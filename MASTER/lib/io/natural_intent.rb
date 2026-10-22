@@ -21,7 +21,7 @@ module Master
           score, evidence = score_candidate(message, spec)
           next unless score
 
-          [name.to_sym, score, extract_entities(message, spec), evidence]
+          [name.to_sym, score, extract_entities(message, spec, raw: text.to_s), evidence]
         end
 
         best = candidates.max_by { |candidate| [candidate[1], candidate[3]] }
@@ -52,9 +52,11 @@ module Master
       end
 
       def score_candidate(message, spec)
-        aliases = Array(spec["aliases"])
-        actions = Array(spec["actions"])
-        objects = Array(spec["objects"])
+        # Flattened: objects is a canonical => aliases Hash, and Array(hash) made each pair one string that
+        # matched nothing, so "edit the latest photos" was not a postpro request at all.
+        aliases = phrase_terms(spec["aliases"])
+        actions = phrase_terms(spec["actions"])
+        objects = phrase_terms(spec["objects"])
         alias_hits = phrase_hits(message, aliases)
         action_hits = phrase_hits(message, actions)
         object_hits = phrase_hits(message, objects)
@@ -70,16 +72,21 @@ module Master
         [confidence, alias_hits.length + action_hits.length + object_hits.length]
       end
 
-      def extract_entities(message, spec)
+      # Recency and count are read outside quotes: "new photos" in a quoted path read as recency "new" and
+      # narrowed an explicit directory to its newest images. The path comes from the raw text, since the
+      # message is downcased and a path keeps its case.
+      def extract_entities(message, spec, raw:)
+        words = message.gsub(/"[^"]*"|'[^']*'/, " ")
+
         {
           action: first_hit(message, spec["actions"]),
           object: canonical_or_first_hit(message, spec["objects"]),
-          recency: canonical_hit(message, spec["recency"]),
-          count: quantity(message, spec["quantities"], spec["objects"], spec["recency"]),
+          recency: canonical_hit(words, spec["recency"]),
+          count: quantity(words, spec["quantities"], spec["objects"], spec["recency"]),
           location: canonical_hit(message, spec["locations"]),
           file_type: canonical_hit(message, spec["file_types"]),
           preset: canonical_hit(message, spec["presets"]),
-          path: path(message),
+          path: path(raw),
         }.compact
       end
 
@@ -131,11 +138,15 @@ module Master
         Array(value)
       end
 
+      UNQUOTED_PATH = %r{\b(?:in|at|from|under|over|on)\s+
+                         (~[^\s"']*|[^\s"']*/[^\s"']*|[^\s"']+\.(?:jpe?g|png|webp|tiff?))(?:\s|$)}ix
+
       def path(message)
         quoted = message.match(/\b(?:in|at|from|under|over|on|for)\s+["']([^"']+)["']/i)
         return quoted[1] if quoted
 
-        token = message.match(%r{\b(?:in|at|from|under|over|on)\s+(~?(?:/|\./|\.\./)?[^\s"']+/?)(?:\s|$)}i)
+        # Unquoted, only what looks like a path: "over the latest" once gave the path "the".
+        token = message.match(UNQUOTED_PATH)
         token && token[1]
       end
 

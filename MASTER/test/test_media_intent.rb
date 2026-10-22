@@ -119,6 +119,7 @@ end
 
 def test_bare_play_renders_the_curated_blue_hour_showcase_and_plays_the_wav
   calls = []
+  result = nil
 
   without_sound do
     Master::Io::ScriptDispatch.stub(:run, dilla_stub(calls)) do

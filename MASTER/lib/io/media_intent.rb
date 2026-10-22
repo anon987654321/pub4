@@ -697,7 +697,8 @@ module Master
         stop_player
         @player_pid = Master::Music::Synth.play(info[:path])
         line = "playing #{info[:progression]}#{" with #{info[:drums]}" if info[:drums]} (pid #{@player_pid}): #{info[:path]}"
-        Result.ok(output: line, rendered: line, media: :dilla_live, style: info[:progression], path: info[:path])
+        Result.ok(output: line, rendered: line, media: :dilla_live, style: info[:progression], path: info[:path],
+                  drums: info[:drums], kit: info[:kit])
       rescue RuntimeError, ArgumentError => e
         Result.err("#{e.message}: install sox (brew install sox) or ffmpeg, whose ffplay also plays", category: :infrastructure)
       end
