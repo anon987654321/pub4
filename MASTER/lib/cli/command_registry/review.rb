@@ -208,7 +208,12 @@ module Master
         baseline = nil
         if writes_requested
           Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: capturing read-only pre-repair baseline")
-          baseline = ::Operator::GateChain.baseline(target:)
+          baseline = begin
+            ::Operator::GateChain.baseline(target:)
+          rescue ::Operator::GateChain::BaselineMutation => e
+            Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: pre-repair baseline blocked; no repair started")
+            return Master::Result.err("pre-repair proof blocked: #{e.message}", category: :validation)
+          end
           Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: baseline ready; starting write-enabled /fix pass")
         end
         value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
