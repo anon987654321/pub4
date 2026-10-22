@@ -66,10 +66,16 @@ infer:
       - "\\b(?:scan|lint|check\\s+(?:code|violations?)|run\\s+scan)(?:\\s+(cosmetic|style|hygiene|perfection|core|axioms|solid|critical|full|aesthetic|pixel|ui|ux|design))?\\b"
       - "\\b(?:review\\s+my\\s+changes?|check\\s+what\\s+I\\s+edited|what\\s+did\\s+I\\s+change|scan\\s+my\\s+edits?)\\b"
       capture: scan_profile
+    # /fix writes code, so plain words never start it: "write an email asking him to fix the broken heater"
+    # ran /fix on MASTER on 2026-10-23. Only a line that opens with the verb and names a tree or a file
+    # path, or is the bare verb, is the command.
     fix:
       patterns:
-      - "\\b(?:fix|repair|correct)\\s+(?:the\\s+)?([\\w./-]+(?:\\.[\\w]+)?)?"
-      - "\\b(?:fiks|reparer)\\s+(?:([\\w./-]+(?:\\.[\\w]+)?)|(?:den|det))?\\b"
+      - '\A\s*(?:please\s+)?(?:fix|repair)\s+(?:the\s+)?(\S*/\S*)'
+      - '\A\s*(?:please\s+)?(?:fix|repair)\s+(?:the\s+)?(\S+\.\w{1,5})\b'
+      - '\A\s*(?:please\s+)?(?:fix|repair)\s+(?:the\s+)?(master|rails|openbsd|studio|itself|self|face)\b'
+      - '\A\s*(?:fiks|reparer)\s+(\S*/\S*|\S+\.\w{1,5}\b|master|rails|openbsd|studio|seg\s+selv)'
+      - '\A\s*(?:fix|fiks)\s*[.!]?\s*\z'
       capture: path
     through:
       patterns:
