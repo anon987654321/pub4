@@ -21,21 +21,32 @@ namespace :postpro do
   end
 end
 
-Rake::TestTask.new(:test) do |t|
+# Test names follow both test_*.rb and *_test.rb. Keep discovery recursive
+# before moving tests by subsystem, and never run fixture Ruby as a test.
+# rack/test lives in the web bundle, which is not installable on a contributor Mac;
+# leaving test_web_ui.rb in the glob aborted `rake test` before any other file ran.
+MASTER_TEST_EXCLUDED = %w[test/fixtures/**/* test/test_browser.rb test/test_web_http.rb test/test_web_ui.rb].freeze
+
+MASTER_TEST_FILES = FileList["test/**/test_*.rb", "test/**/*_test.rb"].exclude(*MASTER_TEST_EXCLUDED)
+
+# One process, in turn: what each parallel worker runs on its share, and the
+# fallback with MASTER_TEST_JOBS=1.
+Rake::TestTask.new(:"test:serial") do |t|
   t.libs << "test"
   t.libs << "lib"
-  # Test names follow both test_*.rb and *_test.rb. Keep discovery recursive
-  # before moving tests by subsystem, and never run fixture Ruby as a test.
-  t.test_files = FileList["test/**/test_*.rb", "test/**/*_test.rb"].exclude(
-    "test/fixtures/**/*",
-    "test/test_browser.rb",
-    "test/test_web_http.rb",
-    # rack/test lives in the web bundle, which is not installable on a
-    # contributor Mac. Leaving this in the default glob aborted `rake test`
-    # before any other file ran.
-    "test/test_web_ui.rb"
-  )
+  t.test_files = MASTER_TEST_FILES
   t.warning = false
+end
+
+desc "Run the MASTER suite across MASTER_TEST_JOBS processes (3 by default)"
+task :test do
+  require_relative "lib/operator/parallel_tests"
+  next Rake::Task[:"test:serial"].invoke if Operator::ParallelTests.jobs == 1
+
+  loader = File.join(Gem.loaded_specs.fetch("rake").full_gem_path, "lib", "rake", "rake_test_loader.rb")
+  options = ["-v", *ENV.fetch("TESTOPTS", "").split].uniq
+  command = ->(files) { [RbConfig.ruby, "-Ilib:test", loader, *files, *options] }
+  abort "test: a worker failed" unless Operator::ParallelTests.run(MASTER_TEST_FILES.to_a, command:)
 end
 
 desc "Check Phoenix regeneration boundaries and provenance contracts"

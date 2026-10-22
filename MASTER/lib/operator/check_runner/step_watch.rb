@@ -17,6 +17,8 @@ module Operator
       FAILURE_HEAD = /\A\s*\d+\) (?:Failure|Error):\s*\z/
       TEST_NAME = /\A\s*(\S+#\S+?)(?: \[[^\]]*\])?:?\s*\z/
       DOTS = /\A[.FES]+/
+      # A verbose run (the parallel suite) prints one line per test instead of a dot.
+      VERBOSE_MARK = / = [\d.]+ s = ([.FES])\s*\z/
 
       def self.log_path(name)
         FileUtils.mkdir_p(LOG_DIR)
@@ -58,8 +60,10 @@ module Operator
         clock.merge!(grew: now, stalled: false)
         lines = fresh.force_encoding(Encoding::UTF_8).scrub.lines(chomp: true)
         lines.each_cons(2) { |head, name| name_failure(head, name) }
-        lines.each { |line| line[DOTS].to_s.each_char { |mark| @tally[mark] += 1 } }
+        lines.each { |line| marks(line).each_char { |mark| @tally[mark] += 1 } }
       end
+
+      def marks(line) = line[VERBOSE_MARK, 1] || line[DOTS].to_s
 
       def name_failure(head, name)
         return unless head.match?(FAILURE_HEAD)
