@@ -1,7 +1,7 @@
-<%= t("mailer.verify_welcome", default: t("shared.email_verification.welcome")) %>
+<%= copy(:welcome) %>
 
-<%= t("mailer.verify_body", default: t("shared.email_verification.body")) %>
+<%= copy(:body) %>
 
 <%= @verification_url %>
 
-<%= t("mailer.verify_ignore", default: t("shared.email_verification.ignore")) %>
+<%= copy(:ignore) %>

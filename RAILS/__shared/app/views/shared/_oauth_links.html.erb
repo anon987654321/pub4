@@ -5,7 +5,7 @@
 <% if active.any? %>
   <nav class="oauth-links" aria-label="<%= t("auth.options") %>">
     <% if active.include?("bankid") %>
-      <%= button_to t("auth.with_bankid", default: "BankID"), "/auth/bankid", method: :post,
+      <%= button_to t("auth.with_bankid"), "/auth/bankid", method: :post,
             class: "btn btn-primary oauth-button oauth-bankid", data: { turbo: false } %>
     <% end %>
     <% if active.include?("vipps") %>

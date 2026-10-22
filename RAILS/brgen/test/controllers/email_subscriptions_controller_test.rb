@@ -50,7 +50,8 @@ class EmailSubscriptionsControllerTest < ActionDispatch::IntegrationTest
     )
     previous_token = subscription.token
 
-    assert_enqueued_jobs 1 do
+    # The confirmation job runs inline (ApplicationJob.run_inline!), so the mail is the evidence.
+    assert_emails 1 do
       post email_subscriptions_path, params: {
         email_subscription: {
           email: subscription.email,

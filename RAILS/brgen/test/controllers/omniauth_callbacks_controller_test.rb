@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "minitest/mock"
 
 class OmniauthCallbacksControllerTest < ActionDispatch::IntegrationTest
-  Info = Struct.new(:email)
+  Info = Struct.new(:email, :phone)
   Auth = Struct.new(:provider, :uid, :info, :extra)
 
   test "only supported providers with an explicit verified email claim prove mailbox ownership" do

@@ -91,6 +91,7 @@ nb:
     with_github: "Logg inn med GitHub"
     with_google: "Logg inn med Google"
     with_facebook: "Logg inn med Facebook"
+    with_bankid: "Logg inn med BankID"
     with_vipps: "Logg inn med Vipps"
     two_factor_lead: "Skann QR-koden eller skriv inn hemmeligheten i autentiseringsappen din."
     magic_link: "Send meg en innloggingslenke"

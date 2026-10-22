@@ -91,6 +91,7 @@ en:
     with_github: "Sign in with GitHub"
     with_google: "Sign in with Google"
     with_facebook: "Sign in with Facebook"
+    with_bankid: "Sign in with BankID"
     with_vipps: "Sign in with Vipps"
     two_factor_lead: "Scan the QR code or enter the secret in your authenticator app."
     magic_link: "Email me a sign-in link"

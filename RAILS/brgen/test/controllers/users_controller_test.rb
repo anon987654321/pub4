@@ -41,7 +41,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert user, "expected the account to exist"
     assert_not user.guest?
     assert user.sessions.any?, "expected a session for the new account"
-    assert_equal I18n.t("flash.welcome"), flash[:notice]
+    assert_equal I18n.t("shared.email_verification.signup_notice"), flash[:notice]
   end
 
   test "a deletion-pending public profile is not reachable" do
@@ -96,7 +96,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
     user = User.find_by(email_address: "carryover@example.test")
     assert_equal user.id, Post.strict_loading(false).find(guest_post.id).user_id
-    assert_equal I18n.t("flash.welcome_guest_merged"), flash[:notice]
+    assert_equal I18n.t("shared.email_verification.signup_notice_guest_merged"), flash[:notice]
   end
 
   test "signup without accepting terms creates no account" do
