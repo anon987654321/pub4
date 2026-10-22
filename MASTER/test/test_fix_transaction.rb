@@ -100,6 +100,23 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def test_transaction_id_collision_preserves_an_orphan_directory_for_diagnosis
+    Dir.mktmpdir do |dir|
+      id = "orphan-collision"
+      orphan = File.join(dir, ".master", "fix_transactions", id)
+      FileUtils.mkdir_p(orphan)
+      sentinel = File.join(orphan, "preserve-me")
+      File.write(sentinel, "operator evidence")
+
+      tx = Master::Fix::Transaction.new(root: dir, paths: [], id:)
+      error = assert_raises(RuntimeError) { tx.begin! }
+
+      assert_includes error.message, "transaction id already exists"
+      refute tx.active?
+      assert_equal "operator evidence", File.read(sentinel)
+    end
+  end
+
   def test_transaction_refuses_unsupported_directory_paths_without_leaving_a_partial_snapshot
     Dir.mktmpdir do |dir|
       tx = Master::Fix::Transaction.new(root: dir, paths: ["."], id: "directory-path")
