@@ -182,8 +182,8 @@ test("evidence events retain their event name and reach the shared FaceWorld clo
     assert.ok(tokens.includes("- " + event), event + " is missing from the face contract");
   }
   assert.match(faceWorld, /function syncActivitySnapshot\(\)/);
-  assert.match(faceWorld, /function updateActivityNodes\(now, state\)/);
-  assert.match(faceWorld, /updateActivityNodes\(now, state\)/);
+  assert.match(faceWorld, /function updateActivityNodes\(now, state, reducedMotion = false\)/);
+  assert.match(faceWorld, /updateActivityNodes\(now, state, reducedMotion\)/);
   assert.doesNotMatch(faceWorld, /requestAnimationFrame\(/);
   assert.ok(manifest.includes("- face_world.js"), "spatial nodes must use the already loaded FaceWorld asset");
 });
