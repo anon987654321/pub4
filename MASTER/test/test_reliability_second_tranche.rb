@@ -653,7 +653,7 @@ class TestReliabilitySecondTranche < Minitest::Test
 
       result = loop.send(:retry_delivery, transaction_id: id, expected_head: "commit-1")
 
-      assert result.ok?, result.message
+      assert result.ok?, -> { result.message.to_s }
       assert push_attempted
       refute Master::Fix::Transaction::Recovery.persisted?(root:, id:)
     end
