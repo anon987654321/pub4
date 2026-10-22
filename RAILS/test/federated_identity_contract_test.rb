@@ -68,8 +68,17 @@ class FederatedIdentityContractTest < Minitest::Test
     refute File.exist?(File.join(ROOT, "RAILS/brgen/app/services/account_merger.rb"))
     refute File.exist?(File.join(ROOT, "RAILS/brgen/app/models/account_merge.rb"))
     assert_includes merger, "def merge_messages"
+    assert_includes merger, "def merge_conversations"
+    assert_includes merger, "def merge_message_receipts"
+    assert_includes merger, "def clear_guest_typing_indicators"
+    assert_includes merger, 'model.find_by(conversation_id: source.conversation_id, user_id: user.id)'
+    assert_includes merger, 'model.find_by(message_id: source.message_id, user_id: user.id)'
+    assert_includes merger, 'values[column] = times.min if times.any?'
     assert_includes merger, "def invalidate_guest_sessions"
     assert_includes merger, '::Session.where(user_id: guest_user.id).find_each(&:destroy!)'
+    messenger_test = read("RAILS/brgen/test/services/account_merger_and_moderation_test.rb")
+    assert_includes messenger_test, "test \"merging duplicate messenger membership and receipts preserves state without violating unique indexes\""
+    assert_includes messenger_test, "assert_equal guest_delivered.to_i, receipt.delivered_at.to_i"
     assert_includes merger, "ActiveRecord::MigrationError"
     refute_includes merger, "guest_user.sessions.destroy_all"
     refute_includes merger, "merge_sessions"
