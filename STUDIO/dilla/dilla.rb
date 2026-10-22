@@ -3090,6 +3090,8 @@ class Drums
 
   # The pattern grid supplies timing; the seeded hit renderer supplies modest human variation
   # in pitch, decay and noise, so a bar does not sound like one sample copied on every beat.
+  # Three voices only: a pattern that also asks for open, clap, rim, tom or perc gets silence for those
+  # roles from this fallback rather than a KeyError that ends the render.
   def sounds
     {
       'kick' => kick(0.24 + (@rng.rand * 0.05)),
@@ -4669,7 +4671,7 @@ if mode == 'arp'
     hits.each_with_index do |(role, time, strength), hit_index|
       # A fresh seeded voice per strike gives ghost notes and hats their own transient/noise;
       # a kit builds each role once.
-      sample = kit ? kit[role] : Drums.new(@seed + ((hit_index + 1) * 104_729)).sounds.fetch(role)
+      sample = kit ? kit[role] : Drums.new(@seed + ((hit_index + 1) * 104_729)).sounds[role]
       next unless sample
 
       # An open hat is choked by the next closed one.
@@ -5366,7 +5368,7 @@ class Streamer
     drum_pans = @data.fetch('stereo').fetch('drums')
     @hits.each_with_index.filter_map do |(role, time, strength), hit_index|
       make = lambda do
-        sample = kit ? kit[role] : Drums.new(@plan.seed + ((hit_index + 1) * 104_729)).sounds.fetch(role)
+        sample = kit ? kit[role] : Drums.new(@plan.seed + ((hit_index + 1) * 104_729)).sounds[role]
         if sample && kit && role == 'open' && (nxt = closers.find { |t| t > time })
           sample = sample.first(((nxt - time) * SAMPLE_RATE).to_i)
           fade = [130, sample.size].min
