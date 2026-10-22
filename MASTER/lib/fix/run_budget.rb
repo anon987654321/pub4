@@ -86,8 +86,15 @@ module Master
         def finish_run(reason: "completed")
           return @current if (@shared_depth || 0).to_i.positive? && !@shared_finishing
 
-          @current&.finish!(reason)
-          @current = nil
+          run = @current
+          begin
+            run&.finish!(reason)
+          ensure
+            # Reporting is part of finalization and can itself fail (for
+            # example, a full log filesystem). Never leave a dead budget as
+            # the current run after its watchdog has been stopped.
+            @current = nil if @current.equal?(run)
+          end
         end
 
         def note_output(unit, text)
