@@ -20,9 +20,12 @@ class TestFixLoopObservability < Minitest::Test
     end
   end
 
+  # Unrequested: a requested run first builds the dependency graph and the research brief, which
+  # this test does not exercise.
   def test_begin_run_crash_is_distinct_from_corpus_findings
     bus = EventBus.new([])
     error = FloatDomainError.new("Infinity can't be coerced into Integer")
+
     loop = Master::Fix::FixLoop.allocate
     loop.instance_variable_set(:@bus, bus)
     loop.instance_variable_set(:@file_collector, Collector.new(1, 0, [File.join(Master::ROOT, "data", "laws.yml")]))
@@ -36,7 +39,7 @@ class TestFixLoopObservability < Minitest::Test
         max_passes: 1,
         budget_seconds: 30,
         incremental: false,
-        requested: true,
+        requested: false,
       )
       @result = result
     end
