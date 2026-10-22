@@ -301,7 +301,7 @@ body[data-hidden-tab="1"] #cognition-ecology {
 }
 
 #cmd-palette-input:focus-visible {
-  outline: 2px solid var(--c-accent);
+  outline: 2px solid var(--chrome-focus);
   outline-offset: -2px;
 }
 
@@ -450,16 +450,16 @@ body[data-council-persona]::after {
  * live colour and the pulse it always had. */
 #mic-dot {
   position: fixed;
-  top: calc(var(--inset-t) + 2px);
-  inset-inline-end: calc(var(--inset-r) + 2px);
-  width: 28px;
-  height: 28px;
+  top: var(--safe-top);
+  inset-inline-end: var(--safe-right);
+  width: var(--tap-min);
+  height: var(--tap-min);
   color: var(--c-mic-off, #6b6b6b);
   opacity: 1;
   pointer-events: auto;
   z-index: var(--z-ui);
   border: 0;
-  border-radius: 50%;
+  border-radius: 0;
   padding: 0;
   background: transparent;
   cursor: pointer;
@@ -468,10 +468,12 @@ body[data-council-persona]::after {
   transition: color 160ms var(--ease-out), opacity 160ms var(--ease-out);
 }
 
+
 #mic-dot:focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 3px;
+  outline: 2px solid var(--chrome-focus);
+  outline-offset: 2px;
 }
+
 #mic-dot svg {
   width: 18px;
   height: 18px;
@@ -781,15 +783,15 @@ body.mission-control .grid {
   max-inline-size: 80ch;
 }
 body.mission-control .panel {
-  margin-block-end: 24px;
-  padding-inline-start: 12px;
-  border-inline-start: 1px solid var(--chrome-border);
+  margin-block-end: 20px;
+  padding-inline-start: 0;
+  border-inline-start: 0;
 }
 body.mission-control .panel h2 {
   font-size: var(--text-meta);
   font-weight: 400;
   color: var(--chrome-muted);
-  margin-bottom: 6px;
+  margin-block-end: 6px;
 }
 body.mission-control pre {
   color: var(--chrome-text);
@@ -877,7 +879,7 @@ body #zsh.live:focus-within {
   opacity: 1;
   background: black;
 }
-#zsh .pp { color: var(--face-fg); font-weight: 400; margin-inline-end: 0.6ch; }
+#zsh .pp { color: var(--face-alert); font-weight: 700; margin-inline-end: 0.6ch; }
 #zsh .sep { color: var(--face-muted); margin-inline-end: 0.4ch; }
 #zsh input, #zsh textarea { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 0px 0; resize: none; line-height: 1.5; max-height: 120px; }
 #zsh input::placeholder, #zsh textarea::placeholder { color: var(--face-muted); }
@@ -1284,6 +1286,8 @@ body[data-history-open="1"] #chat-log {
   margin-inline-start: min(332px, calc(100vw - 24px));
   transition: margin-left 220ms var(--ease-out);
 }
+
+
 
 /* Family skip-link: hard-hide until focus (same contract as RAILS _shell.scss). */
 .skip-link {
@@ -1790,8 +1794,7 @@ body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
 
 #primer {
   padding: clamp(24px, 5vw, 64px);
-  background: rgb(5 7 16 / 80%);
-  backdrop-filter: blur(8px);
+  background: var(--chrome-bg);
 }
 #primer h1 {
   max-inline-size: 14ch;
@@ -1854,354 +1857,126 @@ body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
   border-color: rgb(121 151 210 / 34%);
 }
 
-#zsh {
-  inset-inline: auto;
-  inset-inline-start: 50%;
-  inset-block-end: calc(14px + var(--safe-bottom));
-  width: min(920px, calc(100dvw - 32px - var(--safe-left) - var(--safe-right)));
-  height: auto;
-  min-height: 64px;
-  padding: 9px 12px;
-  gap: 8px;
-  transform: translate(-50%, 0);
-  border: 1px solid var(--chrome-border);
-  border-radius: 10px;
-  background: var(--chrome-surface);
-  color: var(--chrome-text);
-  font: 400 1rem/1.5 var(--font-mono);
-  backdrop-filter: blur(18px) saturate(120%);
-  transition: opacity 180ms ease, border-color 180ms ease, background 180ms ease;
-  touch-action: auto;
-}
-body #zsh.live,
-body:not(.face-ready) #zsh.live {
-  transform: translate(-50%, 0);
-  background: rgb(9 13 27 / 88%);
-}
-body #zsh.live:focus-within {
-  background: var(--chrome-surface-active);
-  border-color: var(--chrome-focus);
-}
-body.zen #zsh {
-  opacity: 0.96;
-  pointer-events: auto;
-  transform: translate(-50%, 0);
-}
-body.zen.zen-hidden #zsh,
-body.zen[data-edge-hover="1"] #zsh { opacity: 0.96; pointer-events: auto; }
-body.zen #zsh.revealed { transform: translate(-50%, 0); }
-#zsh .pp { color: var(--face-fg); font-weight: 400; }
-#zsh input, #zsh textarea {
-  min-height: 42px;
-  padding: 8px 0;
-  font: 400 1rem/1.5 var(--font-mono);
-  color: var(--chrome-text);
-  caret-color: var(--pub4-signal);
-  user-select: text;
-  -webkit-user-select: text;
-  touch-action: auto;
-}
-#zsh input::placeholder, #zsh textarea::placeholder { color: var(--chrome-muted); }
-#photo-button, #music-btn, #spin-btn {
-  min-inline-size: 44px;
-  min-block-size: 44px;
-  border-radius: 12px;
-  color: rgb(171 194 235 / 84%);
-}
-#photo-button { border: 1px solid transparent; font-family: var(--font-brand); font-size: 1.35rem; }
-#photo-button:hover, #music-btn:hover, #spin-btn:hover {
-  background: rgb(149 183 255 / 8%);
-  color: #f0f5ff;
-}
-#music-btn::before {
-  inset: 15px;
-  border-radius: 3px;
-  border-color: currentColor;
-}
-#music-btn[aria-pressed="true"]::before { background: #8ce5ef; border-color: #8ce5ef; }
-#spin-btn { padding-inline: 8px; font-family: var(--font-brand); }
-#zsh-status { color: rgb(157 184 231 / 82%); font-size: 0.75rem; }
-
-@media (max-width: 639px) {
-  .brand-mark { inset-block-start: calc(var(--safe-top) + 7px); inset-inline-start: calc(var(--safe-left) + 15px); }
-  .mic-indicator { inset-block-start: calc(var(--safe-top) + 7px); inset-inline-end: calc(var(--safe-right) + 10px); }
-  #chat-shell { inset-block-end: calc(78px + var(--safe-bottom)); }
-  #chat-log { max-height: 36dvh; padding-inline: 18px; }
-  .message { margin-block-end: 16px; font-size: 0.98rem; }
-  #zsh { width: calc(100dvw - 22px - var(--safe-left) - var(--safe-right)); min-height: 58px; padding: 7px; gap: 5px; border-radius: 15px; }
-  #zsh .pp { display: none; }
-  #zsh input, #zsh textarea { font-size: 16px; }
-  #photo-button, #music-btn, #spin-btn { min-inline-size: var(--tap-min); min-block-size: var(--tap-min); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .message { animation: none; }
-  #zsh { transition: none; }
-}
-@media (prefers-reduced-transparency: reduce) {
-  #zsh { background: #090d1b; backdrop-filter: none; }
-}
-@media (forced-colors: active) {
-  #zsh { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
-  #zsh input, #zsh textarea { color: CanvasText; }
-}
-
-
-/* A glyph-shaded view of the canonical head points shared with the CLI. */
-.master-face-ascii-layer {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  pointer-events: none;
-  z-index: 4;
-  opacity: .28;
-  mix-blend-mode: screen;
-  transition: opacity 180ms linear;
-}
-body[data-face-ascii="1"] .master-face-ascii-layer { opacity: .96; }
-body[data-face-ascii="1"] #face { opacity: .055; }
-@media (prefers-reduced-motion: reduce) {
-  .master-face-ascii-layer { transition: none; }
-}
-
-/* Sequential turn feedback stays separate from the mode status, whose text is
-   cleared whenever the face changes state. */
-.turn-queue-status {
-  color: var(--face-muted);
-  font: 400 0.72rem/1.2 var(--font-mono);
-  white-space: nowrap;
-  pointer-events: none;
-  margin-inline-start: 4px;
-}
-body[data-queue-active="1"] .turn-queue-status { opacity: .9; }
-#turn-control {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  min-inline-size: var(--tap-min);
-  min-block-size: var(--tap-min);
-  padding-inline: 8px;
-  border: 1px solid var(--border-soft);
-  background: transparent;
-  color: var(--face-muted);
-  font: 400 .72rem/1 var(--font-mono);
-  text-transform: lowercase;
-  cursor: pointer;
-}
-#turn-control:hover { color: var(--face-fg); border-color: var(--border-strong); }
-#turn-control[hidden] { display: none; }
-#turn-control:focus-visible { outline: 2px solid var(--face-fg); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) {
-  #turn-control { transition: none; }
-}
-
-
-
 /* Developer controls for the additive face stipple layer; hidden unless explicitly enabled. */
 .master-face-stipple-playground {
-  position: fixed;
-  z-index: 40;
-  inset: auto 16px 64px auto;
-  width: min(320px, calc(100vw - 32px));
-  max-height: min(72vh, 560px);
-  overflow: auto;
-  display: grid;
-  gap: 10px;
-  padding: 14px;
-  color: var(--face-text, #d8d6e0);
-  background: #050505;
-  border: 1px solid var(--face-line, #777);
+  position: fixed; z-index: 40; inset: auto 16px 64px auto;
+  width: min(320px, calc(100vw - 32px)); max-height: min(72vh, 560px);
+  overflow: auto; display: grid; gap: 10px; padding: 14px;
+  color: var(--x-text); background: var(--face-bg); border: 1px solid var(--chrome-border);
   font: 12px/1.4 var(--font-mono, ui-monospace, monospace);
 }
 .master-face-stipple-playground strong { font-size: 13px; font-weight: 700; }
 .master-face-stipple-playground label { display: grid; gap: 5px; }
-.master-face-stipple-playground select,
-.master-face-stipple-playground button {
-  min-height: 36px;
-  padding: 6px 8px;
-  color: inherit;
-  background: #000;
-  border: 1px solid var(--face-line, #777);
-  font: inherit;
+.master-face-stipple-playground select, .master-face-stipple-playground button {
+  min-height: var(--tap-min); padding: 6px 8px; color: inherit;
+  background: var(--chrome-surface); border: 0; font: inherit;
 }
 .master-face-stipple-playground input { width: 100%; accent-color: currentColor; }
-.master-face-stipple-playground .master-stipple-field {
-  grid-template-columns: 78px minmax(0, 1fr) 36px;
-  align-items: center;
-  gap: 8px;
-}
+.master-face-stipple-playground .master-stipple-field { grid-template-columns: 78px minmax(0,1fr) 36px; align-items: center; gap: 8px; }
 .master-face-stipple-playground output { text-align: right; font-variant-numeric: tabular-nums; }
-.master-face-stipple-playground .master-stipple-status { margin: 0; color: var(--face-muted, #aaa); }
+.master-face-stipple-playground .master-stipple-status { margin: 0; color: var(--face-muted); }
 .master-face-stipple-playground .master-stipple-diagnostics {
-  max-height: 180px;
-  overflow: auto;
-  padding: 8px;
-  border: 1px solid var(--face-line, #777);
-  color: var(--face-muted, #aaa);
-  font: inherit;
-  font-size: 10px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  max-height: 180px; overflow: auto; padding: 8px; color: var(--face-muted);
+  font: inherit; font-size: 10px; white-space: pre-wrap; overflow-wrap: anywhere;
 }
 @media (prefers-reduced-motion: reduce) {
-  .master-face-stipple-playground,
-  .master-face-stipple-playground * {
-    scroll-behavior: auto;
-    transition: none;
-    animation: none;
+  .master-face-stipple-playground, .master-face-stipple-playground * {
+    scroll-behavior: auto; transition: none; animation: none;
   }
 }
-
-
-/* The fixed shared titlebar needs space before the first dashboard heading. */
-body.mission-control .page-header.master-titlebar {
-  flex-wrap: nowrap;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.5rem;
-  max-inline-size: none;
-  margin: 0;
+undefined/* Ghostty-inspired session chrome: flat graphite, muted violet focus, one semantic lime signal. */
+#chat-shell { inset-block-end: calc(76px + var(--safe-bottom) + var(--keyboard-inset, 0px)); }
+#chat-log { max-height: 36dvh; padding: 8px 18px; }
+#zsh {
+  inset-inline: auto; inset-inline-start: 50%;
+  inset-block-end: calc(8px + var(--safe-bottom) + var(--keyboard-inset, 0px));
+  width: calc(100dvw - 16px - var(--safe-left) - var(--safe-right));
+  height: auto; min-height: 60px; padding: 7px; gap: 4px;
+  transform: translate(-50%, 0); border: 0; border-radius: 0;
+  background: var(--chrome-surface); color: var(--chrome-text);
+  font: 400 1rem/1.5 var(--font-mono); touch-action: manipulation;
+  transition: background-color var(--transition-fast) var(--ease-out);
 }
-body.mission-control .mission-heading {
-  max-inline-size: 80ch;
-  margin: 0 0 1rem;
+body #zsh.live, body:not(.face-ready) #zsh.live { transform: translate(-50%,0); background: var(--chrome-surface); }
+body #zsh.live:focus-within, #zsh:focus-within { background: var(--chrome-surface-active); outline: 2px solid var(--chrome-focus); outline-offset: 2px; }
+body.zen #zsh { opacity: .96; pointer-events: auto; transform: translate(-50%,0); }
+body.zen.zen-hidden #zsh, body.zen[data-edge-hover="1"] #zsh { opacity: .96; pointer-events: auto; }
+body.zen #zsh.revealed { transform: translate(-50%,0); }
+#zsh .pp { display: none; color: var(--chrome-muted); font-weight: 400; }
+#zsh input, #zsh textarea {
+  min-height: var(--tap-min); min-width: 0; padding: 8px 0;
+  font: 400 16px/1.5 var(--font-mono); color: var(--chrome-text);
+  caret-color: var(--chrome-focus); user-select: text; -webkit-user-select: text; touch-action: auto;
 }
-
-
-/* Ghostty-inspired session chrome: route tabs and native-scale typography,
-   with pub4's own graphite, blue-violet depth and sparse lime signal. */
+#zsh input::placeholder, #zsh textarea::placeholder { color: var(--chrome-muted); }
+#photo-button, #music-btn, #spin-btn {
+  min-inline-size: var(--tap-min); min-block-size: var(--tap-min);
+  border: 0; border-radius: 0; background: transparent; color: var(--chrome-muted);
+}
+#photo-button { font-family: var(--font-brand); font-size: 1.35rem; }
+#photo-button:hover, #music-btn:hover, #spin-btn:hover { background: var(--chrome-hover); color: var(--chrome-text); }
+#photo-button:focus-visible, #music-btn:focus-visible, #spin-btn:focus-visible { outline: 2px solid var(--chrome-focus); outline-offset: -2px; }
+#music-btn::before { inset: 15px; border-radius: 0; border-color: currentColor; }
+#music-btn[aria-pressed="true"]::before { background: var(--pub4-signal); border-color: var(--pub4-signal); }
+#spin-btn { padding-inline: 8px; font-family: var(--font-brand); }
+#zsh-status { color: var(--chrome-muted); font-size: var(--text-meta); }
+.turn-queue-status { color: var(--chrome-muted); font: 400 .72rem/1.2 var(--font-mono); white-space: nowrap; pointer-events: none; margin-inline-start: 4px; }
+body[data-queue-active="1"] .turn-queue-status { opacity: .9; }
+#turn-control {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  min-inline-size: var(--tap-min); min-block-size: var(--tap-min); padding-inline: 8px;
+  border: 0; border-radius: 0; background: var(--chrome-surface); color: var(--chrome-muted);
+  font: 400 .72rem/1 var(--font-mono); text-transform: lowercase; cursor: pointer;
+}
+#turn-control:hover { color: var(--chrome-text); background: var(--chrome-hover); }
+#turn-control[hidden] { display: none; }
+#turn-control:focus-visible { outline: 2px solid var(--chrome-focus); outline-offset: 2px; }
 .master-titlebar {
-  position: fixed;
-  inset-block-start: 0;
-  inset-inline: 0;
-  z-index: var(--z-ui);
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  gap: 0;
-  inline-size: 100%;
-  block-size: calc(var(--face-bar-height) + var(--safe-top));
-  padding-block-start: var(--safe-top);
-  padding-inline-start: var(--inset-l);
-  padding-inline-end: calc(var(--inset-r) + var(--tap-min));
-  background: var(--chrome-bg);
-  color: var(--chrome-text);
-  border-block-end: 1px solid var(--chrome-border);
+  position: fixed; inset-block-start: 0; inset-inline: 0; z-index: var(--z-ui); box-sizing: border-box;
+  display: flex; align-items: center; gap: .25rem; inline-size: 100%; width: 100%; max-inline-size: none; max-width: none;
+  block-size: calc(var(--face-bar-height) + var(--safe-top)); margin: 0;
+  padding-block-start: var(--safe-top); padding-inline-start: var(--inset-l); padding-inline-end: calc(var(--inset-r) + var(--tap-min));
+  background: var(--chrome-bg); color: var(--chrome-text);
 }
 .master-titlebar .brand-mark {
-  display: none;
-  position: static;
-  inset: auto;
-  z-index: auto;
-  flex: 0 0 auto;
-  align-items: center;
-  min-inline-size: 0;
-  min-block-size: var(--tap-min);
-  padding-inline-end: 0.75rem;
-  color: var(--face-muted);
-  pointer-events: auto;
-  cursor: pointer;
-  transition: color var(--transition-fast) var(--ease-out);
+  display: none; position: static; inset: auto; z-index: auto; flex: 0 0 auto; align-items: center;
+  min-inline-size: 0; min-block-size: var(--tap-min); padding-inline-end: .75rem;
+  color: var(--chrome-muted); pointer-events: auto; cursor: pointer; transition: color var(--transition-fast) var(--ease-out);
 }
-.master-titlebar .brand-mark:hover { color: var(--face-fg); }
-.master-titlebar .brand-mark:focus-visible {
-  outline: 2px solid var(--pub4-signal);
-  outline-offset: -2px;
-}
+.master-titlebar .brand-mark:hover { color: var(--chrome-text); }
+.master-titlebar .brand-mark:focus-visible { outline: 2px solid var(--chrome-focus); outline-offset: -2px; }
 .master-session-tabs {
-  display: flex;
-  flex: 1 1 auto;
-  align-self: stretch;
-  align-items: stretch;
-  gap: 0.25rem;
-  min-inline-size: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  overscroll-behavior-inline: contain;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  scroll-snap-type: inline proximity;
+  display: flex; flex: 1 1 auto; align-self: stretch; align-items: stretch; gap: .25rem; min-inline-size: 0;
+  overflow-x: auto; overflow-y: hidden; overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none; scroll-snap-type: inline proximity;
 }
 .master-session-tabs::-webkit-scrollbar { display: none; }
 .master-session-tab {
-  position: relative;
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  min-inline-size: var(--tap-min);
-  min-block-size: var(--tap-min);
-  padding-inline: 0.75rem;
-  color: var(--chrome-muted);
-  font: var(--text-meta)/1 var(--font-mono);
-  text-decoration: none;
-  white-space: nowrap;
-  scroll-snap-align: start;
-  transition: background-color var(--transition-fast) var(--ease-out),
-              color var(--transition-fast) var(--ease-out);
+  position: relative; display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center;
+  min-inline-size: var(--tap-min); min-block-size: var(--tap-min); padding-inline: .625rem;
+  color: var(--chrome-muted); font: var(--text-meta)/1 var(--font-mono); text-decoration: none; white-space: nowrap; scroll-snap-align: start;
+  transition: background-color var(--transition-fast) var(--ease-out), color var(--transition-fast) var(--ease-out);
 }
-.master-session-tab:hover {
-  background: var(--chrome-hover);
-  color: var(--chrome-text);
-}
-.master-session-tab[aria-current="page"] {
-  background: var(--chrome-surface-active);
-  color: var(--chrome-text);
-  font-weight: 600;
-}
-.master-session-tab[aria-current="page"]::after {
-  position: absolute;
-  inset-inline: 0.65rem;
-  inset-block-end: 0;
-  block-size: 2px;
-  background: var(--pub4-signal);
-  content: "";
-}
-.master-session-tab:focus-visible {
-  z-index: 1;
-  outline: 2px solid var(--chrome-focus);
-  outline-offset: -3px;
-}
-body.mission-control .master-titlebar { padding-inline-end: var(--inset-r); }
-body.mission-control .mission-heading {
-  max-inline-size: 80ch;
-  margin: 0 0 1rem;
-}
+.master-session-tab:hover { background: var(--chrome-hover); color: var(--chrome-text); }
+.master-session-tab[aria-current="page"] { background: var(--chrome-surface-active); color: var(--chrome-text); font-weight: 600; }
+.master-session-tab[aria-current="page"]::after { position: absolute; inset-inline: .65rem; inset-block-end: 0; block-size: 2px; background: var(--pub4-signal); content: ""; }
+.master-session-tab:focus-visible { z-index: 1; outline: 2px solid var(--chrome-focus); outline-offset: -3px; }
+body.mission-control .master-titlebar { max-width: none; max-inline-size: none; margin: 0; padding-inline-end: var(--inset-r); }
+body.mission-control .mission-heading { max-inline-size: 80ch; margin: 0 0 1rem; }
 @media (min-width: 480px) {
-  .master-titlebar { gap: 0.5rem; }
+  #chat-log { max-height: 40dvh; padding-inline: 24px; }
+  #zsh { width: min(920px, calc(100dvw - 32px - var(--safe-left) - var(--safe-right))); min-height: 64px; padding: 9px 12px; gap: 8px; }
+  #zsh .pp { display: inline; }
+  .master-titlebar { gap: .5rem; }
   .master-titlebar .brand-mark { display: inline-flex; }
-  .master-session-tab { padding-inline: 0.875rem; }
+  .master-session-tab { padding-inline: .875rem; }
 }
-@media (max-width: 479px) {
-  body.mission-control {
-    padding-inline: calc(12px + var(--safe-left)) calc(12px + var(--safe-right));
-  }
-  body.mission-control .panel {
-    margin-block-end: 20px;
-    padding-inline-start: 10px;
-  }
-  .master-titlebar { background: var(--chrome-bg); }
-  .master-session-tab {
-    padding-inline: 0.625rem;
-    font-size: 0.75rem;
-  }
-  #zsh {
-    width: calc(100dvw - 16px - var(--safe-left) - var(--safe-right));
-    min-height: 60px;
-    padding: 7px;
-    gap: 4px;
-    border-radius: 8px;
-  }
-  #photo-button, #music-btn, #spin-btn {
-    min-inline-size: var(--tap-min);
-    min-block-size: var(--tap-min);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .master-titlebar *, .master-session-tab {
-    transition: none;
-    scroll-behavior: auto;
-  }
+@media (min-width: 768px) { body.mission-control .panel { margin-block-end: 24px; } }
+@media (prefers-reduced-motion: reduce) { #zsh, .master-titlebar *, .master-session-tab, #turn-control { transition: none; scroll-behavior: auto; } }
+@media (prefers-reduced-transparency: reduce) { #zsh { background: var(--chrome-surface); } }
+@media (forced-colors: active) {
+  #zsh { background: Canvas; color: CanvasText; outline-color: CanvasText; }
+  #zsh input, #zsh textarea { color: CanvasText; }
+  .master-titlebar, .master-session-tab, #turn-control { color: CanvasText; }
+  .master-session-tab:focus-visible, #turn-control:focus-visible { outline-color: CanvasText; }
 }

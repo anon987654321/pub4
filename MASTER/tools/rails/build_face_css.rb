@@ -18,6 +18,7 @@ module MasterFaceStylesheet
     30_conversation.css
     40_accessibility_motion.css
     50_ascii_face.css
+    60_session_chrome.css
   ].freeze
 
   module_function

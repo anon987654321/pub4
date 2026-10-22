@@ -24,7 +24,7 @@ html, body {
   text-rendering: optimizeLegibility;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
-  touch-action: none;
+  touch-action: auto;
   user-select: none;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
@@ -140,7 +140,7 @@ canvas {
   height: 100dvh;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  touch-action: none;
+  touch-action: pinch-zoom;
   contain: strict;
   will-change: transform;
   transition: filter var(--transition-fast) var(--ease-out);
@@ -190,6 +190,11 @@ body[data-hidden-tab="1"] #cognition-ecology {
   font: 16px/1.5 var(--font-mono);
   padding: 12px 12px;
   outline: none;
+}
+
+#cmd-palette-input:focus-visible {
+  outline: 2px solid var(--chrome-focus);
+  outline-offset: -2px;
 }
 
 #cmd-palette-list {

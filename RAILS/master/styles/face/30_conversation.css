@@ -3,9 +3,9 @@
 .message.user,
 .message.assistant { border: 0; border-radius: 0; background: transparent; }
 .message:focus-visible { outline: 1px solid var(--face-fg); outline-offset: 1px; }
-.msg-prompt { font-weight: 700; margin-inline-end: 0.35em; }
-.message.user .msg-prompt { color: var(--c-accent, var(--face-fg)); }
-.message.assistant .msg-prompt { color: var(--face-muted); }
+.msg-prompt { color: var(--face-fg); font-weight: 400; margin-inline-end: 0.35em; }
+.message.user .msg-prompt,
+.message.assistant .msg-prompt { color: var(--face-fg); }
 .msg-body { color: color-mix(in srgb, var(--c-text) 88%, transparent); font-feature-settings:'liga' 1,'kern' 1; text-wrap: pretty; }
 .cursor { display:inline-block; width:2px; height:1em; background:currentColor; vertical-align:text-bottom; animation:cursorBlink 900ms steps(2,end) infinite; margin-inline-start:1px; }
 .message.msg-error-flash .msg-body { outline: 1px solid color-mix(in srgb, var(--c-danger) 55%, transparent); outline-offset: 2px; }
@@ -97,18 +97,23 @@ body.mission-control .grid {
   max-inline-size: 80ch;
 }
 body.mission-control .panel {
-  margin-block-end: 24px;
+  margin-block-end: 20px;
+  padding-inline-start: 0;
+  border-inline-start: 0;
 }
 body.mission-control .panel h2 {
   font-size: var(--text-meta);
   font-weight: 400;
-  color: var(--face-muted);
-  margin-bottom: 4px;
+  color: var(--chrome-muted);
+  margin-block-end: 6px;
 }
 body.mission-control pre {
+  color: var(--chrome-text);
   font-family: var(--font-mono);
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.6;
 }
 body.mission-control .meta { opacity: 0.65; margin-bottom: 8px; }
 body.mission-control a { color: var(--c-text); }
@@ -597,16 +602,4 @@ body[data-history-open="1"] #chat-log {
 }
 
 
-/* The fixed shared titlebar needs space before the first dashboard heading. */
-body.mission-control .page-header.master-titlebar {
-  flex-wrap: nowrap;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.5rem;
-  max-inline-size: none;
-  margin: 0;
-}
-body.mission-control .mission-heading {
-  max-inline-size: 80ch;
-  margin: 0 0 1rem;
-}
+

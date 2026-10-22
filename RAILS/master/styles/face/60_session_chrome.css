@@ -1,0 +1,96 @@
+/* Ghostty-inspired session chrome: flat graphite, muted violet focus, one semantic lime signal. */
+#chat-shell { inset-block-end: calc(76px + var(--safe-bottom) + var(--keyboard-inset, 0px)); }
+#chat-log { max-height: 36dvh; padding: 8px 18px; }
+#zsh {
+  inset-inline: auto; inset-inline-start: 50%;
+  inset-block-end: calc(8px + var(--safe-bottom) + var(--keyboard-inset, 0px));
+  width: calc(100dvw - 16px - var(--safe-left) - var(--safe-right));
+  height: auto; min-height: 60px; padding: 7px; gap: 4px;
+  transform: translate(-50%, 0); border: 0; border-radius: 0;
+  background: var(--chrome-surface); color: var(--chrome-text);
+  font: 400 1rem/1.5 var(--font-mono); touch-action: manipulation;
+  transition: background-color var(--transition-fast) var(--ease-out);
+}
+body #zsh.live, body:not(.face-ready) #zsh.live { transform: translate(-50%,0); background: var(--chrome-surface); }
+body #zsh.live:focus-within, #zsh:focus-within { background: var(--chrome-surface-active); outline: 2px solid var(--chrome-focus); outline-offset: 2px; }
+body.zen #zsh { opacity: .96; pointer-events: auto; transform: translate(-50%,0); }
+body.zen.zen-hidden #zsh, body.zen[data-edge-hover="1"] #zsh { opacity: .96; pointer-events: auto; }
+body.zen #zsh.revealed { transform: translate(-50%,0); }
+#zsh .pp { display: none; color: var(--chrome-muted); font-weight: 400; }
+#zsh input, #zsh textarea {
+  min-height: var(--tap-min); min-width: 0; padding: 8px 0;
+  font: 400 16px/1.5 var(--font-mono); color: var(--chrome-text);
+  caret-color: var(--chrome-focus); user-select: text; -webkit-user-select: text; touch-action: auto;
+}
+#zsh input::placeholder, #zsh textarea::placeholder { color: var(--chrome-muted); }
+#photo-button, #music-btn, #spin-btn {
+  min-inline-size: var(--tap-min); min-block-size: var(--tap-min);
+  border: 0; border-radius: 0; background: transparent; color: var(--chrome-muted);
+}
+#photo-button { font-family: var(--font-brand); font-size: 1.35rem; }
+#photo-button:hover, #music-btn:hover, #spin-btn:hover { background: var(--chrome-hover); color: var(--chrome-text); }
+#photo-button:focus-visible, #music-btn:focus-visible, #spin-btn:focus-visible { outline: 2px solid var(--chrome-focus); outline-offset: -2px; }
+#music-btn::before { inset: 15px; border-radius: 0; border-color: currentColor; }
+#music-btn[aria-pressed="true"]::before { background: var(--pub4-signal); border-color: var(--pub4-signal); }
+#spin-btn { padding-inline: 8px; font-family: var(--font-brand); }
+#zsh-status { color: var(--chrome-muted); font-size: var(--text-meta); }
+.turn-queue-status { color: var(--chrome-muted); font: 400 .72rem/1.2 var(--font-mono); white-space: nowrap; pointer-events: none; margin-inline-start: 4px; }
+body[data-queue-active="1"] .turn-queue-status { opacity: .9; }
+#turn-control {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  min-inline-size: var(--tap-min); min-block-size: var(--tap-min); padding-inline: 8px;
+  border: 0; border-radius: 0; background: var(--chrome-surface); color: var(--chrome-muted);
+  font: 400 .72rem/1 var(--font-mono); text-transform: lowercase; cursor: pointer;
+}
+#turn-control:hover { color: var(--chrome-text); background: var(--chrome-hover); }
+#turn-control[hidden] { display: none; }
+#turn-control:focus-visible { outline: 2px solid var(--chrome-focus); outline-offset: 2px; }
+.master-titlebar {
+  position: fixed; inset-block-start: 0; inset-inline: 0; z-index: var(--z-ui); box-sizing: border-box;
+  display: flex; align-items: center; gap: .25rem; inline-size: 100%; width: 100%; max-inline-size: none; max-width: none;
+  block-size: calc(var(--face-bar-height) + var(--safe-top)); margin: 0;
+  padding-block-start: var(--safe-top); padding-inline-start: var(--inset-l); padding-inline-end: calc(var(--inset-r) + var(--tap-min));
+  background: var(--chrome-bg); color: var(--chrome-text);
+}
+.master-titlebar .brand-mark {
+  display: none; position: static; inset: auto; z-index: auto; flex: 0 0 auto; align-items: center;
+  min-inline-size: 0; min-block-size: var(--tap-min); padding-inline-end: .75rem;
+  color: var(--chrome-muted); pointer-events: auto; cursor: pointer; transition: color var(--transition-fast) var(--ease-out);
+}
+.master-titlebar .brand-mark:hover { color: var(--chrome-text); }
+.master-titlebar .brand-mark:focus-visible { outline: 2px solid var(--chrome-focus); outline-offset: -2px; }
+.master-session-tabs {
+  display: flex; flex: 1 1 auto; align-self: stretch; align-items: stretch; gap: .25rem; min-inline-size: 0;
+  overflow-x: auto; overflow-y: hidden; overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none; scroll-snap-type: inline proximity;
+}
+.master-session-tabs::-webkit-scrollbar { display: none; }
+.master-session-tab {
+  position: relative; display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center;
+  min-inline-size: var(--tap-min); min-block-size: var(--tap-min); padding-inline: .625rem;
+  color: var(--chrome-muted); font: var(--text-meta)/1 var(--font-mono); text-decoration: none; white-space: nowrap; scroll-snap-align: start;
+  transition: background-color var(--transition-fast) var(--ease-out), color var(--transition-fast) var(--ease-out);
+}
+.master-session-tab:hover { background: var(--chrome-hover); color: var(--chrome-text); }
+.master-session-tab[aria-current="page"] { background: var(--chrome-surface-active); color: var(--chrome-text); font-weight: 600; }
+.master-session-tab[aria-current="page"]::after { position: absolute; inset-inline: .65rem; inset-block-end: 0; block-size: 2px; background: var(--pub4-signal); content: ""; }
+.master-session-tab:focus-visible { z-index: 1; outline: 2px solid var(--chrome-focus); outline-offset: -3px; }
+body.mission-control .master-titlebar { max-width: none; max-inline-size: none; margin: 0; padding-inline-end: var(--inset-r); }
+body.mission-control .mission-heading { max-inline-size: 80ch; margin: 0 0 1rem; }
+@media (min-width: 480px) {
+  #chat-log { max-height: 40dvh; padding-inline: 24px; }
+  #zsh { width: min(920px, calc(100dvw - 32px - var(--safe-left) - var(--safe-right))); min-height: 64px; padding: 9px 12px; gap: 8px; }
+  #zsh .pp { display: inline; }
+  .master-titlebar { gap: .5rem; }
+  .master-titlebar .brand-mark { display: inline-flex; }
+  .master-session-tab { padding-inline: .875rem; }
+}
+@media (min-width: 768px) { body.mission-control .panel { margin-block-end: 24px; } }
+@media (prefers-reduced-motion: reduce) { #zsh, .master-titlebar *, .master-session-tab, #turn-control { transition: none; scroll-behavior: auto; } }
+@media (prefers-reduced-transparency: reduce) { #zsh { background: var(--chrome-surface); } }
+@media (forced-colors: active) {
+  #zsh { background: Canvas; color: CanvasText; outline-color: CanvasText; }
+  #zsh input, #zsh textarea { color: CanvasText; }
+  .master-titlebar, .master-session-tab, #turn-control { color: CanvasText; }
+  .master-session-tab:focus-visible, #turn-control:focus-visible { outline-color: CanvasText; }
+}
