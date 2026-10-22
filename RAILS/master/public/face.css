@@ -1884,7 +1884,25 @@ body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
     scroll-behavior: auto; transition: none; animation: none;
   }
 }
-undefined/* Ghostty-inspired session chrome: flat graphite, muted violet focus, one semantic lime signal. */
+/* A glyph-shaded view of the canonical head points shared with the CLI. */
+.master-face-ascii-layer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 4;
+  opacity: .28;
+  mix-blend-mode: screen;
+  transition: opacity 180ms linear;
+}
+body[data-face-ascii="1"] .master-face-ascii-layer { opacity: .96; }
+body[data-face-ascii="1"] #face { opacity: .055; }
+@media (prefers-reduced-motion: reduce) {
+  .master-face-ascii-layer { transition: none; }
+}
+/* Ghostty-inspired session chrome: flat graphite, muted violet focus, one semantic lime signal. */
 #chat-shell { inset-block-end: calc(76px + var(--safe-bottom) + var(--keyboard-inset, 0px)); }
 #chat-log { max-height: 36dvh; padding: 8px 18px; }
 #zsh {
