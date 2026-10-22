@@ -69,7 +69,17 @@ module Master
       POSTPRO_EXTREME_RE = /\b(?:extreme|wild|aggressive|rough)\b/i.freeze
       POSTPRO_IMAGE_GLOB_RE = %r{(?:~|/)[^\s"\']*[\*?\[\]{}][^\s"\']*\.(?:jpe?g|png|webp|tiff?)\b}i.freeze
 
+      # A question asking for advice is never a render: "should I quit my stable job to make music full time?"
+      # matched AUDIO_RE on 2026-10-22 and started dilla. "could you" and "can you" stay requests.
+      ADVICE_RE = /\A\s*(?:should\s+(?:i|we)|am\s+i|is\s+it\s+(?:worth|wise|smart|too\s+late|a\s+good\s+idea)|
+                  do\s+you\s+think|would\s+it\s+be|what\s+if\s+i|how\s+do\s+i\s+know)\b/ix.freeze
+      # A question about music is discussion: "why did J Dilla use loose timing?" read "use" as a play verb.
+      DISCUSSION_RE = /\A\s*(?:why|who|when|did|does|was|were|how\s+(?:did|does|was)|what\s+(?:did|does|was|made))
+                       \b.*\?\s*\z/imx.freeze
+
       def handles?(text)
+        return false if text.match?(ADVICE_RE) || text.match?(DISCUSSION_RE)
+
         LoraIntent.handles?(text) || reference_audio_request?(text) || reference_followup_request?(text) || text.match?(INDUSTRIAL_TECHNO_RE) || text.match?(TECHNO_TRACK_RE) || text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || text.match?(LIVE_AUDIO_STOP_RE) || live_synth?(text) || POSTPRO_CAPABILITY_RE.match?(text) ||
           text.match?(BACKGROUND_MUSIC_RE) || text.match?(LIVE_AUDIO_DIAGNOSTIC_RE) || text.match?(AUDIO_RE) || postpro_intent?(text) ||
           text.match?(IMAGE_RE) && text.match?(/\b(?:photo|portrait|image|picture)\b/i)

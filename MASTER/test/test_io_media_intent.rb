@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
+require_relative "test_helper"
 require "tmpdir"
-require_relative "../lib/boot/paths"
 require_relative "../lib/io/media_intent"
 require_relative "../lib/music/synth"
 

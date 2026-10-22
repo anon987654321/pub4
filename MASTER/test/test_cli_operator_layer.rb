@@ -154,6 +154,15 @@ class TestCliOperatorLayer < Minitest::Test
     assert_equal 3.0, Master::Io::MediaIntent.send(:duration_for, "play a sine wave")
   end
 
+  def test_a_question_asking_for_advice_is_not_a_render
+    media = Master::Io::MediaIntent
+
+    refute media.handles?("should I quit my stable job to make music full time? I'm 34")
+    refute media.handles?("do you think I should make music or stay in IT?")
+    assert media.handles?("make a dilla beat")
+    assert media.handles?("could you make a beat for me")
+  end
+
   def test_postpro_selects_latest_images_from_downloads
     Dir.mktmpdir do |dir|
       old = File.join(dir, "old.jpg")
