@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "fileutils"
 require "json"
 require "set"
@@ -27,6 +28,7 @@ module Master
         module Affected
           WIDE = %r{\A(?:lib/master\.rb|lib/boot/|test/test_helper\.rb|test/support|data/|Gemfile|Rakefile)}
           LIMIT = 80
+          MAX_AGE_S = Integer(ENV.fetch("MASTER_PROOF_KNOWN_RED_MAX_AGE_S", 24 * 3600))
           KNOWN_RED = File.join(Master::ROOT, ".master", "proof_baselines")
 
           # What the last whole suite of a tree left red: its failing names and ratchet rows.
@@ -70,17 +72,39 @@ module Master
             return unless stored? && File.file?(path)
 
             data = JSON.parse(File.read(path))
+            stale = staleness(data)
+            if stale
+              Master::Trace::Dmesg.status("gate0", "known-red record #{stale}, proving whole")
+              return
+            end
+
             Known.new(failing: data.fetch("failing").to_set, rows: data.fetch("rows"))
-          rescue JSON::ParserError, KeyError, SystemCallError => e
+          rescue JSON::ParserError, KeyError, SystemCallError, ArgumentError => e
             Master::Trace::Dmesg.status("gate0", "known-red record unreadable, proving whole: #{e.class}")
             nil
+          end
+
+          # Why a record no longer says what is red, or nil. A test another session broke after the
+          # record was made would be blamed on the repair, so the record ages out, and a new Ruby or
+          # lockfile changes what fails. No commit count: main moves dozens of commits a day.
+          def staleness(data)
+            return "made under another toolchain" unless data.fetch("toolchain", toolchain) == toolchain
+            return "older than #{MAX_AGE_S / 3600}h" if Time.now.utc - Time.iso8601(data.fetch("at")) > MAX_AGE_S
+
+            nil
+          end
+
+          def toolchain
+            lock = File.join(Master::ROOT, "Gemfile.lock")
+            [RUBY_VERSION, File.file?(lock) ? Digest::SHA256.file(lock).hexdigest[0, 16] : "none"].join(" ")
           end
 
           def note_known_red(tree, reading)
             return unless stored? && reading&.measured?
 
             FileUtils.mkdir_p(known_dir)
-            data = { "failing" => reading.failing.to_a.sort, "rows" => reading.rows, "at" => Time.now.utc.iso8601 }
+            data = { "failing" => reading.failing.to_a.sort, "rows" => reading.rows,
+                     "at" => Time.now.utc.iso8601, "toolchain" => toolchain }
             File.write(File.join(known_dir, "#{tree}.json"), JSON.generate(data))
           end
 
