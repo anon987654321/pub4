@@ -33,7 +33,7 @@ class AccountMergerAndModerationTest < ActiveSupport::TestCase
     source = @guest.reload
     refute source.guest?, "the source guest must stop being an active guest"
     assert source.deleted_at.present?, "the source row must remain only as an anonymized audit referent"
-    assert_match(/\\Amerged-#{source.id}-[a-f0-9]+@deleted\\.invalid\\z/, source.email_address)
+    assert_match(/\Amerged-#{source.id}-[a-f0-9]+@deleted\.invalid\z/, source.email_address)
     refute_equal source_password_digest, source.password_digest, "the guest password must not remain usable"
     assert_empty Session.where(user_id: source.id)
   end
