@@ -184,8 +184,14 @@ class OmniauthCallbacksController < ::ApplicationController
     when "vipps"
       "verified"
     when "bankid"
-      acr = hash_value(hash_value(auth.extra, :id_info), :acr)
-      acr.to_s == "urn:bankid:bid" ? "verified" : "account"
+      # BankID's request parameter is urn:bankid:bid, while its returned ID
+      # token normally includes the level: "urn:bankid:bid;LOA=4". Require both
+      # the provider and LOA claim; equality with the request value rejects the
+      # real high-assurance token and weakens the no-email identity path.
+      acr_parts = hash_value(hash_value(auth.extra, :id_info), :acr).to_s.split(";").map(&:strip)
+      high_bankid = acr_parts.include?("urn:bankid:bid") &&
+                    acr_parts.any? { |part| part.casecmp("LOA=4").zero? }
+      high_bankid ? "verified" : "account"
     else
       "account"
     end
