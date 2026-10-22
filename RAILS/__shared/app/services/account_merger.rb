@@ -73,16 +73,17 @@ class AccountMerger
   end
 
   def merge_moderation_flags
-    return unless guest_user.respond_to?(:moderation_flags)
     return unless defined?(::ModerationFlag) && ::ModerationFlag.table_exists?
+    return unless ::ModerationFlag.column_names.include?("user_id")
 
-    guest_user.moderation_flags.update_all(user_id: user.id)
+    ::ModerationFlag.where(user_id: guest_user.id).update_all(user_id: user.id)
   end
 
   # The guest and destination can hold the same signal. A bare move would
   # violate the unique index and roll back the entire account conversion.
+  # Query by foreign key, not guest_user.trust_signals: strict loading is on in
+  # both hosts and a lazy association read must not silently stop account merge.
   def merge_trust_signals
-    return unless guest_user.respond_to?(:trust_signals)
     return unless defined?(::TrustSignal) && ::TrustSignal.table_exists?
 
     ::TrustSignal.where(user_id: guest_user.id)
@@ -91,7 +92,7 @@ class AccountMerger
                    "AND kept.kind = trust_signals.kind AND kept.source IS trust_signals.source)",
                    keeper: user.id
                  ).delete_all
-    guest_user.trust_signals.update_all(user_id: user.id)
+    ::TrustSignal.where(user_id: guest_user.id).update_all(user_id: user.id)
   end
 
   def record_merge
@@ -108,9 +109,13 @@ class AccountMerger
   end
 
   def move_owned_rows(association)
-    return unless guest_user.respond_to?(association)
+    reflection = guest_user.class.reflect_on_association(association)
+    return unless reflection&.macro == :has_many && !reflection.options[:through]
 
-    relation = guest_user.public_send(association)
-    relation.update_all(user_id: user.id) if relation.respond_to?(:update_all)
+    model = reflection.klass
+    foreign_key = reflection.foreign_key.to_s
+    return unless model.table_exists? && model.column_names.include?(foreign_key)
+
+    model.where(foreign_key => guest_user.id).update_all(foreign_key => user.id)
   end
 end
