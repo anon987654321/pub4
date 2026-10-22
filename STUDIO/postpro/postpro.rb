@@ -3895,6 +3895,9 @@ def recipe(image, recipe_data)
                $cli_logger.warn "recipe: #{fx} is allowed but has no implementation — skipped"
                processed
              end
+    # Evaluated per step, as preset does: left lazy, the take check and the
+    # write each ran the whole nested gaussblur chain, so a chain cost twice.
+    processed = processed.copy_memory
   end
   processed
 end
