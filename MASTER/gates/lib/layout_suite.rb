@@ -90,7 +90,9 @@ module Deploy
       reasons << "outcome=#{leaf.outcome}" unless leaf.outcome == :passed
 
       reasons << "#{leaf.live_skips} live skip(s)" if leaf.live_skips.positive?
-      reasons << "#{leaf.unchecked.size} inconclusive item(s)" unless leaf.unchecked.empty?
+      unless leaf.unchecked.empty?
+        reasons << "#{leaf.unchecked.size} inconclusive item(s), first: #{leaf.unchecked.first}"
+      end
       reasons << "#{leaf.soft_failures.size} unapproved visual finding(s)" unless leaf.soft_failures.empty?
       reasons << "#{leaf.errors.size} gate error(s)" unless leaf.errors.empty?
       reasons << "zero rendered checks" if leaf.checks_ran.zero?

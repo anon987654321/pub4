@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
+require_relative "test_helper"
 require_relative "../gates/lib/rendered_suite"
 require_relative "../gates/lib/layout_suite"
 require_relative "../lib/fix/reachability"
@@ -69,7 +69,7 @@ class TestGateCoverageReporting < Minitest::Test
     assert_includes lines, ["layout0", coverage.first]
     assert_includes lines, ["layout0", "failure: fixture failure 0"]
     assert_includes lines, ["layout0", "unchecked: missing Chrome"]
-    assert_includes lines, ["layout0", actionable.first]
+    assert_includes lines, ["layout0", "diagnostic: #{actionable.first}"]
     assert_includes lines, ["layout0", "warning: 2 additional item(s) omitted"]
   end
 end
