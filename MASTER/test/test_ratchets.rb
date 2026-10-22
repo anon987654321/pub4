@@ -26,7 +26,19 @@ class TestRatchets < Minitest::Test
   # Measured once per process. Each of the ten tests reading rows paid for its
   # own two-minute measurement, and the file alone ran past bin/check's 900s
   # step timeout, so check:ci reported `test` failed with no test named.
-  def self.rows = @rows ||= Operator::Ratchets.all
+  #
+  # With the finding cache on: test_helper turns it off so a test counting a law's calls sees the law
+  # run, and this measurement then scanned all four trees cold for over half an hour. The cache
+  # replays only laws that read nothing beyond the file, so the counts are the same.
+  def self.rows = @rows ||= with_scan_cache { Operator::Ratchets.all }
+
+  def self.with_scan_cache
+    previous = ENV.fetch("MASTER_SCAN_CACHE", nil)
+    ENV["MASTER_SCAN_CACHE"] = "1"
+    yield
+  ensure
+    ENV["MASTER_SCAN_CACHE"] = previous
+  end
 
   def rows = self.class.rows
 
