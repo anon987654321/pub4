@@ -191,6 +191,9 @@ class TestPipeline < Minitest::Test
     pass.instance_variable_set(:@fix_loop, probe)
     pass.instance_variable_set(:@failed_stages, [])
     pass.instance_variable_set(:@bus, nil)
+    # run_fix reads HEAD before and after to count what the loop delivered.
+    checkout = Master::Io::GitOperations.new(Master::ROOT)
+    pass.define_singleton_method(:git) { checkout }
 
     result = pass.send(:run_fix, File.expand_path("../tmp", __dir__))
 

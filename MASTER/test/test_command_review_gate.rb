@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require "cli/command_registry/command"
 require_relative "../lib/cli/command_registry/review"
+require_relative "../lib/operator/gate_chain"
 
 class TestCommandReviewGate < Minitest::Test
   class Receiver
@@ -65,21 +66,23 @@ class TestCommandReviewGate < Minitest::Test
   end
 
   def test_fix_proof_scope_resolves_from_the_repository_root
-    registry = Master::CLI::CommandRegistry
+    # The worktree session went; the gate chain resolves which trees a /fix target proves.
+    registry = Operator::GateChain
 
-    assert_equal ["MASTER"], registry.worktree_proof_trees("MASTER", root: Master::ROOT)
-    assert_equal ["RAILS"], registry.worktree_proof_trees("RAILS/brgen", root: Master::ROOT)
+    assert_equal ["MASTER"], registry.trees_for_target("MASTER")
+    assert_equal ["RAILS"], registry.trees_for_target("RAILS/brgen")
   end
 
   def test_bare_fix_and_dot_keep_the_default_proof_scoped_to_master
-    registry = Master::CLI::CommandRegistry
+    # The worktree session went; the gate chain resolves which trees a /fix target proves.
+    registry = Operator::GateChain
 
-    assert_equal ["MASTER"], registry.worktree_proof_trees("", root: Master::ROOT)
-    assert_equal ["MASTER"], registry.worktree_proof_trees(".", root: Master::ROOT)
-    assert_equal ["MASTER"], registry.worktree_proof_trees("master", root: Master::ROOT)
-    assert_equal ["MASTER"], registry.worktree_proof_trees("lib/io", root: Master::ROOT)
+    assert_equal ["MASTER"], registry.trees_for_target("")
+    assert_equal ["MASTER"], registry.trees_for_target(".")
+    assert_equal ["MASTER"], registry.trees_for_target("master")
+    assert_equal ["MASTER"], registry.trees_for_target("lib/io")
     assert_equal %w[MASTER RAILS OPENBSD STUDIO],
-                 registry.worktree_proof_trees("all", root: Master::ROOT)
+                 registry.trees_for_target("all")
   end
 
   def test_gated_command_handles_nil_ctx
