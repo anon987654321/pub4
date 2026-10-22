@@ -484,7 +484,7 @@ module Master
             raise "transaction manifest snapshot invalid: #{path}" if item["link"] || item["store"]
           end
         end
-        raise "transaction manifest fingerprints malformed" unless seen.is_a?(Hash) && paths.all? { |p| seen[p].is_a?(Array) && seen[p].all? { |v| v.is_a?(String) } }
+        raise "transaction manifest fingerprints malformed" unless seen.is_a?(Hash) && seen.keys.sort == paths.sort && paths.all? { |p| seen[p].is_a?(Array) && seen[p].all? { |v| v.is_a?(String) } }
       end
 
       def restore(path, snapshot)
