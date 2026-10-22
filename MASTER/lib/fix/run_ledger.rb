@@ -51,7 +51,7 @@ module Master
 
         # --max-files N caps model repairs. Bounded runs retain early-stop
         # behavior unless MASTER_FIX_RANK=1 asks for full-scan impact ranking;
-        # unbounded requested /fix runs rank by impact after the complete scan.
+        # unbounded runs rank and cap each rolling batch before dispatch.
         def max_files
           @max_files || Integer(ENV.fetch("MASTER_FIX_MAX_FILES", "0"), exception: false).then { |n| n&.positive? ? n : nil }
         end
