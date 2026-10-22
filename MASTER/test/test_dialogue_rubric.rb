@@ -3,7 +3,9 @@
 require_relative "test_helper"
 require "master"
 require_relative "../lib/voice/dialogue_rubric"
-require_relative "../lib/review/agent/prompt_builder"
+# Through agent.rb: requiring the module first reopens Agent, the autoload loads agent.rb, and agent.rb
+# includes a PromptBuilder that is still half-defined.
+require_relative "../lib/review/agent"
 
 class SupportPromptHost
   include Master::Review::Agent::PromptBuilder
