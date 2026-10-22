@@ -31,7 +31,7 @@ class FederatedIdentityContractTest < Minitest::Test
 
   def test_email_less_bankid_login_is_looked_up_by_persisted_subject
     callback = read("RAILS/__shared/app/controllers/omniauth_callbacks_controller.rb")
-    assert_includes callback, "external_identities&.find_by(subject: auth.uid.to_s)"
+    assert_includes callback, "::ExternalIdentity.find_by(identity_provider_id: provider.id, subject: auth.uid.to_s)"
     assert_includes callback, '::IdentityProvider.find_by(slug: auth.provider.to_s)'
     assert_includes callback, "identity.save!"
     assert_includes callback, 'legacy_email = "#{auth.uid}@bankid.oauth"'
@@ -46,6 +46,7 @@ class FederatedIdentityContractTest < Minitest::Test
     assert_includes auth, 'identity_providers: { slug: "bankid" }'
     assert_includes callback, 'when "bankid"'
     assert_includes callback, 'acr.to_s == "urn:bankid:bid" ? "verified" : "account"'
+    assert_includes read("RAILS/__shared/lib/omniauth/strategies/bankid.rb"), 'acr_values: "urn:bankid:bid"'
     assert_includes callback, '::ExternalIdentity.find_by(identity_provider_id: provider.id, subject: auth.uid.to_s)'
     assert_includes callback, '::ExternalIdentity.find_or_initialize_by(identity_provider_id: provider.id, subject: auth.uid.to_s)'
     refute_includes callback, "provider&.external_identities"
