@@ -27,7 +27,15 @@ class TestBlockGnuTextTools < Minitest::Test
     code, out = call("sed -i s/a/b/ file")
 
     assert_equal 2, code
-    assert_includes out, "sed: use the Edit tool"
+    assert_match(/sed: .*Edit tool/, out)
+  end
+
+  # The old guard looked only after | ; & ( and so let these through, the remote one on 2026-10-22.
+  def test_commands_behind_keywords_wrappers_and_ssh_are_refused
+    ["for f in a; do wc -l $f; done", "ls | xargs sed -n 1p", "timeout 5 awk 1 f", "FOO=1 awk 1 f",
+     "/usr/bin/sed -n 1p f", "zsh -c 'cut -c1 f'", "ssh dev@brgen.no 'sed -n 1,5p log'"].each do |command|
+      assert_equal 2, call(command).first, command
+    end
   end
 
   def test_the_same_words_as_data_are_let_through
