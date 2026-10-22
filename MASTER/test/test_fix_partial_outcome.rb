@@ -8,7 +8,7 @@ require "tmpdir"
 class TestFixPartialOutcome < Minitest::Test
   Pass = Master::CLI::Pipeline::Pass
 
-  def outcome(ok:, msg:, delivered: 0) = Pass.fix_outcome(ok:, msg:, delivered:)
+  def outcome(ok:, msg:, delivered: 0, ending: nil) = Pass.fix_outcome(ok:, msg:, delivered:, ending:)
 
   def test_a_clean_run_is_done
     assert_equal :done, outcome(ok: true, msg: "DONE: clean after 2 passes")
@@ -45,6 +45,10 @@ class TestFixPartialOutcome < Minitest::Test
       assert_equal 1, pass.send(:fix_commits_since, head),
                    "the lowercase repair-loop commit must count, but another writer's shared trailer must not"
     end
+  end
+
+  def test_the_loops_own_state_wins_over_its_message
+    assert_equal :partial, outcome(ok: true, msg: "clean after 2 passes", delivered: 1, ending: :plateau)
   end
 
   def test_the_scorecard_says_what_the_run_did_and_left

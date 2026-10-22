@@ -40,6 +40,8 @@ module Master
     # ran out of passes is the false completion this loop exists to refuse.
     class FixLoop
       attr_reader :homeostat
+      # How the last run ended, as a TERMINAL_STATES symbol, for the pass to read instead of its message.
+      attr_reader :last_terminal_state
 
       include ConvergenceConfig
       include BackgroundRunner
@@ -140,6 +142,7 @@ module Master
 
       def run_unlocked(target, max_passes:, budget_seconds:, incremental:, requested:)
         mission = nil
+        @last_terminal_state = nil
         current_phase = :preflight
         return halted_result if halted? && !requested
 
@@ -320,6 +323,7 @@ module Master
         result = blocked_by_gaps(result)
         RunBudget.finish_run(reason: run_end_reason(result))
         state = terminal_state_for(result)
+        @last_terminal_state = state
         evidence = @convergence_discipline.receipt if @convergence_discipline.respond_to?(:receipt)
         @run_journal.terminal(run_id, state, message: result.to_s, evidence:)
 

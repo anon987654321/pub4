@@ -28,8 +28,10 @@ module Master
         PARTIAL_ENDINGS = %i[plateau timeout blocked human_decision inconclusive].freeze
 
         # :done, :partial, :incomplete or :failed, from the loop's result and the commits it made.
-        def self.fix_outcome(ok:, msg:, delivered:)
-          ending = fix_ending(msg)
+        # ending: the loop's own terminal state when it reports one; the message is only parsed
+        # for a loop that does not.
+        def self.fix_outcome(ok:, msg:, delivered:, ending: nil)
+          ending ||= fix_ending(msg)
           return :done if ok && !halted?(ending)
           return :partial if delivered.positive? && PARTIAL_ENDINGS.include?(ending)
 
@@ -453,7 +455,7 @@ def default_apply?(*) = false
         def fix_verdict(result, delivered)
           ok = result.ok?
           msg = ok ? result.value!.to_s : result.message.to_s
-          outcome = self.class.fix_outcome(ok:, msg:, delivered:)
+          outcome = self.class.fix_outcome(ok:, msg:, delivered:, ending: loop_ending)
           @scored = { outcome:, delivered: }
           return fix_done(msg) if outcome == :done
           return fix_partial(msg, delivered) if outcome == :partial
@@ -462,6 +464,9 @@ def default_apply?(*) = false
           Master::Trace::Dmesg.status("fix0", "#{outcome}, #{msg[0, 120]}")
           "fix #{outcome}: #{msg}"
         end
+
+        # :reek:ManualDispatch -- test doubles for the fix loop do not report a terminal state
+        def loop_ending = @fix_loop.respond_to?(:last_terminal_state) ? @fix_loop.last_terminal_state : nil
 
         def fix_done(msg)
           Master::Trace::Dmesg.status("fix0", msg[0, 120])
