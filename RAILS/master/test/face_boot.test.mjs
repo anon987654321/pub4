@@ -1021,7 +1021,8 @@ test("Ghostty-inspired chrome uses canonical graphite and violet tokens without 
     assert.ok(generated.includes(name + ': "' + value + '"'), "generated token missing " + name);
     assert.ok(css.includes("--" + name.replaceAll("_", "-") + ": " + value), "CSS projection missing " + name);
   }
-  assert.match(css, /body\.mission-control \.panel \{[^}]*border-inline-start: 1px solid var\(--chrome-border\)/s);
+  assert.match(css, /body\.mission-control \.panel \{[^}]*border-inline-start: 0;/s);
+  assert.match(css, /body\.mission-control \.panel \{[^}]*padding-inline-start: 0;/s);
   assert.match(css, /@media \(max-width: 479px\) \{[\s\S]*?min-inline-size: var\(--tap-min\);[\s\S]*?min-block-size: var\(--tap-min\);/);
 });
 
