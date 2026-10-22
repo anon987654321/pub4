@@ -22,6 +22,25 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def test_transaction_reports_snapshot_cost_and_file_count
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "one.txt"), "one\n")
+      File.write(File.join(dir, "two.txt"), "two\n")
+      events = []
+      bus = Object.new
+      bus.define_singleton_method(:publish) { |event, **payload| events << [event, payload] }
+
+      tx = Master::Fix::Transaction.new(root: dir, paths: %w[one.txt two.txt], id: "snapshot-metrics", bus:).begin!
+      _event, payload = events.find { |event, _data| event == "fix:transaction_snapshot_summary" }
+
+      refute_nil payload
+      assert_equal 2, payload.fetch(:tracked_paths)
+      assert_equal 2, payload.fetch(:file_snapshots)
+      assert_operator payload.fetch(:elapsed_ms), :>=, 0
+      assert tx.rollback!.ok?
+    end
+  end
+
   def test_rollback_refuses_an_unobserved_concurrent_change
     Dir.mktmpdir do |dir|
       path = File.join(dir, "note.txt")
