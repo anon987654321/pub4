@@ -100,6 +100,56 @@ class FixHardeningTest < Minitest::Test
     assert_equal :human_decision, loop.send(:pass_outcome, 0)
   end
 
+  def coverage_report(semantic_full:)
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) do |event, payload = nil, **keywords|
+      events << [event, (payload || {}).merge(keywords)]
+    end
+    scan_phase = Object.new
+    scan_phase.define_singleton_method(:semantic_full?) { semantic_full }
+
+    runner = Master::Fix::FixLoop::PassRunner.allocate
+    runner.instance_variable_set(:@scan_phase, scan_phase)
+    runner.instance_variable_set(:@bus, bus)
+    runner.send(
+      :take_limits,
+      clean_runs_required: 2,
+      plateau_window: 3,
+      ground_truth: nil,
+      homeostat: nil,
+      council: nil,
+      visual_pass: nil,
+      opportunity_pass: nil,
+      discipline: Object.new,
+      wishlist: nil,
+    )
+    capture_io { runner.instance_variable_get(:@coverage_reporter).call("MASTER", 1) }
+
+    event = events.find { |name, _payload| name == "fix_loop:coverage" }
+    refute_nil event
+    event.last
+  end
+
+  def test_sampled_semantic_coverage_is_explicit_in_the_event_contract
+    report = coverage_report(semantic_full: false)
+
+    assert_equal "conditional/sampled", report.fetch(:semantic)
+    assert_equal "conditional/sampled", report.fetch(:semantic_violations)
+    assert_equal "conditional/sampled", report.fetch(:semantic_opportunities)
+    assert_equal "contract_only_not_measurement", report.fetch(:assessment_matrix)
+    assert_includes report.fetch(:lexical_violations), "not measured"
+  end
+
+  def test_full_semantic_mode_does_not_claim_the_surface_matrix_was_measured
+    report = coverage_report(semantic_full: true)
+
+    assert_equal "full", report.fetch(:semantic)
+    assert_includes report.fetch(:semantic_violations), "surface matrix not measured"
+    assert_includes report.fetch(:semantic_opportunities), "surface matrix not measured"
+    assert_equal "contract_only_not_measurement", report.fetch(:assessment_matrix)
+  end
+
   def test_stream_refresh_replaces_stale_touched_findings
     runner = Master::Fix::FixLoop::PassRunner.allocate
     runner.define_singleton_method(:violations_for) do |path|
