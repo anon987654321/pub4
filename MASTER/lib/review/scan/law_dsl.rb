@@ -26,14 +26,17 @@ module Master
         #     fires: "Time.now.beginning_of_day",
         #     does_not_fire: "Time.now.utc.iso8601"
         def self.law(id, severity: :warning, tags: [], applies_to: nil, autofix: true, description: nil,
-                      fires: nil, does_not_fire: nil, example_path: nil, detect_semantic: nil, detect_structural: nil, &block)
+                      fires: nil, does_not_fire: nil, example_path: nil, detect_semantic: nil, detect_structural: nil,
+                      reads_beyond_file: false, &block)
           raise ArgumentError, "block required" unless block
 
           dsl_id = id.to_s
           dsl_desc = description || dsl_id.tr("_", " ")
           dsl_tags = Array(tags)
-          build_dsl_law_class(dsl_id:, dsl_desc:, dsl_tags:, severity:, applies_to:, autofix:, block:,
-                                fires:, does_not_fire:, example_path:, detect_semantic:, detect_structural:)
+          cls = build_dsl_law_class(dsl_id:, dsl_desc:, dsl_tags:, severity:, applies_to:, autofix:, block:,
+                                    fires:, does_not_fire:, example_path:, detect_semantic:, detect_structural:)
+          cls.define_singleton_method(:reads_beyond_file?) { true } if reads_beyond_file
+          cls
         end
 
         def self.build_dsl_law_class(dsl_id:, dsl_desc:, dsl_tags:, severity:, applies_to:, autofix:, block:,

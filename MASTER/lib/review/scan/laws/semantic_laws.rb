@@ -63,6 +63,8 @@ module Master
         # This suppresses false positives by forcing consideration of legitimate reasons
         # before a violation can survive. Deep depth only; one LLM call per file.
         class AdversarialLaw < Law
+          def self.reads_beyond_file? = true
+
           PROMPT_TEMPLATE = <<~PROMPT.freeze
           Red-team review of %<path>s.
 
@@ -149,6 +151,8 @@ module Master
         # requests; the same law can therefore yield two distinct findings. A
         # deterministic detector remains layered evidence for that one law.
         class SemanticLaw < Law
+          def self.reads_beyond_file? = true
+
           CODE_SNIPPET_LIMIT = 2000
 
           declare id: "semantic", severity: :warning, autofix: true,
@@ -384,6 +388,8 @@ module Master
         # batched call per file. Pairs with the "reassess on touch" directive: lying
         # comments are factual bugs, not style noise.
         class CommentDriftLaw < Law
+          def self.reads_beyond_file? = true
+
           MAX_PAIRS_PER_FILE = 8
           # Lines of method body sent to LLM for drift comparison.
           BODY_SNIPPET = 20

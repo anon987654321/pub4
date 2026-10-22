@@ -11,6 +11,8 @@ module Master
         # Also detects orphan keys — top-level YAML keys with zero references in lib/.
         # Only meaningful when scanning lib/ with root: access.
         class InterconnectLaw < Law
+          def self.reads_beyond_file? = true
+
           LOAD_CALL = /load_yaml(?:_data)?\s*\(\s*["']([^"']+\.yml)["']/.freeze
           DIG_CALL = /\.dig\(\s*((?:["'][^"']+["']\s*,?\s*)+)\)/.freeze
           FETCH_CALL = /\.fetch\(\s*["']([^"']+)["']/.freeze
@@ -116,6 +118,8 @@ module Master
         # mining git per-scan. Flags cross-module pairs — likely DECOUPLE candidates
         # the lexical rules can't see.
         class CoChangeCouplingLaw < Law
+          def self.reads_beyond_file? = true
+
           WEIGHT_THRESHOLD = 5
 
           def self.auto_build? = false

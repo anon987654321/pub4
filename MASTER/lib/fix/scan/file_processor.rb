@@ -9,6 +9,7 @@ require "timeout"
 
 require_relative "law_timing"
 require_relative "semantic_verdicts"
+require_relative "finding_cache"
 require_relative "../gate_focus"
 require_relative "../../review/scan/semantic_fingerprint"
 require_relative "../../review/scan/law_health"
@@ -45,6 +46,7 @@ module Master
           @semantic_gap_mutex = Mutex.new
           @semantic_gaps = {}
           @verdicts = SemanticVerdicts.new
+          @finding_cache = FindingCache.new
           @semantic_gap_notice_emitted = false
           @progress_path = ENV.fetch("GATE_PROGRESS_FILE", "").to_s
           @progress_writer_id = "#{Process.pid}-#{object_id}"
@@ -191,9 +193,7 @@ module Master
 
         def apply_laws(code:, ast:, path:, law_set:)
           lexical, structural, semantic = partition_laws(law_set, ast)
-          findings = []
-          findings.concat(run_law_pass(pass: :lexical, laws: lexical, code:, ast:, path:))
-          findings.concat(run_law_pass(pass: :structural, laws: structural, code:, ast:, path:))
+          findings = deterministic_findings({ lexical:, structural: }, code:, ast:, path:)
           # Keep semantic violations/opportunities independent from lexical
           # findings. A fatal deterministic hit must not suppress meaning-based
           # assessment of the same file; otherwise one early result can hide the
@@ -209,6 +209,23 @@ module Master
           end
 
           findings.concat(read_semantic(path:, code:, ast:, laws: semantic))
+        end
+
+        # Laws that read only this file's text replay their findings when the text is unchanged
+        # (FindingCache); the rest run every time.
+        def deterministic_findings(passes, code:, ast:, path:)
+          pure = passes.transform_values { |laws| laws.select { |law| @finding_cache.cacheable?(law) } }
+          live = passes.to_h { |pass, laws| [pass, laws - pure[pass]] }
+          relative = relative_progress_path(path)
+
+          replayed = @finding_cache.fetch(relative, code:, laws: pure.values.flatten, ast:) do
+            run_passes(pure, code:, ast:, path:)
+          end
+          replayed + run_passes(live, code:, ast:, path:)
+        end
+
+        def run_passes(passes, code:, ast:, path:)
+          passes.flat_map { |pass, laws| run_law_pass(pass:, laws:, code:, ast:, path:) }
         end
 
         # 74 of the 225 declared rules reach a file only through the semantic

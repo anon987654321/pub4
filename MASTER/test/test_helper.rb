@@ -20,6 +20,8 @@ ENV["MASTER_VISUAL_ENGINES"] = "chrome"
 # /fix tries its own instruments (disk, git, patch, linters) before the first file. Tests of the loop run on
 # scratch directories and stubbed models; the instrument check has its own test, which switches it back on.
 ENV["MASTER_FIX_INSTRUMENT_CHECK"] = "0"
+# A test that counts a law's calls must see the law run; the finding cache has its own test.
+ENV["MASTER_SCAN_CACHE"] = "0"
 
 # Direct test entrypoints must use the same pinned, private bundle as bin/cli.
 # Otherwise RubyGems can select a host-installed Minitest (or a native gem

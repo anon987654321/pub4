@@ -33,6 +33,11 @@ module Master
           true
         end
 
+        # Whether a finding depends on more than the file's text and path: git history,
+        # sibling files, another tree. Scan::FindingCache replays a pure law's findings
+        # for unchanged content, so a law that reads further must say so here.
+        def self.reads_beyond_file? = false
+
         # What a law *is*, declared once at the class level.
         #
         # Forty-two laws opened with the same constructor — `super()` and

@@ -7,6 +7,8 @@ module Master
       # Detects methods/classes/modules present in recent git history but absent now.
       # Wraps CommitGuard as a standard scan Law so it runs in the scanner pipeline.
         class AstOmissionLaw < Law
+          def self.reads_beyond_file? = true
+
           def self.auto_build? = false
 
           declare id: "ast_omission", severity: :warning, tags: %i[COMPLETENESS],
@@ -42,6 +44,8 @@ module Master
 
         # Every Law subclass must have a matching test file; gaps mean untested enforcement.
         class LawCoverageLaw < Law
+          def self.reads_beyond_file? = true
+
           def self.auto_build? = false
 
           declare id: "law_coverage", severity: :warning, tags: %i[TEST_COVERAGE],
@@ -168,6 +172,8 @@ module Master
         end
 
         class LearnedSmellsLaw < Law
+          def self.reads_beyond_file? = true
+
           declare id: "LEARNED_SMELLS", severity: :warning, tags: %i[LEARNED_SMELLS SESSION],
                   description: "session-learned smell patterns from laws.yml"
 
@@ -337,6 +343,8 @@ module Master
         # lib/*/engine.rb — rather than by a directory named app, so a plain
         # Ruby tree with its own app/ is still judged.
         class FileSprawlLaw < Law
+          def self.reads_beyond_file? = true
+
           TINY_CODE_LINES = 25
           SKIP_RE = %r{/(?:law|core|test|spec|fixtures|templates|node_modules)/|/web/public/}
           RAILS_NAMED = %r{\A(?:app|config|db)/|\Alib/[^/]+/(?:engine|version)\.rb\z}
@@ -436,6 +444,8 @@ module Master
         # entry, not one per member. Scratch and generated trees are out of
         # scope: they are working residue, not structure.
         class PathPurposeLaw < Law
+          def self.reads_beyond_file? = true
+
           SKIP_RE = %r{/(?:test|spec|fixtures|node_modules|vendor|tmp|log|scratch|frames?_|renders?)/|/\.}
           def self.auto_build? = false
 

@@ -166,7 +166,7 @@ module Master
         # the name says how; if it cannot, they are one file or the difference
         # is not yet understood.
         LawDSL.law :FILE_SEQUENCE_NAME,
-          severity: :warning,
+          severity: :warning, reads_beyond_file: true,
           does_not_fire: "class AddThing < ActiveRecord::Migration[8.0]; end\n",
           example_path: "/repo/db/migrate/20260101000000_add_thing_v2.rb",
           tags: %i[LOAD_BEARING_NAMES DOMAIN_LANGUAGE],
