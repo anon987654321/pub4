@@ -103,6 +103,16 @@ module Operator
       end
       return [status, changed] unless status == 1 && baseline && changed.empty?
 
+      unmeasured = Array(@last_results).select { |result| result.state == "skipped" }
+      if unmeasured.any?
+        stages = unmeasured.map { |result| "#{result.stage} (#{result.summary})" }.first(6).join(", ")
+        more = unmeasured.size > 6 ? " and #{unmeasured.size - 6} more" : ""
+        Master::Trace::Dmesg.status(
+          "gate0", "INCONCLUSIVE, regression comparison withheld; #{unmeasured.size} stage(s) unmeasured: #{stages}#{more}"
+        )
+        return [status, changed]
+      end
+
       # Standing failures are not this run's to clear. A run passes when it adds
       # no failure the tree did not have; nothing is moved or relaxed.
       regressions = GateRegression.new(baseline).regressions(@last_results)
