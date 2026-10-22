@@ -264,6 +264,21 @@ class TestFixModelPhaseGuards < Minitest::Test
                  streamed.map { |file, law| [File.basename(file), law] }.to_set
   end
 
+  def test_a_later_high_severity_law_finding_is_not_starved_by_the_batch_cap
+    low_priority = Array.new(Master::Fix::FixLoop::PassRunner::StreamStage::LAW_CAP) do
+      { law: "LONG_LINE", severity: :warning }
+    end
+    urgent = [{ law: "LONG_LINE", severity: :error }]
+    queue = Queue.new
+
+    Stream.new.send(:enqueue_ranked, [["/r/early.rb", low_priority], ["/r/urgent.rb", urgent]], queue, Set.new)
+
+    assert_equal 1, queue.size
+    path, rows = queue.pop
+    assert_equal "/r/urgent.rb", path
+    assert_equal :error, rows.first[:severity]
+  end
+
   def test_an_unbounded_worklist_ranks_after_the_complete_scan_by_default
     previous = ENV["MASTER_FIX_RANK"]
     previous_limit = ENV["MASTER_FIX_MAX_FILES"]
