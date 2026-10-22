@@ -99,9 +99,6 @@ module Master
         raise "transaction enlistment contains an unsafe path" if selected.any?(&:nil?)
 
         added = selected.uniq - @paths
-        return Result.err("transaction cannot safely enlist a directory", category: :policy) if
-          added.any? { |path| File.directory?(absolute(path)) }
-
         staged = added.to_h { |path| [path, snapshot(path)] }
         return Result.err("transaction source changed during enlistment", category: :policy) unless
           added.all? { |path| snapshot_matches_fingerprint?(staged.fetch(path), fingerprint(absolute(path))) }
@@ -335,7 +332,6 @@ module Master
         master_dir = File.join(@root, ".master")
         tx_root = File.join(@root, ROOT_DIR)
         raise "MASTER state directory is a symlink" if File.symlink?(master_dir)
-        FileUtils.mkdir_p(master_dir)
         raise "transaction root is a symlink" if File.symlink?(tx_root)
         FileUtils.mkdir_p(tx_root)
         path = File.join(@root, LOCK)
@@ -471,7 +467,6 @@ module Master
         state, paths, snapshots, seen = data.values_at("state", "paths", "snapshots", "seen")
         raise "transaction manifest state unsupported" unless VALID_STATES.include?(state)
         raise "transaction manifest paths malformed" unless paths.is_a?(Array) && paths.all? { |p| p.is_a?(String) && p != "." && normalize(p) == p }
-        raise "transaction manifest contains duplicate paths" unless paths.uniq == paths
         raise "transaction manifest snapshot set mismatch" unless snapshots.is_a?(Hash) && snapshots.keys.sort == paths.sort
 
         paths.each do |path|
