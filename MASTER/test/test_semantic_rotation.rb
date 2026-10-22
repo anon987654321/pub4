@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "date"
 
 # A requested /fix reads a rotating tenth of the clean files semantically, so every file is read
 # once across ten days and no run reads them all.
@@ -30,5 +31,18 @@ class TestSemanticRotation < Minitest::Test
     paths = Array.new(50) { |n| "lib/f#{n}.rb" }
 
     assert(paths.all? { |path| processor.due?(path, findings: [{ law: "CQS" }]) })
+  end
+
+  def test_rotation_covers_ten_consecutive_dates_across_new_year
+    paths = Array.new(200) { |n| "lib/new_year_#{n}.rb" }
+    dates = (Date.new(2026, 12, 28)..Date.new(2027, 1, 6)).to_a
+    reads = dates.flat_map do |date|
+      processor = OnDay.new.on(date.jd)
+      paths.select { |path| processor.due?(path) }
+    end
+
+    assert_equal paths.sort, reads.sort
+    source = File.read(File.expand_path("../lib/fix/scan/file_processor.rb", __dir__))
+    assert_includes source, "def rotation_day = Date.today.jd"
   end
 end
