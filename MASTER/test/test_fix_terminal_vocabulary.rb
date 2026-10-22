@@ -23,7 +23,7 @@ class TestFixTerminalVocabulary < Minitest::Test
   def test_failed_verification_outcomes_never_map_to_done
     loop = Master::Fix::FixLoop.allocate
 
-    %i[provider_error validation_failed infrastructure policy timeout crash].each do |category|
+    %i[provider_error validation infrastructure policy timeout crash].each do |category|
       result = Master::Result.err("verification failed", category:)
 
       refute_equal :done, loop.send(:terminal_state_for, result), "#{category} must not report DONE"
