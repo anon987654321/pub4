@@ -165,7 +165,6 @@ en:
     skip_to_content: "Skip to main content"
   # Mirrors nb.yml's flash: block.
   flash:
-    cve_cross_reference_complete: "CVE cross-reference complete."
     cve_cross_reference_queued: "CVE cross-reference queued for background processing."
     review_issues: "MASTER review: %{issues}"
     review_clean: "MASTER review: no issues found in the indexed record or local port source."
