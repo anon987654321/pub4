@@ -54,7 +54,11 @@ class FederatedIdentityContractTest < Minitest::Test
     assert_includes auth, "verified_bankid_identity?(user)"
     assert_includes auth, 'identity_providers: { slug: "bankid" }'
     assert_includes callback, 'when "bankid"'
-    assert_includes callback, 'acr.to_s == "urn:bankid:bid" ? "verified" : "account"'
+    assert_includes callback, 'acr_parts.include?("urn:bankid:bid")'
+    assert_includes callback, 'part.casecmp("LOA=4").zero?'
+    assert_includes callback, 'high_bankid ? "verified" : "account"'
+    assert_includes read("RAILS/amber/test/controllers/bankid_identity_persistence_test.rb"),
+                    "test \"BankID ACR without returned LOA=4 cannot bypass email verification\""
     assert_includes callback, "assurance_level_for(auth.provider, auth:)"
     assert_includes callback, "record.update!("
     assert_includes read("RAILS/amber/test/controllers/bankid_identity_persistence_test.rb"),
