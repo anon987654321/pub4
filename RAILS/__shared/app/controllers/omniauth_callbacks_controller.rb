@@ -56,7 +56,13 @@ class OmniauthCallbacksController < ::ApplicationController
       user = User.find_by(id: record.user_id)
       raise IdentityEmailConflict unless user && user.try(:deleted_at).blank? && !user.try(:deletion_pending?)
 
-      record.update_column(:last_used_at, Time.current)
+      # Assurance belongs to this verified authentication event, not forever to
+      # the first login: upgrade when a fresh BankID token proves high ACR and
+      # downgrade when a later token has lower assurance.
+      record.update!(
+        last_used_at: Time.current,
+        assurance_level: assurance_level_for(auth.provider, auth:)
+      )
       return user
     end
 
@@ -149,7 +155,7 @@ class OmniauthCallbacksController < ::ApplicationController
 
     provider = ::IdentityProvider.find_or_create_by!(slug: auth.provider.to_s) do |record|
       record.name = auth.provider.to_s.tr("_", " ").titleize
-      record.issuer = auth.extra&.dig(:id_info, :iss) if auth.extra.respond_to?(:dig)
+      record.issuer = hash_value(hash_value(auth.extra, :id_info), :iss)
       record.client_id = ENV["#{auth.provider.to_s.upcase}_CLIENT_ID"]
     end
     identity = ::ExternalIdentity.find_or_initialize_by(identity_provider_id: provider.id, subject: auth.uid.to_s)
