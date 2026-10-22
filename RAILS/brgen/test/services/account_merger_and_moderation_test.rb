@@ -78,7 +78,7 @@ class AccountMergerAndModerationTest < ActiveSupport::TestCase
     receipts = MessageReceipt.where(message_id: message.id, user_id: @member.id)
     assert_equal 1, receipts.count
     receipt = receipts.first
-    assert_equal member_delivered.to_i, receipt.delivered_at.to_i, "keep the earliest delivered timestamp"
+    assert_equal guest_delivered.to_i, receipt.delivered_at.to_i, "keep the earliest delivered timestamp"
     assert_equal guest_read_at.to_i, receipt.read_at.to_i, "a read receipt must not become unread"
     refute MessageReceipt.exists?(id: guest_receipt.id)
     refute TypingIndicator.exists?(id: typing.id), "stale guest typing state must be discarded"
