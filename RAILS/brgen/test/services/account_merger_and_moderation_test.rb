@@ -32,6 +32,60 @@ class AccountMergerAndModerationTest < ActiveSupport::TestCase
     assert_not @guest.reload.guest?, "the emptied guest row stops being a guest"
   end
 
+  test "merging duplicate messenger membership and receipts preserves state without violating unique indexes" do
+    conversation = Conversation.create!(conversation_type: "group", city: @city)
+    guest_read = 4.hours.ago
+    member_read = 2.hours.ago
+    guest_pin = 1.day.ago
+    guest_mute = 1.hour.ago
+    guest_participant = ConversationParticipant.create!(
+      conversation_id: conversation.id, user_id: @guest.id, role: "voice",
+      last_read_at: guest_read, pinned_at: guest_pin, muted_at: guest_mute
+    )
+    member_participant = ConversationParticipant.create!(
+      conversation_id: conversation.id, user_id: @member.id, role: "member",
+      last_read_at: member_read
+    )
+    message = Message.create!(
+      conversation_id: conversation.id, sender_id: @guest.id,
+      content: "History survives account conversion", message_type: "text"
+    )
+    guest_receipt = MessageReceipt.find_or_create_by!(message_id: message.id, user_id: @guest.id)
+    member_receipt = MessageReceipt.find_or_create_by!(message_id: message.id, user_id: @member.id)
+    guest_delivered = 3.hours.ago
+    member_delivered = 2.hours.ago
+    guest_read_at = 30.minutes.ago
+    guest_receipt.update_columns(delivered_at: guest_delivered, read_at: guest_read_at)
+    member_receipt.update_columns(delivered_at: member_delivered, read_at: nil)
+    typing = TypingIndicator.create!(
+      conversation_id: conversation.id, user_id: @guest.id, expires_at: 1.minute.from_now
+    )
+
+    AccountMerger.new(guest_user: @guest, user: @member).call
+
+    participants = ConversationParticipant.where(conversation_id: conversation.id, user_id: @member.id)
+    assert_equal 1, participants.count
+    participant = participants.first
+    assert_equal "voice", participant.role
+    assert_equal member_read.to_i, participant.last_read_at.to_i
+    assert_equal guest_pin.to_i, participant.pinned_at.to_i
+    assert_equal guest_mute.to_i, participant.muted_at.to_i
+    assert_nil participant.archived_at
+    refute ConversationParticipant.exists?(id: guest_participant.id)
+    assert ConversationParticipant.exists?(id: member_participant.id)
+    assert_equal @member.id, message.reload.sender_id
+
+    receipts = MessageReceipt.where(message_id: message.id, user_id: @member.id)
+    assert_equal 1, receipts.count
+    receipt = receipts.first
+    assert_equal member_delivered.to_i, receipt.delivered_at.to_i, "keep the earliest delivered timestamp"
+    assert_equal guest_read_at.to_i, receipt.read_at.to_i, "a read receipt must not become unread"
+    refute MessageReceipt.exists?(id: guest_receipt.id)
+    refute TypingIndicator.exists?(id: typing.id), "stale guest typing state must be discarded"
+    refute TypingIndicator.exists?(user_id: @guest.id)
+    assert AccountMerge.exists?(guest_user_id: @guest.id, user_id: @member.id)
+  end
+
   test "merging a non-guest is refused as a no-op" do
     regular = User.create!(email_address: "r-#{SecureRandom.hex(4)}@brgen.no",
                            password: SecureRandom.hex(16), username: "r_#{SecureRandom.hex(3)}", city: @city)
