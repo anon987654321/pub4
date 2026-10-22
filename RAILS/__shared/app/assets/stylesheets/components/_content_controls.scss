@@ -1,0 +1,164 @@
+
+input[type="radio"].star:checked ~ .star,
+input[type="radio"].star:checked {
+  color: var(--color-accent);
+}
+
+.field-error {
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  margin-block-start: var(--space-1);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.errors {
+  margin-block-end: var(--space-5);
+  padding: var(--space-4);
+  border: 1px solid var(--color-danger);
+  border-inline-start-width: 4px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-danger) 9%, var(--color-surface));
+}
+
+.errors-title {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--text-base);
+  line-height: 1.5;
+}
+
+.errors-list {
+  margin: var(--space-2) 0 0;
+  padding-inline-start: var(--space-5);
+}
+
+.error-msg + .error-msg {
+  margin-block-start: var(--space-1);
+}
+
+.field_with_errors {
+  display: contents;
+}
+
+.field_with_errors :is(input, select, textarea) {
+  border-color: var(--color-danger);
+}
+
+fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+legend {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-4);
+}
+
+[data-state="active"] { opacity: 1; }
+[data-state="inactive"] { opacity: 0.65; }
+[data-variant="danger"] { color: var(--color-danger); }
+[data-size="sm"] { font-size: var(--text-sm); }
+
+:is(h1, h2, h3, h4) {
+  text-wrap: balance;
+}
+
+:where(.prose) h2 {
+  margin-block-start: 1.5em;
+}
+
+.card-grid {
+  container-type: inline-size;
+  container-name: grid;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+}
+
+@container grid (min-width: 400px) {
+  .card {
+    flex-direction: row;
+  }
+}
+
+@container grid (min-width: 600px) {
+  .card {
+    animation: expandLayout 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  background: var(--color-highlight);
+  z-index: 1;
+}
+
+@media (forced-colors: active) {
+  .btn,
+  .compose-btn,
+  button {
+    forced-color-adjust: auto;
+    border: 1px solid ButtonText;
+  }
+}
+
+@media print {
+  .sidebar,
+  .nav,
+  .btn,
+  .compose-btn,
+  nav {
+    display: none !important;
+  }
+
+  .prose {
+    max-width: 100%;
+    font-size: 12pt;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+  }
+}
+
+.read-more-content {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--read-more-line-clamp, 3);
+}
+
+.password-field {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.password-field .hidden,
+[data-password-visibility-target="icon"].hidden {
+  display: none;
+}
+
+body:has(dialog[data-dialog-target="dialog"][open]) {
+  overflow: hidden;
+}
+
+/* Mobile sensor affordances */
+@media (pointer: coarse) {
+  .deal-card {
+    transition: transform 0.2s var(--ease-out);
+  }
+  .deal-card:active {
+    transform: scale(0.985);
+  }
+}
+
+
