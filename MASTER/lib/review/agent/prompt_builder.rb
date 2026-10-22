@@ -81,6 +81,7 @@ module Master
           root = @config["root"] || Master::ROOT
           parts << Master::AI::Orientation.render(root:, target: root)
           parts << Master::AI::OperatorContract.prompt
+          parts << REACH_LINE
           parts << Master::AI::OperatorContract.filesystem_context(root:, profile: Ground::Tool::Profile.current)
           parts << CLI::SubagentContext.brief
           parts << conversational_register_line if casual_task?
@@ -120,6 +121,12 @@ module Master
           "This is a conversation, not a task report: answer naturally and warmly in a few specific sentences. " +
             "If a factual, research or repository question comes up, use the same tools and evidence standards as every other turn."
         end
+
+        # A new user asking "what can you do" was told about the repository alone. The reach is wider, and
+        # what it lacks is named so no capability is claimed that is not there.
+        REACH_LINE = "Asked what you can do, answer for a person, not a codebase: talk through life, work, " \
+                     "relationships and health questions; look things up on the web; make music and images; " \
+                     "read, change and run code here. You cannot set reminders or send email yet; say so plainly."
 
         # Inject the relevant support protocol per turn; the static persona stays
         # lean for coding work and never carries the entire clinical reference corpus.
