@@ -49,6 +49,11 @@ class UserPurgeJob < ApplicationJob
     # Inbound/outbound federation relationships are part of the user identity graph.
     { model: "FediFollow", key: :user_id },
     { model: "Notification", key: :user_id },
+    { model: "Notification", key: :actor_id },
+    { model: "ActivityEvent", key: :actor_id },
+    { model: "Shared::Reaction", key: :user_id },
+    { model: "Vote", key: :user_id },
+    { model: "Shared::OutboundClick", key: :user_id },
     { model: "IdentityAssurance", key: :user_id },
     { model: "ReputationScore", key: :user_id },
     { model: "TrustSignal", key: :user_id },
@@ -117,10 +122,49 @@ class UserPurgeJob < ApplicationJob
 
         model.where(row[:key] => user.id).find_each(&:destroy)
       end
+      erase_authored_messages(user)
       NULLIFY.each { |row| nullify(row, user) }
       erase_email_subscription(former_email)
       anonymise(user)
       user.sessions.delete_all if user.respond_to?(:sessions)
+    end
+  end
+
+  # Private Messenger rows preserve their thread and reply shape, but
+  # neither message bodies nor attached media survive the sender's erasure.
+  # Remove other users' metadata that points at those private messages before
+  # unsending the row. Reactions and receipts do not make the body public.
+  def erase_authored_messages(user)
+    return unless defined?(::Message) && ::Message.table_exists?
+
+    message_ids = ::Message.where(sender_id: user.id).select(:id)
+    return unless message_ids.exists?
+
+    ::MessageReceipt.where(message_id: message_ids).find_each(&:destroy!) if
+      defined?(::MessageReceipt) && ::MessageReceipt.table_exists?
+    ::Notification.where(notifiable_type: "Message", notifiable_id: message_ids).find_each(&:destroy!) if
+      defined?(::Notification) && ::Notification.table_exists?
+    ::Notification.where(source_type: "Message", source_id: message_ids).find_each(&:destroy!) if
+      defined?(::Notification) && ::Notification.table_exists?
+    ::ActivityEvent.where(subject_type: "Message", subject_id: message_ids).find_each(&:destroy!) if
+      defined?(::ActivityEvent) && ::ActivityEvent.table_exists?
+    ::Shared::Reaction.where(reactable_type: "Message", reactable_id: message_ids).find_each(&:destroy!) if
+      defined?(::Shared::Reaction) && ::Shared::Reaction.table_exists?
+    ::Vote.where(votable_type: "Message", votable_id: message_ids).find_each(&:destroy!) if
+      defined?(::Vote) && ::Vote.table_exists?
+    ::Shared::OutboundClick.where(subject_type: "Message", subject_id: message_ids).find_each(&:destroy!) if
+      defined?(::Shared::OutboundClick) && ::Shared::OutboundClick.table_exists?
+
+    ::Message.strict_loading(false).where(sender_id: user.id).find_each do |message|
+      preview_id = message.link_preview_id if message.has_attribute?(:link_preview_id)
+      message.attachment.purge if message.respond_to?(:attachment) && message.attachment.attached?
+      message.update_column(:link_preview_id, nil) if preview_id
+      message.unsend! unless message.deleted?
+
+      if preview_id && defined?(::LinkPreview) && ::LinkPreview.table_exists? &&
+         !::Message.where(link_preview_id: preview_id).exists?
+        ::LinkPreview.where(id: preview_id).find_each(&:destroy!)
+      end
     end
   end
 
