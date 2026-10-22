@@ -54,6 +54,8 @@ class AmberErasureContractTest < Minitest::Test
     assert_includes job, 'Shared::ReviewCase.where(reviewable_type: "Outfit", reviewable_id: outfit_ids)'
     assert_includes job, 'Shared::OutboundClick.where(subject_type: "Item", subject_id: item_ids)'
     assert_includes job, 'Shared::OutboundClick.where(subject_type: "Outfit", subject_id: outfit_ids)'
+    assert_includes job, 'Shared::OutboundClick.where(subject_type: "Comment", subject_id: private_comment_ids)'
+    assert_includes job, 'DeclutterChallenge.where(item_id: item_ids).find_each(&:destroy!)'
     assert_includes job, 'Shared::Reaction.where(reactable_type: "Item", reactable_id: item_ids)'
     assert_includes job, 'Shared::Notification.where(notifiable_type: "Item", notifiable_id: item_ids)'
     assert_includes job, 'Shared::Notification.where(notifiable_type: "Comment", notifiable_id: private_comment_ids)'
