@@ -36,6 +36,7 @@ module Master
         def begin_run(root:, max_passes:, bus: nil, target: nil)
           finish_run
           ToolBreaker.reset!
+          RunLedger.begin_run!
           @current = new(root:, max_passes:).start!.tap { |run| run.announce(target:, bus:) }
         end
 

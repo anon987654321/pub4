@@ -8,7 +8,8 @@ module Master
     # failing. The 2026-10-12 runs fixed nothing and said only "0 fixed";
     # the reasons were in the log one line at a time and never added up.
     #
-    # State is per process, which is per run.
+    # State is per run: RunBudget.begin_run clears it, because a long MASTER session runs /fix many
+    # times in one process, and a file rejected twice in one run was excluded from every later one.
     module RunLedger
       MAX_REJECTS_PER_FILE = 2
       LANE_FAILURES_BEFORE_DROP = 2
@@ -27,13 +28,19 @@ module Master
 
       class << self
         def reset!
+          begin_run!
+          @mutex.synchronize { @max_files = nil }
+        end
+
+        # A new run's counters; the --max-files override set for this dispatch stays.
+        def begin_run!
           @mutex.synchronize do
             @reasons = Hash.new(0)
             @declined = Hash.new(0)
             @file_rejects = Hash.new(0)
+
             @timeouts = []
             @lane_failures = Hash.new(0)
-            @max_files = nil
           end
         end
 
