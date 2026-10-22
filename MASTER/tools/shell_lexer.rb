@@ -147,11 +147,19 @@ class ShellLexer
 
   private
 
-  def step = instance_exec(&HANDLERS.fetch(peek, PLAIN))
+  # No endless defs in this file: a hook may run under macOS's /usr/bin/ruby 2.6, a hook that fails to
+  # parse does not block, and every banned tool then passes.
+  def step
+    instance_exec(&HANDLERS.fetch(peek, PLAIN))
+  end
 
-  def done? = @pos >= @src.length
+  def done?
+    @pos >= @src.length
+  end
 
-  def peek(offset = 0) = @src[@pos + offset]
+  def peek(offset = 0)
+    @src[@pos + offset]
+  end
 
   def append(text)
     @word ||= +""

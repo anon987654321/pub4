@@ -42,8 +42,10 @@ class TestSessionLawContext < Minitest::Test
   def test_the_committed_settings_register_the_hooks_that_mirror_master
     commands = registered_commands
 
-    assert(commands.any? { |command| command.include?("session_law_context.rb") })
-    assert(commands.any? { |command| command.include?("finish_check.rb\" record") }, "the edit recorder")
-    assert(commands.any? { |command| command.end_with?("finish_check.rb\"") }, "the Stop check")
+    # Through hook_ruby.rb, which finds a Ruby that can parse them when the hook's PATH holds only 2.6:
+    # the briefing, the edit recorder and the Stop check.
+    endings = ["session_law_context", "finish_check record", "finish_check"].map { |hook| "hook_ruby.rb\" #{hook}" }
+    endings.each { |ending| assert_includes commands.map { |command| command[-ending.size..] }, ending }
+    assert_empty commands.grep(%r{MASTER/tools/(?!hook_ruby)\w+\.rb}), "no hook bypasses the launcher"
   end
 end

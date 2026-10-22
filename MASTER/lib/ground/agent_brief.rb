@@ -47,7 +47,9 @@ module Master
       def law_line(priority:, id:, text:) = "  #{id} (#{priority}): #{text[0, STATEMENT_CHARS]}"
 
       def top_laws(root)
-        catalog = Master.load_yaml(File.join(root, "MASTER", "data", "laws.yml")) || {}
+        # Plain YAML, not Master.load_yaml: the SessionStart hook loads this file alone, and without the
+        # runtime every session's briefing came back "no briefing (NoMethodError)".
+        catalog = YAML.safe_load_file(File.join(root, "MASTER", "data", "laws.yml"), aliases: true) || {}
         rows = catalog.filter_map do |id, row|
           next unless row.is_a?(Hash) && row["priority"].is_a?(Numeric) && !row["statement"].to_s.empty?
 

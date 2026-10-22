@@ -18,19 +18,19 @@
         "hooks": [
           {
             "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/block_git_stash.rb\"",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" block_git_stash",
             "statusMessage": "Checking for a shared git stash",
             "timeout": 15
           },
           {
             "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/block_branching.rb\"",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" block_branching",
             "statusMessage": "Checking this writes straight to main",
             "timeout": 15
           },
           {
             "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/block_gnu_text_tools.rb\"",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" block_gnu_text_tools",
             "statusMessage": "Checking for GNU text tools",
             "timeout": 15
           }
@@ -41,13 +41,13 @@
         "hooks": [
           {
             "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/require_law_first.rb\"",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" require_law_first",
             "statusMessage": "Checking the law was read",
             "timeout": 15
           },
           {
             "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/law_check_edit.rb\"",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" law_check_edit",
             "statusMessage": "Judging the edit by the laws",
             "timeout": 30
           }
@@ -60,7 +60,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/finish_check.rb\" record",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" finish_check record",
             "statusMessage": "Noting the edit",
             "timeout": 10
           },
@@ -83,7 +83,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/require_law_first.rb\"",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" require_law_first",
             "timeout": 15
           }
         ]
@@ -94,7 +94,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/finish_check.rb\"",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" finish_check",
             "statusMessage": "Judging what you changed before you finish",
             "timeout": 240
           },
@@ -112,7 +112,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/session_law_context.rb\"",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" session_law_context",
             "statusMessage": "Loading the constitution",
             "timeout": 20
           }
