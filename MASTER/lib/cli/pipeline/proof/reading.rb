@@ -12,6 +12,7 @@ module Master
         SUITE_HEADER = /\Aproof suite (.+): (ok|FAIL)\z/
         GATE_VERDICT = /\b(\d+) pass, (\d+) fail, \d+ skip, (\d+) inconclusive, (\d+) error in [^;]*autofix (?:on|off)/
         GATE_FAILED = /\A(?:failed|errored)=(.+)\z/
+        GATE_UNMEASURED = /\Ainconclusive=(.+)\z/
         CHECK_FAILURES = /\Acheck\d+ at \S+: \d+ failure\(s\), (.+)\z/
         TEST_HEAD = /\A\s*(?:\d+\)\s+)?(?:Failure|Error):\s*\z/
         TEST_NAME = /\A\s*(\S+#\S+?)(?: \[[^\]]*\])?:?\s*\z/
@@ -48,7 +49,14 @@ module Master
               other_keys(line, lines[index + 1].to_s, keys)
             end
             passed, total = counted || [ok ? 1 : 0, 1]
-            { ok:, keys:, passed:, total: }
+            { ok:, keys:, passed:, total:, unmeasured: unmeasured_gates(lines) }
+          end
+
+          # Gates the runner could not measure: neither passed nor failed, and never green.
+          def self.unmeasured_gates(lines)
+            parts = lines.flat_map { |line| line.split(";").drop(1) }
+            named = parts.filter_map { |part| part.strip[GATE_UNMEASURED, 1] }
+            named.flat_map { |list| list.split(",").map(&:strip) }.to_set
           end
 
           # A failed bin/check step, a step killed at its timeout, and a
@@ -77,6 +85,7 @@ module Master
           end
 
           def failing = units.values.flat_map { |unit| unit[:keys].to_a }.to_set
+          def unmeasured = units.values.flat_map { |unit| unit[:unmeasured].to_a }.to_set
           def passed = units.values.sum { |unit| unit[:passed] }
           def total = units.values.sum { |unit| unit[:total] }
 

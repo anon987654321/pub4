@@ -207,7 +207,7 @@ module Master
             reading = Reading.parse(ok, out)
             held, verdict = Proof.judge(reading, baseline)
             hard, soft = Master::Fix::GateTiers.split(reading.failing)
-            @proof = { verdict:, hard:, soft: }
+            @proof = { verdict:, hard:, soft:, unmeasured: reading.unmeasured.sort }
             Master::Trace::Dmesg.status("gate0", verdict)
             fail_stage("proof", verdict) unless held
             [verdict, proof_body(held, out), (deliver_leftovers(abs, verdict) if held)].compact.join("\n")

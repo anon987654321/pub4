@@ -43,6 +43,11 @@ class TestProofBaseline < Minitest::Test
     assert_equal [10, 20], [reading.passed, reading.total]
   end
 
+  # A gate the runner could not measure is neither passed nor failed, and is named as such.
+  def test_the_runner_verdict_names_each_unmeasured_gate
+    assert_equal %w[deploy_drift flow_journey].to_set, Reading.parse(false, RAILS_RED).unmeasured
+  end
+
   def test_a_baseline_red_pass_with_no_new_failure_delivers
     pass = pass_with(RAILS_RED)
     baseline = pass.send(:proof_baseline, Master::RAILS_ROOT)

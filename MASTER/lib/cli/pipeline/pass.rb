@@ -53,9 +53,9 @@ module Master
         def self.proof_parts(proof)
           return ["no proof ran"] unless proof
 
-          hard, soft = proof.values_at(:hard, :soft).map { |gates| Array(gates) }
+          hard, soft, unmeasured = proof.values_at(:hard, :soft, :unmeasured).map { |gates| Array(gates) }
           [proof[:verdict], "hard red #{hard.size}#{" (#{hard.first(3).join(", ")})" if hard.any?}",
-           "soft red #{soft.size}"]
+           "soft red #{soft.size}", ("unmeasured #{unmeasured.size}" if unmeasured.any?)].compact
         end
 
         def self.fix_ending(msg) = msg.to_s.match(/\A([A-Z_]+):/)&.captures&.first&.downcase&.to_sym
