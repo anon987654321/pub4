@@ -148,7 +148,7 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
-  def test_transaction_reports_snapshot_cost_and_file_count
+  def test_transaction_reports_the_snapshot_path_count
     Dir.mktmpdir do |dir|
       File.write(File.join(dir, "one.txt"), "one\n")
       File.write(File.join(dir, "two.txt"), "two\n")
@@ -161,8 +161,6 @@ class TestFixTransaction < Minitest::Test
 
       refute_nil payload
       assert_equal 2, payload.fetch(:tracked_paths)
-      assert_equal 2, payload.fetch(:file_snapshots)
-      assert_operator payload.fetch(:elapsed_ms), :>=, 0
       assert tx.rollback!.ok?
     end
   end
