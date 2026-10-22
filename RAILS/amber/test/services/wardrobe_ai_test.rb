@@ -22,6 +22,13 @@ class WardrobeAiTest < ActiveSupport::TestCase
     end
   end
 
+  # WardrobeAi drops even an injected client unless the user's privacy settings allow AI analysis.
+  def consenting_user
+    user = User.create!(email_address: "ai-#{SecureRandom.hex(4)}@amber.test", password: "password123")
+    PrivacySetting.find_by!(user_id: user.id).update!(allow_ai_analysis: true)
+    user
+  end
+
   test "analyze_joy uses local heuristic when no API key is configured" do
     item = Item.new(title: "Blue jacket", category: "Outerwear", times_worn: 0)
     service = WardrobeAi.new(User.new, client: nil)
@@ -45,7 +52,7 @@ class WardrobeAiTest < ActiveSupport::TestCase
   test "chat-backed methods tolerate invalid JSON" do
     item = Item.new(title: "Blue jacket", category: "Outerwear")
     client = FakeClient.new(content: "not json")
-    service = WardrobeAi.new(User.new, client: client)
+    service = WardrobeAi.new(consenting_user, client:)
 
     result = service.analyze_joy(item)
 
@@ -65,7 +72,7 @@ class WardrobeAiTest < ActiveSupport::TestCase
 
   test "chat passes multimodal attachments through the model seam" do
     client = FakeClient.new(content: '{"ok":true}')
-    service = WardrobeAi.new(User.new, client: client)
+    service = WardrobeAi.new(consenting_user, client:)
 
     result = service.send(:chat, "inspect these", with: [ :photo ])
 
@@ -75,7 +82,7 @@ class WardrobeAiTest < ActiveSupport::TestCase
 
   test "chat omits attachments when none were supplied" do
     client = FakeClient.new(content: '{"ok":true}')
-    service = WardrobeAi.new(User.new, client: client)
+    service = WardrobeAi.new(consenting_user, client:)
 
     result = service.send(:chat, "text only")
 

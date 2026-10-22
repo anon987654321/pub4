@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "minitest/mock"
 
 class StyleAssistantTest < ActiveSupport::TestCase
   def user(email)
@@ -76,7 +77,10 @@ class StyleAssistantTest < ActiveSupport::TestCase
     finalists = scored.select { |score, _| best_score - score <= StyleAssistant::COMPOSITION_TOLERANCE }
                       .sort_by { |score, composition| [ -score, composition.map { |pick| pick.item.id } ] }
                       .first(StyleAssistant::SHORTLIST)
-    expected = finalists.fetch(date.jd % finalists.length).last.map { |pick| pick.item.id }
+    # The suggestion lists its picks in StyleAssistant::ZONES order, head to toe.
+    chosen = finalists.fetch(date.jd % finalists.length).last
+    zone_order = StyleAssistant::ZONES.keys
+    expected = chosen.sort_by { |pick| zone_order.index(pick.zone) }.map(&:item).map(&:id)
 
     assert_equal expected, assistant.suggest.item_ids
   end

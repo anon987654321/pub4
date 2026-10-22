@@ -118,10 +118,11 @@ class User < ApplicationRecord
 
   private
 
+  # Created by class, not through create_profile!: the has_one builder would read the association under
+  # strict loading. It was wrapped in strict_loading!(false) do ... end, which takes no block, so neither
+  # record was ever made and no account had a profile or privacy settings.
   def ensure_identity_records
-    strict_loading!(false) do
-      create_profile!
-      create_privacy_setting!
-    end
+    Profile.create!(user: self)
+    PrivacySetting.create!(user: self)
   end
 end

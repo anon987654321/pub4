@@ -302,6 +302,9 @@ class Pub4AdminTest < Minitest::Test
     assert_includes helper, 'bundle-install|bundle-check|ci-bundle-install|db-prepare|db-seed|assets-precompile|ci'
     assert_includes helper, 'BUNDLE_PATH: /home/$app/.bundle/gems'
     assert_includes helper, 'RAILS_ENV=production $bundle install'
+    # Production bundles are deployment-mode and leave out the development and test groups.
+    assert_includes helper, "$bundle config set --local deployment true"
+    assert_includes helper, %($bundle config set --local without \\"development test\\")
     assert_includes helper, 'exec /usr/bin/su -m "$app" -c "$script"'
     refute_includes helper, 'sh -c "$script"'
   end

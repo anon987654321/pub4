@@ -1,10 +1,16 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "minitest/mock"
 
 class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
   Info = Struct.new(:email, :phone)
   Auth = Struct.new(:provider, :uid, :info, :extra)
+
+  # The callback's account lookup, made public for this test rather than reached by send.
+  class Callback < OmniauthCallbacksController
+    public :find_or_create_user
+  end
 
   test "a BankID subject without email reuses the persisted account on later callbacks" do
     uid = "bankid-subject-#{SecureRandom.hex(8)}"
@@ -81,13 +87,18 @@ class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
     )
     user = OmniauthCallbacksController.new.send(:find_or_create_user, auth)
     session_record = user.sessions.create!(user_agent: "test", ip_address: "127.0.0.1")
-    cookies.signed[:session_id] = session_record.id
+    # An integration test's jar cannot sign; a request jar signs and hands over the raw value.
+    jar = ActionDispatch::TestRequest.create.cookie_jar
+    jar.signed[:session_id] = session_record.id
+    cookies[:session_id] = jar[:session_id]
 
     refute user.reload.email_verified?, "BankID must not fabricate mailbox verification"
+    # The path, not posts_url: the URL names localhost, and the jar sends its cookie to the test host only.
     assert_difference -> { Post.count }, 1 do
-      post posts_url, params: { post: { body: "A signed-in BankID member can post without an email claim" } }
+      post posts_path, params: { post: { body: "A signed-in BankID member can post without an email claim" } }
     end
-    assert_redirected_to posts_url
+    assert_equal user.id, Post.last.user_id, "the post belongs to the BankID member, not a fresh guest"
+    assert_redirected_to posts_path
   end
 
   test "BankID ACR without returned LOA=4 cannot bypass email verification" do
@@ -126,8 +137,9 @@ class BankidIdentityPersistenceTest < ActionDispatch::IntegrationTest
     assert_equal "account", identity.assurance_level
 
     high_user = nil
+    # Only a returned LOA=4 is verified, as the "ACR without returned LOA=4" test above holds.
     assert_no_difference -> { User.count } do
-      high_user = callback.send(:find_or_create_user, make_auth.call("urn:bankid:bid"))
+      high_user = Callback.new.find_or_create_user(make_auth.call("urn:bankid:bid;LOA=4"))
     end
     assert_equal first.id, high_user.id
     assert_equal "verified", identity.reload.assurance_level

@@ -11,7 +11,10 @@ class UserPurgeJob < ApplicationJob
   # Destroy actual model rows one at a time where callbacks purge attachments or
   # remove dependent records. The model and table are both required: a missing
   # migration halts the transaction before the account is anonymised, leaving
-  # the due deletion marker for the next scheduled attempt.
+  # the due deletion marker for the next scheduled attempt. Every destroy here
+  # loads with strict_loading(false): destroy callbacks read the records they
+  # point at, which strict loading refuses, and one refusal rolled back the
+  # whole erasure (brgen's job hit the same on Vote#votable).
   DESTROY = [
     { model: "Profile", key: :user_id },
     { model: "CreatorProfile", key: :user_id },
@@ -77,15 +80,16 @@ class UserPurgeJob < ApplicationJob
   def erase!(user)
     former_email = user.try(:email_address)
 
+    user_id = user.id
     ActiveRecord::Base.transaction do
-      item_ids = Item.where(user_id: user.id).select(:id)
-      outfit_ids = Outfit.where(user_id: user.id).select(:id)
-      message_ids = Message.where(sender_id: user.id).or(Message.where(recipient_id: user.id)).select(:id)
+      item_ids = Item.where(user_id:).select(:id)
+      outfit_ids = Outfit.where(user_id:).select(:id)
+      message_ids = Message.where(sender_id: user_id).or(Message.where(recipient_id: user_id)).select(:id)
       detach_deleted_private_content(item_ids:, outfit_ids:, message_ids:)
 
       DESTROY.each do |row|
         model = resolve!(row.fetch(:model))
-        model.where(row.fetch(:key) => user.id).find_each(&:destroy!)
+        destroy_each(model.where(row.fetch(:key) => user_id))
       end
 
       nullify_review_cases(user)
@@ -99,59 +103,65 @@ class UserPurgeJob < ApplicationJob
     # derived suggestions outside the deleted user's own associations.
     Post.where(item_id: item_ids).update_all(item_id: nil)
     Post.where(outfit_id: outfit_ids).update_all(outfit_id: nil)
-    CreatorWardrobeItem.where(item_id: item_ids).find_each(&:destroy!)
-    WardrobeItem.where(item_id: item_ids).find_each(&:destroy!)
-    Recommendation.where(item_id: item_ids).or(Recommendation.where(outfit_id: outfit_ids)).find_each(&:destroy!)
+    destroy_each(CreatorWardrobeItem.where(item_id: item_ids))
+    destroy_each(WardrobeItem.where(item_id: item_ids))
+    destroy_each(Recommendation.where(item_id: item_ids).or(Recommendation.where(outfit_id: outfit_ids)))
     # Polymorphic activity has no database foreign keys, so every other user's
     # reaction, notification or vote on a private object needs explicit removal.
     if defined?(Shared::Reaction) && Shared::Reaction.table_exists?
-      Shared::Reaction.where(reactable_type: "Item", reactable_id: item_ids).find_each(&:destroy!)
-      Shared::Reaction.where(reactable_type: "Outfit", reactable_id: outfit_ids).find_each(&:destroy!)
+      destroy_each(Shared::Reaction.where(reactable_type: "Item", reactable_id: item_ids))
+      destroy_each(Shared::Reaction.where(reactable_type: "Outfit", reactable_id: outfit_ids))
     end
     private_comment_ids = Comment.where(commentable_type: "Item", commentable_id: item_ids)
                                   .or(Comment.where(commentable_type: "Outfit", commentable_id: outfit_ids))
                                   .select(:id)
     if defined?(Shared::Reaction) && Shared::Reaction.table_exists?
-      Shared::Reaction.where(reactable_type: "Comment", reactable_id: private_comment_ids).find_each(&:destroy!)
-      Shared::Reaction.where(reactable_type: "Message", reactable_id: message_ids).find_each(&:destroy!)
+      destroy_each(Shared::Reaction.where(reactable_type: "Comment", reactable_id: private_comment_ids))
+      destroy_each(Shared::Reaction.where(reactable_type: "Message", reactable_id: message_ids))
     end
     if defined?(Shared::Notification) && Shared::Notification.table_exists?
-      Shared::Notification.where(notifiable_type: "Item", notifiable_id: item_ids).find_each(&:destroy!)
-      Shared::Notification.where(notifiable_type: "Outfit", notifiable_id: outfit_ids).find_each(&:destroy!)
-      Shared::Notification.where(notifiable_type: "Comment", notifiable_id: private_comment_ids).find_each(&:destroy!)
-      Shared::Notification.where(notifiable_type: "Message", notifiable_id: message_ids).find_each(&:destroy!)
+      destroy_each(Shared::Notification.where(notifiable_type: "Item", notifiable_id: item_ids))
+      destroy_each(Shared::Notification.where(notifiable_type: "Outfit", notifiable_id: outfit_ids))
+      destroy_each(Shared::Notification.where(notifiable_type: "Comment", notifiable_id: private_comment_ids))
+      destroy_each(Shared::Notification.where(notifiable_type: "Message", notifiable_id: message_ids))
     end
     if defined?(Shared::OutboundClick) && Shared::OutboundClick.table_exists?
-      Shared::OutboundClick.where(subject_type: "Comment", subject_id: private_comment_ids).find_each(&:destroy!)
-      Shared::OutboundClick.where(subject_type: "Message", subject_id: message_ids).find_each(&:destroy!)
+      destroy_each(Shared::OutboundClick.where(subject_type: "Comment", subject_id: private_comment_ids))
+      destroy_each(Shared::OutboundClick.where(subject_type: "Message", subject_id: message_ids))
     end
-    Vote.where(votable_type: "Item", votable_id: item_ids).find_each(&:destroy!)
-    Vote.where(votable_type: "Outfit", votable_id: outfit_ids).find_each(&:destroy!)
-    Vote.where(votable_type: "Comment", votable_id: private_comment_ids).find_each(&:destroy!)
-    Vote.where(votable_type: "Message", votable_id: message_ids).find_each(&:destroy!)
+    destroy_each(Vote.where(votable_type: "Item", votable_id: item_ids))
+    destroy_each(Vote.where(votable_type: "Outfit", votable_id: outfit_ids))
+    destroy_each(Vote.where(votable_type: "Comment", votable_id: private_comment_ids))
+    destroy_each(Vote.where(votable_type: "Message", votable_id: message_ids))
     # These are per-user records, but Item declares them as has_one even
     # though the schema allows multiple users to reference the same item.
     # Explicitly remove every user's rows before erasing the target item.
-    DeclutterReview.where(item_id: item_ids).find_each(&:destroy!)
-    DeclutterOutcome.where(item_id: item_ids).find_each(&:destroy!)
-    DeclutterChallenge.where(item_id: item_ids).find_each(&:destroy!)
+    destroy_each(DeclutterReview.where(item_id: item_ids))
+    destroy_each(DeclutterOutcome.where(item_id: item_ids))
+    destroy_each(DeclutterChallenge.where(item_id: item_ids))
     DeclutterChallenge.where(outfit_id: outfit_ids).update_all(outfit_id: nil)
-    Comment.where(commentable_type: "Item", commentable_id: item_ids).find_each(&:destroy!)
-    Comment.where(commentable_type: "Outfit", commentable_id: outfit_ids).find_each(&:destroy!)
+    destroy_each(Comment.where(commentable_type: "Item", commentable_id: item_ids))
+    destroy_each(Comment.where(commentable_type: "Outfit", commentable_id: outfit_ids))
     if defined?(Shared::ReviewCase) && Shared::ReviewCase.table_exists?
-      Shared::ReviewCase.where(reviewable_type: "Item", reviewable_id: item_ids).find_each(&:destroy!)
-      Shared::ReviewCase.where(reviewable_type: "Outfit", reviewable_id: outfit_ids).find_each(&:destroy!)
+      destroy_each(Shared::ReviewCase.where(reviewable_type: "Item", reviewable_id: item_ids))
+      destroy_each(Shared::ReviewCase.where(reviewable_type: "Outfit", reviewable_id: outfit_ids))
     end
     if defined?(Shared::OutboundClick) && Shared::OutboundClick.table_exists?
-      Shared::OutboundClick.where(subject_type: "Item", subject_id: item_ids).find_each(&:destroy!)
-      Shared::OutboundClick.where(subject_type: "Outfit", subject_id: outfit_ids).find_each(&:destroy!)
+      destroy_each(Shared::OutboundClick.where(subject_type: "Item", subject_id: item_ids))
+      destroy_each(Shared::OutboundClick.where(subject_type: "Outfit", subject_id: outfit_ids))
     end
+  end
+
+  # One row at a time so callbacks run, loaded without strict loading because
+  # those callbacks read the records the rows point at.
+  def destroy_each(scope)
+    scope.strict_loading(false).find_each(&:destroy!)
   end
 
   def nullify_review_cases(user)
     return unless defined?(Shared::ReviewCase) && Shared::ReviewCase.table_exists?
 
-    Shared::ReviewCase.where(reporter_id: user.id).find_each(&:destroy!)
+    destroy_each(Shared::ReviewCase.where(reporter_id: user.id))
     Shared::ReviewCase.where(reviewer_id: user.id).update_all(reviewer_id: nil)
   end
 
@@ -159,7 +169,7 @@ class UserPurgeJob < ApplicationJob
     return if email.blank?
     return unless defined?(::EmailSubscription) && ::EmailSubscription.table_exists?
 
-    ::EmailSubscription.where(email: email).find_each(&:destroy!)
+    destroy_each(::EmailSubscription.where(email:))
   end
 
   def anonymise(user)

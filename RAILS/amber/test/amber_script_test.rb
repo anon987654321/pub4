@@ -27,12 +27,11 @@ class AmberScriptTest < ActiveSupport::TestCase
     assert_includes content, "APP_DOMAIN=amberapp.art"
   end
 
-  test "deploy script avoids self-copying an amber bundle cache" do
-    content = SCRIPT.read
-    shared = self.class.shared_rails_root.join("_deploy.sh").read
-
-    assert_includes content, "SHARED_BUNDLE_CACHE"
-    assert_includes shared, "${bundle_home} != /home/amber/.bundle"
+  # The bundle itself is installed by the root broker (OPENBSD/usr/local/libexec/rails-task.ksh), which
+  # owns the deployment and without settings and the self-copy guard; OPENBSD/test/test_pub4_admin.rb
+  # holds those. This file holds what amber's own scripts promise.
+  test "deploy script names its shared bundle cache" do
+    assert_includes SCRIPT.read, "SHARED_BUNDLE_CACHE"
   end
 
   test "deploy script delegates to the shared deploy_tracked_app pipeline" do
@@ -44,9 +43,7 @@ class AmberScriptTest < ActiveSupport::TestCase
     assert_includes shared, 'bundle_install_as_app "$APP_NAME" "$APP_DIR"'
     assert_includes shared, "bundle_cas_prepare"
     assert_includes shared, "bundle_cas_capture"
-    assert_includes shared, "bundle config set --local deployment true"
-    assert_includes shared, "bundle config set --local without"
-    assert_includes shared, "development test"
+    assert_includes shared, %(run_rails_as_app "$app_name" "$app_dir" "bundle-install")
     refute_includes content, "bundle install --deployment --without"
   end
 end
