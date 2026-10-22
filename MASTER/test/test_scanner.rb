@@ -311,7 +311,29 @@ class TestScanner < Minitest::Test
     assert_equal [double.call(items)] * 2, [forked, redone]
   end
 
+  # A walk asks a Markdown file the laws a lone scan of it asks, not the Ruby-only ones.
+  def test_a_walk_dispatches_laws_by_language_as_a_lone_scan_does
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "notes.md").tap { |file| File.write(file, "# notes\n") }
+      asked = []
+      laws = [language_law(:ruby, asked), language_law(nil, asked)]
+
+      Master::Fix::Scanner.new(laws:).scan_dir(dir)
+
+      assert_equal [[path, "ANY"]], asked
+    end
+  end
+
   private
+
+  def language_law(lang, asked)
+    law = Class.new do
+      define_singleton_method(:dsl_langs) { Array(lang) }
+      define_method(:id) { lang ? lang.to_s.upcase : "ANY" }
+      define_method(:check) { |_code, path:| (asked << [path, id]) && [] }
+    end
+    law.new
+  end
 
   def git(repo, *args)
     assert system("git", "-C", repo, *args, out: File::NULL, err: File::NULL)

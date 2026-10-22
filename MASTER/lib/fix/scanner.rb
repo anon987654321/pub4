@@ -72,8 +72,10 @@ module Master
 
         def scan(path, depth: :deep, laws: nil)
           validate_depth!(depth)
-          law_set = laws || active_laws(depth)
-          law_set = dispatched_laws(path, law_set) if laws.nil?
+          # A walk hands down the scanner's own set, which is dispatched by language here as a lone scan's is:
+          # undispatched, obs0 asked a Markdown file all 142 laws and the preview 56, and as the finding cache
+          # keys on the laws asked, the preview's walk after obs0 started cold.
+          law_set = dispatched_laws(path, laws || active_laws(depth))
           @file_processor.call(path:, depth:, laws: law_set)
         end
 
