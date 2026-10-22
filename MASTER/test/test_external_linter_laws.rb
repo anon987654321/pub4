@@ -217,6 +217,36 @@ class TestExternalLinterLaws < Minitest::Test
       assert_match(/Style\/Example/, findings.first.message)
     end
   end
+  # With the real linters, a batched run caches exactly what each file alone would report.
+  def test_real_batched_findings_match_single_file_runs
+    laws = Master::Review::Scan::Laws
+    skip "rubocop and reek not installed" unless laws::RubocopLaw.new(root: Master::ROOT).linter_available?("reek")
+
+    Dir.mktmpdir do |root|
+      files = linter_fixtures(root)
+      [laws::RubocopLaw, laws::ReekLaw].each do |klass|
+        assert_equal single_runs(klass.new(root:), files), batched_runs(klass.new(root:), files), klass.name
+      end
+    end
+  end
+
+  def linter_fixtures(root)
+    FileUtils.cp(File.join(Master::ROOT, ".rubocop.yml"), root)
+    { "a.rb" => "def a(x)\n  x.size\nend\n", "b.rb" => "class B\n  def b = 1\nend\n", "c.rb" => "C = 1\n" }
+      .map { |name, text| File.join(root, name).tap { |path| File.write(path, text) } }
+  end
+
+  def single_runs(law, files)
+    files.map { |file| law.check(File.read(file), path: file).map(&:to_h) }
+  end
+
+  # Starts from an empty cache, so every answer comes from the batch.
+  def batched_runs(law, files)
+    FileUtils.rm_rf(File.join(File.dirname(files.first), ".master"))
+    law.prefetch(files)
+    files.map { |file| law.check(File.read(file), path: file).map(&:to_h) }
+  end
+
   # One reek process answers a whole batch, and each file then reads its own share from the cache.
   def test_a_batch_prefetch_spawns_once_and_answers_each_file_from_the_cache
     Dir.mktmpdir do |root|
