@@ -72,6 +72,8 @@ module Operator
     # this file makes attributable. So the queue has a floor under it.
     PICK_BUDGET = Integer(ENV.fetch("PUB4_GATE_COUNCIL_PICKS", "5"))
 
+    class BaselineMutation < StandardError; end
+
     # ok / failed / skipped; skipped is the one that matters.
     Result = Struct.new(:stage, :state, :summary, :changed, :body, keyword_init: true)
 
@@ -181,6 +183,14 @@ module Operator
         "read-only pre-repair proof starting, trees=#{trees.join(", ")}, stages=#{selected.map(&:name).join(", ")}; repair follows",
       )
       status, changed = report(selected, scan_only: true, trees:, return_results: true)
+      if changed.any?
+        paths = changed.first(12).join(", ")
+        more = changed.size > 12 ? " and #{changed.size - 12} more" : ""
+        message = "read-only pre-repair proof changed #{changed.size} path(s): #{paths}#{more}"
+        Master::Trace::Dmesg.status("baseline0", "BLOCKED — #{message}")
+        raise BaselineMutation, message
+      end
+
       snapshot = GateRegression.snapshot(@last_results)
       write_baseline(key, snapshot)
       outcome = case status
@@ -844,8 +854,15 @@ end
     # tools/sweep.rb learned when design_baseline printed its verdict above its
     # detail and "last line" read a detail row as the verdict.
     def verdict(body)
-      summary = body.reverse.find { |line| line.match?(/\A[a-z][a-z_0-9]*:\s/) }
-      (summary || body.last).to_s.strip
+      lines = Array(body).map(&:to_s)
+      aggregate = lines.reverse.find { |line| line.match?(%r{\\Agates\\d+ at rails: \\d+ pass, \\d+ fail\\b}i) }
+      return aggregate.strip if aggregate
+
+      failed = lines.reverse.find do |line|
+        line.match?(%r{\\A[a-z][a-z_0-9]*:\\s.*\\b(?:failed|inconclusive|blocked|error)\\b}i)
+      end
+      summary = lines.reverse.find { |line| line.match?(%r{\\A[a-z][a-z_0-9]*:\\s}) }
+      (failed || summary || lines.last).to_s.strip
     end
 
     # The seam to the council's own diagnosis, not invented here.
