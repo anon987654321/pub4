@@ -48,7 +48,13 @@ module Master
           outer = (@shared_depth || 0).to_i.zero?
           begin_run(root:, max_passes:, bus:, target:) if outer
           @shared_depth = (@shared_depth || 0).to_i + 1
-          result = yield
+          # A startup disk/protected-path abort is already a terminal safety
+          # decision. Do not run trace, research, gates, or model work afterwards.
+          result = if @current&.stopping
+                     Master::Result.err(@current.stopping, category: @current.stop_category)
+                   else
+                     yield
+                   end
           result
         ensure
           if outer
@@ -319,6 +325,9 @@ module Master
         end
         nil
       end
+
+      # Distinguish an infrastructure abort from a graceful/progress timeout.
+      def stop_category = @exit_reason ? :infrastructure : :timeout
 
       # One machine-readable heartbeat a minute, whatever the human line says.
       def machine_beat(now)
