@@ -42,6 +42,11 @@ class GateFailOpenTest < Minitest::Test
     end
   end
 
+  # The run's closing line, in the shape Operator::GateChain and the /fix proof parse.
+  def summary_line(counts, tail)
+    /^gates0 at rails: #{counts} in \S+, autofix (?:on|off); #{Regexp.escape(tail)}$/
+  end
+
   # The one that matters. ok_after is declared after the raising gate, so it only
   # reaches the retired-output log if the run survived the crash. A passing gate
   # prints nothing, so the log beside the ledger is where it has to be found.
@@ -68,9 +73,8 @@ class GateFailOpenTest < Minitest::Test
   # did not earn, and it may not bury the errored gates in a pass total.
   def test_the_summary_names_the_errored_gates_and_does_not_count_them_as_passes
     run_fixture_suite do |out, _status, _ledger|
-      assert_includes out, "gates0 at rails: raiser, missing_class errored and blocked nothing", out
       # Autofix follows the caller's GATE_AUTOFIX, which this test does not set.
-      assert_match(/^gates0 at rails: 2 of 4 passed in \S+, autofix (?:on|off); raiser, missing_class errored$/, out)
+      assert_match(summary_line("2 pass, 0 fail, 0 skip, 0 inconclusive, 2 error", "errored=raiser,missing_class"), out)
     end
   end
 
@@ -78,7 +82,7 @@ class GateFailOpenTest < Minitest::Test
   # news, and the run should stop.
   def test_strict_errors_promotes_a_crash_to_a_blocking_failure
     run_fixture_suite("GATE_STRICT_ERRORS" => "1") do |out, status, _ledger|
-      assert_match(/^gates0 at rails: 2 of 4 passed in \S+, autofix (?:on|off); raiser, missing_class failed$/, out)
+      assert_match(summary_line("2 pass, 2 fail, 0 skip, 0 inconclusive, 0 error", "failed=raiser,missing_class"), out)
       assert_equal 1, status.exitstatus, out
     end
   end
