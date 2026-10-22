@@ -361,6 +361,30 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def test_failed_observation_does_not_make_an_unpersisted_change_look_owned
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "note.txt")
+      File.write(path, "before")
+      tx = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id: "observe-failure").begin!
+      original_persist = tx.method(:persist!)
+      File.write(path, "concurrent or unverified change")
+      tx.define_singleton_method(:persist!) { raise "simulated manifest write failure" }
+
+      result = tx.observe_paths!(["note.txt"])
+
+      refute result.ok?
+      assert_equal :infrastructure, result.category
+      refute tx.observed_current?("note.txt"), "failed persistence must not advance the in-memory ownership fingerprint"
+
+      tx.define_singleton_method(:persist!) { original_persist.call }
+      rollback = tx.rollback!
+
+      refute rollback.ok?
+      assert_equal :policy, rollback.category
+      assert_equal "concurrent or unverified change", File.read(path)
+    end
+  end
+
   def test_enlistment_rejects_a_directory_without_corrupting_the_open_transaction
     Dir.mktmpdir do |dir|
       File.write(File.join(dir, "note.txt"), "before")
