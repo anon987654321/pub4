@@ -64,11 +64,13 @@ module Master
         previous_mode = Master::Fix::AutofixGuard.explicit_mode_override
         previous_max_files = Master::Fix::RunLedger.max_files_override
         previous_blockers = Master::Fix::GateFocus.blockers?
+        previous_plan = Master::Fix::GateFocus.plan?
 
         begin
           Master::Fix::AutofixGuard.mode = overrides[:autofix_mode] if overrides[:autofix_mode]
           Master::Fix::RunLedger.max_files = overrides[:max_files] if overrides[:max_files]
           Master::Fix::GateFocus.blockers! if overrides[:blockers]
+          Master::Fix::GateFocus.plan! if overrides[:plan]
           rendered = dispatch_fix_parsed(
             scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
             apply:, critique:, aesthetic:, only:, target:
@@ -78,6 +80,7 @@ module Master
           Master::Fix::AutofixGuard.restore_mode_override(previous_mode)
           Master::Fix::RunLedger.restore_max_files_override(previous_max_files)
           Master::Fix::GateFocus.restore_blockers(previous_blockers)
+          Master::Fix::GateFocus.restore_plan(previous_plan)
         end
       end
 
@@ -238,7 +241,7 @@ module Master
         baseline = nil
         Master::Fix::GateFocus.reset!
         resume_from_residual(target)
-        if writes_requested
+        if writes_requested || Master::Fix::GateFocus.plan?
           Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: capturing read-only pre-repair baseline")
           baseline = begin
             ::Operator::GateChain.baseline(target:)
@@ -251,7 +254,8 @@ module Master
           end
           # The lexical stage lists every finding; the other stages name what keeps a gate red.
           Master::Fix::GateFocus.note(baseline.except("lexical").values.flatten)
-          Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: baseline ready; starting write-enabled /fix pass")
+          next_step = writes_requested ? "starting write-enabled /fix pass" : "planning, nothing is written"
+          Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: baseline ready; #{next_step}")
         end
         value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
                          target:, apply: writes_requested, critique: effective_critique,
@@ -380,6 +384,7 @@ module Master
 
       PASS_FLAGS = {
         "--dry-run" => [:apply, false], "preview" => [:apply, false], "dry" => [:apply, false],
+        "--plan" => [:apply, false],
         "--no-autofix" => [:apply, false], "no-autofix" => [:apply, false],
         "--apply" => [:apply, true], "apply" => [:apply, true], "fix" => [:apply, true],
         "--no-critique" => [:critique, false], "no-critique" => [:critique, false],
@@ -410,7 +415,8 @@ module Master
       end
 
       def execution_overrides(raw)
-        overrides = { autofix_mode: nil, max_files: nil, blockers: false }
+        plan = raw.to_s.split(/\s+/).any? { |token| token.casecmp?("--plan") }
+        overrides = { autofix_mode: nil, max_files: nil, blockers: false, plan: }
         raw.to_s.split(/\s+/).each do |token|
           if (match = AUTOFIX_FLAG.match(token))
             overrides[:autofix_mode] = match[1]

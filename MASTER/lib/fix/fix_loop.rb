@@ -400,6 +400,7 @@ module Master
           files: by_file.sort_by { |_, n| -n }.first(10).to_h,
           structure:,
           transformation_order: @transformation_plan.operations.map(&:name),
+          blockers: GateFocus.only(files).map { |path| path.delete_prefix("#{@root}/") },
           gaps: @pass_runner.gaps,
           coverage: {
             candidates: @file_collector.candidate_count,

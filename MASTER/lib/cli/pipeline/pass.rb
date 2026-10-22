@@ -527,22 +527,37 @@ def default_apply?(*) = false
         PREVIEW_SHOWN = 6
 
         def preview_lines(value)
-          total = value[:total].to_i
+          [blocker_line(value[:blockers]), *finding_lines(value)].compact.join("\n")
+        end
+
+        # --plan: the files a red gate names come first, because the run would repair them first.
+        def blocker_line(blockers)
+          named = Array(blockers)
+          return if named.empty?
+
+          shown = named.first(PREVIEW_SHOWN).join(", ")
+          "preview blockers: #{named.size} file(s) named by a red gate, first: #{shown}"
+        end
+
+        def finding_lines(value) = (summary_rows(value) + detail_rows(value)).compact.join("\n")
+
+        def summary_rows(value)
+          [total_line(value[:total].to_i), semantic_note(value[:gaps]), preview_row("rules", value[:rules])]
+        end
+
+        def detail_rows(value)
           files = value[:files].to_h.transform_keys { |path| File.basename(path.to_s) }
-          structure = Array(value[:structure])
-          gaps = (value[:gaps] || {}).to_h
-          semantic_gaps = gaps.fetch(:semantic_inconclusive, gaps.fetch("semantic_inconclusive", {})).to_h
-          semantic_note = if semantic_gaps.any?
-            "preview semantic: INCONCLUSIVE, #{semantic_gaps.size} file(s) not measured by model-backed laws"
-          end
-          [
-            "preview: #{total} #{total == 1 ? 'repair' : 'repairs'}",
-            semantic_note,
-            preview_row("rules", value[:rules]),
-            preview_row("files", files),
-            preview_structure_row(structure),
-            preview_row("transformations", { "order" => Array(value[:transformation_order]).join(" > ") }),
-          ].compact.join("\n")
+          order = Array(value[:transformation_order]).join(" > ")
+          [preview_row("files", files), preview_structure_row(Array(value[:structure])),
+           preview_row("transformations", { "order" => order })]
+        end
+
+        def total_line(total) = "preview: #{total} #{total == 1 ? "repair" : "repairs"}"
+
+        def semantic_note(gaps)
+          gaps = (gaps || {}).to_h
+          missing = gaps.fetch(:semantic_inconclusive, gaps.fetch("semantic_inconclusive", {})).to_h
+          "preview semantic: INCONCLUSIVE, #{missing.size} file(s) not measured by model-backed laws" if missing.any?
         end
 
         def preview_structure_row(structure)

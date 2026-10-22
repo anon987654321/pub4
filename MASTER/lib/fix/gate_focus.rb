@@ -15,6 +15,7 @@ module Master
 
       @named = Set.new
       @blockers = false
+      @plan = false
       @lock = Mutex.new
 
       module_function
@@ -33,6 +34,11 @@ module Master
       def blockers! = @lock.synchronize { @blockers = true }
       def blockers? = @lock.synchronize { @blockers == true }
       def restore_blockers(value) = @lock.synchronize { @blockers = value }
+
+      # --plan: this run takes the read-only gate baseline and prints the worklist, writing nothing.
+      def plan! = @lock.synchronize { @plan = true }
+      def plan? = @lock.synchronize { @plan == true }
+      def restore_plan(value) = @lock.synchronize { @plan = value }
 
       def covers?(path)
         text = path.to_s
