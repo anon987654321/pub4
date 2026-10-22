@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Transfers the user-owned history of a persisted guest to a registered
+\nrequire "bcrypt"\nrequire "securerandom"\n# Transfers the user-owned history of a persisted guest to a registered
 # account. Shared signup and OAuth use this one transaction, while optional
 # associations keep the contract portable across Brgen and Amber: Brgen owns
 # conversations, channel messages and trust signals; Amber owns direct inboxes.
@@ -31,7 +31,7 @@ class AccountMerger
       merge_moderation_flags
       invalidate_guest_sessions
       record_merge
-      guest_user.update!(guest: false) if guest_user.respond_to?(:guest=)
+      retire_guest_source
     end
 
     user
@@ -180,6 +180,30 @@ class AccountMerger
                    keeper: user.id
                  ).delete_all
     ::TrustSignal.where(user_id: guest_user.id).update_all(user_id: user.id)
+  end
+
+  # Keep the audit's foreign-key referent, but never turn a synthetic guest
+  # row into an ordinary account. Its sessions are already revoked; clear its
+  # login material and anonymise it so it cannot be authenticated later.
+  def retire_guest_source
+    attributes = {
+      guest: false,
+      deleted_at: Time.current,
+      deletion_scheduled_at: nil,
+      email_address: "merged-#{guest_user.id}-#{SecureRandom.hex(6)}@deleted.invalid",
+      password_digest: BCrypt::Password.create(SecureRandom.hex(32), cost: BCrypt::Engine::MIN_COST),
+      email_verified_at: nil,
+      email_verification_token: nil,
+      magic_link_token: nil,
+      magic_link_expires_at: nil,
+      remember_token: nil,
+      remember_token_expires_at: nil,
+      otp_secret: nil,
+      two_factor_enabled: false,
+      updated_at: Time.current
+    }
+    attributes.select! { |column, _value| guest_user.has_attribute?(column) }
+    guest_user.update_columns(attributes)
   end
 
   def record_merge
