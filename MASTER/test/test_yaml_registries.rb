@@ -347,13 +347,16 @@ end
 
 class TestConstitutionYamlLoading < Minitest::Test
   # These run without booting Master: the commit-msg hook, the standalone
-  # ratchet instrument and a test file that requires nothing but minitest.
+  # ratchet instrument, a test file that requires nothing but minitest, and the
+  # two readers bin/operator loads bare (`affiliate`, the inter-model measure).
   ALLOWED_DIRECT_LOADS = %w[
     lib/master.rb
     spec/static_syntax_spec.rb
     lib/ground/commit_format.rb
     lib/operator/ratchets.rb
     test/test_future_face.rb
+    lib/finance/tradedoubler.rb
+    lib/review/council/inter_model_contract.rb
   ].freeze
 
   def test_data_yml_runtime_readers_use_master_loader

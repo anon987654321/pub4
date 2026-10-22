@@ -13,7 +13,8 @@ class TestLawVocabulary < Minitest::Test
     /\bscanner\.rules\b/,
     /\bLaw\.rules\b/,
     /\bRule\s*=\s*Law\b/,
-    /<\s*Rule\b/,
+    # Subclassing the old scanner Rule; `rules << Rule.new` in scss_parser is a CSS rule.
+    /\bclass\s+\S+\s*<\s*Rule\b/,
   ].freeze
 
   def files

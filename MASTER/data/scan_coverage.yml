@@ -32,6 +32,9 @@ scan_coverage:
   # is handled where it belongs, in tools/security_sweep.rb.
   - law
   - plugins
+  # The adapters MASTER reaches its sibling trees through; lib loads them at runtime
+  # (lib/io/media_intent.rb requires contracts/studio).
+  - contracts
   # Not scanned, and why. A reason is required: the lint fails on a blank one,
   # because "exempt: true" records the exemption without recording the argument,
   # and the argument is the part that rots.
@@ -57,13 +60,6 @@ scan_coverage:
       outside the runtime. Exempt from SelfCheck only: lib/operator/self_findings.rb
       counts MASTER/tools under its ratchet, so a finding here is measured and
       cannot grow silently.
-    web: >-
-      A Rails application with its own gates (bin/check --profile=web,
-      test:web_ui, test:integration_web). MASTER's scanner law is written for the
-      runtime, and applying rules like DENSITY to ERB-adjacent controllers
-      produces findings nobody acts on. The face law (FOR_OF, TEMPLATE_LITERALS,
-      NO_JQUERY and the rest) is still counted: lib/operator/self_findings.rb reads
-      RAILS/master under its ratchet, skipping only generated bundles.
     gates: >-
       Gates are executable instruments, not runtime source. They have their own
       manifest (gates/gates.yml) and runner, and the gate suite is the check that

@@ -96,10 +96,13 @@ class TestScanSpeedPaths < Minitest::Test
   end
 
   def test_scan_progress_reports_the_active_law_and_nested_laws_yml_detector
+    # Declared here so the ensure below can reach them.
+    processor = token = monitor = nil
+    previous_path = ENV["GATE_PROGRESS_FILE"]
+    previous_enabled = ENV["MASTER_SCAN_PROGRESS"]
+
     Dir.mktmpdir do |dir|
       progress = File.join(dir, "progress.json")
-      previous_path = ENV["GATE_PROGRESS_FILE"]
-      previous_enabled = ENV["MASTER_SCAN_PROGRESS"]
       ENV["GATE_PROGRESS_FILE"] = progress
       ENV["MASTER_SCAN_PROGRESS"] = "1"
 
@@ -157,7 +160,7 @@ class TestScanSpeedPaths < Minitest::Test
         File.write(path, source)
         result = processor.send(:read_file, path)
 
-        assert result.ok?, "#{name}: #{result.message}"
+        assert result.ok?, -> { "#{name}: #{result.message}" }
         assert_equal source, result.value!, name
       end
 

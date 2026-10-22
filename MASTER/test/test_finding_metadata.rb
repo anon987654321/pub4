@@ -39,10 +39,11 @@ class TestFindingMetadata < Minitest::Test
     findings = rule.send(:parse_findings, "PATTERN_EXTRACTION:12:extract strategy", scoped)
 
     assert_equal 1, findings.size
-    assert_equal "PATTERN_EXTRACTION", findings.first.law_id
-    assert_equal "PATTERN_EXTRACTION", findings.first.rule
-    assert_equal "surgical", findings.first.reversibility
-    assert_equal({ "files_touched" => 2 }, findings.first.blast_radius)
+    finding = findings.first
+    assert_equal "PATTERN_EXTRACTION", finding.law_id
+    assert_equal "PATTERN_EXTRACTION", finding.law.to_s
+    assert_equal "surgical", finding.reversibility
+    assert_equal({ "files_touched" => 2 }, finding.blast_radius)
   end
 end
 
