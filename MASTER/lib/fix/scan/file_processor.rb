@@ -6,6 +6,7 @@ require "json"
 require "prism"
 require "timeout"
 require_relative "law_timing"
+require_relative "semantic_verdicts"
 require_relative "../../review/scan/semantic_fingerprint"
 require_relative "../../review/scan/law_health"
 require_relative "../../operator/lock_sweep"
@@ -22,6 +23,8 @@ module Master
         MAX_LINES = 10_000
         STYLE_EXTENSIONS = %w[.css .scss].freeze
         STYLE_MAX_LINES = 12_000
+        OUTSIDE_SAMPLE = "clean file, outside sample"
+        UNCHANGED = "unchanged since a clean semantic read"
         PROGRESS_POLL_SECONDS = 1.0
         PROGRESS_IDLE_GRACE_SECONDS = 3.0
         PROGRESS_HEARTBEAT_SECONDS = 5.0
@@ -38,6 +41,7 @@ module Master
           @skip_semantic = skip_semantic
           @semantic_gap_mutex = Mutex.new
           @semantic_gaps = {}
+          @verdicts = SemanticVerdicts.new
           @semantic_gap_notice_emitted = false
           @progress_path = ENV.fetch("GATE_PROGRESS_FILE", "").to_s
           @progress_writer_id = "#{Process.pid}-#{object_id}"
@@ -191,9 +195,17 @@ module Master
           # findings. A fatal deterministic hit must not suppress meaning-based
           # assessment of the same file; otherwise one early result can hide the
           # other streams.
-          return skip_semantic(path:, laws: semantic, findings:) unless semantic_due?(findings, path)
+          unless semantic_due?(findings, path)
+            note_skip(path:, laws: semantic, reason: OUTSIDE_SAMPLE)
+            return findings
+          end
 
-          findings.concat(run_law_pass(pass: :semantic, laws: semantic, code:, ast:, path:))
+          if unchanged_clean?(path, code, semantic)
+            note_skip(path:, laws: semantic, reason: UNCHANGED)
+            return findings
+          end
+
+          findings.concat(read_semantic(path:, code:, ast:, laws: semantic))
         end
 
         # 74 of the 225 declared rules reach a file only through the semantic
@@ -228,9 +240,22 @@ module Master
           path.to_s.delete_prefix("#{Master::ROOT}/")
         end
 
-        def skip_semantic(path:, laws:, findings:)
-          @bus&.publish("scan:semantic_skipped", path:, law_count: laws.size, reason: "clean file, outside sample")
-          findings
+        # Content and semantic law set a model already read clean.
+        def unchanged_clean?(path, code, laws)
+          @verdicts.clean?(relative_progress_path(path), code:, laws:)
+        end
+
+        # Records the file clean only when every semantic law answered: an inconclusive read leaves a gap.
+        def read_semantic(path:, code:, ast:, laws:)
+          semantic = run_law_pass(pass: :semantic, laws:, code:, ast:, path:)
+          relative = relative_progress_path(path)
+          answered = !@semantic_gap_mutex.synchronize { @semantic_gaps.key?(relative) }
+          @verdicts.record(relative, code:, laws:) if answered && semantic.empty?
+          semantic
+        end
+
+        def note_skip(path:, laws:, reason:)
+          @bus&.publish("scan:semantic_skipped", path:, law_count: laws.size, reason:)
         end
 
         def partition_laws(law_set, ast)
