@@ -90,6 +90,15 @@ class UserPurgeJobTest < ActiveJob::TestCase
 
     sent = Message.create!(sender: @user, recipient: @other, body: "Private message sent")
     received = Message.create!(sender: @other, recipient: @user, body: "Private message received")
+    private_message_reaction = Shared::Reaction.create!(user: @other, reactable: sent, kind: "love")
+    private_message_notification = Shared::Notification.create!(
+      user: @other, actor: @other, notifiable: received, kind: "message"
+    )
+    private_message_vote = Vote.create!(user: @other, votable: received, value: 1)
+    private_message_click = Shared::OutboundClick.create!(
+      app: "amber", url_host: "merchant.example", subject_type: "Message", subject_id: sent.id,
+      user_id: @other.id, guest: false, created_at: Time.current
+    )
     Follow.create!(follower: @user, followee: @other)
     Follow.create!(follower: @other, followee: @user)
     Connection.create!(requester: @user, addressee: @other, status: "accepted")
@@ -149,6 +158,10 @@ class UserPurgeJobTest < ActiveJob::TestCase
     assert_not Recommendation.exists?(other_recommendation.id), "recommendation leaked a private item"
     assert_nil other_challenge.reload.outfit_id, "another account's challenge retained the deleted outfit id"
     assert_empty Message.where(id: [sent.id, received.id]), "private inbox messages survived erasure"
+    refute Shared::Reaction.exists?(private_message_reaction.id), "reaction retained a private message target"
+    refute Shared::Notification.exists?(private_message_notification.id), "notification retained a private message target"
+    refute Vote.exists?(private_message_vote.id), "vote retained a private message target"
+    refute Shared::OutboundClick.exists?(private_message_click.id), "outbound click retained a private message target"
     assert_empty Follow.where("follower_id = :id OR followee_id = :id", id: @user.id)
     assert_empty Connection.where("requester_id = :id OR addressee_id = :id", id: @user.id)
     assert_empty Shared::Reaction.where(user_id: @user.id)
