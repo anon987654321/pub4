@@ -209,9 +209,9 @@ test("chat and mission control share accessible Ghostty-inspired session tabs", 
   }
   assert.match(chatIndex, /href="\/" aria-current="page"/);
   assert.match(dashboard, /href="\/dashboard" aria-current="page"/);
-  assert.match(faceMotion, /\.master-session-tab\[aria-current="page"\]::after/);
-  assert.match(faceMotion, /@media \(min-width: 480px\)/);
-  assert.match(faceMotion, /\.master-session-tab:focus-visible/);
+  assert.match(faceChrome, /\.master-session-tab\[aria-current="page"\]::after/);
+  assert.match(faceChrome, /@media \(min-width: 480px\)/);
+  assert.match(faceChrome, /\.master-session-tab:focus-visible/);
 });
 
 test("canonical theme token reaches CSS, routes and PWA manifest", () => {
