@@ -21,6 +21,26 @@ module Master
             ENV["MASTER_SCAN_DETERMINISTIC"] != "1"
         end
 
+        # Endings that stop a run without saying its delivered work was wrong. A run that committed
+        # verified fixes and then plateaued or ran out of time did useful work, and calling it a
+        # failure hid every fix /fix ever landed behind the same verdict as a crash.
+        PARTIAL_ENDINGS = %i[plateau timeout blocked human_decision inconclusive].freeze
+
+        # :done, :partial, :incomplete or :failed, from the loop's result and the commits it made.
+        def self.fix_outcome(ok:, msg:, delivered:)
+          ending = fix_ending(msg)
+          return :done if ok && !halted?(ending)
+          return :partial if delivered.positive? && PARTIAL_ENDINGS.include?(ending)
+
+          ok ? :incomplete : :failed
+        end
+
+        def self.fix_ending(msg) = msg.to_s.match(/\A([A-Z_]+):/)&.captures&.first&.downcase&.to_sym
+
+        def self.halted?(ending)
+          !ending.nil? && ending != :done && Master::Fix::FixLoop::TERMINAL_STATES.include?(ending)
+        end
+
         def initialize(scanner:, fix_loop:, root:, deliberation: nil, bus: nil, swarm: nil)
           @failed_stages = []
           @causes = {}
@@ -367,21 +387,9 @@ def default_apply?(*) = false
           # Claim the same execution slot around an interactive /fix so the control
           # plane cannot fetch, rebase or deploy while the fix loop is mutating main.
           claimed = Master::Ops::LoopOwner.with_claim("fix") do
+            head = git.head
             result = @fix_loop.run(abs, requested: true)
-            unless result.ok?
-              fail_stage("fix", result.message)
-              Master::Trace::Dmesg.status("fix0", "failed, #{result.message}")
-              next "fix failed: #{result.message}"
-            end
-
-            msg = result.value!.to_s
-            if non_success_fix_terminal?(msg)
-              fail_stage("fix", msg)
-              Master::Trace::Dmesg.status("fix0", "incomplete, #{msg[0, 120]}")
-              next "fix incomplete: #{msg}"
-            end
-            Master::Trace::Dmesg.status("fix0", msg[0, 120])
-            msg
+            fix_verdict(result, fix_commits_since(head))
           end
           return claimed unless claimed == false
 
@@ -391,6 +399,39 @@ def default_apply?(*) = false
           "fix failed: loop slot held by #{holder["loop"]} pid #{holder["pid"]}"
         rescue StandardError => e
           stage_failure("fix", "fix0", e)
+        end
+
+        def fix_verdict(result, delivered)
+          ok = result.ok?
+          msg = ok ? result.value!.to_s : result.message.to_s
+          outcome = self.class.fix_outcome(ok:, msg:, delivered:)
+          return fix_done(msg) if outcome == :done
+          return fix_partial(msg, delivered) if outcome == :partial
+
+          fail_stage("fix", msg)
+          Master::Trace::Dmesg.status("fix0", "#{outcome}, #{msg[0, 120]}")
+          "fix #{outcome}: #{msg}"
+        end
+
+        def fix_done(msg)
+          Master::Trace::Dmesg.status("fix0", msg[0, 120])
+          msg
+        end
+
+        def fix_partial(msg, delivered)
+          Master::Trace::Dmesg.status("fix0", "partial, #{delivered} commit(s) delivered; stopped #{msg[0, 100]}")
+          "fix partial: #{delivered} verified commit(s) delivered; stopped: #{msg}"
+        end
+
+        # Commits /fix made since head: each carries MASTER's trailer, so another writer's commits
+        # in the shared checkout are not counted.
+        def fix_commits_since(head)
+          return 0 if head.to_s.empty?
+
+          trailer = "--grep=#{Master::Core::World::COMMIT_TRAILER}"
+          command = ["git", "-C", @root.to_s, "rev-list", "--count", trailer, "#{head}..HEAD"]
+          out, status = Master::Io::Exec.capture2e(*command)
+          status.success? ? out.to_i : 0
         end
 
         # One place decides what a stage exception means. Defects propagate;

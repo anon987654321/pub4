@@ -198,6 +198,7 @@ module Master
                      recurring_violations:, consecutive_clean:, wishlist_proposals: [], run_id: nil)
           pass_mtimes = mtimes(files)
           @pass_progress = false
+          @human_decision_required = false
           @coverage_reporter&.call(target, pass)
           start_pass_transaction(files:, target:, pass:, transaction_id:, run_id:)
           found, streamed = observe_pass(files, target, pass, deadline)
@@ -251,14 +252,17 @@ module Master
 
         private
 
+        # A finding that needs a person was never applied, so it does not taint the pass's other
+        # repairs: they are delivered, and the finding is reported for a person. Ending the run here
+        # threw away every verified fix of the pass and stopped the run on any one such finding.
         def deliver_pass(found, files, pass)
-          if @human_decision_required
-            @committer.abort_transaction!
-            return PassResult.new(status: :human_decision, consecutive_clean: 0, message: "human decision required before continuing autofix")
-          end
           delivery = @committer.finish_transaction("fix_loop: pass #{pass}", findings: found, owned_paths: files)
           return PassResult.new(status: :delivery_failed, consecutive_clean: 0, message: delivery.message) if delivery.err?
 
+          if @human_decision_required
+            Master::Trace::Dmesg.status("fix0", "pass #{pass}: a finding needs a person and was left; " \
+                                                  "the rest was delivered")
+          end
           PassResult.new(status: :continue, consecutive_clean: 0)
         end
 
