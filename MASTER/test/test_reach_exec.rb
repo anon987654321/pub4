@@ -9,10 +9,23 @@ class TestReachExec < Minitest::Test
 
   def test_process_spawn_closes_an_inherited_master_lock_fd
     original = ENV["MASTER_PROCESS_LOCK_FD"]
+    File.open(__FILE__) do |lock|
+      ENV["MASTER_PROCESS_LOCK_FD"] = lock.fileno.to_s
+      options = Master::Io::ProcessSpawn.options(pgroup: true)
+      assert_equal :close, options.fetch(lock.fileno)
+      assert options[:close_others]
+    end
+  ensure
+    original.nil? ? ENV.delete("MASTER_PROCESS_LOCK_FD") : ENV["MASTER_PROCESS_LOCK_FD"] = original
+  end
+
+  # A variable naming a descriptor no longer held made every spawn fail with EBADF.
+  def test_a_stale_lock_fd_does_not_break_spawning
+    original = ENV["MASTER_PROCESS_LOCK_FD"]
     ENV["MASTER_PROCESS_LOCK_FD"] = "91"
-    options = Master::Io::ProcessSpawn.options(pgroup: true)
-    assert_equal :close, options.fetch(91)
-    assert options[:close_others]
+
+    refute Master::Io::ProcessSpawn.options.key?(91)
+    assert E.capture2(RbConfig.ruby, "-e", "print 1").last.success?
   ensure
     original.nil? ? ENV.delete("MASTER_PROCESS_LOCK_FD") : ENV["MASTER_PROCESS_LOCK_FD"] = original
   end

@@ -12,8 +12,18 @@ module Master
         result = options.dup
         result[:close_others] = true unless result.key?(:close_others)
         lock_fd = ENV["MASTER_PROCESS_LOCK_FD"].to_i
-        result[lock_fd] = :close if lock_fd.positive?
+        result[lock_fd] = :close if lock_fd.positive? && open_fd?(lock_fd)
         result
+      end
+
+      # A variable naming a descriptor this process no longer holds made every spawn fail with
+      # EBADF, the disk check that guards each gate child included. Only an open one is closed.
+      def open_fd?(descriptor)
+        IO.for_fd(descriptor, autoclose: false)
+
+        true
+      rescue Errno::EBADF
+        false
       end
     end
   end
