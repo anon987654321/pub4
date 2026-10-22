@@ -47,7 +47,7 @@ class AccountMergerAndModerationTest < ActiveSupport::TestCase
       last_read_at: member_read
     )
     message = Message.create!(
-      conversation_id: conversation.id, sender_id: @guest.id,
+      conversation: conversation, sender: @guest,
       content: "History survives account conversion", message_type: "text"
     )
     guest_receipt = MessageReceipt.find_or_create_by!(message_id: message.id, user_id: @guest.id)
