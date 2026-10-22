@@ -40,7 +40,7 @@ module Master
         with_lock do
           data = load
           resumable = data["runs"].reverse.find { |run| RESUMABLE_STATES.include?(run["state"].to_s) }
-          resumable = nil if resumable && release_elsewhere(resumable, target)
+          resumable = nil if resumable && (release_elsewhere(resumable, target) || release_spent(resumable))
           next resume_existing_run(resumable, target, data) if resumable
 
           create_new_run(target:, files:, max_passes:, budget_seconds:, data:)
@@ -140,6 +140,22 @@ module Master
         previous = run["state"]
         run["state"] = "interrupted"
         run["message"] = same_process ? "left #{previous}; #{relative(target)} followed in the same process" : "left #{previous}; #{relative(target)} started while its process was gone"
+        run["finished_at"] = Time.now.utc.iso8601
+        emit("fix:interrupted", run_id: run["id"], target: run["target"], previous_state: previous)
+        true
+      end
+
+      # A run whose budget ran out while no process held it is over, not resumable. A MASTER run
+      # that stopped on 2026-10-21 with thirty minutes of budget was resumed the next morning
+      # with none left, and every /fix after it ended "budget exhausted before resume" without
+      # trying a file. A live run keeps its own deadline, and one stopped mid-pass is resumed so its
+      # transaction is recovered. True when the run was released.
+      def release_spent(run)
+        return false if process_alive?(run["pid"]) || active_pass(run) || remaining_for(run).positive?
+
+        previous = run["state"]
+        run["state"] = "interrupted"
+        run["message"] = "left #{previous} with its budget spent; a new run started"
         run["finished_at"] = Time.now.utc.iso8601
         emit("fix:interrupted", run_id: run["id"], target: run["target"], previous_state: previous)
         true

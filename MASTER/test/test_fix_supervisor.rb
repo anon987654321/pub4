@@ -114,6 +114,47 @@ class FixSupervisorTest < Minitest::Test
     end
   end
 
+  # A crashed run whose deadline passed while nothing ran it gives way to a new run.
+  def test_a_spent_run_is_not_resumed
+    Dir.mktmpdir do |root|
+      journal, old_id = spent_run(root, mid_pass: false)
+      fresh = start_master(journal, root)
+
+      refute_equal old_id, fresh["id"]
+      assert fresh["remaining_seconds"].positive?
+      assert_equal "interrupted", journal.history.find { |row| row["id"] == old_id }["state"]
+    end
+  end
+
+  # One stopped mid-pass still holds a transaction, so it is resumed for recovery, spent or not.
+  def test_a_spent_run_stopped_mid_pass_is_resumed
+    Dir.mktmpdir do |root|
+      journal, old_id = spent_run(root, mid_pass: true)
+
+      assert_equal old_id, start_master(journal, root)["id"]
+    end
+  end
+
+  def start_master(journal, root)
+    target = File.join(root, "MASTER")
+    FileUtils.mkdir_p(target)
+    journal.start_or_resume(target:, files: [target], max_passes: 1, budget_seconds: 60)
+  end
+
+  # A MASTER run that crashed, with its deadline an hour gone and no process holding it.
+  def spent_run(root, mid_pass:)
+    journal = Master::Fix::RunJournal.new(root:)
+    id = start_master(journal, root).fetch("id")
+    journal.pass_start(id, 1, transaction_id: "tx-1") if mid_pass
+    journal.crash(id, "stopped")
+
+    path = File.join(root, ".master", "fix_runs.json")
+    data = JSON.parse(File.read(path))
+    data["runs"].find { |row| row["id"] == id }.merge!("deadline_at" => (Time.now.utc - 3600).iso8601, "pid" => 0)
+    File.write(path, JSON.generate(data))
+    [journal, id]
+  end
+
   def test_same_process_can_advance_a_sequential_target_queue
     Dir.mktmpdir do |root|
       first = File.join(root, "MASTER")

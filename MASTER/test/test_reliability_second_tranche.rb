@@ -407,15 +407,15 @@ class TestReliabilitySecondTranche < Minitest::Test
   def test_fix_journal_preserves_the_original_deadline
     Dir.mktmpdir("master-journal") do |root|
       journal = Master::Fix::RunJournal.new(root:)
-      first = journal.start_or_resume(target: root, files: [], max_passes: 5, budget_seconds: 1)
+      first = journal.start_or_resume(target: root, files: [], max_passes: 5, budget_seconds: 600)
       journal.send(:persist, {
         "version" => 1,
-        "runs" => [first.merge("state" => "crashed", "pid" => 0, "deadline_at" => (Time.now.utc - 1).iso8601)],
+        "runs" => [first.merge("state" => "crashed", "pid" => 0, "deadline_at" => (Time.now.utc + 5).iso8601)],
       })
-      resumed = journal.start_or_resume(target: root, files: [], max_passes: 5, budget_seconds: 1)
+      resumed = journal.start_or_resume(target: root, files: [], max_passes: 5, budget_seconds: 600)
 
       assert resumed["resumed"]
-      assert_operator resumed["remaining_seconds"], :<=, 0
+      assert_operator resumed["remaining_seconds"], :<=, 5
     end
   end
 
