@@ -35,6 +35,15 @@ module Master
           ok ? :incomplete : :failed
         end
 
+        # The run in one line: how it ended, what it delivered, the findings before and after, the
+        # proof's verdict and the gaps, so an incomplete run says what it did and what it left.
+        def self.scorecard(outcome:, delivered:, counts: [], proof: nil, gaps: 0)
+          before, after = counts
+          findings = after && before ? "#{after} finding(s), was #{before}" : "#{before || after || "?"} finding(s)"
+          ["fix #{outcome}", "#{delivered} commit(s) delivered", findings, proof || "no proof ran",
+           "#{gaps} gap(s)"].join(" · ")
+        end
+
         def self.fix_ending(msg) = msg.to_s.match(/\A([A-Z_]+):/)&.captures&.first&.downcase&.to_sym
 
         def self.halted?(ending)
@@ -121,6 +130,7 @@ module Master
                                    "--only takes #{STAGES.join(", ")} (council is a spelling of critique)"]
           end
           sections.concat(guarded_fix_sections(resolved:, shell:, posture:, aesthetic:, critique:)) if run?("fix")
+          sections << ["scorecard", scorecard_line] if @scored
           sections << ["council", COUNCIL_OFFER] if offer_council?(critique)
           sections << critique_section(resolved, shell) if critique && run?("critique") && !run?("fix")
           sections << ["principle map", log_phase("map0", "principle_map", nil) { map_line }] if run?("map")
@@ -128,6 +138,16 @@ module Master
         end
 
         COUNCIL_OFFER = "not run during /fix; /critique convenes it on this result"
+
+        def scorecard_line
+          counts = @observation_totals.values_at("obs0", "obs1")
+          line = self.class.scorecard(**@scored, counts:, proof: @proof_verdict, gaps: fix_gaps)
+          Master::Trace::Dmesg.status("fix0", line)
+          line
+        end
+
+        # :reek:ManualDispatch -- test doubles for the fix loop do not count gaps
+        def fix_gaps = @fix_loop.respond_to?(:gap_count) ? @fix_loop.gap_count : 0
 
         # Offered after a /fix that read the tree and did not convene the council.
         def offer_council?(critique) = run?("fix") && @apply && !critique && !@failed_stages.include?("instruments")
@@ -405,6 +425,7 @@ def default_apply?(*) = false
           ok = result.ok?
           msg = ok ? result.value!.to_s : result.message.to_s
           outcome = self.class.fix_outcome(ok:, msg:, delivered:)
+          @scored = { outcome:, delivered: }
           return fix_done(msg) if outcome == :done
           return fix_partial(msg, delivered) if outcome == :partial
 

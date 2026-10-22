@@ -109,6 +109,9 @@ module Master
         @sweeps = build_sweeps(agent:, root:, bus:, ground_truth:, preserve_user_intent:)
       end
 
+      # Files the last run could not scan, read semantically, or finish a stage on, for its scorecard.
+      def gap_count = Array(@pass_runner&.gaps&.values).sum(&:size)
+
       # What /fix measures with, tried before anything is read: the check run_journaled repeats on entry.
       def instrument_failures = InstrumentCheck.new(root: @root, bus: @bus).broken
 

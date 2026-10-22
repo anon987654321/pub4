@@ -54,4 +54,16 @@ class TestFixPartialOutcome < Minitest::Test
     assert status.success?, "git #{args.join(" ")} failed: #{output}"
     output
   end
+
+  def test_the_scorecard_says_what_the_run_did_and_left
+    line = Pass.scorecard(outcome: :partial, delivered: 3, counts: [900, 412],
+                          proof: "proof: 9 of 20; no new failures", gaps: 2)
+
+    assert_equal "fix partial · 3 commit(s) delivered · 412 finding(s), was 900 · " \
+                 "proof: 9 of 20; no new failures · 2 gap(s)", line
+  end
+
+  def test_a_scorecard_without_a_proof_says_so
+    assert_includes Pass.scorecard(outcome: :failed, delivered: 0, counts: [10]), "no proof ran"
+  end
 end
