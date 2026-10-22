@@ -483,7 +483,7 @@ module Master
             dir = File.expand_path(File.join(@dir, "files"))
             valid = item["link"].nil? && File.dirname(File.expand_path(store)) == dir &&
                     File.basename(store).match?(/\A#{Regexp.escape(encoded(path))}(?:\.[0-9a-f]{16})?\z/) &&
-                    (!%w[open delivering].include?(state) || (File.file?(store) && !File.symlink?(store)))
+                    !File.symlink?(store) && !File.directory?(store) && (!%w[open delivering].include?(state) || File.file?(store))
             raise "transaction manifest snapshot invalid: #{path}" unless valid
           else
             raise "transaction manifest snapshot invalid: #{path}" if item["link"] || item["store"]
