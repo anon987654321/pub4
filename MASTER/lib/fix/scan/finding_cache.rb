@@ -111,13 +111,20 @@ module Master
           read(entry_path(subject), key(subject))
         end
 
+        # A linter that failed to answer is not an answer: kept, its "scan error" replayed on unchanged text
+        # long after the linter recovered, and refused a commit whose file rubocop judged cleanly.
         def record(subject, findings)
           return unless self.class.enabled? && !subject.laws.empty?
+          return if Array(findings).any? { |finding| scan_error?(finding) }
 
           write(entry_path(subject), key: key(subject), findings:)
         end
 
         private
+
+        def scan_error?(finding)
+          finding.to_h[:message].to_s.include?(": scan error")
+        end
 
         def entry_path(subject)
           asked = subject.laws.map { |law| law.id.to_s }.sort

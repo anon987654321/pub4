@@ -60,6 +60,19 @@ class TestFindingCache < Minitest::Test
     assert_equal 2, calls.size
   end
 
+  # A linter that failed is asked again next time instead of replaying its failure.
+  def test_a_scan_error_is_not_kept
+    calls = []
+    2.times do
+      cache.fetch(Master::Fix::Scan::FindingCache::Subject.new("a.rb", "x = 1\n", [PureLaw.new], nil)) do
+        calls << :ran
+        [{ law: :rubocop, line: 1, message: "rubocop: scan error — empty JSON stdout" }]
+      end
+    end
+
+    assert_equal 2, calls.size
+  end
+
   # Symbols and Finding survive the trip, or a replayed finding matches no reader.
   def test_the_replay_keeps_findings_and_symbols
     fetch("x = 1\n")
