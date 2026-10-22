@@ -56,6 +56,50 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def test_transaction_refuses_a_symlinked_state_directory_before_writing
+    Dir.mktmpdir do |base|
+      root = File.join(base, "repo")
+      outside = File.join(base, "outside")
+      FileUtils.mkdir_p([root, outside])
+      File.symlink(outside, File.join(root, ".master"))
+
+      tx = Master::Fix::Transaction.new(root:, paths: [], id: "state-symlink")
+      error = assert_raises(RuntimeError) { tx.begin! }
+
+      assert_includes error.message, "MASTER state directory is a symlink"
+      assert_empty Dir.children(outside)
+      refute tx.active?
+    end
+  end
+
+  def test_recovery_refuses_a_symlinked_snapshot_storage_directory
+    Dir.mktmpdir do |base|
+      root = File.join(base, "repo")
+      outside = File.join(base, "outside")
+      FileUtils.mkdir_p([root, outside])
+      path = File.join(root, "note.txt")
+      File.write(path, "before")
+      id = "snapshot-symlink"
+      tx = Master::Fix::Transaction.new(root:, paths: [path], id:).begin!
+      files = File.join(root, ".master", "fix_transactions", id, "files")
+      moved = File.join(base, "saved-snapshots")
+      FileUtils.mv(files, moved)
+      File.write(File.join(outside, "sentinel"), "do not touch")
+      File.symlink(outside, files)
+      tx.send(:release_lock)
+      tx.instance_variable_set(:@active, false)
+
+      recovery = Master::Fix::Transaction::Recovery.recover!(root:, id:)
+
+      refute recovery.ok?
+      assert_equal :infrastructure, recovery.category
+      assert_includes recovery.message, "transaction snapshot directory is a symlink"
+      assert_equal "do not touch", File.read(File.join(outside, "sentinel"))
+      assert_equal "before", File.read(path)
+      assert Master::Fix::Transaction::Recovery.persisted?(root:, id:)
+    end
+  end
+
   def test_transaction_refuses_unsupported_directory_paths_without_leaving_a_partial_snapshot
     Dir.mktmpdir do |dir|
       tx = Master::Fix::Transaction.new(root: dir, paths: ["."], id: "directory-path")
