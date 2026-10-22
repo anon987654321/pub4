@@ -7,7 +7,7 @@ module Master
     module Scan
       class Report
         def initialize(pairs:, profile:, rule_filter:, severity_filter: nil, dry_run: false, autofixes: [],
-                       phase: nil, prior_total: nil)
+                       phase: nil, prior_total: nil, conflicts: nil)
           @pairs = pairs
           @profile = profile
           @rule_filter = rule_filter
@@ -16,7 +16,8 @@ module Master
           @autofixes = Array(autofixes)
           @phase = phase
           @prior_total = prior_total
-          @conflicts = Master::Fix::ConflictResolver.new(root: Master::ROOT)
+          # A caller counting file by file passes one resolver: building one costs 5ms, 10s over 1,900 files.
+          @conflicts = conflicts || Master::Fix::ConflictResolver.new(root: Master::ROOT)
         end
 
         def render

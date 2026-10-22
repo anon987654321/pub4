@@ -62,8 +62,9 @@ end
         return unless on_counts && holder[:pairs]
 
         profile, rule_filter, severity_filter = holder[:filters]
+        conflicts = Master::Fix::ConflictResolver.new(root: Master::ROOT)
         counts = holder[:pairs].to_h do |pair|
-          report = Scan::Report.new(pairs: [pair], profile:, rule_filter:, severity_filter:, dry_run:)
+          report = Scan::Report.new(pairs: [pair], profile:, rule_filter:, severity_filter:, dry_run:, conflicts:)
           [pair.first.to_s, report.total_count]
         end
         on_counts.call(counts.reject { |_path, count| count.zero? })
