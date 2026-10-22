@@ -5,6 +5,7 @@ require "yaml"
 require "tmpdir"
 require "digest"
 require "set"
+require_relative "gates/method_swap"
 require_relative "../../MASTER/gates/lib/rendered/browser_diagnostics"
 require_relative "../../MASTER/gates/lib/rendered_suite"
 
@@ -44,6 +45,8 @@ class BrowserDiagnosticsFakeCdp
 end
 
 class BrowserDiagnosticsGateTest < Minitest::Test
+  include MethodSwap
+
   ROOT = File.expand_path("../..", __dir__)
   SURFACE = Deploy::GeometryProbe::Surface.new(
     app: "brgen", label: "marketplace_listings", host: "markedsplass.brgen.no",
@@ -257,17 +260,8 @@ class BrowserDiagnosticsGateTest < Minitest::Test
     end
   end
 
-  # Swapped by hand, not with stub: minitest 6 ships stub in a separate gem.
-  def with_visual_baseline(baseline)
-    real = Deploy::BrowserDiagnosticsGate.method(:visual_baseline_path)
-    Deploy::BrowserDiagnosticsGate.define_singleton_method(:visual_baseline_path) { |_surface| baseline }
-    yield
-  ensure
-    Deploy::BrowserDiagnosticsGate.define_singleton_method(:visual_baseline_path, real)
-  end
-
   def pixel_evidence(gate, baseline:, current:, dir:, surface: SURFACE)
-    with_visual_baseline(baseline) do
+    swap_value(Deploy::BrowserDiagnosticsGate, :visual_baseline_path, baseline) do
       gate.send(:pixel_evidence, surface:, screenshot: current, screenshot_dir: dir,
                 screenshot_error: nil)
     end
