@@ -25,7 +25,7 @@ class RerenderedFormErrorsTest < Minitest::Test
 
   def find_view(root, name)
     Dir.glob(File.join(root, "app/views/#{name}.html.erb")).first ||
-      Dir.glob(File.join(ROOT, "{#{APPS.join(',')}}/{app,engines/*/app}/views/#{name}.html.erb")).first
+      Dir.glob(File.join(ROOT, "{#{APPS.join(',')},#{EngineRoots::GLOB}}/app/views/#{name}.html.erb")).first
   end
 
   def rendered_partials(root, controller_path, source)

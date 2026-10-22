@@ -5,6 +5,7 @@
   <p><%= t("privacy_settings.lead") %></p>
 
   <%= form_with model: @privacy_setting, url: privacy_setting_path, method: :patch, class: "form" do |form| %>
+    <%= render "shared/errors", object: @privacy_setting %>
     <fieldset>
       <legend><%= t("privacy_settings.ai_heading") %></legend>
       <div class="field">
