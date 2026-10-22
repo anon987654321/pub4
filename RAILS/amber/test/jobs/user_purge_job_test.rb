@@ -39,9 +39,9 @@ class UserPurgeJobTest < ActiveJob::TestCase
     outfit = Outfit.create!(user: @user, name: "Private occasion outfit")
     outfit.image.attach(io: StringIO.new("outfit-image"), filename: "outfit.jpg", content_type: "image/jpeg")
 
-    item_blob_ids = item.photos.map(&:blob_id)
-    profile_blob_ids = [profile.avatar.blob_id]
-    outfit_blob_ids = [outfit.image.blob_id]
+    item_blob_ids = ActiveStorage::Attachment.where(record_type: "Item", record_id: item.id, name: "photos").pluck(:blob_id)
+    profile_blob_ids = ActiveStorage::Attachment.where(record_type: "Profile", record_id: profile.id, name: "avatar").pluck(:blob_id)
+    outfit_blob_ids = ActiveStorage::Attachment.where(record_type: "Outfit", record_id: outfit.id, name: "image").pluck(:blob_id)
 
     public_post = Post.create!(user: @user, body: "Public outfit post", item: item, outfit: outfit)
     other_post = Post.create!(user: @other, body: "A post using the shared item", item: item, outfit: outfit)
@@ -168,8 +168,8 @@ class UserPurgeJobTest < ActiveJob::TestCase
       assert_empty ActiveStorage::Attachment.where(blob_id: blob_id), "an erased user's attachment survived"
     end
 
-    public_post.reload
-    other_post.reload
+    public_post = Post.includes(:user).find(public_post.id)
+    other_post = Post.includes(:user).find(other_post.id)
     assert_equal "Public outfit post", public_post.body
     assert_equal "anon", public_post.author_name
     assert_nil public_post.item_id
