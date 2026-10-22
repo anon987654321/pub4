@@ -608,6 +608,12 @@ class TestReliabilitySecondTranche < Minitest::Test
 
       recovered = Master::Fix::Transaction::Recovery.load_persisted(root:, id: tx.id)
       assert recovered.delivery.pending?
+
+      competing_recovery = Master::Fix::Transaction::Recovery.recover!(root:, id: tx.id)
+      refute competing_recovery.ok?
+      assert_equal :infrastructure, competing_recovery.category
+      assert_includes competing_recovery.message, "active transaction holds the root lock"
+
       result = recovered.delivery.finalize!(head: "commit-1")
 
       assert result.ok?
