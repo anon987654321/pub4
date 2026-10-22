@@ -13,6 +13,7 @@ module Deploy
   # the script's answer, so the verdicts are proved on planted answers.
   module TurboJourneys
     PROBES = File.join(__dir__, "journey_probe")
+
     FRAME = File.read(File.join(PROBES, "turbo_frame.js")).freeze
     FOCUS = File.read(File.join(PROBES, "turbo_focus.js")).freeze
     RECONNECT = File.read(File.join(PROBES, "log_reconnect.js")).freeze
@@ -50,6 +51,7 @@ module Deploy
 
     def frame_outcome(label, answer, result)
       where = "#{label} #{answer["href"]} into ##{answer["frame"]}"
+
       if answer["outcome"] == "missing" || answer["missing"]
         result.fail("journey_invariant frame: #{where} showed \"Content missing\" — " \
                     "the response has no ##{answer["frame"]}")
@@ -96,6 +98,7 @@ module Deploy
       pulled = answer["arrived"].to_i - answer["reconnected"].to_i
       findings << "the log's reconnect moved a scrolled-back reader #{moved}px" if moved.abs > DRIFT
       findings << "a new line pulled a scrolled-back reader #{pulled}px" if pulled.abs > DRIFT
+
       if !answer["pill"]
         findings << "a line arrived below a scrolled-back reader and no jump-to-newest appeared"
       elsif answer["tail_gap"].to_i > TAIL || answer["pill_left"]
@@ -110,6 +113,7 @@ module Deploy
     def judge_pager(label, html, result, follow:)
       sentinel = html.match?(SENTINEL)
       href = html[NEXT_LINK, 1]
+
       if sentinel && href.nil?
         result.fail("journey_invariant noscript: #{label} loads further pages only by infinite scroll and carries " \
                     "no rel=next link — without JavaScript the list ends at page one", severity: :soft)
@@ -133,6 +137,7 @@ module Deploy
       else
         result.warn("journey_invariant: #{label} #{what} not measured (#{answer["error"]})")
       end
+
       false
     end
   end

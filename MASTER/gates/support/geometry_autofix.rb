@@ -17,7 +17,9 @@ module Deploy
   # by the operator's decision; a second generated file would be a second.
   module GeometryAutofix
     RAILS_ROOT = File.expand_path("../..", __dir__)
+
     OPEN = "// Deploy::GeometryAutofix begin — generated, do not hand-edit"
+
     CLOSE = "// Deploy::GeometryAutofix end"
     HEADER = <<~SCSS
       // Each rule below corrects a violation measured in a real browser
@@ -45,6 +47,7 @@ module Deploy
         next unless File.file?(path)
 
         source = File.read(path)
+
         # Merge, do not replace. Each round measures the page with this block
         # already applied, so a rule that WORKS produces no finding and was
         # therefore absent from `rows` — and a plain re-render dropped it.
@@ -58,6 +61,7 @@ module Deploy
         # Findings repeat per viewport and render() dedupes by selector, so
         # report what actually lands in the block, not the finding count.
         count = block.lines.count { |line| line.include?("{") }
+
         # A header and a list of comments is not a fix. On 2026-08-24 a run wrote
         # a generated layer containing no rules at all, resurrecting one that had
         # been deliberately retired at 90ef51aa6 ("retire the geometry autofix
@@ -108,6 +112,7 @@ module Deploy
 
       kind = nil
       detail = nil
+
       # chomp first: lines keeps the newline and \z is absolute end-of-string,
       # so /\A\/\/ (.+)\z/ silently never matched a detail comment.
       block.lines(chomp: true).filter_map do |line|
@@ -117,6 +122,7 @@ module Deploy
         when /\A\/\/ (.+)\z/        then detail = Regexp.last_match(1).strip; next
         when /\A(.+?) \{/
           selector = Regexp.last_match(1).strip
+
           row = { selector:, kind:, detail:, parsed: true }
           detail = nil
           kind ? row : nil
@@ -139,6 +145,7 @@ module Deploy
       out = +HEADER
       rows.group_by { |r| r[:kind] }.each do |kind, group|
         out << "\n// --- #{kind} ---\n"
+
         group.uniq { |r| r[:selector] }.sort_by { |r| r[:selector] }.each do |row|
           # A row read back from the file already holds a CSS selector.
           # css_selector is not idempotent — it re-splits on ">" and rejoins
@@ -148,6 +155,7 @@ module Deploy
           next unless sel
 
           out << "// #{row[:detail]}\n" if row[:detail]
+
           out << case kind
                  when :touch
                    "#{sel} { min-height: 44px; min-width: 44px; }\n"
@@ -158,6 +166,7 @@ module Deploy
                  end
         end
       end
+
       out
     end
 
@@ -201,6 +210,7 @@ module Deploy
         err = nil
         2.times do |attempt|
           _out, err, status = Open3.capture3(RbConfig.ruby, builder, "--app", app)
+
           if status.success?
             Kernel.warn "  [autofix] rebuilt #{app} CSS#{attempt.positive? ? " (retry)" : ""}"
             err = nil
@@ -215,6 +225,7 @@ module Deploy
                       "(#{before.bytesize} → #{File.size(built)} bytes) — restored the previous build"
           next
         end
+
         if err
           Kernel.warn "  [autofix] CSS rebuild failed for #{app} after retry — remeasure will not see the patch"
           Kernel.warn "            #{err.to_s.lines.last(2).map(&:strip).join(' / ')}"

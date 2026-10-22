@@ -16,6 +16,7 @@ module Deploy
     # emulation, so a "mobile" WebKit capture is a narrow desktop Safari window.
     class WebDriverEngine < Base
       SAFARIDRIVER = %w[/usr/bin/safaridriver /System/Cryptexes/App/usr/bin/safaridriver].freeze
+
       GECKODRIVER = %w[/opt/homebrew/bin/geckodriver /usr/local/bin/geckodriver].freeze
       FIREFOX_APPS = ["/Applications/Firefox.app/Contents/MacOS/firefox"].freeze
       BOOT_SECONDS = 8

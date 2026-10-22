@@ -76,6 +76,7 @@ module Deploy
           r = ChunkyPNG::Color.r(px)
           g = ChunkyPNG::Color.g(px)
           b = ChunkyPNG::Color.b(px)
+
           lum = (0.2126 * r) + (0.7152 * g) + (0.0722 * b)
           # midtone / chromatic content (not pure black canvas or pure white void)
           signal += 1 if lum > 18 && lum < 240
@@ -108,6 +109,7 @@ module Deploy
       ok = Array(rules["require_any"]).any? { |p| body.match?(Regexp.new(p, Regexp::IGNORECASE)) }
       unless ok
         notes << "landmarks:missing"
+
         return 0
       end
       pts
@@ -122,6 +124,7 @@ module Deploy
         notes << "hierarchy:h1=#{h1}"
         return 0
       end
+
       if h1.zero?
         notes << "hierarchy:no_h1"
         return (pts * 0.5).floor
@@ -171,6 +174,7 @@ module Deploy
         notes << "cta:choices=#{choices}"
         score = (score * 0.4).floor
       end
+
       if primary > max_pri
         notes << "cta:primary=#{primary}"
         score = (score * 0.5).floor
@@ -197,6 +201,7 @@ module Deploy
 
     def score_dialect(body, surface, notes)
       pts = w(:dialect_purity)
+
       key =
         case surface.to_s
         when "marketplace" then "marketplace_forbids"
@@ -220,6 +225,7 @@ module Deploy
       min_bytes = 400 if min_bytes <= 0
       if body.bytesize < min_bytes
         notes << "density:thin=#{body.bytesize}"
+
         return 0
       end
       pts

@@ -95,6 +95,7 @@ module Deploy
           illegal = true
           next
         end
+
         scores = spec["scores"] || {}
         scores.each { |k, v| breakdown[k.to_sym] = breakdown[k.to_sym].to_i + v.to_i }
         # hard: variant marked hard:false is still legal; hard_required checked separately
@@ -151,12 +152,14 @@ module Deploy
         title_i = card.index("deal-card-title")
         return "price_first" if price_i && title_i && price_i < title_i
         return "title_first" if price_i && title_i
+
         "title_first"
       when "media_placement"
         img = card.index("deal-card-img") || card.index("deal-card-media")
         body = card.index("deal-card-body")
         return "photo_first" if img && body && img < body
         return "body_first" if img && body
+
         "body_first"
       when "hit_model"
         if card.include?("deal-card-hit") || card.match?(/link_to.*deal-card/)

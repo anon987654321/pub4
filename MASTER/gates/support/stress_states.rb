@@ -20,6 +20,7 @@ module Deploy
       Sykehusinnkjøpssamarbeidsorganisasjonen Arbeidsmiljøverneombudsrepresentant
       Skattebetalerforeningsmedlemsregisteret Eiendomsmeglerforetaksregistreringen
     ].freeze
+
     ORDER = %i[compound narrow320 zoom200 list_200 list_empty list_one landscape reduced_motion dark].freeze
     LIST_COUNTS = { list_200: 200, list_empty: 0, list_one: 1 }.freeze
     TALL_PAGE_PX = 8000
@@ -37,6 +38,7 @@ module Deploy
     # resting page offers (a list to resize, a stylesheet that answers dark).
     def plan(surface, scan)
       support = scan["support"] || {}
+
       ORDER.select do |name|
         case name
         when :narrow320 then surface.width.to_i > 320
@@ -60,6 +62,7 @@ module Deploy
       w = surface.width.to_i
       h = surface.height.to_i
       mobile = w < 500
+
       case name
       when :narrow320 then State.new(name:, width: 320, height: h, mobile: true)
       when :zoom200 then State.new(name:, width: [w / 2, 200].max, height: [h / 2, 300].max, mobile:)
@@ -138,6 +141,7 @@ module Deploy
     def record(cdp, surface, state, measured, scan, applied, dir:)
       derived = derived_surface(surface, state)
       findings = StressMeasure.new_findings(measured, scan["baseline"])
+
       payload = {
         "elements" => [], "scroll_width" => measured["scroll_width"], "client_width" => measured["viewport_width"],
         "composition" => { "state" => "stress", "stress" => state.name.to_s, "base_surface" => surface.id,
@@ -145,6 +149,7 @@ module Deploy
         "stress" => { "name" => state.name.to_s, "findings" => findings, "applied" => applied,
                       "list" => scan["list"], "viewport" => [state.width, state.height] }
       }
+
       shot = File.join(dir, "#{derived.id.to_s.gsub(/[^a-zA-Z0-9._-]+/, "_")}.png")
       cdp.screenshot(shot, capture_beyond_viewport: measured["scroll_height"].to_i <= TALL_PAGE_PX)
       { surface: derived, payload:, screenshot: shot, journeys: [], platform: {} }

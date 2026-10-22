@@ -13,11 +13,13 @@ module CrawlSupport
   # port; Accept can narrow a probe to an expected response type.
   def fetch(url, timeout: 15, open_timeout: 8, host: nil, accept: nil)
     uri = URI(url)
+
     Net::HTTP.start(uri.host, uri.port,
                     use_ssl: uri.scheme == "https",
                     open_timeout:,
                     read_timeout: timeout) do |http|
       req = Net::HTTP::Get.new(uri.request_uri)
+
       req["Host"] = host if host
       req["Accept"] = accept if accept
       http.request(req)
@@ -33,6 +35,7 @@ module CrawlSupport
     rescue StandardError
       # Diagnostics must not change the result of a port probe.
     end
+
     false
   end
 end

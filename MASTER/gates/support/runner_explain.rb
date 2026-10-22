@@ -11,6 +11,7 @@ def list_gates
     kind = subprocess?(row) ? "subprocess #{row['script']}" : row["class"]
     puts "  #{name.ljust(22)} #{kind}"
   end
+
   puts
   puts "Composite gates (their leaves are skipped when the parent is also selected):"
   GATES.group_by { |_, row| row["covered_by"] }.each do |parent, rows|
@@ -45,16 +46,19 @@ ENV_SWITCHES = {
 # explaining never walks the inventory.
 def explain_gates
   puts "Gates in run order (#{GATES.size}):"
+
   GATES.each do |name, row|
     kind = subprocess?(row) ? "subprocess #{row['script']}" : row["class"]
     notes = []
     notes << "needs #{needs(name).join(', ')}" if needs(name).any?
+
     notes << "covered by #{row['covered_by']}" if row["covered_by"]
     row.fetch("env_flags", {}).each { |var, keyword| notes << "#{var}=1 -> #{keyword}" }
     puts "  #{name.ljust(22)} #{kind}#{notes.empty? ? '' : " (#{notes.join('; ')})"}"
     pass = row["pass"] || "exit 0 passes, exit #{SUBPROCESS_INCONCLUSIVE} is inconclusive"
     puts "  #{' ' * 22} pass: #{pass}"
   end
+
   puts
   puts "Environment switches:"
   ENV_SWITCHES.each { |var, meaning| puts "  #{var.ljust(24)} #{meaning}" }

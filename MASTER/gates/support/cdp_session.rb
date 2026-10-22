@@ -7,6 +7,7 @@ require "socket"
 require "base64"
 require "digest/sha1"
 require "securerandom"
+
 require_relative "cdp_framing"
 require_relative "cdp_budget"
 require_relative "chrome_process"
@@ -32,6 +33,7 @@ module Deploy
   #   end
   class CdpSession
     include CdpConsole
+
     include CdpNetwork
 
     include CdpFraming
@@ -54,6 +56,7 @@ module Deploy
     # specific hosts before any wildcard.
     def self.open(host_map: {}, timeout: DEFAULT_TIMEOUT, webgl: false)
       session = new(host_map:, timeout:, webgl:)
+
       session.start
       yield session
     ensure
@@ -71,6 +74,7 @@ module Deploy
       @host_map = host_map
       @timeout = timeout
       @webgl = webgl
+
       @id = 0
       @events = []
       @pending = {}
@@ -103,6 +107,7 @@ module Deploy
       nil
     ensure
       reap_chrome
+
       # Chrome keeps writing to the profile until it has fully exited, so a
       # remove_entry racing that write blows up mid-traverse. Reaping first
       # makes it rare; swallowing makes a leftover tmpdir a non-event.
@@ -137,6 +142,7 @@ module Deploy
     def navigate(url, settle: 0.2)
       send_cmd("Page.navigate", url:)
       deadline = monotonic + @timeout
+
       loop do
         state = begin
           evaluate("document.readyState")
@@ -190,6 +196,7 @@ module Deploy
     # changed nothing. The promise is the actual settle signal.
     def wait_for_ready
       deadline = monotonic + @timeout
+
       loop do
         state = evaluate("document.readyState")
         return if state == "complete"
@@ -231,6 +238,7 @@ module Deploy
                      returnByValue: true,
                      awaitPromise: await_promise,
                      userGesture: true)
+
       if (details = res["exceptionDetails"])
         text = details.dig("exception", "description") || details["text"]
         raise JsError, text.to_s.lines.first.to_s.strip
@@ -268,6 +276,7 @@ module Deploy
     def screenshot(path, format: "png", quality: nil, clip: nil, capture_beyond_viewport: false)
       params = { format:, captureBeyondViewport: capture_beyond_viewport }
       params[:quality] = quality if quality && format == "jpeg"
+
       params[:clip] = clip.merge(scale: clip.fetch(:scale, 1)) if clip
       res = send_cmd("Page.captureScreenshot", **params)
       File.binwrite(path, Base64.decode64(res.fetch("data")))
@@ -284,6 +293,7 @@ module Deploy
     def force_pseudo_state(selector, states)
       unless @css_enabled
         send_cmd("DOM.enable")
+
         send_cmd("CSS.enable")
         @css_enabled = true
       end
@@ -307,6 +317,7 @@ module Deploy
       uri = URI(ws_url)
       @socket = TCPSocket.new(uri.host, uri.port)
       key = Base64.strict_encode64(SecureRandom.bytes(16))
+
       request = [
         "GET #{uri.request_uri} HTTP/1.1",
         "Host: #{uri.host}:#{uri.port}",
@@ -316,6 +327,7 @@ module Deploy
         "Sec-WebSocket-Version: 13",
         "", ""
       ].join("\r\n")
+
       @socket.write(request)
 
       header = +""
@@ -332,6 +344,7 @@ module Deploy
       send_cmd("Runtime.enable")
       send_cmd("Network.enable")
       send_cmd("Log.enable")
+
       # A headless page is not the focused window, so document.hasFocus() is
       # false and Chrome suppresses focus/focusin/blur entirely. `.focus()` still
       # moves document.activeElement, which is what makes this so easy to miss:
@@ -370,6 +383,7 @@ module Deploy
     def recover!
       @recovering = true
       @recoveries += 1
+
       begin
         @socket&.close
       rescue StandardError # scan: intentional — teardown; the socket is closing either way
@@ -377,11 +391,13 @@ module Deploy
       end
       @desync = false
       @mid_frame = false
+
       @pending.clear
       @events.clear
       connect(discover_page_target)
       enable_domains
       @css_enabled = false
+
       @boot_scripts.each { |source| dispatch("Page.addScriptToEvaluateOnNewDocument", source:) }
       Kernel.warn "  [cdp] rebuilt the DevTools connection after a desync (#{@recoveries}/#{MAX_RECOVERIES})"
     ensure

@@ -13,6 +13,7 @@ module Deploy
     module GrammarChecks
       def check_grammar(surface, data)
         elements = Array(data["elements"])
+
         check_duplicate_nav(surface, data)
         check_duplicate_search(surface, elements)
         check_width_drift(surface, data)

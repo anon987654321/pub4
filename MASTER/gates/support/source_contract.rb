@@ -16,6 +16,7 @@ module Deploy
           result.fail("#{gate}: missing #{rel}")
           next
         end
+
         body = File.read(path)
         result.fail("#{gate}: #{rel} missing #{pat.inspect}") unless body.match?(pat)
       end

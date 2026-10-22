@@ -70,6 +70,7 @@ module Deploy
       def ratios
         sizes = [action_ratio(@old) { |el| area(el) }, action_ratio(@new) { |el| area(el) }]
         contrasts = [action_ratio(@old) { |el| contrast(el) }, action_ratio(@new) { |el| contrast(el) }]
+
         [
           ratio_row("h1/body ratio", heading_ratio(@old), heading_ratio(@new)),
           primary_row,
@@ -117,6 +118,7 @@ module Deploy
         rows << field_row("reflow", "scroll_width")
         (@was["landmarks"] || {}).each do |mark, was|
           now = @now.dig("landmarks", mark)
+
           rows << ["hierarchy", "landmark #{mark}: #{was} → #{now}"] if was != now
         end
         rows << landmark_order_row

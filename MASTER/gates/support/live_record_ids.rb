@@ -6,6 +6,7 @@
 # the missing gem as an inconclusive note instead.
 SQLITE3 = begin
   require "sqlite3"
+
   true
 rescue LoadError
   false

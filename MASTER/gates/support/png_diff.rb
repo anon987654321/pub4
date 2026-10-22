@@ -16,6 +16,7 @@ module Deploy
     def compare(baseline_path:, current_path:, diff_path: nil)
       baseline = decode(File.binread(baseline_path))
       current = decode(File.binread(current_path))
+
       unless baseline[:width] == current[:width] && baseline[:height] == current[:height]
         return {
           status: :dimension_mismatch,
@@ -32,6 +33,7 @@ module Deploy
       base_channels = baseline[:channels]
       current_channels = current[:channels]
       base_row_bytes = width * base_channels
+
       current_row_bytes = width * current_channels
       base_previous = Array.new(base_row_bytes, 0)
       current_previous = Array.new(current_row_bytes, 0)
@@ -51,6 +53,7 @@ module Deploy
           same = base_row[bi] == current_row[ci] &&
                  base_row[bi + 1] == current_row[ci + 1] &&
                  base_row[bi + 2] == current_row[ci + 2]
+
           if base_channels == 4 || current_channels == 4
             base_alpha = base_channels == 4 ? base_row[bi + 3] : 255
             current_alpha = current_channels == 4 ? current_row[ci + 3] : 255
@@ -137,6 +140,7 @@ module Deploy
           header = data.unpack("NNCCCCC")
         when "IDAT"
           raise InvalidPng, "PNG data precedes header" unless header
+
           compressed << data
         when "IEND"
           ended = true
@@ -168,6 +172,7 @@ module Deploy
         left = i >= bytes_per_pixel ? row[i - bytes_per_pixel] : 0
         above = previous[i] || 0
         upper_left = i >= bytes_per_pixel ? (previous[i - bytes_per_pixel] || 0) : 0
+
         predictor = case filter
                     when 0 then 0
                     when 1 then left
@@ -175,6 +180,7 @@ module Deploy
                     when 3 then (left + above) / 2
                     when 4 then paeth(left, above, upper_left)
                     end
+
         row[i] = (value + predictor) & 0xff
       end
       row

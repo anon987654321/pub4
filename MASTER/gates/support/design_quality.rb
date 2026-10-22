@@ -4,6 +4,7 @@ module Deploy
   module DesignQuality
     BASE_UNIT_PX = 8.0
     SPACE_STEPS_PX = [4.5, 9.0, 13.5, 27.0, 36.0, 54.0, 72.0].freeze
+
     DENSITY_TARGETS = {
       social: 0.52..0.68,
       luxury: 0.38..0.55,

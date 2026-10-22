@@ -84,6 +84,7 @@ module Deploy
             message: "guest_flow:#{label} capability #{cap} hit auth wall (#{spec[:principle]})",
           }
         end
+
         if spec[:require] && !body.match?(spec[:require])
           findings << {
             severity: spec[:severity] || :hard,
@@ -107,11 +108,13 @@ module Deploy
           result.fail("guest_flow:#{probe[:label]} HTTP #{code} Host=#{probe[:host]}#{probe[:path]}", severity: :hard)
           next
         end
+
         body = res[:body].to_s
         %w[Exception Routing Error].each do |bad|
           # "Routing Error" as two words in page
           next if bad == "Routing"
         end
+
         if body.include?("Exception") || body.include?("Routing Error")
           result.fail("guest_flow:#{probe[:label]} saw exception body", severity: :hard)
         end
@@ -126,6 +129,7 @@ module Deploy
 
     def request(method, path, host: nil, form: nil)
       uri = URI("http://#{@base_host}:#{@port}#{path}")
+
       Net::HTTP.start(uri.host, uri.port, open_timeout: 8, read_timeout: 15) do |http|
         req =
           case method
@@ -134,16 +138,19 @@ module Deploy
           when :post then Net::HTTP::Post.new(uri.request_uri)
           else raise ArgumentError, method.to_s
           end
+
         req["Host"] = host if host
         req["Cookie"] = cookie_header unless @cookies.empty?
         if form
           req["Content-Type"] = "application/x-www-form-urlencoded"
+
           req["X-CSRF-Token"] = @csrf if @csrf
           req.body = URI.encode_www_form(form)
         end
         res = http.request(req)
         store_cookies(res)
         body = res.body.to_s
+
         if (m = body.match(/name="csrf-token"\s+content="([^"]+)"/))
           @csrf = m[1]
         end

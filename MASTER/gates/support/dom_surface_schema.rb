@@ -47,6 +47,7 @@ module Deploy
         principle = spec["principle"] || schema["principle"]
         idx = body =~ pat
         positions[mid.to_s] = idx
+
         if idx.nil?
           findings << Finding.new(
             schema_id: schema_id.to_s,
@@ -99,6 +100,7 @@ module Deploy
         msg = "surface_schema:#{schema_id} forbidden #{pat.inspect}"
         msg += " — #{note}" if note
         msg += " principle=#{principle}"
+
         findings << Finding.new(
           schema_id: schema_id.to_s,
           severity: sev,

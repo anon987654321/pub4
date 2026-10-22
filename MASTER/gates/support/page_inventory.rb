@@ -13,6 +13,7 @@ module Deploy
   module PageInventory
     ROOT = File.expand_path("../../..", __dir__)
     APEX = "brgen.no"
+
     # Derived, not declared. This table held playlist.<apex> for a day after
     # RADIO_SUBDOMAINS renamed the host, because a rename sweeping literal
     # hostnames cannot see one built by interpolation — so the gate autofixed the
@@ -132,6 +133,7 @@ module Deploy
           next unless path
 
           rel = parts.join("/")
+
           {
             id: "brgen/#{rel}",
             app: "brgen",
@@ -155,6 +157,7 @@ module Deploy
         shared_abs = File.join(SHARED_ROOT, "#{parts.join("/")}.html.erb")
         Array(row[:apps] || Fleet.app_names).map do |app|
           abs = app_override(app, parts) || shared_abs
+
           {
             id: "#{app}/shared/#{parts.join("/")}",
             app:,
@@ -208,6 +211,7 @@ module Deploy
         next unless path
 
         rel = parts.join("/")
+
         {
           id: "brgen/#{rel}",
           app: "brgen",
@@ -230,6 +234,7 @@ module Deploy
         next unless path
 
         rel = parts.join("/")
+
         {
           id: "amber/#{rel}",
           app: "amber",
@@ -247,6 +252,7 @@ module Deploy
     def master_pages
       MASTER_PAGES.map do |row|
         abs = File.join(ROOT, row[:view])
+
         {
           id: row[:id],
           app: "master",
@@ -271,6 +277,7 @@ module Deploy
         next unless path
 
         rel = parts.join("/")
+
         {
           id: "bsdports/#{rel}",
           app: "bsdports",
@@ -283,6 +290,7 @@ module Deploy
           needs_id: path.match?(/:\w+/),
         }
       end
+
       discovered
     end
 
@@ -348,6 +356,7 @@ module Deploy
       return false if path.end_with?("/edit")
       # Nested create forms need a channel/resource id — not guest-liveable as bare paths
       return false if path.include?("/channels/:slug/")
+
       return true if GUEST_AUTHORING_PATHS.include?(path)
       # This predicate defaults to guest, which held while the inventory was 43
       # app-level views. The 57 engine views brought a `new` form per vertical;
@@ -375,6 +384,7 @@ module Deploy
         "count" => rows.size,
         "pages" => rows,
       }.to_yaml)
+
       path
     end
   end

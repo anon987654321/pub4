@@ -65,6 +65,7 @@ module Deploy
       @soft_failures = []
       @unchecked = []
       @gaps = {}
+
       @errors = []
       @checks_ran = 0
       @live_skips = 0
@@ -92,6 +93,7 @@ module Deploy
     # on the deploy host, where a gate that cannot run is itself the news.
     def errored!(reason)
       @errors << reason
+
       @failures << "[gate-error] #{reason}" if self.class.strict_errors?
       self
     end
@@ -111,6 +113,7 @@ module Deploy
       case severity.to_sym
       when :soft
         @soft_failures << message
+
         if self.class.strict_soft?
           @failures << "[soft→hard] #{message}"
         else
@@ -128,6 +131,7 @@ module Deploy
     # A live check the gate declined to run because nothing was listening.
     def skipped_live(message)
       @live_skips += 1
+
       if self.class.require_live?
         @failures << "[live-required] #{message}"
       else
@@ -147,6 +151,7 @@ module Deploy
     # does not load it: OPENBSD/lib carries a copy and must not reach into MASTER.
     def inconclusive!(reason, gap: nil)
       @unchecked << reason
+
       @gaps[reason] = gap if gap
       self
     end
@@ -163,6 +168,7 @@ module Deploy
     # on the host where the apps must be up) -- it only refuses to be green.
     def incomplete!(reason, gap: nil)
       @incomplete = true
+
       inconclusive!(reason, gap:)
     end
 
@@ -178,6 +184,7 @@ module Deploy
     # from the pass count.
     def checked!(count = 1)
       @checks_ran += count
+
       self
     end
 
@@ -209,6 +216,7 @@ module Deploy
     # was not listening.
     def nothing_measured_reason
       parts = []
+
       parts << "#{@unchecked.size} precondition(s) missing" unless @unchecked.empty?
       parts << "#{@live_skips} live check(s) skipped, nothing listening" if @live_skips.positive?
       parts.empty? ? "no checks ran" : parts.join(", ")
@@ -252,6 +260,7 @@ module Deploy
       Array(other.failures).each { |m| @failures << "#{tag}#{m}" }
       Array(other.warnings).each { |w| @warnings << "#{tag}#{w}" }
       Array(other.soft_failures).each { |m| @soft_failures << "#{tag}#{m}" }
+
       Array(other.unchecked).each { |m| @unchecked << "#{tag}#{m}" }
       other.gaps.each { |m, gap| @gaps["#{tag}#{m}"] = gap } if other.respond_to?(:gaps)
       # Without this a composite swallows a leaf that crashed: the leaf's errors
@@ -259,11 +268,13 @@ module Deploy
       # PASSED for a leaf that never ran. That is the same false green the third
       # state was added to close, one level up.
       Array(other.errors).each { |m| @errors << "#{tag}#{m}" } if other.respond_to?(:errors)
+
       # A composite measured whatever its leaves measured, or one leaf with no
       # Chrome would speak for the whole suite the way one app used to speak for
       # a whole gate.
       @checks_ran += other.checks_ran if other.respond_to?(:checks_ran)
       @incomplete ||= other.incomplete? if other.respond_to?(:incomplete?)
+
       # Same reason as checks_ran: without this a composite whose every leaf
       # live-skipped would look like a composite that had nothing to skip.
       @live_skips += other.live_skips if other.respond_to?(:live_skips)
@@ -291,6 +302,7 @@ module Deploy
           emit("Failures:", ["nothing measured, and GATE_STRICT_INCONCLUSIVE is set " \
                              "(#{nothing_measured_reason})"])
         end
+
         :failed
       when :inconclusive
         # Deliberately not the success message: the point of the third state is
@@ -302,6 +314,7 @@ module Deploy
           puts "inconclusive: #{@checks_ran} check(s) ran, #{@unchecked.size} declared check(s) could not " \
                "(see Not checked above; this is not a pass)"
         end
+
         :inconclusive
       else
         # A pass that skipped something says so, instead of printing a clean
@@ -309,6 +322,7 @@ module Deploy
         if success_message
           detail = ["#{@checks_ran} check(s) ran"]
           detail << "#{@unchecked.size} check(s) not checked" unless @unchecked.empty?
+
           detail << "#{@live_skips} live check(s) skipped" if @live_skips.positive?
           puts conclusive? ? success_message : "#{success_message} (#{detail.join(', ')})"
         end

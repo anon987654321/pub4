@@ -27,6 +27,7 @@ module Deploy
       @floor = @config["agreement_floor"].to_f
       @floor = 0.85 if @floor <= 0
       @soft_band = @config["soft_band"].to_i
+
       @soft_band = 15 if @soft_band <= 0
       @exemplars = ExemplarStructure.new
       @quality = VisualQuality.new(config: quality_config)
@@ -38,6 +39,7 @@ module Deploy
       agreed = cases.count(&:agree)
       total = cases.size
       rate = total.positive? ? (agreed.to_f / total) : 0.0
+
       {
         cases:,
         agreed:,
@@ -61,6 +63,7 @@ module Deploy
 
         weights[s[:dimension].to_s] = s[:suggested]
       end
+
       payload = {
         "schema" => 1,
         "generated_by" => "GateCalibration",
@@ -70,6 +73,7 @@ module Deploy
         "layout_search_target" => tune["layout_search_target"] || 90,
         "notes" => report[:suggestions].map { |s| s[:message] },
       }
+
       File.write(WEIGHTS_OUT, YAML.dump(payload))
       WEIGHTS_OUT
     end
@@ -81,11 +85,13 @@ module Deploy
       # Overlay committed calibration weights if present
       if File.file?(WEIGHTS_OUT)
         cal = YAML.safe_load_file(WEIGHTS_OUT)
+
         if cal["quality_weights"].is_a?(Hash)
           base["weights"] = base["weights"].merge(cal["quality_weights"])
         end
         base["target_score"] = cal["quality_target"] if cal["quality_target"]
       end
+
       # Seed tune weights as starting point when no applied file
       tune = @config.dig("tune", "quality_weights")
       if tune.is_a?(Hash) && !File.file?(WEIGHTS_OUT)
@@ -108,6 +114,7 @@ module Deploy
         detail[:exemplar_max] = r.max
         detail[:exemplar_target] = r.target
         detail[:exemplar_missing] = r.missing_required
+
         unless r.pass?
           gate_verdict = r.missing_required.any? ? "fail" : "soft"
           notes.concat(r.notes)
@@ -120,6 +127,7 @@ module Deploy
         detail[:quality_max] = q.max
         detail[:quality_target] = q.target
         detail[:quality_notes] = q.notes
+
         unless q.pass?
           # soft if close to target
           gate_verdict =
@@ -128,6 +136,7 @@ module Deploy
             else
               "fail"
             end
+
           notes.concat(q.notes)
         end
       end
@@ -140,6 +149,7 @@ module Deploy
         soft = findings.select { |f| f.severity == :soft }
         detail[:schema_hard] = hard.size
         detail[:schema_soft] = soft.size
+
         if hard.any?
           gate_verdict = "fail"
           notes << "schema_hard=#{hard.size}"
@@ -149,6 +159,7 @@ module Deploy
       end
 
       agree = agreement?(human, gate_verdict, detail)
+
       CaseResult.new(
         id:,
         human:,
@@ -185,6 +196,7 @@ module Deploy
           note_counts[dim] += 1
         end
       end
+
       weights = (@config.dig("tune", "quality_weights") || VisualQuality.load["weights"])
       note_counts.each do |dim, count|
         next unless weights.key?(dim)

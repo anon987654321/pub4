@@ -20,6 +20,7 @@ module Deploy
   # rendered box is 44px tall and that nothing is sitting on top of it.
   class GeometryProbe
     ROOT = File.expand_path("../../..", __dir__)
+
     DATA = File.join(File.expand_path("..", __dir__), "data", "geometry_surfaces.yml")
 
     Surface = Struct.new(:app, :label, :host, :path, :viewport, :width, :height, :snapshot, :pixel_snapshot, :port, :profile, keyword_init: true) do
@@ -55,6 +56,7 @@ module Deploy
           BrgenVerticalSurfaces::SURFACES.each do |s|
             wanted.each do |vp|
               w, h = vps.fetch(vp)
+
               rows << Surface.new(app: "brgen", label: s[:label], host: s[:host], path: s[:path],
                                   viewport: vp, width: w, height: h, snapshot: true, pixel_snapshot: !!s[:pixel_snapshot],
                                   port: ports["brgen"], profile: s[:profile])
@@ -66,6 +68,7 @@ module Deploy
           Array(s["viewports"]).each do |vp|
             w, h = vps.fetch(vp)
             app = s.fetch("app")
+
             rows << Surface.new(app:, label: s.fetch("label"), host: s["host"],
                                 path: s.fetch("path"), viewport: vp, width: w, height: h,
                                 snapshot: !!s["snapshot"], pixel_snapshot: !!s["pixel_snapshot"], port: ports[app],
@@ -91,6 +94,7 @@ module Deploy
       # browser probe skips markedsplass entirely (design_metrics_gate.rb:317).
       def host_map(root: ROOT, path: DATA)
         map = {}
+
         surfaces(path, root:).each do |s|
           map[s.host] ||= "127.0.0.1:#{s.port}" if s.host && s.port
         end
@@ -152,6 +156,7 @@ module Deploy
     # this rather than paying for a browser launch each.
     def self.with_browser(root: ROOT, warm: surfaces(DATA, root:))
       warm_surfaces(warm)
+
       CdpSession.open(host_map: host_map(root:)) do |cdp|
         cdp.on_new_document(DETERMINISM)
         yield cdp
@@ -207,6 +212,7 @@ module Deploy
       # other half of the same problem: it outranks Accept-Language, so one page
       # visited with a stale locale choice re-answers in that language.
       cdp.clear_cookies
+
       cdp.navigate(surface.url)
       measure_current(cdp, surface)
     rescue CdpSession::Error => e
@@ -280,6 +286,7 @@ module Deploy
     # the single biggest source of flake in layout assertions.
     def self.wait_for_fonts(cdp, timeout: 3)
       deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
+
       loop do
         ready = begin
           cdp.evaluate("document.fonts ? document.fonts.status === 'loaded' : true")

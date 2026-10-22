@@ -182,6 +182,7 @@ def explain
   puts "  GATE_AUDITOR_STRICT advisory"
   puts "  GATE_STRICT_INCONCLUSIVE blocks inconclusive gates"
   puts "  GATE_STRICT_ERRORS blocks errored gates"
+
   puts "  GATE_STRICT_SOFT promotes soft failures"
   puts "  GATES_FILE selects the gate registry"
   puts "  GATE_AUTOFIX controls gate autofix where supported"

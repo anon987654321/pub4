@@ -57,6 +57,7 @@ module Deploy
         check_choice_overload(surface, data)
         check_proximity(surface, data)
         check_thumb_zone(surface, elements)
+
         check_scan_path(surface, elements)
         check_dominance(surface, elements)
         check_action_weight(surface, elements)
@@ -226,6 +227,7 @@ module Deploy
       # loses none, so a trade (larger but paler) stays a design decision.
       def check_action_weight(surface, elements)
         buttons = elements.select { |el| el["visible"] && el["onscreen"] && el["parent"] && button_like?(el) }
+
         primaries, secondaries = buttons.partition { |el| el["key"].to_s.match?(PRIMARY_ACTION) }
         inverted = primaries.flat_map do |primary|
           secondaries.select { |el| el["parent"] == primary["parent"] && outweighs?(el, primary) }
@@ -257,6 +259,7 @@ module Deploy
         step = (@rules.dig("typography", "hierarchy", "min_size_ratio_between_levels") || 1.2).to_f
         delta = (@rules.dig("typography", "hierarchy", "min_weight_delta") || 200).to_i
         wins = []
+
         wins << :size if box_area(a) > box_area(b) * step
         wins << :contrast if fill_contrast(a) > fill_contrast(b) * step
         wins << :font_weight if a["font_weight"].to_i >= b["font_weight"].to_i + delta

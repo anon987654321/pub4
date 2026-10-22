@@ -68,11 +68,13 @@ module Deploy
           last.warn("gate_autofix: no mechanical fix available for remaining failures (remeasure stopped)")
           break last
         end
+
         rounds += 1
         if dry_run?(env)
           last.warn("gate_autofix: dry-run — would patch #{applied} file(s); skip remeasure")
           break last
         end
+
         last.warn("gate_autofix: patched #{applied} file(s) in round #{rounds}; remeasuring…")
         last = measure.call
         break last if last.ok?
@@ -91,6 +93,7 @@ module Deploy
     # apply: ->(result) { Integer } — number of files patched.
     def remeasure_loop(measure:, apply:, label:, env: ENV)
       last = measure.call
+
       return last if last.ok? || !enabled?(env)
 
       rounds = 0
@@ -98,16 +101,19 @@ module Deploy
         applied = apply.call(last)
         if applied.zero?
           last.warn("#{label}: no mechanical fix available for remaining failures")
+
           break last
         end
         rounds += 1
         if dry_run?(env)
           last.warn("#{label}: dry-run — would patch #{applied} file(s); skip remeasure")
+
           break last
         end
         last.warn("#{label}: patched #{applied} file(s) in round #{rounds}; remeasuring…")
         last = measure.call
         break last if last.ok?
+
         break last if rounds >= max_rounds(env)
       end
       last.warn("#{label}: still failing after #{rounds} round(s)") if last && !last.ok? && rounds.positive?
@@ -132,6 +138,7 @@ module Deploy
           File.write(path, body)
           Kernel.warn "  [autofix] patched #{path.sub(%r{.*/RAILS/}, 'RAILS/')}"
         end
+
         patched << path
       end
       patched.size
@@ -194,6 +201,7 @@ module Deploy
       else
         # Proactive: if failure mentions path and body has known issues, apply all safe fixers
         body = strip_flat_violations(body) if body.match?(/box-shadow\s*:\s*(?!none\b)|text-shadow\s*:|backdrop-filter\s*:|filter\s*:[^;]*\bblur\(/i)
+
         body = replace_twitter_blue(body) if body.match?(/#1d9bf0|#1DA1F2/i)
         body = prefer_title_type_token(body) if body.match?(/font-size\s*:\s*20px/i)
         body

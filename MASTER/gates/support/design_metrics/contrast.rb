@@ -18,6 +18,7 @@ module Deploy
       # WCAG relative luminance for sRGB hex (#rgb / #rrggbb).
       def parse_hex(color)
         s = color.to_s.strip
+
         return if s.empty? || s.start_with?("var(", "oklch", "color-mix", "rgb")
 
         s = s.delete_prefix("#")
@@ -125,6 +126,7 @@ module Deploy
       # decisions and are deliberately never rewritten automatically.
       def suggest_contrast_fix(fg_hex, bg_hex, target)
         fg = parse_hex(fg_hex)
+
         bg = parse_hex(bg_hex)
         return unless fg && bg
 

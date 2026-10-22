@@ -12,6 +12,7 @@ module Deploy
   module CssWeight
     def check_weight
       ceilings = weight_ceilings
+
       return @result.warn("css_constitution weight: no weight_kb in css_budget.yml") if ceilings.empty?
 
       ceilings.each do |app, ceiling|
@@ -19,6 +20,7 @@ module Deploy
         next @result.warn("css_constitution weight: #{app} has no built application.css") unless File.file?(built)
 
         kb = (File.size(built) / 1024.0).ceil
+
         if kb > ceiling
           @result.fail("css_constitution weight: #{app} application.css is #{kb}KB, over its " \
                        "#{ceiling}KB ceiling (+#{kb - ceiling}) -- cut it, or record a new ceiling with a reason")

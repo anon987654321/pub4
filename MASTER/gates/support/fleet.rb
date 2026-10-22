@@ -21,6 +21,7 @@ require "yaml"
 # hand-written maps rather than merely shorten them.
 module Fleet
   ROOT = File.expand_path("../../..", __dir__)
+
   APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
 
   MASTER_NAME = "master"

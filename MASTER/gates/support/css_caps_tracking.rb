@@ -10,6 +10,7 @@ module Deploy
   # strip_comments.
   module CssCapsTracking
     UPPERCASE = /text-transform\s*:\s*uppercase/
+
     LETTER_SPACING = /letter-spacing\s*:\s*(-?[\d.]+)em/
 
     private
@@ -23,6 +24,7 @@ module Deploy
         next unless block.match?(UPPERCASE)
 
         tracking = block[LETTER_SPACING, 1] || tracking_from_token(block)
+
         if tracking.nil?
           @result.fail("css_constitution caps_tracking: #{rel}:#{line_no} sets uppercase with no " \
                        "letter-spacing (floor #{floor}em)")
@@ -42,6 +44,7 @@ module Deploy
     def tracking_ladder
       @tracking_ladder ||= begin
         file = token_path("_typography.scss")
+
         body = File.file?(file) ? File.read(file) : ""
         body.scan(/(--tracking-[\w-]+)\s*:\s*(-?[\d.]+)em\s*;/).to_h { |n, v| [ n, v.to_f ] }
       end
@@ -65,6 +68,7 @@ module Deploy
     def each_declaration_block(body)
       lines = body.lines
       opens = []
+
       lines.each_with_index do |line, index|
         line.each_char do |char|
           if char == "{"

@@ -24,6 +24,7 @@ module Deploy
         a = ours.fetch(key)
         b = theirs.fetch(key)
         delta = %w[x y w h].to_h { |axis| [axis, b[axis].to_i - a[axis].to_i] }
+
         size = delta.values.map(&:abs).max
         { "key" => key, "delta" => delta, "size" => size } if size > tolerance
       end
@@ -50,6 +51,7 @@ module Deploy
           capture(engine, surface, reference, dir:)
         rescue StandardError => e
           CaptureEngine.unavailable[name] = "#{e.class}: #{e.message[0, 100]}"
+
           nil
         ensure
           engine.close
@@ -71,6 +73,7 @@ module Deploy
       result = diff(reference, geometry).merge("name" => engine.name)
       derived = derived_surface(surface, engine.name)
       shot = File.join(dir, "#{derived.id.to_s.gsub(/[^a-zA-Z0-9._-]+/, "_")}.png")
+
       engine.screenshot(shot)
       payload = { "elements" => [], "scroll_width" => geometry["scroll_width"], "client_width" => geometry["width"],
                   "composition" => { "state" => "engine", "engine" => engine.name, "base_surface" => surface.id,

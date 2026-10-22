@@ -159,22 +159,26 @@ module Deploy
         cdp.navigate(surface.url)
         sleep 0.1
         baseline = state_signature(cdp)
+
         result = cdp.evaluate(format(ACTION, selector: action.fetch("selector").to_json,
                                       kind: action.fetch("kind").to_json))
         sleep 0.35
         if action["kind"] == "navigation"
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 3
+
           while Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
             break if cdp.evaluate("document.readyState").to_s == "complete"
             sleep 0.05
           end
         end
         after = state_signature(cdp)
+
         slug = surface.id.gsub(/[^a-zA-Z0-9]+/, "-").downcase
         path = File.join(dir, "journey-#{slug}-#{index}.png")
         cdp.screenshot(path, capture_beyond_viewport: true)
         states << action.merge("result" => JSON.parse(result.to_s), "changed" => baseline != after,
                                "from" => surface.url, "to" => action["href"], "screenshot" => path)
+
         if action["kind"] == "navigation" && after["url"] != baseline["url"]
           cdp.back
           back = state_signature(cdp)
@@ -183,11 +187,13 @@ module Deploy
                                  "to" => surface.url)
           cdp.forward
           forward = state_signature(cdp)
+
           states << action.merge("kind" => "navigation_forward", "result" => {"ok" => true},
                                  "changed" => forward != after, "from" => surface.url,
                                  "to" => after["url"])
         end
       end
+
       states
     rescue StandardError => e
       raise "mobile journey probe failed: #{e.class}: #{e.message}"

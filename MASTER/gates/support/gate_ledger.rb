@@ -64,6 +64,7 @@ module Deploy
         errors:,
         duration_ms:,
       }
+
       File.open(@path, "a") { |f| f.puts(JSON.generate(line)) }
       self
     rescue SystemCallError => e
@@ -92,10 +93,12 @@ module Deploy
     # cannot run outranks one that is merely red: the red one told you something.
     def summary(entries = self.entries)
       by_gate = entries.group_by { |e| e["gate"] }
+
       by_gate.map do |gate, rows|
         counts = Hash.new(0)
         rows.each { |r| counts[r["outcome"].to_s] += 1 }
         times = rows.filter_map { |r| r["duration_ms"] }
+
         {
           gate:,
           runs: rows.size,
@@ -164,6 +167,7 @@ module Deploy
       io.puts "[gates] ledger #{display_path} — #{rows.sum { |r| r[:runs] }} gate-runs across #{rows.size} gates"
       io.puts format("  %-24s %5s %5s %5s %5s %5s %9s  %s",
                      "gate", "runs", "pass", "fail", "inc", "err", "median", "last")
+
       rows.each do |r|
         io.puts format(
           "  %-24s %5d %5d %5d %5d %5d %9s  %s",

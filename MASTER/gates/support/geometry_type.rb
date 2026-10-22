@@ -66,6 +66,7 @@ module Deploy
       check_type_scale(result, surface, data, spec)
       check_baseline(result, surface, data, spec)
       check_tabular(result, surface, data, spec)
+
       check_accents(result, surface, data, spec)
       check_empty(result, surface, data, spec)
       check_split(result, surface, data, spec)
@@ -158,6 +159,7 @@ module Deploy
     # browser has renders in a generic, which covers them, and is not reported.
     def check_glyphs(result, surface, data)
       status = data["glyphs_status"].to_s
+
       if status.start_with?("unverified:")
         result.incomplete!("geometry glyphs: #{surface.id} coverage not measured — #{status.delete_prefix("unverified:").strip}")
         return
@@ -302,6 +304,7 @@ module Deploy
       rag = rules.dig("typography", "rag") || {}
       minimum_lines = rag.fetch("inspect_from_lines", 5).to_i
       extreme_ratio = rag.fetch("extreme_last_line_ratio", 0.12).to_f
+
       rows = Array(data["prose"]).select do |row|
         row["line_count"].to_i >= minimum_lines &&
           row["rag_ratio"].to_f.positive? &&
@@ -329,6 +332,7 @@ module Deploy
       missing = []
       rows.each do |row|
         missing << "wrap" if profile[:text_wrap] == "pretty" && !row["text_wrap"].to_s.match?(/pretty|balance|stable/)
+
         missing << "features" if row["font_feature_settings"].to_s.empty? &&
                                   row["font_kerning"].to_s.empty? &&
                                   profile[:punctuation] == "hanging"

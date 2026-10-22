@@ -85,6 +85,7 @@ def run(label, command, chdir: ROOT, env: {})
     )
   rescue Master::Io::Exec::TimeoutError
     FAILURES << "#{label}: timed out after #{STEP_TIMEOUT}s (#{command.join(" ")})"
+
     return
   end
 

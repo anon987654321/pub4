@@ -20,12 +20,14 @@ module Deploy
           head, rest = stripped.split("{", 2)
           selector = "#{pending} #{head}".strip
           pending = +""
+
           inspect_props(rel, index + 1, selector, rest.to_s)
         elsif stripped.include?(":")
           inspect_props(rel, index + 1, selector, stripped)
         else
           pending = "#{pending} #{stripped}".strip
         end
+
         selector = +"" if stripped.include?("}")
       end
     end

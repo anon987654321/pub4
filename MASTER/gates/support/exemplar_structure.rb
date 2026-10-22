@@ -40,6 +40,7 @@ module Deploy
       Array(spec["parts"]).each do |part|
         points = part["points"].to_i
         max += points
+
         ok =
           if part["order"]
             order_ok?(body, part["order"])

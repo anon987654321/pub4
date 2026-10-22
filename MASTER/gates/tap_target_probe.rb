@@ -73,11 +73,13 @@ Deploy::CdpSession.open do |cdp|
   cdp.viewport(390, 844, mobile: true)
   pages.each do |name, url|
     cdp.navigate(url, settle: 0.6)
+
     bad = JSON.parse(cdp.evaluate(JS).to_s)
     if bad.empty?
       puts "#{name}: all tap targets >= 44px"
     else
       total += bad.size
+
       puts "#{name}: #{bad.size} under 44px"
       bad.each { |b| puts "  #{b['w']}x#{b['h']}  #{b['sel']}  #{b['text'].inspect}" }
     end

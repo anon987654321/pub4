@@ -24,6 +24,7 @@ module Deploy
       # rather than four lines apart in a loop body.
       def text_grade(el)
         size = el["font_size"].to_f
+
         bold = el["font_weight"].to_s.to_i >= 700 || el["font_weight"].to_s == "bold"
         large = size >= 24 || (size >= 18.66 && bold)
         [size, bold, large, large ? 3.0 : 4.5]
@@ -47,6 +48,7 @@ module Deploy
 
           seen[key] = true
           where = el["onscreen"] == false ? " off-canvas" : ""
+
           if ratio < floor
             @result.fail(
               "geometry contrast: #{surface.id} #{fg} on #{bg} = #{ratio} < #{floor} " \
@@ -75,6 +77,7 @@ module Deploy
       # than the ratio predicts.
       def apca_note(fg, bg, size, bold)
         lc = DesignMetrics.apca_lc(fg, bg)
+
         return "" unless lc
 
         " (APCA Lc #{lc.abs.round(1)}, wants #{DesignMetrics.apca_threshold(size, bold:).round})"
@@ -91,6 +94,7 @@ module Deploy
         return if @apca_seen&.include?(key)
 
         (@apca_seen ||= {})[key] = true
+
         @result.fail(
           "geometry apca: #{surface.id} #{fg} on #{bg} = Lc #{lc.abs.round(1)} < #{want.round} " \
           "(#{size.round}px#{bold ? ' bold' : ''}, e.g. #{el["key"]}) principle=perceptual_contrast",

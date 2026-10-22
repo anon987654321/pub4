@@ -58,6 +58,7 @@ module Deploy
       shared_dir = File.join(RAILS_ROOT, "__shared")
       patterns = WATCHED.map { |pattern| File.join(app_dir, pattern) } +
                  SHARED_WATCHED.map { |pattern| File.join(shared_dir, pattern) }
+
       # brgen's application.scss @uses each vertical's partials from its engine
       # (vertical_maps_shell and the rest), so an engine edit stales the build too.
       engine = EngineRoots.glob(File.dirname(app_dir), File.basename(app_dir), "app/assets/stylesheets/**/*.scss")

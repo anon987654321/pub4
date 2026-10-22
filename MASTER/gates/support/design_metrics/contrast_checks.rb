@@ -28,6 +28,7 @@ module Deploy
       # which is the difference between a possibility and a fact.
       def check_token_contrast
         normal_min = @rules.dig("typography", "accessibility", "normal_text_contrast").to_f
+
         normal_min = 7.0 if normal_min <= 0 # design_rules AAA default
 
         all_pairs = @tokens.flat_map { |name, dialect| DesignMetrics.token_pairs(name, dialect) } +
@@ -57,8 +58,10 @@ module Deploy
             DesignMetrics.token_value_wins?(DesignMetricsGate::RAILS, p[:fg_key], p[:fg]) &&
             DesignMetrics.token_value_wins?(DesignMetricsGate::RAILS, p[:bg_key], p[:bg])
         end
+
         if unpainted.any?
           skipped = unpainted.select { |p| p[:ratio] < 4.5 }
+
           # Name the side that has no reader, not the pair's foreground. Listing
           # fg_key alone printed "text, accent, danger" — tokens painted all over
           # the tree — because their *background* was the dead one, which reads as
@@ -66,6 +69,7 @@ module Deploy
           dead = unpainted.flat_map do |p|
             [p[:fg_key], p[:bg_key]].reject { |k| DesignMetrics.token_painted?(DesignMetricsGate::RAILS, k) }
           end.uniq.sort
+
           # Two different reasons, reported as two. Calling a shadowed token
           # "unread" is the same error this filter was written to stop: --accent is
           # read everywhere and social's value still never lands.
@@ -74,6 +78,7 @@ module Deploy
               .select { |k, v| DesignMetrics.token_painted?(DesignMetricsGate::RAILS, k) && !DesignMetrics.token_value_wins?(DesignMetricsGate::RAILS, k, v) }
               .map { |k, v| "#{k}=#{v}" }
           end.uniq.sort
+
           detail = []
           detail << "unread: #{dead.join(', ')}" if dead.any?
           detail << "overridden: #{shadowed.join(', ')}" if shadowed.any?
@@ -82,6 +87,7 @@ module Deploy
             "(#{skipped.size} of them below AA) — #{detail.join(' | ')}",
           )
         end
+
         if pairs.empty?
           @result.fail("design_metrics contrast: every token pair is unread — the palette paints nothing",
                        severity: :soft)
@@ -148,6 +154,7 @@ module Deploy
       # file.
       def contrast_budget
         path = File.expand_path("../../data/css_budget.yml", __dir__)
+
         data = YAML.safe_load_file(path)
         rules = data&.dig("rules")
         raise "contrast budget has no rules: #{path}" unless rules.is_a?(Hash)

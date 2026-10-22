@@ -167,6 +167,7 @@ module Deploy
             # Payment files may not exist yet — warn so flow gate still teaches the contract
             if contract[:id] == :fail_visibly_payments
               @result.warn("#{label}: payment paths not present yet — create honest NotConfigured stubs")
+
               next
             end
             @result.fail("#{label}: missing path #{rel}")
@@ -234,6 +235,7 @@ module Deploy
         Array(contract[:required_all]).each do |pat|
           @result.fail("#{label}: #{rel} missing #{pat.inspect}") unless body.match?(pat)
         end
+
         if contract[:required_any]
           unless contract[:required_any].any? { |pat| body.match?(pat) }
             @result.fail("#{label}: #{rel} missing any of #{contract[:required_any].map(&:inspect).join(', ')}")
@@ -241,12 +243,14 @@ module Deploy
         end
         if contract[:required_rule]
           selector, declaration = contract[:required_rule]
+
           unless Operator::ScssRules.matching(body, selector).any? { |rule| rule.declares?(declaration) }
             @result.fail("#{label}: #{rel} has no #{selector.inspect} rule declaring #{declaration.inspect}")
           end
         end
         if contract[:max_h1]
           count = body.scan(/<h1\b/i).size
+
           @result.fail("#{label}: #{rel} has #{count} h1 tags (max #{contract[:max_h1]})") if count > contract[:max_h1]
         end
         return unless contract[:forbidden] && !(contract[:allow_path] && path.match?(contract[:allow_path]))

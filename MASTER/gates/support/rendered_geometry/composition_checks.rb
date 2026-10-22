@@ -54,6 +54,7 @@ module Deploy
         typography = visual["typography"] || {}
         sizes = Array(typography["distinct_font_sizes"]).map(&:to_f).select(&:positive?)
         max_sizes = @rules.dig("typography", "hierarchy", "max_font_sizes").to_i
+
         if max_sizes.positive? && sizes.size > max_sizes
           @result.fail(
             "geometry composition: #{surface.id} first screen renders #{sizes.size} type sizes > " \

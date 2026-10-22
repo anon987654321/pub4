@@ -89,6 +89,7 @@ module Deploy
         *(@webgl ? [ "--use-angle=swiftshader", "--enable-unsafe-swiftshader" ] : [ "--disable-gpu" ]),
         "about:blank",
       ]
+
       unless @host_map.empty?
         rules = @host_map.map { |host, target| "MAP #{host} #{target}" }.join(", ")
         args.insert(-2, "--host-resolver-rules=#{rules}")
@@ -119,6 +120,7 @@ module Deploy
         rescue StandardError # scan: intentional — one poll in the discovery loop; nil retries
           nil
         end
+
         if body
           targets = JSON.parse(body) rescue []
           page = targets.find { |t| t["type"] == "page" && t["webSocketDebuggerUrl"] }

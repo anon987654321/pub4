@@ -12,6 +12,7 @@ module Deploy
     module TokenChecks
       def check_token_conformance(surface, data)
         colors = data["colors"] || {}
+
         rogue = colors.reject { |hex, _| @palette.include?(hex.to_s.downcase) }
         return if rogue.empty?
 
@@ -33,6 +34,7 @@ module Deploy
       # in MASTER/data/tokens.yml, on the line above its own contrast measurement.
       def token_palette
         set = %w[#000000 #ffffff]
+
         collect_hexes(@tokens, set)
         set.compact.uniq
       end

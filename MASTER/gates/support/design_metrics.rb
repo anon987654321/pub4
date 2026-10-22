@@ -67,6 +67,7 @@ module Deploy
         {__shared,brgen,amber,bsdports}/app/assets/stylesheets/**/*.scss
         {brgen_*,brgen_radio/*,brgen_marketplace/engines/*}/app/assets/stylesheets/*.scss
       ]
+
       light_only = {}
       globs.each do |pattern|
         Dir.glob(File.join(rails_root, pattern)).each do |path|
@@ -140,6 +141,7 @@ module Deploy
     # instead"; .market-hero-kicker, the rule it names, is gone.
     def vertical_accent_pairs(tokens, rails_root = nil)
       verticals = tokens["vertical_accents"]
+
       social = tokens[VERTICAL_SURFACE_DIALECT] || tokens["social"]
       return [] unless verticals.is_a?(Hash) && social.is_a?(Hash)
 
@@ -211,11 +213,13 @@ module Deploy
     # which is correct for those and conservative elsewhere.
     def winning_property_values(rails_root, prop)
       @winning_property_values ||= {}
+
       @winning_property_values[[rails_root, prop]] ||= begin
         values = Set.new
         Dir.glob(File.join(rails_root, "*/app/assets/builds/application.css")).each do |path|
           css = File.read(path) rescue next
 decls = []
+
 css.scan(/([^{}]+)\{([^{}]*)\}/) do
   selector = Regexp.last_match(1)
   body = Regexp.last_match(2)
@@ -225,6 +229,7 @@ css.scan(/([^{}]+)\{([^{}]*)\}/) do
               conditional_at(css, offset)]
   end
 end
+
 # Among bare `:root` rules only the last one is the default winner —
 # but a `:root` inside @media is not a bare `:root`. It applies only
 # when its condition holds, so it cannot shadow the default, and the
@@ -243,6 +248,7 @@ end
 # Both values paint, under different conditions, so both stay in the
 # set; only the unconditional one gets to shadow.
 bare = decls.each_index.select { |i| decls[i][0] == [":root"] && !decls[i][2] }
+
 bare[0..-2].to_a.each { |i| decls[i] = nil }
 decls.compact.each { |_, v, _| values << v }
         end
@@ -257,10 +263,12 @@ decls.compact.each { |_, v, _| values << v }
 # what separates an override from an alternative.
   def conditional_at(css, offset)
     head = css[0...offset]
+
     depth = 0
     opens = []
     head.scan(/@(media|supports|container)[^{;]*\{|\{|\}/) do |kind|
       token = Regexp.last_match(0)
+
       if token.end_with?("{") && kind.first
         opens << depth
         depth += 1
@@ -268,6 +276,7 @@ decls.compact.each { |_, v, _| values << v }
         depth += 1
       else
         depth -= 1
+
         opens.pop while opens.any? && opens.last >= depth
       end
     end
@@ -304,6 +313,7 @@ decls.compact.each { |_, v, _| values << v }
     # before trusting one.
     def read_custom_properties(rails_root)
       @read_custom_properties ||= {}
+
       @read_custom_properties[rails_root] ||= begin
         globs = %w[
           {__shared,brgen,amber,bsdports}/app/assets/stylesheets/**/*.scss
@@ -313,6 +323,7 @@ decls.compact.each { |_, v, _| values << v }
           __shared/frontend/**/*.js
           {__shared,brgen,amber,bsdports}/app/javascript/**/*.js
         ]
+
         names = Set.new
         globs.each do |pattern|
           Dir.glob(File.join(rails_root, pattern)).each do |path|
@@ -336,6 +347,7 @@ decls.compact.each { |_, v, _| values << v }
       key = fg_key.to_s
       base = key.sub(MODE_PREFIX, "")
       cands = ["--#{base.tr('_', '-')}", "--#{key.tr('_', '-')}"]
+
       if (m = base.match(/\A(?<vertical>[a-z]+)_(?<kind>accent|hover)\z/))
         if m[:kind] == "accent"
           # The accent map assigns each vertical's accent straight to
@@ -346,6 +358,7 @@ decls.compact.each { |_, v, _| values << v }
           # header: marketplace 4.33:1 and tv 4.14:1 on social chrome, "and
           # nothing had reported either").
           cands << "--accent"
+
           cands << "--vertical-#{m[:vertical]}-accent"
         else
           cands << "--vertical-#{m[:vertical]}-accent-hover"
@@ -388,6 +401,7 @@ decls.compact.each { |_, v, _| values << v }
     # rem/em/px → px assuming 16px root
     def to_px(value, root_px: 16.0)
       s = value.to_s.strip
+
       case s
       when /\A(-?[\d.]+)px\z/i then Regexp.last_match(1).to_f
       when /\A(-?[\d.]+)rem\z/i then Regexp.last_match(1).to_f * root_px
@@ -430,6 +444,7 @@ decls.compact.each { |_, v, _| values << v }
         extract_declarations(css, prop).each do |raw|
           raw.split(/\s+/).each do |token|
             px = to_px(token, root_px:)
+
             values << px if px && px.positive?
           end
         end
@@ -484,6 +499,7 @@ decls.compact.each { |_, v, _| values << v }
           extract_box_mins(body).any? { |h| h + 0.01 >= min_px } ||
             body.match?(/--space-(1[2-9]|[2-9]\d)|--touch|min-height:\s*44px|height:\s*44px|width:\s*var\(--space-1[2-9]/i)
         end
+
         findings << { label:, paths:, covered: }
       end
       findings

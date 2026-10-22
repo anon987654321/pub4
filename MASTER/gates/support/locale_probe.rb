@@ -14,6 +14,7 @@ module Deploy
   # itself. Only the resting state is walked for the extra locale.
   module LocaleProbe
     DEFAULT = "nb,en"
+
     LANG_JS = "(document.documentElement.getAttribute('lang') || '').toLowerCase()"
     TEXTS_LIMIT = 300
 
