@@ -103,8 +103,9 @@ mailbox proof from a synthetic email address.
 
 When a visitor registers or signs in while a persisted guest owns activity, the shared merger
 moves the guest's post/comment ownership and applicable conversation or message history inside
-one transaction, records an account-merge audit row, then destroys guest sessions before the
-registered session is created. An old guest cookie is never promoted into a full account session.
+one transaction, records an account-merge audit row, destroys guest sessions, and anonymises the
+source guest row as a non-authenticating audit referent before the registered session is created.
+An old guest cookie is never promoted into a full account session.
 If the merge cannot be committed and audited, the visitor is told that the transfer is blocked
 and the guest session remains available for retry; authentication must not silently strand the
 activity. The federated-identity and account-merge tables are app-owned migrations in
