@@ -83,6 +83,37 @@ class TestFixRunBudget < Minitest::Test
     assert @said.any? { |line| line.include?("ABORT") }
   end
 
+  def test_shared_run_does_not_enter_command_body_after_startup_abort
+    reason = "disk pressure at 0.1 GB free; stopping before filesystem exhaustion"
+    aborted = Object.new
+    aborted.define_singleton_method(:stopping) { reason }
+    aborted.define_singleton_method(:stop_category) { :infrastructure }
+    aborted.define_singleton_method(:finish!) { |_why| true }
+    body_ran = false
+
+    starter = lambda do |**_kwargs|
+      Budget.instance_variable_set(:@current, aborted)
+      aborted
+    end
+    result = Budget.stub(:begin_run, starter) do
+      Budget.with_shared_run(root: @root, max_passes: 3) do
+        body_ran = true
+        Master::Result.ok(:should_not_run)
+      end
+    end
+
+    refute body_ran
+    assert result.err?
+    assert_equal :infrastructure, result.category
+    assert_includes result.message, "disk pressure"
+    assert_nil Budget.current
+  ensure
+    Budget.instance_variable_set(:@shared_depth, 0)
+    Budget.instance_variable_set(:@shared_finishing, false)
+    Budget.finish_run
+    Master::Fix::RunLedger.reset!
+  end
+
   def test_defaults_do_not_stop_and_zero_means_unlimited
     run = budget({"MASTER_FIX_MAX_COST" => "0"})
     cost(500, 1)
