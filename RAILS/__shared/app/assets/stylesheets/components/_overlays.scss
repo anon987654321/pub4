@@ -1,0 +1,63 @@
+form input[type="submit"]:not(.btn):not([class]):disabled,
+form button[type="submit"]:not(.btn):not([class]):disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+dialog {
+  box-sizing: border-box;
+  inline-size: min(42rem, calc(100vw - var(--space-4)));
+  max-block-size: calc(100dvh - (var(--space-4) * 2));
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--text);
+}
+
+dialog::backdrop {
+  background: var(--scrim-55);
+}
+
+[popover] {
+  box-sizing: border-box;
+  max-inline-size: min(24rem, calc(100vw - var(--space-4)));
+  max-block-size: calc(100dvh - (var(--space-4) * 2));
+  padding: var(--space-2);
+  border: 0;
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--text);
+}
+
+[popover]:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  form :is(
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="search"],
+    input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    input[type="month"],
+    input[type="week"],
+    input[type="datetime-local"],
+    select,
+    textarea
+  ):not(.btn) {
+    transition: none;
+  }
+}
+
+/* The shared stack forwards _buttons.scss immediately before this sequence.
+   Keep the .btn media overrides at the sequence end: forced-colors ties with
+   the base selector at 0-1-0, so later source order must win. */
+
