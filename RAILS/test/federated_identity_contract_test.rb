@@ -32,6 +32,15 @@ class FederatedIdentityContractTest < Minitest::Test
   def test_email_less_bankid_login_is_looked_up_by_persisted_subject
     callback = read("RAILS/__shared/app/controllers/omniauth_callbacks_controller.rb")
     assert_includes callback, "::ExternalIdentity.find_by(identity_provider_id: provider.id, subject: auth.uid.to_s)"
+    assert_includes callback, "def ensure_identity_storage!"
+    assert_includes callback, "raise IdentityStorageUnavailable unless available"
+    assert_includes callback, 't("shared.flash.oauth_storage_unavailable")'
+    assert_includes read("RAILS/__shared/config/locales/social.en.yml"), "oauth_storage_unavailable:"
+    assert_includes read("RAILS/__shared/config/locales/social.nb.yml"), "oauth_storage_unavailable:"
+    assert_includes read("RAILS/amber/test/controllers/bankid_identity_persistence_test.rb"),
+                    "test \"OAuth does not create a duplicate account while federated identity storage is unavailable\""
+    assert_includes read("RAILS/amber/test/controllers/bankid_identity_persistence_test.rb"),
+                    "test \"lower-assurance BankID cannot reclaim a legacy synthetic account\""
     assert_includes callback, '::IdentityProvider.find_by(slug: auth.provider.to_s)'
     assert_includes callback, "identity.save!"
     assert_includes callback, 'legacy_email = "#{auth.uid}@bankid.oauth"'
