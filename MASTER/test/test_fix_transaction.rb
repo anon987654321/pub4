@@ -97,6 +97,69 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def test_recovery_rejects_a_manifest_path_that_escapes_the_transaction_root
+    Dir.mktmpdir do |base|
+      root = File.join(base, "repo")
+      FileUtils.mkdir_p(root)
+      outside = File.join(base, "outside.txt")
+      File.write(outside, "preserve outside bytes")
+      path = File.join(root, "note.txt")
+      File.write(path, "before")
+      id = "unsafe-path"
+      tx = Master::Fix::Transaction.new(root:, paths: [path], id:).begin!
+      manifest = File.join(root, ".master", "fix_transactions", id, "manifest.json")
+      data = JSON.parse(File.read(manifest))
+      snapshot = data.fetch("snapshots").delete("note.txt")
+      snapshot["path"] = "../outside.txt"
+      data["snapshots"]["../outside.txt"] = snapshot
+      fingerprints = data.fetch("seen").delete("note.txt")
+      data["seen"]["../outside.txt"] = fingerprints
+      data["paths"] = ["../outside.txt"]
+      File.write(manifest, JSON.pretty_generate(data))
+      tx.send(:release_lock)
+      tx.instance_variable_set(:@active, false)
+
+      result = Master::Fix::Transaction::Recovery.recover!(root:, id:)
+
+      refute result.ok?
+      assert_equal :infrastructure, result.category
+      assert_includes result.message, "unsafe or non-canonical path"
+      assert_equal "preserve outside bytes", File.read(outside)
+      assert_equal "before", File.read(path)
+      assert Master::Fix::Transaction::Recovery.persisted?(root:, id:)
+    end
+  end
+
+  def test_recovery_rejects_a_snapshot_store_outside_the_transaction
+    Dir.mktmpdir do |base|
+      root = File.join(base, "repo")
+      FileUtils.mkdir_p(root)
+      outside = File.join(base, "outside.txt")
+      File.write(outside, "external content")
+      path = File.join(root, "note.txt")
+      File.write(path, "before")
+      id = "unsafe-store"
+      tx = Master::Fix::Transaction.new(root:, paths: [path], id:).begin!
+      File.write(path, "after")
+      tx.observe!
+      manifest = File.join(root, ".master", "fix_transactions", id, "manifest.json")
+      data = JSON.parse(File.read(manifest))
+      data.fetch("snapshots").fetch("note.txt")["store"] = outside
+      File.write(manifest, JSON.pretty_generate(data))
+      tx.send(:release_lock)
+      tx.instance_variable_set(:@active, false)
+
+      result = Master::Fix::Transaction::Recovery.recover!(root:, id:)
+
+      refute result.ok?
+      assert_equal :infrastructure, result.category
+      assert_includes result.message, "snapshot invalid: note.txt"
+      assert_equal "after", File.read(path)
+      assert_equal "external content", File.read(outside)
+      assert Master::Fix::Transaction::Recovery.persisted?(root:, id:)
+    end
+  end
+
   def test_recovery_refuses_to_race_with_a_live_transaction
     Dir.mktmpdir do |dir|
       path = File.join(dir, "note.txt")
