@@ -274,6 +274,35 @@ class TestGateChain < Minitest::Test
     ])
   end
 
+  def test_pre_repair_baseline_blocks_mutation_of_a_preexisting_dirty_path
+    stage = G::Stage.new(name: "source", purpose: "measurement", mutates: false, run: -> {})
+    keys = ["fingerprint-before", "fingerprint-after"]
+    fake_report = lambda do |selected, scan_only:, trees:, return_results:|
+      G.instance_variable_set(:@last_results, [
+        G::Result.new(stage: "source", state: "ok", summary: "no attributed change", changed: [], body: ["source: clean"])
+      ])
+      [0, []]
+    end
+
+    G.stub(:verification_stages, [stage]) do
+      G.stub(:trees_for_target, ["MASTER"]) do
+        G.stub(:baseline_key, ->(*) { keys.shift }) do
+          G.stub(:read_baseline, nil) do
+            G.stub(:report, fake_report) do
+              G.stub(:dirty, ["MASTER/lib/foreign.rb"]) do
+                G.stub(:write_baseline, ->(*) { flunk("a mutated foreign path must not become the baseline") }) do
+                  error = assert_raises(G::BaselineMutation) { G.baseline(target: "MASTER") }
+                  assert_match(/changed checkout state/, error.message)
+                  assert_includes error.message, "MASTER/lib/foreign.rb"
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
   def test_pre_repair_baseline_refuses_to_cache_after_a_read_only_stage_mutates
     stage = G::Stage.new(name: "source", purpose: "measurement", mutates: false, run: -> {})
     fake_report = lambda do |selected, scan_only:, trees:, return_results:|
