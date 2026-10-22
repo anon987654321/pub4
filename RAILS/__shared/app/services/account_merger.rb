@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
-\nrequire "bcrypt"\nrequire "securerandom"\n# Transfers the user-owned history of a persisted guest to a registered
+
+require "bcrypt"
+require "securerandom"
+# Transfers the user-owned history of a persisted guest to a registered
 # account. Shared signup and OAuth use this one transaction, while optional
 # associations keep the contract portable across Brgen and Amber: Brgen owns
 # conversations, channel messages and trust signals; Amber owns direct inboxes.
