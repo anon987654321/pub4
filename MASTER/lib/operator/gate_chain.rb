@@ -192,7 +192,7 @@ module Operator
       # Preflight promises the entire shared checkout will remain read-only,
       # including dirty/untracked paths from other trees, so use the whole-tree
       # key as a second guard around the measurement.
-      checkout_before = baseline_key("all")
+      checkout_before = checkout_fingerprint
 
       Master::Trace::Dmesg.status(
         "baseline0",
@@ -205,7 +205,7 @@ module Operator
       # before saving any baseline; it includes tracked diffs and non-ignored
       # untracked files even when their paths were already dirty at stage start.
       after_key = baseline_key(target)
-      checkout_after = baseline_key("all")
+      checkout_after = checkout_fingerprint
       fingerprint_changed = after_key != key || checkout_after != checkout_before
       if changed.any? || fingerprint_changed
         paths = (changed + (fingerprint_changed ? dirty : [])).uniq
@@ -255,6 +255,26 @@ module Operator
       untracked_fingerprint = paths.sort.map { |relative| fingerprint_untracked(root, relative) }.join("\0")
       scope = baseline_scope_key_for(tree_names)
       Digest::SHA256.hexdigest([head.strip, scope, diff, untracked_fingerprint, verification_only.join(",")].join("\0"))
+    end
+
+    # Unlike a target baseline key, this fingerprint covers the complete repository,
+    # including root-level files and untracked files outside MASTER/RAILS/OPENBSD/STUDIO.
+    # It brackets a read-only measurement only; it does not change the target-specific cache key.
+    def checkout_fingerprint(root: ROOT)
+      head, head_status = Master::Io::Exec.capture2("git", "rev-parse", "HEAD", chdir: root)
+      raise "checkout fingerprint: git rev-parse failed" unless head_status.success?
+
+      diff, diff_status = Master::Io::Exec.capture2("git", "diff", "HEAD", "--binary", chdir: root)
+      raise "checkout fingerprint: git diff failed" unless diff_status.success?
+
+      untracked, untracked_status = Master::Io::Exec.capture2(
+        "git", "ls-files", "--others", "--exclude-standard", "-z", chdir: root
+      )
+      raise "checkout fingerprint: git ls-files failed" unless untracked_status.success?
+
+      paths = untracked.split("\0").reject(&:empty?).sort
+      untracked_fingerprint = paths.map { |relative| fingerprint_untracked(root, relative) }.join("\0")
+      Digest::SHA256.hexdigest([head.strip, diff, untracked_fingerprint].join("\0"))
     end
 
     def committed_version(root, tree)
