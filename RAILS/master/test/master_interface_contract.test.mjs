@@ -11,6 +11,8 @@ const pwaManifest = readFileSync(join(root, "app", "views", "pwa", "manifest.jso
 const publicDir = join(root, "public");
 const chat = readFileSync(join(publicDir, "chat.js"), "utf8");
 const faceMotion = readFileSync(join(root, "styles", "face", "40_accessibility_motion.css"), "utf8");
+const faceChrome = readFileSync(join(root, "styles", "face", "60_session_chrome.css"), "utf8");
+const faceBuilder = readFileSync(join(root, "..", "..", "MASTER", "tools", "rails", "build_face_css.rb"), "utf8");
 const faceConversation = readFileSync(join(root, "styles", "face", "30_conversation.css"), "utf8");
 const manifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
 const laws = readFileSync(join(root, "..", "..", "MASTER", "data", "laws.yml"), "utf8");
@@ -232,14 +234,38 @@ test("canonical theme token reaches CSS, routes and PWA manifest", () => {
   assert.doesNotMatch(faceMotion, /--radius-md: 12px/);
 });
 
-test("session chrome is mobile-first, nuanced and motion-aware", () => {
-  const start = faceMotion.indexOf("/* Ghostty-inspired session chrome:");
-  assert.ok(start >= 0, "shared session chrome source is missing");
-  const chrome = faceMotion.slice(start);
-  assert.match(chrome, /gap: 0\.25rem/);
-  assert.match(chrome, /color-mix\(in oklch, var\(--face-bg\) 92%, var\(--c-code\)\)/);
-  assert.match(chrome, /\.master-session-tab\[aria-current="page"\]::after/);
-  assert.match(chrome, /@media \(min-width: 480px\)/);
-  assert.doesNotMatch(chrome, /@media \(max-width:/);
-  assert.doesNotMatch(chrome, /border-(?:block|inline)-end:\s*1px/);
+test("session chrome is mobile-first, nuanced, flat and touch-ready", () => {
+  assert.ok(faceChrome.includes("background: var(--chrome-bg)"));
+  assert.ok(faceChrome.includes("background: var(--chrome-surface-active)"));
+  assert.ok(faceChrome.includes("outline: 2px solid var(--chrome-focus)"));
+  assert.ok(faceChrome.includes('.master-session-tab[aria-current="page"]::after'));
+  assert.ok(faceChrome.includes("var(--safe-left)"));
+  assert.ok(faceChrome.includes("var(--safe-bottom)"));
+  assert.ok(faceChrome.includes("min-block-size: var(--tap-min)"));
+  assert.match(faceChrome, /@media \(min-width: 480px\)/);
+  assert.match(faceChrome, /prefers-reduced-motion/);
+  assert.match(faceChrome, /prefers-reduced-transparency/);
+  assert.match(faceChrome, /forced-colors/);
+  assert.doesNotMatch(faceChrome, /@media \(max-width:/);
+  assert.doesNotMatch(faceChrome, /backdrop-filter\s*:/);
+  assert.doesNotMatch(faceChrome, /box-shadow\s*:/);
+  assert.doesNotMatch(faceChrome, /border-radius:\s*(?:[1-9]\d*|\d*\.\d+)(?:px|rem|em|%)?/);
+  assert.doesNotMatch(faceChrome, /border-(?:block|inline)-end:\s*1px/);
+});
+
+
+test("served face.css is generated from the ordered editable sources", () => {
+  const rootStart = faceCss.indexOf("/* BEGIN:generated-face-root");
+  const rootMarker = "/* END:generated-face-root */";
+  const rootEnd = faceCss.indexOf(rootMarker, rootStart);
+  assert.ok(rootStart >= 0 && rootEnd >= 0, "generated token block is missing");
+  const rootBlock = faceCss.slice(rootStart, rootEnd + rootMarker.length);
+  const partsBlock = faceBuilder.match(/PARTS = %w\[([\s\S]*?)\]/);
+  assert.ok(partsBlock, "stylesheet builder source list is missing");
+  const parts = partsBlock[1].trim().split(/\s+/);
+  assert.ok(parts.includes("60_session_chrome.css"), "session chrome must be in the generated source order");
+  const expected = readFileSync(join(root, "styles", "face", parts[0]), "utf8")
+    + rootBlock
+    + parts.slice(1).map(name => readFileSync(join(root, "styles", "face", name), "utf8")).join("");
+  assert.equal(faceCss, expected, "public/face.css drifted from its authoritative source modules");
 });

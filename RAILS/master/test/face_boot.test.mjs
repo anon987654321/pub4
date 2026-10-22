@@ -622,8 +622,8 @@ test("face.css keeps primer and prompt layering stable", () => {
   assert.match(css, /#primer/);
   assert.match(css, /z-index:\s*var\(--z-modal\)/);
   assert.match(css, /body:not\(\.face-ready\) #zsh:not\(\.live\)/);
-  assert.match(css, /--x-text:\s*#d8d6e0/);
-  assert.match(css, /--face-bg:\s*black/);
+  assert.match(css, /--x-text:\s*#e7eeff/);
+  assert.match(css, /--face-bg:\s*#050710/);
   assert.match(css, /body\[data-runtime-profile="calm"\]/);
 });
 
