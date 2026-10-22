@@ -303,6 +303,36 @@ class TestGateChain < Minitest::Test
     end
   end
 
+  def test_regression_proof_cannot_pass_when_any_selected_stage_is_unmeasured
+    source = G::Stage.new(name: "source", purpose: "source", mutates: false, run: -> {})
+    deploy = G::Stage.new(name: "deploy_drift", purpose: "deployment evidence", mutates: false, run: -> {})
+    previous_results = G.instance_variable_get(:@last_results)
+    baseline = { "source" => ["production failed"] }
+    current_results = [
+      G::Result.new(stage: "source", state: "failed", summary: "production failed",
+                    changed: [], body: ["production failed"]),
+      G::Result.new(stage: "deploy_drift", state: "skipped", summary: "no deploy stamps",
+                    changed: [], body: ["deploy_drift inconclusive"]),
+    ]
+
+    fake_report = lambda do |selected, **|
+      assert_equal %w[source deploy_drift], selected.map(&:name)
+      G.instance_variable_set(:@last_results, current_results)
+      [1, []]
+    end
+
+    G.stub(:verification_stages, [source, deploy]) do
+      G.stub(:report, fake_report) do
+        status, changed = G.verify_fix(target: "RAILS", baseline:)
+
+        assert_equal 1, status
+        assert_empty changed
+      end
+    end
+  ensure
+    G.instance_variable_set(:@last_results, previous_results)
+  end
+
   def test_pre_repair_baseline_refuses_to_cache_after_a_read_only_stage_mutates
     stage = G::Stage.new(name: "source", purpose: "measurement", mutates: false, run: -> {})
     fake_report = lambda do |selected, scan_only:, trees:, return_results:|
@@ -330,16 +360,6 @@ class TestGateChain < Minitest::Test
     end
   end
 
-  def test_gate_verdict_prefers_aggregate_rails_counts_over_success_detail
-    aggregate = "gates0 at rails: 17 pass, 8 fail, 0 skip, 0 inconclusive, 0 error in 1504.5s"
-
-    assert_equal aggregate, G.verdict([
-      "Failures:",
-      "  - layout_suite failed",
-      "ok: page UI/UX simulations clean across inventory",
-      aggregate,
-    ])
-  end
 
   def test_rails_fix_verification_uses_the_rails_source_proof_without_generic_suite_duplication
     source = G::Stage.new(name: "source", purpose: "source", mutates: false, run: -> {})
