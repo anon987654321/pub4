@@ -23,7 +23,7 @@ class CouncilKeyGuardTest < Minitest::Test
     result = Master.stub(:any_api_key_present?, false) { council.review("x = 1") }
 
     assert_predicate result, :err?
-    assert_match(/provider key/, result.message)
+    assert_match(/no provider reached/, result.message)
   end
 
   def test_the_refusal_names_the_personas_case_too

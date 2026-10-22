@@ -29,7 +29,7 @@ module Master
                       prompt: "Is this shippable? Flag over-engineering.",
                       **PERSONA_DEFAULTS),
           Persona.new(name: "Security", role: "Security review", bias: "Safety",
-                      prompt: "Find injection vectors, auth bypasses, path traversals. Prefix VETO: if must not ship.",
+                      prompt: "Find injection vectors, auth bypasses, path traversals. Critical if it must not ship.",
                       **PERSONA_DEFAULTS.merge(veto_role: true)),
           Persona.new(name: "User", role: "UX advocate", bias: "Usability",
                       prompt: "Does this serve the user? Are error messages actionable?",

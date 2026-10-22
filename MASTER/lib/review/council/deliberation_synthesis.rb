@@ -9,8 +9,10 @@ module Master
       module DeliberationSynthesis
         private
 
+        # A veto is a critical finding from a veto role. The structured answer always opens with
+        # its position, so a "VETO:" prefix on the rendered text can never occur.
         def enforce_veto(feedback)
-          veto = feedback.find { |entry| entry[:veto_role] && veto_text?(entry[:feedback]) }
+          veto = feedback.find { |entry| entry[:veto_role] && critical_finding?(entry) }
           return unless veto
 
           @bus&.publish(:council_veto, veto)

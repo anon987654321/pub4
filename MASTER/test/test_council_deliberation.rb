@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require_relative "support/council_answer"
 
 class TestCouncilDeliberation < Minitest::Test
   Gate = Master::Io::QuotaGate
@@ -29,7 +30,7 @@ class TestCouncilDeliberation < Minitest::Test
       @calls += 1
       raise(StandardError, CREDITS) if @calls <= @fail_times
 
-      "looks good"
+      CouncilAnswer.json
     end
   end
 
@@ -42,7 +43,7 @@ class TestCouncilDeliberation < Minitest::Test
       @mapping.each do |needle, response|
         return response if prompt.include?(needle)
       end
-      "looks good"
+      CouncilAnswer.json
     end
   end
 
@@ -54,7 +55,7 @@ class TestCouncilDeliberation < Minitest::Test
     personas = [
       Persona.new(name: "Security", role: "Attacker", bias: "paranoid", prompt: "be strict", veto_role: true),
     ]
-    agent = StubAgent.new("You are Security" => "VETO: unsafe eval path")
+    agent = StubAgent.new("You are Security" => CouncilAnswer.json(severity: "critical", claim: "unsafe eval path"))
 
     result = Master.stub(:any_api_key_present?, true) do
       Master::Review::Council::Deliberation.new(personas:, agent:, judge_enabled: false)
@@ -99,7 +100,7 @@ class TestCouncilDeliberation < Minitest::Test
 
     agent = Object.new
     agent.define_singleton_method(:candidate_models) { |*, **| ["anthropic/claude-sonnet-4"] }
-    agent.define_singleton_method(:ask) { |_prompt, **_kwargs| asked << :local; "looks good" }
+    agent.define_singleton_method(:ask) { |_prompt, **_kwargs| asked << :local; CouncilAnswer.json }
     agent.define_singleton_method(:ask_once) { |_prompt, **_kwargs| raise "cloud persona model was used" }
 
     delib = Master::Review::Council::Deliberation.new(personas: [persona], agent:, judge_enabled: false)

@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require "review/council/personas"
 require "review/council/selector"
+require_relative "support/council_answer"
 
 class TestCouncilPersonas < Minitest::Test
   def test_personas_carry_temperature_not_weight
@@ -17,7 +18,7 @@ class TestCouncilPersonas < Minitest::Test
   def test_ask_persona_forwards_temperature
     seen = nil
     agent = Object.new
-    agent.define_singleton_method(:ask) { |_prompt, temperature: nil, **| seen = temperature; "ok" }
+    agent.define_singleton_method(:ask) { |_prompt, temperature: nil, **| seen = temperature; CouncilAnswer.json }
     persona = Master::Review::Council::Personas.load.find { |p| p.name == "Security" }
     delib = Master::Review::Council::Deliberation.new(personas: [persona], agent:, event_bus: nil)
     delib.send(:ask_persona, persona:, code: "x = 1", context: nil)

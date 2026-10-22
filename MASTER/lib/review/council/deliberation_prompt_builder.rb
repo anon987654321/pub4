@@ -6,7 +6,6 @@ module Master
   module Review
     module Council
       module DeliberationPromptBuilder
-        VETO_RE = /\AVETO:/i.freeze
         HIGH_CONFIDENCE = /\b(certain|clearly|definitely|must|always|never|critical|serious)\b/i.freeze
         LOW_CONFIDENCE_TERMS = [
           "may#{?b}e", "possibl#{?y}", "per#{?h}aps", "unclear", "migh#{?t}", "coul#{?d}", "unsure", "uncertain"
@@ -92,7 +91,7 @@ module Master
         end
 
         def veto_hint(persona)
-          veto_role?(persona) ? " You may prefix VETO: if this must not ship." : ""
+          veto_role?(persona) ? " Your critical finding vetoes the change; use one only if it must not ship." : ""
         end
 
         def truncate_code(code)
@@ -102,7 +101,9 @@ module Master
           code.byteslice(0, Deliberation::MAX_CODE_BYTES) + Deliberation::TRUNCATE_MARKER
         end
 
-        def veto_text?(feedback) = VETO_RE.match?(feedback.to_s.strip)
+        def critical_finding?(entry)
+          Array(entry[:structured_findings]).any? { |finding| finding.is_a?(Hash) && finding["severity"] == "critical" }
+        end
 
         def score_confidence(text)
           highs = text.to_s.scan(HIGH_CONFIDENCE).size

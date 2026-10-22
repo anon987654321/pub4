@@ -114,7 +114,7 @@ personas:
     cognitive_lens: attacker
     emphasizes: [ROBUSTNESS, ABSTRACTION]
     can_veto: true
-    prompt: Identify injection, privilege escalation, data‑exposure, and auth risks. Prefix VETO when unsafe to ship.
+    prompt: Identify injection, privilege escalation, data‑exposure, and auth risks. Critical means unsafe to ship.
 
   - name: Skeptic
     aliases: [skeptic, absence]

@@ -2,6 +2,7 @@
 
 require "test_helper"
 require "minitest/mock"
+require_relative "support/council_answer"
 
 # A /fix run once sat 39 minutes in its first council, 186 seconds per call on a
 # free model, and never reached a file. The council is advisory: every call has a
@@ -123,7 +124,7 @@ class TestCouncilDeadline < Minitest::Test
     lock = Mutex.new
     agent.define_singleton_method(:ask) do |_prompt, **|
       n = lock.synchronize { count += 1 }
-      n <= 2 ? "No issue found." : sleep(30)
+      n <= 2 ? CouncilAnswer.json : sleep(30)
     end
     personas = Array.new(6) { |i| Persona.new(name: "P#{i}", role: "r", bias: "b", prompt: "p") }
     delib = Master::Review::Council::Deliberation.new(personas:, agent:, judge_enabled: false)
