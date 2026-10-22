@@ -80,6 +80,33 @@ module Master
         end
       end
 
+      # A trace refuses bytes that changed while it read them. In a checkout other writers share,
+      # one of their saves landing mid-read refused the whole run; a trace that failed only on such
+      # drift is read again, up to TRACE_ATTEMPTS times, and refuses only if the drift persists.
+      TRACE_ATTEMPTS = 3
+      TRACE_DRIFT = /changed during preflight|content differs during|file inventory changed during preflight/
+      TRACE_PAUSE = Float(ENV.fetch("MASTER_FIX_TRACE_PAUSE", "2"))
+
+      def steady_trace(scope:, dependencies:)
+        (1..TRACE_ATTEMPTS).each do |attempt|
+          trace = execution_trace(scope:, dependencies:)
+          return trace if trace.clean? || attempt == TRACE_ATTEMPTS || !trace.failures.all?(TRACE_DRIFT)
+
+          Master::Trace::Dmesg.status("trace0", "#{trace.failures.size} file(s) changed while read; " \
+                                                "reading again, attempt #{attempt + 1} of #{TRACE_ATTEMPTS}")
+          sleep TRACE_PAUSE
+        end
+      end
+
+      def execution_trace(scope:, dependencies:)
+        Master::Fix::ExecutionTrace.new(root: Master.repo_root, scope:, dependencies:).run
+      rescue SyntaxError, StandardError => e
+        Master::Fix::ExecutionTrace::Result.new(
+          ok: false, files: 0, bytes: 0, ruby_files: 0, phases: {},
+          failures: ["execution trace uncaught: #{e.class}: #{e.message}"]
+        )
+      end
+
       # The first step of every /fix: lay out the tree and let the model say what it would
       # reshape, before any Law scans. Inconclusive is reported and the run goes on.
       def first_read(deliberation:, bus:, targets:)
@@ -125,18 +152,7 @@ module Master
           first_read(deliberation:, bus:, targets:)
 
           unless ENV["MASTER_FIX_DEEP_TRACE"] == "0"
-            trace = begin
-              Master::Fix::ExecutionTrace.new(
-                root: Master.repo_root,
-                scope: trace_scope,
-                dependencies: { scanner:, fix_loop:, deliberation:, bus: },
-              ).run
-            rescue SyntaxError, StandardError => e
-              Master::Fix::ExecutionTrace::Result.new(
-                ok: false, files: 0, bytes: 0, ruby_files: 0, phases: {},
-                failures: ["execution trace uncaught: #{e.class}: #{e.message}"]
-              )
-            end
+            trace = steady_trace(scope: trace_scope, dependencies: { scanner:, fix_loop:, deliberation:, bus: })
             Master::Trace::Dmesg.status("trace0", trace.summary)
             unless trace.clean?
               details = trace.failures.first(12).join(" | ")
