@@ -152,7 +152,9 @@ module Master
       def checkpoint!(paths)
         raise "transaction not active" unless @active
 
-        selected = Array(paths).filter_map { |path| normalize(path) }.uniq
+        selected = Array(paths).map { |path| normalize(path) }
+        raise "checkpoint includes an unsafe path" if selected.any?(&:nil?)
+        selected = selected.uniq
         raise "checkpoint includes a path outside the transaction" unless (selected - @paths).empty?
 
         selected.each do |path|
