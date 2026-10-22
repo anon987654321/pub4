@@ -450,7 +450,7 @@ module Master
         @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
 
         InstrumentCheck.new(root: @root, bus: @bus).verify!
-        @reachability.verify!(target, files:)
+        @reachability.verify!(target, files:, subset: GateFocus.blockers?)
 
         resumed = resume_active_transaction(journal:, run_id:, start_pass:)
         return finish_run(resumed, target, run_id, mission:, requested:) if resumed.err?

@@ -19,17 +19,14 @@ module Master
         @fleet_verified = false
       end
 
-      def verify!(target, files:)
+      # subset: the run declared a narrower scope (--blockers), so files may be fewer than the
+      # collector's; never more, and never outside it.
+      def verify!(target, files:, subset: false)
         target = File.expand_path(target)
         raise "target #{target} is outside MASTER repository" unless inside_repo?(target)
 
-        expected = Master::Fix::FixLoop::FileCollector.new(root: @root, bus: @bus).collect(target)
-        actual = Array(files).map { |file| File.expand_path(file) }
-        missing = expected - actual
-        extra = actual - expected
-
-        raise "fix reachability gap: #{missing.size} collector file(s) never reached" if missing.any?
-        raise "fix reachability mismatch: #{extra.size} file(s) outside collector scope" if extra.any?
+        expected = collected(target)
+        check_scope!(expected, Array(files).map { |file| File.expand_path(file) }, subset:)
 
         publish_reachability(target, expected)
         verify_fleet! if top_level_target?(target) && !@fleet_verified
@@ -41,6 +38,15 @@ module Master
       end
 
       private
+
+      def collected(target) = Master::Fix::FixLoop::FileCollector.new(root: @root, bus: @bus).collect(target)
+
+      def check_scope!(expected, actual, subset:)
+        missing = expected - actual
+        extra = actual - expected
+        raise "fix reachability gap: #{missing.size} collector file(s) never reached" if missing.any? && !subset
+        raise "fix reachability mismatch: #{extra.size} file(s) outside collector scope" if extra.any?
+      end
 
       def publish_reachability(target, expected)
         @bus&.publish("fix_loop:reachability", target:, files: expected.size)
