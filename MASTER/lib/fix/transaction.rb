@@ -176,11 +176,19 @@ module Master
         selected = selected.uniq
         raise "observation includes a path outside the transaction" unless (selected - @paths).empty?
 
+        old_seen = @seen
+        next_seen = duplicate_seen
         selected.each do |path|
-          @seen[path] << fingerprint(absolute(path))
-          @seen[path] = @seen[path].uniq.last(8)
+          next_seen[path] << fingerprint(absolute(path))
+          next_seen[path] = next_seen[path].uniq.last(8)
         end
-        persist!
+        @seen = next_seen
+        begin
+          persist!
+        rescue StandardError
+          @seen = old_seen unless persisted_state_matches?(state: @state, paths: @paths, snapshots: @snapshots)
+          raise
+        end
         emit("fix:transaction_paths_observed", id: @id, paths: selected)
         Result.ok(selected)
       rescue StandardError => e
