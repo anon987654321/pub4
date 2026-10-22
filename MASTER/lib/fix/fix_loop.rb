@@ -12,6 +12,7 @@ require_relative "fix_loop/llm_router"
 require_relative "fix_loop/file_collector"
 require_relative "fix_loop/order"
 require_relative "fix_loop/pass_runner"
+require_relative "gate_focus"
 require_relative "fix_loop/convergence_config"
 require_relative "fix_loop/background_runner"
 require_relative "fix_loop/pass_runner_builder"
@@ -109,6 +110,13 @@ module Master
         @sweeps = build_sweeps(agent:, root:, bus:, ground_truth:, preserve_user_intent:)
       end
 
+      # --blockers: the corpus is the files a red gate named before the repair, nothing else.
+      def blocker_files(files)
+        named = GateFocus.only(files)
+        Master::Trace::Dmesg.status("fix0", "blockers: #{named.size} of #{files.size} file(s) named by a red gate")
+        named
+      end
+
       # Files the last run could not scan, read semantically, or finish a stage on, for its scorecard.
       def gap_count = Array(@pass_runner&.gaps&.values).sum(&:size)
 
@@ -144,6 +152,7 @@ module Master
         Master::Io::LaneSelection.announce
         current_phase = :corpus
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
+        files = blocker_files(files) if GateFocus.blockers?
         coverage = {
           candidates: @file_collector.candidate_count,
           collected: files.size,

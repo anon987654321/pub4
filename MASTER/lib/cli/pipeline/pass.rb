@@ -36,12 +36,25 @@ module Master
         end
 
         # The run in one line: how it ended, what it delivered, the findings before and after, the
-        # proof's verdict and the gaps, so an incomplete run says what it did and what it left.
+        # proof's verdict with the hard and soft gates it left red, and the gaps.
         def self.scorecard(outcome:, delivered:, counts: [], proof: nil, gaps: 0)
           before, after = counts
           findings = after && before ? "#{after} finding(s), was #{before}" : "#{before || after || "?"} finding(s)"
-          ["fix #{outcome}", "#{delivered} commit(s) delivered", findings, proof || "no proof ran",
-           "#{gaps} gap(s)"].join(" · ")
+          ["fix #{final_outcome(outcome, proof)}", "#{delivered} commit(s) delivered", findings,
+           *proof_parts(proof), "#{gaps} gap(s)"].join(" · ")
+        end
+
+        # A run that reached DONE while a hard gate is still red has not finished the app.
+        def self.final_outcome(outcome, proof)
+          outcome == :done && Array(proof&.fetch(:hard, nil)).any? ? :partial : outcome
+        end
+
+        def self.proof_parts(proof)
+          return ["no proof ran"] unless proof
+
+          hard, soft = proof.values_at(:hard, :soft).map { |gates| Array(gates) }
+          [proof[:verdict], "hard red #{hard.size}#{" (#{hard.first(3).join(", ")})" if hard.any?}",
+           "soft red #{soft.size}"]
         end
 
         def self.fix_ending(msg) = msg.to_s.match(/\A([A-Z_]+):/)&.captures&.first&.downcase&.to_sym
@@ -141,7 +154,7 @@ module Master
 
         def scorecard_line
           counts = @observation_totals.values_at("obs0", "obs1")
-          line = self.class.scorecard(**@scored, counts:, proof: @proof_verdict, gaps: fix_gaps)
+          line = self.class.scorecard(**@scored, counts:, proof: @proof, gaps: fix_gaps)
           Master::Trace::Dmesg.status("fix0", line)
           line
         end

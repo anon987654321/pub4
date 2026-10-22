@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "set"
+require "yaml"
 
 module Master
   module Fix
@@ -13,6 +14,7 @@ module Master
       IGNORED = %r{(?:\A|/)(?:gems|ruby/\d|minitest|bundler)/}
 
       @named = Set.new
+      @blockers = false
       @lock = Mutex.new
 
       module_function
@@ -27,15 +29,41 @@ module Master
 
       def reset! = @lock.synchronize { @named.clear }
 
+      # --blockers: this run repairs only the files a red gate names, and reads none semantically.
+      def blockers! = @lock.synchronize { @blockers = true }
+      def blockers? = @lock.synchronize { @blockers == true }
+      def restore_blockers(value) = @lock.synchronize { @blockers = value }
+
       def covers?(path)
         text = path.to_s
         named.any? { |token| text == token || text.end_with?("/#{token}") }
       end
 
+      # Only the files a red gate names.
+      def only(files) = Array(files).select { |path| covers?(path) }
+
       # The same files, those a red gate names first, the order otherwise kept.
       def first(files)
         focused, rest = Array(files).partition { |path| covers?(path) }
         focused + rest
+      end
+    end
+
+    # Splits the gates a proof left red into hard and soft (data/gate_tiers.yml). A run with a
+    # hard gate red cannot call itself done; a soft gate red is reported and left for later.
+    module GateTiers
+      FILE = File.expand_path("../../data/gate_tiers.yml", __dir__)
+
+      module_function
+
+      def soft = @soft ||= Array(YAML.safe_load_file(FILE)&.fetch("soft", [])).map(&:to_s).freeze
+
+      def hard?(gate) = !soft.include?(gate.to_s)
+
+      # [hard, soft] red gates, each sorted.
+      def split(failing)
+        hard, rest = Array(failing).map(&:to_s).partition { |gate| hard?(gate) }
+        [hard.sort, rest.sort]
       end
     end
   end

@@ -162,8 +162,10 @@ module Master
 
           ["proof", log_phase("gate0", "proof", nil) do
             ok, out = inside_proof { runner.call }
-            held, verdict = Proof.judge(Reading.parse(ok, out), baseline)
-            @proof_verdict = verdict
+            reading = Reading.parse(ok, out)
+            held, verdict = Proof.judge(reading, baseline)
+            hard, soft = Master::Fix::GateTiers.split(reading.failing)
+            @proof = { verdict:, hard:, soft: }
             Master::Trace::Dmesg.status("gate0", verdict)
             fail_stage("proof", verdict) unless held
             [verdict, proof_body(held, out), (deliver_leftovers(abs, verdict) if held)].compact.join("\n")

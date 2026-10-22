@@ -47,23 +47,35 @@ class TestFixPartialOutcome < Minitest::Test
     end
   end
 
+  def test_the_scorecard_says_what_the_run_did_and_left
+    proof = { verdict: "proof: 9 of 20; no new failures", hard: %w[release], soft: %w[layout_suite tap_target_probe] }
+    line = Pass.scorecard(outcome: :partial, delivered: 3, counts: [900, 412], proof:, gaps: 2)
+
+    assert_equal "fix partial · 3 commit(s) delivered · 412 finding(s), was 900 · " \
+                 "proof: 9 of 20; no new failures · hard red 1 (release) · soft red 2 · 2 gap(s)", line
+  end
+
+  def test_a_scorecard_without_a_proof_says_so
+    assert_includes Pass.scorecard(outcome: :failed, delivered: 0, counts: [10]), "no proof ran"
+  end
+
+  def test_a_clean_run_with_a_hard_gate_red_is_partial
+    proof = { verdict: "proof: 18 of 20", hard: %w[production], soft: [] }
+
+    assert_match(/\Afix partial /, Pass.scorecard(outcome: :done, delivered: 1, proof:))
+  end
+
+  def test_a_clean_run_with_only_soft_gates_red_is_done
+    proof = { verdict: "proof: 18 of 20", hard: [], soft: %w[layout_suite] }
+
+    assert_match(/\Afix done /, Pass.scorecard(outcome: :done, delivered: 1, proof:))
+  end
+
   private
 
   def git!(root, *args)
     output, status = Open3.capture2e("git", "-C", root, *args)
     assert status.success?, "git #{args.join(" ")} failed: #{output}"
     output
-  end
-
-  def test_the_scorecard_says_what_the_run_did_and_left
-    line = Pass.scorecard(outcome: :partial, delivered: 3, counts: [900, 412],
-                          proof: "proof: 9 of 20; no new failures", gaps: 2)
-
-    assert_equal "fix partial · 3 commit(s) delivered · 412 finding(s), was 900 · " \
-                 "proof: 9 of 20; no new failures · 2 gap(s)", line
-  end
-
-  def test_a_scorecard_without_a_proof_says_so
-    assert_includes Pass.scorecard(outcome: :failed, delivered: 0, counts: [10]), "no proof ran"
   end
 end

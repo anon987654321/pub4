@@ -31,6 +31,10 @@ class TestCliCommandFlags < Minitest::Test
     refute_match(/option error/, err + out)
   end
 
+  def test_blockers_survives_into_the_message
+    assert_equal "/fix RAILS --blockers", @host.initial_message_from_argv(["/fix", "RAILS", "--blockers"])
+  end
+
   def test_dry_run_is_never_dropped
     argv = ["/fix", "MASTER", "--dry-run", "--no-autofix", "--only=critique"]
 

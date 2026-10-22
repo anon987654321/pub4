@@ -9,6 +9,7 @@ require "timeout"
 
 require_relative "law_timing"
 require_relative "semantic_verdicts"
+require_relative "../gate_focus"
 require_relative "../../review/scan/semantic_fingerprint"
 require_relative "../../review/scan/law_health"
 require_relative "../../operator/lock_sweep"
@@ -220,7 +221,7 @@ module Master
         # size. Keeping it, but sampling a deterministic slice so clean files are
         # not permanently exempt, and saying so when a file is skipped.
         def semantic_due?(findings, path)
-          return false if @skip_semantic
+          return false if @skip_semantic || GateFocus.blockers?
           return true unless findings.empty?
           return false if semantic_sample <= 0
 

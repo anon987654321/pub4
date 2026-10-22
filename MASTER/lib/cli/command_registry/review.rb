@@ -62,10 +62,12 @@ module Master
         overrides = execution_overrides(raw)
         previous_mode = Master::Fix::AutofixGuard.explicit_mode_override
         previous_max_files = Master::Fix::RunLedger.max_files_override
+        previous_blockers = Master::Fix::GateFocus.blockers?
 
         begin
           Master::Fix::AutofixGuard.mode = overrides[:autofix_mode] if overrides[:autofix_mode]
           Master::Fix::RunLedger.max_files = overrides[:max_files] if overrides[:max_files]
+          Master::Fix::GateFocus.blockers! if overrides[:blockers]
           rendered = dispatch_fix_parsed(
             scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
             apply:, critique:, aesthetic:, only:, target:
@@ -74,6 +76,7 @@ module Master
         ensure
           Master::Fix::AutofixGuard.restore_mode_override(previous_mode)
           Master::Fix::RunLedger.restore_max_files_override(previous_max_files)
+          Master::Fix::GateFocus.restore_blockers(previous_blockers)
         end
       end
 
@@ -367,6 +370,9 @@ module Master
       # How many files the model phase takes, easiest first (Fix::RunLedger.max_files).
       MAX_FILES_FLAG = /\A--max-files=(\d+)\z/i
 
+      # Repair only the files a red gate names, without semantic reads (Fix::GateFocus).
+      BLOCKERS_FLAG = /\A--blockers\z/i
+
       # Status messages are one-line operator evidence. Do not let a path label
       # inject terminal controls or forged log lines into the dmesg stream.
       def display_fix_target(target)
@@ -377,12 +383,14 @@ module Master
       end
 
       def execution_overrides(raw)
-        overrides = { autofix_mode: nil, max_files: nil }
+        overrides = { autofix_mode: nil, max_files: nil, blockers: false }
         raw.to_s.split(/\s+/).each do |token|
           if (match = AUTOFIX_FLAG.match(token))
             overrides[:autofix_mode] = match[1]
           elsif (match = MAX_FILES_FLAG.match(token))
             overrides[:max_files] = match[1]
+          elsif BLOCKERS_FLAG.match?(token)
+            overrides[:blockers] = true
           end
         end
         overrides
@@ -396,7 +404,7 @@ module Master
             flags[flag.first] = flag.last
           elsif DMESG_FLAGS.key?(token.downcase)
             next
-          elsif token =~ AUTOFIX_FLAG || token =~ MAX_FILES_FLAG
+          elsif token =~ AUTOFIX_FLAG || token =~ MAX_FILES_FLAG || token =~ BLOCKERS_FLAG
             # Parsed below as per-dispatch options; parsing must not mutate the
             # next command's behavior in a long-lived interactive session.
             next

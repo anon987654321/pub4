@@ -77,7 +77,8 @@ end
 # Flags the slash commands read from their own argument text (/fix --max-files=25,
 # /fix --no-critique, /fix --dry-run). The top-level parser does not know them and
 # must not reject them or drop them: a dropped --dry-run is a write run.
-COMMAND_FLAG = /\A--(?:(?:autofix|max-files|only)=|dry-run\z|no-autofix\z|apply\z|(?:no-)?critique\z|no-aesthetic\z)/
+COMMAND_FLAG = %r{\A--(?:(?:autofix|max-files|only)=|
+                 (?:dry-run|no-autofix|apply|(?:no-)?critique|no-aesthetic|blockers)\z)}x
 
 def initial_message_from_argv(argv)
   kept = argv.select { |arg| arg.match?(COMMAND_FLAG) }
