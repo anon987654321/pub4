@@ -36,7 +36,7 @@ module Master
         def begin_run(root:, max_passes:, bus: nil, target: nil)
           # Nested tree passes and gate re-entries belong to the command's one
           # budget. Do not restart its clock, watchdog, lane failures, or ledger.
-          return @current if @shared_depth.to_i.positive? && @current
+          return @current if (@shared_depth || 0).to_i.positive? && @current
 
           finish_run
           ToolBreaker.reset!
@@ -45,9 +45,9 @@ module Master
         end
 
         def with_shared_run(root:, max_passes:, bus: nil, target: nil)
-          outer = @shared_depth.to_i.zero?
+          outer = (@shared_depth || 0).to_i.zero?
           begin_run(root:, max_passes:, bus:, target:) if outer
-          @shared_depth = @shared_depth.to_i + 1
+          @shared_depth = (@shared_depth || 0).to_i + 1
           result = yield
           result
         ensure
@@ -57,7 +57,7 @@ module Master
             finish_run(reason: "command scope ended")
             @shared_finishing = false
           else
-            @shared_depth = [@shared_depth.to_i - 1, 0].max
+            @shared_depth = [(@shared_depth || 0).to_i - 1, 0].max
           end
         end
 
@@ -75,7 +75,7 @@ module Master
         end
 
         def finish_run(reason: "completed")
-          return @current if @shared_depth.to_i.positive? && !@shared_finishing
+          return @current if (@shared_depth || 0).to_i.positive? && !@shared_finishing
 
           @current&.finish!(reason)
           @current = nil
