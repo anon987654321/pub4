@@ -377,36 +377,18 @@ module Master
       end
 
       def retry_delivery(transaction_id:, expected_head:)
-        # The root transaction lock covers HEAD verification, push, and finalize.
-        # Checking or pushing before locking lets a second /fix publish commits
-        # between the recovery proof and the delivery that proof authorizes.
         transaction = Transaction::Recovery.load_persisted(root: @root, id: transaction_id, bus: @bus)
-        unless transaction.delivery.pending?
-          return Result.err("delivery recovery transaction has no recorded commit", category: :policy)
-        end
-        unless transaction.delivery.head_after.to_s == expected_head.to_s
-          return Result.err("delivery recovery commit identity mismatch", category: :policy)
-        end
-
-        actual_head = @git.head
-        return Result.err("delivery recovery HEAD mismatch", category: :policy) unless actual_head == expected_head
+        return Result.err("delivery recovery transaction has no recorded commit", category: :policy) unless transaction.delivery.pending?
+        return Result.err("delivery recovery commit identity mismatch", category: :policy) unless transaction.delivery.head_after.to_s == expected_head.to_s
+        return Result.err("delivery recovery HEAD mismatch", category: :policy) unless @git.head == expected_head
 
         @git.push
-        head_after_push = @git.head
-        return Result.err("delivery recovery HEAD changed during push", category: :policy) unless head_after_push == expected_head
-
+        return Result.err("delivery recovery HEAD changed during push", category: :policy) unless @git.head == expected_head
         ahead, behind = @git.ahead_behind
-        unless ahead.zero? && behind.zero?
-          return Result.err(
-            "delivery recovery left ahead=#{ahead} behind=#{behind} commit(s) after push",
-            category: :infrastructure,
-          )
-        end
+        return Result.err("delivery recovery left ahead=#{ahead} behind=#{behind} commit(s) after push", category: :infrastructure) unless ahead.zero? && behind.zero?
 
-        result = transaction.delivery.finalize!(head: head_after_push)
-        return result if result.err?
-
-        Result.ok(:delivery_recovered)
+        result = transaction.delivery.finalize!(head: expected_head)
+        result.err? ? result : Result.ok(:delivery_recovered)
       rescue StandardError => e
         Result.err("delivery recovery: #{e.message}", category: :infrastructure)
       ensure
