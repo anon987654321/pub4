@@ -2,7 +2,7 @@
 schema: 1
 apps:
   amber:
-    digest: e10ce2b86858b0d4
+    digest: 37ea2cccd8a96cd5
     routes:
       shared/changelog#show:
       - "/changelog"
@@ -18,6 +18,8 @@ apps:
       - "/sso/from_master"
       registrations#new:
       - "/registration/new"
+      privacy_settings#show:
+      - "/privacy_setting"
       sessions#magic:
       - "/session/magic"
       sessions#new:
@@ -40,6 +42,8 @@ apps:
       - "/two_factor_setup"
       omniauth_callbacks#create:
       - "/auth/:provider/callback"
+      email_verifications#show:
+      - "/verify/:token"
       site_verifications#well_known:
       - "/.well-known/:network-site-verification"
       site_verifications#file:
@@ -183,7 +187,7 @@ apps:
       active_storage/disk#show:
       - "/rails/active_storage/disk/:encoded_key/*filename"
   brgen:
-    digest: d7be6e512f50c1cf
+    digest: 30e793bcc4498c5b
     routes:
       shared/changelog#show:
       - "/changelog"
@@ -203,8 +207,6 @@ apps:
       - "/internal/status"
       sso#from_master:
       - "/sso/from_master"
-      email_verifications#show:
-      - "/verify/:token"
       hashtags#show:
       - "/tags/:name"
       bookmarks#index:
@@ -235,6 +237,8 @@ apps:
       - "/two_factor_setup"
       omniauth_callbacks#create:
       - "/auth/:provider/callback"
+      email_verifications#show:
+      - "/verify/:token"
       site_verifications#well_known:
       - "/.well-known/:network-site-verification"
       site_verifications#file:
@@ -544,7 +548,7 @@ apps:
       maps/places#show:
       - "/places/:id"
   bsdports:
-    digest: a800e936f20c7362
+    digest: b225ea6fbc1af8a4
     routes:
       shared/changelog#show:
       - "/changelog"
