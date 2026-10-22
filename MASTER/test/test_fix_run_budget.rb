@@ -83,6 +83,15 @@ class TestFixRunBudget < Minitest::Test
     assert @said.any? { |line| line.include?("ABORT") }
   end
 
+  def test_stop_category_distinguishes_resource_failure_from_a_stall
+    run = budget
+    run.instance_variable_set(:@exit_reason, "disk pressure at 0.1 GB free")
+    assert_equal :infrastructure, run.stop_category
+
+    run.instance_variable_set(:@exit_reason, "stalled pass 2 phase scan")
+    assert_equal :timeout, run.stop_category
+  end
+
   def test_shared_run_does_not_enter_command_body_after_startup_abort
     reason = "disk pressure at 0.1 GB free; stopping before filesystem exhaustion"
     aborted = Object.new
