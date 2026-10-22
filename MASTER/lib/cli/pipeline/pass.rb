@@ -423,13 +423,13 @@ def default_apply?(*) = false
           "fix partial: #{delivered} verified commit(s) delivered; stopped: #{msg}"
         end
 
-        # Commits /fix made since head: each carries MASTER's trailer, so another writer's commits
-        # in the shared checkout are not counted.
+        # Commits /fix made since head: a Fix_loop: subject and MASTER's trailer together, because
+        # other writers in the shared checkout use the same trailer.
         def fix_commits_since(head)
           return 0 if head.to_s.empty?
 
-          trailer = "--grep=#{Master::Core::World::COMMIT_TRAILER}"
-          command = ["git", "-C", @root.to_s, "rev-list", "--count", trailer, "#{head}..HEAD"]
+          greps = ["--all-match", "--grep=^Fix_loop:", "--grep=#{Master::Core::World::COMMIT_TRAILER}"]
+          command = ["git", "-C", @root.to_s, "rev-list", "--count", *greps, "#{head}..HEAD"]
           out, status = Master::Io::Exec.capture2e(*command)
           status.success? ? out.to_i : 0
         end
