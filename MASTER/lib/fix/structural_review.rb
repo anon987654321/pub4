@@ -16,6 +16,9 @@ module Master
     # refactor or a do-over, and where the target does not hold to the Law catalogue. Findings are hints for
     # the structural step and the closing reflection, never edits. A finding that names a path the tree
     # does not hold is dropped, and one that cites a Law that does not exist loses the citation.
+    # This and the first read are /fix's semantic reading above the file, two calls per target; a
+    # further pass per subsystem was weighed and refused: it repeats this read at many more calls,
+    # and per-file semantic reads already cover changed files and a rotating slice of the rest.
     class StructuralReview
       CATEGORIES = %w[stands_out odd over_engineered under_engineered refactor do_over adherence].freeze
       HEADER = "FINDING"
