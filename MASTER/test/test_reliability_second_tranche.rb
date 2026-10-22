@@ -578,6 +578,10 @@ class TestReliabilitySecondTranche < Minitest::Test
       tx.observe!
       tx.delivery.begin!(head_before: "before")
       tx.delivery.record_commit!(head_after: "after")
+      # Emulate a crashed process: the new recovery instance must take the
+      # root lock after the original process has released it.
+      tx.send(:release_lock)
+      tx.instance_variable_set(:@active, false)
 
       recovery = Master::Fix::Transaction::Recovery.recover!(root:, id: tx.id)
 
@@ -598,6 +602,9 @@ class TestReliabilitySecondTranche < Minitest::Test
       tx.observe!
       tx.delivery.begin!(head_before: "before")
       tx.delivery.record_commit!(head_after: "commit-1")
+      # Simulate process loss before the new process loads and finalizes it.
+      tx.send(:release_lock)
+      tx.instance_variable_set(:@active, false)
 
       recovered = Master::Fix::Transaction::Recovery.load_persisted(root:, id: tx.id)
       assert recovered.delivery.pending?
