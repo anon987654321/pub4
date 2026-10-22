@@ -13,7 +13,7 @@ this file > the per-tree contract. Feature truth is `RAILS/apps.yml`.
 `rake lint:agent_contracts` failing when one drifts. Whichever door an agent
 comes through, it is pointed at `MASTER/data/soul.yml` and
 `MASTER/data/laws.yml` before it writes. Change the law there, never in a
-harness file.
+harness file. The glossary at `MASTER/docs/synonyms.yml` is vocabulary-only and cannot change policy.
 
 This file points; it does not copy. Every subsystem keeps its own contract and
 those files are maintained, so restating them here produces a second source that
@@ -51,9 +51,10 @@ beside itself, unless `--out` says otherwise.
 ## Commands
 
 ```zsh
-MASTER/bin/operator gate                 # every gate in the repo, fixing as it goes
-MASTER/bin/operator gate --explain       # the ladder, without running it
-MASTER/bin/operator gate --scan-only     # the same ladder, writing nothing
+MASTER/bin/operator check                 # every declared check in the repo, fixing as it goes
+MASTER/bin/operator check --explain       # the ladder, without running it
+MASTER/bin/operator check --scan-only     # the same ladder, writing nothing
+MASTER/bin/operator gate                 # compatibility alias for check
 MASTER/bin/operator status               # what is dirty, per tree
 MASTER/bin/operator test                 # the suites
 MASTER/bin/operator measure              # every ratchet, current vs ceiling
@@ -71,7 +72,7 @@ Run the smallest check that proves the work, and do not report done without its
 output. `--profile=agent` may fail on known debt tagged `agent-ignore`; do not
 chase scan noise on unrelated patches.
 
-`bin/operator gate` is the whole ladder in one command: the scanner over all four
+`bin/operator check` is the whole ladder in one command: the scanner over all four
 governed trees with autofix on, every RAILS gate, every suite, the ratchets, the sprawl
 census, and last the council. It writes by default and says which files each
 stage changed, under that stage's name, so a bad fix is attributable to the

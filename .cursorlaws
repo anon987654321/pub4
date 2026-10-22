@@ -10,11 +10,11 @@ pub4 is governed by MASTER. Read the authority chain before editing:
 3. `MASTER/law/*.rb` — executable Laws with required bad/good fixtures.
 4. `MASTER/lib/review/scan/laws/*.rb` — the scanner registry and remaining detectors.
 
-Authority is `soul.yml` > `laws.yml` > executable Laws > gates and tree contracts > agent-harness prose. Harness files route work to the Laws; they do not override them. Edit this marked source block and regenerate the root agent files with `cd MASTER && rake docs:agent_contracts`; never edit generated copies directly.
+Authority is `soul.yml` > `laws.yml` > executable Laws > checks and tree contracts > agent-harness prose. Harness files route work to the Laws; they do not override them. `MASTER/docs/synonyms.yml` is glossary-only: a Law names the requirement, a check names the instrument, and proof is evidence. `MASTER/gates/gates.yml` routes existing instruments; it does not create policy, Law IDs, or tiers. The glossary cannot override the authority chain. Edit this marked source block and regenerate the root agent files with `cd MASTER && rake docs:agent_contracts`; never edit generated copies directly.
 
 The four owners are `MASTER/` (runtime, `MASTER/bin/master`), `RAILS/` (apps, `MASTER/bin/operator triangle up`), `OPENBSD/` (deployment and vm23), and `STUDIO/` (Dilla, postpro, Replicate and LoRA). `MASTER/tools/` keeps compatibility entrypoints for STUDIO tools.
 
-Use `MASTER/bin/operator gate` for the full gate ladder and `MASTER/bin/operator measure` for ratchets. Prefer the smallest check that proves the change, and report its real output. For unfamiliar or broad work, start with `ruby MASTER/tools/agent_context.rb --tree`.
+Use `MASTER/bin/operator check` for the full check ladder (`gate` remains a compatibility alias) and `MASTER/bin/operator measure` for ratchets. Prefer the smallest check that proves the change, and report its real output. For unfamiliar or broad work, start with `ruby MASTER/tools/agent_context.rb --tree`.
 
 `/fix [path]` is the single convergence lifecycle: observe, critique, repair, re-observe and
 verify until DONE or a truthful terminal state. Bare `/fix` is write-enabled; its read-only
