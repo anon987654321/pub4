@@ -57,6 +57,27 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def test_corrupt_recovery_manifest_is_reported_and_preserved
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "note.txt")
+      File.write(path, "before")
+      id = "corrupt-manifest"
+      tx = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id:).begin!
+      manifest = File.join(dir, ".master", "fix_transactions", id, "manifest.json")
+      File.write(manifest, "{not-json")
+      tx.send(:release_lock)
+      tx.instance_variable_set(:@active, false)
+
+      result = Master::Fix::Transaction::Recovery.recover!(root: dir, id:)
+
+      refute result.ok?
+      assert_equal :infrastructure, result.category
+      assert_includes result.message, "manifest is corrupt"
+      assert_equal "before", File.read(path)
+      assert File.file?(manifest), "preserve corrupt evidence for diagnosis instead of deleting it"
+    end
+  end
+
   def test_recovery_refuses_to_race_with_a_live_transaction
     Dir.mktmpdir do |dir|
       path = File.join(dir, "note.txt")
