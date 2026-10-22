@@ -255,6 +255,26 @@ module Master
             tally_rule_results([[repair.scope, result]], breakdown: stream.breakdown, pass: stream.pass)
           end
 
+          # The graph is built once per run, and the run itself changes files: RuboCop, earlier passes,
+          # another writer. A file indexed under older bytes, or not at all, rebuilds the graph once
+          # (under a lock, and only if the file changed after the last build) instead of parking the
+          # file for a person.
+          GRAPH_LOCK = Mutex.new
+          GRAPH_REBUILT = "dependency graph rebuilt: files changed since it was indexed"
+          NOT_INDEXED = "target source not indexed at its current content, even after a graph rebuild"
+
+          def indexed_at?(graph, path, digest) = graph.includes_path?(path) && graph.source_digest(path) == digest
+
+          def refresh_graph_for(graph, path)
+            GRAPH_LOCK.synchronize do
+              next unless File.mtime(path).to_f > (@graph_built_at || 0)
+
+              graph.build(refresh: true)
+              @graph_built_at = Time.now.to_f
+              Master::Trace::Dmesg.status("understand0", GRAPH_REBUILT)
+            end
+          end
+
           # The dependency graph is built from complete current files before an
           # operator-requested run starts. Read all direct inbound/outbound file
           # relationships in full; never truncate a dependency to fit a prompt.
@@ -263,12 +283,10 @@ module Master
           def repair_context(path)
             graph = @reference_graph
             return { complete: true, files: [] } unless graph # isolated unit tests only; requested /fix always wires it
-            return incomplete_repair_context("target source is not indexed") unless graph.includes_path?(path)
-
             target_source = File.read(path, encoding: "UTF-8")
             target_sha256 = Digest::SHA256.hexdigest(target_source)
-            return incomplete_repair_context("target source changed since dependency graph refresh") \
-              unless graph.source_digest(path) == target_sha256
+            refresh_graph_for(graph, path) unless indexed_at?(graph, path, target_sha256)
+            return incomplete_repair_context(NOT_INDEXED) unless indexed_at?(graph, path, target_sha256)
 
             relative = graph.relative(path)
             radius = graph.blast_radius(path)
