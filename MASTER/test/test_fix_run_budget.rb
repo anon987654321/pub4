@@ -180,6 +180,59 @@ class TestFixRunBudget < Minitest::Test
     assert(lines.none? { |l| l.start_with?(" ") && !l.start_with?("    ") })
   end
 
+  def test_nested_fix_scopes_share_one_command_budget
+    first_run = nil
+
+    result = Budget.with_shared_run(root: @root, max_passes: 3) do
+      first_run = Budget.current
+      refute_nil first_run
+
+      nested_result = Budget.with_shared_run(root: @root, max_passes: 1) do
+        assert_same first_run, Budget.current
+
+        # FixLoop also calls begin_run. Inside the command scope that must not
+        # reset the watchdog, ledger, or start time.
+        Budget.begin_run(root: @root, max_passes: 99)
+        assert_same first_run, Budget.current
+
+        # A nested caller cannot stop the budget owned by the command.
+        Budget.finish_run(reason: "nested pass ended")
+        assert_same first_run, Budget.current
+        :nested_complete
+      end
+
+      assert_equal :nested_complete, nested_result
+      assert_same first_run, Budget.current
+      :command_complete
+    end
+
+    assert_equal :command_complete, result
+    assert_nil Budget.current
+    assert_equal 0, Budget.instance_variable_get(:@shared_depth)
+  ensure
+    Budget.finish_run
+  end
+
+  def test_shared_budget_is_finalized_when_a_nested_pass_raises
+    started = nil
+
+    error = assert_raises(RuntimeError) do
+      Budget.with_shared_run(root: @root, max_passes: 3) do
+        started = Budget.current
+        Budget.with_shared_run(root: @root, max_passes: 1) do
+          raise "simulated pass failure"
+        end
+      end
+    end
+
+    assert_equal "simulated pass failure", error.message
+    refute_nil started
+    assert_nil Budget.current
+    assert_equal 0, Budget.instance_variable_get(:@shared_depth)
+  ensure
+    Budget.finish_run
+  end
+
   def test_pass_boundary_returns_a_timeout_result
     Master::Trace::Dmesg.with_verbosity("quiet") do
       Budget.begin_run(root: @root, max_passes: 3)
