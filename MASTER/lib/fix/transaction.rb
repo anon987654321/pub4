@@ -5,8 +5,8 @@ require "fileutils"
 require "json"
 require "pathname"
 require "securerandom"
-require "set"
 require_relative "../io/atomic_write"
+require_relative "../core/world"
 require_relative "transaction/delivery"
 require_relative "transaction/recovery"
 
@@ -53,40 +53,29 @@ module Master
         raise "transaction already active" if @active
         raise "transaction id is empty" if @id.empty?
 
-        created_dir = false
         acquire_lock
         raise "transaction id already exists: #{@id}" if File.exist?(@dir) || File.symlink?(@dir)
 
         Dir.mkdir(@dir, 0o700)
-        created_dir = true
-        snapshot_started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         @paths.each do |path|
-          captured = snapshot(path)
-          raise "transaction cannot safely track unsupported filesystem object: #{path}" if captured.kind == :other
-
-          @snapshots[path] = captured
+          @snapshots[path] = snapshot(path)
+          raise "transaction cannot safely track unsupported filesystem object: #{path}" if @snapshots[path].kind == :other
         end
         @state = "open"
         @active = true
         observe!(verify_snapshot: true)
-        emit(
-          "fix:transaction_snapshot_summary",
-          id: @id,
-          tracked_paths: @paths.size,
-          file_snapshots: @snapshots.values.count { |item| item.kind == :file },
-          elapsed_ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - snapshot_started) * 1000).round,
-        )
+        emit("fix:transaction_snapshot_summary", id: @id, tracked_paths: @paths.size,
+                                                  file_snapshots: @snapshots.values.count { |item| item.kind == :file },
+                                                  elapsed_ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round)
         emit("fix:transaction_start", id: @id, paths: @paths)
         self
       rescue StandardError
-        # begin! can fail after observe! has persisted a usable manifest. The
-        # Ruby object must no longer claim an active transaction after releasing
-        # the lock, while the durable state remains intact for next-run recovery.
         @active = false
         if persisted?
           release_lock
         else
-          cleanup! if created_dir
+          cleanup! if File.directory?(@dir) && !File.symlink?(@dir)
           release_lock
         end
         raise
@@ -95,10 +84,9 @@ module Master
       def observe!(verify_snapshot: false)
         @paths.each do |path|
           current = fingerprint(absolute(path))
-          if verify_snapshot && !snapshot_matches_fingerprint?(path, @snapshots.fetch(path), current)
+          if verify_snapshot && !snapshot_matches_fingerprint?(@snapshots.fetch(path), current)
             raise "transaction source changed during initial snapshot: #{path}"
           end
-
           @seen[path] << current
           @seen[path] = @seen[path].uniq.last(8)
         end
@@ -116,52 +104,24 @@ module Master
         raise "transaction enlistment contains an unsafe path" if selected.any?(&:nil?)
 
         added = selected.uniq - @paths
-        staged = {}
-        added.each { |path| staged[path] = snapshot(path, versioned: true) }
+        staged = added.to_h { |path| [path, snapshot(path, versioned: true)] }
         unsupported = staged.select { |_path, item| item.kind == :other }.keys
-        unless unsupported.empty?
-          discard_snapshots!(staged.values)
-          return Result.err(
-            "transaction cannot safely enlist unsupported filesystem object(s): #{unsupported.join(", ")}",
-            category: :policy,
-          )
-        end
+        return Result.err("transaction cannot safely enlist unsupported filesystem object(s): #{unsupported.join(", ")}",
+                          category: :policy) unless unsupported.empty?
 
-        old_paths = @paths
-        old_snapshots = @snapshots
-        old_seen = @seen
-        new_paths = (@paths + added).uniq
-        new_snapshots = @snapshots.merge(staged)
-        new_seen = duplicate_seen
         added.each do |path|
-          current = fingerprint(absolute(path))
-          unless snapshot_matches_fingerprint?(path, staged.fetch(path), current)
-            discard_snapshots!(staged.values)
+          unless snapshot_matches_fingerprint?(staged.fetch(path), fingerprint(absolute(path)))
             return Result.err("transaction source changed during enlistment: #{path}", category: :policy)
           end
-          new_seen[path] = [current]
         end
+        @snapshots.merge!(staged)
+        @paths = (@paths + added).uniq
+        observed = observe_paths!(added) unless added.empty?
+        return observed if observed && observed.err?
 
-        @paths = new_paths
-        @snapshots = new_snapshots
-        @seen = new_seen
-        begin
-          persist!
-        rescue StandardError
-          unless persisted_state_matches?(state: @state, paths: new_paths, snapshots: new_snapshots)
-            @paths = old_paths
-            @snapshots = old_snapshots
-            @seen = old_seen
-            discard_snapshots!(staged.values)
-          end
-          raise
-        end
-
-        emit("fix:transaction_paths_observed", id: @id, paths: added) unless added.empty?
         emit("fix:transaction_paths_enlisted", id: @id, paths: added)
         Result.ok(added)
       rescue StandardError => e
-        discard_snapshots!(staged.values) if defined?(staged) && staged
         emit("fix:transaction_enlist_failed", id: @id, error: e.message)
         Result.err("transaction enlistment: #{e.message}", category: :infrastructure)
       end
@@ -177,18 +137,12 @@ module Master
         raise "observation includes a path outside the transaction" unless (selected - @paths).empty?
 
         old_seen = @seen
-        next_seen = duplicate_seen
+        @seen = @seen.to_h.transform_values(&:dup).tap { |seen| seen.default_proc = ->(hash, path) { hash[path] = [] } }
         selected.each do |path|
-          next_seen[path] << fingerprint(absolute(path))
-          next_seen[path] = next_seen[path].uniq.last(8)
+          @seen[path] << fingerprint(absolute(path))
+          @seen[path] = @seen[path].uniq.last(8)
         end
-        @seen = next_seen
-        begin
-          persist!
-        rescue StandardError
-          @seen = old_seen unless persisted_state_matches?(state: @state, paths: @paths, snapshots: @snapshots)
-          raise
-        end
+        persist!
         emit("fix:transaction_paths_observed", id: @id, paths: selected)
         Result.ok(selected)
       rescue StandardError => e
@@ -229,63 +183,30 @@ module Master
         selected = selected.uniq
         raise "checkpoint includes a path outside the transaction" unless (selected - @paths).empty?
 
-        staged = {}
-        begin
-          selected.each { |path| staged[path] = snapshot(path, versioned: true) }
-        rescue StandardError
-          discard_snapshots!(staged.values)
-          raise
-        end
-        unsupported = staged.select { |_path, item| item.kind == :other }.keys
-        unless unsupported.empty?
-          discard_snapshots!(staged.values)
-          return Result.err(
-            "transaction checkpoint cannot safely capture unsupported filesystem object(s): #{unsupported.join(", ")}",
-            category: :policy,
-          )
+        staged = selected.to_h { |path| [path, snapshot(path, versioned: true)] }
+        return Result.err("checkpoint cannot safely capture a directory", category: :policy) if staged.values.any? { |item| item.kind == :other }
+        unless selected.all? { |path| snapshot_matches_fingerprint?(staged.fetch(path), fingerprint(absolute(path))) }
+          return Result.err("transaction source changed while checkpointing", category: :policy)
         end
 
-        next_seen = duplicate_seen
-        selected.each do |path|
-          current = fingerprint(absolute(path))
-          unless snapshot_matches_fingerprint?(path, staged.fetch(path), current)
-            discard_snapshots!(staged.values)
-            return Result.err("transaction source changed while checkpointing: #{path}", category: :policy)
-          end
-          next_seen[path] = [current]
-        end
-
-        old_snapshots = @snapshots
-        old_seen = @seen
-        old_state = @state
-        old_delivery_head_before = @delivery_head_before
-        old_delivery_head_after = @delivery_head_after
-        next_snapshots = @snapshots.merge(staged)
-        @snapshots = next_snapshots
-        @seen = next_seen
+        old_snapshots, old_seen, old_state = @snapshots, @seen, @state
+        old_before, old_after = @delivery_head_before, @delivery_head_after
+        old_stores = selected.filter_map { |path| @snapshots[path]&.store }
+        @snapshots = @snapshots.merge(staged)
+        @seen = @seen.to_h.transform_values(&:dup)
+        @seen.default_proc = ->(hash, path) { hash[path] = [] }
+        selected.each { |path| @seen[path] = [fingerprint(absolute(path))] }
         @state = "open"
-        @delivery_head_before = nil
-        @delivery_head_after = nil
-        begin
-          persist!
-        rescue StandardError
-          unless persisted_state_matches?(state: @state, paths: @paths, snapshots: next_snapshots)
-            @snapshots = old_snapshots
-            @seen = old_seen
-            @state = old_state
-            @delivery_head_before = old_delivery_head_before
-            @delivery_head_after = old_delivery_head_after
-          end
-          discard_snapshots!(staged.values)
-          raise
-        end
-
-        obsolete = selected.filter_map { |path| old_snapshots[path] }
-          .reject { |item| item.store && next_snapshots.values.any? { |current| current.store == item.store } }
-        discard_snapshots!(obsolete)
+        @delivery_head_before = @delivery_head_after = nil
+        persist!
+        old_stores.each { |store| File.delete(store) if store && !@snapshots.values.any? { |item| item.store == store } }
         emit("fix:transaction_checkpoint", id: @id, paths: selected)
         Result.ok(selected)
       rescue StandardError => e
+        unless persisted_state_matches?
+          @snapshots, @seen, @state = old_snapshots, old_seen, old_state if defined?(old_snapshots)
+          @delivery_head_before, @delivery_head_after = old_before, old_after if defined?(old_before)
+        end
         emit("fix:transaction_checkpoint_failed", id: @id, error: e.message)
         Result.err("transaction checkpoint: #{e.message}", category: :infrastructure)
       end
@@ -369,15 +290,7 @@ module Master
       # -- nothing else calls an instance's own recover! directly, confirmed
       # by grepping every lib/ and test/ caller before making this private.
       def recover!
-        # Recovery is a writer too: serialize it against a live /fix transaction.
-        # Nonblocking acquisition avoids hanging an operator while another run
-        # owns the root-wide lock; preserve the manifest and report the blocker.
-        unless acquire_lock(nonblock: true)
-          return Result.err(
-            "transaction recovery refused: an active transaction holds the root lock",
-            category: :infrastructure,
-          )
-        end
+        return Result.err("transaction recovery refused: an active transaction holds the root lock", category: :infrastructure) unless acquire_lock(nonblock: true)
 
         load_manifest!
         recover_for_state
@@ -430,17 +343,18 @@ module Master
       def persisted? = File.file?(File.join(@dir, MANIFEST))
 
       def acquire_lock(nonblock: false)
-        verify_root_storage_tree!
+        master_dir = File.join(@root, ".master")
+        tx_root = File.join(@root, ROOT_DIR)
+        raise "MASTER state directory is a symlink" if File.symlink?(master_dir)
+        FileUtils.mkdir_p(master_dir)
+        raise "transaction root is a symlink" if File.symlink?(tx_root)
+        FileUtils.mkdir_p(tx_root)
         path = File.join(@root, LOCK)
         raise "transaction lock path is a symlink" if File.symlink?(path)
         @lock = File.open(path, File::RDWR | File::CREAT, 0o600)
-        flags = File::LOCK_EX
-        flags |= File::LOCK_NB if nonblock
-        locked = @lock.flock(flags)
-        return true if locked
-
-        release_lock
-        false
+        locked = @lock.flock(File::LOCK_EX | (nonblock ? File::LOCK_NB : 0))
+        release_lock unless locked
+        !!locked
       rescue StandardError
         release_lock
         raise
@@ -475,22 +389,10 @@ module Master
 
       def inside?(path, dir) = path == dir || path.start_with?(dir + File::SEPARATOR)
 
-      # Resolve the parent directory before every snapshot/restore. Lexical
-      # containment alone permits a path below a symlinked directory to escape
-      # the checkout and make rollback write outside the repository.
-      def absolute(path)
-        candidate = File.expand_path(path, @root)
-        return File.realpath(@root) if candidate == File.expand_path(@root)
+      def absolute(path) = path_guard.send(:within, File.join(@root, path))
 
-        parent = File.realpath(File.dirname(candidate))
-        allowed_roots = [@root, outer_root].map { |root| File.realpath(root) }.uniq
-        unless allowed_roots.any? { |root| inside?(parent, root) }
-          raise "transaction path escapes through a symlinked parent: #{path}"
-        end
-
-        File.join(parent, File.basename(candidate))
-      rescue Errno::ENOENT => e
-        raise "transaction parent is unavailable for #{path}: #{e.message}"
+      def path_guard
+        @path_guard ||= Master::Core::World.allocate.tap { |world| world.instance_variable_set(:@root, outer_root) }
       end
 
       def snapshot(path, versioned: false)
@@ -512,9 +414,8 @@ module Master
       end
 
       def snapshot_file(source, destination)
-        verify_storage_tree!(create_files: true)
-        expected_dir = File.expand_path(File.join(@dir, "files"))
-        raise "snapshot store path escapes the transaction directory" unless File.dirname(File.expand_path(destination)) == expected_dir
+        raise "transaction snapshot directory is a symlink" if File.symlink?(File.join(@dir, "files"))
+        FileUtils.mkdir_p(File.dirname(destination))
         before = fingerprint(source)
         temporary = "#{destination}.tmp.#{Process.pid}.#{SecureRandom.hex(4)}"
         File.open(source, "rb") do |input|
@@ -543,9 +444,9 @@ module Master
       end
 
       def persist!
-        verify_storage_tree!
-        manifest_path = File.join(@dir, MANIFEST)
-        raise "transaction manifest is a symlink" if File.symlink?(manifest_path)
+        raise "transaction directory is a symlink" if File.symlink?(@dir)
+        raise "transaction snapshot directory is a symlink" if File.symlink?(File.join(@dir, "files"))
+        raise "transaction manifest is a symlink" if File.symlink?(File.join(@dir, MANIFEST))
         manifest = {
           "version" => 1,
           "id" => @id,
@@ -556,100 +457,56 @@ module Master
           "seen" => @seen,
           "snapshots" => @snapshots.transform_values(&:to_h),
         }
-        write_atomic(manifest_path, JSON.pretty_generate(manifest) + "\n", mode: 0o600)
+        write_atomic(File.join(@dir, MANIFEST), JSON.pretty_generate(manifest) + "\n", mode: 0o600)
       end
 
       def load_manifest!
-        verify_storage_tree!
+        raise "transaction directory is a symlink" if File.symlink?(@dir)
+        raise "transaction snapshot directory is a symlink" if File.symlink?(File.join(@dir, "files"))
         path = File.join(@dir, MANIFEST)
         raise "transaction manifest is a symlink" if File.symlink?(path)
         raise "transaction manifest not found: #{@id}" unless File.file?(path)
 
         data = JSON.parse(File.read(path, encoding: "UTF-8"))
         validate_manifest!(data)
-
         @state = data.fetch("state")
         @delivery_head_before = data["delivery_head_before"]
         @delivery_head_after = data["delivery_head_after"]
         @paths = data.fetch("paths")
         @seen = Hash.new { |hash, key| hash[key] = [] }
         data.fetch("seen").each { |key, values| @seen[key] = values }
-        @snapshots = data.fetch("snapshots").to_h.transform_values do |raw|
+        @snapshots = data["snapshots"].to_h.transform_values do |raw|
           Snapshot.new(raw["path"], raw["exists"], raw["kind"].to_sym, raw["mode"], raw["link"], raw["store"])
         end
-        cleanup_orphan_snapshots!
         true
       rescue JSON::ParserError => e
         raise "transaction manifest is corrupt: #{e.message}"
       end
 
-      # A recovery manifest is persisted local state, not authority to write
-      # arbitrary paths or to restore bytes from arbitrary files.
       def validate_manifest!(data)
-        raise "transaction manifest malformed" unless data.is_a?(Hash) && data["version"].to_i == 1
-        raise "transaction manifest identity mismatch" unless data["id"] == @id
+        raise "transaction manifest malformed" unless data.is_a?(Hash) && data["version"].to_i == 1 && data["id"] == @id
         raise "transaction manifest state unsupported" unless VALID_STATES.include?(data["state"])
-
-        raw_paths = data["paths"]
-        raise "transaction manifest paths malformed" unless raw_paths.is_a?(Array) && raw_paths.all? { |item| item.is_a?(String) }
-        paths = raw_paths.map do |item|
-          normalized = normalize(item)
-          raise "transaction manifest contains unsafe or non-canonical path: #{item}" unless normalized == item && item != "."
-
-          normalized
-        end
+        paths = data["paths"]
+        raise "transaction manifest paths malformed" unless paths.is_a?(Array) && paths.all? { |p| p.is_a?(String) && p != "." && normalize(p) == p }
         raise "transaction manifest contains duplicate paths" unless paths.uniq == paths
+        snapshots = data["snapshots"]
+        raise "transaction manifest snapshot set mismatch" unless snapshots.is_a?(Hash) && snapshots.keys.sort == paths.sort
+        paths.each do |path|
+          item = snapshots.fetch(path)
+          valid = item.is_a?(Hash) && item["path"] == path && %w[missing file symlink other].include?(item["kind"]) &&
+                  [true, false].include?(item["exists"])
+          raise "transaction manifest snapshot invalid: #{path}" unless valid
+          next unless item["kind"] == "file"
 
-        raw_snapshots = data["snapshots"]
-        raise "transaction manifest snapshots malformed" unless raw_snapshots.is_a?(Hash)
-        raise "transaction manifest snapshot set mismatch" unless raw_snapshots.keys.sort == paths.sort
-
-        raw_snapshots.each do |path, snapshot|
-          validate_snapshot_record!(path, snapshot, require_store: data["state"] == "open")
+          dir = File.expand_path(File.join(@dir, "files"))
+          store = item["store"].to_s
+          valid_store = File.dirname(File.expand_path(store)) == dir &&
+                        File.basename(store).match?(/\A#{Regexp.escape(encoded(path))}(?:\.[0-9a-f]{16})?\z/)
+          valid_bytes = data["state"] != "open" || (File.file?(store) && !File.symlink?(store))
+          raise "transaction manifest snapshot invalid: #{path}" unless valid_store && valid_bytes
         end
-        raw_seen = data["seen"]
-        raise "transaction manifest fingerprints malformed" unless raw_seen.is_a?(Hash)
-        raw_seen.each do |path, fingerprints|
-          raise "transaction manifest fingerprint path is unsafe: #{path}" unless paths.include?(path)
-          raise "transaction manifest fingerprints malformed for #{path}" unless fingerprints.is_a?(Array) && fingerprints.all? { |item| item.is_a?(String) }
-        end
-        raise "transaction manifest is missing path fingerprints" unless (paths - raw_seen.keys).empty?
-
-        true
-      end
-
-      def validate_snapshot_record!(path, snapshot, require_store:)
-        raise "transaction manifest snapshot malformed: #{path}" unless snapshot.is_a?(Hash) && snapshot["path"] == path
-        kind = snapshot["kind"]
-        exists = snapshot["exists"]
-        mode = snapshot["mode"]
-        link = snapshot["link"]
-        store = snapshot["store"]
-        valid_mode = mode.is_a?(Integer) && mode.between?(0, 0o7777)
-
-        case kind
-        when "missing"
-          valid = exists == false && mode.nil? && link.nil? && store.nil?
-        when "file"
-          files_dir = File.expand_path(File.join(@dir, "files"))
-          store_path = store.is_a?(String) ? File.expand_path(store) : nil
-          store_name = store_path && File.basename(store_path)
-          store_name_pattern = /\A#{Regexp.escape(encoded(path))}(?:\.[0-9a-f]{16})?\z/
-          stored_path_valid = store_path && File.dirname(store_path) == files_dir &&
-                              store_name.match?(store_name_pattern)
-          stored_bytes_valid = !require_store || (
-            store_path && File.directory?(files_dir) && !File.symlink?(files_dir) &&
-            File.file?(store_path) && !File.symlink?(store_path)
-          )
-          valid = exists == true && valid_mode && link.nil? && stored_path_valid && stored_bytes_valid
-        when "symlink"
-          valid = exists == true && valid_mode && link.is_a?(String) && store.nil?
-        when "other"
-          valid = !require_store && exists == true && valid_mode && link.nil? && store.nil?
-        else
-          valid = false
-        end
-        raise "transaction manifest snapshot invalid: #{path}" unless valid
+        seen = data["seen"]
+        raise "transaction manifest fingerprints malformed" unless seen.is_a?(Hash) && paths.all? { |p| seen[p].is_a?(Array) && seen[p].all? { |v| v.is_a?(String) } }
       end
 
       def restore(path, snapshot)
@@ -675,131 +532,31 @@ module Master
       end
 
       def cleanup!
-        verify_root_storage_tree!
-        raise "transaction directory changed type" if File.symlink?(@dir)
-        return nil unless Dir.exist?(@dir)
-
-        expected_parent = File.realpath(File.join(@root, ROOT_DIR))
-        raise "transaction directory parent changed" unless File.realpath(File.dirname(@dir)) == expected_parent
+        return if [File.join(@root, ".master"), File.join(@root, ROOT_DIR), @dir].any? { |path| File.symlink?(path) }
         FileUtils.rm_rf(@dir)
         parent = File.dirname(@dir)
         FileUtils.rmdir(parent) if Dir.exist?(parent) && Dir.empty?(parent)
-      rescue SystemCallError, RuntimeError
+      rescue SystemCallError
         nil
       end
 
-      def verify_root_storage_tree!
-        master_dir = File.join(@root, ".master")
-        transaction_root = File.join(@root, ROOT_DIR)
-        raise "MASTER state directory is a symlink" if File.symlink?(master_dir)
-        FileUtils.mkdir_p(master_dir)
-        raise "MASTER state path is not a real directory" unless File.directory?(master_dir) && !File.symlink?(master_dir)
-        raise "transaction root is a symlink" if File.symlink?(transaction_root)
-        FileUtils.mkdir_p(transaction_root)
-        raise "transaction root is not a real directory" unless File.directory?(transaction_root) && !File.symlink?(transaction_root)
-      end
-
-      def verify_storage_tree!(create_files: false)
-        verify_root_storage_tree!
-        raise "transaction directory is a symlink" if File.symlink?(@dir)
-        raise "transaction directory is unavailable" unless File.directory?(@dir)
-
-        files_dir = File.join(@dir, "files")
-        raise "transaction snapshot directory is a symlink" if File.symlink?(files_dir)
-        FileUtils.mkdir_p(files_dir) if create_files
-        return true unless File.exist?(files_dir)
-
-        raise "transaction snapshot path is not a real directory" unless File.directory?(files_dir) && !File.symlink?(files_dir)
-        true
-      end
-
-      def duplicate_seen
-        copy = Hash.new { |hash, path| hash[path] = [] }
-        @seen.each { |path, values| copy[path] = values.dup }
-        copy
-      end
-
-      def snapshot_matches_fingerprint?(path, snapshot, current)
+      def snapshot_matches_fingerprint?(snapshot, current)
         case snapshot.kind
-        when :missing
-          current == "missing"
-        when :file
-          current == "file:#{Digest::SHA256.file(snapshot.store)}"
-        when :symlink
-          absolute_path = absolute(path)
-          stat = File.lstat(absolute_path)
-          stat.symlink? && (stat.mode & 0o7777) == snapshot.mode && File.readlink(absolute_path) == snapshot.link
-        else
-          false
+        when :missing then current == "missing"
+        when :file then current == fingerprint(snapshot.store)
+        when :symlink then current.start_with?("symlink:") && current.split(":", 3).last == snapshot.link
+        else false
         end
       rescue StandardError
         false
       end
 
-      def persisted_state_matches?(state:, paths:, snapshots:)
-        verify_storage_tree!
-        manifest_path = File.join(@dir, MANIFEST)
-        return false if File.symlink?(manifest_path) || !File.file?(manifest_path)
-
-        data = JSON.parse(File.read(manifest_path, encoding: "UTF-8"))
-        return false unless data["state"] == state && data["paths"] == paths
-        return false unless data["delivery_head_before"] == @delivery_head_before
-        return false unless data["delivery_head_after"] == @delivery_head_after
-        return false unless data.fetch("snapshots", {}).keys.sort == snapshots.keys.sort
-
-        snapshots_match = snapshots.all? do |path, item|
-          record = data.fetch("snapshots", {})[path]
-          expected = {
-            "path" => item.path,
-            "exists" => item.exists,
-            "kind" => item.kind.to_s,
-            "mode" => item.mode,
-            "link" => item.link,
-            "store" => item.store,
-          }
-          record == expected
-        end
-        seen_matches = @seen.all? { |path, values| data.fetch("seen", {})[path] == values }
-        snapshots_match && seen_matches
+      def persisted_state_matches?
+        data = JSON.parse(File.read(File.join(@dir, MANIFEST), encoding: "UTF-8"))
+        data["state"] == @state && data["paths"] == @paths && data["seen"] == @seen &&
+          @snapshots.all? { |path, item| data.dig("snapshots", path, "store") == item.store }
       rescue StandardError
         false
-      end
-
-      def discard_snapshots!(snapshots)
-        return if [File.join(@root, ".master"), File.join(@root, ROOT_DIR), @dir,
-                   File.join(@dir, "files")].any? { |path| File.symlink?(path) }
-
-        verify_storage_tree!
-        root = File.expand_path(File.join(@dir, "files"))
-        referenced = @snapshots.values.filter_map(&:store).map { |path| File.expand_path(path) }.to_set
-        Array(snapshots).each do |item|
-          next unless item&.kind == :file && item.store
-
-          path = File.expand_path(item.store)
-          next unless File.dirname(path) == root
-          next if referenced.include?(path)
-
-          File.delete(path) if File.file?(path) || File.symlink?(path)
-        rescue SystemCallError
-          nil
-        end
-      end
-
-      def cleanup_orphan_snapshots!
-        verify_storage_tree!
-        files_dir = File.join(@dir, "files")
-        return unless Dir.exist?(files_dir) && !File.symlink?(files_dir)
-
-        referenced = @snapshots.values.filter_map(&:store).map { |path| File.expand_path(path) }.to_set
-        Dir.children(files_dir).each do |name|
-          path = File.join(files_dir, name)
-          next if referenced.include?(File.expand_path(path))
-          next unless File.file?(path) || File.symlink?(path)
-
-          File.delete(path)
-        rescue SystemCallError
-          nil
-        end
       end
 
       def encoded(path) = Digest::SHA256.hexdigest(path)[0, 24]
