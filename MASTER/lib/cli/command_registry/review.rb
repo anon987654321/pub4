@@ -213,6 +213,9 @@ module Master
           rescue ::Operator::GateChain::BaselineMutation => e
             Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: pre-repair baseline blocked; no repair started")
             return Master::Result.err("pre-repair proof blocked: #{e.message}", category: :validation)
+          rescue ::Operator::GateChain::InvalidVerificationScope => e
+            Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: invalid verification scope; no repair started")
+            return Master::Result.err("verification scope invalid: #{e.message}", category: :validation)
           end
           Master::Trace::Dmesg.status("gate0", "scope #{gate_label}: baseline ready; starting write-enabled /fix pass")
         end
