@@ -485,8 +485,8 @@ module Master
           valid = exists == false && mode.nil? && link.nil? && store.nil?
         when "file"
           expected_store = File.expand_path(File.join(@dir, "files", encoded(path)))
-          valid = exists == true && valid_mode && link.nil? && store.is_a?(String) &&
-                  File.expand_path(store) == expected_store && File.file?(expected_store)
+          valid = exists == true && valid_mode && link.nil? && store == expected_store &&
+                  File.file?(expected_store) && !File.symlink?(expected_store)
         when "symlink"
           valid = exists == true && valid_mode && link.is_a?(String) && store.nil?
         when "other"
