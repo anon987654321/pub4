@@ -140,20 +140,25 @@ class UserPurgeJob < ApplicationJob
     message_ids = ::Message.where(sender_id: user.id).select(:id)
     return unless message_ids.exists?
 
-    ::MessageReceipt.where(message_id: message_ids).find_each(&:destroy!) if
-      defined?(::MessageReceipt) && ::MessageReceipt.table_exists?
-    ::Notification.where(notifiable_type: "Message", notifiable_id: message_ids).find_each(&:destroy!) if
-      defined?(::Notification) && ::Notification.table_exists?
-    ::Notification.where(source_type: "Message", source_id: message_ids).find_each(&:destroy!) if
-      defined?(::Notification) && ::Notification.table_exists?
-    ::ActivityEvent.where(subject_type: "Message", subject_id: message_ids).find_each(&:destroy!) if
-      defined?(::ActivityEvent) && ::ActivityEvent.table_exists?
-    ::Shared::Reaction.where(reactable_type: "Message", reactable_id: message_ids).find_each(&:destroy!) if
-      defined?(::Shared::Reaction) && ::Shared::Reaction.table_exists?
-    ::Vote.where(votable_type: "Message", votable_id: message_ids).find_each(&:destroy!) if
-      defined?(::Vote) && ::Vote.table_exists?
-    ::Shared::OutboundClick.where(subject_type: "Message", subject_id: message_ids).find_each(&:destroy!) if
-      defined?(::Shared::OutboundClick) && ::Shared::OutboundClick.table_exists?
+    if defined?(::MessageReceipt) && ::MessageReceipt.table_exists?
+      ::MessageReceipt.where(message_id: message_ids).find_each(&:destroy!)
+    end
+    if defined?(::Notification) && ::Notification.table_exists?
+      ::Notification.where(notifiable_type: "Message", notifiable_id: message_ids).find_each(&:destroy!)
+      ::Notification.where(source_type: "Message", source_id: message_ids).find_each(&:destroy!)
+    end
+    if defined?(::ActivityEvent) && ::ActivityEvent.table_exists?
+      ::ActivityEvent.where(subject_type: "Message", subject_id: message_ids).find_each(&:destroy!)
+    end
+    if defined?(::Shared::Reaction) && ::Shared::Reaction.table_exists?
+      ::Shared::Reaction.where(reactable_type: "Message", reactable_id: message_ids).find_each(&:destroy!)
+    end
+    if defined?(::Vote) && ::Vote.table_exists?
+      ::Vote.where(votable_type: "Message", votable_id: message_ids).find_each(&:destroy!)
+    end
+    if defined?(::Shared::OutboundClick) && ::Shared::OutboundClick.table_exists?
+      ::Shared::OutboundClick.where(subject_type: "Message", subject_id: message_ids).find_each(&:destroy!)
+    end
 
     ::Message.strict_loading(false).where(sender_id: user.id).find_each do |message|
       preview_id = message.link_preview_id if message.has_attribute?(:link_preview_id)
