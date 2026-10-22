@@ -91,7 +91,7 @@ class FederatedIdentityContractTest < Minitest::Test
     assert_includes merger, "def record_merge"
     assert_includes merger, "def retire_guest_source"
     assert_includes merger, "deleted_at: Time.current"
-    assert_includes merger, "email_address: \"merged-#{guest_user.id}-#{SecureRandom.hex(6)}@deleted.invalid\""
+    assert_includes merger, 'email_address: "merged-#{guest_user.id}-#{SecureRandom.hex(6)}@deleted.invalid"'
     assert_includes merger, "password_digest: BCrypt::Password.create"
     assert_includes merger, "guest_user.update_columns(attributes)"
     assert_includes read("RAILS/brgen/app/models/user/core_associations.rb"), "has_many :account_merges_as_guest"
