@@ -98,6 +98,32 @@ class TestFixRunBudget < Minitest::Test
     Master::Fix::AutofixGuard.reset!
   end
 
+  # The MASTER abort of 2026-10-23 left the model's half-applied edit to bin/loops in the tree. The
+  # open pass goes back with the abort; a file another writer saved since is theirs and stays.
+  def test_an_abort_rolls_back_the_open_pass_and_leaves_another_writers_file
+    ours, theirs = pass_with_a_model_edit_and_a_foreign_save
+
+    capture_io { killable([]).abort_run!("stalled, pass 1", force: true) }
+
+    assert_equal ["X = 1\n", "X = 2\n"], [File.read(ours), File.read(theirs)]
+  ensure
+    Budget.hold_pass(nil)
+  end
+
+  # An open pass that wrote a.rb itself; b.rb was then saved by another writer.
+  def pass_with_a_model_edit_and_a_foreign_save
+    system("git", "-C", @root, "init", "-q")
+    ours, theirs = %w[a.rb b.rb].map { |name| File.join(@root, name).tap { |path| File.write(path, "X = 1\n") } }
+    committer = Master::Fix::FixLoop::Committer.new(git: Struct.new(:changed_paths).new([]), root: @root)
+    committer.baseline!
+    committer.begin_transaction!(Master::Fix::Transaction.new(root: @root, paths: %w[a.rb b.rb]))
+
+    File.write(ours, "X = 1\n\ndef half_applied\n")
+    committer.attest_written!(ours)
+    File.write(theirs, "X = 2\n")
+    [ours, theirs]
+  end
+
   def killable(killed)
     Budget.new(root: @root, max_passes: 3, clock: -> { @now }, wall: -> { Time.at(1000) },
                out: ->(line) { @lines << line }, say: ->(line) { @said << line }, poll_seconds: 0,

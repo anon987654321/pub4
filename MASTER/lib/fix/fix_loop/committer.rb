@@ -7,6 +7,7 @@ require_relative "../../ground/known_good"
 require_relative "../../operator/ratchet_sponsor"
 require_relative "repo_scope"
 require_relative "../autofix_guard"
+require_relative "../run_budget"
 
 module Master
   module Fix
@@ -100,6 +101,7 @@ module Master
             transaction.begin!
             @transaction = transaction
           end
+          RunBudget.hold_pass(self)
         end
 
         def abort_transaction!

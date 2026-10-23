@@ -31,6 +31,8 @@ module Master
       # A stalled run is asked to stop and prove what it did; it is killed only if it has not
       # wound down after this many seconds (MASTER_FIX_STOP_GRACE_S; 0 kills at once).
       STOP_GRACE_SECONDS = 300
+      # How long an abort waits on the committer to roll back the open pass before its TERM.
+      ROLLBACK_WAIT_SECONDS = 30
 
       class << self
         attr_reader :current
@@ -111,13 +113,22 @@ module Master
 
         def run_spend = @current&.spend || [0.0, 0]
 
-        # Monotonic elapsed time for the one active run, including preflight.
-        # The pass deadline subtracts this so graph/research cannot reset the clock.
+        # Monotonic elapsed time for the one active run, including preflight. The pass deadline
+        # takes off what elapsed after its journal opened (FixLoop#repair_seconds_left).
         def elapsed_seconds = @current&.elapsed_seconds || 0.0
 
         def note_law_cost(law_id, usd, tokens = 0) = @current&.note_law_cost(law_id, usd, tokens)
 
         def law_limit_exceeded?(law_id) = @current&.law_limit_exceeded?(law_id) || false
+
+        # The committer whose pass transaction an abort rolls back before its TERM. One fix loop, one
+        # committer; a committer with no open transaction makes the rollback a no-op.
+        def pass_owner = @pass_owner
+
+        def hold_pass(committer)
+          @pass_owner = committer
+          nil
+        end
       end
 
       def initialize(root:, max_passes:, env: ENV, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) },
@@ -402,8 +413,24 @@ module Master
         finish!(reason)
         return unless force || ENV["MASTER_FIX_ABORT_ON_STALL"] != "0"
 
+        roll_back_open_pass
         discard_unproven_writes
         @killer.call(reason)
+      end
+
+      # The pass in flight goes back first: the MASTER abort of 2026-10-23 left a model's half-applied
+      # edit to bin/loops in the tree. A file another writer changed since stays (Committer#roll_back_own).
+      # A commit holding the committer's lock past the wait is left to the next run's recovery.
+      def roll_back_open_pass
+        owner = self.class.pass_owner
+        return unless owner
+
+        worker = Thread.new { owner.abort_transaction! }
+        return if worker.join(ROLLBACK_WAIT_SECONDS)
+
+        @say.call("fix0: the open pass did not roll back in #{ROLLBACK_WAIT_SECONDS}s; recovery restores it")
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "RunBudget.roll_back_open_pass")
       end
 
       # An aborted run proves nothing, and its TERM skips the pipeline's clean-up, so the uncommitted
