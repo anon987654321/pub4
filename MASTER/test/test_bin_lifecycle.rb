@@ -38,7 +38,7 @@ class TestBinLifecycle < Minitest::Test
       assert holder.flock(File::LOCK_EX | File::LOCK_NB)
 
       out, status = run_script(
-        File.join(BIN, "master"),
+        File.join(BIN, "master.rb"),
         "--fast", "/status",
         env: {
           "MASTER_INTERNAL_CHILD" => "1",
@@ -61,7 +61,7 @@ class TestBinLifecycle < Minitest::Test
       out, status = run_script(File.join(BIN, "master-core"), "--root", scratch, "noop")
 
       assert status.success?, out
-      assert_includes out, "held — done refused without passing evidence"
+      assert_includes out, "core0 at master0: held, done refused without passing evidence"
     end
   end
 
@@ -75,6 +75,9 @@ class TestBinLifecycle < Minitest::Test
   def test_cleanup_refuses_a_dirty_tree_and_only_reports_on_a_clean_one
     Dir.mktmpdir do |scratch|
       script = staged(scratch, "cleanup")
+      # bin/cleanup boots through lib/boot/entrypoint, which writes MASTER/.master/.
+      File.symlink(File.join(Master::ROOT, "lib"), File.join(scratch, "MASTER", "lib"))
+      File.write(File.join(scratch, ".gitignore"), "MASTER/lib\nMASTER/.master/\nMASTER/reports/\n")
       git(scratch, "init", "-q")
       git(scratch, "config", "user.email", "test@example.invalid")
       git(scratch, "config", "user.name", "test")
@@ -89,7 +92,7 @@ class TestBinLifecycle < Minitest::Test
       File.delete(File.join(scratch, "test_leftover.jpg"))
       clean, clean_status = run_script(script, chdir: scratch)
       assert clean_status.success?, clean
-      assert_includes clean, "dry-run only"
+      assert_includes clean, "dry run only"
       assert_path_exists File.join(scratch, "MASTER", "reports", "cleanup")
     end
   end

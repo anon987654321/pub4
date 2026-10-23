@@ -21,6 +21,9 @@ module Master
         @model = model
         @task_type = task_type
       end
+
+      # Review::Agent reads config["model"] as it reads the real Config.
+      def [](key) = { "model" => model, "task_type" => task_type }[key.to_s]
     end
 
     # Routing tests grade the policy that builds a chain: which lanes, in which

@@ -207,7 +207,7 @@ FLOW_OUTPUT = <<~OUT
 
   def test_deploy_preflight_capture_kills_a_hung_process_group
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    output, ok = Canary::DeployPreflight.capture(
+    output, ok = Operator::DeployPreflight.capture(
       [RbConfig.ruby, "-e", "Process.spawn('sleep','10', out: STDOUT, err: STDERR); exit 0"],
       @root,
       timeout: 0.1

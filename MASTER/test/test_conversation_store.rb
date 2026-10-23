@@ -20,8 +20,8 @@ class TestConversationStore < Minitest::Test
   end
 
   def test_requires_explicit_consent_and_ai_disclosure
-    assert_raises(SecurityError) { @store.opt_in(**@args, consent: false, ai_disclosed: true) }
-    assert_raises(SecurityError) { @store.opt_in(**@args, consent: true, ai_disclosed: false) }
+    assert_raises(Master::SecurityError) { @store.opt_in(**@args, consent: false, ai_disclosed: true) }
+    assert_raises(Master::SecurityError) { @store.opt_in(**@args, consent: true, ai_disclosed: false) }
     assert_empty @store.history(**@args)
   end
 
@@ -37,7 +37,7 @@ class TestConversationStore < Minitest::Test
   end
 
   def test_recording_without_active_consent_fails_closed
-    assert_raises(SecurityError) do
+    assert_raises(Master::SecurityError) do
       @store.record(**@args, role: "user", content: "hello")
     end
   end
@@ -50,7 +50,7 @@ class TestConversationStore < Minitest::Test
     @store.opt_out(**@args)
 
     assert_empty @store.history(**@args)
-    assert_raises(SecurityError) do
+    assert_raises(Master::SecurityError) do
       @store.record(**@args, role: "assistant", content: "A follow-up")
     end
   end

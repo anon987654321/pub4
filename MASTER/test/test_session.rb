@@ -72,7 +72,7 @@ class TestSession < Minitest::Test
 
       assert_silent { session.record_cost(0.1, model: invalid, tokens: 1) }
 
-      row = JSON.parse(File.read(File.join(dir, ".master", "costs.jsonl"))).first
+      row = JSON.parse(File.readlines(File.join(dir, ".master", "costs.jsonl")).first)
       assert_equal "model-\uFFFD", row["model"]
     end
   end
@@ -88,7 +88,10 @@ class TestSession < Minitest::Test
 
       assert_empty session.messages
       refute File.exist?(path)
-      assert_equal 1, Dir.glob("#{path}.corrupt.*").size
+      # The quarantined file and, beside it, the reason it was quarantined.
+      quarantined = Dir.glob("#{path}.corrupt.*")
+      assert_equal 1, quarantined.grep_v(/\.reason\z/).size
+      assert_match(/EncodingError/, File.read(quarantined.grep(/\.reason\z/).first))
     end
   end
 

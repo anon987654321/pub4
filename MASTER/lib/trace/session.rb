@@ -46,11 +46,18 @@ module Master
           return self unless File.exist?(@path)
 
           begin
-            data = JSON.parse(File.read(@path), symbolize_names: true)
+            raw = File.read(@path)
+            # The json gem parses invalid UTF-8 inside a string, so the damage
+            # would surface later, in whatever first reads the text.
+            raise EncodingError, "session file is not valid UTF-8" unless raw.valid_encoding?
+
+            data = JSON.parse(raw, symbolize_names: true)
+
             # A valid JSON array or scalar parses and then dies on the first
             # data.fetch below, which reads as a crash in the loader rather than
-            # as a damaged file.
+            # as a damaged file. A message that is not an object dies the same way.
             raise JSON::ParserError, "session root is not an object" unless data.is_a?(Hash)
+            raise JSON::ParserError, "session message is not an object" unless Array(data[:messages]).all?(Hash)
           rescue JSON::ParserError, EncodingError, ArgumentError, Errno::ENOENT => e
             quarantine_corrupt_session!(e)
             data = {}
@@ -387,7 +394,7 @@ module Master
       SHELL_RE = /\A(?:#{SHELL_CMDS})\b|[$`|;&]/.freeze
 
       def auto_name(content)
-        stripped = content.to_s.strip
+        stripped = content.to_s.scrub("�").strip
         return Time.now.strftime("%Y%m%d-%H%M") if stripped.match?(SHELL_RE)
         stripped.split.first(5).join(" ")[0, SESSION_NAME_MAX]
       end

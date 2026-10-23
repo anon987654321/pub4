@@ -6,6 +6,7 @@ require "json"
 require "time"
 require_relative "../io/atomic_write"
 require_relative "redactor"
+require_relative "../security_error"
 
 module Master
   module Ground
@@ -35,8 +36,8 @@ module Master
       # Both checks are mandatory and must come from an explicit operator /
       # consent workflow; missing values are not treated as consent.
       def opt_in(platform:, contact_id:, consent:, ai_disclosed:)
-        raise SecurityError, "recipient consent is required" unless consent == true
-        raise SecurityError, "AI identity disclosure is required" unless ai_disclosed == true
+        raise Master::SecurityError, "recipient consent is required" unless consent == true
+        raise Master::SecurityError, "AI identity disclosure is required" unless ai_disclosed == true
 
         platform_key, contact_key, id = identifiers(platform, contact_id)
         with_lock(id) do
@@ -67,7 +68,7 @@ module Master
 
         with_lock(id) do
           state = read_state(id)
-          raise SecurityError, "conversation is not opted in" unless active_state?(state)
+          raise Master::SecurityError, "conversation is not opted in" unless active_state?(state)
 
           rows = retained_rows(id)
           rows << {

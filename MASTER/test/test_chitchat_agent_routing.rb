@@ -20,9 +20,11 @@ class TestChitchatAgentRouting < Minitest::Test
 
   def test_routed_models_classifies_greeting_as_chitchat
     models = @agent.send(:routed_models, "hey, how are you?")
-    free_ids = Array(@router.send(:load_laws).dig("models", "free")).filter_map { |row| row["id"] }
-    keyless_ids = Array(@router.send(:load_laws).dig("ferrum_web_chat", "free_latest"))
-    assert_includes free_ids + keyless_ids, models.first
+
+    # The head is the chitchat chain's; a live subscription lane leads it when
+    # one is reachable (d1d8e1c8b), so the head is not always a free model.
+    assert_equal :chitchat, @router.classify_intent("hey, how are you?")
+    assert_equal @router.fallback_chain(task_type: :chitchat).first, models.first
   end
 
   def test_routed_models_honors_explicit_task_type
