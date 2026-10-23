@@ -93,7 +93,8 @@ module Master
         end
 
         def state_line(model, **options)
-          bits = ["#{short_model(model)}", context_label(options[:tokens], model)]
+          name = short_model(model)
+          bits = [name.empty? ? "no model" : name, context_label(options[:tokens], model)]
           violations = options.fetch(:violations, 0).to_i
           bits << "#{violations} violations" if violations.positive?
           d(bits.join(", "))

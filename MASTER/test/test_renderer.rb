@@ -82,9 +82,7 @@ class TestRenderer < Minitest::Test
     $stdout.stub(:tty?, true) do
       text = renderer.splash("model")
 
-      refute_includes text, "\e[44m"
-      assert_includes text, "\e[37m"
-      assert_includes text, "boot line 0"
+      refute_match(/\e\[/, text, "the boot is plain dmesg on a terminal too")
       assert_includes text, "root on master0"
     end
   ensure
@@ -115,7 +113,7 @@ class TestRenderer < Minitest::Test
     renderer = FakeRenderer.new(config: {})
     state, prompt = renderer.prompt_line(nil, "idle", tokens: 0)
 
-    assert_includes strip_ansi(state), "model: "
+    assert_match(/\Ano model, /, strip_ansi(state))
     refute_match(/\n|\r/, strip_ansi(prompt))
     assert_match(/input \z/, strip_ansi(prompt))
   end
@@ -151,7 +149,7 @@ class TestRenderer < Minitest::Test
   def test_prompt_line_state_shows_context_usage
     state, prompt = FakeRenderer.new(config: {}).prompt_line("model", "idle", tokens: 45_000)
 
-    assert_includes strip_ansi(state), "ctx: 45.0k/128.0k"
+    assert_includes strip_ansi(state), "model, 45.0k/128.0k"
     assert_match(/input \z/, strip_ansi(prompt))
   end
 
@@ -302,7 +300,7 @@ class TestRenderer < Minitest::Test
       displayed = renderer.send(:prompt_path, suffix_length: 34)
 
       assert_match(/\Apub4\/RAILS\//, displayed)
-      assert_match(/\/\.\.\//, displayed)
+      assert_includes displayed, "/.../"
       assert_match(/directs\z/, displayed)
       assert_operator displayed.length, :<=, renderer.send(:prompt_path_budget, suffix_length: 34)
     end
@@ -374,21 +372,21 @@ class TestRenderer < Minitest::Test
     assert_equal text, renderer.measure(text)
   end
 
-  def test_the_boot_has_one_blank_line_and_no_edges
+  def test_the_boot_has_no_blank_line_and_no_edges
     lines = $stdout.stub(:tty?, false) do
       strip_ansi(FakeRenderer.new(config: {}).splash("model")).lines.map(&:chomp)
     end
 
     refute_empty lines.first
     refute_empty lines.last
-    assert_equal 1, lines.count(&:empty?)
+    assert_equal 0, lines.count(&:empty?)
   end
 
   # The splash names the model the session runs on, which a pin or the router
   # chooses, and config["model"] can still hold another. The context beside
   # the name belongs to the named model.
   def test_the_splash_reads_the_context_window_of_the_model_it_names
-    named = "agy:gemini-2.5-pro"
+    named = "agy:gemini-3.1-pro-high"
     configured = "deepseek-chat"
     refute_equal Master.context_window(named), Master.context_window(configured), "the fixture needs two windows"
 

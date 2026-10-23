@@ -15,7 +15,11 @@ class TestAgent < Minitest::Test
   FakeCB      = Struct.new(:out) { def check_rate!; end; def call(_, &b); b.call; end }
   FakeCache   = Struct.new(:store) { def fetch(k, _m, &b); (store[k] ||= b.call); end }
 
+  # ModelSkipCache is process-wide: a model one test parks stays parked for
+  # the next, so each test starts with nothing skipped.
   def setup
+    Master::Io::ModelSkipCache.clear!
+
     @agent = Master::Review::Agent.new(deps: Master::Review::Agent::Dependencies.from_kwargs(
       config:          FakeConfig.new("claude-sonnet-4-6", :exploration, "none"),
       session:         FakeSession.new([]),

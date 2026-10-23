@@ -19,8 +19,9 @@ class TestBinScripts < Minitest::Test
     output, = Open3.capture3({ "MASTER_KEYLESS" => "1" }, RbConfig.ruby, File.join(ROOT, "bin", "doctor"), chdir: ROOT)
 
     assert_includes output, "MASTER doctor"
-    assert_match(/^(?:OK|FAIL) yaml:/, output)
-    assert_match(/^OK (?:ruby|git):/, output)
+    assert_match(/^doctor\d+ at doctor0: yaml, (?:ok|fail)$/, output)
+    assert_match(/^doctor\d+ at doctor0: (?:ruby|git), ok$/, output)
+    refute_includes output, "[\"receipt:", "the boot receipt prints as lines, not an array"
   end
 
   def test_cleanup_refuses_a_dirty_tree
@@ -116,7 +117,10 @@ class TestBinScripts < Minitest::Test
 
   def cleanup_fixture(repo)
     script = copy_script(repo, "cleanup")
-    File.write(File.join(repo, ".gitignore"), "MASTER/reports/\n")
+    # bin/cleanup boots through lib/boot/entrypoint, which writes MASTER/.master/;
+    # both are ignored as the checkout ignores them, so the fixture stays clean.
+    File.symlink(File.join(ROOT, "lib"), File.join(repo, "MASTER", "lib"))
+    File.write(File.join(repo, ".gitignore"), "MASTER/reports/\nMASTER/lib\nMASTER/.master/\n")
     File.write(File.join(repo, "test_shot.jpg"), "jpg")
     git(repo, "init", "-q")
     git(repo, "add", ".")
