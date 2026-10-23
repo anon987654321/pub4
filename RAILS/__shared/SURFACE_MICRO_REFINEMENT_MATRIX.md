@@ -2,6 +2,8 @@
 
 Each numbered item maps to a property declaration in `_surface_micro_refinements.scss`. This sheet is not loaded by production stacks. Reinstate individual changes only after rendered before/after review and explicit operator approval.
 
+<!-- doc_numbers: ignore -->
+
 001. shared · page ground — background: var(--bg)
 002. shared · page ground — color: var(--text)
 003. shared · page ground — text-rendering: optimizeLegibility

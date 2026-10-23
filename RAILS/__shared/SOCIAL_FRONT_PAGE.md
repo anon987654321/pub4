@@ -32,7 +32,11 @@ Brgen also exposes the existing comment count as a direct jump from the detail a
 
 ## Small details worth keeping
 
-Use the browser's native overlay primitives where they fit. Keep 44px interaction geometry, visible focus, one reading measure, no duplicated nav, staged live arrivals, and explicit sponsored labeling. Avoid copying colors, gradients, radius values or visual chrome merely because another service uses them; those values remain owned by the pub4 design system and its operator.
+Use the browser's native overlay primitives where they fit. Keep 44px interaction geometry
+(shared_chrome.tap_min in MASTER/data/tokens.yml), visible focus, one reading measure, no
+duplicated nav, staged live arrivals, and explicit sponsored labeling. Avoid copying colors,
+gradients, radius values or visual chrome merely because another service uses them; those values
+remain owned by the pub4 design system and its operator.
 
 ## Primary sources
 
