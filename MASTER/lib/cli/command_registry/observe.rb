@@ -39,8 +39,10 @@ module Master
         Scan::Live.ensure_sync!
         _arg, dry_run, _no_autofix, _clean_arg, do_autofix = parse_scan_args(context)
 
-        requests = context.fetch(:files).map do |file|
-          Scan::Request.new(scanner:, root:, arg: file, autofix: do_autofix).call
+        # Mechanical, as the first reading is: the model tier belongs to the fix passes, and twenty
+        # changed files read with it hold the lane for twenty minutes.
+        requests = mechanically(scanner) do
+          context.fetch(:files).map { |file| Scan::Request.new(scanner:, root:, arg: file, autofix: do_autofix).call }
         end
         report_files(requests, dry_run:, on_total:, on_counts: context[:on_counts])
       end

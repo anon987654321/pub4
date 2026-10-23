@@ -148,10 +148,12 @@ module Master
 
         @pass_runner&.reset_gaps!
         @pass_runner.research_brief = nil if @pass_runner&.respond_to?(:research_brief=)
-        # A requested /fix reads every file with a cheap finding, and a rotating slice of the clean
-        # ones (Ground::ModePosture.semantic_sample), so every file is read across runs; a file read
-        # before and unchanged is not read again (Scan::FindingCache). Reading every file on every
-        # run held the first repair for hours. MASTER_SCAN_SEMANTIC_SAMPLE=1 still reads them all.
+        # A requested /fix owes a semantic read to every file with a cheap finding and to a rotating
+        # slice of the clean ones (Ground::ModePosture.semantic_sample); a file read before and
+        # unchanged is not read again (Scan::FindingCache). A pass makes only a budget's worth of
+        # those reads, after its mechanical repairs are queued (PassRunner::StreamStage), and the
+        # next pass resumes where it stopped, so every file is read across runs. Reading them inline
+        # held the first repair for hours. MASTER_SCAN_SEMANTIC_SAMPLE=1 owes a read to every file.
         guidance = outcome_guidance(target:, incremental:)
         # A requested /fix lints every line of every eligible file; only an unattended run may sample.
         incremental = requested ? false : guidance.fetch(:incremental)
@@ -306,6 +308,10 @@ module Master
         unless semantic_gaps.empty?
           named = semantic_gaps.keys.first(3).join(", ")
           parts << "#{semantic_gaps.size} file(s) with inconclusive semantic assessment (#{named})"
+        end
+        pending = gaps.fetch(:semantic_pending, {})
+        unless pending.empty?
+          parts << "#{pending.size} file(s) awaiting a semantic read (#{pending.keys.first(3).join(", ")})"
         end
         gaps[:stage_failures].each { |stage, rows| parts << "#{stage} stage failed #{rows.size}x, last #{rows.last}" }
         Master::Trace::Dmesg.status("fix0", "finished with gaps: #{parts.join("; ")}"[0, 220])

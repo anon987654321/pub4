@@ -28,6 +28,8 @@ module Master
         STYLE_MAX_LINES = 12_000
         OUTSIDE_SAMPLE = "clean file, outside sample"
         UNCHANGED = "unchanged since its last semantic read"
+        DEFERRED = "put off behind the pass's mechanical repairs"
+        OVER_BUDGET = "past the pass's semantic budget"
         # Model reads, kept apart from the deterministic findings so each is keyed on its own law set.
         SEMANTIC_DIR = File.join(".master", "semantic_findings")
         PROGRESS_POLL_SECONDS = 1.0
@@ -49,6 +51,8 @@ module Master
           @semantic_reads = FindingCache.new(root: cache_root, dir: SEMANTIC_DIR)
           @finding_cache = FindingCache.new(root: cache_root)
           @semantic_gap_notice_emitted = false
+          @deferral = nil
+          @semantic_budget = nil
 
           @progress_path = ENV.fetch("CHECK_PROGRESS_FILE", "").to_s
           @progress_writer_id = "#{Process.pid}-#{object_id}"
@@ -72,6 +76,17 @@ module Master
         end
 
         def semantic_full? = @semantic_sample_override.to_f >= 1.0
+
+        # Within the block, on this thread, a due model read with no replayable answer is listed in
+        # +into+ instead of made, so the cheap findings of a whole corpus reach repair first and the
+        # caller reads the list afterwards under a budget (FixLoop::PassRunner::StreamStage). Read
+        # inline at a minute and a half a file, twenty files hold the first repair for half an hour.
+        # Other threads, a repair verifying its own edit among them, still read inline.
+        def deferring_semantic(into, &) = scoped(:@deferral, into, &)
+
+        # Within the block, on this thread, a model read is made only while +budget+ is open, and its
+        # wall time is charged to it.
+        def budgeting_semantic(budget, &) = scoped(:@semantic_budget, budget, &)
 
         # Semantic outages are explicit evidence, separate from files that failed
         # mechanical measurement. They prevent DONE without hiding deterministic
@@ -201,22 +216,61 @@ module Master
           # findings. A fatal deterministic hit must not suppress meaning-based
           # assessment of the same file; otherwise one early result can hide the
           # other streams.
-          unless semantic_due?(findings, path)
-            note_skip(path:, laws: semantic, reason: OUTSIDE_SAMPLE)
-            return findings
-          end
-
-          subject = FindingCache::Subject.new(relative_progress_path(path), code, semantic, ast)
-          replayed = @semantic_reads.replay(subject)
-          unless replayed.nil?
-            note_skip(path:, laws: semantic, reason: UNCHANGED)
-            return findings + replayed
-          end
-
-          findings.concat(read_semantic(path:, code:, ast:, laws: semantic))
+          findings + semantic_findings(findings, Reading.new(path:, code:, ast:, laws: semantic))
         end
         # Public: the whole of what a scan concludes about a text, with no file read.
         public :apply_laws
+
+        # One file's due model read, as semantic_findings replays, puts off, refuses or makes it.
+        Reading = Data.define(:path, :code, :ast, :laws) do
+          def subject(relative) = FindingCache::Subject.new(relative, code, laws, ast)
+        end
+
+        # A replay costs nothing and is always taken; a fresh read waits while the pass defers, and is
+        # refused once the pass's budget is spent.
+        def semantic_findings(found, reading)
+          return skipped(reading, OUTSIDE_SAMPLE) unless semantic_due?(found, reading.path)
+
+          replayed = @semantic_reads.replay(reading.subject(relative_progress_path(reading.path)))
+          return skipped(reading, UNCHANGED) + replayed unless replayed.nil?
+          return defer(reading) if on_this_thread(@deferral)
+          return skipped(reading, OVER_BUDGET) unless semantic_budget_open?
+
+          budgeted_read(reading)
+        end
+
+        def skipped(reading, reason)
+          note_skip(path: reading.path, laws: reading.laws, reason:)
+          []
+        end
+
+        def defer(reading)
+          into = on_this_thread(@deferral)
+          @semantic_gap_mutex.synchronize { into << reading.path }
+          skipped(reading, DEFERRED)
+        end
+
+        def semantic_budget_open?
+          budget = on_this_thread(@semantic_budget)
+          budget.nil? || budget.open?
+        end
+
+        def budgeted_read(reading)
+          started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          read_semantic(**reading.to_h)
+        ensure
+          on_this_thread(@semantic_budget)&.charge(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started)
+        end
+
+        def scoped(ivar, value)
+          previous = instance_variable_get(ivar)
+          instance_variable_set(ivar, [Thread.current, value])
+          yield
+        ensure
+          instance_variable_set(ivar, previous)
+        end
+
+        def on_this_thread(pair) = pair&.first == Thread.current ? pair.last : nil
 
         # Laws that read only this file's text replay their findings when the text is unchanged
         # (FindingCache); the rest run every time.

@@ -118,15 +118,17 @@ module Master
         def semantic_inconclusive
           @scanner.respond_to?(:semantic_gaps) ? @scanner.semantic_gaps : {}
         end
-        def gaps? = !(uninspected.empty? && stage_failures.empty? && semantic_inconclusive.empty?)
+        def gaps? = [uninspected, stage_failures, semantic_inconclusive, semantic_pending].any? { |gap| !gap.empty? }
         def gaps = {
           uninspected: uninspected.dup,
           stage_failures: stage_failures.transform_values(&:dup),
           semantic_inconclusive: semantic_inconclusive.dup,
+          semantic_pending: semantic_pending.dup,
         }
 
         def reset_gaps!
           @uninspected = nil
+          @semantic_pending = nil
           @skip_guard.reset!
           @stage_failures = nil
           @scanner.reset_semantic_gaps! if @scanner.respond_to?(:reset_semantic_gaps!)

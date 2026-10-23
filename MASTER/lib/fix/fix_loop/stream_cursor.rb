@@ -25,6 +25,28 @@ module Master
         def write(root, target, path)
           marks = read(root)
           path ? marks[key(root, target)] = relative(root, path) : marks.delete(key(root, target))
+          save(root, marks)
+        end
+
+        # The semantic reads a pass put off, in path order from past the last one read, so the
+        # per-pass budget walks the corpus across passes and runs in every scan order, and a repair
+        # that changes the files at the front does not hold the rest back.
+        def semantic_order(root, paths)
+          sorted = paths.sort_by { |path| relative(root, path) }
+          last = read(root)[SEMANTIC_KEY]
+          start = last && sorted.index { |path| relative(root, path) > last }
+          start ? sorted.rotate(start) : sorted
+        end
+
+        def mark_semantic(root, path)
+          marks = read(root)
+          marks[SEMANTIC_KEY] = relative(root, path)
+          save(root, marks)
+        end
+
+        SEMANTIC_KEY = "#semantic"
+
+        def save(root, marks)
           FileUtils.mkdir_p(File.dirname(file(root)))
           File.write(file(root), JSON.pretty_generate(marks) + "\n")
         rescue SystemCallError => e

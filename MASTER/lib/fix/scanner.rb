@@ -152,6 +152,10 @@ module Master
           @file_processor.mechanical_only(&)
         end
 
+        # The model tier's schedule within a /fix pass; Scan::FileProcessor says what each does.
+        def deferring_semantic(into, &) = @file_processor.deferring_semantic(into, &)
+        def budgeting_semantic(budget, &) = @file_processor.budgeting_semantic(budget, &)
+
         def full_semantic!
           @file_processor.full_semantic! if @file_processor.respond_to?(:full_semantic!)
           self

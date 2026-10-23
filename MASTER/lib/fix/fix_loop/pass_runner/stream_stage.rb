@@ -51,6 +51,8 @@ module Master
             stop_workers(queue, workers)
           end
 
+          # The scan reads the corpus mechanically and queues repairs as it goes; the semantic reads it
+          # puts off are made afterwards, under the pass's budget, while the workers repair.
           def stream_violations(files, queue, streamed = Set.new, deadline: nil)
             flusher = ->(batch) { enqueue_ranked(batch, queue, streamed) }
             ranked = rank_worklist?
@@ -58,18 +60,96 @@ module Master
             # Bounded early-stop runs intentionally retain scan-order selection;
             # ranked runs apply the allowance after priority is known per batch.
             cap = LawCap.new(LAW_CAP, Hash.new(0)) unless ranked
-            raw = []
-            CheckFocus.first(files).each do |path|
-              break if scan_stop?(path, worklist.taken, deadline)
 
-              rows = violations_for(path)
-              raw.concat(rows)
-              repairs = resolve_violations(rows)
-              repairs = cap.take(repairs) if cap && !CheckFocus.covers?(path)
-              worklist.add([path, repairs]) unless repairs.empty?
+            raw = []
+            put_off = []
+            semantic_deferred(put_off) do
+              CheckFocus.first(files).each do |path|
+                break if scan_stop?(path, worklist.taken, deadline)
+
+                rows = violations_for(path)
+                raw.concat(rows)
+                repairs = resolve_violations(rows)
+                repairs = cap.take(repairs) if cap && !CheckFocus.covers?(path)
+                worklist.add([path, repairs]) unless repairs.empty?
+              end
             end
+
             worklist.flush
-            resolve_violations(raw)
+            resolve_violations(read_put_off(raw, put_off:, deadline:))
+          end
+
+          # A pass's allowance of semantic reads, by files and by seconds, whichever ends first. The
+          # reads share the model lane with the repairs; unbounded, twenty of them fill a 30-minute pass
+          # and leave the repairs none of it. FindingCache keeps every answer, and
+          # StreamCursor.semantic_order resumes past the last file read, so a file a pass leaves unread
+          # is a later pass's and every due file is still read across passes and runs.
+          SEMANTIC_FILES = Integer(ENV.fetch("MASTER_FIX_SEMANTIC_FILES", 3))
+          SEMANTIC_SECONDS = Integer(ENV.fetch("MASTER_FIX_SEMANTIC_SECONDS", 240))
+          PENDING = "semantic read due, left for a later pass by the pass's budget"
+
+          SemanticBudget = Struct.new(:files, :seconds, :read, :spent) do
+            def self.per_pass = new(SEMANTIC_FILES, SEMANTIC_SECONDS, 0, 0.0)
+
+            def open? = read < files && spent < seconds
+
+            def charge(elapsed)
+              self.read += 1
+              self.spent += elapsed
+            end
+          end
+
+          # Files whose semantic read is due and not yet made. They keep a run from DONE as an
+          # inconclusive read does: a file the model has not read has not been measured clean.
+          def semantic_pending = (@semantic_pending ||= {})
+
+          def pass_semantic_budget = SemanticBudget.per_pass
+
+          # A runner without a scan phase, as a unit test's is, reads as it always did.
+          def semantic_deferred(into, &) = @scan_phase ? @scan_phase.deferring_semantic(into, &) : yield
+          def semantic_budgeted(budget, &) = @scan_phase ? @scan_phase.budgeting_semantic(budget, &) : yield
+
+          # A file read here has its rows replaced by the whole reading. Its new findings go to the rule
+          # stage after the stream rather than to a worker, which may hold the file now.
+          def read_put_off(raw, put_off:, deadline:)
+            due = StreamCursor.semantic_order(@root, put_off.uniq)
+            budget = pass_semantic_budget
+            read = []
+            semantic_budgeted(budget) do
+              due.each do |path|
+                break unless semantic_turn?(budget, deadline)
+
+                raw = replace_rows(raw, violations_for(path), path:)
+                read << path
+              end
+            end
+
+            settle_semantic(due, read)
+            raw
+          end
+
+          def semantic_turn?(budget, deadline)
+            budget.open? && !RunBudget.stopping && !(deadline && Time.now >= deadline)
+          end
+
+          def replace_rows(raw, rows, path:)
+            relative = path.delete_prefix("#{@root}/")
+            raw.reject { |row| row[:file].to_s == relative } + rows
+          end
+
+          def settle_semantic(due, read)
+            return if due.empty?
+
+            StreamCursor.mark_semantic(@root, read.last) if read.any?
+            note_pending(due - read)
+            read.each { |path| semantic_pending.delete(path.delete_prefix("#{@root}/")) }
+            Master::Trace::Dmesg.status(
+              "scan0", "semantic: read #{read.size} of #{due.size} put-off file(s); the rest wait for later passes"
+            )
+          end
+
+          def note_pending(paths)
+            paths.each { |path| semantic_pending[path.delete_prefix("#{@root}/")] = PENDING }
           end
 
           # A limited run stops reading once it holds its files: the semantic scan costs a model call
@@ -208,10 +288,18 @@ module Master
             touched = streamed.map(&:first).uniq
             return found if touched.empty?
 
-            fresh = touched.flat_map { |relative| violations_for(File.expand_path(relative, @root)) }
+            # Mechanical, as the scan was: a repaired file's text is new, so its model read is due
+            # again and waits for the next pass's budget instead of one read per repaired file here.
+            later = []
+            fresh = semantic_deferred(later) do
+              touched.flat_map { |relative| violations_for(File.expand_path(relative, @root)) }
+            end
+
+            note_pending(later.uniq)
             untouched = found.reject { |finding| touched.include?(finding[:file].to_s) }
             resolve_violations(untouched + fresh)
           end
+
           # The pass budget starts when the worker receives its first file, not when the scan starts:
           # a budget that began before a long scan expired before any file arrived.
           def drain_repairs(queue, streamed:, pass:, run_deadline:)
