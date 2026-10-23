@@ -255,13 +255,17 @@ module Master::Core
     # api_keys.txt through by anchoring before the prefix. So: the word has to
     # be a whole leading component of the name, and `key` may carry one
     # qualifier in front of it -- api_key, private_key -- which keeps
-    # keyboard.js, tokenizer.rb and environment.rb readable.
+    # keyboard.js, tokenizer.rb and environment.rb readable. A name led by one
+    # of those words is still source when it ends in a source extension:
+    # token_checks.rb is a check over design tokens, and refusing it crashed
+    # /fix mid-pass.
+    SOURCE_EXTENSION = /(?!.*\.(?:rb|rake|erb|js|mjs|ts|css|scss|md)\z)/
     SECRET_BASENAME = /
       \A(?:
         \.env(?:rc|[._-][a-z0-9._-]+)?\z |
         [a-z0-9_-]+\.env\z |
-        (?:credentials?|secrets?|tokens?)(?:[._-]|\z) |
-        (?:[a-z0-9]+[._-])?keys?(?:[._-]|\z) |
+        (?:credentials?|secrets?|tokens?)(?:[._-]|\z)#{SOURCE_EXTENSION} |
+        (?:[a-z0-9]+[._-])?keys?(?:[._-]|\z)#{SOURCE_EXTENSION} |
         id_(?:rsa|dsa|ecdsa|ed25519) |
         \.(?:netrc|pgpass|npmrc)\z |
         [a-z0-9._-]+\.pem\z
