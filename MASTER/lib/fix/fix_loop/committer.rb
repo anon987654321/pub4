@@ -79,7 +79,7 @@ module Master
           @commit_mutex.synchronize do
             transaction = @transaction
             @transaction = nil
-            result = transaction&.rollback!
+            result = transaction && roll_back_own(transaction)
             @boundary_scope = nil
             @related_owned_paths = []
             result
@@ -122,9 +122,23 @@ module Master
         # ReadFile tool made one, so every commit of a /fix repair or a RuboCop autocorrect was
         # blocked as stale. A file changed by someone else after this still fails the check.
         def attest_written!(*paths)
+          files = paths.flatten
+          observe_own_writes(files)
           return unless @ground_truth
 
-          paths.flatten.each { |path| @ground_truth.record_read!(path) if File.file?(path) }
+          files.each { |path| @ground_truth.record_read!(path) if File.file?(path) }
+        end
+
+        # A write /fix makes during a pass is recorded with the pass transaction, so a crash rolls it
+        # back. Unrecorded, it read as another writer's edit and the rollback refused every path.
+        def observe_own_writes(paths)
+          observe = lambda do
+            transaction = @transaction
+            tracked = transaction&.active? ? transaction.tracked(paths) : []
+            transaction.observe_paths!(tracked) unless tracked.empty?
+          end
+
+          @commit_mutex.owned? ? observe.call : @commit_mutex.synchronize(&observe)
         end
 
         def written_unchanged?(path) = @ground_truth.recorded_unchanged?(File.expand_path(path, @root))
@@ -287,7 +301,7 @@ def stage_commit_mode?
               @transaction = nil
               transaction.delivery.preserve! if transaction.active?
             else
-              rollback = transaction.rollback!
+              rollback = roll_back_own(transaction)
               raise rollback.message if rollback.err?
             end
             raise
@@ -304,8 +318,28 @@ def stage_commit_mode?
           return [prepared, nil] if prepared
 
           @transaction = nil
-          transaction.rollback!
+          roll_back_own(transaction)
           [nil, Result.err("fix transaction blocked before delivery", category: :policy)]
+        end
+
+        # Another writer's edit to a tracked file is left as it stands and the rest of the pass rolls
+        # back; refusing the whole rollback for one foreign file left every /fix write in the tree.
+        def roll_back_own(transaction)
+          left = transaction.release_conflicts!
+          result = transaction.rollback!
+          report_rollback(result, left)
+          result
+        end
+
+        # The bus carries the event; dmesg says which files a rollback did not put back.
+        def report_rollback(result, left)
+          unless left.empty?
+            Master::Trace::Dmesg.status("fix0", "rollback left #{left.size} file(s) another writer changed: " \
+                                                "#{left.first(5).join(", ")}")
+          end
+          return if result.ok?
+
+          Master::Trace::Dmesg.status("fix0", "rollback refused, the pass's writes stay: #{result.message}"[0, 300])
         end
 
         # A file that changed under the pass without its write belongs to another writer in the
@@ -334,7 +368,7 @@ def stage_commit_mode?
               @bus&.publish("fix_loop:commit_error", error: e.message, committed: true)
               Result.err("fix transaction delivery pending: #{e.message}", category: :infrastructure)
             else
-              rollback = transaction.rollback!
+              rollback = roll_back_own(transaction)
               @bus&.publish("fix_loop:commit_error", error: e.message, committed: false)
               rollback.err? ? rollback : Result.err("fix transaction delivery: #{e.message}", category: :infrastructure)
             end

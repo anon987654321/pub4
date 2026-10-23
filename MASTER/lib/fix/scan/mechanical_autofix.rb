@@ -79,7 +79,7 @@ module Master
             return Rewrite.new(status: :refused, content: source, transforms: [], reason: why)
           end
 
-          AutofixGuard.note_written(path)
+          AutofixGuard.note_written(path, before: source)
           Rewrite.new(status: :written, content: candidate.content, transforms: candidate.transforms)
         end
 

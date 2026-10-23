@@ -248,6 +248,17 @@ module Master
         @paths.reject { |path| @seen[path].include?(fingerprint(absolute(path))) }
       end
 
+      # Before a rollback of an open pass: another writer's edits leave the transaction, so the
+      # rollback restores the pass's own writes and leaves theirs. Answers the paths released.
+      def release_conflicts!
+        return [] unless @active && @state == "open"
+
+        release!(conflicts)
+      end
+
+      # The paths among these that this transaction tracks, in its own spelling.
+      def tracked(paths) = Array(paths).filter_map { |path| normalize(path) } & @paths
+
       def id = @id
       def state = @state
       def active? = @active

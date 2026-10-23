@@ -239,7 +239,8 @@ module Master
           @repair_before = before
           changes = changes_section(before)
           sections << ["changes", changes]
-          return sections << ["proof", REPAIR_UNPROVEN] if repair_failed_without_changes?(changes)
+          unproven = repair_unproven(changes)
+          return sections << ["proof", unproven] if unproven
 
           sections << reobserve_section(before:, resolved:, shell:, aesthetic: run_aesthetic)
           return sections << ["proof", NOTHING_DELIVERED] if nothing_delivered?(before)
@@ -298,6 +299,30 @@ module Master
 
         # A repair that died before writing leaves the tree as the first reading saw it.
         def repair_failed_without_changes?(changes) = @failed_stages.include?("fix") && changes == "nothing changed"
+
+        REPAIR_CRASHED = "skipped: the repair crashed, so nothing after it reads, proves or delivers the tree"
+
+        # A crashed repair proves nothing, so the observation's autofix bytes it would have carried go
+        # back. Only uncommitted files still holding exactly those bytes; a later edit is another writer's.
+        def discard_unproven_writes
+          uncommitted = repo_git.changed_paths.map { |path| File.join(repo_top, path) }
+          reverted, left = Master::Fix::AutofixGuard.revert_written!(uncommitted)
+
+          named = left.first(5).join(", ")
+          notes = [("put back #{reverted.size} file(s) the autofix wrote" if reverted.any?),
+                   ("left #{left.size} file(s) changed since the autofix wrote them: #{named}" if left.any?)]
+          notes.compact.each { |line| Master::Trace::Dmesg.status("fix0", line[0, 300]) }
+          [REPAIR_CRASHED, *notes.compact].join("\n")
+        end
+
+        # The proof section's text when the repair leaves nothing to prove, else nil.
+        def repair_unproven(changes)
+          return REPAIR_UNPROVEN if repair_failed_without_changes?(changes)
+
+          discard_unproven_writes if @fix_crashed
+        end
+
+        def repo_top = Master::REPO_ROOT
 
         NOTHING_DELIVERED = "skipped: the run committed nothing and its autofix left nothing, so the baseline stands"
 
@@ -453,11 +478,13 @@ def default_apply?(*) = false
           Master::Trace::Dmesg.status("fix0", "failed, loop slot held by #{holder["loop"]} pid #{holder["pid"]}; no repair ran")
           "fix failed: loop slot held by #{holder["loop"]} pid #{holder["pid"]}"
         rescue StandardError => e
+          @fix_crashed = true
           stage_failure("fix", "fix0", e)
         end
 
         def fix_verdict(result, delivered)
           ok = result.ok?
+          @fix_crashed = true if !ok && result.category == :crash
           msg = ok ? result.value!.to_s : result.message.to_s
           outcome = self.class.fix_outcome(ok:, msg:, delivered:, ending: loop_ending)
           @scored = { outcome:, delivered: }

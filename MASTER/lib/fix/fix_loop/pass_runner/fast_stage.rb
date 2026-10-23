@@ -98,7 +98,8 @@ module Master
 
           # RuboCop wrote in place; each changed file is judged like any other
           # autofix candidate and the original bytes go back on a verdict
-          # against it. dry puts every file back and keeps the diff.
+          # against it. dry puts every file back and keeps the diff. Only a kept write is attested:
+          # attesting every file RuboCop opened claimed another writer's edit to one it left alone.
           def settle_rubocop(snapshot, _root)
             snapshot.each do |path, before|
               after = File.binread(path)
@@ -113,7 +114,8 @@ module Master
                 Master::Fix::AutofixGuard.note_refused(path, "rubocop: #{reason}")
                 Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop fix reverted, #{path.delete_prefix("#{@root}/")}: #{reason[0, 140]}")
               else
-                Master::Fix::AutofixGuard.note_written(path)
+                Master::Fix::AutofixGuard.note_written(path, before:)
+                @committer&.attest_written!(path)
               end
             end
           end
@@ -150,7 +152,6 @@ module Master
                       end
             summary = "failed: no machine-readable report" if !status.success? && rows.empty?
             Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop #{summary}, checked #{Master::Trace::Dmesg.counted(files.size, "file")}")
-            @committer&.attest_written!(files.map { |path| File.expand_path(path, root) }) if corrected.positive?
             corrected
           rescue JSON::ParserError
             @bus&.publish("fix_loop:rubocop_report_unreadable", files: files.map { |path| path.delete_prefix("#{@root}/") })

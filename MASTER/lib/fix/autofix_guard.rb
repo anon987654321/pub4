@@ -46,6 +46,7 @@ module Master
       @mode = nil
       @written = []
       @written_digests = {}
+      @originals = {}
       @refused = []
       @capped = []
       @patch = nil
@@ -82,6 +83,7 @@ module Master
             @mode = nil
             @written = []
             @written_digests = {}
+            @originals = {}
             @refused = []
             @capped = []
             @patch = nil
@@ -161,14 +163,31 @@ module Master
         end
 
         # Each written file's content is kept as its digest, so delivery can tell this run's bytes
-        # from another writer's later save to the same path.
-        def note_written(path)
+        # from another writer's later save to the same path. before is what the file held ahead of
+        # the run's first write to it, kept so a run that ends unproven can put it back.
+        def note_written(path, before: nil)
           digest = content_digest(path)
+          absolute = File.expand_path(path.to_s)
           @mutex.synchronize do
             @written << path.to_s unless @written.include?(path.to_s)
-            @written_digests[File.expand_path(path.to_s)] = digest
+            @written_digests[absolute] = digest
+            @originals[absolute] = before.b unless before.nil? || @originals.key?(absolute)
           end
         end
+
+        # Puts back what each written file among paths held before the run wrote it, when the file
+        # still holds exactly the run's bytes. A file changed since is another writer's and is left.
+        # Answers [reverted, left], absolute paths.
+        def revert_written!(paths)
+          wanted = Array(paths).map { |path| File.expand_path(path.to_s) }
+          ours = written.map { |path| File.expand_path(path) } & wanted
+          reverted, left = ours.partition { |path| original(path) && still_as_written?(path) }
+
+          reverted.each { |path| put_back(path) }
+          [reverted, left]
+        end
+
+        def original(path) = @mutex.synchronize { @originals[File.expand_path(path.to_s)] }
 
         # The file still holds exactly what the autofix wrote.
         def still_as_written?(path)
@@ -220,6 +239,15 @@ module Master
         end
 
         private
+
+        def put_back(path)
+          File.binwrite(path, original(path))
+          @mutex.synchronize do
+            @written.reject! { |item| File.expand_path(item) == path }
+            @written_digests.delete(path)
+            @originals.delete(path)
+          end
+        end
 
         def sacred?(absolute, root)
           master = [root, File.join(root.to_s, "MASTER")].compact.find { |dir| File.file?(File.join(dir, "data", "soul.yml")) }
