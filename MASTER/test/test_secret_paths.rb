@@ -19,6 +19,7 @@ class TestSecretPaths < Minitest::Test
     config.yml environment.rb keyboard.js tokenizer.rb private_notes_test.rb
     README.md dilla.rb app/config/database.yml .master/mode
     checks/support/rendered_geometry/token_checks.rb secrets_test.rb api_keys_controller.js
+    RAILS/__shared/public/styles/tokens.css keys.rb secrets.md
   ].freeze
 
   def guard(path) = Master::Io::PathGuard.secret?(path)

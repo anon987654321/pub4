@@ -264,8 +264,8 @@ module Master::Core
       \A(?:
         \.env(?:rc|[._-][a-z0-9._-]+)?\z |
         [a-z0-9_-]+\.env\z |
-        (?:credentials?|secrets?|tokens?)(?:[._-]|\z)#{SOURCE_EXTENSION} |
-        (?:[a-z0-9]+[._-])?keys?(?:[._-]|\z)#{SOURCE_EXTENSION} |
+        #{SOURCE_EXTENSION}(?:credentials?|secrets?|tokens?)(?:[._-]|\z) |
+        #{SOURCE_EXTENSION}(?:[a-z0-9]+[._-])?keys?(?:[._-]|\z) |
         id_(?:rsa|dsa|ecdsa|ed25519) |
         \.(?:netrc|pgpass|npmrc)\z |
         [a-z0-9._-]+\.pem\z
