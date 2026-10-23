@@ -40,6 +40,7 @@ module Deploy
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       out, status = capture(env, *cmd)
       elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
       ok = status.success?
       @results << Result.new(name:, success: ok, output: out)
       report(unit, name, ok, elapsed)

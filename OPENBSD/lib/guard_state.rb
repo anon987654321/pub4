@@ -54,6 +54,7 @@ module Deploy
     # them, before a later guard tick caught up and cleared the list.
     def stale_entries(shed:, running:)
       services = shed.to_s.split.reject(&:empty?)
+
       services.select { |svc| running.call(svc) }
     end
   end

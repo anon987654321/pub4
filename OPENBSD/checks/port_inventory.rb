@@ -10,11 +10,13 @@ module Deploy
     ROOT = File.expand_path("../..", __dir__)
     DEPLOY_INVENTORY = ENV.fetch("DEPLOY_INVENTORY", File.join(ROOT, "OPENBSD", "deploy_inventory.json"))
     OPENBSD_DEPLOY = File.join(ROOT, "OPENBSD", "OPERATOR.sh")
+
     APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
     RAILS_README = File.join(ROOT, "RAILS", "README.md")
     PWA_BUILDER = File.join(ROOT, "MASTER", "tools", "rails", "build_workbox.mjs")
     RELAYD_CONF = File.join(ROOT, "OPENBSD", "etc", "relayd.conf")
     CRAWL_MANIFEST = File.join(ROOT, "RAILS", "crawl_manifest.yml")
+
     # Health probes that name a loopback port. They must never probe a port no
     # app listens on: a retired port here does not fail loudly, it reports the
     # app down forever, or reports a different app's health under this app's
@@ -111,6 +113,7 @@ module Deploy
       check_master_json(result, apps)
       check_deploy_scripts(result, apps)
       check_openbsd_ports(result, apps)
+
       check_relayd_ports(result, apps)
       check_crawl_manifest(result, apps)
       check_smoke_probes(result, apps)
@@ -173,6 +176,7 @@ module Deploy
       declared = manifest.fetch("apps", {})
       apps.each do |app|
         entry = declared[app.name]
+
         if entry.nil?
           result.fail("crawl_manifest.yml has no target for #{app.name}")
         elsif entry["port"].to_i != app.port
@@ -228,6 +232,7 @@ module Deploy
         ["git", "-C", ROOT, "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
         &:read
       )
+
       raise "git unavailable" unless $CHILD_STATUS&.success?
 
       paths = tracked.split("\0").grep(/\.(rb|sh|ya?ml|json|conf|mjs|js|md|erb|exp)\z/)
@@ -300,6 +305,7 @@ module Deploy
         end
 
         text = File.read(path)
+
         {
           "APP_NAME=#{app.name}" => "APP_NAME",
           "APP_DOMAIN=#{app.domain}" => "APP_DOMAIN",

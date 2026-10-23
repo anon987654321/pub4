@@ -42,6 +42,7 @@ module Deploy
       if needs.include?(:vps) && !on_vps
         return "not on VPS"
       end
+
       if needs.include?(:bundle) && Deploy::RubyRunner.runtime_check_skipped?
         return Deploy::RubyRunner.runtime_skip_reason || "bundle runtime unavailable"
       end

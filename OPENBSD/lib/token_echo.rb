@@ -11,6 +11,7 @@
 # different job from checking the relayd and httpd templates anyway.
 module TokenEcho
   PATTERN = /token=(?:#\{|\$\{?\w|%s)/
+
   OUTPUT_VERB = /\b(?:puts|print|printf|echo|warn|logger|tee)\b|\$std(?:out|err)\b|\bSTD(?:OUT|ERR)\b/
   SCRIPT_EXTENSIONS = %w[.rb .sh .ksh .zsh .rake].freeze
 

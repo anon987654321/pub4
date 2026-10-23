@@ -58,6 +58,7 @@ module Deploy
     def port_open?(port, host = "127.0.0.1")
       socket = Socket.tcp(host, port, connect_timeout: 0.2)
       socket.close
+
       true
     rescue StandardError
       # A closed/refused/timed-out port is the routine, expected negative

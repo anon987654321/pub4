@@ -28,6 +28,7 @@ module Deploy
         mount = row.last
         { "blocks" => row[capacity], "inodes" => row[iused] }.filter_map do |what, value|
           percent = value.to_s.delete("%").to_i
+
           "disk: #{mount} #{what} #{percent}% used" if percent >= limit
         end
       end

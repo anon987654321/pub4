@@ -42,6 +42,7 @@ module Operator
     # rather than positioning against them covers both.
     def sysctl
       numbers = `sysctl -n vm.loadavg 2>/dev/null`.scan(/\d+(?:\.\d+)?/)
+
       numbers.size >= 3 ? numbers.first(3) : nil
     rescue StandardError # scan: intentional — one probe in a fallback chain; nil advances to the next source
       nil

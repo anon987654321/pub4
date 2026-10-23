@@ -9,6 +9,7 @@ module Deploy
   # and the check runner and the deploy scripts read it from here.
   module Dmesg
     ANSI = /\e\[[0-9;?]*[A-Za-z]/
+
     # A line naming a file position or a verdict. Minitest's `[test/x.rb:12]`,
     # RuboCop's `app/x.rb:3:5: C:`, the design lints' `lint: file:line …` and
     # every summary that counts failures or offences all carry one of the two.
@@ -43,6 +44,7 @@ module Deploy
         attached = false
         source.lines.each do |raw|
           line = raw.chomp.strip
+
           if line.empty?
             lines << "" unless lines.empty? || lines.last.empty?
             attached = false
@@ -56,6 +58,7 @@ module Deploy
             attached = true
           end
         end
+
         lines.join("\n").strip
       end
 
@@ -95,6 +98,7 @@ module Deploy
     # they took all eight places, and the one failing test that held the deploy was not shown.
     def findings(text, limit: FINDING_LIMIT)
       lines = collapse(plain(text).lines).reject { |candidate| candidate.strip.empty? }
+
       hits = lines.grep(TEST_FAILURE)
       hits = lines.grep(FINDING) if hits.empty?
       picked = hits.empty? ? lines.last(limit) : hits.first(limit)
@@ -114,6 +118,7 @@ module Deploy
     # block, every step runs, and the process exits 1 when any step failed.
     class CiRun
       Result = Struct.new(:title, :ok, :seconds, keyword_init: true)
+
       UNIT = "ci0"
       WARN = /\Awarn: /
 
@@ -140,6 +145,7 @@ module Deploy
         Signal.trap("INT") { say("interrupted during #{@current}"); exit 1 }
         instance_eval(&steps)
         summarize(clock - started)
+
         self
       ensure
         Signal.trap("INT", "DEFAULT")
@@ -154,6 +160,7 @@ module Deploy
         @log&.puts Dmesg.line(UNIT, @app, "#{title}: #{command.join(' ')}")
         from = log_size
         started = clock
+
         ok = @log ? system(*command, out: @log, err: @log) : system(*command)
         seconds = clock - started
         results << Result.new(title:, ok: ok == true, seconds:)

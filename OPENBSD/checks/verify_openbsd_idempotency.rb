@@ -12,6 +12,7 @@
 # With no argument the script is OPERATOR.sh and the two stage scripts it
 # sources, because the nsd backup/delete and the db:prepare live in the stages.
 paths = ARGV.empty? ? ["OPERATOR.sh", "dev/operator_stage_1.zsh", "dev/operator_stage_2.zsh"].map { |p| File.expand_path("../#{p}", __dir__) } : [ARGV.fetch(0)]
+
 script = paths.map { |path| File.read(path, encoding: "UTF-8") }.join("\n")
 
 issues = []

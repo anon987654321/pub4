@@ -37,6 +37,7 @@ module Deploy
     # inventory died the same anonymous way.
     def load_apps
       path = File.join(root, "RAILS", "apps.yml")
+
       data = YAML.safe_load(File.read(path))
       data.fetch("apps").map do |name, metadata|
         missing = REQUIRED_APP_KEYS.reject { |key| metadata.is_a?(Hash) && metadata.key?(key) }

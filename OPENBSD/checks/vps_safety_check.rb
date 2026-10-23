@@ -39,6 +39,7 @@ else
 end
 
 operator_script = File.join(OPENBSD, "OPERATOR.sh")
+
 if File.file?(operator_script)
   operator = File.read(operator_script)
   unless operator.include?('[[ ${SKIP_MASTER_SCAN:-0} != 0 ]]') &&
@@ -51,6 +52,7 @@ end
 
 guard_wrapper_path = File.join(OPENBSD, "bin", "resource_guard.sh")
 guard_impl_path = File.join(OPENBSD, "usr", "local", "bin", "resource_guard.sh")
+
 if File.file?(guard_wrapper_path) && !File.symlink?(guard_wrapper_path) &&
    File.file?(guard_impl_path) && !File.symlink?(guard_impl_path)
   guard_wrapper = File.read(guard_wrapper_path)
@@ -79,6 +81,7 @@ end
 
 emergency_wrapper_path = File.join(OPENBSD, "emergency_cpu.sh")
 emergency_impl_path = File.join(OPENBSD, "usr", "local", "bin", "emergency_cpu.sh")
+
 if File.file?(emergency_wrapper_path) && !File.symlink?(emergency_wrapper_path) &&
    File.file?(emergency_impl_path) && !File.symlink?(emergency_impl_path)
   emergency_wrapper = File.read(emergency_wrapper_path)
@@ -107,6 +110,7 @@ else
 end
 
 validate_doas = File.join(TOOLING, "validate_doas.ksh")
+
 if File.file?(validate_doas)
   # install_doas_conf_from_repo rolls /etc/doas.conf back when validation fails, so
   # validation has to test the thing that changed. `doas id` alone passes with a wrong
@@ -126,6 +130,7 @@ admin = ""
 if File.symlink?(admin_path)
   failures << "usr/local/sbin/pub4-admin must not be a symlink"
 end
+
 if File.file?(admin_path) && !File.symlink?(admin_path)
   admin = File.read(admin_path)
   failures << "pub4-admin must use the fixed packaged Ruby interpreter" unless
@@ -435,12 +440,14 @@ end
   failures << "usr/local/libexec/#{name} must not be a symlink" if File.symlink?(path)
 end
 smoke_source = File.read(File.join(OPENBSD, "bin", "deploy-smoke.sh"))
+
 smoke_contract = smoke_source.include?('case "$svc" in master|brgen|amber|bsdports|relayd)') &&
                  smoke_source.include?('doas /usr/local/sbin/pub4-admin service check "$svc"') &&
                  smoke_source.include?('if [ -L /usr/local/sbin/pub4-admin ]; then') &&
                  smoke_source.include?("Bootstrap fallback only")
 failures << "deploy-smoke service checks must use the fixed broker and an explicit fallback" unless smoke_contract
 install_all_source = File.read(File.join(OPENBSD, "bin", "vps_install_all.sh"))
+
 install_all_contract = install_all_source.include?("admin_service() {") &&
                        install_all_source.include?('case "$action" in check|start|stop|restart)') &&
                        install_all_source.include?('case "$service" in master|brgen|amber|bsdports)') &&
@@ -448,6 +455,7 @@ install_all_contract = install_all_source.include?("admin_service() {") &&
                        install_all_source.include?('doas rcctl "$action" "$service"') &&
                        install_all_source.include?("Bootstrap fallback only") &&
                        install_all_source.include?('case "$app" in brgen|amber|bsdports)')
+
 failures << "vps_install_all service control must be broker-first and app-allowlisted" unless install_all_contract
 deploy_all_source = File.read(File.join(OPENBSD, "bin", "deploy_all.sh"))
 deploy_all_contract = deploy_all_source.include?('zsh OPENBSD/bin/vps-deploy ${app}') &&
@@ -455,6 +463,7 @@ deploy_all_contract = deploy_all_source.include?('zsh OPENBSD/bin/vps-deploy ${a
                       !deploy_all_source.include?('RAILS/${app}/${app}.sh')
 failures << "deploy_all per-app mode must not elevate checkout Rails wrappers" unless deploy_all_contract
 start_all_apps_path = File.join(OPENBSD, "bin", "start_all_apps.sh")
+
 if File.file?(start_all_apps_path)
   start_all_apps = File.read(start_all_apps_path)
   start_all_wrapper = start_all_apps.include?('if [ "$(id -u)" -eq 0 ]; then') &&
@@ -471,7 +480,9 @@ if File.file?(start_all_apps_path)
 else
   failures << "missing OPENBSD/bin/start_all_apps.sh"
 end
+
 vps_state_path = File.join(OPENBSD, "bin", "vps-state")
+
 if File.file?(vps_state_path)
   vps_state = File.read(vps_state_path)
   service_state = vps_state[/def service_state\(service\).*?^end/m]
@@ -485,6 +496,7 @@ else
 end
 
 restore_litestream_path = File.join(OPENBSD, "bin", "restore_litestream.sh")
+
 if File.file?(restore_litestream_path)
   restore_litestream = File.read(restore_litestream_path)
   restore_contract = restore_litestream.include?('doas /usr/local/sbin/pub4-admin service stop "$app"') &&
@@ -495,7 +507,9 @@ if File.file?(restore_litestream_path)
 else
   failures << "missing OPENBSD/bin/restore_litestream.sh"
 end
+
 manual_master_path = File.join(OPENBSD, "bin", "manual_master_deploy.ksh")
+
 if File.file?(manual_master_path)
   manual_master = File.read(manual_master_path)
   manual_master_contract = manual_master.include?("pub4-admin service stop master") &&
@@ -507,7 +521,9 @@ if File.file?(manual_master_path)
 else
   failures << "missing OPENBSD/bin/manual_master_deploy.ksh"
 end
+
 master_deploy_path = File.join(OPENBSD, "bin", "vps_deploy_master.sh")
+
 if File.file?(master_deploy_path)
   master_deploy = File.read(master_deploy_path)
   master_deploy_contract = master_deploy.include?("pub4-admin master-web-assets-reset") &&
@@ -524,10 +540,12 @@ if File.file?(master_deploy_path)
 else
   failures << "missing OPENBSD/bin/vps_deploy_master.sh"
 end
+
 deploy_source = File.read(File.join(OPENBSD, "bin", "vps-deploy"))
 failures << "vps-deploy must not recommend generic privileged du" unless
   deploy_source.include?('pub4-admin disk-usage $mount_point') && !deploy_source.include?("doas du -xk $mount_point")
 console_main = File.join(TOOLING, "vps_console.exp")
+
 if File.file?(console_main)
   text = File.read(console_main)
   unless text.include?("proc require_console_risk_ack") && text.match?(/^require_console_risk_ack$/)
