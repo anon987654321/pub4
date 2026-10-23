@@ -73,14 +73,6 @@ module Master
         )
       end
 
-      def git_line(d)
-        ahead, behind = d[:ahead_behind]
-        counts = [("#{ahead} ahead" if ahead.to_i.positive?), ("#{behind} behind" if behind.to_i.positive?)]
-        return unless d[:branch]
-
-        ["git0: #{d[:branch]} at #{d[:head]}", *counts.compact, d[:dirty] ? "dirty" : "clean"].join(", ")
-      end
-
       # The feedback ledger's reading of the last week: a tool failing a fifth
       # of its calls, a correction or a provider error that keeps recurring.
       def rsi_opportunities(learnings)
@@ -88,13 +80,6 @@ module Master
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "CommandRegistry.rsi_opportunities")
         []
-      end
-
-      def format_opportunity(row)
-        kind = row[:category].to_s.tr("_", " ")
-        return "#{row[:dimension]}, #{row[:count]} #{kind}" unless row[:fail_rate]
-
-        "#{row[:dimension]} failed #{(row[:fail_rate] * 100).round}% of #{row[:total]} calls"
       end
 
       def last_event(root, pattern)

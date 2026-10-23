@@ -94,11 +94,11 @@ module Master
         end
 
         def record_improvement(payload)
-          rule_id = payload[:rule] || payload["rule"] || "unknown"
+          law_id = payload[:law] || payload["law"] || "unknown"
           files = Array(payload[:sample] || payload["sample"]).filter_map { |row| row[:file] || row["file"] }.uniq
           record(
             event_type: "fix_improvement",
-            dimension: rule_id,
+            dimension: law_id,
             value: files.size,
             metadata: { files: },
           )

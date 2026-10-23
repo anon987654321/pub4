@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
+require_relative "test_helper"
 require "fileutils"
 require "json"
 require "tmpdir"
-require_relative "test_helper"
 
 class TestPhoenix < Minitest::Test
   def test_current_boundary_graph_is_clean
@@ -16,14 +16,16 @@ class TestPhoenix < Minitest::Test
   def test_boundary_lookup_under_master_root
     assert_equal "master", Master::Phoenix.boundary_for("lib/master.rb")
     assert_equal "rails", Master::Phoenix.boundary_for("../RAILS/brgen")
-    assert_equal "studio", Master::Phoenix.boundary_for("tools/runs.rb")
+    assert_equal "studio", Master::Phoenix.boundary_for("../STUDIO/dilla/dilla.rb")
+    assert_equal "master", Master::Phoenix.boundary_for("tools/runs.rb")
   end
 
   def test_scope_follows_target_granularity
     assert_equal ["master"], Master::Phoenix.scope_for("lib/master.rb")
-    assert_equal ["studio"], Master::Phoenix.scope_for("tools")
+    assert_equal ["studio"], Master::Phoenix.scope_for("../STUDIO")
+    assert_equal ["master"], Master::Phoenix.scope_for("tools")
     assert_equal ["rails"], Master::Phoenix.scope_for("../RAILS")
-    assert_equal %w[master studio], Master::Phoenix.scope_for(Master::ROOT)
+    assert_equal ["master"], Master::Phoenix.scope_for(Master::ROOT)
     assert_equal %w[master rails openbsd studio], Master::Phoenix.scope_for(Master::REPO_ROOT)
   end
 

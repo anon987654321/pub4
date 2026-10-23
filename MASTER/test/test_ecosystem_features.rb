@@ -69,8 +69,11 @@ class TestEcosystemFeatures < Minitest::Test
     # /status runtime, /doctor device, /model auth, /soul law, and /session for
     # sessions, continue, resume and fork. /rollback went with them: three
     # verbs meant three different rollbacks, and /undo is the one it aliased.
-    assert_equal %w[clear commit doctor fix help model orders pair plugin
-                    review rules session snapshot soul status undo why],
+    # /pair, /device and /owner folded into /android and /ios (3910842ae);
+    # /rules became /laws with the Law registry (0202b2a76).
+    assert_equal %w[agenda android bard capabilities clear commit critique deploy doctor events explain face fix
+                    help incident ios laws model narrate orders play plugin privacy prove reload review screen
+                    session size snapshot soul status support task undo voice wake why wishlist],
                  registry.keys.sort
   end
 

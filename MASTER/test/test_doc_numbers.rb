@@ -19,7 +19,7 @@ class TestDocNumbers < Minitest::Test
 
   def setup
     @report = self.class.report
-    @baseline = YAML.safe_load_file(BASELINE).fetch("doc_numbers")
+    @baseline = YAML.safe_load_file(BASELINE).fetch("doc_numbers") || {}
   end
 
   def test_no_untraceable_dimensions

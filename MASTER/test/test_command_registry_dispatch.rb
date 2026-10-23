@@ -336,7 +336,13 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert_includes Registry::HELP_TOPICS.keys, "critique"
     assert_includes Registry.slash_commands, "/critique"
     assert_match(%r{/critique}, Registry.help_text("critique"))
-    assert_equal :dispatch_critique, built.fetch("critique").method_name
+    # review_verbs builds keyword calls in a block, so there is no method_name
+    # to read; the command is proved by what it calls.
+    called = nil
+    Registry.stub(:dispatch_critique, ->(**kwargs) { called = kwargs.keys }) do
+      built.fetch("critique").call(Master::CLI::PipelineContext.new(user_message: "/critique", args: ""))
+    end
+    assert_includes called, :ctx
   end
 
   def test_no_command_table_is_left_unmerged
@@ -387,7 +393,7 @@ class TestCommandRegistryDispatch < Minitest::Test
     original = media.method(:play_live_music)
     media.define_singleton_method(:play_live_music) do |arg, root: MasterPaths.root, **_kwargs|
       captured = [arg, root]
-      "play0: test"
+      Master::Result.err("play0: test")
     end
 
     result = built.fetch("play").call(Master::CLI::PipelineContext.new(user_message: "/play Bach", args: "Bach"))

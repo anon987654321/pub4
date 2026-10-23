@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
-require_relative "../../lib/master"
+require_relative "../test_helper"
 
 # MASTER kept introducing itself, and two things caused it.
 #

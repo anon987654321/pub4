@@ -41,7 +41,7 @@ class TestToolsHierarchy < Minitest::Test
   def test_master_test_discovery_is_recursive_for_both_test_naming_forms
     rake = File.read(File.join(MASTER_ROOT, "Rakefile"))
     assert_includes rake, 'FileList["test/**/test_*.rb", "test/**/*_test.rb"]'
-    assert_includes rake, '"test/fixtures/**/*"'
+    assert_match(/MASTER_TEST_EXCLUDED = %w\[test\/fixtures\/\*\*\/\* /, rake)
 
     Dir.mktmpdir do |root|
       test_root = File.join(root, "test")
@@ -145,7 +145,7 @@ class TestToolsHierarchy < Minitest::Test
     ownership = YAML.safe_load_file(File.join(MASTER_ROOT, "PATH_OWNERSHIP.yml")).fetch("ownership")
     row = ownership.fetch("tools/audit/")
 
-    assert_includes row.fetch("purpose"), "substantive repository audits"
+    assert_includes row.fetch("purpose"), "repository audits for capability inventory"
     assert_equal "medium", row.fetch("risk")
     assert_includes row.fetch("check"), "test_capability_inventory.rb"
   end

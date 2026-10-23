@@ -28,6 +28,8 @@ end
 MASTER_TEST_EXCLUDED = %w[test/fixtures/**/* test/test_browser.rb test/test_web_http.rb test/test_web_ui.rb].freeze
 
 MASTER_TEST_FILES = FileList["test/**/test_*.rb", "test/**/*_test.rb"].exclude(*MASTER_TEST_EXCLUDED)
+# tools/test proves tools/check.rb and tools/event_bus_reach.rb beside them.
+MASTER_TEST_FILES.include("tools/test/test_*.rb")
 
 # One process, in turn: what each parallel worker runs on its share, and the
 # fallback with MASTER_TEST_JOBS=1.

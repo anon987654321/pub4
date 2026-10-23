@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
+require_relative "test_helper"
 require "json"
 require "fileutils"
 require "sqlite3"
 require "tmpdir"
-require_relative "test_helper"
 require_relative "../lib/ground/knowledge_store"
 require_relative "../lib/trace/ledger"
 
@@ -29,8 +29,21 @@ class TestFeedbackLedger < Minitest::Test
     end
   end
 
+  # Phoenix journals a commit under the boundary its paths fall in, found from
+  # the checkout's .git, so the fixture is a checkout with a MASTER tree.
+  def with_env(key, value)
+    old = ENV[key]
+    ENV[key] = value
+    yield
+  ensure
+    ENV[key] = old
+  end
+
   def test_attach_records_tool_success_provider_error_and_improvement
-    root = Dir.mktmpdir("feedback_ledger")
+    checkout = Dir.mktmpdir("feedback_ledger")
+    FileUtils.mkdir_p(File.join(checkout, ".git"))
+    root = File.join(checkout, "MASTER")
+    FileUtils.mkdir_p(root)
     bus = FakeBus.new
     learnings = Master::Ground::KnowledgeStore.new(root:)
     Master::Trace::Ledger::Feedback.new(event_bus: bus, learnings:).attach
@@ -39,8 +52,9 @@ class TestFeedbackLedger < Minitest::Test
     bus.publish("tool:after", { tool: "write_file", exit_code: 0 })
     bus.publish("llm:call_complete", model: "gpt-4.1", tokens_out: 42)
     bus.publish("llm:provider_outcome", model: "gpt-4.1", status: "provider_error", error: "boom")
-    bus.publish("fix_loop:soul_proposal", root:, rule: "T205", sample: [{ file: "lib/example.rb" }])
-    bus.publish("ops:commit", root:, message: "fix_loop: llm-fix [pass 1]", head: "abc123", paths: ["lib/example.rb"], findings: [{ rule: "T205" }])
+    bus.publish("fix_loop:soul_proposal", root:, law: "T205", sample: [{ file: "lib/example.rb" }])
+    bus.publish("ops:commit", root:, message: "fix_loop: llm-fix [pass 1]", head: "abc123",
+                              paths: ["lib/example.rb"], findings: [{ law: "T205" }])
     bus.publish("fix_loop:oscillation", violations: 1)
 
     db = SQLite3::Database.new(File.join(root, ".master", "knowledge.sqlite3"))
@@ -63,7 +77,7 @@ class TestFeedbackLedger < Minitest::Test
     assert_equal 1, entries.first.fetch("evidence").fetch("findings")
   ensure
     db&.close
-    FileUtils.remove_entry(root) if root && Dir.exist?(root)
+    FileUtils.remove_entry(checkout) if checkout && Dir.exist?(checkout)
   end
 
   # read_file publishes no tool:after, so the ledger held its failures and none
@@ -96,17 +110,25 @@ class TestFeedbackLedger < Minitest::Test
     FileUtils.remove_entry(root) if root && Dir.exist?(root)
   end
 
+  # The state PassRunner#initialize gives track_recurrence, and the method opened up.
+  class RecurrenceRunner < Master::Fix::FixLoop::PassRunner
+    def initialize(bus:, root:)
+      @bus = bus
+      @root = root
+      @law_recurrence = Hash.new(0)
+    end
+
+    public :track_recurrence
+  end
+
   # One recurrence event produces one persisted knowledge event. No markdown
   # sidecar or retired runtime directory is created.
   def test_a_recurring_rule_is_logged_once
     root = Dir.mktmpdir("recurrence_log")
     bus = FakeBus.new
     learnings = Master::Ground::KnowledgeStore.new(root:)
-    runner = Master::Fix::FixLoop::PassRunner.allocate
-    runner.instance_variable_set(:@bus, bus)
-    runner.instance_variable_set(:@root, root)
-    runner.instance_variable_set(:@rule_recurrence, Hash.new(0))
-    recur = -> { 3.times { runner.send(:track_recurrence, [{ rule: "T205", file: "lib/example.rb" }]) } }
+    runner = RecurrenceRunner.new(bus:, root:)
+    recur = -> { 3.times { runner.track_recurrence([{ law: "T205", file: "lib/example.rb" }]) } }
 
     Master::Trace::Ledger::Feedback.new(event_bus: bus, learnings:).attach
     recur.call
@@ -144,10 +166,13 @@ class TestFeedbackLedger < Minitest::Test
 
     failures = learnings.opportunities.select { |row| row[:category] == :high_failure }
     assert_equal %w[dynamic_http web_fetch], failures.map { |row| row[:dimension] }.sort
-    status = Master::CLI::CommandRegistry.render_status_lines(
-      { ahead_behind: [0, 0], svc: {}, failures: [], rsi: learnings.opportunities },
-    )
-    assert_includes status, "learn0: web_fetch failed 100% of 3 calls"
+    # 70ab4875c keeps opportunities out of the quiet status; verbose shows them.
+    status = with_env("MASTER_CLI_VERBOSE", "1") do
+      Master::CLI::CommandRegistry.render_status_lines(
+        { ahead_behind: [0, 0], svc: {}, failures: [], rsi: learnings.opportunities },
+      )
+    end
+    assert_includes status, "opportunity: web fetch failed 100% of 3 calls"
   ensure
     learnings&.close
     FileUtils.remove_entry(root) if root && Dir.exist?(root)

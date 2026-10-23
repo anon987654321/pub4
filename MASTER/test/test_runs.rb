@@ -60,7 +60,7 @@ class TestRuns < Minitest::Test
 
   def test_who_runs_answers_for_a_known_file
     assert_includes Operator::Runs.who_runs("MASTER/test/test_runs.rb"), "MASTER/Rakefile"
-    assert_empty Operator::Runs.who_runs("MASTER/test/no_such_test.rb")
+    assert_empty Operator::Runs.who_runs("MASTER/test/no_such_file.rb")
   end
 
   # STUDIO was the fourth tree and the census never looked at it: 23 test files
@@ -122,7 +122,9 @@ class TestRuns < Minitest::Test
   def test_the_directory_is_what_makes_a_file_a_test
     refute_includes Operator::Runs.test_files, "MASTER/tools/test_naming.rb"
     refute_includes Operator::Runs.test_files, "MASTER/lib/review/scan/self_test.rb"
-    assert_empty Operator::Runs.who_runs("MASTER/test/deep/nested/test_orphan.rb"),
-                 "the Rakefile globs one level, so a nested test would go unrun"
+    assert_includes Operator::Runs.who_runs("MASTER/test/deep/nested/test_orphan.rb"), "MASTER/Rakefile",
+                    "the Rakefile globs test/** recursively, so a nested test runs"
+    assert_empty Operator::Runs.who_runs("MASTER/deep/nested/test_orphan.rb"),
+                 "a test-named file outside any runner's directory is still unreached"
   end
 end

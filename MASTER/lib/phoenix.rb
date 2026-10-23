@@ -47,9 +47,8 @@ module Master
 
       # A target owns its direct boundary roots. A target that contains a nested
       # boundary explicitly names both; a target nested inside a boundary falls
-      # back to the most specific containing boundary. This keeps MASTER/tools
-      # in STUDIO without making the parent MASTER boundary an accidental write
-      # permission.
+      # back to the most specific containing boundary, so a parent boundary is
+      # never an accidental write permission for a nested one.
       def scope_for(target, root: Master::ROOT)
         absolute = File.expand_path(target.to_s, root)
         rows = boundaries(root:)
