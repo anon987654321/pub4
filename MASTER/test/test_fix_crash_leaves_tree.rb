@@ -101,6 +101,47 @@ class TestFixCrashLeavesTree < Minitest::Test
     def last_terminal_state = :crash
   end
 
+  # A repair that failed without crashing, judged by a proof that stays red, or held and delivered.
+  class ProvedPass < CrashedPass
+    def initialize(proof_holds:, **)
+      super(**)
+      @proof_holds = proof_holds
+    end
+
+    def proof_section(*)
+      deliver if @proof_holds
+      @proof_holds ? %w[proof held] : %w[proof red]
+    end
+
+    def deliver = system("git", "-C", @root, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qam", "deliver")
+  end
+
+  class FailingLoop
+    def run(*, **) = Master::Result.err("fix_loop: uninspectable inputs remain", category: :validation)
+    def last_terminal_state = :validation_failed
+  end
+
+  # STUDIO's proof was red, nothing was delivered, and 19 files of the observation's autofix stayed.
+  def test_a_red_proof_puts_back_the_observations_autofix
+    Dir.mktmpdir do |root|
+      committed_repo(root)
+      pass = ProvedPass.new(scanner: nil, fix_loop: FailingLoop.new, root:, proof_holds: false)
+      capture_io { pass.repair(root) }
+
+      assert_equal "A = 1\n", File.read(File.join(root, "a.rb"))
+    end
+  end
+
+  def test_a_held_proof_keeps_the_autofix_it_delivered
+    Dir.mktmpdir do |root|
+      committed_repo(root)
+      pass = ProvedPass.new(scanner: nil, fix_loop: FailingLoop.new, root:, proof_holds: true)
+      capture_io { pass.repair(root) }
+
+      assert_equal "A = 1\n\n", File.read(File.join(root, "a.rb"))
+    end
+  end
+
   def test_a_crashed_repair_puts_back_the_observations_autofix_and_stops
     Dir.mktmpdir do |root|
       committed_repo(root)

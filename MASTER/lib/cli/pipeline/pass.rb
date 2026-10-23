@@ -246,6 +246,8 @@ module Master
           return sections << ["proof", NOTHING_DELIVERED] if nothing_delivered?(before)
 
           sections << proof_section(resolved, baseline)
+        ensure
+          put_back_autofix if @apply && !@fix_crashed
         end
 
         # A repair that says it repaired and shows nothing asks the operator to
@@ -302,9 +304,14 @@ module Master
 
         REPAIR_CRASHED = "skipped: the repair crashed, so nothing after it reads, proves or delivers the tree"
 
-        # A crashed repair proves nothing, so the observation's autofix bytes it would have carried go
-        # back. Only uncommitted files still holding exactly those bytes; a later edit is another writer's.
-        def discard_unproven_writes
+        # A crashed repair proves nothing, so the observation's autofix bytes it would have carried go back.
+        def discard_unproven_writes = [REPAIR_CRASHED, *put_back_autofix].join("\n")
+
+        # The observation's autofix bytes the run did not deliver go back on every ending: a red proof or
+        # a failed repair proves nothing, and STUDIO's red proof left 19 files of them in the tree. A
+        # delivered file is committed and so untouched. Only uncommitted files still holding exactly
+        # those bytes; a later edit is another writer's. Answers the lines it printed.
+        def put_back_autofix
           uncommitted = repo_git.changed_paths.map { |path| File.join(repo_top, path) }
           reverted, left = Master::Fix::AutofixGuard.revert_written!(uncommitted)
 
@@ -312,7 +319,6 @@ module Master
           notes = [("put back #{reverted.size} file(s) the autofix wrote" if reverted.any?),
                    ("left #{left.size} file(s) changed since the autofix wrote them: #{named}" if left.any?)]
           notes.compact.each { |line| Master::Trace::Dmesg.status("fix0", line[0, 300]) }
-          [REPAIR_CRASHED, *notes.compact].join("\n")
         end
 
         # The proof section's text when the repair leaves nothing to prove, else nil.
