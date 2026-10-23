@@ -264,6 +264,29 @@ def test_a_file_fix_did_not_write_stays_out_of_its_commit
   assert_equal ["lib/ok.rb"], committed
 end
 
+# The end of a pass delivers what the pass wrote, as its checkpoints do. A file the review's
+# observation autofixed before the pass began has no recorded write; finish_transaction took it
+# anyway, the freshness check refused it, and /fix MASTER ended DELIVERY_FAILED with its own
+# verified repair undelivered.
+def test_the_end_of_a_pass_delivers_only_what_the_pass_wrote
+  paths = %w[lib/ok.rb lib/observed.rb]
+  write_file("lib/ok.rb", "OK = 1\n")
+  write_file("lib/observed.rb", "SEEN = 1\n")
+
+  git = FakeGit.new([], paths)
+  truth = Master::Ground::Truth.new
+
+  committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir, ground_truth: truth)
+  committer.baseline!
+  committer.begin_transaction!(Master::Fix::Transaction.new(root: @dir, paths:))
+  committer.attest_written!(File.join(@dir, "lib/ok.rb"))
+
+  out, = capture_io { committer.finish_transaction("fix: ok", owned_paths: paths) }
+
+  assert_equal ["lib/ok.rb"], git.commits.flat_map(&:last)
+  assert_includes out, "/fix did not write: lib/observed.rb"
+end
+
 # A repair that took longer than the freshness window still commits its own unchanged write.
 def test_a_slow_repairs_own_write_still_commits
   write_file("lib/ok.rb", "OK = 1\n")

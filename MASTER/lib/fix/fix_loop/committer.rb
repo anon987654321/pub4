@@ -91,7 +91,8 @@ module Master
             transaction = @transaction
             return Result.err("no active fix transaction", category: :infrastructure) unless transaction
 
-            paths = own_changes(owned_paths) - release_foreign(transaction)
+            # As at a checkpoint, only what this pass wrote; the observation's autofix is the pipeline's.
+            paths = written_here(own_changes(owned_paths) - release_foreign(transaction))
             return finish_empty_transaction(transaction) if paths.empty?
 
             prepared, blocked = prepare_for_delivery(transaction, message, paths)
