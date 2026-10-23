@@ -30,7 +30,7 @@ tune:
   exemplar_min_ratio: 0.85
 
 labels:
-  # --- Marketplace tile ---
+  # Marketplace tile
   - id: marketplace_tile_good
     fixture: fixtures/exemplars/good_marketplace_tile.html
     surface: marketplace
@@ -47,7 +47,7 @@ labels:
     rater: seed
     notes: "Title-first + feed-card dialect leak"
 
-  # --- Dating card ---
+  # Dating card
   - id: dating_card_good
     fixture: fixtures/exemplars/good_dating_card.html
     surface: dating
@@ -63,7 +63,7 @@ labels:
     rater: seed
     notes: "Retail chrome, no face-first card"
 
-  # --- Live card ---
+  # Live card
   - id: live_card_good
     fixture: fixtures/exemplars/good_live_card.html
     surface: live
@@ -79,7 +79,7 @@ labels:
     rater: seed
     notes: "Marketplace dialect + identity chrome"
 
-  # --- Full first screens / surface schemas ---
+  # Full first screens and surface schemas
   - id: marketplace_first_good
     fixture: fixtures/exemplars/good_marketplace_first_screen.html
     surface: marketplace
