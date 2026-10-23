@@ -82,7 +82,7 @@ class TestFixStructuralReview < Minitest::Test
 
   def test_read_only_review_uses_current_hints_without_persisting_findings
     hints = [{ kind: "merge", paths: %w[lib/a.rb lib/a_helper.rb], law: "SINGULARITY", reason: "one concept" }]
-    agent = FakeAgent.new("FINDING: odd | lonely/only.rb | NONE | unusual shape\\n")
+    agent = FakeAgent.new("FINDING: odd | lonely/only.rb | NONE | unusual shape\n")
 
     result = Review.new(agent:, root: @root).call(
       target: @root, persist: false, first_read_proposals: hints

@@ -83,7 +83,7 @@ class TestFixTreeReasoning < Minitest::Test
   end
 
   def test_read_only_read_returns_proposals_without_persisting_them
-    agent = FakeAgent.new("PROPOSE: merge | lib/a.rb, lib/a_helper.rb | NONE | one concept\\n")
+    agent = FakeAgent.new("PROPOSE: merge | lib/a.rb, lib/a_helper.rb | NONE | one concept\n")
 
     result = Reasoning.new(agent:, root: @root).call(target: @root, persist: false)
 

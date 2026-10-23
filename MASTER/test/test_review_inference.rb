@@ -2,6 +2,8 @@
 
 require_relative "test_helper"
 require "fix/autofix_guard"
+require "fix/tree_reasoning"
+require "fix/structural_review"
 
 class TestThroughInference < Minitest::Test
 # --only names stages, and the names have to mean the same thing everywhere.
