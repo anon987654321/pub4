@@ -11,6 +11,33 @@ require_relative "../autofix_guard"
 module Master
   module Fix
     class FixLoop
+      # The hook's lint over the lines a change adds. Files outside the repository, a test's temp tree, are no
+      # commit's and are skipped.
+      module HouseLint
+        TIMEOUT_SECONDS = 180
+
+        module_function
+
+        # The lint0 findings, or [] when clean. A lint that fails without naming one is still a finding.
+        def findings(paths, root:)
+          files = paths.map { |path| File.expand_path(path, root) }
+          files = files.select { |path| path.start_with?("#{Master::REPO_ROOT}/") }
+          return [] if files.empty?
+
+          out, _err, status = run(files)
+          return [] if status.success?
+
+          named = out.lines.grep(/\Alint0: \S+:\d+/).map(&:strip)
+          named.empty? ? ["bin/operator lint failed"] : named
+        end
+
+        def run(files)
+          operator = File.join(Master::ROOT, "bin", "operator")
+          Master::Io::Exec.capture3(RbConfig.ruby, operator, "lint", "--changed-lines", *files,
+                                    chdir: Master::ROOT, timeout: TIMEOUT_SECONDS)
+        end
+      end
+
       # Commits and publishes each explicitly requested, validated repair
       # checkpoint by default. MASTER_FIX_PUSH=end defers pushes until final
       # verification; every attempted push is proved to have landed.
@@ -404,8 +431,19 @@ def stage_commit_mode?
           return block_commit_intent(message) && false unless intent_preserved?(message, paths)
           return block_commit_ground_truth && false unless ground_truth_fresh?(paths)
           return false unless lint_changed_ruby(paths)
+          return false unless house_lint_clean?(paths)
 
           paths
+        end
+
+        # The pre-commit hook runs `bin/operator lint --staged --changed-lines` and refuses a finding in any line a
+        # commit adds; rubocop --fail-level E passes a 141-character line it refuses, so the same lint runs here first.
+        def house_lint_clean?(paths)
+          found = HouseLint.findings(paths, root: @root)
+          return true if found.empty?
+
+          refuse_commit(reason: "house_lint", findings: found.first(3))
+          false
         end
 
         def finish_empty_transaction(transaction)

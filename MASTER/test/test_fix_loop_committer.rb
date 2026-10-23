@@ -287,6 +287,35 @@ def test_the_end_of_a_pass_delivers_only_what_the_pass_wrote
   assert_includes out, "/fix did not write: lib/observed.rb"
 end
 
+# The hook refuses what bin/operator lint --changed-lines finds; /fix asks the same question before it stages,
+# so a RuboCop correction that lengthened a 141-character line is rolled back instead of refused at commit.
+def test_a_change_the_hook_would_refuse_is_named_before_staging
+  refused = Struct.new(:success?).new(false)
+  finding = "lint0: MASTER/lib/a.rb:85, line 141 chars (max 120)\n"
+
+  found = Master::Io::Exec.stub(:capture3, [finding, "", refused]) do
+    Master::Fix::FixLoop::HouseLint.findings(["lib/a.rb"], root: Master::ROOT)
+  end
+
+  assert_equal ["lint0: MASTER/lib/a.rb:85, line 141 chars (max 120)"], found
+end
+
+def test_a_lint_that_fails_without_naming_a_line_still_blocks
+  refused = Struct.new(:success?).new(false)
+
+  found = Master::Io::Exec.stub(:capture3, ["boom\n", "", refused]) do
+    Master::Fix::FixLoop::HouseLint.findings(["lib/a.rb"], root: Master::ROOT)
+  end
+
+  assert_equal ["bin/operator lint failed"], found
+end
+
+def test_the_house_lint_leaves_files_outside_the_repository_to_rubocop
+  Master::Io::Exec.stub(:capture3, ->(*) { flunk "a temp tree is no commit's" }) do
+    assert_empty Master::Fix::FixLoop::HouseLint.findings(["lib/ok.rb"], root: @dir)
+  end
+end
+
 # A repair that took longer than the freshness window still commits its own unchanged write.
 def test_a_slow_repairs_own_write_still_commits
   write_file("lib/ok.rb", "OK = 1\n")
