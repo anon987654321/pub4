@@ -22,10 +22,10 @@
 # accessor on Master.* the way load_laws already is.
 reader_singularity:
   ceiling:
-    models.yml: 9
-    patterns.yml: 6
+    models.yml: 3
+    patterns.yml: 4
     laws.yml: 3
-    soul.yml: 8
+    soul.yml: 3
     tools.yml: 2
     tts.yml: 2
     voice.yml: 3

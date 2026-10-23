@@ -102,7 +102,7 @@ module Master
 
       def initialize(root: Master::ROOT, laws_data: nil, definitions: nil)
         @root = File.expand_path(root)
-        @data = laws_data || Master.load_yaml(File.join(@root, "data", "laws.yml"))
+        @data = laws_data || Master.load_laws(root: @root)
         @resolver = LawResolver.new(laws_data: @data)
         @definitions = definitions
       end

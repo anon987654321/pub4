@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+# ApplicableLaws shares law_resolver.rb, where Zeitwerk cannot find it by name.
+require_relative "../lib/ground/law_resolver"
 
 # LawResolver settles two rules that want the same lines by the priority of the
 # law each one serves: lower number wins, a tie keeps the first, and a rule

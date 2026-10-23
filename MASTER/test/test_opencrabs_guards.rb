@@ -20,10 +20,12 @@ class TestOpenCrabsGuards < Minitest::Test
 
   def setup
     Fiber[:master_tool_streak] = nil
+    Fiber[:master_tree_seen] = nil
   end
 
   def teardown
     Fiber[:master_tool_streak] = nil
+    Fiber[:master_tree_seen] = nil
   end
 
   def replaced(content, old_string, new_string)
@@ -64,8 +66,12 @@ class TestOpenCrabsGuards < Minitest::Test
     assert_equal "same", wrapper.run(command: "pwd")
   end
 
+  # Source work waits for a Tree or ListDir call in the turn; once the model
+  # has oriented, rereading is the method and never trips the repeat guard.
   def test_rereading_a_file_is_not_a_loop
     wrapper = Wrapper.new(ReadTool.new)
+    assert_match(/\AError: tree required before source work: a\.rb/, wrapper.run(path: "a.rb"))
+    Fiber[:master_tree_seen] = true
     4.times { assert_equal "same", wrapper.run(path: "a.rb") }
   end
 
@@ -77,11 +83,19 @@ class TestOpenCrabsGuards < Minitest::Test
     NAME = "zsh"
   end
 
-  def react_host
-    Object.new.tap do |host|
-      host.extend(Master::Review::LLMDispatcher::ReactLoop)
-      host.instance_variable_set(:@tools, [ReadFile.new, Shell.new])
+  # The tools and the registry LLMDispatcher#initialize gives the loop;
+  # tool_registry_name reads the registry for every tool name.
+  class ReactHost
+    include Master::Review::LLMDispatcher::ReactLoop
+
+    def initialize(tools)
+      @tools = tools
+      @tool_registry = {}
     end
+  end
+
+  def react_host
+    ReactHost.new([ReadFile.new, Shell.new])
   end
 
   def test_a_tool_name_that_differs_only_in_spelling_reaches_its_tool
@@ -137,7 +151,7 @@ class TestOpenCrabsGuards < Minitest::Test
   end
 
   def test_the_prompt_path_gets_what_the_screen_leaves
-    renderer = Master::Voice::Renderer.allocate
+    renderer = Master::Voice::Renderer.new(config: {})
     TTY::Screen.stub(:width, 200) { assert_equal 44, renderer.send(:prompt_path_budget) }
     TTY::Screen.stub(:width, 50) { assert_equal 44, renderer.send(:prompt_path_budget) }
     TTY::Screen.stub(:width, 30) { assert_equal 29, renderer.send(:prompt_path_budget) }
