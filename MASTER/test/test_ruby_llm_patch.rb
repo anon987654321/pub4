@@ -5,49 +5,27 @@ require "ruby_llm"
 require "tmpdir"
 require_relative "../lib/io/ruby_llm_patch"
 
-# lib/io/ruby_llm_patch.rb builds a Model::Info for ids the shipped registry
-# does not carry. A key the gem's constructor never reads sets nothing, so the
-# fallback must pass only keys Model::Info#initialize actually looks up — and
-# that set belongs to the installed gem, so it is measured, not listed.
+# lib/io/ruby_llm_patch.rb keeps one thing from RubyLLM 1 (00aae8664): an id
+# the registry does not carry resolves to an OpenRouter model instead of
+# raising, and an id it does carry still resolves to its registry entry.
+# RubyLLM 2 owns registry loading and its UTF-8 decoding; the last test holds
+# the gem to the vm23 locale MASTER runs under.
 class TestRubyLlmPatch < Minitest::Test
-  # Records every key the constructor asks for.
-  class KeyProbe < Hash
-    attr_reader :asked
-
-    def [](key)
-      (@asked ||= []) << key
-      super
-    end
-  end
-
-  def fallback_arguments
-    captured = nil
-    original = RubyLLM::Model::Info.method(:new)
-    RubyLLM::Model::Info.stub(:new, ->(data) { captured = data; original.call(data) }) do
-      RubyLLM::Models.allocate.send(:fallback_model_info, "vendor/unknown-model")
-    end
-    captured
-  end
-
-  def test_the_fallback_passes_only_keys_the_gem_reads
-    probe = KeyProbe.new
-    RubyLLM::Model::Info.new(probe)
-
-    unread = fallback_arguments.keys - probe.asked
-    assert_empty unread, "Model::Info#initialize never reads #{unread.join(', ')}"
-  end
-
   def test_an_unknown_id_resolves_to_an_openrouter_model_instead_of_raising
-    info = RubyLLM::Models.allocate.send(:fallback_model_info, "vendor/unknown-model")
+    info = RubyLLM.models.find("vendor/unknown-model")
 
     assert_equal "vendor/unknown-model", info.id
     assert_equal "openrouter", info.provider
-    assert_equal "vendor", info.family
-    assert_equal 128_000, info.context_window
   end
 
-  # The encoding: argument exists because vm23's cron and rc.d run with no
-  # locale, so the default external encoding is US-ASCII.
+  def test_a_registry_id_resolves_to_its_registry_entry
+    known = RubyLLM.models.all.first
+
+    assert_same known, RubyLLM.models.find(known.id)
+  end
+
+  # vm23's cron and rc.d run with no locale, so the default external
+  # encoding is US-ASCII.
   def test_the_registry_reads_as_utf8_under_an_ascii_locale
     Dir.mktmpdir do |dir|
       path = File.join(dir, "models.json")
@@ -55,9 +33,9 @@ class TestRubyLlmPatch < Minitest::Test
       previous = Encoding.default_external
       silence_warnings { Encoding.default_external = Encoding::US_ASCII }
 
-      models = RubyLLM::Models.read_from_json(path)
+      models = RubyLLM::Models.new.load_from_json(path)
 
-      assert_equal ["Café — model"], models.map(&:name)
+      assert_equal "Café — model", models.find("a/b").name
     ensure
       silence_warnings { Encoding.default_external = previous }
     end
