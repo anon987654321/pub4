@@ -706,6 +706,11 @@ tokens:
       # contours and features use (| - / \ ' _ ( ) o) stay out of the ramp.
       ink: { " ": 0.0, ".": 0.0362, ",": 0.0492, ":": 0.0576, "~": 0.0646, ";": 0.0753, "r": 0.0802, "+": 0.0834, "=": 0.0910, "c": 0.0967, "i": 0.1003, "v": 0.1030, "*": 0.1103, "Y": 0.1161, "n": 0.1222, "y": 0.1288, "e": 0.1379, "a": 0.1442, "X": 0.1499, "P": 0.1574, "q": 0.1633, "&": 0.1718, "#": 0.1797, "8": 0.1871, "W": 0.2010, "@": 0.2099 }
       mode: dark
+      # The terminal face's three depth tones as RGB, far (drawn faint), mid, and near (drawn bold): a
+      # darker blue-violet, Johann's choice of 2026-10-23 over the grey-blue it replaced.
+      tone_far: "#2e2868"
+      tone_mid: "#6054ba"
+      tone_near: "#aaa0f6"
       fit: 0.92
       camera: 3.2
       aspect: 2.0
