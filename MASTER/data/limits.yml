@@ -1101,9 +1101,9 @@ process:
     load_avg_1m:
       warn: 1.5
       crit: 2.5
-    master_rss_mb:
-      warn: 512
-      crit: 768
+    # master_rss_mb is left out on purpose: ResourceBudget scales it to 10% and 20% of the machine's RAM,
+    # floored at 512 and 768 MB for vm23. A figure here wins outright, and 768 MB here shed every
+    # model fix on an 8 GB Mac, where a /fix process sits near 1 GB.
   resources:
     fd_count:
       warn: 512

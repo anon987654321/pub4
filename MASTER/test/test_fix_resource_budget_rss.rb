@@ -30,6 +30,14 @@ class TestFixResourceBudgetRss < Minitest::Test
     assert_equal [300, 900], limits(budget(memory_mb: 16_384, config:))
   end
 
+  # The shipped configuration must leave the ceiling to the scaling: data/limits.yml pinned 768 MB, so
+  # three /fix passes on an 8 GB Mac shed every model fix at about 1 GB resident.
+  def test_the_shipped_configuration_lets_an_eight_gigabyte_mac_scale
+    shipped = Master::Fix::ResourceBudget.new(root: Dir.pwd, memory_mb: 8192)
+
+    assert_equal [819, 1638], limits(shipped)
+  end
+
   def test_pass_one_of_a_fix_run_is_no_longer_critical_on_a_laptop
     critical = budget(memory_mb: 8192).send(:classify_one_check, :ok, :rss_mb, 791, *limits(budget(memory_mb: 8192)))
 
