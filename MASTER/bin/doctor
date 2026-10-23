@@ -155,7 +155,11 @@ def check_web_token
   end
 
   cfg_path = File.join(ROOT, ".master", "config.yml")
-  cfg = YAML.safe_load_file(cfg_path, aliases: true, permitted_classes: [Symbol]) rescue {}
+  cfg = begin
+    YAML.safe_load_file(cfg_path, aliases: true, permitted_classes: [Symbol])
+  rescue Psych::Exception, SystemCallError => e
+    return fail_check("web-token", "#{cfg_path.sub(ROOT + '/', '')}: #{e.class}: #{e.message.lines.first.to_s.strip}")
+  end
   tok = cfg["web_token"].to_s
   Check.new(name: "web-token", state: tok.length >= 8 ? :pass : :fail,
             detail: tok.empty? ? "unset in .master/config.yml" : "configured")
