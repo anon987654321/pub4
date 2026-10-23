@@ -197,6 +197,7 @@ module Master
         return finish_run(budget_error, target, run_id, mission:, requested:) if budget_error
 
         RunBudget.begin_run(root: Master::ROOT, max_passes:, bus: @bus, target:)
+        journal["budget_clock_at"] = RunBudget.elapsed_seconds
         current_phase = :begin_run
         @convergence_discipline.begin_run(files)
         if requested
@@ -456,8 +457,6 @@ module Master
       def run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:, requested:, incremental:)
         run_id = journal["id"]
         files = StreamCursor.order(@root, target, files)
-        remaining = [journal["remaining_seconds"].to_f - RunBudget.elapsed_seconds, 0].max
-        deadline = Ground::Reliability::Deadline.new(remaining)
         start_pass = @run_journal.next_pass(journal)
         @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
 
@@ -466,6 +465,12 @@ module Master
 
         resumed = resume_active_transaction(journal:, run_id:, start_pass:)
         return finish_run(resumed, target, run_id, mission:, requested:) if resumed.err?
+
+        remaining = repair_seconds_left(journal)
+        spent = budget_spent_before_pass(journal, resumed.value!) unless remaining.positive?
+        return finish_run(spent, target, run_id, mission:, requested:) if spent
+
+        deadline = Ground::Reliability::Deadline.new(remaining)
 
         if journal["resumed"] && journal["convergence_state"].is_a?(Hash) &&
            @convergence_discipline.respond_to?(:restore_checkpoint)
@@ -483,6 +488,23 @@ module Master
         )
         result = reflect_then_continue(result, files:, target:, max_passes:, budget_seconds:, run_id:)
         finish_run(result, target, run_id, mission:, requested:)
+      end
+
+      # The journal's budget runs from the moment the journal opened, so only what this process
+      # spent since then (graph, research, recovery) comes off it. The command's baseline checks and
+      # first observation ran before the journal and are bounded by MASTER_FIX_MAX_MINUTES instead:
+      # charged here as well, a fifteen-minute RAILS baseline left the passes nothing.
+      def repair_seconds_left(journal)
+        now = RunBudget.elapsed_seconds
+        spent = now - journal.fetch("budget_clock_at", now).to_f
+        [journal["remaining_seconds"].to_f - [spent, 0.0].max, 0.0].max
+      end
+
+      # Nothing left for the passes is a timeout the run reports, never a Deadline it cannot build.
+      def budget_spent_before_pass(journal, pass)
+        budget = journal["remaining_seconds"].to_f.round
+        Master::Trace::Dmesg.status("fix0", "repair budget #{budget}s spent before pass #{pass}; no pass ran")
+        Result.err("fix budget (#{budget}s) spent before pass #{pass} began; no pass ran", category: :timeout)
       end
 
       # Incremental mode narrows repair work, never completion proof.

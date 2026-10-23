@@ -1560,6 +1560,76 @@ end
     assert_equal :timeout, event[:payload][:state]
   end
 
+  # The journaled half of a run, callable from a test.
+  class JournaledLoop < Master::Fix::FixLoop
+    public :run_journaled
+  end
+
+  # A journal that records its terminal rows and starts every run at pass 1.
+  class TerminalJournal
+    attr_reader :rows
+
+    def initialize = @rows = []
+    def next_pass(_run) = 1
+    def terminal(run_id, state, message:, evidence: nil) = @rows << { run_id:, state:, message:, evidence: }
+  end
+
+  class PassingReachability
+    def verify!(*, **) = true
+  end
+
+  def journaled_loop(journal)
+    Master::Fix::RunJournal.stub(:new, journal) do
+      Master::Fix::Reachability.stub(:new, PassingReachability.new) do
+        JournaledLoop.new(laws: [StubRule.new("TEST_RULE", :warning)], agent: OpenCircuitAgent.new,
+                          scanner: ConstantScanner.new([]), root: @root, bus: @bus, git: StubGit.new)
+      end
+    end
+  end
+
+  JOURNALED = { files: [], max_passes: 1, budget_seconds: 60, mission: nil, requested: false,
+                incremental: false }.freeze
+
+  def run_journal_at(loop, elapsed:, journal_row:)
+    budget = Master::Fix::RunBudget
+    loop.define_singleton_method(:resume_active_transaction) { |**| Master::Result.ok(1) }
+
+    budget.stub(:elapsed_seconds, elapsed) do
+      budget.stub(:finish_run, ->(**) {}) { loop.run_journaled(journal_row, target: @root, **JOURNALED) }
+    end
+  end
+
+  # The RAILS run of 2026-10-23 crashed "deadline must be positive" when the stages before its
+  # first pass had spent the budget. Spent is a timeout the run reports, before any pass.
+  def test_a_budget_spent_before_the_first_pass_ends_as_a_timeout_not_a_crash
+    journal = TerminalJournal.new
+    loop = journaled_loop(journal)
+    row = { "id" => "run-spent", "remaining_seconds" => 60.0, "resumed" => false, "budget_clock_at" => 0.0 }
+
+    result = nil
+    capture_io { result = run_journal_at(loop, elapsed: 120.0, journal_row: row) }
+
+    assert_equal :timeout, result.category
+    assert_match(/spent before pass 1 began/, result.message)
+    assert_equal [:timeout], journal.rows.map { |entry| entry[:state] }
+  end
+
+  # The command's baseline and first reading ran before the journal opened; they are not the passes'.
+  def test_time_spent_before_the_journal_opened_is_not_taken_from_the_passes
+    loop = journaled_loop(TerminalJournal.new)
+    deadlines = []
+    loop.define_singleton_method(:run_passes) do |deadline:, **|
+      deadlines << deadline.remaining
+      Master::Result.err("stopped", category: :timeout)
+    end
+    row = { "id" => "run-late", "remaining_seconds" => 60.0, "resumed" => false, "budget_clock_at" => 1800.0 }
+
+    capture_io { run_journal_at(loop, elapsed: 1830.0, journal_row: row) }
+
+    assert_equal 1, deadlines.size
+    assert_in_delta 30.0, deadlines.first, 2.0
+  end
+
   def test_failed_resume_recovery_publishes_terminal_and_finishes_budget
     loop = build_loop([])
     terminal_rows = []
