@@ -184,8 +184,34 @@ module Master
         Array(keys).each_with_index.to_h { |key, index| [key, reps.empty? ? nil : reps.fetch(index % reps.size)] }
       end
 
-      # Read straight from the file: `operator fix status` asks without booting the runtime.
-      def config(path = MODELS) = YAML.safe_load_file(path, aliases: true) || {}
+      CONFIG_LOCK = Mutex.new
+
+      # Read straight from the file: `operator fix status` asks without booting the runtime. Parsed once per
+      # change of the file and handed out frozen: a chat turn ranked its lanes three times, and parsing this
+      # file on each of the hundreds of calls that made took 1.4s a turn.
+      def config(path = MODELS)
+        return {} unless File.file?(path)
+
+        stat = File.stat(path)
+        key = [path, stat.mtime.to_r, stat.size]
+        remember_config(key, path) unless cached_config(key)
+        cached_config(key)
+      end
+
+      def cached_config(key) = CONFIG_LOCK.synchronize { @config_cache.last if @config_cache&.first == key }
+
+      def remember_config(key, path)
+        parsed = deep_freeze(YAML.safe_load_file(path, aliases: true) || {})
+        CONFIG_LOCK.synchronize { @config_cache = [key, parsed] }
+      end
+
+      def deep_freeze(value)
+        case value
+        when Hash then value.each { |key, item| deep_freeze(key) && deep_freeze(item) }
+        when Array then value.each { |item| deep_freeze(item) }
+        end
+        value.freeze
+      end
 
       # The models of a tier as data/models.yml lists them.
       def tier(name, cfg: config)

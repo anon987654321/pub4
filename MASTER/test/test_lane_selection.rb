@@ -18,6 +18,21 @@ class TestLaneSelection < Minitest::Test
   LOCAL = "ollama:gemma3:4b"
   NEMOTRON = "nvidia/nemotron-3-super-120b-a12b:free"
   NANO = "nvidia/nemotron-3.5-lightning:free"
+
+  # models.yml is parsed once per change and handed out frozen; an edit is seen on the next read.
+  def test_the_models_file_is_read_again_only_when_it_changes
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "models.yml")
+      File.write(path, "models:\n  default:\n    - id: a\n")
+      first = Selection.config(path)
+
+      assert_same first, Selection.config(path)
+      assert_predicate first.dig("models", "default"), :frozen?
+
+      File.write(path, "models:\n  default:\n    - id: a\n    - id: b\n")
+      assert_equal %w[a b], Selection.tier("default", cfg: Selection.config(path))
+    end
+  end
   DEEPSEEK = "deepseek-chat"
   AGY_REPLY = "agy: error: Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 165h22m49s."
   CLAUDE_REPLY = "You've hit your session limit · resets 5pm (Europe/Oslo)"
