@@ -1,8 +1,9 @@
 ---
 # What every path under OPENBSD/ is for, its risk, and the check that governs
 # it. Keys are relative to this directory; `../` reaches the repo root. Globs
-# are allowed. test/test_path_ownership.rb fails when a key names nothing, when
-# a top-level entry here has no key, or when a check names a file that is gone.
+# are allowed. Check commands run from the repo root, so their paths start
+# there. test/test_path_ownership.rb fails when a key names nothing, when a
+# top-level entry here has no key, or when a check names a file that is gone.
 ownership:
   "*.md":
     purpose: deploy front door, runbook, recipes, and agent gotchas with the standing refusals
