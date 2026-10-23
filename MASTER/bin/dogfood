@@ -17,6 +17,12 @@ BUNDLE = ENV.fetch("MASTER_BUNDLE", Operator::RubyRunner.bundle_cmd)
 TIMEOUT_SECONDS = Integer(ENV.fetch("MASTER_DOGFOOD_TIMEOUT", "90"))
 BAD_OUTPUT = /\b(NameError|NoMethodError|LoadError|SyntaxError|ArgumentError|uninitialized constant|unknown category|aborted)\b/i
 
+def report_failure(name, out)
+  Master::Trace::Dmesg.status("test0", "#{name}, failed")
+  warn out.lines.last(120).join
+  false
+end
+
 def run_step(name, env, *cmd, stdin_data: nil, chdir: MASTER_ROOT)
   Master::Trace::Dmesg.status("test0", "#{name}, running")
   out, status = Timeout.timeout(TIMEOUT_SECONDS) do
@@ -27,9 +33,7 @@ def run_step(name, env, *cmd, stdin_data: nil, chdir: MASTER_ROOT)
     Master::Trace::Dmesg.status("test0", "#{name}, ok")
     true
   else
-    Master::Trace::Dmesg.status("test0", "#{name}, failed")
-    warn out.lines.last(120).join
-    false
+    report_failure(name, out)
   end
 rescue Timeout::Error
   Master::Trace::Dmesg.status("test0", "dogfood=#{name} state=timeout seconds=#{TIMEOUT_SECONDS}")
