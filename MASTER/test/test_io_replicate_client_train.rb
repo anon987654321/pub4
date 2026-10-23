@@ -56,7 +56,7 @@ class TestReplicateClientRetry < Minitest::Test
     error = nil
     with_http_responses([failure], requests) do
       error = assert_raises(Client::TransientError) do
-        client.post(URI("https://api.replicate.com/v1/predictions"), {})
+        client.create_model("owner/lora")
       end
     end
 
@@ -73,7 +73,7 @@ class TestReplicateClientRetry < Minitest::Test
     accepted = Struct.new(:code, :body).new("200", '{"id":"p1"}')
 
     result = with_http_responses([throttled, accepted], requests) do
-      client.post(URI("https://api.replicate.com/v1/predictions"), {})
+      client.create_model("owner/lora")
     end
 
     assert_equal({ "id" => "p1" }, result)
@@ -89,7 +89,7 @@ class TestReplicateClientRetry < Minitest::Test
       error = nil
       with_http_responses([exhausted], requests) do
         error = assert_raises(Client::ExhaustedError) do
-          client.post(URI("https://api.replicate.com/v1/predictions"), {})
+          client.create_model("owner/lora")
         end
       end
       assert_match(/429/, error.message)
@@ -103,13 +103,13 @@ class TestReplicateClientRetry < Minitest::Test
     client.define_singleton_method(:sleep) { |_seconds| }
     requests = []
     failed = Struct.new(:code, :body).new("500", '{"detail":"temporary server fault"}')
-    accepted = Struct.new(:code, :body).new("200", '{"ok":true}')
+    accepted = Struct.new(:code, :body).new("200", '{"results":[{"name":"lora"}]}')
 
     result = with_http_responses([failed, accepted], requests) do
-      client.get(URI("https://api.replicate.com/v1/account"))
+      client.models(limit: 1)
     end
 
-    assert_equal({ "ok" => true }, result)
+    assert_equal([{ "name" => "lora" }], result)
     assert_equal 2, requests.length
   end
 end
