@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "open3"
 require_relative "run_pulse"
 require_relative "autofix_guard"
 require_relative "run_ledger"
@@ -392,7 +393,29 @@ module Master
         @exit_reason = reason
         @say.call("fix0: ABORT #{reason}")
         finish!(reason)
-        @killer.call(reason) if force || ENV["MASTER_FIX_ABORT_ON_STALL"] != "0"
+        return unless force || ENV["MASTER_FIX_ABORT_ON_STALL"] != "0"
+
+        discard_unproven_writes
+        @killer.call(reason)
+      end
+
+      # An aborted run proves nothing, and its TERM skips the pipeline's clean-up, so the uncommitted
+      # autofix bytes go back first; a file changed since is another writer's and stays.
+      def discard_unproven_writes
+        reverted, left = AutofixGuard.revert_written!(uncommitted_paths)
+        @say.call("fix0: put back #{reverted.size} file(s) the autofix wrote") if reverted.any?
+        @say.call("fix0: left #{left.size} file(s) changed since the autofix wrote them") if left.any?
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "RunBudget.discard_unproven_writes")
+      end
+
+      # Spelled from @root, as the autofix recorded its writes: --show-toplevel answers with symlinks
+      # resolved (/private/var for /var), and no path would match.
+      def uncommitted_paths
+        up, = Open3.capture2("git", "-C", @root, "rev-parse", "--show-cdup")
+        top = File.expand_path(up.strip, @root)
+        listing, = Open3.capture2("git", "-C", top, "diff", "--name-only", "HEAD")
+        listing.lines.map { |path| File.join(top, path.strip) }
       end
 
       private

@@ -83,6 +83,44 @@ class TestFixRunBudget < Minitest::Test
     assert @said.any? { |line| line.include?("ABORT") }
   end
 
+  # An abort ends the process with TERM before the pipeline can clean up, so it puts the autofix's
+  # uncommitted bytes back itself; another writer's later save to a written file stays.
+  def test_an_abort_puts_back_the_autofix_writes_before_it_kills
+    Master::Fix::AutofixGuard.reset!
+    ours, theirs = autofixed_pair
+    killed = []
+
+    killable(killed).abort_run!("protected path changed: test/x.rb", force: true)
+
+    assert_equal ["A = 1\n", "B = 9\n"], [File.read(ours), File.read(theirs)]
+    assert_equal 1, killed.size
+  ensure
+    Master::Fix::AutofixGuard.reset!
+  end
+
+  def killable(killed)
+    Budget.new(root: @root, max_passes: 3, clock: -> { @now }, wall: -> { Time.at(1000) },
+               out: ->(line) { @lines << line }, say: ->(line) { @said << line }, poll_seconds: 0,
+               killer: ->(reason) { killed << reason })
+  end
+
+  # Two committed files the autofix rewrote; the second was then saved by someone else.
+  def autofixed_pair
+    system("git", "-C", @root, "init", "-q")
+    paths = %w[a.rb b.rb].map { |name| File.join(@root, name) }
+    paths.zip(["A = 1\n", "B = 1\n"]) { |path, body| File.write(path, body) }
+    system("git", "-C", @root, "add", "a.rb", "b.rb")
+    system("git", "-C", @root, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "base")
+
+    paths.zip(["A = 1\n\n", "B = 1\n\n"]) do |path, body|
+      before = File.read(path)
+      File.write(path, body)
+      Master::Fix::AutofixGuard.note_written(path, before:)
+    end
+    File.write(paths.last, "B = 9\n")
+    paths
+  end
+
   def test_stop_category_distinguishes_resource_failure_from_a_stall
     run = budget
     run.instance_variable_set(:@exit_reason, "disk pressure at 0.1 GB free")
