@@ -255,11 +255,17 @@ class TestPhantomRecovery < Minitest::Test
     refute_includes result.message, "<tool_call>"
   end
 
+  # The calls below are about parameters, so the turn has already oriented: source tools refuse to run
+  # before a Tree or ListDir.
   def react_call(harness, tool, name, args)
     harness.instance_variable_set(:@tools, [tool])
+    Fiber[:master_tree_seen] = true
+
     Master::CLI::SubagentContext.stub(:permits?, true) do
       Master::Ground::Tool::Profile.stub(:allow?, true) { harness.send(:execute_react_tool, name, args) }
     end
+  ensure
+    Fiber[:master_tree_seen] = nil
   end
 
   def search_tool

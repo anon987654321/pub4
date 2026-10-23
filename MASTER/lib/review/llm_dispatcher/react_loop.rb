@@ -2,11 +2,15 @@
 
 require "did_you_mean"
 require_relative "../../unwrap_error"
+require_relative "tool_registry"
 
 module Master
   module Review
     class LLMDispatcher
       module ReactLoop
+        # Tool names in the emulated protocol are the registry's names.
+        include ToolRegistry
+
         # Names models reach for when they guess a parameter. Renamed only when
         # the tool declares the target and not the guess, so no real key moves.
         ARG_ALIASES = {
