@@ -177,9 +177,18 @@ module Master
         finished = children ? children.track(wait_thr.pid, &wait) : wait.call
         return [wait_thr.value, false] if finished
 
+        stop_child(wait_thr, readers)
+        [wait_thr.value, true]
+      ensure
+        stop_child(wait_thr, readers) if wait_thr.alive?
+      end
+
+      # An outer deadline (Timeout.timeout around a model call, a file's repair budget) interrupts the
+      # wait from outside, and popen's ensure then joins the child with no bound: a /fix pass sat 711s
+      # on a claude call whose 240s budget had already fired. The child goes with the wait.
+      def stop_child(wait_thr, readers)
         kill_group(wait_thr.pid)
         readers.each(&:kill)
-        [wait_thr.value, true]
       end
 
       def kill_group(pid)

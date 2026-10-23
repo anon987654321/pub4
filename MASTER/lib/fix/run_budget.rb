@@ -7,6 +7,7 @@ require_relative "autofix_guard"
 require_relative "run_ledger"
 require_relative "tool_breaker"
 require_relative "resource_budget"
+require_relative "../review/llm_dispatcher/pass_clock"
 
 module Master
   module Fix
@@ -42,8 +43,13 @@ module Master
           finish_run
           ToolBreaker.reset!
           RunLedger.begin_run!
+          Master::Review::LLMDispatcher::PassClock.cap_calls!(call_cap_s)
           @current = new(root:, max_passes:).start!.tap { |run| run.announce(target:, bus:) }
         end
+
+        # Every model call of a run ends inside a file's repair budget, and that budget inside the
+        # stall window: a call that outlived both ended a whole tree while the pass waited on it.
+        def call_cap_s = [RunLedger.file_budget_s, RunPulse::FINISH_WINDOW_SECONDS * 4 / 5].min
 
         def with_shared_run(root:, max_passes:, bus: nil, target: nil)
           outer = (@shared_depth || 0).to_i.zero?
@@ -95,6 +101,7 @@ module Master
             # example, a full log filesystem). Never leave a dead budget as
             # the current run after its watchdog has been stopped.
             @current = nil if @current.equal?(run)
+            Master::Review::LLMDispatcher::PassClock.cap_calls!(nil) unless @current
           end
         end
 

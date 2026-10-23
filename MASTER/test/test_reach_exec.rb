@@ -2,6 +2,7 @@
 
 require "minitest/autorun"
 require "rbconfig"
+require "timeout"
 require_relative "../lib/io/exec"
 
 class TestReachExec < Minitest::Test
@@ -225,5 +226,14 @@ class TestReachExec < Minitest::Test
         assert_equal File.join(second, "tool"), E.which("tool", path: first, prefer: [second])
       end
     end
+  end
+  # A deadline outside the call (Timeout.timeout around a model call) interrupts the wait; the child
+  # must die with it, or popen joins it unbounded and the caller waits out the whole child.
+  def test_an_outer_deadline_kills_the_child_instead_of_waiting_for_it
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+    assert_raises(Timeout::Error) { Timeout.timeout(0.5) { E.capture3("sleep", "8", timeout: 30) } }
+
+    assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 4
   end
 end

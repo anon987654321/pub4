@@ -21,6 +21,7 @@ module Master
         @deadline = nil
         @budget = nil
         @cancelled = nil
+        @call_cap = nil
 
         class << self
           def call_timeout_s = positive("MASTER_COUNCIL_CALL_TIMEOUT_S", CALL_TIMEOUT_S)
@@ -54,12 +55,19 @@ module Master
 
           def cancelled? = sync { !@cancelled.nil? }
 
-          # The deadline for one call: the dispatcher's own, tightened inside a council.
+          # The deadline for one call: the dispatcher's own, under the run's cap, tightened inside a council.
           def call_deadline(default)
-            return default unless active?
+            capped = [default, sync { @call_cap }].compact.min
+            return capped unless active?
 
-            [default, call_timeout_s, [remaining, 1.0].max].min
+            [capped, call_timeout_s, [remaining, 1.0].max].min
           end
+
+          # A /fix run caps every model call below its stall window, so one slow call fails its file
+          # and the pass moves on rather than the watchdog ending the run. Nil lifts the cap.
+          def cap_calls!(seconds) = sync { @call_cap = seconds&.positive? ? seconds : nil }
+
+          def call_cap = sync { @call_cap }
 
           def refusal
             "council deadline #{budget_s || "reached"}s spent, no further model calls this phase#{cancelled? ? " (#{sync { @cancelled }})" : ""}"

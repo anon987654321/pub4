@@ -319,6 +319,25 @@ class TestFixRunBudget < Minitest::Test
     Master::Fix::RunLedger.reset!
   end
 
+  # One slow model call ended MASTER and OPENBSD runs: the stall watchdog fires after five minutes
+  # with no file finished, and a call could outlast that. Inside a run every call ends sooner.
+  def test_a_run_caps_every_model_call_under_the_stall_window
+    clock = Master::Review::LLMDispatcher::PassClock
+    window = Master::Fix::RunPulse::FINISH_WINDOW_SECONDS
+
+    capture_io do
+      Budget.with_shared_run(root: @root, max_passes: 1) do
+        assert_operator clock.call_deadline(300), :<, window
+        assert_equal 30, clock.call_deadline(30), "a tighter deadline of the caller's own stands"
+      end
+    end
+
+    assert_equal 300, clock.call_deadline(300), "outside a run the dispatcher's own deadline stands"
+  ensure
+    Budget.finish_run
+    Master::Fix::RunLedger.reset!
+  end
+
   def test_shared_finish_guard_clears_even_if_finalization_raises
     original_finish = Budget.method(:finish_run)
     calls = 0

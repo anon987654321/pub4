@@ -42,7 +42,7 @@ module Master
           end
           cli_lane_result(name, out, err, status, reply_path)
         rescue Timeout::Error
-          Result.err("#{name}: timed out after #{CLI_LANE_TIMEOUT_S}s", category: :timeout)
+          Result.err("#{name}: timed out after #{PassClock.call_deadline(CLI_LANE_TIMEOUT_S)}s", category: :timeout)
         rescue StandardError => e
           Result.err("#{name}: #{e.message}", category: :provider_error)
         end
@@ -108,7 +108,7 @@ def agy_cli_call(agy_bin, model_alias, messages, sys, stream, &blk)
 
   out.strip.tap { |said| blk&.call(said) if stream && block_given? }.then { |said| Result.ok(said) }
 rescue Timeout::Error
-  Result.err("agy: timed out after #{timeout_s}s", category: :timeout)
+  Result.err("agy: timed out after #{PassClock.call_deadline(timeout_s)}s", category: :timeout)
 rescue StandardError => e
   Result.err("agy: #{e.message}", category: :provider_error)
 end
@@ -240,7 +240,7 @@ def claude_execute(run)
   run.stream&.finish
   claude_cli_reply(run.json ? claude_stream_reply(out).to_s : out, json: run.json)
 rescue Timeout::Error
-  Result.err("claude-cli: timed out after #{claude_cli_timeout_s}s", category: :timeout)
+  Result.err("claude-cli: timed out after #{PassClock.call_deadline(claude_cli_timeout_s)}s", category: :timeout)
 rescue StandardError => e
   Result.err("claude-cli: #{e.message}", category: :provider_error)
 end
@@ -280,12 +280,16 @@ def claude_cli_reply(out, json:)
   Result.ok(reply)
 end
 
+      # The lane's own bound, under a /fix run's call cap (PassClock.call_deadline): the child dies by
+      # its own bounded wait, and the call fails as a timeout before the stall window closes.
+
       # Keep the dispatcher-specific timeout contract, but let the sanctioned
       # runner own stream draining, child tracking and process-group cleanup.
       # Exec reads the pipes as bytes. A lane replies in UTF-8 text, and left BINARY its reply broke the
       # first regex that met a non-ASCII letter: the "å" of a Norwegian greeting killed the CLI turn.
       def capture3_with_timeout(timeout_s, *cmd, env: {}, **opts)
         opts.delete(:on_stdout) if opts[:on_stdout].nil?
+        timeout_s = PassClock.call_deadline(timeout_s)
         out, err, status = Master::Io::Exec.capture3(env, *cmd, timeout: timeout_s, raise_on_timeout: true, **opts)
         [out.to_s.dup.force_encoding(Encoding::UTF_8).scrub, err.to_s.dup.force_encoding(Encoding::UTF_8).scrub, status]
       rescue Master::Io::Exec::TimeoutError
