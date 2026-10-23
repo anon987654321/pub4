@@ -21,6 +21,20 @@ class AtomicWriteTest < Minitest::Test
 
   def path(name = "out.txt") = File.join(@dir, name)
 
+  # A /fix rollback restores File.binread snapshots, and bin/cli runs with default_internal UTF-8: the
+  # text-mode temp file raised on the first non-ASCII byte, mid-rollback.
+  def test_binary_bytes_are_written_as_given_under_a_utf8_default_internal
+    previous = Encoding.default_internal
+    Encoding.default_internal = Encoding::UTF_8
+    bytes = "a — b".b
+
+    @writer.write_atomic(path, bytes)
+
+    assert_equal bytes, File.binread(path)
+  ensure
+    Encoding.default_internal = previous
+  end
+
   def test_writes_content_and_returns_the_path
     result = @writer.write_atomic(path, "hello")
 
