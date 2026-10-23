@@ -7,14 +7,11 @@ class TestWebServer < Minitest::Test
   def test_openbsd_status_uses_dmesg_shape
     ENV["MASTER_WEB"] = "1"
     config = { "web_public_url" => "https://ai.brgen.no", "web_token" => "" }
-    running = true
-    Master.stub_const(:RUBY_PLATFORM, "openbsd") do
-      Kernel.stub(:system, running) do
-        out = StringIO.new
-        Master::CLI::WebServer.openbsd_status(config:, host: "127.0.0.1", port: 53_187, io: out)
-        assert_includes out.string, "web0: https://ai.brgen.no, up"
-      end
+    out = StringIO.new
+    Master::CLI::WebServer.stub(:system, true) do
+      Master::CLI::WebServer.openbsd_status(config:, host: "127.0.0.1", port: 53_187, io: out)
     end
+    assert_includes out.string, "web0: https://ai.brgen.no, up"
   ensure
     ENV.delete("MASTER_WEB")
   end
