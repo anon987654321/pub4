@@ -238,7 +238,10 @@ module Master
       def phrase_languages(cfg)
         return unless cfg["phrase_language_switching"] == true
 
-        Policy.language_voice_families.each_key.each_with_object({}) do |language, voices|
+        # language_voices is the declared route; a gender family may add a
+        # language, but English has no family and must still get its voice.
+        languages = (Policy.language_voices.keys + Policy.language_voice_families.keys).uniq
+        languages.each_with_object({}) do |language, voices|
           voices[language.to_sym] = Policy.voice_for_language(language)
         end
       end

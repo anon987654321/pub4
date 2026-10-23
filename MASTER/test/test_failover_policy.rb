@@ -28,9 +28,13 @@ class TestFailoverPolicy < Minitest::Test
   # Every entry has to be a category some Result.err actually carries, or the
   # comparison in failover_skip_model? silently matches nothing.
   def test_every_configured_category_is_one_the_code_produces
-    produced = Dir.glob(File.join(Master::ROOT, "lib", "**", "*.rb")).flat_map do |path|
+    literal = Dir.glob(File.join(Master::ROOT, "lib", "**", "*.rb")).flat_map do |path|
       File.read(path).scan(/category:\s*:([a-z_]+)/).flatten
-    end.uniq
+    end
+    # RubyLLM's typed errors carry their category through a table, not a literal.
+    table = Master::Review::LLMDispatcher::ProviderFailure::RUBY_LLM_ERROR_CATEGORIES
+    mapped = table.map { |_error, category| category.to_s }
+    produced = (literal + mapped).uniq
 
     models_yml.fetch("fallback_policy").fetch("on").each do |category|
       assert_includes produced, category, "fallback_policy.on lists #{category.inspect}, which no Result.err carries"
@@ -38,7 +42,7 @@ class TestFailoverPolicy < Minitest::Test
   end
 
   def test_router_exposes_the_configured_categories
-    assert_equal %i[timeout no_api_key rate_limit budget model_missing], router.failover_skip_categories
+    assert_equal models_yml.fetch("fallback_policy").fetch("on").map(&:to_sym), router.failover_skip_categories
   end
 
   def test_retry_count_has_one_source

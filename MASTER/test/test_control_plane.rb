@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
+require_relative "test_helper"
 require "stringio"
 require "tmpdir"
-require_relative "../lib/master"
 
 class ControlPlaneSpec < Minitest::Test
   Status = Struct.new(:success?)
@@ -41,26 +40,38 @@ class ControlPlaneSpec < Minitest::Test
     end
   end
 
-  def test_main_checkout_pushes_when_it_is_ahead
+  def test_main_checkout_refuses_to_push_when_it_is_ahead
     Dir.mktmpdir("master-control") do |root|
-      plane = Master::Ops::ControlPlane.new(root:, interval: 5, out: StringIO.new)
-      commands = [
-        { stdout: "main\n", stderr: "", status: Status.new(true) },
-        { stdout: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n", stderr: "", status: Status.new(true) },
-        { stdout: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", stderr: "", status: Status.new(true) },
-        { stdout: "", stderr: "", status: Status.new(false) },
-        { stdout: "", stderr: "", status: Status.new(true) },
-      ]
+      out = StringIO.new
       seen = []
-      plane.define_singleton_method(:command) do |*argv|
-        seen << argv
-        commands.shift
-      end
+      plane = ahead_plane(root:, out:, seen:)
 
-      plane.send(:synchronize_refs!)
+      plane.cycle
 
-      assert_equal ["git", "-C", File.expand_path("..", root), "push", "origin", "main"], seen.last
+      assert_match(/local main is ahead of origin\/main/, out.string)
+      refute(seen.any? { |argv| argv.include?("push") })
     end
+  end
+
+  def ahead_plane(root:, out:, seen:)
+    plane = Master::Ops::ControlPlane.new(root:, interval: 5, out:)
+
+    commands = [
+      { stdout: "main\n", stderr: "", status: Status.new(true) },
+      { stdout: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n", stderr: "", status: Status.new(true) },
+      { stdout: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", stderr: "", status: Status.new(true) },
+      { stdout: "", stderr: "", status: Status.new(false) },
+      { stdout: "", stderr: "", status: Status.new(true) },
+    ]
+
+    plane.define_singleton_method(:clean?) { true }
+    plane.define_singleton_method(:fetch!) { nil }
+    plane.define_singleton_method(:command) do |*argv|
+      seen << argv
+      commands.shift
+    end
+
+    plane
   end
 
   def test_main_checkout_stops_on_divergence
@@ -99,7 +110,8 @@ class ControlPlaneSpec < Minitest::Test
 
   def test_cycle_rejects_a_non_main_checkout
     Dir.mktmpdir("master-control") do |root|
-      plane = Master::Ops::ControlPlane.new(root:, interval: 5, out: StringIO.new)
+      out = StringIO.new
+      plane = Master::Ops::ControlPlane.new(root:, interval: 5, out:)
       calls = 0
       plane.define_singleton_method(:command) do |*argv|
         calls += 1
@@ -112,7 +124,9 @@ class ControlPlaneSpec < Minitest::Test
 
       plane.cycle
 
-      assert_equal 2, calls
+      # status, fetch, then the branch check that stops the cycle.
+      assert_equal 3, calls
+      assert_match(/requires the main branch/, out.string)
     end
   end
 
