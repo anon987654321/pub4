@@ -79,7 +79,10 @@ module Master
         # A short summary of the vertices as fitted, to compare two readers' input.
         def digest
           pos = @mesh.pos
-          rows = Array.new(@mesh.vertex_count) { |v| [pos[3 * v], pos[(3 * v) + 1] - @lift, pos[(3 * v) + 2], @mesh.bright[v]] }
+          rows = Array.new(@mesh.vertex_count) do |v|
+            at = 3 * v
+            [pos[at], pos[at + 1] - @lift, pos[at + 2], @mesh.bright[v]]
+          end
           Digest::SHA256.hexdigest(rows.map { |p| p.map { |v| format("%.4f", v) }.join(",") }.join(";"))[0, 16]
         end
 
@@ -157,12 +160,15 @@ module Master
         private
 
         def turn(look)
-          @cy, @sy, @cp, @sp, @cr, @sr = [look.yaw + look.turn, look.pitch, look.roll].flat_map { |a| [Math.cos(a), Math.sin(a)] }
+          angles = [look.yaw + look.turn, look.pitch, look.roll]
+          @cy, @sy, @cp, @sp, @cr, @sr = angles.flat_map { |a| [Math.cos(a), Math.sin(a)] }
           @camera = CAMERA / look.dolly
           @gain = @scale * look.scale
           @bob = look.bob * @scale
-          @key = Ascii.unit(Math.sin(look.light) * Math.cos(ELEVATION), Math.sin(ELEVATION), Math.cos(look.light) * Math.cos(ELEVATION))
-          @rim = Ascii.unit(-Math.sin(look.light), 0.4, -Math.cos(look.light))
+          orbit = look.light
+          lift = Math.cos(ELEVATION)
+          @key = Ascii.unit(Math.sin(orbit) * lift, Math.sin(ELEVATION), Math.cos(orbit) * lift)
+          @rim = Ascii.unit(-Math.sin(orbit), 0.4, -Math.cos(orbit))
           @half = Ascii.unit(@key[0], @key[1], @key[2] + 1.0)
         end
 
@@ -181,12 +187,13 @@ module Master
           norm = @mesh.normals
           @sx, @sy_, @sd, @nx, @ny, @nz = Array.new(6) { Array.new(@mesh.vertex_count) }
           @mesh.vertex_count.times do |v|
-            x, y, z = rotate(pos[3 * v], pos[(3 * v) + 1] - @lift, pos[(3 * v) + 2])
+            at = 3 * v
+            x, y, z = rotate(pos[at], pos[at + 1] - @lift, pos[at + 2])
             k = @gain * @camera / (@camera - z)
             @sx[v] = @samples * ((@cols / 2.0) + (x * k))
             @sy_[v] = @samples * (@rows - (y * k) - @bob)
             @sd[v] = z * @scale
-            @nx[v], @ny[v], @nz[v] = rotate(norm[3 * v], norm[(3 * v) + 1], norm[(3 * v) + 2])
+            @nx[v], @ny[v], @nz[v] = rotate(norm[at], norm[at + 1], norm[at + 2])
           end
         end
 
@@ -220,7 +227,8 @@ module Master
                 b2 = e2 * inv
                 idx = (j * @sw) + i
                 z = (b0 * z0) + (b1 * z1) + (b2 * z2)
-                @zb[idx], @tri[idx], @bu[idx], @bv[idx] = z, t, b1, b2 if b0 >= 0.0 && b1 >= 0.0 && b2 >= 0.0 && z > @zb[idx]
+                inside = b0 >= 0.0 && b1 >= 0.0 && b2 >= 0.0
+                @zb[idx], @tri[idx], @bu[idx], @bv[idx] = z, t, b1, b2 if inside && z > @zb[idx]
                 e0 += y1 - y2
                 e1 += y2 - y0
                 e2 += y0 - y1
@@ -245,9 +253,12 @@ module Master
             b2 = @bv[idx]
             b0 = 1.0 - b1 - b2
             i0, i1, i2 = tris[3 * t, 3]
-            nx, ny, nz = Ascii.unit((b0 * @nx[i0]) + (b1 * @nx[i1]) + (b2 * @nx[i2]), (b0 * @ny[i0]) + (b1 * @ny[i1]) + (b2 * @ny[i2]),
+            nx, ny, nz = Ascii.unit((b0 * @nx[i0]) + (b1 * @nx[i1]) + (b2 * @nx[i2]),
+                                    (b0 * @ny[i0]) + (b1 * @ny[i1]) + (b2 * @ny[i2]),
                                     (b0 * @nz[i0]) + (b1 * @nz[i1]) + (b2 * @nz[i2]))
-            @lum[idx] = radiance(nx, ny, nz, (b0 * bright[i0]) + (b1 * bright[i1]) + (b2 * bright[i2]), (b0 * cavity[i0]) + (b1 * cavity[i1]) + (b2 * cavity[i2]))
+            paint = (b0 * bright[i0]) + (b1 * bright[i1]) + (b2 * bright[i2])
+            ao = (b0 * cavity[i0]) + (b1 * cavity[i1]) + (b2 * cavity[i2])
+            @lum[idx] = radiance(nx, ny, nz, paint, ao)
             facing = nz > 0.25 ? nz : 0.25
             @slope_x[idx] = -nx / facing
             @slope_y[idx] = ny / facing
@@ -258,7 +269,8 @@ module Master
           k = (nx * @key[0]) + (ny * @key[1]) + (nz * @key[2])
           f = (nx * FILL_DIR[0]) + (ny * FILL_DIR[1]) + (nz * FILL_DIR[2])
           r = (nx * @rim[0]) + (ny * @rim[1]) + (nz * @rim[2])
-          lum = (AMBIENT + (KEY * (k > 0.0 ? k : 0.0)) + (FILL * (f > 0.0 ? f : 0.0)) + (RIM * (r > 0.0 ? r : 0.0))) * (1.0 - PAINT + (PAINT * brightness))
+          direct = AMBIENT + (KEY * (k > 0.0 ? k : 0.0)) + (FILL * (f > 0.0 ? f : 0.0)) + (RIM * (r > 0.0 ? r : 0.0))
+          lum = direct * (1.0 - PAINT + (PAINT * brightness))
           if k > 0.0
             h = (nx * @half[0]) + (ny * @half[1]) + (nz * @half[2])
             if h > 0.0
@@ -311,7 +323,13 @@ module Master
           fraction = depth_at(i)
           glyph = edge ? silhouette(c, r) : (step(c, r, fraction) || crease(c, r))
           @frame.chars[r][c] = glyph || shade(c, r, i, cover, fraction)
-          @frame.depth[r][c] = fraction >= NEAR ? 2 : (fraction <= FAR ? 0 : 1)
+          @frame.depth[r][c] = if fraction >= NEAR
+                                 2
+                               elsif fraction <= FAR
+                                 0
+                               else
+                                 1
+                               end
         end
 
         # The glyph for the cell's boundary, from the gradient of coverage over
@@ -424,7 +442,7 @@ module Master
           return nil if seen.zero?
 
           # Ties go to the glyph later in character order, as a port's sort would.
-          votes, glyph = [[horizontal, "-"], [diagonal_up, "/"], [diagonal_down, "\\"],[vertical, "|"]].max
+          votes, glyph = [[horizontal, "-"], [diagonal_up, "/"], [diagonal_down, "\\"], [vertical, "|"]].max
           votes >= VOTE * seen && votes.positive? ? glyph : nil
         end
 
