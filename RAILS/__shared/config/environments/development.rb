@@ -3,8 +3,12 @@
 require "active_support/core_ext/integer/time"
 # The host allowlist below reads brgen's domain registry, which config time
 # reaches before autoloading; production.rb requires it the same way. It is a
-# plain data file, so amber and bsdports load it for their allowlist too.
-require File.expand_path("../../../brgen/lib/brgen/domain_registry", __dir__)
+# plain data file, so amber and bsdports load it for their allowlist too. In the
+# repo it sits in RAILS/brgen; on the box brgen's checkout is /home/brgen/app,
+# and amber's and bsdports' homes carry no copy, so they go without the cities.
+registry = %w[brgen app].map { |dir| File.expand_path("../../../#{dir}/lib/brgen/domain_registry.rb", __dir__) }
+                        .find { |path| File.file?(path) }
+require registry if registry
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
@@ -121,9 +125,11 @@ Rails.application.configure do
   #
   # Development only. Production takes its hosts from relayd and the certificate
   # on disk, which is a stricter question than "is this one of ours".
-  Brgen::DomainRegistry::ENTRIES.each do |entry|
-    config.hosts << entry.domain
-    config.hosts << /\A([a-z0-9-]+\.)*#{Regexp.escape(entry.domain)}\z/i
+  if defined?(Brgen::DomainRegistry)
+    Brgen::DomainRegistry::ENTRIES.each do |entry|
+      config.hosts << entry.domain
+      config.hosts << /\A([a-z0-9-]+\.)*#{Regexp.escape(entry.domain)}\z/i
+    end
   end
   config.hosts << /\A([a-z0-9-]+\.)*localhost\z/i
   # bsdports runs its own apex and is not a city, so no registry entry covers
