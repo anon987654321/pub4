@@ -12,17 +12,15 @@ module Master
     # gitignored .master/. Pairing and memory are YAML, not SQLite, and never reach it.
     module SqliteStore
       @sqlite_warned = false
-      @chmod_warned = false
       JOURNAL_MODES = {
         "WAL" => "PRAGMA journal_mode = WAL",
         "DELETE" => "PRAGMA journal_mode = DELETE",
       }.freeze
 
       class << self
+        # Dmesg.once keeps it to one line per directory; a process-wide flag
+        # hid the second directory's refusal.
         def warn_chmod_unsupported_once(path)
-          return if @chmod_warned
-
-          @chmod_warned = true
           if defined?(Master::Trace::Dmesg)
             Master::Trace::Dmesg.once("sqlite0", "chmod unsupported for #{path}, continuing with filesystem permissions")
           else

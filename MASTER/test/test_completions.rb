@@ -36,7 +36,7 @@ class TestCompletions < Minitest::Test
 
   def test_operator_completes_every_subcommand
     source = File.read(File.join(Master::ROOT, "bin", "operator"))
-    subcommands = source.scan(/^when (.+)$/).flat_map { |clause| clause.scan(/"([a-z?-]+)"/).flatten }.sort
+    subcommands = source.scan(/^when (.+)$/).flatten.flat_map { |clause| clause.scan(/"([a-z?-]+)"/).flatten }.sort
 
     assert_operator subcommands.size, :>=, 10, "a short list means the scan of bin/operator broke"
     assert_equal subcommands, completed("_operator")

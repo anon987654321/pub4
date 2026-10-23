@@ -32,12 +32,12 @@ class TestSqliteStore < Minitest::Test
       chmod = ->(*) { raise Errno::ENOSYS }
 
       FileUtils.stub(:chmod, chmod) do
-        _stdout, stderr = capture_io do
+        stdout, = capture_io do
           database = Store.new.open_sqlite(root, ".master/test.sqlite3")
           database.execute("CREATE TABLE example (value TEXT)")
         end
 
-        assert_includes stderr, "chmod unsupported"
+        assert_includes stdout, "sqlite0: chmod unsupported"
       end
 
       assert File.exist?(File.join(root, ".master", "test.sqlite3"))
@@ -68,12 +68,12 @@ class TestSqliteStore < Minitest::Test
       chmod = ->(*) { raise Errno::EPERM }
 
       FileUtils.stub(:chmod, chmod) do
-        _stdout, stderr = capture_io do
+        stdout, = capture_io do
           database = Store.new.open_sqlite(root, ".master/test.sqlite3")
           database.execute("CREATE TABLE example (value TEXT)")
         end
 
-        assert_includes stderr, "chmod unsupported"
+        assert_includes stdout, "sqlite0: chmod unsupported"
       end
 
       assert File.exist?(File.join(root, ".master", "test.sqlite3"))

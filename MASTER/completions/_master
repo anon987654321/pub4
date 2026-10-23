@@ -5,7 +5,9 @@
 _master() {
   local -a commands
   commands=(
+    'agenda:read a paired owner'\''s imported local calendar'
     'android:start Android/Termux onboarding and pair the local owner'
+    'capabilities:discover core tools and optional plugin observation capabilities'
     'clear:clear the session transcript'
     'commit:commit the named paths'
     'critique:read-only council review'
@@ -36,6 +38,8 @@ _master() {
     'snapshot:write source snapshots for all four governed trees at the pub4 root'
     'soul:read and amend the constitution, and its portable contract'
     'status:one-frame health, services and the known-good runtime'
+    'support:practical personal support and a bounded synthetic quality benchmark'
+    'task:keep a durable private task list with bounded steps and evidence'
     'undo:revert the last recorded change'
     'voice:CLI voice status and an explicit speaker test'
     'wake:control the Android/Termux wake-word listener'

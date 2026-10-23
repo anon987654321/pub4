@@ -28,14 +28,16 @@ class LifecycleToolsSpec < Minitest::Test
   end
 
   def test_media_tool_compatibility_links_point_at_studio
-    %w[dilla lora postpro replicate].each do |tool|
+    # lora trains through Replicate and lives under it (4d1250d28).
+    homes = { "dilla" => "dilla", "lora" => "replicate/lora", "postpro" => "postpro", "replicate" => "replicate" }
+    homes.each do |tool, home|
       link = File.join(ROOT, "tools", tool)
-      target = "../../STUDIO/#{tool}"
+      target = "../../STUDIO/#{home}"
 
       assert File.symlink?(link), "MASTER/tools/#{tool} must remain a compatibility symlink"
       assert_equal target, File.readlink(link), "MASTER/tools/#{tool} target drifted"
 
-      entry = File.join(ROOT, "..", "STUDIO", tool, "#{tool}.rb")
+      entry = File.join(ROOT, "..", "STUDIO", home, "#{tool}.rb")
       assert File.file?(entry), "missing canonical STUDIO/#{tool}/#{tool}.rb"
     end
   end
