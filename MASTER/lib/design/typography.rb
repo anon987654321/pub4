@@ -75,15 +75,25 @@ module Master
       end
 
       def self.for_surface(path:, purpose: nil, root: Master::ROOT)
+        profile(context_name(path:, purpose:), root:)
+      end
+
+      # Which contextual profile a surface reads as, from its route and purpose alone.
+      def self.context_name(path:, purpose: nil)
         route = path.to_s.split("?").first
-        return profile(ROUTE_PROFILES.fetch(route), root:) if ROUTE_PROFILES.key?(route)
+        return ROUTE_PROFILES.fetch(route) if ROUTE_PROFILES.key?(route)
 
         text = [route, purpose].compact.join(" ").downcase
-        return profile(:legal, root:) if text.match?(/privacy|terms|cookie|legal/)
-        return profile(:marketplace, root:) if text.match?(/market|item|deal|order|cart|shop/)
-        return profile(:terminal, root:) if text.match?(/terminal|console|cli|shell|bsdports/)
-        profile(:social, root:)
+        return :legal if text.match?(/privacy|terms|cookie|legal/)
+        return :marketplace if text.match?(/market|item|deal|order|cart|shop/)
+        return :terminal if text.match?(/terminal|console|cli|shell|bsdports/)
+
+        :social
       end
+
+      # The surface's wrap, numerals, punctuation and justification, which need no tokens. The rendered
+      # checks load this file without booting MASTER, where for_surface's token reads raise NameError.
+      def self.context_for(path:, purpose: nil) = CONTEXTUAL.fetch(context_name(path:, purpose:))
 
       def self.brief(path:, purpose: nil, root: Master::ROOT)
         values = for_surface(path:, purpose:, root:)

@@ -325,10 +325,7 @@ module Deploy
       rows = Array(data.dig("typography", "prose"))
       return if rows.empty?
 
-      profile = Master::Design::Typography.for_surface(
-        path: surface.path,
-        purpose: surface.label,
-      )
+      profile = Master::Design::Typography.context_for(path: surface.path, purpose: surface.label)
       missing = []
       rows.each do |row|
         missing << "wrap" if profile[:text_wrap] == "pretty" && !row["text_wrap"].to_s.match?(/pretty|balance|stable/)

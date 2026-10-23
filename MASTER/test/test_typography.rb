@@ -1,9 +1,22 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "open3"
 require_relative "../lib/design/typography"
 
 class TypographyTest < Minitest::Test
+  # The rendered geometry check loads this file in a bare process. Through for_surface every
+  # micro-typography measurement raised NameError on Master::ROOT, 187 of them in one /fix RAILS run.
+  def test_a_surfaces_context_reads_without_booting_master
+    file = File.expand_path("../lib/design/typography.rb", __dir__)
+    script = "require #{file.inspect}; print Master::Design::Typography.context_for(path: '/feed')[:text_wrap]"
+
+    out, status = Open3.capture2e(RbConfig.ruby, "-e", script)
+
+    assert status.success?, out
+    assert_equal "pretty", out
+  end
+
   def test_profiles_are_contextual
     editorial = Master::Design::Typography.profile(:editorial)
     social = Master::Design::Typography.profile(:social)
