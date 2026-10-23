@@ -27,17 +27,25 @@ module Master
             lines.join
           end
 
+          # The bodies a blank line may divide: a file, a class or module, a method, a block. A branch of a
+          # case, an if or a rescue is one thought; splitting its two lines put blank lines inside `when`.
+          BREATHING_BODIES = [
+            Prism::ProgramNode, Prism::ClassNode, Prism::ModuleNode, Prism::SingletonClassNode,
+            Prism::DefNode, Prism::BlockNode, Prism::LambdaNode, Prism::BeginNode
+          ].freeze
+
           # Line numbers L such that a blank line may go between line L and line L + 1: the last line of a
-          # statement whose next sibling starts on a later line, and not part of a multi-line literal.
+          # statement whose next sibling starts on a later line, in a breathing body, and not part of a
+          # multi-line literal.
           def statement_boundaries(root, src)
             literal = literal_lines(src)
             boundaries = Set.new
 
-            stack = [root]
+            stack = [[root, nil]]
             until stack.empty?
-              node = stack.pop
-              stack.concat(node.compact_child_nodes)
-              next unless node.is_a?(Prism::StatementsNode)
+              node, parent = stack.pop
+              stack.concat(node.compact_child_nodes.map { |child| [child, node] })
+              next unless node.is_a?(Prism::StatementsNode) && BREATHING_BODIES.any? { |kind| parent.is_a?(kind) }
 
               node.body.each_cons(2) do |current, following|
                 line = current.location.end_line

@@ -507,6 +507,17 @@ class TestAstFixerTransforms < Minitest::Test
     assert_includes result[:content], "    one\n    two\n    three\n    four\n  TEXT\n"
   end
 
+  # A when branch is one thought. /fix MASTER put a blank line between `@stage = "scan"` and the
+  # `@violations` line under it in cli/activity.rb, inside the branch.
+  def test_a_blank_line_never_splits_a_case_branch
+    branches = Array.new(6) { |n| "  when #{n}\n    @stage = #{n}\n    @count = #{n}\n" }.join
+    source = "# frozen_string_literal: true\n\ndef track(event)\n  case event\n#{branches}  end\nend\n"
+
+    result = fix("branches.rb", source)
+
+    assert_equal source, result[:content]
+  end
+
   def test_a_dense_run_with_no_statement_boundary_is_left_alone
     rows = Array.new(11) { |n| "  k#{n}: #{n}," }
     source = "TABLE = {\n#{rows.join("\n")}\n}.freeze\n"
