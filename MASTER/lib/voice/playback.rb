@@ -816,6 +816,8 @@ def decode_job(job)
         end
         false
       rescue StandardError => e
+        # The one-line warning names the error; the log keeps where it came from.
+        Master::Ground::Swallow.log(e, context: "Voice::Playback.play")
         warn_once("audio player error — #{e.class}: #{e.message}")
         false
       end

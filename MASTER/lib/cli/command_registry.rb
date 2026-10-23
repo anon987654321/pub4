@@ -305,6 +305,7 @@ module Master
           output: terminal,
         ).run
       rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.face")
         "face0: failed — #{e.class}: #{e.message}"
       ensure
         terminal&.close
