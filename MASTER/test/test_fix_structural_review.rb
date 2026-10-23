@@ -79,4 +79,19 @@ class TestFixStructuralReview < Minitest::Test
 
     assert_equal :inconclusive, Review.new(agent: broken, root: @root).call(target: @root).state
   end
+
+  def test_read_only_review_uses_current_hints_without_persisting_findings
+    hints = [{ kind: "merge", paths: %w[lib/a.rb lib/a_helper.rb], law: "SINGULARITY", reason: "one concept" }]
+    agent = FakeAgent.new("FINDING: odd | lonely/only.rb | NONE | unusual shape\\n")
+
+    result = Review.new(agent:, root: @root).call(
+      target: @root, persist: false, first_read_proposals: hints
+    )
+
+    assert_predicate result, :answered?
+    assert_equal 1, result.findings.size
+    assert_includes agent.prompts.first, JSON.generate(hints)
+    refute File.exist?(Review.findings_path(@root)), "read-only structural review must not save findings"
+    refute Dir.exist?(File.join(@root, ".master")), "read-only structural review must not create state directories"
+  end
 end

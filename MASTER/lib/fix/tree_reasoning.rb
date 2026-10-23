@@ -41,14 +41,14 @@ module Master
         @bus = bus
       end
 
-      def call(target:)
+      def call(target:, persist: true)
         return result(:unavailable, "tree reasoning skipped, no model") unless @agent.class.method_defined?(:ask)
 
         tree = Tree.new(root: @root, target:)
         return result(:empty, "tree has no tracked files") if tree.files.empty?
 
         proposals, dropped = TreeProposals.parse(@agent.ask(prompt(tree), operation: :tree).to_s, tree.paths)
-        record(tree:, proposals:, dropped:)
+        record(tree:, proposals:, dropped:, persist:)
       rescue StandardError => e
         @bus&.publish("fix_loop:tree_error", target: target.to_s, error: "#{e.class}: #{e.message}")
         result(:inconclusive, "tree reasoning inconclusive, #{e.class}")
@@ -81,12 +81,14 @@ module Master
         text.byteslice(0, MAX_PROMPT_BYTES)
       end
 
-      def record(tree:, proposals:, dropped:)
-        path = self.class.hints_path(@root)
-        FileUtils.mkdir_p(File.dirname(path))
-        File.write(path, JSON.generate(proposals.map(&:to_h)))
+      def record(tree:, proposals:, dropped:, persist: true)
+        if persist
+          path = self.class.hints_path(@root)
+          FileUtils.mkdir_p(File.dirname(path))
+          File.write(path, JSON.generate(proposals.map(&:to_h)))
+          @bus&.publish("fix_loop:tree", metrics: tree.metrics, proposals: proposals.map(&:to_h), dropped:)
+        end
         summary = summary(tree:, proposals:, dropped:)
-        @bus&.publish("fix_loop:tree", metrics: tree.metrics, proposals: proposals.map(&:to_h), dropped:)
         Master::Trace::Dmesg.status("tree0", summary)
         Result.new(state: :answered, summary:, proposals:, dropped:)
       end

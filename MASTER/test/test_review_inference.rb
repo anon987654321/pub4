@@ -148,6 +148,60 @@ end
     saved.nil? ? ENV.delete("MASTER_FIX_DEEP_TRACE") : ENV["MASTER_FIX_DEEP_TRACE"] = saved
   end
 
+
+  def test_fix_dry_run_keeps_whole_tree_reads_in_memory
+    old = {
+      deep_trace: ENV["MASTER_FIX_DEEP_TRACE"],
+      tree: ENV["MASTER_FIX_TREE"],
+      structural: ENV["MASTER_FIX_STRUCTURAL_REVIEW"],
+    }
+    ENV["MASTER_FIX_DEEP_TRACE"] = "0"
+    ENV.delete("MASTER_FIX_TREE")
+    ENV.delete("MASTER_FIX_STRUCTURAL_REVIEW")
+    calls = []
+    proposal = Master::Fix::TreeReasoning::Proposal.new(
+      kind: "merge", paths: ["lib/a.rb", "lib/b.rb"], law: "SINGULARITY", reason: "one concept"
+    )
+    tree_result = Master::Fix::TreeReasoning::Result.new(
+      state: :answered, summary: "1 proposal", proposals: [proposal], dropped: 0
+    )
+    structural_result = Master::Fix::StructuralReview::Result.new(
+      state: :answered, summary: "0 findings", findings: [], dropped: 0
+    )
+    tree_reader = Object.new
+    tree_reader.define_singleton_method(:call) do |target:, persist:|
+      calls << [:tree, target, persist]
+      tree_result
+    end
+    structural_reader = Object.new
+    structural_reader.define_singleton_method(:call) do |target:, persist:, first_read_proposals:|
+      calls << [:structural, target, persist, first_read_proposals]
+      structural_result
+    end
+    deliberation = Struct.new(:agent).new(Object.new)
+    registry = Master::CLI::CommandRegistry
+
+    Master::Fix::TreeReasoning.stub(:new, ->(**_kwargs) { tree_reader }) do
+      Master::Fix::StructuralReview.stub(:new, ->(**_kwargs) { structural_reader }) do
+        registry.stub(:run_pass, ->(_deps, **_kwargs) { "preview" }) do
+          registry.dispatch_fix(
+            scanner: Object.new, fix_loop: Object.new, deliberation:, root: Master::ROOT, bus: nil,
+            ctx: { args: "MASTER --dry-run" }
+          )
+        end
+      end
+    end
+
+    assert_equal [:tree, "MASTER", false], calls[0]
+    assert_equal [:structural, "MASTER", false, [proposal.to_h]], calls[1]
+  ensure
+    old&.each do |key, value|
+      name = { deep_trace: "MASTER_FIX_DEEP_TRACE", tree: "MASTER_FIX_TREE",
+               structural: "MASTER_FIX_STRUCTURAL_REVIEW" }.fetch(key)
+      value.nil? ? ENV.delete(name) : ENV[name] = value
+    end
+  end
+
   def test_cli_treats_every_non_done_fix_terminal_as_incomplete
     pass = Master::CLI::Pipeline::Pass.allocate
     terminals = Master::Fix::FixLoop::TERMINAL_STATES

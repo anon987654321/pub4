@@ -81,4 +81,15 @@ class TestFixTreeReasoning < Minitest::Test
     assert_equal :inconclusive, result.state
     assert_empty result.proposals
   end
+
+  def test_read_only_read_returns_proposals_without_persisting_them
+    agent = FakeAgent.new("PROPOSE: merge | lib/a.rb, lib/a_helper.rb | NONE | one concept\\n")
+
+    result = Reasoning.new(agent:, root: @root).call(target: @root, persist: false)
+
+    assert_predicate result, :answered?
+    assert_equal 1, result.proposals.size
+    refute File.exist?(Reasoning.hints_path(@root)), "read-only tree reasoning must not save hints"
+    refute Dir.exist?(File.join(@root, ".master")), "read-only tree reasoning must not create state directories"
+  end
 end

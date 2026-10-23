@@ -46,14 +46,16 @@ module Master
         @bus = bus
       end
 
-      def call(target:)
+      def call(target:, persist: true, first_read_proposals: nil)
         return result(:unavailable, "structural review skipped, no model") unless @agent.class.method_defined?(:ask)
 
         tree = Tree.new(root: @root, target:)
         return result(:empty, "tree has no tracked files") if tree.files.empty?
 
-        findings, dropped = parse(@agent.ask(prompt(tree), operation: :structural_review).to_s, tree)
-        record(tree:, findings:, dropped:)
+        findings, dropped = parse(
+          @agent.ask(prompt(tree, first_read_proposals:), operation: :structural_review).to_s, tree
+        )
+        record(tree:, findings:, dropped:, persist:)
       rescue StandardError => e
         @bus&.publish("fix_loop:structural_review_error", target: target.to_s, error: "#{e.class}: #{e.message}")
         result(:inconclusive, "structural review inconclusive, #{e.class}")
@@ -69,7 +71,7 @@ module Master
         Master::Fix::LawMapRepair.executable_law_ids
       end
 
-      def prompt(tree)
+      def prompt(tree, first_read_proposals: nil)
         text = <<~PROMPT
           Second read of a MASTER /fix run, before any Law has scanned a line.
 
@@ -87,7 +89,7 @@ module Master
 
           Constitutional Laws: #{constitution}
 
-          First-read proposals: #{JSON.generate(TreeReasoning.hints(@root))}
+          First-read proposals: #{JSON.generate(first_read_proposals || TreeReasoning.hints(@root))}
 
           Measurements: #{JSON.generate(tree.metrics)}
 
@@ -106,14 +108,16 @@ module Master
         "unavailable"
       end
 
-      def record(tree:, findings:, dropped:)
-        path = self.class.findings_path(@root)
-        FileUtils.mkdir_p(File.dirname(path))
-        File.write(path, JSON.generate(findings.map(&:to_h)))
+      def record(tree:, findings:, dropped:, persist: true)
+        if persist
+          path = self.class.findings_path(@root)
+          FileUtils.mkdir_p(File.dirname(path))
+          File.write(path, JSON.generate(findings.map(&:to_h)))
+          @bus&.publish("fix_loop:structural_review", findings: findings.map(&:to_h), dropped:)
+        end
         note = dropped.positive? ? ", #{dropped} dropped" : ""
         summary = "#{tree.metrics[:files]} files, #{findings.size} finding(s)#{note}"
 
-        @bus&.publish("fix_loop:structural_review", findings: findings.map(&:to_h), dropped:)
         Master::Trace::Dmesg.status("look0", summary)
         Result.new(state: :answered, summary:, findings:, dropped:)
       end

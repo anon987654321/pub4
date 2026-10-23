@@ -124,26 +124,37 @@ module Master
 
       # The first step of every /fix: lay out the tree and let the model say what it would
       # reshape, before any Law scans. Inconclusive is reported and the run goes on.
-      def first_read(deliberation:, bus:, targets:)
-        return if ENV["MASTER_FIX_TREE"] == "0"
-        return Master::Trace::Dmesg.status("tree0", "no model lane, first read skipped") unless deliberation
+      def first_read(deliberation:, bus:, targets:, persist: true)
+        return {} if ENV["MASTER_FIX_TREE"] == "0"
+        unless deliberation
+          Master::Trace::Dmesg.status("tree0", "no model lane, first read skipped")
+          return {}
+        end
+
+        results = {}
 
         reasoning = Master::Fix::TreeReasoning.new(agent: deliberation.agent, root: Master.repo_root, bus:)
         targets.each do |tree_target|
-          result = reasoning.call(target: tree_target)
+          result = reasoning.call(target: tree_target, persist:)
           Master::Trace::Dmesg.status("tree0", result.summary) unless result.answered?
+          results[tree_target.to_s] = result.proposals.map(&:to_h) if result.answered?
         end
+        results
       end
 
       # The second read, after the trace: the whole target reviewed with fresh eyes against the Laws.
       # Inconclusive is reported and the run goes on.
-      def structural_review(deliberation:, bus:, targets:)
+      def structural_review(deliberation:, bus:, targets:, persist: true, first_read_results: {})
         return if ENV["MASTER_FIX_STRUCTURAL_REVIEW"] == "0"
         return Master::Trace::Dmesg.status("look0", "no model lane, structural review skipped") unless deliberation
 
         review = Master::Fix::StructuralReview.new(agent: deliberation.agent, root: Master.repo_root, bus:)
         targets.each do |review_target|
-          result = review.call(target: review_target)
+          result = review.call(
+            target: review_target,
+            persist:,
+            first_read_proposals: first_read_results.fetch(review_target.to_s, nil),
+          )
           Master::Trace::Dmesg.status("look0", result.summary) unless result.answered?
         end
       end
@@ -170,7 +181,7 @@ module Master
 
           rendered = Master::Trace::Dmesg.with_log_voice do
             with_dmesg_verbosity(raw, default: "trace") do
-              first_read(deliberation:, bus:, targets:)
+              first_read_results = first_read(deliberation:, bus:, targets:, persist: writes_requested)
 
               unless ENV["MASTER_FIX_DEEP_TRACE"] == "0"
                 trace = steady_trace(scope: trace_scope, dependencies: { scanner:, fix_loop:, deliberation:, bus: })
@@ -183,7 +194,7 @@ module Master
                 end
               end
 
-              structural_review(deliberation:, bus:, targets:)
+              structural_review(deliberation:, bus:, targets:, persist: writes_requested, first_read_results:)
 
               writes_requested = writes_requested?(apply:, only:)
               effective_critique = critique.nil? ? writes_requested && council_default : critique
