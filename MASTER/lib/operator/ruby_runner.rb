@@ -66,7 +66,21 @@ module Operator
       root.empty? ? File.expand_path("~/.rbenv") : root
     end
 
+    RBENV_VERSION_DIR = %r{/versions/(\d+(?:\.\d+)+)/bin/ruby\z}
+
+    # Asked of an interpreter only when nothing cheaper knows: the running Ruby says RUBY_VERSION, an rbenv
+    # Ruby's directory names its version, and each other path is asked once. Spawning every candidate cost
+    # 0.9s of each MASTER boot, because loading check_chain.rb asks for the best Ruby.
     def version_for(path)
+      return Gem::Version.new(RUBY_VERSION) if File.identical?(path, RbConfig.ruby)
+
+      named = path.to_s[RBENV_VERSION_DIR, 1]
+      return Gem::Version.new(named) if named
+
+      (@versions ||= {}).fetch(path) { @versions[path] = spawned_version(path) }
+    end
+
+    def spawned_version(path)
       output, status = Master::Io::Exec.capture2e(path, "-e", "print RUBY_VERSION")
       return unless status.success?
 
