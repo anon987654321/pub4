@@ -7369,6 +7369,238 @@ module Dilla
   end
 end
 
+module Dilla
+  # The bed MASTER keeps under a session: a low hum, the surface of a record (hiss, dust, crackle and the
+  # odd pop) and slow space tones, put through dilla's own chain (Sonitex, space echo, plate, tape and the
+  # master) so it sits in the same room as the beats. Every number is in data/dilla.json under "ambient".
+  # A render's tail is folded into its start, so a player can loop it with no seam.
+  module Ambient
+    TAU = Math::PI * 2
+    USAGE = "Usage: ruby dilla.rb ambient [--seconds N] [--seed N] [--out PATH] [--replace]"
+    module_function
+
+    # Every sample is plain Ruby, so YJIT is on before the first one.
+    def run(argv)
+      RubyVM::YJIT.enable if defined?(RubyVM::YJIT) && !RubyVM::YJIT.enabled?
+      write(JSON.parse(File.read(File.join(__dir__, "data", "dilla.json"))), options(argv))
+    rescue ArgumentError, KeyError, OptionParser::ParseError => error
+      warn "dilla0: #{error.message}"
+      2
+    end
+
+    def options(argv)
+      chosen = { seed: Random.new_seed & 0xffff_ffff, replace: false }
+      parser = OptionParser.new(USAGE)
+
+      parser.on("--seconds N", Integer) { |value| chosen[:seconds] = value }
+      parser.on("--seed N", Integer) { |value| chosen[:seed] = value }
+      parser.on("--out PATH") { |value| chosen[:out] = value }
+      parser.on("--replace") { chosen[:replace] = true }
+
+      parser.parse!(argv)
+      chosen
+    end
+
+    def write(data, chosen)
+      settings = data.fetch("ambient")
+      seconds = chosen.fetch(:seconds) { settings.fetch("seconds") }.clamp(20, 600)
+      path = destination(chosen)
+      WAV.write(path, render(settings, data, seconds:, seed: chosen[:seed]), replace: chosen[:replace])
+      puts "dilla0: wrote ambient #{path} (#{seconds}s, seed #{chosen[:seed]})"
+      0
+    end
+
+    def destination(chosen)
+      named = "ambient-#{Time.now.utc.strftime("%Y%m%dT%H%M%SZ")}.wav"
+      path = File.expand_path(chosen.fetch(:out) { File.join(Studio::OutputPaths.dilla_render_directory, named) })
+      raise ArgumentError, "refusing to overwrite #{path}; pass --replace" if File.exist?(path) && !chosen[:replace]
+
+      path
+    end
+
+    # The hum, the space tones and the surface, each added into the frame.
+    def layer(frame, settings, random:)
+      hum(frame, spec: settings.fetch("hum"), random:)
+      space(frame, spec: settings.fetch("space"), random:)
+      surface(frame, spec: settings.fetch("surface"), random:)
+    end
+
+    def render(settings, data, seconds:, seed:)
+      random = Random.new(seed)
+      fade = (settings.fetch("loop_fade_s") * SAMPLE_RATE).round
+      frame = Array.new(2) { Array.new((seconds * SAMPLE_RATE).round + fade, 0.0) }
+      layer(frame, settings, random:)
+      seam(treat(frame, settings:, data:, seed:), fade)
+    end
+
+    # A low drone: the partials of one root, the right a few cents above the left so the two beat slowly
+    # against each other, over a lowpassed rumble.
+    def hum(frame, spec:, random:)
+      rumble = rumble(spec, random, frames: frame[0].size)
+      spreads = [1.0, 2.0**(spec.fetch("detune_cents") / 1200.0)]
+      frame.zip(spreads) { |channel, spread| drone(channel, partials: partials(spec, spread), rumble:) }
+    end
+
+    def drone(channel, partials:, rumble:)
+      channel.each_index { |i| channel[i] += partials.sum { |step, gain| gain * Math.sin(step * i) } + rumble[i] }
+    end
+
+    def partials(spec, spread)
+      root = TAU * spec.fetch("hz") * spread / SAMPLE_RATE
+      spec.fetch("partials").map { |ratio, gain| [root * ratio, gain * spec.fetch("level")] }
+    end
+
+    def rumble(spec, random, frames:)
+      noise = Array.new(frames) { (random.rand * 2.0) - 1.0 }
+      level = spec.fetch("rumble_level")
+      Stream::SmoothLowpass.new(spec.fetch("rumble_hz")).process(noise).map { |sample| sample * level }
+    end
+
+    def space(frame, spec:, random:)
+      Array.new(spec.fetch("voices")) { Tone.new(spec, random) }.each { |tone| tone.add(frame) }
+    end
+
+    # The record's surface: a quiet hiss under three kinds of click.
+    def surface(frame, spec:, random:)
+      layers = [Hiss.new(spec.fetch("hiss"), random)]
+      layers += %w[dust crackle pops].map { |name| Clicks.new(spec.fetch(name), random) }
+
+      frame[0].each_index do |i|
+        left, right = layers.map(&:sample).transpose.map(&:sum)
+        frame[0][i] += left
+        frame[1][i] += right
+      end
+    end
+
+    # dilla's chain: the Sonitex colour on each side, the ping-pong space echo, a plate, then the tape
+    # stack, imager, loudness and limiter of master_frame.
+    def treat(frame, settings:, data:, seed:)
+      effects = settings.fetch("effects")
+      stages = [colour(effects, data:, seed:), echo(effects), plate(effects, seed)]
+      coloured = stages.reduce(frame) { |signal, stage| stage.process(signal) }
+      master_frame(coloured, data, { lufs: settings.fetch("lufs") }, seed:, bpm: 60, channels: 2).first
+    end
+
+    def colour(effects, data:, seed:)
+      preset = data.dig("sonitex", "presets").fetch(effects.fetch("sonitex"))
+      count = effects.fetch("sonitex_instances")
+      Stream::Pair.new(*Array.new(2) { |side| Stream::SonitexStack.new(preset, count, seed + (side * 104_729)) })
+    end
+
+    def echo(effects)
+      Stream::PingPongEcho.new(delay: effects.fetch("echo_s"), heads: effects.fetch("echo_heads"),
+                               intensity: effects.fetch("echo_intensity"), volume: effects.fetch("echo_volume"),
+                               lowpass: effects.fetch("echo_lowpass_hz"))
+    end
+
+    def plate(effects, seed)
+      Stream::Pair.new(*Array.new(2) { |side| Stages::Plate.new(effects.fetch("room"), seed, side) })
+    end
+
+    # The tail past the loop length is crossfaded, equal power, into the start; then cut off. The last
+    # sample of the result runs straight on into its first.
+    def seam(frame, fade)
+      length = frame[0].size - fade
+
+      frame.map do |channel|
+        head = channel.first(length)
+
+        fade.times do |i|
+          angle = Math::PI * 0.5 * i / fade
+          head[i] = (head[i] * Math.sin(angle)) + (channel[length + i] * Math.cos(angle))
+        end
+
+        head
+      end
+    end
+
+    # A tone that glides toward a new pitch every so often and fades in or out as it goes, placed somewhere
+    # across the field. Drawn from the seed, so nothing in it repeats on a clock.
+    class Tone
+      def initialize(spec, random)
+        @spec = spec
+        @random = random
+        @glide = (spec.fetch("glide_s") * SAMPLE_RATE).round
+
+        @hz = pitch
+        @target = pitch
+        @amp = @goal = @phase = 0.0
+
+        pan = random.rand(-0.8..0.8)
+        @gains = [(1.0 - pan) * 0.5, (1.0 + pan) * 0.5].map { |gain| gain * spec.fetch("level") }
+        @offset = random.rand(@glide)
+      end
+
+      def add(frame)
+        left, right = @gains
+
+        frame[0].each_index do |i|
+          retarget if ((i + @offset) % @glide).zero?
+          advance
+          sample = Math.sin(@phase) * @amp
+          frame[0][i] += sample * left
+          frame[1][i] += sample * right
+        end
+      end
+
+      private
+
+      def pitch = @random.rand(@spec.fetch("low_hz")..@spec.fetch("high_hz"))
+
+      def retarget
+        @target = pitch
+        @goal = @random.rand < @spec.fetch("presence") ? 1.0 : 0.0
+      end
+
+      def advance
+        @hz += (@target - @hz) * 4.0 / @glide
+        @amp += (@goal - @amp) * 3.0 / @glide
+        @phase += TAU * @hz / SAMPLE_RATE
+      end
+    end
+
+    # A quiet hiss: independent noise on each side through its own lowpass.
+    class Hiss
+      def initialize(spec, random)
+        @random = random
+        @level = spec.fetch("level")
+        @filters = Array.new(2) { Stream::Lowpass.new(spec.fetch("lowpass_hz")) }
+      end
+
+      def sample = @filters.map { |filter| filter.step((@random.rand * 2.0) - 1.0) * @level }
+    end
+
+    # One kind of click (fine dust, crackle, the odd pop): a decaying impulse at random moments through its
+    # own lowpass, landing a little more in one ear. Most are faint and a few loud (the cube of a uniform
+    # draw), with either sign.
+    class Clicks
+      def initialize(spec, random)
+        @random = random
+        @chance = spec.fetch("rate") / SAMPLE_RATE.to_f
+        @level = spec.fetch("level")
+
+        @decay = Math.exp(-1000.0 / (spec.fetch("decay_ms") * SAMPLE_RATE))
+        @filter = Stream::Lowpass.new(spec.fetch("lowpass_hz"))
+        @value = @balance = 0.0
+      end
+
+      def sample
+        strike if @random.rand < @chance
+        @value *= @decay
+        out = @filter.step(@value)
+        [out * (1.0 - @balance), out * (1.0 + @balance)]
+      end
+
+      private
+
+      def strike
+        @value += @level * (@random.rand**3) * (@random.rand < 0.5 ? -1.0 : 1.0)
+        @balance = @random.rand(-0.6..0.6)
+      end
+    end
+  end
+end
+
 # --- engine.rb ---
 # Reference analysis and industrial-techno generation stay in their own modules.
 
@@ -7401,9 +7633,11 @@ end
 
 # ---------------------------------------------------------------------- CLI
 def run(argv)
-  return Dilla::Reference.run(argv.drop(1)) if argv.first == "reference"
-  return Dilla::IndustrialTechno.run(argv.drop(1)) if argv.first == "industrial-techno"
-  return dilla_output_path(argv.drop(1)) if argv.first == "output-path"
+  subcommand, *rest = argv
+  return Dilla::Reference.run(rest) if subcommand == "reference"
+  return Dilla::IndustrialTechno.run(rest) if subcommand == "industrial-techno"
+  return Dilla::Ambient.run(rest) if subcommand == "ambient"
+  return dilla_output_path(rest) if subcommand == "output-path"
   RubyVM::YJIT.enable if defined?(RubyVM::YJIT) && !RubyVM::YJIT.enabled? && !ENV.key?('DILLA_NO_YJIT') # about a third off every render
   live_argument = argv.first == 'live'
   argv = argv.drop(1) if live_argument

@@ -8,26 +8,24 @@ class TestVoiceBed < Minitest::Test
 
   def config = Master::Voice::Narrator.load_config(:bard).fetch("bed")
 
-  def test_the_bed_is_on_by_default_and_draws_one_listed_progression
-    assert_equal true, config["enabled"]
-
-    argv = Bed.live_command(config, random: Random.new(1))
-
-    assert_includes config["progressions"].map(&:to_s), argv[argv.index("--progression") + 1]
+  def teardown
+    Bed.stop
   end
 
-  def test_two_starts_need_not_play_the_same_song
-    argvs = Array.new(6) { |n| Bed.live_command(config, random: Random.new(n)) }
-    seeds = argvs.map { |argv| argv[argv.index("--seed") + 1] }
+  def test_the_bed_is_the_ambient_render_and_starts_with_the_session
+    assert_equal true, config["enabled"]
+    assert_equal true, config["autostart"]
+    assert_equal false, config["live"]
+    assert_equal "ambient", config["render_args"].first
+  end
+
+  def test_two_renders_need_not_sound_the_same
+    seeds = Array.new(6) { |n| Bed.pick_args(config, Random.new(n)).last }
 
     assert_operator seeds.uniq.size, :>, 1
   end
 
-  def test_the_player_carries_the_volume_from_the_data
-    assert_includes Bed.player(config), "volume=#{config["volume"]}"
-  end
-
-  def test_a_cached_track_plays_once_through_so_the_next_progression_can_follow
+  def test_a_cached_track_plays_once_through_so_the_next_can_follow
     Dir.mktmpdir do |dir|
       track = File.join(dir, "bed one.wav")
       File.write(track, "RIFF")
@@ -35,7 +33,7 @@ class TestVoiceBed < Minitest::Test
 
       assert_equal "ffplay", argv.first
       assert_includes argv, "-autoexit"
-      refute_includes argv, "-loop"
+      assert_includes argv.join(" "), "volume=#{config["volume"]}"
       assert_equal track, argv.last
     end
   end
@@ -66,10 +64,38 @@ class TestVoiceBed < Minitest::Test
     end
   end
 
-  def test_there_is_no_music_at_startup_unless_the_data_says_so
-    assert_equal false, config["autostart"]
-    assert_equal false, Bed.boot(nil)
-    assert_equal false, Bed.boot(config.merge("autostart" => false))
+  def test_an_empty_cache_waits_for_a_render_instead_of_streaming_music
+    Bed.stub(:prerender, true) do
+      Bed.stub(:sleep, nil) do
+        assert_nil Bed.play_next(config.merge("cache_dir" => Dir.mktmpdir), nil)
+      end
+    end
+  end
+
+  def test_the_bard_releasing_the_bed_leaves_the_held_ambient_playing
+    Bed.stub(:start, true) { Bed.boot(config) }
+    assert_predicate Bed, :held?
+    Bed.stub(:stop, -> { flunk "a held bed was stopped" }) { Bed.release }
+
+    Bed.stop
+    stopped = false
+    Bed.stub(:stop, -> { stopped = true }) { Bed.release }
+    assert stopped
+  end
+
+  def test_the_held_ambient_does_not_keep_the_face_from_listening
+    Bed.stub(:start, true) { Bed.boot(config) }
+    Bed.stub(:running?, true) { refute_predicate Bed, :foreground? }
+
+    Bed.stop
+    Bed.stub(:running?, true) { assert_predicate Bed, :foreground? }
+  end
+
+  def test_a_missing_or_switched_off_bed_never_boots
+    Bed.boot(nil)
+    refute_predicate Bed, :held?
+    Bed.boot(config.merge("autostart" => false))
+    refute_predicate Bed, :held?
   end
 
   def test_a_disabled_or_missing_bed_never_starts

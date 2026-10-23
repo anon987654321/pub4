@@ -5,15 +5,15 @@ require "shellwords"
 
 module Master
   module Voice
-    # The beat under the bard: STUDIO/dilla's own music, started with the first spoken line of a task and
-    # stopped when the task ends. It is heard at once: prerendered tracks from the cache play one after
-    # another, each progression once through and then a different one, never the same twice running. While
-    # the cache is short a nice'd background render adds tracks to it. With an empty cache the first start
-    # streams dilla live (about six seconds to sound) and fills the cache for the next one.
-    # Every choice lives in voice.yml under bard.bed: the progressions to draw from, the drums, the groove,
-    # the players, the volume and the cache size. A different track is drawn per start.
+    # The sound under the session, rendered by STUDIO/dilla. Prerendered tracks from the cache play one after
+    # another, never the same twice running, and a nice'd background render tops the cache up. Started at
+    # boot (bard.bed.autostart) it is held for the whole session: the bard's task ending releases it, which
+    # stops only a bed the bard started. With an empty cache it streams dilla live when `live` allows, and
+    # otherwise waits for the first render. Every choice lives in voice.yml under bard.bed.
     module Bed
       module_function
+
+      RENDER_POLL_S = 5
 
       # MASTER_BED=0 keeps the speakers quiet whatever voice.yml says: the test suite sets it.
       def start(config)
@@ -23,13 +23,26 @@ module Master
 
         FileUtils.mkdir_p(cache_dir(config))
 
-        started = tracks(config).any? ? rotate(config) : launch(live_command(config))
+        started = tracks(config).any? || config["live"] == false ? rotate(config) : launch(live_command(config))
         prerender(config)
         started
       end
 
-      # At session start, when voice.yml says so (bard.bed.autostart): the beat is there from the first moment.
-      def boot(config) = config.is_a?(Hash) && config["autostart"] == true && start(config)
+      # At session start, when voice.yml says so (bard.bed.autostart): the bed is there from the first moment and
+      # held until the session closes.
+      def boot(config)
+        return unless config.is_a?(Hash) && config["autostart"] == true
+
+        @held = start(config)
+        nil
+      end
+
+      def held? = @held == true
+
+      # The bard's end of a task: a bed held since boot plays on.
+      def release
+        stop unless held?
+      end
 
       def launch(argv)
         return false unless argv
@@ -57,27 +70,41 @@ module Master
 
       def stop
         @stopping = true
+        @held = false
         pid, @pid = @pid, nil
         signal(-pid, "TERM") if pid
       end
 
       def running? = (!@pid.nil? && signal(@pid, 0)) || (@rotation&.alive? == true)
 
-      # Plays the cached tracks in turn, one whole progression each, a different one next, until stopped.
+      # A bed the bard started, as opposed to the ambient held since boot.
+      def foreground? = !held? && running?
+
+      # Plays the cached tracks in turn, a different one next, until stopped. An empty cache waits for a render.
       def rotate(config)
         @stopping = false
+
         @rotation = Thread.new do
           Thread.current.report_on_exception = false
           last = nil
-          until @stopping
-            track = next_track(config, last)
-            break unless track
-
-            last = track
-            play_through(loop_command(config, track))
-          end
+          last = play_next(config, last) until @stopping
         end
         true
+      end
+
+      def play_next(config, last)
+        track = next_track(config, last)
+        return wait_for_render(config) unless track
+
+        play_through(loop_command(config, track))
+        prerender(config)
+        track
+      end
+
+      def wait_for_render(config)
+        prerender(config)
+        sleep(RENDER_POLL_S)
+        nil
       end
 
       def next_track(config, last)

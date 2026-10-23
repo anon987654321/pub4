@@ -70,7 +70,7 @@ module Master
         greet_from_model unless initial_message
         @running = true
         play_boot_sound
-        start_bard_bed
+        start_bed
         if face_on_start?(initial_message)
           @face_open = true
           run_face
@@ -154,15 +154,15 @@ module Master
         Master::Ground::Swallow.log(e, context: "cli.boot_sound", event_bus: @refs.bus)
       end
 
-      # The bard's beat starts with the session when the bard can be heard; closing the session stops it.
-      def start_bard_bed
-        bard = Master::Voice::Narrator.instance(:bard)
-        return unless bard.enabled? && bard.audible?
+      # The ambient bed plays from the session's start whether or not the bard speaks; closing the session stops
+      # it, and MASTER_BED=0 keeps it silent.
+      def start_bed
+        return unless $stdout.tty?
 
-        started = Master::Voice::Bed.boot(Master::Voice::Narrator.load_config(:bard)["bed"])
-        Master::Trace::Dmesg.status("bed0", "beat #{started ? "on" : "off"}") unless started.nil?
+        Master::Voice::Bed.boot(Master::Voice::Narrator.load_config(:bard)["bed"])
+        Master::Trace::Dmesg.status("bed0", "ambient on") if Master::Voice::Bed.held?
       rescue StandardError => e
-        Master::Trace::Dmesg.status("bed0", "beat failed, #{e.class}: #{e.message}")
+        Master::Trace::Dmesg.status("bed0", "ambient failed, #{e.class}: #{e.message}")
       end
 
       def init_session_state!

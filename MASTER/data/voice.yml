@@ -824,27 +824,21 @@ bard:
   batch_window_s: 9.0
   max_events_per_beat: 12
   max_sentences_per_minute: 6
-  # The beat under the bard, dilla's own --play stream (lib/voice/bed.rb). One progression is drawn from
-  # `progressions` per start; they are the long extended-chord ones in STUDIO/dilla/data/dilla.json.
+  # The ambient bed under every session (lib/voice/bed.rb): a low hum, vinyl crackle, dust and pops, and slow
+  # space tones, rendered by `dilla.rb ambient` through dilla's own chain. Johann asked on 2026-10-23 for this
+  # in place of the music that used to start, playing constantly. Each render is a seamless loop; the cache
+  # holds cache_target of them from different seeds and they play one after another. With an empty cache the
+  # first render (about four minutes, nice'd) starts the sound; nothing is streamed live (live: false).
   bed:
     enabled: true
-    # false: no music at startup. The beat then starts only under the bard's first spoken line.
-    autostart: false
+    autostart: true
+    live: false
     tool: STUDIO/dilla/dilla.rb
-    volume: 0.22
-    player: "ffplay -nodisp -autoexit -loglevel quiet -af volume=%{volume} -f s16le -ar 44100 -ch_layout stereo -i -"
-    # Prerendered tracks play at once, one whole progression each and then the next; a nice'd render tops the
-    # cache up to cache_target. Outside the repo.
+    volume: 0.5
     loop_player: "ffplay -nodisp -autoexit -loglevel quiet -af volume=%{volume} %{path}"
-    cache_dir: ~/.master/bed/cache
+    cache_dir: ~/.master/bed/ambient
     cache_target: 4
-    render_args: ["--render", "--no-video", "--bpm", "92", "--beats", "4", "--drums", "dusty_laid_back",
-                  "--profile", "dilla_shadow", "--groove", "1.2", "--improvise", "--vcs", "0.5", "--tape", "4",
-                  "--drum-tape", "heavy", "--sonitex"]
-    progressions: [9, 11, 12, 13, 14, 15, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502,
-                   503, 504, 505]
-    args: ["--play", "--bpm", "92", "--beats", "4", "--drums", "dusty_laid_back", "--profile", "dilla_shadow",
-           "--groove", "1.2", "--improvise", "--vcs", "0.5", "--tape", "4", "--drum-tape", "heavy", "--sonitex"]
+    render_args: ["ambient", "--seconds", "150"]
 
 voice:
   style: openbsd_dmesg

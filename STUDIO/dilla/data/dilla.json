@@ -11688,5 +11688,90 @@
       "rate": 4,
       "octaves": 1
     }
-  ]
+  ],
+  "ambient": {
+    "seconds": 150,
+    "loop_fade_s": 6,
+    "lufs": -24,
+    "hum": {
+      "hz": 49.0,
+      "detune_cents": 2.5,
+      "level": 0.16,
+      "rumble_hz": 90,
+      "rumble_level": 0.012,
+      "partials": [
+        [
+          1.0,
+          1.0
+        ],
+        [
+          1.5,
+          0.1
+        ],
+        [
+          2.0,
+          0.42
+        ],
+        [
+          3.0,
+          0.16
+        ],
+        [
+          4.0,
+          0.05
+        ]
+      ]
+    },
+    "space": {
+      "voices": 4,
+      "low_hz": 140,
+      "high_hz": 880,
+      "glide_s": 14,
+      "presence": 0.6,
+      "level": 0.045
+    },
+    "surface": {
+      "hiss": {
+        "level": 0.004,
+        "lowpass_hz": 5200
+      },
+      "dust": {
+        "rate": 45,
+        "level": 0.06,
+        "decay_ms": 0.25,
+        "lowpass_hz": 9000
+      },
+      "crackle": {
+        "rate": 9,
+        "level": 0.24,
+        "decay_ms": 0.6,
+        "lowpass_hz": 6000
+      },
+      "pops": {
+        "rate": 0.3,
+        "level": 0.5,
+        "decay_ms": 3.0,
+        "lowpass_hz": 1400
+      }
+    },
+    "effects": {
+      "sonitex": "dusty_warm",
+      "sonitex_instances": 1,
+      "echo_s": 0.62,
+      "echo_heads": [
+        1,
+        2,
+        3
+      ],
+      "echo_intensity": 0.6,
+      "echo_volume": 0.5,
+      "echo_lowpass_hz": 2600,
+      "room": {
+        "decay": 0.9,
+        "damp": 0.45,
+        "mix": 0.35,
+        "gain": 30.0
+      }
+    }
+  }
 }
