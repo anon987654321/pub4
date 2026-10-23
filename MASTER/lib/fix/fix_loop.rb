@@ -173,10 +173,7 @@ module Master
           "fix0",
           "corpus candidates=#{coverage[:candidates]} collected=#{coverage[:collected]} skipped=#{coverage[:skipped]}",
         )
-        unless coverage[:blocking_skips].empty?
-          detail = coverage[:blocking_skips].map { |reason, count| "#{reason}=#{count}" }.join(", ")
-          return Result.err("fix_loop: uninspectable inputs remain: #{detail}", category: :validation)
-        end
+        note_uninspectable(coverage[:blocking_skips])
         if coverage[:candidates].positive? && files.empty?
           reasons = @file_collector.skip_reasons.sort_by { |reason, count| [-count, reason] }
           detail = reasons.first(4).map { |reason, count| "#{reason}=#{count}" }.join(", ")
@@ -293,14 +290,30 @@ module Master
         snapshot
       end
 
+      # A file over the corpus limits (STUDIO/dilla/dilla.rb past the line limit) cannot be read, so
+      # the run can never say DONE; it is a gap like an unread file, and the rest of the tree is
+      # still repaired. Refusing the run for it left 133 STUDIO files unrepaired.
+      def note_uninspectable(skips)
+        @uninspectable = skips.to_h
+        return if @uninspectable.empty?
+
+        Master::Trace::Dmesg.status("fix0", "uninspectable inputs remain: #{uninspectable_detail}; repairing the rest")
+      end
+
+      def uninspectable = (@uninspectable ||= {})
+
+      def uninspectable_detail = uninspectable.map { |reason, count| "#{reason}=#{count}" }.join(", ")
+
       # A run that reaches DONE after skipping files it could not scan, or
       # stages that raised, has proved nothing about them. Every stage and pass
       # still ran; the verdict says what they could not.
       def blocked_by_gaps(result)
-        return result unless @pass_runner&.gaps? && result.ok? && terminal_state_for(result) == :done
+        gapped = @pass_runner&.gaps? || uninspectable.any?
+        return result unless gapped && result.ok? && terminal_state_for(result) == :done
 
-        gaps = @pass_runner.gaps
-        parts = []
+        gaps = @pass_runner ? @pass_runner.gaps : { uninspected: {}, stage_failures: {} }
+        parts = uninspectable.empty? ? [] : ["uninspectable inputs remain: #{uninspectable_detail}"]
+
         unless gaps[:uninspected].empty?
           named = gaps[:uninspected].keys.first(3).join(", ")
           parts << "#{gaps[:uninspected].size} file(s) not scanned (#{named})"

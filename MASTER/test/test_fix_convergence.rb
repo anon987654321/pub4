@@ -101,23 +101,33 @@ class TestFixConvergence < Minitest::Test
     refute discipline.improving?
   end
 
-  def test_fix_refuses_to_treat_an_uninspectable_file_as_a_clean_corpus
-    oversized = File.join(@root, "oversized.rb")
-    File.write(oversized, "x" * (Master::Fix::Scan::FileProcessor::MAX_FILE_BYTES + 1))
+  # /fix STUDIO refused every file because dilla.rb was past the line limit. The oversized file is a
+  # gap that keeps DONE out of reach; the rest of the corpus is still repaired.
+  def test_an_uninspectable_file_blocks_done_but_not_the_repair_of_the_rest
+    File.write(File.join(@root, "oversized.rb"), "x" * (Master::Fix::Scan::FileProcessor::MAX_FILE_BYTES + 1))
     loop = build_loop([])
+    repaired = []
 
-    result = loop.send(
-      :run_unlocked,
-      @root,
-      max_passes: 1,
-      budget_seconds: 60,
-      incremental: false,
-      requested: true,
-    )
+    loop.define_singleton_method(:run_journaled) do |journal, files:, **rest|
+      repaired.concat(files)
+      finish_run(Master::Result.ok("DONE: clean"), rest[:target], journal["id"], **rest.slice(:mission, :requested))
+    end
 
-    refute result.ok?, "a corpus with a blocking skip must not be reported as clean"
-    assert_match(/uninspectable inputs remain: too_large=1/, result.to_s)
-    refute File.exist?(File.join(@root, ".master")), "preflight must refuse before opening a repair transaction"
+    result = run_unrequested(loop)
+
+    assert_equal [File.join(@root, "dummy.yml")], repaired
+    assert_equal :blocked, loop.last_terminal_state, "a corpus with a blocking skip must not be reported as clean"
+    assert_match(/\ABLOCKED: finished with gaps, uninspectable inputs remain: too_large=1/, result.value!)
+  end
+
+  def run_unrequested(loop)
+    result = nil
+    Master::Io::LaneSelection.stub(:announce, nil) do
+      loop.stub(:outcome_guidance, { incremental: false, prediction: nil }) do
+        capture_io { result = loop.run(@root, max_passes: 1, budget_seconds: 60, incremental: false) }
+      end
+    end
+    result
   end
 
   def test_fix_extends_pass_budget_while_measured_state_improves
