@@ -103,6 +103,18 @@ failures << "launcher" unless step("bin/ruby bin/cli boot") do
   output = +""
   status = nil
 
+  # EIO is how a PTY reports that the child closed its side: the output is complete.
+  read_chunk = lambda do |io|
+    io.wait_readable(0.2) ? io.readpartial(4096) : ""
+  rescue Errno::EIO, EOFError
+    ""
+  end
+
+  stop = lambda do |pid|
+    Process.kill("TERM", pid) rescue nil
+    Process.waitpid2(pid).last rescue nil
+  end
+
   PTY.spawn(
     { "MASTER_FAST" => nil, "MASTER_WEB" => "0", "MASTER_SKIP_TTS" => "1",
       "MASTER_SKIP_BOOT_SCAN" => "1", "MASTER_BACKGROUND" => "0",
@@ -114,19 +126,12 @@ failures << "launcher" unless step("bin/ruby bin/cli boot") do
     deadline = Time.now + PIPE_TIMEOUT_SECONDS
 
     until status
-      if reader.wait_readable(0.2)
-        begin
-          output << reader.readpartial(4096)
-        rescue Errno::EIO, EOFError
-          nil
-        end
-      end
+      output << read_chunk.call(reader)
 
       _done, status = Process.waitpid2(pid, Process::WNOHANG)
       next unless Time.now >= deadline
 
-      Process.kill("TERM", pid) rescue nil
-      _done, status = Process.waitpid2(pid) rescue [nil, nil]
+      status = stop.call(pid)
       break
     end
   ensure
