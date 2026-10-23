@@ -267,7 +267,18 @@ class TestSpeech < Minitest::Test
     original ? ENV["MASTER_TTS_MODE"] = original : ENV.delete("MASTER_TTS_MODE")
   end
 
+  def without_tts_mode_pin
+    pinned = ENV.delete("MASTER_TTS_MODE")
+    yield
+  ensure
+    ENV["MASTER_TTS_MODE"] = pinned if pinned
+  end
+
   def test_fast_mode_does_not_override_cli_synthesis_or_live_streaming_contract
+    without_tts_mode_pin { fast_mode_contract }
+  end
+
+  def fast_mode_contract
     config = { "fast_mode" => true, "default_mode" => "transcendent", "enabled" => true }
     Master::Voice::Transcendent.stub(:load_config, config) do
       speech = Master::Voice::Speech
@@ -810,9 +821,12 @@ class TestSpeech < Minitest::Test
     assert_equal :fail, speech.infer_style("The deploy failed.")
   end
 
+  # An opening hedge is padding; "will" carries tense and stays
+  # (StrunkPass::MEANING_BEARING_HEDGES).
   def test_clean_text_strips_hedge_words
-    result = Master::Voice::Speech.clean_text("This will improve performance.")
-    refute_includes result, "will"
+    result = Master::Voice::Speech.clean_text("I believe this will improve performance.")
+    refute_includes result, "I believe"
+    assert_includes result, "will improve"
   end
 
   def test_clean_text_preserves_newline_to_period_pacing
@@ -833,7 +847,7 @@ class TestSpeech < Minitest::Test
   def test_no_profile_leaves_the_voice_exactly_as_declared
     with_profile(nil) do
       assert_equal "", Master::Voice::Policy.profile_name
-      assert_equal "-6%", Master::Voice::Policy.default_rate
+      assert_equal "+4%", Master::Voice::Policy.default_rate
       assert_empty Master::Voice::Policy.layers
       refute Master::Voice::Layers.active?
       refute Master::Voice::Policy.fx_enabled?
@@ -912,7 +926,7 @@ class TestSpeech < Minitest::Test
 
   def test_an_unknown_profile_speaks_the_default_voice
     with_profile("no-such-profile") do
-      assert_equal "-6%", Master::Voice::Policy.default_rate
+      assert_equal "+4%", Master::Voice::Policy.default_rate
       refute Master::Voice::Layers.active?
     end
   end

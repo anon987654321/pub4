@@ -29,7 +29,7 @@ class TestRecoveryPubManifest < Minitest::Test
   end
 
   def test_recovery_contract_has_critical_items
-    contract = YAML.safe_load(ROOT.join("MASTER/data/recovery_pub.yml").read, permitted_classes: [Date])
+    contract = YAML.safe_load(ROOT.join("MASTER/data/recovery/pub_restore.yml").read, permitted_classes: [Date])
     ids = contract.fetch("critical_items").map { |item| item.fetch("id") }
 
     assert_includes ids, "mega_all_apps"
@@ -238,7 +238,7 @@ class TestRecoveryPubManifest < Minitest::Test
     assert_includes lineage.fetch("caution"), "The old JSON versions are historical reasoning evidence, not runtime configuration."
   end
   def test_missing_until_restored_contains_only_absent_targets
-    contract = YAML.safe_load(ROOT.join("MASTER/data/recovery_pub.yml").read, permitted_classes: [Date])
+    contract = YAML.safe_load(ROOT.join("MASTER/data/recovery/pub_restore.yml").read, permitted_classes: [Date])
     paths = contract.fetch("checks").fetch("missing_until_restored")
     present = paths.select { |path| ROOT.join(path).file? }
 
