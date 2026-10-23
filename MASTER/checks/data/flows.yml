@@ -268,7 +268,7 @@ flows:
         get: /ai/search
         expect_status: [200, 302, 303]
 
-  # --- brgen subapp depth (each vertical beyond root) ---
+  # brgen subapp depth: each vertical beyond root.
 
   - id: brgen_marketplace_depth
     app: brgen
@@ -553,7 +553,6 @@ flows:
         expect_status: [200]
         expect_final_path: /items/new
 
-  # ---------------------------------------------------------------------------
   # Write journeys. Everything above reads; these change state and read the
   # change back on a later page.
   #
@@ -579,7 +578,6 @@ flows:
   #   mail:           open the message sent to `to` and capture from the link in it
   #   capture_final_path: name   keep the path a redirect ended on
   #   expect_final_path: { matches: re } | { not_matches: re }
-  # ---------------------------------------------------------------------------
 
   - id: brgen_signup_confirm_email_then_post
     app: brgen
@@ -1152,7 +1150,7 @@ flows:
         get: /offline
         expect_status: [200]
 
-  # --- amber -----------------------------------------------------------------
+  # amber
 
   - id: amber_signup_sign_out_in
     app: amber
@@ -1374,7 +1372,7 @@ flows:
         get: /offline
         expect_status: [200]
 
-  # --- bsdports --------------------------------------------------------------
+  # bsdports
 
   - id: bsdports_search_then_open_port
     app: bsdports
@@ -1424,7 +1422,7 @@ flows:
         asset: true
         expect_status: [200]
 
-  # --- master ----------------------------------------------------------------
+  # master
   # Master's one write is a chat turn, which calls a model and costs credits, so
   # no journey sends one. What can be exercised for free is the runtime a face
   # boots from and the one command that must refuse a stranger.
