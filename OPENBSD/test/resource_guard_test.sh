@@ -50,9 +50,13 @@ shift 2 2>/dev/null || true
 print "$*" >> "$FAKE_STATE_DIR/log"
 EOF
 
-# Two processes per daemon user, 256M each, in ps's kilobytes.
+# Two processes per daemon user, 256M each, in ps's kilobytes. A user listed in FAKE_PS_IDLE has
+# none, and then ps exits 1, as OpenBSD's does for a shed app.
 cat > "$BIN/ps" <<'EOF'
 #!/bin/ksh
+user=""
+while [[ $# -gt 0 ]]; do [[ $1 == -U ]] && user=$2; shift; done
+[[ " ${FAKE_PS_IDLE:-} " == *" $user "* ]] && exit 1
 print 262144
 print 262144
 EOF
@@ -154,6 +158,17 @@ FAKE_LOAD=6.0 FAKE_FREE=$CLEAR ksh "$SANDBOX/guard_under_test.sh" >/dev/null 2>&
 check "deploy flag, load 6: emergency did not run" "" "$(cat "$DB/emergency_ran" 2>/dev/null)"
 FAKE_LOAD=13.0 FAKE_FREE=$CLEAR ksh "$SANDBOX/guard_under_test.sh" >/dev/null 2>&1 || true
 check "deploy flag, load 13: emergency ran" "ran" "$(cat "$DB/emergency_ran" 2>/dev/null)"
+
+print "8. with the real cleanup helper sourced, a tick still logs while a shed app has no processes"
+# The helper set pipefail in the guard's own shell; ps -U for a shed app then failed the rss
+# pipeline, set -e ended every tick before the log line, and vm23 had no guard from 15:45.
+HELPER=${GUARD%/bin/resource_guard.sh}/libexec/stale_ci_cleanup.ksh
+sed -e "s#^GUARD_HELPER=.*#GUARD_HELPER=$HELPER#" "$SANDBOX/guard_under_test.sh" > "$SANDBOX/guard_with_helper.sh"
+reset
+before=$(grep -c . "$SANDBOX/log/history" 2>/dev/null || print 0)
+FAKE_PS_IDLE="bsdports amber" FAKE_FREE=$CLEAR ksh "$SANDBOX/guard_with_helper.sh" >/dev/null 2>&1 || true
+after=$(grep -c . "$SANDBOX/log/history" 2>/dev/null || print 0)
+check "the tick reached its history line" "$((before + 1))" "$after"
 
 rm -rf "$SANDBOX"
 [[ $fail -eq 0 ]] && print "\nALL PASS" || { print "\nFAILURES"; exit 1; }

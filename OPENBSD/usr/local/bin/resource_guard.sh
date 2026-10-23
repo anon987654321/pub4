@@ -248,7 +248,8 @@ fi
 # fields go last so the positions a recalibration reads stay where they are.
 rss=""
 for app in $CORE $OPTIONAL; do
-  kb=$(ps -o rss= -U "$app" 2>/dev/null | awk '{ s += $1 } END { printf "%d", s }')
+  # A shed app has no processes and ps exits 1; that is 0M, not a reason to end the tick.
+  kb=$(ps -o rss= -U "$app" 2>/dev/null | awk '{ s += $1 } END { printf "%d", s }') || kb=0
   rss="$rss rss_$app=$(( ${kb:-0} / 1024 ))M"
 done
 echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) load=$load mem_avail=${mem_avail_pct}% shed=$shed deploy=$deploying$rss" \

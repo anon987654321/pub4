@@ -3,11 +3,10 @@
 # Safe-ish: skips falcon/rc.d parents; targets test/seed/ci/cli patterns only.
 
 
-# set -e and pipefail: a failed step inside a manual deploy used to continue
-# to the next one, and with only set -e a failed `sysctl | awk` yields an empty
-# string that the caller then compares against nothing.
-set -e
-set -o pipefail
+# No shell options here. resource_guard.sh dot-sources this file, so a top-level
+# `set -o pipefail` stayed on in the guard's own shell: `ps -U amber` exits 1 once
+# amber is shed, the guard's rss pipeline failed, its set -e ended every tick before
+# the shed and restore logic, and on 2026-10-23 vm23 ran with no guard from 15:45.
 stale_ci_cleanup() {
   typeset load=${1:-0}
   typeset mem_free=${2:-100}
