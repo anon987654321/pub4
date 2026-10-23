@@ -49,8 +49,11 @@ module Master
       end
 
       GEM_DIRS = [".local/share/gem", ".gem"].freeze
-      STAGE1_PROMISES = "stdio rpath wpath cpath proc exec inet dns tty unveil prot_exec error"
-      STAGE2_PROMISES = "stdio rpath wpath cpath proc exec inet dns tty prot_exec error"
+      # flock and fattr: MASTER locks its process, constitution and scan files with flock(2), and
+      # write_atomic chmods each temp file. Without them pledge(2)'s error promise answers ENOSYS, and
+      # OPERATOR.sh's scan on vm23 failed every lock and atomic write, then refused the sync.
+      STAGE1_PROMISES = "stdio rpath wpath cpath fattr flock proc exec inet dns tty unveil prot_exec error"
+      STAGE2_PROMISES = "stdio rpath wpath cpath fattr flock proc exec inet dns tty prot_exec error"
       # Used only by the model-command worker, never by the trusted parent.
       # OpenBSD refuses setuid/setgid execs when execpromises is active.
       EXEC_PROMISES = STAGE2_PROMISES

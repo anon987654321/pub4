@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
-require "master"
+require_relative "test_helper"
 
 class PledgeProfileTest < Minitest::Test
   def test_profiles_have_declared_capabilities
@@ -83,6 +82,15 @@ class PledgeProfileTest < Minitest::Test
     assert_includes source, 'gem_root = File.join(RbConfig::CONFIG.fetch("libdir"), "ruby", "gems",'
     assert_includes Master::Ground::Pledge::EXEC_PROMISES.split, "exec"
     refute_includes Master::Ground::Pledge::EXEC_PROMISES.split, "unveil"
+  end
+
+  # The trusted runtime takes locks and chmods its atomic writes; pledge(2) answers ENOSYS without these.
+  # Stage 2 narrows stage 1, since pledge can only take promises away.
+  def test_the_runtime_promises_cover_locks_and_file_modes
+    stage1, stage2 = [Master::Ground::Pledge::STAGE1_PROMISES, Master::Ground::Pledge::STAGE2_PROMISES].map(&:split)
+
+    [stage1, stage2].each { |promises| assert_empty %w[flock fattr] - promises }
+    assert_empty stage2 - stage1
   end
 
   def test_unknown_profile_is_rejected
