@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "json"
 require "net/http"
 require "open3"
@@ -158,16 +159,51 @@ module Master
           # `agy --model <model>`. A provider catalogue therefore grows and shrinks
           # the pool without a models.yml edit.
           def agy_catalog_models
-            return @agy_catalog_models if defined?(@agy_catalog_models)
+            remember_agy_catalog unless defined?(@agy_catalog_models)
+            @agy_catalog_models
+          end
 
+          # Asking `agy models` took 1.5s of every boot, so the listing is kept for a day in
+          # .master/agy_models.json, keyed by the binary's path and mtime: an upgraded agy is asked again.
+          AGY_CATALOG_TTL_S = 86_400
+
+          def remember_agy_catalog
             binary = agy_binary
-            return @agy_catalog_models = [] unless agy_binary_available?(binary)
-
-            output = run_probe(binary, "models")
-            @agy_catalog_models = parse_agy_models(output).map { |id| "agy:#{id}" }.uniq
+            @agy_catalog_models = agy_binary_available?(binary) ? agy_catalog_for(binary) : []
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "model_router.pool.agy_catalog")
             @agy_catalog_models = []
+          end
+
+          def agy_catalog_for(binary)
+            path = Master::Io::Exec.cli_binary(binary) || binary
+            key = [path, File.mtime(path).to_i]
+            cached = read_agy_catalog(key)
+            return cached if cached
+
+            listed = parse_agy_models(run_probe(binary, "models")).map { |id| "agy:#{id}" }.uniq
+            write_agy_catalog(key, listed) unless listed.empty?
+            listed
+          end
+
+          def agy_catalog_file = File.join(Master::ROOT, ".master", "agy_models.json")
+
+          def read_agy_catalog(key)
+            file = agy_catalog_file
+            return unless File.file?(file) && Time.now - File.mtime(file) < AGY_CATALOG_TTL_S
+
+            data = JSON.parse(File.read(file))
+            data["models"] if data["key"] == key && data["models"].is_a?(Array)
+          rescue JSON::ParserError, SystemCallError => e
+            Master::Ground::Swallow.log(e, context: "model_router.pool.agy_catalog_cache")
+            nil
+          end
+
+          def write_agy_catalog(key, models)
+            FileUtils.mkdir_p(File.dirname(agy_catalog_file))
+            File.write(agy_catalog_file, JSON.generate(key:, models:))
+          rescue SystemCallError => e
+            Master::Ground::Swallow.log(e, context: "model_router.pool.agy_catalog_cache")
           end
 
           def agy_binary
