@@ -125,13 +125,14 @@ module Master
       # The first step of every /fix: lay out the tree and let the model say what it would
       # reshape, before any Law scans. Inconclusive is reported and the run goes on.
       def first_read(deliberation:, bus:, targets:, persist: true)
-        return {} if ENV["MASTER_FIX_TREE"] == "0"
+        # An absent/inconclusive current read must not fall back to hints from an older run.
+        results = Array(targets).to_h { |target| [target.to_s, []] }
+        return results if ENV["MASTER_FIX_TREE"] == "0"
         unless deliberation
           Master::Trace::Dmesg.status("tree0", "no model lane, first read skipped")
-          return {}
+          return results
         end
 
-        results = {}
 
         reasoning = Master::Fix::TreeReasoning.new(agent: deliberation.agent, root: Master.repo_root, bus:)
         targets.each do |tree_target|

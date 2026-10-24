@@ -161,7 +161,7 @@ end
     ENV.delete("MASTER_FIX_TREE")
     ENV.delete("MASTER_FIX_STRUCTURAL_REVIEW")
     calls = []
-    proposal = Master::Fix::TreeReasoning::Proposal.new(
+    proposal = Master::Fix::TreeProposals::Proposal.new(
       kind: "merge", paths: ["lib/a.rb", "lib/b.rb"], law: "SINGULARITY", reason: "one concept"
     )
     tree_result = Master::Fix::TreeReasoning::Result.new(
@@ -202,6 +202,37 @@ end
                structural: "MASTER_FIX_STRUCTURAL_REVIEW" }.fetch(key)
       value.nil? ? ENV.delete(name) : ENV[name] = value
     end
+  end
+
+
+  def test_a_disabled_first_read_does_not_reuse_stale_tree_hints
+    old_tree = ENV["MASTER_FIX_TREE"]
+    old_review = ENV["MASTER_FIX_STRUCTURAL_REVIEW"]
+    ENV["MASTER_FIX_TREE"] = "0"
+    ENV.delete("MASTER_FIX_STRUCTURAL_REVIEW")
+    deliberation = Struct.new(:agent).new(Object.new)
+    captured = nil
+    fake_review = Object.new
+    fake_review.define_singleton_method(:call) do |target:, persist:, first_read_proposals:|
+      captured = [target, persist, first_read_proposals]
+      Master::Fix::StructuralReview::Result.new(
+        state: :answered, summary: "0 findings", findings: [], dropped: 0
+      )
+    end
+    registry = Master::CLI::CommandRegistry
+
+    first_read = registry.send(:first_read, deliberation:, bus: nil, targets: ["MASTER"], persist: false)
+    Master::Fix::StructuralReview.stub(:new, ->(**_kwargs) { fake_review }) do
+      registry.send(
+        :structural_review, deliberation:, bus: nil, targets: ["MASTER"],
+        persist: false, first_read_results: first_read
+      )
+    end
+
+    assert_equal ["MASTER", false, []], captured
+  ensure
+    old_tree.nil? ? ENV.delete("MASTER_FIX_TREE") : ENV["MASTER_FIX_TREE"] = old_tree
+    old_review.nil? ? ENV.delete("MASTER_FIX_STRUCTURAL_REVIEW") : ENV["MASTER_FIX_STRUCTURAL_REVIEW"] = old_review
   end
 
   def test_cli_treats_every_non_done_fix_terminal_as_incomplete
