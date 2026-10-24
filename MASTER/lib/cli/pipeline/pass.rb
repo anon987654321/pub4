@@ -602,8 +602,12 @@ def default_apply?(*) = false
 
         def semantic_note(gaps)
           gaps = (gaps || {}).to_h
-          missing = gaps.fetch(:semantic_inconclusive, gaps.fetch("semantic_inconclusive", {})).to_h
-          "preview semantic: INCONCLUSIVE, #{missing.size} file(s) not measured by model-backed laws" if missing.any?
+          inconclusive = gaps.fetch(:semantic_inconclusive, gaps.fetch("semantic_inconclusive", {})).to_h
+          pending = gaps.fetch(:semantic_pending, gaps.fetch("semantic_pending", {})).to_h
+          parts = []
+          parts << "INCONCLUSIVE #{inconclusive.size} file(s)" if inconclusive.any?
+          parts << "PENDING #{pending.size} file(s)" if pending.any?
+          "preview semantic: #{parts.join("; ")}; model-backed coverage incomplete" if parts.any?
         end
 
         def preview_structure_row(structure)

@@ -418,7 +418,7 @@ module Master
       def preview(target = @root)
         @pass_runner.reset_gaps!
         files = @file_collector.collect(target)
-        violations = @pass_runner.violations(files)
+        violations = @pass_runner.preview_violations(files)
         by_law = violations.group_by { |v| v[:law].to_s }.transform_values(&:size)
         by_file = violations.group_by { |v| v[:file].to_s }.transform_values(&:size)
         structure = @sweeps.filter_map do |sweep|

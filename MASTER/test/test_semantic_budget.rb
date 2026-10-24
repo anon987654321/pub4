@@ -118,6 +118,18 @@ class TestSemanticBudget < Minitest::Test
     assert_equal 2, @model.calls.size
   end
 
+  def test_preview_reads_only_its_semantic_budget_and_does_not_advance_the_cursor
+    corpus = files
+
+    found = preview_violations(corpus)
+
+    assert_equal 2, @model.calls.size, "preview must obey the same bounded read allowance"
+    assert_equal 4, semantic_pending.size, "unread semantic files must be visible as pending"
+    assert_equal 2, found.count { |row| row[:law] == "MODEL" }
+    refute File.exist?(Master::Fix::FixLoop::StreamCursor.file(@root)),
+           "a read-only preview must not advance the persistent semantic cursor"
+  end
+
   def test_later_passes_read_what_earlier_ones_left_and_every_file_is_read_once
     corpus = files
     streaming_observation(corpus, @root, 1, from_now(30))

@@ -111,7 +111,7 @@ module Master
 
           # A file read here has its rows replaced by the whole reading. Its new findings go to the rule
           # stage after the stream rather than to a worker, which may hold the file now.
-          def read_put_off(raw, put_off:, deadline:)
+          def read_put_off(raw, put_off:, deadline:, advance_cursor: true)
             due = StreamCursor.semantic_order(@root, put_off.uniq)
             budget = pass_semantic_budget
             read = []
@@ -124,9 +124,25 @@ module Master
               end
             end
 
-            settle_semantic(due, read)
+            settle_semantic(due, read, advance_cursor:)
             raw
           end
+
+          # A preview measures deterministic findings across the corpus but makes only
+          # one pass-budget of semantic reads. Pending files remain visible as gaps.
+          # Unlike repair, preview must not move the persistent cursor used by future runs.
+          def preview_violations(files)
+            paths = Array(files)
+            @scan_total = paths.size
+            put_off = []
+            raw = semantic_deferred(put_off) do
+              paths.flat_map { |path| violations_for(path) }
+            end
+            resolve_violations(
+              read_put_off(raw, put_off:, deadline: nil, advance_cursor: false)
+            )
+          end
+          public :preview_violations
 
           def semantic_turn?(budget, deadline)
             budget.open? && !RunBudget.stopping && !(deadline && Time.now >= deadline)
@@ -137,10 +153,10 @@ module Master
             raw.reject { |row| row[:file].to_s == relative } + rows
           end
 
-          def settle_semantic(due, read)
+          def settle_semantic(due, read, advance_cursor: true)
             return if due.empty?
 
-            StreamCursor.mark_semantic(@root, read.last) if read.any?
+            StreamCursor.mark_semantic(@root, read.last) if advance_cursor && read.any?
             note_pending(due - read)
             read.each { |path| semantic_pending.delete(path.delete_prefix("#{@root}/")) }
             Master::Trace::Dmesg.status(
