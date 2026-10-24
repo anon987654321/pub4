@@ -72,7 +72,7 @@ class DillaTest < Minitest::Test
   def test_the_tracked_tree_is_the_engine_its_data_and_a_readme
     tracked, status = Open3.capture2("git", "ls-files", ".", chdir: DIR)
     skip "not a git checkout" unless status.success?
-    assert_equal %w[.gitignore ENGINE_NOTES.md README.md data/dilla.json data/music_theory.json data/recovered_music.json data/showcase.json dilla.rb dilla.wav], tracked.lines.map(&:strip).sort
+    assert_equal %w[.gitignore ENGINE_NOTES.md README.md REFERENCE_STUDY.md data/dilla.json data/music_theory.json data/recovered_music.json data/showcase.json dilla.rb dilla.wav], tracked.lines.map(&:strip).sort
   end
 
   def test_no_artist_band_song_or_book_is_named_anywhere
@@ -116,7 +116,7 @@ class DillaTest < Minitest::Test
   end
 
   def test_the_data_has_only_what_the_engine_reads
-    assert_equal %w[arp bus_effects comp default_layers default_profile drum_patterns echo essential groove_profiles kick_styles kits master mix modal_patches nasty_vcs noise organ play_profiles progressions sonitex stages stereo strum tape voices], DATA.keys.sort
+    assert_equal %w[ambient arp bus_effects comp default_layers default_profile drum_patterns echo essential groove_profiles kick_styles kits master mix modal_patches nasty_vcs noise organ play_profiles progressions sonitex stages stereo strum tape voices], DATA.keys.sort
   end
 
   def test_showcase_uses_dark_harmony_with_richer_instrument_layers_and_dilla_drums
@@ -149,22 +149,28 @@ class DillaTest < Minitest::Test
       assert_includes DATA.fetch("sonitex").fetch("presets").keys, section.fetch("sonitex")
       assert_operator section.fetch("sonitex_instances"), :>=, 2
       assert_operator section.fetch("sonitex_instances"), :<=, 3
-      assert_equal "rhodes_mark1", section.fetch("voice")
-      assert_equal "rhodes_tine_wurli", section.fetch("melody_voice")
       assert_equal "kit_dust", section.fetch("kit")
       assert_includes DATA.fetch("kits").keys, section.fetch("kit")
       assert_equal false, section.fetch("echo")
       assert_equal 0, section.fetch("echo_reverb")
-      assert_equal 5, section.fetch("layers").size
-      layer_voices = section.fetch("layers").map { |layer| layer.fetch("voice") }
-      assert_empty %w[prophet_warm dub_bass dx_ep_glass rhodes_tine_wurli juno_strings] - layer_voices
-      assert(section.fetch("layers").any? { |layer| layer["notes"] == "bass" }, "a low-end bass layer is required")
-      families = layer_voices.map { |name| DATA.fetch("voices").fetch(name).fetch("family") }.uniq
-      assert_includes families, "moog"
-      assert_includes families, "rhodes"
-      section.fetch("layers").each do |layer|
-        assert_includes DATA.fetch("voices").keys, layer.fetch("voice")
-        assert_equal 0, layer.fetch("transpose", 0) % 12
+      if section.fetch("name") == "Nylon Room"
+        assert_equal "nylon_guitar", section.fetch("voice")
+        assert_equal "steel_guitar", section.fetch("melody_voice")
+        assert_empty section.fetch("layers"), "the guitar feature remains a deliberate lean arrangement"
+      else
+        assert_equal "rhodes_mark1", section.fetch("voice")
+        assert_equal "rhodes_tine_wurli", section.fetch("melody_voice")
+        assert_equal 5, section.fetch("layers").size
+        layer_voices = section.fetch("layers").map { |layer| layer.fetch("voice") }
+        assert_empty %w[prophet_warm dub_bass dx_ep_glass rhodes_tine_wurli juno_strings] - layer_voices
+        assert(section.fetch("layers").any? { |layer| layer["notes"] == "bass" }, "a low-end bass layer is required")
+        families = layer_voices.map { |name| DATA.fetch("voices").fetch(name).fetch("family") }.uniq
+        assert_includes families, "moog"
+        assert_includes families, "rhodes"
+        section.fetch("layers").each do |layer|
+          assert_includes DATA.fetch("voices").keys, layer.fetch("voice")
+          assert_equal 0, layer.fetch("transpose", 0) % 12
+        end
       end
       texture = DATA.fetch("groove_profiles").fetch(section.fetch("profile")).fetch("texture")
       assert_equal 0, texture.fetch("detune")

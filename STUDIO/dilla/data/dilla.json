@@ -3898,7 +3898,8 @@
       "polypad": -0.1,
       "strings": 0.1,
       "dub": 0,
-      "organ": 0
+      "organ": 0,
+      "guitar": 0.35
     },
     "spread": 0.5,
     "low_below": 52,
@@ -4713,8 +4714,8 @@
         "triangle"
       ],
       "detune": [
-        -7,
-        7,
+        -6,
+        6,
         -3,
         3
       ],

@@ -268,7 +268,7 @@ uses broad audio characteristics and never loads reference audio or separated st
 the generated composition. Tempo estimates can be ambiguous between half-time and
 double-time, and Demucs stems can contain bleed and artifacts.
 
-## J Dilla reference study
+## Rhythmic reference study
 
 The evidence-based research notes, provenance warnings, and measurement plan for the two current
 reference mixes are in [REFERENCE_STUDY.md](REFERENCE_STUDY.md). That document distinguishes
