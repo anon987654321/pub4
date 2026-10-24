@@ -3,6 +3,7 @@
 require "digest"
 require "fileutils"
 require "json"
+require "set"
 require_relative "repair_outcomes"
 
 module Master
