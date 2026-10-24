@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "open3"
+require "rbconfig"
 require "review/scan/law_dsl"
 require_relative "../lib/operator/law_reach"
 
@@ -20,6 +22,14 @@ class TestLawRegistryAudit < Minitest::Test
   end
 
   def audit = Master::Review::Scan::LawRegistryAudit.new(root: Master::ROOT)
+
+  def test_audit_declares_its_set_dependency_in_a_fresh_process
+    lib = File.expand_path("../lib", __dir__)
+    script = "require 'review/scan/law_registry_audit'; abort 'set unavailable' unless defined?(Set)"
+    output, status = Open3.capture2e(RbConfig.ruby, "-I", lib, "-e", script)
+
+    assert status.success?, output
+  end
 
   def test_audit_reports_yaml_and_registry_counts
     report = audit.call
