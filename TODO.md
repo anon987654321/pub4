@@ -198,12 +198,12 @@ browser evidence recorded in the commit.
   postpro/three.js output, audio-analysis report, and failure cleanup. Compare against
   operator-supplied J Dilla reference tracks and document which musical characteristics are
   measured versus subjective.
-- [ ] `STUDIO/test/dilla_test.rb` has 7 failures on main (2026-10-23, 25 min run): README.md
-  names an artist (house rule: describe by character), prophet_pad unison detune 7 > 6 cents, a
-  render test refused by the take-overwrite guard, the tracked-tree listing, the showcase's
-  layer count (11, expected 8), a guitar voice group with no stereo place, and bar-drift
-  repetition. Some are tests behind the engine, some are rule breaks; decide each before the
-  dilla.wav overhaul.
+- [ ] `STUDIO/test/dilla_test.rb` recorded 7 failures on 2026-10-23 (25 min run). A
+  source/test follow-up was committed on 2026-10-24: the README reference heading, six-cent
+  `prophet_pad` detune, tracked-tree expectation, eight-section 92 BPM showcase, five Rhodes
+  layers, and guitar stereo group were reconciled. **Not rerun**; do not count these as closed
+  until the fast suite and full suite run. The prior render-overwrite and bar-drift findings are
+  still unverified. Decide each from fresh output before the `dilla.wav` overhaul.
 - [ ] Run STUDIO fast tests and at least one full render on the target machine. Record audio
   peaks/loudness, clipping, duration, BPM, file integrity, and visual output; do not infer
   quality from a successful process exit.
