@@ -31,7 +31,8 @@ class TestVpsState < Minitest::Test
 
     assert_includes source, 'Open3.capture2e("doas", "-n", broker, "deploy-status-read", app)'
     assert_includes source, 'broker = "/usr/local/sbin/pub4-admin"'
-    assert_includes source, 'STAMP_DIR == "/var/db/pub4"'
+    assert_includes source, 'status["unavailable"] ? "unavailable"'
+    assert_includes source, 'File.expand_path(STAMP_DIR) == "/var/db/pub4"'
   end
 
   def test_corrupt_in_progress_deploy_status_is_visible
