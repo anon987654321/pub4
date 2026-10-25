@@ -30,6 +30,11 @@ are not yet fully reconciled: `LawRegistryAudit` reports the specific gaps, and
 MASTER must not claim complete enforcement from a file count or registry count.
 A break gets a refusal with a reason, never a quiet patch.
 
+The `MASTER/bin/operator laws <ID>` view uses
+`Operator::LawInventory.catalogue_declaration` through `Master.load_laws` to
+search every catalogue section. `Master.law_entries` is intentionally narrower:
+it provides priority-ranked entries, not every declaration.
+
 The kernel also forbids simulation. MASTER may not claim it read a file without
 showing the content and its hash, claim a change without the diff, or claim
 completion without the command output. A model, a network or a speech worker
