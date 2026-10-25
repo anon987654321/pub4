@@ -94,7 +94,16 @@ module Master
 
         tail = File.open(path, "rb") do |file|
           file.seek(-max_bytes, IO::SEEK_END)
-          file.read(max_bytes)
+          start = file.pos
+          bytes = file.read(max_bytes)
+          if start.positive?
+            file.seek(start - 1, IO::SEEK_SET)
+            unless file.read(1) == "\n"
+              first_newline = bytes.index("\n")
+              bytes = first_newline ? bytes.byteslice(first_newline + 1..) : +"".b
+            end
+          end
+          bytes || +"".b
         end
         File.open(path, "r+b") do |file|
           file.truncate(0)
