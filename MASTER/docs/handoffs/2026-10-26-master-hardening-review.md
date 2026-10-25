@@ -28,6 +28,10 @@ A further code trace found two provider-health issues and one OpenBSD visibility
 
 All newly added and modified tests remain unexecuted. No runtime PASS is claimed; the exact focused test list and per-tree INCONCLUSIVE state are recorded in root `TODO.md`. No deployment, Vercel retry, or OpenBSD host action was performed.
 
+## Follow-on Swallow log compaction
+
+The standalone error logger now locks append+rotation, reserves space before append, compacts each rotated backup to a bounded tail, and retains only five bounded generations. Its pruning filter excludes the `.lock` sidecar so it cannot unlink the active lock inode. Added a rotation/retention regression test in `MASTER/test/test_swallow.rb`, not yet run.
+
 ## Follow-on shared JSONL retention pass
 
 Added `Master::Trace::Log.append_jsonl` to own bounded private append, rotation, sidecar locking, symlink refusal, and per-record size caps. Reused it for provider health/quarantine, incident notes, Phoenix provenance, model metrics, OpenTelemetry trace output, and the tool-invocation audit. Existing smaller caps are preserved by passing them through. The OpenTelemetry exporter now opens the trace path per bounded append rather than retaining a descriptor that could bypass rotation.
