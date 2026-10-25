@@ -100,6 +100,12 @@ class LayoutStabilityLintTest < Minitest::Test
 
   # --- sizing recognition -------------------------------------------------
 
+  def test_dimensioned_image_helpers_are_not_treated_as_raw_image_tags
+    refute_match LINT::MEDIA, 'responsive_image_tag attachment, alt: ""'
+    refute_match LINT::MEDIA, 'lazy_image_tag attachment, alt: "", width: 320, height: 320'
+    assert_match LINT::MEDIA, 'image_tag attachment, alt: ""'
+  end
+
   def test_explicit_attributes_count_as_sized
     assert LINT.sized?('<img src="a.png" width="80" height="80">')
     assert LINT.sized?('image_tag "a.png", width: 80, height: 80')
