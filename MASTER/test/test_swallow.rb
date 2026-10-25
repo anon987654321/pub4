@@ -50,7 +50,8 @@ class TestSwallow < Minitest::Test
       File.chmod(0o600, lock_path)
 
       6.times do |index|
-        File.write(path, JSON.generate("entry" => index, "detail" => "x" * 1_000))
+        rows = 20.times.map { |n| JSON.generate("entry" => index * 20 + n) }.join("\\n") + "\\n"
+        File.write(path, rows)
         File.chmod(0o600, path)
         Master::Ground::Swallow.rotate!(path:, max_bytes: 128, keep: 2)
       end
@@ -58,6 +59,9 @@ class TestSwallow < Minitest::Test
       backups = Dir.glob("#{path}.*").reject { |candidate| candidate == lock_path }
       assert_equal 2, backups.size
       assert backups.all? { |backup| File.size(backup) <= 128 }
+      backups.each do |backup|
+        File.readlines(backup, chomp: true).each { |line| JSON.parse(line) }
+      end
       assert File.file?(lock_path), "rotation retention must never remove the active lock inode"
     end
   end
