@@ -76,10 +76,13 @@ module Master
       include ::Master::Io::AtomicWrite
 
       def save!
-        FileUtils.mkdir_p(File.dirname(@path))
+        directory = File.dirname(@path)
+        FileUtils.mkdir_p(directory, mode: 0o700)
+        File.chmod(0o700, directory)
         errs = validate if respond_to?(:validate)
         warn "config: validation issues before save: #{errs.join('; ')}" if errs && !errs.empty?
-        write_atomic(@path, @settings.to_yaml, fsync: true)
+        # config.yml may include web_token and web_secret_key_base.
+        write_atomic(@path, @settings.to_yaml, fsync: true, mode: 0o600)
       end
 
       def reload!

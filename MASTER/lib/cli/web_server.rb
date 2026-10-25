@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../io/atomic_write"
+
 require "fileutils"
 require "open3"
 require "securerandom"
@@ -73,13 +75,20 @@ module Master
       end
       private_class_method :stable_secret
 
-      def persist_secret(secret)
-        config_path = File.join(Master::ROOT, ".master", "config.yml")
-        FileUtils.mkdir_p(File.dirname(config_path))
+      def persist_secret(secret, root: Master::ROOT)
+        config_dir = File.join(root, ".master")
+        config_path = File.join(config_dir, "config.yml")
+        FileUtils.mkdir_p(config_dir, mode: 0o700)
+        File.chmod(0o700, config_dir)
         existing = YAML.safe_load_file(config_path, permitted_classes: [Symbol], aliases: true) rescue {}
-        tmp_path = "#{config_path}.tmp"
-        File.write(tmp_path, existing.merge("web_secret_key_base" => secret).to_yaml)
-        File.rename(tmp_path, config_path)
+        # The file contains web_secret_key_base and web_token. An explicit mode
+        # prevents a fresh or pre-existing permissive file leaking bearer secrets.
+        Object.new.extend(Io::AtomicWrite).write_atomic(
+          config_path,
+          existing.merge("web_secret_key_base" => secret).to_yaml,
+          fsync: true,
+          mode: 0o600,
+        )
       end
       private_class_method :persist_secret
 

@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "stringio"
+require "tmpdir"
 
 class TestWebServer < Minitest::Test
   def test_openbsd_status_uses_dmesg_shape
@@ -58,4 +59,34 @@ class TestWebServer < Minitest::Test
       assert_nil env[key], "expected #{key} to be stripped from the spawn env"
     end
   end
+  def test_persist_secret_writes_private_config_and_tightens_existing_mode
+    Dir.mktmpdir("web-secret-mode") do |root|
+      Master::CLI::WebServer.send(:persist_secret, "s" * 64, root:)
+      path = File.join(root, ".master", "config.yml")
+      assert_equal 0o600, File.stat(path).mode & 0o777
+      assert_equal 0o700, File.stat(File.dirname(path)).mode & 0o777
+
+      File.chmod(0o644, path)
+      Master::CLI::WebServer.send(:persist_secret, "t" * 64, root:)
+      assert_equal 0o600, File.stat(path).mode & 0o777
+    end
+  end
+
+  def test_config_save_writes_private_file_mode
+    Dir.mktmpdir("ground-config-mode") do |root|
+      config = Master::Ground::Config.new(root)
+      config["web_token"] = "token-for-mode-test"
+      config.save!
+      path = File.join(root, ".master", "config.yml")
+
+      assert_equal 0o600, File.stat(path).mode & 0o777
+      assert_equal 0o700, File.stat(File.dirname(path)).mode & 0o777
+
+      File.chmod(0o644, path)
+      config.save!
+      assert_equal 0o600, File.stat(path).mode & 0o777
+    end
+  end
+
+
 end
