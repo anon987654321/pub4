@@ -18,7 +18,7 @@ class TestExampleScan < Minitest::Test
       out, status = Open3.capture2e(RbConfig.ruby, TOOL, dir)
 
       assert status.success?, out
-      assert_match(/\d+ rules registered/, out)
+      assert_match(/\d+ laws registered/, out)
       assert_match(%r{sample\.rb:4: \[TRAILING_WHITESPACE\]}, out)
       count = out[/^(\d+) finding\(s\)$/, 1]
       refute_nil count, out
