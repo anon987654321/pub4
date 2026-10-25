@@ -37,7 +37,8 @@ class TestRecoveryPubManifest < Minitest::Test
     assert ROOT.join("MASTER/data/recovery/legacy_manifest.yml").file?
   end
 
-  def test_recovery_contract_has_critical_items    contract = YAML.safe_load(ROOT.join("MASTER/data/recovery/pub_restore.yml").read, permitted_classes: [Date])
+  def test_recovery_contract_has_critical_items
+    contract = YAML.safe_load(ROOT.join("MASTER/data/recovery/pub_restore.yml").read, permitted_classes: [Date])
     ids = contract.fetch("critical_items").map { |item| item.fetch("id") }
 
     assert_includes ids, "mega_all_apps"
