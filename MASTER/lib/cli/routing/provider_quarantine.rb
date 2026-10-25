@@ -3,6 +3,7 @@
 require "json"
 require "fileutils"
 require "time"
+require_relative "provider_health"
 
 module Master
   module CLI
