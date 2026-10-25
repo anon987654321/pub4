@@ -153,8 +153,8 @@ Operator::CiGuard.run! do
     # you which app to update. This comment is a pointer, not a warning to keep
     # in mind — the keeping-in-mind is what failed twice.
     if Dir.glob("../brgen_*/test/**/*_test.rb").any?
-      test_glob = "{test,../brgen_*/test}/**/*_test.rb"
-      test_exclude = "{test,../brgen_*/test}/{system,dummy,fixtures}/**/*_test.rb"
+      test_glob = "{test,../brgen_*/test,../__shared/test}/**/*_test.rb"
+      test_exclude = "{test,../brgen_*/test,../__shared/test}/{system,dummy,fixtures}/**/*_test.rb"
       step "rails_test", "env FULL_COVERAGE=1 DEFAULT_TEST='#{test_glob}' DEFAULT_TEST_EXCLUDE='#{test_exclude}' bin/rails test"
     else
       step "rails_test", "bin/rails test"

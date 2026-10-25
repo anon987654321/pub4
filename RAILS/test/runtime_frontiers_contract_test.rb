@@ -35,10 +35,14 @@ class RuntimeFrontiersContractTest < Minitest::Test
   end
 
   def test_ractor_shareability_is_strict_during_tests
+    shared = File.read(File.join(ROOT, "__shared/config/environments/test.rb"))
+    assert_includes shared, "ActiveSupport::Ractors.unshareable_proc_action = :raise",
+                    "shared test environment does not fail loudly on unshareable Rails state"
+
     APPS.each do |app|
       source = read(app, "config/environments/test.rb")
-      assert_includes source, "ActiveSupport::Ractors.unshareable_proc_action = :raise",
-                      "#{app}: test environment does not fail loudly on unshareable Rails state"
+      assert_includes source, "__shared/config/environments/test.rb",
+                      "#{app}: test environment no longer loads the shared policy"
     end
   end
 

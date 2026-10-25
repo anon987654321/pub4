@@ -6,6 +6,13 @@
 # and recreated between test runs. Don't rely on the data there!
 
 Rails.application.configure do
+  # Ractor shareability failures must surface during tests, not as intermittent
+  # production-only errors. Keep this setting in the shared environment so all
+  # three applications enforce the same contract.
+  if defined?(ActiveSupport::Ractors) && ActiveSupport::Ractors.respond_to?(:unshareable_proc_action=)
+    ActiveSupport::Ractors.unshareable_proc_action = :raise
+  end
+
   # Settings specified here will take precedence over those in config/application.rb.
 
   # While tests run files are not watched, reloading is not necessary.
