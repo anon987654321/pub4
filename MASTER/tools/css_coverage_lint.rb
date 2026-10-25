@@ -3,6 +3,7 @@
 require_relative "../lib/operator/baseline_ratchet"
 
 require "set"
+require_relative "../checks/support/brgen_vertical_surfaces"
 
 module Operator
   # CSS drift, in both directions.
@@ -29,7 +30,7 @@ module Operator
   module CssCoverageLint
     RAILS_ROOT = File.expand_path("../../RAILS", __dir__)
     APPS = %w[amber brgen bsdports].freeze
-    TREES = (APPS + %w[shared]).freeze
+    TREES = (APPS + %w[__shared]).freeze
     OPT_OUT = "css_coverage: ok"
 
     # Applied by JS, by the framework, or by a check — never written in a stylesheet.
@@ -621,7 +622,7 @@ BASELINES = { "undefined_class" => 0, "unused_selector" => 89 }.freeze
           .gsub(%r{//[^\n]*}) { |line| " " * line.length }
     end
 
-    def engine_dirs = Dir.glob(File.join(RAILS_ROOT, "brgen/engines/*"))
+    def engine_dirs = EngineRoots.glob(RAILS_ROOT, "brgen", "")
 
     def rel(path) = path.to_s.sub("#{RAILS_ROOT}/", "")
 
