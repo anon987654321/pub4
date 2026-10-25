@@ -67,6 +67,11 @@ module Master
         EACCES
       /ix.freeze
 
+      LOCK_WAIT_SECONDS = 60
+      CAPTURE_DEADLINE_SECONDS = 900
+      CAPTURE_POLL_SECONDS = 0.25
+      CAPTURE_DRAIN_SECONDS = 1.0
+
       Result = Data.define(
         :ok,
         :changed,
@@ -365,6 +370,12 @@ module Master
         unless native_build_failure?(native_output)
           return fail_result("bundle native probe failed", output: join_output(output, native_output))
         end
+        unless native_output.match?(ABI_STALE_LINE) || @env["MASTER_DEPS_DISCARD_BUNDLE"] == "1"
+          return fail_result(
+            "bundle native probe failed (no ABI-stale evidence; gem store left intact)",
+            output: join_output(output, native_output),
+          )
+        end
 
         report("rebuilding native bundle extensions")
         return fail_result("stale native bundle cleanup failed") unless discard_stale_native_bundle!
@@ -437,6 +448,13 @@ module Master
       end
 
       def repair_native_bundle(previous_output)
+        unless previous_output.to_s.match?(ABI_STALE_LINE) || @env["MASTER_DEPS_DISCARD_BUNDLE"] == "1"
+          return fail_result(
+            "native bundle repair refused (no ABI-stale evidence; gem store left intact)",
+            output: previous_output,
+          )
+        end
+
         report("rebuilding native bundle extensions")
         return fail_result(
           "stale native bundle cleanup failed",
@@ -598,6 +616,7 @@ module Master
           "BUNDLE_USER_CONFIG" => File.join(bundle_config_root, "global"),
           "BUNDLE_PATH" => bundle_gems_path,
           "BUNDLE_DISABLE_SHARED_GEMS" => "1",
+          "BUNDLE_FROZEN" => "true",
         )
         without = @env["BUNDLE_WITHOUT"].to_s
         without = "tts" if without.empty? && @env["MASTER_SKIP_TTS"] == "1"
@@ -667,8 +686,14 @@ module Master
         path = bundle_gems_path
         return true unless File.directory?(path)
 
-        report("discarding stale native bundle #{path}")
-        FileUtils.rm_rf(path)
+        trash = "#{path}.stale-#{Process.pid}-#{Time.now.to_i}"
+        suffix = 0
+        while File.exist?(trash)
+          suffix += 1
+          trash = "#{path}.stale-#{Process.pid}-#{Time.now.to_i}-#{suffix}"
+        end
+        report("moving stale native bundle #{path} to #{trash}")
+        File.rename(path, trash)
         true
       rescue StandardError => e
         report("stale native bundle cleanup failed: #{e.class}: #{e.message}")
@@ -687,7 +712,7 @@ module Master
         @env["MASTER_LOW_RESOURCE"] == "1" ? 2 : 4
       end
 
-      # An ABI-stale bundle is repaired by wiping and reinstalling; only a
+      # An ABI-stale bundle is moved aside and reinstalled; only a
       # toolchain or header failure that survives that rebuild needs OS packages.
       SYSTEM_RECOVERY_MESSAGES = [
         "bundle install failed",
@@ -778,29 +803,79 @@ module Master
         :arch if @command_path.call("pacman")
       end
 
-      def with_lock
+      def with_lock(wait_seconds: LOCK_WAIT_SECONDS)
         lock_path = File.join(@home, ".master", "dependency.lock")
         FileUtils.mkdir_p(File.dirname(lock_path), mode: 0o700)
         File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |lock|
-          lock.flock(File::LOCK_EX)
+          deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + wait_seconds.to_f
+          until lock.flock(File::LOCK_EX | File::LOCK_NB)
+            if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+              raise "dependency lock held elsewhere over #{wait_seconds}s: #{lock_path}"
+            end
+            sleep [0.05, deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)].min
+          end
           yield
         end
       end
 
-      def capture(argv, chdir:, env:)
+      # Runs before Bundler activation, so this uses only spawn, pipes and
+      # monotonic clock primitives. A stopped package manager must not wedge boot.
+      def capture(argv, chdir:, env:, deadline_seconds: CAPTURE_DEADLINE_SECONDS)
         stdout_r, stdout_w = IO.pipe
         stderr_r, stderr_w = IO.pipe
-        pid = Process.spawn(env, *argv, chdir:, out: stdout_w, err: stderr_w)
+        pid = Process.spawn(env, *argv, chdir:, out: stdout_w, err: stderr_w, pgroup: true)
         stdout_w.close
         stderr_w.close
-        stdout_thread = Thread.new { stdout_r.read }
-        stderr_thread = Thread.new { stderr_r.read }
-        _pid, status = Process.wait2(pid)
-        [status.success?, stdout_thread.value, stderr_thread.value]
+        stdout_thread = Thread.new { stdout_r.read rescue "" }
+        stderr_thread = Thread.new { stderr_r.read rescue "" }
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + [deadline_seconds.to_f, 0.01].max
+        killed = false
+        status = nil
+
+        loop do
+          pair = Process.waitpid2(pid, Process::WNOHANG)
+          if pair
+            status = pair.last
+            break
+          end
+          remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          if remaining <= 0
+            kill_capture_group(pid)
+            _waited, status = Process.waitpid2(pid, 0)
+            killed = true
+            break
+          end
+          sleep [CAPTURE_POLL_SECONDS, remaining].min
+        end
+
+        # A successful parent can leave a grandchild holding an inherited pipe.
+        # Bound that drain too, then terminate the group rather than waiting forever.
+        unless killed || (stdout_thread.join(CAPTURE_DRAIN_SECONDS) && stderr_thread.join(CAPTURE_DRAIN_SECONDS))
+          kill_capture_group(pid)
+          killed = true
+          [stdout_r, stderr_r].each { |io| io.close unless io.closed? }
+          stdout_thread.join(0.2)
+          stderr_thread.join(0.2)
+          stdout_thread.kill if stdout_thread.alive?
+          stderr_thread.kill if stderr_thread.alive?
+        end
+
+        stdout = stdout_thread.value.to_s
+        stderr = stderr_thread.value.to_s
+        stderr = join_output(stderr, "#{argv.first} process group killed after #{deadline_seconds}s deadline") if killed
+        [!killed && status&.success? == true, stdout, stderr]
       ensure
         [stdout_r, stdout_w, stderr_r, stderr_w].compact.each do |io|
           io.close unless io.closed?
         end
+      end
+
+      def kill_capture_group(pid)
+        Process.kill("TERM", -pid)
+        sleep 0.2
+        Process.kill("KILL", -pid)
+      rescue Errno::ESRCH, Errno::EPERM
+        nil
       end
 
       # Not Io::Exec.which: Exec loads Swallow, which loads json, and this runs

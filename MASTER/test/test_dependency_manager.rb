@@ -158,7 +158,6 @@ class TestDependencyManager < Minitest::Test
     assert result.success?
     bundle_env = @commands.last[2]
     %w[
-      BUNDLE_FROZEN
       BUNDLE_DEPLOYMENT
       BUNDLE_VERSION
       RUBYOPT
@@ -173,6 +172,7 @@ class TestDependencyManager < Minitest::Test
     assert_match(%r{/\.master/bundler/[0-9a-f]{16}/global$}, bundle_env["BUNDLE_USER_CONFIG"])
     assert_match(%r{/\.master/bundler/[0-9a-f]{16}/gems$}, bundle_env["BUNDLE_PATH"])
     assert_equal "1", bundle_env["BUNDLE_DISABLE_SHARED_GEMS"]
+    assert_equal "true", bundle_env["BUNDLE_FROZEN"]
   end
 
   # The store key hashes the git common dir, so a process that has not loaded
@@ -255,7 +255,7 @@ class TestDependencyManager < Minitest::Test
     assert_match(%r{/\.master/bundler/[0-9a-f]{16}/global$}, env["BUNDLE_USER_CONFIG"])
     assert_match(%r{/\.master/bundler/[0-9a-f]{16}/gems$}, env["BUNDLE_PATH"])
     assert_equal "1", env["BUNDLE_DISABLE_SHARED_GEMS"]
-    assert_nil env["BUNDLE_FROZEN"]
+    assert_equal "true", env["BUNDLE_FROZEN"]
     assert_equal "tts", env["BUNDLE_WITHOUT"], "an explicit BUNDLE_WITHOUT is the caller's choice and survives"
     assert_nil env["BUNDLE_VERSION"]
   end
@@ -320,7 +320,7 @@ class TestDependencyManager < Minitest::Test
     assert_equal [RbConfig.ruby, "-rbundler/setup", "-rjson", "-e", "exit"], @commands[3].first
   end
 
-  def test_stale_native_bundle_cleanup_removes_private_gems
+  def test_stale_native_bundle_is_moved_aside_without_losing_bytes
     manager = MANAGER.new(
       root: @root,
       env: { "PATH" => "/bin", "MASTER_AUTO_INSTALL" => "1", "MASTER_AUTO_BUNDLE" => "1" },
@@ -329,11 +329,57 @@ class TestDependencyManager < Minitest::Test
     )
     path = manager.send(:bundle_gems_path)
     FileUtils.mkdir_p(path)
-    File.write(File.join(path, "stale.bundle"), "homebrew")
+    marker = File.join(path, "stale.bundle")
+    File.write(marker, "homebrew")
 
     assert manager.send(:discard_stale_native_bundle!)
     refute Dir.exist?(path)
+    stale_path = Dir.glob("#{path}.stale-*").fetch(0)
+    assert_equal "homebrew", File.read(File.join(stale_path, "stale.bundle"))
   end
+
+  def test_non_abi_native_probe_failure_keeps_the_private_store
+    manager = fake_manager([
+      [true, "dependencies satisfied", ""],
+      [false, "", "No such file or directory"],
+    ])
+    path = manager.send(:bundle_gems_path)
+    FileUtils.mkdir_p(path)
+    marker = File.join(path, "preserve.bundle")
+    File.write(marker, "keep me")
+
+    result = manager.send(:ensure_bundle)
+
+    refute result.success?
+    assert_match(/no ABI-stale evidence/, result.message)
+    assert_equal "keep me", File.read(marker)
+    assert_equal 2, @commands.length
+  end
+
+  def test_capture_kills_a_hung_process_group_at_its_deadline
+    manager = MANAGER.new(root: @root, env: { "PATH" => ENV.fetch("PATH", "") }, out: StringIO.new, home: @root)
+    ok, _stdout, stderr = manager.send(
+      :capture, [RbConfig.ruby, "-e", "sleep 30"],
+      chdir: @root, env: {}, deadline_seconds: 0.35,
+    )
+
+    refute ok
+    assert_match(/process group killed after 0.35s deadline/, stderr)
+  end
+
+  def test_dependency_lock_wait_is_bounded
+    manager = MANAGER.new(root: @root, env: {}, out: StringIO.new, home: @root)
+    path = File.join(@root, ".master", "dependency.lock")
+    FileUtils.mkdir_p(File.dirname(path))
+    File.open(path, File::RDWR | File::CREAT, 0o600) do |lock|
+      lock.flock(File::LOCK_EX)
+      error = assert_raises(RuntimeError) do
+        manager.send(:with_lock, wait_seconds: 0.08) { flunk "must not enter locked body" }
+      end
+      assert_match(/dependency lock held elsewhere/, error.message)
+    end
+  end
+
 
   def test_bundler_path_rejects_stale_spec_without_executable
     manager = MANAGER.new(root: @root, env: { "PATH" => "/bin" }, out: StringIO.new, home: @root)
