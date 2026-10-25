@@ -364,7 +364,9 @@ append, rejects symlink targets and oversized records, and defaults to the share
 25 MiB log ceiling; sensitive telemetry uses private file and directory modes.
 The canonical activity/evidence streams, provider health/quarantine, the incident
 notebook, Phoenix provenance, metrics, OpenTelemetry traces and the tool audit use this path. The Swallow error log is
-standalone-loadable and maintains its own equivalent locked, capped writer. A
+standalone-loadable and maintains its own equivalent locked, capped writer. The
+/fix conflict journal keeps its three bounded generations under the same kind of
+sidecar lock, and the Reflexion ledger atomically retains its newest 50 rows. A
 cap is a retention boundary, not a guarantee that every historic row is kept;
 billing ledgers and generated-media manifests need their own explicit retention
 decision rather than being silently truncated.
