@@ -379,7 +379,7 @@ class CritiqueImplementationTest < Minitest::Test
   def test_brgen_new_post_is_progressive_and_photo_first
     form = read("brgen/app/views/posts/new.html.erb")
     controller = read("__shared/frontend/post_progressive_controller.js")
-    boot = read("__shared/frontend/stimulus_boot_social.js")
+    boot = read("__shared/frontend/stimulus_boot_brgen.js")
     importmap = read("__shared/config/importmap_baseline.rb")
     css = brgen_css_source
 
