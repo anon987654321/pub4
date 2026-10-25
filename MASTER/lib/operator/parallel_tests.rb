@@ -96,7 +96,8 @@ module Operator
       File.open(worker.fetch(:log), "a") do |file|
         file.puts "test-worker-timeout0: exceeded #{worker_timeout}s; terminating process group"
       end
-      out.puts "test-worker-timeout0: pid=#{worker.fetch(:pid)} elapsed=#{elapsed.round(1)}s log=#{worker.fetch(:log)}"
+      last_test = last_started_test(worker)
+      out.puts "test-worker-timeout0: pid=#{worker.fetch(:pid)} elapsed=#{elapsed.round(1)}s last_test=#{last_test || "unknown"} log=#{worker.fetch(:log)}"
       terminate(worker)
     end
 
@@ -148,6 +149,16 @@ module Operator
       complete = String.new(text[/\A.*\n/m].to_s)
       worker[:offset] += complete.bytesize
       complete.force_encoding(Encoding::UTF_8).scrub.lines(chomp: true)
+    end
+
+    def last_started_test(worker)
+      last = nil
+      File.foreach(worker.fetch(:log), encoding: "UTF-8", invalid: :replace, undef: :replace) do |line|
+        last = line.delete_prefix("test-start0: ").strip if line.start_with?("test-start0: ")
+      end
+      last
+    rescue Errno::ENOENT
+      nil
     end
 
     def summary_present?(worker)
