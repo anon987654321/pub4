@@ -52,6 +52,20 @@ class TestLawInventory < Minitest::Test
     end
   end
 
+  def test_council_rows_uses_shared_yaml_loader
+    observed_path = nil
+    loader = lambda do |path, **_options|
+      observed_path = path
+      { "personas" => [{ "name" => "Operator" }, { "name" => "Reviewer" }] }
+    end
+
+    Master.stub(:load_yaml, loader) do
+      rows = Operator::LawInventory.council_rows
+      assert_equal %w[Operator Reviewer], rows.map { |row| row.fetch("name") }
+    end
+    assert_equal Operator::LawInventory::COUNCIL_PATH, observed_path
+  end
+
   def test_health_reach_uses_the_live_law_audit
     row = Operator::LawInventory.health("ONE_SOURCE")
     refute_nil row
