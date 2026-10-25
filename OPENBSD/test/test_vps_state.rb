@@ -26,6 +26,19 @@ class TestVpsState < Minitest::Test
     end
   end
 
+  def test_corrupt_in_progress_deploy_status_is_visible
+    Dir.mktmpdir do |dir|
+      status_dir = File.join(dir, "deploy_status")
+      FileUtils.mkdir_p(status_dir)
+      File.write(File.join(status_dir, "amber.json"), "{broken json")
+
+      output = state(dir)
+
+      assert_match(/deploy0 at amber: state=corrupt step=status metadata corrupt/, output)
+      assert_match(/JSON::ParserError/, output)
+    end
+  end
+
   def test_recorded_alerts_show_newest_first_and_a_quiet_box_shows_none
     Dir.mktmpdir do |dir|
       refute_includes state(dir), "alert0"
