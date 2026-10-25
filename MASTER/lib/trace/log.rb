@@ -73,7 +73,14 @@ module Master
           begin
             rotate(path, [limit - line.bytesize, 0].max)
             size = File.file?(path) ? File.size(path) : 0
-            raise IOError, "JSONL rotation failed to honor #{limit}-byte cap" if size + line.bytesize > limit
+            if size + line.bytesize > limit
+              unless attempts.zero? && reclaim(path)
+                raise IOError, "JSONL rotation failed to honor #{limit}-byte cap"
+              end
+
+              attempts += 1
+              retry
+            end
 
             File.open(path, File::WRONLY | File::CREAT | File::APPEND, mode) do |io|
               offset = 0
