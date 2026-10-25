@@ -65,6 +65,33 @@ class TestProviderQuarantineWiring < Minitest::Test
     end
   end
 
+  def test_quarantine_clear_in_active_log_supersedes_rotated_entry
+    Dir.mktmpdir("quarantine-rotated-clear") do |dir|
+      now = Time.utc(2026, 10, 26, 12, 0, 0)
+      path = File.join(dir, "quarantine.ndjson")
+      File.write("#{path}.1", JSON.generate(
+        "model" => "provider-a",
+        "reason" => "earlier failure",
+        "quarantined_at" => (now - 10).iso8601,
+        "expires_at" => (now + 300).iso8601,
+        "duration" => 300,
+      ) + "\n")
+      File.write(path, JSON.generate(
+        "model" => "provider-a",
+        "cleared_at" => now.iso8601,
+        "action" => "clear",
+      ) + "\n")
+      subject = Routing::ProviderQuarantine.new(
+        health: StubHealth.new(0.9),
+        path:,
+        now: -> { now },
+      )
+
+      refute subject.quarantined?("provider-a"),
+             "the active clear event must beat the retained previous-generation quarantine"
+    end
+  end
+
   def test_operator_clear_releases_quarantine_even_with_same_second_timestamps
     Dir.mktmpdir("quarantine-clear") do |dir|
       now = Time.utc(2026, 10, 26, 12, 0, 0)
