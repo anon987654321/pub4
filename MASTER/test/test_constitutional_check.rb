@@ -25,6 +25,17 @@ class TestConstitutionalCheck < Minitest::Test
     refute Master::Fix::ConstitutionalCheck.admit_clean?(findings)
   end
 
+  def test_priority_law_ids_come_from_the_canonical_law_reader
+    expected = Master.law_entries(root: Master::ROOT).filter_map do |entry|
+      next unless entry["tier"].to_s == "constitutional"
+      next unless entry.key?("priority") && Integer(entry["priority"]) <= 3
+
+      entry["id"].to_s
+    end
+
+    assert_equal expected, Master::Fix::ConstitutionalCheck.priority_constitutional_ids
+  end
+
   def test_veto_is_blocking
     findings = [{ severity: :veto, tier: "constitutional" }]
     refute Master::Fix::ConstitutionalCheck.admit_clean?(findings)

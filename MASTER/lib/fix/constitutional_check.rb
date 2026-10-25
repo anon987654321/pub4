@@ -24,7 +24,8 @@ module Master
         return true if tier.to_s == "constitutional"
 
         law_id = (row[:law_id] || row["law_id"] || row[:id] || row["id"]).to_s
-        priority_constitutional_ids.include?(law_id)
+        ids = priority_constitutional_ids
+        ids.nil? || ids.include?(law_id)
       end
 
       def residual_errors(findings)
@@ -36,18 +37,25 @@ module Master
       end
 
       def priority_constitutional_ids
-        @priority_constitutional_ids ||= begin
-          path = File.join(Master::ROOT, "data", "laws.yml")
-          data = YAML.safe_load_file(path, aliases: true)
-          data.select do |_id, spec|
-            spec.is_a?(Hash) &&
-              spec["tier"].to_s == "constitutional" &&
-              spec.key?("priority") &&
-              Integer(spec["priority"]) <= 3
-          end.keys.map(&:to_s)
-        rescue StandardError
-          %w[CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS SINGULARITY LINEARITY]
+        return @priority_constitutional_ids if @priority_constitutional_ids_loaded
+
+        @priority_constitutional_ids = begin
+          entries = Master.law_entries(root: Master::ROOT)
+          ids = entries.filter_map do |entry|
+            next unless entry["tier"].to_s == "constitutional"
+            next unless entry.key?("priority") && Integer(entry["priority"]) <= 3
+
+            entry["id"].to_s
+          end
+          raise "priority constitutional law catalogue is empty" if ids.empty?
+
+          ids.freeze
+        rescue StandardError => e
+          warn("law0: priority constitutional catalogue unavailable; clean completion blocked (#{e.class})")
+          nil
         end
+        @priority_constitutional_ids_loaded = true
+        @priority_constitutional_ids
       end
     end
   end
