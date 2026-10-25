@@ -50,7 +50,6 @@ module Master
           FEATURE_ENVY
           FEW_ARGUMENTS
           FINAL_NEWLINE
-          KEYWORD_ARGS
           LAW_OF_DEMETER
           LAZY_CLASS
           LONG_LINE
@@ -75,9 +74,6 @@ module Master
           TRAILING_COMMENT
           TRANSFORM_KEYS
           TYPOGRAPHIC_EXCELLENCE
-          duplicate_code
-          magic_number
-          sycophancy
         ].freeze
 
         Bucket = Data.define(:name, :findings)
