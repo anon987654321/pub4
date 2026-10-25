@@ -2,48 +2,36 @@
 
 require_relative "test_helper"
 
-# `laws.yml` declares the shape of the pitch; `MASTER/README.md` is the pitch.
-# Nothing held the two together, so the declaration was one of the two keys
-# data_reach counted as read by no code at all — and a structure nobody checks
-# is a structure the next edit silently breaks.
-#
-# The README is the Innovasjon Norge case, so the movements and their order are
-# load-bearing rather than cosmetic: idea, then business, then ask, then
-# horizon. Four of the five name themselves in a heading. `proof` is the fifth
-# and shows rather than names — it is the console transcript and the loop, under
-# a heading that says "Under the hood" — so this asserts the section count
-# carries it and leaves its wording alone.
+# The business case is maintained in the README, not in laws.yml: a proposal
+# is documentation, not another constitutional law registry. Keep the actual
+# business-direction section structured so the funding route and decision
+# horizon remain visible as the idea evolves.
 class TestBusinessPlanStructure < Minitest::Test
   README = File.join(Master::ROOT, "README.md")
+  EXPECTED = [
+    "Competitive landscape",
+    "Business hypothesis and strategy",
+    "Pilot and funding route",
+    "Ask and evidence",
+    "Horizon",
+  ].freeze
 
-  def plan = Master.law("business_plan")
+  def readme = File.read(README)
 
-  # Any heading below the title. The movements are the law; which level they are
-  # written at is hierarchy, and the README sets its sections one step under its
-  # own `#` rather than two.
-  def headings
-    File.readlines(README).grep(/\A##+\s/).map { |line| line.sub(/\A#+\s*/, "").strip }
+  def business_section
+    match = readme.match(/^## External assessment and business direction\s*\n(.*?)(?=^## |\z)/m)
+    refute_nil match, "README must retain the business-direction section"
+    match[1]
   end
 
-  def test_the_readme_carries_one_section_per_declared_movement
-    assert_equal Array(plan["structure"]).size, headings.size,
-                 "README sections: #{headings.join(' | ')}"
+  def test_business_direction_has_the_five_current_sections_in_order
+    actual = business_section.lines.grep(/^###\s/).map { |line| line.sub(/^###\s*/, "").strip }
+    assert_equal EXPECTED, actual
   end
 
-  def test_the_named_movements_appear_in_the_declared_order
-    named = Array(plan["structure"]).map(&:to_s) - ["proof"]
-    positions = named.map do |movement|
-      index = headings.index { |heading| heading.downcase.include?(movement) }
-      refute_nil index, "README has no heading for the #{movement} movement — #{headings.join(' | ')}"
-      index
-    end
-
-    assert_equal positions.sort, positions,
-                 "README movements are out of the order laws.yml declares: #{named.join(' -> ')}"
-  end
-
-  def test_the_ask_names_innovasjon_norge
-    assert_includes File.read(README), "innovasjonnorge.no",
-                    "business_plan.sources names the grant criteria; the ask must reach them"
+  def test_funding_route_is_named_without_claiming_eligibility
+    section = business_section
+    assert_includes section, "innovasjonnorge.no"
+    assert_includes section, "does not claim eligibility or approval"
   end
 end
