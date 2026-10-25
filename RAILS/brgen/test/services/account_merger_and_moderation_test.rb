@@ -17,6 +17,14 @@ class AccountMergerAndModerationTest < ActiveSupport::TestCase
   end
   teardown { ActsAsTenant.current_tenant = nil }
 
+  test "a guest and destination pair cannot have duplicate merge audit rows" do
+    AccountMerge.create!(guest_user: @guest, user: @member, status: "pending")
+    duplicate = AccountMerge.new(guest_user: @guest, user: @member, status: "pending")
+
+    refute duplicate.valid?
+    assert_includes duplicate.errors.attribute_names, :guest_user_id
+  end
+
   test "merge hands the guest's posts and signals to the member and records itself" do
     source_password_digest = @guest.password_digest
     post = Post.create!(title: "hei", content: "nabolagsfest på lørdag", user: @guest)
