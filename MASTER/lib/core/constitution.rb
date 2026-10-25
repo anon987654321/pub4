@@ -554,8 +554,8 @@ module Master::Core
                      else
                        []
                      end
-          if declared.empty?
-            raise "soul.yml under #{@root} declares no absolute.sacred_paths — refusing to derive empty sacred paths"
+          if declared.empty? || declared.any? { |path| path.to_s.strip.empty? }
+            raise "soul.yml under #{@root} declares no valid absolute.sacred_paths — refusing to derive empty sacred paths"
           end
 
           declared.map(&:to_s).map do |path|
