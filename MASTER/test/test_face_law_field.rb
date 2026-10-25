@@ -1,5 +1,6 @@
-require "fileutils"
 # frozen_string_literal: true
+
+require "fileutils"
 
 require_relative "test_helper"
 
