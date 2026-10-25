@@ -10,7 +10,7 @@ class AiController < ApplicationController
   # and the optional single STUDIO photograph.
 
   rate_limit to: 10, within: 10.minutes, only: %i[suggest_outfits generate_outfit],
-             by: -> { "u#{Current.user&.id}" },
+             by: -> { Current.user ? "u#{Current.user.id}" : "ip#{request.remote_ip}" },
              with: -> { redirect_to items_path, alert: t("shared.flash.rate_limited") }
 
   def analyze_item
