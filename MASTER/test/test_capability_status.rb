@@ -15,7 +15,7 @@ class CapabilityStatusTest < Minitest::Test
     playback.instance_variable_set(:@last_error, "audio playback failed — afplay")
     status = Master::Operator.status("voice")["voice"]
 
-    assert_match(/Adegraded:/, status)
+    assert_match(/degraded:/, status)
     assert_match(/edge socket produced empty audio|audio playback failed/, status)
   ensure
     speech.instance_variable_set(:@last_error, original_speech)

@@ -67,7 +67,7 @@ tts:
   # slightly brisker (+4%) with neutral pitch; the prior values (-5%, -12Hz)
   # were tuned for the former voice. Christopher's operator_log below is unchanged.
   # operator_log line below was tuned by ear and is untouched.
-  default_rate: "+4%"
+  default_rate: "-6%"
   default_pitch: "+0Hz"
   operator_log:
     voice: christopher

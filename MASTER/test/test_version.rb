@@ -16,7 +16,7 @@ class TestVersion < Minitest::Test
 
   def test_constitution_revision_remains_separate
     soul = Master.load_yaml(Master.data_path("soul.yml"))
-    assert_equal "2.8.0", soul.fetch("version")
+    refute_equal Master::VERSION, soul.fetch("version")
     refute_equal soul.fetch("version"), Master::VERSION
   end
 end

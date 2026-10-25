@@ -383,7 +383,7 @@ class TestLawsPhysicalOrder < Minitest::Test
   # authority boundary. Tokens live in tokens.yml and must not re-enter this file.
   ORDER = %w[
     CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS SINGULARITY LINEARITY
-    PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES markdown_style visual_identity_contract
+    PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES INTER_MODEL_CONTRACT languages markdown_style visual_identity_contract
     prose zsh detection_calibration phantom_recovery transformation_policy self_test veto_patterns anti_patterns
     architecture runtime_policy law_deps plugins law_ratchets law_map browser_policy
     face_ascii personal_privacy

@@ -17,7 +17,7 @@ module Master
         "neural" => "en-US-ChristopherNeural",
         "persona_affects_text_only" => true,
         "stream_live_default" => true,
-        "default_rate" => "+4%",
+        "default_rate" => "-6%",
         "default_pitch" => "+0Hz",
         "operator_log" => { "voice" => "christopher", "rate" => "-10%", "pitch" => "+0Hz" },
         "rotation" => %w[christopher],
