@@ -8,10 +8,13 @@ checked before anyone has to notice it is not.**
 
 The checks judge the three Rails apps, brgen, amber and bsdports, together with
 the MASTER web face. One runner, `runner.rb`, executes them. The registry,
-`checks.yml`, declares them, and the runner adds no knowledge of its own. A
-registry row names a class to run, or a script, and the line to print when the
-check passes. The registry also records which checks are covered by a composite,
-so `--all` skips those leaves rather than running the same work twice.
+`checks.yml`, declares them, and the runner adds no Law authority. A registry
+row names a class to run, or a script, and the line to print when the check
+passes. The registry also records which checks are covered by a composite, so
+`--all` skips those leaves rather than running the same work twice. Before any
+check starts, the runner validates the registry root and refuses a row that
+has neither `class:` nor `script:`. A headless row is a configuration error,
+not an outcome from a check that actually ran.
 
 ## What they check
 
