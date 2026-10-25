@@ -3,6 +3,7 @@
 require_relative "../lib/operator/baseline_ratchet"
 
 require "set"
+require_relative "../checks/support/brgen_vertical_surfaces"
 require_relative "../lib/trace/dmesg"
 
 module Operator
@@ -32,7 +33,7 @@ module Operator
   module AssetUrlLint
     RAILS_ROOT = File.expand_path("../../RAILS", __dir__)
     APPS = %w[amber brgen bsdports].freeze
-    TREES = (APPS + %w[shared]).freeze
+    TREES = (APPS + %w[__shared]).freeze
 
     # The baseline is what is left after the one live bug this lint found was
     # fixed. amber's layout links `/lightgallery.css`, amber has no
@@ -177,15 +178,22 @@ module Operator
     # is why a shared stylesheet needs the file in shared or in all three.
     def roots_for(path)
       tree = tree_of(path)
-      return [ File.join(RAILS_ROOT, tree, "public"), File.join(RAILS_ROOT, "__shared", "public"),
-              File.join(RAILS_ROOT, tree, "app/assets") ] if APPS.include?(tree)
+      shared = [File.join(RAILS_ROOT, "__shared", "public"),
+                File.join(RAILS_ROOT, "__shared", "app/assets")]
+      return shared unless APPS.include?(tree)
 
-      [ File.join(RAILS_ROOT, "__shared", "public"), File.join(RAILS_ROOT, "__shared", "app/assets") ]
+      roots = [File.join(RAILS_ROOT, tree, "public"), *shared,
+               File.join(RAILS_ROOT, tree, "app/assets")]
+      engine_root = engine_root_for(path)
+      roots << File.join(engine_root, "app/assets") if engine_root
+      roots
     end
 
     def tree_of(path)
       rel = path.sub("#{RAILS_ROOT}/", "")
-      rel.start_with?("brgen/engines/") ? "brgen" : rel.split("/").first
+      return "brgen" if rel.start_with?("brgen/engines/") || engine_root_for(path)
+
+      rel.split("/").first
     end
 
     def body_of(path)
@@ -194,7 +202,12 @@ module Operator
       css.gsub(%r{/\*.*?\*/}m, " ").gsub(%r{(?<!:)//[^\n]*}, " ")
     end
 
-    def engine_dirs = Dir.glob(File.join(RAILS_ROOT, "brgen/engines/*"))
+    def engine_dirs = EngineRoots.glob(RAILS_ROOT, "brgen", "")
+
+    def engine_root_for(path)
+      EngineRoots::PATHS.values.map { |root| File.join(RAILS_ROOT, root) }
+                 .find { |root| path.start_with?("#{root}/") }
+    end
 
     def rel(path) = path.to_s.sub("#{RAILS_ROOT}/", "")
 
