@@ -65,4 +65,12 @@ then starts each suite in its own process because the tools define constants at 
 would collide in a shared process. The script `check.rb` parses every Ruby file, checks the
 sibling-import boundary and verifies the entry points have load guards.
 
+The Replicate schema tasks are explicit network checks, not part of the offline default suite:
+`cd STUDIO && rake replicate:schema_audit` compares the capability table with live schemas,
+and `rake replicate:schema_snapshot` stores a dated local evidence snapshot. They require
+`REPLICATE_API_TOKEN` or `REPLICATE_API_KEY`. Without credentials they report inconclusive and
+exit 3 rather than succeeding without measuring a schema. Run them only in an environment
+where provider access is authorized; a source-only check or historical snapshot is not live
+schema proof.
+
 The folder `visual/` holds the generator behind `photograph.rb`.
