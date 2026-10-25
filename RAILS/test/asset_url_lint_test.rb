@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "tmpdir"
 require_relative "../../MASTER/tools/asset_url_lint"
 
 # The gap css_coverage_lint left. It measures class names in both directions and
@@ -71,12 +72,19 @@ class AssetUrlLintTest < Minitest::Test
   end
 
   def test_remote_and_inline_references_are_not_assets
-    sheet = File.join(L::RAILS_ROOT, "__shared/app/assets/stylesheets/_fonts.scss")
-    refs = L.refs_in(sheet)
+    Dir.mktmpdir("asset-url-lint") do |dir|
+      sheet = File.join(dir, "application.scss")
+      File.write(sheet, <<~SCSS)
+        .fixture {
+          background-image: url("/images/owned.png");
+          mask-image: url("https://cdn.example.test/icon.svg");
+          cursor: url("//cdn.example.test/cursor.cur");
+          content: url("data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=");
+        }
+      SCSS
 
-    refute_empty refs
-    refute refs.any? { |r| r.start_with?("data:", "http", "//") },
-           "a CDN fallback and a data: URI are not files this tree owns"
+      assert_equal ["/images/owned.png"], L.refs_in(sheet)
+    end
   end
 
   # An empty scan reads as a clean tree, which is the failure mode every check here
@@ -84,5 +92,9 @@ class AssetUrlLintTest < Minitest::Test
   def test_it_reads_something
     assert_operator L.sheets.size, :>, 100, "the stylesheet glob stopped matching"
     assert_operator L.refs_in(File.join(L::RAILS_ROOT, "__shared/app/assets/stylesheets/_fonts.scss")).size, :>=, 2
+    assert L.sheets.any? { |path| path.include?("/brgen_marketplace/") },
+           "asset scan misses extracted marketplace engine surfaces"
+    assert L.sheets.any? { |path| path.include?("/__shared/") },
+           "asset scan misses shared-engine surfaces"
   end
 end
