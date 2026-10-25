@@ -79,19 +79,30 @@ def deploy_in_progress(app)
   # /var/db/pub4/deploy_status is root-only by design. On vm23 read through the
   # fixed broker instead of treating denied direct reads as "no deploy". A
   # custom stamp directory remains directly readable for tests and local drills.
-  if Deploy::Environment.on_vps? && STAMP_DIR == "/var/db/pub4"
+  if Deploy::Environment.on_vps? && File.expand_path(STAMP_DIR) == "/var/db/pub4"
     broker = "/usr/local/sbin/pub4-admin"
-    raise "pub4-admin missing or untrusted" unless
-      File.file?(broker) && !File.symlink?(broker) && File.executable?(broker)
+    unless File.file?(broker) && !File.symlink?(broker) && File.executable?(broker)
+      return unavailable_deploy_status(path, "pub4-admin missing or untrusted")
+    end
 
-    output, status = Open3.capture2e("doas", "-n", broker, "deploy-status-read", app)
-    raise "deploy status broker failed (exit #{status.exitstatus})" unless status.success?
+    output, result = Open3.capture2e("doas", "-n", broker, "deploy-status-read", app)
+    return unavailable_deploy_status(path, "status broker failed (exit #{result.exitstatus})") unless result.success?
 
-    record = JSON.parse(output)
+    begin
+      record = JSON.parse(output)
+    rescue JSON::ParserError => e
+      return corrupt_deploy_status(path, e.class.to_s)
+    end
   else
     return nil unless File.file?(path)
 
-    record = JSON.parse(File.read(path))
+    begin
+      record = JSON.parse(File.read(path))
+    rescue JSON::ParserError => e
+      return corrupt_deploy_status(path, e.class.to_s)
+    rescue SystemCallError => e
+      return unavailable_deploy_status(path, e.class.to_s)
+    end
   end
 
   return nil if record.nil?
@@ -102,8 +113,10 @@ def deploy_in_progress(app)
 
   record["stale"] = !pid_alive?(record["pid"])
   record
+rescue SystemCallError => e
+  unavailable_deploy_status(path, e.class.to_s)
 rescue StandardError => e
-  corrupt_deploy_status(path, e.class.to_s)
+  unavailable_deploy_status(path, e.class.to_s)
 end
 
 def corrupt_deploy_status(path, reason)
@@ -112,6 +125,17 @@ def corrupt_deploy_status(path, reason)
     "corrupt" => true,
     "stale" => true,
     "step" => "status metadata corrupt (#{reason})",
+    "pid" => nil,
+    "error" => "#{path}: #{reason}",
+  }
+end
+
+def unavailable_deploy_status(path, reason)
+  {
+    "state" => "UNAVAILABLE",
+    "unavailable" => true,
+    "stale" => true,
+    "step" => "status read unavailable (#{reason})",
     "pid" => nil,
     "error" => "#{path}: #{reason}",
   }
@@ -216,7 +240,7 @@ else
   if m[:deploy_in_progress]
     status = m[:deploy_in_progress]
 
-    state = status["corrupt"] ? "corrupt" : status["stale"] ? "stale" : "running"
+    state = status["corrupt"] ? "corrupt" : status["unavailable"] ? "unavailable" : status["stale"] ? "stale" : "running"
     puts Deploy::Dmesg.line("deploy0", "master", "state=#{state} step=#{status['step']} pid=#{status['pid']}")
   end
   payload[:apps].each do |row|
@@ -235,7 +259,7 @@ else
     end
     if row[:deploy_in_progress]
       status = row[:deploy_in_progress]
-      state = status["corrupt"] ? "corrupt" : status["stale"] ? "stale" : "running"
+      state = status["corrupt"] ? "corrupt" : status["unavailable"] ? "unavailable" : status["stale"] ? "stale" : "running"
       puts Deploy::Dmesg.line(
         "deploy0",
         row[:app],
