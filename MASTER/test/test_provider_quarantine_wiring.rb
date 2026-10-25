@@ -84,4 +84,28 @@ class TestProviderQuarantineWiring < Minitest::Test
     assert_nil router.next_escalation_tier("strong")
     assert_nil router.next_escalation_tier("not-a-tier")
   end
+  def test_router_outcome_reaches_quarantine_health_and_compute_pool
+    Dir.mktmpdir("router-quarantine-wiring") do |dir|
+      health = StubHealth.new(0.9)
+      quarantine = Routing::ProviderQuarantine.new(
+        health:, path: File.join(dir, "quarantine.ndjson")
+      )
+      router = Routing::ModelRouter.allocate
+      router.instance_variable_set(:@provider_health, health)
+      router.instance_variable_set(:@quarantine, quarantine)
+      compute_rows = []
+      pool = Object.new
+      pool.define_singleton_method(:record) { |**row| compute_rows << row }
+      router.instance_variable_set(:@compute_pool, pool)
+
+      router.record_provider_outcome(model: "good-model", status: :success, latency_ms: 12)
+
+      assert_equal 1, health.recorded.size
+      assert_equal "good-model", health.recorded.first[:model]
+      assert_equal 1, compute_rows.size
+      assert_equal :success, compute_rows.first[:status]
+    end
+  end
+
+
 end
