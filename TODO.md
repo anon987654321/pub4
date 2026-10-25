@@ -52,12 +52,14 @@ browser evidence recorded in the commit.
   recognised from their files. The parallel test runner now polls worker exit status, applies a
   configurable 1,800-second per-worker deadline (`MASTER_TEST_WORKER_TIMEOUT`), terminates a
   timed-out worker process group, reports the offending PID/log and includes the final worker
-  log in its report; relay-thread exceptions are surfaced, and a worker without the final Minitest
-  summary cannot pass merely by exiting with status zero. Worker logs record the active test
-  (`test-start0`) so a timeout or abrupt exit identifies the last test entered. Regression tests
-  cover a hung worker and a successful-but-incomplete exit. These source changes are not yet
-  runtime-verified: run `MASTER_TEST_START_MARKERS=1 MASTER_TEST_JOBS=1 rake test` to isolate a
-  serial hang, then `MASTER_TEST_JOBS=3 rake test`, and record exact test/output before closing.
+  log in its report; relay-thread exceptions are surfaced, and a worker without a final Minitest
+  summary, matching verbose result count, and matching test-start count cannot pass with exit 0.
+  The normal `rake test` task uses this supervisor for both one-worker diagnostics and parallel
+  runs. Worker logs record the active test (`test-start0`) so a timeout or abrupt exit identifies
+  the last test entered. Regression tests cover a hung worker, an incomplete exit, and the
+  supervised one-worker route. These source changes are not yet runtime-verified: run
+  `MASTER_TEST_START_MARKERS=1 MASTER_TEST_JOBS=1 rake test` to isolate a serial hang, then
+  `MASTER_TEST_JOBS=3 rake test`, and record exact test/output before closing.
   No trial has reached a repair, so repair
   quality remains unmeasured on both MASTER and RAILS. Run /fix again only when the operator asks.
 - [ ] Validate the OpenBSD Operator CLI and /help against the requested plain dmesg style,
@@ -134,10 +136,10 @@ browser evidence recorded in the commit.
 - [ ] Verify the shared OAuth callback end to end in Brgen and Amber after the Amber
   federated-identity migration runs: provider-subject reuse (including BankID without email and
   legacy placeholder recovery), account cleanup, email-verification boundaries, and real
-  configured Google/Facebook/Vipps/BankID callbacks. The 2026-10-25 source pass adds atomic
-  provider-row creation, recovery of eligible unverified non-BankID synthetic placeholders,
-  merge-pair model validation with Brgen/Amber regression tests, and user/IP-scoped Amber AI
-  rate limiting. These commits are source changes, not runtime evidence. Regenerate Amber's schema,
+  configured Google/Facebook/Vipps/BankID callbacks. The 2026-10-25 source pass adds
+  provider-row uniqueness recovery, recovery of eligible unverified non-guest non-BankID synthetic
+  placeholders, merge-pair model validation with Brgen/Amber regression tests, and user/IP-scoped
+  Amber AI rate limiting. These commits are source changes, not runtime evidence. Regenerate Amber's schema,
   run both app suites, and exercise real configured provider callbacks before closing this item.
 - [ ] Execute the shared guest-to-account conversion tests in Brgen and Amber after Amber's
   `account_merges` and federated-identity migrations run. Verify anonymous post presentation
