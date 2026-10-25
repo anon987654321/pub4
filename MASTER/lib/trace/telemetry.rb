@@ -11,7 +11,6 @@ module Master
 
       @enabled = false
       @tracer = nil
-      @trace_path = nil
 
       class << self
         attr_reader :enabled, :tracer
@@ -20,7 +19,6 @@ module Master
       def self.bootstrap!(root:, service: "master")
         return if @enabled
         path = File.join(root, TRACE_PATH)
-        @trace_path = path
         OpenTelemetry::SDK.configure do |c|
           c.service_name = service
           c.add_span_processor(
