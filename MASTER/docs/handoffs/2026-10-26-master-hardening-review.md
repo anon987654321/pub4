@@ -28,6 +28,10 @@ A further code trace found two provider-health issues and one OpenBSD visibility
 
 All newly added and modified tests remain unexecuted. No runtime PASS is claimed; the exact focused test list and per-tree INCONCLUSIVE state are recorded in root `TODO.md`. No deployment, Vercel retry, or OpenBSD host action was performed.
 
+## Remaining telemetry retention boundaries
+
+Local STUDIO `clips.jsonl` and per-subject billed-render `ledger.jsonl` remain open for an explicit archive/retention contract; they carry user-owned render and billing provenance and must not be silently truncated. `Trace::Ledger::Reflexion` retains only 50 rows but rewrites them on append, so concurrent writers may lose a row. These surfaces are not covered by the bounded-writer changes above and need separate source/test work before the telemetry pass is complete.
+
 ## Follow-on JSONL compaction integrity
 
 The shared and standalone compactors now discard a partial leading line when a bounded byte tail begins mid-record. Regression tests parse active and rotated JSONL; the Swallow test checks a nonempty tail of complete records and confirms the lock sidecar survives pruning. The changes have not been runtime-tested.
