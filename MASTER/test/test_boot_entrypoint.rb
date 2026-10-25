@@ -62,6 +62,19 @@ class TestBootEntrypoint < Minitest::Test
     refute env::SUPPORTED_RUBY_MIN <= Gem::Version.new("3.2.9")
   end
 
+  def test_inline_program_does_not_reexec_when_the_selected_ruby_version_matches
+    candidate = { path: "/different/path/to/ruby", version: Gem::Version.new(RUBY_VERSION) }
+    root = File.expand_path("../..", __dir__)
+
+    Operator::RubyRunner.stub(:best_available_ruby, candidate) do
+      Master::Boot::Entrypoint.stub(:same_file?, false) do
+        assert_nil Master::Boot::Entrypoint.reexec_best_ruby!(
+          root:, env: {}, out: StringIO.new, argv: ["-e", "puts :ok"], program: "-e",
+        )
+      end
+    end
+  end
+
   def test_preloaded_wrong_bundler_reexecs_into_a_clean_process
     Dir.mktmpdir("master-entrypoint") do |root|
       File.write(File.join(root, "Gemfile"), "source \"https://rubygems.org\"\n")
