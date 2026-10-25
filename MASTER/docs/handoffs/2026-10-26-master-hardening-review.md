@@ -29,7 +29,7 @@ Regression tests were added or extended in these areas: constitution, dependency
 
 **The Ruby suite, focused tests, syntax checks, and the requested live boot have not been run in this integration environment.** Source changes and tests existing in GitHub are not evidence that they pass. Do not mark this tranche verified until commands produce captured output on a compatible checkout/interpreter.
 
-The latest combined commit status observed for `73a45cc7a9800808fb7658e95dc3dceacf73bd67` shows the Vercel context failing with a `build-rate-limit` target. That signal is neither a Ruby test result nor proof of a code defect, and no Vercel rerun is requested here.
+The latest combined commit status observed for `08c095f97cd3495269d6643bf3bc8918016bbf8d` shows the Vercel context failing with a `build-rate-limit` target. That signal is neither a Ruby test result nor proof of a code defect, and no Vercel rerun is requested here.
 
 ## Required next verification
 
