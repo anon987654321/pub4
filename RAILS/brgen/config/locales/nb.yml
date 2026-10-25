@@ -108,9 +108,6 @@ nb:
     opens_new_tab: "%{label} (åpnes i ny fane)"
   skip_to_content: Hopp til hovedinnhold
   home:
-    feed_views: Visninger og meldinger
-    feed_view: Innlegg
-    media_wall_view: Mediavegg
     new_posts:
       one: 1 nytt innlegg
       other: "%{count} nye innlegg"
