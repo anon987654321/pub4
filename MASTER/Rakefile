@@ -40,11 +40,12 @@ Rake::TestTask.new(:"test:serial") do |t|
   t.warning = false
 end
 
-desc "Run the MASTER suite across MASTER_TEST_JOBS processes (3 by default)"
+desc "Run the MASTER suite through the supervised worker runner (3 jobs by default)"
 task :test do
   require_relative "lib/operator/parallel_tests"
-  next Rake::Task[:"test:serial"].invoke if Operator::ParallelTests.jobs == 1
 
+  # The one-job diagnostic path must retain timeout, active-test, and completion
+  # checks too; calling the raw Rake::TestTask here can mistake exit(0) for a full run.
   loader = File.join(Gem.loaded_specs.fetch("rake").full_gem_path, "lib", "rake", "rake_test_loader.rb")
   options = ["-v", *ENV.fetch("TESTOPTS", "").split].uniq
   command = ->(files) { [RbConfig.ruby, "-Ilib:test", loader, *files, *options] }
