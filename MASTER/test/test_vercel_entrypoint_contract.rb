@@ -43,8 +43,8 @@ class TestVercelEntrypointContract < Minitest::Test
     assert_includes html, 'id="main"'
     assert_includes html, 'rel="stylesheet" href="/styles.css"'
     assert File.file?(css_path), "local stylesheet must exist"
-    assert_equal 4, html.scan(/<h3\\b/i).length, "every source tree needs a navigable heading"
-    refute_match(/\\sstyle=/i, html, "inline styles are disallowed by the Content Security Policy")
+    assert_equal 4, html.scan(/<h3\b/i).length, "every source tree needs a navigable heading"
+    refute_match(/\sstyle=/i, html, "inline styles are disallowed by the Content Security Policy")
     assert_includes html, "does not boot MASTER"
     assert_includes html, "does not prove that the runtime or production host is healthy"
     refute_match(/<(?:script|iframe|object|embed)\b/i, html, "repository index must remain static")
