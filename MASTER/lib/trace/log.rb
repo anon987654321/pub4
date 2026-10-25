@@ -40,7 +40,7 @@ module Master
       # One bounded, private, process-safe JSONL append path for local telemetry.
       # The sidecar lock covers both rotate and append because locking the data
       # inode is not enough once rotation renames it.
-      def self.append_jsonl(path, value, max_bytes: Event::MAX_BYTES, mode: 0o600, directory_mode: nil)
+      def self.append_jsonl(path, value, max_bytes: Event::MAX_BYTES, mode: 0o600, directory_mode: nil, sync: true)
         limit = Integer(max_bytes)
         raise ArgumentError, "JSONL byte limit must be positive" unless limit.positive?
 
@@ -76,7 +76,7 @@ module Master
           File.open(path, File::WRONLY | File::CREAT | File::APPEND, mode) do |io|
             io.write(line)
             io.flush
-            io.fsync
+            io.fsync if sync
           end
         ensure
           lock.flock(File::LOCK_UN) if lock
