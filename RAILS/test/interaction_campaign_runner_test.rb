@@ -308,7 +308,7 @@ class InteractionCampaignRunnerTest < Minitest::Test
     exercise_runtime_adapter(
       case_id: "RI-341",
       source_path: "MASTER/test/test_repair_loop_policy.rb",
-      source: "class RepairLoopFixtureTest; def test_RI_341_fix_repairs_known_small_defect_and_verifies; assert true; end; end\n",
+      source: "class RepairLoopFixtureTest\n  def test_RI_341_fix_repairs_known_small_defect_and_verifies\n    assert true\n  end\nend\n",
       adapter: {
         "runner" => "ruby_minitest",
         "path" => "MASTER/test/test_repair_loop_policy.rb",
