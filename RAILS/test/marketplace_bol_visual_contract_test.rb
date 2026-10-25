@@ -175,11 +175,15 @@ class MarketplaceBolVisualContractTest < Minitest::Test
   end
 
   def test_bol_geometry_tokens_are_explicit
-    css = File.read(CSS)
+    catalog = File.read(File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_marketplace_catalog.scss"))
+    header = File.read(HEADER_CSS)
+    commerce = File.read(File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_marketplace_commerce.scss"))
 
-    assert_includes css, "--bol-blue: #0000a3;"
-    assert_includes css, "--bol-max: 1248px;"
-    assert_includes css, "grid-template-columns: 176px 168px minmax(320px, 1fr) auto;"
-    assert_includes css, "grid-template-columns: 232px minmax(0, 1fr);"
+    # The accent is the canonical source of the marketplace blue; a fixed
+    # second navy would drift from the operator's declared vertical palette.
+    assert_includes catalog, "--bol-blue: var(--accent);"
+    assert_includes catalog, "--bol-max: 1248px;"
+    assert_includes header, "grid-template-columns: 176px 168px minmax(320px, 1fr) auto;"
+    assert_includes commerce, "grid-template-columns: 232px minmax(0, 1fr);"
   end
 end
