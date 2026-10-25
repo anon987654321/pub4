@@ -83,6 +83,10 @@ class UserPurgeJobTest < ActiveJob::TestCase
       ConversationParticipant.create!(conversation: conversation, user: @user)
       message = Message.create!(conversation: conversation, sender: @user, content: "private", message_type: "text")
 
+      location_ping = Dating::LocationPing.create!(
+        user: @user, city: @city, latitude: 60.39, longitude: 5.32,
+        expires_at: 1.minute.from_now
+      )
       notification = Notification.create!(user: @user, kind: "alert")
       assurance = IdentityAssurance.create!(user: @user, level: "account", source: "test")
       reputation = ReputationScore.create!(user: @user, scope: "global")
@@ -100,6 +104,7 @@ class UserPurgeJobTest < ActiveJob::TestCase
       purge!
 
       {
+        location_ping: Dating::LocationPing.exists?(location_ping.id),
         notification: Notification.exists?(notification.id),
         assurance: IdentityAssurance.exists?(assurance.id),
         reputation: ReputationScore.exists?(reputation.id),
