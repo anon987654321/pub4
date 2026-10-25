@@ -20,6 +20,18 @@ The glossary lives at MASTER/docs/synonyms.yml rather than MASTER/data/synonyms.
 
 Do not flatten skipped, inconclusive, and gap into one machine state. Skipped means the instrument did not run or did not measure its target; inconclusive means available evidence cannot settle the result; gap means a required instrument, input, or coverage item is absent. The preferred word in prose can be concise, but machine truth stays precise.
 
+## Architecture simplification follow-through (2026-10-25)
+
+The first Law-reader tranche is committed to `main`:
+
+- `28a39324417f6a8f2562abdd17a7b17bb7592205`: `Fix::ConstitutionalCheck` reads priority Law IDs through `Master.law_entries`, removes the hard-coded fallback list, and blocks clean completion when the catalogue cannot be resolved. A regression test compares the IDs against the canonical reader.
+- `68b6ea269c7e24a1ea770f75e43e69ec52303201`: `Fix::LawParity` uses the shared loaders for the catalogue and enforcement overlay and refuses an empty catalogue. A regression test covers the empty case.
+- `83a3a9b26b2e9ec704ad6f641d08271fccc68a7b`: `Operator::Ratchets` reads the law-trace ceiling through `Master.law("law_map")`; the existing ratchet test compares it to the declared value.
+
+These are source changes with regression tests added, **not verified test passes**. The Ruby commands have not been run in this session. Run the focused constitutional-check, LawParity and ratchet tests, then reader-singularity and law-trace checks, and record exact output before treating the tranche as verified.
+
+The architecture target is intentionally conservative: one canonical Law catalogue; executable Law definitions and scanner detectors that trace back to it; one scanner/finding contract; one repository-repair coordinator; one transaction path; and one operational check registry/runner. `Core::Fold` and `/fix` are different workflows today. Before merging or deleting any of `FixLoop`, `RepairLoop`, `Kernel`, `Mission`, `RunJournal`, `RunLedger` or `Transaction`, trace their callers and prove rollback, restart, delivery-failure and evidence semantics through tests. Do not edit the sacred `data/` or `lib/review/scan/` paths without the required authorization.
+
 ## Verified source facts as of this review
 
 - soul.yml declares version 2.9.1 and includes data/ among the sacred paths. Do not edit it or laws.yml as part of a terminology cleanup.

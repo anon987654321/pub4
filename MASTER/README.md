@@ -20,12 +20,15 @@ small: better judgment should reduce machinery, not create another orchestration
 
 Most AI is written in Python, chosen for its libraries more than its clarity.
 MASTER is written in Ruby, and that is the point. A law governs a system only
-when a human can read both the law and the code it judges, and Ruby reads like
-intention. The constitution therefore stays legible. One kernel, `data/soul.yml`,
-holds the unbreakable rule: preserve, then improve, and never break. Under it,
-`data/laws.yml` declares the working laws. Under that, the files in `law/` carry
-each law as executable code, with one example it must flag and one it must
-spare. A break gets a refusal with a reason, never a quiet patch.
+when a human can read both the Law and the code that enforces it, and Ruby reads
+like intention. The constitution therefore stays legible. `data/soul.yml` holds
+the constitutional absolutes; `data/laws.yml` is the canonical declared Law
+catalogue and execution policy. `law/` and `lib/review/scan/` hold executable
+definitions, detectors and registration. Those are enforcement mechanisms, not
+separate sources of normative authority. The catalogue and detector populations
+are not yet fully reconciled: `LawRegistryAudit` reports the specific gaps, and
+MASTER must not claim complete enforcement from a file count or registry count.
+A break gets a refusal with a reason, never a quiet patch.
 
 The kernel also forbids simulation. MASTER may not claim it read a file without
 showing the content and its hash, claim a change without the diff, or claim
@@ -69,6 +72,16 @@ add a constraint, add a rule. The spine does not grow.
 `/critique` are read-only. The pre-repair baseline is deliberately read-only,
 but it is a preflight stage, not a silent downgrade to dry-run. Explicit
 `--dry-run` plans and measures without writing.
+
+The architectural boundary matters: `Core::Fold` governs the general model-effect
+loop, while `/fix` owns repository repair and convergence. They share constitutional
+principles but are not yet one implemented coordinator. The repair path currently
+has a `FixLoop`, an inner `RepairLoop`, a primitive `Kernel`, durable mission/run
+state and a disk-backed `Transaction`. Their ownership is under review; none is
+safe to delete or merge based on its name alone. The target is one repair
+coordinator, one scanner/finding contract, one transaction path and one operational
+check runner, preserving existing rollback and recovery behavior. This is a
+migration target, not a claim that consolidation is complete.
 
 A requested repair starts by inventorying its eligible corpus, refreshing the
 static reference graph and refusing to proceed if an eligible source could not

@@ -239,10 +239,14 @@ browser evidence recorded in the commit.
   28a39324417f6a8f2562abdd17a7b17bb7592205 (canonical constitutional-priority reader),
   68b6ea269c7e24a1ea770f75e43e69ec52303201 (shared LawParity loaders and empty-catalogue
   refusal), and 83a3a9b26b2e9ec704ad6f641d08271fccc68a7b (canonical law-trace ceiling reader).
-  These are source changes, not verified test passes. Run the focused constitutional-check,
-  LawParity and ratchet tests, reader-singularity/law-trace checks, and then a bounded suite
-  before closing any part of this work. The full LawRegistryAudit reconciliation and the
-  FixLoop/RepairLoop/Kernel ownership analysis remain open.
+  These are source changes, not verified test passes. The canonical architecture docs and agent
+  contract were updated to distinguish policy authority from detector registration, describe
+  the current Fold-versus-/fix boundary, and keep registry and repair-loop consolidation open.
+  The generated root agent files were reconstructed from the exact generator template; still run
+  `cd MASTER && rake docs:agent_contracts && rake lint:agent_contracts` on a real checkout.
+  Run the focused constitutional-check, LawParity and ratchet tests, reader-singularity/law-trace
+  checks, and then a bounded suite before closing any part of this work. The full LawRegistryAudit
+  reconciliation and the FixLoop/RepairLoop/Kernel ownership analysis remain open.
 - [ ] Re-run the four-tree performance sweep with before/after evidence: boot, CLI response, web
   first paint and interaction latency, JS/CSS payloads, memory/CPU, background work, and Dilla
   render time. Avoid claims based only on source size or unrepresentative local machines.

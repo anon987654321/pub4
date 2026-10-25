@@ -22,6 +22,14 @@ terms:
     meaning: An instrument that inspects source or runtime state and reports evidence.
     legacy_aliases: [gate]
     caution: The legacy word was renamed out of class names, file names, environment variables and commands on 2026-10-22; read it in older commits and notes as check.
+  detector:
+    preferred: detector
+    meaning: Executable mechanism that measures whether a Law is satisfied; it may be lexical, AST, structural, or semantic.
+    caution: A detector is implementation, not another source of normative policy. Its coverage must be reconciled against the canonical Law catalogue.
+  registry:
+    preferred: registry
+    meaning: Index of registered executable definitions or checks.
+    caution: Registration is not a second authority for normative requirements; use LawRegistryAudit for Law coverage and checks.yml for operational execution.
   proof:
     preferred: proof
     meaning: Evidence that a check or test actually ran and supports a stated claim.

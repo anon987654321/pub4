@@ -23,14 +23,16 @@ pub4 is governed by MASTER. Read the authority chain before editing:
 
 1. `MASTER/data/soul.yml` — constitutional absolutes and anti-simulation.
 2. `MASTER/data/laws.yml` — the canonical declared Law catalogue and execution policy.
-3. `MASTER/law/*.rb` — executable Laws with required bad/good fixtures.
-4. `MASTER/lib/review/scan/laws/*.rb` — the scanner registry and remaining detectors.
+3. `MASTER/law/*.rb` — executable Law definitions and their required positive/negative fixtures.
+4. `MASTER/lib/review/scan/` — detector implementations and scanner registration; these enforce Laws but do not establish a second policy authority.
 
-Authority is `soul.yml` > `laws.yml` > executable Laws > checks and tree contracts > agent-harness prose. Harness files route work to the Laws; they do not override them. `MASTER/docs/synonyms.yml` is glossary-only: a Law names the requirement, a check names the instrument, and proof is evidence. `MASTER/checks/checks.yml` routes existing instruments; it does not create policy, Law IDs, or tiers. The glossary cannot override the authority chain. Edit this marked source block and regenerate the root agent files with `cd MASTER && rake docs:agent_contracts`; never edit generated copies directly.
+Authority is `soul.yml` > `laws.yml` > executable enforcement > checks and tree contracts > agent-harness prose. `data/laws.yml` is the sole normative Law catalogue; `law/*.rb` and `lib/review/scan/` are execution implementations, not competing policy registries. The mapping is still being reconciled: use `LawRegistryAudit` and its explicit gap populations, and never infer complete coverage from one file or registry count. `MASTER/docs/synonyms.yml` is glossary-only: a Law names the requirement, a check names the instrument, and proof is evidence. `MASTER/checks/checks.yml` routes operational checks; it does not create policy, Law IDs, or tiers. The glossary cannot override the authority chain. Edit this marked source block and regenerate the root agent files with `cd MASTER && rake docs:agent_contracts`; never edit generated copies directly.
 
 The four owners are `MASTER/` (runtime, `MASTER/bin/master`), `RAILS/` (apps, `MASTER/bin/operator triangle up`), `OPENBSD/` (deployment and vm23), and `STUDIO/` (Dilla, postpro, Replicate and LoRA). `MASTER/tools/` keeps compatibility entrypoints for STUDIO tools.
 
 Use `MASTER/bin/operator check` for the full check ladder and `MASTER/bin/operator measure` for ratchets. Prefer the smallest check that proves the change, and report its real output. For unfamiliar or broad work, start with `ruby MASTER/tools/agent_context.rb --tree`.
+
+`Core::Fold` is the general model-effect loop; `/fix` is the repository repair and convergence workflow. They share the Law authority and evidence principles, but they are not yet one implemented coordinator. The current `FixLoop`, `RepairLoop`, `Kernel`, `Mission`, `RunJournal`, `RunLedger` and `Transaction` responsibilities must be mapped against real call sites and recovery tests before any are merged or removed. The target is one canonical `/fix` coordinator, one scanner/finding contract, one transaction path and one operational check runner—not a rewrite that discards existing recovery guarantees.
 
 `/fix [path]` is the single convergence lifecycle: observe, critique, repair, re-observe and
 verify until DONE or a truthful terminal state. Bare `/fix` is write-enabled; its read-only
@@ -387,7 +389,7 @@ to edit it by hand. Editing the build is a fix that survives until the next
 | TTS / speech / visemes | `topics.tts` |
 | Deploy / VPS / rc.d | `topics.deploy` |
 | Persona / voice policy | `topics.persona` |
-| Law / scanners / loop | all scanner law is `data/laws.yml`; the executable law is `law/` |
+| Law / scanners / loop | `data/laws.yml` is the canonical catalogue; `law/` and `lib/review/scan/` implement enforcement. Run `LawRegistryAudit`; do not infer full coverage from one file or registry count. |
 | Extend runtime behavior | `data/spine.yml` header and `test/test_core_no_lib_backedges.rb`. New ability in the fold = one Effect verb in `lib/core/world.rb`; new constraint = one rule in `lib/core/constitution.rb`; anything else is ordinary `lib/` and must not grow it (`rake lint:spine`) |
 | Worn type / layout checks | `data/laws.yml` `design_rules.worn_type` + `MASTER/checks/support/geometry_type.rb`. Feed is a short measure; legal/prose is 66ch. |
 | brgen city network / verticals | `RAILS/brgen/AGENTS.md` — one process, city apex + subdomain engines |

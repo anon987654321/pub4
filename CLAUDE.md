@@ -154,13 +154,15 @@ The order is the authority order, and it is not long:
 
 1. `MASTER/data/soul.yml` — the kernel. Absolutes, work rules, anti-simulation.
    It outranks everything below, including this file.
-2. `MASTER/data/laws.yml` — the canonical declarative law catalogue plus
-its execution policy, adapters, topology and runtime data. Priority-ranked law
-entries are flat at the top level; there is no canonical `rules:` subtree.
-3. `MASTER/law/*.rb` — the executable constitutional layer, with worked
-examples and enforcement metadata.
-4. `MASTER/lib/review/scan/laws/*.rb` — scanner adapters built around that
-constitution.
+2. `MASTER/data/laws.yml` — the canonical declared Law catalogue and execution
+policy. Priority-ranked entries are flat at the top level; there is no canonical
+`rules:` subtree.
+3. `MASTER/law/*.rb` — executable Law definitions with their positive and
+negative fixtures.
+4. `MASTER/lib/review/scan/` — detector implementations and scanner registration.
+   These implement enforcement; they do not define another policy catalogue.
+   Use `LawRegistryAudit` to reconcile catalogue entries, executable definitions
+   and registered detectors; do not assume a one-to-one mapping.
 
 Do not hand-parse the catalogue with an assumed YAML shape. Run
 `ruby MASTER/tools/agent_context.rb --tree`; it is the bounded operator-facing
@@ -174,10 +176,11 @@ usually the exemption rather than the rule — every scan noise entry
 is somebody who knew the rule and not what it spares.
 
 Two cautions from the tree itself. `data/laws.yml` and `data/soul.yml` are
-`paths.immutable`: read them, never let an effect write them. And a rule
-declared there may have no detector — 92 of the 242 carry none and resolve
-through `law/` or a fold — so the file is the law, not the scanner's coverage
-of it.
+`paths.immutable`: read them, never let an effect write them. Catalogue entries
+and executable detectors are not a one-to-one population, and the audit currently
+tracks unresolved mapping and coverage gaps. Use `LawRegistryAudit` and its named
+populations; do not infer complete enforcement from a total count or a single
+registry.
 
 ## Every agent mirrors MASTER
 
