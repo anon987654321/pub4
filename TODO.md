@@ -49,10 +49,14 @@ browser evidence recorded in the commit.
   brackets working bytes, so commits pass and edits still block), the ratchet stage measured
   every RAILS ceiling for a MASTER target, and the known-red record named failed steps rather
   than tests, so a narrow proof could not tell old red from new. Rails targets are now
-  recognised from their files. Still open: the MASTER suite stops at about test 3,632 (under
-  investigation with an exit probe), so the whole suite cannot yet name its failing tests, and
-  no trial has reached a repair, so repair quality is unmeasured on both MASTER and RAILS. Run
-  /fix again only when the operator asks.
+  recognised from their files. The parallel test runner now polls worker exit status, applies a
+  configurable 1,800-second per-worker deadline (`MASTER_TEST_WORKER_TIMEOUT`), terminates a
+  timed-out worker process group, reports the offending PID/log and includes the final worker
+  log in its report; relay-thread exceptions are surfaced instead of leaving the parent blocked.
+  A regression test covers a hung worker. These source changes are not yet runtime-verified: rerun
+  `MASTER_TEST_JOBS=1 rake test` to isolate a serial hang, then the default parallel suite, and
+  record the exact test/output before closing this item. No trial has reached a repair, so repair
+  quality remains unmeasured on both MASTER and RAILS. Run /fix again only when the operator asks.
 - [ ] Validate the OpenBSD Operator CLI and /help against the requested plain dmesg style,
   correct checkout/tree-relative location, no decorative status, and useful scrollback. Re-check
   that ASCII art never appears outside the face.
