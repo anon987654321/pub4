@@ -6,6 +6,10 @@ class TestModelHealth < Minitest::Test
   Registry = Master::CLI::CommandRegistry
 
   Pool = Struct.new(:stats, :rows) do
+    def initialize(stats = {}, rows = nil)
+      super(stats, rows)
+    end
+
     def snapshot = stats
     def inventory(task_type:) = rows
   end
