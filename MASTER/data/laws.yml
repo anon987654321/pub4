@@ -1,6 +1,6 @@
 ---
 # Physical order is intentional: governing laws first, then how /fix applies them, proves them, and reaches the world.
-# The first eight entries are priority-ranked laws. The remaining sections are their execution policy, adapters, topology, runtime, and
+# The first nine entries are priority-ranked laws (eight operating principles plus the inter-model protocol). The remaining sections are execution policy, adapters, topology, runtime, and
 # operator-owned configuration. Historical change belongs in git; comments here state present constraints only.
 
 CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
