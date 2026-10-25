@@ -17,13 +17,14 @@ grades. The reference is inspiration only: pub4 must retain original branding.
 
 ## Static repository index
 
-The root-level Vercel project serves only `public/index.html`, using
-`vercel.json` to select the `public` output directory and the Other framework
-(no application runtime). This index points readers to the canonical source
-trees; it does not boot MASTER, run Rails, deploy OPENBSD, or generate STUDIO
-media. A successful build or HTTP response proves only that the static index was
-delivered, not that an application or production host is healthy. Production
-deployment remains governed by OPENBSD.
+The root-level Vercel project serves only `public/index.html` and its local
+stylesheet, with the `public` output directory selected in `vercel.json` and
+the Other framework preset. Response headers set a restrictive Content Security
+Policy, disable framing, limit browser permissions and prevent MIME sniffing.
+The static index points to the canonical source trees; it does not boot MASTER,
+run Rails, deploy OPENBSD or generate STUDIO media. A successful build or HTTP
+response proves only that the static page was delivered, not that an application
+or production host is healthy. Production deployment remains governed by OPENBSD.
 
 ## The four trees
 

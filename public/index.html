@@ -3,30 +3,63 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="description" content="A static source index for the pub4 repository and its four governed trees.">
     <title>pub4 — source index</title>
+    <link rel="stylesheet" href="/styles.css">
   </head>
   <body>
-    <header>
-      <p>pub4 / source index</p>
-      <h1>One repository. Four governed trees.</h1>
-      <p>This is a static repository index. It does not boot MASTER, run the Rails applications, deploy OPENBSD, or generate STUDIO media. A working page here does not prove that the runtime or production host is healthy.</p>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="shell">
+      <div class="topbar">
+        <a class="wordmark" href="#main" aria-label="pub4 source index">
+          <span class="wordmark-mark" aria-hidden="true"></span>
+          <span>pub4</span>
+        </a>
+        <p class="topbar-note">One repository · Four governed trees</p>
+      </div>
+      <div class="hero">
+        <p class="eyebrow">Source index / 2026</p>
+        <h1>One repository.<br><span class="signal-text">Four governed trees.</span></h1>
+        <p class="hero-copy">pub4 brings together a law-governed Ruby runtime, the Rails products it supports, its OpenBSD production boundary, and the tools that make sound and media.</p>
+      </div>
     </header>
-    <main>
-      <section aria-labelledby="source-trees">
-        <h2 id="source-trees">Explore the source</h2>
-        <ul>
-          <li><a href="https://github.com/anon987654321/pub4/tree/main/MASTER">MASTER</a> — the Ruby runtime, Laws, repair workflow, and verification.</li>
-          <li><a href="https://github.com/anon987654321/pub4/tree/main/RAILS">RAILS</a> — Brgen, Amber, shared product code, and Rails contracts.</li>
-          <li><a href="https://github.com/anon987654321/pub4/tree/main/OPENBSD">OPENBSD</a> — production host, deployment, security, and recovery.</li>
-          <li><a href="https://github.com/anon987654321/pub4/tree/main/STUDIO">STUDIO</a> — Dilla, post-processing, and media workflows.</li>
-          <li><a href="https://github.com/anon987654321/pub4/blob/main/README.md">Repository README</a> — system overview and canonical verification commands.</li>
-        </ul>
+    <main id="main" class="shell">
+      <div class="section-head">
+        <h2>Explore the source</h2>
+        <p>Each tree has a distinct responsibility. Follow the source for its implementation, tests and operating contracts.</p>
+      </div>
+      <div class="tree-grid">
+        <article class="tree-card">
+          <span class="tree-index">01 / Runtime</span>
+          <a href="https://github.com/anon987654321/pub4/tree/main/MASTER">MASTER</a>
+          <p>The Ruby runtime, constitutional Laws, repair workflow and verification tools.</p>
+        </article>
+        <article class="tree-card">
+          <span class="tree-index">02 / Products</span>
+          <a href="https://github.com/anon987654321/pub4/tree/main/RAILS">RAILS</a>
+          <p>Brgen, Amber, shared product code and the Rails application contracts.</p>
+        </article>
+        <article class="tree-card">
+          <span class="tree-index">03 / Operations</span>
+          <a href="https://github.com/anon987654321/pub4/tree/main/OPENBSD">OPENBSD</a>
+          <p>Production host operations, deployment, security and recovery.</p>
+        </article>
+        <article class="tree-card">
+          <span class="tree-index">04 / Media</span>
+          <a href="https://github.com/anon987654321/pub4/tree/main/STUDIO">STUDIO</a>
+          <p>Dilla, post-processing, visual tools and media-provider workflows.</p>
+        </article>
+      </div>
+      <section class="verification" aria-labelledby="verification-title">
+        <h2 id="verification-title">What this page proves</h2>
+        <p>This is a static repository index. It does not boot MASTER, run the Rails applications, deploy OPENBSD or generate STUDIO media. A successful page response does not prove that the runtime or production host is healthy. Use the canonical test commands in the <a href="https://github.com/anon987654321/pub4/blob/main/README.md">repository README</a>; browser, device, database, provider, network and production checks require their real environments.</p>
       </section>
-      <section aria-labelledby="verification">
-        <h2 id="verification">Verification boundary</h2>
-        <p>Run the canonical test suites in a checkout with the pinned Ruby 4.0.5 and installed dependencies. Browser, device, database, audio-provider, network, and production checks require their real environments. Neither a successful static-page response nor a deployment marked ready substitutes for those results.</p>
-      </section>
+      <footer class="footer">
+        <p><a href="https://github.com/anon987654321/pub4">View pub4 on GitHub</a></p>
+        <p class="footer-note">No client-side code · No external assets · No application runtime</p>
+      </footer>
     </main>
   </body>
 </html>
