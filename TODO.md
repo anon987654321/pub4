@@ -1,6 +1,6 @@
 # pub4 outstanding work
 
-Last reconciled against `main` at `3cd29c8389f7c777a4b7397c800c643bc0067426` on 2026-10-25. The audit baseline below is historical, not the current HEAD.
+Last source audit: code HEAD `3cd29c8389f7c777a4b7397c800c643bc0067426` on 2026-10-25. Backlog reconciliation commits: `9dd60e3` and `9ab5958`. The audit baseline below is historical, not current HEAD.
 
 Audit baseline: d9a008ba1f332a312122e342913486c54a32f18a. This is the one cross-tree backlog; do
 not create separate project backlog files. A source edit, a static contract, an empty CI status
@@ -12,14 +12,16 @@ browser evidence recorded in the commit.
 - [ ] Run a fresh bounded release pass against the exact commit intended for deployment:
   constitutional and repository checks, all RAILS contract tests, active app suites, OPENBSD
   tests, and STUDIO fast tests. Record PASS, FAIL, INCONCLUSIVE, BLOCKED, or TIMEOUT separately.
-  The no-status observation belongs to the historical audit baseline, not current HEAD. On 2026-10-25, GitHub reported a failed Vercel status for code head `3cd29c8` and a pending Vercel status for TODO-only commit `9dd60e3`; neither is local test evidence. Do not use Vercel or a status badge as a substitute for running the documented checks on the exact checkout.
+  The no-status observation belongs to the historical audit baseline, not current HEAD. At the latest status check, GitHub reported a failed Vercel status for code head `3cd29c8` and TODO-only commit `9ab5958`; neither is local test evidence. Do not use Vercel or a status badge as a substitute for running the documented checks on the exact checkout.
 - [ ] Complete the requested 200–400 scenario interaction matrix across MASTER CLI, MASTER web,
   keyboard/touch, session state, routes, errors, models/tools, speech, reconnects, offline mode,
   and PWA updates. Use the existing `RAILS/test/interaction_campaign_400.json` as the canonical
   400-case inventory: validate its declared 20 surfaces × 20 cases, action/fault setup, expected
   outcomes and evidence paths; do not create a second matrix. Run cases against real CLI, browser
-  and HTTP surfaces where applicable. Record scenario ID, setup, action, observed result and
-  evidence; scripted mocks and the presence of this file do not constitute runtime passes.
+  and HTTP surfaces where applicable. A static parse confirms 20 surfaces and 400 unique action
+  records in the current manifest, but this is inventory evidence only. Record scenario ID, setup,
+  action, observed result and evidence; scripted mocks and the presence of this file do not
+  constitute runtime passes.
 - [ ] Run the live rendered-layout suite with screenshots and geometry evidence at 320, 360,
   375, 390, 430, 480, 640, 768, 1024, and 1280 CSS-pixel widths. Include keyboard-only use,
   zoom/reflow, safe-area, forced-colors, and reduced-motion checks. Do not report visual
@@ -304,7 +306,11 @@ browser evidence recorded in the commit.
   numbers surfaced in broad search results but are not confirmed open. Prior chat commitments
   still outstanding include the larger DRY/KISS census, Dilla/Postpro and Brgen SCSS source
   consolidation, the complete DeepSeek/Master findings audit, and fresh bounded tests across all
-  four trees. Keep these represented here until proven complete.
+  four trees. Reconcile each distinct finding from the available DeepSeek handoff/chat material
+  against current source, regression tests and commit evidence; classify it as verified, changed
+  but unverified, superseded, open or blocked, and deduplicate it against the items above. Do not
+  treat a summary of older chat logs as a substitute for locating and checking the underlying
+  finding. Keep unresolved commitments represented here until proven complete.
 
 ## Closure rule
 
