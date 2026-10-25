@@ -12,7 +12,7 @@
 
   <div class="form-help">
     <%= t("post.shared_media_staged", default: "Staged privately") %>:
-    <%= pluralize(@share_draft.images.count, t("post.photo", default: "photo")) %>
+    <%= pluralize(@share_draft.images.attachments.size, t("post.photo", default: "photo")) %>
     <% if @share_draft.video.attached? %>
       <%= t("post.and_video", default: "and one video") %>
     <% end %>

@@ -86,7 +86,13 @@ class ShareDraftsController < ApplicationController
     city = Current.city_record
     raise ActiveRecord::RecordNotFound unless city && Current.user
 
-    @share_draft = ShareDraft.where(user_id: Current.user.id, city_id: city.id).find(params[:id])
+    @share_draft = ShareDraft.with_attached_images.with_attached_video.includes(:city)
+                              .where(user_id: Current.user.id, city_id: city.id)
+                              .find(params[:id])
+    if @share_draft.expires_at <= Time.current
+      @share_draft.destroy!
+      raise ActiveRecord::RecordNotFound
+    end
   end
 
   def load_communities
