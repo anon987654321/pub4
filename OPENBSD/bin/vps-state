@@ -218,7 +218,7 @@ else
     end
     if row[:deploy_in_progress]
       status = row[:deploy_in_progress]
-      state = status["stale"] ? "stale" : "running"
+      state = status["corrupt"] ? "corrupt" : status["stale"] ? "stale" : "running"
       puts Deploy::Dmesg.line(
         "deploy0",
         row[:app],
