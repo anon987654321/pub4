@@ -180,7 +180,7 @@ Start with a reproducible failing test, then use the pinned Ruby debugger for
 live state and call-stack inspection:
 
 ```zsh
-RBENV_VERSION=4.0.7 rbenv exec ruby -rdebug -Itest test/test_execution_trace.rb
+RBENV_VERSION=4.0.5 rbenv exec ruby -rdebug -Itest test/test_execution_trace.rb
 ```
 
 Place `binding.break` at the narrowest useful line. Use `caller_locations(1, 8)`

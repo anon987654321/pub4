@@ -19,13 +19,13 @@ legacy_roots:
   - path: __OLD_BACKUPS/MEGA_ALL_APPS.md
     state: restored
     priority: critical
-    target_path: RECOVERY/pub/__OLD_BACKUPS/MEGA_ALL_APPS.md
+    target_path: MASTER/docs/handoffs/legacy/MEGA_ALL_APPS.md
     sha_seen: 1649c9d03e5b6981cf5d76e843f2296810807d4a
     reason: >
       Canonical old mega-ledger for Rails/OpenBSD app restoration. It records
       install payloads, checksums, app scope, and old assumptions.
     action: >
-      Copy full file from pub into RECOVERY/pub/__OLD_BACKUPS/ and port intent
+      Keep the full file at MASTER/docs/handoffs/legacy/MEGA_ALL_APPS.md and port intent
       into RAILS/apps.yml. Do not execute old generated installers.
 
   - path: ai3/
@@ -835,7 +835,7 @@ archaeology_commands:
     command: "ruby MASTER/tools/history_valuables.rb --legacy --all-history"
     scope: "pub4 + sibling pub3 + pub2 + pub when their .git directories are present"
   archives:
-    command: "MASTER/tools/archaeology/extract_legacy_archives.zsh"
+    command: "MASTER/tools/extract_legacy_archives.zsh"
     scope: "tracked .tgz/.tar.gz/.zip from pub3/pub2/pub, deduplicated by Git blob"
 deep_lineage_candidates:
   pub3_my_work:
@@ -955,7 +955,7 @@ legacy_cli_reviews:
       - "8c6f9be76341"
     value: "Legacy three.js face modules: state, renderer, shaders, pixel diff, point renderer and offscreen ecology."
     disposition: "retired-by-consolidation"
-    current_mapping: "RAILS/master_web/public/face_world.js and MASTER/FACE_WORLD.md preserve the canonical face state, repository geometry, semantic camera and renderer contract."
+    current_mapping: "RAILS/master/public/face_world.js and MASTER/FACE_WORLD.md preserve the canonical face state, repository geometry, semantic camera and renderer contract."
     reason: "Git history explicitly records each legacy module as dead or obsolete; the current FaceWorld is the consolidated successor."
 
 master_json_v43_review:
@@ -1020,7 +1020,7 @@ legacy_capability_reviews:
         disposition: "partial; recover individual useful commands only when demanded by current MASTER workflow"
       - capability: "UniversalScraper"
         historical_behavior: "Ferrum navigation, screenshots, deep same-domain crawl, page-structure analysis and link extraction."
-        current_mapping: "MASTER/lib/io/web_fetch.rb plus MASTER/tools/rails/crawl_browser.rb and RAILS/master_web/script/browser_probe_support.rb provide bounded fetch/browser verification, not a general scraper service."
+        current_mapping: "MASTER/lib/io/web_fetch.rb plus MASTER/tools/rails/crawl_browser.rb and RAILS/master/script/browser_probe_support.rb provide bounded fetch/browser verification, not a general scraper service."
         disposition: "partial; no class-level restore"
     retired:
       - capability: "WeaviateIntegration"
@@ -1061,7 +1061,7 @@ legacy_capability_reviews:
       disposition: "behavioral-reference-only; candidate for selective migration only if the canonical renderer needs kinetic-depth evidence"
 
   pub4_dilla_lineage:
-    current_mapping: "STUDIO/dilla/lib/groove.rb, harmony.rb, sound.rb and sampling.rb now contain substantially richer versions of the old synthesis, swing, harmony and sample-processing concepts."
+    current_mapping: "STUDIO/dilla/dilla.rb now contains substantially richer versions of the old synthesis, swing, harmony and sample-processing concepts."
     evidence:
       - "FM voice implementation exists in the current sound stack."
       - "swing/humanization and Dilla timing are explicit in the current groove stack."
@@ -1073,7 +1073,7 @@ recovered_regression_reviews:
   - commit: "d1f6a31af0c82d8f6127b60eabbc76eef0cdef81"
     area: dilla
     finding: "A merge inlined Hash#dig compatibility into test_helper and broke dilla's absolute reader, silently disabling coltrane and changing rendered theory."
-    current_mapping: "MASTER/lib/boot/hash_dig_compat.rb is restored as the shared compatibility source and is required by both test boot and Dilla."
+    current_mapping: "The shared shim and its tests were removed in e8dc5e445 because Dilla takes no gems; supported Ruby 3.3+ provides Hash#dig natively, so the compatibility behavior no longer needs a shared file."
     disposition: "preserved-fix"
   - commit: "fa897d465d8ce7a7f7465028164d0460888a907f"
     area: fix_loop

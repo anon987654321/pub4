@@ -416,12 +416,12 @@ apps:
 
 archived_subsystems:
   baibl:
-    recovery_source: OPENBSD/archive/recovery/manifest.json
-    notes: Retired from active stack; pub3 Rails installer/prototype preserved as recovery-only context.
+    recovery_source: MASTER/data/recovery/legacy_manifest.yml
+    notes: "Retired from active stack; the former OPENBSD/archive/recovery/manifest.json path is absent from pub4. The manifest records provenance, not restored app code."
 
   blognet:
-    recovery_source: OPENBSD/archive/recovery/references/build_blognet.rb
-    notes: Retired from active stack; old megablog/content-generation logic preserved as recovery-only context.
+    recovery_source: MASTER/data/recovery/legacy_manifest.yml
+    notes: "Retired from active stack; the former OPENBSD/archive/recovery/references/build_blognet.rb path is absent from pub4. The manifest records provenance, not restored app code."
 
   hjerterom:
     recovery_source: git history — deleted 2026-08-12; databases at /var/backups/pub4/hjerterom-20260812 on vm23.
@@ -433,8 +433,8 @@ archived_subsystems:
       port_inventory now scans the config files where that residue lives.
 
   aight_production_ai:
-    recovery_source: MASTER/lib/reach/
-    notes: Absorbed — semantic cache + scrape in MASTER reach; shared Scrape service in pub4-shared.
+    recovery_source: MASTER/lib/io/
+    notes: Absorbed — semantic cache + scrape in MASTER io; shared Scrape service in pub4-shared.
 
   ai3_assistants:
     recovery_source: MASTER/

@@ -68,7 +68,7 @@ class RailsStackContractTest < Minitest::Test
     master_version = File.read(File.join(REPO_ROOT, "MASTER", ".ruby-version")).strip
 
     assert_equal "4.0.5", root_version, "change the root/Rails runtime deliberately with this contract"
-    assert_equal "4.0.7", master_version, "change MASTER's runtime deliberately with this contract"
+    assert_equal root_version, master_version, "MASTER shares the repository's single Ruby pin"
 
     APP_ROOTS.each do |root|
       app_version = File.read(File.join(REPO_ROOT, root, ".ruby-version")).strip

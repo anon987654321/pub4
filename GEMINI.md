@@ -52,9 +52,9 @@ Operational constraints:
 - On deploy, relayd can answer while amber and bsdports are down; inspect health, not just TLS.
 - Dilla and postpro renders are replaceable; a new run may delete the old take. Never change a rendered sound/look default by taste alone.
 - Operator-owned rendered values include colour, type, layout and sound. Stop at that decision boundary; do not invent aesthetic values.
-- Ruby is tree-scoped: the repository root and Rails apps pin 4.0.5; MASTER pins
-  4.0.7. Use each tree's canonical launcher rather than assuming root Ruby is
-  MASTER's runtime.
+- Ruby has one pin, 4.0.5, shared by the repository root, MASTER and every Rails
+  app; a test requires the `.ruby-version` files to agree. Use each tree's
+  canonical launcher rather than assuming root Ruby is MASTER's runtime.
 
 Prefer clear, named steps over compressed expressions that force a reader to keep several operations in mind. This is a readability judgment, not a line-length rule. Before trusting a finding, prove the detector catches a known bad case and spares a known good one. Comments describe present constraints; Git records history. `ruby MASTER/tools/agent_context.rb` supplies the compact conduct rules and write-refusal boundaries.
 

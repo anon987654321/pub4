@@ -25,9 +25,9 @@ require_relative "../io/exec"
 # A number that needs a network and an API key is a number nobody has. Both
 # populations here need neither and finish in about two minutes.
 #
-#   ruby MASTER/tools/self_findings.rb
-#   ruby MASTER/tools/self_findings.rb --json
-#   ruby MASTER/tools/self_findings.rb --ratchet  # record a new low, with its members
+#   ruby MASTER/lib/operator/self_findings.rb
+#   ruby MASTER/lib/operator/self_findings.rb --json
+#   ruby MASTER/lib/operator/self_findings.rb --ratchet  # record a new low, with its members
 
 require "English"
 require "json"

@@ -35,7 +35,7 @@ contracts/configuration: `README.md`, `CLAUDE.md`, generated agent harnesses
 and `VERSION`. Design constraints belong in `MASTER/data/laws.yml`;
 each tree or project README is its human entry point. A separate architecture
 document would duplicate the design authority and is not maintained. `.claude/`
-is committed Claude tooling configuration, and `RECOVERY/` is historical restore
+is committed Claude tooling configuration, and the restore ledgers under `MASTER/data/recovery/` are historical
 evidence; neither is a governed product tree. There is no `TREE.md` on current
 main; the tree contracts and `RAILS/README.md` are the map. `STUDIO/` is the canonical media
 tool plane; `MASTER/tools/` keeps compatibility symlinks. The backlog file is gone: operator-only

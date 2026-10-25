@@ -80,20 +80,36 @@ class TestDocPaths < Minitest::Test
 
   # Non-entry Markdown has a narrow purpose: face/reference contracts, archived
   # RAILS experiments and research, recovery material, and STUDIO migration guides.
+  # docs/runbooks and docs/todo-triage.md are the evidence procedures TODO.md cites;
+  # MASTER/docs/handoffs holds preserved run logs and the archived predecessor ledger.
   # These are artifacts, not substitutes for tree/project README entry points.
   MARKDOWN_REFERENCE_EXCEPTIONS = %w[
     MASTER/FACE_WORLD.md
     MASTER/data/principles/openbsd_kernel_philosophy.md
+    MASTER/docs/handoffs/2026-10-22-laws-checks-rails-fix.md
+    MASTER/docs/handoffs/legacy/MEGA_ALL_APPS.md
     MASTER/lib/cli/face/contract.md
+    RAILS/INTERACTION_CAMPAIGN.md
     RAILS/__shared/LAYOUT_MICRO_REFINEMENT_MATRIX.md
     RAILS/__shared/SOCIAL_FRONT_PAGE.md
     RAILS/__shared/SURFACE_MICRO_REFINEMENT_MATRIX.md
     RAILS/__shared/SURFACE_MICRO_REFINEMENT_MATRIX_II.md
     RAILS/__shared/UI_ARCHAEOLOGY.md
     RAILS/__shared/UI_ARCHAEOLOGY_II.md
-    RECOVERY/pub/__OLD_BACKUPS/MEGA_ALL_APPS.md
+    STUDIO/dilla/ENGINE_NOTES.md
+    STUDIO/dilla/REFERENCE_STUDY.md
     STUDIO/postpro/LEGACY_RESTORE.md
+    STUDIO/replicate/lora/guides/photography.md
     STUDIO/replicate/lora/guides/prompting.md
+    docs/runbooks/cli-web-ux.md
+    docs/runbooks/openbsd-deploy-restore.md
+    docs/runbooks/provider-integration.md
+    docs/runbooks/pwa.md
+    docs/runbooks/release-pass.md
+    docs/runbooks/rendered-layout.md
+    docs/runbooks/studio-render.md
+    docs/runbooks/voice-path.md
+    docs/todo-triage.md
   ].freeze
 
   # README.md is the human entry point at each tree/project boundary. Other

@@ -1,6 +1,6 @@
 meta:
   name: pub_archive_restore
-  updated: "2026-07-07"
+  updated: "2026-10-25"
   purpose: "Lessons recovered from pub, pub2, and pub3 without restoring unsafe defaults."
 
 sources:
@@ -84,6 +84,4 @@ pub3:
 
 checks:
   required:
-    - "ruby MASTER/tools/convergence/evidence_check.rb"
-    - "ruby RAILS/archive_restore_check.rb"
-    - "ruby RAILS/check_production_check.rb"
+    - "ruby MASTER/test/test_recovery_pub_manifest.rb"

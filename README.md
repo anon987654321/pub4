@@ -1,6 +1,6 @@
 # pub4
 
-pub4 is one repository with four governed trees: **MASTER** controls the repair and reasoning runtime, **RAILS** holds the products, **OPENBSD** owns deployment and machine security, and **STUDIO** owns sound and media generation. `RECOVERY/` contains recovery material rather than a fifth application tree.
+pub4 is one repository with four governed trees: **MASTER** controls the repair and reasoning runtime, **RAILS** holds the products, **OPENBSD** owns deployment and machine security, and **STUDIO** owns sound and media generation. Recovery material lives in `MASTER/data/recovery/` (restore ledgers) and `MASTER/docs/handoffs/legacy/` (the archived predecessor ledger), not in a fifth application tree.
 
 Start with the repository's [agent contract](AGENTS.md) and the relevant tree or project `README.md`. Design constraints are specified in `MASTER/data/laws.yml` under the constitutional authority of `MASTER/data/soul.yml`; executable laws in `MASTER/law/` and scanner adapters enforce them. Each README is the human entry point for its boundary, while configuration and code remain authoritative for behavior. Do not call work complete without the command output that proves it.
 
@@ -33,7 +33,7 @@ bin/operator measure
 bin/operator check --scan-only
 ```
 
-The check's default mode can repair files; `--scan-only` is the read-only option. Use the tree's canonical test runner and record its real exit status. The main proof surfaces are `cd MASTER && rake test`, `ruby RAILS/test/run_all.rb`, `ruby OPENBSD/bin/check --profile=full`, and `cd STUDIO/test && rake`. Browser, device, paid-provider, DNS, backup, and production checks require their respective real environments.
+The check's default mode can repair files; `--scan-only` is the read-only option. Use the tree's canonical test runner and record its real exit status. The main proof surfaces are `cd MASTER && rake test`, `ruby RAILS/test/run_all.rb`, `ruby OPENBSD/bin/check --profile=full`, and `cd STUDIO && rake test`. Browser, device, paid-provider, DNS, backup, and production checks require their respective real environments.
 
 Agent-owned unfinished work is tracked in the single root [TODO.md](TODO.md). Work that only the
 operator can finish is listed in [operator seams](MASTER/data/operator_seams.yml), each with its

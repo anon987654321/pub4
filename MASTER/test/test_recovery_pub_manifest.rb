@@ -237,6 +237,18 @@ class TestRecoveryPubManifest < Minitest::Test
     assert_includes lineage.dig("canonical_v20_2", "value"), "ask before destructive action"
     assert_includes lineage.fetch("caution"), "The old JSON versions are historical reasoning evidence, not runtime configuration."
   end
+  def test_archive_restore_required_commands_refer_to_existing_scripts
+    plan = YAML.safe_load(ROOT.join("MASTER/data/recovery/pub_archive_restore.yml").read)
+    commands = plan.fetch("checks").fetch("required")
+
+    refute_empty commands, "archive restore needs at least one executable verification command"
+    commands.each do |command|
+      parts = command.split(/\s+/)
+      script = parts[1] if parts.first == "ruby"
+      assert script && ROOT.join(script).file?, "required archive check names a missing script: #{command}"
+    end
+  end
+
   def test_missing_until_restored_contains_only_absent_targets
     contract = YAML.safe_load(ROOT.join("MASTER/data/recovery/pub_restore.yml").read, permitted_classes: [Date])
     paths = contract.fetch("checks").fetch("missing_until_restored")

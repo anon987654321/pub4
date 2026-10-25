@@ -237,7 +237,7 @@ PATH, or set DEMUCS_BIN. Essentia's `streaming_extractor_music` is optional.
 
 For a second independent estimate of tempo, meter, beats and downbeats, key, chords,
 sections, timbre, dynamics and rhythm, optionally install libsonare in the environment
-used by MASTER/Dilla (`pip install libsonare`). Its command-line entry point is
+used by STUDIO/dilla (`pip install libsonare`). Its command-line entry point is
 `sonare`; set `LIBSONARE_BIN` if it lives outside `PATH`. Dilla calls
 `sonare analyze FILE --json` using an argument vector, stores the raw result in
 `libsonare_features.json`, and surfaces a compact summary plus a separate tempo
