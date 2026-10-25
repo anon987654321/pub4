@@ -28,6 +28,10 @@ A further code trace found two provider-health issues and one OpenBSD visibility
 
 All newly added and modified tests remain unexecuted. No runtime PASS is claimed; the exact focused test list and per-tree INCONCLUSIVE state are recorded in root `TODO.md`. No deployment, Vercel retry, or OpenBSD host action was performed.
 
+## Follow-on JSONL compaction integrity
+
+The shared and standalone compactors now discard a partial leading line when a bounded byte tail begins mid-record. Regression tests parse active and rotated JSONL; the Swallow test checks a nonempty tail of complete records and confirms the lock sidecar survives pruning. The changes have not been runtime-tested.
+
 ## Follow-on Swallow log compaction
 
 The standalone error logger now locks append+rotation, reserves space before append, compacts each rotated backup to a bounded tail, and retains only five bounded generations. Its pruning filter excludes the `.lock` sidecar so it cannot unlink the active lock inode. Added a rotation/retention regression test in `MASTER/test/test_swallow.rb`, not yet run.
