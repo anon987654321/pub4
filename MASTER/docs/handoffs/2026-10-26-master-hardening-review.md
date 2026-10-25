@@ -30,7 +30,7 @@ All newly added and modified tests remain unexecuted. No runtime PASS is claimed
 
 ## Follow-on trajectory telemetry hardening
 
-The opt-in trajectory writer now derives its 25 MiB ceiling from the existing trace-event log contract, rotates through the shared bounded log implementation, enforces private file/directory modes, and rejects a symlink destination. This is important because the recorded task can contain the user's prompt. Added coverage for rotation, permissions and symlink refusal in `MASTER/test/test_ai_trajectory.rb`.
+The opt-in trajectory writer now derives its 25 MiB ceiling from the existing trace-event log contract, serializes rotation and append through a private sidecar lock, reserves space for each complete record, rejects oversized records, enforces private file/directory modes, and refuses symlink destinations. This is important because the recorded task can contain the user's prompt. Added coverage for rotation, size limits, permissions and symlink refusal in `MASTER/test/test_ai_trajectory.rb`.
 
 The new trajectory tests, like all other new tests in this continuation, remain unexecuted. See root `TODO.md` for the consolidated focused test sequence and the still-INCONCLUSIVE proof state. No full /fix run or live verification is claimed.
 
