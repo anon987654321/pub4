@@ -3,6 +3,7 @@
 require "json"
 require "fileutils"
 require "time"
+require_relative "../../trace/log"
 
 module Master
   module AI
@@ -10,6 +11,7 @@ module Master
       class Record
         SCHEMA = "master.llm.trajectory/v1"
         REQUIRED = %w[task model events outcome verified].freeze
+        MAX_BYTES = Master::Trace::Log::Event::MAX_BYTES
 
         attr_reader :data
 
@@ -39,10 +41,17 @@ module Master
 
         def score = Benchmark.score(@data)
 
-        def append!(path)
-          FileUtils.mkdir_p(File.dirname(path))
-          File.open(path, "a") do |io|
+        def append!(path, max_bytes: MAX_BYTES)
+          raise ArgumentError, "trajectory log limit must be positive" unless max_bytes.to_i.positive?
+
+          FileUtils.mkdir_p(File.dirname(path), mode: 0o700)
+          raise ArgumentError, "trajectory log path is a symlink" if File.symlink?(path)
+          File.chmod(0o600, path) if File.file?(path)
+          Master::Trace::Log.rotate(path, max_bytes)
+
+          File.open(path, File::WRONLY | File::CREAT | File::APPEND, 0o600) do |io|
             io.flock(File::LOCK_EX)
+            io.chmod(0o600)
             io.puts(JSON.generate(@data))
             io.flush
             io.flock(File::LOCK_UN)
