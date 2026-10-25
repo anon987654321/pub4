@@ -28,12 +28,12 @@ class FaceSpeechRuntimeSpec < Minitest::Test
     bundle = read("../RAILS/master/public/face.runtime.js")
 
     assert_includes source, "FEMALE_BROWSER_VOICE_RE"
-    assert_includes source, "FEMALE_BROWSER_VOICE_RE"
     assert_includes source, "Do not play a truncated MP3"
-    assert_includes source, "Do not play a truncated MP3"
-    refute_includes source, "const audioStream = window.MASTER_RUNTIME?.enhancements?.includes?.('tts_audio_stream')"
-    refute_includes source, "let browserFallbackTimer = setTimeout"
-    refute_includes source, "if (pending.length <= TTS_CHUNK_MAX)"
+    assert_includes bundle, "FEMALE_BROWSER_VOICE_RE"
+    assert_includes bundle, "Do not play a truncated MP3"
+    refute_includes bundle, "const audioStream = window.MASTER_RUNTIME?.enhancements?.includes?.('tts_audio_stream')"
+    refute_includes bundle, "let browserFallbackTimer = setTimeout"
+    refute_includes bundle, "if (pending.length <= TTS_CHUNK_MAX)"
   end
 
   def test_retired_partial_tts_path_is_absent
