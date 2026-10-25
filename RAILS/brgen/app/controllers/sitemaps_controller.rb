@@ -83,8 +83,8 @@ class SitemapsController < ApplicationController
   end
 
   def playlist_entries
-    entries_for(Playlist::Playlist.public_playlists, changefreq: "weekly", priority: "0.6") { |p| playlist.playlist_url(p) } +
-      entries_for(Playlist::Set.publicly_listed, changefreq: "weekly", priority: "0.5") { |s| playlist.set_url(s) }
+    entries_for(Playlist::Playlist.public_playlists.in_current_city, changefreq: "weekly", priority: "0.6") { |p| playlist.playlist_url(p) } +
+      entries_for(Playlist::Set.publicly_listed.in_current_city, changefreq: "weekly", priority: "0.5") { |s| playlist.set_url(s) }
   end
 
   def food_entries

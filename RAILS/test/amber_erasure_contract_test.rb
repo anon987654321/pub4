@@ -20,14 +20,14 @@ class AmberErasureContractTest < Minitest::Test
 
     %w[
       Profile CreatorProfile PrivacySetting ExternalIdentity IdentityVerification ConsentEvent
-      AccountMerge Shared::Notification Shared::OutboundClick Shared::Reaction Vote Follow Connection Message LiveStream
+      AccountMerge Notification Shared::OutboundClick Reaction Vote Follow Connection Message LiveStream
       WearLog DeclutterReview DeclutterChallenge DeclutterOutcome Recommendation PackingList
       PlannedOutfit StylePreference Outfit Item WardrobeItem Session
     ].each do |model|
       assert_includes job, "model: \"#{model}\"", "erasure list missing #{model}"
     end
     assert_includes job, 'model: "AccountMerge", key: :guest_user_id'
-    assert_includes job, 'model: "Shared::Notification", key: :actor_id'
+    assert_includes job, 'model: "Notification", key: :actor_id'
     assert_includes job, "def nullify_review_cases(user)"
     assert_includes job, "reviewer_id: nil"
     assert_includes job, "def anonymise(user)"
@@ -55,16 +55,16 @@ class AmberErasureContractTest < Minitest::Test
     assert_includes job, 'Shared::OutboundClick.where(subject_type: "Item", subject_id: item_ids)'
     assert_includes job, 'Shared::OutboundClick.where(subject_type: "Outfit", subject_id: outfit_ids)'
     assert_includes job, 'Shared::OutboundClick.where(subject_type: "Comment", subject_id: private_comment_ids)'
-    assert_includes job, 'Shared::Reaction.where(reactable_type: "Message", reactable_id: message_ids)'
-    assert_includes job, 'Shared::Notification.where(notifiable_type: "Message", notifiable_id: message_ids)'
+    assert_includes job, 'reaction_model.where(reactable_type: "Message", reactable_id: message_ids)'
+    assert_includes job, 'notification_model.where(notifiable_type: "Message", notifiable_id: message_ids)'
     assert_includes job, 'Shared::OutboundClick.where(subject_type: "Message", subject_id: message_ids)'
     assert_includes job, 'Vote.where(votable_type: "Message", votable_id: message_ids)'
     assert_includes job, 'Message.where(sender_id: user.id).or(Message.where(recipient_id: user.id))'
-    assert_includes job, 'DeclutterChallenge.where(item_id: item_ids).find_each(&:destroy!)'
-    assert_includes job, 'Shared::Reaction.where(reactable_type: "Item", reactable_id: item_ids)'
-    assert_includes job, 'Shared::Notification.where(notifiable_type: "Item", notifiable_id: item_ids)'
-    assert_includes job, 'Shared::Notification.where(notifiable_type: "Comment", notifiable_id: private_comment_ids)'
-    assert_includes job, 'Shared::Reaction.where(reactable_type: "Comment", reactable_id: private_comment_ids)'
+    assert_includes job, 'destroy_each(DeclutterChallenge.where(item_id: item_ids))'
+    assert_includes job, 'reaction_model.where(reactable_type: "Item", reactable_id: item_ids)'
+    assert_includes job, 'notification_model.where(notifiable_type: "Item", notifiable_id: item_ids)'
+    assert_includes job, 'notification_model.where(notifiable_type: "Comment", notifiable_id: private_comment_ids)'
+    assert_includes job, 'reaction_model.where(reactable_type: "Comment", reactable_id: private_comment_ids)'
     assert_includes job, 'Vote.where(votable_type: "Comment", votable_id: private_comment_ids)'
     assert_includes job, 'Vote.where(votable_type: "Item", votable_id: item_ids)'
     assert_includes job, "DeclutterReview.where(item_id: item_ids)"

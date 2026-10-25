@@ -24,10 +24,10 @@ class UserPurgeJob < ApplicationJob
     { model: "ConsentEvent", key: :user_id },
     { model: "AccountMerge", key: :user_id },
     { model: "AccountMerge", key: :guest_user_id },
-    { model: "Shared::Notification", key: :user_id },
-    { model: "Shared::Notification", key: :actor_id },
+    { model: "Notification", key: :user_id },
+    { model: "Notification", key: :actor_id },
     { model: "Shared::OutboundClick", key: :user_id },
-    { model: "Shared::Reaction", key: :user_id },
+    { model: "Reaction", key: :user_id },
     { model: "Vote", key: :user_id },
     { model: "Follow", key: :follower_id },
     { model: "Follow", key: :followee_id },
@@ -108,22 +108,24 @@ class UserPurgeJob < ApplicationJob
     destroy_each(Recommendation.where(item_id: item_ids).or(Recommendation.where(outfit_id: outfit_ids)))
     # Polymorphic activity has no database foreign keys, so every other user's
     # reaction, notification or vote on a private object needs explicit removal.
-    if defined?(Shared::Reaction) && Shared::Reaction.table_exists?
-      destroy_each(Shared::Reaction.where(reactable_type: "Item", reactable_id: item_ids))
-      destroy_each(Shared::Reaction.where(reactable_type: "Outfit", reactable_id: outfit_ids))
+    reaction_model = canonical_reaction_model
+    notification_model = canonical_notification_model
+    if reaction_model&.table_exists?
+      destroy_each(reaction_model.where(reactable_type: "Item", reactable_id: item_ids))
+      destroy_each(reaction_model.where(reactable_type: "Outfit", reactable_id: outfit_ids))
     end
     private_comment_ids = Comment.where(commentable_type: "Item", commentable_id: item_ids)
                                   .or(Comment.where(commentable_type: "Outfit", commentable_id: outfit_ids))
                                   .select(:id)
-    if defined?(Shared::Reaction) && Shared::Reaction.table_exists?
-      destroy_each(Shared::Reaction.where(reactable_type: "Comment", reactable_id: private_comment_ids))
-      destroy_each(Shared::Reaction.where(reactable_type: "Message", reactable_id: message_ids))
+    if reaction_model&.table_exists?
+      destroy_each(reaction_model.where(reactable_type: "Comment", reactable_id: private_comment_ids))
+      destroy_each(reaction_model.where(reactable_type: "Message", reactable_id: message_ids))
     end
-    if defined?(Shared::Notification) && Shared::Notification.table_exists?
-      destroy_each(Shared::Notification.where(notifiable_type: "Item", notifiable_id: item_ids))
-      destroy_each(Shared::Notification.where(notifiable_type: "Outfit", notifiable_id: outfit_ids))
-      destroy_each(Shared::Notification.where(notifiable_type: "Comment", notifiable_id: private_comment_ids))
-      destroy_each(Shared::Notification.where(notifiable_type: "Message", notifiable_id: message_ids))
+    if notification_model&.table_exists?
+      destroy_each(notification_model.where(notifiable_type: "Item", notifiable_id: item_ids))
+      destroy_each(notification_model.where(notifiable_type: "Outfit", notifiable_id: outfit_ids))
+      destroy_each(notification_model.where(notifiable_type: "Comment", notifiable_id: private_comment_ids))
+      destroy_each(notification_model.where(notifiable_type: "Message", notifiable_id: message_ids))
     end
     if defined?(Shared::OutboundClick) && Shared::OutboundClick.table_exists?
       destroy_each(Shared::OutboundClick.where(subject_type: "Comment", subject_id: private_comment_ids))
@@ -192,8 +194,22 @@ class UserPurgeJob < ApplicationJob
     user.update_columns(attrs)
   end
 
+  def canonical_reaction_model
+    return ::Reaction if defined?(::Reaction)
+    return Shared::Reaction if defined?(Shared::Reaction)
+  end
+
+  def canonical_notification_model
+    return ::Notification if defined?(::Notification)
+    return Shared::Notification if defined?(Shared::Notification)
+  end
+
   def resolve!(name)
-    model = name.safe_constantize
+    model = case name
+            when "Reaction" then canonical_reaction_model
+            when "Notification" then canonical_notification_model
+            else name.safe_constantize
+            end
     raise "erasure model unavailable: #{name}" unless model
     raise "erasure table unavailable: #{name}" unless model.respond_to?(:table_exists?) && model.table_exists?
 

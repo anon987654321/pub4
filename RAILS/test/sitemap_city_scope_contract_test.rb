@@ -17,13 +17,14 @@
 require "minitest/autorun"
 
 class SitemapCityScopeContractTest < Minitest::Test
-  ROOT = File.expand_path("../brgen", __dir__)
-  CONTROLLER = File.join(ROOT, "app/controllers/sitemaps_controller.rb")
+  ROOT = File.expand_path("..", __dir__)
+  CONTROLLER = File.join(ROOT, "brgen/app/controllers/sitemaps_controller.rb")
 
   # Every city-owned model the sitemap lists, and where its city comes from.
   # nil means global by design and must NOT be scoped.
   SCOPED = {
     "Post.hot" => :own, "Community" => :own, "Tv::Channel" => :own,
+    "Playlist::Playlist.public_playlists" => :own, "Playlist::Set.publicly_listed" => :parent,
     "Takeaway::Restaurant.indexable" => :own, "Marketplace::Store.publicly_visible" => :own,
     "Marketplace::Listing.publicly_visible" => :own, "Place" => :own,
     "Tv::Video.publicly_visible" => :parent, "Marketplace::Deal.live" => :parent,
@@ -46,8 +47,9 @@ class SitemapCityScopeContractTest < Minitest::Test
   # unscoped, which is how every city's sitemap came to list every city's deals.
   def test_parent_tenanted_models_declare_how_they_reach_a_city
     {
-      "engines/tv/app/models/concerns/tv/channel_tenanted.rb" => "tenanted_through :channel",
-      "engines/marketplace/app/models/marketplace/deal.rb" => "tenanted_through :listing",
+      "brgen_radio/tv/app/models/concerns/tv/channel_tenanted.rb" => "tenanted_through :channel",
+      "brgen_marketplace/app/models/marketplace/deal.rb" => "tenanted_through :listing",
+      "brgen_radio/playlist/app/models/playlist/set.rb" => "scope :in_current_city",
     }.each do |path, declaration|
       assert_includes File.read(File.join(ROOT, path)), declaration,
                       "#{path} lost its city derivation"
@@ -63,7 +65,7 @@ class SitemapCityScopeContractTest < Minitest::Test
 
   def test_every_indexable_model_has_an_entries_method
     %w[posts_entries community_entries hashtag_entries user_entries tv_entries
-       takeaway_entries marketplace_entries maps_entries].each do |method|
+       food_entries marketplace_entries maps_entries].each do |method|
       assert_includes source, "def #{method}", "sitemap lost #{method}"
     end
   end

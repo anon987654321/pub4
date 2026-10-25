@@ -26,6 +26,10 @@ module Playlist
     scope :visible, -> { where(privacy: [ nil, "public", "unlisted" ]) }
     scope :publicly_listed, -> { where(privacy: [ nil, "public" ]).joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
 
+    # Sets have no city_id of their own; their city is the creator's home-city
+    # hint. Keep discovery and sitemaps scoped consistently with User#in_current_city.
+    scope :in_current_city, -> { where(user_id: User.in_current_city.select(:id)) }
+
     def add_track!(track, user:)
       set_track = set_tracks.find_or_initialize_by(track: track)
       return set_track if set_track.persisted?
