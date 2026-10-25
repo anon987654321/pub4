@@ -50,6 +50,6 @@ class AmberArchitectureCoverageTest < Minitest::Test
   end
 
   def camelize(name)
-    name.split("_").map(&:capitalize).join
+    name.split("_").map { |part| part[0].upcase + part[1..].to_s }.join
   end
 end
