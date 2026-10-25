@@ -33,6 +33,52 @@ class TestAgent < Minitest::Test
   # anchored regex rejects garbage-tailed model ids but accepts real ones.
   # cache_key_for — must produce bounded, deterministic SHA256 keys.
   # escalation flag — must be per-thread, not per-instance.
+  def test_chat_turn_stages_a_preference_candidate_only_after_repeated_opted_in_corrections
+    require "tmpdir"
+    root = Dir.mktmpdir("agent-preference-feedback")
+    subject = "agent-owner"
+    previous_subject = Fiber[:master_pair_subject]
+    previous_visitor = Fiber[:master_visitor]
+    Fiber[:master_pair_subject] = subject
+    Fiber[:master_visitor] = nil
+
+    permissions = Master::Ground::PersonalPermissions.new(root:)
+    permissions.grant(
+      scope: "personal_memory", subject:, confirmed_by: "local owner",
+      purpose: Master::Ground::PersonalWorkspace::MEMORY_PERMISSION_PURPOSE,
+    )
+    preferences = Master::Device::OwnerPreferences
+    preferences.set_learning(root:, subject:, enabled: true)
+
+    @agent.instance_variable_set(:@config, { "root" => root })
+    @agent.instance_variable_set(:@tools, [])
+    @agent.instance_variable_set(:@memory, nil)
+    messages = []
+    session = Object.new
+    session.define_singleton_method(:add_message) { |role:, content:| messages << { role:, content: } }
+    session.define_singleton_method(:messages) { messages }
+    @agent.instance_variable_set(:@session, session)
+
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |event, **payload| events << [event, payload] }
+    @agent.instance_variable_set(:@bus, bus)
+
+    @agent.send(:prepare_chat_turn, "Your answer is too verbose.")
+    assert_empty preferences.status(root:, subject:).fetch("suggestions")
+
+    @agent.send(:prepare_chat_turn, "That answer was too verbose again.")
+    candidates = preferences.status(root:, subject:).fetch("suggestions")
+    assert_equal 1, candidates.size
+    assert_equal "observed_correction", candidates.first.fetch("origin")
+    assert events.any? { |event, payload| event == "preferences:suggestion_staged" && payload[:suggestion_id] == candidates.first.fetch("id") }
+    refute_includes File.read(preferences.path(root:, subject:)), "Your answer is too verbose"
+  ensure
+    FileUtils.rm_rf(root) if root
+    Fiber[:master_pair_subject] = previous_subject
+    Fiber[:master_visitor] = previous_visitor
+  end
+
   def test_unknown_factual_turn_gets_evidence_preflight
     agent = @agent
     knowledge = Object.new
