@@ -7,6 +7,12 @@ not create separate project backlog files. A source edit, a static contract, an 
 list, and a passing live run are different kinds of evidence. Close an item with the command or
 browser evidence recorded in the commit.
 
+## Follow-on shared JSONL retention pass (2026-10-26)
+
+Added `Master::Trace::Log.append_jsonl` as the common private, bounded append path. It serializes rotation+append with a sidecar `flock`, rejects symlinks and oversized single records, maintains restrictive modes, and refuses a write if rotation did not make enough room. The default cap reuses the existing trace-event 25 MiB limit; callers with an established smaller cap can supply it.
+
+Migrated provider health/quarantine, incident notes, Phoenix provenance, model metrics, OpenTelemetry trace output and tool-invocation audit to that common writer. The OpenTelemetry exporter no longer keeps one permanent open file descriptor that would bypass rotation. Tests added/updated: `MASTER/test/test_trace_log_append_jsonl.rb`, `MASTER/test/test_trace_telemetry.rb`, `MASTER/test/test_trace_metrics_log.rb`, `MASTER/test/test_cli_incident_log.rb`, `MASTER/test/test_phoenix.rb`, plus the provider health concurrency/retention suite. **None of these tests has been run.**
+
 ## Follow-on telemetry append and broker privacy pass (2026-10-26)
 
 - MASTER provider health/quarantine now share a private append primitive that locks the log before seeking/writing, flushes and fsyncs a complete JSONL line, enforces file/directory permissions, and rotates both logs at the existing 25 MiB trace-event limit. Rotation and append are serialized through a private sidecar lock; an oversized single event or a failed rotation is refused rather than growing past the cap. Added an 8-thread/200-event regression test plus bounded-rotation and oversized-record cases in `MASTER/test/test_provider_health_cache.rb`; none has been run.
@@ -54,7 +60,7 @@ Changes added during the pass:
 - **Law parity:** the known `RENDERED_VALUES` coverage gap remains an explicit gap until an authorized deferral or tagged detector lands; it is not cleared by this pass.
 - **External status:** previously observed Vercel `build-rate-limit` failure is not a Ruby result. No Vercel retry was made.
 
-Next proof commands on the dev Mac with the pinned Ruby 4.0.5: run the focused tests (`MASTER/test/test_stale_bundle_sweep.rb`, `MASTER/test/test_watched_thread.rb`, `MASTER/test/test_check_registry_schema.rb`, `MASTER/test/test_ops_loop_owner.rb`, `MASTER/test/test_provider_quarantine_wiring.rb`, `MASTER/test/test_provider_canary.rb`, `MASTER/test/test_provider_health_cache.rb`, `MASTER/test/test_ai_trajectory.rb`, `OPENBSD/test/test_pid_probe.rb`, `OPENBSD/test/test_vps_state.rb`, `OPENBSD/test/test_pub4_admin.rb`, and `STUDIO/test/replicate_schema_task_test.rb`), then `cd MASTER && bin/check --profile=agent`, the full MASTER suite, RAILS contract/app suites, `ruby OPENBSD/test/run_all.rb`, and `cd STUDIO && rake check test`. Capture actual output and distinguish PASS / FAIL / INCONCLUSIVE / BLOCKED / TIMEOUT. Do not run a production deploy as part of a simulated pass.
+Next proof commands on the dev Mac with the pinned Ruby 4.0.5: run the focused tests (`MASTER/test/test_stale_bundle_sweep.rb`, `MASTER/test/test_watched_thread.rb`, `MASTER/test/test_check_registry_schema.rb`, `MASTER/test/test_ops_loop_owner.rb`, `MASTER/test/test_provider_quarantine_wiring.rb`, `MASTER/test/test_provider_canary.rb`, `MASTER/test/test_provider_health_cache.rb`, `MASTER/test/test_trace_log_append_jsonl.rb`, `MASTER/test/test_trace_telemetry.rb`, `MASTER/test/test_trace_metrics_log.rb`, `MASTER/test/test_cli_incident_log.rb`, `MASTER/test/test_phoenix.rb`, `MASTER/test/test_ai_trajectory.rb`, `OPENBSD/test/test_pid_probe.rb`, `OPENBSD/test/test_vps_state.rb`, `OPENBSD/test/test_pub4_admin.rb`, and `STUDIO/test/replicate_schema_task_test.rb`), then `cd MASTER && bin/check --profile=agent`, the full MASTER suite, RAILS contract/app suites, `ruby OPENBSD/test/run_all.rb`, and `cd STUDIO && rake check test`. Capture actual output and distinguish PASS / FAIL / INCONCLUSIVE / BLOCKED / TIMEOUT. Do not run a production deploy as part of a simulated pass.
 
 ## 2026-10-25 source-fix reconciliation
 
