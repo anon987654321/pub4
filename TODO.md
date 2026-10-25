@@ -7,6 +7,12 @@ not create separate project backlog files. A source edit, a static contract, an 
 list, and a passing live run are different kinds of evidence. Close an item with the command or
 browser evidence recorded in the commit.
 
+## Follow-on trajectory telemetry hardening (2026-10-26)
+
+The opt-in LLM trajectory writer previously appended indefinitely and used the process umask to choose file permissions. The records include the task/message and tool events, so an operator enabling `MASTER_LLM_RECORD=1` could accumulate an unbounded, readable-by-group log. `Master::AI::Trajectory::Record#append!` now uses the existing trace-event log byte ceiling (25 MiB), rotates through the existing bounded log mechanism, creates/keeps the destination private (0600), creates its directory privately (0700), and refuses a symlink destination. Added rotation, permission and symlink regression cases in `MASTER/test/test_ai_trajectory.rb`.
+
+This is a source change plus regression coverage only. The suite and Ruby syntax checks remain **INCONCLUSIVE** because they have not been run. Add `MASTER/test/test_ai_trajectory.rb` to the focused proof run listed below. The 25 MiB maximum is shared from the existing trace-event log contract rather than introduced as a new independent policy number.
+
 ## Follow-on manual fix continuation (2026-10-26, Europe/Oslo)
 
 Further source tracing found and repaired three state-observability defects after the first pass. These changes are committed to `main`, but none of their tests has been executed.
@@ -43,7 +49,7 @@ Changes added during the pass:
 - **Law parity:** the known `RENDERED_VALUES` coverage gap remains an explicit gap until an authorized deferral or tagged detector lands; it is not cleared by this pass.
 - **External status:** previously observed Vercel `build-rate-limit` failure is not a Ruby result. No Vercel retry was made.
 
-Next proof commands on the dev Mac with the pinned Ruby 4.0.5: run the focused tests (`MASTER/test/test_stale_bundle_sweep.rb`, `MASTER/test/test_watched_thread.rb`, `MASTER/test/test_check_registry_schema.rb`, `MASTER/test/test_ops_loop_owner.rb`, `MASTER/test/test_provider_quarantine_wiring.rb`, `MASTER/test/test_provider_canary.rb`, `MASTER/test/test_provider_health_cache.rb`, `OPENBSD/test/test_pid_probe.rb`, `OPENBSD/test/test_vps_state.rb`, `OPENBSD/test/test_pub4_admin.rb`, and `STUDIO/test/replicate_schema_task_test.rb`), then `cd MASTER && bin/check --profile=agent`, the full MASTER suite, RAILS contract/app suites, `ruby OPENBSD/test/run_all.rb`, and `cd STUDIO && rake check test`. Capture actual output and distinguish PASS / FAIL / INCONCLUSIVE / BLOCKED / TIMEOUT. Do not run a production deploy as part of a simulated pass.
+Next proof commands on the dev Mac with the pinned Ruby 4.0.5: run the focused tests (`MASTER/test/test_stale_bundle_sweep.rb`, `MASTER/test/test_watched_thread.rb`, `MASTER/test/test_check_registry_schema.rb`, `MASTER/test/test_ops_loop_owner.rb`, `MASTER/test/test_provider_quarantine_wiring.rb`, `MASTER/test/test_provider_canary.rb`, `MASTER/test/test_provider_health_cache.rb`, `MASTER/test/test_ai_trajectory.rb`, `OPENBSD/test/test_pid_probe.rb`, `OPENBSD/test/test_vps_state.rb`, `OPENBSD/test/test_pub4_admin.rb`, and `STUDIO/test/replicate_schema_task_test.rb`), then `cd MASTER && bin/check --profile=agent`, the full MASTER suite, RAILS contract/app suites, `ruby OPENBSD/test/run_all.rb`, and `cd STUDIO && rake check test`. Capture actual output and distinguish PASS / FAIL / INCONCLUSIVE / BLOCKED / TIMEOUT. Do not run a production deploy as part of a simulated pass.
 
 ## 2026-10-25 source-fix reconciliation
 
