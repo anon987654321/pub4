@@ -68,7 +68,8 @@ class CritiqueImplementationTest < Minitest::Test
     # as this assertion held.
     assert_includes compose, "Post to %{city}"
     assert_includes compose, "city: city_name"
-    assert_includes compose, "Posting as a guest"
+    assert_includes compose, 't("feed.posting_as_guest")'
+    assert_equal "Posting as a guest", en_value("brgen", "feed.posting_as_guest")
     assert_match(/post\.share|Share post/, post)
     assert_includes post, "shared/post_card"
     # Either spelling, on the feed action's own rule. The stylesheet writes
@@ -178,11 +179,9 @@ class CritiqueImplementationTest < Minitest::Test
     brgen_css = brgen_css_source
 
     assert_includes search, "width: 480px;"
-    assert_match(
-      /box-shadow:\s*rgba\(0,\s*0,\s*0,\s*0\.25\)\s*0(?:px)?\s+1px\s+8px\s+0(?:px)?;/,
-      search
-    )
-    assert_includes search, "border-radius: 16px;"
+    assert_includes search, "border-radius: 30px;"
+    assert_includes search, "box-shadow: none;"
+    refute_match(/box-shadow:\s*(?!none)/, search)
     assert_includes affiliate, 'data-controller="parallax-tilt"'
     assert_includes affiliate, 'data-parallax-tilt-target="tile"'
     assert_match(/\.affiliate_feed_label\s*\{[^}]*font-size:\s*var\(--text-xs\);/m, affiliate_css)
