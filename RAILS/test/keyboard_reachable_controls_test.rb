@@ -3,6 +3,7 @@
 require "minitest/autorun"
 require "tmpdir"
 require "fileutils"
+require_relative "engine_roots"
 
 # A control a keyboard cannot reach, and a role that promises one.
 #
@@ -107,7 +108,8 @@ class KeyboardReachableControlsTest < Minitest::Test
   Surface = Struct.new(:path, :tag, :attrs, :controller, :match)
 
   def views
-    @views ||= Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,__shared}/**/app/views/**/*.erb")).uniq
+    @views ||= (Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,__shared}/**/app/views/**/*.erb")) +
+                EngineRoots.glob(ROOT, "brgen", "app/views/**/*.erb")).uniq
   end
 
   # ERB is blanked to spaces first, offsets kept. An attribute like
@@ -146,9 +148,10 @@ class KeyboardReachableControlsTest < Minitest::Test
   end
 
   def controller_sources(root: ROOT)
-    Dir.glob(File.join(root, "{brgen,amber,bsdports,__shared}/**/*_controller.js"))
-       .reject { |path| path.match?(%r{/(vendor|node_modules|public|builds)/}) }
-       .map { |path| [File.basename(path, "_controller.js").tr("_", "-"), File.read(path)] }
+    paths = Dir.glob(File.join(root, "{brgen,amber,bsdports,__shared}/**/*_controller.js")) +
+            EngineRoots.glob(root, "brgen", "**/*_controller.js")
+    paths.uniq.reject { |path| path.match?(%r{/(vendor|node_modules|public|builds)/}) }
+         .map { |path| [File.basename(path, "_controller.js").tr("_", "-"), File.read(path)] }
   end
 
   # Controllers that drag their own element from addEventListener, with no
@@ -354,6 +357,12 @@ class KeyboardReachableControlsTest < Minitest::Test
   # Every view that binds a move event in a data-action, found by plain text,
   # has to be one the tag matcher read. A helper hash — data: { action: … } — is
   # the shape it cannot see, and that file would pass here by being invisible.
+  def test_the_gesture_census_includes_extracted_verticals
+    assert views.any? { |path| path.include?("/brgen_dating/") }
+    assert views.any? { |path| path.include?("/brgen_radio/playlist/") }
+    assert controller_sources.any? { |name, _| name == "dating-deck" || name == "playlist-player" }
+  end
+
   def test_the_gesture_census_sees_every_bound_move
     bound = []
     each_tag { |_, attrs, path| bound << path if local_actions(attrs).any? { |a| MOVE_EVENTS.include?(event_of(a)) } }
