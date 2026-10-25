@@ -9,6 +9,7 @@ require_relative "../lib/dmesg"
 
 ROOT = File.expand_path("../..", __dir__)
 require_relative "../lib/environment"
+require_relative "../lib/pid_probe"
 
 STAMP_DIR = ENV.fetch("PUB4_STAMP_DIR", "/var/db/pub4")
 # pub4-alert's record: what a healed or noted symptom left behind when it recurred.
@@ -86,16 +87,7 @@ rescue StandardError
 end
 
 def pid_alive?(pid)
-  return false unless pid
-
-  Process.kill(0, pid.to_i)
-  true
-rescue Errno::ESRCH
-  false
-rescue Errno::EPERM
-  true # exists, just owned by another user (e.g. root vs. dev)
-rescue StandardError
-  false
+  Deploy::PidProbe.alive?(pid)
 end
 
 def app_row(name, port)
