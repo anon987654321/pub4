@@ -48,7 +48,8 @@ class TestSelfFindingsDrift < Minitest::Test
     assert_empty missing, "expected active brgen vertical directories to exist: #{missing.join(", ")}"
   end
 
-  def test_the_total_is_still_read_from_findings    with_baseline({ "findings" => 154 }) { assert_equal 154, Tool.ceiling }
+  def test_the_total_is_still_read_from_findings
+    with_baseline({ "findings" => 154 }) { assert_equal 154, Tool.ceiling }
   end
 
   def test_per_rule_counts_are_read_when_present
@@ -153,7 +154,8 @@ class TestSelfFindingsDrift < Minitest::Test
     assert_equal 0, records, "ratchet must not reset a ceiling above the current baseline"
   end
 
-  def test_a_rule_that_disappeared_is_reported_too    with_baseline({ "findings" => 2, "by_rule" => { "GONE" => 2 } }) do
+  def test_a_rule_that_disappeared_is_reported_too
+    with_baseline({ "findings" => 2, "by_rule" => { "GONE" => 2 } }) do
       out, = capture_io { Tool.report_drift({}) }
 
       assert_match(/GONE\s+2 ->\s+0\s+-2/, out)
