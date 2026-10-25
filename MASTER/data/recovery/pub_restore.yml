@@ -25,7 +25,7 @@ critical_items:
 
   - id: ai3_standalone
     source: ai3/
-    expected_target: RECOVERY/pub/ai3/legacy/
+    expected_target: MASTER/data/recovery/ai3/legacy/
     current_state: absorbed
     check: source_archived_or_importer_tested
 
@@ -62,7 +62,7 @@ checks:
   # to the old layout and the bplans pipeline never had the generator/templates
   # this ledger once claimed.
   missing_until_restored:
-    - RECOVERY/pub/ai3/legacy/ai3.rb
+    - MASTER/data/recovery/ai3/legacy/ai3.rb
 
 agent_prompt: >
   Before claiming pub4 restored pub, read RESTORE_FROM_PUB.md and this file.

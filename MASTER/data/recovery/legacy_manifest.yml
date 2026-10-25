@@ -31,7 +31,7 @@ legacy_roots:
   - path: ai3/
     state: absorbed
     priority: critical
-    target_path: RECOVERY/pub/ai3/
+    target_path: MASTER/data/recovery/ai3/legacy/
     reason: >
       MASTER absorbed the idea, but the old standalone Ruby CLI, assistant
       inventory, LangChain/Weaviate/Ferrum layout, installers, and config
@@ -51,7 +51,7 @@ legacy_roots:
       - ai3/lib/utils/file.rb
       - ai3/lib/utils/llm.rb
     action: >
-      Preserve source under RECOVERY/pub/ai3/legacy or implement a deterministic
+      Preserve source under MASTER/data/recovery/ai3/legacy/ or implement a deterministic
       importer into MASTER plugins/council roles.
 
   - path: bplans/consolidated/
