@@ -812,7 +812,7 @@ module Master
             if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
               raise "dependency lock held elsewhere over #{wait_seconds}s: #{lock_path}"
             end
-            sleep [0.05, deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)].min
+            sleep 0.05
           end
           yield
         end
@@ -849,19 +849,23 @@ module Master
         end
 
         # A successful parent can leave a grandchild holding an inherited pipe.
-        # Bound that drain too, then terminate the group rather than waiting forever.
-        unless killed || (stdout_thread.join(CAPTURE_DRAIN_SECONDS) && stderr_thread.join(CAPTURE_DRAIN_SECONDS))
+        # Bound draining even after the parent timed out; never call Thread#value
+        # on a reader that could still be waiting for an escaped descendant.
+        drained = !killed &&
+          stdout_thread.join(CAPTURE_DRAIN_SECONDS) &&
+          stderr_thread.join(CAPTURE_DRAIN_SECONDS)
+        unless drained
           kill_capture_group(pid)
           killed = true
           [stdout_r, stderr_r].each { |io| io.close unless io.closed? }
-          stdout_thread.join(0.2)
-          stderr_thread.join(0.2)
-          stdout_thread.kill if stdout_thread.alive?
-          stderr_thread.kill if stderr_thread.alive?
+          [stdout_thread, stderr_thread].each do |thread|
+            thread.kill if thread.alive?
+            thread.join(0.1)
+          end
         end
 
-        stdout = stdout_thread.value.to_s
-        stderr = stderr_thread.value.to_s
+        stdout = stdout_thread.alive? ? "" : stdout_thread.value.to_s
+        stderr = stderr_thread.alive? ? "" : stderr_thread.value.to_s
         stderr = join_output(stderr, "#{argv.first} process group killed after #{deadline_seconds}s deadline") if killed
         [!killed && status&.success? == true, stdout, stderr]
       ensure
