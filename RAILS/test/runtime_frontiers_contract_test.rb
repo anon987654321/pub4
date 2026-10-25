@@ -19,7 +19,7 @@ class RuntimeFrontiersContractTest < Minitest::Test
       assert_match(/production:\n(?:.*\n){0,12}\s*adapter:\s*solid_cable/, cable, "#{app}: production cable adapter is not Solid Cable")
       assert_includes cable, "writing: cable", "#{app}: Solid Cable does not use its cable database"
       assert_includes cable, "CABLE_POLLING_INTERVAL", "#{app}: cable latency is not operationally tunable"
-      assert_match(/^  production:\n[\s\S]*?^  cable:\n/m, database, "#{app}: production has no dedicated cable database")
+      assert_match(/^production:\n[\s\S]*?^  cable:\n/m, database, "#{app}: production has no dedicated cable database")
       assert_includes database, "migrations_paths: db/cable_migrate"
       assert_includes schema, 'create_table "solid_cable_messages"'
       assert_includes schema, 't.binary "payload", limit: 536870912, null: false'
