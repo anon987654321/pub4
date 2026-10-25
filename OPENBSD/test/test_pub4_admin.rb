@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "json"
+require "stringio"
+require "tmpdir"
 load File.expand_path("../usr/local/sbin/pub4-admin", __dir__)
 
 class Pub4AdminTest < Minitest::Test
@@ -56,12 +59,60 @@ class Pub4AdminTest < Minitest::Test
     core = File.read(File.expand_path("../../RAILS/_core.sh", __dir__))
 
     assert_includes source, 'args.length == 4 && args[0] == "deploy-status"'
+    assert_includes source, 'args.length == 2 && args[0] == "deploy-status-read"'
     assert_includes source, "def write_deploy_status(app, step, state)"
     assert_includes source, 'File.join(directory, "#{app}.json")'
     assert_includes source, "File::CREAT | File::EXCL"
     assert_includes source, "File.link(temporary, target)"
     assert_includes source, 'raise "#{target} is a symlink; refusing status write"'
     assert_includes core, 'pub4-admin deploy-status "$app" "$step" "$state"'
+  end
+
+  def test_deploy_status_read_returns_only_the_allowlisted_app_record
+    Dir.mktmpdir("pub4-admin-status-") do |root|
+      directory = File.join(root, "deploy_status")
+      FileUtils.mkdir_p(directory)
+      record = {
+        "app" => "amber",
+        "state" => "running",
+        "step" => "bundle",
+        "pid" => 123,
+        "started_at" => "2026-10-26T00:00:00Z",
+        "updated_at" => "2026-10-26T00:00:05Z",
+      }
+      File.write(File.join(directory, "amber.json"), JSON.generate(record))
+      output = StringIO.new
+
+      assert_equal 0, ADMIN.read_deploy_status("amber", root:, output:, verify_root: false)
+      assert_equal record, JSON.parse(output.string)
+    end
+  end
+
+  def test_deploy_status_read_reports_missing_record_as_json_null
+    Dir.mktmpdir("pub4-admin-status-") do |root|
+      output = StringIO.new
+
+      assert_equal 0, ADMIN.read_deploy_status("amber", root:, output:, verify_root: false)
+      assert_equal "null", output.string.strip
+    end
+  end
+
+  def test_deploy_status_read_refuses_unknown_apps_and_symlinks
+    Dir.mktmpdir("pub4-admin-status-") do |root|
+      assert_raises(RuntimeError) do
+        ADMIN.read_deploy_status("../secret", root:, output: StringIO.new, verify_root: false)
+      end
+
+      directory = File.join(root, "deploy_status")
+      FileUtils.mkdir_p(directory)
+      target = File.join(root, "outside.json")
+      File.write(target, "{}")
+      File.symlink(target, File.join(directory, "amber.json"))
+
+      assert_raises(RuntimeError) do
+        ADMIN.read_deploy_status("amber", root:, output: StringIO.new, verify_root: false)
+      end
+    end
   end
 
   def test_ci_lock_is_a_fixed_broker_verb
