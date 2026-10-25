@@ -7,6 +7,11 @@ not create separate project backlog files. A source edit, a static contract, an 
 list, and a passing live run are different kinds of evidence. Close an item with the command or
 browser evidence recorded in the commit.
 
+## Follow-on telemetry append and broker privacy pass (2026-10-26)
+
+- MASTER provider health/quarantine now share a private append primitive that locks the log before seeking/writing, flushes and fsyncs a complete JSONL line, and enforces file/directory permissions. This closes the concurrent-writer risk in which multiple runtime instances could interleave a record. Added an 8-thread/200-event regression test in `MASTER/test/test_provider_health_cache.rb`; it is not run.
+- OPENBSD's `deploy-status-read` broker now rejects progress records with group/world permissions, not just group/world write bits. Test coverage includes a readable-by-all status record. No real OpenBSD user/permission setup was exercised, and tests remain unexecuted.
+
 ## Follow-on trajectory telemetry hardening (2026-10-26)
 
 The opt-in LLM trajectory writer previously appended indefinitely and used the process umask to choose file permissions. The records include the task/message and tool events, so an operator enabling `MASTER_LLM_RECORD=1` could accumulate an unbounded, readable-by-group log. `Master::AI::Trajectory::Record#append!` now uses the existing trace-event log byte ceiling (25 MiB), serializes rotation and append through a private sidecar lock, reserves room for each complete record before writing, rejects one record larger than the cap, enforces file mode 0600 and directory mode 0700, and refuses symlink destinations. Added rotation, cap, permission and symlink regression cases in `MASTER/test/test_ai_trajectory.rb`.
