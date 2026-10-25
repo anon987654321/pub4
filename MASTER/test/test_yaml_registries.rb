@@ -353,6 +353,7 @@ class TestConstitutionYamlLoading < Minitest::Test
     lib/master.rb
     spec/static_syntax_spec.rb
     lib/ground/commit_format.rb
+    lib/ground/agent_brief.rb # deliberately unbooted SessionStart reader
     lib/operator/ratchets.rb
     test/test_future_face.rb
     lib/finance/tradedoubler.rb
