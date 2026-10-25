@@ -667,7 +667,7 @@ end
 
 def deep_rows(rails: true)
   # This ceiling belongs to the principle map, not this presentation layer.
-  law_trace_ceiling = YAML.safe_load_file(File.join(MASTER, "data", "laws.yml")).dig("law_map", "law_trace_ceiling")
+  law_trace_ceiling = Master.law("law_map").fetch("law_trace_ceiling")
 
   [
     # Deep because it parses every tracked Ruby file in four top-level trees with Prism.
