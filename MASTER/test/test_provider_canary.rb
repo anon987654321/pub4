@@ -19,6 +19,7 @@ class ProviderCanaryTest < Minitest::Test
 
     def ask_once(prompt, **kwargs)
       @models << [kwargs.fetch(:model), kwargs.fetch(:failover), kwargs.fetch(:law)]
+      raise IOError, "provider unavailable" if @response_mode == :raise
       return "wrong response" if @response_mode == :wrong
 
       prompt.sub(/Reply with (.+) and nothing else./, '\1')
@@ -85,16 +86,40 @@ class ProviderCanaryTest < Minitest::Test
   def test_run_uses_ask_once_without_failover_and_publishes_results
     agent = Agent.new
     bus = Bus.new
-    canary = Master::CLI::Routing::ProviderCanary.new(
-      agent:,
-      router: Router.new,
-      event_bus: bus,
-      max_providers: 2,
-    )
 
-    assert_equal "2/2 canaries passed", canary.run
-    assert_equal [["claude-cli:opus", false, false], ["ollama:qwen3", false, false]], agent.models
-    assert bus.events.any? { |name, payload| name == "provider:canary" && payload[:status] == :success }
-    assert bus.events.any? { |name, _| name == "provider:canary_summary" }
+    Dir.mktmpdir do |dir|
+      health = Master::CLI::Routing::ProviderHealth.new(path: File.join(dir, "health.ndjson"))
+      canary = Master::CLI::Routing::ProviderCanary.new(
+        agent:,
+        router: Router.new,
+        event_bus: bus,
+        health:,
+        max_providers: 2,
+      )
+
+      assert_equal "2/2 canaries passed", canary.run
+      assert_equal [["claude-cli:opus", false, false], ["ollama:qwen3", false, false]], agent.models
+      assert bus.events.any? { |name, payload| name == "provider:canary" && payload[:status] == :success }
+      assert bus.events.any? { |name, _| name == "provider:canary_summary" }
+      assert_equal :success, health.latest_event("claude-cli:opus")["status"].to_sym
+      assert_operator health.score("claude-cli:opus"), :>, 1.0
+    end
   end
-end
+
+  def test_provider_exception_is_recorded_as_health_failure
+    agent = Agent.new(response_mode: :raise)
+
+    Dir.mktmpdir do |dir|
+      health = Master::CLI::Routing::ProviderHealth.new(path: File.join(dir, "health.ndjson"))
+      canary = Master::CLI::Routing::ProviderCanary.new(
+        agent:,
+        router: Router.new,
+        health:,
+        max_providers: 1,
+      )
+
+      assert_equal "0/1 canaries passed", canary.run
+      assert_equal :canary_failure, health.latest_event("claude-cli:opus")["status"].to_sym
+      assert_operator health.score("claude-cli:opus"), :<, 1.0
+    end
+  endend
