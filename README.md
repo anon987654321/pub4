@@ -15,17 +15,6 @@ identity, Amber preserves garment colour, bsdports remains terminal-green,
 OpenBSD output stays plain and explicit, and STUDIO never overrides operator-owned
 grades. The reference is inspiration only: pub4 must retain original branding.
 
-## Static repository index
-
-The root-level Vercel project serves only `public/index.html` and its local
-stylesheet, with the `public` output directory selected in `vercel.json` and
-the Other framework preset. Response headers set a restrictive Content Security
-Policy, disable framing, limit browser permissions and prevent MIME sniffing.
-The static index points to the canonical source trees; it does not boot MASTER,
-run Rails, deploy OPENBSD or generate STUDIO media. A successful build or HTTP
-response proves only that the static page was delivered, not that an application
-or production host is healthy. Production deployment remains governed by OPENBSD.
-
 ## The four trees
 
 - [MASTER](MASTER/README.md) — constitutional Ruby runtime, `/fix`, laws, operator commands and verification.
