@@ -147,7 +147,8 @@ module Master
           lines = ["preferences: learning=#{state.fetch("learning_enabled") ? "on" : "off"}"]
           scopes.each do |name|
             state.fetch("preferences").fetch(name, {}).each do |key, entry|
-              lines << "#{name} #{key}=#{entry.fetch("value")} (source=#{entry.fetch("source")}, confidence=#{entry.fetch("confidence")})"
+              reason = entry["reason"] ? ", reason=#{entry.fetch("reason")}" : ""
+              lines << "#{name} #{key}=#{entry.fetch("value")} (source=#{entry.fetch("source")}, confidence=#{entry.fetch("confidence")}#{reason})"
             end
           end
           if state.fetch("suggestions").empty?
