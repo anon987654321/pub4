@@ -99,13 +99,30 @@ class TestAiTrajectory < Minitest::Test
         "verified" => true,
       )
 
-      record.append!(path, max_bytes: 1)
-      record.append!(path, max_bytes: 1)
+      5.times { record.append!(path, max_bytes: 400) }
 
       assert File.file?("#{path}.1")
-      assert_operator File.size("#{path}.1"), :<=, 1
+      assert_operator File.size("#{path}.1"), :<=, 400
+      assert_operator File.size(path), :<=, 400
       assert_equal "inspect", JSON.parse(File.readlines(path).last)["task"]
       assert_equal 0o600, File.stat(path).mode & 0o777
+      assert_equal 0o600, File.stat("#{path}.lock").mode & 0o777
+    end
+  end
+
+  def test_trajectory_record_cannot_exceed_log_ceiling
+    Dir.mktmpdir("trajectory-limit") do |dir|
+      path = File.join(dir, "trajectory.ndjson")
+      record = Master::AI::Trajectory::Record.new(
+        "task" => "inspect",
+        "model" => "small-model",
+        "events" => [{ "tool" => "Tree" }],
+        "outcome" => "complete",
+        "verified" => true,
+      )
+
+      assert_raises(ArgumentError) { record.append!(path, max_bytes: 20) }
+      refute File.exist?(path)
     end
   end
 
