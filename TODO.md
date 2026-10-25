@@ -220,8 +220,11 @@ browser evidence recorded in the commit.
 
 - [ ] Finish the security review across MASTER, RAILS, OPENBSD, and STUDIO: outbound HTTP/SSRF,
   DNS pinning, body/time limits, authentication/authorization, rate limiting, CSP/CORS, upload
-  paths, secret redaction, unsafe command construction, and safe failure states. Re-test the
-  actual production boundary after recent hardening commits.
+  paths, secret redaction, unsafe command construction, and safe failure states. Source-level
+  hardening on 2026-10-25 keys Amber AI limits by user/IP and makes Brgen's generated avatar
+  responses independent of account existence. Shared CSP nonce initializers exist, but real
+  response headers/enforcement and targeted `html_safe` data-flow review remain unverified.
+  Re-test the actual production boundary; do not close this item from source inspection alone.
 - [ ] Benchmark RubyLLM routing/provider gains using representative workloads: latency, success
   rate, token/context use, cost, retries, circuit breakers, and fallback quality. Keep
   measurements per provider/model and distinguish observed values from estimates.
