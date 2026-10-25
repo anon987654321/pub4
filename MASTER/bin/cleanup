@@ -11,6 +11,7 @@ require "optparse"
 require "time"
 require_relative "../lib/trace/dmesg"
 require_relative "../lib/operator/lock_sweep"
+require_relative "../lib/boot/stale_bundle_sweep"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
@@ -71,6 +72,14 @@ candidates.each { |candidate| Master::Trace::Dmesg.status("cleanup0", candidate)
 lock_dir = File.join(ROOT, ".constitutional_locks")
 swept = Operator::LockSweep.sweep(lock_dir, apply: options[:apply])
 Master::Trace::Dmesg.status("cleanup0", "#{swept} scan lock(s) older than a day#{options[:apply] ? " removed" : ", rerun with --apply to remove"}")
+
+bundle_root = File.join(File.expand_path("~"), ".master", "bundler")
+stale_bundles = Master::Boot::StaleBundleSweep.sweep(bundle_root, apply: options[:apply])
+Master::Trace::Dmesg.status(
+  "cleanup0",
+  "#{stale_bundles} stale Bundler store(s) older than #{Master::Boot::StaleBundleSweep::TTL_SECONDS / 86_400} days" \
+  "#{options[:apply] ? " removed" : ", rerun with --apply to remove"}",
+)
 
 if options[:apply]
   candidates.each { |rel| File.delete(File.join(REPO, rel)) if File.file?(File.join(REPO, rel)) } # scan: intentional — each candidate was listed above and --apply names them
