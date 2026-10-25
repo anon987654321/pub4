@@ -90,8 +90,13 @@ module Master
           backup = "#{path}.#{Time.now.utc.strftime("%Y%m%d%H%M%S%N")}-#{Process.pid}"
           File.rename(path, backup)
           compact_rotated!(backup, limit)
-          # Keep only the newest bounded generations.
-          Dir.glob("#{path}.*").sort.reverse.drop([Integer(keep), 0].max).each do |old|
+          # The sidecar lock is not a rotated generation and must never be
+          # unlinked while another process could be waiting on its inode.
+          prefix = "#{File.basename(path)}."
+          backups = Dir.glob("#{path}.*").select do |candidate|
+            File.basename(candidate).delete_prefix(prefix).match?(/\\A\\d{23}-\\d+\\z/)
+          end
+          backups.sort.reverse.drop([Integer(keep), 0].max).each do |old|
             File.delete(old) if File.file?(old) && !File.symlink?(old)
           end
         end
@@ -137,10 +142,11 @@ module Master
 
         def write_structured_log(payload)
           directory = File.dirname(LOG_PATH)
+          raise IOError, "swallow log directory is a symlink" if File.symlink?(directory)
           FileUtils.mkdir_p(directory, mode: 0o700)
           File.chmod(0o700, directory)
           line = JSON.generate(payload) + "\n"
-          raise IOError, "swallow log record exceeds #{MAX_BYTES}-byte cap" if line.bytesize > MAX_BYTES
+          raise IOError, "swallow log record must be smaller than #{MAX_BYTES} bytes" if line.bytesize >= MAX_BYTES
 
           lock_path = "#{LOG_PATH}.lock"
           raise IOError, "swallow log lock is a symlink" if File.symlink?(lock_path)
