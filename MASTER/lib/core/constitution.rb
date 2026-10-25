@@ -543,19 +543,27 @@ module Master::Core
 
       def sacred_paths
         @sacred_paths ||= begin
-          if manifest_root
-            soul = YAML.safe_load_file(File.join(manifest_root, MANIFEST), aliases: true) || {}
-            Array(soul.dig("absolute", "sacred_paths")).map(&:to_s).map do |path|
-              entry = normalize("#{manifest_prefix}#{path}")
-              # normalize resolves the path and drops the slash that marks a subtree;
-              # Constitution.immutable_hit? reads that slash to guard everything below.
-              path.end_with?("/") ? "#{entry}/" : entry
-            end.uniq.freeze
-          else
-            [].freeze
+          # Fail closed: a missing, unreadable, invalid, or empty soul.yml must
+          # never degrade into "nothing is sacred" and silently disable protection.
+          root = manifest_root
+          raise Errno::ENOENT, "#{MANIFEST} not found under #{@root}" unless root
+
+          soul = YAML.safe_load_file(File.join(root, MANIFEST), aliases: true)
+          declared = if soul.is_a?(Hash) && soul["absolute"].is_a?(Hash)
+                       Array(soul.dig("absolute", "sacred_paths"))
+                     else
+                       []
+                     end
+          if declared.empty?
+            raise "soul.yml under #{@root} declares no absolute.sacred_paths — refusing to derive empty sacred paths"
           end
-        rescue Errno::ENOENT
-          [].freeze
+
+          declared.map(&:to_s).map do |path|
+            entry = normalize("#{manifest_prefix}#{path}")
+            # normalize resolves the path and drops the slash that marks a subtree;
+            # Constitution.immutable_hit? reads that slash to guard everything below.
+            path.end_with?("/") ? "#{entry}/" : entry
+          end.uniq.freeze
         end
       end
 
@@ -564,7 +572,8 @@ module Master::Core
         sacred_paths.any? do |entry|
           relative == entry || relative.start_with?("#{entry.delete_suffix("/")}/")
         end
-      rescue ArgumentError
+      rescue StandardError
+        # An uncertain path or unreadable constitution is protected until proven otherwise.
         true
       end
 
@@ -572,14 +581,19 @@ module Master::Core
       # it may carry is the ceiling RatchetSponsor requires beside any change that grows
       # or shrinks a tree.
       def commit_refusal(path)
-        return if sacred_paths.empty? || !sacred?(path)
-
         relative = normalize(path)
+        # Validate the constitution before honoring the ratchet-ceiling exception below.
+        # A broken manifest must refuse every commit, including data/spine.yml.
+        sacred_paths
+        return unless sacred?(path)
+
         return if relative.delete_prefix(manifest_prefix) == RATCHET_CEILING
 
         "#{relative} is sacred (soul.yml absolute.sacred_paths)"
       rescue ArgumentError
         "#{path} is outside #{@root}"
+      rescue StandardError => e
+        "#{path} refused: constitution unreadable (#{e.class}: #{e.message.to_s[0, 80]})"
       end
 
       private
