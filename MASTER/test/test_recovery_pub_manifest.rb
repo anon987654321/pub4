@@ -181,7 +181,7 @@ class TestRecoveryPubManifest < Minitest::Test
     end
 
     assert_equal(
-      "preserved-fix",
+      "retired-by-runtime-support",
       reviews.find { |review| review["commit"] == "d1f6a31af0c82d8f6127b60eabbc76eef0cdef81" }.fetch("disposition"),
     )
     assert_equal(

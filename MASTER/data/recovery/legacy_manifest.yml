@@ -1074,7 +1074,7 @@ recovered_regression_reviews:
     area: dilla
     finding: "A merge inlined Hash#dig compatibility into test_helper and broke dilla's absolute reader, silently disabling coltrane and changing rendered theory."
     current_mapping: "The shared shim and its tests were removed in e8dc5e445 because Dilla takes no gems; supported Ruby 3.3+ provides Hash#dig natively, so the compatibility behavior no longer needs a shared file."
-    disposition: "preserved-fix"
+    disposition: "retired-by-runtime-support"
   - commit: "fa897d465d8ce7a7f7465028164d0460888a907f"
     area: fix_loop
     finding: "God-class splits dropped reload-after-AST-fix state, added unbounded generated-tree scanning, and changed the rule/reader loading shape."
