@@ -1,9 +1,22 @@
 # MASTER hardening review follow-through
 
-Updated: 2026-10-26  
+Updated: 2026-10-25 (the external review labels its snapshot 2026-10-26; that chronology is unconfirmed)  
 Reviewed base: `1ef67fe10` (external review snapshot)  
 Integration base: `0b59844318f2e5527b5d5d54328a44f433438c3c`  
 Integrated head at writing: `73a45cc7a9800808fb7658e95dc3dceacf73bd67`
+
+## Follow-on manual four-tree source pass (2026-10-25)
+
+A manual source-only pass subsequently touched MASTER, the shared check runner used by RAILS, OPENBSD, and STUDIO. The work was committed directly to `main`; it was not an actual `/fix` execution. No app, suite, syntax check or live service was run in this environment.
+
+- MASTER: `lib/boot/stale_bundle_sweep.rb` adds a 30-day, quarantine-timestamp-based cleanup for renamed stale Bundler stores. It is dry-run by default and is wired into `bin/cleanup`; `--apply` is required to remove eligible directories. Regression tests cover TTL age, dry-run, explicit pruning and symlink refusal.
+- MASTER: the asynchronous builder self-test now uses `watched_thread`, and invalid check registry roots/headless rows are refused before the runner executes any checks. A static read found all 64 current rows in `MASTER/checks/checks.yml` have `class:` or `script:`; this census is source evidence, not a runtime pass.
+- MASTER: LoopOwner preserves a live process claim when PID or timestamp metadata is malformed, logging the invalid metadata instead of deleting the claim. Tests added, not run.
+- RAILS: the runner is shared; the invalid-registry guard is relevant to its declared checks. No Rails app, migration, HTTP or browser tests were run.
+- OPENBSD: `vps-state` validates deploy-status PIDs through `Deploy::PidProbe`. Tests added, not run. No OpenBSD-specific execution, vm23 health check or deployment was attempted.
+- STUDIO: Replicate schema audit/snapshot tasks without credentials now report inconclusive and exit 3. Tests added, not run; no provider call was attempted.
+
+All related tests remain unexecuted. The one cross-tree backlog, `TODO.md`, records the precise verification commands and per-tree inconclusive states. Do not infer PASS from a commit, a test file, static census or a CI badge. The previously observed Vercel `build-rate-limit` status is not a Ruby test result and was not retried.
 
 ## State of the P01–P11 tranche
 
