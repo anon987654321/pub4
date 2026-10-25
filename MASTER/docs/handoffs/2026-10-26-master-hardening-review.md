@@ -1,6 +1,6 @@
 # MASTER hardening review follow-through
 
-Updated: 2026-10-25 (the external review labels its snapshot 2026-10-26; that chronology is unconfirmed)  
+Updated: 2026-10-26 (Europe/Oslo; GitHub commit timestamps are UTC)  
 Reviewed base: `1ef67fe10` (external review snapshot)  
 Integration base: `0b59844318f2e5527b5d5d54328a44f433438c3c`  
 Integrated head at writing: `73a45cc7a9800808fb7658e95dc3dceacf73bd67`
@@ -17,6 +17,16 @@ A manual source-only pass subsequently touched MASTER, the shared check runner u
 - STUDIO: Replicate schema audit/snapshot tasks without credentials now report inconclusive and exit 3. Tests added, not run; no provider call was attempted.
 
 All related tests remain unexecuted. The one cross-tree backlog, `TODO.md`, records the precise verification commands and per-tree inconclusive states. Do not infer PASS from a commit, a test file, static census or a CI badge. The previously observed Vercel `build-rate-limit` status is not a Ruby test result and was not retried.
+
+## Follow-on provider and deploy-status pass
+
+A further code trace found two provider-health issues and one OpenBSD visibility issue:
+
+- Provider quarantine now respects the latest append-only event, so `clear` actually releases a model even if quarantine and clear timestamps fall in the same second. Quarantine log caching keys on inode, size and mtime, so appends invalidate a cached view even when filesystem timestamp granularity is coarse.
+- Provider canary outcomes now pass through `ModelRouter#record_provider_outcome` where available; this connects actual canary results to the existing health/quarantine path. Success and exception outcomes both enter telemetry, and `canary_failure` reduces health score. Focused tests cover clear, re-quarantine, stable-mtime append, success, provider exception, and router routing.
+- The progress directory `/var/db/pub4/deploy_status` remains root-only. `pub4-admin deploy-status-read <app>` exposes one allowlisted, validated record, and `vps-state` uses it on vm23 rather than treating direct permission denial as no active deploy. Corrupt records are reported as corrupt. Tests cover the broker method, caller contract and damaged status data.
+
+All newly added and modified tests remain unexecuted. No runtime PASS is claimed; the exact focused test list and per-tree INCONCLUSIVE state are recorded in root `TODO.md`. No deployment, Vercel retry, or OpenBSD host action was performed.
 
 ## State of the P01–P11 tranche
 
