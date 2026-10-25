@@ -17,7 +17,7 @@ The /fix conflict log already retained three bounded generations, but its check-
 
 ## Follow-on canonical event-stream locking (2026-10-26)
 
-`Master::Trace::Log::Event#append` now uses the common locked writer with the same 25 MiB cap, private file modes and complete-record rotation. The shared append helper retains the prior one-shot `ENOSPC` recovery behavior (discard a rotated generation or compact the active log before one retry). Added a multi-thread event-stream test that checks all 200 JSONL rows, unique outcomes and private modes in `MASTER/test/test_trace_log_append_jsonl.rb`. The test remains unexecuted.
+`Master::Trace::Log::Event#append` now uses the common locked writer with the same 25 MiB cap, private file modes and complete-record rotation. The shared append helper retains the prior one-shot `ENOSPC` recovery behavior (discard a rotated generation or compact the active log before one retry), and now also attempts that one bounded reclaim if a failed rotation leaves the active file over its cap. Added a multi-thread event-stream test that checks all 200 JSONL rows, unique outcomes and private modes in `MASTER/test/test_trace_log_append_jsonl.rb`. The test remains unexecuted.
 
 ## Follow-on JSONL compaction integrity (2026-10-26)
 
