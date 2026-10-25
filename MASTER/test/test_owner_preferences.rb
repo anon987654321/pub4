@@ -136,6 +136,7 @@ class TestOwnerPreferences < Minitest::Test
     state = Preferences.status(root: @root, subject: SUBJECT)
     assert_empty state.fetch("observations")
     assert_empty state.fetch("suggestions")
+    refute File.exist?(Preferences.path(root: @root, subject: SUBJECT))
   end
 
   def test_non_correction_is_not_collected
