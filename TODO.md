@@ -12,12 +12,14 @@ browser evidence recorded in the commit.
 - [ ] Run a fresh bounded release pass against the exact commit intended for deployment:
   constitutional and repository checks, all RAILS contract tests, active app suites, OPENBSD
   tests, and STUDIO fast tests. Record PASS, FAIL, INCONCLUSIVE, BLOCKED, or TIMEOUT separately.
-  GitHub returned no status entries for the audit head; that is not a green result.
+  The no-status observation belongs to the historical audit baseline, not current HEAD. On 2026-10-25, GitHub reported a failed Vercel status for code head `3cd29c8` and a pending Vercel status for TODO-only commit `9dd60e3`; neither is local test evidence. Do not use Vercel or a status badge as a substitute for running the documented checks on the exact checkout.
 - [ ] Complete the requested 200–400 scenario interaction matrix across MASTER CLI, MASTER web,
   keyboard/touch, session state, routes, errors, models/tools, speech, reconnects, offline mode,
-  and PWA updates. Exercise success and failure paths. Record scenario ID, setup, action,
-  observed result, and evidence; scripted mocks do not substitute for real browser/CLI smoke
-  tests.
+  and PWA updates. Use the existing `RAILS/test/interaction_campaign_400.json` as the canonical
+  400-case inventory: validate its declared 20 surfaces × 20 cases, action/fault setup, expected
+  outcomes and evidence paths; do not create a second matrix. Run cases against real CLI, browser
+  and HTTP surfaces where applicable. Record scenario ID, setup, action, observed result and
+  evidence; scripted mocks and the presence of this file do not constitute runtime passes.
 - [ ] Run the live rendered-layout suite with screenshots and geometry evidence at 320, 360,
   375, 390, 430, 480, 640, 768, 1024, and 1280 CSS-pixel widths. Include keyboard-only use,
   zoom/reflow, safe-area, forced-colors, and reduced-motion checks. Do not report visual
@@ -68,10 +70,11 @@ browser evidence recorded in the commit.
 - [ ] Validate the OpenBSD Operator CLI and /help against the requested plain dmesg style,
   correct checkout/tree-relative location, no decorative status, and useful scrollback. Re-check
   that ASCII art never appears outside the face.
-- [ ] Complete real voice-path checks: single Christopher voice, no overlapping voices, natural
-  turn timing, interruption/barge-in, microphone permission denial, STT/TTS timeout, and
-  declared fallbacks. Measure latency on the target machine rather than relying on a mocked
-  worker.
+- [ ] Complete real voice-path checks: English uses Christopher; Norwegian uses Pernille/Finn and
+  Malay uses Yasmin/Osman according to the declared voice policy. Verify single-voice playback,
+  no overlap, natural turn timing, interruption/barge-in, microphone permission denial, STT/TTS
+  timeout and declared fallbacks. Measure latency on the target machine rather than relying on a
+  mocked worker.
 - [ ] Capture real-browser face boot/render evidence: first-tap behavior, failed asset recovery, context loss, lifecycle cleanup, reduced motion, renderer budget, phone thermal/battery behavior, and GPU/device performance claims. Include the requested grayscale palette, original single CLI prompt when the face is exposed, micro-/nano-expressions, duration-based lip-sync against actual TTS playback, and face/prompt coexistence. Inspect the generated runtime bundle, not only its split source parts.
 
 ## MASTER personal assistance
@@ -220,6 +223,41 @@ browser evidence recorded in the commit.
   peaks/loudness, clipping, duration, BPM, file integrity, and visual output; do not infer
   quality from a successful process exit.
 
+
+## /fix transaction safety and Law coverage
+
+- [ ] Trace the write planes from real call sites: proposed Core::Fold Effects must pass
+  `Master::Core::Constitution#admit` before `Master::Core::World` performs them; `Io::Base`,
+  DiffStager, `Fix::Transaction`, Committer and direct filesystem mutation are distinct planes
+  with their own guards and transaction contracts. Prove each plane is governed; do not assume
+  every internal write is literally a Core Effect or replace protections before tracing them.
+- [ ] Instrument representative writes with the applicable admission decision, normalized path,
+  transactional owner and outcome. Add end-to-end recovery tests for atomic snapshot ownership,
+  crash recovery, concurrent run serialization, orphan/rollback evidence, refusal to roll back
+  after commit, and rollback when final verification fails. Inspect the actual Transaction API
+  before writing the tests.
+- [ ] Keep DesignSweep out of automatic `/fix` application until it has a candidate/apply split:
+  evaluate an isolated candidate, validate the whole result, then apply through the existing
+  `Fix::Transaction` and Committer after admission and verification. Prove rejected candidates,
+  failed visual evidence and failed final verification leave no partial changes or stray commits.
+  Use a disposable copy for destructive experiments; do not introduce a branch/worktree workaround.
+- [ ] Prove semantic-scan coverage over every target file and that finding-cache keys include all
+  detector inputs, including the Law/catalogue digest where relevant. Run positive and negative
+  LawDSL fixtures when scanner registration changes.
+- [ ] Run `LawRegistryAudit` and record `yaml_only`, `law_only`, `registry_only`,
+  `lexical_unwired`, `structural_unwired`, `semantic_only`, `dep_graph_gaps` and
+  `source_drift`. Explain each drift with source and tests; distinguish normative Laws from
+  factual measurements, environment preconditions and composite checks. Never fabricate Law IDs
+  or add a second policy registry.
+- [ ] Prove baseline and repair evidence refer to the same pinned source SHA, Law digest and
+  toolchain. Inspect/reuse an existing trial-hygiene instrument before adding one. Measure
+  transaction snapshot bytes, elapsed time and file count; audit `rescue nil`/swallowed
+  exceptions in load-bearing paths; prove fresh-clone setup and canonical tests on a real checkout.
+- [ ] Recheck the shared RAILS CSS import order and the current CSS/file-length check output before
+  selecting any next stylesheet split. Preserve cascade order, compare all outcomes, and change
+  only the exact measured ratchet. Consolidate RailsApp detection only if a source trace proves
+  meaningful duplication among `rails_app.rb`, visual pass, RailsProof and app fix profiles.
+
 ## Cross-tree security, RubyLLM, and efficiency
 
 - [ ] Finish the security review across MASTER, RAILS, OPENBSD, and STUDIO: outbound HTTP/SSRF,
@@ -255,7 +293,9 @@ browser evidence recorded in the commit.
   reader-singularity/law-trace checks, and then a bounded suite before closing any part of this
   work. The full LawRegistryAudit reconciliation and FixLoop/RepairLoop/Kernel ownership analysis
   remain open, including the primitive `Master::Fix::Laws::LAWS` scope map and proof of any
-  `Kernel#fix` reachability claim.
+  `Kernel#fix` reachability claim. Also reconcile the historical /fix `--dry-run` zero-proposal
+  failure report with current behavior; do not infer it is fixed from changed source or old test
+  notes without a current regression run.
 - [ ] Re-run the four-tree performance sweep with before/after evidence: boot, CLI response, web
   first paint and interaction latency, JS/CSS payloads, memory/CPU, background work, and Dilla
   render time. Avoid claims based only on source size or unrepresentative local machines.
