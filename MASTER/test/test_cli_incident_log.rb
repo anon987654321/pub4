@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "tmpdir"
+require "json"
 
 class TestCliIncidentLog < Minitest::Test
   def log = Master::CLI::IncidentLog
@@ -20,6 +21,20 @@ class TestCliIncidentLog < Minitest::Test
       assert_equal 1, log.entries(file:).size
       assert_equal "0600", format("%04o", File.stat(file).mode & 0o777)
       assert_includes log.list(file:), "2026-10-20 21:05  said something quietly"
+    end
+  end
+
+  def test_incident_log_rotation_is_bounded_and_remains_private
+    with_file do |file|
+      8.times do |index|
+        log.add("incident #{index}: " + "x" * 80, file:, max_bytes: 500)
+      end
+
+      assert File.file?("#{file}.1")
+      assert_operator File.size(file), :<=, 500
+      assert_operator File.size("#{file}.1"), :<=, 500
+      assert_equal 0o600, File.stat(file).mode & 0o777
+      File.readlines(file, chomp: true).each { |line| JSON.parse(line) }
     end
   end
 
