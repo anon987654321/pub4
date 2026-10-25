@@ -122,4 +122,5 @@ class ProviderCanaryTest < Minitest::Test
       assert_equal :canary_failure, health.latest_event("claude-cli:opus")["status"].to_sym
       assert_operator health.score("claude-cli:opus"), :<, 1.0
     end
-  endend
+  end
+end
