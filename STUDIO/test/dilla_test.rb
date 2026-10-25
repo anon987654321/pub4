@@ -119,7 +119,7 @@ class DillaTest < Minitest::Test
     assert_equal %w[ambient arp bus_effects comp default_layers default_profile drum_patterns echo essential groove_profiles kick_styles kits master mix modal_patches nasty_vcs noise organ play_profiles progressions sonitex stages stereo strum tape voices], DATA.keys.sort
   end
 
-  def test_showcase_uses_dark_harmony_with_richer_instrument_layers_and_dilla_drums
+  def test_showcase_uses_dark_harmony_with_a_leaner_mix_and_dilla_drums
     sections = SHOWCASE.fetch("sections")
     assert_equal 8, sections.size
     assert_equal "Blue Hour — Dilla Minor Dub Cut", SHOWCASE.fetch("title")
@@ -147,8 +147,8 @@ class DillaTest < Minitest::Test
       assert_includes DATA.fetch("drum_patterns").keys, section.fetch("drums")
       assert_includes DATA.fetch("comp").fetch("styles").keys, section.fetch("repeat")
       assert_includes DATA.fetch("sonitex").fetch("presets").keys, section.fetch("sonitex")
-      assert_operator section.fetch("sonitex_instances"), :>=, 2
-      assert_operator section.fetch("sonitex_instances"), :<=, 3
+      assert_operator section.fetch("sonitex_instances"), :>=, 1
+      assert_operator section.fetch("sonitex_instances"), :<=, 2
       assert_equal "kit_dust", section.fetch("kit")
       assert_includes DATA.fetch("kits").keys, section.fetch("kit")
       assert_equal false, section.fetch("echo")
@@ -160,13 +160,12 @@ class DillaTest < Minitest::Test
       else
         assert_equal "rhodes_mark1", section.fetch("voice")
         assert_equal "rhodes_tine_wurli", section.fetch("melody_voice")
-        assert_equal 5, section.fetch("layers").size
+        assert_equal 2, section.fetch("layers").size
         layer_voices = section.fetch("layers").map { |layer| layer.fetch("voice") }
-        assert_empty %w[prophet_warm dub_bass dx_ep_glass rhodes_tine_wurli juno_strings] - layer_voices
+        assert_empty %w[prophet_warm dub_bass] - layer_voices
         assert(section.fetch("layers").any? { |layer| layer["notes"] == "bass" }, "a low-end bass layer is required")
         families = layer_voices.map { |name| DATA.fetch("voices").fetch(name).fetch("family") }.uniq
         assert_includes families, "moog"
-        assert_includes families, "rhodes"
         section.fetch("layers").each do |layer|
           assert_includes DATA.fetch("voices").keys, layer.fetch("voice")
           assert_equal 0, layer.fetch("transpose", 0) % 12
@@ -181,14 +180,15 @@ class DillaTest < Minitest::Test
       assert_operator hats.uniq.size, :>, 2, "hat velocities create accents instead of a flat machine-gun"
       rig = DATA.fetch("bus_effects").fetch(section.fetch("effect_rig"))
       assert_equal "cassette", rig.fetch("drum_sonitex")
-      assert_equal 3, rig.fetch("drum_sonitex_instances")
-      assert_equal "heavy", rig.fetch("drum_tape")
-      assert_operator rig.fetch("drum_vcs"), :>=, 0.7
+      assert_equal "dilla_bed", section.fetch("effect_rig")
+      assert_equal 1, rig.fetch("drum_sonitex_instances")
+      assert_equal "light", rig.fetch("drum_tape")
+      assert_operator rig.fetch("drum_vcs"), :<=, 0.4
       dub = rig.fetch("drum_dub_echo")
-      assert_equal [1, 2, 3], dub.fetch("heads")
-      assert_operator dub.fetch("intensity"), :>=, 0.7
-      assert_operator dub.fetch("volume"), :>=, 0.75
-      assert_operator dub.fetch("saturation"), :>=, 0.9
+      assert_equal [1, 2], dub.fetch("heads")
+      assert_operator dub.fetch("intensity"), :<=, 0.3
+      assert_operator dub.fetch("volume"), :<=, 0.3
+      assert_operator dub.fetch("saturation"), :<=, 0.2
       assert_equal 0, dub.fetch("reverb")
       %w[clap open rim perc tom].each do |role|
         assert_equal 16, DATA.fetch("drum_patterns").fetch(section.fetch("drums")).fetch(role).size
@@ -196,8 +196,8 @@ class DillaTest < Minitest::Test
       assert section.fetch("drums").end_with?("_full"), "showcase uses the expanded kit pattern only"
       crystal = rig.fetch("drum_crystallizer")
       assert_equal 12, crystal.fetch("semitones")
-      assert_operator crystal.fetch("mix"), :>=, 0.5
-      assert_operator crystal.fetch("repeats"), :>=, 3
+      assert_operator crystal.fetch("mix"), :<=, 0.05
+      assert_equal 1, crystal.fetch("repeats")
       assert_equal 0, rig.dig("instrument_dub_echo", "reverb")
     end
     refute_equal SHOWCASE.fetch("sections").first.fetch("progression"),

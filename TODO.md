@@ -269,6 +269,8 @@ Repairs committed in this batch include:
 
 ## STUDIO and Dilla
 
+- [ ] 2026-10-25 source-only mix pass: the showcase now has a separate restrained `dilla_bed` rig and a two-layer support arrangement; regression expectations and engine notes were updated. This is not closed until the focused Dilla tests pass and the rendered WAV is auditioned against the previous take for punch, low-end weight, clarity, and groove.
+
 - [ ] Finish Dilla defragmentation only where one musical decision truly shares an owner. Keep
   dilla.rb as the thin public shell and one authoritative engine for theory, progressions,
   arrangement, drum feel, effects, mix, and master; avoid one-use wrapper files.

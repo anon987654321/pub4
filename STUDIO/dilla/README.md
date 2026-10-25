@@ -1,5 +1,7 @@
 # Dilla
 
+The default Blue Hour showcase uses a restrained `dilla_bed` bus rig and a leaner arrangement; `dilla_night` remains available for deliberately exaggerated effect experiments.
+
 **A small room that plays a chord progression soft and a little late, with drums that
 lean on the beat and a rack of analogue colour.** The complete live engine is the single
 Ruby file `dilla.rb`: composition, music theory, synthesis, sequencing, instruments, effects,

@@ -263,11 +263,12 @@ heads with feedback and a dark low-pass. The crystallizer shifts overlapping sho
 grains by a fixed musical interval and feeds delayed repeats back at a lower level; each
 repeat moves another interval higher.
 
-The shared `dilla_night` rig applies these stages
-to instrument and drum buses separately, then uses nasty_vcs to glue the drum bus and
-final sum. The drums receive the heavier send, cassette Sonitex x3, heavy tape,
-octave-up crystals and stronger summing saturation; the instrument echo/crystal send
-stays quieter so the chord tones remain clear. Reverb is intentionally zero.
+The explicit `dilla_night` rig preserves the deliberately exaggerated dub/crystal treatment for
+sound-design experiments. The default Blue Hour showcase uses the separate `dilla_bed` rig:
+one light cassette pass, restrained bus saturation, a quiet two-head drum echo, and near-dry
+instrument processing. Its crystallizer sends are kept at trace levels rather than turned
+into a second melody. This keeps the transient and bass pocket in front while leaving the
+more dramatic rig available as an intentional effect. Reverb is zero in both rigs.
 
 Every render ends on a stack of tape machines, and nothing comes after them but a soft
 ceiling just under full scale. One machine is a Jiles-Atherton hysteresis loop for the

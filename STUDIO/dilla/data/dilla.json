@@ -4728,7 +4728,7 @@
       "cutoff": 900,
       "env_amount": 900,
       "resonance": 0.1,
-      "drive": 1.0,
+      "drive": 1,
       "amp": [
         0.9,
         0.6,
@@ -4739,7 +4739,7 @@
         0.9,
         1.2,
         0.5,
-        1.0
+        1
       ]
     },
     "prophet_warm": {
@@ -4769,7 +4769,7 @@
         0.5,
         0.7,
         0.8,
-        1.0
+        1
       ],
       "filter_env": [
         0.4,
@@ -4803,7 +4803,7 @@
       "cutoff": 700,
       "env_amount": 800,
       "resonance": 0.12,
-      "drive": 1.0,
+      "drive": 1,
       "amp": [
         0.9,
         0.8,
@@ -4811,10 +4811,10 @@
         1.2
       ],
       "filter_env": [
-        1.0,
+        1,
         1.5,
         0.5,
-        1.0
+        1
       ]
     },
     "juno_strings": {
@@ -4853,7 +4853,7 @@
         0.6,
         0.5,
         0.85,
-        1.0
+        1
       ],
       "filter_env": [
         0.2,
@@ -4926,7 +4926,7 @@
       "cutoff": 600,
       "env_amount": 1200,
       "resonance": 0.15,
-      "drive": 1.0,
+      "drive": 1,
       "amp": [
         0.7,
         0.7,
@@ -4935,9 +4935,9 @@
       ],
       "filter_env": [
         0.8,
-        1.0,
+        1,
         0.5,
-        1.0
+        1
       ]
     },
     "ruby_strings": {
@@ -5349,7 +5349,7 @@
       "bell_index": 7.5,
       "bell_ratio": 3.5,
       "bell_decay": 0.9,
-      "body_decay": 1.0,
+      "body_decay": 1,
       "decay": 1.8,
       "release": 0.4,
       "click": 0.01,
@@ -11345,6 +11345,56 @@
         "tail": 0.55,
         "grain_ms": 96
       }
+    },
+    "dilla_bed": {
+      "drum_sonitex": "cassette",
+      "drum_sonitex_instances": 1,
+      "drum_tape": "light",
+      "drum_vcs": 0.35,
+      "drum_dub_echo": {
+        "delay_ms": 326,
+        "heads": [
+          1,
+          2
+        ],
+        "intensity": 0.24,
+        "volume": 0.24,
+        "lowpass": 4300,
+        "saturation": 0.15,
+        "reverb": 0,
+        "tail": 0.55
+      },
+      "drum_crystallizer": {
+        "delay_ms": 352,
+        "semitones": 12,
+        "feedback": 0.08,
+        "mix": 0.035,
+        "repeats": 1,
+        "tail": 0.45,
+        "grain_ms": 76
+      },
+      "instrument_dub_echo": {
+        "delay_ms": 488,
+        "heads": [
+          1,
+          2
+        ],
+        "intensity": 0.2,
+        "volume": 0.16,
+        "lowpass": 4900,
+        "saturation": 0.15,
+        "reverb": 0,
+        "tail": 0.5
+      },
+      "instrument_crystallizer": {
+        "delay_ms": 366,
+        "semitones": 7,
+        "feedback": 0.06,
+        "mix": 0.02,
+        "repeats": 1,
+        "tail": 0.4,
+        "grain_ms": 96
+      }
     }
   },
   "kick_styles": {
@@ -11695,30 +11745,30 @@
     "loop_fade_s": 6,
     "lufs": -24,
     "hum": {
-      "hz": 49.0,
+      "hz": 49,
       "detune_cents": 2.5,
       "level": 0.16,
       "rumble_hz": 90,
       "rumble_level": 0.012,
       "partials": [
         [
-          1.0,
-          1.0
+          1,
+          1
         ],
         [
           1.5,
           0.1
         ],
         [
-          2.0,
+          2,
           0.42
         ],
         [
-          3.0,
+          3,
           0.16
         ],
         [
-          4.0,
+          4,
           0.05
         ]
       ]
@@ -11751,7 +11801,7 @@
       "pops": {
         "rate": 0.3,
         "level": 0.5,
-        "decay_ms": 3.0,
+        "decay_ms": 3,
         "lowpass_hz": 1400
       }
     },
@@ -11771,7 +11821,7 @@
         "decay": 0.9,
         "damp": 0.45,
         "mix": 0.35,
-        "gain": 30.0
+        "gain": 30
       }
     }
   }

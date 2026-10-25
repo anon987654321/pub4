@@ -148,51 +148,20 @@
       ],
       "layers": [
         {
-          "mode": "held",
           "voice": "prophet_warm",
-          "gain_db": -12,
-          "gate": 1.2,
-          "velocity": 0.3,
-          "count": 3
+          "gain_db": -19,
+          "mode": "held"
         },
         {
-          "mode": "held",
           "voice": "dub_bass",
           "gain_db": -8,
-          "gate": 1.08,
-          "velocity": 0.48,
-          "transpose": -12,
+          "mode": "held",
           "notes": "bass"
-        },
-        {
-          "mode": "arp",
-          "voice": "dx_ep_glass",
-          "gain_db": -18,
-          "gate": 0.54,
-          "pattern": "down",
-          "rate": 4,
-          "octaves": 1
-        },
-        {
-          "mode": "held",
-          "voice": "rhodes_tine_wurli",
-          "gain_db": -20,
-          "gate": 1,
-          "velocity": 0.2,
-          "count": 3
-        },
-        {
-          "mode": "held",
-          "voice": "juno_strings",
-          "gain_db": -17,
-          "gate": 1.28,
-          "velocity": 0.22,
-          "count": 3
         }
       ],
       "echo_reverb": 0,
       "gate": 0.9,
-      "effect_rig": "dilla_night",
+      "effect_rig": "dilla_bed",
       "kit": "kit_dust"
     },
     {
@@ -341,51 +310,20 @@
       ],
       "layers": [
         {
-          "mode": "held",
           "voice": "prophet_warm",
-          "gain_db": -12,
-          "gate": 1.2,
-          "velocity": 0.3,
-          "count": 3
+          "gain_db": -19,
+          "mode": "held"
         },
         {
-          "mode": "held",
           "voice": "dub_bass",
           "gain_db": -8,
-          "gate": 1.08,
-          "velocity": 0.48,
-          "transpose": -12,
+          "mode": "held",
           "notes": "bass"
-        },
-        {
-          "mode": "arp",
-          "voice": "dx_ep_glass",
-          "gain_db": -18,
-          "gate": 0.54,
-          "pattern": "down",
-          "rate": 4,
-          "octaves": 1
-        },
-        {
-          "mode": "held",
-          "voice": "rhodes_tine_wurli",
-          "gain_db": -20,
-          "gate": 1,
-          "velocity": 0.2,
-          "count": 3
-        },
-        {
-          "mode": "held",
-          "voice": "juno_strings",
-          "gain_db": -17,
-          "gate": 1.28,
-          "velocity": 0.22,
-          "count": 3
         }
       ],
       "echo_reverb": 0,
       "gate": 0.9,
-      "effect_rig": "dilla_night",
+      "effect_rig": "dilla_bed",
       "kit": "kit_dust"
     },
     {
@@ -534,51 +472,20 @@
       ],
       "layers": [
         {
-          "mode": "held",
           "voice": "prophet_warm",
-          "gain_db": -12,
-          "gate": 1.2,
-          "velocity": 0.3,
-          "count": 3
+          "gain_db": -19,
+          "mode": "held"
         },
         {
-          "mode": "held",
           "voice": "dub_bass",
           "gain_db": -8,
-          "gate": 1.08,
-          "velocity": 0.48,
-          "transpose": -12,
+          "mode": "held",
           "notes": "bass"
-        },
-        {
-          "mode": "arp",
-          "voice": "dx_ep_glass",
-          "gain_db": -18,
-          "gate": 0.54,
-          "pattern": "down",
-          "rate": 4,
-          "octaves": 1
-        },
-        {
-          "mode": "held",
-          "voice": "rhodes_tine_wurli",
-          "gain_db": -20,
-          "gate": 1,
-          "velocity": 0.2,
-          "count": 3
-        },
-        {
-          "mode": "held",
-          "voice": "juno_strings",
-          "gain_db": -17,
-          "gate": 1.28,
-          "velocity": 0.22,
-          "count": 3
         }
       ],
       "echo_reverb": 0,
       "gate": 0.9,
-      "effect_rig": "dilla_night",
+      "effect_rig": "dilla_bed",
       "kit": "kit_dust"
     },
     {
@@ -727,51 +634,20 @@
       ],
       "layers": [
         {
-          "mode": "held",
           "voice": "prophet_warm",
-          "gain_db": -12,
-          "gate": 1.2,
-          "velocity": 0.3,
-          "count": 3
+          "gain_db": -19,
+          "mode": "held"
         },
         {
-          "mode": "held",
           "voice": "dub_bass",
           "gain_db": -8,
-          "gate": 1.08,
-          "velocity": 0.48,
-          "transpose": -12,
+          "mode": "held",
           "notes": "bass"
-        },
-        {
-          "mode": "arp",
-          "voice": "dx_ep_glass",
-          "gain_db": -18,
-          "gate": 0.54,
-          "pattern": "down",
-          "rate": 4,
-          "octaves": 1
-        },
-        {
-          "mode": "held",
-          "voice": "rhodes_tine_wurli",
-          "gain_db": -20,
-          "gate": 1,
-          "velocity": 0.2,
-          "count": 3
-        },
-        {
-          "mode": "held",
-          "voice": "juno_strings",
-          "gain_db": -17,
-          "gate": 1.28,
-          "velocity": 0.22,
-          "count": 3
         }
       ],
       "echo_reverb": 0,
       "gate": 0.9,
-      "effect_rig": "dilla_night",
+      "effect_rig": "dilla_bed",
       "kit": "kit_dust"
     },
     {
@@ -920,51 +796,20 @@
       ],
       "layers": [
         {
-          "mode": "held",
           "voice": "prophet_warm",
-          "gain_db": -12,
-          "gate": 1.2,
-          "velocity": 0.3,
-          "count": 3
+          "gain_db": -19,
+          "mode": "held"
         },
         {
-          "mode": "held",
           "voice": "dub_bass",
           "gain_db": -8,
-          "gate": 1.08,
-          "velocity": 0.48,
-          "transpose": -12,
+          "mode": "held",
           "notes": "bass"
-        },
-        {
-          "mode": "arp",
-          "voice": "dx_ep_glass",
-          "gain_db": -18,
-          "gate": 0.54,
-          "pattern": "down",
-          "rate": 4,
-          "octaves": 1
-        },
-        {
-          "mode": "held",
-          "voice": "rhodes_tine_wurli",
-          "gain_db": -20,
-          "gate": 1,
-          "velocity": 0.2,
-          "count": 3
-        },
-        {
-          "mode": "held",
-          "voice": "juno_strings",
-          "gain_db": -17,
-          "gate": 1.28,
-          "velocity": 0.22,
-          "count": 3
         }
       ],
       "echo_reverb": 0,
       "gate": 0.9,
-      "effect_rig": "dilla_night",
+      "effect_rig": "dilla_bed",
       "kit": "kit_dust"
     },
     {
@@ -1113,51 +958,20 @@
       ],
       "layers": [
         {
-          "mode": "held",
           "voice": "prophet_warm",
-          "gain_db": -12,
-          "gate": 1.2,
-          "velocity": 0.3,
-          "count": 3
+          "gain_db": -19,
+          "mode": "held"
         },
         {
-          "mode": "held",
           "voice": "dub_bass",
           "gain_db": -8,
-          "gate": 1.08,
-          "velocity": 0.48,
-          "transpose": -12,
+          "mode": "held",
           "notes": "bass"
-        },
-        {
-          "mode": "arp",
-          "voice": "dx_ep_glass",
-          "gain_db": -18,
-          "gate": 0.54,
-          "pattern": "down",
-          "rate": 4,
-          "octaves": 1
-        },
-        {
-          "mode": "held",
-          "voice": "rhodes_tine_wurli",
-          "gain_db": -20,
-          "gate": 1,
-          "velocity": 0.2,
-          "count": 3
-        },
-        {
-          "mode": "held",
-          "voice": "juno_strings",
-          "gain_db": -17,
-          "gate": 1.28,
-          "velocity": 0.22,
-          "count": 3
         }
       ],
       "echo_reverb": 0,
       "gate": 0.9,
-      "effect_rig": "dilla_night",
+      "effect_rig": "dilla_bed",
       "kit": "kit_dust"
     },
     {
@@ -1306,51 +1120,20 @@
       ],
       "layers": [
         {
-          "mode": "held",
           "voice": "prophet_warm",
-          "gain_db": -12,
-          "gate": 1.2,
-          "velocity": 0.3,
-          "count": 3
+          "gain_db": -19,
+          "mode": "held"
         },
         {
-          "mode": "held",
           "voice": "dub_bass",
           "gain_db": -8,
-          "gate": 1.08,
-          "velocity": 0.48,
-          "transpose": -12,
+          "mode": "held",
           "notes": "bass"
-        },
-        {
-          "mode": "arp",
-          "voice": "dx_ep_glass",
-          "gain_db": -18,
-          "gate": 0.54,
-          "pattern": "down",
-          "rate": 4,
-          "octaves": 1
-        },
-        {
-          "mode": "held",
-          "voice": "rhodes_tine_wurli",
-          "gain_db": -20,
-          "gate": 1,
-          "velocity": 0.2,
-          "count": 3
-        },
-        {
-          "mode": "held",
-          "voice": "juno_strings",
-          "gain_db": -17,
-          "gate": 1.28,
-          "velocity": 0.22,
-          "count": 3
         }
       ],
       "echo_reverb": 0,
       "gate": 0.9,
-      "effect_rig": "dilla_night",
+      "effect_rig": "dilla_bed",
       "kit": "kit_dust"
     },
     {
@@ -1391,7 +1174,7 @@
       "vcs": 0.3,
       "echo_reverb": 0,
       "gate": 0.9,
-      "effect_rig": "dilla_night",
+      "effect_rig": "dilla_bed",
       "kit": "kit_dust",
       "improvise": true,
       "voicing": "drop2",
