@@ -3,9 +3,8 @@
 require "fileutils"
 require "json"
 require "net/http"
-require "open3"
-require "timeout"
 require "uri"
+require_relative "../../../io/exec"
 
 module Master
   module CLI
@@ -318,18 +317,18 @@ module Master
             !output.downcase.include?(rule["refuse"].to_s.downcase)
           end
 
-          # Output and error together, since CLIs disagree about which a status goes to.
-          def run_probe(*command)
-            Open3.popen2e(*command) do |stdin, output, waiter|
-              stdin.close
-              reader = Thread.new { output.read }
-              next reader.value if waiter.join(PROBE_TIMEOUT_S)
+          # Use the shared bounded runner: a CLI can exit while a child it spawned
+          # still owns stdout/stderr, so waiting only for the direct PID is not a
+          # timeout. Exec enforces the deadline across the process group and readers.
+          def run_probe(*command, timeout: PROBE_TIMEOUT_S)
+            output, status = Master::Io::Exec.capture2e(*command, timeout:, raise_on_timeout: true)
+            return unless status&.success?
 
-              Process.kill("KILL", waiter.pid)
-              reader.kill
-              nil
-            end
-          rescue SystemCallError => e
+            output
+          rescue Master::Io::Exec::TimeoutError => e
+            Master::Ground::Swallow.log(e, context: "model_router.pool.run_probe_timeout")
+            nil
+          rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "model_router.pool.run_probe")
             nil
           end
