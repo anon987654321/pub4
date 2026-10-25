@@ -3,6 +3,7 @@
 require_relative "../../ai/orientation"
 require_relative "../../cli/context_layers"
 require_relative "../../voice/dialogue_rubric"
+require_relative "../../device/owner_preferences"
 
 module Master
   module Review
@@ -93,12 +94,25 @@ module Master
           parts << Ground::Tool::Profile.session_note
           parts << Fiber[:master_evidence_note]
           parts << Ground::PersonalWorkspace.prompt_section(@config["root"] || Master::ROOT)
+          parts << Device::OwnerPreferences.prompt_section(root: @config["root"] || Master::ROOT, scope: preference_scope)
           parts << @code_index.summary(focus: last_user_message) if @code_index&.built?
           parts << @memory.context_summary if @memory&.context_summary
           parts << @memory.reasoning_context if @memory&.respond_to?(:reasoning_context)
           parts << @memory.preference_context if @memory&.respond_to?(:preference_context)
           parts << @memory.turn_recall(last_user_message) if @memory.respond_to?(:turn_recall)
           parts.compact.join("\n\n").then { |s| s.empty? ? nil : filter_prompt(s) }
+        end
+
+        def preference_scope
+          task_type = @config.respond_to?(:task_type) ? @config.task_type.to_s : ""
+          task = [task_type, @session.respond_to?(:topic) ? @session.topic : nil, last_user_message].compact.join(" ")
+          return "coding" if task.match?(/\b(?:code|coding|repository|repo|ruby|bug|test|refactor|implement|github|rails|openbsd|master|commit|pull request)\b/i)
+          return "research" if task.match?(/\b(?:research|source|citation|evidence|latest|compare|look up|investigate)\b/i)
+          return "support" if task.match?(/\b(?:relationship|couples?|anxious|stress|feelings|therap|cope|conflict|grief)\b/i)
+          return "creative" if task.match?(/\b(?:music|song|beat|image|video|creative|write a story|poem|design)\b/i)
+          return "planning" if task.match?(/\b(?:plan|roadmap|priorit|schedule|goal|strategy)\b/i)
+
+          "all"
         end
 
         # The dispatcher asks for the system prompt after prepare_chat_turn has

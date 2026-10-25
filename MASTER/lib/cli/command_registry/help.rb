@@ -161,6 +161,21 @@ detail: [
             "First run /privacy grant calendar_read in the paired local session. Import is local-only and read-only; remote calendar accounts are not connected. Events with RRULE or RDATE are flagged but recurrence is not expanded, so verify those series in the source calendar.",
           ],
         },
+        "preferences" => {
+          summary: "inspect and control per-person interaction settings and staged suggestions",
+          detail: [
+            "/preferences or /preferences show — list active settings, scopes, provenance and pending suggestions.",
+            "/preferences set KEY=VALUE [scope=SCOPE] — set a validated preference; keys and values appear below.",
+            "Keys: communication.tone=direct|warm|neutral; communication.detail=brief|balanced|detailed;",
+            "reasoning.approach=pragmatic|first_principles|compare_options; work.flow=recommend|plan_first|implement_verify;",
+            "research.depth=quick|standard|deep; learning.format=step_by_step|worked_examples|socratic.",
+            "Scopes: all, coding, research, support, creative, planning. A scoped value overrides the all-scope value.",
+            "/preferences learn on|off — let MASTER notice repeated low-risk interaction preferences; nothing is saved automatically.",
+            "/preferences suggest KEY=VALUE [scope=SCOPE] [reason=\"...\"] — stage an inactive candidate; /preferences accept ID or /preferences reject ID decides it.",
+            "/preferences forget KEY [scope=SCOPE] | /preferences reset --confirm | /preferences export.",
+            "Requires a paired local subject and the existing /privacy grant personal_memory permission. Preferences never grant tool authority or override Laws.",
+          ],
+        },
         "privacy" => {
           summary: "inspect personal-memory consent and manage the paired subject's stored data",
           detail: [
@@ -343,7 +358,7 @@ detail: [
         "fix" => "fix", "status" => "health", "doctor" => "health", "events" => "health",
         "session" => "session", "clear" => "session", "undo" => "session",
         "model" => "model", "plugin" => "model", "screen" => "session", "wake" => "model",
-        "privacy" => "constitution", "agenda" => "session", "task" => "session", "capabilities" => "model",
+        "privacy" => "constitution", "preferences" => "interface", "agenda" => "session", "task" => "session", "capabilities" => "model",
         "review" => "review", "critique" => "review", "laws" => "review",
         "why" => "review", "explain" => "review", "prove" => "review",
         "commit" => "change", "deploy" => "change", "snapshot" => "change",

@@ -49,6 +49,7 @@ module Master
           "ios" => command(:dispatch_ios, root),
           "wake" => command(:dispatch_wake, root),
           "privacy" => command(:dispatch_privacy, root),
+          "preferences" => command(:dispatch_preferences, root),
           "agenda" => command(:dispatch_agenda, root),
           "task" => command(:dispatch_task, root),
           "capabilities" => command(:dispatch_capabilities, root),

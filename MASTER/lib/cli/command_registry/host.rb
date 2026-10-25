@@ -3,6 +3,7 @@
 require_relative "../../operator/capability_graph"
 require_relative "../../io/exec"
 require_relative "../../ground/personal_workspace"
+require_relative "../../device/owner_preferences"
 require_relative "../../ground/personal_calendar"
 require_relative "../../ground/assistant_tasks"
 require_relative "../../ground/capability_catalog"
@@ -113,6 +114,108 @@ module Master
         end
       rescue StandardError => e
         "privacy0: unavailable — #{e.class}: #{e.message}"
+      end
+
+      # /preferences — consented, subject-scoped interaction preferences.
+      def dispatch_preferences(root, ctx: nil)
+        return "preferences: local-only; visitors cannot access personal preferences" if Fiber[:master_visitor] == true
+
+        subject = Fiber[:master_pair_subject].to_s.strip
+        if subject.empty? && defined?(Master::Device::Agent) && Master::Device.respond_to?(:android?) &&
+            Master::Device.android? && Master::Device::Agent.paired?(root:)
+          subject = Master::Device::Agent.owner_subject(root:).to_s.strip
+        end
+        return "preferences: no paired subject; pair the local owner first" if subject.empty?
+        unless Master::Device::OwnerPreferences.permission_granted?(root:, subject:)
+          return "preferences: disabled; explicitly enable with /privacy grant personal_memory in the local paired session"
+        end
+
+        args = Shellwords.split(arg_for(ctx).to_s)
+        action = args.shift.to_s.downcase
+        preferences = Master::Device::OwnerPreferences
+        case action
+        when "", "show", "status"
+          requested_scope = args.first
+          return "preferences: usage /preferences show [#{preferences::SCOPES.join("|")}]" if args.size > 1
+          state = preferences.status(root:, subject:)
+          scope = requested_scope ? preferences.normalize_scope(requested_scope) : "all"
+          scopes = scope == "all" ? preferences::SCOPES.reject { |name| name != "all" } : %w[all].concat([scope])
+          lines = ["preferences: learning=#{state.fetch("learning_enabled") ? "on" : "off"}"]
+          scopes.each do |name|
+            state.fetch("preferences").fetch(name, {}).each do |key, entry|
+              lines << "#{name} #{key}=#{entry.fetch("value")} (source=#{entry.fetch("source")}, confidence=#{entry.fetch("confidence")})"
+            end
+          end
+          if state.fetch("suggestions").empty?
+            lines << "preferences: no pending suggestions"
+          else
+            state.fetch("suggestions").each do |entry|
+              lines << "suggestion #{entry.fetch("id")} #{entry.fetch("scope")} #{entry.fetch("key")}=#{entry.fetch("value")} (confidence=#{entry.fetch("confidence")}): #{entry.fetch("reason")}"
+            end
+          end
+          lines.join("\n")
+        when "set"
+          key_value = args.shift.to_s
+          key, value = key_value.split("=", 2)
+          options = parse_preference_options(args, %w[scope])
+          return "preferences: usage /preferences set KEY=VALUE [scope=SCOPE]" unless key && value && options
+          result = preferences.set(root:, subject:, key:, value:, scope: options.fetch("scope", "all"))
+          "preferences: set #{result.fetch("scope")} #{result.fetch("key")}=#{result.fetch("value")}"
+        when "suggest"
+          key_value = args.shift.to_s
+          key, value = key_value.split("=", 2)
+          options = parse_preference_options(args, %w[scope reason confidence])
+          return "preferences: usage /preferences suggest KEY=VALUE [scope=SCOPE] [reason=\"...\"] [confidence=0.7]" unless key && value && options
+          confidence = options.key?("confidence") ? Float(options.fetch("confidence")) : 0.7
+          candidate = preferences.suggest(
+            root:, subject:, key:, value:, scope: options.fetch("scope", "all"),
+            reason: options.fetch("reason", "Preference candidate"),
+            confidence:,
+          )
+          "preferences: suggestion #{candidate.fetch("id")} staged but inactive; inspect with /preferences show and use /preferences accept #{candidate.fetch("id")} to activate"
+        when "accept"
+          return "preferences: usage /preferences accept <suggestion-id>" unless args.size == 1
+          candidate = preferences.accept(root:, subject:, id: args.first)
+          "preferences: accepted #{candidate.fetch("id")} — #{candidate.fetch("scope")} #{candidate.fetch("key")}=#{candidate.fetch("value")}"
+        when "reject"
+          return "preferences: usage /preferences reject <suggestion-id>" unless args.size == 1
+          preferences.reject(root:, subject:, id: args.first) ? "preferences: suggestion rejected" : "preferences: suggestion not found"
+        when "forget"
+          key = args.shift.to_s
+          options = parse_preference_options(args, %w[scope])
+          return "preferences: usage /preferences forget KEY [scope=SCOPE]" if key.empty? || !options
+          preferences.forget(root:, subject:, key:, scope: options.fetch("scope", "all")) ?
+            "preferences: forgot #{options.fetch("scope", "all")} #{key}" : "preferences: no such preference"
+        when "learn"
+          return "preferences: usage /preferences learn on|off" unless args.size == 1 && %w[on off].include?(args.first.downcase)
+          enabled = args.first.downcase == "on"
+          preferences.set_learning(root:, subject:, enabled:)
+          "preferences: learning #{enabled ? "enabled" : "disabled"}; inferred settings still require explicit acceptance"
+        when "reset"
+          return "preferences: reset requires the exact command /preferences reset --confirm" unless args == ["--confirm"]
+          preferences.reset(root:, subject:)
+          "preferences: reset to defaults; learning is off"
+        when "export"
+          return "preferences: usage /preferences export" unless args.empty?
+          preferences.export(root:, subject:)
+        else
+          "preferences: show [scope] | set KEY=VALUE [scope=SCOPE] | suggest KEY=VALUE [scope=SCOPE] [reason=\"...\"] | accept ID | reject ID | forget KEY [scope=SCOPE] | learn on|off | reset --confirm | export"
+        end
+      rescue ArgumentError, Shellwords::ArgumentError => e
+        "preferences0: #{e.message}"
+      rescue StandardError => e
+        "preferences0: unavailable — #{e.class}: #{e.message}"
+      end
+
+      def parse_preference_options(tokens, allowed)
+        pairs = tokens.map do |token|
+          key, value = token.split("=", 2)
+          return nil unless value && allowed.include?(key)
+          [key, value]
+        end
+        return nil unless pairs.map(&:first).uniq.size == pairs.size
+
+        pairs.to_h
       end
 
       # /agenda reads an owner-imported local iCalendar export; it never mutates
