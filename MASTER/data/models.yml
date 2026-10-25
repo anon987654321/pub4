@@ -172,15 +172,15 @@ model_defs:
     id: grok-cli:auto
     <<: *model_defaults
     score: { quality: 0.90, speed: 0.50, cost: 0.3 }
-  # codex-cli: NOT added below. `codex login status` succeeds instantly, but
-  # `codex exec` -- the cli_lanes.codex-cli.ask invocation this file declares
-  # -- hung past its own configured metadata (250s+, no reply) on five
-  # separate attempts tonight: with and without --sandbox/--ephemeral, with
-  # an explicit --model, and with this session's CLAUDECODE env vars
-  # stripped (so it is not the claude-cli nested-session hang; something
-  # about `codex exec` itself is currently broken on this account/version).
-  # Wiring it in would just reproduce the 300s-per-call tax this same change
-  # removed for claude-cli. Revisit once `codex exec` genuinely replies.
+  # codex-cli: deliberately absent from model tiers. The live router also
+  # discovers generic CLI declarations, so data/lanes.yml keeps this lane out of
+  # ordinary selection until a bounded `codex exec` probe proves it can answer.
+  # `codex login status` succeeds instantly, but `codex exec` -- the configured
+  # ask command below -- hung past 250s with no reply on five attempts, with and
+  # without --sandbox/--ephemeral, with an explicit model, and with this session's
+  # CLAUDECODE environment stripped. CLI login health is not execution health;
+  # the dispatcher timeout is 300s. Revisit the exclusion after a successful,
+  # bounded execution probe and an end-to-end fallback test.
   gemma_2_27b: &gemma_2_27b
     id: google/gemma-2-27b-it
     <<: *model_defaults

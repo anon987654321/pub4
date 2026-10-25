@@ -250,10 +250,24 @@ class TestKeylessRouting < Minitest::Test
     signed_in = false
     router.define_singleton_method(:probe_value) { |_name, wait:| signed_in }
 
-    assert_equal "run codex login", router.unreachable_reason("codex-cli:auto")
+    assert_equal "run grok login", router.unreachable_reason("grok-cli:auto")
     signed_in = true
-    assert router.reachable?("codex-cli:auto")
-    assert_equal "codex", router.cli_lane("codex-cli:auto")["binary"]
+    assert router.reachable?("grok-cli:auto")
+    assert_equal "grok", router.cli_lane("grok-cli:auto")["binary"]
+  end
+
+  def test_manually_dead_codex_lane_stays_out_of_the_pool_when_login_succeeds
+    ENV["MASTER_NO_POOL_PROBES"] = "1"
+    router = Master::CLI::Routing::ModelRouter.new(
+      config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
+    )
+    router.define_singleton_method(:executable_on_path?) { |_binary| true }
+    router.define_singleton_method(:probe_value) { |_name, wait:| true }
+
+    assert_includes Master::Io::LaneQuota.manual_dead, "codex-cli"
+    refute router.reachable?("codex-cli:auto")
+    refute_includes router.fallback_chain(task_type: :code_generation), "codex-cli:auto"
+    refute_includes router.pool, "codex-cli:auto"
   end
 
   # mistral.rs, LM Studio and llama-server all answer the OpenAI /models call.

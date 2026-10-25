@@ -32,8 +32,15 @@ module Master
           def reachable?(model_id) = unreachable_reason(model_id).nil?
 
           # nil when the model can be asked, otherwise what to do about it.
+          # LaneQuota owns manual exclusions and failures learned at runtime; applying
+          # it here keeps /model, boot selection, and turn failover on one availability rule.
           def unreachable_reason(model_id, wait: false)
             id = model_id.to_s
+            if Master::Io::LaneQuota.dead?(id)
+              return Master::Io::LaneQuota.report_for(id) ||
+                     "lane excluded by data/lanes.yml or recent failure state"
+            end
+
             case lane_of(id)
             when :cli_lane then cli_lane_problem(id, wait:)
             when :ollama then ollama_problem(id)
@@ -82,7 +89,10 @@ module Master
           def start_pool_probes
             return {} if ENV["MASTER_NO_POOL_PROBES"] == "1" || ENV["MASTER_LOCAL_ONLY"] == "1"
 
-            @pool_probes ||= cli_lanes.keys.to_h { |name| [name, Thread.new { probe_cli_lane(name) }] }.merge(
+            # A login probe cannot rehabilitate a lane the canonical quota record
+            # has excluded; don't spend boot work on it outside its explicit canary.
+            candidates = cli_lanes.keys.reject { |name| Master::Io::LaneQuota.dead?("#{name}:") }
+            @pool_probes ||= candidates.to_h { |name| [name, Thread.new { probe_cli_lane(name) }] }.merge(
               "openrouter_credits" => Thread.new { probe_openrouter_credits },
               "provider_catalogs" => Thread.new { refresh_provider_catalogs },
             )
