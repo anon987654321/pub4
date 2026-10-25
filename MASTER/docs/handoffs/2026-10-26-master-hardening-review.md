@@ -28,6 +28,12 @@ A further code trace found two provider-health issues and one OpenBSD visibility
 
 All newly added and modified tests remain unexecuted. No runtime PASS is claimed; the exact focused test list and per-tree INCONCLUSIVE state are recorded in root `TODO.md`. No deployment, Vercel retry, or OpenBSD host action was performed.
 
+## Follow-on shared JSONL retention pass
+
+Added `Master::Trace::Log.append_jsonl` to own bounded private append, rotation, sidecar locking, symlink refusal, and per-record size caps. Reused it for provider health/quarantine, incident notes, Phoenix provenance, model metrics, OpenTelemetry trace output, and the tool-invocation audit. Existing smaller caps are preserved by passing them through. The OpenTelemetry exporter now opens the trace path per bounded append rather than retaining a descriptor that could bypass rotation.
+
+Added shared-writer, exporter, metrics, incident and provenance tests; provider health tests also cover concurrency and retention. None have been run. The focused command inventory in root `TODO.md` includes the tests, but every runtime claim remains INCONCLUSIVE until the pinned Ruby and target-specific checks run.
+
 ## Follow-on telemetry append and broker privacy pass
 
 - Provider health and quarantine share a private append primitive using a sidecar `flock`, complete-line writes, flush/fsync, and the existing 25 MiB trace-log ceiling. Rotation and append are serialized; oversized single events or failed rotation refuse the write. Added an 8-thread/200-event integrity test plus bounded-rotation and oversized-record tests; none have been run.
