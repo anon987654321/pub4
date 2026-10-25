@@ -104,7 +104,11 @@ class PwaDesignContractTest < Minitest::Test
 
     assert_includes source, "max-inline-size: 100%"
     assert_match(/@supports \(field-sizing:\s*content\)\s*\{\s*textarea\s*\{\s*field-sizing:\s*content;/m, source)
-    refute_match(/^\s*field-sizing:\s*content;/, source)
+    outside_support = source.sub(
+      /@supports \(field-sizing:\s*content\)\s*\{\s*textarea\s*\{\s*field-sizing:\s*content;\s*\}\s*\}/m,
+      "",
+    )
+    refute_match(/^\s*field-sizing:\s*content;/, outside_support)
   end
 
   def test_pwa_runtime_test_is_wired_to_the_root_package
