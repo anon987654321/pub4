@@ -190,6 +190,36 @@ class TestFixRunBudget < Minitest::Test
     Master::Fix::RunLedger.reset!
   end
 
+  def test_watchdog_survives_transient_beat_failures
+    run = killable([])
+    attempts = 0
+    run.define_singleton_method(:beat) do
+      attempts += 1
+      raise "transient beat failure" if attempts <= 2
+
+      instance_variable_set(:@exit_reason, "test complete")
+    end
+
+    capture_io { run.send(:watch) }
+
+    assert_equal 3, attempts
+    assert_equal "test complete", run.instance_variable_get(:@exit_reason)
+  end
+
+  def test_watchdog_stops_after_five_consecutive_failures
+    run = killable([])
+    attempts = 0
+    run.define_singleton_method(:beat) do
+      attempts += 1
+      raise "persistent beat failure"
+    end
+
+    capture_io { run.send(:watch) }
+
+    assert_equal Master::Fix::RunBudget::WATCHDOG_MAX_CONSECUTIVE_FAILURES, attempts
+    assert_match(/watchdog failed 5 consecutive beats/, run.instance_variable_get(:@exit_reason))
+  end
+
   def test_defaults_do_not_stop_and_zero_means_unlimited
     run = budget({"MASTER_FIX_MAX_COST" => "0"})
     cost(500, 1)

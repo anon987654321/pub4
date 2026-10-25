@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "tmpdir"
 
 class TestWatcher < Minitest::Test
   def test_openbsd_vmm_memory_pressure_without_swap
@@ -53,4 +54,33 @@ class TestWatcher < Minitest::Test
     assert_equal 84.0, watcher.send(:disk_percent, df)
     assert_equal 256.0, watcher.send(:master_rss_mb_from_ps, ps)
   end
+  def test_watcher_continues_after_one_sample_failure
+    previous = ENV["MASTER_WATCHER"]
+    ENV["MASTER_WATCHER"] = "1"
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |event, **payload| events << [event, payload] }
+
+    Dir.mktmpdir("watcher-resilience") do |root|
+      watcher = Master::Fix::Watcher.new(bus:, root:, interval: 0)
+      attempts = 0
+      watcher.define_singleton_method(:sample!) do
+        attempts += 1
+        raise "transient sample failure" if attempts == 1
+
+        throw :watcher_test_finished
+      end
+
+      capture_io do
+        catch(:watcher_test_finished) { watcher.run_forever }
+      end
+
+      assert_equal 2, attempts
+      assert events.any? { |event, payload| event == "watcher:error" && payload[:error] == "transient sample failure" }
+    end
+  ensure
+    previous.nil? ? ENV.delete("MASTER_WATCHER") : ENV["MASTER_WATCHER"] = previous
+  end
+
+
 end

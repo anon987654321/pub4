@@ -475,17 +475,32 @@ module Master
                   "past #{(share * 100).round}% of the run; skipped until the run ends")
       end
 
+      WATCHDOG_MAX_CONSECUTIVE_FAILURES = 5
+
       def watch
+        failures = 0
         loop do
           sleep @poll
-          beat
-          break if @exit_reason
+          begin
+            beat
+            machine_beat(@clock.call) unless @exit_reason
+            failures = 0
+          rescue StandardError => e
+            failures += 1
+            Master::Ground::Swallow.log(
+              e, context: "Fix::RunBudget.watch", severity: :load_bearing
+            )
+            next unless failures >= WATCHDOG_MAX_CONSECUTIVE_FAILURES
 
-          machine_beat(@clock.call)
+            @exit_reason ||= "watchdog failed #{failures} consecutive beats: #{e.class}"
+            Master::Trace::Dmesg.status(
+              "fix0",
+              "watchdog failed #{failures} consecutive beats — run stops: #{e.class}: #{e.message.to_s[0, 120]}",
+            )
+            break
+          end
           break if @exit_reason
         end
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "Fix::RunBudget.watch")
       end
 
       def limit(raw, default)

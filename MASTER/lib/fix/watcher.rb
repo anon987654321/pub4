@@ -34,11 +34,16 @@ module Master
         return unless ENV["MASTER_WATCHER"] == "1"
 
         loop do
-          sample!
+          begin
+            sample!
+          rescue StandardError => e
+            Master::Ground::Swallow.log(
+              e, context: "Watcher.run_forever", severity: :load_bearing
+            )
+            @bus&.publish("watcher:error", error: e.message)
+          end
           sleep @interval
         end
-      rescue StandardError => e
-        @bus&.publish("watcher:error", error: e.message)
       end
 
       def sample!
