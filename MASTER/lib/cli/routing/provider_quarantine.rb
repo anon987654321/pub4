@@ -86,9 +86,24 @@ module Master
         end
 
         def active_quarantine(model_id)
-          all_entries
-            .select { |e| e["model"] == model_id && e["expires_at"] && !e["action"] }
-            .max_by { |e| e["quarantined_at"] }
+          latest = all_entries
+            .select { |entry| entry["model"] == model_id }
+            .max_by { |entry| entry_time(entry) }
+
+          # Clear records are events in the same append-only log. Excluding them
+          # before choosing the latest event makes an operator clear ineffective:
+          # the earlier quarantine row wins until expiry. A later quarantine row
+          # naturally becomes active again.
+          return unless latest && latest["action"] != "clear" && latest["expires_at"]
+
+          latest
+        end
+
+        def entry_time(entry)
+          value = entry["cleared_at"] || entry["quarantined_at"]
+          Time.iso8601(value.to_s)
+        rescue ArgumentError, TypeError
+          Time.at(0).utc
         end
 
         def all_entries
