@@ -19,6 +19,14 @@ class FixMarketplaceOrderForeignKeys < ActiveRecord::Migration[8.1]
       SELECT id, buyer_id, listing_id, status, message, price_cents, created_at, updated_at
       FROM marketplace_orders_legacy
     SQL
+
+    source_rows = select_value("SELECT COUNT(*) FROM marketplace_orders_legacy").to_i
+    copied_rows = select_value("SELECT COUNT(*) FROM marketplace_orders").to_i
+    raise "marketplace_orders copy incomplete: #{source_rows} source rows, #{copied_rows} copied" unless source_rows == copied_rows
+
+    # migration-safety-reviewed: the legacy table is removed only after a full row-count check.
+    # The original table was renamed, all records copied with explicit columns, and the migration
+    # is intentionally irreversible because the old foreign-key shape is the defect being repaired.
     drop_table :marketplace_orders_legacy
     execute 'PRAGMA foreign_keys = ON'
   end
