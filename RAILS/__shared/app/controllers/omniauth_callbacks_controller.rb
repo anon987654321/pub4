@@ -85,12 +85,21 @@ class OmniauthCallbacksController < ::ApplicationController
     # A previous callback can persist the user and fail before it records the
     # provider subject. For email-less non-BankID providers, recover only the
     # exact subject-derived address while it is still unverified and unclaimed.
-    # create_or_find_by! also closes the concurrent first-login unique-email race.
+    # On a concurrent insert, re-query only this exact placeholder after either
+    # the model's uniqueness validation or the database index rejects the write.
     if user.nil? && email.blank? && auth.provider.to_s != "bankid"
       placeholder = "#{auth.uid}@#{auth.provider}.oauth"
-      user = User.create_or_find_by!(email_address: placeholder) do |record|
-        record.password = SecureRandom.hex(24)
-        record.require_email_verification = true
+      user = User.find_by(email_address: placeholder)
+      unless user
+        candidate = User.new(email_address: placeholder, password: SecureRandom.hex(24))
+        candidate.require_email_verification = true
+        begin
+          candidate.save!
+          user = candidate
+        rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
+          user = User.find_by(email_address: placeholder)
+          raise unless user
+        end
       end
       has_unconsumed_synthetic_address = user.respond_to?(:has_attribute?) &&
                                          user.has_attribute?(:email_verification_token) &&
@@ -187,10 +196,22 @@ class OmniauthCallbacksController < ::ApplicationController
   def persist_external_identity(user, auth)
     ensure_identity_storage!
 
-    provider = ::IdentityProvider.create_or_find_by!(slug: auth.provider.to_s) do |record|
-      record.name = auth.provider.to_s.tr("_", " ").titleize
-      record.issuer = hash_value(hash_value(auth.extra, :id_info), :iss)
-      record.client_id = ENV["#{auth.provider.to_s.upcase}_CLIENT_ID"]
+    slug = auth.provider.to_s
+    provider = ::IdentityProvider.find_by(slug: slug)
+    unless provider
+      candidate = ::IdentityProvider.new(
+        slug: slug,
+        name: slug.tr("_", " ").titleize,
+        issuer: hash_value(hash_value(auth.extra, :id_info), :iss),
+        client_id: ENV["#{slug.upcase}_CLIENT_ID"]
+      )
+      begin
+        candidate.save!
+        provider = candidate
+      rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
+        provider = ::IdentityProvider.find_by(slug: slug)
+        raise unless provider
+      end
     end
     identity = ::ExternalIdentity.find_or_initialize_by(identity_provider_id: provider.id, subject: auth.uid.to_s)
     identity.user_id = user.id
