@@ -262,7 +262,6 @@ module Master
           @ear_after = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 1.5
         end
 
-
         def react(key)
           return @closing = true if key == :eof || key == QUIT
           return interrupt if key == INTERRUPT
@@ -298,7 +297,6 @@ module Master
           end
         end
 
-
         def toggle_law_field
           if Master::Face::LawField.config.fetch("terminal_law_ring", true) == false
             show(["constitutional law glyphs disabled by laws.yml"])
@@ -321,7 +319,7 @@ module Master
 
         # Hands free is the data default: the face listens when idle, ends a take on silence and answers without
         # Enter. It holds off while MASTER speaks (the face's voice, the speech queue, a bed the bard started), so
-        # it does not hear itself. The quiet ambient held since boot plays under listening.
+        # it does not hear itself. The quiet Dilla chord bed plays under listening.
         def auto_mic?
           return false if Master::Voice::Bed.foreground? || Master::Voice::Playback.backlog.positive?
           return false if Master::Voice::Playback.external_speaking?
@@ -353,7 +351,6 @@ module Master
             change { @draft << key }
           end
         end
-
 
         def submit
           text = @draft.strip
@@ -391,7 +388,6 @@ module Master
           set(:idle, ["mic0: #{e.message}"])
           nil
         end
-
 
         def answer(text)
           set(:thinking, ["you: #{text}"])
@@ -481,7 +477,6 @@ module Master
           end
         end
 
-
         # turn answers with a Result, or with the text it streamed.
         def reply_text(result)
           return result.to_s unless result.is_a?(Master::Result)
@@ -519,7 +514,6 @@ module Master
             false
           end
         end
-
 
         # A key, :eof when the input is gone, or nil when none came in time.
         # getc waits on a cooked buffer and drops keys once the terminal is
@@ -616,9 +610,8 @@ module Master
           "#{ACCENT}#{token}#{PLAIN}#{line.delete_prefix(token)}"
         end
 
-        # Reuse the same host:path$ prompt contract as the ordinary shell and
-        # browser face, but reflect this terminal's actual working directory.
-        # Read the exact live prompt owned by the ordinary REPL. Cache it briefly
+        # Isolated callers get a usable fallback; production faces use the exact live REPL prompt.
+        # Cache it briefly
         # because the face paints faster than the Git/status prompt needs refreshing.
         def operator_prompt
           return fallback_operator_prompt unless @prompt_provider
@@ -640,7 +633,6 @@ module Master
         def fallback_operator_prompt
           Master::Face::Contract.shell_prompt(path: Dir.pwd, root: Master::ROOT)
         end
-
 
         # The end of the line being typed, which is the part being typed into.
         def typed(draft, cols)
@@ -673,7 +665,6 @@ module Master
           end
           lines.last(3)
         end
-
 
         def tail(words, rows, cols)
           lines = words.flat_map { |text| wrap(text.to_s, cols) }.last(rows)

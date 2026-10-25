@@ -880,7 +880,7 @@ cli:
   history_limit: 2000
   # Bare bin/master opens on the canonical Ruby REPL prompt; /face opens the visual stage.
   # MASTER_FACE_ON_START=1 opts into the face at startup. Command-line messages and pipes stay plain.
-  # Command-line messages and pipes remain non-visual.
+  # The setting affects only interactive TTY presentation; command routing is unchanged.
   face_on_start: false
   # The radios on the startup lines: net0 (wifi) and bth0 (bluetooth), as a kernel prints them.
   boot_devices: true

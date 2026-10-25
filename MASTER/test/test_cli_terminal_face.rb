@@ -261,7 +261,7 @@ class TestCliTerminalFace < Minitest::Test
     refute_includes text, "job 0"
   end
 
-  def test_typed_input_uses_the_shared_location_aware_operator_prompt
+  def test_typed_input_fallback_remains_usable_without_a_session_prompt
     prompt = window.send(:operator_prompt)
     assert_match(/\A[^:]+:.+\$\z/, prompt)
     assert_equal "#{prompt} hello", window.send(:typed, "hello", 80)

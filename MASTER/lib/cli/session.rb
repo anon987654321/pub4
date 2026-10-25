@@ -156,7 +156,7 @@ module Master
         Master::Ground::Swallow.log(e, context: "cli.boot_sound", event_bus: @refs.bus)
       end
 
-      # The ambient bed plays from the session's start whether or not the bard speaks; closing the session stops
+      # The Dilla chord bed starts with the session whether or not the bard speaks; closing the session stops
       # it, and MASTER_BED=0 keeps it silent.
       def start_bed
         return unless $stdout.tty?
