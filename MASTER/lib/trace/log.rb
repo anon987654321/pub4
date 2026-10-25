@@ -37,6 +37,52 @@ module Master
         Master::Ground::Swallow.log(e, context: "Trace::Log.rotate", path:)
       end
 
+      # One bounded, private, process-safe JSONL append path for local telemetry.
+      # The sidecar lock covers both rotate and append because locking the data
+      # inode is not enough once rotation renames it.
+      def self.append_jsonl(path, value, max_bytes: Event::MAX_BYTES, mode: 0o600, directory_mode: nil)
+        limit = Integer(max_bytes)
+        raise ArgumentError, "JSONL byte limit must be positive" unless limit.positive?
+
+        line = JSON.generate(value) + "\n"
+        raise ArgumentError, "JSONL record exceeds #{limit}-byte cap" if line.bytesize > limit
+
+        directory = File.dirname(path)
+        raise ArgumentError, "JSONL directory is a symlink" if File.symlink?(directory)
+        FileUtils.mkdir_p(directory, mode: directory_mode || 0o700)
+        directory_stat = File.lstat(directory)
+        raise ArgumentError, "JSONL directory is not a real directory" unless
+          directory_stat.directory? && !directory_stat.symlink?
+        File.chmod(directory_mode, directory) if directory_mode
+
+        lock_path = "#{path}.lock"
+        raise ArgumentError, "JSONL lock is a symlink" if File.symlink?(lock_path)
+        File.open(lock_path, File::RDWR | File::CREAT, mode) do |lock|
+          File.chmod(mode, lock_path)
+          lock.flock(File::LOCK_EX)
+
+          raise ArgumentError, "JSONL destination is a symlink" if File.symlink?(path)
+          if File.exist?(path)
+            path_stat = File.lstat(path)
+            raise ArgumentError, "JSONL destination is not a regular file" unless path_stat.file? && !path_stat.symlink?
+
+            File.chmod(mode, path)
+          end
+
+          rotate(path, [limit - line.bytesize, 0].max)
+          size = File.file?(path) ? File.size(path) : 0
+          raise IOError, "JSONL rotation failed to honor #{limit}-byte cap" if size + line.bytesize > limit
+
+          File.open(path, File::WRONLY | File::CREAT | File::APPEND, mode) do |io|
+            io.write(line)
+            io.flush
+            io.fsync
+          end
+        ensure
+          lock.flock(File::LOCK_UN) if lock
+        end
+      end
+
       # Release oversized rotated logs while preserving the newest max_bytes.
       # The tail is read before truncating; the old allocation is freed before the
       # bounded bytes are written back, so recovery still works on a full disk.
