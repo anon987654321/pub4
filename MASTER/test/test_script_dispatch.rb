@@ -67,6 +67,7 @@ class TestScriptDispatch < Minitest::Test
 
       previous = ENV.to_h.select { |key, _| key.start_with?("BUNDLE_") || %w[GEM_HOME GEM_PATH RUBYOPT].include?(key) }
       begin
+        File.write(File.join(root, "Gemfile"), "source \"https://rubygems.org\"\n")
         ENV["BUNDLE_GEMFILE"] = File.join(root, "Gemfile")
         ENV["BUNDLE_PATH"] = File.join(root, "bundle")
         ENV["GEM_HOME"] = File.join(root, "gems")
