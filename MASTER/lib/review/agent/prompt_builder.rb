@@ -106,7 +106,7 @@ module Master
         def preference_scope
           task_type = @config.respond_to?(:task_type) ? @config.task_type.to_s : ""
           task = [task_type, @session.respond_to?(:topic) ? @session.topic : nil, last_user_message].compact.join(" ")
-          return "coding" if task.match?(/\b(?:code|coding|repository|repo|ruby|bug|test|refactor|implement|github|rails|openbsd|master|commit|pull request)\b/i)
+          return "coding" if task.match?(/\b(?:code|coding|repository|repo|ruby|bug|test|refactor|implement|github|rails|openbsd|commit|pull request)\b/i)
           return "research" if task.match?(/\b(?:research|source|citation|evidence|latest|compare|look up|investigate)\b/i)
           return "support" if task.match?(/\b(?:relationship|couples?|anxious|stress|feelings|therap|cope|conflict|grief)\b/i)
           return "creative" if task.match?(/\b(?:music|song|beat|image|video|creative|write a story|poem|design)\b/i)
