@@ -296,9 +296,10 @@ browser evidence recorded in the commit.
   and `b398fb45fb8112534cddd127ee28d690c06f556c` (face Law field uses the shared Law loader).
   The follow-on `622c8b5` / `c43df95` / `5074f1c` / `a2864fd` changes move operator Law
   declaration lookup into `Operator::LawInventory.catalogue_declaration`, remove the duplicate
-  recursive parser and direct YAML read from `bin/operator`, and add cases for nested catalogue
-  sections, key-derived IDs and empty-catalogue refusal. These are source changes, not verified
-  test passes. The canonical architecture docs and agent contract were updated to distinguish
+  recursive parser and direct YAML read from `bin/operator`, and add cases for canonical/nested
+  catalogue sections, key-derived IDs and empty-catalogue refusal. Follow-up commits `40b7253`
+  and `d3d0fab` route LawInventory council personas through `Master.load_yaml` and test that
+  loader contract. These are source changes, not verified test passes. The canonical architecture docs and agent contract were updated to distinguish
   policy authority from detector registration, describe the current Fold-versus-/fix boundary,
   and keep registry and repair-loop consolidation open. The generated root agent files were
   reconstructed from the exact generator template; still run
