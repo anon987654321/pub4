@@ -40,6 +40,7 @@ class TestCorePaths < Minitest::Test
   def test_path_escape_is_treated_as_protected
     assert paths.sacred?("../outside")
   end
+
   def test_missing_soul_manifest_fails_closed_for_queries_commits_and_load
     Dir.mktmpdir("core-paths-missing-soul") do |root|
       data_dir = File.join(root, "data")
@@ -65,6 +66,18 @@ class TestCorePaths < Minitest::Test
 
       assert_raises(RuntimeError) { repo_paths.sacred_paths }
       assert repo_paths.sacred?("lib/fix/fix_loop.rb")
+      assert_includes repo_paths.commit_refusal("data/spine.yml"), "constitution unreadable"
+    end
+  end
+
+  def test_blank_sacred_path_entries_fail_closed
+    Dir.mktmpdir("core-paths-blank-soul") do |root|
+      data_dir = File.join(root, "data")
+      FileUtils.mkdir_p(data_dir)
+      File.write(File.join(data_dir, "soul.yml"), "absolute:\n  sacred_paths:\n    - \"\"\n")
+      repo_paths = Master::Core::Constitution::Paths.new(root:)
+
+      assert_raises(RuntimeError) { repo_paths.sacred_paths }
       assert_includes repo_paths.commit_refusal("data/spine.yml"), "constitution unreadable"
     end
   end
