@@ -362,8 +362,8 @@ Local append-only telemetry uses `Master::Trace::Log.append_jsonl` where the
 record shape and retention contract permit it. The writer serializes rotation and
 append, rejects symlink targets and oversized records, and defaults to the shared
 25 MiB log ceiling; sensitive telemetry uses private file and directory modes.
-Provider health/quarantine, the incident notebook, Phoenix provenance, metrics,
-OpenTelemetry traces and the tool audit use this path. The Swallow error log is
+The canonical activity/evidence streams, provider health/quarantine, the incident
+notebook, Phoenix provenance, metrics, OpenTelemetry traces and the tool audit use this path. The Swallow error log is
 standalone-loadable and maintains its own equivalent locked, capped writer. A
 cap is a retention boundary, not a guarantee that every historic row is kept;
 billing ledgers and generated-media manifests need their own explicit retention
