@@ -83,6 +83,48 @@ class TestAiTrajectory < Minitest::Test
       loaded = JSON.parse(File.read(path))
       assert_equal "master.llm.trajectory/v1", loaded["schema"]
       assert_equal "map the tree", loaded["task"]
+      assert_equal 0o600, File.stat(path).mode & 0o777,
+                   "trajectory prompts are opt-in private telemetry"
+    end
+  end
+
+  def test_trajectory_log_rotates_to_a_bounded_tail
+    Dir.mktmpdir("trajectory-rotation") do |dir|
+      path = File.join(dir, "trajectory.ndjson")
+      record = Master::AI::Trajectory::Record.new(
+        "task" => "inspect",
+        "model" => "small-model",
+        "events" => [{ "tool" => "Tree" }],
+        "outcome" => "complete",
+        "verified" => true,
+      )
+
+      record.append!(path, max_bytes: 1)
+      record.append!(path, max_bytes: 1)
+
+      assert File.file?("#{path}.1")
+      assert_operator File.size("#{path}.1"), :<=, 1
+      assert_equal "inspect", JSON.parse(File.readlines(path).last)["task"]
+      assert_equal 0o600, File.stat(path).mode & 0o777
+    end
+  end
+
+  def test_trajectory_append_refuses_symlink_destination
+    Dir.mktmpdir("trajectory-symlink") do |dir|
+      target = File.join(dir, "target.ndjson")
+      path = File.join(dir, "trajectory.ndjson")
+      File.write(target, "keep\n")
+      File.symlink(target, path)
+      record = Master::AI::Trajectory::Record.new(
+        "task" => "inspect",
+        "model" => "small-model",
+        "events" => [{ "tool" => "Tree" }],
+        "outcome" => "complete",
+        "verified" => true,
+      )
+
+      assert_raises(ArgumentError) { record.append!(path) }
+      assert_equal "keep\n", File.read(target)
     end
   end
 
