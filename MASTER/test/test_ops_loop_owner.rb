@@ -2,6 +2,9 @@
 
 require "fileutils"
 require "minitest/autorun"
+require "json"
+require "tmpdir"
+require "time"
 require_relative "../lib/master"
 require_relative "../lib/ops"
 
@@ -32,5 +35,37 @@ class LoopOwnerSpec < Minitest::Test
     result = Master::Ops::LoopOwner.with_claim("watcher") { :ok }
     assert_equal :ok, result
     assert_nil Master::Ops::LoopOwner.active
+  end
+
+  def test_corrupt_timestamp_does_not_release_a_live_owner
+    Dir.mktmpdir("loop-owner-corrupt-") do |dir|
+      path = File.join(dir, "owner.json")
+      File.write(path, JSON.generate(pid: Process.pid, at: "not-an-iso-timestamp"))
+
+      Master::Ops::LoopOwner.stub(:dir, dir) do
+        Master::Ops::LoopOwner.stub(:info, path) do
+          Master::Ground::Swallow.stub(:log, nil) do
+            Master::Ops::LoopOwner.cleanup_stale!
+          end
+          assert File.file?(path), "corrupt timestamp must not delete a live process claim"
+        end
+      end
+    end
+  end
+
+  def test_malformed_pid_does_not_release_a_claim
+    Dir.mktmpdir("loop-owner-pid-") do |dir|
+      path = File.join(dir, "owner.json")
+      File.write(path, JSON.generate(pid: "not-a-pid", at: Time.now.utc.iso8601))
+
+      Master::Ops::LoopOwner.stub(:dir, dir) do
+        Master::Ops::LoopOwner.stub(:info, path) do
+          Master::Ground::Swallow.stub(:log, nil) do
+            Master::Ops::LoopOwner.cleanup_stale!
+          end
+          assert File.file?(path), "malformed PID must not cause stale-claim deletion"
+        end
+      end
+    end
   end
 end
