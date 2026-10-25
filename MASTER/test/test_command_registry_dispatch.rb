@@ -103,7 +103,8 @@ class TestCommandRegistryDispatch < Minitest::Test
   def test_mobile_platform_commands_replace_the_public_device_surface
     assert_equal :dispatch_android, built.fetch("android").method_name
     assert_equal :dispatch_ios, built.fetch("ios").method_name
-    %w[pair device owner].each { |gone| refute built.key?(gone), "/#{gone} is replaced by /android or /ios" }
+    assert_equal :dispatch_pair, built.fetch("pair").method_name
+    %w[device owner].each { |gone| refute built.key?(gone), "/#{gone} is replaced by /android or /ios" }
     assert Registry.respond_to?(:dispatch_device)
   end
 
