@@ -161,4 +161,12 @@ class TtsWorkerContractTest < Minitest::Test
     assert_equal [:raw, 8 + 12], result  # header(8) + body(12)
     assert_equal "raw mp3 data", sink.string
   end
+  def test_daemon_race_probe_accepts_the_versioned_health_reply
+    source = File.read(File.join(Master::ROOT, "bin", "tts-worker"), encoding: "UTF-8")
+
+    assert_match(/probe\.gets\.to_s\.strip\.start_with\?\("ok "\)/, source)
+    refute_match(/probe\.gets\.to_s\.strip\s*==\s*"ok"/, source)
+  end
+
+
 end

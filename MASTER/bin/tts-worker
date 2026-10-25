@@ -390,7 +390,9 @@ if ARGV[0] == "--daemon"
     begin
       UNIXSocket.open(sock_path) do |probe|
         probe.write(%({"health":true}\n))
-        if IO.select([probe], nil, nil, 1) && probe.gets.to_s.strip == "ok"
+        # A healthy daemon answers "ok #{WORKER_VERSION}"; accepting only
+        # bare "ok" made racing spawns unlink the live socket and fork duplicates.
+        if IO.select([probe], nil, nil, 1) && probe.gets.to_s.strip.start_with?("ok ")
           Master::Trace::Dmesg.status("tts0", "healthy daemon already bound to #{sock_path}, exiting")
           exit 0
         end
