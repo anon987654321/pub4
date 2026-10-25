@@ -20,7 +20,7 @@ diagnosis but is not the required device proof.
 7. Verify the served manifest is host-aware and contains only intended stable
    cache resources.
 
-Use OPENBSD/bin/evidence around the existing real-device/browser test or
+Use ruby OPENBSD/bin/evidence around the existing real-device/browser test or
 capture command, then attach actual screenshots, device logs and relevant
 network traces. Record device model, OS/browser version, tested host, build
 commit and exact steps. For manual observations, include explicit --note
