@@ -11,8 +11,9 @@ Review the emitted route/viewport manifest and every screenshot. The runner
 uses the canonical MASTER/checks/data/geometry_surfaces.yml inventory; do not
 change it merely to make a run smaller. Capture the additional acceptance
 widths 320, 360, 375, 390, 430, 480, 640, 768, 1024 and 1280 CSS pixels for
-relevant MASTER/RAILS surfaces, with a live geometry dump beside each
-screenshot. Record viewport, app/host, browser/runtime, commit and timestamp.
+relevant MASTER/RAILS surfaces, with the geometry measurements retained in the
+run manifest beside the screenshots. Record viewport, app/host, browser/runtime,
+commit and timestamp.
 
 At each required width, inspect:
 
@@ -28,12 +29,12 @@ At each required width, inspect:
 Do not treat a single desktop screenshot as evidence for mobile geometry.
 Attach reviewed screenshots and geometry files to a later evidence capture:
 
-    OPENBSD/bin/evidence --attach evidence/browser-diagnostics/<run-id>/screenshots/<surface>.png --attach evidence/browser-diagnostics/<run-id>/manifest.json --note 'Describe the exact viewport and interaction reviewed' visual-review -- ruby -e 'puts "Human review record; inspect attached evidence"'
+    OPENBSD/bin/evidence --attach evidence/browser-diagnostics/<run-id>/screenshots/<surface>.png --attach evidence/browser-diagnostics/<run-id>/manifest.json --note 'I reviewed the named screenshot and manifest; record the exact result and any findings' visual-review -- env CHECK_BROWSER_DIAGNOSTICS_OUTPUT=evidence/browser-diagnostics/review-run ruby MASTER/checks/runner.rb browser_diagnostics
 
-The last command records the reviewer’s declaration and attachment hashes; it
-does not perform the browser review for them. Replace the illustrative paths
-with real files from the run. Never use an empty command or no-op as a
-surrogate for a browser check.
+The command runs a real fresh browser-diagnostics pass and records the prior
+reviewed PNG/manifest hashes and the reviewer’s note. Replace illustrative
+paths with real files, inspect the fresh manifest too, and do not use a no-op
+command as a surrogate for a browser check.
 
 ## Fresh asset budgets
 
