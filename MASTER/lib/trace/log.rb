@@ -69,14 +69,28 @@ module Master
             File.chmod(mode, path)
           end
 
-          rotate(path, [limit - line.bytesize, 0].max)
-          size = File.file?(path) ? File.size(path) : 0
-          raise IOError, "JSONL rotation failed to honor #{limit}-byte cap" if size + line.bytesize > limit
+          attempts = 0
+          begin
+            rotate(path, [limit - line.bytesize, 0].max)
+            size = File.file?(path) ? File.size(path) : 0
+            raise IOError, "JSONL rotation failed to honor #{limit}-byte cap" if size + line.bytesize > limit
 
-          File.open(path, File::WRONLY | File::CREAT | File::APPEND, mode) do |io|
-            io.write(line)
-            io.flush
-            io.fsync if sync
+            File.open(path, File::WRONLY | File::CREAT | File::APPEND, mode) do |io|
+              offset = 0
+              while offset < line.bytesize
+                written = io.write(line.byteslice(offset..))
+                raise IOError, "JSONL append wrote no bytes" unless written&.positive?
+
+                offset += written
+              end
+              io.flush
+              io.fsync if sync
+            end
+          rescue Errno::ENOSPC
+            raise unless attempts.zero? && reclaim(path)
+
+            attempts += 1
+            retry
           end
         ensure
           lock.flock(File::LOCK_UN) if lock
@@ -198,20 +212,9 @@ module Master
 
         def append(event, payload = {})
           record = build_record(event, payload)
-          FileUtils.mkdir_p(File.dirname(@path))
-          2.times do |attempt|
-            begin
-              Log.rotate(@path, MAX_BYTES)
-              File.open(@path, "a") { |io| io.write(JSON.generate(record), "\n") }
-              return record
-            rescue Errno::ENOSPC
-              # One bounded recovery attempt only; a persistently full disk must
-              # not turn logging into a retry loop of its own.
-              raise unless attempt.zero? && Log.reclaim(@path)
-            end
-          end
+          Log.append_jsonl(@path, record, max_bytes: MAX_BYTES, mode: 0o600, directory_mode: 0o700)
           record
-        rescue SystemCallError, JSON::GeneratorError => e
+        rescue SystemCallError, JSON::GeneratorError, ArgumentError, IOError => e
           # Stderr is last resort — cannot route through bus without risking recursion.
           Log.warn_once([@path, e.class], "event_log: #{@path}: #{e.message}")
           nil
