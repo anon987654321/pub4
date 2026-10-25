@@ -48,8 +48,9 @@ module EvidenceCapture
     root = git_root
     head = git_value(root, "rev-parse", "HEAD").strip
     branch = git_value(root, "branch", "--show-current").strip
-    status = git_value(root, "status", "--porcelain=v1", "--untracked-files=normal")
-    dirty = !status.empty?
+    status_before = git_value(root, "status", "--porcelain=v1", "--untracked-files=normal")
+    dirty_before = status_before.lines.map { |line| line[3..].to_s.strip }.reject(&:empty?)
+    source_dirty_before = dirty_before.reject { |path| path == "evidence" || path.start_with?("evidence/") }
     attachments = options[:attachments].map { |path| attachment_record(root, path) }
     started_wall = Time.now.utc
     started_mono = Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -61,6 +62,9 @@ module EvidenceCapture
     log_path = "#{base}.txt"
 
     result = execute(command, log_path, options[:timeout])
+    status_after = git_value(root, "status", "--porcelain=v1", "--untracked-files=normal")
+    dirty_after = status_after.lines.map { |line| line[3..].to_s.strip }.reject(&:empty?)
+    source_dirty_after = dirty_after.reject { |path| path == "evidence" || path.start_with?("evidence/") }
     finished_wall = Time.now.utc
     duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_mono
     detected_verdict = classify(result.fetch(:reported_exit_status), timed_out: result.fetch(:timed_out))
@@ -80,8 +84,12 @@ module EvidenceCapture
       spawn_error: result[:spawn_error],
       commit: head,
       branch: branch,
-      worktree: dirty ? "dirty" : "clean",
-      dirty_paths: status.lines.map { |line| line[3..].to_s.strip }.reject(&:empty?),
+      worktree: dirty_before.empty? ? "clean" : "dirty",
+      source_worktree: source_dirty_before.empty? ? "clean" : "dirty",
+      dirty_paths: dirty_before,
+      worktree_after_command: dirty_after.empty? ? "clean" : "dirty",
+      source_worktree_after_command: source_dirty_after.empty? ? "clean" : "dirty",
+      dirty_paths_after_command: dirty_after,
       started_at: started_wall.iso8601(6),
       finished_at: finished_wall.iso8601(6),
       duration_seconds: duration.round(3),
