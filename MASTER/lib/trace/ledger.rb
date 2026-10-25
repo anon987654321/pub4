@@ -3,6 +3,7 @@
 require "fileutils"
 require "json"
 require "time"
+require "tempfile"
 
 module Master
   module Trace
@@ -166,11 +167,37 @@ module Master
         end
 
         def append(entry)
-          FileUtils.mkdir_p(File.dirname(@path))
-          # The file is the history and nothing else trims it, so each write
-          # keeps the newest MAX_REFLECTIONS. Fifty short lines are cheap to reread.
-          kept = File.exist?(@path) ? File.readlines(@path).last(MAX_REFLECTIONS - 1) : []
-          File.write(@path, (kept << "#{JSON.generate(entry)}\n").join)
+          directory = File.dirname(@path)
+          FileUtils.mkdir_p(directory)
+          lock_path = "#{@path}.lock"
+          raise IOError, "reflexion lock is a symlink" if File.symlink?(lock_path)
+
+          File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |lock|
+            File.chmod(0o600, lock_path)
+            lock.flock(File::LOCK_EX)
+            raise IOError, "reflexion log is a symlink" if File.symlink?(@path)
+
+            kept = if File.file?(@path)
+              stat = File.lstat(@path)
+              raise IOError, "reflexion log is not a regular file" unless stat.file? && !stat.symlink?
+
+              File.chmod(0o600, @path)
+              File.readlines(@path).last(MAX_REFLECTIONS - 1)
+            else
+              []
+            end
+            content = (kept << "#{JSON.generate(entry)}\n").join
+            Tempfile.create(["reflexions-", ".tmp"], directory, binmode: true) do |temporary|
+              temporary.write(content)
+              temporary.flush
+              temporary.fsync
+              temporary.close
+              File.chmod(0o600, temporary.path)
+              File.rename(temporary.path, @path)
+            end
+          ensure
+            lock.flock(File::LOCK_UN) if lock
+          end
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Ledger::Reflexion.append", event_bus: @bus)
         end
