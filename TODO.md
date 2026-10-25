@@ -247,8 +247,9 @@ browser evidence recorded in the commit.
   `cd MASTER && rake docs:agent_contracts && rake lint:agent_contracts` on a real checkout.
   Run the focused constitutional-check, LawParity, ratchet and face-law-field tests,
   reader-singularity/law-trace checks, and then a bounded suite before closing any part
-  of this work. The full LawRegistryAudit
-  reconciliation and the FixLoop/RepairLoop/Kernel ownership analysis remain open.
+  of this work. The full LawRegistryAudit reconciliation and FixLoop/RepairLoop/Kernel
+  ownership analysis remain open, including the primitive `Master::Fix::Laws::LAWS` scope
+  map and proof of any `Kernel#fix` reachability claim.
 - [ ] Re-run the four-tree performance sweep with before/after evidence: boot, CLI response, web
   first paint and interaction latency, JS/CSS payloads, memory/CPU, background work, and Dilla
   render time. Avoid claims based only on source size or unrepresentative local machines.
