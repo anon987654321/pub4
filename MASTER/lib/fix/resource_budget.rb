@@ -269,7 +269,7 @@ module Master
 
         lines = out.to_s.lines.map(&:strip).reject(&:empty?)
         header = lines.first&.split
-        available_index = header&.index("Available")
+        available_index = header&.index { |column| %w[Available Avail].include?(column) }
         return unless available_index
 
         available_kib = lines.drop(1).last&.split&.[](available_index)
