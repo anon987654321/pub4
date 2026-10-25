@@ -20,6 +20,36 @@ class TestLawInventory < Minitest::Test
     assert row.key?(:history)
   end
 
+  def test_catalogue_declaration_uses_shared_loader_across_sections
+    catalogue = {
+      "laws" => { "CANONICAL_LAW" => { "statement" => "Canonical entry" } },
+      "beauty" => [{ "id" => "BEAUTY_LAW", "statement" => "Beauty entry" }],
+      "anti_patterns" => { "UNSAFE_PATTERN" => { "statement" => "Pattern entry" } },
+    }
+    observed_root = nil
+    loader = lambda do |root:|
+      observed_root = root
+      catalogue
+    end
+
+    Master.stub(:load_laws, loader) do
+      beauty = Operator::LawInventory.catalogue_declaration("beauty_law", root: "/tmp/custom-master")
+      pattern = Operator::LawInventory.catalogue_declaration("unsafe_pattern", root: "/tmp/custom-master")
+
+      assert_equal "BEAUTY_LAW", beauty.fetch("id")
+      assert_equal "UNSAFE_PATTERN", pattern.fetch("id")
+    end
+    assert_equal "/tmp/custom-master", observed_root
+  end
+
+  def test_catalogue_declaration_refuses_an_empty_catalogue
+    Master.stub(:load_laws, ->(root:) { {} }) do
+      assert_raises(RuntimeError) do
+        Operator::LawInventory.catalogue_declaration("MISSING_LAW", root: "/tmp/empty-master")
+      end
+    end
+  end
+
   def test_health_reach_uses_the_live_law_audit
     row = Operator::LawInventory.health("ONE_SOURCE")
     refute_nil row
