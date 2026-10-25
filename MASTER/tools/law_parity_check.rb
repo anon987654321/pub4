@@ -7,4 +7,4 @@ require_relative "../lib/fix/law_parity"
 parity = Master::Fix::LawParity.new
 report = parity.report
 puts report
-abort "law_parity: constitutional enforcement gap remains" unless parity.ok?
+abort "law_parity: constitutional enforcement gap remains" unless report.start_with?("law_parity: ok")
