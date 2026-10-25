@@ -36,7 +36,7 @@ class TestParallelTests < Minitest::Test
       if files.include?("hang")
         [RbConfig.ruby, "-e", "sleep 30"]
       else
-        [RbConfig.ruby, "-e", "puts 'Finished in 0.01s'; puts '1 runs, 1 assertions, 0 failures, 0 errors, 0 skips'; exit 0"]
+        [RbConfig.ruby, "-e", "puts 'test-start0: TestOk#test_one'; puts 'TestOk#test_one = 0.00 s = .'; puts 'Finished in 0.01s'; puts '1 runs, 1 assertions, 0 failures, 0 errors, 0 skips'; exit 0"]
       end
     end
 
@@ -62,6 +62,13 @@ class TestParallelTests < Minitest::Test
     assert_includes out.string, "test-worker-incomplete0: missing final Minitest summary"
   end
 
+  def test_one_job_rake_test_still_uses_the_supervised_runner
+    rakefile = File.read(File.expand_path("../Rakefile", __dir__))
+
+    assert_includes rakefile, "Operator::ParallelTests.run(MASTER_TEST_FILES.to_a, command:)"
+    refute_includes rakefile, 'next Rake::Task[:"test:serial"].invoke if Operator::ParallelTests.jobs == 1'
+  end
+
   def test_files_are_dealt_largest_first_onto_the_lightest_worker
     buckets = Dir.mktmpdir { |dir| Runner.deal(sized_files(dir), 2).map { |bucket| bucket.map { File.basename(_1) } } }
     assert_equal [%w[a d], %w[b c]], buckets
@@ -78,6 +85,7 @@ class TestParallelTests < Minitest::Test
     test = bad ? "TestBad#test_two" : "TestOk#test_one"
     failure = bad ? "puts \"  1) Failure:\", \"#{test} [x.rb:1]:\"" : ""
     script = [
+      "puts \"test-start0: #{test}\"",
       "puts \"#{test} = 0.00 s = #{bad ? "F" : "."}\"", "puts \"Finished in 0.1s\"", failure,
       "puts \"1 runs, 1 assertions, 0 failures, 0 errors, 0 skips\"", "exit(#{!bad})"
     ].join("\n")
