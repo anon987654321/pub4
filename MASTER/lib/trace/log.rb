@@ -65,15 +65,17 @@ module Master
       # A failing log says so once per path and error. On a full disk every
       # event fails the same way, and a line per event lands mid-prompt.
       def self.warn_once(key, message)
-        @warned ||= {}
-        return if @warned[key]
+        @warn_mutex ||= Mutex.new
+        emit = @warn_mutex.synchronize do
+          @warned ||= {}
+          next false if @warned[key]
 
-        @warned[key] = true
-        if defined?(Master::Trace::Dmesg)
-          Master::Trace::Dmesg.once("event0", message.sub(/\A[^:]+:\s*/, ""))
-        else
-          ::Kernel.warn(message)
+          @warned[key] = true
+          true
         end
+        ::Kernel.warn(message) if emit
+      rescue StandardError
+        nil
       end
 
       # Last resort after ENOSPC: discard one rotated generation first, or
