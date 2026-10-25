@@ -107,7 +107,7 @@ module Operator
     end
 
     # <img ...> written by hand, and image_tag/video_tag through the helper.
-    MEDIA = /<(?:img|video|iframe)\b[^>]*>|(?:image_tag|video_tag)\s*\(?[^%]*/
+    MEDIA = /<(?:img|video|iframe)\b[^>]*>|(?:(?<!responsive_)(?<!lazy_)image_tag|video_tag)\s*\(?[^%]*/
 
     # Classes that reserve the box of an image BELOW them, via a descendant
     # selector — `.playlist-queue-art img { width: 48px; height: 48px }`.
