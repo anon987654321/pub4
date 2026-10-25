@@ -42,18 +42,36 @@ module Master
         def score = Benchmark.score(@data)
 
         def append!(path, max_bytes: MAX_BYTES)
-          raise ArgumentError, "trajectory log limit must be positive" unless max_bytes.to_i.positive?
+          limit = Integer(max_bytes)
+          raise ArgumentError, "trajectory log limit must be positive" unless limit.positive?
 
-          FileUtils.mkdir_p(File.dirname(path), mode: 0o700)
+          directory = File.dirname(path)
+          raise ArgumentError, "trajectory log directory is a symlink" if File.symlink?(directory)
+          FileUtils.mkdir_p(directory, mode: 0o700)
+          directory_stat = File.lstat(directory)
+          raise ArgumentError, "trajectory log directory is not a real directory" unless
+            directory_stat.directory? && !directory_stat.symlink?
+          File.chmod(0o700, directory)
+
           raise ArgumentError, "trajectory log path is a symlink" if File.symlink?(path)
-          File.chmod(0o600, path) if File.file?(path)
-          Master::Trace::Log.rotate(path, max_bytes)
+          if File.exist?(path)
+            path_stat = File.lstat(path)
+            raise ArgumentError, "trajectory log path is not a regular file" unless path_stat.file? && !path_stat.symlink?
 
+            File.chmod(0o600, path)
+          end
+
+          line = JSON.generate(@data) + "\n"
+          raise ArgumentError, "trajectory record exceeds #{limit}-byte log limit" if line.bytesize > limit
+
+          # Reserve room for the new record before appending, so one large record
+          # cannot push the active log past its declared cap.
+          Master::Trace::Log.rotate(path, [limit - line.bytesize, 0].max)
           File.open(path, File::WRONLY | File::CREAT | File::APPEND, 0o600) do |io|
             io.flock(File::LOCK_EX)
-            io.chmod(0o600)
-            io.puts(JSON.generate(@data))
+            io.write(line)
             io.flush
+            io.fsync
             io.flock(File::LOCK_UN)
           end
           self
