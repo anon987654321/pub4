@@ -36,7 +36,7 @@ class TestParallelTests < Minitest::Test
       if files.include?("hang")
         [RbConfig.ruby, "-e", "sleep 30"]
       else
-        [RbConfig.ruby, "-e", "puts 'Finished in 0.01s'; exit 0"]
+        [RbConfig.ruby, "-e", "puts 'Finished in 0.01s'; puts '1 runs, 1 assertions, 0 failures, 0 errors, 0 skips'; exit 0"]
       end
     end
 
@@ -48,6 +48,18 @@ class TestParallelTests < Minitest::Test
     assert_operator elapsed, :<, 8
     assert_includes out.string, "test-worker-timeout0:"
     assert_includes out.string, "TIMEOUT"
+  end
+
+  def test_successful_exit_without_minitest_summary_is_incomplete
+    out = StringIO.new
+    command = lambda do |_files|
+      [RbConfig.ruby, "-e", "STDERR.puts 'test-start0: Example#test_exits_early'; exit 0"]
+    end
+
+    refute Runner.run(%w[early-exit], command:, out:)
+    assert_includes out.string, "INCOMPLETE"
+    assert_includes out.string, "test-start0: Example#test_exits_early"
+    assert_includes out.string, "test-worker-incomplete0: missing final Minitest summary"
   end
 
   def test_files_are_dealt_largest_first_onto_the_lightest_worker
