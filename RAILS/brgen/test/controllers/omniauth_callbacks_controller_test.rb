@@ -46,6 +46,29 @@ class OmniauthCallbacksControllerTest < ActionDispatch::IntegrationTest
     refute user.email_verified?
   end
 
+  test "a retry reuses its unverified synthetic placeholder when a provider omits email" do
+    controller = OmniauthCallbacksController.new
+    controller.define_singleton_method(:external_identity_for) { |_auth| nil }
+    auth = auth_for("google_oauth2", email_verified: false, email: nil)
+    legacy = User.new(
+      email_address: "#{auth.uid}@#{auth.provider}.oauth",
+      password: SecureRandom.hex(24)
+    )
+    legacy.require_email_verification = true
+    legacy.save!
+    original_id = legacy.id
+
+    assert_no_difference -> { User.count } do
+      user = controller.send(:find_or_create_user, auth)
+      assert_equal original_id, user.id
+    end
+
+    refute legacy.reload.email_verified?
+    identity = ExternalIdentity.joins(:identity_provider)
+                               .find_by!(subject: auth.uid, identity_providers: { slug: "google_oauth2" })
+    assert_equal original_id, identity.user_id
+  end
+
   test "a returning BankID subject reuses its unverified legacy placeholder" do
     controller = OmniauthCallbacksController.new
     controller.define_singleton_method(:external_identity_for) { |_auth| nil }
