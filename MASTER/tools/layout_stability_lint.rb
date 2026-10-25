@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "set"
+require_relative "../checks/support/brgen_vertical_surfaces"
 
 module Operator
   # Ratchet: nothing on a page may change size after it has been painted.
@@ -193,7 +194,7 @@ module Operator
     def views
       @views ||= (
         Dir.glob(File.join(RAILS_ROOT, "*/app/views/**/*.erb")) +
-        Dir.glob(File.join(RAILS_ROOT, "*/engines/*/app/views/**/*.erb")) +
+        EngineRoots.glob(RAILS_ROOT, "brgen", "app/views/**/*.erb") +
         Dir.glob(File.join(RAILS_ROOT, "__shared/app/views/**/*.erb"))
       ).uniq.sort.reject { |path| path.match?(SKIP) }
     end
@@ -201,7 +202,7 @@ module Operator
     def stylesheets
       @stylesheets ||= (
         Dir.glob(File.join(RAILS_ROOT, "*/app/assets/stylesheets/**/*.{scss,css}")) +
-        Dir.glob(File.join(RAILS_ROOT, "*/engines/*/app/assets/stylesheets/**/*.{scss,css}")) +
+        EngineRoots.glob(RAILS_ROOT, "brgen", "app/assets/stylesheets/**/*.{scss,css}") +
         Dir.glob(File.join(RAILS_ROOT, "__shared/app/assets/stylesheets/**/*.{scss,css}"))
       ).uniq.sort.reject { |path| path.match?(SKIP) }
     end
