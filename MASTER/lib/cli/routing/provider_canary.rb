@@ -110,7 +110,14 @@ module Master
         end
 
         def record(model:, status:, latency_ms:, error:)
-          @health.record(model:, status:, latency_ms:, error:)
+          if @router.respond_to?(:record_provider_outcome)
+            # The production router records health and applies quarantine in one
+            # path. Recording only in @health would rank the provider lower but
+            # never create the quarantine event that removes it from the pool.
+            @router.record_provider_outcome(model:, status:, latency_ms:, error:)
+          else
+            @health.record(model:, status:, latency_ms:, error:)
+          end
           @bus&.publish("provider:canary", model:, domain: provider_domain(model), status:, latency_ms:, error:)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "provider_canary.record", event_bus: @bus)
