@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "fileutils"
+require "json"
 require "tmpdir"
 
 class TestSwallow < Minitest::Test
