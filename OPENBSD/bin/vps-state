@@ -75,16 +75,33 @@ end
 # distinctly from a genuinely live one so it doesn't read as still-in-flight.
 def deploy_in_progress(app)
   path = File.join(STAMP_DIR, "deploy_status", "#{app}.json")
-  return nil unless File.file?(path)
 
-  status = JSON.parse(File.read(path))
-  unless status.is_a?(Hash) && %w[running done failed].include?(status["state"])
+  # /var/db/pub4/deploy_status is root-only by design. On vm23 read through the
+  # fixed broker instead of treating denied direct reads as "no deploy". A
+  # custom stamp directory remains directly readable for tests and local drills.
+  if Deploy::Environment.on_vps? && STAMP_DIR == "/var/db/pub4"
+    broker = "/usr/local/sbin/pub4-admin"
+    raise "pub4-admin missing or untrusted" unless
+      File.file?(broker) && !File.symlink?(broker) && File.executable?(broker)
+
+    output, status = Open3.capture2e("doas", "-n", broker, "deploy-status-read", app)
+    raise "deploy status broker failed (exit #{status.exitstatus})" unless status.success?
+
+    record = JSON.parse(output)
+  else
+    return nil unless File.file?(path)
+
+    record = JSON.parse(File.read(path))
+  end
+
+  return nil if record.nil?
+  unless record.is_a?(Hash) && %w[running done failed].include?(record["state"])
     return corrupt_deploy_status(path, "invalid status schema")
   end
-  return nil if status["state"] != "running"
+  return nil if record["state"] != "running"
 
-  status["stale"] = !pid_alive?(status["pid"])
-  status
+  record["stale"] = !pid_alive?(record["pid"])
+  record
 rescue StandardError => e
   corrupt_deploy_status(path, e.class.to_s)
 end
