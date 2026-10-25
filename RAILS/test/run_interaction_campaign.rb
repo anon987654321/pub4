@@ -164,7 +164,7 @@ module Operator
         summary = parse_summary(output, command_data.fetch(:runner))
         if summary.nil? || summary.fetch(:runs) != 1
           state = "BLOCKED"
-          reason = "test process did not report exactly one executed mapped test"
+          reason = "test process did not report exactly one executed mapped Minitest case"
         elsif command_data.fetch(:runner) != "node_test" && summary.fetch(:assertions).to_i.zero?
           state = "BLOCKED"
           reason = "mapped test executed without assertions; no behavior was verified"
