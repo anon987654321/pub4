@@ -131,6 +131,41 @@ Amber is a wardrobe intelligence graph. Layers 1–4 are restored verbatim from
 all 23 components it named are still present and still accurate. Layer 5 and the
 service catalog cover what grew after the deletion and had no written record.
 
+### Additional component catalog
+
+The layer headings below keep the original identity and wardrobe structure. The following components belong to those same boundaries and are named explicitly so the catalog remains searchable as the code grows.
+
+**Models**
+
+- `AffiliateLink`: an owner-managed product link used by Shop the Look.
+- `Comment`: a comment within the social content graph.
+- `Connection`: a mutual connection between user accounts.
+- `ConsentEvent`: an auditable consent-change record.
+- `CreatorProfile`: the public creator identity for publishing and remixing garments.
+- `CreatorWardrobeItem`: the creator-owned garment record used by creator publishing.
+- `DeclutterChallenge`: a time-bound prompt to consider releasing a garment.
+- `DeclutterOutcome`: the recorded result of a declutter action.
+- `DeclutterReview`: the stored review associated with a declutter decision.
+- `Follow`: a directional social-follow relationship.
+- `GarmentEmbedding`: a legacy JSON-backed vector record; this does not imply an active embedding-generation or vector-search pipeline.
+- `IdentityVerification`: account verification evidence, handled as private identity data.
+- `LiveStream`: the record for a user's live-stream activity.
+
+**Services**
+
+- `BrgenCommerce`: the shared commerce integration used by Amber's commerce-facing flows.
+- `CapsuleBuilder`: assembles a capsule from garments in the wardrobe.
+- `CommerceFit`: the fit-related service used by commerce recommendations.
+- `DeclutterActionRouter`: routes a declutter choice to its selected destination.
+- `DeclutterDashboard`: prepares the declutter progress and challenge view.
+- `GarmentTaxonomy`: the canonical garment-category vocabulary.
+- `LastChanceOutfit`: proposes a final outfit before an item is released.
+
+**Jobs**
+
+- `CalculateSustainabilityJob`: refreshes Amber's heuristic sustainability score; it is not a lifecycle assessment.
+- `MasterMessageReplyJob`: runs the queued work for a MASTER reply in a message thread.
+
 ## 1. Identity and privacy
 
 - `User`
