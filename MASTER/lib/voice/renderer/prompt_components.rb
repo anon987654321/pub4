@@ -81,20 +81,21 @@ module Master
         # [state line or nil, prompt]. The state line carries what a status bar
         # used to: the caller prints it only when one of its values moves.
         def prompt_line(model, phase, **options)
+          last_ok = options.fetch(:last_ok, true)
+          destination = options.fetch(:destination, "llm")
+          focused = options.fetch(:focused, false)
+          operator = operator_state(phase, last_ok, destination:, focused:)
+
           [
-            state_line(model, **options),
-            shell_prompt(
-              phase,
-              options.fetch(:last_ok, true),
-              destination: options.fetch(:destination, "llm"),
-              focused: options.fetch(:focused, false)
-            )
+            state_line(model, **options.merge(operator:)),
+            shell_prompt(phase, last_ok, destination:, focused:)
           ]
         end
 
         def state_line(model, **options)
           name = short_model(model)
-          bits = [name.empty? ? "no model" : name, context_label(options[:tokens], model)]
+          bits = [options[:operator], name.empty? ? "no model" : name,
+                  context_label(options[:tokens], model)].compact
           violations = options.fetch(:violations, 0).to_i
           bits << "#{violations} violations" if violations.positive?
           d(bits.join(", "))
@@ -129,19 +130,22 @@ module Master
           text.to_s.gsub(ANSI_ESCAPE, "")
         end
 
-        # OpenBSD Operator prompt: one plain-text line, words and digits only.
-        # Host, checkout/tree, Git state, destination, phase, then input/error input.
-        # Reline owns editing; no punctuation or ANSI decoration in the prompt.
-        def shell_prompt(phase, last_ok, destination: "llm", focused: false)
-          host = prompt_host
-          suffix = prompt_suffix(phase, last_ok, destination:, focused:)
-
-          path = plain_prompt_segment(
-            prompt_path(suffix_length: visible_length(([host] + suffix).join(" ")) + 1),
+        # One stable OpenBSD-style input prompt; changing context is announced
+        # separately only when it changes, so the editable line stays familiar.
+        def shell_prompt(_phase, _last_ok, **)
+          prompt = Master::Face::Contract.shell_prompt(
+            path: Dir.pwd,
+            host: safe_hostname.to_s,
+            root: @config["root"] || Master::ROOT
           )
-          path = "root" if path.empty?
+          "#{prompt} "
+        end
 
-          [host, path, *suffix].reject(&:empty?).join(" ") + " "
+        def operator_state(phase, last_ok, destination:, focused:)
+          words = [bounded_prompt_segment(git_prompt_text, 16), prompt_destination(destination)]
+          words << bounded_prompt_segment(phase_label(phase), 10) unless focused
+          words << "error" unless last_ok
+          words.reject(&:empty?).join(" ")
         end
 
         def prompt_host

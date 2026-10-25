@@ -106,23 +106,35 @@ module Master
       # The ordinary shell keeps Reline in charge of the prompt. /face opens the
       # dedicated alternate-screen stage when the operator wants the full face.
       def normal_prompt
-        _state, prompt = @refs.renderer.prompt_line(
+        state, prompt = @refs.renderer.prompt_line(
           @refs.agent.model, @refs.session.phase,
           last_ok: @last_ok, violations: violations_count,
-          tokens: @refs.session.token_est, cost: @refs.session.cost
+          tokens: @refs.session.token_est, cost: @refs.session.cost,
+          destination: Master::Io::Chat.destination_label
         )
+        announce_state(state)
         prompt
       end
 
       # Focus mode reduces context noise, never hides the working location or
       # the destination that receives the next line of text.
       def focus_prompt
-        _state, prompt = @refs.renderer.prompt_line(
+        state, prompt = @refs.renderer.prompt_line(
           @refs.agent.model, @refs.session.phase,
           last_ok: @last_ok, violations: violations_count,
-          tokens: @refs.session.token_est, cost: @refs.session.cost, focused: true
+          tokens: @refs.session.token_est, cost: @refs.session.cost,
+          destination: Master::Io::Chat.destination_label, focused: true
         )
+        announce_state(state)
         prompt
+      end
+
+      # The state line prints only when it moves, so the prompt stays one shape.
+      def announce_state(state)
+        return if state.nil? || state == @announced_state
+
+        @announced_state = state
+        terminal_puts(state)
       end
 
       # An empty line does nothing, as in a shell: Enter never runs an action

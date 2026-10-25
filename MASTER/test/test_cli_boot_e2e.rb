@@ -196,12 +196,12 @@ end
 class TestCliReplExit < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   # patterns.yml cli.face_on_start opens the face on a terminal; these drive the
-  # plain prompt, whose last word is "input" (7e186b3ae), so they ask for it.
+  # historical shell prompt ends in host:path$.
   ENV_FOR_PTY = TestCliBootE2e::BOOT_ENV.merge(
     "MASTER_FAST" => "0", "MASTER_SKIP_BOOT_SCAN" => "1", "MASTER_SKIP_TTS" => "1", "TERM" => "xterm",
     "MASTER_FACE_ON_START" => "0"
   ).freeze
-  READY = / input /
+  READY = /\S+:\S+\$ /
 
   # A real model call under rate-limited/failover conditions can run well
   # past the 30s boot+reply windows below; 150s gives the chitchat test

@@ -113,15 +113,15 @@ class TestRenderer < Minitest::Test
     renderer = FakeRenderer.new(config: {})
     state, prompt = renderer.prompt_line(nil, "idle", tokens: 0)
 
-    assert_match(/\Ano model, /, strip_ansi(state))
+    assert_match(/\bno model, /, strip_ansi(state))
     refute_match(/\n|\r/, strip_ansi(prompt))
-    assert_match(/input \z/, strip_ansi(prompt))
+    assert_match(/\A\S+:.+\$ \z/, strip_ansi(prompt))
   end
 
   def test_phase_prompt_uses_the_plain_openbsd_operator_words
     renderer = FakeRenderer.new(config: {})
 
-    # The CLI prompt uses words rather than borrowing the face's ASCII glyph.
+    # The REPL's shell-shaped prompt and the face's glyph remain distinct.
     Master::Face::Contract.stub(:glyph, nil) do
       assert_equal "input", renderer.phase_prompt(true, "discover")
     end
@@ -150,7 +150,7 @@ class TestRenderer < Minitest::Test
     state, prompt = FakeRenderer.new(config: {}).prompt_line("model", "idle", tokens: 45_000)
 
     assert_includes strip_ansi(state), "model, 45.0k/128.0k"
-    assert_match(/input \z/, strip_ansi(prompt))
+    assert_match(/\A\S+:.+\$ \z/, strip_ansi(prompt))
   end
 
   # A dmesg is legible on a serial console: no box drawing, no arrows, no
@@ -218,17 +218,14 @@ class TestRenderer < Minitest::Test
     refute_empty truncated
   end
 
-  def test_openbsd_operator_prompt_matches_the_agreed_plain_contract
+  def test_openbsd_operator_prompt_matches_the_historical_shell_contract
     renderer = FakeRenderer.new(config: {})
 
-    renderer.stub(:safe_hostname, "openbsd.localdomain") do
-      renderer.stub(:git_prompt_state, { branch: "main", ahead: 0, behind: 0, dirty: true }) do
-        Dir.stub(:pwd, File.join(Master.repo_root, "MASTER")) do
-          _state, prompt = renderer.prompt_line("model", "discover", tokens: 10)
+    renderer.stub(:safe_hostname, "vm23.brgen.no") do
+      Dir.stub(:pwd, File.join(Dir.home, "pub4")) do
+        _state, prompt = renderer.prompt_line("model", "discover", tokens: 10)
 
-          assert_equal "openbsd pub4 MASTER main dirty llm discover input ", strip_ansi(prompt)
-          assert_match(/\A[\p{L}\p{N} ]+\z/u, strip_ansi(prompt))
-        end
+        assert_equal "vm23:~/pub4$ ", strip_ansi(prompt)
       end
     end
   end
@@ -239,20 +236,17 @@ class TestRenderer < Minitest::Test
 
     clean = strip_ansi(prompt)
     assert_equal 1, clean.lines.size
-    assert_match(/\A\S+ \S+/, clean)
-    refute_includes clean, "/"
-    refute_includes clean, "  "
-    assert_match(/\A[\p{L}\p{N} ]+\z/u, clean)
-    assert_match(/llm discover input \z/, clean)
+    assert_match(/\A\S+:.+\$ \z/, clean)
     refute_match(/\e\[/, prompt, "the OpenBSD-console prompt does not need ANSI segment styling")
     assert_operator clean.chomp.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
   end
 
   def test_shell_prompt_names_the_active_chat_destination
     renderer = FakeRenderer.new(config: {})
-    _state, prompt = renderer.prompt_line("model", "discover", tokens: 10, destination: "read-only:irc:#help")
+    state, prompt = renderer.prompt_line("model", "discover", tokens: 10, destination: "read-only:irc:#help")
 
-    assert_match(/read only irc help discover input \z/, strip_ansi(prompt))
+    assert_includes strip_ansi(state), "read only irc help discover"
+    refute_includes strip_ansi(prompt), "read only irc help"
     assert_operator strip_ansi(prompt).length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
   end
 
@@ -260,18 +254,19 @@ class TestRenderer < Minitest::Test
     renderer = FakeRenderer.new(config: {})
     git = { branch: "feature/this/is/a/very/long/branch/name", ahead: 1234, behind: 987, dirty: true }
     renderer.stub(:git_prompt_state, git) do
-      _state, prompt = renderer.prompt_line(
+      state, prompt = renderer.prompt_line(
         "model", "a-phase-name-that-is-far-too-long", tokens: 10,
         destination: "read-only:irc:#a-very-long-channel-name"
       )
+      state_text = strip_ansi(state)
       clean = strip_ansi(prompt)
 
       refute_match(/\n|\r/, clean)
       assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
-      assert_includes clean, "read only irc a very"
-      assert_includes clean, "feature dirty"
-      assert_match(/input \z/, clean)
-      refute_includes clean, "/"
+      assert_includes state_text, "read only irc a very"
+      assert_includes state_text, "feature dirty"
+      assert_includes state_text, "a phase na"
+      assert_match(/\A\S+:.+\$ \z/, clean)
     end
   end
 
@@ -325,11 +320,11 @@ class TestRenderer < Minitest::Test
     renderer = FakeRenderer.new(config: {})
     git = { branch: "feature/with/a/very/long/operator/branch/name", ahead: 0, behind: 0, dirty: false }
     renderer.stub(:git_prompt_state, git) do
-      _state, prompt = renderer.prompt_line("model", "discover", tokens: 10)
+      state, prompt = renderer.prompt_line("model", "discover", tokens: 10)
       clean = strip_ansi(prompt)
       refute_match(/\n|\r/, clean)
       assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
-      assert_includes strip_ansi(prompt), "feature"
+      assert_includes strip_ansi(state), "feature"
     end
   end
 
