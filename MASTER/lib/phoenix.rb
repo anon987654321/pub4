@@ -3,6 +3,7 @@
 require "fileutils"
 require "json"
 require_relative "io/exec"
+require_relative "trace/log"
 require "time"
 
 module Master
@@ -164,8 +165,7 @@ module Master
 
       def append(root:, entry:)
         path = File.join(root, JOURNAL)
-        FileUtils.mkdir_p(File.dirname(path))
-        File.open(path, "a") { |file| file.puts(JSON.generate(entry)) }
+        Master::Trace::Log.append_jsonl(path, entry, mode: 0o600, directory_mode: 0o700)
       end
 
       def git_head(root)
