@@ -68,7 +68,7 @@ module EvidenceCapture
     finished_wall = Time.now.utc
     duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_mono
     detected_verdict = classify(result.fetch(:reported_exit_status), timed_out: result.fetch(:timed_out))
-    final_verdict, rejected_override = apply_override(detected_verdict, options[:verdict], result.fetch(:reported_exit_status))
+    final_verdict, rejected_override = apply_override(detected_verdict, options[:verdict], result.fetch(:reported_exit_status), options[:notes])
     payload = {
       schema_version: 1,
       label: label,
@@ -186,13 +186,11 @@ module EvidenceCapture
   end
 
   # Classification can add context, never turn a non-zero observed command into PASS.
-  def apply_override(detected, requested, exit_code)
+  def apply_override(detected, requested, exit_code, notes)
     return [detected, nil] unless requested
     return [detected, "PASS override refused because the command did not exit 0"] if requested == "PASS" && !exit_code.zero?
     return [detected, "override refused because a timed-out command cannot be reclassified"] if detected == "TIMEOUT" && requested != "TIMEOUT"
-    return [detected, "override refused because a blocked command cannot be reclassified"] if detected == "BLOCKED" && requested != "BLOCKED"
-    return [detected, "override refused because an inconclusive command cannot be reclassified"] if detected == "INCONCLUSIVE" && requested != "INCONCLUSIVE"
-    return [detected, "override refused because a failed command cannot be downgraded"] if detected == "FAIL" && !%w[FAIL VALIDATION_FAILED DELIVERY_FAILED].include?(requested)
+    return [detected, "override requires a non-empty --note explaining the classification"] if requested != detected && notes.none? { |note| !note.to_s.strip.empty? }
 
     [requested, nil]
   end
