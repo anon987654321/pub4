@@ -344,7 +344,7 @@ The funding route to investigate includes Innovasjon Norge ([innovasjonnorge.no]
 
 ## Runtime
 
-MASTER pins Ruby 4.0.5. Isolated execution through `Ruby::Box` is available only
+MASTER pins Ruby 4.0.7. Isolated execution through `Ruby::Box` is available only
 when the process was started with `RUBY_BOX=1`, and the adapter in
 `Master::Runtime::Box` does not pretend otherwise. Startup prefers YJIT, and
 `MASTER_JIT=zjit` selects ZJIT as an experiment. The parallel compute path uses
