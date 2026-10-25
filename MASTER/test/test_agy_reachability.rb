@@ -155,7 +155,7 @@ class TestAgyReachability < Minitest::Test
   end
 
   def test_probe_deadline_includes_grandchildren_holding_output_open
-    router_instance = router
+    router_instance = Master::CLI::Routing::ModelRouter.allocate
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
     output = router_instance.send(
