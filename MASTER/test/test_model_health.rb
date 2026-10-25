@@ -43,9 +43,9 @@ class TestModelHealth < Minitest::Test
     assert_includes Registry.help_text("model"), "/model health"
 
     result = Registry.dispatch_model(
-      agent: Agent.new(Router.new(Pool.new(
+      agent: Agent.new(Router.new(Pool.new({
         "provider:model" => { calls: 2, successes: 1, failures: 1, latency_ms: 400.0 },
-      ))),
+      }))),
       config: nil,
       metrics: nil,
       root: Master::ROOT,
