@@ -3,6 +3,7 @@
 require "fileutils"
 require "json"
 require "time"
+require_relative "../trace/log"
 
 module Master
   module CLI
@@ -22,8 +23,7 @@ module Master
         entry = { "at" => now.iso8601, "text" => text.to_s.strip }
         return if entry["text"].empty?
 
-        FileUtils.mkdir_p(File.dirname(file))
-        File.open(file, "a", 0o600) { |io| io.puts(JSON.generate(entry)) }
+        Master::Trace::Log.append_jsonl(file, entry, mode: 0o600)
         entry
       end
 
