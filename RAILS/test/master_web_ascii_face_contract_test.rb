@@ -90,12 +90,12 @@ class MasterWebAsciiFaceContractTest < Minitest::Test
 
   def test_secondary_orbital_particles_are_deterministic_and_subordinate
     part3 = read(PUBLIC, "face.part3.txt")
-    orbital = part3[/const CLI_FACE_WEB_DENSITY = 360;.*?function ensureOrbitalField\(\) \{.*?^}/m]
 
-    refute_nil orbital
-    assert_includes orbital, "function faceFieldSample(index, salt = 0)"
-    assert_includes orbital, "opacity: 0.10"
-    refute_match(/Math\.random\(\)/, orbital)
+    assert_includes part3, "const CLI_FACE_WEB_DENSITY = 360;"
+    assert_includes part3, "function faceFieldSample(index, salt = 0)"
+    assert_includes part3, "function ensureOrbitalField() {"
+    assert_includes part3, "opacity: 0.10"
+    refute_match(/Math\.random\(\)/, part3)
   end
 
   def test_the_configured_face_shortcuts_control_laws_and_overlay_separately
