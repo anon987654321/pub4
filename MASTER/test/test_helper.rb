@@ -81,6 +81,10 @@ Minitest::Test.class_eval do
   def test_timeout = MASTER_TEST_TIMEOUT
 
   def run(*args)
+    if ENV["MASTER_TEST_START_MARKERS"] == "1"
+      STDERR.puts "test-start0: #{self.class}##{name}"
+      STDERR.flush
+    end
     watchdog = overrun_watchdog(Thread.current)
     Timeout.timeout(test_timeout) { run_without_timeout(*args) }
   rescue Timeout::Error
