@@ -2,6 +2,7 @@
 
 require "test_helper"
 require "tmpdir"
+require_relative "support_council_answer"
 
 # One rule picks the model for every /fix and council call: the tier's models in
 # data/models.yml order, dead lanes dropped (quota, silence, the hand-kept list),
@@ -187,12 +188,12 @@ class TestLaneSelection < Minitest::Test
 
     def ask_once(_prompt, model: nil, **)
       @asked << model
-      "No issue found."
+      CouncilAnswer.json
     end
 
     def ask(_prompt, **)
       @asked << :routed
-      "No issue found."
+      CouncilAnswer.json
     end
   end
 
