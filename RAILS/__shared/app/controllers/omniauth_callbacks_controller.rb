@@ -105,8 +105,8 @@ class OmniauthCallbacksController < ::ApplicationController
                                          user.has_attribute?(:email_verification_token) &&
                                          user.email_verification_token.blank?
       eligible = has_unconsumed_synthetic_address && !user.email_verified? &&
-                 user.try(:deleted_at).blank? && user.try(:deletion_scheduled_at).blank? &&
-                 !user.try(:deletion_pending?)
+                 !user.try(:guest?) && user.try(:deleted_at).blank? &&
+                 user.try(:deletion_scheduled_at).blank? && !user.try(:deletion_pending?)
       raise IdentityEmailConflict unless eligible
 
       synthetic_placeholder_recovered = true
