@@ -330,9 +330,21 @@ MASTER should integrate mature specialists rather than re-create their scanners.
 
 **Validation before scale:** interview ten target buyers and run three paid pilots with written scope. Present the same pilot at three test prices rather than assuming a market price; record actual conversion and buyer-reported alternatives. Measure confirmed-finding rate, false positives, time to first useful finding, time to verified remediation, delivery cost, willingness to pay and repeat purchase. Keep the dashboard and multi-tenant service small until buyers repeatedly pay for the report and the follow-through. The possible moat is evidence and verification, not a new scanner. Risks include false positives, out-of-scope testing, liability and a scope too broad to deliver well.
 
+### Pilot and funding route
+
+The first paid experiment should be a tightly scoped website review with an evidence-backed report and optional, separately authorised remediation. Test this with a few agencies and small SaaS/SME buyers before building a hosted dashboard or assuming recurring demand.
+
+### Ask and evidence
+
+The funding route to investigate includes Innovasjon Norge ([innovasjonnorge.no](https://www.innovasjonnorge.no/)), subject to the current programme criteria, eligibility assessment and an independently checked budget. This document does not claim eligibility or approval. The ask should fund measured pilot delivery, buyer interviews and validation of the evidence-to-verified-fix workflow, not a speculative expansion of scope.
+
+### Horizon
+
+**Next 90 days:** complete buyer interviews, run three fixed-scope pilots, record conversion and false-positive rates, measure delivery cost and time-to-verified-remediation, and decide whether repeat purchase is real. Continue only on evidence from paying customers.
+
 ## Runtime
 
-MASTER pins Ruby 4.0.7. Isolated execution through `Ruby::Box` is available only
+MASTER pins Ruby 4.0.5. Isolated execution through `Ruby::Box` is available only
 when the process was started with `RUBY_BOX=1`, and the adapter in
 `Master::Runtime::Box` does not pretend otherwise. Startup prefers YJIT, and
 `MASTER_JIT=zjit` selects ZJIT as an experiment. The parallel compute path uses
