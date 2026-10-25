@@ -61,6 +61,7 @@ class Pub4AdminTest < Minitest::Test
 
     assert_includes source, 'args.length == 4 && args[0] == "deploy-status"'
     assert_includes source, 'args.length == 2 && args[0] == "deploy-status-read"'
+    assert_includes source, '(status_stat.mode & 0o077).zero?'
     assert_includes source, "def write_deploy_status(app, step, state)"
     assert_includes source, 'File.join(directory, "#{app}.json")'
     assert_includes source, "File::CREAT | File::EXCL"
@@ -82,6 +83,7 @@ class Pub4AdminTest < Minitest::Test
         "updated_at" => "2026-10-26T00:00:05Z",
       }
       File.write(File.join(directory, "amber.json"), JSON.generate(record))
+      File.chmod(0o600, File.join(directory, "amber.json"))
       output = StringIO.new
 
       assert_equal 0, ADMIN.read_deploy_status("amber", root:, output:, verify_root: false)
@@ -95,6 +97,27 @@ class Pub4AdminTest < Minitest::Test
 
       assert_equal 0, ADMIN.read_deploy_status("amber", root:, output:, verify_root: false)
       assert_equal "null", output.string.strip
+    end
+  end
+
+  def test_deploy_status_read_rejects_group_or_world_readable_record
+    Dir.mktmpdir("pub4-admin-status-") do |root|
+      directory = File.join(root, "deploy_status")
+      FileUtils.mkdir_p(directory)
+      path = File.join(directory, "amber.json")
+      File.write(path, JSON.generate(
+        "app" => "amber",
+        "state" => "running",
+        "step" => "bundle",
+        "pid" => 123,
+        "started_at" => "2026-10-26T00:00:00Z",
+        "updated_at" => "2026-10-26T00:00:05Z",
+      ))
+      File.chmod(0o644, path)
+
+      assert_raises(RuntimeError) do
+        ADMIN.read_deploy_status("amber", root:, output: StringIO.new, verify_root: false)
+      end
     end
   end
 
