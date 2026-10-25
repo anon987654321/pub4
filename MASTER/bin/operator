@@ -533,28 +533,10 @@ when "laws"
     exit 0
   end
 
-  # The declaration, from the file CLAUDE.md calls the law. A rule can be
-  # declared here and have no detector — 78 of them are — so this is looked up
-  # first and separately from the scanner.
-  # Walked rather than read from `rules`: ids live under `laws`, `beauty` and
-  # `anti_patterns` too, and a lookup that knows only one section answers "no
-  # such rule" about a rule that exists.
-  def declarations_in(node, found = [])
-    case node
-    when Hash
-      found << node if node["id"].is_a?(String)
-      node.each do |key, value|
-        found << value.merge("id" => key) if key.to_s.match?(/\A[A-Z][A-Z0-9_]*\z/) && value.is_a?(Hash) && !value.key?("id")
-        declarations_in(value, found)
-      end
-    when Array
-      node.each { |value| declarations_in(value, found) }
-    end
-    found
-  end
-
-  declared = declarations_in(YAML.safe_load_file(File.join(master_root, "data/laws.yml"), aliases: true))
-             .find { |row| row["id"].to_s.casecmp?(id) }
+  # This command needs declarations from every catalogue section, not only
+  # priority-ranked entries. The shared inventory uses Master.load_laws and
+  # preserves the full laws/beauty/anti_patterns lookup behavior.
+  declared = Operator::LawInventory.catalogue_declaration(id, root: master_root)
 
   require File.join(master_root, "law", "definition")
   Law.load_all(File.join(master_root, "law")) if Law.definitions.empty?
