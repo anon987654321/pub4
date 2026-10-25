@@ -139,6 +139,21 @@ class TestOwnerPreferences < Minitest::Test
     refute File.exist?(Preferences.path(root: @root, subject: SUBJECT))
   end
 
+  def test_turning_learning_off_discards_observations_and_unconfirmed_suggestions
+    grant
+    Preferences.set_learning(root: @root, subject: SUBJECT, enabled: true)
+    Preferences.observe_feedback(root: @root, subject: SUBJECT, message: "Your answer is too verbose.")
+    staged = Preferences.observe_feedback(root: @root, subject: SUBJECT, message: "That was too verbose again.")
+    assert_equal "staged", staged.fetch("status")
+
+    Preferences.set_learning(root: @root, subject: SUBJECT, enabled: false)
+    state = Preferences.status(root: @root, subject: SUBJECT)
+    assert_empty state.fetch("observations")
+    assert_empty state.fetch("suggestions")
+    assert_nil Preferences.observe_feedback(root: @root, subject: SUBJECT, message: "Your answer is too verbose.")
+    assert_empty Preferences.effective(root: @root, subject: SUBJECT)
+  end
+
   def test_non_correction_is_not_collected
     grant
     Preferences.set_learning(root: @root, subject: SUBJECT, enabled: true)
