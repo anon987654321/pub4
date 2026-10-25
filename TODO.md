@@ -7,6 +7,10 @@ not create separate project backlog files. A source edit, a static contract, an 
 list, and a passing live run are different kinds of evidence. Close an item with the command or
 browser evidence recorded in the commit.
 
+## Remaining telemetry retention boundaries
+
+The source scan also found local STUDIO `clips.jsonl` and per-subject billed-render `ledger.jsonl` writers. They are user-owned render/cost provenance, not merely diagnostic telemetry; do not truncate them automatically. Define an explicit archive/export contract, retention duration, and recovery proof before applying rotation. `Trace::Ledger::Reflexion` bounds the file to the newest 50 rows but rewrites the history on every append, so concurrent writers may lose an update; test and fix that separately before claiming all telemetry writers are safe. These are still open, source-derived findings.
+
 ## Follow-on JSONL compaction integrity (2026-10-26)
 
 The shared `Trace::Log.compact_rotated` and standalone Swallow compactor now drop a partial leading record when compacting a byte tail. This keeps retained backups parseable JSONL instead of making the first backup line a fragment. Tests for the shared writer, telemetry exporter and Swallow backup now parse both active and rotated files; Swallow's fixture uses actual newline-delimited records and asserts the retained tail is nonempty. These tests are not run.
