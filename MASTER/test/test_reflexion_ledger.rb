@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "tmpdir"
+require "json"
 require "fileutils"
 
 # Reflexion episodic memory: blocked/failed commits become reflections that guide retries.
@@ -46,5 +47,35 @@ class TestReflexionLedger < Minitest::Test
 
     path = File.join(@dir, "runtime", "reflexions.ndjson")
     assert_operator File.readlines(path).size, :<=, 50
+  end
+
+  def test_concurrent_appends_keep_fifty_unique_private_records
+    bus = FakeBus.new
+    bus.subscribe("reflexion:recorded") {}
+    Master::Trace::Ledger::Reflexion.new(event_bus: bus, root: @dir).attach
+
+    threads = 8.times.map do |worker|
+      Thread.new do
+        25.times do |index|
+          bus.publish(
+            "fix_loop:commit_blocked",
+            reason: "worker-#{worker}-entry-#{index}",
+            files: ["lib/#{worker}-#{index}.rb"],
+          )
+        end
+      end
+    end
+    threads.each(&:value)
+
+    path = File.join(@dir, "runtime", "reflexions.ndjson")
+    lines = File.readlines(path, chomp: true)
+    records = lines.map { |line| JSON.parse(line) }
+    reasons = records.map { |record| record.fetch("reason") }
+
+    assert_equal 50, records.size
+    assert_equal 50, reasons.uniq.size, "concurrent commits must not overwrite a peer's retained row"
+    assert_equal 0o600, File.stat(path).mode & 0o777
+    assert File.file?("#{path}.lock")
+    assert_equal 0o600, File.stat("#{path}.lock").mode & 0o777
   end
 end
