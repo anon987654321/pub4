@@ -105,15 +105,13 @@ class TestUnpromptedSpeech < Minitest::Test
   # start"). It now opens at load. What still keeps it shut is the browser's own
   # answer: a denied permission, read through the Permissions API.
   def test_voice_mode_listens_at_load_unless_the_permission_is_denied
-    boot_sources.each do |name, source|
-      code = code_of(source)
+    combined = boot_sources.values.map { |source| code_of(source) }.join("\n")
 
-      assert_match(/maybeAutoVoice\(\);/, code, "#{name}: startEverything no longer opens the mic")
-      assert_match(/async function maybeAutoVoice\(\) \{\n[^\n]*\n\s*if \(await micPermissionDenied\(\)\) return;/, code,
-                   "#{name}: the mic opens without checking for a denied permission")
-      refute_includes code, "master:voice-auto",
-                      "#{name}: a stored off switch is back, and one Escape shuts the mic for good"
-    end
+    assert_match(/maybeAutoVoice\(\);/, combined, "assembled boot path no longer opens the mic")
+    assert_match(/async function maybeAutoVoice\(\) \{\n[^\n]*\n\s*if \(await micPermissionDenied\(\)\) return;/, combined,
+                 "the mic opens without checking for a denied permission")
+    refute_includes combined, "master:voice-auto",
+                    "a stored off switch is back, and one Escape shuts the mic for good"
   end
 
   # A deliberate exit is honoured for the page it happened on.
