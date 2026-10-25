@@ -306,6 +306,7 @@ module Master
       def load_state(target)
         return empty_state unless File.exist?(target)
         raise Ground::PersonalWorkspace::PermissionDenied, "preference file must not be a symlink" if File.symlink?(target)
+        raise InvalidStore, "preference file must be a regular file" unless File.file?(target)
         raise InvalidStore, "preference file exceeds #{MAX_BYTES} bytes" if File.size(target) > MAX_BYTES
 
         raw = YAML.safe_load(File.read(target, encoding: "UTF-8"), permitted_classes: [], aliases: false)
