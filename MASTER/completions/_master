@@ -28,6 +28,7 @@ _master() {
     'orders:the objective ledger'
     'play:render a Dilla progression with a drum pattern and play it'
     'plugin:list and invoke governed plugins'
+    'pair:issue and redeem one-time pairing codes for consent-gated local access'
     'privacy:inspect and revoke subject-specific personal-memory consent'
     'prove:run the deterministic local PUB4 convergence proof and write a receipt'
     'quit:leave MASTER'
