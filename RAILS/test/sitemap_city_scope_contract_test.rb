@@ -23,7 +23,7 @@ class SitemapCityScopeContractTest < Minitest::Test
   # Every city-owned model the sitemap lists, and where its city comes from.
   # nil means global by design and must NOT be scoped.
   SCOPED = {
-    "Post.hot" => :own, "Community" => :own, "Tv::Channel" => :own,
+    "Post.hot" => :own, "Community" => :own, "Tv::Channel.publicly_visible" => :own,
     "Playlist::Playlist.public_playlists" => :own, "Playlist::Set.publicly_listed" => :parent,
     "Takeaway::Restaurant.indexable" => :own, "Marketplace::Store.publicly_visible" => :own,
     "Marketplace::Listing.publicly_visible" => :own, "Place" => :own,
