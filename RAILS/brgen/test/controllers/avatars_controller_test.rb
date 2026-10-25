@@ -4,7 +4,7 @@ require "test_helper"
 
 class AvatarsControllerTest < ActionDispatch::IntegrationTest
   test "numeric IDs render deterministic identicons without exposing account existence" do
-    identifier = (User.maximum(:id).to_i + 1_000).to_s
+    identifier = (User.unscoped.maximum(:id).to_i + 1_000).to_s
 
     get "/users/#{identifier}/avatar"
 
