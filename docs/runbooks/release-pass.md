@@ -7,16 +7,16 @@ independently so one failure does not suppress the remaining diagnostic evidence
 
 From the repository root, run each command as written:
 
-    OPENBSD/bin/evidence release-master -- sh -c 'cd MASTER && rake test'
-    OPENBSD/bin/evidence release-rails-contracts -- ruby RAILS/test/run_all.rb
-    OPENBSD/bin/evidence release-openbsd-contracts -- ruby OPENBSD/test/run_all.rb
-    OPENBSD/bin/evidence release-check-full -- OPENBSD/bin/check --profile=full
-    OPENBSD/bin/evidence release-studio -- sh -c 'cd STUDIO && rake test'
+    ruby OPENBSD/bin/evidence release-master -- sh -c 'cd MASTER && rake test'
+    ruby OPENBSD/bin/evidence release-rails-contracts -- ruby RAILS/test/run_all.rb
+    ruby OPENBSD/bin/evidence release-openbsd-contracts -- ruby OPENBSD/test/run_all.rb
+    ruby OPENBSD/bin/evidence release-check-full -- OPENBSD/bin/check --profile=full
+    ruby OPENBSD/bin/evidence release-studio -- sh -c 'cd STUDIO && rake test'
 
 Then run the repository’s own operator instruments:
 
-    OPENBSD/bin/evidence operator-triangle-up -- MASTER/bin/operator triangle up
-    OPENBSD/bin/evidence operator-rails-check -- MASTER/bin/operator check --scan-only --tree=RAILS
+    ruby OPENBSD/bin/evidence operator-triangle-up -- MASTER/bin/operator triangle up
+    ruby OPENBSD/bin/evidence operator-rails-check -- MASTER/bin/operator check --scan-only --tree=RAILS
 
 Read the complete artifact output, not only the final exit status. A source-only
 check cannot replace a live browser or app test; an unavailable dependency is
@@ -30,12 +30,12 @@ scenario manifest.
 
 First inspect mappings, without running cases:
 
-    OPENBSD/bin/evidence campaign-list -- ruby RAILS/test/run_interaction_campaign.rb --list
+    ruby OPENBSD/bin/evidence campaign-list -- ruby RAILS/test/run_interaction_campaign.rb --list
 
 Then execute the mapped cases:
 
-    OPENBSD/bin/evidence campaign-mapped -- ruby RAILS/test/run_interaction_campaign.rb
-    OPENBSD/bin/evidence campaign-all -- ruby RAILS/test/run_interaction_campaign.rb --all
+    ruby OPENBSD/bin/evidence campaign-mapped -- ruby RAILS/test/run_interaction_campaign.rb
+    ruby OPENBSD/bin/evidence campaign-all -- ruby RAILS/test/run_interaction_campaign.rb --all
 
 The default run selects only cases with exact registered runtime adapters.
 --all records unmapped cases as SKIPPED; the runner exits non-zero if any
