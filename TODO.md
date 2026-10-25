@@ -7,6 +7,16 @@ not create separate project backlog files. A source edit, a static contract, an 
 list, and a passing live run are different kinds of evidence. Close an item with the command or
 browser evidence recorded in the commit.
 
+## Follow-on manual fix continuation (2026-10-26, Europe/Oslo)
+
+Further source tracing found and repaired three state-observability defects after the first pass. These changes are committed to `main`, but none of their tests has been executed.
+
+- MASTER provider quarantine: an explicit `clear` event previously remained ineffective because lookup filtered clear events before choosing the latest decision. Lookup now uses append order (the log's source of truth), and a clear works even when ISO timestamps share one second. Quarantine telemetry is cached by inode, size and precise mtime, so appended clear/re-arm events are visible without reparsing the entire log for every provider.
+- MASTER provider canaries: thrown canary dispatch failures were displayed in the canary summary but did not reach health or quarantine; successful canaries also were not reflected in health. Outcomes now flow through `ModelRouter#record_provider_outcome` when present, allowing the production health/quarantine path to record them, with the direct health adapter retained for isolated clients. `ProviderHealth` recognizes `canary_failure` as a failure signal. Added/expanded `test_provider_canary.rb`, `test_provider_health_cache.rb`, and `test_provider_quarantine_wiring.rb`.
+- OPENBSD deploy progress: `/var/db/pub4/deploy_status` stays root-only. `pub4-admin deploy-status-read <app>` is a fixed, allowlisted read verb that validates the path, owner and record shape; `vps-state` uses it on vm23 instead of silently hiding records it cannot read as `dev`. Malformed records now report a corrupt state. Added broker and `vps-state` regression cases and documented the read contract in `OPENBSD/README.md`.
+
+Proof state remains **INCONCLUSIVE**: this pass did not run Ruby syntax checks or any focused suite. No production service, VM, remote deployment, or CI service was invoked. The provider quarantine/canary and broker tests must be run on the pinned Ruby/OpenBSD environments before relying on the fixes.
+
 ## 2026-10-25 manual four-tree /fix simulation
 
 Manual source review and narrowly scoped source/test edits were committed directly to `main`. This was **not** an invocation of `MASTER/bin/master /fix`, `MASTER/bin/operator check`, or a real runtime suite. The working environment could not clone the repository, so all source reads and commits used GitHub file APIs; Ruby 4.0.5, the app bundles, local services and the OpenBSD host were not available for execution.
@@ -33,7 +43,7 @@ Changes added during the pass:
 - **Law parity:** the known `RENDERED_VALUES` coverage gap remains an explicit gap until an authorized deferral or tagged detector lands; it is not cleared by this pass.
 - **External status:** previously observed Vercel `build-rate-limit` failure is not a Ruby result. No Vercel retry was made.
 
-Next proof commands on the dev Mac with the pinned Ruby 4.0.5: run the new focused tests (`MASTER/test/test_stale_bundle_sweep.rb`, `MASTER/test/test_watched_thread.rb`, `MASTER/test/test_check_registry_schema.rb`, `MASTER/test/test_ops_loop_owner.rb`, `OPENBSD/test/test_pid_probe.rb`, and `STUDIO/test/replicate_schema_task_test.rb`), then `cd MASTER && bin/check --profile=agent`, the full MASTER suite, RAILS contract/app suites, `ruby OPENBSD/test/run_all.rb`, and `cd STUDIO && rake check test`. Capture actual output and distinguish PASS / FAIL / INCONCLUSIVE / BLOCKED / TIMEOUT. Do not run a production deploy as part of a simulated pass.
+Next proof commands on the dev Mac with the pinned Ruby 4.0.5: run the focused tests (`MASTER/test/test_stale_bundle_sweep.rb`, `MASTER/test/test_watched_thread.rb`, `MASTER/test/test_check_registry_schema.rb`, `MASTER/test/test_ops_loop_owner.rb`, `MASTER/test/test_provider_quarantine_wiring.rb`, `MASTER/test/test_provider_canary.rb`, `MASTER/test/test_provider_health_cache.rb`, `OPENBSD/test/test_pid_probe.rb`, `OPENBSD/test/test_vps_state.rb`, `OPENBSD/test/test_pub4_admin.rb`, and `STUDIO/test/replicate_schema_task_test.rb`), then `cd MASTER && bin/check --profile=agent`, the full MASTER suite, RAILS contract/app suites, `ruby OPENBSD/test/run_all.rb`, and `cd STUDIO && rake check test`. Capture actual output and distinguish PASS / FAIL / INCONCLUSIVE / BLOCKED / TIMEOUT. Do not run a production deploy as part of a simulated pass.
 
 ## 2026-10-25 source-fix reconciliation
 
