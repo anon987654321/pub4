@@ -21,6 +21,37 @@ module Master
           @now = now
         end
 
+        # Health and quarantine share one append primitive so independent
+        # runtime instances and processes never interleave NDJSON records.
+        def self.append_json_line(path, value)
+          directory = File.dirname(path)
+          raise ArgumentError, "provider telemetry directory is a symlink" if File.symlink?(directory)
+
+          FileUtils.mkdir_p(directory, mode: 0o700)
+          directory_stat = File.lstat(directory)
+          raise ArgumentError, "provider telemetry directory is not a real directory" unless
+            directory_stat.directory? && !directory_stat.symlink?
+          File.chmod(0o700, directory)
+
+          raise ArgumentError, "provider telemetry log is a symlink" if File.symlink?(path)
+          if File.exist?(path)
+            log_stat = File.lstat(path)
+            raise ArgumentError, "provider telemetry log is not a regular file" unless log_stat.file? && !log_stat.symlink?
+
+            File.chmod(0o600, path)
+          end
+
+          File.open(path, File::RDWR | File::CREAT, 0o600) do |file|
+            file.flock(File::LOCK_EX)
+            file.seek(0, IO::SEEK_END)
+            file.write(JSON.generate(value) + "\n")
+            file.flush
+            file.fsync
+          ensure
+            file.flock(File::LOCK_UN) if file
+          end
+        end
+
         def record(model:, status:, latency_ms: nil, error: nil, at: @now.call)
           event = {
             ts: at.iso8601,
@@ -29,8 +60,7 @@ module Master
             latency_ms:,
             error: error&.to_s,
           }.compact
-          FileUtils.mkdir_p(File.dirname(path))
-          File.open(path, "a") { |f| f.puts(JSON.generate(event)) }
+          self.class.append_json_line(path, event)
           event
         end
 
