@@ -78,12 +78,26 @@ def deploy_in_progress(app)
   return nil unless File.file?(path)
 
   status = JSON.parse(File.read(path))
+  unless status.is_a?(Hash) && %w[running done failed].include?(status["state"])
+    return corrupt_deploy_status(path, "invalid status schema")
+  end
   return nil if status["state"] != "running"
 
   status["stale"] = !pid_alive?(status["pid"])
   status
-rescue StandardError
-  nil
+rescue StandardError => e
+  corrupt_deploy_status(path, e.class.to_s)
+end
+
+def corrupt_deploy_status(path, reason)
+  {
+    "state" => "CORRUPT",
+    "corrupt" => true,
+    "stale" => true,
+    "step" => "status metadata corrupt (#{reason})",
+    "pid" => nil,
+    "error" => "#{path}: #{reason}",
+  }
 end
 
 def pid_alive?(pid)
@@ -185,7 +199,7 @@ else
   if m[:deploy_in_progress]
     status = m[:deploy_in_progress]
 
-    state = status["stale"] ? "stale" : "running"
+    state = status["corrupt"] ? "corrupt" : status["stale"] ? "stale" : "running"
     puts Deploy::Dmesg.line("deploy0", "master", "state=#{state} step=#{status['step']} pid=#{status['pid']}")
   end
   payload[:apps].each do |row|
