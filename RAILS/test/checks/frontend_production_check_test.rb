@@ -79,7 +79,7 @@ class FrontendProductionCheckTest < Minitest::Test
   def test_an_unsanitised_interpolation_is_named
     body = SOUND_LAYOUT.sub("<%= yield %>", "<%= @post.body.html_safe %>")
 
-    assert_includes issues_for(body), "unsafe raw <%= without sanitize"
+    assert_includes issues_for(body), "unsafe raw <%= without context-appropriate escaping"
   end
 
   # Sanitized is the same construct and must not be reported, or the rule gets
@@ -87,7 +87,25 @@ class FrontendProductionCheckTest < Minitest::Test
   def test_a_sanitised_interpolation_is_not_named
     body = SOUND_LAYOUT.sub("<%= yield %>", "<%= sanitize(@post.body).html_safe %>")
 
-    refute_includes issues_for(body), "unsafe raw <%= without sanitize"
+    refute_includes issues_for(body), "unsafe raw <%= without context-appropriate escaping"
+  end
+
+  def test_json_html_safe_is_not_mistaken_for_context_escaped_json
+    body = SOUND_LAYOUT.sub("<%= yield %>", "<%= @payload.to_json.html_safe %>")
+
+    assert_includes issues_for(body), "unsafe raw <%= without context-appropriate escaping"
+  end
+
+  def test_json_escape_is_accepted_for_a_script_payload
+    body = SOUND_LAYOUT.sub("<%= yield %>", "<%= raw json_escape(@payload.to_json) %>")
+
+    refute_includes issues_for(body), "unsafe raw <%= without context-appropriate escaping"
+  end
+
+  def test_sanitizing_a_different_expression_does_not_excuse_raw_markup
+    body = SOUND_LAYOUT.sub("<%= yield %>", "<%= sanitize(@safe) %><%= @unsafe.html_safe %>")
+
+    assert_includes issues_for(body), "unsafe raw <%= without context-appropriate escaping"
   end
 
   # A link whose href is "#" looks like an action and does nothing without

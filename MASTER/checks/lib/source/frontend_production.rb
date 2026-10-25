@@ -85,8 +85,10 @@ module Deploy
       issues << "missing CSP meta" if body.match?(/<head\b/i) && !csp
       skip = body.match?(/skip|#main-content/i)
       issues << "missing skip link or #main-content" unless skip
-      unsafe = body.match?(/<%=\s*[^%]+\.html_safe\s*%>/) && !body.match?(/sanitize|strip_tags|\.to_json\.html_safe/)
-      issues << "unsafe raw <%= without sanitize" if unsafe
+      unsafe = body.scan(/<%=\s*(.*?)\s*%>/m).any? do |expression|
+        expression.match?(/\.html_safe\b/) && !expression.match?(/\b(?:sanitize|strip_tags)\b/)
+      end
+      issues << "unsafe raw <%= without context-appropriate escaping" if unsafe
       issues
     end
 

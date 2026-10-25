@@ -153,27 +153,46 @@ module Master
           does_not_fire: %(<%= sanitize(@post.body).html_safe %>\n),
           description: "html_safe only after sanitize" do |src, path:|
           next [] unless path.include?("/app/views/")
-          next [] unless src.match?(/<%=\s*[^%]+\.html_safe\s*%>/)
-          # The escape has to be a call, not the word. This read
-          # `/sanitize|strip_tags/` against the whole file, so any view that
-          # merely mentioned sanitizing — in prose, in a comment, in an
-          # attribute — silenced a SECURITY rule at error severity for every
-          # line in it. The one view in the fleet carrying a raw html_safe was
-          # silenced by the comment explaining why sanitize is the wrong fix
-          # there, which means the marker below was doing nothing and the rule
-          # looked honoured rather than off.
-          #
-          # A call in a view lives inside an ERB tag, so that is the test.
-          # `(?!#)` keeps `<%# … sanitize … %>` out: an ERB comment is prose.
-          next [] if src.match?(/<%[-=]?(?!#)[^%]*\b(?:sanitize|strip_tags)\b/)
-          next [] if src.include?(".to_json.html_safe")
-          # The finding is about the file, so the marker is read from the file.
-          # sanitize is the fix this rule names and it is the wrong one for
-          # generated SVG — Rails' allowlist strips svg and path, so following
-          # the advice on the 2FA QR code would blank the QR. A view that
-          # renders markup it generated itself says so where it renders it.
-          next [] if src.match?(/scan:\s*intentional\b/)
-          [finding(line: 1, message: "raw html_safe in view — sanitize first or use auto-escaped <%= %>")]
+          # html_safe is judged per output expression: sanitizing one ERB tag
+          # cannot excuse a different tag, and JSON serialization is not HTML
+          # escaping. Only a scan: intentional comment associated with the next
+          # output can excuse generated markup (the 2FA QR SVG).
+          output_pattern = /<%=\s*(.*?)\s*%>/m
+          marker_pattern = /<%#.*?\bscan:\s*intentional\b(?!-).*?%>|<!--.*?\bscan:\s*intentional\b(?!-).*?-->/m
+          marker_ends = []
+          src.scan(marker_pattern) { marker_ends << Regexp.last_match.end(0) }
+          marker_index = 0
+          previous_output_end = 0
+          findings = []
+
+          src.scan(output_pattern) do |expression|
+            match = Regexp.last_match
+            output_start = match.begin(0)
+            output_end = match.end(0)
+            marker_end = nil
+
+            while marker_index < marker_ends.length && marker_ends[marker_index] < output_start
+              marker_end = marker_ends[marker_index]
+              marker_index += 1
+            end
+
+            if expression.match?(/\.html_safe\b/)
+              sanitized_in_this_expression = expression.match?(/\b(?:sanitize|strip_tags)\b/)
+              intentional_for_this_expression = marker_end && marker_end > previous_output_end
+
+              unless sanitized_in_this_expression || intentional_for_this_expression
+                line = src[0...output_start].count("\n") + 1
+                findings << finding(
+                  line: line,
+                  message: "raw html_safe in view — prefer auto-escaped output or raw json_escape(valid_json) for script payloads"
+                )
+              end
+            end
+
+            previous_output_end = output_end
+          end
+
+          findings
         end
 
         LawDSL.law :SINGLE_H1,

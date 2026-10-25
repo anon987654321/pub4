@@ -117,7 +117,10 @@ module Shared
     def json_ld_script(data)
       return "" if data.blank?
 
-      tag.script(data.to_json.html_safe, type: "application/ld+json", data: { turbo_permanent: true })
+      # JSON is not HTML-safe: a value containing </script> can terminate this element.
+      # Escape HTML-significant characters after serialization, then mark only that
+      # escaped JSON as safe so Rails does not turn the JSON into HTML entities.
+      tag.script(raw(json_escape(data.to_json)), type: "application/ld+json", data: { turbo_permanent: true })
     end
 
     def robots_meta(index: true, follow: true)

@@ -39,23 +39,23 @@
     <%# Rendered from config/face_assets.yml — the one manifest. The eager list
         and the path map used to be two hand-maintained literals repeating the
         same twelve names, free to drift apart; the map is now derived. %>
-    window.MASTER_ASSET_PATHS = {
-      faceModulesList: <%= raw FaceAssets.eager.to_json %>,
-      faceModules: <%= raw FaceAssets.module_names.to_h { |name| [name, FaceAssets.versioned(asset_path(name), name)] }.to_json %>,
-      <%= raw FaceAssets.singletons.map { |key, file| "#{key}: #{FaceAssets.versioned(asset_path(file), file).to_json}" }.join(",\n      ") %>
-    };
+    <% asset_paths = {
+      faceModulesList: FaceAssets.eager,
+      faceModules: FaceAssets.module_names.to_h { |name| [name, FaceAssets.versioned(asset_path(name), name)] }
+    }.merge(FaceAssets.singletons.to_h { |key, file| [key, FaceAssets.versioned(asset_path(file), file)] }) %>
+    window.MASTER_ASSET_PATHS = <%= raw json_escape(asset_paths.to_json) %>;
   </script>
   <script nonce="<%= content_security_policy_nonce %>">
     <% persona = Rails.application.config.x.master_container&.[](:personality) %>
     <% profile = persona.respond_to?(:browser_profile) ? persona.browser_profile : {} %>
-    window.MASTER_PERSONA = <%= raw profile.to_json %>;
-    window.MASTER_VOICE_POLICY = <%= raw Master::Voice::Policy.browser_payload.to_json %>;
-    window.MASTER_SOUL_SUMMARY = "persona <%= persona&.name || 'anchor' %>; voice <%= Master::Voice::Policy.neural_voice %> (TTS fixed; persona affects text only); constitutional face";
-    window.MASTER_RUNTIME = <%= raw Master::Ground::RuntimeCatalog.web_boot_payload_minimal.to_json %>;
-    window.MASTER_FACE_CONTRACT = <%= raw Master.tokens.fetch("face_interface", {}).to_json %>;
+    window.MASTER_PERSONA = <%= raw json_escape(profile.to_json) %>;
+    window.MASTER_VOICE_POLICY = <%= raw json_escape(Master::Voice::Policy.browser_payload.to_json) %>;
+    window.MASTER_SOUL_SUMMARY = <%= raw json_escape("persona #{persona&.name || 'anchor'}; voice #{Master::Voice::Policy.neural_voice} (TTS fixed; persona affects text only); constitutional face".to_json) %>;
+    window.MASTER_RUNTIME = <%= raw json_escape(Master::Ground::RuntimeCatalog.web_boot_payload_minimal.to_json) %>;
+    window.MASTER_FACE_CONTRACT = <%= raw json_escape(Master.tokens.fetch("face_interface", {}).to_json) %>;
     window.MASTER_FACE_LAW_FIELD = <%= raw json_escape(@face_law_field.to_json) %>;
-    window.MASTER_COMMANDS = <%= raw Master::CLI::CommandRegistry.command_surface.to_json %>;
-    window.MASTER_I18N = <%= raw t("face.js").to_json %>;
+    window.MASTER_COMMANDS = <%= raw json_escape(Master::CLI::CommandRegistry.command_surface.to_json) %>;
+    window.MASTER_I18N = <%= raw json_escape(t("face.js").to_json) %>;
     window.MASTER_T = function (key, fallback, vars) {
       var text = window.MASTER_I18N && typeof window.MASTER_I18N[key] === "string" ? window.MASTER_I18N[key] : fallback;
       return vars ? text.replace(/%\{(\w+)\}/g, function (_, name) { return vars[name]; }) : text;
@@ -159,7 +159,7 @@
       Enhancements here should preserve the _primerFired guard and dbgFrames check. %>
   <script src="<%= asset_path("boot_fsm.js") %>"></script>
   <script nonce="<%= content_security_policy_nonce %>">
-    window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
+    window.MASTER_CACHE_VERSION = <%= raw json_escape(ENV.fetch("CACHE_VERSION", "v2").to_json) %>;
     (function(){
       var p=document.getElementById('primer');
       var fired=false,timer=null,fallback=null,hintT=null,retryT=null,started=false,failedShown=false;

@@ -15,12 +15,7 @@ module SchemaHelper
   include Shared::SeoKit
 
   def json_ld_for(resource, type: nil)
-    data = build_schema(resource, type)
-    return "" if data.blank?
-
-    content_tag :script, data.to_json.html_safe,
-                type: "application/ld+json",
-                data: { turbo_permanent: true }
+    json_ld_script(build_schema(resource, type))
   end
 
   # ItemList for category / search result pages (marketplace index, etc.)

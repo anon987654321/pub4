@@ -920,21 +920,37 @@ end
 
   def test_a_real_sanitizing_call_still_excuses_it
     ["<%= sanitize(@post.body).html_safe %>\n",
-     "<%= sanitize @post.body %>\n<%= @x.html_safe %>\n",
-     "<%= strip_tags(@a) %>\n<%= @x.html_safe %>\n",
-     "<%= @a.to_json.html_safe %>\n"].each do |source|
+     "<%= strip_tags(@a).html_safe %>\n"].each do |source|
       assert_empty findings(:ERB_HTML_SAFE, source, path: VIEW), source.strip.inspect
     end
   end
 
-  # And the marker is what excuses the QR code now, visibly, rather than a word
-  # in the sentence beside it.
+  def test_a_sanitizing_expression_does_not_excuse_a_different_raw_output
+    ["<%= sanitize(@post.body) %>\n<%= @x.html_safe %>\n",
+     "<%= strip_tags(@post.body) %>\n<%= @x.html_safe %>\n"].each do |source|
+      refute_empty findings(:ERB_HTML_SAFE, source, path: VIEW), source.strip.inspect
+    end
+  end
+
+  def test_json_serialization_is_not_html_escaping
+    refute_empty findings(:ERB_HTML_SAFE, "<%= @a.to_json.html_safe %>\n", path: VIEW)
+    assert_empty findings(:ERB_HTML_SAFE, "<%= raw json_escape(@a.to_json) %>\n", path: VIEW)
+  end
+
   def test_the_marker_excuses_it_and_nothing_else_does
-    raw = "<%\# scan: intentional — generated SVG %>\n<%= @qr.html_safe %>\n"
+    raw = "<%# scan: intentional — generated SVG %>\n<%= @qr.html_safe %>\n"
 
     assert_empty findings(:ERB_HTML_SAFE, raw, path: VIEW)
     refute_empty findings(:ERB_HTML_SAFE, raw.sub("scan: intentional — ", ""), path: VIEW)
   end
+
+  def test_an_intentional_marker_does_not_excuse_later_raw_output
+    source = "<%# scan: intentional — generated SVG %>\n<%= @qr.html_safe %>\n<%= @x.html_safe %>\n"
+
+    findings = self.findings(:ERB_HTML_SAFE, source, path: VIEW)
+    assert_equal 1, findings.size
+  end
+
 
   # --- CONTRAST_TOKENS ----------------------------------------------------
   # Light text on a dark background is excused, and "dark" was judged on

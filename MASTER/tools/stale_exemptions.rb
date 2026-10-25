@@ -26,7 +26,7 @@
 # called dilla's two shell markers stale while STRICT_MODE_ZSH's own comment
 # names one of them as the reason `absent` exists. And a registry rule can grep
 # the whole file and report at line 1 — ERB_HTML_SAFE does — so the 2FA QR code's
-# exemption works file-wide from line 4. The difference sees both.
+# exemption is attached to the QR output itself, not every output in the file.
 #
 # One limit stands, and the rule that would close it is not worth having. A
 # marker can be *named* rather than used: this repo's documentation, rule
