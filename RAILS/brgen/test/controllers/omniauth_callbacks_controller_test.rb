@@ -69,6 +69,23 @@ class OmniauthCallbacksControllerTest < ActionDispatch::IntegrationTest
     assert_equal original_id, identity.user_id
   end
 
+  test "email-less OAuth cannot reclaim a guest account sharing the synthetic address" do
+    controller = OmniauthCallbacksController.new
+    controller.define_singleton_method(:external_identity_for) { |_auth| nil }
+    auth = auth_for("google_oauth2", email_verified: false, email: nil)
+    guest = User.create!(
+      email_address: "#{auth.uid}@#{auth.provider}.oauth",
+      password: SecureRandom.hex(24),
+      guest: true
+    )
+
+    assert_raises(OmniauthCallbacksController::IdentityEmailConflict) do
+      controller.send(:find_or_create_user, auth)
+    end
+    refute ExternalIdentity.joins(:identity_provider)
+                           .where(user_id: guest.id, identity_providers: { slug: "google_oauth2" }).exists?
+  end
+
   test "a returning BankID subject reuses its unverified legacy placeholder" do
     controller = OmniauthCallbacksController.new
     controller.define_singleton_method(:external_identity_for) { |_auth| nil }
