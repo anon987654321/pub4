@@ -161,6 +161,16 @@ detail: [
             "First run /privacy grant calendar_read in the paired local session. Import is local-only and read-only; remote calendar accounts are not connected. Events with RRULE or RDATE are flagged but recurrence is not expanded, so verify those series in the source calendar.",
           ],
         },
+        "pair" => {
+          summary: "issue and redeem one-time pairing codes for consent-gated local access",
+          detail: [
+            "/pair or /pair status — show pairing and local-device status.",
+            "/pair issue [label] — issue a one-time code and show its expiry.",
+            "/pair <code> — redeem a code. Pairing grants messaging tools, not operator shell access.",
+            "/pair list — list paired subjects; /pair revoke <token> revokes a pairing.",
+            "Keep the code private and redeem it only on the intended local device.",
+          ],
+        },
         "preferences" => {
           summary: "inspect and control per-person interaction settings and staged suggestions",
           detail: [
