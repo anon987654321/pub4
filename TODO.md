@@ -11,6 +11,10 @@ browser evidence recorded in the commit.
 
 The source scan also found local STUDIO `clips.jsonl` and per-subject billed-render `ledger.jsonl` writers. They are user-owned render/cost provenance, not merely diagnostic telemetry; do not truncate them automatically. Define an explicit archive/export contract, retention duration, and recovery proof before applying rotation. `Trace::Ledger::Reflexion` now serializes the 50-row read/retain/replace transaction with a private sidecar lock and atomic rename; a concurrent regression test was added but remains unrun. The STUDIO billing and clip indexes remain open until an explicit archive/export contract is agreed.
 
+## Follow-on canonical event-stream locking (2026-10-26)
+
+`Master::Trace::Log::Event#append` now uses the common locked writer with the same 25 MiB cap, private file modes and complete-record rotation. The shared append helper retains the prior one-shot `ENOSPC` recovery behavior (discard a rotated generation or compact the active log before one retry). Added a multi-thread event-stream test that checks all 200 JSONL rows, unique outcomes and private modes in `MASTER/test/test_trace_log_append_jsonl.rb`. The test remains unexecuted.
+
 ## Follow-on JSONL compaction integrity (2026-10-26)
 
 The shared `Trace::Log.compact_rotated` and standalone Swallow compactor now drop a partial leading record when compacting a byte tail. This keeps retained backups parseable JSONL instead of making the first backup line a fragment. Tests for the shared writer, telemetry exporter and Swallow backup now parse both active and rotated files; Swallow's fixture uses actual newline-delimited records and asserts the retained tail is nonempty. These tests are not run.
@@ -23,7 +27,7 @@ The standalone `Master::Ground::Swallow` logger now serializes append/rotation w
 
 Added `Master::Trace::Log.append_jsonl` as the common private, bounded append path. It serializes rotation+append with a sidecar `flock`, rejects symlinks and oversized single records, maintains restrictive modes, and refuses a write if rotation did not make enough room. The default cap reuses the existing trace-event 25 MiB limit; callers with an established smaller cap can supply it.
 
-Migrated provider health/quarantine, incident notes, Phoenix provenance, model metrics, OpenTelemetry trace output and tool-invocation audit to that common writer. The OpenTelemetry exporter no longer keeps one permanent open file descriptor that would bypass rotation. Tests added/updated: `MASTER/test/test_trace_log_append_jsonl.rb`, `MASTER/test/test_trace_telemetry.rb`, `MASTER/test/test_trace_metrics_log.rb`, `MASTER/test/test_cli_incident_log.rb`, `MASTER/test/test_phoenix.rb`, plus the provider health concurrency/retention suite. **None of these tests has been run.**
+Migrated the canonical activity/evidence streams, provider health/quarantine, incident notes, Phoenix provenance, model metrics, OpenTelemetry trace output and tool-invocation audit to that common writer. The OpenTelemetry exporter no longer keeps one permanent open file descriptor that would bypass rotation. Tests added/updated: `MASTER/test/test_trace_log_append_jsonl.rb`, `MASTER/test/test_trace_telemetry.rb`, `MASTER/test/test_trace_metrics_log.rb`, `MASTER/test/test_cli_incident_log.rb`, `MASTER/test/test_phoenix.rb`, plus the provider health concurrency/retention suite. **None of these tests has been run.**
 
 ## Follow-on telemetry append and broker privacy pass (2026-10-26)
 
