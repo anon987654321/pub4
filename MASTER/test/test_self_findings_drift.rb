@@ -37,8 +37,18 @@ class TestSelfFindingsDrift < Minitest::Test
     end
   end
 
-  def test_the_total_is_still_read_from_findings
-    with_baseline({ "findings" => 154 }) { assert_equal 154, Tool.ceiling }
+  def test_census_covers_every_brgen_vertical_directory
+    verticals = %w[
+      RAILS/brgen_dating RAILS/brgen_maps RAILS/brgen_marketplace
+      RAILS/brgen_messenger RAILS/brgen_radio
+    ]
+
+    assert_empty verticals - Tool::TREES, "self-findings omits brgen vertical source roots"
+    missing = verticals.reject { |relative| File.directory?(File.join(Tool::ROOT, relative)) }
+    assert_empty missing, "expected active brgen vertical directories to exist: #{missing.join(", ")}"
+  end
+
+  def test_the_total_is_still_read_from_findings    with_baseline({ "findings" => 154 }) { assert_equal 154, Tool.ceiling }
   end
 
   def test_per_rule_counts_are_read_when_present
