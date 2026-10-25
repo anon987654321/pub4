@@ -28,7 +28,7 @@ At each required width, inspect:
 Do not treat a single desktop screenshot as evidence for mobile geometry.
 Attach reviewed screenshots and geometry files to a later evidence capture:
 
-    OPENBSD/bin/evidence --attach evidence/browser-diagnostics/<file>.png --attach evidence/browser-diagnostics/<file>.geometry.json --note 'Describe the exact viewport and interaction reviewed' visual-review -- ruby -e 'puts "Human review record; inspect attached evidence"'
+    OPENBSD/bin/evidence --attach evidence/browser-diagnostics/<run-id>/screenshots/<surface>.png --attach evidence/browser-diagnostics/<run-id>/manifest.json --note 'Describe the exact viewport and interaction reviewed' visual-review -- ruby -e 'puts "Human review record; inspect attached evidence"'
 
 The last command records the reviewer’s declaration and attachment hashes; it
 does not perform the browser review for them. Replace the illustrative paths
