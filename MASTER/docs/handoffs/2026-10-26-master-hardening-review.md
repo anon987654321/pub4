@@ -32,6 +32,10 @@ All newly added and modified tests remain unexecuted. No runtime PASS is claimed
 
 Local STUDIO `clips.jsonl` and per-subject billed-render `ledger.jsonl` remain open for an explicit archive/retention contract; they carry user-owned render and billing provenance and must not be silently truncated. `Trace::Ledger::Reflexion` now locks the 50-row read/retain/replace transaction and publishes the new file atomically; a concurrent regression case exists but is not run. The STUDIO clip index and billed-render ledger remain open for a deliberate archive/export retention contract.
 
+## Follow-on conflict log writer hardening
+
+The conflict log's existing three-generation retention is now wrapped in a sidecar flock across rotation and append. Each incoming line reserves capacity before the rotate, and the write remains private and complete-record based. Added a concurrent 200-record test and fixed the test's tail assertion to support short valid compacted records. Nothing has been executed; the proof status is still INCONCLUSIVE.
+
 ## Follow-on canonical event-stream locking
 
 The canonical activity/evidence `Trace::Log::Event` writer now delegates to the shared private bounded JSONL appender, serializing rotation+append across processes while retaining the original one-shot disk-full recovery path. Added an eight-thread / 200-event regression case that verifies complete, unique JSONL rows and private modes; it has not been run.
