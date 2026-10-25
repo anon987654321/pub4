@@ -87,10 +87,10 @@ namespace :replicate do
     if token.to_s.strip.empty?
       warn(
         "replicate0",
-        "schema audit skipped, no REPLICATE_API_TOKEN; " +
+        "schema audit inconclusive, no REPLICATE_API_TOKEN; " +
           "run schema_audit_offline for historical evidence"
       )
-      next
+      exit 3
     end
 
     engine = File.read(File.expand_path("replicate/replicate.rb", __dir__))
@@ -135,8 +135,8 @@ namespace :replicate do
   task :schema_snapshot do
     token = Studio::ReplicateClient.load_token
     if token.to_s.strip.empty?
-      warn("replicate0", "schema snapshot skipped, no REPLICATE_API_TOKEN, nothing measured")
-      next
+      warn("replicate0", "schema snapshot inconclusive, no REPLICATE_API_TOKEN, nothing measured")
+      exit 3
     end
 
     engine = File.read(File.expand_path("replicate/replicate.rb", __dir__))
