@@ -86,24 +86,15 @@ module Master
         end
 
         def active_quarantine(model_id)
-          latest = all_entries
-            .select { |entry| entry["model"] == model_id }
-            .max_by { |entry| entry_time(entry) }
+          latest = all_entries.select { |entry| entry["model"] == model_id }.last
 
-          # Clear records are events in the same append-only log. Excluding them
-          # before choosing the latest event makes an operator clear ineffective:
-          # the earlier quarantine row wins until expiry. A later quarantine row
-          # naturally becomes active again.
+          # The log is append-only, so record order is the authoritative order
+          # of decisions. Timestamp sorting loses ties because iso8601 defaults
+          # to whole seconds and can make an immediate clear lose to its entry.
+          # A later quarantine naturally becomes active again.
           return unless latest && latest["action"] != "clear" && latest["expires_at"]
 
           latest
-        end
-
-        def entry_time(entry)
-          value = entry["cleared_at"] || entry["quarantined_at"]
-          Time.iso8601(value.to_s)
-        rescue ArgumentError, TypeError
-          Time.at(0).utc
         end
 
         def all_entries
