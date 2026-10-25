@@ -56,6 +56,8 @@ module Master
         return unless cfg.is_a?(Hash) && cfg["enabled"] != false
 
         transport = (cfg["transport"] || "stdio").to_sym
+        return unless %i[stdio sse].include?(transport)
+
         client = build_mcp_client(name, transport, cfg)
         client.connect
         @clients[name] = client
