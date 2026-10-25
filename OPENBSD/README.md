@@ -45,7 +45,11 @@ allowlisted service actions, atomic deploy receipts/secrets, a fixed CI lock, an
 bounded Rails/CI task and sync verbs. CI and production Rails tree replacement run
 with the selected app account; the CI runner has a wall-clock process-group deadline.
 The deploy adapter verifies root-owned rc.d files rather than installing from the
-checkout, and relay route verification is read-only.
+checkout, and relay route verification is read-only. The progress records in
+`/var/db/pub4/deploy_status` stay root-only; `vps-state` reads them through the
+allowlisted `doas -n pub4-admin deploy-status-read <app>` verb. Missing status is
+JSON `null`; unreadable or malformed status is reported as corrupt rather than
+silently shown as no deploy.
 
 The Bundler content-addressed cache now uses fixed broker verbs, a bounded Ruby-version
 key and immutable SHA-256 objects; the app copies cache objects rather than sharing
