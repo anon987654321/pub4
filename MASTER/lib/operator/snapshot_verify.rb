@@ -93,7 +93,10 @@ module Operator
         end
         (problems << "#{name}: block #{heading[1]} is not closed") && break if i >= lines.size
 
-        body.chomp!("\n") if markers.include?("#{SnapshotParts::NO_NEWLINE}\n")
+        # Remove only the framing LF; chomp also consumes a source-ending CR in CRLF.
+        body.delete_suffix!("
+") if markers.include?("#{SnapshotParts::NO_NEWLINE}
+")
         blocks[heading[1]] << [(heading[2] || 1).to_i, (heading[3] || 1).to_i, heading[4].to_i, heading[5].to_i, body]
         i += 1
       end
