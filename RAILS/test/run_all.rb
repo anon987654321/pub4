@@ -118,16 +118,30 @@ module Operator
     end
 
     def build(path, out, status)
-      tally = out.to_s[/^(\d+) runs, (\d+) assertions, (\d+) failures, (\d+) errors/]
-      runs, assertions, failures, errors = $1.to_i, $2.to_i, $3.to_i, $4.to_i if tally
+      summary = out.to_s.lines.filter_map do |line|
+        line.match(/\A(\d+) runs, (\d+) assertions, (\d+) failures, (\d+) errors(?:, (\d+) skips)?\s*\z/)
+      end.last
+      runs, assertions, failures, errors = summary ? summary.captures.first(4).map(&:to_i) : [ 0, 0, 0, 0 ]
+
+      invalid_summary = if summary.nil?
+                          "missing valid Minitest summary"
+                        elsif runs.zero?
+                          "Minitest reported zero runs"
+                        elsif failures.positive? || errors.positive?
+                          "Minitest reported #{failures} failures and #{errors} errors"
+                        end
+      output = if invalid_summary
+                 "contract runner rejected result: #{invalid_summary}\n#{out}"
+               else
+                 out.to_s
+               end
 
       state = if status.nil? then :timeout
-              elsif status.success? then :pass
-              else :fail
+              elsif !status.success? || invalid_summary then :fail
+              else :pass
               end
-      Outcome.new(rel(path), state, runs.to_i, assertions.to_i, failures.to_i + errors.to_i, out.to_s)
+      Outcome.new(rel(path), state, runs, assertions, failures + errors, output)
     end
-
     MARK = { pass: "ok  ", fail: "FAIL", timeout: "HUNG", flake: "FLAKE" }.freeze
 
     def report(outcome)

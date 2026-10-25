@@ -129,6 +129,9 @@ browser evidence recorded in the commit.
 - [ ] Run an independent /fix and bin/ci pass for every active app in RAILS/apps.yml, plus
   RAILS/test/run_all.rb. Shared-engine changes must be verified in each consumer app and in the
   deploy copy-tree layout.
+- [ ] Run `ruby RAILS/test/contract_runner_contract_test.rb` and then the full `ruby RAILS/test/run_all.rb`
+  on the current checkout. The contract runner now rejects a missing Minitest summary, zero-run output, and
+  a failure summary paired with exit status zero; committed source and regression tests are not a test pass.
 - [x] Brgen's account-erasure suite ran on 2026-10-22: `test/jobs/user_purge_job_test.rb` 16
   runs, 223 assertions, green after 0866cf75b let the job destroy message metadata under strict
   loading (it raised on Vote#votable and rolled the erasure back) and classified
@@ -146,8 +149,9 @@ browser evidence recorded in the commit.
   configured Google/Facebook/Vipps/BankID callbacks. The 2026-10-25 source pass adds
   provider-row uniqueness recovery, recovery of eligible unverified non-guest non-BankID synthetic
   placeholders, merge-pair model validation with Brgen/Amber regression tests, and user/IP-scoped
-  Amber AI rate limiting. These commits are source changes, not runtime evidence. Regenerate Amber's schema,
-  run both app suites, and exercise real configured provider callbacks before closing this item.
+  Amber AI rate limiting. These commits are source changes, not runtime evidence. The tracked Amber schema is already at
+  version `2026_10_21_230200`, matching the latest migration; verify migration application on a fresh
+  test database, run both app suites, and exercise real configured provider callbacks before closing this item.
 - [ ] Execute the shared guest-to-account conversion tests in Brgen and Amber after Amber's
   `account_merges` and federated-identity migrations run. Verify anonymous post presentation
   survives, both sender and recipient sides of Amber's MASTER chat move to the registered
@@ -156,8 +160,9 @@ browser evidence recorded in the commit.
   indicators are cleared, trust signals deduplicate, and a failed merge leaves guest history
   untouched. Confirm old guest-session IDs are destroyed rather than promoted into authenticated
   sessions and the source guest row is anonymized with unusable credentials while retained only
-  as the account-merge audit referent. Regenerate Amber's schema from migrations; source and
-  regression tests are committed but runtime proof remains open.
+  as the account-merge audit referent. Amber's tracked schema is already at version
+  `2026_10_21_230200`; verify that a fresh test database applies these migrations. Source and regression
+  tests are committed but runtime proof remains open.
 - [ ] Run the guest-transfer failure and retry tests through password sign-in, magic-link
   sign-in, OAuth, and both signup controllers. The shared flow now checks for a committed audit
   record before rotating sessions, keeps the anonymous session active when transfer fails, and
