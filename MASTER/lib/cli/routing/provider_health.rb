@@ -109,22 +109,34 @@ module Master
           Time.at(0).utc
         end
 
+        def telemetry_paths
+          ["#{path}.1", path]
+        end
+
         def all_events
-          stat = File.stat(path) if File.file?(path)
-          stamp = stat && [stat.ino, stat.size, stat.mtime.to_r]
+          stamp = telemetry_paths.map do |candidate|
+            next unless File.file?(candidate) && !File.symlink?(candidate)
+
+            stat = File.stat(candidate)
+            [candidate, stat.ino, stat.size, stat.mtime.to_r]
+          end
           return @events if @events && @events_stamp == stamp
 
           @events_stamp = stamp
-          @events = load_events
+          @events = telemetry_paths.flat_map { |candidate| load_events(candidate) }
+        rescue SystemCallError => e
+          Master::Ground::Swallow.log(e, context: "ProviderHealth.all_events")
+          @events || []
         end
 
-        def load_events
-          return [] unless File.file?(path)
-          File.readlines(path, chomp: true).filter_map do |line|
+        def load_events(candidate)
+          return [] unless File.file?(candidate) && !File.symlink?(candidate)
+
+          File.readlines(candidate, chomp: true).filter_map do |line|
             next if line.strip.empty?
             JSON.parse(line)
           rescue JSON::ParserError => e
-            Master::Ground::Swallow.log(e, context: "ProviderHealth.events_for")
+            Master::Ground::Swallow.log(e, context: "ProviderHealth.events_for", path: candidate)
             nil
           end
         end
