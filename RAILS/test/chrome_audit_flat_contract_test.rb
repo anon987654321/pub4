@@ -10,7 +10,8 @@ class ChromeAuditFlatContractTest < Minitest::Test
   end
 
   def test_shared_form_controls_are_borderless_but_keep_focus
-    source = read("__shared/app/assets/stylesheets/_components.scss")
+    source = %w[components/_forms.scss components/_overlays.scss components/_fields.scss]
+             .map { |path| read("__shared/app/assets/stylesheets/#{path}") }.join("\n")
     assert_includes source, "border: 0;"
     assert_includes source, "outline: var(--focus-ring);"
     assert_includes source, "outline: 2px solid var(--danger);"
