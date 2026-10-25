@@ -286,15 +286,17 @@ class CheckLiveAndCssBudgetTest < Minitest::Test
   # ("design_metrics measured contrast on colours nothing paints") and this test
   # kept asserting the old label, so it had been failing on a rename rather than
   # on a measurement.
-  def test_vertical_accents_are_paired_against_the_chrome_they_paint_on
-    pairs = Deploy::DesignMetrics.vertical_accent_pairs(design_tokens)
-    surface = Deploy::DesignMetrics::VERTICAL_SURFACE_DIALECT
+  def test_vertical_accents_measure_the_foreground_and_fill_that_are_actually_rendered
+    pairs = Deploy::DesignMetrics.vertical_accent_pairs(
+      design_tokens,
+      Deploy::DesignMetricsCheck::RAILS,
+    )
 
     refute_empty pairs
     labels = pairs.map { |pair| pair[:label] }
 
-    assert_includes labels, "vertical_accents.marketplace_accent/#{surface}.bg"
-    assert_includes labels, "vertical_accents.tv_accent/#{surface}.bg"
+    assert_includes labels, "vertical_accent_ink/vertical_accents.marketplace_hover"
+    assert_includes labels, "vertical_accent_ink/vertical_accents.tv_hover"
   end
 
   # Not a specific colour: an accent that gets fixed should not fail this. What
