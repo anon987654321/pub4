@@ -5,7 +5,7 @@ takes; do not overwrite an existing dilla.wav, dilla_norsk.wav, video or
 render output as a side effect of a proof run. Choose a fresh output directory
 using the engine’s documented output option.
 
-    OPENBSD/bin/evidence studio-tests -- sh -c 'cd STUDIO && rake test'
+    ruby OPENBSD/bin/evidence studio-tests -- sh -c 'cd STUDIO && rake test'
 
 Generate the requested English and Norwegian renders, then inspect the files
 and any live/postpro/three.js output with the current documented Dilla entry
