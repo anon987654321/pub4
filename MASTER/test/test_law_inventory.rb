@@ -33,9 +33,11 @@ class TestLawInventory < Minitest::Test
     end
 
     Master.stub(:load_laws, loader) do
+      canonical = Operator::LawInventory.catalogue_declaration("canonical_law", root: "/tmp/custom-master")
       beauty = Operator::LawInventory.catalogue_declaration("beauty_law", root: "/tmp/custom-master")
       pattern = Operator::LawInventory.catalogue_declaration("unsafe_pattern", root: "/tmp/custom-master")
 
+      assert_equal "CANONICAL_LAW", canonical.fetch("id")
       assert_equal "BEAUTY_LAW", beauty.fetch("id")
       assert_equal "UNSAFE_PATTERN", pattern.fetch("id")
     end
