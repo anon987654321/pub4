@@ -13,13 +13,23 @@ class TestLawReadsBeyondFile < Minitest::Test
 
   def test_every_law_that_reads_beyond_its_file_says_so
     scanner = Master::Fix::Scanner.build(root: Master::ROOT)
-    undeclared = scanner.laws.reject { |law| law.class.reads_beyond_file? }
+    undeclared = scanner.laws.reject { |law| law.class.reads_beyond_file? || test_defined?(law) }
                         .select { |law| law_source(law).match?(BEYOND_FILE) }
 
     assert_empty undeclared.map(&:id), "these read more than their file; declare reads_beyond_file?"
   end
 
   private
+
+  # Scanner registries are process-local, and Minitest loads test-defined Law
+  # subclasses into the same inherited registry. Those fixtures are not shipped
+  # scanner laws and must not be judged as production code.
+  def test_defined?(law)
+    klass = law.class
+    location = klass.name && Object.const_source_location(klass.name)&.first
+    location ||= law.method(:check).source_location&.first
+    location&.match?(%r{(?:\A|/)(?:test|spec)/})
+  end
 
   # The DSL block for a LawDSL law, whose class is anonymous; the class body otherwise.
   def law_source(law)
