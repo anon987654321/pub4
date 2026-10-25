@@ -155,7 +155,7 @@ module Master
             lines << "preferences: no pending suggestions"
           else
             state.fetch("suggestions").each do |entry|
-              lines << "suggestion #{entry.fetch("id")} #{entry.fetch("scope")} #{entry.fetch("key")}=#{entry.fetch("value")} (confidence=#{entry.fetch("confidence")}): #{entry.fetch("reason")}"
+              lines << "suggestion #{entry.fetch("id")} #{entry.fetch("scope")} #{entry.fetch("key")}=#{entry.fetch("value")} (origin=#{entry.fetch("origin", "owner")}, evidence=#{entry.fetch("evidence_count", 0)}, confidence=#{entry.fetch("confidence")}): #{entry.fetch("reason")}"
             end
           end
           lines.join("\n")
@@ -195,7 +195,7 @@ module Master
           return "preferences: usage /preferences learn on|off" unless args.size == 1 && %w[on off].include?(args.first.downcase)
           enabled = args.first.downcase == "on"
           preferences.set_learning(root:, subject:, enabled:)
-          "preferences: learning #{enabled ? "enabled" : "disabled"}; inferred settings still require explicit acceptance"
+          "preferences: learning #{enabled ? "enabled" : "disabled"}; repeated low-risk correction signals can stage inactive suggestions; owner acceptance is still required"
         when "reset"
           return "preferences: reset requires the exact command /preferences reset --confirm" unless args == ["--confirm"]
           preferences.reset(root:, subject:)
