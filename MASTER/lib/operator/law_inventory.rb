@@ -204,8 +204,9 @@ end
       when Hash
         found << node if node["id"].is_a?(String)
         node.each do |key, value|
-          found << value.merge("id" => key.to_s) if key.to_s.match?(/\\A[A-Z][A-Z0-9_]*\\z/) &&
-                                                       value.is_a?(Hash) && !value.key?("id")
+          if key.to_s.match?(/\A[A-Z][A-Z0-9_]*\z/) && value.is_a?(Hash) && !value.key?("id")
+            found << value.merge("id" => key.to_s)
+          end
           catalogue_declarations_in(value, found)
         end
       when Array
