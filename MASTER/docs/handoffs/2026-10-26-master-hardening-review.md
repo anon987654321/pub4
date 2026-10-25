@@ -38,13 +38,14 @@ The latest combined commit status observed for `73a45cc7a9800808fb7658e95dc3dcea
 3. Run `rake lint:law_parity`. An explicit `RENDERED_VALUES` gap is currently expected until an operator authorizes a sacred-overlay deferral or a tagged detector is implemented.
 4. Test dependency-manager behavior using an offline/non-ABI failure and an ABI mismatch. Check the dev Mac boot log for the real `deps0` lines.
 5. Verify the TTS worker's executable mode and health-probe behavior from two processes; check the socket inode as described in the review.
+6. Run `test/test_stale_bundle_sweep.rb`; verify `bin/cleanup` lists eligible stale stores in dry-run mode and removes only stores older than 30 days with `--apply`.
 
 ## Outstanding review findings — not closed by P01–P11
 
 These items were identified in the review but are **not** claimed as repaired by this tranche:
 
 - **Law/register truth:** re-baseline stale `data/self_findings.yml` SILENT_RESCUE members and add a stale-member regression test (L4); prove the INTER_MODEL_CONTRACT detector catches the council's heredoc/keyword call sites (L5); reconcile the nine runtime self-test checks with the declarative `self_test` contract (L7); make headless check-registry rows fail at parse time and decide the deploy default for strict check errors (L8).
-- **Resource bounds:** give the renamed dependency gem stores an age-bounded cleanup policy in `bin/cleanup`; census and rotate the remaining append-only writers; bound provider-health history reads and the kernel log's full-history append verification (R3/R10).
+- **Resource bounds:** an age-bounded stale-store sweep is now implemented in `lib/boot/stale_bundle_sweep.rb` and wired into `bin/cleanup`. It is dry-run by default, targets only `gems.stale-*` directories at the expected store depth, skips symlinks, and requires an age of 30 days before deletion. Its new test file is present but has not been run. Still open: census and rotate the remaining append-only writers, bound provider-health history reads, and remove the kernel log's full-history append verification (R3/R10).
 - **Fix lifecycle:** bring DesignRun commits inside transaction/recovery semantics (R8); make the abort-on-stall setting, durable partial outcomes, and skippable-stage timeouts truthful (R9); make undo-journal pruning atomic and reclaim only safely unreferenced transaction/autofix artifacts (R10); audit load-bearing silent rescues without swallowing fatal exceptions (R11).
 - **Providers and I/O:** add a success/recovery path and recent-event window for provider health; address Replicate poll authentication/SSRF/timeouts, retry jitter, process-group probe termination, error redaction, and Gemini key transport (R12/R13/H5).
 - **Boot, device, and browser edges:** resolve the remaining R4 boot diagnostics and loop-claim recovery; pairing's claim race, unscoped process termination, pending-utterance TTL, wake-word timeout, bare device `system()` calls, and CDP handshake/nested-budget issues remain open (R4/R16/R17).
