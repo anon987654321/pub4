@@ -27,7 +27,7 @@ class TraceTelemetryExporterTest < Minitest::Test
       path = File.join(dir, "traces.log")
       exporter = Master::Trace::Telemetry::JsonlExporter.new(path, max_bytes: 400)
 
-      assert_equal Master::Trace::Telemetry::SUCCESS, exporter.export(8.times.map { |index| span(index) })
+      assert_equal Master::Trace::Telemetry::JsonlExporter::SUCCESS, exporter.export(8.times.map { |index| span(index) })
       assert_operator File.size(path), :<=, 400
       assert_operator File.size("#{path}.1"), :<=, 400
       File.readlines(path, chomp: true).each { |line| JSON.parse(line) }
@@ -41,7 +41,7 @@ class TraceTelemetryExporterTest < Minitest::Test
       path = File.join(dir, "traces.log")
       exporter = Master::Trace::Telemetry::JsonlExporter.new(path, max_bytes: 40)
 
-      assert_equal Master::Trace::Telemetry::FAILURE, exporter.export([span(1)])
+      assert_equal Master::Trace::Telemetry::JsonlExporter::FAILURE, exporter.export([span(1)])
       refute File.exist?(path)
     end
   end
