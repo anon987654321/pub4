@@ -279,7 +279,7 @@ module Master
       # Open the full-screen terminal face without inventing a second model route.
       # `/face size auto|small|large|WxH` chooses how big the face is drawn and
       # opens it; the choice holds for the session. WxH is columns by rows.
-      def dispatch_face(ctx = nil)
+      def dispatch_face(ctx = nil, prompt: nil)
         chosen = face_size(arg_for(ctx))
         return chosen if chosen.is_a?(String) && chosen.start_with?("face0:")
 
@@ -297,14 +297,28 @@ module Master
 
           streamed
         end
-        # The face has its own terminal stream: sharing Reline's stdin let the
-        # line editor and the face read the same keys.
+        prompt ||= Fiber[:master_cli_prompt]
+        prompt ||= lambda do
+          renderer = container[:renderer]
+          session = container[:session]
+          agent = container[:agent]
+          if renderer.respond_to?(:prompt_line) && session
+            _state, value = renderer.prompt_line(
+              agent&.model, session.phase,
+              tokens: session.token_est, cost: session.cost
+            )
+            value
+          else
+            Master::Face::Contract.shell_prompt(path: Dir.pwd, root: Master::ROOT)
+          end
+        end
         terminal = File.open("/dev/tty", "r+")
         Face::Window.new(
           turn:,
           event_bus: container[:bus],
           input: terminal,
           output: terminal,
+          prompt:,
         ).run
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.face")

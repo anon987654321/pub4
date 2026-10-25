@@ -48,6 +48,8 @@ module Master
         load_cli_history
         setup_completion
         init_session_state!
+        # The optional face paints the live Reline prompt, never a second shell-style prompt.
+        Fiber[:master_cli_prompt] = -> { @focus_mode ? focus_prompt : normal_prompt }
         set_visitor_mode_if_unauthenticated
       end
 
@@ -160,7 +162,7 @@ module Master
         return unless $stdout.tty?
 
         Master::Voice::Bed.boot(Master::Voice::Narrator.load_config(:bard)["bed"])
-        Master::Trace::Dmesg.status("bed0", "ambient on") if Master::Voice::Bed.held?
+        Master::Trace::Dmesg.status("bed0", "Dilla chord bed on") if Master::Voice::Bed.held?
       rescue StandardError => e
         Master::Trace::Dmesg.status("bed0", "ambient failed, #{e.class}: #{e.message}")
       end

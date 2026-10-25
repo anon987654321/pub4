@@ -12,12 +12,24 @@ class TestVoiceBed < Minitest::Test
     Bed.stop
   end
 
-  def test_the_bed_is_the_ambient_render_and_starts_with_the_session
+  def test_the_bed_uses_dilla_chords_and_the_existing_heavy_effects
     assert_equal true, config["enabled"]
     assert_equal true, config["autostart"]
     assert_equal false, config["live"]
-    assert_equal "ambient", config["render_args"].first
+    assert_equal [1, 7, 8, 9, 15], config["progressions"]
+    assert_equal 0.22, config["volume"]
+    assert_match(/dilla-chords\z/, config["cache_dir"])
+    args = config["render_args"]
+    assert_includes args, "--no-video"
+    assert_includes args, "dilla_night"
+    assert_includes args, "rhodes_mark1"
+    assert_includes args, "soft_swing"
+    assert_includes args, "--echo=1,2,3"
+    assert_includes args, "subtle"
+    refute_includes args, "ambient"
+    refute_includes args, "--drums"
   end
+
 
   def test_two_renders_need_not_sound_the_same
     seeds = Array.new(6) { |n| Bed.pick_args(config, Random.new(n)).last }

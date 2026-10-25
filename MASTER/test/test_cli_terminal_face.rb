@@ -132,6 +132,101 @@ class TestCliTerminalFace < Minitest::Test
     refute face.instance_variable_get(:@halt_ear), "display toggles should not stop a listening turn"
   end
 
+  def test_ctrl_c_interrupts_or_clears_without_leaving_the_face
+    face = window
+
+    face.send(:react, "\u0003")
+
+    refute face.instance_variable_get(:@closing)
+    assert_includes face.instance_variable_get(:@words).join(" "), "interrupted"
+  end
+
+  def test_ctrl_c_clears_a_draft_but_keeps_the_face_open
+    face = window
+    face.send(:react, "h")
+    face.send(:react, "i")
+
+    face.send(:react, "\u0003")
+
+    refute face.instance_variable_get(:@closing)
+    assert_empty face.instance_variable_get(:@draft)
+    assert_includes face.instance_variable_get(:@words).join(" "), "draft cleared"
+  end
+
+  def test_ctrl_d_leaves_the_face
+    face = window
+
+    face.send(:react, "\u0004")
+
+    assert face.instance_variable_get(:@closing)
+  end
+
+  def test_face_uses_the_original_repl_prompt_when_a_provider_is_available
+    prompt = "openbsd pub4 MASTER main dirty llm discover input"
+    face = Master::CLI::Face::Window.new(
+      turn: ->(_) {},
+      ear: Quiet.new(false),
+      mouth: Quiet.new(false),
+      input: StringIO.new,
+      output: StringIO.new,
+      size: -> { [24, 80] },
+      prompt: -> { "#{prompt} " },
+    )
+
+    assert_equal prompt, face.send(:operator_prompt)
+    assert_equal "#{prompt} hello", face.send(:typed, "hello", 80)
+  end
+
+  def test_ctrl_c_stop_request_is_not_lost_when_listening_starts
+    stopped = nil
+    ear = Object.new
+    ear.define_singleton_method(:available?) { true }
+    ear.define_singleton_method(:missing) { nil }
+    ear.define_singleton_method(:listen) do |stop:, on_partial: nil|
+      stopped = stop.call
+      nil
+    end
+    face = Master::CLI::Face::Window.new(
+      turn: ->(_) {},
+      ear:,
+      mouth: Quiet.new(false),
+      input: StringIO.new,
+      output: StringIO.new,
+      size: -> { [24, 80] },
+    )
+    face.instance_variable_set(:@halt_ear, true)
+    face.instance_variable_set(:@suppress_heard, true)
+
+    face.send(:listen)
+
+    assert_equal true, stopped
+    assert_includes face.instance_variable_get(:@words).join(" "), "listening interrupted"
+  end
+
+  def test_a_failed_speech_keeps_the_reply_visible
+    mouth = Object.new
+    mouth.define_singleton_method(:missing) { nil }
+    mouth.define_singleton_method(:available?) { true }
+    mouth.define_singleton_method(:say) { |*_args, **_kwargs| false }
+    mouth.define_singleton_method(:last_error) { "the synthesiser returned no audio" }
+    face = Master::CLI::Face::Window.new(
+      turn: ->(_) { Master::Result.ok("The actual answer remains visible.") },
+      ear: Quiet.new(false),
+      mouth:,
+      input: StringIO.new,
+      output: StringIO.new,
+      size: -> { [24, 80] },
+    )
+
+    face.send(:answer, "Tell me something useful.")
+
+    transcript = rows_of(face.screen(24, 80, 1.0)).values.join("\n")
+    assert_includes transcript, "The actual answer remains visible."
+    assert_includes transcript, "reply shown as text"
+    assert_includes transcript, "synthesiser returned no audio"
+  end
+
+
   def test_motion_has_a_camera_dolly
     motion = Master::CLI::Face::Motion.new(seed: 7)
     motion.step(state: :idle, t: 1.0)

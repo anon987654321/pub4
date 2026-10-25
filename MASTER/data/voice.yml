@@ -824,21 +824,20 @@ bard:
   batch_window_s: 9.0
   max_events_per_beat: 12
   max_sentences_per_minute: 6
-  # The ambient bed under every session (lib/voice/bed.rb): a low hum, vinyl crackle, dust and pops, and slow
-  # space tones, rendered by `dilla.rb ambient` through dilla's own chain. Johann asked on 2026-10-23 for this
-  # in place of the music that used to start, playing constantly. Each render is a seamless loop; the cache
-  # holds cache_target of them from different seeds and they play one after another. With an empty cache the
-  # first render (about four minutes, nice'd) starts the sound; nothing is streamed live (live: false).
+  # Quiet background music from Dilla's minor chord progressions, Rhodes and the existing Dilla Night FX rig.
+  # The distinct cache path prevents the old sustained hum and drifting-space tracks from being replayed.
   bed:
     enabled: true
     autostart: true
     live: false
     tool: STUDIO/dilla/dilla.rb
-    volume: 0.5
+    volume: 0.22
     loop_player: "ffplay -nodisp -autoexit -loglevel quiet -af volume=%{volume} %{path}"
-    cache_dir: ~/.master/bed/ambient
+    cache_dir: ~/.master/bed/dilla-chords
     cache_target: 4
-    render_args: ["ambient", "--seconds", "150"]
+    progressions: [1, 7, 8, 9, 15]
+    render_args: ["--no-video", "--effect-rig", "dilla_night", "--profile", "soft_swing", "--voice", "rhodes_mark1", "--bpm", "92", "--beats", "8", "--echo=1,2,3", "--echo-mix", "0.48", "--echo-feedback", "0.58", "--echo-time", "326", "--sonitex", "subtle", "--sonitex-instances", "2", "--vcs", "0.54"]
+
 
 voice:
   style: openbsd_dmesg

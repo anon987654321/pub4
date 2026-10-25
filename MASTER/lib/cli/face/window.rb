@@ -16,7 +16,8 @@ module Master
       # the path bin/master takes — and the reply is spoken and shown.
       class Window
         ENTER = %W[\r \n].freeze
-        LEAVE = %W[\u0003 \u0004].freeze
+        INTERRUPT = "\u0003"
+        QUIT = "\u0004"
         ERASE = %W[\u007f \b].freeze
         EXIT_WORDS = %w[/exit /quit exit quit].freeze
         DIM = "\e[2m"
@@ -55,7 +56,7 @@ module Master
         end
 
         def initialize(turn:, ear: Ear.new, mouth: Mouth.new, input: $stdin, output: $stdout,
-                       size: -> { Sizing.winsize }, event_bus: nil, size_mode: nil)
+                       size: -> { Sizing.winsize }, event_bus: nil, size_mode: nil, prompt: nil)
           @turn = turn
           @ear = ear
           @mouth = mouth
@@ -63,6 +64,10 @@ module Master
           @output = output
           @size = size
           @size_mode = size_mode
+          @prompt_provider = prompt
+          @prompt_at = nil
+          @prompt_text = nil
+          @prompt_error_reported = false
           @lock = Mutex.new
           @state = :idle
           law_config = Master::Face::LawField.config
@@ -74,6 +79,8 @@ module Master
           @words = [ear.missing, mouth.missing].compact
           @draft = +""
           @closing = false
+          @retain_input_on_interrupt = false
+          @speech_interrupted = false
           @motion = Motion.new(seed: ::Random.new_seed % 1_000_003)
           @events = []
           @jobs = []
@@ -242,19 +249,23 @@ module Master
           heard = listen
           if heard && !@closing
             if @suppress_heard
-              set(:idle, ["listening interrupted — typed input retained"])
+              message = @retain_input_on_interrupt ? "listening interrupted — typed input retained" : "listening interrupted"
+              set(:idle, [message])
             else
               answer(heard)
             end
           end
         ensure
           @suppress_heard = false
+          @retain_input_on_interrupt = false
           @hearing = nil
           @ear_after = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 1.5
         end
 
+
         def react(key)
-          return @closing = true if key == :eof || LEAVE.include?(key)
+          return @closing = true if key == :eof || key == QUIT
+          return interrupt if key == INTERRUPT
           # Display controls remain usable while the mic is armed; ordinary
           # keys still interrupt capture and become the start of the prompt.
           return toggle_law_field if key == @law_toggle_key
@@ -270,6 +281,23 @@ module Master
 
           change { @draft << key } if key.match?(/\A[[:print:]]\z/)
         end
+
+        # Ctrl-C cancels current activity or clears a draft; it never closes the face.
+        def interrupt
+          nudge(:key)
+          if hearing?
+            @halt_ear = true
+            @suppress_heard = true
+            @retain_input_on_interrupt = false
+            show(["microphone interrupted"])
+          elsif @draft.empty?
+            show(["interrupted — ready for input; Ctrl-D leaves the face"])
+          else
+            change { @draft.clear }
+            show(["draft cleared"])
+          end
+        end
+
 
         def toggle_law_field
           if Master::Face::LawField.config.fetch("terminal_law_ring", true) == false
@@ -320,8 +348,12 @@ module Master
           return if ENTER.include?(key)
 
           @suppress_heard = true
-          change { @draft << key } if key.match?(/\A[[:print:]]\z/)
+          if key.match?(/\A[[:print:]]\z/)
+            @retain_input_on_interrupt = true
+            change { @draft << key }
+          end
         end
+
 
         def submit
           text = @draft.strip
@@ -334,7 +366,6 @@ module Master
         # Nil when nothing was heard, and the window says so; no guess stands
         # in for a transcription.
         def listen
-          @halt_ear = false
           unless @ear.available?
             show([@ear.missing])
             return
@@ -342,7 +373,16 @@ module Master
 
           set(:listening, ["listening — say stop or type to interrupt"])
           nudge(:listen)
-          heard = @ear.listen(stop: -> { @halt_ear || @closing }, on_partial: ->(text) { @heard_at = Process.clock_gettime(Process::CLOCK_MONOTONIC); show(["heard: #{text}"]) })
+          heard = @ear.listen(
+            stop: -> { @halt_ear || @closing },
+            on_partial: ->(text) { @heard_at = Process.clock_gettime(Process::CLOCK_MONOTONIC); show(["heard: #{text}"]) }
+          )
+          if @halt_ear && @suppress_heard
+            message = @retain_input_on_interrupt ? "listening interrupted — typed input retained" : "listening interrupted"
+            set(:idle, [message])
+            return
+          end
+
           heard = heard.to_s.strip
           heard = nil if heard.empty?
           set(:idle, ["heard nothing"]) unless heard
@@ -351,6 +391,7 @@ module Master
           set(:idle, ["mic0: #{e.message}"])
           nil
         end
+
 
         def answer(text)
           set(:thinking, ["you: #{text}"])
@@ -367,14 +408,25 @@ module Master
           end
 
           if @mouth.available?
+            @speech_interrupted = false
             set(:speaking, [reply])
             @spoken_letters = reply.downcase.scan(/[aeiou]+|[mbpfwv]/).map { |group| group[0] }
             spoken = @mouth.say(reply, on_level: ->(level) { change { @level = level; advance_viseme(level) } },
                                on_chunk: ->(part) { show([part]) }, stop: -> { stop_key? })
             unless spoken
-              set(:idle, [@mouth.last_error || "voice0: audio did not play"])
+              message = if @closing
+                          "voice0: speech stopped while leaving face"
+                        elsif @speech_interrupted
+                          "voice0: speech interrupted — reply remains visible"
+                        else
+                          detail = @mouth.last_error || "audio did not play"
+                          "voice0: speech failed — reply shown as text (#{detail})"
+                        end
+              @speech_interrupted = false
+              set(:idle, [reply, message])
               return
             end
+            @speech_interrupted = false
           end
           set(:idle, [reply])
           nudge(:nod)
@@ -422,8 +474,13 @@ module Master
             "user:interrupt", reason: "face", source: "face", children:
           )
           worker.join(1)
-          Master::Result.err("face0: turn cancelled", category: :timeout)
+          if @closing
+            Master::Result.err("face0: turn cancelled — leaving face", category: :timeout)
+          else
+            Master::Result.err("face0: turn interrupted — ready for input", category: :abort)
+          end
         end
+
 
         # turn answers with a Result, or with the text it streamed.
         def reply_text(result)
@@ -438,16 +495,31 @@ module Master
 
         def stop_key?
           key = read_key(0)
-          @closing = true if key == :eof || LEAVE.include?(key)
+          if key == :eof || key == QUIT
+            @closing = true
+            return true
+          end
+          if key == INTERRUPT
+            @speech_interrupted = true
+            return true
+          end
+
           ENTER.include?(key) || @closing
         end
 
-        # ^C abandons the turn; ^D abandons it and leaves.
+        # Ctrl-C cancels an active turn without closing the stage; Ctrl-D leaves.
         def cancel_key?
           key = read_key(0)
-          @closing = true if key == :eof || key == "\u0004"
-          key == :eof || LEAVE.include?(key)
+          if key == :eof || key == QUIT
+            @closing = true
+            true
+          elsif key == INTERRUPT
+            true
+          else
+            false
+          end
         end
+
 
         # A key, :eof when the input is gone, or nil when none came in time.
         # getc waits on a cooked buffer and drops keys once the terminal is
@@ -533,7 +605,7 @@ module Master
 
         def status(state)
           mic = mic_label
-          "#{state}, #{mic}, #{@law_toggle_label} laws, Enter sends, Ctrl-C interrupts, Ctrl-D quits"
+          "#{state}, #{mic}, #{@law_toggle_label} laws, Enter sends, Ctrl-C interrupts/clears, Ctrl-D leaves"
         end
 
         def prompt_line(draft, cols, color:)
@@ -546,9 +618,29 @@ module Master
 
         # Reuse the same host:path$ prompt contract as the ordinary shell and
         # browser face, but reflect this terminal's actual working directory.
+        # Read the exact live prompt owned by the ordinary REPL. Cache it briefly
+        # because the face paints faster than the Git/status prompt needs refreshing.
         def operator_prompt
+          return fallback_operator_prompt unless @prompt_provider
+
+          current = now
+          return @prompt_text if @prompt_text && @prompt_at && current - @prompt_at < 0.25
+
+          value = @prompt_provider.call.to_s.strip
+          @prompt_at = current
+          @prompt_text = value.empty? ? fallback_operator_prompt : value
+        rescue StandardError => e
+          unless @prompt_error_reported
+            Master::Ground::Swallow.log(e, context: "face.window.prompt")
+            @prompt_error_reported = true
+          end
+          fallback_operator_prompt
+        end
+
+        def fallback_operator_prompt
           Master::Face::Contract.shell_prompt(path: Dir.pwd, root: Master::ROOT)
         end
+
 
         # The end of the line being typed, which is the part being typed into.
         def typed(draft, cols)
@@ -575,10 +667,13 @@ module Master
         # that is still changing (a partial, a spoken chunk).
         def column(jobs, words)
           lines = jobs.dup
-          live = words.first.to_s.strip
-          lines << live if !live.empty? && lines.last != live
+          Array(words).each do |word|
+            live = word.to_s.strip
+            lines << live if !live.empty? && lines.last != live
+          end
           lines.last(3)
         end
+
 
         def tail(words, rows, cols)
           lines = words.flat_map { |text| wrap(text.to_s, cols) }.last(rows)

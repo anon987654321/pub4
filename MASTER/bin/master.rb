@@ -9,11 +9,11 @@ MASTER = File.join(ROOT, "MASTER").freeze
 CLI = File.join(MASTER, "bin", "cli").freeze
 
 ENV["PUB4_ROOT"] ||= ROOT
-# The terminal runtime is a quiet, local instruction surface. The web face has
-# its own Rails owner, while repository observation begins only when requested.
-# Explicit bin/cli flags and environment settings still opt into either feature.
+# The terminal runtime is a quiet, local instruction surface. Repository-wide scanning is opt-in.
+# MASTER_BACKGROUND_SCAN=1 opts in; an explicit skip always wins.
 ENV["MASTER_WEB"] ||= "0"
-ENV["MASTER_SKIP_BOOT_SCAN"] ||= "1"
+ENV["MASTER_BACKGROUND_SCAN"] ||= "0"
+ENV["MASTER_SKIP_BOOT_SCAN"] ||= (ENV["MASTER_BACKGROUND_SCAN"] == "1" ? "0" : "1")
 ENV["MASTER_CLI_QUIET"] ||= "1"
 
 if ARGV.first == "replay"
