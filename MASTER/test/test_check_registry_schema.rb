@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "open3"
+require "rbconfig"
 require "tmpdir"
 
 class CheckRegistrySchemaTest < Minitest::Test
