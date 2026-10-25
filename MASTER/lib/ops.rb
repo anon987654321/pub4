@@ -246,12 +246,18 @@ module Master
         return unless File.exist?(info)
 
         data = JSON.parse(File.read(info))
-        pid = data["pid"].to_i
-        at = Time.iso8601(data["at"].to_s) rescue Time.at(0)
-        stale = pid <= 0 || !process_alive?(pid) || (Time.now.utc - at) > STALE_SECONDS
+        pid_text = data["pid"].to_s
+        raise ArgumentError, "invalid loop owner PID" unless pid_text.match?(/\\A[1-9]\\d*\\z/)
+
+        pid = pid_text.to_i
+        # Corrupt timestamps must not become epoch zero: a live owner must never
+        # lose its claim because one metadata field was unreadable or malformed.
+        at = Time.iso8601(data.fetch("at").to_s)
+        stale = !process_alive?(pid) || (Time.now.utc - at) > STALE_SECONDS
         release if stale
-      rescue StandardError
-        release
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "LoopOwner.cleanup_stale!", severity: :load_bearing)
+        nil
       end
 
       def process_alive?(pid)
