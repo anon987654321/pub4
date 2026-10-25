@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require_relative "log"
 
 module Master
   module Trace
@@ -10,7 +11,7 @@ module Master
 
       @enabled = false
       @tracer = nil
-      @io = nil
+      @trace_path = nil
 
       class << self
         attr_reader :enabled, :tracer
@@ -19,14 +20,11 @@ module Master
       def self.bootstrap!(root:, service: "master")
         return if @enabled
         path = File.join(root, TRACE_PATH)
-        require "fileutils"
-        FileUtils.mkdir_p(File.dirname(path))
-        @io = File.open(path, "a")
-        @io.sync = true
+        @trace_path = path
         OpenTelemetry::SDK.configure do |c|
           c.service_name = service
           c.add_span_processor(
-            OpenTelemetry::SDK::Trace::Export::SimpleSpanProcessor.new(JsonlExporter.new(@io)),
+            OpenTelemetry::SDK::Trace::Export::SimpleSpanProcessor.new(JsonlExporter.new(path)),
           )
         end
         @tracer = OpenTelemetry.tracer_provider.tracer(service)
@@ -52,25 +50,33 @@ module Master
         SUCCESS = 0
         FAILURE = 1
 
-        def initialize(io)
-          @io = io
+        def initialize(path, max_bytes: Master::Trace::Log::Event::MAX_BYTES)
+          @path = path
+          @max_bytes = max_bytes
         end
 
         def export(spans, timeout: nil)
-          spans.each do |s|
-            @io.puts(JSON.generate(
-              name: s.name,
-              kind: s.kind.to_s,
-              start: s.start_timestamp,
-              end: s.end_timestamp,
-              dur_us: ((s.end_timestamp - s.start_timestamp) / 1000),
-              attrs: s.attributes,
-              trace: s.hex_trace_id,
-              span: s.hex_span_id,
-            ))
+          spans.each do |span|
+            Master::Trace::Log.append_jsonl(
+              @path,
+              {
+                name: span.name,
+                kind: span.kind.to_s,
+                start: span.start_timestamp,
+                end: span.end_timestamp,
+                dur_us: ((span.end_timestamp - span.start_timestamp) / 1000),
+                attrs: span.attributes,
+                trace: span.hex_trace_id,
+                span: span.hex_span_id,
+              },
+              max_bytes: @max_bytes,
+              mode: 0o600,
+              sync: false,
+            )
           end
           SUCCESS
-        rescue StandardError; FAILURE
+        rescue StandardError
+          FAILURE
         end
 
         def force_flush(timeout: nil) = SUCCESS
