@@ -31,6 +31,8 @@ class TraceTelemetryExporterTest < Minitest::Test
       assert_operator File.size(path), :<=, 400
       assert_operator File.size("#{path}.1"), :<=, 400
       File.readlines(path, chomp: true).each { |line| JSON.parse(line) }
+      File.readlines("#{path}.1", chomp: true).each { |line| JSON.parse(line) }
+      assert_operator File.size("#{path}.1"), :>, 0
       assert_equal 0o600, File.stat(path).mode & 0o777
       assert_equal 0o600, File.stat("#{path}.lock").mode & 0o777
     end
