@@ -195,6 +195,19 @@ class TestOwnerPreferences < Minitest::Test
     refute_includes prompt, "Repeated request"
   end
 
+  def test_pending_observed_suggestion_is_visible_but_still_inactive
+    grant
+    Preferences.set_learning(root: @root, subject: SUBJECT, enabled: true)
+    Preferences.observe_feedback(root: @root, subject: SUBJECT, message: "Your answer is too verbose.")
+    staged = Preferences.observe_feedback(root: @root, subject: SUBJECT, message: "That was too verbose again.")
+    prompt = Preferences.prompt_section(root: @root, scope: "all", subject: SUBJECT)
+
+    assert_equal "staged", staged.fetch("status")
+    assert_includes prompt, "Pending suggestions are inactive"
+    assert_includes prompt, staged.fetch("suggestion_id")
+    assert_empty Preferences.effective(root: @root, subject: SUBJECT)
+  end
+
   def test_visitor_never_receives_personal_preferences
     grant
     Preferences.set(root: @root, subject: SUBJECT, key: "communication.tone", value: "direct")
