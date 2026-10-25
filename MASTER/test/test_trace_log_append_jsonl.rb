@@ -66,6 +66,29 @@ class TraceLogAppendJsonlTest < Minitest::Test
     end
   end
 
+  def test_failed_rotation_uses_one_bounded_reclaim_before_append
+    Dir.mktmpdir("trace-jsonl-reclaim-") do |dir|
+      path = File.join(dir, "events.ndjson")
+      File.write(path, "x" * 500)
+      reclaim_calls = 0
+      reclaim = lambda do |target|
+        reclaim_calls += 1
+        File.truncate(target, 0)
+        true
+      end
+
+      LOG.stub(:rotate, nil) do
+        LOG.stub(:reclaim, reclaim) do
+          LOG.append_jsonl(path, { "event" => "recovered" }, max_bytes: 200)
+        end
+      end
+
+      assert_equal 1, reclaim_calls
+      assert_equal "recovered", JSON.parse(File.readlines(path).last).fetch("event")
+      assert_operator File.size(path), :<=, 200
+    end
+  end
+
   def test_refuses_a_symlink_destination
     Dir.mktmpdir("trace-jsonl-symlink-") do |dir|
       path = File.join(dir, "events.ndjson")
