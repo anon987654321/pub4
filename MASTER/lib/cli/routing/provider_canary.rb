@@ -110,7 +110,7 @@ module Master
         end
 
         def record(model:, status:, latency_ms:, error:)
-          @health.record(model:, status:, latency_ms:, error:) if status == :canary_validation_failure
+          @health.record(model:, status:, latency_ms:, error:)
           @bus&.publish("provider:canary", model:, domain: provider_domain(model), status:, latency_ms:, error:)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "provider_canary.record", event_bus: @bus)
