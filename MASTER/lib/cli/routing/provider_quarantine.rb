@@ -98,23 +98,34 @@ module Master
           latest
         end
 
+        def quarantine_paths
+          ["#{@path}.1", @path]
+        end
+
         def all_entries
-          stat = File.stat(@path) if File.file?(@path)
-          stamp = stat && [stat.ino, stat.size, stat.mtime.to_r]
+          stamp = quarantine_paths.map do |candidate|
+            next unless File.file?(candidate) && !File.symlink?(candidate)
+
+            stat = File.stat(candidate)
+            [candidate, stat.ino, stat.size, stat.mtime.to_r]
+          end
           return @entries if @entries && @entries_stamp == stamp
 
           @entries_stamp = stamp
-          @entries = if stamp
-            File.readlines(@path, chomp: true).filter_map do |line|
+          @entries = quarantine_paths.flat_map do |candidate|
+            next [] unless File.file?(candidate) && !File.symlink?(candidate)
+
+            File.readlines(candidate, chomp: true).filter_map do |line|
               next if line.strip.empty?
               JSON.parse(line)
             rescue JSON::ParserError => e
-              Master::Ground::Swallow.log(e, context: "ProviderQuarantine.all_entries")
+              Master::Ground::Swallow.log(e, context: "ProviderQuarantine.all_entries", path: candidate)
               nil
             end
-          else
-            []
           end
+        rescue SystemCallError => e
+          Master::Ground::Swallow.log(e, context: "ProviderQuarantine.all_entries")
+          @entries || []
         end
 
         def append(entry)
