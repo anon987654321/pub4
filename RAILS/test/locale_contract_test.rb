@@ -277,9 +277,12 @@ class LocaleContractTest < Minitest::Test
             else [unit, "__shared"]
             end
     @sources ||= {}
-    @sources[trees] ||= trees.flat_map { |tree| Dir.glob(File.join(ROOT, tree, "**/*.{rb,erb,js,rake,jbuilder,yml,json}")) }
-                             .reject { |path| path.match?(READER_SKIP) }
-                             .to_h { |path| [rel(path), File.read(path)] }
+    paths = trees.flat_map { |tree| Dir.glob(File.join(ROOT, tree, "**/*.{rb,erb,js,rake,jbuilder,yml,json}")) }
+    if unit == "brgen"
+      paths.concat(Dir.glob(File.join(ROOT, "#{EngineRoots::GLOB}/**/*.{rb,erb,js,rake,jbuilder,yml,json}")))
+    end
+    @sources[trees] ||= paths.uniq.reject { |path| path.match?(READER_SKIP) }
+                                .to_h { |path| [rel(path), File.read(path)] }
   end
 
   READER_SKIP = %r{/(?:test|vendor|node_modules|tmp|log|storage|coverage)/|/public/assets/|/config/locales/}
