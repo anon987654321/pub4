@@ -17,7 +17,7 @@ class BrgenAgentNotesTest < Minitest::Test
 
   def test_it_says_one_process_and_names_the_engine_layout
     assert_includes notes, "One Rails process"
-    assert_includes notes, "engines/marketplace"
+    assert_includes notes, "../brgen_marketplace"
     assert_includes notes, "ENTRIES"
     assert_includes notes, "vowel"
   end
