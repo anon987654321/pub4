@@ -68,16 +68,21 @@ class TestProviderQuarantineWiring < Minitest::Test
   def test_operator_clear_releases_quarantine_even_with_same_second_timestamps
     Dir.mktmpdir("quarantine-clear") do |dir|
       now = Time.utc(2026, 10, 26, 12, 0, 0)
+      path = File.join(dir, "quarantine.ndjson")
       subject = Routing::ProviderQuarantine.new(
         health: StubHealth.new(0.05),
-        path: File.join(dir, "quarantine.ndjson"),
+        path:,
         now: -> { now },
       )
 
       subject.quarantine(model: "provider-a", reason: "fixture failure")
       assert subject.quarantined?("provider-a")
+      first_mtime = File.mtime(path)
 
       subject.clear("provider-a")
+      # Simulate a filesystem whose mtime granularity cannot distinguish two
+      # append operations in the same tick. The file size still changed.
+      File.utime(first_mtime, first_mtime, path)
 
       refute subject.quarantined?("provider-a"),
              "the latest clear event must supersede an earlier quarantine"
