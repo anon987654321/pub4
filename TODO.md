@@ -12,7 +12,7 @@ browser evidence recorded in the commit.
 - [ ] Run a fresh bounded release pass against the exact commit intended for deployment:
   constitutional and repository checks, all RAILS contract tests, active app suites, OPENBSD
   tests, and STUDIO fast tests. Record PASS, FAIL, INCONCLUSIVE, BLOCKED, or TIMEOUT separately.
-  At the latest status check for current HEAD, GitHub reported a failed Vercel status whose target points to a build-rate-limit condition. No local test run was performed in this audit. Do not use Vercel or a status badge as a substitute for running the documented checks on the exact checkout.
+  GitHub previously reported a failed Vercel status whose target points to a build-rate-limit condition. That status does not prove the new evidence helper or runbooks pass; no full local release run has been performed on the current checkout. Do not use Vercel or a status badge as a substitute for running the documented checks on the exact checkout.
 - [ ] Complete the requested 200–400 scenario interaction matrix across MASTER CLI, MASTER web,
   keyboard/touch, session state, routes, errors, models/tools, speech, reconnects, offline mode,
   and PWA updates. Use the existing `RAILS/test/interaction_campaign_400.json` as the canonical
@@ -32,6 +32,11 @@ browser evidence recorded in the commit.
 - [ ] Prove deploy and recovery on the intended OpenBSD host. Check the deployed commit, service
   health, logs, backups, and a restore path. Keep deployment separate from local-source test
   evidence.
+- [ ] Run `ruby OPENBSD/test/test_evidence_tool.rb` from the exact checkout and smoke-test PASS,
+  FAIL, BLOCKED, INCONCLUSIVE, and TIMEOUT outcomes, including process-group termination and
+  attachment hashes. An isolated temporary-Git-repository exercise of the draft helper passed
+  9 runs / 35 assertions; the committed test has not been executed from this checkout, so this is
+  not yet a checkout-level pass. Inspect emitted JSON and text logs before committing artifacts.
 
 ## MASTER CLI, web, voice, and shared session
 
@@ -42,12 +47,17 @@ browser evidence recorded in the commit.
   sparse lime semantic signal; the face renderer remains the focal point. Source-level mobile
   rules are in place, but final spacing, face/prompt coexistence, dashboard density, contrast
   measurements, and desktop/mobile screenshots remain unverified.
-- [ ] Verify the installed PWA end to end: install, launch, safe-area layout, offline fallback,
-  stale asset handling, service-worker update, and recovery after a failed request. Confirm that
-  the shared manifest stays host-aware and that only intended stable resources are cached.
+- [ ] Verify the installed PWA end to end: install, launch, safe-area and keyboard-open layout,
+  a useful offline surface, stale-asset recovery, service-worker update and failed-request recovery.
+  Confirm the shared manifest stays host-aware and only intended stable resources are cached.
+  The update must not auto-reload mid-typing; expose a deliberate update/reload path and preserve
+  the draft/session. Queue offline sends only where a supported queue actually exists.
 - [ ] Validate parity across CLI and browser for conversation/session state and the requested
   /connect, /join, and /msg channel flows. Check destination, reconnect, history, interruption,
-  and error behavior; do not assume parity from shared naming.
+  and error behavior; do not assume parity from shared naming. The browser must visibly distinguish
+  connected/reconnecting/offline, and each outgoing message must expose confirmed pending/sent/
+  delivered/failed states. Verify reload preserves history, scroll and unsent draft, and double
+  Enter/network retry cannot duplicate a send.
 - [ ] Run the full /fix phase loop per tree and demonstrate truthful DONE, PLATEAU,
   HUMAN_DECISION, BLOCKED, VALIDATION_FAILED, DELIVERY_FAILED, and TIMEOUT states. Verify
   dirty-tree preservation, interrupted writes, disk exhaustion, retry convergence, and
@@ -79,6 +89,10 @@ browser evidence recorded in the commit.
   timeout and declared fallbacks. Measure latency on the target machine rather than relying on a
   mocked worker.
 - [ ] Capture real-browser face boot/render evidence: first-tap behavior, failed asset recovery, context loss, lifecycle cleanup, reduced motion, renderer budget, phone thermal/battery behavior, and GPU/device performance claims. Include the requested grayscale palette, original single CLI prompt when the face is exposed, micro-/nano-expressions, duration-based lip-sync against actual TTS playback, and face/prompt coexistence. Inspect the generated runtime bundle, not only its split source parts.
+- [ ] Measure input acknowledgement, time-to-first-token, completed reply and greeting independently. Proposed targets for review are input acknowledgement <=100 ms, first token <=2 s, greeting <=3 s and --help/--version/--status <=200 ms. Establish the current baseline first, test CLI and web separately, and enforce only a measured ratchet; a target is not a result.
+- [ ] Verify CLI cancellation and terminal restoration on Ctrl-C during generation, Ctrl-D, SIGTERM, child-process timeout and exceptions. Preserve partial output as specified, terminate owned child processes, and restore raw mode, bracketed paste and alternate-screen state. Test resize/scrollback, long-output history/search, NO_COLOR, TERM=dumb and non-TTY piping; suppress the face in dumb/non-interactive terminals.
+- [ ] Verify browser cancel/stop, socket loss, reconnect and offline-mid-reply outcomes with visible status. Ensure each state label corresponds to the actual server/runtime state, the mobile prompt remains above keyboard/safe area, drafts are not resent on reload, and reduced-motion/forced-colors retain usable status and focus.
+- [ ] Review the existing `CAPABILITY_STATUS_MUST_BE_TRUTHFUL` Law and surface detectors against the invariant that UI progress, success, pending and delivery state must match observed system state. Reuse an existing Law if it already covers the behavior; if it does not, propose the narrowest canonical Law/enforcement change with positive and negative fixtures. Do not create a parallel policy registry or edit sacred Law paths without the required authority process.
 
 ## MASTER personal assistance
 
@@ -114,10 +128,15 @@ browser evidence recorded in the commit.
   - Reproduce the latency on the current HEAD with a monotonic timeline for boot, first visible token, completed reply, model/provider, retries and fallback hops. Test CLI and web separately. Confirm that streaming begins on the first usable provider chunk and that a failed stream emits a truthful error before switching lanes; do not claim a latency win from mocks or source inspection.
   - "does god exist? give me your actual view" ran two web searches (the second appending
     "official documentation") for a question that asks for a view, not evidence. Weather then
-    said web tools were unavailable, and no answer cited a source. Decide whether ordinary
-    lookups need approval at all.
+    said web tools were unavailable, and no answer cited a source. Define and test the lookup policy:
+    separate opinion/advice from factual/current-information requests, request approval only where
+    the declared policy requires it, and never run unrelated searches. If a requested lookup is
+    unavailable, say so plainly instead of presenting an uncited answer as researched.
   - "remind me tomorrow at 9" is kept as a task, but nothing alerts at the time; an alert needs
-    a delivery channel (the face, a push, or the operator's messaging channel above).
+    a real delivery channel (the face, push or the operator's messaging channel above). Implement
+    scheduling/delivery and retry evidence, resolve relative times in the user's declared timezone,
+    and disclose at acceptance time whether anything will actually alert. A stored task alone is
+    not a delivered reminder.
   - Pre-existing reds found on the way: `test/test_media_intent.rb` went green in d8efe79db
     (each failure was a real misreading of postpro requests) and
     `test/test_ground_standing_orders.rb` in 40fd09ff7 (stale fakes), the two prompt tests in
@@ -161,7 +180,9 @@ browser evidence recorded in the commit.
   indicators are cleared, trust signals deduplicate, and a failed merge leaves guest history
   untouched. Confirm old guest-session IDs are destroyed rather than promoted into authenticated
   sessions and the source guest row is anonymized with unusable credentials while retained only
-  as the account-merge audit referent. Amber's tracked schema is already at version
+  as the account-merge audit referent. Add a real-browser continuity check: the same posts,
+  conversations and trust signals must remain visible without a flash that looks like lost history
+  or an unexplained reload. Amber's tracked schema is already at version
   `2026_10_21_230200`; verify that a fresh test database applies these migrations. Source and regression
   tests are committed but runtime proof remains open.
 - [ ] Run the guest-transfer failure and retry tests through password sign-in, magic-link
@@ -327,6 +348,8 @@ browser evidence recorded in the commit.
   finding. Keep unresolved commitments represented here until proven complete.
 
 ## Closure rule
+
+Evidence procedures and the code/evidence split are indexed in `docs/todo-triage.md` and `docs/runbooks/`; these documents do not create another backlog or close items themselves.
 
 An item is closed only when the owning command or interaction ran on the current commit, the
 result is recorded, and any generated artifact is in sync with its source. For rendered/UI work,
