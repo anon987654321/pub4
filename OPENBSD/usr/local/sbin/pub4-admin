@@ -313,6 +313,55 @@ module Pub4Admin
   rescue ArgumentError
     raise "account or group #{app} is missing; cannot establish app secret"
   end
+  # Read one app's root-owned progress record through this fixed broker verb.
+  # The directory intentionally remains private (0700); vps-state runs as dev and
+  # must not silently infer "no deploy" because direct filesystem access is denied.
+  def read_deploy_status(app, root: STAMP_DIR, output: $stdout, verify_root: true)
+    raise "unknown app: #{app}" unless APPS.include?(app)
+
+    base = File.expand_path(root)
+    raise "#{base} is a symlink; refusing status read" if File.symlink?(base)
+    if File.exist?(base)
+      root_stat = File.lstat(base)
+      raise "#{base} must be a real directory" unless root_stat.directory? && !root_stat.symlink?
+      raise "#{base} must be root-owned and non-writable by group/other" if
+        verify_root && (!root_stat.uid.zero? || (root_stat.mode & 0o022).positive?)
+    end
+
+    directory = File.join(base, "deploy_status")
+    raise "#{directory} is a symlink; refusing status read" if File.symlink?(directory)
+    unless File.exist?(directory)
+      output.puts("null")
+      return 0
+    end
+    directory_stat = File.lstat(directory)
+    raise "#{directory} must be a real directory" unless directory_stat.directory? && !directory_stat.symlink?
+    raise "#{directory} must be root-owned and private" if
+      verify_root && (!directory_stat.uid.zero? || (directory_stat.mode & 0o077).positive?)
+
+    path = File.join(directory, "#{app}.json")
+    raise "#{path} is a symlink; refusing status read" if File.symlink?(path)
+    unless File.exist?(path)
+      output.puts("null")
+      return 0
+    end
+
+    status_stat = File.lstat(path)
+    raise "#{path} must be a root-owned regular file" unless
+      status_stat.file? && !status_stat.symlink? && (!verify_root || status_stat.uid.zero?)
+    raise "#{path} must not be group/other writable" if verify_root && (status_stat.mode & 0o022).positive?
+
+    record = JSON.parse(File.read(path))
+    raise "#{path} has invalid status schema" unless
+      record.is_a?(Hash) && record["app"] == app &&
+      %w[running done failed].include?(record["state"]) &&
+      record["step"].is_a?(String) && record["pid"] &&
+      record["started_at"].is_a?(String) && record["updated_at"].is_a?(String)
+
+    output.puts(JSON.generate(record))
+    0
+  end
+
   def write_deploy_status(app, step, state)
     raise "unknown app: #{app}" unless APPS.include?(app)
     raise "invalid deploy status" unless %w[running done failed].include?(state)
@@ -846,6 +895,10 @@ end
 
     if args.length == 4 && args[0] == "deploy-status"
       return write_deploy_status(*args.drop(1))
+    end
+
+    if args.length == 2 && args[0] == "deploy-status-read"
+      return read_deploy_status(args[1])
     end
 
     if args.length == 4 && args[0] == "stamp"
