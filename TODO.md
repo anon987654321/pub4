@@ -9,7 +9,7 @@ browser evidence recorded in the commit.
 
 ## Follow-on telemetry append and broker privacy pass (2026-10-26)
 
-- MASTER provider health/quarantine now share a private append primitive that locks the log before seeking/writing, flushes and fsyncs a complete JSONL line, and enforces file/directory permissions. This closes the concurrent-writer risk in which multiple runtime instances could interleave a record. Added an 8-thread/200-event regression test in `MASTER/test/test_provider_health_cache.rb`; it is not run.
+- MASTER provider health/quarantine now share a private append primitive that locks the log before seeking/writing, flushes and fsyncs a complete JSONL line, enforces file/directory permissions, and rotates both logs at the existing 25 MiB trace-event limit. Rotation and append are serialized through a private sidecar lock; an oversized single event or a failed rotation is refused rather than growing past the cap. Added an 8-thread/200-event regression test plus bounded-rotation and oversized-record cases in `MASTER/test/test_provider_health_cache.rb`; none has been run.
 - OPENBSD's `deploy-status-read` broker now rejects progress records with group/world permissions, not just group/world write bits. Test coverage includes a readable-by-all status record. No real OpenBSD user/permission setup was exercised, and tests remain unexecuted.
 
 ## Follow-on trajectory telemetry hardening (2026-10-26)
