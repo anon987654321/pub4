@@ -228,13 +228,15 @@ Repairs committed in this batch include:
   across feed, posts/comments, identity/moderation, discovery/maps, marketplace listings,
   dating, messenger, radio, and takeaway. Cover authorization boundaries, empty/error states,
   tenant/city resolution, upload limits, and mobile one-handed use.
-- [ ] Repair Brgen's PWA share-target lifecycle before calling the journey complete. `PostsController#share`
-  currently saves a normal `Post` (the posts schema has no draft state), then redirects to edit with a
-  "shared into draft" notice; it assigns `Community.first`, bypasses `PostModeration` and the verified-email
-  callback, and attaches only the first upload as `image` although the manifest also accepts video. Stage
-  shared text/media privately until explicit publish; scope any community to the current city; apply the
-  ordinary verification, moderation, upload-size/type and cleanup rules; test image/video, unverified
-  members, city isolation, and abandoned drafts.
+- [ ] Verify Brgen's PWA share-target private-draft lifecycle before calling the journey complete.
+  The source now stages incoming images/video in owner- and city-scoped `ShareDraft` rows, exposes a
+  review-and-publish action that reuses email verification, community authorization and `PostModeration`,
+  transfers media only on explicit publish, and has an hourly expiry cleanup job. Regression coverage
+  was added for staging without a public post, image/video handling, explicit publication, unverified
+  accounts, foreign-city communities, cross-member access and expiry. These source/tests are not yet
+  runtime-verified: run Brgen's `test/integration/share_target_test.rb`, `test/jobs/share_draft_cleanup_job_test.rb`,
+  `test/jobs/job_concurrency_test.rb`, fresh migration/schema loading, and the full app suite on the
+  current checkout before closing this item.
 - [ ] Brgen revenue readiness: verify the intended listing/offer/payment or monetization path,
   entitlements, moderation and abuse handling, privacy/terms, accounting/audit trail, and
   production configuration. Do not call it revenue-ready until the real configured path works

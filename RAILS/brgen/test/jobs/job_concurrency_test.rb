@@ -11,6 +11,7 @@ class JobConcurrencyTest < ActiveSupport::TestCase
     AffiliateImportJob => [],
     NightlySearchIndexRebuildJob => [],
     ExpiredStoriesSweepJob => [],
+    ShareDraftCleanupJob => [],
     ComposeNewsletterEditionJob => [ "weekly_deals", "Bergen" ],
     LinkConverterSyncJob => [],
     UserPurgeJob => [],

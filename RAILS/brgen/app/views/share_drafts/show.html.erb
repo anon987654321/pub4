@@ -1,0 +1,47 @@
+<% content_for :title, t("post.new") %>
+
+<div class="page-header">
+  <%= tag.h1 t("post.new") %>
+  <p><%= t("post.share_draft_lead", default: "This share is private. Nothing appears in the feed until you publish it.") %></p>
+</div>
+
+<div class="form-wrap">
+  <% if @post.present? %>
+    <%= render "shared/errors", object: @post %>
+  <% end %>
+
+  <div class="form-help">
+    <%= t("post.shared_media_staged", default: "Staged privately") %>:
+    <%= pluralize(@share_draft.images.count, t("post.photo", default: "photo")) %>
+    <% if @share_draft.video.attached? %>
+      <%= t("post.and_video", default: "and one video") %>
+    <% end %>
+  </div>
+
+  <%= form_with url: publish_share_draft_path(@share_draft), scope: :post, method: :post do |f| %>
+    <div class="field">
+      <%= f.label :community_id, t("posts.community_optional", default: "Community (optional)") %>
+      <%= f.collection_select :community_id, @communities, :id, :name,
+            { include_blank: t("posts.no_community", default: "No community"), selected: @post&.community_id } %>
+    </div>
+    <div class="field">
+      <%= f.label :title %>
+      <%= f.text_field :title, value: @post&.title || @share_draft.title, maxlength: 300, required: true %>
+    </div>
+    <div class="field">
+      <%= f.label :content, t("posts.body_optional", default: "Text (optional)") %>
+      <%= f.text_area :content, value: @post&.content || @share_draft.content, rows: 6, maxlength: 40000 %>
+    </div>
+    <div class="field field--check">
+      <%= f.check_box :anonymous, checked: @post&.anonymous? || false %>
+      <%= f.label :anonymous, t("posts.post_anonymously") %>
+    </div>
+    <div class="field">
+      <%= f.submit t("post.submit"), class: "btn btn-primary" %>
+      <%= link_to t("actions.cancel"), posts_path, class: "btn btn-ghost" %>
+    </div>
+  <% end %>
+
+  <%= button_to t("actions.delete", default: "Discard draft"), share_draft_path(@share_draft),
+        method: :delete, class: "btn btn-ghost" %>
+</div>

@@ -134,6 +134,7 @@ class User < ApplicationRecord
   def blocking?(other) = blocks_as_blocker.exists?(blocked_id: other.id)
   def blocked_user_ids = blocks_as_blocker.pluck(:blocked_id)
 
+  has_many :share_drafts, dependent: :destroy
   has_many :community_memberships, dependent: :destroy
   has_many :joined_communities, through: :community_memberships, source: :community
 

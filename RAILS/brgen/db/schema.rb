@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_10_10_180000) do
+ActiveRecord::Schema[8.2].define(version: 2026_10_25_180000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1520,6 +1520,19 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_10_180000) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "share_drafts", force: :cascade do |t|
+    t.integer "city_id", null: false
+    t.text "content"
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["city_id"], name: "index_share_drafts_on_city_id"
+    t.index ["expires_at"], name: "index_share_drafts_on_expires_at"
+    t.index ["user_id"], name: "index_share_drafts_on_user_id"
+  end
+
   create_table "stories", force: :cascade do |t|
     t.string "caption"
     t.integer "city_id"
@@ -2107,6 +2120,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_10_180000) do
   add_foreign_key "reposts", "users"
   add_foreign_key "reputation_scores", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "share_drafts", "cities"
+  add_foreign_key "share_drafts", "users"
   add_foreign_key "stories", "cities"
   add_foreign_key "stories", "users"
   add_foreign_key "story_streaks", "users", column: "user_a_id"

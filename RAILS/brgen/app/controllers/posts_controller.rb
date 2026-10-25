@@ -8,7 +8,7 @@ class PostsController < ApplicationController
   # counter for every signed-out request. See RAILS/test/rate_limit_naming_test.rb.
   rate_limit to: 12, within: 1.minute, only: :create, name: "burst",
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
-  before_action :require_verified_email, only: :create
+  before_action :require_verified_email, only: %i[create share]
   include Shared::LiveSearchable
 
   rate_limit to: 30, within: 3.minutes, only: %i[create share], name: "sustained",
@@ -133,21 +133,46 @@ class PostsController < ApplicationController
   end
 
   def share
-    shared_media = Array(params[:media]).select { |f| f.respond_to?(:read) }
-    post = Post.new(
-      title: share_title.presence || (shared_media.any? ? t("share.photo_title", default: "Shared photo") : nil),
-      content: share_content,
-      community: Community.first,
-      user: Current.user
-    )
-    # Share Target for images: a photo shared INTO brgen from the camera roll lands
-    # attached to a fresh draft (manifest share_target declares files: media).
-    post.image.attach(shared_media.first) if shared_media.any? && post.respond_to?(:image)
+    city = Current.city_record
+    return redirect_to(new_post_path, alert: t("flash.draft_failed", default: "The share could not be staged.")) unless city
 
-    if post.save
-      redirect_to edit_post_path(post), notice: t("flash.shared_into_draft")
+    uploads = Array(params[:media]).reject(&:blank?)
+    unless uploads.all? { |file| file.respond_to?(:read) && file.respond_to?(:content_type) }
+      redirect_to new_post_path, alert: t("flash.draft_failed", default: "The share could not be staged.")
+      return
+    end
+
+    images = uploads.select { |file| file.content_type.to_s.downcase.start_with?("image/") }
+    videos = uploads.select { |file| file.content_type.to_s.downcase.start_with?("video/") }
+    if images.size + videos.size != uploads.size ||
+       images.size > ShareDraft::MAX_IMAGES || videos.size > 1 ||
+       uploads.size > ShareDraft::MAX_MEDIA
+      redirect_to new_post_path, alert: t("flash.draft_failed", default: "Use up to five images and one video.")
+      return
+    end
+
+    content = share_content
+    if uploads.empty? && params[:title].blank? && content.blank?
+      redirect_to new_post_path, alert: t("flash.draft_failed", default: "There is nothing to share.")
+      return
+    end
+
+    draft = ShareDraft.new(
+      user: Current.user,
+      city: city,
+      title: share_title(media_kind: images.any? ? :image : (videos.any? ? :video : nil)),
+      content: content,
+      expires_at: 24.hours.from_now
+    )
+    draft.images.attach(images) if images.any?
+    draft.video.attach(videos.first) if videos.any?
+
+    if draft.save
+      redirect_to share_draft_path(draft),
+                  notice: t("flash.shared_into_draft", default: "Shared privately. Review it before publishing.")
     else
-      redirect_to new_post_path, alert: t("flash.draft_failed")
+      redirect_to new_post_path,
+                  alert: t("flash.draft_failed", default: "The share could not be staged. Nothing was published.")
     end
   end
 
@@ -234,8 +259,15 @@ class PostsController < ApplicationController
                 alert: t("flash.community.members_only"))
   end
 
-  def share_title
-    params[:title].presence || params[:text].presence || params[:url].presence || "Shared draft"
+  def share_title(media_kind: nil)
+    raw = params[:title].presence || params[:text].presence || params[:url].presence
+    return ActionController::Base.helpers.strip_tags(raw.to_s).squish.truncate(300) if raw.present?
+
+    case media_kind
+    when :image then t("share.photo_title", default: "Shared photo")
+    when :video then t("share.video_title", default: "Shared video")
+    else "Shared draft"
+    end
   end
 
   def share_content

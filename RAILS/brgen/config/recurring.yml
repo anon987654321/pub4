@@ -103,6 +103,11 @@ production:
     queue: bulk
     schedule: every hour at minute 20
 
+  share_draft_cleanup:
+    class: ShareDraftCleanupJob
+    queue: bulk
+    schedule: every hour at minute 25
+
   # Runs saved searches that have alerts switched on. The job self-limits to one
   # alert per search per 6 hours, so the schedule sets how fresh an alert can be,
   # not how often anyone is interrupted.
