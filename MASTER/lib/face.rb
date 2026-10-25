@@ -2,7 +2,6 @@
 
 require "digest"
 require "json"
-require "yaml"
 require_relative "design"
 
 module Master
@@ -139,14 +138,15 @@ module Master
       end
 
       def catalog(root: Master::ROOT)
-        path = File.expand_path("data/laws.yml", root)
+        root = Master.master_root(root:)
+        path = File.join(root, "data", "laws.yml")
         stat = File.stat(path)
-        key = [path, stat.mtime.to_f, stat.size]
+        key = [path, stat.size, stat.ino, stat.mtime.to_r]
         @mutex.synchronize do
           return @cache.fetch(key) if @cache.key?(key)
 
           @cache.clear if @cache.size >= MAX_CACHE_ENTRIES
-          @cache[key] = YAML.safe_load_file(path, aliases: true) || {}
+          @cache[key] = Master.load_laws(root:) || {}
         end
       end
     end

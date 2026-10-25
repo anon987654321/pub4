@@ -1,3 +1,4 @@
+require "fileutils"
 # frozen_string_literal: true
 
 require_relative "test_helper"
@@ -13,6 +14,22 @@ class TestFaceLawField < Minitest::Test
     ], laws.map { |row| row.fetch("id") }
     assert_equal Master::Face::LawField.config.fetch("law_glyphs"), laws.map { |row| row.fetch("glyph") }
     assert laws.all? { |row| row.fetch("priority").is_a?(Numeric) && !row.fetch("statement").empty? }
+  end
+
+  def test_catalog_uses_the_canonical_law_loader
+    Dir.mktmpdir("face-law-field") do |dir|
+      data = File.join(dir, "data")
+      FileUtils.mkdir_p(data)
+      File.write(File.join(data, "laws.yml"), "FIXTURE: {}\n")
+      expected = { "FIXTURE" => { "priority" => 1, "statement" => "loader fixture" } }
+
+      Master.stub(:load_laws, ->(root:) {
+        assert_equal File.expand_path(dir), root
+        expected
+      }) do
+        assert_same expected, Master::Face::LawField.catalog(root: dir)
+      end
+    end
   end
 
   def test_browser_payload_exposes_laws_without_duplicating_face_geometry
