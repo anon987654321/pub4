@@ -7,6 +7,10 @@ not create separate project backlog files. A source edit, a static contract, an 
 list, and a passing live run are different kinds of evidence. Close an item with the command or
 browser evidence recorded in the commit.
 
+## Follow-on JSONL compaction integrity (2026-10-26)
+
+The shared `Trace::Log.compact_rotated` and standalone Swallow compactor now drop a partial leading record when compacting a byte tail. This keeps retained backups parseable JSONL instead of making the first backup line a fragment. Tests for the shared writer, telemetry exporter and Swallow backup now parse both active and rotated files; Swallow's fixture uses actual newline-delimited records and asserts the retained tail is nonempty. These tests are not run.
+
 ## Follow-on Swallow log compaction (2026-10-26)
 
 The standalone `Master::Ground::Swallow` logger now serializes append/rotation with a private sidecar lock, reserves room for the next complete record, and compacts a rotated backup to its newest bounded tail before retaining it. The backup retention filter explicitly excludes the sidecar lock so it cannot unlink a lock inode while another process waits. A generation cap keeps only the five newest bounded backups. Added regression coverage in `MASTER/test/test_swallow.rb`; it remains unexecuted.
