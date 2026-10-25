@@ -65,6 +65,45 @@ class TestProviderQuarantineWiring < Minitest::Test
     end
   end
 
+  def test_operator_clear_releases_quarantine_even_with_same_second_timestamps
+    Dir.mktmpdir("quarantine-clear") do |dir|
+      now = Time.utc(2026, 10, 26, 12, 0, 0)
+      subject = Routing::ProviderQuarantine.new(
+        health: StubHealth.new(0.05),
+        path: File.join(dir, "quarantine.ndjson"),
+        now: -> { now },
+      )
+
+      subject.quarantine(model: "provider-a", reason: "fixture failure")
+      assert subject.quarantined?("provider-a")
+
+      subject.clear("provider-a")
+
+      refute subject.quarantined?("provider-a"),
+             "the latest clear event must supersede an earlier quarantine"
+    end
+  end
+
+  def test_provider_can_be_quarantined_again_after_operator_clear
+    Dir.mktmpdir("quarantine-rearm") do |dir|
+      now = Time.utc(2026, 10, 26, 12, 0, 0)
+      subject = Routing::ProviderQuarantine.new(
+        health: StubHealth.new(0.05),
+        path: File.join(dir, "quarantine.ndjson"),
+        now: -> { now },
+      )
+
+      subject.quarantine(model: "provider-a", reason: "first failure")
+      subject.clear("provider-a")
+      refute subject.quarantined?("provider-a")
+
+      subject.quarantine(model: "provider-a", reason: "new failure")
+
+      assert subject.quarantined?("provider-a"),
+             "a new quarantine event after clear must become effective"
+    end
+  end
+
   # ESCALATION_CHAIN is cheap → default → strong, and stronger_model read a
   # single static key instead of walking it. Escalating from cheap skipped
   # default; escalating twice asked for the same tier both times, so the
