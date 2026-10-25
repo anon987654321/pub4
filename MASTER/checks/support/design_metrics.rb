@@ -26,7 +26,6 @@ module Deploy
     # tv is #dc635c in design_tokens.yml, which records tv's own history. The
     # measurement below is kept because its lesson is about the background, not
     # about two hex values.
-    VERTICAL_BACKGROUNDS = %w[bg surface_elevated].freeze
 
     # Against the surfaces brgen actually paints, which are not social's.
     #
@@ -141,35 +140,17 @@ module Deploy
     # instead"; .market-hero-kicker, the rule it names, is gone.
     def vertical_accent_pairs(tokens, rails_root = nil)
       verticals = tokens["vertical_accents"]
+      return [] unless verticals.is_a?(Hash) && rails_root
 
-      social = tokens[VERTICAL_SURFACE_DIALECT] || tokens["social"]
-      return [] unless verticals.is_a?(Hash) && social.is_a?(Hash)
+      # Only measure the colour actually drawn in the vertical nav submit button:
+      # accent-ink stays as foreground and the vertical's hover value is the fill.
+      # Comparing the accent fill itself against page surfaces measured a
+      # foreground/background combination that no component renders.
+      ink = vertical_accent_ink(rails_root)
+      verticals.filter_map do |vertical, row|
+        next unless row.is_a?(Hash)
 
-      # Computed once, not per vertical.
-      light_only = rails_root ? light_only_vertical_keys(rails_root) : []
-      ink = rails_root ? vertical_accent_ink(rails_root) : nil
-
-      verticals.flat_map do |vertical, row|
-        next [] unless row.is_a?(Hash)
-
-        foreground_accent_pairs(vertical:, row:, social:, light_only:) +
-          hover_fill_pairs(vertical:, row:, ink:)
-      end
-    end
-
-    def foreground_accent_pairs(vertical:, row:, social:, light_only:)
-      return [] if light_only.include?("#{vertical}_accent")
-
-      fg = row["accent"]
-      return [] unless fg
-
-      VERTICAL_BACKGROUNDS.filter_map do |bg_key|
-        bg = social[bg_key]
-        ratio = bg && contrast_ratio(fg, bg)
-        next unless ratio
-
-        { label: "vertical_accents.#{vertical}_accent/#{VERTICAL_SURFACE_DIALECT}.#{bg_key}", fg:, bg:,
-          fg_key: "#{vertical}_accent", bg_key:, ratio: }
+        hover_fill_pairs(vertical:, row:, ink:).first
       end
     end
 
