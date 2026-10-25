@@ -287,6 +287,10 @@ module Master
 
         mutate(root:, subject:) do |state|
           state["learning_enabled"] = enabled
+          unless enabled
+            state["observations"] = []
+            state["suggestions"].reject! { |entry| entry.fetch("origin", "owner") == "observed_correction" }
+          end
           enabled
         end
       end
@@ -315,7 +319,7 @@ module Master
           values = values.merge(state.fetch("preferences").fetch(selected_scope, {}))
         end
         learning = state.fetch("learning_enabled")
-        has_pending = state.fetch("suggestions").any? { |entry| entry.fetch("origin", "owner") == "observed_correction" }
+        has_pending = learning && state.fetch("suggestions").any? { |entry| entry.fetch("origin", "owner") == "observed_correction" }
         return if values.empty? && !learning && !has_pending
 
         lines = [
@@ -330,7 +334,7 @@ module Master
         if learning
           lines << "Preference learning is enabled. Only the same low-risk correction signal on two separate user turns may create an inactive suggestion. Do not infer sensitive traits, retain raw user messages, or activate suggestions yourself. The owner must explicitly accept an ID before it becomes active."
         end
-        pending = state.fetch("suggestions").select { |entry| entry.fetch("origin", "owner") == "observed_correction" }
+        pending = learning ? state.fetch("suggestions").select { |entry| entry.fetch("origin", "owner") == "observed_correction" } : []
         unless pending.empty?
           lines << "Pending suggestions are inactive. You may mention them naturally and ask whether the owner wants to accept one; do not treat them as active preferences."
           pending.first(3).each do |entry|
