@@ -142,7 +142,8 @@ class TestSelfFindingsDrift < Minitest::Test
         Tool.stub(:population, ->(name) { current.fetch(name) }) do
           Tool.stub(:ceiling, ->(name = "law") { ceilings.fetch(name) }) do
             Tool.stub(:record, -> { records += 1; true }) do
-              refute Tool.run(ratchet: true)
+              _stdout, stderr = capture_io { refute Tool.run(ratchet: true) }
+              assert_match(/refusing to refresh stale attribution while findings exceed baseline/, stderr)
             end
           end
         end

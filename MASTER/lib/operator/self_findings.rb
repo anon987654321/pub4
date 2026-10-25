@@ -385,6 +385,16 @@ module Operator
         stale = POPULATIONS.any? { |name| stale_recorded_members(name).any? }
         within_ceilings = POPULATIONS.all? { |name| population(name).size <= ceiling(name) }
         return record if stale && within_ceilings
+
+        if stale && !within_ceilings
+          POPULATIONS.each do |name|
+            current = population(name).size
+            baseline = ceiling(name)
+            next unless current > baseline
+
+            warn "self_findings #{name}: refusing to refresh stale attribution while findings exceed baseline — #{current} > #{baseline}"
+          end
+        end
       end
 
       over.empty?
