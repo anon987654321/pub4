@@ -28,8 +28,16 @@ class TestRecoveryPubManifest < Minitest::Test
     assert_empty missing, "missing recovery files: #{missing.join(", ")}"
   end
 
-  def test_recovery_contract_has_critical_items
+  def test_restore_prompt_names_the_canonical_manifest
     contract = YAML.safe_load(ROOT.join("MASTER/data/recovery/pub_restore.yml").read, permitted_classes: [Date])
+    prompt = contract.fetch("agent_prompt")
+
+    assert_includes prompt, "MASTER/data/recovery/legacy_manifest.yml"
+    refute_includes prompt, "RESTORE_FROM_PUB.md"
+    assert ROOT.join("MASTER/data/recovery/legacy_manifest.yml").file?
+  end
+
+  def test_recovery_contract_has_critical_items    contract = YAML.safe_load(ROOT.join("MASTER/data/recovery/pub_restore.yml").read, permitted_classes: [Date])
     ids = contract.fetch("critical_items").map { |item| item.fetch("id") }
 
     assert_includes ids, "mega_all_apps"

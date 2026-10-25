@@ -65,6 +65,6 @@ checks:
     - MASTER/data/recovery/ai3/legacy/ai3.rb
 
 agent_prompt: >
-  Before claiming pub4 restored pub, read RESTORE_FROM_PUB.md and this file.
+  Before claiming pub4 restored pub, read MASTER/data/recovery/legacy_manifest.yml and this file.
   For every item in critical_items, prove it is restored, ported, archived, or
   retired. Do not infer completion from naming similarity.
