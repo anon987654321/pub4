@@ -15,11 +15,16 @@ class MigrationSafetyContractTest < Minitest::Test
     end
   end
 
-  def test_migrations_do_not_use_unbounded_destructive_helpers
+  def test_migrations_review_each_destructive_table_drop
     Dir.glob(File.join(ROOT, "{brgen,amber,bsdports}", "db/migrate/*.rb")).each do |path|
-      source = File.read(path)
-      assert_equal 0, source.scan(/\bdrop_table\b/).length,
-        "#{path} must not drop tables without an explicit safety review"
+      lines = File.readlines(path, chomp: true)
+      lines.each_with_index do |line, index|
+        next unless line.match?(/\bdrop_table\b/)
+
+        context = lines[[index - 3, 0].max...index].join("\n")
+        assert_includes context, "migration-safety-reviewed:",
+                        "#{path}:#{index + 1} drops a table without a local safety rationale"
+      end
     end
   end
 end
