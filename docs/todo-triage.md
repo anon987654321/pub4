@@ -48,7 +48,7 @@ until its own regression and required live evidence are both recorded.
 
 ## Evidence capture
 
-Use OPENBSD/bin/evidence LABEL -- COMMAND [ARG...] from inside the checkout.
+Use ruby OPENBSD/bin/evidence LABEL -- COMMAND [ARG...] from inside the checkout.
 The helper writes JSON and captured command output to evidence/, recording
 the Git commit, branch, before/after dirty state, duration, exit status,
 timeout, host/runtime and optional attachment SHA-256 values.
