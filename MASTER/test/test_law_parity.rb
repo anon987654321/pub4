@@ -16,6 +16,18 @@ class TestLawParity < Minitest::Test
     assert_match(/law_parity: ok/, parity.report) if parity.ok?
   end
 
+  def test_empty_catalogue_is_not_reported_as_clean
+    Dir.mktmpdir("law_parity") do |dir|
+      path = File.join(dir, "laws.yml")
+      File.write(path, "{}\n")
+
+      error = assert_raises(RuntimeError) do
+        Master::Fix::LawParity.new(root: dir, laws_path: path).call
+      end
+      assert_match(/non-empty mapping/, error.message)
+    end
+  end
+
   def test_deferred_without_expiry_is_gap
     dir = Dir.mktmpdir("law_parity")
     path = File.join(dir, "laws.yml")

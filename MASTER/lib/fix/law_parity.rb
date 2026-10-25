@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "yaml"
 require "date"
 require "set"
 
@@ -16,8 +15,9 @@ module Master
       Gap = Data.define(:id, :priority, :tier, :reason)
 
       def initialize(root: Master::ROOT, laws_path: nil)
-        @root = File.expand_path(root)
-        @laws_path = laws_path || File.join(@root, "data", "laws.yml")
+        @root = File.expand_path(Master.master_root(root:))
+        @laws_path = laws_path
+        @laws_file = laws_path || File.join(@root, "data", "laws.yml")
       end
 
       def call
@@ -55,11 +55,12 @@ module Master
       private
 
       def priority_constitutional_entries
-        data = YAML.safe_load_file(@laws_path, aliases: true)
-        raise "laws.yml root must be a mapping" unless data.is_a?(Hash)
-        overlay_path = File.join(File.dirname(@laws_path), "law_enforcement.yml")
+        data = @laws_path ? Master.load_yaml(@laws_path) : Master.load_laws(root: @root)
+        raise "laws.yml root must be a non-empty mapping" unless data.is_a?(Hash) && !data.empty?
+
+        overlay_path = File.join(File.dirname(@laws_file), "law_enforcement.yml")
         if File.file?(overlay_path)
-          overlay = YAML.safe_load_file(overlay_path, aliases: true) || {}
+          overlay = Master.load_yaml(overlay_path) || {}
           overlay.each do |id, extra|
             next unless extra.is_a?(Hash) && data[id].is_a?(Hash)
 
