@@ -30,7 +30,12 @@ class TestVisualAnchorThreading < Minitest::Test
       scanner.define_singleton_method(:scan) { |_p, laws: nil| Master::Result.ok([]) }
       loop = Master::Fix::RepairLoop.new(law: Struct.new(:id, :severity).new("TEST_RULE", :warning), agent: nil,
                                       scanner:, root:, visual_custody: custody)
-      loop.send(:apply, path, "b{}\n", { law: "TEST_RULE", file: path, line: 1, anchor: ".site-nav" })
+      # This temporary Rails-shaped fixture has no app bin/rails. Stub the
+      # focused-test runner so this test isolates anchor threading rather than
+      # an expected missing executable in an artificial tree.
+      loop.stub(:failing_test_for, nil) do
+        loop.send(:apply, path, "b{}\n", { law: "TEST_RULE", file: path, line: 1, anchor: ".site-nav" })
+      end
       assert_equal [[".site-nav"]], seen
     end
   end
