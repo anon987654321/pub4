@@ -323,7 +323,14 @@ module Master
           lines << "- #{label} [#{key}; scope=#{preference_scope_for(state, selected_scope, key)}; source=#{entry.fetch("source")}; confidence=#{format("%.2f", entry.fetch("confidence"))}]: #{entry.fetch("value")}"
         end
         if learning
-          lines << "Preference learning is enabled. Notice repeated explicit corrections to interaction style or workflow, not one-off requests or sensitive personal traits. Ask before retaining an inferred preference. Never claim a suggestion was saved. The owner may stage a candidate with /preferences suggest KEY=VALUE scope=SCOPE reason=\"...\" and must explicitly accept its ID before it becomes active."
+          lines << "Preference learning is enabled. Only the same low-risk correction signal on two separate user turns may create an inactive suggestion. Do not infer sensitive traits, retain raw user messages, or activate suggestions yourself. The owner must explicitly accept an ID before it becomes active."
+        end
+        pending = state.fetch("suggestions").select { |entry| entry.fetch("origin", "owner") == "observed_correction" }
+        unless pending.empty?
+          lines << "Pending suggestions are inactive. You may mention them naturally and ask whether the owner wants to accept one; do not treat them as active preferences."
+          pending.first(3).each do |entry|
+            lines << "- Pending #{entry.fetch("id")}: #{entry.fetch("key")}=#{entry.fetch("value")} (scope=#{entry.fetch("scope")}, evidence_count=#{entry.fetch("evidence_count", 0)}). Acceptance must be initiated by the owner."
+          end
         end
         lines.join("\n")
       rescue StandardError => e
