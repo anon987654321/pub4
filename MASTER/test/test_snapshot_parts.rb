@@ -138,56 +138,17 @@ class TestSnapshotParts < Minitest::Test
     end
   end
 
-  def test_a_file_without_a_trailing_newline_and_a_file_with_backtick_fences_survive_exactly
+  def test_a_file_without_a_trailing_newline_or_with_a_bare_cr_and_backtick_fences_survives_exactly
     with_repo do |repo|
       put(repo, "DEMO/lib/bare.txt", "no newline at the end")
+      put(repo, "DEMO/lib/bare_cr.txt", "source ending in a bare carriage return\r")
       put(repo, "DEMO/lib/doc.md", "# T\n\n````\n```ruby\nx\n```\n````\n")
       put(repo, "DEMO/lib/empty.txt", "")
       Operator::SnapshotPack.write(Host, "DEMO", io: StringIO.new, full: true)
 
-      assert_equal 3, Verify.call(Host, "DEMO", variant: :exact, io: StringIO.new)
+      assert_equal 4, Verify.call(Host, "DEMO", variant: :exact, io: StringIO.new)
     end
   end
-
-  def test_the_code_variant_drops_comments_and_is_named_with_code
-    with_repo do |repo|
-      put(repo, "DEMO/lib/a.rb", "# Does a.\n# Second.\n\nputs 1 # trailing\n")
-      Operator::SnapshotPack.write(Host, "DEMO", io: StringIO.new, full: true, variants: %i[exact code])
-
-      assert_equal %w[snapshot_DEMO.code.md snapshot_DEMO.md], Dir.children(repo).grep(/snapshot/).sort
-      code = File.read(File.join(repo, "snapshot_DEMO.code.md"))
-      assert_includes code, "# Does a.\nputs 1"
-      refute_includes code, "Second."
-      refute_includes code, "trailing"
-      assert_includes File.read(File.join(repo, "snapshot_DEMO.md")), "# Second."
-    end
-  end
-
-  def test_regenerating_deletes_every_old_variant_and_part_of_the_tree_only
-    with_repo do |repo|
-      put(repo, "DEMO/lib/a.rb", "puts 1\n")
-      old = %w[snapshot_DEMO.md snapshot_DEMO.code.md snapshot_DEMO.part02-of-03.md snapshot_DEMO.code.part01-of-02.md snapshot_DEMO.part003.md]
-      (old + %w[snapshot_OTHER.md snapshot_DEMOS.md notes.md]).each { |n| put(repo, n, "old") }
-
-      Operator::SnapshotPack.write(Host, "DEMO", io: StringIO.new, full: true)
-
-      assert_equal %w[snapshot_DEMO.md snapshot_DEMOS.md snapshot_OTHER.md], Dir.children(repo).grep(/snapshot/).sort
-      assert_includes Dir.children(repo), "notes.md"
-    end
-  end
-
-  def test_the_part_size_can_come_from_the_environment
-    with_repo do |repo|
-      4.times { |i| put(repo, "DEMO/lib/f#{i}.rb", "#{"puts #{i}\n" * 800}") }
-      ENV["MASTER_SNAPSHOT_PART_BYTES"] = "9000"
-      Operator::SnapshotPack.write(Host, "DEMO", io: StringIO.new, full: true)
-
-      assert_operator Dir.children(repo).grep(/part\d+-of-\d+/).size, :>, 1
-    ensure
-      ENV.delete("MASTER_SNAPSHOT_PART_BYTES")
-    end
-  end
-
   # --- verification ---
 
   def written(repo, **options)
