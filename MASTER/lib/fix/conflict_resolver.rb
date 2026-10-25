@@ -193,9 +193,31 @@ module Master
           file: file.to_s,
           line: line.to_i,
         }
-        FileUtils.mkdir_p(File.dirname(log_path))
-        rotate_log_if_oversized!
-        File.write(log_path, "#{JSON.generate(payload)}\n", mode: "a")
+        directory = File.dirname(log_path)
+        FileUtils.mkdir_p(directory)
+        line = JSON.generate(payload) + "\n"
+        raise ArgumentError, "conflict record exceeds log cap" if line.bytesize >= LOG_MAX_BYTES
+
+        lock_path = "#{log_path}.lock"
+        raise IOError, "conflict log lock is a symlink" if File.symlink?(lock_path)
+        File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |lock|
+          File.chmod(0o600, lock_path)
+          lock.flock(File::LOCK_EX)
+          raise IOError, "conflict log is a symlink" if File.symlink?(log_path)
+          File.chmod(0o600, log_path) if File.file?(log_path)
+
+          rotate_log_if_oversized!(threshold: LOG_MAX_BYTES - line.bytesize)
+          size = File.file?(log_path) ? File.size(log_path) : 0
+          raise IOError, "conflict log rotation failed to honor byte cap" if size + line.bytesize > LOG_MAX_BYTES
+
+          File.open(log_path, File::WRONLY | File::CREAT | File::APPEND, 0o600) do |io|
+            io.write(line)
+            io.flush
+            io.fsync
+          end
+        ensure
+          lock.flock(File::LOCK_UN) if lock
+        end
         bus&.publish("conflict:resolved", payload)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "conflict_resolver.log", event_bus: bus)
@@ -210,8 +232,8 @@ module Master
         File.join(root, LOG_PATH)
       end
 
-      def rotate_log_if_oversized!
-        return unless File.exist?(log_path) && File.size(log_path) > LOG_MAX_BYTES
+      def rotate_log_if_oversized!(threshold: LOG_MAX_BYTES)
+        return unless File.file?(log_path) && File.size(log_path) > threshold
 
         oldest = "#{log_path}.#{LOG_GENERATIONS}"
         File.delete(oldest) if File.exist?(oldest)
