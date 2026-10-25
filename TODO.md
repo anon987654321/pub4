@@ -29,7 +29,7 @@ browser evidence recorded in the commit.
 
 ## MASTER CLI, web, voice, and shared session
 
-- [ ] Connect preference-learning prompts to measured interaction feedback so MASTER can stage evidence-backed suggestions from repeated corrections without requiring the owner to initiate `/preferences suggest`; persistence must still require explicit acceptance.
+- [ ] Run `cd MASTER && ruby -Itest test/test_owner_preferences.rb` and the relevant agent/command-registry tests on the exact current commit; then smoke-test two repeated correction turns through CLI and web, verify the pending suggestion is surfaced, and prove acceptance is owner-only. Source and regression cases are committed, but runtime execution is not yet evidenced.
 - [ ] Finish the Ghostty-inspired web-console pass with rendered visual review. The canonical
   palette now separates graphite shell surfaces, muted violet focus, neutral text, and the
   sparse lime semantic signal; the face renderer remains the focal point. Source-level mobile
