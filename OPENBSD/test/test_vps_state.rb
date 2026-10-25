@@ -26,6 +26,14 @@ class TestVpsState < Minitest::Test
     end
   end
 
+  def test_production_status_reader_uses_fixed_broker_verb
+    source = File.read(SCRIPT)
+
+    assert_includes source, 'Open3.capture2e("doas", "-n", broker, "deploy-status-read", app)'
+    assert_includes source, 'broker = "/usr/local/sbin/pub4-admin"'
+    assert_includes source, 'STAMP_DIR == "/var/db/pub4"'
+  end
+
   def test_corrupt_in_progress_deploy_status_is_visible
     Dir.mktmpdir do |dir|
       status_dir = File.join(dir, "deploy_status")
