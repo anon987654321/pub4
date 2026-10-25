@@ -90,7 +90,7 @@ class MasterWebAsciiFaceContractTest < Minitest::Test
 
   def test_secondary_orbital_particles_are_deterministic_and_subordinate
     part3 = read(PUBLIC, "face.part3.txt")
-    orbital = part3[/const CLI_FACE_WEB_DENSITY = 360.*?^}/m]
+    orbital = part3[/const CLI_FACE_WEB_DENSITY = 360;.*?function ensureOrbitalField\(\) \{.*?^}/m]
 
     refute_nil orbital
     assert_includes orbital, "function faceFieldSample(index, salt = 0)"
