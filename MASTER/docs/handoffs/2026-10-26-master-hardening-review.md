@@ -30,7 +30,7 @@ All newly added and modified tests remain unexecuted. No runtime PASS is claimed
 
 ## Follow-on telemetry append and broker privacy pass
 
-- Provider health and quarantine share a serialized append primitive using an exclusive `flock`, seek-to-end, whole-line write, flush/fsync, and private mode enforcement. Added an 8-thread/200-event JSONL integrity regression test; it remains unexecuted.
+- Provider health and quarantine share a private append primitive using a sidecar `flock`, complete-line writes, flush/fsync, and the existing 25 MiB trace-log ceiling. Rotation and append are serialized; oversized single events or failed rotation refuse the write. Added an 8-thread/200-event integrity test plus bounded-rotation and oversized-record tests; none have been run.
 - The deploy-status read broker now requires status files to have no group/world permission bits. Added a regression case for mode 0644; it remains unexecuted.
 - There is no live verification: no syntax or suite run, no OpenBSD service account check, and no deployment. The consolidated list and truthful status are in root `TODO.md`.
 
