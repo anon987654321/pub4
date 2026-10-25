@@ -46,6 +46,22 @@ class TestRecoveryPubManifest < Minitest::Test
     assert_includes ids, "privcam_active_decision"
   end
 
+  def test_ai3_recovery_target_is_canonical_across_ledgers
+    contract = YAML.safe_load(ROOT.join("MASTER/data/recovery/pub_restore.yml").read, permitted_classes: [Date])
+    ai3_item = contract.fetch("critical_items").find { |item| item.fetch("id") == "ai3_standalone" }
+    expected_target = "MASTER/data/recovery/ai3/legacy/"
+
+    refute_nil ai3_item
+    assert_equal expected_target, ai3_item.fetch("expected_target")
+    assert_includes contract.fetch("checks").fetch("missing_until_restored"), "#{expected_target}ai3.rb"
+
+    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    legacy_ai3 = manifest.fetch("legacy_roots").find { |item| item.fetch("path") == "ai3/" }
+
+    refute_nil legacy_ai3
+    assert_equal expected_target, legacy_ai3.fetch("target_path")
+  end
+
   def test_legacy_manifest_has_state_definitions
     manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     states = manifest.fetch("states")
