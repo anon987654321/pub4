@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require_relative "log"
 
 module Master
   module Trace
@@ -88,7 +89,7 @@ module Master
       def append(entry)
         entry[:ts] = Time.now.to_i
         Master::Trace::Telemetry.span("metrics.append", keys: entry.keys.join(",")) do
-          File.open(@path, "a") { |f| f.puts(JSON.generate(entry)) }
+          Master::Trace::Log.append_jsonl(@path, entry, mode: 0o600, directory_mode: 0o700)
         end
       rescue StandardError => e
         @bus&.publish("metrics:append_error", error: e.message)
