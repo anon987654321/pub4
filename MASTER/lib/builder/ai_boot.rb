@@ -48,7 +48,7 @@ module Master
       run = -> { publish_self_test(bus, Review::Scan::SelfTest.new(root:, event_bus: bus).call) }
       # Only a strict boot acts on the result, so only a strict boot waits for it: the self-test read the
       # source tree for 1.9s of every ordinary boot before the prompt appeared.
-      strict_boot_requested? ? run.call : Thread.new(&run).tap { |thread| thread.report_on_exception = false }
+      strict_boot_requested? ? run.call : watched_thread(bus, "builder_self_test", &run)
     end
 
     def build_agent_bundle(root:, infra:, bus:)
