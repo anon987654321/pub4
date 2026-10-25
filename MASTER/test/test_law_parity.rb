@@ -12,6 +12,17 @@ class TestLawParity < Minitest::Test
     assert_equal 7, gaps.first.priority
   end
 
+  def test_law_loader_errors_are_not_swallowed_as_an_empty_registry
+    parity = Master::Fix::LawParity.new
+
+    capture_io do
+      ::Law.stub(:load_all, ->(*) { raise SyntaxError, "broken law fixture" }) do
+        assert_raises(SyntaxError) { parity.send(:law_pack_ids) }
+      end
+    end
+  end
+
+
   def test_report_ok_string_when_clean
     parity = Master::Fix::LawParity.new
     assert_match(/law_parity: ok/, parity.report) if parity.ok?

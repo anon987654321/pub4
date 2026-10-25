@@ -133,47 +133,42 @@ module Master
 
       def law_pack_ids
         ids = Set.new
-        begin
-          require_relative "../../law/definition" unless defined?(::Law)
-          ::Law.load_all if ::Law.respond_to?(:load_all)
-          ::Law.definitions.each_key { |k| ids << k.to_s } if defined?(::Law) && ::Law.respond_to?(:definitions)
-        rescue Exception
-          nil
-        end
+        require_relative "../../law/definition" unless defined?(::Law)
+        ::Law.load_all if ::Law.respond_to?(:load_all)
+        ::Law.definitions.each_key { |key| ids << key.to_s } if defined?(::Law) && ::Law.respond_to?(:definitions)
         ids
+      rescue StandardError, ScriptError => e
+        Master::Ground::Swallow.log(e, context: "Fix::LawParity.law_pack_ids", severity: :load_bearing)
+        raise
       end
 
       def scan_registry_ids
         ids = Set.new
-        begin
-          return ids unless File.file?(File.expand_path("../review/scan/law.rb", __dir__))
+        return ids unless File.file?(File.expand_path("../review/scan/law.rb", __dir__))
 
-          require_relative "../review/scan/law_dsl"
-
-          Master::Review::Scan::Law.registry.each do |klass|
-            decl = klass.respond_to?(:declaration) ? klass.declaration : nil
-            ids << decl[:id].to_s if decl && decl[:id]
-          end
-        rescue Exception
-          nil
+        require_relative "../review/scan/law_dsl"
+        Master::Review::Scan::Law.registry.each do |klass|
+          declaration = klass.respond_to?(:declaration) ? klass.declaration : nil
+          ids << declaration[:id].to_s if declaration && declaration[:id]
         end
         ids
+      rescue StandardError, ScriptError => e
+        Master::Ground::Swallow.log(e, context: "Fix::LawParity.scan_registry_ids", severity: :load_bearing)
+        raise
       end
 
       def scan_registry_tags
         tags = Set.new
-        begin
-          require_relative "../review/scan/law_dsl"
-          Master::Review::Scan::Law.registry.each do |klass|
-            # A LawDSL class carries its tags on the class; a declare-style one in its declaration.
-            Array(klass.dsl_tags).each { |tag| tags << tag.to_s.upcase }
-            decl = klass.respond_to?(:declaration) ? klass.declaration : nil
-            Array(decl && decl[:law_tags]).each { |tag| tags << tag.to_s.upcase }
-          end
-        rescue Exception
-          nil
+        require_relative "../review/scan/law_dsl"
+        Master::Review::Scan::Law.registry.each do |klass|
+          Array(klass.dsl_tags).each { |tag| tags << tag.to_s.upcase }
+          declaration = klass.respond_to?(:declaration) ? klass.declaration : nil
+          Array(declaration && declaration[:law_tags]).each { |tag| tags << tag.to_s.upcase }
         end
         tags
+      rescue StandardError, ScriptError => e
+        Master::Ground::Swallow.log(e, context: "Fix::LawParity.scan_registry_tags", severity: :load_bearing)
+        raise
       end
 
       def law_define_ids_from_source
@@ -184,14 +179,14 @@ module Master
         Dir.glob(File.join(dir, "*.rb")).each do |file|
           content = File.read(file, mode: "r:bom|utf-8", invalid: :replace, undef: :replace)
           content.each_line do |line|
-            if (m = line.match(/Law\.define\(:(\w+)/))
-              ids << m[1]
-            end
+            match = line.match(/Law\.define\(:(\w+)/)
+            ids << match[1] if match
           end
-        rescue StandardError
-          next
         end
         ids
+      rescue StandardError, ScriptError => e
+        Master::Ground::Swallow.log(e, context: "Fix::LawParity.law_define_ids_from_source", severity: :load_bearing)
+        raise
       end
     end
   end
