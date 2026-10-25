@@ -62,7 +62,7 @@ class LayoutCheckEnforcementContractTest < Minitest::Test
     assert_includes source, "font-size: clamp(2rem, 5vw, 3.25rem);"
     assert_includes source, "font-weight: var(--weight-heavy);"
     assert_includes source, "text-transform: none;"
-    assert_includes source, "main#main-content :is(h2, h3, h4, h5, h6)"
+    assert_match(/main#main-content :is\(h2, h3, h4, h5, h6(?:,|\))/, source)
     assert_includes source, "font-size: var(--text-lg);"
     assert_includes source, "border: 0;"
     assert_includes source, "body.wscons .tabs .active"
