@@ -261,12 +261,21 @@ module Master
         nil
       end
 
-      # df -kP: the fourth column is the space available to this user, in KiB.
+      # df -kP exposes available space in KiB. Validate its header and value:
+      # malformed output must be unavailable, not a fabricated 0.0 GB reading.
       def disk_free_gb(path = @root)
         out, status = Master::Io::Exec.capture2e("df", "-kP", path)
         return unless status.success?
 
-        (out.lines.last.to_s.split[3].to_f / (1024 * 1024)).round(1)
+        lines = out.to_s.lines.map(&:strip).reject(&:empty?)
+        header = lines.first&.split
+        available_index = header&.index("Available")
+        return unless available_index
+
+        available_kib = lines.drop(1).last&.split&.[](available_index)
+        return unless available_kib&.match?(/\A\d+\z/)
+
+        (available_kib.to_i / (1024 * 1024.0)).round(1)
       rescue StandardError
         nil
       end
