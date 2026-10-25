@@ -72,6 +72,17 @@ class CssCoverageLintTest < Minitest::Test
 
   # Both lists must be non-empty for the counts to mean anything: an empty scan reads
   # as a clean tree, which is the failure mode every check here exists to catch.
+  def test_the_corpus_includes_shared_and_extracted_engine_surfaces
+    assert L.views.any? { |path| path.include?("/__shared/") },
+           "the shared engine's views must contribute class usage"
+    assert L.stylesheets.any? { |path| path.include?("/__shared/") },
+           "the shared engine's stylesheets must contribute class definitions"
+    assert L.views.any? { |path| path.include?("/brgen_marketplace/") },
+           "extracted marketplace views must contribute class usage"
+    assert L.stylesheets.any? { |path| path.include?("/brgen_marketplace/") },
+           "extracted marketplace stylesheets must contribute class definitions"
+  end
+
   def test_it_reads_something
     refute_empty L.defined_names
     refute_empty L.used_names
