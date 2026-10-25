@@ -44,8 +44,8 @@ class TestConflictResolverLogRotation < Minitest::Test
       [*1..generations].each do |index|
         assert_operator File.size("#{path}.#{index}"), :<=, Master::Fix::ConflictResolver::LOG_MAX_BYTES
       end
-      latest_tail = File.open("#{path}.1", "rb") { |file| file.seek(-16, IO::SEEK_END); file.read }
-      oldest_tail = File.open("#{path}.#{generations}", "rb") { |file| file.seek(-16, IO::SEEK_END); file.read }
+      latest_tail = File.read("#{path}.1")
+      oldest_tail = File.read("#{path}.#{generations}")
       assert_includes latest_tail, "gen#{total_rotations - 1}"
       assert_includes oldest_tail, "gen#{total_rotations - generations}"
     end
