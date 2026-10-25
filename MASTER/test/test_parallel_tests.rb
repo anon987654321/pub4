@@ -34,7 +34,7 @@ class TestParallelTests < Minitest::Test
     out = StringIO.new
     command = lambda do |files|
       if files.include?("hang")
-        [RbConfig.ruby, "-e", "sleep 30"]
+        [RbConfig.ruby, "-e", "STDERR.puts 'test-start0: HungSuite#test_stuck'; STDERR.flush; sleep 30"]
       else
         [RbConfig.ruby, "-e", "puts 'test-start0: TestOk#test_one'; puts 'TestOk#test_one = 0.00 s = .'; puts 'Finished in 0.01s'; puts '1 runs, 1 assertions, 0 failures, 0 errors, 0 skips'; exit 0"]
       end
@@ -47,6 +47,7 @@ class TestParallelTests < Minitest::Test
     refute passed
     assert_operator elapsed, :<, 8
     assert_includes out.string, "test-worker-timeout0:"
+    assert_includes out.string, "last_test=HungSuite#test_stuck"
     assert_includes out.string, "TIMEOUT"
   end
 
