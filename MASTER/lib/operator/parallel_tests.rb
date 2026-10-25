@@ -73,9 +73,13 @@ module Operator
     end
 
     def start(bucket, log:, command:)
-      env = { "MASTER_TEST_START_MARKERS" => ENV.fetch("MASTER_TEST_START_MARKERS", "1") }
+      marker_setting = ENV.fetch("MASTER_TEST_START_MARKERS", "1")
+      env = { "MASTER_TEST_START_MARKERS" => marker_setting }
       pid = Process.spawn(env, *command.call(bucket), out: log, err: %i[child out], in: File::NULL, pgroup: true)
-      { pid:, log:, offset: 0, started_at: Process.clock_gettime(Process::CLOCK_MONOTONIC), status: nil, timed_out: false }
+      {
+        pid:, log:, offset: 0, started_at: Process.clock_gettime(Process::CLOCK_MONOTONIC),
+        status: nil, timed_out: false, start_markers: marker_setting == "1"
+      }
     end
 
     def poll(worker, out)
@@ -147,8 +151,21 @@ module Operator
     end
 
     def summary_present?(worker)
-      File.foreach(worker.fetch(:log), encoding: "UTF-8", invalid: :replace, undef: :replace)
-          .any? { |line| SUMMARY_LINE.match?(line.chomp) }
+      result_count = 0
+      start_count = 0
+      summary_runs = nil
+
+      File.foreach(worker.fetch(:log), encoding: "UTF-8", invalid: :replace, undef: :replace) do |raw_line|
+        line = raw_line.chomp
+        result_count += 1 if RESULT_LINE.match?(line)
+        start_count += 1 if line.start_with?("test-start0: ")
+        summary_runs = line[/\A(\d+) runs?/, 1].to_i if SUMMARY_LINE.match?(line)
+      end
+
+      return false unless summary_runs == result_count
+      return false if worker[:start_markers] && start_count != result_count
+
+      true
     rescue Errno::ENOENT
       false
     end
