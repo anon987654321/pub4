@@ -31,7 +31,9 @@ class CookieConsentContractTest < Minitest::Test
   def test_optional_technology_waits_for_consent
     assert_includes File.read(HOTWIRE), %(allows("analytics"))
     assert_includes File.read(LINK_CONVERTER), %(controller: "link-converter")
-    assert_includes File.read(CONTROLLER), %(saveConsent(selected))
+    controller = File.read(CONTROLLER)
+    assert_includes controller, %(this.persist(selected))
+    assert_includes controller, %(saveConsent(purposes))
   end
 
   def test_both_apps_mount_the_banner_controller
