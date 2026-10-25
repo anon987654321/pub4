@@ -1,5 +1,7 @@
 # pub4 outstanding work
 
+Last reconciled against `main` at `3cd29c8389f7c777a4b7397c800c643bc0067426` on 2026-10-25. The audit baseline below is historical, not the current HEAD.
+
 Audit baseline: d9a008ba1f332a312122e342913486c54a32f18a. This is the one cross-tree backlog; do
 not create separate project backlog files. A source edit, a static contract, an empty CI status
 list, and a passing live run are different kinds of evidence. Close an item with the command or
@@ -29,7 +31,7 @@ browser evidence recorded in the commit.
 
 ## MASTER CLI, web, voice, and shared session
 
-- [ ] Run `cd MASTER && ruby -Itest test/test_owner_preferences.rb` and the relevant agent/command-registry tests on the exact current commit; then smoke-test two repeated correction turns through CLI and web, verify the pending suggestion is surfaced, and prove acceptance is owner-only. Source and regression cases are committed, but runtime execution is not yet evidenced.
+- [ ] Run `cd MASTER && ruby -Itest test/test_owner_preferences.rb` and the relevant agent/command-registry tests on the exact current commit; then smoke-test two repeated correction turns through CLI and web, verify the pending suggestion is surfaced, and prove acceptance is owner-only. Source and regression cases are committed, but runtime execution is not yet evidenced. Acceptance must also prove that an accepted preference changes the intended prompt, model-routing, CLI/web or face behavior without overriding `soul.yml`/`laws.yml`; a saved preference alone is not adaptive behavior.
 - [ ] Finish the Ghostty-inspired web-console pass with rendered visual review. The canonical
   palette now separates graphite shell surfaces, muted violet focus, neutral text, and the
   sparse lime semantic signal; the face renderer remains the focal point. Source-level mobile
@@ -70,9 +72,7 @@ browser evidence recorded in the commit.
   turn timing, interruption/barge-in, microphone permission denial, STT/TTS timeout, and
   declared fallbacks. Measure latency on the target machine rather than relying on a mocked
   worker.
-- [ ] Capture real-browser face boot/render evidence: first-tap behavior, failed asset recovery,
-  context loss, lifecycle cleanup, reduced motion, renderer budget, phone thermal/battery
-  behavior, and GPU/device performance claims.
+- [ ] Capture real-browser face boot/render evidence: first-tap behavior, failed asset recovery, context loss, lifecycle cleanup, reduced motion, renderer budget, phone thermal/battery behavior, and GPU/device performance claims. Include the requested grayscale palette, original single CLI prompt when the face is exposed, micro-/nano-expressions, duration-based lip-sync against actual TTS playback, and face/prompt coexistence. Inspect the generated runtime bundle, not only its split source parts.
 
 ## MASTER personal assistance
 
@@ -105,6 +105,7 @@ browser evidence recorded in the commit.
     in write mode (fixed in 6806b6fdc; its blank-line edits were restored). Still slow: boot
     17.6s, the greeting at 26.7s, each reply 13–16s end to end. Make replies stream their first
     words.
+  - Reproduce the latency on the current HEAD with a monotonic timeline for boot, first visible token, completed reply, model/provider, retries and fallback hops. Test CLI and web separately. Confirm that streaming begins on the first usable provider chunk and that a failed stream emits a truthful error before switching lanes; do not claim a latency win from mocks or source inspection.
   - "does god exist? give me your actual view" ran two web searches (the second appending
     "official documentation") for a question that asks for a view, not evidence. Weather then
     said web tools were unavailable, and no answer cited a source. Decide whether ordinary
@@ -228,6 +229,7 @@ browser evidence recorded in the commit.
   responses independent of account existence. Shared CSP nonce initializers exist, but real
   response headers/enforcement and targeted `html_safe` data-flow review remain unverified.
   Re-test the actual production boundary; do not close this item from source inspection alone.
+- [ ] Verify model-pool selection and fallback on the exact current HEAD with Ollama unavailable or quota-dead, each actually configured provider, and at least one healthy fallback. Exercise `test_fix_fresh_checkout_models.rb`, `test_compute_pool.rb`, `test_fallback_chain.rb`, and `test_lane_pool.rb`; record the exact test output. Check that stale saved-model pins and unreachable local/cloud lanes cannot beat a live lane, and that one unhealthy provider cannot make the pool appear healthy. These cases currently exist as source/tests, not as a run performed for this reconciliation.
 - [ ] Benchmark RubyLLM routing/provider gains using representative workloads: latency, success
   rate, token/context use, cost, retries, circuit breakers, and fallback quality. Keep
   measurements per provider/model and distinguish observed values from estimates.
