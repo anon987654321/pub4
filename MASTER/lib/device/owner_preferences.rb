@@ -19,9 +19,51 @@ module Master
       SCHEMA = 1
       MAX_BYTES = 16_384
       MAX_SUGGESTIONS = 20
+      MAX_OBSERVATIONS = 40
       MAX_REASON_BYTES = 240
       SCOPES = %w[all coding research support creative planning].freeze
+      OBSERVATION_THRESHOLD = 2
 
+      # Deliberately narrow, deterministic correction signals. Raw messages are
+      # never persisted; only the matched pattern, scope, count and timestamps are.
+      FEEDBACK_RULES = [
+        {
+          id: "concise",
+          pattern: /\b(?:too\s+(?:long|verbose|wordy)|stop\s+(?:rambling|being\s+so\s+verbose)|be\s+more\s+concise|shorter\s+please|keep\s+it\s+brief|less\s+detail)\b/i,
+          key: "communication.detail", value: "brief",
+        }.freeze,
+        {
+          id: "detailed",
+          pattern: /\b(?:too\s+(?:brief|short)|need\s+more\s+detail|explain\s+(?:that|it|this)\s+in\s+more\s+detail|expand\s+on\s+that)\b/i,
+          key: "communication.detail", value: "detailed",
+        }.freeze,
+        {
+          id: "direct",
+          pattern: /\b(?:stop\s+sugarcoating|be\s+more\s+direct|don't\s+(?:sugarcoat|soften|dodge)|tell\s+me\s+straight|cut\s+the\s+fluff)\b/i,
+          key: "communication.tone", value: "direct",
+        }.freeze,
+        {
+          id: "warm",
+          pattern: /\b(?:be\s+more\s+empathetic|need\s+more\s+empathy|less\s+cold|too\s+cold|more\s+compassionate)\b/i,
+          key: "communication.tone", value: "warm",
+        }.freeze,
+        {
+          id: "implement_verify",
+          pattern: /\b(?:stop\s+just\s+(?:suggesting|explaining)|don't\s+just\s+(?:suggest|explain)|actually\s+(?:implement|fix|write)\s+(?:it|this|the\s+fix)|i\s+asked\s+you\s+to\s+(?:implement|fix|write)|not\s+just\s+(?:advice|suggestions|an\s+explanation))\b/i,
+          key: "work.flow", value: "implement_verify",
+        }.freeze,
+        {
+          id: "plan_first",
+          pattern: /\b(?:plan\s+before\s+(?:you\s+)?(?:change|edit|implement)|show\s+me\s+the\s+plan\s+first|you\s+(?:changed|edited|implemented)\s+before\s+planning)\b/i,
+          key: "work.flow", value: "plan_first",
+        }.freeze,
+        {
+          id: "deep_research",
+          pattern: /\b(?:not\s+enough\s+research|go\s+deeper\s+on\s+the\s+sources|didn't\s+check\s+enough\s+sources|cite\s+more\s+sources)\b/i,
+          key: "research.depth", value: "deep",
+        }.freeze,
+      ].freeze
+      FEEDBACK_RULES_BY_ID = FEEDBACK_RULES.to_h { |rule| [rule.fetch(:id), rule] }.freeze
       DEFINITIONS = {
         "communication.tone" => {
           label: "Tone", values: %w[direct warm neutral].freeze,
@@ -76,6 +118,7 @@ module Master
 
         mutate(root:, subject:) do |state|
           state["suggestions"].reject! { |entry| entry["scope"] == selected_scope && entry["key"] == normalized_key }
+          state["observations"].reject! { |entry| entry["scope"] == selected_scope && entry["key"] == normalized_key }
           state["preferences"][selected_scope] ||= {}
           state["preferences"][selected_scope][normalized_key] = {
             "value" => normalized_value,
@@ -109,9 +152,87 @@ module Master
             "confidence" => certainty,
             "created_at" => now,
           }
+          candidate["origin"] = "owner"
+          candidate["evidence_count"] = 0
           state["suggestions"] << candidate
           deep_copy(candidate)
         end
+      end
+
+      # Observe the current user turn once, after it enters the session. Only
+      # explicit, low-risk correction phrases are considered, and only after the
+      # owner opts in. A repeated signal stages a candidate; it never activates it.
+      def observe_feedback(root:, subject:, message:)
+        return if Fiber[:master_visitor] == true
+
+        text = message.to_s
+        return if text.empty? || text.bytesize > 4_096
+
+        rule = FEEDBACK_RULES.find { |candidate| text.match?(candidate.fetch(:pattern)) }
+        return unless rule
+
+        owner = resolve_subject(root, subject)
+        return if owner.empty? || !permission_granted?(root:, subject: owner)
+
+        mutate(root:, subject: owner) do |state|
+          next nil unless state.fetch("learning_enabled")
+
+          selected_scope = feedback_scope(text)
+          observation = state["observations"].find do |entry|
+            entry["id"] == rule.fetch(:id) && entry["scope"] == selected_scope
+          end
+          unless observation
+            observation = {
+              "id" => rule.fetch(:id),
+              "scope" => selected_scope,
+              "key" => rule.fetch(:key),
+              "value" => rule.fetch(:value),
+              "count" => 0,
+              "last_seen" => now,
+              "suggestion_id" => nil,
+            }
+            state["observations"] << observation
+          end
+          observation["count"] = [observation.fetch("count") + 1, 100].min
+          observation["last_seen"] = now
+
+          next({ "status" => "observed", "count" => observation.fetch("count") }) if
+            observation.fetch("count") < OBSERVATION_THRESHOLD
+          next({ "status" => "already_staged", "suggestion_id" => observation["suggestion_id"] }) if
+            observation["suggestion_id"]
+
+          if state.fetch("suggestions").size >= MAX_SUGGESTIONS
+            next({ "status" => "suggestion_limit", "count" => observation.fetch("count") })
+          end
+
+          candidate_id = "s#{SecureRandom.hex(3)}"
+          why = "Repeated interaction correction matched #{rule.fetch(:id)} in #{observation.fetch("count")} separate user turns; no raw message was retained."
+          confidence = [0.65 + (observation.fetch("count") * 0.05), 0.9].min.round(2)
+          state["suggestions"] << {
+            "id" => candidate_id,
+            "scope" => selected_scope,
+            "key" => rule.fetch(:key),
+            "value" => rule.fetch(:value),
+            "reason" => why,
+            "confidence" => confidence,
+            "created_at" => now,
+            "origin" => "observed_correction",
+            "evidence_count" => observation.fetch("count"),
+          }
+          observation["suggestion_id"] = candidate_id
+          { "status" => "staged", "suggestion_id" => candidate_id, "count" => observation.fetch("count") }
+        end
+      end
+
+      def feedback_scope(message)
+        text = message.to_s
+        return "coding" if text.match?(/\b(?:code|coding|repository|repo|ruby|bug|test|refactor|implement|github|rails|openbsd|commit|pull request)\b/i)
+        return "research" if text.match?(/\b(?:research|source|citation|evidence|cite|sources|investigate)\b/i)
+        return "support" if text.match?(/\b(?:relationship|couples?|anxious|stress|feelings|therapy|cope|conflict|grief)\b/i)
+        return "creative" if text.match?(/\b(?:music|song|beat|image|video|creative|story|poem|design)\b/i)
+        return "planning" if text.match?(/\b(?:plan|roadmap|priorit|schedule|goal|strategy)\b/i)
+
+        "all"
       end
 
       def accept(root:, subject:, id:)
@@ -127,6 +248,7 @@ module Master
             "confidence" => candidate.fetch("confidence"),
             "updated_at" => now,
             "reason" => candidate.fetch("reason"),
+            "evidence_count" => candidate.fetch("evidence_count", 0),
           }
           state["suggestions"].reject! { |entry| entry["id"] == token }
           deep_copy(candidate)
@@ -150,6 +272,7 @@ module Master
           entries = state["preferences"].fetch(selected_scope, {})
           removed = !entries.delete(normalized_key).nil?
           state["suggestions"].reject! { |entry| entry["scope"] == selected_scope && entry["key"] == normalized_key }
+          state["observations"].reject! { |entry| entry["scope"] == selected_scope && entry["key"] == normalized_key }
           state["preferences"].delete(selected_scope) if entries.empty?
           removed
         end
@@ -326,9 +449,12 @@ module Master
 
         preferences = raw.fetch("preferences", {})
         suggestions = raw.fetch("suggestions", [])
+        observations = raw.fetch("observations", [])
         raise InvalidStore, "preferences must be a mapping" unless preferences.is_a?(Hash)
         raise InvalidStore, "suggestions must be a list" unless suggestions.is_a?(Array)
         raise InvalidStore, "too many pending suggestions" if suggestions.size > MAX_SUGGESTIONS
+        raise InvalidStore, "observations must be a list" unless observations.is_a?(Array)
+        raise InvalidStore, "too many preference observations" if observations.size > MAX_OBSERVATIONS
 
         clean_preferences = {}
         preferences.each do |scope, entries|
@@ -352,6 +478,7 @@ module Master
               "updated_at" => stamp,
             }
             clean_entry["reason"] = normalize_reason(entry["reason"]) if entry.key?("reason")
+            clean_entry["evidence_count"] = normalize_evidence_count(entry["evidence_count"]) if entry.key?("evidence_count")
             clean_preferences[selected_scope][normalized_key] = clean_entry
           end
         end
@@ -365,6 +492,8 @@ module Master
           confidence = normalize_confidence(entry["confidence"])
           stamp = entry["created_at"].to_s
           raise InvalidStore, "missing suggestion timestamp" if stamp.empty?
+          origin = entry.fetch("origin", "owner").to_s
+          raise InvalidStore, "invalid suggestion origin" unless %w[owner observed_correction].include?(origin)
           {
             "id" => id,
             "scope" => selected_scope,
@@ -373,6 +502,31 @@ module Master
             "reason" => normalize_reason(entry["reason"]),
             "confidence" => confidence,
             "created_at" => stamp,
+            "origin" => origin,
+            "evidence_count" => normalize_evidence_count(entry.fetch("evidence_count", 0)),
+          }
+        end
+        clean_observations = observations.map do |entry|
+          raise InvalidStore, "observation must be a mapping" unless entry.is_a?(Hash)
+          id = entry["id"].to_s
+          rule = FEEDBACK_RULES_BY_ID[id]
+          raise InvalidStore, "unknown observation pattern" unless rule
+          selected_scope = normalize_scope(entry["scope"])
+          key = normalize_key(entry["key"])
+          value = normalize_value(key, entry["value"])
+          unless key == rule.fetch(:key) && value == rule.fetch(:value)
+            raise InvalidStore, "observation does not match its declared correction pattern"
+          end
+          count = normalize_evidence_count(entry["count"])
+          stamp = entry["last_seen"].to_s
+          raise InvalidStore, "missing observation timestamp" if stamp.empty?
+          suggestion_id = entry["suggestion_id"]
+          unless suggestion_id.nil? || suggestion_id.to_s.match?(/\As[a-f0-9]{6}\z/)
+            raise InvalidStore, "invalid observation suggestion reference"
+          end
+          {
+            "id" => id, "scope" => selected_scope, "key" => key, "value" => value,
+            "count" => count, "last_seen" => stamp, "suggestion_id" => suggestion_id,
           }
         end
         {
@@ -380,6 +534,7 @@ module Master
           "learning_enabled" => raw.fetch("learning_enabled", false),
           "preferences" => clean_preferences,
           "suggestions" => clean_suggestions,
+          "observations" => clean_observations,
         }
       rescue ArgumentError => e
         raise InvalidStore, e.message
@@ -393,8 +548,17 @@ module Master
         File.chmod(0o600, target)
       end
 
+      def normalize_evidence_count(value)
+        count = Integer(value)
+        raise ArgumentError, "evidence count must be between 0 and 100" unless count.between?(0, 100)
+
+        count
+      rescue TypeError, ArgumentError
+        raise ArgumentError, "evidence count must be an integer between 0 and 100"
+      end
+
       def empty_state
-        { "schema" => SCHEMA, "learning_enabled" => false, "preferences" => {}, "suggestions" => [] }
+        { "schema" => SCHEMA, "learning_enabled" => false, "preferences" => {}, "suggestions" => [], "observations" => [] }
       end
 
       def preference_scope_for(state, selected_scope, key)
