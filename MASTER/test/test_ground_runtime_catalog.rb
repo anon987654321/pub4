@@ -28,14 +28,22 @@ class TestRuntimeCatalog < Minitest::Test
       path = File.join(root, "runtime.yml")
       File.write(path, "probe:\n  marker: first\n")
 
-      Master::Ground::RuntimeCatalog.stub_const(:CATALOG_PATH, path) do
-        Master::Ground::RuntimeCatalog.clear_cache!
+      catalog = Master::Ground::RuntimeCatalog
+      original_path = catalog.const_get(:CATALOG_PATH)
+      catalog.send(:remove_const, :CATALOG_PATH)
+      catalog.const_set(:CATALOG_PATH, path)
 
-        assert_equal "first", Master::Ground::RuntimeCatalog.load("probe").fetch("marker")
+      begin
+        catalog.clear_cache!
+        assert_equal "first", catalog.load("probe").fetch("marker")
 
         File.write(path, "probe:\n  marker: second\n")
 
-        assert_equal "second", Master::Ground::RuntimeCatalog.load("probe").fetch("marker")
+        assert_equal "second", catalog.load("probe").fetch("marker")
+      ensure
+        catalog.send(:remove_const, :CATALOG_PATH)
+        catalog.const_set(:CATALOG_PATH, original_path)
+        catalog.clear_cache!
       end
     end
   ensure
