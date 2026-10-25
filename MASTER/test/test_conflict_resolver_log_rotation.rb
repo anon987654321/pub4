@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "json"
 
 class TestConflictResolverLogRotation < Minitest::Test
   # conflict_log.jsonl was append-only with no cap and grew to 890MB
@@ -47,6 +48,36 @@ class TestConflictResolverLogRotation < Minitest::Test
       oldest_tail = File.open("#{path}.#{generations}", "rb") { |file| file.seek(-16, IO::SEEK_END); file.read }
       assert_includes latest_tail, "gen#{total_rotations - 1}"
       assert_includes oldest_tail, "gen#{total_rotations - generations}"
+    end
+  end
+
+  def test_concurrent_log_conflicts_remain_complete_jsonl
+    Dir.mktmpdir do |dir|
+      resolver = Master::Fix::ConflictResolver.new(root: dir, config: {})
+      threads = 8.times.map do |worker|
+        Thread.new do
+          25.times do |index|
+            resolver.send(
+              :log_conflict,
+              law_a: "A",
+              law_b: "B",
+              resolution: "worker_#{worker}_#{index}",
+              file: "f#{worker}.rb",
+              line: index + 1,
+            )
+          end
+        end
+      end
+      threads.each(&:value)
+
+      path = File.join(dir, Master::Fix::ConflictResolver::LOG_PATH)
+      lines = File.readlines(path, chomp: true)
+      rows = lines.map { |line| JSON.parse(line) }
+
+      assert_equal 200, rows.size
+      assert_equal 200, rows.map { |row| row.fetch("resolution") }.uniq.size
+      assert_equal 0o600, File.stat(path).mode & 0o777
+      assert File.file?("#{path}.lock")
     end
   end
 
