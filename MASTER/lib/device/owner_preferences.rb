@@ -75,6 +75,7 @@ module Master
         selected_scope = normalize_scope(scope)
 
         mutate(root:, subject:) do |state|
+          state["suggestions"].reject! { |entry| entry["scope"] == selected_scope && entry["key"] == normalized_key }
           state["preferences"][selected_scope] ||= {}
           state["preferences"][selected_scope][normalized_key] = {
             "value" => normalized_value,
@@ -148,6 +149,7 @@ module Master
         mutate(root:, subject:) do |state|
           entries = state["preferences"].fetch(selected_scope, {})
           removed = !entries.delete(normalized_key).nil?
+          state["suggestions"].reject! { |entry| entry["scope"] == selected_scope && entry["key"] == normalized_key }
           state["preferences"].delete(selected_scope) if entries.empty?
           removed
         end
