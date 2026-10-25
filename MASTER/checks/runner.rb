@@ -32,6 +32,22 @@ require File.join(ROOT, "MASTER", "lib", "gap")
 
 CHECKS_FILE = ENV.fetch("CHECKS_FILE", REGISTRY_DEFAULT)
 CHECKS = YAML.safe_load_file(CHECKS_FILE).freeze
+unless CHECKS.is_a?(Hash)
+  abort "checks: invalid registry root (expected a mapping)"
+end
+
+# A row that cannot identify an executable was historically recorded as
+# :errored during a run and could still leave exit status zero by default.
+# This is a declaration error, so refuse the registry before running any checks.
+invalid_registry_rows = CHECKS.filter_map do |name, row|
+  if !row.is_a?(Hash)
+    "#{name} must declare a mapping"
+  elsif row["class"].to_s.strip.empty? && row["script"].to_s.strip.empty?
+    "#{name} must declare class: or script:"
+  end
+end
+abort "checks: invalid registry: #{invalid_registry_rows.join("; ")}" unless invalid_registry_rows.empty?
+
 LEDGER = Deploy::CheckLedger.new
 RUN_ID = "#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}-#{Process.pid}"
 
