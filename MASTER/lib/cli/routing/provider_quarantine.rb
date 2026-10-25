@@ -117,8 +117,7 @@ module Master
         end
 
         def append(entry)
-          FileUtils.mkdir_p(File.dirname(@path))
-          File.open(@path, "a") { |f| f.puts(JSON.generate(entry)) }
+          ProviderHealth.append_json_line(@path, entry)
         end
       end
     end
