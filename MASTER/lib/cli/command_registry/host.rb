@@ -139,7 +139,11 @@ module Master
           return "preferences: usage /preferences show [#{preferences::SCOPES.join("|")}]" if args.size > 1
           state = preferences.status(root:, subject:)
           scope = requested_scope ? preferences.normalize_scope(requested_scope) : "all"
-          scopes = scope == "all" ? preferences::SCOPES.reject { |name| name != "all" } : %w[all].concat([scope])
+          scopes = if requested_scope.nil? || scope == "all"
+                     preferences::SCOPES
+                   else
+                     %w[all].concat([scope])
+                   end
           lines = ["preferences: learning=#{state.fetch("learning_enabled") ? "on" : "off"}"]
           scopes.each do |name|
             state.fetch("preferences").fetch(name, {}).each do |key, entry|
@@ -201,7 +205,7 @@ module Master
         else
           "preferences: show [scope] | set KEY=VALUE [scope=SCOPE] | suggest KEY=VALUE [scope=SCOPE] [reason=\"...\"] | accept ID | reject ID | forget KEY [scope=SCOPE] | learn on|off | reset --confirm | export"
         end
-      rescue ArgumentError, Shellwords::ArgumentError => e
+      rescue ArgumentError => e
         "preferences0: #{e.message}"
       rescue StandardError => e
         "preferences0: unavailable — #{e.class}: #{e.message}"
