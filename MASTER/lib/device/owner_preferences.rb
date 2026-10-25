@@ -173,6 +173,7 @@ module Master
 
         owner = resolve_subject(root, subject)
         return if owner.empty? || !permission_granted?(root:, subject: owner)
+        return unless read_state(root:, subject: owner).fetch("learning_enabled")
 
         mutate(root:, subject: owner) do |state|
           next nil unless state.fetch("learning_enabled")
@@ -311,7 +312,8 @@ module Master
           values = values.merge(state.fetch("preferences").fetch(selected_scope, {}))
         end
         learning = state.fetch("learning_enabled")
-        return if values.empty? && !learning
+        has_pending = state.fetch("suggestions").any? { |entry| entry.fetch("origin", "owner") == "observed_correction" }
+        return if values.empty? && !learning && !has_pending
 
         lines = [
           "## Personal interaction preferences (paired owner)",
