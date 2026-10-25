@@ -120,13 +120,17 @@ module Master
 
         candidate = ::Operator::RubyRunner.best_available_ruby(root:)
         return unless candidate
-        return if same_file?(RbConfig.ruby, candidate[:path])
+
+        # Inline Ruby has no script path to re-exec. Check the interpreter version
+        # before comparing executable paths: version-manager shims can point to
+        # the same Ruby through different filesystem paths.
         if program.to_s == "-e"
-          return if RUBY_VERSION == candidate[:version]
+          return if RUBY_VERSION == candidate[:version].to_s
 
           Master::Trace::Dmesg.status("ruby0", "cannot switch Ruby for inline -e from #{RUBY_VERSION} to #{candidate[:version]}; invoke a script file", io: out)
           exit 78
         end
+        return if same_file?(RbConfig.ruby, candidate[:path])
 
         Master::Trace::Dmesg.status(
           "ruby0",
