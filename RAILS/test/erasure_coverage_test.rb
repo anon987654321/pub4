@@ -45,6 +45,7 @@ class ErasureCoverageTest < Minitest::Test
 
   # User-owned private/relationship rows that do not survive account erasure.
   PRIVATE_RELATIONS = {
+    "dating_location_pings" => "private dating-discovery coordinates with short-lived timestamps",
     "notifications"                 => "private inbox state and pushable alerts",
     "identity_assurances"           => "identity and trust evidence belonging to the account",
     "reputation_scores"             => "derived account reputation, not shared content",
@@ -71,6 +72,7 @@ class ErasureCoverageTest < Minitest::Test
   #   :handled      erasure reaches it some other way, named in the reason
   #   :not_personal the columns are not about one of our users
   CLASSIFIED = {
+    "dating_location_pings" => [ :destroy, "short-lived private coordinates used for dating discovery; removed by UserPurgeJob" ],
     "dating_profiles"                  => [ :destroy, "the profile exists only to describe the person; photographs and the verification selfie go with it" ],
     "external_identities"              => [ :destroy, "a federated login carrying their email and phone number" ],
     "marketplace_addresses"             => [ :destroy, "recipient, street, postcode and phone, and nothing else" ],
