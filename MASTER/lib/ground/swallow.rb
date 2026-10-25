@@ -32,6 +32,8 @@ module Master
       # next diagnostic hunt can filter for :load_bearing instead of reading
       # every line.
       SEVERITIES = %i[load_bearing cosmetic].freeze
+      MAX_BYTES = 10_485_760
+      KEEP_BACKUPS = 5
 
       class << self
         def event_bus=(bus)
@@ -77,14 +79,46 @@ module Master
           records
         end
 
-        # Rotate log if it exceeds size threshold (default 10MB).
-        def rotate!(max_bytes: 10_485_760)
-          return unless File.exist?(LOG_PATH) && File.size(LOG_PATH) > max_bytes
+        # Rotate oversized logs without preserving a giant backup. The active
+        # file and every retained generation are bounded, not just the filename
+        # that new writes happen to reach.
+        def rotate!(path: LOG_PATH, max_bytes: MAX_BYTES, keep: KEEP_BACKUPS)
+          limit = Integer(max_bytes)
+          raise ArgumentError, "swallow log limit must be positive" unless limit.positive?
+          return unless File.file?(path) && File.size(path) > limit
 
-          backup = "#{LOG_PATH}.#{Time.now.utc.strftime("%Y%m%d%H%M%S")}"
-          File.rename(LOG_PATH, backup)
-          # Keep only last 5 backups
-          Dir.glob("#{LOG_PATH}.*").sort.reverse.drop(5).each { |f| File.delete(f) } # scan: intentional — log rotation, drop(5) keeps the five newest
+          backup = "#{path}.#{Time.now.utc.strftime("%Y%m%d%H%M%S%N")}-#{Process.pid}"
+          File.rename(path, backup)
+          compact_rotated!(backup, limit)
+          # Keep only the newest bounded generations.
+          Dir.glob("#{path}.*").sort.reverse.drop([Integer(keep), 0].max).each do |old|
+            File.delete(old) if File.file?(old) && !File.symlink?(old)
+          end
+        end
+
+        def compact_rotated!(path, max_bytes)
+          return unless File.file?(path)
+
+          size = File.size(path)
+          return size if size <= max_bytes
+
+          tail = File.open(path, "rb") do |file|
+            file.seek(-max_bytes, IO::SEEK_END)
+            file.read(max_bytes)
+          end
+          File.open(path, "r+b") do |file|
+            file.truncate(0)
+            offset = 0
+            while offset < tail.bytesize
+              written = file.write(tail.byteslice(offset..))
+              raise IOError, "swallow log compaction wrote no bytes" unless written&.positive?
+
+              offset += written
+            end
+            file.flush
+            file.fsync
+          end
+          File.size(path)
         end
 
         private
@@ -102,11 +136,29 @@ module Master
         end
 
         def write_structured_log(payload)
-          FileUtils.mkdir_p(File.dirname(LOG_PATH))
-          File.open(LOG_PATH, "a", 0o600) do |f|
-            f.puts(JSON.generate(payload))
+          directory = File.dirname(LOG_PATH)
+          FileUtils.mkdir_p(directory, mode: 0o700)
+          File.chmod(0o700, directory)
+          line = JSON.generate(payload) + "\n"
+          raise IOError, "swallow log record exceeds #{MAX_BYTES}-byte cap" if line.bytesize > MAX_BYTES
+
+          lock_path = "#{LOG_PATH}.lock"
+          raise IOError, "swallow log lock is a symlink" if File.symlink?(lock_path)
+          File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |lock|
+            File.chmod(0o600, lock_path)
+            lock.flock(File::LOCK_EX)
+
+            raise IOError, "swallow log is a symlink" if File.symlink?(LOG_PATH)
+            File.chmod(0o600, LOG_PATH) if File.file?(LOG_PATH)
+            rotate!(max_bytes: MAX_BYTES - line.bytesize)
+            File.open(LOG_PATH, File::WRONLY | File::CREAT | File::APPEND, 0o600) do |file|
+              file.write(line)
+              file.flush
+              file.fsync
+            end
+          ensure
+            lock.flock(File::LOCK_UN) if lock
           end
-          rotate!
         end
       end
 
