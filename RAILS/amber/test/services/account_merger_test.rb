@@ -3,6 +3,17 @@
 require "test_helper"
 
 class AccountMergerTest < ActiveSupport::TestCase
+  test "a guest and destination pair cannot have duplicate merge audit rows" do
+    suffix = SecureRandom.hex(6)
+    guest = User.create!(email_address: "guest-#{suffix}@guest.local", password: SecureRandom.hex(24), guest: true)
+    member = User.create!(email_address: "member-#{suffix}@example.test", password: SecureRandom.hex(24))
+    AccountMerge.create!(guest_user: guest, user: member, status: "pending")
+
+    duplicate = AccountMerge.new(guest_user: guest, user: member, status: "pending")
+    refute duplicate.valid?
+    assert_includes duplicate.errors.attribute_names, :guest_user_id
+  end
+
   test "guest posts and both sides of the inbox follow the registered account" do
     suffix = SecureRandom.hex(6)
     guest = User.create!(
