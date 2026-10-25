@@ -71,7 +71,7 @@ class AssetUrlLintTest < Minitest::Test
   end
 
   def test_remote_and_inline_references_are_not_assets
-    sheet = File.join(L::RAILS_ROOT, "brgen/app/assets/stylesheets/application.scss")
+    sheet = File.join(L::RAILS_ROOT, "__shared/app/assets/stylesheets/_fonts.scss")
     refs = L.refs_in(sheet)
 
     refute_empty refs
