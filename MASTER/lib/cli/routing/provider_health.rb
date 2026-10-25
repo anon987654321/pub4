@@ -23,55 +23,12 @@ module Master
           @now = now
         end
 
-        # Health and quarantine share one append primitive so independent
-        # runtime instances and processes never interleave NDJSON records. The
-        # same sidecar lock protects rotation and append because rotation changes
-        # the data file's inode, making a lock on the old file insufficient.
+        # Compatibility name for the shared, bounded telemetry writer.
         def self.append_json_line(path, value, max_bytes: MAX_BYTES)
-          limit = Integer(max_bytes)
-          raise ArgumentError, "provider telemetry limit must be positive" unless limit.positive?
-
-          line = JSON.generate(value) + "\n"
-          raise ArgumentError, "provider telemetry record exceeds #{limit}-byte cap" if line.bytesize > limit
-
-          directory = File.dirname(path)
-          raise ArgumentError, "provider telemetry directory is a symlink" if File.symlink?(directory)
-
-          FileUtils.mkdir_p(directory, mode: 0o700)
-          directory_stat = File.lstat(directory)
-          raise ArgumentError, "provider telemetry directory is not a real directory" unless
-            directory_stat.directory? && !directory_stat.symlink?
-          File.chmod(0o700, directory)
-
-          lock_path = "#{path}.lock"
-          raise ArgumentError, "provider telemetry lock is a symlink" if File.symlink?(lock_path)
-          File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |lock|
-            File.chmod(0o600, lock_path)
-            lock.flock(File::LOCK_EX)
-
-            raise ArgumentError, "provider telemetry log is a symlink" if File.symlink?(path)
-            if File.exist?(path)
-              log_stat = File.lstat(path)
-              raise ArgumentError, "provider telemetry log is not a regular file" unless
-                log_stat.file? && !log_stat.symlink?
-
-              File.chmod(0o600, path)
-            end
-
-            Master::Trace::Log.rotate(path, [limit - line.bytesize, 0].max)
-            size = File.file?(path) ? File.size(path) : 0
-            raise IOError, "provider telemetry rotation failed to honor #{limit}-byte cap" if size + line.bytesize > limit
-
-            File.open(path, File::WRONLY | File::CREAT | File::APPEND, 0o600) do |file|
-              file.write(line)
-              file.flush
-              file.fsync
-            end
-          ensure
-            lock.flock(File::LOCK_UN) if lock
-          end
+          Master::Trace::Log.append_jsonl(
+            path, value, max_bytes:, mode: 0o600, directory_mode: 0o700
+          )
         end
-
         def record(model:, status:, latency_ms: nil, error: nil, at: @now.call)
           event = {
             ts: at.iso8601,
