@@ -19,11 +19,11 @@ module Master
 
       def path = ENV.fetch("MASTER_INCIDENT_LOG") { File.join(Dir.home, ".master", "incidents.ndjson") }
 
-      def add(text, now: Time.now, file: path)
+      def add(text, now: Time.now, file: path, max_bytes: Master::Trace::Log::Event::MAX_BYTES)
         entry = { "at" => now.iso8601, "text" => text.to_s.strip }
         return if entry["text"].empty?
 
-        Master::Trace::Log.append_jsonl(file, entry, mode: 0o600)
+        Master::Trace::Log.append_jsonl(file, entry, max_bytes:, mode: 0o600)
         entry
       end
 
