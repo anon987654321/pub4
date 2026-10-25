@@ -7,7 +7,7 @@ For each run:
 
 1. Choose the exact intended source commit. Record git rev-parse HEAD and
    inspect the starting source/worktree state.
-2. Run the real command through OPENBSD/bin/evidence LABEL -- COMMAND ...
+2. Run the real command through ruby OPENBSD/bin/evidence LABEL -- COMMAND ...
    The default timeout is 1,800 seconds; set a shorter or longer explicit
    --timeout where appropriate.
 3. Inspect the JSON and captured text output. Resolve every FAIL, BLOCKED,
