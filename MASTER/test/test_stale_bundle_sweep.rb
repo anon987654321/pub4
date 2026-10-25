@@ -67,7 +67,6 @@ class TestStaleBundleSweep < Minitest::Test
   def test_symlinked_store_key_is_not_traversed
     real_key = @store_key
     FileUtils.rm_rf(real_key)
-    store("gems.stale-123-456", age: SWEEP::TTL_SECONDS + 60) if false
     target = File.join(@root, "external-key")
     FileUtils.mkdir_p(target)
     stale = File.join(target, "gems.stale-123-456")
@@ -75,6 +74,6 @@ class TestStaleBundleSweep < Minitest::Test
     File.utime(Time.now - SWEEP::TTL_SECONDS - 60, Time.now - SWEEP::TTL_SECONDS - 60, stale)
     File.symlink(target, real_key)
 
-    refute_includes SWEEP.candidates(@bundle_root), stale
+    assert_empty SWEEP.candidates(@bundle_root)
   end
 end
