@@ -347,6 +347,29 @@ end
         Fiber[:master_trajectory_events] = []
         @memory&.auto_save(message) if @memory&.respond_to?(:auto_save)
         @session.add_message(role: :user, content: message)
+        observe_preference_feedback(message)
+      end
+
+      # Observation is a bounded, opt-in post-ingest hook. A broken preference
+      # store must not fail the conversation, and raw user text is never logged.
+      def observe_preference_feedback(message)
+        return if Fiber[:master_visitor] == true
+        return unless defined?(Master::Device::OwnerPreferences)
+
+        root = @config["root"] || Master::ROOT
+        result = Master::Device::OwnerPreferences.observe_feedback(
+          root:, subject: Fiber[:master_pair_subject], message:,
+        )
+        return unless result.is_a?(Hash) && result["status"] == "staged"
+
+        @bus&.publish(
+          "preferences:suggestion_staged",
+          suggestion_id: result["suggestion_id"],
+          evidence_count: result["count"],
+        )
+      rescue StandardError => e
+        @bus&.publish("preferences:observation_unavailable", error: e.class.name)
+        nil
       end
 
       # Plain chat stays lightweight, but an explicit request for current facts,
