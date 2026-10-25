@@ -102,8 +102,47 @@ class TestSelfFindingsDrift < Minitest::Test
     end
   end
 
-  def test_a_rule_that_disappeared_is_reported_too
-    with_baseline({ "findings" => 2, "by_rule" => { "GONE" => 2 } }) do
+  def test_ratchet_refreshes_stale_members_when_both_counts_fit_their_ceilings
+    records = 0
+    current = { "law" => Array.new(10), "registry" => Array.new(5) }
+    ceilings = { "law" => 10, "registry" => 5 }
+
+    Tool.stub(:report, false) do
+      Tool.stub(:stale_recorded_members, ->(name, **_kwargs) { name == "law" ? ["stale member"] : [] }) do
+        Tool.stub(:population, ->(name) { current.fetch(name) }) do
+          Tool.stub(:ceiling, ->(name = "law") { ceilings.fetch(name) }) do
+            Tool.stub(:record, -> { records += 1; true }) do
+              assert Tool.run(ratchet: true)
+            end
+          end
+        end
+      end
+    end
+
+    assert_equal 1, records, "stale attribution should be refreshed once"
+  end
+
+  def test_ratchet_does_not_hide_real_increases_while_members_are_stale
+    records = 0
+    current = { "law" => Array.new(11), "registry" => Array.new(5) }
+    ceilings = { "law" => 10, "registry" => 5 }
+
+    Tool.stub(:report, false) do
+      Tool.stub(:stale_recorded_members, ->(name, **_kwargs) { name == "law" ? ["stale member"] : [] }) do
+        Tool.stub(:population, ->(name) { current.fetch(name) }) do
+          Tool.stub(:ceiling, ->(name = "law") { ceilings.fetch(name) }) do
+            Tool.stub(:record, -> { records += 1; true }) do
+              refute Tool.run(ratchet: true)
+            end
+          end
+        end
+      end
+    end
+
+    assert_equal 0, records, "ratchet must not reset a ceiling above the current baseline"
+  end
+
+  def test_a_rule_that_disappeared_is_reported_too    with_baseline({ "findings" => 2, "by_rule" => { "GONE" => 2 } }) do
       out, = capture_io { Tool.report_drift({}) }
 
       assert_match(/GONE\s+2 ->\s+0\s+-2/, out)

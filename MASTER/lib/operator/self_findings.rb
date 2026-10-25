@@ -371,6 +371,17 @@ module Operator
       # overage would report it as known and hide exactly what is wanted.
       return record if ratchet && over.empty?
 
+      # Stale members also make report false, but unlike a real overage they
+      # must be refreshed before the next comparison can be trusted. The normal
+      # ratchet must not strand that state forever: rewrite only when both
+      # populations still fit their existing ceilings, and never ratchet away
+      # an actual increase in findings.
+      if ratchet
+        stale = POPULATIONS.any? { |name| stale_recorded_members(name).any? }
+        within_ceilings = POPULATIONS.all? { |name| population(name).size <= ceiling(name) }
+        return record if stale && within_ceilings
+      end
+
       over.empty?
     end
 
