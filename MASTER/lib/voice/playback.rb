@@ -757,13 +757,20 @@ def decode_job(job)
       # Never bypass synthesis failure itself; fallback begins only after a player error.
       def play_or_fallback(path, text, generation:, voice: nil)
         return true if play(path, generation:)
+
+        fallback_after_playback_failure(text, generation:, voice:)
+      end
+
+      # Fallback runs only after a player failure, never after synthesis failure.
+      # Recheck the cancellation generation before and after native speech so an
+      # interrupted reply cannot be emitted after a replacement reply starts.
+      def fallback_after_playback_failure(text, generation:, voice: nil)
+        return false unless generation_active?(generation)
+        return false unless native_say(text, voice:)
         return false unless generation_active?(generation)
 
-        # The player process has fully exited before this fallback runs, so the
-        # native narrator cannot overlap a live player. This is the declared
-        # recovery path for workstation audio failures such as a broken afplay
-        # invocation or an unreadable/unsupported synthesized file.
-        native_say(text, voice:)
+        spoken(text)
+        true
       end
 
       def android_speak(text)
