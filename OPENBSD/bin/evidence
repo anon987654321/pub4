@@ -1,0 +1,266 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require "socket"
+require "time"
+
+module EvidenceCapture
+  VERDICTS = %w[PASS FAIL TIMEOUT BLOCKED INCONCLUSIVE SKIPPED VALIDATION_FAILED DELIVERY_FAILED].freeze
+  DEFAULT_TIMEOUT = 1_800.0
+  READ_SIZE = 16 * 1024
+
+  module_function
+
+  def run(argv)
+    separator = argv.index("--")
+    usage!("expected LABEL -- COMMAND [ARG...]") unless separator
+
+    option_argv = argv.take(separator)
+    command = argv.drop(separator + 1)
+    options = { timeout: DEFAULT_TIMEOUT, verdict: nil, attachments: [], notes: [] }
+    parser = OptionParser.new do |opts|
+      opts.banner = "Usage: OPENBSD/bin/evidence [options] LABEL -- COMMAND [ARG...]"
+      opts.on("--timeout SECONDS", Float, "Terminate the command process group after SECONDS (default #{DEFAULT_TIMEOUT.to_i})") do |value|
+        options[:timeout] = value
+      end
+      opts.on("--verdict VERDICT", VERDICTS, "Classify as #{VERDICTS.join('|')} (cannot turn an observed failure into PASS)") do |value|
+        options[:verdict] = value
+      end
+      opts.on("--attach PATH", "Attach a repository-relative evidence file and record its SHA-256 (repeatable)") do |value|
+        options[:attachments] << value
+      end
+      opts.on("--note TEXT", "Record an operator observation; repeatable") do |value|
+        options[:notes] << value
+      end
+      opts.on("-h", "--help", "Show help") { puts opts; return 0 }
+    end
+    parser.parse!(option_argv)
+    label = option_argv.shift
+    usage!(parser.to_s) unless label && option_argv.empty? && !command.empty?
+    usage!("invalid label #{label.inspect}; use letters, digits, dot, underscore or hyphen") unless label.match?(/\A[A-Za-z0-9._-]+\z/)
+    usage!("--timeout must be finite and > 0") unless options[:timeout].finite? && options[:timeout].positive?
+
+    root = git_root
+    head = git_value(root, "rev-parse", "HEAD").strip
+    branch = git_value(root, "branch", "--show-current").strip
+    status = git_value(root, "status", "--porcelain=v1", "--untracked-files=normal")
+    dirty = !status.empty?
+    attachments = options[:attachments].map { |path| attachment_record(root, path) }
+    started_wall = Time.now.utc
+    started_mono = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    stamp = started_wall.strftime("%Y%m%dT%H%M%SZ")
+    out_dir = File.join(root, "evidence")
+    FileUtils.mkdir_p(out_dir)
+    base = unique_base(out_dir, "#{stamp}-#{label}")
+    json_path = "#{base}.json"
+    log_path = "#{base}.txt"
+
+    result = execute(command, log_path, options[:timeout])
+    finished_wall = Time.now.utc
+    duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_mono
+    detected_verdict = classify(result.fetch(:reported_exit_status), timed_out: result.fetch(:timed_out))
+    final_verdict, rejected_override = apply_override(detected_verdict, options[:verdict], result.fetch(:reported_exit_status))
+    payload = {
+      schema_version: 1,
+      label: label,
+      verdict: final_verdict,
+      detected_verdict: detected_verdict,
+      requested_verdict: options[:verdict],
+      verdict_override_rejected: rejected_override,
+      command: redact_argv(command),
+      command_exit_status: result[:command_exit_status],
+      exit_status: result[:reported_exit_status],
+      timed_out: result[:timed_out],
+      timeout_seconds: options[:timeout],
+      spawn_error: result[:spawn_error],
+      commit: head,
+      branch: branch,
+      worktree: dirty ? "dirty" : "clean",
+      dirty_paths: status.lines.map { |line| line[3..].to_s.strip }.reject(&:empty?),
+      started_at: started_wall.iso8601(6),
+      finished_at: finished_wall.iso8601(6),
+      duration_seconds: duration.round(3),
+      host: Socket.gethostname,
+      os: RUBY_PLATFORM,
+      ruby: RUBY_VERSION,
+      log: relative(root, log_path),
+      attachments: attachments,
+      notes: options[:notes]
+    }
+    atomic_write(json_path, JSON.pretty_generate(payload) + "\n", mode: 0o600)
+
+    warn("evidence0: #{final_verdict} (command exit #{result[:command_exit_status].inspect}; reported exit #{result[:reported_exit_status]})")
+    warn("evidence0: artifact #{relative(root, json_path)}")
+    warn("evidence0: log #{relative(root, log_path)}")
+    warn("evidence0: inspect logs for secrets and irrelevant personal data before committing them")
+    warn("evidence0: after review, commit JSON + text log and cite both in the closing commit message")
+    result.fetch(:reported_exit_status)
+  rescue OptionParser::ParseError, ArgumentError => error
+    warn("evidence0: #{error.message}")
+    64
+  rescue StandardError => error
+    warn("evidence0: capture failed: #{error.class}: #{error.message}")
+    70
+  end
+
+  def execute(command, log_path, timeout_seconds)
+    command_status = nil
+    timed_out = false
+    spawn_error = nil
+    File.open(log_path, "wb", 0o600) do |log|
+      begin
+        Open3.popen2e(*command, pgroup: true) do |stdin, stream, waiter|
+          stdin.close
+          reader = Thread.new do
+            loop do
+              chunk = stream.readpartial(READ_SIZE)
+              log.write(chunk)
+              log.flush
+              $stderr.write(chunk)
+              $stderr.flush
+            end
+          rescue EOFError, IOError
+            nil
+          end
+
+          unless waiter.join(timeout_seconds)
+            timed_out = true
+            terminate_process_group(waiter.pid, waiter)
+          end
+          command_status = exit_status(waiter.value)
+          reader.join
+        ensure
+          stream.close unless stream.closed?
+        end
+      rescue SystemCallError => error
+        spawn_error = "#{error.class}: #{error.message}"
+        log.write("evidence0: could not start command: #{spawn_error}\n")
+        command_status = 127
+      end
+    end
+    reported = timed_out ? 124 : (command_status || 1)
+    { command_exit_status: command_status, reported_exit_status: reported, timed_out: timed_out, spawn_error: spawn_error }
+  end
+
+  def terminate_process_group(pid, waiter)
+    Process.kill("TERM", -pid)
+  rescue Errno::ESRCH
+    nil
+  ensure
+    unless waiter.join(1.5)
+      begin
+        Process.kill("KILL", -pid)
+      rescue Errno::ESRCH
+        nil
+      end
+      waiter.join
+    end
+  end
+
+  def exit_status(status)
+    return status.exitstatus unless status.exitstatus.nil?
+
+    status.termsig ? 128 + status.termsig : 1
+  end
+
+  def classify(exit_code, timed_out: false)
+    return "TIMEOUT" if timed_out || exit_code == 124
+    return "PASS" if exit_code.zero?
+    return "BLOCKED" if exit_code == 77
+    return "INCONCLUSIVE" if exit_code == 78
+
+    "FAIL"
+  end
+
+  # Classification can add context, never turn a non-zero observed command into PASS.
+  def apply_override(detected, requested, exit_code)
+    return [detected, nil] unless requested
+    return [detected, "PASS override refused because the command did not exit 0"] if requested == "PASS" && !exit_code.zero?
+    return [detected, "override refused because a timed-out command cannot be reclassified"] if detected == "TIMEOUT" && requested != "TIMEOUT"
+    return [detected, "override refused because a blocked command cannot be reclassified"] if detected == "BLOCKED" && requested != "BLOCKED"
+    return [detected, "override refused because an inconclusive command cannot be reclassified"] if detected == "INCONCLUSIVE" && requested != "INCONCLUSIVE"
+    return [detected, "override refused because a failed command cannot be downgraded"] if detected == "FAIL" && !%w[FAIL VALIDATION_FAILED DELIVERY_FAILED].include?(requested)
+
+    [requested, nil]
+  end
+
+  def attachment_record(root, path)
+    full = File.expand_path(path, root)
+    raise ArgumentError, "attachment is not a regular file: #{path}" unless File.file?(full)
+
+    real_root = File.realpath(root)
+    real_file = File.realpath(full)
+    raise ArgumentError, "attachment must resolve inside the repository: #{path}" unless real_file.start_with?("#{real_root}/")
+
+    { path: relative(root, full), bytes: File.size(real_file), sha256: Digest::SHA256.file(real_file).hexdigest }
+  end
+
+  def redact_argv(argv)
+    hidden_next = false
+    argv.map do |argument|
+      value = argument.to_s
+      if hidden_next
+        hidden_next = false
+        "[REDACTED]"
+      elsif value.match?(/\A(?:--?(?:token|password|passwd|secret|api[-_]?key|authorization|cookie))\z/i)
+        hidden_next = true
+        value
+      elsif value.match?(/\A--?(?:token|password|passwd|secret|api[-_]?key|authorization|cookie)=/i)
+        "#{value.split("=", 2).first}=[REDACTED]"
+      elsif value.match?(/\A(?:[A-Z0-9_]*(?:TOKEN|PASSWORD|SECRET|API_KEY|ACCESS_KEY|AUTHORIZATION)=).+/i)
+        "#{value.split("=", 2).first}=[REDACTED]"
+      else
+        value
+      end
+    end
+  end
+
+  def git_root
+    out, status = Open3.capture2e("git", "rev-parse", "--show-toplevel")
+    raise "not inside a Git work tree" unless status.success?
+
+    File.realpath(out.strip)
+  end
+
+  def git_value(root, *args)
+    out, status = Open3.capture2("git", *args, chdir: root)
+    raise "git #{args.join(' ')} failed" unless status.success?
+
+    out
+  end
+
+  def unique_base(directory, stem)
+    base = File.join(directory, stem)
+    index = 1
+    while File.exist?("#{base}.json") || File.exist?("#{base}.txt")
+      base = File.join(directory, format("%s-%02d", stem, index))
+      index += 1
+    end
+    base
+  end
+
+  def relative(root, path)
+    path = File.expand_path(path)
+    root = File.expand_path(root)
+    path.start_with?("#{root}/") ? path.delete_prefix("#{root}/") : path
+  end
+
+  def atomic_write(path, content, mode:)
+    temp = "#{path}.tmp-#{Process.pid}"
+    File.open(temp, "wb", mode) { |file| file.write(content); file.flush; file.fsync }
+    File.rename(temp, path)
+  ensure
+    File.delete(temp) if temp && File.exist?(temp)
+  end
+
+  def usage!(message)
+    raise ArgumentError, message
+  end
+end
+
+exit EvidenceCapture.run(ARGV)
