@@ -94,7 +94,12 @@ module Master
 
           def deploy_god_class_findings
             deploy_paths.select { |p| p.end_with?(".rb") }.flat_map do |path|
-              code = read_text(path) rescue ""
+              code = begin
+                read_text(path)
+              rescue StandardError => e
+                Master::Ground::Swallow.log(e, context: "SelfTest.deploy_god_class", severity: :load_bearing)
+                next [finding(path:, line: 1, message: "unreadable deploy file — ABSTRACTION unmeasured, not clean")]
+              end
               code.scan(/^\s*def\s+\w+/).size > 10 ? [finding(path:, line: 1, message: "potential god class in OPERATOR rails (>10 defs)")] : []
             end
           end
@@ -102,7 +107,16 @@ module Master
           MAX_DEPLOY_FILE_BYTES = 24_000
 
           def deploy_small_files_findings
-            deploy_paths.select { |path| File.size(path) > MAX_DEPLOY_FILE_BYTES rescue false }.map do |path|
+            deploy_paths.filter_map do |path|
+              size = begin
+                File.size(path)
+              rescue StandardError => e
+                Master::Ground::Swallow.log(e, context: "SelfTest.deploy_small_files", severity: :load_bearing)
+                nil
+              end
+              next finding(path:, line: 1, message: "unreadable deploy file — DENSITY unmeasured, not clean") if size.nil?
+              next unless size > MAX_DEPLOY_FILE_BYTES
+
               finding(path:, line: 1,
                 message: "OpenBSD deploy file exceeds #{MAX_DEPLOY_FILE_BYTES} bytes (violates DENSITY/SMALL_FILES)")
             end
@@ -194,7 +208,10 @@ module Master
               bare_rescue_findings + deploy_bare_rescue_findings + timeout_findings +
                 js_silent_catch_findings + library_verify_findings
             }],
-            ["SINGULARITY", lambda { duplicate_law_id_findings + deploy_duplicate_id_findings }],
+            ["SINGULARITY", lambda {
+              duplicate_law_id_findings + deploy_duplicate_id_findings +
+                cross_yaml_duplicate_key_findings + malformed_yaml_findings
+            }],
             ["LINEARITY", lambda { structural_findings(Laws::NestingDepthLaw.new) + deploy_nesting_findings }],
             ["PROXIMITY", lambda { law_test_proximity_findings }],
             ["ABSTRACTION", lambda { structural_findings(Laws::GodClassLaw.new) + deploy_god_class_findings }],
@@ -238,7 +255,7 @@ module Master
             [finding(path:, line: 1, message: "HTTP/Open3 without bounded timeout (ROBUSTNESS)")]
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "SelfTest.timeout_scan", severity: :load_bearing)
-            []
+            [finding(path:, line: 1, message: "timeout audit could not read this file — ROBUSTNESS unmeasured, not clean")]
           end
         end
 
@@ -330,8 +347,17 @@ module Master
           return {} unless yaml.is_a?(Hash)
 
           yaml.reject { |key, _value| %w[schema meta version].include?(key.to_s) }
-        rescue Psych::Exception
+        rescue Psych::Exception => e
+          Master::Ground::Swallow.log(e, context: "SelfTest.top_level_yaml_entries", severity: :load_bearing)
+          malformed_yaml_findings << finding(
+            path: path, line: 1,
+            message: "malformed YAML in data register (#{e.class}) — SINGULARITY unmeasured, not clean",
+          )
           {}
+        end
+
+        def malformed_yaml_findings
+          @malformed_yaml_findings ||= []
         end
 
         def law_ids(value, ids = [])

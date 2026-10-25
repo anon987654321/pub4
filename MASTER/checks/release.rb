@@ -39,7 +39,7 @@ RELEASE_CHECK_CLASSES = %w[
 
 manifest_path = File.join(__dir__, "checks.yml")
 repo_root = File.expand_path("../../..", manifest_path)
-YAML.load_file(manifest_path).then { |manifest| manifest["checks"] || manifest }
+YAML.safe_load_file(manifest_path, aliases: true).then { |manifest| manifest["checks"] || manifest }
     .each_value.select { |row| row.is_a?(Hash) && RELEASE_CHECK_CLASSES.include?(row["class"]) }
     .each do |row|
       require_path = row.fetch("require")

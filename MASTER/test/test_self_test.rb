@@ -32,6 +32,64 @@ class TestSelfTest < Minitest::Test
     end
   end
 
+  def test_malformed_data_yaml_is_a_singularity_finding
+    Dir.mktmpdir do |root|
+      write_fixture_tree(root)
+      path = File.join(root, "data", "broken.yml")
+      File.write(path, "broken: [\n")
+
+      result = Master::Review::Scan::SelfTest.new(root:).call(laws: ["SINGULARITY"])
+      findings = result.value!.checks.fetch(0).findings
+
+      assert findings.any? { |finding| finding[:path] == path && finding[:message].include?("malformed YAML") }
+    end
+  end
+
+  def test_timeout_audit_read_failure_is_not_reported_as_clean
+    Dir.mktmpdir do |root|
+      write_fixture_tree(root)
+      FileUtils.mkdir_p(File.join(root, "lib", "core"))
+      path = File.join(root, "lib", "core", "unreadable.rb")
+      File.write(path, "require 'open3'\n")
+      audit = Master::Review::Scan::SelfTest.new(root:)
+      audit.define_singleton_method(:read_text) do |candidate|
+        raise Errno::EACCES, candidate if candidate == path
+        File.read(candidate, encoding: "UTF-8")
+      end
+
+      findings = audit.send(:timeout_findings)
+      assert findings.any? { |finding| finding[:path] == path && finding[:message].include?("unmeasured, not clean") }
+    end
+  end
+
+  def test_deploy_file_read_and_size_failures_become_findings
+    Dir.mktmpdir do |workspace|
+      root = File.join(workspace, "MASTER")
+      deploy = File.join(workspace, "OPENBSD")
+      FileUtils.mkdir_p(root)
+      FileUtils.mkdir_p(deploy)
+      path = File.join(deploy, "OPERATOR.rb")
+      File.write(path, "def example; end\n")
+      audit = Master::Review::Scan::SelfTest.new(root:)
+      audit.define_singleton_method(:read_text) do |candidate|
+        raise Errno::EACCES, candidate if candidate == path
+        File.read(candidate, encoding: "UTF-8")
+      end
+
+      read_findings = audit.send(:deploy_god_class_findings)
+      assert read_findings.any? { |finding| finding[:path] == path && finding[:message].include?("ABSTRACTION unmeasured") }
+
+      original_size = File.method(:size)
+      File.stub(:size, lambda { |candidate|
+        raise Errno::EACCES, candidate if candidate == path
+        original_size.call(candidate)
+      }) do
+        size_findings = audit.send(:deploy_small_files_findings)
+        assert size_findings.any? { |finding| finding[:path] == path && finding[:message].include?("DENSITY unmeasured") }
+      end
+    end
+  end
+
   def test_only_law_ids_are_checked_under_singularity
     Dir.mktmpdir do |root|
       write_fixture_tree(root)
