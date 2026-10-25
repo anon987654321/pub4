@@ -347,9 +347,9 @@ module Pub4Admin
     end
 
     status_stat = File.lstat(path)
-    raise "#{path} must be a root-owned regular file" unless
-      status_stat.file? && !status_stat.symlink? && (!verify_root || status_stat.uid.zero?)
-    raise "#{path} must not be group/other writable" if verify_root && (status_stat.mode & 0o022).positive?
+    raise "#{path} must be a root-owned, private regular file" unless
+      status_stat.file? && !status_stat.symlink? &&
+      (!verify_root || status_stat.uid.zero?) && (status_stat.mode & 0o077).zero?
 
     record = JSON.parse(File.read(path))
     raise "#{path} has invalid status schema" unless
