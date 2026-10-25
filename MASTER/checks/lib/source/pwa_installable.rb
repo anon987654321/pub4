@@ -26,7 +26,6 @@ module Deploy
     # levels sufficed; from MASTER it is four plus the RAILS_ROOT join.
     ROOT = File.expand_path("../../../..", __dir__)
 
-    RAILS_ROOT = File.join(ROOT, "RAILS")
     APPS = Fleet.app_names.freeze
 
     # Chrome installs on one 192 and one 512 with purpose "any". Maskable and
@@ -60,7 +59,7 @@ module Deploy
 
     def manifest_path(app)
       candidates = %w[app/views/pwa/manifest.json app/views/pwa/manifest.json.erb]
-      candidates.map { |path| File.join(RAILS_ROOT, app, path) }.find { |path| File.file?(path) }
+      candidates.map { |path| File.join(rails_root, app, path) }.find { |path| File.file?(path) }
     end
 
     def check_keys(app, source)
@@ -128,7 +127,7 @@ module Deploy
 
     def check_service_worker(app)
       @result.checked!
-      worker = File.join(RAILS_ROOT, app, "app/views/pwa/service-worker.js")
+      worker = File.join(rails_root, app, "app/views/pwa/service-worker.js")
       return if File.file?(worker)
 
       @result.fail("pwa_installable: #{app} has no service worker at #{rel(worker)}")
@@ -164,9 +163,11 @@ module Deploy
 
     def resolves?(app, src)
       path = src.sub(%r{\A/}, "")
-      File.file?(File.join(RAILS_ROOT, app, "public", path)) ||
-        File.file?(File.join(RAILS_ROOT, "__shared", "public", path))
+      File.file?(File.join(rails_root, app, "public", path)) ||
+        File.file?(File.join(rails_root, "__shared", "public", path))
     end
+
+    def rails_root = File.join(ROOT, "RAILS")
 
     def rel(path) = path.sub("#{ROOT}/", "")
   end
