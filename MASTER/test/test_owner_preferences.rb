@@ -99,6 +99,55 @@ class TestOwnerPreferences < Minitest::Test
     assert_includes response, "coding work.flow=implement_verify"
   end
 
+  def test_repeated_explicit_corrections_stage_inactive_suggestion_without_raw_text
+    grant
+    Preferences.set_learning(root: @root, subject: SUBJECT, enabled: true)
+    first = Preferences.observe_feedback(
+      root: @root, subject: SUBJECT, message: "Your answer is too verbose.",
+    )
+    assert_equal "observed", first.fetch("status")
+    assert_equal 1, first.fetch("count")
+    assert_empty Preferences.status(root: @root, subject: SUBJECT).fetch("suggestions")
+
+    second = Preferences.observe_feedback(
+      root: @root, subject: SUBJECT, message: "That was too verbose again.",
+    )
+    assert_equal "staged", second.fetch("status")
+    state = Preferences.status(root: @root, subject: SUBJECT)
+    candidate = state.fetch("suggestions").fetch(0)
+    assert_equal second.fetch("suggestion_id"), candidate.fetch("id")
+    assert_equal "observed_correction", candidate.fetch("origin")
+    assert_equal 2, candidate.fetch("evidence_count")
+    refute_includes File.read(Preferences.path(root: @root, subject: SUBJECT)), "Your answer is too verbose"
+    assert_empty Preferences.effective(root: @root, subject: SUBJECT)
+
+    Preferences.accept(root: @root, subject: SUBJECT, id: candidate.fetch("id"))
+    active = Preferences.effective(root: @root, subject: SUBJECT).fetch("communication.detail")
+    assert_equal "brief", active.fetch("value")
+    assert_equal 2, active.fetch("evidence_count")
+  end
+
+  def test_learning_off_does_not_collect_feedback
+    grant
+    result = Preferences.observe_feedback(
+      root: @root, subject: SUBJECT, message: "Your answer is too verbose.",
+    )
+    assert_nil result
+    state = Preferences.status(root: @root, subject: SUBJECT)
+    assert_empty state.fetch("observations")
+    assert_empty state.fetch("suggestions")
+  end
+
+  def test_non_correction_is_not_collected
+    grant
+    Preferences.set_learning(root: @root, subject: SUBJECT, enabled: true)
+    result = Preferences.observe_feedback(
+      root: @root, subject: SUBJECT, message: "Please help me write a short README.",
+    )
+    assert_nil result
+    assert_empty Preferences.status(root: @root, subject: SUBJECT).fetch("observations")
+  end
+
   def test_rejected_suggestion_never_becomes_active
     grant
     suggestion = Preferences.suggest(
