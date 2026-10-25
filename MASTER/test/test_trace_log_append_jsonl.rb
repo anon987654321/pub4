@@ -43,6 +43,29 @@ class TraceLogAppendJsonlTest < Minitest::Test
     end
   end
 
+  def test_event_stream_uses_private_serialized_jsonl_appends
+    Dir.mktmpdir("trace-event-jsonl-") do |root|
+      event_log = Master::Trace::Log::Event.new(root:)
+      threads = 8.times.map do |worker|
+        Thread.new do
+          25.times do |index|
+            event_log.append("fixture", worker:, index:)
+          end
+        end
+      end
+      threads.each(&:value)
+
+      path = File.join(root, "runtime", "events", "activity.jsonl")
+      lines = File.readlines(path, chomp: true)
+      assert_equal 200, lines.size
+      rows = lines.map { |line| JSON.parse(line) }
+      assert_equal 200, rows.size
+      assert_equal 200, rows.map { |row| [row.dig("payload", "worker"), row.dig("payload", "index")] }.uniq.size
+      assert_equal 0o600, File.stat(path).mode & 0o777
+      assert_equal 0o700, File.stat(File.dirname(path)).mode & 0o777
+    end
+  end
+
   def test_refuses_a_symlink_destination
     Dir.mktmpdir("trace-jsonl-symlink-") do |dir|
       path = File.join(dir, "events.ndjson")
