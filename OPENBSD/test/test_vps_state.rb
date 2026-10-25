@@ -2,6 +2,7 @@
 
 require "minitest/autorun"
 require "open3"
+require "fileutils"
 require "rbconfig"
 require "tmpdir"
 
