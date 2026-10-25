@@ -36,6 +36,28 @@ class TestConstitutionalCheck < Minitest::Test
     assert_equal expected, Master::Fix::ConstitutionalCheck.priority_constitutional_ids
   end
 
+  def test_unavailable_priority_catalogue_blocks_unclassified_error_findings
+    check = Master::Fix::ConstitutionalCheck
+    had_ids = check.instance_variable_defined?(:@priority_constitutional_ids)
+    old_ids = check.instance_variable_get(:@priority_constitutional_ids)
+    had_loaded = check.instance_variable_defined?(:@priority_constitutional_ids_loaded)
+    old_loaded = check.instance_variable_get(:@priority_constitutional_ids_loaded)
+    check.remove_instance_variable(:@priority_constitutional_ids) if had_ids
+    check.remove_instance_variable(:@priority_constitutional_ids_loaded) if had_loaded
+
+    Master.stub(:law_entries, ->(**_options) { raise IOError, "catalogue unavailable" }) do
+      findings = [{ severity: :error, law_id: "UNMAPPED_LAW" }]
+      refute check.admit_clean?(findings)
+    end
+  ensure
+    if defined?(check) && check
+      check.instance_variable_set(:@priority_constitutional_ids, old_ids) if had_ids
+      check.remove_instance_variable(:@priority_constitutional_ids) if !had_ids && check.instance_variable_defined?(:@priority_constitutional_ids)
+      check.instance_variable_set(:@priority_constitutional_ids_loaded, old_loaded) if had_loaded
+      check.remove_instance_variable(:@priority_constitutional_ids_loaded) if !had_loaded && check.instance_variable_defined?(:@priority_constitutional_ids_loaded)
+    end
+  end
+
   def test_veto_is_blocking
     findings = [{ severity: :veto, tier: "constitutional" }]
     refute Master::Fix::ConstitutionalCheck.admit_clean?(findings)
