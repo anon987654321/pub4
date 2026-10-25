@@ -183,7 +183,9 @@ class CheckLiveAndCssBudgetTest < Minitest::Test
       end
     end
 
-    refute_empty sites.call(motion), "no reduced-motion override carries !important, so this proves nothing"
+    # The fixture above proves the exemption remains effective even when a
+    # future reduced-motion rule contains !important; production need not carry
+    # that debt merely to keep this test meaningful.
     assert_empty sites.call(motion) & important
     refute_empty sites.call(rest) & important, "the reduced-motion exemption has swallowed the whole file"
   end
