@@ -43,7 +43,8 @@ class FederatedIdentityContractTest < Minitest::Test
                     "test \"lower-assurance BankID cannot reclaim a legacy synthetic account\""
     assert_includes callback, '::IdentityProvider.find_by(slug: auth.provider.to_s)'
     assert_includes callback, "identity.save!"
-    assert_includes callback, "::IdentityProvider.create_or_find_by!(slug: auth.provider.to_s)"
+    assert_includes callback, "provider = ::IdentityProvider.find_by(slug: slug)"
+    assert_includes callback, "rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid"
     assert_includes read("RAILS/__shared/app/models/account_merge.rb"),
                     "validates :guest_user_id, uniqueness: { scope: :user_id }"
     assert_includes callback, 'legacy_email = "#{auth.uid}@bankid.oauth"'
