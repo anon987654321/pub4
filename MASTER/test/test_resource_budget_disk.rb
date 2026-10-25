@@ -36,6 +36,18 @@ class TestResourceBudgetDisk < Minitest::Test
     end
   end
 
+  def test_parses_openbsd_avail_header
+    path = "/tmp/work tree"
+    output = <<~DF
+      Filesystem 1K-blocks Used Avail Capacity Mounted on
+      /dev/mock 10000000 1000000 2097152 10% /
+    DF
+
+    with_df(path, output) do
+      assert_equal 2.0, @budget.disk_free_gb_for(path)
+    end
+  end
+
   def test_malformed_or_header_only_df_output_is_unavailable
     path = "/tmp/work tree"
     [
