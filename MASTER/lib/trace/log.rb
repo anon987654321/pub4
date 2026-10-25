@@ -168,8 +168,7 @@ module Master
           record = { ts: Time.now.utc.iso8601, session: Log.session, tool: event_data[:tool] }.merge(fields)
           Master::Trace::Telemetry.span("audit.append", tool: event_data[:tool].to_s) do
             @mutex.synchronize do
-              Log.rotate(@path, MAX_BYTES)
-              File.open(@path, "a") { |f| f.puts(JSON.generate(record)) }
+              Log.append_jsonl(@path, record, max_bytes: MAX_BYTES, mode: 0o600, directory_mode: 0o700)
             end
           end
         end
