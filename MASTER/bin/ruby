@@ -57,9 +57,6 @@ for name in ruby4.0 ruby40 ruby3.4 ruby34 ruby3.3 ruby33 ruby; do
 done
 
 if [[ -n $BEST_RUBY ]]; then
-  if [[ -n ${PREFERRED_RUBY:-} ]]; then
-    :
-  fi
   ACTUAL=$("$BEST_RUBY" -e 'print RUBY_VERSION')
   if [[ ( ${MASTER_DMESG:-0} == 1 || ${MASTER_VERBOSE:-0} == 1 ) && ${MASTER_QUIET:-0} != 1 ]]; then
     print -u2 -- "ruby0: selected $ACTUAL ($BEST_RUBY), best supported Ruby available"
