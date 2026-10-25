@@ -62,8 +62,8 @@ class TestVercelEntrypointContract < Minitest::Test
     pages = css.scan(/--page:\s*(#[\da-f]{6})/i).flatten
     inks = css.scan(/--ink:\s*(#[\da-f]{6})/i).flatten
     muted = css.scan(/--muted:\s*(#[\da-f]{6})/i).flatten
-    signal = css.match(/--signal:\s*(#[\da-f]{6})/i).fetch(1)
-    signal_ink = css.match(/--signal-ink:\s*(#[\da-f]{6})/i).fetch(1)
+    signal = css.match(/--signal:\s*(#[\da-f]{6})/i).captures.fetch(0)
+    signal_ink = css.match(/--signal-ink:\s*(#[\da-f]{6})/i).captures.fetch(0)
 
     assert_equal 2, pages.size, "light and dark page colours must be explicit"
     assert_equal 2, inks.size, "light and dark text colours must be explicit"
