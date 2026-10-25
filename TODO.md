@@ -97,10 +97,15 @@ Repairs committed in this batch include:
   summary, matching verbose result count, and matching test-start count cannot pass with exit 0.
   The normal `rake test` task uses this supervisor for both one-worker diagnostics and parallel
   runs. Worker logs record the active test (`test-start0`) so a timeout or abrupt exit identifies
-  the last test entered. Regression tests cover a hung worker, an incomplete exit, and the
-  supervised one-worker route. These source changes are not yet runtime-verified: run
-  `MASTER_TEST_START_MARKERS=1 MASTER_TEST_JOBS=1 rake test` to isolate a serial hang, then
-  `MASTER_TEST_JOBS=3 rake test`, and record exact test/output before closing.
+  the last test entered. The 2026-10-25 diagnostic follow-up adds a run-time configurable
+  completed-result progress cadence (`MASTER_TEST_PROGRESS_EVERY`), a JSON worker outcome report at
+  `.master/check/suite-report.json`, last-entered-test markers for incomplete workers, and rejects
+  exit-zero runs whose Minitest summary or verbose result lines report failures/errors. The progress
+  counter means completed result lines relayed, not tests started or total suite completion. These
+  source changes are not yet runtime-verified: run
+  `MASTER_TEST_START_MARKERS=1 MASTER_TEST_JOBS=1 MASTER_TEST_PROGRESS_EVERY=25 rake test` to isolate
+  a serial hang, inspect the report/logs, then `MASTER_TEST_JOBS=3 rake test`, and record exact
+  test/output before closing.
   No trial has reached a repair, so repair
   quality remains unmeasured on both MASTER and RAILS. Run /fix again only when the operator asks.
 - [ ] Validate the OpenBSD Operator CLI and /help against the requested plain dmesg style,

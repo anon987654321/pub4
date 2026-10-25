@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require "tmpdir"
 require "stringio"
+require "json"
 require_relative "../lib/operator/parallel_tests"
 
 class TestParallelTests < Minitest::Test
@@ -11,12 +12,15 @@ class TestParallelTests < Minitest::Test
   def setup
     @previous_jobs = ENV["MASTER_TEST_JOBS"]
     @previous_timeout = ENV["MASTER_TEST_WORKER_TIMEOUT"]
+    @previous_progress = ENV["MASTER_TEST_PROGRESS_EVERY"]
     ENV["MASTER_TEST_JOBS"] = "2"
+    ENV["MASTER_TEST_PROGRESS_EVERY"] = "1"
   end
 
   def teardown
     @previous_jobs.nil? ? ENV.delete("MASTER_TEST_JOBS") : ENV["MASTER_TEST_JOBS"] = @previous_jobs
     @previous_timeout.nil? ? ENV.delete("MASTER_TEST_WORKER_TIMEOUT") : ENV["MASTER_TEST_WORKER_TIMEOUT"] = @previous_timeout
+    @previous_progress.nil? ? ENV.delete("MASTER_TEST_PROGRESS_EVERY") : ENV["MASTER_TEST_PROGRESS_EVERY"] = @previous_progress
   end
 
   def test_results_pass_through_and_a_failed_worker_fails_the_run
@@ -61,6 +65,45 @@ class TestParallelTests < Minitest::Test
     assert_includes out.string, "INCOMPLETE"
     assert_includes out.string, "test-start0: Example#test_exits_early"
     assert_includes out.string, "test-worker-incomplete0: missing final Minitest summary"
+    assert_includes out.string, "test-worker-last0: Example#test_exits_early"
+  end
+
+  def test_progress_and_suite_report_name_incomplete_workers
+    out = StringIO.new
+    command = lambda do |files|
+      if files.include?("early")
+        [RbConfig.ruby, "-e", "STDERR.puts 'test-start0: Early#test_gone'; exit 0"]
+      else
+        [RbConfig.ruby, "-e", "puts 'test-start0: Ok#test_one'; puts 'Ok#test_one = 0.00 s = .'; puts 'Finished in 0.01s'; puts '1 runs, 1 assertions, 0 failures, 0 errors, 0 skips'; exit 0"]
+      end
+    end
+
+    refute Runner.run(%w[early ok], command:, out:)
+    assert_includes out.string, "test-progress0: completed_results=1"
+    assert_includes out.string, "test-suite-report0:"
+    assert_includes out.string, "test-suite-incomplete-workers0:"
+    assert_includes out.string, "test-worker-last0: Early#test_gone"
+
+    report_path = File.join(Runner::LOG_DIR, "suite-report.json")
+    assert File.file?(report_path), "expected #{report_path}"
+    payload = JSON.parse(File.read(report_path))
+    assert_equal 1, payload["schema"]
+    assert_equal 1, payload["completed_results_relayed"]
+    incomplete = payload["workers"].select { |worker| worker["outcome"] == "incomplete" }
+    refute_empty incomplete
+    assert_equal "Early#test_gone", incomplete.first["last_started_test"]
+  end
+
+  def test_exit_zero_with_failure_summary_still_fails_the_run
+    out = StringIO.new
+    command = lambda do |_files|
+      [RbConfig.ruby, "-e", "puts 'test-start0: Example#test_false_green'; puts 'Example#test_false_green = 0.00 s = F'; puts 'Finished in 0.01s'; puts '1 runs, 1 assertions, 1 failures, 0 errors, 0 skips'; exit 0"]
+    end
+
+    refute Runner.run(%w[false-green], command:, out:)
+    payload = JSON.parse(File.read(File.join(Runner::LOG_DIR, "suite-report.json")))
+    assert_equal "failed", payload.fetch("workers").first.fetch("outcome")
+    assert payload.fetch("workers").first.fetch("known_red")
   end
 
   def test_one_job_rake_test_still_uses_the_supervised_runner

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "json"
 
 module Operator
   # The MASTER suite across several processes. Workers are polled rather than
@@ -9,13 +10,20 @@ module Operator
     LOG_DIR = File.expand_path("../../.master/check", __dir__)
     RESULT_LINE = /\A\S+#\S+ = [\d.]+ s = [.FES]\s*\z/
     REPORT_START = /\AFinished in /
-    SUMMARY_LINE = /\A\d+ runs?, \d+ assertions?, \d+ failures?, \d+ errors?, \d+ skips?\s*\z/i
+    SUMMARY_LINE = /\A(\d+) runs?, (\d+) assertions?, (\d+) failures?, (\d+) errors?, (\d+) skips?\s*\z/i
     DEFAULT_WORKER_TIMEOUT = 1800
     POLL_INTERVAL = 0.1
 
     module_function
 
     def jobs = [Integer(ENV.fetch("MASTER_TEST_JOBS", "3"), exception: false) || 3, 1].max
+
+    # Read at run time so a test or caller can change the cadence after require.
+    # Zero disables progress output; completed results remain available in JSON.
+    def progress_every
+      value = Integer(ENV.fetch("MASTER_TEST_PROGRESS_EVERY", "50"), exception: false)
+      value && value >= 0 ? value : 50
+    end
 
     def worker_timeout
       value = Float(ENV.fetch("MASTER_TEST_WORKER_TIMEOUT", DEFAULT_WORKER_TIMEOUT), exception: false)
@@ -41,9 +49,10 @@ module Operator
       end
 
       relay_errors = Queue.new
+      progress = { completed: 0, last_emitted: 0, every: progress_every }
       relay = Thread.new do
         begin
-          relay_results(workers, out) { workers.all? { |worker| worker[:status] } }
+          relay_results(workers, out, progress) { workers.all? { |worker| worker[:status] } }
         rescue StandardError => error
           relay_errors << "#{error.class}: #{error.message}"
         end
@@ -65,9 +74,18 @@ module Operator
       rescue ThreadError
         # No relay error was queued.
       end
-      workers.each { |worker| worker[:summary_present] = summary_present?(worker) }
+      workers.each do |worker|
+        worker[:summary] = summary_data(worker)
+        worker[:summary_present] = !worker[:summary].nil?
+        worker[:failure_result_lines] = worker_failures(worker)
+      end
+      write_suite_report(workers, progress[:completed], out)
       report(workers, out)
-      workers.all? { |worker| worker[:status]&.success? && !worker[:timed_out] && worker[:summary_present] }
+      workers.all? do |worker|
+        summary = worker[:summary]
+        worker[:status]&.success? && !worker[:timed_out] && worker[:summary_present] &&
+          worker[:failure_result_lines].empty? && summary["failures"].zero? && summary["errors"].zero?
+      end
     ensure
       workers&.each { |worker| terminate(worker) unless worker[:status] }
     end
@@ -131,16 +149,25 @@ module Operator
       worker[:status] ||= nil
     end
 
-    def relay_results(workers, out)
+    def relay_results(workers, out, progress)
       until yield
-        relay_once(workers, out)
+        relay_once(workers, out, progress)
         sleep 1
       end
-      relay_once(workers, out)
+      relay_once(workers, out, progress)
     end
 
-    def relay_once(workers, out)
-      workers.each { |worker| fresh_lines(worker).grep(RESULT_LINE).each { |line| out.puts line } }
+    def relay_once(workers, out, progress)
+      workers.each do |worker|
+        fresh_lines(worker).grep(RESULT_LINE).each do |line|
+          out.puts line
+          progress[:completed] += 1
+          if progress[:every].positive? && progress[:completed] - progress[:last_emitted] >= progress[:every]
+            progress[:last_emitted] = progress[:completed]
+            out.puts "test-progress0: completed_results=#{progress[:completed]}"
+          end
+        end
+      end
       out.flush
     end
 
@@ -161,24 +188,96 @@ module Operator
       nil
     end
 
-    def summary_present?(worker)
+    def summary_data(worker)
       result_count = 0
       start_count = 0
-      summary_runs = nil
+      summary = nil
 
       File.foreach(worker.fetch(:log), encoding: "UTF-8", invalid: :replace, undef: :replace) do |raw_line|
         line = raw_line.chomp
         result_count += 1 if RESULT_LINE.match?(line)
         start_count += 1 if line.start_with?("test-start0: ")
-        summary_runs = line[/\A(\d+) runs?/, 1].to_i if SUMMARY_LINE.match?(line)
+        if (match = SUMMARY_LINE.match(line))
+          summary = {
+            "runs" => match[1].to_i,
+            "assertions" => match[2].to_i,
+            "failures" => match[3].to_i,
+            "errors" => match[4].to_i,
+            "skips" => match[5].to_i
+          }
+        end
       end
 
-      return false unless summary_runs == result_count
-      return false if worker[:start_markers] && start_count != result_count
+      return nil unless summary && summary["runs"] == result_count
+      return nil if worker[:start_markers] && start_count != result_count
 
-      true
+      summary.merge("result_lines" => result_count, "start_markers" => start_count)
     rescue Errno::ENOENT
-      false
+      nil
+    end
+
+    def summary_present?(worker) = !summary_data(worker).nil?
+
+    def worker_failures(worker)
+      failures = []
+      File.foreach(worker.fetch(:log), encoding: "UTF-8", invalid: :replace, undef: :replace) do |raw_line|
+        line = raw_line.chomp
+        failures << line if RESULT_LINE.match?(line) && line.match?(/ = [FE]\s*\z/)
+      end
+      failures
+    rescue Errno::ENOENT
+      []
+    end
+
+    def worker_outcome(worker)
+      summary = worker[:summary]
+      return "timeout" if worker[:timed_out]
+      return "incomplete" unless worker[:summary_present]
+      return "failed" unless worker[:status]&.success?
+      return "failed" unless worker[:failure_result_lines].empty?
+      return "failed" if summary["failures"].positive? || summary["errors"].positive?
+
+      "passed"
+    end
+
+    def write_suite_report(workers, completed_results, out)
+      payload = {
+        "schema" => 1,
+        "status" => (workers.all? { |worker| worker_outcome(worker) == "passed" } ? "passed" : "failed_or_incomplete"),
+        "completed_results_relayed" => completed_results,
+        "jobs" => workers.size,
+        "workers" => workers.each_with_index.map do |worker, index|
+          {
+            "index" => index + 1,
+            "pid" => worker[:pid],
+            "log" => worker[:log],
+            "exit_status" => worker[:status]&.exitstatus,
+            "success" => worker[:status]&.success? || false,
+            "timed_out" => !!worker[:timed_out],
+            "outcome" => worker_outcome(worker),
+            "summary_present" => !!worker[:summary_present],
+            "summary" => worker[:summary],
+            "last_started_test" => last_started_test(worker),
+            "failure_result_lines" => worker[:failure_result_lines],
+            "known_red" => !!(worker[:summary] && (worker[:summary]["failures"].positive? || worker[:summary]["errors"].positive?)) || !worker[:failure_result_lines].empty? || (worker[:status] && !worker[:status].success?)
+          }
+        end
+      }
+      path = File.join(LOG_DIR, "suite-report.json")
+      File.write(path, JSON.pretty_generate(payload) + "\n")
+      out.puts "test-suite-report0: #{path} completed_results=#{completed_results} status=#{payload["status"]}"
+
+      incomplete = payload["workers"].reject { |worker| worker["outcome"] == "passed" }
+      return if incomplete.empty?
+
+      out.puts "test-suite-incomplete-workers0: #{incomplete.size}"
+      incomplete.each do |worker|
+        out.puts "test-worker-last0: #{worker["last_started_test"] || "unknown"}" if worker["last_started_test"]
+        out.puts "  worker=#{worker["index"]} outcome=#{worker["outcome"]} timed_out=#{worker["timed_out"]} " \
+                 "summary=#{worker["summary_present"]} exit=#{worker["exit_status"].inspect}"
+      end
+    rescue StandardError => error
+      out.puts "test-suite-report0: failed #{error.class}: #{error.message}"
     end
 
     def report(workers, out)
@@ -191,6 +290,9 @@ module Operator
         label = suffix.empty? ? "" : ", #{suffix.join(", ")}"
         out.puts "", "worker #{index + 1} of #{workers.size} (pid #{worker.fetch(:pid)}#{label}):", *lines.drop(start).map(&:chomp)
         out.puts "test-worker-incomplete0: missing final Minitest summary" unless worker[:summary_present]
+        if worker[:timed_out] || worker[:failure_result_lines]&.any? || worker[:summary].to_h.values_at("failures", "errors").compact.any?(&:positive?)
+          out.puts "test-worker-last0: #{last_started_test(worker) || "unknown"}"
+        end
       end
     end
   end
