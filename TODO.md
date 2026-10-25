@@ -7,6 +7,29 @@ not create separate project backlog files. A source edit, a static contract, an 
 list, and a passing live run are different kinds of evidence. Close an item with the command or
 browser evidence recorded in the commit.
 
+## 2026-10-25 source-fix reconciliation
+
+The direct-to-main repair batch reached source commit 4a7618ea5d86c2e637402b8b60ff19afbb19ea4e before this backlog update. These commits are source and regression-test changes, **not** a passing test run. The operator-provided terminal output predates many of them; its failure summaries must be rechecked against current main rather than copied forward as current results.
+
+Repairs committed in this batch include:
+
+- Restored valid MASTER/data/laws.yml syntax after the boot-blocking malformed default_disabled_scopes sequence. The current body count is 2,009 non-blank/non-comment lines against the existing 2,050 body-line budget; the 2,174/2,171 raw-line measurements in old output are not the metric used by the ratchet.
+- Restored MASTER's canonical Ruby pin to 4.0.5 and fixed same-version inline ruby -e re-exec, which previously attempted to load a nonexistent MASTER/-e file.
+- Added a bounded phrase-energy signal, generation-checked native TTS recovery, and current digest checks for the generated face loader; repaired split-source voice assertions and the orbital-field fixture.
+- Bounded subprocess waits across output-reader threads and process groups; kept configured Ollama lanes eligible when live model discovery is inconclusive; fixed denial-round constraint placement, JSON namespace-report exit status, and inter-model fixture responses.
+- Restored the /pair command route/help/completion, corrected browser hostname normalization, and made critical event-log warnings emit once to stderr.
+- Made PWA, CSS coverage, asset URL, layout-stability, locale-reader, and keyboard/gesture inventories follow RAILS/__shared and the extracted sibling engines rather than the retired shared/ and brgen/engines/* layouts.
+- Corrected architecture and test contracts that pointed at removed component layouts, old locale owners, old CSS aggregation files, stale voice bundle assumptions, or the wrong Stimulus boot module. Lowered the measured Rails opacity baseline from 27 to 22 rather than masking the improvement with a larger ceiling.
+- Added an Amber account-erasure entry and regression fixture for user-linked dating location pings, and guarded a marketplace-order table rebuild with a copied-row-count check and a local migration-safety rationale.
+
+### Required verification for this batch
+
+- [ ] Run the focused tests affected by these changes on the exact current commit, including the MASTER boot/YAML/law-order, subprocess-timeout, model-pool, voice, /pair, and event-log tests, and the RAILS locale, erasure, CSS/asset/layout/gesture, PWA, campaign, migration-safety and face contracts. Record each command and its actual output.
+- [ ] Re-run the MASTER suite serially and then in the configured parallel mode; check for incomplete workers, missing Minitest summaries, timeouts, or mismatched test-start/result counts.
+- [ ] Re-run the full RAILS contract suite and each active app suite. Investigate the expanded CSS-corpus counts and any new findings individually; do not raise existing baselines or ratchets merely to obtain green.
+- [ ] Rebuild generated outputs where the source-of-truth contract requires it, then prove their digests are current. Specifically verify generated RAILS/__shared/design_tokens.yml and the RAILS/master/public/face.runtime.js manifest against their sources.
+- [ ] Finish the bounded four-tree release pass and real browser/viewport evidence already listed below. No test suite, rendered validation, deploy, or merge is marked PASS by this source reconciliation.
+
 ## P0 — evidence before calling the system complete
 
 - [ ] Run a fresh bounded release pass against the exact commit intended for deployment:
