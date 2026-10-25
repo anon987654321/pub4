@@ -40,6 +40,7 @@ class UserPurgeJob < ApplicationJob
   # attachments are purged by the destroy callback, and a photograph left in
   # storage is the failure this whole job exists to prevent.
   DESTROY = [
+    { model: "Dating::LocationPing", key: :user_id },
     { model: "Dating::Profile",       key: :user_id },
     { model: "ExternalIdentity",      key: :user_id },
     { model: "Marketplace::Address",  key: :user_id },
