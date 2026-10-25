@@ -3,7 +3,7 @@
 Updated: 2026-10-26 (Europe/Oslo; GitHub commit timestamps are UTC)  
 Reviewed base: `1ef67fe10` (external review snapshot)  
 Integration base: `0b59844318f2e5527b5d5d54328a44f433438c3c`  
-Integrated head at writing: `73a45cc7a9800808fb7658e95dc3dceacf73bd67`
+P01–P11 integration head (historical; follow-on commits are recorded below): `73a45cc7a9800808fb7658e95dc3dceacf73bd67`
 
 ## Follow-on manual four-tree source pass (2026-10-25)
 
