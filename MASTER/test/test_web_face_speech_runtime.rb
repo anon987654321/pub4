@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "digest"
 
 class FaceSpeechRuntimeSpec < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -29,11 +30,15 @@ class FaceSpeechRuntimeSpec < Minitest::Test
 
     assert_includes source, "FEMALE_BROWSER_VOICE_RE"
     assert_includes source, "Do not play a truncated MP3"
-    assert_includes bundle, "FEMALE_BROWSER_VOICE_RE"
-    assert_includes bundle, "Do not play a truncated MP3"
-    refute_includes bundle, "const audioStream = window.MASTER_RUNTIME?.enhancements?.includes?.('tts_audio_stream')"
-    refute_includes bundle, "let browserFallbackTimer = setTimeout"
-    refute_includes bundle, "if (pending.length <= TTS_CHUNK_MAX)"
+
+    # face.runtime.js is a content-addressed loader, not an inline copy of the
+    # sources. Its manifest must point at the current speech module digest.
+    path = File.join(ROOT, "../RAILS/master/public/face_speech_runtime.js")
+    digest = Digest::SHA256.file(path).hexdigest[0, 10]
+    assert_includes bundle, "face_speech_runtime.js?v=#{digest}"
+    refute_includes source, "const audioStream = window.MASTER_RUNTIME?.enhancements?.includes?.('tts_audio_stream')"
+    refute_includes source, "let browserFallbackTimer = setTimeout"
+    refute_includes source, "if (pending.length <= TTS_CHUNK_MAX)"
   end
 
   def test_retired_partial_tts_path_is_absent
