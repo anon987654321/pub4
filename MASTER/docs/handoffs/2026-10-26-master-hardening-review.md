@@ -28,6 +28,12 @@ A further code trace found two provider-health issues and one OpenBSD visibility
 
 All newly added and modified tests remain unexecuted. No runtime PASS is claimed; the exact focused test list and per-tree INCONCLUSIVE state are recorded in root `TODO.md`. No deployment, Vercel retry, or OpenBSD host action was performed.
 
+## Follow-on telemetry append and broker privacy pass
+
+- Provider health and quarantine share a serialized append primitive using an exclusive `flock`, seek-to-end, whole-line write, flush/fsync, and private mode enforcement. Added an 8-thread/200-event JSONL integrity regression test; it remains unexecuted.
+- The deploy-status read broker now requires status files to have no group/world permission bits. Added a regression case for mode 0644; it remains unexecuted.
+- There is no live verification: no syntax or suite run, no OpenBSD service account check, and no deployment. The consolidated list and truthful status are in root `TODO.md`.
+
 ## Follow-on trajectory telemetry hardening
 
 The opt-in trajectory writer now derives its 25 MiB ceiling from the existing trace-event log contract, serializes rotation and append through a private sidecar lock, reserves space for each complete record, rejects oversized records, enforces private file/directory modes, and refuses symlink destinations. This is important because the recorded task can contain the user's prompt. Added coverage for rotation, size limits, permissions and symlink refusal in `MASTER/test/test_ai_trajectory.rb`.
