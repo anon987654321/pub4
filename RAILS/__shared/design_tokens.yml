@@ -1364,7 +1364,7 @@ scale:
       off_scale_radius: 0
       off_scale_font_weight: 0
       off_scale_tracking: 0
-      off_scale_opacity: 27
+      off_scale_opacity: 22
       off_scale_duration: 20
     face:
       off_scale_space: 9
