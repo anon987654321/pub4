@@ -103,10 +103,11 @@ module Master
         end
 
         def all_events
-          mtime = File.file?(path) ? File.mtime(path) : nil
-          return @events if @events && @events_mtime == mtime
+          stat = File.stat(path) if File.file?(path)
+          stamp = stat && [stat.ino, stat.size, stat.mtime.to_r]
+          return @events if @events && @events_stamp == stamp
 
-          @events_mtime = mtime
+          @events_stamp = stamp
           @events = load_events
         end
 
