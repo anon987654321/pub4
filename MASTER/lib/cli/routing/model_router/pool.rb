@@ -413,7 +413,17 @@ module Master
 
             name = id.sub(%r{\Aollama[:/]}, "")
             installed = ollama_installed_models
-            return "ollama unreachable at #{ollama_tags_base_url}" if installed.nil?
+            if installed.nil?
+              configured = Array(@rules.dig("models", "local")).any? do |row|
+                row.is_a?(Hash) && row["id"].to_s == id
+              end
+              return "ollama unreachable at #{ollama_tags_base_url}" unless configured || @config.model.to_s == id
+
+              # Discovery is inconclusive, not proof that a configured model is
+              # missing. Keep the configured local fallback available; report the
+              # unreachable daemon only for arbitrary names not in the catalog.
+              return
+            end
             return "ollama pull #{name}" unless ollama_pulled?(id)
             return if name.end_with?(":cloud", "-cloud")
 
