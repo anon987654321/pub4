@@ -38,7 +38,7 @@ pinning, bounded response bodies, metadata/dependency and CVE edges,
 disk-space fallback, rollback safety and a real package installation. A test
 fixture or parser result is not a real index refresh or package install.
 
-Use OPENBSD/bin/evidence from the repository checkout to capture the real
+Use ruby OPENBSD/bin/evidence from the repository checkout to capture the real
 documented command output and attach reviewed host logs/manifests. If no
 supported OpenBSD host or permitted target is available, report BLOCKED or
 INCONCLUSIVE and leave the TODO item open.
