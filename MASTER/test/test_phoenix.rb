@@ -44,8 +44,11 @@ class TestPhoenix < Minitest::Test
     assert_equal 1, entry[:schema]
     assert_equal "change", entry[:kind]
     assert_equal "master", entry[:boundary]
-    assert File.file?(File.join(dir, Master::Phoenix::JOURNAL))
-    assert_includes File.read(File.join(dir, Master::Phoenix::JOURNAL)), "unnecessary abstraction"
+    journal = File.join(dir, Master::Phoenix::JOURNAL)
+    assert File.file?(journal)
+    assert_includes File.read(journal), "unnecessary abstraction"
+    assert_equal 0o600, File.stat(journal).mode & 0o777
+    assert_equal 0o700, File.stat(File.dirname(journal)).mode & 0o777
   ensure
     FileUtils.remove_entry(dir) if dir && File.exist?(dir)
   end
