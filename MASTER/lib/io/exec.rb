@@ -172,15 +172,27 @@ module Master
       # lockfile, and requiring the timeout default gem here pins the stock
       # version and fails Bundler.setup when the lockfile asks for a newer one.
       def bounded_wait(wait_thr, timeout, readers)
+        # The direct child can exit while a grandchild keeps stdout/stderr open.
+        # Waiting only for the direct PID then reaping readers without a deadline
+        # turns a successful-looking parent exit into an unbounded pipeline hang.
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout.to_f
         children = Fiber[:master_children]
-        wait = -> { wait_thr.join(timeout) }
-        finished = children ? children.track(wait_thr.pid, &wait) : wait.call
-        return [wait_thr.value, false] if finished
+
+        loop do
+          return [wait_thr.value, false] unless wait_thr.alive? || readers.any?(&:alive?)
+
+          remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          break if remaining <= 0
+
+          wait = -> { wait_thr.join([remaining, 0.01].min) }
+          children ? children.track(wait_thr.pid, &wait) : wait.call if wait_thr.alive?
+          sleep([remaining, 0.005].min) if !wait_thr.alive? && readers.any?(&:alive?)
+        end
 
         stop_child(wait_thr, readers)
         [wait_thr.value, true]
       ensure
-        stop_child(wait_thr, readers) if wait_thr.alive?
+        stop_child(wait_thr, readers) if wait_thr.alive? || readers.any?(&:alive?)
       end
 
       # An outer deadline (Timeout.timeout around a model call, a file's repair budget) interrupts the
@@ -192,11 +204,15 @@ module Master
       end
 
       def kill_group(pid)
-        pgid = Process.getpgid(pid)
-        Process.kill("TERM", -pgid)
+        # Every sanctioned spawn starts a new process group. Use the child's PID
+        # as that group ID: once the parent exits, getpgid(pid) raises ESRCH even
+        # while a grandchild is alive and holding the output pipes open.
+        Process.kill("TERM", -pid)
         sleep GRACE_S
-        Process.kill("KILL", -pgid)
-      rescue Errno::ESRCH, Errno::EPERM => e
+        Process.kill("KILL", -pid)
+      rescue Errno::ESRCH
+        nil
+      rescue Errno::EPERM => e
         Master::Ground::Swallow.log(e, context: "Exec.kill_group")
         nil
       end
@@ -217,6 +233,7 @@ module Master
         end
 
         def kill = @thread.kill
+        def alive? = @thread.alive?
 
         def value
           @thread.value
