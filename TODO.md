@@ -1,6 +1,6 @@
 # pub4 outstanding work
 
-Last source audit: code HEAD `3cd29c8389f7c777a4b7397c800c643bc0067426` on 2026-10-25. Backlog reconciliation commits: `9dd60e3` and `9ab5958`. The audit baseline below is historical, not current HEAD.
+Repository-wide audit baseline: code HEAD `3cd29c8389f7c777a4b7397c800c643bc0067426` on 2026-10-25. Targeted model-routing audit and repair: `a0dab52adc388f6e11699d672b2133842c3aa6f9`; unrelated later source commits have not been represented as covered by that targeted audit. Backlog reconciliation commits: `9dd60e3` and `9ab5958`. The baseline below is historical, not current HEAD.
 
 Audit baseline: d9a008ba1f332a312122e342913486c54a32f18a. This is the one cross-tree backlog; do
 not create separate project backlog files. A source edit, a static contract, an empty CI status
@@ -12,7 +12,7 @@ browser evidence recorded in the commit.
 - [ ] Run a fresh bounded release pass against the exact commit intended for deployment:
   constitutional and repository checks, all RAILS contract tests, active app suites, OPENBSD
   tests, and STUDIO fast tests. Record PASS, FAIL, INCONCLUSIVE, BLOCKED, or TIMEOUT separately.
-  The no-status observation belongs to the historical audit baseline, not current HEAD. At the latest status check, GitHub reported a failed Vercel status for code head `3cd29c8` and TODO-only commit `9ab5958`; neither is local test evidence. Do not use Vercel or a status badge as a substitute for running the documented checks on the exact checkout.
+  At the latest status check for current HEAD, GitHub reported a failed Vercel status whose target points to a build-rate-limit condition. No local test run was performed in this audit. Do not use Vercel or a status badge as a substitute for running the documented checks on the exact checkout.
 - [ ] Complete the requested 200–400 scenario interaction matrix across MASTER CLI, MASTER web,
   keyboard/touch, session state, routes, errors, models/tools, speech, reconnects, offline mode,
   and PWA updates. Use the existing `RAILS/test/interaction_campaign_400.json` as the canonical
@@ -35,6 +35,7 @@ browser evidence recorded in the commit.
 
 ## MASTER CLI, web, voice, and shared session
 
+- [ ] Run `cd MASTER && ruby -Itest test/test_keyless_routing.rb` on the exact pushed code commit. The model-router patch makes the shared reachability check honor `Io::LaneQuota` and keeps manually excluded Codex out of the live pool even when login reports success. Regression coverage is committed but this test was not executed during the audit.
 - [ ] Run `cd MASTER && ruby -Itest test/test_owner_preferences.rb` and the relevant agent/command-registry tests on the exact current commit; then smoke-test two repeated correction turns through CLI and web, verify the pending suggestion is surfaced, and prove acceptance is owner-only. Source and regression cases are committed, but runtime execution is not yet evidenced. Acceptance must also prove that an accepted preference changes the intended prompt, model-routing, CLI/web or face behavior without overriding `soul.yml`/`laws.yml`; a saved preference alone is not adaptive behavior.
 - [ ] Finish the Ghostty-inspired web-console pass with rendered visual review. The canonical
   palette now separates graphite shell surfaces, muted violet focus, neutral text, and the
