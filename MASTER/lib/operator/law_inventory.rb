@@ -2,7 +2,6 @@
 
 require "json"
 require_relative "../io/exec"
-require "yaml"
 
 module Operator
   # Derived intelligence over the existing law sources. It owns no rule data.
@@ -228,7 +227,8 @@ end
     end
 
     def council_rows
-      raw = YAML.safe_load_file(COUNCIL_PATH, aliases: true) || {}
+      require "master"
+      raw = Master.load_yaml(COUNCIL_PATH) || {}
       Array(raw.fetch("personas", []))
     rescue StandardError
       []
