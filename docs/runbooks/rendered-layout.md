@@ -5,7 +5,7 @@ questions. Run the existing browser diagnostics from the repository root
 against live app ports; the diagnostic runner reports unavailable apps or
 browsers as SKIPPED/INCONCLUSIVE instead of silently green.
 
-    OPENBSD/bin/evidence browser-diagnostics -- env CHECK_BROWSER_DIAGNOSTICS_OUTPUT=evidence/browser-diagnostics ruby MASTER/checks/runner.rb browser_diagnostics
+    ruby OPENBSD/bin/evidence browser-diagnostics -- env CHECK_BROWSER_DIAGNOSTICS_OUTPUT=evidence/browser-diagnostics ruby MASTER/checks/runner.rb browser_diagnostics
 
 Review the emitted route/viewport manifest and every screenshot. The runner
 uses the canonical MASTER/checks/data/geometry_surfaces.yml inventory; do not
@@ -29,7 +29,7 @@ At each required width, inspect:
 Do not treat a single desktop screenshot as evidence for mobile geometry.
 Attach reviewed screenshots and geometry files to a later evidence capture:
 
-    OPENBSD/bin/evidence --attach evidence/browser-diagnostics/<run-id>/screenshots/<surface>.png --attach evidence/browser-diagnostics/<run-id>/manifest.json --note 'I reviewed the named screenshot and manifest; record the exact result and any findings' visual-review -- env CHECK_BROWSER_DIAGNOSTICS_OUTPUT=evidence/browser-diagnostics/review-run ruby MASTER/checks/runner.rb browser_diagnostics
+    ruby OPENBSD/bin/evidence --attach evidence/browser-diagnostics/<run-id>/screenshots/<surface>.png --attach evidence/browser-diagnostics/<run-id>/manifest.json --note 'I reviewed the named screenshot and manifest; record the exact result and any findings' visual-review -- env CHECK_BROWSER_DIAGNOSTICS_OUTPUT=evidence/browser-diagnostics/review-run ruby MASTER/checks/runner.rb browser_diagnostics
 
 The command runs a real fresh browser-diagnostics pass and records the prior
 reviewed PNG/manifest hashes and the reviewer’s note. Replace illustrative
