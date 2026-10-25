@@ -50,6 +50,7 @@ class TestCorePaths < Minitest::Test
 
       assert_raises(Errno::ENOENT) { repo_paths.sacred_paths }
       assert repo_paths.sacred?("data/laws.yml")
+      assert_includes repo_paths.commit_refusal("data/laws.yml"), "constitution unreadable"
       assert_includes repo_paths.commit_refusal("data/spine.yml"), "constitution unreadable"
       assert_raises(Errno::ENOENT) do
         Master::Core::Constitution.load(data_dir:, workspace_root: root)
