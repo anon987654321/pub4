@@ -27,6 +27,10 @@ The shared `Trace::Log.compact_rotated` and standalone Swallow compactor now dro
 
 The standalone `Master::Ground::Swallow` logger now serializes append/rotation with a private sidecar lock, reserves room for the next complete record, and compacts a rotated backup to its newest bounded tail before retaining it. The backup retention filter explicitly excludes the sidecar lock so it cannot unlink a lock inode while another process waits. A generation cap keeps only the five newest bounded backups. Added regression coverage in `MASTER/test/test_swallow.rb`; it remains unexecuted.
 
+## Follow-on provider state replay across rotation (2026-10-26)
+
+Provider health scoring and quarantine-state lookup now replay the retained `.1` generation before the active log, in append order, and include both files in cache invalidation. This prevents the first bounded rotation from resetting provider scores or hiding a still-active quarantine/clear event. Added tests for a rotated failure followed by active success (score 0.78) and an active clear superseding a rotated quarantine; neither test has been run. State older than the retained generation remains outside the bounded history contract.
+
 ## Follow-on shared JSONL retention pass (2026-10-26)
 
 Added `Master::Trace::Log.append_jsonl` as the common private, bounded append path. It serializes rotation+append with a sidecar `flock`, rejects symlinks and oversized single records, maintains restrictive modes, and refuses a write if rotation did not make enough room. The default cap reuses the existing trace-event 25 MiB limit; callers with an established smaller cap can supply it.
