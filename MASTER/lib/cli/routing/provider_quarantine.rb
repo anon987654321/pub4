@@ -98,13 +98,21 @@ module Master
         end
 
         def all_entries
-          return [] unless File.file?(@path)
-          File.readlines(@path, chomp: true).filter_map do |line|
-            next if line.strip.empty?
-            JSON.parse(line)
-          rescue JSON::ParserError => e
-            Master::Ground::Swallow.log(e, context: "ProviderQuarantine.all_entries")
-            nil
+          stat = File.stat(@path) if File.file?(@path)
+          stamp = stat && [stat.ino, stat.size, stat.mtime.to_r]
+          return @entries if @entries && @entries_stamp == stamp
+
+          @entries_stamp = stamp
+          @entries = if stamp
+            File.readlines(@path, chomp: true).filter_map do |line|
+              next if line.strip.empty?
+              JSON.parse(line)
+            rescue JSON::ParserError => e
+              Master::Ground::Swallow.log(e, context: "ProviderQuarantine.all_entries")
+              nil
+            end
+          else
+            []
           end
         end
 
