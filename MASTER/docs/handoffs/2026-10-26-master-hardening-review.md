@@ -28,6 +28,12 @@ A further code trace found two provider-health issues and one OpenBSD visibility
 
 All newly added and modified tests remain unexecuted. No runtime PASS is claimed; the exact focused test list and per-tree INCONCLUSIVE state are recorded in root `TODO.md`. No deployment, Vercel retry, or OpenBSD host action was performed.
 
+## Follow-on trajectory telemetry hardening
+
+The opt-in trajectory writer now derives its 25 MiB ceiling from the existing trace-event log contract, rotates through the shared bounded log implementation, enforces private file/directory modes, and rejects a symlink destination. This is important because the recorded task can contain the user's prompt. Added coverage for rotation, permissions and symlink refusal in `MASTER/test/test_ai_trajectory.rb`.
+
+The new trajectory tests, like all other new tests in this continuation, remain unexecuted. See root `TODO.md` for the consolidated focused test sequence and the still-INCONCLUSIVE proof state. No full /fix run or live verification is claimed.
+
 ## State of the P01–P11 tranche
 
 The patch tranche and follow-up corrections are committed directly to `main` in 15 commits, touching 24 files. The branch is 15 commits ahead of the integration base and zero behind it. This is direct-to-main integration, not a pull-request merge.
