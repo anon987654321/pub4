@@ -7,6 +7,34 @@ not create separate project backlog files. A source edit, a static contract, an 
 list, and a passing live run are different kinds of evidence. Close an item with the command or
 browser evidence recorded in the commit.
 
+## 2026-10-25 manual four-tree /fix simulation
+
+Manual source review and narrowly scoped source/test edits were committed directly to `main`. This was **not** an invocation of `MASTER/bin/master /fix`, `MASTER/bin/operator check`, or a real runtime suite. The working environment could not clone the repository, so all source reads and commits used GitHub file APIs; Ruby 4.0.5, the app bundles, local services and the OpenBSD host were not available for execution.
+
+Changes added during the pass:
+
+- MASTER: stale Bundler-store cleanup with a 30-day quarantine-age TTL, dry-run default, explicit `--apply`, expected directory shape and symlink checks; corrected the TTL to use the quarantine timestamp, not the old store mtime. Added `test_stale_bundle_sweep.rb`.
+- MASTER: background boot self-test now uses the existing `watched_thread` publisher/logger instead of suppressing thread exceptions. Added `test_watched_thread.rb`.
+- MASTER: invalid check registry roots and rows without `class:` or `script:` now fail before checks start. Static inspection of the current `MASTER/checks/checks.yml` found 64 rows and all 64 have an executable declaration; the new guard's tests are not run. Added `test_check_registry_schema.rb`.
+- MASTER: `LoopOwner.cleanup_stale!` no longer deletes its claim after a malformed PID or timestamp; the issue is logged as load-bearing. Added corrupt-metadata cases to `test_ops_loop_owner.rb`.
+- RAILS/shared check runner: same parse-time registry protection as above; static row census only, no RAILS app suite, browser, migration or live HTTP checks were run.
+- OPENBSD: `vps-state` delegates PID validation to `Deploy::PidProbe`, rejecting non-positive/non-decimal PIDs before probing. Added `OPENBSD/test/test_pid_probe.rb`. No OpenBSD-host tests, vm23 checks or deploy were run.
+- STUDIO: `replicate:schema_audit` and `replicate:schema_snapshot` now exit 3 with an explicit inconclusive message when no Replicate token is configured, instead of looking successful without measuring anything. Added `STUDIO/test/replicate_schema_task_test.rb`. No STUDIO suite or live schema lookup was run.
+- Documentation: root `CLAUDE.md` again identifies root `TODO.md` as the single cross-tree backlog; details and proof obligations stay here.
+
+### Proof state
+
+- **Source committed:** yes, visible on `main`.
+- **Regression tests added:** yes, but none of the new tests were run in this environment.
+- **Syntax checks / MASTER focused suite / MASTER full suite:** INCONCLUSIVE (not run).
+- **RAILS contract and app suites / database migration / browser scenarios:** INCONCLUSIVE (not run).
+- **OPENBSD suite / remote vm23 service health / deploy / rollback:** INCONCLUSIVE (not run; no deployment was attempted).
+- **STUDIO check / tool suites / real Replicate schema call:** INCONCLUSIVE (not run; no token/network-backed call was attempted).
+- **Law parity:** the known `RENDERED_VALUES` coverage gap remains an explicit gap until an authorized deferral or tagged detector lands; it is not cleared by this pass.
+- **External status:** previously observed Vercel `build-rate-limit` failure is not a Ruby result. No Vercel retry was made.
+
+Next proof commands on the dev Mac with the pinned Ruby 4.0.5: run the new focused tests (`MASTER/test/test_stale_bundle_sweep.rb`, `MASTER/test/test_watched_thread.rb`, `MASTER/test/test_check_registry_schema.rb`, `MASTER/test/test_ops_loop_owner.rb`, `OPENBSD/test/test_pid_probe.rb`, and `STUDIO/test/replicate_schema_task_test.rb`), then `cd MASTER && bin/check --profile=agent`, the full MASTER suite, RAILS contract/app suites, `ruby OPENBSD/test/run_all.rb`, and `cd STUDIO && rake check test`. Capture actual output and distinguish PASS / FAIL / INCONCLUSIVE / BLOCKED / TIMEOUT. Do not run a production deploy as part of a simulated pass.
+
 ## 2026-10-25 source-fix reconciliation
 
 The direct-to-main repair batch reached source commit 4a7618ea5d86c2e637402b8b60ff19afbb19ea4e before this backlog update; commit 22df7a7173ff74eae89a172e6f8850e91728377e then added progress reporting and incomplete-suite evidence to the parallel test supervisor. These are source and regression-test changes, **not** a passing test run. The operator-provided terminal output predates many of them; its failure summaries must be rechecked against current main rather than copied forward as current results.
