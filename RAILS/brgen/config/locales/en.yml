@@ -105,9 +105,6 @@ en:
     opens_new_tab: "%{label} (opens in a new tab)"
   skip_to_content: Skip to main content
   home:
-    feed_views: Views and messages
-    feed_view: Posts
-    media_wall_view: Media wall
     new_posts:
       one: 1 new post
       other: "%{count} new posts"
