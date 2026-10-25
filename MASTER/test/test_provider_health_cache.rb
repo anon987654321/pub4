@@ -64,6 +64,28 @@ class ProviderHealthCacheTest < Minitest::Test
     end
   end
 
+  def test_retained_rotated_generation_still_contributes_to_health_score
+    Dir.mktmpdir("provider-health-generation-") do |dir|
+      path = File.join(dir, "provider-health.ndjson")
+      now = Time.utc(2026, 10, 26, 12, 0, 0)
+      File.write("#{path}.1", JSON.generate(
+        "ts" => now.iso8601,
+        "model" => "provider-a",
+        "status" => "provider_error",
+      ) + "\n")
+      File.write(path, JSON.generate(
+        "ts" => now.iso8601,
+        "model" => "provider-a",
+        "status" => "success",
+      ) + "\n")
+
+      health = Master::CLI::Routing::ProviderHealth.new(path:, now: -> { now })
+
+      assert_in_delta 0.78, health.score("provider-a"), 0.001,
+                      "score should replay the older rotated failure before the active success"
+    end
+  end
+
   def test_appended_event_invalidates_cache_even_when_mtime_is_unchanged
     Dir.mktmpdir("provider-health-cache-") do |dir|
       path = File.join(dir, "provider-health.ndjson")
