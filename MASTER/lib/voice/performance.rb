@@ -172,6 +172,20 @@ module Master
         }
       end
 
+      # A bounded, deterministic expression signal for the visual/audio timeline.
+      # It is derived from the phrase only; no claim is made about measured loudness.
+      def phrase_energy(text)
+        phrase = text.to_s.strip
+        return 0.0 if phrase.empty?
+
+        energy = 0.38
+        energy += 0.22 if phrase.match?(/[!?]/)
+        energy += 0.16 if phrase.match?(/\b(?:critical|danger|failed|important|must|never|warning)\b/i)
+        energy += 0.10 if phrase.match?(/\b(?:the key|the point|surprisingly|here\x27s why)\b/i)
+        energy -= 0.08 if phrase.match?(/[,;:]\z/)
+        energy.clamp(0.15, 1.0).round(3)
+      end
+
       def punctuation_for(text)
         text.to_s[/([.!?;:—-])\s*$/, 1].to_s
       end
