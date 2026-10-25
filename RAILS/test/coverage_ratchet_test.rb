@@ -43,7 +43,7 @@ class CoverageRatchetTest < Minitest::Test
     # controllers 1 -> 2 on 2026-08-23: declutter_controller_test covers the
     # strict-loading preloads on the declutter box.
     # controllers 2 -> 4: the ratchet found two tested controllers above the floor.
-    "amber" => { "controllers" => 4, "models" => 10 },
+    "amber" => { "controllers" => 5, "models" => 10 },
     # models raised 10 -> 11 on 2026-08-03; the ratchet asked for it.
     # 11 -> 13 on 2026-08-12: engines/playlist got its first tests, covering
     # Playlist::Playlist and Playlist::ListeningParty. It was the only one of the
