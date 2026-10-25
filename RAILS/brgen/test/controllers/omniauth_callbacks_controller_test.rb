@@ -69,6 +69,42 @@ class OmniauthCallbacksControllerTest < ActionDispatch::IntegrationTest
     assert_equal original_id, identity.user_id
   end
 
+  test "a concurrent synthetic placeholder insert is recovered after uniqueness rejection" do
+    controller = OmniauthCallbacksController.new
+    controller.define_singleton_method(:external_identity_for) { |_auth| nil }
+    auth = auth_for("google_oauth2", email_verified: false, email: nil)
+    legacy = User.create!(
+      email_address: "#{auth.uid}@#{auth.provider}.oauth",
+      password: SecureRandom.hex(24)
+    )
+    lookup_count = 0
+    finder = ->(*) { lookup_count += 1; lookup_count == 1 ? nil : legacy }
+
+    User.stub(:find_by, finder) do
+      assert_no_difference -> { User.count } do
+        user = controller.send(:find_or_create_user, auth)
+        assert_equal legacy.id, user.id
+      end
+    end
+  end
+
+  test "a concurrent provider registry insert is recovered after uniqueness rejection" do
+    controller = OmniauthCallbacksController.new
+    controller.define_singleton_method(:external_identity_for) { |_auth| nil }
+    auth = auth_for("google_oauth2", email_verified: true, email: "person@example.test")
+    provider = IdentityProvider.create!(name: "Google OAuth2", slug: "google_oauth2")
+    lookup_count = 0
+    finder = ->(*) { lookup_count += 1; lookup_count == 1 ? nil : provider }
+
+    IdentityProvider.stub(:find_by, finder) do
+      controller.send(:find_or_create_user, auth)
+    end
+
+    identity = ExternalIdentity.joins(:identity_provider)
+                               .find_by!(subject: auth.uid, identity_providers: { slug: "google_oauth2" })
+    assert_equal provider.id, identity.identity_provider_id
+  end
+
   test "email-less OAuth cannot reclaim a guest account sharing the synthetic address" do
     controller = OmniauthCallbacksController.new
     controller.define_singleton_method(:external_identity_for) { |_auth| nil }
