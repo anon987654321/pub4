@@ -40,7 +40,13 @@ module Master
             Master::Ground::Swallow.log(
               e, context: "Watcher.run_forever", severity: :load_bearing
             )
-            @bus&.publish("watcher:error", error: e.message)
+            begin
+              @bus&.publish("watcher:error", error: e.message)
+            rescue StandardError => publish_error
+              Master::Ground::Swallow.log(
+                publish_error, context: "Watcher.run_forever.publish_error", severity: :load_bearing
+              )
+            end
           end
           sleep @interval
         end

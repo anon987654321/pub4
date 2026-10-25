@@ -83,4 +83,35 @@ class TestWatcher < Minitest::Test
   end
 
 
+  def test_watcher_survives_failure_to_publish_its_error_event
+    previous = ENV["MASTER_WATCHER"]
+    ENV["MASTER_WATCHER"] = "1"
+    calls = 0
+    bus = Object.new
+    bus.define_singleton_method(:publish) do |_event, **_payload|
+      calls += 1
+      raise "bus unavailable" if calls == 1
+    end
+
+    Dir.mktmpdir("watcher-publish-resilience") do |root|
+      watcher = Master::Fix::Watcher.new(bus:, root:, interval: 0)
+      attempts = 0
+      watcher.define_singleton_method(:sample!) do
+        attempts += 1
+        raise "sample failed" if attempts == 1
+
+        throw :watcher_publish_test_finished
+      end
+
+      capture_io do
+        catch(:watcher_publish_test_finished) { watcher.run_forever }
+      end
+      assert_equal 2, attempts
+      assert_equal 1, calls
+    end
+  ensure
+    previous.nil? ? ENV.delete("MASTER_WATCHER") : ENV["MASTER_WATCHER"] = previous
+  end
+
+
 end
