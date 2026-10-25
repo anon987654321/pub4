@@ -107,7 +107,7 @@ class TestRailsInteractionCraft < Minitest::Test
     css = File.read(CRAFT)
     assert_includes js, "turbo:before-render"
     assert_includes js, "startViewTransition"
-    assert_includes js, 'data.viewTransitions === "off"'
+    assert_includes js, 'document.documentElement.dataset.viewTransitions === "off"'
     assert_includes css, "::view-transition-old(root)"
     assert_includes css, "::view-transition-new(root)"
   end
