@@ -191,7 +191,21 @@ module Master
         run_id = journal["id"]
         mission = mission_for(target:, requested:)
         budget_error = exhausted_budget(journal:)
-        return finish_run(budget_error, target, run_id, mission:, requested:) if budget_error
+        if budget_error
+          # A prior process can die mid-pass after spending the budget. Recover
+          # its persisted transaction before returning the timeout, otherwise
+          # each later /fix strands the same half-applied tree forever.
+          stranded = @run_journal.active_pass(journal)
+          transaction_id = stranded.is_a?(Hash) ? stranded["transaction_id"] : nil
+          if transaction_id && Transaction::Recovery.persisted?(root: @root, id: transaction_id)
+            recovered = resume_active_transaction(
+              journal:, run_id:, start_pass: @run_journal.next_pass(journal)
+            )
+            return finish_run(recovered, target, run_id, mission:, requested:) if recovered.err?
+          end
+
+          return finish_run(budget_error, target, run_id, mission:, requested:)
+        end
 
         RunBudget.begin_run(root: Master::ROOT, max_passes:, bus: @bus, target:)
         journal["budget_clock_at"] = RunBudget.elapsed_seconds

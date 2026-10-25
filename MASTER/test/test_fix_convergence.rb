@@ -1570,6 +1570,55 @@ end
     assert_equal :timeout, event[:payload][:state]
   end
 
+  def test_expired_run_recovers_a_persisted_transaction_before_timeout
+    commit_fixture!
+    loop = build_loop([])
+    terminal_rows = []
+    journal = Object.new
+    journal.define_singleton_method(:start_or_resume) do |**|
+      { "id" => "run-stranded", "remaining_seconds" => 0.0 }
+    end
+    journal.define_singleton_method(:active_pass) do |_run|
+      { "transaction_id" => "tx-stranded", "pass" => 1 }
+    end
+    journal.define_singleton_method(:next_pass) { |_run| 2 }
+    journal.define_singleton_method(:terminal) do |run_id, state, message:, evidence: nil|
+      terminal_rows << { run_id:, state:, message:, evidence: }
+    end
+    loop.instance_variable_set(:@run_journal, journal)
+
+    recovered_calls = []
+    mission = Object.new
+    mission.define_singleton_method(:defer!) { |reason:| nil }
+    mission.define_singleton_method(:requeue_if_requested!) { false }
+
+    Master::Fix::Transaction::Recovery.stub(:persisted?, true) do
+      loop.stub(:resume_active_transaction, lambda { |journal:, run_id:, start_pass:|
+        recovered_calls << [run_id, start_pass]
+        Master::Result.ok(start_pass)
+      }) do
+        Master::Fix::RunBudget.stub(:finish_run, ->(**) {}) do
+          Master::Io::LaneSelection.stub(:announce, nil) do
+            loop.stub(:outcome_guidance, { incremental: false, prediction: nil }) do
+              loop.stub(:mission_for, mission) do
+                result = loop.run_unlocked(
+                  @root, max_passes: 1, budget_seconds: 60,
+                  incremental: false, requested: false,
+                )
+                assert result.err?
+                assert_equal :timeout, result.category
+              end
+            end
+          end
+        end
+      end
+    end
+
+    assert_equal [["run-stranded", 2]], recovered_calls
+    assert_equal :timeout, terminal_rows.first[:state]
+  end
+
+
   # The journaled half of a run, callable from a test.
   class JournaledLoop < Master::Fix::FixLoop
     public :run_journaled
