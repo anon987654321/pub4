@@ -505,6 +505,11 @@ namespace :readme do
 end
 
 namespace :lint do
+  desc "Constitutional laws.yml entries have executable enforcement (Fix::LawParity)"
+  task :law_parity do
+    ruby File.join(__dir__, "tools", "law_parity_check.rb")
+  end
+
 desc "Every agent harness file matches the contract in MASTER/AGENTS.md"
 task :agent_contracts do
   root = File.expand_path("..", __dir__)
