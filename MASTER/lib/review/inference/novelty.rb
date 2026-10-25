@@ -17,23 +17,21 @@ module Master
 
         def denial(agent:, prompt:, constraints:, rounds:, temperature:)
           answers = []
-          current = prompt.to_s
+          forbidden = Array(constraints).map(&:to_s).map(&:strip).reject(&:empty?)
 
-          rounds.times do |index|
-            answer = agent.ask_once(current, temperature:)
-            answers << answer
-            constraint = Array(constraints)[index % Array(constraints).length]
-            break unless constraint
+          rounds.to_i.times do |index|
+            pieces = [prompt.to_s]
+            if index.positive?
+              pieces.concat([
+                "Previous candidate:",
+                answers.last.to_s,
+                "Deny that approach now. Produce a materially different solution.",
+              ])
+            end
+            constraint = forbidden[index % forbidden.length] unless forbidden.empty?
+            pieces << "Forbidden approach: #{constraint}" if constraint
 
-            current = [
-              prompt,
-              "Previous candidate:",
-              answer,
-              "Deny that approach now. Produce a materially different solution.",
-              "Forbidden approach: #{constraint}",
-            ].join("
-
-")
+            answers << agent.ask_once(pieces.join("\n\n"), temperature:)
           end
 
           Master::Result.ok(strategy: :denial, rounds: answers.size, answers:)
