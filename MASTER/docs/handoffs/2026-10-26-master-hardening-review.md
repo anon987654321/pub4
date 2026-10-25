@@ -42,7 +42,7 @@ The conflict log's existing three-generation retention is now wrapped in a sidec
 
 ## Follow-on canonical event-stream locking
 
-The canonical activity/evidence `Trace::Log::Event` writer now delegates to the shared private bounded JSONL appender, serializing rotation+append across processes while retaining the original one-shot disk-full recovery path. Added an eight-thread / 200-event regression case that verifies complete, unique JSONL rows and private modes; it has not been run.
+The canonical activity/evidence `Trace::Log::Event` writer now delegates to the shared private bounded JSONL appender, serializing rotation+append across processes. The helper retains one-shot disk-full recovery and also attempts a single reclaim when the legacy rotator returns without actually making enough room. Added an eight-thread / 200-event regression case that verifies complete, unique JSONL rows and private modes; it has not been run.
 
 ## Follow-on JSONL compaction integrity
 
