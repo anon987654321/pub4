@@ -30,7 +30,7 @@ All newly added and modified tests remain unexecuted. No runtime PASS is claimed
 
 ## Remaining telemetry retention boundaries
 
-Local STUDIO `clips.jsonl` and per-subject billed-render `ledger.jsonl` remain open for an explicit archive/retention contract; they carry user-owned render and billing provenance and must not be silently truncated. `Trace::Ledger::Reflexion` retains only 50 rows but rewrites them on append, so concurrent writers may lose a row. These surfaces are not covered by the bounded-writer changes above and need separate source/test work before the telemetry pass is complete.
+Local STUDIO `clips.jsonl` and per-subject billed-render `ledger.jsonl` remain open for an explicit archive/retention contract; they carry user-owned render and billing provenance and must not be silently truncated. `Trace::Ledger::Reflexion` now locks the 50-row read/retain/replace transaction and publishes the new file atomically; a concurrent regression case exists but is not run. The STUDIO clip index and billed-render ledger remain open for a deliberate archive/export retention contract.
 
 ## Follow-on JSONL compaction integrity
 
