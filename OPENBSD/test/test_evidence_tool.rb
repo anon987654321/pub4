@@ -80,6 +80,27 @@ class TestEvidenceTool < Minitest::Test
     assert_equal ["operator reviewed the screenshot"], artifact.fetch("notes")
   end
 
+
+  def test_requires_a_note_to_reclassify_a_successful_command
+    status, output = run_tool("unexplained", "--verdict", "INCONCLUSIVE", "--", RbConfig.ruby, "-e", "exit 0")
+    assert_equal 0, status.exitstatus, output
+    artifact = latest_artifact("unexplained")
+    assert_equal "PASS", artifact.fetch("verdict")
+    assert_match(/requires a non-empty --note/, artifact.fetch("verdict_override_rejected"))
+  end
+
+  def test_records_explicit_manual_classification_with_note
+    status, output = run_tool(
+      "reviewed", "--verdict", "INCONCLUSIVE", "--note", "live browser unavailable on this host",
+      "--", RbConfig.ruby, "-e", "exit 0"
+    )
+    assert_equal 0, status.exitstatus, output
+    artifact = latest_artifact("reviewed")
+    assert_equal "PASS", artifact.fetch("detected_verdict")
+    assert_equal "INCONCLUSIVE", artifact.fetch("verdict")
+    assert_equal ["live browser unavailable on this host"], artifact.fetch("notes")
+  end
+
   def test_rejects_attachment_outside_repository
     outside = File.join(Dir.tmpdir, "outside-evidence-#{Process.pid}.txt")
     File.write(outside, "not part of repo")
