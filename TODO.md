@@ -134,10 +134,11 @@ browser evidence recorded in the commit.
 - [ ] Verify the shared OAuth callback end to end in Brgen and Amber after the Amber
   federated-identity migration runs: provider-subject reuse (including BankID without email and
   legacy placeholder recovery), account cleanup, email-verification boundaries, and real
-  configured Google/Facebook/Vipps/BankID callbacks. Regenerate Amber's schema via the Rails
-  migration runner and run both app suites; this session added migrations and regression tests
-  but could not execute them or access live provider credentials, so keep the checks open until
-  measured.
+  configured Google/Facebook/Vipps/BankID callbacks. The 2026-10-25 source pass adds atomic
+  provider-row creation, recovery of eligible unverified non-BankID synthetic placeholders,
+  merge-pair model validation with Brgen/Amber regression tests, and user/IP-scoped Amber AI
+  rate limiting. These commits are source changes, not runtime evidence. Regenerate Amber's schema,
+  run both app suites, and exercise real configured provider callbacks before closing this item.
 - [ ] Execute the shared guest-to-account conversion tests in Brgen and Amber after Amber's
   `account_merges` and federated-identity migrations run. Verify anonymous post presentation
   survives, both sender and recipient sides of Amber's MASTER chat move to the registered
