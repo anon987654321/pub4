@@ -83,9 +83,10 @@ module Master
         end
       end
 
-      # Release oversized rotated logs while preserving the newest max_bytes.
-      # The tail is read before truncating; the old allocation is freed before the
-      # bounded bytes are written back, so recovery still works on a full disk.
+      # Release oversized rotated JSONL logs while preserving the newest complete
+      # records within max_bytes. The tail is read before truncating; the old
+      # allocation is freed before the bounded bytes are written back, so recovery
+      # still works on a full disk. A partial first record is discarded.
       def self.compact_rotated(path, max_bytes)
         return unless File.file?(path)
 
