@@ -162,12 +162,15 @@ module DesignTokens
     derived = data.fetch("derived")
     layout = data.fetch("layout")
     visual_identity = root.fetch("visual_identity")
+    # Face-local palette overrides keep the universal identity token and the
+    # other product dialects independent. The rendered face remains monochrome.
+    palette = data.fetch("palette", {})
     lines = [":root {",
-             "  --pub4-signal: #{visual_identity.fetch('signal')};",
-             "  --pub4-signal-ink: #{visual_identity.fetch('signal_ink')};",
-             "  --pub4-signal-on-light: #{visual_identity.fetch('signal_on_light')};"]
+             "  --pub4-signal: #{palette.fetch('signal', visual_identity.fetch('signal'))};",
+             "  --pub4-signal-ink: #{palette.fetch('signal_ink', visual_identity.fetch('signal_ink'))};",
+             "  --pub4-signal-on-light: #{palette.fetch('signal_on_light', visual_identity.fetch('signal_on_light'))};"]
     FACE_ORDER.each do |key|
-      lines << "  --#{key.tr('_', '-')}: #{anchors.fetch(key)};"
+      lines << "  --#{key.tr('_', '-')}: #{palette.fetch(key, anchors.fetch(key))};"
     end
     lines << "  --font-mono: #{data.fetch('font_mono')};"
     lines << "  --font-label: #{data.fetch('font_label')};"

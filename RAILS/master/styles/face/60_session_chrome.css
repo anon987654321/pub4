@@ -1,4 +1,4 @@
-/* Ghostty-inspired session chrome: flat graphite, muted violet focus, one semantic lime signal. */
+/* Ghostty-inspired session chrome: neutral graphite, grayscale focus and semantic contrast. */
 #chat-shell { inset-block-end: calc(76px + var(--safe-bottom) + var(--keyboard-inset, 0px)); }
 #chat-log { max-height: 36dvh; padding: 8px 18px; }
 #zsh {
@@ -16,7 +16,11 @@ body #zsh.live:focus-within, #zsh:focus-within { background: var(--chrome-surfac
 body.zen #zsh { opacity: .96; pointer-events: auto; transform: translate(-50%,0); }
 body.zen.zen-hidden #zsh, body.zen[data-edge-hover="1"] #zsh { opacity: .96; pointer-events: auto; }
 body.zen #zsh.revealed { transform: translate(-50%,0); }
-#zsh .pp { display: none; color: var(--chrome-muted); font-weight: 400; }
+#zsh .pp {
+  display: inline-flex; align-items: center; flex: 0 1 auto; min-inline-size: 0;
+  max-inline-size: min(42vw, 32ch); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--chrome-muted); font-weight: 400;
+}
 #zsh input, #zsh textarea {
   min-height: var(--tap-min); min-width: 0; padding: 8px 0;
   font: 400 16px/1.5 var(--font-mono); color: var(--chrome-text);
@@ -80,7 +84,6 @@ body.mission-control .mission-heading { max-inline-size: 80ch; margin: 0 0 1rem;
 @media (min-width: 480px) {
   #chat-log { max-height: 40dvh; padding-inline: 24px; }
   #zsh { width: min(920px, calc(100dvw - 32px - var(--safe-left) - var(--safe-right))); min-height: 64px; padding: 9px 12px; gap: 8px; }
-  #zsh .pp { display: inline; }
   .master-titlebar { gap: .5rem; }
   .master-titlebar .brand-mark { display: inline-flex; }
   .master-session-tab { padding-inline: .875rem; }

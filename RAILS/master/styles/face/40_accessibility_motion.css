@@ -483,7 +483,7 @@ canvas#face { background: var(--face-bg); }
 .brand-mark {
   min-block-size: 40px;
   padding: 8px 0;
-  color: rgb(226 235 255 / 88%);
+  color: rgb(226 226 226 / 88%);
   font-family: var(--font-brand);
   font-size: clamp(0.95rem, 1.5vw, 1.12rem);
   font-weight: 640;
@@ -497,9 +497,9 @@ canvas#face { background: var(--face-bg); }
   inset-block-start: var(--inset-t);
   min-inline-size: 40px;
   min-block-size: 40px;
-  color: rgb(170 190 228 / 78%);
+  color: rgb(170 170 170 / 78%);
 }
-body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
+body[data-mode="listening"] .mic-indicator { color: #C7C7C7; }
 
 #primer {
   padding: clamp(24px, 5vw, 64px);
@@ -517,14 +517,14 @@ body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
 #primer .tagline {
   max-inline-size: 46ch;
   margin: 22px auto 0;
-  color: rgb(189 202 231 / 78%);
+  color: rgb(189 189 189 / 78%);
   font: 400 clamp(0.95rem, 1.6vw, 1.08rem)/1.7 var(--font-brand);
   text-wrap: pretty;
 }
 #primer .primer-consent {
   max-inline-size: 44ch;
   margin: 22px auto 0;
-  color: rgb(156 171 205 / 72%);
+  color: rgb(156 156 156 / 72%);
   font: 400 0.75rem/1.6 var(--font-brand);
 }
 
@@ -539,7 +539,7 @@ body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
   line-height: 1.72;
   scroll-snap-type: none;
   scrollbar-width: thin;
-  scrollbar-color: rgb(142 170 225 / 26%) transparent;
+  scrollbar-color: rgb(142 142 142 / 26%) transparent;
 }
 .message {
   max-inline-size: 68ch;
@@ -557,13 +557,13 @@ body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
   text-transform: none;
 }
 .msg-body {
-  color: rgb(226 233 250 / 92%);
+  color: rgb(226 226 226 / 92%);
   font-family: var(--font-mono);
   text-wrap: pretty;
 }
 .compaction-note, .message.system {
-  color: rgb(153 171 210 / 70%);
-  border-color: rgb(121 151 210 / 34%);
+  color: rgb(153 153 153 / 70%);
+  border-color: rgb(121 121 121 / 34%);
 }
 
 /* Developer controls for the additive face stipple layer; hidden unless explicitly enabled. */

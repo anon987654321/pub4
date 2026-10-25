@@ -34,14 +34,14 @@
 
 /* BEGIN:generated-face-root — ruby MASTER/tools/rails/generate_face_root_css.rb */
 :root {
-  --pub4-signal: #C8F55F;
-  --pub4-signal-ink: #101010;
-  --pub4-signal-on-light: #50630A;
-  --c-text: oklch(93% 0.025 250);
-  --x-text: #e7eeff;
+  --pub4-signal: #D4D4D4;
+  --pub4-signal-ink: #080808;
+  --pub4-signal-on-light: #3A3A3A;
+  --c-text: oklch(93% 0 0);
+  --x-text: #E7E7E7;
   --c-accent: var(--pub4-signal);
-  --c-danger: oklch(60% 0.14 35);
-  --c-code: oklch(81% 0.10 268);
+  --c-danger: oklch(78% 0 0);
+  --c-code: oklch(81% 0 0);
   --font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   --font-label: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   color-scheme: dark;
@@ -54,26 +54,26 @@
   --inset-r: calc(var(--chrome-inset) + var(--safe-right));
   --inset-b: calc(var(--chrome-inset) + var(--safe-bottom));
   --inset-l: calc(var(--chrome-inset) + var(--safe-left));
-  --face-bg: #050710;
+  --face-bg: #050505;
   --face-fg: var(--x-text);
-  --face-muted: #a1acc5;
-  --face-dim: rgb(176 194 232 / 18%);
-  --face-soft: rgb(176 194 232 / 7%);
+  --face-muted: #A1A1A1;
+  --face-dim: rgb(176 176 176 / 18%);
+  --face-soft: rgb(176 176 176 / 7%);
   --face-alert: color-mix(in oklch, var(--c-danger) 75%, white);
   --mood-accent: var(--c-accent);
   --canvas-mood-accent: var(--c-accent);
-  --border-faint: rgb(164 190 244 / 16%);
-  --border-soft: rgb(164 190 244 / 23%);
-  --border-strong: rgb(175 202 255 / 34%);
+  --border-faint: rgb(164 164 164 / 16%);
+  --border-soft: rgb(164 164 164 / 23%);
+  --border-strong: rgb(175 175 175 / 34%);
   --hover-tint: color-mix(in srgb, var(--face-fg) 8%, transparent);
-  --chrome-bg: #11131a;
-  --chrome-surface: #171a23;
-  --chrome-surface-active: #202431;
-  --chrome-border: #303747;
-  --chrome-hover: rgb(183 182 239 / 8%);
-  --chrome-text: #dce1eb;
-  --chrome-muted: #a0a8b8;
-  --chrome-focus: #b7b6ef;
+  --chrome-bg: #111111;
+  --chrome-surface: #171717;
+  --chrome-surface-active: #222222;
+  --chrome-border: #303030;
+  --chrome-hover: rgb(183 183 183 / 8%);
+  --chrome-text: #DCDCDC;
+  --chrome-muted: #A0A0A0;
+  --chrome-focus: #C8C8C8;
   --tap-min: 44px;
   --text-meta: 0.8125rem;
   --text-title: 1.25rem;
@@ -212,7 +212,7 @@ body[data-focus-mode="1"] #spin-btn {
 #spin-btn:focus-visible,
 #zin:focus-visible,
 .skip-link:focus-visible {
-  outline: 2px solid var(--c-accent, var(--accent, #7c6fd6));
+  outline: 2px solid var(--c-accent, var(--accent, #bdbdbd));
   outline-offset: 2px;
 }
 
@@ -1774,7 +1774,7 @@ canvas#face { background: var(--face-bg); }
 .brand-mark {
   min-block-size: 40px;
   padding: 8px 0;
-  color: rgb(226 235 255 / 88%);
+  color: rgb(226 226 226 / 88%);
   font-family: var(--font-brand);
   font-size: clamp(0.95rem, 1.5vw, 1.12rem);
   font-weight: 640;
@@ -1788,9 +1788,9 @@ canvas#face { background: var(--face-bg); }
   inset-block-start: var(--inset-t);
   min-inline-size: 40px;
   min-block-size: 40px;
-  color: rgb(170 190 228 / 78%);
+  color: rgb(170 170 170 / 78%);
 }
-body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
+body[data-mode="listening"] .mic-indicator { color: #C7C7C7; }
 
 #primer {
   padding: clamp(24px, 5vw, 64px);
@@ -1808,14 +1808,14 @@ body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
 #primer .tagline {
   max-inline-size: 46ch;
   margin: 22px auto 0;
-  color: rgb(189 202 231 / 78%);
+  color: rgb(189 189 189 / 78%);
   font: 400 clamp(0.95rem, 1.6vw, 1.08rem)/1.7 var(--font-brand);
   text-wrap: pretty;
 }
 #primer .primer-consent {
   max-inline-size: 44ch;
   margin: 22px auto 0;
-  color: rgb(156 171 205 / 72%);
+  color: rgb(156 156 156 / 72%);
   font: 400 0.75rem/1.6 var(--font-brand);
 }
 
@@ -1830,7 +1830,7 @@ body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
   line-height: 1.72;
   scroll-snap-type: none;
   scrollbar-width: thin;
-  scrollbar-color: rgb(142 170 225 / 26%) transparent;
+  scrollbar-color: rgb(142 142 142 / 26%) transparent;
 }
 .message {
   max-inline-size: 68ch;
@@ -1848,13 +1848,13 @@ body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
   text-transform: none;
 }
 .msg-body {
-  color: rgb(226 233 250 / 92%);
+  color: rgb(226 226 226 / 92%);
   font-family: var(--font-mono);
   text-wrap: pretty;
 }
 .compaction-note, .message.system {
-  color: rgb(153 171 210 / 70%);
-  border-color: rgb(121 151 210 / 34%);
+  color: rgb(153 153 153 / 70%);
+  border-color: rgb(121 121 121 / 34%);
 }
 
 /* Developer controls for the additive face stipple layer; hidden unless explicitly enabled. */
@@ -1920,7 +1920,11 @@ body #zsh.live:focus-within, #zsh:focus-within { background: var(--chrome-surfac
 body.zen #zsh { opacity: .96; pointer-events: auto; transform: translate(-50%,0); }
 body.zen.zen-hidden #zsh, body.zen[data-edge-hover="1"] #zsh { opacity: .96; pointer-events: auto; }
 body.zen #zsh.revealed { transform: translate(-50%,0); }
-#zsh .pp { display: none; color: var(--chrome-muted); font-weight: 400; }
+#zsh .pp {
+  display: inline-flex; align-items: center; flex: 0 1 auto; min-inline-size: 0;
+  max-inline-size: min(42vw, 32ch); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--chrome-muted); font-weight: 400;
+}
 #zsh input, #zsh textarea {
   min-height: var(--tap-min); min-width: 0; padding: 8px 0;
   font: 400 16px/1.5 var(--font-mono); color: var(--chrome-text);
@@ -1984,7 +1988,7 @@ body.mission-control .mission-heading { max-inline-size: 80ch; margin: 0 0 1rem;
 @media (min-width: 480px) {
   #chat-log { max-height: 40dvh; padding-inline: 24px; }
   #zsh { width: min(920px, calc(100dvw - 32px - var(--safe-left) - var(--safe-right))); min-height: 64px; padding: 9px 12px; gap: 8px; }
-  #zsh .pp { display: inline; }
+  
   .master-titlebar { gap: .5rem; }
   .master-titlebar .brand-mark { display: inline-flex; }
   .master-session-tab { padding-inline: .875rem; }

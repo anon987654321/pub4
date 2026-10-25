@@ -1,7 +1,7 @@
 // Viseme playback — mouth animation driven by TTS audio and server viseme plans.
 // Concatenated into face.runtime.js by assets:build_face_runtime (after face_speech_runtime.js).
 
-const VISEME_STEP_MS = 90;
+const VISEME_STEP_MS = 45;
 const VOWEL_VISEME = { a: 'A', e: 'E', i: 'I', o: 'O', u: 'U' };
 
 function setViseme(ch) {

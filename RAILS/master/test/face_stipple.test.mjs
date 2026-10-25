@@ -118,6 +118,41 @@ test("micro-interactions remove continuous motion and crown spawns under reduced
   assert.equal(spawns, 3);
 });
 
+test("micro and nano expressions reuse blendshapes and respect reduced motion", () => {
+  const listeners = new Map();
+  const expressions = [];
+  const state = { mode: "thinking", valence: 0.2, arousal: 0.3, eyeMaskBiasX: 0, eyeMaskBiasY: 0 };
+  let reduced = false;
+  const pool = { count: 0, alive: new Uint8Array(0), cells: new Float32Array(0) };
+  const window = {
+    MASTER_FACE_STATE: { reducedMotion: () => reduced },
+    MASTER_FACE: { State: state, eyePool: pool, mouthPool: pool },
+    MASTER_FACE_BLEND: { applyExpression: (value) => expressions.push(value), applyMouthDrive() {} },
+    ParticleKernel: { FIELDS_PER_CELL: 16, FIELD: { attention: 0, pressure: 1 }, spawn() {} },
+    MASTEREcology: { agents: [] },
+    addEventListener(name, callback) {
+      if (!listeners.has(name)) listeners.set(name, []);
+      listeners.get(name).push(callback);
+    },
+    dispatchEvent() {}
+  };
+  const document = { getElementById: () => null, documentElement: { dataset: { reducedMotion: "0", masterMode: "thinking" }, style: { getPropertyValue: () => "0.86" } } };
+  runInNewContext(microInteractions, {
+    window, document, matchMedia: () => ({ matches: false }), innerWidth: 1000, innerHeight: 800,
+    setInterval() { return 1; },
+    CustomEvent: class CustomEvent { constructor(type, options = {}) { this.type = type; this.detail = options.detail; } }
+  });
+  for (const listener of listeners.get("master:visual") || []) listener({ detail: { mode: "thinking" } });
+  assert.ok(expressions.length > 0);
+  assert.ok(Math.abs(state.eyeMaskBiasX) <= 0.035);
+  assert.ok(Math.abs(state.eyeMaskBiasY) <= 0.035);
+  const count = expressions.length;
+  reduced = true;
+  for (const listener of listeners.get("master:visual") || []) listener({ detail: { mode: "speaking" } });
+  assert.equal(expressions.length, count);
+  assert.ok(Math.abs(state.eyeMaskBiasX) <= 0.035);
+});
+
 test("FaceWorld observes reduced motion across shader, camera and event layers", () => {
   assert.match(faceWorld, /function reducedMotionEnabled\(state = \{\}\)/);
   assert.match(faceWorld, /MASTER_FACE_STATE\?\.reducedMotion/);

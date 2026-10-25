@@ -53,6 +53,57 @@
     }
   }
 
+  const MICRO_CUES = Object.freeze({
+    idle: { pressure: 0, valence: 0, arousal: 0 },
+    listening: { pressure: 0.025, valence: 0, arousal: 0.015 },
+    thinking: { pressure: 0.045, valence: -0.025, arousal: 0.025 },
+    working: { pressure: 0.035, valence: -0.012, arousal: 0.02 },
+    speaking: { pressure: 0.055, valence: 0, arousal: 0.025 },
+    ready: { pressure: 0, valence: 0.018, arousal: 0 },
+    warning: { pressure: 0.05, valence: -0.03, arousal: 0.035 },
+    error: { pressure: 0.065, valence: -0.045, arousal: 0.04 }
+  });
+  const NANO_GAZE = Object.freeze({
+    idle: [0, 0], listening: [-0.006, 0.002], thinking: [0.005, -0.008],
+    working: [0.003, -0.004], speaking: [-0.002, 0.001], ready: [0, 0],
+    warning: [0.004, 0.002], error: [-0.005, 0.004]
+  });
+
+  function bounded(value, min, max) {
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.max(min, Math.min(max, number)) : 0;
+  }
+
+  // Micro expressions are state cues, not sentiment guesses from user text.
+  // They reuse the existing blendshape bridge and stay deliberately below the
+  // amplitude of speech articulation. No extra animation loop is introduced.
+  function microExpression(mode = st()?.mode || "idle") {
+    const state = st();
+    if (!state || reducedMotionActive(state)) return;
+    const key = String(mode).toLowerCase();
+    const cue = MICRO_CUES[key] || MICRO_CUES.idle;
+    const valence = bounded(Number(state.valence || 0) * 0.72 + cue.valence, -1, 1);
+    const arousal = bounded(Number(state.arousal || 0) * 0.32 + cue.arousal, 0, 1);
+    window.MASTER_FACE_BLEND?.applyExpression?.({
+      arousal, valence, pressure: cue.pressure
+    });
+  }
+
+  // Nano-saccades are event-driven, sub-degree eye-field nudges. They decay
+  // toward neutral on each new semantic event and never run under reduced motion.
+  function nanoGaze(mode = st()?.mode || "idle") {
+    const state = st();
+    if (!state || reducedMotionActive(state)) return;
+    const [dx, dy] = NANO_GAZE[String(mode).toLowerCase()] || NANO_GAZE.idle;
+    state.eyeMaskBiasX = bounded((Number(state.eyeMaskBiasX) || 0) * 0.35 + dx, -0.035, 0.035);
+    state.eyeMaskBiasY = bounded((Number(state.eyeMaskBiasY) || 0) * 0.35 + dy, -0.035, 0.035);
+  }
+
+  function applyMicroPresence(mode = st()?.mode || "idle") {
+    microExpression(mode);
+    nanoGaze(mode);
+  }
+
   // web_011 — ecology orbit tightens with kernel attention
   setInterval(() => {
     const ecology = window.MASTEREcology;
@@ -81,6 +132,9 @@
     const name = String(ev.detail?.name || ev.detail?.mode || "");
     if (/memory|retriev|context|compact/.test(name)) spawnCrown(2, { valence: 0.42 });
     if (/photo:ready|input:photo/.test(name)) spawnCrown(3, { valence: 0.55, confidence: 0.9 });
+    const mode = String(ev.detail?.mode || ev.detail?.phase || st()?.mode || name || "idle").toLowerCase();
+    if (/^(idle|listening|thinking|working|speaking|ready|warning|error)$/.test(mode)) applyMicroPresence(mode);
+    else if (/stt:start|listening/.test(name.toLowerCase())) applyMicroPresence("listening");
   });
 
   // Breathing is owned by the canonical face frame loop; do not add a second timer.
@@ -117,7 +171,10 @@
   // Reduced motion removes the continuous sinusoidal scan; semantic gaze updates remain event-driven.
 
   // web_020 — streaming nudges eye attention
-  window.addEventListener("chat:chunk", () => boostEye(0.05));
+  window.addEventListener("chat:chunk", () => {
+    boostEye(0.05);
+    applyMicroPresence(st()?.mode || "speaking");
+  });
   const origChunk = window._chatOnChunk;
   if (typeof origChunk === "function") {
     window._chatOnChunk = (raw) => {
@@ -162,5 +219,5 @@
     cv.setAttribute("aria-label", `MASTER face — ${mode}, confidence ${Math.round(conf * 100)}%`);
   }, 2000);
 
-  window.MASTER_FACE_MICRO = Object.freeze({ boostEye, spawnCrown, mouthPressure });
+  window.MASTER_FACE_MICRO = Object.freeze({ boostEye, spawnCrown, mouthPressure, microExpression, nanoGaze });
 })();

@@ -12,7 +12,7 @@ class TestFutureFaceContract < Minitest::Test
   end
 
   def test_future_profile_uses_structural_traits_not_skin_or_identity_traits
-    assert_equal "speculative_distant_human_2026_r2", @morphology.fetch("model")
+    assert_equal "speculative_distant_human_2026_r3", @morphology.fetch("model")
     assert_operator @morphology.fetch("cranium_scale"), :>, 1.0
     assert_operator @morphology.fetch("lower_face_scale"), :<, 1.0
     assert_operator @morphology.fetch("facial_projection"), :<, 1.0
@@ -20,6 +20,8 @@ class TestFutureFaceContract < Minitest::Test
     assert_operator @morphology.fetch("masticatory_scale"), :<, 1.0
     assert_operator @morphology.fetch("upper_face_scale"), :<, 1.0
     assert_equal "neutral", @morphology.fetch("climate_variant")
+    assert_operator @morphology.fetch("jaw_softening"), :>, 0.9
+    assert_operator @morphology.fetch("malar_scale"), :>, 0.9
     refute @morphology.key?("skin_tone")
     refute @morphology.key?("ethnicity")
   end

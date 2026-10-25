@@ -106,6 +106,21 @@ test("MASTER web face uses the same monospaced presentation contract as the CLI"
   assert.match(rules, /prompt:\s*\n\s+font: font_code/);
 });
 
+test("face preserves the canonical CLI prompt on narrow and wide viewports", () => {
+  const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  const sessionCss = readFileSync(join(root, "styles", "face", "60_session_chrome.css"), "utf8");
+  assert.match(view, /Master::Face::Contract\.shell_prompt/);
+  assert.match(sessionCss, /#zsh \.pp\s*\{[\s\S]*?display:\s*inline-flex/);
+  assert.match(sessionCss, /max-inline-size:\s*min\(42vw, 32ch\)/);
+  assert.doesNotMatch(sessionCss, /#zsh \.pp \{ display: none;/);
+});
+
+test("web lip-sync samples visemes at a finer audio-clock cadence", () => {
+  const playback = readFileSync(join(publicDir, "face_speech_playback.js"), "utf8");
+  assert.match(playback, /const VISEME_STEP_MS = 45;/);
+  assert.match(playback, /audio\.currentTime \* 1000/);
+});
+
 test("FaceWorld keeps portrait rendering separate from repository overlays", () => {
   const world = readFileSync(join(publicDir, "face_world.js"), "utf8");
   assert.match(world, /const portrait = topology === "face" \|\| topology === "papua-mask";/);

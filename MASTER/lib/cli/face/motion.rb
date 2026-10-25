@@ -24,6 +24,10 @@ module Master
         SPIN = ASCII.fetch("spin").to_f
         SPINNING = ASCII.fetch("spin_states").map(&:to_sym).freeze
         BREATH = ASCII.fetch("breath").to_f
+        GLANCE_INITIAL = ASCII.fetch("glance_initial", 0.9).to_f
+        GLANCE_INTERVAL = ASCII.fetch("glance_interval", [0.35, 2.2]).map(&:to_f).freeze
+        GLANCE_HORIZONTAL = ASCII.fetch("glance_horizontal", 0.09).to_f
+        GLANCE_VERTICAL = ASCII.fetch("glance_vertical", 0.04).to_f
         # The key light's start and orbit, in radians and radians a second.
         LIGHT = Master::Face::Contract.ascii.fetch("light").freeze
         EVENTS = %i[key listen nod thinking phantom council anticipate].freeze
@@ -62,7 +66,7 @@ module Master
           @mouth_open = Spring.new(1.0, 0.0)
           @viseme = "neutral"
           @next_blink = 2.2
-          @next_glance = 0.9
+          @next_glance = GLANCE_INITIAL
           @glance = [0.0, 0.0]
           @particles = []
         end
@@ -191,10 +195,10 @@ module Master
         def glance(state, t)
           return if t < @next_glance
 
-          @next_glance = t + @rng.rand(0.35..2.2)
+          @next_glance = t + @rng.rand(GLANCE_INTERVAL.fetch(0)..GLANCE_INTERVAL.fetch(1))
           home = @rng.rand < 0.3
           scale = GLANCE_SCALE.fetch(state, 1.0)
-          @glance = home ? [0.0, 0.0] : [@rng.rand(-0.09..0.09) * scale, @rng.rand(-0.04..0.04) * scale]
+          @glance = home ? [0.0, 0.0] : [@rng.rand(-GLANCE_HORIZONTAL..GLANCE_HORIZONTAL) * scale, @rng.rand(-GLANCE_VERTICAL..GLANCE_VERTICAL) * scale]
           @glance = [@glance[0] + 0.05, @glance[1] + 0.05] if state == :thinking
         end
 

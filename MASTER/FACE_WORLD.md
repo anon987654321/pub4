@@ -36,6 +36,17 @@ Ruby reads it through `MASTER/lib/face.rb`. Browser code receives
 the same block as `MASTER_FACE_CONTRACT` and keeps dynamic state in
 `MASTER_FACE_STATE`.
 
+Face-only grayscale values live in `tokens.face_root.palette`; the universal identity accent and
+Brgen/Amber palettes retain their own colours. The CLI uses neutral graphite depth tones, and its
+small gaze movements read from the same face contract. The web prompt renders the canonical
+`Master::Face::Contract.shell_prompt` at mobile and desktop widths while keeping its visible measure
+bounded so the message field and touch controls remain usable.
+
+Micro expressions are semantic blendshape cues; nano-saccades are event-driven eye-field nudges.
+Both reuse the existing runtime and remain off under reduced-motion preferences. Web visemes follow
+the audio clock at 45 ms sampling intervals; the terminal mouth continues to follow the audio
+envelope and phoneme shape.
+
 ## Primary material: particle stipple
 
 FaceWorld's material is greyscale particle stipple, named in `tokens.visual_identity.material`
@@ -64,7 +75,7 @@ to locked.
 
 Motion defaults to still. Gather, ripple, fragment and settle run only when a state supplies the
 cause, and reduced motion keeps the turned and unturned contrast readable without animation.
-Idle keeps its residual, because a field with no individual variation is a fog. The lime signal
+Idle keeps its residual, because a field with no individual variation is a fog. The neutral highlight
 marks admission and focus only. The point budget and the stipple layer's limits are in the
 section on the additive stipple layer below.
 
