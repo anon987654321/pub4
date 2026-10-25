@@ -10,6 +10,7 @@ module Master
     module StaleBundleSweep
       TTL_SECONDS = 30 * 24 * 60 * 60
       STORE_NAME = /\Agems\.stale-\d+-\d+(?:-\d+)?\z/.freeze
+      STALE_TIMESTAMP = /\Agems\.stale-\d+-(\d+)(?:-\d+)?\z/.freeze
 
       module_function
 
@@ -52,7 +53,13 @@ module Master
         return false unless File.directory?(parent) && File.directory?(candidate)
         return false unless File.basename(candidate).match?(STORE_NAME)
 
-        now - File.mtime(candidate) >= ttl
+        renamed_at = File.basename(candidate)[STALE_TIMESTAMP, 1]
+        return false unless renamed_at
+
+        # The directory's mtime reflects the old gem store, not when it was
+        # renamed out of service. Use the embedded rename timestamp so a newly
+        # quarantined store gets its full retention TTL.
+        now.to_f - renamed_at.to_i >= ttl
       rescue Errno::ENOENT, Errno::EACCES
         false
       end
