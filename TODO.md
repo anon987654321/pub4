@@ -52,10 +52,13 @@ browser evidence recorded in the commit.
   recognised from their files. The parallel test runner now polls worker exit status, applies a
   configurable 1,800-second per-worker deadline (`MASTER_TEST_WORKER_TIMEOUT`), terminates a
   timed-out worker process group, reports the offending PID/log and includes the final worker
-  log in its report; relay-thread exceptions are surfaced instead of leaving the parent blocked.
-  A regression test covers a hung worker. These source changes are not yet runtime-verified: rerun
-  `MASTER_TEST_JOBS=1 rake test` to isolate a serial hang, then the default parallel suite, and
-  record the exact test/output before closing this item. No trial has reached a repair, so repair
+  log in its report; relay-thread exceptions are surfaced, and a worker without the final Minitest
+  summary cannot pass merely by exiting with status zero. Worker logs record the active test
+  (`test-start0`) so a timeout or abrupt exit identifies the last test entered. Regression tests
+  cover a hung worker and a successful-but-incomplete exit. These source changes are not yet
+  runtime-verified: run `MASTER_TEST_START_MARKERS=1 MASTER_TEST_JOBS=1 rake test` to isolate a
+  serial hang, then `MASTER_TEST_JOBS=3 rake test`, and record exact test/output before closing.
+  No trial has reached a repair, so repair
   quality remains unmeasured on both MASTER and RAILS. Run /fix again only when the operator asks.
 - [ ] Validate the OpenBSD Operator CLI and /help against the requested plain dmesg style,
   correct checkout/tree-relative location, no decorative status, and useful scrollback. Re-check
