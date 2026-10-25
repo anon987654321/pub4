@@ -49,7 +49,10 @@ module Operator
       over = actual.select { |dir, count| count > recorded[dir] }
       under = actual.select { |dir, count| count < recorded[dir] }
 
-      return puts(JSON.pretty_generate(recorded:, actual:)) if json
+      if json
+        puts JSON.pretty_generate(recorded:, actual:)
+        return 0
+      end
 
       actual.each { |dir, count| puts format("  %-34s %3d flat file(s), ceiling %d", dir, count, recorded[dir]) }
       return record(actual) if ratchet && under.any?
