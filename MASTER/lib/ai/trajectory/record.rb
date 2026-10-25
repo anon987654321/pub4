@@ -53,26 +53,35 @@ module Master
             directory_stat.directory? && !directory_stat.symlink?
           File.chmod(0o700, directory)
 
-          raise ArgumentError, "trajectory log path is a symlink" if File.symlink?(path)
-          if File.exist?(path)
-            path_stat = File.lstat(path)
-            raise ArgumentError, "trajectory log path is not a regular file" unless path_stat.file? && !path_stat.symlink?
-
-            File.chmod(0o600, path)
-          end
-
           line = JSON.generate(@data) + "\n"
           raise ArgumentError, "trajectory record exceeds #{limit}-byte log limit" if line.bytesize > limit
 
-          # Reserve room for the new record before appending, so one large record
-          # cannot push the active log past its declared cap.
-          Master::Trace::Log.rotate(path, [limit - line.bytesize, 0].max)
-          File.open(path, File::WRONLY | File::CREAT | File::APPEND, 0o600) do |io|
-            io.flock(File::LOCK_EX)
-            io.write(line)
-            io.flush
-            io.fsync
-            io.flock(File::LOCK_UN)
+          # Rotation and append must share a process-wide lock: locking only the
+          # data file is insufficient after rotation because its inode changes.
+          lock_path = "#{path}.lock"
+          raise ArgumentError, "trajectory log lock is a symlink" if File.symlink?(lock_path)
+          File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |lock|
+            File.chmod(0o600, lock_path)
+            lock.flock(File::LOCK_EX)
+
+            raise ArgumentError, "trajectory log path is a symlink" if File.symlink?(path)
+            if File.exist?(path)
+              path_stat = File.lstat(path)
+              raise ArgumentError, "trajectory log path is not a regular file" unless path_stat.file? && !path_stat.symlink?
+
+              File.chmod(0o600, path)
+            end
+
+            # Reserve room for the new record before appending, so one large record
+            # cannot push the active log past its declared cap.
+            Master::Trace::Log.rotate(path, [limit - line.bytesize, 0].max)
+            File.open(path, File::WRONLY | File::CREAT | File::APPEND, 0o600) do |io|
+              io.write(line)
+              io.flush
+              io.fsync
+            end
+          ensure
+            lock.flock(File::LOCK_UN) if lock
           end
           self
         end
