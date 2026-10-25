@@ -7,6 +7,10 @@ not create separate project backlog files. A source edit, a static contract, an 
 list, and a passing live run are different kinds of evidence. Close an item with the command or
 browser evidence recorded in the commit.
 
+## Follow-on Swallow log compaction (2026-10-26)
+
+The standalone `Master::Ground::Swallow` logger now serializes append/rotation with a private sidecar lock, reserves room for the next complete record, and compacts a rotated backup to its newest bounded tail before retaining it. The backup retention filter explicitly excludes the sidecar lock so it cannot unlink a lock inode while another process waits. A generation cap keeps only the five newest bounded backups. Added regression coverage in `MASTER/test/test_swallow.rb`; it remains unexecuted.
+
 ## Follow-on shared JSONL retention pass (2026-10-26)
 
 Added `Master::Trace::Log.append_jsonl` as the common private, bounded append path. It serializes rotation+append with a sidecar `flock`, rejects symlinks and oversized single records, maintains restrictive modes, and refuses a write if rotation did not make enough room. The default cap reuses the existing trace-event 25 MiB limit; callers with an established smaller cap can supply it.
@@ -60,7 +64,7 @@ Changes added during the pass:
 - **Law parity:** the known `RENDERED_VALUES` coverage gap remains an explicit gap until an authorized deferral or tagged detector lands; it is not cleared by this pass.
 - **External status:** previously observed Vercel `build-rate-limit` failure is not a Ruby result. No Vercel retry was made.
 
-Next proof commands on the dev Mac with the pinned Ruby 4.0.5: run the focused tests (`MASTER/test/test_stale_bundle_sweep.rb`, `MASTER/test/test_watched_thread.rb`, `MASTER/test/test_check_registry_schema.rb`, `MASTER/test/test_ops_loop_owner.rb`, `MASTER/test/test_provider_quarantine_wiring.rb`, `MASTER/test/test_provider_canary.rb`, `MASTER/test/test_provider_health_cache.rb`, `MASTER/test/test_trace_log_append_jsonl.rb`, `MASTER/test/test_trace_telemetry.rb`, `MASTER/test/test_trace_metrics_log.rb`, `MASTER/test/test_cli_incident_log.rb`, `MASTER/test/test_phoenix.rb`, `MASTER/test/test_ai_trajectory.rb`, `OPENBSD/test/test_pid_probe.rb`, `OPENBSD/test/test_vps_state.rb`, `OPENBSD/test/test_pub4_admin.rb`, and `STUDIO/test/replicate_schema_task_test.rb`), then `cd MASTER && bin/check --profile=agent`, the full MASTER suite, RAILS contract/app suites, `ruby OPENBSD/test/run_all.rb`, and `cd STUDIO && rake check test`. Capture actual output and distinguish PASS / FAIL / INCONCLUSIVE / BLOCKED / TIMEOUT. Do not run a production deploy as part of a simulated pass.
+Next proof commands on the dev Mac with the pinned Ruby 4.0.5: run the focused tests (`MASTER/test/test_stale_bundle_sweep.rb`, `MASTER/test/test_watched_thread.rb`, `MASTER/test/test_check_registry_schema.rb`, `MASTER/test/test_ops_loop_owner.rb`, `MASTER/test/test_provider_quarantine_wiring.rb`, `MASTER/test/test_provider_canary.rb`, `MASTER/test/test_provider_health_cache.rb`, `MASTER/test/test_trace_log_append_jsonl.rb`, `MASTER/test/test_trace_telemetry.rb`, `MASTER/test/test_trace_metrics_log.rb`, `MASTER/test/test_cli_incident_log.rb`, `MASTER/test/test_phoenix.rb`, `MASTER/test/test_swallow.rb`, `MASTER/test/test_ai_trajectory.rb`, `OPENBSD/test/test_pid_probe.rb`, `OPENBSD/test/test_vps_state.rb`, `OPENBSD/test/test_pub4_admin.rb`, and `STUDIO/test/replicate_schema_task_test.rb`), then `cd MASTER && bin/check --profile=agent`, the full MASTER suite, RAILS contract/app suites, `ruby OPENBSD/test/run_all.rb`, and `cd STUDIO && rake check test`. Capture actual output and distinguish PASS / FAIL / INCONCLUSIVE / BLOCKED / TIMEOUT. Do not run a production deploy as part of a simulated pass.
 
 ## 2026-10-25 source-fix reconciliation
 
