@@ -9,6 +9,16 @@ class ProviderCanaryTest < Minitest::Test
     def api_provider_for(model) = model.start_with?("openai:") ? "openai" : nil
   end
 
+  class RecordingRouter < Router
+    attr_reader :outcomes
+
+    def initialize = @outcomes = []
+
+    def record_provider_outcome(**outcome)
+      @outcomes << outcome
+    end
+  end
+
   class Agent
     attr_reader :models, :response_mode
 
@@ -121,6 +131,29 @@ class ProviderCanaryTest < Minitest::Test
       assert_equal "0/1 canaries passed", canary.run
       assert_equal :canary_failure, health.latest_event("claude-cli:opus")["status"].to_sym
       assert_operator health.score("claude-cli:opus"), :<, 1.0
+    end
+  end
+
+  def test_canary_outcome_flows_through_router_quarantine_entrypoint
+    agent = Agent.new(response_mode: :raise)
+    router = RecordingRouter.new
+
+    Dir.mktmpdir do |dir|
+      health = Master::CLI::Routing::ProviderHealth.new(path: File.join(dir, "health.ndjson"))
+      canary = Master::CLI::Routing::ProviderCanary.new(
+        agent:,
+        router:,
+        health:,
+        max_providers: 1,
+      )
+
+      assert_equal "0/1 canaries passed", canary.run
+      outcome = router.outcomes.fetch(0)
+      assert_equal "claude-cli:opus", outcome.fetch(:model)
+      assert_equal :canary_failure, outcome.fetch(:status)
+      assert_equal "provider unavailable", outcome.fetch(:error)
+      assert_nil health.latest_event("claude-cli:opus"),
+                 "router-owned health should not be double-recorded by the canary adapter"
     end
   end
 end
