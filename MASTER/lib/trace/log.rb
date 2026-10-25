@@ -70,7 +70,7 @@ module Master
           end
 
           attempts = 0
-          begin
+          loop do
             rotate(path, [limit - line.bytesize, 0].max)
             size = File.file?(path) ? File.size(path) : 0
             if size + line.bytesize > limit
@@ -79,25 +79,27 @@ module Master
               end
 
               attempts += 1
-              retry
+              next
             end
 
-            File.open(path, File::WRONLY | File::CREAT | File::APPEND, mode) do |io|
-              offset = 0
-              while offset < line.bytesize
-                written = io.write(line.byteslice(offset..))
-                raise IOError, "JSONL append wrote no bytes" unless written&.positive?
+            begin
+              File.open(path, File::WRONLY | File::CREAT | File::APPEND, mode) do |io|
+                offset = 0
+                while offset < line.bytesize
+                  written = io.write(line.byteslice(offset..))
+                  raise IOError, "JSONL append wrote no bytes" unless written&.positive?
 
-                offset += written
+                  offset += written
+                end
+                io.flush
+                io.fsync if sync
               end
-              io.flush
-              io.fsync if sync
-            end
-          rescue Errno::ENOSPC
-            raise unless attempts.zero? && reclaim(path)
+              break
+            rescue Errno::ENOSPC
+              raise unless attempts.zero? && reclaim(path)
 
-            attempts += 1
-            retry
+              attempts += 1
+            end
           end
         ensure
           lock.flock(File::LOCK_UN) if lock
