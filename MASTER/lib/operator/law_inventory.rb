@@ -186,6 +186,34 @@ end
       scanner.laws.to_h { |rule| [rule.id.to_s.downcase, rule] }
     end
 
+    # The operator's `laws ID` command needs the entire declared catalogue,
+    # not only the priority-ranked entries returned by Master.law_entries.
+    # Keep that recursive interpretation here and load through MASTER's sole
+    # YAML reader; declarations may live under laws, beauty, anti_patterns,
+    # or another nested catalogue section.
+    def catalogue_declaration(id, root: MASTER)
+      require "master"
+      data = Master.load_laws(root:)
+      raise "data/laws.yml must be a non-empty mapping" unless data.is_a?(Hash) && !data.empty?
+
+      catalogue_declarations_in(data).find { |row| row["id"].to_s.casecmp?(id.to_s) }
+    end
+
+    def catalogue_declarations_in(node, found = [])
+      case node
+      when Hash
+        found << node if node["id"].is_a?(String)
+        node.each do |key, value|
+          found << value.merge("id" => key.to_s) if key.to_s.match?(/\\A[A-Z][A-Z0-9_]*\\z/) &&
+                                                       value.is_a?(Hash) && !value.key?("id")
+          catalogue_declarations_in(value, found)
+        end
+      when Array
+        node.each { |value| catalogue_declarations_in(value, found) }
+      end
+      found
+    end
+
     def catalogue_rows
       require "master"
       entries = Master.law_entries(root: MASTER)
