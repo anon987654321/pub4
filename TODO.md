@@ -9,7 +9,7 @@ browser evidence recorded in the commit.
 
 ## 2026-10-25 source-fix reconciliation
 
-The direct-to-main repair batch reached source commit 4a7618ea5d86c2e637402b8b60ff19afbb19ea4e before this backlog update. These commits are source and regression-test changes, **not** a passing test run. The operator-provided terminal output predates many of them; its failure summaries must be rechecked against current main rather than copied forward as current results.
+The direct-to-main repair batch reached source commit 4a7618ea5d86c2e637402b8b60ff19afbb19ea4e before this backlog update; commit 22df7a7173ff74eae89a172e6f8850e91728377e then added progress reporting and incomplete-suite evidence to the parallel test supervisor. These are source and regression-test changes, **not** a passing test run. The operator-provided terminal output predates many of them; its failure summaries must be rechecked against current main rather than copied forward as current results.
 
 Repairs committed in this batch include:
 
@@ -21,6 +21,7 @@ Repairs committed in this batch include:
 - Made PWA, CSS coverage, asset URL, layout-stability, locale-reader, and keyboard/gesture inventories follow RAILS/__shared and the extracted sibling engines rather than the retired shared/ and brgen/engines/* layouts.
 - Corrected architecture and test contracts that pointed at removed component layouts, old locale owners, old CSS aggregation files, stale voice bundle assumptions, or the wrong Stimulus boot module. Lowered the measured Rails opacity baseline from 27 to 22 rather than masking the improvement with a larger ceiling.
 - Added an Amber account-erasure entry and regression fixture for user-linked dating location pings, and guarded a marketplace-order table rebuild with a copied-row-count check and a local migration-safety rationale.
+- Added regression coverage for the parallel test supervisor's timeout, progress reporting, and incomplete-worker evidence. Commit 22df7a7 adds the suite report/progress plumbing, but its new tests and the real serial/parallel suite remain unexecuted.
 
 ### Required verification for this batch
 
