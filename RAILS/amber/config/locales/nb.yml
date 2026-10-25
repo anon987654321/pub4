@@ -823,7 +823,7 @@ nb:
     allow_ai_analysis: "Tillat ekstern KI-analyse"
     ai_description: "Når dette er slått av, bruker Amber lokale regler og sender ikke garderobedetaljer til OpenRouter eller bruker den valgfrie STUDIO-tjenesten for antrekksbilder."
     save: "Lagre personvernvalg"
-    saved: "Personvernvalgene er lagret."
+    saved: "Lagring av personvernvalg er fullført."
   footer:
     label: "Nettsted"
     wardrobe: "Garderobe"
