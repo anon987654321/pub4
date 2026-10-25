@@ -71,6 +71,34 @@ class TestOwnerPreferences < Minitest::Test
     assert_empty Preferences.status(root: @root, subject: SUBJECT).fetch("suggestions")
   end
 
+  def test_explicit_set_and_forget_invalidate_stale_suggestions
+    grant
+    staged = Preferences.suggest(
+      root: @root, subject: SUBJECT, key: "work.flow", value: "plan_first", scope: "coding",
+    )
+    Preferences.set(root: @root, subject: SUBJECT, key: "work.flow", value: "implement_verify", scope: "coding")
+    assert_empty Preferences.status(root: @root, subject: SUBJECT).fetch("suggestions")
+    assert_equal "implement_verify", Preferences.effective(root: @root, subject: SUBJECT, scope: "coding").fetch("work.flow").fetch("value")
+
+    newer = Preferences.suggest(
+      root: @root, subject: SUBJECT, key: "work.flow", value: "plan_first", scope: "coding",
+    )
+    assert Preferences.forget(root: @root, subject: SUBJECT, key: "work.flow", scope: "coding")
+    assert_empty Preferences.status(root: @root, subject: SUBJECT).fetch("suggestions")
+    assert_empty Preferences.effective(root: @root, subject: SUBJECT, scope: "coding")
+    refute_equal staged.fetch("id"), newer.fetch("id")
+  end
+
+  def test_preferences_command_shows_all_scopes_by_default
+    grant
+    Preferences.set(root: @root, subject: SUBJECT, key: "communication.tone", value: "warm")
+    Preferences.set(root: @root, subject: SUBJECT, key: "work.flow", value: "implement_verify", scope: "coding")
+    response = Master::CLI::CommandRegistry.dispatch_preferences(@root, ctx: { args: "show" })
+
+    assert_includes response, "all communication.tone=warm"
+    assert_includes response, "coding work.flow=implement_verify"
+  end
+
   def test_rejected_suggestion_never_becomes_active
     grant
     suggestion = Preferences.suggest(
