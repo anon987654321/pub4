@@ -59,7 +59,7 @@ class AmberErasureContractTest < Minitest::Test
     assert_includes job, 'notification_model.where(notifiable_type: "Message", notifiable_id: message_ids)'
     assert_includes job, 'Shared::OutboundClick.where(subject_type: "Message", subject_id: message_ids)'
     assert_includes job, 'Vote.where(votable_type: "Message", votable_id: message_ids)'
-    assert_includes job, 'Message.where(sender_id: user.id).or(Message.where(recipient_id: user.id))'
+    assert_includes job, 'Message.where(sender_id: user_id).or(Message.where(recipient_id: user_id))'
     assert_includes job, 'destroy_each(DeclutterChallenge.where(item_id: item_ids))'
     assert_includes job, 'reaction_model.where(reactable_type: "Item", reactable_id: item_ids)'
     assert_includes job, 'notification_model.where(notifiable_type: "Item", notifiable_id: item_ids)'
