@@ -116,7 +116,6 @@ class MarketplaceBolVisualContractTest < Minitest::Test
 
   def test_marketplace_hero_has_one_responsive_geometry_owner
     campaigns = File.read(CITY_CAMPAIGNS_CSS)
-    commerce = File.read(File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_marketplace_commerce.scss"))
 
     refute_includes campaigns, "min-height: 240px;",
                     "the late campaign layer must not replace the fluid hero media height"
@@ -184,6 +183,6 @@ class MarketplaceBolVisualContractTest < Minitest::Test
     assert_includes catalog, "--bol-blue: var(--accent);"
     assert_includes catalog, "--bol-max: 1248px;"
     assert_includes header, "grid-template-columns: 176px 168px minmax(320px, 1fr) auto;"
-    assert_includes commerce, "grid-template-columns: 232px minmax(0, 1fr);"
+    assert_includes catalog, "grid-template-columns: 232px minmax(0, 1fr);"
   end
 end
