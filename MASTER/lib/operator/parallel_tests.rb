@@ -9,6 +9,7 @@ module Operator
     LOG_DIR = File.expand_path("../../.master/check", __dir__)
     RESULT_LINE = /\A\S+#\S+ = [\d.]+ s = [.FES]\s*\z/
     REPORT_START = /\AFinished in /
+    SUMMARY_LINE = /\A\d+ runs?, \d+ assertions?, \d+ failures?, \d+ errors?, \d+ skips?\s*\z/i
     DEFAULT_WORKER_TIMEOUT = 1800
     POLL_INTERVAL = 0.1
 
@@ -64,14 +65,16 @@ module Operator
       rescue ThreadError
         # No relay error was queued.
       end
+      workers.each { |worker| worker[:summary_present] = summary_present?(worker) }
       report(workers, out)
-      workers.all? { |worker| worker[:status]&.success? && !worker[:timed_out] }
+      workers.all? { |worker| worker[:status]&.success? && !worker[:timed_out] && worker[:summary_present] }
     ensure
       workers&.each { |worker| terminate(worker) unless worker[:status] }
     end
 
     def start(bucket, log:, command:)
-      pid = Process.spawn(*command.call(bucket), out: log, err: %i[child out], in: File::NULL, pgroup: true)
+      env = { "MASTER_TEST_START_MARKERS" => ENV.fetch("MASTER_TEST_START_MARKERS", "1") }
+      pid = Process.spawn(env, *command.call(bucket), out: log, err: %i[child out], in: File::NULL, pgroup: true)
       { pid:, log:, offset: 0, started_at: Process.clock_gettime(Process::CLOCK_MONOTONIC), status: nil, timed_out: false }
     end
 
@@ -143,12 +146,23 @@ module Operator
       complete.force_encoding(Encoding::UTF_8).scrub.lines(chomp: true)
     end
 
+    def summary_present?(worker)
+      File.foreach(worker.fetch(:log), encoding: "UTF-8", invalid: :replace, undef: :replace)
+          .any? { |line| SUMMARY_LINE.match?(line.chomp) }
+    rescue Errno::ENOENT
+      false
+    end
+
     def report(workers, out)
       workers.each_with_index do |worker, index|
         lines = File.read(worker.fetch(:log), encoding: "UTF-8", invalid: :replace, undef: :replace).lines
         start = lines.index { |line| line.match?(REPORT_START) } || [lines.size - 40, 0].max
-        suffix = worker[:timed_out] ? ", TIMEOUT" : ""
-        out.puts "", "worker #{index + 1} of #{workers.size} (pid #{worker.fetch(:pid)}#{suffix}):", *lines.drop(start).map(&:chomp)
+        suffix = []
+        suffix << "TIMEOUT" if worker[:timed_out]
+        suffix << "INCOMPLETE" unless worker[:summary_present]
+        label = suffix.empty? ? "" : ", #{suffix.join(", ")}"
+        out.puts "", "worker #{index + 1} of #{workers.size} (pid #{worker.fetch(:pid)}#{label}):", *lines.drop(start).map(&:chomp)
+        out.puts "test-worker-incomplete0: missing final Minitest summary" unless worker[:summary_present]
       end
     end
   end
