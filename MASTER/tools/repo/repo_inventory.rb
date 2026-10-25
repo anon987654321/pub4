@@ -31,7 +31,9 @@ ALLOWED_ROOT_FILES = %w[
   AGENTS.md
   CLAUDE.md
   GEMINI.md
+  LICENSE
   README.md
+  TODO.md
   VERSION
 ].freeze
 GENERATED_ROOT_FILES = %w[
