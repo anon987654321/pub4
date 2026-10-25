@@ -209,8 +209,7 @@ module Master
                 js_silent_catch_findings + library_verify_findings
             }],
             ["SINGULARITY", lambda {
-              duplicate_law_id_findings + deploy_duplicate_id_findings +
-                cross_yaml_duplicate_key_findings + malformed_yaml_findings
+              duplicate_law_id_findings + deploy_duplicate_id_findings + malformed_yaml_findings
             }],
             ["LINEARITY", lambda { structural_findings(Laws::NestingDepthLaw.new) + deploy_nesting_findings }],
             ["PROXIMITY", lambda { law_test_proximity_findings }],
@@ -349,15 +348,29 @@ module Master
           yaml.reject { |key, _value| %w[schema meta version].include?(key.to_s) }
         rescue Psych::Exception => e
           Master::Ground::Swallow.log(e, context: "SelfTest.top_level_yaml_entries", severity: :load_bearing)
-          malformed_yaml_findings << finding(
-            path: path, line: 1,
-            message: "malformed YAML in data register (#{e.class}) — SINGULARITY unmeasured, not clean",
-          )
+          record_malformed_yaml(path, e)
           {}
         end
 
+        # SINGULARITY checks that registers can be read, not that unrelated
+        # registry keys happen to repeat across files. The broader cross-file
+        # duplicate census remains the separate data_singularity instrument.
         def malformed_yaml_findings
+          data_dir = File.join(@root, "data")
+          return [] unless File.directory?(data_dir)
+
+          singularity_yaml_paths(data_dir).each { |path| top_level_yaml_entries(path) }
+          @malformed_yaml_findings || []
+        end
+
+        def record_malformed_yaml(path, error)
           @malformed_yaml_findings ||= []
+          return if @malformed_yaml_findings.any? { |row| row[:path] == path }
+
+          @malformed_yaml_findings << finding(
+            path: path, line: 1,
+            message: "malformed YAML in data register (#{error.class}) — SINGULARITY unmeasured, not clean",
+          )
         end
 
         def law_ids(value, ids = [])
