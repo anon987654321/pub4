@@ -77,6 +77,10 @@ module Master
         active = Gem.loaded_specs["bundler"]&.version&.to_s
         return if active.nil? || active == lock_version
         return if env["MASTER_BUNDLER_REEXEC_DONE"] == "1"
+        if program.to_s == "-e"
+          Master::Trace::Dmesg.status("bundler0", "cannot switch Bundler for inline -e; invoke a script file", io: out)
+          exit 78
+        end
 
         clean_env = env.to_h.dup
         %w[RUBYOPT RUBYLIB].each { |key| clean_env.delete(key) }
@@ -117,6 +121,12 @@ module Master
         candidate = ::Operator::RubyRunner.best_available_ruby(root:)
         return unless candidate
         return if same_file?(RbConfig.ruby, candidate[:path])
+        if program.to_s == "-e"
+          return if RUBY_VERSION == candidate[:version]
+
+          Master::Trace::Dmesg.status("ruby0", "cannot switch Ruby for inline -e from #{RUBY_VERSION} to #{candidate[:version]}; invoke a script file", io: out)
+          exit 78
+        end
 
         Master::Trace::Dmesg.status(
           "ruby0",

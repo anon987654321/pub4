@@ -78,7 +78,8 @@ class TestScriptDispatch < Minitest::Test
         assert result.ok?, -> { result.message.to_s }
         assert_equal %Q{"#{ENV["BUNDLE_GEMFILE"]}" "#{ENV["BUNDLE_PATH"]}" "#{ENV["GEM_HOME"]}" ""}, result.value!
       ensure
-        ENV.keys.grep(/A(?:BUNDLE_|GEM_HOME|GEM_PATH|RUBYOPT)$/).each { |key| ENV.delete(key) }
+        ENV.keys.grep(/\ABUNDLE_/).each { |key| ENV.delete(key) }
+        %w[GEM_HOME GEM_PATH RUBYOPT].each { |key| ENV.delete(key) }
         previous.each { |key, value| ENV[key] = value }
       end
     end

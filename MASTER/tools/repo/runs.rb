@@ -50,7 +50,12 @@ module Operator
     # that looks like a measurement is how a check ends up measuring nothing.
     CONVENTIONS = {
       "RAILS/amber/bin/ci" => ["RAILS/amber/test/**/*_test.rb"],
-      "RAILS/brgen/bin/ci" => ["RAILS/brgen/test/**/*_test.rb", "RAILS/brgen/engines/*/test/**/*_test.rb"],
+      "RAILS/brgen/bin/ci" => [
+        "RAILS/brgen/test/**/*_test.rb",
+        "RAILS/brgen/engines/*/test/**/*_test.rb",
+        "RAILS/brgen_*/test/**/*_test.rb",
+        "RAILS/__shared/test/**/*_test.rb",
+      ],
       "RAILS/bsdports/bin/ci" => ["RAILS/bsdports/test/**/*_test.rb"],
       "RAILS/master/bin/ci" => ["RAILS/master/test/**/*_test.rb"],
       # These runners construct their Node inventory from a runtime path variable
