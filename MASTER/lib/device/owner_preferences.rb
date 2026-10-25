@@ -196,6 +196,9 @@ module Master
           end
           observation["count"] = [observation.fetch("count") + 1, 100].min
           observation["last_seen"] = now
+          state["observations"].delete(observation)
+          state["observations"] << observation
+          state["observations"] = state["observations"].last(MAX_OBSERVATIONS)
 
           next({ "status" => "observed", "count" => observation.fetch("count") }) if
             observation.fetch("count") < OBSERVATION_THRESHOLD
