@@ -38,8 +38,8 @@ document would duplicate the design authority and is not maintained. `.claude/`
 is committed Claude tooling configuration, and the restore ledgers under `MASTER/data/recovery/` are historical
 evidence; neither is a governed product tree. There is no `TREE.md` on current
 main; the tree contracts and `RAILS/README.md` are the map. `STUDIO/` is the canonical media
-tool plane; `MASTER/tools/` keeps compatibility symlinks. The backlog file is gone: operator-only
-work lives in `MASTER/data/operator_seams.yml`, decisions beside the thing they decide.
+tool plane; `MASTER/tools/` keeps compatibility symlinks. The one cross-tree backlog is the root `TODO.md`; operator-only work lives in
+`MASTER/data/operator_seams.yml`, with individual decisions beside the thing they decide.
 Build output
 never sits at the root whatever the tool's default: a renderer that writes to
 `$PWD` once left a session's renders at the root for weeks. Renders belong outside
