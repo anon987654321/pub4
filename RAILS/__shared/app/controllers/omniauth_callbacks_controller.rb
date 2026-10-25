@@ -80,6 +80,28 @@ class OmniauthCallbacksController < ::ApplicationController
       raise IdentityEmailConflict
     end
     legacy_bankid_placeholder = false
+    synthetic_placeholder_recovered = false
+
+    # A previous callback can persist the user and fail before it records the
+    # provider subject. For email-less non-BankID providers, recover only the
+    # exact subject-derived address while it is still unverified and unclaimed.
+    # create_or_find_by! also closes the concurrent first-login unique-email race.
+    if user.nil? && email.blank? && auth.provider.to_s != "bankid"
+      placeholder = "#{auth.uid}@#{auth.provider}.oauth"
+      user = User.create_or_find_by!(email_address: placeholder) do |record|
+        record.password = SecureRandom.hex(24)
+        record.require_email_verification = true
+      end
+      has_unconsumed_synthetic_address = user.respond_to?(:has_attribute?) &&
+                                         user.has_attribute?(:email_verification_token) &&
+                                         user.email_verification_token.blank?
+      eligible = has_unconsumed_synthetic_address && !user.email_verified? &&
+                 user.try(:deleted_at).blank? && user.try(:deletion_scheduled_at).blank? &&
+                 !user.try(:deletion_pending?)
+      raise IdentityEmailConflict unless eligible
+
+      synthetic_placeholder_recovered = true
+    end
 
     # Before the shared subject tables existed, BankID accounts were created
     # with a deterministic, non-deliverable "#{sub}@bankid.oauth" placeholder.
@@ -105,7 +127,7 @@ class OmniauthCallbacksController < ::ApplicationController
       end
     end
 
-    raise IdentityEmailConflict if user && !verified_email && !legacy_bankid_placeholder
+    raise IdentityEmailConflict if user && !verified_email && !legacy_bankid_placeholder && !synthetic_placeholder_recovered
 
     unless user
       user = User.new(
@@ -165,7 +187,7 @@ class OmniauthCallbacksController < ::ApplicationController
   def persist_external_identity(user, auth)
     ensure_identity_storage!
 
-    provider = ::IdentityProvider.find_or_create_by!(slug: auth.provider.to_s) do |record|
+    provider = ::IdentityProvider.create_or_find_by!(slug: auth.provider.to_s) do |record|
       record.name = auth.provider.to_s.tr("_", " ").titleize
       record.issuer = hash_value(hash_value(auth.extra, :id_info), :iss)
       record.client_id = ENV["#{auth.provider.to_s.upcase}_CLIENT_ID"]
