@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require_relative "support_fake_config"
+require "rbconfig"
 
 # agy is the only entry in the routing tables that is not an API model. It is
 # the Antigravity CLI, reached by executing a binary, and two things about it
@@ -151,5 +152,18 @@ class TestAgyReachability < Minitest::Test
   def test_the_stub_is_actually_detected
     with_agy(true) { assert Master.agy_cli_available?, "the agy stub was not detected as available" }
     with_agy(false) { refute Master.agy_cli_available? }
+  end
+
+  def test_probe_deadline_includes_grandchildren_holding_output_open
+    router_instance = router
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+    output = router_instance.send(
+      :run_probe, RbConfig.ruby, "-e", "fork { sleep 5 }; exit 0", timeout: 0.2,
+    )
+
+    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+    assert_nil output, "a probe with a surviving child must be inconclusive"
+    assert_operator elapsed, :<, 3.0, "a grandchild-held pipe must not defeat the probe deadline"
   end
 end
