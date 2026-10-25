@@ -32,6 +32,10 @@ All newly added and modified tests remain unexecuted. No runtime PASS is claimed
 
 Local STUDIO `clips.jsonl` and per-subject billed-render `ledger.jsonl` remain open for an explicit archive/retention contract; they carry user-owned render and billing provenance and must not be silently truncated. `Trace::Ledger::Reflexion` now locks the 50-row read/retain/replace transaction and publishes the new file atomically; a concurrent regression case exists but is not run. The STUDIO clip index and billed-render ledger remain open for a deliberate archive/export retention contract.
 
+## Follow-on provider state replay across rotation
+
+Provider health and quarantine readers now merge the retained `.1` generation before the active log and invalidate caches on both file stamps. This preserves recent health scores and the latest quarantine/clear decision across a bounded rotation. Added two focused regression cases; neither has been executed. Events older than the retained generation remain outside the bounded retention contract.
+
 ## Follow-on conflict log writer hardening
 
 The conflict log's existing three-generation retention is now wrapped in a sidecar flock across rotation and append. Each incoming line reserves capacity before the rotate, and the write remains private and complete-record based. Added a concurrent 200-record test and fixed the test's tail assertion to support short valid compacted records. Nothing has been executed; the proof status is still INCONCLUSIVE.
