@@ -52,8 +52,11 @@ class TestIoMcpAndWebChat < Minitest::Test
     coordinator.stub(:build_mcp_client, build) { coordinator.connect_all }
     events = coordinator.instance_variable_get(:@bus).events
 
-    assert_equal [["local", :stdio, { command: "npx", args: ["-y", "server"] }],
-                  ["remote", :sse, { url: "http://127.0.0.1:1" }], ["broken", :stdio, { command: "nope", args: [] }]], built
+    assert_equal [
+      ["local", :stdio, { "command" => "npx", "args" => ["-y", "server"] }],
+      ["remote", :sse, { "transport" => "sse", "url" => "http://127.0.0.1:1" }],
+      ["broken", :stdio, { "command" => "nope" }],
+    ], built
     assert_includes events, ["mcp:server_failed", { name: "broken", error: "npx missing" }]
     assert_includes events, ["mcp:connected", { count: 2 }]
   ensure
