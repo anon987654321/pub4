@@ -153,6 +153,10 @@ class TestExecutionContract < Minitest::Test
       FakeCheckResult.new(outcome: :failed, checks_ran: 4, failures: ["fixture failure"]),
       id: "check-failed", subject: "unit-tests", verifier: "minitest"
     )
+    errored = Contract::VerificationResult.from_check_result(
+      FakeCheckResult.new(outcome: :errored, checks_ran: 0),
+      id: "check-errored", subject: "unit-tests", verifier: "minitest"
+    )
 
     assert_equal :partial, partial.status
     assert_equal 12, partial.checked_count
@@ -166,6 +170,8 @@ class TestExecutionContract < Minitest::Test
     assert_equal :fail, failed.status
     assert_equal 1, failed.failure_count
     assert_predicate failed, :conclusive?
+    assert_equal :error, errored.status
+    refute_predicate errored, :conclusive?
   end
 
   def test_proof_adapter_preserves_open_claims_as_inconclusive
