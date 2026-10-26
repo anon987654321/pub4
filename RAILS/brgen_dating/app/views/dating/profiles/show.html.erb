@@ -53,9 +53,13 @@
 
   <article>
     <p class="profile-meta">
-      <span>
-        <%= t("dating.location") %> · <%= @profile.location.presence || "—" %>
-        <% if @profile.neighborhood&.name.present? %> · <%= t("dating.neighborhood") %> · <%= @profile.neighborhood.name %><% end %>
+      <span class="meta-facts">
+        <span><%= t("dating.location") %></span>
+        <span><%= @profile.location.presence || "—" %></span>
+        <% if @profile.neighborhood&.name.present? %>
+          <span><%= t("dating.neighborhood") %></span>
+          <span><%= @profile.neighborhood.name %></span>
+        <% end %>
       </span>
       <span>
         <%= t("dating.visibility") %> ·
