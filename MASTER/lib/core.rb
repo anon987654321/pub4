@@ -20,6 +20,26 @@ module Master::Core
   # set is closed and small; that closure is what makes the agent auditable.
   VERBS = %i[read write exec git http ask note critique done].freeze
 
+  # Cooperative cancellation shared by hosts and the Fold. A cancellation is
+  # sticky: the first reason remains authoritative across racing callers.
+  class CancellationToken
+    def initialize
+      @mutex = Mutex.new
+      @reason = nil
+    end
+
+    def cancel!(reason: "operator requested cancellation")
+      value = reason.to_s.strip
+      raise ArgumentError, "cancellation reason cannot be empty" if value.empty?
+
+      @mutex.synchronize { @reason ||= value[0, 240].freeze }
+      self
+    end
+
+    def cancelled? = @mutex.synchronize { !@reason.nil? }
+    def reason = @mutex.synchronize { @reason }
+  end
+
   # A compensation is a proposed inverse command, not a promise that it works.
   # The Constitution must admit it and the operator must approve it after the
   # original effect fails. It is deliberately limited to argv, never shell text.
