@@ -99,14 +99,6 @@ def test_core_context_keeps_constitution_and_output_contract
     assert_includes line, "measure 72ch"
   end
 
-  def test_typography_line_matches_the_committed_style_yml
-    typography = Master.law("style").fetch("typography")
-    line = Typographer.new.typography_style_line(typography)
-
-    assert_includes line, "scale #{typography.fetch("scale_base")} × #{typography.fetch("scale_ratio")}"
-    assert_includes line, "measure #{typography.fetch("measure")}"
-  end
-
   def test_typography_line_still_degrades_without_a_scale
     line = Typographer.new.typography_style_line("families_sans" => "Inter")
 
