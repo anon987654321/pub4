@@ -1052,8 +1052,8 @@ loc_body_budgets:
 # Historical convergence semantics recovered from pub -> pub2 -> pub3 -> pub4.
 # Reader: Master::Fix::ConvergenceDiscipline. Keep behavior here, not prose-only.
 convergence_discipline:
-  # One clean pass, then the proof decides (Fix::FixLoop::CLEAN_RUNS).
-  clean_runs_required: 1
+  # Two consecutive evidence-backed clean readings are the minimum.
+  clean_runs_required: 2
   diminishing_delta: 0.001
   diminishing_cycles: 3
   oscillation_window: 3
