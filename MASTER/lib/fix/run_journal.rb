@@ -176,7 +176,34 @@ module Master
           run_id: id, path: receipt["path"], sha256: receipt["sha256"],
           cells: receipt["cells"], readings: receipt["readings"], status: receipt["matrix_status"]
         )
+        prune_assessment_reports!(keep_ids: history(limit: MAX_RUNS).map { |entry| entry["id"] })
         receipt
+      end
+
+      # Keep evidence storage aligned with the bounded run journal. Only
+      # delete old, owned report files with the exact generated filename shape.
+      def prune_assessment_reports!(keep_ids:)
+        master_dir = File.join(@root, ".master")
+        directory = File.join(@root, ASSESSMENT_DIR)
+        return if File.symlink?(master_dir) || File.symlink?(directory) || !File.directory?(directory)
+
+        retained = Array(keep_ids).map(&:to_s).to_set
+        removed = 0
+        Dir.children(directory).each do |name|
+          match = name.match(/\A([a-f0-9]{20})\.json\z/)
+          next unless match && !retained.include?(match[1])
+
+          path = File.join(directory, name)
+          next if File.symlink?(path) || !File.file?(path)
+
+          File.delete(path)
+          removed += 1
+        rescue SystemCallError => e
+          emit("fix:assessment_prune_entry_failed", path: name, error: e.message.to_s[0, 160])
+        end
+        emit("fix:assessment_reports_pruned", removed:) if removed.positive?
+      rescue StandardError => e
+        emit("fix:assessment_prune_failed", error_class: e.class.name, message: e.message.to_s[0, 160])
       end
 
       # Re-check a saved receipt whenever a later tool needs to rely on it.
