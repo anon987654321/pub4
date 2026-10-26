@@ -146,8 +146,9 @@ class CoreBridgeTest < Minitest::Test
       events = records.select { |record| record["event"].start_with?("core:effect:") }
       assert events.any? { |record| record["event"] == "core:effect:before" }
       assert events.any? { |record| record["event"] == "core:effect:after" }
-      before = events.find { |record| record["event"] == "core:effect:before" }
-      after = events.find { |record| record["event"] == "core:effect:after" }
+      # The activity log nests an event's fields under payload.
+      before = events.find { |record| record["event"] == "core:effect:before" }.fetch("payload")
+      after = events.find { |record| record["event"] == "core:effect:after" }.fetch("payload")
       assert_equal before["effect_id"], after["effect_id"]
       assert_equal before["run_id"], after["run_id"]
       assert_equal before["attempt_id"], after["attempt_id"]

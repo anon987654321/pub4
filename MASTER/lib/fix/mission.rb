@@ -308,6 +308,8 @@ module Master
           @record["stage"] = "deliver" if state == "completed"
           @record["summary"] = summary.to_s.byteslice(0, 2_048) if summary
           @record["next_wake_at"] = nil
+          # A finished attempt is terminal; nothing may continue it on its own.
+          @record["auto_continue"] = false
           @record["lease_owner"] = nil
           @record["lease_until"] = nil
           @record["finished_at"] = now
