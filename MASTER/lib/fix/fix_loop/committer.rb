@@ -8,7 +8,6 @@ require_relative "../../operator/ratchet_sponsor"
 require_relative "repo_scope"
 require_relative "../autofix_guard"
 require_relative "../run_budget"
-require_relative "../../trace/mutation_observer"
 
 module Master
   module Fix
@@ -62,10 +61,6 @@ module Master
           @git = git
           @bus = bus
           @root = root
-          @lifecycle_observer = Master::Trace::MutationObserver.new(
-            root: @root || Master::ROOT, namespace: "fix:git_lifecycle",
-            subject_type: "repository", subject_id: "working-tree", bus: @bus
-          )
           @ground_truth = ground_truth
           @preserve_user_intent = preserve_user_intent
           @baseline = nil
@@ -267,11 +262,8 @@ def publish_pending!
     return held(ahead) if no_publish?
 
     @git.log_between("@{u}").each { |line| Master::Trace::Dmesg.status("deliver0", "publishing #{line}") }
-    @lifecycle_observer.mutate(operation: "publish_pending", item_count: ahead) do
-      @git.push
-      verify_push!(["#{ahead} commit(s)"])
-      true
-    end
+    @git.push
+    verify_push!(["#{ahead} commit(s)"])
     @bus&.publish("fix_loop:published", commits: ahead)
     :published
   end
@@ -296,18 +288,8 @@ end
 def push_commit!(paths)
   return unless push_each?
 
-  @lifecycle_observer.mutate(operation: "push", item_count: Array(paths).size) do
-    @git.push
-    verify_push!(paths)
-    true
-  end
-end
-
-def commit_audited!(message, paths:)
-  @lifecycle_observer.mutate(operation: "commit", item_count: Array(paths).size) do
-    commit_scoped(message, paths:)
-    true
-  end
+  @git.push
+  verify_push!(paths)
 end
 
 def stage_commit_mode?
@@ -441,7 +423,7 @@ def stage_commit_mode?
           return :noop if paths.empty?
           return :blocked unless validate_paths(message, paths)
 
-          commit_audited!(with_finding_ids(message, findings, paths), paths:)
+          commit_scoped(with_finding_ids(message, findings, paths), paths:)
           push_commit!(paths)
 
           promote_known_good(@git.head, paths)
@@ -494,7 +476,7 @@ def stage_commit_mode?
         end
 
         def commit_paths(message, findings, paths, transaction:)
-          commit_audited!(with_finding_ids(message, findings, paths), paths:)
+          commit_scoped(with_finding_ids(message, findings, paths), paths:)
           head_after = @git.head
           transaction.delivery.record_commit!(head_after:)
           push_commit!(paths)
