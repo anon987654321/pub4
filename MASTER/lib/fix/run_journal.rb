@@ -59,7 +59,7 @@ module Master
         raise ArgumentError, "fix plan manifest must be a hash" unless manifest.is_a?(Hash)
 
         dimensions = %w[
-          scope_digest source_digest law_digest authority_digest toolchain_digest adapter_digest exclusion_digest
+          scope_digest source_digest law_digest authority_digest toolchain_digest adapter_digest exclusion_digest identity_digest
         ]
         receipt = nil
         update(run_id) do |run|
