@@ -11,6 +11,8 @@ module Master
 
         def run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass: 1, run_id:,
                        wishlist_proposals: [], resume_state: nil)
+          return cancellation_terminal if cancellation_requested?
+
           state = restore_pass_state(resume_state)
 
           first_index = start_pass - 1
@@ -19,6 +21,8 @@ module Master
           stop_reason = nil
 
           loop do
+            return cancellation_terminal if cancellation_requested?
+
             remaining_passes = [pass_limit - first_index, 0].max
 
             remaining_passes.times do |offset|
@@ -30,6 +34,7 @@ module Master
               )
               return terminal(:plateau, "no further improvement after #{i + 1} pass(es)") if outcome == :break
               return outcome if outcome
+              return cancellation_terminal if cancellation_requested?
 
               if i == 0 && structural_target?(target)
                 structure_checkpoint(target:, files:, run_id:)
@@ -84,6 +89,8 @@ module Master
         # deliver a verified repair; only then does the bounded structural sweep
         # run against freshly observed files.
         def reflect_then_continue(result, files:, target:, max_passes:, budget_seconds:, run_id:)
+          return cancellation_terminal if cancellation_requested?
+
           state = terminal_state_for(result)
           return result unless %i[done plateau].include?(state)
 
@@ -103,6 +110,8 @@ module Master
         def wishlist_rounds = WISHLIST_MAX_ROUNDS
 
         def continue_with_wishlist(result, files:, target:, max_passes:, budget_seconds:, run_id:)
+          return cancellation_terminal if cancellation_requested?
+
           state = terminal_state_for(result)
           return result unless wishlist_rounds.positive? && %i[done plateau].include?(state)
 
@@ -111,6 +120,8 @@ module Master
 
           rounds = 0
           while rounds < wishlist_rounds
+            return cancellation_terminal if cancellation_requested?
+
             pending = @wishlist.claimable(target:, limit: Wishlist::BATCH_SIZE, run_id:)
             break if pending.empty?
 
@@ -207,6 +218,8 @@ module Master
         end
 
         def run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:, wishlist_proposals:)
+          return cancellation_terminal if cancellation_requested?
+
           pass = i + 1
           transaction_id = "#{run_id}-pass-#{pass}"
           @run_journal.pass_start(run_id, pass, transaction_id:)
@@ -232,6 +245,19 @@ module Master
             )
           end
           state[:consecutive_clean] = result.consecutive_clean
+          if cancellation_requested?
+            if @convergence_discipline.respond_to?(:checkpoint_state) &&
+               @run_journal.respond_to?(:save_convergence_state)
+              @run_journal.save_convergence_state(
+                run_id,
+                @convergence_discipline.checkpoint_state,
+                pass_state: durable_pass_state(state),
+              )
+            end
+            @run_journal.pass_finish(run_id, pass, status: result.status, message: result.message)
+            return cancellation_terminal
+          end
+
           structural = structural_repair?(result, files:, target:, state:, run_id:, pass:)
           if @convergence_discipline.respond_to?(:checkpoint_state) &&
              @run_journal.respond_to?(:save_convergence_state)
