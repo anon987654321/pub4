@@ -14,7 +14,7 @@ module Master
       module_function
 
       def run(goal, root:, bus: nil, model: nil, model_id: nil, max_turns: 40, on_turn: nil, memory: nil,
-              container: nil, risk: :low, mode: nil, allowed_tools: nil)
+              container: nil, risk: :low, mode: nil, allowed_tools: nil, cancellation: nil)
         workspace_root = workspace_root_for(root)
         lifecycle_bus = lifecycle_event_bus(bus:, requested_root: root, workspace_root:)
         transcript = []
@@ -53,7 +53,7 @@ module Master
           world = build_world(root: workspace_root, container:, capabilities:, network: network_client(container))
           mission.transition!(:execute)
           effect_observer = build_effect_observer(bus: lifecycle_bus)
-          done = build_fold(root: workspace_root, model:, memory:, world:, max_turns:, observer:, effect_observer:, capabilities:).run(goal)
+          done = build_fold(root: workspace_root, model:, memory:, world:, max_turns:, observer:, effect_observer:, capabilities:, cancellation:).run(goal)
           mission.transition!(:verify, summary: continuation_summary(done))
           settle_mission(mission, done)
 
@@ -174,6 +174,10 @@ module Master
           # The effect may already have happened, but its after-record is missing.
           # Never auto-continue an ambiguous side effect and risk repeating it.
           mission.fail!(done.summary.to_s)
+        elsif done.reason == :cancelled
+          # Cancellation is terminal for this attempt. A future operator request
+          # creates a new mission; the supervisor must not replay it as a retry.
+          mission.finish!(state: "cancelled", summary: done.summary)
         else
           mission.defer!(reason: "attempt #{done.reason}: #{continuation_summary(done)}")
         end
@@ -355,7 +359,7 @@ module Master
       end
 
       def build_fold(root:, model:, memory:, world:, max_turns:, observer:, effect_observer: nil,
-                     capabilities: Master::Core::Capabilities.for(:fix))
+                     capabilities: Master::Core::Capabilities.for(:fix), cancellation: nil)
         Master::Core::Fold.new(
           model:,
           constitution: Master::Core::Constitution.load(data_dir: Master.data_path, workspace_root: root,
@@ -367,6 +371,7 @@ module Master
           max_turns:,
           observer:,
           effect_observer:,
+          cancellation:,
         )
       end
 
