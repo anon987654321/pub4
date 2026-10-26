@@ -307,6 +307,7 @@ module Master
             surfaces: FourStreamAssessment::SURFACES,
           )
           @assessment_plan = plan
+          @assessment_surface_presence = nil
           @assessment_scope = Array(files).map { |path| File.expand_path(path) }.uniq.sort.freeze
           @bus&.publish(
             "fix_loop:assessment_matrix_started",
@@ -350,6 +351,7 @@ module Master
               reason: "fix plan changed to #{plan.digest}",
             )
             @assessment_plan = plan
+            @assessment_surface_presence = nil
             @assessment_scope = plan.sources.map { |source| File.expand_path(source.path, plan.root) }.sort.freeze
           end
           @bus&.publish(
@@ -718,7 +720,7 @@ module Master
           end
 
           scoped_files = observation[:files].select do |path|
-            assessment_law_applies?(info, path) &&
+            assessment_law_applies?(info, path, stream:) &&
               assessment_surface_applies?(info, surface, path, stream:)
           end
           return assessment_result(:not_applicable, reason: "no eligible file matches this Law/surface scope") if scoped_files.empty?
@@ -797,11 +799,18 @@ module Master
           end
         end
 
-        def assessment_law_applies?(info, path)
+        def assessment_law_applies?(info, path, stream:)
+          semantic = %i[semantic_violations semantic_opportunities].include?(stream)
           case info[:source_kind]
           when :canonical
             law = info[:law]
-            law.applies?(path, Master.language_for(path)&.to_sym)
+            if semantic
+              return false if law.path && !(law.path.is_a?(Regexp) ? path.match?(law.path) : path.include?(law.path.to_s))
+              return false if law.path_exclude && path.match?(law.path_exclude)
+              true
+            else
+              law.applies?(path, Master.language_for(path)&.to_sym)
+            end
           when :scanner
             law = info[:scanner_law]
             return true unless law.respond_to?(:applies_to?)
