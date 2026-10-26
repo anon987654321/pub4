@@ -54,7 +54,7 @@ module Master
             return Verdict.new(introduced: [{ law: :forbidden_file, line: 0, message: reason, severity: :error }])
           end
 
-          if (reason = ConfigurationGuard.validate(path:, content:))
+          if (reason = Master::ConfigurationGuard.validate(path:, content:))
             return Verdict.new(introduced: [{ law: :configuration_invariant, line: 0, message: reason, severity: :error }])
           end
 
