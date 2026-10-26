@@ -29,7 +29,8 @@ module Master
       # Retrying reproduces it, a decision belongs to the operator, or the
       # outcome already describes a stable stop rather than a transient fault.
       PERMANENT = %i[validation model_missing axiom_violation invalid_request budget no_api_key auth_error policy
-                     shutdown abort handler_exception crash skip human_decision plateau failed].freeze
+                     shutdown abort handler_exception crash skip human_decision plateau failed cancelled unknown_outcome
+                     recovery_failed].freeze
 
       def retriable? = RETRIABLE.include?(@category)
       def permanent? = PERMANENT.include?(@category)
@@ -82,6 +83,9 @@ module Master
       abort: "operation aborted",
       skip: "nothing to do for this target (no app, no checkout) — neither failure nor success",
       inconclusive: "evidence could not be gathered (browser, surface or reviewer unavailable) — no verdict either way",
+      cancelled: "execution was cancelled; do not resume without checking the current state",
+      unknown_outcome: "the operation may have run without a reliable receipt; reconcile before retrying",
+      recovery_failed: "the system could not prove that recovery restored the prior state",
     }.freeze
 
     def self.ok(value) = Ok.new(value)
