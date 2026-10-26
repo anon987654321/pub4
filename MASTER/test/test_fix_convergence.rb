@@ -57,6 +57,10 @@ class TestFixConvergence < Minitest::Test
     File.write(File.join(@root, "data", "soul.yml"), "absolute:\n  sacred_paths:\n    - data/soul.yml\n")
     # The collector fails closed without a Git inventory, so the fixture is a checkout.
     system("git", "-C", @root, "init", "-q", "--initial-branch=main", out: File::NULL, err: File::NULL) || raise("git init failed")
+    # Ignored as the real checkout ignores them, in .git/info/exclude so no file joins the
+    # corpus: the run writes .master/ and runtime/ as it goes, and unignored they changed the
+    # exclusion digest after pass 1 and reset the clean streak.
+    File.write(File.join(@root, ".git", "info", "exclude"), ".master/\nruntime/\n")
     @bus = FakeBus.new
     # The real baseline runs every check stage; this file asserts what /fix does
     # with a baseline, not how one is measured (test_check_chain.rb owns that).
@@ -72,6 +76,27 @@ class TestFixConvergence < Minitest::Test
 
   # Non-matrix tests inject the proof status they need; the focused terminal test
   # selects :not_measured to exercise the production fail-closed contract.
+# DONE needs a persisted, read-back, plan-bound four-stream receipt (completion.rb).
+# A case about convergence itself supplies one that matches whatever plan the run
+# pinned; the cases about withholding DONE build their loop without it.
+ProvenPlan = Struct.new(:digest, :manifest) do
+  def to_h = manifest
+end
+PLAN_KEYS = %w[identity_digest scope_digest source_digest law_digest law_source_digest authority_digest
+               toolchain_digest exclusion_digest adapter_digest].freeze
+
+def prove(loop)
+  unless loop.instance_variable_get(:@fix_plan)
+    loop.instance_variable_set(:@fix_plan, ProvenPlan.new("a" * 64, PLAN_KEYS.to_h { |key| [key, "b" * 64] }))
+  end
+  loop.define_singleton_method(:persist_assessment_receipt) do |**|
+    plan = @fix_plan
+    { "status" => "persisted", "readback_verified" => true, "matrix_status" => "complete",
+      "verification" => "verified", "plan_digest" => plan.digest }.merge(plan.to_h.slice(*PLAN_KEYS))
+  end
+  loop
+end
+
   def build_loop(violations, ground_truth: nil, council: nil, assessment_matrix_status: :complete)
     loop = Master::Fix::FixLoop.new(
       laws: [StubRule.new("TEST_RULE", :warning)],
@@ -112,7 +137,7 @@ class TestFixConvergence < Minitest::Test
   # gap that keeps DONE out of reach; the rest of the corpus is still repaired.
   def test_an_uninspectable_file_blocks_done_but_not_the_repair_of_the_rest
     File.write(File.join(@root, "oversized.rb"), "x" * (Master::Fix::Scan::FileProcessor::MAX_FILE_BYTES + 1))
-    loop = build_loop([])
+    loop = prove(build_loop([]))
     repaired = []
 
     loop.define_singleton_method(:run_journaled) do |journal, files:, **rest|
@@ -176,6 +201,8 @@ class TestFixConvergence < Minitest::Test
     loop = Master::Fix::FixLoop.allocate
     journal_events = []
     journal = Object.new
+    journal.define_singleton_method(:history) { |**| [] }
+    journal.define_singleton_method(:crash) { |*| nil }
     journal.define_singleton_method(:pass_start) { |run_id, pass, transaction_id:| journal_events << [:start, run_id, pass, transaction_id] }
     journal.define_singleton_method(:pass_finish) do |run_id, pass, status:, message:|
       journal_events << [:finish, run_id, pass, status, message]
@@ -232,6 +259,8 @@ class TestFixConvergence < Minitest::Test
     loop.instance_variable_set(:@convergence_discipline, discipline)
 
     journal = Object.new
+    journal.define_singleton_method(:history) { |**| [] }
+    journal.define_singleton_method(:crash) { |*| nil }
     journal.define_singleton_method(:history) do |limit:|
       [{ "id" => "run", "passes" => [{ "pass" => 1, "state" => "committed" }] }]
     end
@@ -503,7 +532,7 @@ def test_builder_gives_the_pass_runner_its_scanner_and_violation_tally
 end
 
   def test_budget_closeout_records_blocked_when_done_is_downgraded_for_gaps
-    loop = build_loop([])
+    loop = prove(build_loop([]))
     runner = loop.instance_variable_get(:@pass_runner)
     runner.send(
       :skip_unreadable,
@@ -512,6 +541,8 @@ end
     )
 
     journal = Object.new
+    journal.define_singleton_method(:history) { |**| [] }
+    journal.define_singleton_method(:crash) { |*| nil }
     journal.define_singleton_method(:terminal) { |*| nil }
     loop.instance_variable_set(:@run_journal, journal)
     reasons = []
@@ -1522,8 +1553,10 @@ end
   end
 
   def test_finish_run_publishes_machine_readable_repair_outcome
-    loop = build_loop([])
+    loop = prove(build_loop([]))
     journal = Object.new
+    journal.define_singleton_method(:history) { |**| [] }
+    journal.define_singleton_method(:crash) { |*| nil }
     journal.define_singleton_method(:terminal) { |*| nil }
     loop.instance_variable_set(:@run_journal, journal)
 
@@ -1542,6 +1575,8 @@ end
     loop = build_loop([])
     terminal_rows = []
     journal = Object.new
+    journal.define_singleton_method(:history) { |**| [] }
+    journal.define_singleton_method(:crash) { |*| nil }
     opened = []
     journal.define_singleton_method(:start_or_resume) do |**|
       opened << (opened.empty? ? "run-timeout" : "run-fresh")
@@ -1592,6 +1627,8 @@ end
     loop = build_loop([])
     terminal_rows = []
     journal = Object.new
+    journal.define_singleton_method(:history) { |**| [] }
+    journal.define_singleton_method(:crash) { |*| nil }
     journal.define_singleton_method(:start_or_resume) do |**|
       { "id" => "run-stranded", "remaining_seconds" => 0.0 }
     end
@@ -1648,6 +1685,8 @@ end
     def initialize = @rows = []
     def next_pass(_run) = 1
     def terminal(run_id, state, message:, evidence: nil) = @rows << { run_id:, state:, message:, evidence: }
+    def history(**) = []
+    def crash(*) = nil
   end
 
   class PassingReachability
@@ -1710,6 +1749,8 @@ end
     loop = build_loop([])
     terminal_rows = []
     journal = Object.new
+    journal.define_singleton_method(:history) { |**| [] }
+    journal.define_singleton_method(:crash) { |*| nil }
     journal.define_singleton_method(:next_pass) { |_| 1 }
     journal.define_singleton_method(:terminal) do |run_id, state, message:, evidence: nil|
       terminal_rows << { run_id:, state:, message:, evidence: }
@@ -1798,6 +1839,8 @@ end
     %w[MASTER RAILS OPENBSD STUDIO].each { |tree| FileUtils.mkdir_p(File.join(@root, tree)) }
     loop = build_loop([])
     journal = Object.new
+    journal.define_singleton_method(:history) { |**| [] }
+    journal.define_singleton_method(:crash) { |*| nil }
     journal.define_singleton_method(:terminal) { |*| nil }
     loop.instance_variable_set(:@run_journal, journal)
 
@@ -1815,6 +1858,8 @@ end
   def test_a_partial_workspace_leaves_no_outcome_receipt
     loop = build_loop([])
     journal = Object.new
+    journal.define_singleton_method(:history) { |**| [] }
+    journal.define_singleton_method(:crash) { |*| nil }
     journal.define_singleton_method(:terminal) { |*| nil }
     loop.instance_variable_set(:@run_journal, journal)
 
@@ -1856,6 +1901,8 @@ end
   def test_finish_run_does_not_label_human_escalation_as_a_failed_repair
     loop = build_loop([])
     journal = Object.new
+    journal.define_singleton_method(:history) { |**| [] }
+    journal.define_singleton_method(:crash) { |*| nil }
     journal.define_singleton_method(:terminal) { |*| nil }
     loop.instance_variable_set(:@run_journal, journal)
 
@@ -1870,6 +1917,8 @@ end
   def test_finish_run_only_closes_the_journal
     calls = []
     journal = Object.new
+    journal.define_singleton_method(:history) { |**| [] }
+    journal.define_singleton_method(:crash) { |*| nil }
     journal.define_singleton_method(:terminal) { |*args, **kwargs| calls << [:terminal, args, kwargs] }
 
     loop = build_loop([])
@@ -1889,7 +1938,8 @@ end
       asked << { files:, pass: }
       []
     end
-    result = build_loop([], council:).run(@root, max_passes: 2)
+    # Three passes: DONE takes two clean readings, so a clean first pass needs a second.
+    result = prove(build_loop([], council:)).run(@root, max_passes: 3)
 
     assert result.ok?
     assert_match(/\ADONE: /, result.value!)
@@ -2031,7 +2081,7 @@ end
   end
 
   def test_a_converged_run_is_done
-    result = build_loop([]).run(@root)
+    result = prove(build_loop([])).run(@root)
 
     assert result.ok?
     assert_match(/\ADONE: /, result.value!)

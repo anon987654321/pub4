@@ -78,6 +78,56 @@ class FixMissionTest < Minitest::Test
     end
   end
 
+def lease_to_another_worker(root)
+  record = Master::Fix::Mission.current(root:)
+  record["lease_owner"] = "other-host:4242:cafebabecafebabe"
+  record["lease_until"] = (Time.now.utc + 300).iso8601
+  File.write(File.join(root, ".master", "mission.json"), JSON.pretty_generate(record) + "\n")
+end
+
+# A worker whose lease lapsed and was taken must not write over the new owner.
+def test_a_worker_that_lost_its_lease_cannot_write
+  Dir.mktmpdir do |root|
+    bus = Bus.new
+    mission = Master::Fix::Mission.new(root:, bus:).start!(goal: "fix MASTER", scope: root)
+    lease_to_another_worker(root)
+
+    assert_raises(Master::Fix::Mission::Fenced) { mission.transition!(:verify) }
+    assert_raises(Master::Fix::Mission::Fenced) { mission.finish!(state: "completed") }
+    saved = Master::Fix::Mission.current(root:)
+    assert_equal "running", saved["state"]
+    assert_equal "execute", saved["stage"]
+    assert(bus.events.any? { |event, payload| event == "mission:fenced" && payload[:id] == mission.id })
+  end
+end
+
+# Writes reload the current record; a replaced mission's handle used to adopt the new id.
+def test_a_replaced_mission_cannot_finish_its_successor
+  Dir.mktmpdir do |root|
+    first = File.join(root, "RAILS")
+    second = File.join(root, "MASTER")
+    FileUtils.mkdir_p([first, second])
+    mission = Master::Fix::Mission.new(root:).start!(goal: "fix RAILS", scope: first)
+    replacement = Master::Fix::Mission.new(root:).start_or_resume!(goal: "fix MASTER", scope: second)
+
+    assert_raises(Master::Fix::Mission::Fenced) { mission.finish!(state: "completed") }
+    saved = Master::Fix::Mission.current(root:)
+    assert_equal replacement.id, saved["id"]
+    assert_equal "running", saved["state"]
+  end
+end
+
+# An operator command is not the lease holder and still cancels a running mission.
+def test_an_unclaimed_handle_still_ends_a_running_mission
+  Dir.mktmpdir do |root|
+    Master::Fix::Mission.new(root:).start!(goal: "fix MASTER", scope: root)
+    lease_to_another_worker(root)
+
+    Master::Fix::Mission.new(root:).finish!(state: "cancelled")
+    assert_equal "cancelled", Master::Fix::Mission.current(root:)["state"]
+  end
+end
+
   def test_mission_lifecycle_persists_one_contract
     Dir.mktmpdir do |root|
       bus = Bus.new

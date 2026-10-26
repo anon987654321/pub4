@@ -29,6 +29,11 @@ module Master
 
       attr_reader :root, :id
 
+      # A worker that claimed a mission and then lost it. Its lease expired and another worker
+      # claimed the mission, or a newer mission replaced it: a write now would land on work
+      # someone else owns, so it is refused rather than made.
+      class Fenced < StandardError; end
+
       def self.instance_id
         if @instance_pid != Process.pid
           @instance_pid = Process.pid
@@ -125,7 +130,7 @@ module Master
 
       def transition!(stage, **payload)
         with_lock do
-          load_current_unlocked!
+          load_writable_unlocked!
           return self unless @record
           stage = stage.to_s
           raise ArgumentError, "unknown mission stage: #{stage}" unless STAGES.include?(stage)
@@ -144,7 +149,7 @@ module Master
 
         checkpoint = @checkpoint.call(id: @id, root: @root, files: Array(files)).transform_keys(&:to_s)
         with_lock do
-          load_current_unlocked!
+          load_writable_unlocked!
           @record["checkpoint"] = checkpoint
           @record["last_seen_at"] = now
           persist!
@@ -155,7 +160,7 @@ module Master
 
       def heartbeat!
         with_lock do
-          load_current_unlocked!
+          load_writable_unlocked!
           return self unless @record
 
           @record["last_seen_at"] = now
@@ -296,7 +301,7 @@ module Master
         raise ArgumentError, "unknown mission state: #{state}" unless STATES.include?(state)
 
         with_lock do
-          load_current_unlocked!
+          load_writable_unlocked!
           return self unless @record
 
           @record["state"] = state
@@ -315,7 +320,7 @@ module Master
 
       def fail!(error)
         with_lock do
-          load_current_unlocked!
+          load_writable_unlocked!
           return self unless @record
 
           @record["state"] = "failed"
@@ -336,7 +341,7 @@ module Master
         return self if path.to_s.empty?
 
         with_lock do
-          load_current_unlocked!
+          load_writable_unlocked!
           return self unless @record
 
           @record["artifacts"] = (@record.fetch("artifacts", []) + [relative(path)]).uniq.last(32)
@@ -530,6 +535,7 @@ module Master
           raise "mission already leased by pid=#{@record["lease_owner"]}"
         end
 
+        @claimed = true
         @record["state"] = "running"
         @record["stage"] = "execute"
         @record["attempt_count"] = @record.fetch("attempt_count", 0).to_i + 1
@@ -552,6 +558,7 @@ module Master
 
       def start_unlocked!(goal:, scope:, model:, effort:, plan:, origin: "unknown", auto_continue: false,
                           mode: "repair", risk: nil, intent: nil)
+        @claimed = true
         @id = SecureRandom.hex(10)
         @record = {
           "version" => VERSION,
@@ -585,6 +592,32 @@ module Master
           "lease_owner" => self.class.instance_id,
           "lease_until" => (Time.now.utc + LEASE_SECONDS).iso8601,
         }
+      end
+
+      # Like load_current_unlocked!, but a handle that claimed a mission may write only that
+      # mission, and only while no other worker holds its lease. Unclaimed handles (the
+      # supervisor, an operator command) keep the plain read.
+      def load_writable_unlocked!
+        return load_current_unlocked! unless @claimed
+
+        current = load_record
+        reason = fence_reason(current)
+        if reason
+          emit("mission:fenced", id: @id, reason:)
+          raise Fenced, reason
+        end
+
+        @record = current
+      end
+
+      def fence_reason(current)
+        return "mission #{@id} no longer exists" unless current
+        return "mission #{@id} was replaced by #{current["id"]}" unless current["id"] == @id
+
+        owner = current["lease_owner"].to_s
+        return if current["state"] != "running" || owner.empty? || owner == self.class.instance_id
+
+        "mission #{@id} is leased to another worker"
       end
 
       def load_current_unlocked!

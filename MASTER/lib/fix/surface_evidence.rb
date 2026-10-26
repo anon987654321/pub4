@@ -1153,6 +1153,18 @@ module Master
 
       def digest_json(value) = Digest::SHA256.hexdigest(JSON.generate(value))
 
+      # Plain JSON values with string keys. Called by the cache and every receipt and never
+      # defined, so building any surface receipt raised NoMethodError and the assessment
+      # matrix stage failed on every pass.
+      def json_safe(value)
+        case value
+        when Hash then value.to_h { |key, item| [key.to_s, json_safe(item)] }
+        when Array then value.map { |item| json_safe(item) }
+        when String, Integer, Float, true, false, nil then value
+        else value.to_s
+        end
+      end
+
       def safe_text(value, limit = 240)
         value.to_s.gsub(/\s+/, " ").strip[0, limit].to_s
           .gsub(/(?i)(password|passwd|token|secret|authorization)(\s*[:=]\s*)[^\s,;]+/, '\1\2[redacted]')
