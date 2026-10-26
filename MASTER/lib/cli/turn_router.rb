@@ -11,10 +11,10 @@ module Master
       # Chained elsif nests one IfNode inside the previous one's else-branch,
       # so a 6-way route chain reads flat but is 6 deep in the AST. Guard
       # clauses keep each check a standalone, unnested IfNode.
-      def call(message:, container:, felt_sense: nil, on_turn: nil, on_chunk: nil, image: nil)
+      def call(message:, container:, felt_sense: nil, on_turn: nil, on_chunk: nil, image: nil, cancellation: nil)
         text = message.to_s.strip
         return Master::Result.err("empty message", category: :validation) if text.empty?
-        return dispatch_slash(rewrite_slash(text), container:, felt_sense:, on_turn:) if text.start_with?("/")
+        return dispatch_slash(rewrite_slash(text), container:, felt_sense:, on_turn:, cancellation:) if text.start_with?("/")
 
         # Visitors (no web token — i.e. the open internet on ai.brgen.no) get the
         # conversational path only. Everything below this line can reach real
@@ -30,7 +30,7 @@ module Master
         # Falcon user and wrote under ~.
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if visitor?
         if text.match?(%r{\A(?:review|critique)\b}i) || text.match?(FIX_COMMAND)
-          return dispatch_slash("/#{text}", container:, felt_sense:, on_turn:)
+          return dispatch_slash("/#{text}", container:, felt_sense:, on_turn:, cancellation:)
         end
         if deployment_intent?(text)
           return dispatch_slash("/deploy #{deployment_args(text)}".strip, container:, felt_sense:, on_turn:)
@@ -51,7 +51,7 @@ module Master
         return dispatch_review_pass(text, container:, felt_sense:, on_turn:) if full_workflow_intent?(text)
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if casual?(text)
 
-        run_fold(text, container:, on_turn:)
+        run_fold(text, container:, on_turn:, cancellation:)
       end
 
       def visitor? = Fiber[:master_visitor] == true
@@ -281,7 +281,7 @@ module Master
         Master::Result.err("chat: #{e.message}", category: :infrastructure)
       end
 
-      def run_fold(goal, container:, on_turn: nil)
+      def run_fold(goal, container:, on_turn: nil, cancellation: nil)
         goal = goal.to_s.strip
         # Defence in depth: TurnRouter.call already routes visitors to
         # casual_reply, but run_fold is also reachable via dispatch_slash when
@@ -294,7 +294,7 @@ module Master
         Master::Trace::Dmesg.under("fold0") do
           root, risk, mode = assess_fold_risk(goal, container:)
           memory = prepare_fold_memory(goal:, container:, risk:)
-          fold_to_result(run_fold_pipeline(goal, root:, container:, on_turn:, memory:, risk:, mode:))
+          fold_to_result(run_fold_pipeline(goal, root:, container:, on_turn:, memory:, risk:, mode:, cancellation:))
         end
       rescue StandardError => e
         Master::Result.err("fold0: #{e.message}", category: :infrastructure)
@@ -314,7 +314,7 @@ module Master
         [root, assessment[:risk], assessment[:mode]]
       end
 
-      def run_fold_pipeline(goal, root:, container:, on_turn:, memory:, risk:, mode:)
+      def run_fold_pipeline(goal, root:, container:, on_turn:, memory:, risk:, mode:, cancellation: nil)
         CoreBridge.run(
           goal,
           root:,
@@ -325,6 +325,7 @@ module Master
           container:,
           risk:,
           mode:,
+          cancellation:,
         )
       end
 
@@ -360,9 +361,9 @@ module Master
         parts.compact.reject(&:empty?).join(" ")
       end
 
-      def dispatch_slash(input, container:, felt_sense: nil, on_turn: nil)
+      def dispatch_slash(input, container:, felt_sense: nil, on_turn: nil, cancellation: nil)
         name, rest = input.sub(%r{\A/}, "").split(/\s+/, 2)
-        return run_fold(rest.to_s, container:, on_turn:) if FOLD_SLASH.include?(name.to_s.downcase)
+        return run_fold(rest.to_s, container:, on_turn:, cancellation:) if FOLD_SLASH.include?(name.to_s.downcase)
 
         ctx = PipelineContext.wrap(user_message: input, felt_sense:)
         ctx = unwrap(Stages::Intake.new(root: container.fetch(:root, Master::ROOT)).call(ctx))
@@ -371,7 +372,7 @@ module Master
         if ctx.intent == :llm
           goal = ctx.message.to_s.strip
           goal = input.to_s.strip if goal.empty?
-          return run_fold(goal, container:, on_turn:)
+          return run_fold(goal, container:, on_turn:, cancellation:)
         end
 
         commands = container[:commands]
