@@ -76,7 +76,7 @@ select {
   .mt-#{$step} { margin-top: var(--space-#{$step}); }
 }
 
-.text-sm { font-size: var(--text-sm); line-height: 1.5; }
+.text-sm { font-size: var(--text-sm); line-height: var(--leading-normal); }
 
 .full-bleed {
   width: 100vw;

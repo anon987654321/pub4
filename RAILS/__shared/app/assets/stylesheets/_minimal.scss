@@ -420,7 +420,7 @@ footer {
   color: var(--text-secondary);
   margin-bottom: 4px;
   flex-wrap: wrap; /* mobile-friendly */
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 .feed-card-name {
   color: var(--text);
@@ -555,7 +555,7 @@ footer {
 .post-reading-title a:hover,.post-reading-title a:focus-visible{text-decoration:underline;text-underline-offset:.12em}
 .post-reading-preview{position:relative;max-width:72ch}
 .post-reading-body-preview{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
-.post-reading-more{display:inline-flex;align-items:center;justify-content:center;min-width:var(--tap-min);min-height:var(--tap-min);margin-inline-start:2px;font-size:1.2em;font-weight:var(--weight-heavy);line-height:1;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.16em}
+.post-reading-more{display:inline-flex;align-items:center;justify-content:center;min-width:var(--tap-min);min-height:var(--tap-min);margin-inline-start:2px;font-size:1.2em;font-weight:var(--weight-heavy);line-height:var(--leading-none);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.16em}
 .post-reading-more:hover,.post-reading-more:focus-visible{color:var(--accent)}
 .post-reading-actions{margin-top:var(--space-2)}
 .feed-card-byline{display:flex;align-items:baseline;gap:4px;min-width:0;margin-bottom:var(--space-2)}

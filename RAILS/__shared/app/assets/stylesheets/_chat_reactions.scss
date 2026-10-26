@@ -25,7 +25,7 @@
   background: var(--surface-elevated);
   color: var(--text);
   font-size: var(--text-xs);
-  line-height: 1.6;
+  line-height: var(--leading-loose);
   cursor: pointer;
   /* button_to emits a <form>; keep it inline so chips sit on one row. */
   &,
@@ -159,7 +159,7 @@ li:focus-within .msg_reaction_picker {
 }
 .comment.comment_item header {
   font-size: var(--text-sm);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   color: var(--text-secondary);
   margin-bottom: var(--space-1);
 }
@@ -169,7 +169,7 @@ li:focus-within .msg_reaction_picker {
 }
 .comment-body {
   color: var(--text);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   font-size: var(--text-base);
   margin: 0;
   white-space: pre-wrap;

@@ -42,7 +42,7 @@ body.auth-surface {
   max-width: var(--measure-narrow);
   margin: 0 0 var(--space-4);
   font-size: var(--text-sm);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   color: var(--text-secondary);
 }
 
@@ -130,7 +130,7 @@ body.auth-surface {
   align-items: center;
   gap: 4px 0.5rem;
   font-size: var(--text-sm);
-  line-height: 1.4;
+  line-height: var(--leading-snug);
   color: var(--text-secondary);
 }
 
@@ -197,7 +197,7 @@ body.auth-surface {
   border-radius: 0;
   font-size: 0.7rem;
   font-weight: var(--weight-heavy);
-  line-height: 1;
+  line-height: var(--leading-none);
   letter-spacing: 0;
 }
 
