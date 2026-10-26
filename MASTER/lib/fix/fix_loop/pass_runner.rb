@@ -3,6 +3,7 @@
 require "digest"
 require "fileutils"
 require "open3"
+require "pathname"
 require "set"
 require "time"
 require_relative "pass_runner/fast_stage"
@@ -833,8 +834,7 @@ module Master
           when :sections
             semantic
           when :syntax_tree
-            %w[.rb .rake].include?(extension) &&
-              info[:source_kind] == :scanner && info[:scanner_law]&.respond_to?(:check_ast)
+            !language.empty?
           when :structured_data
             %w[.yml .yaml .json .toml].include?(extension) || %w[yaml json toml].include?(language)
           when :documentation
@@ -876,6 +876,36 @@ module Master
           }
         end
 
+        def assessment_gap_paths(entries, applicable)
+          keys = entries.respond_to?(:keys) ? entries.keys : Array(entries)
+          scope = Array(applicable).map { |path| File.expand_path(path) }.to_set
+          roots = [
+            @assessment_plan&.root,
+            (Master::REPO_ROOT if defined?(Master::REPO_ROOT)),
+            Master::ROOT,
+            @root,
+          ].compact.map { |path| File.expand_path(path) }.uniq
+          matched = Set.new
+          unresolved = []
+
+          keys.each do |key|
+            raw = key.to_s
+            candidates = if Pathname.new(raw).absolute?
+                           [File.expand_path(raw)]
+                         else
+                           roots.map { |root| File.expand_path(raw, root) }
+                         end
+            path = candidates.find { |candidate| scope.include?(candidate) }
+            if path
+              matched << path
+            elsif candidates.none? { |candidate| roots.any? { |root| candidate == root || candidate.start_with?(root + File::SEPARATOR) } }
+              unresolved << raw
+            end
+          end
+
+          [matched.to_a, unresolved]
+        end
+
         def assessment_result_for_scope(stream:, applicable:, found:, observation:, signatures_stable:,
                                         semantic:, semantic_gaps:, pending:, evidence:)
           return assessment_result(:inconclusive, reason: "source bytes changed during this scan pass", evidence:) unless signatures_stable
@@ -894,15 +924,32 @@ module Master
             evidence:
           ) if refused.any?
 
-          if semantic
-            return assessment_result(:inconclusive, reason: "semantic coverage is sampled or budgeted", evidence:) unless @scan_phase.semantic_full?
-            return assessment_result(:inconclusive, reason: "semantic reads pending for #{pending.keys.first(4).join(", ")}", evidence:) if pending.any?
-            return assessment_result(:inconclusive, reason: "semantic read inconclusive for #{semantic_gaps.keys.first(4).join(", ")}", evidence:) if semantic_gaps.any?
-          end
-
           if found.any?
             status = %i[lexical_opportunities semantic_opportunities].include?(stream) ? :opportunity_found : :violation_found
             return assessment_result(status, evidence:, findings: found)
+          end
+
+          if semantic
+            return assessment_result(:inconclusive, reason: "semantic coverage is sampled or budgeted", evidence:) unless @scan_phase.semantic_full?
+            pending_paths, pending_unknown = assessment_gap_paths(pending, applicable)
+            return assessment_result(
+              :inconclusive,
+              reason: "semantic reads pending for #{pending_paths.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}",
+              evidence:
+            ) if pending_paths.any?
+            return assessment_result(
+              :inconclusive, reason: "semantic gap paths could not be scoped: #{pending_unknown.first(4).join(", ")}", evidence:
+            ) if pending_unknown.any?
+
+            gap_paths, gap_unknown = assessment_gap_paths(semantic_gaps, applicable)
+            return assessment_result(
+              :inconclusive,
+              reason: "semantic read inconclusive for #{gap_paths.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}",
+              evidence:
+            ) if gap_paths.any?
+            return assessment_result(
+              :inconclusive, reason: "semantic gap paths could not be scoped: #{gap_unknown.first(4).join(", ")}", evidence:
+            ) if gap_unknown.any?
           end
 
           assessment_result(:assessed_clean, evidence:)
