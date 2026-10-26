@@ -57,7 +57,9 @@ module HistoryValuables
   end
 
   def diff_file(line)
-    match = line.match(/\Adiff --git a\/(.+) b\/(.+)\z/)
+    # each_line keeps the newline, and \z never matched before it: every hit
+    # carried no file, and no deleted archive was ever reported.
+    match = line.chomp.match(/\Adiff --git a\/(.+) b\/(.+)\z/)
     match && match[2]
   end
 
@@ -69,7 +71,9 @@ module HistoryValuables
     commit = nil
     file = nil
 
-    log.each_line.filter_map do |line|
+    # git log carries deleted binary and Latin-1 lines; String#strip raised on them
+    # and took the whole history step down with it.
+    log.scrub.each_line.filter_map do |line|
       if line.start_with?("commit ")
         commit = line.split.fetch(1)
         file = nil

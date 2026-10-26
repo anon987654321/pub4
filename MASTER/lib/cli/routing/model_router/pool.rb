@@ -370,7 +370,11 @@ module Master
             key = ENV["OPENROUTER_API_KEY"].to_s
             return if key.empty?
 
-            data = JSON.parse(get_json(CREDITS_URL, headers: { "Authorization" => "Bearer #{key}" }).to_s)["data"] || {}
+            data = JSON.parse(get_json(CREDITS_URL, headers: { "Authorization" => "Bearer #{key}" }).to_s)
+            data = data["data"] if data.is_a?(Hash)
+            # A reply in another shape says nothing about credit; it is not a TypeError.
+            return unless data.is_a?(Hash)
+
             data["total_credits"].to_f > data["total_usage"].to_f
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "model_router.pool.credits")
