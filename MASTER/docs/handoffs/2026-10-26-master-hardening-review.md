@@ -5,14 +5,13 @@ Reviewed base: `1ef67fe10` (external review snapshot)
 Integration base: `0b59844318f2e5527b5d5d54328a44f433438c3c`  
 P01–P11 integration head (historical; follow-on commits are recorded below): `73a45cc7a9800808fb7658e95dc3dceacf73bd67`
 
-## Follow-on manual four-tree source pass (2026-10-25)
-
 ## Follow-on kernel audit-log append complexity (2026-10-26)
 
-\`Master::Fix::Kernel#append_event\` no longer verifies the entire hash chain before every append. Each kernel instance performs full-chain validation when it first needs a head; later appends reuse the cached head if the file identity/metadata are unchanged, or validate only records appended after the cached byte offset when another instance has written. An unexpected inode change or truncation fails closed. \`verify_log!\` and replay retain complete-chain validation, including a final-newline check.
+`Master::Fix::Kernel#append_event` no longer verifies the entire hash chain before every append. Each kernel instance performs full-chain validation when it first needs a head; later appends reuse the cached head if the file identity/metadata are unchanged, or validate only records appended after the cached byte offset when another instance has written. An unexpected inode change or truncation fails closed. `verify_log!` and replay retain complete-chain validation, including a final-newline check.
 
 Regression tests cover cached-head reuse, suffix validation across two kernel instances, refusal after truncation, and rejection of an incomplete final record. They are committed but unexecuted. No Ruby syntax check, focused suite, or full suite was run here; verification remains INCONCLUSIVE.
 
+## Follow-on manual four-tree source pass (2026-10-25)
 
 A manual source-only pass subsequently touched MASTER, the shared check runner used by RAILS, OPENBSD, and STUDIO. The work was committed directly to `main`; it was not an actual `/fix` execution. No app, suite, syntax check or live service was run in this environment.
 
