@@ -293,7 +293,7 @@ module Master
             !required_capabilities.empty? && !law_ids.empty? && errors.empty?
         end
 
-        def permitted_for_trigger? = !%i[blocked deprecated invalid].include?(status)
+        def permitted_for_trigger? = %i[unreviewed approved].include?(status)
 
         def to_h
           {
