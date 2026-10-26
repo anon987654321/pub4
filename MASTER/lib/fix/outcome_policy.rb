@@ -15,6 +15,10 @@ module Master
 
       PARTIAL_ENDINGS = %i[plateau timeout blocked human_decision inconclusive].freeze
 
+      MEASURED_REPAIR_OUTCOMES = TERMINAL_STATES.to_h do |state|
+        [state, state == :done]
+      end.freeze
+
       ERROR_STATES = {
         timeout: :timeout,
         crash: :crash,

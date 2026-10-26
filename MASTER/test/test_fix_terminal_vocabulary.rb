@@ -30,6 +30,19 @@ class TestFixTerminalVocabulary < Minitest::Test
     end
   end
 
+  def test_completion_effects_are_isolated_from_the_fix_loop_class
+    assert_includes Master::Fix::FixLoop.ancestors, Master::Fix::FixLoop::Completion
+    assert_equal Master::Fix::FixLoop::Completion,
+                 Master::Fix::FixLoop.instance_method(:finish_run).owner
+  end
+
+  def test_measured_outcome_map_is_shared_with_the_completion_policy
+    assert_equal Master::Fix::OutcomePolicy::MEASURED_REPAIR_OUTCOMES,
+                 Master::Fix::FixLoop::MEASURED_REPAIR_OUTCOMES
+    assert_equal true, Master::Fix::OutcomePolicy::MEASURED_REPAIR_OUTCOMES.fetch(:done)
+    refute Master::Fix::OutcomePolicy::MEASURED_REPAIR_OUTCOMES.fetch(:blocked)
+  end
+
   def test_fix_loop_and_protocol_share_the_canonical_terminal_vocabulary
     policy = Master::Fix::OutcomePolicy::TERMINAL_STATES
 

@@ -1,0 +1,80 @@
+# frozen_string_literal: true
+
+module Master
+  module Fix
+    class FixLoop
+      # Completion owns terminalization side effects: durable journal state,
+      # mission state, receipts and the terminal event. OutcomePolicy remains
+      # the pure decision core; this module applies that decision to runtime state.
+      module Completion
+        private
+
+        # A run that reaches DONE after skipping files it could not scan, or
+        # stages that raised, has proved nothing about them. Every stage and pass
+        # still ran; the verdict says what they could not.
+        def blocked_by_gaps(result)
+          gapped = @pass_runner&.gaps? || uninspectable.any?
+          return result unless gapped && result.ok? && terminal_state_for(result) == :done
+
+          gaps = @pass_runner ? @pass_runner.gaps : { uninspected: {}, stage_failures: {} }
+          parts = uninspectable.empty? ? [] : ["uninspectable inputs remain: #{uninspectable_detail}"]
+
+          unless gaps[:uninspected].empty?
+            named = gaps[:uninspected].keys.first(3).join(", ")
+            parts << "#{gaps[:uninspected].size} file(s) not scanned (#{named})"
+          end
+          semantic_gaps = gaps.fetch(:semantic_inconclusive, {})
+          unless semantic_gaps.empty?
+            named = semantic_gaps.keys.first(3).join(", ")
+            parts << "#{semantic_gaps.size} file(s) with inconclusive semantic assessment (#{named})"
+          end
+          pending = gaps.fetch(:semantic_pending, {})
+          unless pending.empty?
+            parts << "#{pending.size} file(s) awaiting a semantic read (#{pending.keys.first(3).join(", ")})"
+          end
+          gaps[:stage_failures].each { |stage, rows| parts << "#{stage} stage failed #{rows.size}x, last #{rows.last}" }
+          Master::Trace::Dmesg.status("fix0", "finished with gaps: #{parts.join("; ")}"[0, 220])
+          terminal(:blocked, "finished with gaps, #{parts.join("; ")}")
+        end
+
+        # A pass cut short by a hot reload attempted nothing and is not a completed run; the
+        # restarted process carries the work on.
+        def run_end_reason(result)
+          return "reloading: origin/main changed" if CodeWatch.requested?
+
+          state = terminal_state_for(result)
+          return "completed" if state == :done
+
+          "#{state}: #{result.to_s[0, 80]}"
+        end
+
+        def finish_run(result, target, run_id, mission: nil, requested: false)
+          result = blocked_by_gaps(result)
+          RunBudget.finish_run(reason: run_end_reason(result))
+          state = terminal_state_for(result)
+          @last_terminal_state = state
+          evidence = @convergence_discipline.receipt if @convergence_discipline.respond_to?(:receipt)
+          @run_journal.terminal(run_id, state, message: result.to_s, evidence:)
+
+          if mission&.requeue_if_requested!
+            @bus&.publish("fix_loop:mission_requeued", run_id:, state:, reason: "wake received during attempt")
+          elsif state == :done
+            mission&.finish!(state: "completed", summary: result.to_s)
+          elsif %i[human_decision blocked].include?(state)
+            mission&.block!(reason: result.to_s)
+          else
+            mission&.defer!(reason: "attempt #{state}: #{result.to_s}")
+          end
+
+          target_label = fix_target_label(target)
+          outcome = { state:, message: result.to_s, task_id: run_id, capability: "code_repair", target: target_label, run_id: }
+          outcome[:outcome_receipt] = write_outcome_receipt(run_id:, target: target_label, state:, result:, convergence: evidence)
+          outcome[:ok] = MEASURED_REPAIR_OUTCOMES.fetch(state) if MEASURED_REPAIR_OUTCOMES.key?(state)
+          @bus&.publish("fix_loop:terminal", **outcome)
+
+          result
+        end
+      end
+    end
+  end
+end
