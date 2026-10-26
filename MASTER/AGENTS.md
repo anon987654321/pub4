@@ -169,7 +169,7 @@ loser reads the wrong tree without complaint. Name it for the script
 
 **The three Law-id counts answer three questions.** The scanner's `@rules`
 (147) is what weights anything; a `Rule.registry` walk drops bridge classes; a
-regex over `law/` and the rules files (what `tools/law_hygiene.rb` uses) counts
+regex over `law/` and the rules files (what `tools/audit/law_hygiene.rb` uses) counts
 more. An unreached-file sweep must include the repo-root `bin/` and filter by no
 extension — `test/test_entrypoint_requires.rb` holds the case that broke
 `bin/operator` for six days.
@@ -236,6 +236,24 @@ back.
 **If you overwrote another session's work**, their commits are safe on
 `origin/main` — the damage is only in the working tree. `git checkout -- <path>`
 restores from HEAD. Say what you did rather than hoping it is unnoticed.
+
+**A script that rewrites files by splice must prove every splice.** The first
+version of the campaign's rewriter computed offsets against a stale copy, and
+every splice after the first landed at shifted positions — silently corrupting
+files that had looked verified a line earlier. It was caught because the
+rewriter re-read and compared, not because anything downstream did. The rule:
+re-read the current bytes immediately before each write; after writing, confirm
+the file parses (YAML/Ruby/JSON as its suffix demands) and that every line
+outside the splice is byte-identical to what was there; one write per
+verification round. A rewriter that cannot do all three edits one file at a
+time by hand instead.
+
+**Never a tree-wide `git checkout -- .` inside a batch.** It ran once between
+two batches of a campaign and erased a validated, uncommitted batch whole —
+no diff, no recovery, the work simply gone. Destructive restores are for a
+single named path, run deliberately, after the bytes have been copied
+somewhere outside the tree. If a batch has gone wrong past fixing, stop and
+report what was lost; do not compound it with a second discard.
 
 **Before any push**, `git log --oneline origin/main..HEAD`. A push publishes
 every commit beneath yours, including other people's. Name in your report what

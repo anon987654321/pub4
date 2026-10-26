@@ -17,7 +17,7 @@ class TestCheckChain < Minitest::Test
   G = Operator::CheckChain
 
   def test_every_stage_runs_a_script_that_exists
-    missing = %w[bin/operator bin/check bin/master lib/operator/sprawl_census.rb tools/dup_census.rb lib/operator/check_ladder.rb]
+    missing = %w[bin/operator bin/check bin/master lib/operator/sprawl_census.rb tools/audit/dup_census.rb lib/operator/check_ladder.rb]
               .reject { |path| File.file?(File.join(G::MASTER, path)) }
     missing << "MASTER/checks/runner.rb" unless File.file?(File.join(G::ROOT, "MASTER", "checks", "runner.rb"))
     missing << "OPENBSD/bin/check-openbsd" unless File.file?(File.join(G::ROOT, "OPENBSD", "bin", "check-openbsd"))

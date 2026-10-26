@@ -1,0 +1,44 @@
+---
+schema: 1
+app: takeaway
+pass: 1
+date: 2026-10-27
+ledger: data/gaps.yml
+authorization: operator request 2026-10-27 (chat e2c7ceca) — ideate over the planned rows; every pick stays law-gated
+gaps: [takeaway_delivery_area, takeaway_cart_expiry, takeaway_pro_surface]
+candidates:
+  # takeaway_delivery_area
+  - { id: takeaway_c01, gap: takeaway_delivery_area, spec: "Restaurant states a delivery radius; order create validates the reader's stored position against it (haversine), nil-safe everywhere, refusal message names the radius — never blocks the kitchen's own acceptance.", hyperlocal: high, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  - { id: takeaway_c02, gap: takeaway_delivery_area, spec: "Free-text address geocoding so the typed string itself is validated.", hyperlocal: medium, synergy: low, cost: L, laws_delta: new-surface, reversibility: low }
+  - { id: takeaway_c03, gap: takeaway_delivery_area, spec: "Postal-code zones: restaurant picks a list of postnummer it serves.", hyperlocal: high, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
+  # takeaway_cart_expiry
+  - { id: takeaway_c04, gap: takeaway_cart_expiry, spec: "Pending carts get a 45-minute deadline; a sweep cancels stale ones through the same transition as a manual cancel, and the ticket shows the countdown.", hyperlocal: low, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  - { id: takeaway_c05, gap: takeaway_cart_expiry, spec: "Expiry on the client only — a timer that empties the basket in the browser.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  - { id: takeaway_c06, gap: takeaway_cart_expiry, spec: "Expiring carts with reminder notifications before the deadline.", hyperlocal: low, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
+  # takeaway_pro_surface
+  - { id: takeaway_c07, gap: takeaway_pro_surface, spec: "Restaurant promotion inside the shared commerce domain: sponsored placement in the city restaurant list, labelled, capped.", hyperlocal: high, synergy: high, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: takeaway_c08, gap: takeaway_pro_surface, spec: "Loyalty stamps per restaurant (nth coffee free) stored per reader.", hyperlocal: high, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: takeaway_c09, gap: takeaway_pro_surface, spec: "Coupons via commerce_shared_domain's campaign rows once the ledger lands.", hyperlocal: medium, synergy: high, cost: S, laws_delta: new-surface, reversibility: medium }
+critique:
+  - { candidate: takeaway_c01, verdict: keep, attack: "Validating the stored position rather than the typed string will surprise a reader ordering for a friend across town — the message must say what was measured, and the kitchen keeps the final say." }
+  - { candidate: takeaway_c02, verdict: reject, attack: "There is no geocoder in the suite by recorded decision (Restaurant's header); adding one for a radius check drags an external dependency into checkout." }
+  - { candidate: takeaway_c03, verdict: keep, attack: "Postnummer zones are how Norwegian kitchens actually think; kept as the follow-up once owners ask for more precision than a circle." }
+  - { candidate: takeaway_c04, verdict: keep, attack: "Cancelling through the same transition as a manual cancel means both sides get told — the only expiry shape that keeps the notification path honest." }
+  - { candidate: takeaway_c05, verdict: reject, attack: "A client timer lies when the tab sleeps; the kitchen would hold a basket the reader believes is gone." }
+  - { candidate: takeaway_c06, verdict: reject, attack: "A reminder for a cart the reader abandoned 40 minutes ago is a nudge toward a purchase — the fence's dark-pattern clause, adjacent but recognisable." }
+  - { candidate: takeaway_c07, verdict: keep, attack: "Sponsored placement in a hungry city list is the money shape here, but it waits for the commerce domain and the liquidity page like every other money row." }
+  - { candidate: takeaway_c08, verdict: keep, attack: "Loyalty state is per-reader, per-restaurant — real scope; kept because stamps are the oldest honest promotion there is." }
+  - { candidate: takeaway_c09, verdict: keep, attack: "Right order, wrong subject: coupons are the commerce domain's campaign rows consumed here — the pick records the dependency." }
+picks:
+  - gap: takeaway_delivery_area
+    winner: takeaway_c01
+    rationale: "Nil-safe in every direction, uses the position the suite already stores, and says what it measured. Implemented this pass."
+    losers: { takeaway_c02: "adds a geocoder the suite refuses to own", takeaway_c03: "kept as the zones follow-up" }
+  - gap: takeaway_cart_expiry
+    winner: takeaway_c04
+    rationale: "Server truth, honest transitions, visible countdown; the sweep rides the same Solid Queue schedule pattern as the stories sweep. Implemented this pass."
+    losers: { takeaway_c05: "a client timer lies when tabs sleep", takeaway_c06: "a purchase nudge wearing a reminder's clothes" }
+  - gap: takeaway_pro_surface
+    winner: takeaway_c07
+    rationale: "Sponsored, labelled, capped placement on the commerce domain — gated on the ledger landing, recorded as the design of record."
+    losers: { takeaway_c08: "kept as the loyalty follow-up", takeaway_c09: "the dependency record, folded into the winner's gate" }

@@ -1,0 +1,81 @@
+---
+schema: 1
+app: master
+pass: 2
+date: 2026-10-27
+ledger: data/gaps.yml
+authorization: >
+  operator follow-up of 2026-10-27 (chat e2c7ceca), same authorization as pass 1:
+  "especially its face, making it more visually appealing and soothing. and the tts
+  voice, making it sound way cooler using digital sound processing and/or fm modulation
+  or creative use of audio effects etc." Every pick stays law-gated: the CSS budget
+  ratchet (magic_hex is full at 146/146) and NO_DECORATIVE_FX bound the face work;
+  the two-lane honesty rule (a preset both lanes cannot build is a unit skipped whole,
+  never half-built) and the never-pitch-shift-vocals refusal recorded in voice.yml
+  bound the voice work.
+method: >
+  Same method as pass 1: candidates at spec level, critique is adversarial per
+  candidate — the strongest honest attack — and winners need a reason while losers
+  keep theirs. The face candidates were read against the actual seams
+  (face_stipple_system.js vAlpha, the [data-runtime-profile] CSS, the token budgets);
+  the voice candidates were read against the actual builders (buildChainNode's table,
+  buildFxRack's skip-whole convention, Policy#browser_payload).
+gaps: [master_face_soothing, master_voice_dsp_lanes, master_voice_cooler]
+candidates:
+  # master_face_soothing
+  - { id: masterweb_f01, gap: master_face_soothing, spec: "Breathing luminosity: a slow (~11 s period, +/-5%) sine folded into the stipple field's vAlpha brightness seam, scaled by uMotionScale so reduced motion freezes it; no new colours, no point-size change.", hyperlocal: high, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: masterweb_f02, gap: master_face_soothing, spec: "A new soothing palette: pastel tokens, softer accents, warmer background across the face chrome.", hyperlocal: low, synergy: low, cost: M, laws_delta: new-budget, reversibility: low }
+  - { id: masterweb_f03, gap: master_face_soothing, spec: "Calm-profile damping: [data-runtime-profile=\"calm\"] also drops the flash-class canvas filters (topology-flash, laughter, face-flash) and softens chrome borders via color-mix of existing tokens; conversation leading moves one token looser within budget.", hyperlocal: high, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: masterweb_f04, gap: master_face_soothing, spec: "An aurora/nebula particle backdrop behind the field — slow drifting colour washes for atmosphere.", hyperlocal: low, synergy: low, cost: M, laws_delta: decorative-fx, reversibility: medium }
+  # master_voice_dsp_lanes
+  - { id: masterweb_v01, gap: master_voice_dsp_lanes, spec: "Build the missing nodes in the browser: aeval for whitelisted ring-mod shapes (val(0)*(A+B*sin(2*PI*t*F))), acrusher as WaveShaper bit quantization with dry/wet mix (samples=1 only, larger holds refuse), and the asetrate/aresample/atempo idiom recognised as one dual-tap modulated-delay pitch shifter; afreqshift, aphaseshift and enable=-carrying glitch stay server-only and named.", hyperlocal: medium, synergy: high, cost: M, laws_delta: none, reversibility: high }
+  - { id: masterweb_v02, gap: master_voice_dsp_lanes, spec: "Fork the presets: browser-only filter strings that sound similar, kept beside the server strings.", hyperlocal: low, synergy: low, cost: M, laws_delta: new-surface, reversibility: low }
+  - { id: masterweb_v03, gap: master_voice_dsp_lanes, spec: "Ship an AudioWorklet crusher processor for a sample-true acrusher, registered from connectTTSAudio.", hyperlocal: medium, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: masterweb_v04, gap: master_voice_dsp_lanes, spec: "Leave the browser plain and document that character presets are terminal-only.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  # master_voice_cooler
+  - { id: masterweb_c01, gap: master_voice_cooler, spec: "Enable doubler (24 ms, +12 cents, 0.7 mix) as the shipped default and enable the room (six early reflections, head-follow pan) so the voice speaks in its space; both already declared and measured.", hyperlocal: medium, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: masterweb_c02, gap: master_voice_cooler, spec: "Author three new presets both lanes can build: ionosphere (38 Hz ring-mod whisper at 18% depth + chorus), midnight (down-formant velvet: asetrate 0.9 with duration restored, darkened presence), shortwave (band-limited radio curve with tanh soft clip); enable ionosphere alongside doubler as the operator pick, all values marked author's judgement.", hyperlocal: medium, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: masterweb_c03, gap: master_voice_cooler, spec: "Enable every existing preset at once (robot, formant, doubler, glitch, shimmer) for maximum effect.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: low }
+  - { id: masterweb_c04, gap: master_voice_cooler, spec: "A vocoder on the voice for the full synthetic-character read.", hyperlocal: low, synergy: low, cost: L, laws_delta: new-surface, reversibility: low }
+critique:
+  - { candidate: masterweb_f01, verdict: keep, attack: "A continuous sine could read as its own distraction — mitigated by the depth (5% is at the edge of notice) and by riding the one-pixel law's own seam: depth in brightness, never size." }
+  - { candidate: masterweb_f02, verdict: reject, attack: "magic_hex is 146/146 — the budget is full and the ratchet only goes down; a new palette is exactly the raise the ledger exists to refuse." }
+  - { candidate: masterweb_f03, verdict: keep, attack: "Damping the flash filters in calm changes what calm means for readers who rely on the flash as signal — but calm is the profile that already hides ascii-star and dims ecology, so damping is the profile's own direction continued." }
+  - { candidate: masterweb_f04, verdict: reject, attack: "A decorative backdrop is the text of NO_DECORATIVE_FX made flesh; the canvas filters exist only because they encode runtime state." }
+  - { candidate: masterweb_v01, verdict: keep, attack: "The pitch-shift node is an approximation (grain crossfade against ffmpeg's resampler) — honest only if the presets' own status: approximated notes say so and the idiom matcher refuses non-conforming triples instead of guessing." }
+  - { candidate: masterweb_v02, verdict: reject, attack: "Two filter strings under one preset name is the 2026-09-16 sin again — the refactor's whole point was one declared chain per lane." }
+  - { candidate: masterweb_v03, verdict: reject, attack: "A worklet buys sample-hold fidelity for one unit at the cost of a registration surface, a second file and a new failure mode on old browsers; the WaveShaper build covers the only preset that needs it once glitch's enable= is already server-only." }
+  - { candidate: masterweb_v04, verdict: reject, attack: "Documenting the gap keeps it: the operator asked the voice get cooler, and the browser lane is the lane the operator actually watches." }
+  - { candidate: masterweb_c01, verdict: keep, attack: "Both flips are operator-class decisions being made by operator instruction — but the room's own comment records loudness measured within ~1 LU of dry, and doubler is near-universally flattering; the risk is taste, and both are one env var away from off." }
+  - { candidate: masterweb_c02, verdict: keep, attack: "New presets carry the same author-judgement caveat as the five before them, and ionosphere's ring mod at 18% depth is a whisper, not a robot; the honest attack is that no ear here has heard them — the notes say retune by ear." }
+  - { candidate: masterweb_c03, verdict: reject, attack: "Five presets stacked is fatigue by construction, and glitch's dropout loop on every sixth of a second makes work speech unreadable." }
+  - { candidate: masterweb_c04, verdict: reject, attack: "voice.yml already records the refusal: this ffmpeg build has no vocoder and both lanes would need a second signal or a pitch tracker." }
+picks:
+  - gap: master_face_soothing
+    winner: masterweb_f01
+    rationale: >
+      The breath rides the seam the one-pixel law already owns — depth in
+      brightness, not size — costs three shader lines, freezes itself under
+      reduced motion twice over (uTime at 0 and uMotionScale at 0), and is the
+      only candidate that makes the face feel alive while adding nothing to
+      look at. Implemented this pass alongside f03's calm damping, which is
+      the same direction in CSS.
+    losers: { masterweb_f02: "budget full; the ratchet only goes down", masterweb_f04: "NO_DECORATIVE_FX exists to refuse this exact thing" }
+  - gap: master_voice_dsp_lanes
+    winner: masterweb_v01
+    rationale: >
+      One builder pass makes every declared preset honest in both lanes and
+      keeps the skip-whole convention for what the browser genuinely cannot
+      build. The refusals are part of the design: non-conforming aeval
+      expressions, samples>1, and the idiom's arithmetic not closing all
+      leave the unit unbuilt and named, never half-voiced.
+    losers: { masterweb_v02: "two chains under one name is the recorded sin", masterweb_v03: "a worklet per unit is surface for fidelity one preset needs and the crasher grammar does not", masterweb_v04: "documents the gap instead of closing it" }
+  - gap: master_voice_cooler
+    winner: masterweb_c02
+    rationale: >
+      c01's flips ship inside this pick: doubler and the room go on as the
+      base coolness, and the three new presets give the operator named,
+      single-env-var characters (MASTER_TTS_CHARACTER=ionosphere) that both
+      lanes can now speak. Values stay marked author's judgement, retune by
+      ear, per the file's own convention.
+    losers: { masterweb_c01: "folded into c02 as the base layer rather than the whole answer", masterweb_c03: "stacked presets are fatigue; glitch breaks work speech", masterweb_c04: "no vocoder in this ffmpeg and no second signal to feed it" }

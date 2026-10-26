@@ -56,7 +56,7 @@ unless clean_tree?
 end
 
 reports = {
-  "inventory_before.json" => maybe_run_tool("inventory", "ruby", "tools/repo_inventory.rb", "--json"),
+  "inventory_before.json" => maybe_run_tool("inventory", "ruby", "tools/repo/repo_inventory.rb", "--json"),
   "history_before.txt" => maybe_run_tool("history", "ruby", "tools/history_valuables.rb", "."),
 }
 Master::Trace::Dmesg.attach("cleanup0", "master0", "reports")

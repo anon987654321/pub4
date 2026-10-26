@@ -1,0 +1,33 @@
+---
+schema: 1
+app: dating
+pass: 1
+date: 2026-10-27
+ledger: data/gaps.yml
+authorization: operator request 2026-10-27 (chat e2c7ceca) — ideate over the planned rows; every pick stays law-gated
+gaps: [dating_premium_boost, dating_two_sided_ranked_for]
+candidates:
+  # dating_premium_boost
+  - { id: dating_c01, gap: dating_premium_boost, spec: "Boost: a profile enters more decks for 24h at a price — on the shared commerce domain, capped so no reader sees a wall of boosters.", hyperlocal: low, synergy: high, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: dating_c02, gap: dating_premium_boost, spec: "Super-like: one per day free for everyone; extra ones paid. Visible to the receiver as designed.", hyperlocal: low, synergy: medium, cost: S, laws_delta: new-surface, reversibility: medium }
+  - { id: dating_c03, gap: dating_premium_boost, spec: "No purchases; the ranked_for deck already refuses attention feedback loops, and payment is the loudest feedback loop there is.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  # dating_two_sided_ranked_for
+  - { id: dating_c04, gap: dating_two_sided_ranked_for, spec: "Close as already landed: candidate_scope applies oriented_for, which filters both ways (who the viewer seeks AND who would seek the viewer).", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  - { id: dating_c05, gap: dating_two_sided_ranked_for, spec: "Beyond gender: two-sided intent on interests/prompts as a scored match, replacing the plain preference filter.", hyperlocal: low, synergy: medium, cost: M, laws_delta: none, reversibility: medium }
+  - { id: dating_c06, gap: dating_two_sided_ranked_for, spec: "Two-sided intent as a hard filter on prompts, so a dealbreaker mismatch never enters the deck.", hyperlocal: low, synergy: low, cost: M, laws_delta: none, reversibility: medium }
+critique:
+  - { candidate: dating_c01, verdict: keep, attack: "Boosts in dating are where dark patterns live — the fence allows it only with the cap and the shared domain; kept with both named as structural, not tunable." }
+  - { candidate: dating_c02, verdict: keep, attack: "The free-per-day shape avoids pay-to-be-seen for everyone; still introduces scarcity as a product, which the ranked_for comment warns about." }
+  - { candidate: dating_c03, verdict: keep, attack: "The strongest anti-candidate: the deck's own design comment refuses attention feedback loops, and boost is exactly that loop with a price tag. Kept as the fence with a voice." }
+  - { candidate: dating_c04, verdict: keep, attack: "Verifying an already-landed behaviour is the pass doing its job — the ledger row was written from a horizon file, not from code." }
+  - { candidate: dating_c05, verdict: keep, attack: "Interest scoring drifts toward engagement ranking the code explicitly refuses; kept as a future question, not a default." }
+  - { candidate: dating_c06, verdict: reject, attack: "Hard filters on free-text prompts are brittle and shrink decks toward emptiness — the opposite of oriented_for's nil-means-open design." }
+picks:
+  - gap: dating_two_sided_ranked_for
+    winner: dating_c04
+    rationale: "The tree already implements both ways — oriented_for in candidate_scope filters the deck to mutual orientation. Ledger row closes as satisfied with evidence; apps.horizon.yml's row predates the Tier-3 work."
+    losers: { dating_c05: "a future question the deck's anti-engagement stance keeps open", dating_c06: "brittle hard filters shrink decks" }
+  - gap: dating_premium_boost
+    winner: dating_c02
+    rationale: "One free super-like a day for everyone keeps the deck's anti-feedback-loop promise while leaving room for a paid extra on the commerce domain — the smallest honest step, and it is visible-to-receiver so the gesture is real."
+    losers: { dating_c01: "boost is the attention loop with a price tag; only acceptable under the commerce domain with a structural cap", dating_c03: "the standing objection — revisited the day the cap cannot be honoured" }

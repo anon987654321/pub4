@@ -1,0 +1,21 @@
+---
+schema: 1
+app: tv
+pass: 1
+date: 2026-10-27
+ledger: data/gaps.yml
+authorization: operator request 2026-10-27 (chat e2c7ceca) — ideate over the planned rows; every pick stays law-gated
+gaps: [tv_live_stream_infra]
+candidates:
+  - { id: tv_c01, gap: tv_live_stream_infra, spec: "MediaMTX on vm23: single Go binary, RTMP ingest + HLS out, plays through the existing video player; Tv::Broadcast keeps owning go_live!/end_live!.", hyperlocal: medium, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: tv_c02, gap: tv_live_stream_infra, spec: "SRS (Simple Realtime Server): heavier, more features, Docker-shaped.", hyperlocal: low, synergy: low, cost: M, laws_delta: new-surface, reversibility: low }
+  - { id: tv_c03, gap: tv_live_stream_infra, spec: "nginx-rtmp: the oldest answer, config-heavy, no dashboards.", hyperlocal: low, synergy: low, cost: M, laws_delta: none, reversibility: medium }
+critique:
+  - { candidate: tv_c01, verdict: keep, attack: "Still a second service to supervise and TLS to terminate — the operator cost is real even if the binary is one file; the pick must say so." }
+  - { candidate: tv_c02, verdict: reject, attack: "SRS wants a Docker runtime the OpenBSD host does not run." }
+  - { candidate: tv_c03, verdict: reject, attack: "nginx-rtmp is unmaintained upstream and gives back none of MediaMTX's playback paths." }
+picks:
+  - gap: tv_live_stream_infra
+    winner: tv_c01
+    rationale: "One static binary, HLS the existing player already understands, and the Broadcast model keeps owning state. Blocked on the operator provisioning the box; the workstream records exactly what vm23 needs."
+    losers: { tv_c02: "Docker-shaped for a host that runs none", tv_c03: "unmaintained and blind" }

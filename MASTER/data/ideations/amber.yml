@@ -1,0 +1,121 @@
+---
+schema: 1
+app: amber
+pass: 1
+date: 2026-10-27
+ledger: data/gaps.yml
+authorization: operator request 2026-10-27 (chat e2c7ceca) — ideate over the planned rows; every pick stays law-gated
+gaps: [amber_fashion_embeddings, amber_visual_similarity, amber_fitting_room, amber_mood_matcher, amber_event_outfit_planner, amber_sustainable_resale, amber_weather_suggestions, amber_outfit_whole_score, amber_trends_designers, amber_style_agents]
+candidates:
+  # amber_fashion_embeddings
+  - { id: amber_c01, gap: amber_fashion_embeddings, spec: "Structured attribute vectors, not learned embeddings: colour family, garment class, formality, season, material — typed columns on the wardrobe item, filled by the owner's own tagging.", hyperlocal: low, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: amber_c02, gap: amber_fashion_embeddings, spec: "Learned image embeddings from a small local model.", hyperlocal: low, synergy: medium, cost: L, laws_delta: new-surface, reversibility: low }
+  - { id: amber_c03, gap: amber_fashion_embeddings, spec: "pgvector + an external embedding API.", hyperlocal: low, synergy: low, cost: L, laws_delta: new-surface, reversibility: low }
+  # amber_visual_similarity
+  - { id: amber_c04, gap: amber_visual_similarity, spec: "'Wears well with' and 'same shape as' from the attribute vectors: brute-force cosine over a personal wardrobe (hundreds of rows) in Ruby — the right-sized answer to a pgvector problem.", hyperlocal: low, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: amber_c05, gap: amber_visual_similarity, spec: "Pixel-hash similarity on the photos.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: medium }
+  - { id: amber_c06, gap: amber_visual_similarity, spec: "Defer similarity until embeddings exist.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  # amber_fitting_room
+  - { id: amber_c07, gap: amber_fitting_room, spec: "The dressing-room mannequin (already in the visual language) renders a chosen combination — real garments on the silhouette, no body claims.", hyperlocal: low, synergy: high, cost: M, laws_delta: none, reversibility: high }
+  - { id: amber_c08, gap: amber_fitting_room, spec: "Body-scan AR try-on.", hyperlocal: low, synergy: low, cost: L, laws_delta: new-surface, reversibility: low }
+  - { id: amber_c09, gap: amber_fitting_room, spec: "A side-by-side grid of the chosen items, no mannequin.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  # amber_mood_matcher
+  - { id: amber_c10, gap: amber_mood_matcher, spec: "Mood tags on items (quiet, sharp, soft) + a mood picker that filters the wardrobe graph — data the owner writes, no inference.", hyperlocal: low, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  - { id: amber_c11, gap: amber_mood_matcher, spec: "Infer mood from calendar weather/time and pre-suggest.", hyperlocal: medium, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: amber_c12, gap: amber_mood_matcher, spec: "Skip moods; colours are the real signal.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  # amber_event_outfit_planner
+  - { id: amber_c13, gap: amber_event_outfit_planner, spec: "Plan an outfit against an event row the reader picks (their own RSVPs exist in brgen): formality + season + 'worn recently' constraints, one screen.", hyperlocal: high, synergy: high, cost: M, laws_delta: none, reversibility: high }
+  - { id: amber_c14, gap: amber_event_outfit_planner, spec: "Free-text plans ('wedding in June') with heuristics.", hyperlocal: low, synergy: low, cost: M, laws_delta: none, reversibility: medium }
+  - { id: amber_c15, gap: amber_event_outfit_planner, spec: "Defer; the planner is the whole product and deserves its own pass.", hyperlocal: low, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  # amber_sustainable_resale
+  - { id: amber_c16, gap: amber_sustainable_resale, spec: "'Release' flow: an item leaving the wardrobe offers to create a Marketplace listing pre-filled from its attributes — one hand-off, one marketplace, no resale stack.", hyperlocal: high, synergy: high, cost: M, laws_delta: none, reversibility: high }
+  - { id: amber_c17, gap: amber_sustainable_resale, spec: "A resale surface inside amber with its own listings.", hyperlocal: low, synergy: low, cost: L, laws_delta: new-surface, reversibility: low }
+  - { id: amber_c18, gap: amber_sustainable_resale, spec: "Sustainability score per item shown everywhere.", hyperlocal: low, synergy: low, cost: M, laws_delta: none, reversibility: medium }
+  # amber_weather_suggestions
+  - { id: amber_c19, gap: amber_weather_suggestions, spec: "Season-and-observed-weather suggestions once a weather source exists; the item rows already carry season attributes.", hyperlocal: high, synergy: medium, cost: S, laws_delta: new-surface, reversibility: high }
+  - { id: amber_c20, gap: amber_weather_suggestions, spec: "Reader-reported weather ('bucketing down') as the signal — no API, honest to Bergen.", hyperlocal: high, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  - { id: amber_c21, gap: amber_weather_suggestions, spec: "Subscribe to a weather API now.", hyperlocal: medium, synergy: low, cost: M, laws_delta: new-surface, reversibility: low }
+  # amber_outfit_whole_score
+  - { id: amber_c22, gap: amber_outfit_whole_score, spec: "Outfit score = sum of item scores minus a clash penalty from the attribute vectors (colour-family and formality conflicts); 'wears-well-with' renders on items#show from the same arithmetic.", hyperlocal: low, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: amber_c23, gap: amber_outfit_whole_score, spec: "Learned outfit scoring from wear logs.", hyperlocal: low, synergy: medium, cost: L, laws_delta: new-surface, reversibility: low }
+  - { id: amber_c24, gap: amber_outfit_whole_score, spec: "No scores; show the combination and let the mirror decide.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  # amber_trends_designers
+  - { id: amber_c25, gap: amber_trends_designers, spec: "Local designer highlights as curated content rows (a Bergen designer a month), written by the operator — content, not scraping.", hyperlocal: high, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  - { id: amber_c26, gap: amber_trends_designers, spec: "Scrape global trend feeds.", hyperlocal: low, synergy: low, cost: M, laws_delta: new-surface, reversibility: low }
+  - { id: amber_c27, gap: amber_trends_designers, spec: "Reader-submitted inspiration board.", hyperlocal: low, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
+  # amber_style_agents
+  - { id: amber_c28, gap: amber_style_agents, spec: "A MASTER-side style pass: given the attribute vectors and the wear history, one advisory paragraph per week — evidence in, advice out, nothing autonomous.", hyperlocal: low, synergy: high, cost: M, laws_delta: new-surface, reversibility: high }
+  - { id: amber_c29, gap: amber_style_agents, spec: "Autonomous agent that reorders/buys for the wardrobe.", hyperlocal: low, synergy: low, cost: L, laws_delta: new-surface, reversibility: low }
+  - { id: amber_c30, gap: amber_style_agents, spec: "No agents; the weekly wear summary MASTER already could compute is enough.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+critique:
+  - { candidate: amber_c01, verdict: keep, attack: "Owner tagging is labour — the flow must make it feel like noticing, not data entry; kept because typed facts age honestly." }
+  - { candidate: amber_c02, verdict: reject, attack: "A local model for one wardrobe is a research project; the wardrobe's own words beat a model's guess." }
+  - { candidate: amber_c03, verdict: reject, attack: "Postgres plus an external API for a private closet breaks two stack laws at once." }
+  - { candidate: amber_c04, verdict: keep, attack: "Cosine over attribute vectors is only as good as the tagging — the real dependency is c01, and the pick must say so." }
+  - { candidate: amber_c05, verdict: reject, attack: "Pixel hashes match the same photo, not the same garment; photos are retaken constantly." }
+  - { candidate: amber_c06, verdict: reject, attack: "The wardrobe-scale brute-force answer removes the blocker this deferral assumes exists." }
+  - { candidate: amber_c07, verdict: keep, attack: "The mannequin is visual language, not a body claim — but rendering 'real garments' needs compositing rules that can look cheap fast; art direction is the cost." }
+  - { candidate: amber_c08, verdict: reject, attack: "Body-scanning in a privacy-first wardrobe app is a promise violation the experience principles name outright." }
+  - { candidate: amber_c09, verdict: keep, attack: "The honest baseline; kept because c07's art direction may take longer than this does." }
+  - { candidate: amber_c10, verdict: keep, attack: "Moods are self-report; the moment they are inferred (c11) the app claims to know the reader's feelings — the brand voice says non-judgmental for a reason." }
+  - { candidate: amber_c11, verdict: reject, attack: "Inferred moods plus pushed suggestions is exactly the pressure the experience principles refuse." }
+  - { candidate: amber_c12, verdict: keep, attack: "Colour-first is a real alternative aesthetic; kept so the mood row never becomes a stub." }
+  - { candidate: amber_c13, verdict: keep, attack: "Reads brgen events across apps — the synergy the fence encourages; constraints must stay soft (suggest, never scold)." }
+  - { candidate: amber_c14, verdict: reject, attack: "Heuristics over free text guess formality wrong at the exact moment wrong is costly." }
+  - { candidate: amber_c15, verdict: keep, attack: "Fair scope objection; kept as the brake on doing it small and badly." }
+  - { candidate: amber_c16, verdict: keep, attack: "One hand-off, one marketplace — the fence's own shape; the risk is photo/attribute drift between amber and the listing, which the pre-fill must not paper over." }
+  - { candidate: amber_c17, verdict: reject, attack: "A second listings stack is what the shared-domain fence exists to prevent." }
+  - { candidate: amber_c18, verdict: reject, attack: "Sustainability scores from typed attributes are vibes with decimal points; show facts (wears, age, releases) instead." }
+  - { candidate: amber_c19, verdict: keep, attack: "Gated on a weather source that does not exist; kept because the season half can land first and honestly." }
+  - { candidate: amber_c20, verdict: keep, attack: "Reader-reported weather is charming and honest but becomes a chore after day three; kept as the fallback that needs no source." }
+  - { candidate: amber_c21, verdict: reject, attack: "The suite calls no external API today; the first one should not be for clothing advice." }
+  - { candidate: amber_c22, verdict: keep, attack: "Arithmetic is inspectable — the clash penalty must be explainable in one sentence on the page or it becomes a horoscope." }
+  - { candidate: amber_c23, verdict: reject, attack: "Learned scoring on one person's wear log overfits to noise and cannot explain itself." }
+  - { candidate: amber_c24, verdict: keep, attack: "The strongest anti-candidate in amber: the brand says 'intelligence with honest boundaries', and a number on an outfit may cross it. Kept as the conscience." }
+  - { candidate: amber_c25, verdict: keep, attack: "Curated local content is the hyperlocal answer and costs writing, not code; the risk is it going stale — date every row visibly." }
+  - { candidate: amber_c26, verdict: reject, attack: "Scraped trends are neither local nor owned, and the suite has a scrape-and-rewrite precedent it should not extend here." }
+  - { candidate: amber_c27, verdict: keep, attack: "Reader submissions need moderation; kept as a later social layer if amber ever wants one." }
+  - { candidate: amber_c28, verdict: keep, attack: "MASTER integration must stay advisory — the moment an agent writes to the wardrobe unasked, the privacy promise bends; weekly, read-only, attributed." }
+  - { candidate: amber_c29, verdict: reject, attack: "An agent that buys clothes autonomously is the privacy promise in the shredder." }
+  - { candidate: amber_c30, verdict: keep, attack: "The minimal version may be the whole truth; kept so the agent row never ships as a demo of autonomy nobody asked for." }
+picks:
+  - gap: amber_fashion_embeddings
+    winner: amber_c01
+    rationale: "Typed attribute vectors are the wardrobe's own language, SQLite-native, and they unblock similarity, clash scoring and the planner at once — the substrate pick."
+    losers: { amber_c02: "a model's guess loses to the owner's words", amber_c03: "two stack laws broken for one closet" }
+  - gap: amber_visual_similarity
+    winner: amber_c04
+    rationale: "'Wears well with' from brute-force cosine over a personal wardrobe — the right-sized answer the ledger row asks for; depends on c01 landing first. Workstream records the shape."
+    losers: { amber_c05: "matches photos, not garments", amber_c06: "the blocker it assumes does not exist" }
+  - gap: amber_outfit_whole_score
+    winner: amber_c22
+    rationale: "Sum minus clash, one explainable sentence, same arithmetic feeding wears-well-with; the horizon row's own shape."
+    losers: { amber_c23: "unexplainable by design", amber_c24: "the conscience kept on the page" }
+  - gap: amber_fitting_room
+    winner: amber_c07
+    rationale: "The mannequin is already amber's visual language; rendering chosen combinations on it is product the reader can feel, with art direction named as the cost."
+    losers: { amber_c08: "a privacy promise violation", amber_c09: "the honest fallback if compositing stays cheap-looking" }
+  - gap: amber_mood_matcher
+    winner: amber_c10
+    rationale: "Self-reported mood tags filter the graph the owner wrote; no inference claims to know feelings the brand promises not to judge."
+    losers: { amber_c11: "inference plus pushes is the pressure the principles refuse", amber_c12: "colour-first kept as the alternative aesthetic" }
+  - gap: amber_event_outfit_planner
+    winner: amber_c13
+    rationale: "Plans against the reader's own brgen RSVPs with soft constraints — the cross-app synergy the fence encourages, and 'worn recently' is a fact the wardrobe already knows."
+    losers: { amber_c14: "guesses formality wrong when wrong is costly", amber_c15: "the brake, respected by starting with one screen" }
+  - gap: amber_sustainable_resale
+    winner: amber_c16
+    rationale: "Release to the existing marketplace pre-filled — one marketplace, one ledger, the fence's shape exactly; no resale stack inside amber."
+    losers: { amber_c17: "a second listings stack", amber_c18: "decimal-point vibes instead of facts" }
+  - gap: amber_weather_suggestions
+    winner: amber_c19
+    rationale: "Season half lands now from existing attributes; observed-weather half stays gated on a source, recorded with the gate named."
+    losers: { amber_c20: "kept as the no-source fallback", amber_c21: "the first external API should not be for clothes" }
+  - gap: amber_trends_designers
+    winner: amber_c25
+    rationale: "A curated Bergen designer a month is hyperlocal content the operator can actually keep truthful, dated visibly."
+    losers: { amber_c26: "neither local nor owned", amber_c27: "a moderation surface amber has not earned" }
+  - gap: amber_style_agents
+    winner: amber_c28
+    rationale: "Weekly, read-only, attributed advisory from vectors and wear history — MASTER integration with the privacy promise structural, not aspirational."
+    losers: { amber_c29: "autonomy in a private wardrobe is the promise in the shredder", amber_c30: "the minimal version kept as the yardstick" }

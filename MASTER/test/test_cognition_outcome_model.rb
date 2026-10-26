@@ -161,7 +161,7 @@ class TestCognitionOutcomeModel < Minitest::Test
       end
       path = File.join(dir, "outcomes.jsonl")
       File.write(path, rows.map { |row| JSON.generate(row) }.join("\n"))
-      tool = File.expand_path("../tools/cognition_benchmark.rb", __dir__)
+      tool = File.expand_path("../tools/research/cognition_benchmark.rb", __dir__)
 
       out, status = Open3.capture2(RbConfig.ruby, tool, "--no-learning", path)
 

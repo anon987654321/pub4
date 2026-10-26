@@ -1,0 +1,51 @@
+---
+schema: 1
+app: master
+pass: 2
+date: 2026-10-27
+ledger: data/gaps.yml
+authorization: >
+  The master-web surface audit of 2026-10-27 (recorded in gaps.yml's
+  master_audit source) named these two gaps and marked them picked with
+  workstream names, but the session ended before the picks were written down.
+  This record is that missing half: the pick, the candidates it beat, and the
+  rationale, under the same operator authorization as pass 1. Implementation
+  stays open — the workstreams are declared with state missing.
+method: >
+  Same method as pass 1: spec-level candidates, adversarial critique, winners
+  with reasons, losers keeping theirs. Read against the actual dashboard
+  contract (dashboard payload computed in the live poll, CLAUDE.md's
+  resource_guard order amber then bsdports).
+gaps: [master_fleet_health, master_dead_payload_facts]
+candidates:
+  # master_fleet_health
+  - { id: masterweb_a01, gap: master_fleet_health, spec: "Fleet panel: the dashboard polls each sibling app's health endpoint on the same box, renders load/memory/shed-state per app, and names the resource_guard order (amber first, bsdports second).", hyperlocal: high, synergy: high, cost: M, laws_delta: none, reversibility: high }
+  - { id: masterweb_a02, gap: master_fleet_health, spec: "Parse the system process table instead of calling the siblings — one source, no HTTP fan-out from a 1 GB box.", hyperlocal: medium, synergy: medium, cost: M, laws_delta: none, reversibility: medium }
+  - { id: masterweb_a03, gap: master_fleet_health, spec: "Keep the console single-container and publish fleet state as a static JSON the operator curls — no dashboard surface.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  # master_dead_payload_facts
+  - { id: masterweb_a04, gap: master_dead_payload_facts, spec: "Render the already-computed model_quota and cache_efficiency in the dashboard's status strip — the values exist in every live poll, only the panel is missing.", hyperlocal: high, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: masterweb_a05, gap: master_dead_payload_facts, spec: "Drop the two computations from the payload instead of rendering them — dead code removal rather than a new panel.", hyperlocal: medium, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  - { id: masterweb_a06, gap: master_dead_payload_facts, spec: "A dedicated metrics subpage fed by a new aggregated endpoint.", hyperlocal: low, synergy: low, cost: M, laws_delta: new-surface, reversibility: medium }
+critique:
+  - { candidate: masterweb_a01, verdict: keep, attack: "HTTP fan-out from a 1 GB box is exactly the load the panel exists to explain — mitigated by polling the siblings' own cheap health endpoints on the dashboard's existing poll cadence, not a new timer." }
+  - { candidate: masterweb_a02, verdict: reject, attack: "A process table read cannot see inside the siblings: puma may be up while the app is failing its own health check; the panel would report the box, not the fleet." }
+  - { candidate: masterweb_a03, verdict: reject, attack: "The operator's window is the dashboard; a curl makes the fact available but not visible, which is the gap's own wording." }
+  - { candidate: masterweb_a04, verdict: keep, attack: "Two more cells in the status strip is still more to read at a glance — mitigated by the strip's existing fact-element shape; the values are computed either way, so rendering them costs nothing at poll time." }
+  - { candidate: masterweb_a05, verdict: reject, attack: "model_quota is the one number that explains a degraded reply; deleting the computation throws away the fact to avoid a panel." }
+  - { candidate: masterweb_a06, verdict: reject, attack: "A second page and a new endpoint for two numbers that already arrive every poll is surface for nothing." }
+picks:
+  - gap: master_fleet_health
+    winner: masterweb_a01
+    rationale: >
+      The dashboard already polls; the siblings already expose health. The
+      panel names the guard order because a shedding the operator cannot
+      anticipate is a shedding that looks like an outage. Declared, not yet
+      implemented — workstream master_fleet_panel, state missing.
+    losers: { masterweb_a02: "reports the box, not the fleet", masterweb_a03: "visible is the point of the operator's window" }
+  - gap: master_dead_payload_facts
+    winner: masterweb_a04
+    rationale: >
+      The facts are computed into every live poll and dropped at render — the
+      cheapest honest fix in the whole ledger: stop dropping them. Declared,
+      not yet implemented — workstream master_quota_facts, state missing.
+    losers: { masterweb_a05: "deletes the fact to avoid a panel", masterweb_a06: "new surface for numbers already in the payload" }

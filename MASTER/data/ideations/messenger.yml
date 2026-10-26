@@ -1,0 +1,44 @@
+---
+schema: 1
+app: messenger
+pass: 1
+date: 2026-10-27
+ledger: data/gaps.yml
+authorization: operator request 2026-10-27 (chat e2c7ceca) — ideate over the planned rows; every pick stays law-gated
+gaps: [messenger_webrtc_calls, messenger_notify_suppression, messenger_business_crm]
+candidates:
+  # messenger_webrtc_calls
+  - { id: messenger_c01, gap: messenger_webrtc_calls, spec: "Full WebRTC audio/video with a coturn STUN/TURN deployed on the host; signaling over the existing ActionCable.", hyperlocal: low, synergy: medium, cost: L, laws_delta: new-surface, reversibility: low }
+  - { id: messenger_c02, gap: messenger_webrtc_calls, spec: "Voice notes are already done; add call-scheduling prose (a 'call me at 8' message affordance) instead of live calls.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  - { id: messenger_c03, gap: messenger_webrtc_calls, spec: "TURN-less peer-to-peer WebRTC on the local network only, documented as a hack-night feature.", hyperlocal: low, synergy: low, cost: M, laws_delta: none, reversibility: medium }
+  # messenger_notify_suppression
+  - { id: messenger_c04, gap: messenger_notify_suppression, spec: "Client-side suppression: the conversation page marks delivered notifications read on open; the bell stream filters what the reader has already seen.", hyperlocal: low, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  - { id: messenger_c05, gap: messenger_notify_suppression, spec: "Server-side: notifications carry a conversation_id and the stream skips rows whose conversation is the reader's current Turbo visit, via a short-lived presence key.", hyperlocal: low, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: messenger_c06, gap: messenger_notify_suppression, spec: "No suppression; badges are information, and the reader can mute the thread.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  # messenger_business_crm
+  - { id: messenger_c07, gap: messenger_business_crm, spec: "Business inbox: a store or restaurant account answers listing questions and orders from one queue, with labels and canned replies — on the shared commerce domain.", hyperlocal: high, synergy: high, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: messenger_c08, gap: messenger_business_crm, spec: "Full CRM: pipelines, contact stages, deal values per thread.", hyperlocal: low, synergy: medium, cost: L, laws_delta: new-surface, reversibility: low }
+  - { id: messenger_c09, gap: messenger_business_crm, spec: "Just route Marketplace::Question notifications to the store owner's messenger inbox; no new surface.", hyperlocal: medium, synergy: high, cost: S, laws_delta: none, reversibility: high }
+critique:
+  - { candidate: messenger_c01, verdict: keep, attack: "TURN is real infrastructure money on a 1 GB VPS — the pick is honest that this stays blocked until the operator buys the box time." }
+  - { candidate: messenger_c02, verdict: keep, attack: "Not calls — and must not be sold as closing the row; kept as the cheap humane fallback." }
+  - { candidate: messenger_c03, verdict: reject, attack: "LAN-only calls in a city app are a demo of a feature the row does not ask for." }
+  - { candidate: messenger_c04, verdict: keep, attack: "Client-side truth depends on the tab actually being open — stale tabs lie; acceptable because the cost of being wrong is one redundant badge." }
+  - { candidate: messenger_c05, verdict: reject, attack: "Presence keys are a second source of truth for 'is the reader looking', and every second source in this suite has eventually contradicted the first." }
+  - { candidate: messenger_c06, verdict: keep, attack: "The mute path exists and is honest; kept as the baseline the suppression must beat." }
+  - { candidate: messenger_c07, verdict: keep, attack: "Depends on commerce_shared_domain for money features, but the inbox-and-labels half is order-taking, not billing, and can land first." }
+  - { candidate: messenger_c08, verdict: reject, attack: "A CRM is a product; the row asks for a business inbox. Pipelines would sit empty on a 1 GB VPS full of chatty neighbours." }
+  - { candidate: messenger_c09, verdict: keep, attack: "Right shape, but it closes 'questions routing', not 'business inbox' — kept as the first slice of c07." }
+picks:
+  - gap: messenger_notify_suppression
+    winner: messenger_c04
+    rationale: "One filter on the bell stream plus read-on-open, no new server truth. The badge can be wrong for one stale tab; that is the honest cost."
+    losers: { messenger_c05: "a presence key is a second source of truth", messenger_c06: "the baseline, not the answer" }
+  - gap: messenger_business_crm
+    winner: messenger_c07
+    rationale: "The inbox-and-labels slice is order-taking rather than billing, so it honours the fence while being genuinely useful to a kitchen on a Friday."
+    losers: { messenger_c08: "a product nobody asked for inside a messenger", messenger_c09: "kept as the first slice of the winner" }
+  - gap: messenger_webrtc_calls
+    winner: messenger_c01
+    rationale: "Design of record with the infrastructure cost stated; the row stays blocked until the operator provisions STUN/TURN. Voice notes and c02 remain the humane interim."
+    losers: { messenger_c02: "scheduling is not calling", messenger_c03: "a LAN demo in a city product" }

@@ -25,7 +25,11 @@ stylesheets obey the CSS constitution and the type and scale contracts, that
 payment and affiliate pages say what they do, that Stimulus controllers are
 wired to something, and that the shared engine is mounted where the apps expect
 it. A neighbouring group checks the surface schemas and the first screen of each
-page.
+page. One more reads the craft ledger:
+`exemption_freshness` holds every recorded exemption to its `review_by` date —
+fails the row whose review has passed, fails a row whose law no executable law
+file declares, and warns when a review comes due — so an excuse recorded once
+cannot quietly outlive its argument.
 
 Others simulate a visitor. The page simulation walks every full-page template,
 checking its identity, its dead ends and its labels, and when the apps listen it
@@ -155,4 +159,13 @@ MASTER/bin/operator triangle up
 ruby MASTER/checks/runner.rb page_simulation flow_journey
 ruby MASTER/checks/runner.rb --all
 ruby MASTER/checks/runner.rb --ledger
+```
+
+`--json` prints one JSON document instead of the dmesg lines — every named
+check's outcome, failure/warning/error lines, gaps and the summary — with the
+same exit codes as the prose run. It exists so harnesses and foreign runtimes
+can consume findings as data instead of parsing them back out of the log:
+
+```zsh
+ruby MASTER/checks/runner.rb --json --all > check_run.json
 ```

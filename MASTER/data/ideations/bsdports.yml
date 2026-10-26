@@ -1,0 +1,55 @@
+---
+schema: 1
+app: bsdports
+pass: 1
+date: 2026-10-27
+ledger: data/gaps.yml
+authorization: operator request 2026-10-27 (chat e2c7ceca) — ideate over the planned rows; every pick stays law-gated
+gaps: [bsdports_multi_parsers, bsdports_semantic_search, bsdports_knowledge_graph, bsdports_package_intel]
+candidates:
+  # bsdports_multi_parsers
+  - { id: bsdports_c01, gap: bsdports_multi_parsers, spec: "Keep OpenBSD-only production scope; document the decision on the parser surface instead of shipping parsers for trees the host never runs.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  - { id: bsdports_c02, gap: bsdports_multi_parsers, spec: "Add a FreeBSD ports parser behind the same Makefile-reading interface, data on demand.", hyperlocal: low, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: bsdports_c03, gap: bsdports_multi_parsers, spec: "Full cross-platform: pkgsrc too.", hyperlocal: low, synergy: low, cost: L, laws_delta: new-surface, reversibility: low }
+  # bsdports_semantic_search
+  - { id: bsdports_c04, gap: bsdports_semantic_search, spec: "Match by meaning: embed a small local description corpus (pkg-descr) and serve 'search by what it does' over brute-force cosine — the wardrobe-scale answer.", hyperlocal: low, synergy: medium, cost: M, laws_delta: none, reversibility: high }
+  - { id: bsdports_c05, gap: bsdports_semantic_search, spec: "FTS5 the right way: synonyms and stem expansion for port jargon (httpd -> nginx, apache) in a checked-in table.", hyperlocal: low, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  - { id: bsdports_c06, gap: bsdports_semantic_search, spec: "pgvector.", hyperlocal: low, synergy: low, cost: L, laws_delta: new-surface, reversibility: low }
+  # bsdports_knowledge_graph
+  - { id: bsdports_c07, gap: bsdports_knowledge_graph, spec: "Graph the ports tree the reader actually asks: dependency edges + 'what depends on this' pages from data already parsed.", hyperlocal: low, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: bsdports_c08, gap: bsdports_knowledge_graph, spec: "Full infrastructure knowledge graph: hosts, vlans, services, packages — an operator asset, not a reader surface.", hyperlocal: low, synergy: medium, cost: L, laws_delta: new-surface, reversibility: low }
+  - { id: bsdports_c09, gap: bsdports_knowledge_graph, spec: "Skip the graph; the tree file itself is the truth.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  # bsdports_package_intel
+  - { id: bsdports_c10, gap: bsdports_package_intel, spec: "Package intelligence from existing rows: last-commit freshness, maintainer activity, 'still maintained?' signals shown per port.", hyperlocal: low, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  - { id: bsdports_c11, gap: bsdports_package_intel, spec: "Vulnerability feed cross-referenced per port.", hyperlocal: low, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: bsdports_c12, gap: bsdports_package_intel, spec: "Download/popularity telemetry.", hyperlocal: low, synergy: low, cost: M, laws_delta: new-surface, reversibility: medium }
+critique:
+  - { candidate: bsdports_c01, verdict: keep, attack: "A documented 'no' is the honest scope line; but the row exists because someone will want FreeBSD next year, so the interface note matters as much as the refusal." }
+  - { candidate: bsdports_c02, verdict: keep, attack: "On-demand data for a tree the production host does not run is shelfware risk; kept because the Makefile interface makes it a week, not a quarter." }
+  - { candidate: bsdports_c03, verdict: reject, attack: "Three trees, one maintainer, zero production need for two of them." }
+  - { candidate: bsdports_c04, verdict: keep, attack: "Brute-force cosine over a few thousand descriptions is honest at this scale — but it needs an embedding source; without one it is a plan, not a feature." }
+  - { candidate: bsdports_c05, verdict: keep, attack: "Synonyms are hand-made meaning — cheap, inspectable, and exactly right for jargon; kept as the start c04 can sit on later." }
+  - { candidate: bsdports_c06, verdict: reject, attack: "Postgres again; the stack is SQLite by law." }
+  - { candidate: bsdports_c07, verdict: keep, attack: "'What depends on this' is the question every port reader eventually asks; the edges already exist in the parse." }
+  - { candidate: bsdports_c08, verdict: reject, attack: "That is an OPENBSD-repo asset wearing a bsdports costume; the row's readers are port browsers, not operators." }
+  - { candidate: bsdports_c09, verdict: keep, attack: "Kept as the baseline: the tree is truth; the graph only earns its place by answering a question the tree answers badly." }
+  - { candidate: bsdports_c10, verdict: keep, attack: "Freshness from existing parse data is free truth; the only risk is a 'still maintained?' label reading as judgment — word it as a fact, not a grade." }
+  - { candidate: bsdports_c11, verdict: keep, attack: "A vuln feed is a pipeline to maintain and a fear surface to word carefully; kept, gated on a source that does not need scraping." }
+  - { candidate: bsdports_c12, verdict: reject, attack: "Popularity telemetry for a browsing site invites the same attention-ranking the rest of the suite refuses." }
+picks:
+  - gap: bsdports_semantic_search
+    winner: bsdports_c05
+    rationale: "A checked-in synonym table over the existing FTS5 gives jargon-tolerant search this week, inspectable forever; c04's embeddings remain the documented next step when an embedding source exists."
+    losers: { bsdports_c04: "needs an embedding source the suite does not have", bsdports_c06: "Postgres is out of stack" }
+  - gap: bsdports_knowledge_graph
+    winner: bsdports_c07
+    rationale: "Dependency pages from data already parsed — the smallest graph that answers the reader's actual question."
+    losers: { bsdports_c08: "an operator asset in a reader surface", bsdports_c09: "the baseline the graph must beat" }
+  - gap: bsdports_package_intel
+    winner: bsdports_c10
+    rationale: "Freshness and maintainer activity are facts the parse already holds; shown as facts, not grades."
+    losers: { bsdports_c11: "kept, gated on a clean source", bsdports_c12: "telemetry invites the ranking the suite refuses" }
+  - gap: bsdports_multi_parsers
+    winner: bsdports_c01
+    rationale: "The documented refusal plus the interface note: OpenBSD-only stays, and the Makefile interface is what makes a future FreeBSD parser a week instead of a quarter."
+    losers: { bsdports_c02: "kept as the named future, not the present", bsdports_c03: "three trees, one maintainer" }

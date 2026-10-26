@@ -1,0 +1,21 @@
+---
+schema: 1
+app: maps
+pass: 1
+date: 2026-10-27
+ledger: data/gaps.yml
+authorization: operator request 2026-10-27 (chat e2c7ceca) — ideate over the planned rows; every pick stays law-gated
+gaps: [maps_poi_substrate]
+candidates:
+  - { id: maps_c01, gap: maps_poi_substrate, spec: "Places as the fleet's POI substrate: a stable public JSON surface (index/show by slug) other verticals read — takeaway near-pins, dating meet-spots, marketplace pickup hints — so 'hyperlocal' has one shared source.", hyperlocal: high, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: maps_c02, gap: maps_poi_substrate, spec: "Per-vertical POI copies: each engine keeps its own place rows.", hyperlocal: medium, synergy: low, cost: M, laws_delta: new-surface, reversibility: low }
+  - { id: maps_c03, gap: maps_poi_substrate, spec: "Import OSM locally and serve POIs from the import instead of the curated Place table.", hyperlocal: high, synergy: medium, cost: L, laws_delta: new-surface, reversibility: low }
+critique:
+  - { candidate: maps_c01, verdict: keep, attack: "A shared substrate is a contract, and contracts accrete consumers who never leave — once dating pins a meet-spot to a Place, every Place edit is load-bearing." }
+  - { candidate: maps_c02, verdict: reject, attack: "Per-vertical copies are the duplication the shared-concern campaign spent a season removing." }
+  - { candidate: maps_c03, verdict: keep, attack: "Right ambition, wrong order: the curated table is small and trusted; an OSM import needs licensing care and a refresh pipeline nobody is asking for yet." }
+picks:
+  - gap: maps_poi_substrate
+    winner: maps_c01
+    rationale: "The synergy axis elected this row more than any feature: the suite's hyperlocal claims get one shared source of places, and the surface already exists — the work is a contract and consumers, not a product."
+    losers: { maps_c02: "copies of truth are how drift starts", maps_c03: "the ambition, after the substrate has consumers" }

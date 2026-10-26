@@ -83,7 +83,7 @@ workstreams:
     state: partial
     title: Capability ownership and least-privilege graph
     implementation: MASTER/lib/core.rb
-    proof: MASTER/tools/capability_inventory.rb
+    proof: MASTER/tools/audit/capability_inventory.rb
   - id: event_replay
     state: partial
     title: Canonical event vocabulary, provenance and replay
@@ -199,3 +199,67 @@ workstreams:
     title: Claims distinguish source proof from external evidence
     implementation: MASTER/lib/convergence/proof.rb
     proof: MASTER/test/test_convergence_proof.rb
+  # --- ideation pass 1 (2026-10-27, operator chat e2c7ceca) ---
+  # Every row below came out of data/ideations/*.yml via data/gaps.yml; the
+  # picks and the losers' reasons live there, not here. This file records the
+  # shape of the winner and where its proof will live.
+  - id: gap_ledger_ideation
+    state: landed
+    title: Gap ledger, adversarial ideation records and the discipline that keeps them honest
+    implementation: MASTER/data/gaps.yml
+    proof: MASTER/test/test_gap_discipline.rb
+  - id: brgen_recent_searches
+    state: partial
+    title: Recent committed searches in the palette blank state (server-side, cross-device)
+    implementation: RAILS/brgen/app/models/search_recent.rb
+    proof: RAILS/brgen/test/models/search_recent_test.rb
+  - id: marketplace_duplicate_detection
+    state: partial
+    title: Duplicate-listing detection files a moderation report; a human decides
+    implementation: RAILS/brgen_marketplace/app/models/marketplace/listing.rb
+    proof: RAILS/brgen/test/models/marketplace_duplicate_detection_test.rb
+  - id: takeaway_delivery_area
+    state: partial
+    title: Stated delivery radius validated nil-safely against the reader's stored position
+    implementation: RAILS/brgen_marketplace/engines/takeaway/app/models/takeaway/order.rb
+    proof: RAILS/brgen_marketplace/engines/takeaway/test/models/takeaway/delivery_area_test.rb
+  - id: takeaway_cart_expiry
+    state: partial
+    title: Pending carts expire on a clock through the same transition as a manual cancel
+    implementation: RAILS/brgen/app/jobs/takeaway_cart_expiry_sweep_job.rb
+    proof: RAILS/brgen_marketplace/engines/takeaway/test/models/takeaway/cart_expiry_test.rb
+  - id: brgen_feed_ranking_deterministic
+    state: missing
+    title: Deterministic recency-plus-engagement feed ranking in the dating ranked_for shape
+    implementation: RAILS/brgen
+    proof: Feed surface test on a Ruby host
+  - id: amber_similarity_right_sized
+    state: missing
+    title: Wears-well-with from typed attribute vectors by brute-force cosine at wardrobe scale
+    implementation: RAILS/amber
+    proof: RAILS/amber/test
+  - id: master_face_breath
+    state: partial
+    title: The stipple field breathes in brightness only, frozen by reduced motion twice over
+    implementation: RAILS/master/public/face_stipple_system.js
+    proof: shaders static-checked; breath rides vAlpha with uMotionScale and uTime both zeroed by the reduced-motion path
+  - id: master_voice_browser_dsp
+    state: partial
+    title: The browser builds the declared character presets — ring-mod aeval shapes, WaveShaper acrusher bits, the asetrate idiom as one modulated-delay shifter
+    implementation: RAILS/master/public/face_speech_runtime.js
+    proof: both-lane buildability proven per preset by scripts/verify_face_voice_batch.py against the ported builder grammar
+  - id: master_voice_cooler_default
+    state: partial
+    title: Doubler and the room ship on as the default voice; ionosphere, midnight and shortwave are one env var away
+    implementation: MASTER/data/voice.yml
+    proof: preset filter strings parse in both lanes; values marked author's judgement per file convention
+  - id: master_fleet_panel
+    state: missing
+    title: The dashboard renders the fleet — sibling health, load and the resource_guard order
+    implementation: RAILS/master/app/views/dashboard
+    proof: dashboard fleet panel on a Ruby host
+  - id: master_quota_facts
+    state: missing
+    title: model_quota and cache_efficiency stop being computed and dropped — the status strip renders them
+    implementation: RAILS/master/app/views/dashboard
+    proof: dashboard status strip on a Ruby host

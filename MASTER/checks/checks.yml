@@ -83,6 +83,11 @@ domain_alignment:
   pass: "Domain alignment check passed (city domains + deploy_inventory.json/relayd checks)."
   covered_by: release
 
+exemption_freshness:
+  require: lib/source/exemption_freshness
+  class: Deploy::ExemptionFreshnessCheck
+  pass: "exemption_freshness: every craft-ledger exemption review is current."
+
 frontend_auditor:
   require: lib/source/frontend_auditor
   class: Deploy::FrontendAuditorCheck

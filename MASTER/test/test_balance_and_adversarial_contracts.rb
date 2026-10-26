@@ -5,7 +5,7 @@ require "open3"
 
 require_relative "test_helper"
 require_relative "../lib/review/challenges"
-require_relative "../tools/llm_challenges"
+require_relative "../tools/research/llm_challenges"
 require_relative "../lib/core"
 require_relative "../checks/support/check_result"
 
@@ -35,7 +35,7 @@ class ReviewChallengePackTest < Minitest::Test
   def test_operator_tool_emits_the_same_source_of_truth
     out, status = Open3.capture2e(
       RbConfig.ruby,
-      File.expand_path("../tools/llm_challenges.rb", __dir__),
+      File.expand_path("../tools/research/llm_challenges.rb", __dir__),
       "--mode", "pack",
       "--evidence", "probe"
     )

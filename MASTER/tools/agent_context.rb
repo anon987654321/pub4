@@ -9,9 +9,11 @@
 #
 #   ruby MASTER/tools/agent_context.rb                 # the standing context
 #   ruby MASTER/tools/agent_context.rb "<prompt>"      # plus what matches it
+#   ruby MASTER/tools/agent_context.rb --json          # the same, as data
+#   ruby MASTER/tools/agent_context.rb --json --tree   # plus the tree map
 #
 # Designed for a UserPromptSubmit hook, so it has to be small: data/laws.yml is
-# 4,609 lines and injecting it every turn would drown the turn. Six kilobytes
+# 2,170 lines and injecting it every turn would drown the turn. Six kilobytes
 # go out — the binding half: the conduct rules that govern how to work, what the
 # check can actually block on, and how much of the law is unmeasured right now.
 
@@ -211,6 +213,32 @@ end
       out << "Lessons matching this prompt: #{matched.map { |p| File.basename(p, '.yml') }.join(', ')}" if matched.any?
       out.join("\n")
     end
+
+    # The same standing context as #render, as data. For harnesses and session
+    # handoffs that consume JSON rather than prose: the conduct rules in
+    # force, the rules that can refuse a write, coverage, and the operator
+    # shell contract. Every field is read from the same methods the prose
+    # mode prints — this is a serialization of one authority, never a second
+    # one. With --tree, the rendered tree lines ride along under "tree".
+    def session_json(tree: false, tree_root: REPO_ROOT, tree_depth: TREE_DEFAULT_DEPTH, tree_max_entries: TREE_DEFAULT_MAX_ENTRIES)
+      require "json"
+      payload = {
+        "source" => "MASTER/tools/agent_context.rb",
+        "authority" => [
+          "MASTER/data/soul.yml",
+          "MASTER/data/laws.yml",
+          "MASTER/law/*.rb",
+          "tree contracts",
+          "agent-harness prose",
+        ],
+        "conduct" => conduct,
+        "blocking_rules" => blocking_rules,
+        "coverage" => coverage,
+        "shell_contract" => shell_contract.join("\n"),
+      }
+      payload["tree"] = render_tree(root: tree_root, max_depth: tree_depth, max_entries: tree_max_entries) if tree
+      payload
+    end
   end
 end
 
@@ -218,6 +246,16 @@ if $PROGRAM_NAME == __FILE__
   if (options = Operator::AgentContext.fix_context_args(ARGV))
     target, full = options
     puts Operator::AgentContext.fix_context(target:, full:)
+  elsif ARGV.include?("--json")
+    require "json"
+    tree = ARGV.include?("--tree")
+    root, depth, max_entries = tree ? Operator::AgentContext.tree_args(ARGV) : nil
+    puts JSON.generate(Operator::AgentContext.session_json(
+                         tree:,
+                         tree_root: root,
+                         tree_depth: depth,
+                         tree_max_entries: max_entries,
+                       ))
   elsif (options = Operator::AgentContext.tree_args(ARGV))
     root, depth, max_entries = options
     puts Operator::AgentContext.render_tree(root:, max_depth: depth, max_entries:)

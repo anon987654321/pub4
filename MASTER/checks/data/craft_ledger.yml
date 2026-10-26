@@ -1,0 +1,234 @@
+# Craft ledger: provenance for ceilings, pens and exemptions.
+#
+# schema: 1
+# name: craft_ledger
+#
+# This file is evidence, not policy. Three boundaries keep it that way:
+#
+#   1. The ceilings live in checks/data/css_budget.yml and nowhere else. This
+#      file records what a ceiling measured, when, and why each delta was
+#      legitimate; it never states a ceiling the budget file does not also
+#      state. A row here that disagrees with the budget file is a bug in this
+#      row.
+#   2. The executable exemption markers live in law/*.rb and nowhere else. A
+#      row here maps a marker to its reason and a review date; it grants
+#      nothing by itself. Deleting the marker in law makes the row dead, and
+#      deleting the row here does not change what the scanner enforces.
+#   3. A measured number is only stated where it was actually measured. The
+#      2026-10-25 campaign ran in an environment with no Ruby runtime and no
+#      browser, using a faithful port of css_constitution (scripts outside the
+#      repo, 27 self-tests against known-bad/good fixtures), so its numbers
+#      are marked with that provenance rather than presented as operator runs.
+#
+# review_by dates make every exemption expire. checks/lib/source/exemption_freshness.rb
+# is that stale-exemptions reader: an overdue review is a check failure, a law
+# whose executable file has vanished is a dead row, and a review coming due
+# warns before it can block anyone. The review itself — re-arguing the excuse
+# against its law — stays a human obligation; the check only ends the part
+# where a date could pass unnoticed.
+schema: 1
+name: craft_ledger
+recorded: "2026-10-25"
+recorded_by: layout-campaign agent (static analysis port of css_constitution; no Ruby runtime in the recording environment)
+
+budget_rows:
+  # One row per rule the budget file seeds. measured is the campaign's final
+  # tally against the ceiling of the same day; a row without measured was not
+  # measured by that campaign and says so instead of guessing.
+  - rule: important
+    ceiling: 60
+    measured: 3
+    as_of: "2026-10-25"
+    provenance: static-analysis port, RAILS tree
+    note: >-
+      Down from the 60 the ceiling was set at. The remaining three are in
+      __shared auth_form and battery_aware styles.
+
+  - rule: rhythm
+    ceiling: 90
+    measured: 72
+    as_of: "2026-10-25"
+    provenance: static-analysis port, RAILS tree
+    note: >-
+      The 72 break down into the named pens below, the two idioms that only
+      look off-grid (the -1px visually-hidden clip, the -1000px off-screen
+      park), inline-chip hairlines, and dialect steps already recorded in
+      css_budget.yml's rhythm history. The campaign report carries the full
+      file:line list; this row is the summary, not the census.
+
+  - rule: magic_hex
+    ceiling: 146
+    measured: 146
+    as_of: "2026-10-25"
+    provenance: static-analysis port, RAILS tree
+    note: >-
+      At ceiling. Full composition recorded by the campaign so the number is
+      checkable rather than asserted: 72 dialect definitions (the amber,
+      bsdports and brgen token blocks that define their palettes), 12 marked
+      scan:intentional, 4 product pens, and the remainder distinct one-off
+      steps each wired to an in-scope token or named by the dialect blocks.
+
+  - rule: type_scale
+    ceiling: 5
+    measured: 5
+    as_of: "2026-10-25"
+    provenance: static-analysis port, RAILS tree
+    note: At ceiling. auth_form small-print sizes and face.css measured sizes.
+
+  - rule: weight_ladder
+    ceiling: 3
+    measured: 3
+    as_of: "2026-10-25"
+    provenance: static-analysis port, RAILS tree
+    note: At ceiling. _site_legal 700, face.css 700s.
+
+  - rule: child_margin
+    ceiling: 0
+    measured: 0
+    as_of: "2026-10-25"
+    provenance: static-analysis port, RAILS tree
+
+  - rule: card_padding
+    ceiling: 1
+    measured: 0
+    as_of: "2026-10-25"
+    provenance: static-analysis port, RAILS tree
+    note: >-
+      Under ceiling by one. The campaign neither added to it nor spent the
+      raised slot; the reason the ceiling stands at 1 is in the budget file's
+      own history, not restated here.
+
+  - rule: leading
+    ceiling: 85
+    measured: 29
+    as_of: "2026-10-25"
+    provenance: static-analysis port, RAILS tree
+    note: >-
+      125 literal line-heights were snapped to --leading-* in the campaign and
+      29 remain against the 85 ceiling. The remaining 29 are listed in the
+      campaign report as file:line rows; closing them is snapping, not
+      re-measuring.
+
+  # Contrast ceilings were not re-measured by the campaign (rendered-geometry
+  # checks need a browser); the rows exist so the ledger covers every seeded
+  # budget rule, and say so instead of inventing counts.
+  - rule: contrast_below_aa
+    ceiling: 0
+    as_of: "2026-10-25"
+    provenance: not measured by this campaign (needs rendered geometry)
+
+  - rule: contrast_below_aaa
+    ceiling: 38
+    as_of: "2026-10-25"
+    provenance: not measured by this campaign (needs rendered geometry)
+
+pens:
+  # A pen is a named, deliberate exception to the spacing/type grid: rendered
+  # intent a mechanical snap would damage. Same boundary as everything here —
+  # the budget file and the scanners decide what counts; this list says why.
+  - id: chat-upload-centre-inset
+    rule: rhythm
+    value: 13px
+    sites:
+      - RAILS/master/public/chat_upload.css:30
+    reason: >-
+      (44 - 18) / 2 — how an 18px drawn square centres inside a 44px tap
+      target. Both numbers are themselves law (--tap-min is 44), so 13px is
+      the only spacing value that satisfies them. First recorded in
+      css_budget.yml's 2026-08-22 entry.
+
+  - id: marketplace-nav-bar-hand-tuned
+    rule: rhythm
+    value: 10px, 6px, 6px, 5px
+    sites:
+      - RAILS/brgen/app/assets/stylesheets/_marketplace_nav_bar.scss
+    reason: >-
+      Four use sites from commit 0c110203b, a deliberate operator redesign of
+      that bar. Snapping to 8/4 moves rendered spacing in a bar just tuned by
+      hand, and the repo's rule is restore-or-ask on visual layout. First
+      recorded 2026-08-25; if the bar should sit on the grid, snap the four
+      and ratchet the ceiling back down.
+
+  - id: visually-hidden-clip
+    rule: rhythm
+    value: -1px
+    reason: >-
+      Half of the visually-hidden clip rectangle; the nearest allowed step
+      would delete it rather than align it. Below the grid is not off it.
+
+  - id: off-screen-park
+    rule: rhythm
+    value: -1000px
+    sites:
+      - RAILS/brgen/app/assets/stylesheets/_brgen_vertical_radio_home.scss:180-181
+    reason: Parks a node off-screen; not a spacing decision at all.
+
+  - id: inline-chip-hairline
+    rule: rhythm
+    value: 1px
+    reason: >-
+      1px padding on inline chips; the nearest allowed step is 0, which
+      deletes the chip's shape. Recorded in css_budget.yml's rhythm history.
+
+  - id: affiliate-tile-hairlines
+    rule: rhythm
+    value: 2px gap, 2px 4px chip padding
+    sites:
+      - RAILS/brgen/app/assets/stylesheets/_affiliate.scss
+    reason: >-
+      In-feed tile label spacing over the photo; nearest step doubles the
+      hairline or deletes it. First recorded 2026-08-13 (89 -> 91 raise).
+
+exemptions:
+  # The executable markers live in MASTER/law/html.rb (NO_INLINE_SCRIPT_BLOCK)
+  # and the other law files; each row here carries the reason the marker was
+  # granted and the date it must be re-argued. Granularity is the surface, not
+  # the byte range, on purpose: the law file remains the only thing that
+  # decides what the scanner actually skips.
+  - id: no-inline-script-chat-face
+    law: NO_INLINE_SCRIPT_BLOCK
+    surface: RAILS master chat face
+    reason: >-
+      Face chat needs its live behaviour beside the markup it stipples; the
+      inline block was moved or excused with the reason stated in the law
+      declaration during the 2026-10-25 campaign batch A. See the law file for
+      the exact paths.
+    recorded: "2026-10-25"
+    review_by: "2027-04-26"
+
+  - id: no-inline-script-offline-and-406
+    law: NO_INLINE_SCRIPT_BLOCK
+    surface: RAILS master offline page and 406 surface
+    reason: >-
+      Both surfaces must work without any external asset by design; their
+      scripts are the fallback, not a bypass. Excused with reasons stated in
+      the law declaration, batch A.
+    recorded: "2026-10-25"
+    review_by: "2027-04-26"
+
+pending_evidence:
+  # Findings the 2026-10-25 campaign could see but could not close honestly
+  # without a rendered browser: the evidence that would retire them does not
+  # exist yet, and inventing it from a lexical scan is the exact
+  # anti-simulation move soul.yml forbids. Recorded here so the debt lives in
+  # the tree rather than only in a session report; each row names the evidence
+  # that retires it. A row leaves this section the way a budget number leaves
+  # the ledger: by being closed, never by being deleted.
+  - id: mobile-first-max-width-queries
+    law: MOBILE_FIRST
+    count: 18
+    as_of: "2026-10-25"
+    provenance: static-analysis port, RAILS tree
+    surfaces: >-
+      __shared welcome_onboarding; amber commerce_polish and mannequin_3d; and
+      ten brgen shared partials (city_campaigns, feed_responsive_finish,
+      listing_creation, marketplace_commerce, media_feed, dating and more) —
+      the campaign report carries the full file:line list.
+    evidence_owed: >-
+      A rendered capture of each affected surface at a narrow and a wide
+      viewport (browser_diagnostics, then geometry or pixel baselines),
+      showing whether each max-width query is a deliberate desktop-only
+      override or a mobile-first miss. With that evidence: rewrite to
+      min-width where the cascade allows, or record a pen with the rendered
+      reason. Without it the warns stand; they are warns, not failures,
+      because the law's own severity says the judgement needs the render.

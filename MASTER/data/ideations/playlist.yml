@@ -1,0 +1,21 @@
+---
+schema: 1
+app: playlist
+pass: 1
+date: 2026-10-27
+ledger: data/gaps.yml
+authorization: operator request 2026-10-27 (chat e2c7ceca) — ideate over the planned rows; every pick stays law-gated
+gaps: [playlist_creator_donations]
+candidates:
+  - { id: playlist_c01, gap: playlist_creator_donations, spec: "Donations on the shared commerce domain: a tip row on sets, ledgered, with the creator named — no platform skim recorded anywhere.", hyperlocal: medium, synergy: high, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: playlist_c02, gap: playlist_creator_donations, spec: "Ad-free tier for listeners: a subscription that removes nothing today (there are no ads), which makes it dishonest.", hyperlocal: low, synergy: low, cost: M, laws_delta: new-surface, reversibility: low }
+  - { id: playlist_c03, gap: playlist_creator_donations, spec: "Wait for commerce_shared_domain; meanwhile give creators the embeddable player's credit line prominence (already exists) and record the dependency.", hyperlocal: low, synergy: high, cost: S, laws_delta: none, reversibility: high }
+critique:
+  - { candidate: playlist_c01, verdict: keep, attack: "Blocked on the commerce domain like every money row — kept because tips are the only money shape the fence permits without changing what listening is." }
+  - { candidate: playlist_c02, verdict: reject, attack: "Selling the removal of ads that do not exist is a dark pattern the fence bans by name." }
+  - { candidate: playlist_c03, verdict: keep, attack: "The fence again; kept as the interim answer, not a dodge — the credit line already gives creators their name on every embed." }
+picks:
+  - gap: playlist_creator_donations
+    winner: playlist_c03
+    rationale: "The fence decides the order: tips are recorded as the design of record on the shared commerce domain; nothing ships money before the ledger exists."
+    losers: { playlist_c01: "the design of record, gated on the domain", playlist_c02: "sells the removal of nothing" }

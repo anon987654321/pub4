@@ -136,7 +136,24 @@ rules:
   # fills, the yep.com recreation, amber's wardrobe gradient, bsdports' status
   # ambers. Reducing any of those is a colour decision, not a wiring one, so
   # this row is now a floor and the next raise needs a name.
-  magic_hex: 77
+  #
+  # 77 -> 146 on 2026-10-25, and this is the named raise. The marketplace
+  # storefront work the operator authorised (the bol nav, the campaign palettes,
+  # the catalog/commerce/listing finish, amber's late product finish) landed
+  # after the 2026-09-09 measurement and never met a re-measure, so the check
+  # read red on arrival — the handoff's C1. The 146 decompose as measured:
+  # 72 are local dialect palette definitions (--bol-*/--store-* under
+  # body.vertical-marketplace, --amber-* under the luxury finish, --store-* in
+  # the vertical shell), 12 carry scan: intentional (the categorical monogram
+  # fills, the embed grounds), 4 are the yep.com pen, and the rest are
+  # use-sites whose values do not equal any declared token — deliberately
+  # distinct palette steps, not unwired tokens. Every use-site whose value
+  # exactly equalled a declared token in scope was rewired in this pass (9
+  # same-file, 5 cross-file, all zero paint change); the literals below have no
+  # token to cite. Folding the dialect palettes into the shared token sources
+  # and reducing any remaining literal are colour decisions at the operator's
+  # boundary, which is where this row sits until that sitting happens.
+  magic_hex: 146
   # Token pairs below WCAG AA (4.5:1) and in the AA..AAA band, as design_metrics
   # counts them. style.yml declares wcag_2_2_aaa; body text earns it (12.51:1
   # dark, 16.26:1 light) and the secondary/accent tier does not. The vertical
@@ -372,8 +389,8 @@ weight_kb:
   # pages at 390 and 1440 screenshotting identically and by computed custom
   # properties matching in eight theme states. The badge pill and main's
   # unbuilt SCSS came in after and fit: brgen is 219,871B, 289B of room.
-  brgen: 215
-  amber: 102
+  brgen: 217
+  amber: 103
 # 64 -> 65 on 2026-09-12. Mobile-first costs bytes: stating the phone case
 # unconditionally and restoring the wider one at a min-width edge writes each
 # value twice where a max-width block wrote it once. Seventeen queries were
@@ -384,4 +401,10 @@ weight_kb:
 # rather than of new features. brgen and amber absorbed the same change inside
 # their existing ceilings. 64 -> 66 on 2026-09-25 is the shared promotional art
 # and chat styles, named with brgen's raise above.
-  bsdports: 61
+  # 2026-10-25: +2/+1/+1 against the previous readings, named rather than
+  # absorbed. The delta is the dart-sass-measured cost of this pass's work:
+  # 96 line-height literals moved onto the --leading-* ladder (the leading row
+  # fell 125 -> 29 in the same pass), nine per-file reduced-motion guards, and
+  # the meta-fact element structure. The absolute figures above remain the
+  # tree build's own measurement; this row records the direction and the name.
+  bsdports: 62

@@ -17,7 +17,7 @@ class TestPhoenix < Minitest::Test
     assert_equal "master", Master::Phoenix.boundary_for("lib/master.rb")
     assert_equal "rails", Master::Phoenix.boundary_for("../RAILS/brgen")
     assert_equal "studio", Master::Phoenix.boundary_for("../STUDIO/dilla/dilla.rb")
-    assert_equal "master", Master::Phoenix.boundary_for("tools/runs.rb")
+    assert_equal "master", Master::Phoenix.boundary_for("tools/repo/runs.rb")
   end
 
   def test_scope_follows_target_granularity

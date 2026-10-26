@@ -221,12 +221,50 @@ def ledger_report
   LEDGER.render
 end
 
+# One JSON document per run: every check's outcome, its failure/warning/error
+# lines and gaps, and the summary. For harnesses and foreign runtimes that
+# consume findings as data instead of parsing dmesg lines — the same evidence
+# the prose path prints, read from the same CheckResult objects, with the
+# same exit codes. Serialized defensively: a check whose result objects do
+# not answer the usual readers is reported as errored rather than taking the
+# whole document down.
+def result_json(result)
+  {
+    "outcome" => result.outcome.to_s,
+    "failures" => result.failures.map(&:to_s),
+    "warnings" => result.warnings.map(&:to_s),
+    "errors" => result.errors.map(&:to_s),
+    "gaps" => result.gaps.to_h { |name, gap| [name.to_s, gap.respond_to?(:clause) ? gap.clause.to_s : gap.to_s] },
+    "live_skips" => result.live_skips,
+    "checks_ran" => result.checks_ran,
+  }
+rescue StandardError => e
+  { "outcome" => "errored", "errors" => ["result serialization failed: #{e.class}: #{e.message}"] }
+end
+
+def json_report(results, elapsed)
+  {
+    "run_id" => RUN_ID,
+    "elapsed_s" => elapsed.round(1),
+    "checks" => results.to_h { |name, result| [name, result_json(result)] },
+    "summary" => {
+      "passed" => results.count { |_name, result| result.outcome == :passed },
+      "failed" => results.select { |_name, result| result.outcome == :failed }.keys,
+      "errored" => results.select { |_name, result| result.outcome == :errored }.keys,
+      "inconclusive" => results.select { |_name, result| result.outcome == :inconclusive }.keys,
+      "live_skips" => results.values.sum(&:live_skips),
+      "autofix" => Deploy::CheckAutofix.enabled?,
+    },
+  }
+end
+
 def parse_options
-  options = { all: false, explain: false, ledger: false, args: [] }
+  options = { all: false, explain: false, ledger: false, json: false, args: [] }
   parser = OptionParser.new do |opts|
     opts.on("--all") { options[:all] = true }
     opts.on("--explain") { options[:explain] = true }
     opts.on("--ledger") { options[:ledger] = true }
+    opts.on("--json") { options[:json] = true }
     opts.on("--no-autofix") { ENV["CHECK_AUTOFIX"] = "0" }
 
     opts.on("--scan-only") { ENV["CHECK_AUTOFIX"] = "0" }
@@ -260,7 +298,9 @@ names.each_with_index do |name, index|
   results[name] = result
 
   outcome = result.outcome
-  if outcome == :passed
+  if options[:json]
+    log_retired("#{CHECK_UNIT} at #{CHECK_PARENT}: #{name} #{outcome}")
+  elsif outcome == :passed
     result.render(row["pass"]) if %w[
       css_constitution design_metrics rendered_suite layout_suite flow_journey page_simulation mobile_flow
     ].include?(name)
@@ -283,8 +323,10 @@ unless token_reads.outcome == :inconclusive
   record("token_reads", token_reads, 0)
 
   results["token_reads"] = token_reads
-  token_reads.render
-  say("token_reads #{token_reads.outcome}")
+  unless options[:json]
+    token_reads.render
+    say("token_reads #{token_reads.outcome}")
+  end
 end
 
 elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
@@ -300,7 +342,12 @@ summary += " in #{format('%.1fs', elapsed)}, autofix #{autofix}"
 summary += "; failed=#{failed.join(',')}" unless failed.empty?
 summary += "; inconclusive=#{inconclusive.join(',')}" unless inconclusive.empty?
 summary += "; errored=#{errored.join(',')}" unless errored.empty?
-say(summary)
+
+if options[:json]
+  puts JSON.generate(json_report(results, elapsed))
+else
+  say(summary)
+end
 
 exit 1 if failed.any?
 exit 1 if errored.any? && Deploy::CheckResult.strict_errors?

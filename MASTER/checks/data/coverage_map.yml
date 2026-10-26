@@ -1,0 +1,99 @@
+# Declared instrument coverage for the reconciliation census.
+#
+# schema: 1
+# name: coverage_map
+#
+# What this file is: the one place that says which instrument claims which
+# part of the trees, so MASTER/tools/coverage_reconciliation.rb can compute
+# the files no instrument sees. It exists because the repo's blind spots were
+# never broken checks — they were checks whose globs drifted when the tree's
+# shape changed, found by hand each time (57 views lost when the verticals
+# became engines; 10 stylesheets and 1,406 lines outside every ceiling; 1,513
+# more when RAILS/master joined the product).
+#
+# What this file is not: complete. complete is false because every row below
+# was written from static reading in an environment with no Ruby runtime, and
+# a declared-complete map that lies would be worse than no map. The fill-in
+# protocol is the same one css_budget.yml's history used after each blind
+# spot: read the instrument's actual glob, copy it here, run the
+# reconciliation once against the real tree, and only then mark the row
+# verified. When every row is verified and the first full run reports zero
+# uncovered files that are not explained by the skip list, set complete: true
+# and the tool starts failing on whatever the next shape change drops.
+#
+# Globs are repo-root relative (the directory that holds MASTER and RAILS).
+schema: 1
+name: coverage_map
+complete: false
+
+roots:
+  - RAILS
+  - MASTER
+
+skip:
+  - .git
+  - .bundle
+  - node_modules
+  - vendor
+  - tmp
+  - log
+  - coverage
+  - storage
+  - .master
+  - sockets
+  - pids
+  - cache
+  - builds
+
+instruments:
+  # Seed row, verified the hard way: the 2026-10-25 campaign ported this
+  # check's globbing (27 fixture self-tests) and its census matched
+  # css_budget.yml's history — 94 stylesheets once the verticals and
+  # RAILS/master were folded in. The glob below is that widened shape; confirm
+  # it against checks/lib/source/css_constitution.rb's css_files on a Ruby
+  # host before trusting the row over the source.
+  - name: css_constitution
+    sees: stylesheets under each shipping app, the mountable verticals, and master's public sheets
+    verified: true
+    globs:
+      - RAILS/amber/app/assets/stylesheets/**/*.scss
+      - RAILS/bsdports/app/assets/stylesheets/**/*.scss
+      - RAILS/brgen/app/assets/stylesheets/**/*.scss
+      - RAILS/brgen_*/app/assets/stylesheets/**/*.scss
+      - RAILS/brgen_*/**/app/assets/stylesheets/**/*.scss
+      - RAILS/master/public/*.css
+      - RAILS/__shared/app/assets/stylesheets/**/*.scss
+
+  # Declared, not yet verified: fill in from the law sources before marking.
+  - name: web_laws (html/javascript detectors)
+    sees: ERB views and frontend javascript under the four surfaces
+    verified: false
+    verify: MASTER/law/html.rb, MASTER/law/javascript.rb, MASTER/law/detectors/web_laws.rb — copy their actual path lists
+    globs:
+      - RAILS/amber/app/views/**/*.html.erb
+      - RAILS/bsdports/app/views/**/*.html.erb
+      - RAILS/brgen/app/views/**/*.html.erb
+      - RAILS/brgen_*/app/views/**/*.html.erb
+      - RAILS/__shared/app/views/**/*.html.erb
+      - RAILS/__shared/frontend/*.js
+
+  # Declared, not yet verified.
+  - name: locale contracts
+    sees: locale files the nb/en parity and one-home-per-key tests read
+    verified: false
+    verify: RAILS/test/locale_contract_test.rb, RAILS/test/i18n_resolution_test.rb — their directory walks
+    globs:
+      - RAILS/*/config/locales/*.yml
+      - RAILS/brgen_*/config/locales/*.yml
+      - RAILS/__shared/config/locales/*.yml
+
+  # A row for what no instrument should ever see, so the skip list stays
+  # argued instead of accumulated: machine-written artefacts, not source.
+  - name: skip-list rationale
+    sees: nothing — the listed directories are generated, vendored or runtime state
+    verified: true
+    note: >-
+      .git, .bundle, node_modules, vendor, tmp, log, coverage, storage,
+      .master, sockets, pids, cache and builds are artefacts or runtime
+      state. Anything source-shaped that lands there is misfiled and should
+      be moved rather than added here.

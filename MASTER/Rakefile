@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Keep the task registry here; reusable implementations live in lib/ and tools/.
-# Tests such as tools/runs.rb read this file to discover the actual entrypoints.
+# Tests such as tools/repo/runs.rb read this file to discover the actual entrypoints.
 
 require "bundler"
 require "rake/testtask"
@@ -485,6 +485,13 @@ namespace :docs do
       puts "docs:agent_contracts: wrote #{relative}"
     end
   end
+
+  desc "Regenerate docs/laws_digest.md from data/laws.yml and law/*.rb"
+  task :laws_digest do
+    require_relative "tools/laws_digest"
+    digest = Operator::LawsDigest.write
+    puts "docs:laws_digest: wrote docs/laws_digest.md (#{digest.count("\n")} lines)"
+  end
 end
 
 namespace :readme do
@@ -523,6 +530,20 @@ task :agent_contracts do
         "edit the marked block there and run `rake docs:agent_contracts`" if drifted.any?
 
   puts "lint:agent_contracts: #{AGENT_CONTRACT_TARGETS.size} harness files match their source"
+end
+
+desc "docs/laws_digest.md matches what data/laws.yml and law/*.rb generate"
+task :laws_digest do
+  require_relative "tools/laws_digest"
+  path = Operator::LawsDigest::OUTPUT
+  abort "lint:laws_digest: docs/laws_digest.md is missing — run `rake docs:laws_digest`" unless File.file?(path)
+
+  current = File.read(path)
+  fresh = Operator::LawsDigest.render
+  abort "lint:laws_digest: docs/laws_digest.md drifted from data/laws.yml and law/*.rb — " \
+        "edit the sources and run `rake docs:laws_digest`" unless current == fresh
+
+  puts "lint:laws_digest: docs/laws_digest.md matches its sources"
 end
 
   desc "Check all Ruby files have # frozen_string_literal: true"
@@ -766,7 +787,7 @@ end
 
   TOOL_LINT_TASKS = {
     scan_coverage: ["Every Ruby-bearing tree in MASTER is scanned by its own law or exempt with a written reason", "tools/scan_coverage.rb"],
-    capability: ["Named capabilities must not disappear vs origin/main", "tools/capability_inventory.rb"],
+    capability: ["Named capabilities must not disappear vs origin/main", "tools/audit/capability_inventory.rb"],
     reader_singularity: ["One loader per data file — a second direct reader is a second implementation", "tools/reader_singularity.rb"],
     doc_citations: ["Prose citing a number that data/ owns must cite the value data/ currently holds", "tools/doc_citations.rb"],
     do_not_touch: ["Every Do Not Touch entry names the check that fails when its claim stops being true", "tools/do_not_touch.rb"],
@@ -774,7 +795,7 @@ end
     swallowed: ["Load-bearing errors that were swallowed and never looked at", "tools/swallowed_errors.rb"],
     law_audit: ["Rules that cannot see their own subject, or fire on nearly everything", "tools/law_audit.rb"],
     autofix_reach: ["Rules whose autofix names code that does not exist, or names nothing at all", "tools/autofix_reach.rb"],
-    rule_hygiene: ["Rule ids, aliases and metadata: collisions, unfinished folds, missing tier/severity", "tools/law_hygiene.rb"],
+    rule_hygiene: ["Rule ids, aliases and metadata: collisions, unfinished folds, missing tier/severity", "tools/audit/law_hygiene.rb"],
     word_boundary: ["Flag \\b adjacent to punctuation in rule regexes — a word boundary that can never fire", "tools/word_boundary_lint.rb"],
     test_naming: ["MASTER test files are test_<subject>.rb, not <subject>_test.rb", "tools/test_naming.rb"],
     constant_collisions: ["No two files loadable into one process define the same top-level constant", "tools/constant_collisions.rb"],

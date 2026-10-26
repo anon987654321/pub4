@@ -12,7 +12,7 @@
 # This asserts every test file is reachable from some entrypoint.
 
 require "minitest/autorun"
-require_relative "../tools/runs"
+require_relative "../tools/repo/runs"
 
 class TestRuns < Minitest::Test
   def self.report = @report ||= Operator::Runs.run

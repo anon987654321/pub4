@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../tools/law_hygiene"
+require_relative "../tools/audit/law_hygiene"
 require_relative "../lib/operator/autofix_reach"
 require_relative "../lib/operator/law_reach"
 

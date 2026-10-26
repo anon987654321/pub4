@@ -12,7 +12,7 @@ require_relative "../../lib/review/challenges"
 module Master
   module Review
     module ChallengeTools
-      ROOT = File.expand_path("../../..", __dir__)
+      ROOT = File.expand_path("../..", __dir__)
 
       class DeletionProbe
         Result = Data.define(:baseline_ok, :methods, :protected, :unprotected, :errors)

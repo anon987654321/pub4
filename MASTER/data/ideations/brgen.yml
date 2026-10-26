@@ -1,0 +1,93 @@
+---
+schema: 1
+app: brgen
+pass: 1
+date: 2026-10-27
+ledger: data/gaps.yml
+authorization: operator request 2026-10-27 (chat e2c7ceca) — ideate over the planned rows; every pick stays law-gated
+method: >
+  Candidates at spec level only — no code — because breadth is cheap in words
+  and expensive in diffs. Critique is adversarial per candidate: the strongest
+  honest argument that it is wrong, breaks existing behaviour, or fights a
+  decision already recorded. Winners need a reason; losers keep theirs.
+gaps: [brgen_ai_feed_ranking, brgen_cold_start_feed, brgen_creator_monetization, brgen_activitypub_inbound, brgen_recurring_events, brgen_city_population_seeds, brgen_recent_searches]
+candidates:
+  # brgen_ai_feed_ranking
+  - { id: brgen_c01, gap: brgen_ai_feed_ranking, spec: "Model-ranked feed: train a ranker on vote/comment/dwell signals, serve top-n per reader.", hyperlocal: medium, synergy: medium, cost: L, laws_delta: new-surface, reversibility: low }
+  - { id: brgen_c02, gap: brgen_ai_feed_ranking, spec: "Deterministic score: recency + local engagement decay in SQL, no model, no background recompute — the dating ranked_for shape already in the tree.", hyperlocal: high, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: brgen_c03, gap: brgen_ai_feed_ranking, spec: "Import a vector-search stack (pgvector + embeddings) and rank by neighbour similarity.", hyperlocal: medium, synergy: low, cost: L, laws_delta: new-surface, reversibility: low }
+  # brgen_cold_start_feed
+  - { id: brgen_c04, gap: brgen_cold_start_feed, spec: "Cold-start tab: follows union city popular, explicitly labelled, so an empty follow graph still shows a living city.", hyperlocal: high, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: brgen_c05, gap: brgen_cold_start_feed, spec: "Onboarding quiz that seeds follows from interests before the first scroll.", hyperlocal: low, synergy: low, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: brgen_c06, gap: brgen_cold_start_feed, spec: "Guest sees nearby-only feed keyed to the geolocation the browser already shares with locations#update.", hyperlocal: high, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  # brgen_creator_monetization
+  - { id: brgen_c07, gap: brgen_creator_monetization, spec: "Creator tips on posts through the shared commerce domain once it exists.", hyperlocal: low, synergy: high, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: brgen_c08, gap: brgen_creator_monetization, spec: "Defer until commerce_shared_domain lands; record the dependency rather than minting a second billing path.", hyperlocal: low, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: brgen_c09, gap: brgen_creator_monetization, spec: "Paid subscriptions per creator with a per-creator Stripe account.", hyperlocal: low, synergy: low, cost: L, laws_delta: new-surface, reversibility: low }
+  # brgen_activitypub_inbound
+  - { id: brgen_c10, gap: brgen_activitypub_inbound, spec: "Store remote Create/Announce/Like behind a remote-media proxy with per-origin quotas and the FediBlock list applied at ingest.", hyperlocal: medium, synergy: medium, cost: L, laws_delta: new-surface, reversibility: low }
+  - { id: brgen_c11, gap: brgen_activitypub_inbound, spec: "Store text-only inbound notes first (no remote media), moderated by the existing ModerationWorkflow.", hyperlocal: medium, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: brgen_c12, gap: brgen_activitypub_inbound, spec: "Keep verified-and-dropped; publish the decision as documentation instead of code.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  # brgen_recurring_events
+  - { id: brgen_c13, gap: brgen_recurring_events, spec: "RRULE-lite: Event gains a recurrence rule column and a materialiser that writes concrete occurrences a season ahead.", hyperlocal: high, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: brgen_c14, gap: brgen_recurring_events, spec: "External ticketing link only, kept as-is; events stay rsvp-only inside the fence.", hyperlocal: medium, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  - { id: brgen_c15, gap: brgen_recurring_events, spec: "Full ticketing with payments on the shared commerce domain.", hyperlocal: medium, synergy: high, cost: L, laws_delta: new-surface, reversibility: low }
+  # brgen_city_population_seeds
+  - { id: brgen_c16, gap: brgen_city_population_seeds, spec: "Add population to CitySeed from a checked-in public-domain table of the 43 registry cities, column + reader, no API.", hyperlocal: high, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  - { id: brgen_c17, gap: brgen_city_population_seeds, spec: "Derive a popularity proxy from existing visit_counts instead of adding a column.", hyperlocal: medium, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: brgen_c18, gap: brgen_city_population_seeds, spec: "Fetch populations at boot from an external API.", hyperlocal: low, synergy: low, cost: M, laws_delta: new-surface, reversibility: low }
+  # brgen_recent_searches
+  - { id: brgen_c19, gap: brgen_recent_searches, spec: "Server-side per-user recents table; the palette's blank state renders the last five committed searches as chips.", hyperlocal: low, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  - { id: brgen_c20, gap: brgen_recent_searches, spec: "localStorage-only recents, no table, no server round-trip.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  - { id: brgen_c21, gap: brgen_recent_searches, spec: "Recents plus saved-search suggestions merged into one blank-state list.", hyperlocal: low, synergy: medium, cost: M, laws_delta: none, reversibility: medium }
+critique:
+  - { candidate: brgen_c01, verdict: reject, attack: "A trained ranker needs telemetry the suite does not collect and a host job it cannot run yet; it also hides its reasons — the opposite of the ranked_for decision recorded on Dating::Profile." }
+  - { candidate: brgen_c02, verdict: keep, attack: "Looks too dumb to be 'AI' — but it is inspectable, testable, honest about its inputs, and the tree already proves the shape works." }
+  - { candidate: brgen_c03, verdict: reject, attack: "pgvector drags Postgres into a SQLite-pinned stack for a feed one reader scrolls; infrastructure bought for a demo is debt, not capability." }
+  - { candidate: brgen_c04, verdict: keep, attack: "Union feeds can feel noisy — mitigated by the explicit tab label; nothing existing breaks." }
+  - { candidate: brgen_c05, verdict: reject, attack: "A quiz is a wall between a guest and the city; the suite's own rule is that guests are never forced to sign up." }
+  - { candidate: brgen_c06, verdict: reject, attack: "Geolocation-gated feeds punish readers who decline the prompt with an empty city; cold-start must not depend on a permission." }
+  - { candidate: brgen_c07, verdict: keep, attack: "Money without the shared commerce domain first is exactly what the horizon fence forbids; kept only as the design of record for after it lands." }
+  - { candidate: brgen_c08, verdict: keep, attack: "Not a feature — but the critique that survives is 'wait for the domain', which is the fence speaking." }
+  - { candidate: brgen_c09, verdict: reject, attack: "A billing stack per creator duplicates what commerce_shared_domain exists to prevent." }
+  - { candidate: brgen_c10, verdict: keep, attack: "The full version is the only one that actually answers the apps.yml note's three blockers — but it is L-cost and stays unimplemented until the proxy exists." }
+  - { candidate: brgen_c11, verdict: reject, attack: "Half a federation inbox is a second moderation surface to keep honest; the note names media proxying as the reason storage was dropped, and text-only does not remove the moderation half." }
+  - { candidate: brgen_c12, verdict: keep, attack: "Doing nothing is a real option — the verified-and-dropped decision is recent and documented; kept as the fallback, not the winner." }
+  - { candidate: brgen_c13, verdict: keep, attack: "A materialiser can ghost the calendar when rules change; needs a visible 'recurring, next: date' label so occurrences never lie." }
+  - { candidate: brgen_c14, verdict: keep, attack: "Already the recorded state; keeping it as the honest baseline the recurrence design must beat." }
+  - { candidate: brgen_c15, verdict: reject, attack: "Payments before the shared commerce domain violates the fence order recorded in apps.horizon.yml." }
+  - { candidate: brgen_c16, verdict: keep, attack: "A static table ages; a column with a source comment ages honestly. CitySeed already owns the 43 cities." }
+  - { candidate: brgen_c17, verdict: keep, attack: "visit_counts measures the deployed host, not the city — a proxy that flatters big launch cities; better as a dashboard number than a seed fact." }
+  - { candidate: brgen_c18, verdict: reject, attack: "The suite calls no external API anywhere at boot; seeds must stay deterministic for the contract tests." }
+  - { candidate: brgen_c19, verdict: keep, attack: "A per-user table is state to protect — but it is small, indexed, and the palette blank state is otherwise empty for signed-in readers." }
+  - { candidate: brgen_c20, verdict: reject, attack: "localStorage breaks the cross-device promise every other server-side preference in the suite keeps, and cannot be tested in the contract suite." }
+  - { candidate: brgen_c21, verdict: reject, attack: "Merging recents with saved searches muddies two different intents — 'what I looked for' vs 'what I want to be told about'." }
+picks:
+  - gap: brgen_recent_searches
+    winner: brgen_c19
+    rationale: "Small, testable, cross-device, and it fills the palette's one genuinely empty state. Implemented this pass."
+    losers: { brgen_c20: "server-side preferences are the suite's kept promise", brgen_c21: "two intents in one list helps neither" }
+  - gap: brgen_ai_feed_ranking
+    winner: brgen_c02
+    rationale: "The deterministic ranked_for shape is already proven in the tree, honest about its inputs, and needs no infrastructure the host lacks. Workstream records the spec; implementation follows when the feed surface is touched next."
+    losers: { brgen_c01: "unfalsifiable without telemetry the suite refuses to collect", brgen_c03: "Postgres for one scroll is debt" }
+  - gap: brgen_cold_start_feed
+    winner: brgen_c04
+    rationale: "Cheapest honest union of follows and city popular with a truthful label; pairs with c02 when it lands."
+    losers: { brgen_c05: "a wall in front of the city", brgen_c06: "permission-gated cold start is an empty city for decliners" }
+  - gap: brgen_creator_monetization
+    winner: brgen_c08
+    rationale: "The fence decides: no creator money path before commerce_shared_domain. The pick records the dependency, which is the work."
+    losers: { brgen_c07: "right idea, wrong order", brgen_c09: "per-creator billing duplicates the domain the fence demands" }
+  - gap: brgen_activitypub_inbound
+    winner: brgen_c10
+    rationale: "The only candidate that answers all three blockers named in apps.yml; kept as the design of record, blocked in practice until the media proxy exists."
+    losers: { brgen_c11: "half an inbox is a second moderation surface", brgen_c12: "kept as fallback; the pick prefers the eventual answer over permanent deferral" }
+  - gap: brgen_recurring_events
+    winner: brgen_c13
+    rationale: "Materialised occurrences keep the existing Event surface (RSVP, capacity, cancel!) working unchanged — the fence is honoured and ticketing stays out."
+    losers: { brgen_c14: "the status quo the row exists to change", brgen_c15: "payments before the commerce domain breaks the fence order" }
+  - gap: brgen_city_population_seeds
+    winner: brgen_c16
+    rationale: "A checked-in table is deterministic, testable and honest about ageing; the column gives every city surface a real sort key."
+    losers: { brgen_c17: "a proxy that flatters launch cities", brgen_c18: "external calls at boot break seed determinism" }

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../tools/capability_inventory"
+require_relative "../tools/audit/capability_inventory"
 
 class TestCapabilityInventory < Minitest::Test
   def setup

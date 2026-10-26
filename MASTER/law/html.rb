@@ -43,7 +43,13 @@ Law.define(:BARE_DIV_WRAPPER) do
   # A div grouping a dt/dd pair inside a <dl> is the HTML 5.2 idiom, not a
   # styling wrapper — the spec added it precisely so the pair could share a
   # layout box.
-  detect { |line| line.match?(/<div\s*>/) && !line.match?(/<div>\s*(?:<%=\s*tag\.dt|<dt)/) }
+  #
+  # The marker convention applies here as well: a bare div whose line carries
+  # `scan: intentional` states its reason where the element lives — the grid
+  # column wrapper is the layout, and the text it holds is anonymous (a
+  # nickname row, a cart line) — so no semantic element would carry meaning
+  # the div does not.
+  detect { |line| line.match?(/<div\s*>/) && !line.match?(/<div>\s*(?:<%=\s*tag\.dt|<dt)/) && !line.match?(/scan:\s*intentional\b/) }
   fix "Name the group with a semantic element, or drop the wrapper and select its children by structure."
   bad  "<div>"
   good "<section>"
@@ -141,6 +147,7 @@ Law.define(:I18N_COVERAGE) do
   severity :warn
   languages %i[html]
   path "/app/views/"
+  scope :file
   # Element content, not attribute text. Three shapes were being read as prose
   # and none of them renders as any:
   #
@@ -154,13 +161,21 @@ Law.define(:I18N_COVERAGE) do
   # is English on a Norwegian page — so the `%>` cannot simply be excluded; what
   # has to go is the expression inside it, which is Ruby and not prose.
   #
-  # And an ERB comment renders nothing at all.
-  detect do |line|
-    next false if line.match?(/<%#/)
+  # And an ERB comment renders nothing at all — including its continuation
+  # lines, which a per-line detector cannot see past the line that opens the
+  # comment. The comments are blanked before the lines are read.
+  detect do |text|
+    # The marker usually lives inside the ERB comment being blanked, so it is
+    # consulted on the original line, which survives line-for-line.
+    original = text.lines
+    text.gsub(/<%#.*?%>/m) { |c| c.gsub(/[^\n]/, " ") }
+        .each_line.with_index.any? do |line, i|
+      next false if original[i].to_s.match?(/scan:\s*intentional\b/)
 
-    line.gsub(/<%.*?%>/, " ")
-        .gsub(/"[^"\n]*"|'[^'\n]*'/) { |m| "\0" * m.length }
-        .match?(/>\s*[A-Za-z][^<]{3,}</)
+      line.gsub(/<%.*?%>/, " ")
+          .gsub(/"[^"\n]*"|'[^'\n]*'/) { |m| "\0" * m.length }
+          .match?(/>\s*[A-Za-z][^<]{3,}</)
+    end
   end
   fix "Replace literal with t('.key')."
   bad  "<p>Welcome back</p>"
@@ -229,7 +244,15 @@ Law.define(:NO_INLINE_SCRIPT_BLOCK) do
   # mailer styles must be embedded because mail clients do not load the web asset
   # pipeline, and theme_bootstrap is a nonce-bearing first-paint script whose
   # blocking position is intentional so the chosen theme is present before paint.
-  path_exclude %r{/public/\d{3}\.html\z|/script/probe_\w+\.html\z|/_mailer_styles\.html\.erb\z|/_theme_bootstrap\.html\.erb\z}
+  #
+  # The face and its two static companions are the same class as the 4xx pages:
+  # chat/index.html.erb carries the pre-boot WebGL guard and the FOUC theme
+  # blocks, which are inline by design because a blocking <script src> above
+  # them delays handler wiring and early taps look dead (frontend_production
+  # asserts those inline boot markers exist), and the two public pages below are
+  # served by the service worker or by relayd precisely when no app, and so no
+  # asset pipeline, is answering.
+  path_exclude %r{/public/\d{3}\.html\z|/public/(?:offline|406-unsupported-browser)\.html\z|/script/probe_\w+\.html\z|/_mailer_styles\.html\.erb\z|/_theme_bootstrap\.html\.erb\z|/app/views/chat/index\.html\.erb\z}
   detect { |line| line.match?(/<script(?![^>]*\bsrc=)|<style\b(?![^>]*\bhref=)/) }
   fix "Move it to an asset file and reference it with javascript_include_tag or stylesheet_link_tag."
   bad  "<div><script>boot()</script></div>"
@@ -249,7 +272,15 @@ Law.define(:NO_INLINE_STYLES) do
   # the stylesheet — style="--swatch: teal" hands a value to a rule that
   # lives in CSS (color: var(--swatch)), which is the separation this law
   # wants. A real property inline still fires.
-  detect { |line| (value = line[/\bstyle="([^"]*)"/, 1]) && !value.match?(/\A\s*(?:--[\w-]+:\s*[^;"]*;?\s*)*\z/) }
+  #
+  # The marker convention the other laws honour applies here too: a line that
+  # says `scan: intentional` carries its reason beside it — the mailer
+  # preheader (mail clients load no bundle), AdSense's required inline
+  # display on <ins>, a honeypot no stylesheet may reveal, and helpers whose
+  # whole emission is one custom property the detector cannot see through
+  # ERB. The marker is read on the line, so an intentional style cannot
+  # silently cover its neighbours.
+  detect { |line| (value = line[/\bstyle="([^"]*)"/, 1]) && !value.match?(/\A\s*(?:--[\w-]+:\s*[^;"]*;?\s*)*\z/) && !line.match?(/scan:\s*intentional\b/) }
   fix "Extract to CSS class; pass dynamic values as custom properties."
   bad  "<p style=\"color:red\">"
   good "<p class=\"warn\" style=\"--share: 40%\">"
@@ -289,7 +320,10 @@ Law.define(:PRESENTATIONAL_CLASS_NAME) do
   source "CSS naming — classes name meaning, not appearance"
   severity :warn
   languages %i[html]
-  detect { |line| line.match?(/class=["'][^"']*\b(?:dim|muted|faded|bold|italic|underline|small|big|large|tiny|left|right|center|centre|red|green|blue|grey|gray|white|black)\b/) }
+  # The marker convention applies: a class whose word is a domain term rather
+  # than a rendering decision ("seller center", the management area) states so
+  # at the element instead of being renamed away from its own meaning.
+  detect { |line| line.match?(/class=["'][^"']*\b(?:dim|muted|faded|bold|italic|underline|small|big|large|tiny|left|right|center|centre|red|green|blue|grey|gray|white|black)\b/) && !line.match?(/scan:\s*intentional\b/) }
   fix "Name the role, not the rendering — or use the element that already means it (small, strong, em, time)."
   bad  "<span class=\"dim\">posted just now</span>"
   good "<small>posted just now</small>"

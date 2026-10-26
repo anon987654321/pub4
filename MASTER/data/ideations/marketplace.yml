@@ -1,0 +1,121 @@
+---
+schema: 1
+app: marketplace
+pass: 1
+date: 2026-10-27
+ledger: data/gaps.yml
+authorization: operator request 2026-10-27 (chat e2c7ceca) — ideate over the planned rows; every pick stays law-gated
+gaps: [marketplace_ai_recs, marketplace_coupons, marketplace_contact_relay, marketplace_duplicates, marketplace_liquidity, marketplace_paid_boosts, marketplace_seller_analytics, commerce_shared_domain, commerce_private_seller_verification, commerce_local_ads]
+candidates:
+  # marketplace_ai_recs
+  - { id: marketplace_c01, gap: marketplace_ai_recs, spec: "Co-view recommendations: listings favourited or bought by readers who also touched this one — pure SQL over existing tables.", hyperlocal: medium, synergy: high, cost: M, laws_delta: none, reversibility: high }
+  - { id: marketplace_c02, gap: marketplace_ai_recs, spec: "Category+price-band neighbours: 'more like this' from the same city, category and budget decile.", hyperlocal: high, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  - { id: marketplace_c03, gap: marketplace_ai_recs, spec: "Embedding similarity over titles/descriptions with a vector store.", hyperlocal: low, synergy: low, cost: L, laws_delta: new-surface, reversibility: low }
+  # marketplace_coupons
+  - { id: marketplace_c04, gap: marketplace_coupons, spec: "Coupons and referral credit as rows on the shared commerce domain, consumed at checkout — one ledger, transparent balances.", hyperlocal: low, synergy: high, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: marketplace_c05, gap: marketplace_coupons, spec: "Referral credit only (invite a friend, both get store credit), no coupon machinery.", hyperlocal: medium, synergy: medium, cost: S, laws_delta: new-surface, reversibility: medium }
+  - { id: marketplace_c06, gap: marketplace_coupons, spec: "Bundle pricing: 'buy these three listings together' with a seller-set discount.", hyperlocal: medium, synergy: low, cost: M, laws_delta: new-surface, reversibility: medium }
+  # marketplace_contact_relay
+  - { id: marketplace_c07, gap: marketplace_contact_relay, spec: "Per-listing relay address (listing-abc123@) that forwards to the seller, expires with the listing, rate-limited — blocked until vm23 accepts inbound mail.", hyperlocal: medium, synergy: medium, cost: L, laws_delta: new-surface, reversibility: low }
+  - { id: marketplace_c08, gap: marketplace_contact_relay, spec: "In-app anonymised thread only (exists: buyer-seller chat); hide email/phone in first messages with a moderator-reviewed unmask request.", hyperlocal: low, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: marketplace_c09, gap: marketplace_contact_relay, spec: "Do nothing; the chat surface already is the relay.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  # marketplace_duplicates
+  - { id: marketplace_c10, gap: marketplace_duplicates, spec: "On create, normalise the title and compare against the seller's own active listings; a match files one open ModerationReport (reason: duplicate) for a human to judge.", hyperlocal: low, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  - { id: marketplace_c11, gap: marketplace_duplicates, spec: "Block the create outright when a normalised twin exists.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  - { id: marketplace_c12, gap: marketplace_duplicates, spec: "Fuzzy match on title+body+price with a similarity threshold and nightly batch scan.", hyperlocal: low, synergy: medium, cost: M, laws_delta: none, reversibility: medium }
+  # marketplace_liquidity
+  - { id: marketplace_c13, gap: marketplace_liquidity, spec: "Liquidity page for the operator: empty categories, categories where demand (saved searches) outruns supply (live listings), and zero-result searches.", hyperlocal: high, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: marketplace_c14, gap: marketplace_liquidity, spec: "Show demand badges publicly on empty categories ('wanted in Bergen').", hyperlocal: high, synergy: medium, cost: M, laws_delta: none, reversibility: medium }
+  - { id: marketplace_c15, gap: marketplace_liquidity, spec: "Weekly liquidity digest email to the operator.", hyperlocal: medium, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  # marketplace_paid_boosts
+  - { id: marketplace_c16, gap: marketplace_paid_boosts, spec: "Time-boxed boost that multiplies ranking_score for 7 days, capped per category so paid never crowds out the organic page — on the commerce domain.", hyperlocal: low, synergy: high, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: marketplace_c17, gap: marketplace_paid_boosts, spec: "Separate 'sponsored' slot above the organic list, always labelled, never mixed into ranking.", hyperlocal: low, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: marketplace_c18, gap: marketplace_paid_boosts, spec: "No boosts; keep discovery strictly organic forever.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  # marketplace_seller_analytics
+  - { id: marketplace_c19, gap: marketplace_seller_analytics, spec: "Seller dashboard from existing rows: views (ListingEvent), favourites, orders, sell-through per listing — no new tracking.", hyperlocal: medium, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: marketplace_c20, gap: marketplace_seller_analytics, spec: "Add impression tracking to every card render for full funnel numbers.", hyperlocal: low, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: marketplace_c21, gap: marketplace_seller_analytics, spec: "Promotion analytics only once boosts exist; defer the whole row.", hyperlocal: low, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  # commerce_shared_domain
+  - { id: marketplace_c22, gap: commerce_shared_domain, spec: "Entitlements-as-data first: one shared domain with plans, entitlements, a transparent ledger and campaign rows; verticals consume, none own billing. Money movement still goes through the operator-approved provider.", hyperlocal: low, synergy: high, cost: L, laws_delta: new-surface, reversibility: medium }
+  - { id: marketplace_c23, gap: commerce_shared_domain, spec: "Ledger-only first: record credits and entitlements as data with no payment path at all — the fence's first honest slice.", hyperlocal: low, synergy: high, cost: M, laws_delta: new-surface, reversibility: high }
+  - { id: marketplace_c24, gap: commerce_shared_domain, spec: "Per-vertical billing stacks, built independently.", hyperlocal: low, synergy: low, cost: L, laws_delta: new-surface, reversibility: low }
+  # commerce_private_seller_verification
+  - { id: marketplace_c25, gap: commerce_private_seller_verification, spec: "Vouching: an existing verified business vouches for a private seller after a documented check; the badge names the vouching business.", hyperlocal: high, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: marketplace_c26, gap: commerce_private_seller_verification, spec: "Proof-by-history: badge after n completed orders with zero unresolved reports — earned, not bought.", hyperlocal: medium, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  - { id: marketplace_c27, gap: commerce_private_seller_verification, spec: "Do not verify private sellers at all; the TrustScore stays the only signal.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  # commerce_local_ads
+  - { id: marketplace_c28, gap: commerce_local_ads, spec: "Self-serve local ads as Campaign rows on the commerce domain: geo+time targeted, CPC, capped share of every surface, always labelled 'Ad from <business>'.", hyperlocal: high, synergy: high, cost: L, laws_delta: new-surface, reversibility: medium }
+  - { id: marketplace_c29, gap: commerce_local_ads, spec: "Fixed-price sponsored category tiles sold month-to-month, no auction.", hyperlocal: high, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
+  - { id: marketplace_c30, gap: commerce_local_ads, spec: "Wait for liquidity signals first, per the recorded 'liquidity before ads' note.", hyperlocal: low, synergy: high, cost: S, laws_delta: none, reversibility: high }
+critique:
+  - { candidate: marketplace_c01, verdict: keep, attack: "Co-view bias replicates popularity — the exact feedback loop Dating::Profile's ranking comment refuses; acceptable for products, never for people." }
+  - { candidate: marketplace_c02, verdict: keep, attack: "Cheap and explainable but shallow; a chair page shows more chairs, which the category page already does." }
+  - { candidate: marketplace_c03, verdict: reject, attack: "A vector store for a classifieds site on SQLite is infrastructure cosplay." }
+  - { candidate: marketplace_c04, verdict: keep, attack: "Nothing here may move money before the domain exists — this candidate IS the domain's first consumer spec, which is why it stays." }
+  - { candidate: marketplace_c05, verdict: keep, attack: "Referral credit is still money-like state; kept as the smallest honest slice of c04." }
+  - { candidate: marketplace_c06, verdict: reject, attack: "Bundles of one-off used goods are a mismatch — the listings sell individually and stock is one-of-a-kind." }
+  - { candidate: marketplace_c07, verdict: keep, attack: "Blocked on inbound mail; kept because it is the only design that actually protects a seller's private address." }
+  - { candidate: marketplace_c08, verdict: reject, attack: "Hiding phone numbers in messages is a moderation surface with no moderator demand behind it — the chat is already in-app and logged." }
+  - { candidate: marketplace_c09, verdict: keep, attack: "Kept as the honest baseline: for most trades the chat thread is enough." }
+  - { candidate: marketplace_c10, verdict: keep, attack: "A same-seller normalised-title check is narrow on purpose — it catches double-posts and floods, not relistings; a human judges every report." }
+  - { candidate: marketplace_c11, verdict: reject, attack: "Blocking assumes bad faith; a seller who legitimately wants two identical rows (two rooms for rent) gets an error instead of a queue." }
+  - { candidate: marketplace_c12, verdict: reject, attack: "Fuzzy nightly scans re-flag the same rows forever with no resolution path; the report queue fills with noise." }
+  - { candidate: marketplace_c13, verdict: keep, attack: "Saved-search demand vs live supply is a real signal the tables already hold; the page is operator-only so no public pressure is added." }
+  - { candidate: marketplace_c14, verdict: keep, attack: "Public demand badges help sellers, but they can gamify 'wanted' noise; kept as a follow-up once c13 proves the signal." }
+  - { candidate: marketplace_c15, verdict: reject, attack: "An email nobody configured to want; the operator page is the digest." }
+  - { candidate: marketplace_c16, verdict: keep, attack: "Multiplied ranking_score quietly mixes paid into organic — mitigated only by the cap; the labelled-slot design (c17) is more honest, so this wins only if slots are also labelled." }
+  - { candidate: marketplace_c17, verdict: keep, attack: "Labelled sponsored slots cost the reader nothing in trust and are the shape classifieds have converged on worldwide." }
+  - { candidate: marketplace_c18, verdict: keep, attack: "The fence's own spirit; kept as the permanent fallback if ads fund nothing they claim to." }
+  - { candidate: marketplace_c19, verdict: keep, attack: "Existing rows only means no new consent surface and no new tracking law to explain; the numbers are small but real." }
+  - { candidate: marketplace_c20, verdict: reject, attack: "Impression tracking on a 1 GB VPS for hobby sellers is instrumentation the product has not earned." }
+  - { candidate: marketplace_c21, verdict: keep, attack: "Correct ordering for promotion analytics specifically; wrong for the row as a whole." }
+  - { candidate: marketplace_c22, verdict: keep, attack: "L-cost and it touches money — but the fence demands exactly this shape, so the pick is the fence's own answer." }
+  - { candidate: marketplace_c23, verdict: keep, attack: "The first slice that can land without a payment provider; kept as the implementation order inside c22." }
+  - { candidate: marketplace_c24, verdict: reject, attack: "Explicitly forbidden by the horizon fence: one domain, never a stack per engine." }
+  - { candidate: marketplace_c25, verdict: keep, attack: "Vouching shifts trust to whoever vouches — named vouching keeps that honest; still a new social surface to moderate." }
+  - { candidate: marketplace_c26, verdict: keep, attack: "Earned badges cannot be bought, which fits 'payment never buys a trust outcome' better than anything else in this list." }
+  - { candidate: marketplace_c27, verdict: keep, attack: "Honest and free; kept as the baseline c26 must beat." }
+  - { candidate: marketplace_c28, verdict: keep, attack: "Only after liquidity signals and on the shared domain — the fence order is explicit; the labelled cap is what keeps organic discovery quality-weighted." }
+  - { candidate: marketplace_c29, verdict: keep, attack: "Simpler to sell to a local bakery than an auction UI; kept as the go-to-market inside c28." }
+  - { candidate: marketplace_c30, verdict: keep, attack: "The recorded order of operations; kept as the gate, not the answer." }
+picks:
+  - gap: marketplace_duplicates
+    winner: marketplace_c10
+    rationale: "Narrow, reversible, human-judged: detection files the report, a person decides. Implemented this pass."
+    losers: { marketplace_c11: "assumes bad faith and blocks legitimate repeats", marketplace_c12: "a noise machine with no resolution path" }
+  - gap: marketplace_ai_recs
+    winner: marketplace_c02
+    rationale: "'More like this' from city + category + budget band is explainable, SQLite-friendly and cheap; it improves the PDP without a popularity feedback loop."
+    losers: { marketplace_c01: "co-view bias is the loop the dating code refuses", marketplace_c03: "a vector store is infrastructure cosplay here" }
+  - gap: marketplace_liquidity
+    winner: marketplace_c13
+    rationale: "Operator-first liquidity page from existing demand (saved searches) vs supply (live listings) — the recorded 'liquidity before ads' gate starts here."
+    losers: { marketplace_c14: "a public follow-up once the signal is proven", marketplace_c15: "the page is the digest" }
+  - gap: marketplace_seller_analytics
+    winner: marketplace_c19
+    rationale: "Existing rows only: views, favourites, orders, sell-through. No consent surface, no tracking law, real numbers."
+    losers: { marketplace_c20: "impressions the product has not earned", marketplace_c21: "right for promotions, wrong for the row" }
+  - gap: marketplace_coupons
+    winner: marketplace_c04
+    rationale: "Coupons and credits as rows on the shared domain — the consumer spec that makes commerce_shared_domain concrete."
+    losers: { marketplace_c05: "kept as the smallest slice of the winner", marketplace_c06: "bundles mismatch one-of-a-kind goods" }
+  - gap: marketplace_contact_relay
+    winner: marketplace_c07
+    rationale: "The only design that actually protects the seller's address; blocked on vm23 inbound mail, recorded with the blocker named."
+    losers: { marketplace_c08: "a moderation surface with no demand", marketplace_c09: "the honest baseline, kept" }
+  - gap: marketplace_paid_boosts
+    winner: marketplace_c17
+    rationale: "A labelled sponsored slot never mixes paid into organic ranking — the fence's 'paid never overwhelms it' is structural, not a dial."
+    losers: { marketplace_c16: "multiplied ranking is paid-in-disguise even capped", marketplace_c18: "the permanent fallback if ads prove unworthy" }
+  - gap: commerce_shared_domain
+    winner: marketplace_c23
+    rationale: "Ledger-only first: entitlements and credits as transparent data with no payment path — the fence's first honest slice, and the prerequisite four other gaps point at."
+    losers: { marketplace_c22: "the full domain, after the ledger proves its shape", marketplace_c24: "forbidden by the fence outright" }
+  - gap: commerce_private_seller_verification
+    winner: marketplace_c26
+    rationale: "Proof-by-history is earned, unbought and unfakeable — the only candidate that strengthens 'payment never buys a trust outcome'."
+    losers: { marketplace_c25: "vouching moves trust sideways, not up", marketplace_c27: "the baseline kept for contrast" }
+  - gap: commerce_local_ads
+    winner: marketplace_c30
+    rationale: "The recorded gate holds: liquidity signals first, ads second. The pick defers with the design of record attached (c28, fixed-price slices via c29)."
+    losers: { marketplace_c28: "the design of record, gated", marketplace_c29: "the go-to-market inside the design" }

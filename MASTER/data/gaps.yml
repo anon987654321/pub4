@@ -1,0 +1,95 @@
+---
+schema: 1
+name: pub4_gap_ledger
+purpose: >
+  The registry of what the suite is MISSING — logic, content, knowledge and
+  UX that no scanner can see, because absence leaves no diff to scan. Every
+  scanner law measures what exists; this file gives MASTER a word for what
+  does not. It is seeded from the planned rows of RAILS/apps.yml and
+  RAILS/apps.horizon.yml, from the rows the first ideation pass itself
+  surfaced, and from the master-web surface audit of 2026-10-27 — the
+  operator's window was already shipped, so absence there looked like
+  completeness until the audit read its contracts against what the surface
+  renders. The chain is one direction: ledger -> ideation record
+  (data/ideations/) -> pick -> convergence.yml workstream -> law-gated
+  implementation. This file routes appetite; it grants no authority of its
+  own — laws remain in soul.yml and laws.yml, and the budget ratchet still
+  only ever goes down.
+authorization: >
+  Operator request of 2026-10-27 (chat e2c7ceca): ideate over the planned
+  rows, keep the survivors, implement the winners. Same chat, follow-up
+  "what about master web?": the audit-sourced master rows below carry the
+  same authorization and the same fences. This does not lift the
+  horizon fence for silent building: a row becomes implementation only
+  through a recorded pick with loser rationale, a convergence workstream,
+  and the normal pipeline.
+states: [open, ideating, picked, satisfied, rejected, blocked]
+kinds: [logic, content, knowledge, ux]
+sources:
+  apps_yml: "RAILS/apps.yml planned rows (feature statuses verified against landed code)"
+  horizon: "RAILS/apps.horizon.yml (aspirational; agent_policy set to ignore at seed time)"
+  pass_1: "rows the first ideation pass itself surfaced (source: ideation_pass_1)"
+  master_audit: "master-web surface audit 2026-10-27: contracts (CLAUDE.md, routes, dashboard payload) read against what the surface actually renders"
+  operator_chat: "operator messages of 2026-10-27 in the same chat (e2c7ceca): 'especially its face, making it more visually appealing and soothing' and 'the tts voice, making it sound way cooler using digital sound processing and/or fm modulation or creative use of audio effects etc.'"
+gaps:
+  # --- brgen (the city app proper) ---
+  - { id: brgen_ai_feed_ranking, app: brgen, kind: logic, name: "AI feed ranking", source: apps_yml, status: picked, workstream: brgen_feed_ranking_deterministic }
+  - { id: brgen_cold_start_feed, app: brgen, kind: logic, name: "cold-start feed as follows union city popular", source: horizon, status: open }
+  - { id: brgen_creator_monetization, app: brgen, kind: logic, name: "creator monetization", source: apps_yml, status: open, note: "consumes commerce_shared_domain" }
+  - { id: brgen_activitypub_inbound, app: brgen, kind: logic, name: "inbound ActivityPub storage", source: horizon, status: open, note: "blocked on remote media proxying, remote moderation and a blocklist per apps.yml notes" }
+  - { id: brgen_recurring_events, app: brgen, kind: logic, name: "recurring events / ticketing beyond an external link", source: horizon, status: open }
+  - { id: brgen_city_population_seeds, app: brgen, kind: content, name: "city population in seeds", source: horizon, status: open, note: "no column or reader in any schema; CitySeed covers all 43 registry cities" }
+  - { id: brgen_recent_searches, app: brgen, kind: ux, name: "recent searches in the search palette", source: horizon, status: picked, workstream: brgen_recent_searches }
+  # --- messenger ---
+  - { id: messenger_webrtc_calls, app: messenger, kind: logic, name: "messenger voice and video calls (WebRTC)", source: horizon, status: blocked, note: "needs STUN/TURN infra on the host" }
+  - { id: messenger_notify_suppression, app: messenger, kind: ux, name: "notification suppressed while its conversation is open", source: horizon, status: open }
+  - { id: messenger_business_crm, app: messenger, kind: logic, name: "business inbox and CRM on messenger", source: horizon, status: open, note: "consumes commerce_shared_domain" }
+  # --- marketplace ---
+  - { id: marketplace_ai_recs, app: marketplace, kind: logic, name: "AI recommendations", source: apps_yml, status: open }
+  - { id: marketplace_coupons, app: marketplace, kind: logic, name: "coupons / referral credit / bundle pricing", source: horizon, status: open, note: "consumes commerce_shared_domain" }
+  - { id: marketplace_contact_relay, app: marketplace, kind: logic, name: "anonymised buyer-seller contact relay", source: horizon, status: blocked, note: "needs inbound mail routing and per-listing addresses on vm23" }
+  - { id: marketplace_duplicates, app: marketplace, kind: logic, name: "duplicate-listing detection", source: horizon, status: picked, workstream: marketplace_duplicate_detection }
+  - { id: marketplace_liquidity, app: marketplace, kind: knowledge, name: "liquidity signals (empty categories, unmet demand)", source: horizon, status: open, note: "liquidity before ads, per the horizon fence" }
+  - { id: marketplace_paid_boosts, app: marketplace, kind: logic, name: "paid listing boosts and category/homepage placement", source: horizon, status: open, note: "organic discovery stays quality-weighted; payment never buys a trust outcome" }
+  - { id: marketplace_seller_analytics, app: marketplace, kind: knowledge, name: "seller, listing and promotion analytics", source: horizon, status: open }
+  # --- dating ---
+  - { id: dating_premium_boost, app: dating, kind: logic, name: "premium memberships / boost / super-like purchases", source: apps_yml, status: open, note: "inside the monetization fences — no dark patterns; payment never buys moderation" }
+  - { id: dating_two_sided_ranked_for, app: dating, kind: logic, name: "two-sided ranked_for (looking_for both ways)", source: horizon, status: satisfied, evidence: "Dating::BaseController#candidate_scope applies Profile.oriented_for (mutual gender preference both ways); see apps.yml Tier 3 parity row" }
+  # --- playlist ---
+  - { id: playlist_creator_donations, app: playlist, kind: logic, name: "creator donations / ad-free tier", source: apps_yml, status: open, note: "consumes commerce_shared_domain" }
+  # --- takeaway ---
+  - { id: takeaway_delivery_area, app: takeaway, kind: logic, name: "delivery-area validation", source: horizon, status: picked, workstream: takeaway_delivery_area }
+  - { id: takeaway_cart_expiry, app: takeaway, kind: logic, name: "cart expiry", source: horizon, status: picked, workstream: takeaway_cart_expiry }
+  - { id: takeaway_pro_surface, app: takeaway, kind: logic, name: "takeaway Pro (restaurant promotion, coupons, loyalty)", source: horizon, status: open, note: "consumes commerce_shared_domain" }
+  # --- tv ---
+  - { id: tv_live_stream_infra, app: tv, kind: logic, name: "live stream infrastructure", source: apps_yml, status: blocked, note: "needs a media server (MediaMTX / SRS / nginx-rtmp) plus a delivery tier on the host; Tv::Broadcast already models the state machine" }
+  # --- maps ---
+  - { id: maps_poi_substrate, app: maps, kind: logic, name: "places as the POI substrate every vertical can query", source: pass_1, status: open, note: "the pass found the maps surface done but unconsumed as a service; the synergy axis kept electing it" }
+  # --- shared commerce domain (the horizon monetization block, folded) ---
+  - { id: commerce_shared_domain, app: fleet, kind: logic, name: "one shared Commerce/Ledger/Campaign/Entitlements domain consumed by the verticals", source: horizon, status: open, note: "folds plans-as-data, payments abstraction, seller credits and the revenue dashboard; the horizon fence demands one domain, never a billing stack per engine" }
+  - { id: commerce_private_seller_verification, app: fleet, kind: logic, name: "seller verification badge for a seller with no shop", source: horizon, status: open, note: "a private seller has no organisation number, so this needs its own proof" }
+  - { id: commerce_local_ads, app: fleet, kind: logic, name: "self-service local advertising (CPC/CPM/fixed, geo and time targeting)", source: horizon, status: open, note: "after liquidity signals and on the shared commerce domain" }
+  # --- amber ---
+  - { id: amber_fashion_embeddings, app: amber, kind: knowledge, name: "fashion embeddings", source: horizon, status: open, note: "wardrobe is personal-scale (hundreds of items) — a right-sized answer must not start with pgvector" }
+  - { id: amber_visual_similarity, app: amber, kind: logic, name: "visual similarity search", source: horizon, status: picked, workstream: amber_similarity_right_sized }
+  - { id: amber_fitting_room, app: amber, kind: ux, name: "virtual fitting room", source: horizon, status: open }
+  - { id: amber_mood_matcher, app: amber, kind: ux, name: "mood matcher", source: horizon, status: open }
+  - { id: amber_event_outfit_planner, app: amber, kind: ux, name: "event outfit planner", source: horizon, status: open }
+  - { id: amber_sustainable_resale, app: amber, kind: logic, name: "sustainable styles / resale", source: horizon, status: open, note: "resale surface would consume the marketplace domain, not clone it" }
+  - { id: amber_weather_suggestions, app: amber, kind: logic, name: "weather-based suggestions", source: horizon, status: blocked, note: "needs a weather source; no external API is called anywhere in the suite today" }
+  - { id: amber_outfit_whole_score, app: amber, kind: logic, name: "outfit scored as a whole (item scores minus clash); wears-well-with on items#show", source: horizon, status: open }
+  - { id: amber_trends_designers, app: amber, kind: content, name: "global trends / local designer highlights", source: horizon, status: open }
+  - { id: amber_style_agents, app: amber, kind: logic, name: "style agents (MASTER integration)", source: horizon, status: open }
+  # --- bsdports ---
+  - { id: bsdports_multi_parsers, app: bsdports, kind: logic, name: "FreeBSD/NetBSD ports parsers", source: horizon, status: open, note: "OpenBSD-only production scope per the horizon note" }
+  - { id: bsdports_semantic_search, app: bsdports, kind: knowledge, name: "semantic package search", source: horizon, status: open }
+  - { id: bsdports_knowledge_graph, app: bsdports, kind: knowledge, name: "infrastructure knowledge graph", source: horizon, status: open }
+  - { id: bsdports_package_intel, app: bsdports, kind: knowledge, name: "OpenBSD package intelligence", source: horizon, status: open }
+  # --- master web (the operator's window; found by the surface audit, not by apps.yml) ---
+  - { id: master_fleet_health, app: master, kind: logic, name: "dashboard sees only its own container — the three sibling apps sharing the 1GB box are invisible", source: master_audit, status: picked, workstream: master_fleet_panel, note: "CLAUDE.md documents resource_guard shedding amber then bsdports and restart storms spiking load; the console renders none of it" }
+  - { id: master_dead_payload_facts, app: master, kind: knowledge, name: "model_quota and cache_efficiency computed into every dashboard/live poll, rendered by no panel", source: master_audit, status: picked, workstream: master_quota_facts }
+  - { id: master_pair_admin_surface, app: master, kind: ux, name: "pairing issue/list/destroy are curl-only; no authenticated web surface administers pairing codes", source: master_audit, status: open, note: "redeem itself is covered by the chat command router; this row is the operator's admin side" }
+  # --- master web face + voice (operator follow-up of 2026-10-27, same chat) ---
+  - { id: master_face_soothing, app: master, kind: ux, name: "the face has no stillness of its own — flash-class canvas filters, hard chrome, zero breath; operator asks for visually appealing and soothing", source: operator_chat, status: picked, workstream: master_face_breath, note: "constraints carry: magic_hex budget is full so soothing must come from motion, brightness and air, never new colours" }
+  - { id: master_voice_dsp_lanes, app: master, kind: logic, name: "the browser voice cannot build the declared character presets — aeval, acrusher and the asetrate/atempo idiom are server-only, so an enabled preset makes terminal and face two voices under one name again", source: operator_chat, status: picked, workstream: master_voice_browser_dsp, note: "the split is documented in face_speech_runtime.js lines 855-858; the 2026-09-16 refactor exists to prevent exactly this" }
+  - { id: master_voice_cooler, app: master, kind: ux, name: "every character preset is disabled and the room is dry — the default voice carries no DSP character at all; operator asks for way cooler via digital sound processing and FM modulation", source: operator_chat, status: picked, workstream: master_voice_cooler_default, note: "boot sound already speaks FM (Fmaj9 pad); the voice itself never does" }

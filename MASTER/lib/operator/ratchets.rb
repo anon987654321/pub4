@@ -162,12 +162,12 @@ module Operator
 
     def law_hygiene_rows_a
       [master_row("law_hygiene.id_case_collisions", "data/laws.yml", "ids differing only by case") do
-         require File.join(MASTER, "tools/law_hygiene")
+         require File.join(MASTER, "tools/audit/law_hygiene")
          collisions = Operator::LawHygiene.report[:id_case_collisions]
          [collisions.size, Operator::LawHygiene.ceilings.fetch("id_case_collisions"), collisions.map(&:to_s)]
        end,
        master_row("law_hygiene.alias_shadows_live_law", "data/laws.yml", "aliases naming a rule that still exists") do
-         require File.join(MASTER, "tools/law_hygiene")
+         require File.join(MASTER, "tools/audit/law_hygiene")
          shadows = Operator::LawHygiene.report[:alias_shadows_live_law]
          [shadows.size, Operator::LawHygiene.ceilings.fetch("alias_shadows_live_law"), shadows.map(&:to_s)]
        end]
@@ -175,17 +175,17 @@ module Operator
 
     def law_hygiene_rows_b
       [master_row("law_hygiene.missing_metadata", "data/laws.yml", "rules with neither tier nor severity") do
-         require File.join(MASTER, "tools/law_hygiene")
+         require File.join(MASTER, "tools/audit/law_hygiene")
          missing = Operator::LawHygiene.report[:missing_metadata]
          [missing.size, Operator::LawHygiene.ceilings.fetch("missing_metadata"), missing.map(&:to_s)]
        end,
        master_row("law_hygiene.cross_population_duplicates", "data/laws.yml", "one id with two detectors") do
-         require File.join(MASTER, "tools/law_hygiene")
+         require File.join(MASTER, "tools/audit/law_hygiene")
          duplicates = Operator::LawHygiene.report[:cross_population_duplicates]
          [duplicates.size, Operator::LawHygiene.ceilings.fetch("cross_population_duplicates"), duplicates.map(&:to_s)]
        end,
        master_row("law_hygiene.statement_conflicts", "data/laws.yml", "one id, two statements") do
-         require File.join(MASTER, "tools/law_hygiene")
+         require File.join(MASTER, "tools/audit/law_hygiene")
          conflicts = Operator::LawHygiene.report[:statement_conflicts]
          [conflicts.size, Operator::LawHygiene.ceilings.fetch("statement_conflicts"), conflicts.map(&:to_s)]
        end]
@@ -237,12 +237,12 @@ module Operator
 
     def reach_rows
       [master_row("dup_census", "data/dup_census.yml", "tracked files existing twice") do
-         require File.join(MASTER, "tools/dup_census")
+         require File.join(MASTER, "tools/audit/dup_census")
          sets = Operator::DupCensus.sets
          [sets.size, Operator::DupCensus.ceiling, Operator::DupCensus.members(sets)]
        end,
        master_row("data_reach", "data/data_reach.yml", "data keys no code names") do
-         require File.join(MASTER, "tools/data_reach")
+         require File.join(MASTER, "tools/audit/data_reach")
          unnamed = Operator::DataReach.unnamed
          [unnamed.size, Operator::DataReach.ceiling, unnamed]
        end]

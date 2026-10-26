@@ -3,7 +3,7 @@
 require_relative "test_helper"
 require "yaml"
 require "tmpdir"
-require_relative "../tools/data_reach"
+require_relative "../tools/audit/data_reach"
 
 # A census that records only an integer can say "over by two" and never which
 # two. data_reach was over by exactly that on 2026-08-31 and the number had no

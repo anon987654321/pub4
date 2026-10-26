@@ -516,13 +516,24 @@ tts:
 
   # Optional character presets: ways to make MASTER sound less like itself,
   # taken from the vocal-effects thread the operator pointed at (vocoding, ring
-  # modulation, formant shifting, doubling, glitch slicing, shimmer). All are OFF.
-  # A preset applies only when its `enabled` is true here, or when
+  # modulation, formant shifting, doubling, glitch slicing, shimmer). A preset
+  # applies only when its `enabled` is true here, or when
   # MASTER_TTS_CHARACTER=<name> names it (=none switches every preset off).
   # They run after the dilla rack and before the room. The thread gives no
   # numbers, so every value is the author's own judgement: retune by ear. This
   # ffmpeg build has no vocoder and no rubberband, so none is exact. Vocoding and
   # pitch correction are not offered: both need a second signal or a pitch tracker.
+  #
+  # Operator follow-up of 2026-10-27 (chat e2c7ceca) asks the voice sound
+  # "way cooler using digital sound processing and/or fm modulation or creative
+  # use of audio effects". That authorization carried three flips: `doubler`
+  # and `ionosphere` go on as the shipped character and the `room` opens, and
+  # three new presets (ionosphere, midnight, shortwave) join the rack, each
+  # authored so BOTH lanes can build it — the browser gained ring-mod aeval,
+  # WaveShaper acrusher and the asetrate/aresample/atempo pitch-shift idiom the
+  # same day (recorded in data/ideations/master_web_face_voice.yml). A preset
+  # whose filter string either lane cannot build whole is refused by the
+  # discipline check, never shipped half-voiced.
   character:
     robot:
       enabled: false
@@ -535,10 +546,10 @@ tts:
       filter: "aformat=sample_rates=24000,asetrate=28800,aresample=24000,atempo=0.833333"
       note: "this ffmpeg build has no rubberband, so formants cannot move alone: asetrate x1.2 shifts pitch and formants together and atempo 0.8333 restores the duration. Values are the author's judgement."
     doubler:
-      enabled: false
+      enabled: true
       status: approximated
       filter: "asplit=2[dbl_a][dbl_b];[dbl_b]aformat=sample_rates=24000,asetrate=24168,aresample=24000,atempo=0.99304,adelay=24,chorus=0.6:0.9:30:0.3:0.25:2,volume=0.7[dbl_c];[dbl_a][dbl_c]amix=inputs=2:weights=1 1:normalize=0"
-      note: "a 24 ms delayed copy, +12 cents by asetrate x1.007 with atempo to restore duration, chorus on the copy, mixed at 0.7. Values are the author's judgement."
+      note: "a 24 ms delayed copy, +12 cents by asetrate x1.007 with atempo to restore duration, chorus on the copy, mixed at 0.7. Values are the author's judgement. Enabled 2026-10-27 by operator request for a cooler default voice; MASTER_TTS_CHARACTER=none returns the dry voice."
     glitch:
       enabled: false
       status: approximated
@@ -549,6 +560,21 @@ tts:
       status: approximated
       filter: "asplit=2[shm_a][shm_b];[shm_b]aformat=sample_rates=24000,asetrate=48000,aresample=24000,atempo=0.5,highpass=f=500,aecho=0.8:0.6:180|360:0.5|0.3,volume=0.35[shm_c];[shm_a][shm_c]amix=inputs=2:weights=1 1:normalize=0"
       note: "a copy one octave up (asetrate x2, atempo 0.5), highpassed at 500 Hz, through aecho 180/360 ms, mixed at 0.35. The tail lengthens the clip by about 0.3 s. Values are the author's judgement."
+    ionosphere:
+      enabled: true
+      status: approximated
+      filter: "aeval=exprs='val(0)*(0.82+0.18*sin(2*PI*t*38))',chorus=0.6:0.9:30:0.3:0.25:2"
+      note: "a 38 Hz ring-mod whisper at 18% depth — the voice brushes a carrier without turning into the robot preset — through the doubler's chorus. The FM the operator asked for, kept under the intelligibility line. Values are the author's judgement; retune by ear."
+    midnight:
+      enabled: false
+      status: approximated
+      filter: "aformat=sample_rates=24000,asetrate=21600,aresample=24000,atempo=1.111111,equalizer=f=2800:t=q:w=1.0:g=-1,lowpass=f=11000"
+      note: "down-formant velvet: asetrate x0.9 lowers pitch and formants together, atempo 1.1111 restores duration, then 2 dB off presence and an 11 kHz ceiling darken the edges. Values are the author's judgement."
+    shortwave:
+      enabled: false
+      status: approximated
+      filter: "highpass=f=300,lowpass=f=3400,asoftclip=type=tanh:threshold=0.8,volume=2dB"
+      note: "the radio curve: band-limited to the speech band, tanh-soft-clipped, +2 dB into the chain's own limiter. Cool the way a distant station is cool. Values are the author's judgement."
 
   # The room MASTER speaks in (operator decision 2026-10-09: the default voice).
   # Polished chain above stays dry; Policy.shaped_chain appends this for ffmpeg
@@ -558,8 +584,11 @@ tts:
   # Loudness is held within ~1 LU of the dry voice (ebur128, a spoken sentence);
   # gain_db is that makeup. The dry voice is one line away:
   # MASTER_TTS_PROFILE=dry, or `profile: dry` in this file.
+  # Opened 2026-10-27 by operator request (chat e2c7ceca): a voice with space
+  # reads calmer and cooler than a dry one, and the six reflections were already
+  # measured to sit within ~1 LU of dry. MASTER_TTS_PROFILE=dry still closes it.
   room:
-    enabled: false
+    enabled: true
     reflections_ms: [19, 31, 47, 73, 109, 151]
     decays: [0.30, 0.22, 0.17, 0.12, 0.08, 0.05]
     out_gain: 0.9
