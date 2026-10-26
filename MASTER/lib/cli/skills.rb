@@ -51,17 +51,7 @@ module Master
       def trigger_for(input)
         input = input.to_s
         matches = @loaded.select do |skill|
-          contract = skill[:contract]
-          unless contract.nil? || contract.permitted_for_trigger?
-            @bus&.publish(
-              "skills:contract_refused",
-              skill: skill[:name], revision: skill[:revision],
-              status: contract.status, errors: contract.errors
-            )
-            next false
-          end
-
-          Array(skill[:triggers]).any? do |trigger|
+          triggered = Array(skill[:triggers]).any? do |trigger|
             begin
               input.match?(Regexp.new(trigger.to_s, Regexp::IGNORECASE))
             rescue RegexpError => e
@@ -81,10 +71,26 @@ module Master
               false
             end
           end
+          next false unless triggered
+
+          contract = skill[:contract]
+          unless contract.nil? || contract.permitted_for_trigger?
+            @bus&.publish(
+              "skills:contract_refused",
+              skill: skill[:name], revision: skill[:revision],
+              status: contract.status, errors: contract.errors
+            )
+            next false
+          end
+
+          true
         end
         matches.each do |skill|
           record_used(skill[:name])
-          @bus&.publish("skills:triggered", skill: skill[:name], revision: skill[:revision], contract_status: skill.dig(:contract)&.status)
+          @bus&.publish(
+            "skills:triggered", skill: skill[:name], revision: skill[:revision],
+            contract_status: skill.dig(:contract)&.status
+          )
         end
         matches
       end
