@@ -270,6 +270,21 @@ end
     assert_match(/status-ok/, result.value[:rendered].to_s)
   end
 
+  def test_slash_command_context_keeps_the_turn_cancellation_token
+    token = Master::Core::CancellationToken.new
+    seen = nil
+    command = Master::CLI::CommandRegistry::Command.new do |ctx|
+      seen = ctx.cancellation
+      "status-ok"
+    end
+    container = build_container(commands: { "status" => command })
+
+    result = Master::CLI::TurnRouter.call(message: "/status", container:, cancellation: token)
+
+    assert result.ok?
+    assert_same token, seen
+  end
+
   # ChatService builds image_payload from the upload token, but the face used
   # to drop it: TurnRouter.casual_reply never put :image on the agent ctx, so
   # a visitor who attached a photo talked to a model that could not see it.
