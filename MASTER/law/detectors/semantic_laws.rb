@@ -392,15 +392,16 @@ module Master
           # invented a rule for this file, and accepting it would put the scope
           # back where it was.
           def parse_findings(response, scoped, mode: nil)
-            expected_empty = mode.to_sym == :opportunity ? "NONE" : "CLEAN"
+            stream = (mode || :violation).to_sym
+            expected_empty = stream == :opportunity ? "NONE" : "CLEAN"
             lines = response.to_s.lines.map(&:strip).reject(&:empty?)
             return [] if lines == [expected_empty]
-            raise "semantic assessment INCONCLUSIVE: empty response for #{mode} stream" if lines.empty?
+            raise "semantic assessment INCONCLUSIVE: empty response for #{stream} stream" if lines.empty?
 
             lines.map do |stripped|
               match = stripped.match(/\A([A-Z_][A-Z0-9_]*):(\d+):(.+)\z/)
               unless match
-                raise "semantic assessment INCONCLUSIVE: malformed #{mode} response record: #{stripped[0, 120].inspect}"
+                raise "semantic assessment INCONCLUSIVE: malformed #{stream} response record: #{stripped[0, 120].inspect}"
               end
 
               law_id = match[1]
@@ -420,8 +421,8 @@ module Master
                 fix: nil,
                 tags: [
                   law_id.to_sym,
-                  mode.to_sym == :opportunity ? :semantic_opportunities : :semantic_violations,
-                  mode.to_sym,
+                  stream == :opportunity ? :semantic_opportunities : :semantic_violations,
+                  stream,
                 ],
                 reversibility: axiom[:reversibility],
                 blast_radius: axiom[:blast_radius],
