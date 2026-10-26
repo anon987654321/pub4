@@ -32,7 +32,12 @@ module Master
               return outcome if outcome
 
               if i == 0 && structural_target?(target)
-                structure_checkpoint(target:, files:, run_id:)
+                if structure_checkpoint(target:, files:, run_id:)
+                  state[:consecutive_clean] = 0
+                  state[:history].clear
+                  state[:seen_snapshots].clear
+                  state[:recurring_violations].clear
+                end
               end
             end
 
@@ -177,14 +182,21 @@ module Master
         end
 
         def structure_checkpoint(target:, files:, run_id:)
-          return unless structural_enabled?
+          return false unless structural_enabled?
 
           changes = sweep_tree(target, "#{run_id}-structure-checkpoint", phase: :structure_first)
-          return if changes.empty?
+          return false if changes.empty?
 
           files.replace(@file_collector.collect(target))
           Master::Trace::Dmesg.status("fix0", "structure checkpoint kept #{changes.size}; corpus refreshed")
           @bus&.publish("fix_loop:structure_checkpoint", target:, changes: changes.size)
+          run_record = @run_journal.history(limit: RunJournal::MAX_RUNS).find { |row| row["id"] == run_id }
+          refresh_fix_plan!(
+            target:, files:,
+            max_passes: run_record&.fetch("max_passes", max_passes_default) || max_passes_default,
+            budget_seconds: run_record&.fetch("budget_seconds", RUN_BUDGET_SECONDS) || RUN_BUDGET_SECONDS,
+            run_id:
+          )
         end
 
         def structural_enabled? = ENV["MASTER_FIX_STRUCTURAL"] != "0"
@@ -233,6 +245,25 @@ module Master
           end
           state[:consecutive_clean] = result.consecutive_clean
           structural = structural_repair?(result, files:, target:, state:, run_id:, pass:)
+          run_record = @run_journal.history(limit: RunJournal::MAX_RUNS).find { |row| row["id"] == run_id }
+          plan_changed = refresh_fix_plan!(
+            target:, files:,
+            max_passes: run_record&.fetch("max_passes", max_passes_default) || max_passes_default,
+            budget_seconds: run_record&.fetch("budget_seconds", RUN_BUDGET_SECONDS) || RUN_BUDGET_SECONDS,
+            run_id:
+          )
+          if plan_changed
+            state[:consecutive_clean] = 0
+            state[:history].clear
+            state[:seen_snapshots].clear
+            state[:recurring_violations].clear
+            if PASS_ENDINGS[result.status] == :done
+              result = @pass_runner.class::PassResult.new(
+                status: :continue, consecutive_clean: 0,
+                message: "source generation changed; fresh observation required"
+              )
+            end
+          end
           if @convergence_discipline.respond_to?(:checkpoint_state) &&
              @run_journal.respond_to?(:save_convergence_state)
             @run_journal.save_convergence_state(
