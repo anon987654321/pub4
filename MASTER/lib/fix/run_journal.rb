@@ -183,21 +183,24 @@ module Master
         id = run_id.to_s
         return { "status" => "invalid_run_id" } unless id.match?(/\A[a-f0-9]{20}\z/)
 
+        master_dir = File.join(@root, ".master")
+        assessment_dir = File.join(@root, ASSESSMENT_DIR)
+        return { "status" => "journal_directory_symlink" } if File.symlink?(master_dir)
+        return { "status" => "assessment_directory_symlink" } if File.symlink?(assessment_dir)
+
         run = history(limit: MAX_RUNS).find { |entry| entry["id"] == id }
         return { "status" => "run_not_found" } unless run
 
         receipt = run["assessment_receipt"]
         return { "status" => "receipt_missing" } unless receipt.is_a?(Hash)
 
-        master_dir = File.join(@root, ".master")
-        assessment_dir = File.join(@root, ASSESSMENT_DIR)
-        return { "status" => "journal_directory_symlink" } if File.symlink?(master_dir)
-        return { "status" => "assessment_directory_symlink" } if File.symlink?(assessment_dir)
-
         expected_path = File.join(assessment_dir, "#{id}.json")
         relative_path = relative(expected_path)
         return { "status" => "receipt_path_mismatch" } unless receipt["path"] == relative_path
-        return { "status" => "artifact_unavailable" } unless File.file?(expected_path) && !File.symlink?(expected_path)
+        return { "status" => "artifact_unavailable" unless File.file?(expected_path) && !File.symlink?(expected_path)
+
+        file_mode = File.stat(expected_path).mode & 0o777
+        return { "status" => "artifact_permissions_insecure", "mode" => format("%04o", file_mode) } unless (file_mode & 0o077).zero?
 
         payload = File.binread(expected_path)
         actual_digest = Digest::SHA256.hexdigest(payload)
