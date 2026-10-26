@@ -26,6 +26,7 @@ module Master::Core
     def initialize
       @mutex = Mutex.new
       @reason = nil
+      @active = false
     end
 
     def cancel!(reason: "operator requested cancellation")
@@ -36,6 +37,14 @@ module Master::Core
       self
     end
 
+    # Mark that the consumer is honoring cancellation cooperatively. Hosts
+    # can then avoid killing a running thread at an arbitrary point.
+    def activate!
+      @mutex.synchronize { @active = true }
+      self
+    end
+
+    def active? = @mutex.synchronize { @active }
     def cancelled? = @mutex.synchronize { !@reason.nil? }
     def reason = @mutex.synchronize { @reason }
   end
