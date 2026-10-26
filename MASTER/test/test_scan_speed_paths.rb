@@ -174,6 +174,32 @@ class TestScanSpeedPaths < Minitest::Test
     end
   end
 
+  def test_structured_data_budget_covers_dilla_catalogue_and_stays_bounded
+    path = File.expand_path("../../STUDIO/dilla/data/dilla.json", __dir__)
+    assert File.file?(path), "the canonical Dilla catalogue must remain present"
+
+    processor = Master::Fix::Scan::FileProcessor.new(skip_semantic: true)
+    assert_equal 20_000, Master::Fix::Scan::FileProcessor.max_lines_for(path)
+    assert_operator File.foreach(path, encoding: "UTF-8").count, :<=,
+                    Master::Fix::Scan::FileProcessor::STRUCTURED_DATA_MAX_LINES
+
+    result = processor.send(:read_file, path)
+    assert result.ok?, "Dilla catalogue was refused by the scanner: #{result.message}"
+  end
+
+  def test_structured_data_budget_rejects_files_over_its_ceiling
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "too_long.json")
+      File.write(path, JSON.pretty_generate(Array.new(Master::Fix::Scan::FileProcessor::STRUCTURED_DATA_MAX_LINES + 1, "x")))
+      processor = Master::Fix::Scan::FileProcessor.new(skip_semantic: true)
+
+      result = processor.send(:read_file, path)
+      assert result.err?
+      assert_equal :validation, result.category
+      assert_match(/file too long/, result.message)
+    end
+  end
+
   def test_law_scan_matches_the_per_line_reading_it_replaced
     css = "/* a !important\n   !important in a comment */\na { color: red !important; }\n" \
           "b { x: 1 !important; } /* scan: intentional */\n// !important\n"

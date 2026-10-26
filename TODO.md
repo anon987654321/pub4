@@ -10,6 +10,17 @@ The law definitions and detector code were not changed. Where a source line is g
 
 No Ruby/Rails test command, SCSS compilation, browser visual comparison, or live app boot was executed through the GitHub connector. Added/updated tests remain unrun; overall validation is **INCONCLUSIVE**, not PASS, until the focused contracts, full RAILS suite, CSS-budget measurement and `/fix` runtime verification execute on the pinned toolchain.
 
+## Manual four-tree /fix simulation (2026-10-26)
+
+**Verdict: INCONCLUSIVE — the real /fix loop and all four canonical suites remain unexecuted in this environment.** The exact remote tree was inventoried from GitHub; the pinned Ruby 4.0.5, zsh, local checkout, app boot, browser, OpenBSD host and provider credentials were unavailable here. A manual source review is not equivalent to /fix's required full execution trace, four assessment streams, two clean observations, or live evidence.
+
+Source-level blockers and repairs identified during the simulation:
+- MASTER wrapper preflight: fixed MASTER/bin/fix-here so a failed or malformed df -kP response reports unreadable disk rather than an incorrect low-disk diagnosis; added two regression cases. Tests remain unrun.
+- STUDIO / scanner corpus: STUDIO/dilla/data/dilla.json is 11,829 lines and under 160 KB, but the generic 10,000-line cap made it a blocking corpus gap. Added a 20,000-line cap for JSON/YAML while retaining the 10 MiB byte ceiling, plus tests for the live Dilla catalogue and the cap boundary. Tests remain unrun.
+- RAILS: verified its canonical isolated contract runner and required suite commands. No migration, application boot, rendered browser check or app suite was run; CSS/source changes still need compilation and rendered verification.
+- OPENBSD: reviewed the check/deploy entrypoints, drift check and service-smoke boundaries. No OpenBSD-native suite, vm23 inspection, service restart, deploy or rollback was attempted. A commit message on the branch reports a prior OPENBSD run; this session did not execute or independently reproduce it.
+
+Do not mark DONE or close the release proof obligations until the pinned toolchain runs the four canonical commands from the root README against the exact intended HEAD, the failures are repaired, generated outputs are synced, and rendered/live evidence is recorded. The current manual state is not a complete /fix result.
 ## Kernel audit-log append complexity (2026-10-26)
 
 `Master::Fix::Kernel#append_event` now caches the last fully verified sequence/hash and byte offset per kernel instance. Subsequent appends reuse that head when the file identity and metadata are unchanged, or validate only the new suffix under the existing file lock when another instance has appended records. Truncation or inode replacement is refused. `verify_log!` and replay still validate the complete hash chain, including the final JSONL record boundary.

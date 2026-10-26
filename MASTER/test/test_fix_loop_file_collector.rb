@@ -140,6 +140,14 @@ class TestFixLoopFileCollector < Minitest::Test
     end
   end
 
+  def test_current_dilla_catalogue_is_not_a_line_limit_skip
+    repo_root = File.expand_path("../..", __dir__)
+    path = File.join(repo_root, "STUDIO", "dilla", "data", "dilla.json")
+
+    assert File.file?(path), "the canonical Dilla catalogue must remain present"
+    refute_equal :too_many_lines, collector(repo_root).__send__(:skip_reason, path)
+  end
+
   def test_stylesheet_line_limit_covers_large_authored_application_stylesheet
     Dir.mktmpdir do |dir|
       path = write(dir, "app/assets/stylesheets/application.scss", Array.new(Master::Fix::Scan::FileProcessor::STYLE_MAX_LINES - 100, "x").join("\n"))

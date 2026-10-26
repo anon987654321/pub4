@@ -26,6 +26,8 @@ module Master
         MAX_LINES = 10_000
         STYLE_EXTENSIONS = %w[.css .scss].freeze
         STYLE_MAX_LINES = 12_000
+        STRUCTURED_DATA_EXTENSIONS = %w[.json .yml .yaml].freeze
+        STRUCTURED_DATA_MAX_LINES = 20_000
         OUTSIDE_SAMPLE = "clean file, outside sample"
         UNCHANGED = "unchanged since its last semantic read"
         DEFERRED = "put off behind the pass's mechanical repairs"
@@ -40,7 +42,11 @@ module Master
         # Ground::ModePosture. Keyed on the path digest rather than rand, so two scans
         # of the same tree ask the same questions and their reports can be compared.
         def self.max_lines_for(path)
-          STYLE_EXTENSIONS.include?(File.extname(path.to_s).downcase) ? STYLE_MAX_LINES : MAX_LINES
+          extension = File.extname(path.to_s).downcase
+          return STYLE_MAX_LINES if STYLE_EXTENSIONS.include?(extension)
+          return STRUCTURED_DATA_MAX_LINES if STRUCTURED_DATA_EXTENSIONS.include?(extension)
+
+          MAX_LINES
         end
 
         def initialize(event_bus: nil, skip_semantic: false, cache_root: Master::ROOT)
