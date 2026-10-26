@@ -76,4 +76,15 @@ class TestMutationObserver < Minitest::Test
     assert observer.failed?
     assert_equal ["test:mutation_lifecycle:before"], bus.events.map(&:first)
   end
+
+  def test_tuple_with_failed_process_status_is_recorded_as_failed
+    bus = RecordingBus.new
+    observer = build(bus)
+    status = Object.new
+    status.define_singleton_method(:success?) { false }
+
+    observer.mutate(operation: "fetch") { ["remote rejected", status] }
+
+    assert_equal "failed", bus.events.last.last.fetch(:status)
+  end
 end
