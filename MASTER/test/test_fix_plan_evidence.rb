@@ -96,6 +96,7 @@ class TestFixPlan < Minitest::Test
   def test_journal_invalidates_convergence_when_source_generation_changes
     journal = Master::Fix::RunJournal.new(root: @root)
     run = journal.start_or_resume(target: @root, files: [@ruby], max_passes: 5, budget_seconds: 120)
+    assert_equal ".", run.fetch("target")
     first = capture(files: [@ruby])
     first_binding = journal.bind_plan(run.fetch("id"), first)
 
