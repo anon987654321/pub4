@@ -23,7 +23,7 @@ module Master
         lib/fix/visual_pass.rb
         lib/fix/four_stream_assessment.rb
       ].freeze
-      RUNTIME_GLOBS = %w[law/**/*.rb lib/review/scan/laws/**/*.rb].freeze
+      RUNTIME_GLOBS = %w[law/**/*.rb].freeze
       TOOLCHAIN_FILES = %w[.ruby-version Gemfile.lock].freeze
       MAX_EXCLUSION_SAMPLE = 20
 
