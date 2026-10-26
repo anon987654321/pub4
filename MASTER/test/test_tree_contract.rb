@@ -20,7 +20,6 @@ class TreeContractTest < Minitest::Test
     lib/ai
     lib/cli/command_registry
     lib/cli/session
-    lib/review/scan/laws
     lib/fix/scan
     lib/fix/fix_loop
     lib/ground/memory
