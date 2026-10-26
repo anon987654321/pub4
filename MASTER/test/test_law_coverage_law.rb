@@ -32,7 +32,7 @@ class TestLawCoverageLaw < Minitest::Test
     end
   RUBY
 
-  # The rule keys off a path containing /review/scan/laws/, so the fixture
+  # The rule keys off a path under /law/detectors/, so the fixture
   # supplies one; only the source directory has to exist on disk.
   def messages(code, test_files: {}, dir: "test", path: "/x/law/detectors/widget_rules.rb")
     Dir.mktmpdir do |root|
@@ -119,7 +119,7 @@ class TestLawCoverageLaw < Minitest::Test
   end
 
   def test_a_non_ruby_file_is_skipped
-    assert_empty messages(ONE_CLASS, path: "/x/lib/review/scan/laws/widget_rules.yml")
+    assert_empty messages(ONE_CLASS, path: "/x/law/detectors/widget_rules.yml")
   end
 
   # Only Rule subclasses. LawDSL declares dozens of rules inline and the
