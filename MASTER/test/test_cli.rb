@@ -894,4 +894,29 @@ def test_ctrl_c_at_the_prompt_raises_interrupt_for_repl_loop_to_close
     assert_predicate token, :cancelled?
   end
 
+  def test_dispatch_stop_race_uses_cooperative_policy_for_fold_work
+    requested = nil
+    spawn = lambda do |_input, on_turn:, on_chunk:, cancellation:|
+      cancellation.activate!
+      @cli.instance_variable_set(:@turn_cancel_requested, true)
+      Thread.new { Master::Result.ok("finished") }
+    end
+    request_stop = lambda do |turn, children, reason:|
+      requested = [turn, children, reason]
+      @cli.instance_variable_get(:@turn_cancellation).cancel!(reason: reason)
+    end
+
+    @cli.stub(:spawn_pipeline_thread, spawn) do
+      @cli.stub(:request_or_interrupt_turn, request_stop) do
+        @cli.stub(:fetch_pipeline_result, -> { Master::Result.ok("finished") }) do
+          result = @cli.send(:dispatch_turn, "do work", accumulated: +"", state: {})
+          assert result.ok?
+        end
+      end
+    end
+
+    assert_equal "stop", requested[2]
+    assert_predicate @cli.instance_variable_get(:@turn_cancellation), :cancelled?
+  end
+
 end

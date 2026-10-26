@@ -227,7 +227,7 @@ module Master
           input, on_turn:, on_chunk: build_on_chunk_handler(accumulated, state),
           cancellation: @turn_cancellation
         )
-        cancel_turn(@pipeline_thread, @turn_children) if turn_cancel_requested? && @pipeline_thread&.alive?
+        request_or_interrupt_turn(@pipeline_thread, @turn_children, reason: "stop") if turn_cancel_requested? && @pipeline_thread&.alive?
         fetch_pipeline_result
       end
 

@@ -287,6 +287,7 @@ module Master
         # casual_reply, but run_fold is also reachable via dispatch_slash when
         # Intake classifies input as :llm. The Fold can exec; visitors cannot.
         return Master::Result.err("fold: not available to visitors", category: :policy) if visitor?
+        cancellation.activate! if cancellation&.respond_to?(:activate!)
         unless Master.llm_reachable?(container[:agent]&.model)
           return Master::Result.err(Master.no_api_key_message, category: :no_api_key)
         end
