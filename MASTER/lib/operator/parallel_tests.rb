@@ -7,7 +7,8 @@ module Operator
   # The MASTER suite across several processes. Workers are polled rather than
   # waited on synchronously, so a hung worker cannot hide its identity forever.
   module ParallelTests
-    LOG_DIR = File.expand_path("../../.master/check", __dir__)
+    # The suite under test runs its own runner; it keeps its logs and lock apart (test_helper).
+    LOG_DIR = ENV.fetch("MASTER_CHECK_LOG_DIR") { File.expand_path("../../.master/check", __dir__) }
     RESULT_LINE = /\A\S+#\S+ = [\d.]+ s = [.FES]\s*\z/
     REPORT_START = /\AFinished in /
     SUMMARY_LINE = /\A(\d+) runs?, (\d+) assertions?, (\d+) failures?, (\d+) errors?, (\d+) skips?\s*\z/i
@@ -42,8 +43,24 @@ module Operator
       buckets.reject(&:empty?)
     end
 
+    # One suite at a time per checkout: the worker logs and suite-report.json have fixed
+    # names, so a second suite overwrote the first one's evidence, and two suites on this
+    # 8 GB machine starve each other. A held lock refuses rather than waits.
     def run(files, command:, out: $stdout)
       FileUtils.mkdir_p(LOG_DIR)
+      File.open(File.join(LOG_DIR, "suite.lock"), File::RDWR | File::CREAT, 0o600) do |lock|
+        unless lock.flock(File::LOCK_EX | File::LOCK_NB)
+          out.puts "test-suite0: another suite holds #{LOG_DIR}/suite.lock (pid #{lock.read.strip}); not starting"
+          return false
+        end
+        lock.truncate(0)
+        lock.write(Process.pid.to_s)
+        lock.flush
+        run_locked(files, command:, out:)
+      end
+    end
+
+    def run_locked(files, command:, out:)
       workers = deal(files, jobs).each_with_index.map do |bucket, index|
         start(bucket, log: File.join(LOG_DIR, "test-worker-#{index + 1}.log"), command:)
       end

@@ -87,7 +87,5 @@ rollback on the box is the operator's (operator_seams.yml).
    nothing provides one.
 4. WatchLoop's RepairLoop writes outside any transaction.
 5. Fix::Kernel is never constructed; its hash-chained log has no writer.
-6. Parallel test workers and StepWatch write fixed names in .master/check
-   without a lock.
-7. RunLedger is process-wide, so repairs WatchLoop makes outside a run count
+6. RunLedger is process-wide, so repairs WatchLoop makes outside a run count
    toward whichever run is current.

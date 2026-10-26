@@ -35,6 +35,9 @@ ENV["MASTER_PROVIDER_HEALTH_PATH"] = File.join(LIVE_STATE_DIR, "provider_health.
 # A crashed /fix on this machine left its loop claim behind and every
 # dispatch_fix test failed with "loop slot held by fix pid 26971".
 ENV["MASTER_ACTIVE_LOOP_DIR"] = File.join(LIVE_STATE_DIR, "active_loop")
+# The suite runner a test drives keeps its logs and its one-suite lock apart from the
+# rake test that is running this file and holds .master/check/suite.lock.
+ENV["MASTER_CHECK_LOG_DIR"] = File.join(LIVE_STATE_DIR, "check")
 
 # Direct test entrypoints must use the same pinned, private bundle as bin/cli.
 # Otherwise RubyGems can select a host-installed Minitest (or a native gem

@@ -23,6 +23,20 @@ class TestParallelTests < Minitest::Test
     @previous_progress.nil? ? ENV.delete("MASTER_TEST_PROGRESS_EVERY") : ENV["MASTER_TEST_PROGRESS_EVERY"] = @previous_progress
   end
 
+  # A second suite refused while the first holds the lock: both share fixed log names.
+  def test_a_second_suite_refuses_while_one_runs
+    FileUtils.mkdir_p(Runner::LOG_DIR)
+    File.open(File.join(Runner::LOG_DIR, "suite.lock"), File::RDWR | File::CREAT) do |held|
+      held.flock(File::LOCK_EX)
+      out = StringIO.new
+      started = false
+
+      refute Runner.run(%w[ok], command: ->(_files) { started = true }, out:)
+      refute started
+      assert_match(/another suite holds/, out.string)
+    end
+  end
+
   def test_results_pass_through_and_a_failed_worker_fails_the_run
     out = StringIO.new
     passed = Runner.run(%w[ok bad], command: method(:fake_worker), out:)
