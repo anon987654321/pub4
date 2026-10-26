@@ -232,4 +232,111 @@ class TestSkills < Minitest::Test
     end
   end
 
+  def test_execution_contract_changes_skill_revision
+    Dir.mktmpdir do |root|
+      data_dir = File.join(root, "data")
+      FileUtils.mkdir_p(data_dir)
+      path = File.join(data_dir, "patterns.yml")
+      common = <<~YAML
+        skills_registry:
+          skills:
+            - name: alpha
+              description: alpha
+              triggers: ["alpha"]
+              body: alpha body
+              execution_contract:
+                schema_version: 1
+                version: "1.0.0"
+                status: candidate
+                risk: low
+                required_capabilities: [read]
+                laws: [ROBUSTNESS]
+                fixtures: [test/test_skills.rb]
+      YAML
+      File.write(path, common)
+      first = Master::CLI::Skills.new(root:).tap(&:discover!).find("alpha")
+
+      File.write(path, common.sub('version: "1.0.0"', 'version: "1.0.1"'))
+      second = Master::CLI::Skills.new(root:).tap(&:discover!).find("alpha")
+
+      refute_equal first[:revision], second[:revision]
+      assert_equal :candidate, first[:contract].status
+      assert_predicate first[:contract], :promotable?
+      assert_equal ["ROBUSTNESS"], first[:contract].law_ids
+      assert_equal ["test/test_skills.rb"], first[:contract].fixture_refs
+    end
+  end
+
+  def test_blocked_skill_contract_prevents_trigger_and_body_injection
+    Dir.mktmpdir do |root|
+      data_dir = File.join(root, "data")
+      FileUtils.mkdir_p(data_dir)
+      File.write(File.join(data_dir, "patterns.yml"), <<~YAML)
+        skills_registry:
+          skills:
+            - name: blocked_skill
+              description: blocked
+              triggers: ["blocked phrase"]
+              body: private skill instructions
+              execution_contract:
+                schema_version: 1
+                version: "1.0.0"
+                status: blocked
+                risk: high
+                required_capabilities: [write]
+                laws: [ROBUSTNESS]
+                fixtures: [test/test_skills.rb]
+      YAML
+
+      bus = Class.new do
+        attr_reader :events
+        def initialize = @events = []
+        def publish(name, payload = {}) = @events << [name, payload]
+      end.new
+      skills = Master::CLI::Skills.new(root:, event_bus: bus)
+      skills.discover!
+
+      assert_empty skills.trigger_for("please use blocked phrase")
+      assert_nil skills.body_for("blocked_skill")
+      assert_equal :blocked, skills.contract_for("blocked_skill")[:status]
+      event = bus.events.find { |name, _| name == "skills:contract_refused" }
+      refute_nil event
+      assert_equal :blocked, event.last[:status]
+      refute_includes bus.events.inspect, "private skill instructions"
+    end
+  end
+
+  def test_invalid_skill_contract_is_quarantined_explicitly
+    Dir.mktmpdir do |root|
+      data_dir = File.join(root, "data")
+      FileUtils.mkdir_p(data_dir)
+      File.write(File.join(data_dir, "patterns.yml"), <<~YAML)
+        skills_registry:
+          skills:
+            - name: malformed
+              description: malformed metadata
+              triggers: ["quarantined phrase"]
+              body: should not inject
+              execution_contract:
+                version: "not-a-version"
+                status: self_approved
+                mystery_field: value
+      YAML
+
+      bus = Class.new do
+        attr_reader :events
+        def initialize = @events = []
+        def publish(name, payload = {}) = @events << [name, payload]
+      end.new
+      skills = Master::CLI::Skills.new(root:, event_bus: bus)
+      skills.discover!
+
+      assert_equal :invalid, skills.contract_for("malformed")[:status]
+      assert_empty skills.trigger_for("quarantined phrase")
+      assert_nil skills.body_for("malformed")
+      assert bus.events.any? { |name, _| name == "skills:contract_invalid" }
+    end
+  end
+
+
 end
