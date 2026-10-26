@@ -55,6 +55,25 @@ class LoopOwnerSpec < Minitest::Test
     end
   end
 
+  def test_dead_owner_with_valid_numeric_pid_is_released
+    Dir.mktmpdir("loop-owner-dead-") do |dir|
+      path = File.join(dir, "owner.json")
+      File.write(path, JSON.generate(pid: 123_456, at: Time.now.utc.iso8601))
+
+      Master::Ops::LoopOwner.stub(:dir, dir) do
+        Master::Ops::LoopOwner.stub(:info, path) do
+          Master::Ops::LoopOwner.stub(:process_alive?, false) do
+            Master::Ground::Swallow.stub(:log, nil) do
+              Master::Ops::LoopOwner.cleanup_stale!
+            end
+          end
+        end
+      end
+
+      refute File.exist?(dir), "a valid dead owner must release the stale loop claim"
+    end
+  end
+
   def test_corrupt_timestamp_does_not_release_a_live_owner
     Dir.mktmpdir("loop-owner-corrupt-") do |dir|
       path = File.join(dir, "owner.json")
