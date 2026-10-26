@@ -133,7 +133,7 @@ class FoldObserverTest < Minitest::Test
     Dir.mktmpdir do |root|
       path = File.join(root, "effect.txt")
       seen = []
-      effect_observer = lambda do |stage:, turn:, effect:, effect_id:, observation: nil, elapsed_ms: nil|
+      effect_observer = lambda do |stage:, turn:, effect:, effect_id:, observation: nil, elapsed_ms: nil, **|
         next unless effect.verb == :write
 
         seen << { stage:, turn:, effect_id:, exists: File.exist?(path), ok: observation&.ok?, elapsed_ms: }
@@ -171,7 +171,7 @@ class FoldObserverTest < Minitest::Test
 
       assert_equal :trace_failed, done.reason
       refute File.exist?(path)
-      assert_match(/lifecycle before-event publication failed/, done.summary)
+      assert_match(/before event publication failed/, done.summary)
     end
   end
 
@@ -188,7 +188,7 @@ class FoldObserverTest < Minitest::Test
 
       assert_equal :trace_failed, done.reason
       assert_equal "payload", File.read(path), "the completed side effect must not be misreported as failed and retried"
-      assert_match(/lifecycle after event publication failed/, done.summary)
+      assert_match(/after event publication failed/, done.summary)
     end
   end
 

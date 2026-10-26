@@ -80,6 +80,18 @@ module Master::Core
     def restorable? = kind == :reversible
     def compensatable? = kind == :compensatable
     def approval_required? = kind == :approval_required
+
+    # The receipt's coarser vocabulary (Execution::Contract::REVERSIBILITY),
+    # which decides whether a replay must reconcile first. Harmless or undoable
+    # is reversible; an effect only a person or a policy can take back is not.
+    def contract_kind
+      case kind
+      when :non_mutating, :session_state, :reversible then :reversible
+      when :compensatable then :compensatable
+      when :approval_required, :policy_gated then :irreversible
+      else :unknown
+      end
+    end
   end
 
   Effect = Data.define(:verb, :args, :capability) do

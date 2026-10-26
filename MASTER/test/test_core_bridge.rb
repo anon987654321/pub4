@@ -150,6 +150,9 @@ class CoreBridgeTest < Minitest::Test
       before = events.find { |record| record["event"] == "core:effect:before" }.fetch("payload")
       after = events.find { |record| record["event"] == "core:effect:after" }.fetch("payload")
       assert_equal before["effect_id"], after["effect_id"]
+      # A checkpointed write can be restored, so a replay need not reconcile it first.
+      assert_equal "reversible", before["reversibility"]
+      assert_equal false, before["replay_requires_reconciliation"]
       assert_equal before["run_id"], after["run_id"]
       assert_equal before["attempt_id"], after["attempt_id"]
       assert_equal "#{result[:mission]["id"]}:#{result[:mission]["attempt_count"]}", before["attempt_id"]

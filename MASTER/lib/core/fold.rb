@@ -248,6 +248,7 @@ private
 
     def notify_effect(**event)
       event[:scope] = effect_scope(event[:effect]) unless event.key?(:scope)
+      event[:reversibility] ||= event[:effect].reversibility.contract_kind if event[:effect].respond_to?(:reversibility)
       @effect_observer&.call(**event)
     rescue StandardError => e
       @lifecycle_failure_before = true if event[:stage] == :before
