@@ -113,7 +113,7 @@ module Master
           fires: "value = a ? (b ? 1 : 2) : 3\n",
           does_not_fire: "value = a ? 1 : 2\n",
           description: "no nested ternaries" do |src, path:|
-          next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+          next [] if path.to_s.include?("/law/detectors/")
           result = Prism.parse(src)
           next [] if result.failure?
 
@@ -135,7 +135,7 @@ module Master
           fires: "def call(tmp)\nend\n",
           does_not_fire: "def call(temporary_path)\nend\n",
           description: "spell identifiers in full — no tmp/idx/cfg/ctx" do |src, path:|
-          next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+          next [] if path.to_s.include?("/law/detectors/")
           src.each_line.with_index(1).filter_map do |line, number|
             next if line.strip.start_with?("#", "//")
             next unless line.match?(ABBREV_IDENT_RE)
@@ -164,7 +164,7 @@ module Master
           fires: %(name = 'osman'\n),
           does_not_fire: %(name = "osman"\n),
           description: "double-quoted strings per style.yml" do |src, path:|
-          next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+          next [] if path.to_s.include?("/law/detectors/")
 
           parsed = Prism.parse(src)
           next [] if parsed.failure?
@@ -192,7 +192,7 @@ module Master
           fires: "The band is 45-75 wide.\n",
           does_not_fire: "The band is 45–75 wide.\n",
           description: "numeric ranges use en dash not hyphen" do |src, path:|
-          next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+          next [] if path.to_s.include?("/law/detectors/")
           next [] if path.end_with?(".rb", ".js", ".css", ".scss")
           data_file = path.end_with?(".yml", ".yaml")
           src.each_line.with_index(1).filter_map do |line, number|
@@ -276,7 +276,7 @@ module Master
           fires: "# increment the wear count\nincrement_wear_count\n",
           does_not_fire: "# a torn hem is still a wearing\nincrement_wear_count\n",
           description: "a comment that restates the line below it says nothing the code did not" do |src, path:|
-          next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+          next [] if path.to_s.include?("/law/detectors/")
 
           lines = src.lines
           lines.each_with_index.filter_map do |line, index|
@@ -302,7 +302,7 @@ module Master
           fires: (1..10).map { |i| "line#{i} = 1\n" }.join,
           does_not_fire: "a = 1\n\nb = 2\n",
           description: "vertical breath — avoid dense blocks of 10+ lines without a blank line" do |src, path:|
-          next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+          next [] if path.to_s.include?("/law/detectors/")
           findings = []
           lines = src.lines
           dense_count = 0
@@ -333,7 +333,7 @@ module Master
           fires: "def foo\n        return true\nend\n",
           does_not_fire: "def foo\n  return true\nend\n",
           description: "source symmetry — avoid jagged indentation shifts" do |src, path:|
-          next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+          next [] if path.to_s.include?("/law/detectors/")
           findings = []
           lines = src.lines
           lines.each_with_index.each_slice(2) do |pair|
@@ -357,7 +357,7 @@ module Master
           does_not_fire: "short line\n",
           example_path: "/repo/README.md",
           description: "typographic grid — maintain line length and vertical rhythm" do |src, path:|
-          next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+          next [] if path.to_s.include?("/law/detectors/")
           findings = []
           lines = src.lines
           lines.each_with_index do |line, n|
