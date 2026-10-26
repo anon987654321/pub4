@@ -52,11 +52,6 @@ source and tests they could not run; this pass is what measures them.
   learning families, with adversarial tests for credentials, paths, prompts and tool output.
 - [ ] Structured cancellation and deadlines for supervisors, scheduled jobs, child process trees,
   provider calls and checks.
-- [ ] Trace the write planes (`Io::Base`, DiffStager, `Fix::Transaction`, Committer, direct
-  filesystem writes) and add recovery tests: crash recovery, concurrent runs, refusal to roll back
-  after commit, rollback when final verification fails.
-- [ ] Keep DesignSweep out of automatic `/fix` until it has a candidate/apply split through
-  `Fix::Transaction`.
 
 ## One verification vocabulary
 

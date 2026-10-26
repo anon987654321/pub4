@@ -216,6 +216,10 @@ module Master
       end
 
       def rollback!
+        # A committed pass is delivered work; undoing it is a new change, never a rollback.
+        if %w[committed rolled_back].include?(@state)
+          return Result.err("rollback refused: transaction already #{@state.tr("_", " ")}", category: :policy)
+        end
         raise "transaction not active" unless @active || persisted?
         return delivery.preserve! if @state == "delivering" && delivery.pending?
         @state = "open" if @state == "delivering"

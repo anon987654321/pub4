@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
-require "json"
-
-require "tmpdir"
+# test_helper first: it pins the bundle, and a json required before it activates
+# the default gem and Bundler refuses the locked version.
 require_relative "test_helper"
+require "json"
+require "tmpdir"
 require_relative "../lib/fix/transaction"
 
 class TestFixTransaction < Minitest::Test
@@ -95,7 +96,7 @@ class TestFixTransaction < Minitest::Test
 
       refute recovery.ok?
       assert_equal :infrastructure, recovery.category
-      assert_includes recovery.message, "transaction snapshot directory is a symlink"
+      assert_includes recovery.message, "recovery storage is a symlink"
       assert_equal "do not touch", File.read(File.join(outside, "sentinel"))
       assert_equal "before", File.read(path)
       assert Master::Fix::Transaction::Recovery.persisted?(root:, id:)
@@ -175,6 +176,25 @@ class TestFixTransaction < Minitest::Test
       assert result.ok?
       assert_equal "before", File.read(path)
       refute tx.active?
+    end
+  end
+
+  def test_rollback_after_commit_is_refused_and_leaves_the_delivered_bytes
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "note.txt")
+      File.write(path, "before")
+      tx = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id: "committed")
+      tx.begin!
+      File.write(path, "after")
+      tx.observe!
+      assert tx.finalize!.ok?
+
+      result = tx.rollback!
+
+      refute result.ok?
+      assert_equal :policy, result.category
+      assert_match(/already committed/, result.message)
+      assert_equal "after", File.read(path)
     end
   end
 

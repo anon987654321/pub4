@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
+require_relative "test_helper"
 require "fileutils"
 require "json"
-require_relative "test_helper"
 require "tmpdir"
 require File.expand_path("../lib/fix/best_of_n", __dir__)
 
