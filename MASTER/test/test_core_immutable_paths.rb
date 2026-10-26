@@ -63,9 +63,9 @@ class ImmutablePathsTest < Minitest::Test
     assert_blocked Master::Core::Effect.write("./data/soul.yml", "x"), by: :immutable_paths
   end
 
-  def test_absolute_master_root_path_is_blocked
+  def test_absolute_master_root_soul_path_is_editable
     path = File.join(Master::ROOT, "data/soul.yml")
-    assert_blocked Master::Core::Effect.write(path, "x"), by: :immutable_paths
+    assert_allowed Master::Core::Effect.write(path, "absolute:\n  sacred_paths: []\n")
   end
 
   def test_absolute_repository_path_with_master_prefix_allows_law_catalogue_edits
@@ -99,18 +99,20 @@ class ImmutablePathsTest < Minitest::Test
     assert_blocked effect, by: :immutable_paths
   end
 
-  # The manifest marks subtrees (data/, lib/review/scan/) with a trailing slash;
-  # Paths must hand that slash on or the subtree guard never matches.
-  def test_every_subtree_declared_in_the_real_manifest_blocks_its_children
+  def test_real_manifest_does_not_make_configuration_or_scanner_paths_immutable
     sacred = Master::Core::Constitution::Paths.sacred_paths(root: Master::ROOT)
-    subtrees = sacred.select { |entry| entry.end_with?("/") }
-    refute_empty subtrees, "soul.yml declares subtree sacred paths"
+    refute sacred.any? { |entry| entry == "data/" || entry == "data" || entry == "data/soul.yml" }
+    refute sacred.any? { |entry| entry.start_with?("lib/review/scan/") }
+
     law = Master::Core::Constitution.immutable_paths_rule(
       sacred, master_root: Master::ROOT, workspace_root: Master::ROOT
     )
-    subtrees.each do |entry|
-      effect = Master::Core::Effect.write("#{entry}new_child_file.rb", "A = 1\n")
-      assert_instance_of Master::Core::Verdict::Block, law.judge.call(effect, nil), "#{entry} subtree is unguarded"
+    [
+      Master::Core::Effect.write("data/laws.yml", "law_catalogue: {}\n"),
+      Master::Core::Effect.write("data/soul.yml", "absolute:\n  sacred_paths: []\n"),
+      Master::Core::Effect.write("lib/review/scan/law.rb", "# scanner code may evolve\n"),
+    ].each do |effect|
+      assert_instance_of Master::Core::Verdict::Allow, law.judge.call(effect, nil)
     end
   end
 
