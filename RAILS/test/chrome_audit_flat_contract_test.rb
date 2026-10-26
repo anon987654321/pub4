@@ -37,15 +37,18 @@ class ChromeAuditFlatContractTest < Minitest::Test
     refute_includes source, "→"
   end
 
-  def test_shared_vertical_motion_has_one_core_reduced_motion_contract
-    source = read("brgen/app/assets/stylesheets/_brgen_core_shell.scss")
-    guard = source.split("@media (prefers-reduced-motion: reduce)", 2).last
-    %w[nearby-alert nearby-alert-dot push-enable-btn match-overlay skeleton].each do |selector|
-      assert_includes guard, ".#{selector}"
-    end
-    assert_includes guard, "body.vertical-tv .live-badge"
-    assert_includes guard, 'body.vertical-messenger #typing-indicator[data-active="true"]::before'
-    assert_includes guard, "animation: none;"
+  def test_brgen_reduced_motion_override_is_last_and_covers_animation_transitions_and_scroll
+    source = read("brgen/app/assets/stylesheets/application.scss")
+    at = source.rindex("@media (prefers-reduced-motion: reduce)")
+    refute_nil at, "the assembled Brgen stylesheet needs a final reduced-motion guard"
+    guard = source[at..]
+
+    assert_match(/\A@media \(prefers-reduced-motion: reduce\)\s*\{\s*\*,\s*\*::before,\s*\*::after\s*\{/m, guard)
+    assert_includes guard, "animation: none !important;"
+    assert_includes guard, "transition: none !important;"
+    assert_includes guard, "scroll-behavior: auto !important;"
+    assert guard.rstrip.end_with?("}"), "the final guard must remain the last stylesheet block"
+    refute_includes read("brgen/app/assets/stylesheets/_brgen_core_shell.scss"), "Shared motion vocabulary"
   end
 
   def test_consent_banner_is_mobile_first_and_restores_wide_layout
