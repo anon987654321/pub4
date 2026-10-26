@@ -11,7 +11,7 @@
     <% end %>
   <% end %>
   <% if buybox_listing.photo_processing? %>
-    <p class="listing-status listing-status--muted"><%= t("marketplace.photo_processing_notice") %></p>
+    <p class="listing-status listing-status--notice"><%= t("marketplace.photo_processing_notice") %></p>
   <% end %>
   <p><%= [buybox_listing.condition_label, buybox_listing.location].compact.join(" · ") %></p>
   <p class="listing-delivery"><%= buybox_listing.delivery_badge %></p>
