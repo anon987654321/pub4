@@ -6,6 +6,7 @@ require "mcp"
 # McpToolWrapper subclasses RubyLLM::Tool; a caller that reached this file
 # before anything loaded the gem got no wrapper at all.
 require "ruby_llm"
+require_relative "../execution/contract"
 
 module Master
   module Io
@@ -28,7 +29,7 @@ module Master
         load_servers.each { |name, cfg| connect(name, cfg) }
         @bus&.publish("mcp:connected", count: @clients.size)
       rescue StandardError => e
-        @bus&.publish("mcp:error", error: e.message)
+        @bus&.publish("mcp:error", **Master::Execution::Contract.diagnostic_fields(e.message))
       end
 
       def tools
@@ -44,12 +45,12 @@ module Master
               tier: @server_config.fetch(name, {}).fetch("tier", DEFAULT_TIER).to_sym,
             )
           rescue StandardError => e
-            @bus&.publish("mcp:tool_wrap_error", name:, error: e.message)
+            @bus&.publish("mcp:tool_wrap_error", name:, **Master::Execution::Contract.diagnostic_fields(e.message))
             nil
           end
         end
       rescue StandardError => e
-        @bus&.publish("mcp:tools_error", error: e.message)
+        @bus&.publish("mcp:tools_error", **Master::Execution::Contract.diagnostic_fields(e.message))
         []
       end
 
@@ -67,7 +68,7 @@ module Master
         @server_config[name] = cfg
         @bus&.publish("mcp:server_connected", name:, transport: transport.to_s)
       rescue StandardError => e
-        @bus&.publish("mcp:server_failed", name:, error: e.message)
+        @bus&.publish("mcp:server_failed", name:, **Master::Execution::Contract.diagnostic_fields(e.message))
       end
 
       def build_mcp_client(_name, transport, cfg)
@@ -170,7 +171,7 @@ module Master
             ok:,
             latency_ms: started ? elapsed_ms(started) : nil,
           }
-          payload[:error] = error if error
+          payload.merge!(Master::Execution::Contract.diagnostic_fields(error)) if error
           @bus&.publish("mcp:tool_after", **payload)
         end
 
