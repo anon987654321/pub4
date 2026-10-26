@@ -8,6 +8,7 @@ require_relative "../../operator/ratchet_sponsor"
 require_relative "repo_scope"
 require_relative "../autofix_guard"
 require_relative "../run_budget"
+require_relative "../../trace/mutation_observer"
 
 module Master
   module Fix
@@ -61,6 +62,10 @@ module Master
           @git = git
           @bus = bus
           @root = root
+          @lifecycle_observer = Master::Trace::MutationObserver.new(
+            root: @root || Master::ROOT, namespace: "fix:git_lifecycle",
+            subject_type: "repository", subject_id: "working-tree", bus: @bus
+          )
           @ground_truth = ground_truth
           @preserve_user_intent = preserve_user_intent
           @baseline = nil
@@ -129,7 +134,7 @@ module Master
 
             deliver_and_commit(transaction:, message:, findings:, prepared:)
           rescue StandardError => e
-            @bus&.publish("fix_loop:commit_error", error: e.message)
+            @bus&.publish("fix_loop:commit_error", error_class: e.class.name, error_present: true)
             @transaction = nil
             transaction&.delivery&.preserve! if transaction&.active?
             Result.err("fix transaction delivery: #{e.message}", category: :infrastructure)
@@ -288,8 +293,18 @@ end
 def push_commit!(paths)
   return unless push_each?
 
-  @git.push
-  verify_push!(paths)
+  @lifecycle_observer.mutate(operation: "push", item_count: Array(paths).size) do
+    @git.push
+    verify_push!(paths)
+    true
+  end
+end
+
+def commit_audited!(message, paths:)
+  @lifecycle_observer.mutate(operation: "commit", item_count: Array(paths).size) do
+    commit_scoped(message, paths:)
+    true
+  end
 end
 
 def stage_commit_mode?
@@ -401,16 +416,18 @@ def stage_commit_mode?
           @transaction = nil
           begin
             result = commit_paths(message, findings, prepared, transaction:)
-            transaction.finalize!
+            finalized = transaction.finalize!
+            return finalized if finalized.err?
+
             result
           rescue StandardError => e
             committed = head_changed?(head_before)
             if committed
-              @bus&.publish("fix_loop:commit_error", error: e.message, committed: true)
+              @bus&.publish("fix_loop:commit_error", error_class: e.class.name, error_present: true, committed: true)
               Result.err("fix transaction delivery pending: #{e.message}", category: :infrastructure)
             else
               rollback = roll_back_own(transaction)
-              @bus&.publish("fix_loop:commit_error", error: e.message, committed: false)
+              @bus&.publish("fix_loop:commit_error", error_class: e.class.name, error_present: true, committed: false)
               rollback.err? ? rollback : Result.err("fix transaction delivery: #{e.message}", category: :infrastructure)
             end
           end
@@ -421,17 +438,18 @@ def stage_commit_mode?
           return :noop if paths.empty?
           return :blocked unless validate_paths(message, paths)
 
-          commit_scoped(with_finding_ids(message, findings, paths), paths:)
+          commit_audited!(with_finding_ids(message, findings, paths), paths:)
           push_commit!(paths)
 
           promote_known_good(@git.head, paths)
           Master::Trace::Dmesg.status(
             "deliver0", "commit=#{@git.head} push=#{push_each? ? "ok" : "deferred"} paths=#{paths.join(", ")}"
           )
-          @bus&.publish("ops:commit", message: message.to_s[0, 120], head: @git.head, paths:, findings:)
+          @bus&.publish("ops:commit", operation: "commit", head: @git.head,
+                        path_count: paths.size, finding_count: Array(findings).size)
           Result.ok(:committed)
         rescue StandardError => e
-          @bus&.publish("fix_loop:commit_error", error: e.message)
+          @bus&.publish("fix_loop:commit_error", error_class: e.class.name, error_present: true)
           raise
         end
 
@@ -473,12 +491,13 @@ def stage_commit_mode?
         end
 
         def commit_paths(message, findings, paths, transaction:)
-          commit_scoped(with_finding_ids(message, findings, paths), paths:)
+          commit_audited!(with_finding_ids(message, findings, paths), paths:)
           head_after = @git.head
           transaction.delivery.record_commit!(head_after:)
           push_commit!(paths)
           promote_known_good(head_after, paths)
-          @bus&.publish("ops:commit", message: message.to_s[0, 120], head: head_after, paths:, findings:)
+          @bus&.publish("ops:commit", operation: "commit", head: head_after,
+                        path_count: paths.size, finding_count: Array(findings).size)
           Result.ok(:committed)
         end
 
