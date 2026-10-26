@@ -51,6 +51,70 @@ module Master
         raise
       end
 
+      # Bind an immutable pre-mutation plan to this run. If the resumed scope,
+      # source, Law authority, toolchain, exclusions or adapters changed, old
+      # convergence observations are invalid and must be measured again.
+      def bind_plan(run_id, plan)
+        manifest = plan.respond_to?(:to_h) ? plan.to_h : plan
+        raise ArgumentError, "fix plan manifest must be a hash" unless manifest.is_a?(Hash)
+
+        dimensions = %w[
+          scope_digest source_digest law_digest authority_digest toolchain_digest adapter_digest exclusion_digest
+        ]
+        receipt = nil
+        update(run_id) do |run|
+          previous = run["plan"]
+          changed = if previous.is_a?(Hash)
+                      dimensions.select { |key| previous[key] != manifest[key] }
+                    else
+                      []
+                    end
+          invalidated = previous.is_a?(Hash) && changed.any?
+          if invalidated
+            run.delete("convergence_state")
+            run.delete("pass_state")
+            run["convergence_invalidated"] = {
+              "at" => Time.now.utc.iso8601,
+              "dimensions" => changed,
+              "previous_source_digest" => previous["source_digest"],
+              "current_source_digest" => manifest["source_digest"],
+            }
+          end
+
+          plans = Array(run["plan_generations"])
+          if previous.nil? || invalidated
+            generation = (plans.map { |row| row["generation"].to_i }.max || -1).to_i + 1
+            plans << {
+              "generation" => generation,
+              "digest" => manifest["digest"],
+              "scope_digest" => manifest["scope_digest"],
+              "source_digest" => manifest["source_digest"],
+              "law_digest" => manifest["law_digest"],
+              "authority_digest" => manifest["authority_digest"],
+              "toolchain_digest" => manifest["toolchain_digest"],
+              "created_at" => manifest["created_at"],
+            }
+            run["plan_generations"] = plans.last(8)
+          else
+            generation = (plans.map { |row| row["generation"].to_i }.max || 0).to_i
+          end
+
+          run["plan"] = manifest
+          receipt = { invalidated: invalidated, dimensions: changed, generation:, plan: manifest }
+        end
+        emit(
+          "fix:plan_bound",
+          run_id:,
+          plan_digest: manifest["digest"],
+          source_digest: manifest["source_digest"],
+          scope_digest: manifest["scope_digest"],
+          generation: receipt && receipt[:generation],
+          convergence_invalidated: receipt && receipt[:invalidated],
+          changed_dimensions: receipt && receipt[:dimensions],
+        )
+        receipt
+      end
+
       def pass_start(run_id, pass, transaction_id:)
         update(run_id) do |run|
           run["passes"] << {
@@ -293,7 +357,8 @@ module Master
 
         full = File.expand_path(value, @root)
         root = File.expand_path(@root)
-        return value unless full == root || full.start_with?(root + File::SEPARATOR)
+        return "." if full == root
+        return value unless full.start_with?(root + File::SEPARATOR)
 
         full.delete_prefix(root + File::SEPARATOR)
       rescue ArgumentError
