@@ -21,6 +21,7 @@ module Master
       SAFE_BOOLEANS = %w[blocked success ok cancelled complete enabled].freeze
       FIELD_NAME = /\A[a-zA-Z][a-zA-Z0-9_]{0,63}\z/
       CATEGORY_VALUE = /\A[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,79}\z/
+      SHA256 = /\A[0-9a-f]{64}\z/i
       SENSITIVE_FIELD = /(?:\A|_)(?:arg|args|argv|body|branch|command|content|cookie|credential|credentials|cwd|data|description|detail|dir|directory|error|exception|file|filename|goal|input|message|new|old|output|path|paths|payload|prompt|query|reason|ref|response|result|root|scope|secret|summary|target|text|token|transcript|uri|url|working_dir|working_directory|authorization|password|scan_ip|ip_address)(?:\z|_)/i
 
       module_function
@@ -51,6 +52,8 @@ module Master
         return true if SAFE_CATEGORIES.include?(field) && category_value?(value)
         return true if SAFE_NUMBERS.include?(field) && numeric_value?(value)
         return true if SAFE_BOOLEANS.include?(field) && [true, false].include?(value)
+        return true if field.end_with?("_digest") && value.is_a?(String) && SHA256.match?(value)
+        return true if field.end_with?("_bytes") && numeric_value?(value) && value >= 0
 
         false
       end
