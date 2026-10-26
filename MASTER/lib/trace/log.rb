@@ -177,12 +177,12 @@ module Master
         false
       end
 
-      # Append-only tool invocation log; subscribes to tool:before on EventBus.
-      # Under .master/ because it records tool arguments, which stay out of the served event stream.
+      # Append-only tool invocation metadata; raw arguments stay in the live
+      # dispatch path and are never copied into a durable audit file.
       class Audit
         LOG_PATH = ".master/audit.ndjson".freeze
-        MAX_VAL = 120
         MAX_BYTES = 5 * 1024 * 1024
+        SAFE_NAME = /\A[a-zA-Z0-9_.:-]{1,96}\z/
 
         def initialize(root:, event_bus:)
           @path = File.join(root, LOG_PATH)
@@ -193,17 +193,28 @@ module Master
 
         private
 
-        # The bus stamps its own `ts` (milliseconds since boot) and the raw
-        # conversation id; neither belongs in a log read across processes, so
-        # the wall clock and the session digest take their places.
         def append(event_data)
-          fields = event_data.except(:tool, :ts, :conversation).transform_values { |v| v.to_s[0, MAX_VAL] }
-          record = { ts: Time.now.utc.iso8601, session: Log.session, tool: event_data[:tool] }.merge(fields)
-          Master::Trace::Telemetry.span("audit.append", tool: event_data[:tool].to_s) do
+          tool = event_data[:tool].to_s
+          tool = "unknown" unless SAFE_NAME.match?(tool)
+          record = {
+            ts: Time.now.utc.iso8601,
+            session: Log.session,
+            tool:,
+            path_present: !event_data[:path].to_s.empty?,
+            argument_count: event_data[:args].is_a?(Hash) ? event_data[:args].size : Array(event_data[:args] || event_data[:argv]).size,
+          }
+          %i[operation verb capability stage turn].each do |key|
+            value = event_data[key]
+            record[key] = value.to_s if (String === value || Symbol === value) && SAFE_NAME.match?(value.to_s)
+            record[key] = value if value.is_a?(Numeric) || value == true || value == false
+          end
+          Master::Trace::Telemetry.span("audit.append", tool:) do
             @mutex.synchronize do
               Log.append_jsonl(@path, record, max_bytes: MAX_BYTES, mode: 0o600, directory_mode: 0o700)
             end
           end
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "Trace::Log::Audit.append")
         end
       end
 
