@@ -57,6 +57,8 @@ module Master
           @semantic_reads = FindingCache.new(root: cache_root, dir: SEMANTIC_DIR)
           @finding_cache = FindingCache.new(root: cache_root)
           @semantic_gap_notice_emitted = false
+          @ast_mutex = Mutex.new
+          @ast_assessments = {}
           @deferral = nil
           @semantic_budget = nil
 
@@ -109,6 +111,34 @@ module Master
           self
         end
 
+        # Per-file parser receipts let the assessment matrix distinguish a real
+        # syntax-tree reading from a scanner pass that silently fell back to text.
+        def ast_assessments
+          @ast_mutex.synchronize { @ast_assessments.dup }
+        end
+
+        def reset_ast_assessments!
+          @ast_mutex.synchronize { @ast_assessments.clear }
+          self
+        end
+
+        def record_ast_assessment(path:, code:, ast:)
+          status = ast ? "assessed" : "inconclusive"
+          row = {
+            "status" => status,
+            "sha256" => Digest::SHA256.hexdigest(code),
+            "reason" => ast ? nil : "Prism did not produce a syntax tree for the current Ruby source",
+          }.freeze
+          @ast_mutex.synchronize { @ast_assessments[File.expand_path(path)] = row }
+          @bus&.publish(
+            "scan:ast_assessment",
+            path: File.expand_path(path),
+            status:,
+            sha256: row["sha256"],
+            reason: row["reason"],
+          )
+        end
+
         # The model tier off for the length of one block, then back as it was.
         # A tree-wide observation is a mechanical reading: 75% of RAILS files
         # carry a finding, so "run the model when the cheap passes found
@@ -128,6 +158,7 @@ module Master
             return code if code.err?
 
             ast = parse_ruby(code.value!, path)
+            record_ast_assessment(path:, code: code.value!, ast:) if Master.language_for(path) == "ruby"
             fingerprint = Master::Review::Scan::SemanticFingerprint.for(code.value!)
             findings = apply_laws(code: code.value!, ast:, path:, law_set: laws)
             findings = annotate_findings(findings, fingerprint:)
