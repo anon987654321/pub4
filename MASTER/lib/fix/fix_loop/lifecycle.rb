@@ -47,7 +47,7 @@ module Master
             root: @root, target:, files: refreshed, laws: @laws,
             excluded: @file_collector.skip_reasons,
             adapters: @pass_runner.assessment_adapters(target:),
-            max_passes:, budget_seconds:
+            max_passes:, budget_seconds:, deadline_at: @fix_plan.deadline_at
           )
           @pass_runner.plan_refresh_succeeded! if @pass_runner.respond_to?(:plan_refresh_succeeded!)
           current = @fix_plan
