@@ -64,50 +64,56 @@ module Master
     end
 
     def validate_laws(data, path:, text:)
-      missing_sections = REQUIRED_LAW_SECTIONS - data.keys.map(&:to_s)
-      raise ArgumentError, "required Law sections missing: #{missing_sections.join(', ')}" unless missing_sections.empty?
-
+      validate_required_law_sections(data)
       catalogue = data.fetch("law_catalogue")
+      validate_catalogue_contract(catalogue)
+      entries = catalogue.fetch("entries")
+      validate_catalogue_entries(entries, repository_root(path))
+      validate_catalogue_key_duplicates(text, entries.keys)
+    end
+
+    def validate_required_law_sections(data)
+      missing = REQUIRED_LAW_SECTIONS - data.keys.map(&:to_s)
+      raise ArgumentError, "required Law sections missing: #{missing.join(', ')}" unless missing.empty?
+    end
+
+    def validate_catalogue_contract(catalogue)
       raise ArgumentError, "law_catalogue must be a mapping" unless catalogue.is_a?(Hash)
       modalities = Array(catalogue["modalities"]).map(&:to_s).uniq.sort
-      unless modalities == LAW_MODALITIES
-        raise ArgumentError, "law_catalogue.modalities must be #{LAW_MODALITIES.join(', ')}"
-      end
-      surfaces = Array(catalogue["surfaces"]).map(&:to_s).uniq
-      raise ArgumentError, "law_catalogue.surfaces must be non-empty" if surfaces.empty?
-
+      raise ArgumentError, "law_catalogue.modalities must be #{LAW_MODALITIES.join(', ')}" unless modalities == LAW_MODALITIES
+      raise ArgumentError, "law_catalogue.surfaces must be non-empty" if Array(catalogue["surfaces"]).empty?
       entries = catalogue.fetch("entries") { raise KeyError, "law_catalogue.entries is required" }
       raise ArgumentError, "law_catalogue.entries must be a non-empty mapping" unless entries.is_a?(Hash) && !entries.empty?
 
       keys = entries.keys.map { |id| id.to_s.downcase }
       duplicates = keys.tally.select { |_id, count| count > 1 }.keys
       raise ArgumentError, "duplicate Law identities: #{duplicates.join(', ')}" unless duplicates.empty?
+    end
 
-      repo_root = repository_root(path)
+    def validate_catalogue_entries(entries, repo_root)
       entries.each do |id, row|
         raise ArgumentError, "Law #{id} must be a mapping" unless row.is_a?(Hash)
         raise ArgumentError, "Law #{id} must be universal" unless row["universal"] == true
-        row_modalities = Array(row["modalities"]).map(&:to_s).uniq.sort
-        unless row_modalities == LAW_MODALITIES
-          raise ArgumentError, "Law #{id} modalities must be #{LAW_MODALITIES.join(', ')}"
-        end
+        modalities = Array(row["modalities"]).map(&:to_s).uniq.sort
+        raise ArgumentError, "Law #{id} modalities must be #{LAW_MODALITIES.join(', ')}" unless modalities == LAW_MODALITIES
 
-        sources = (Array(row["definition_sources"]) + Array(row["detector_sources"])).map(&:to_s).uniq
-        raise ArgumentError, "Law #{id} must name a Ruby source" if sources.empty?
-        sources.each do |source|
-          unless source.start_with?("MASTER/law/") && source.end_with?(".rb") &&
-                 !source.split("/").include?("..")
-            raise ArgumentError, "Law #{id} has invalid source path #{source.inspect}"
-          end
-
-          full_path = File.expand_path(source, repo_root)
-          unless full_path.start_with?(repo_root + File::SEPARATOR) && File.file?(full_path)
-            raise ArgumentError, "Law #{id} source is missing: #{source}"
-          end
-        end
+        validate_catalogue_sources(id, row, repo_root)
       end
+    end
 
-      validate_catalogue_key_duplicates(text, entries.keys)
+    def validate_catalogue_sources(id, row, repo_root)
+      sources = (Array(row["definition_sources"]) + Array(row["detector_sources"])).map(&:to_s).uniq
+      raise ArgumentError, "Law #{id} must name a Ruby source" if sources.empty?
+      sources.each { |source| validate_catalogue_source(id, source, repo_root) }
+    end
+
+    def validate_catalogue_source(id, source, repo_root)
+      valid = source.start_with?("MASTER/law/") && source.end_with?(".rb") && !source.split("/").include?("..")
+      raise ArgumentError, "Law #{id} has invalid source path #{source.inspect}" unless valid
+
+      full_path = File.expand_path(source, repo_root)
+      valid_file = full_path.start_with?(repo_root + File::SEPARATOR) && File.file?(full_path)
+      raise ArgumentError, "Law #{id} source is missing: #{source}" unless valid_file
     end
 
     def validate_catalogue_key_duplicates(text, ids)
