@@ -24,7 +24,8 @@ module Master
           def catalogue_integrity_errors
             structural = %i[invalid_status malformed_entries empty_without_declared_gap gap_with_law_ids unmapped_with_law_ids]
             hard = catalogue_drift.select do |kind, _ids|
-              kind.to_s.start_with?("manifest_") || structural.include?(kind)
+              (kind.to_s.start_with?("manifest_") && kind != :manifest_without_deterministic_detector) ||
+                structural.include?(kind)
             end
             hard.flat_map do |kind, ids|
               ids.map { |id| "catalogue_#{kind}: #{id}" }
@@ -94,7 +95,7 @@ module Master
             executable_ids: law_ids,
             registry_ids: registry
           )
-          manifest = law_catalogue_report(yaml_entries)
+          manifest = law_catalogue_report(yaml_entries, registry:)
           catalogue_drift = catalogue.fetch(:drift).merge(manifest.fetch(:drift))
           Report.new(
             yaml_laws: c[:yaml_ids].size,
@@ -284,7 +285,7 @@ module Master
           end
         end
 
-        def law_catalogue_report(entries)
+        def law_catalogue_report(entries, registry:)
           data = Master.law("law_catalogue", root: @root)
           required_modalities = %w[lexical semantic visual]
           required_surfaces = ::Law::ASSESSMENT_SURFACES.map(&:to_s)
@@ -298,6 +299,7 @@ module Master
           duplicate_definitions = []
           non_universal = []
           entry_missing_modalities = []
+          without_deterministic_detector = []
 
           repo_root = File.dirname(File.expand_path(@root))
           entries.each do |entry|
@@ -311,6 +313,8 @@ module Master
             entry_modalities = Array(entry["modalities"]).map(&:to_s).to_set
             absent_modalities = required_modalities.reject { |modality| entry_modalities.include?(modality) }
             entry_missing_modalities << "#{id}:#{absent_modalities.join(',')}" unless absent_modalities.empty?
+
+            without_deterministic_detector << id unless detector_present?(registry, id)
 
             sources.uniq.each do |source|
               full_path = File.expand_path(source, repo_root)
@@ -330,6 +334,7 @@ module Master
               manifest_duplicate_definitions: duplicate_definitions.sort.freeze,
               manifest_non_universal: non_universal.sort.freeze,
               manifest_entry_missing_modalities: entry_missing_modalities.sort.freeze,
+              manifest_without_deterministic_detector: without_deterministic_detector.sort.freeze,
             }.freeze,
           }.freeze
         end
