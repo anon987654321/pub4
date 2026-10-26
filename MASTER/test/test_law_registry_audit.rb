@@ -153,13 +153,24 @@ class TestLawRegistryAudit < Minitest::Test
     assert_includes ids, "no_god_class"
   end
 
-  # The escape hatch is idle: no rule declares a detect_lexical, so
-  # YamlDeclarativeLaw bridges nothing. This is the tripwire — the day somebody
-  # declares one, it fails and asks whether the bridge is still wanted.
-  def test_the_lexical_hatch_is_empty
+  def test_every_catalogue_entry_is_universal_and_has_all_three_modalities
+    manifest = Master.law("law_catalogue").fetch("entries")
+    expected = %w[lexical semantic visual]
+
+    assert_operator manifest.size, :>, 400
+    manifest.each do |id, entry|
+      assert_equal true, entry["universal"], "#{id} must be universal"
+      assert_equal expected, Array(entry["modalities"]).map(&:to_s).sort, "#{id} modality coverage"
+      sources = Array(entry["definition_sources"]) + Array(entry["detector_sources"])
+      refute_empty sources, "#{id} must point to Ruby source"
+    end
+  end
+
+  def test_catalogue_reconciliation_is_an_enforced_gate
     report = audit.call
 
-    assert_empty report.lexical_wired
-    assert_empty report.lexical_unwired
+    assert_empty report.reconciliation_errors,
+                 "canonical Law catalogue is not reconciled: #{report.reconciliation_errors.first(20).join("; ")}"
+    assert report.assert_reconciled!
   end
 end
