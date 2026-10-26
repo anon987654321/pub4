@@ -68,9 +68,9 @@ module Master
             self
           end
 
-          # The matrix population is the canonical executable Law registry plus
-          # scanner-only adapters that report their own identities. LawBridgeLaw
-          # and SemanticLaw are transport adapters, never duplicate Law rows.
+          # The matrix population is the canonical YAML Law catalogue projected
+          # into executable definitions and Ruby detector adapters. Each Law ID
+          # appears once; semantic and visual reviewers consume that same ID set.
           def begin_assessment_run(files:, plan:)
             @assessment_plan = plan
             @assessment_surface_cache = {}
