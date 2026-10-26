@@ -8,13 +8,14 @@ module Master
       # Audits executable law population vs Ruby scanner registry.
       class LawRegistryAudit
         Report = Data.define(:yaml_laws, :registry_ids, :kernel_ids, :lexical_wired, :lexical_unwired,
-                             :semantic_only, :structural_unwired, :dep_graph_gaps, :mechanical, :source_drift) do
+                             :semantic_only, :structural_unwired, :dep_graph_gaps, :mechanical, :source_drift, :catalogue_drift) do
           def reconciled?
-            source_drift.values.all?(&:empty?)
+            source_drift.values.all?(&:empty?) && catalogue_drift.values.all?(&:empty?)
           end
 
           def reconciliation_errors
-            source_drift.flat_map { |kind, ids| ids.map { |id| "#{kind}: #{id}" } }
+            source_drift.flat_map { |kind, ids| ids.map { |id| "#{kind}: #{id}" } } +
+              catalogue_drift.flat_map { |kind, ids| ids.map { |id| "catalogue_#{kind}: #{id}" } }
           end
 
           def assert_reconciled!
@@ -70,6 +71,7 @@ module Master
             dep_graph_gaps: ungraphed_law_ids(registry),
             mechanical: mechanical(yaml_entries, registry:).map { |law| law["id"] },
             source_drift: source_drift(yaml_entries, registry),
+            catalogue_drift: catalogue_drift,
           )
         end
 
@@ -88,6 +90,24 @@ module Master
             yaml_only: (yaml_ids - executable_ids - detector_ids).to_a.sort.freeze,
             law_only: (executable_ids - yaml_ids).to_a.sort.freeze,
             registry_only: (detector_ids - yaml_ids - executable_ids).to_a.sort.freeze,
+          }.freeze
+        end
+
+        # Cross-check the curated law-map catalogue against actual enforceable
+        # Laws. A map entry with no law_ids is a known coverage gap, not a detector.
+        # No missing reference is silently treated as covered.
+        def catalogue_drift
+          map = Master.law("law_map", root: @root)
+          entries = map.fetch("laws", {})
+          mapped = entries.values.flat_map { |entry| Array(entry["law_ids"]) }
+                          .map { |id| id.to_s.downcase }.to_set
+          executable = law_ids
+          {
+            executable_not_mapped: (executable - mapped).to_a.sort.freeze,
+            mapped_without_executable: (mapped - executable).to_a.sort.freeze,
+            catalogue_gaps: entries.filter_map do |name, entry|
+              name.to_s if Array(entry["law_ids"]).empty?
+            end.sort.freeze,
           }.freeze
         end
 
