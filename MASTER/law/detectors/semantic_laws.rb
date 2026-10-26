@@ -392,29 +392,45 @@ module Master
           # invented a rule for this file, and accepting it would put the scope
           # back where it was.
           def parse_findings(response, scoped, mode: nil)
-            response.lines.filter_map do |line|
-              stripped = line.strip
-              next if stripped.empty? || %w[CLEAN NONE].include?(stripped.upcase)
+            expected_empty = mode.to_sym == :opportunity ? "NONE" : "CLEAN"
+            lines = response.to_s.lines.map(&:strip).reject(&:empty?)
+            return [] if lines == [expected_empty]
+            raise "semantic assessment INCONCLUSIVE: empty response for #{mode} stream" if lines.empty?
 
+            lines.map do |stripped|
               match = stripped.match(/\A([A-Z_][A-Z0-9_]*):(\d+):(.+)\z/)
-              next unless match && scoped.key?(match[1])
+              unless match
+                raise "semantic assessment INCONCLUSIVE: malformed #{mode} response record: #{stripped[0, 120].inspect}"
+              end
 
-              axiom = scoped[match[1]]
+              law_id = match[1]
+              unless scoped.key?(law_id)
+                raise "semantic assessment INCONCLUSIVE: response named unrequested Law #{law_id}"
+              end
+
+              axiom = scoped.fetch(law_id)
+              line = Integer(match[2])
+              raise "semantic assessment INCONCLUSIVE: non-positive finding line for #{law_id}" unless line.positive?
+
               Finding.build(
-                law: match[1],
+                law: law_id,
                 message: match[3].strip,
-                line: match[2].to_i,
+                line:,
                 severity: axiom[:severity],
                 fix: nil,
                 tags: [
-                  match[1].to_sym,
-                  (mode || axiom[:mode]).to_sym == :opportunity ? :semantic_opportunities : :semantic_violations,
-                  (mode || axiom[:mode]).to_sym,
+                  law_id.to_sym,
+                  mode.to_sym == :opportunity ? :semantic_opportunities : :semantic_violations,
+                  mode.to_sym,
                 ],
                 reversibility: axiom[:reversibility],
                 blast_radius: axiom[:blast_radius],
               )
             end
+          rescue ArgumentError => e
+            raise if e.message.start_with?("semantic assessment INCONCLUSIVE:")
+
+            raise "semantic assessment INCONCLUSIVE: malformed finding line number (#{e.message})"
           end
         end
 
