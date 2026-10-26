@@ -57,7 +57,8 @@ class TestIoMcpAndWebChat < Minitest::Test
       ["remote", :sse, { "transport" => "sse", "url" => "http://127.0.0.1:1" }],
       ["broken", :stdio, { "command" => "nope" }],
     ], built
-    assert_includes events, ["mcp:server_failed", { name: "broken", error: "npx missing" }]
+    assert_includes events, ["mcp:server_failed", { name: "broken", error_digest: Digest::SHA256.hexdigest("npx missing"), error_bytes: "npx missing".bytesize }]
+    refute_includes events.inspect, "npx missing"
     assert_includes events, ["mcp:connected", { count: 2 }]
   ensure
     FileUtils.rm_rf(root)
@@ -119,6 +120,33 @@ class TestIoMcpAndWebChat < Minitest::Test
     assert_equal JSON.generate([{ "type" => "text", "text" => "ok" }]), tool.execute(path: "README.md")
     assert_equal [["filesystem__read_file", :dangerous, tool.description]], governor.calls
     assert_equal [["read_file", { path: "README.md" }]], client.calls
+  end
+
+  def test_mcp_tool_error_event_redacts_server_error_text
+    client = Struct.new(:calls) do
+      def call_tool(tool:, arguments:)
+        calls << [tool.name, arguments]
+        raise "token=private-secret at /home/private/user.txt"
+      end
+    end.new([])
+    bus = Bus.new([])
+    tool = Master::Io::McpToolWrapper.new(
+      name: "filesystem", client:,
+      tool: FakeMcpTool.new("read_file", "read a file"),
+      governor: Governor.new, event_bus: bus, timeout: 2
+    )
+
+    result = tool.execute(path: "private.txt")
+    event = bus.events.find { |name, _payload| name == "mcp:tool_after" }
+
+    assert_includes result, "token=private-secret"
+    refute_nil event
+    payload = event.last
+    assert_equal Digest::SHA256.hexdigest("token=private-secret at /home/private/user.txt"), payload[:error_digest]
+    assert_equal "token=private-secret at /home/private/user.txt".bytesize, payload[:error_bytes]
+    refute payload.key?(:error)
+    refute_includes bus.events.inspect, "private-secret"
+    refute_includes bus.events.inspect, "/home/private/user.txt"
   end
 
   def test_mcp_tool_refuses_before_calling_the_server
