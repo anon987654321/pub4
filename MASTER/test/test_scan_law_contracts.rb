@@ -159,17 +159,14 @@ class TestScanLawContracts < Minitest::Test
     end
   end
 
-  # UNBOUNDED_RETRY is the first retired law/registry twin: the registry block
-  # is gone and law/ is the one implementation, so the
-  # contract asserts through the bridge — the id must reach the scanner's
-  # findings, unchanged, not just prove itself inside Law.
-  def test_advisory_laws_do_not_enter_enforcement_bridge
-    bridge = Laws::LawBridgeLaw.new
+  def test_advisory_laws_do_not_enter_enforcement_adapter
     law = Law.definitions.fetch(:BEAUTIFUL_CODE)
 
     assert_equal :advisory, law.lifecycle
-    findings = bridge.check("# frozen_string_literal: true\n\nif a; b; else; c; end\n", path: "example.rb")
-    refute_includes findings.map(&:law), "BEAUTIFUL_CODE", "advisory doctrine must not become an enforcement finding"
+    findings = Master::Review::Scan::CanonicalLawAdapter.new(law)
+      .check("# frozen_string_literal: true\n\nif a; b; else; c; end\n", path: "example.rb")
+    refute findings.any? { |finding| finding[:law] == "BEAUTIFUL_CODE" },
+           "advisory doctrine must not become an enforcement finding"
   end
 
   def test_trusted_transformation_law_remains_in_semantic_population
