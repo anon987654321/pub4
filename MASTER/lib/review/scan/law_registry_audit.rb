@@ -180,10 +180,15 @@ module Master
 
         def mechanical(entries, registry: build_registry_ids)
           entries.select do |law|
-            law["detect_lexical"] || law["detect_structural"] ||
-              law_detector?(law["id"]) || law_detector?(law["folded_into"]) ||
-              detected?(registry, law["id"]) || detected?(registry, law["folded_into"])
+            detector_present?(registry, law["id"]) || detector_present?(registry, law["folded_into"])
           end
+        end
+
+        def detector_present?(registry, id)
+          key = id.to_s.downcase
+          return false if key.empty?
+
+          registry.include?(key) || !!law_detector?(key)
         end
 
         # `Law.inherited` registers every subclass in the process, and a test
@@ -366,23 +371,15 @@ module Master
         end
 
         def classify_yaml_entries(yaml_entries, registry)
-          lexical_wired, lexical_unwired = yaml_entries.select { |law| law["detect_lexical"] }
-                                                       .partition { |law| registry.include?(key_of(law)) }
-          semantic_laws = executable_semantic_ids
-          semantic_only = yaml_entries.select do |law|
-            semantic_laws.include?(key_of(law)) &&
-              !law["detect_lexical"] &&
-              !law["detect_structural"] &&
-              !law_detector?(law["id"])
-          end
-          structural_unwired = yaml_entries.select { |law| law["detect_structural"] }
-                                           .reject { |law| registry.include?(key_of(law)) }
-
+          lexical_wired, lexical_unwired = yaml_entries.partition { |law| detector_present?(registry, law["id"]) }
+          # The semantic adapter evaluates every catalogue entry, using the
+          # authored question or a generic question built from its repair contract.
+          semantic_only = lexical_unwired
           {
             yaml_ids: yaml_entries.map { |law| key_of(law) },
             kernel: yaml_entries.select { |law| law["tier"] == "kernel" }.map { |law| key_of(law) },
             lexical_wired: ids_of(lexical_wired), lexical_unwired: ids_of(lexical_unwired),
-            semantic_only: ids_of(semantic_only), structural_unwired: ids_of(structural_unwired)
+            semantic_only: ids_of(semantic_only), structural_unwired: []
           }
         end
 
