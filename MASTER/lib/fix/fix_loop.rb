@@ -193,15 +193,19 @@ module Master
             category: :validation,
           )
         end
-        # Capture the exact pre-mutation scope and source provenance. The
-        # existing RunJournal binds this manifest and invalidates stale checkpoints
-        # if the source, Law authority, toolchain, exclusions or adapters move.
+# Open the durable run and start its single budget before graph building
+        # or research. Previously both expensive stages ran before the journal and
+        # watchdog existed, so they could consume the whole allowance invisibly.
+        current_phase = :journal
+        journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
+        run_id = journal["id"]
+        # Capture before any repair, against the journal's authoritative deadline.
         current_phase = :plan
         @fix_plan = FixPlan.capture(
           root: @root, target:, files:, laws: @laws,
           excluded: @file_collector.skip_reasons,
           adapters: @pass_runner.assessment_adapters(target:),
-          max_passes:, budget_seconds:
+          max_passes:, budget_seconds:, deadline_at: journal["deadline_at"]
         )
         @bus&.publish(
           "fix_loop:plan",
@@ -212,13 +216,6 @@ module Master
             "budget_seconds", "deadline_at"
           ).transform_keys(&:to_sym)
         )
-
-        # Open the durable run and start its single budget before graph building
-        # or research. Previously both expensive stages ran before the journal and
-        # watchdog existed, so they could consume the whole allowance invisibly.
-        current_phase = :journal
-        journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
-        run_id = journal["id"]
         bind_fix_plan!(journal, run_id)
         mission = mission_for(target:, requested:)
         budget_error = exhausted_budget(journal:)
