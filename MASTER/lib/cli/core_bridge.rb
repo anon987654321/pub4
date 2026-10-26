@@ -15,7 +15,6 @@ module Master
 
       def run(goal, root:, bus: nil, model: nil, model_id: nil, max_turns: 40, on_turn: nil, memory: nil,
               container: nil, risk: :low, mode: nil, allowed_tools: nil, cancellation: nil)
-        cancellation ||= Fiber[:master_cancellation]
         cancellation.activate! if cancellation&.respond_to?(:activate!)
         workspace_root = workspace_root_for(root)
         lifecycle_bus = lifecycle_event_bus(bus:, requested_root: root, workspace_root:)
