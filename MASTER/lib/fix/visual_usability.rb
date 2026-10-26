@@ -5,88 +5,55 @@ module Master
     module VisualUsability
       # The laws remain ONE_SOURCE in law/. This list only declares which
       # constitutional laws are relevant to rendered product review.
-      IDS = %w[
-        SYSTEM_STATUS
-        VISUAL_HIERARCHY
-        CONTEXTUAL_STATUS_CUES
-        OPENBSD_DMESG_CONSOLE_STYLE
-        CLI_PROMPT_COMPOSITION
-        MASTER_PROMPT_AESTHETIC
-        MATCH_REAL_WORLD
-        USER_CONTROL
-        CONSISTENCY
-        ERROR_RECOVERY
-        AESTHETIC_MINIMALISM
-        RECOGNITION_OVER_RECALL
-        FLEXIBILITY_EFFICIENCY
-        HELP_AND_DOCUMENTATION
-        DENSITY
-        PROXIMITY
-        LINEARITY
-        ABSTRACTION
-        SINGULARITY
-        STRONG_CENTERS
-        LEVELS_OF_SCALE
-        SQUINT_TEST
-        BEAUTIFUL_CODE
-        PSYCHOLOGICAL_ACCEPTABILITY
-        PROGRESSIVE_DISCLOSURE
-        FEEDBACK_LOOPS
-        COST_TRANSPARENCY
-        INTRINSIC_LAYOUT
-        CONTAINER_RESPONSIVENESS
-        MODERN_FORMS
-        NATIVE_DISCLOSURE
-        ANCHOR_RELATIONSHIPS
-        SCOPED_CSS
-        MOBILE_VIEWPORT
-        SCROLL_INTEGRITY
-        MOTION_ACCESSIBILITY
-        NAVIGATION_CONTINUITY
-        BASELINE_COMPATIBILITY
-        CORE_WEB_VITALS
-        WEB_PLATFORM_DEFAULTS
-        MOBILE_ACCESSIBILITY_DEFAULTS
-        PWA_RESILIENCE_DEFAULTS
-        DIRECT_MANIPULATION_FEEDBACK
-        INTERACTION_PERFORMANCE
-        STATE_CHOREOGRAPHY
-        WAITING_STATE_MEANING
-        TACTILE_FEEDBACK
-        POINTER_FEEDBACK_EARLY
-        GESTURE_OWNERSHIP
-        HAPTIC_SINGLE_SOURCE
-        SIGNATURE_MOMENT
-      ].freeze
 
       module_function
 
       def ids
-        IDS
+        load_laws!
+        executable = ::Law.definitions.keys.map { |id| id.to_s.upcase }
+        inline = Master::Review::Scan::Law.registry.filter_map do |klass|
+          next unless klass.respond_to?(:dsl_id) && !klass.dsl_id.to_s.empty?
+
+          klass.dsl_id.to_s.upcase
+        end
+        catalogue = Master.law_entries.filter_map { |row| row["id"]&.to_s&.upcase }
+        (catalogue + executable + inline).uniq.sort.freeze
       end
 
       def context
-        load_laws!
-        IDS.map { |id| line(id) }.join("\n")
+        ids.map { |id| line(id) }.join("\n")
       end
 
-      # law/ keys its registry by symbol. DENSITY, PROXIMITY, LINEARITY,
-      # ABSTRACTION and SINGULARITY are top-level entries of laws.yml, not
-      # law/ files, so they are read from there.
       def load_laws!
         require File.expand_path("../../law/definition", __dir__)
-        Law.load_all(File.expand_path("../../law", __dir__)) unless Law.definitions.key?(IDS.first.to_sym)
-        missing = IDS.reject { |id| Law.definitions.key?(id.to_sym) || constitutional_laws.key?(id) }
-        raise "visual usability law missing: #{missing.join(", ")}" unless missing.empty?
+        ::Law.load_all(File.expand_path("../../law", __dir__)) if ::Law.definitions.empty?
+        require_relative "../review/scan/law_dsl" unless defined?(Master::Review::Scan::LawDSL)
       end
 
       def constitutional_laws
-        @constitutional_laws ||= Master.law_entries.to_h { |entry| [entry.fetch("id"), entry] }
+        @constitutional_laws ||= Master.law_entries.to_h { |entry| [entry.fetch("id").to_s.upcase, entry] }
+      end
+
+      def inline_laws
+        @inline_laws ||= Master::Review::Scan::Law.registry.filter_map do |klass|
+          next unless klass.respond_to?(:dsl_id) && !klass.dsl_id.to_s.empty?
+
+          [klass.dsl_id.to_s.upcase, Master::Review::Scan::LawFactory.build(klass, root: Master::ROOT)]
+        end.to_h
       end
 
       def line(id)
-        law = Law.definitions[id.to_sym]
-        law ? "#{id}: #{law.ask} Fix: #{law.fix}" : "#{id}: #{constitutional_laws.fetch(id).fetch("statement")}"
+        key = id.to_s.upcase
+        law = ::Law.definitions[key.to_sym] || ::Law.definitions[key.to_s]
+        return "#{key}: #{law.ask} Fix: #{law.fix}" if law
+
+        inline = inline_laws[key]
+        return "#{key}: #{inline.description}" if inline
+
+        row = constitutional_laws[key]
+        return "#{key}: #{row["statement"] || row["ask"] || row["source"]}" if row
+
+        raise KeyError, "visual review referenced unknown Law #{key}"
       end
     end
   end
