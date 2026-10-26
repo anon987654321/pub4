@@ -88,6 +88,19 @@ class TestLawRegistryAudit < Minitest::Test
     assert_equal drift[:registry_only].sort, drift[:registry_only]
   end
 
+  def test_reconciliation_is_an_explicit_gate_not_a_pretty_report
+    report = audit.call
+
+    assert_equal report.source_drift.values.all?(&:empty?), report.reconciled?
+    if report.reconciled?
+      assert report.assert_reconciled!
+    else
+      error = assert_raises(RuntimeError) { report.assert_reconciled! }
+      assert_match(/Law catalogue is not reconciled/, error.message)
+      refute_empty report.reconciliation_errors
+    end
+  end
+
   def test_a_law_a_test_defined_is_not_in_the_corpus
     assert_includes Master::Review::Scan::Law.registry, LawDefinedByATest,
                     "the premise: defining the class registers it"
