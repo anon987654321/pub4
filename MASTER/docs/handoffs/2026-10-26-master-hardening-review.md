@@ -7,6 +7,13 @@ P01–P11 integration head (historical; follow-on commits are recorded below): `
 
 ## Follow-on manual four-tree source pass (2026-10-25)
 
+## Follow-on kernel audit-log append complexity (2026-10-26)
+
+\`Master::Fix::Kernel#append_event\` no longer verifies the entire hash chain before every append. Each kernel instance performs full-chain validation when it first needs a head; later appends reuse the cached head if the file identity/metadata are unchanged, or validate only records appended after the cached byte offset when another instance has written. An unexpected inode change or truncation fails closed. \`verify_log!\` and replay retain complete-chain validation, including a final-newline check.
+
+Regression tests cover cached-head reuse, suffix validation across two kernel instances, refusal after truncation, and rejection of an incomplete final record. They are committed but unexecuted. No Ruby syntax check, focused suite, or full suite was run here; verification remains INCONCLUSIVE.
+
+
 A manual source-only pass subsequently touched MASTER, the shared check runner used by RAILS, OPENBSD, and STUDIO. The work was committed directly to `main`; it was not an actual `/fix` execution. No app, suite, syntax check or live service was run in this environment.
 
 - MASTER: `lib/boot/stale_bundle_sweep.rb` adds a 30-day, quarantine-timestamp-based cleanup for renamed stale Bundler stores. It is dry-run by default and is wired into `bin/cleanup`; `--apply` is required to remove eligible directories. Regression tests cover TTL age, dry-run, explicit pruning and symlink refusal.
@@ -110,7 +117,7 @@ The latest combined commit status observed for `08c095f97cd3495269d6643bf3bc8918
 These items were identified in the review but are **not** claimed as repaired by this tranche:
 
 - **Law/register truth:** re-baseline stale `data/self_findings.yml` SILENT_RESCUE members and add a stale-member regression test (L4); prove the INTER_MODEL_CONTRACT detector catches the council's heredoc/keyword call sites (L5); reconcile the nine runtime self-test checks with the declarative `self_test` contract (L7); make headless check-registry rows fail at parse time and decide the deploy default for strict check errors (L8).
-- **Resource bounds:** an age-bounded stale-store sweep is now implemented in `lib/boot/stale_bundle_sweep.rb` and wired into `bin/cleanup`. It is dry-run by default, targets only `gems.stale-*` directories at the expected store depth, skips symlinks, and requires an age of 30 days before deletion. Its new test file is present but has not been run. Still open: census and rotate the remaining append-only writers, bound provider-health history reads, and remove the kernel log's full-history append verification (R3/R10).
+- **Resource bounds:** an age-bounded stale-store sweep is now implemented in `lib/boot/stale_bundle_sweep.rb` and wired into `bin/cleanup`. It is dry-run by default, targets only `gems.stale-*` directories at the expected store depth, skips symlinks, and requires an age of 30 days before deletion. Its new test file is present but has not been run. Still open: census and rotate the remaining append-only writers, bound provider-health history reads, and verify the incremental kernel-log append cache and its cross-instance suffix validation (R3/R10); source changes and regression tests are committed, but runtime proof remains inconclusive.
 - **Fix lifecycle:** bring DesignRun commits inside transaction/recovery semantics (R8); make the abort-on-stall setting, durable partial outcomes, and skippable-stage timeouts truthful (R9); make undo-journal pruning atomic and reclaim only safely unreferenced transaction/autofix artifacts (R10); audit load-bearing silent rescues without swallowing fatal exceptions (R11).
 - **Providers and I/O:** add a success/recovery path and recent-event window for provider health; address Replicate poll authentication/SSRF/timeouts, retry jitter, process-group probe termination, error redaction, and Gemini key transport (R12/R13/H5).
 - **Boot, device, and browser edges:** resolve the remaining R4 boot diagnostics and loop-claim recovery; pairing's claim race, unscoped process termination, pending-utterance TTL, wake-word timeout, bare device `system()` calls, and CDP handshake/nested-budget issues remain open (R4/R16/R17).

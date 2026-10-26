@@ -87,6 +87,54 @@ class TestFixKernel < Minitest::Test
     end
   end
 
+  def test_append_reuses_the_verified_head_without_rescanning_history
+    with_workspace do |root|
+      kernel = K.new(root:)
+      kernel.observe(root)
+
+      K.stub(:read_log_io, ->(_file) { flunk("append rescanned the complete ledger") }) do
+        kernel.observe(root)
+      end
+
+      assert_equal 2, kernel.verify_log!.length
+    end
+  end
+
+  def test_append_validates_records_added_by_another_kernel_instance
+    with_workspace do |root|
+      first = K.new(root:)
+      second = K.new(root:)
+
+      first.observe(root)
+      second.observe(root)
+      first.observe(root)
+
+      events = first.verify_log!
+      assert_equal [1, 2, 3], events.map { |event| event.fetch("seq") }
+    end
+  end
+
+  def test_append_refuses_a_truncated_ledger
+    with_workspace do |root|
+      kernel = K.new(root:)
+      kernel.observe(root)
+      File.write(kernel.log_path, "")
+
+      assert_raises(K::LedgerCorruption) { kernel.observe(root) }
+    end
+  end
+
+  def test_full_verification_refuses_an_incomplete_final_record
+    with_workspace do |root|
+      kernel = K.new(root:)
+      kernel.observe(root)
+      contents = File.binread(kernel.log_path)
+      File.binwrite(kernel.log_path, contents.delete_suffix("\n"))
+
+      assert_raises(K::LedgerCorruption) { kernel.verify_log! }
+    end
+  end
+
   def test_modified_hash_chain_is_refused
     with_workspace do |root|
       File.write(File.join(root, "sample.txt"), "good\n")

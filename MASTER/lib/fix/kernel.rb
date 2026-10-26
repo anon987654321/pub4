@@ -68,6 +68,7 @@ module Master
         @actor = actor.to_s
         @laws = laws
         @log_path = File.expand_path(log_path || File.join(@workspace_root, LOG_RELATIVE_PATH))
+        @log_head = nil
       end
 
       attr_reader :root, :workspace_root, :actor, :log_path
@@ -279,30 +280,7 @@ module Master
       def self.read_log(path)
         return [] unless File.file?(path)
 
-        previous = GENESIS
-        expected_seq = 1
-        events = []
-        File.foreach(path).with_index(1) do |line, line_number|
-          begin
-            next if line.strip.empty?
-
-            row = JSON.parse(line)
-            hash = row.fetch("hash")
-            body = row.reject { |key, _| key == "hash" }
-            raise LedgerCorruption, "line #{line_number}: sequence gap" unless row.fetch("seq") == expected_seq
-            raise LedgerCorruption, "line #{line_number}: previous hash mismatch" unless row.fetch("prev") == previous
-
-            actual = Digest::SHA256.hexdigest(JSON.generate(body))
-            raise LedgerCorruption, "line #{line_number}: event hash mismatch" unless actual == hash
-
-            events << row
-            previous = hash
-            expected_seq += 1
-          rescue JSON::ParserError, KeyError => error
-            raise LedgerCorruption, "line #{line_number}: #{error.message}"
-          end
-        end
-        events
+        File.open(path, "rb") { |file| read_log_io(file) }
       end
 
       def self.locate_workspace_static(path)
@@ -608,29 +586,96 @@ module Master
         FileUtils.mkdir_p(File.dirname(@log_path), mode: 0o700)
         File.open(@log_path, File::RDWR | File::CREAT, 0o600) do |file|
           file.flock(File::LOCK_EX)
-          file.rewind
-          events = self.class.read_log_io(file)
-          previous = events.last ? events.last.fetch("hash") : GENESIS
+          head = append_head(file)
           body = {
-            "seq" => events.size + 1,
+            "seq" => head.fetch(:seq) + 1,
             "at" => Time.now.utc.iso8601(6),
             "run_id" => run_id,
             "kind" => kind.to_s,
             "payload" => payload,
-            "prev" => previous
+            "prev" => head.fetch(:hash)
           }
           row = body.merge("hash" => Digest::SHA256.hexdigest(JSON.generate(body)))
+          line = JSON.generate(row) + "\n"
           file.seek(0, IO::SEEK_END)
-          file.write(JSON.generate(row))
-          file.write("\n")
+          written = file.write(line)
+          raise IOError, "ledger append wrote #{written || 0} of #{line.bytesize} bytes" unless written == line.bytesize
+
           file.flush
           file.fsync
+          cache_log_head(file, row.fetch("seq"), row.fetch("hash"))
           row
         ensure
           file.flock(File::LOCK_UN) rescue nil
         end
       end
 
+      def append_head(file)
+        stat = file.stat
+        cached = @log_head
+        if cached
+          unless stat.dev == cached.fetch(:dev) && stat.ino == cached.fetch(:ino) &&
+                 stat.size >= cached.fetch(:size)
+            raise LedgerCorruption, "ledger identity changed or ledger was truncated"
+          end
+
+          if stat.size > cached.fetch(:size)
+            suffix = self.class.read_log_suffix(file, cached)
+            return cache_log_head(file, suffix.fetch(:seq), suffix.fetch(:hash))
+          end
+
+          return cached if stat.mtime == cached.fetch(:mtime) && stat.ctime == cached.fetch(:ctime)
+        end
+
+        events = self.class.read_log_io(file)
+        last = events.last
+        cache_log_head(file, last ? last.fetch("seq") : 0, last ? last.fetch("hash") : GENESIS)
+      end
+
+      def cache_log_head(file, seq, hash)
+        stat = file.stat
+        @log_head = {
+          dev: stat.dev,
+          ino: stat.ino,
+          size: stat.size,
+          mtime: stat.mtime,
+          ctime: stat.ctime,
+          seq:,
+          hash:
+        }
+      end
+
+      # Validate records appended after a previously verified byte offset. The
+      # file flock in append_event serializes writers; the cached offset lets a
+      # long /fix run validate each new record once instead of rescanning its
+      # complete hash chain before every append.
+      def self.read_log_suffix(file, head)
+        previous = head.fetch(:hash)
+        expected_seq = head.fetch(:seq) + 1
+        file.seek(head.fetch(:size), IO::SEEK_SET)
+        file.each_line do |line|
+          begin
+            raise LedgerCorruption, "sequence #{expected_seq}: incomplete final record" unless line.end_with?("\n")
+            next if line.strip.empty?
+
+            row = JSON.parse(line)
+            body = row.reject { |key, _| key == "hash" }
+            raise LedgerCorruption, "sequence #{expected_seq}: sequence gap" unless row.fetch("seq") == expected_seq
+            raise LedgerCorruption, "sequence #{expected_seq}: previous hash mismatch" unless row.fetch("prev") == previous
+            actual = Digest::SHA256.hexdigest(JSON.generate(body))
+            raise LedgerCorruption, "sequence #{expected_seq}: event hash mismatch" unless actual == row.fetch("hash")
+
+            previous = row.fetch("hash")
+            expected_seq += 1
+          rescue JSON::ParserError, KeyError, TypeError, NoMethodError => error
+            raise LedgerCorruption, "sequence #{expected_seq}: #{error.message}"
+          end
+        end
+        { seq: expected_seq - 1, hash: previous }
+      end
+
+      # Full-chain verification remains the explicit audit/replay path and is
+      # also the initialization path for a process with no trusted head cache.
       def self.read_log_io(file)
         previous = GENESIS
         expected_seq = 1
@@ -638,6 +683,7 @@ module Master
         file.rewind
         file.each_line.with_index(1) do |line, line_number|
           begin
+            raise LedgerCorruption, "line #{line_number}: incomplete final record" unless line.end_with?("\n")
             next if line.strip.empty?
 
             row = JSON.parse(line)
@@ -650,7 +696,7 @@ module Master
             events << row
             previous = row.fetch("hash")
             expected_seq += 1
-          rescue JSON::ParserError, KeyError => error
+          rescue JSON::ParserError, KeyError, TypeError, NoMethodError => error
             raise LedgerCorruption, "line #{line_number}: #{error.message}"
           end
         end

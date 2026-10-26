@@ -1,5 +1,11 @@
 # pub4 outstanding work
 
+## Kernel audit-log append complexity (2026-10-26)
+
+\`Master::Fix::Kernel#append_event\` now caches the last fully verified sequence/hash and byte offset per kernel instance. Subsequent appends reuse that head when the file identity and metadata are unchanged, or validate only the new suffix under the existing file lock when another instance has appended records. Truncation or inode replacement is refused. \`verify_log!\` and replay still validate the complete hash chain, including the final JSONL record boundary.
+
+Added regression cases for cached-head reuse, suffix validation across kernel instances, truncation refusal, and incomplete final records in \`MASTER/test/test_fix_kernel.rb\`. These tests have not been run; source integration is not runtime verification. Keep the ledger/hardening status INCONCLUSIVE until the pinned Ruby focused suite passes.
+
 Repository-wide audit baseline: code HEAD `3cd29c8389f7c777a4b7397c800c643bc0067426` on 2026-10-25. Targeted model-routing audit and repair: `a0dab52adc388f6e11699d672b2133842c3aa6f9`; unrelated later source commits have not been represented as covered by that targeted audit. Backlog reconciliation commits: `9dd60e3` and `9ab5958`. The baseline below is historical, not current HEAD.
 
 Audit baseline: d9a008ba1f332a312122e342913486c54a32f18a. This is the one cross-tree backlog; do
