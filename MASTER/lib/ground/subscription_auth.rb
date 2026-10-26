@@ -47,7 +47,7 @@ module Master
       end
 
       def refresh_compute_pool
-        router = Master::CLI::Routing::ModelRouter.new(root: Master::ROOT)
+        router = Master::CLI::Routing::ModelRouter.new(config: Master::Ground::Config.new(Master::ROOT))
         router.compute_pool.refresh!
       rescue StandardError => e
         Swallow.log(e, context: "subscription_auth.refresh")
@@ -59,7 +59,7 @@ module Master
       end
 
       def pool_message(lane)
-        router = Master::CLI::Routing::ModelRouter.new(root: Master::ROOT)
+        router = Master::CLI::Routing::ModelRouter.new(config: Master::Ground::Config.new(Master::ROOT))
         ids = router.pool(wait: false)
         prefix = "#{lane["command"]}:"
         discovered = ids.grep(/\A#{Regexp.escape(prefix)}/)

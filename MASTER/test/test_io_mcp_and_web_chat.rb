@@ -155,7 +155,9 @@ class TestIoMcpAndWebChat < Minitest::Test
     assert_raises(Master::Io::WebChat::ProviderError) { Master::Io::WebChat.new(provider: "altavista") }
   end
 
-  Node = Struct.new(:text, :inner_html)
+  Node = Struct.new(:text, :html) do
+    def property(_name) = html
+  end
 
   class Page
     def initialize(nodes) = @nodes = nodes

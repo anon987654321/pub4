@@ -223,7 +223,7 @@ module Master
       def extract_text(node)
         text = node.text.to_s.strip
         return text unless text.empty?
-        node.inner_html.to_s.gsub(/<[^>]+>/, " ").gsub(/\s+/, " ").strip
+        node.property("innerHTML").to_s.gsub(/<[^>]+>/, " ").gsub(/\s+/, " ").strip
       end
 
       def wait_for_reply(page, previous: nil)

@@ -706,7 +706,7 @@ class TestIoTools < Minitest::Test
   class FakeNode
     def initialize(text) = @text = text
     def text = @text
-    def inner_html = "<p>#{@text}</p>"
+    def property(_name) = "<p>#{@text}</p>"
     def focus = self
     def type(text, _key) = (@typed = text) && self
     def typed = @typed

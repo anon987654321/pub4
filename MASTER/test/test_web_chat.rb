@@ -21,7 +21,7 @@ class TestWebChat < Minitest::Test
       self
     end
 
-    def inner_html = text
+    def property(_name) = text
   end
 
   class FakePage
