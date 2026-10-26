@@ -8006,6 +8006,988 @@
         "good": 2259
       },
       "kind": "definition"
+    },
+    {
+      "id": "RUBY_TERNARY_NOT_NESTED",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[STYLE], applies_to: %i[ruby],\n          fires: \"value = a ? (b ? 1 : 2) : 3\\n\",\n          does_not_fire: \"value = a ? 1 : 2\\n\",\n          description: \"no nested ternaries\" do |src, path:|"
+        },
+        "tags": [
+          "STYLE"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "no nested ternaries",
+        "fires": "value = a ? (b ? 1 : 2) : 3\n",
+        "does_not_fire": "value = a ? 1 : 2\n"
+      },
+      "kind": "dsl",
+      "line": 111
+    },
+    {
+      "id": "NO_ABBREVIATED_IDENTIFIERS",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[STYLE], applies_to: %i[ruby javascript],\n          fires: \"def call(tmp)\\nend\\n\",\n          does_not_fire: \"def call(temporary_path)\\nend\\n\",\n          description: \"spell identifiers in full — no tmp/idx/cfg/ctx\" do |src, path:|"
+        },
+        "tags": [
+          "STYLE"
+        ],
+        "languages": [
+          "ruby",
+          "javascript"
+        ],
+        "description": "spell identifiers in full — no tmp/idx/cfg/ctx",
+        "fires": "def call(tmp)\nend\n",
+        "does_not_fire": "def call(temporary_path)\nend\n"
+      },
+      "kind": "dsl",
+      "line": 133
+    },
+    {
+      "id": "DOUBLE_QUOTES_RUBY",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[STYLE], applies_to: %i[ruby],\n          fires: %(name = 'osman'\\n),\n          does_not_fire: %(name = \"osman\"\\n),\n          description: \"double-quoted strings per style.yml\" do |src, path:|"
+        },
+        "tags": [
+          "STYLE"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "double-quoted strings per style.yml",
+        "fires": {
+          "expression": "%(name = 'osman'\\n),\n          does_not_fire: %(name = \"osman\"\\n),\n          description: \"double-quoted strings per style.yml\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(name = \"osman\"\\n),\n          description: \"double-quoted strings per style.yml\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 162
+    },
+    {
+      "id": "EN_DASH_RANGE",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[TYPOGRAPHY], applies_to: %i[markdown yaml html],\n          example_path: \"/repo/docs/example.md\",\n          fires: \"The band is 45-75 wide.\\n\",\n          does_not_fire: \"The band is 45–75 wide.\\n\",\n          description: \"numeric ranges use en dash not hyphen\" do |src, path:|"
+        },
+        "tags": [
+          "TYPOGRAPHY"
+        ],
+        "languages": [
+          "markdown",
+          "yaml",
+          "html"
+        ],
+        "description": "numeric ranges use en dash not hyphen",
+        "fires": "The band is 45-75 wide.\n",
+        "does_not_fire": "The band is 45–75 wide.\n",
+        "example_path": "/repo/docs/example.md"
+      },
+      "kind": "dsl",
+      "line": 189
+    },
+    {
+      "id": "ALL_CAPS_NO_TRACKING",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[TYPOGRAPHY], applies_to: %i[css scss],\n          fires: \".label { text-transform: uppercase; }\\n\",\n          does_not_fire: \".label { text-transform: uppercase; letter-spacing: 0.08em; }\\n\",\n          description: \"all-caps labels need letter-spacing\" do |src, path:|"
+        },
+        "tags": [
+          "TYPOGRAPHY"
+        ],
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "description": "all-caps labels need letter-spacing",
+        "fires": ".label { text-transform: uppercase; }\n",
+        "does_not_fire": ".label { text-transform: uppercase; letter-spacing: 0.08em; }\n"
+      },
+      "kind": "dsl",
+      "line": 210
+    },
+    {
+      "id": "TAB_CHARACTER",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[HYGIENE],\n          fires: \"def call\\n\\tvalue\\nend\\n\",\n          does_not_fire: \"def call\\n  value\\nend\\n\",\n          description: \"tabs forbidden — use two spaces\" do |src, path:|"
+        },
+        "tags": [
+          "HYGIENE"
+        ],
+        "description": "tabs forbidden — use two spaces",
+        "fires": "def call\n\tvalue\nend\n",
+        "does_not_fire": "def call\n  value\nend\n"
+      },
+      "kind": "dsl",
+      "line": 226
+    },
+    {
+      "id": "FINAL_NEWLINE",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[HYGIENE],\n          fires: \"puts 1\",\n          does_not_fire: \"puts 1\\n\",\n          description: \"files end with a single newline\" do |src, path:|"
+        },
+        "tags": [
+          "HYGIENE"
+        ],
+        "description": "files end with a single newline",
+        "fires": "puts 1",
+        "does_not_fire": "puts 1\n"
+      },
+      "kind": "dsl",
+      "line": 236
+    },
+    {
+      "id": "COMMENTS_AS_DEODORANT",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[CLEAN_CODE SELF_EXPLAINING], applies_to: %i[ruby],\n          fires: \"# increment the wear count\\nincrement_wear_count\\n\",\n          does_not_fire: \"# a torn hem is still a wearing\\nincrement_wear_count\\n\",\n          description: \"a comment that restates the line below it says nothing the code did not\" do |src, path:|"
+        },
+        "tags": [
+          "CLEAN_CODE",
+          "SELF_EXPLAINING"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "a comment that restates the line below it says nothing the code did not",
+        "fires": "# increment the wear count\nincrement_wear_count\n",
+        "does_not_fire": "# a torn hem is still a wearing\nincrement_wear_count\n"
+      },
+      "kind": "dsl",
+      "line": 274
+    },
+    {
+      "id": "VERTICAL_BREATH",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, autofix: \"add_vertical_breath\", tags: %i[BEAUTY], applies_to: %i[ruby javascript],\n          fires: (1..10).map { |i| \"line#{i} = 1\\n\" }.join,\n          does_not_fire: \"a = 1\\n\\nb = 2\\n\",\n          description: \"vertical breath — avoid dense blocks of 10+ lines without a blank line\" do |src, path:|"
+        },
+        "tags": [
+          "BEAUTY"
+        ],
+        "languages": [
+          "ruby",
+          "javascript"
+        ],
+        "autofix": "add_vertical_breath",
+        "description": "vertical breath — avoid dense blocks of 10+ lines without a blank line",
+        "fires": {
+          "expression": "(1..10).map { |i| \"line#{i} = 1\\n\" }.join,\n          does_not_fire: \"a = 1\\n\\nb = 2\\n\",\n          description: \"vertical breath — avoid dense blocks of 10+ lines without a blank line\" do |src, path:|"
+        },
+        "does_not_fire": "a = 1\n\nb = 2\n"
+      },
+      "kind": "dsl",
+      "line": 300
+    },
+    {
+      "id": "CODE_SYMMETRY",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[BEAUTY], applies_to: %i[ruby javascript],\n          fires: \"def foo\\n        return true\\nend\\n\",\n          does_not_fire: \"def foo\\n  return true\\nend\\n\",\n          description: \"source symmetry — avoid jagged indentation shifts\" do |src, path:|"
+        },
+        "tags": [
+          "BEAUTY"
+        ],
+        "languages": [
+          "ruby",
+          "javascript"
+        ],
+        "description": "source symmetry — avoid jagged indentation shifts",
+        "fires": "def foo\n        return true\nend\n",
+        "does_not_fire": "def foo\n  return true\nend\n"
+      },
+      "kind": "dsl",
+      "line": 331
+    },
+    {
+      "id": "TYPOGRAPHIC_GRID",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[TYPOGRAPHY], applies_to: %i[markdown html],\n          fires: \"#{\"x\" * 105}\\n\",\n          does_not_fire: \"short line\\n\",\n          example_path: \"/repo/README.md\",\n          description: \"typographic grid — maintain line length and vertical rhythm\" do |src, path:|"
+        },
+        "tags": [
+          "TYPOGRAPHY"
+        ],
+        "languages": [
+          "markdown",
+          "html"
+        ],
+        "description": "typographic grid — maintain line length and vertical rhythm",
+        "fires": "#{",
+        "does_not_fire": "short line\n",
+        "example_path": "/repo/README.md"
+      },
+      "kind": "dsl",
+      "line": 354
+    },
+    {
+      "id": "README_PROSE",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[TYPOGRAPHY DOMAIN_LANGUAGE], applies_to: %i[markdown],\n          example_path: \"/repo/README.md\",\n          fires: \"# Title\\n\\n| one | two |\\n\",\n          does_not_fire: \"# Title\\n\\n**One bold sentence carrying the argument.**\\n\",\n          description: \"a README is prose — a bold visionary opening, tables never, code only under the final heading\" do |src, path:|"
+        },
+        "tags": [
+          "TYPOGRAPHY",
+          "DOMAIN_LANGUAGE"
+        ],
+        "languages": [
+          "markdown"
+        ],
+        "description": "a README is prose — a bold visionary opening, tables never, code only under the final heading",
+        "fires": "# Title\n\n| one | two |\n",
+        "does_not_fire": "# Title\n\n**One bold sentence carrying the argument.**\n",
+        "example_path": "/repo/README.md"
+      },
+      "kind": "dsl",
+      "line": 372
+    },
+    {
+      "id": "rubocop",
+      "path": "MASTER/law/detectors/external_linter_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[STYLE LINT], description: \"RuboCop style/lint violation\""
+        },
+        "tags": [
+          "STYLE",
+          "LINT"
+        ],
+        "description": "RuboCop style/lint violation"
+      },
+      "kind": "declared_class",
+      "line": 148
+    },
+    {
+      "id": "reek",
+      "path": "MASTER/law/detectors/external_linter_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[SMELL ONE_JOB], description: \"Reek code smell detected\""
+        },
+        "tags": [
+          "SMELL",
+          "ONE_JOB"
+        ],
+        "description": "Reek code smell detected"
+      },
+      "kind": "declared_class",
+      "line": 200
+    },
+    {
+      "id": "interconnect",
+      "path": "MASTER/law/detectors/graph_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[ONE_SOURCE],\n                  description: \"Phantom YAML key reads and orphan data keys\""
+        },
+        "tags": [
+          "ONE_SOURCE"
+        ],
+        "description": "Phantom YAML key reads and orphan data keys"
+      },
+      "kind": "declared_class",
+      "line": 23
+    },
+    {
+      "id": "co_change_coupling",
+      "path": "MASTER/law/detectors/graph_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[DECOUPLE ONE_JOB], autofix: true,\n                  description: \"Files co-change with N+ peers across module boundaries — hidden coupling\""
+        },
+        "tags": [
+          "DECOUPLE",
+          "ONE_JOB"
+        ],
+        "autofix": {
+          "expression": "true,\n                  description: \"Files co-change with N+ peers across module boundaries — hidden coupling\""
+        },
+        "description": "Files co-change with N+ peers across module boundaries — hidden coupling"
+      },
+      "kind": "declared_class",
+      "line": 127
+    },
+    {
+      "id": "CONST_BY_DEFAULT",
+      "path": "MASTER/law/detectors/js_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[IMMUTABLE], applies_to: %i[javascript],\n          fires: \"let total = 0\\n\",\n          does_not_fire: \"let total = 0\\ntotal += 1\\n\",\n          description: \"use const unless reassigned\" do |src, path:|"
+        },
+        "tags": [
+          "IMMUTABLE"
+        ],
+        "languages": [
+          "javascript"
+        ],
+        "description": "use const unless reassigned",
+        "fires": "let total = 0\n",
+        "does_not_fire": "let total = 0\ntotal += 1\n"
+      },
+      "kind": "dsl",
+      "line": 13
+    },
+    {
+      "id": "QUOTE_VARIABLES",
+      "path": "MASTER/law/detectors/js_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[ROBUSTNESS], applies_to: %i[zsh],\n          fires: \"#!/bin/bash\\ngrep $pattern file\\n\",\n          does_not_fire: \"#!/bin/zsh\\ngrep $pattern file\\n\",\n          description: \"quote $variables where the shell word-splits\" do |src, path:|"
+        },
+        "tags": [
+          "ROBUSTNESS"
+        ],
+        "languages": [
+          "zsh"
+        ],
+        "description": "quote $variables where the shell word-splits",
+        "fires": "#!/bin/bash\ngrep $pattern file\n",
+        "does_not_fire": "#!/bin/zsh\ngrep $pattern file\n"
+      },
+      "kind": "dsl",
+      "line": 47
+    },
+    {
+      "id": "DOUBLE_BRACKET",
+      "path": "MASTER/law/detectors/js_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[ROBUSTNESS], applies_to: %i[zsh],\n          fires: \"#!/bin/zsh\\nif [ -f x ]; then echo y; fi\\n\",\n          does_not_fire: \"#!/bin/zsh\\nif [[ -f x ]]; then echo y; fi\\n\",\n          description: \"use [[ ]] over [ ]\" do |src, path:|"
+        },
+        "tags": [
+          "ROBUSTNESS"
+        ],
+        "languages": [
+          "zsh"
+        ],
+        "description": "use [[ ]] over [ ]",
+        "fires": "#!/bin/zsh\nif [ -f x ]; then echo y; fi\n",
+        "does_not_fire": "#!/bin/zsh\nif [[ -f x ]]; then echo y; fi\n"
+      },
+      "kind": "dsl",
+      "line": 106
+    },
+    {
+      "id": "JS_MODULE_SIZE",
+      "path": "MASTER/law/detectors/js_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[SMALL_PARTS], applies_to: %i[javascript],\n          fires: (\"// line\\n\" * 301),\n          does_not_fire: (\"// line\\n\" * 300),\n          description: \"JS files over 300 lines — split at module boundaries\" do |src, path:|"
+        },
+        "tags": [
+          "SMALL_PARTS"
+        ],
+        "languages": [
+          "javascript"
+        ],
+        "description": "JS files over 300 lines — split at module boundaries",
+        "fires": {
+          "expression": "(\"// line\\n\" * 301),\n          does_not_fire: (\"// line\\n\" * 300),\n          description: \"JS files over 300 lines — split at module boundaries\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "(\"// line\\n\" * 300),\n          description: \"JS files over 300 lines — split at module boundaries\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 122
+    },
+    {
+      "id": "MAGIC_COLOR",
+      "path": "MASTER/law/detectors/js_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[DESIGN], applies_to: %i[css scss javascript html],\n          fires: \".btn { color: #c0392b; }\\n\",\n          does_not_fire: \":root { --danger: #c0392b; }\\n\",\n          description: \"color values must reference design tokens, not raw hex/rgb\" do |src, path:|"
+        },
+        "tags": [
+          "DESIGN"
+        ],
+        "languages": [
+          "css",
+          "scss",
+          "javascript",
+          "html"
+        ],
+        "description": "color values must reference design tokens, not raw hex/rgb",
+        "fires": ".btn { color: #c0392b; }\n",
+        "does_not_fire": ":root { --danger: #c0392b; }\n"
+      },
+      "kind": "dsl",
+      "line": 162
+    },
+    {
+      "id": "OPTIONAL_CHAINING_JS",
+      "path": "MASTER/law/detectors/js_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[READABILITY], applies_to: %i[javascript],\n          fires: \"const name = user && user.name\\n\",\n          does_not_fire: \"const name = user?.name\\n\",\n          description: \"use ?. over && chains\" do |src, path:|"
+        },
+        "tags": [
+          "READABILITY"
+        ],
+        "languages": [
+          "javascript"
+        ],
+        "description": "use ?. over && chains",
+        "fires": "const name = user && user.name\n",
+        "does_not_fire": "const name = user?.name\n"
+      },
+      "kind": "dsl",
+      "line": 235
+    },
+    {
+      "id": "NO_DEBUG",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[CLEAN_CODE], applies_to: %i[ruby],\n    fires: \"  binding.pry\\n\",\n    does_not_fire: \"debugger_enabled = false\\n\",\n    description: \"no debug breakpoints in committed code\" do |src, path:|"
+        },
+        "tags": [
+          "CLEAN_CODE"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "no debug breakpoints in committed code",
+        "fires": "  binding.pry\n",
+        "does_not_fire": "debugger_enabled = false\n"
+      },
+      "kind": "dsl",
+      "line": 12
+    },
+    {
+      "id": "NO_PUTS",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[CLEAN_CODE], applies_to: %i[ruby],\n    fires: \"  puts(\\\"ready\\\")\\n\",\n    # A local named p is not Kernel#p: assignment, a method call on it, and a\n    # bare p (which prints nothing) all stay quiet.\n    does_not_fire: \"  @bus.publish(\\\"ready\\\")\\n  p = point\\n  p.x\\n  p == q\\n  p\\n\",\n    description: \"no puts, p or pp in library code\" do |src, path:|"
+        },
+        "tags": [
+          "CLEAN_CODE"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "no puts, p or pp in library code",
+        "fires": "  puts(\"ready\")\n",
+        "does_not_fire": "  @bus.publish(\"ready\")\n  p = point\n  p.x\n  p == q\n  p\n"
+      },
+      "kind": "dsl",
+      "line": 36
+    },
+    {
+      "id": "FROZEN_LITERAL",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[PERFORMANCE], applies_to: %i[ruby],\n    fires: \"value = 1\\n# frozen_string_literal: true\\n\",\n    # Ruby reads the magic comment anywhere in the leading comments, and a\n    # script's first line is its shebang: reading line one alone flagged every\n    # bin/ executable that carries the comment on line two, and /fix asked a\n    # model to add what was already there.\n    does_not_fire: \"#!/usr/bin/env ruby\\n# frozen_string_literal: true\\n\\nvalue = 1\\n\",\n    description: \"missing frozen_string_literal magic comment\" do |src, path:|"
+        },
+        "tags": [
+          "PERFORMANCE"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "missing frozen_string_literal magic comment",
+        "fires": "value = 1\n# frozen_string_literal: true\n",
+        "does_not_fire": "#!/usr/bin/env ruby\n# frozen_string_literal: true\n\nvalue = 1\n"
+      },
+      "kind": "dsl",
+      "line": 72
+    },
+    {
+      "id": "LONG_LINE",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[READABILITY], autofix: false,\n    fires: \"#{\"x\" * 121}\\n\",\n    # Two cases that must not fire: a line at the limit, and a line that is only\n    # over it because a reviewer wrote down why the line is deliberate.\n    does_not_fire: \"#{\"x\" * 120}\\n#{\"x\" * 100} # scan: intentional — the marker is not the defect\\n\",\n    description: \"lines exceeding 120 characters\" do |src, path:|"
+        },
+        "tags": [
+          "READABILITY"
+        ],
+        "autofix": {
+          "expression": "false,\n    fires: \"#{\"x\" * 121}\\n\",\n    # Two cases that must not fire: a line at the limit, and a line that is only\n    # over it because a reviewer wrote down why the line is deliberate.\n    does_not_fire: \"#{\"x\" * 120}\\n#{\"x\" * 100} # scan: intentional — the marker is not the defect\\n\",\n    description: \"lines exceeding 120 characters\" do |src, path:|"
+        },
+        "description": "lines exceeding 120 characters",
+        "fires": "#{",
+        "does_not_fire": "#{"
+      },
+      "kind": "dsl",
+      "line": 87
+    },
+    {
+      "id": "TRAILING_WHITESPACE",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[HYGIENE],\n    fires: \"value = 1   \\n\",\n    does_not_fire: \"value = 1\\n\\n\",\n    description: \"trailing whitespace\" do |src, path:|"
+        },
+        "tags": [
+          "HYGIENE"
+        ],
+        "description": "trailing whitespace",
+        "fires": "value = 1   \n",
+        "does_not_fire": "value = 1\n\n"
+      },
+      "kind": "dsl",
+      "line": 105
+    },
+    {
+      "id": "TODO_FIXME",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[COMPLETENESS], autofix: false,\n    fires: \"  # FIXME: the retry has no cap\\n\",\n    # Both exemptions as worked cases: naming the backlog is not a marker, and\n    # neither is a pattern that hunts for one.\n    does_not_fire: \"  # the reasoning is in TODO.md\\n  MARKERS = /TODO|FIXME|XXX/\\n\",\n    description: \"unresolved work markers\" do |src, path:|"
+        },
+        "tags": [
+          "COMPLETENESS"
+        ],
+        "autofix": {
+          "expression": "false,\n    fires: \"  # FIXME: the retry has no cap\\n\",\n    # Both exemptions as worked cases: naming the backlog is not a marker, and\n    # neither is a pattern that hunts for one.\n    does_not_fire: \"  # the reasoning is in TODO.md\\n  MARKERS = /TODO|FIXME|XXX/\\n\",\n    description: \"unresolved work markers\" do |src, path:|"
+        },
+        "description": "unresolved work markers",
+        "fires": "  # FIXME: the retry has no cap\n",
+        "does_not_fire": "  # the reasoning is in TODO.md\n  MARKERS = /TODO|FIXME|XXX/\n"
+      },
+      "kind": "dsl",
+      "line": 115
+    },
+    {
+      "id": "RESCUE_EXCEPTION",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[ERROR_HANDLING], applies_to: %i[ruby],\n    # A rule's worked example is the one place its own forbidden shape is\n    # legitimately spelled, and FAIL_VISIBLY reads this file like any other. The\n    # marker has to sit on the matching line, not above it.\n    fires: \"begin\\nrescue Exception => e\\nend\\n\", # scan: intentional\n    # A comment naming the shape is prose about it. The paragraph below\n    # explaining which rescue each rule owns was a finding against itself, and\n    # this line spells the shape twice, so it carries the marker the way the\n    # positive example above does.\n    does_not_fire: \"begin\\n  # rescue Exception belongs to this rule\\nrescue StandardError => e\\nend\\n\", # scan: intentional\n    description: \"rescue StandardError not Exception\" do |src, path:|"
+        },
+        "tags": [
+          "ERROR_HANDLING"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "rescue StandardError not Exception",
+        "fires": "begin\nrescue Exception => e\nend\n",
+        "does_not_fire": "begin\n  # rescue Exception belongs to this rule\nrescue StandardError => e\nend\n"
+      },
+      "kind": "dsl",
+      "line": 135
+    },
+    {
+      "id": "SILENT_RESCUE",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[ERROR_HANDLING FAIL_VISIBLY], applies_to: %i[ruby],\n    # The examples are escaped strings on one physical line, and that is what\n    # makes them possible here. SilentRescue reads a line that *starts* with\n    # `rescue`, so a fixture spelled this way is a worked example everywhere and\n    # a finding nowhere — including in this file, which carries no path\n    # exemption on purpose (see the note in the block below).\n    fires: \"begin\\n  risky\\nrescue StandardError\\n  nil\\nend\\n\",\n    does_not_fire: \"begin\\n  risky\\nrescue StandardError => e\\n  warn e\\nend\\n\",\n    description: \"blanket rescue discards error without logging or re-raising\" do |src, path:|"
+        },
+        "tags": [
+          "ERROR_HANDLING",
+          "FAIL_VISIBLY"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "blanket rescue discards error without logging or re-raising",
+        "fires": "begin\n  risky\nrescue StandardError\n  nil\nend\n",
+        "does_not_fire": "begin\n  risky\nrescue StandardError => e\n  warn e\nend\n"
+      },
+      "kind": "dsl",
+      "line": 167
+    },
+    {
+      "id": "NARROW_SILENT_RESCUE",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[ERROR_HANDLING], applies_to: %i[ruby],\n    # Named class, same discard. The pair with SILENT_RESCUE above is the point:\n    # these two split one subject on the class named, and a shared predicate is\n    # where a change to one silently becomes a change to both.\n    fires: \"begin\\n  risky\\nrescue Errno::ENOENT\\n  nil\\nend\\n\",\n    does_not_fire: \"begin\\n  risky\\nrescue Errno::ENOENT => e\\n  warn e\\nend\\n\",\n    description: \"narrow-class rescue discards error without logging or re-raising\" do |src, path:|"
+        },
+        "tags": [
+          "ERROR_HANDLING"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "narrow-class rescue discards error without logging or re-raising",
+        "fires": "begin\n  risky\nrescue Errno::ENOENT\n  nil\nend\n",
+        "does_not_fire": "begin\n  risky\nrescue Errno::ENOENT => e\n  warn e\nend\n"
+      },
+      "kind": "dsl",
+      "line": 185
+    },
+    {
+      "id": "MODIFIER_SILENT_RESCUE",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[ERROR_HANDLING], applies_to: %i[ruby],\n    # The third spelling, and the one the two rules above are blind to by\n    # construction: SilentRescue.matches_mode? reads a line that *starts* with\n    # `rescue`, so `value = parse(raw) rescue nil` is a blanket StandardError\n    # rescue that no rule in this registry sees.\n    #\n    # An assignment, deliberately. Measured across the four trees: 28 modifier\n    # rescues bind or discard a discard value, and 15 of them are a best-effort\n    # side effect whose result nobody reads — `File.delete(path) rescue nil`,\n    # `Process.kill(\"TERM\", pid) rescue nil`, `response.stream.close rescue\n    # nil`. There the rescue is the idempotence, and the value it returns goes\n    # nowhere. The other 13 bind the discard to a name the next lines read as\n    # though the call had succeeded, which is the measurement this rule is for.\n    fires: \"value = parse(raw) rescue nil\\n\",\n    does_not_fire: \"File.delete(path) rescue nil\\n\",\n    description: \"modifier rescue binds a discarded error to a name\" do |src, path:|"
+        },
+        "tags": [
+          "ERROR_HANDLING"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "modifier rescue binds a discarded error to a name",
+        "fires": "value = parse(raw) rescue nil\n",
+        "does_not_fire": "File.delete(path) rescue nil\n"
+      },
+      "kind": "dsl",
+      "line": 201
+    },
+    {
+      "id": "CONSECUTIVE_BLANK_LINES",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[HYGIENE],\n    fires: \"a = 1\\n\\n\\nb = 2\\n\",\n    does_not_fire: \"a = 1\\n\\nb = 2\\n\",\n    description: \"no consecutive blank lines\" do |src, path:|"
+        },
+        "tags": [
+          "HYGIENE"
+        ],
+        "description": "no consecutive blank lines",
+        "fires": "a = 1\n\n\nb = 2\n",
+        "does_not_fire": "a = 1\n\nb = 2\n"
+      },
+      "kind": "dsl",
+      "line": 240
+    },
+    {
+      "id": "DEBUG_OUTPUT",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[FAIL_VISIBLY], applies_to: %i[ruby],\n    example_path: \"/repo/lib/example.rb\",\n    fires: \"p value\\n\",\n    does_not_fire: \"p << value\\n\",\n    description: \"debug output left in lib/\" do |src, path:|"
+        },
+        "tags": [
+          "FAIL_VISIBLY"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "debug output left in lib/",
+        "fires": "p value\n",
+        "does_not_fire": "p << value\n",
+        "example_path": "/repo/lib/example.rb"
+      },
+      "kind": "dsl",
+      "line": 255
+    },
+    {
+      "id": "OMIT_NEEDLESS_WORDS",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[BE_CONCISE],\n    fires: \"# This is a helper for totals\\n\",\n    does_not_fire: \"# Sums the line items\\n\",\n    description: \"Strunk & White: omit needless words in comments\" do |src, path:|"
+        },
+        "tags": [
+          "BE_CONCISE"
+        ],
+        "description": "Strunk & White: omit needless words in comments",
+        "fires": "# This is a helper for totals\n",
+        "does_not_fire": "# Sums the line items\n"
+      },
+      "kind": "dsl",
+      "line": 280
+    },
+    {
+      "id": "TRAILING_COMMENT",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[BE_CONCISE],\n    fires: \"value = 1 # why one\\n\",\n    # The marker is itself a trailing comment, so a line carrying only the\n    # marker must not read as one.\n    does_not_fire: \"# why one\\nvalue = 1\\nvalue = 2 # scan: intentional — the exemption is not the defect\\n\",\n    description: \"trailing comment after code\" do |src, path:|"
+        },
+        "tags": [
+          "BE_CONCISE"
+        ],
+        "description": "trailing comment after code",
+        "fires": "value = 1 # why one\n",
+        "does_not_fire": "# why one\nvalue = 1\nvalue = 2 # scan: intentional — the exemption is not the defect\n"
+      },
+      "kind": "dsl",
+      "line": 296
+    },
+    {
+      "id": "TIME_ZONE_UNSAFE",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[ROBUSTNESS], applies_to: %i[ruby],\n    description: \"bare Time.now/Date.today bypasses Rails Time.zone\",\n    example_path: \"/repo/app/models/example.rb\",\n    fires: \"stamp = Time.now.beginning_of_day\\n\",\n    does_not_fire: \"generated_at: Time.now.utc.iso8601, exp: Time.now.to_i\\n# Date.today is the server's day\\n\" do |src, path:|"
+        },
+        "tags": [
+          "ROBUSTNESS"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "bare Time.now/Date.today bypasses Rails Time.zone",
+        "fires": "stamp = Time.now.beginning_of_day\n",
+        "does_not_fire": "generated_at: Time.now.utc.iso8601, exp: Time.now.to_i\n# Date.today is the server's day\n",
+        "example_path": "/repo/app/models/example.rb"
+      },
+      "kind": "dsl",
+      "line": 313
+    },
+    {
+      "id": "NO_ASCII_LINE_ART",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[BE_CONCISE],\n    # A divider is decoration in a comment, so this rule must read comments and\n    # cannot blank them the way RESCUE_EXCEPTION above does. Its own worked\n    # example is the one legitimate divider in the tree, and the marker on that\n    # line is what says so.\n    fires: \"# --- section\\n\", # scan: intentional\n    does_not_fire: \"# -- section\\n\",\n    description: \"ASCII divider decorations\" do |src, path:|"
+        },
+        "tags": [
+          "BE_CONCISE"
+        ],
+        "description": "ASCII divider decorations",
+        "fires": "# --- section\n",
+        "does_not_fire": "# -- section\n"
+      },
+      "kind": "dsl",
+      "line": 350
+    },
+    {
+      "id": "NO_ASCII_ART_OUTSIDE_FACE",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[BE_CONCISE],\n    fires: \"ascii_art: true\\n\",\n    does_not_fire: \"prompt = \\\"~/repo main %\\\"\\n\",\n    description: \"ASCII art outside the face renderer\" do |src, path:|"
+        },
+        "tags": [
+          "BE_CONCISE"
+        ],
+        "description": "ASCII art outside the face renderer",
+        "fires": "ascii_art: true\n",
+        "does_not_fire": "prompt = \"~/repo main %\"\n"
+      },
+      "kind": "dsl",
+      "line": 379
+    },
+    {
+      "id": "ast_omission",
+      "path": "MASTER/law/detectors/meta_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[COMPLETENESS],\n                  description: \"symbol dropped vs recent commits\""
+        },
+        "tags": [
+          "COMPLETENESS"
+        ],
+        "description": "symbol dropped vs recent commits"
+      },
+      "kind": "declared_class",
+      "line": 14
+    },
+    {
+      "id": "law_coverage",
+      "path": "MASTER/law/detectors/meta_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[TEST_COVERAGE],\n                  description: \"Law subclass has no corresponding test file\""
+        },
+        "tags": [
+          "TEST_COVERAGE"
+        ],
+        "description": "Law subclass has no corresponding test file"
+      },
+      "kind": "declared_class",
+      "line": 51
+    },
+    {
+      "id": "RUNTIME_DOCS_YAML",
+      "path": "MASTER/law/detectors/meta_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error,\n          tags: %i[CONSTITUTION DOCS],\n          applies_to: %i[markdown],\n          autofix: false,\n          # The subject is the path — a stray .md under data/ — so the positive\n          # example is all the harness can express with one path per rule. It is\n          # spelled from Master::ROOT because data_relative answers only for a\n          # path inside this tree, and it names no file that exists.\n          example_path: File.join(Master::ROOT, \"data\", \"worked_example.md\"),\n          fires: \"# a runtime doc that should have been YAML\\n\",\n          description: \"runtime-read docs must be YAML — forbid stray .md under data/\" do |_src, path:|"
+        },
+        "tags": [
+          "CONSTITUTION",
+          "DOCS"
+        ],
+        "languages": [
+          "markdown"
+        ],
+        "autofix": {
+          "expression": "false,\n          # The subject is the path — a stray .md under data/ — so the positive\n          # example is all the harness can express with one path per rule. It is\n          # spelled from Master::ROOT because data_relative answers only for a\n          # path inside this tree, and it names no file that exists.\n          example_path: File.join(Master::ROOT, \"data\", \"worked_example.md\"),\n          fires: \"# a runtime doc that should have been YAML\\n\",\n          description: \"runtime-read docs must be YAML — forbid stray .md under data/\" do |_src, path:|"
+        },
+        "description": "runtime-read docs must be YAML — forbid stray .md under data/",
+        "fires": "# a runtime doc that should have been YAML\n",
+        "example_path": {
+          "expression": "File.join(Master::ROOT, \"data\", \"worked_example.md\"),\n          fires: \"# a runtime doc that should have been YAML\\n\",\n          description: \"runtime-read docs must be YAML — forbid stray .md under data/\" do |_src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 123
+    },
+    {
+      "id": "LEARNED_SMELLS",
+      "path": "MASTER/law/detectors/meta_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[LEARNED_SMELLS SESSION],\n                  description: \"session-learned smell patterns from laws.yml\""
+        },
+        "tags": [
+          "LEARNED_SMELLS",
+          "SESSION"
+        ],
+        "description": "session-learned smell patterns from laws.yml"
+      },
+      "kind": "declared_class",
+      "line": 177
+    },
+    {
+      "id": "FILE_SPRAWL",
+      "path": "MASTER/law/detectors/meta_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[FLAT_HIERARCHY COLLAPSE_BEFORE_ADDING],\n                  description: \"one-file directories and tiny files merge into their owners\""
+        },
+        "tags": [
+          "FLAT_HIERARCHY",
+          "COLLAPSE_BEFORE_ADDING"
+        ],
+        "description": "one-file directories and tiny files merge into their owners"
+      },
+      "kind": "declared_class",
+      "line": 353
+    },
+    {
+      "id": "PATH_PURPOSE",
+      "path": "MASTER/law/detectors/meta_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[ONE_SOURCE COLLAPSE_BEFORE_ADDING],\n                  description: \"every directory declares its purpose in PATH_OWNERSHIP.yml\""
+        },
+        "tags": [
+          "ONE_SOURCE",
+          "COLLAPSE_BEFORE_ADDING"
+        ],
+        "description": "every directory declares its purpose in PATH_OWNERSHIP.yml"
+      },
+      "kind": "declared_class",
+      "line": 455
+    },
+    {
+      "id": "PARAMETERIZED_SLUG",
+      "path": "MASTER/law/detectors/naming_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning,\n          tags: %i[FLAT_HIERARCHY DRY],\n          applies_to: %i[ruby],\n          autofix: false,\n          # The subject is the path, not the source, and the harness gives a rule\n          # one path — so the positive example is all this rule can carry, and a\n          # does_not_fire here would be the same path answering differently.\n          # The clean form is the message's own suggestion, minus `_service`.\n          example_path: \"/repo/app/services/user_profile_photo_uploader_service.rb\",\n          fires: \"# any source; this rule reads the path\\n\",\n          description: \"path is dense Rails-parameterize slug — Strunk-clean snake_case\" do |_src, path:|"
+        },
+        "tags": [
+          "FLAT_HIERARCHY",
+          "DRY"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "autofix": {
+          "expression": "false,\n          # The subject is the path, not the source, and the harness gives a rule\n          # one path — so the positive example is all this rule can carry, and a\n          # does_not_fire here would be the same path answering differently.\n          # The clean form is the message's own suggestion, minus `_service`.\n          example_path: \"/repo/app/services/user_profile_photo_uploader_service.rb\",\n          fires: \"# any source; this rule reads the path\\n\",\n          description: \"path is dense Rails-parameterize slug — Strunk-clean snake_case\" do |_src, path:|"
+        },
+        "description": "path is dense Rails-parameterize slug — Strunk-clean snake_case",
+        "fires": "# any source; this rule reads the path\n",
+        "example_path": "/repo/app/services/user_profile_photo_uploader_service.rb"
+      },
+      "kind": "dsl",
+      "line": 7
+    },
+    {
+      "id": "TYPE_IN_NAME",
+      "path": "MASTER/law/detectors/naming_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[DOMAIN_LANGUAGE LOAD_BEARING_NAMES],\n                  description: \"a name that encodes its own type says nothing the code did not\""
+        },
+        "tags": [
+          "DOMAIN_LANGUAGE",
+          "LOAD_BEARING_NAMES"
+        ],
+        "description": "a name that encodes its own type says nothing the code did not"
+      },
+      "kind": "declared_class",
+      "line": 62
+    },
+    {
+      "id": "NUMBERED_NAME",
+      "path": "MASTER/law/detectors/naming_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[DOMAIN_LANGUAGE LOAD_BEARING_NAMES],\n                  description: \"numbered siblings name no difference between themselves\""
+        },
+        "tags": [
+          "DOMAIN_LANGUAGE",
+          "LOAD_BEARING_NAMES"
+        ],
+        "description": "numbered siblings name no difference between themselves"
+      },
+      "kind": "declared_class",
+      "line": 117
+    },
+    {
+      "id": "FILE_SEQUENCE_NAME",
+      "path": "MASTER/law/detectors/naming_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, reads_beyond_file: true,\n          does_not_fire: \"class AddThing < ActiveRecord::Migration[8.0]; end\\n\",\n          example_path: \"/repo/db/migrate/20260101000000_add_thing_v2.rb\",\n          tags: %i[LOAD_BEARING_NAMES DOMAIN_LANGUAGE],\n          applies_to: %i[ruby],\n          autofix: false,\n          description: \"a filename records what a thing is, never where it sat in a sequence\" do |_src, path:|"
+        },
+        "tags": [
+          "LOAD_BEARING_NAMES",
+          "DOMAIN_LANGUAGE"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "autofix": {
+          "expression": "false,\n          description: \"a filename records what a thing is, never where it sat in a sequence\" do |_src, path:|"
+        },
+        "description": "a filename records what a thing is, never where it sat in a sequence",
+        "does_not_fire": "class AddThing < ActiveRecord::Migration[8.0]; end\n",
+        "example_path": "/repo/db/migrate/20260101000000_add_thing_v2.rb",
+        "reads_beyond_file": {
+          "expression": "true,\n          does_not_fire: \"class AddThing < ActiveRecord::Migration[8.0]; end\\n\",\n          example_path: \"/repo/db/migrate/20260101000000_add_thing_v2.rb\",\n          tags: %i[LOAD_BEARING_NAMES DOMAIN_LANGUAGE],\n          applies_to: %i[ruby],\n          autofix: false,\n          description: \"a filename records what a thing is, never where it sat in a sequence\" do |_src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 168
+    },
+    {
+      "id": "FILE_VAGUE_NAME",
+      "path": "MASTER/law/detectors/naming_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info,\n          does_not_fire: \"module FormatHelper; end\\n\",\n          example_path: \"/repo/app/helpers/format_helper.rb\",\n          tags: %i[LOAD_BEARING_NAMES DOMAIN_LANGUAGE],\n          applies_to: %i[ruby],\n          autofix: false,\n          description: \"a filename names its subject, not a category\" do |_src, path:|"
+        },
+        "tags": [
+          "LOAD_BEARING_NAMES",
+          "DOMAIN_LANGUAGE"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "autofix": {
+          "expression": "false,\n          description: \"a filename names its subject, not a category\" do |_src, path:|"
+        },
+        "description": "a filename names its subject, not a category",
+        "does_not_fire": "module FormatHelper; end\n",
+        "example_path": "/repo/app/helpers/format_helper.rb"
+      },
+      "kind": "dsl",
+      "line": 202
     }
   ]
 }
