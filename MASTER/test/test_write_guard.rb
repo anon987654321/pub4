@@ -74,6 +74,15 @@ class WriteGuardTest < Minitest::Test
     refute_predicate @guard.verdict(path:, content: "# frozen_string_literal: true\n\ndef work = 1\n"), :blocked?
   end
 
+  def test_malformed_law_catalogue_is_blocked_by_configuration_invariants
+    laws_path = File.join(Master::ROOT, "data", "laws.yml")
+    verdict = @guard.verdict(path: laws_path, content: "law_catalogue: {}\n")
+
+    assert_predicate verdict, :blocked?
+    assert_match(/configuration_invariant/, verdict.reason)
+    assert_match(/required Law sections missing/, verdict.reason)
+  end
+
   def test_sidecar_markdown_is_blocked_even_when_clean
     verdict = @guard.verdict(path: path("summary.md"), content: "# notes\n")
 
