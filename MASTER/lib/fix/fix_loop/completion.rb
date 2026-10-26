@@ -64,6 +64,8 @@ module Master
             @bus&.publish("fix_loop:mission_requeued", run_id:, state:, reason: "wake received during attempt")
           elsif state == :done
             mission&.finish!(state: "completed", summary: result.to_s)
+          elsif %i[cancelled unknown_outcome recovery_failed].include?(state)
+            mission&.finish!(state: state.to_s, summary: result.to_s)
           elsif %i[human_decision blocked].include?(state)
             mission&.block!(reason: result.to_s)
           else
