@@ -776,7 +776,7 @@ module Master
           when :canonical
             return true if %i[whole_file lines].include?(surface)
             return semantic if surface == :sections
-            return %i[yaml json].include?(Master.language_for(@assessment_plan.root).to_s) if false
+            return true if surface == :structured_data
 
             false
           when :scanner
@@ -786,7 +786,7 @@ module Master
             return surface == :syntax_tree && info[:scanner_law]&.respond_to?(:check_ast)
             false
           when :yaml_declarative
-            %i[whole_file lines].include?(surface)
+            %i[whole_file lines structured_data].include?(surface)
           when :opportunity
             info[:surfaces].include?(surface)
           when :visual
@@ -821,27 +821,59 @@ module Master
           false
         end
 
-        def assessment_surface_applies?(info, surface, path)
+        def assessment_surface_applies?(info, surface, path, stream:)
           extension = File.extname(path).downcase
           language = Master.language_for(path).to_s
+          semantic = %i[semantic_violations semantic_opportunities].include?(stream)
           case surface
           when :whole_file
             true
           when :lines
-            info[:source_kind] == :canonical ? info[:law].scope.to_sym == :line : true
+            semantic || info[:source_kind] != :canonical || info[:law].scope.to_sym == :line
           when :sections
-            false
+            semantic
           when :syntax_tree
-            %w[.rb .rake].include?(extension) && info[:source_kind] == :scanner
+            %w[.rb .rake].include?(extension) &&
+              info[:source_kind] == :scanner && info[:scanner_law]&.respond_to?(:check_ast)
           when :structured_data
             %w[.yml .yaml .json .toml].include?(extension) || %w[yaml json toml].include?(language)
           when :documentation
             %w[.md .markdown .rst .txt].include?(extension) || language == "markdown"
-          when :syntax_tree
-            %w[.rb .rake].include?(extension)
           else
             false
           end
+        end
+
+        def parse_structured_surface(path)
+          extension = File.extname(path).downcase
+          text = File.read(path, encoding: "UTF-8")
+          sha256 = Digest::SHA256.hexdigest(text)
+          case extension
+          when ".json"
+            require "json"
+            JSON.parse(text)
+            parser = "JSON.parse"
+          when ".yml", ".yaml"
+            require "yaml"
+            YAML.parse(text)
+            parser = "YAML.parse"
+          else
+            return {
+              status: :inconclusive,
+              reason: "no structured-data parser registered for #{extension.empty? ? "extensionless input" : extension}",
+              evidence: [],
+            }
+          end
+          {
+            status: :assessed_clean,
+            evidence: ["structured_data=#{parser} sha256=#{sha256} path=#{path}"],
+          }
+        rescue StandardError => e
+          {
+            status: :inconclusive,
+            reason: "structured-data parser failed for #{path}: #{e.class}: #{e.message.to_s[0, 160]}",
+            evidence: [],
+          }
         end
 
         def assessment_result_for_scope(stream:, applicable:, found:, observation:, signatures_stable:,
