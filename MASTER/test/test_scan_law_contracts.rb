@@ -84,10 +84,10 @@ class TestScanLawContracts < Minitest::Test
     assert_finding Laws::CqsLaw.new, code, "non_memoized.rb", "mutates state and returns"
   end
 
-  def test_secret_proximity_reaches_findings_through_the_bridge
-    hits = Laws::LawBridgeLaw.new.check(%q{api_key = "sk_live_123456789"}, path: "app.rb")
+  def test_secret_proximity_reaches_findings_from_its_canonical_detector
+    hits = law_findings("SECRET_PROXIMITY", %q{api_key = "sk_live_123456789"}, path: "app.rb")
 
-    assert hits.any? { |h| h[:law] == "SECRET_PROXIMITY" }, "hardcoded secret must reach scanner findings"
+    assert hits.any? { |h| h[:law].to_s.upcase == "SECRET_PROXIMITY" }, "hardcoded secret must reach scanner findings"
   end
 
   def test_magic_color_rule_flags_raw_css_color
