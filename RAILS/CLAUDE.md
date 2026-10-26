@@ -80,9 +80,9 @@ and `/fix` mutates the working tree. `MASTER_CHECK_SCAN_ONLY=1` for preflight.
 
 ## Traps
 
-- **Visual/CSS work:** read `shared/README.md` first: the visual design system
+- **Visual/CSS work:** read `__shared/README.md` first: the visual design system
   and the layout chrome contract every surface shares are there.
-  Tokens live in `shared/app/assets/stylesheets/_dialect_tokens.scss`; flat
+  Tokens live in `__shared/app/assets/stylesheets/_dialect_tokens.scss`; flat
   only, no shadow/blur/glow. Most layout "bugs" here are stale deployed CSS —
   diff live against source before changing anything.
 - **Stale fragment caches:** `update_column` skips `updated_at`, so `[record,
@@ -116,7 +116,7 @@ and `/fix` mutates the working tree. `MASTER_CHECK_SCAN_ONLY=1` for preflight.
 ## Editing frontend code
 
 Stimulus packages are vendored, never fetched from a CDN;
-`shared/README.md` explains the check that holds
+`__shared/README.md` explains the check that holds
 it and why a `pin` costs a `modulepreload`.
 
 The visual design and product dialect are operator-owned. By default, restore or
