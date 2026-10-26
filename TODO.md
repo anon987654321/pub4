@@ -506,3 +506,27 @@ An item is closed only when the owning command or interaction ran on the current
 result is recorded, and any generated artifact is in sync with its source. For rendered/UI work,
 include before/after screenshots, viewport, device/runtime, and relevant console/network errors.
 If a tool or host was unavailable, record that state explicitly instead of guessing.
+
+
+## Architecture tournament and 90-point interaction acceptance (2026-10-26)
+
+Added a read-only architecture tournament to requested /fix runs on the repository root
+or an exact top-level tree. The default is 36 architectural candidates per eligible tree,
+bounded to 30–40; a repository-root run gives MASTER, RAILS, OPENBSD and STUDIO separate
+candidate sets. One structured generation request is used per tree. Candidates must be
+source-grounded, use valid in-tree paths, describe verification and rollback, and survive
+near-duplicate rejection. A deterministic local score compares source evidence, test
+anchors, verification, rollback, scope and Law alignment. Model-provided scores are ignored.
+The winner and a five-plan shortlist guide repair; they do not authorize broad rewrites or
+replace ordinary Law and verification gates. Candidate tests remain NOT_RUN until the
+repository's actual suites run.
+
+Added MASTER/data/ux_refinements.yml with all 90 UI, UX, CLI, REPL, terminal, browser
+recovery and visual/accessibility contracts. Each row names owner trees and expected proof
+types and remains acceptance_required. The catalogue is validated, fingerprinted into the
+/fix protocol report and scoped into the relevant repair context. No item is claimed passing
+from source review alone.
+
+Validation status: INCONCLUSIVE until the added focused tests, protocol tests, full MASTER
+suite and top-level /fix execution run on the pinned toolchain. The GitHub source connector
+does not provide a checked-out repo/runtime for this session. No GitHub Actions workflow was added.

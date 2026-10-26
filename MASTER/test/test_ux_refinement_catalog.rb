@@ -1,0 +1,40 @@
+# frozen_string_literal: true
+
+require_relative "test_helper"
+require_relative "../lib/fix/ux_refinement_catalog"
+
+class TestUXRefinementCatalog < Minitest::Test
+  def test_catalog_contains_ninety_unique_owned_acceptance_contracts
+    payload = Master::Fix::UXRefinementCatalog.load
+    rows = payload.fetch("refinements")
+    assert_equal 90, rows.size
+    assert_equal 90, rows.map { |row| row.fetch("id") }.uniq.size
+    assert_equal "UX001", rows.first.fetch("id")
+    assert_equal "UX090", rows.last.fetch("id")
+    assert rows.all? { |row| row.fetch("state") == "acceptance_required" }
+    manifest = Master::Fix::UXRefinementCatalog.manifest
+    assert_equal 90, manifest.fetch("loaded_count")
+    assert_equal 64, manifest.fetch("sha256").length
+  end
+
+  def test_catalog_rejects_missing_or_duplicate_contracts
+    payload = Master::Fix::UXRefinementCatalog.load
+    duplicate = Marshal.load(Marshal.dump(payload))
+    duplicate.fetch("refinements").last["id"] = duplicate.fetch("refinements").first.fetch("id")
+    assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(duplicate) }
+    assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!({ "refinements" => [] }) }
+  end
+
+  def test_prompt_context_is_scoped_to_target_and_never_claims_passing
+    root = "/work/pub4"
+    master = Master::Fix::UXRefinementCatalog.prompt_context(target: "#{root}/MASTER", root: root)
+    rails = Master::Fix::UXRefinementCatalog.prompt_context(target: "#{root}/RAILS", root: root)
+    openbsd = Master::Fix::UXRefinementCatalog.prompt_context(target: "#{root}/OPENBSD", root: root)
+    all = Master::Fix::UXRefinementCatalog.prompt_context(target: root, root: root)
+    assert_includes master, "UX001"
+    assert_includes rails, "UX063"
+    assert_includes openbsd, "UX031"
+    assert_equal 90, all.lines.count { |line| line.match?(/\AUX\d{3} \[/) }
+    refute_match(/all 90 (?:tests|behaviors) pass/i, all)
+  end
+end

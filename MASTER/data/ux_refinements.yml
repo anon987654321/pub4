@@ -1,0 +1,641 @@
+# Canonical acceptance inventory for CLI, REPL, terminal, browser and visual refinements.
+# Inventory entries are acceptance targets, not implementation or test evidence.
+schema: 1
+catalogue_id: MASTER_UX_REFINEMENTS
+authority: "MASTER/data/laws.yml#visual_identity_contract"
+expected_count: 90
+evidence_policy:
+  implementation_state: "acceptance_required"
+  completion_rule: "A row is complete only when its owner records the required test or rendered/runtime evidence."
+  no_simulation: "A prompt, checklist or source-only review never counts as a passing runtime test."
+refinements:
+  - id: UX001
+    area: "input"
+    title: "Immediate acknowledgement"
+    owner_trees: ["MASTER", "OPENBSD", "STUDIO"]
+    proof: ["unit", "terminal"]
+    contract: "A submitted turn gets one truthful acknowledgement, without claiming execution or success prematurely."
+    state: "acceptance_required"
+  - id: UX002
+    area: "input"
+    title: "Preserve an unsent draft"
+    owner_trees: ["MASTER", "OPENBSD", "STUDIO"]
+    proof: ["unit", "terminal"]
+    contract: "Unsent text survives harmless redraws, context changes and rejected submissions."
+    state: "acceptance_required"
+  - id: UX003
+    area: "input"
+    title: "Intentional multiline entry"
+    owner_trees: ["MASTER", "OPENBSD", "STUDIO"]
+    proof: ["unit", "terminal"]
+    contract: "Newline insertion is distinct from command submission and is documented."
+    state: "acceptance_required"
+  - id: UX004
+    area: "input"
+    title: "Bracketed paste safety"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Pasted multiline text remains one draft and is never executed line by line accidentally."
+    state: "acceptance_required"
+  - id: UX005
+    area: "input"
+    title: "Stable input while streaming"
+    owner_trees: ["MASTER", "OPENBSD", "STUDIO"]
+    proof: ["unit", "terminal"]
+    contract: "Output streaming never overwrites, steals or corrupts the current draft."
+    state: "acceptance_required"
+  - id: UX006
+    area: "input"
+    title: "Duplicate-submit prevention"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["unit", "browser", "terminal"]
+    contract: "Double-clicks, repeated Enter and reconnects cannot submit one pending turn twice."
+    state: "acceptance_required"
+  - id: UX007
+    area: "input"
+    title: "Command history navigation"
+    owner_trees: ["MASTER", "OPENBSD", "STUDIO"]
+    proof: ["unit", "terminal"]
+    contract: "History navigation restores exact text and preserves an existing draft."
+    state: "acceptance_required"
+  - id: UX008
+    area: "input"
+    title: "Searchable history"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "History search is useful, preserves the draft and excludes sensitive values."
+    state: "acceptance_required"
+  - id: UX009
+    area: "input"
+    title: "Filesystem path completion"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Path completion handles spaces, quoting, symlinks and target boundaries."
+    state: "acceptance_required"
+  - id: UX010
+    area: "input"
+    title: "Command completion"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Slash-command completion is generated from the canonical command registry."
+    state: "acceptance_required"
+  - id: UX011
+    area: "input"
+    title: "Visible interaction mode"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal", "browser"]
+    contract: "Editing, queued, waiting, streaming, cancelling and idle states are distinguishable."
+    state: "acceptance_required"
+  - id: UX012
+    area: "input"
+    title: "Empty-input guard"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["unit", "browser", "terminal"]
+    contract: "Whitespace-only input causes no empty turn or false activity."
+    state: "acceptance_required"
+  - id: UX013
+    area: "input"
+    title: "Unicode editing safety"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["unit", "browser", "terminal"]
+    contract: "Cursor movement and selection respect grapheme boundaries and Unicode input."
+    state: "acceptance_required"
+  - id: UX014
+    area: "input"
+    title: "Explicit end-of-input behavior"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Ctrl-D is contextual and never silently discards a non-empty draft."
+    state: "acceptance_required"
+  - id: UX015
+    area: "input"
+    title: "Recovery after command exception"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Errors restore a usable prompt and terminal state without restarting the process."
+    state: "acceptance_required"
+  - id: UX016
+    area: "terminal"
+    title: "Active target indicator"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal", "browser"]
+    contract: "The current repository and target tree remain visible during an operation."
+    state: "acceptance_required"
+  - id: UX017
+    area: "terminal"
+    title: "Model/provider indicator"
+    owner_trees: ["MASTER"]
+    proof: ["unit", "terminal"]
+    contract: "Provider/model status reflects the live route rather than a stale configured default."
+    state: "acceptance_required"
+  - id: UX018
+    area: "terminal"
+    title: "Idle versus waiting distinction"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal", "browser"]
+    contract: "Idle, queued, provider-waiting and actively streaming have distinct state labels."
+    state: "acceptance_required"
+  - id: UX019
+    area: "terminal"
+    title: "Truthful busy state"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["unit", "browser", "terminal"]
+    contract: "Busy state follows lifecycle evidence and never infers completion from dispatch."
+    state: "acceptance_required"
+  - id: UX020
+    area: "terminal"
+    title: "Cancellation affordance"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["unit", "browser", "terminal"]
+    contract: "Cancellation is discoverable when supported and honestly marked unavailable otherwise."
+    state: "acceptance_required"
+  - id: UX021
+    area: "terminal"
+    title: "Degraded-capability state"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Missing microphone, model, network or terminal capability is not reported ready."
+    state: "acceptance_required"
+  - id: UX022
+    area: "terminal"
+    title: "Stable visual baseline"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["visual", "browser"]
+    contract: "A repeatable baseline covers the main prompt and essential active states."
+    state: "acceptance_required"
+  - id: UX023
+    area: "terminal"
+    title: "Bounded status text"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["unit", "browser", "terminal"]
+    contract: "Long status text wraps or truncates without concealing outcome or recovery action."
+    state: "acceptance_required"
+  - id: UX024
+    area: "terminal"
+    title: "Narrow terminal layout"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["terminal", "visual"]
+    contract: "Narrow terminals keep the input and target usable without clipping."
+    state: "acceptance_required"
+  - id: UX025
+    area: "terminal"
+    title: "Face never intercepts prompt authority"
+    owner_trees: ["MASTER"]
+    proof: ["unit", "terminal", "browser"]
+    contract: "The face remains a presentation adapter over the canonical turn router."
+    state: "acceptance_required"
+  - id: UX026
+    area: "terminal"
+    title: "Monochrome operability"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["terminal", "accessibility"]
+    contract: "Critical status remains clear with colour disabled."
+    state: "acceptance_required"
+  - id: UX027
+    area: "terminal"
+    title: "No decorative banners"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["source", "terminal"]
+    contract: "Operational output avoids ornamental banners that displace the active prompt."
+    state: "acceptance_required"
+  - id: UX028
+    area: "terminal"
+    title: "Repository context visibility"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "The prompt exposes enough repository context to prevent edits to the wrong target."
+    state: "acceptance_required"
+  - id: UX029
+    area: "terminal"
+    title: "Canonical prompt vocabulary"
+    owner_trees: ["MASTER", "OPENBSD", "STUDIO"]
+    proof: ["source", "unit"]
+    contract: "CLI, REPL and face share status vocabulary and canonical command spellings."
+    state: "acceptance_required"
+  - id: UX030
+    area: "terminal"
+    title: "REPL versus system shell distinction"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["source", "terminal"]
+    contract: "Help distinguishes MASTER commands from shell commands and browser authority."
+    state: "acceptance_required"
+  - id: UX031
+    area: "diagnostics"
+    title: "Outcome-first diagnostics"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["unit", "terminal", "browser"]
+    contract: "The first diagnostic line states the actual outcome before the details."
+    state: "acceptance_required"
+  - id: UX032
+    area: "diagnostics"
+    title: "Standard status verbs"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["unit", "source"]
+    contract: "Lifecycle reporting uses one canonical vocabulary across commands and adapters."
+    state: "acceptance_required"
+  - id: UX033
+    area: "diagnostics"
+    title: "Elapsed-time reporting"
+    owner_trees: ["MASTER", "OPENBSD", "STUDIO"]
+    proof: ["unit", "terminal"]
+    contract: "Measured elapsed duration is reported as a fact, not a forecast."
+    state: "acceptance_required"
+  - id: UX034
+    area: "diagnostics"
+    title: "Actionable failure recovery"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["unit", "browser", "terminal"]
+    contract: "Failures provide a valid next action or explicitly require human intervention."
+    state: "acceptance_required"
+  - id: UX035
+    area: "diagnostics"
+    title: "FAILED versus INCONCLUSIVE"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["unit", "source"]
+    contract: "Execution failure and insufficient evidence produce distinct terminal states."
+    state: "acceptance_required"
+  - id: UX036
+    area: "diagnostics"
+    title: "No duplicate summaries"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["unit", "terminal", "browser"]
+    contract: "A single owner emits the canonical final summary for each operation."
+    state: "acceptance_required"
+  - id: UX037
+    area: "diagnostics"
+    title: "Stable event prefixes"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Operational events use stable subsystem prefixes suitable for TTS and filtering."
+    state: "acceptance_required"
+  - id: UX038
+    area: "diagnostics"
+    title: "Output navigation"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Long output can be navigated without losing access to active input."
+    state: "acceptance_required"
+  - id: UX039
+    area: "diagnostics"
+    title: "Precise failure location"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["unit", "source"]
+    contract: "When known, failures identify the responsible file, stage or operation."
+    state: "acceptance_required"
+  - id: UX040
+    area: "diagnostics"
+    title: "Bounded diagnostic traces"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["unit", "source"]
+    contract: "Trace output is bounded, useful and redacted rather than unbounded internals."
+    state: "acceptance_required"
+  - id: UX041
+    area: "diagnostics"
+    title: "Meaningful exit codes"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Process exit codes match the user-visible terminal result."
+    state: "acceptance_required"
+  - id: UX042
+    area: "diagnostics"
+    title: "Predictable piped output"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Piping disables interactive control sequences and keeps machine output clean."
+    state: "acceptance_required"
+  - id: UX043
+    area: "diagnostics"
+    title: "Secret redaction"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["unit", "source"]
+    contract: "Credentials, authorization values and sensitive prompt data are redacted in diagnostics."
+    state: "acceptance_required"
+  - id: UX044
+    area: "diagnostics"
+    title: "Run identifiers"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Related events have a stable run identifier without repeated metadata noise."
+    state: "acceptance_required"
+  - id: UX045
+    area: "diagnostics"
+    title: "Intentional quiet mode"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Quiet mode suppresses routine noise but not failures, uncertainty or required action."
+    state: "acceptance_required"
+  - id: UX046
+    area: "command_help"
+    title: "Registry-generated completions"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Command help and completion use the same registry and cannot drift."
+    state: "acceptance_required"
+  - id: UX047
+    area: "command_help"
+    title: "Canonical command spellings"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Aliases resolve to canonical command names and help identifies the preferred spelling."
+    state: "acceptance_required"
+  - id: UX048
+    area: "command_help"
+    title: "Helpful unknown-command suggestions"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Unknown commands suggest nearby valid choices and never execute them."
+    state: "acceptance_required"
+  - id: UX049
+    area: "command_help"
+    title: "Explicit read/write boundary"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Help says whether commands inspect, modify, commit, push or deploy."
+    state: "acceptance_required"
+  - id: UX050
+    area: "command_help"
+    title: "Target preview before mutation"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Broad or destructive operations display the resolved target before mutation."
+    state: "acceptance_required"
+  - id: UX051
+    area: "command_help"
+    title: "Normalized flags"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Equivalent flags have consistent names, types, defaults and help."
+    state: "acceptance_required"
+  - id: UX052
+    area: "command_help"
+    title: "Dry-run semantics"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Dry-run states exactly what is skipped and never implies changes were applied."
+    state: "acceptance_required"
+  - id: UX053
+    area: "command_help"
+    title: "Clear usage errors"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Invalid arguments return concise syntax guidance and a failure exit status."
+    state: "acceptance_required"
+  - id: UX054
+    area: "command_help"
+    title: "Argument completion"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Argument completion respects command metadata, target scope and permission boundaries."
+    state: "acceptance_required"
+  - id: UX055
+    area: "command_help"
+    title: "Copyable paths"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Paths and commands are emitted in copyable form without decorative separators."
+    state: "acceptance_required"
+  - id: UX056
+    area: "command_help"
+    title: "Machine-readable output schema"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "JSON output is versioned and has no human chatter mixed into stdout."
+    state: "acceptance_required"
+  - id: UX057
+    area: "command_help"
+    title: "Stdout and stderr ownership"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Machine results and operator diagnostics use consistent stdout/stderr channels."
+    state: "acceptance_required"
+  - id: UX058
+    area: "command_help"
+    title: "Useful command listing"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Command lists show useful entry points without duplicating aliases."
+    state: "acceptance_required"
+  - id: UX059
+    area: "command_help"
+    title: "Risk-aware confirmation"
+    owner_trees: ["MASTER", "OPENBSD"]
+    proof: ["unit", "terminal"]
+    contract: "Confirmation gates irreversible external effects, not harmless inspection."
+    state: "acceptance_required"
+  - id: UX060
+    area: "command_help"
+    title: "Conservative natural-language routing"
+    owner_trees: ["MASTER"]
+    proof: ["unit", "source"]
+    contract: "Ambiguous natural language cannot silently select a high-risk write operation."
+    state: "acceptance_required"
+  - id: UX061
+    area: "browser_recovery"
+    title: "Scroll follows only near bottom"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["unit", "browser"]
+    contract: "Streaming autoscroll follows only while the reader is already near the bottom."
+    state: "acceptance_required"
+  - id: UX062
+    area: "browser_recovery"
+    title: "Draft survives disconnect"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["unit", "browser"]
+    contract: "Network loss and reconnect preserve the unsent draft."
+    state: "acceptance_required"
+  - id: UX063
+    area: "browser_recovery"
+    title: "Reconnect does not duplicate turns"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["unit", "browser"]
+    contract: "Reconnect does not repeat a submission without safe idempotency evidence."
+    state: "acceptance_required"
+  - id: UX064
+    area: "browser_recovery"
+    title: "Explicit stream terminal state"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["unit", "browser"]
+    contract: "Every stream visibly terminates as success, failure, cancellation or interruption."
+    state: "acceptance_required"
+  - id: UX065
+    area: "browser_recovery"
+    title: "Mobile keyboard and safe area"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["visual", "browser"]
+    contract: "The composer stays reachable above the mobile keyboard and device safe areas."
+    state: "acceptance_required"
+  - id: UX066
+    area: "browser_recovery"
+    title: "Honest stop semantics"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["unit", "browser"]
+    contract: "Stop is shown as complete only after cancellation is confirmed or stream ends."
+    state: "acceptance_required"
+  - id: UX067
+    area: "browser_recovery"
+    title: "Visible keyboard focus"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["browser", "accessibility"]
+    contract: "Keyboard focus remains visibly locatable on inputs, actions and message navigation."
+    state: "acceptance_required"
+  - id: UX068
+    area: "browser_recovery"
+    title: "Accessible icon labels"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["browser", "accessibility"]
+    contract: "Icon-only controls expose accessible names and meaningful state."
+    state: "acceptance_required"
+  - id: UX069
+    area: "browser_recovery"
+    title: "Status without colour"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["browser", "accessibility"]
+    contract: "State is conveyed by text or structure as well as colour."
+    state: "acceptance_required"
+  - id: UX070
+    area: "browser_recovery"
+    title: "Reduced-motion behavior"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["browser", "accessibility"]
+    contract: "Every motion-driven interaction honours reduced-motion preferences."
+    state: "acceptance_required"
+  - id: UX071
+    area: "browser_recovery"
+    title: "Forced-colors behavior"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["browser", "accessibility"]
+    contract: "Controls and state markers remain visible in forced-colours mode."
+    state: "acceptance_required"
+  - id: UX072
+    area: "browser_recovery"
+    title: "320px reflow"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["visual", "browser"]
+    contract: "Primary interaction reflows at 320 CSS pixels without horizontal page overflow."
+    state: "acceptance_required"
+  - id: UX073
+    area: "browser_recovery"
+    title: "Preserve conversation text shape"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["visual", "browser"]
+    contract: "Conversation remains readable and copyable without unnecessary chat-bubble scaffolding."
+    state: "acceptance_required"
+  - id: UX074
+    area: "browser_recovery"
+    title: "Usable touch targets"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["visual", "browser", "accessibility"]
+    contract: "Touch controls have measured usable hit areas and adequate separation."
+    state: "acceptance_required"
+  - id: UX075
+    area: "browser_recovery"
+    title: "Recoverable browser errors"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["unit", "browser"]
+    contract: "Socket, permission and stream errors preserve context and offer a truthful retry path."
+    state: "acceptance_required"
+  - id: UX076
+    area: "visual_accessibility"
+    title: "Consistent prompt baseline"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["visual", "terminal", "browser"]
+    contract: "Prompt baselines align at supported viewport sizes without jumping between states."
+    state: "acceptance_required"
+  - id: UX077
+    area: "visual_accessibility"
+    title: "Predictable heading wrapping"
+    owner_trees: ["MASTER", "RAILS", "STUDIO"]
+    proof: ["visual", "browser"]
+    contract: "Headings wrap without overflow, collisions or broken hierarchy."
+    state: "acceptance_required"
+  - id: UX078
+    area: "visual_accessibility"
+    title: "Long identifier handling"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["unit", "visual", "terminal"]
+    contract: "Long paths and identifiers wrap or scroll without hiding distinguishing suffixes."
+    state: "acceptance_required"
+  - id: UX079
+    area: "visual_accessibility"
+    title: "Tabular numerals"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["visual", "terminal", "browser"]
+    contract: "Changing numeric values remain readable without unnecessary layout-width shifts."
+    state: "acceptance_required"
+  - id: UX080
+    area: "visual_accessibility"
+    title: "Muted text contrast"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["visual", "accessibility"]
+    contract: "Secondary text meets the declared contrast contract."
+    state: "acceptance_required"
+  - id: UX081
+    area: "visual_accessibility"
+    title: "Unclipped focus ring"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["visual", "browser", "accessibility"]
+    contract: "Focus indicators are not clipped by overflow or rounded containers."
+    state: "acceptance_required"
+  - id: UX082
+    area: "visual_accessibility"
+    title: "Remove repeated metadata"
+    owner_trees: ["MASTER", "RAILS", "STUDIO"]
+    proof: ["source", "visual"]
+    contract: "Each metadata fact is shown once with consistent spacing."
+    state: "acceptance_required"
+  - id: UX083
+    area: "visual_accessibility"
+    title: "Clear primary action hierarchy"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["visual", "browser"]
+    contract: "The first screen has one visually primary action and subordinate secondary controls."
+    state: "acceptance_required"
+  - id: UX084
+    area: "visual_accessibility"
+    title: "Useful empty states"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["unit", "visual"]
+    contract: "Empty surfaces explain what is absent and what the operator can do next."
+    state: "acceptance_required"
+  - id: UX085
+    area: "visual_accessibility"
+    title: "Aligned field labels"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["visual", "browser", "accessibility"]
+    contract: "Input labels are visually and programmatically associated with controls."
+    state: "acceptance_required"
+  - id: UX086
+    area: "visual_accessibility"
+    title: "Contextual validation errors"
+    owner_trees: ["MASTER", "RAILS", "OPENBSD", "STUDIO"]
+    proof: ["unit", "browser", "terminal"]
+    contract: "Validation errors identify the affected field or operation and recovery step."
+    state: "acceptance_required"
+  - id: UX087
+    area: "visual_accessibility"
+    title: "Stable loading layout"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["visual", "browser"]
+    contract: "Loading and streaming states minimize layout shifts around the composer."
+    state: "acceptance_required"
+  - id: UX088
+    area: "visual_accessibility"
+    title: "Bounded animation duration"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["visual", "browser", "accessibility"]
+    contract: "Animations are brief, represent real state changes and have reduced-motion alternatives."
+    state: "acceptance_required"
+  - id: UX089
+    area: "visual_accessibility"
+    title: "Screenshot comparison evidence"
+    owner_trees: ["MASTER", "RAILS", "STUDIO"]
+    proof: ["visual", "browser"]
+    contract: "Visual changes are compared at named viewport sizes; source review alone is not visual proof."
+    state: "acceptance_required"
+  - id: UX090
+    area: "visual_accessibility"
+    title: "Text zoom and font scaling"
+    owner_trees: ["MASTER", "RAILS"]
+    proof: ["visual", "browser", "accessibility"]
+    contract: "At 200% text zoom or larger system fonts, controls remain reachable and content does not overlap."
+    state: "acceptance_required"

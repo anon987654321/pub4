@@ -548,3 +548,29 @@ After pairing locally and granting the existing personal-memory scope with `/pri
 ## Personal privacy and consent
 
 Read `personal_privacy` in `data/laws.yml` before enabling personal-device, companion or financial workflows. `Master::Ground::PersonalPermissions` is a local, default-deny ledger with expiry, immediate revocation and inspectable audit events. Personal-memory grants are bound to one paired subject; `PersonalWorkspace` and `OwnerProfile` refuse reads/writes without the exact `read and write personal profile and memory` purpose grant. Run `/privacy status`, `/privacy grant personal_memory`, or `/privacy revoke personal_memory` in a local, non-visitor paired session. An unpaired `MemoryRecord` user fact is refused rather than written to shared `data/project_context.yml`. Pairing no longer duplicates the owner label into memory before consent. These are source changes, not a claimed test pass: the Ruby suite and Android/Termux acceptance have not been run. Microphone, speech recognition, camera, location, contacts, messages, notifications, financial data/actions, purchases, deployment and destructive operations remain unintegrated and must stay disabled until their adapters enforce this policy and any native OS permission. A paired person is not automatically the operator; public visitors cannot grant. See the single repository backlog for remaining adapter integration and real-device proof.
+
+
+## /fix architecture tournament and interaction acceptance
+
+A requested /fix targeting the repository root or an exact top-level MASTER, RAILS,
+OPENBSD or STUDIO tree now performs a read-only architecture tournament before repair.
+It asks for 36 candidates per tree by default (configurable through
+MASTER_FIX_ARCHITECTURE_CANDIDATES, clamped to 30–40) in one structured generation per
+tree. Candidates must reference existing source evidence and test anchors, state a
+verification plan and rollback path, and remain within the target tree. Local scoring
+uses source grounding, existing tests, verification specificity, rollback quality, scope
+control and Law alignment; model scores are ignored and near-duplicates are rejected.
+
+A winner requires at least 30 distinct, grounded candidates. The tournament itself does
+not run tests or edit files, and its report marks runtime tests NOT_RUN. The selected
+direction and five-candidate shortlist guide narrow fixes only; they do not authorize
+large rewrites or bypass the ordinary Law, transaction and verification requirements.
+Generation failures or fewer than 30 valid candidates are reported as INCONCLUSIVE.
+
+The canonical 90-item interaction inventory is MASTER/data/ux_refinements.yml. Every
+entry has owner-tree metadata, a test/rendered proof expectation, and an
+acceptance_required state. It is included in the /fix protocol fingerprint and adds
+target-relevant acceptance contracts to the repair context. The visual Law's required
+evidence includes prompt contracts, input recovery, browser reconnection, visible state,
+keyboard accessibility and terminal modes. A catalogue row is not proof that the behavior
+is implemented or passing; close it only with the declared test or live/rendered evidence.

@@ -28,6 +28,7 @@ require_relative "violation"
 require_relative "wishlist"
 require_relative "outcome_policy"
 require_relative "protocol"
+require_relative "architecture_exploration"
 require_relative "transformation_plan"
 require_relative "../review/reference_graph"
 require_relative "research_pass"
@@ -230,10 +231,18 @@ module Master
           dependency_result = prepare_dependency_map!(files)
           return finish_run(dependency_result, target, run_id, mission:, requested:) if dependency_result.is_a?(Master::Result)
           current_phase = :research
+          current_phase = :architecture_exploration
+          architecture = ArchitectureExploration.new(root: @root, agent: @agent, bus: @bus).run(target:, files:)
+          ux_context = UXRefinementCatalog.prompt_context(target:, root: @root)
+          current_phase = :research
           research = ResearchPass.new(
             agent: @agent, bus: @bus, plan: @transformation_plan, root: @root
           ).run(target:, files:)
-          @pass_runner.research_brief = research.fetch(:brief)
+          @pass_runner.research_brief = [
+            architecture.fetch("brief"),
+            ux_context,
+            research.fetch(:brief),
+          ].reject { |part| part.to_s.strip.empty? }.join("\n\n")
           Master::Trace::Dmesg.status(
             "research0",
             "#{research.fetch(:status)} domain=#{research.fetch(:domain)} " \

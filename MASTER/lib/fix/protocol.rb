@@ -6,6 +6,8 @@ require_relative "outcome_policy"
 require_relative "../ai/orientation"
 require_relative "protocol_detector_matrix"
 require_relative "four_stream_assessment"
+require_relative "architecture_exploration"
+require_relative "ux_refinement_catalog"
 require_relative "../ground/law_resolver"
 
 module Master
@@ -13,8 +15,8 @@ module Master
     # The canonical /fix execution contract. This is procedure, not a second
     # constitution: soul.yml and executable law remain authoritative.
     module Protocol
-      VERSION = 5
-      STAGES = %w[load trace inventory structure scan semantic repair verify repeat report].freeze
+      VERSION = 6
+      STAGES = %w[load trace inventory structure architecture_exploration scan semantic repair verify repeat report].freeze
       TERMINAL_STATES = OutcomePolicy::TERMINAL_STATES.map { |state| state.to_s.upcase }.freeze
 
       module_function
@@ -42,6 +44,20 @@ module Master
           holds, are hints for the STRUCTURE step and the closing reflection, and
           never edit anything. A model that cannot answer is reported and the run
           goes on.
+
+          0.1 ARCHITECTURE EXPLORATION
+          For a requested /fix at the repository root, or an exact top-level MASTER,
+          RAILS, OPENBSD or STUDIO target, generate 30–40 materially distinct architecture
+          candidates in one structured request per eligible tree (36 by default). Validate
+          source and test paths, reject near-duplicates, require explicit verification and
+          rollback plans, and rank locally using source grounding, test anchors, verification
+          specificity, rollback quality, scope control and Law alignment. Ignore model-supplied
+          scores. A winner requires at least 30 valid distinct candidates. Record PARTIAL or
+          INCONCLUSIVE otherwise. The tournament is planning-only: it does not run tests,
+          edit files or authorize a wholesale rewrite. Ordinary Laws, transactions and
+          verification continue to govern every repair. The canonical 90-entry interaction
+          acceptance catalogue is MASTER/data/ux_refinements.yml; catalogue membership is
+          not completion evidence.
 
           1. LOAD
           Read the live constitution, Law registry, executable Law definitions,
@@ -373,6 +389,8 @@ end
           "detector_matrix" => detector_matrix,
           "detector_summary" => ProtocolDetectorMatrix.summary(detector_matrix),
           "assessment_contract" => FourStreamAssessment.contract,
+          "architecture_exploration_contract" => ArchitectureExploration.contract,
+          "ux_refinement_catalog" => UXRefinementCatalog.manifest,
           "four_stream_law_coverage" => four_stream_law_coverage(laws),
         }
         JSON.pretty_generate(payload)

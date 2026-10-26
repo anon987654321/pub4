@@ -34,6 +34,8 @@ class TestFixProtocol < Minitest::Test
     assert_includes text, "No deterministic fixer exists"
     assert_includes text, "complete current source"
     assert_includes text, "complete current source of every direct dependency"
+    assert_includes text, "30–40 materially distinct architecture"
+    assert_includes text, "MASTER/data/ux_refinements.yml"
     assert_includes text, "generated documentation"
     assert_includes text, "commit and push"
     assert_includes text, "Never promise that literally every defect was repaired"
@@ -152,7 +154,7 @@ class TestFixProtocol < Minitest::Test
 
       payload = JSON.parse(Master::Fix::Protocol.render(root:, target: root))
 
-      assert_equal 5, Master::Fix::Protocol::VERSION
+      assert_equal 6, Master::Fix::Protocol::VERSION
       assert_equal Master::Fix::Protocol::VERSION, payload.fetch("fix_protocol_version")
       assert_includes payload.fetch("stages"), "semantic"
       assert_includes payload.fetch("terminal_states"), "PLATEAU"
@@ -175,6 +177,13 @@ class TestFixProtocol < Minitest::Test
       assert_equal Master::Fix::FourStreamAssessment::SURFACES.map(&:to_s), contract.fetch("surfaces")
       assert_equal "contract_only_not_measurement", contract.fetch("runtime_status")
       assert_equal 2, contract.fetch("clean_passes_required")
+      exploration = payload.fetch("architecture_exploration_contract")
+      assert_equal 36, exploration.fetch("default_candidates_per_tree")
+      assert_equal 30, exploration.fetch("minimum_candidates_for_selection")
+      assert_equal 40, exploration.fetch("maximum_candidates_per_tree")
+      assert_equal "NOT_RUN until actual tree verification commands execute", exploration.fetch("execution_evidence")
+      assert_equal 90, payload.dig("ux_refinement_catalog", "loaded_count")
+      assert_equal 90, payload.dig("ux_refinement_catalog", "expected_count")
     end
   end
 
