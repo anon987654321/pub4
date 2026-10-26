@@ -150,21 +150,11 @@ module Law
       declared = Array(surfaces).map(&:to_sym).uniq
       return declared.freeze unless declared.empty?
 
-      selected = if semantic? || scope.to_sym == :file
-                   %i[whole_file sections]
-                 else
-                   %i[whole_file lines]
-                 end
-      declared_languages = Array(languages).map(&:to_s)
-      if declared_languages.empty? || (declared_languages & %w[yaml json toml]).any?
-        selected << :structured_data
-      end
-      if declared_languages.empty? || declared_languages.include?("markdown")
-        selected << :documentation
-      end
-      selected.uniq.freeze
+      # Universal Laws remain applicable across the full canonical surface set.
+      # Missing surface adapters become INCONCLUSIVE in Fix::AssessmentMatrix;
+      # a narrow scope must be an explicit declaration, never an inferred omission.
+      ::Law::ASSESSMENT_SURFACES
     end
-
     # Universal describes the invariant, not the detector syntax. A universal
     # principle may have Ruby, zsh, Rails or another domain adapter.
     def universal? = true
