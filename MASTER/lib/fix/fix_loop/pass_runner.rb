@@ -486,11 +486,11 @@ module Master
           start_pass_transaction(files:, target:, pass:, transaction_id:, run_id:)
           begin_assessment_pass(pass, files)
           found, streamed = observe_pass(files, target, pass, deadline)
-          finalize_assessment_pass(pass)
 
           visual, opportunities, found = guarded(:evidence, pass, [nil, nil, found]) do
             merge_evidence_findings(target:, files:, pass:, found:)
           end
+          finalize_assessment_pass(pass, visual:, opportunities:)
           found += Wishlist.findings(wishlist_proposals, root: @root)
           return evidence_abort_result(visual, opportunities) if found.empty? && (visual&.err? || opportunities&.err?)
 
@@ -545,13 +545,13 @@ module Master
           signatures = paths.to_h { |path| [path, assessment_signature(path)] }
           @assessment_mutex.synchronize do
             @assessment_observation = {
-              thread_id: Thread.current.object_id,
               pass: Integer(pass),
               files: paths,
               signatures:,
               scanned: Set.new,
               refused: {},
-              findings: Hash.new { |hash, law| hash[law] = [] },
+              findings: Hash.new { |hash, key| hash[key] = [] },
+              unclassified_findings: [],
             }
           end
         end
@@ -569,9 +569,6 @@ module Master
           absolute = File.expand_path(path)
           @assessment_mutex.synchronize do
             observation = @assessment_observation
-            # Scanner workers run in parallel. Scope the receipt by the exact
-            # pass paths rather than the coordinator thread; unrelated preview
-            # or post-pass scans cannot count unless they touch a scoped path.
             return unless observation && observation[:files].include?(absolute)
 
             case state
@@ -579,11 +576,39 @@ module Master
               observation[:scanned] << absolute
               Array(findings).each do |finding|
                 row = finding.respond_to?(:to_h) ? finding.to_h.transform_keys(&:to_sym) : {}
-                id = (row[:law] || row[:law_id] || row[:rule]).to_s.strip
-                next if id.empty?
+                raw_id = (row[:law] || row[:law_id] || row[:rule]).to_s.strip
+                next if raw_id.empty?
 
-                observation[:findings][id] << {
-                  "file" => (row[:file] || absolute).to_s,
+                law_id = assessment_existing_law_id(@assessment_law_info || {}, raw_id)
+                unless law_id
+                  observation[:unclassified_findings] << {
+                    "law" => raw_id, "file" => absolute,
+                    "reason" => "finding identity is absent from the runtime assessment population",
+                  }
+                  next
+                end
+
+                info = @assessment_law_info.fetch(law_id)
+                tags = Array(row[:tags]).map(&:to_s)
+                stream_tag = tags.find { |tag| FourStreamAssessment::STREAMS.map(&:to_s).include?(tag) }
+                stream = stream_tag&.to_sym
+                if stream.nil? && tags.include?("opportunity") && info[:streams].include?(:semantic_opportunities)
+                  stream = :semantic_opportunities
+                elsif stream.nil? && tags.include?("violation") && info[:streams].include?(:semantic_violations)
+                  stream = :semantic_violations
+                elsif stream.nil? && info[:streams].one?
+                  stream = info[:streams].first
+                end
+                unless stream && info[:streams].include?(stream)
+                  observation[:unclassified_findings] << {
+                    "law" => law_id, "file" => absolute,
+                    "reason" => "finding stream could not be resolved from explicit tags",
+                  }
+                  next
+                end
+
+                observation[:findings][[law_id, stream]] << {
+                  "file" => absolute,
                   "line" => row[:line].to_i,
                   "message" => row[:message].to_s[0, 180],
                 }
@@ -596,7 +621,7 @@ module Master
           @bus&.publish("fix_loop:assessment_path_error", file: path.to_s, error: e.message)
         end
 
-        def finalize_assessment_pass(pass)
+        def finalize_assessment_pass(pass, visual:, opportunities:)
           observation = @assessment_mutex.synchronize do
             current = @assessment_observation
             @assessment_observation = nil
@@ -611,54 +636,34 @@ module Master
           pending = semantic_pending
           plan_digest = @assessment_plan&.source_digest.to_s
           evidence = [
-            "adapter=Master::Fix::Scanner#scan",
+            "plan_source_sha256=#{plan_digest}",
+            "scanner=Master::Fix::Scanner#scan",
             "pass=#{pass}",
-            "source_digest=#{plan_digest}",
             "eligible_files=#{observation[:files].size}",
           ].freeze
+          unclassified = observation[:unclassified_findings]
+          unless unclassified.empty?
+            stage_failures[:assessment_matrix] << "#{unclassified.size} unclassified finding(s): #{unclassified.first(2).map { |row| "#{row["law"]}@#{row["file"]}" }.join(", ")}"
+            @bus&.publish("fix_loop:assessment_unclassified_findings", pass:, findings: unclassified.first(20))
+          end
 
           @assessment_law_info.each do |law_id, info|
-            applicable = observation[:files].select do |path|
-              info[:laws].any? do |law|
-                languages = law.respond_to?(:languages) ? law.languages : nil
-                !law.respond_to?(:applies_to?) || law.applies_to?(path, languages)
+            FourStreamAssessment::STREAMS.each do |stream|
+              FourStreamAssessment::SURFACES.each do |surface|
+                result = assessment_cell_result(
+                  law_id:, info:, stream:, surface:, pass:, observation:,
+                  signatures_stable:, semantic_gaps:, pending:, evidence:,
+                  visual:, opportunities:
+                )
+                record_assessment(law_id, stream, surface, pass, result)
               end
             end
-            found = Array(observation[:findings][law_id])
-            lexical = if info[:conflicting_mode]
-                        assessment_result(:inconclusive, reason: "duplicate Law id has conflicting detector modes")
-                      elsif info[:semantic]
-                        assessment_result(:not_applicable, reason: "Law uses the semantic detector stream")
-                      else
-                        assessment_result_for_scope(
-                          applicable:, found:, observation:, signatures_stable:, semantic: false,
-                          pending:, inconclusive:, evidence:
-                        )
-                      end
-            semantic = if info[:conflicting_mode]
-                         assessment_result(:inconclusive, reason: "duplicate Law id has conflicting detector modes")
-                       elsif !info[:semantic]
-                         assessment_result(:not_applicable, reason: "Law uses deterministic/structural detectors")
-                       else
-                         assessment_result_for_scope(
-                           applicable:, found:, observation:, signatures_stable:, semantic: true,
-                           pending:, inconclusive:, evidence:
-                         )
-                       end
-
-            record_assessment(law_id, :lexical_violations, pass, lexical)
-            record_assessment(law_id, :semantic_violations, pass, semantic)
-            record_assessment(
-              law_id, :lexical_opportunities, pass,
-              assessment_result(:inconclusive, reason: "no per-Law lexical opportunity assessor is registered")
-            )
-            record_assessment(
-              law_id, :semantic_opportunities, pass,
-              assessment_result(:inconclusive, reason: "opportunity observations are not attributed per Law")
-            )
           end
           @assessment_last_pass = Integer(pass)
-          @bus&.publish("fix_loop:assessment_matrix_pass", **@assessment_ledger.summary.merge(pass:, plan_source_digest: plan_digest))
+          @bus&.publish(
+            "fix_loop:assessment_matrix_pass",
+            **@assessment_ledger.summary.merge(pass:, plan_source_digest: plan_digest)
+          )
         rescue StandardError => e
           stage_failures[:assessment_matrix] << "pass #{pass}: #{e.class}: #{e.message.to_s[0, 180]}"
           @bus&.publish(
@@ -667,15 +672,132 @@ module Master
           )
         end
 
-        def assessment_result(status, reason: nil, evidence: [], findings: [])
-          { status:, reason:, evidence: Array(evidence), findings: Array(findings) }
+        def assessment_cell_result(law_id:, info:, stream:, surface:, pass:, observation:,
+                                   signatures_stable:, semantic_gaps:, pending:, evidence:,
+                                   visual:, opportunities:)
+          declared_surfaces = Array(info[:surfaces]).map(&:to_sym)
+          if !info[:streams].include?(stream)
+            return assessment_result(:not_applicable, reason: "Law has no #{stream} detector/assessor")
+          end
+          return assessment_result(:not_applicable, reason: "Law does not declare the #{surface} surface") unless declared_surfaces.include?(surface)
+
+          if info[:unmeasurable_reason]
+            return assessment_result(:inconclusive, reason: info[:unmeasurable_reason], evidence:)
+          end
+
+          return assessment_result(:inconclusive, reason: "#{surface} has no assessor for this Law adapter", evidence:) unless assessment_surface_supported?(info, surface)
+
+          case info[:source_kind]
+          when :opportunity
+            return assessment_result(:inconclusive, reason: "opportunity assessor returned no result", evidence:) unless opportunities
+            return assessment_result(:inconclusive, reason: opportunities.message.to_s, evidence:) if opportunities.err?
+
+            values = opportunities.value!
+            rows = Array(values[:findings] || values["findings"]).select do |row|
+              (row[:law] || row["law"]).to_s.casecmp?(law_id)
+            end
+            status = rows.any? ? :opportunity_found : :assessed_clean
+            return assessment_result(status, evidence:, findings: rows)
+          when :visual
+            return assessment_result(:inconclusive, reason: "rendered review returned no result", evidence:) unless visual
+            return assessment_result(:inconclusive, reason: visual.message.to_s, evidence:) if visual.err?
+
+            values = visual.value!
+            rows = Array(values[:findings] || values["findings"]).select do |row|
+              (row[:law] || row["law"]).to_s.casecmp?(law_id)
+            end
+            status = rows.any? ? :violation_found : :assessed_clean
+            return assessment_result(status, evidence:, findings: rows)
+          end
+
+          scoped_files = observation[:files].select do |path|
+            assessment_law_applies?(info, path) && assessment_surface_applies?(info, surface, path)
+          end
+          return assessment_result(:not_applicable, reason: "no eligible file matches this Law/surface scope") if scoped_files.empty?
+
+          if %i[repository_tree directories file_names paths syntax_tree cross_file structured_data
+                documentation media_assets compiled_assets rendered_ui interactive_behavior tests runtime deployment].include?(surface) &&
+             !%i[structured_data documentation].include?(surface)
+            return assessment_result(:inconclusive, reason: "surface-specific measurement adapter is not registered", evidence:)
+          end
+
+          found = Array(observation[:findings][[law_id, stream]]).select do |row|
+            scoped_files.include?(row["file"])
+          end
+          assessment_result_for_scope(
+            stream:, applicable: scoped_files, found:, observation:, signatures_stable:,
+            semantic: %i[semantic_violations semantic_opportunities].include?(stream),
+            semantic_gaps:, pending:, evidence:
+          )
         end
 
-        def assessment_result_for_scope(applicable:, found:, observation:, signatures_stable:,
-                                        semantic:, pending:, inconclusive:, evidence:)
-          return assessment_result(:not_applicable, reason: "no eligible source file matches this Law scope") if applicable.empty?
-          return assessment_result(:violation_found, evidence:, findings: found) if found.any?
-          return assessment_result(:inconclusive, reason: "source bytes changed during the scan pass", evidence:) unless signatures_stable
+        def assessment_surface_supported?(info, surface)
+          case info[:source_kind]
+          when :canonical
+            %i[whole_file lines sections structured_data documentation].include?(surface)
+          when :scanner
+            return true if %i[whole_file lines sections].include?(surface)
+            return surface == :syntax_tree if info[:scanner_law]&.respond_to?(:check_ast)
+            false
+          when :yaml_declarative
+            %i[whole_file lines].include?(surface)
+          when :opportunity
+            info[:surfaces].include?(surface)
+          when :visual
+            surface == :rendered_ui
+          else
+            false
+          end
+        end
+
+        def assessment_law_applies?(info, path)
+          case info[:source_kind]
+          when :canonical
+            law = info[:law]
+            law.applies?(path, Master.language_for(path)&.to_sym)
+          when :scanner
+            law = info[:scanner_law]
+            return true unless law.respond_to?(:applies_to?)
+
+            languages = law.respond_to?(:languages) ? law.languages : nil
+            law.applies_to?(path, languages)
+          when :yaml_declarative
+            entry = info[:yaml_entry]
+            relative = path.delete_prefix("#{@root}/")
+            return false if entry[:path_match] && !relative.include?(entry[:path_match].to_s.delete("/"))
+
+            languages = Array(entry[:languages]).map(&:to_s)
+            languages.empty? || languages.include?(Master.language_for(path).to_s)
+          else
+            true
+          end
+        rescue StandardError
+          false
+        end
+
+        def assessment_surface_applies?(info, surface, path)
+          extension = File.extname(path).downcase
+          language = Master.language_for(path).to_s
+          case surface
+          when :whole_file
+            true
+          when :lines
+            info[:source_kind] == :canonical ? info[:law].scope.to_sym == :line : true
+          when :sections
+            info[:source_kind] == :canonical ?
+              (info[:law].scope.to_sym == :file || info[:law].semantic?) : true
+          when :structured_data
+            %w[.yml .yaml .json .toml].include?(extension) || %w[yaml json toml].include?(language)
+          when :documentation
+            %w[.md .markdown .rst .txt].include?(extension) || language == "markdown"
+          else
+            false
+          end
+        end
+
+        def assessment_result_for_scope(stream:, applicable:, found:, observation:, signatures_stable:,
+                                        semantic:, semantic_gaps:, pending:, evidence:)
+          return assessment_result(:inconclusive, reason: "source bytes changed during this scan pass", evidence:) unless signatures_stable
 
           unread = applicable.reject { |path| observation[:scanned].include?(path) }
           return assessment_result(
@@ -684,34 +806,34 @@ module Master
             evidence:
           ) if unread.any?
 
+          refused = applicable.select { |path| observation[:refused].key?(path) }
+          return assessment_result(
+            :inconclusive,
+            reason: "scan short-circuited for #{refused.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}",
+            evidence:
+          ) if refused.any?
+
           if semantic
             return assessment_result(:inconclusive, reason: "semantic coverage is sampled or budgeted", evidence:) unless @scan_phase.semantic_full?
-
-            # Gap keys can be rooted at MASTER, RAILS, or a nested scanner root.
-            # Without a validated root map, matching strings across those roots
-            # risks declaring an unread file clean; any gap keeps semantic proof open.
-            return assessment_result(
-              :inconclusive,
-              reason: "semantic read pending for #{pending.keys.first(4).join(", ")}",
-              evidence:
-            ) if pending.any?
-
-            return assessment_result(
-              :inconclusive,
-              reason: "semantic read inconclusive for #{semantic_gaps.keys.first(4).join(", ")}",
-              evidence:
-            ) if semantic_gaps.any?
+            return assessment_result(:inconclusive, reason: "semantic reads pending for #{pending.keys.first(4).join(", ")}", evidence:) if pending.any?
+            return assessment_result(:inconclusive, reason: "semantic read inconclusive for #{semantic_gaps.keys.first(4).join(", ")}", evidence:) if semantic_gaps.any?
           end
 
-          refused = applicable.select { |path| observation[:refused].key?(path) }
-          return assessment_result(:inconclusive, reason: "scan short-circuited for #{refused.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}", evidence:) if refused.any?
+          if found.any?
+            status = %i[lexical_opportunities semantic_opportunities].include?(stream) ? :opportunity_found : :violation_found
+            return assessment_result(status, evidence:, findings: found)
+          end
 
           assessment_result(:assessed_clean, evidence:)
         end
 
-        def record_assessment(law_id, stream, pass, result)
+        def assessment_result(status, reason: nil, evidence: [], findings: [])
+          { status:, reason:, evidence: Array(evidence), findings: Array(findings) }
+        end
+
+        def record_assessment(law_id, stream, surface, pass, result)
           @assessment_ledger.record(
-            law: law_id, stream:, surface: :whole_file, status: result.fetch(:status),
+            law: law_id, stream:, surface:, status: result.fetch(:status),
             iteration: Integer(pass), generation: @assessment_ledger.generation,
             reason: result[:reason], evidence: result[:evidence], findings: result[:findings]
           )
