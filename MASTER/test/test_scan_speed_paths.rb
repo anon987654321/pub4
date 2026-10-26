@@ -190,7 +190,8 @@ class TestScanSpeedPaths < Minitest::Test
   def test_structured_data_budget_rejects_files_over_its_ceiling
     Dir.mktmpdir do |dir|
       path = File.join(dir, "too_long.json")
-      File.write(path, JSON.pretty_generate(Array.new(Master::Fix::Scan::FileProcessor::STRUCTURED_DATA_MAX_LINES + 1, "x")))
+      count = Master::Fix::Scan::FileProcessor::STRUCTURED_DATA_MAX_LINES + 1
+      File.write(path, JSON.pretty_generate(Array.new(count, "x")))
       processor = Master::Fix::Scan::FileProcessor.new(skip_semantic: true)
 
       result = processor.send(:read_file, path)
