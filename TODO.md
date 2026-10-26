@@ -625,3 +625,13 @@ Regression coverage was added for both activity and private audit logs. Tests we
 ## Audited Fold-entrypoint coverage (2026-10-26)
 
 Added a source-level regression test that inventories every production `Master::Core::Fold.new` callsite and requires each callsite to install and pass the strict effect observer. This makes a new direct Fold entrypoint an explicit architectural change rather than a silent route around lifecycle tracing. The test intentionally covers production `lib/` sources and the standalone `bin/master-core` entrypoint, not test fixtures. Validation remains INCONCLUSIVE until the focused test runs on the pinned Ruby toolchain.
+
+
+## Effect lifecycle retained as operational evidence (2026-10-26)
+
+Classified `core:effect:` lifecycle records as operational evidence, so the strict before/after receipts are written to both the activity stream and the dedicated evidence stream when the event bus is configured with its evidence log. Added regression coverage for matching effect IDs and ordered lifecycle events across both streams. This improves evidence availability but does not make bounded logs an indefinite audit archive; restart reconciliation and retention policy remain separate work. Test execution remains INCONCLUSIVE in this environment.
+
+
+## SHA-256 evidence receipt preservation (2026-10-26)
+
+The secret redactor now recognizes valid 64-character SHA-256 values stored under `*_digest` fields as opaque evidence identifiers and preserves them for correlation. Raw long hexadecimal strings under ordinary fields remain redacted. Added a regression test covering both digest preservation and unchanged secret-token behavior. The test was not executed; validation remains INCONCLUSIVE until the pinned Ruby suite runs.

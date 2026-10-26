@@ -2,6 +2,7 @@
 
 require "test_helper"
 require "open3"
+require "digest"
 
 class GroundRedactorTest < Minitest::Test
   def test_text_redacts_api_key_patterns
@@ -145,6 +146,22 @@ class GroundRedactorTest < Minitest::Test
   def test_payload_accepts_keyword_fields
     scrubbed = Master::Ground::Redactor.payload(text: "sk-#{'C' * 24}")
 
+    assert_equal "[REDACTED]", scrubbed[:text]
+  end
+
+
+  def test_payload_preserves_sha256_digest_metadata_without_relaxing_secret_redaction
+    digest = Digest::SHA256.hexdigest("private source location")
+    secret = "G" * 64
+
+    scrubbed = Master::Ground::Redactor.payload(
+      path_digest: digest,
+      scope_digest: digest,
+      text: secret
+    )
+
+    assert_equal digest, scrubbed[:path_digest]
+    assert_equal digest, scrubbed[:scope_digest]
     assert_equal "[REDACTED]", scrubbed[:text]
   end
 

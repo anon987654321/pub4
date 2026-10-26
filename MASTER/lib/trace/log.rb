@@ -287,7 +287,7 @@ module Master
       end
 
       class Evidence
-        OPERATIONAL = /\A(?:ops:|pipeline:rollback|fix_loop:commit|resync:|deploy:)/
+        OPERATIONAL = /\A(?:core:effect:|ops:|pipeline:rollback|fix_loop:commit|resync:|deploy:)/
 
         def initialize(root: Master::ROOT)
           @log = Event.new(root:, stream: "evidence")

@@ -13,6 +13,7 @@ module Master
       /ix
 
       DMESG_MAX = 240
+      SHA256_DIGEST = /\A[0-9a-f]{64}\z/i
       MAX_DEPTH = 16
 
       def self.text(value)
@@ -184,6 +185,8 @@ module Master
         when Hash, Array
           scrub_container(value, seen:, depth:)
         when String
+          return value if digest_metadata?(key, value)
+
           truncate(text(value))
         else
           value
@@ -192,6 +195,13 @@ module Master
 
       def self.scrub_array(_key, array, seen:, depth: 0)
         scrub_container(array, seen:, depth:)
+      end
+
+      # SHA-256 receipts are intentionally opaque hexadecimal identifiers.
+      # The generic bearer detector otherwise mistakes any 64-character digest
+      # for a credential and destroys the value needed to correlate evidence.
+      def self.digest_metadata?(key, value)
+        key.to_s.end_with?("_digest") && value.is_a?(String) && SHA256_DIGEST.match?(value)
       end
 
       def self.scrub_container(value, seen:, depth:)
@@ -245,7 +255,7 @@ module Master
             stack << [:enter, value, nested, depth]
           end
         elsif value.is_a?(String)
-          target[key] = truncate(text(value))
+          target[key] = digest_metadata?(key, value) ? value : truncate(text(value))
         else
           target[key] = value
         end

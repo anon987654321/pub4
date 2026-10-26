@@ -175,6 +175,23 @@ class TestEventBus < Minitest::Test
     assert_includes activity, Digest::SHA256.hexdigest(command)
   end
 
+
+  def test_effect_lifecycle_events_are_written_to_the_operational_evidence_stream
+    evidence = Master::Trace::Log::Evidence.new(root: @dir)
+    bus = Master::Trace::EventBus.new(
+      event_log: Master::Trace::Log::Event.new(root: @dir),
+      evidence_log: evidence
+    )
+
+    bus.publish_required("core:effect:before", effect_id: "effect-evidence-1", verb: "write")
+    bus.publish_required("core:effect:after", effect_id: "effect-evidence-1", status: "ok")
+
+    activity = log_lines("runtime/events/activity.jsonl")
+    operational = log_lines("runtime/events/evidence.jsonl")
+    assert_equal %w[core:effect:before core:effect:after], operational.map { |row| row["event"] }
+    assert_equal activity.map { |row| row["effect_id"] }, operational.map { |row| row["effect_id"] }
+  end
+
   def test_publish_required_persists_before_dispatching_subscribers
     observed_record = nil
     @bus.subscribe("critical:before") do |_event|
