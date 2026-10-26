@@ -375,7 +375,11 @@ module Master
                 line: match[2].to_i,
                 severity: axiom[:severity],
                 fix: nil,
-                tags: [match[1].to_sym, (mode || axiom[:mode])],
+                tags: [
+                  match[1].to_sym,
+                  (mode || axiom[:mode]).to_sym == :opportunity ? :semantic_opportunities : :semantic_violations,
+                  (mode || axiom[:mode]).to_sym,
+                ],
                 reversibility: axiom[:reversibility],
                 blast_radius: axiom[:blast_radius],
               )
