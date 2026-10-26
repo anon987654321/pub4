@@ -1,6 +1,9 @@
 # Shared social chrome — loaded by the pub4-shared engine for every host app.
 # Apps can override any key in their own config/locales.
 en:
+  changelog:
+    title: "What has changed"
+    intro: "Published changes to the product and operations contracts."
   actions:
     copy: "Copy"
     copied: "Copied"

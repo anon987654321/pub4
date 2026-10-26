@@ -3,9 +3,8 @@
 %>
 <main class="page" id="main-content">
   <header class="page-header">
-    <p class="eyebrow">Endringslogg</p>
-    <h1 class="page-title">Hva har endret seg</h1>
-    <p class="page-intro">Publiserte endringer i husets produkt- og driftskontrakter.</p>
+    <h1 class="page-title"><%= t("changelog.title") %></h1>
+    <p class="page-intro"><%= t("changelog.intro") %></p>
   </header>
 
   <% entries.each do |entry| %>

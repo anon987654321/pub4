@@ -1,4 +1,7 @@
 nb:
+  changelog:
+    title: "Hva har endret seg"
+    intro: "Publiserte endringer i produkt- og driftskontraktene."
   actions:
     copy: "Kopier"
     copied: "Kopiert"
