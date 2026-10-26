@@ -53,9 +53,11 @@ failover:
   transient_skip_ttl_ms: 30000
   max_retries: 2
 
+# context_window is written only where RubyLLM's registry does not hold the
+# model (CLI lanes, Ollama, web chats) or the lane serves a different window;
+# Master.context_window asks the registry for the rest.
 defaults: &model_defaults
   score: { quality: 0.0, speed: 0.0, cost: 0.0 }
-  context_window: 128000
 
 model_defs:
   agy_auto: &agy_auto

@@ -394,6 +394,21 @@ module Master
                 Master::Ground::Swallow.log(e, context: "model_router.pool.catalog", source:)
               end
             end
+            refresh_model_registry
+            nil
+          end
+
+          # RubyLLM's registry (models.dev plus each configured provider's own
+          # list) answers context windows, modalities and prices. Nothing ever
+          # refreshed it, so it stayed the snapshot the gem shipped with. A day
+          # old, it refreshes; a failed fetch keeps the last good file.
+          def refresh_model_registry
+            file = RubyLLM.config.model_registry_file
+            return if File.file?(file) && Time.now - File.mtime(file) < CATALOG_MAX_AGE_S
+
+            RubyLLM.models.refresh
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "model_router.pool.registry")
             nil
           end
 

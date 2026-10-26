@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+# Boot loads the gem in configure_providers!; the registry half of the test needs it.
+require "ruby_llm"
 require "master"
 
 class TestContextWindow < Minitest::Test
@@ -74,9 +76,10 @@ class TestContextWindow < Minitest::Test
     assert_equal 0, session.token_pressure - session.token_est, "compaction clears the measured count"
   end
 
-  def test_model_context_windows_come_from_registry
+  def test_models_yml_states_a_window_and_the_registry_fills_the_rest
     assert_equal 64_000, Master.context_window("deepseek-chat")
-    assert_equal 200_000, Master.context_window("anthropic/claude-sonnet-4")
-    assert_equal 128_000, Master.context_window("x-ai/grok-4.3")
+    assert_equal 200_000, Master.context_window("claude-cli:claude-opus-5-5"), "a CLI lane keeps its stated window"
+    assert_equal RubyLLM.models.find("x-ai/grok-4.3").context_window, Master.context_window("x-ai/grok-4.3")
+    assert_equal Master::DEFAULT_CONTEXT_WINDOW, Master.context_window("nobody/never-listed")
   end
 end

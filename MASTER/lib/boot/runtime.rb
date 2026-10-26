@@ -167,7 +167,16 @@ module Master
       entry = provider_models(root:).values.find do |candidate|
         candidate.is_a?(Hash) && candidate["id"].to_s == model.to_s
       end
-      (entry&.fetch("context_window", nil) || DEFAULT_CONTEXT_WINDOW).to_i
+      (entry&.fetch("context_window", nil) || registry_context_window(model) || DEFAULT_CONTEXT_WINDOW).to_i
+    end
+
+    # The window RubyLLM's registry records, for a model models.yml names
+    # without one; nil when the registry does not hold the model. model_info
+    # is the dispatcher's one cached registry lookup per id.
+    def registry_context_window(model)
+      return unless defined?(RubyLLM) && defined?(Master::Review::LLMDispatcher) && !model.to_s.empty?
+
+      Master::Review::LLMDispatcher.model_info(model)&.context_window
     end
 
     def provider_models(root: ROOT)
