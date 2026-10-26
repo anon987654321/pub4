@@ -659,8 +659,10 @@ module Master
               source.path.match?(%r{(?:app/views|views|templates|frontend|src)/}) &&
                 %w[.erb .html .htm .css .scss .js .jsx .ts .tsx].include?(File.extname(source.path).downcase)
             end
-            @assessment_surface_presence[:rendered_ui] =
-              @visual_pass&.applicable?(target) == true && front_end
+            # Inventory UI independently of adapter availability. If a
+            # target contains a frontend but has no visual adapter, its UI
+            # cells are INCONCLUSIVE, not falsely NOT_APPLICABLE.
+            @assessment_surface_presence[:rendered_ui] = front_end
           rescue StandardError
             @assessment_surface_presence[:rendered_ui] = true
           end
