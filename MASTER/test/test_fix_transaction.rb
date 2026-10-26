@@ -687,4 +687,41 @@ class TestFixTransaction < Minitest::Test
       assert_equal "delivered", File.read(path)
     end
   end
+  def test_transaction_telemetry_redacts_paths_and_free_form_diagnostics
+    Dir.mktmpdir do |dir|
+      private_path = "private/customer-name.txt"
+      FileUtils.mkdir_p(File.join(dir, "private"))
+      File.write(File.join(dir, private_path), "private bytes")
+      events = []
+      bus = Object.new
+      bus.define_singleton_method(:publish) { |event, **payload| events << [event, payload] }
+      tx = Master::Fix::Transaction.new(
+        root: dir, paths: [private_path], id: "privacy-audit", bus:
+      ).begin!
+
+      tx.send(
+        :emit, "fix:transaction_diagnostic",
+        error: "permission denied for #{private_path}",
+        detail: "customer-specific repair context"
+      )
+
+      serialized = events.inspect
+      refute_includes serialized, private_path
+      refute_includes serialized, "customer-name"
+      refute_includes serialized, "permission denied"
+      refute_includes serialized, "customer-specific repair context"
+
+      start = events.find { |event, _| event == "fix:transaction_start" }.last
+      assert_equal 1, start[:paths_count]
+      assert_equal Digest::SHA256.hexdigest(private_path), start[:paths_digest]
+      diagnostic = events.find { |event, _| event == "fix:transaction_diagnostic" }.last
+      assert_equal Digest::SHA256.hexdigest("permission denied for #{private_path}"), diagnostic[:error_digest]
+      assert_equal "customer-specific repair context".bytesize, diagnostic[:detail_bytes]
+      assert_equal 1, diagnostic[:schema_version]
+
+      assert tx.rollback!.ok?
+    end
+  end
+
+
 end
