@@ -27,9 +27,12 @@ module Master
               (kind.to_s.start_with?("manifest_") && kind != :manifest_without_deterministic_detector) ||
                 structural.include?(kind)
             end
-            hard.flat_map do |kind, ids|
+            errors = hard.flat_map do |kind, ids|
               ids.map { |id| "catalogue_#{kind}: #{id}" }
             end
+            return errors if trace_debt.size <= trace_ceiling
+
+            errors + ["trace_debt: #{trace_debt.size} untraced detectors exceeds declared ceiling #{trace_ceiling}"]
           end
 
           def reconciliation_errors
@@ -67,12 +70,11 @@ module Master
           def adherence_pct
             return 100.0 if yaml_laws.zero?
 
-            # This is evaluator availability, not a clean-run claim. Deterministic
-            # detectors cover one population; every remaining catalogue row is
-            # submitted to the shared semantic/visual adapters and remains
-            # INCONCLUSIVE when those assessors cannot produce evidence.
-            assessable = mechanical.size + semantic_only.size
-            (assessable * 100.0 / yaml_laws).round(1)
+            # Deterministic detectors only. Every catalogue row also goes to the
+            # semantic adapter, so counting semantic_only in here made the share
+            # mechanical + its complement: 100 for any corpus, the floor this
+            # replaced.
+            (mechanical.size * 100.0 / yaml_laws).round(1)
           end
 
         end
@@ -243,7 +245,8 @@ module Master
 
           require File.join(@root, "law", "definition") unless defined?(::Law)
           ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
-          law = ::Law.definitions[id.to_sym] || ::Law.definitions[id.to_s]
+          # Callers hand in the downcased key every population compares on; Law ids are upper case.
+          law = ::Law.definitions[id.to_s.upcase.to_sym] || ::Law.definitions[id.to_sym]
           law&.detect
         end
 

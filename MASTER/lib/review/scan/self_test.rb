@@ -272,7 +272,8 @@ module Master
         end
 
         def law_integrity_findings
-          require File.join(@root, "law", "definition") unless defined?(::Law)
+          # The lifecycle is the runtime’s own contract; a fixture root has no law/ of its own.
+          require File.join(Master::ROOT, "law", "definition") unless defined?(::Law::Definition)
           lifecycle = ::Law::Definition::LIFECYCLE_TRANSITIONS
           required = %i[proposed proven active observed trusted advisory retired]
           return [finding(path: File.join(@root, "law", "definition.rb"), line: 1,

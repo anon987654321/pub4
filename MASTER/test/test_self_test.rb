@@ -155,11 +155,12 @@ class TestSelfTest < Minitest::Test
   def test_real_rubrics_share_dimension_namespace_without_becoming_singular_runtime_debt
     findings = Master::Review::Scan::SelfTest.new(root: Master::ROOT).data_singularity_findings
 
-    refute findings.any? do |finding|
-      finding[:message].include?("top-level fact dimensions") &&
-        [File.join(Master::ROOT, "data", "dialogue_rubric.yml"),
-         File.join(Master::ROOT, "data", "visual_rubric.yml")].include?(finding[:path])
-    end
+    # Parenthesised: unwrapped, the do block bound to refute, and any? with no
+    # block asked whether there was any finding at all.
+    rubrics = %w[dialogue_rubric.yml visual_rubric.yml].map { |name| File.join(Master::ROOT, "data", name) }
+    refute(findings.any? do |finding|
+      finding[:message].include?("top-level fact dimensions") && rubrics.include?(finding[:path])
+    end)
   end
 
   def test_shell_nesting_ignores_inline_closers_and_quoted_programs

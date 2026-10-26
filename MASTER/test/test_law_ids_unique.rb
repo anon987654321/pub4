@@ -38,8 +38,9 @@ class TestLawIdsUnique < Minitest::Test
   # equals the post-fold count, so the audit can never again mask a collision.
   def test_the_registry_audit_does_not_mask_a_collision
     Master::Review::Scan::LawDSL
+    audit = Master::Review::Scan::LawRegistryAudit.new(root: Master::ROOT)
     built = Master::Review::Scan::Law.registry
-      .reject { |klass| Master::Review::Scan::LawFactory.bridge_class?(klass) }
+      .select { |klass| audit.shipped?(klass) }
       .map { |klass| Master::Review::Scan::LawFactory.build(klass, root: Master::ROOT).id.to_s.downcase }
 
     assert_equal built.size, built.uniq.size,

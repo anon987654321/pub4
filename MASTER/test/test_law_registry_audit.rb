@@ -50,17 +50,20 @@ class TestLawRegistryAudit < Minitest::Test
 
   # Three check banners and lib/operator/law_reach.rb print a count of one population,
   # and they read 107 and 115 for as long as one of them subtracted rather than
-  # counted. Both directions: the shared answer, and that it is not the
-  # subtraction that used to stand in for it.
+  # counted. The count is still counted, not subtracted.
+  #
+  # They have converged, by design, since 2026-10-26: every catalogue Law goes to
+  # the semantic adapter, so semantic_only is exactly the Laws with no detector and
+  # the subtraction now equals the count. The guard asserted they differ; it now
+  # asserts the partition, which breaks if a Law lands in both or neither.
   def test_coverage_agrees_with_law_reach
     report = audit.call
     reach = Operator::LawReach.mechanical(Operator::LawReach.laws).size
 
     assert_equal reach, report.mechanical.size
     assert_includes report.coverage_line, "#{reach} of #{report.yaml_laws}"
-    refute_equal report.yaml_laws - report.semantic_only.size, report.mechanical.size,
-                 "the subtraction and the count agree here only by accident; if they " \
-                 "have converged, say so rather than deleting the guard"
+    assert_empty report.mechanical & report.semantic_only
+    assert_equal report.yaml_laws, report.mechanical.size + report.semantic_only.size
   end
 
   # A layered Law can carry both deterministic and semantic enforcement without

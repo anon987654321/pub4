@@ -1808,7 +1808,7 @@ law_map:
       "confidence": 0.75, "operation": "simplify", "law_ids": [], "status": "gap", "tags": ["visual_design"],
       "source": "master.yml@30dad7ead"}
     secrets_encryption: {"meaning": "never store secrets in plaintext", "detects": "plaintext_secrets",
-      "severity": "critical", "confidence": 1.0, "operation": "encrypt", "law_ids": ["SECRET_PROXIMITY"],
+      "severity": "critical", "confidence": 1.0, "operation": "encrypt", "law_ids": ["SECRET_PROXIMITY", "VETO_PATTERNS"],
       "status": "covered", "root": "least_authority", "tags": ["code"]}
     secrets_rotation: {"meaning": "credentials expire and rotate automatically", "detects": "stale_secrets",
       "severity": "critical", "confidence": 0.85, "operation": "add_rotation", "law_ids": [], "status": "gap",
@@ -3572,6 +3572,26 @@ law_catalogue:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/rails.rb]
+    RAMS_HONEST:
+      universal: true
+      modalities: [lexical, semantic, visual]
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    RAMS_THOROUGH:
+      universal: true
+      modalities: [lexical, semantic, visual]
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    RAMS_UNDERSTANDABLE:
+      universal: true
+      modalities: [lexical, semantic, visual]
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    RAMS_UNOBTRUSIVE:
+      universal: true
+      modalities: [lexical, semantic, visual]
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    RAMS_USEFUL:
+      universal: true
+      modalities: [lexical, semantic, visual]
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
     RATCHET_INTEGRITY:
       universal: true
       modalities: [lexical, semantic, visual]

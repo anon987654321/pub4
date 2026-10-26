@@ -29,7 +29,9 @@ class TestRuleCatalogue < Minitest::Test
     entries = rows.to_h do |row|
       [row.fetch("id"), { "priority" => 1, "statement" => "s" }.merge(row.except("id"))]
     end
-    entries.merge(extra.transform_keys(&:to_s))
+    # law_catalogue owns Law identity in laws.yml, so the fixture catalogues each row it declares.
+    identities = { "law_catalogue" => { "entries" => entries.keys.to_h { |id| [id, {}] } } }
+    entries.merge(identities, extra.transform_keys(&:to_s))
   end
 
   def body_with_checks

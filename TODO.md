@@ -46,11 +46,6 @@ source and tests they could not run; this pass is what measures them.
 
 `MASTER/data/laws.yml` owns Law identity; detectors sit under `MASTER/law/detectors/`.
 
-- [ ] Make reconciliation a blocking check. `test_law_registry_audit.rb` fails five ways on
-  current main (the five `rams_*` identities are registry-only; adherence, trace-debt and
-  coverage assertions drifted) and `test_law_catalogue.rb` six (fixtures without
-  `law_catalogue`, `FAIL_VISIBLY` not found as a detector, folded-into lookup). Fix the instrument
-  or the catalogue, whichever is wrong, case by case.
 - [ ] One catalogue-backed loader. Trace and migrate the consumers of `Law.define`, `Law::Builder`,
   `LawDSL.law`, `Review::Scan::Law.registry`, `LawFactory`, `YamlDeclarativeLaw`, `VetoPatternLaw`,
   `LawBridgeLaw`, `SemanticLaw` and the scanner's `Rule` name.
