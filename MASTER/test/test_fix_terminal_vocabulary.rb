@@ -29,7 +29,6 @@ class TestFixTerminalVocabulary < Minitest::Test
       refute_equal :done, loop.send(:terminal_state_for, result), "#{category} must not report DONE"
     end
   end
-end
 
   def test_fix_loop_and_protocol_share_the_canonical_terminal_vocabulary
     policy = Master::Fix::OutcomePolicy::TERMINAL_STATES
@@ -52,3 +51,5 @@ end
 
     assert_equal :done, loop.send(:terminal_state_for, Master::Result.ok(:done))
   end
+
+end
