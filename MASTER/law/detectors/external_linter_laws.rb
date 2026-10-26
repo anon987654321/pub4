@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "../../../operator/ruby_runner"
-require_relative "../../../ground/library_verify"
+require_relative "../../lib/operator/ruby_runner"
+require_relative "../../lib/ground/library_verify"
 
 require "digest"
 require "fileutils"
