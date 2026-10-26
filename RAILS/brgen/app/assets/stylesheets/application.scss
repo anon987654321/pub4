@@ -222,12 +222,12 @@
 /* Six categorical avatar backgrounds, each carrying white ink. A palette, not
    a usage: there is no prior token for these to cite. Local to brgen — unlike
    x.$vertical-accents they are declared by MASTER/data/tokens.yml#tokens.vertical_accents. */
-.monogram--0 { background: #4b2e83; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
-.monogram--1 { background: #7a3e12; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
-.monogram--2 { background: #075e54; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
-.monogram--3 { background: #7b1e3a; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
-.monogram--4 { background: #184e77; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
-.monogram--5 { background: #5f4b32; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
+.monogram--0 { background: #4b2e83; color: var(--nav-badge-ink); } // scan: intentional — categorical avatar palette; the colour is the definition
+.monogram--1 { background: #7a3e12; color: var(--nav-badge-ink); } // scan: intentional — categorical avatar palette; the colour is the definition
+.monogram--2 { background: #075e54; color: var(--nav-badge-ink); } // scan: intentional — categorical avatar palette; the colour is the definition
+.monogram--3 { background: #7b1e3a; color: var(--nav-badge-ink); } // scan: intentional — categorical avatar palette; the colour is the definition
+.monogram--4 { background: #184e77; color: var(--nav-badge-ink); } // scan: intentional — categorical avatar palette; the colour is the definition
+.monogram--5 { background: #5f4b32; color: var(--nav-badge-ink); } // scan: intentional — categorical avatar palette; the colour is the definition
 .compose-actions span { font-family: var(--font-emoji); }
 article h2 { font-size: var(--text-base); font-weight: var(--weight-bold); margin-bottom: 4px; }
 article p { color: var(--text-secondary); font-size: var(--text-base); }

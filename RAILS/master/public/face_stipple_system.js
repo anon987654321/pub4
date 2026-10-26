@@ -241,16 +241,19 @@
           p.xy *= 1.0 - uAttract * 0.007;
           vec4 mv = modelViewMatrix * vec4(p, 1.0);
           gl_Position = projectionMatrix * mv;
-          // Canonical token values control both sample bias and camera-distance attenuation.
-          // Hardware may clamp the requested size further; retain readable one-pixel points.
+          // One point, one pixel: depth and bias belong in brightness (vAlpha
+          // already folds zone weight, bias and luminosity), not in point size.
+          // The face breathes: luminosity sways about five percent over ~11 s,
+          // the pace of a resting breath, so the field is never perfectly
+          // still while it waits. The breath rides brightness only — the same
+          // seam the one-pixel law owns — and freezes twice over under reduced
+          // motion: uTime stops and uMotionScale goes to 0.
+          float breath = 1.0 + uMotionScale * 0.05 * sin(uTime * 0.5712);
           float distanceScale = clamp(uPointSizeReferenceDepth / max(1.0, -mv.z),
             uPointSizeDistanceMin, uPointSizeDistanceMax);
-          float biasedSize = uPointSizeBase +
-            clamp(aBias, uPointSizeBiasMin, uPointSizeBiasMax) * uPointSizeBiasScale;
-          gl_PointSize = clamp(biasedSize * distanceScale,
-            uPointSizeOutputMin, uPointSizeOutputMax);
+          gl_PointSize = 1.0;
           vThreshold = aThreshold;
-          vAlpha = clamp((0.34 + zoneWeight * 0.56) * aBias * uLuminosity * (1.0 - uEntropy * 0.08), 0.0, 1.0);
+          vAlpha = clamp((0.34 + zoneWeight * 0.56) * aBias * uLuminosity * breath * (1.0 - uEntropy * 0.08) * distanceScale, 0.0, 1.0);
           vZone = aZone;
         }
       `,

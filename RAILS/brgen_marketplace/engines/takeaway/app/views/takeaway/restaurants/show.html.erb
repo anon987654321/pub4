@@ -52,6 +52,11 @@
       <p><%= @restaurant.cuisine_type %> · <%= @restaurant.address %>, <%= @restaurant.city_label %></p>
       <%# t(count:) goes through the locale's own plural rules. %>
       <p><%= t("takeaway.min_order_short", min: @restaurant.min_order_display) %> · <%= t("takeaway.saves", count: @restaurant.favorites.size) %></p>
+      <%# A stated radius is a promise worth restating where the reader decides;
+          an unstated one is not a small radius, so nothing renders. %>
+      <% if @restaurant.delivery_radius_km.present? %>
+        <p><%= t("takeaway.delivers_within", radius: @restaurant.delivery_radius_km) %></p>
+      <% end %>
       <% if @restaurant.place.present? %>
         <p><%= link_to t("maps.on_the_map"), record_public_href(@restaurant.place) %></p>
       <% end %>

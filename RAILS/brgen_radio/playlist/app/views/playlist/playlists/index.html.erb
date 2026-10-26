@@ -2,11 +2,11 @@
 
 <div class="radio-home">
   <header class="radio-home-header">
-    <div>
+    <hgroup>
       <p class="radio-home-label"><%= t("playlist.home_eyebrow") %></p>
       <h1><%= t("playlist.home_heading") %></h1>
       <p><%= t("playlist.home_blurb") %></p>
-    </div>
+    </hgroup>
     <nav aria-label="<%= t("playlist.navigation") %>">
       <%= link_to t("radio.browse_tracks"), hosted_tracks_path, class: "radio-home-link" %>
       <% if authenticated? %>
@@ -42,10 +42,10 @@
 
   <section class="radio-discovery" aria-labelledby="radio-recent-heading">
     <header class="radio-section-header">
-      <div>
+      <hgroup>
         <p class="radio-home-label"><%= t("playlist.recent_eyebrow") %></p>
         <h2 id="radio-recent-heading"><%= t("playlist.recent_tracks") %></h2>
-      </div>
+      </hgroup>
       <%= link_to t("playlist.see_all_tracks"), hosted_tracks_path, class: "radio-section-link" %>
     </header>
     <div class="radio-track-list">
@@ -58,10 +58,10 @@
   <% if @playlists.any? %>
     <section class="radio-discovery" aria-labelledby="radio-playlists-heading">
       <header class="radio-section-header">
-        <div>
+        <hgroup>
           <p class="radio-home-label"><%= t("playlist.city_eyebrow") %></p>
           <h2 id="radio-playlists-heading"><%= t("playlist.popular_playlists") %></h2>
-        </div>
+        </hgroup>
       </header>
       <div class="radio-playlist-list">
         <% @playlists.each do |playlist| %>

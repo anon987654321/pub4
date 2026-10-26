@@ -301,7 +301,7 @@ body.vertical-marketplace .listing-source-badge--shop {
     z-index: 2;
     overflow-x: auto;
     display: flex;
-    background: #fff;
+    background: var(--nav-badge-ink);
   }
 
   body.vertical-marketplace .listing-step-link {

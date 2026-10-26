@@ -26,6 +26,12 @@
   animation: nearby-in 280ms cubic-bezier(.34, 1.56, .64, 1) both;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .nearby-alert {
+    animation: none;
+  }
+}
+
 .nearby-alert-body { display: flex; align-items: center; gap: 8px; flex: 1; font-size: var(--text-base); }
 
 .nearby-alert-dot {

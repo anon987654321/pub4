@@ -38,6 +38,21 @@ label { display: block; font-size: var(--text-sm); color: var(--text-secondary);
   100% { background-position: -100% 0; }
 }
 
+/* The keyframes above are brgen's shared motion vocabulary; their use sites
+   each carry a guard, and this one sits with the definitions so a sheet move
+   cannot orphan the set. */
+@media (prefers-reduced-motion: reduce) {
+  .nearby-alert,
+  .nearby-alert-dot,
+  .push-enable-btn,
+  .match-overlay,
+  body.vertical-tv .live-badge,
+  body.vertical-messenger #typing-indicator[data-active="true"]::before,
+  .skeleton {
+    animation: none;
+  }
+}
+
 // ============================================================ chrome: search palette and shell
 
 @include meta.load-css("responsive");
@@ -121,6 +136,27 @@ label { display: block; font-size: var(--text-sm); color: var(--text-secondary);
 
 .search_palette_results:empty {
   display: none;
+}
+
+/* Committed searches from this reader, above the city network. The heading
+   reuses the city network's small-heading pattern; the list is real list
+   markup so it reads as history, and the chips are the panel's own border
+   language rather than a new visual invention. */
+.search-recents-list {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+}
+
+.search-recents-link {
+  display: inline-block;
+  padding-block: var(--space-1);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border);
+  color: var(--text);
 }
 
 /* The page behind holds still while the palette is open. */

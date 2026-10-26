@@ -73,7 +73,7 @@
       const parent = input()?.parentElement || document.body;
       parent.appendChild(wrap);
     }
-    let button = wrap.querySelector("[data-action='" + action + "']");
+    let button = wrap.querySelector(`[data-action='${action}']`);
     if (!button) {
       button = document.createElement("button");
       button.type = "button";

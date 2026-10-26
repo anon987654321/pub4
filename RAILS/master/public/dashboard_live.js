@@ -80,7 +80,7 @@ async function refresh() {
     document.getElementById('bus').textContent = (d.bus_events || []).slice(-12).map(e => JSON.stringify(e)).join('\n') || L('i18nQuiet', '(quiet)');
     refreshState.textContent = `${L('i18nUpdated', 'updated')}: ${new Date().toLocaleTimeString()}`;
   } catch (error) {
-    const reason = error && error.message ? error.message : 'network error';
+    const reason = error?.message ? error.message : 'network error';
     document.getElementById('status').textContent =
       `${L('i18nUnavailable', 'status unavailable')}: ${reason}`;
     refreshState.textContent = L('i18nRefreshFailed', 'live data unavailable; retrying');

@@ -115,7 +115,7 @@ body.vertical-marketplace .store-pdp {
 
 body.vertical-marketplace .store-pdp-media {
   min-width: 0;
-  background: #f5f5f5;
+  background: var(--store-well);
 }
 
 body.vertical-marketplace .store-pdp-info {
@@ -238,7 +238,7 @@ body.vertical-marketplace .store-buybox .price {
     border: 1px solid var(--bol-rule);
     border-radius: 4px;
     color: var(--bol-ink);
-    background: #fff;
+    background: var(--nav-badge-ink);
     font-size: 14px;
     font-weight: var(--weight-bold);
   }

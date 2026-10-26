@@ -194,8 +194,8 @@
         "void main(){",
         "  vec4 mv = modelViewMatrix * vec4(position,1.0);",
         "  gl_Position = projectionMatrix * mv;",
-        "  gl_PointSize = clamp(aSize * uSize * uViewportHeight * projectionMatrix[1][1] * 0.12 / max(0.001, -mv.z), 1.0, 4.0);",
-        "  vOpacity = aOpacity;",
+        "  gl_PointSize = 1.0;",
+        "  vOpacity = aOpacity * clamp(uSize * uViewportHeight * projectionMatrix[1][1] * 0.12 / max(0.001, -mv.z), 0.25, 1.0);",
         "}"
       ].join("\n"),
       fragmentShader: [

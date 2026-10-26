@@ -94,6 +94,7 @@ nb:
     channels: Kanaler
     search: Søk
     search_placeholder: Søk i Brgen
+    recent_searches: Nylige søk
     show_menu: Vis meny
     menu_coach: Menyen er nederst — trykk på stripen eller scroll opp.
     menu_coach_dismiss: Skjønner
@@ -699,6 +700,10 @@ nb:
               below_minimum: Minste ordre hos %{restaurant} er %{minimum} — din delsum
                 er %{subtotal}.
               empty_order: Velg minst én rett.
+            delivery_address:
+              outside_delivery_area: "%{restaurant} leverer innen %{radius} km fra kjøkkenet,
+                og lagrede posisjonen din er %{distance} km unna. De kan likevel godta
+                bestillingen — kjøkkenet bekrefter hver bestilling selv."
         takeaway/order_item:
           attributes:
             menu_item:
@@ -1477,6 +1482,9 @@ nb:
     delivery_details: Leveringsdetaljer
     delivery_heading: Levering
     delivery_label: Levering
+    delivery_radius: Leveringsradius (km, blank = ingen grense oppgitt)
+    delivers_within: "Leverer innen %{radius} km fra kjøkkenet"
+    cart_expiring: Denne kurven utløper snart — kjøkkenet har ikke bekreftet den ennå.
     restaurant_results: Restauranttreff
     top_rated_heading: "Best vurdert i %{city}"
     restaurant_actions: Restauranthandlinger

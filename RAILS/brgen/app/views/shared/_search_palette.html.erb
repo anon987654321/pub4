@@ -47,6 +47,21 @@
           before <main> on every page, and a stream lands on the first element
           with its target id, so sharing an index page's #live_search_results
           sent that page's results in here, behind a closed dialog. %>
+      <%# What this reader committed to recently, before the city network fills
+          the rest. Guests and signed-out readers get neither row nor heading. %>
+      <% palette_recents = SearchRecent.recent_for(Current.user) if Current.user.present? && !Current.user.guest? %>
+      <% if palette_recents.present? %>
+        <nav class="search_palette_recents" aria-labelledby="search-palette-recents-title">
+          <%= tag.h2 t("nav.recent_searches"), id: "search-palette-recents-title", class: "city-network-heading" %>
+          <ul class="search-recents-list">
+            <% palette_recents.each do |recent| %>
+              <li class="search-recents-item">
+                <%= link_to recent.query, main_app.global_search_path(q: recent.query), class: "search-recents-link" %>
+              </li>
+            <% end %>
+          </ul>
+        </nav>
+      <% end %>
       <%= render "shared/city_network",
                  container_class: "search_palette_cities",
                  heading_id: "search-palette-cities-title" %>

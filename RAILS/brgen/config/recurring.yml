@@ -87,6 +87,15 @@ production:
     queue: bulk
     schedule: every 15 minutes
 
+  # Cancels takeaway carts the kitchen never accepted, through the same
+  # transition a manual cancel uses so both sides are told. `unexpired` hides
+  # a lapsed cart from the reader immediately; this is what makes the status
+  # column tell the truth afterwards.
+  takeaway_cart_expiry:
+    class: TakeawayCartExpirySweepJob
+    queue: bulk
+    schedule: every 15 minutes
+
   # Tells a seller a week before their listing lapses. Nothing is deleted or
   # hidden by it — `live` already keeps an expired listing off public surfaces —
   # so this is only the warning.

@@ -18,6 +18,7 @@
     <div class="field"><%= f.label :cuisine_type %><%= f.select :cuisine_type, Takeaway::Restaurant::CUISINE_TYPES, { include_blank: "—" } %></div>
     <div class="field"><%= f.label :delivery_fee_cents, t("takeaway.delivery_fee") %><%= f.number_field :delivery_fee_cents, inputmode: "numeric" %></div>
     <div class="field"><%= f.label :min_order_cents, t("takeaway.min_order") %><%= f.number_field :min_order_cents, inputmode: "numeric" %></div>
+    <div class="field"><%= f.label :delivery_radius_km, t("takeaway.delivery_radius") %><%= f.number_field :delivery_radius_km, min: 1, max: Takeaway::Restaurant::MAX_DELIVERY_RADIUS_KM, inputmode: "numeric" %></div>
     <div class="field field--check"><%= f.check_box :active %><%= f.label :active, t("takeaway.active") %></div>
     <%= render "takeaway/restaurants/place_field", f: f %>
     <div class="field"><%= f.submit t("takeaway.save"), class: "btn btn-primary" %></div>

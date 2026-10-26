@@ -57,7 +57,7 @@ module Operator
     def files
       # Recursive: test/checks/ is part of the contract suite. This currently
       # selects all 131 files; a narrower glob would make a green result dishonest.
-      # Written from the repository root so MASTER/tools/runs.rb reads the glob
+      # Written from the repository root so MASTER/tools/repo/runs.rb reads the glob
       # and counts every file it selects as run.
       all = Dir.glob(File.join(RAILS_ROOT, "..", "RAILS/test/**/*_test.rb")).map { |path| File.expand_path(path) }.sort
       @filter ? all.select { |path| path.include?(@filter) } : all

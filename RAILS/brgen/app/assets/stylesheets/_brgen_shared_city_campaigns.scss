@@ -74,7 +74,7 @@ body.vertical-marketplace {
 }
 
 body.vertical-marketplace #navBar.storefront-nav--bol {
-  background: #fff;
+  background: var(--store-page);
   color: var(--bol-ink);
   border-block-end: 1px solid var(--bol-rule);
 }
@@ -103,14 +103,14 @@ body.vertical-marketplace #navBar .section:hover {
 
 body.vertical-marketplace #bottomHalf {
   min-height: 72px;
-  background: #f4f7fb;
+  background: var(--store-well);
   border-block-start: 1px solid var(--bol-rule);
 }
 
 body.vertical-marketplace #navBar .nav-search-input {
   border-color: #cbd5e1;
   border-radius: 999px 0 0 999px;
-  background: #fff;
+  background: var(--store-page);
 }
 
 body.vertical-marketplace #navBar .nav-search-submit {
@@ -167,7 +167,7 @@ body.vertical-marketplace .store-promo-art-cta {
 
 body.vertical-marketplace .store-promo-art-cta:hover {
   background: var(--bol-blue-dark);
-  color: #fff;
+  color: var(--store-page);
 }
 
 /* First-party campaign micro-details from the owner's marketplace pen.

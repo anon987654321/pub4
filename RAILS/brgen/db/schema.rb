@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_10_25_180000) do
+ActiveRecord::Schema[8.2].define(version: 2026_10_27_102000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1511,6 +1511,17 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_25_180000) do
     t.index ["user_id"], name: "index_reputation_scores_on_user_id"
   end
 
+  create_table "search_recents", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "last_searched_at", null: false
+    t.string "query", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "last_searched_at"], name: "index_search_recents_on_user_id_and_last_searched_at"
+    t.index ["user_id", "query"], name: "index_search_recents_on_user_id_and_query", unique: true
+    t.index ["user_id"], name: "index_search_recents_on_user_id"
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
@@ -1646,6 +1657,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_25_180000) do
     t.string "delivery_address"
     t.integer "delivery_driver_id"
     t.integer "delivery_fee_cents"
+    t.datetime "expires_at"
     t.boolean "group_open", default: false, null: false
     t.string "group_token"
     t.integer "restaurant_id", null: false
@@ -1663,6 +1675,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_25_180000) do
     t.index ["restaurant_id", "status", "updated_at"], name: "index_takeaway_orders_on_restaurant_id_and_status_and_updated_at"
     t.index ["restaurant_id"], name: "index_takeaway_orders_on_restaurant_id"
     t.index ["scheduled_for"], name: "index_takeaway_orders_on_scheduled_for"
+    t.index ["status", "expires_at"], name: "index_takeaway_orders_on_status_and_expires_at"
     t.index ["user_id"], name: "index_takeaway_orders_on_user_id"
   end
 
@@ -1674,6 +1687,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_25_180000) do
     t.datetime "created_at", null: false
     t.string "cuisine_type"
     t.integer "delivery_fee_cents"
+    t.integer "delivery_radius_km"
     t.boolean "demo", default: false, null: false
     t.text "description"
     t.decimal "latitude", precision: 10, scale: 7

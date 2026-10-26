@@ -31,16 +31,38 @@ class Takeaway::Order < ApplicationRecord
   }.freeze
   CENTS_PER_KRONE = 100.0
 
+  # How long an unaccepted cart stays open. The kitchen has not confirmed it,
+  # so the only thing expiring is the reader's own intent — long enough to
+  # finish deciding, short enough that "pending" keeps meaning something.
+  CART_TTL_MINUTES = 45
+
   validates :status, inclusion: { in: STATUSES }
   validates :delivery_address, presence: true
 
   before_validation { self.status ||= "pending" }
+  before_create :stamp_cart_expiry
   validate :status_transition_allowed, on: :update
   validate :meets_minimum_order, on: :create
   validate :has_line_items, on: :create
+  validate :within_delivery_area, on: :create
 
   scope :active, -> { where.not(status: TERMINAL_STATUSES) }
   scope :recent, -> { order(created_at: :desc) }
+  # Rows with no deadline are never expired by definition; the sweep is what
+  # turns a stale one into a cancelled row. Mirrors the SQL shape the feed and
+  # local-activity readers already use for their own expiry columns.
+  scope :unexpired, -> { where("expires_at IS NULL OR expires_at > ?", Time.current) }
+  scope :stale_pending, -> { where(status: "pending").where(expires_at: ..Time.current) }
+
+  # Carts nobody confirmed should not sit in "pending" forever: the sweep job
+  # calls this on its schedule and each order leaves through the same
+  # transition a manual cancel uses, so the kitchen and the reader are told
+  # through the notification path rather than by a status that changed behind
+  # their backs. A transition that no longer applies (the kitchen confirmed
+  # between the scope and the read) simply returns false and is left alone.
+  def self.expire_stale_pending!
+    stale_pending.find_each(&:cancel!)
+  end
 
   def calculate_totals!
     # Use in-memory association target so create-with-build works under strict_loading.
@@ -100,6 +122,43 @@ class Takeaway::Order < ApplicationRecord
 
   def amount_display(cents)
     Shared::MoneyDisplay.format(cents)
+  end
+
+  # Only immediate carts get a deadline; a scheduled order is a deliberate
+  # placement for a future time and keeps the lifetime it always had.
+  def stamp_cart_expiry
+    return if scheduled?
+
+    self.expires_at ||= CART_TTL_MINUTES.minutes.from_now
+  end
+
+  # A kitchen that states a delivery radius has said where it will carry food.
+  # The only coordinate known at create time is the position the reader's
+  # browser stored via locations#update — the typed address is free text with
+  # no geocoder, so validating the string would be theatre. Any missing fact
+  # (no radius stated, no kitchen pin, no reader position) skips the check:
+  # an unset fact is not a false one, and refusing orders over a number
+  # nobody typed would empty the vertical.
+  def within_delivery_area
+    restaurant_record = restaurant
+    return if restaurant_record.nil?
+
+    radius = restaurant_record.delivery_radius_km
+    return if radius.blank?
+    return if restaurant_record.latitude.blank? || restaurant_record.longitude.blank?
+
+    reader = user
+    return if reader.nil? || reader.latitude.blank? || reader.longitude.blank?
+
+    distance = Takeaway::DeliveryDriver.haversine(
+      reader.latitude, reader.longitude,
+      restaurant_record.latitude, restaurant_record.longitude
+    )
+    return if distance <= radius
+
+    errors.add(:delivery_address, :outside_delivery_area,
+               restaurant: restaurant_record.name, radius: radius,
+               distance: distance.round(1))
   end
 
   # The restaurant advertises a minimum-order threshold (shown as a chip on its

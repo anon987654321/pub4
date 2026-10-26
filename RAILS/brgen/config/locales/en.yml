@@ -90,6 +90,7 @@ en:
     channels: Channels
     search: Search
     search_placeholder: Search Brgen
+    recent_searches: Recent searches
     show_menu: Show menu
     menu_coach: Menu is down here — tap the bar or scroll up.
     menu_coach_dismiss: Got it
@@ -694,6 +695,10 @@ en:
               below_minimum: Minimum order at %{restaurant} is %{minimum} — your subtotal
                 is %{subtotal}.
               empty_order: Choose at least one item.
+            delivery_address:
+              outside_delivery_area: "%{restaurant} delivers within %{radius} km of the kitchen
+                and your saved position is %{distance} km away. They may still accept the
+                order — the kitchen confirms every ticket itself."
         takeaway/order_item:
           attributes:
             menu_item:
@@ -1471,6 +1476,9 @@ en:
     delivery_details: Delivery details
     delivery_heading: Delivery
     delivery_label: Delivery
+    delivery_radius: Delivery radius (km, blank = no limit stated)
+    delivers_within: "Delivers within %{radius} km of the kitchen"
+    cart_expiring: This basket expires soon — the kitchen has not confirmed it yet.
     restaurant_results: Restaurant results
     top_rated_heading: "Top rated in %{city}"
     restaurant_actions: Restaurant actions

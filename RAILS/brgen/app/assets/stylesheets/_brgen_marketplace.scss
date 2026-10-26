@@ -297,7 +297,7 @@ body.vertical-marketplace .search {
 
 .banner path,
 .banner use {
-  stroke: #fff; // scan: intentional — the animated mark's drawn stroke, not a theme surface
+  stroke: var(--nav-badge-ink); // scan: intentional — the animated mark's drawn stroke, not a theme surface
   fill: none;
   stroke-linecap: round;
   stroke-width: 2;

@@ -79,8 +79,8 @@
   }
 
   function build(contract) {
-    const ascii = (contract && contract.ascii) || {};
-    const morphology = (contract && contract.spatial && contract.spatial.morphology) || {};
+    const ascii = (contract?.ascii) || {};
+    const morphology = (contract?.spatial?.morphology) || {};
     if (!ascii.dither || !ascii.motion) throw new Error("face contract has no ascii block");
 
     // ---- Face::Glyphs -------------------------------------------------------
@@ -1172,7 +1172,7 @@
       drawFeatures(look, state) {
         this.look = look;
         const mask = this.mask;
-        this.rings = !!(mask && mask.ring >= MASK_TAKEOVER);
+        this.rings = !!(mask?.ring >= MASK_TAKEOVER);
         this.slack = mask ? (mask.beak_projection + mask.brow_ridge) * this.scale : 0.0;
         this.mouthSlack = mask ? MOUTH_SLACK * this.scale : 0.0;
         this.anchors.eyes.forEach((eye) => (this.rings ? this.ringEye(eye) : this.eyebrowAndEye(eye)));
@@ -1501,7 +1501,7 @@
     const cx = (width - 1) / 2;
     const cy = (height - 1) / 2;
     laws.forEach((law, index) => {
-      const glyph = String((law && law.glyph) || "").charAt(0);
+      const glyph = String((law?.glyph) || "").charAt(0);
       if (!/^[\x20-\x7e]$/.test(glyph)) return;
       const angle = (-Math.PI / 2) + ((Math.PI * 2 * index) / laws.length);
       const col = halfUp(cx + (Math.cos(angle) * width * 0.47));
@@ -1545,7 +1545,7 @@
     const style = () => (env.getComputedStyle ? env.getComputedStyle(env.document.documentElement) : null);
     const mono = () => {
       const s = style();
-      const family = s && s.getPropertyValue("--font-mono").trim();
+      const family = s?.getPropertyValue("--font-mono").trim();
       return family || "ui-monospace, monospace";
     };
 
@@ -1890,7 +1890,7 @@
   }
   const api = { build, createView, kbSum, paintLawField, update, resize, setLawField, setGlyphMode, setRamp, setInkMode, setRotation };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
-  if (root && root.document) {
+  if (root?.document) {
     root.MASTER_FACE_ASCII = Object.freeze(api);
     root.addEventListener("keydown", onKeydown);
     root.dispatchEvent(new root.CustomEvent("master:face-ascii-ready"));

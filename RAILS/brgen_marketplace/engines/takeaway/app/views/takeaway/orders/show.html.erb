@@ -32,6 +32,11 @@
       <div class="order-progress-fill" style="--progress: <%= (fraction * 100).round %>%"></div>
     </div>
   <% end %>
+  <%# An unaccepted cart expires on a clock; say so while it still can. Same
+      countdown controller as the ETA, pointed at the same kind of deadline. %>
+  <% if @order.status == "pending" && @order.expires_at.present? %>
+    <p class="eta-badge" data-controller="countdown" data-countdown-target-time-value="<%= @order.expires_at.iso8601 %>"><%= t("takeaway.cart_expiring") %></p>
+  <% end %>
   <% if @order.status == "delivered" %>
     <p class="eta-badge eta-badge--done"><%= t("takeaway.delivered") %></p>
   <% elsif @order.status == "cancelled" %>

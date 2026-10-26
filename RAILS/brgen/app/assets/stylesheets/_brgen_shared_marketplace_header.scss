@@ -159,6 +159,9 @@ body.vertical-marketplace .storefront-bol-categories > summary {
   min-height: var(--bol-mainnav-block);
   padding-inline: 14px;
   border: 0;
+  /* The selected-state bar is a flat border, not an inset shadow: the space
+     is reserved on every item so the active state moves no geometry. */
+  border-block-end: 3px solid transparent;
   background: transparent;
   color: var(--bol-ink);
   font-size: var(--store-text-meta);
@@ -176,7 +179,7 @@ body.vertical-marketplace .storefront-bol-categories > summary:hover {
 
 body.vertical-marketplace .storefront-bol-mainnav > .section--active {
   color: var(--bol-blue);
-  box-shadow: inset 0 -3px 0 var(--bol-blue);
+  border-block-end-color: var(--bol-blue);
 }
 
 body.vertical-marketplace .storefront-bol-categories {
@@ -200,7 +203,7 @@ body.vertical-marketplace .storefront-bol-categories > summary::after {
 
 body.vertical-marketplace .storefront-bol-categories[open] > summary {
   color: var(--bol-blue);
-  box-shadow: inset 0 -3px 0 var(--bol-blue);
+  border-block-end-color: var(--bol-blue);
 }
 
 body.vertical-marketplace .storefront-bol-mega {

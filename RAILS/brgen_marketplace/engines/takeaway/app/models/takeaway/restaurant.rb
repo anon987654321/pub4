@@ -30,9 +30,17 @@ class Takeaway::Restaurant < ApplicationRecord
   CUISINE_TYPES = %w[Norwegian Italian Chinese Japanese Indian Thai Mexican Pizza Burger Kebab Sushi Vegetarian Vegan].freeze
   CENTS_PER_KRONE = 100.0
 
+  # Upper bound on a stated delivery radius. Bergen end to end is about 10 km
+  # (see Order::Delivery::DISPATCH_RADIUS_KM), so anything beyond this reads as
+  # a typo rather than an ambition; the form enforces the same ceiling.
+  MAX_DELIVERY_RADIUS_KM = 50
+
   validates :name, :address, :cuisine_type, presence: true
   validates :delivery_fee_cents, :min_order_cents,
             numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :delivery_radius_km,
+            numericality: { greater_than: 0, less_than_or_equal_to: MAX_DELIVERY_RADIUS_KM },
+            allow_nil: true
 
   scope :active, -> { where(active: true) }
   scope :publicly_visible, -> { active.joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
@@ -66,6 +74,19 @@ class Takeaway::Restaurant < ApplicationRecord
   end
 
   def hours_for(wday) = opening_hours.for_weekday(wday).order(:opens_minute)
+
+  # Whether this kitchen carries to a coordinate. Only a stated radius
+  # constrains anything: nil means the restaurant has said nothing, which is
+  # not the same as "nowhere", so the answer is yes until the owner types a
+  # number. Every input may be missing — an unset pin or a reader who never
+  # shared a position — and a missing fact does not make a refusal.
+  def delivers_to?(lat, lng)
+    return true if delivery_radius_km.blank?
+    return false if lat.blank? || lng.blank?
+    return false if latitude.blank? || longitude.blank?
+
+    Takeaway::DeliveryDriver.haversine(latitude, longitude, lat, lng) <= delivery_radius_km
+  end
 
   def owner?(account)
     user_id == account&.id

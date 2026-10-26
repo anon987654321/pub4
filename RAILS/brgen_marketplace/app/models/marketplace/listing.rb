@@ -116,6 +116,7 @@ class Marketplace::Listing < ApplicationRecord
   # match this row, and only if they are due — a filtered index is not a
   # stream we can append into.
   after_create :alert_matching_saved_searches
+  after_create :file_duplicate_report
   after_create_commit :queue_ranking_recalculation
 
   # A classifieds listing has a life. Without one the marketplace fills with
@@ -259,6 +260,33 @@ class Marketplace::Listing < ApplicationRecord
   def favorite_for(user) = favorites.find_by(user: user)
   def store_name = store&.name
 
+  # The active sibling this listing looks like a copy of, or nil.
+  #
+  # "Duplicate" here is deliberately narrow: same seller, still active, and a
+  # title that normalises to the same string. That is the one case where a
+  # second listing is almost always a mistake (double-posted) or a flood
+  # (the same ad re-posted to occupy the page) rather than a legitimate
+  # second life — a seller relisting a sold lamp is not caught, because the
+  # old row is no longer active, and two genuinely different chairs with
+  # different titles are not either. Detection files a report for a person
+  # to judge; it never withdraws anything itself.
+  def duplicate_of
+    key = self.class.normalize_title(title)
+    return nil if key.blank?
+    return nil if user_id.blank?
+
+    siblings = Marketplace::Listing.active.where(user_id: user_id).where.not(id: id)
+    siblings.select(:id, :title).find { |sibling| self.class.normalize_title(sibling.title) == key }
+  end
+
+  # Whitespace and punctuation out, case folded: "Sofa! 3-seat" and
+  # "sofa 3 seat" are one listing posted twice. Kept ASCII-alphanumeric on
+  # purpose — Norwegian titles keep their digits and letters, and anything
+  # more clever starts splitting genuine re-postings of the same sofa.
+  def self.normalize_title(title)
+    title.to_s.downcase.gsub(/[^a-z0-9]+/, " ").strip
+  end
+
   def reviewable_by?(account)
     return false if account.blank? || account == user
     return false if reviews.exists?(user: account)
@@ -292,5 +320,26 @@ class Marketplace::Listing < ApplicationRecord
     rescue StandardError => error
       Rails.logger.error("Listing##{id} saved-search alert: #{error.class}: #{error.message}")
     end
+  end
+
+  # Detection files a moderation report; a human decides. `user` on a report
+  # is the account the report concerns — the seller — because the queue reads
+  # it as "whose listing is this", not "who complained". One open report per
+  # listing: a seller posting three copies gets three reports, but editing
+  # and re-saving never multiplies one.
+  def file_duplicate_report
+    twin = duplicate_of
+    return if twin.nil?
+    return if ModerationReport.exists?(reportable: self, reason: "duplicate", status: "open")
+
+    ModerationReport.create!(
+      user: user,
+      reportable: self,
+      reason: "duplicate",
+      details: "Duplicate-listing detection: same seller's active listing ##{twin.id} " \
+               "has the same normalised title (#{twin.title})."
+    )
+  rescue StandardError => error
+    Rails.logger.error("Listing##{id} duplicate report: #{error.class}: #{error.message}")
   end
 end

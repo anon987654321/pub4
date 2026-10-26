@@ -143,7 +143,6 @@ body[class*="vertical-"] main > section {
   text-align: center;
 }
 
-
 .match-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--tile-min-md)), 1fr));

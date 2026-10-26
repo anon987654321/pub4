@@ -14,6 +14,12 @@ class SearchController < ApplicationController
 
   def index
     @query = live_search_query
+    # A committed search only: a full-page /search?q= visit is someone who
+    # pressed enter on a real query. The palette's keystroke streams arrive as
+    # turbo_stream and record nothing — those are suggestions being tried, not
+    # a search having happened. Guests are skipped inside record!; their rows
+    # would only give the prune job something to clean up.
+    SearchRecent.record!(Current.user, @query) if request.format.html?
     @results = {}
     return if @query.blank?
 

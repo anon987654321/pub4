@@ -693,6 +693,157 @@ function buildPhaser(ctx, args) {
   return { input, output };
 }
 
+// aeval, for the one shape the character presets actually write: ring
+// modulation spelled as val(0)*(A+B*sin(2*PI*t*F)) — a dry floor A plus a
+// carrier of F hertz at depth B, which is exactly a GainNode whose gain
+// parameter a carrier oscillator rides. The matcher refuses every other
+// expression: aeval is a language, not a filter, and a node that guessed at
+// arithmetic would be a second voice under the preset's name. cos is accepted
+// beside sin because the two differ only in carrier phase — a quarter period
+// of a 38-50 hertz carrier, beneath perception in the envelope.
+function buildAeval(ctx, args) {
+  const raw = String(args.exprs !== undefined ? args.exprs : (args._ ? args._[0] : '') || '')
+    .replace(/^'+|'+$/g, '').trim();
+  const match = raw.match(/^val\(0\)\s*\*\s*\(\s*([0-9.]+)\s*\+\s*([0-9.]+)\s*\*\s*(sin|cos)\s*\(\s*2\s*\*\s*PI\s*\*\s*t\s*\*\s*([0-9.]+)\s*\)\s*\)$/);
+  if (!match) return null;
+  const floor = parseFloat(match[1]);
+  const depth = parseFloat(match[2]);
+  const carrier = parseFloat(match[4]);
+  if (!Number.isFinite(floor) || !Number.isFinite(depth) || !Number.isFinite(carrier) || carrier <= 0) return null;
+  const node = ctx.createGain();
+  node.gain.value = floor;
+  const lfo = ctx.createOscillator();
+  lfo.frequency.value = carrier;
+  const ring = ctx.createGain();
+  ring.gain.value = depth;
+  lfo.connect(ring);
+  ring.connect(node.gain);
+  lfo.start();
+  return { input: node, output: node };
+}
+
+// acrusher as bit quantization through a WaveShaper. The `samples` hold (a
+// sample-and-true-hold at a fraction of the rate) has no honest node without a
+// worklet, so a unit asking for one is refused whole — the glitch preset, the
+// only acrusher user, is server-only anyway through its enable=. mix reads as
+// the crushed blend against dry, which is how the server lane reads it.
+function buildAcrusher(ctx, args) {
+  const bits = parseFloat(args.bits);
+  if (!Number.isFinite(bits) || bits < 1 || bits > 16) return null;
+  if (parseFloat(args.samples || '1') !== 1) return null;
+  const mix = args.mix === undefined ? 1 : parseFloat(args.mix);
+  if (!Number.isFinite(mix) || mix < 0 || mix > 1) return null;
+  const levels = Math.pow(2, bits - 1);
+  const count = 2 * levels + 1;
+  if (count > 65537) return null;
+  const curve = new Float32Array(count);
+  for (let i = 0; i < count; i++) {
+    const x = (i / (count - 1)) * 2 - 1;
+    curve[i] = Math.max(-1, Math.min(1, Math.round(x * levels) / levels));
+  }
+  const crusher = ctx.createWaveShaper();
+  crusher.curve = curve;
+  // Aliasing is part of what acrusher does; oversampling would clean away the
+  // sound the preset asked for.
+  crusher.oversample = 'none';
+  const input = ctx.createGain();
+  const output = ctx.createGain();
+  const wet = ctx.createGain();
+  wet.gain.value = mix;
+  const dry = ctx.createGain();
+  dry.gain.value = 1 - mix;
+  input.connect(crusher);
+  crusher.connect(wet);
+  wet.connect(output);
+  input.connect(dry);
+  dry.connect(output);
+  return { input, output };
+}
+
+// The asetrate/aresample/atempo idiom as one pitch shifter: two delay taps
+// swept in opposite phase by one sawtooth, crossfaded at constant power
+// (sin^2 + cos^2 = 1). The sweep is the FM the shifter lives on — the delay
+// line's slope sets the ratio exactly, the same arithmetic the idiom writes
+// with resampler clocks. An approximation in texture, not in ratio: ffmpeg's
+// resampler and this crossfade disagree about artifacts, not about pitch.
+const PITCH_SHIFT_RATE = 6;
+function buildPitchShift(ctx, ratio) {
+  if (!Number.isFinite(ratio) || ratio <= 0) return null;
+  if (Math.abs(ratio - 1) < 1e-6) {
+    const unity = ctx.createGain();
+    return { input: unity, output: unity };
+  }
+  const sweep = (1 - ratio) / PITCH_SHIFT_RATE;
+  const base = Math.abs(sweep) + 0.004;
+  const maxDelay = base + Math.abs(sweep) + 0.002;
+  const input = ctx.createGain();
+  const output = ctx.createGain();
+  const saw = ctx.createOscillator();
+  saw.type = 'sawtooth';
+  saw.frequency.value = PITCH_SHIFT_RATE;
+  const sweepGain = ctx.createGain();
+  sweepGain.gain.value = sweep;
+  saw.connect(sweepGain);
+  const tap1 = ctx.createDelay(maxDelay);
+  tap1.delayTime.value = base;
+  sweepGain.connect(tap1.delayTime);
+  // The second tap runs half a phase later, so its wrap lands where the first
+  // tap's window is at full weight, and the two never click.
+  const halfPhase = ctx.createDelay(0.1);
+  halfPhase.delayTime.value = 0.5 / PITCH_SHIFT_RATE;
+  sweepGain.connect(halfPhase);
+  const tap2 = ctx.createDelay(maxDelay);
+  tap2.delayTime.value = base;
+  halfPhase.connect(tap2.delayTime);
+  // Windows off the same saw: tap 1 fades by sin^2 of the phase, tap 2 by
+  // cos^2 — zero exactly at each tap's own wrap, constant power in between.
+  const points = 1024;
+  const win1 = ctx.createWaveShaper();
+  const win2 = ctx.createWaveShaper();
+  const curve1 = new Float32Array(points);
+  const curve2 = new Float32Array(points);
+  for (let i = 0; i < points; i++) {
+    const phase = (i / (points - 1)) * 2;
+    curve1[i] = Math.pow(Math.sin(Math.PI * phase), 2);
+    curve2[i] = Math.pow(Math.cos(Math.PI * phase), 2);
+  }
+  win1.curve = curve1;
+  win2.curve = curve2;
+  saw.connect(win1);
+  saw.connect(win2);
+  const wet1 = ctx.createGain();
+  const wet2 = ctx.createGain();
+  win1.connect(wet1.gain);
+  win2.connect(wet2.gain);
+  input.connect(tap1);
+  tap1.connect(wet1);
+  wet1.connect(output);
+  input.connect(tap2);
+  tap2.connect(wet2);
+  wet2.connect(output);
+  saw.start();
+  return { input, output };
+}
+
+// The idiom must be exactly asetrate=R, aresample=S, atempo=T — contiguous,
+// and with atempo closing the arithmetic (T ~= S/R, the duration the asetrate
+// spent). Anything looser is refused whole: a rate change the node guessed at
+// would be the preset's pitch drifting from what the server speaks.
+function buildPitchIdiom(ctx, filters, index) {
+  if (index + 2 >= filters.length) return null;
+  const rate = filters[index].match(/^asetrate=([0-9.]+)$/);
+  const sampleRate = filters[index + 1].match(/^aresample=([0-9.]+)$/);
+  const tempo = filters[index + 2].match(/^atempo=([0-9.]+)$/);
+  if (!rate || !sampleRate || !tempo) return null;
+  const up = parseFloat(rate[1]);
+  const base = parseFloat(sampleRate[1]);
+  const restore = parseFloat(tempo[1]);
+  if (!(up > 0) || !(base > 0) || !(restore > 0)) return null;
+  const ratio = up / base;
+  if (Math.abs(restore - 1 / ratio) > 0.001 * Math.max(1, 1 / ratio)) return null;
+  return buildPitchShift(ctx, ratio);
+}
+
 function buildChainNode(ctx, name, args) {
   // A filter with a timeline (enable=) has no honest node; the whole unit is
   // skipped by the caller.
@@ -829,6 +980,26 @@ function buildChainNode(ctx, name, args) {
   }
   if (name === 'chorus') return buildChorus(ctx, args);
   if (name === 'aphaser') return buildPhaser(ctx, args);
+  if (name === 'aeval') return buildAeval(ctx, args);
+  if (name === 'acrusher') return buildAcrusher(ctx, args);
+  if (name === 'aformat') {
+    // sample_rates alone pins the working rate, which a time-domain graph
+    // already satisfies at its own clock — an exact passthrough. Any other
+    // aformat dimension (channels, layouts, sample formats) has no node.
+    const keys = Object.keys(args).filter((key) => key !== '_');
+    if (keys.length !== 1 || keys[0] !== 'sample_rates') return null;
+    const node = ctx.createGain();
+    return { input: node, output: node };
+  }
+  if (name === 'adelay') {
+    // One delay per channel in milliseconds; the voice arrives mono here, so
+    // the first entry carries the unit.
+    const ms = String(args._[0] || '').split('|').map(parseFloat).find(Number.isFinite);
+    if (!Number.isFinite(ms) || ms < 0) return null;
+    const node = ctx.createDelay(2);
+    node.delayTime.value = Math.min(ms, 2000) / 1000;
+    return { input: node, output: node };
+  }
   return null;
 }
 
@@ -852,10 +1023,14 @@ function buildVoiceChain(ctx, chainText) {
 // the same filter strings the server hands ffmpeg. A unit is built only when
 // every filter in it has a node: a unit with one filter missing would sound
 // like neither the server nor the unit, so it is skipped whole and named once.
-// What the page cannot build: aeval (fold, crackle, robot), acrusher, pan and
-// extrastereo (the stereo units), afreqshift, aphaseshift, volume with a
-// timeline (delay_throw), asetrate/atempo (formant, doubler, shimmer) and the
-// glitch's enable=. Those only the server chain applies.
+// What the page still cannot build: pan and extrastereo (the stereo units),
+// afreqshift, aphaseshift, volume with a timeline (delay_throw) and the
+// glitch's enable=. Those only the server chain applies. The rate idiom
+// (asetrate, aresample, atempo), aeval ring-mod shapes, acrusher bits,
+// aformat sample_rates and adelay gained nodes 2026-10-27, so the character
+// presets robot, formant, doubler, shimmer, ionosphere, midnight and shortwave
+// now build here exactly as the server speaks them (see
+// MASTER/data/ideations/master_web_face_voice.yml).
 function splitTop(text, sep) {
   const parts = [];
   let current = '';
@@ -872,12 +1047,23 @@ function splitTop(text, sep) {
 
 function buildFilterRun(ctx, filters) {
   const nodes = [];
-  for (const filter of filters) {
-    const eq = filter.indexOf('=');
-    const name = eq > 0 ? filter.slice(0, eq) : filter;
-    const built = buildChainNode(ctx, name, parseFilterArgs(eq > 0 ? filter.slice(eq + 1) : ''));
+  for (let i = 0; i < filters.length;) {
+    const eq = filters[i].indexOf('=');
+    const name = eq > 0 ? filters[i].slice(0, eq) : filters[i];
+    // The rate idiom is read before buildChainNode ever sees a rate filter:
+    // the triple becomes one pitch shifter, and a stray asetrate, aresample or
+    // atempo outside the recognized shape refuses the whole run.
+    if (name === 'asetrate' || name === 'aresample' || name === 'atempo') {
+      const shifter = buildPitchIdiom(ctx, filters, i);
+      if (!shifter) return null;
+      nodes.push(shifter);
+      i += 3;
+      continue;
+    }
+    const built = buildChainNode(ctx, name, parseFilterArgs(eq > 0 ? filters[i].slice(eq + 1) : ''));
     if (!built) return null;
     nodes.push(built);
+    i += 1;
   }
   nodes.forEach((node, i) => { if (i) nodes[i - 1].output.connect(node.input); });
   return nodes;
@@ -943,7 +1129,7 @@ function gainNode(ctx, db) {
 // the server declares no rack.
 function buildFxRack(ctx, fx, characters) {
   const wanted = [];
-  if (fx && fx.enabled) {
+  if (fx?.enabled) {
     wanted.push({ id: 'in_db', node: gainNode(ctx, fx.in_db) });
   }
   const built = [];
@@ -952,7 +1138,7 @@ function buildFxRack(ctx, fx, characters) {
     const unit = buildFxUnit(ctx, filter);
     if (unit) { wanted.push({ id, node: unit }); built.push(id); } else skipped.push(id);
   };
-  if (fx && fx.enabled) {
+  if (fx?.enabled) {
     const mono = (fx.units || []).filter((unit) => (unit.region || 'mono') === 'mono');
     mono.forEach((unit, i) => {
       place(unit.id, unit.filter);
@@ -967,7 +1153,7 @@ function buildFxRack(ctx, fx, characters) {
   const nodes = wanted.map((item) => item.node);
   nodes.forEach((node, i) => { if (i) nodes[i - 1].output.connect(node.input); });
   const tail = [];
-  if (fx && fx.enabled) {
+  if (fx?.enabled) {
     tail.push(gainNode(ctx, fx.trim_db));
     const limiter = buildChainNode(ctx, 'alimiter', { limit: String(fx.ceiling || 0.85), _: [] });
     if (limiter) tail.push(limiter);
@@ -1074,7 +1260,7 @@ async function connectTTSAudio(audio, boostValue = 1.35) {
       room.update();
       tts.panTimer = setInterval(room.update, 60);
     }
-    if (rack && rack.tail) { tailOf.connect(rack.tail.input); tailOf = rack.tail.output; }
+    if (rack?.tail) { tailOf.connect(rack.tail.input); tailOf = rack.tail.output; }
     tailOf.connect(masterGain);
   } else {
     const boost = actx.createGain();
