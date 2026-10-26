@@ -49,6 +49,22 @@ class ChromeAuditFlatContractTest < Minitest::Test
     refute_includes source, "Last in the cascade: reduced motion must survive"
   end
 
+  def test_consent_banner_is_mobile_first_and_restores_wide_layout
+    source = read("__shared/app/assets/stylesheets/_cookie_banner.scss")
+    mobile = source.split("@media (min-width: 768px)", 2).first
+    wide = source.split("@media (min-width: 768px)", 2).last
+
+    refute_match(/@media\s*\(\s*max-width\b/, source,
+                 "the shared consent banner must not use a max-width override")
+    assert_match(/\.cookie-banner\s*\{[^}]*grid-template-columns:\s*1fr;[^}]*max-height:\s*min\(90dvh,\s*42rem\);[^}]*overflow-y:\s*auto;/m, mobile)
+    assert_match(/\.cookie-banner-actions\s*\{[^}]*justify-content:\s*stretch;/m, mobile)
+    assert_match(/\.cookie-banner-button\s*\{[^}]*flex:\s*1 1 9rem;/m, mobile)
+    assert_match(/\.cookie-consent-preferences\s*\{[^}]*grid-template-columns:\s*1fr;/m, mobile)
+    assert_match(/\.cookie-banner\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) auto;[^}]*max-height:\s*none;[^}]*overflow-y:\s*visible;/m, wide)
+    assert_match(/\.cookie-banner-button\s*\{[^}]*flex:\s*0 1 auto;/m, wide)
+    assert_match(/\.cookie-consent-preferences\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(18rem, 1fr\);/m, wide)
+  end
+
   def test_dialog_sheet_consent_and_affiliate_chrome_is_flat
     modal = read("__shared/app/assets/stylesheets/_modal.scss")
     cookie = read("__shared/app/assets/stylesheets/_cookie_banner.scss")
