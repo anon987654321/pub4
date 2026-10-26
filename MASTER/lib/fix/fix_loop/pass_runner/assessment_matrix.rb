@@ -18,8 +18,10 @@ module Master
           # inventory is not evidence of a successful measurement; missing assessors
           # still leave the completion ledger INCONCLUSIVE.
           def assessment_adapters(target:)
-            visual = @visual_pass&.applicable?(target) == true
-            opportunities = @opportunity_pass&.applicable?(target) == true
+            visual_applicable = @visual_pass&.applicable?(target)
+            visual = visual_applicable == true
+            opportunities_applicable = @opportunity_pass&.applicable?(target)
+            opportunities = opportunities_applicable == true
             {
               "whole_file" => @scan_phase ? "scanner" : "unavailable",
               "paths" => @scanner.respond_to?(:scan) ? "scanner" : "unavailable",
@@ -27,11 +29,29 @@ module Master
               "syntax_tree" => @scanner.respond_to?(:scan) ? "language_dispatch" : "unavailable",
               "structured_data" => @scanner.respond_to?(:scan) ? "scanner_path_filter" : "unavailable",
               "cross_file" => @reference_graph&.respond_to?(:build) ? "reference_graph" : "unavailable",
-              "lexical_opportunities" => opportunities ? "opportunity_pass" : "not_applicable_to_target",
+              "lexical_opportunities" => if @opportunity_pass.nil?
+                                           "unavailable"
+                                         elsif opportunities
+                                           "opportunity_pass"
+                                         else
+                                           "not_applicable_to_target"
+                                         end,
               "semantic_violations" => @scan_phase&.semantic_full? ? "full_semantic_mode" : "sampled_or_budgeted",
               "semantic_opportunities" => @council&.respond_to?(:improve) ? "bounded_council" : "unavailable",
-              "rendered_ui" => visual ? "visual_pass" : "not_applicable_to_target",
-              "interactive_behavior" => visual ? "browser_journeys" : "not_applicable_to_target",
+              "rendered_ui" => if @visual_pass.nil?
+                                 "unavailable"
+                               elsif visual
+                                 "visual_pass"
+                               else
+                                 "not_applicable_to_target"
+                               end,
+              "interactive_behavior" => if @visual_pass.nil?
+                                          "unavailable"
+                                        elsif visual
+                                          "browser_journeys"
+                                        else
+                                          "not_applicable_to_target"
+                                        end,
               "tests" => "target_specific_runner_only",
               "runtime" => "target_specific_probe_only",
               "deployment" => "external_validation_not_universal",
