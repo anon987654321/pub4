@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require "json"
 require "fileutils"
+require "digest"
 require "sqlite3"
 require "tmpdir"
 require_relative "../lib/ground/knowledge_store"
@@ -174,6 +175,48 @@ class TestFeedbackLedger < Minitest::Test
     end
     assert_includes status, "opportunity: web fetch failed 100% of 3 calls"
   ensure
+    learnings&.close
+    FileUtils.remove_entry(root) if root && Dir.exist?(root)
+  end
+
+  def test_feedback_metadata_redacts_tool_inputs_and_outputs
+    root = Dir.mktmpdir("feedback_redaction")
+    bus = FakeBus.new
+    learnings = Master::Ground::KnowledgeStore.new(root:)
+    Master::Trace::Ledger::Feedback.new(event_bus: bus, learnings:).attach
+    private_url = "https://private.example/path?access_token=top-secret"
+    private_output = "account=private-customer; returned document contents"
+    private_error = "provider returned private response body"
+    bus.publish(
+      "tool:after",
+      tool: "web_fetch", status: 200, url: private_url,
+      output: private_output, bytes: private_output.bytesize,
+      newly_added_field: private_error
+    )
+    bus.publish("tool:failed", tool: "web_fetch", category: :infrastructure, error: private_error)
+
+    db = SQLite3::Database.new(File.join(root, ".master", "knowledge.sqlite3"))
+    db.results_as_hash = true
+    rows = db.execute(
+      "SELECT event_type, metadata FROM feedback_events WHERE dimension = ? ORDER BY id",
+      ["web_fetch"]
+    )
+    success = JSON.parse(rows.find { |row| row["event_type"] == "tool_success" }["metadata"])
+    failure = JSON.parse(rows.find { |row| row["event_type"] == "tool_failure" }["metadata"])
+    persisted = rows.map { |row| row["metadata"] }.join("\\n")
+
+    assert_equal Digest::SHA256.hexdigest(private_url), success.fetch("url_digest")
+    assert_equal private_url.bytesize, success.fetch("url_bytes")
+    assert_equal Digest::SHA256.hexdigest(private_output), success.fetch("output_digest")
+    assert_equal private_output.bytesize, success.fetch("output_bytes")
+    assert_equal 1, success.fetch("extra_fields_count")
+    assert_equal Digest::SHA256.hexdigest(private_error), failure.fetch("error_digest")
+    assert_equal private_error.bytesize, failure.fetch("error_bytes")
+    [private_url, private_output, private_error, "top-secret"].each do |secret|
+      refute_includes persisted, secret
+    end
+  ensure
+    db&.close
     learnings&.close
     FileUtils.remove_entry(root) if root && Dir.exist?(root)
   end
