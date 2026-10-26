@@ -138,7 +138,7 @@
 .brgen-media-add-link > span:first-child {
   font-size: clamp(2rem, 6vw, 3rem);
   font-weight: var(--weight-normal);
-  line-height: 1;
+  line-height: var(--leading-none);
 }
 
 .brgen-media-add-link small {

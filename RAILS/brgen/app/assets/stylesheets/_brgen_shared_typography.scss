@@ -199,7 +199,7 @@ body:not([class*="vertical-"]) .chrome-corner .theme-toggle {
   justify-content: center;
   min-inline-size: var(--tap-min);
   max-inline-size: 100%;
-  line-height: 1.25;
+  line-height: var(--leading-tight);
   text-decoration: none;
 }
 

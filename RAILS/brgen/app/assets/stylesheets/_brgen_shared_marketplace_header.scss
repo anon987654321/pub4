@@ -245,7 +245,7 @@ body.vertical-marketplace .storefront-bol-mega h3 a {
 body.vertical-marketplace .storefront-bol-mega section > a {
   color: var(--bol-muted);
   font-size: var(--store-text-meta);
-  line-height: 1.4;
+  line-height: var(--leading-snug);
   text-decoration: none;
 }
 

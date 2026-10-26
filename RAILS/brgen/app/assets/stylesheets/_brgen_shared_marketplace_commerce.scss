@@ -63,14 +63,14 @@ body.vertical-marketplace .deal-price {
   order: -1;
   color: var(--bol-price);
   font-size: 24px;
-  line-height: 1;
+  line-height: var(--leading-none);
   font-weight: 800;
 }
 
 body.vertical-marketplace .deal-card-title {
   color: var(--bol-ink);
   font-size: var(--store-text-action);
-  line-height: 1.4;
+  line-height: var(--leading-snug);
   font-weight: 600;
 }
 
@@ -331,7 +331,7 @@ body.vertical-marketplace .store-buybox .price {
 
   body.vertical-marketplace #marketplace-listings .deal-card-title {
     font-size: 16px;
-    line-height: 1.4;
+    line-height: var(--leading-snug);
   }
 
 }

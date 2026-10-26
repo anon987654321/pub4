@@ -67,7 +67,7 @@ body.vertical-marketplace .storefront-utility--bol {
   background: unset;
   color: var(--bol-muted);
   font-size: 12px;
-  line-height: 1;
+  line-height: var(--leading-none);
 }
 
 body.vertical-marketplace .storefront-bol-brand {
@@ -126,13 +126,13 @@ body.vertical-marketplace .bol-market-hero-copy > p:not(.bol-market-kicker) {
   margin: 0;
   color: var(--bol-muted);
   font-size: 16px;
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 
 body.vertical-marketplace .bol-market-hero-price {
   color: var(--bol-price);
   font-size: var(--store-text-price);
-  line-height: 1;
+  line-height: var(--leading-none);
   font-variant-numeric: tabular-nums;
 }
 
