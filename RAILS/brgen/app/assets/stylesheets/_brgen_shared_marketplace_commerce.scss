@@ -313,7 +313,7 @@ body.vertical-marketplace .store-buybox .price {
   body.vertical-marketplace #marketplace-listings .deal-card-img {
     grid-row: 1;
     width: 220px;
-    height: 220px;
+    height: 220px; // scan: intentional — a fixed square product-photo crop frame, not a flowing text container
     padding: 12px;
   }
 
