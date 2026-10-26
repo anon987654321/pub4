@@ -13,9 +13,11 @@ module Master
         # with skipped files, failed stages, or an unmeasured Law/stream/surface
         # matrix must report the missing proof instead of claiming completion.
         def blocked_by_gaps(result)
-          matrix_status = @pass_runner&.assessment_matrix_status
+          matrix_status = @pass_runner&.assessment_matrix_status || :not_measured
           matrix_unmeasured = matrix_status == :not_measured
-          matrix_incomplete = matrix_status == :incomplete
+          # Unknown/missing states fail closed too; only an explicitly complete,
+          # generation-current matrix can authorize DONE.
+          matrix_incomplete = matrix_status != :complete && !matrix_unmeasured
           matrix_gapped = matrix_unmeasured || matrix_incomplete
           gapped = @pass_runner&.gaps? || uninspectable.any? || matrix_gapped
           return result unless gapped && result.ok? && terminal_state_for(result) == :done
