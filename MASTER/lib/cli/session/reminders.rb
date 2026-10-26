@@ -34,12 +34,21 @@ module Master
 
       def ring_due_reminders(tasks: Master::Ground::AssistantTasks.new(root: @refs.root, bus: @refs.bus))
         tasks.due_reminders.each do |task|
-          tasks.call(action: "reminded", id: task.fetch("id"))
+          next unless claim_reminder(tasks, task.fetch("id"))
+
           terminal_puts("remind0: #{task.fetch('title')}")
           redraw_active_input
           @refs.bus&.publish("reminder:due", task_id: task.fetch("id"))
           Master::Voice::Playback.speak("Reminder: #{task.fetch('title')}")
         end
+      end
+
+      # Another session that rang it first wins; this one stays quiet.
+      def claim_reminder(tasks, id)
+        tasks.call(action: "reminded", id:)
+        true
+      rescue Master::Ground::AssistantTasks::Error
+        false
       end
     end
   end

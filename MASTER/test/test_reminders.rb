@@ -61,6 +61,7 @@ class TestReminderDelivery < Minitest::Test
 
       tasks.call(action: "reminded", id: task.fetch("id"))
       assert_empty tasks.due_reminders, "a reminder rings once"
+      assert_raises(Master::Ground::AssistantTasks::Error) { tasks.call(action: "reminded", id: task.fetch("id")) }
     end
   end
 
@@ -114,5 +115,21 @@ class TestSessionRingsReminders < Minitest::Test
     assert_equal ["Reminder: Call the plumber"], spoken
     assert_equal [["reminder:due", { task_id: "a1" }]], events
     assert_equal [%w[reminded a1]], tasks.marked
+  end
+
+  # Two sessions saw the same reminder due; the second to mark it rings nothing.
+  def test_a_reminder_another_session_claimed_stays_quiet
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@refs, Refs.new(Dir.tmpdir, nil))
+    tasks = Tasks.new
+    tasks.define_singleton_method(:call) { |**| raise Master::Ground::AssistantTasks::Error, "already reminded" }
+
+    out, = capture_io do
+      Master::Voice::Playback.stub(:speak, ->(_) { flunk("a claimed reminder must not speak") }) do
+        session.send(:ring_due_reminders, tasks:)
+      end
+    end
+
+    refute_includes out, "remind0"
   end
 end

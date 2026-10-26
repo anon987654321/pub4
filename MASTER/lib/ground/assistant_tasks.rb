@@ -140,8 +140,12 @@ module Master
 
       def delivered(task) = task["due_at"] ? task.merge("delivery" => DELIVERY) : task
 
+      # A claim under the ledger lock: two open sessions both see a reminder
+      # due, and only the one that marks it first rings it.
       def reminded!(state, id)
         task = task!(state, id)
+        raise Error, "task #{id} was already reminded" if task["reminded_at"]
+
         task["reminded_at"] = now
         public_task(task)
       end
