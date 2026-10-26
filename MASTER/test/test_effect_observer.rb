@@ -78,6 +78,98 @@ class TestEffectObserver < Minitest::Test
     assert_equal "cp-1", payload[:checkpoint_id]
   end
 
+
+  def test_after_event_requires_a_matching_before_event
+    bus = RecordingBus.new
+    observer = Master::Trace::EffectObserver.new(bus:)
+    effect = Master::Core::Effect.read("README.md")
+
+    error = assert_raises(ArgumentError) do
+      observer.call(
+        stage: :after, turn: 0, effect:, effect_id: "effect-without-before",
+        observation: Master::Core::Observation.ok("read")
+      )
+    end
+
+    assert_match(/matching before-event/, error.message)
+    assert_empty bus.events
+  end
+
+  def test_duplicate_before_event_is_rejected_without_a_second_persisted_event
+    bus = RecordingBus.new
+    observer = Master::Trace::EffectObserver.new(bus:)
+    effect = Master::Core::Effect.read("README.md")
+    arguments = { stage: :before, turn: 0, effect:, effect_id: "effect-duplicate" }
+
+    observer.call(**arguments)
+    error = assert_raises(ArgumentError) { observer.call(**arguments) }
+
+    assert_match(/duplicate before-event/, error.message)
+    assert_equal 1, bus.events.length
+  end
+
+  def test_after_event_must_match_the_original_effect_identity
+    bus = RecordingBus.new
+    observer = Master::Trace::EffectObserver.new(bus:)
+    effect = Master::Core::Effect.write("private.txt", "private")
+    observer.call(stage: :before, turn: 1, effect:, effect_id: "effect-scope", scope: "private/a")
+
+    error = assert_raises(ArgumentError) do
+      observer.call(
+        stage: :after, turn: 1, effect:, effect_id: "effect-scope", scope: "private/b",
+        observation: Master::Core::Observation.ok("written")
+      )
+    end
+    assert_match(/identity differs/, error.message)
+    assert_equal 1, bus.events.length
+
+    observer.call(
+      stage: :after, turn: 1, effect:, effect_id: "effect-scope", scope: "private/a",
+      observation: Master::Core::Observation.ok("written")
+    )
+    assert_equal 2, bus.events.length
+  end
+
+  def test_after_event_rejects_negative_elapsed_time_without_closing_the_pair
+    bus = RecordingBus.new
+    observer = Master::Trace::EffectObserver.new(bus:)
+    effect = Master::Core::Effect.read("README.md")
+    observer.call(stage: :before, turn: 0, effect:, effect_id: "effect-timing")
+
+    error = assert_raises(ArgumentError) do
+      observer.call(
+        stage: :after, turn: 0, effect:, effect_id: "effect-timing",
+        observation: Master::Core::Observation.ok("read"), elapsed_ms: -1
+      )
+    end
+    assert_match(/elapsed_ms/, error.message)
+    assert_equal 1, bus.events.length
+
+    observer.call(
+      stage: :after, turn: 0, effect:, effect_id: "effect-timing",
+      observation: Master::Core::Observation.ok("read"), elapsed_ms: 2
+    )
+    assert_equal 2, bus.events.length
+    assert_equal 2, bus.events.last.last[:elapsed_ms]
+  end
+
+  def test_completed_effect_identity_cannot_be_reused
+    bus = RecordingBus.new
+    observer = Master::Trace::EffectObserver.new(bus:)
+    effect = Master::Core::Effect.read("README.md")
+    observer.call(stage: :before, turn: 0, effect:, effect_id: "effect-finished")
+    observer.call(
+      stage: :after, turn: 0, effect:, effect_id: "effect-finished",
+      observation: Master::Core::Observation.ok("read")
+    )
+
+    error = assert_raises(ArgumentError) do
+      observer.call(stage: :before, turn: 1, effect:, effect_id: "effect-finished")
+    end
+    assert_match(/duplicate before-event/, error.message)
+    assert_equal 2, bus.events.length
+  end
+
   def test_requires_a_bus_with_strict_persistence
     error = assert_raises(ArgumentError) { Master::Trace::EffectObserver.new(bus: Object.new) }
     assert_match(/publish_required/, error.message)

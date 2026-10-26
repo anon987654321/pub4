@@ -606,3 +606,10 @@ Rendered UI receipts now require a successful render status, a SHA-256 screensho
 ## Media asset inventory completeness (2026-10-26)
 
 SurfaceEvidence now includes symlinked paths with recognized media/font extensions in the asset inventory instead of silently dropping them from media coverage. A symlinked asset is reported as unmeasured/inconclusive until its target can be verified; it cannot make the target appear to have no media assets. Added a focused regression contract. Validation remains INCONCLUSIVE because tests were not executed in this session.
+
+
+## Effect lifecycle pair integrity (2026-10-26)
+
+The strict effect observer now validates before/after pairing in-process. It rejects an after-event without a prior before-event, duplicate effect identities, mismatched lifecycle envelopes, and negative or non-integer elapsed times. A failed after-event persistence leaves the pair pending instead of pretending it closed. Added focused regression tests for each case.
+
+This guard prevents malformed lifecycle sequences within one observer instance; it is not an exactly-once guarantee across process restarts. Unknown or irreversible effects still require durable reconciliation before replay, and the shared contract has not yet been propagated to every background, transaction and deployment effect path. Tests were not run in this environment because the local runtime cannot resolve github.com to obtain the checkout; validation remains INCONCLUSIVE.
