@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "tmpdir"
+require "digest"
 
 class TestLLMDispatcher < Minitest::Test
   class FakeBus
@@ -89,6 +90,21 @@ class TestLLMDispatcher < Minitest::Test
     result = dispatcher.send(:claude_cli_call, "claude-sonnet-4-6", [{ role: "user", content: "hi" }], nil)
 
     assert_equal "claude-cli: exited 124 with nothing on either stream", result.message
+  end
+
+  def test_provider_outcome_event_redacts_raw_error_text
+    dispatcher, _session, bus = build_dispatcher
+    private_error = "auth failed at https://private.example/?token=not-for-logs"
+
+    dispatcher.send(
+      :record_provider_outcome, "provider-a", :provider_error, error: private_error
+    )
+
+    _name, payload = bus.events.find { |name, _| name == "llm:provider_outcome" }
+    assert_equal Digest::SHA256.hexdigest(private_error), payload[:error_digest]
+    assert_equal private_error.bytesize, payload[:error_bytes]
+    refute payload.key?(:error)
+    refute_includes bus.events.inspect, private_error
   end
 
   def test_record_usage_publishes_cost_transparency_line
