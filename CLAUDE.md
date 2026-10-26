@@ -22,7 +22,7 @@ Do not copy MASTER settings, defaults, limits, Laws, exemptions, workflow defini
 
 When a canonical setting changes, change its owning source and follow MASTER's documented process for maintaining generated contracts. Do not create a second source that must be kept in sync manually.
 
-The executable Law code has one canonical home: `MASTER/law/`. The old `MASTER/lib/review/scan/laws` path is a compatibility symlink into `MASTER/law/detectors/`, not a second source tree. `MASTER/data/laws.yml` remains in its constitutionally owned data location.
+`MASTER/data/laws.yml` is the canonical Law catalogue. Ruby under `MASTER/law/detectors/` implements detectors, not a competing policy catalogue. There is no compatibility directory or alias for retired Law paths. Each Law must have one canonical catalogue entry, a traceable Ruby detector or explicit semantic/visual evaluator, and coverage across lexical, semantic, and visual review.
 
 ## Task-specific context
 
