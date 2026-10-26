@@ -251,7 +251,8 @@ module Master
         @root_path = root_path
         @mutation_observer = Master::Trace::MutationObserver.new(
           root: @root_path, namespace: "git:mutation",
-          subject_type: "repository", subject_id: "working-tree", bus: event_bus
+          subject_type: "repository", subject_id: "working-tree", bus: event_bus,
+          marker_root: ".master/git_mutations"
         )
       end
 
