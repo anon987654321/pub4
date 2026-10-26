@@ -29,7 +29,7 @@ module Master
 
       Source = Data.define(:path, :sha256, :bytes)
 
-      attr_reader :root, :target, :sources, :excluded, :law_ids, :adapters,
+      attr_reader :root, :target, :sources, :source_signatures, :excluded, :law_ids, :adapters,
                   :max_passes, :budget_seconds, :created_at, :deadline_at,
                   :scope_digest, :source_digest, :law_digest, :authority_digest,
                   :law_source_digest, :toolchain_digest, :exclusion_digest,
@@ -49,7 +49,9 @@ module Master
         @budget_seconds = positive_integer(budget_seconds, "budget_seconds")
         @deadline_at = (Time.now.utc + @budget_seconds).iso8601.freeze
 
+        @source_signatures = {}
         @sources = snapshot_sources(files).freeze
+        @source_signatures = @source_signatures.freeze
         @scope_digest = digest_json(@sources.map(&:path)).freeze
         @source_digest = digest_json(@sources.map { |source| [source.path, source.sha256, source.bytes] }).freeze
 
@@ -153,7 +155,9 @@ module Master
             raise ArgumentError, "fix source changed while the plan was being captured: #{relative(path)}"
           end
 
-          Source.new(path: relative(path).freeze, sha256: sha256.freeze, bytes: after.size)
+          relative_path = relative(path).freeze
+          @source_signatures[relative_path] = signature.call(after).freeze
+          Source.new(path: relative_path, sha256: sha256.freeze, bytes: after.size)
         end
       end
 
