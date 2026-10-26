@@ -659,3 +659,10 @@ This does not yet cover direct calls to every `Master::Io` class, arbitrary back
 The sanitized `fix:transaction_*` lifecycle events now also enter the canonical operational evidence stream, alongside activity telemetry. The transaction manifest remains the authoritative recovery record; this change does not introduce another ledger or make telemetry a prerequisite for transaction recovery. Added an integration regression contract that checks start/rollback evidence is present in both streams while private workspace paths, filenames and file content remain absent and the transaction's path digest remains correlatable.
 
 The new regression test is committed but unexecuted. Validation remains INCONCLUSIVE until it runs on the pinned Ruby toolchain.
+
+
+## Mission and /fix run lifecycle evidence (2026-10-26)
+
+The existing operational evidence stream now includes a bounded set of sanitized mission lifecycle and /fix journal events: mission start/queue/resume/finish/block/defer/wake/interrupt/artifact/checkpoint, plus run start/resume/interruption, plan binding, assessment receipts and journal errors/corruption. Arbitrary `mission:stage` payloads are deliberately excluded because callers can attach arbitrary stage-specific data. Durable mission and run records remain the state authority; this is cross-process-readable evidence, not a replacement state machine.
+
+Added a regression test proving mission start/finish appear in evidence while goal, scope and summary content are represented by SHA-256 digests. It remains unexecuted; validation is INCONCLUSIVE until the focused suite runs on the pinned Ruby toolchain.

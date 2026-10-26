@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require_relative "../lib/trace/event_bus"
+require_relative "../lib/trace/log"
 require "tmpdir"
 require "fileutils"
 require "json"
+require "digest"
 
 class FixMissionTest < Minitest::Test
   class Bus
@@ -101,6 +104,41 @@ class FixMissionTest < Minitest::Test
       assert_equal "clean", record["summary"]
       assert_equal %w[mission:start mission:stage mission:stage mission:stage mission:finish],
                    bus.events.map(&:first)
+    end
+  end
+
+  def test_mission_lifecycle_evidence_redacts_goal_scope_and_summary
+    Dir.mktmpdir do |root|
+      goal = "repair private customer 7391"
+      scope = "private/customer-7391"
+      summary = "customer-specific repair details"
+      bus = Master::Trace::EventBus.new(
+        event_log: Master::Trace::Log::Event.new(root:),
+        evidence_log: Master::Trace::Log::Evidence.new(root:)
+      )
+      mission = Master::Fix::Mission.new(root:, bus:).start!(
+        goal:, scope:, model: "grok-cli:auto", effort: "medium"
+      )
+      mission.finish!(summary:)
+
+      evidence_path = File.join(root, "runtime/events/evidence.jsonl")
+      evidence = File.read(evidence_path)
+      refute_includes evidence, goal
+      refute_includes evidence, scope
+      refute_includes evidence, summary
+      assert_includes evidence, Digest::SHA256.hexdigest(goal)
+      assert_includes evidence, Digest::SHA256.hexdigest(scope)
+      assert_includes evidence, Digest::SHA256.hexdigest(summary)
+
+      rows = File.readlines(evidence_path, chomp: true).map { |line| JSON.parse(line) }
+      lifecycle = rows.select { |row| %w[mission:start mission:finish].include?(row["event"]) }
+      assert_equal %w[mission:start mission:finish], lifecycle.map { |row| row["event"] }
+      started = lifecycle.first.fetch("payload")
+      finished = lifecycle.last.fetch("payload")
+      assert_equal Digest::SHA256.hexdigest(goal), started["goal_digest"]
+      assert_equal Digest::SHA256.hexdigest(scope), started["scope_digest"]
+      assert_equal Digest::SHA256.hexdigest(summary), finished["summary_digest"]
+      assert_equal "completed", finished["state"]
     end
   end
 
