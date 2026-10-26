@@ -142,6 +142,45 @@ class TestFourStreamAssessment < Minitest::Test
     assert_includes failure[:reason], "fixture failure"
   end
 
+  def test_plan_invalidation_resets_every_clean_streak
+    assessment = build(clean_passes: 2)
+    Master::Fix::FourStreamAssessment::STREAMS.each do |stream|
+      1.upto(2) do |iteration|
+        assessment.record(
+          law: "DRY", stream:, surface: :whole_file,
+          status: :assessed_clean,
+          evidence: ["sha256=source-#{iteration}", "adapter=fixture"],
+          iteration:, generation: 0
+        )
+      end
+    end
+
+    assert assessment.clean?
+    generation = assessment.invalidate!(iteration: 2, reason: "source changed")
+    assert_equal 1, generation
+    refute assessment.complete?
+    refute assessment.clean?
+    summary = assessment.summary
+    assert_equal 1, summary[:generation]
+    assert_equal 4, summary[:recorded_cells]
+    assert_equal 0, summary[:unassessed_cells]
+  end
+
+  def test_not_applicable_receipts_do_not_survive_a_new_generation
+    assessment = build
+    Master::Fix::FourStreamAssessment::STREAMS.each do |stream|
+      assessment.record(
+        law: "DRY", stream:, surface: :whole_file,
+        status: :not_applicable, iteration: 1,
+        reason: "fixture has no relevant surface"
+      )
+    end
+
+    assert assessment.complete?
+    assessment.invalidate!(iteration: 1, reason: "surface inventory changed")
+    refute assessment.complete?
+  end
+
   def test_unknown_surfaces_are_rejected
     assert_raises(ArgumentError) { build(surfaces: [:made_up_surface]) }
   end
