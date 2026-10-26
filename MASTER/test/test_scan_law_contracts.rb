@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+<sub># frozen_string_literal: true
 
 require_relative "test_helper"
 require "review/scan/law_dsl"
@@ -184,11 +184,8 @@ class TestScanLawContracts < Minitest::Test
     assert_equal :error, retry_hits.first[:severity]
   end
 
-  # The batch-retired twins: every id whose registry block was a regex-identical
-  # duplicate of its law. Each law already proves itself against its own bad
-  # fixture at load; this asserts the other half of the contract — that the id
-  # still reaches scanner findings through the bridge, at a path its own
-  # scoping (path prefix + language) accepts.
+  # Every canonical Law detector must reach the scanner through the same
+  # adapter used in production, at a path its declared detector scope accepts.
   RETIRED_TWINS = %w[
     ARIA_INTERACTIVE BUTTON_OVER_ANCHOR CLAMP_TYPOGRAPHY DOLLAR_PAREN
     I18N_COVERAGE MEANINGFUL_NAMES MEASURE_OPTIMUM
@@ -203,15 +200,14 @@ class TestScanLawContracts < Minitest::Test
     "scss" => ".scss", "zsh" => ".zsh", "javascript" => ".js"
   }.freeze
 
-  def test_every_retired_twin_reaches_findings_through_the_bridge
-    bridge = Laws::LawBridgeLaw.new
+  def test_every_canonical_detector_reaches_findings_without_a_bridge
     RETIRED_TWINS.each do |id|
       law = Law.definitions[id.to_sym]
-      refute_nil law, "#{id} must exist in law/ — its registry twin is gone"
+      refute_nil law, "#{id} must exist in the canonical Law registry"
       ext = TWIN_EXT.fetch(law.languages.first&.to_s, ".rb")
       path = "#{law.path || "/lib/"}example#{ext}"
-      hits = bridge.check(law.bad, path:)
-      assert hits.any? { |h| h[:law] == id }, "#{id} must reach scanner findings via the bridge"
+      hits = Master::Review::Scan::CanonicalLawAdapter.new(law).check(law.bad, path:)
+      assert hits.any? { |h| h[:law] == id }, "#{id} must reach scanner findings from its canonical detector"
     end
   end
 
@@ -418,13 +414,13 @@ class TestScanLawContracts < Minitest::Test
   # Comparing every law id caught that pair and would have kept the principle
   # out of the system prompt to protect against a disagreement neither half can
   # have.
-  def test_no_id_lives_in_both_law_and_registry
-    Laws::LawBridgeLaw.new
-    law_ids = Law.definitions.values.select(&:scannable?).map { |rule| rule.id.to_s }
+  def test_canonical_law_ids_do_not_have_duplicate_detector_registrations
+    law_ids = Law.definitions.values.select(&:scannable?).map { |law| law.id.to_s.upcase }.to_set
     registry_ids = Master::Review::Scan::Law.registry.filter_map do |klass|
       Master::Review::Scan::LawFactory.registry_id(klass, root: Master::ROOT)&.upcase
     end
-    assert_empty law_ids & registry_ids
+    duplicate_ids = law_ids & registry_ids
+    assert_empty duplicate_ids, "canonical detector identities also registered in scanner DSL: #{duplicate_ids.to_a.sort.join(", ")}"
   end
 
   # Every registered rule over one planted source carrying what fools a line
@@ -477,3 +473,4 @@ class TestScanLawContracts < Minitest::Test
 
   def finding_lines(findings) = findings.map { |finding| finding.line.to_i }.sort
 end
+</sub>
