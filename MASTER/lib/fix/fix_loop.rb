@@ -49,6 +49,10 @@ module Master
       # How the last run ended, as a TERMINAL_STATES symbol, for the pass to read instead of its message.
       attr_reader :last_terminal_state
 
+      # Where this loop keeps its mission: the repository root when it serves MASTER. The Fold's
+      # mission stays under MASTER's root; the two are different work and both may be live.
+      def mission_root = @root
+
       include ConvergenceConfig
       include BackgroundRunner
       include PassRunnerBuilder

@@ -10,12 +10,18 @@ class TestFixStatus < Minitest::Test
   def setup
     @root = Dir.mktmpdir("fix-status-")
     FileUtils.mkdir_p(File.join(@root, "MASTER", ".master"))
+    FileUtils.mkdir_p(File.join(@root, ".master"))
   end
 
   def teardown = FileUtils.rm_rf(@root)
 
   def write(path, body)
     File.write(File.join(@root, "MASTER", ".master", path), body)
+  end
+
+  # /fix keeps its mission at the repository root, its journal under MASTER.
+  def write_mission(body)
+    File.write(File.join(@root, ".master", "mission.json"), body)
   end
 
   def run_record(target, state: "active", pid: Process.pid)
@@ -47,7 +53,7 @@ class TestFixStatus < Minitest::Test
     write("fix_runs.json", JSON.generate("version" => 1, "runs" => runs))
     mission = { "state" => "running", "stage" => "execute", "scope" => "RAILS",
                 "attempt_count" => 2, "artifacts" => %w[x] }
-    write("mission.json", JSON.generate(mission))
+    write_mission(JSON.generate(mission))
     write("fix-RAILS.log", "first\nlast line\n")
     before = Dir.glob(File.join(@root, "**", "*"), File::FNM_DOTMATCH).sort
 
@@ -107,7 +113,7 @@ class TestFixStatus < Minitest::Test
 
   def test_trees_filter_narrows_runs_logs_and_mission
     write("fix_runs.json", JSON.generate("runs" => [run_record("RAILS"), run_record("STUDIO")]))
-    write("mission.json", JSON.generate("state" => "running", "scope" => "STUDIO"))
+    write_mission(JSON.generate("state" => "running", "scope" => "STUDIO"))
     write("fix-RAILS.log", "r\n")
     write("fix-STUDIO.log", "s\n")
 
@@ -120,7 +126,7 @@ class TestFixStatus < Minitest::Test
 
   def test_corrupt_journals_are_not_reported_as_empty
     write("fix_runs.json", "{not valid json")
-    write("mission.json", "{also broken")
+    write_mission("{also broken")
 
     status = Operator::FixStatus.new(root: @root)
     payload = status.payload
@@ -139,7 +145,7 @@ class TestFixStatus < Minitest::Test
       external = File.join(outside, "payload.json")
       File.write(external, JSON.generate("version" => 1, "runs" => [run_record("RAILS")]))
       File.symlink(external, File.join(@root, "MASTER", ".master", "fix_runs.json"))
-      File.symlink(external, File.join(@root, "MASTER", ".master", "mission.json"))
+      File.symlink(external, File.join(@root, ".master", "mission.json"))
 
       payload = Operator::FixStatus.new(root: @root).payload
 

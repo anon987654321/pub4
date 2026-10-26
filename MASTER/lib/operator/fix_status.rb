@@ -22,7 +22,8 @@ module Operator
   class FixStatus
     TREES = MasterPaths::TREES
     JOURNAL = "MASTER/.master/fix_runs.json"
-    MISSION = "MASTER/.master/mission.json"
+    # FixLoop keeps /fix's mission at the repository root (FixLoop#mission_root).
+    MISSION = ".master/mission.json"
     LOG_GLOB = "MASTER/.master/fix-*.log"
     HEARTBEAT = %r{\Afix0: pass \d+/\d+ }
     HEARTBEAT_WINDOW = 65_536

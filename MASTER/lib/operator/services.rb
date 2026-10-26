@@ -91,10 +91,12 @@ module Master
     def mission_state
       return "not_tested: missions are not loaded" unless defined?(Master::Fix::Mission)
 
-      record = Master::Fix::Mission.current(root: Master::ROOT)
-      return "ready: no mission" unless record
+      records = { "fold" => Master::ROOT, "fix" => Master::REPO_ROOT }
+                .filter_map { |kind, at| (record = Master::Fix::Mission.current(root: at)) && [kind, record] }
+      return "ready: no mission" if records.empty?
+      return "failed: mission record has no state" if records.any? { |_, record| record["state"].to_s.empty? }
 
-      record["state"].to_s.empty? ? "failed: mission record has no state" : "ready: mission #{record["state"]}"
+      "ready: #{records.map { |kind, record| "#{kind} mission #{record["state"]}" }.join(", ")}"
     rescue StandardError => e
       "failed: #{e.class}"
     end

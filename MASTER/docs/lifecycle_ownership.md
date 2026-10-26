@@ -48,7 +48,11 @@ Lifecycle, the background runner, the Supervisor, the TaskSteward and CoreBridge
 build it. State is .master/mission.json under a lock and a lease. A handle that
 claimed a mission may write only that mission while it holds the lease; any
 other write raises Mission::Fenced (c296719e1). The Supervisor, Heartbeat and
-TaskSteward read it and wake work whose lease expired.
+TaskSteward read it and wake work whose lease expired. Two missions coexist: the
+Fold's under MASTER's root and /fix's under the repository root
+(FixLoop#mission_root); FixLoop's run mutex and the transaction lock already
+serialise their writes. Heartbeat wakes /fix's, the TaskSteward tends the
+Fold's, and /status mission, fix_status and the service check name each.
 
 ### Fix::Transaction and Delivery
 
@@ -80,12 +84,7 @@ rollback on the box is the operator's (operator_seams.yml).
 
 ### Open gaps, by risk
 
-1. Two mission files. CoreBridge keeps the Fold's mission under MASTER's root
-   and FixLoop and the Supervisor keep /fix's under the repository root, while
-   Heartbeat, the TaskSteward and fix_status read only MASTER's. One file would
-   make the two kinds of mission supersede each other, so this needs a decision
-   about whether a Fold turn and a /fix run may coexist, not a path change.
-2. Fix::Kernel is built only by replay_cli, so its hash-chained log has no
+1. Fix::Kernel is built only by replay_cli, so its hash-chained log has no
    production writer. It is the coordinator the others fold into, in the
    gated order docs/fix_coordinator_map.md sets; until a phase moves a
    responsibility, deleting it would undo that plan.

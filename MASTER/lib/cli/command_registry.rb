@@ -582,36 +582,47 @@ module Master
 
       def dispatch_undo(undo, ctx: nil) = undo_line("reverted", undo.undo!)
 
+      # The Fold's mission lives under MASTER's root and /fix's under the
+      # repository root (FixLoop#mission_root); status names each that exists.
       def dispatch_mission(root, ctx: nil)
-        record = Master::Fix::Mission.current(root:)
         arg = arg_for(ctx)
-        return "mission0: none" unless record
+        return "status mission" unless ["", "status"].include?(arg)
 
-        case arg
-        when "", "status"
-          [
-            "mission: #{record["id"]}",
-            "state: #{record["state"]}",
-            "stage: #{record["stage"]}",
-            "model: #{record["model"]}",
-            "effort: #{record["effort"]}",
-            "operator_mode: #{record.dig("operator", "mode") || "repair"}",
-            "operator_risk: #{record.dig("operator", "risk") || "unknown"}",
-            "model_tier: #{Master::Operator::Mode.spec(record.dig("operator", "mode") || "repair")[:model_tier]}",
-            "council_required: #{Master::Operator::Mode.spec(record.dig("operator", "mode") || "repair")[:council]}",
-            "evidence_contract: #{Master::Operator::Mode.spec(record.dig("operator", "mode") || "repair")[:evidence]}",
-            "goal: #{record["goal"]}",
-            "attempt: #{record["attempt_count"]}",
-            "retries: #{record["retry_count"]}",
-            "next_wake: #{record["next_wake_at"] || "now"}",
-            "wake_reason: #{record["wake_reason"] || "none"}",
-            "lease: #{record["lease_owner"] || "none"} until #{record["lease_until"] || "none"}",
-          ].join("\n")
-        else
-          "status mission"
+        missions = mission_roots(root).filter_map do |kind, at|
+          record = Master::Fix::Mission.current(root: at)
+          [kind, record] if record
         end
+        return "mission0: none" if missions.empty?
+
+        missions.map { |kind, record| mission_lines(kind, record) }.join("\n\n")
       rescue StandardError => e
         "mission0: #{e.class}: #{e.message}"
+      end
+
+      def mission_roots(root)
+        fix_root = File.expand_path(root) == Master::ROOT ? Master::REPO_ROOT : root
+        [["fold", root], ["fix", fix_root]].uniq { |_, at| File.expand_path(at) }
+      end
+
+      def mission_lines(kind, record)
+        [
+          "mission: #{record["id"]} (#{kind})",
+          "state: #{record["state"]}",
+          "stage: #{record["stage"]}",
+          "model: #{record["model"]}",
+          "effort: #{record["effort"]}",
+          "operator_mode: #{record.dig("operator", "mode") || "repair"}",
+          "operator_risk: #{record.dig("operator", "risk") || "unknown"}",
+          "model_tier: #{Master::Operator::Mode.spec(record.dig("operator", "mode") || "repair")[:model_tier]}",
+          "council_required: #{Master::Operator::Mode.spec(record.dig("operator", "mode") || "repair")[:council]}",
+          "evidence_contract: #{Master::Operator::Mode.spec(record.dig("operator", "mode") || "repair")[:evidence]}",
+          "goal: #{record["goal"]}",
+          "attempt: #{record["attempt_count"]}",
+          "retries: #{record["retry_count"]}",
+          "next_wake: #{record["next_wake_at"] || "now"}",
+          "wake_reason: #{record["wake_reason"] || "none"}",
+          "lease: #{record["lease_owner"] || "none"} until #{record["lease_until"] || "none"}",
+        ].join("\n")
       end
 
       def dispatch_runtime(root, ctx: nil)

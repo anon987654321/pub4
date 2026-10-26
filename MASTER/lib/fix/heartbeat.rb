@@ -93,7 +93,7 @@ module Master
       def reconcile_fix_mission!
         return unless @fix_loop
 
-        record = Mission.current(root: @root)
+        record = Mission.current(root: @fix_loop.respond_to?(:mission_root) ? @fix_loop.mission_root : @root)
         return unless record
         return unless %w[running waiting].include?(record["state"].to_s)
 
