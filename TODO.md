@@ -591,3 +591,8 @@ these missing assessors will correctly finish BLOCKED rather than report DONE.
 ## Effect replay safety (2026-10-26)
 
 The shared `Master::Execution::Contract::EffectEnvelope` now records explicit reversibility (`reversible`, `compensatable`, `irreversible`, `unknown`), defaults to `unknown`, rejects invalid classifications, and exposes `replay_requires_reconciliation?` for irreversible/unknown effects. This prevents the contract from implying that an idempotency key alone proves exactly-once behavior. A regression test covers the default, invalid values and irreversible replay. The declaration is intentionally not presented as complete runtime enforcement: the strict Fold lifecycle observer now accepts and persists the reversibility classification on both before/after receipts, defaulting to unknown. Inventory and classify actual effect handlers, propagate classification from callers, and add reconciliation tests before claiming replay safety across every tool/background/deployment path. Validation remains INCONCLUSIVE until the focused contract suite runs on Ruby 4.0.5.
+
+
+## Assessment adapter availability truth (2026-10-26)
+
+The /fix assessment adapter inventory now distinguishes a missing rendered-UI/browser-journey or lexical-opportunity adapter (`unavailable`) from an installed adapter that explicitly declares the target non-applicable (`not_applicable_to_target`). Added focused regression coverage for missing, non-applicable and applicable adapter states. This fixes the plan's capability report only; the SurfaceEvidence receipts remain the authoritative evidence, and missing browser evidence for a front-end target still cannot count as clean. The regression tests were not executed here, so validation remains INCONCLUSIVE.
