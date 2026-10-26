@@ -369,6 +369,18 @@ module Master
           self
         end
 
+        def assessment_plan_refreshed!(plan)
+          @assessment_mutex&.synchronize do
+            @assessment_plan = plan
+            @assessment_surface_presence = nil
+            @assessment_scope = plan.sources.map { |source| File.expand_path(source.path, plan.root) }.sort.freeze
+          end
+          self
+        rescue StandardError => e
+          stage_failures[:assessment_matrix] << "plan metadata refresh: #{e.class}: #{e.message.to_s[0, 150]}"
+          self
+        end
+
         def assessment_matrix_status
           return :not_measured unless @assessment_ledger
 
@@ -486,6 +498,13 @@ module Master
 
         def run_pass(files:, target:, pass:, deadline:, transaction_id:, history:, seen_snapshots:,
                      recurring_violations:, consecutive_clean:, wishlist_proposals: [], run_id: nil)
+          plan_failures = stage_failures.fetch(:fix_plan, [])
+          if plan_failures.any?
+            message = "fix plan refresh remains inconclusive; no repair pass attempted: #{plan_failures.last}"
+            Master::Trace::Dmesg.status("fix0", message[0, 200])
+            return PassResult.new(status: :continue, consecutive_clean: 0, message:)
+          end
+
           pass_mtimes = mtimes(files)
           @pass_progress = false
           @human_decision_required = false
