@@ -17,10 +17,9 @@ absolute:
   golden_law: PRESERVE_THEN_IMPROVE_NEVER_BREAK
   severity_rank: { info: 0, warning: 1, error: 2, critical: 3 }
   sacred_paths:
-    - data/
+    - data/soul.yml
     - data/SOUL.md
     - data/project_context.yml
-    - lib/review/scan/
     - lib/ground/pledge.rb
     - bin/cli
   anti_simulation:
