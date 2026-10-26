@@ -9,6 +9,13 @@ module Master
     # OS-backed web service has an independent rcctl control plane.
     SERVICES = %w[cognition mission model memory device voice web].freeze
     SYSTEM_SERVICE = { "web" => "master" }.freeze
+    # One vocabulary for every service, provider and channel status: ready only when
+    # something observed it working, configured when its prerequisites exist but
+    # nothing has tried it, not_tested when nothing was measured. A reason follows a
+    # colon. memory and device read "ready" from a literal before, which is the false
+    # ready CAPABILITY_STATUS_MUST_BE_TRUTHFUL forbids.
+    HEALTH = %w[ready configured degraded failed unavailable not_tested].freeze
+    MODEL_CLIS = %w[claude codex grok gemini].freeze
 
     module_function
 
@@ -59,51 +66,54 @@ module Master
 
     def state(name)
       case name.to_s
-      when "cognition" then defined?(Master::Core::Fold) ? "ready" : "unloaded"
+      when "cognition" then defined?(Master::Core::Fold) ? "ready" : "not_tested: the Fold is not loaded"
       when "mission" then mission_state
       when "model" then model_state
-      when "memory" then "ready"
-      when "device" then "ready"
-      when "voice"
-        voice_error = Master::Voice::Speech.last_error if defined?(Master::Voice::Speech)
-        playback_error = Master::Voice::Playback.last_error if defined?(Master::Voice::Playback)
-        reason = [voice_error, playback_error].compact.map(&:to_s).reject(&:empty?).first
-        degraded = ENV["MASTER_TTS_DEGRADED"] == "1" || !reason.nil?
-        if degraded
-"degraded#{reason ? ": #{reason}" : ""}"
-else
-"ready"
-end
+      when "memory", "device" then "not_tested: no probe"
+      when "voice" then voice_state
       when "web" then rcctl_state("master")
-      else "unknown"
+      else "not_tested: unknown service"
       end
     rescue StandardError => e
-      "unknown, #{e.class}"
+      "failed: #{e.class}"
+    end
+
+    # Ready until speech or playback has failed in this process; the failure is the reason.
+    def voice_state
+      errors = [defined?(Master::Voice::Speech) && Master::Voice::Speech.last_error,
+                defined?(Master::Voice::Playback) && Master::Voice::Playback.last_error]
+      reason = errors.select { |error| error.is_a?(String) && !error.empty? }.first
+      return "degraded: #{reason}" if reason
+
+      ENV["MASTER_TTS_DEGRADED"] == "1" ? "degraded: MASTER_TTS_DEGRADED=1" : "ready"
     end
 
     def mission_state
-      return "idle" unless defined?(Master::Fix::Mission)
+      return "not_tested: missions are not loaded" unless defined?(Master::Fix::Mission)
 
       record = Master::Fix::Mission.current(root: Master::ROOT)
-      return "idle" unless record
+      return "ready: no mission" unless record
 
-      record["state"].to_s.empty? ? "unknown" : record["state"].to_s
-    rescue StandardError
-      "unknown"
+      record["state"].to_s.empty? ? "failed: mission record has no state" : "ready: mission #{record["state"]}"
+    rescue StandardError => e
+      "failed: #{e.class}"
     end
 
     def model_state
-      configured = ENV.values_at("OPENROUTER_API_KEY", "ANTHROPIC_API_KEY", "REPLICATE_API_TOKEN").any? { |v| v.to_s != "" }
-      configured ? "configured" : "local/degraded"
+      keys = ENV.values_at("OPENROUTER_API_KEY", "ANTHROPIC_API_KEY").any? { |value| value.to_s != "" }
+      clis = MODEL_CLIS.select { |cli| Master::Io::Exec.which(cli) }
+      return "configured: #{[("API key" if keys), *clis].compact.join(", ")}" if keys || clis.any?
+
+      "unavailable: no API key and no model CLI on PATH"
     end
 
     def rcctl_state(service)
-      return "unmanaged" unless File.executable?("/usr/sbin/rcctl")
+      return "not_tested: no rcctl on this host" unless File.executable?("/usr/sbin/rcctl")
 
       _, _, status = Master::Io::Exec.capture3("/usr/sbin/rcctl", "check", service)
-      status.success? ? "running" : "stopped"
+      status.success? ? "ready" : "unavailable: #{service} is stopped"
     rescue StandardError => e
-      "unknown, #{e.class}"
+      "failed: #{e.class}"
     end
 
     def run_rcctl(action, service)
