@@ -18,6 +18,9 @@ class Comment < ApplicationRecord
   # content holds Tiptap's HTML; the maximum measures the text inside it.
   validates :content, presence: true, length: { minimum: 1 }
   validates_rich_text_length :content, maximum: 10_000
+  # A reply belongs to its parent's thread. parent_id comes from the form, and a parent
+  # from another post put this reply under a thread its writer may not be able to read.
+  validate :parent_on_the_same_thread, if: -> { parent_id.present? && will_save_change_to_parent_id? }
 
   after_create_commit -> { broadcast_append_to [ commentable, "comments" ], partial: "comments/comment", locals: { comment: self } }
 
@@ -57,5 +60,13 @@ class Comment < ApplicationRecord
 
   def has_thread_summary?
     thread_summary.present? && summary_updated_at.present?
+  end
+
+  private
+
+  # By key: a lazy load of parent raises under strict loading.
+  def parent_on_the_same_thread
+    same = Comment.where(id: parent_id, commentable_type:, commentable_id:).exists?
+    errors.add(:parent_id, :invalid) unless same
   end
 end

@@ -78,6 +78,9 @@ class MessagesController < ApplicationController
   def forward
     message = @conversation.messages.visible.unexpired.find(params[:id])
     target = Conversation.for_user(Current.user).find(params[:target_conversation_id])
+    # The block that holds in create holds here too: a forward is a message into target.
+    return refuse_blocked if target.blocked_between?(Current.user)
+
     forwarded = target.messages.create!(
       sender: Current.user, content: message.content, message_type: message.message_type,
       duration_seconds: message.duration_seconds, forwarded_from: message

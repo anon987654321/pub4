@@ -22,4 +22,24 @@ class OutfitTest < ActiveSupport::TestCase
 
     assert_equal "fall · casual · work", outfit.context_label
   end
+# likes_count counted presses; one person could raise it as fast as the write limit.
+test "a person likes an outfit once, however often they press" do
+  outfit = Outfit.create!(user: @user, name: "Rain day")
+  other = User.strict_loading(false).create!(email_address: "liker@amber.test", password: "password123")
+
+  assert outfit.like!(other)
+  refute outfit.like!(other)
+  assert outfit.like!(@user)
+  assert_equal 2, outfit.reload.likes_count
+end
+
+test "removing an outfit removes its likes" do
+  outfit = Outfit.create!(user: @user, name: "Rain day")
+  outfit.like!(@user)
+
+  assert_difference -> { Reaction.count }, -1 do
+    outfit.destroy!
+  end
+end
+
 end

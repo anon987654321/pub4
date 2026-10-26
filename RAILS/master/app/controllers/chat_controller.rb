@@ -172,7 +172,7 @@ class ChatController < ApplicationController
   end
 
   def photo
-    status, payload = ImagePresenter.new(logger: web_logger).store(params[:photo])
+    status, payload = ImagePresenter.new(logger: web_logger, process: authenticated?).store(params[:photo])
     render json: payload, status:
   end
 

@@ -15,6 +15,9 @@ class Message < ApplicationRecord
   # conversations running at once, a message with no referent is one nobody can
   # follow.
   belongs_to :parent, class_name: "Message", optional: true
+  # The thread draws the parent's sender and first words beside the reply, so a parent
+  # from another conversation read a thread the sender is not in, by id.
+  validate :parent_in_this_conversation, if: -> { parent_id.present? && will_save_change_to_parent_id? }
   has_many :replies, class_name: "Message", foreign_key: :parent_id, dependent: :nullify, inverse_of: :parent
   # Where a forwarded copy came from. :nullify, because unsending the original
   # must not take the copy with it — the copy is the forwarder's message in
@@ -186,6 +189,11 @@ class Message < ApplicationRecord
   def maybe_summon_bot = ChannelBotReplyJob.set(wait: rand(2..6).seconds).perform_later(id)
 
   private
+
+  # By key, not through the association: a lazy load raises under strict loading.
+  def parent_in_this_conversation
+    errors.add(:parent, :invalid) unless Message.where(id: parent_id, conversation_id:).exists?
+  end
 
   def type_from_attachment
     return unless attachment.attached?

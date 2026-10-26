@@ -52,7 +52,7 @@ class PostsController < ApplicationController
   end
 
   def like
-    @post.like!
+    @post.like!(Current.user)
     @post.record_activity!("AmberPostLiked", source_vertical: "amber")
     respond_to do |format|
       format.turbo_stream do

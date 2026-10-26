@@ -115,7 +115,7 @@ class OutfitsController < ApplicationController
   end
 
   def like
-    @outfit.like!
+    @outfit.like!(Current.user)
     @outfit.record_activity!("AmberOutfitLiked", source_vertical: "amber")
     respond_to do |format|
       format.turbo_stream do

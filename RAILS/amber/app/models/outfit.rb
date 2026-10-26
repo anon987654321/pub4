@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Outfit < ApplicationRecord
+  include Likeable
   # Engine-ize Shared via pub4-shared
   include Shared::Reactable
   include Shared::Notifiable
@@ -44,10 +45,6 @@ class Outfit < ApplicationRecord
   accepts_nested_attributes_for :outfit_items, allow_destroy: true, reject_if: :reject_blank_outfit_item
 
   after_commit :broadcast_live_refresh
-
-  def like!
-    increment!(:likes_count)
-  end
 
   def context_label
     [ season, category, occasion ].compact_blank.join(" · ")

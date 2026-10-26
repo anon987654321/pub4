@@ -18,9 +18,16 @@ class ImagePresenter
     "image/heif" => ".heif",
   }.freeze
   DEFAULT_POSTPRO_PRESET = ENV.fetch("STUDIO_POSTPRO_PRESET", "portrait")
+  # postpro is the heaviest thing this 1 GB, 1 vCPU box runs; a grade that has not
+  # finished in this long is killed and the original is served.
+  POSTPRO_TIMEOUT_S = Integer(ENV.fetch("MASTER_PHOTO_POSTPRO_TIMEOUT_S", 90))
 
-  def initialize(logger: Rails.logger)
+  # process: false stores the photo as uploaded. Only an authenticated operator's
+  # upload is graded: /chat/photo is open to visitors, and a small PNG that decodes
+  # to a vast image made postpro pin the box for as long as it liked.
+  def initialize(logger: Rails.logger, process: false)
     @logger = logger
+    @process = process
   end
 
   def store(upload)
@@ -90,7 +97,7 @@ class ImagePresenter
     processed_path = PHOTO_UPLOAD_DIR.join("#{token}_#{DEFAULT_POSTPRO_PRESET}#{ext}")
 
     File.binwrite(original_path, upload.read)
-    processed = postpro_photo(original_path.to_s, processed_path.to_s)
+    processed = @process && postpro_photo(original_path.to_s, processed_path.to_s)
     final_path = processed && File.file?(processed_path) ? processed_path : original_path
     info = metadata(token, final_path, original_path, safe_name, mime, processed_path)
     File.write(PHOTO_UPLOAD_DIR.join("#{token}.json"), JSON.pretty_generate(info))
@@ -139,18 +146,25 @@ class ImagePresenter
     script = File.join(Master::REPO_ROOT, "STUDIO", "postpro", "postpro.rb")
     return false unless File.file?(script)
 
-    out, status = Open3.capture2e(
-      RbConfig.ruby,
-      script,
-      "--input", input_path,
-      "--output", output_path,
-      "--preset", DEFAULT_POSTPRO_PRESET,
-      chdir: File.dirname(script)
-    )
-    @logger.info("postpro photo=#{File.basename(input_path)} status=#{status.exitstatus} out=#{out.lines.last}")
-    status.success?
+    argv = [RbConfig.ruby, script, "--input", input_path, "--output", output_path, "--preset", DEFAULT_POSTPRO_PRESET]
+    out, status = run_bounded(argv, chdir: File.dirname(script))
+    @logger.info("postpro photo=#{File.basename(input_path)} status=#{status&.exitstatus.inspect} out=#{out.to_s.lines.last}")
+    status&.success? || false
   rescue StandardError => e
     @logger.warn("postpro failed: #{e.class}: #{e.message}")
     false
+  end
+
+  # Its own process group, so the kill takes the libvips children with it.
+  def run_bounded(argv, chdir:, timeout_s: POSTPRO_TIMEOUT_S)
+    Open3.popen2e(*argv, chdir:, pgroup: true) do |_stdin, output, waiter|
+      reader = Thread.new { output.read }
+      unless waiter.join(timeout_s)
+        Process.kill("KILL", -waiter.pid)
+        @logger.warn("postpro killed after #{timeout_s}s")
+        return [reader.value, nil]
+      end
+      [reader.value, waiter.value]
+    end
   end
 end
