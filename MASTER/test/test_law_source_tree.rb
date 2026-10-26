@@ -3,19 +3,16 @@
 require_relative "test_helper"
 
 class TestLawSourceTree < Minitest::Test
-  def test_executable_law_sources_have_one_canonical_home
+  def test_law_detectors_have_one_canonical_home_and_no_legacy_alias
     canonical = File.join(Master::ROOT, "law", "detectors")
-    compatibility = File.join(Master::ROOT, "lib", "review", "scan", "laws")
+    legacy = File.join(Master::ROOT, "lib", "review", "scan", "laws")
 
-    assert File.directory?(canonical), "the canonical detector directory is missing"
-    assert File.symlink?(compatibility), "the former scanner-law directory must remain a compatibility symlink"
-    assert_equal File.realpath(canonical), File.realpath(compatibility)
+    assert File.directory?(canonical), "canonical detector directory is missing"
+    refute File.exist?(legacy), "retired scanner-law path must not be restored"
+    refute File.symlink?(legacy), "law source consolidation must not use a compatibility symlink"
 
-    canonical_sources = Dir.glob(File.join(canonical, "*.rb")).map { |path| File.realpath(path) }.sort
-    compatibility_sources = Dir.glob(File.join(compatibility, "*.rb")).map { |path| File.realpath(path) }.sort
-
-    refute_empty canonical_sources
-    assert_equal canonical_sources, compatibility_sources,
-                 "compatibility loading must resolve to the same physical source files"
+    detectors = Dir.glob(File.join(canonical, "*.rb"))
+    refute_empty detectors
+    detectors.each { |detector| assert File.file?(detector), "missing detector source: #{detector}" }
   end
 end
