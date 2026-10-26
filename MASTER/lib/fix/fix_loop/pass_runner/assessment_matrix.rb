@@ -293,7 +293,7 @@ module Master
           def assessment_matrix_artifact
             unless @assessment_ledger
               return {
-                schema_version: 1,
+                schema_version: 2,
                 status: "not_measured",
                 reason: "no scanner-backed Law population was available",
                 target: @assessment_plan&.target,
@@ -312,7 +312,7 @@ module Master
 
             @assessment_mutex.synchronize do
               {
-                schema_version: 1,
+                schema_version: 2,
                 status: (@assessment_ledger.clean? ? "complete" : "incomplete"),
                 target: @assessment_plan&.target,
                 plan_digest: @assessment_plan&.digest,
@@ -330,7 +330,7 @@ module Master
             end
           rescue StandardError => e
             {
-              schema_version: 1,
+              schema_version: 2,
               status: "incomplete",
               reason: "matrix artifact failed: #{e.class}: #{e.message.to_s[0, 150]}",
             }

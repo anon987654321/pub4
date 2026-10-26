@@ -234,7 +234,7 @@ module Master
       # compact terminal summary is intentionally separate from this audit record.
       def evidence_report
         {
-          schema_version: 1,
+          schema_version: 2,
           streams: STREAMS.map(&:to_s),
           surfaces: surfaces.map(&:to_s),
           laws: laws,

@@ -381,6 +381,8 @@ module Master
       private
 
       def validate_assessment_matrix_report(report)
+        return { "status" => "matrix_report_schema_unsupported" } unless report["schema_version"].to_i == 2
+
         status = report["status"].to_s
         return { "status" => "matrix_status_unknown" } unless %w[complete incomplete not_measured].include?(status)
 
@@ -390,6 +392,8 @@ module Master
 
           return nil
         end
+
+        return { "status" => "matrix_ledger_schema_unsupported" } unless ledger["schema_version"].to_i == 2
 
         summary = ledger["summary"]
         cells = ledger["cells"]
