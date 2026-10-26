@@ -11,6 +11,25 @@ module Master
 
         # The run once its journal is open and a mission records it: resume what
         # an earlier process left, then the passes, then the terminal state.
+        def capture_fix_plan!(target:, files:, max_passes:, budget_seconds:, journal:)
+          @fix_plan = FixPlan.capture(
+            root: @root, target:, files:, laws: @laws,
+            excluded: @file_collector.skip_reasons,
+            adapters: @pass_runner.assessment_adapters(target:),
+            max_passes:, budget_seconds:, deadline_at: journal["deadline_at"]
+          )
+          @bus&.publish(
+            "fix_loop:plan",
+            **@fix_plan.to_h.slice(
+              "digest", "identity_digest", "source_digest", "scope_digest", "law_digest",
+              "law_source_digest", "authority_digest", "toolchain_digest", "adapter_digest",
+              "exclusion_digest", "eligible_files", "excluded", "adapters", "max_passes",
+              "budget_seconds", "deadline_at"
+            ).transform_keys(&:to_sym)
+          )
+          @fix_plan
+        end
+
         def bind_fix_plan!(journal, run_id, plan = @fix_plan)
           binding = @run_journal.bind_plan(run_id, plan)
           return binding unless binding
