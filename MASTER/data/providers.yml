@@ -24,7 +24,7 @@ anthropic:
   ruby_llm_key: anthropic_api_key
   min_key_length: 80
   strengths: [coding, long_context, instruction_following]
-  default_model: claude-sonnet-4-6
+  default_model: claude-sonnet-5-5
 
 gemini:
   env: [GOOGLE_API_KEY, GEMINI_API_KEY]

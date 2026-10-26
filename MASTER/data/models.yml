@@ -106,9 +106,9 @@ model_defs:
     context_window: 64000
     score: { quality: 0.85, speed: 0.70, cost: 0.95 }
   claude_sonnet: &claude_sonnet
-    id: anthropic/claude-sonnet-4
+    id: claude-sonnet-5-5
     <<: *model_defaults
-    context_window: 200000
+    context_window: 1000000
     score: { quality: 0.95, speed: 0.75, cost: 0.60 }
   gemini_flash_openrouter: &gemini_flash_openrouter
     id: google/gemini-2.5-flash
@@ -155,9 +155,9 @@ model_defs:
     # CLI the primary first lane for all of MASTER, and the credits are back.
     score: { quality: 0.99, speed: 0.55, cost: 1.0 }
   claude_opus_api: &claude_opus_api
-    id: anthropic/claude-opus-4.1
+    id: claude-opus-5-5
     <<: *model_defaults
-    context_window: 200000
+    context_window: 1000000
     score: { quality: 0.99, speed: 0.50, cost: 0.20 }
   # codex-cli and grok-cli were already fully wired in cli_sender.rb (the
   # generic cli_lanes dispatch every claude-cli call already goes through) but
@@ -416,7 +416,7 @@ tool_capable_prefixes:
 operation_constraints:
   # Operations that write files, run autoloop/sweep, or execute destructive commands
   # require a model with quality score >= 0.88 (default and cheap tiers excluded).
-  # Equivalent to: claude-sonnet-4, gemini-2.5-pro, mistral-large, gpt-4o.
+  # Equivalent to: claude-sonnet-5-5, gemini-2.5-pro, mistral-large, gpt-4o.
   file_write:       { min_quality: 0.88, preferred_tier: strong }
   autoloop:         { min_quality: 0.88, preferred_tier: strong }
   sweep:            { min_quality: 0.88, preferred_tier: strong }
@@ -483,7 +483,7 @@ three_mirror_redundancy:
   # Three models vote; ship only on >= 2 agreement for critical fixes.
   # Source: cross-cutting reunification (#95).
   enabled_for:   [tier1_critical, security_relevant, irreversible]
-  pool:          ["anthropic/claude-sonnet-4", "ollama:gemma4:31b-cloud", "moonshotai/kimi-k2"]
+  pool:          ["claude-sonnet-5-5", "ollama:gemma4:31b-cloud", "moonshotai/kimi-k2"]
   quorum:        2
   on_disagreement: "fall back to council vote with all dissent recorded"
 

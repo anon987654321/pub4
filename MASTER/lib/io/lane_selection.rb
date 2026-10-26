@@ -245,7 +245,7 @@ module Master
       # only for a vendor this table does not name.
       API_KEYS = [
         [%r{/}, %w[OPENROUTER_API_KEY]], [/\Adeepseek/, %w[DEEPSEEK_API_KEY]], [/\Agrok-\d/, %w[XAI_API_KEY]],
-        [/\Agemini/, %w[GOOGLE_API_KEY GEMINI_API_KEY]]
+        [/\Agemini/, %w[GOOGLE_API_KEY GEMINI_API_KEY]], [/\Aclaude-/, %w[ANTHROPIC_API_KEY]]
       ].freeze
 
       def key_present_for?(id)
