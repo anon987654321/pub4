@@ -46,7 +46,7 @@ module Master
           def run_opportunity_pass(target:, files:)
             return unless @opportunity_pass&.applicable?(target)
 
-            @opportunity_pass.run(target:, files:)
+            @opportunity_pass.run(target:, files:, plan: @assessment_plan)
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "pass_runner.opportunity_pass", event_bus: @bus)
             Result.err("convergence opportunities: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)

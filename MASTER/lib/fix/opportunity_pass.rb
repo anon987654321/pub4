@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "../boot/paths"
+require "digest"
+require "json"
 require_relative "design_audit"
 
 module Master
@@ -54,18 +56,170 @@ module Master
         SOURCE_ROOTS.include?(relative) || SOURCE_ROOTS.any? { |name| relative.start_with?("#{name}/") }
       end
 
-      def run(target:, files:)
-        return Result.ok(findings: []) unless applicable?(target)
+      def run(target:, files:, plan: nil)
+        return Result.ok(findings: [], assessment_evidence: { status: "not_applicable" }) unless applicable?(target)
 
-        findings = collect_findings(target:, files:)
+        @assessment_gaps = []
+        scope_paths = Array(files).map { |path| File.expand_path(path) }.uniq.sort
+        before = capture_assessment_snapshot(target:, scope_paths:)
+        findings = collect_findings(target:, files: scope_paths)
+        after = capture_assessment_snapshot(target:, scope_paths:)
+        assessment_evidence = build_assessment_evidence(
+          target:, scope_paths:, plan:, before:, after:
+        )
         publish_opportunities(target, findings)
-        Result.ok(findings: findings.map(&:to_h))
+        Result.ok(findings: findings.map(&:to_h), assessment_evidence:)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix.opportunity_pass", event_bus: @bus)
         Result.err("convergence opportunities: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)
       end
 
       private
+
+      # Capture the filesystem facts this heuristic pass can observe. The input
+      # scope is pinned by FixPlan; auxiliary detectors are bound to a stable
+      # path inventory and hashes of every file they read outside that scope.
+      def capture_assessment_snapshot(target:, scope_paths:)
+        inventory_paths = SOURCE_ROOTS.flat_map do |root|
+          base = File.join(repo_root, root)
+          next [] unless File.directory?(base)
+
+          [base, *Dir.glob(File.join(base, "**", "*"), File::FNM_DOTMATCH)]
+        end
+        inventory = inventory_paths.uniq.filter_map do |path|
+          next if %w[. ..].include?(File.basename(path))
+
+          type = if File.symlink?(path)
+                   "symlink"
+                 elsif File.directory?(path)
+                   "directory"
+                 elsif File.file?(path)
+                   "file"
+                 else
+                   "other"
+                 end
+          [repo_relative(path), type]
+        end.sort
+
+        dependencies = assessment_dependency_paths(target:, scope_paths:).filter_map do |path|
+          next unless File.file?(path)
+
+          raise "symlinked assessment dependency: #{repo_relative(path)}" if File.symlink?(path)
+
+          before = File.stat(path)
+          digest = Digest::SHA256.file(path).hexdigest
+          after = File.stat(path)
+          unless assessment_file_signature(before) == assessment_file_signature(after)
+            raise "assessment dependency changed while read: #{repo_relative(path)}"
+          end
+
+          { path: repo_relative(path), sha256: digest, bytes: after.size }
+        end
+        inventory_sha256 = Digest::SHA256.hexdigest(JSON.generate(inventory))
+        dependency_sha256 = Digest::SHA256.hexdigest(JSON.generate(dependencies))
+        {
+          status: "captured",
+          digest: Digest::SHA256.hexdigest(JSON.generate([inventory_sha256, dependency_sha256])),
+          inventory_sha256:,
+          inventory_count: inventory.size,
+          inventory:,
+          dependency_sha256:,
+          dependency_count: dependencies.size,
+          dependencies:,
+        }
+      rescue StandardError => e
+        {
+          status: "unavailable",
+          reason: "#{e.class}: #{e.message.to_s.gsub(/\\s+/, " ").strip[0, 180]}",
+        }
+      end
+
+      def assessment_dependency_paths(target:, scope_paths:)
+        paths = scope_paths.dup
+        relative = repo_relative(target)
+        if relative == "MASTER"
+          paths.concat(Dir.glob(File.join(repo_root, "MASTER", "lib", "**", "*.rb")))
+          paths.concat(Dir.glob(File.join(repo_root, "{MASTER,RAILS,OPENBSD}", "**", "test*", "**", "*_test.rb")))
+          paths.concat(Dir.glob(File.join(repo_root, "MASTER", "test", "test_*.rb")))
+          paths.concat(Dir.glob(File.join(repo_root, "MASTER", "tools", "*.rb")))
+          paths.concat([
+            File.join(repo_root, "MASTER", "Rakefile"),
+            File.join(repo_root, "MASTER", "lib", "operator", "ratchets.rb"),
+          ])
+        elsif relative == "RAILS"
+          paths.concat([
+            File.join(repo_root, "MASTER", "checks", "visual_contract.rb"),
+            File.join(repo_root, "RAILS", "checks", "support", "geometry_probe.rb"),
+          ])
+        end
+        if Array(scope_paths).empty?
+          SOURCE_ROOTS.each do |root|
+            paths.concat(
+              Dir.glob(File.join(repo_root, root, "**", "*"))
+                 .select { |path| File.file?(path) && TEXT_FILES.include?(File.extname(path).downcase) }
+            )
+          end
+        end
+        paths.map { |path| File.expand_path(path) }.uniq.sort
+      end
+
+      def build_assessment_evidence(target:, scope_paths:, plan:, before:, after:)
+        reasons = []
+        reasons << "active FixPlan unavailable" unless plan&.respond_to?(:sources)
+        if plan
+          expected_paths = plan.sources.map { |source| File.expand_path(source.path, plan.root) }.sort
+          reasons << "input file scope differs from FixPlan" unless scope_paths == expected_paths
+          reasons << "FixPlan contains no eligible source files" if expected_paths.empty?
+          reasons << "assessment target differs from FixPlan target" unless File.expand_path(target) == plan.target
+        end
+
+        [before, after].each do |snapshot|
+          reasons << (snapshot[:reason] || "assessment snapshot unavailable") unless snapshot[:status] == "captured"
+        end
+        stable_snapshot = before[:status] == "captured" && after[:status] == "captured" &&
+          before[:digest] == after[:digest]
+        reasons << "filesystem inventory or dependency hashes changed during assessment" if before[:status] == "captured" && after[:status] == "captured" && !stable_snapshot
+
+        source_rows = []
+        source_hashes_verified = false
+        if plan && before[:status] == "captured"
+          actual_by_path = before[:dependencies].to_h { |row| [File.expand_path(row[:path], repo_root), row[:sha256]] }
+          source_rows = plan.sources.map do |source|
+            absolute = File.expand_path(source.path, plan.root)
+            { path: source.path, expected_sha256: source.sha256, actual_sha256: actual_by_path[absolute] }
+          end
+          source_hashes_verified = scope_paths == plan.sources.map { |source| File.expand_path(source.path, plan.root) }.sort &&
+            source_rows.all? { |row| !row[:actual_sha256].to_s.empty? && row[:actual_sha256] == row[:expected_sha256] }
+          reasons << "FixPlan source hashes no longer match" unless source_hashes_verified
+        end
+        reasons.concat(Array(@assessment_gaps))
+        reasons = reasons.uniq.first(10)
+
+        {
+          schema_version: 1,
+          status: reasons.empty? && stable_snapshot && source_hashes_verified ? "complete" : "inconclusive",
+          target: File.expand_path(target),
+          plan_digest: plan&.digest,
+          source_digest: plan&.source_digest,
+          scope_digest: plan&.scope_digest,
+          eligible_files: scope_paths.size,
+          source_hashes_verified: source_hashes_verified,
+          snapshot_sha256: before[:digest],
+          snapshot_after_sha256: after[:digest],
+          inventory_sha256: before[:inventory_sha256],
+          inventory_count: before[:inventory_count],
+          inventory: before[:inventory],
+          dependency_sha256: before[:dependency_sha256],
+          dependency_count: before[:dependency_count],
+          dependencies: before[:dependencies],
+          source_rows:,
+          reasons:,
+        }
+      end
+
+      def assessment_file_signature(stat)
+        [stat.dev, stat.ino, stat.size, stat.mtime.to_r, stat.ctime.to_r]
+      end
 
       def collect_findings(target:, files:)
         findings = []
@@ -123,6 +277,7 @@ module Master
           end
         end
       rescue ArgumentError, EncodingError => e
+        @assessment_gaps << "stale-path scan failed for #{root}: #{e.class}: #{e.message.to_s[0, 160]}"
         Master::Ground::Swallow.log(e, context: "fix.opportunity_pass.paths", path: root, error: e.message)
       end
 
