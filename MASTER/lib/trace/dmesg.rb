@@ -454,7 +454,17 @@ module Master
           tally[:failed] += 1 unless payload[:status].to_s == "success"
           return rollup(parent, tally) if !Dmesg.verbose? && tally[:calls] > BURST_AFTER
 
-          return ["#{unit}: #{payload[:status]}, #{clip(payload[:error])}"] unless payload[:status].to_s == "success"
+          unless payload[:status].to_s == "success"
+            digest = payload[:error_digest].to_s
+            bytes = payload[:error_bytes]
+            diagnostic = if !digest.empty?
+              "diagnostic #{digest[0, 12]} (#{bytes} bytes)"
+            elsif payload[:error]
+              "diagnostic details redacted"
+            end
+            summary = [payload[:status], diagnostic].compact.join(", ")
+            return ["#{unit}: #{summary}"]
+          end
 
           ["#{unit}: #{[tokens(usage), seconds(payload[:latency_ms]), cents(usage)].compact.join(', ')}"]
         end
