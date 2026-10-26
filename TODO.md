@@ -601,3 +601,8 @@ The /fix assessment adapter inventory now distinguishes a missing rendered-UI/br
 ## Rendered UI evidence integrity (2026-10-26)
 
 Rendered UI receipts now require a successful render status, a SHA-256 screenshot digest, a SHA-256 geometry digest and a non-negative element count for every captured surface. Missing geometry is not accepted merely because a screenshot exists. Compact evidence retains the geometry digest and element count but excludes page URLs and page content. Regression coverage was added; tests were not executed in this session, so validation remains INCONCLUSIVE.
+
+
+## Media asset inventory completeness (2026-10-26)
+
+SurfaceEvidence now includes symlinked paths with recognized media/font extensions in the asset inventory instead of silently dropping them from media coverage. A symlinked asset is reported as unmeasured/inconclusive until its target can be verified; it cannot make the target appear to have no media assets. Added a focused regression contract. Validation remains INCONCLUSIVE because tests were not executed in this session.
