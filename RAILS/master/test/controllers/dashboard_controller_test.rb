@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "tmpdir"
 
 class DashboardControllerTest < ActionDispatch::IntegrationTest
   # Through the key, not the English literal. This app serves nb by default, so
@@ -40,6 +41,28 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_equal "warming up", JSON.parse(response.body)["error"]
   ensure
     Rails.application.config.x.master_container = stub_master_container
+  end
+
+  test "live reports a generic error instead of returning exception details" do
+    source = File.read(File.expand_path("../../app/controllers/dashboard_controller.rb", __dir__))
+    assert_includes source, 'Master::Ground::Swallow.log(e, context: "Dashboard.live")'
+    assert_includes source, 'render json: { error: "dashboard unavailable" }'
+    refute_includes source, "error: e.message"
+  end
+
+  test "dashboard file previews stay within fixed byte and line budgets" do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "history.jsonl")
+      File.write(path, (1..80).map { |n| "#{n} #{'x' * 1024}" }.join("\n"))
+      controller = DashboardController.new
+
+      recent = controller.send(:recent_lines, path)
+      assert_operator recent.length, :<=, DashboardController::PANEL_RECENT_LINES
+      assert_operator recent.join("\n").bytesize, :<=, DashboardController::PANEL_TAIL_BYTES
+
+      excerpt = controller.send(:bounded_excerpt, path)
+      assert_operator excerpt.bytesize, :<=, DashboardController::PROPOSAL_EXCERPT_BYTES + 3
+    end
   end
 
   test "live returns the mission payload when container present" do

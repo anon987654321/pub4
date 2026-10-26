@@ -3,6 +3,10 @@
 require "json"
 
 class DashboardController < ApplicationController
+  PANEL_TAIL_BYTES = 16 * 1024
+  PANEL_RECENT_LINES = 8
+  PROPOSAL_EXCERPT_BYTES = 400
+
   def index
     @tier = request.env["master.tier"].to_s
     render layout: false
@@ -18,7 +22,8 @@ class DashboardController < ApplicationController
     root = Master::ROOT
     render json: mission_payload(c, root)
   rescue StandardError => e
-    render json: { error: e.message }, status: :service_unavailable
+    Master::Ground::Swallow.log(e, context: "Dashboard.live")
+    render json: { error: "dashboard unavailable" }, status: :service_unavailable
   end
 
   private
@@ -78,14 +83,36 @@ class DashboardController < ApplicationController
   def repair_queue(root)
     file_panel(root, %w[runtime/failures.jsonl runtime/repair_queue.json runtime/telemetry/failures.jsonl],
                context: "Dashboard.log_listing") do |rel, path|
-      { path: rel, count: File.size(path), recent: File.readlines(path).map(&:chomp).last(8) }
+      { path: rel, count: File.size(path), recent: recent_lines(path) }
     end
   end
 
   def rsi_inbox(root)
     file_panel(root, %w[data/proposals.yml],
                context: "Dashboard.file_excerpts") do |rel, path|
-      { path: rel, bytes: File.size(path), excerpt: File.read(path)[0, 400] }
+      { path: rel, bytes: File.size(path), excerpt: bounded_excerpt(path) }
+    end
+  end
+
+  # This endpoint refreshes frequently; display panels must never read whole
+  # append-only logs or a growing proposals file merely to render a short preview.
+  def recent_lines(path)
+    File.open(path, "rb") do |file|
+      size = file.stat.size
+      offset = [size - PANEL_TAIL_BYTES, 0].max
+      file.seek(offset)
+      tail = file.read(PANEL_TAIL_BYTES).to_s
+      if offset.positive?
+        boundary = tail.index("\n")
+        tail = boundary ? tail[(boundary + 1)..] : ""
+      end
+      tail.force_encoding(Encoding::UTF_8).scrub.lines(chomp: true).last(PANEL_RECENT_LINES)
+    end
+  end
+
+  def bounded_excerpt(path)
+    File.open(path, "rb") do |file|
+      file.read(PROPOSAL_EXCERPT_BYTES).to_s.force_encoding(Encoding::UTF_8).scrub
     end
   end
 end
