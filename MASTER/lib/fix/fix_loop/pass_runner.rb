@@ -416,6 +416,7 @@ module Master
           guarded(:fast_fixes, pass) { run_fast_stage(files, pass) }
           guarded(:lane_probe, pass) { probe_lanes_once }
           enter_phase(:stream, pass)
+          begin_assessment_pass(pass, files)
           found, streamed = streaming_observation(files, target, pass, deadline)
           structure = files.empty? ? [] : guarded(:structure, pass, []) { structural_findings(files:) }
           [found + structure, streamed]
