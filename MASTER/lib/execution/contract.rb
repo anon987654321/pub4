@@ -66,7 +66,15 @@ module Master
         pass fail partial inconclusive error blocked timeout unavailable not_applicable
       ].freeze
       CHECK_OUTCOMES = {
-        passed: :pass, failed: :fail, inconclusive: :inconclusive, errored: :error
+        passed: :pass, pass: :pass,
+        failed: :fail, fail: :fail,
+        partial: :partial,
+        inconclusive: :inconclusive,
+        errored: :error, error: :error,
+        blocked: :blocked,
+        timeout: :timeout, timed_out: :timeout,
+        unavailable: :unavailable,
+        not_applicable: :not_applicable, skipped: :not_applicable
       }.freeze
       PROOF_OUTCOMES = { proven: :pass, failed: :fail, open: :inconclusive }.freeze
 
