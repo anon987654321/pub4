@@ -15,7 +15,6 @@ en:
   legal:
     updated_on: Last updated 12 August 2026
     cookies_page:
-      eyebrow: Cookies
       heading: Cookies on %{host}
       intro_html: We keep cookie use to a minimum. Strictly necessary storage keeps the service working. Optional analytics and partner advertising technology stay off until you choose.
       necessary_heading: Strictly necessary
@@ -37,7 +36,6 @@ en:
       control_body: Use Cookie settings to change optional choices at any time. You can also delete and block cookies in your browser. Block the necessary ones and you won’t be able to sign in.%{partner}
       control_partner_clause: " To avoid partner cookies, don’t click partner links."
     terms_page:
-      eyebrow: Terms of use
       heading: Terms for %{host}
       intro: By using this site you accept these terms. If you don’t read them, you
         shouldn’t use the service.
@@ -74,7 +72,6 @@ en:
       termination_body: You may delete your account at any time. We may terminate
         accounts that breach these terms. Norwegian law applies, with venue in Bergen.
     privacy_page:
-      eyebrow: Privacy policy
       heading: Privacy at %{host}
       intro_html: This policy explains what we collect, why, and the rights you have.
         The controller is the operator of this site. There is no registered company

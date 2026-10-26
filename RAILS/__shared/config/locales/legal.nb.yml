@@ -15,7 +15,6 @@ nb:
   legal:
     updated_on: Sist oppdatert 12. august 2026
     cookies_page:
-      eyebrow: Informasjonskapsler
       heading: Informasjonskapsler på %{host}
       intro_html: Vi holder bruken av informasjonskapsler på et minimum. Strengt nødvendig lagring holder tjenesten i gang. Valgfri analyse og partnerannonsering er av før du velger.
       necessary_heading: Nødvendige
@@ -39,7 +38,6 @@ nb:
       control_body: Bruk Cookie-innstillinger for å endre valgfrie valg når som helst. Du kan også slette og blokkere informasjonskapsler i nettleseren din. Blokkerer du de nødvendige, kan du ikke logge inn.%{partner}
       control_partner_clause: " Vil du unngå partnerkapsler, la være å klikke på partnerlenker."
     terms_page:
-      eyebrow: Brukervilkår
       heading: Vilkår for %{host}
       intro: Ved å bruke nettstedet godtar du disse vilkårene. Leser du dem ikke,
         bør du ikke bruke tjenesten.
@@ -74,7 +72,6 @@ nb:
       termination_body: Du kan slette kontoen når som helst. Vi kan avslutte kontoer
         ved brudd på vilkårene. Norsk rett gjelder, med verneting i Bergen.
     privacy_page:
-      eyebrow: Personvernerklæring
       heading: Personvern hos %{host}
       intro_html: Denne erklæringen forklarer hvilke opplysninger vi samler inn, hvorfor,
         og hvilke rettigheter du har. Behandlingsansvarlig er den som driver dette
