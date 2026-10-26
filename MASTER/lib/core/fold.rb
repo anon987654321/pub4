@@ -17,13 +17,19 @@ module Master::Core
     # observer, if given, is called once per turn with (turn:, effect:, observation:)
     # after the outcome is recorded. It only watches — it cannot change the fold —
     # so a host (a CLI, a dashboard) can stream turns without the spine growing.
-    def initialize(model:, constitution:, world:, memory:, max_turns: 40, observer: nil)
+    # effect_observer receives :before and :after around every World effect. Unlike
+    # the UI observer, failure to publish a lifecycle event stops the fold safely.
+    def initialize(model:, constitution:, world:, memory:, max_turns: 40, observer: nil, effect_observer: nil)
       @model = model
       @law = constitution
       @world = world
       @memory = memory
       @max_turns = max_turns
       @observer = observer
+      @effect_observer = effect_observer
+      @effect_sequence = 0
+      @lifecycle_failure = nil
+      @lifecycle_failure_before = false
     end
 
     def run(goal)
@@ -73,7 +79,8 @@ private
     # The refusal is recorded as an observation, so the agent sees why it was
     # stopped and can choose another route, exactly as it does for a Block.
     def approve(turn, effect, prompt:, reason:, by:)
-      answer = @world.perform(Effect.ask(prompt))
+      answer = perform_effect(turn, Effect.ask(prompt))
+      return trace_failed_done(turn) if @lifecycle_failure
       return apply(turn, effect) if answer.ok? && affirmative?(answer.detail)
 
       detail = ["#{by} needs approval", reason, answer.ok? ? nil : answer.detail].compact.join(": ")
@@ -107,13 +114,15 @@ private
       contract = admitted.reversibility
       rollbackable = contract.restorable?
       checkpoint = @world.checkpoint if rollbackable
-      observation = @world.perform(admitted)
+      observation = perform_effect(turn, admitted)
       if observation.err?
-        observation = undo(checkpoint, admitted, observation) if rollbackable
-        observation = compensate(observation, contract) if contract.compensatable?
+        observation = undo(checkpoint, admitted, observation) if rollbackable && !@lifecycle_failure_before
+        observation = compensate(observation, contract, turn:) if contract.compensatable? && !@lifecycle_failure
       end
       @memory.record(admitted, observation)
       emit(turn, admitted, observation)
+      return trace_failed_done(turn) if @lifecycle_failure
+
       nil
     end
 
@@ -132,7 +141,7 @@ private
     # Run only a declared compensation, only after the original command failed,
     # and only after the same Constitution has admitted it and the operator says
     # yes. The compensation is a new exec effect; no inverse bypasses the check.
-    def compensate(failure, contract)
+    def compensate(failure, contract, turn:)
       action = contract.compensation
       inverse = Effect.exec(action.argv)
       case @law.admit(inverse, @memory)
@@ -147,13 +156,15 @@ private
       end
 
       prompt = "#{approval_context}#{check_prompt} Compensation: #{action.argv.inspect}. Reason: #{action.reason}"
-      answer = @world.perform(Effect.ask(prompt))
+      answer = perform_effect(turn, Effect.ask(prompt))
+      return Observation.no("compensation stopped because lifecycle event publication failed") if @lifecycle_failure
+
       unless answer.ok? && affirmative?(answer.detail)
         detail = answer.ok? ? "operator declined" : answer.message
         return Observation.no("#{failure.message} [compensation not run: #{detail}]")
       end
 
-      result = @world.perform(inverse)
+      result = perform_effect(turn, inverse)
       @memory.record(inverse, result)
       if result.ok?
         Observation.no("#{failure.message} [compensation completed: #{action.argv.join(" ")} — #{result.message}]")
@@ -162,6 +173,37 @@ private
       end
     rescue StandardError => e
       Observation.no("#{failure.message} [compensation failed: #{e.class}: #{e.message}]")
+    end
+
+    def perform_effect(turn, effect)
+      @effect_sequence += 1
+      effect_id = "#{object_id}-#{@effect_sequence}"
+      notify_effect(stage: :before, turn:, effect:, effect_id:)
+      return Observation.no("effect not executed: lifecycle before-event publication failed") if @lifecycle_failure
+
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      observation = world_observation(effect)
+      elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
+      notify_effect(stage: :after, turn:, effect:, effect_id:, observation:, elapsed_ms:)
+      observation
+    end
+
+    def world_observation(effect)
+      @world.perform(effect)
+    rescue StandardError, SecurityError => e
+      Observation.no("#{e.class}: #{e.message}")
+    end
+
+    def notify_effect(**event)
+      @effect_observer&.call(**event)
+    rescue StandardError => e
+      @lifecycle_failure_before = true if event[:stage] == :before
+      @lifecycle_failure ||= "#{event[:stage]} event publication failed (#{e.class})"
+    end
+
+    def trace_failed_done(turn)
+      Done.new(reason: :trace_failed, turns: turn + 1,
+               summary: "stopped without claiming completion: #{@lifecycle_failure}")
     end
 
     def emit(turn, effect, observation)

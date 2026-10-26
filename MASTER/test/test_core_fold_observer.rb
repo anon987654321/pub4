@@ -14,13 +14,14 @@ class FoldObserverTest < Minitest::Test
     def propose(_context, verbs:, **) = @effects.shift || Master::Core::Effect.done("done")
   end
 
-  def build(model, root:, observer: nil)
+  def build(model, root:, observer: nil, effect_observer: nil, world: nil)
     Master::Core::Fold.new(
       model:,
       constitution: Master::Core::Constitution.new(laws: []),
-      world: Master::Core::World.new(root:),
+      world: world || Master::Core::World.new(root:),
       memory: Master::Core::Memory.new,
       observer:,
+      effect_observer:,
     )
   end
 
@@ -118,6 +119,69 @@ class FoldObserverTest < Minitest::Test
 
     assert_match(/rolled back a\.txt/, failed_observation(Master::Core::Effect.write("a.txt", "x"), undone).message)
     assert_equal "boom", failed_observation(Master::Core::Effect.exec(["false"]), undone).message
+  end
+
+  def test_effect_lifecycle_surrounds_world_execution
+    Dir.mktmpdir do |root|
+      path = File.join(root, "effect.txt")
+      seen = []
+      effect_observer = lambda do |stage:, turn:, effect:, effect_id:, observation: nil, elapsed_ms: nil|
+        next unless effect.verb == :write
+
+        seen << { stage:, turn:, effect_id:, exists: File.exist?(path), ok: observation&.ok?, elapsed_ms: }
+      end
+      model = ScriptedModel.new(Master::Core::Effect.write("effect.txt", "payload"),
+                                Master::Core::Effect.done("finished"))
+
+      done = build(model, root:, effect_observer:).run("write and finish")
+
+      assert_equal :complete, done.reason
+      assert_equal %i[before after], seen.map { |event| event.fetch(:stage) }
+      refute seen.first.fetch(:exists), "the before event must precede the file write"
+      assert seen.last.fetch(:exists), "the after event must follow the file write"
+      assert_equal seen.first.fetch(:effect_id), seen.last.fetch(:effect_id)
+      assert_equal true, seen.last.fetch(:ok)
+      assert_operator seen.last.fetch(:elapsed_ms), :>=, 0
+    end
+  end
+
+  def test_lifecycle_publication_failure_prevents_effect_execution
+    Dir.mktmpdir do |root|
+      path = File.join(root, "must-not-exist.txt")
+      effect_observer = lambda do |stage:, **|
+        raise "ledger unavailable" if stage == :before
+      end
+      world = Object.new
+      world.define_singleton_method(:verbs) { Master::Core::VERBS }
+      world.define_singleton_method(:checkpoint) { { id: "cp", patch: "" } }
+      world.define_singleton_method(:perform) { |_effect| flunk("World effect ran without a before event") }
+      world.define_singleton_method(:rollback) { |*| flunk("an effect that never ran must not be rolled back") }
+      model = ScriptedModel.new(Master::Core::Effect.write("must-not-exist.txt", "payload"),
+                                Master::Core::Effect.done("finished"))
+
+      done = build(model, root:, effect_observer:, world:).run("write safely")
+
+      assert_equal :trace_failed, done.reason
+      refute File.exist?(path)
+      assert_match(/lifecycle before-event publication failed/, done.summary)
+    end
+  end
+
+  def test_after_event_failure_does_not_claim_completion_or_repeat_the_effect
+    Dir.mktmpdir do |root|
+      path = File.join(root, "effect.txt")
+      effect_observer = lambda do |stage:, effect:, **|
+        raise "ledger unavailable" if stage == :after && effect.verb == :write
+      end
+      model = ScriptedModel.new(Master::Core::Effect.write("effect.txt", "payload"),
+                                Master::Core::Effect.done("finished"))
+
+      done = build(model, root:, effect_observer:).run("write safely")
+
+      assert_equal :trace_failed, done.reason
+      assert_equal "payload", File.read(path), "the completed side effect must not be misreported as failed and retried"
+      assert_match(/lifecycle after event publication failed/, done.summary)
+    end
   end
 
   def test_no_observer_still_runs

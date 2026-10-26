@@ -1,5 +1,11 @@
 # pub4 outstanding work
 
+## Constitutional runtime consolidation (2026-10-26)
+
+Implemented the first lifecycle-tracing slice on MASTER's interactive Fold path: CoreBridge injects before/after effect events; payloads omit raw effect arguments; an unavailable before-event publisher prevents the effect; an after-event publication failure terminates as trace_failed without retrying or claiming completion. Regression contracts cover event order, redacted payloads and both publication-failure cases. The modified Minitest files were not executed here: GitHub could be read through the connector, but the execution environment could not resolve github.com to obtain the checkout. Validation is INCONCLUSIVE until the focused Fold and bridge tests run on the pinned toolchain.
+
+Still outstanding: unify the distinct Fold and repository-repair coordination paths; settle ownership among FixLoop, its inner repair loop, Fix::Kernel, RunJournal and Transaction from call-site evidence; standardize findings and check results; and propagate the same audited effect contract to every tool, background job and deployment path. Do not claim these broader migrations complete until the canonical suites run on the pinned toolchain. No law or sacred constitutional file was changed for this slice.
+
 ## GLM law-adherence port (2026-10-26)
 
 Source-only port of the safe, evidence-backed layout proposals is committed on `main`. The MASTER dashboard poller is now an external same-origin asset with a regression contract for no-store fetches, hidden-tab throttling and terminal 401/403 handling. The chat stop control, anonymous guest name, private share-draft copy, changelog and mailer branding now use locale-owned copy; legal pages no longer repeat heading labels as eyebrows. Vertical promo child classes are role-named consistently across markup, CSS and their existing contract test, and the trailing decorative arrow was removed.

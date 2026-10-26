@@ -50,7 +50,8 @@ module Master
           )
           world = build_world(root: workspace_root, container:, capabilities:, network: network_client(container))
           mission.transition!(:execute)
-          done = build_fold(root: workspace_root, model:, memory:, world:, max_turns:, observer:, capabilities:).run(goal)
+          effect_observer = build_effect_observer(bus:)
+          done = build_fold(root: workspace_root, model:, memory:, world:, max_turns:, observer:, effect_observer:, capabilities:).run(goal)
           mission.transition!(:verify, summary: continuation_summary(done))
           settle_mission(mission, done)
 
@@ -295,6 +296,21 @@ module Master
         end
       end
 
+      # The lifecycle stream intentionally excludes effect arguments: argv, URLs,
+      # prompts and write content may contain secrets or private user data.
+      def build_effect_observer(bus:)
+        lambda do |stage:, turn:, effect:, effect_id:, observation: nil, elapsed_ms: nil|
+          payload = { effect_id:, turn:, verb: effect.verb, capability: effect.capability }
+          if stage == :before
+            bus&.publish("core:effect:before", payload)
+          elsif stage == :after
+            bus&.publish("core:effect:after", payload.merge(
+              status: observation.ok? ? "ok" : "error", elapsed_ms:
+            ))
+          end
+        end
+      end
+
       # The part of an effect a person names it by: the file, the command, the
       # question. Written content stays out; it is the payload.
       def effect_subject(effect)
@@ -306,7 +322,7 @@ module Master
         end
       end
 
-      def build_fold(root:, model:, memory:, world:, max_turns:, observer:,
+      def build_fold(root:, model:, memory:, world:, max_turns:, observer:, effect_observer: nil,
                      capabilities: Master::Core::Capabilities.for(:fix))
         Master::Core::Fold.new(
           model:,
@@ -318,6 +334,7 @@ module Master
           memory:,
           max_turns:,
           observer:,
+          effect_observer:,
         )
       end
 

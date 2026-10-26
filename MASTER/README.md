@@ -88,6 +88,15 @@ coordinator, one scanner/finding contract, one transaction path and one operatio
 check runner, preserving existing rollback and recovery behavior. This is a
 migration target, not a claim that consolidation is complete.
 
+The interactive CoreBridge path now attaches a lifecycle observer to the Fold:
+core:effect:before is published before each World effect and core:effect:after
+records the observed outcome and elapsed time. Event payloads carry an effect ID,
+turn, verb and capability, not raw arguments that could contain secrets. Failure to
+publish the before-event prevents the effect from running; failure to publish the
+after-event returns trace_failed rather than claiming the task completed. This
+is the first slice of the external-action event contract, not yet a shared event
+adapter for every tool and /fix path.
+
 A requested repair starts by inventorying its eligible corpus, refreshing the
 static reference graph and refusing to proceed if an eligible source could not
 be read or indexed. Before a proposed edit, the repair receives the complete

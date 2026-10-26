@@ -57,6 +57,22 @@ class CoreBridgeTest < Minitest::Test
     end
   end
 
+  def test_core_effect_lifecycle_events_are_paired_and_redacted
+    Dir.mktmpdir do |root|
+      bus = FakeBus.new
+      effect = Master::Core::Effect.write("private.txt", "secret payload")
+      model = ScriptedModel.new(*evidence_then_done(effect, summary: "ok"))
+
+      result = Master::CLI::CoreBridge.run("write a private note", root:, bus:, model:)
+
+      assert_equal :complete, result[:reason]
+      events = bus.events.select { |name, payload| name.start_with?("core:effect:") && payload[:verb] == :write }
+      assert_equal %w[core:effect:before core:effect:after], events.map(&:first)
+      assert_equal events.first.last[:effect_id], events.last.last[:effect_id]
+      refute events.any? { |_name, payload| payload.values.include?("secret payload") }
+    end
+  end
+
   # defer! reads delay and retry_count after with_lock returns; defined inside
   # the block they died with it and the emit below named an unset local.
   # CoreBridge.settle_mission routes any fold end that is neither complete nor
