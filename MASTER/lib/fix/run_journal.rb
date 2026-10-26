@@ -308,6 +308,14 @@ module Master
             "reason" => (latest.is_a?(Hash) ? latest["reason"] : nil).to_s.gsub(/\s+/, " ").strip[0, 180],
           }
         end.first(5)
+        surface_report = report["surface_coverage"].is_a?(Hash) ? report["surface_coverage"] : {}
+        surface_rows = surface_report["surfaces"].is_a?(Hash) ? surface_report["surfaces"] : {}
+        surface_blockers = surface_rows.filter_map do |name, row|
+          next unless row.is_a?(Hash)
+          next if %w[assessed_clean not_applicable].include?(row["status"].to_s)
+
+          { "surface" => name, "status" => row["status"].to_s, "reason" => row["reason"].to_s[0, 180] }
+        end.first(8)
         {
           "status" => "verified",
           "path" => relative_path,
@@ -321,6 +329,14 @@ module Master
             "pending_cells" => matrix_summary["unassessed_cells"].to_i,
             "inconclusive_cells" => matrix_summary["inconclusive_cells"].to_i,
             "finding_cells" => matrix_summary["finding_cells"].to_i,
+          },
+          "surface_coverage" => {
+            "status" => surface_report["complete"] == true ? "complete" : "incomplete",
+            "digest" => surface_report["digest"],
+            "measured" => surface_rows.count { |_name, row| %w[assessed_clean not_applicable].include?(row["status"].to_s) },
+            "expected" => surface_rows.size,
+            "blockers" => surface_blockers,
+            "surfaces" => surface_rows,
           },
           "blockers" => blockers,
         }
@@ -455,21 +471,24 @@ module Master
           return { "status" => "surface_coverage_snapshot_incomplete" } if surface["complete"] == true
         end
 
-        calculated_complete = details.values.all? do |receipt|
+        snapshot_stable = inventory.is_a?(Hash) && source_manifest.is_a?(Hash) &&
+          inventory["status"] == "captured" && inventory["truncated"] == false &&
+          source_manifest["status"] == "captured" && source_manifest["verified_after_assessment"] == true &&
+          source_manifest["digest"] == source_manifest["digest_after_assessment"]
+        calculated_complete = snapshot_stable && details.values.all? do |receipt|
           %w[assessed_clean not_applicable].include?(receipt["status"].to_s)
         end
         return { "status" => "surface_coverage_truth_mismatch" } unless surface["complete"] == calculated_complete
-        if calculated_complete
-          expected_digest = Digest::SHA256.hexdigest(JSON.generate(
-            "schema_version" => surface["schema_version"],
-            "target" => surface["target"],
-            "plan_digest" => surface["plan_digest"],
-            "source_digest" => surface["source_digest"],
-            "inventory_digest" => inventory["digest"],
-            "surface_rows" => rows.sort.map { |name, row| [name, row["status"], row["evidence_sha256"]] },
-          ))
-          return { "status" => "surface_coverage_digest_mismatch" } unless surface["digest"] == expected_digest
-        end
+        expected_digest = Digest::SHA256.hexdigest(JSON.generate(
+          "schema_version" => surface["schema_version"],
+          "target" => surface["target"],
+          "plan_digest" => surface["plan_digest"],
+          "source_digest" => surface["source_digest"],
+          "inventory_digest" => inventory.is_a?(Hash) ? inventory["digest"] : nil,
+          "surface_rows" => rows.sort.map { |name, row| [name, row["status"], row["evidence_sha256"]] },
+        ))
+        return { "status" => "surface_coverage_digest_mismatch" } unless surface["digest"] == expected_digest
+
         nil
       rescue ArgumentError, TypeError, NoMethodError
         { "status" => "surface_coverage_malformed" }

@@ -185,19 +185,24 @@ module Operator
       matrix = verification["matrix_status"].to_s
       digest = verification["sha256"].to_s[0, 12]
       summary = verification["matrix_summary"] || {}
+      surface = verification["surface_coverage"] || {}
       unless matrix == "complete"
         counts = "cells=#{summary["recorded_cells"]}/#{summary["expected_cells"]} " \
           "pending=#{summary["pending_cells"]} inconclusive=#{summary["inconclusive_cells"]} findings=#{summary["finding_cells"]}"
-        first = Array(verification["blockers"]).first
-        detail = if first
-                   "#{first["law"]}/#{first["stream"]}/#{first["surface"]}: #{first["reason"]}".strip
+        cell = Array(verification["blockers"]).first
+        surface_blocker = Array(surface["blockers"]).first
+        detail = if surface_blocker
+                   "surface #{surface_blocker["surface"]}=#{surface_blocker["status"]}: #{surface_blocker["reason"]}".strip
+                 elsif cell
+                   "#{cell["law"]}/#{cell["stream"]}/#{cell["surface"]}: #{cell["reason"]}".strip
                  else
-                   "no cell-level blocker detail"
+                   "no cell-level or surface blocker detail"
                  end
-        return "verified matrix=#{matrix} #{counts}; next=#{detail[0, 100]} sha256=#{digest}"
+        surface_counts = "surface=#{surface["measured"]}/#{surface["expected"]}"
+        return "verified matrix=#{matrix} #{counts} #{surface_counts}; next=#{detail[0, 100]} sha256=#{digest}"
       end
 
-      "verified complete sha256=#{digest}"
+      "verified complete surface=#{surface["status"]} #{surface["measured"]}/#{surface["expected"]} sha256=#{digest}"
     end
 
     # The receipt is convergence evidence, not proof of deployment, playback or

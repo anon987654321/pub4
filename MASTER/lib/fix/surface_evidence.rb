@@ -62,6 +62,7 @@ module Master
       def capture
         source_before = source_manifest
         inventory_before = inventory_snapshot
+        @current_inventory_digest = inventory_before["digest"]
         receipts = {}
         receipts["repository_tree"] = tree_receipt(inventory_before, source_before)
         receipts["directories"] = directory_receipt(inventory_before, source_before)
@@ -69,14 +70,12 @@ module Master
         receipts["paths"] = path_receipt(inventory_before, source_before)
         receipts["cross_file"] = cross_file_receipt(inventory_before, source_before)
         receipts["media_assets"] = media_receipt(inventory_before, source_before)
-        receipts["compiled_assets"] = cached("compiled_assets") do
-          compiled_asset_receipt(inventory_before, source_before)
-        end
+        receipts["compiled_assets"] = compiled_asset_receipt(inventory_before, source_before)
         receipts["rendered_ui"] = rendered_ui_receipt
         receipts["interactive_behavior"] = interactive_receipt
         receipts["tests"] = cached("tests") { test_receipt(inventory_before, source_before) }
         receipts["runtime"] = cached("runtime") { runtime_receipt(inventory_before, source_before) }
-        receipts["deployment"] = cached("deployment") { deployment_receipt(inventory_before, source_before) }
+        receipts["deployment"] = deployment_receipt(inventory_before, source_before)
 
         source_after = source_manifest
         inventory_after = inventory_snapshot
@@ -153,12 +152,14 @@ module Master
       private
 
       def cached(name)
-        key = [name.to_s, @plan&.source_digest.to_s, @plan&.scope_digest.to_s]
+        key = [name.to_s, @plan&.source_digest.to_s, @plan&.scope_digest.to_s, @current_inventory_digest.to_s]
         return json_safe(@cache[key]) if @cache.key?(key)
 
-        @cache[key] = yield
+        result = yield
+        @cache[key] = result if result.is_a?(Hash) && %w[assessed_clean violation_found not_applicable].include?(result["status"].to_s)
+        result
       rescue StandardError => e
-        @cache[key] = receipt("inconclusive", reason: "#{name} probe failed: #{error_text(e)}")
+        receipt("inconclusive", reason: "#{name} probe failed: #{error_text(e)}")
       end
 
       def tree_receipt(inventory, source)
@@ -1161,7 +1162,14 @@ module Master
           "surfaces" => compact,
           "details" => rows,
           "complete" => false,
-          "digest" => digest_json(compact),
+          "digest" => digest_json(
+            "schema_version" => SCHEMA_VERSION,
+            "target" => @target_label,
+            "plan_digest" => @plan&.digest,
+            "source_digest" => @plan&.source_digest,
+            "inventory_digest" => nil,
+            "surface_rows" => compact.map { |name, row| [name, row["status"], row["evidence_sha256"]] },
+          ),
         }
       end
     end
