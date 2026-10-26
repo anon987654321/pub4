@@ -40,14 +40,6 @@ source and tests they could not run; this pass is what measures them.
   `MASTER/docs/fix_coordinator_map.md` sets, recovery tests first; the one gap left in
   `MASTER/docs/lifecycle_ownership.md`.
 
-## One verification vocabulary
-
-- [ ] Adapt scanner findings, `Master::Proof`, the RAILS and OPENBSD check runners, visual and
-  accessibility results, and deployment receipts to `Execution::Contract`'s normalised outcomes,
-  keeping standalone trees on adapters rather than cross-tree requires.
-- [ ] Incomplete coverage cannot read green: verifier, subject, scope digest, completeness and
-  evidence reference are required; only an accepted terminal state with complete evidence is DONE.
-
 ## MASTER behaviour
 
 - [ ] Latency: a monotonic timeline for boot, first token, completed reply and greeting, CLI and
