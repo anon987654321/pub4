@@ -10,7 +10,7 @@
   border: 1px solid #ccc;
   border-radius: 30px;
   font-size: 18px;
-  transition: all 100ms ease-in-out;
+  transition: all 100ms var(--ease-in-out);
 }
 
 /* Only the query field gets the transparent inner treatment; submit controls

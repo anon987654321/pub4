@@ -140,7 +140,7 @@ html.drawer-open .tab-bar-peel {
   max-width: var(--measure-narrow);
   margin: 0 0 var(--space-2);
   font-size: var(--text-sm);
-  line-height: 1.4;
+  line-height: var(--leading-snug);
 }
 .tab-bar-coach-actions {
   display: flex;

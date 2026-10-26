@@ -41,7 +41,7 @@
 
 .system-signal[data-state="working"] {
   border-inline-color: var(--signal-info);
-  animation: system-signal-pulse var(--motion-rest) ease-in-out infinite alternate;
+  animation: system-signal-pulse var(--motion-rest) var(--ease-in-out) infinite alternate;
 }
 
 @keyframes system-signal-pulse {
