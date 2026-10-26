@@ -32,6 +32,9 @@ LIVE_STATE_DIR = Dir.mktmpdir("master-test-lanes-")
 ENV["MASTER_LANE_QUOTA_PATH"] = File.join(LIVE_STATE_DIR, "lane_quota.yml")
 ENV["MASTER_MODEL_QUOTA_PATH"] = File.join(LIVE_STATE_DIR, "model_quota.json")
 ENV["MASTER_PROVIDER_HEALTH_PATH"] = File.join(LIVE_STATE_DIR, "provider_health.ndjson")
+# A crashed /fix on this machine left its loop claim behind and every
+# dispatch_fix test failed with "loop slot held by fix pid 26971".
+ENV["MASTER_ACTIVE_LOOP_DIR"] = File.join(LIVE_STATE_DIR, "active_loop")
 
 # Direct test entrypoints must use the same pinned, private bundle as bin/cli.
 # Otherwise RubyGems can select a host-installed Minitest (or a native gem

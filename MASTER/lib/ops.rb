@@ -247,7 +247,7 @@ module Master
 
         data = JSON.parse(File.read(info))
         pid_text = data["pid"].to_s
-        raise ArgumentError, "invalid loop owner PID" unless pid_text.match?(/\\A[1-9]\\d*\\z/)
+        raise ArgumentError, "invalid loop owner PID" unless pid_text.match?(/\A[1-9]\d*\z/)
 
         pid = pid_text.to_i
         # Corrupt timestamps must not become epoch zero: a live owner must never
