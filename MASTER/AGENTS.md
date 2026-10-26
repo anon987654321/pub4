@@ -2,7 +2,7 @@
 
 Task-scoped entry for coding agents (Cursor, Codex, Grok, Claude Code). This file is the contract; `README.md` is the tour.
 
-**Read the repo-root `CLAUDE.md` first.** It is Claude Code's bootstrap pointer, not a competing policy authority. MASTER owns the governing configuration and Law system. The order is `MASTER/data/soul.yml` > `MASTER/data/laws.yml` > the executable Law tree `MASTER/law/` > this workflow contract > per-tree contracts and harness prose. This file carries repository-specific workflow guidance; root CLAUDE only routes.
+**Read the repo-root `CLAUDE.md` first.** It is only Claude Code's bootstrap pointer. MASTER owns the governing configuration and Law catalogue. Read `MASTER/data/soul.yml`, then `MASTER/data/laws.yml`, then the relevant Ruby definitions/adapters under `MASTER/law/`, then this workflow contract and task-specific tree contract. The old `MASTER/lib/review/scan/laws` path is deleted; `MASTER/lib/review/scan/` contains scanner machinery, not a second Law source tree.
 
 The block below is the source every other agent's entry file is generated from
 — root `AGENTS.md`, `GEMINI.md`, `.cursorlaws` and
@@ -17,11 +17,13 @@ rot.
 pub4 is governed by MASTER. Read the authority chain before editing:
 
 1. `MASTER/data/soul.yml` — constitutional absolutes and anti-simulation.
-2. `MASTER/data/laws.yml` — the canonical declared Law catalogue and execution policy.
-3. `MASTER/law/*.rb` — executable Law definitions and their required positive/negative fixtures.
-4. `MASTER/lib/review/scan/` — detector implementations and scanner registration; these enforce Laws but do not establish a second policy authority.
+2. `MASTER/data/laws.yml` — the canonical Law catalogue, identity manifest, universal scope, modality contract and global assessment surfaces.
+3. `MASTER/law/*.rb` and `MASTER/law/detectors/*.rb` — Ruby executable definitions and detector/evaluator implementations. Each Law identity must have one catalogue entry; implementation source paths are recorded in that entry.
+4. `MASTER/lib/review/scan/` — scanner runtime, finding model, registration and orchestration only. It is not a second Law source directory.
 
-Authority is `soul.yml` > `laws.yml` > executable enforcement > checks and tree contracts > agent-harness prose. `data/laws.yml` is the sole normative Law catalogue; `law/*.rb` and `lib/review/scan/` are execution implementations, not competing policy registries. The mapping is still being reconciled: use `LawRegistryAudit` and its explicit gap populations, and never infer complete coverage from one file or registry count. `MASTER/docs/synonyms.yml` is glossary-only: a Law names the requirement, a check names the instrument, and proof is evidence. `MASTER/checks/checks.yml` routes operational checks; it does not create policy, Law IDs, or tiers. The glossary cannot override the authority chain. The `MASTER/bin/operator laws <ID>` view uses `Operator::LawInventory.catalogue_declaration` through `Master.load_laws` because declarations may live outside the priority-ranked entries; do not narrow it to `Master.law_entries`. Edit this marked source block and regenerate the root agent files with `cd MASTER && rake docs:agent_contracts`; never edit generated copies directly.
+Authority is `soul.yml` > `laws.yml` > Ruby enforcement > checks and tree contracts > agent-harness prose. `law_catalogue.entries` is the single identity inventory. Each entry must declare `universal: true`, `modalities: [lexical, semantic, visual]`, and its Ruby source path(s); the global `surfaces` list also lives in `laws.yml`. `LawRegistryAudit.reconciled?` is a blocking identity/source-integrity gate: `source_drift`, missing source files, duplicate definitions and incomplete modality declarations must not be hidden. A Law without a deterministic Ruby detector is recorded as `manifest_without_deterministic_detector` coverage debt; its lexical assessment remains INCONCLUSIVE rather than being called clean. Semantic/visual review must receive the full catalogue independent of file language or source path. A declared source file is not proof that the corresponding detector or runtime assessment has executed.
+
+`MASTER/docs/synonyms.yml` is glossary-only: a Law names the requirement, a check names the instrument, and proof is evidence. `MASTER/checks/checks.yml` routes operational checks; it does not create Law identities or normative policy. The glossary and check registry cannot override the authority chain. Edit this marked source block and regenerate the root agent files with `cd MASTER && rake docs:agent_contracts`; never create another policy catalogue.
 
 The four owners are `MASTER/` (runtime, `MASTER/bin/master`), `RAILS/` (apps, `MASTER/bin/operator triangle up`), `OPENBSD/` (deployment and vm23), and `STUDIO/` (Dilla, postpro, Replicate and LoRA). `MASTER/tools/` keeps compatibility entrypoints for STUDIO tools.
 
