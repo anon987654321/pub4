@@ -141,11 +141,9 @@ module Law
     # rather than raise on a nil detect.
     def semantic? = !ask.nil?
 
-    # A Law declares the artifact surfaces its detector can actually examine.
-    # Defaults follow its executable source contract; broader surfaces require an
-    # explicit declaration and a matching runtime adapter. This prevents the
-    # presence of a language-agnostic principle from implying unmeasured runtime,
-    # UI, deployment or cross-file coverage.
+    # Universal Laws apply across the canonical surface vocabulary. A
+    # deliberate surfaces: declaration may narrow the adapter contract; without
+    # one, absent surface assessors remain INCONCLUSIVE rather than disappearing.
     def assessment_surfaces
       declared = Array(surfaces).map(&:to_sym).uniq
       return declared.freeze unless declared.empty?
