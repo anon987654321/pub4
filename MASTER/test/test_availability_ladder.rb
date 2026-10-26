@@ -50,6 +50,21 @@ class AvailabilityLadderTest < Minitest::Test
     end
   end
 
+  def test_only_a_fresh_failure_counts_as_recently_failed
+    Dir.mktmpdir do |dir|
+      now = Time.utc(2026, 10, 26, 7, 0, 0)
+      health = Master::CLI::Routing::ProviderHealth.new(path: File.join(dir, "health.ndjson"), now: -> { now })
+      health.record(model: "idle-opus", status: :success, at: now - 12_600)
+      health.record(model: "old-failure", status: :timeout, at: now - 600)
+      health.record(model: "new-failure", status: :timeout, at: now - 30)
+
+      refute health.recently_failed?("idle-opus", max_age_s: 120)
+      refute health.recently_failed?("old-failure", max_age_s: 120)
+      assert health.recently_failed?("new-failure", max_age_s: 120)
+      refute health.recently_failed?("never-seen", max_age_s: 120)
+    end
+  end
+
   def test_custom_config_can_tighten_dispatch_deadline
     subject = policy("dispatch_deadline_s" => 90)
 

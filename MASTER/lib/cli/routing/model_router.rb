@@ -102,8 +102,8 @@ module Master
 
           chain = chain_for(task_type).uniq.select { |id| reachable?(id) }
           chain = Io::ModelSkipCache.filter(chain)
-          fresh = chain.reject { |id| stale_health?(id) }
-          chain = prefer_floor(chain, fresh, operation: task_type)
+          answering = chain.reject { |id| recently_failed?(id) }
+          chain = prefer_floor(chain, answering, operation: task_type)
           ranked = @provider_health.rank(chain)
           ranked = @compute_pool.rank(ranked, task_type:)
           selected = chitchat_head(
@@ -224,7 +224,7 @@ module Master
         end
 
         def healthy(models)
-          models.reject { |m| unhealthy?(m["id"]) || stale_health?(m["id"]) || !reachable?(m["id"]) }
+          models.reject { |m| unhealthy?(m["id"]) || recently_failed?(m["id"]) || !reachable?(m["id"]) }
         end
 
         def floor_candidates(models, operation:)
@@ -254,21 +254,26 @@ module Master
           nil
         end
 
-        def prefer_floor(all_models, fresh_models, operation:)
-          return fresh_models unless fresh_models.empty?
+        def prefer_floor(all_models, answering, operation:)
+          return answering unless answering.empty?
 
           floor = all_models.select { |id| @availability.meets_floor?(id, operation:) }
           local = floor.select { |id| @availability.level_for(id) == "L2" }
           local.empty? ? floor : local
         end
 
-        def stale_health?(model_id)
+        # Excluded only while a failure is the newest thing known about the lane.
+        # This used to exclude every lane whose last answer was older than the
+        # freshness window, success or not, so an idle lane was never asked and
+        # stayed stale: on 2026-10-26 opus, 8 answers and no failure, sat out a
+        # whole /fix while free models read the tree.
+        def recently_failed?(model_id)
           level = @availability.level_for(model_id)
           return false if level == "L2"
 
-          @provider_health.stale?(model_id, max_age_s: @availability.health_freshness_s)
+          @provider_health.recently_failed?(model_id, max_age_s: @availability.health_freshness_s)
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "ModelRouter.stale_health?", model: model_id)
+          Master::Ground::Swallow.log(e, context: "ModelRouter.recently_failed?", model: model_id)
           false
         end
 
@@ -293,7 +298,7 @@ module Master
           # model that just failed kept winning the same weighted comparison on
           # the very next file, forever, since it never saw its own failure.
           return true if Io::ModelSkipCache.skipped?(model_id)
-          @provider_health.unhealthy?(model_id) || stale_health?(model_id)
+          @provider_health.unhealthy?(model_id) || recently_failed?(model_id)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "ModelRouter.unhealthy?")
           false

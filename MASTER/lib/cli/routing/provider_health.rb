@@ -15,6 +15,8 @@ module Master
         MIN_SCORE = 0.05
         MAX_SCORE = 1.25
         MAX_BYTES = Master::Trace::Log::Event::MAX_BYTES
+        FAILURES = %w[failure timeout rate_limit provider_error quota_exceeded canary_validation_failure
+                      canary_failure].freeze
 
         attr_reader :path
 
@@ -46,7 +48,7 @@ module Master
             case event["status"].to_s
             when "success"
               [score + SUCCESS_BONUS, MAX_SCORE].min
-            when "failure", "timeout", "rate_limit", "provider_error", "quota_exceeded", "canary_validation_failure", "canary_failure"
+            when *FAILURES
               [score - FAILURE_PENALTY, MIN_SCORE].max
             else
               score
@@ -82,6 +84,12 @@ module Master
 
         def stale?(model, max_age_s:)
           freshness(model, max_age_s:) == :stale
+        end
+
+        # The last thing the model did was fail, and that happened within
+        # max_age_s. Older evidence of either kind says nothing about now.
+        def recently_failed?(model, max_age_s:)
+          FAILURES.include?(latest_event(model)&.fetch("status", nil).to_s) && fresh?(model, max_age_s:)
         end
 
         def latest_event(model)

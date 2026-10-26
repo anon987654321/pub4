@@ -248,7 +248,7 @@ class TestLaneSelection < Minitest::Test
     router.instance_variable_set(:@capability_map, Object.new.tap { |o| o.define_singleton_method(:best_model_for) { |_| nil } })
     router.define_singleton_method(:chain_for) { |_task| chain }
     router.define_singleton_method(:reachable?) { |_id| true }
-    router.define_singleton_method(:stale_health?) { |_id| false }
+    router.define_singleton_method(:recently_failed?) { |_id| false }
     router.define_singleton_method(:healthy) { |models| models }
     router.define_singleton_method(:prefer_floor) { |all, _fresh, **| all }
     router

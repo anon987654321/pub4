@@ -74,7 +74,7 @@ class TestLanePool < Minitest::Test
     router.instance_variable_set(:@provider_health, pool)
     router.define_singleton_method(:chain_for) { |_| [SUPER, LIGHTNING, OPUS] }
     router.define_singleton_method(:reachable?) { |_| true }
-    router.define_singleton_method(:stale_health?) { |_| false }
+    router.define_singleton_method(:recently_failed?) { |_id| false }
     router.define_singleton_method(:prefer_floor) { |all, _f, **| all }
 
     assert_equal [OPUS, LIGHTNING, SUPER], router.fallback_chain(task_type: :code_generation)
