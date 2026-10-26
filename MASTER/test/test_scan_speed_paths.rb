@@ -221,7 +221,7 @@ class TestScanSpeedPaths < Minitest::Test
 
   def probe_definition(reads, pattern)
     Law::Definition.new(id: :probe, source: nil, severity: :warn, mode: :violation, languages: [], scope: :line,
-law_scope: nil, lifecycle: :active, autofix: :review, path: nil, path_exclude: nil,
+surfaces: nil, law_scope: nil, lifecycle: :active, autofix: :review, path: nil, path_exclude: nil,
                         absent: nil, detect: ->(line) { line.match?(pattern) }, ask: nil, practice: nil,
                         reads_comments: reads, fix: "f", bad: "b", good: "g")
   end
