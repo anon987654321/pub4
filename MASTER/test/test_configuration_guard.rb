@@ -4,7 +4,7 @@ require_relative "test_helper"
 require_relative "../lib/fix/configuration_guard"
 
 class TestConfigurationGuard < Minitest::Test
-  Guard = Master::Fix::ConfigurationGuard
+  Guard = Master::ConfigurationGuard
 
   def laws_path = File.join(Master::ROOT, "data", "laws.yml")
   def soul_path = File.join(Master::ROOT, "data", "soul.yml")
