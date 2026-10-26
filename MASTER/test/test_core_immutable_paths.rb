@@ -59,8 +59,8 @@ class ImmutablePathsTest < Minitest::Test
     assert_blocked Master::Core::Effect.write("lib/core.rb", "# hijack\n"), by: :immutable_paths
   end
 
-  def test_leading_dot_slash_still_matches
-    assert_blocked Master::Core::Effect.write("./data/soul.yml", "x"), by: :immutable_paths
+  def test_leading_dot_slash_to_law_configuration_remains_editable
+    assert_allowed Master::Core::Effect.write("./data/soul.yml", "absolute:\n  sacred_paths: []\n")
   end
 
   def test_absolute_master_root_soul_path_is_editable
