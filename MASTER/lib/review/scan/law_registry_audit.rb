@@ -339,7 +339,6 @@ module Master
           Review::Scan::LawDSL
           @registry_law_rows = Review::Scan::Law.registry
             .select { |klass| shipped?(klass) }
-            .reject { |klass| LawFactory.bridge_class?(klass) }
             .map { |klass| LawFactory.build(klass, root: @root) }
              .map do |law|
               {
@@ -362,7 +361,6 @@ module Master
           Review::Scan::LawDSL
           Review::Scan::Law.registry
             .select { |klass| shipped?(klass) }
-            .reject { |klass| LawFactory.bridge_class?(klass) }
             .map { |klass| LawFactory.build(klass, root: @root).id.to_s.downcase }
             .to_set
         end
