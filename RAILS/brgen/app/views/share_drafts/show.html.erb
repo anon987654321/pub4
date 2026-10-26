@@ -2,7 +2,7 @@
 
 <div class="page-header">
   <%= tag.h1 t("post.new") %>
-  <p><%= t("post.share_draft_lead", default: "This share is private. Nothing appears in the feed until you publish it.") %></p>
+  <p><%= t("post.share_draft_lead") %></p>
 </div>
 
 <div class="form-wrap">
@@ -11,10 +11,10 @@
   <% end %>
 
   <div class="form-help">
-    <%= t("post.shared_media_staged", default: "Staged privately") %>:
-    <%= pluralize(@share_draft.images.attachments.size, t("post.photo", default: "photo")) %>
+    <%= t("post.shared_media_staged") %>:
+    <%= pluralize(@share_draft.images.attachments.size, t("post.photo")) %>
     <% if @share_draft.video.attached? %>
-      <%= t("post.and_video", default: "and one video") %>
+      <%= t("post.and_video") %>
     <% end %>
   </div>
 
