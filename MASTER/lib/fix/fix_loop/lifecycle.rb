@@ -60,7 +60,13 @@ module Master
             toolchain_digest exclusion_digest adapter_digest
           ]
           changed = dimensions.select { |field| current.public_send(field) != replacement.public_send(field) }
-          return false if changed.empty?
+          if changed.empty?
+            # Refresh the filesystem signatures even when bytes and scope are
+            # identical. A harmless touch must not leave the next pass comparing
+            # against stale stat metadata or force a false source generation.
+            @fix_plan = replacement
+            return false
+          end
 
           @fix_plan = replacement
           binding = bind_fix_plan!({}, run_id, replacement)
