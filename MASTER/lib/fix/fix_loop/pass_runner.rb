@@ -168,46 +168,153 @@ module Master
           self
         end
 
-        # Begin the real runtime matrix with the scanner's own Law population.
-        # Missing scanner Law metadata is explicit; it never fabricates a measured matrix.
+        # The matrix population is the canonical executable Law registry plus
+        # scanner-only adapters that report their own identities. LawBridgeLaw
+        # and SemanticLaw are transport adapters, never duplicate Law rows.
         def begin_assessment_run(files:, plan:)
           @assessment_ledger = nil
           @assessment_observation = nil
           @assessment_law_info = nil
-          return self unless @scanner.respond_to?(:laws)
+          @assessment_unclassified = []
+          @assessment_last_pass = 0
 
-          rows = Array(@scanner.laws)
-          info = rows.each_with_object({}) do |law, out|
-            id = law.respond_to?(:id) ? law.id.to_s.strip : ""
+          require File.join(Master::ROOT, "law", "definition") unless defined?(::Law::Definition)
+          ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
+
+          info = {}
+          Array(::Law.definitions.values).each do |law|
+            next if law.respond_to?(:enforceable?) && !law.enforceable?
+
+            id = assessment_law_id(law)
             next if id.empty?
 
-            entry = (out[id] ||= { laws: [], modes: [] })
-            entry[:laws] << law
-            entry[:modes] << (law.respond_to?(:mode) ? law.mode.to_sym : :mechanical)
+            streams = []
+            streams << :lexical_violations if law.respond_to?(:scannable?) && law.scannable? && law.mode.to_sym == :violation
+            streams << :lexical_opportunities if law.respond_to?(:scannable?) && law.scannable? && law.mode.to_sym == :opportunity
+            if law.respond_to?(:semantic?) && law.semantic?
+              streams.concat(%i[semantic_violations semantic_opportunities])
+            end
+            declared_surfaces = law.respond_to?(:assessment_surfaces) ? law.assessment_surfaces : []
+            info[id] = {
+              id:,
+              source_kind: :canonical,
+              law:,
+              scanner_law: nil,
+              yaml_entry: nil,
+              streams: streams.uniq.freeze,
+              surfaces: Array(declared_surfaces).map(&:to_sym).uniq.freeze,
+              unmeasurable_reason: streams.empty? ?
+                "conduct-only Law has no independent four-stream source assessor" : nil,
+            }
           end
+
+          scanner_laws = @scanner.respond_to?(:laws) ? Array(@scanner.laws) : []
+          wrapper_ids = %w[law_bridge semantic yaml_declarative]
+          scanner_laws.each do |law|
+            id = assessment_law_id(law)
+            next if id.empty? || wrapper_ids.include?(id.downcase)
+            next if assessment_existing_law_id(info, id)
+
+            class_name = law.class.name.to_s
+            semantic = class_name.match?(/AdversarialLaw|CommentDriftLaw|SemanticLaw/) ||
+              (law.respond_to?(:set_agent) && !law.respond_to?(:check_ast))
+            mode = law.respond_to?(:mode) ? law.mode.to_s : ""
+            streams = if mode == "opportunity"
+                        [:lexical_opportunities]
+                      elsif semantic
+                        [:semantic_violations]
+                      else
+                        [:lexical_violations]
+                      end
+            surfaces = if law.respond_to?(:assessment_surfaces)
+                         Array(law.assessment_surfaces)
+                       elsif law.respond_to?(:check_ast)
+                         %i[whole_file lines syntax_tree]
+                       elsif semantic
+                         %i[whole_file sections]
+                       else
+                         %i[whole_file lines]
+                       end
+            info[id] = {
+              id:,
+              source_kind: :scanner,
+              law: nil,
+              scanner_law: law,
+              yaml_entry: nil,
+              streams: streams.freeze,
+              surfaces: surfaces.map(&:to_sym).uniq.freeze,
+              unmeasurable_reason: nil,
+            }
+          end
+
+          yaml_adapter = scanner_laws.find { |law| law.id.to_s.downcase == "yaml_declarative" }
+          Array(yaml_adapter&.instance_variable_get(:@entries)).each do |entry|
+            id = entry[:id].to_s.downcase.strip
+            next if id.empty? || assessment_existing_law_id(info, id)
+
+            info[id] = {
+              id:,
+              source_kind: :yaml_declarative,
+              law: nil,
+              scanner_law: nil,
+              yaml_entry: entry,
+              streams: [:lexical_violations].freeze,
+              surfaces: %i[whole_file lines].freeze,
+              unmeasurable_reason: nil,
+            }
+          end
+
+          opportunity_applicable = @opportunity_pass&.applicable?(plan.target) == true
+          if opportunity_applicable && !assessment_existing_law_id(info, OpportunityPass::LAW_ID)
+            info[OpportunityPass::LAW_ID] = {
+              id: OpportunityPass::LAW_ID,
+              source_kind: :opportunity,
+              law: nil,
+              scanner_law: nil,
+              yaml_entry: nil,
+              streams: [:lexical_opportunities].freeze,
+              surfaces: %i[repository_tree directories file_names paths whole_file lines].freeze,
+              unmeasurable_reason: nil,
+            }
+          end
+
+          visual_applicable = @visual_pass&.applicable?(plan.target) == true
+          if visual_applicable && !assessment_existing_law_id(info, VisualPass::LAW_ID)
+            info[VisualPass::LAW_ID] = {
+              id: VisualPass::LAW_ID,
+              source_kind: :visual,
+              law: nil,
+              scanner_law: nil,
+              yaml_entry: nil,
+              streams: [:semantic_violations].freeze,
+              surfaces: [:rendered_ui].freeze,
+              unmeasurable_reason: nil,
+            }
+          end
+
           if info.empty?
-            stage_failures[:assessment_matrix] << "scanner exposes no identifiable Laws; matrix not measured"
+            stage_failures[:assessment_matrix] << "no canonical or scanner-only Law identities; matrix not measured"
             return self
           end
 
-          @assessment_law_info = info.transform_values do |entry|
-            modes = entry[:modes].uniq
-            entry.merge(semantic: modes == [:semantic], conflicting_mode: modes.size > 1)
-          end
+          @assessment_law_info = info.freeze
           @assessment_ledger = FourStreamAssessment.new(
-            laws: @assessment_law_info.keys,
+            laws: info.keys,
             clean_passes: [Integer(@clean_runs_required), 2].max,
             surfaces: FourStreamAssessment::SURFACES,
           )
           @assessment_plan = plan
           @assessment_scope = Array(files).map { |path| File.expand_path(path) }.uniq.sort.freeze
-          @assessment_last_pass = 0
           @bus&.publish(
             "fix_loop:assessment_matrix_started",
-            laws: @assessment_law_info.size,
+            law_population: info.size,
+            canonical_laws: info.values.count { |row| row[:source_kind] == :canonical },
+            scanner_only_laws: info.values.count { |row| row[:source_kind] == :scanner },
+            yaml_declarative_laws: info.values.count { |row| row[:source_kind] == :yaml_declarative },
+            synthetic_opportunity: opportunity_applicable,
+            synthetic_visual: visual_applicable,
             surfaces: FourStreamAssessment::SURFACES.size,
-            expected_cells: @assessment_law_info.size * FourStreamAssessment::STREAMS.size *
-              FourStreamAssessment::SURFACES.size,
+            expected_cells: info.size * FourStreamAssessment::STREAMS.size * FourStreamAssessment::SURFACES.size,
             plan_digest: plan.digest,
             status: "incomplete_until_every_applicable_cell_is_proved",
           )
@@ -217,6 +324,18 @@ module Master
           @bus&.publish("fix_loop:assessment_matrix_init_failed", error_class: e.class.name, message: e.message)
           @assessment_ledger = nil
           self
+        end
+
+        def assessment_law_id(law)
+          value = law.respond_to?(:id) ? law.id : law
+          value.to_s.strip
+        rescue StandardError
+          ""
+        end
+
+        def assessment_existing_law_id(info, value)
+          needle = value.to_s
+          info.keys.find { |candidate| candidate.casecmp?(needle) }
         end
 
         def assessment_plan_changed!(plan)
