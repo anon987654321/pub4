@@ -118,8 +118,8 @@ private
       effect_id = SecureRandom.uuid
       observation = perform_effect(turn, admitted, effect_id:)
       if observation.err?
-        observation = undo(checkpoint, admitted, observation, turn:, parent_effect_id: effect_id) if rollbackable && !@lifecycle_failure_before
-        observation = compensate(observation, contract, turn:) if contract.compensatable? && !@lifecycle_failure
+        observation = undo(checkpoint, admitted, observation, turn:, parent_effect_id: effect_id) if rollbackable && !@lifecycle_failure
+        observation = compensate(observation, contract, turn:, parent_effect_id: effect_id) if contract.compensatable? && !@lifecycle_failure
       end
       @memory.record(admitted, observation)
       emit(turn, admitted, observation)
@@ -165,7 +165,7 @@ private
     # Run only a declared compensation, only after the original command failed,
     # and only after the same Constitution has admitted it and the operator says
     # yes. The compensation is a new exec effect; no inverse bypasses the check.
-    def compensate(failure, contract, turn:)
+    def compensate(failure, contract, turn:, parent_effect_id:)
       action = contract.compensation
       inverse = Effect.exec(action.argv)
       case @law.admit(inverse, @memory)
@@ -180,7 +180,7 @@ private
       end
 
       prompt = "#{approval_context}#{check_prompt} Compensation: #{action.argv.inspect}. Reason: #{action.reason}"
-      answer = perform_effect(turn, Effect.ask(prompt))
+      answer = perform_effect(turn, Effect.ask(prompt), operation: :compensation_approval, parent_effect_id:)
       return Observation.no("compensation stopped because lifecycle event publication failed") if @lifecycle_failure
 
       unless answer.ok? && affirmative?(answer.detail)
@@ -188,7 +188,7 @@ private
         return Observation.no("#{failure.message} [compensation not run: #{detail}]")
       end
 
-      result = perform_effect(turn, inverse)
+      result = perform_effect(turn, inverse, operation: :compensation, parent_effect_id:)
       @memory.record(inverse, result)
       if result.ok?
         Observation.no("#{failure.message} [compensation completed: #{action.argv.join(" ")} — #{result.message}]")
@@ -199,14 +199,14 @@ private
       Observation.no("#{failure.message} [compensation failed: #{e.class}: #{e.message}]")
     end
 
-    def perform_effect(turn, effect, effect_id: SecureRandom.uuid)
-      notify_effect(stage: :before, turn:, effect:, effect_id:, operation: :perform)
+    def perform_effect(turn, effect, effect_id: SecureRandom.uuid, operation: :perform, parent_effect_id: nil)
+      notify_effect(stage: :before, turn:, effect:, effect_id:, operation:, parent_effect_id:)
       return Observation.no("effect not executed: lifecycle before-event publication failed") if @lifecycle_failure
 
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       observation = world_observation(effect)
       elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
-      notify_effect(stage: :after, turn:, effect:, effect_id:, operation: :perform, observation:, elapsed_ms:)
+      notify_effect(stage: :after, turn:, effect:, effect_id:, operation:, parent_effect_id:, observation:, elapsed_ms:)
       observation
     end
 

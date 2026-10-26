@@ -230,6 +230,21 @@ class FoldObserverTest < Minitest::Test
     end
   end
 
+  def test_failed_effect_with_missing_after_record_does_not_attempt_rollback
+    Dir.mktmpdir do |root|
+      world = FailingWorld.new(Master::Core::Observation.ok("rolled back"))
+      observer = lambda do |stage:, operation:, **|
+        raise "ledger unavailable" if stage == :after && operation == :perform
+      end
+      model = ScriptedModel.new(Master::Core::Effect.write("a.txt", "x"), Master::Core::Effect.done("ok"))
+
+      done = build(model, root:, effect_observer: observer, world:).run("write safely")
+
+      assert_equal :trace_failed, done.reason
+      assert_equal 0, world.rollback_calls
+    end
+  end
+
   def test_no_observer_still_runs
     Dir.mktmpdir do |root|
       done = build(ScriptedModel.new(Master::Core::Effect.done("ok")), root:).run("g")
