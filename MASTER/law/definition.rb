@@ -147,7 +147,22 @@ module Law
     # presence of a language-agnostic principle from implying unmeasured runtime,
     # UI, deployment or cross-file coverage.
     def assessment_surfaces
-      ::Law::ASSESSMENT_SURFACES
+      declared = Array(surfaces).map(&:to_sym).uniq
+      return declared.freeze unless declared.empty?
+
+      selected = if semantic? || scope.to_sym == :file
+                   %i[whole_file sections]
+                 else
+                   %i[whole_file lines]
+                 end
+      declared_languages = Array(languages).map(&:to_s)
+      if declared_languages.empty? || (declared_languages & %w[yaml json toml]).any?
+        selected << :structured_data
+      end
+      if declared_languages.empty? || declared_languages.include?("markdown")
+        selected << :documentation
+      end
+      selected.uniq.freeze
     end
 
     # Universal describes the invariant, not the detector syntax. A universal
