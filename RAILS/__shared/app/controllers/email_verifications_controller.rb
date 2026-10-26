@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-class EmailVerificationsController < ApplicationController
+# One controller for every app that verifies an email; amber and brgen route to it.
+class EmailVerificationsController < ::ApplicationController
   include Shared::EmailVerificationActions
 
   allow_unauthenticated_access only: :show
