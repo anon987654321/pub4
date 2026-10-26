@@ -133,7 +133,7 @@ Law.define(:KERNEL_COERCION) do
   source "Ruby Style Guide — Integer()/Float() over to_i/to_f"
   severity :info
   languages %i[ruby]
-  path_exclude %r{/(?:review/scan/laws|law/detectors)/}
+  path_exclude %r{/law/detectors/}
   # The `|| []` arm left. The fix line names one substitution — the explicit
   # nil-ternary — and `x || []` is not that: Array() splats a Hash into pairs
   # and wraps a String, so swapping it in is a behaviour change wherever the
@@ -262,7 +262,7 @@ Law.define(:RESCUE_ON_DEF) do
   source "Ruby Style Guide — rescue in method definitions"
   severity :info
   languages %i[ruby]
-  path_exclude %r{/review/scan/laws/}
+  path_exclude %r{/law/detectors/}
   scope :file
   # Same /m defect as GUARD_CLAUSE above: the pattern spanned unrelated methods,
   # gluing a def to a rescue hundreds of lines away and reporting it at line 1.
@@ -302,7 +302,7 @@ Law.define(:RUBY_BLOCK_DELIMITER) do
   source "Ruby Style Guide / RuboCop Style/BlockDelimiters"
   severity :info
   languages %i[ruby]
-  path_exclude %r{/review/scan/laws/}
+  path_exclude %r{/law/detectors/}
   detect { |line| line.match?(/\bdo\b\s*(\|[^|]*\|)?[^\n]*\bend\s*$/) }
   fix "Single-line block on one line -> use { }. Reserve do/end for multi-line."
   bad  "list.each do |x| puts x end"
@@ -313,7 +313,7 @@ Law.define(:RUBY_CAMEL_CLASS) do
   source "Ruby Style Guide / RuboCop Naming/ClassAndModuleCamelCase"
   severity :warn
   languages %i[ruby]
-  path_exclude %r{/review/scan/laws/}
+  path_exclude %r{/law/detectors/}
   # A declaration ends the line, or continues only into a superclass. A sentence
   # keeps going, and prose in a heredoc is not blanked the way a comment is:
   # "module into shared/vendor/javascript, or pin it preload: false and" is a
@@ -329,7 +329,7 @@ Law.define(:RUBY_NUMERIC_UNDERSCORE) do
   source "Ruby Style Guide / RuboCop Style/NumericLiterals"
   severity :info
   languages %i[ruby]
-  path_exclude %r{/review/scan/laws/}
+  path_exclude %r{/law/detectors/}
   # A long run of digits inside a string is not a numeric literal. Unmasked, this
   # read a port out of "http://127.0.0.1:38182/", an ffmpeg filter's
   # sample_rates=44100, the hex in '#010203', and the digits in this rule's own
@@ -361,7 +361,7 @@ Law.define(:RUBY_SNAKE_METHODS) do
   source "Ruby Style Guide / RuboCop Naming/MethodName"
   severity :warn
   languages %i[ruby]
-  path_exclude %r{/review/scan/laws/}
+  path_exclude %r{/law/detectors/}
   detect { |line| line.match?(/\bdef\s+[a-z][a-z0-9_]*[A-Z]/) }
   fix "Rename to snake_case: def fetchAlbum -> def fetch_album."
   bad  "def fetchAlbum"
@@ -372,7 +372,7 @@ Law.define(:RUBY_SYMBOL_TO_PROC) do
   source "Ruby Style Guide / RuboCop Style/SymbolProc"
   severity :info
   languages %i[ruby]
-  path_exclude %r{/review/scan/laws/}
+  path_exclude %r{/law/detectors/}
   detect { |line| line.match?(/\{\s*\|(\w+)\|\s*\1\.[a-z_]+\s*\}/) }
   fix "Collapse { |x| x.name } -> (&:name)."
   bad  "names = users.map { |u| u.name }"
@@ -390,7 +390,7 @@ Law.define(:RUBY_SCREAMING_CONST) do
   severity :info
   ask "Is a Ruby value constant named in a case other than SCREAMING_SNAKE_CASE?"
   languages %i[ruby]
-  path_exclude %r{/review/scan/laws/}
+  path_exclude %r{/law/detectors/}
   detect do |line|
     match = line.match(/^\s*([A-Z][A-Za-z0-9]*)\s*=(?!=|~|>)\s*(.*)$/)
     next false unless match && match[1].match?(/[a-z]/)
@@ -412,7 +412,7 @@ Law.define(:SAFE_NAVIGATION) do
   source "Ruby Style Guide / RuboCop Style/SafeNavigation"
   severity :warn
   languages %i[ruby]
-  path_exclude %r{/review/scan/laws/}
+  path_exclude %r{/law/detectors/}
   detect { |line| line.match?(/(\w+)\s*&&\s*\1\.\w+/) && !line.match?(/[!=<>]=|[<>]|\?\s*\w/) }
   fix "Rewrite to x&.foo&.bar"
   bad  "user && user.name"
@@ -475,7 +475,7 @@ Law.define(:USE_THEN) do
   source "Ruby idiom — Object#then (yield_self) for pipelines"
   severity :info
   languages %i[ruby]
-  path_exclude %r{/review/scan/laws/}
+  path_exclude %r{/law/detectors/}
   scope :file
   # The same defect GUARD_CLAUSE carried and had fixed above: `/m` makes `.`
   # match newlines, so `\(.*\)` ran to the last paren in the file and any file
