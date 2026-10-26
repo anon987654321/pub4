@@ -93,6 +93,27 @@ class CoreBridgeTest < Minitest::Test
     end
   end
 
+  def test_ambiguous_fold_outcomes_are_terminal_and_never_auto_deferred
+    %i[unknown_outcome recovery_failed].each do |reason|
+      Dir.mktmpdir do |root|
+        mission = Master::Fix::Mission.new(root:).start_or_resume!(
+          goal: "reconcile external effect", scope: root, origin: "fold", auto_continue: true
+        )
+        mission.transition!(:execute)
+        done = Master::Core::Fold::Done.new(
+          reason:, turns: 1, summary: "#{reason}: receipt unavailable"
+        )
+
+        Master::CLI::CoreBridge.settle_mission(mission, done)
+
+        record = Master::Fix::Mission.current(root:)
+        assert_equal reason.to_s, record["state"]
+        assert_equal "execute", record["stage"]
+        refute_includes Master::Fix::Mission::RESUMABLE_STATES, record["state"]
+      end
+    end
+  end
+
   def test_lifecycle_events_persist_without_a_host_bus
     Dir.mktmpdir do |root|
       model = ScriptedModel.new(*evidence_then_done(
