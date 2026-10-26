@@ -46,6 +46,17 @@ class TestOutcomePolicy < Minitest::Test
     assert_equal :done, Policy.workflow_outcome(ok: true, msg: "PLATEAU: message is stale", delivered: 1, ending: :done)
   end
 
+  def test_recovery_failure_is_not_collapsed_into_generic_failure
+    result = Master::Result.err("restoration not proven", category: :recovery_failed)
+
+    assert_equal :recovery_failed, Policy.terminal_state(result)
+    assert_equal :partial, Policy.workflow_outcome(
+      ok: false, msg: "RECOVERY_FAILED: restoration not proven",
+      delivered: 1, ending: :recovery_failed
+    )
+    refute Policy::MEASURED_REPAIR_OUTCOMES.fetch(:recovery_failed)
+  end
+
   def test_nil_and_unrecognized_values_normalize_to_no_state
     assert_nil Policy.normalize_state(nil)
     assert_nil Policy.normalize_state("not a state")
