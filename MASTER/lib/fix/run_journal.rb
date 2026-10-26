@@ -197,7 +197,7 @@ module Master
         expected_path = File.join(assessment_dir, "#{id}.json")
         relative_path = relative(expected_path)
         return { "status" => "receipt_path_mismatch" } unless receipt["path"] == relative_path
-        return { "status" => "artifact_unavailable" unless File.file?(expected_path) && !File.symlink?(expected_path)
+        return { "status" => "artifact_unavailable" } unless File.file?(expected_path) && !File.symlink?(expected_path)
 
         file_mode = File.stat(expected_path).mode & 0o777
         return { "status" => "artifact_permissions_insecure", "mode" => format("%04o", file_mode) } unless (file_mode & 0o077).zero?
