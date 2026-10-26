@@ -32,16 +32,16 @@
   <% if variant == :prose %>
     <article id="<%= dom_id(post) %>" class="feed-post post-reading-card<%= " #{css_class}" if css_class.present? %>" role="article" aria-label="<%= t("post.by_author", name: name, default: "Post by %{name}") %>">
       <div class="post-reading-layout"><%= vote_rail if show_votes %><div class="post-reading-main">
-        <header class="feed-post-meta feed-post-byline"><span class="author"><%= url.present? ? link_to(name, author_url, class: "link-inherit") : name %></span><% if (place = distance_stamp(post)) %> · <span class="feed-post-place"><%= place %></span><% end %><% if time.present? && post.created_at %> · <time datetime="<%= post.created_at.iso8601 %>"><%= time %></time><% elsif time.present? %> · <span class="feed-post-time"><%= time %></span><% end %></header>
+        <header class="feed-post-meta feed-post-byline"><span class="author"><%= url.present? ? link_to(name, author_url, class: "link-inherit") : name %></span><% if (place = distance_stamp(post)) %><span class="feed-post-place"><%= place %></span><% end %><% if time.present? && post.created_at %><time datetime="<%= post.created_at.iso8601 %>"><%= time %></time><% elsif time.present? %><span class="feed-post-time"><%= time %></span><% end %></header>
         <% if derived_title.present? %><h2 class="feed-post-title post-reading-title"><%= post_url.present? ? link_to(derived_title, post_url) : derived_title %></h2><% end %>
         <% if content.present? %><div class="feed-post-body feed-post-prose prose post-reading-body-preview"><%= content %></div><% if post_url.present? && body_plain.length > 260 %><%= link_to "…", post_url, class: "post-reading-more", aria: { label: more_label }, title: more_label %><% end %><% end %>
-        <% if meta.present? %><div><%= meta %></div><% end %><% if media.present? %><div class="feed-post-media"><%= media %></div><% end %><% if actions.present? %><footer class="feed-post-actions post-reading-actions"><%= actions %></footer><% end %>
+        <% if meta.present? %><p><%= meta %></p><% end %><% if media.present? %><div class="feed-post-media"><%= media %></div><% end %><% if actions.present? %><footer class="feed-post-actions post-reading-actions"><%= actions %></footer><% end %>
       </div></div>
     </article>
   <% else %>
     <article id="<%= dom_id(post) %>" class="feed-card post-reading-card<%= " #{css_class}" if css_class.present? %>">
       <div class="post-reading-layout"><%= vote_rail if show_votes %><div class="post-reading-main post-reading-main--card">
-        <header class="feed-card-header feed-card-byline"><span class="feed-card-name"><%= url.present? ? link_to(name, author_url, class: "link-inherit") : name %></span><% if handle.present? %><span class="feed-card-handle"><%= handle %></span><% end %><% if time.present? %><span class="feed-card-time">· <%= time %></span><% end %></header>
+        <header class="feed-card-header feed-card-byline"><span class="feed-card-name"><%= url.present? ? link_to(name, author_url, class: "link-inherit") : name %></span><% if handle.present? %><span class="feed-card-handle"><%= handle %></span><% end %><% if time.present? %><span class="feed-card-time"><%= time %></span><% end %></header>
         <% if derived_title.present? %><h2 class="feed-card-text post-reading-title"><%= post_url.present? ? link_to(derived_title, post_url) : derived_title %></h2><% end %>
         <% if content.present? %>
           <div class="post-reading-preview">
