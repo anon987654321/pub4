@@ -323,7 +323,7 @@ end
     end
 
     def history(id)
-      paths = %w[MASTER/law MASTER/data/laws.yml MASTER/lib/review/scan/laws]
+      paths = %w[MASTER/law MASTER/data/laws.yml]
       format = "--format=%h %cs %s"
       output, status = Master::Io::Exec.capture2("git", "-C", ROOT, "log", "-n", "5", format, "--", *paths)
       return "history unavailable" unless status.success?
