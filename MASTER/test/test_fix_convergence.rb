@@ -460,12 +460,17 @@ class TestFixConvergence < Minitest::Test
     runner = loop.instance_variable_get(:@pass_runner)
     done = Master::Result.ok("DONE: all clean")
 
-    assert_same done, loop.send(:blocked_by_gaps, done), "no gaps, no change"
+    matrix_blocked = loop.send(:blocked_by_gaps, done)
+    assert_match(
+      /\ABLOCKED: finished with gaps, law\/stream\/surface assessment matrix not measured; DONE withheld/,
+      matrix_blocked.value!,
+    )
 
     runner.send(:skip_unreadable, File.join(@root, "walk.js"), Master::Result.err("scan failed", category: :infrastructure))
     blocked = loop.send(:blocked_by_gaps, done)
 
     assert_match(/\ABLOCKED: finished with gaps, 1 file\(s\) not scanned \(walk\.js\)/, blocked.value!)
+    assert_includes blocked.value!, "assessment matrix not measured"
     plateau = Master::Result.ok("PLATEAU: no further improvement")
     assert_same plateau, loop.send(:blocked_by_gaps, plateau), "only DONE is downgraded"
   end
