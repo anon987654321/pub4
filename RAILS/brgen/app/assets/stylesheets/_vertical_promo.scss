@@ -13,7 +13,7 @@
   --promo-signal: #4ecdc4;
 }
 
-.brgen-vertical-promo__link {
+.promo-link {
   display: grid;
   grid-template-columns: minmax(8rem, 18rem) minmax(0, 1fr);
   align-items: center;
@@ -23,13 +23,13 @@
   text-decoration: none;
 }
 
-.brgen-vertical-promo__link:hover .brgen-vertical-promo__action,
-.brgen-vertical-promo__link:focus-visible .brgen-vertical-promo__action {
+.promo-link:hover .promo-action,
+.promo-link:focus-visible .promo-action {
   text-decoration: underline;
   text-underline-offset: 0.15em;
 }
 
-.brgen-vertical-promo__disc {
+.promo-disc {
   position: relative;
   display: grid;
   place-items: center;
@@ -40,7 +40,7 @@
   animation: brgen-vertical-promo-spin 100s var(--ease-linear) infinite;
 }
 
-.brgen-vertical-promo__host {
+.promo-host {
   max-width: 75%;
   color: var(--text);
   font-size: var(--text-xs);
@@ -50,7 +50,7 @@
   white-space: nowrap;
 }
 
-.brgen-vertical-promo__dot {
+.promo-dot {
   position: absolute;
   inset-block-start: 10%;
   inset-inline-start: 50%;
@@ -61,33 +61,33 @@
   transform: translate(-50%, -50%);
 }
 
-.brgen-vertical-promo__copy {
+.promo-copy {
   display: grid;
   justify-items: start;
   gap: var(--space-1);
   max-width: 42rem;
 }
 
-.brgen-vertical-promo__kicker {
+.promo-kicker {
   color: var(--text-secondary);
   font-size: var(--text-sm);
   font-weight: var(--weight-bold);
   letter-spacing: var(--tracking-tight);
 }
 
-.brgen-vertical-promo__title {
+.promo-title {
   font-size: clamp(1.35rem, 4vw, 2.25rem);
   line-height: var(--leading-none);
   letter-spacing: var(--tracking-tight);
 }
 
-.brgen-vertical-promo__body {
+.promo-body {
   max-width: 58ch;
   color: var(--text-secondary);
   font-size: var(--text-base);
 }
 
-.brgen-vertical-promo__action {
+.promo-action {
   margin-top: var(--space-2);
   color: var(--text);
   font-size: var(--text-sm);
@@ -101,19 +101,19 @@
 }
 
 @media (max-width: 639px) {
-  .brgen-vertical-promo__link {
+  .promo-link {
     grid-template-columns: 1fr;
     justify-items: center;
     text-align: center;
   }
 
-  .brgen-vertical-promo__copy {
+  .promo-copy {
     justify-items: center;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .brgen-vertical-promo__disc {
+  .promo-disc {
     animation: none;
   }
 }

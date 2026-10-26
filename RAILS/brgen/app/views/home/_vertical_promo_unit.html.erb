@@ -10,17 +10,17 @@
                 end %>
 
 <aside class="brgen-vertical-promo" data-promo="<%= slug %>" aria-label="<%= t("promo.aria_label") %>">
-  <%= link_to href, class: "brgen-vertical-promo__link", data: { turbo: false } do %>
-    <span class="brgen-vertical-promo__disc" aria-hidden="true">
-      <span class="brgen-vertical-promo__host"><%= host %></span>
-      <span class="brgen-vertical-promo__dot"></span>
+  <%= link_to href, class: "promo-link", data: { turbo: false } do %>
+    <span class="promo-disc" aria-hidden="true">
+      <span class="promo-host"><%= host %></span>
+      <span class="promo-dot"></span>
     </span>
 
-    <span class="brgen-vertical-promo__copy">
-      <span class="brgen-vertical-promo__kicker"><%= t("promo.#{slug}.kicker") %></span>
-      <strong class="brgen-vertical-promo__title"><%= t("promo.#{slug}.title") %></strong>
-      <span class="brgen-vertical-promo__body"><%= t("promo.#{slug}.body") %></span>
-      <span class="brgen-vertical-promo__action">
+    <span class="promo-copy">
+      <span class="promo-kicker"><%= t("promo.#{slug}.kicker") %></span>
+      <strong class="promo-title"><%= t("promo.#{slug}.title") %></strong>
+      <span class="promo-body"><%= t("promo.#{slug}.body") %></span>
+      <span class="promo-action">
         <%= t("promo.#{slug}.action") %>
       </span>
     </span>

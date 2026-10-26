@@ -27,7 +27,7 @@ class ChromeAuditFlatContractTest < Minitest::Test
     assert_includes app, '@use "vertical_promo";'
     assert_includes promo, ".brgen-vertical-promo {"
     assert_includes promo, "background: var(--bg);"
-    assert_includes promo, ".brgen-vertical-promo__disc {"
+    assert_includes promo, ".promo-disc {"
     assert_includes promo, "border: 0;"
   end
 
