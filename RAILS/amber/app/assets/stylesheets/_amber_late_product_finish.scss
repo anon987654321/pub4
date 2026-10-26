@@ -162,7 +162,7 @@ body[data-surface="luxury"] .item-card--luxury nav {
 body[data-surface="luxury"] .item-card--luxury .item-title {
   font-size: 14px;
   font-weight: 600;
-  line-height: 1.4;
+  line-height: var(--leading-snug);
   letter-spacing: 0;
 }
 
@@ -306,7 +306,7 @@ body[data-surface="luxury"] .item-card--luxury .item-title {
 body[data-surface="luxury"] .item-card--luxury .item-meta,
 body[data-surface="luxury"] .commerce-fit-reasons,
 body[data-surface="luxury"] .shop-feed-note {
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 
 body[data-surface="luxury"] :is(
@@ -317,7 +317,7 @@ body[data-surface="luxury"] :is(
   .luxury-section > p
 ) {
   max-inline-size: 66ch;
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 
 body[data-surface="luxury"] .amber-editorial-nav {
@@ -419,7 +419,7 @@ body[data-surface="luxury"] .amber-editorial-nav a {
 .amber-stardust-spark--4,
 .amber-stardust-speck--1,
 .amber-stardust-speck--5 {
-  animation: amber-stardust-twinkle 4.8s ease-in-out infinite;
+  animation: amber-stardust-twinkle 4.8s var(--ease-in-out) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

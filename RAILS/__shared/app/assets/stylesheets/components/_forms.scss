@@ -24,7 +24,7 @@ form :is(
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   accent-color: var(--accent);
   transition: background var(--transition-fast) var(--ease-out);
 }
@@ -139,7 +139,7 @@ form :is(.field, fieldset) > legend {
   display: block;
   color: var(--text-secondary);
   font-size: var(--text-sm);
-  line-height: 1.4;
+  line-height: var(--leading-snug);
 }
 
 form > fieldset {

@@ -125,7 +125,7 @@
   height: var(--tap-min);
   cursor: pointer;
   font-size: var(--text-lg);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   display: flex;
   align-items: center;
   justify-content: center;

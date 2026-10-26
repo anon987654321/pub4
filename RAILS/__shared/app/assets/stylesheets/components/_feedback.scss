@@ -41,6 +41,12 @@
   animation: slideInRight 240ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}
+
 /* One variant: a toast carries a confirmation, and an error stays in the page. */
 .toast--success { border-inline-start: 3px solid var(--color-success); }
 .toast--error { border-inline-start: 3px solid var(--color-danger); }
