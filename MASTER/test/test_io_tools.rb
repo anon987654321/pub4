@@ -169,12 +169,15 @@ class TestIoTools < Minitest::Test
 
   def test_batch_replace_leaves_sacred_paths_alone
     with_root(manifest: true) do |root|
-      sacred = write(root, "data/config.yml", "old: 1\n")
+      # The sacred file the manifest names, not all of data/: data/ was blanket-protected once.
+      sacred = File.join(root, "data", "soul.yml")
+      File.write(sacred, File.read(sacred) + "old: 1\n")
+      before = File.read(sacred)
       ordinary = write(root, "lib/x.txt", "old\n")
 
       Master::Io::BatchReplace.new(root:, governor: allow).call(old_str: "old", new_str: "new")
 
-      assert_equal "old: 1\n", File.read(sacred)
+      assert_equal before, File.read(sacred)
       assert_equal "new\n", File.read(ordinary)
     end
   end
@@ -516,7 +519,10 @@ class TestIoTools < Minitest::Test
       coordinator.connect_all
 
       assert_equal %w[good bad], built, "a disabled server is never built"
-      assert_includes bus.events, ["mcp:server_failed", { name: "bad", error: "spawn failed" }]
+      # The event carries a digest of the error, not its text (bd4cd2c0f).
+      failed = bus.events.find { |event, _| event == "mcp:server_failed" }&.last
+      assert_equal "bad", failed[:name]
+      assert_equal Digest::SHA256.hexdigest("spawn failed"), failed[:error_digest]
       assert_includes bus.events, ["mcp:connected", { count: 1 }]
     end
   end

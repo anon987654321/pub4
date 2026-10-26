@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../ground/redactor"
+
 module Master
   module Io
     # LLM-callable tool; tools self-report outcomes so RSI reads the ledger.
@@ -25,7 +27,8 @@ module Master
           event_type: event_type.to_s,
           dimension: dimension.to_s,
           value: value&.to_f,
-          metadata: metadata&.to_s,
+          # Model-written, and it quoted users verbatim into a table nothing pruned.
+          metadata: metadata && Master::Ground::Redactor.text(metadata.to_s).byteslice(0, 500).scrub(""),
         )
         Result.ok("recorded: #{event_type} / #{dimension}")
       rescue StandardError => e

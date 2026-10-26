@@ -10,7 +10,11 @@ module Master
       # Feedback-event storage and RSI opportunity detection — separate from
       # KnowledgeStore's fix-outcome and strategy-reuse concerns.
       module FeedbackEvents
+        # RSI reads seven days; ninety are kept for the trend and the rest dropped on write.
+        FEEDBACK_KEEP_DAYS = 90
+
         def record_event(event_type:, dimension:, value: nil, metadata: nil)
+          @db.execute("DELETE FROM feedback_events WHERE ts < ?", [Time.now.to_i - (FEEDBACK_KEEP_DAYS * 86_400)])
           @db.execute(
             "INSERT INTO feedback_events (ts, event_type, dimension, value, metadata) VALUES (?, ?, ?, ?, ?)",
             [Time.now.to_i, event_type.to_s, dimension.to_s, value&.to_s, encoded_metadata(metadata)],

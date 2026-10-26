@@ -29,6 +29,26 @@ module Master
         @lock = Monitor.new
         FileUtils.mkdir_p(@root)
         FileUtils.mkdir_p(File.dirname(@manifest_path))
+        sweep_stale!
+      end
+
+      # The TTL was enforced only when an entry was read, and the LRU starts empty in each
+      # process, so model output stayed on disk indefinitely: 740 entries over five days.
+      # Each process now drops what has expired when it opens the cache.
+      def sweep_stale!
+        cutoff = Time.now - @ttl
+        Dir.glob(File.join(@root, "*.json")).each { |file| File.delete(file) if File.mtime(file) < cutoff }
+        entries = manifest
+        live = entries.reject do |_key, entry|
+          entry.is_a?(Hash) && Time.now.to_i - (entry["ts"] || entry[:ts]).to_i > @ttl
+        end
+        return if live.size == entries.size
+
+        return File.delete(@manifest_path) if live.empty?
+
+        write_atomic(@manifest_path, live.to_yaml, fsync: false, fsync_dir: false, mode: 0o600)
+      rescue SystemCallError => e
+        Master::Ground::Swallow.log(e, context: "semantic_cache.sweep", event_bus: @bus)
       end
 
       def fetch(prompt, model, &blk)

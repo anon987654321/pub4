@@ -51,7 +51,7 @@ module Master
       def save!
         FileUtils.mkdir_p(File.dirname(@path))
         temp = "#{@path}.#{Process.pid}.tmp"
-        File.write(temp, "#{JSON.pretty_generate(@data)}\n")
+        File.write(temp, "#{JSON.pretty_generate(@data)}\n", perm: 0o600)
         File.rename(temp, @path)
       end
     end

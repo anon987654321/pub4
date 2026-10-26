@@ -103,7 +103,9 @@ module Master
           # unlinked while another process could be waiting on its inode.
           prefix = "#{File.basename(path)}."
           backups = Dir.glob("#{path}.*").select do |candidate|
-            File.basename(candidate).delete_prefix(prefix).match?(/\A\d{23}-\d+\z/)
+            # The older second-resolution names too: five of those, 52 MB of messages and
+            # backtraces, sat outside the keep count because this matched only the new ones.
+            File.basename(candidate).delete_prefix(prefix).match?(/\A\d{14}(?:\d{9}-\d+)?\z/)
           end
           backups.sort.reverse.drop([Integer(keep), 0].max).each do |old|
             File.delete(old) if File.file?(old) && !File.symlink?(old)

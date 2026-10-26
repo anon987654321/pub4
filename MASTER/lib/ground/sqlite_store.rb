@@ -50,6 +50,11 @@ module Master
         FileUtils.mkdir_p(dir, mode: 0o700)
         harden_sqlite_directory(dir)
         FileUtils.touch(path) unless File.exist?(path)
+        # The file, like its directory: no access for other. It was created 0644.
+        file_mode = File.stat(path).mode & 0o7777
+        FileUtils.chmod(file_mode & 0o7770, path) unless (file_mode & 0o007).zero?
+      rescue Errno::ENOSYS, Errno::EOPNOTSUPP, Errno::EPERM
+        SqliteStore.warn_chmod_unsupported_once(path)
       end
 
       # Clears "other" and leaves owner and group alone, rather than clamping

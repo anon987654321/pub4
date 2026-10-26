@@ -2,6 +2,8 @@
 
 require "json"
 require "fileutils"
+require "digest"
+require_relative "event_privacy"
 
 module Master
   module Trace
@@ -12,6 +14,7 @@ module Master
     class Recorder
       EVENT_PATTERNS = %w[gateway:* pipeline:* tool:after route:* council:* memo:* lint:* governor:*].freeze
       MAX_EVENTS_PER_TURN = 200
+      KEEP_DAYS = 14
 
       def initialize(root:, event_bus:)
         @dir = File.join(root, ".master", "traces")
@@ -19,7 +22,7 @@ module Master
         @mutex = Mutex.new
         @current = nil
         @last = nil
-        FileUtils.mkdir_p(@dir)
+        FileUtils.mkdir_p(@dir, mode: 0o700)
         subscribe
       end
 
@@ -30,7 +33,9 @@ module Master
         return "no trace recorded yet" unless turn
 
         lines = ["turn #{turn[:id]}  ts=#{turn[:start_ts]}  channel=#{turn[:channel]}"]
-        lines << "  message: #{(turn.fetch(:message, ""))[0, 100]}"
+        message = turn.fetch(:message, "")
+        shown = message.is_a?(Hash) ? "#{message[:bytes]} bytes, kept as a digest" : message.to_s[0, 100]
+        lines << "  message: #{shown}"
         turn[:events].each do |ev|
           ms = ev[:ts_ms]
           name = ev[:event]
@@ -73,11 +78,30 @@ module Master
         ev.merge(ts_ms: (ev.fetch(:ts, 0)) - ts0).except(:ts)
       end
 
+      # Disk gets what the event log gets: the same EventPrivacy transform, the message as a
+      # digest and length, owner-only, two weeks kept. Subscribers see raw payloads, and this
+      # wrote them as they came: chat text, tool URLs and queries, in 0644 daily files.
+      # /why keeps the full turn in memory for the process that recorded it.
       def finalize(turn)
         path = File.join(@dir, "#{Time.now.strftime("%Y-%m-%d")}.jsonl")
-        File.open(path, "a") { |f| f.puts JSON.generate(turn) }
+        File.open(path, "a", 0o600) { |f| f.puts JSON.generate(persisted(turn)) }
+        File.chmod(0o600, path)
+        prune
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "recorder.finalize", path:)
+      end
+
+      def persisted(turn)
+        message = turn[:message].to_s
+        events = turn[:events].map do |event|
+          EventPrivacy.persisted(event[:event].to_s, event.except(:event)).merge(event: event[:event])
+        end
+        turn.merge(message: { sha256: Digest::SHA256.hexdigest(message), bytes: message.bytesize }, events:)
+      end
+
+      def prune
+        cutoff = Time.now - (KEEP_DAYS * 86_400)
+        Dir.glob(File.join(@dir, "*.jsonl")).each { |file| File.delete(file) if File.mtime(file) < cutoff }
       end
 
       def load_last_from_disk

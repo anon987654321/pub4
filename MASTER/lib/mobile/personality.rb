@@ -47,7 +47,7 @@ module Master
       def save!
         FileUtils.mkdir_p(File.dirname(@path))
         temp = "#{@path}.#{Process.pid}.tmp"
-        File.write(temp, YAML.dump(@data))
+        File.write(temp, YAML.dump(@data), perm: 0o600)
         File.rename(temp, @path)
       end
     end

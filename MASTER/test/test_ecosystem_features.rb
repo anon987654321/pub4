@@ -72,10 +72,11 @@ class TestEcosystemFeatures < Minitest::Test
     # /device and /owner folded into /android and /ios (3910842ae); /pair came
     # back as one-time pairing codes for local access (11f15666b), and
     # /preferences governs per-person settings (cddc6ff0e).
-    # /rules became /laws with the Law registry (0202b2a76).
+    # /rules became /laws with the Law registry (0202b2a76), and /skill reviews and
+    # approves skill revisions (3a6b3a980).
     assert_equal %w[agenda android bard capabilities clear commit critique deploy doctor events explain face fix
                     help incident ios laws model narrate orders pair play plugin preferences privacy prove reload
-                    review screen session size snapshot soul status support task undo voice wake why wishlist],
+                    review screen session size skill snapshot soul status support task undo voice wake why wishlist],
                  registry.keys.sort
   end
 

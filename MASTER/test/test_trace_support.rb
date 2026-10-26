@@ -285,6 +285,22 @@ class TestTraceSupport < Minitest::Test
     FileUtils.rm_rf(root)
   end
 
+# What reaches disk is what the event log keeps: no chat text, no tool query, owner-only.
+def test_a_recorded_turn_keeps_its_words_off_disk
+  root = Dir.mktmpdir("recorder_")
+  bus = Bus.new
+  Master::Trace::Recorder.new(root:, event_bus: bus)
+  bus.emit("gateway:*", { event: "gateway:turn_start", turn_id: "t1", channel: :web, message: "my bank pin is 4417", ts: 1 })
+  bus.emit("tool:after", { event: "tool:after", tool: "web_search", query: "4417 bank", ts: 2 })
+  bus.emit("gateway:*", { event: "gateway:turn_done", ts: 3 })
+
+  file = Dir.glob(File.join(root, ".master", "traces", "*.jsonl")).first
+  refute_includes File.read(file), "4417"
+  assert_equal 0o600, File.stat(file).mode & 0o777
+ensure
+  FileUtils.rm_rf(root)
+end
+
   def test_events_outside_a_turn_are_not_recorded
     root = Dir.mktmpdir("recorder_")
     bus = Bus.new
@@ -424,7 +440,7 @@ class TestTraceSupport < Minitest::Test
     secret = "private prompt material"
     lines = Master::Trace::Dmesg::Console.new.lines(event: "core:reason", why: secret)
 
-    assert_equal ["fold0: reason received (legacy payload redacted)"], lines
+    assert_equal ["fold0: reason metadata unavailable"], lines
     refute_includes lines.join, secret
   end
 
@@ -440,7 +456,8 @@ class TestTraceSupport < Minitest::Test
 
     assert_equal [
       "llm0 at master0: nvidia/nemotron-3-super-120b-a12b",
-      "llm0: provider_error, Upstream error from Nvidia: Service temporarily overloaded",
+      # Provider text stays out of the terminal since 1ac838c8e; the category still shows.
+      "llm0: provider_error, diagnostic details redacted",
       "io0 at master0: files and commands",
       "read0 at io0: target redacted (10 bytes)",
       "read0: failed (legacy diagnostic redacted)",

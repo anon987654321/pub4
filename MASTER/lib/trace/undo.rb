@@ -89,8 +89,10 @@ module Master
         []
       end
 
+      # Owner-only: the journal holds the whole content of every file it snapshots, and
+      # written 0644 it made a 0600 key or env file readable by anyone the source was not.
       def persist_journal
-        write_atomic(@journal, @stack.map { |entry| "#{JSON.generate(entry)}\n" }.join)
+        write_atomic(@journal, @stack.map { |entry| "#{JSON.generate(entry)}\n" }.join, mode: 0o600)
       rescue StandardError => e
         delete_tmp_file(tmp_path) if defined?(tmp_path)
         raise

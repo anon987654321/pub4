@@ -178,7 +178,9 @@ module Master
       def save_cli_history
         path = cli_history_path
         FileUtils.mkdir_p(File.dirname(path))
-        File.write(path, Reline::HISTORY.to_a.last(HISTORY_LIMIT).join("\n") + "\n")
+        # Every prompt the operator typed: owner-only, as the shell keeps its own history.
+        File.write(path, Reline::HISTORY.to_a.last(HISTORY_LIMIT).join("\n") + "\n", perm: 0o600)
+        File.chmod(0o600, path)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.save_history", event_bus: @refs.bus)
       end

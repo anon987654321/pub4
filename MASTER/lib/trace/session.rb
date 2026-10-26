@@ -35,7 +35,7 @@ module Master
             cost: @cost,
             ts: Time.now.to_i,
           }
-          write_atomic(@path, JSON.generate(json_safe(data)))
+          write_atomic(@path, JSON.generate(json_safe(data)), mode: 0o600)
           save_forks!
         end
 
@@ -90,7 +90,7 @@ module Master
               [key.to_s, { messages: conversation[:messages], token_est: conversation[:token_est], name: conversation[:name], input_tokens: conversation[:input_tokens] }]
             end.to_h
           end
-          write_atomic(forks_path, JSON.generate(json_safe(data)))
+          write_atomic(forks_path, JSON.generate(json_safe(data)), mode: 0o600)
         end
 
         def json_safe(value)
@@ -133,7 +133,7 @@ module Master
           stamp = Time.now.utc.strftime("%Y%m%d%H%M%S")
           target = "#{forks_path}.corrupt.#{stamp}.#{Process.pid}"
           FileUtils.mv(forks_path, target)
-          File.write("#{target}.reason", "#{error.class}: #{error.message}\n")
+          File.write("#{target}.reason", "#{error.class}: #{error.message}\n", perm: 0o600)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Session.quarantine_forks", severity: :load_bearing, path: forks_path)
         end
@@ -150,7 +150,7 @@ module Master
           stamp = Time.now.utc.strftime("%Y%m%d%H%M%S")
           target = "#{@path}.corrupt.#{stamp}.#{Process.pid}"
           FileUtils.mv(@path, target)
-          File.write("#{target}.reason", "#{error.class}: #{error.message}\n")
+          File.write("#{target}.reason", "#{error.class}: #{error.message}\n", perm: 0o600)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Session.quarantine_corrupt_session",
                                         severity: :load_bearing, path: @path)
@@ -347,7 +347,7 @@ module Master
           entry[:approximate] = true if approximate
         end
         rotate_costs! if File.exist?(@costs_path) && File.size(@costs_path) > COSTS_MAX_BYTES
-        File.open(@costs_path, "a") { |f| f.puts(JSON.generate(json_safe(entry))) }
+        File.open(@costs_path, "a", 0o600) { |f| f.puts(JSON.generate(json_safe(entry))) }
         entry
       end
 
@@ -404,7 +404,7 @@ module Master
 
         lines = File.readlines(@costs_path)
         keep = lines.last([lines.size / 2, 1].max)
-        File.write(@costs_path, keep.join)
+        File.write(@costs_path, keep.join, perm: 0o600)
       end
     end
   end
