@@ -17,7 +17,7 @@ article > header {
 
 article > header h1 {
   overflow-wrap: anywhere;
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 
 article dl {
@@ -73,13 +73,13 @@ header.page-header {
 header.page-header h1 {
   margin: 0;
   font-size: clamp(1.75rem, 5vw, 2.5rem);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   letter-spacing: var(--tracking-tightest);
 }
 
 header.page-header > p {
   max-width: 62ch;
-  line-height: 1.6;
+  line-height: var(--leading-loose);
 }
 
 header.page-header > nav {
@@ -162,7 +162,7 @@ turbo-frame {
 .port-row > div code, .install-panel input, article dd code { font-family: var(--font-mono); }
 .data-state { display: inline-flex; width: fit-content; padding: var(--space-0-5) var(--space-1); border: 0; border-radius: 0; color: var(--text-secondary); font-size: var(--text-xs); }
 .data-state--stale { border-color: var(--status-stale-border); color: var(--status-stale-text); }
-.ports-purpose { max-width: 58ch; font-size: var(--text-lg); line-height: 1.5; color: var(--text); }
+.ports-purpose { max-width: 58ch; font-size: var(--text-lg); line-height: var(--leading-normal); color: var(--text); }
 .install-panel { margin-block: var(--space-6); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-elevated); }
 .install-panel [data-controller="clipboard"] { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); }
 .install-panel input { min-width: 0; background: var(--bg); color: var(--text); border: 0; border-radius: 0; box-shadow: none; padding: var(--space-3); }

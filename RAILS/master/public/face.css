@@ -339,7 +339,7 @@ body[data-hidden-tab="1"] #cognition-ecology {
 #cmd-palette-list .cmd-hint {
   display: block;
   font-size: var(--text-meta);
-  line-height: 1.5;
+  line-height: var(--leading-body);
   color: var(--face-muted);
   margin-top: 0px;
 }
@@ -881,7 +881,7 @@ body #zsh.live:focus-within {
 }
 #zsh .pp { color: var(--face-alert); font-weight: 700; margin-inline-end: 0.6ch; }
 #zsh .sep { color: var(--face-muted); margin-inline-end: 0.4ch; }
-#zsh input, #zsh textarea { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 0px 0; resize: none; line-height: 1.5; max-height: 120px; }
+#zsh input, #zsh textarea { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--face-fg); font: inherit; caret-color: var(--face-fg); padding: 0px 0; resize: none; line-height: var(--leading-body); max-height: 120px; }
 #zsh input::placeholder, #zsh textarea::placeholder { color: var(--face-muted); }
 html[data-input-dense="1"] #zsh { border-top: 1.5px solid color-mix(in srgb, var(--face-fg) 28%, transparent); transition: border-top-width .2s var(--ease-out); }
 
@@ -1017,7 +1017,7 @@ body[data-mode="speaking"] #spin-btn { display: block; }
 .message[data-ts]::after {
   content: attr(data-ts);
   font-size: var(--text-meta);
-  line-height: 1.5;
+  line-height: var(--leading-body);
   color: var(--face-muted);
   opacity: 0;
   transition: opacity var(--transition-fast) var(--ease-out);
@@ -1146,7 +1146,7 @@ body[data-tts-loading="true"] canvas { filter: none; }
 }
 
 .compaction-title { font-size: var(--text-meta); text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.6; margin-bottom: 4px; }
-.compaction-body { white-space: pre-wrap; font-size: var(--text-meta); line-height: 1.5; max-height: 160px; overflow: auto; }
+.compaction-body { white-space: pre-wrap; font-size: var(--text-meta); line-height: var(--leading-body); max-height: 160px; overflow: auto; }
 
 .message.msg-phantom .msg-body {
   text-decoration: line-through;
@@ -1540,7 +1540,7 @@ html[data-aesthetic="wscons"] body,
 body.wscons-mode {
   font-family: var(--font-mono);
   font-size: 16px;
-  line-height: 1.5;
+  line-height: var(--leading-body);
   -webkit-font-smoothing: auto;
 }
 
@@ -1895,7 +1895,7 @@ body[data-mode="listening"] .mic-indicator { color: #C7C7C7; }
   z-index: 4;
   opacity: .28;
   mix-blend-mode: screen;
-  transition: opacity 180ms linear;
+  transition: opacity 180ms var(--ease-linear);
 }
 body[data-face-ascii="1"] .master-face-ascii-layer { opacity: .96; }
 body[data-face-ascii="1"] #face { opacity: .055; }
