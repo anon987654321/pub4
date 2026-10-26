@@ -18,6 +18,25 @@ This document describes what the current code has established and what remains t
 
 This is deliberately an adapter layer, not a second law registry or a replacement for `Master::Proof`, `Deploy::CheckResult`, or the repair loop's own state machine.
 
+### Skill declaration and promotion gate
+
+`Master::Execution::Contract::SkillContract` now validates an optional `execution_contract` declaration on a registry or Antigravity skill. It records a content-addressed revision, semantic version, risk classification, required capabilities, referenced Law IDs, fixture paths and provenance. The contract metadata does not grant those capabilities; every real tool operation remains subject to constitutional admission.
+
+Legacy skills without a declaration retain the prior activation behavior as `unreviewed` for compatibility. A declared skill is not injected merely because its own YAML says `candidate` or `approved`. A valid declaration must also have an operator-owned approval entry in `~/.master/skill_approvals.yml` matching both the exact name and SHA-256 revision. Editing the body, triggers, metadata or included skill files changes the revision and invalidates the approval. Blocked, deprecated and malformed declarations remain inactive. The approval file must be a regular, non-symlink file that is not group/world-writable; malformed manifests fail closed for declared skills.
+
+The approval manifest has this shape:
+
+```yaml
+schema_version: 1
+approvals:
+  - name: release-skill
+    revision: "<exact SHA-256 revision reported by the operator inventory>"
+    approved_by: "<operator identity>"
+    approved_at: "2026-10-26T12:00:00Z"
+```
+
+The library exposes `contract_for(name)` and a compact `contract_inventory` containing status, revision, promotion readiness, operator-approval state and trigger eligibility. They omit the skill body and credentials. These are inspection APIs, not an approval UI or a self-promotion command. The current task did not add a complete operator-facing approval workflow; the file must be written by the operator through a trusted host-side path. End-to-end coverage of all skill sources and the UI/command for reviewing candidates remains outstanding.
+
 ### Fold lifecycle audit
 
 The Fold's lifecycle observer now writes typed effect envelopes and can carry run and mission correlation IDs. Relevant local scope is hashed before persistence. The observer rejects untyped evidence references and continues to use the strict event-persistence path: if the before-event cannot be written, the effect must not run; if the after-event cannot be recorded, the Fold must not claim completion.
@@ -48,7 +67,7 @@ The current changes are the first shared-contract slice. The following work rema
 4. **Finish one durable operation identity.** Carry mission, run, attempt, effect and parent IDs through every execution path. Use idempotency keys when an external API supports them; otherwise reconcile before replaying a result that may have happened but lacks a receipt. Do not claim exactly-once execution for arbitrary external effects.
 5. **Consolidate coordinator ownership from evidence.** Map `Core::Fold`, `FixLoop`, `RepairLoop`, `Fix::Kernel`, `Mission`, `RunJournal`, `RunLedger` and `Transaction` against actual call sites and restart/rollback tests. Retain one public `/fix` coordinator and the existing transaction paths until behavioral equivalence is proven. The target is a shared execution contract, not a universal mega-loop.
 6. **Harden isolation and parallel repair.** Candidate repair workers should use isolated worktrees, stable base revisions, bounded permissions and one integration/commit authority. Test conflicting edits, stale bases, worker loss, partial delivery and preservation of unrelated staged and unstaged work before making parallel repair the default.
-7. **Promote skills by validation, not trust.** Existing skills already have content revisions; that is not the same as an approved, executable skill contract. Add explicit provenance, required capabilities, compatibility, fixtures, risk, verifier and promotion state before automatically learning or changing skills. A skill must not change the constitutional catalog.
+7. **Complete skill promotion end to end.** A typed `execution_contract`, content-addressed revision and external operator approval manifest now exist, and a revision change invalidates approval. Still add the operator-facing candidate review/approval workflow; link fixture references to actual test results rather than trusting their presence; cover every Antigravity, registry and learned-skill source; and prove the new gate under the pinned runtime. A skill must never change the constitutional catalog or grant its own capabilities.
 8. **Make model failover an observed contract.** Verify selected provider, actual credentials, structured-output/tool support, capability floor, timeout and retry class at the provider boundary. A routing log alone is not proof that the selected key or provider was used.
 9. **Complete adapter and operations consistency.** Bring CLI, web, voice, browser, chat, device and background interactions onto shared session/mission semantics; expose degraded health and recovery instructions without letting adapters bypass constitutional admission.
 10. **Keep policy, isolation and observability separate.** A policy decision is not an OS sandbox. A best-effort metric is not an audit receipt. A graph edge is not proof that every dynamic caller was found. Preserve these distinctions in APIs and terminal reports.
@@ -62,6 +81,8 @@ The focused set is:
 ```zsh
 cd MASTER
 RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_execution_contract.rb
+RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_skills.rb
+RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_enhance_stage.rb
 RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_core_cancellation.rb
 RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_core_bridge.rb
 RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_turn_router.rb
