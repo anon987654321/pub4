@@ -17,8 +17,10 @@ module Master
         MAX_SCORE = 1.25
         WINDOW_S = 900
         MAX_BYTES = Master::Trace::Log::Event::MAX_BYTES
-        FAILURES = %w[failure timeout rate_limit provider_error quota_exceeded canary_validation_failure
-                      canary_failure].freeze
+        FAILURES = %w[
+          failure timeout rate_limit provider_error quota_exceeded model_missing llm_call_failure
+          canary_validation_failure canary_failure
+        ].freeze
 
         attr_reader :path
 
