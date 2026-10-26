@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 require "tmpdir"
-require_relative "../lib/review/scan/laws/external_linter_laws"
+require_relative "../law/detectors/external_linter_laws"
 
 # A /fix whose instruments are broken stops in seconds and says why, instead of reading for an hour
 # and ending with "incomplete, failed fix, proof".
