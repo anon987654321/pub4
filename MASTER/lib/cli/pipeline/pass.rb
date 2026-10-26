@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../operator/check_chain"
+require_relative "../../fix/outcome_policy"
 require_relative "pass_result"
 require_relative "target_resolver"
 require_relative "proof"
@@ -25,17 +26,13 @@ module Master
         # Endings that stop a run without saying its delivered work was wrong. A run that committed
         # verified fixes and then plateaued or ran out of time did useful work, and calling it a
         # failure hid every fix /fix ever landed behind the same verdict as a crash.
-        PARTIAL_ENDINGS = %i[plateau timeout blocked human_decision inconclusive].freeze
+        PARTIAL_ENDINGS = Master::Fix::OutcomePolicy::PARTIAL_ENDINGS
 
         # :done, :partial, :incomplete or :failed, from the loop's result and the commits it made.
         # ending: the loop's own terminal state when it reports one; the message is only parsed
         # for a loop that does not.
         def self.fix_outcome(ok:, msg:, delivered:, ending: nil)
-          ending ||= fix_ending(msg)
-          return :done if ok && !halted?(ending)
-          return :partial if delivered.positive? && PARTIAL_ENDINGS.include?(ending)
-
-          ok ? :incomplete : :failed
+          Master::Fix::OutcomePolicy.workflow_outcome(ok:, msg:, delivered:, ending:)
         end
 
         # The run in one line: how it ended, what it delivered, the findings before and after, the
@@ -60,11 +57,9 @@ module Master
            "soft red #{soft.size}", ("unmeasured #{unmeasured.size}" if unmeasured.any?)].compact
         end
 
-        def self.fix_ending(msg) = msg.to_s.match(/\A([A-Z_]+):/)&.captures&.first&.downcase&.to_sym
+        def self.fix_ending(msg) = Master::Fix::OutcomePolicy.extract_state(msg)
 
-        def self.halted?(ending)
-          !ending.nil? && ending != :done && Master::Fix::FixLoop::TERMINAL_STATES.include?(ending)
-        end
+        def self.halted?(ending) = Master::Fix::OutcomePolicy.halted?(ending)
 
         def initialize(scanner:, fix_loop:, root:, deliberation: nil, bus: nil, swarm: nil)
           @failed_stages = []

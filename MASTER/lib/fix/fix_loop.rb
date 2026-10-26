@@ -23,6 +23,7 @@ require_relative "rename_sweep"
 require_relative "severity"
 require_relative "violation"
 require_relative "wishlist"
+require_relative "outcome_policy"
 require_relative "protocol"
 require_relative "transformation_plan"
 require_relative "../review/reference_graph"
@@ -56,7 +57,7 @@ module Master
       # proposed fix is irreversible or spans multiple files. BLOCKED is a halt
       # outside the loop's authority, and VALIDATION_FAILED is a repair the tree refused.
       # Protocol declares the set; this is its symbol spelling, not a second list.
-      TERMINAL_STATES = Protocol::TERMINAL_STATES.map { |state| state.downcase.to_sym }.freeze
+      TERMINAL_STATES = OutcomePolicy::TERMINAL_STATES
       # A pass status that ends the run, and the state it ends in.
       PASS_ENDINGS = { clean: :done, blockers_cleared: :done, validation_failed: :validation_failed,
                        delivery_failed: :delivery_failed, human_decision: :human_decision,
@@ -653,20 +654,7 @@ module Master
       end
 
       def terminal_state_for(result)
-        return :timeout if result.err? && result.category == :timeout
-        return :crash if result.err? && result.category == :crash
-        return :skip if result.err? && result.category == :skip
-        return :delivery_failed if result.err? && result.category == :delivery_failed
-        return :blocked if result.err? && result.category == :policy
-        return :human_decision if result.err? && result.category == :human_decision
-        return :plateau if result.err? && result.category == :plateau
-        return :reloading if result.err? && result.category == :reloading
-        return :inconclusive if result.err? && result.category == :inconclusive
-        return :validation_failed if result.err? && result.category == :validation
-        return :failed if result.err? && result.category == :failed
-        return result.value!.to_s[/\A[A-Z_]+/].to_s.downcase.to_sym if result.ok?
-
-        :failed
+        OutcomePolicy.terminal_state(result)
       end
 
       # start_pass is the number of the first pass to run, 1-based like the

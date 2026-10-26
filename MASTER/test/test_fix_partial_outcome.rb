@@ -47,6 +47,12 @@ class TestFixPartialOutcome < Minitest::Test
     end
   end
 
+  def test_unknown_or_missing_status_cannot_be_reported_as_done
+    assert_equal :incomplete, outcome(ok: true, msg: "MYSTERY: status not in protocol", delivered: 2)
+    assert_equal :incomplete, outcome(ok: true, msg: "clean after 2 passes", delivered: 0)
+    assert_equal :incomplete, outcome(ok: true, msg: "clean", delivered: 2, ending: :mystery)
+  end
+
   def test_the_loops_own_state_wins_over_its_message
     assert_equal :partial, outcome(ok: true, msg: "clean after 2 passes", delivered: 1, ending: :plateau)
   end

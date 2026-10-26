@@ -2,6 +2,7 @@
 
 require "json"
 require "digest"
+require_relative "outcome_policy"
 require_relative "../ai/orientation"
 require_relative "protocol_detector_matrix"
 require_relative "four_stream_assessment"
@@ -14,7 +15,7 @@ module Master
     module Protocol
       VERSION = 5
       STAGES = %w[load trace inventory structure scan semantic repair verify repeat report].freeze
-      TERMINAL_STATES = %w[DONE PLATEAU CRASH SKIP HUMAN_DECISION BLOCKED INCONCLUSIVE VALIDATION_FAILED DELIVERY_FAILED TIMEOUT FAILED RELOADING].freeze
+      TERMINAL_STATES = OutcomePolicy::TERMINAL_STATES.map { |state| state.to_s.upcase }.freeze
 
       module_function
 
