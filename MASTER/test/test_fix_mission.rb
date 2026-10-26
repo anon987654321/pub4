@@ -104,6 +104,23 @@ class FixMissionTest < Minitest::Test
     end
   end
 
+  def test_cancelled_and_ambiguous_missions_are_terminal_without_delivery_claims
+    %w[cancelled unknown_outcome recovery_failed].each do |state|
+      Dir.mktmpdir do |root|
+        mission = Master::Fix::Mission.new(root:).start!(
+          goal: "repair safely", scope: root, origin: "fold", auto_continue: true
+        )
+        mission.transition!(:execute)
+        mission.finish!(state:, summary: "operator stopped")
+
+        record = Master::Fix::Mission.current(root:)
+        assert_equal state, record["state"]
+        assert_equal "execute", record["stage"]
+        refute_includes Master::Fix::Mission::RESUMABLE_STATES, record["state"]
+      end
+    end
+  end
+
   def test_v1_mission_migrates_and_resumes_without_losing_identity
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, ".master"))
