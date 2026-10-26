@@ -18,8 +18,8 @@ class TestFourStreamAssessment < Minitest::Test
     assert_equal %i[
       lexical_violations lexical_opportunities semantic_violations semantic_opportunities
     ], Master::Fix::FourStreamAssessment::STREAMS
-    %i[paths directories file_names sections lines syntax_tree cross_file structured_data
-       media_assets compiled_assets rendered_ui interactive_behavior tests runtime deployment].each do |surface|
+    %i[repository_tree directories file_names paths whole_file sections lines syntax_tree cross_file
+       structured_data documentation media_assets compiled_assets rendered_ui interactive_behavior tests runtime deployment].each do |surface|
       assert_includes Master::Fix::FourStreamAssessment::SURFACES, surface
     end
 
