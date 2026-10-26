@@ -386,7 +386,7 @@ class TestTraceSupport < Minitest::Test
 
     assert_equal [
       "fold0 at master0: risk low",
-      "fold0: read the logger before describing it",
+      "fold0: reason recorded, 36 bytes",
       "read0 at fold0: lib/trace/logging.rb",
       "read0: 4 bytes, 2 lines",
       "exec0 at fold0: rake test",
@@ -411,12 +411,35 @@ class TestTraceSupport < Minitest::Test
       "llm0 at master0: nvidia/nemotron-3-super-120b-a12b",
       "llm0: provider_error, Upstream error from Nvidia: Service temporarily overloaded",
       "io0 at master0: files and commands",
-      "read0 at io0: missing.rb",
-      "read0: no such file",
+      "read0 at io0: read_file call",
+      "read0: failed",
     ], lines
   end
 
   # A scan's model calls and the fold's must not both read "at master0".
+  def test_trace_does_not_persist_reason_text_paths_or_tool_errors_in_dmesg_lines
+    console = Master::Trace::Dmesg::Console.new
+    events = [
+      { event: "core:reason", why: "private user prompt is here" },
+      { event: "tool:call", tool: "read_file", subject: "/home/alice/private-note.txt" },
+      { event: "tool:return", tool: "read_file", ok: false, error: "secret token in filesystem error" },
+      { event: "fix:transaction_rollback", id: "tx-safe-1", paths: ["/home/alice/private-note.txt"], error: "secret token" },
+      { event: "git:mutation:after", operation: "git_push", status: "ok", argv: ["/home/alice/private-note.txt"] },
+    ]
+
+    lines = Master::Trace::Dmesg.with_verbosity("trace") do
+      events.flat_map { |payload| console.lines(payload) }
+    end
+
+    joined = lines.join("\n")
+    assert_includes joined, "reason recorded"
+    assert_includes joined, "read_file call"
+    assert_includes joined, "failed"
+    refute_includes joined, "private user prompt"
+    refute_includes joined, "/home/alice/private-note.txt"
+    refute_includes joined, "secret token"
+  end
+
   def test_a_model_call_attaches_to_the_work_that_asked_for_it
     console = Master::Trace::Dmesg::Console.new
     inside = Master::Trace::Dmesg.under("scan0") { Thread.new { console.lines(event: "llm:send", model: "m") }.value }
