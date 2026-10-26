@@ -89,9 +89,6 @@ source and tests they could not run; this pass is what measures them.
 
 ## Cross-tree
 
-- [ ] Source-level security review of all four trees: outbound HTTP and SSRF, DNS pinning, body and
-  time limits, authorisation, rate limits, CSP and CORS headers as actually sent, uploads, secret
-  redaction, command construction, `html_safe` data flow.
 - [ ] DRY and duplication census: duplicate decisions, one-use abstractions, single-child
   directories, stale pointers; compare structural ratchets before and after.
 - [ ] Performance sweep with before/after numbers: boot, CLI response, web first paint, payloads,

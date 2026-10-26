@@ -339,3 +339,10 @@ seams:
       The DeepSeek handoff or chat export the backlog cited, saved under ~/Downloads, so each finding can be
       classified against current source. No file in the tree or Downloads holds it; git keeps only the commits
       that applied some of it (proof guards kept, MASTER/web and lib/master layouts since removed).
+  - id: csp_enforced_on_vm23
+    tree: OPENBSD
+    needs: console
+    evidence: >-
+      PUB4_CSP_ENFORCE set in the live /etc/master.env and each app's env on vm23, and a response header showing
+      Content-Security-Policy (not -Report-Only) with frame-ancestors, from a real request. The sample ships it
+      commented out, so every app's policy only reports.
