@@ -177,6 +177,7 @@ module Master
                  end
         report = { "tree" => name, "status" => status, "requested" => @count,
           "accepted" => candidates.size, "qualified" => qualified.size, "rejections" => rejected,
+          "decision" => tournament_decision(candidates, qualified, selected),
           "winner" => selected && compact(selected), "shortlist" => shortlist }
         publish("fix_loop:architecture_exploration_complete", tree: name, status: status,
           requested: @count, accepted: candidates.size, qualified: qualified.size, winner: report.dig("winner", "id"))
@@ -382,6 +383,35 @@ module Master
           "runtime_tests" => "NOT_RUN" }
       end
 
+      # Expose why a plan won, how much evidence survived, and whether the
+      # winner was decisive. Scores are locally computed; model-supplied scores
+      # never enter the tournament. This is planning evidence, not execution proof.
+      def tournament_decision(candidates, qualified, selected)
+        totals = candidates.map { |candidate| candidate.fetch(:scorecard).fetch(:total) }.sort
+        path_signatures = candidates.map { |candidate| candidate.fetch(:change_paths).sort.join("\\n") }.uniq
+        median = if totals.empty?
+                   nil
+                 elsif totals.size.odd?
+                   totals[totals.size / 2]
+                 else
+                   (totals[totals.size / 2 - 1] + totals[totals.size / 2]) / 2.0
+                 end
+        winner_score = selected&.fetch(:scorecard)&.fetch(:total)
+        runner_up_score = qualified[1]&.fetch(:scorecard)&.fetch(:total)
+        {
+          "scoring_authority" => "local_evidence_rules",
+          "candidate_score_range" => totals.empty? ? nil : { "min" => totals.first, "median" => median, "max" => totals.last },
+          "distinct_change_path_sets" => path_signatures.size,
+          "qualified_candidates" => qualified.size,
+          "selection_gate_passed" => !selected.nil?,
+          "winner_score" => winner_score,
+          "runner_up_score" => runner_up_score,
+          "winner_margin" => winner_score && runner_up_score ? winner_score - runner_up_score : nil,
+          "winner_selection_rule" => selected ? "highest local evidence score among candidates passing every quality floor; deterministic tie-break by test anchors, evidence paths, smaller scope, then id" : nil,
+          "execution_proof" => "NOT_RUN"
+        }
+      end
+
       def brief(row)
         output = ["ARCHITECTURE EXPLORATION #{row["status"]}: #{row["tree"]} accepted #{row["accepted"]}/#{row["requested"]}. Runtime tests: NOT_RUN."]
         winner = row["winner"]
@@ -399,6 +429,10 @@ module Master
           row["shortlist"].drop(1).each do |item|
             output << "Alternative #{item["id"]}: #{item["title"]}; score=#{item["score"]}/100."
           end
+          decision = row["decision"] || {}
+          output << "Tournament evidence: distinct_path_sets=#{decision["distinct_change_path_sets"]}; " \
+            "qualified=#{decision["qualified_candidates"]}; winner_margin=#{decision["winner_margin"] || "unavailable"}; " \
+            "execution_proof=#{decision["execution_proof"] || "NOT_RUN"}."
           output << "Selected direction guides narrow repairs and is not authorization for broad rewrites."
         else
           reason = if row["accepted"].to_i < MIN_CANDIDATES
