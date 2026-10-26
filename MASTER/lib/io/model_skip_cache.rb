@@ -22,10 +22,30 @@ module Master
       # (measured 2026-09-15). A spent key, a quota or a rate limit keeps the long park.
       TRANSIENT_CATEGORIES = %i[timeout provider_error llm_call_failure].freeze
 
+      # A park the provider did not time escalates with the model's own failures
+      # in the last day: the first is transient_skip_ttl_ms, then a minute, then
+      # five. A success clears the count (OpenClaw's cooldown ladder).
+      ESCALATION_MS = [60_000, 300_000].freeze
+      STRIKE_WINDOW_MS = 86_400_000
+
+      # In the last two minutes of a longer park, one call is let through every
+      # thirty seconds, so a lane that recovered early is seen to have.
+      PROBE_LEAD_MS = 120_000
+      PROBE_EVERY_MS = 30_000
+      PROBE_OPEN_MS = 5_000
+
       @mutex = Mutex.new
       @skips = {}
+      @strikes = {}
+      @clock = nil
 
       module_function
+
+      def clock=(callable)
+        @clock = callable
+      end
+
+      def now_ms = (@clock ? @clock.call : Process.clock_gettime(Process::CLOCK_REALTIME) * 1000).round
 
       def skip_ttl_ms
         env = ENV["MASTER_FALLBACK_SKIP_TTL_MS"].to_s
@@ -47,24 +67,41 @@ module Master
         cat = category&.to_sym
         return if cat && !SKIP_CATEGORIES.include?(cat)
 
-        now_ms = (Process.clock_gettime(Process::CLOCK_REALTIME) * 1000).round
-        ttl = ttl_ms(category: cat, reason: reason.to_s, now_ms:)
+        now = now_ms
+        ttl = ttl_ms(category: cat, reason: reason.to_s, now_ms: now, strikes: strike!(model, now))
         return if ttl <= 0 || model.to_s.empty?
 
         @mutex.synchronize do
           held = @skips[model.to_s]
-          until_ms = [now_ms + ttl, held && held[:until_ms] > now_ms ? held[:until_ms] : 0].max
-          @skips[model.to_s] = { until_ms:, reason: reason.to_s, category: cat&.to_s }
+          until_ms = [now + ttl, held && held[:until_ms] > now ? held[:until_ms] : 0].max
+          @skips[model.to_s] = { until_ms:, span_ms: until_ms - now, reason: reason.to_s, category: cat&.to_s }
         end
       end
+
+      # The call came back: the model is neither parked nor counted against.
+      def succeeded!(model)
+        @mutex.synchronize do
+          @skips.delete(model.to_s)
+          @strikes.delete(model.to_s)
+        end
+      end
+
+      def strike!(model, now)
+        @mutex.synchronize do
+          recent = Array(@strikes[model.to_s]).select { |at| now - at < STRIKE_WINDOW_MS } << now
+          @strikes[model.to_s] = recent
+          recent.size
+        end
+      end
+      private_class_method :strike!
 
       # The wait the provider stated wins. A rate limit that states none is
       # parked like a transient failure: the flat ten minutes over-parked a 429
       # that asked for seconds and under-parked a daily quota that asked for hours.
-      def ttl_ms(category:, reason:, now_ms:)
+      def ttl_ms(category:, reason:, now_ms:, strikes: 1)
         stated = LaneReply.stated_wait(reason, now_ms / 1000.0) || LaneReply.daily_reset(reason, now_ms / 1000.0)
         return stated.clamp(1, LaneReply::MAX_WAIT_S) * 1000 if stated&.positive?
-        return transient_skip_ttl_ms if TRANSIENT_CATEGORIES.include?(category) || category == :rate_limit
+        return escalated_ms(strikes) if TRANSIENT_CATEGORIES.include?(category) || category == :rate_limit
 
         skip_ttl_ms
       rescue StandardError => e
@@ -73,17 +110,34 @@ module Master
       end
       private_class_method :ttl_ms
 
+      def escalated_ms(strikes)
+        ladder = [transient_skip_ttl_ms, *ESCALATION_MS]
+        [ladder[[strikes, ladder.size].min - 1], skip_ttl_ms].min
+      end
+      private_class_method :escalated_ms
+
       def skipped?(model)
         entry = @mutex.synchronize { @skips[model.to_s] }
         return false unless entry
 
-        now_ms = (Process.clock_gettime(Process::CLOCK_REALTIME) * 1000).round
-        if now_ms >= entry[:until_ms]
+        now = now_ms
+        if now >= entry[:until_ms]
           @mutex.synchronize { @skips.delete(model.to_s) }
           return false
         end
-        true
+        !probe_open?(entry, now)
       end
+
+      def probe_open?(entry, now)
+        return false if entry[:span_ms].to_i <= PROBE_LEAD_MS || entry[:until_ms] - now > PROBE_LEAD_MS
+
+        @mutex.synchronize do
+          opened = entry[:probe_ms]
+          entry[:probe_ms] = opened = now if opened.nil? || now - opened >= PROBE_EVERY_MS
+          now - opened < PROBE_OPEN_MS
+        end
+      end
+      private_class_method :probe_open?
 
       # Epoch milliseconds the model's park ends, nil when it is not parked.
       def skipped_until_ms(model)
@@ -99,7 +153,10 @@ module Master
       end
 
       def clear!
-        @mutex.synchronize { @skips.clear }
+        @mutex.synchronize do
+          @skips.clear
+          @strikes.clear
+        end
       end
 
       def models_failover_cfg
