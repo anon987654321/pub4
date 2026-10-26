@@ -180,8 +180,6 @@ module Master
             nil
           end
 
-  d
-
           # Excluded only while a failure is the newest thing known about the lane.
           # This used to exclude every lane whose last answer was older than the
           # freshness window, success or not, so an idle lane was never asked and
