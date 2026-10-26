@@ -212,7 +212,7 @@ module Master
       SAFE_LIFECYCLE_LABELS = %w[
         event tool operation verb capability stage phase status category result_state
         reason_code code effect_id parent_effect_id checkpoint_id transaction_id audit_id
-        run_id subject_type subject_id commit head_before head_after target boundary
+        run_id subject_type subject_id commit head_before head_after
         previous_state state
       ].freeze
 
