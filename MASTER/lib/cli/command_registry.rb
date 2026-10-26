@@ -53,6 +53,7 @@ module Master
           "preferences" => command(:dispatch_preferences, root),
           "agenda" => command(:dispatch_agenda, root),
           "task" => command(:dispatch_task, root),
+          "skill" => command(:dispatch_skill, root),
           "capabilities" => command(:dispatch_capabilities, root),
           "doctor" => command(:dispatch_doctor, root),
           "voice" => Command.new { |ctx| dispatch_voice(ctx:) },
