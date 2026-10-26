@@ -235,6 +235,8 @@ module Master
       def evidence_report
         {
           schema_version: 1,
+          streams: STREAMS.map(&:to_s),
+          surfaces: surfaces.map(&:to_s),
           summary: summary,
           invalidations: Array(@invalidations).map do |entry|
             {

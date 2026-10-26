@@ -217,6 +217,8 @@ module Master
 
         report = document["report"]
         return { "status" => "artifact_report_missing" } unless report.is_a?(Hash)
+        matrix_validation = validate_assessment_matrix_report(report)
+        return matrix_validation if matrix_validation
         unless report["status"].to_s == receipt["matrix_status"].to_s
           return { "status" => "artifact_status_mismatch" }
         end
@@ -348,6 +350,154 @@ module Master
       end
 
       private
+
+      def validate_assessment_matrix_report(report)
+        status = report["status"].to_s
+        return { "status" => "matrix_status_unknown" } unless %w[complete incomplete not_measured].include?(status)
+
+        ledger = report["ledger"]
+        unless ledger.is_a?(Hash)
+          return { "status" => "matrix_ledger_missing" } if status == "complete"
+
+          return nil
+        end
+
+        summary = ledger["summary"]
+        cells = ledger["cells"]
+        streams = Array(ledger["streams"]).map(&:to_s)
+        surfaces = Array(ledger["surfaces"]).map(&:to_s)
+        unless summary.is_a?(Hash) && cells.is_a?(Array) && streams.any? && surfaces.any?
+          return { "status" => "matrix_ledger_malformed" }
+        end
+
+        required_clean_passes = Integer(summary["clean_passes_required"])
+        generation = Integer(summary["generation"])
+        last_mutation = Integer(summary["last_mutation_iteration"])
+        laws = Integer(summary["laws"])
+        expected_cells = Integer(summary["expected_cells"])
+        return { "status" => "matrix_dimensions_invalid" } unless required_clean_passes.positive? && laws.positive?
+        unless expected_cells == laws * streams.uniq.size * surfaces.uniq.size && cells.size == expected_cells
+          return { "status" => "matrix_cell_count_mismatch" }
+        end
+
+        keys = cells.map do |cell|
+          return { "status" => "matrix_cell_malformed" } unless cell.is_a?(Hash)
+
+          law = cell["law"].to_s
+          stream = cell["stream"].to_s
+          surface = cell["surface"].to_s
+          return { "status" => "matrix_cell_identity_missing" } if [law, stream, surface].any?(&:empty?)
+          return { "status" => "matrix_cell_out_of_domain" } unless streams.include?(stream) && surfaces.include?(surface)
+
+          [law, stream, surface]
+        end
+        return { "status" => "matrix_duplicate_cells" } unless keys.uniq.size == keys.size
+        return { "status" => "matrix_law_count_mismatch" } unless keys.map(&:first).uniq.size == laws
+
+        recorded = 0
+        unassessed = 0
+        inconclusive = 0
+        finding_cells = 0
+        complete = true
+        clean = true
+        allowed_readings = %w[assessed_clean violation_found opportunity_found not_applicable inconclusive]
+
+        cells.each_with_index do |cell, index|
+          cell_status = cell["status"].to_s
+          readings = cell["readings"]
+          return { "status" => "matrix_readings_malformed", "cell" => keys[index] } unless readings.is_a?(Array)
+          unless (allowed_readings + ["pending"]).include?(cell_status)
+            return { "status" => "matrix_cell_status_unknown", "cell" => keys[index] }
+          end
+
+          if readings.empty?
+            unassessed += 1
+            return { "status" => "matrix_pending_has_readings", "cell" => keys[index] } unless cell_status == "pending"
+
+            complete = false
+            clean = false
+            next
+          end
+
+          recorded += 1
+          latest = readings.last
+          unless latest.is_a?(Hash) && latest["status"].to_s == cell_status
+            return { "status" => "matrix_latest_reading_mismatch", "cell" => keys[index] }
+          end
+
+          previous_iteration = 0
+          previous_generation = 0
+          readings.each do |reading|
+            return { "status" => "matrix_reading_malformed", "cell" => keys[index] } unless reading.is_a?(Hash)
+
+            iteration = Integer(reading["iteration"])
+            reading_generation = Integer(reading["generation"])
+            reading_status = reading["status"].to_s
+            unless iteration.positive? && iteration > previous_iteration && reading_generation >= previous_generation &&
+                   reading_generation <= generation && allowed_readings.include?(reading_status)
+              return { "status" => "matrix_reading_order_invalid", "cell" => keys[index] }
+            end
+
+            previous_iteration = iteration
+            previous_generation = reading_generation
+          end
+
+          streak = readings.reverse.take_while do |reading|
+            reading["status"] == "assessed_clean" &&
+              reading["generation"].to_i == generation &&
+              reading["iteration"].to_i > last_mutation
+          end.size
+          return { "status" => "matrix_clean_streak_mismatch", "cell" => keys[index] } unless Integer(cell["clean_streak"]) == streak
+
+          if cell_status == "inconclusive"
+            inconclusive += 1
+            clean = false
+          elsif %w[violation_found opportunity_found].include?(cell_status)
+            finding_cells += 1
+            clean = false
+          elsif cell_status == "not_applicable"
+            unless latest["generation"].to_i == generation && !latest["reason"].to_s.strip.empty?
+              complete = false
+              clean = false
+            end
+          elsif cell_status == "assessed_clean"
+            unless streak >= required_clean_passes && latest["generation"].to_i == generation &&
+                   latest["iteration"].to_i > last_mutation
+              complete = false
+              clean = false
+            end
+          else
+            complete = false
+            clean = false
+          end
+        end
+
+        complete &&= cells.all? do |cell|
+          (cell["status"] == "not_applicable" && cell["readings"].last&.fetch("generation", nil).to_i == generation) ||
+            (cell["status"] == "assessed_clean" && cell["clean_streak"].to_i >= required_clean_passes)
+        end
+        clean &&= complete && cells.all? { |cell| %w[assessed_clean not_applicable].include?(cell["status"]) }
+
+        counts = {
+          "recorded_cells" => recorded,
+          "unassessed_cells" => unassessed,
+          "inconclusive_cells" => inconclusive,
+          "finding_cells" => finding_cells,
+        }
+        counts.each do |key, actual|
+          return { "status" => "matrix_summary_count_mismatch", "field" => key } unless Integer(summary[key]) == actual
+        end
+        unless summary["complete"] == complete && summary["clean"] == clean
+          return { "status" => "matrix_summary_truth_mismatch" }
+        end
+        unless (status == "complete") == clean
+          return { "status" => "matrix_status_claim_mismatch" }
+        end
+
+        nil
+      rescue ArgumentError, TypeError, NoMethodError
+        { "status" => "matrix_report_value_invalid" }
+      end
 
       # A resumable run on another target whose process is gone would block
       # every other target until someone reran exactly that one: a MASTER/tools run
