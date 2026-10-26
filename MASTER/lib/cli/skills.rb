@@ -3,7 +3,6 @@
 require_relative "../execution/contract"
 require "digest"
 require "fileutils"
-require "set"
 require "time"
 require "yaml"
 require_relative "../io/atomic_write"
@@ -49,7 +48,33 @@ module Master
       # metadata never grants a capability or bypasses constitutional admission.
       def contract_for(name)
         skill = find(name)
-        skill && skill[:contract]&.to_h
+        return unless skill && skill[:contract]
+
+        skill[:contract].to_h.merge(
+          operator_approved: !approval_for(skill).nil?,
+          active_for_trigger: eligible_for_trigger?(skill),
+          approval: approval_for(skill)&.dup
+        ).compact
+      end
+
+      # Small operator-facing inventory; never returns skill bodies, prompts,
+      # source paths or credentials. Approval is bound to the exact revision.
+      def contract_inventory
+        @loaded.filter_map do |skill|
+          contract = skill[:contract]
+          next unless contract
+
+          {
+            name: skill[:name],
+            revision: skill[:revision],
+            status: contract.status,
+            risk: contract.risk,
+            promotable: contract.promotable?,
+            operator_approved: !approval_for(skill).nil?,
+            active_for_trigger: eligible_for_trigger?(skill),
+            errors: contract.errors
+          }
+        end
       end
 
       def trigger_for(input)
@@ -94,7 +119,8 @@ module Master
           record_used(skill[:name])
           @bus&.publish(
             "skills:triggered", skill: skill[:name], revision: skill[:revision],
-            contract_status: skill.dig(:contract)&.status
+            contract_status: skill.dig(:contract)&.status,
+            operator_approved: !approval_for(skill).nil?
           )
         end
         matches
@@ -130,7 +156,17 @@ module Master
       # cannot self-promote by editing its own registry declaration. Approval
       # binds to the content-addressed revision; edits require a new approval.
       def load_skill_approvals
-        return {} unless File.file?(@approval_path)
+        return {} unless File.exist?(@approval_path) || File.symlink?(@approval_path)
+        if File.symlink?(@approval_path)
+          @bus&.publish("skills:approval_manifest_invalid", reason: "symlink")
+          return {}
+        end
+
+        stat = File.lstat(@approval_path)
+        unless stat.file? && (stat.mode & 0o022).zero?
+          @bus&.publish("skills:approval_manifest_invalid", reason: "unsafe_file_type_or_permissions")
+          return {}
+        end
 
         data = Master.load_yaml(@approval_path)
         unless data.is_a?(Hash) && data["schema_version"] == 1 && data["approvals"].is_a?(Array)
@@ -150,7 +186,7 @@ module Master
           revision = values["revision"].to_s.downcase
           approved_by = values["approved_by"].to_s.strip
           begin
-            Time.iso8601(values["approved_at"].to_s)
+            approved_at = Time.iso8601(values["approved_at"].to_s).utc.iso8601
           rescue ArgumentError
             @bus&.publish("skills:approval_invalid", reason: "invalid_timestamp")
             next
@@ -162,7 +198,9 @@ module Master
             next
           end
 
-          approvals[[name, revision]] = true
+          approvals[[name, revision]] = {
+            approved_by: approved_by.freeze, approved_at: approved_at.freeze
+          }.freeze
         end
         approvals.freeze
       rescue StandardError => e
@@ -170,18 +208,22 @@ module Master
         {}
       end
 
+      def approval_for(skill)
+        @approved_skill_revisions[[skill[:name].to_s, skill[:revision].to_s]]
+      end
+
       def eligible_for_trigger?(skill)
         contract = skill[:contract]
         return true if contract&.permitted_for_trigger?
         return false unless contract&.valid_declaration?
 
-        @approved_skill_revisions.fetch([skill[:name].to_s, skill[:revision].to_s], false)
+        !approval_for(skill).nil?
       end
 
       def refusal_reason(skill)
         contract = skill[:contract]
         return "missing_or_invalid_contract" unless contract&.valid_declaration?
-        return "revision_not_approved" unless @approved_skill_revisions[[skill[:name].to_s, skill[:revision].to_s]]
+        return "revision_not_approved" unless approval_for(skill)
 
         "not_permitted"
       end
