@@ -66,8 +66,6 @@ source and tests they could not run; this pass is what measures them.
 - [ ] Latency: a monotonic timeline for boot, first token, completed reply and greeting, CLI and
   web separately, on current HEAD (17.6 s boot and 13–16 s replies on 2026-10-23). Stream the
   first words of a reply; a failed stream says so before switching lanes.
-- [ ] Lookup policy: separate opinion and advice from factual or current questions, search only
-  for the latter, and say plainly when a lookup was unavailable.
 - [ ] Reminders: resolve relative times in the declared timezone, deliver through the face, and
   say at acceptance whether anything will ring.
 - [ ] CLI cancellation in a PTY: Ctrl-C mid-generation, Ctrl-D, SIGTERM, child timeout; terminal
@@ -114,7 +112,5 @@ source and tests they could not run; this pass is what measures them.
   only through the reviewed, fixture-backed skill contract.
 - [ ] Model-backed evaluation of advice quality on realistic personal-assistance scenarios,
   labelled apart from human review (a seam).
-- [ ] Reconcile the DeepSeek handoff findings against current source, each classified verified,
-  changed but unverified, superseded, open or blocked.
 - [ ] STUDIO billing and clip ledgers (`clips.jsonl`, per-subject `ledger.jsonl`) need an
   archive/export contract before any rotation; they are cost provenance, not telemetry.

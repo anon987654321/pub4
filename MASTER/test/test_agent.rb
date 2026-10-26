@@ -98,6 +98,47 @@ class TestAgent < Minitest::Test
     Fiber[:master_evidence_note] = nil
   end
 
+def evidence_tools(answer)
+  queries = []
+  knowledge = Object.new
+  knowledge.define_singleton_method(:call) { |query:| Master::Result.ok("(no results)") }
+  knowledge.define_singleton_method(:class) { Class.new { def self.name = "Master::Io::SearchKnowledge" } }
+  web = Object.new
+  web.define_singleton_method(:call) do |query:|
+    queries << query
+    answer
+  end
+  web.define_singleton_method(:class) { Class.new { def self.name = "Master::Io::WebSearch" } }
+  @agent.instance_variable_set(:@tools, [knowledge, web])
+  queries
+end
+
+# "does god exist? give me your actual view" ran two web searches on 2026-10-23.
+def test_a_request_for_a_view_searches_nothing
+  queries = evidence_tools(Master::Result.ok("a page"))
+
+  @agent.send(:prepare_evidence, "does god exist? give me your actual view")
+
+  assert_equal :opinion, Fiber[:master_evidence_mode]
+  assert_empty queries
+  assert_match(/do not search/, Fiber[:master_evidence_note])
+ensure
+  Fiber[:master_evidence_mode] = nil
+  Fiber[:master_evidence_note] = nil
+end
+
+def test_a_current_question_whose_lookup_returns_nothing_says_so
+  evidence_tools(Master::Result.err("search unavailable", category: :infrastructure))
+
+  @agent.send(:prepare_evidence, "what is the weather in Bergen tomorrow")
+
+  assert_equal :web_current, Fiber[:master_evidence_mode]
+  assert_match(/Web lookup returned nothing/, Fiber[:master_evidence_note])
+ensure
+  Fiber[:master_evidence_mode] = nil
+  Fiber[:master_evidence_note] = nil
+end
+
   def test_personal_support_preflight_minimizes_external_search_text
     agent = @agent
     knowledge = Object.new

@@ -332,3 +332,10 @@ seams:
     evidence: >-
       A real bsdports package-index refresh and port install on a supported OpenBSD host: signed manifests,
       pinned HTTPS, CVE edges, disk-space fallback and rollback.
+  - id: deepseek_findings_export
+    tree: MASTER
+    needs: material
+    evidence: >-
+      The DeepSeek handoff or chat export the backlog cited, saved under ~/Downloads, so each finding can be
+      classified against current source. No file in the tree or Downloads holds it; git keeps only the commits
+      that applied some of it (proof guards kept, MASTER/web and lib/master layouts since removed).

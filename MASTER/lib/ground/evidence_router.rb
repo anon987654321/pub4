@@ -3,9 +3,16 @@
 module Master
   module Ground
     module EvidenceRouter
-      MODES = %i[conversation repository web_current deep_research browser device unknown].freeze
+      MODES = %i[conversation opinion repository web_current deep_research browser device unknown].freeze
 
-      CURRENT = /\b(?:latest|current|today|tonight|now|recent|recently|this\s+(?:week|month|year)|as\s+of|newest|up[-\s]?to[-\s]?date|20\d{2})\b/i
+      # Weather and tomorrow are current too: "what is the weather in Bergen tomorrow" was
+      # :unknown and answered from memory.
+      CURRENT = /\b(?:latest|current|today|tonight|tomorrow|now|recent|recently|this\s+(?:week|month|year)|as\s+of|newest|
+                   up[-\s]?to[-\s]?date|20\d{2}|weather|forecast|været|værmelding|i\s+morgen|i\s+dag)\b/ix
+      # A request for MASTER's own view or advice. "does god exist? give me your actual view"
+      # was :unknown, so it ran two web searches for a question that asks for a view, not evidence.
+      OPINION = /\b(?:your\s+(?:actual\s+|honest\s+|own\s+|personal\s+)?(?:view|opinion|take|thoughts)|what\s+do\s+you\s+(?:think|believe|reckon)|
+                   do\s+you\s+(?:think|believe)|should\s+i|would\s+you|in\s+your\s+(?:view|opinion)|hva\s+(?:synes|mener|tror)\s+du|bør\s+jeg)\b/ix
       RESEARCH = /\b(?:research|investigate|deep\s+dive|look\s+into|study|compare\s+(?:sources|options|approaches)|survey|literature|find\s+out)\b/i
       # Not "master": it is the assistant's name, and "hei master, hvordan går det?" was routed as a
       # repository question with tools and a long model wait.
@@ -54,6 +61,7 @@ module Master
         return :browser if value.match?(BROWSER)
         return :device if value.match?(DEVICE)
         return :repository if value.match?(REPOSITORY) || about_itself?(value)
+        return :opinion if value.match?(OPINION)
         return :unknown if value.match?(/\b(?:what|why|how|which|is|are|does|do|can|could)\b/i)
 
         :conversation
@@ -120,6 +128,9 @@ module Master
           "Use the href of a link rather than firing arbitrary page handlers when following links. Every click, set or type action requires " \
           "fresh human approval; the request interceptor still refuses write methods. Never disguise automation, bypass a challenge, " \
           "submit credentials, payments or posts without explicit instruction, or claim a login succeeded unless the page provides evidence."
+        when :opinion
+          "Evidence rule: this turn asks for your own view or advice. Answer it directly from reasoning, " \
+          "say where you are uncertain, and do not search or present the answer as researched."
         when :device
           "Capability rule: this turn concerns local hardware. Use the governed device or wireless capability and report unavailable permissions or backends plainly."
         else

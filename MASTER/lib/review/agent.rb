@@ -397,6 +397,10 @@ end
         @bus&.publish("evidence:routed", mode:, web_required: Ground::EvidenceRouter.web_required?(mode))
       end
 
+      # A turn that needed the web and got nothing must not read as researched.
+      LOOKUP_UNAVAILABLE = "Web lookup returned nothing this turn (no search tool, or no result). Say so plainly, " \
+                           "answer from what you know if you can, and cite no source you did not read."
+
       def evidence_preflight(message, mode)
         if mode == :browser
           return unless message.to_s.match?(Ground::EvidenceRouter::SOCIAL_ACCOUNTS)
@@ -404,13 +408,14 @@ end
           return capability_preflight("social_browser", "status")
         end
         return capability_preflight("air_superiority", "scan") if mode == :device
-        return if mode == :repository || mode == :conversation
+        return if %i[repository conversation opinion].include?(mode)
 
         local = evidence_tool("SearchKnowledge")&.call(query: message.to_s)
         local_text = local.respond_to?(:ok?) && local.ok? ? local.value!.to_s : ""
         return "Local knowledge:\n#{local_text[0, 4_000]}" if mode == :unknown && !local_text.empty? && local_text != "(no results)"
 
         snippets = web_snippets(message, mode)
+        return LOOKUP_UNAVAILABLE if snippets.empty? && Ground::EvidenceRouter.web_required?(mode)
         return if snippets.empty? && local_text.empty?
 
         parts = []
