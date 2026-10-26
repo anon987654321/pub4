@@ -367,7 +367,7 @@ end
     )
 
     assert_equal :cancelled, cancelled.category
-    assert_equal :recovery_failed, audit_failed.category
+    assert_equal :unknown_outcome, audit_failed.category
     assert_equal :unknown_outcome, unknown.category
     assert_equal :recovery_failed, recovery_failed.category
     assert_equal :human_decision, approval.category
