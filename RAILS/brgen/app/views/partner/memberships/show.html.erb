@@ -17,8 +17,10 @@
     <% if @clicks.any? %>
       <ul>
         <% @clicks.each do |click| %>
-          <li>
-            <%= click.occurred_at %> · <%= t("partner.click_expires", at: click.expires_at) %><%= " · #{t("partner.click_listing", id: click.listing_id)}" if click.listing_id %>
+          <li class="meta-facts">
+            <span><%= click.occurred_at %></span>
+            <span><%= t("partner.click_expires", at: click.expires_at) %></span>
+            <% if click.listing_id %><span><%= t("partner.click_listing", id: click.listing_id) %></span><% end %>
           </li>
         <% end %>
       </ul>

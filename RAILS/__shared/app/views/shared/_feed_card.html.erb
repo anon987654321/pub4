@@ -58,7 +58,15 @@
     <% end %>
 
     <% if local_assigns[:meta].present? %>
-      <div class="feed-card-meta"><%= local_assigns[:meta] %></div>
+      <div class="feed-card-meta">
+        <% if local_assigns[:meta].is_a?(Array) %>
+          <% local_assigns[:meta].compact.each do |fact| %>
+            <span><%= fact %></span>
+          <% end %>
+        <% else %>
+          <%= local_assigns[:meta] %>
+        <% end %>
+      </div>
     <% end %>
 
     <% if local_assigns[:media].present? %>

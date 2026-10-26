@@ -13,6 +13,15 @@
 // Fold these into the component stylesheets they belong to whenever those files are
 // next touched; this file exists so the gap was closed in one reviewable place.
 
+/* Independent facts stay in separate elements; flex gap replaces separator glyphs. */
+.meta-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-2);
+  row-gap: var(--space-1);
+}
+
 // Pagination — shared/_pager, 19 render sites, previously unstyled entirely.
 .pager {
   display: flex;

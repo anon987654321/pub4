@@ -4,8 +4,10 @@
 
 <header class="profile-header">
   <%= tag.h1 @user.display_name %>
-  <p>
-    <%= t("profile.followers", count: @followers_count) %> · <%= t("profile.following", count: @following_count) %> · <%= t("community.posts_count", count: @posts.size) %>
+  <p class="meta-facts">
+    <span><%= t("profile.followers", count: @followers_count) %></span>
+    <span><%= t("profile.following", count: @following_count) %></span>
+    <span><%= t("community.posts_count", count: @posts.size) %></span>
   </p>
 
   <% if authenticated? && Current.user != @user %>
