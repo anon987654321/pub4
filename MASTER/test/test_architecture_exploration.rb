@@ -62,7 +62,9 @@ class TestArchitectureExploration < Minitest::Test
           verification_plan: "Run ruby -Itest #{test} and assert regression baseline #{i}.",
           rollback_plan: "Use git revert of the isolated commit and restore the known-good boundary.",
           law_alignment: "Preserve existing behavior, constitutional Laws and operator-owned values.",
-          risks: ["Migration risk #{i}"] }
+          benefits: ["This improves owner separation and reduces duplicate reads #{i}."],
+          tradeoffs: ["Migration costs one bounded change and requires an additional regression check #{i}."],
+          risks: ["Migration risk includes compatibility checks for variant #{i}"] }
       end
       agent = FakeAgent.new(JSON.generate(candidates: candidates))
       explorer = Master::Fix::ArchitectureExploration.new(root: root, agent: agent, candidate_count: 30)
@@ -76,6 +78,111 @@ class TestArchitectureExploration < Minitest::Test
       assert_equal 5, report.fetch("shortlist").size
       assert_equal 1, agent.prompts.size
       assert_includes agent.prompts.first, "PLAN ONLY"
+    end
+  end
+
+
+  def test_candidates_without_test_anchors_cannot_win_even_when_their_plans_are_well_formed
+    Dir.mktmpdir("architecture-quality-gate") do |root|
+      master = File.join(root, "MASTER")
+      FileUtils.mkdir_p(File.join(master, "lib"))
+      source_file = File.join(master, "lib", "owner.rb")
+      File.write(source_file, "module Owner; end\n")
+      source = "MASTER/lib/owner.rb"
+      candidates = Master::Fix::ArchitectureExploration::LENSES.first(30).map.with_index do |lens, i|
+        { id: lens.fetch(:id), lens: lens.fetch(:name),
+          title: "No-test alternative variant#{i}",
+          thesis: "Keep the lifecycle local with grounded change marker#{i} and stable recovery.",
+          core_boundary: "Retain one local owner boundary marker#{i} and a clear rollback.",
+          change_paths: [source, "MASTER/lib/plan_#{i}.rb"],
+          evidence_paths: [source], test_paths: [],
+          verification_plan: "Compare measurements before and after the bounded change.",
+          rollback_plan: "Use git revert and restore the last known-good checkpoint.",
+          law_alignment: "Preserve existing behavior, constitutional Laws and operator values.",
+          benefits: ["Reduces duplicate lifecycle decisions with measurable consistency #{i}."],
+          tradeoffs: ["Adds a migration step and raises short-term coordination cost #{i}."],
+          risks: ["Compatibility drift must be measured against the baseline for #{i}"] }
+      end
+      explorer = Master::Fix::ArchitectureExploration.new(
+        root: root, agent: FakeAgent.new(JSON.generate(candidates: candidates)), candidate_count: 30
+      )
+      report = explorer.run(target: master, files: [source_file]).fetch("targets").first
+      assert_equal "INCONCLUSIVE", report.fetch("status")
+      assert_equal 30, report.fetch("accepted")
+      assert_equal 0, report.fetch("qualified")
+      assert_nil report.fetch("winner")
+    end
+  end
+
+  def test_symlinked_evidence_outside_the_tree_is_rejected
+    Dir.mktmpdir("architecture-symlink") do |root|
+      master = File.join(root, "MASTER")
+      FileUtils.mkdir_p(File.join(master, "lib"))
+      source_file = File.join(master, "lib", "owner.rb")
+      outside = File.join(root, "outside-secret.rb")
+      File.write(source_file, "module Owner; end\n")
+      File.write(outside, "secret = 'must not be used as evidence'\n")
+      link = File.join(master, "lib", "external_evidence.rb")
+      begin
+        File.symlink(outside, link)
+      rescue NotImplementedError, SystemCallError
+        skip "symlink creation is unavailable"
+      end
+      explorer = Master::Fix::ArchitectureExploration.new(root: root, agent: FakeAgent.new("{}"), candidate_count: 30)
+      refute explorer.send(:inside?, link, master)
+    end
+  end
+
+  def test_only_files_shown_as_source_evidence_may_ground_a_candidate
+    Dir.mktmpdir("architecture-grounding") do |root|
+      master = File.join(root, "MASTER")
+      FileUtils.mkdir_p(File.join(master, "lib"))
+      FileUtils.mkdir_p(File.join(master, "test"))
+      source_file = File.join(master, "lib", "owner.rb")
+      unshown_file = File.join(master, "lib", "not_in_prompt.rb")
+      test_file = File.join(master, "test", "test_owner.rb")
+      File.write(source_file, "module Owner; end\n")
+      File.write(unshown_file, "module Unshown; end\n")
+      File.write(test_file, "# regression contract\n")
+      source = "MASTER/lib/owner.rb"
+      unshown = "MASTER/lib/not_in_prompt.rb"
+      test = "MASTER/test/test_owner.rb"
+      candidates = Master::Fix::ArchitectureExploration::LENSES.first(30).map.with_index do |lens, i|
+        { id: lens.fetch(:id), lens: lens.fetch(:name),
+          title: "Ungrounded alternative marker#{i}",
+          thesis: "Use source-grounded owner changes with a distinct proof boundary #{i}.",
+          core_boundary: "Only cited source material can justify boundary #{i}.",
+          change_paths: [source, "MASTER/lib/plan_#{i}.rb"],
+          evidence_paths: [unshown], test_paths: [test],
+          verification_plan: "Run ruby -Itest #{test} and compare the regression baseline #{i}.",
+          rollback_plan: "Use git revert and restore the last known-good owner boundary.",
+          law_alignment: "Preserve existing behavior, constitutional Laws and operator-owned values.",
+          benefits: ["Prevents an architecture plan from relying on unshown information #{i}."],
+          tradeoffs: ["The model must reason from a smaller but actually supplied evidence set #{i}."],
+          risks: ["An omitted dependency requires another evidence pass before repair #{i}"] }
+      end
+      explorer = Master::Fix::ArchitectureExploration.new(
+        root: root, agent: FakeAgent.new(JSON.generate(candidates: candidates)), candidate_count: 30
+      )
+      report = explorer.run(target: master, files: [source_file, test_file]).fetch("targets").first
+      assert_equal "INCONCLUSIVE", report.fetch("status")
+      assert_equal 0, report.fetch("accepted")
+      assert_nil report.fetch("winner")
+    end
+  end
+
+  def test_top_level_tree_symlink_is_not_an_eligible_target
+    Dir.mktmpdir("architecture-tree-root") do |root|
+      Dir.mktmpdir("architecture-external-tree") do |outside|
+        begin
+          File.symlink(outside, File.join(root, "MASTER"))
+        rescue NotImplementedError, SystemCallError
+          skip "symlink creation is unavailable"
+        end
+        %w[RAILS OPENBSD STUDIO].each { |name| Dir.mkdir(File.join(root, name)) }
+        eligible = Master::Fix::ArchitectureExploration.eligible_targets(root: root, target: root)
+        assert_equal %w[RAILS OPENBSD STUDIO], eligible.map { |path| File.basename(path) }
+      end
     end
   end
 

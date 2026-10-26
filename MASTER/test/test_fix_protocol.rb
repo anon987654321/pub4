@@ -35,6 +35,8 @@ class TestFixProtocol < Minitest::Test
     assert_includes text, "complete current source"
     assert_includes text, "complete current source of every direct dependency"
     assert_includes text, "30–40 materially distinct architecture"
+    assert_includes text, "at least three plans passing the deterministic quality"
+    assert_includes text, "concrete benefits, trade-offs and risks"
     assert_includes text, "MASTER/data/ux_refinements.yml"
     assert_includes text, "generated documentation"
     assert_includes text, "commit and push"
@@ -181,9 +183,13 @@ class TestFixProtocol < Minitest::Test
       assert_equal 36, exploration.fetch("default_candidates_per_tree")
       assert_equal 30, exploration.fetch("minimum_candidates_for_selection")
       assert_equal 40, exploration.fetch("maximum_candidates_per_tree")
+      assert_equal 65, exploration.dig("quality_gate", "minimum_score")
+      assert_equal 3, exploration.dig("quality_gate", "minimum_qualified_candidates")
+      assert_includes exploration.fetch("required_consequence_fields"), "tradeoffs"
       assert_equal "NOT_RUN until actual tree verification commands execute", exploration.fetch("execution_evidence")
       assert_equal 90, payload.dig("ux_refinement_catalog", "loaded_count")
       assert_equal 90, payload.dig("ux_refinement_catalog", "expected_count")
+      assert_equal 90, payload.dig("ux_refinement_catalog", "acceptance_required_count")
     end
   end
 

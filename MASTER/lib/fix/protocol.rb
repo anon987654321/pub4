@@ -48,12 +48,17 @@ module Master
           0.1 ARCHITECTURE EXPLORATION
           For a requested /fix at the repository root, or an exact top-level MASTER,
           RAILS, OPENBSD or STUDIO target, generate 30–40 materially distinct architecture
-          candidates in one structured request per eligible tree (36 by default). Validate
-          source and test paths, reject near-duplicates, require explicit verification and
-          rollback plans, and rank locally using source grounding, test anchors, verification
-          specificity, rollback quality, scope control and Law alignment. Ignore model-supplied
-          scores. A winner requires at least 30 valid distinct candidates. Record PARTIAL or
-          INCONCLUSIVE otherwise. The tournament is planning-only: it does not run tests,
+          candidates in one structured request per eligible tree (36 by default). Require
+          concrete benefits, trade-offs and risks alongside a verification and rollback plan.
+          Evidence paths must have been included in the actual source excerpts and hashes;
+          test anchors must exist in the supplied test inventory. Resolve symlinks before
+          accepting any evidence, test or change path. Reject near-duplicates using both plan
+          language and target-path overlap. Rank locally by source grounding, test anchors,
+          verification specificity, rollback quality, scope control, Law alignment and
+          consequence analysis. Ignore model-supplied scores. A winner requires at least 30
+          valid distinct candidates and at least three plans passing the deterministic quality
+          gate. Otherwise report INCONCLUSIVE and do not invent a winner. Record PARTIAL or
+          INCONCLUSIVE when the requested candidate population is not fully proven. The tournament is planning-only: it does not run tests,
           edit files or authorize a wholesale rewrite. Ordinary Laws, transactions and
           verification continue to govern every repair. The canonical 90-entry interaction
           acceptance catalogue is MASTER/data/ux_refinements.yml; catalogue membership is

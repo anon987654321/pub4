@@ -1,5 +1,12 @@
 # pub4 outstanding work
 
+## Architecture tournament quality gates and UX inventory coverage (2026-10-26)
+
+The `/fix` architecture tournament now treats generating 30–40 ideas as necessary, not sufficient: candidate evidence must be among the source excerpts and hashes actually supplied to the model, test anchors must be in the supplied test inventory, and each plan must state concrete benefits, trade-offs, risks, verification and rollback. Local scoring now includes consequence analysis, candidate diversity considers both prose and target-path overlap, and a winner requires at least 30 structurally valid plans plus at least three plans clearing deterministic score/dimension floors. Path checks resolve symlinks and reject top-level tree symlinks. The 90-entry UX catalog validates the complete ordered ID sequence, allowed areas/proof types/tree ownership and keeps every row `acceptance_required`; its manifest exposes coverage counts by area, owner tree and evidence type.
+
+Focused regression tests were added/updated for these contracts, but could not be executed in this environment: the GitHub API is reachable through the repository connector while a local `git ls-remote` fails because the runtime cannot resolve `github.com`. Validation remains **INCONCLUSIVE** until the following run in the checkout and pass: `ruby -Itest test/test_architecture_exploration.rb`, `ruby -Itest test/test_ux_refinement_catalog.rb`, and `ruby -Itest test/test_fix_protocol.rb` from `MASTER/`. No UX item is marked implemented merely because it is catalogued.
+
+
 ## Constitutional runtime consolidation (2026-10-26)
 
 Implemented the first lifecycle-tracing slice on MASTER's interactive Fold path with a persistent event sink, even when no host event bus is supplied: CoreBridge injects before/after effect events; payloads omit raw effect arguments; a before-event persistence failure prevents the effect; an after-event persistence failure terminates as trace_failed without retrying or claiming completion. Regression contracts cover event order, redacted payloads and both publication-failure cases. The shared event bus now has a required-persistence path, backed by a strict append variant on the canonical event log; ordinary telemetry remains best-effort. The modified Minitest files were not executed here: GitHub could be read through the connector, but the execution environment could not resolve github.com to obtain the checkout. Validation is INCONCLUSIVE until the focused Fold and bridge tests run on the pinned toolchain.

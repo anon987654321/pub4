@@ -14,6 +14,10 @@ class TestUXRefinementCatalog < Minitest::Test
     assert rows.all? { |row| row.fetch("state") == "acceptance_required" }
     manifest = Master::Fix::UXRefinementCatalog.manifest
     assert_equal 90, manifest.fetch("loaded_count")
+    assert_equal 90, manifest.fetch("acceptance_required_count")
+    assert_equal 90, manifest.fetch("by_area").values.sum
+    assert_equal %w[MASTER OPENBSD RAILS STUDIO], manifest.fetch("by_owner_tree").select { |_tree, count| count.positive? }.keys.sort
+    assert_equal %w[accessibility browser source terminal unit visual], manifest.fetch("by_proof_type").keys.sort
     assert_equal 64, manifest.fetch("sha256").length
   end
 
@@ -23,6 +27,16 @@ class TestUXRefinementCatalog < Minitest::Test
     duplicate.fetch("refinements").last["id"] = duplicate.fetch("refinements").first.fetch("id")
     assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(duplicate) }
     assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!({ "refinements" => [] }) }
+  end
+
+  def test_catalog_rejects_gaps_in_the_id_sequence_and_false_completion_states
+    payload = Master::Fix::UXRefinementCatalog.load
+    missing = Marshal.load(Marshal.dump(payload))
+    missing.fetch("refinements")[40]["id"] = "UX091"
+    assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(missing) }
+    completed = Marshal.load(Marshal.dump(payload))
+    completed.fetch("refinements").first["state"] = "complete"
+    assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(completed) }
   end
 
   def test_prompt_context_is_scoped_to_target_and_never_claims_passing
