@@ -22,6 +22,7 @@ class TestExecutionContract < Minitest::Test
     assert_same Contract::TERMINAL_STATES, Master::Fix::OutcomePolicy::TERMINAL_STATES
     assert_equal :cancelled, Contract.normalize_terminal_state("CANCELLED")
     assert_equal :unknown_outcome, Contract.normalize_terminal_state(:unknown_outcome)
+    assert_equal :recovery_failed, Contract.normalize_terminal_state(:recovery_failed)
     assert_nil Contract.normalize_terminal_state("not-a-terminal-state")
     assert_nil Contract.normalize_terminal_state(nil)
   end
