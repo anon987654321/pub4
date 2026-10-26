@@ -72,7 +72,7 @@ class TestFixConvergence < Minitest::Test
 
   # Non-matrix tests inject the proof status they need; the focused terminal test
   # selects :not_measured to exercise the production fail-closed contract.
-  def build_loop(violations, ground_truth: nil, council: nil, assessment_matrix_status: :measured)
+  def build_loop(violations, ground_truth: nil, council: nil, assessment_matrix_status: :complete)
     loop = Master::Fix::FixLoop.new(
       laws: [StubRule.new("TEST_RULE", :warning)],
       agent: OpenCircuitAgent.new,
