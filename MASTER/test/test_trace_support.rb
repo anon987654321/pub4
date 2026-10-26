@@ -158,6 +158,29 @@ class TestTraceSupport < Minitest::Test
   end
 
   # Verbose remains available explicitly: every model send/outcome is visible.
+  def test_provider_outcome_console_never_prints_raw_error_text
+    console = Master::Trace::Dmesg::Console.new
+    private_error = "authorization failed for https://private.example/?token=do-not-print"
+
+    legacy = Master::Trace::Dmesg.with_verbosity("verbose") do
+      console.lines(
+        event: "llm:provider_outcome", model: "provider-a",
+        status: :provider_error, error: private_error
+      )
+    end
+    redacted = Master::Trace::Dmesg.with_verbosity("verbose") do
+      console.lines(
+        event: "llm:provider_outcome", model: "provider-a",
+        status: :provider_error, error_digest: "a" * 64, error_bytes: private_error.bytesize
+      )
+    end
+
+    refute_includes legacy.join("\n"), private_error
+    assert_includes legacy.first, "diagnostic details redacted"
+    assert_includes redacted.first, "diagnostic aaaaaaaaaaaa"
+    assert_includes redacted.first, "#{private_error.bytesize} bytes"
+  end
+
   def test_verbose_model_calls_are_visible_when_requested
     console = Master::Trace::Dmesg::Console.new
     Fiber[:master_unit] = "scan0"
