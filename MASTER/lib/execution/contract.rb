@@ -36,6 +36,19 @@ module Master
         token.freeze
       end
 
+      # Durable diagnostics carry correlation, not raw provider errors, prompts,
+      # file paths or upstream response bodies. The caller retains the original
+      # error locally for an actionable result.
+      def diagnostic_fields(value, key: :error)
+        return {} if value.nil?
+
+        raw = value.to_s
+        {
+          "#{key}_digest".to_sym => Digest::SHA256.hexdigest(raw),
+          "#{key}_bytes".to_sym => raw.bytesize
+        }
+      end
+
       EvidenceReference = Data.define(:id, :kind, :digest, :status, :verifier) do
         def initialize(id:, kind:, status:, verifier:, digest: nil)
           id = Contract.token!(id, "evidence id")
