@@ -132,6 +132,8 @@ class CoreBridgeTest < Minitest::Test
       after = events.find { |record| record["event"] == "core:effect:after" }
       assert_equal before["effect_id"], after["effect_id"]
       assert_equal before["run_id"], after["run_id"]
+      assert_equal before["attempt_id"], after["attempt_id"]
+      assert_equal "#{result[:mission]["id"]}:#{result[:mission]["attempt_count"]}", before["attempt_id"]
       assert_equal before["mission_id"], after["mission_id"]
       assert_equal before["checkpoint_id"], after["checkpoint_id"]
       assert before["checkpoint_id"], "the reversible write should link its checkpoint"
