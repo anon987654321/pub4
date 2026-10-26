@@ -60,6 +60,135 @@ module Master
         def to_h = { id:, kind:, digest:, status:, verifier: }.compact
       end
 
+      # One normalized verifier outcome. It adapts existing check and proof
+      # APIs without requiring MASTER to depend on the sibling-tree check kernel.
+      VERIFICATION_STATUSES = %i[
+        pass fail partial inconclusive error blocked timeout unavailable not_applicable
+      ].freeze
+      CHECK_OUTCOMES = {
+        passed: :pass, failed: :fail, inconclusive: :inconclusive, errored: :error
+      }.freeze
+      PROOF_OUTCOMES = { proven: :pass, failed: :fail, open: :inconclusive }.freeze
+
+      VerificationResult = Data.define(
+        :id, :subject, :verifier, :status, :scope_digest, :checked_count,
+        :failure_count, :warning_count, :unchecked_count, :complete, :evidence_refs
+      ) do
+        def initialize(id:, subject:, verifier:, status:, scope: nil, scope_digest: nil,
+                       checked_count: nil, failure_count: nil, warning_count: nil,
+                       unchecked_count: nil, complete: nil, evidence_refs: [])
+          id = Contract.token!(id, "verification id")
+          verifier = Contract.token!(verifier, "verification verifier")
+          subject = subject.to_s
+          raise ArgumentError, "verification subject cannot be empty" if subject.strip.empty?
+          raise ArgumentError, "verification subject is too long" if subject.bytesize > 1_024
+
+          status = status.to_sym
+          unless Contract::VERIFICATION_STATUSES.include?(status)
+            raise ArgumentError, "unknown verification status: #{status}"
+          end
+
+          scope_digest ||= Digest::SHA256.hexdigest(scope.to_s) unless scope.nil?
+          unless scope_digest.nil? || Contract::SHA256.match?(scope_digest.to_s)
+            raise ArgumentError, "verification scope digest must be a SHA-256 hex digest"
+          end
+
+          counts = {
+            checked_count: checked_count, failure_count: failure_count,
+            warning_count: warning_count, unchecked_count: unchecked_count
+          }.transform_values { |value| Contract.optional_count(value) }
+          evidence_refs = Array(evidence_refs)
+          unless evidence_refs.all? { |ref| ref.is_a?(Contract::EvidenceReference) }
+            raise ArgumentError, "verification evidence must use typed EvidenceReference values"
+          end
+
+          complete = %i[pass fail error blocked timeout not_applicable].include?(status) if complete.nil?
+          super(
+            id:, subject: subject.freeze, verifier:, status:, scope_digest: scope_digest&.freeze,
+            **counts, complete:, evidence_refs: evidence_refs.freeze
+          )
+        end
+
+        def self.from_check_result(result, id:, subject:, verifier:, scope: nil)
+          outcome = begin
+            result.respond_to?(:outcome) ? result.outcome.to_sym : :inconclusive
+          rescue StandardError
+            :errored
+          end
+          status = Contract::CHECK_OUTCOMES.fetch(outcome, :inconclusive)
+          conclusive = begin
+            result.respond_to?(:conclusive?) ? result.conclusive? : true
+          rescue StandardError
+            false
+          end
+          status = :partial if status == :pass && conclusive == false
+
+          new(
+            id:, subject:, verifier:, status:, scope:,
+            checked_count: read_count(result, :checks_ran),
+            failure_count: read_collection_count(result, :failures),
+            warning_count: read_collection_count(result, :warnings),
+            unchecked_count: read_collection_count(result, :unchecked),
+            complete: %i[pass fail error blocked timeout not_applicable].include?(status)
+          )
+        rescue StandardError
+          new(id:, subject:, verifier:, status: :error, scope:, complete: false)
+        end
+
+        def self.from_proof(proof, id:, verifier:, scope: nil)
+          source_status = proof.respond_to?(:status) ? proof.status.to_s.to_sym : :open
+          status = Contract::PROOF_OUTCOMES.fetch(source_status, :inconclusive)
+          subject = proof.respond_to?(:subject) ? proof.subject : nil
+          claim = proof.respond_to?(:claim) ? proof.claim.to_s : ""
+          evidence = proof.respond_to?(:evidence) ? proof.evidence : nil
+          refs = evidence.is_a?(EvidenceReference) ? [evidence] : []
+
+          new(
+            id:, subject: subject.to_s.empty? ? claim : subject.to_s, verifier:, status:, scope:,
+            evidence_refs: refs, complete: status != :inconclusive
+          )
+        end
+
+        def pass? = status == :pass
+        def fail? = status == :fail
+        def conclusive? = complete == true && !%i[partial inconclusive unavailable].include?(status)
+
+        def to_h
+          {
+            schema_version: 1, id:, subject:, verifier:, status:, scope_digest:,
+            checked_count:, failure_count:, warning_count:, unchecked_count:,
+            complete:, evidence_refs: evidence_refs.map(&:to_h)
+          }.compact
+        end
+
+        def self.read_count(value, method)
+          value.respond_to?(method) ? optional_count(value.public_send(method)) : nil
+        rescue StandardError
+          nil
+        end
+        private_class_method :read_count
+
+        def self.read_collection_count(value, method)
+          return nil unless value.respond_to?(method)
+
+          collection = value.public_send(method)
+          collection.respond_to?(:size) ? optional_count(collection.size) : nil
+        rescue StandardError
+          nil
+        end
+        private_class_method :read_collection_count
+      end
+
+      def optional_count(value)
+        return nil if value.nil?
+
+        count = Integer(value)
+        count >= 0 ? count : nil
+      rescue ArgumentError, TypeError
+        nil
+      end
+      module_function :optional_count
+
       # Privacy-safe effect identity for audit events. Arguments are deliberately
       # absent; callers can provide a digest of scope, not the scope itself.
       EffectEnvelope = Data.define(
