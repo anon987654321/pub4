@@ -441,7 +441,9 @@ module Master
           clean_count = consecutive_clean + 1
           @bus&.publish("fix_loop:clean", pass:, consecutive_clean: clean_count)
           @homeostat&.observe(:llm_success)
-          proof = @discipline.clean_proof(files:, pass:, clean_runs: clean_count, findings: ground_truth)
+          proof = @discipline.clean_proof(
+            files:, pass:, clean_runs: clean_count, required_runs: @clean_runs_required, findings: ground_truth
+          )
           unless proof[:eligible]
             return PassResult.new(
               status: proof[:fatal] ? :validation_failed : :continue,
