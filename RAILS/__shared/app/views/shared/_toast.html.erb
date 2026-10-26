@@ -5,8 +5,8 @@
 <div class="<%= classes %>" role="status" aria-live="polite" data-controller="toast" data-toast-delay-value="<%= local_assigns.fetch(:delay, 4000) %>" data-turbo-temporary>
   <% if variant == "success" %>
     <span class="interaction-success" data-state="success" aria-hidden="true">
-      <svg class="interaction-success__mark" viewBox="0 0 24 24">
-        <path class="interaction-success__check" d="M5 12.5 10 17l9-10"></path>
+      <svg class="interaction-mark" viewBox="0 0 24 24">
+        <path class="interaction-check" d="M5 12.5 10 17l9-10"></path>
       </svg>
     </span>
   <% end %>

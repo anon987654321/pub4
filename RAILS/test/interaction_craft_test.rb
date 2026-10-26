@@ -116,7 +116,7 @@ class TestRailsInteractionCraft < Minitest::Test
     erb = File.read(TOAST)
     assert_includes erb, 'variant == "success"'
     assert_includes erb, 'class="interaction-success"'
-    assert_includes erb, 'class="interaction-success__check"'
+    assert_includes erb, 'class="interaction-check"'
     assert_includes erb, 'role="status"'
   end
 end

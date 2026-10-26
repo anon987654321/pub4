@@ -19,13 +19,13 @@
   flex: 0 0 auto;
 }
 
-.interaction-success__mark {
+.interaction-mark {
   inline-size: 100%;
   block-size: 100%;
   overflow: visible;
 }
 
-.interaction-success__check {
+.interaction-check {
   fill: none;
   stroke: currentColor;
   stroke-width: 2.25;
@@ -35,7 +35,7 @@
   stroke-dashoffset: 24;
 }
 
-.interaction-success[data-state="success"] .interaction-success__check {
+.interaction-success[data-state="success"] .interaction-check {
   animation: interaction-success-check var(--duration-m3-short) var(--ease-m3-spring) forwards;
 }
 
@@ -44,7 +44,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .interaction-success[data-state="success"] .interaction-success__check {
+  .interaction-success[data-state="success"] .interaction-check {
     stroke-dashoffset: 0;
   }
 }
