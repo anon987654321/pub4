@@ -83,7 +83,7 @@ class TestLawContract < Minitest::Test
       original = Law.definitions.dup
       original[:ATOMIC_RELOAD_PROBE] = Law::Definition.new(
         id: :ATOMIC_RELOAD_PROBE, source: "test", severity: :info, mode: :violation,
-        languages: [], scope: :line, law_scope: :universal, lifecycle: :active,
+        languages: [], scope: :line, surfaces: nil, law_scope: :universal, lifecycle: :active,
         autofix: :review, path: nil, path_exclude: nil, absent: nil, detect: nil,
         ask: nil, practice: "old", fix: "keep it", bad: "bad", good: "good",
         reads_comments: false
@@ -188,6 +188,7 @@ class TestLawContract < Minitest::Test
       mode: :violation,
       languages: %i[ruby scss],
       scope: :file,
+      surfaces: nil,
       law_scope: :domain,
       lifecycle: :active,
       autofix: :review,
