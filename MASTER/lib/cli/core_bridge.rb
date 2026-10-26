@@ -177,8 +177,8 @@ module Master
           mission.block!(reason: done.summary.to_s)
         elsif done.reason == :trace_failed
           # The effect may already have happened, but its after-record is missing.
-          # Never auto-continue an ambiguous side effect and risk repeating it.
-          mission.fail!(done.summary.to_s)
+          # Preserve ambiguity explicitly; never auto-continue and repeat the effect.
+          mission.finish!(state: "unknown_outcome", summary: done.summary)
         elsif %i[cancelled unknown_outcome recovery_failed].include?(done.reason)
           # Explicit stop or an outcome that could not be reconciled is terminal
           # for this attempt. The supervisor must not replay it as a blind retry.
