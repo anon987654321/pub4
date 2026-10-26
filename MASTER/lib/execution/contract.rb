@@ -1,0 +1,140 @@
+# frozen_string_literal: true
+
+require "digest"
+require "securerandom"
+require "time"
+
+module Master
+  module Execution
+    # Small shared contracts for lifecycle records. Workflow-specific policy
+    # remains with its workflow; this module owns the accepted wire vocabulary.
+    module Contract
+      TERMINAL_STATES = %i[
+        done plateau crash skip human_decision blocked inconclusive validation_failed
+        delivery_failed timeout failed reloading cancelled unknown_outcome
+      ].freeze
+
+      EFFECT_OPERATIONS = %i[perform rollback compensation compensation_approval].freeze
+      EVIDENCE_STATUSES = %i[verified failed inconclusive unavailable].freeze
+      TOKEN = /\A[a-zA-Z0-9][a-zA-Z0-9._:-]{0,159}\z/
+      KIND = /\A[a-z][a-z0-9_.-]{0,63}\z/
+      SHA256 = /\A[0-9a-f]{64}\z/
+
+      module_function
+
+      def normalize_terminal_state(value)
+        return nil if value.nil?
+
+        state = value.to_s.downcase.to_sym
+        TERMINAL_STATES.include?(state) ? state : nil
+      end
+
+      def token!(value, name)
+        token = value.to_s
+        raise ArgumentError, "#{name} must be a non-empty opaque token" unless TOKEN.match?(token)
+
+        token.freeze
+      end
+
+      EvidenceReference = Data.define(:id, :kind, :digest, :status, :verifier) do
+        def initialize(id:, kind:, status:, verifier:, digest: nil)
+          id = Contract.token!(id, "evidence id")
+          kind = kind.to_s.downcase
+          raise ArgumentError, "invalid evidence kind" unless Contract::KIND.match?(kind)
+
+          digest = digest.to_s.downcase unless digest.nil?
+          unless digest.nil? || Contract::SHA256.match?(digest)
+            raise ArgumentError, "evidence digest must be a SHA-256 hex digest"
+          end
+
+          status = status.to_sym
+          unless Contract::EVIDENCE_STATUSES.include?(status)
+            raise ArgumentError, "unknown evidence status: #{status}"
+          end
+
+          verifier = Contract.token!(verifier, "evidence verifier")
+          super(id:, kind: kind.freeze, digest: digest&.freeze, status:, verifier:)
+        end
+
+        # The reference records provenance, never the referenced private content.
+        def to_h = { id:, kind:, digest:, status:, verifier: }.compact
+      end
+
+      # Privacy-safe effect identity for audit events. Arguments are deliberately
+      # absent; callers can provide a digest of scope, not the scope itself.
+      EffectEnvelope = Data.define(
+        :effect_id, :turn, :verb, :capability, :operation, :parent_effect_id,
+        :checkpoint_id, :run_id, :mission_id, :scope_digest, :idempotency_key,
+        :deadline_at
+      ) do
+        def self.build(effect:, turn:, effect_id:, operation: :perform, parent_effect_id: nil,
+                       checkpoint_id: nil, run_id: nil, mission_id: nil, scope: nil,
+                       idempotency_key: nil, deadline_at: nil)
+          unless effect.respond_to?(:verb) && effect.respond_to?(:capability)
+            raise ArgumentError, "effect envelope requires a typed effect"
+          end
+
+          scope_digest = Digest::SHA256.hexdigest(scope.to_s) unless scope.nil? || scope.to_s.empty?
+          new(
+            effect_id:, turn:, verb: effect.verb, capability: effect.capability, operation:,
+            parent_effect_id:, checkpoint_id:, run_id:, mission_id:, scope_digest,
+            idempotency_key:, deadline_at:
+          )
+        end
+
+        def initialize(effect_id:, turn:, verb:, capability:, operation: :perform, parent_effect_id: nil,
+                       checkpoint_id: nil, run_id: nil, mission_id: nil, scope_digest: nil,
+                       idempotency_key: nil, deadline_at: nil)
+          effect_id = Contract.token!(effect_id, "effect id")
+          turn = Integer(turn)
+          raise ArgumentError, "effect turn must be non-negative" if turn.negative?
+
+          verb = Contract.token!(verb, "effect verb").to_sym
+          capability = Contract.token!(capability, "effect capability").to_sym
+          operation = operation.to_sym
+          unless Contract::EFFECT_OPERATIONS.include?(operation)
+            raise ArgumentError, "unknown effect operation: #{operation}"
+          end
+
+          parent_effect_id = Contract.token!(parent_effect_id, "parent effect id") if parent_effect_id
+          checkpoint_id = Contract.token!(checkpoint_id, "checkpoint id") if checkpoint_id
+          run_id = Contract.token!(run_id, "run id") if run_id
+          mission_id = Contract.token!(mission_id, "mission id") if mission_id
+          idempotency_key = Contract.token!(idempotency_key, "idempotency key") if idempotency_key
+
+          scope_digest = scope_digest.to_s.downcase unless scope_digest.nil?
+          unless scope_digest.nil? || Contract::SHA256.match?(scope_digest)
+            raise ArgumentError, "scope digest must be a SHA-256 hex digest"
+          end
+
+          if deadline_at
+            deadline_at = deadline_at.to_s
+            Time.iso8601(deadline_at)
+            deadline_at = deadline_at.freeze
+          end
+
+          super(
+            effect_id:, turn:, verb:, capability:, operation:, parent_effect_id:,
+            checkpoint_id:, run_id:, mission_id:, scope_digest: scope_digest&.freeze,
+            idempotency_key:, deadline_at:
+          )
+        rescue ArgumentError => e
+          raise e if e.message.start_with?(
+            "effect ", "unknown effect ", "parent effect ", "checkpoint ",
+            "run id", "mission id", "idempotency key", "scope digest"
+          )
+
+          raise ArgumentError, "invalid effect envelope: #{e.message}"
+        end
+
+        def to_h
+          {
+            schema_version: 1, effect_id:, turn:, verb:, capability:, operation:,
+            parent_effect_id:, checkpoint_id:, run_id:, mission_id:, scope_digest:,
+            idempotency_key:, deadline_at:
+          }.compact
+        end
+      end
+    end
+  end
+end
