@@ -267,8 +267,11 @@ def publish_pending!
     return held(ahead) if no_publish?
 
     @git.log_between("@{u}").each { |line| Master::Trace::Dmesg.status("deliver0", "publishing #{line}") }
-    @git.push
-    verify_push!(["#{ahead} commit(s)"])
+    @lifecycle_observer.mutate(operation: "publish_pending", item_count: ahead) do
+      @git.push
+      verify_push!(["#{ahead} commit(s)"])
+      true
+    end
     @bus&.publish("fix_loop:published", commits: ahead)
     :published
   end
