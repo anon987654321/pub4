@@ -231,20 +231,18 @@ module Master
           models.select do |model|
             id = model["id"]
             @availability.meets_floor?(id, operation:) &&
-              !Io::ModelSkipCache.skipped?(id) &&
               !unhealthy?(id)
           end
         end
 
         def live_config_model(task_type:)
           id = @config.model.to_s
-          if !id.empty? && !Io::ModelSkipCache.skipped?(id) && !unhealthy?(id) && reachable?(id)
+          if !id.empty? && !unhealthy?(id) && reachable?(id)
             return id
           end
 
           ids = tier_ids.select do |candidate|
-            !Io::ModelSkipCache.skipped?(candidate) &&
-              !unhealthy?(candidate) &&
+            !unhealthy?(candidate) &&
               reachable?(candidate) &&
               @availability.meets_floor?(candidate, operation: task_type)
           end
@@ -297,7 +295,7 @@ module Master
           # which nothing in this codebase constructs — it is always nil. A
           # model that just failed kept winning the same weighted comparison on
           # the very next file, forever, since it never saw its own failure.
-          return true if Io::ModelSkipCache.skipped?(model_id)
+          return true unless Io::LaneState.usable?(model_id)
           @provider_health.unhealthy?(model_id) || recently_failed?(model_id)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "ModelRouter.unhealthy?")

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../io/lane_state"
+
 module Master
   module Fix
     # Before /fix reads anything, print the model each kind of call will get
@@ -17,7 +19,10 @@ module Master
       # nil when the run may start, else a Result::Err naming the operation,
       # the model it would get, and the lane it should have had.
       def check(agent:, env: ENV)
+        return unless agent.class.method_defined?(:model_for)
+
         rows = routes(agent)
+        explain_skipped
         weak = rows.find { |row| free_class?(row.model) }
         better = Master::Io::LaneSelection.live_lanes.find { |id| !free_class?(id) }
         return if weak.nil? || better.nil? || env["MASTER_FIX_FREE_OK"] == "1"
@@ -32,6 +37,15 @@ module Master
         end.each { |row| say("#{row.operation} -> #{row.model} (#{row.kind})") }
       ensure
         Fiber[:master_operation] = nil
+      end
+
+      # One line per catalogue lane LaneState refuses, with the store and its
+      # reason, so a run says which lanes it is not using and why.
+      def explain_skipped
+        lanes = Master::Io::LaneSelection.catalogue.uniq { |id| Master::Io::LaneQuota.lane_of(id) }
+        lanes.map { |id| Master::Io::LaneState.verdict(id) }.reject(&:usable?).each do |verdict|
+          say("skipped #{verdict.model}: #{verdict.source}, #{verdict.reason}")
+        end
       end
 
       def refuse(weak, better)

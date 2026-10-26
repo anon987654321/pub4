@@ -3,6 +3,7 @@
 require "yaml"
 require_relative "lane_quota"
 require_relative "lane_health"
+require_relative "lane_state"
 
 module Master
   module Io
@@ -69,7 +70,8 @@ module Master
       # `latency` answers seconds for a model or nil when it was never measured.
       # `vision: true` puts the lanes that read images ahead of those that do not.
       def order(models, free_last: true, latency: nil, vision: false, manual: LaneQuota.manual_dead, lead: [])
-        live = Array(models).map(&:to_s).reject(&:empty?).uniq.reject { |id| LaneQuota.dead?(id, manual:) || LaneHealth.dead?(id) }
+        live = Array(models).map(&:to_s).reject(&:empty?).uniq
+        live = live.reject { |id| LaneQuota.dead?(id, manual:) || !LaneState.usable?(id) }
         live = live.reject { |id| kind(id) == :paid_tail && !Io::PaidTail.enabled? }
         return live unless free_last
 

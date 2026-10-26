@@ -398,10 +398,10 @@ module Master
             nil
           end
 
-          # RubyLLM's registry (models.dev plus each configured provider's own
-          # list) answers context windows, modalities and prices. Nothing ever
-          # refreshed it, so it stayed the snapshot the gem shipped with. A day
-          # old, it refreshes; a failed fetch keeps the last good file.
+          # RubyLLM's registry answers context windows, modalities and prices, and
+          # a day old it refreshes from rubyllm.com/models.json (the copy the gem
+          # ships) and each configured provider's own list. Its models.dev builder
+          # is never called: AGENTS.md refuses a models.dev scrape.
           def refresh_model_registry
             file = RubyLLM.config.model_registry_file
             return if File.file?(file) && Time.now - File.mtime(file) < CATALOG_MAX_AGE_S

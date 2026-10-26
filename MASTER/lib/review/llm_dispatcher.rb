@@ -203,7 +203,7 @@ module Master
         # A pin is the first choice, not the only one: a pinned lane that is quota-dead
         # or has just failed (parked in the skip cache) yields to the router's lane,
         # so a failover hop is not sent back to the lane that failed.
-        model = [ModelPin.current, forced_model].find { |m| m && !Io::LaneQuota.dead?(m) && !Io::ModelSkipCache.skipped?(m) } || selected_model
+        model = [ModelPin.current, forced_model].find { |m| m && Io::LaneState.usable?(m) } || selected_model
         image_present?(image) ? vision_model_for(model) : model
       end
 

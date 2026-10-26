@@ -38,7 +38,16 @@ class TestFixLanePreflight < Minitest::Test
     result, lines = check({}, live: [OPUS])
 
     assert_nil result
-    assert_equal Preflight::OPERATIONS.size, lines.size
+    assert_equal Preflight::OPERATIONS.size, lines.count { |line| line.include?(" -> ") }
+  end
+
+  def test_a_refused_catalogue_lane_is_named_with_its_reason
+    Master::Io::ModelSkipCache.skip!(OPUS, reason: "session limit, resets in 2h", category: :rate_limit)
+    _result, lines = check({}, live: [OPUS])
+
+    assert(lines.any? { |line| line.start_with?("skipped #{OPUS}: parked") && line.include?("resets in 2h") })
+  ensure
+    Master::Io::ModelSkipCache.clear!
   end
 
   def test_a_free_lane_is_accepted_when_nothing_better_is_live

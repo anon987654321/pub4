@@ -18,7 +18,7 @@ module Master
           chain = routed_chain(message, task_type:)
           pin_boot_model_once!
           return preference_led(chain) unless @pinned_model
-          return chain if Io::ModelSkipCache.skipped?(@pinned_model)
+          return chain unless Io::LaneState.usable?(@pinned_model)
           return chain unless pinned_model_reachable?
 
           ([@pinned_model] + chain).uniq

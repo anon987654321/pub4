@@ -104,9 +104,9 @@ module Master
           end
 
           pin_boot_model_once!
-          pinned = @pinned_model if @pinned_model && !Io::ModelSkipCache.skipped?(@pinned_model) &&
+          pinned = @pinned_model if @pinned_model && Io::LaneState.usable?(@pinned_model) &&
                                    pinned_model_reachable?
-          runtime = @runtime_model if @runtime_model && !Io::ModelSkipCache.skipped?(@runtime_model) &&
+          runtime = @runtime_model if @runtime_model && Io::LaneState.usable?(@runtime_model) &&
                                       pinned_model_reachable_for(@runtime_model)
           pinned || runtime || @model_router&.constrained_for(operation:) || model
         end

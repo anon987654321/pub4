@@ -246,11 +246,10 @@ end
         attempted = [chosen]
         park_failed_single_call(chosen, last)
         loop do
-          # A silent lane refuses every hop, so walking it would only publish
-          # one failover event per catalogue model for each call.
-          silence = Master::Review::LLMDispatcher::LaneSilence
+          # A lane LaneState refuses (silent, dead, parked, spent) refuses every
+          # hop, so walking it would only publish one failover event per model.
           fallback = single_call_fallback_models.reject do |model|
-            attempted.include?(model) || silence.refuses?(model) || Io::ModelSkipCache.skipped?(model)
+            attempted.include?(model) || !Io::LaneState.usable?(model)
           end.first
           break unless fallback
 

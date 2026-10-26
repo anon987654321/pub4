@@ -16,6 +16,13 @@ class TestCliOperatorLayer < Minitest::Test
     router = Class.new do
       include Master::CLI::Routing::ModelRouter::Pool
 
+      # ollama_problem reads the catalogue and the configured model when the
+      # daemon cannot be listed; this router configures neither.
+      def initialize
+        @rules = {}
+        @config = Struct.new(:model).new(nil)
+      end
+
       def ollama_enabled? = true
       def ollama_installed_models = nil
       def ollama_tags_base_url = "http://127.0.0.1:11434"

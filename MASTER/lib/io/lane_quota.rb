@@ -218,7 +218,8 @@ module Master
       def report_for(model)
         rows = report
         shared = rows.find { |row| row.start_with?("openrouter-free: ") } if model.to_s.end_with?(":free")
-        shared || rows.find { |row| row.start_with?("#{lane_of(model)}: ") }
+        shared || rows.find { |row| row.start_with?("#{lane_of(model)}: ") } ||
+          rows.find { |row| (key = row[/\A\S+(?=: )/]) && model.to_s.start_with?(key) }
       end
 
       # lane => reason for the lanes the file holds; a row with none reads as quota.
