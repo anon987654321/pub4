@@ -281,7 +281,7 @@ module Master
               question = law.ask.to_s.strip
               question = "Does this artifact breach #{id} or miss an improvement implied by its repair contract?" if question.empty?
               entries[id] = {
-                prompt: [question, "Repair contract: #{law.fix}", "Forbidden example: #{law.bad.strip}", "Compliant example: #{law.good.strip}"].join("\\n"),
+                prompt: [question, "Repair contract: #{law.fix}", "Forbidden example: #{law.bad.strip}", "Compliant example: #{law.good.strip}"].join("\n"),
                 severity: law.severity,
                 mode: :both,
                 reversibility: nil,
@@ -355,7 +355,7 @@ module Master
             # Each Law participates in both streams. They are separate judgements:
             # a breach does not satisfy or suppress the opportunity assessment.
             build = [violation_block(rules), opportunity_block(rules)]
-            build.join("\\n\\n")
+            build.join("\n\n")
           end
 
           def violation_block(rules)
