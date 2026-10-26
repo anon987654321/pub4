@@ -272,14 +272,3 @@ article mark { background: var(--hover); color: var(--text-secondary); padding: 
 
 // ============================================================ shared modules and overrides
 @include meta.load-css("brgen_shared_overrides");
-
-/* Last in the cascade: reduced motion must survive every vertical's later rules. */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-    scroll-behavior: auto !important;
-  }
-}

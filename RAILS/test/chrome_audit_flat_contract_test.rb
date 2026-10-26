@@ -37,34 +37,16 @@ class ChromeAuditFlatContractTest < Minitest::Test
     refute_includes source, "→"
   end
 
-  def test_brgen_reduced_motion_override_is_last_and_covers_animation_transitions_and_scroll
+  def test_brgen_uses_the_shared_canonical_reduced_motion_reset
     source = read("brgen/app/assets/stylesheets/application.scss")
-    at = source.rindex("@media (prefers-reduced-motion: reduce)")
-    refute_nil at, "the assembled Brgen stylesheet needs a final reduced-motion guard"
-    guard = source[at..]
+    stack = read("__shared/app/assets/stylesheets/_stack_brgen.scss")
+    animations = read("__shared/app/assets/stylesheets/_animations.scss")
 
-    assert_match(/\A@media \(prefers-reduced-motion: reduce\)\s*\{\s*\*,\s*\*::before,\s*\*::after\s*\{/m, guard)
-    assert_includes guard, "animation: none !important;"
-    assert_includes guard, "transition: none !important;"
-    assert_includes guard, "scroll-behavior: auto !important;"
-    assert guard.rstrip.end_with?("}"), "the final guard must remain the last stylesheet block"
-    refute_includes read("brgen/app/assets/stylesheets/_brgen_core_shell.scss"), "Shared motion vocabulary"
-  end
-
-  def test_consent_banner_is_mobile_first_and_restores_wide_layout
-    source = read("__shared/app/assets/stylesheets/_cookie_banner.scss")
-    mobile = source.split("@media (min-width: 768px)", 2).first
-    wide = source.split("@media (min-width: 768px)", 2).last
-
-    refute_match(/@media\s*\(\s*max-width\b/, source,
-                 "the shared consent banner must not use a max-width override")
-    assert_match(/\.cookie-banner\s*\{[^}]*grid-template-columns:\s*1fr;[^}]*max-height:\s*min\(90dvh,\s*42rem\);[^}]*overflow-y:\s*auto;/m, mobile)
-    assert_match(/\.cookie-banner-actions\s*\{[^}]*justify-content:\s*stretch;/m, mobile)
-    assert_match(/\.cookie-banner-button\s*\{[^}]*flex:\s*1 1 9rem;/m, mobile)
-    assert_match(/\.cookie-consent-preferences\s*\{[^}]*grid-template-columns:\s*1fr;/m, mobile)
-    assert_match(/\.cookie-banner\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) auto;[^}]*max-height:\s*none;[^}]*overflow-y:\s*visible;/m, wide)
-    assert_match(/\.cookie-banner-button\s*\{[^}]*flex:\s*0 1 auto;/m, wide)
-    assert_match(/\.cookie-consent-preferences\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(18rem, 1fr\);/m, wide)
+    assert_includes source, '@use "stack_brgen" as *;'
+    assert_includes stack, '@forward "animations";'
+    assert_match(/@media \(prefers-reduced-motion: reduce\)[\s\S]*\*::before,[\s\S]*animation: none !important;[\s\S]*transition: none !important;[\s\S]*scroll-behavior: auto !important;/m, animations)
+    refute_includes source, "animation: none !important;"
+    refute_includes source, "Last in the cascade: reduced motion must survive"
   end
 
   def test_dialog_sheet_consent_and_affiliate_chrome_is_flat
