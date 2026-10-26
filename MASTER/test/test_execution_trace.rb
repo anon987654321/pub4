@@ -118,6 +118,21 @@ class TestExecutionTrace < Minitest::Test
     assert failures.any? { |failure| failure.include?("scanner missing #scan") }
   end
 
+  def test_extracted_fix_and_routing_files_are_in_the_boot_surface
+    %w[
+      MASTER/lib/cli/routing/model_router.rb
+      MASTER/lib/cli/routing/model_router/route_policy.rb
+      MASTER/lib/cli/routing/model_router/selection.rb
+      MASTER/lib/io/lane_state.rb
+      MASTER/lib/fix/outcome_policy.rb
+      MASTER/lib/fix/fix_loop/completion.rb
+      MASTER/lib/fix/fix_loop/lifecycle.rb
+      MASTER/lib/fix/fix_loop/pass_execution.rb
+    ].each do |path|
+      assert_includes Master::Fix::ExecutionTrace::BOOT_CHAIN, path
+    end
+  end
+
   def test_canonical_boot_configuration_does_not_depend_on_workflow_yml
     refute_includes Master::Fix::ExecutionTrace::BOOT_CONFIG.keys, "MASTER/data/workflow.yml"
     assert_includes Master::Fix::ExecutionTrace::BOOT_CONFIG.keys, "MASTER/data/limits.yml"

@@ -31,7 +31,15 @@ module Master
         MASTER/lib/cli/pipeline.rb
         MASTER/lib/cli/session.rb
         MASTER/lib/cli/command_registry/review.rb
+        MASTER/lib/cli/routing/model_router.rb
+        MASTER/lib/cli/routing/model_router/route_policy.rb
+        MASTER/lib/cli/routing/model_router/selection.rb
+        MASTER/lib/io/lane_state.rb
         MASTER/lib/fix/fix_loop.rb
+        MASTER/lib/fix/outcome_policy.rb
+        MASTER/lib/fix/fix_loop/completion.rb
+        MASTER/lib/fix/fix_loop/lifecycle.rb
+        MASTER/lib/fix/fix_loop/pass_execution.rb
         MASTER/lib/trace/event_bus.rb
         MASTER/lib/trace/logging.rb
         MASTER/lib/ground/redactor.rb

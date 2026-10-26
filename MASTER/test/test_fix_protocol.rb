@@ -193,7 +193,7 @@ class TestFixProtocol < Minitest::Test
   end
 
   def test_incremental_done_requires_full_scope_verification
-    source = File.read(File.join(Master::ROOT, "lib/fix/fix_loop.rb"), encoding: "UTF-8")
+    source = File.read(File.join(Master::ROOT, "lib/fix/fix_loop/lifecycle.rb"), encoding: "UTF-8")
     start = source.index("def verify_incremental_scope")
     finish = source.index("def mission_for", start)
     refute_nil start

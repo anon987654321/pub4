@@ -30,6 +30,15 @@ class TestFixTerminalVocabulary < Minitest::Test
     end
   end
 
+  def test_fix_lifecycle_and_pass_execution_are_separate_collaborators
+    loop_class = Master::Fix::FixLoop
+
+    assert_equal loop_class::Lifecycle, loop_class.instance_method(:run_journaled).owner
+    assert_equal loop_class::Lifecycle, loop_class.instance_method(:verify_incremental_scope).owner
+    assert_equal loop_class::PassExecution, loop_class.instance_method(:run_passes).owner
+    assert_equal loop_class::Completion, loop_class.instance_method(:finish_run).owner
+  end
+
   def test_completion_effects_are_isolated_from_the_fix_loop_class
     assert_includes Master::Fix::FixLoop.ancestors, Master::Fix::FixLoop::Completion
     assert_equal Master::Fix::FixLoop::Completion,
