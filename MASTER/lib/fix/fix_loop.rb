@@ -67,7 +67,8 @@ module Master
       # A pass status that ends the run, and the state it ends in.
       PASS_ENDINGS = { clean: :done, blockers_cleared: :done, validation_failed: :validation_failed,
                        delivery_failed: :delivery_failed, human_decision: :human_decision,
-                       reloading: :reloading }.freeze
+                       reloading: :reloading, cancelled: :cancelled, unknown_outcome: :unknown_outcome,
+                       recovery_failed: :recovery_failed }.freeze
       MEASURED_REPAIR_OUTCOMES = OutcomePolicy::MEASURED_REPAIR_OUTCOMES
 
       MAX_PASSES = 15
