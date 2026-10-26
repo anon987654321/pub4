@@ -3,6 +3,7 @@
 require "fileutils"
 require "open3"
 require "tempfile"
+require_relative "hunk_anchor"
 
 module Master
   module Fix
@@ -42,7 +43,7 @@ module Master
           return Failure.new(reason: "diff names more than one file; this applies to one source")
         end
 
-        new(original, recount(diff_text)).apply
+        new(original, HunkAnchor.anchor(recount(diff_text), original)).apply
       end
 
       # The diff with every hunk header rewritten from its own body. Text that is
@@ -56,7 +57,7 @@ module Master
             lines.concat(hunk_lines(hunk)) if hunk
             hunk = { old: header[1], new: header[2], body: [] }
           elsif hunk && hunk_body_line?(line)
-            hunk[:body] << (line.empty? ? " " : line)
+            hunk[:body] << line
           elsif hunk
             lines.concat(hunk_lines(hunk))
             hunk = nil
@@ -71,11 +72,14 @@ module Master
 
       def self.hunk_body_line?(line) = line.empty? || line.start_with?(" ", "-", "+", "\\")
 
-      # Blank lines the model left at the end of a hunk are the end of the reply,
-      # not context the file has to contain.
+      # Empty lines ending a hunk are the end of the reply. A " " line is blank
+      # context the model marked, and it stays: dropping it rejected five repairs
+      # in a row on 2026-10-26 (see HunkAnchor). Empty lines inside read as blank.
       def self.hunk_lines(hunk)
         body = hunk[:body].dup
-        body.pop while body.last == " "
+        body.pop while body.last == ""
+
+        body = body.map { |line| line.empty? ? " " : line }
         old = body.count { |line| line.start_with?(" ", "-") }
         new = body.count { |line| line.start_with?(" ", "+") }
         ["@@ -#{hunk[:old]},#{old} +#{hunk[:new]},#{new} @@", *body]

@@ -177,6 +177,29 @@ class PatchApplierTest < Minitest::Test
     assert_equal "not a diff\n", Applier.recount("not a diff\n")
   end
 
+  MIDDLE = (1..12).map { |n| n == 6 ? "\n" : "line #{n}\n" }.join
+
+  def assert_middle_edit(diff)
+    result = Master::Fix::PatchApplier.apply(MIDDLE, diff)
+
+    assert_kind_of Master::Fix::PatchApplier::Success, result, result.inspect
+    assert_includes result.source, "line FIVE\n"
+    assert_equal 12, result.source.lines.size
+  end
+
+  # The 2026-10-26 run lost five repairs in a row to each of these shapes.
+  def test_a_blank_line_of_trailing_context_is_kept
+    assert_middle_edit("--- a/x\n+++ b/x\n@@ -4,3 +4,3 @@\n line 4\n-line 5\n+line FIVE\n \n")
+  end
+
+  def test_a_hunk_with_no_leading_context_applies_mid_file
+    assert_middle_edit("--- a/x\n+++ b/x\n@@ -5,2 +5,2 @@\n-line 5\n+line FIVE\n \n line 7\n")
+  end
+
+  def test_a_hunk_at_the_wrong_line_is_found_where_its_lines_are
+    assert_middle_edit("--- a/x\n+++ b/x\n@@ -40,3 +40,3 @@\n line 4\n-line 5\n+line FIVE\n")
+  end
+
   def test_the_diff_threshold_is_declared
     assert_equal 8_192, Applier::DIFF_THRESHOLD
   end
