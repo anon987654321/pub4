@@ -37,7 +37,7 @@
             <% end %>
             <div>
               <h2><%= profile.name %></h2>
-              <p><%= neighborhood_names[crossing.neighborhood_id] || t("dating.path_crossings_approximate_area") %> · <%= time_ago_in_words(crossing.crossed_at) %></p>
+              <p class="meta-facts"><span><%= neighborhood_names[crossing.neighborhood_id] || t("dating.path_crossings_approximate_area") %></span><span><%= time_ago_in_words(crossing.crossed_at) %></span></p>
               <%= button_to t("dating.like"), likes_path, params: { user_id: profile.user_id }, method: :post, class: "btn btn-primary btn-sm" %>
             </div>
           </article>
