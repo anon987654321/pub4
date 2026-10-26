@@ -3504,7 +3504,15 @@ law_catalogue:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/prose.rb]
+    PROSE_ACTIVE_VOICE_NB:
+      universal: true
+      modalities: [lexical, semantic, visual]
+      definition_sources: [MASTER/law/prose.rb]
     PROSE_OMIT_QUALIFIERS:
+      universal: true
+      modalities: [lexical, semantic, visual]
+      definition_sources: [MASTER/law/prose.rb]
+    PROSE_OMIT_QUALIFIERS_NB:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/prose.rb]
