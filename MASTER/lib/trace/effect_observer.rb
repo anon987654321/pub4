@@ -11,21 +11,23 @@ module Master
       BEFORE_EVENT = "core:effect:before"
       AFTER_EVENT = "core:effect:after"
 
-      def initialize(bus:, run_id: SecureRandom.uuid, mission_id: nil)
+      def initialize(bus:, run_id: SecureRandom.uuid, attempt_id: nil, mission_id: nil)
         raise ArgumentError, "effect audit requires publish_required" unless bus.respond_to?(:publish_required)
 
         @bus = bus
         @run_id = Master::Execution::Contract.token!(run_id, "run id")
+        @attempt_id = Master::Execution::Contract.token!(attempt_id, "attempt id") if attempt_id
         @mission_id = Master::Execution::Contract.token!(mission_id, "mission id") if mission_id
       end
 
       def call(stage:, turn:, effect:, effect_id:, operation: :perform, parent_effect_id: nil,
-               checkpoint_id: nil, run_id: nil, mission_id: nil, scope: nil,
+               checkpoint_id: nil, run_id: nil, attempt_id: nil, mission_id: nil, scope: nil,
                idempotency_key: nil, deadline_at: nil, evidence_refs: [],
                observation: nil, elapsed_ms: nil)
         payload = Master::Execution::Contract::EffectEnvelope.build(
           effect:, turn:, effect_id:, operation:, parent_effect_id:, checkpoint_id:,
-          run_id: run_id || @run_id, mission_id: mission_id || @mission_id, scope:,
+          run_id: run_id || @run_id, attempt_id: attempt_id || @attempt_id,
+          mission_id: mission_id || @mission_id, scope:,
           idempotency_key:, deadline_at:
         ).to_h
         references = safe_evidence_refs(evidence_refs)
