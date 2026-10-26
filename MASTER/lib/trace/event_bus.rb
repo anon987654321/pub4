@@ -104,8 +104,12 @@ module Master
         # visitor's SSE from a handler) must be able to ignore another
         # conversation's events — without this stamp, subscribe("**") and even
         # named tool:before handlers dump visitor B's turn into visitor A's stream.
-        enriched = already_persisted ? payload : payload.merge(event:, ts:)
-        enriched[:conversation] = conversation if conversation && !enriched.key?(:conversation)
+        if already_persisted
+          enriched = payload
+        else
+          enriched = payload.merge(event:, ts:)
+          enriched[:conversation] = conversation if conversation
+        end
         handlers = synchronize { matching_handlers(event) }
 
         persist_event(event, enriched) unless already_persisted

@@ -140,6 +140,7 @@ class TestEventBus < Minitest::Test
     assert_equal "critical:before", observed_record.fetch("event")
     assert_equal "e-1", observed_record.dig("payload", "effect_id")
     assert_equal "write", observed_record.dig("payload", "verb")
+    assert_equal 1, @bus.instance_variable_get(:@event_log).recent(10).count { |record| record["event"] == "critical:before" }
   end
 
   def test_publish_required_propagates_persistence_failure
