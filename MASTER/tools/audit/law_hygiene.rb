@@ -72,7 +72,7 @@ module Operator
     end
 
     def catalogue_ids
-      Master.law("law_catalogue", root: MASTER).fetch("entries").keys.map(&:to_s)
+      master_laws.fetch("law_catalogue").fetch("entries").keys.map(&:to_s)
     end
 
     def all_ids = (catalogue_ids + yaml_laws.map { |r| r["id"] } + law_ids + dsl_ids).compact
