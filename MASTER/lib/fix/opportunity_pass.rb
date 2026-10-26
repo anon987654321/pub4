@@ -60,7 +60,8 @@ module Master
         return Result.ok(findings: [], assessment_evidence: { status: "not_applicable" }) unless applicable?(target)
 
         @assessment_gaps = []
-        scope_paths = Array(files).map { |path| File.expand_path(path) }.uniq.sort
+        scope_root = plan&.root || repo_root
+        scope_paths = Array(files).map { |path| File.expand_path(path.to_s, scope_root) }.uniq.sort
         before = capture_assessment_snapshot(target:, scope_paths:)
         findings = collect_findings(target:, files: scope_paths)
         after = capture_assessment_snapshot(target:, scope_paths:)
@@ -130,7 +131,7 @@ module Master
       rescue StandardError => e
         {
           status: "unavailable",
-          reason: "#{e.class}: #{e.message.to_s.gsub(/\\s+/, " ").strip[0, 180]}",
+          reason: "#{e.class}: #{e.message.to_s.gsub(/\s+/, " ").strip[0, 180]}",
         }
       end
 
@@ -170,7 +171,8 @@ module Master
           expected_paths = plan.sources.map { |source| File.expand_path(source.path, plan.root) }.sort
           reasons << "input file scope differs from FixPlan" unless scope_paths == expected_paths
           reasons << "FixPlan contains no eligible source files" if expected_paths.empty?
-          reasons << "assessment target differs from FixPlan target" unless File.expand_path(target) == plan.target
+          absolute_target = target.to_s.start_with?("/") ? File.expand_path(target) : File.expand_path(target.to_s, repo_root)
+          reasons << "assessment target differs from FixPlan target" unless absolute_target == plan.target
         end
 
         [before, after].each do |snapshot|
@@ -198,7 +200,7 @@ module Master
         {
           schema_version: 1,
           status: reasons.empty? && stable_snapshot && source_hashes_verified ? "complete" : "inconclusive",
-          target: File.expand_path(target),
+          target: target.to_s.start_with?("/") ? File.expand_path(target) : File.expand_path(target.to_s, repo_root),
           plan_digest: plan&.digest,
           source_digest: plan&.source_digest,
           scope_digest: plan&.scope_digest,

@@ -498,15 +498,28 @@ module Master
               rows = Array(values[:findings] || values["findings"]).select do |row|
                 (row[:law] || row["law"]).to_s.casecmp?(law_id)
               end
-              return assessment_result(:opportunity_found, evidence:, findings: rows) if rows.any?
+              receipt = values[:assessment_evidence] || values["assessment_evidence"]
+              receipt_value = lambda do |key|
+                receipt.is_a?(Hash) ? (receipt[key.to_sym] || receipt[key.to_s]) : nil
+              end
+              receipt_reason = Array(receipt_value.call(:reasons)).map(&:to_s).reject(&:empty?).first
+              receipt_bound = receipt_value.call(:status).to_s == "complete" &&
+                @assessment_plan &&
+                receipt_value.call(:plan_digest).to_s == @assessment_plan.digest.to_s &&
+                receipt_value.call(:source_digest).to_s == @assessment_plan.source_digest.to_s &&
+                receipt_value.call(:scope_digest).to_s == @assessment_plan.scope_digest.to_s &&
+                receipt_value.call(:target).to_s == @assessment_plan.target.to_s &&
+                receipt_value.call(:source_hashes_verified) == true &&
+                receipt_value.call(:snapshot_sha256).to_s == receipt_value.call(:snapshot_after_sha256).to_s
+              cell_evidence = Array(evidence) + (receipt.is_a?(Hash) ? [receipt] : [])
+              unless receipt_bound
+                reason = receipt_reason || "opportunity assessment receipt is missing, unstable or not bound to the current FixPlan"
+                return assessment_result(:inconclusive, reason:, evidence: cell_evidence, findings: rows)
+              end
 
-              # This adapter aggregates heuristics and does not publish a per-surface
-              # clean receipt. Its absence of findings is not evidence of clean scope.
-              return assessment_result(
-                :inconclusive,
-                reason: "opportunity assessor does not publish per-surface clean receipts",
-                evidence:
-              )
+              return assessment_result(:opportunity_found, evidence: cell_evidence, findings: rows) if rows.any?
+
+              assessment_result(:assessed_clean, evidence: cell_evidence)
             when :visual
               return assessment_result(:inconclusive, reason: "source generation changed during visual assessment", evidence:) unless signatures_stable
               return assessment_result(:inconclusive, reason: "rendered review returned no result", evidence:) unless visual
