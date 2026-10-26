@@ -272,7 +272,7 @@ module Master
             "stream" => cell["stream"].to_s,
             "surface" => cell["surface"].to_s,
             "status" => cell["status"].to_s,
-            "reason" => (latest.is_a?(Hash) ? latest["reason"] : nil).to_s.gsub(/\\s+/, " ").strip[0, 180],
+            "reason" => (latest.is_a?(Hash) ? latest["reason"] : nil).to_s.gsub(/\s+/, " ").strip[0, 180],
           }
         end.first(5)
         {
