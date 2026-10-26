@@ -32,7 +32,7 @@
   font-display: swap;
 }
 
-/* BEGIN:generated-face-root — ruby MASTER/tools/rails/generate_face_root_css.rb */
+/* BEGIN:generated-face-root — ruby MASTER/tools/design_tokens.rb generate_face_root_css */
 :root {
   --pub4-signal: #D4D4D4;
   --pub4-signal-ink: #080808;
@@ -1905,7 +1905,7 @@ body[data-face-ascii="1"] #face { opacity: .055; }
 @media (prefers-reduced-motion: reduce) {
   .master-face-ascii-layer { transition: none; }
 }
-/* Ghostty-inspired session chrome: flat graphite, muted violet focus, one semantic lime signal. */
+/* Ghostty-inspired session chrome: neutral graphite, grayscale focus and semantic contrast. */
 #chat-shell { inset-block-end: calc(76px + var(--safe-bottom) + var(--keyboard-inset, 0px)); }
 #chat-log { max-height: 36dvh; padding: 8px 18px; }
 #zsh {
@@ -1991,7 +1991,6 @@ body.mission-control .mission-heading { max-inline-size: 80ch; margin: 0 0 1rem;
 @media (min-width: 480px) {
   #chat-log { max-height: 40dvh; padding-inline: 24px; }
   #zsh { width: min(920px, calc(100dvw - 32px - var(--safe-left) - var(--safe-right))); min-height: 64px; padding: 9px 12px; gap: 8px; }
-  
   .master-titlebar { gap: .5rem; }
   .master-titlebar .brand-mark { display: inline-flex; }
   .master-session-tab { padding-inline: .875rem; }
