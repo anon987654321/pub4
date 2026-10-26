@@ -50,6 +50,46 @@ class TestFixCrashLeavesTree < Minitest::Test
     end
   end
 
+# The process died with its pass open, and the journal only marked the run interrupted.
+# The next run's sweep rolls the pass back; one whose file changed since is kept as a conflict.
+def stranded_pass(root, content)
+  path = File.join(root, "a.rb").tap { |file| File.write(file, "A = 1\n") }
+  transaction = Master::Fix::Transaction.new(root:, paths: %w[a.rb])
+  transaction.begin!
+  File.write(path, content)
+  transaction.observe!
+  transaction.send(:release_lock)
+  [path, transaction.id]
+end
+
+def sweep(root)
+  loop = Master::Fix::FixLoop.allocate
+  loop.instance_variable_set(:@transaction_root, root)
+  capture_io { loop.send(:recover_stranded_transactions!) }.first
+end
+
+def test_the_next_run_rolls_back_a_pass_a_dead_process_left_open
+  Dir.mktmpdir do |root|
+    path, = stranded_pass(root, "A = 1\n\n")
+
+    sweep(root)
+
+    assert_equal "A = 1\n", File.read(path)
+  end
+end
+
+def test_a_stranded_pass_whose_file_changed_since_is_kept_and_named
+  Dir.mktmpdir do |root|
+    path, id = stranded_pass(root, "A = 1\n\n")
+    File.write(path, "A = 2\n")
+
+    out = sweep(root)
+
+    assert_equal "A = 2\n", File.read(path)
+    assert_includes out, "stranded transaction #{id}"
+  end
+end
+
   # A rollback that leaves a file names it in dmesg, not only on the bus.
   def test_a_refused_rollback_is_reported_in_dmesg
     Dir.mktmpdir do |root|

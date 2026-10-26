@@ -239,6 +239,25 @@ module Master
           Result.err("fix budget exhausted before resume", category: :timeout)
         end
 
+        # Every transaction a previous process left behind, whatever its journal row says. The
+        # journal marks a run interrupted without recovering its pass, so five manifests sat
+        # open under MASTER/.master for days. An open one rolls back unless its files changed
+        # since (then it is kept as a conflict); one a live run holds is skipped by its lock.
+        def recover_stranded_transactions!
+          dir = File.join(@transaction_root, Transaction::ROOT_DIR)
+          return unless File.directory?(dir)
+
+          Dir.children(dir).sort.each do |id|
+            next unless Transaction::Recovery.persisted?(root: @transaction_root, id:)
+
+            result = Transaction::Recovery.recover!(root: @transaction_root, id:, bus: @bus)
+            next if result.ok? && %i[committed rolled_back].include?(result.value!)
+
+            outcome = result.ok? ? result.value!.inspect : result.message
+            Master::Trace::Dmesg.status("fix0", "stranded transaction #{id}: #{outcome[0, 160]}")
+          end
+        end
+
         def resume_active_transaction(journal:, run_id:, start_pass:)
           active_pass = @run_journal.active_pass(journal)
           transaction_id = active_pass&.fetch("transaction_id")

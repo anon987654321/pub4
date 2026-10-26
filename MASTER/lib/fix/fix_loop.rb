@@ -175,6 +175,7 @@ module Master
         return cancellation_terminal if cancellation_requested?
         return halted_result if halted? && !requested
 
+        recover_stranded_transactions!
         @pass_runner&.reset_gaps!
         @pass_runner.research_brief = nil if @pass_runner&.respond_to?(:research_brief=)
         # A requested /fix owes a semantic read to every file with a cheap finding and to a rotating
