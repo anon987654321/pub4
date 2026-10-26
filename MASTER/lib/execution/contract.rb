@@ -202,7 +202,7 @@ module Master
       SKILL_DECLARATION_KEYS = %w[schema_version version status risk required_capabilities laws fixtures provenance].freeze
 
       SkillContract = Data.define(
-        :name, :revision, :source, :version, :status, :risk,
+        :name, :revision, :source, :version, :status, :risk, :declared,
         :required_capabilities, :law_ids, :fixture_refs, :provenance, :errors
       ) do
         def self.from_declaration(name:, revision:, source:, declaration: nil)
@@ -255,6 +255,7 @@ module Master
             version: version&.freeze,
             status:,
             risk:,
+            declared: !declaration.nil?,
             required_capabilities: required_capabilities.freeze,
             law_ids: law_ids.freeze,
             fixture_refs: fixture_refs.freeze,
@@ -288,16 +289,26 @@ module Master
         end
         private_class_method :checked_digest
 
-        def promotable?
-          status == :candidate && !version.nil? && !fixture_refs.empty? &&
-            !required_capabilities.empty? && !law_ids.empty? && errors.empty?
+        def declared? = declared == true
+
+        def valid_declaration?
+          declared? && !version.nil? && !fixture_refs.empty? &&
+            !required_capabilities.empty? && !law_ids.empty? && errors.empty? &&
+            !%i[blocked deprecated invalid].include?(status)
         end
 
-        def permitted_for_trigger? = %i[unreviewed approved].include?(status)
+        # Candidate means the contract is ready for operator review, not ready
+        # for injection. The separate operator approval manifest pins its exact
+        # content digest; changing one byte requires a new approval.
+        def promotable? = status == :candidate && valid_declaration?
+
+        # Compatibility is reserved for the pre-contract legacy population.
+        # A declared skill always needs an external approval for this revision.
+        def permitted_for_trigger? = !declared? && status == :unreviewed
 
         def to_h
           {
-            schema_version: 1, name:, revision:, source:, version:, status:, risk:,
+            schema_version: 1, name:, revision:, source:, version:, status:, risk:, declared:,
             required_capabilities:, law_ids:, fixture_refs:, provenance:, errors:
           }.compact
         end
