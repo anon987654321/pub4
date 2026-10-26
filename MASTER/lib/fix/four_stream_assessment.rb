@@ -237,6 +237,7 @@ module Master
           schema_version: 1,
           streams: STREAMS.map(&:to_s),
           surfaces: surfaces.map(&:to_s),
+          laws: laws,
           summary: summary,
           invalidations: Array(@invalidations).map do |entry|
             {

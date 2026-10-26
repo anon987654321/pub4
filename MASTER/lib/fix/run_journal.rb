@@ -394,9 +394,12 @@ module Master
         cells = ledger["cells"]
         streams = Array(ledger["streams"]).map(&:to_s)
         surfaces = Array(ledger["surfaces"]).map(&:to_s)
-        unless summary.is_a?(Hash) && cells.is_a?(Array) && streams.any? && surfaces.any?
+        law_ids = ledger["laws"]
+        unless summary.is_a?(Hash) && cells.is_a?(Array) && streams.any? && surfaces.any? && law_ids.is_a?(Array)
           return { "status" => "matrix_ledger_malformed" }
         end
+        return { "status" => "matrix_duplicate_axes" } unless streams.uniq == streams && surfaces.uniq == surfaces
+        return { "status" => "matrix_law_population_invalid" } unless law_ids.all? { |law| law.is_a?(String) && !law.strip.empty? } && law_ids.uniq == law_ids
 
         required_clean_passes = Integer(summary["clean_passes_required"])
         generation = Integer(summary["generation"])
@@ -404,7 +407,8 @@ module Master
         laws = Integer(summary["laws"])
         expected_cells = Integer(summary["expected_cells"])
         return { "status" => "matrix_dimensions_invalid" } unless required_clean_passes.positive? && laws.positive?
-        unless expected_cells == laws * streams.uniq.size * surfaces.uniq.size && cells.size == expected_cells
+        return { "status" => "matrix_law_population_mismatch" } unless law_ids.size == laws
+        unless expected_cells == laws * streams.size * surfaces.size && cells.size == expected_cells
           return { "status" => "matrix_cell_count_mismatch" }
         end
 
@@ -421,6 +425,8 @@ module Master
         end
         return { "status" => "matrix_duplicate_cells" } unless keys.uniq.size == keys.size
         return { "status" => "matrix_law_count_mismatch" } unless keys.map(&:first).uniq.size == laws
+        expected_keys = law_ids.product(streams, surfaces).to_set
+        return { "status" => "matrix_cartesian_product_mismatch" } unless keys.to_set == expected_keys
 
         recorded = 0
         unassessed = 0
@@ -464,6 +470,18 @@ module Master
             unless iteration.positive? && iteration > previous_iteration && reading_generation >= previous_generation &&
                    reading_generation <= generation && allowed_readings.include?(reading_status)
               return { "status" => "matrix_reading_order_invalid", "cell" => keys[index] }
+            end
+            reading_evidence = Array(reading["evidence"])
+            reading_findings = Array(reading["findings"])
+            reason = reading["reason"].to_s.strip
+            if reading_status == "assessed_clean" && reading_evidence.empty?
+              return { "status" => "matrix_clean_without_evidence", "cell" => keys[index] }
+            end
+            if %w[not_applicable inconclusive].include?(reading_status) && reason.empty?
+              return { "status" => "matrix_reason_missing", "cell" => keys[index] }
+            end
+            if %w[violation_found opportunity_found].include?(reading_status) && reading_evidence.empty? && reading_findings.empty?
+              return { "status" => "matrix_finding_without_evidence", "cell" => keys[index] }
             end
 
             previous_iteration = iteration
@@ -514,6 +532,22 @@ module Master
         }
         counts.each do |key, actual|
           return { "status" => "matrix_summary_count_mismatch", "field" => key } unless Integer(summary[key]) == actual
+        end
+
+        stream_summary = summary["streams"]
+        return { "status" => "matrix_stream_summary_missing" } unless stream_summary.is_a?(Hash)
+        return { "status" => "matrix_stream_population_mismatch" } unless stream_summary.keys.sort == streams.sort
+        streams.each do |stream|
+          rows = cells.select { |cell| cell["stream"] == stream }
+          stream_row = stream_summary[stream]
+          return { "status" => "matrix_stream_summary_malformed", "stream" => stream } unless stream_row.is_a?(Hash)
+          return { "status" => "matrix_stream_cell_count_mismatch", "stream" => stream } unless Integer(stream_row["cells"]) == rows.size
+          states = stream_row["states"]
+          return { "status" => "matrix_stream_states_missing", "stream" => stream } unless states.is_a?(Hash)
+          (allowed_readings + ["pending"]).each do |state|
+            actual = rows.count { |cell| cell["status"] == state }
+            return { "status" => "matrix_stream_state_count_mismatch", "stream" => stream, "state" => state } unless Integer(states[state]) == actual
+          end
         end
         unless summary["complete"] == complete && summary["clean"] == clean
           return { "status" => "matrix_summary_truth_mismatch" }
