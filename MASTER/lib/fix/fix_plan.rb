@@ -22,8 +22,17 @@ module Master
         lib/fix/opportunity_pass.rb
         lib/fix/visual_pass.rb
         lib/fix/four_stream_assessment.rb
+        lib/fix/fix_plan.rb
+        lib/fix/run_journal.rb
+        lib/fix/fix_loop.rb
+        lib/fix/outcome_policy.rb
+        lib/execution/contract.rb
+        lib/io/atomic_write.rb
       ].freeze
-      RUNTIME_GLOBS = %w[law/**/*.rb].freeze
+      # A plan binds the executable Law catalogue and the complete /fix
+      # engine that interprets, persists and terminalizes its evidence. Adding
+      # or changing an adapter invalidates the same provenance fingerprint.
+      RUNTIME_GLOBS = %w[law/**/*.rb lib/fix/**/*.rb].freeze
       TOOLCHAIN_FILES = %w[.ruby-version Gemfile.lock].freeze
       MAX_EXCLUSION_SAMPLE = 20
 
