@@ -36,10 +36,7 @@ source and tests they could not run; this pass is what measures them.
 
 ## Execution contract
 
-- [ ] Map lifecycle ownership from call sites: `Core::Fold`, `Core::Constitution`, `Core::World`,
-  `FixLoop`, the inner repair loop, `Fix::Kernel`, `Mission`, `RunJournal`, `RunLedger`,
-  `Transaction`, `Transaction::Delivery`, supervisors, MCP and tool dispatch. Record who owns
-  state, authorisation, replay, recovery and delivery for each.
+- [ ] Close the gaps listed in `MASTER/docs/lifecycle_ownership.md`, worst first.
 - [ ] Extend before/after receipts to background workers, schedulers and transaction-internal
   writes. Tools, MCP, the Fold and git writes carry them; `test_effect_boundary_inventory.rb` fails
   on a new tool built outside the builder.
@@ -48,8 +45,6 @@ source and tests they could not run; this pass is what measures them.
 - [ ] Restart and duplicate-delivery tests: death after the before-receipt, after the effect but
   before the after-receipt, after commit but before delivery; duplicate events; stale leases.
   A worker with an expired lease cannot write, commit or deliver.
-- [ ] Field-by-field privacy review of the commit/Phoenix journal and the remaining event, log and
-  learning families, with adversarial tests for credentials, paths, prompts and tool output.
 - [ ] Structured cancellation and deadlines for supervisors, scheduled jobs, child process trees,
   provider calls and checks.
 

@@ -1,0 +1,93 @@
+# Lifecycle ownership
+
+Who builds each part of MASTER's execution path, what state it keeps, who
+authorises its effects, and what reads that state after a crash. Mapped from
+production call sites on 2026-10-26; a claim here names the file that makes it
+true, so a change to that file is a change to this page.
+
+### Core::Fold
+
+CoreBridge builds it (lib/cli/core_bridge.rb, build_fold), reached from the
+TaskSteward and the interactive session; bin/master-core builds the standalone
+one. It keeps no state of its own. Every effect passes Constitution#admit,
+compensations included, and EffectObserver brackets it with durable
+core:effect:before and after events. A trace failure ends the turn as
+unknown_outcome, which stops automatic continuation. Delivery is a path-scoped
+World git commit; the Fold never pushes. bin/master-core admits with the same
+scan verifier and shell sandbox as CoreBridge since 50e3fc1e6.
+
+### Core::Constitution and Core::World
+
+The Constitution reads laws.yml and soul.yml's sacred paths; its Paths class
+also backs the sacred-path refusal in GitOperations, AutofixGuard and the /fix
+file collector. World dispatches each verb to a do_ method and checks
+capabilities. Its checkpoints live in memory, so a crash loses them; the Fold's
+compensations cover one path at a time.
+
+### FixLoop, RunJournal and RunLedger
+
+ai_boot builds the FixLoop (in the background when MASTER_AUTOFIX=1) and the
+/fix command builds one per run. FixLoop works on the repository root but keeps
+@transaction_root, the root it was given, for transactions (2de776cde).
+RunJournal persists runs in MASTER/.master/fix_runs.json with plan
+generations and assessment receipts. RunLedger is process memory reset at each
+run start. Delivery is the Committer: a commit per kept fix and a push, or one
+push at the end.
+
+### The inner repair loop
+
+Pass stages build RepairLoop; it writes source with write_atomic inside the
+pass transaction and relies on the reflexion verifier, the consensus panel, the
+collapse guard and the Committer's path validation. WatchLoop also builds one
+with no transaction or committer, so its writes have no rollback record (open,
+below).
+
+### Fix::Mission
+
+Lifecycle, the background runner, the Supervisor, the TaskSteward and CoreBridge
+build it. State is .master/mission.json under a lock and a lease. A handle that
+claimed a mission may write only that mission while it holds the lease; any
+other write raises Mission::Fenced (c296719e1). The Supervisor, Heartbeat and
+TaskSteward read it and wake work whose lease expired.
+
+### Fix::Transaction and Delivery
+
+The pass runner builds one per pass under <root>/.master/fix_transactions with
+a root lock. States run open, delivering, then committed or rolled back, or end
+in conflict. A committed or rolled-back transaction refuses rollback by name
+(2ddc00247). At the start of every run, FixLoop recovers each persisted
+transaction: an open pass rolls back unless its files changed since, which
+keeps it as a conflict; a delivering one is finalised only when the recorded
+HEAD still matches (43b53ec61).
+
+### Tool dispatch, MCP and git
+
+LLMDispatcher and McpCoordinator wrap every tool call in Trace::ToolObserver: a
+durable before-receipt or no call, then an after-receipt with the outcome.
+GitOperations does the same for add, commit, push and the rebase a rejected push
+needs (ec589be8d). test_effect_boundary_inventory names every place outside
+lib/builder.rb that builds a consequential tool.
+
+### Deployment
+
+/deploy runs bin/operator vps deploy over ssh. MASTER keeps no deploy state;
+rollback on the box is the operator's (operator_seams.yml).
+
+### Open gaps, by risk
+
+1. Two mission files. CoreBridge keeps the Fold's mission under MASTER's root
+   and FixLoop and the Supervisor keep /fix's under the repository root, while
+   Heartbeat, the TaskSteward and fix_status read only MASTER's. One file would
+   make the two kinds of mission supersede each other, so this needs a decision
+   about whether a Fold turn and a /fix run may coexist, not a path change.
+2. The unknown-outcome quarantine is per ToolObserver instance and in memory,
+   so it does not survive a restart, and reconcile! has no production caller.
+3. A crash between commit_scoped and record_commit! in the Committer leaves a
+   commit the journal does not know; delivery asks for manual review and
+   nothing provides one.
+4. WatchLoop's RepairLoop writes outside any transaction.
+5. Fix::Kernel is never constructed; its hash-chained log has no writer.
+6. Parallel test workers and StepWatch write fixed names in .master/check
+   without a lock.
+7. RunLedger is process-wide, so repairs WatchLoop makes outside a run count
+   toward whichever run is current.
