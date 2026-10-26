@@ -827,6 +827,8 @@ module Master
           language = Master.language_for(path).to_s
           semantic = %i[semantic_violations semantic_opportunities].include?(stream)
           case surface
+          when :repository_tree, :directories, :file_names, :paths
+            true
           when :whole_file
             true
           when :lines
@@ -835,13 +837,100 @@ module Master
             semantic
           when :syntax_tree
             !language.empty?
+          when :cross_file
+            @assessment_plan.sources.size > 1
           when :structured_data
             %w[.yml .yaml .json .toml].include?(extension) || %w[yaml json toml].include?(language)
           when :documentation
             %w[.md .markdown .rst .txt].include?(extension) || language == "markdown"
+          when :media_assets
+            assessment_target_has_assets?(%w[.png .jpg .jpeg .webp .gif .svg .pdf .wav .mp3 .m4a .flac .mp4 .mov .webm])
+          when :compiled_assets
+            assessment_target_has_compiled_assets?
+          when :rendered_ui, :interactive_behavior
+            assessment_target_has_rendered_ui?
+          when :tests
+            assessment_target_has_tests?
+          when :runtime
+            !@assessment_plan.sources.empty?
+          when :deployment
+            assessment_target_has_deployment_surface?
           else
             false
           end
+        end
+
+        def assessment_target_has_assets?(extensions)
+          key = [:asset_extensions, extensions.sort]
+          @assessment_surface_presence ||= {}
+          return @assessment_surface_presence[key] if @assessment_surface_presence.key?(key)
+
+          target = @assessment_plan.target
+          return @assessment_surface_presence[key] = false unless File.directory?(target)
+
+          @assessment_surface_presence[key] = extensions.any? do |extension|
+            Dir.glob(File.join(target, "**", "*#{extension}")).any? do |path|
+              File.file?(path) && !File.symlink?(path)
+            end
+          end
+        rescue StandardError => e
+          @bus&.publish("fix_loop:assessment_surface_inventory_failed", surface: key&.first, error: e.message)
+          @assessment_surface_presence[key] = true
+        end
+
+        def assessment_target_has_compiled_assets?
+          @assessment_surface_presence ||= {}
+          return @assessment_surface_presence[:compiled_assets] if @assessment_surface_presence.key?(:compiled_assets)
+
+          paths = @assessment_plan.sources.map(&:path)
+          @assessment_surface_presence[:compiled_assets] = paths.any? do |path|
+            path.match?(%r{(?:public/assets|app/assets/builds|vendor/assets)/}) ||
+              File.basename(path).match?(/\A(?:manifest(?:-[a-f0-9]+)?\.json|.+\.min\.(?:css|js))\z/i)
+          end || assessment_target_has_assets?(%w[.map])
+        rescue StandardError
+          @assessment_surface_presence[:compiled_assets] = true
+        end
+
+        def assessment_target_has_rendered_ui?
+          @assessment_surface_presence ||= {}
+          return @assessment_surface_presence[:rendered_ui] if @assessment_surface_presence.key?(:rendered_ui)
+
+          target = @assessment_plan.target
+          front_end = @assessment_plan.sources.any? do |source|
+            source.path.match?(%r{(?:app/views|views|templates|frontend|src)/}) &&
+              %w[.erb .html .htm .css .scss .js .jsx .ts .tsx].include?(File.extname(source.path).downcase)
+          end
+          @assessment_surface_presence[:rendered_ui] =
+            @visual_pass&.applicable?(target) == true && front_end
+        rescue StandardError
+          @assessment_surface_presence[:rendered_ui] = true
+        end
+
+        def assessment_target_has_tests?
+          @assessment_surface_presence ||= {}
+          return @assessment_surface_presence[:tests] if @assessment_surface_presence.key?(:tests)
+
+          @assessment_surface_presence[:tests] = @assessment_plan.sources.any? do |source|
+            source.path.match?(%r{(?:\A|/)(?:test|tests|spec)(?:/|\z)}) ||
+              File.basename(source.path).match?(/(?:_test|_spec)\.(?:rb|js|ts|jsx|tsx)\z/)
+          end
+        end
+
+        def assessment_target_has_deployment_surface?
+          @assessment_surface_presence ||= {}
+          return @assessment_surface_presence[:deployment] if @assessment_surface_presence.key?(:deployment)
+
+          target = @assessment_plan.target
+          target_label = target.delete_prefix(@assessment_plan.root + File::SEPARATOR)
+          paths = @assessment_plan.sources.map(&:path)
+          @assessment_surface_presence[:deployment] =
+            target_label == "." || target_label.start_with?("OPENBSD", "RAILS") ||
+            paths.any? do |path|
+              File.basename(path).match?(/\A(?:Procfile|Dockerfile|compose\.ya?ml|.*\.service|.*deploy.*)\z/i) ||
+                path.match?(%r{(?:deploy|deployment|helm|terraform|k8s)/})
+            end
+        rescue StandardError
+          @assessment_surface_presence[:deployment] = true
         end
 
         def parse_structured_surface(path)
