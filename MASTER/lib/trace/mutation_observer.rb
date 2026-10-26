@@ -39,7 +39,7 @@ module Master
           status = result_status(result)
           after_attempted = true
           after(token, status:, item_count:)
-          remove_pending_mutation!(marker) if marker && status != "ambiguous"
+          remove_pending_mutation!(marker) if marker
           result
         rescue StandardError
           if token && !after_attempted && !@failed
@@ -47,7 +47,7 @@ module Master
             begin
               status = marker ? "ambiguous" : "failed"
               after(token, status:, item_count:)
-              remove_pending_mutation!(marker) if marker && status != "ambiguous"
+              remove_pending_mutation!(marker) if marker
             rescue StandardError
               # A failed after-record must leave a durable marker for manual
               # reconciliation; never retry the side effect to repair tracing.
@@ -143,7 +143,7 @@ module Master
         path = File.join(@marker_root, ".pending-#{token.audit_id}")
         File.open(path, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |io|
           io.write(JSON.generate(audit_id: token.audit_id, operation: token.operation, started_at: token.started_at))
-          io.write("\\n")
+          io.write("\n")
           io.flush
           io.fsync
         end
