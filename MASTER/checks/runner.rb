@@ -24,6 +24,7 @@ SUBPROCESS_INCONCLUSIVE = 3
 $LOAD_PATH.unshift(ROOT, CHECKS_DIR)
 require File.join(ROOT, "MASTER", "checks", "support", "check_autofix")
 require File.join(ROOT, "MASTER", "checks", "support", "check_result")
+require File.join(ROOT, "MASTER", "lib", "execution", "contract")
 require File.join(ROOT, "MASTER", "checks", "support", "check_ledger")
 require File.join(ROOT, "MASTER", "checks", "support", "flow_coverage")
 require File.join(ROOT, "MASTER", "checks", "support", "token_reads")
@@ -178,6 +179,13 @@ def run_check(name, row, args)
 end
 
 def record(name, result, duration_ms)
+  verification = Master::Execution::Contract::VerificationResult.from_check_result(
+    result,
+    id: "#{RUN_ID}:#{Digest::SHA256.hexdigest(name.to_s)[0, 12]}",
+    subject: name,
+    verifier: "pub4-check-runner",
+    scope: CHECKS_FILE,
+  )
   LEDGER.record(
     check: name,
     outcome: result.outcome,
@@ -186,6 +194,7 @@ def record(name, result, duration_ms)
     warnings: result.warnings.size,
     errors: result.errors.size,
     duration_ms:,
+    verification: verification.to_h,
   )
 end
 

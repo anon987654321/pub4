@@ -5,6 +5,7 @@ require_relative "../lib/execution/contract"
 require_relative "../lib/proof"
 require_relative "../lib/trace/effect_observer"
 require_relative "../lib/fix/outcome_policy"
+require_relative "../checks/support/check_ledger"
 
 class TestExecutionContract < Minitest::Test
   Contract = Master::Execution::Contract
@@ -191,6 +192,25 @@ class TestExecutionContract < Minitest::Test
     assert_predicate failed, :conclusive?
     assert_equal :error, errored.status
     refute_predicate errored, :conclusive?
+  end
+
+  def test_check_ledger_stores_normalized_receipt_alongside_legacy_counts
+    Dir.mktmpdir do |dir|
+      ledger = Deploy::CheckLedger.new(path: File.join(dir, "checks.jsonl"))
+      result = FakeCheckResult.new(outcome: :passed, checks_ran: 4, failures: [], warnings: ["warning"])
+      receipt = Contract::VerificationResult.from_check_result(
+        result, id: "run-1:check-1", subject: "example-check", verifier: "pub4-check-runner", scope: "MASTER/checks"
+      )
+
+      ledger.record(check: "example-check", outcome: result.outcome, run_id: "run-1", verification: receipt.to_h)
+      entry = ledger.entries.fetch(0)
+
+      assert_equal "passed", entry.fetch("outcome")
+      assert_equal "pass", entry.dig("verification", "status")
+      assert_equal "pub4-check-runner", entry.dig("verification", "verifier")
+      assert_equal Digest::SHA256.hexdigest("MASTER/checks"), entry.dig("verification", "scope_digest")
+      refute entry.dig("verification").key?("failure_details")
+    end
   end
 
   def test_check_result_adapter_preserves_infrastructure_outcomes
