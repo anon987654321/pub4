@@ -236,6 +236,32 @@ class TestGitHooks < Minitest::Test
     assert status.success?, "PUB4_RUBY_PARSE_SKIP=1 with PUB4_PARSE_SKIP=1 did not let the commit through:\n#{out}"
   end
 
+  # 4c. A commit must not clear an execute bit.
+
+  def commit_executable
+    write("MASTER/bin/run", "#!/bin/sh\n")
+    File.chmod(0o755, File.join(@dir, "MASTER/bin/run"))
+    git!("add", "MASTER/bin/run")
+    commit("add a script", env: { "PUB4_UNTRACKED" => "1" })
+    File.chmod(0o644, File.join(@dir, "MASTER/bin/run"))
+    git!("add", "MASTER/bin/run")
+  end
+
+  def test_clearing_an_execute_bit_is_refused
+    commit_executable
+    out, status = commit("drop the bit")
+
+    refute_committed out, status, /REFUSED — this commit removes the execute bit from:\n\s+MASTER\/bin\/run/
+    assert_match(/PUB4_MODE_CHANGE=1/, out)
+  end
+
+  def test_the_mode_override_is_honoured
+    commit_executable
+    out, status = commit("drop the bit, deliberately", env: { "PUB4_MODE_CHANGE" => "1" })
+
+    assert status.success?, "PUB4_MODE_CHANGE=1 did not let the commit through:\n#{out}"
+  end
+
   # --- 5. pre-push: a push carries everything beneath it -------------------
 
   def push_setup
