@@ -21,6 +21,16 @@ module Master
           # named on the check before it is taken.
           OFFLINE_ERRORS_PATTERN = /missing configuration|api.?key|unauthorized|no.*provider|no.*claude.*path|no.*on.*path/i.freeze
           LANE_SILENCE_PATTERN = /\Ano lane answered \d+ calls in a row; model work is skipped for \d+ minutes\./i.freeze
+          MAX_MODEL_CONTEXT_BYTES = Integer(ENV.fetch("MASTER_FIX_SEMANTIC_CONTEXT_MAX_BYTES", 320_000))
+
+          # Never issue a semantic verdict from a clipped source prefix.
+          # Oversized complete prompts remain explicit INCONCLUSIVE evidence.
+          def complete_source_prompt(prompt, path:)
+            return prompt if prompt.bytesize <= MAX_MODEL_CONTEXT_BYTES
+
+            raise "semantic assessment INCONCLUSIVE: complete source prompt for #{path} is #{prompt.bytesize} bytes, " \
+              "above MASTER_FIX_SEMANTIC_CONTEXT_MAX_BYTES=#{MAX_MODEL_CONTEXT_BYTES}"
+          end
 
           def quota_paused?
             return false unless Master::Io::QuotaCheck.blocked?
@@ -110,9 +120,10 @@ module Master
             return [] if quota_paused?
             return [] unless (lang = language(path))
 
-            prompt = format(PROMPT_TEMPLATE, path: File.basename(path),
-                                             lang:,
-                                             code: code[0, 3_000])
+            prompt = complete_source_prompt(
+              format(PROMPT_TEMPLATE, path: File.basename(path), lang:, code:),
+              path:
+            )
             response = ask_without_tools(prompt, operation: :scan_adversarial)
             parse_findings(response)
           rescue StandardError => e
@@ -153,8 +164,6 @@ module Master
         class SemanticLaw < Law
           def self.reads_beyond_file? = true
 
-          CODE_SNIPPET_LIMIT = 2000
-
           declare id: "semantic", severity: :warning, autofix: true,
                   description: "LLM-based rule review (violations + opportunities)"
 
@@ -190,7 +199,8 @@ module Master
               next @cache[cache_key] if @cache.key?(cache_key)
 
               operation = stream == :violation ? :scan_semantic_violations : :scan_semantic_opportunities
-              response = ask_without_tools(build_prompt(code, path, scoped, mode: stream), operation:)
+              prompt = complete_source_prompt(build_prompt(code, path, scoped, mode: stream), path:)
+              response = ask_without_tools(prompt, operation:)
               @cache[cache_key] = parse_findings(response, scoped, mode: stream)
             end
           rescue StandardError => e
@@ -342,8 +352,8 @@ module Master
 
             #{rules}
 
-            Code (first #{CODE_SNIPPET_LIMIT} chars):
-            #{code[0, CODE_SNIPPET_LIMIT]}
+            Complete source (UTF-8, #{code.bytesize} bytes):
+            #{code}
           PROMPT
           end
 
