@@ -58,7 +58,7 @@ module Master
         destructive_route
         pre_enhanced
         rendered output_findings
-        image felt_sense explicit_run
+        image felt_sense explicit_run cancellation
         channel metadata turn_id
         _timings _parallel_errors _parallel_timeout _stage_error
       ].freeze
