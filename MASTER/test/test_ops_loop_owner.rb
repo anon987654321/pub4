@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
+require_relative "test_helper"
 require "fileutils"
-require "minitest/autorun"
 require "json"
 require "tmpdir"
 require "time"
-require_relative "../lib/master"
 require_relative "../lib/ops"
 
 class LoopOwnerSpec < Minitest::Test

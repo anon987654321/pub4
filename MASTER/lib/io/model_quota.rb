@@ -67,7 +67,7 @@ module Master
         [daily_limit - count(model, day:), 0].max
       end
 
-      def burn_rate_per_day(model, day: today_key, now: Time.now.utc)
+      def burn_rate_per_day(model, now: Time.now.utc, day: now.utc.strftime("%Y-%m-%d"))
         used = count(model, day:)
         date = Date.strptime(day, "%Y-%m-%d")
         start = Time.utc(date.year, date.month, date.day)
@@ -79,7 +79,7 @@ module Master
         0.0
       end
 
-      def forecast(model, day: today_key, now: Time.now.utc)
+      def forecast(model, now: Time.now.utc, day: now.utc.strftime("%Y-%m-%d"))
         return unless trackable?(model)
 
         used = count(model, day:)
@@ -132,7 +132,7 @@ module Master
       end
 
       def path
-        File.join(Master::ROOT, ".master", "model_quota.json")
+        ENV["MASTER_MODEL_QUOTA_PATH"] || File.join(Master::ROOT, ".master", "model_quota.json")
       end
 
       def today_key = Time.now.utc.strftime("%Y-%m-%d")

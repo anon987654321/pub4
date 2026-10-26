@@ -196,7 +196,11 @@ class TestLanePool < Minitest::Test
 
       personas.each { |p| delib.send(:ask_persona, persona: p, code: "x", context: nil, image: { path: "shot.png" }) }
 
-      assert_equal [OPUS, OPUS, OPUS], agent.asked, "a lane that cannot see was asked about a screenshot"
+      # InterModelContract re-asks once when a reply is not its structured
+      # shape, and "ok" is not, so each persona may be asked twice: every ask
+      # still has to reach the lane that reads images.
+      assert_equal [OPUS], agent.asked.uniq, "a lane that cannot see was asked about a screenshot"
+      assert_operator agent.asked.size, :>=, personas.size
     end
   end
 

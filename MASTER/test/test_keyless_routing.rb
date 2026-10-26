@@ -167,10 +167,13 @@ class TestKeylessRouting < Minitest::Test
     router.instance_variable_set(:@ollama_sizes, { "glm-5.3-flash:cloud" => 317, "gemma3:4b" => 3_338_801_804,
                                                    "gemma4:26b" => 18_604_148_513, "llama3:latest" => 4_661_224_676 })
 
-    Master::Core::Memory.stub(:host_memory_mb, 8192) do
-      assert_equal %w[ollama:gemma3:4b ollama:llama3], router.local_models
-      refute router.reachable?("ollama:gemma4:26b")
-      assert router.reachable?("ollama:glm-5.3-flash:cloud")
+    # data/lanes.yml hand-kills ollama:glm today; this test grades the memory rule.
+    Master::Io::LaneQuota.stub(:manual_dead, []) do
+      Master::Core::Memory.stub(:host_memory_mb, 8192) do
+        assert_equal %w[ollama:gemma3:4b ollama:llama3], router.local_models
+        refute router.reachable?("ollama:gemma4:26b")
+        assert router.reachable?("ollama:glm-5.3-flash:cloud")
+      end
     end
   end
 
@@ -229,10 +232,13 @@ class TestKeylessRouting < Minitest::Test
     router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT)
     router.define_singleton_method(:ollama_installed_models) { [] }
 
-    assert_match(/GEMINI_API_KEY/, router.unreachable_reason("gemini-2.5-flash"))
-    assert router.reachable?("google/gemini-2.5-flash")
-    refute_includes router.fallback_chain(task_type: :exploration), "gemini-2.5-flash"
-    assert_match(/GEMINI_API_KEY/, router.pool_growth.first)
+    # data/lanes.yml hand-kills gemini today; this test grades the missing-key reason.
+    Master::Io::LaneQuota.stub(:manual_dead, []) do
+      assert_match(/GEMINI_API_KEY/, router.unreachable_reason("gemini-2.5-flash"))
+      assert router.reachable?("google/gemini-2.5-flash")
+      refute_includes router.fallback_chain(task_type: :exploration), "gemini-2.5-flash"
+      assert_match(/GEMINI_API_KEY/, router.pool_growth.first)
+    end
   end
 
   def test_spent_openrouter_credit_keeps_the_free_models_and_drops_the_paid

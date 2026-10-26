@@ -21,7 +21,7 @@ module Master
 
         attr_reader :path
 
-        def initialize(path: DEFAULT_PATH, now: -> { Time.now.utc })
+        def initialize(path: ENV.fetch("MASTER_PROVIDER_HEALTH_PATH", DEFAULT_PATH), now: -> { Time.now.utc })
           @path = path
           @now = now
         end

@@ -31,6 +31,7 @@ class TestLaneFailover < Minitest::Test
   end
 
   def teardown
+    Master::Io::ModelSkipCache.clear!
     Quota.path = nil
     Quota.clock = -> { Time.now.to_f }
     @lists.values.flatten.each { |model| Silence.record(true, Silence.lane_of(model)) }
@@ -82,6 +83,9 @@ class TestLaneFailover < Minitest::Test
     Master.stub(:llm_reachable?, true) do
       @lists.each do |tier, tier_models|
         Quota.path = File.join(@dir, "#{tier}.yml")
+        # A lane parked in the tier before (agy states a 165h reset) would
+        # still be parked here; each tier starts with nothing in the skip cache.
+        Master::Io::ModelSkipCache.clear!
         models = Selection.order(tier_models)
         lanes = models.map { |m| Quota.lane_of(m) }.uniq
         calls = []

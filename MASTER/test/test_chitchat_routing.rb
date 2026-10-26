@@ -6,6 +6,17 @@ require_relative "support_fake_config"
 class TestChitchatRouting < Minitest::Test
   FakeConfig = Master::TestSupport::FakeConfig
 
+  # The free tier is reachable by construction, not because this machine has
+  # an OpenRouter key in its env file.
+  def setup
+    @saved_key = ENV["OPENROUTER_API_KEY"]
+    ENV["OPENROUTER_API_KEY"] = "sk-or-v1-#{"a" * 64}"
+  end
+
+  def teardown
+    @saved_key ? ENV["OPENROUTER_API_KEY"] = @saved_key : ENV.delete("OPENROUTER_API_KEY")
+  end
+
   def test_models_yml_maps_chitchat_to_free_tier
     routes = Master.load_yaml(File.join(Master::ROOT, "data", "models.yml")).fetch("routes", {})
     assert_equal "free", routes["chitchat"]

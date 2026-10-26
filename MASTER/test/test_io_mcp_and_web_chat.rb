@@ -142,10 +142,11 @@ class TestIoMcpAndWebChat < Minitest::Test
     assert_empty client.calls
   end
 
-  def test_web_chat_is_off_without_an_opt_in
+  # Web chat is on by default; either switch turns it off before a browser starts.
+  def test_web_chat_switched_off_refuses_before_opening_a_browser
     chat = Master::Io::WebChat.new(provider: "grok")
-    with_env("MASTER_WEB_CHAT" => nil, "MASTER_KEYLESS" => nil) do
-      Master.stub(:keyless_llm_enabled?, false) do
+    [{ "MASTER_WEB_CHAT" => "0" }, { "MASTER_NO_WEB_CHAT" => "1" }].each do |switch|
+      with_env(switch) do
         assert_raises(Master::Io::WebChat::DisabledError) { chat.ask(prompt: "hi") }
       end
     end

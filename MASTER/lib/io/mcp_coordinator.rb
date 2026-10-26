@@ -3,6 +3,9 @@
 require "json"
 require "timeout"
 require "mcp"
+# McpToolWrapper subclasses RubyLLM::Tool; a caller that reached this file
+# before anything loaded the gem got no wrapper at all.
+require "ruby_llm"
 
 module Master
   module Io

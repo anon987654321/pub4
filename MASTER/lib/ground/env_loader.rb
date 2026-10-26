@@ -5,7 +5,12 @@ module Master
     module EnvLoader
       module_function
 
+      # MASTER_NO_ENV_FILES=1 reads only a file MASTER_ENV_FILE names: the suite
+      # sets it so a key in the operator's ~/.config/master/env cannot decide
+      # which lane a test routes to.
       def default_paths
+        return [ENV["MASTER_ENV_FILE"]].compact if ENV["MASTER_NO_ENV_FILES"] == "1"
+
         root = defined?(Master::ROOT) ? Master::ROOT : File.expand_path("../..", __dir__)
         [
           "/etc/master.env",

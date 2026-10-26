@@ -24,6 +24,14 @@ ENV["MASTER_FIX_INSTRUMENT_CHECK"] = "0"
 ENV["MASTER_SCAN_CACHE"] = "0"
 # A test whose narrator speaks started the bard's music bed through the speakers, mid-suite.
 ENV["MASTER_BED"] = "0"
+# The machine's own lane state graded routing tests: a real agy quota, a key in
+# ~/.config/master/env and the live health log each changed which lane a test
+# saw first. The suite routes against empty state of its own.
+ENV["MASTER_NO_ENV_FILES"] = "1"
+LIVE_STATE_DIR = Dir.mktmpdir("master-test-lanes-")
+ENV["MASTER_LANE_QUOTA_PATH"] = File.join(LIVE_STATE_DIR, "lane_quota.yml")
+ENV["MASTER_MODEL_QUOTA_PATH"] = File.join(LIVE_STATE_DIR, "model_quota.json")
+ENV["MASTER_PROVIDER_HEALTH_PATH"] = File.join(LIVE_STATE_DIR, "provider_health.ndjson")
 
 # Direct test entrypoints must use the same pinned, private bundle as bin/cli.
 # Otherwise RubyGems can select a host-installed Minitest (or a native gem

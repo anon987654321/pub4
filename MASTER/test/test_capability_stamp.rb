@@ -18,7 +18,8 @@ class CapabilityStampTest < Minitest::Test
   def test_stamp_reports_fresh_cloud_model
     Dir.mktmpdir do |dir|
       now = Time.utc(2026, 9, 28, 13, 0, 0)
-      health = health_at(dir, at: now - 41, model: "claude-cli:opus")
+      recorded = health_at(dir, at: now - 41, model: "claude-cli:opus")
+      health = Master::CLI::Routing::ProviderHealth.new(path: recorded.path, now: -> { now })
       policy = Master::CLI::Routing::AvailabilityPolicy.new(root: dir)
 
       assert_equal(
