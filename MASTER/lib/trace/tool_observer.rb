@@ -248,7 +248,7 @@ module Master
       end
 
       def non_negative_integer(value, field)
-        unless value.is_a?(Integer) || (value.is_a?(String) && value.match?(/\\A\\d+\\z/))
+        unless value.is_a?(Integer) || (value.is_a?(String) && value.match?(/\A\d+\z/))
           raise ArgumentError, "#{field} must be a non-negative integer"
         end
 

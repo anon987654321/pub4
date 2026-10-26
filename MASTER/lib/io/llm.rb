@@ -30,89 +30,101 @@ module Master
 
         # The strict receipt is persisted before entering the underlying tool.
         # Legacy presentation events remain best-effort and never authorize work.
-        def forward(**args)
+        def forward(**args, &block)
           return orientation_refusal(args) if orientation_required?
           return repeated_call_reply(args) if repeated_call?(args)
 
           invocation_id = SecureRandom.uuid
-          identity = nil
-          if @tool_observer
-            begin
-              identity = @tool_observer.before(
-                tool: tool_name, tier: tool_tier, args:, invocation_id:
-              )
-            rescue Master::Trace::ToolObserver::UnknownOutcome
-              error = "previous invocation outcome is unresolved; verify state and reconcile before retrying"
-              publish_tool_failure(invocation_id, :unknown_outcome, error)
-              return "Error: #{error}."
-            rescue StandardError => e
-              publish_tool_failure(invocation_id, :audit_unavailable, e.message)
-              return "Error: durable tool audit could not be recorded; the operation was not executed."
-            end
-          end
+          identity = begin_tool_observation(args:, invocation_id:)
+          return identity if identity.is_a?(String)
 
           @bus&.publish("tool:call", { tool: tool_name, invocation_id: }.merge(public_subject_fields(args)))
           record_trajectory_event(tool: tool_name, args:, phase: "call", ok: nil)
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
+          result = invoke_tool(args:, identity:, invocation_id:, started:)
+          return result if result.is_a?(String)
 
+          finish_tool_result(result:, identity:, args:, invocation_id:, started:, &block)
+        end
+
+        def begin_tool_observation(args:, invocation_id:)
+          return unless @tool_observer
+
+          @tool_observer.before(tool: tool_name, tier: tool_tier, args:, invocation_id:)
+        rescue Master::Trace::ToolObserver::UnknownOutcome
+          error = "previous invocation outcome is unresolved; verify state and reconcile before retrying"
+          publish_tool_failure(invocation_id, :unknown_outcome, error)
+          "Error: #{error}."
+        rescue StandardError => e
+          publish_tool_failure(invocation_id, :audit_unavailable, e.message)
+          "Error: durable tool audit could not be recorded; the operation was not executed."
+        end
+
+        def invoke_tool(args:, identity:, invocation_id:, started:)
+          @tool.call(**args)
+        rescue StandardError => e
+          raise unless identity
+
+          finish_unknown_exception(identity:, args:, invocation_id:, started:, error: e)
+        end
+
+        def finish_unknown_exception(identity:, args:, invocation_id:, started:, error:)
           begin
-            result = @tool.call(**args)
-          rescue StandardError => e
-            ms = elapsed_ms(started)
-            if identity
-              begin
-                @tool_observer.after(
-                  identity:, tool: tool_name, tier: tool_tier, args:, status: "unknown_outcome",
-                  elapsed_ms: ms, error: e.message
-                )
-              rescue StandardError
-                # The observer quarantines the invocation if its terminal receipt
-                # cannot be persisted. Do not retry the tool to repair telemetry.
-              end
-              publish_tool_failure(invocation_id, :unknown_outcome, e.message, ms:)
-              record_trajectory_event(tool: tool_name, args:, phase: "unknown_outcome", ok: false, error: e.class.name)
-              return unknown_outcome_reply(invocation_id)
-            end
-
-            raise
+            @tool_observer.after(
+              identity:, tool: tool_name, tier: tool_tier, args:, status: "unknown_outcome",
+              elapsed_ms: elapsed_ms(started), error: error.message
+            )
+          rescue StandardError
+            # The observer quarantines the invocation if its terminal receipt
+            # cannot be persisted. Do not retry the tool to repair telemetry.
           end
+          publish_tool_failure(invocation_id, :unknown_outcome, error.message, ms: elapsed_ms(started))
+          record_trajectory_event(tool: tool_name, args:, phase: "unknown_outcome", ok: false, error: error.class.name)
+          unknown_outcome_reply(invocation_id)
+        end
 
+        def finish_tool_result(result:, identity:, args:, invocation_id:, started:, &block)
           ms = elapsed_ms(started)
           succeeded = result.ok?
           outcome = succeeded ? "success" : tool_failure_status(result)
-          if identity
-            begin
-              @tool_observer.after(
-                identity:, tool: tool_name, tier: tool_tier, args:,
-                status: outcome,
-                elapsed_ms: ms,
-                result_bytes: succeeded ? result.value!.to_s.bytesize : nil,
-                error: succeeded ? nil : result.message
-              )
-            rescue Master::Trace::ToolObserver::UnknownOutcome
-              publish_tool_failure(invocation_id, :unknown_outcome, "terminal receipt unavailable", ms:)
-              return unknown_outcome_reply(invocation_id)
-            rescue StandardError => e
-              # A failure after the operation ran is not a failed operation; it
-              # is an unverified outcome that must not be replayed blindly.
-              publish_tool_failure(invocation_id, :unknown_outcome, e.message, ms:)
-              return unknown_outcome_reply(invocation_id)
-            end
-          end
+          return unknown_outcome_reply(invocation_id) unless persist_tool_result(
+            identity:, args:, invocation_id:, result:, outcome:, succeeded:, ms:
+          )
+          return finish_tool_failure(result:, args:, invocation_id:, outcome:, ms:, identity:) unless succeeded
 
-          unless succeeded
-            @bus&.publish("tool:failed", { tool: tool_name, invocation_id:, category: result.category }.merge(public_error_fields(result.message)))
-            @bus&.publish("tool:return", { tool: tool_name, invocation_id:, ok: false, ms: }.merge(public_error_fields(result.message)))
-            record_trajectory_event(tool: tool_name, args:, phase: outcome, ok: false, error: result.message.to_s[0, 200])
-            return unknown_outcome_reply(invocation_id) if identity && outcome == "unknown_outcome"
+          finish_tool_success(result:, args:, invocation_id:, ms:, &block)
+        end
 
-            return "Error: #{result.message}"
-          end
+        def persist_tool_result(identity:, args:, invocation_id:, result:, outcome:, succeeded:, ms:)
+          return true unless identity
 
-          @bus&.publish("tool:return", tool: tool_name, invocation_id:, ok: true, ms:, bytes: result.value!.to_s.bytesize)
-          record_trajectory_event(tool: tool_name, args:, phase: "return", ok: true, bytes: result.value!.to_s.bytesize)
+          @tool_observer.after(
+            identity:, tool: tool_name, tier: tool_tier, args:, status: outcome,
+            elapsed_ms: ms,
+            result_bytes: succeeded ? result.value!.to_s.bytesize : nil,
+            error: succeeded ? nil : result.message
+          )
+          true
+        rescue StandardError => e
+          publish_tool_failure(invocation_id, :unknown_outcome, e.message, ms:)
+          false
+        end
+
+        def finish_tool_failure(result:, args:, invocation_id:, outcome:, ms:, identity:)
+          @bus&.publish("tool:failed", { tool: tool_name, invocation_id:, category: result.category }.merge(public_error_fields(result.message)))
+          @bus&.publish("tool:return", { tool: tool_name, invocation_id:, ok: false, ms: }.merge(public_error_fields(result.message)))
+          record_trajectory_event(tool: tool_name, args:, phase: outcome, ok: false, error: result.message.to_s[0, 200])
+          return unknown_outcome_reply(invocation_id) if identity && outcome == "unknown_outcome"
+
+          "Error: #{result.message}"
+        end
+
+        def finish_tool_success(result:, args:, invocation_id:, ms:, &block)
+          value = result.value!
+          @bus&.publish("tool:return", tool: tool_name, invocation_id:, ok: true, ms:, bytes: value.to_s.bytesize)
+          record_trajectory_event(tool: tool_name, args:, phase: "return", ok: true, bytes: value.to_s.bytesize)
           Fiber[:master_tree_seen] = true if orientation_tool?
-          block_given? ? yield(result.value!) : result.value!
+          block ? block.call(value) : value
         end
 
         def tool_tier
