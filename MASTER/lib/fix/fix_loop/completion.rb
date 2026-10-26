@@ -57,7 +57,19 @@ module Master
           RunBudget.finish_run(reason: run_end_reason(result))
           state = terminal_state_for(result)
           @last_terminal_state = state
-          evidence = @convergence_discipline.receipt if @convergence_discipline.respond_to?(:receipt)
+          convergence = @convergence_discipline.receipt if @convergence_discipline.respond_to?(:receipt)
+          evidence = convergence.is_a?(Hash) ? convergence.transform_keys(&:to_s) : {}
+          if @fix_plan
+            journal_run = @run_journal.history(limit: RunJournal::MAX_RUNS).find { |row| row["id"] == run_id }
+            generations = Array(journal_run && journal_run["plan_generations"])
+            evidence["fix_plan"] = @fix_plan.to_h.slice(
+              "digest", "identity_digest", "source_digest", "scope_digest", "law_digest",
+              "law_source_digest", "authority_digest", "toolchain_digest", "adapter_digest",
+              "exclusion_digest", "eligible_files", "max_passes", "budget_seconds"
+            ).merge("generation" => generations.last && generations.last["generation"])
+          end
+          evidence["assessment_matrix_status"] = @pass_runner.assessment_matrix_status.to_s if
+            @pass_runner&.respond_to?(:assessment_matrix_status)
           @run_journal.terminal(run_id, state, message: result.to_s, evidence:)
 
           if mission&.requeue_if_requested!
@@ -71,7 +83,10 @@ module Master
           end
 
           target_label = fix_target_label(target)
-          outcome = { state:, message: result.to_s, task_id: run_id, capability: "code_repair", target: target_label, run_id: }
+          outcome = {
+            state:, message: result.to_s, task_id: run_id, capability: "code_repair",
+            target: target_label, run_id:, evidence:
+          }
           outcome[:outcome_receipt] = write_outcome_receipt(run_id:, target: target_label, state:, result:, convergence: evidence)
           outcome[:ok] = MEASURED_REPAIR_OUTCOMES.fetch(state) if MEASURED_REPAIR_OUTCOMES.key?(state)
           @bus&.publish("fix_loop:terminal", **outcome)
