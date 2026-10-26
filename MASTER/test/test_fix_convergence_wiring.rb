@@ -5,6 +5,9 @@ require_relative "test_helper"
 class FixConvergenceWiringTest < Minitest::Test
   def test_fix_loop_wires_rendered_and_opportunity_evidence
     loop_source = File.read(File.expand_path("../lib/fix/fix_loop.rb", __dir__))
+    pass_source = File.read(File.expand_path("../lib/fix/fix_loop/pass_execution.rb", __dir__))
+    lifecycle_source = File.read(File.expand_path("../lib/fix/fix_loop/lifecycle.rb", __dir__))
+    completion_source = File.read(File.expand_path("../lib/fix/fix_loop/completion.rb", __dir__))
     builder_source = File.read(File.expand_path("../lib/fix/fix_loop/pass_runner_builder.rb", __dir__))
     runner_source = File.read(File.expand_path("../lib/fix/fix_loop/pass_runner.rb", __dir__))
     evidence_source = File.read(File.expand_path("../lib/fix/fix_loop/pass_runner/evidence_stage.rb", __dir__))
@@ -26,8 +29,13 @@ class FixConvergenceWiringTest < Minitest::Test
     assert_includes runner_source, "Wishlist.findings"
     assert_includes llm_source, "run_wishlist_stage"
     assert_includes llm_source, "Wishlist::LAW_ID"
-    assert_includes loop_source, "continue_with_wishlist"
-    assert_includes loop_source, "WISHLIST_MAX_ROUNDS"
+    assert_includes loop_source, 'require_relative "fix_loop/pass_execution"'
+    assert_includes loop_source, 'require_relative "fix_loop/lifecycle"'
+    assert_includes loop_source, 'require_relative "fix_loop/completion"'
+    assert_includes pass_source, "continue_with_wishlist"
+    assert_includes pass_source, "WISHLIST_MAX_ROUNDS"
+    assert_includes lifecycle_source, "verify_incremental_scope"
+    assert_includes completion_source, "finish_run"
     assert_includes wishlist_source, 'LEDGER_PATH = ".master/fix_wishlist.json"'
     refute_includes wishlist_source, "runtime/wishlist.md"
     assert_includes journal_source, "def remaining_seconds(run_id)"
