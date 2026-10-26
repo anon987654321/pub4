@@ -710,6 +710,10 @@ en:
     also_in: Also in
     quote_notification: "%{user} quoted your post"
     new: New post
+    share_draft_lead: "This share is private. Nothing appears in the feed until you publish it."
+    shared_media_staged: "Staged privately"
+    photo: photo
+    and_video: "and one video"
     guest_sign_in: " to use your name."
     posting_as_anon: Posting as
     anon_name: anon

@@ -715,6 +715,10 @@ nb:
     also_in: Også i
     quote_notification: "%{user} siterte innlegget ditt"
     new: Nytt innlegg
+    share_draft_lead: "Denne delingen er privat. Ingenting vises i strømmen før du publiserer den."
+    shared_media_staged: "Klargjort privat"
+    photo: bilde
+    and_video: "og én video"
     guest_sign_in: " for å bruke navnet ditt."
     posting_as_anon: Poster som
     anon_name: anonym
