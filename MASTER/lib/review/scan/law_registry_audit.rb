@@ -66,7 +66,12 @@ module Master
           def adherence_pct
             return 100.0 if yaml_laws.zero?
 
-            (mechanical.size * 100.0 / yaml_laws).round(1)
+            # This is evaluator availability, not a clean-run claim. Deterministic
+            # detectors cover one population; every remaining catalogue row is
+            # submitted to the shared semantic/visual adapters and remains
+            # INCONCLUSIVE when those assessors cannot produce evidence.
+            assessable = mechanical.size + semantic_only.size
+            (assessable * 100.0 / yaml_laws).round(1)
           end
 
         end
@@ -292,6 +297,7 @@ module Master
           missing_source_files = []
           duplicate_definitions = []
           non_universal = []
+          entry_missing_modalities = []
 
           repo_root = File.dirname(File.expand_path(@root))
           entries.each do |entry|
@@ -301,7 +307,10 @@ module Master
             sources = definitions + detectors
             entry_without_source << id if sources.empty?
             duplicate_definitions << id if definitions.uniq.size > 1
-            non_universal << id if entry["universal"] == false
+            non_universal << id unless entry["universal"] == true
+            entry_modalities = Array(entry["modalities"]).map(&:to_s).to_set
+            absent_modalities = required_modalities.reject { |modality| entry_modalities.include?(modality) }
+            entry_missing_modalities << "#{id}:#{absent_modalities.join(',')}" unless absent_modalities.empty?
 
             sources.uniq.each do |source|
               full_path = File.expand_path(source, repo_root)
@@ -320,6 +329,7 @@ module Master
               manifest_missing_source_files: missing_source_files.sort.freeze,
               manifest_duplicate_definitions: duplicate_definitions.sort.freeze,
               manifest_non_universal: non_universal.sort.freeze,
+              manifest_entry_missing_modalities: entry_missing_modalities.sort.freeze,
             }.freeze,
           }.freeze
         end
