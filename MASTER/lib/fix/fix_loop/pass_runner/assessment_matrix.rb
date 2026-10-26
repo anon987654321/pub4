@@ -51,6 +51,7 @@ module Master
           # scanner-only adapters that report their own identities. LawBridgeLaw
           # and SemanticLaw are transport adapters, never duplicate Law rows.
           def begin_assessment_run(files:, plan:)
+            @assessment_plan = plan
             @assessment_ledger = nil
             @assessment_observation = nil
             @assessment_law_info = nil
@@ -290,11 +291,24 @@ module Master
           # Full report passed to RunJournal for durable, checksum-addressed storage.
           # It is deliberately not embedded in the bounded terminal history.
           def assessment_matrix_artifact
-            return {
-              schema_version: 1,
-              status: "not_measured",
-              reason: "no scanner-backed Law population was available",
-            } unless @assessment_ledger
+            unless @assessment_ledger
+              return {
+                schema_version: 1,
+                status: "not_measured",
+                reason: "no scanner-backed Law population was available",
+                target: @assessment_plan&.target,
+                plan_digest: @assessment_plan&.digest,
+                source_digest: @assessment_plan&.source_digest,
+                law_digest: @assessment_plan&.law_digest,
+                identity_digest: @assessment_plan&.identity_digest,
+                scope_digest: @assessment_plan&.scope_digest,
+                law_source_digest: @assessment_plan&.law_source_digest,
+                authority_digest: @assessment_plan&.authority_digest,
+                toolchain_digest: @assessment_plan&.toolchain_digest,
+                exclusion_digest: @assessment_plan&.exclusion_digest,
+                adapter_digest: @assessment_plan&.adapter_digest,
+              }
+            end
 
             @assessment_mutex.synchronize do
               {
