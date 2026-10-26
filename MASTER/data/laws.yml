@@ -2181,927 +2181,1831 @@ law_catalogue:
   missing_assessor: inconclusive
   entries:
     A_FINDING_IS_A_HYPOTHESIS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     ABC_SIZE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/ruby_laws.rb]
     ABSTRACTION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     adversarial:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/semantic_laws.rb]
     AESTHETIC_DISCIPLINE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     AESTHETIC_FLAT_SEMANTIC:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/rails.rb]
     AESTHETIC_MINIMALISM:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     AESTHETIC_RAMS_SEMANTIC:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/rails.rb]
     AFFORDANCE_CLARITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     ALL_CAPS_NO_TRACKING:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
     ANALOG_WARMTH:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     ANCHOR_RELATIONSHIPS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     ANTI_DIVITIS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     ARIA_INTERACTIVE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
     ARIA_LABELS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     ARTIFICIAL_COUPLING:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     ast_omission:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/meta_laws.rb]
     ASYNC_AWAIT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
     ASYNC_STATUS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     AUDIO_SMOOTHING:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     AUDIT_APPEND_ONLY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
     AUTOFIX_REQUIRES_CONFIDENCE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     BARE_DIV_WRAPPER:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
     BASELINE_COMPATIBILITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     BE_CONCISE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     BEAUTIFUL_CODE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     BEM_IN_VIEWS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
     BIG_TENT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     BLANK_LINE_RUN:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
     BOOLEAN_TRAP:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
     BOUNDARY_ISOLATION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     BROKEN_WINDOWS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     BUTTON_OVER_ANCHOR:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
     CACHE_LLM:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     CAPABILITY_REDUCTION_IS_MONOTONIC:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/capability.rb]
     CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
     CHESTERTONS_FENCE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     CHOICE_OVERLOAD:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     CINEMA_PALETTE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     CLAMP_TYPOGRAPHY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     CLASS_RESTATES_TAG:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
     CLI_ANALYZE_TARGET_ROUTING:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
     CLI_FACE_DEDICATED_TTY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
     CLI_PROMPT_COMPOSITION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
     CLI_TREE_TARGET_RESOLUTION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
     co_change_coupling:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/graph_laws.rb]
     CODE_HIERARCHY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
     CODE_SYMMETRY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
     COLLAPSE_BEFORE_ADDING:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     comment_drift:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/semantic_laws.rb]
     COMMENTS_AS_DEODORANT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
     COMMERCE_AMBER_DOES_NOT_OWN_BRGEN:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/commerce.rb]
     COMMERCE_BRGEN_DOES_NOT_OWN_AMBER:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/commerce.rb]
     COMMERCE_EXTERNAL_SOURCES_STAY_EXPLAINABLE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/commerce.rb]
     COMPLETE_MEDIATION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     COMPLETION_THEATER:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
     COMPLEX_SYSTEMS_FAIL:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     COMPOSABLE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     COMPOSITION_OVER_INHERITANCE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     CONFIG_HIERARCHY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
     CONFIGURATION_AS_CODE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     CONFIGURATION_SHAPE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
     CONSECUTIVE_BLANK_LINES:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
     CONSISTENCY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     CONSISTENT_ERROR_STRATEGY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     CONST_BY_DEFAULT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/js_laws.rb]
     CONTAINER_RESPONSIVENESS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     CONTEXTUAL_STATUS_CUES:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     CONTRAST_TOKENS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     CONTROL_CHARS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
     CONVENTION_OVER_CONFIG:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     CORE_WEB_VITALS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     COST_TRANSPARENCY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     COUNCIL_WHEN_RISKY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     COUPLER_SMELLS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
     CQS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
     CYCLOMATIC_COMPLEXITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
     DATA_CLASS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
     DATA_CLUMPS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
     DATA_REMOTE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     DEAD_CODE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/ruby_laws.rb]
     DEBUG_OUTPUT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
     DECOUPLE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     DEEP_MODULES:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     DEEP_SCAN_ONLY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     DEFENSIVE_INPUT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     DEFINE_ERRORS_OUT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     DEGRADE_GRACEFULLY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     DENSITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     DEPENDENCY_INVERSION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
     DESIGN_BY_CONTRACT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     DESIGN_IT_TWICE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     DEVICE_LIMITS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     DIFFERENT_LAYER_DIFFERENT_ABSTRACTION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     DIRECT_MANIPULATION_FEEDBACK:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
     DIRNAME_FILE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     DIVERGED_BRANCH_SYNC:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     DIVERGENT_CHANGE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     DOCUMENTATION_FOLLOWS_CODE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     DOLLAR_PAREN:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/shell.rb]
     DOMAIN_LANGUAGE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     DONT_OUTRUN_HEADLIGHTS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     DOUBLE_BRACKET:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/js_laws.rb]
     DOUBLE_QUOTES_RUBY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
     DRY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     DUAL_DETECTION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     EACH_WITH_OBJECT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     ECONOMY_OF_MECHANISM:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     EIGHT_PX_RHYTHM:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     EN_DASH_RANGE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
     ENGINEERING_FIT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     ENTROPY_RESISTANCE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     ERB_HARDCODED_CHROME:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     ERB_HTML_SAFE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     ERROR_CONTEXT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     ERROR_RECOVERY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     ETC:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     EVIDENCE_BY_INTENT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     EXECUTE_NOT_INSTRUCT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     EXEMPTIONS_EXPIRE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     EXPLICIT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
     EXPLICIT_HTTP_TIMEOUT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     EXPLICIT_TRADEOFF:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     FACE_POINT_IS_ONE_PIXEL:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
     FAIL_FAST:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     FAIL_SAFE_DEFAULTS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     FAIL_VISIBLY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     FAT_MODEL_CALLBACK_SOUP:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     FEATURE_ENVY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
     FEEDBACK_LOOPS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     FEW_ARGUMENTS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
     FILE_LAYOUT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
     FILE_SEQUENCE_NAME:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/naming_laws.rb]
     FILE_SPRAWL:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/meta_laws.rb]
     FILE_VAGUE_NAME:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/naming_laws.rb]
     FILTER_MAP:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     FINAL_NEWLINE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
     FIND_EACH:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/ruby_laws.rb]
     FIXED_HEIGHT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     FLAT_HIERARCHY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     FLAT_PIXELS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     FLAT_UI:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     FLEXIBILITY_EFFICIENCY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     FOCUS_VISIBLE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     FOR_OF:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
     FORM_FOLLOWS_FUNCTION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     FORM_LABEL:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     FROZEN_LITERAL:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
     FROZEN_STRING_LITERAL:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     FULL_BY_DEFAULT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     FUNCTIONAL_CORE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     GALLS_LAW:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     GESTURE_OWNERSHIP:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     GIT_COMMITS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     GRACEFUL_BOUNDARIES:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     GRACEFUL_LOAD:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     GRICE_COOPERATIVE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     GRID_STRUCTURE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     GUARD_CLAUSE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     GUARD_EXPENSIVE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     GUARD_EXPENSIVE_OPS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     HAPTIC_SINGLE_SOURCE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
     HASH_FETCH:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/ruby_laws.rb]
     HELP_AND_DOCUMENTATION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     HELPER_VIEW_ONLY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     HOST_CAPACITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     HOSTILE_AUDIT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     HTML_CSS_STYLE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     HTML_HEADING_HIERARCHY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
     HTML_LANG:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     HUMBLE_OBJECT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     HYRUM:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     I18N_COVERAGE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
     IDEMPOTENT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     IMG_ALT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     IMMUTABLE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     IMPORTANCE_ORDER:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     INAPPROPRIATE_INTIMACY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     INCONCLUSIVE_IS_NOT_PASS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     INFORMATION_HIDING:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     INPUT_TYPE_SPECIFIC:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     INSTRUMENT_MUST_PROVE_ITSELF:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     INTEGRATED_SYSTEMS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     INTER_MODEL_CONTRACT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/inter_model.rb]
     INTERACTION_PERFORMANCE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     INTERACTION_SEMANTICS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
     interconnect:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/graph_laws.rb]
     INTERFACE_SEGREGATION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
     INTRINSIC_LAYOUT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     INVERTED_PYRAMID:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     JS_MODULE_SIZE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/js_laws.rb]
     KERNEL_COERCION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     KISS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     law_coverage:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/meta_laws.rb]
     LAW_OF_DEMETER:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
     LAZY_CLASS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
     LAZY_IMAGES:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     LEARNED_SMELLS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/meta_laws.rb]
     LEAST_ASTONISHMENT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     LEAST_PRIVILEGE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     LEVELS_OF_SCALE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     LIB_ROOT_DISCIPLINE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
     LINE_HEIGHT_ON_SCALE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     LINEARITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     LINT_BEAUTIFY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     LISKOV:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
     LOAD_BEARING_NAMES:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     LOGICAL_PROPERTIES:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     LONG_LINE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
     LONG_PARAMETER_LIST:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
     MAGIC_COLOR:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/js_laws.rb]
     MAKE_ILLEGAL_STATES_UNREPRESENTABLE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     MASS_GENERATE_CURATE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     MASTER_PROMPT_AESTHETIC:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     MATCH_REAL_WORLD:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     MEANINGFUL_NAMES:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     MEASURE_OPTIMUM:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     MERGE_BEFORE_MULTIPLY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     META_CHARSET:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
     META_FRAMING:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     MICRO_REFINEMENTS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     MIDDLE_MAN:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
     MIGRATION_ADD_REFERENCE_NO_FK:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     MIGRATION_FIND_OR_CREATE_BY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     MIGRATION_NOT_NULL_NO_DEFAULT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     MIGRATION_REMOVE_COLUMN:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     MINIMAL_FOOTPRINT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     MIRROR_EXPERTISE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     MOBILE_ACCESSIBILITY_DEFAULTS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     MOBILE_FIRST:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     MOBILE_VIEWPORT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     MODERN_FORMS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     MODIFIER_SILENT_RESCUE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
     MONKEY_PATCH_CORE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     MONOLITH_FIRST:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     MOTION_ACCESSIBILITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     MOTION_COLOR_GRADING:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     N_PLUS_ONE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
     NARROW_SILENT_RESCUE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
     NATIVE_DISCLOSURE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     NAVIGATION_CONTINUITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     NESTING_DEPTH:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
     NEVER_BATCH_DELETE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/shell.rb]
     NO_ABBREVIATED_IDENTIFIERS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
     NO_ASCII_ART_OUTSIDE_FACE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
     NO_ASCII_DECORATION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     NO_ASCII_LINE_ART:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
     NO_CHANGELOG_COMMENT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     NO_COLUMN_ALIGN:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     NO_CONSECUTIVE_BLANK_LINES:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     NO_DEAD_ENDS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     NO_DEBUG:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
     NO_DECORATIVE_FX:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     NO_DECORATIVE_GRADIENT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     NO_DOT_SEPARATED_META:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     NO_EYEBROW_LABEL:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     NO_FILLER:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     NO_FLAG_ARGUMENTS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
     NO_GOD_CLASS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
     NO_HIDDEN_GLOBAL_STATE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     NO_IMPORT_SCSS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     NO_IMPORTANT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     NO_INFINITY_TO_I:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/fix_hygiene.rb]
     NO_INLINE_ASSETS_IN_SHELL:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/shell.rb]
     NO_INLINE_SCRIPT_BLOCK:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
     NO_INLINE_STYLES:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
     NO_JQUERY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
     NO_JS_ERB:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     NO_LOGIC_IN_VIEW:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     NO_LONG_TRANSITION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     NO_MAGIC:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     NO_MULTIPLE_LANGUAGES:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     NO_NEW_FILES:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     NO_ONE_PARADIGM:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     NO_ORDINAL_ORNAMENT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     NO_OUTPUT_ARGUMENTS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     NO_OVERESCAPED_NONCAPTURING:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/fix_hygiene.rb]
     NO_PUTS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
     NO_SELECTOR_ARGUMENTS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     NO_SHOTGUN_SURGERY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     NO_SIDE_EFFECTS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     NO_TODO_IN_VIEWS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     NO_TRAILING_ARROW:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     NO_TRANSPORT_WRAPPER_IN_SOURCE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
     NO_UPDATE_ATTRIBUTE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/ruby_laws.rb]
     NO_VAR:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
     NO_WEBGL_GLOW_PASS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
     NOISE_NAME:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     NULL_BLINDNESS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     NULLISH_COALESCING:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
     NUMBERED_NAME:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/naming_laws.rb]
     OMAKASE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     OMIT_NEEDLESS_WORDS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
     ONE_ABSTRACTION_LEVEL:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     ONE_JOB:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     ONE_SOURCE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
     OPEN_CLOSED:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
     OPENBSD_DMESG_CONSOLE_STYLE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
     OPERATOR_AUTONOMY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     OPTIONAL_CHAINING:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
     OPTIONAL_CHAINING_JS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/js_laws.rb]
     ORTHOGONALITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     PARALLEL_INHERITANCE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     PARAMETERIZED_SLUG:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/naming_laws.rb]
     PARSE_DONT_VALIDATE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     PATH_PURPOSE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/meta_laws.rb]
     PATTERN_EXTRACTION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
     PERCENT_LITERAL:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     PIXEL_EXACT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     PLEDGE_STAGED:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
     PLUCK_OVER_MAP:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/ruby_laws.rb]
     POINTER_FEEDBACK_EARLY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
     POKA_YOKE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     POSTEL:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     PRECOMPUTE_MATH:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     PREEMPT_FOLLOWUP:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     PREFER_TAG_HELPERS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     PRESENTATIONAL_CLASS_NAME:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
     PRESERVE_FIRST:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     PRIMITIVE_OBSESSION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
     PROBE_BEFORE_SHIP:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     PROGRAMMER_HAPPINESS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     PROGRESS_OVER_STABILITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     PROGRESSIVE_DISCLOSURE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     PROPERTY_BASED_TESTING:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     PROSE_ACTIVE_VOICE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/prose.rb]
     PROSE_OMIT_QUALIFIERS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/prose.rb]
     PROSE_ONE_TOPIC_PARAGRAPH:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     PROSE_PARALLEL_FORM:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     PROSE_POSITIVE_FORM:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     PROSE_RELATED_WORDS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     PROXIMITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     PSYCHOLOGICAL_ACCEPTABILITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     PULL_COMPLEXITY_DOWN:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     PURE_FUNCTIONS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     PWA_MANIFEST_HINT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     PWA_RESILIENCE_DEFAULTS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     QUOTE_VARIABLES:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/js_laws.rb]
     RAILS_TAG_HELPER:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     RAILS_THIN_CONTROLLER_SEMANTIC:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/rails.rb]
     RAILS_VIEW_PURITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/rails.rb]
     RATCHET_INTEGRITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     RATE_LIMITING_MISSING:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     README_PROSE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
     README_VISION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
     RECOGNITION_OVER_RECALL:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     REDUCED_MOTION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     reek:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/external_linter_laws.rb]
     REFUSED_BEQUEST:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     REGISTER_STABLE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     RENDERED_VALUES:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     RESCUE_EXCEPTION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
     RESCUE_ON_DEF:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     RESTART_RAILS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     REVERSIBILITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     ROBUSTNESS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     RTFM_FIRST:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     rubocop:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/external_linter_laws.rb]
     RUBY_BLOCK_DELIMITER:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     RUBY_CAMEL_CLASS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     RUBY_NUMERIC_UNDERSCORE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     RUBY_SCREAMING_CONST:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     RUBY_SNAKE_METHODS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     RUBY_SYMBOL_TO_PROC:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     RUBY_TERNARY_NOT_NESTED:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
     RUNTIME_DOCS_YAML:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/meta_laws.rb]
     SAFE_NAVIGATION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     SCAN_SWEEP_CONVERGENCE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     SCOPED_CSS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     SCROLL_INTEGRITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     SCSS_NESTING_DEPTH:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     SECRET_PROXIMITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     SELF_EXPLAINING:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     semantic:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/semantic_laws.rb]
     SEMANTIC_ELEMENTS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
     SHARP_KNIVES:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     SHELL_DISCIPLINE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     SIGNAL_COLOR_IS_SEMANTIC:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     SIGNAL_NOISE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     SIGNATURE_MOMENT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
     SILENCE_ON_SUCCESS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     SILENT_RESCUE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
     SIMPLEST_WORKS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     SIMULATION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
     SINGLE_H1:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     SINGLE_PRIVATE_SECTION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     SINGULARITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     SKIP_TO_MAIN:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
     SMALL_FILES:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
     SMALL_FUNCTIONS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
     SPECULATIVE_GENERALITY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     SQL_INJECTION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
     SQUINT_TEST:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     SRP:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     STATE_CHOREOGRAPHY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
     STEPDOWN:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     STIMULUS_CONTROLLER_SIZE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     STIMULUS_PROGRESSIVE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     STRICT_LOADING_MISSING:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     STRICT_MODE_ZSH:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/shell.rb]
     STRONG_CENTERS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     STRONG_PARAMETERS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/ruby_laws.rb]
     STRUCTURAL_HONESTY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     STRUNK_WHITE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     STYLE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     STYLE_FOLLOWS_STRUCTURE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
     SURFACE_AREA:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     SURFACE_ERRORS_FIRST:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     SYSTEM_STATUS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     TAB_CHARACTER:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
     TABINDEX_ABOVE_ZERO:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
     TACTILE_FEEDBACK:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
     TEMPLATE_LITERALS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
     TEMPORAL_COUPLING:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     THIN_CONTROLLER:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     TIME_ZONE_UNSAFE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
     TODO_FIXME:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
     TOUCH_TARGET_MIN:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     TRACER_BULLETS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     TRAILING_COMMAS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/ruby_laws.rb]
     TRAILING_COMMENT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
     TRAILING_WHITESPACE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
     TRANSFORM_KEYS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     TRANSFORMATIONS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     TYPE_HIERARCHY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     TYPE_IN_NAME:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/naming_laws.rb]
     TYPE_TITLE_TOKEN:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     TYPOGRAPHIC_EXCELLENCE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
     TYPOGRAPHIC_GRID:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
     TYPOGRAPHY_DISCIPLINE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
     UNBOUNDED_RETRY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     UNIVERSAL_CROSS_DISCIPLINARY_RULES:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     UNIX_PHILOSOPHY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     UNTRUSTED_CONTENT_IS_DATA:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     USE_THEN:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
     USER_CONTROL:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     UTILITY_CLASS_SOUP:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
     VERIFICATION_REQUIRED_FOR_COMPLETION:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     VERIFY_THE_INSTRUMENT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     VERTICAL_BREATH:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
     veto_patterns:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/veto_pattern_law.rb]
     VISUAL_HIERARCHY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     VISUAL_IDENTITY_SOURCE_OF_TRUTH:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
     VISUAL_PARTICLE_STIPPLE_PRIMARY:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
     VOICE_FAILURES_ARE_ACTIONABLE:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
     VOICE_TERSE_UNIX:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     VPS_SERIAL_TRUTH:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
     WAITING_STATE_MEANING:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
     WEB_PLATFORM_DEFAULTS:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     WHITESPACE_RHYTHM:
+      universal: true
+      modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     WHY_NOT_WHAT:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
     ZSH_SHEBANG:
+      universal: true
+      modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/shell.rb]
