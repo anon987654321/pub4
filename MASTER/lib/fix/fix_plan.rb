@@ -32,7 +32,16 @@ module Master
         lib/fix/outcome_policy.rb
         lib/fix/fix_plan.rb
       ].freeze
-      LAW_RUNTIME_GLOBS = %w[law/**/*.rb lib/review/scan/laws/**/*.rb].freeze
+      LAW_RUNTIME_GLOBS = %w[
+        law/**/*.rb
+        lib/review/scan/laws/**/*.rb
+        lib/fix/fix_loop/**/*.rb
+        lib/fix/scan/**/*.rb
+        data/limits.yml
+        data/visual_rubric.yml
+        data/verification_commands.yml
+        data/structure_exclusions.yml
+      ].freeze
       MAX_EXCLUSION_REASONS = 40
 
       Source = Data.define(:path, :sha256, :bytes)
