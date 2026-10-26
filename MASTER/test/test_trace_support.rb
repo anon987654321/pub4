@@ -390,7 +390,7 @@ class TestTraceSupport < Minitest::Test
       "read0 at fold0: lib/trace/logging.rb",
       "read0: 4 bytes, 2 lines",
       "exec0 at fold0: rake test",
-      "exec0: 1 failure",
+      "exec0: failed",
       "read1 at fold0: lib/trace/dmesg.rb",
       "read1: 2 bytes, 1 line",
       "fold0: done, 4 turns",

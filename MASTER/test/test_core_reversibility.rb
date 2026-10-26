@@ -291,6 +291,10 @@ class TestCoreReversibility < Minitest::Test
     )
     world = RecordingWorld.new
     seen = []
+    lifecycle = []
+    effect_observer = lambda do |stage:, effect_id:, operation:, parent_effect_id: nil, **|
+      lifecycle << { stage:, effect_id:, operation:, parent_effect_id: }
+    end
     fold = Master::Core::Fold.new(
       model: ScriptedModel.new(effect),
       constitution: C.new(laws: []),
@@ -298,6 +302,7 @@ class TestCoreReversibility < Minitest::Test
       memory: Master::Core::Memory.new,
       max_turns: 1,
       observer: ->(turn:, effect:, observation:) { seen << observation },
+      effect_observer:,
     )
 
     fold.run("perform a compensatable operation")
@@ -307,6 +312,15 @@ class TestCoreReversibility < Minitest::Test
     refute seen.fetch(0).ok?
     assert_match(/exit 1 after partial application/, seen.fetch(0).message)
     assert_match(/compensation completed/, seen.fetch(0).message)
+    assert_equal [
+      [:before, :perform], [:after, :perform],
+      [:before, :compensation_approval], [:after, :compensation_approval],
+      [:before, :compensation], [:after, :compensation],
+    ], lifecycle.map { |event| [event[:stage], event[:operation]] }
+    original_id = lifecycle.first.fetch(:effect_id)
+    assert_equal original_id, lifecycle[2].fetch(:parent_effect_id)
+    assert_equal original_id, lifecycle[4].fetch(:parent_effect_id)
+    refute_equal original_id, lifecycle[4].fetch(:effect_id)
   end
 
   def test_declined_compensation_never_runs_the_inverse

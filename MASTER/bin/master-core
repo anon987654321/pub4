@@ -19,6 +19,8 @@ require_relative "../lib/trace/dmesg"
 # exit 0 means the model's goal completed.
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "master"
+require_relative "../lib/trace/event_bus"
+require_relative "../lib/trace/effect_observer"
 
 class NullModel
   def initialize(goal)
@@ -71,6 +73,11 @@ observer = lambda do |turn:, effect:, observation:|
   refusals << observation.detail if effect.done? && !observation.ok?
 end
 
+telemetry_root = [Master::ROOT, Master::REPO_ROOT].map { |path| File.expand_path(path) }.include?(root) ? Master::ROOT : root
+event_bus = Master::Trace::EventBus.new(
+  event_log: Master::Trace::Log::Event.new(root: telemetry_root),
+)
+effect_observer = Master::Trace::EffectObserver.new(bus: event_bus)
 result = Master::Core::Fold.new(
   model:,
   constitution:,
@@ -78,6 +85,7 @@ result = Master::Core::Fold.new(
   memory:,
   max_turns: options[:real] ? options.fetch(:max_turns) : model.turns,
   observer:,
+  effect_observer:,
 ).run(goal)
 
 if options[:real]

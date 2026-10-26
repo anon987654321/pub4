@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../design/authoring"
+require_relative "../trace/effect_observer"
 
 module Master
   module CLI
@@ -15,6 +16,7 @@ module Master
       def run(goal, root:, bus: nil, model: nil, model_id: nil, max_turns: 40, on_turn: nil, memory: nil,
               container: nil, risk: :low, mode: nil, allowed_tools: nil)
         workspace_root = workspace_root_for(root)
+        lifecycle_bus = lifecycle_event_bus(bus:, requested_root: root, workspace_root:)
         transcript = []
         observer = build_turn_observer(transcript, root: workspace_root, bus:, on_turn:)
 
@@ -50,7 +52,8 @@ module Master
           )
           world = build_world(root: workspace_root, container:, capabilities:, network: network_client(container))
           mission.transition!(:execute)
-          done = build_fold(root: workspace_root, model:, memory:, world:, max_turns:, observer:, capabilities:).run(goal)
+          effect_observer = build_effect_observer(bus: lifecycle_bus)
+          done = build_fold(root: workspace_root, model:, memory:, world:, max_turns:, observer:, effect_observer:, capabilities:).run(goal)
           mission.transition!(:verify, summary: continuation_summary(done))
           settle_mission(mission, done)
 
@@ -167,6 +170,10 @@ module Master
           mission.finish!(state: "completed", summary: done.summary)
         elsif %i[needs_user blocked].include?(done.reason)
           mission.block!(reason: done.summary.to_s)
+        elsif done.reason == :trace_failed
+          # The effect may already have happened, but its after-record is missing.
+          # Never auto-continue an ambiguous side effect and risk repeating it.
+          mission.fail!(done.summary.to_s)
         else
           mission.defer!(reason: "attempt #{done.reason}: #{continuation_summary(done)}")
         end
@@ -290,23 +297,64 @@ module Master
             Master::Trace::WriteTracker.current&.record(File.expand_path(effect.args[:path].to_s, root))
           end
           bus&.publish("core:turn", turn:, effect: effect.to_s, verb: effect.verb, subject: effect_subject(effect),
-                                    ok: observation.ok?, detail: observation.message)
+                                    ok: observation.ok?, detail: public_effect_detail(observation),
+                                    **public_output_metrics(effect, observation))
           on_turn&.call(line)
         end
       end
 
+      # Always audit even when no host supplied a bus. In that case persist to the
+      # relevant runtime root without subscribers; never turn missing UI wiring
+      # into an execution-audit bypass.
+      def lifecycle_event_bus(bus:, requested_root:, workspace_root:)
+        return bus if bus
+
+        requested_root = File.expand_path(requested_root)
+        canonical_roots = [Master::ROOT, Master::REPO_ROOT].map { |path| File.expand_path(path) }
+        telemetry_root = canonical_roots.include?(requested_root) ? Master::ROOT : workspace_root
+        event_log = Master::Trace::Log::Event.new(root: telemetry_root)
+        Master::Trace::EventBus.new(event_log:)
+      end
+
+      # The lifecycle stream intentionally excludes effect arguments: argv, URLs,
+      # prompts and write content may contain secrets or private user data.
+      def build_effect_observer(bus:)
+        Master::Trace::EffectObserver.new(bus:)
+      end
+
       # The part of an effect a person names it by: the file, the command, the
       # question. Written content stays out; it is the payload.
+      # This stream is shared and persisted. Identify the action without copying
+      # paths, argv, URLs, prompts, note text, summaries or file contents into it.
+      # The full observation remains available on the operator's local transcript.
       def effect_subject(effect)
-        args = effect.args
         case effect.verb
-        when :exec then Array(args[:argv]).join(" ")
-        when :git then [args[:operation], *Array(args[:paths])].join(" ")
-        else (args[:path] || args[:prompt] || args[:text] || args[:summary] || args[:scope]).to_s
+        when :read then "file read"
+        when :write then "file write"
+        when :exec then "command"
+        when :git then "git action"
+        when :http then "network request"
+        when :ask then "approval request"
+        when :note then "note"
+        when :critique then "review"
+        when :done then "completion"
+        else effect.verb.to_s
         end
       end
 
-      def build_fold(root:, model:, memory:, world:, max_turns:, observer:,
+      def public_effect_detail(observation)
+        observation.ok? ? "completed" : "failed"
+      end
+
+      # Keep useful speech/dashboard measurements, never the text being measured.
+      def public_output_metrics(effect, observation)
+        return {} unless %i[read exec].include?(effect.verb)
+
+        output = observation.message.to_s
+        { output_bytes: output.bytesize, output_lines: output.lines.size }
+      end
+
+      def build_fold(root:, model:, memory:, world:, max_turns:, observer:, effect_observer: nil,
                      capabilities: Master::Core::Capabilities.for(:fix))
         Master::Core::Fold.new(
           model:,
@@ -318,6 +366,7 @@ module Master
           memory:,
           max_turns:,
           observer:,
+          effect_observer:,
         )
       end
 

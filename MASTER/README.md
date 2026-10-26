@@ -97,6 +97,26 @@ transaction paths; they are not competing workflows. Further consolidation of
 `RepairLoop`, `Kernel`, `Mission`, `RunJournal` and `Transaction` still requires
 caller tracing and explicit rollback/restart/delivery proof.
 
+CoreBridge attaches a lifecycle observer to the Fold even when the host does not
+supply a bus; that case uses the event log at the task runtime root, or MASTER's
+canonical runtime root when working in pub4 itself. The standalone `bin/master-core`
+entrypoint uses the same shared Trace::EffectObserver adapter, so it does not bypass
+the lifecycle contract. core:effect:before is durably published before each World effect and
+core:effect:after records the observed outcome and elapsed time. Rollback is a
+separate audited operation linked to the failed effect and its checkpoint. If the
+required after-event cannot be persisted, the mission fails terminally instead of
+being automatically resumed against an ambiguous side effect. Event payloads carry an effect ID,
+turn, verb and capability, not raw arguments that could contain secrets. Failure to
+persist the before-event prevents the effect from running; failure to persist the
+after-event returns trace_failed rather than claiming the task completed. This
+path uses EventBus#publish_required and the event log's strict append method,
+while ordinary best-effort telemetry retains its existing failure-swallowing behavior.
+The legacy core:turn stream is also privacy-safe now: action subjects are categorical,
+the detail is reduced to completed/failed, and read/exec output is represented by
+byte and line counts. Full observations remain only in the local operator transcript.
+This is the first slice of the external-action event contract, not yet a shared event
+adapter for every tool and /fix path.
+
 A requested repair starts by inventorying its eligible corpus, refreshing the
 static reference graph and refusing to proceed if an eligible source could not
 be read or indexed. Before a proposed edit, the repair receives the complete

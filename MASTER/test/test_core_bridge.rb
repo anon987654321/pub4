@@ -21,6 +21,7 @@ class CoreBridgeTest < Minitest::Test
     attr_reader :events
     def initialize = @events = []
     def publish(name, payload = {}) = @events << [name, payload]
+    def publish_required(name, payload = {}) = @events << [name, payload]
   end
 
   # The real Constitution blocks `done` before an evidence threshold, so a
@@ -54,6 +55,80 @@ class CoreBridgeTest < Minitest::Test
       assert_equal "wrote the note", result[:summary]
       assert_equal "hello\n", File.read(File.join(root, "note.txt"))
       assert(bus.events.any? { |name, _| name == "core:turn" }, "expected a core:turn event")
+    end
+  end
+
+  def test_trace_failed_mission_is_terminal_not_auto_deferred
+    mission = Object.new
+    mission.define_singleton_method(:fail!) { |error| @failure = error }
+    mission.define_singleton_method(:defer!) { |**| flunk("ambiguous side effects must not auto-continue") }
+    mission.define_singleton_method(:block!) { |**| flunk("trace failure is a terminal execution error") }
+
+    done = Master::Core::Fold::Done.new(
+      reason: :trace_failed, turns: 1, summary: "after-event persistence failed"
+    )
+    Master::CLI::CoreBridge.settle_mission(mission, done)
+
+    assert_equal "after-event persistence failed", mission.instance_variable_get(:@failure)
+  end
+
+  def test_lifecycle_events_persist_without_a_host_bus
+    Dir.mktmpdir do |root|
+      model = ScriptedModel.new(*evidence_then_done(
+        Master::Core::Effect.write("persisted.txt", "never log this payload"), summary: "ok"
+      ))
+
+      result = Master::CLI::CoreBridge.run("persist a note", root:, model:)
+
+      assert_equal :complete, result[:reason]
+      records = File.readlines(File.join(root, "runtime", "events", "activity.jsonl"))
+                      .map { |line| JSON.parse(line) }
+      events = records.select { |record| record["event"].start_with?("core:effect:") }
+      assert events.any? { |record| record["event"] == "core:effect:before" }
+      assert events.any? { |record| record["event"] == "core:effect:after" }
+      refute_includes File.read(File.join(root, "runtime", "events", "activity.jsonl")), "never log this payload"
+    end
+  end
+
+  def test_core_turn_stream_does_not_persist_private_read_output
+    Dir.mktmpdir do |root|
+      private_text = "private customer content\nsecond private line\n"
+      File.write(File.join(root, "private.txt"), private_text)
+      bus = FakeBus.new
+      model = ScriptedModel.new(*evidence_then_done(
+        Master::Core::Effect.read("private.txt"), summary: "read complete"
+      ))
+
+      result = Master::CLI::CoreBridge.run("read a private file", root:, bus:, model:)
+
+      assert_equal :complete, result[:reason]
+      turn = bus.events.find { |name, payload| name == "core:turn" && payload[:verb] == :read }
+      assert_equal "file read", turn.last[:subject]
+      assert_equal "completed", turn.last[:detail]
+      assert_equal private_text.bytesize, turn.last[:output_bytes]
+      assert_equal private_text.lines.size, turn.last[:output_lines]
+      refute turn.last.values.include?(private_text)
+      refute bus.events.inspect.include?(private_text)
+    end
+  end
+
+  def test_core_effect_lifecycle_events_are_paired_and_redacted
+    Dir.mktmpdir do |root|
+      bus = FakeBus.new
+      effect = Master::Core::Effect.write("private.txt", "secret payload")
+      model = ScriptedModel.new(*evidence_then_done(effect, summary: "ok"))
+
+      result = Master::CLI::CoreBridge.run("write a private note", root:, bus:, model:)
+
+      assert_equal :complete, result[:reason]
+      events = bus.events.select { |name, payload| name.start_with?("core:effect:") && payload[:verb] == :write }
+      assert_equal %w[core:effect:before core:effect:after], events.map(&:first)
+      assert_equal events.first.last[:effect_id], events.last.last[:effect_id]
+      refute events.any? { |_name, payload| payload.values.include?("secret payload") }
+      turn = bus.events.find { |name, payload| name == "core:turn" && payload[:verb] == :write }
+      assert_equal "file write", turn.last[:subject]
+      assert_equal "completed", turn.last[:detail]
+      refute turn.last.key?(:content)
     end
   end
 

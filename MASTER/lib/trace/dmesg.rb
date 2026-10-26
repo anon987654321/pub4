@@ -619,13 +619,15 @@ module Master
         end
 
         def fold_result(verb, payload)
-          detail = payload[:detail].to_s
-          lines = detail.lines
-          return clip(lines.last) unless payload[:ok]
-          return "#{size(detail.bytesize)}, #{counted(lines.size, "line")}" if verb == "read"
-          return "ok, #{counted(lines.size, "line")}" if verb == "exec"
+          return "failed" unless payload[:ok]
 
-          clip(lines.first || "ok")
+          detail = payload[:detail].to_s
+          bytes = payload.fetch(:output_bytes, detail.bytesize)
+          line_count = payload.fetch(:output_lines, detail.lines.size)
+          return "#{size(bytes)}, #{counted(line_count, "line")}" if verb == "read"
+          return "ok, #{counted(line_count, "line")}" if verb == "exec"
+
+          clip(detail.lines.first || "ok")
         end
 
         def parent(unit, grandparent, detail = PARENT_DETAIL[unit])
