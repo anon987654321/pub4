@@ -109,7 +109,7 @@ module Law
     ".html" => "html", ".yml" => "yaml", ".sh" => "zsh", ".md" => "markdown", ".json" => "json"
   }.freeze
 
-  MEMBERS = %i[id source severity mode languages scope surfaces law_scope lifecycle autofix path path_exclude absent detect ask practice fix bad good reads_comments].freeze
+  MEMBERS = %i[id source severity mode languages scope law_scope lifecycle autofix path path_exclude absent detect ask practice fix bad good reads_comments].freeze
   Definition = Data.define(*MEMBERS) do
     # `path` takes a Regexp or a substring; `path_exclude` was already a Regexp,
     # and one member of a pair reading its argument the other way is a trap for
@@ -395,9 +395,9 @@ module Law
   }.freeze)
 
   class Builder
-    %i[source severity mode languages scope surfaces law_scope lifecycle autofix path path_exclude absent ask practice fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
+    %i[source severity mode languages scope law_scope lifecycle autofix path path_exclude absent ask practice fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
 
-    def initialize(id) = @h = { id:, severity: :warn, mode: :violation, languages: [], scope: :line, surfaces: nil, law_scope: nil, lifecycle: :active, autofix: :review, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil, practice: nil, reads_comments: false }
+    def initialize(id) = @h = { id:, severity: :warn, mode: :violation, languages: [], scope: :line, law_scope: nil, lifecycle: :active, autofix: :review, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil, practice: nil, reads_comments: false }
     def detect(&block) = @h[:detect] = block
 
     # A law can carry more than one enforcement surface without becoming more
@@ -408,12 +408,6 @@ module Law
     def build
       kinds = %i[detect ask practice].select { |k| @h[k] }
       raise ArgumentError, "#{@h[:id]}: needs detect, ask or practice" if kinds.empty?
-      if @h[:surfaces]
-        @h[:surfaces] = Array(@h[:surfaces]).map(&:to_sym).uniq
-        unknown_surfaces = @h[:surfaces] - ASSESSMENT_SURFACES
-        raise ArgumentError, "#{@h[:id]}: unknown assessment surfaces #{unknown_surfaces.join(", ")}" if unknown_surfaces.any?
-      end
-
       # `fix` is in this list because Data requires it and Builder does not
       # default it, so a rule that omitted it died with "missing keyword: :fix"
       # from Data#initialize — a message about the implementation rather than
