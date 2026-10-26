@@ -76,26 +76,26 @@ module Master
 end
 
 require_relative "law"
-require_relative "laws/lexical_laws"
-require_relative "laws/ruby_laws"
-require_relative "laws/web_laws"
-require_relative "laws/cosmetic_laws"
-require_relative "laws/surface_laws"
-require_relative "laws/js_laws"
-require_relative "laws/universal_laws"
-require_relative "laws/structural_laws"
-require_relative "laws/structural_question_laws"
-require_relative "laws/external_linter_laws"
-require_relative "laws/semantic_laws"
-require_relative "laws/graph_laws"
-require_relative "laws/yaml_bridge_laws"
-require_relative "laws/naming_laws"
-require_relative "laws/meta_laws"
+require_relative "../../../law/detectors/lexical_laws"
+require_relative "../../../law/detectors/ruby_laws"
+require_relative "../../../law/detectors/web_laws"
+require_relative "../../../law/detectors/cosmetic_laws"
+require_relative "../../../law/detectors/surface_laws"
+require_relative "../../../law/detectors/js_laws"
+require_relative "../../../law/detectors/universal_laws"
+require_relative "../../../law/detectors/structural_laws"
+require_relative "../../../law/detectors/structural_question_laws"
+require_relative "../../../law/detectors/external_linter_laws"
+require_relative "../../../law/detectors/semantic_laws"
+require_relative "../../../law/detectors/graph_laws"
+require_relative "../../../law/detectors/yaml_bridge_laws"
+require_relative "../../../law/detectors/naming_laws"
+require_relative "../../../law/detectors/meta_laws"
 # The registry is what these requires load, and this one was missing: nothing
 # reached law_bridge_rule until InfraHelpers const_get'd it while building a
 # scanner, so `Law.registry` held 144 laws in a fresh process and 145 after
 # anything scanned. Every census over the registry read whichever number its
 # load order happened to produce — law_deps.ungraphed 133 alone and 134 under
 # a run that had scanned.
-require_relative "laws/law_bridge_law"
+require_relative "../../../law/detectors/law_bridge_law"
 require_relative "law_registry_audit"

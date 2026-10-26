@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # law/universal.rb — every universal law, one Law.define per law.
-# DEAD_CODE lives once, in the scanner registry (MASTER/lib/review/scan/laws/ruby_laws.rb): it anchors the
+# DEAD_CODE lives once, in the scanner registry (MASTER/law/detectors/ruby_laws.rb): it anchors the
 # terminator to the line start, walks indentation to tell a dedent (block
 # over, next line reachable) from a continuation, and knows else/elsif/when/
 # rescue/ensure open new reachability. This file regex called `x = return_val`

@@ -121,7 +121,7 @@ module Master
       def probe_linter
         return if ENV["MASTER_EXTERNAL_LINT"] == "0"
 
-        require_relative "../review/scan/laws/external_linter_laws"
+        require_relative "../../law/detectors/external_linter_laws"
         rule = Master::Review::Scan::Laws::RubocopLaw.new(root: @root)
         return unless rule.linter_available?("rubocop")
 

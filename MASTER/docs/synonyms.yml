@@ -7,8 +7,7 @@ authority:
   constitution: MASTER/data/soul.yml
   law_catalogue: MASTER/data/laws.yml
   executable_laws:
-    - MASTER/law/*.rb
-    - MASTER/lib/review/scan/laws/*.rb
+    - MASTER/law/**/*.rb
   check_execution_registry: MASTER/checks/checks.yml
 
 terms:

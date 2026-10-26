@@ -34,7 +34,7 @@ class TestLawCoverageLaw < Minitest::Test
 
   # The rule keys off a path containing /review/scan/laws/, so the fixture
   # supplies one; only the source directory has to exist on disk.
-  def messages(code, test_files: {}, dir: "test", path: "/x/lib/review/scan/laws/widget_rules.rb")
+  def messages(code, test_files: {}, dir: "test", path: "/x/law/detectors/widget_rules.rb")
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, dir))
       test_files.each { |name, body| File.write(File.join(root, dir, name), body) }

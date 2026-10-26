@@ -5,9 +5,7 @@ Operator-facing docs live in `README.md` and `RUNBOOK.md`, and the recipes in
 specifically the sharp edges that have burned agents in this repo — read it
 before touching the deploy pipeline, not after.
 
-Authority order: `MASTER/data/soul.yml` > `MASTER/data/laws.yml` >
-executable law (`MASTER/law/*.rb` and `MASTER/lib/review/scan/laws/*.rb`) >
-repo harnesses > this per-tree contract.
+Authority order: `MASTER/data/soul.yml` > `MASTER/data/laws.yml` > the executable Law tree `MASTER/law/` > repo harnesses > this per-tree contract.
 
 ## The fleet is four, and master is the one that gets dropped
 

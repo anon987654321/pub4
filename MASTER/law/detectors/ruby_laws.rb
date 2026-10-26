@@ -112,7 +112,7 @@ module Master
           fires: "value = options[:size] || 10\n",
           does_not_fire: "value = options.fetch(:size, 10)\n",
           description: "prefer Hash#fetch over [] with ||" do |src, path:|
-          next [] if path.to_s.include?("/review/scan/laws/")
+          next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
           src.each_line.with_index(1).filter_map do |line, n|
             stripped = line.strip
             next unless (m = stripped.match(/(@{0,2}\w+)\[:\w+\]\s*\|\|(?!=)/))

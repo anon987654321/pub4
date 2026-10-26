@@ -133,7 +133,7 @@ Law.define(:KERNEL_COERCION) do
   source "Ruby Style Guide — Integer()/Float() over to_i/to_f"
   severity :info
   languages %i[ruby]
-  path_exclude %r{/review/scan/laws/}
+  path_exclude %r{/(?:review/scan/laws|law/detectors)/}
   # The `|| []` arm left. The fix line names one substitution — the explicit
   # nil-ternary — and `x || []` is not that: Array() splats a Hash into pairs
   # and wraps a String, so swapping it in is a behaviour change wherever the

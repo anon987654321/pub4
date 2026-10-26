@@ -7,7 +7,7 @@ require "yaml"
 class LayoutCheckEnforcementContractTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   LAWS = File.join(ROOT, "MASTER/data/laws.yml")
-  SURFACE_LAWS = File.join(ROOT, "MASTER/lib/review/scan/laws/surface_laws.rb")
+  SURFACE_LAWS = File.join(ROOT, "MASTER/law/detectors/surface_laws.rb")
   LAYOUT_SUITE = File.join(ROOT, "MASTER/checks/lib/layout_suite.rb")
   CHECKS = File.join(ROOT, "MASTER/checks/checks.yml")
   MINIMAL_ENDGAME = File.join(ROOT, "RAILS/__shared/app/assets/stylesheets/_surface_chrome_endgame.scss")

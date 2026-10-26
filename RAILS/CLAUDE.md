@@ -3,10 +3,10 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with
 code in this repository.
 
-Scope: `RAILS/`. Repo-wide rules are in `../CLAUDE.md`; authority order is
+Scope: `RAILS/`. The repo-wide entrypoint is `../CLAUDE.md`; MASTER is primary configuration. Authority order is
 `MASTER/data/soul.yml` > `MASTER/data/laws.yml` >
-executable law (`MASTER/law/*.rb` and `MASTER/lib/review/scan/laws/*.rb`) >
-`../CLAUDE.md` > this file.
+the executable Law tree `MASTER/law/` >
+this file.
 
 This file is a pointer. `README.md` in this directory is the maintained
 long-form reference (check tables, rendered-check semantics, deploy blockers,

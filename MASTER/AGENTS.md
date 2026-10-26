@@ -2,12 +2,7 @@
 
 Task-scoped entry for coding agents (Cursor, Codex, Grok, Claude Code). This file is the contract; `README.md` is the tour.
 
-**Read the repo-root `CLAUDE.md` first.** It is the authority above this file —
-the order is executable law first: `MASTER/data/soul.yml` > `MASTER/data/laws.yml` >
-`MASTER/law/*.rb` + `MASTER/lib/review/scan/laws/*.rb` > repo harnesses >
-the per-tree contract — and this file carries the five traps that cost the most time
-here. This file routes; it does not restate, because a second copy drifts and
-the copy is always the one being read.
+**Read the repo-root `CLAUDE.md` first.** It is Claude Code's bootstrap pointer, not a competing policy authority. MASTER owns the governing configuration and Law system. The order is `MASTER/data/soul.yml` > `MASTER/data/laws.yml` > the executable Law tree `MASTER/law/` > this workflow contract > per-tree contracts and harness prose. This file carries repository-specific workflow guidance; root CLAUDE only routes.
 
 The block below is the source every other agent's entry file is generated from
 — root `AGENTS.md`, `GEMINI.md`, `.cursorlaws` and
