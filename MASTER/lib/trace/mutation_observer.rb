@@ -91,6 +91,9 @@ module Master
       end
 
       def result_status(result)
+        if result.is_a?(Array) && result.last.respond_to?(:success?)
+          return result.last.success? ? "ok" : "failed"
+        end
         return "ok" unless result.respond_to?(:ok?)
         return "ok" if result.ok?
         return "blocked" if result.respond_to?(:category) && result.category == :policy
