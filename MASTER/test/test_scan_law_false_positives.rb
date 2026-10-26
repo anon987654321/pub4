@@ -704,21 +704,17 @@ end
 
   # --- line-scoped laws reading comments -------------------------------------
   #
-  # A detector over raw lines flags prose about a construct as the construct:
-  # "# a bare rescue" was an error-severity finding. The yaml bridge learned to
-  # skip comment lines once; when FAIL_VISIBLY, BARE_RESCUE (folded into it) and
-  # GUARD_EXPENSIVE_OPS moved to law/, the lesson stayed behind and the same
-  # false positives came back through the law bridge. Comment skipping lives in
-  # Law's own line scan now, keyed on the file's comment syntax, with
-  # reads_comments as the opt-in for rules whose subject IS comments.
-
-  def bridge = scanner.laws.find { |r| r.id.to_s == "law_bridge" } || raise("bridge rule is not registered")
+  # A detector over raw lines must not mistake prose about a construct for
+  # the construct. Comment handling lives in the canonical Law scan, keyed on
+  # the file's comment syntax, with reads_comments for rules whose subject IS
+  # comments.
 
   LINE_RULES = %w[FAIL_VISIBLY GUARD_EXPENSIVE_OPS].freeze
 
-  def bridge_findings(source, path: "lib/example.rb")
-    Array(bridge.check(source, path: File.join(Master::ROOT, path)))
-      .map { |f| f[:law].to_s }.select { |id| LINE_RULES.include?(id) }
+  def universal_line_findings(source, path: "lib/example.rb")
+    absolute = File.join(Master::ROOT, path)
+    LINE_RULES.flat_map { |id| law_findings(id, source, path: absolute) }
+      .map { |finding| finding[:law].to_s }
   end
 
   def test_a_comment_naming_a_forbidden_construct_is_not_a_finding
@@ -728,35 +724,37 @@ end
       ["# Rotate rather than truncate-in-place\n", "lib/example.rb"],
       ["  // rm -rf in a JS comment\n", "web/example.js"],
     ].each do |source, path|
-      assert_empty bridge_findings(source, path:), "#{source.strip.inspect} is prose, not code"
+      assert_empty universal_line_findings(source, path:), "#{source.strip.inspect} is prose, not code"
     end
   end
 
   def test_the_same_constructs_in_code_are_still_findings
-    assert_includes bridge_findings("def probe\n  work\nrescue\n  nil\nend\n"), "FAIL_VISIBLY"
-    assert_includes bridge_findings("def probe\n  work\nrescue Exception\n  nil\nend\n"), "FAIL_VISIBLY"
-    assert_includes bridge_findings("  Item.delete_all\n"), "GUARD_EXPENSIVE_OPS"
+    assert_includes universal_line_findings("def probe\n  work\nrescue\n  nil\nend\n"), "FAIL_VISIBLY"
+    assert_includes universal_line_findings("def probe\n  work\nrescue Exception\n  nil\nend\n"), "FAIL_VISIBLY"
+    assert_includes universal_line_findings("  Item.delete_all\n"), "GUARD_EXPENSIVE_OPS"
   end
 
   # `@transforms << :bare_rescue` in the autofixer that repairs bare rescues was an
   # error-severity finding against itself, recorded in the old backlog as noise rather than
   # fixed. A symbol is not a rescue clause.
   def test_a_symbol_named_bare_rescue_is_not_a_bare_rescue
-    refute_includes bridge_findings("  @transforms << :bare_rescue\n"), "FAIL_VISIBLY"
-    refute_includes bridge_findings("  def bare_rescue\n"), "FAIL_VISIBLY"
+    refute_includes universal_line_findings("  @transforms << :bare_rescue\n"), "FAIL_VISIBLY"
+    refute_includes universal_line_findings("  def bare_rescue\n"), "FAIL_VISIBLY"
   end
 
   # The rules whose subject is comments keep their reach: a comment that IS the
   # violation still fires through the same comment-skipping scan.
   def test_comment_reading_laws_still_see_comments
-    hits = Array(bridge.check("# increment counter\n", path: File.join(Master::ROOT, "lib/example.rb")))
-    assert(hits.any? { |f| f[:law] == "WHY_NOT_WHAT" }, "WHY_NOT_WHAT reads comments by design")
+    hits = law_findings("WHY_NOT_WHAT", "# increment counter\n", path: File.join(Master::ROOT, "lib/example.rb"))
+    assert(hits.any? { |finding| finding[:law] == "WHY_NOT_WHAT" }, "WHY_NOT_WHAT reads comments by design")
   end
 
-  def test_the_deleted_rule_does_not_come_back
-    refute scanner.laws.any? { |r| r.id.to_s == "EMPTY_RESCUE" },
-           "EMPTY_RESCUE was collapsed into SILENT_RESCUE/NARROW_SILENT_RESCUE — re-registering it " \
-           "restores the double-report this test exists to prevent"
+  def test_retired_bridge_law_ids_do_not_return
+    ids = scanner.laws.map { |law| law.id.to_s }
+    refute_includes ids, "law_bridge"
+    refute_includes ids, "yaml_declarative"
+    refute_includes ids, "EMPTY_RESCUE",
+                    "EMPTY_RESCUE was collapsed into SILENT_RESCUE/NARROW_SILENT_RESCUE"
   end
 
   def test_ascii_dividers_in_tests_and_assertions_are_not_decorations
