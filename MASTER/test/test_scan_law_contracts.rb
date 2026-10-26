@@ -177,12 +177,10 @@ class TestScanLawContracts < Minitest::Test
     assert law.enforceable?
   end
 
-  def test_unbounded_retry_reaches_findings_through_the_bridge
-    bridge = Laws::LawBridgeLaw.new
-    hits = bridge.check("begin\n  call\nrescue\n  retry\nend\n", path: "retry.rb")
-    retry_hits = hits.select { |h| h[:law] == "UNBOUNDED_RETRY" }
+  def test_unbounded_retry_reaches_findings_through_its_canonical_detector
+    retry_hits = law_findings("UNBOUNDED_RETRY", "begin\n  call\nrescue\n  retry\nend\n", path: "retry.rb")
 
-    refute_empty retry_hits, "uncapped retry must reach scanner findings via the bridge"
+    refute_empty retry_hits, "uncapped retry must reach scanner findings"
     assert_equal :error, retry_hits.first[:severity]
   end
 
