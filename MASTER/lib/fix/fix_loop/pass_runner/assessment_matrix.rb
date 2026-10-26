@@ -92,14 +92,10 @@ module Master
               id = assessment_law_id(law)
               next if id.empty?
 
-              streams = []
-              streams << :lexical_violations if law.respond_to?(:scannable?) && law.scannable? && law.mode.to_sym == :violation
-              streams << :lexical_opportunities if law.respond_to?(:scannable?) && law.scannable? && law.mode.to_sym == :opportunity
-              # SemanticLaw derives its questions from every active executable Law,
-              # using the Law's ask when present and its repair contract otherwise.
-              # Therefore both semantic streams cover the canonical population even
-              # when a Law also has a deterministic detector.
-              streams.concat(%i[semantic_violations semantic_opportunities])
+              # Every Law is assessed in every stream. An adapter may return
+              # NOT_APPLICABLE only with evidence; a missing assessor stays
+              # INCONCLUSIVE and cannot turn into a clean result.
+              streams = FourStreamAssessment::STREAMS
               declared_surfaces = law.respond_to?(:assessment_surfaces) ? law.assessment_surfaces : []
               info[id] = {
                 id:,
@@ -115,32 +111,16 @@ module Master
             end
 
             scanner_laws = @scanner.respond_to?(:laws) ? Array(@scanner.laws) : []
-            wrapper_ids = %w[law_bridge semantic yaml_declarative]
             scanner_laws.each do |law|
               id = assessment_law_id(law)
-              next if id.empty? || wrapper_ids.include?(id.downcase)
+              next if id.empty?
               next if assessment_existing_law_id(info, id)
 
               class_name = law.class.name.to_s
               semantic = class_name.match?(/AdversarialLaw|CommentDriftLaw|SemanticLaw/) ||
                 (law.respond_to?(:set_agent) && !law.respond_to?(:check_ast))
-              mode = law.respond_to?(:mode) ? law.mode.to_s : ""
-              streams = if mode == "opportunity"
-                          [:lexical_opportunities]
-                        elsif semantic
-                          [:semantic_violations]
-                        else
-                          [:lexical_violations]
-                        end
-              surfaces = if law.respond_to?(:assessment_surfaces)
-                           Array(law.assessment_surfaces)
-                         elsif law.respond_to?(:check_ast)
-                           %i[whole_file lines syntax_tree]
-                         elsif semantic
-                           %i[whole_file sections]
-                         else
-                           %i[whole_file lines]
-                         end
+              streams = FourStreamAssessment::STREAMS
+              surfaces = ::Law::ASSESSMENT_SURFACES
               info[id] = {
                 id:,
                 source_kind: :scanner,
@@ -149,23 +129,6 @@ module Master
                 yaml_entry: nil,
                 streams: streams.freeze,
                 surfaces: surfaces.map(&:to_sym).uniq.freeze,
-                unmeasurable_reason: nil,
-              }
-            end
-
-            yaml_adapter = scanner_laws.find { |law| law.id.to_s.downcase == "yaml_declarative" }
-            Array(yaml_adapter&.instance_variable_get(:@entries)).each do |entry|
-              id = entry[:id].to_s.downcase.strip
-              next if id.empty? || assessment_existing_law_id(info, id)
-
-              info[id] = {
-                id:,
-                source_kind: :yaml_declarative,
-                law: nil,
-                scanner_law: nil,
-                yaml_entry: entry,
-                streams: [:lexical_violations].freeze,
-                surfaces: %i[whole_file lines].freeze,
                 unmeasurable_reason: nil,
               }
             end
