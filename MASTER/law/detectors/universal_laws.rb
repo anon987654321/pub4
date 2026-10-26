@@ -125,7 +125,7 @@ module Master
           fires: %(warn "..."\n),
           does_not_fire: %(warn "…"\n),
           description: "typographic excellence in user-facing text" do |src, path:|
-          next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+          next [] if path.to_s.include?("/law/detectors/")
           src.each_line.with_index(1).filter_map do |line, n|
             next if line.match?(/Open3|capture2|capture3|gsub\(|Shellwords/)
             next if line.match?(/,\s*"--"\s*,|,\s*"--"\s*\)|<<\s*["']--/)
@@ -148,7 +148,7 @@ module Master
           fires: "# ╭──── section ────╮\n",
           does_not_fire: "| name | purpose |\n|------|---------|\n",
           description: "hierarchy via weight and brightness, not decoration" do |src, path:|
-          next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+          next [] if path.to_s.include?("/law/detectors/")
 
           scan_lines(src, BOX_DRAWING, message: "box drawing — use whitespace and typographic weight instead")
         end
@@ -172,7 +172,7 @@ module Master
       # learned — keyword not symbol, not predicate, not identifier, not regex
       # alternation, not a line continuation — moved into the law's detector
       # with each shape pinned as a good fixture, which is what the registry
-      # version never had. Its /review/scan/laws/ self-exemption dies with it:
+      # version never had. Its /law/detectors/ self-exemption dies with it:
       # canonical `law/detectors/` sources arrive conducted, and rule sources that
       # spell the pattern in strings are counted and triaged rather than excused by path.
 
@@ -186,7 +186,7 @@ module Master
           fires: %(COUNCIL_PATH = "data/council.yml"\n),
           does_not_fire: "path = Master::COUNCIL_PATH\n",
           description: "constants defined locally when a canonical ONE_SOURCE exists" do |src, path:|
-          next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+          next [] if path.to_s.include?("/law/detectors/")
           next [] if path.to_s.include?("master.rb")
           patterns = [
             [/COUNCIL_PATH\s*=/, "define COUNCIL_PATH once in master.rb; reference Master::COUNCIL_PATH"],
@@ -218,7 +218,7 @@ module Master
           does_not_fire: %(assert ok, "this test would pass having measured nothing"\n),
           description: "future tense implies without evidence — use indicative past" do |src, path:|
           next [] unless path.to_s.end_with?(".rb", ".md", ".txt", ".erb")
-          next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+          next [] if path.to_s.include?("/law/detectors/")
           src.each_line.with_index(1).filter_map do |line, n|
             next if line.strip.start_with?("#")
             next unless line.match?(SIMULATION_PROMISE) || line.match?(SIMULATION_REPORT)
@@ -279,7 +279,7 @@ module Master
           fires: "handle(first, second, etc.)\n",
           does_not_fire: %(require "etc"\n),
           description: "ellipsis or etcetera as placeholder violates completeness" do |src, path:|
-          next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+          next [] if path.to_s.include?("/law/detectors/")
 
           # In prose "etc." is a word; in code it stands where the work should
           # be. Markdown is prose, and reading a documented list of examples as
@@ -327,7 +327,7 @@ module Master
           # this file, so this rule reads its own source as two findings unless
           # it skips the directory it lives in. COMPLETION_THEATER carries the
           # same skip for the same reason.
-          next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+          next [] if path.to_s.include?("/law/detectors/")
 
           src.each_line.with_index(1).filter_map do |line, n|
             stripped = line.strip
@@ -399,7 +399,7 @@ module Master
           fires: %q(Master::Ground::Pledge.unveil("/", "r")) + "\n",
           does_not_fire: "Master::Ground::Pledge.stage1_boot!(root)\n",
           description: "restrict the process through Ground::Pledge's stages, never a hand-written promise" do |src, path:|
-          next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+          next [] if path.to_s.include?("/law/detectors/")
 
           wrapper = path.to_s.end_with?("lib/ground/pledge.rb")
           src.each_line.with_index(1).flat_map do |line, number|
@@ -433,7 +433,7 @@ module Master
           fires: %Q(bus.subscribe("tool:before") { |e| record(e) }\nFile.open(@path, "w") { |f| f.puts(line) }\n),
           does_not_fire: %Q(bus.subscribe("tool:before") { |e| record(e) }\nFile.open(@path, "a") { |f| f.puts(line) }\n),
           description: "an audit sink appends to its log and never truncates it" do |src, path:|
-          next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+          next [] if path.to_s.include?("/law/detectors/")
           next [] unless src.match?(/subscribe\(\s*["']tool:before["']/)
 
           src.each_line.with_index(1).filter_map do |line, number|
