@@ -106,8 +106,8 @@ the lifecycle contract. `core:effect:before` is durably published before each Wo
 separate audited operation linked to the failed effect and its checkpoint. If the
 required after-event cannot be persisted, the mission fails terminally instead of
 being automatically resumed against an ambiguous side effect. Event payloads carry a typed
-effect ID, turn, verb, capability, run ID and mission ID; source scope is represented by a
-SHA-256 digest, not a raw path, URL or command argument. Failure to persist the before-event
+effect ID, turn, verb, capability, run ID, attempt ID and mission ID; source scope is
+represented by a SHA-256 digest, not a raw path, URL or command argument. Failure to persist the before-event
 prevents the effect from running; failure to persist the after-event returns `trace_failed`
 rather than claiming the task completed. This path uses `EventBus#publish_required` and the
 event log's strict append method, while ordinary best-effort telemetry retains its existing
