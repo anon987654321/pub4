@@ -300,7 +300,7 @@ module Master
         end
         turn = @pipeline_thread
         if turn&.alive? && Thread.current != @turn_worker
-          canceler = Thread.new { cancel_turn(turn, @turn_children) }
+          canceler = Thread.new { request_or_interrupt_turn(turn, @turn_children, reason: "stop") }
           canceler.join(1)
           turn.join(1)
         end
