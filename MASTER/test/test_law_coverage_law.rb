@@ -5,12 +5,9 @@ require "review/scan/law_dsl"
 require "tmpdir"
 require "fileutils"
 
-# The check that asks whether every Rule subclass has a test, which for most of
-# its life examined one rule file in sixteen and was wrong about that one. It
-# returned early unless the path ended `_rule.rb` — only `law_bridge_rule.rb`
-# does, the other fifteen being `*_rules.rb` — and then looked for
-# `<base>_test.rb` while this tree names tests `test_<base>.rb`, 283 files to 1.
-# Its single output was a false positive about a test that existed.
+# The check asks whether each scanner Law subclass is referenced by a test.
+# Its former filename heuristics skipped most detector files and used a test
+# naming convention this tree does not follow, so it falsely reported existing tests.
 #
 # Both halves are pinned below, because either one regressing restores a check
 # that reports nothing and looks green doing it.
