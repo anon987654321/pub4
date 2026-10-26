@@ -48,6 +48,9 @@ class TestReliabilitySecondTranche < Minitest::Test
       tx.begin!
       File.write(path, "partial\n")
       tx.observe!
+      # Simulate process loss: a dead process holds no lock.
+      tx.send(:release_lock)
+      tx.instance_variable_set(:@active, false)
       recovered = Master::Fix::Transaction::Recovery.recover!(root:, id: tx.id)
 
       assert recovered.ok?
@@ -84,6 +87,8 @@ class TestReliabilitySecondTranche < Minitest::Test
       tx.observe!
       tx.delivery.begin!(head_before: "before")
       tx.delivery.record_commit!(head_after: "commit-1")
+      tx.send(:release_lock)
+      tx.instance_variable_set(:@active, false)
 
       recovered = Master::Fix::Transaction::Recovery.recover!(root:, id: tx.id)
 
@@ -649,6 +654,7 @@ class TestReliabilitySecondTranche < Minitest::Test
 
       loop = Master::Fix::FixLoop.allocate
       loop.instance_variable_set(:@root, root)
+      loop.instance_variable_set(:@transaction_root, root)
       loop.instance_variable_set(:@git, fake_git)
 
       result = loop.send(:retry_delivery, transaction_id: id, expected_head: "commit-1")
@@ -686,6 +692,7 @@ class TestReliabilitySecondTranche < Minitest::Test
       fake_git.define_singleton_method(:push) { true }
       loop = Master::Fix::FixLoop.allocate
       loop.instance_variable_set(:@root, root)
+      loop.instance_variable_set(:@transaction_root, root)
       loop.instance_variable_set(:@git, fake_git)
 
       result = loop.send(:retry_delivery, transaction_id: id, expected_head: "commit-1")
@@ -719,6 +726,7 @@ class TestReliabilitySecondTranche < Minitest::Test
       fake_git.define_singleton_method(:push) { true }
       loop = Master::Fix::FixLoop.allocate
       loop.instance_variable_set(:@root, root)
+      loop.instance_variable_set(:@transaction_root, root)
       loop.instance_variable_set(:@git, fake_git)
 
       result = loop.send(:retry_delivery, transaction_id: id, expected_head: "commit-1")

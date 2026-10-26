@@ -106,6 +106,9 @@ def publish_pending! = :nothing_to_publish
     Dir.mkdir(File.join(@root, "data"))
     File.write(File.join(@root, "data", "soul.yml"), "absolute:\n  sacred_paths:\n    - data/soul.yml\n")
     system("git", "-C", @root, "init", "-q", "--initial-branch=main", out: File::NULL, err: File::NULL) || raise("git init failed")
+    # Every checkout ignores MASTER's own state; unignored, the run's .master/ files joined the
+    # plan's exclusions after pass one and reset its stagnation counters.
+    File.write(File.join(@root, ".git", "info", "exclude"), ".master/\n")
     @bus = FakeBus.new
   end
 
