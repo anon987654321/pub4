@@ -61,7 +61,19 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
       assert_operator recent.join("\n").bytesize, :<=, DashboardController::PANEL_TAIL_BYTES
 
       excerpt = controller.send(:bounded_excerpt, path)
-      assert_operator excerpt.bytesize, :<=, DashboardController::PROPOSAL_EXCERPT_BYTES + 3
+      assert_operator excerpt.bytesize, :<=, DashboardController::PROPOSAL_EXCERPT_BYTES
+    end
+
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "invalid-utf8.bin")
+      File.binwrite(path, "\xFF".b * 20_000)
+
+      recent = controller.send(:recent_lines, path)
+      excerpt = controller.send(:bounded_excerpt, path)
+      assert_operator recent.join("\\n").bytesize, :<=, DashboardController::PANEL_TAIL_BYTES
+      assert_operator excerpt.bytesize, :<=, DashboardController::PROPOSAL_EXCERPT_BYTES
+      assert_predicate recent.join, :valid_encoding?
+      assert_predicate excerpt, :valid_encoding?
     end
   end
 

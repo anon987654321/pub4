@@ -106,13 +106,13 @@ class DashboardController < ApplicationController
         boundary = tail.index("\n")
         tail = boundary ? tail[(boundary + 1)..] : ""
       end
-      tail.force_encoding(Encoding::UTF_8).scrub.lines(chomp: true).last(PANEL_RECENT_LINES)
+      tail.force_encoding(Encoding::UTF_8).scrub("?").lines(chomp: true).last(PANEL_RECENT_LINES)
     end
   end
 
   def bounded_excerpt(path)
     File.open(path, "rb") do |file|
-      file.read(PROPOSAL_EXCERPT_BYTES).to_s.force_encoding(Encoding::UTF_8).scrub
+      file.read(PROPOSAL_EXCERPT_BYTES).to_s.force_encoding(Encoding::UTF_8).scrub("?")
     end
   end
 end
