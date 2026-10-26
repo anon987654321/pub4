@@ -36,6 +36,25 @@ class TestProofAdapters < Minitest::Test
     assert proof.proven?
   end
 
+  def test_finding_maps_to_a_failed_verification_without_copying_diagnostics
+    finding = Master::Review::Scan::Finding.build(
+      law: "SECRET_PROXIMITY", message: "password leaked in /private/customer.txt",
+      line: 14, severity: :critical
+    )
+
+    result = finding.to_verification(
+      id: "finding-proof-1", verifier: "law-scanner",
+      subject: "MASTER/lib/example.rb", scope: "MASTER"
+    )
+
+    assert_equal :fail, result.status
+    assert_equal "MASTER/lib/example.rb", result.subject
+    assert_equal 1, result.failure_count
+    assert_equal Digest::SHA256.hexdigest("MASTER"), result.scope_digest
+    refute_includes result.to_h.inspect, "password leaked"
+    refute_includes result.to_h.inspect, "/private/customer.txt"
+  end
+
   def test_proof_freezes_nested_evidence
     proof = Master::Proof.build(claim: "x", evidence: { paths: ["a.rb"] })
 
