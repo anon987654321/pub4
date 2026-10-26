@@ -53,11 +53,7 @@ module Master
 
         paths = Array(absolute["sacred_paths"]).map { |entry| normalize_path(entry) }
         raise ArgumentError, "sacred_paths must not be empty" if paths.empty?
-        forbidden = paths.select do |entry|
-          FORBIDDEN_SACRED_PATHS.any? do |path|
-            entry == path || (path.end_with?("/") && entry.start_with?(path))
-          end
-        end
+        forbidden = paths.select { |entry| FORBIDDEN_SACRED_PATHS.include?(entry) }
         unless forbidden.empty?
           raise ArgumentError, "configuration files and retired scanner paths must remain editable: #{forbidden.join(', ')}"
         end
