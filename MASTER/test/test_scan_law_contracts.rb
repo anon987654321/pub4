@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 require "review/scan/law_dsl"
-require "review/scan/laws/structural_laws"
+require_relative "../law/detectors/structural_laws
 require_relative "../lib/fix/scan/ast_fixer"
 
 class TestScanLawContracts < Minitest::Test
