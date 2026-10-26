@@ -3,6 +3,8 @@
 require_relative "../execution/contract"
 require "digest"
 require "fileutils"
+require "set"
+require "time"
 require "yaml"
 require_relative "../io/atomic_write"
 
@@ -12,10 +14,12 @@ module Master
       include ::Master::Io::AtomicWrite
       attr_reader :loaded
 
-      def initialize(root:, event_bus: nil)
+      def initialize(root:, event_bus: nil, approval_path: File.join(Dir.home, ".master", "skill_approvals.yml"))
         @root = root
         @bus = event_bus
+        @approval_path = File.expand_path(approval_path)
         @loaded = []
+        @approved_skill_revisions = load_skill_approvals
         @usage = load_usage
       end
 
@@ -74,11 +78,12 @@ module Master
           next false unless triggered
 
           contract = skill[:contract]
-          unless contract.nil? || contract.permitted_for_trigger?
+          unless eligible_for_trigger?(skill)
             @bus&.publish(
               "skills:contract_refused",
               skill: skill[:name], revision: skill[:revision],
-              status: contract.status, errors: contract.errors
+              status: contract&.status,
+              reason: refusal_reason(skill), errors: contract&.errors || []
             )
             next false
           end
@@ -98,7 +103,7 @@ module Master
       def body_for(name)
         skill = find(name)
         return unless skill
-        return if skill[:contract] && !skill[:contract].permitted_for_trigger?
+        return unless eligible_for_trigger?(skill)
 
         body = skill[:body].to_s.strip
         return body[0, 4_000] unless body.empty?
@@ -118,6 +123,68 @@ module Master
       end
 
       private
+
+      APPROVAL_KEYS = %w[name revision approved_by approved_at].freeze
+
+      # Approval is deliberately outside the workspace/repository so an agent
+      # cannot self-promote by editing its own registry declaration. Approval
+      # binds to the content-addressed revision; edits require a new approval.
+      def load_skill_approvals
+        return {} unless File.file?(@approval_path)
+
+        data = Master.load_yaml(@approval_path)
+        unless data.is_a?(Hash) && data["schema_version"] == 1 && data["approvals"].is_a?(Array)
+          @bus&.publish("skills:approval_manifest_invalid", reason: "invalid_schema")
+          return {}
+        end
+
+        approvals = {}
+        data["approvals"].each do |row|
+          unless row.is_a?(Hash) && (row.keys.map(&:to_s) - APPROVAL_KEYS).empty?
+            @bus&.publish("skills:approval_invalid", reason: "invalid_entry_shape")
+            next
+          end
+
+          values = row.transform_keys(&:to_s)
+          name = values["name"].to_s
+          revision = values["revision"].to_s.downcase
+          approved_by = values["approved_by"].to_s.strip
+          begin
+            Time.iso8601(values["approved_at"].to_s)
+          rescue ArgumentError
+            @bus&.publish("skills:approval_invalid", reason: "invalid_timestamp")
+            next
+          end
+          unless !name.empty? && name.bytesize <= 160 &&
+                 Master::Execution::Contract::SHA256.match?(revision) &&
+                 !approved_by.empty? && approved_by.bytesize <= 120
+            @bus&.publish("skills:approval_invalid", reason: "invalid_entry_value")
+            next
+          end
+
+          approvals[[name, revision]] = true
+        end
+        approvals.freeze
+      rescue StandardError => e
+        @bus&.publish("skills:approval_manifest_invalid", reason: e.class.name)
+        {}
+      end
+
+      def eligible_for_trigger?(skill)
+        contract = skill[:contract]
+        return true if contract&.permitted_for_trigger?
+        return false unless contract&.valid_declaration?
+
+        @approved_skill_revisions.fetch([skill[:name].to_s, skill[:revision].to_s], false)
+      end
+
+      def refusal_reason(skill)
+        contract = skill[:contract]
+        return "missing_or_invalid_contract" unless contract&.valid_declaration?
+        return "revision_not_approved" unless @approved_skill_revisions[[skill[:name].to_s, skill[:revision].to_s]]
+
+        "not_permitted"
+      end
 
       def load_antigravity_skills
         require_relative "../io/antigravity"
