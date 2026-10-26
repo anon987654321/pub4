@@ -19,6 +19,6 @@ class TestEffectBoundaryContract < Minitest::Test
   def test_fold_admits_before_dispatching_and_handles_done_without_world_io
     source = File.read(File.join(Master::ROOT, "lib", "core", "fold.rb"), encoding: "UTF-8")
     assert_operator source.index("@law.admit(effect, @memory)"), :<, source.index("done = apply(turn, admitted)")
-    assert_includes source, "if effect.done?"
+    assert_includes source, "if admitted.done?"
   end
 end
