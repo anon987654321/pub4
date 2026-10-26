@@ -23,9 +23,8 @@ module Master
         sleep_s = ENV["MASTER_AUTOFIX"] == "1" ? wf.dig("autoloop", "scan_file_sleep_s").to_f : 0
         scanner = new(event_bus: bus, file_sleep_s: sleep_s)
 
-        # Canonical Laws enter the scanner directly; no LawBridgeLaw wrapper or
-        # duplicate registry is needed. Each adapter carries the original Law
-        # identity and policy while executing its Ruby detector.
+        # Canonical Laws enter the scanner directly through a detector adapter.
+        # The adapter retains the original ID; policy and metadata are catalogue-owned.
         ::Law.definitions.values.select { |law| law.enforceable? && law.scannable? }.each do |definition|
           scanner.add_law(Review::Scan::CanonicalLawAdapter.new(definition))
         end
