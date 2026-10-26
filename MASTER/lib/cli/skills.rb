@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../execution/contract"
 require "digest"
 require "fileutils"
 require "yaml"
@@ -40,9 +41,26 @@ module Master
         @loaded.find { |s| s[:name] == name.to_s }
       end
 
+      # Returns the declaration and its content-addressed revision. Contract
+      # metadata never grants a capability or bypasses constitutional admission.
+      def contract_for(name)
+        skill = find(name)
+        skill && skill[:contract]&.to_h
+      end
+
       def trigger_for(input)
         input = input.to_s
         matches = @loaded.select do |skill|
+          contract = skill[:contract]
+          unless contract.nil? || contract.permitted_for_trigger?
+            @bus&.publish(
+              "skills:contract_refused",
+              skill: skill[:name], revision: skill[:revision],
+              status: contract.status, errors: contract.errors
+            )
+            next false
+          end
+
           Array(skill[:triggers]).any? do |trigger|
             begin
               input.match?(Regexp.new(trigger.to_s, Regexp::IGNORECASE))
@@ -66,7 +84,7 @@ module Master
         end
         matches.each do |skill|
           record_used(skill[:name])
-          @bus&.publish("skills:triggered", skill: skill[:name], revision: skill[:revision])
+          @bus&.publish("skills:triggered", skill: skill[:name], revision: skill[:revision], contract_status: skill.dig(:contract)&.status)
         end
         matches
       end
@@ -74,6 +92,7 @@ module Master
       def body_for(name)
         skill = find(name)
         return unless skill
+        return if skill[:contract] && !skill[:contract].permitted_for_trigger?
 
         body = skill[:body].to_s.strip
         return body[0, 4_000] unless body.empty?
@@ -112,6 +131,7 @@ module Master
             dir: skill[:dir],
             has_ruby: Dir.glob(File.join(skill[:dir], "*.rb")).any?,
             source: skill[:source],
+            execution_contract: skill.dig(:meta, "execution_contract"),
           }
         end
       rescue StandardError => e
@@ -145,6 +165,7 @@ module Master
           dir: nil,
           has_ruby: false,
           source: :registry,
+          execution_contract: row["execution_contract"],
         }
       end
 
@@ -155,8 +176,14 @@ module Master
           triggers: Array(skill[:triggers]).map(&:to_s),
           body: skill[:body].to_s,
           source: skill[:source].to_s,
+          execution_contract: skill[:execution_contract],
         }
-        skill.merge(revision: Digest::SHA256.hexdigest(Marshal.dump(portable_revision(skill, portable))))
+        revision = Digest::SHA256.hexdigest(Marshal.dump(portable_revision(skill, portable)))
+        contract = Master::Execution::Contract::SkillContract.from_declaration(
+          name: skill[:name], revision:, source: skill[:source], declaration: skill[:execution_contract]
+        )
+        @bus&.publish("skills:contract_invalid", skill: skill[:name], revision:, errors: contract.errors) if contract.status == :invalid
+        skill.merge(revision:, contract:)
       end
 
       def portable_revision(skill, portable)
