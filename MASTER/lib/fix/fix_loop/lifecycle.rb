@@ -64,6 +64,8 @@ module Master
 
           @fix_plan = replacement
           binding = bind_fix_plan!({}, run_id, replacement)
+          @pass_runner.assessment_plan_changed!(replacement) if
+            @pass_runner.respond_to?(:assessment_plan_changed!)
           @convergence_discipline.begin_run(files, preserve_run_baseline: true)
           @bus&.publish(
             "fix_loop:plan_generation",
