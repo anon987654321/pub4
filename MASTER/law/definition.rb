@@ -145,12 +145,8 @@ module Law
     # deliberate surfaces: declaration may narrow the adapter contract; without
     # one, absent surface assessors remain INCONCLUSIVE rather than disappearing.
     def assessment_surfaces
-      declared = Array(surfaces).map(&:to_sym).uniq
-      return declared.freeze unless declared.empty?
-
-      # Universal Laws remain applicable across the full canonical surface set.
-      # Missing surface adapters become INCONCLUSIVE in Fix::AssessmentMatrix;
-      # a narrow scope must be an explicit declaration, never an inferred omission.
+      # Every Law is assessed on every canonical surface. Adapters may be
+      # domain-specific, but a missing adapter is INCONCLUSIVE, never an exemption.
       ::Law::ASSESSMENT_SURFACES
     end
 
