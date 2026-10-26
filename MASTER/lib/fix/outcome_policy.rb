@@ -13,14 +13,14 @@ module Master
       TERMINAL_STATES = Master::Execution::Contract::TERMINAL_STATES
 
       PARTIAL_ENDINGS = %i[
-        plateau timeout blocked human_decision inconclusive cancelled unknown_outcome
+        plateau timeout blocked human_decision inconclusive cancelled unknown_outcome recovery_failed
       ].freeze
 
       MEASURED_REPAIR_OUTCOMES = {
         done: true, plateau: false, crash: false, skip: false, blocked: false,
         validation_failed: false, delivery_failed: false, timeout: false,
         inconclusive: false, failed: false, reloading: false,
-        cancelled: false, unknown_outcome: false
+        cancelled: false, unknown_outcome: false, recovery_failed: false
       }.freeze
 
       ERROR_STATES = {
@@ -36,7 +36,7 @@ module Master
         validation: :validation_failed,
         cancelled: :cancelled,
         unknown_outcome: :unknown_outcome,
-        recovery_failed: :failed,
+        recovery_failed: :recovery_failed,
         failed: :failed
       }.freeze
 
