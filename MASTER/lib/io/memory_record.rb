@@ -2,12 +2,16 @@
 
 require "fileutils"
 require_relative "../ground/personal_workspace"
+require_relative "../ground/redactor"
+require_relative "atomic_write"
 
 module Master
   module Io
     # MemoryRecord — writes durable context into data/project_context.yml and
     # seeds Master::Ground::Memory so semantic recall sees it immediately.
     class MemoryRecord
+      include AtomicWrite
+
       NAME = "memory_record".freeze
       DESCRIPTION = "Write a durable project-context entry. " \
                     "Use for user facts, feedback, project context, or external references.".freeze
@@ -44,6 +48,12 @@ module Master
           return Result.ok("memory_record: #{relative(path)}")
         end
 
+        # project_context.yml is tracked and pushed: a web visitor fell through the paired
+        # check above and wrote into it, and a model's body went to git with any secret in it.
+        if Fiber[:master_visitor] == true
+          return Result.err("memory_record: visitors cannot write the shared project context", category: :policy)
+        end
+
         if type == "user"
           return Result.err(
             "memory_record: personal facts require a paired subject; refusing to write them to shared project_context.yml",
@@ -70,13 +80,13 @@ module Master
         entries << {
           "key" => key,
           "name" => key.tr("_", " "),
-          "description" => description.to_s.strip,
+          "description" => Master::Ground::Redactor.text(description.to_s.strip),
           "type" => type,
-          "body" => body.to_s.strip,
+          "body" => Master::Ground::Redactor.text(body.to_s.strip),
         }
         data["entries"] = entries
         FileUtils.mkdir_p(File.dirname(path))
-        File.write(path, data.to_yaml)
+        write_atomic(path, data.to_yaml)
         path
       end
 

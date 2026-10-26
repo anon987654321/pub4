@@ -151,6 +151,26 @@ class TestPersonalWorkspace < Minitest::Test
     refute File.exist?(File.join(@root, "data", "project_context.yml"))
   end
 
+# The shared context is tracked and pushed: no visitor writes it, and no secret reaches it.
+def test_a_visitor_never_writes_the_shared_project_context
+  Fiber[:master_visitor] = true
+  result = Master::Io::MemoryRecord.new(memory: nil, root: @root)
+                                   .call(key: "deploy_note", description: "x", body: "y", type: "project")
+
+  refute result.ok?
+  refute File.exist?(File.join(@root, "data", "project_context.yml"))
+ensure
+  Fiber[:master_visitor] = nil
+end
+
+def test_a_secret_in_a_project_entry_is_redacted_before_it_is_written
+  token = "sk-" + ("a" * 40)
+  Master::Io::MemoryRecord.new(memory: nil, root: @root)
+                          .call(key: "deploy_note", description: "key", body: "use #{token} for deploys", type: "project")
+
+  refute_includes File.read(File.join(@root, "data", "project_context.yml")), token
+end
+
   def test_paired_personal_memory_is_denied_until_its_subject_grants_consent
     Fiber[:master_pair_subject] = "sub1"
     tool = Master::Io::MemoryRecord.new(memory: nil, root: @root)

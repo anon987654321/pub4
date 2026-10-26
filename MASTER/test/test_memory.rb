@@ -189,6 +189,20 @@ class TestMemory < Minitest::Test
     assert_equal 1, @mem.preferences(limit: 10).size
   end
 
+  # A web visitor's sentence is not the operator's memory.
+  def test_a_visitor_sentence_is_never_auto_saved
+    Fiber[:master_visitor] = true
+    assert_nil @mem.auto_save("I'm a nurse in Bergen")
+  ensure
+    Fiber[:master_visitor] = nil
+  end
+
+  def test_the_memory_file_is_owner_only
+    @mem.auto_save("I'm a senior Ruby engineer at a startup")
+
+    assert_equal 0o600, File.stat(File.join(@root, ".master", "memory.yml")).mode & 0o777
+  end
+
   def test_auto_save_feedback_pattern
     key = @mem.auto_save("never use awk in zsh scripts, use parameter expansion instead")
     refute_nil key

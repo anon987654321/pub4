@@ -132,17 +132,31 @@ module Master
         lines.join("\n")
       end
 
+      DAILY_KEEP_DAYS = 30
+
+      # The operator's own conversations only, owner-readable, kept a month. A web
+      # visitor's conversation was summarised into the operator's log too (the
+      # compaction thread inherits the turn's fiber storage), at 0644, forever.
       def append_daily_log(summary, tier:)
+        return if Fiber[:master_visitor] == true
+
         day = Time.now.strftime("%Y-%m-%d")
         path = File.join(@root, ".master", "daily", "#{day}.md")
-        FileUtils.mkdir_p(File.dirname(path))
+        FileUtils.mkdir_p(File.dirname(path), mode: 0o700)
+        prune_daily_logs(File.dirname(path))
         stamp = Time.now.utc.iso8601
         bullets = summary.to_s.lines.map(&:strip).reject(&:empty?).map { |line| "- #{line.delete_prefix("- ").strip}" }
         entry = "\n## Compaction #{tier} #{stamp}\n#{bullets.join("\n")}\n"
-        File.open(path, "a") { |io| io.write(entry) }
+        File.open(path, "a", 0o600) { |io| io.write(entry) }
+        File.chmod(0o600, path)
         @bus&.publish("compaction:logged", path:, tier:)
       rescue StandardError => e
         Ground::Swallow.log(e, context: "context_window.daily_log", event_bus: @bus)
+      end
+
+      def prune_daily_logs(dir)
+        cutoff = Time.now - (DAILY_KEEP_DAYS * 86_400)
+        Dir.glob(File.join(dir, "*.md")).each { |file| File.delete(file) if File.mtime(file) < cutoff }
       end
     end
   end

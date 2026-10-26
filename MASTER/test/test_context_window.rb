@@ -25,6 +25,23 @@ class TestContextWindow < Minitest::Test
     @session ||= Master::Trace::Session.new(root: Dir.mktmpdir("ctx-window"))
   end
 
+def daily_logs(visitor:)
+  Dir.mktmpdir("ctx-daily") do |root|
+    10.times { |i| session.add_message(role: :user, content: "turn #{i}") }
+    Fiber[:master_visitor] = visitor
+    Master::CLI::ContextWindow.new(session:, agent: SlowAgent.new, root:).send(:compact!, :hard)
+    return Dir.glob(File.join(root, ".master", "daily", "*.md")).map { |file| File.stat(file).mode & 0o777 }
+  ensure
+    Fiber[:master_visitor] = nil
+  end
+end
+
+# A visitor's conversation is not the operator's day; the operator's log is owner-only.
+def test_only_the_operators_compactions_reach_the_daily_log
+  assert_empty daily_logs(visitor: true)
+  assert_equal [0o600], daily_logs(visitor: nil)
+end
+
   def test_compaction_summarises_a_prefix_and_keeps_the_tail_and_late_turns
     10.times { |i| session.add_message(role: :user, content: "turn #{i}") }
     agent = SlowAgent.new { session.add_message(role: :user, content: "late turn") }

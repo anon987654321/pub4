@@ -199,8 +199,10 @@ module Master
           end
         end
 
+        # The local operator's words only. A web visitor's "I am a..." was saved as
+        # explicit operator feedback and read into every later prompt, the operator's too.
         def auto_save(text)
-          return if text.to_s.empty?
+          return if text.to_s.empty? || Fiber[:master_visitor] == true
 
           AUTO_SAVE_PATTERNS.each do |type, pattern|
             next unless (match = text.match(pattern))
@@ -409,7 +411,7 @@ module Master
 
         def persist
           FileUtils.mkdir_p(File.dirname(@path))
-          write_atomic(@path, @store.to_yaml)
+          write_atomic(@path, @store.to_yaml, mode: 0o600)
           @store_version += 1
         end
       end
