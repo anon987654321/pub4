@@ -425,7 +425,10 @@ module Master
           absolute = File.expand_path(path)
           @assessment_mutex.synchronize do
             observation = @assessment_observation
-            return unless observation && observation[:thread_id] == Thread.current.object_id
+            # Scanner workers run in parallel. Scope the receipt by the exact
+            # pass paths rather than the coordinator thread; unrelated preview
+            # or post-pass scans cannot count unless they touch a scoped path.
+            return unless observation && observation[:files].include?(absolute)
 
             case state
             when :scanned
@@ -461,8 +464,7 @@ module Master
             observation[:signatures][path] == assessment_signature(path)
           end
           semantic_gaps = @scanner.respond_to?(:semantic_gaps) ? @scanner.semantic_gaps : {}
-          pending = semantic_pending.keys.map { |path| File.expand_path(path, @root) }.to_set
-          inconclusive = semantic_gaps.keys.map { |path| File.expand_path(path, @root) }.to_set
+          pending = semantic_pending
           plan_digest = @assessment_plan&.source_digest.to_s
           evidence = [
             "adapter=Master::Fix::Scanner#scan",
@@ -541,11 +543,20 @@ module Master
           if semantic
             return assessment_result(:inconclusive, reason: "semantic coverage is sampled or budgeted", evidence:) unless @scan_phase.semantic_full?
 
-            pending_paths = applicable.select { |path| pending.include?(path) }
-            return assessment_result(:inconclusive, reason: "semantic reads pending for #{pending_paths.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}", evidence:) if pending_paths.any?
+            # Gap keys can be rooted at MASTER, RAILS, or a nested scanner root.
+            # Without a validated root map, matching strings across those roots
+            # risks declaring an unread file clean; any gap keeps semantic proof open.
+            return assessment_result(
+              :inconclusive,
+              reason: "semantic read pending for #{pending.keys.first(4).join(", ")}",
+              evidence:
+            ) if pending.any?
 
-            inconclusive_paths = applicable.select { |path| inconclusive.include?(path) }
-            return assessment_result(:inconclusive, reason: "semantic read inconclusive for #{inconclusive_paths.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}", evidence:) if inconclusive_paths.any?
+            return assessment_result(
+              :inconclusive,
+              reason: "semantic read inconclusive for #{semantic_gaps.keys.first(4).join(", ")}",
+              evidence:
+            ) if semantic_gaps.any?
           end
 
           refused = applicable.select { |path| observation[:refused].key?(path) }
