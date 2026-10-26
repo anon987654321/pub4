@@ -152,7 +152,7 @@ module Master
 
         def pass? = status == :pass
         def fail? = status == :fail
-        def conclusive? = complete == true && !%i[partial inconclusive unavailable].include?(status)
+        def conclusive? = complete == true && %i[pass fail].include?(status)
 
         def to_h
           {
