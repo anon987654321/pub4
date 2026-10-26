@@ -3,6 +3,7 @@
 require "open3"
 require "tempfile"
 require "pathname"
+require_relative "../trace/mutation_observer"
 
 module Master
   module Io
@@ -11,6 +12,11 @@ module Master
       # State-changing git commands (add/commit/push/reset/tag/fetch) — kept
       # separate from GitOperations' own read-only status/inspection queries.
       module Mutations
+        MUTATING_COMMANDS = %w[
+          add am apply checkout cherry-pick clean commit fetch merge mv pull push
+          rebase reset restore revert rm stash switch tag worktree update-ref submodule
+        ].freeze
+
         # Stages and commits the named paths and nothing else, the rule
         # Core::World#do_git_commit keeps for the fold. The index is shared with
         # every session in this checkout, so committing it signs their staged
@@ -75,10 +81,18 @@ module Master
         def git!(*args)
           Master::Ground::LawHandshake::Admission.require!
           refuse_sacred!(args) if args.first == "commit"
-          output, status = Master::Io::Exec.capture2e("git", "-C", @root_path, *args)
-          raise "git #{args.first} failed: #{output.strip}" unless status.success?
+          operation = args.first.to_s
+          execute = lambda do
+            output, status = Master::Io::Exec.capture2e("git", "-C", @root_path, *args)
+            raise "git #{operation} failed: #{output.strip}" unless status.success?
 
-          output
+            output
+          end
+          return execute.call unless MUTATING_COMMANDS.include?(operation)
+
+          @mutation_observer.mutate(operation: "git_#{operation}", item_count: [args.length - 1, 0].max) do
+            execute.call
+          end
         end
 
         # Every runtime commit passes here: the fix loop's, a restructure's, a rename's and the
@@ -227,8 +241,12 @@ module Master
 
       public
 
-      def initialize(root_path)
+      def initialize(root_path, event_bus: nil)
         @root_path = root_path
+        @mutation_observer = Master::Trace::MutationObserver.new(
+          root: @root_path, namespace: "git:mutation",
+          subject_type: "repository", subject_id: "working-tree", bus: event_bus
+        )
       end
 
       def dirty?(path = "lib/")
