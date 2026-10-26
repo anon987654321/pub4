@@ -126,10 +126,13 @@ stream and private tool audit retain categorical labels, identifiers and counts 
 of raw prompts, paths, arguments, findings or error text. Live policy subscribers still
 receive their full in-memory payload, which is not written into those durable projections.
 
-This does not yet unify all of /fix: RunJournal still has a separate best-effort event
-path, and broader provider, background-job and deployment mutations need the same
-contract. The current slice preserves the existing FixLoop/RunJournal/Transaction APIs;
-it is not a replacement runner or ledger.
+RunJournal persistence now uses the same strict event adapter: each journal-state
+write has a required before/after pair and a durable `.master/.fix_runs.pending`
+marker. A missing after-event leaves the marker in place, and a later run refuses to
+resume or overwrite that journal until an operator resolves the ambiguity. The current
+slice preserves the existing FixLoop/RunJournal/Transaction APIs; it is not a replacement
+runner or ledger. Provider, background-job and deployment mutations still need the same
+contract, and the remaining direct filesystem mutation paths need a targeted inventory.
 
 A requested repair starts by inventorying its eligible corpus, refreshing the
 static reference graph and refusing to proceed if an eligible source could not
