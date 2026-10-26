@@ -10,14 +10,10 @@ module Master
 
       def ids
         load_laws!
-        executable = ::Law.definitions.keys.map { |id| id.to_s.upcase }
-        inline = Master::Review::Scan::Law.registry.filter_map do |klass|
-          next unless klass.respond_to?(:dsl_id) && !klass.dsl_id.to_s.empty?
-
-          klass.dsl_id.to_s.upcase
-        end
-        catalogue = Master.law_entries.filter_map { |row| row["id"]&.to_s&.upcase }
-        (catalogue + executable + inline).uniq.sort.freeze
+        catalogue = law_catalogue.keys.map { |id| id.to_s.upcase }
+        executable = ::Law.definitions.values.map { |law| law.id.to_s.upcase }
+        scanner = scanner_laws.keys
+        (catalogue + executable + scanner).uniq.sort.freeze
       end
 
       def context
@@ -30,15 +26,14 @@ module Master
         require_relative "../review/scan/law_dsl" unless defined?(Master::Review::Scan::LawDSL)
       end
 
-      def constitutional_laws
-        @constitutional_laws ||= Master.law_entries.to_h { |entry| [entry.fetch("id").to_s.upcase, entry] }
+      def law_catalogue
+        @law_catalogue ||= Master.law("law_catalogue").fetch("entries")
       end
 
-      def inline_laws
-        @inline_laws ||= Master::Review::Scan::Law.registry.filter_map do |klass|
-          next unless klass.respond_to?(:dsl_id) && !klass.dsl_id.to_s.empty?
-
-          [klass.dsl_id.to_s.upcase, Master::Review::Scan::LawFactory.build(klass, root: Master::ROOT)]
+      def scanner_laws
+        @scanner_laws ||= Master::Review::Scan::Law.registry.filter_map do |klass|
+          law = Master::Review::Scan::LawFactory.build(klass, root: Master::ROOT)
+          [law.id.to_s.upcase, law]
         end.to_h
       end
 
@@ -47,11 +42,15 @@ module Master
         law = ::Law.definitions[key.to_sym] || ::Law.definitions[key.to_s]
         return "#{key}: #{law.ask} Fix: #{law.fix}" if law
 
-        inline = inline_laws[key]
-        return "#{key}: #{inline.description}" if inline
+        scanner = scanner_laws[key]
+        if scanner
+          description = scanner.respond_to?(:description) ? scanner.description.to_s.strip : ""
+          description = "Assess #{key} for a clear breach and a concrete improvement." if description.empty?
+          return "#{key}: #{description}"
+        end
 
-        row = constitutional_laws[key]
-        return "#{key}: #{row["statement"] || row["ask"] || row["source"]}" if row
+        row = law_catalogue[key] || law_catalogue.find { |name, _entry| name.to_s.upcase == key }&.last
+        return "#{key}: #{Array(row["definition_sources"]).join(", ")} #{Array(row["detector_sources"]).join(", ")}".strip if row
 
         raise KeyError, "visual review referenced unknown Law #{key}"
       end
