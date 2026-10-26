@@ -338,7 +338,7 @@ module Master
         if safe.key?(:paths)
           paths = Array(safe.delete(:paths)).map(&:to_s).sort
           safe[:paths_count] = paths.size
-          safe[:paths_digest] = Digest::SHA256.hexdigest(paths.join("\\0"))
+          safe[:paths_digest] = Digest::SHA256.hexdigest(paths.join("\0"))
         end
 
         %i[error result message detail output].each do |key|
