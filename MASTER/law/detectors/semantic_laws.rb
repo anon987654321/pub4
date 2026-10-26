@@ -179,8 +179,9 @@ module Master
           include NeedsModel
 
           def check(code, path:)
+            # Do not skip unknown-language text: semantic interpretation is
+            # language-agnostic, while lexical and AST adapters keep their dispatch.
             lang = language(path)
-            return [] unless lang
             raise "semantic assessment INCONCLUSIVE: no model agent configured for #{path}" unless @agent
             if quota_paused?
               raise "semantic assessment INCONCLUSIVE: quota check paused model assessment for #{path}"
