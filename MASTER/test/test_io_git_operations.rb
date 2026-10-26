@@ -101,6 +101,26 @@ class GitOperationsTest < Minitest::Test
     assert_equal remote_before, remote_after, "the remote must remain unchanged when the required before-event cannot be stored"
   end
 
+  def test_failed_after_audit_leaves_marker_and_blocks_a_retry
+    write("uncertain-publication.txt", "local\\n")
+    @git.commit("uncertain publication", paths: ["uncertain-publication.txt"])
+    remote_before = sh("git", "--git-dir", @remote, "rev-parse", "refs/heads/main", chdir: @tmp).strip
+    @bus.failure = "git:mutation:after"
+
+    assert_raises(IOError) { @git.push }
+
+    marker_root = File.join(@repo, ".master", "git_mutations")
+    assert File.directory?(marker_root)
+    assert_equal 1, Dir.children(marker_root).count { |name| name.start_with?(".pending-") }
+    remote_after = sh("git", "--git-dir", @remote, "rev-parse", "refs/heads/main", chdir: @tmp).strip
+    refute_equal remote_before, remote_after, "the remote may have accepted the push before the after-record failed"
+
+    @bus.failure = nil
+    error = assert_raises(IOError) { @git.push }
+    assert_match(/incomplete Git audit; manual review required/, error.message)
+    assert_equal remote_after, sh("git", "--git-dir", @remote, "rev-parse", "refs/heads/main", chdir: @tmp).strip
+  end
+
   def test_a_clean_repository_reports_clean
     refute @git.dirty?(".")
     assert_empty @git.status_lines
