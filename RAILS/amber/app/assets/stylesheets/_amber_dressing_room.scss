@@ -24,6 +24,31 @@
   background: #000;
 }
 
+
+.mannequin-3d-caption {
+  position: absolute;
+  inset-inline: var(--space-3);
+  inset-block-end: var(--space-4);
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  max-width: 30ch;
+  margin-inline: auto;
+  color: var(--luxury-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  text-align: center;
+  pointer-events: none;
+}
+
+.mannequin-caption-label {
+  color: var(--luxury-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+}
+
 .mannequin {
   position: relative;
   width: 200px;
