@@ -36,6 +36,12 @@ module Master
         token.freeze
       end
 
+      def skill_tokens(values, label)
+        tokens = Array(values).map { |value| token!(value, label).downcase }.uniq
+        tokens.freeze
+      end
+      module_function :skill_tokens
+
       # Durable diagnostics carry correlation, not raw provider errors, prompts,
       # file paths or upstream response bodies. The caller retains the original
       # error locally for an actionable result.
@@ -71,6 +77,63 @@ module Master
 
         # The reference records provenance, never the referenced private content.
         def to_h = { id:, kind:, digest:, status:, verifier: }.compact
+      end
+
+      # Declarative skill metadata never grants authority by itself. A skill
+      # becomes eligible for autonomous promotion only when it names applicable
+      # Laws, fixtures, and verified evidence; the runtime's capability policy
+      # still decides which tools the current agent can use.
+      SKILL_STATES = %i[available candidate validated approved disabled].freeze
+
+      SkillContract = Data.define(
+        :name, :version, :revision, :source, :required_capabilities,
+        :law_ids, :fixture_ids, :state, :evidence_refs
+      ) do
+        def initialize(name:, version: "1", revision:, source:, required_capabilities: [:prompt_context],
+                       law_ids: [], fixture_ids: [], state: :available, evidence_refs: [])
+          name = Contract.token!(name, "skill name")
+          version = Contract.token!(version, "skill version")
+          revision = revision.to_s.downcase
+          raise ArgumentError, "skill revision must be a SHA-256 hex digest" unless Contract::SHA256.match?(revision)
+
+          source = source.to_s.downcase
+          raise ArgumentError, "invalid skill source" unless Contract::KIND.match?(source)
+
+          capabilities = Contract.skill_tokens(required_capabilities, "skill capability")
+          laws = Contract.skill_tokens(law_ids, "skill Law ID")
+          fixtures = Contract.skill_tokens(fixture_ids, "skill fixture ID")
+          state = state.to_sym
+          raise ArgumentError, "unknown skill state: #{state}" unless Contract::SKILL_STATES.include?(state)
+
+          references = Array(evidence_refs)
+          unless references.all? { |ref| ref.is_a?(Contract::EvidenceReference) }
+            raise ArgumentError, "skill evidence must use typed EvidenceReference values"
+          end
+
+          super(
+            name:, version:, revision: revision.freeze, source: source.freeze,
+            required_capabilities: capabilities, law_ids: laws, fixture_ids: fixtures,
+            state:, evidence_refs: references.freeze
+          )
+        end
+
+        def promotion_ready?
+          !law_ids.empty? && !fixture_ids.empty? && !evidence_refs.empty? &&
+            evidence_refs.all? { |reference| reference.status == :verified }
+        end
+
+        # A metadata field saying "approved" cannot promote a skill by itself.
+        # Promotion requires the evidence contract as well as an approved state.
+        def approved? = state == :approved && promotion_ready?
+
+        def to_h
+          {
+            schema_version: 1, name:, version:, revision:, source:,
+            required_capabilities:, law_ids:, fixture_ids:, state:,
+            promotion_ready: promotion_ready?, approved: approved?,
+            evidence_refs: evidence_refs.map(&:to_h)
+          }
+        end
       end
 
       # One normalized verifier outcome. It adapts existing check and proof
