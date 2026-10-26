@@ -23,7 +23,7 @@ module Master
       LEASE_RENEW_SECONDS = 60
       RETRY_BASE_SECONDS = 60
       RETRY_MAX_SECONDS = 3_600
-      STATES = %w[queued running waiting completed failed blocked interrupted].freeze
+      STATES = %w[queued running waiting completed failed blocked interrupted cancelled].freeze
       RESUMABLE_STATES = %w[running waiting].freeze
       STAGES = %w[discover plan execute verify deliver].freeze
 
