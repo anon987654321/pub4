@@ -679,15 +679,12 @@ module Master
                                    visual:, opportunities:)
           declared_surfaces = Array(info[:surfaces]).map(&:to_sym)
           return assessment_result(:not_applicable, reason: "Law does not declare the #{surface} surface") unless declared_surfaces.include?(surface)
-
-          if info[:unmeasurable_reason]
-            return assessment_result(:inconclusive, reason: info[:unmeasurable_reason], evidence:)
-          end
           unless info[:streams].include?(stream)
             return assessment_result(:not_applicable, reason: "Law has no #{stream} detector/assessor")
           end
-
-          return assessment_result(:inconclusive, reason: "#{surface} has no assessor for this Law adapter", evidence:) unless assessment_surface_supported?(info, surface)
+          if info[:unmeasurable_reason]
+            return assessment_result(:inconclusive, reason: info[:unmeasurable_reason], evidence:)
+          end
 
           case info[:source_kind]
           when :opportunity
@@ -700,9 +697,8 @@ module Master
             end
             return assessment_result(:opportunity_found, evidence:, findings: rows) if rows.any?
 
-            # OpportunityPass aggregates tree, file, and design heuristics into
-            # one finding list; it does not report which surface each heuristic
-            # examined. A zero-finding result cannot be copied onto every surface.
+            # This adapter aggregates heuristics and does not publish a per-surface
+            # clean receipt. Its absence of findings is not evidence of clean scope.
             return assessment_result(
               :inconclusive,
               reason: "opportunity assessor does not publish per-surface clean receipts",
@@ -721,9 +717,48 @@ module Master
           end
 
           scoped_files = observation[:files].select do |path|
-            assessment_law_applies?(info, path) && assessment_surface_applies?(info, surface, path)
+            assessment_law_applies?(info, path) &&
+              assessment_surface_applies?(info, surface, path, stream:)
           end
           return assessment_result(:not_applicable, reason: "no eligible file matches this Law/surface scope") if scoped_files.empty?
+          unless assessment_surface_supported?(info, surface, stream:)
+            return assessment_result(:inconclusive, reason: "#{surface} has no assessor for this Law/stream adapter", evidence:)
+          end
+
+          cell_evidence = Array(evidence)
+          if surface == :structured_data
+            parsed = scoped_files.map { |path| parse_structured_surface(path) }
+            failure = parsed.find { |row| row[:status] != :assessed_clean }
+            if failure
+              return assessment_result(:inconclusive, reason: failure[:reason], evidence: cell_evidence)
+            end
+            cell_evidence += parsed.flat_map { |row| row[:evidence] }
+          elsif surface == :syntax_tree
+            receipts = @scanner.respond_to?(:ast_assessments) ? @scanner.ast_assessments : {}
+            source_hashes = @assessment_plan.source_hashes.to_h do |relative, sha|
+              [File.expand_path(relative, @assessment_plan.root), sha]
+            end
+            missing = []
+            receipt_evidence = []
+            scoped_files.each do |path|
+              receipt = receipts[File.expand_path(path)]
+              expected = source_hashes[File.expand_path(path)]
+              unless receipt && receipt["status"] == "assessed" &&
+                     expected && receipt["sha256"] == expected
+                missing << path
+                next
+              end
+              receipt_evidence << "prism_ast=#{File.basename(path)} sha256=#{receipt["sha256"]}"
+            end
+            if missing.any?
+              return assessment_result(
+                :inconclusive,
+                reason: "syntax tree receipt missing/stale for #{missing.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}",
+                evidence: cell_evidence
+              )
+            end
+            cell_evidence += receipt_evidence
+          end
 
           found = Array(observation[:findings][[law_id, stream]]).select do |row|
             scoped_files.include?(row["file"])
@@ -731,21 +766,24 @@ module Master
           assessment_result_for_scope(
             stream:, applicable: scoped_files, found:, observation:, signatures_stable:,
             semantic: %i[semantic_violations semantic_opportunities].include?(stream),
-            semantic_gaps:, pending:, evidence:
+            semantic_gaps:, pending:, evidence: cell_evidence
           )
         end
 
-        def assessment_surface_supported?(info, surface)
+        def assessment_surface_supported?(info, surface, stream:)
+          semantic = %i[semantic_violations semantic_opportunities].include?(stream)
           case info[:source_kind]
           when :canonical
-            # SemanticLaw sends the complete source or returns INCONCLUSIVE when
-            # its context ceiling is exceeded. Whole-file and line evidence are
-            # covered; parser-backed sections/data/docs still need their own
-            # adapters and cannot inherit cleanliness from a text scan.
-            %i[whole_file lines].include?(surface)
-          when :scanner
             return true if %i[whole_file lines].include?(surface)
-            return surface == :syntax_tree if info[:scanner_law]&.respond_to?(:check_ast)
+            return semantic if surface == :sections
+            return %i[yaml json].include?(Master.language_for(@assessment_plan.root).to_s) if false
+
+            false
+          when :scanner
+            return true if surface == :whole_file
+            return semantic || !info[:scanner_law]&.respond_to?(:check_ast) if surface == :lines
+            return semantic if surface == :sections
+            return surface == :syntax_tree && info[:scanner_law]&.respond_to?(:check_ast)
             false
           when :yaml_declarative
             %i[whole_file lines].include?(surface)
