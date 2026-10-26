@@ -160,7 +160,7 @@ detail: [
                    "/task verify-step <id> <step-id> <evidence> records evidence; it is not independently authenticated.",
                    "/task block-step <id> <step-id> <reason> | block <id> <reason> | resume <id> <note>.",
                    "/task complete <id> <evidence> requires every step to be verified. /task update <id> title|description|priority|due_at <value>.",
-                   "Tasks stay in an owner-local, permission-restricted file. MASTER does not execute task steps or claim to send reminders."],
+                   "Tasks stay in an owner-local, permission-restricted file. MASTER does not execute task steps. A task with a due time rings in an open interactive session, and only there."],
         },
         "agenda" => {
           summary: "read a paired owner's imported local calendar",

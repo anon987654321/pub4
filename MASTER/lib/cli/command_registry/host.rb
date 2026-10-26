@@ -342,7 +342,7 @@ module Master
       end
 
       # /task is a local, durable personal task board. It records supplied
-      # verification evidence but never executes actions or claims to send reminders.
+      # verification evidence but never executes actions; a due task rings only in an open session.
       def dispatch_task(root, ctx: nil)
         return "task: local-owner only; visitor sessions cannot access personal tasks" if Fiber[:master_visitor] == true
 

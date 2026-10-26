@@ -66,8 +66,6 @@ source and tests they could not run; this pass is what measures them.
 - [ ] Latency: a monotonic timeline for boot, first token, completed reply and greeting, CLI and
   web separately, on current HEAD (17.6 s boot and 13–16 s replies on 2026-10-23). Stream the
   first words of a reply; a failed stream says so before switching lanes.
-- [ ] Reminders: resolve relative times in the declared timezone, deliver through the face, and
-  say at acceptance whether anything will ring.
 - [ ] CLI cancellation in a PTY: Ctrl-C mid-generation, Ctrl-D, SIGTERM, child timeout; terminal
   modes restored; NO_COLOR, TERM=dumb and non-TTY piping; no face in a dumb terminal.
 - [ ] Owner preferences: two repeated corrections surface a pending suggestion, acceptance is

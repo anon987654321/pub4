@@ -7,6 +7,7 @@ require_relative "session/thinking_indicator"
 require_relative "activity"
 require_relative "session/result_display"
 require_relative "session/background_scan"
+require_relative "session/reminders"
 require_relative "session/repl_flow"
 require_relative "session/greeting"
 require_relative "session/bridge_run"
@@ -73,6 +74,7 @@ module Master
         @running = true
         play_boot_sound
         start_bed
+        start_reminder_watch
         if face_on_start?(initial_message)
           @face_open = true
           run_face

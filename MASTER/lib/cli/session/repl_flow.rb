@@ -92,6 +92,7 @@ module Master
         Master::Voice::Bed.stop
         shutdown_interactive_queue! if $stdin.tty? && $stdout.tty?
         stop_background_loop
+        stop_reminder_watch
         save_cli_history
         save_session_on_exit
       rescue StandardError => e

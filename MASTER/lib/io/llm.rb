@@ -591,12 +591,15 @@ module Master
       class AssistantTasks < RubyLLM::Tool
         include ToolForwarding
 
-        description "Keep a durable owner-local task list with bounded steps and recorded verification evidence. Does not execute actions or send notifications."
+        description "Keep a durable owner-local task list with bounded steps and recorded verification evidence. " \
+                    "Does not execute actions. A task with a due time rings in an open interactive session, " \
+                    "not otherwise; tell the person so."
         parameter :action, description: "list, show, create, update, add_step, start_step, block_step, verify_step, block, resume or complete", required: true
         parameter :id, description: "Task id returned by create/list", required: false
         parameter :title, description: "Task title (for create/update)", required: false
         parameter :description, description: "Optional task detail", required: false
-        parameter :due_at, description: "ISO-8601 due time; use none to clear", required: false
+        parameter :due_at, description: "When it is due: ISO-8601, or the person's words such as " \
+                                        "tomorrow at 9, i morgen kl 9, in 20 minutes; none clears", required: false
         parameter :priority, description: "low, normal or high", required: false
         parameter :step_id, description: "Step id returned by add_step", required: false
         parameter :step_title, description: "New step title", required: false

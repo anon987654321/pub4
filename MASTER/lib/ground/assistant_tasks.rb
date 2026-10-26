@@ -5,6 +5,7 @@ require "json"
 require "securerandom"
 require "time"
 require_relative "../io/atomic_write"
+require_relative "reminder_time"
 
 module Master
   module Ground
@@ -26,7 +27,10 @@ module Master
       TASK_STATES = %w[open in_progress blocked completed].freeze
       STEP_STATES = %w[pending in_progress blocked verified].freeze
       PRIORITIES = %w[low normal high].freeze
-      MUTATIONS = %w[create update add_step start_step block_step verify_step block resume complete].freeze
+      MUTATIONS = %w[create update add_step start_step block_step verify_step block resume complete reminded].freeze
+      # Said when a due time is accepted, so no one is told a reminder will ring that will not.
+      DELIVERY = "Rings in an open interactive MASTER session (bin/master) once it is due; " \
+                 "nothing rings while no session is open.".freeze
 
       def initialize(root: Master::ROOT, subject: nil, bus: nil, clock: -> { Time.now.utc })
         @root = File.expand_path(root)
@@ -62,6 +66,16 @@ module Master
         raise Error, "task ledger is corrupt; no data was overwritten (#{e.message})"
       end
 
+      # Tasks whose due time has passed, not completed and not yet rung.
+      def due_reminders
+        current = Time.iso8601(now)
+        with_lock do
+          read_state.fetch("tasks").select do |task|
+            task["state"] != "completed" && task["reminded_at"].nil? && overdue?(task, current)
+          end.map { |task| public_task(task) }
+        end
+      end
+
       private
 
       def dispatch(state, action, id:, title:, description:, due_at:, priority:,
@@ -78,6 +92,7 @@ module Master
         when "block" then block!(state, id, note:)
         when "resume" then resume!(state, id, note:)
         when "complete" then complete!(state, id, evidence:)
+        when "reminded" then reminded!(state, id)
         end
       end
 
@@ -97,7 +112,7 @@ module Master
           "count" => rows.size,
           "tasks" => rows.first(50).map { |task| public_task(task).merge("overdue" => overdue?(task, current_time)) },
           "truncated" => rows.size > 50,
-          "note" => "Due dates are stored and overdue tasks are labeled when listed. This local ledger does not send background notifications."
+          "note" => "Overdue tasks are labeled when listed. #{DELIVERY}"
         }
       end
 
@@ -111,6 +126,7 @@ module Master
           "description" => bounded_text(description, MAX_DESCRIPTION_BYTES),
           "priority" => normalize_priority(priority || "normal"),
           "due_at" => normalize_due(due_at),
+          "reminded_at" => nil,
           "state" => "open",
           "steps" => [],
           "verification_note" => nil,
@@ -119,17 +135,29 @@ module Master
           "completed_at" => nil
         }
         state["tasks"] << task
+        delivered(public_task(task))
+      end
+
+      def delivered(task) = task["due_at"] ? task.merge("delivery" => DELIVERY) : task
+
+      def reminded!(state, id)
+        task = task!(state, id)
+        task["reminded_at"] = now
         public_task(task)
       end
 
       def update!(state, id, title:, description:, due_at:, priority:)
         task = task!(state, id)
         raise Error, "completed tasks cannot be edited; reopen by creating a follow-up task" if task["state"] == "completed"
+        raise Error, "blocked tasks need an explicit resume before they are edited" if task["state"] == "blocked"
 
         task["title"] = required_text(title, "title", MAX_TITLE_BYTES) unless title.nil?
         task["description"] = bounded_text(description, MAX_DESCRIPTION_BYTES) unless description.nil?
         task["priority"] = normalize_priority(priority) unless priority.nil?
-        task["due_at"] = normalize_due(due_at) unless due_at.nil?
+        unless due_at.nil?
+          task["due_at"] = normalize_due(due_at)
+          task["reminded_at"] = nil
+        end
         task["updated_at"] = now
         public_task(task)
       end
@@ -249,9 +277,18 @@ module Master
       def normalize_due(value)
         return nil if value.nil? || value.to_s.strip.empty? || value.to_s.strip.downcase == "none"
 
-        Time.iso8601(value.to_s).utc.iso8601
-      rescue ArgumentError
-        raise Error, "due_at must be an ISO-8601 timestamp, or none to clear it"
+        due = ReminderTime.resolve(value, zone: owner_zone, now: Time.iso8601(now))
+        return due.iso8601 if due
+
+        raise Error, "due_at must be an ISO-8601 time, a clock time such as \"tomorrow at 9\" or \"i morgen kl 9\", " \
+                     "a delay such as \"in 20 minutes\", or none to clear it"
+      end
+
+      # The owner profile's timezone, else the process's own.
+      def owner_zone
+        Master::Device::OwnerProfile.values(root: @root, subject: @subject)["timezone"]
+      rescue StandardError
+        nil
       end
 
       def required_text(value, name, max_bytes)

@@ -75,7 +75,7 @@ class AssistantTasksTest < Minitest::Test
     overdue = call("list").fetch("tasks").find { |row| row["title"] == "Overdue task" }
 
     assert_equal true, overdue.fetch("overdue")
-    assert_match(/does not send background notifications/, call("list").fetch("note"))
+    assert_match(/nothing rings while no session is open/, call("list").fetch("note"))
   end
 
   def test_list_is_bounded_searchable_and_marks_notification_limitation
@@ -85,7 +85,7 @@ class AssistantTasksTest < Minitest::Test
     assert_equal 55, all.fetch("count")
     assert_equal 50, all.fetch("tasks").size
     assert_equal true, all.fetch("truncated")
-    assert_match(/does not send background notifications/, all.fetch("note"))
+    assert_match(/nothing rings while no session is open/, all.fetch("note"))
     assert_equal false, all.fetch("tasks").find { |row| row["title"] == "Routine task 54" }.fetch("overdue")
     assert_equal 1, call("list", query: "Routine task 54").fetch("tasks").size
   end
