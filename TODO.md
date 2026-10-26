@@ -579,3 +579,10 @@ and interactive-behavior evidence outside the current Rails visual adapter, comp
 cross-file and media/compiled-asset assessors, test/runtime/deployment probes, and a
 per-surface clean-receipt contract for opportunity assessment. A full matrix that exposes
 these missing assessors will correctly finish BLOCKED rather than report DONE.
+
+## Architecture tournament evidence (2026-10-26)
+
+- [ ] Run `MASTER/test/test_architecture_exploration.rb` on the pinned repository toolchain; this environment only reviewed the source and did not execute Ruby tests.
+- [ ] Exercise requested `/fix` against the repository root and verify four independent reports (MASTER, RAILS, OPENBSD, STUDIO), each with 30–40 materially distinct candidates, grounded evidence, a local scorecard, qualified alternatives, and explicit NOT_RUN execution proof until actual verification runs.
+- [ ] Inspect the new tournament decision fields in emitted run events and confirm their persistence across process interruption; source-level integration is not durability proof.
+- [ ] Keep all 90 UI/UX micro-refinements canonical in `MASTER/data/ux_refinements.yml`; they remain acceptance contracts, not blanket styling instructions or completed implementation claims.
