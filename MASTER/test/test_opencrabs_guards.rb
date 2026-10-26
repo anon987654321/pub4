@@ -121,6 +121,32 @@ class TestOpenCrabsGuards < Minitest::Test
     def publish(name, _payload = {}) = @events << name
   end
 
+  class PayloadBus
+    attr_reader :events
+    def initialize = @events = []
+    def publish(name, payload = {}) = @events << [name, payload]
+  end
+
+  def test_public_tool_events_hash_private_subjects_and_errors
+    secret = "/private/home/member.txt"
+    bus = PayloadBus.new
+    tool = Object.new
+    tool.define_singleton_method(:call) { |**| Master::Result.err("cannot read #{secret}", category: :io) }
+    wrapper = Wrapper.new(tool, bus:)
+
+    wrapper.run(path: secret)
+
+    call = bus.events.find { |name, _| name == "tool:call" }.last
+    returned = bus.events.find { |name, _| name == "tool:return" }.last
+    refute call.key?(:subject)
+    assert_equal "path", call[:subject_kind]
+    assert_equal Digest::SHA256.hexdigest(secret), call[:subject_digest]
+    refute_includes call.inspect, secret
+    refute returned.key?(:error)
+    assert_equal Digest::SHA256.hexdigest("cannot read #{secret}"), returned[:error_digest]
+    refute_includes returned.inspect, secret
+  end
+
   def test_a_refused_repeat_is_bracketed_so_dmesg_prints_it
     bus = RecordingBus.new
     wrapper = Wrapper.new(EchoTool.new, bus:)

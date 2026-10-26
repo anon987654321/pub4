@@ -615,16 +615,39 @@ module Master
           ["fold0: reason metadata unavailable"]
         end
 
+        def public_subject(payload)
+          kind = payload[:subject_kind].to_s
+          bytes = payload[:subject_bytes]
+          digest = payload[:subject_digest].to_s
+          if !kind.empty? && bytes.to_s.match?(/\A\d+\z/)
+            suffix = digest.match?(/\A[0-9a-f]{64}\z/) ? ", sha256 #{digest[0, 12]}" : ""
+            return "#{kind} target (#{bytes} bytes#{suffix})"
+          end
+
+          legacy = payload[:subject].to_s
+          legacy.empty? ? "target unavailable" : "target redacted (#{legacy.bytesize} bytes)"
+        end
+
+        def public_error(payload)
+          digest = payload[:error_digest].to_s
+          bytes = payload[:error_bytes]
+          if digest.match?(/\A[0-9a-f]{64}\z/) && bytes.to_s.match?(/\A\d+\z/)
+            return "failed (#{bytes} bytes, sha256 #{digest[0, 12]})"
+          end
+
+          payload.key?(:error) ? "failed (legacy diagnostic redacted)" : "failed"
+        end
+
         def tool_call(payload)
           kind, parent_unit = TOOL_UNITS.fetch(payload[:tool].to_s, [payload[:tool].to_s, "io0"])
           unit = open_unit(kind, "tool:#{payload[:tool]}")
-          [*parent(parent_unit, "master0"), "#{unit} at #{parent_unit}: #{clip(payload[:subject])}"]
+          [*parent(parent_unit, "master0"), "#{unit} at #{parent_unit}: #{public_subject(payload)}"]
         end
 
         def tool_return(payload)
           unit = @open.delete("tool:#{payload[:tool]}")
           return [] unless unit
-          return ["#{unit}: #{clip(payload[:error])}"] unless payload[:ok]
+          return ["#{unit}: #{public_error(payload)}"] unless payload[:ok]
 
           ["#{unit}: #{[size(payload[:bytes]), seconds(payload[:ms])].compact.join(', ')}"]
         end

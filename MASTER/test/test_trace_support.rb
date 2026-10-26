@@ -442,8 +442,8 @@ class TestTraceSupport < Minitest::Test
       "llm0 at master0: nvidia/nemotron-3-super-120b-a12b",
       "llm0: provider_error, Upstream error from Nvidia: Service temporarily overloaded",
       "io0 at master0: files and commands",
-      "read0 at io0: missing.rb",
-      "read0: no such file",
+      "read0 at io0: target redacted (10 bytes)",
+      "read0: failed (legacy diagnostic redacted)",
     ], lines
   end
 
