@@ -37,6 +37,17 @@ class ChromeAuditFlatContractTest < Minitest::Test
     refute_includes source, "→"
   end
 
+  def test_shared_vertical_motion_has_one_core_reduced_motion_contract
+    source = read("brgen/app/assets/stylesheets/_brgen_core_shell.scss")
+    guard = source.split("@media (prefers-reduced-motion: reduce)", 2).last
+    %w[nearby-alert nearby-alert-dot push-enable-btn match-overlay skeleton].each do |selector|
+      assert_includes guard, ".#{selector}"
+    end
+    assert_includes guard, "body.vertical-tv .live-badge"
+    assert_includes guard, 'body.vertical-messenger #typing-indicator[data-active="true"]::before'
+    assert_includes guard, "animation: none;"
+  end
+
   def test_consent_banner_is_mobile_first_and_restores_wide_layout
     source = read("__shared/app/assets/stylesheets/_cookie_banner.scss")
     mobile = source.split("@media (min-width: 768px)", 2).first

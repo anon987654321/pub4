@@ -38,6 +38,19 @@ label { display: block; font-size: var(--text-sm); color: var(--text-secondary);
   100% { background-position: -100% 0; }
 }
 
+/* Shared motion vocabulary: retain semantic states while stilling movement. */
+@media (prefers-reduced-motion: reduce) {
+  .nearby-alert,
+  .nearby-alert-dot,
+  .push-enable-btn,
+  .match-overlay,
+  body.vertical-tv .live-badge,
+  body.vertical-messenger #typing-indicator[data-active="true"]::before,
+  .skeleton {
+    animation: none;
+  }
+}
+
 // ============================================================ chrome: search palette and shell
 
 @include meta.load-css("responsive");
