@@ -60,6 +60,20 @@ class TestExecutionContract < Minitest::Test
     end
   end
 
+  def test_rollback_envelope_keeps_parent_effect_and_checkpoint_identity
+    effect = Master::Core::Effect.write("private.txt", "private")
+    envelope = Contract::EffectEnvelope.build(
+      effect:, turn: 4, effect_id: "rollback-1", operation: :rollback,
+      parent_effect_id: "effect-1", checkpoint_id: "checkpoint-1", run_id: "run-1"
+    )
+
+    assert_equal :rollback, envelope.operation
+    assert_equal "effect-1", envelope.parent_effect_id
+    assert_equal "checkpoint-1", envelope.checkpoint_id
+    refute_includes envelope.to_h.inspect, "private.txt"
+    refute_includes envelope.to_h.inspect, "private"
+  end
+
   def test_evidence_reference_is_typed_and_contains_no_content
     reference = Contract::EvidenceReference.new(
       id: "proof-1", kind: "test_output", status: :verified,
