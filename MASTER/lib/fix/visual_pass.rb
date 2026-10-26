@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "json"
+require "digest"
 require_relative "../io/exec"
 require "tmpdir"
 require_relative "../review/council/critique"
@@ -169,9 +170,10 @@ module Master
         payload["composition"] = { "state" => "resting", "base_surface" => surface.id }
         shot = File.join(@dir, "#{safe_slug(surface.id)}.png")
         cdp.screenshot(shot, capture_beyond_viewport: true)
-        journeys = Deploy::MobileJourneyProbe.run(cdp, surface, @dir)
+        journey_evidence = Deploy::MobileJourneyProbe.measure(cdp, surface, @dir)
+        journeys = journey_evidence.fetch("actions")
         platform = Deploy::WebPlatformProbe.run(cdp, surface)
-        { surface:, payload:, screenshot: shot, journeys:, platform: }
+        { surface:, payload:, screenshot: shot, journeys:, journey_evidence:, platform: }
       end
 
       def run_critique(captures, sources, anchors, graph:)
@@ -199,12 +201,38 @@ module Master
         return findings if findings.is_a?(Result)
 
         @bus&.publish("fix_loop:visual_review", pass:, surfaces: captures.map { |c| c[:surface].id }, findings: findings.size, coverage: coverage[:ratio], graph: graph&.context)
+        surface_evidence = captures.map do |capture|
+          screenshot = capture[:screenshot]
+          payload = capture[:payload]
+          screenshot_ready = File.file?(screenshot) && File.size(screenshot).positive?
+          {
+            "id" => capture[:surface].id,
+            "app" => capture[:surface].app,
+            "viewport" => capture[:surface].viewport,
+            "url" => capture[:surface].url,
+            "rendered_status" => screenshot_ready && Deploy::GeometryProbe.ok?(payload) ? "assessed_clean" : "inconclusive",
+            "screenshot_sha256" => screenshot_ready ? Digest::SHA256.file(screenshot).hexdigest : nil,
+            "geometry_sha256" => Digest::SHA256.hexdigest(JSON.generate(payload)),
+            "element_count" => Array(payload["elements"]).size,
+            "journey" => capture[:journey_evidence],
+            "platform" => capture[:platform],
+          }.compact
+        rescue StandardError => e
+          {
+            "id" => capture[:surface].id,
+            "app" => capture[:surface].app,
+            "viewport" => capture[:surface].viewport,
+            "rendered_status" => "inconclusive",
+            "reason" => "#{e.class}: #{e.message.to_s.gsub(/\s+/, " ").strip[0, 180]}",
+          }
+        end
         Result.ok(
           state: findings.empty? ? :clean : :findings,
           findings:,
           image:,
           artifact:,
           coverage: coverage.merge(captured: captures.map { |c| c[:surface].id }),
+          surface_evidence:,
         )
       end
 

@@ -151,52 +151,114 @@ module Deploy
       JSON.parse(cdp.evaluate(ACTION_DISCOVERY).to_s)
     end
 
+    # Compatibility API retained for existing mobile-only consumers.
     def self.run(cdp, surface, dir)
       return [] unless surface.viewport == "mobile"
 
+      measure(cdp, surface, dir).fetch("actions")
+    end
+
+    # Universal viewport probe. Only safe same-origin controls are discovered;
+    # forms with non-GET methods and destructive/logout actions are excluded by
+    # ACTION_DISCOVERY. A missing control is NOT_APPLICABLE, not a false pass.
+    def self.measure(cdp, surface, dir)
+      actions = discover(cdp)
+      return { "status" => "not_applicable", "reason" => "no safe measurable controls", "actions" => [] } if actions.empty?
+
       states = []
-      discover(cdp).each_with_index do |action, index|
+      actions.each_with_index do |action, index|
         cdp.navigate(surface.url)
         sleep 0.1
         baseline = state_signature(cdp)
 
-        result = cdp.evaluate(format(ACTION, selector: action.fetch("selector").to_json,
-                                      kind: action.fetch("kind").to_json))
+        raw_result = cdp.evaluate(format(ACTION, selector: action.fetch("selector").to_json,
+                                               kind: action.fetch("kind").to_json))
+        result = JSON.parse(raw_result.to_s)
         sleep 0.35
         if action["kind"] == "navigation"
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 3
-
           while Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
             break if cdp.evaluate("document.readyState").to_s == "complete"
             sleep 0.05
           end
         end
         after = state_signature(cdp)
+        changed = baseline != after
 
         slug = surface.id.gsub(/[^a-zA-Z0-9]+/, "-").downcase
-        path = File.join(dir, "journey-#{slug}-#{index}.png")
-        cdp.screenshot(path, capture_beyond_viewport: true)
-        states << action.merge("result" => JSON.parse(result.to_s), "changed" => baseline != after,
-                               "from" => surface.url, "to" => action["href"], "screenshot" => path)
+        screenshot = File.join(dir, "journey-#{slug}-#{index}.png")
+        cdp.screenshot(screenshot, capture_beyond_viewport: true)
+
+        status = action_status(action, result, baseline, after, changed)
+        states << action.merge(
+          "status" => status,
+          "result" => result,
+          "changed" => changed,
+          "from" => baseline["url"],
+          "to" => after["url"],
+          "screenshot" => screenshot
+        )
 
         if action["kind"] == "navigation" && after["url"] != baseline["url"]
           cdp.back
           back = state_signature(cdp)
-          states << action.merge("kind" => "navigation_back", "result" => {"ok" => true},
-                                 "changed" => back != baseline, "from" => after["url"],
-                                 "to" => surface.url)
+          back_changed = back != baseline
+          states << action.merge(
+            "kind" => "navigation_back",
+            "status" => back["url"] == baseline["url"] ? "assessed_clean" : "violation_found",
+            "result" => { "ok" => back["url"] == baseline["url"] },
+            "changed" => back_changed,
+            "from" => after["url"],
+            "to" => back["url"]
+          )
           cdp.forward
           forward = state_signature(cdp)
-
-          states << action.merge("kind" => "navigation_forward", "result" => {"ok" => true},
-                                 "changed" => forward != after, "from" => surface.url,
-                                 "to" => after["url"])
+          states << action.merge(
+            "kind" => "navigation_forward",
+            "status" => forward["url"] == after["url"] ? "assessed_clean" : "violation_found",
+            "result" => { "ok" => forward["url"] == after["url"] },
+            "changed" => forward != after,
+            "from" => back["url"],
+            "to" => forward["url"]
+          )
         end
       end
 
-      states
+      failures = states.select { |row| row["status"] == "violation_found" }
+      unknown = states.select { |row| row["status"] == "inconclusive" }
+      status = if failures.any?
+                 "violation_found"
+               elsif unknown.any?
+                 "inconclusive"
+               else
+                 "assessed_clean"
+               end
+      {
+        "status" => status,
+        "actions" => states,
+        "action_count" => states.size,
+        "failures" => failures.first(12),
+        "inconclusive" => unknown.first(12)
+      }
     rescue StandardError => e
-      raise "mobile journey probe failed: #{e.class}: #{e.message}"
+      raise "browser journey probe failed: #{e.class}: #{e.message}"
+    end
+
+    def self.action_status(action, result, before, after, changed)
+      return "violation_found" unless result.is_a?(Hash) && result["ok"] == true
+
+      case action["kind"]
+      when "validation"
+        result["active"] == true ? "assessed_clean" : "inconclusive"
+      when "focus", "search"
+        result["active"] == true ? "assessed_clean" : "violation_found"
+      when "navigation"
+        after["url"] != before["url"] ? "assessed_clean" : "violation_found"
+      when "toggle", "filter"
+        changed ? "assessed_clean" : "inconclusive"
+      else
+        changed ? "assessed_clean" : "inconclusive"
+      end
     end
   end
 end
