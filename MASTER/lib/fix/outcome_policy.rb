@@ -19,7 +19,8 @@ module Master
       MEASURED_REPAIR_OUTCOMES = {
         done: true, plateau: false, crash: false, skip: false, blocked: false,
         validation_failed: false, delivery_failed: false, timeout: false,
-        inconclusive: false, failed: false, reloading: false
+        inconclusive: false, failed: false, reloading: false,
+        cancelled: false, unknown_outcome: false
       }.freeze
 
       ERROR_STATES = {
