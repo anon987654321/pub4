@@ -146,6 +146,7 @@ module Operator
 
     def run_row(run)
       passes = Array(run["passes"])
+      assessment_details = assessment_proof_details(run)
       {
         id: run["id"].to_s[0, 8],
         state: run["state"].to_s,
@@ -159,18 +160,26 @@ module Operator
         finished: run["finished_at"].to_s,
         message: run["message"].to_s.gsub(/\s+/, " ").strip[0, 180],
         receipt: receipt_summary(run["evidence"]),
-        assessment_proof: assessment_proof_summary(run),
+        assessment_proof: assessment_proof_summary(assessment_details),
+        assessment_details: assessment_details,
       }
     end
 
     # Assessment integrity is read through the same verifier that /fix uses
-    # before DONE. Report missing proof as explicit work, never as an empty success.
-    def assessment_proof_summary(run)
+    # before DONE. Preserve structured details for JSON/API consumers as well.
+    def assessment_proof_details(run)
       receipt = run["assessment_receipt"]
-      return "not recorded" unless receipt.is_a?(Hash)
+      return { "status" => "not_recorded" } unless receipt.is_a?(Hash)
 
-      verification = @run_journal.verify_assessment_report(run["id"])
+      @run_journal.verify_assessment_report(run["id"])
+    rescue StandardError => e
+      { "status" => "unavailable", "error_class" => e.class.name }
+    end
+
+    def assessment_proof_summary(verification)
       state = verification["status"].to_s
+      return "not recorded" if state == "not_recorded"
+      return "unavailable" if state == "unavailable"
       return "unverified (#{state})" unless state == "verified"
 
       matrix = verification["matrix_status"].to_s
@@ -189,8 +198,6 @@ module Operator
       end
 
       "verified complete sha256=#{digest}"
-    rescue StandardError => e
-      "unavailable (#{e.class})"
     end
 
     # The receipt is convergence evidence, not proof of deployment, playback or
