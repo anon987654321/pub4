@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../law/definition"
+
 module Master
   module Fix
     # Runs every active law through four independent assessment streams on each
@@ -16,11 +18,7 @@ module Master
         semantic_opportunities
       ].freeze
 
-      SURFACES = %i[
-        repository_tree directories file_names paths whole_file sections lines
-        syntax_tree cross_file structured_data documentation media_assets
-        compiled_assets rendered_ui interactive_behavior tests runtime deployment
-      ].freeze
+      SURFACES = ::Law::ASSESSMENT_SURFACES
 
       FINDING_STATES = %i[violation_found opportunity_found].freeze
 
@@ -176,7 +174,7 @@ module Master
           latest = history[key].last
           next false unless latest
 
-          latest.status == :not_applicable ||
+          (latest.status == :not_applicable && latest.generation == generation) ||
             (latest.status == :assessed_clean && clean_streak(key) >= clean_passes)
         end
       end
