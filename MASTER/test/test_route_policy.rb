@@ -23,6 +23,33 @@ class TestRoutePolicy < Minitest::Test
     assert_equal router::Selection, router.instance_method(:constrained_for).owner
   end
 
+  def test_usable_candidates_are_preferred_over_unusable_candidates
+    result = decision(
+      candidates: %w[opus grok],
+      usable: %w[grok],
+      recently_failed: [],
+    )
+
+    assert_equal %w[grok], result.selected
+    assert_equal :answering_candidates, result.reason
+  end
+
+  def test_all_parked_candidates_are_reported_as_parked
+    result = decision(candidates: %w[opus grok], parked: %w[opus grok])
+
+    assert_empty result.selected
+    assert_equal %w[opus grok], result.parked
+    assert_equal :all_candidates_parked, result.reason
+  end
+
+  def test_no_candidate_input_is_reported_without_inventing_a_route
+    result = decision(candidates: [])
+
+    assert_empty result.candidates
+    assert_empty result.selected
+    assert_equal :no_reachable_candidates, result.reason
+  end
+
   def test_candidate_ids_are_normalized_once_without_changing_order
     result = decision(candidates: [" opus ", "grok", "opus", nil, ""])
 

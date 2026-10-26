@@ -27,8 +27,12 @@ module Master
           parked_ids = intersection(live, parked)
           unparked = live.reject { |id| parked_ids.include?(id) }
           usable_ids = intersection(unparked, usable)
-          failed = intersection(unparked, recently_failed)
-          answering = unparked.reject { |id| failed.include?(id) }
+          # If any lane is usable, never let an unusable-but-not-yet-failed lane
+          # outrank it. When none are usable, preserve the candidates so the
+          # downstream dispatcher can produce its typed offline diagnosis.
+          eligible = usable_ids.empty? ? unparked : usable_ids
+          failed = intersection(eligible, recently_failed)
+          answering = eligible.reject { |id| failed.include?(id) }
 
           if answering.any?
             selected = answering
@@ -46,7 +50,8 @@ module Master
                      end
           end
 
-          reason = :no_usable_candidates if selected.any? && usable_ids.empty?
+          selected_is_usable = selected.any? { |id| usable_ids.include?(id) }
+          reason = :no_usable_candidates if selected.any? && !selected_is_usable
 
           Decision.new(
             candidates: ids.freeze,
