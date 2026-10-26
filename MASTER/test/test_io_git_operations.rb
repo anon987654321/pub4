@@ -14,6 +14,16 @@ require "open3"
 # can reach the checkout it is running in, which matters more than usual: one of
 # the methods under test is reset_hard.
 class GitOperationsTest < Minitest::Test
+  class RecordingBus
+    attr_reader :events
+
+    def initialize = @events = []
+
+    def publish_required(name, payload = {})
+      @events << [name, payload]
+      self
+    end
+  end
 
   def setup
     @tmp = Dir.mktmpdir("git_operations_test")
@@ -22,7 +32,8 @@ class GitOperationsTest < Minitest::Test
 
     git_init_bare(@remote)
     clone(@remote, @repo)
-    @git = Master::Io::GitOperations.new(@repo)
+    @bus = RecordingBus.new
+    @git = Master::Io::GitOperations.new(@repo, event_bus: @bus)
   end
 
   def teardown
@@ -57,6 +68,21 @@ class GitOperationsTest < Minitest::Test
     path = File.join(@repo, relative)
     FileUtils.mkdir_p(File.dirname(path))
     File.write(path, content)
+  end
+
+  def test_git_push_has_required_before_and_after_events
+    @git.push
+
+    events = @bus.events.select do |name, payload|
+      name.start_with?("git:mutation:") && payload[:operation] == "git_push"
+    end
+    before_event, after_event = events
+
+    assert_equal %w[git:mutation:before git:mutation:after], events.map(&:first)
+    assert_equal before_event.last.fetch(:audit_id), after_event.last.fetch(:audit_id)
+    assert_equal "ok", after_event.last.fetch(:status)
+    assert_operator after_event.last.fetch(:elapsed_ms), :>=, 0
+    refute_includes events.inspect, @repo
   end
 
   def test_a_clean_repository_reports_clean
