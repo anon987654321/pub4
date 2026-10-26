@@ -4,7 +4,7 @@ require_relative "test_helper"
 # Zeitwerk is told to ignore this file (data/autoload.yml), so the semantic
 # tier only exists once something requires it — the same require every other
 # test of these rules makes.
-require "review/scan/laws/semantic_laws"
+require_relative "../law/detectors/semantic_laws
 
 class TestQuotaCheck < Minitest::Test
   Check = Master::Io::QuotaCheck
