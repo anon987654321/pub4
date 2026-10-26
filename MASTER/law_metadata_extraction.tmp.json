@@ -8988,6 +8988,2078 @@
       },
       "kind": "dsl",
       "line": 202
+    },
+    {
+      "id": "STRONG_PARAMETERS",
+      "path": "MASTER/law/detectors/ruby_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[SECURITY], applies_to: %i[ruby],\n          fires: \"Post.create(params[:post])\\n\",\n          does_not_fire: \"Post.create(params.require(:post).permit(:title))\\n\",\n          description: \"mass assignment goes through explicitly permitted attributes\" do |src, path:|"
+        },
+        "tags": [
+          "SECURITY"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "mass assignment goes through explicitly permitted attributes",
+        "fires": "Post.create(params[:post])\n",
+        "does_not_fire": "Post.create(params.require(:post).permit(:title))\n"
+      },
+      "kind": "dsl",
+      "line": 89
+    },
+    {
+      "id": "HASH_FETCH",
+      "path": "MASTER/law/detectors/ruby_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[READABILITY], applies_to: %i[ruby],\n          fires: \"value = options[:size] || 10\\n\",\n          does_not_fire: \"value = options.fetch(:size, 10)\\n\",\n          description: \"prefer Hash#fetch over [] with ||\" do |src, path:|"
+        },
+        "tags": [
+          "READABILITY"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "prefer Hash#fetch over [] with ||",
+        "fires": "value = options[:size] || 10\n",
+        "does_not_fire": "value = options.fetch(:size, 10)\n"
+      },
+      "kind": "dsl",
+      "line": 110
+    },
+    {
+      "id": "FIND_EACH",
+      "path": "MASTER/law/detectors/ruby_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[PERFORMANCE], applies_to: %i[ruby],\n          fires: \"  User.all.each { |u| u.touch }\\n\",\n          does_not_fire: \"  User.find_each(batch_size: 500) { |u| u.touch }\\n\",\n          description: \"use find_each for batch processing\" do |src, path:|"
+        },
+        "tags": [
+          "PERFORMANCE"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "use find_each for batch processing",
+        "fires": "  User.all.each { |u| u.touch }\n",
+        "does_not_fire": "  User.find_each(batch_size: 500) { |u| u.touch }\n"
+      },
+      "kind": "dsl",
+      "line": 138
+    },
+    {
+      "id": "NO_UPDATE_ATTRIBUTE",
+      "path": "MASTER/law/detectors/ruby_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[DATA_INTEGRITY], applies_to: %i[ruby],\n          fires: \"  user.update_attribute(:name, name)\\n\",\n          does_not_fire: \"  user.update!(name: name)\\n\",\n          description: \"replace update_attribute with update!\" do |src, path:|"
+        },
+        "tags": [
+          "DATA_INTEGRITY"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "replace update_attribute with update!",
+        "fires": "  user.update_attribute(:name, name)\n",
+        "does_not_fire": "  user.update!(name: name)\n"
+      },
+      "kind": "dsl",
+      "line": 148
+    },
+    {
+      "id": "PLUCK_OVER_MAP",
+      "path": "MASTER/law/detectors/ruby_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[PERFORMANCE], applies_to: %i[ruby],\n          fires: \"  ids = order.items.map(&:id)\\n\",\n          does_not_fire: \"  ids = order.items.pluck(:id)\\n\",\n          description: \"prefer pluck over map for single columns\" do |src, path:|"
+        },
+        "tags": [
+          "PERFORMANCE"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "prefer pluck over map for single columns",
+        "fires": "  ids = order.items.map(&:id)\n",
+        "does_not_fire": "  ids = order.items.pluck(:id)\n"
+      },
+      "kind": "dsl",
+      "line": 157
+    },
+    {
+      "id": "DEAD_CODE",
+      "path": "MASTER/law/detectors/ruby_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, autofix: \"remove_immediate_dead_code\", tags: %i[CLEAN_CODE], applies_to: %i[ruby],\n          fires: \"  return value\\n  log(value)\\n\",\n          # A guard clause keeps the next line reachable, which is the shape a bare\n          # \\b(return|raise)\\b read as unreachable across the whole tree.\n          does_not_fire: \"  return value if done?\\n  log(value)\\n\",\n          description: \"eliminate unreachable code\" do |src, path:|"
+        },
+        "tags": [
+          "CLEAN_CODE"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "autofix": "remove_immediate_dead_code",
+        "description": "eliminate unreachable code",
+        "fires": "  return value\n  log(value)\n",
+        "does_not_fire": "  return value if done?\n  log(value)\n"
+      },
+      "kind": "dsl",
+      "line": 170
+    },
+    {
+      "id": "ABC_SIZE",
+      "path": "MASTER/law/detectors/ruby_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[COMPLEXITY], applies_to: %i[ruby], autofix: false,\n          description: \"method ABC size over the ratchet threshold — extract until the pieces name themselves\",\n          example_path: \"/repo/lib/example.rb\",\n          fires: \"def dense(x)\\n\" + Array.new(20) { |i| \"  v#{i} = x.call(#{i}) if x.ok?(#{i})\\n\" }.join + \"end\\n\",\n          does_not_fire: \"def calm(x)\\n  y = x.call\\n  y ? y.to_s : nil\\nend\\n\" do |src, path:|"
+        },
+        "tags": [
+          "COMPLEXITY"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "autofix": {
+          "expression": "false,\n          description: \"method ABC size over the ratchet threshold — extract until the pieces name themselves\",\n          example_path: \"/repo/lib/example.rb\",\n          fires: \"def dense(x)\\n\" + Array.new(20) { |i| \"  v#{i} = x.call(#{i}) if x.ok?(#{i})\\n\" }.join + \"end\\n\",\n          does_not_fire: \"def calm(x)\\n  y = x.call\\n  y ? y.to_s : nil\\nend\\n\" do |src, path:|"
+        },
+        "description": "method ABC size over the ratchet threshold — extract until the pieces name themselves",
+        "fires": "def dense(x)\n",
+        "does_not_fire": "def calm(x)\n  y = x.call\n  y ? y.to_s : nil\nend\n",
+        "example_path": "/repo/lib/example.rb"
+      },
+      "kind": "dsl",
+      "line": 216
+    },
+    {
+      "id": "TRAILING_COMMAS",
+      "path": "MASTER/law/detectors/ruby_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[STYLE], applies_to: %i[ruby],\n          fires: %(LIST = [\\n  \"one\"\\n]\\n),\n          does_not_fire: %(LIST = [\\n  \"one\",\\n]\\n),\n          description: \"trailing commas in multi-line collections\" do |src, path:|"
+        },
+        "tags": [
+          "STYLE"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "description": "trailing commas in multi-line collections",
+        "fires": {
+          "expression": "%(LIST = [\\n  \"one\"\\n]\\n),\n          does_not_fire: %(LIST = [\\n  \"one\",\\n]\\n),\n          description: \"trailing commas in multi-line collections\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(LIST = [\\n  \"one\",\\n]\\n),\n          description: \"trailing commas in multi-line collections\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 248
+    },
+    {
+      "id": "adversarial",
+      "path": "MASTER/law/detectors/semantic_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[ONE_JOB CQS GUARD_EXPENSIVE FAIL_VISIBLY COMPOSABLE],\n                  autofix: true, description: \"Red-team scan: steelman then challenge — suppresses false positives\""
+        },
+        "tags": [
+          "ONE_JOB",
+          "CQS",
+          "GUARD_EXPENSIVE",
+          "FAIL_VISIBLY",
+          "COMPOSABLE"
+        ],
+        "autofix": {
+          "expression": "true, description: \"Red-team scan: steelman then challenge — suppresses false positives\""
+        },
+        "description": "Red-team scan: steelman then challenge — suppresses false positives"
+      },
+      "kind": "declared_class",
+      "line": 106
+    },
+    {
+      "id": "semantic",
+      "path": "MASTER/law/detectors/semantic_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, autofix: true,\n                  description: \"LLM-based rule review (violations + opportunities)\""
+        },
+        "autofix": {
+          "expression": "true,\n                  description: \"LLM-based rule review (violations + opportunities)\""
+        },
+        "description": "LLM-based rule review (violations + opportunities)"
+      },
+      "kind": "declared_class",
+      "line": 167
+    },
+    {
+      "id": "comment_drift",
+      "path": "MASTER/law/detectors/semantic_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[SELF_EXPLAINING EXPLICIT], autofix: true,\n                  description: \"Comment claim doesn't match method body — comment is lying\""
+        },
+        "tags": [
+          "SELF_EXPLAINING",
+          "EXPLICIT"
+        ],
+        "autofix": {
+          "expression": "true,\n                  description: \"Comment claim doesn't match method body — comment is lying\""
+        },
+        "description": "Comment claim doesn't match method body — comment is lying"
+      },
+      "kind": "declared_class",
+      "line": 446
+    },
+    {
+      "id": "FILE_LAYOUT",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[PROXIMITY CONVENTION],\n                  description: \"frozen header → requires → module/class → public → private\""
+        },
+        "tags": [
+          "PROXIMITY",
+          "CONVENTION"
+        ],
+        "description": "frozen header → requires → module/class → public → private"
+      },
+      "kind": "declared_class",
+      "line": 17
+    },
+    {
+      "id": "EXPLICIT",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[EXPLICIT CONVENTION],\n                  description: \"no implicit requires or magic coupling\""
+        },
+        "tags": [
+          "EXPLICIT",
+          "CONVENTION"
+        ],
+        "description": "no implicit requires or magic coupling"
+      },
+      "kind": "declared_class",
+      "line": 110
+    },
+    {
+      "id": "CYCLOMATIC_COMPLEXITY",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[LINEARITY SMALL_PARTS],\n                  description: \"cyclomatic complexity under 10 per method\""
+        },
+        "tags": [
+          "LINEARITY",
+          "SMALL_PARTS"
+        ],
+        "description": "cyclomatic complexity under 10 per method"
+      },
+      "kind": "declared_class",
+      "line": 145
+    },
+    {
+      "id": "PATTERN_EXTRACTION",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[DESIGN OPPORTUNITY],\n                  description: \"file is close to a named design pattern\""
+        },
+        "tags": [
+          "DESIGN",
+          "OPPORTUNITY"
+        ],
+        "description": "file is close to a named design pattern"
+      },
+      "kind": "declared_class",
+      "line": 175
+    },
+    {
+      "id": "DATA_CLASS",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[SRP SOLID],\n                  description: \"data class with no behavior — use Struct or Data\""
+        },
+        "tags": [
+          "SRP",
+          "SOLID"
+        ],
+        "description": "data class with no behavior — use Struct or Data"
+      },
+      "kind": "declared_class",
+      "line": 227
+    },
+    {
+      "id": "LIB_ROOT_DISCIPLINE",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[ABSTRACTION ARCHITECTURE],\n                  description: \"new files shouldn't land directly in lib/ root\""
+        },
+        "tags": [
+          "ABSTRACTION",
+          "ARCHITECTURE"
+        ],
+        "description": "new files shouldn't land directly in lib/ root"
+      },
+      "kind": "declared_class",
+      "line": 274
+    },
+    {
+      "id": "SMALL_FILES",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[SMALL_PARTS], description: \"files under 300 lines\""
+        },
+        "tags": [
+          "SMALL_PARTS"
+        ],
+        "description": "files under 300 lines"
+      },
+      "kind": "declared_class",
+      "line": 316
+    },
+    {
+      "id": "SMALL_FUNCTIONS",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[SMALL_PARTS],\n                  description: \"methods under 10 lines ideal, max 20\""
+        },
+        "tags": [
+          "SMALL_PARTS"
+        ],
+        "description": "methods under 10 lines ideal, max 20"
+      },
+      "kind": "declared_class",
+      "line": 334
+    },
+    {
+      "id": "NO_GOD_CLASS",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[SOLID SRP], description: \"no god classes\""
+        },
+        "tags": [
+          "SOLID",
+          "SRP"
+        ],
+        "description": "no god classes"
+      },
+      "kind": "declared_class",
+      "line": 386
+    },
+    {
+      "id": "NESTING_DEPTH",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[LINEARITY], description: \"nesting depth under 4\""
+        },
+        "tags": [
+          "LINEARITY"
+        ],
+        "description": "nesting depth under 4"
+      },
+      "kind": "declared_class",
+      "line": 461
+    },
+    {
+      "id": "CQS",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[CQS CLEAN_CODE],\n                  description: \"command-query separation — mutate OR return, not both\""
+        },
+        "tags": [
+          "CQS",
+          "CLEAN_CODE"
+        ],
+        "description": "command-query separation — mutate OR return, not both"
+      },
+      "kind": "declared_class",
+      "line": 484
+    },
+    {
+      "id": "OPEN_CLOSED",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[SOLID OCP],\n                  description: \"case/when or is_a? chains that must grow on every new type\""
+        },
+        "tags": [
+          "SOLID",
+          "OCP"
+        ],
+        "description": "case/when or is_a? chains that must grow on every new type"
+      },
+      "kind": "declared_class",
+      "line": 569
+    },
+    {
+      "id": "LISKOV",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[SOLID LSP],\n                  description: \"subclass breaks the parent's contract via refused bequest or narrowed signature\""
+        },
+        "tags": [
+          "SOLID",
+          "LSP"
+        ],
+        "description": "subclass breaks the parent's contract via refused bequest or narrowed signature"
+      },
+      "kind": "declared_class",
+      "line": 598
+    },
+    {
+      "id": "DEPENDENCY_INVERSION",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[SOLID DIP],\n                  description: \"constructor hardcodes a concrete collaborator instead of accepting it as a dependency\""
+        },
+        "tags": [
+          "SOLID",
+          "DIP"
+        ],
+        "description": "constructor hardcodes a concrete collaborator instead of accepting it as a dependency"
+      },
+      "kind": "declared_class",
+      "line": 659
+    },
+    {
+      "id": "INTERFACE_SEGREGATION",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[SOLID ISP],\n                  description: \"large module forces includers to stub methods they don't use\""
+        },
+        "tags": [
+          "SOLID",
+          "ISP"
+        ],
+        "description": "large module forces includers to stub methods they don't use"
+      },
+      "kind": "declared_class",
+      "line": 696
+    },
+    {
+      "id": "MIDDLE_MAN",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[ENGINEERING_FIT ABSTRACTION],\n                  description: \"a class that only forwards to one object adds a name, not behaviour\""
+        },
+        "tags": [
+          "ENGINEERING_FIT",
+          "ABSTRACTION"
+        ],
+        "description": "a class that only forwards to one object adds a name, not behaviour"
+      },
+      "kind": "declared_class",
+      "line": 749
+    },
+    {
+      "id": "CONFIG_HIERARCHY",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[CONFIG HIERARCHY],\n                  description: \"config keys are grouped, non-duplicated, and shallow\""
+        },
+        "tags": [
+          "CONFIG",
+          "HIERARCHY"
+        ],
+        "description": "config keys are grouped, non-duplicated, and shallow"
+      },
+      "kind": "declared_class",
+      "line": 14
+    },
+    {
+      "id": "CODE_HIERARCHY",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[ARCHITECTURE HIERARCHY],\n                  description: \"related classes are grouped under clear namespaces\""
+        },
+        "tags": [
+          "ARCHITECTURE",
+          "HIERARCHY"
+        ],
+        "description": "related classes are grouped under clear namespaces"
+      },
+      "kind": "declared_class",
+      "line": 155
+    },
+    {
+      "id": "LONG_PARAMETER_LIST",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[BLOATERS API],\n                  description: \"methods accept at most four parameters\""
+        },
+        "tags": [
+          "BLOATERS",
+          "API"
+        ],
+        "description": "methods accept at most four parameters"
+      },
+      "kind": "declared_class",
+      "line": 185
+    },
+    {
+      "id": "PRIMITIVE_OBSESSION",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[BLOATERS DOMAIN_MODELING],\n                  description: \"clusters of primitives should become small domain objects\""
+        },
+        "tags": [
+          "BLOATERS",
+          "DOMAIN_MODELING"
+        ],
+        "description": "clusters of primitives should become small domain objects"
+      },
+      "kind": "declared_class",
+      "line": 211
+    },
+    {
+      "id": "BOOLEAN_TRAP",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[API DOMAIN_LANGUAGE],\n                  description: \"a positional boolean parameter makes every call site a riddle\""
+        },
+        "tags": [
+          "API",
+          "DOMAIN_LANGUAGE"
+        ],
+        "description": "a positional boolean parameter makes every call site a riddle"
+      },
+      "kind": "declared_class",
+      "line": 237
+    },
+    {
+      "id": "DATA_CLUMPS",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[BLOATERS DOMAIN_MODELING],\n                  description: \"the same parameters travelling together are a record struggling to be born\""
+        },
+        "tags": [
+          "BLOATERS",
+          "DOMAIN_MODELING"
+        ],
+        "description": "the same parameters travelling together are a record struggling to be born"
+      },
+      "kind": "declared_class",
+      "line": 274
+    },
+    {
+      "id": "COUPLER_SMELLS",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[COUPLING DEMETER],\n                  description: \"inappropriate intimacy through reflective access\""
+        },
+        "tags": [
+          "COUPLING",
+          "DEMETER"
+        ],
+        "description": "inappropriate intimacy through reflective access"
+      },
+      "kind": "declared_class",
+      "line": 322
+    },
+    {
+      "id": "FEATURE_ENVY",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[COUPLING DEMETER],\n                  description: \"method talks to one collaborator's internals more than its own\""
+        },
+        "tags": [
+          "COUPLING",
+          "DEMETER"
+        ],
+        "description": "method talks to one collaborator's internals more than its own"
+      },
+      "kind": "declared_class",
+      "line": 342
+    },
+    {
+      "id": "LAZY_CLASS",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[DISPENSABLES SRP],\n                  description: \"classes should own behavior, not only delegate\""
+        },
+        "tags": [
+          "DISPENSABLES",
+          "SRP"
+        ],
+        "description": "classes should own behavior, not only delegate"
+      },
+      "kind": "declared_class",
+      "line": 390
+    },
+    {
+      "id": "NO_DECORATIVE_FX",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[DESIGN AESTHETIC PIXEL], applies_to: CSS_LANGS, autofix: true,\n          description: \"flat UI — no blur, glow, or ornamental shadow\",\n          detect_semantic: \"Does the element use shadows or glows that serve no functional purpose?\",\n          detect_structural: \"Check for 'glow' or 'shadow' in filenames or directory names\",\n          example_path: \"/repo/app/assets/stylesheets/_example.scss\",\n          fires: \".card { box-shadow: 0 2px 8px rgba(0,0,0,.3); }\\n\",\n          # Suppressing a shadow is the law being obeyed, not broken.\n          does_not_fire: \".card { box-shadow: none; }\\n.b { text-shadow: none; }\\n\" do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "AESTHETIC",
+          "PIXEL"
+        ],
+        "languages": {
+          "expression": "CSS_LANGS, autofix: true,\n          description: \"flat UI — no blur, glow, or ornamental shadow\",\n          detect_semantic: \"Does the element use shadows or glows that serve no functional purpose?\",\n          detect_structural: \"Check for 'glow' or 'shadow' in filenames or directory names\",\n          example_path: \"/repo/app/assets/stylesheets/_example.scss\",\n          fires: \".card { box-shadow: 0 2px 8px rgba(0,0,0,.3); }\\n\",\n          # Suppressing a shadow is the law being obeyed, not broken.\n          does_not_fire: \".card { box-shadow: none; }\\n.b { text-shadow: none; }\\n\" do |src, path:|"
+        },
+        "autofix": {
+          "expression": "true,\n          description: \"flat UI — no blur, glow, or ornamental shadow\",\n          detect_semantic: \"Does the element use shadows or glows that serve no functional purpose?\",\n          detect_structural: \"Check for 'glow' or 'shadow' in filenames or directory names\",\n          example_path: \"/repo/app/assets/stylesheets/_example.scss\",\n          fires: \".card { box-shadow: 0 2px 8px rgba(0,0,0,.3); }\\n\",\n          # Suppressing a shadow is the law being obeyed, not broken.\n          does_not_fire: \".card { box-shadow: none; }\\n.b { text-shadow: none; }\\n\" do |src, path:|"
+        },
+        "description": "flat UI — no blur, glow, or ornamental shadow",
+        "fires": ".card { box-shadow: 0 2px 8px rgba(0,0,0,.3); }\n",
+        "does_not_fire": ".card { box-shadow: none; }\n.b { text-shadow: none; }\n",
+        "example_path": "/repo/app/assets/stylesheets/_example.scss",
+        "detect_semantic": "Does the element use shadows or glows that serve no functional purpose?",
+        "detect_structural": "Check for 'glow' or 'shadow' in filenames or directory names"
+      },
+      "kind": "dsl",
+      "line": 49
+    },
+    {
+      "id": "FLAT_PIXELS",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[DESIGN AESTHETIC PIXEL], applies_to: %i[css scss javascript], autofix: true,\n          description: \"canvas/pixel layers stay crisp — no smoothing/glow language\",\n          detect_semantic: \"Is the rendering intent 'crisp' or 'pixel-art', yet smoothing is enabled?\",\n          detect_structural: \"Check for 'smoothing' or 'blur' in JS filename/path\",\n          # Spelled, because the first language decides the default path and this\n          # rule reads only .js/.ts or a file named face.\n          example_path: \"/repo/web/public/face_vision.js\",\n          fires: \"ctx.imageSmoothingEnabled = true;\\n\",\n          does_not_fire: \"ctx.imageSmoothingEnabled = false;\\n\" do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "AESTHETIC",
+          "PIXEL"
+        ],
+        "languages": [
+          "css",
+          "scss",
+          "javascript"
+        ],
+        "autofix": {
+          "expression": "true,\n          description: \"canvas/pixel layers stay crisp — no smoothing/glow language\",\n          detect_semantic: \"Is the rendering intent 'crisp' or 'pixel-art', yet smoothing is enabled?\",\n          detect_structural: \"Check for 'smoothing' or 'blur' in JS filename/path\",\n          # Spelled, because the first language decides the default path and this\n          # rule reads only .js/.ts or a file named face.\n          example_path: \"/repo/web/public/face_vision.js\",\n          fires: \"ctx.imageSmoothingEnabled = true;\\n\",\n          does_not_fire: \"ctx.imageSmoothingEnabled = false;\\n\" do |src, path:|"
+        },
+        "description": "canvas/pixel layers stay crisp — no smoothing/glow language",
+        "fires": "ctx.imageSmoothingEnabled = true;\n",
+        "does_not_fire": "ctx.imageSmoothingEnabled = false;\n",
+        "example_path": "/repo/web/public/face_vision.js",
+        "detect_semantic": "Is the rendering intent 'crisp' or 'pixel-art', yet smoothing is enabled?",
+        "detect_structural": "Check for 'smoothing' or 'blur' in JS filename/path"
+      },
+      "kind": "dsl",
+      "line": 83
+    },
+    {
+      "id": "GRID_STRUCTURE",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[DESIGN LAYOUT], applies_to: CSS_LANGS, autofix: false,\n          description: \"grid structure — shared tracks, consistent alignment and parent-owned gap\",\n          detect_semantic: \"Does the interface express repeated relationships with coherent grid or flex tracks and parent-owned gap rather than arbitrary per-child offsets and widths?\",\n          detect_structural: \"Find grid-like containers whose direct children combine absolute positioning, a fixed physical offset and a fixed wide width.\",\n          example_path: \"/repo/app/assets/stylesheets/_example.scss\",\n          fires: \".cards > * { position: absolute; left: 17px; width: 243px; }\\n\",\n          does_not_fire: \".cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: var(--space-4); }\\n\" do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "LAYOUT"
+        ],
+        "languages": {
+          "expression": "CSS_LANGS, autofix: false,\n          description: \"grid structure — shared tracks, consistent alignment and parent-owned gap\",\n          detect_semantic: \"Does the interface express repeated relationships with coherent grid or flex tracks and parent-owned gap rather than arbitrary per-child offsets and widths?\",\n          detect_structural: \"Find grid-like containers whose direct children combine absolute positioning, a fixed physical offset and a fixed wide width.\",\n          example_path: \"/repo/app/assets/stylesheets/_example.scss\",\n          fires: \".cards > * { position: absolute; left: 17px; width: 243px; }\\n\",\n          does_not_fire: \".cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: var(--space-4); }\\n\" do |src, path:|"
+        },
+        "autofix": {
+          "expression": "false,\n          description: \"grid structure — shared tracks, consistent alignment and parent-owned gap\",\n          detect_semantic: \"Does the interface express repeated relationships with coherent grid or flex tracks and parent-owned gap rather than arbitrary per-child offsets and widths?\",\n          detect_structural: \"Find grid-like containers whose direct children combine absolute positioning, a fixed physical offset and a fixed wide width.\",\n          example_path: \"/repo/app/assets/stylesheets/_example.scss\",\n          fires: \".cards > * { position: absolute; left: 17px; width: 243px; }\\n\",\n          does_not_fire: \".cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: var(--space-4); }\\n\" do |src, path:|"
+        },
+        "description": "grid structure — shared tracks, consistent alignment and parent-owned gap",
+        "fires": ".cards > * { position: absolute; left: 17px; width: 243px; }\n",
+        "does_not_fire": ".cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: var(--space-4); }\n",
+        "example_path": "/repo/app/assets/stylesheets/_example.scss",
+        "detect_semantic": "Does the interface express repeated relationships with coherent grid or flex tracks and parent-owned gap rather than arbitrary per-child offsets and widths?",
+        "detect_structural": "Find grid-like containers whose direct children combine absolute positioning, a fixed physical offset and a fixed wide width."
+      },
+      "kind": "dsl",
+      "line": 122
+    },
+    {
+      "id": "EIGHT_PX_RHYTHM",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[DESIGN AESTHETIC], applies_to: CSS_LANGS, autofix: true,\n          description: \"spacing on 8px rhythm (4px hairline allowed) — Müller-Brockmann grid module\",\n          detect_semantic: \"Does the spacing create a visual rhythm that deviates from the 8px grid?\",\n          detect_structural: \"Verify if layout files follow the 8px naming convention (e.g., _grid_8.scss)\",\n          example_path: \"/repo/app/assets/stylesheets/_example.scss\",\n          fires: \".card { padding: 10px; }\\n\",\n          # A media condition is not spacing, and 44px is the tap-target token.\n          does_not_fire: \"@media (min-width: 1280px) { .card { padding: 24px; min-height: 44px; } }\\n\" do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "AESTHETIC"
+        ],
+        "languages": {
+          "expression": "CSS_LANGS, autofix: true,\n          description: \"spacing on 8px rhythm (4px hairline allowed) — Müller-Brockmann grid module\",\n          detect_semantic: \"Does the spacing create a visual rhythm that deviates from the 8px grid?\",\n          detect_structural: \"Verify if layout files follow the 8px naming convention (e.g., _grid_8.scss)\",\n          example_path: \"/repo/app/assets/stylesheets/_example.scss\",\n          fires: \".card { padding: 10px; }\\n\",\n          # A media condition is not spacing, and 44px is the tap-target token.\n          does_not_fire: \"@media (min-width: 1280px) { .card { padding: 24px; min-height: 44px; } }\\n\" do |src, path:|"
+        },
+        "autofix": {
+          "expression": "true,\n          description: \"spacing on 8px rhythm (4px hairline allowed) — Müller-Brockmann grid module\",\n          detect_semantic: \"Does the spacing create a visual rhythm that deviates from the 8px grid?\",\n          detect_structural: \"Verify if layout files follow the 8px naming convention (e.g., _grid_8.scss)\",\n          example_path: \"/repo/app/assets/stylesheets/_example.scss\",\n          fires: \".card { padding: 10px; }\\n\",\n          # A media condition is not spacing, and 44px is the tap-target token.\n          does_not_fire: \"@media (min-width: 1280px) { .card { padding: 24px; min-height: 44px; } }\\n\" do |src, path:|"
+        },
+        "description": "spacing on 8px rhythm (4px hairline allowed) — Müller-Brockmann grid module",
+        "fires": ".card { padding: 10px; }\n",
+        "does_not_fire": "@media (min-width: 1280px) { .card { padding: 24px; min-height: 44px; } }\n",
+        "example_path": "/repo/app/assets/stylesheets/_example.scss",
+        "detect_semantic": "Does the spacing create a visual rhythm that deviates from the 8px grid?",
+        "detect_structural": "Verify if layout files follow the 8px naming convention (e.g., _grid_8.scss)"
+      },
+      "kind": "dsl",
+      "line": 153
+    },
+    {
+      "id": "LINE_HEIGHT_ON_SCALE",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[DESIGN TYPOGRAPHY RHYTHM], applies_to: CSS_LANGS, autofix: false,\n          description: \"unitless line-height must be on design_rules / ScaleLint scale\",\n          example_path: \"/repo/app/assets/stylesheets/_example.scss\",\n          fires: \".prose { line-height: 1.45; }\\n\",\n          does_not_fire: \".prose { line-height: 1.5; }\\n.h1 { line-height: 1.25; }\\n\" do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "TYPOGRAPHY",
+          "RHYTHM"
+        ],
+        "languages": {
+          "expression": "CSS_LANGS, autofix: false,\n          description: \"unitless line-height must be on design_rules / ScaleLint scale\",\n          example_path: \"/repo/app/assets/stylesheets/_example.scss\",\n          fires: \".prose { line-height: 1.45; }\\n\",\n          does_not_fire: \".prose { line-height: 1.5; }\\n.h1 { line-height: 1.25; }\\n\" do |src, path:|"
+        },
+        "autofix": {
+          "expression": "false,\n          description: \"unitless line-height must be on design_rules / ScaleLint scale\",\n          example_path: \"/repo/app/assets/stylesheets/_example.scss\",\n          fires: \".prose { line-height: 1.45; }\\n\",\n          does_not_fire: \".prose { line-height: 1.5; }\\n.h1 { line-height: 1.25; }\\n\" do |src, path:|"
+        },
+        "description": "unitless line-height must be on design_rules / ScaleLint scale",
+        "fires": ".prose { line-height: 1.45; }\n",
+        "does_not_fire": ".prose { line-height: 1.5; }\n.h1 { line-height: 1.25; }\n",
+        "example_path": "/repo/app/assets/stylesheets/_example.scss"
+      },
+      "kind": "dsl",
+      "line": 196
+    },
+    {
+      "id": "TOUCH_TARGET_MIN",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[DESIGN UX ACCESSIBILITY], applies_to: CSS_LANGS, autofix: true,\n          description: \"Fitts — interactive targets ≥44px\",\n          detect_semantic: \"Is the interactive element's hit area too small for comfortable thumb use?\",\n          detect_structural: \"Check if mobile-specific views lack minimum target constraints\",\n          # The selector and the dimension on separate lines, which is the shape\n          # the rule was blind to until 2026-07-21 and the one worth pinning.\n          fires: \".btn {\\n  width: 12px;\\n}\\n\",\n          does_not_fire: \".btn {\\n  width: 48px;\\n}\\n\" do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "UX",
+          "ACCESSIBILITY"
+        ],
+        "languages": {
+          "expression": "CSS_LANGS, autofix: true,\n          description: \"Fitts — interactive targets ≥44px\",\n          detect_semantic: \"Is the interactive element's hit area too small for comfortable thumb use?\",\n          detect_structural: \"Check if mobile-specific views lack minimum target constraints\",\n          # The selector and the dimension on separate lines, which is the shape\n          # the rule was blind to until 2026-07-21 and the one worth pinning.\n          fires: \".btn {\\n  width: 12px;\\n}\\n\",\n          does_not_fire: \".btn {\\n  width: 48px;\\n}\\n\" do |src, path:|"
+        },
+        "autofix": {
+          "expression": "true,\n          description: \"Fitts — interactive targets ≥44px\",\n          detect_semantic: \"Is the interactive element's hit area too small for comfortable thumb use?\",\n          detect_structural: \"Check if mobile-specific views lack minimum target constraints\",\n          # The selector and the dimension on separate lines, which is the shape\n          # the rule was blind to until 2026-07-21 and the one worth pinning.\n          fires: \".btn {\\n  width: 12px;\\n}\\n\",\n          does_not_fire: \".btn {\\n  width: 48px;\\n}\\n\" do |src, path:|"
+        },
+        "description": "Fitts — interactive targets ≥44px",
+        "fires": ".btn {\n  width: 12px;\n}\n",
+        "does_not_fire": ".btn {\n  width: 48px;\n}\n",
+        "detect_semantic": "Is the interactive element's hit area too small for comfortable thumb use?",
+        "detect_structural": "Check if mobile-specific views lack minimum target constraints"
+      },
+      "kind": "dsl",
+      "line": 233
+    },
+    {
+      "id": "CHOICE_OVERLOAD",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[DESIGN UX], applies_to: HTML_LANGS, autofix: false,\n          description: \"Hick — too many peer choices without grouping\",\n          fires: \"<nav>#{(1..8).map { |n| \"<a href=\\\"/#{n}\\\">#{n}</a>\" }.join}</nav>\\n\",\n          # A plain <ul> is content being browsed, not options being chosen\n          # between — the exemption that took this rule off search results.\n          does_not_fire: \"<ul>#{(1..8).map { |n| \"<li>#{n}</li>\" }.join}</ul>\\n\" do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "UX"
+        ],
+        "languages": {
+          "expression": "HTML_LANGS, autofix: false,\n          description: \"Hick — too many peer choices without grouping\",\n          fires: \"<nav>#{(1..8).map { |n| \"<a href=\\\"/#{n}\\\">#{n}</a>\" }.join}</nav>\\n\",\n          # A plain <ul> is content being browsed, not options being chosen\n          # between — the exemption that took this rule off search results.\n          does_not_fire: \"<ul>#{(1..8).map { |n| \"<li>#{n}</li>\" }.join}</ul>\\n\" do |src, path:|"
+        },
+        "autofix": {
+          "expression": "false,\n          description: \"Hick — too many peer choices without grouping\",\n          fires: \"<nav>#{(1..8).map { |n| \"<a href=\\\"/#{n}\\\">#{n}</a>\" }.join}</nav>\\n\",\n          # A plain <ul> is content being browsed, not options being chosen\n          # between — the exemption that took this rule off search results.\n          does_not_fire: \"<ul>#{(1..8).map { |n| \"<li>#{n}</li>\" }.join}</ul>\\n\" do |src, path:|"
+        },
+        "description": "Hick — too many peer choices without grouping",
+        "fires": "<nav>#{(1..8).map { |n| ",
+        "does_not_fire": "<ul>#{(1..8).map { |n| "
+      },
+      "kind": "dsl",
+      "line": 272
+    },
+    {
+      "id": "PROGRESSIVE_DISCLOSURE",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[DESIGN UX], applies_to: HTML_LANGS, autofix: false,\n          fires: %(<form class=\"settings\">\\n<input name=\\\"f1\\\">\\n<input name=\\\"f2\\\">\\n<input name=\\\"f3\\\">\\n<input name=\\\"f4\\\">\\n<input name=\\\"f5\\\">\\n<input name=\\\"f6\\\">\\n</form>\\n),\n          does_not_fire: %(<form class=\"settings\">\\n<details><summary>Advanced</summary>\\n<input name=\\\"f1\\\">\\n<input name=\\\"f2\\\">\\n<input name=\\\"f3\\\">\\n<input name=\\\"f4\\\">\\n<input name=\\\"f5\\\">\\n<input name=\\\"f6\\\">\\n</details>\\n</form>\\n),\n          description: \"advanced controls should not dump all options at once\" do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "UX"
+        ],
+        "languages": {
+          "expression": "HTML_LANGS, autofix: false,\n          fires: %(<form class=\"settings\">\\n<input name=\\\"f1\\\">\\n<input name=\\\"f2\\\">\\n<input name=\\\"f3\\\">\\n<input name=\\\"f4\\\">\\n<input name=\\\"f5\\\">\\n<input name=\\\"f6\\\">\\n</form>\\n),\n          does_not_fire: %(<form class=\"settings\">\\n<details><summary>Advanced</summary>\\n<input name=\\\"f1\\\">\\n<input name=\\\"f2\\\">\\n<input name=\\\"f3\\\">\\n<input name=\\\"f4\\\">\\n<input name=\\\"f5\\\">\\n<input name=\\\"f6\\\">\\n</details>\\n</form>\\n),\n          description: \"advanced controls should not dump all options at once\" do |src, path:|"
+        },
+        "autofix": {
+          "expression": "false,\n          fires: %(<form class=\"settings\">\\n<input name=\\\"f1\\\">\\n<input name=\\\"f2\\\">\\n<input name=\\\"f3\\\">\\n<input name=\\\"f4\\\">\\n<input name=\\\"f5\\\">\\n<input name=\\\"f6\\\">\\n</form>\\n),\n          does_not_fire: %(<form class=\"settings\">\\n<details><summary>Advanced</summary>\\n<input name=\\\"f1\\\">\\n<input name=\\\"f2\\\">\\n<input name=\\\"f3\\\">\\n<input name=\\\"f4\\\">\\n<input name=\\\"f5\\\">\\n<input name=\\\"f6\\\">\\n</details>\\n</form>\\n),\n          description: \"advanced controls should not dump all options at once\" do |src, path:|"
+        },
+        "description": "advanced controls should not dump all options at once",
+        "fires": {
+          "expression": "%(<form class=\"settings\">\\n<input name=\\\"f1\\\">\\n<input name=\\\"f2\\\">\\n<input name=\\\"f3\\\">\\n<input name=\\\"f4\\\">\\n<input name=\\\"f5\\\">\\n<input name=\\\"f6\\\">\\n</form>\\n),\n          does_not_fire: %(<form class=\"settings\">\\n<details><summary>Advanced</summary>\\n<input name=\\\"f1\\\">\\n<input name=\\\"f2\\\">\\n<input name=\\\"f3\\\">\\n<input name=\\\"f4\\\">\\n<input name=\\\"f5\\\">\\n<input name=\\\"f6\\\">\\n</details>\\n</form>\\n),\n          description: \"advanced controls should not dump all options at once\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<form class=\"settings\">\\n<details><summary>Advanced</summary>\\n<input name=\\\"f1\\\">\\n<input name=\\\"f2\\\">\\n<input name=\\\"f3\\\">\\n<input name=\\\"f4\\\">\\n<input name=\\\"f5\\\">\\n<input name=\\\"f6\\\">\\n</details>\\n</form>\\n),\n          description: \"advanced controls should not dump all options at once\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 329
+    },
+    {
+      "id": "WHITESPACE_RHYTHM",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[DESIGN AESTHETIC], applies_to: CSS_LANGS, autofix: true,\n          fires: \".card { color: red; }\\n\",\n          does_not_fire: \".card { gap: var(--sp); }\\n\",\n          description: \"ma — breathing room via gap/section spacing tokens\" do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "AESTHETIC"
+        ],
+        "languages": {
+          "expression": "CSS_LANGS, autofix: true,\n          fires: \".card { color: red; }\\n\",\n          does_not_fire: \".card { gap: var(--sp); }\\n\",\n          description: \"ma — breathing room via gap/section spacing tokens\" do |src, path:|"
+        },
+        "autofix": {
+          "expression": "true,\n          fires: \".card { color: red; }\\n\",\n          does_not_fire: \".card { gap: var(--sp); }\\n\",\n          description: \"ma — breathing room via gap/section spacing tokens\" do |src, path:|"
+        },
+        "description": "ma — breathing room via gap/section spacing tokens",
+        "fires": ".card { color: red; }\n",
+        "does_not_fire": ".card { gap: var(--sp); }\n"
+      },
+      "kind": "dsl",
+      "line": 348
+    },
+    {
+      "id": "TYPE_HIERARCHY",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[DESIGN TYPOGRAPHY], applies_to: CSS_LANGS, autofix: false,\n          fires: \".s1 { font-size: 11px; }\\n.s2 { font-size: 12px; }\\n.s3 { font-size: 13px; }\\n.s4 { font-size: 14px; }\\n.s5 { font-size: 15px; }\\n.s6 { font-size: 16px; }\\n.s7 { font-size: 17px; }\\n.s8 { font-size: 18px; }\\n.s9 { font-size: 19px; }\\n\",\n          does_not_fire: \".s1 { font-size: 11px; }\\n.s2 { font-size: 12px; }\\n.s3 { font-size: 13px; }\\n.s4 { font-size: 14px; }\\n.s5 { font-size: 15px; }\\n.s6 { font-size: 16px; }\\n.s7 { font-size: 17px; }\\n.s8 { font-size: 18px; }\\n\",\n          description: \"modular type scale — flag one-off font sizes\" do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "TYPOGRAPHY"
+        ],
+        "languages": {
+          "expression": "CSS_LANGS, autofix: false,\n          fires: \".s1 { font-size: 11px; }\\n.s2 { font-size: 12px; }\\n.s3 { font-size: 13px; }\\n.s4 { font-size: 14px; }\\n.s5 { font-size: 15px; }\\n.s6 { font-size: 16px; }\\n.s7 { font-size: 17px; }\\n.s8 { font-size: 18px; }\\n.s9 { font-size: 19px; }\\n\",\n          does_not_fire: \".s1 { font-size: 11px; }\\n.s2 { font-size: 12px; }\\n.s3 { font-size: 13px; }\\n.s4 { font-size: 14px; }\\n.s5 { font-size: 15px; }\\n.s6 { font-size: 16px; }\\n.s7 { font-size: 17px; }\\n.s8 { font-size: 18px; }\\n\",\n          description: \"modular type scale — flag one-off font sizes\" do |src, path:|"
+        },
+        "autofix": {
+          "expression": "false,\n          fires: \".s1 { font-size: 11px; }\\n.s2 { font-size: 12px; }\\n.s3 { font-size: 13px; }\\n.s4 { font-size: 14px; }\\n.s5 { font-size: 15px; }\\n.s6 { font-size: 16px; }\\n.s7 { font-size: 17px; }\\n.s8 { font-size: 18px; }\\n.s9 { font-size: 19px; }\\n\",\n          does_not_fire: \".s1 { font-size: 11px; }\\n.s2 { font-size: 12px; }\\n.s3 { font-size: 13px; }\\n.s4 { font-size: 14px; }\\n.s5 { font-size: 15px; }\\n.s6 { font-size: 16px; }\\n.s7 { font-size: 17px; }\\n.s8 { font-size: 18px; }\\n\",\n          description: \"modular type scale — flag one-off font sizes\" do |src, path:|"
+        },
+        "description": "modular type scale — flag one-off font sizes",
+        "fires": ".s1 { font-size: 11px; }\n.s2 { font-size: 12px; }\n.s3 { font-size: 13px; }\n.s4 { font-size: 14px; }\n.s5 { font-size: 15px; }\n.s6 { font-size: 16px; }\n.s7 { font-size: 17px; }\n.s8 { font-size: 18px; }\n.s9 { font-size: 19px; }\n",
+        "does_not_fire": ".s1 { font-size: 11px; }\n.s2 { font-size: 12px; }\n.s3 { font-size: 13px; }\n.s4 { font-size: 14px; }\n.s5 { font-size: 15px; }\n.s6 { font-size: 16px; }\n.s7 { font-size: 17px; }\n.s8 { font-size: 18px; }\n"
+      },
+      "kind": "dsl",
+      "line": 366
+    },
+    {
+      "id": "CONTRAST_TOKENS",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[DESIGN ACCESSIBILITY], applies_to: CSS_LANGS, autofix: false,\n          fires: \".meta { color: #ccc; }\\n\",\n          does_not_fire: \".meta { color: var(--text-secondary); }\\n\",\n          description: \"prefer token colors over low-contrast gray-on-gray magic\" do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "ACCESSIBILITY"
+        ],
+        "languages": {
+          "expression": "CSS_LANGS, autofix: false,\n          fires: \".meta { color: #ccc; }\\n\",\n          does_not_fire: \".meta { color: var(--text-secondary); }\\n\",\n          description: \"prefer token colors over low-contrast gray-on-gray magic\" do |src, path:|"
+        },
+        "autofix": {
+          "expression": "false,\n          fires: \".meta { color: #ccc; }\\n\",\n          does_not_fire: \".meta { color: var(--text-secondary); }\\n\",\n          description: \"prefer token colors over low-contrast gray-on-gray magic\" do |src, path:|"
+        },
+        "description": "prefer token colors over low-contrast gray-on-gray magic",
+        "fires": ".meta { color: #ccc; }\n",
+        "does_not_fire": ".meta { color: var(--text-secondary); }\n"
+      },
+      "kind": "dsl",
+      "line": 382
+    },
+    {
+      "id": "PIXEL_EXACT",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[DESIGN AESTHETIC PIXEL], applies_to: CSS_LANGS, autofix: false,\n          fires: \".card { width: 12.5px; }\\n\",\n          does_not_fire: \".card { width: 12px; }\\n\",\n          description: \"avoid subpixel/fractional layout that breaks integer grids\" do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "AESTHETIC",
+          "PIXEL"
+        ],
+        "languages": {
+          "expression": "CSS_LANGS, autofix: false,\n          fires: \".card { width: 12.5px; }\\n\",\n          does_not_fire: \".card { width: 12px; }\\n\",\n          description: \"avoid subpixel/fractional layout that breaks integer grids\" do |src, path:|"
+        },
+        "autofix": {
+          "expression": "false,\n          fires: \".card { width: 12.5px; }\\n\",\n          does_not_fire: \".card { width: 12px; }\\n\",\n          description: \"avoid subpixel/fractional layout that breaks integer grids\" do |src, path:|"
+        },
+        "description": "avoid subpixel/fractional layout that breaks integer grids",
+        "fires": ".card { width: 12.5px; }\n",
+        "does_not_fire": ".card { width: 12px; }\n"
+      },
+      "kind": "dsl",
+      "line": 409
+    },
+    {
+      "id": "ERB_HARDCODED_CHROME",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[DESIGN I18N RAILS VIEWS], applies_to: HTML_LANGS, autofix: false,\n          description: \"empty/search chrome uses t() not hardcoded English (default_locale nb)\",\n          fires: %(<%= render \"shared/empty\", title: \"No results\" %>\\n),\n          does_not_fire: %(<%= render \"shared/empty\", title: t(\"empty.results\") %>\\n) do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "I18N",
+          "RAILS",
+          "VIEWS"
+        ],
+        "languages": {
+          "expression": "HTML_LANGS, autofix: false,\n          description: \"empty/search chrome uses t() not hardcoded English (default_locale nb)\",\n          fires: %(<%= render \"shared/empty\", title: \"No results\" %>\\n),\n          does_not_fire: %(<%= render \"shared/empty\", title: t(\"empty.results\") %>\\n) do |src, path:|"
+        },
+        "autofix": {
+          "expression": "false,\n          description: \"empty/search chrome uses t() not hardcoded English (default_locale nb)\",\n          fires: %(<%= render \"shared/empty\", title: \"No results\" %>\\n),\n          does_not_fire: %(<%= render \"shared/empty\", title: t(\"empty.results\") %>\\n) do |src, path:|"
+        },
+        "description": "empty/search chrome uses t() not hardcoded English (default_locale nb)",
+        "fires": {
+          "expression": "%(<%= render \"shared/empty\", title: \"No results\" %>\\n),\n          does_not_fire: %(<%= render \"shared/empty\", title: t(\"empty.results\") %>\\n) do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<%= render \"shared/empty\", title: t(\"empty.results\") %>\\n) do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 421
+    },
+    {
+      "id": "TYPE_TITLE_TOKEN",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[DESIGN TYPOGRAPHY], applies_to: CSS_LANGS, autofix: false,\n          description: \"page titles use --text-title token not raw 20px\",\n          fires: \".page-header h1 { font-size: 20px; }\\n\",\n          does_not_fire: \".page-header h1 { font-size: var(--text-title, 1.25rem); }\\n\" do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "TYPOGRAPHY"
+        ],
+        "languages": {
+          "expression": "CSS_LANGS, autofix: false,\n          description: \"page titles use --text-title token not raw 20px\",\n          fires: \".page-header h1 { font-size: 20px; }\\n\",\n          does_not_fire: \".page-header h1 { font-size: var(--text-title, 1.25rem); }\\n\" do |src, path:|"
+        },
+        "autofix": {
+          "expression": "false,\n          description: \"page titles use --text-title token not raw 20px\",\n          fires: \".page-header h1 { font-size: 20px; }\\n\",\n          does_not_fire: \".page-header h1 { font-size: var(--text-title, 1.25rem); }\\n\" do |src, path:|"
+        },
+        "description": "page titles use --text-title token not raw 20px",
+        "fires": ".page-header h1 { font-size: 20px; }\n",
+        "does_not_fire": ".page-header h1 { font-size: var(--text-title, 1.25rem); }\n"
+      },
+      "kind": "dsl",
+      "line": 446
+    },
+    {
+      "id": "FORM_FOLLOWS_FUNCTION",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[DESIGN AESTHETIC], applies_to: HTML_LANGS, autofix: false,\n          description: \"decorative empty wrappers without content/role\",\n          fires: %(<div class=\"decor\"></div>\\n),\n          # The same class carrying something is the wrapper doing work.\n          does_not_fire: %(<div class=\"decor\"><%= yield %></div>\\n) do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "AESTHETIC"
+        ],
+        "languages": {
+          "expression": "HTML_LANGS, autofix: false,\n          description: \"decorative empty wrappers without content/role\",\n          fires: %(<div class=\"decor\"></div>\\n),\n          # The same class carrying something is the wrapper doing work.\n          does_not_fire: %(<div class=\"decor\"><%= yield %></div>\\n) do |src, path:|"
+        },
+        "autofix": {
+          "expression": "false,\n          description: \"decorative empty wrappers without content/role\",\n          fires: %(<div class=\"decor\"></div>\\n),\n          # The same class carrying something is the wrapper doing work.\n          does_not_fire: %(<div class=\"decor\"><%= yield %></div>\\n) do |src, path:|"
+        },
+        "description": "decorative empty wrappers without content/role",
+        "fires": {
+          "expression": "%(<div class=\"decor\"></div>\\n),\n          # The same class carrying something is the wrapper doing work.\n          does_not_fire: %(<div class=\"decor\"><%= yield %></div>\\n) do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<div class=\"decor\"><%= yield %></div>\\n) do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 469
+    },
+    {
+      "id": "SIGNAL_NOISE",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[DESIGN AESTHETIC], applies_to: HTML_LANGS, autofix: false,\n          description: \"too many competing visual classes on one node\",\n          fires: %(<div class=\"card card--wide is-open u-mt-2 u-p-1 shadow rounded muted\">x</div>\\n),\n          does_not_fire: %(<div class=\"card card--wide is-open\">x</div>\\n) do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "AESTHETIC"
+        ],
+        "languages": {
+          "expression": "HTML_LANGS, autofix: false,\n          description: \"too many competing visual classes on one node\",\n          fires: %(<div class=\"card card--wide is-open u-mt-2 u-p-1 shadow rounded muted\">x</div>\\n),\n          does_not_fire: %(<div class=\"card card--wide is-open\">x</div>\\n) do |src, path:|"
+        },
+        "autofix": {
+          "expression": "false,\n          description: \"too many competing visual classes on one node\",\n          fires: %(<div class=\"card card--wide is-open u-mt-2 u-p-1 shadow rounded muted\">x</div>\\n),\n          does_not_fire: %(<div class=\"card card--wide is-open\">x</div>\\n) do |src, path:|"
+        },
+        "description": "too many competing visual classes on one node",
+        "fires": {
+          "expression": "%(<div class=\"card card--wide is-open u-mt-2 u-p-1 shadow rounded muted\">x</div>\\n),\n          does_not_fire: %(<div class=\"card card--wide is-open\">x</div>\\n) do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<div class=\"card card--wide is-open\">x</div>\\n) do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 481
+    },
+    {
+      "id": "AFFORDANCE_CLARITY",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[DESIGN UX], applies_to: HTML_LANGS, autofix: false,\n          description: \"clickable non-buttons need clear affordance\",\n          fires: %(<div data-action=\"click->dropdown#toggle\">Menu</div>\\n),\n          # A click-outside listener on the window says nothing about the div\n          # carrying it, and the 79 findings that taught this rule that were all\n          # this shape.\n          does_not_fire: %(<div data-action=\"click@window->dropdown#hide\">Menu</div>\\n) do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "UX"
+        ],
+        "languages": {
+          "expression": "HTML_LANGS, autofix: false,\n          description: \"clickable non-buttons need clear affordance\",\n          fires: %(<div data-action=\"click->dropdown#toggle\">Menu</div>\\n),\n          # A click-outside listener on the window says nothing about the div\n          # carrying it, and the 79 findings that taught this rule that were all\n          # this shape.\n          does_not_fire: %(<div data-action=\"click@window->dropdown#hide\">Menu</div>\\n) do |src, path:|"
+        },
+        "autofix": {
+          "expression": "false,\n          description: \"clickable non-buttons need clear affordance\",\n          fires: %(<div data-action=\"click->dropdown#toggle\">Menu</div>\\n),\n          # A click-outside listener on the window says nothing about the div\n          # carrying it, and the 79 findings that taught this rule that were all\n          # this shape.\n          does_not_fire: %(<div data-action=\"click@window->dropdown#hide\">Menu</div>\\n) do |src, path:|"
+        },
+        "description": "clickable non-buttons need clear affordance",
+        "fires": {
+          "expression": "%(<div data-action=\"click->dropdown#toggle\">Menu</div>\\n),\n          # A click-outside listener on the window says nothing about the div\n          # carrying it, and the 79 findings that taught this rule that were all\n          # this shape.\n          does_not_fire: %(<div data-action=\"click@window->dropdown#hide\">Menu</div>\\n) do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<div data-action=\"click@window->dropdown#hide\">Menu</div>\\n) do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 498
+    },
+    {
+      "id": "AESTHETIC_MINIMALISM",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[DESIGN AESTHETIC], applies_to: HTML_LANGS, autofix: false,\n          description: \"Rams less-but-better — flag icon+label+badge pileups\",\n          fires: %(<button class=\"btn\"><svg class=\"icon\"></svg><span>Save</span></button>\\n),\n          does_not_fire: %(<button class=\"btn\">Save</button>\\n) do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "AESTHETIC"
+        ],
+        "languages": {
+          "expression": "HTML_LANGS, autofix: false,\n          description: \"Rams less-but-better — flag icon+label+badge pileups\",\n          fires: %(<button class=\"btn\"><svg class=\"icon\"></svg><span>Save</span></button>\\n),\n          does_not_fire: %(<button class=\"btn\">Save</button>\\n) do |src, path:|"
+        },
+        "autofix": {
+          "expression": "false,\n          description: \"Rams less-but-better — flag icon+label+badge pileups\",\n          fires: %(<button class=\"btn\"><svg class=\"icon\"></svg><span>Save</span></button>\\n),\n          does_not_fire: %(<button class=\"btn\">Save</button>\\n) do |src, path:|"
+        },
+        "description": "Rams less-but-better — flag icon+label+badge pileups",
+        "fires": {
+          "expression": "%(<button class=\"btn\"><svg class=\"icon\"></svg><span>Save</span></button>\\n),\n          does_not_fire: %(<button class=\"btn\">Save</button>\\n) do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<button class=\"btn\">Save</button>\\n) do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 527
+    },
+    {
+      "id": "HOST_CAPACITY",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[OPS], applies_to: %i[ruby], autofix: false,\n          description: \"carrying capacity — avoid full-repo scan/fix in hot paths\",\n          example_path: \"/repo/lib/example.rb\",\n          fires: \"scanner.scan_dir(Master::ROOT)\\n\",\n          does_not_fire: \"scanner.scan_dir(target_dir)\\n\" do |src, path:|"
+        },
+        "tags": [
+          "OPS"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "autofix": {
+          "expression": "false,\n          description: \"carrying capacity — avoid full-repo scan/fix in hot paths\",\n          example_path: \"/repo/lib/example.rb\",\n          fires: \"scanner.scan_dir(Master::ROOT)\\n\",\n          does_not_fire: \"scanner.scan_dir(target_dir)\\n\" do |src, path:|"
+        },
+        "description": "carrying capacity — avoid full-repo scan/fix in hot paths",
+        "fires": "scanner.scan_dir(Master::ROOT)\n",
+        "does_not_fire": "scanner.scan_dir(target_dir)\n",
+        "example_path": "/repo/lib/example.rb"
+      },
+      "kind": "dsl",
+      "line": 596
+    },
+    {
+      "id": "THIN_CONTROLLER",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[RAILS ARCHITECTURE], applies_to: %i[ruby], autofix: false,\n          description: \"thin controllers — business logic belongs in models/services\",\n          example_path: \"/repo/app/controllers/example_controller.rb\",\n          fires: %(def index\\n  @posts = Post.where(\"created_at > ? AND city_id = ? AND published = ?\", a, b, c)\\nend\\n),\n          does_not_fire: \"def index\\n  @posts = Post.recent\\nend\\n\" do |src, path:|"
+        },
+        "tags": [
+          "RAILS",
+          "ARCHITECTURE"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "autofix": {
+          "expression": "false,\n          description: \"thin controllers — business logic belongs in models/services\",\n          example_path: \"/repo/app/controllers/example_controller.rb\",\n          fires: %(def index\\n  @posts = Post.where(\"created_at > ? AND city_id = ? AND published = ?\", a, b, c)\\nend\\n),\n          does_not_fire: \"def index\\n  @posts = Post.recent\\nend\\n\" do |src, path:|"
+        },
+        "description": "thin controllers — business logic belongs in models/services",
+        "fires": {
+          "expression": "%(def index\\n  @posts = Post.where(\"created_at > ? AND city_id = ? AND published = ?\", a, b, c)\\nend\\n),\n          does_not_fire: \"def index\\n  @posts = Post.recent\\nend\\n\" do |src, path:|"
+        },
+        "does_not_fire": "def index\n  @posts = Post.recent\nend\n",
+        "example_path": "/repo/app/controllers/example_controller.rb"
+      },
+      "kind": "dsl",
+      "line": 636
+    },
+    {
+      "id": "FAT_MODEL_CALLBACK_SOUP",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[RAILS ARCHITECTURE], applies_to: %i[ruby], autofix: false,\n          description: \"limit model callback piles\",\n          fires: %w[before_validation before_save after_save after_create after_update after_commit]\n                 .map { |cb| \"  #{cb} :touch_feed\\n\" }.join,\n          does_not_fire: \"  before_validation :normalise_slug\\n  after_commit :broadcast\\n\",\n          example_path: \"/repo/app/models/example.rb\" do |src, path:|"
+        },
+        "tags": [
+          "RAILS",
+          "ARCHITECTURE"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "autofix": {
+          "expression": "false,\n          description: \"limit model callback piles\",\n          fires: %w[before_validation before_save after_save after_create after_update after_commit]\n                 .map { |cb| \"  #{cb} :touch_feed\\n\" }.join,\n          does_not_fire: \"  before_validation :normalise_slug\\n  after_commit :broadcast\\n\",\n          example_path: \"/repo/app/models/example.rb\" do |src, path:|"
+        },
+        "description": "limit model callback piles",
+        "fires": [
+          "before_validation",
+          "before_save",
+          "after_save",
+          "after_create",
+          "after_update",
+          "after_commit"
+        ],
+        "does_not_fire": "  before_validation :normalise_slug\n  after_commit :broadcast\n",
+        "example_path": "/repo/app/models/example.rb"
+      },
+      "kind": "dsl",
+      "line": 670
+    },
+    {
+      "id": "RAILS_TAG_HELPER",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[RAILS VIEWS], applies_to: %i[html], autofix: false,\n          description: \"prefer tag helpers over raw HTML for dynamic content\",\n          fires: %(<p><%= @post.title %></p>\\n),\n          does_not_fire: %(<%= tag.p @post.title %>\\n) do |src, path:|"
+        },
+        "tags": [
+          "RAILS",
+          "VIEWS"
+        ],
+        "languages": [
+          "html"
+        ],
+        "autofix": {
+          "expression": "false,\n          description: \"prefer tag helpers over raw HTML for dynamic content\",\n          fires: %(<p><%= @post.title %></p>\\n),\n          does_not_fire: %(<%= tag.p @post.title %>\\n) do |src, path:|"
+        },
+        "description": "prefer tag helpers over raw HTML for dynamic content",
+        "fires": {
+          "expression": "%(<p><%= @post.title %></p>\\n),\n          does_not_fire: %(<%= tag.p @post.title %>\\n) do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<%= tag.p @post.title %>\\n) do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 683
+    },
+    {
+      "id": "STIMULUS_CONTROLLER_SIZE",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[RAILS JAVASCRIPT], applies_to: %i[javascript], autofix: false,\n          description: \"Stimulus controllers stay focused\",\n          # 201 lines against the ceiling of 200, so the example proves the\n          # boundary rather than a number far from it.\n          fires: \"export default class extends Controller {\\n#{\"  step();\\n\" * 199}}\\n\",\n          does_not_fire: \"export default class extends Controller {\\n  connect() {}\\n}\\n\" do |src, path:|"
+        },
+        "tags": [
+          "RAILS",
+          "JAVASCRIPT"
+        ],
+        "languages": [
+          "javascript"
+        ],
+        "autofix": {
+          "expression": "false,\n          description: \"Stimulus controllers stay focused\",\n          # 201 lines against the ceiling of 200, so the example proves the\n          # boundary rather than a number far from it.\n          fires: \"export default class extends Controller {\\n#{\"  step();\\n\" * 199}}\\n\",\n          does_not_fire: \"export default class extends Controller {\\n  connect() {}\\n}\\n\" do |src, path:|"
+        },
+        "description": "Stimulus controllers stay focused",
+        "fires": "export default class extends Controller {\n#{",
+        "does_not_fire": "export default class extends Controller {\n  connect() {}\n}\n"
+      },
+      "kind": "dsl",
+      "line": 698
+    },
+    {
+      "id": "STIMULUS_PROGRESSIVE",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[RAILS JAVASCRIPT UX], applies_to: %i[html], autofix: false,\n          description: \"interactive UI should degrade without JS when possible\",\n          fires: %(<div data-controller=\"map\"></div>\\n),\n          does_not_fire: %(<div data-controller=\"map\"><a href=\"/kart\">Kart</a></div>\\n) do |src, path:|"
+        },
+        "tags": [
+          "RAILS",
+          "JAVASCRIPT",
+          "UX"
+        ],
+        "languages": [
+          "html"
+        ],
+        "autofix": {
+          "expression": "false,\n          description: \"interactive UI should degrade without JS when possible\",\n          fires: %(<div data-controller=\"map\"></div>\\n),\n          does_not_fire: %(<div data-controller=\"map\"><a href=\"/kart\">Kart</a></div>\\n) do |src, path:|"
+        },
+        "description": "interactive UI should degrade without JS when possible",
+        "fires": {
+          "expression": "%(<div data-controller=\"map\"></div>\\n),\n          does_not_fire: %(<div data-controller=\"map\"><a href=\"/kart\">Kart</a></div>\\n) do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<div data-controller=\"map\"><a href=\"/kart\">Kart</a></div>\\n) do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 718
+    },
+    {
+      "id": "NO_LOGIC_IN_VIEW",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[RAILS VIEWS], applies_to: %i[html], autofix: false,\n          description: \"views present; models/helpers compute\",\n          fires: %(<% @posts.select { |p| p.published? }.each do |post| %>\\n),\n          # Rendering a collection is presentation, and `<%=` is the tell.\n          does_not_fire: %(<%= render @posts %>\\n) do |src, path:|"
+        },
+        "tags": [
+          "RAILS",
+          "VIEWS"
+        ],
+        "languages": [
+          "html"
+        ],
+        "autofix": {
+          "expression": "false,\n          description: \"views present; models/helpers compute\",\n          fires: %(<% @posts.select { |p| p.published? }.each do |post| %>\\n),\n          # Rendering a collection is presentation, and `<%=` is the tell.\n          does_not_fire: %(<%= render @posts %>\\n) do |src, path:|"
+        },
+        "description": "views present; models/helpers compute",
+        "fires": {
+          "expression": "%(<% @posts.select { |p| p.published? }.each do |post| %>\\n),\n          # Rendering a collection is presentation, and `<%=` is the tell.\n          does_not_fire: %(<%= render @posts %>\\n) do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<%= render @posts %>\\n) do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 729
+    },
+    {
+      "id": "HELPER_VIEW_ONLY",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[RAILS], applies_to: %i[ruby], autofix: false,\n          description: \"helpers format for views only\",\n          example_path: \"/repo/app/helpers/example_helper.rb\",\n          fires: \"def recent_posts\\n  Post.where(published: true)\\nend\\n\",\n          does_not_fire: \"def title_for(post)\\n  post.title.upcase\\nend\\n\" do |src, path:|"
+        },
+        "tags": [
+          "RAILS"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "autofix": {
+          "expression": "false,\n          description: \"helpers format for views only\",\n          example_path: \"/repo/app/helpers/example_helper.rb\",\n          fires: \"def recent_posts\\n  Post.where(published: true)\\nend\\n\",\n          does_not_fire: \"def title_for(post)\\n  post.title.upcase\\nend\\n\" do |src, path:|"
+        },
+        "description": "helpers format for views only",
+        "fires": "def recent_posts\n  Post.where(published: true)\nend\n",
+        "does_not_fire": "def title_for(post)\n  post.title.upcase\nend\n",
+        "example_path": "/repo/app/helpers/example_helper.rb"
+      },
+      "kind": "dsl",
+      "line": 746
+    },
+    {
+      "id": "SCSS_NESTING_DEPTH",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[RAILS CSS DESIGN], applies_to: %i[scss], autofix: false,\n          description: \"avoid deep SCSS nesting / preprocessor bloat\",\n          # Depth is read at each line's end, so the example nests the way SCSS\n          # is written. The same five levels on one line measure zero.\n          fires: \".a {\\n  .b {\\n    .c {\\n      .d {\\n        .e {\\n          color: red;\\n        }\\n      }\\n    }\\n  }\\n}\\n\",\n          does_not_fire: \".a {\\n  .b {\\n    color: red;\\n  }\\n}\\n\" do |src, path:|"
+        },
+        "tags": [
+          "RAILS",
+          "CSS",
+          "DESIGN"
+        ],
+        "languages": [
+          "scss"
+        ],
+        "autofix": {
+          "expression": "false,\n          description: \"avoid deep SCSS nesting / preprocessor bloat\",\n          # Depth is read at each line's end, so the example nests the way SCSS\n          # is written. The same five levels on one line measure zero.\n          fires: \".a {\\n  .b {\\n    .c {\\n      .d {\\n        .e {\\n          color: red;\\n        }\\n      }\\n    }\\n  }\\n}\\n\",\n          does_not_fire: \".a {\\n  .b {\\n    color: red;\\n  }\\n}\\n\" do |src, path:|"
+        },
+        "description": "avoid deep SCSS nesting / preprocessor bloat",
+        "fires": ".a {\n  .b {\n    .c {\n      .d {\n        .e {\n          color: red;\n        }\n      }\n    }\n  }\n}\n",
+        "does_not_fire": ".a {\n  .b {\n    color: red;\n  }\n}\n"
+      },
+      "kind": "dsl",
+      "line": 757
+    },
+    {
+      "id": "PWA_MANIFEST_HINT",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[RAILS PWA], applies_to: %i[json html], autofix: false,\n          description: \"PWA surfaces declare manifest\",\n          example_path: \"/repo/app/views/layouts/application.html.erb\",\n          fires: \"<html>\\n<head><title>Brgen</title></head>\\n</html>\\n\",\n          does_not_fire: %(<html>\\n<head><link rel=\"manifest\" href=\"/manifest.json\"></head>\\n</html>\\n) do |src, path:|"
+        },
+        "tags": [
+          "RAILS",
+          "PWA"
+        ],
+        "languages": [
+          "json",
+          "html"
+        ],
+        "autofix": {
+          "expression": "false,\n          description: \"PWA surfaces declare manifest\",\n          example_path: \"/repo/app/views/layouts/application.html.erb\",\n          fires: \"<html>\\n<head><title>Brgen</title></head>\\n</html>\\n\",\n          does_not_fire: %(<html>\\n<head><link rel=\"manifest\" href=\"/manifest.json\"></head>\\n</html>\\n) do |src, path:|"
+        },
+        "description": "PWA surfaces declare manifest",
+        "fires": "<html>\n<head><title>Brgen</title></head>\n</html>\n",
+        "does_not_fire": {
+          "expression": "%(<html>\\n<head><link rel=\"manifest\" href=\"/manifest.json\"></head>\\n</html>\\n) do |src, path:|"
+        },
+        "example_path": "/repo/app/views/layouts/application.html.erb"
+      },
+      "kind": "dsl",
+      "line": 777
+    },
+    {
+      "id": "FEW_ARGUMENTS",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[SMALL_PARTS],\n          fires: \"def place(north, east, depth)\\nend\\n\",\n          does_not_fire: \"def place(north:, east:, depth:)\\nend\\n\",\n          description: \"ideal is zero to two positional arguments\" do |src, path:|"
+        },
+        "tags": [
+          "SMALL_PARTS"
+        ],
+        "description": "ideal is zero to two positional arguments",
+        "fires": "def place(north, east, depth)\nend\n",
+        "does_not_fire": "def place(north:, east:, depth:)\nend\n"
+      },
+      "kind": "dsl",
+      "line": 20
+    },
+    {
+      "id": "N_PLUS_ONE",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[PERFORMANCE],\n          fires: \"posts.each { |post| post.author.name }\\n\",\n          does_not_fire: \"posts.each { |post| post.title }\\n\",\n          description: \"loading records one-by-one inside a loop\" do |src, path:|"
+        },
+        "tags": [
+          "PERFORMANCE"
+        ],
+        "description": "loading records one-by-one inside a loop",
+        "fires": "posts.each { |post| post.author.name }\n",
+        "does_not_fire": "posts.each { |post| post.title }\n"
+      },
+      "kind": "dsl",
+      "line": 37
+    },
+    {
+      "id": "NO_FLAG_ARGUMENTS",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[SMALL_PARTS],\n          fires: \"def render(body, cache = true)\\nend\\n\",\n          does_not_fire: \"def render(body, cache: true)\\nend\\n\",\n          description: \"a flag that selects behavior means two things hiding as one\" do |src, path:|"
+        },
+        "tags": [
+          "SMALL_PARTS"
+        ],
+        "description": "a flag that selects behavior means two things hiding as one",
+        "fires": "def render(body, cache = true)\nend\n",
+        "does_not_fire": "def render(body, cache: true)\nend\n"
+      },
+      "kind": "dsl",
+      "line": 50
+    },
+    {
+      "id": "LAW_OF_DEMETER",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[COUPLING], applies_to: %i[ruby javascript html],\n          fires: \"city = order.buyer.profile.address\\n\",\n          does_not_fire: \"names = files.uniq.sort.reject(&:empty?)\\n\",\n          description: \"only talk to immediate friends\" do |src, path:|"
+        },
+        "tags": [
+          "COUPLING"
+        ],
+        "languages": [
+          "ruby",
+          "javascript",
+          "html"
+        ],
+        "description": "only talk to immediate friends",
+        "fires": "city = order.buyer.profile.address\n",
+        "does_not_fire": "names = files.uniq.sort.reject(&:empty?)\n"
+      },
+      "kind": "dsl",
+      "line": 97
+    },
+    {
+      "id": "TYPOGRAPHIC_EXCELLENCE",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[TYPOGRAPHY],\n          # A quote against the ellipsis: the rule reads a bare quoted\n          # ellipsis as the placeholder, not prose that happens to contain dots.\n          fires: %(warn \"...\"\\n),\n          does_not_fire: %(warn \"…\"\\n),\n          description: \"typographic excellence in user-facing text\" do |src, path:|"
+        },
+        "tags": [
+          "TYPOGRAPHY"
+        ],
+        "description": "typographic excellence in user-facing text",
+        "fires": {
+          "expression": "%(warn \"...\"\\n),\n          does_not_fire: %(warn \"…\"\\n),\n          description: \"typographic excellence in user-facing text\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(warn \"…\"\\n),\n          description: \"typographic excellence in user-facing text\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 121
+    },
+    {
+      "id": "TYPOGRAPHY_DISCIPLINE",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[TYPOGRAPHY],\n          fires: \"# ╭──── section ────╮\\n\",\n          does_not_fire: \"| name | purpose |\\n|------|---------|\\n\",\n          description: \"hierarchy via weight and brightness, not decoration\" do |src, path:|"
+        },
+        "tags": [
+          "TYPOGRAPHY"
+        ],
+        "description": "hierarchy via weight and brightness, not decoration",
+        "fires": "# ╭──── section ────╮\n",
+        "does_not_fire": "| name | purpose |\n|------|---------|\n"
+      },
+      "kind": "dsl",
+      "line": 146
+    },
+    {
+      "id": "ONE_SOURCE",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[COUPLING],\n          fires: %(COUNCIL_PATH = \"data/council.yml\"\\n),\n          does_not_fire: \"path = Master::COUNCIL_PATH\\n\",\n          description: \"constants defined locally when a canonical ONE_SOURCE exists\" do |src, path:|"
+        },
+        "tags": [
+          "COUPLING"
+        ],
+        "description": "constants defined locally when a canonical ONE_SOURCE exists",
+        "fires": {
+          "expression": "%(COUNCIL_PATH = \"data/council.yml\"\\n),\n          does_not_fire: \"path = Master::COUNCIL_PATH\\n\",\n          description: \"constants defined locally when a canonical ONE_SOURCE exists\" do |src, path:|"
+        },
+        "does_not_fire": "path = Master::COUNCIL_PATH\n"
+      },
+      "kind": "dsl",
+      "line": 184
+    },
+    {
+      "id": "SIMULATION",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[ANTI_SIMULATION DENSITY],\n          fires: %(warn \"the deploy will restart relayd\"\\n),\n          does_not_fire: %(assert ok, \"this test would pass having measured nothing\"\\n),\n          description: \"future tense implies without evidence — use indicative past\" do |src, path:|"
+        },
+        "tags": [
+          "ANTI_SIMULATION",
+          "DENSITY"
+        ],
+        "description": "future tense implies without evidence — use indicative past",
+        "fires": {
+          "expression": "%(warn \"the deploy will restart relayd\"\\n),\n          does_not_fire: %(assert ok, \"this test would pass having measured nothing\"\\n),\n          description: \"future tense implies without evidence — use indicative past\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(assert ok, \"this test would pass having measured nothing\"\\n),\n          description: \"future tense implies without evidence — use indicative past\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 215
+    },
+    {
+      "id": "COMPLETION_THEATER",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[ROBUSTNESS COMPLETENESS],\n          fires: \"handle(first, second, etc.)\\n\",\n          does_not_fire: %(require \"etc\"\\n),\n          description: \"ellipsis or etcetera as placeholder violates completeness\" do |src, path:|"
+        },
+        "tags": [
+          "ROBUSTNESS",
+          "COMPLETENESS"
+        ],
+        "description": "ellipsis or etcetera as placeholder violates completeness",
+        "fires": "handle(first, second, etc.)\n",
+        "does_not_fire": {
+          "expression": "%(require \"etc\"\\n),\n          description: \"ellipsis or etcetera as placeholder violates completeness\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 277
+    },
+    {
+      "id": "SQL_INJECTION",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[SECURITY],\n          fires: %q(conn.execute(\"DELETE FROM #{table}\")) + \"\\n\",\n          does_not_fire: %q(conn.execute(\"DELETE FROM #{conn.quote_table_name(table)}\")) + \"\\n\",\n          description: \"parameterize all SQL — never interpolate user input\" do |src, path:|"
+        },
+        "tags": [
+          "SECURITY"
+        ],
+        "description": "parameterize all SQL — never interpolate user input",
+        "fires": {
+          "expression": "%q(conn.execute(\"DELETE FROM #{table}\")) + \"\\n\",\n          does_not_fire: %q(conn.execute(\"DELETE FROM #{conn.quote_table_name(table)}\")) + \"\\n\",\n          description: \"parameterize all SQL — never interpolate user input\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%q(conn.execute(\"DELETE FROM #{conn.quote_table_name(table)}\")) + \"\\n\",\n          description: \"parameterize all SQL — never interpolate user input\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 321
+    },
+    {
+      "id": "CONTROL_CHARS",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[ROBUSTNESS],\n          # An escape, not a literal, so this file keeps carrying no control\n          # character of its own — which is why the rule counts by ordinal.\n          fires: \"value = 1\\u0001\\n\",\n          does_not_fire: \"value = 1\\t\\n\",\n          description: \"no non-printable control characters in source\" do |src, path:|"
+        },
+        "tags": [
+          "ROBUSTNESS"
+        ],
+        "description": "no non-printable control characters in source",
+        "fires": "value = 1\u0001\n",
+        "does_not_fire": "value = 1\t\n"
+      },
+      "kind": "dsl",
+      "line": 362
+    },
+    {
+      "id": "PLEDGE_STAGED",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[SECURITY], applies_to: %i[ruby], autofix: false,\n          fires: %q(Master::Ground::Pledge.unveil(\"/\", \"r\")) + \"\\n\",\n          does_not_fire: \"Master::Ground::Pledge.stage1_boot!(root)\\n\",\n          description: \"restrict the process through Ground::Pledge's stages, never a hand-written promise\" do |src, path:|"
+        },
+        "tags": [
+          "SECURITY"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "autofix": {
+          "expression": "false,\n          fires: %q(Master::Ground::Pledge.unveil(\"/\", \"r\")) + \"\\n\",\n          does_not_fire: \"Master::Ground::Pledge.stage1_boot!(root)\\n\",\n          description: \"restrict the process through Ground::Pledge's stages, never a hand-written promise\" do |src, path:|"
+        },
+        "description": "restrict the process through Ground::Pledge's stages, never a hand-written promise",
+        "fires": {
+          "expression": "%q(Master::Ground::Pledge.unveil(\"/\", \"r\")) + \"\\n\",\n          does_not_fire: \"Master::Ground::Pledge.stage1_boot!(root)\\n\",\n          description: \"restrict the process through Ground::Pledge's stages, never a hand-written promise\" do |src, path:|"
+        },
+        "does_not_fire": "Master::Ground::Pledge.stage1_boot!(root)\n"
+      },
+      "kind": "dsl",
+      "line": 397
+    },
+    {
+      "id": "AUDIT_APPEND_ONLY",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[SECURITY], applies_to: %i[ruby], autofix: false,\n          fires: %Q(bus.subscribe(\"tool:before\") { |e| record(e) }\\nFile.open(@path, \"w\") { |f| f.puts(line) }\\n),\n          does_not_fire: %Q(bus.subscribe(\"tool:before\") { |e| record(e) }\\nFile.open(@path, \"a\") { |f| f.puts(line) }\\n),\n          description: \"an audit sink appends to its log and never truncates it\" do |src, path:|"
+        },
+        "tags": [
+          "SECURITY"
+        ],
+        "languages": [
+          "ruby"
+        ],
+        "autofix": {
+          "expression": "false,\n          fires: %Q(bus.subscribe(\"tool:before\") { |e| record(e) }\\nFile.open(@path, \"w\") { |f| f.puts(line) }\\n),\n          does_not_fire: %Q(bus.subscribe(\"tool:before\") { |e| record(e) }\\nFile.open(@path, \"a\") { |f| f.puts(line) }\\n),\n          description: \"an audit sink appends to its log and never truncates it\" do |src, path:|"
+        },
+        "description": "an audit sink appends to its log and never truncates it",
+        "fires": {
+          "expression": "%Q(bus.subscribe(\"tool:before\") { |e| record(e) }\\nFile.open(@path, \"w\") { |f| f.puts(line) }\\n),\n          does_not_fire: %Q(bus.subscribe(\"tool:before\") { |e| record(e) }\\nFile.open(@path, \"a\") { |f| f.puts(line) }\\n),\n          description: \"an audit sink appends to its log and never truncates it\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%Q(bus.subscribe(\"tool:before\") { |e| record(e) }\\nFile.open(@path, \"a\") { |f| f.puts(line) }\\n),\n          description: \"an audit sink appends to its log and never truncates it\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 431
+    },
+    {
+      "id": "veto_patterns",
+      "path": "MASTER/law/detectors/veto_pattern_law.rb",
+      "fields": {
+        "severity": {
+          "expression": ":veto,\n                  description: \"Unconditional merge blockers from laws.yml veto_patterns\""
+        },
+        "description": "Unconditional merge blockers from laws.yml veto_patterns"
+      },
+      "kind": "declared_class",
+      "line": 21
+    },
+    {
+      "id": "HTML_LANG",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[ACCESSIBILITY], applies_to: %i[html],\n          fires: %(<html>\\n),\n          does_not_fire: %(<html lang=\"nb\">\\n),\n          description: \"lang attribute on <html>\" do |src, path:|"
+        },
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "html"
+        ],
+        "description": "lang attribute on <html>",
+        "fires": {
+          "expression": "%(<html>\\n),\n          does_not_fire: %(<html lang=\"nb\">\\n),\n          description: \"lang attribute on <html>\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<html lang=\"nb\">\\n),\n          description: \"lang attribute on <html>\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 14
+    },
+    {
+      "id": "IMG_ALT",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[ACCESSIBILITY], applies_to: %i[html],\n          fires: %(<img src=\"a.png\">\\n),\n          does_not_fire: %(<img src=\"a.png\" alt=\"a garment\">\\n),\n          description: \"require alt on every <img>\" do |src, path:|"
+        },
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "html"
+        ],
+        "description": "require alt on every <img>",
+        "fires": {
+          "expression": "%(<img src=\"a.png\">\\n),\n          does_not_fire: %(<img src=\"a.png\" alt=\"a garment\">\\n),\n          description: \"require alt on every <img>\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<img src=\"a.png\" alt=\"a garment\">\\n),\n          description: \"require alt on every <img>\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 29
+    },
+    {
+      "id": "LAZY_IMAGES",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[PERFORMANCE], applies_to: %i[html],\n          fires: %(<img src=\"a.png\" alt=\"a\">\\n),\n          does_not_fire: %(<img src=\"a.png\" alt=\"a\" loading=\"lazy\">\\n),\n          description: \"loading=lazy on below-fold images\" do |src, path:|"
+        },
+        "tags": [
+          "PERFORMANCE"
+        ],
+        "languages": [
+          "html"
+        ],
+        "description": "loading=lazy on below-fold images",
+        "fires": {
+          "expression": "%(<img src=\"a.png\" alt=\"a\">\\n),\n          does_not_fire: %(<img src=\"a.png\" alt=\"a\" loading=\"lazy\">\\n),\n          description: \"loading=lazy on below-fold images\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<img src=\"a.png\" alt=\"a\" loading=\"lazy\">\\n),\n          description: \"loading=lazy on below-fold images\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 37
+    },
+    {
+      "id": "NO_IMPORTANT",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[MAINTAINABILITY], applies_to: %i[css scss],\n          fires: \".btn { background: #c00 !important; }\\n\",\n          does_not_fire: \".btn { border: none !important; }\\n\",\n          description: \"no !important\" do |src, path:|"
+        },
+        "tags": [
+          "MAINTAINABILITY"
+        ],
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "description": "no !important",
+        "fires": ".btn { background: #c00 !important; }\n",
+        "does_not_fire": ".btn { border: none !important; }\n"
+      },
+      "kind": "dsl",
+      "line": 45
+    },
+    {
+      "id": "ARIA_LABELS",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],\n          fires: %(<button class=\"icon-only\"><svg></svg></button>\\n),\n          does_not_fire: %(<button class=\"icon-only\" aria-label=\"Close\"><svg></svg></button>\\n),\n          description: \"interactive controls need accessible names\" do |src, path:|"
+        },
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "html"
+        ],
+        "description": "interactive controls need accessible names",
+        "fires": {
+          "expression": "%(<button class=\"icon-only\"><svg></svg></button>\\n),\n          does_not_fire: %(<button class=\"icon-only\" aria-label=\"Close\"><svg></svg></button>\\n),\n          description: \"interactive controls need accessible names\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<button class=\"icon-only\" aria-label=\"Close\"><svg></svg></button>\\n),\n          description: \"interactive controls need accessible names\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 93
+    },
+    {
+      "id": "NO_TODO_IN_VIEWS",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[MAINTAINABILITY], applies_to: %i[html],\n          fires: %(<%# FIXME: wire the filter %>\\n),\n          does_not_fire: %(<%# the filter is Marketplace::ListingFacets %>\\n),\n          description: \"no TODO/FIXME in shipped views\" do |src, path:|"
+        },
+        "tags": [
+          "MAINTAINABILITY"
+        ],
+        "languages": [
+          "html"
+        ],
+        "description": "no TODO/FIXME in shipped views",
+        "fires": {
+          "expression": "%(<%# FIXME: wire the filter %>\\n),\n          does_not_fire: %(<%# the filter is Marketplace::ListingFacets %>\\n),\n          description: \"no TODO/FIXME in shipped views\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<%# the filter is Marketplace::ListingFacets %>\\n),\n          description: \"no TODO/FIXME in shipped views\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 105
+    },
+    {
+      "id": "ANTI_DIVITIS",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[DESIGN], applies_to: %i[html],\n          fires: %(<div class=\"header\">\\n),\n          does_not_fire: %(<header class=\"header\">\\n),\n          description: \"avoid styling-only wrappers and semantic div substitutes\" do |src, path:|"
+        },
+        "tags": [
+          "DESIGN"
+        ],
+        "languages": [
+          "html"
+        ],
+        "description": "avoid styling-only wrappers and semantic div substitutes",
+        "fires": {
+          "expression": "%(<div class=\"header\">\\n),\n          does_not_fire: %(<header class=\"header\">\\n),\n          description: \"avoid styling-only wrappers and semantic div substitutes\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<header class=\"header\">\\n),\n          description: \"avoid styling-only wrappers and semantic div substitutes\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 114
+    },
+    {
+      "id": "PREFER_TAG_HELPERS",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[DESIGN RAILS_IDIOM], applies_to: %i[html],\n          fires: %(<p><%= t(\"hello_world\") %></p>\\n),\n          does_not_fire: %(<%= tag.p t(\"hello_world\") %>\\n),\n          description: \"prefer Rails tag helpers over raw HTML wrapping a single ERB expression\" do |src, path:|"
+        },
+        "tags": [
+          "DESIGN",
+          "RAILS_IDIOM"
+        ],
+        "languages": [
+          "html"
+        ],
+        "description": "prefer Rails tag helpers over raw HTML wrapping a single ERB expression",
+        "fires": {
+          "expression": "%(<p><%= t(\"hello_world\") %></p>\\n),\n          does_not_fire: %(<%= tag.p t(\"hello_world\") %>\\n),\n          description: \"prefer Rails tag helpers over raw HTML wrapping a single ERB expression\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<%= tag.p t(\"hello_world\") %>\\n),\n          description: \"prefer Rails tag helpers over raw HTML wrapping a single ERB expression\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 133
+    },
+    {
+      "id": "ERB_HTML_SAFE",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":error, tags: %i[SECURITY], applies_to: %i[html],\n          fires: %(<%= @post.body.html_safe %>\\n),\n          does_not_fire: %(<%= sanitize(@post.body).html_safe %>\\n),\n          description: \"html_safe only after sanitize\" do |src, path:|"
+        },
+        "tags": [
+          "SECURITY"
+        ],
+        "languages": [
+          "html"
+        ],
+        "description": "html_safe only after sanitize",
+        "fires": {
+          "expression": "%(<%= @post.body.html_safe %>\\n),\n          does_not_fire: %(<%= sanitize(@post.body).html_safe %>\\n),\n          description: \"html_safe only after sanitize\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<%= sanitize(@post.body).html_safe %>\\n),\n          description: \"html_safe only after sanitize\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 150
+    },
+    {
+      "id": "SINGLE_H1",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[SEO ACCESSIBILITY], applies_to: %i[html],\n          fires: %(<h1>Bergen</h1>\\n<h1>Oslo</h1>\\n),\n          does_not_fire: %(<h1>Bergen</h1>\\n<h2>Oslo</h2>\\n),\n          description: \"one h1 per view surface\" do |src, path:|"
+        },
+        "tags": [
+          "SEO",
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "html"
+        ],
+        "description": "one h1 per view surface",
+        "fires": {
+          "expression": "%(<h1>Bergen</h1>\\n<h1>Oslo</h1>\\n),\n          does_not_fire: %(<h1>Bergen</h1>\\n<h2>Oslo</h2>\\n),\n          description: \"one h1 per view surface\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<h1>Bergen</h1>\\n<h2>Oslo</h2>\\n),\n          description: \"one h1 per view surface\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 199
+    },
+    {
+      "id": "FORM_LABEL",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],\n          fires: %(<input type=\"text\" name=\"query\">\\n),\n          does_not_fire: %(<label>Search<input type=\"text\" name=\"query\"></label>\\n),\n          description: \"inputs require labels or aria-label\" do |src, path:|"
+        },
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "html"
+        ],
+        "description": "inputs require labels or aria-label",
+        "fires": {
+          "expression": "%(<input type=\"text\" name=\"query\">\\n),\n          does_not_fire: %(<label>Search<input type=\"text\" name=\"query\"></label>\\n),\n          description: \"inputs require labels or aria-label\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<label>Search<input type=\"text\" name=\"query\"></label>\\n),\n          description: \"inputs require labels or aria-label\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 213
+    },
+    {
+      "id": "ASYNC_STATUS",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[ACCESSIBILITY], applies_to: %i[html],\n          fires: %(<turbo-frame id=\"feed\"></turbo-frame>\\n),\n          does_not_fire: %(<turbo-frame id=\"feed\" aria-live=\"polite\"></turbo-frame>\\n),\n          description: \"async regions expose status for screen readers\" do |src, path:|"
+        },
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "html"
+        ],
+        "description": "async regions expose status for screen readers",
+        "fires": {
+          "expression": "%(<turbo-frame id=\"feed\"></turbo-frame>\\n),\n          does_not_fire: %(<turbo-frame id=\"feed\" aria-live=\"polite\"></turbo-frame>\\n),\n          description: \"async regions expose status for screen readers\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<turbo-frame id=\"feed\" aria-live=\"polite\"></turbo-frame>\\n),\n          description: \"async regions expose status for screen readers\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 226
+    },
+    {
+      "id": "REDUCED_MOTION",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[ACCESSIBILITY], applies_to: %i[css scss],\n          description: \"animations respect prefers-reduced-motion\",\n          example_path: \"/repo/app/assets/stylesheets/_example.scss\",\n          fires: \"@keyframes spin { to { transform: rotate(360deg); } }\\n\",\n          does_not_fire: \"@keyframes spin { to { transform: rotate(360deg); } }\\n@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }\\n\" do |src, path:|"
+        },
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "description": "animations respect prefers-reduced-motion",
+        "fires": "@keyframes spin { to { transform: rotate(360deg); } }\n",
+        "does_not_fire": "@keyframes spin { to { transform: rotate(360deg); } }\n@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }\n",
+        "example_path": "/repo/app/assets/stylesheets/_example.scss"
+      },
+      "kind": "dsl",
+      "line": 243
+    },
+    {
+      "id": "TABINDEX_ABOVE_ZERO",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],\n          fires: %(<a href=\"/\" tabindex=\"3\">Home</a>\\n),\n          does_not_fire: %(<a href=\"/\" tabindex=\"0\">Home</a>\\n),\n          description: \"tabindex above zero disrupts natural tab order\" do |src, path:|"
+        },
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "html"
+        ],
+        "description": "tabindex above zero disrupts natural tab order",
+        "fires": {
+          "expression": "%(<a href=\"/\" tabindex=\"3\">Home</a>\\n),\n          does_not_fire: %(<a href=\"/\" tabindex=\"0\">Home</a>\\n),\n          description: \"tabindex above zero disrupts natural tab order\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<a href=\"/\" tabindex=\"0\">Home</a>\\n),\n          description: \"tabindex above zero disrupts natural tab order\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 261
+    },
+    {
+      "id": "NO_JS_ERB",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[HOTWIRE], applies_to: %i[html],\n          fires: %(<%= render \"posts/create.js.erb\" %>\\n),\n          does_not_fire: %(<%= render \"posts/create.turbo_stream.erb\" %>\\n),\n          description: \"RJS and format.js — migrate to Turbo Streams\" do |src, path:|"
+        },
+        "tags": [
+          "HOTWIRE"
+        ],
+        "languages": [
+          "html"
+        ],
+        "description": "RJS and format.js — migrate to Turbo Streams",
+        "fires": {
+          "expression": "%(<%= render \"posts/create.js.erb\" %>\\n),\n          does_not_fire: %(<%= render \"posts/create.turbo_stream.erb\" %>\\n),\n          description: \"RJS and format.js — migrate to Turbo Streams\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<%= render \"posts/create.turbo_stream.erb\" %>\\n),\n          description: \"RJS and format.js — migrate to Turbo Streams\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 271
+    },
+    {
+      "id": "DATA_REMOTE",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":warning, tags: %i[HOTWIRE], applies_to: %i[html],\n          fires: %(<%= link_to \"Slett\", post_path(post), remote: true %>\\n),\n          does_not_fire: %(<%= link_to \"Slett\", post_path(post), data: { turbo_method: :delete } %>\\n),\n          description: \"rails-ujs data-remote — use Turbo native forms\" do |src, path:|"
+        },
+        "tags": [
+          "HOTWIRE"
+        ],
+        "languages": [
+          "html"
+        ],
+        "description": "rails-ujs data-remote — use Turbo native forms",
+        "fires": {
+          "expression": "%(<%= link_to \"Slett\", post_path(post), remote: true %>\\n),\n          does_not_fire: %(<%= link_to \"Slett\", post_path(post), data: { turbo_method: :delete } %>\\n),\n          description: \"rails-ujs data-remote — use Turbo native forms\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<%= link_to \"Slett\", post_path(post), data: { turbo_method: :delete } %>\\n),\n          description: \"rails-ujs data-remote — use Turbo native forms\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 282
+    },
+    {
+      "id": "INPUT_TYPE_SPECIFIC",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[ACCESSIBILITY], applies_to: %i[html],\n          fires: %(<input type=\"text\" name=\"email_address\">\\n),\n          does_not_fire: %(<input type=\"email\" name=\"email_address\">\\n),\n          description: \"semantic input types for email/url/tel/date\" do |src, path:|"
+        },
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "html"
+        ],
+        "description": "semantic input types for email/url/tel/date",
+        "fires": {
+          "expression": "%(<input type=\"text\" name=\"email_address\">\\n),\n          does_not_fire: %(<input type=\"email\" name=\"email_address\">\\n),\n          description: \"semantic input types for email/url/tel/date\" do |src, path:|"
+        },
+        "does_not_fire": {
+          "expression": "%(<input type=\"email\" name=\"email_address\">\\n),\n          description: \"semantic input types for email/url/tel/date\" do |src, path:|"
+        }
+      },
+      "kind": "dsl",
+      "line": 298
+    },
+    {
+      "id": "FOCUS_VISIBLE",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": {
+          "expression": ":info, tags: %i[ACCESSIBILITY], applies_to: %i[css scss],\n          example_path: \"/repo/app/assets/stylesheets/application.scss\",\n          fires: \".btn:hover { background: var(--hover); }\\n\",\n          does_not_fire: \".btn:hover { background: var(--hover); }\\n.btn:focus-visible { outline: 2px solid; }\\n\",\n          description: \"interactive surfaces expose visible focus\" do |src, path:|"
+        },
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "description": "interactive surfaces expose visible focus",
+        "fires": ".btn:hover { background: var(--hover); }\n",
+        "does_not_fire": ".btn:hover { background: var(--hover); }\n.btn:focus-visible { outline: 2px solid; }\n",
+        "example_path": "/repo/app/assets/stylesheets/application.scss"
+      },
+      "kind": "dsl",
+      "line": 308
     }
   ]
 }
