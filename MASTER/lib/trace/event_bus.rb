@@ -217,7 +217,7 @@ module Master
       ].freeze
 
       SAFE_LIFECYCLE_COUNTS = %w[
-        turn elapsed_ms duration_ms tracked_paths path_count finding_count argument_count
+        turn elapsed_ms duration_ms tracked_paths path_count finding_count argument_count item_count
         file_count count attempt tries resume_count remaining_seconds output_bytes output_lines
         input_bytes input_lines bytes lines violations changes additions deletions
       ].freeze
