@@ -3,6 +3,7 @@
 require "json"
 require "ruby_llm"
 require_relative "../result"
+require_relative "../execution/contract"
 
 module Master
   module Io
@@ -35,14 +36,14 @@ module Master
           return orientation_refusal(args) if orientation_required?
           return repeated_call_reply(args) if repeated_call?(args)
 
-          @bus&.publish("tool:call", tool: tool_name, subject: subject_of(args))
+          @bus&.publish("tool:call", { tool: tool_name }.merge(public_subject_fields(args)))
           record_trajectory_event(tool: tool_name, args:, phase: "call", ok: nil)
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
           result = @tool.call(**args)
           ms = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond) - started
           unless result.ok?
-            @bus&.publish("tool:failed", tool: tool_name, category: result.category, error: result.message.to_s[0, 200])
-            @bus&.publish("tool:return", tool: tool_name, ok: false, ms:, error: result.message.to_s[0, 200])
+            @bus&.publish("tool:failed", { tool: tool_name, category: result.category }.merge(public_error_fields(result.message)))
+            @bus&.publish("tool:return", { tool: tool_name, ok: false, ms: }.merge(public_error_fields(result.message)))
             record_trajectory_event(tool: tool_name, args:, phase: "failed", ok: false, error: result.message.to_s[0, 200])
             return "Error: #{result.message}"
           end
@@ -60,6 +61,20 @@ module Master
         def subject_of(args)
           key = SUBJECT_KEYS.find { |name| !args[name].to_s.empty? }
           key ? args[key].to_s : ""
+        end
+
+        # Public events expose correlation metadata, never a raw path, URL,
+        # command, query, prompt, or upstream error. The private trajectory
+        # recorder remains separately opt-in and permission-restricted.
+        def public_subject_fields(args)
+          key = SUBJECT_KEYS.find { |name| !args[name].to_s.empty? }
+          return {} unless key
+
+          { subject_kind: key.to_s }.merge(Master::Execution::Contract.diagnostic_fields(args[key], key: :subject))
+        end
+
+        def public_error_fields(error)
+          Master::Execution::Contract.diagnostic_fields(error, key: :error)
         end
 
         # The same call three times running, nothing between, is a loop and not
@@ -84,9 +99,9 @@ module Master
         def orientation_refusal(args)
           subject = subject_of(args)
           error = "tree required before source work#{subject.empty? ? "" : ": #{subject}"}"
-          @bus&.publish("tool:call", tool: tool_name, subject:)
-          @bus&.publish("tool:failed", tool: tool_name, category: :orientation, error:)
-          @bus&.publish("tool:return", tool: tool_name, ok: false, ms: 0, error:)
+          @bus&.publish("tool:call", { tool: tool_name }.merge(public_subject_fields(args)))
+          @bus&.publish("tool:failed", { tool: tool_name, category: :orientation }.merge(public_error_fields(error)))
+          @bus&.publish("tool:return", { tool: tool_name, ok: false, ms: 0 }.merge(public_error_fields(error)))
           "Error: #{error}; call Tree or ListDir first."
         end
 
@@ -126,9 +141,9 @@ module Master
         def repeated_call_reply(args)
           subject = subject_of(args)
           error = "repeat refused: #{subject}"[0, 200]
-          @bus&.publish("tool:call", tool: tool_name, subject:)
-          @bus&.publish("tool:failed", tool: tool_name, category: :validation, error:)
-          @bus&.publish("tool:return", tool: tool_name, ok: false, ms: 0, error:)
+          @bus&.publish("tool:call", { tool: tool_name }.merge(public_subject_fields(args)))
+          @bus&.publish("tool:failed", { tool: tool_name, category: :validation }.merge(public_error_fields(error)))
+          @bus&.publish("tool:return", { tool: tool_name, ok: false, ms: 0 }.merge(public_error_fields(error)))
           "Error: the same #{tool_name} call #{REPEAT_LIMIT} times running. Its result is above; act on it or change the call."
         end
 

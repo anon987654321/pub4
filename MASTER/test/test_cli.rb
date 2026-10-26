@@ -614,7 +614,7 @@ def test_a_turn_prints_its_units_and_nothing_else
     "llm0 at master0: nvidia/nemotron-3-super-120b-a12b",
     "llm0: 900 tokens in, 40 out, 2.1s",
     "net0 at master0: network",
-    "fetch0 at net0: https://www.openbsd.org/",
+    "fetch0 at net0: target redacted (24 bytes)",
     "fetch0: 14203 bytes, 0.3s",
   ], lines
 end
