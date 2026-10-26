@@ -96,7 +96,7 @@ class TestInstrumentCheck < Minitest::Test
     assert_equal "fix_loop:instruments_unavailable", event
     assert_equal :blocked, payload.dig(:verification, :status)
     assert_equal 1, payload.fetch(:failure_count)
-    assert_match(/\\A[0-9a-f]{64}\\z/, payload.fetch(:failure_digest))
+    assert_match(/\A[0-9a-f]{64}\z/, payload.fetch(:failure_digest))
     refute_includes payload.inspect, "private/customer/workspace"
     refute_includes payload.inspect, "no disk budget"
   end
