@@ -60,12 +60,15 @@ module Master
           evidence = @convergence_discipline.receipt if @convergence_discipline.respond_to?(:receipt)
           @run_journal.terminal(run_id, state, message: result.to_s, evidence:)
 
-          if mission&.requeue_if_requested!
+          if %i[cancelled unknown_outcome recovery_failed].include?(state)
+            # An explicit stop or ambiguous external outcome outranks a concurrent
+            # wake request; otherwise the steward could replay work the operator
+            # cancelled or the system could not prove safe to repeat.
+            mission&.finish!(state: state.to_s, summary: result.to_s)
+          elsif mission&.requeue_if_requested!
             @bus&.publish("fix_loop:mission_requeued", run_id:, state:, reason: "wake received during attempt")
           elsif state == :done
             mission&.finish!(state: "completed", summary: result.to_s)
-          elsif %i[cancelled unknown_outcome recovery_failed].include?(state)
-            mission&.finish!(state: state.to_s, summary: result.to_s)
           elsif %i[human_decision blocked].include?(state)
             mission&.block!(reason: result.to_s)
           else
