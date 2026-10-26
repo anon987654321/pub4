@@ -92,16 +92,22 @@ module Master
             next if value.nil?
             next unless value.is_a?(String) || value.is_a?(Numeric) || value == true || value == false || value.is_a?(Symbol)
 
-            result[key.to_sym] = value.is_a?(String) ? Master::Ground::Redactor.truncate(Master::Ground::Redactor.text(value)) : value.to_s
+            result[key.to_sym] = case value
+            when String then Master::Ground::Redactor.truncate(Master::Ground::Redactor.text(value))
+            when Symbol then value.to_s
+            else value
+            end
           end
 
           SENSITIVE_METADATA_FIELDS.each do |key|
             next unless fields.key?(key) && !fields[key].nil?
 
-            raw = fields[key].is_a?(String) ? fields[key] : JSON.generate(fields[key])
-            result.merge!(Master::Execution::Contract.diagnostic_fields(raw, key: key.to_sym))
-          rescue StandardError
-            result[:"#{key}_present"] = true
+            begin
+              raw = fields[key].is_a?(String) ? fields[key] : JSON.generate(fields[key])
+              result.merge!(Master::Execution::Contract.diagnostic_fields(raw, key: key.to_sym))
+            rescue StandardError
+              result[:"#{key}_present"] = true
+            end
           end
 
           extra_keys = fields.keys - SAFE_METADATA_FIELDS - SENSITIVE_METADATA_FIELDS - %w[event ts conversation]
