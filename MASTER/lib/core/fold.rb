@@ -79,6 +79,8 @@ module Master::Core
         end
       end
 
+      return cancellation_done(@max_turns) if cancellation_requested?
+
       Done.new(reason: :max_turns, turns: @max_turns, summary: nil)
     end
 
