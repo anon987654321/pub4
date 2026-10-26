@@ -80,6 +80,17 @@ module Master
           )
         end
 
+        # A detector finding is a measured Law violation, not an open question.
+        # The compact result links to the stable finding key rather than copying
+        # potentially private diagnostics into a shared status record.
+        def to_verification(id:, verifier: "law-scanner", subject: nil, scope: nil)
+          to_proof(
+            status: :failed,
+            subject: subject || "finding:#{evidence_key}",
+            evidence: evidence_key,
+          ).to_verification(id:, verifier:, scope:)
+        end
+
         def merge(extras)
           to_h.merge(extras)
         end
