@@ -401,7 +401,7 @@ module Master
           when "tool:call" then tool_call(payload)
           when "tool:return" then tool_return(payload)
           when "fold:risk" then parent("fold0", "master0", "risk #{payload[:risk]}")
-          when "core:reason" then ["fold0: #{clip(payload[:why])}"]
+          when "core:reason" then reason_metadata(payload)
           when "core:turn" then fold_turn(payload)
           when "fix_loop:terminal" then terminal(payload)
           when "wishlist:done" then ["wish0: drafted #{payload[:drafted]} proposal(s)"]
@@ -601,6 +601,18 @@ module Master
         def remember_usage(payload)
           @usage = payload
           []
+        end
+
+        # Shared event logs must not persist model-authored reason text. Accept
+        # old event shapes only as a signal that a legacy payload was redacted.
+        def reason_metadata(payload)
+          digest = payload[:why_digest].to_s
+          bytes = Integer(payload[:why_bytes])
+          return ["fold0: reason received (#{bytes} bytes, sha256 #{digest[0, 12]})"] if digest.match?(/\\A[0-9a-f]{64}\\z/) && bytes >= 0
+
+          ["fold0: reason received (legacy payload redacted)"]
+        rescue ArgumentError, TypeError
+          ["fold0: reason metadata unavailable"]
         end
 
         def tool_call(payload)

@@ -43,6 +43,22 @@ class CoreBridgeTest < Minitest::Test
     ]
   end
 
+  def test_model_reason_event_persists_digest_and_size_not_reason_text
+    secret = "private prompt and source material"
+    bus = FakeBus.new
+    agent = Object.new
+    agent.define_singleton_method(:ask_once) { |*_, **| JSON.generate(why: secret, verb: "read") }
+    chat = Master::CLI::CoreBridge::AgentChat.new(agent, bus, nil, nil, nil)
+
+    chat.ask("read something")
+
+    payload = bus.events.find { |name, _| name == "core:reason" }.last
+    assert_equal Digest::SHA256.hexdigest(secret), payload[:why_digest]
+    assert_equal secret.bytesize, payload[:why_bytes]
+    refute payload.key?(:why)
+    refute_includes payload.inspect, secret
+  end
+
   def test_run_returns_summary_and_streams_turns
     Dir.mktmpdir do |root|
       bus = FakeBus.new

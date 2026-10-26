@@ -47,9 +47,10 @@ A privacy-hardening slice now applies the shared diagnostic representation to ad
 - Provider outcome, provider-canary and health-recorder-failure bus events publish digest/length metadata instead of upstream error strings. The terminal dmesg adapter also refuses to print raw diagnostic text if it receives a legacy event.
 - SQLite feedback learning uses an allow-list of operational metadata, fingerprints content-bearing fields, and fingerprints unknown field names rather than persisting their values. Fix-improvement feedback records the number of affected files and a digest rather than filenames.
 - Reflexion events on the shared event bus contain kind, counts and fingerprints only. The local bounded reflection record keeps a redacted, limited diagnostic hint so repair continuity still has context.
+- The shared `core:reason` event now stores only the reason digest and byte count. Dmesg renders those metadata fields and treats legacy raw-text payloads as redacted; the model-authored reason remains local to the current turn.
 - Transaction telemetry contains path counts and digests, and digests/lengths for free-form error or output fields. The protected transaction manifest remains the source for path-level rollback and recovery.
 
-These changes reduce accidental leakage into logs, the learning database, and event subscribers. They are not a substitute for a complete data-retention review, and they do not make all event families privacy-safe. In particular, the general `core:reason` stream and the commit/Phoenix journal still need a dedicated field-level review. Operational values such as model names, tool IDs, statuses and timing remain visible where they are required for routing and diagnosis.
+These changes reduce accidental leakage into logs, the learning database, and event subscribers. They are not a substitute for a complete data-retention review, and they do not make all event families privacy-safe. The commit/Phoenix journal and other event families still need a dedicated field-level review. Operational values such as model names, tool IDs, statuses and timing remain visible where they are required for routing and diagnosis.
 
 ### Fold lifecycle audit
 

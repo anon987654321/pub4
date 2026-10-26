@@ -396,7 +396,7 @@ class TestTraceSupport < Minitest::Test
   # is a numbered unit under it, and a failure reports its last line.
   FOLD_EVENTS = [
     { event: "fold:risk", risk: :low },
-    { event: "core:reason", why: "read the logger before describing it" },
+    { event: "core:reason", why_digest: "a" * 64, why_bytes: 32 },
     { event: "core:turn", verb: :read, subject: "lib/trace/logging.rb", ok: true, detail: "a\nb\n" },
     { event: "core:turn", verb: :exec, subject: "rake test", ok: false, detail: "run\n1 failure\n" },
     { event: "core:turn", verb: :read, subject: "lib/trace/dmesg.rb", ok: true, detail: "c\n" },
@@ -409,7 +409,7 @@ class TestTraceSupport < Minitest::Test
 
     assert_equal [
       "fold0 at master0: risk low",
-      "fold0: read the logger before describing it",
+      "fold0: reason received (32 bytes, sha256 aaaaaaaaaaaa)",
       "read0 at fold0: lib/trace/logging.rb",
       "read0: 4 bytes, 2 lines",
       "exec0 at fold0: rake test",
@@ -418,6 +418,14 @@ class TestTraceSupport < Minitest::Test
       "read1: 2 bytes, 1 line",
       "fold0: done, 4 turns",
     ], lines
+  end
+
+  def test_legacy_core_reason_event_is_redacted_instead_of_printed
+    secret = "private prompt material"
+    lines = Master::Trace::Dmesg::Console.new.lines(event: "core:reason", why: secret)
+
+    assert_equal ["fold0: reason received (legacy payload redacted)"], lines
+    refute_includes lines.join, secret
   end
 
   def test_console_reports_a_failed_model_call_and_a_failed_tool
