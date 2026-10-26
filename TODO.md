@@ -2,9 +2,13 @@
 
 ## GLM law-adherence port (2026-10-26)
 
-The law-aligned dashboard portion of the GLM layout pass is integrated: the large polling block is now a standalone same-origin asset, with a regression contract preserving no-store fetches, hidden-tab throttling, and terminal 401/403 handling. The face stop control now has English and Norwegian translations.
+Source-only port of the safe, evidence-backed layout proposals is committed on `main`. The MASTER dashboard poller is now an external same-origin asset with a regression contract for no-store fetches, hidden-tab throttling and terminal 401/403 handling. The chat stop control, anonymous guest name, private share-draft copy, changelog and mailer branding now use locale-owned copy; legal pages no longer repeat heading labels as eyebrows.
 
-Other GLM proposals are being ported only where current MASTER/data/laws.yml, executable laws, token sources and current-tree evidence support them. No law detectors were weakened, no CSS budget ceilings were raised, and no operator-owned palette or shader decisions were accepted without measured visual proof. Tests are added but not run here; runtime verification remains INCONCLUSIVE.
+The RAILS styles use existing `--leading-*` and easing tokens where their numeric values are unchanged; MASTER's standalone face uses its own declared leading tokens. Reduced-motion guards were added for selected animated surfaces, checkbox toggles now retain a 44px outer hit target with the 26px track preserved, and dot-separated metadata was converted to independent elements with shared flex gaps. Redundant eyebrows and a few non-semantic wrapper groupings were removed or replaced with appropriate elements. Static regression contracts were added for the dashboard poller, metadata, tap targets, localized share copy and mailer branding.
+
+Not ported: law-detector exemptions that would turn `scan: intentional` into a broad escape hatch, path exclusions that exempt the entire chat view from inline-script scanning, the proposed CSS-budget ceiling raises, unmeasured palette/shader/state-rendering changes, and lazy-loading hints on email artwork. The proposal's broad line-height substitutions were only accepted where the correct token source and affected selector were verified.
+
+No Ruby/Rails test command, SCSS compilation, browser visual comparison, or live app boot was executed through the GitHub connector. Added/updated tests remain unrun; overall validation is **INCONCLUSIVE**, not PASS, until the focused contracts, full RAILS suite, and `/fix` runtime verification execute on the pinned toolchain.
 
 ## Kernel audit-log append complexity (2026-10-26)
 
