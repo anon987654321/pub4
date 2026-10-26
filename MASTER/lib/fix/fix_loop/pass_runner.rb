@@ -492,9 +492,13 @@ module Master
           @coverage_reporter&.call(target, pass)
           start_pass_transaction(files:, target:, pass:, transaction_id:, run_id:)
           begin_assessment_pass(pass, files)
-          stale_plan_paths = @assessment_mutex.synchronize do
-            Array(@assessment_observation && @assessment_observation[:stale_plan_paths]).dup
-          end
+          stale_plan_paths = if @assessment_ledger && @assessment_mutex
+                               @assessment_mutex.synchronize do
+                                 Array(@assessment_observation && @assessment_observation[:stale_plan_paths]).dup
+                               end
+                             else
+                               []
+                             end
           if stale_plan_paths.any?
             @assessment_mutex.synchronize { @assessment_observation = nil }
             @committer.abort_transaction!
