@@ -342,4 +342,94 @@ class TestSkills < Minitest::Test
   end
 
 
+  def test_declared_skill_requires_exact_external_revision_approval
+    Dir.mktmpdir do |root|
+      data_dir = File.join(root, "data")
+      FileUtils.mkdir_p(data_dir)
+      registry_path = File.join(data_dir, "patterns.yml")
+      approval_path = File.join(root, "operator", "skill_approvals.yml")
+      registry = <<~YAML
+        skills_registry:
+          skills:
+            - name: alpha
+              description: alpha
+              triggers: ["alpha"]
+              body: alpha body
+              execution_contract:
+                schema_version: 1
+                version: "1.0.0"
+                status: candidate
+                risk: low
+                required_capabilities: [read]
+                laws: [ROBUSTNESS]
+                fixtures: [test/test_skills.rb]
+      YAML
+      File.write(registry_path, registry)
+
+      bus = Class.new do
+        attr_reader :events
+        def initialize = @events = []
+        def publish(name, payload = {}) = @events << [name, payload]
+      end.new
+      unapproved = Master::CLI::Skills.new(root:, event_bus: bus, approval_path:)
+      skill = unapproved.discover!.fetch(0)
+      assert_empty unapproved.trigger_for("alpha")
+      assert_nil unapproved.body_for("alpha")
+      assert_equal "revision_not_approved", bus.events.find { |name, _| name == "skills:contract_refused" }.last[:reason]
+
+      FileUtils.mkdir_p(File.dirname(approval_path))
+      File.write(approval_path, <<~YAML)
+        schema_version: 1
+        approvals:
+          - name: alpha
+            revision: "#{skill[:revision]}"
+            approved_by: test-operator
+            approved_at: "2026-10-26T12:00:00Z"
+      YAML
+      approved = Master::CLI::Skills.new(root:, approval_path:).tap(&:discover!)
+      assert_equal ["alpha"], approved.trigger_for("alpha").map { |row| row[:name] }
+      assert_equal "alpha body", approved.body_for("alpha")
+
+      File.write(registry_path, registry.sub("body: alpha body", "body: changed content"))
+      changed = Master::CLI::Skills.new(root:, approval_path:).tap(&:discover!)
+      refute_equal skill[:revision], changed.find("alpha")[:revision]
+      assert_empty changed.trigger_for("alpha"), "a changed revision requires a fresh operator approval"
+    end
+  end
+
+  def test_invalid_operator_approval_manifest_fails_closed_for_declared_skills
+    Dir.mktmpdir do |root|
+      data_dir = File.join(root, "data")
+      FileUtils.mkdir_p(data_dir)
+      File.write(File.join(data_dir, "patterns.yml"), <<~YAML)
+        skills_registry:
+          skills:
+            - name: alpha
+              description: alpha
+              triggers: ["alpha"]
+              body: alpha body
+              execution_contract:
+                version: "1.0.0"
+                status: candidate
+                risk: low
+                required_capabilities: [read]
+                laws: [ROBUSTNESS]
+                fixtures: [test/test_skills.rb]
+      YAML
+      approval_path = File.join(root, "skill_approvals.yml")
+      File.write(approval_path, "schema_version: 9\napprovals: []\n")
+      bus = Class.new do
+        attr_reader :events
+        def initialize = @events = []
+        def publish(name, payload = {}) = @events << [name, payload]
+      end.new
+
+      skills = Master::CLI::Skills.new(root:, event_bus: bus, approval_path:)
+      skills.discover!
+      assert_empty skills.trigger_for("alpha")
+      assert bus.events.any? { |name, _| name == "skills:approval_manifest_invalid" }
+    end
+  end
+
+
 end
