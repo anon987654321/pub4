@@ -48,9 +48,8 @@ module Master
               @severity = severity; @law_tags = dsl_tags; @auto_fix = autofix
             end
             define_method(:check) do |code, path:|
-              langs = self.class.dsl_langs
-              return [] if langs && !langs.include?(language(path)&.to_sym)
-
+              # Detector code may be language-aware internally, but language metadata
+              # never exempts an artifact from universal Law assessment.
               instance_exec(code, path:, &self.class.dsl_block) || []
             end
           end
