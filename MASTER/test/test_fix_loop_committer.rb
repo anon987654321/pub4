@@ -287,6 +287,31 @@ def test_the_end_of_a_pass_delivers_only_what_the_pass_wrote
   assert_includes out, "/fix did not write: lib/observed.rb"
 end
 
+# A rollback refused over another writer's edit ends the pass's transaction. The committer
+# kept it, and every later fix in the pass failed "transaction not active" uncommitted.
+def test_a_fix_after_the_transaction_ended_still_commits
+  write_file("lib/ok.rb", "OK = 1\n")
+  git = FakeGit.new([], ["lib/ok.rb"])
+  committer = ended_transaction_committer(git)
+
+  out, = capture_io { committer.commit_if_dirty("fix: ok") }
+
+  assert_equal ["lib/ok.rb"], git.commits.flat_map(&:last)
+  assert_includes out, "transaction ended mid-pass"
+end
+
+def ended_transaction_committer(git)
+  truth = Master::Ground::Truth.new
+  committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir, ground_truth: truth)
+  committer.baseline!
+  transaction = Master::Fix::Transaction.new(root: @dir, paths: ["lib/ok.rb"])
+  committer.begin_transaction!(transaction)
+
+  transaction.finalize!
+  committer.attest_written!(File.join(@dir, "lib/ok.rb"))
+  committer
+end
+
 # The hook refuses what bin/operator lint --changed-lines finds; /fix asks the same question before it stages,
 # so a RuboCop correction that lengthened a 141-character line is rolled back instead of refused at commit.
 def test_a_change_the_hook_would_refuse_is_named_before_staging

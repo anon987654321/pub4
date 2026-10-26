@@ -240,6 +240,7 @@ module Master
 
         def commit_if_dirty(message, findings: [], owned_paths: nil)
           @commit_mutex.synchronize do
+            drop_ended_transaction!
             if @transaction
               return stage_only(owned_paths:, findings:) if stage_commit_mode?
 
@@ -325,17 +326,27 @@ def stage_commit_mode?
               "deliver0", "commit=#{@git.head} push=#{push_each? ? "ok" : "deferred"} paths=#{paths.join(", ")}"
             )
             result
-          rescue StandardError
+          rescue StandardError => e
             committed = head_changed?(head_before)
             if committed
               @transaction = nil
               transaction.delivery.preserve! if transaction.active?
             else
               rollback = roll_back_own(transaction)
-              raise rollback.message if rollback.err?
+              raise "#{e.message}; #{rollback.message}" if rollback.err?
             end
             raise
           end
+        end
+
+        # A refused rollback ends the transaction but left it here, so every later fix
+        # in the pass failed "transaction not active" and none was committed. The fix
+        # is already on disk; it commits on its own, path-scoped, as outside a pass.
+        def drop_ended_transaction!
+          return unless @transaction && !@transaction.active?
+
+          Master::Trace::Dmesg.status("fix0", "transaction ended mid-pass; later fixes commit on their own")
+          @transaction = nil
         end
 
         # Runs validate_paths, the check that can block delivery, exactly once,
