@@ -192,6 +192,117 @@ module Master
       end
       module_function :optional_count
 
+      # Skills remain instructional content: declaring a capability never
+      # grants it. This contract records version, provenance and validation state
+      # so a future promotion gate can require evidence instead of trusting prose.
+      SKILL_STATES = %i[unreviewed candidate approved deprecated blocked invalid].freeze
+      SKILL_RISKS = %i[unknown low medium high critical].freeze
+      SKILL_VERSION = /\\A\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?\\z/
+      REFERENCE = /\\A[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,239}\\z/
+      SKILL_DECLARATION_KEYS = %w[schema_version version status risk required_capabilities laws fixtures provenance].freeze
+
+      SkillContract = Data.define(
+        :name, :revision, :source, :version, :status, :risk,
+        :required_capabilities, :law_ids, :fixture_refs, :provenance, :errors
+      ) do
+        def self.from_declaration(name:, revision:, source:, declaration: nil)
+          source_name = source.to_s
+          errors = []
+          data = declaration
+
+          if data.nil?
+            data = {}
+          elsif !data.is_a?(Hash)
+            errors << "declaration_not_a_mapping"
+            data = {}
+          end
+
+          data = data.each_with_object({}) { |(key, value), normalized| normalized[key.to_s] = value }
+          unknown = data.keys - Contract::SKILL_DECLARATION_KEYS
+          errors << "unknown_fields" unless unknown.empty?
+          schema_version = data.fetch("schema_version", 1)
+          errors << "unsupported_schema_version" unless schema_version == 1
+
+          version = data["version"]
+          if !version.nil? && !(version.is_a?(String) && Contract::SKILL_VERSION.match?(version))
+            errors << "invalid_version"
+            version = nil
+          end
+
+          status = data.fetch("status", declaration.nil? ? "unreviewed" : "candidate").to_s.downcase.to_sym
+          errors << "invalid_status" unless Contract::SKILL_STATES.include?(status)
+          status = :invalid unless Contract::SKILL_STATES.include?(status)
+
+          risk = data.fetch("risk", "unknown").to_s.downcase.to_sym
+          errors << "invalid_risk" unless Contract::SKILL_RISKS.include?(risk)
+          risk = :unknown unless Contract::SKILL_RISKS.include?(risk)
+
+          required_capabilities = references(data["required_capabilities"], "required_capabilities", errors, /\\A[a-zA-Z][a-zA-Z0-9_.:-]{0,79}\\z/)
+          law_ids = references(data["laws"], "laws", errors, Contract::TOKEN)
+          fixture_refs = references(data["fixtures"], "fixtures", errors, Contract::REFERENCE)
+
+          provenance = data["provenance"]
+          if !provenance.nil? && !(provenance.is_a?(String) && provenance.bytesize <= 240)
+            errors << "invalid_provenance"
+            provenance = nil
+          end
+
+          status = :invalid if errors.any?
+          new(
+            name: Contract.token!(name.to_s.gsub(/[^a-zA-Z0-9._:-]/, "-")[0, 160], "skill name"),
+            revision: checked_digest(revision),
+            source: source_name.empty? ? "unknown" : source_name,
+            version: version&.freeze,
+            status:,
+            risk:,
+            required_capabilities: required_capabilities.freeze,
+            law_ids: law_ids.freeze,
+            fixture_refs: fixture_refs.freeze,
+            provenance: provenance&.freeze,
+            errors: errors.uniq.freeze
+          )
+        end
+
+        def self.references(value, field, errors, pattern)
+          return [] if value.nil?
+          unless value.is_a?(Array) && value.length <= 64
+            errors << "invalid_#{field}"
+            return []
+          end
+
+          value.each_with_object([]) do |item, refs|
+            unless item.is_a?(String) && pattern.match?(item)
+              errors << "invalid_#{field}_entry"
+              next
+            end
+            refs << item.freeze
+          end.uniq
+        end
+        private_class_method :references
+
+        def self.checked_digest(value)
+          digest = value.to_s.downcase
+          raise ArgumentError, "skill revision must be SHA-256 hex" unless Contract::SHA256.match?(digest)
+
+          digest.freeze
+        end
+        private_class_method :checked_digest
+
+        def promotable?
+          status == :candidate && !version.nil? && !fixture_refs.empty? &&
+            !required_capabilities.empty? && !law_ids.empty? && errors.empty?
+        end
+
+        def permitted_for_trigger? = !%i[blocked deprecated invalid].include?(status)
+
+        def to_h
+          {
+            schema_version: 1, name:, revision:, source:, version:, status:, risk:,
+            required_capabilities:, law_ids:, fixture_refs:, provenance:, errors:
+          }.compact
+        end
+      end
+
       # Privacy-safe effect identity for audit events. Arguments are deliberately
       # absent; callers can provide a digest of scope, not the scope itself.
       EffectEnvelope = Data.define(
