@@ -32,6 +32,21 @@ class PwaMasterContractTest < Minitest::Test
     assert_includes manifest_assets, "clusterMiner"
   end
 
+  def test_inline_boot_exceptions_are_line_scoped_and_explained
+    index = read("app/views/chat/index.html.erb")
+    inline_scripts = index.lines.select { |line| line.match?(/^\s*<script nonce=/) }
+    assert_equal 5, inline_scripts.size
+    assert inline_scripts.all? { |line| line.include?("scan: intentional") }
+
+    inline_styles = index.lines.select { |line| line.match?(/^\s*<style nonce=/) }
+    assert_equal 1, inline_styles.size
+    assert_includes inline_styles.first, "scan: intentional"
+
+    %w[public/offline.html public/406-unsupported-browser.html].each do |path|
+      assert_match(/<style>\/\* scan: intentional/, read(path), "#{path} must document its self-contained style block")
+    end
+  end
+
   def test_dashboard_poller_is_external_and_preserves_live_state_contract
     dashboard = read("app/views/dashboard/index.html.erb")
     script = read("public/dashboard_live.js")
