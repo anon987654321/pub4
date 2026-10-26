@@ -867,4 +867,31 @@ def test_ctrl_c_at_the_prompt_raises_interrupt_for_repl_loop_to_close
     refute cli.instance_variable_get(:@last_ok)
     refute_equal 0, cli.instance_variable_get(:@exit_code)
   end
+  def test_active_fold_cancellation_is_cooperative
+    token = Master::Core::CancellationToken.new.activate!
+    @cli.instance_variable_set(:@turn_cancellation, token)
+    @cli.define_singleton_method(:cancel_turn) do |*|
+      flunk("active Fold turns must stop at a safe boundary, not be killed")
+    end
+
+    @cli.send(:request_or_interrupt_turn, Object.new, nil, reason: "ctrl_c")
+
+    assert_predicate token, :cancelled?
+    assert_match(/Ctrl-C/, token.reason)
+  end
+
+  def test_non_fold_cancellation_uses_existing_interrupt_fallback
+    token = Master::Core::CancellationToken.new
+    @cli.instance_variable_set(:@turn_cancellation, token)
+    turn = Object.new
+    children = Object.new
+    called = nil
+    @cli.define_singleton_method(:cancel_turn) { |actual_turn, actual_children| called = [actual_turn, actual_children] }
+
+    @cli.send(:request_or_interrupt_turn, turn, children, reason: "ctrl_c")
+
+    assert_equal [turn, children], called
+    assert_predicate token, :cancelled?
+  end
+
 end
