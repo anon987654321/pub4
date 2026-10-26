@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "provider_health"
+require_relative "../../execution/contract"
 
 module Master
   module CLI
@@ -118,7 +119,11 @@ module Master
           else
             @health.record(model:, status:, latency_ms:, error:)
           end
-          @bus&.publish("provider:canary", model:, domain: provider_domain(model), status:, latency_ms:, error:)
+          @bus&.publish(
+            "provider:canary",
+            model:, domain: provider_domain(model), status:, latency_ms:,
+            **Master::Execution::Contract.diagnostic_fields(error)
+          )
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "provider_canary.record", event_bus: @bus)
         end
