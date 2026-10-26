@@ -56,13 +56,21 @@ module Master
         def call(ctx)
           return Result.ok(ctx) if ctx.pre_enhanced
 
-          msg = apply_skills(ctx.message.to_s.strip)
-          result = call_raw(msg)
-          return Result.ok(ctx) unless result[:changed]
+          original = ctx.message.to_s.strip
+          result = call_raw(original)
+          message = result[:changed] ? result[:enhanced] : original
+          message = apply_skills(message, source_message: original)
+          return Result.ok(ctx) if message == ctx.message && !result[:changed]
 
-          enhanced = result[:enhanced]
-          @bus&.publish("enhance:rewrite", original: msg, enhanced:)
-          Result.ok(ctx.merge(message: enhanced, original_message: msg))
+          if result[:changed]
+            @bus&.publish("enhance:rewrite", original:, enhanced: result[:enhanced])
+            Result.ok(ctx.merge(message:, original_message: original))
+          else
+            # Skill instructions are appended after message editing. The editor
+            # cannot erase or rewrite a skill body, and no-change responses must
+            # not silently discard an otherwise eligible skill.
+            Result.ok(ctx.merge(message:))
+          end
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "stages.enhance", event_bus: @bus)
           Result.ok(ctx)
@@ -79,15 +87,16 @@ module Master
 
         private
 
-        def apply_skills(msg)
+        def apply_skills(msg, source_message: msg)
           return msg unless @skills
 
-          matches = @skills.trigger_for(msg)
+          matches = @skills.trigger_for(source_message)
           return msg if matches.empty?
 
           skill = matches.first
           body = @skills.body_for(skill[:name])
-          @bus&.publish("skills:triggered", skill: skill[:name], triggers: skill[:triggers])
+          return msg if body.to_s.strip.empty?
+
           [msg, "", "[skill: #{skill[:name]}]", body.to_s.strip].join("\n")
         end
 
