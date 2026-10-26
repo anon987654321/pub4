@@ -117,11 +117,16 @@ represented by byte and line counts. Full observations remain only in the local 
 transcript. This is the first slice of the external-action event contract, not yet a shared
 event adapter for every tool and /fix path.
 
-Interactive Fold turns now receive a cooperative cancellation token through the session,
-TurnRouter and CoreBridge. Cancellation is persisted as a terminal, non-success mission
-state and does not falsely advance the mission to delivery. The token is checked at safe
-Fold boundaries; it does not forcibly stop a model request or external effect already in
-progress, and non-Fold command paths retain their prior interruption behavior.
+Interactive turns carry a cooperative cancellation token through the session and TurnRouter.
+The general Core Fold checks it at safe proposal/admission/effect boundaries. The canonical
+`/fix` command carries the same token through PipelineContext and FixLoop, which stops
+between preflight phases and repair passes. If cancellation arrives during a pass, that
+bounded pass is allowed to finish and record its receipt before any later repair or structural
+pass is started; persisted active-transaction recovery runs before a resumed repair is stopped.
+Cancelled, unknown-outcome and recovery-failed repair missions are terminal and cannot be
+automatically resumed, and cancellation never claims delivery. A model request, check or
+external operation already in progress is not forcibly killed; non-interactive background runs
+and other commands retain their existing lifecycle.
 
 The normalized contract adapter and its migration boundary are documented in
 [Execution contracts](docs/execution-contracts.md). Its existence does not mean the
