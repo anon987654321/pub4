@@ -2,11 +2,11 @@
 
 <div class="dating-app">
   <header class="dating-page-intro">
-    <div>
+    <hgroup>
       <p><%= t("dating.local") %></p>
       <h1><%= t("dating.path_crossings_title") %></h1>
       <p><%= t("dating.path_crossings_intro") %></p>
-    </div>
+    </hgroup>
     <nav aria-label="<%= t("dating.path_crossings_title") %>">
       <%= link_to t("dating.discover"), dating.root_path, class: "btn btn-ghost" %>
       <%= link_to t("dating.edit_profile"), edit_profile_path, class: "btn btn-ghost" %>
