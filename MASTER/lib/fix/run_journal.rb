@@ -160,6 +160,10 @@ module Master
             Array(cell[:readings] || cell["readings"]).size
           end,
         }
+        %w[plan_digest identity_digest scope_digest source_digest law_digest law_source_digest authority_digest toolchain_digest exclusion_digest adapter_digest].each do |key|
+          value = report[key.to_sym] || report[key]
+          receipt[key] = json_safe_value(value) unless value.nil?
+        end
         receipt["expected_cells"] = summary[:expected_cells] || summary["expected_cells"] if summary
         receipt["generation"] = summary[:generation] || summary["generation"] if summary
 
@@ -201,6 +205,18 @@ module Master
         document = JSON.parse(payload)
         unless document["schema_version"].to_i == 1 && document["run_id"] == id
           return { "status" => "artifact_identity_mismatch" }
+        end
+
+        report = document["report"]
+        return { "status" => "artifact_report_missing" } unless report.is_a?(Hash)
+        unless report["status"].to_s == receipt["matrix_status"].to_s
+          return { "status" => "artifact_status_mismatch" }
+        end
+        %w[plan_digest identity_digest scope_digest source_digest law_digest law_source_digest authority_digest toolchain_digest exclusion_digest adapter_digest].each do |key|
+          expected = receipt[key]
+          actual = report[key]
+          next if expected.nil? && actual.nil?
+          return { "status" => "provenance_mismatch", "dimension" => key } unless expected == actual
         end
 
         {

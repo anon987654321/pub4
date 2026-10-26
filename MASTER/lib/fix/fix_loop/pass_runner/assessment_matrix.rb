@@ -304,6 +304,13 @@ module Master
                 plan_digest: @assessment_plan&.digest,
                 source_digest: @assessment_plan&.source_digest,
                 law_digest: @assessment_plan&.law_digest,
+                identity_digest: @assessment_plan&.identity_digest,
+                scope_digest: @assessment_plan&.scope_digest,
+                law_source_digest: @assessment_plan&.law_source_digest,
+                authority_digest: @assessment_plan&.authority_digest,
+                toolchain_digest: @assessment_plan&.toolchain_digest,
+                exclusion_digest: @assessment_plan&.exclusion_digest,
+                adapter_digest: @assessment_plan&.adapter_digest,
                 ledger: @assessment_ledger.evidence_report,
               }
             end

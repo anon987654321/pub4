@@ -69,16 +69,37 @@ module Master
 
         def finish_run(result, target, run_id, mission: nil, requested: false)
           assessment_receipt = persist_assessment_receipt(run_id:, target:)
+          plan_manifest = @fix_plan&.to_h
+          provenance_values = if plan_manifest.is_a?(Hash)
+                                {
+                                  "plan_digest" => @fix_plan.digest,
+                                  "identity_digest" => plan_manifest["identity_digest"],
+                                  "scope_digest" => plan_manifest["scope_digest"],
+                                  "source_digest" => plan_manifest["source_digest"],
+                                  "law_digest" => plan_manifest["law_digest"],
+                                  "law_source_digest" => plan_manifest["law_source_digest"],
+                                  "authority_digest" => plan_manifest["authority_digest"],
+                                  "toolchain_digest" => plan_manifest["toolchain_digest"],
+                                  "exclusion_digest" => plan_manifest["exclusion_digest"],
+                                  "adapter_digest" => plan_manifest["adapter_digest"],
+                                }
+                              else
+                                {}
+                              end
+          provenance_matches = !provenance_values.empty? &&
+            provenance_values.all? { |key, value| !value.to_s.empty? && assessment_receipt[key] == value }
           proof_ready = assessment_receipt["status"] == "persisted" &&
             assessment_receipt["readback_verified"] == true &&
             assessment_receipt["matrix_status"] == "complete" &&
-            assessment_receipt["verification"] == "verified"
+            assessment_receipt["verification"] == "verified" &&
+            provenance_matches
           if terminal_state_for(result) == :done && !proof_ready
             result = terminal(
               :blocked,
-              "four-stream assessment receipt is not complete and verified " \
+              "four-stream assessment receipt is not complete, verified and plan-bound " \
                 "(artifact=#{assessment_receipt["status"]}, matrix=#{assessment_receipt["matrix_status"]}, " \
-                "verification=#{assessment_receipt["verification"] || "unavailable"}); DONE withheld"
+                "verification=#{assessment_receipt["verification"] || "unavailable"}, " \
+                "provenance=#{provenance_matches ? "matched" : "mismatch"}); DONE withheld"
             )
           end
           result = blocked_by_gaps(result)
