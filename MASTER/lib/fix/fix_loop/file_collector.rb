@@ -21,7 +21,7 @@ module Master
         #
         # A file that must not be edited is not a file worth collecting for a
         # fix pass, so there is one list now and the scanner owns it.
-        attr_reader :skipped, :candidate_count, :skip_reasons, :blocking_skips
+        attr_reader :skipped, :candidate_count, :skip_reasons, :blocking_skips, :excluded_path_reasons
 
         def initialize(root:, bus: nil)
           @root = root
@@ -30,6 +30,7 @@ module Master
           @candidate_count = 0
           @skip_reasons = {}
           @blocking_skips = {}
+          @excluded_path_reasons = {}
         end
 
         def collect(target)
@@ -134,6 +135,7 @@ module Master
           @candidate_count = files.size
           @skip_reasons = Hash.new(0)
           @blocking_skips = Hash.new(0)
+          @excluded_path_reasons = {}
           kept = []
           dropped = []
 
@@ -142,6 +144,7 @@ module Master
             if reason
               dropped << file
               @skip_reasons[reason.to_s] += 1
+              @excluded_path_reasons[repository_relative(file)] = reason.to_s
               @blocking_skips[reason.to_s] += 1 if %i[too_large too_many_lines].include?(reason)
             else
               kept << file
@@ -199,6 +202,15 @@ module Master
 
         def relative(path)
           path.to_s.delete_prefix("#{@root}#{File::SEPARATOR}")
+        end
+
+        def repository_relative(path)
+          base = git_root || File.expand_path(@root)
+          full = File.expand_path(path.to_s)
+          return "." if full == base
+          return full.delete_prefix("#{base}#{File::SEPARATOR}") if full.start_with?("#{base}#{File::SEPARATOR}")
+
+          full
         end
 
         def too_many_lines?(path)
