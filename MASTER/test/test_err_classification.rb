@@ -83,6 +83,13 @@ class TestErrClassification < Minitest::Test
     refute err(:handler_exception).retriable?
   end
 
+  def test_cancellation_and_ambiguous_outcomes_are_not_retried_blindly
+    %i[cancelled unknown_outcome recovery_failed].each do |category|
+      assert err(category).permanent?, "#{category} requires a new decision or reconciliation"
+      refute err(category).retriable?
+    end
+  end
+
   def test_a_missing_key_is_not_something_to_retry_against
     assert err(:no_api_key).permanent?, "retrying a missing credential burns the retry budget on nothing"
   end
