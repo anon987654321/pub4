@@ -169,6 +169,8 @@ module Master
 
           new(
             id:, subject:, verifier:, status:, scope:,
+            checked_count: 1,
+            failure_count: status == :fail ? 1 : (status == :pass ? 0 : nil),
             evidence_refs: refs, complete: status != :inconclusive
           )
         end
