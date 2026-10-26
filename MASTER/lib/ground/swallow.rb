@@ -32,6 +32,13 @@ module Master
       # next diagnostic hunt can filter for :load_bearing instead of reading
       # every line.
       SEVERITIES = %i[load_bearing cosmetic].freeze
+      # Errors that mean the code is wrong rather than the world. A caller's
+      # :cosmetic does not hold for them: WebChat swallowed "undefined method
+      # inner_html" on every reply as cosmetic and four lanes sat dead with
+      # nothing printed. They are recorded load_bearing and printed once per
+      # context and class per process. ArgumentError is left out: this tree
+      # raises it to refuse bad input, an invalid PID or a malformed setting.
+      DEFECTS = [NoMethodError, NameError, TypeError, FrozenError, NoMatchingPatternError].freeze
       MAX_BYTES = 10_485_760
       KEEP_BACKUPS = 5
 
@@ -41,7 +48,9 @@ module Master
         end
 
         def log(error, context:, event_bus: nil, severity: :cosmetic, **meta)
-          payload = build_payload(error, context, severity, meta)
+          defect = DEFECTS.any? { |kind| error.is_a?(kind) }
+          payload = build_payload(error, context, defect ? :load_bearing : severity, meta)
+          announce_defect(error, context) if defect
           bus = event_bus || @event_bus
           reporting = Thread.current.thread_variable_get(:master_swallow_reporting)
 
@@ -136,6 +145,17 @@ module Master
         end
 
         private
+
+        def announce_defect(error, context)
+          key = [context.to_s, error.class.name]
+          @announced ||= {}
+          return if @announced[key]
+
+          @announced[key] = true
+          where = error.backtrace&.first.to_s.delete_prefix("#{MasterPaths::ROOT}/")
+          text = "#{context} swallowed #{error.class}: #{error.message.to_s[0, 160]} (#{where})"
+          defined?(Master::Trace::Dmesg) ? Master::Trace::Dmesg.status("error0", text) : warn("error0: #{text}")
+        end
 
         def build_payload(error, context, severity, meta)
           {

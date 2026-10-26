@@ -16,6 +16,18 @@ class TestSwallow < Minitest::Test
     assert_equal "cosmetic", entry["severity"]
   end
 
+  def test_a_code_defect_is_load_bearing_and_printed_once_per_context
+    ctx = unique_context("defect")
+    lines = []
+    Master::Trace::Dmesg.stub(:status, ->(unit, text, **) { lines << "#{unit}: #{text}" }) do
+      2.times { Master::Ground::Swallow.log(NoMethodError.new("undefined method 'inner_html'"), context: ctx) }
+    end
+
+    assert_equal "load_bearing", Master::Ground::Swallow.recent(limit: 5, context: ctx).last["severity"]
+    assert_equal 1, lines.size
+    assert_match(/error0: #{Regexp.escape(ctx)} swallowed NoMethodError: undefined method 'inner_html'/, lines.first)
+  end
+
   def test_log_accepts_explicit_load_bearing_severity
     ctx = unique_context("tagged")
     Master::Ground::Swallow.log(RuntimeError.new("x"), context: ctx, severity: :load_bearing)
