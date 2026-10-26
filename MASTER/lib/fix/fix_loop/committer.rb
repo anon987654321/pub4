@@ -73,7 +73,12 @@ module Master
           @related_owned_paths = []
           @known_good = root ? Ground::KnownGood.new(root:, bus:) : nil
           @boundary_scope = nil
+          @lease_guard = nil
         end
+
+        # The run's Mission#hold_lease!, called before every commit and push,
+        # so a worker that lost its mission's lease delivers nothing.
+        attr_writer :lease_guard
 
         def baseline!(scope: nil)
           # The observation's own autofix writes are this run's, not another writer's dirty work.
@@ -286,6 +291,7 @@ def held(ahead)
 end
 
 def push_commit!(paths)
+  @lease_guard&.call
   return unless push_each?
 
   @git.push

@@ -11,8 +11,8 @@ module Master
         def build_pass_runner(laws:, agent:, scanner:, root:, bus:, learnings:,
           ground_truth:, preserve_user_intent:, law_resolver:, homeostat: nil, discipline: nil, wishlist: nil,
           reference_graph: nil)
-          committer = Committer.new(git: @git, bus:, root:,
-                                       ground_truth:, preserve_user_intent:)
+          committer = @committer = Committer.new(git: @git, bus:, root:,
+                                                 ground_truth:, preserve_user_intent:)
           conflict_resolver = ConflictResolver.new(root:, bus:, law_resolver:)
           llm_router = LlmRouter.new(agent)
           council = CouncilRound.new(agent:, root:, bus:, discipline:)

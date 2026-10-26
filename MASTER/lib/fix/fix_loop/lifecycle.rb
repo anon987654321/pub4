@@ -202,7 +202,7 @@ module Master
               label: "mission-#{id}", files:,
             )
           end
-          Master::Fix::Mission.new(root: @root, bus: @bus, checkpoint:).start_or_resume!(
+          mission = Master::Fix::Mission.new(root: @root, bus: @bus, checkpoint:).start_or_resume!(
             goal: "fix #{relative_target(target)}",
             scope: target,
             model: @agent.respond_to?(:model) ? @agent.model : ENV["MASTER_MODEL"],
@@ -210,6 +210,8 @@ module Master
             plan: mission_plan(target:),
             origin: requested ? "manual" : "supervisor",
           )
+          @committer.lease_guard = -> { mission.hold_lease! } if @committer.respond_to?(:lease_guard=)
+          mission
         rescue StandardError => e
           @bus&.publish("mission:error", error: e.message, phase: "start")
           raise

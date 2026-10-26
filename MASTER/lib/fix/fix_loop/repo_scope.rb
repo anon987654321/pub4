@@ -20,6 +20,7 @@ module Master
         end
 
         def commit_scoped(message, paths:)
+          @lease_guard&.call
           return @git.commit(message, paths:) unless repo_git && paths.any? { |path| path.start_with?("../") }
 
           repo_git.commit(message, paths: paths.map { |path| repo_relative(path) })

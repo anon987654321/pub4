@@ -352,6 +352,7 @@ module Master
         end
         result
       ensure
+        @committer.lease_guard = nil if @committer.respond_to?(:lease_guard=)
         @pass_runner&.cleanup_visual_runtime
       end
 

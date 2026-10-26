@@ -172,6 +172,32 @@ module Master
         self
       end
 
+      # Called before an effect that leaves the process: a commit or a push.
+      # A claimed handle may act only while its mission is running under its
+      # own lease; it renews that lease here, so a long run keeps it without a
+      # supervisor, and another worker cannot claim it between this check and
+      # the commit. A lease taken over, or a mission stopped, raises Fenced.
+      def hold_lease!
+        return self unless @claimed
+
+        with_lock do
+          current = load_record
+          reason = fence_reason(current)
+          reason ||= "mission #{@id} is #{current["state"]}, not running" unless current["state"] == "running"
+          if reason
+            emit("mission:fenced", id: @id, reason:)
+            raise Fenced, reason
+          end
+
+          @record = current
+          @record["lease_owner"] = self.class.instance_id
+          @record["lease_until"] = (Time.now.utc + LEASE_SECONDS).iso8601
+          @record["last_seen_at"] = now
+          persist!
+        end
+        self
+      end
+
       # Wake the current mission immediately. Used by file watchers and other
       # event sources; they request work, the supervisor decides when to execute.
       def wake!(reason: "external_event")
