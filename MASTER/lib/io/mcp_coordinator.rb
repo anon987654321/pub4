@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
 require "json"
+require "securerandom"
 require "timeout"
 require "mcp"
 # McpToolWrapper subclasses RubyLLM::Tool; a caller that reached this file
 # before anything loaded the gem got no wrapper at all.
 require "ruby_llm"
 require_relative "../execution/contract"
+require_relative "../trace/tool_observer"
 
 module Master
   module Io
@@ -21,6 +23,9 @@ module Master
         @root = root
         @bus = event_bus
         @governor = governor
+        @tool_observer = if event_bus&.respond_to?(:publish_required)
+                           Master::Trace::ToolObserver.new(bus: event_bus)
+                         end
         @clients = {}
         @server_config = {}
       end
@@ -41,6 +46,7 @@ module Master
               tool:,
               governor: @governor,
               event_bus: @bus,
+              tool_observer: @tool_observer,
               timeout: @server_config.fetch(name, {}).fetch("timeout_seconds", DEFAULT_TIMEOUT),
               tier: @server_config.fetch(name, {}).fetch("tier", DEFAULT_TIER).to_sym,
             )
@@ -116,12 +122,15 @@ module Master
 
     if defined?(::RubyLLM::Tool)
       class McpToolWrapper < ::RubyLLM::Tool
-        def initialize(name:, client:, tool:, governor: nil, event_bus: nil, timeout: 60, tier: :dangerous)
+        def initialize(name:, client:, tool:, governor: nil, event_bus: nil, tool_observer: nil, timeout: 60, tier: :dangerous)
           @mcp_name = name
           @mcp_client = client
           @mcp_tool = tool
           @governor = governor
           @bus = event_bus
+          @tool_observer = tool_observer || if event_bus&.respond_to?(:publish_required)
+                                             Master::Trace::ToolObserver.new(bus: event_bus)
+                                           end
           @timeout = timeout.to_i.clamp(1, 600)
           @tier = tier.to_sym
         end
@@ -138,16 +147,57 @@ module Master
           permit = @governor&.permit?(name, @tier, description)
           return "MCP tool refused: #{permit.message}" if permit && !permit.ok?
 
+          identity = nil
+          started = nil
+          executing = false
+          after_attempted = false
+          receipt_written = false
+          if @tool_observer
+            identity = @tool_observer.before(tool: name, tier: @tier, args: params)
+          end
+
+          invocation_id = identity&.invocation_id || SecureRandom.uuid
+          @bus&.publish("mcp:tool_before", server: @mcp_name, tool: @mcp_tool.name,
+                        tier: @tier, invocation_id:)
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-          @bus&.publish("mcp:tool_before", server: @mcp_name, tool: @mcp_tool.name, tier: @tier)
+          executing = true
           response = Timeout.timeout(@timeout, Timeout::Error) do
             @mcp_client.call_tool(tool: @mcp_tool, arguments: params)
           end
-          publish_after(started, ok: true)
-          tool_content(response)
+          content = tool_content(response)
+          if identity
+            after_attempted = true
+            @tool_observer.after(
+              identity:, tool: name, tier: @tier, args: params, status: "success",
+              elapsed_ms: elapsed_ms(started), result_bytes: content.to_s.bytesize
+            )
+            receipt_written = true
+          end
+          publish_after(started, ok: true, invocation_id:)
+          content
+        rescue Master::Trace::ToolObserver::UnknownOutcome => e
+          publish_after(started, ok: false, error: e.message, invocation_id:) if executing
+          "Error: MCP invocation outcome is unresolved; verify the current state and reconcile before retrying."
         rescue StandardError => e
-          publish_after(started, ok: false, error: e.message)
-          "MCP tool error: #{e.class}: #{e.message}"
+          return content if identity && receipt_written
+          if identity && executing && !after_attempted
+            after_attempted = true
+            begin
+              @tool_observer.after(
+                identity:, tool: name, tier: @tier, args: params, status: "unknown_outcome",
+                elapsed_ms: elapsed_ms(started), error: e.message
+              )
+            rescue StandardError
+              # The observer keeps the invocation quarantined when a terminal
+              # receipt cannot be persisted.
+            end
+          end
+          publish_after(started, ok: false, error: e.message, invocation_id:) if executing
+          if identity && executing
+            "Error: MCP invocation #{identity.invocation_id} may have run; verify current state and reconcile before retrying."
+          else
+            "MCP tool error: #{e.class}: #{e.message}"
+          end
         end
 
         private
@@ -164,10 +214,11 @@ module Master
           response.to_json
         end
 
-        def publish_after(started, ok:, error: nil)
+        def publish_after(started, ok:, error: nil, invocation_id: nil)
           payload = {
             server: @mcp_name,
             tool: @mcp_tool.name,
+            invocation_id:,
             ok:,
             latency_ms: started ? elapsed_ms(started) : nil,
           }

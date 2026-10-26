@@ -185,7 +185,7 @@ module Master
             return Result.wrap(raw).value_or(raw.to_s)
           end
 
-          llm_tool = wrapper.new(tool, bus: @bus)
+          llm_tool = wrapper.new(tool, bus: @bus, tool_observer: tool_observer)
           # RubyLLM::Tool#call accepts declared arguments as keywords. Passing
           # the healed hash positionally raises "given 1, expected 0" before
           # WebFetch, WebBrowse, Shell, or any other wrapped tool can execute.

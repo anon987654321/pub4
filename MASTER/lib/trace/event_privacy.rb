@@ -9,16 +9,17 @@ module Master
     # in-process payload delivered to trusted subscribers. Tool arguments are
     # never stored verbatim; other event families redact sensitive named fields.
     module EventPrivacy
-      TOOL_ARGUMENT_EVENTS = %w[tool:before tool:after].freeze
+      TOOL_ARGUMENT_EVENTS = %w[tool:before tool:after tool:execution:before tool:execution:after tool:execution:reconciled].freeze
       SAFE_CATEGORIES = %w[
         event tool op operation tier profile mode risk status outcome capability verb
-        stage state kind method reason_code
+        stage state kind method reason_code invocation_id run_id mission_id attempt_id
+        effect_id parent_effect_id checkpoint_id idempotency_key reconciliation evidence_ref
       ].freeze
       SAFE_NUMBERS = %w[
-        ts bytes count elapsed_ms duration_ms attempt attempts turn turns checks_ran
+        ts schema_version bytes count elapsed_ms duration_ms result_bytes attempt attempts turn turns checks_ran
         failure_count warning_count unchecked_count n_handlers paths_count tracked_paths
       ].freeze
-      SAFE_BOOLEANS = %w[blocked success ok cancelled complete enabled].freeze
+      SAFE_BOOLEANS = %w[blocked success ok cancelled complete enabled retry_requires_reconciliation].freeze
       FIELD_NAME = /\A[a-zA-Z][a-zA-Z0-9_]{0,63}\z/
       CATEGORY_VALUE = /\A[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,79}\z/
       SHA256 = /\A[0-9a-f]{64}\z/i

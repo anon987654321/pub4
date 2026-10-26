@@ -643,3 +643,12 @@ The secret redactor now recognizes valid 64-character SHA-256 values stored unde
 - The rendered-UI matrix no longer marks its rendered-visual Law cell clean unless the target-level rendered receipt contains valid screenshot and geometry evidence for every capture and the visual assessor actually returns a law-findings collection. Regression coverage includes missing receipts, broken geometry, missing findings and Law attribution.
 - Added a cross-tree regression contract checking OPENBSD's deployment inventory against the canonical RAILS app registry and validating its separate MASTER face entry and deploy entrypoint.
 - Validation status: **INCONCLUSIVE** until focused MASTER tests and all four native tree suites run on the pinned toolchain. This source patch is not proof of live OpenBSD deployment/restore health or an audible Dilla comparison; those remain real-environment checks.
+
+
+## Audited model-tool and MCP invocations (2026-10-26)
+
+Added a shared `Trace::ToolObserver` to the LLM tool-forwarding boundary and MCP wrappers. The before receipt must be durably persisted before the underlying tool is entered. After receipts carry the same invocation identity, a digest and byte count for canonicalized arguments, outcome category, elapsed time and result size; raw arguments and error text are not persisted. The receipt goes to the operational evidence stream as well as activity telemetry when configured.
+
+If the after receipt cannot be persisted, or an exception leaves the operation's outcome uncertain, the observer quarantines the same tool/argument fingerprint in-process. Further equivalent calls are refused until an operator writes a reconciliation receipt with an evidence reference. Native tool calls and the ReAct fallback share the dispatcher-owned observer, and MCP wrappers share the coordinator-owned observer.
+
+This does not yet cover direct calls to every `Master::Io` class, arbitrary background jobs, transaction-internal writes or deployment adapters that bypass these entrypoints. It is not cross-process exactly-once execution; an unmatched persisted before-event after process restart still requires external reconciliation. Tests were added but not executed in this environment; validation remains INCONCLUSIVE.

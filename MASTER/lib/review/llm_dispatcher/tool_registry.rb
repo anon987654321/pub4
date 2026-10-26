@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../trace/tool_observer"
+
 module Master
   module Review
     class LLMDispatcher
@@ -37,7 +39,7 @@ module Master
             next if allowed && !allowed.include?(name)
             next if allowed.nil? && !Fiber[:master_elevated] && elevated
             next if tier == "cheap" && elevated
-            wrapper.new(tool, bus: @bus)
+            wrapper.new(tool, bus: @bus, tool_observer: tool_observer)
           end
         rescue StandardError => err
           @bus&.publish("agent:llm_tools_error", error: err.message)
@@ -47,6 +49,12 @@ module Master
         # MCP wrappers now carry their own Governor boundary. They still require
         # an elevated session here, because the server's capabilities are
         # operator-defined and are not represented in data/tools.yml.
+        def tool_observer
+          return unless @bus&.respond_to?(:publish_required)
+
+          @tool_observer ||= Master::Trace::ToolObserver.new(bus: @bus)
+        end
+
         def mcp_tool(tool, allowed:, tier:)
           return if allowed || !Fiber[:master_elevated] || tier == "cheap"
 
