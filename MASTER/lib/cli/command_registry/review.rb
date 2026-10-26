@@ -69,6 +69,7 @@ module Master
         previous_until = Master::Fix::CheckFocus.until_checks?
 
         cancellation = ctx.cancellation if ctx.respond_to?(:cancellation)
+        cancellation.activate! if cancellation&.respond_to?(:activate!)
 
         begin
           Master::Fix::AutofixGuard.mode = overrides[:autofix_mode] if overrides[:autofix_mode]
@@ -105,9 +106,10 @@ module Master
       TRACE_DRIFT = /changed during preflight|content differs during|file inventory changed during preflight/
       TRACE_PAUSE = Float(ENV.fetch("MASTER_FIX_TRACE_PAUSE", "2"))
 
-      def steady_trace(scope:, dependencies:)
+      def steady_trace(scope:, dependencies:, cancellation: nil)
         (1..TRACE_ATTEMPTS).each do |attempt|
           trace = execution_trace(scope:, dependencies:)
+          return trace if cancellation&.cancelled?
           return trace if trace.clean? || attempt == TRACE_ATTEMPTS || !trace.failures.all?(TRACE_DRIFT)
 
           Master::Trace::Dmesg.status("trace0", "#{trace.failures.size} file(s) changed while read; " \
@@ -127,7 +129,7 @@ module Master
 
       # The first step of every /fix: lay out the tree and let the model say what it would
       # reshape, before any Law scans. Inconclusive is reported and the run goes on.
-      def first_read(deliberation:, bus:, targets:, persist: true)
+      def first_read(deliberation:, bus:, targets:, persist: true, cancellation: nil)
         # An absent/inconclusive current read must not fall back to hints from an older run.
         results = Array(targets).to_h { |target| [target.to_s, []] }
         return results if ENV["MASTER_FIX_TREE"] == "0"
@@ -139,6 +141,8 @@ module Master
 
         reasoning = Master::Fix::TreeReasoning.new(agent: deliberation.agent, root: Master.repo_root, bus:)
         targets.each do |tree_target|
+          return results if cancellation&.cancelled?
+
           result = reasoning.call(target: tree_target, persist:)
           Master::Trace::Dmesg.status("tree0", result.summary) unless result.answered?
           results[tree_target.to_s] = result.proposals.map(&:to_h) if result.answered?
@@ -148,12 +152,14 @@ module Master
 
       # The second read, after the trace: the whole target reviewed with fresh eyes against the Laws.
       # Inconclusive is reported and the run goes on.
-      def structural_review(deliberation:, bus:, targets:, persist: true, first_read_results: {})
+      def structural_review(deliberation:, bus:, targets:, persist: true, first_read_results: {}, cancellation: nil)
         return if ENV["MASTER_FIX_STRUCTURAL_REVIEW"] == "0"
         return Master::Trace::Dmesg.status("look0", "no model lane, structural review skipped") unless deliberation
 
         review = Master::Fix::StructuralReview.new(agent: deliberation.agent, root: Master.repo_root, bus:)
         targets.each do |review_target|
+          return if cancellation&.cancelled?
+
           result = review.call(
             target: review_target,
             persist:,
@@ -171,6 +177,8 @@ module Master
           bus:,
           target:,
         ) do
+          next cancelled_fix_result(cancellation) if cancellation&.cancelled?
+
           writes_requested = writes_requested?(apply:, only:)
           display_target = display_fix_target(target)
           mode = writes_requested ? "write" : "read-only"
@@ -182,16 +190,24 @@ module Master
           ::Operator::CheckChain.clear_verified_fix_snapshots! if writes_requested
           Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
           refusal = Master::Fix::LanePreflight.check(agent: deliberation.agent) if deliberation
+          next cancelled_fix_result(cancellation) if cancellation&.cancelled?
           next refusal if refusal
 
           trace_scope = execution_trace_scopes(target)
 
           rendered = Master::Trace::Dmesg.with_log_voice do
             with_dmesg_verbosity(raw, default: "trace") do
-              first_read_results = first_read(deliberation:, bus:, targets:, persist: writes_requested)
+              next cancelled_fix_result(cancellation) if cancellation&.cancelled?
+              first_read_results = first_read(
+                deliberation:, bus:, targets:, persist: writes_requested, cancellation:
+              )
+              next cancelled_fix_result(cancellation) if cancellation&.cancelled?
 
               unless ENV["MASTER_FIX_DEEP_TRACE"] == "0"
-                trace = steady_trace(scope: trace_scope, dependencies: { scanner:, fix_loop:, deliberation:, bus: })
+                trace = steady_trace(
+                  scope: trace_scope, dependencies: { scanner:, fix_loop:, deliberation:, bus: }, cancellation:
+                )
+                next cancelled_fix_result(cancellation) if cancellation&.cancelled?
                 Master::Trace::Dmesg.status("trace0", trace.summary)
                 unless trace.clean?
                   details = trace.failures.first(12).join(" | ")
@@ -201,12 +217,17 @@ module Master
                 end
               end
 
-              structural_review(deliberation:, bus:, targets:, persist: writes_requested, first_read_results:)
+              structural_review(
+                deliberation:, bus:, targets:, persist: writes_requested, first_read_results:, cancellation:
+              )
+              next cancelled_fix_result(cancellation) if cancellation&.cancelled?
 
               writes_requested = writes_requested?(apply:, only:)
               effective_critique = critique.nil? ? writes_requested && council_default : critique
 
               results = targets.map do |fix_target|
+                next cancelled_fix_result(cancellation) if cancellation&.cancelled?
+
                 run_fix_target(
                   scanner:, fix_loop:, root:, deliberation:, bus:, swarm:,
                   target: fix_target, writes_requested:, effective_critique:, critique:, aesthetic:, only:,
@@ -220,6 +241,8 @@ module Master
               # A verified local repair is not a delivered repair: do not save the
               # candidate baseline as the published state when its final push fails.
               if writes_requested
+                next cancelled_fix_result(cancellation) if cancellation&.cancelled?
+
                 begin
                   fix_loop.publish_pending!
                 rescue StandardError => e
