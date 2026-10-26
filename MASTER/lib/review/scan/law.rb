@@ -258,7 +258,56 @@ module Master
         end
       end
 
-      # Compatibility name for callers not yet migrated to the singular Law concept.
+      # Adapts the canonical Law::Definition contract to the scanner's
+      # finding interface. This is an adapter, not a second Law declaration or
+      # registry: identity, severity, scope, fixtures, and repair guidance live
+      # with the canonical definition and are audited against laws.yml.
+      class CanonicalLawAdapter
+        attr_reader :definition
+
+        def initialize(definition)
+          raise ArgumentError, "canonical law definition required" unless definition.respond_to?(:id)
+
+          @definition = definition
+          @id = definition.id.to_s
+        end
+
+        def id = @id
+        def description = definition.ask.to_s.empty? ? definition.practice.to_s : definition.ask.to_s
+        def severity = normalize_severity(definition.severity)
+        def law_tags = [definition.id.to_s]
+        def auto_fix = false
+        def autofix = definition.autofix
+        def languages = Array(definition.languages).map(&:to_s)
+        def mode = definition.mode
+        def prefetch(_paths) = nil
+
+        def check(code, path:)
+          return [] unless definition.enforceable? && definition.scannable?
+          return [] unless definition.applies?(path.to_s, Master.language_for(path))
+
+          stream = definition.mode.to_sym == :opportunity ? :lexical_opportunities : :lexical_violations
+          definition.scan(code, file: path).map do |hit|
+            Finding.build(
+              law: id,
+              message: "#{id}: #{definition.fix}",
+              line: hit.line,
+              severity:,
+              fix: definition.fix,
+              tags: [id, stream, definition.mode],
+            )
+          end
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "CanonicalLawAdapter#check", severity: :load_bearing, path:)
+          raise "canonical Law #{id} detector failed for #{path}: #{e.class}: #{e.message}"
+        end
+
+        private
+
+        def normalize_severity(value)
+          { warn: :warning, warning: :warning, info: :info, error: :error, critical: :critical, veto: :veto }.fetch(value.to_sym, value.to_sym)
+        end
+      end
 
     end
   end
