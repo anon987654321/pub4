@@ -9,6 +9,83 @@ module Master
       module Lifecycle
         private
 
+        def bind_fix_plan!(journal, run_id, plan = @fix_plan)
+          binding = @run_journal.bind_plan(run_id, plan)
+          return unless binding
+
+          journal["plan"] = binding[:plan] if journal.is_a?(Hash)
+          return binding unless binding[:invalidated]
+
+          journal.delete("convergence_state") if journal.is_a?(Hash)
+          journal.delete("pass_state") if journal.is_a?(Hash)
+          @bus&.publish(
+            "fix_loop:convergence_evidence_invalidated",
+            run_id:, generation: binding[:generation], dimensions: binding[:dimensions]
+          )
+          Master::Trace::Dmesg.status(
+            "fix0", "prior convergence evidence invalidated by #{binding[:dimensions].join(", ")}"
+          )
+          binding
+        end
+
+        # Re-observe the current eligible scope after each pass. A source, scope,
+        # Law, authority, toolchain, exclusion or adapter change creates a new
+        # evidence generation and resets convergence; inability to recapture is a gap.
+        def refresh_fix_plan!(target:, files:, max_passes:, budget_seconds:, run_id:)
+          collected = if @fix_plan_incremental && !structural_target?(target)
+                        @file_collector.collect_changed(target)
+                      else
+                        @file_collector.collect(target)
+                      end
+          fresh_files = StreamCursor.order(@root, target, collected)
+          fresh_files = blocker_files(fresh_files) if CheckFocus.blockers?
+          files.replace(fresh_files) if Array(files).map { |path| File.expand_path(path) } !=
+                                       fresh_files.map { |path| File.expand_path(path) }
+
+          exclusions = {
+            counts: @file_collector.skip_reasons,
+            paths: @file_collector.excluded_path_reasons,
+            sample: @file_collector.excluded_path_reasons.keys.sort.first(FixPlan::MAX_EXCLUSION_SAMPLE),
+          }
+          replacement = FixPlan.capture(
+            root: @fix_plan.root,
+            target:, files:, laws: @laws, excluded: exclusions,
+            adapters: @pass_runner.assessment_adapters(target:),
+            max_passes:, budget_seconds:
+          )
+          @pass_runner.plan_refresh_succeeded! if @pass_runner.respond_to?(:plan_refresh_succeeded!)
+          current = @fix_plan
+          dimensions = %i[
+            scope_digest source_digest law_digest law_source_digest authority_digest
+            toolchain_digest exclusion_digest adapter_digest
+          ]
+          changed = dimensions.select { |field| current.public_send(field) != replacement.public_send(field) }
+          return false if changed.empty?
+
+          @fix_plan = replacement
+          binding = bind_fix_plan!({}, run_id, replacement)
+          @convergence_discipline.begin_run(files, preserve_run_baseline: true)
+          @bus&.publish(
+            "fix_loop:plan_generation",
+            run_id:, generation: binding[:generation], changed_dimensions: changed,
+            source_digest: replacement.source_digest, scope_digest: replacement.scope_digest,
+            plan_digest: replacement.digest,
+          )
+          Master::Trace::Dmesg.status(
+            "fix0",
+            "new plan generation #{binding[:generation]}, changed=#{changed.join(", ")}; clean streak reset"
+          )
+          true
+        rescue StandardError => e
+          @pass_runner.plan_refresh_failed!(e) if @pass_runner.respond_to?(:plan_refresh_failed!)
+          @bus&.publish(
+            "fix_loop:plan_refresh_failed",
+            run_id:, error_class: e.class.name, message: e.message
+          )
+          Master::Trace::Dmesg.status("fix0", "plan refresh INCONCLUSIVE: #{e.class}: #{e.message.to_s[0, 150]}")
+          false
+        end
+
         # The run once its journal is open and a mission records it: resume what
         # an earlier process left, then the passes, then the terminal state.
         def run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:, requested:, incremental:)
