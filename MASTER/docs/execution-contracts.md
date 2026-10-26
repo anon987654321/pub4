@@ -37,11 +37,23 @@ approvals:
 
 The library exposes `contract_for(name)` and a compact `contract_inventory` containing status, revision, promotion readiness, operator-approval state and trigger eligibility. They omit the skill body and credentials. These are inspection APIs, not an approval UI or a self-promotion command. The current task did not add a complete operator-facing approval workflow; the file must be written by the operator through a trusted host-side path. End-to-end coverage of all skill sources and the UI/command for reviewing candidates remains outstanding.
 
+### Persisted telemetry privacy
+
+A privacy-hardening slice now applies the shared diagnostic representation to additional persisted event families:
+
+- Provider-health JSONL records store error digests and byte lengths, not raw provider exception text. Missing-model and pre-response dispatch failures are also counted as health failures, consistent with the router's exclusion behavior.
+- Provider outcome, provider-canary and health-recorder-failure bus events publish digest/length metadata instead of upstream error strings. The terminal dmesg adapter also refuses to print raw diagnostic text if it receives a legacy event.
+- SQLite feedback learning uses an allow-list of operational metadata, fingerprints content-bearing fields, and fingerprints unknown field names rather than persisting their values. Fix-improvement feedback records the number of affected files and a digest rather than filenames.
+- Reflexion events on the shared event bus contain kind, counts and fingerprints only. The local bounded reflection record keeps a redacted, limited diagnostic hint so repair continuity still has context.
+- Transaction telemetry contains path counts and digests, and digests/lengths for free-form error or output fields. The protected transaction manifest remains the source for path-level rollback and recovery.
+
+These changes reduce accidental leakage into logs, the learning database, and event subscribers. They are not a substitute for a complete data-retention review, and they do not make all event families privacy-safe. In particular, the general `core:reason` stream and the commit/Phoenix journal still need a dedicated field-level review. Operational values such as model names, tool IDs, statuses and timing remain visible where they are required for routing and diagnosis.
+
 ### Fold lifecycle audit
 
 The Fold's lifecycle observer now writes typed effect envelopes and can carry run and mission correlation IDs. Relevant local scope is hashed before persistence. The observer rejects untyped evidence references and continues to use the strict event-persistence path: if the before-event cannot be written, the effect must not run; if the after-event cannot be recorded, the Fold must not claim completion.
 
-The interactive CoreBridge path supplies the durable mission ID and a mission-scoped attempt ID derived from its persisted attempt counter. The standalone effect entrypoint can still use a run ID without a mission or attempt. These records cover the Fold's effect lifecycle; they do **not** mean every Fix transaction, tool, background job or deployment operation has been migrated to this contract.
+The interactive CoreBridge path supplies the durable mission ID and a mission-scoped attempt ID derived from its persisted attempt counter. A run with an interrupted or ambiguous outcome does not advance into verification unless that stage was actually reached; a completed Fold alone proceeds to the verification transition. The standalone effect entrypoint can still use a run ID without a mission or attempt. These records cover the Fold's effect lifecycle; they do **not** mean every Fix transaction, tool, background job or deployment operation has been migrated to this contract.
 
 ### Cooperative cancellation
 
@@ -89,6 +101,14 @@ RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_turn_router.rb
 RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_cli.rb
 RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_outcome_policy.rb
 RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_err_classification.rb
+RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_instrument_check.rb
+RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_fix_transaction.rb
+RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_provider_health_cache.rb
+RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_provider_canary.rb
+RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_llm_dispatcher.rb
+RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_trace_support.rb
+RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_feedback_ledger.rb
+RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_reflexion_ledger.rb
 ```
 
 After focused tests pass, run the full canonical MASTER suite and relevant operator checks. For changes that touch RAILS, OPENBSD or STUDIO, run their canonical checks too. Source inspection, a committed test, or a remote commit is never reported as an executed test or a verified deployment.
