@@ -123,6 +123,52 @@ module Master
         row
       end
 
+      # Called when the owning /fix plan detects a source, scope, Law, authority,
+      # toolchain, exclusion or adapter mutation. Old clean readings remain auditable
+      # but cannot satisfy the new generation's clean streak.
+      def invalidate!(iteration:, reason:)
+        iteration = Integer(iteration)
+        raise ArgumentError, "mutation iteration cannot be negative" if iteration.negative?
+
+        @generation += 1
+        @last_mutation_iteration = [@last_mutation_iteration, iteration].max
+        @invalidations ||= []
+        @invalidations << {
+          iteration:,
+          generation: @generation,
+          reason: reason.to_s[0, 240],
+        }.freeze
+        @generation
+      end
+
+      # Small summary for the terminal event. Full findings remain available via
+      # #report; callers need not serialize every unassessed cell to know coverage.
+      def summary
+        keys = cells
+        latest = keys.map { |key| [key, history[key].last] }
+        by_stream = STREAMS.to_h do |stream|
+          rows = latest.select { |key, _row| key[1] == stream }.map(&:last)
+          counts = (STATES + [:pending]).to_h do |state|
+            [state, rows.count { |row| row ? row.status == state : state == :pending }]
+          end
+          [stream, { cells: rows.size, states: counts }]
+        end
+        {
+          laws: laws.size,
+          generation: generation,
+          last_mutation_iteration: last_mutation_iteration,
+          clean_passes_required: clean_passes,
+          expected_cells: keys.size,
+          recorded_cells: latest.count { |_key, row| !row.nil? },
+          unassessed_cells: latest.count { |_key, row| row.nil? },
+          inconclusive_cells: latest.count { |_key, row| row&.status == :inconclusive },
+          finding_cells: latest.count { |_key, row| row && FINDING_STATES.include?(row.status) },
+          complete: complete?,
+          clean: clean?,
+          streams: by_stream.transform_keys(&:to_s),
+        }
+      end
+
       # A cell is complete only after the required consecutive clean readings or
       # a reasoned not-applicable decision. Any missing work remains open.
       def complete?
