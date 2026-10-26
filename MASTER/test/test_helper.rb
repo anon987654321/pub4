@@ -131,13 +131,25 @@ Minitest::Test.class_eval do
     Minitest::Result.from(self)
   end
 
-  # Shared by every scan-law test (test_cosmetic_laws, test_web_laws,
-  # test_web_scan_fixtures, test_scan_law_contracts) -- was copy-pasted
-  # byte-identical in all four before this hoist.
-  # A rule that lives in law/ has the bridge as its scanner surface, so its
-  # contract test asserts through it (BUTTON_OVER_ANCHOR set the precedent).
+  # Run the canonical Law definition or its single registered detector
+  # directly. Tests must not depend on a parallel bridge class to make a Law
+  # visible to the scanner.
   def law_findings(id, code, path:)
-    Master::Review::Scan::Laws::LawBridgeLaw.new.check(code, path:).select { |f| f[:law] == id }
+    require_relative "../lib/review/scan/law_dsl"
+    key = id.to_s.upcase
+    definition = ::Law.definitions.values.find { |law| law.id.to_s.upcase == key }
+    if definition
+      return Master::Review::Scan::CanonicalLawAdapter.new(definition).check(code, path:)
+    end
+
+    klass = Master::Review::Scan::Law.registry.find do |candidate|
+      instance = Master::Review::Scan::LawFactory.build(candidate, root: Master::ROOT)
+      instance.id.to_s.upcase == key
+    end
+    raise KeyError, "no Ruby detector registered for Law #{key}" unless klass
+
+    Master::Review::Scan::LawFactory.build(klass, root: Master::ROOT).check(code, path:)
+      .select { |finding| finding[:law].to_s.upcase == key }
   end
 
   def rule(id, path: nil)
