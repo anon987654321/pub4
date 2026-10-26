@@ -329,8 +329,27 @@ module Master
         result
       end
 
+      # Transaction events are diagnostic telemetry, not the durable manifest.
+      # Never persist raw workspace paths or free-form errors/results here: paths
+      # live in the protected transaction manifest, and actionable errors remain
+      # in the local Result/exception for the operator.
       def emit(event, **payload)
-        @bus&.publish(event, **payload)
+        safe = payload.dup
+        if safe.key?(:paths)
+          paths = Array(safe.delete(:paths)).map(&:to_s).sort
+          safe[:paths_count] = paths.size
+          safe[:paths_digest] = Digest::SHA256.hexdigest(paths.join("\\0"))
+        end
+
+        %i[error result message detail output].each do |key|
+          value = safe.delete(key)
+          next unless value.is_a?(String)
+
+          safe["#{key}_digest".to_sym] = Digest::SHA256.hexdigest(value)
+          safe["#{key}_bytes".to_sym] = value.bytesize
+        end
+        safe[:schema_version] = 1 unless safe.key?(:schema_version)
+        @bus&.publish(event, **safe)
       rescue StandardError => e
         warn("trace0: #{e.class}: #{e.message}") if ENV["MASTER_TRACE_STRICT"] == "1"
         nil
