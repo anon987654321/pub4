@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require_relative "../lib/cli/routing/model_router/route_policy"
+require_relative "../lib/cli/routing/model_router"
 
 class TestRoutePolicy < Minitest::Test
   Policy = Master::CLI::Routing::RoutePolicy
@@ -11,6 +12,15 @@ class TestRoutePolicy < Minitest::Test
     reachable ||= candidates
     usable ||= candidates
     Policy.call(candidates:, reachable:, parked:, usable:, recently_failed:, meets_floor:, local:)
+  end
+
+  def test_router_selection_methods_are_owned_by_the_selection_module
+    router = Master::CLI::Routing::ModelRouter
+
+    assert_includes router.ancestors, router::Selection
+    assert_equal router::Selection, router.instance_method(:preferred).owner
+    assert_equal router::Selection, router.instance_method(:fallback_chain).owner
+    assert_equal router::Selection, router.instance_method(:constrained_for).owner
   end
 
   def test_candidate_ids_are_normalized_once_without_changing_order
