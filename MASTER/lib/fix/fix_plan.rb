@@ -43,11 +43,12 @@ module Master
                   :authority_digest, :exclusion_digest, :toolchain_digest,
                   :adapter_digest, :identity_digest, :digest
 
-      def self.capture(root:, target:, files:, laws:, excluded: {}, adapters: {}, max_passes:, budget_seconds:)
-        new(root:, target:, files:, laws:, excluded:, adapters:, max_passes:, budget_seconds:)
+      def self.capture(root:, target:, files:, laws:, excluded: {}, adapters: {}, max_passes:, budget_seconds:,
+                       deadline_at: nil)
+        new(root:, target:, files:, laws:, excluded:, adapters:, max_passes:, budget_seconds:, deadline_at:)
       end
 
-      def initialize(root:, target:, files:, laws:, excluded:, adapters:, max_passes:, budget_seconds:)
+      def initialize(root:, target:, files:, laws:, excluded:, adapters:, max_passes:, budget_seconds:, deadline_at: nil)
         @root = File.expand_path(root).freeze
         @target = expand(target).freeze
         raise ArgumentError, "fix target escapes repository root" unless inside?(@target, @root)
@@ -55,7 +56,11 @@ module Master
         @created_at = Time.now.utc.iso8601.freeze
         @max_passes = positive_integer(max_passes, "max_passes")
         @budget_seconds = positive_integer(budget_seconds, "budget_seconds")
-        @deadline_at = (Time.now.utc + @budget_seconds).iso8601.freeze
+        @deadline_at = if deadline_at.to_s.strip.empty?
+                         (Time.now.utc + @budget_seconds).iso8601
+                       else
+                         Time.iso8601(deadline_at.to_s).utc.iso8601
+                       end.freeze
         @sources = snapshot_sources(files).freeze
         raise ArgumentError, "fix plan has no eligible source files" if @sources.empty?
 
