@@ -188,7 +188,7 @@ class TestLawContract < Minitest::Test
       mode: :violation,
       languages: %i[ruby scss],
       scope: :file,
-      surfaces: nil,
+
       law_scope: :domain,
       lifecycle: :active,
       autofix: :review,
