@@ -401,7 +401,7 @@ module Master
           when "tool:call" then tool_call(payload)
           when "tool:return" then tool_return(payload)
           when "fold:risk" then parent("fold0", "master0", "risk #{payload[:risk]}")
-          when "core:reason" then ["fold0: #{clip(payload[:why])}"]
+          when "core:reason" then ["fold0: reason recorded, #{size(payload[:why].to_s.bytesize)}"]
           when "core:turn" then fold_turn(payload)
           when "fix_loop:terminal" then terminal(payload)
           when "wishlist:done" then ["wish0: drafted #{payload[:drafted]} proposal(s)"]
@@ -515,6 +515,16 @@ module Master
         CHURN = %w[scan:file_read scan:pass scan:complete scan:semantic_skipped scan:progress
                    hook:on_violation_found cognition:tick homeostat:observe conflict:resolved].freeze
 
+        PRIVATE_EVENT_PREFIXES = %w[
+          tool: git:mutation fix:transaction fix:journal fix_loop: fix:start fix:resume
+          fix:interrupted ops:commit
+        ].freeze
+
+        SAFE_EVENT_FIELDS = %i[
+          event ts status state category pass file_count count violations changes fixed
+          ms bytes stage attempt elapsed_ms turn operation item_count result_state
+        ].freeze
+
         def verbose_event(payload)
           return [] unless Dmesg.verbose? || Dmesg.trace?
 
@@ -522,7 +532,12 @@ module Master
           return [] if event.empty?
           return [] if CHURN.include?(event) && !Dmesg.trace?
 
-          [event_line(payload)]
+          safe = PRIVATE_EVENT_PREFIXES.any? { |prefix| event.start_with?(prefix) }
+          [event_line(safe ? safe_event_projection(payload) : payload)]
+        end
+
+        def safe_event_projection(payload)
+          payload.select { |key, _| SAFE_EVENT_FIELDS.include?(key.to_sym) }
         end
 
         def event_line(payload)
@@ -596,13 +611,13 @@ module Master
         def tool_call(payload)
           kind, parent_unit = TOOL_UNITS.fetch(payload[:tool].to_s, [payload[:tool].to_s, "io0"])
           unit = open_unit(kind, "tool:#{payload[:tool]}")
-          [*parent(parent_unit, "master0"), "#{unit} at #{parent_unit}: #{clip(payload[:subject])}"]
+          [*parent(parent_unit, "master0"), "#{unit} at #{parent_unit}: #{clip(payload[:tool])} call"]
         end
 
         def tool_return(payload)
           unit = @open.delete("tool:#{payload[:tool]}")
           return [] unless unit
-          return ["#{unit}: #{clip(payload[:error])}"] unless payload[:ok]
+          return ["#{unit}: failed"] unless payload[:ok]
 
           ["#{unit}: #{[size(payload[:bytes]), seconds(payload[:ms])].compact.join(', ')}"]
         end
