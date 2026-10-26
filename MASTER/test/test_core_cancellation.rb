@@ -25,10 +25,10 @@ class TestCoreCancellation < Minitest::Test
     Master::Core::Constitution.load(data_dir: File.expand_path("../data", __dir__))
   end
 
-  def build_fold(model:, root:, token:)
+  def build_fold(model:, root:, token:, world: nil, max_turns: 3)
     Master::Core::Fold.new(
-      model:, constitution: constitution, world: Master::Core::World.new(root:),
-      memory: Master::Core::Memory.new, max_turns: 3, cancellation: token
+      model:, constitution: constitution, world: world || Master::Core::World.new(root:),
+      memory: Master::Core::Memory.new, max_turns:, cancellation: token
     )
   end
 
@@ -53,6 +53,36 @@ class TestCoreCancellation < Minitest::Test
       assert_equal :cancelled, result.reason
       assert_equal 1, result.turns
       refute File.exist?(File.join(root, "must-not-exist.txt"))
+    end
+  end
+
+  class OneRead
+    def propose(_context, verbs:, scope:)
+      raise "read handler missing" unless verbs.include?(:read)
+
+      Master::Core::Effect.read("README.md")
+    end
+  end
+
+  class CancellingWorld
+    def initialize(token) = @token = token
+    def verbs = Master::Core::VERBS
+
+    def perform(_effect)
+      @token.cancel!(reason: "operator stopped during effect")
+      Master::Core::Observation.ok("read complete")
+    end
+  end
+
+  def test_cancellation_during_the_last_effect_wins_over_max_turns
+    Dir.mktmpdir do |root|
+      token = Master::Core::CancellationToken.new
+      world = CancellingWorld.new(token)
+      result = build_fold(model: OneRead.new, root:, token:, world:, max_turns: 1).run("read")
+
+      assert_equal :cancelled, result.reason
+      assert_equal 1, result.turns
+      assert_equal "cancelled: operator stopped during effect", result.summary
     end
   end
 
