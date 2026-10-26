@@ -11,7 +11,7 @@ This document describes what the current code has established and what remains t
 
 `MASTER/lib/execution/contract.rb` now owns a small set of validated, typed shapes:
 
-- `EffectEnvelope` represents an effect's identity, verb, capability, operation, parent/checkpoint/run/mission IDs, optional idempotency key and deadline. Its optional scope is stored as a SHA-256 digest. Raw arguments and scope are not part of the envelope.
+- `EffectEnvelope` represents an effect's identity, verb, capability, operation, parent/checkpoint/run/attempt/mission IDs, optional idempotency key and deadline. Its optional scope is stored as a SHA-256 digest. Raw arguments and scope are not part of the envelope.
 - `EvidenceReference` identifies evidence by ID, kind, status, verifier and optional digest. It carries a reference, not the underlying private content.
 - `VerificationResult` adapts existing check results and `Master::Proof` into a stable outcome vocabulary. A check that ran but skipped declared coverage remains partial; an unavailable check remains inconclusive; a check error is not promoted into conclusive verification. The adapter uses duck typing and does not make MASTER import the sibling-tree `Deploy::CheckResult` implementation.
 - The canonical repair terminal-state vocabulary now comes from this execution contract through `Master::Fix::OutcomePolicy`.
@@ -22,7 +22,7 @@ This is deliberately an adapter layer, not a second law registry or a replacemen
 
 The Fold's lifecycle observer now writes typed effect envelopes and can carry run and mission correlation IDs. Relevant local scope is hashed before persistence. The observer rejects untyped evidence references and continues to use the strict event-persistence path: if the before-event cannot be written, the effect must not run; if the after-event cannot be recorded, the Fold must not claim completion.
 
-The interactive CoreBridge path supplies the durable mission ID. The standalone effect entrypoint can still use a run ID without a mission. These records cover the Fold's effect lifecycle; they do **not** mean every Fix transaction, tool, background job or deployment operation has been migrated to this contract.
+The interactive CoreBridge path supplies the durable mission ID and a mission-scoped attempt ID derived from its persisted attempt counter. The standalone effect entrypoint can still use a run ID without a mission or attempt. These records cover the Fold's effect lifecycle; they do **not** mean every Fix transaction, tool, background job or deployment operation has been migrated to this contract.
 
 ### Cooperative cancellation
 
