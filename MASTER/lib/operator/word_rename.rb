@@ -14,7 +14,6 @@ module Operator
   # leave dilla's note gate and postpro's film gate weave alone. --keep names those spellings, and --skip the
   # paths whose every use is the other meaning.
   class WordRename
-    IMMUTABLE = %w[MASTER/data/laws.yml MASTER/data/soul.yml].freeze
     Change = Data.define(:from, :to, :text)
 
     USAGE = "usage: ruby MASTER/tools/rename.rb --word OLD NEW [--keep=a,b] [--skip=path/,path/] [--apply]"
@@ -92,7 +91,7 @@ module Operator
         out, status = Master::Io::Exec.capture2("git", "-C", @root, "ls-files", "-z")
         raise "rename: git ls-files failed" unless status.success?
 
-        out.split("\0").reject { |path| IMMUTABLE.include?(path) || @skip.any? { |prefix| path.start_with?(prefix) } }
+        out.split("\0").reject { |path| @skip.any? { |prefix| path.start_with?(prefix) } }
       end
     end
 
