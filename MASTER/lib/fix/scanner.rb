@@ -176,6 +176,15 @@ module Master
           self
         end
 
+        def ast_assessments
+          @file_processor.respond_to?(:ast_assessments) ? @file_processor.ast_assessments : {}
+        end
+
+        def reset_ast_assessments!
+          @file_processor.reset_ast_assessments! if @file_processor.respond_to?(:reset_ast_assessments!)
+          self
+        end
+
         private
 
         def findings_for(path, depth:)
