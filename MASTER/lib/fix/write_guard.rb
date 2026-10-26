@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "configuration_guard"
+
 module Master
   module Fix
     # Every write judged by every mechanical rule, on both write paths, with no
@@ -50,6 +52,10 @@ module Master
         def verdict(path:, content:)
           if (reason = Master::Core::Constitution.forbidden_file_reason(path))
             return Verdict.new(introduced: [{ law: :forbidden_file, line: 0, message: reason, severity: :error }])
+          end
+
+          if (reason = ConfigurationGuard.validate(path:, content:))
+            return Verdict.new(introduced: [{ law: :configuration_invariant, line: 0, message: reason, severity: :error }])
           end
 
           before = tally(findings(path:, content: (File.read(path) if File.exist?(path))))
