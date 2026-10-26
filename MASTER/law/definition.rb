@@ -109,7 +109,7 @@ module Law
     ".html" => "html", ".yml" => "yaml", ".sh" => "zsh", ".md" => "markdown", ".json" => "json"
   }.freeze
 
-  MEMBERS = %i[id source severity mode languages scope law_scope lifecycle autofix path path_exclude absent detect ask practice fix bad good reads_comments].freeze
+  MEMBERS = %i[id source severity mode languages scope surfaces law_scope lifecycle autofix path path_exclude absent detect ask practice fix bad good reads_comments].freeze
   Definition = Data.define(*MEMBERS) do
     # `path` takes a Regexp or a substring; `path_exclude` was already a Regexp,
     # and one member of a pair reading its argument the other way is a trap for
@@ -147,29 +147,12 @@ module Law
     # presence of a language-agnostic principle from implying unmeasured runtime,
     # UI, deployment or cross-file coverage.
     def assessment_surfaces
-      declared = Array(surfaces).map(&:to_sym).uniq
-      return declared.freeze unless declared.empty?
-
-      selected = if semantic?
-                   %i[whole_file sections]
-                 elsif scope.to_sym == :file
-                   %i[whole_file sections]
-                 else
-                   %i[whole_file lines]
-                 end
-      declared_languages = Array(languages).map(&:to_s)
-      if declared_languages.empty? || (declared_languages & %w[yaml json toml]).any?
-        selected << :structured_data
-      end
-      if declared_languages.empty? || declared_languages.include?("markdown")
-        selected << :documentation
-      end
-      selected.uniq.freeze
+      ::Law::ASSESSMENT_SURFACES
     end
 
     # Universal describes the invariant, not the detector syntax. A universal
     # principle may have Ruby, zsh, Rails or another domain adapter.
-    def universal? = law_scope == :universal
+    def universal? = true
 
     # Lifecycle controls whether a law may affect enforcement. Existing laws
     # default to active for compatibility; candidates can enter proposed/proven
@@ -440,7 +423,7 @@ module Law
 
       # Strings, because the files a law is judged on arrive as "ruby" and a symbol list never matched them.
       @h[:languages] = Array(@h[:languages]).map(&:to_s)
-      @h[:law_scope] ||= @h[:languages].empty? ? :universal : :domain
+      @h[:law_scope] = :universal
       @h[:lifecycle] ||= :active
       @h[:autofix] ||= :review
 
