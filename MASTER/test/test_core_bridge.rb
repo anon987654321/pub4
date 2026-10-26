@@ -110,8 +110,13 @@ class CoreBridgeTest < Minitest::Test
       after = events.find { |record| record["event"] == "core:effect:after" }
       assert_equal before["effect_id"], after["effect_id"]
       assert_equal before["run_id"], after["run_id"]
+      assert_equal before["mission_id"], after["mission_id"]
       assert_equal result[:mission]["id"], before["mission_id"]
-      refute_includes File.read(File.join(root, "runtime", "events", "activity.jsonl")), "never log this payload"
+      assert_match(/\\A[0-9a-f]{64}\\z/, before["scope_digest"])
+      assert_equal before["scope_digest"], after["scope_digest"]
+      persisted = File.read(File.join(root, "runtime", "events", "activity.jsonl"))
+      refute_includes persisted, "never log this payload"
+      refute_includes persisted, "persisted.txt"
     end
   end
 
