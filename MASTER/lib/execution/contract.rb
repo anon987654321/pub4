@@ -194,11 +194,11 @@ module Master
       # absent; callers can provide a digest of scope, not the scope itself.
       EffectEnvelope = Data.define(
         :effect_id, :turn, :verb, :capability, :operation, :parent_effect_id,
-        :checkpoint_id, :run_id, :mission_id, :scope_digest, :idempotency_key,
+        :checkpoint_id, :run_id, :attempt_id, :mission_id, :scope_digest, :idempotency_key,
         :deadline_at
       ) do
         def self.build(effect:, turn:, effect_id:, operation: :perform, parent_effect_id: nil,
-                       checkpoint_id: nil, run_id: nil, mission_id: nil, scope: nil,
+                       checkpoint_id: nil, run_id: nil, attempt_id: nil, mission_id: nil, scope: nil,
                        idempotency_key: nil, deadline_at: nil)
           unless effect.respond_to?(:verb) && effect.respond_to?(:capability)
             raise ArgumentError, "effect envelope requires a typed effect"
@@ -207,13 +207,13 @@ module Master
           scope_digest = Digest::SHA256.hexdigest(scope.to_s) unless scope.nil? || scope.to_s.empty?
           new(
             effect_id:, turn:, verb: effect.verb, capability: effect.capability, operation:,
-            parent_effect_id:, checkpoint_id:, run_id:, mission_id:, scope_digest,
+            parent_effect_id:, checkpoint_id:, run_id:, attempt_id:, mission_id:, scope_digest,
             idempotency_key:, deadline_at:
           )
         end
 
         def initialize(effect_id:, turn:, verb:, capability:, operation: :perform, parent_effect_id: nil,
-                       checkpoint_id: nil, run_id: nil, mission_id: nil, scope_digest: nil,
+                       checkpoint_id: nil, run_id: nil, attempt_id: nil, mission_id: nil, scope_digest: nil,
                        idempotency_key: nil, deadline_at: nil)
           effect_id = Contract.token!(effect_id, "effect id")
           turn = Integer(turn)
@@ -229,6 +229,7 @@ module Master
           parent_effect_id = Contract.token!(parent_effect_id, "parent effect id") if parent_effect_id
           checkpoint_id = Contract.token!(checkpoint_id, "checkpoint id") if checkpoint_id
           run_id = Contract.token!(run_id, "run id") if run_id
+          attempt_id = Contract.token!(attempt_id, "attempt id") if attempt_id
           mission_id = Contract.token!(mission_id, "mission id") if mission_id
           idempotency_key = Contract.token!(idempotency_key, "idempotency key") if idempotency_key
 
@@ -245,13 +246,13 @@ module Master
 
           super(
             effect_id:, turn:, verb:, capability:, operation:, parent_effect_id:,
-            checkpoint_id:, run_id:, mission_id:, scope_digest: scope_digest&.freeze,
+            checkpoint_id:, run_id:, attempt_id:, mission_id:, scope_digest: scope_digest&.freeze,
             idempotency_key:, deadline_at:
           )
         rescue ArgumentError, TypeError, NoMethodError => e
           raise e if e.message.start_with?(
             "effect ", "unknown effect ", "parent effect ", "checkpoint ",
-            "run id", "mission id", "idempotency key", "scope digest", "invalid effect envelope"
+            "run id", "attempt id", "mission id", "idempotency key", "scope digest", "invalid effect envelope"
           )
 
           raise ArgumentError, "invalid effect envelope: #{e.message}"
@@ -260,7 +261,7 @@ module Master
         def to_h
           {
             schema_version: 1, effect_id:, turn:, verb:, capability:, operation:,
-            parent_effect_id:, checkpoint_id:, run_id:, mission_id:, scope_digest:,
+            parent_effect_id:, checkpoint_id:, run_id:, attempt_id:, mission_id:, scope_digest:,
             idempotency_key:, deadline_at:
           }.compact
         end
