@@ -15,11 +15,26 @@ require_relative "../lib/law_vocabulary"
 # Contract: `rake dogfood` is the archaeological audit. A capability that goes
 # missing is a fixture that stops passing — nothing to compare by hand.
 module Law
-  ASSESSMENT_SURFACES = %i[
-    repository_tree directories file_names paths whole_file sections lines
-    syntax_tree cross_file structured_data documentation media_assets
-    compiled_assets rendered_ui interactive_behavior tests runtime deployment
-  ].freeze
+  # laws.yml owns the catalogue and global assessment surface contract. Ruby
+  # source files implement detectors; they do not create another Law identity or
+  # a separate list of supported surfaces.
+  require_relative "../lib/master" unless defined?(Master::ROOT)
+  LAW_CATALOGUE = Master.load_laws.fetch("law_catalogue").freeze
+  ASSESSMENT_SURFACES = Array(LAW_CATALOGUE.fetch("surfaces")).map(&:to_sym).freeze
+
+  def self.catalogue_entry(id)
+    key = id.to_s
+    entries = LAW_CATALOGUE.fetch("entries")
+    entry = entries[key] || entries.find { |name, _value| name.to_s.casecmp?(key) }&.last
+    raise KeyError, "Law #{key} is absent from MASTER/data/laws.yml law_catalogue.entries" unless entry
+
+    raise ArgumentError, "Law #{key} is not marked universal in laws.yml" unless entry["universal"] == true
+    modalities = Array(entry["modalities"]).map(&:to_s).sort
+    expected = %w[lexical semantic visual]
+    raise ArgumentError, "Law #{key} modalities must be #{expected.join(', ')}" unless modalities == expected
+
+    entry
+  end
 
   Finding = Data.define(:id, :file, :line, :text)
 
@@ -152,7 +167,7 @@ module Law
 
     # Universal describes the invariant, not the detector syntax. A universal
     # principle may have Ruby, zsh, Rails or another domain adapter.
-    def universal? = true
+    def universal? = ::Law.catalogue_entry(id).fetch("universal")
 
     # Lifecycle controls whether a law may affect enforcement. Existing laws
     # default to active for compatibility; candidates can enter proposed/proven
@@ -422,7 +437,9 @@ module Law
 
       # Strings, because the files a law is judged on arrive as "ruby" and a symbol list never matched them.
       @h[:languages] = Array(@h[:languages]).map(&:to_s)
-      @h[:law_scope] = :universal
+      catalogue = ::Law.catalogue_entry(@h.fetch(:id))
+      @h[:law_scope] = catalogue.fetch("universal") ? :universal : :domain
+      @h[:surfaces] = ::Law::ASSESSMENT_SURFACES
       @h[:lifecycle] ||= :active
       @h[:autofix] ||= :review
 
