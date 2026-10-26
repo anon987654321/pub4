@@ -68,6 +68,19 @@ module Master
         end
 
         def finish_run(result, target, run_id, mission: nil, requested: false)
+          assessment_receipt = persist_assessment_receipt(run_id:, target:)
+          proof_ready = assessment_receipt["status"] == "persisted" &&
+            assessment_receipt["readback_verified"] == true &&
+            assessment_receipt["matrix_status"] == "complete" &&
+            assessment_receipt["verification"] == "verified"
+          if terminal_state_for(result) == :done && !proof_ready
+            result = terminal(
+              :blocked,
+              "four-stream assessment receipt is not complete and verified " \
+                "(artifact=#{assessment_receipt["status"]}, matrix=#{assessment_receipt["matrix_status"]}, " \
+                "verification=#{assessment_receipt["verification"] || "unavailable"}); DONE withheld"
+            )
+          end
           result = blocked_by_gaps(result)
           RunBudget.finish_run(reason: run_end_reason(result))
           state = terminal_state_for(result)
@@ -85,7 +98,10 @@ module Master
                             else
                               { status: "not_measured", reason: "assessment matrix adapter unavailable" }
                             end
+          matrix_evidence = matrix_evidence.dup
+          matrix_evidence[:ledger_receipt] = assessment_receipt
           evidence[:assessment_matrix] = matrix_evidence
+          evidence[:assessment_ledger_receipt] = assessment_receipt
           run_record = @run_journal.history(limit: RunJournal::MAX_RUNS).find { |row| row["id"] == run_id }
           plan_generation = Array(run_record && run_record["plan_generations"]).last&.fetch("generation", nil)
           evidence[:fix_plan_generation] = plan_generation unless plan_generation.nil?
@@ -121,6 +137,29 @@ module Master
           @bus&.publish("fix_loop:terminal", **outcome)
 
           result
+        end
+
+        def persist_assessment_receipt(run_id:, target:)
+          report = if @pass_runner&.respond_to?(:assessment_matrix_artifact)
+                     @pass_runner.assessment_matrix_artifact
+                   else
+                     { schema_version: 1, status: "not_measured", reason: "assessment matrix artifact adapter unavailable" }
+                   end
+          receipt = @run_journal.persist_assessment_report(run_id, target:, report:)
+          verification = @run_journal.verify_assessment_report(run_id)
+          raise "assessment artifact verification failed: #{verification["status"]}" unless verification["status"] == "verified"
+
+          receipt.merge("verification" => "verified")
+        rescue StandardError => e
+          @bus&.publish(
+            "fix_loop:assessment_receipt_failed",
+            run_id:, error_class: e.class.name, message: e.message.to_s[0, 180]
+          )
+          {
+            "status" => "persistence_failed",
+            "error_class" => e.class.name,
+            "message" => e.message.to_s[0, 180],
+          }
         end
       end
     end

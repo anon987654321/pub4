@@ -229,10 +229,82 @@ module Master
         }
       end
 
+
+      # Durable per-cell proof, including the complete transition history. The
+      # compact terminal summary is intentionally separate from this audit record.
+      def evidence_report
+        {
+          schema_version: 1,
+          summary: summary,
+          invalidations: Array(@invalidations).map do |entry|
+            {
+              iteration: entry[:iteration],
+              generation: entry[:generation],
+              reason: entry[:reason],
+            }
+          end,
+          cells: cells.sort_by { |key| key.map(&:to_s) }.map do |key|
+            rows = history[key]
+            latest = rows.last
+            {
+              law: key[0],
+              stream: key[1].to_s,
+              surface: key[2].to_s,
+              status: latest ? latest.status.to_s : "pending",
+              clean_streak: clean_streak(key),
+              readings: rows.map { |row| reading_evidence(row) },
+            }
+          end,
+        }
+      end
+
       private
 
       def cells
         @cells ||= laws.product(STREAMS, surfaces).freeze
+      end
+
+      def reading_evidence(row)
+        {
+          iteration: row.iteration,
+          generation: row.generation,
+          status: row.status.to_s,
+          reason: row.reason,
+          evidence: json_safe_value(row.evidence),
+          findings: json_safe_value(row.findings),
+          repair: repair_evidence(row.repair),
+        }
+      end
+
+      def repair_evidence(repair)
+        return nil if repair.nil?
+
+        if repair.is_a?(Hash)
+          {
+            changed: repair[:changed] == true || repair["changed"] == true,
+            retryable: repair[:retryable] == true || repair["retryable"] == true,
+            reason: (repair[:reason] || repair["reason"]).to_s[0, 240],
+          }
+        else
+          { changed: repair == true }
+        end
+      end
+
+      def json_safe_value(value)
+        case value
+        when NilClass, TrueClass, FalseClass, Numeric, String
+          value
+        when Symbol
+          value.to_s
+        when Array
+          value.map { |entry| json_safe_value(entry) }
+        when Hash
+          value.each_with_object({}) do |(key, entry), normalized|
+            normalized[key.to_s] = json_safe_value(entry)
+          end
+        else
+          value.respond_to?(:to_h) ? json_safe_value(value.to_h) : value.to_s
+        end
       end
 
       def cell_key(law, stream, surface)

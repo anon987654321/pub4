@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "digest"
 require "json"
 require "securerandom"
 require "time"
@@ -23,6 +24,7 @@ module Master
       PATH = ".master/fix_runs.json"
       LOCK = ".master/fix_runs.lock"
       MAX_RUNS = 24
+      ASSESSMENT_DIR = ".master/fix_assessments"
       RESUMABLE_STATES = %w[active crashed delivery_failed].freeze
 
       def self.instance_id
@@ -114,6 +116,104 @@ module Master
           changed_dimensions: receipt && receipt[:dimensions],
         )
         receipt
+      end
+
+      # Persist the full Law × stream × surface ledger as an independent audit
+      # artifact. Run history retains only this checksum-addressed receipt.
+      def persist_assessment_report(run_id, target:, report:)
+        id = run_id.to_s
+        raise ArgumentError, "invalid fix run id" unless id.match?(/\A[a-f0-9]{20}\z/)
+        raise ArgumentError, "assessment report must be a hash" unless report.is_a?(Hash)
+
+        master_dir = File.join(@root, ".master")
+        assessment_dir = File.join(@root, ASSESSMENT_DIR)
+        raise "refusing symlinked .master directory" if File.symlink?(master_dir)
+        raise "refusing symlinked assessment directory" if File.symlink?(assessment_dir)
+
+        path = File.join(assessment_dir, "#{id}.json")
+        envelope = {
+          "schema_version" => 1,
+          "run_id" => id,
+          "target" => relative(target),
+          "created_at" => Time.now.utc.iso8601,
+          "report" => json_safe_value(report),
+        }
+        payload = JSON.pretty_generate(envelope) + "\n"
+        write_atomic(path, payload, mode: 0o600)
+        stored_payload = File.binread(path)
+        digest = Digest::SHA256.hexdigest(payload)
+        raise "assessment artifact read-back mismatch" unless stored_payload == payload
+        raise "assessment artifact checksum mismatch after write" unless Digest::SHA256.hexdigest(stored_payload) == digest
+
+        ledger = report[:ledger] || report["ledger"]
+        summary = ledger && (ledger[:summary] || ledger["summary"])
+        cells = ledger && (ledger[:cells] || ledger["cells"])
+        receipt = {
+          "status" => "persisted",
+          "readback_verified" => true,
+          "path" => relative(path),
+          "sha256" => digest,
+          "bytes" => stored_payload.bytesize,
+          "matrix_status" => (report[:status] || report["status"]).to_s,
+          "cells" => Array(cells).size,
+          "readings" => Array(cells).sum do |cell|
+            Array(cell[:readings] || cell["readings"]).size
+          end,
+        }
+        receipt["expected_cells"] = summary[:expected_cells] || summary["expected_cells"] if summary
+        receipt["generation"] = summary[:generation] || summary["generation"] if summary
+
+        updated = update(id) { |run| run["assessment_receipt"] = receipt }
+        raise "fix run disappeared before assessment receipt was indexed" unless updated
+
+        emit(
+          "fix:assessment_receipt_persisted",
+          run_id: id, path: receipt["path"], sha256: receipt["sha256"],
+          cells: receipt["cells"], readings: receipt["readings"], status: receipt["matrix_status"]
+        )
+        receipt
+      end
+
+      # Re-check a saved receipt whenever a later tool needs to rely on it.
+      def verify_assessment_report(run_id)
+        id = run_id.to_s
+        return { "status" => "invalid_run_id" } unless id.match?(/\A[a-f0-9]{20}\z/)
+
+        run = history(limit: MAX_RUNS).find { |entry| entry["id"] == id }
+        return { "status" => "run_not_found" } unless run
+
+        receipt = run["assessment_receipt"]
+        return { "status" => "receipt_missing" } unless receipt.is_a?(Hash)
+
+        expected_path = File.join(@root, ASSESSMENT_DIR, "#{id}.json")
+        relative_path = relative(expected_path)
+        return { "status" => "receipt_path_mismatch" } unless receipt["path"] == relative_path
+        return { "status" => "artifact_unavailable" } unless File.file?(expected_path) && !File.symlink?(expected_path)
+
+        payload = File.binread(expected_path)
+        actual_digest = Digest::SHA256.hexdigest(payload)
+        return {
+          "status" => "checksum_mismatch",
+          "expected_sha256" => receipt["sha256"],
+          "actual_sha256" => actual_digest,
+        } unless actual_digest == receipt["sha256"]
+
+        document = JSON.parse(payload)
+        unless document["schema_version"].to_i == 1 && document["run_id"] == id
+          return { "status" => "artifact_identity_mismatch" }
+        end
+
+        {
+          "status" => "verified",
+          "path" => relative_path,
+          "sha256" => actual_digest,
+          "bytes" => payload.bytesize,
+          "matrix_status" => receipt["matrix_status"],
+        }
+      rescue JSON::ParserError => e
+        { "status" => "invalid_json", "message" => e.message.to_s[0, 180] }
+      rescue StandardError => e
+        { "status" => "verification_failed", "error_class" => e.class.name, "message" => e.message.to_s[0, 180] }
       end
 
       def pass_start(run_id, pass, transaction_id:)
@@ -349,6 +449,25 @@ module Master
           yield
         ensure
           io&.flock(File::LOCK_UN)
+        end
+      end
+
+      def json_safe_value(value)
+        case value
+        when NilClass, TrueClass, FalseClass, String, Integer
+          value
+        when Float
+          value.finite? ? value : value.to_s
+        when Symbol
+          value.to_s
+        when Array
+          value.map { |entry| json_safe_value(entry) }
+        when Hash
+          value.each_with_object({}) do |(key, entry), normalized|
+            normalized[key.to_s] = json_safe_value(entry)
+          end
+        else
+          value.respond_to?(:to_h) ? json_safe_value(value.to_h) : value.to_s
         end
       end
 

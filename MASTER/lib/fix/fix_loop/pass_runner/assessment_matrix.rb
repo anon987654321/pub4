@@ -286,6 +286,34 @@ module Master
           rescue StandardError => e
             { status: "incomplete", reason: "matrix evidence failed: #{e.class}: #{e.message.to_s[0, 150]}" }
           end
+
+          # Full report passed to RunJournal for durable, checksum-addressed storage.
+          # It is deliberately not embedded in the bounded terminal history.
+          def assessment_matrix_artifact
+            return {
+              schema_version: 1,
+              status: "not_measured",
+              reason: "no scanner-backed Law population was available",
+            } unless @assessment_ledger
+
+            @assessment_mutex.synchronize do
+              {
+                schema_version: 1,
+                status: (@assessment_ledger.clean? ? "complete" : "incomplete"),
+                target: @assessment_plan&.target,
+                plan_digest: @assessment_plan&.digest,
+                source_digest: @assessment_plan&.source_digest,
+                law_digest: @assessment_plan&.law_digest,
+                ledger: @assessment_ledger.evidence_report,
+              }
+            end
+          rescue StandardError => e
+            {
+              schema_version: 1,
+              status: "incomplete",
+              reason: "matrix artifact failed: #{e.class}: #{e.message.to_s[0, 150]}",
+            }
+          end
           
           private
 
@@ -819,11 +847,13 @@ module Master
           end
 
           def record_assessment(law_id, stream, surface, pass, result)
-            @assessment_ledger.record(
-              law: law_id, stream:, surface:, status: result.fetch(:status),
-              iteration: Integer(pass), generation: @assessment_ledger.generation,
-              reason: result[:reason], evidence: result[:evidence], findings: result[:findings]
-            )
+            @assessment_mutex.synchronize do
+              @assessment_ledger.record(
+                law: law_id, stream:, surface:, status: result.fetch(:status),
+                iteration: Integer(pass), generation: @assessment_ledger.generation,
+                reason: result[:reason], evidence: result[:evidence], findings: result[:findings]
+              )
+            end
           end
         end
       end
