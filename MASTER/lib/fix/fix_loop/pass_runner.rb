@@ -276,7 +276,9 @@ module Master
               scanner_law: nil,
               yaml_entry: nil,
               streams: [:lexical_opportunities].freeze,
-              surfaces: %i[repository_tree directories file_names paths whole_file lines].freeze,
+              # The aggregate opportunity engine has no per-surface clean receipt.
+              # Keep one source-level cell and leave its negative result inconclusive.
+              surfaces: [:whole_file].freeze,
               unmeasurable_reason: nil,
             }
           end
@@ -777,19 +779,18 @@ module Master
           semantic = %i[semantic_violations semantic_opportunities].include?(stream)
           case info[:source_kind]
           when :canonical
-            return true if %i[whole_file lines].include?(surface)
+            return true if %i[whole_file lines documentation structured_data].include?(surface)
             return semantic if surface == :sections
-            return true if surface == :structured_data
 
             false
           when :scanner
-            return true if surface == :whole_file
+            return true if %i[whole_file documentation structured_data].include?(surface)
             return semantic || !info[:scanner_law]&.respond_to?(:check_ast) if surface == :lines
             return semantic if surface == :sections
             return surface == :syntax_tree && info[:scanner_law]&.respond_to?(:check_ast)
             false
           when :yaml_declarative
-            %i[whole_file lines structured_data].include?(surface)
+            %i[whole_file lines documentation structured_data].include?(surface)
           when :opportunity
             info[:surfaces].include?(surface)
           when :visual
@@ -845,7 +846,7 @@ module Master
           when :sections
             semantic
           when :syntax_tree
-            !language.empty?
+            !language.empty? && !%w[markdown yaml json toml].include?(language)
           when :cross_file
             @assessment_plan.sources.size > 1
           when :structured_data
@@ -930,7 +931,7 @@ module Master
           return @assessment_surface_presence[:deployment] if @assessment_surface_presence.key?(:deployment)
 
           target = @assessment_plan.target
-          target_label = target.delete_prefix(@assessment_plan.root + File::SEPARATOR)
+          target_label = target == @assessment_plan.root ? "." : target.delete_prefix(@assessment_plan.root + File::SEPARATOR)
           paths = @assessment_plan.sources.map(&:path)
           @assessment_surface_presence[:deployment] =
             target_label == "." || target_label.start_with?("OPENBSD", "RAILS") ||
