@@ -20,7 +20,7 @@
   background: var(--hover-subtle);
   border-inline-start: 3px solid var(--accent);
   font-size: var(--text-sm);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   color: var(--text-secondary);
 }
 
@@ -31,14 +31,14 @@
 .feed-post-show h1 {
   font-size: clamp(1.25rem, 3vw, 1.5rem);
   font-weight: var(--weight-heavy);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   margin: 0 0 var(--space-3);
   letter-spacing: var(--tracking-tighter);
 }
 
 .feed-post-show .post_body {
   font-size: var(--text-base);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   color: var(--text);
   margin-bottom: var(--space-4);
 }
@@ -447,6 +447,12 @@ body.vertical-playlist input[type="range"] {
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.2s var(--ease-in-out) infinite;
   min-height: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
 }
 
 /* Safe area + tap highlight */

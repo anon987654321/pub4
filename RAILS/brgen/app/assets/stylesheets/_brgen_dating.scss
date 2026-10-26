@@ -212,7 +212,7 @@
   border-radius: var(--radius-pill);
   border: 2px solid transparent;
   font-size: var(--text-xl);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   display: grid;
   place-items: center;
   cursor: pointer;

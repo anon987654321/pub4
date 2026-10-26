@@ -43,7 +43,7 @@
 
 .comment_item header {
   font-size: var(--text-sm);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   color: var(--text-secondary);
   margin-bottom: var(--space-1);
 }
@@ -55,7 +55,7 @@
 
 .comment_item > p {
   color: var(--text);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   font-size: var(--text-base);
   margin: 0;
 }
@@ -115,7 +115,7 @@ input[type=file]::file-selector-button {
 }
 
 input:focus, textarea:focus, select:focus { background: var(--hover); }
-textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
+textarea { min-height: 120px; resize: vertical; line-height: var(--leading-loose); }
 
 /* Where a crosspost came from, where it also went, and the control that sends
    it somewhere new. Quiet lines around the post body — the post is the page. */
@@ -301,7 +301,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .form-help {
   color: var(--text-secondary);
   font-size: var(--text-xs);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 
 .advanced-fields {
@@ -384,7 +384,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   color: var(--text-secondary);
   margin-bottom: 4px;
   flex-wrap: wrap;
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 .feed-card-name {
   color: var(--text);
@@ -395,7 +395,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .feed-card-time { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 .feed-card-text {
   font-size: var(--text-base);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   margin: 0 0 8px;
   color: var(--text);
 }

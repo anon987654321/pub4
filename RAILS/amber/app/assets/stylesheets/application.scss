@@ -166,7 +166,7 @@ body {
 @media (min-width: 1280px) {
   html {
     font-size: var(--text-lg);
-    line-height: 1.5;
+    line-height: var(--leading-normal);
   }
 }
 
@@ -213,6 +213,14 @@ a {
 @keyframes amber-skeleton {
   0% { background-position: 100% 0; }
   100% { background-position: -100% 0; }
+}
+
+/* Preserve meaning while suppressing ambient motion for reduced-motion users. */
+@media (prefers-reduced-motion: reduce) {
+  .animated-gradient,
+  .skeleton {
+    animation: none;
+  }
 }
 
 h1,

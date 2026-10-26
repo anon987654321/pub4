@@ -61,7 +61,7 @@
   max-inline-size: 62ch;
   font-size: var(--text-base);
   font-weight: var(--weight-bold);
-  line-height: 1.4;
+  line-height: var(--leading-snug);
 }
 
 .commerce-fit-source {
@@ -81,7 +81,7 @@
   max-inline-size: 66ch;
   color: var(--luxury-muted);
   font-size: var(--luxury-font-meta);
-  line-height: 1.4;
+  line-height: var(--leading-snug);
 }
 
 .commerce-fit-local {
