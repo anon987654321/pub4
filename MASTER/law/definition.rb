@@ -135,6 +135,32 @@ module Law
     # rather than raise on a nil detect.
     def semantic? = !ask.nil?
 
+    # A Law declares the artifact surfaces its detector can actually examine.
+    # Defaults follow its executable source contract; broader surfaces require an
+    # explicit declaration and a matching runtime adapter. This prevents the
+    # presence of a language-agnostic principle from implying unmeasured runtime,
+    # UI, deployment or cross-file coverage.
+    def assessment_surfaces
+      declared = Array(surfaces).map(&:to_sym).uniq
+      return declared.freeze unless declared.empty?
+
+      selected = if semantic?
+                   %i[whole_file sections]
+                 elsif scope.to_sym == :file
+                   %i[whole_file sections]
+                 else
+                   %i[whole_file lines]
+                 end
+      declared_languages = Array(languages).map(&:to_s)
+      if declared_languages.empty? || (declared_languages & %w[yaml json toml]).any?
+        selected << :structured_data
+      end
+      if declared_languages.empty? || declared_languages.include?("markdown")
+        selected << :documentation
+      end
+      selected.uniq.freeze
+    end
+
     # Universal describes the invariant, not the detector syntax. A universal
     # principle may have Ruby, zsh, Rails or another domain adapter.
     def universal? = law_scope == :universal
@@ -172,6 +198,7 @@ module Law
         "severity" => severity.to_s,
         "mode" => mode.to_s,
         "languages" => languages.map(&:to_s),
+        "surfaces" => assessment_surfaces.map(&:to_s),
         "law_scope" => law_scope.to_s,
         "lifecycle" => lifecycle.to_s,
         "autofix" => autofix.to_s,
@@ -379,9 +406,9 @@ module Law
   }.freeze)
 
   class Builder
-    %i[source severity mode languages scope law_scope lifecycle autofix path path_exclude absent ask practice fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
+    %i[source severity mode languages scope surfaces law_scope lifecycle autofix path path_exclude absent ask practice fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
 
-    def initialize(id) = @h = { id:, severity: :warn, mode: :violation, languages: [], scope: :line, law_scope: nil, lifecycle: :active, autofix: :review, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil, practice: nil, reads_comments: false }
+    def initialize(id) = @h = { id:, severity: :warn, mode: :violation, languages: [], scope: :line, surfaces: nil, law_scope: nil, lifecycle: :active, autofix: :review, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil, practice: nil, reads_comments: false }
     def detect(&block) = @h[:detect] = block
 
     # A law can carry more than one enforcement surface without becoming more
@@ -514,6 +541,7 @@ module Law
         {
           "id" => law.id.to_s,
           "scope" => law.scope.to_s,
+          "surfaces" => law.assessment_surfaces.map(&:to_s),
           "law_scope" => law.law_scope.to_s,
           "languages" => law.languages.map(&:to_s),
           "lifecycle" => law.lifecycle.to_s,
