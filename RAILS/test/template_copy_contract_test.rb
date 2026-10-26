@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "yaml"
 
 class TemplateCopyContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -17,9 +18,10 @@ class TemplateCopyContractTest < Minitest::Test
     end
 
     %w[en nb].each do |locale|
-      yaml = read("brgen/config/locales/#{locale}.yml")
+      translations = YAML.safe_load(read("brgen/config/locales/#{locale}.yml"), aliases: true).fetch(locale)
+      post = translations.fetch("post")
       %w[share_draft_lead shared_media_staged photo and_video].each do |key|
-        assert_match(/^    #{key}:/, yaml, "#{locale} must define post.#{key}")
+        assert post.key?(key), "#{locale} must define post.#{key}"
       end
     end
   end
