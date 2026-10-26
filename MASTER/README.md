@@ -7,6 +7,8 @@ first and inspect the wreckage afterward. MASTER inverts the order. The model
 only proposes, and nothing touches a file until a written constitution admits
 it.
 
+See the [full tooling comparison and architecture proposal](TOOLING_COMPARISON_PROPOSAL_2026-10-26.md) for the latest source-grounded review of external agent tools, the gaps in MASTER, and a phased implementation plan.
+
 ### Cognitive judgment
 
 MASTER's reasoning habits are executable, not a second constitution. `Master::Cognition::Intelligence`
