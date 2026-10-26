@@ -376,6 +376,9 @@ class TestSkills < Minitest::Test
       skill = unapproved.discover!.fetch(0)
       assert_empty unapproved.trigger_for("alpha")
       assert_nil unapproved.body_for("alpha")
+      inspection = unapproved.contract_for("alpha")
+      refute inspection[:operator_approved]
+      refute inspection[:active_for_trigger]
       assert_equal "revision_not_approved", bus.events.find { |name, _| name == "skills:contract_refused" }.last[:reason]
 
       FileUtils.mkdir_p(File.dirname(approval_path))
@@ -390,6 +393,12 @@ class TestSkills < Minitest::Test
       approved = Master::CLI::Skills.new(root:, approval_path:).tap(&:discover!)
       assert_equal ["alpha"], approved.trigger_for("alpha").map { |row| row[:name] }
       assert_equal "alpha body", approved.body_for("alpha")
+      inspection = approved.contract_for("alpha")
+      assert inspection[:operator_approved]
+      assert inspection[:active_for_trigger]
+      assert_equal "test-operator", inspection.dig(:approval, :approved_by)
+      assert_equal "2026-10-26T12:00:00Z", inspection.dig(:approval, :approved_at)
+      assert_equal "alpha", approved.contract_inventory.fetch(0)[:name]
 
       File.write(registry_path, registry.sub("body: alpha body", "body: changed content"))
       changed = Master::CLI::Skills.new(root:, approval_path:).tap(&:discover!)
@@ -429,6 +438,45 @@ class TestSkills < Minitest::Test
       skills.discover!
       assert_empty skills.trigger_for("alpha")
       assert bus.events.any? { |name, _| name == "skills:approval_manifest_invalid" }
+    end
+  end
+
+
+  def test_symlinked_operator_approval_manifest_fails_closed
+    Dir.mktmpdir do |root|
+      data_dir = File.join(root, "data")
+      FileUtils.mkdir_p(data_dir)
+      File.write(File.join(data_dir, "patterns.yml"), <<~YAML)
+        skills_registry:
+          skills:
+            - name: alpha
+              description: alpha
+              triggers: ["alpha"]
+              body: alpha body
+              execution_contract:
+                version: "1.0.0"
+                status: candidate
+                risk: low
+                required_capabilities: [read]
+                laws: [ROBUSTNESS]
+                fixtures: [test/test_skills.rb]
+      YAML
+      valid_path = File.join(root, "valid-approvals.yml")
+      File.write(valid_path, "schema_version: 1\napprovals: []\n")
+      link_path = File.join(root, "skill_approvals.yml")
+      File.symlink(valid_path, link_path)
+      bus = Class.new do
+        attr_reader :events
+        def initialize = @events = []
+        def publish(name, payload = {}) = @events << [name, payload]
+      end.new
+
+      skills = Master::CLI::Skills.new(root:, event_bus: bus, approval_path: link_path)
+      skills.discover!
+      assert_empty skills.trigger_for("alpha")
+      assert bus.events.any? do |name, payload|
+        name == "skills:approval_manifest_invalid" && payload[:reason] == "symlink"
+      end
     end
   end
 
