@@ -2168,3 +2168,944 @@ personal_privacy:
     claim_personhood_or_romantic_reciprocity: forbidden
     pressure_to_share_data_or_use_system: forbidden
     refusal_must_not_affect_other_users: required
+
+# Canonical inventory of every executable Law identity. Law policy and its
+# cross-modal reach are declared here; Ruby sources implement detectors and
+# semantic evaluators. Missing evidence for any modality is INCONCLUSIVE.
+law_catalogue:
+  schema: 1
+  identity_source: this_section
+  universal_by_default: true
+  modalities: [lexical, semantic, visual]
+  surfaces: [repository_tree, directories, file_names, paths, whole_file, sections, lines, syntax_tree, cross_file, structured_data, documentation, media_assets, compiled_assets, rendered_ui, interactive_behavior, tests, runtime, deployment]
+  missing_assessor: inconclusive
+  entries:
+    A_FINDING_IS_A_HYPOTHESIS:
+      definition_sources: [MASTER/law/practice.rb]
+    ABC_SIZE:
+      detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+    ABSTRACTION:
+      definition_sources: [MASTER/law/universal.rb]
+    adversarial:
+      detector_sources: [MASTER/law/detectors/semantic_laws.rb]
+    AESTHETIC_DISCIPLINE:
+      definition_sources: [MASTER/law/practice.rb]
+    AESTHETIC_FLAT_SEMANTIC:
+      definition_sources: [MASTER/law/rails.rb]
+    AESTHETIC_MINIMALISM:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    AESTHETIC_RAMS_SEMANTIC:
+      definition_sources: [MASTER/law/rails.rb]
+    AFFORDANCE_CLARITY:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    ALL_CAPS_NO_TRACKING:
+      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+    ANALOG_WARMTH:
+      definition_sources: [MASTER/law/universal.rb]
+    ANCHOR_RELATIONSHIPS:
+      definition_sources: [MASTER/law/css.rb]
+    ANTI_DIVITIS:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    ARIA_INTERACTIVE:
+      definition_sources: [MASTER/law/html.rb]
+    ARIA_LABELS:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    ARTIFICIAL_COUPLING:
+      definition_sources: [MASTER/law/universal.rb]
+    ast_omission:
+      detector_sources: [MASTER/law/detectors/meta_laws.rb]
+    ASYNC_AWAIT:
+      definition_sources: [MASTER/law/javascript.rb]
+    ASYNC_STATUS:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    AUDIO_SMOOTHING:
+      definition_sources: [MASTER/law/universal.rb]
+    AUDIT_APPEND_ONLY:
+      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+    AUTOFIX_REQUIRES_CONFIDENCE:
+      definition_sources: [MASTER/law/universal.rb]
+    BARE_DIV_WRAPPER:
+      definition_sources: [MASTER/law/html.rb]
+    BASELINE_COMPATIBILITY:
+      definition_sources: [MASTER/law/universal.rb]
+    BE_CONCISE:
+      definition_sources: [MASTER/law/practice.rb]
+    BEAUTIFUL_CODE:
+      definition_sources: [MASTER/law/universal.rb]
+    BEM_IN_VIEWS:
+      definition_sources: [MASTER/law/html.rb]
+    BIG_TENT:
+      definition_sources: [MASTER/law/universal.rb]
+    BLANK_LINE_RUN:
+      definition_sources: [MASTER/law/html.rb]
+    BOOLEAN_TRAP:
+      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+    BOUNDARY_ISOLATION:
+      definition_sources: [MASTER/law/universal.rb]
+    BROKEN_WINDOWS:
+      definition_sources: [MASTER/law/universal.rb]
+    BUTTON_OVER_ANCHOR:
+      definition_sources: [MASTER/law/html.rb]
+    CACHE_LLM:
+      definition_sources: [MASTER/law/universal.rb]
+    CAPABILITY_REDUCTION_IS_MONOTONIC:
+      definition_sources: [MASTER/law/capability.rb]
+    CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
+      definition_sources: [MASTER/law/interface.rb]
+    CHESTERTONS_FENCE:
+      definition_sources: [MASTER/law/universal.rb]
+    CHOICE_OVERLOAD:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    CINEMA_PALETTE:
+      definition_sources: [MASTER/law/practice.rb]
+    CLAMP_TYPOGRAPHY:
+      definition_sources: [MASTER/law/css.rb]
+    CLASS_RESTATES_TAG:
+      definition_sources: [MASTER/law/html.rb]
+    CLI_ANALYZE_TARGET_ROUTING:
+      definition_sources: [MASTER/law/interface.rb]
+    CLI_FACE_DEDICATED_TTY:
+      definition_sources: [MASTER/law/interface.rb]
+    CLI_PROMPT_COMPOSITION:
+      definition_sources: [MASTER/law/interface.rb]
+    CLI_TREE_TARGET_RESOLUTION:
+      definition_sources: [MASTER/law/interface.rb]
+    co_change_coupling:
+      detector_sources: [MASTER/law/detectors/graph_laws.rb]
+    CODE_HIERARCHY:
+      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+    CODE_SYMMETRY:
+      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+    COLLAPSE_BEFORE_ADDING:
+      definition_sources: [MASTER/law/practice.rb]
+    comment_drift:
+      detector_sources: [MASTER/law/detectors/semantic_laws.rb]
+    COMMENTS_AS_DEODORANT:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+    COMMERCE_AMBER_DOES_NOT_OWN_BRGEN:
+      definition_sources: [MASTER/law/commerce.rb]
+    COMMERCE_BRGEN_DOES_NOT_OWN_AMBER:
+      definition_sources: [MASTER/law/commerce.rb]
+    COMMERCE_EXTERNAL_SOURCES_STAY_EXPLAINABLE:
+      definition_sources: [MASTER/law/commerce.rb]
+    COMPLETE_MEDIATION:
+      definition_sources: [MASTER/law/universal.rb]
+    COMPLETION_THEATER:
+      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+    COMPLEX_SYSTEMS_FAIL:
+      definition_sources: [MASTER/law/universal.rb]
+    COMPOSABLE:
+      definition_sources: [MASTER/law/universal.rb]
+    COMPOSITION_OVER_INHERITANCE:
+      definition_sources: [MASTER/law/universal.rb]
+    CONFIG_HIERARCHY:
+      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+    CONFIGURATION_AS_CODE:
+      definition_sources: [MASTER/law/practice.rb]
+    CONFIGURATION_SHAPE:
+      definition_sources: [MASTER/law/recovered_design_semantics.rb]
+    CONSECUTIVE_BLANK_LINES:
+      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+    CONSISTENCY:
+      definition_sources: [MASTER/law/universal.rb]
+    CONSISTENT_ERROR_STRATEGY:
+      definition_sources: [MASTER/law/universal.rb]
+    CONST_BY_DEFAULT:
+      detector_sources: [MASTER/law/detectors/js_laws.rb]
+    CONTAINER_RESPONSIVENESS:
+      definition_sources: [MASTER/law/css.rb]
+    CONTEXTUAL_STATUS_CUES:
+      definition_sources: [MASTER/law/universal.rb]
+    CONTRAST_TOKENS:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    CONTROL_CHARS:
+      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+    CONVENTION_OVER_CONFIG:
+      definition_sources: [MASTER/law/universal.rb]
+    CORE_WEB_VITALS:
+      definition_sources: [MASTER/law/universal.rb]
+    COST_TRANSPARENCY:
+      definition_sources: [MASTER/law/universal.rb]
+    COUNCIL_WHEN_RISKY:
+      definition_sources: [MASTER/law/practice.rb]
+    COUPLER_SMELLS:
+      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+    CQS:
+      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+    CYCLOMATIC_COMPLEXITY:
+      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+    DATA_CLASS:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+    DATA_CLUMPS:
+      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+    DATA_REMOTE:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    DEAD_CODE:
+      detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+    DEBUG_OUTPUT:
+      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+    DECOUPLE:
+      definition_sources: [MASTER/law/universal.rb]
+    DEEP_MODULES:
+      definition_sources: [MASTER/law/universal.rb]
+    DEEP_SCAN_ONLY:
+      definition_sources: [MASTER/law/practice.rb]
+    DEFENSIVE_INPUT:
+      definition_sources: [MASTER/law/universal.rb]
+    DEFINE_ERRORS_OUT:
+      definition_sources: [MASTER/law/universal.rb]
+    DEGRADE_GRACEFULLY:
+      definition_sources: [MASTER/law/universal.rb]
+    DENSITY:
+      definition_sources: [MASTER/law/universal.rb]
+    DEPENDENCY_INVERSION:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+    DESIGN_BY_CONTRACT:
+      definition_sources: [MASTER/law/universal.rb]
+    DESIGN_IT_TWICE:
+      definition_sources: [MASTER/law/universal.rb]
+    DEVICE_LIMITS:
+      definition_sources: [MASTER/law/practice.rb]
+    DIFFERENT_LAYER_DIFFERENT_ABSTRACTION:
+      definition_sources: [MASTER/law/universal.rb]
+    DIRECT_MANIPULATION_FEEDBACK:
+      definition_sources: [MASTER/law/interface.rb]
+    DIRNAME_FILE:
+      definition_sources: [MASTER/law/ruby.rb]
+    DIVERGED_BRANCH_SYNC:
+      definition_sources: [MASTER/law/practice.rb]
+    DIVERGENT_CHANGE:
+      definition_sources: [MASTER/law/universal.rb]
+    DOCUMENTATION_FOLLOWS_CODE:
+      definition_sources: [MASTER/law/practice.rb]
+    DOLLAR_PAREN:
+      definition_sources: [MASTER/law/shell.rb]
+    DOMAIN_LANGUAGE:
+      definition_sources: [MASTER/law/universal.rb]
+    DONT_OUTRUN_HEADLIGHTS:
+      definition_sources: [MASTER/law/universal.rb]
+    DOUBLE_BRACKET:
+      detector_sources: [MASTER/law/detectors/js_laws.rb]
+    DOUBLE_QUOTES_RUBY:
+      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+    DRY:
+      definition_sources: [MASTER/law/universal.rb]
+    DUAL_DETECTION:
+      definition_sources: [MASTER/law/universal.rb]
+    EACH_WITH_OBJECT:
+      definition_sources: [MASTER/law/ruby.rb]
+    ECONOMY_OF_MECHANISM:
+      definition_sources: [MASTER/law/universal.rb]
+    EIGHT_PX_RHYTHM:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    EN_DASH_RANGE:
+      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+    ENGINEERING_FIT:
+      definition_sources: [MASTER/law/practice.rb]
+    ENTROPY_RESISTANCE:
+      definition_sources: [MASTER/law/universal.rb]
+    ERB_HARDCODED_CHROME:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    ERB_HTML_SAFE:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    ERROR_CONTEXT:
+      definition_sources: [MASTER/law/universal.rb]
+    ERROR_RECOVERY:
+      definition_sources: [MASTER/law/universal.rb]
+    ETC:
+      definition_sources: [MASTER/law/universal.rb]
+    EVIDENCE_BY_INTENT:
+      definition_sources: [MASTER/law/universal.rb]
+    EXECUTE_NOT_INSTRUCT:
+      definition_sources: [MASTER/law/practice.rb]
+    EXEMPTIONS_EXPIRE:
+      definition_sources: [MASTER/law/practice.rb]
+    EXPLICIT:
+      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+    EXPLICIT_HTTP_TIMEOUT:
+      definition_sources: [MASTER/law/ruby.rb]
+    EXPLICIT_TRADEOFF:
+      definition_sources: [MASTER/law/universal.rb]
+    FACE_POINT_IS_ONE_PIXEL:
+      definition_sources: [MASTER/law/javascript.rb]
+    FAIL_FAST:
+      definition_sources: [MASTER/law/universal.rb]
+    FAIL_SAFE_DEFAULTS:
+      definition_sources: [MASTER/law/universal.rb]
+    FAIL_VISIBLY:
+      definition_sources: [MASTER/law/universal.rb]
+    FAT_MODEL_CALLBACK_SOUP:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    FEATURE_ENVY:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+    FEEDBACK_LOOPS:
+      definition_sources: [MASTER/law/universal.rb]
+    FEW_ARGUMENTS:
+      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+    FILE_LAYOUT:
+      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+    FILE_SEQUENCE_NAME:
+      detector_sources: [MASTER/law/detectors/naming_laws.rb]
+    FILE_SPRAWL:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/meta_laws.rb]
+    FILE_VAGUE_NAME:
+      detector_sources: [MASTER/law/detectors/naming_laws.rb]
+    FILTER_MAP:
+      definition_sources: [MASTER/law/ruby.rb]
+    FINAL_NEWLINE:
+      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+    FIND_EACH:
+      detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+    FIXED_HEIGHT:
+      definition_sources: [MASTER/law/css.rb]
+    FLAT_HIERARCHY:
+      definition_sources: [MASTER/law/practice.rb]
+    FLAT_PIXELS:
+      definition_sources: [MASTER/law/practice.rb]
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    FLAT_UI:
+      definition_sources: [MASTER/law/practice.rb]
+    FLEXIBILITY_EFFICIENCY:
+      definition_sources: [MASTER/law/universal.rb]
+    FOCUS_VISIBLE:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    FOR_OF:
+      definition_sources: [MASTER/law/javascript.rb]
+    FORM_FOLLOWS_FUNCTION:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    FORM_LABEL:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    FROZEN_LITERAL:
+      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+    FROZEN_STRING_LITERAL:
+      definition_sources: [MASTER/law/ruby.rb]
+    FULL_BY_DEFAULT:
+      definition_sources: [MASTER/law/universal.rb]
+    FUNCTIONAL_CORE:
+      definition_sources: [MASTER/law/universal.rb]
+    GALLS_LAW:
+      definition_sources: [MASTER/law/universal.rb]
+    GESTURE_OWNERSHIP:
+      definition_sources: [MASTER/law/css.rb]
+    GIT_COMMITS:
+      definition_sources: [MASTER/law/practice.rb]
+    GRACEFUL_BOUNDARIES:
+      definition_sources: [MASTER/law/universal.rb]
+    GRACEFUL_LOAD:
+      definition_sources: [MASTER/law/universal.rb]
+    GRICE_COOPERATIVE:
+      definition_sources: [MASTER/law/universal.rb]
+    GRID_STRUCTURE:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    GUARD_CLAUSE:
+      definition_sources: [MASTER/law/ruby.rb]
+    GUARD_EXPENSIVE:
+      definition_sources: [MASTER/law/universal.rb]
+    GUARD_EXPENSIVE_OPS:
+      definition_sources: [MASTER/law/universal.rb]
+    HAPTIC_SINGLE_SOURCE:
+      definition_sources: [MASTER/law/javascript.rb]
+    HASH_FETCH:
+      detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+    HELP_AND_DOCUMENTATION:
+      definition_sources: [MASTER/law/universal.rb]
+    HELPER_VIEW_ONLY:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    HOST_CAPACITY:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    HOSTILE_AUDIT:
+      definition_sources: [MASTER/law/practice.rb]
+    HTML_CSS_STYLE:
+      definition_sources: [MASTER/law/practice.rb]
+    HTML_HEADING_HIERARCHY:
+      definition_sources: [MASTER/law/recovered_design_semantics.rb]
+    HTML_LANG:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    HUMBLE_OBJECT:
+      definition_sources: [MASTER/law/universal.rb]
+    HYRUM:
+      definition_sources: [MASTER/law/universal.rb]
+    I18N_COVERAGE:
+      definition_sources: [MASTER/law/html.rb]
+    IDEMPOTENT:
+      definition_sources: [MASTER/law/universal.rb]
+    IMG_ALT:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    IMMUTABLE:
+      definition_sources: [MASTER/law/ruby.rb]
+    IMPORTANCE_ORDER:
+      definition_sources: [MASTER/law/practice.rb]
+    INAPPROPRIATE_INTIMACY:
+      definition_sources: [MASTER/law/universal.rb]
+    INCONCLUSIVE_IS_NOT_PASS:
+      definition_sources: [MASTER/law/universal.rb]
+    INFORMATION_HIDING:
+      definition_sources: [MASTER/law/universal.rb]
+    INPUT_TYPE_SPECIFIC:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    INSTRUMENT_MUST_PROVE_ITSELF:
+      definition_sources: [MASTER/law/universal.rb]
+    INTEGRATED_SYSTEMS:
+      definition_sources: [MASTER/law/universal.rb]
+    INTER_MODEL_CONTRACT:
+      definition_sources: [MASTER/law/inter_model.rb]
+    INTERACTION_PERFORMANCE:
+      definition_sources: [MASTER/law/css.rb]
+    INTERACTION_SEMANTICS:
+      definition_sources: [MASTER/law/recovered_design_semantics.rb]
+    interconnect:
+      detector_sources: [MASTER/law/detectors/graph_laws.rb]
+    INTERFACE_SEGREGATION:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+    INTRINSIC_LAYOUT:
+      definition_sources: [MASTER/law/css.rb]
+    INVERTED_PYRAMID:
+      definition_sources: [MASTER/law/practice.rb]
+    JS_MODULE_SIZE:
+      detector_sources: [MASTER/law/detectors/js_laws.rb]
+    KERNEL_COERCION:
+      definition_sources: [MASTER/law/ruby.rb]
+    KISS:
+      definition_sources: [MASTER/law/universal.rb]
+    law_bridge:
+      detector_sources: [MASTER/law/detectors/law_bridge_law.rb]
+    law_coverage:
+      detector_sources: [MASTER/law/detectors/meta_laws.rb]
+    LAW_OF_DEMETER:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+    LAZY_CLASS:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+    LAZY_IMAGES:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    LEARNED_SMELLS:
+      detector_sources: [MASTER/law/detectors/meta_laws.rb]
+    LEAST_ASTONISHMENT:
+      definition_sources: [MASTER/law/universal.rb]
+    LEAST_PRIVILEGE:
+      definition_sources: [MASTER/law/universal.rb]
+    LEVELS_OF_SCALE:
+      definition_sources: [MASTER/law/universal.rb]
+    LIB_ROOT_DISCIPLINE:
+      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+    LINE_HEIGHT_ON_SCALE:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    LINEARITY:
+      definition_sources: [MASTER/law/universal.rb]
+    LINT_BEAUTIFY:
+      definition_sources: [MASTER/law/practice.rb]
+    LISKOV:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+    LOAD_BEARING_NAMES:
+      definition_sources: [MASTER/law/universal.rb]
+    LOGICAL_PROPERTIES:
+      definition_sources: [MASTER/law/css.rb]
+    LONG_LINE:
+      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+    LONG_PARAMETER_LIST:
+      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+    MAGIC_COLOR:
+      detector_sources: [MASTER/law/detectors/js_laws.rb]
+    MAKE_ILLEGAL_STATES_UNREPRESENTABLE:
+      definition_sources: [MASTER/law/universal.rb]
+    MASS_GENERATE_CURATE:
+      definition_sources: [MASTER/law/universal.rb]
+    MASTER_PROMPT_AESTHETIC:
+      definition_sources: [MASTER/law/practice.rb]
+    MATCH_REAL_WORLD:
+      definition_sources: [MASTER/law/universal.rb]
+    MEANINGFUL_NAMES:
+      definition_sources: [MASTER/law/universal.rb]
+    MEASURE_OPTIMUM:
+      definition_sources: [MASTER/law/css.rb]
+    MERGE_BEFORE_MULTIPLY:
+      definition_sources: [MASTER/law/practice.rb]
+    META_CHARSET:
+      definition_sources: [MASTER/law/html.rb]
+    META_FRAMING:
+      definition_sources: [MASTER/law/practice.rb]
+    MICRO_REFINEMENTS:
+      definition_sources: [MASTER/law/practice.rb]
+    MIDDLE_MAN:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+    MIGRATION_ADD_REFERENCE_NO_FK:
+      definition_sources: [MASTER/law/ruby.rb]
+    MIGRATION_FIND_OR_CREATE_BY:
+      definition_sources: [MASTER/law/ruby.rb]
+    MIGRATION_NOT_NULL_NO_DEFAULT:
+      definition_sources: [MASTER/law/ruby.rb]
+    MIGRATION_REMOVE_COLUMN:
+      definition_sources: [MASTER/law/ruby.rb]
+    MINIMAL_FOOTPRINT:
+      definition_sources: [MASTER/law/practice.rb]
+    MIRROR_EXPERTISE:
+      definition_sources: [MASTER/law/practice.rb]
+    MOBILE_ACCESSIBILITY_DEFAULTS:
+      definition_sources: [MASTER/law/universal.rb]
+    MOBILE_FIRST:
+      definition_sources: [MASTER/law/css.rb]
+    MOBILE_VIEWPORT:
+      definition_sources: [MASTER/law/css.rb]
+    MODERN_FORMS:
+      definition_sources: [MASTER/law/css.rb]
+    MODIFIER_SILENT_RESCUE:
+      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+    MONKEY_PATCH_CORE:
+      definition_sources: [MASTER/law/ruby.rb]
+    MONOLITH_FIRST:
+      definition_sources: [MASTER/law/universal.rb]
+    MOTION_ACCESSIBILITY:
+      definition_sources: [MASTER/law/css.rb]
+    MOTION_COLOR_GRADING:
+      definition_sources: [MASTER/law/practice.rb]
+    N_PLUS_ONE:
+      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+    NARROW_SILENT_RESCUE:
+      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+    NATIVE_DISCLOSURE:
+      definition_sources: [MASTER/law/css.rb]
+    NAVIGATION_CONTINUITY:
+      definition_sources: [MASTER/law/css.rb]
+    NESTING_DEPTH:
+      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+    NEVER_BATCH_DELETE:
+      definition_sources: [MASTER/law/shell.rb]
+    NO_ABBREVIATED_IDENTIFIERS:
+      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+    NO_ASCII_ART_OUTSIDE_FACE:
+      definition_sources: [MASTER/law/interface.rb]
+      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+    NO_ASCII_DECORATION:
+      definition_sources: [MASTER/law/practice.rb]
+    NO_ASCII_LINE_ART:
+      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+    NO_CHANGELOG_COMMENT:
+      definition_sources: [MASTER/law/universal.rb]
+    NO_COLUMN_ALIGN:
+      definition_sources: [MASTER/law/universal.rb]
+    NO_CONSECUTIVE_BLANK_LINES:
+      definition_sources: [MASTER/law/practice.rb]
+    NO_DEAD_ENDS:
+      definition_sources: [MASTER/law/practice.rb]
+    NO_DEBUG:
+      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+    NO_DECORATIVE_FX:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    NO_DECORATIVE_GRADIENT:
+      definition_sources: [MASTER/law/css.rb]
+    NO_DOT_SEPARATED_META:
+      definition_sources: [MASTER/law/css.rb]
+    NO_EYEBROW_LABEL:
+      definition_sources: [MASTER/law/css.rb]
+    NO_FILLER:
+      definition_sources: [MASTER/law/practice.rb]
+    NO_FLAG_ARGUMENTS:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+    NO_GOD_CLASS:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+    NO_HIDDEN_GLOBAL_STATE:
+      definition_sources: [MASTER/law/universal.rb]
+    NO_IMPORT_SCSS:
+      definition_sources: [MASTER/law/css.rb]
+    NO_IMPORTANT:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    NO_INFINITY_TO_I:
+      definition_sources: [MASTER/law/fix_hygiene.rb]
+    NO_INLINE_ASSETS_IN_SHELL:
+      definition_sources: [MASTER/law/shell.rb]
+    NO_INLINE_SCRIPT_BLOCK:
+      definition_sources: [MASTER/law/html.rb]
+    NO_INLINE_STYLES:
+      definition_sources: [MASTER/law/html.rb]
+    NO_JQUERY:
+      definition_sources: [MASTER/law/html.rb]
+    NO_JS_ERB:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    NO_LOGIC_IN_VIEW:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    NO_LONG_TRANSITION:
+      definition_sources: [MASTER/law/css.rb]
+    NO_MAGIC:
+      definition_sources: [MASTER/law/universal.rb]
+    NO_MULTIPLE_LANGUAGES:
+      definition_sources: [MASTER/law/css.rb]
+    NO_NEW_FILES:
+      definition_sources: [MASTER/law/practice.rb]
+    NO_ONE_PARADIGM:
+      definition_sources: [MASTER/law/universal.rb]
+    NO_ORDINAL_ORNAMENT:
+      definition_sources: [MASTER/law/css.rb]
+    NO_OUTPUT_ARGUMENTS:
+      definition_sources: [MASTER/law/universal.rb]
+    NO_OVERESCAPED_NONCAPTURING:
+      definition_sources: [MASTER/law/fix_hygiene.rb]
+    NO_PUTS:
+      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+    NO_SELECTOR_ARGUMENTS:
+      definition_sources: [MASTER/law/universal.rb]
+    NO_SHOTGUN_SURGERY:
+      definition_sources: [MASTER/law/universal.rb]
+    NO_SIDE_EFFECTS:
+      definition_sources: [MASTER/law/universal.rb]
+    NO_TODO_IN_VIEWS:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    NO_TRAILING_ARROW:
+      definition_sources: [MASTER/law/css.rb]
+    NO_TRANSPORT_WRAPPER_IN_SOURCE:
+      definition_sources: [MASTER/law/interface.rb]
+    NO_UPDATE_ATTRIBUTE:
+      detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+    NO_VAR:
+      definition_sources: [MASTER/law/javascript.rb]
+    NO_WEBGL_GLOW_PASS:
+      definition_sources: [MASTER/law/javascript.rb]
+    NOISE_NAME:
+      definition_sources: [MASTER/law/ruby.rb]
+    NULL_BLINDNESS:
+      definition_sources: [MASTER/law/universal.rb]
+    NULLISH_COALESCING:
+      definition_sources: [MASTER/law/javascript.rb]
+    NUMBERED_NAME:
+      detector_sources: [MASTER/law/detectors/naming_laws.rb]
+    OMAKASE:
+      definition_sources: [MASTER/law/universal.rb]
+    OMIT_NEEDLESS_WORDS:
+      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+    ONE_ABSTRACTION_LEVEL:
+      definition_sources: [MASTER/law/universal.rb]
+    ONE_JOB:
+      definition_sources: [MASTER/law/universal.rb]
+    ONE_SOURCE:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+    OPEN_CLOSED:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+    OPENBSD_DMESG_CONSOLE_STYLE:
+      definition_sources: [MASTER/law/interface.rb]
+    OPERATOR_AUTONOMY:
+      definition_sources: [MASTER/law/practice.rb]
+    OPTIONAL_CHAINING:
+      definition_sources: [MASTER/law/javascript.rb]
+    OPTIONAL_CHAINING_JS:
+      detector_sources: [MASTER/law/detectors/js_laws.rb]
+    ORTHOGONALITY:
+      definition_sources: [MASTER/law/universal.rb]
+    PARALLEL_INHERITANCE:
+      definition_sources: [MASTER/law/universal.rb]
+    PARAMETERIZED_SLUG:
+      detector_sources: [MASTER/law/detectors/naming_laws.rb]
+    PARSE_DONT_VALIDATE:
+      definition_sources: [MASTER/law/universal.rb]
+    PATH_PURPOSE:
+      detector_sources: [MASTER/law/detectors/meta_laws.rb]
+    PATTERN_EXTRACTION:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+    PERCENT_LITERAL:
+      definition_sources: [MASTER/law/ruby.rb]
+    PIXEL_EXACT:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    PLEDGE_STAGED:
+      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+    PLUCK_OVER_MAP:
+      detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+    POINTER_FEEDBACK_EARLY:
+      definition_sources: [MASTER/law/javascript.rb]
+    POKA_YOKE:
+      definition_sources: [MASTER/law/universal.rb]
+    POSTEL:
+      definition_sources: [MASTER/law/universal.rb]
+    PRECOMPUTE_MATH:
+      definition_sources: [MASTER/law/universal.rb]
+    PREEMPT_FOLLOWUP:
+      definition_sources: [MASTER/law/practice.rb]
+    PREFER_TAG_HELPERS:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    PRESENTATIONAL_CLASS_NAME:
+      definition_sources: [MASTER/law/html.rb]
+    PRESERVE_FIRST:
+      definition_sources: [MASTER/law/practice.rb]
+    PRIMITIVE_OBSESSION:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+    PROBE_BEFORE_SHIP:
+      definition_sources: [MASTER/law/practice.rb]
+    PROGRAMMER_HAPPINESS:
+      definition_sources: [MASTER/law/universal.rb]
+    PROGRESS_OVER_STABILITY:
+      definition_sources: [MASTER/law/universal.rb]
+    PROGRESSIVE_DISCLOSURE:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    PROPERTY_BASED_TESTING:
+      definition_sources: [MASTER/law/universal.rb]
+    PROSE_ACTIVE_VOICE:
+      definition_sources: [MASTER/law/prose.rb]
+    PROSE_OMIT_QUALIFIERS:
+      definition_sources: [MASTER/law/prose.rb]
+    PROSE_ONE_TOPIC_PARAGRAPH:
+      definition_sources: [MASTER/law/universal.rb]
+    PROSE_PARALLEL_FORM:
+      definition_sources: [MASTER/law/universal.rb]
+    PROSE_POSITIVE_FORM:
+      definition_sources: [MASTER/law/universal.rb]
+    PROSE_RELATED_WORDS:
+      definition_sources: [MASTER/law/universal.rb]
+    PROXIMITY:
+      definition_sources: [MASTER/law/universal.rb]
+    PSYCHOLOGICAL_ACCEPTABILITY:
+      definition_sources: [MASTER/law/universal.rb]
+    PULL_COMPLEXITY_DOWN:
+      definition_sources: [MASTER/law/universal.rb]
+    PURE_FUNCTIONS:
+      definition_sources: [MASTER/law/universal.rb]
+    PWA_MANIFEST_HINT:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    PWA_RESILIENCE_DEFAULTS:
+      definition_sources: [MASTER/law/universal.rb]
+    QUOTE_VARIABLES:
+      detector_sources: [MASTER/law/detectors/js_laws.rb]
+    RAILS_TAG_HELPER:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    RAILS_THIN_CONTROLLER_SEMANTIC:
+      definition_sources: [MASTER/law/rails.rb]
+    RAILS_VIEW_PURITY:
+      definition_sources: [MASTER/law/rails.rb]
+    RATCHET_INTEGRITY:
+      definition_sources: [MASTER/law/universal.rb]
+    RATE_LIMITING_MISSING:
+      definition_sources: [MASTER/law/ruby.rb]
+    README_PROSE:
+      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+    README_VISION:
+      definition_sources: [MASTER/law/recovered_design_semantics.rb]
+    RECOGNITION_OVER_RECALL:
+      definition_sources: [MASTER/law/universal.rb]
+    REDUCED_MOTION:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    reek:
+      detector_sources: [MASTER/law/detectors/external_linter_laws.rb]
+    REFUSED_BEQUEST:
+      definition_sources: [MASTER/law/universal.rb]
+    REGISTER_STABLE:
+      definition_sources: [MASTER/law/practice.rb]
+    RENDERED_VALUES:
+      definition_sources: [MASTER/law/universal.rb]
+    RESCUE_EXCEPTION:
+      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+    RESCUE_ON_DEF:
+      definition_sources: [MASTER/law/ruby.rb]
+    RESTART_RAILS:
+      definition_sources: [MASTER/law/practice.rb]
+    REVERSIBILITY:
+      definition_sources: [MASTER/law/universal.rb]
+    ROBUSTNESS:
+      definition_sources: [MASTER/law/universal.rb]
+    RTFM_FIRST:
+      definition_sources: [MASTER/law/practice.rb]
+    rubocop:
+      detector_sources: [MASTER/law/detectors/external_linter_laws.rb]
+    RUBY_BLOCK_DELIMITER:
+      definition_sources: [MASTER/law/ruby.rb]
+    RUBY_CAMEL_CLASS:
+      definition_sources: [MASTER/law/ruby.rb]
+    RUBY_NUMERIC_UNDERSCORE:
+      definition_sources: [MASTER/law/ruby.rb]
+    RUBY_SCREAMING_CONST:
+      definition_sources: [MASTER/law/ruby.rb]
+    RUBY_SNAKE_METHODS:
+      definition_sources: [MASTER/law/ruby.rb]
+    RUBY_SYMBOL_TO_PROC:
+      definition_sources: [MASTER/law/ruby.rb]
+    RUBY_TERNARY_NOT_NESTED:
+      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+    RUNTIME_DOCS_YAML:
+      detector_sources: [MASTER/law/detectors/meta_laws.rb]
+    SAFE_NAVIGATION:
+      definition_sources: [MASTER/law/ruby.rb]
+    SCAN_SWEEP_CONVERGENCE:
+      definition_sources: [MASTER/law/practice.rb]
+    SCOPED_CSS:
+      definition_sources: [MASTER/law/css.rb]
+    SCROLL_INTEGRITY:
+      definition_sources: [MASTER/law/css.rb]
+    SCSS_NESTING_DEPTH:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    SECRET_PROXIMITY:
+      definition_sources: [MASTER/law/universal.rb]
+    SELF_EXPLAINING:
+      definition_sources: [MASTER/law/universal.rb]
+    semantic:
+      detector_sources: [MASTER/law/detectors/semantic_laws.rb]
+    SEMANTIC_ELEMENTS:
+      definition_sources: [MASTER/law/html.rb]
+    SHARP_KNIVES:
+      definition_sources: [MASTER/law/universal.rb]
+    SHELL_DISCIPLINE:
+      definition_sources: [MASTER/law/practice.rb]
+    SIGNAL_COLOR_IS_SEMANTIC:
+      definition_sources: [MASTER/law/css.rb]
+    SIGNAL_NOISE:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    SIGNATURE_MOMENT:
+      definition_sources: [MASTER/law/interface.rb]
+    SILENCE_ON_SUCCESS:
+      definition_sources: [MASTER/law/universal.rb]
+    SILENT_RESCUE:
+      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+    SIMPLEST_WORKS:
+      definition_sources: [MASTER/law/practice.rb]
+    SIMULATION:
+      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+    SINGLE_H1:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    SINGLE_PRIVATE_SECTION:
+      definition_sources: [MASTER/law/ruby.rb]
+    SINGULARITY:
+      definition_sources: [MASTER/law/universal.rb]
+    SKIP_TO_MAIN:
+      definition_sources: [MASTER/law/html.rb]
+    SMALL_FILES:
+      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+    SMALL_FUNCTIONS:
+      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+    SPECULATIVE_GENERALITY:
+      definition_sources: [MASTER/law/universal.rb]
+    SQL_INJECTION:
+      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+    SQUINT_TEST:
+      definition_sources: [MASTER/law/universal.rb]
+    SRP:
+      definition_sources: [MASTER/law/universal.rb]
+    STATE_CHOREOGRAPHY:
+      definition_sources: [MASTER/law/css.rb]
+    STEPDOWN:
+      definition_sources: [MASTER/law/universal.rb]
+    STIMULUS_CONTROLLER_SIZE:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    STIMULUS_PROGRESSIVE:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    STRICT_LOADING_MISSING:
+      definition_sources: [MASTER/law/ruby.rb]
+    STRICT_MODE_ZSH:
+      definition_sources: [MASTER/law/shell.rb]
+    STRONG_CENTERS:
+      definition_sources: [MASTER/law/universal.rb]
+    STRONG_PARAMETERS:
+      detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+    STRUCTURAL_HONESTY:
+      definition_sources: [MASTER/law/universal.rb]
+    STRUNK_WHITE:
+      definition_sources: [MASTER/law/practice.rb]
+    STYLE:
+      definition_sources: [MASTER/law/practice.rb]
+    STYLE_FOLLOWS_STRUCTURE:
+      definition_sources: [MASTER/law/recovered_design_semantics.rb]
+    SURFACE_AREA:
+      definition_sources: [MASTER/law/universal.rb]
+    SURFACE_ERRORS_FIRST:
+      definition_sources: [MASTER/law/practice.rb]
+    SYSTEM_STATUS:
+      definition_sources: [MASTER/law/universal.rb]
+    TAB_CHARACTER:
+      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+    TABINDEX_ABOVE_ZERO:
+      detector_sources: [MASTER/law/detectors/web_laws.rb]
+    TACTILE_FEEDBACK:
+      definition_sources: [MASTER/law/javascript.rb]
+    TEMPLATE_LITERALS:
+      definition_sources: [MASTER/law/javascript.rb]
+    TEMPORAL_COUPLING:
+      definition_sources: [MASTER/law/universal.rb]
+    THIN_CONTROLLER:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    TIME_ZONE_UNSAFE:
+      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+    TODO_FIXME:
+      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+    TOUCH_TARGET_MIN:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    TRACER_BULLETS:
+      definition_sources: [MASTER/law/universal.rb]
+    TRAILING_COMMAS:
+      definition_sources: [MASTER/law/universal.rb]
+      detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+    TRAILING_COMMENT:
+      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+    TRAILING_WHITESPACE:
+      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+    TRANSFORM_KEYS:
+      definition_sources: [MASTER/law/ruby.rb]
+    TRANSFORMATIONS:
+      definition_sources: [MASTER/law/universal.rb]
+    TYPE_HIERARCHY:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    TYPE_IN_NAME:
+      detector_sources: [MASTER/law/detectors/naming_laws.rb]
+    TYPE_TITLE_TOKEN:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    TYPOGRAPHIC_EXCELLENCE:
+      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+    TYPOGRAPHIC_GRID:
+      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+    TYPOGRAPHY_DISCIPLINE:
+      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+    UNBOUNDED_RETRY:
+      definition_sources: [MASTER/law/universal.rb]
+    UNIVERSAL_CROSS_DISCIPLINARY_RULES:
+      definition_sources: [MASTER/law/practice.rb]
+    UNIX_PHILOSOPHY:
+      definition_sources: [MASTER/law/universal.rb]
+    UNTRUSTED_CONTENT_IS_DATA:
+      definition_sources: [MASTER/law/practice.rb]
+    USE_THEN:
+      definition_sources: [MASTER/law/ruby.rb]
+    USER_CONTROL:
+      definition_sources: [MASTER/law/universal.rb]
+    UTILITY_CLASS_SOUP:
+      definition_sources: [MASTER/law/html.rb]
+    VERIFICATION_REQUIRED_FOR_COMPLETION:
+      definition_sources: [MASTER/law/universal.rb]
+    VERIFY_THE_INSTRUMENT:
+      definition_sources: [MASTER/law/practice.rb]
+    VERTICAL_BREATH:
+      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+    veto_patterns:
+      detector_sources: [MASTER/law/detectors/yaml_bridge_laws.rb]
+    VISUAL_HIERARCHY:
+      definition_sources: [MASTER/law/universal.rb]
+    VISUAL_IDENTITY_SOURCE_OF_TRUTH:
+      definition_sources: [MASTER/law/recovered_design_semantics.rb]
+    VISUAL_PARTICLE_STIPPLE_PRIMARY:
+      definition_sources: [MASTER/law/recovered_design_semantics.rb]
+    VOICE_FAILURES_ARE_ACTIONABLE:
+      definition_sources: [MASTER/law/interface.rb]
+    VOICE_TERSE_UNIX:
+      definition_sources: [MASTER/law/practice.rb]
+    VPS_SERIAL_TRUTH:
+      definition_sources: [MASTER/law/practice.rb]
+    WAITING_STATE_MEANING:
+      definition_sources: [MASTER/law/interface.rb]
+    WEB_PLATFORM_DEFAULTS:
+      definition_sources: [MASTER/law/universal.rb]
+    WHITESPACE_RHYTHM:
+      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+    WHY_NOT_WHAT:
+      definition_sources: [MASTER/law/universal.rb]
+    yaml_declarative:
+      detector_sources: [MASTER/law/detectors/yaml_bridge_laws.rb]
+    ZSH_SHEBANG:
+      definition_sources: [MASTER/law/shell.rb]
