@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../execution/contract"
+
 module Master
   module Fix
     # The functional core for /fix terminal-state decisions.
@@ -8,12 +10,11 @@ module Master
     # its protocol document, and the review scorecard. Unknown states fail
     # closed; only a recognized DONE may claim successful repair.
     module OutcomePolicy
-      TERMINAL_STATES = %i[
-        done plateau crash skip human_decision blocked inconclusive validation_failed
-        delivery_failed timeout failed reloading
-      ].freeze
+      TERMINAL_STATES = Master::Execution::Contract::TERMINAL_STATES
 
-      PARTIAL_ENDINGS = %i[plateau timeout blocked human_decision inconclusive].freeze
+      PARTIAL_ENDINGS = %i[
+        plateau timeout blocked human_decision inconclusive cancelled unknown_outcome
+      ].freeze
 
       MEASURED_REPAIR_OUTCOMES = {
         done: true, plateau: false, crash: false, skip: false, blocked: false,
@@ -32,6 +33,9 @@ module Master
         reloading: :reloading,
         inconclusive: :inconclusive,
         validation: :validation_failed,
+        cancelled: :cancelled,
+        unknown_outcome: :unknown_outcome,
+        recovery_failed: :failed,
         failed: :failed
       }.freeze
 
@@ -57,10 +61,7 @@ module Master
       end
 
       def normalize_state(value)
-        return nil if value.nil?
-
-        state = value.to_s.downcase.to_sym
-        TERMINAL_STATES.include?(state) ? state : nil
+        Master::Execution::Contract.normalize_terminal_state(value)
       end
 
       # Classify the review's fix outcome without side effects. Missing or
