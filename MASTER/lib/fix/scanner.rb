@@ -16,15 +16,26 @@ module Master
       def self.build(root:, agent: nil, bus: nil, ecology: nil)
         agent = nil if ENV["MASTER_SCAN_DETERMINISTIC"] == "1"
         Review::Scan::LawDSL
+        require File.join(Master::ROOT, "law", "definition") unless defined?(::Law::Definition)
+        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
+
         wf = Master.load_yaml(Master.limits_path) rescue {}
         sleep_s = ENV["MASTER_AUTOFIX"] == "1" ? wf.dig("autoloop", "scan_file_sleep_s").to_f : 0
         scanner = new(event_bus: bus, file_sleep_s: sleep_s)
+
+        # Canonical Laws enter the scanner directly; no LawBridgeLaw wrapper or
+        # duplicate registry is needed. Each adapter carries the original Law
+        # identity and policy while executing its Ruby detector.
+        ::Law.definitions.values.select { |law| law.enforceable? && law.scannable? }.each do |definition|
+          scanner.add_law(Review::Scan::CanonicalLawAdapter.new(definition))
+        end
+
         Review::Scan::Law.registry.select(&:auto_build?).each do |klass|
           scanner.add_law(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
         end
         %w[
           CoChangeCouplingLaw LawCoverageLaw RubocopLaw ReekLaw InterconnectLaw
-          YamlDeclarativeLaw VetoPatternLaw LawBridgeLaw SemanticLaw AdversarialLaw CommentDriftLaw AstOmissionLaw
+          VetoPatternLaw SemanticLaw AdversarialLaw CommentDriftLaw AstOmissionLaw
           LibRootDisciplineLaw FileSprawlLaw PathPurposeLaw
         ].each do |name|
           klass = Review::Scan::Laws.const_get(name)
@@ -331,6 +342,8 @@ module Master
           Array(laws).each do |law|
             declared = if law.class.respond_to?(:dsl_langs)
               Array(law.class.dsl_langs).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
+            elsif law.respond_to?(:languages)
+              Array(law.languages).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
             else
               []
             end
