@@ -31,6 +31,12 @@ class ChromeAuditFlatContractTest < Minitest::Test
     assert_includes promo, "border: 0;"
   end
 
+  def test_vertical_promo_action_does_not_duplicate_link_affordance_with_an_arrow
+    source = read("brgen/app/views/home/_vertical_promo_unit.html.erb")
+    assert_includes source, '<%= t("promo.#{slug}.action") %>'
+    refute_includes source, "→"
+  end
+
   def test_consent_banner_is_mobile_first_and_restores_wide_layout
     source = read("__shared/app/assets/stylesheets/_cookie_banner.scss")
     mobile = source.split("@media (min-width: 768px)", 2).first
