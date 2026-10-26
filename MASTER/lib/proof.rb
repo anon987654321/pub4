@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "execution/contract"
+
 module Master
   # Immutable claim/evidence envelope shared by scan, review and check adapters.
   # This is intentionally not Master::Core::Proof: that object owns Fold evidence
@@ -72,6 +74,14 @@ module Master
         status:,
         metadata:,
       }.compact
+    end
+
+    # Map the claim's existing proof state into the shared execution outcome
+    # vocabulary. The evidence payload itself is not copied into the result.
+    def to_verification(id:, verifier: "master-proof", scope: nil)
+      Master::Execution::Contract::VerificationResult.from_proof(
+        self, id:, verifier:, scope:
+      )
     end
   end
 end
