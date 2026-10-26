@@ -241,11 +241,11 @@ module Master
 
         def resume_active_transaction(journal:, run_id:, start_pass:)
           active_pass = @run_journal.active_pass(journal)
-          unless active_pass && Transaction::Recovery.persisted?(root: @root, id: active_pass.fetch("transaction_id"))
-            return Result.ok(start_pass)
-          end
+          transaction_id = active_pass&.fetch("transaction_id")
+          persisted = transaction_id && Transaction::Recovery.persisted?(root: @transaction_root, id: transaction_id)
+          return Result.ok(start_pass) unless persisted
 
-          recovery = Transaction::Recovery.recover!(root: @root, id: active_pass.fetch("transaction_id"), bus: @bus)
+          recovery = Transaction::Recovery.recover!(root: @transaction_root, id: transaction_id, bus: @bus)
           return recovery if recovery.err?
           return Result.ok(start_pass) unless recovery.value!.is_a?(Hash) && recovery.value![:state] == :delivery_pending
 

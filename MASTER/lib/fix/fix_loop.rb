@@ -99,6 +99,10 @@ module Master
         path_root = File.expand_path(root)
         @cognition_root = path_root
         @root = path_root == Master::ROOT ? Master::REPO_ROOT : path_root
+        # Where the pass runner persists its transactions: the root given here, not the
+        # repository root above. Recovery read the repository root, so a crashed pass's
+        # transaction was never found and its half-applied tree was never restored.
+        @transaction_root = path_root
         @bus = bus
         @reference_graph = reference_graph || Master::Review::ReferenceGraph.new(root: @root, event_bus: bus)
         @homeostat = homeostat
@@ -224,7 +228,7 @@ module Master
           # each later /fix strands the same half-applied tree forever.
           stranded = @run_journal.active_pass(journal)
           transaction_id = stranded.is_a?(Hash) ? stranded["transaction_id"] : nil
-          if transaction_id && Transaction::Recovery.persisted?(root: @root, id: transaction_id)
+          if transaction_id && Transaction::Recovery.persisted?(root: @transaction_root, id: transaction_id)
             recovered = resume_active_transaction(
               journal:, run_id:, start_pass: @run_journal.next_pass(journal)
             )
@@ -428,7 +432,7 @@ module Master
       end
 
       def retry_delivery(transaction_id:, expected_head:)
-        transaction = Transaction::Recovery.load_persisted(root: @root, id: transaction_id, bus: @bus)
+        transaction = Transaction::Recovery.load_persisted(root: @transaction_root, id: transaction_id, bus: @bus)
         return Result.err("delivery recovery transaction has no recorded commit", category: :policy) unless transaction.delivery.pending?
         return Result.err("delivery recovery commit identity mismatch", category: :policy) unless transaction.delivery.head_after.to_s == expected_head.to_s
         return Result.err("delivery recovery HEAD mismatch", category: :policy) unless @git.head == expected_head
