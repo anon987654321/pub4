@@ -31,21 +31,23 @@ module Master
 
         ensure_no_pending_mutation! if @marker_root
         token = before(operation:, item_count:)
-        marker = create_pending_mutation!(token) if @marker_root
+        marker = nil
         after_attempted = false
         begin
+          marker = create_pending_mutation!(token) if @marker_root
           result = yield
           status = result_status(result)
           after_attempted = true
           after(token, status:, item_count:)
-          remove_pending_mutation!(marker) if marker
+          remove_pending_mutation!(marker) if marker && status != "ambiguous"
           result
         rescue StandardError
           if token && !after_attempted && !@failed
             after_attempted = true
             begin
-              after(token, status: marker ? "ambiguous" : "failed", item_count:)
-              remove_pending_mutation!(marker) if marker
+              status = marker ? "ambiguous" : "failed"
+              after(token, status:, item_count:)
+              remove_pending_mutation!(marker) if marker && status != "ambiguous"
             rescue StandardError
               # A failed after-record must leave a durable marker for manual
               # reconciliation; never retry the side effect to repair tracing.
@@ -105,7 +107,7 @@ module Master
 
       def result_status(result)
         if result.is_a?(Array) && result.last.respond_to?(:success?)
-          return result.last.success? ? "ok" : "failed"
+          return result.last.success? ? "ok" : (@marker_root ? "ambiguous" : "failed")
         end
         return "ok" unless result.respond_to?(:ok?)
         return "ok" if result.ok?
