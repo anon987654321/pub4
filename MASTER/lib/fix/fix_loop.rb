@@ -4,6 +4,7 @@ require "set"
 require "time"
 require_relative "scanner"
 require_relative "run_journal"
+require_relative "fix_plan"
 require_relative "reachability"
 require_relative "instrument_check"
 require_relative "fix_loop/committer"
@@ -178,9 +179,11 @@ module Master
         # those reads, after its mechanical repairs are queued (PassRunner::StreamStage), and the
         # next pass resumes where it stopped, so every file is read across runs. Reading them inline
         # held the first repair for hours. MASTER_SCAN_SEMANTIC_SAMPLE=1 owes a read to every file.
+        @pass_runner.full_semantic! if requested && @pass_runner&.respond_to?(:full_semantic!)
         guidance = outcome_guidance(target:, incremental:)
         # A requested /fix lints every line of every eligible file; only an unattended run may sample.
         incremental = requested ? false : guidance.fetch(:incremental)
+        @fix_plan_incremental = incremental
         @outcome_prior = guidance[:prediction]
         Master::Io::LaneSelection.announce
         current_phase = :corpus
@@ -233,7 +236,7 @@ module Master
           # the whole MASTER target of a four-tree /fix on 2026-10-26.
           finish_run(budget_error, target, run_id, mission:, requested:)
 
-          journal =@run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
+          journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
           run_id = journal["id"]
           mission = mission_for(target:, requested:)
           budget_error = exhausted_budget(journal:)
@@ -242,6 +245,39 @@ module Master
 
         RunBudget.begin_run(root: Master::ROOT, max_passes:, bus: @bus, target:)
         journal["budget_clock_at"] = RunBudget.elapsed_seconds
+        # Capture the immutable plan inside the run's measured budget, but before
+        # any structure/repair mutation. Hashing a large corpus is real work and
+        # must not happen invisibly ahead of the run journal or watchdog.
+        current_phase = :plan
+        canonical_root = File.expand_path(defined?(Master::REPO_ROOT) ? Master::REPO_ROOT : @root)
+        expanded_target = File.expand_path(target.to_s, @root)
+        managed_target = expanded_target == canonical_root ||
+          expanded_target.start_with?(canonical_root + File::SEPARATOR)
+        repository_root = managed_target ? canonical_root : File.expand_path(@root)
+        exclusions = {
+          counts: @file_collector.skip_reasons,
+          paths: @file_collector.excluded_path_reasons,
+          sample: @file_collector.excluded_path_reasons.keys.sort.first(FixPlan::MAX_EXCLUSION_SAMPLE),
+        }
+        @fix_plan = FixPlan.capture(
+          root: repository_root, target:, files:, laws: @laws, excluded: exclusions,
+          adapters: @pass_runner.assessment_adapters(target:),
+          max_passes:, budget_seconds:
+        )
+        @bus&.publish("fix_loop:plan", **@fix_plan.to_h.slice(
+          "digest", "identity_digest", "source_digest", "scope_digest", "law_digest",
+          "law_source_digest", "authority_digest", "toolchain_digest", "exclusion_digest",
+          "adapter_digest", "eligible_files", "excluded", "adapters", "max_passes",
+          "budget_seconds", "deadline_at"
+        ).transform_keys(&:to_sym))
+        bind_fix_plan!(journal, run_id)
+        if RunBudget.stopping || repair_seconds_left(journal) <= 0
+          exhausted = RunBudget.pass_boundary(0) ||
+            Result.err("wall-clock timeout during fix-plan capture; no repair pass ran", category: :timeout)
+          return finish_run(exhausted, target, run_id, mission:, requested:)
+        end
+        return finish_run(cancellation_terminal, target, run_id, mission:, requested:) if cancellation_requested?
+
         current_phase = :begin_run
         @convergence_discipline.begin_run(files)
         return finish_run(cancellation_terminal, target, run_id, mission:, requested:) if cancellation_requested?
