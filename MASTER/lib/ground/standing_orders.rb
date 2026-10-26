@@ -255,6 +255,14 @@ end
       def domain_of(order) = order.fetch("domain", Tool::Domain::DEFAULT).to_s
 
       def execute_order(order, event: nil)
+        Master::Trace::WorkerReceipt.around(@bus, worker: "standing_order", job: order["name"]) do
+          dispatch_order(order, event:)
+        end
+      rescue StandardError => e
+        Result.err(e.message)
+      end
+
+      def dispatch_order(order, event: nil)
         return execute_callable(order, event:) if order["callable"]
         # An objective with nothing to do between checks: the verify is the work.
         return Result.ok("nothing to run; the verify decides") if order["command"].to_s.empty? && order["verify"]

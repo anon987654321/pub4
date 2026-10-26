@@ -90,7 +90,9 @@ module Master
 
         goal = record["goal"].to_s
         @bus&.publish("task_steward:run", mission: record["id"], goal:, attempt: record["attempt_count"].to_i + 1)
-        result = @runner.call(goal:, mission: record)
+        result = Master::Trace::WorkerReceipt.around(@bus, worker: "task_steward", job: "mission #{record["id"]}") do
+          @runner.call(goal:, mission: record)
+        end
         @bus&.publish("task_steward:result", mission: record["id"], ok: result_ok?(result))
         result
       rescue StandardError => e
