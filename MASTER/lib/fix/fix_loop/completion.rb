@@ -13,10 +13,11 @@ module Master
         # with skipped files, failed stages, or an unmeasured Law/stream/surface
         # matrix must report the missing proof instead of claiming completion.
         def blocked_by_gaps(result)
-          matrix_unmeasured = @pass_runner &&
-            @pass_runner.respond_to?(:assessment_matrix_status) &&
-            @pass_runner.assessment_matrix_status == :not_measured
-          gapped = @pass_runner&.gaps? || uninspectable.any? || matrix_unmeasured
+          matrix_status = @pass_runner&.assessment_matrix_status
+          matrix_unmeasured = matrix_status == :not_measured
+          matrix_incomplete = matrix_status == :incomplete
+          matrix_gapped = matrix_unmeasured || matrix_incomplete
+          gapped = @pass_runner&.gaps? || uninspectable.any? || matrix_gapped
           return result unless gapped && result.ok? && terminal_state_for(result) == :done
 
           gaps = @pass_runner ? @pass_runner.gaps : { uninspected: {}, stage_failures: {} }
@@ -36,7 +37,19 @@ module Master
             parts << "#{pending.size} file(s) awaiting a semantic read (#{pending.keys.first(3).join(", ")})"
           end
           gaps[:stage_failures].each { |stage, rows| parts << "#{stage} stage failed #{rows.size}x, last #{rows.last}" }
-          parts << "law/stream/surface assessment matrix not measured; DONE withheld" if matrix_unmeasured
+          if matrix_gapped
+            summary = @pass_runner.respond_to?(:assessment_matrix_summary) ? @pass_runner.assessment_matrix_summary : {}
+            if matrix_unmeasured
+              parts << "law/stream/surface assessment matrix not measured; DONE withheld"
+            else
+              parts << "law/stream/surface assessment matrix incomplete " \
+                "(expected=#{summary[:expected_cells] || summary["expected_cells"]}, " \
+                "recorded=#{summary[:recorded_cells] || summary["recorded_cells"]}, " \
+                "unassessed=#{summary[:unassessed_cells] || summary["unassessed_cells"]}, " \
+                "inconclusive=#{summary[:inconclusive_cells] || summary["inconclusive_cells"]}, " \
+                "findings=#{summary[:finding_cells] || summary["finding_cells"]}); DONE withheld"
+            end
+          end
           Master::Trace::Dmesg.status("fix0", "finished with gaps: #{parts.join("; ")}"[0, 220])
           terminal(:blocked, "finished with gaps, #{parts.join("; ")}")
         end
