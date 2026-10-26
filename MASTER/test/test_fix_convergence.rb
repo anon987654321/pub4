@@ -70,7 +70,9 @@ class TestFixConvergence < Minitest::Test
     FileUtils.remove_entry(@root) if @root && Dir.exist?(@root)
   end
 
-  def build_loop(violations, ground_truth: nil, council: nil)
+  # Non-matrix tests inject the proof status they need; the focused terminal test
+  # selects :not_measured to exercise the production fail-closed contract.
+  def build_loop(violations, ground_truth: nil, council: nil, assessment_matrix_status: :measured)
     loop = Master::Fix::FixLoop.new(
       laws: [StubRule.new("TEST_RULE", :warning)],
       agent: OpenCircuitAgent.new,
@@ -78,6 +80,7 @@ class TestFixConvergence < Minitest::Test
       root: @root, bus: @bus, git: StubGit.new, ground_truth:
     )
     runner = loop.instance_variable_get(:@pass_runner)
+    runner.define_singleton_method(:assessment_matrix_status) { assessment_matrix_status }
     runner.instance_variable_set(:@council, council) if council
     runner.instance_variable_set(:@resource_budget, calm_budget)
     loop
@@ -456,7 +459,7 @@ class TestFixConvergence < Minitest::Test
   end
 
   def test_a_run_that_would_be_done_but_had_gaps_ends_blocked_not_done
-    loop = build_loop([])
+    loop = build_loop([], assessment_matrix_status: :not_measured)
     runner = loop.instance_variable_get(:@pass_runner)
     done = Master::Result.ok("DONE: all clean")
 
