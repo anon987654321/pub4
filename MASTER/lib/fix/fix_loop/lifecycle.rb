@@ -65,7 +65,7 @@ module Master
             # Also keep the journal and PassRunner pinned to the exact replacement
             # plan without advancing the evidence generation.
             @fix_plan = replacement
-            binding = bind_fix_plan!({}, run_id, replacement)
+            bind_fix_plan!({}, run_id, replacement)
             @pass_runner.assessment_plan_refreshed!(replacement) if
               @pass_runner.respond_to?(:assessment_plan_refreshed!)
             return false
