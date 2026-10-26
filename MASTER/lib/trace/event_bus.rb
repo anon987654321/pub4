@@ -176,12 +176,13 @@ module Master
       end
 
       def append_required(log, event, payload)
-        result = if log.respond_to?(:append!)
-                   log.append!(event, payload)
-                 else
-                   log.append(event, payload)
-                 end
+        unless log.respond_to?(:append!)
+          raise IOError, "event log does not support required persistence"
+        end
+
+        result = log.append!(event, payload)
         raise IOError, "event log rejected #{event}" if result.nil?
+
         result
       end
 
