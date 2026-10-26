@@ -243,18 +243,10 @@ module Master
           # Every Law is assessed against every artifact, regardless of the file's
           # implementation language. Languages are detector implementation details,
           # not exemptions from semantic or visual review.
-          def laws_for(_language, path: nil)
-            @laws.select do |_id, rule|
-              next false if path && rule[:path] && !path_matches?(path, rule[:path])
-              next false if path && rule[:path_exclude] && path_matches?(path, rule[:path_exclude])
-
-              true
-            end
-          end
-
-          def path_matches?(path, pattern)
-            pattern.is_a?(Regexp) ? path.match?(pattern) : path.include?(pattern.to_s)
-          end
+          # Languages and source paths constrain deterministic adapters only.
+          # Semantic review evaluates the complete canonical Law population on
+          # every artifact, regardless of implementation language or location.
+          def laws_for(_language, path: nil) = @laws
 
           def reload_semantic_laws_if_stale
             reload_semantic_laws! if @laws_mtime != laws_mtime
