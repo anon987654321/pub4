@@ -90,8 +90,10 @@ class TestLawRegistryAudit < Minitest::Test
 
   def test_reconciliation_is_an_explicit_gate_not_a_pretty_report
     report = audit.call
+    expected = report.source_drift.values.all?(&:empty?) &&
+      report.catalogue_integrity_errors.empty?
 
-    assert_equal report.source_drift.values.all?(&:empty?), report.reconciled?
+    assert_equal expected, report.reconciled?
     if report.reconciled?
       assert report.assert_reconciled!
     else
@@ -99,6 +101,38 @@ class TestLawRegistryAudit < Minitest::Test
       assert_match(/Law catalogue is not reconciled/, error.message)
       refute_empty report.reconciliation_errors
     end
+  end
+
+  def test_catalogue_report_separates_declared_gaps_from_real_drift
+    snapshot = audit.send(
+      :catalogue_report,
+      map: {
+        "law_trace_ceiling" => 2,
+        "laws" => {
+          "intentional_gap" => { "status" => "gap", "law_ids" => [] },
+          "intentional_unmapped" => { "status" => "unmapped", "law_ids" => [] },
+          "scanner_law" => { "status" => "covered", "law_ids" => ["SCANNER_LAW"] },
+          "dangling_law" => { "status" => "covered", "law_ids" => ["MISSING_LAW"] }
+        }
+      },
+      executable_ids: Set["EXECUTABLE_LAW"],
+      registry_ids: Set["SCANNER_LAW", "UNMAPPED_DETECTOR"]
+    )
+
+    assert_equal ["intentional_gap"], snapshot.fetch(:declared_gaps)
+    assert_equal ["intentional_unmapped"], snapshot.fetch(:declared_unmapped)
+    assert_empty snapshot.fetch(:drift).fetch(:empty_without_declared_gap)
+    assert_equal ["executable_law"], snapshot.fetch(:drift).fetch(:executable_not_mapped)
+    assert_equal ["missing_law"], snapshot.fetch(:drift).fetch(:mapped_without_enforceable)
+    assert_equal ["unmapped_detector"], snapshot.fetch(:trace_debt)
+    assert_equal 2, snapshot.fetch(:trace_ceiling)
+  end
+
+  def test_catalogue_integrity_gate_rejects_trace_debt_over_its_declared_ceiling
+    over_budget = audit.call.with(trace_debt: %w[one two three], trace_ceiling: 2)
+
+    assert_raises(RuntimeError) { over_budget.assert_catalogue_integrity! }
+    assert over_budget.catalogue_integrity_errors.any? { |error| error.include?("exceeds declared ceiling") }
   end
 
   def test_a_law_a_test_defined_is_not_in_the_corpus

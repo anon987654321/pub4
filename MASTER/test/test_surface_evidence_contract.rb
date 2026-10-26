@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "json"
+require "yaml"
 require_relative "../lib/fix/surface_evidence"
 
 class TestSurfaceEvidenceContract < Minitest::Test
@@ -36,6 +38,19 @@ class TestSurfaceEvidenceContract < Minitest::Test
     rows = evidence.send(:recognized_asset_records, inventory)
 
     assert_equal [["public/logo.svg", "file", 120], ["public/private-logo.png", "symlink", 0]], rows
+  end
+
+  def test_openbsd_deploy_inventory_matches_the_canonical_rails_app_registry
+    root = File.expand_path("../..", __dir__)
+    rails = YAML.safe_load_file(File.join(root, "RAILS", "apps.yml"), aliases: true)
+    inventory = JSON.parse(File.read(File.join(root, "OPENBSD", "deploy_inventory.json"), encoding: "UTF-8"))
+
+    assert_equal rails.fetch("apps").keys.sort, inventory.fetch("apps").map { |row| row.fetch("name") }.sort
+    assert_equal "RAILS/apps.yml", inventory.fetch("generated_from")
+    face = inventory.fetch("master_face")
+    assert_equal "RAILS/master", face.fetch("deploy_root")
+    assert_operator Integer(face.fetch("port")), :>, 0
+    assert File.executable?(File.join(root, "OPENBSD", "bin", "vps-deploy"))
   end
 
   def test_compact_visual_evidence_keeps_geometry_receipt_without_page_content

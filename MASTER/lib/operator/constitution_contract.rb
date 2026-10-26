@@ -41,6 +41,7 @@ module Operator
       prose = File.join(@root, "MASTER", "law", "prose.rb")
       issues << "rules: no Bringhurst reference" unless File.file?(prose) && File.read(prose).include?("Bringhurst")
       issues.concat(law_issues)
+      issues.concat(law_catalogue_issues)
       issues.concat(tree_authority_issues)
       Result.new(issues.uniq.freeze)
     rescue StandardError => e
@@ -65,6 +66,16 @@ module Operator
       ::Law.definitions.empty? ? ["law: no executable laws loaded"] : []
     rescue StandardError => e
       ["law: #{e.class}: #{e.message}"]
+    end
+
+    def law_catalogue_issues
+      require File.join(@root, "MASTER", "lib", "master") unless defined?(Master::ROOT)
+      require File.join(@root, "MASTER", "lib", "review", "scan", "law_registry_audit")
+      report = Master::Review::Scan::LawRegistryAudit.new(root: File.join(@root, "MASTER")).call
+      report.assert_catalogue_integrity!
+      []
+    rescue StandardError => e
+      ["law: catalogue integrity failed — #{e.class}: #{e.message}"]
     end
 
     def tree_authority_issues

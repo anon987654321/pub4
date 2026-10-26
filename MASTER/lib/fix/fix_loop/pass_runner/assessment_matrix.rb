@@ -581,6 +581,21 @@ module Master
             )
           end
 
+          def valid_rendered_ui_receipt?(receipt)
+            return false unless receipt.is_a?(Hash)
+            return false unless (receipt["status"] || receipt[:status]).to_s == "assessed_clean"
+
+            receipt_evidence = receipt["evidence"] || receipt[:evidence]
+            captures = receipt_evidence.is_a?(Hash) ?
+              Array(receipt_evidence["surfaces"] || receipt_evidence[:surfaces]) : []
+            return false if captures.empty?
+
+            validator = SurfaceEvidence.allocate
+            captures.all? { |capture| validator.send(:valid_rendered_capture?, capture) }
+          rescue StandardError
+            false
+          end
+
           def assessment_cell_result(law_id:, info:, stream:, surface:, pass:, observation:,
                                      signatures_stable:, semantic_gaps:, pending:, evidence:,
                                      visual:, opportunities:)
@@ -599,11 +614,28 @@ module Master
               return assessment_result(:inconclusive, reason: "rendered visual review returned no result", evidence:) unless visual
               return assessment_result(:inconclusive, reason: visual.message.to_s, evidence:) if visual.err?
 
+              rendered_receipt = (@assessment_surface_receipts || {})["rendered_ui"]
+              unless valid_rendered_ui_receipt?(rendered_receipt)
+                reason = rendered_receipt.is_a?(Hash) ? rendered_receipt["reason"].to_s : "rendered UI receipt is missing"
+                reason = "rendered UI receipt is absent, incomplete or lacks valid screenshot/geometry evidence" if reason.empty?
+                return assessment_result(:inconclusive, reason:, evidence:)
+              end
+
               visual_value = visual.value!
+              unless visual_value.is_a?(Hash) &&
+                     (visual_value.key?(:findings) || visual_value.key?("findings"))
+                return assessment_result(:inconclusive, reason: "rendered visual review did not return a law-findings collection", evidence:)
+              end
+
               visual_rows = Array(visual_value[:findings] || visual_value["findings"]).select do |row|
                 (row[:law] || row["law"]).to_s.casecmp?(law_id)
               end
-              visual_evidence = Array(evidence) + [{ "surface_probe" => "rendered_ui", "status" => "assessed_clean" }]
+              visual_evidence = Array(evidence) + [{
+                "surface_probe" => "rendered_ui",
+                "status" => "assessed_clean",
+                "evidence_sha256" => rendered_receipt["evidence_sha256"],
+                "counts" => rendered_receipt["counts"],
+              }]
               return assessment_result(visual_rows.any? ? :violation_found : :assessed_clean,
                 evidence: visual_evidence, findings: visual_rows)
             end

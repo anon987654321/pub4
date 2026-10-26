@@ -7,15 +7,36 @@ module Master
     module Scan
       # Audits executable law population vs Ruby scanner registry.
       class LawRegistryAudit
-        Report = Data.define(:yaml_laws, :registry_ids, :kernel_ids, :lexical_wired, :lexical_unwired,
-                             :semantic_only, :structural_unwired, :dep_graph_gaps, :mechanical, :source_drift, :catalogue_drift) do
+        Report = Data.define(
+          :yaml_laws, :registry_ids, :kernel_ids, :lexical_wired, :lexical_unwired,
+          :semantic_only, :structural_unwired, :dep_graph_gaps, :mechanical, :source_drift,
+          :catalogue_drift, :declared_catalogue_gaps, :declared_unmapped_entries, :trace_debt, :trace_ceiling
+        ) do
           def reconciled?
-            source_drift.values.all?(&:empty?) && catalogue_drift.values.all?(&:empty?)
+            source_drift.values.all?(&:empty?) && catalogue_integrity_errors.empty?
+          end
+
+          # Declared coverage gaps remain visible debt; only unexpected catalogue
+          # shape/reference errors and debt beyond the declared ceiling block.
+          def catalogue_integrity_errors
+            errors = catalogue_drift.flat_map do |kind, ids|
+              ids.map { |id| "catalogue_#{kind}: #{id}" }
+            end
+            if trace_debt.size > trace_ceiling
+              errors << "executable trace debt #{trace_debt.size} exceeds declared ceiling #{trace_ceiling}"
+            end
+            errors
           end
 
           def reconciliation_errors
             source_drift.flat_map { |kind, ids| ids.map { |id| "#{kind}: #{id}" } } +
-              catalogue_drift.flat_map { |kind, ids| ids.map { |id| "catalogue_#{kind}: #{id}" } }
+              catalogue_integrity_errors
+          end
+
+          def assert_catalogue_integrity!
+            return true if catalogue_integrity_errors.empty?
+
+            raise "Law catalogue integrity failed: #{catalogue_integrity_errors.join('; ')}"
           end
 
           def assert_reconciled!
@@ -60,6 +81,11 @@ module Master
           registry = build_registry_ids
           c = classify_yaml_entries(yaml_entries, registry)
 
+          catalogue = catalogue_report(
+            map: Master.law("law_map", root: @root),
+            executable_ids: law_ids,
+            registry_ids: registry
+          )
           Report.new(
             yaml_laws: c[:yaml_ids].size,
             registry_ids: registry,
@@ -71,7 +97,11 @@ module Master
             dep_graph_gaps: ungraphed_law_ids(registry),
             mechanical: mechanical(yaml_entries, registry:).map { |law| law["id"] },
             source_drift: source_drift(yaml_entries, registry),
-            catalogue_drift: catalogue_drift,
+            catalogue_drift: catalogue.fetch(:drift),
+            declared_catalogue_gaps: catalogue.fetch(:declared_gaps),
+            declared_unmapped_entries: catalogue.fetch(:declared_unmapped),
+            trace_debt: catalogue.fetch(:trace_debt),
+            trace_ceiling: catalogue.fetch(:trace_ceiling),
           )
         end
 
@@ -93,21 +123,53 @@ module Master
           }.freeze
         end
 
-        # Cross-check the curated law-map catalogue against actual enforceable
-        # Laws. A map entry with no law_ids is a known coverage gap, not a detector.
-        # No missing reference is silently treated as covered.
-        def catalogue_drift
-          map = Master.law("law_map", root: @root)
+        # Cross-check law_map against canonical Laws and scanner detectors.
+        # Explicit gap/unmapped rows remain visible debt, not structural drift.
+        def catalogue_report(map:, executable_ids:, registry_ids:)
           entries = map.fetch("laws", {})
-          mapped = entries.values.flat_map { |entry| Array(entry["law_ids"]) }
-                          .map { |id| id.to_s.downcase }.to_set
-          executable = law_ids
+          executable = executable_ids.map { |id| id.to_s.downcase }.to_set
+          registry = registry_ids.map { |id| id.to_s.downcase }.to_set
+          mapped = entries.values.flat_map do |entry|
+            entry.is_a?(Hash) ? Array(entry["law_ids"]) : []
+          end.map { |id| id.to_s.downcase }.to_set
+          enforceable = executable | registry
+          empty_unclassified = []
+          gap_with_ids = []
+          unmapped_with_ids = []
+          invalid_status = []
+          malformed_entries = []
+
+          entries.each do |name, entry|
+            unless entry.is_a?(Hash)
+              malformed_entries << name.to_s
+              next
+            end
+            ids = Array(entry["law_ids"]).map { |id| id.to_s.strip }.reject(&:empty?)
+            status = entry["status"].to_s
+            empty_unclassified << name.to_s if ids.empty? && !%w[gap unmapped].include?(status)
+            gap_with_ids << name.to_s if status == "gap" && ids.any?
+            unmapped_with_ids << name.to_s if status == "unmapped" && ids.any?
+            invalid_status << name.to_s unless %w[covered gap unmapped].include?(status)
+          end
+
           {
-            executable_not_mapped: (executable - mapped).to_a.sort.freeze,
-            mapped_without_executable: (mapped - executable).to_a.sort.freeze,
-            catalogue_gaps: entries.filter_map do |name, entry|
-              name.to_s if Array(entry["law_ids"]).empty?
+            drift: {
+              executable_not_mapped: (executable - mapped).to_a.sort.freeze,
+              mapped_without_enforceable: (mapped - enforceable).to_a.sort.freeze,
+              empty_without_declared_gap: empty_unclassified.sort.freeze,
+              gap_with_law_ids: gap_with_ids.sort.freeze,
+              unmapped_with_law_ids: unmapped_with_ids.sort.freeze,
+              invalid_status: invalid_status.uniq.sort.freeze,
+              malformed_entries: malformed_entries.sort.freeze,
+            }.freeze,
+            declared_gaps: entries.filter_map do |name, entry|
+              name.to_s if entry.is_a?(Hash) && entry["status"].to_s == "gap" && Array(entry["law_ids"]).empty?
             end.sort.freeze,
+            declared_unmapped: entries.filter_map do |name, entry|
+              name.to_s if entry.is_a?(Hash) && entry["status"].to_s == "unmapped" && Array(entry["law_ids"]).empty?
+            end.sort.freeze,
+            trace_debt: (registry - mapped).to_a.sort.freeze,
+            trace_ceiling: Integer(map.fetch("law_trace_ceiling", 0)),
           }.freeze
         end
 

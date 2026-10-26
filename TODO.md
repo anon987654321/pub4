@@ -635,3 +635,11 @@ Classified `core:effect:` lifecycle records as operational evidence, so the stri
 ## SHA-256 evidence receipt preservation (2026-10-26)
 
 The secret redactor now recognizes valid 64-character SHA-256 values stored under `*_digest` fields as opaque evidence identifiers and preserves them for correlation. Raw long hexadecimal strings under ordinary fields remain redacted. Added a regression test covering both digest preservation and unchanged secret-token behavior. The test was not executed; validation remains INCONCLUSIVE until the pinned Ruby suite runs.
+
+
+## Git-history regression fixes (2026-10-26)
+
+- The Law-map audit distinguishes declared `gap`/`unmapped` entries from malformed mappings, treats scanner-registered detectors as enforceable targets, and applies `law_trace_ceiling` to the untraced scanner registry population it was designed to measure. Canonical Laws missing from the map and dangling map references are reported as structural drift. The constitutional contract invokes the catalogue-integrity gate; `/laws sources` reports integrity, declared gaps and trace debt separately.
+- The rendered-UI matrix no longer marks its rendered-visual Law cell clean unless the target-level rendered receipt contains valid screenshot and geometry evidence for every capture and the visual assessor actually returns a law-findings collection. Regression coverage includes missing receipts, broken geometry, missing findings and Law attribution.
+- Added a cross-tree regression contract checking OPENBSD's deployment inventory against the canonical RAILS app registry and validating its separate MASTER face entry and deploy entrypoint.
+- Validation status: **INCONCLUSIVE** until focused MASTER tests and all four native tree suites run on the pinned toolchain. This source patch is not proof of live OpenBSD deployment/restore health or an audible Dilla comparison; those remain real-environment checks.
