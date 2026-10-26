@@ -79,6 +79,22 @@ class TestReliabilityKernel < Minitest::Test
     end
   end
 
+  def test_fix_journal_refuses_unknown_terminal_states_without_mutating_the_run
+    Dir.mktmpdir("master-reliability-terminal-policy") do |root|
+      journal = Master::Fix::RunJournal.new(root:)
+      run = journal.start_or_resume(target: root, files: [], max_passes: 1, budget_seconds: 5)
+
+      error = assert_raises(ArgumentError) do
+        journal.terminal(run["id"], :mystery, message: "must not be persisted")
+      end
+
+      assert_match(/unknown \/fix terminal state/, error.message)
+      current = Master::Fix::RunJournal.new(root:).history.find { |entry| entry["id"] == run["id"] }
+      assert_equal "active", current["state"]
+      refute current.key?("finished_at")
+    end
+  end
+
   def test_fix_journal_marks_terminal_runs_and_starts_the_next_run
     Dir.mktmpdir("master-reliability") do |root|
       journal = Master::Fix::RunJournal.new(root:)
