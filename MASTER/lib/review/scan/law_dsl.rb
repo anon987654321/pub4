@@ -91,14 +91,7 @@ require_relative "../../../law/detectors/structural_question_laws"
 require_relative "../../../law/detectors/external_linter_laws"
 require_relative "../../../law/detectors/semantic_laws"
 require_relative "../../../law/detectors/graph_laws"
-require_relative "../../../law/detectors/yaml_bridge_laws"
+require_relative "../../../law/detectors/veto_pattern_law"
 require_relative "../../../law/detectors/naming_laws"
 require_relative "../../../law/detectors/meta_laws"
-# The registry is what these requires load, and this one was missing: nothing
-# reached law_bridge_rule until InfraHelpers const_get'd it while building a
-# scanner, so `Law.registry` held 144 laws in a fresh process and 145 after
-# anything scanned. Every census over the registry read whichever number its
-# load order happened to produce — law_deps.ungraphed 133 alone and 134 under
-# a run that had scanned.
-require_relative "../../../law/detectors/law_bridge_law"
 require_relative "law_registry_audit"
