@@ -78,6 +78,12 @@ module Master
             "exclusion_digest", "adapter_digest", "eligible_files", "deadline_at"
           )
           evidence[:fix_plan] = plan_evidence if plan_evidence
+          matrix_evidence = if @pass_runner&.respond_to?(:assessment_matrix_evidence)
+                              @pass_runner.assessment_matrix_evidence
+                            else
+                              { status: "not_measured", reason: "assessment matrix adapter unavailable" }
+                            end
+          evidence[:assessment_matrix] = matrix_evidence
           run_record = @run_journal.history(limit: RunJournal::MAX_RUNS).find { |row| row["id"] == run_id }
           plan_generation = Array(run_record && run_record["plan_generations"]).last&.fetch("generation", nil)
           evidence[:fix_plan_generation] = plan_generation unless plan_generation.nil?
@@ -105,6 +111,7 @@ module Master
             outcome[:plan_generation] = plan_generation unless plan_generation.nil?
             outcome[:source_digest] = plan_evidence["source_digest"]
           end
+          outcome[:assessment_matrix] = matrix_evidence
           outcome[:outcome_receipt] = write_outcome_receipt(
             run_id:, target: target_label, state:, result:, convergence: convergence_evidence
           )
