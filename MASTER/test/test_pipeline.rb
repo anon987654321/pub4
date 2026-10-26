@@ -184,7 +184,8 @@ class TestPipeline < Minitest::Test
     seen = nil
     probe.define_singleton_method(:run) do |_target, requested: false|
       seen = Master::Ops::LoopOwner.active
-      Master::Result.ok(:done)
+      # The loop speaks in terminal states; a bare :done reads as incomplete.
+      Master::Result.ok("DONE: clean")
     end
 
     pass = Master::CLI::Pipeline::Pass.allocate
@@ -197,7 +198,7 @@ class TestPipeline < Minitest::Test
 
     result = pass.send(:run_fix, File.expand_path("../tmp", __dir__))
 
-    assert_equal true, result == "done"
+    assert_equal "DONE: clean", result
     assert_equal "fix", seen.fetch("loop")
     assert_nil Master::Ops::LoopOwner.active
   ensure

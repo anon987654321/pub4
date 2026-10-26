@@ -40,9 +40,9 @@ source and tests they could not run; this pass is what measures them.
   `FixLoop`, the inner repair loop, `Fix::Kernel`, `Mission`, `RunJournal`, `RunLedger`,
   `Transaction`, `Transaction::Delivery`, supervisors, MCP and tool dispatch. Record who owns
   state, authorisation, replay, recovery and delivery for each.
-- [ ] Extend before/after receipts to every consequential `Master::Io` path, direct MCP and
-  browser action, background worker, transaction-internal write and scheduler, with a source
-  inventory test so a new call site cannot bypass them.
+- [ ] Extend before/after receipts to background workers, schedulers and transaction-internal
+  writes. Tools, MCP, the Fold and git writes carry them; `test_effect_boundary_inventory.rb` fails
+  on a new tool built outside the builder.
 - [ ] Classify real effect handlers' reversibility from their semantics; unknown and irreversible
   outcomes reconcile before replay.
 - [ ] Restart and duplicate-delivery tests: death after the before-receipt, after the effect but

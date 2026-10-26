@@ -6,14 +6,29 @@ require "fileutils"
 require "open3"
 
 # the old backlog, Test coverage: no test named GitOperations. It is the runtime's only
-# git surface — status, ahead/behind, and the mutation half (add/commit/push/
-# reset --hard/tag/fetch) that autocommit and the deploy path drive.
+# git surface — status, ahead/behind, and the mutation half (add/commit/push)
+# that autocommit and the deploy path drive.
 #
 # Every command is `git -C @root_path`, so the whole file is exercised against a
 # throwaway repository under Dir.mktmpdir with its own bare remote. Nothing here
-# can reach the checkout it is running in, which matters more than usual: one of
-# the methods under test is reset_hard.
+# can reach the checkout it is running in.
 class GitOperationsTest < Minitest::Test
+  # Receipts land here rather than in the runtime event log. down: an event whose
+  # durable write fails, as a full disk would.
+  class Bus
+    attr_reader :events
+
+    def initialize(down: nil)
+      @down = down
+      @events = []
+    end
+
+    def publish_required(event, payload)
+      raise IOError, "event log down" if event == @down
+
+      @events << [event, payload]
+    end
+  end
 
   def setup
     @tmp = Dir.mktmpdir("git_operations_test")
@@ -22,8 +37,11 @@ class GitOperationsTest < Minitest::Test
 
     git_init_bare(@remote)
     clone(@remote, @repo)
-    @git = Master::Io::GitOperations.new(@repo)
+    @bus = Bus.new
+    @git = git_with(@bus)
   end
+
+  def git_with(bus) = Master::Io::GitOperations.new(@repo, receipts: Master::Trace::ToolObserver.new(bus:))
 
   def teardown
     FileUtils.remove_entry(@tmp)
@@ -48,6 +66,8 @@ class GitOperationsTest < Minitest::Test
     sh("git", "config", "user.name", "Test", chdir: path)
     sh("git", "config", "commit.gpgsign", "false", chdir: path)
     write("README.md", "first\n")
+    # Commits refuse sacred paths and fail closed without a constitution to name them.
+    write("MASTER/data/soul.yml", "absolute:\n  sacred_paths:\n    - data/soul.yml\n")
     sh("git", "add", "-A", chdir: path)
     sh("git", "commit", "-m", "first", chdir: path)
     sh("git", "push", "-u", "origin", "main", chdir: path)
@@ -292,7 +312,7 @@ class GitOperationsTest < Minitest::Test
     refute File.directory?(File.join(@repo, ".git", "rebase-merge")), "the conflicted rebase is aborted"
   end
 
-  def test_fetch_sees_a_new_remote_commit
+  def test_ahead_behind_sees_a_fetched_remote_commit
     other = File.join(@tmp, "other")
     FileUtils.mkdir_p(other)
     sh("git", "clone", @remote, ".", chdir: other)
@@ -302,24 +322,25 @@ class GitOperationsTest < Minitest::Test
     sh("git", "commit", "-am", "from other", chdir: other)
     sh("git", "push", chdir: other)
 
-    @git.fetch
+    sh("git", "fetch", chdir: @repo)
 
     assert_equal [0, 1], @git.ahead_behind
   end
+  def test_a_commit_leaves_a_receipt_with_neither_its_message_nor_its_paths
+    write("notes/private-name.md", "x\n")
+    @git.commit("Mention the secret plan", paths: ["notes/private-name.md"])
 
-  def test_reset_hard_discards_local_work
-    write("README.md", "first\nunwanted\n")
-    @git.commit("unwanted", paths: ["README.md"])
-
-    @git.reset_hard("origin/main")
-
-    assert_equal "first\n", File.read(File.join(@repo, "README.md"))
-    assert_equal [0, 0], @git.ahead_behind
+    tools = @bus.events.map { |event, payload| [event, payload[:tool], payload[:status]] }
+    assert_equal [["tool:execution:before", "git_add", nil], ["tool:execution:after", "git_add", "success"],
+                  ["tool:execution:before", "git_commit", nil], ["tool:execution:after", "git_commit", "success"]], tools
+    refute_match(/secret plan|private-name/, @bus.events.inspect)
   end
 
-  def test_tag_names_the_current_commit
-    @git.tag("v-test")
+  def test_no_durable_before_event_means_no_commit
+    write("README.md", "first\nsecond\n")
+    git = git_with(Bus.new(down: "tool:execution:before"))
 
-    assert_includes sh("git", "tag", "--list", chdir: @repo), "v-test"
+    assert_raises(IOError) { git.commit("Second line", paths: ["README.md"]) }
+    assert_equal "first", sh("git", "log", "-1", "--format=%s", chdir: @repo).strip
   end
 end

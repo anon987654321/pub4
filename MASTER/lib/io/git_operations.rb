@@ -8,8 +8,8 @@ module Master
   module Io
     # GitOperations — git wrappers scoped to a repository root.
     class GitOperations
-      # State-changing git commands (add/commit/push/reset/tag/fetch) — kept
-      # separate from GitOperations' own read-only status/inspection queries.
+      # State-changing git commands (add, commit, push, the rebase a rejected push
+      # needs), kept apart from the read-only status and inspection queries.
       module Mutations
         # Stages and commits the named paths and nothing else, the rule
         # Core::World#do_git_commit keeps for the fold. The index is shared with
@@ -72,14 +72,35 @@ module Master
           raise
         end
 
+        # Every write passes here, under the receipt the Fold's tool calls carry: a
+        # durable before-event or no git, then an after-event with the outcome. The
+        # receipt holds a digest of the arguments, never the message or the paths.
         def git!(*args)
           Master::Ground::LawHandshake::Admission.require!
           refuse_sacred!(args) if args.first == "commit"
-          output, status = Master::Io::Exec.capture2e("git", "-C", @root_path, *args)
+          receipt = receipts.before(tool: "git_#{args.first}", tier: "dangerous", args:)
+          started = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
+          output, status = run_receipted(receipt, args, started)
           raise "git #{args.first} failed: #{output.strip}" unless status.success?
 
           output
         end
+
+        def run_receipted(receipt, args, started)
+          output, status = Master::Io::Exec.capture2e("git", "-C", @root_path, *args)
+          close_receipt(receipt, args, started, status.success? ? "success" : "error")
+          [output, status]
+        rescue StandardError
+          close_receipt(receipt, args, started, "unknown_outcome")
+          raise
+        end
+
+        def close_receipt(receipt, args, started, outcome)
+          elapsed_ms = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond) - started
+          receipts.after(identity: receipt, tool: receipt.tool, tier: receipt.tier, args:, status: outcome, elapsed_ms:)
+        end
+
+        def receipts = @receipts ||= Master::Trace::ToolObserver.new(bus: Master::Trace::EventBus.new)
 
         # Every runtime commit passes here: the fix loop's, a restructure's, a rename's and the
         # proof's delivery. So this is the one place a sacred path is refused, whichever writer
@@ -113,17 +134,6 @@ module Master
           @toplevel ||= Master::Io::Exec.capture2("git", "-C", @root_path, "rev-parse", "--show-toplevel").first.strip
         end
 
-        def reset_hard(ref = "origin/main")
-          Master::Io::Exec.capture2e("git", "-C", @root_path, "reset", "--hard", ref)
-        end
-
-        def tag(name)
-          Master::Io::Exec.capture2e("git", "-C", @root_path, "tag", name)
-        end
-
-        def fetch
-          Master::Io::Exec.capture2e("git", "-C", @root_path, "fetch")
-        end
       end
 
       # Reading what changed: the commits between two points, the patch
@@ -227,8 +237,10 @@ module Master
 
       public
 
-      def initialize(root_path)
+      # receipts: a Trace::ToolObserver; the default writes to the canonical event log.
+      def initialize(root_path, receipts: nil)
         @root_path = root_path
+        @receipts = receipts
       end
 
       def dirty?(path = "lib/")
