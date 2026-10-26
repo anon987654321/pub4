@@ -7,7 +7,7 @@ require_relative "test_helper"
 class TestLawTier < Minitest::Test
   SCANNER_EXTRAS = %w[
     CoChangeCouplingLaw LawCoverageLaw RubocopLaw ReekLaw InterconnectLaw
-    YamlDeclarativeLaw VetoPatternLaw LawBridgeLaw SemanticLaw AdversarialLaw CommentDriftLaw AstOmissionLaw
+    VetoPatternLaw SemanticLaw AdversarialLaw CommentDriftLaw AstOmissionLaw
     LibRootDisciplineLaw FileSprawlLaw PathPurposeLaw
   ].freeze
 
