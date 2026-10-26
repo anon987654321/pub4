@@ -459,6 +459,7 @@ module Master
                 evidence:
               )
             when :visual
+              return assessment_result(:inconclusive, reason: "source generation changed during visual assessment", evidence:) unless signatures_stable
               return assessment_result(:inconclusive, reason: "rendered review returned no result", evidence:) unless visual
               return assessment_result(:inconclusive, reason: visual.message.to_s, evidence:) if visual.err?
 
