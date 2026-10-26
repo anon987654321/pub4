@@ -281,3 +281,49 @@ pointer.
 | brgen's city hosts and verticals | `RAILS/brgen/AGENTS.md` |
 | Why something odd is deliberate | the comment beside it; standing refusals in `MASTER/AGENTS.md` and `OPENBSD/CLAUDE.md`, "Refused, and why" |
 | Operator-only work and the evidence that closes it | `MASTER/data/operator_seams.yml` |
+
+## Restored historical operating contract
+
+Historical source: the full root CLAUDE.md in pub4 at commit 4daac7e90d1ab23b731eba0afff3226cf8596bef (blob 9ca25eb7ec4b58f370bc84d6c0e317247b5d7c66), immediately before the file was removed in the June 28, 2026 history. The durable guidance is restored here and reconciled with the current repository layouts. Historical DEPLOY/ paths, old module names and old Rule terminology are not current commands or architecture.
+
+### The working lifecycle
+
+1. **Load.** Identify the repository and read its root README, canonical configuration, relevant agent instructions and nearest project contract. Use the sources listed below; do not assume the four generations share the same layout.
+2. **Trace.** Read the whole target file and the relevant callers, dependencies, loaders, configuration, tests and public contracts before changing it. Inspect the actual working-tree status first. Do not make edits from a search excerpt, stale report or remembered code.
+3. **Inventory and diagnose.** Establish what is present, what is broken, what evidence proves it, and what must remain unchanged. Verify a detector with both a known bad case and a known good case before trusting its findings. Prefer evidence over narrative.
+4. **Choose.** For a substantial architectural change, compare meaningfully different alternatives before choosing the simplest option that preserves the required contracts. Do not implement every candidate simply because it was proposed.
+5. **Repair.** Make small, attributable changes. Preserve public behavior, APIs, command names, import paths and side-effect order unless changing them is explicitly part of the task and the change is proven. Avoid unrelated cleanup.
+6. **Verify and repeat.** Re-run the same evidence that justified each repair, the relevant tests, and the broader suite required by the task. Update affected documentation and generated artifacts from their canonical source.
+7. **Report.** Say what was changed, what was actually run, what passed or failed, and what remains unverified. A simulation, code inspection, skipped check, unavailable provider, timeout or unconfirmed push is not a passing live test.
+
+Terminal outcomes must be truthful: DONE, PLATEAU, HUMAN_DECISION, BLOCKED, VALIDATION_FAILED, DELIVERY_FAILED or TIMEOUT. DONE requires the applicable work and required verification to be complete. If a task cannot safely proceed, name the specific blocker and preserve the evidence; never hide it behind a success claim.
+
+### Repository authority and entry points
+
+- **pub4:** MASTER/data/soul.yml > MASTER/data/laws.yml > executable Laws and scanner adapters > tree contracts. Read MASTER/AGENTS.md; run MASTER/bin/operator brief and, for broad or unfamiliar work, ruby MASTER/tools/agent_context.rb --tree. The current four governed trees are MASTER/, RAILS/, OPENBSD/ and STUDIO/. Feature truth is RAILS/apps.yml.
+- **pub3:** This is an earlier master.yml / Ruby convergence generation. Read its current README.md, root master.json if present, and the actual CLI and test files before relying on commands or thresholds. The README may describe a different configuration location or version than the checked-in tree; verify rather than assume.
+- **pub2:** Read master.json, .claude/instructions.md, ZSH_NATIVE_PATTERNS.md and the relevant media/tool README before acting. It contains a large audio collection; do not treat media files as source code or rewrite rendered masters as ordinary build output.
+- **pub:** Read README.md, master.json, prompts.json and the relevant source/configuration before acting. __OLD_BACKUPS/ and files labelled backup, original or pre-consolidation are historical evidence, not active configuration unless the task explicitly concerns recovery.
+- **Across generations:** Use the actual file tree and checked-in configuration as the authority for paths, language versions, commands, application names, ports, tools and thresholds. Never copy a command or topology from another generation without verifying it exists here. Keep one authoritative source for each setting.
+
+### Repair, tests and delivery
+
+In pub4, /fix [path] is write-enabled by default; a read-only baseline is preflight, not a downgrade to scan-only. Its authoritative detailed contract is in MASTER/AGENTS.md and the implementation in Master::Fix::Protocol. It must inspect the complete target context, attempt actionable findings, repeat scans and required verification, and finish with a truthful terminal state. Do not replace that contract with a second, divergent implementation in this file. For other repositories, discover the actual repair/scan commands first; do not imply they have pub4's /fix runtime.
+
+Run the smallest check that proves a focused edit. For broad changes, run the applicable full suite. RAILS work in pub4 requires the relevant app tests and the repository-wide RAILS checks, using the current checked-in runner. For UI, audio, image or video changes, source inspection alone is not visual or perceptual proof; compare rendered output and preserve existing approved values. Report when those checks cannot be run.
+
+Do not raise quality thresholds merely to make new code pass. If a check measures an obsolete spelling instead of behavior, repair the check and prove it with regression tests. Never delete files based only on missing textual references; inspect loaders, dynamic discovery, runtime and deployment paths. Historical comments belong in Git history; code comments explain present constraints.
+
+### Shell, code and repository discipline
+
+- Prefer Ruby for parsing or rewriting files and zsh for shell operations. Use native zsh expansion, globs, git grep and the repository's own tools rather than building long shell pipelines.
+- Do not introduce shell use of sed, awk, tr, cut, find, head, tail, wc, perl, python or bash into this workflow or new automation. The active pub4 Law catalogue is the enforcement authority for its exact command policy.
+- Keep changes path-scoped. Never stage the whole working tree or include another session's dirty files. Before pushing, inspect every unpushed commit; a path-scoped commit does not make a push path-scoped.
+- Work on main; do not create branches, worktrees or pull requests. Never force-push or bypass verification hooks. When asked to commit and push, use the repository's established landing path and report any commits that travel with the push.
+- Do not add GitHub Actions, Vercel, Docker, Kamal, nginx, Puma, Tailwind or Bootstrap as a workaround. Use the project's actual supported local tools and its documented production topology.
+- Never commit secrets, credentials, private environment files, generated output or replaceable renders. Do not make a production change, spend money, alter an external account or change an approved rendered value by taste alone.
+- No per-step confirmation when the requested scope already authorizes the work. Continue through verification and delivery, but stop at a real human-decision boundary and state why.
+
+### Communication
+
+Lead with the outcome. Be exact about evidence. Distinguish live execution from simulation, inspection and inference. Do not say a test passed unless it ran and passed. Do not claim a commit, push, deploy or merge unless the tool or repository confirms it. Keep explanations plain and focused; keep necessary technical detail in the changed files and test evidence.
