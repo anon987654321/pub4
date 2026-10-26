@@ -1,3 +1,1682 @@
 {
-  "rows": []
+  "rows": [
+    {
+      "id": "CAPABILITY_REDUCTION_IS_MONOTONIC",
+      "expr": ":CAPABILITY_REDUCTION_IS_MONOTONIC",
+      "path": "MASTER/law/capability.rb",
+      "fields": {
+        "source": "OpenBSD pledge(2) design grammar extended to MASTER",
+        "severity": "error",
+        "languages": [
+          "ruby"
+        ],
+        "path": "MASTER/lib/core.rb",
+        "ask": "Can a capability context regain authority after it has been dropped or locked? Reduced contexts must remain reduced; new authority requires a new trusted context.",
+        "fix": "Do not reacquire capabilities. Create a new trusted context when a genuinely different authority set is required.",
+        "bad": "capabilities.drop(:network)\ncapabilities.acquire(:network)\n",
+        "good": "capabilities.drop(:network)\n# network remains unavailable\n"
+      },
+      "fieldLines": {
+        "source": 6,
+        "severity": 7,
+        "languages": 8,
+        "path": 9,
+        "ask": 10,
+        "fix": 11,
+        "bad": 12,
+        "good": 16
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "COMMERCE_AMBER_DOES_NOT_OWN_BRGEN",
+      "expr": ":COMMERCE_AMBER_DOES_NOT_OWN_BRGEN",
+      "path": "MASTER/law/commerce.rb",
+      "fields": {
+        "source": "pub4 commerce boundary — BRGEN owns listings/orders; Amber owns wardrobe intelligence",
+        "severity": "error",
+        "mode": "violation",
+        "path": "RAILS/amber/",
+        "fix": "Consume the public Shared::Commerce/BRGEN catalog contract through BrgenCommerce; do not load BRGEN models.",
+        "bad": "Marketplace::Order.where(payment_status: \"paid\")",
+        "good": "BrgenCommerce.search(item: item, limit: 6)"
+      },
+      "fieldLines": {
+        "source": 6,
+        "severity": 7,
+        "mode": 8,
+        "path": 9,
+        "fix": 11,
+        "bad": 12,
+        "good": 13
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "COMMERCE_BRGEN_DOES_NOT_OWN_AMBER",
+      "expr": ":COMMERCE_BRGEN_DOES_NOT_OWN_AMBER",
+      "path": "MASTER/law/commerce.rb",
+      "fields": {
+        "source": "pub4 commerce boundary — Amber owns wardrobe intelligence; BRGEN owns transactions",
+        "severity": "error",
+        "mode": "violation",
+        "path": "RAILS/brgen_marketplace/",
+        "fix": "Keep wardrobe ranking and wardrobe records in Amber; expose only commerce references and catalog facts across the boundary.",
+        "bad": "TasteRanker.new(Current.user).rank(listings)",
+        "good": "Marketplace::SearchRanker.new(listings, query: query, viewer: Current.user).relation"
+      },
+      "fieldLines": {
+        "source": 17,
+        "severity": 18,
+        "mode": 19,
+        "path": 20,
+        "fix": 22,
+        "bad": 23,
+        "good": 24
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "COMMERCE_EXTERNAL_SOURCES_STAY_EXPLAINABLE",
+      "expr": ":COMMERCE_EXTERNAL_SOURCES_STAY_EXPLAINABLE",
+      "path": "MASTER/law/commerce.rb",
+      "fields": {
+        "source": "pub4 commerce protocol — external inventory must carry source and provenance",
+        "severity": "error",
+        "mode": "violation",
+        "path": "RAILS/amber/app/services/",
+        "fix": "Use ShopTheLook::Suggestion with source, reasons, and commerce_key so a commercial recommendation is attributable and explainable.",
+        "bad": "Suggestion.new(title, merchant, url, \"remote\", score)",
+        "good": "Suggestion.new(title, merchant, url, \"brgen\", score, reasons, commerce_key)"
+      },
+      "fieldLines": {
+        "source": 28,
+        "severity": 29,
+        "mode": 30,
+        "path": 31,
+        "fix": 33,
+        "bad": 34,
+        "good": 35
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "CLAMP_TYPOGRAPHY",
+      "expr": ":CLAMP_TYPOGRAPHY",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "CSS fluid typography — clamp() (web.dev)",
+        "severity": "info",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "fix": "Use font-size: clamp(1rem, 2.5vw, 1.5rem).",
+        "bad": "@media (min-width: 40em) { h1 { font-size: 2rem; } }",
+        "good": "h1 { font-size: clamp(1.5rem, 2.5vw, 2.5rem); }"
+      },
+      "fieldLines": {
+        "source": 11,
+        "severity": 12,
+        "languages": 13,
+        "fix": 15,
+        "bad": 16,
+        "good": 17
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "LOGICAL_PROPERTIES",
+      "expr": ":LOGICAL_PROPERTIES",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "CSS Logical Properties and Values (W3C)",
+        "severity": "info",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "fix": "Use margin-inline-start/end, padding-inline-start/end.",
+        "bad": "margin-left: 8px;",
+        "good": "margin-inline-start: 8px;"
+      },
+      "fieldLines": {
+        "source": 21,
+        "severity": 22,
+        "languages": 26,
+        "fix": 28,
+        "bad": 29,
+        "good": 30
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "MEASURE_OPTIMUM",
+      "expr": ":MEASURE_OPTIMUM",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "Bringhurst, Elements of Typographic Style — the measure (45–75 chars)",
+        "severity": "info",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "fix": "Bound running-text columns to ~66ch (≈ 33rem), not wide px values.",
+        "bad": "article { max-width: 960px; }",
+        "good": "article { max-width: 66ch; }"
+      },
+      "fieldLines": {
+        "source": 39,
+        "severity": 40,
+        "languages": 41,
+        "fix": 44,
+        "bad": 45,
+        "good": 46
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "MOBILE_FIRST",
+      "expr": ":MOBILE_FIRST",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "Mobile First (Luke Wroblewski, 2011)",
+        "severity": "warn",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "fix": "Use min-width (mobile-first, progressive enhancement).",
+        "bad": "@media (max-width: 600px) {",
+        "good": "@media (min-width: 600px) {"
+      },
+      "fieldLines": {
+        "source": 50,
+        "severity": 51,
+        "languages": 52,
+        "fix": 54,
+        "bad": 55,
+        "good": 56
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "NO_IMPORT_SCSS",
+      "expr": ":NO_IMPORT_SCSS",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "Sass best practice — @use over @import (Sass team)",
+        "severity": "warn",
+        "languages": [
+          "scss"
+        ],
+        "fix": "@import is deprecated. Use @use/@forward.",
+        "bad": "@import \"base\";",
+        "good": "@use \"base\";"
+      },
+      "fieldLines": {
+        "source": 60,
+        "severity": 61,
+        "languages": 62,
+        "fix": 64,
+        "bad": 65,
+        "good": 66
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "NO_LONG_TRANSITION",
+      "expr": ":NO_LONG_TRANSITION",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "style.yml motion budget / FrontendLawSet MOTION",
+        "severity": "warn",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "fix": "Keep transitions ≤300ms.",
+        "bad": ".card { transition: opacity 500ms var(--ease-out); }",
+        "good": ".card { transition: opacity var(--transition-fast) var(--ease-out); }"
+      },
+      "fieldLines": {
+        "source": 70,
+        "severity": 71,
+        "languages": 72,
+        "fix": 74,
+        "bad": 75,
+        "good": 76
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "NO_MULTIPLE_LANGUAGES",
+      "expr": ":NO_MULTIPLE_LANGUAGES",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "MASTER-native (one language per file)",
+        "severity": "warn",
+        "ask": "Does this file embed multiple languages or notations, or does the artifact mix incompatible frameworks or media layers?",
+        "languages": [
+          "ruby",
+          "javascript",
+          "css",
+          "scss",
+          "zsh"
+        ],
+        "path_exclude": {
+          "regex": "/(?:knowledge_store|catalog_index)\\.rb\\z|/memory/search\\.rb\\z|/db/migrate/"
+        },
+        "fix": "One language per layer. Separate into distinct files or clearly demarcated sections.",
+        "bad": "  good \"rows = connection.exec(query)\"\nend\n\n# Every Layout (Bell & Pickering): let the content size the box. A fixed pixel\n# height on a container is a promise about content the container cannot keep —\n# text wraps, translations run long (Norwegian does), and the box clips or\n# spills. min-height states the same floor without the ceiling. Below 100px\n# the element is a control or a media frame sizing itself, not a text\n# container, so the law starts where flowing content starts.\n#\n# The book's other axiom — space between siblings belongs to the parent (gap),\n# not the children (margin-bottom chains) — is not per-line decidable: whether\n# a margin is a chain depends on the siblings, which only the rendered tree\n# knows. It stays a review judgment, not a detector.\nLaw.define(:FIXED_HEIGHT) do\n  source \"Every Layout (Bell & Pickering) — the content sizes the box\"\n  severity :info\n  languages %i[css scss]\n  # A drawn stage — an art frame, a product-photo crop window — sizes itself\n  # by contract, not by its content. Those lines carry scan: intentional with\n  # the reason; the marker keeps the law on flowing-content boxes.\n  detect { |line| line.match?(/(?<![a-z-])height:\\s*[1-9]\\d{2,}px/) && !line.match?(/scan:\\s*intentional\\b/) }\n  fix \"Use min-height for a floor, or let the content size the box.\"\n  bad  \".card { height: 300px; }\"\n  good \".card { min-height: 300px; }\"\nend\n\n# Modern web-platform laws are review laws: the rendered tree, browser support,\n# and component context decide whether a platform primitive is appropriate.\n\nLaw.define(:INTRINSIC_LAYOUT) do\n  source \"Modern CSS intrinsic layout — web.dev Learn CSS\"\n  severity :warning\n  languages %i[css scss]\n  ask \"Does the layout solve content and component sizing with fixed dimensions or breakpoint patches where intrinsic sizing could express the relationship?\"\n  fix \"Prefer min/max-content, fit-content, auto, flex/grid, clamp(), and content-sized controls before adding fixed dimensions or breakpoint overrides.\"\n  bad \"card { width: 420px; }\"\n  good \"card { width: min(100%, 28rem); }\"\nend\n\nLaw.define(:CONTAINER_RESPONSIVENESS) do\n  source \"CSS Container Queries — web.dev Learn CSS\"\n  severity :info\n  languages %i[css scss]\n  ask \"Does a reusable component respond to the viewport even though its actual constraint is the size of its containing component?\"\n  fix \"Use a named or nearest container query when the component's behavior depends on container size.\"\n  bad \"@media (max-width: 700px) { .card { ... } }\"\n  good \"@container (max-width: 30rem) { .card { ... } }\"\nend\n\nLaw.define(:MODERN_FORMS) do\n  source \"CSS field-sizing — Baseline 2026\"\n  severity :info\n  languages %i[css scss]\n  ask \"Does a form control use brittle fixed sizing where its content, label, validation state, or user input should determine its size?\"\n  fix \"Prefer intrinsic form sizing and field-sizing when it improves the control without harming predictability.\"\n  bad \"textarea { height: 96px; }\"\n  good \"textarea { field-sizing: content; }\"\nend\n\nLaw.define(:NATIVE_DISCLOSURE) do\n  source \"Popover and dialog — web.dev Learn CSS\"\n  severity :info\n  languages %i[css scss]\n  ask \"Does the interface recreate a disclosure, popover, or dialog primitive with unnecessary custom state and positioning?\"\n  fix \"Prefer semantic dialog, popover, details, and native open-state behavior when their contracts match the interaction.\"\n  bad \".menu.is-open { display: block; }\"\n  good \"[popover]:popover-open { ... }\"\nend\n\nLaw.define(:ANCHOR_RELATIONSHIPS) do\n  source \"CSS Anchor Positioning — web.dev Learn CSS\"\n  severity :info\n  languages %i[css scss]\n  ask \"Is a floating element positioned relative to another element through brittle coordinates or JavaScript when their spatial relationship is stable?\"\n  fix \"Prefer declarative anchor positioning where browser support and the interaction contract permit it.\"\n  bad \".menu { left: 183px; top: 72px; }\"\n  good \".menu { position-anchor: --trigger; position-area: block-end span-inline-end; }\"\nend\n\nLaw.define(:SCOPED_CSS) do\n  source \"CSS @scope — Baseline 2026\"\n  severity :info\n  languages %i[css scss]\n  ask \"Can a component's styles leak across unrelated DOM regions because its selectors are broader than its ownership boundary?\"\n  fix \"Prefer component-local selectors or @scope where it removes selector leakage without adding unnecessary abstraction.\"\n  bad \".card h2 { ... }\"\n  good \"@scope (.card) { h2 { ... } }\"\nend\n\nLaw.define(:MOBILE_VIEWPORT) do\n  source \"Modern viewport units — web platform\"\n  severity :warning\n  languages %i[css scss]\n  ask \"Does a mobile layout assume a stable viewport height when browser chrome, safe areas, or the virtual keyboard can change the available space?\"\n  fix \"Use svh, dvh, lvh, env(safe-area-inset-*), and intrinsic layout according to the actual interaction requirement.\"\n  bad \".screen { height: 100vh; }\"\n  good \".screen { min-height: 100dvh; }\"\nend\n\nLaw.define(:SCROLL_INTEGRITY) do\n  source \"CSS overflow and modern scroll containers — web.dev Learn CSS\"\n  severity :warning\n  languages %i[css scss]\n  ask \"Does the layout create accidental page overflow, nested scroll traps, or a scroll container that breaks sticky or touch interaction?\"\n  fix \"Give each scroll container one intentional axis and verify the rendered scroll and sticky behavior at mobile widths.\"\n  bad \".shell { overflow: auto; }\"\n  good \".shell { overflow-x: clip; overflow-y: auto; }\"\nend\n\nLaw.define(:MOTION_ACCESSIBILITY) do\n  source \"Web accessibility and reduced motion — web.dev\"\n  severity :warning\n  languages %i[css scss]\n  ask \"Does motion ignore the user's reduced-motion preference or animate a state whose continuity can be communicated without motion?\"\n  fix \"Respect prefers-reduced-motion and keep transitions short, purposeful, and nonessential.\"\n  bad \".page { animation: zoom 2s infinite; }\"\n  good \"@media (prefers-reduced-motion: reduce) { * { animation-duration: 1ms; } }\"\nend\n\nLaw.define(:NAVIGATION_CONTINUITY) do\n  source \"View Transitions and Navigation API — Baseline 2026\"\n  severity :info\n  ask \"Does a same-origin navigation or state transition unnecessarily destroy context when continuity would make the relationship between states clearer?\"\n  fix \"Preserve scroll, focus, state, and visual continuity first; use View Transitions or the Navigation API only when they simplify a real transition.\"\n  bad \"navigate_to(result); reset_all_page_state\"\n  good \"navigate_to(result); preserve_context\"\nend\n\nLaw.define(:INTERACTION_PERFORMANCE) do\n  source \"Web rendering performance — compositor-safe interaction motion\"\n  severity :warning\n  mode :opportunity\n  languages %i[css scss]\n  path \"RAILS/\"\n  ask \"Does frequent interaction motion stay on transform and opacity where possible, avoid layout properties such as top/width/height, and avoid permanent will-change or expensive visual effects?\"\n  fix \"Animate transform and opacity for interaction feedback; let layout properties remain stable, and add will-change only around a measured animation boundary when it removes a real hitch.\"\n  bad \".card { transition: width 300ms, top 300ms; }\"\n  good \".card { transition: transform var(--duration-m3-short) var(--ease-m3-spring), opacity var(--transition-fast) var(--ease-out); }\"\nend\n\nLaw.define(:STATE_CHOREOGRAPHY) do\n  source \"Interaction feedback — loading, success and failure are observable states\"\n  severity :warning\n  mode :opportunity\n  languages %i[html css scss javascript]\n  path \"RAILS/\"\n  ask \"Does an action expose a coherent state sequence such as idle → working → success/failure, with the final state remaining understandable after motion stops? Do not rely on color, motion, or a short-lived flash as the only evidence.\"\n  fix \"Give each important action an explicit state, choreograph its transition with the shared motion tokens, and keep a static success or failure representation for reduced motion.\"\n  bad \"Tap Pay; briefly spin; disappear with no persistent result.\"\n  good \"Tap Pay → working state → self-drawing success mark or persistent failure state; all meanings remain available without motion.\"\nend\n\nLaw.define(:GESTURE_OWNERSHIP) do\n  source \"Pointer Events and touch-action — gesture ownership\"\n  severity :warning\n  mode :opportunity\n  languages %i[html css scss javascript]\n  path \"RAILS/\"\n  ask \"Does a drag or swipe surface explicitly declare which pan remains with the browser and which axis belongs to the interaction? A direct-manipulation gesture must not compete silently with page scrolling, navigation gestures, or pull-to-refresh.\"\n  fix \"Declare touch-action on the gesture surface: use pan-y for horizontal swipes in a vertical page, pan-x for vertical rails, or none when the interaction deliberately owns both axes. Keep an equivalent keyboard/control path.\"\n  bad \".card-stack { touch-action: auto; }\"\n  good \".card-stack { touch-action: pan-y; }\"\nend\n\n# Five decorative devices a model reaches for by habit. Each is judged by what\n# the mark does for the reader, not by its look, and each carries the\n# constitutional law it serves: DENSITY (a mark that carries no information is\n# noise) or LINEARITY (structure belongs to the element tree, not to glyphs\n# between words). Rendered values stay operator-owned (RENDERED_VALUES), so none\n# of these names a replacement colour, face or size. Detection lives once, here,\n# so the laws and the false-positive census in test_design_marks.rb read the\n# same patterns.\nmodule DesignMarks\n  module_function\n\n  # Guarded: Law.load_all re-evaluates a changed law file in the same process.\n  ARROW_GLYPH = \"(?:→|&rarr;|&#8594;|&#x2192;|->|&gt;&gt;|>>|▸|&#9656;|&#x25b8;)\" unless const_defined?(:ARROW_GLYPH)\n  DOT_GLYPH = \"(?:·|&middot;|&#183;|&#xb7;)\" unless const_defined?(:DOT_GLYPH)\n\n  # The innermost { … } blocks of a stylesheet, with their selector.\n  def blocks(text)\n    text.scan(/([^{};]*)\\{([^{}]*)\\}/m).map { |selector, body| [selector.strip, body] }\n  end\n\n  # px / rem / em value under the body size, or a named small step.\n  def small_size?(body)\n    value = body[/font-size\\s*:\\s*([^;}\\n]+)/i, 1].to_s.strip\n    return false if value.empty?\n    return true if value.match?(/(?:--|\\$)(?:font-?(?:size-?)?)?(?:2?xs|sm|small|caption|label|micro|tiny)\\b/i)\n\n    number = value[/\\A([\\d.]+)(rem|em|px)\\b/i, 1]\n    return false unless number\n\n    value.match?(/px\\b/i) ? number.to_f < 16 : number.to_f < 1\n  end\n\n  # Tracked all-caps eyebrows: uppercase and non-zero tracking together, on text\n  # that is small or that the author named an eyebrow, kicker or overline.\n  def eyebrow_blocks(text)\n    blocks(text).select do |selector, body|\n      next false unless body.match?(/text-transform\\s*:\\s*uppercase/i)\n\n      # Heading case is structural, not a decorative label treatment. A heading\n      # remains a finding even when it is large or has no tracking; proper case\n      # is consistent across the levels and the page H1 carries the hierarchy.\n      heading = selector.match?(/(?:\\A|[\\s,>])h[1-6](?=$|[\\s,.:#\\[])/i) ||\n                selector.match?(/\\.(?:page-title|section-title|empty-state-title|luxury-title|amber-look-title|store-heading)\\b/i)\n      next true if heading\n\n      next false unless body.match?(/letter-spacing\\s*:\\s*+(?!0(?:\\.0+)?(?:px|r?em)?\\s*[;}\\n]|normal|inherit|initial|unset)[^;}\\n]+/i)\n\n      selector.match?(/eyebrow|kicker|overline/i) || small_size?(body)\n    end\n  end\n\n  def eyebrow_class?(line) = line.match?(/class\\s*[:=]\\s*[\"'][^\"']*\\b(?:eyebrow|kicker|overline)\\b/i)\n\n  # A glyph that points at the next step, appended to the label of a link or button.\n  def arrow_label?(line)\n    return true if line.match?(%r{<(?:a|button)\\b[^>]*>[^<]*?\\s#{ARROW_GLYPH}\\s*</(?:a|button)>}i)\n    return true if line.match?(%r{<span\\b[^>]*>\\s*#{ARROW_GLYPH}\\s*</span>}i)\n\n    line.match?(/\\b(?:link_to|button_to|submit|link_to_if)\\b\\s*\\(?\\s*([\"'])[^\"']*?\\S\\s*#{ARROW_GLYPH}\\s*\\1/)\n  end\n\n  # `A · B · C`: two or more dot separators between words, or a join(\" · \").\n  def dotted_meta?(line)\n    return false if line.match?(/<title\\b|<meta\\b/i)\n    return true if line.match?(/\\.join\\(\\s*[\"'] ?#{DOT_GLYPH} ?[\"']\\s*\\)/)\n\n    line.scan(/\\S\\s+#{DOT_GLYPH}\\s+\\S/).length >= 2\n  end\n\n  # A gradient painted as a surface. A fade to transparent is a functional edge\n  # (a scroll hint, a scrim under text), so it is spared, as is a mask, a solid\n  # fill and a hard-stop data bar.\n  def gradient_wash?(line)\n    return false unless line.match?(/(?:background(?:-image)?|--[\\w-]+)\\s*:[^;]*(?:linear|radial|conic)-gradient\\(/i)\n\n    return false if line.match?(/transparent|\\bmask/i)\n\n    # A colour used twice is a hard stop or a solid fill: a hairline or a data bar.\n    !line.scan(/var\\(--[\\w-]+\\)|#\\h{3,8}\\b/).tally.value?(2)\n  end\n\n  # Leading-zero counters and literal 0N labels: ornament on items that need no order.\n  def ordinal_ornament?(line)\n    return true if line.match?(/counter\\([^)]*decimal-leading-zero/i)\n    return true if line.match?(/content\\s*:\\s*[\"']0\\d\\b/)\n    return true if line.match?(/>\\s*0[1-9]\\s*[\\/.]?\\s*</)\n\n    line.match?(/(?:[\"']0<%=|[\"']%02d[\"']\\s*%\\s*\\(?\\s*\\w*(?:index|idx|\\bi\\b)\\b?|<%=\\s*[\"']%02d[\"']\\s*%\\s*\\(?[^%]*(?:index|idx|\\+\\s*1))/)\n  end\nend\n\nLaw.define(:NO_EYEBROW_LABEL) do\n  source \"DENSITY — a small tracked all-caps line above a heading restates the heading's role; Strunk, omit needless words\"\n  severity :info\n  languages %i[css scss html]\n  scope :file\n  detect do |text|\n    DesignMarks.eyebrow_blocks(text).any? || text.each_line.any? { |line| DesignMarks.eyebrow_class?(line) }\n  end\n  fix \"Drop the eyebrow; let the heading and the page structure say where the reader is. A label that names a field stays.\"\n  bad  \".kicker { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }\"\n  good \".field-label { font-size: 0.875rem; font-weight: 600; }\"\nend\n\nLaw.define(:NO_TRAILING_ARROW) do\n  source \"DENSITY — a link already says it can be followed; an arrow glyph in its text adds no information\"\n  severity :info\n  languages %i[html]\n  detect { |line| DesignMarks.arrow_label?(line) }\n  fix \"Write the verb and the object (\\\"Les saken\\\"); the link styling carries the affordance.\"\n  bad  '<a href=\"/news\">Les mer →</a>'\n  good '<a href=\"/news\">Les saken</a>'\nend\n\nLaw.define(:NO_DOT_SEPARATED_META) do\n  source \"LINEARITY — structure belongs to the element tree; glyphs between words make a flat string the reader must parse\"\n  severity :info\n  languages %i[html]\n  detect { |line| DesignMarks.dotted_meta?(line) }\n  fix \"Put each fact in its own element (a list item or a span) and let spacing or a border separate them.\"\n  bad  \"<p>Bergen · 3 timer siden · 12 svar</p>\"\n  good \"<ul class=\\\"meta\\\"><li>Bergen</li><li>3 timer siden</li><li>12 svar</li></ul>\"\nend\n\nLaw.define(:NO_DECORATIVE_GRADIENT) do\n  source \"RENDERED_VALUES and flat design — a gradient wash is a colour the operator did not choose; surfaces are flat tokens\"\n  severity :info\n  languages %i[css scss]\n  detect { |line| DesignMarks.gradient_wash?(line) }\n  fix \"Paint the surface with its token colour. A fade to transparent over an edge or a scrim under text is allowed.\"\n  bad  \".hero { background: linear-gradient(135deg, var(--a), var(--b)); }\"\n  good \".hero { background: var(--surface); }\"\nend\n\nLaw.define(:NO_ORDINAL_ORNAMENT) do\n  source \"LINEARITY — a 01, 02, 03 marker promises a sequence; on items with no order it is decoration\"\n  severity :info\n  languages %i[css scss html]\n  detect { |line| DesignMarks.ordinal_ornament?(line) }\n  fix \"Drop the number, or make the items an ordered list when the order is real.\"\n  bad  \".card::before { content: counter(card, decimal-leading-zero); }\"\n  good \"ol.steps li::marker { content: counter(list-item) \\\". \\\"; }\"\nend\n\n\nLaw.define(:SIGNAL_COLOR_IS_SEMANTIC) do\n  source \"pub4 visual identity contract — signal colour is a semantic marker, never a general surface or body-text colour\"\n  severity :warn\n  languages %i[css scss]\n  scope :file\n  detect do |text|\n    unsafe_signal_background = text.scan(/([^{}]+)\\{([^{}]*)\\}/m).any? do |selector, declarations|\n      next false unless declarations.match?(/(?:\\A|;)\\s*background(?:-color)?\\s*:\\s*var\\(\\s*--pub4-signal\\s*\\)/i)\n\n      !selector.strip.match?(/\\A#cmd-palette-list\\s+li\\[data-active\\s*=\\s*[\"']?1[\"']?\\]\\z/i)\n    end\n    direct_signal_text = text.scan(/([^{}]+)\\{([^{}]*)\\}/m).any? do |_selector, declarations|\n      declarations.match?(/(?:\\A|;)\\s*color\\s*:\\s*var\\(\\s*--pub4-signal\\s*\\)\\s*(?:!important\\s*)?;/i)\n    end\n\n    unsafe_signal_background || direct_signal_text\n  end\n  fix \"Use the signal only as a selected-state marker with explicit signal ink; use the local product accent for ordinary buttons, page surfaces and text.\"\n  bad <<~CSS\n    .hero {\n      background: var(--pub4-signal);\n      color: var(--pub4-signal);\n    }\n  CSS\n  good <<~CSS\n    #cmd-palette-list li[data-active=\"1\"] {\n      background: var(--pub4-signal);\n      color: var(--pub4-signal-ink);\n    }\n\n    .home-feed-view.is-active {\n      border-block-end-color: var(--pub4-signal);\n    }\n\n    .page {\n      background: var(--surface);\n      color: var(--text);\n    }\n  CSS\nend\n\n\n"
+      },
+      "fieldLines": {
+        "source": 99,
+        "severity": 100,
+        "ask": 101,
+        "languages": 102,
+        "path_exclude": 116,
+        "fix": 145,
+        "bad": 146
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "FIXED_HEIGHT",
+      "expr": ":FIXED_HEIGHT",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "Every Layout (Bell & Pickering) — the content sizes the box",
+        "severity": "info",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "fix": "Use min-height for a floor, or let the content size the box.",
+        "bad": ".card { height: 300px; }",
+        "good": ".card { min-height: 300px; }"
+      },
+      "fieldLines": {
+        "source": 162,
+        "severity": 163,
+        "languages": 164,
+        "fix": 169,
+        "bad": 170,
+        "good": 171
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "INTRINSIC_LAYOUT",
+      "expr": ":INTRINSIC_LAYOUT",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "Modern CSS intrinsic layout — web.dev Learn CSS",
+        "severity": "warning",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "ask": "Does the layout solve content and component sizing with fixed dimensions or breakpoint patches where intrinsic sizing could express the relationship?",
+        "fix": "Prefer min/max-content, fit-content, auto, flex/grid, clamp(), and content-sized controls before adding fixed dimensions or breakpoint overrides.",
+        "bad": "card { width: 420px; }",
+        "good": "card { width: min(100%, 28rem); }"
+      },
+      "fieldLines": {
+        "source": 178,
+        "severity": 179,
+        "languages": 180,
+        "ask": 181,
+        "fix": 182,
+        "bad": 183,
+        "good": 184
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "CONTAINER_RESPONSIVENESS",
+      "expr": ":CONTAINER_RESPONSIVENESS",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "CSS Container Queries — web.dev Learn CSS",
+        "severity": "info",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "ask": "Does a reusable component respond to the viewport even though its actual constraint is the size of its containing component?",
+        "fix": "Use a named or nearest container query when the component's behavior depends on container size.",
+        "bad": "@media (max-width: 700px) { .card { ... } }",
+        "good": "@container (max-width: 30rem) { .card { ... } }"
+      },
+      "fieldLines": {
+        "source": 188,
+        "severity": 189,
+        "languages": 190,
+        "ask": 191,
+        "fix": 192,
+        "bad": 193,
+        "good": 194
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "MODERN_FORMS",
+      "expr": ":MODERN_FORMS",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "CSS field-sizing — Baseline 2026",
+        "severity": "info",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "ask": "Does a form control use brittle fixed sizing where its content, label, validation state, or user input should determine its size?",
+        "fix": "Prefer intrinsic form sizing and field-sizing when it improves the control without harming predictability.",
+        "bad": "textarea { height: 96px; }",
+        "good": "textarea { field-sizing: content; }"
+      },
+      "fieldLines": {
+        "source": 198,
+        "severity": 199,
+        "languages": 200,
+        "ask": 201,
+        "fix": 202,
+        "bad": 203,
+        "good": 204
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "NATIVE_DISCLOSURE",
+      "expr": ":NATIVE_DISCLOSURE",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "Popover and dialog — web.dev Learn CSS",
+        "severity": "info",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "ask": "Does the interface recreate a disclosure, popover, or dialog primitive with unnecessary custom state and positioning?",
+        "fix": "Prefer semantic dialog, popover, details, and native open-state behavior when their contracts match the interaction.",
+        "bad": ".menu.is-open { display: block; }",
+        "good": "[popover]:popover-open { ... }"
+      },
+      "fieldLines": {
+        "source": 208,
+        "severity": 209,
+        "languages": 210,
+        "ask": 211,
+        "fix": 212,
+        "bad": 213,
+        "good": 214
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "ANCHOR_RELATIONSHIPS",
+      "expr": ":ANCHOR_RELATIONSHIPS",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "CSS Anchor Positioning — web.dev Learn CSS",
+        "severity": "info",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "ask": "Is a floating element positioned relative to another element through brittle coordinates or JavaScript when their spatial relationship is stable?",
+        "fix": "Prefer declarative anchor positioning where browser support and the interaction contract permit it.",
+        "bad": ".menu { left: 183px; top: 72px; }",
+        "good": ".menu { position-anchor: --trigger; position-area: block-end span-inline-end; }"
+      },
+      "fieldLines": {
+        "source": 218,
+        "severity": 219,
+        "languages": 220,
+        "ask": 221,
+        "fix": 222,
+        "bad": 223,
+        "good": 224
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "SCOPED_CSS",
+      "expr": ":SCOPED_CSS",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "CSS @scope — Baseline 2026",
+        "severity": "info",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "ask": "Can a component's styles leak across unrelated DOM regions because its selectors are broader than its ownership boundary?",
+        "fix": "Prefer component-local selectors or @scope where it removes selector leakage without adding unnecessary abstraction.",
+        "bad": ".card h2 { ... }",
+        "good": "@scope (.card) { h2 { ... } }"
+      },
+      "fieldLines": {
+        "source": 228,
+        "severity": 229,
+        "languages": 230,
+        "ask": 231,
+        "fix": 232,
+        "bad": 233,
+        "good": 234
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "MOBILE_VIEWPORT",
+      "expr": ":MOBILE_VIEWPORT",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "Modern viewport units — web platform",
+        "severity": "warning",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "ask": "Does a mobile layout assume a stable viewport height when browser chrome, safe areas, or the virtual keyboard can change the available space?",
+        "fix": "Use svh, dvh, lvh, env(safe-area-inset-*), and intrinsic layout according to the actual interaction requirement.",
+        "bad": ".screen { height: 100vh; }",
+        "good": ".screen { min-height: 100dvh; }"
+      },
+      "fieldLines": {
+        "source": 238,
+        "severity": 239,
+        "languages": 240,
+        "ask": 241,
+        "fix": 242,
+        "bad": 243,
+        "good": 244
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "SCROLL_INTEGRITY",
+      "expr": ":SCROLL_INTEGRITY",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "CSS overflow and modern scroll containers — web.dev Learn CSS",
+        "severity": "warning",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "ask": "Does the layout create accidental page overflow, nested scroll traps, or a scroll container that breaks sticky or touch interaction?",
+        "fix": "Give each scroll container one intentional axis and verify the rendered scroll and sticky behavior at mobile widths.",
+        "bad": ".shell { overflow: auto; }",
+        "good": ".shell { overflow-x: clip; overflow-y: auto; }"
+      },
+      "fieldLines": {
+        "source": 248,
+        "severity": 249,
+        "languages": 250,
+        "ask": 251,
+        "fix": 252,
+        "bad": 253,
+        "good": 254
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "MOTION_ACCESSIBILITY",
+      "expr": ":MOTION_ACCESSIBILITY",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "Web accessibility and reduced motion — web.dev",
+        "severity": "warning",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "ask": "Does motion ignore the user's reduced-motion preference or animate a state whose continuity can be communicated without motion?",
+        "fix": "Respect prefers-reduced-motion and keep transitions short, purposeful, and nonessential.",
+        "bad": ".page { animation: zoom 2s infinite; }",
+        "good": "@media (prefers-reduced-motion: reduce) { * { animation-duration: 1ms; } }"
+      },
+      "fieldLines": {
+        "source": 258,
+        "severity": 259,
+        "languages": 260,
+        "ask": 261,
+        "fix": 262,
+        "bad": 263,
+        "good": 264
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "NAVIGATION_CONTINUITY",
+      "expr": ":NAVIGATION_CONTINUITY",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "View Transitions and Navigation API — Baseline 2026",
+        "severity": "info",
+        "ask": "Does a same-origin navigation or state transition unnecessarily destroy context when continuity would make the relationship between states clearer?",
+        "fix": "Preserve scroll, focus, state, and visual continuity first; use View Transitions or the Navigation API only when they simplify a real transition.",
+        "bad": "navigate_to(result); reset_all_page_state",
+        "good": "navigate_to(result); preserve_context"
+      },
+      "fieldLines": {
+        "source": 268,
+        "severity": 269,
+        "ask": 270,
+        "fix": 271,
+        "bad": 272,
+        "good": 273
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "INTERACTION_PERFORMANCE",
+      "expr": ":INTERACTION_PERFORMANCE",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "Web rendering performance — compositor-safe interaction motion",
+        "severity": "warning",
+        "mode": "opportunity",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "path": "RAILS/",
+        "ask": "Does frequent interaction motion stay on transform and opacity where possible, avoid layout properties such as top/width/height, and avoid permanent will-change or expensive visual effects?",
+        "fix": "Animate transform and opacity for interaction feedback; let layout properties remain stable, and add will-change only around a measured animation boundary when it removes a real hitch.",
+        "bad": ".card { transition: width 300ms, top 300ms; }",
+        "good": ".card { transition: transform var(--duration-m3-short) var(--ease-m3-spring), opacity var(--transition-fast) var(--ease-out); }"
+      },
+      "fieldLines": {
+        "source": 277,
+        "severity": 278,
+        "mode": 279,
+        "languages": 280,
+        "path": 281,
+        "ask": 282,
+        "fix": 283,
+        "bad": 284,
+        "good": 285
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "STATE_CHOREOGRAPHY",
+      "expr": ":STATE_CHOREOGRAPHY",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "Interaction feedback — loading, success and failure are observable states",
+        "severity": "warning",
+        "mode": "opportunity",
+        "languages": [
+          "html",
+          "css",
+          "scss",
+          "javascript"
+        ],
+        "path": "RAILS/",
+        "ask": "Does an action expose a coherent state sequence such as idle → working → success/failure, with the final state remaining understandable after motion stops? Do not rely on color, motion, or a short-lived flash as the only evidence.",
+        "fix": "Give each important action an explicit state, choreograph its transition with the shared motion tokens, and keep a static success or failure representation for reduced motion.",
+        "bad": "Tap Pay; briefly spin; disappear with no persistent result.",
+        "good": "Tap Pay → working state → self-drawing success mark or persistent failure state; all meanings remain available without motion."
+      },
+      "fieldLines": {
+        "source": 289,
+        "severity": 290,
+        "mode": 291,
+        "languages": 292,
+        "path": 293,
+        "ask": 294,
+        "fix": 295,
+        "bad": 296,
+        "good": 297
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "GESTURE_OWNERSHIP",
+      "expr": ":GESTURE_OWNERSHIP",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "Pointer Events and touch-action — gesture ownership",
+        "severity": "warning",
+        "mode": "opportunity",
+        "languages": [
+          "html",
+          "css",
+          "scss",
+          "javascript"
+        ],
+        "path": "RAILS/",
+        "ask": "Does a drag or swipe surface explicitly declare which pan remains with the browser and which axis belongs to the interaction? A direct-manipulation gesture must not compete silently with page scrolling, navigation gestures, or pull-to-refresh.",
+        "fix": "Declare touch-action on the gesture surface: use pan-y for horizontal swipes in a vertical page, pan-x for vertical rails, or none when the interaction deliberately owns both axes. Keep an equivalent keyboard/control path.",
+        "bad": ".card-stack { touch-action: auto; }",
+        "good": ".card-stack { touch-action: pan-y; }"
+      },
+      "fieldLines": {
+        "source": 301,
+        "severity": 302,
+        "mode": 303,
+        "languages": 304,
+        "path": 305,
+        "ask": 306,
+        "fix": 307,
+        "bad": 308,
+        "good": 309
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "NO_EYEBROW_LABEL",
+      "expr": ":NO_EYEBROW_LABEL",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "DENSITY — a small tracked all-caps line above a heading restates the heading's role; Strunk, omit needless words",
+        "severity": "info",
+        "languages": [
+          "css",
+          "scss",
+          "html"
+        ],
+        "scope": "file",
+        "fix": "Drop the eyebrow; let the heading and the page structure say where the reader is. A label that names a field stays.",
+        "bad": ".kicker { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }",
+        "good": ".field-label { font-size: 0.875rem; font-weight: 600; }"
+      },
+      "fieldLines": {
+        "source": 404,
+        "severity": 405,
+        "languages": 406,
+        "scope": 407,
+        "fix": 411,
+        "bad": 412,
+        "good": 413
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "NO_TRAILING_ARROW",
+      "expr": ":NO_TRAILING_ARROW",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "DENSITY — a link already says it can be followed; an arrow glyph in its text adds no information",
+        "severity": "info",
+        "languages": [
+          "html"
+        ],
+        "fix": "Write the verb and the object (\"Les saken\"); the link styling carries the affordance.",
+        "bad": "<a href=\"/news\">Les mer →</a>",
+        "good": "<a href=\"/news\">Les saken</a>"
+      },
+      "fieldLines": {
+        "source": 417,
+        "severity": 418,
+        "languages": 419,
+        "fix": 421,
+        "bad": 422,
+        "good": 423
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "NO_DOT_SEPARATED_META",
+      "expr": ":NO_DOT_SEPARATED_META",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "LINEARITY — structure belongs to the element tree; glyphs between words make a flat string the reader must parse",
+        "severity": "info",
+        "languages": [
+          "html"
+        ],
+        "fix": "Put each fact in its own element (a list item or a span) and let spacing or a border separate them.",
+        "bad": "<p>Bergen · 3 timer siden · 12 svar</p>",
+        "good": "<ul class=\"meta\"><li>Bergen</li><li>3 timer siden</li><li>12 svar</li></ul>"
+      },
+      "fieldLines": {
+        "source": 427,
+        "severity": 428,
+        "languages": 429,
+        "fix": 431,
+        "bad": 432,
+        "good": 433
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "NO_DECORATIVE_GRADIENT",
+      "expr": ":NO_DECORATIVE_GRADIENT",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "RENDERED_VALUES and flat design — a gradient wash is a colour the operator did not choose; surfaces are flat tokens",
+        "severity": "info",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "fix": "Paint the surface with its token colour. A fade to transparent over an edge or a scrim under text is allowed.",
+        "bad": ".hero { background: linear-gradient(135deg, var(--a), var(--b)); }",
+        "good": ".hero { background: var(--surface); }"
+      },
+      "fieldLines": {
+        "source": 437,
+        "severity": 438,
+        "languages": 439,
+        "fix": 441,
+        "bad": 442,
+        "good": 443
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "NO_ORDINAL_ORNAMENT",
+      "expr": ":NO_ORDINAL_ORNAMENT",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "LINEARITY — a 01, 02, 03 marker promises a sequence; on items with no order it is decoration",
+        "severity": "info",
+        "languages": [
+          "css",
+          "scss",
+          "html"
+        ],
+        "fix": "Drop the number, or make the items an ordered list when the order is real.",
+        "bad": ".card::before { content: counter(card, decimal-leading-zero); }",
+        "good": "ol.steps li::marker { content: counter(list-item) \". \"; }"
+      },
+      "fieldLines": {
+        "source": 447,
+        "severity": 448,
+        "languages": 449,
+        "fix": 451,
+        "bad": 452,
+        "good": 453
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "SIGNAL_COLOR_IS_SEMANTIC",
+      "expr": ":SIGNAL_COLOR_IS_SEMANTIC",
+      "path": "MASTER/law/css.rb",
+      "fields": {
+        "source": "pub4 visual identity contract — signal colour is a semantic marker, never a general surface or body-text colour",
+        "severity": "warn",
+        "languages": [
+          "css",
+          "scss"
+        ],
+        "scope": "file",
+        "fix": "Use the signal only as a selected-state marker with explicit signal ink; use the local product accent for ordinary buttons, page surfaces and text.",
+        "bad": ".hero {\n  background: var(--pub4-signal);\n  color: var(--pub4-signal);\n}\n",
+        "good": "#cmd-palette-list li[data-active=\"1\"] {\n  background: var(--pub4-signal);\n  color: var(--pub4-signal-ink);\n}\n\n.home-feed-view.is-active {\n  border-block-end-color: var(--pub4-signal);\n}\n\n.page {\n  background: var(--surface);\n  color: var(--text);\n}\n"
+      },
+      "fieldLines": {
+        "source": 458,
+        "severity": 459,
+        "languages": 460,
+        "scope": 461,
+        "fix": 474,
+        "bad": 475,
+        "good": 481
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "NO_INFINITY_TO_I",
+      "expr": ":NO_INFINITY_TO_I",
+      "path": "MASTER/law/fix_hygiene.rb",
+      "fields": {
+        "source": "MASTER post-incident /fix hardening — finite convergence ranks",
+        "severity": "error",
+        "languages": [
+          "ruby"
+        ],
+        "path_exclude": {
+          "regex": "/law/fix_hygiene\\.rb\\z"
+        },
+        "fix": "Use a finite sentinel or score_value before integer coercion; never call to_i/to_int on a non-finite float.",
+        "bad": "Float::INFINITY.to_i",
+        "good": "UNMEASURED_SCORE = 1_000_000_000"
+      },
+      "fieldLines": {
+        "source": 8,
+        "severity": 9,
+        "languages": 10,
+        "path_exclude": 11,
+        "fix": 19,
+        "bad": 20,
+        "good": 21
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "NO_OVERESCAPED_NONCAPTURING",
+      "expr": ":NO_OVERESCAPED_NONCAPTURING",
+      "path": "MASTER/law/fix_hygiene.rb",
+      "fields": {
+        "source": "MASTER post-incident /fix hardening — extract-then-match regex integrity",
+        "severity": "error",
+        "languages": [
+          "ruby"
+        ],
+        "path_exclude": {
+          "regex": "/law/fix_hygiene\\.rb\\z"
+        },
+        "fix": "Match the extracted regex body with regex syntax appropriate to the body; do not add source-level escaping twice.",
+        "bad": "body.scan(/phantom:\\\\(?:detected|halt|recovery)/)",
+        "good": "body.scan(/phantom:(detected|halt|recovery)/)"
+      },
+      "fieldLines": {
+        "source": 25,
+        "severity": 26,
+        "languages": 27,
+        "path_exclude": 28,
+        "fix": 33,
+        "bad": 34,
+        "good": 35
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "ARIA_INTERACTIVE",
+      "expr": ":ARIA_INTERACTIVE",
+      "path": "MASTER/law/html.rb",
+      "fields": {
+        "source": "WAI-ARIA (W3C) — roles for interactive elements",
+        "severity": "warn",
+        "languages": [
+          "html"
+        ],
+        "fix": "Add role= and tabindex= for accessibility.",
+        "bad": "<div onclick=\"go()\">",
+        "good": "<button onclick=\"go()\">"
+      },
+      "fieldLines": {
+        "source": 11,
+        "severity": 12,
+        "languages": 13,
+        "fix": 15,
+        "bad": 16,
+        "good": 17
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "BARE_DIV_WRAPPER",
+      "expr": ":BARE_DIV_WRAPPER",
+      "path": "MASTER/law/html.rb",
+      "fields": {
+        "source": "HTML5 semantics / WCAG 1.3.1 — an element with no meaning carries none",
+        "severity": "warn",
+        "languages": [
+          "html"
+        ],
+        "path_exclude": {
+          "regex": "/checks/fixtures/"
+        },
+        "fix": "Name the group with a semantic element, or drop the wrapper and select its children by structure.",
+        "bad": "<div>",
+        "good": "<section>"
+      },
+      "fieldLines": {
+        "source": 37,
+        "severity": 38,
+        "languages": 39,
+        "path_exclude": 42,
+        "fix": 53,
+        "bad": 54,
+        "good": 55
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "BEM_IN_VIEWS",
+      "expr": ":BEM_IN_VIEWS",
+      "path": "MASTER/law/html.rb",
+      "fields": {
+        "source": "style.yml bare_tag_targeting — no BEM in ERB",
+        "severity": "warn",
+        "languages": [
+          "html"
+        ],
+        "path": "/app/views/",
+        "fix": "Target bare tags in SCSS; remove __block__element classes from ERB.",
+        "bad": "<div class=\"card__title\">",
+        "good": "<h2>"
+      },
+      "fieldLines": {
+        "source": 59,
+        "severity": 60,
+        "languages": 61,
+        "path": 62,
+        "fix": 64,
+        "bad": 65,
+        "good": 66
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "BLANK_LINE_RUN",
+      "expr": ":BLANK_LINE_RUN",
+      "path": "MASTER/law/html.rb",
+      "fields": {
+        "source": "Strunk & White I.1 — vigorous writing is concise, and so is its spacing",
+        "severity": "warn",
+        "languages": [
+          "html"
+        ],
+        "scope": "file",
+        "reads_comments": true,
+        "fix": "Collapse consecutive blank lines to one.",
+        "bad": "<p>first</p>\n\n\n<p>second</p>\n",
+        "good": "<p>first</p>\n\n<p>second</p>\n"
+      },
+      "fieldLines": {
+        "source": 77,
+        "severity": 78,
+        "languages": 79,
+        "scope": 80,
+        "reads_comments": 90,
+        "fix": 92,
+        "bad": 93,
+        "good": 94
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "BUTTON_OVER_ANCHOR",
+      "expr": ":BUTTON_OVER_ANCHOR",
+      "path": "MASTER/law/html.rb",
+      "fields": {
+        "source": "WAI-ARIA Authoring Practices — button vs link (W3C)",
+        "severity": "warn",
+        "languages": [
+          "html"
+        ],
+        "fix": "Use <button>. Accessible by default.",
+        "bad": "<a href=\"#\">Open</a>",
+        "good": "<button type=\"button\">Open</button>"
+      },
+      "fieldLines": {
+        "source": 98,
+        "severity": 99,
+        "languages": 100,
+        "fix": 102,
+        "bad": 103,
+        "good": 104
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "CLASS_RESTATES_TAG",
+      "expr": ":CLASS_RESTATES_TAG",
+      "path": "MASTER/law/html.rb",
+      "fields": {
+        "source": "style.yml bare_tag_targeting — the tag is already the name",
+        "severity": "warn",
+        "languages": [
+          "html"
+        ],
+        "fix": "Drop the filler class and select the bare tag; a prefix that names which of several coexisting elements this is may stay.",
+        "bad": "<header class=\"content-header\">",
+        "good": "<header class=\"page-header\">"
+      },
+      "fieldLines": {
+        "source": 130,
+        "severity": 131,
+        "languages": 132,
+        "fix": 134,
+        "bad": 135,
+        "good": 136
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "I18N_COVERAGE",
+      "expr": ":I18N_COVERAGE",
+      "path": "MASTER/law/html.rb",
+      "fields": {
+        "source": "Rails i18n best practice (no hardcoded strings)",
+        "severity": "warn",
+        "languages": [
+          "html"
+        ],
+        "path": "/app/views/",
+        "scope": "file",
+        "fix": "Replace literal with t('.key').",
+        "bad": "<p>Welcome back</p>",
+        "good": "<p><%= t('.welcome') %></p>"
+      },
+      "fieldLines": {
+        "source": 146,
+        "severity": 147,
+        "languages": 148,
+        "path": 149,
+        "scope": 150,
+        "fix": 180,
+        "bad": 181,
+        "good": 182
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "META_CHARSET",
+      "expr": ":META_CHARSET",
+      "path": "MASTER/law/html.rb",
+      "fields": {
+        "source": "HTML Living Standard — meta charset utf-8 (WHATWG)",
+        "severity": "error",
+        "languages": [
+          "html"
+        ],
+        "scope": "file",
+        "path_exclude": {
+          "regex": "/checks/fixtures/"
+        },
+        "fix": "Add a UTF-8 charset declaration as the first element in head.",
+        "bad": "<html><head><title>x</title></head></html>",
+        "good": "<html><head><meta charset=\"UTF-8\"></head></html>"
+      },
+      "fieldLines": {
+        "source": 194,
+        "severity": 195,
+        "languages": 196,
+        "scope": 197,
+        "path_exclude": 202,
+        "fix": 208,
+        "bad": 209,
+        "good": 210
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "NO_INLINE_SCRIPT_BLOCK",
+      "expr": ":NO_INLINE_SCRIPT_BLOCK",
+      "path": "MASTER/law/html.rb",
+      "fields": {
+        "source": "CSP script-src / separation of concerns — assets are files",
+        "severity": "warn",
+        "languages": [
+          "html"
+        ],
+        "path_exclude": {
+          "regex": "/public/\\d{3}\\.html\\z|/public/(?:offline|406-unsupported-browser)\\.html\\z|/script/probe_\\w+\\.html\\z|/_mailer_styles\\.html\\.erb\\z|/_theme_bootstrap\\.html\\.erb\\z|/app/views/chat/index\\.html\\.erb\\z"
+        },
+        "fix": "Move it to an asset file and reference it with javascript_include_tag or stylesheet_link_tag.",
+        "bad": "<div><script>boot()</script></div>",
+        "good": "<div></div>"
+      },
+      "fieldLines": {
+        "source": 223,
+        "severity": 224,
+        "languages": 225,
+        "path_exclude": 255,
+        "fix": 257,
+        "bad": 258,
+        "good": 259
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "NO_INLINE_STYLES",
+      "expr": ":NO_INLINE_STYLES",
+      "path": "MASTER/law/html.rb",
+      "fields": {
+        "source": "CSP / separation of concerns — no inline styles",
+        "severity": "warn",
+        "languages": [
+          "html"
+        ],
+        "path_exclude": {
+          "regex": "/public/\\d{3}\\.html\\z"
+        },
+        "fix": "Extract to CSS class; pass dynamic values as custom properties.",
+        "bad": "<p style=\"color:red\">",
+        "good": "<p class=\"warn\" style=\"--share: 40%\">"
+      },
+      "fieldLines": {
+        "source": 263,
+        "severity": 264,
+        "languages": 265,
+        "path_exclude": 270,
+        "fix": 284,
+        "bad": 285,
+        "good": 286
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "NO_JQUERY",
+      "expr": ":NO_JQUERY",
+      "path": "MASTER/law/html.rb",
+      "fields": {
+        "source": "RAILS/__shared frontend convention",
+        "severity": "warn",
+        "languages": [
+          "javascript",
+          "html"
+        ],
+        "fix": "Replace the selector call with a Stimulus target or querySelector.",
+        "bad": "$('#menu').show()",
+        "good": "document.querySelector('#menu').hidden = false"
+      },
+      "fieldLines": {
+        "source": 290,
+        "severity": 291,
+        "languages": 292,
+        "fix": 294,
+        "bad": 295,
+        "good": 296
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "PRESENTATIONAL_CLASS_NAME",
+      "expr": ":PRESENTATIONAL_CLASS_NAME",
+      "path": "MASTER/law/html.rb",
+      "fields": {
+        "source": "CSS naming — classes name meaning, not appearance",
+        "severity": "warn",
+        "languages": [
+          "html"
+        ],
+        "fix": "Name the role, not the rendering — or use the element that already means it (small, strong, em, time).",
+        "bad": "<span class=\"dim\">posted just now</span>",
+        "good": "<small>posted just now</small>"
+      },
+      "fieldLines": {
+        "source": 320,
+        "severity": 321,
+        "languages": 322,
+        "fix": 327,
+        "bad": 328,
+        "good": 329
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "SEMANTIC_ELEMENTS",
+      "expr": ":SEMANTIC_ELEMENTS",
+      "path": "MASTER/law/html.rb",
+      "fields": {
+        "source": "HTML5 semantics / WCAG 1.3.1 (W3C)",
+        "severity": "warn",
+        "languages": [
+          "html"
+        ],
+        "fix": "Use <header>, <footer>, <nav>, <main>, <aside>, <article>, <section>.",
+        "bad": "<div class=\"header\">",
+        "good": "<header>"
+      },
+      "fieldLines": {
+        "source": 333,
+        "severity": 334,
+        "languages": 335,
+        "fix": 337,
+        "bad": 338,
+        "good": 339
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "SKIP_TO_MAIN",
+      "expr": ":SKIP_TO_MAIN",
+      "path": "MASTER/law/html.rb",
+      "fields": {
+        "source": "WCAG 2.4.1 Bypass Blocks / style.yml accessibility",
+        "severity": "warn",
+        "languages": [
+          "html"
+        ],
+        "scope": "file",
+        "path": "/app/views/layouts/",
+        "path_exclude": {
+          "regex": "mailer"
+        },
+        "fix": "Add a skip link to #main-content in the layout.",
+        "bad": "<body><nav></nav><main></main></body>",
+        "good": "<body><a href=\"#main-content\">skip</a><main id=\"main-content\"></main></body>"
+      },
+      "fieldLines": {
+        "source": 355,
+        "severity": 356,
+        "languages": 357,
+        "scope": 358,
+        "path": 359,
+        "path_exclude": 360,
+        "fix": 362,
+        "bad": 363,
+        "good": 364
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "UTILITY_CLASS_SOUP",
+      "expr": ":UTILITY_CLASS_SOUP",
+      "path": "MASTER/law/html.rb",
+      "fields": {
+        "source": "style.yml html.forbidden.framework_class_explosion",
+        "severity": "warn",
+        "languages": [
+          "html"
+        ],
+        "path": "/app/views/",
+        "fix": "Move layout to SCSS with bare tag targeting.",
+        "bad": "<div class=\"row col mt mb\">",
+        "good": "<div class=\"toolbar\">"
+      },
+      "fieldLines": {
+        "source": 382,
+        "severity": 383,
+        "languages": 384,
+        "path": 385,
+        "fix": 387,
+        "bad": 388,
+        "good": 389
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "INTER_MODEL_CONTRACT",
+      "expr": ":INTER_MODEL_CONTRACT",
+      "path": "MASTER/law/inter_model.rb",
+      "fields": {
+        "source": "MASTER/data/inter_model.yml — machine-validated peer-model exchanges",
+        "severity": "error",
+        "languages": [
+          "ruby"
+        ],
+        "path": "MASTER/lib/review/council/",
+        "ask": "Do every MASTER-to-model council turn use InterModelContract to construct a structured request envelope,\nattach a SHA-256 artifact reference, validate the returned JSON finding schema, and record a bounded metric\nwithout persisting raw model text? Invalid output must receive one structured rejection and one retry only.",
+        "practice": "Treat other models as protocol peers: explicit authority, evidence, bounded artifacts, structured disagreement, and no reciprocal persona.",
+        "fix": "Wrap every council model request with InterModelContract and validate its returned structured findings before aggregation.",
+        "bad": "@agent.ask(prompt)",
+        "good": "@agent.ask(request_prompt)"
+      },
+      "fieldLines": {
+        "source": 6,
+        "severity": 7,
+        "languages": 8,
+        "path": 9,
+        "ask": 11,
+        "practice": 16,
+        "fix": 17,
+        "bad": 18,
+        "good": 19
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "NO_TRANSPORT_WRAPPER_IN_SOURCE",
+      "expr": ":NO_TRANSPORT_WRAPPER_IN_SOURCE",
+      "path": "MASTER/law/interface.rb",
+      "fields": {
+        "source": "MASTER source integrity — presentation wrappers do not belong in source files",
+        "severity": "error",
+        "languages": [
+          "ruby"
+        ],
+        "scope": "file",
+        "path_exclude": {
+          "regex": "/law/"
+        },
+        "fix": "Remove presentation/transport wrapper markup from the source file and preserve its Ruby contents verbatim.",
+        "bad": "<sub>\n# frozen_string_literal: true\nrequire \"fileutils\"\nend\n</sub>\n",
+        "good": "# frozen_string_literal: true\n\nrequire \"fileutils\"\n\ndef run = true\n"
+      },
+      "fieldLines": {
+        "source": 8,
+        "severity": 9,
+        "languages": 10,
+        "scope": 11,
+        "path_exclude": 12,
+        "fix": 17,
+        "bad": 18,
+        "good": 25
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "CLI_TREE_TARGET_RESOLUTION",
+      "expr": ":CLI_TREE_TARGET_RESOLUTION",
+      "path": "MASTER/law/interface.rb",
+      "fields": {
+        "source": "MASTER CLI — four-tree target addressing",
+        "severity": "error",
+        "languages": [
+          "ruby"
+        ],
+        "path": "MASTER/lib/cli/",
+        "ask": "When an operator explicitly names MASTER, RAILS, OPENBSD or STUDIO, does the command resolve that target from the repository root through the canonical target resolver rather than assuming the current working directory is MASTER? Return CLEAN when every explicit sibling-tree target follows the shared resolver contract.",
+        "fix": "Resolve explicit four-tree targets from Master::REPO_ROOT through TargetResolver; never reinterpret a sibling tree relative to MASTER/lib or the current process directory.",
+        "bad": "target = File.expand_path(\"STUDIO/replicate/lora\", Dir.pwd)\n",
+        "good": "target = resolve_target(\"STUDIO/replicate/lora\")\n"
+      },
+      "fieldLines": {
+        "source": 35,
+        "severity": 36,
+        "languages": 37,
+        "path": 38,
+        "ask": 39,
+        "fix": 40,
+        "bad": 41,
+        "good": 44
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "CLI_PROMPT_COMPOSITION",
+      "expr": ":CLI_PROMPT_COMPOSITION",
+      "path": "MASTER/law/interface.rb",
+      "fields": {
+        "source": "OpenBSD dmesg console discipline; shell line editing remains the input transport",
+        "severity": "warning",
+        "mode": "opportunity",
+        "languages": [
+          "ruby"
+        ],
+        "path": "MASTER/lib/voice/renderer/",
+        "ask": "Does the interactive prompt remain a restrained OpenBSD-console line that shows the checkout/tree, current directory, active conversation destination, Git state, meaningful phase/error state and input token, with no Starship/powerline-style segments or decorative emphasis? Is it bounded, single-line, plain in scrollback and cheap to redraw? Return CLEAN when it follows the dmesg-first house style.",
+        "fix": "Keep one compact text line with checkout/tree-relative path, active destination, plain Git state, phase and shell token. Prefer ASCII and stable spacing; avoid badges, icon glyphs, color-coded segments, boxes and duplicated status. Cache or bound Git probes and move detail to /status, /doctor or /help.",
+        "bad": "def prompt\n  system(\"git status\")\n  \"◉ #{@path} [model=#{@model} tokens=#{@tokens} memory=#{@memory}]\"\nend\n",
+        "good": "def prompt\n  [path, branch, phase, token].compact.join(\" \") + \" \"\nend\n"
+      },
+      "fieldLines": {
+        "source": 50,
+        "severity": 51,
+        "mode": 52,
+        "languages": 53,
+        "path": 54,
+        "ask": 55,
+        "fix": 56,
+        "bad": 60,
+        "good": 66
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "OPENBSD_DMESG_CONSOLE_STYLE",
+      "expr": ":OPENBSD_DMESG_CONSOLE_STYLE",
+      "path": "MASTER/law/interface.rb",
+      "fields": {
+        "source": "OpenBSD dmesg — xsa/openbsd-dmesgs and Master::Trace::Dmesg",
+        "severity": "warning",
+        "mode": "opportunity",
+        "languages": [
+          "ruby"
+        ],
+        "path": "MASTER/lib/voice/",
+        "ask": "For startup, status, progress and operational events, does CLI output follow the native console idiom: append-only, one factual event per line, a stable subsystem0: or unit0 at parent: prefix, truthful status, and useful scrollback? Look for banners, decorative panels, ASCII art outside the face, badge-like status, repeated progress chatter, and information hidden behind color alone. Conversational replies may retain plain Markdown when structure serves the content. Return CLEAN when operational output remains clear in a pipe, serial terminal and saved transcript.",
+        "fix": "Use Master::Trace::Dmesg's existing unit0: grammar for operational events; emit one concise factual line per event, order events by occurrence, keep state and recovery explicit, and preserve plain-text meaning without relying on ANSI or animation. Conversational replies may use restrained, width-aware Markdown. Do not create a second event logging format.",
+        "bad": "╭─ MASTER ───────────────────────────╮\n│  ◉ ONLINE  MODEL: ready  TOKENS 5k │\n╰───────────────────────────────────╯\n",
+        "good": "model0: ready\ncontext0: 5k/128k\nfix0 at scan0: 3 files changed\n"
+      },
+      "fieldLines": {
+        "source": 74,
+        "severity": 75,
+        "mode": 76,
+        "languages": 77,
+        "path": 78,
+        "ask": 79,
+        "fix": 80,
+        "bad": 81,
+        "good": 86
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "VOICE_FAILURES_ARE_ACTIONABLE",
+      "expr": ":VOICE_FAILURES_ARE_ACTIONABLE",
+      "path": "MASTER/law/interface.rb",
+      "fields": {
+        "source": "OpenBSD-style explicit failure reporting — degraded capability is state, not noise",
+        "severity": "info",
+        "mode": "opportunity",
+        "languages": [
+          "ruby"
+        ],
+        "path": "MASTER/lib/voice/",
+        "ask": "When synthesis, transport, or playback fails, does the runtime produce one bounded actionable state, preserve a useful last_error, and use the declared fallback chain without replaying or spawning uncontrolled work? Return CLEAN when the failure path is already explicit and bounded.",
+        "fix": "Return an explicit failure/result, retain the reason for /status or /doctor, rate-limit repeated diagnostics, and fall through only to declared voice/audio fallbacks.",
+        "bad": "rescue StandardError\n  warn e\n  nil\nend\n",
+        "good": "rescue StandardError => e\n  @last_error = \"#{e.class}: #{e.message}\"\n  warn_once(\"voice0: unavailable — #{@last_error}\")\n  fallback_or_false\nend\n"
+      },
+      "fieldLines": {
+        "source": 94,
+        "severity": 95,
+        "mode": 96,
+        "languages": 97,
+        "path": 98,
+        "ask": 99,
+        "fix": 100,
+        "bad": 101,
+        "good": 107
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "CLI_ANALYZE_TARGET_ROUTING",
+      "expr": ":CLI_ANALYZE_TARGET_ROUTING",
+      "path": "MASTER/law/interface.rb",
+      "fields": {
+        "source": "MASTER CLI — deterministic repository analysis targets",
+        "severity": "error",
+        "languages": [
+          "yaml"
+        ],
+        "path": "MASTER/data/patterns.yml",
+        "scope": "file",
+        "ask": "Does natural-language analysis of an explicit repository path enter the deterministic operator route instead of falling through to the model and guessing about file existence?",
+        "fix": "Register analyze/analyse/inspect with a path capture and map it to the canonical review route.",
+        "bad": "commands:\n  review:\n    patterns:\n    - \"\\\\b(?:review)\\\\s+(.+)\"\n",
+        "good": "infer:\n  commands:\n    analyze:\n      patterns:\n      - \"\\\\b(?:analyze|analyse|inspect)\\\\s+([\\\\w./-]+)\"\n      capture: path\n"
+      },
+      "fieldLines": {
+        "source": 117,
+        "severity": 118,
+        "languages": 119,
+        "path": 120,
+        "scope": 121,
+        "ask": 122,
+        "fix": 123,
+        "bad": 124,
+        "good": 130
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "CLI_FACE_DEDICATED_TTY",
+      "expr": ":CLI_FACE_DEDICATED_TTY",
+      "path": "MASTER/law/interface.rb",
+      "fields": {
+        "source": "Terminal discipline — full-screen face must not share line-editor input",
+        "severity": "error",
+        "languages": [
+          "ruby"
+        ],
+        "path": "MASTER/lib/cli/command_registry.rb",
+        "scope": "file",
+        "ask": "Does the /face command obtain an independent terminal stream instead of sharing Reline/session stdin with the full-screen face?",
+        "fix": "Open /dev/tty and pass that handle as both the face input and output; close it after the face exits.",
+        "bad": "Face::Window.new(turn:, event_bus: container[:bus]).run\n",
+        "good": "terminal = File.open(\"/dev/tty\", \"r+\")\nFace::Window.new(turn:, event_bus: container[:bus], input: terminal, output: terminal).run\n"
+      },
+      "fieldLines": {
+        "source": 145,
+        "severity": 146,
+        "languages": 147,
+        "path": 148,
+        "scope": 149,
+        "ask": 150,
+        "fix": 151,
+        "bad": 152,
+        "good": 155
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "CAPABILITY_STATUS_MUST_BE_TRUTHFUL",
+      "expr": ":CAPABILITY_STATUS_MUST_BE_TRUTHFUL",
+      "path": "MASTER/law/interface.rb",
+      "fields": {
+        "source": "OpenBSD-style status reporting — unavailable capabilities are not ready",
+        "severity": "error",
+        "languages": [
+          "ruby",
+          "javascript",
+          "html"
+        ],
+        "ask": "Does a status, progress, success, pending, sent or delivered label, or a service readiness report, ",
+        "fix": "Derive service state from the capability's actual health or retained error; report degraded or unavailable with the reason instead of ready.",
+        "bad": "when \"voice\" then ENV[\"MASTER_TTS_DEGRADED\"] == \"1\" ? \"degraded\" : \"ready\"\n",
+        "good": "when \"voice\"\n  reason = Voice::Speech.last_error || Voice::Playback.last_error\n  reason ? \"degraded: #{reason}\" : \"ready\"\n"
+      },
+      "fieldLines": {
+        "source": 166,
+        "severity": 167,
+        "languages": 171,
+        "ask": 172,
+        "fix": 175,
+        "bad": 176,
+        "good": 179
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "SIGNATURE_MOMENT",
+      "expr": ":SIGNATURE_MOMENT",
+      "path": "MASTER/law/interface.rb",
+      "fields": {
+        "source": "Interaction design — distinctive, frequent, functional moments",
+        "severity": "info",
+        "mode": "opportunity",
+        "languages": [
+          "html",
+          "javascript",
+          "css",
+          "scss"
+        ],
+        "path": "RAILS/",
+        "ask": "Does this product surface have one deliberately distinctive interaction that users encounter often, improves the task rather than merely decorating it, matches the product's character, and remains effortless and accessible? Return CLEAN when an existing interaction already serves this role.",
+        "fix": "Choose one existing high-frequency interaction and give it immediate, restrained, distinctive feedback. Do not invent a feature solely for delight, duplicate the pattern elsewhere, or make motion or haptics the only signal.",
+        "bad": "Add a decorative animation with no relationship to the user's action.",
+        "good": "Make one frequent action produce immediate visual state, optional tactile feedback, and a clear success or failure result."
+      },
+      "fieldLines": {
+        "source": 191,
+        "severity": 192,
+        "mode": 193,
+        "languages": 194,
+        "path": 195,
+        "ask": 196,
+        "fix": 197,
+        "bad": 198,
+        "good": 199
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "DIRECT_MANIPULATION_FEEDBACK",
+      "expr": ":DIRECT_MANIPULATION_FEEDBACK",
+      "path": "MASTER/law/interface.rb",
+      "fields": {
+        "source": "Direct manipulation — immediate perceptual feedback",
+        "severity": "warning",
+        "mode": "opportunity",
+        "languages": [
+          "html",
+          "javascript",
+          "css",
+          "scss"
+        ],
+        "path": "RAILS/",
+        "ask": "When a user directly presses, drags, swipes, or dismisses something, does the interface acknowledge that input immediately rather than waiting for a delayed release or network result? Check pointer, keyboard, touch, visual state, and failure recovery together.",
+        "fix": "Respond at input start with a small state change, keep the gesture tied to the pointer while it moves, and retain a non-motion keyboard equivalent. Do not make the early feedback imply success before the action is actually committed.",
+        "bad": "click -> request -> finally show any indication that the press happened",
+        "good": "pointerdown/active -> immediate press state; commit -> explicit success or failure state"
+      },
+      "fieldLines": {
+        "source": 203,
+        "severity": 204,
+        "mode": 205,
+        "languages": 206,
+        "path": 207,
+        "ask": 208,
+        "fix": 209,
+        "bad": 210,
+        "good": 211
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "WAITING_STATE_MEANING",
+      "expr": ":WAITING_STATE_MEANING",
+      "path": "MASTER/law/interface.rb",
+      "fields": {
+        "source": "Interaction status — useful feedback during dead time",
+        "severity": "info",
+        "mode": "opportunity",
+        "languages": [
+          "html",
+          "css",
+          "scss",
+          "javascript"
+        ],
+        "path": "RAILS/",
+        "ask": "When a user is waiting for a meaningful result, does the surface identify what is happening or what is being prepared, rather than exposing only a generic spinner or unexplained motion? Keep the message brief, truthful, localised, and independent of animation.",
+        "fix": "Expose a short status label alongside the existing progress or skeleton state. Keep it accurate and persistent long enough to orient the user; never invent progress or use animation as the only meaning.",
+        "bad": "<div class=\"spinner\" aria-label=\"Loading\"></div>",
+        "good": "<div aria-busy=\"true\"><span>Loading results…</span><div class=\"skeleton\" aria-hidden=\"true\"></div></div>"
+      },
+      "fieldLines": {
+        "source": 215,
+        "severity": 216,
+        "mode": 217,
+        "languages": 218,
+        "path": 219,
+        "ask": 220,
+        "fix": 221,
+        "bad": 222,
+        "good": 223
+      },
+      "kind": "definition"
+    },
+    {
+      "id": "NO_ASCII_ART_OUTSIDE_FACE",
+      "expr": ":NO_ASCII_ART_OUTSIDE_FACE",
+      "path": "MASTER/law/interface.rb",
+      "fields": {
+        "source": "Rendered-values law — ASCII art is reserved for the face itself",
+        "severity": "error",
+        "languages": [
+          "ruby",
+          "javascript",
+          "html",
+          "yaml",
+          "markdown",
+          "zsh",
+          "css"
+        ],
+        "path_exclude": {
+          "regex": "(?:MASTER/lib/cli/face|RAILS/master/public/(?:face_ascii|face_2d_fallback)\\.js|RAILS/master/test/face_ascii\\.test\\.mjs|MASTER/test/test_cli_ascii_face\\.rb|MASTER/test/fixtures/face_ascii_frames\\.json|MASTER/tools/face_ascii_fixtures\\.rb)"
+        },
+        "ask": "Does this file add ASCII-art logos, boot banners, decorative prompt drawings, or other typographic pictures outside the face renderer? ASCII art is forbidden everywhere except the face itself and the fixtures that prove its rendering. Ordinary text, a real wordmark set in a font, shell prompt characters, and dmesg-like status lines are not ASCII art. Return CLEAN when no decorative ASCII picture exists outside the face.",
+        "fix": "Delete ASCII-art banners, wordmarks, and prompt drawings. Keep ASCII geometry only inside the terminal/browser face renderer and its matching fixtures.",
+        "bad": "ascii_art = [\"|\\\\  /|\", \"| \\\\/ |\"]\n",
+        "good": "Master::CLI::Face.frame(state: :idle, rows: 24, cols: 60)\n"
+      },
+      "fieldLines": {
+        "source": 228,
+        "severity": 229,
+        "languages": 230,
+        "path_exclude": 231,
+        "ask": 232,
+        "fix": 233,
+        "bad": 234,
+        "good": 237
+      },
+      "kind": "definition"
+    }
+  ]
 }
