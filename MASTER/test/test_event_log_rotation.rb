@@ -38,6 +38,15 @@ class TestEventLogRotation < Minitest::Test
     end
   end
 
+  def test_strict_append_propagates_a_full_disk
+    Dir.mktmpdir do |dir|
+      log = Master::Trace::Log::Event.new(root: dir, stream: "strict_enospc_probe#{Process.pid}")
+      File.stub(:open, ->(*) { raise Errno::ENOSPC }) do
+        assert_raises(Errno::ENOSPC) { log.append!("required:event", effect_id: "e-3") }
+      end
+    end
+  end
+
   def test_enospc_reclaims_a_rotated_generation_and_retries_once
     Dir.mktmpdir do |dir|
       log = Master::Trace::Log::Event.new(root: dir, stream: "activity")

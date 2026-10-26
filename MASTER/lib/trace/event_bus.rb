@@ -48,6 +48,32 @@ module Master
         self
       end
 
+      # Publish an event whose durable record is a precondition for proceeding.
+      # Unlike ordinary telemetry, persistence failure raises to the caller.
+      # Subscribers still run through the shared bounded dispatch queue.
+      def publish_required(event, payload = {})
+        conversation = Fiber[:master_conversation]
+        enriched = payload.merge(event:, ts: elapsed_ms)
+        enriched[:conversation] = conversation if conversation
+        persist_required_event(event, enriched)
+
+        state = Thread.current.thread_variable_get(:master_event_dispatch)
+        unless state
+          state = { queue: [], dispatched: 0, warned: false }
+          Thread.current.thread_variable_set(:master_event_dispatch, state)
+          begin
+            enqueue(state, event, enriched, conversation:, already_persisted: true)
+            drain(state)
+          ensure
+            Thread.current.thread_variable_set(:master_event_dispatch, nil)
+          end
+          return self
+        end
+
+        enqueue(state, event, enriched, conversation:, already_persisted: true)
+        self
+      end
+
       private
 
       # Handlers are allowed to publish follow-up events, but those events are
@@ -55,34 +81,34 @@ module Master
       # The queue is per thread, so independent model/tool workers still publish
       # normally. A bounded cascade prevents a broken telemetry handler from
       # generating an unbounded stream of its own error event.
-      def enqueue(state, event, payload)
+      def enqueue(state, event, payload, conversation: Fiber[:master_conversation], already_persisted: false)
         if state[:dispatched] + state[:queue].size >= MAX_DISPATCHED_EVENTS
           warn_dispatch_limit(state, event)
           return
         end
 
-        state[:queue] << [event, payload, Fiber[:master_conversation]]
+        state[:queue] << [event, payload, conversation, already_persisted]
       end
 
       def drain(state)
         until state[:queue].empty?
-          event, payload, conversation = state[:queue].shift
+          event, payload, conversation, already_persisted = state[:queue].shift
           state[:dispatched] += 1
-          dispatch_one(event, payload, conversation)
+          dispatch_one(event, payload, conversation, already_persisted:)
         end
       end
 
-      def dispatch_one(event, payload, conversation)
+      def dispatch_one(event, payload, conversation, already_persisted: false)
         ts = elapsed_ms
         # One process-wide bus. ChatService (and anything else that writes a
         # visitor's SSE from a handler) must be able to ignore another
         # conversation's events — without this stamp, subscribe("**") and even
         # named tool:before handlers dump visitor B's turn into visitor A's stream.
-        enriched = payload.merge(event:, ts:)
-        enriched[:conversation] = conversation if conversation
+        enriched = already_persisted ? payload : payload.merge(event:, ts:)
+        enriched[:conversation] = conversation if conversation && !enriched.key?(:conversation)
         handlers = synchronize { matching_handlers(event) }
 
-        persist_event(event, enriched)
+        persist_event(event, enriched) unless already_persisted
 
         previous_conversation = Fiber[:master_conversation]
         Fiber[:master_conversation] = conversation
@@ -133,6 +159,26 @@ module Master
         Master::Trace::Dmesg.once("event0", "dispatch limit #{MAX_DISPATCHED_EVENTS} reached at #{event}, dropping recursive telemetry")
       rescue StandardError
         nil
+      end
+
+      def persist_required_event(event, payload)
+        safe_payload = Master::Ground::Redactor.payload(payload)
+        append_required(@event_log, event, safe_payload)
+        if @evidence_log&.operational?(event)
+          append_required(@evidence_log, event, safe_payload)
+        end
+      rescue StandardError => e
+        raise IOError, "required event persistence failed for #{event}: #{e.class}: #{e.message}"
+      end
+
+      def append_required(log, event, payload)
+        result = if log.respond_to?(:append!)
+                   log.append!(event, payload)
+                 else
+                   log.append(event, payload)
+                 end
+        raise IOError, "event log rejected #{event}" if result.nil?
+        result
       end
 
       def persist_event(event, payload)

@@ -50,7 +50,7 @@ module Master
           )
           world = build_world(root: workspace_root, container:, capabilities:, network: network_client(container))
           mission.transition!(:execute)
-          effect_observer = build_effect_observer(bus:)
+          effect_observer = build_effect_observer(bus:) if bus
           done = build_fold(root: workspace_root, model:, memory:, world:, max_turns:, observer:, effect_observer:, capabilities:).run(goal)
           mission.transition!(:verify, summary: continuation_summary(done))
           settle_mission(mission, done)
@@ -302,9 +302,9 @@ module Master
         lambda do |stage:, turn:, effect:, effect_id:, observation: nil, elapsed_ms: nil|
           payload = { effect_id:, turn:, verb: effect.verb, capability: effect.capability }
           if stage == :before
-            bus&.publish("core:effect:before", payload)
+            bus.publish_required("core:effect:before", payload)
           elsif stage == :after
-            bus&.publish("core:effect:after", payload.merge(
+            bus.publish_required("core:effect:after", payload.merge(
               status: observation.ok? ? "ok" : "error", elapsed_ms:
             ))
           end

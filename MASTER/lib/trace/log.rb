@@ -220,13 +220,19 @@ module Master
         end
 
         def append(event, payload = {})
-          record = build_record(event, payload)
-          Log.append_jsonl(@path, record, max_bytes: MAX_BYTES, mode: 0o600, directory_mode: 0o700)
-          record
+          append!(event, payload)
         rescue SystemCallError, JSON::GeneratorError, ArgumentError, IOError => e
           # Stderr is last resort — cannot route through bus without risking recursion.
           Log.warn_once([@path, e.class], "event_log: #{@path}: #{e.message}")
           nil
+        end
+
+        # Strict variant for lifecycle events whose persistence is a safety
+        # precondition. Best-effort telemetry continues to use #append.
+        def append!(event, payload = {})
+          record = build_record(event, payload)
+          Log.append_jsonl(@path, record, max_bytes: MAX_BYTES, mode: 0o600, directory_mode: 0o700)
+          record
         end
 
         def recent(limit, pattern: nil)
@@ -288,6 +294,8 @@ module Master
         def operational?(event) = event.to_s.match?(OPERATIONAL)
 
         def append(event, payload = {}) = @log.append(event, payload)
+
+        def append!(event, payload = {}) = @log.append!(event, payload)
 
         def recent(limit, pattern: nil) = @log.recent(limit, pattern:)
       end

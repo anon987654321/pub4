@@ -92,8 +92,10 @@ The interactive CoreBridge path now attaches a lifecycle observer to the Fold:
 core:effect:before is published before each World effect and core:effect:after
 records the observed outcome and elapsed time. Event payloads carry an effect ID,
 turn, verb and capability, not raw arguments that could contain secrets. Failure to
-publish the before-event prevents the effect from running; failure to publish the
+persist the before-event prevents the effect from running; failure to persist the
 after-event returns trace_failed rather than claiming the task completed. This
+path uses EventBus#publish_required and the event log's strict append method,
+while ordinary best-effort telemetry retains its existing failure-swallowing behavior. This
 is the first slice of the external-action event contract, not yet a shared event
 adapter for every tool and /fix path.
 

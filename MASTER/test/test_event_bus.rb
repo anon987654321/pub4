@@ -129,6 +129,32 @@ class TestEventBus < Minitest::Test
     assert Time.iso8601(audit_cli["ts"]), "the audit line keeps its wall clock"
   end
 
+  def test_publish_required_persists_before_dispatching_subscribers
+    observed_record = nil
+    @bus.subscribe("critical:before") do |_event|
+      observed_record = @bus.instance_variable_get(:@event_log).recent(1).last
+    end
+
+    @bus.publish_required("critical:before", effect_id: "e-1", verb: "write")
+
+    assert_equal "critical:before", observed_record.fetch("event")
+    assert_equal "e-1", observed_record.dig("payload", "effect_id")
+    assert_equal "write", observed_record.dig("payload", "verb")
+  end
+
+  def test_publish_required_propagates_persistence_failure
+    called = false
+    broken_log = Object.new
+    broken_log.define_singleton_method(:append!) { |*| raise IOError, "disk full" }
+    @bus.instance_variable_set(:@event_log, broken_log)
+    @bus.subscribe("critical:before") { called = true }
+
+    error = assert_raises(IOError) { @bus.publish_required("critical:before", effect_id: "e-2") }
+
+    assert_match(/required event persistence failed/, error.message)
+    refute called, "subscriber dispatch must not precede required persistence"
+  end
+
   private
 
   def log_lines(relative)
