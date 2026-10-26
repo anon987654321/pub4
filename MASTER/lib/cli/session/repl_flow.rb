@@ -110,8 +110,7 @@ module Master
         state, prompt = @refs.renderer.prompt_line(
           @refs.agent.model, @refs.session.phase,
           last_ok: @last_ok, violations: violations_count,
-          tokens: @refs.session.token_est, cost: @refs.session.cost,
-          destination: Master::Io::Chat.destination_label
+          tokens: @refs.session.token_est, cost: @refs.session.cost
         )
         announce_state(state)
         prompt
@@ -124,7 +123,7 @@ module Master
           @refs.agent.model, @refs.session.phase,
           last_ok: @last_ok, violations: violations_count,
           tokens: @refs.session.token_est, cost: @refs.session.cost,
-          destination: Master::Io::Chat.destination_label, focused: true
+          focused: true
         )
         announce_state(state)
         prompt
