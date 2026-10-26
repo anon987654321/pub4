@@ -266,7 +266,7 @@
           <div class="listing-review-cover" data-listing-form-target="reviewCover" aria-hidden="true">
             <%= @listing.title.to_s.first&.upcase || "?" %>
           </div>
-          <div>
+          <div> <%# scan: intentional — the review card grid pairs the media cover with its grouped listing facts %>
             <p class="listing-review-title" data-listing-form-target="reviewTitle"><%= @listing.title.presence || t("marketplace.untitled_listing") %></p>
             <% if @kind == "goods" %>
               <p data-listing-form-target="reviewPrice"><%= @listing.price_cents.present? ? Shared::MoneyDisplay.format(@listing.price_cents, @listing.currency || "NOK") : t("marketplace.price_not_set") %></p>

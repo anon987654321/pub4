@@ -42,7 +42,7 @@
         <% (1..3).each do |step| %>
           <li>
             <span class="welcome-onboarding-step-number" aria-hidden="true"><%= step %></span>
-            <div>
+            <div> <%# scan: intentional — the ordered-list grid needs one child for each step title and explanation %>
               <strong><%= t("#{namespace}.steps.#{step}.title") %></strong>
               <p><%= t("#{namespace}.steps.#{step}.body", city: city) %></p>
             </div>
