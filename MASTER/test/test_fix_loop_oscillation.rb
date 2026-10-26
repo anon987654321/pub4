@@ -251,6 +251,20 @@ def publish_pending! = :nothing_to_publish
     assert @bus.events.any? { |event| event[:event] == "fix_loop:halt" }
   end
 
+  def test_pre_cancelled_request_stops_before_journal_or_mission_creation
+    loop, = build_loop([])
+    token = Master::Core::CancellationToken.new.cancel!(reason: "operator stop")
+
+    result = loop.run(@root, requested: true, cancellation: token)
+
+    assert result.err?
+    assert_equal :cancelled, result.category
+    assert_match(/CANCELLED/, result.message)
+    assert_nil Master::Fix::Mission.current(root: @root)
+    refute loop.send(:cancellation_requested?), "a completed run must not retain its token"
+    refute @bus.events.any? { |event| event[:event] == "fix_loop:journal_start" }
+  end
+
   # The boot scan halts the loop whenever lib/ carries a violation, which is
   # always; the operator's /fix exists to fix those, so it runs through a halt.
   def test_a_requested_run_proceeds_through_a_halt
