@@ -613,7 +613,23 @@ because agents read the Law one identity at a time. Reopen with a duplicate body
   against lanes the operator has not authorised.
 - **No distant-future kernel rewrite.** Effect, Constitution, World, Memory and
   Proof, with the separate FixLoop lifecycle, are the kernel. Reopen with a
-  concrete defect the present shape cannot express.
+  concrete defect the present shape cannot express. The 2026-10-26 ChatGPT
+  architecture briefs (effect kernel and evidence ledger, event sourcing, actor
+  supervisors, a capability microkernel, a worker market, eighteen alternatives)
+  fall here and under the parallel-stream, external-protocol, skill, memory and
+  third-surface refusals above; their concrete parts landed instead as
+  `Fix::OutcomePolicy`, one terminal-state list, `Io::LaneState` and
+  `Fix::LanePreflight`.
+- **No RBS or Steep yet.** Signatures are a second declaration of every
+  interface, and a type checker is a toolchain run on an 8 GB Mac with no check
+  that reads its output. `Data.define` values and the contract tests hold the
+  boundaries that have broken. Reopen with an interface mismatch that shipped
+  and that a signature would have caught.
+- **Model order is quality order, not least recently used.** OpenClaw rotates
+  auth profiles least recently used first, and `Io::KeyRotator` already does
+  that for keys. Applied to models it would put sonnet ahead of opus by turns.
+  The starvation it guards against was an idle lane read as unhealthy, fixed in
+  `ProviderHealth` (a 15-minute window) and `ModelRouter#recently_failed?`.
 - **The Rails 8.2 alpha pin moves only by a deliberate change.** Never float it.
   An upgrade is its own commit with compatible Gemfiles and lockfiles and the
   app, contract and browser suites after it. Reopen on an upstream release or a
