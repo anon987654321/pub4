@@ -197,8 +197,8 @@ module Master
       # so a future promotion gate can require evidence instead of trusting prose.
       SKILL_STATES = %i[unreviewed candidate approved deprecated blocked invalid].freeze
       SKILL_RISKS = %i[unknown low medium high critical].freeze
-      SKILL_VERSION = /\A\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?\\z/
-      REFERENCE = /\A[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,239}\\z/
+      SKILL_VERSION = /\A\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?\z/
+      REFERENCE = /\A[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,239}\z/
       SKILL_DECLARATION_KEYS = %w[schema_version version status risk required_capabilities laws fixtures provenance].freeze
 
       SkillContract = Data.define(
@@ -237,7 +237,7 @@ module Master
           errors << "invalid_risk" unless Contract::SKILL_RISKS.include?(risk)
           risk = :unknown unless Contract::SKILL_RISKS.include?(risk)
 
-          required_capabilities = references(data["required_capabilities"], "required_capabilities", errors, /\A[a-zA-Z][a-zA-Z0-9_.:-]{0,79}\\z/)
+          required_capabilities = references(data["required_capabilities"], "required_capabilities", errors, /\A[a-zA-Z][a-zA-Z0-9_.:-]{0,79}\z/)
           law_ids = references(data["laws"], "laws", errors, Contract::TOKEN)
           fixture_refs = references(data["fixtures"], "fixtures", errors, Contract::REFERENCE)
 
