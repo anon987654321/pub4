@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "configuration_guard"
+require_relative "../configuration_guard"
 
 module Master
   module Fix

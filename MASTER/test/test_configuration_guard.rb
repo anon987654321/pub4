@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/fix/configuration_guard"
+require_relative "../lib/configuration_guard"
 
 class TestConfigurationGuard < Minitest::Test
   Guard = Master::ConfigurationGuard
