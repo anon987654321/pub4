@@ -240,6 +240,7 @@ private
     end
 
     def notify_effect(**event)
+      event[:scope] = effect_scope(event[:effect]) unless event.key?(:scope)
       @effect_observer&.call(**event)
     rescue StandardError => e
       @lifecycle_failure_before = true if event[:stage] == :before
@@ -250,6 +251,27 @@ private
       Done.new(reason: :trace_failed, turns: turn + 1,
                summary: "stopped without claiming completion: #{@lifecycle_failure}")
     end
+
+    # The observer hashes this local scope before persistence. Never send the
+    # source path, URL, command arguments, note text, or prompt to the event log.
+    def effect_scope(effect)
+      args = effect.args
+      case effect.verb
+      when :read, :write
+        args[:path] || args["path"]
+      when :http
+        args[:url] || args["url"]
+      when :exec
+        Array(args[:argv] || args["argv"]).map(&:to_s).join("\0")
+      when :git
+        [args[:operation] || args["operation"], *Array(args[:paths] || args["paths"])].join("\0")
+      when :note, :ask, :critique
+        effect.verb.to_s
+      else
+        nil
+      end
+    end
+
 
     def emit(turn, effect, observation)
       @observer&.call(turn:, effect:, observation:)
