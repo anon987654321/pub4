@@ -126,6 +126,8 @@ class TestEventBus < Minitest::Test
     assert_equal [digest, digest], [web["session"], audit_web["session"]]
     assert_equal ["local-#{Process.pid}"] * 2, [cli["session"], audit_cli["session"]]
     refute_includes File.read(File.join(@dir, ".master/audit.ndjson")), "aabbccddeeff00112233445566778899"
+    refute_includes File.read(File.join(@dir, ".master/audit.ndjson")), "web.rb"
+    assert_equal true, audit_web["path_present"]
     assert Time.iso8601(audit_cli["ts"]), "the audit line keeps its wall clock"
   end
 
@@ -154,6 +156,32 @@ class TestEventBus < Minitest::Test
 
     assert_match(/required event persistence failed/, error.message)
     refute called, "subscriber dispatch must not precede required persistence"
+  end
+
+  def test_sensitive_event_payloads_are_projected_only_when_persisted
+    observed = nil
+    @bus.subscribe("tool:before") { |payload| observed = payload }
+    conversation = "session-bearer-1234567890"
+    private_reason = "private customer prompt and internal reasoning"
+    private_path = "customers/alice/private-note.txt"
+    private_content = "secret manuscript contents"
+
+    Fiber[:master_conversation] = conversation
+    @bus.publish("core:reason", why: private_reason)
+    @bus.publish("tool:before", tool: "write_file", path: private_path, args: { content: private_content })
+    @bus.publish("fix:transaction_rollback", id: "tx-safe-1", paths: [private_path], error: "private filesystem failure")
+    Fiber[:master_conversation] = nil
+
+    persisted = @bus.instance_variable_get(:@event_log).recent(20).to_json
+    refute_includes persisted, conversation
+    refute_includes persisted, private_reason
+    refute_includes persisted, private_path
+    refute_includes persisted, private_content
+    assert_includes persisted, "reason_present"
+    assert_includes persisted, "reason_bytes"
+    assert_includes persisted, "path_count"
+    assert_equal private_path, observed[:path], "live policy subscribers retain original event data"
+    assert_equal private_content, observed.dig(:args, :content)
   end
 
   private
