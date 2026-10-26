@@ -3,7 +3,7 @@
 require_relative "test_helper"
 # See test_adversarial_law: SemanticLaw lives in a plural rules file and is
 # reached by require, never by autoload.
-require_relative "../law/detectors/semantic_laws
+require_relative "../law/detectors/semantic_laws"
 
 class TestFindingMetadata < Minitest::Test
   def test_finding_exposes_law_id_and_schema_metadata
