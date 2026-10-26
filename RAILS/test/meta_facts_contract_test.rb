@@ -50,6 +50,14 @@ class MetaFactsContractTest < Minitest::Test
     refute_includes crossings, " · <%= time_ago_in_words(crossing.crossed_at) %>"
   end
 
+  def test_heading_groups_and_named_preferences_use_semantic_elements
+    affiliate = read("__shared/app/views/shared/_affiliate_feed_unit.html.erb")
+    assert_includes affiliate, "<hgroup>"
+    assert_includes affiliate, 'class="affiliate_feed_label"'
+    preferences = read("__shared/app/views/shared/_cookie_banner.html.erb")
+    assert_match(/class="cookie-consent-preferences"[^>]*>\s*<section>\s*<h3/m, preferences)
+  end
+
   def test_post_card_bylines_do_not_embed_separator_glyphs
     template = read("__shared/app/views/shared/_post_card.html.erb")
     refute_includes template, " · <span class=\"feed-post-place\""
