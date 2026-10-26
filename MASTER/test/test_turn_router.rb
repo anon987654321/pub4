@@ -353,4 +353,25 @@ end
     refute approval.ok?
   end
 
+  def test_inferred_slash_route_retains_the_active_cancellation_token
+    token = Master::Core::CancellationToken.new
+    container = build_container
+    captured = nil
+    dispatcher = lambda do |input, container:, felt_sense: nil, on_turn: nil, cancellation: nil|
+      captured = { input:, cancellation: }
+      Master::Result.ok({ rendered: "routed" })
+    end
+
+    Master::CLI::TurnRouter.stub(:dispatch_slash, dispatcher) do
+      result = Master::CLI::TurnRouter.dispatch_inferred(
+        { command: "run", args: "read README.md", confidence: 0.9 },
+        container:, cancellation: token
+      )
+      assert result.ok?
+    end
+
+    assert_equal "/run read README.md", captured[:input]
+    assert_same token, captured[:cancellation]
+  end
+
 end
