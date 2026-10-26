@@ -155,6 +155,7 @@ module Law
       # a narrow scope must be an explicit declaration, never an inferred omission.
       ::Law::ASSESSMENT_SURFACES
     end
+
     # Universal describes the invariant, not the detector syntax. A universal
     # principle may have Ruby, zsh, Rails or another domain adapter.
     def universal? = true
