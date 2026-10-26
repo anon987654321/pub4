@@ -31,20 +31,23 @@ module Master
           def fallback_chain(task_type: :exploration)
             return [@config.model] unless enabled?
 
-            candidates = RoutePolicy.normalize(chain_for(task_type))
+            candidates = Routing::RoutePolicy.normalize(chain_for(task_type))
             reachable = candidates.select { |id| reachable?(id) }
             parked = reachable.select { |id| Io::ModelSkipCache.skipped?(id) }
             unparked = reachable.reject { |id| parked.include?(id) }
+
             recently_failed = unparked.select { |id| recently_failed?(id) }
             answering = unparked.reject { |id| recently_failed.include?(id) }
             needs_floor = answering.empty?
             meets_floor = needs_floor ? unparked.select { |id| @availability.meets_floor?(id, operation: task_type) } : []
             local = needs_floor ? meets_floor.select { |id| @availability.level_for(id) == "L2" } : []
+
             usable = unparked.select { |id| Io::LaneState.usable?(id) }
 
-            decision = RoutePolicy.call(
+            decision = Routing::RoutePolicy.call(
               candidates:, reachable:, parked:, usable:, recently_failed:, meets_floor:, local:
             )
+
             ranked = @provider_health.rank(decision.selected)
             ranked = @compute_pool.rank(ranked, task_type:)
             selected = chitchat_head(

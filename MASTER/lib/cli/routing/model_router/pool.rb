@@ -407,10 +407,12 @@ module Master
           # ships) and each configured provider's own list. Its models.dev builder
           # is never called: AGENTS.md refuses a models.dev scrape.
           def refresh_model_registry
-            file = RubyLLM.config.model_registry_file
+            return unless defined?(::RubyLLM)
+
+            file = ::RubyLLM.config.model_registry_file
             return if File.file?(file) && Time.now - File.mtime(file) < CATALOG_MAX_AGE_S
 
-            RubyLLM.models.refresh
+            ::RubyLLM.models.refresh
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "model_router.pool.registry")
             nil
