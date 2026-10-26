@@ -88,7 +88,7 @@ class CoreBridgeTest < Minitest::Test
       assert_equal "cancelled: operator stopped", result[:summary]
       record = Master::Fix::Mission.current(root:)
       assert_equal "cancelled", record["state"]
-      assert_equal "verify", record["stage"], "cancellation must not pretend that delivery happened"
+      assert_equal "execute", record["stage"], "cancellation must not pretend that verification or delivery happened"
       assert_equal false, record["auto_continue"] if record.key?("auto_continue")
     end
   end
