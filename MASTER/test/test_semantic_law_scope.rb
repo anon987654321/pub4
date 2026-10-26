@@ -3,15 +3,9 @@
 require_relative "test_helper"
 require "review/scan/law_dsl"
 
-# `languages:` on a semantic rule was inert. SemanticLaw.from_yaml kept prompt,
-# severity, mode, reversibility and blast_radius and dropped the rest, so a rule
-# declaring `css` was asked about every file and the declaration cost tokens
-# without buying a scope. Its only reader had been the lexical bridge, which
-# carries no rules now.
-#
-# Both halves are pinned here: the scope is honoured, and a rule that declares
-# nothing still reaches everything — narrowing this into a rule that only ever
-# asks about a handful of files would be worse than the inert key.
+# Semantic interpretation is universal. Language declarations govern
+# deterministic/AST adapter reach, not whether an invariant may be considered
+# when reading a complete artifact as prose, source, or structured text.
 class TestSemanticLawScope < Minitest::Test
   def rule = @rule ||= Master::Review::Scan::Laws::SemanticLaw.new(agent: nil)
 
@@ -48,7 +42,7 @@ class TestSemanticLawScope < Minitest::Test
     agent = Object.new
     agent.define_singleton_method(:ask) do |_prompt, operation:|
       calls += 1
-      "CLEAN"
+      operation == :scan_semantic_opportunities ? "NONE" : "CLEAN"
     end
     rule = Master::Review::Scan::Laws::SemanticLaw.new(agent:)
 
@@ -79,14 +73,11 @@ class TestSemanticLawScope < Minitest::Test
     assert_equal [2, 3], findings.map { |finding| finding[:line] }
   end
 
-  def test_a_ruby_rule_is_not_asked_about_a_stylesheet
-    assert_includes scoped("ruby"), "RAILS_THIN_CONTROLLER_SEMANTIC"
-    refute_includes scoped("css"), "RAILS_THIN_CONTROLLER_SEMANTIC"
-  end
-
-  def test_a_stylesheet_rule_is_not_asked_about_ruby
-    assert_includes scoped("css"), "AESTHETIC_FLAT_SEMANTIC"
-    refute_includes scoped("ruby"), "AESTHETIC_FLAT_SEMANTIC"
+  def test_all_semantic_laws_are_available_for_every_language
+    %w[ruby css markdown html javascript yaml zsh json scss].each do |language|
+      assert_includes scoped(language), "RAILS_THIN_CONTROLLER_SEMANTIC", language
+      assert_includes scoped(language), "AESTHETIC_FLAT_SEMANTIC", language
+    end
   end
 
   # The counterweight. Most rules declare no language and the scope must leave
@@ -100,22 +91,30 @@ class TestSemanticLawScope < Minitest::Test
     end
   end
 
-  # A model handed the css frame that answers with a ruby rule has invented one
-  # for this file. Accepting it would put the scope back where it was.
-  def test_a_finding_outside_the_scope_asked_is_discarded
-    css = rule.send(:laws_for, "css")
-    response = "RAILS_THIN_CONTROLLER_SEMANTIC:3:fat controller\nAESTHETIC_FLAT_SEMANTIC:4:gradient\n"
-    ids = rule.send(:parse_findings, response, css).map { |f| f[:law] }
+  def test_semantic_findings_from_any_active_law_are_retained
+    laws = rule.send(:laws_for, "css")
+    response = "RAILS_THIN_CONTROLLER_SEMANTIC:3:controller cohesion\nAESTHETIC_FLAT_SEMANTIC:4:gradient coherence\n"
+    ids = rule.send(:parse_findings, response, laws).map { |finding| finding[:law] }
 
-    assert_equal ["AESTHETIC_FLAT_SEMANTIC"], ids
+    assert_equal %w[RAILS_THIN_CONTROLLER_SEMANTIC AESTHETIC_FLAT_SEMANTIC], ids
   end
 
-  def test_the_prompt_frame_differs_by_language
+  def test_prompt_frame_is_language_independent
     ruby = rule.send(:prompt_frame_for, rule.send(:laws_for, "ruby"), "ruby")
     css = rule.send(:prompt_frame_for, rule.send(:laws_for, "css"), "css")
 
+    assert_equal ruby, css
     assert_includes ruby, "RAILS_THIN_CONTROLLER_SEMANTIC"
-    refute_includes css, "RAILS_THIN_CONTROLLER_SEMANTIC"
+    assert_includes ruby, "AESTHETIC_FLAT_SEMANTIC"
+  end
+
+  def test_malformed_or_unrequested_law_output_is_inconclusive
+    laws = rule.send(:laws_for, "css")
+    error = assert_raises(RuntimeError) do
+      rule.send(:parse_findings, "UNKNOWN_LAW:1:hallucinated finding\n", laws)
+    end
+
+    assert_match(/INCONCLUSIVE.*unrequested Law/, error.message)
   end
 
   # The invariant Law::Rule#prove! already enforces on the law population, asked
