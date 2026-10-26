@@ -364,10 +364,7 @@ module Master
           return receipt("inconclusive", reason: "rendered surface coverage incomplete",
             evidence: { "expected" => expected, "captured" => actual, "missing" => missing, "capture_records" => captures.size })
         end
-        broken = captures.select do |row|
-          row_status(row, "rendered_status") != "assessed_clean" ||
-            row_value(row, "screenshot_sha256").to_s !~ /\A[a-f0-9]{64}\z/
-        end
+        broken = captures.reject { |row| valid_rendered_capture?(row) }
         return receipt("inconclusive", reason: "rendered surface lacked a stable screenshot or geometry receipt",
           evidence: { "broken" => broken.first(8) }) if broken.any?
 
@@ -1170,6 +1167,17 @@ module Master
         nil
       end
 
+      def valid_rendered_capture?(row)
+        return false unless row_status(row, "rendered_status") == "assessed_clean"
+        return false unless row_value(row, "screenshot_sha256").to_s.match?(/\A[a-f0-9]{64}\z/)
+        return false unless row_value(row, "geometry_sha256").to_s.match?(/\A[a-f0-9]{64}\z/)
+
+        count = Integer(row_value(row, "element_count"))
+        count >= 0
+      rescue ArgumentError, TypeError
+        false
+      end
+
       def compact_visual_row(row)
         journey = row_value(row, "journey")
         {
@@ -1178,6 +1186,8 @@ module Master
           "viewport" => row_value(row, "viewport"),
           "rendered_status" => row_value(row, "rendered_status"),
           "screenshot_sha256" => row_value(row, "screenshot_sha256"),
+          "geometry_sha256" => row_value(row, "geometry_sha256"),
+          "element_count" => row_value(row, "element_count"),
           "journey_status" => row_value(journey, "status"),
           "journey_actions" => Array(row_value(journey, "actions")).map do |action|
             action.select { |key, _| %w[kind selector label status changed from to].include?(key.to_s) }
