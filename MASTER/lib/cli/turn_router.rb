@@ -412,7 +412,12 @@ module Master
         value = { output: text, rendered: text, core: fold }
         return Master::Result.ok(value) if fold[:reason] == :complete
 
-        Master::Result.err(text, category: :policy)
+        category = {
+          cancelled: :cancelled,
+          trace_failed: :recovery_failed,
+          needs_user: :human_decision,
+        }.fetch(fold[:reason], :policy)
+        Master::Result.err(text, category:)
       end
 
       def fold_output_text(fold)
