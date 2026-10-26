@@ -68,10 +68,6 @@ source and tests they could not run; this pass is what measures them.
   first words of a reply; a failed stream says so before switching lanes.
 - [ ] CLI cancellation in a PTY: Ctrl-C mid-generation, Ctrl-D, SIGTERM, child timeout; terminal
   modes restored; NO_COLOR, TERM=dumb and non-TTY piping; no face in a dumb terminal.
-- [ ] Owner preferences: two repeated corrections surface a pending suggestion, acceptance is
-  owner-only, and an accepted preference changes the prompt or routing it names.
-- [ ] Check `CAPABILITY_STATUS_MUST_BE_TRUTHFUL`'s detectors against progress, success, pending
-  and delivery labels that do not match observed state.
 - [ ] Measure provider failover at the boundary: the provider, model and credential actually used
   under auth failure, rate limit, timeout, malformed reply and budget exhaustion.
 

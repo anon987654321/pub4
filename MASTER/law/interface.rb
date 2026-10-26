@@ -165,9 +165,13 @@ end
 Law.define(:CAPABILITY_STATUS_MUST_BE_TRUTHFUL) do
   source "OpenBSD-style status reporting — unavailable capabilities are not ready"
   severity :error
-  languages %i[ruby]
-  path "MASTER/lib/operator/services.rb"
-  ask "Does a service status report readiness solely from a flag or optimistic default while the underlying capability may have failed? Status must derive from current observable capability state and preserve the failure reason."
+  # Every surface that reports state, not only services.rb: a chat message shown as sent
+  # before the server answered, or a progress bar at 100% before the work ended, is the
+  # same false ready. The detector still reads only the services.rb shape it was built on.
+  languages %i[ruby javascript html]
+  ask "Does a status, progress, success, pending, sent or delivered label, or a service readiness report, " \
+      "claim a state the system has not observed: from a flag, an optimistic default, or before the " \
+      "server or capability answered? State must derive from observed outcome and keep the failure reason."
   fix "Derive service state from the capability's actual health or retained error; report degraded or unavailable with the reason instead of ready."
   bad <<~'X'
     when "voice" then ENV["MASTER_TTS_DEGRADED"] == "1" ? "degraded" : "ready"
