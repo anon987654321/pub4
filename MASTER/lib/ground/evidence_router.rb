@@ -110,7 +110,8 @@ module Master
         when :browser
           "Capability rule: this turn concerns a website. You have a read-only WebBrowse tool and a sessionful Browser. " \
           "For a public page, try WebBrowse first; use Browser when session state, a JavaScript page that needs continued reading, " \
-          "or a visible operator login is necessary. Browser actions: status; navigate with a public HTTP(S) URL; login to open " \
+          "or a visible operator login is necessary. Try WebBrowse before saying a site cannot be read. " \
+          "Browser actions: status; navigate with a public HTTP(S) URL; login to open " \
           "a visible browser for operator-controlled sign-in attempts (ordinary POST-based login submissions are blocked by read-only policy); " \
           "extract the current page; look to capture the current viewport without reading the DOM; follow using a same-host anchor selector; " \
           "paginate with a bounded page count; close. " \

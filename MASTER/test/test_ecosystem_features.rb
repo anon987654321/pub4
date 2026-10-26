@@ -69,11 +69,13 @@ class TestEcosystemFeatures < Minitest::Test
     # /status runtime, /doctor device, /model auth, /soul law, and /session for
     # sessions, continue, resume and fork. /rollback went with them: three
     # verbs meant three different rollbacks, and /undo is the one it aliased.
-    # /pair, /device and /owner folded into /android and /ios (3910842ae);
+    # /device and /owner folded into /android and /ios (3910842ae); /pair came
+    # back as one-time pairing codes for local access (11f15666b), and
+    # /preferences governs per-person settings (cddc6ff0e).
     # /rules became /laws with the Law registry (0202b2a76).
     assert_equal %w[agenda android bard capabilities clear commit critique deploy doctor events explain face fix
-                    help incident ios laws model narrate orders play plugin privacy prove reload review screen
-                    session size snapshot soul status support task undo voice wake why wishlist],
+                    help incident ios laws model narrate orders pair play plugin preferences privacy prove reload
+                    review screen session size snapshot soul status support task undo voice wake why wishlist],
                  registry.keys.sort
   end
 
