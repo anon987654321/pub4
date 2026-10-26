@@ -15,6 +15,12 @@ require_relative "../lib/law_vocabulary"
 # Contract: `rake dogfood` is the archaeological audit. A capability that goes
 # missing is a fixture that stops passing — nothing to compare by hand.
 module Law
+  ASSESSMENT_SURFACES = %i[
+    repository_tree directories file_names paths whole_file sections lines
+    syntax_tree cross_file structured_data documentation media_assets
+    compiled_assets rendered_ui interactive_behavior tests runtime deployment
+  ].freeze
+
   Finding = Data.define(:id, :file, :line, :text)
 
   # What every law asks of one subject, worked out once. The bridge hands the
@@ -419,6 +425,11 @@ module Law
     def build
       kinds = %i[detect ask practice].select { |k| @h[k] }
       raise ArgumentError, "#{@h[:id]}: needs detect, ask or practice" if kinds.empty?
+      if @h[:surfaces]
+        @h[:surfaces] = Array(@h[:surfaces]).map(&:to_sym).uniq
+        unknown_surfaces = @h[:surfaces] - ASSESSMENT_SURFACES
+        raise ArgumentError, "#{@h[:id]}: unknown assessment surfaces #{unknown_surfaces.join(", ")}" if unknown_surfaces.any?
+      end
 
       # `fix` is in this list because Data requires it and Builder does not
       # default it, so a rule that omitted it died with "missing keyword: :fix"
