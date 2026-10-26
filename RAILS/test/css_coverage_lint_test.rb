@@ -44,10 +44,11 @@ class CssCoverageLintTest < Minitest::Test
   # by a test and by nothing else is the thing this file exists to catch, not a
   # thing for it to require.
   def test_the_legal_pages_are_styled
-    %w[legal-eyebrow legal-prose legal-updated].each do |name|
-      assert_includes L.defined_names, name, "#{name} is styled by _site_legal_footer's inline block"
+    %w[legal-prose legal-updated].each do |name|
+      assert_includes L.defined_names, name, "#{name} must remain styled"
       refute_includes L.undefined_classes, name
     end
+    refute_includes L.defined_names, "legal-eyebrow"
   end
 
   # A BEM child whose base is defined is not a missing style — SCSS builds those names

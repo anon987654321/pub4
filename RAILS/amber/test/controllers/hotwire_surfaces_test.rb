@@ -87,7 +87,7 @@ class HotwireSurfacesTest < ActionDispatch::IntegrationTest
     assert_equal 1, item.reload.times_worn
     assert_includes response.body, I18n.t("items.wear_count", count: 1)
     assert_includes response.body, "interaction-success"
-    assert_includes response.body, "interaction-success__check"
+    assert_includes response.body, "interaction-check"
   end
 
   test "wear action has an early tactile signal without a new per-button controller" do
