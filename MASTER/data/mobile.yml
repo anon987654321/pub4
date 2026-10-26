@@ -1,0 +1,47 @@
+# The mobile profile: MASTER on an Android phone under Termux. It answers to the
+# same soul.yml and laws.yml as the desktop; it only runs less of itself.
+# Master::Mobile::Profile activates it when Termux is detected or when
+# MASTER_PROFILE=mobile is set, and every key below has a reader in lib/mobile/.
+schema: 1
+
+profile:
+  min_ruby: "3.3.0"
+
+# Environment the profile sets, each only when the operator has not set it.
+# A phone has no spare cores for a background scan and no screen for the
+# desktop web face; its own face is served by bin/master-mobile bridge.
+env:
+  MASTER_BACKGROUND_SCAN: "0"
+  MASTER_WEB: "0"
+  MASTER_SKIP_BOOT_SCAN: "1"
+  MASTER_CLI_QUIET: "1"
+  MASTER_MEMORY_PATH: ".master/mobile/memory.yml"
+  MASTER_MISSION_PATH: ".master/mobile/mission.json"
+
+# Termux packages the boot installs before Bundler builds native gems, which
+# is why clang, make, libyaml and openssl are here. Only these names are ever
+# passed to pkg; optional ones install when MASTER_MOBILE_INSTALL_OPTIONAL=1.
+packages:
+  required: [ruby, git, clang, make, libyaml, openssl]
+  optional: [tmux, termux-api]
+  # A public install approves the pinned list on first run; MASTER_MOBILE_AUTO_APPROVE=0 asks instead.
+  auto_approve: true
+
+face:
+  socket: ".master/mobile/face.sock"
+  protocol_version: 1
+  wake_lock: termux-wake-lock
+  wake_unlock: termux-wake-unlock
+
+bridge:
+  # Loopback only: the bridge has no authentication, so it never binds a LAN address.
+  bind: 127.0.0.1
+  port: 8765
+  utterance_timeout_s: 120
+
+# Listening is off until the person presses listen, one utterance per press,
+# and no audio is kept: termux-speech-to-text hands back text only.
+ambient:
+  stt: termux-speech-to-text
+  stt_timeout_s: 30
+  tts: termux-tts-speak

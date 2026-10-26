@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# MASTER on the phone. Ruby rather than zsh, because Termux ships ruby as a
+# required package and zsh only as an optional one.
+#
+#   bin/master-mobile doctor    what the phone has and lacks, as JSON; exit 0 only when ready
+#   bin/master-mobile bridge    the face at http://127.0.0.1:8765/face, on Falcon
+#   bin/master-mobile host      the face socket alone, for a companion app
+#   bin/master-mobile <args>    bin/master in the mobile profile
+
+root = File.expand_path("..", __dir__)
+$LOAD_PATH.unshift(File.join(root, "lib"))
+require "mobile/profile"
+
+ENV["MASTER_PROFILE"] = "mobile"
+Master::Mobile::Profile.new.activate!
+
+case ARGV.first
+when "doctor"
+  require "mobile/doctor"
+  report = Master::Mobile::Doctor.new(root:).report
+  puts JSON.pretty_generate(report)
+  exit(report["status"] == "ready" ? 0 : 1)
+when "bridge"
+  require "mobile/face_bridge_http"
+  Master::Mobile::FaceBridgeHttp.new(root:).start!
+when "host"
+  require "mobile/host"
+  host = Master::Mobile::Host.new(root:)
+  host.start!
+  warn "mobile0: face socket #{host.face.socket_path}, session #{host.session.id}"
+  %w[INT TERM].each { |signal| trap(signal) { host.stop!; exit } }
+  host.serve_loop
+else
+  exec(File.join(root, "bin", "master"), *ARGV)
+end

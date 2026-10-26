@@ -1,0 +1,32 @@
+#!/usr/bin/env sh
+# Installs MASTER on a phone running Termux, from nothing.
+#
+# This is POSIX sh, the one script here that is not Ruby, because it runs
+# before Ruby exists: a fresh Termux has sh and pkg and nothing else.
+# Everything after the first pkg install is bin/master-mobile's job.
+#
+#   curl -fsSL https://raw.githubusercontent.com/anon987654321/pub4/main/MASTER/bin/master-mobile-install | sh
+set -eu
+
+repo="${MASTER_REPO_URL:-https://github.com/anon987654321/pub4.git}"
+dir="${MASTER_INSTALL_DIR:-$HOME/pub4}"
+branch="${MASTER_BRANCH:-main}"
+
+command -v pkg >/dev/null 2>&1 || { echo "mobile0: no pkg here; install Termux from F-Droid first" >&2; exit 1; }
+
+pkg update -y
+pkg install -y ruby git clang make libyaml openssl
+
+if [ -d "$dir/.git" ]; then
+  git -C "$dir" pull --ff-only origin "$branch"
+else
+  git clone --depth 1 --branch "$branch" "$repo" "$dir"
+fi
+
+# Falcon serves the phone face. It is a gem of the phone's, not of MASTER's
+# desktop bundle, so it installs into the phone's own Ruby.
+gem install --no-document falcon
+
+cd "$dir/MASTER"
+bin/master-mobile doctor || true
+echo "mobile0: installed. Run $dir/MASTER/bin/master-mobile bridge, then open http://127.0.0.1:8765/face"

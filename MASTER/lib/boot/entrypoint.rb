@@ -39,6 +39,7 @@ require_relative "dependency_manager"
 require_relative "../trace/dmesg"
 require_relative "../operator/environment"
 require_relative "../operator/ruby_runner"
+require_relative "../mobile/bootstrap"
 
 module Master
   module Boot
@@ -52,6 +53,7 @@ module Master
         # itself; every MASTER process boots through here.
         Encoding.default_external = Encoding::UTF_8
         root = File.expand_path(root)
+        prepare_mobile!(env:, out:)
         reexec_best_ruby!(root:, env:, out:, argv:, program:)
         manager = DependencyManager.new(root:, env:, out:)
         result = manager.ensure!
@@ -68,6 +70,16 @@ module Master
         write_boot_receipt!(root:, out:)
 
         true
+      end
+
+      # On a phone the build tools must be there before Bundler compiles a native gem,
+      # so the pinned Termux packages install ahead of the dependency check.
+      def prepare_mobile!(env:, out:)
+        return unless Master::Mobile::Profile.new(env:).activate!
+
+        result = Master::Mobile::Bootstrap.new(env:).ensure!
+        result.messages.each { |line| Master::Trace::Dmesg.status("mobile0", line, io: out) }
+        exit 78 unless result.ok
       end
 
       def reexec_mismatched_bundler!(root:, env:, out:, argv:, program:)
