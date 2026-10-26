@@ -89,7 +89,8 @@ module Master
           end
 
           scope_digest ||= Digest::SHA256.hexdigest(scope.to_s) unless scope.nil?
-          unless scope_digest.nil? || Contract::SHA256.match?(scope_digest.to_s)
+          scope_digest = scope_digest.to_s.downcase unless scope_digest.nil?
+          unless scope_digest.nil? || Contract::SHA256.match?(scope_digest)
             raise ArgumentError, "verification scope digest must be a SHA-256 hex digest"
           end
 
