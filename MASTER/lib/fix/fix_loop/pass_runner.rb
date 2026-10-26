@@ -120,6 +120,36 @@ module Master
           @scanner.respond_to?(:semantic_gaps) ? @scanner.semantic_gaps : {}
         end
 
+        # Report adapter capabilities to the immutable run plan. Availability is
+        # not proof: runtime completion still requires the measured cell ledger.
+        def assessment_adapters(target:)
+          visual = @visual_pass&.applicable?(target) == true
+          opportunities = @opportunity_pass&.applicable?(target) == true
+          {
+            "whole_file" => @scan_phase ? "registered" : "unavailable",
+            "lexical_violations" => @scanner.respond_to?(:scan) ? "registered" : "unavailable",
+            "semantic_violations" => @scan_phase&.semantic_full? ? "full_reads_enabled" : "sampled_or_budgeted",
+            "lexical_opportunities" => opportunities ? "registered" : "not_applicable_to_target",
+            "semantic_opportunities" => @council&.respond_to?(:improve) ? "bounded_council_review" : "unavailable",
+            "cross_file" => @reference_graph&.respond_to?(:build) ? "dependency_graph_registered" : "unavailable",
+            "rendered_ui" => visual ? "browser_adapter_registered" : "not_applicable_to_target",
+            "interactive_behavior" => visual ? "browser_journey_adapter_registered" : "not_applicable_to_target",
+            "tests" => "no_universal_test_runner",
+            "runtime" => "no_universal_runtime_probe",
+            "deployment" => "no_universal_deployment_probe",
+          }.freeze
+        end
+
+        def plan_refresh_failed!(error)
+          stage_failures[:fix_plan] << "#{error.class}: #{error.message.to_s[0, 180]}"
+          self
+        end
+
+        def plan_refresh_succeeded!
+          stage_failures.delete(:fix_plan)
+          self
+        end
+
         # The real Law x stream x surface ledger is not wired to production yet.
         # Keep the absence explicit so terminalization cannot mistake the contract for evidence.
         def assessment_matrix_status = :not_measured
