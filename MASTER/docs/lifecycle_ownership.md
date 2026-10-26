@@ -85,4 +85,7 @@ rollback on the box is the operator's (operator_seams.yml).
 3. A crash between commit_scoped and record_commit! in the Committer leaves a
    commit the journal does not know; delivery asks for manual review and
    nothing provides one.
-4. Fix::Kernel is never constructed; its hash-chained log has no writer.
+4. Fix::Kernel is built only by replay_cli, so its hash-chained log has no
+   production writer. It is the coordinator the others fold into, in the
+   gated order docs/fix_coordinator_map.md sets; until a phase moves a
+   responsibility, deleting it would undo that plan.
