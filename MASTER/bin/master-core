@@ -64,7 +64,14 @@ end
 root = File.expand_path(options.fetch(:root))
 data_dir = File.join(File.expand_path("..", __dir__), "data")
 capabilities = Master::Core::Capabilities.for(:fix)
-constitution = Master::Core::Constitution.load(data_dir:, workspace_root: root, capabilities:)
+# The same guards CoreBridge gives the Fold: without them this entrypoint admitted writes no
+# scan verified and execs no sandbox scoped, the path that runs unattended.
+bridge = Master::CLI::CoreBridge
+constitution = Master::Core::Constitution.load(
+  data_dir:, workspace_root: root, capabilities:,
+  verify: Master::CLI::ToolHooks.wrap_verifier(bridge.scan_verifier(root:), root:),
+  sandbox: Master::CLI::ToolHooks.wrap_sandbox(bridge.shell_sandbox(root:), root:)
+)
 world = Master::Core::World.new(root:)
 memory = Master::Core::Memory.new
 model = options[:real] ? Master::Core::Model.new(**{ model_id: options[:model] }.compact) : NullModel.new(goal)
