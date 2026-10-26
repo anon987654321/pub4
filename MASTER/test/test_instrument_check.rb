@@ -60,6 +60,47 @@ class TestInstrumentCheck < Minitest::Test
     previous.nil? ? ENV.delete("MASTER_FIX_INSTRUMENT_CHECK") : ENV["MASTER_FIX_INSTRUMENT_CHECK"] = previous
   end
 
+  def test_verification_result_normalizes_pass_blocked_and_disabled
+    healthy = scripted(disk: nil, git: nil).verification_result
+    blocked = scripted(disk: "private disk diagnostic", git: nil).verification_result
+    disabled = scripted(disk: "should not execute").verification_result(
+      env: { "MASTER_FIX_INSTRUMENT_CHECK" => "0" }
+    )
+
+    assert_equal :pass, healthy.status
+    assert_predicate healthy, :conclusive?
+    assert_equal 2, healthy.checked_count
+    assert_equal Digest::SHA256.hexdigest(Dir.pwd), healthy.scope_digest
+
+    assert_equal :blocked, blocked.status
+    assert_equal 2, blocked.checked_count
+    assert_equal 1, blocked.failure_count
+    refute_predicate blocked, :conclusive?
+    refute_includes blocked.to_h.inspect, "private disk diagnostic"
+
+    assert_equal :not_applicable, disabled.status
+    assert_equal 0, disabled.checked_count
+    assert_equal 1, disabled.unchecked_count
+    refute_predicate disabled, :conclusive?
+  end
+
+  def test_blocked_preflight_event_contains_no_free_form_failure_text
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |event, **payload| events << [event, payload] }
+    check = Scripted.new(answers: { disk: "private/customer/workspace has no disk budget" }, bus:)
+
+    error = assert_raises(Check::Unavailable) { check.verify! }
+    assert_includes error.message, "private/customer/workspace"
+    event, payload = events.fetch(0)
+    assert_equal "fix_loop:instruments_unavailable", event
+    assert_equal :blocked, payload.dig(:verification, :status)
+    assert_equal 1, payload.fetch(:failure_count)
+    assert_match(/\\A[0-9a-f]{64}\\z/, payload.fetch(:failure_digest))
+    refute_includes payload.inspect, "private/customer/workspace"
+    refute_includes payload.inspect, "no disk budget"
+  end
+
   def test_the_real_instruments_work_on_this_checkout
     probes = %i[disk git patch_tool ruby_child cache_dir]
 
