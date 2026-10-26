@@ -157,9 +157,11 @@ class TtsWorkerContractTest < Minitest::Test
     huge = (1 << 23) + 1
     sock = StringIO.new([huge].pack("Q>") + "raw mp3 data")
     sink = StringIO.new
-    result = @speech.send(:read_frame, sock, sink)
+    target = Master::Voice::SpeechWorker::StreamTarget.build(io: sink)
+    result = @speech.send(:read_frame, sock, target)
     assert_equal [:raw, 8 + 12], result  # header(8) + body(12)
-    assert_equal "raw mp3 data", sink.string
+    # The misread "header" is the first eight bytes of the mp3, so it is forwarded too.
+    assert_equal ([huge].pack("Q>") + "raw mp3 data").b, sink.string.b
   end
   def test_daemon_race_probe_accepts_the_versioned_health_reply
     source = File.read(File.join(Master::ROOT, "bin", "tts-worker"), encoding: "UTF-8")

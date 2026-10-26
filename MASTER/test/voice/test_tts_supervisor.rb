@@ -156,18 +156,24 @@ class TestTtsSupervisor < Minitest::Test
   end
 
   def test_fast_mode_uses_existing_socket_without_health_probe_or_respawn
-    Dir.mktmpdir("master_tts_fast_socket") do |dir|
-      socket = Sup.socket_path(dir, index: 0)
-      server = UNIXServer.new(socket)
+    # macOS's per-user TMPDIR plus .master/tts.sock outruns the 104-byte sun_path limit; /tmp keeps it short.
+    Dir.mktmpdir("tts", "/tmp") do |dir|
+      server = nil
 
-      Master::Voice::Speech.stub(:fast_tts_mode?, true) do
-        Sup.stub(:socket_alive?, ->(*) { raise "health probe should not run in fast mode" }) do
-          Sup.stub(:pool_size, 1) do
+      # The socket name depends on the pool size, so it is named under the same stub next_socket sees.
+      Sup.stub(:pool_size, 1) do
+        socket = Sup.socket_path(dir, index: 0)
+        FileUtils.mkdir_p(File.dirname(socket))
+        server = UNIXServer.new(socket)
+
+        Master::Voice::Speech.stub(:fast_tts_mode?, true) do
+          Sup.stub(:socket_alive?, ->(*) { raise "health probe should not run in fast mode" }) do
             Sup.instance_variable_set(:@pool_rr, 0)
             assert_equal socket, Sup.next_socket(dir)
           end
         end
       end
+
     ensure
       server&.close
     end

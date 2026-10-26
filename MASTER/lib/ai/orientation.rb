@@ -273,6 +273,8 @@ module Master
 
       def relative(path, repo_root)
         full = File.expand_path(path)
+        # repo_root is a realpath, so a symlinked spelling of the same place (macOS /var) resolves first.
+        full = File.realpath(full) if File.exist?(full)
         return "." if full == repo_root
         return path.to_s unless full.start_with?("#{repo_root}/")
 

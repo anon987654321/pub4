@@ -61,7 +61,8 @@ class TestDeviceOnboarding < Minitest::Test
     @present.concat(%w[clang make pkg-config])
     onboarding.run
     lines = @out.string.lines.map { |line| line.split(":").first }
-    assert_equal %w[termux0 git0], lines
+    # The fixture phone has no owner yet, so the pairing hint is still missing too.
+    assert_equal %w[android0 termux0 git0], lines
   end
 
   def test_a_checkout_on_shared_storage_is_named

@@ -30,18 +30,16 @@ class FaceStateSpec < Minitest::Test
     assert_includes source, "MODE_FAIL"
   end
 
-  # NOTE: this file's own header comment claims its limits are "sourced from
-  # data/ops/visual.yml" — they are not; it's a static asset that never reads
-  # that file, and the two sets of numbers currently disagree entirely
-  # (YAML: 30/400/96, JS: 24/200/64). That's a real SINGULARITY violation
-  # worth fixing deliberately (e.g. render this as .js.erb, or fetch a small
-  # JSON config at boot) rather than papering over here — this spec pins the
-  # values actually shipping today so drift is visible, not the YAML's.
+  # The governor reads its limits from the face contract's spatial budget and keeps
+  # 24 fps and 200 particles only as the fallback when the contract is absent.
   def test_visual_governor_is_quiet_and_freezes_only_on_explicit_signal
     source = read("../RAILS/master/public/visual_governor.js")
-    # let, not const: the reduced-motion and battery clamps below reassign it.
-    assert_includes source, "let maxFps = 24"
-    assert_includes source, "let maxParticles = 200"
+
+    assert_includes source, "window.MASTER_FACE_CONTRACT"
+    assert_includes source, "Number(BUDGET.active_fps) || 24"
+    # let, not const: the reduced-motion and battery clamps below reassign them.
+    assert_includes source, "let maxFps = idle ? idleFps : activeFps"
+    assert_match(/let maxParticles = .*\(mobile \? 120 : 200\)/, source)
     assert_includes source, "freezeOnFail: false"
     assert_includes source, "dataset.visualRuntime === \"frozen\""
   end

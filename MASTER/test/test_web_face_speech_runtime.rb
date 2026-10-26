@@ -28,7 +28,8 @@ class FaceSpeechRuntimeSpec < Minitest::Test
     source = read("../RAILS/master/public/face_speech_runtime.js")
     bundle = read("../RAILS/master/public/face.runtime.js")
 
-    assert_includes source, "FEMALE_BROWSER_VOICE_RE"
+    # The browser speechSynthesis fallback (and its female-voice regex) is gone; every utterance is server TTS.
+    refute_includes source, "speechSynthesis"
     assert_includes source, "Do not play a truncated MP3"
 
     # face.runtime.js is a content-addressed loader, not an inline copy of the
@@ -95,7 +96,7 @@ class FaceSpeechRuntimeSpec < Minitest::Test
 
     assert_includes source, "const alreadySpoken = Math.max(0, Math.min(text.length, Number(opts.spokenLen) || 0));"
     assert_includes source, "let rest = text.slice(alreadySpoken).trimStart();"
+    # part5 streams the reply and passes how much it already spoke; part1 skips that much.
     assert_includes consumer, "spokenLen: ttsStreamSpokenLen"
-    assert_includes source, "spokenLen: ttsStreamSpokenLen"
   end
 end

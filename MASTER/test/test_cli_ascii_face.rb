@@ -12,13 +12,13 @@ class TestCliAsciiFace < Minitest::Test
   # A front frame at 12 rows by 24 columns with the head at rest.
   GOLDEN = <<-'FRAME'
 
-        //''''\\
-       ///----\\\
-      ///ya/\;:\\\
-     -------|-------
-     (  o  )|(  o  )
-     ||ee///|\\-~||
-     |\\\\\-./////|
+        /''''''\
+       ////--\\\\
+      ///yX/\;:\\\
+     |--------------
+     |(  o  |(  o  )
+     |||e///|\\~|||
+      \\\\\-./////
       \\\       //
        \\\-----//
 

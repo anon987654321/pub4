@@ -50,7 +50,11 @@ class TestCliTerminalFace < Minitest::Test
   end
 
   def test_the_cursor_sits_on_the_prompt_line_after_the_draft
-    face = window
+    # A fixed prompt: the fallback names this host and checkout, which can outrun a 40-column window.
+    face = Master::CLI::Face::Window.new(
+      turn: ->(_line) {}, ear: Quiet.new(nil), mouth: Quiet.new(nil),
+      input: StringIO.new, output: StringIO.new, size: -> { [30, 60] }, prompt: -> { "master0:~$" }
+    )
     [[30, 80], [24, 60], [12, 40]].each do |rows, cols|
       screen = face.screen(rows, cols, 1.0)
       row, col = screen.scan(/\e\[(\d+);(\d+)H\e\[\?25h\z/).first.map(&:to_i)
@@ -364,9 +368,13 @@ class TestCliTerminalFace < Minitest::Test
     result = face.send(:cancel_worker, worker, children)
 
     assert result.err?
-    assert_equal :timeout, result.category
+    # Ctrl-C keeps the face open, so the turn is aborted rather than timed out.
+    assert_equal :abort, result.category
     assert_equal %i[kill children join], order
     assert_equal [["user:interrupt", { reason: "face", source: "face", children: }]], events
+
+    face.instance_variable_set(:@closing, true)
+    assert_equal :timeout, face.send(:cancel_worker, worker, children).category
   end
 
   def test_face_falls_back_to_native_speech_when_synthesis_is_missing
@@ -574,6 +582,7 @@ class TestCliTerminalFace < Minitest::Test
     )
     face.instance_variable_set(:@draft, "h")
     face.instance_variable_set(:@suppress_heard, true)
+    face.instance_variable_set(:@retain_input_on_interrupt, true)
 
     face.stub(:answer, ->(text) { flunk("interrupted transcript was answered: #{text.inspect}") }) do
       face.send(:hear)
@@ -582,6 +591,7 @@ class TestCliTerminalFace < Minitest::Test
     assert_equal :idle, face.instance_variable_get(:@state)
     assert_equal "h", face.instance_variable_get(:@draft)
     assert_equal false, face.instance_variable_get(:@suppress_heard)
+    assert_equal false, face.instance_variable_get(:@retain_input_on_interrupt)
     assert_includes face.instance_variable_get(:@words).join(" "), "typed input retained"
   end
 
@@ -631,7 +641,7 @@ class TestCliTerminalFace < Minitest::Test
     assert_equal [:thinking, :anticipate], face.instance_variable_get(:@events)
     face.send(:unsubscribe_from_bus)
     bus.publish("council:deliberation")
-    assert_equal [:thinking], face.instance_variable_get(:@events)
+    assert_equal [:thinking, :anticipate], face.instance_variable_get(:@events)
   end
 
   def test_face_command_arguments_are_recognised

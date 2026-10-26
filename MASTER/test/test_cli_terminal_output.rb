@@ -58,6 +58,7 @@ class TestCLITerminalOutput < Minitest::Test
       session.send(:print_terminal_output, text, mode: :dim)
     end
 
-    assert_equal "dim:#{text}\n", stdout
+    # puts adds no newline after text that already ends in one.
+    assert_equal "dim:#{text}", stdout
   end
 end

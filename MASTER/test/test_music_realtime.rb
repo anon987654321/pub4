@@ -67,7 +67,9 @@ class TestMusicRealtime < Minitest::Test
       File.chmod(0o755, sox)
       old_path = ENV["PATH"]
       ENV["PATH"] = dir
-      assert_equal sox, Master::Music::AudioSink.which("sox")
+      # Homebrew's bins are tried before PATH, as Io::Exec does, so a host with sox installed finds that one.
+      preferred = %w[/opt/homebrew/bin/sox /usr/local/bin/sox].find { |path| File.executable?(path) }
+      assert_equal preferred || sox, Master::Music::AudioSink.which("sox")
     ensure
       ENV["PATH"] = old_path
     end

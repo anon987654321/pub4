@@ -19,6 +19,8 @@ class TestAiOrientation < Minitest::Test
     File.write(File.join(@root, "README.md"), "pub4 entry\n")
     File.write(File.join(@root, "CLAUDE.md"), "authority order\n")
     File.write(File.join(@master, "lib", "master.rb"), "module Master\nend\n")
+    # git tracks files, not directories, so io/ holds one to stay in the tracked tree.
+    File.write(File.join(@master, "lib", "io", "exec.rb"), "module Master\nend\n")
     File.write(File.join(@master, "runtime", "active_plan.md"), "repair boot\nverify again\n")
     FileUtils.mkdir_p(File.join(@master, ".master"))
     File.write(
@@ -60,6 +62,13 @@ class TestAiOrientation < Minitest::Test
         "master_face": {"name": "master", "domain": "ai.brgen.no", "port": 53187}
       }
     JSON
+    # Wishes are claimed against a git HEAD, so the fixture is a repository, and it ignores runtime
+    # state the way MASTER/.gitignore does.
+    File.write(File.join(@master, ".gitignore"), ".master/\n")
+    system("git", "-C", @root, "init", "-q", "-b", "main")
+    system("git", "-C", @root, "add", ".")
+    identity = ["-c", "user.name=t", "-c", "user.email=t@example.invalid"]
+    system("git", "-C", @root, *identity, "commit", "-q", "-m", "fixture")
   end
 
   def teardown = FileUtils.rm_rf(@root)
@@ -80,7 +89,7 @@ class TestAiOrientation < Minitest::Test
     assert_includes text, "scales: reason local"
     assert_includes text, "creative work: preserve identity"
     assert_includes text, "active plan: repair boot verify again"
-    assert_includes text, "pending wishes: 1. Better boot receipt"
+    assert_includes text, "pending wishes: Better boot receipt"
     assert_includes text, "lib/"
     assert_includes text, "io/"
     assert_includes text, "master.rb"

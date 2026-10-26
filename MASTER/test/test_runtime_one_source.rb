@@ -19,7 +19,8 @@ class TestRuntimeOneSource < Minitest::Test
 
   def test_css_builder_delegates_bundle_selection
     source = read("../MASTER/tools/rails/build_all_css.rb")
-    assert_includes source, 'require_relative "../../MASTER/lib/operator/ruby_runner"'
+    # The tool lives in MASTER/tools/rails, two levels below MASTER/lib.
+    assert_includes source, 'require_relative "../../lib/operator/ruby_runner"'
     assert_includes source, "Operator::RubyRunner.bundle_cmd"
     refute_includes source, '["rbenv", "exec", "bundle"]'
   end

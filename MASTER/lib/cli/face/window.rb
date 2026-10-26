@@ -575,6 +575,7 @@ module Master
                    when /\Allm:(?:response|call_complete)\z/, /\Apipeline:(?:stage_complete|complete|done)\z/ then :nod
                    when /\Aphantom:(?:detected|recovery|halt|occurrence)\z/ then :phantom
                    when /\Acouncil:/ then :council
+                   when /\Atts:anticipate\z/ then :anticipate
                    end
           nudge(motion) if motion
         rescue StandardError => e

@@ -33,8 +33,9 @@ class AttentionModelSpec < Minitest::Test
   end
 
   def test_face_js_loads_attention_model_first
+    # face.js imports whatever faceModulesList the manifest hands it, so the order lives in face_assets.yml.
     source = read("../RAILS/master/public/face.js")
-    assert_includes source, '"attention_model.js"'
+    assert_includes source, "faceModulesList"
     assert_equal "attention_model.js", face_eager.first
   end
 end

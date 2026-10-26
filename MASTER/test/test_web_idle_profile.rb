@@ -25,7 +25,7 @@ class IdleProfileSpec < Minitest::Test
     assert_includes part3, "if (!isRichMotionProfile()) return"
     assert_includes part3, "isRichMotionProfile())"
     assert_includes part1, "function faceReducedMotionActive()"
-    assert_includes part1, "document.documentElement?.dataset.reducedMotion === '1'"
+    assert_match(/document\.documentElement\?\.dataset\??\.reducedMotion === '1'/, part1)
     assert_includes part1, "rootBody.dataset.runtimeProfile = faceReducedMotionActive() ? 'battery' : (State.profileOverride"
     refute_includes part3, "State.shake = 1.2"
     assert_includes part3, "applyShake(1.2)"

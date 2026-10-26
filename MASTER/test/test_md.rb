@@ -13,7 +13,8 @@ class TestMD < Minitest::Test
   def test_normalize_recognizes_fences_headings_and_bullets
     source = "### Heading\n* one\n+ two\n```ruby\n* inside\n```\n"
 
-    assert_equal "### Heading\n- one\n- two\n```ruby\n* inside\n```\n", Master::MD.normalize(source)
+    # A heading gets a blank line after it, as in the fenced-source case above.
+    assert_equal "### Heading\n\n- one\n- two\n```ruby\n* inside\n```\n", Master::MD.normalize(source)
   end
 
   def test_markdown_regexes_do_not_match_escaped_text

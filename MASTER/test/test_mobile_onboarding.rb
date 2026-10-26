@@ -39,7 +39,11 @@ class TestMobileOnboarding < Minitest::Test
       onboarding = Master::Device::Onboarding.new(android: false, root:)
       output = onboarding.mobile_start!(platform: :ios)
 
-      assert_includes output, "iOS/PWA onboarding started"
+      # The iOS/PWA disclaimer is a dmesg status line; the reply starts the questions
+      # and claims no device identity.
+      assert output.start_with?("ios0: onboarding started"), output
+      refute_includes output, "device identity"
+
       assert_includes output, "name"
       assert_includes output, "language"
     ensure
