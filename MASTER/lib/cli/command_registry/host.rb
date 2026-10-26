@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "shellwords"
+require_relative "../skills"
 require_relative "../../operator/capability_graph"
 require_relative "../../io/exec"
 require_relative "../../ground/personal_workspace"
@@ -273,6 +275,70 @@ module Master
         lines = ["agenda: no events for #{date} (#{result.fetch(:total_events)} imported)"] if lines.empty?
         lines << "agenda: note: #{result.fetch(:recurring_series)} recurring series are not expanded; verify their occurrences in the source calendar" if result.fetch(:recurring_series).positive?
         lines.join("\n")
+      end
+
+      # /skill reviews declared capability contracts and allows an explicit
+      # local operator to approve or revoke one exact content revision.
+      def dispatch_skill(root, ctx: nil, approval_path: File.join(Dir.home, ".master", "skill_approvals.yml"))
+        return "skill: local operator only; visitors cannot approve executable skill revisions" if Fiber[:master_visitor] == true
+
+        args = Shellwords.split(arg_for(ctx).to_s)
+        action = args.shift.to_s.downcase
+        skills = Master::CLI::Skills.new(root:, approval_path:).tap(&:discover!)
+
+        case action
+        when "", "list", "review"
+          rows = skills.contract_inventory.select { |row| row[:declared] }
+          return "skill0 at master0: no declared skill contracts; legacy skills remain unreviewed and compatible" if rows.empty?
+
+          rows.map do |row|
+            errors = row[:errors].empty? ? "" : " errors=#{row[:errors].join(",")}"
+            "#{row[:name]} revision=#{row[:revision]} status=#{row[:status]} risk=#{row[:risk]} " \
+              "promotable=#{row[:promotable] ? "yes" : "no"} approved=#{row[:operator_approved] ? "yes" : "no"} " \
+              "active=#{row[:active_for_trigger] ? "yes" : "no"}#{errors}"
+          end.join("\n")
+        when "inspect"
+          return "skill: usage /skill inspect <name>" unless args.length == 1
+
+          row = skills.contract_for(args.first)
+          return "skill: not found or has no contract" unless row
+
+          [
+            "name=#{row[:name]}",
+            "revision=#{row[:revision]}",
+            "status=#{row[:status]} risk=#{row[:risk]}",
+            "declared=#{row[:declared]} promotable=#{row[:status] == :candidate && row[:errors].empty?}",
+            "operator_approved=#{row[:operator_approved]} active=#{row[:active_for_trigger]}",
+            "capabilities=#{Array(row[:required_capabilities]).join(",")}",
+            "laws=#{Array(row[:law_ids]).join(",")}",
+            "fixtures=#{Array(row[:fixture_refs]).join(",")}",
+            "errors=#{Array(row[:errors]).join(",")}"
+          ].join("\n")
+        when "approve"
+          unless args.length == 3 && args[2] == "--confirm"
+            return "skill: approval requires the exact command /skill approve <name> <full SHA-256 revision> --confirm"
+          end
+
+          approved_by = ENV["USER"].to_s.strip
+          approved_by = "local-operator" if approved_by.empty?
+          row = skills.approve_revision!(name: args[0], revision: args[1], approved_by:)
+          "skill0 at master0: approved #{args[0]} revision=#{args[1]} by=#{approved_by}; activation is limited to this exact revision"
+        when "revoke"
+          unless args.length == 3 && args[2] == "--confirm"
+            return "skill: revocation requires the exact command /skill revoke <name> <full SHA-256 revision> --confirm"
+          end
+
+          removed = skills.revoke_revision!(name: args[0], revision: args[1])
+          removed ? "skill0 at master0: revoked #{args[0]} revision=#{args[1]}" :
+            "skill0 at master0: no matching approval for #{args[0]} revision=#{args[1]}"
+        else
+          "skill: list | inspect <name> | approve <name> <full SHA-256 revision> --confirm | revoke <name> <full SHA-256 revision> --confirm"
+        end
+      rescue ArgumentError => e
+        "skill0: #{e.message}"
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.skill", event_bus: nil)
+        "skill0: unavailable — #{e.class}: #{e.message}"
       end
 
       # /task is a local, durable personal task board. It records supplied
