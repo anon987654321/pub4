@@ -37,7 +37,12 @@ module Master
               return cancellation_terminal if cancellation_requested?
 
               if i == 0 && structural_target?(target)
-                structure_checkpoint(target:, files:, run_id:)
+                if structure_checkpoint(target:, files:, run_id:)
+                  state[:consecutive_clean] = 0
+                  state[:history].clear
+                  state[:seen_snapshots].clear
+                  state[:recurring_violations].clear
+                end
               end
             end
 
@@ -188,14 +193,19 @@ module Master
         end
 
         def structure_checkpoint(target:, files:, run_id:)
-          return unless structural_enabled?
+          return false unless structural_enabled?
 
           changes = sweep_tree(target, "#{run_id}-structure-checkpoint", phase: :structure_first)
-          return if changes.empty?
+          return false if changes.empty?
 
           files.replace(@file_collector.collect(target))
           Master::Trace::Dmesg.status("fix0", "structure checkpoint kept #{changes.size}; corpus refreshed")
           @bus&.publish("fix_loop:structure_checkpoint", target:, changes: changes.size)
+          refresh_fix_plan!(
+            target:, files:, max_passes: @fix_plan.max_passes,
+            budget_seconds: @fix_plan.budget_seconds, run_id:
+          ) if @fix_plan
+          true
         end
 
         def structural_enabled? = ENV["MASTER_FIX_STRUCTURAL"] != "0"
@@ -259,6 +269,26 @@ module Master
           end
 
           structural = structural_repair?(result, files:, target:, state:, run_id:, pass:)
+          plan_changed = if @fix_plan
+                           refresh_fix_plan!(
+                             target:, files:, max_passes: @fix_plan.max_passes,
+                             budget_seconds: @fix_plan.budget_seconds, run_id:
+                           )
+                         else
+                           false
+                         end
+          if plan_changed
+            state[:consecutive_clean] = 0
+            state[:history].clear
+            state[:seen_snapshots].clear
+            state[:recurring_violations].clear
+            if PASS_ENDINGS[result.status] == :done
+              result = PassResult.new(
+                status: :continue, consecutive_clean: 0,
+                message: "source generation changed; fresh observation required"
+              )
+            end
+          end
           if @convergence_discipline.respond_to?(:checkpoint_state) &&
              @run_journal.respond_to?(:save_convergence_state)
             @run_journal.save_convergence_state(
