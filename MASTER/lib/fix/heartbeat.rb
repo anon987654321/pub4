@@ -13,6 +13,7 @@ module Master
       STATE_PATH = ".master/heartbeat_state.yml".freeze
 
       RESULT_TRUNCATE = 200
+      JOB_DEADLINE_S = 300
       SECONDS_PER_HOUR = 3600
 
       JOB_HANDLERS = {
@@ -140,13 +141,24 @@ module Master
         method_name = JOB_HANDLERS[job["action"]]
         return "unknown action: #{job["action"]}" unless method_name
 
-        Master::Trace::WorkerReceipt.around(@bus, worker: "heartbeat", job: job["name"]) do
+        Master::Trace::WorkerReceipt.around(@bus, worker: "heartbeat", job: job["name"], deadline_s: job_deadline(job)) do
           Master::Trace::Telemetry.span("heartbeat.tick", job: job["name"].to_s) do
             send(method_name)
           end
         end
       rescue StandardError => e
         "error: #{e.message}"
+      end
+
+      # A job ends by its deadline or by its next turn, whichever is sooner, so
+      # one hung provider canary cannot hold every later job. timeout_seconds in
+      # data/patterns.yml overrides it.
+      def job_deadline(job)
+        explicit = job["timeout_seconds"].to_i
+        return explicit if explicit.positive?
+
+        interval = job["interval_seconds"].to_i
+        interval.positive? ? [interval, JOB_DEADLINE_S].min : JOB_DEADLINE_S
       end
 
       def prune_memory

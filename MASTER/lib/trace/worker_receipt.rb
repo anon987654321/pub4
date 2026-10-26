@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "securerandom"
+require "timeout"
 
 module Master
   module Trace
@@ -9,28 +10,37 @@ module Master
     # these as they run, so the before-record must land before the work starts,
     # and a crash leaves a before with no after that names what was cut short.
     # The after-record is best effort: the work has happened by then, and
-    # failing it would only hide that.
+    # failing it would only hide that. A deadline, for work that is safe to
+    # interrupt (a probe, a canary), ends it with status timeout.
     module WorkerReceipt
       BEFORE = "worker:before"
       AFTER = "worker:after"
 
       module_function
 
-      def around(bus, worker:, job:)
-        return yield unless bus.respond_to?(:publish_required)
+      def around(bus, worker:, job:, deadline_s: nil, &work)
+        return bounded(deadline_s, &work) unless bus.respond_to?(:publish_required)
 
-        id = SecureRandom.uuid
-        bus.publish_required(BEFORE, worker: worker.to_s, job: job.to_s, invocation_id: id, pid: Process.pid)
+        invocation = SecureRandom.uuid
+        bus.publish_required(BEFORE, worker: worker.to_s, job: job.to_s, invocation_id: invocation, pid: Process.pid)
+        id = invocation
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
         outcome = "error"
-        result = yield
+        result = bounded(deadline_s, &work)
         outcome = succeeded?(result) ? "success" : "error"
         result
+      rescue Timeout::Error
+        outcome = "timeout"
+        raise
       ensure
         if id
           elapsed_ms = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond) - started.to_i
           bus.publish(AFTER, worker: worker.to_s, job: job.to_s, invocation_id: id, status: outcome, elapsed_ms:)
         end
+      end
+
+      def bounded(deadline_s, &work)
+        deadline_s ? Timeout.timeout(deadline_s, &work) : work.call
       end
 
       def succeeded?(result)

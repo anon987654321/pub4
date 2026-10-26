@@ -50,6 +50,20 @@ class TestWorkerReceipt < Minitest::Test
     assert_equal "error", evidence.last.dig("payload", "status")
   end
 
+  def test_work_past_its_deadline_is_cut_and_recorded_as_a_timeout
+    assert_raises(Timeout::Error) { Receipt.around(@bus, worker: "heartbeat", job: "canary", deadline_s: 0.05) { sleep 2 } }
+
+    assert_equal "timeout", evidence.last.dig("payload", "status")
+  end
+
+  def test_a_job_ends_by_its_next_turn_or_the_cap
+    heartbeat = Master::Fix::Heartbeat.new(root: @dir, event_bus: @bus)
+
+    assert_equal 120, heartbeat.send(:job_deadline, { "interval_seconds" => 120 })
+    assert_equal 300, heartbeat.send(:job_deadline, { "interval_seconds" => 3600 })
+    assert_equal 30, heartbeat.send(:job_deadline, { "interval_seconds" => 3600, "timeout_seconds" => 30 })
+  end
+
   def test_heartbeat_jobs_carry_receipts
     Master::Fix::Heartbeat.new(root: @dir, event_bus: @bus).send(:execute_job, { "name" => "self_test", "action" => "self_test" })
 
