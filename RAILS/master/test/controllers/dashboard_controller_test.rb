@@ -35,7 +35,8 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
   test "live returns warming up when container absent" do
     Rails.application.config.x.master_container = nil
 
-    get "/dashboard/live", headers: auth_headers, as: :json
+    # The Accept header dashboard_live.js sends; a GET does not take its format from as: :json.
+    get "/dashboard/live", headers: auth_headers.merge("Accept" => "application/json")
 
     assert_response :service_unavailable
     assert_equal "warming up", JSON.parse(response.body)["error"]
@@ -68,6 +69,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
       path = File.join(dir, "invalid-utf8.bin")
       lines = Array.new(24) { |n| "#{n} ".b + ("\xFF".b * 1_024) }
       File.binwrite(path, lines.join("\n".b))
+      controller = DashboardController.new
 
       recent = controller.send(:recent_lines, path)
       excerpt = controller.send(:bounded_excerpt, path)

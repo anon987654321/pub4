@@ -15,6 +15,9 @@ class PwaControllerTest < ActionDispatch::IntegrationTest
     assert_equal "fullscreen", body["display"]
     assert_includes body["display_override"], "fullscreen"
     assert body["icons"].any? { |icon| icon["sizes"] == "512x512" }
+    face_bg = Master.tokens.fetch("face_root").fetch("face_bg")
+    assert_equal face_bg, body["theme_color"]
+    assert_equal face_bg, body["background_color"]
   end
 
   test "the manifest is served to a visitor without a token" do

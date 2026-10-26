@@ -25,8 +25,10 @@ class PwaMasterContractTest < Minitest::Test
       assert_match(/pwa_manifest_path/, page)
       assert_match(/theme_color = Master\.tokens\.fetch\("face_root"\)\.fetch\("face_bg"\)/, page)
     end
-    assert_match(/"background_color": <%= theme_color\.to_json %>/, manifest)
-    assert_match(/"theme_color": <%= theme_color\.to_json %>/, manifest)
+    # Rendered values are PwaControllerTest's; this pins only where they come from.
+    assert_match(/theme_color = Master\.tokens\.fetch\("face_root"\)\.fetch\("face_bg"\)/, manifest)
+    assert_match(/"background_color": <%= (?:raw )?theme_color\.to_json %>/, manifest)
+    assert_match(/"theme_color": <%= (?:raw )?theme_color\.to_json %>/, manifest)
     manifest_assets = read("config/face_assets.yml")
     assert_includes manifest_assets, "visemePacks"
     assert_includes manifest_assets, "clusterMiner"
