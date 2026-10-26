@@ -184,7 +184,8 @@ class TestScanSpeedPaths < Minitest::Test
                     Master::Fix::Scan::FileProcessor::STRUCTURED_DATA_MAX_LINES
 
     result = processor.send(:read_file, path)
-    assert result.ok?, "Dilla catalogue was refused by the scanner: #{result.message}"
+    # A proc: Result::Ok has no #message, so the text is built only on refusal.
+    assert result.ok?, -> { "Dilla catalogue was refused by the scanner: #{result.message}" }
   end
 
   def test_structured_data_budget_rejects_files_over_its_ceiling

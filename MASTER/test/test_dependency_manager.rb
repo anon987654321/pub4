@@ -597,14 +597,16 @@ class TestDependencyManager < Minitest::Test
     assert_equal ["install", "--jobs", "4", "--retry", "3"], @commands.last.first[1..]
   end
 
+  # A missing header carries no ABI-stale line, so the private store stays and
+  # the OS packages install straight after the failed bundle install.
   def test_native_build_failure_installs_system_packages_and_retries
     responses = [
-      [false, "", "extconf failed: sqlite3.h not found"],
       [false, "", "extconf failed: sqlite3.h not found"],
       [false, "", "extconf failed: sqlite3.h not found"],
       [true, "system packages installed", ""],
       [true, "The Gemfile's dependencies are satisfied", ""],
     ]
+
     manager = fake_manager(responses)
     manager.define_singleton_method(:package_commands) do
       [[["pkg", "install", "-y", "sqlite"], "pkg"]]

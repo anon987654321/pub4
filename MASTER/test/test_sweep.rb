@@ -71,9 +71,8 @@ def test_sibling_probes_point_at_a_script_that_exists
   # OPENBSD's obsdreach probe runs bin/reach: the module moved to lib/reach.rb
   # when OPENBSD/tools/ was deleted (6e09c6919), because require cannot load an
   # extensionless file, and bin/reach stayed as the executable shim the probe
-  # names. STUDIO's own probe was removed from sweep.rb; this list still names
-  # check.rb for it, which is what the STUDIO failure below measures.
-  { "OPENBSD" => "bin/reach" }.each do |tree, script|
+  # names. STUDIO's probe runs its check.rb.
+  { "OPENBSD" => "bin/reach", "STUDIO" => "check.rb" }.each do |tree, script|
     path = File.join(S::ROOT, tree, script)
 
     assert File.file?(path), "#{tree} probe runs #{script}, which is not there"

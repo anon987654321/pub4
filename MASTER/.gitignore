@@ -37,9 +37,11 @@ knowledge/
 .constitutional_locks/
 # Source material for the README films, not the films themselves. loop.mp4 is the
 # raw face take that bin/loops composites the wordmark onto; tts.wav is the
-# narration face_loop_record drives the mouth from. What ships is loop1.* and
-# loop2.*, which are tracked.
+# narration face_loop_record drives the mouth from. bin/loops renders the films
+# themselves, loop1.* and loop2.*, on demand; they are output, not source.
 loop.mp4
+loop1.*
+loop2.*
 tts.wav
 
 # reports/ is generated output — PATH_OWNERSHIP.yml calls it "regenerate, do not

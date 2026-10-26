@@ -59,7 +59,7 @@ class TestRename < Minitest::Test
   def teardown = FileUtils.remove_entry(@dir)
 
   def test_a_category_suffix_is_a_candidate_and_the_proposal_drops_it
-    row = candidates.find { |line| line.include?("DemoThingManager ") }
+    row = candidates.find { |line| line.match?(/\bDemoThingManager\b/) }
 
     refute_nil row, "Manager at the end of a name is what this rule is for:\n#{candidates.join("\n")}"
     assert_includes row, "-> DemoThing"

@@ -23,8 +23,9 @@ class TestReadmeEnvNames < Minitest::Test
   }.freeze
 
   # Not switches. MASTER's README shows a boot transcript, and the kernel string
-  # in it is in the same shape as an ENV name without being one.
-  NOT_A_SWITCH = %w[RELEASE_ARM64_T8112].freeze
+  # in it is in the same shape as an ENV name without being one. FULL_SHA256 is
+  # the argument placeholder in the `/skill approve NAME FULL_SHA256` usage line.
+  NOT_A_SWITCH = %w[RELEASE_ARM64_T8112 FULL_SHA256].freeze
 
   def test_every_screaming_snake_name_a_readme_prints_is_read_by_its_tree
     unread = TREES.flat_map do |tree, globs|

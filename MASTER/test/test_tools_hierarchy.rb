@@ -83,7 +83,8 @@ class TestToolsHierarchy < Minitest::Test
     trajectory = File.read(File.join(TOOLS_ROOT, "research", "llm_trajectory.rb"))
 
     assert_includes cognition, 'require_relative "../../lib/cognition/benchmark"'
-    assert_includes challenges, 'ROOT = File.expand_path("../../..", __dir__)'
+    # ROOT is MASTER/, where the challenge balance finds lib/ and test/.
+    assert_includes challenges, 'ROOT = File.expand_path("../..", __dir__)'
     assert_includes trajectory, 'MASTER/tools/research/llm_trajectory.rb contract'
   end
 

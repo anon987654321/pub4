@@ -156,7 +156,11 @@ class TestEntrypointRequires < Minitest::Test
         # A glob is a query, not a path: matching nothing is an empty list, not a
         # crash, so it is not this check's defect class.
         next if path.include?("*")
-        next if File.exist?(path) || CREATED_AT_RUNTIME.key?(relative(path))
+        # An interpolated segment is chosen at run time; the fixed directory
+        # before it is the part a move can break.
+        path = File.dirname("#{path[/\A[^#]*/]}x") if path.include?("\#{")
+        # `require File.join(..., "feature")` names the file without its .rb.
+        next if File.exist?(path) || File.file?("#{path}.rb") || CREATED_AT_RUNTIME.key?(relative(path))
 
         [script, path]
       end

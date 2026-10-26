@@ -65,6 +65,10 @@ module Operator
 # stopped agreeing.
 Probe.new(unit: "obsdreach", trees: %w[OPENBSD],
           run: -> { sibling("OPENBSD", "bin/reach") }),
+# STUDIO's check parses its Ruby, holds its require boundary and boots the
+# guarded entry points; without it STUDIO's heading reports cohesion alone.
+Probe.new(unit: "studiocheck", trees: %w[STUDIO],
+          run: -> { sibling("STUDIO", "check.rb") }),
 # MASTER/tools's coverage was never thin, only unreported here: check.rb parses
 # every first-party file, checks dilla's manifest against the disk, and
 # boots the guarded entry points. `rake tools` already runs it; this is

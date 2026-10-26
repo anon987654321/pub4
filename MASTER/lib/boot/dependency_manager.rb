@@ -449,10 +449,7 @@ module Master
 
       def repair_native_bundle(previous_output)
         unless previous_output.to_s.match?(ABI_STALE_LINE) || @env["MASTER_DEPS_DISCARD_BUNDLE"] == "1"
-          return fail_result(
-            "native bundle repair refused (no ABI-stale evidence; gem store left intact)",
-            output: previous_output,
-          )
+          return fail_result(NATIVE_REPAIR_REFUSED, output: previous_output)
         end
 
         report("rebuilding native bundle extensions")
@@ -712,12 +709,16 @@ module Master
         @env["MASTER_LOW_RESOURCE"] == "1" ? 2 : 4
       end
 
-      # An ABI-stale bundle is moved aside and reinstalled; only a
-      # toolchain or header failure that survives that rebuild needs OS packages.
+      # An ABI-stale bundle is moved aside and reinstalled; only a toolchain or
+      # header failure that survives that rebuild needs OS packages. A header
+      # failure with no ABI-stale line keeps its store and goes to OS packages directly.
+      NATIVE_REPAIR_REFUSED = "native bundle repair refused (no ABI-stale evidence; gem store left intact)"
+
       SYSTEM_RECOVERY_MESSAGES = [
         "bundle install failed",
         "bundle install failed in user path",
         "bundle native extension repair failed",
+        NATIVE_REPAIR_REFUSED,
       ].freeze
       ABI_STALE_LINE = /linked\ to\ incompatible|incompatible\ architecture/i.freeze
 

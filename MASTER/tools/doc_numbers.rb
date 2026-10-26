@@ -23,7 +23,8 @@ module Operator
     ROOT = File.expand_path("../..", __dir__)
     RULES = File.join(ROOT, "MASTER/data/tokens.yml")
     TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
-    SKIP = %r{/(node_modules|vendor|knowledge|output|tmp|\.master)/}
+    # An archived handoff quotes retired app code; it prescribes nothing.
+    SKIP = %r{/(node_modules|vendor|knowledge|output|tmp|\.master|handoffs/legacy)/}
 
     # Naming any of these makes the number traceable.
     SOURCES = %w[MASTER/data/tokens.yml _dialect_tokens.scss tokens.css design_system].freeze

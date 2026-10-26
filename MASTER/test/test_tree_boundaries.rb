@@ -37,7 +37,7 @@ class TreeBoundaryContractTest < Minitest::Test
   end
 
   def test_contract_adapters_are_present
-    assert File.file?(File.join(ROOT, "RAILS", "contracts", "master_client.rb"))
-    assert File.file?(File.join(ROOT, "RAILS", "contracts", "studio.rb"))
+    assert File.file?(File.join(ROOT, "MASTER", "contracts", "master_client.rb"))
+    assert File.file?(File.join(ROOT, "MASTER", "contracts", "studio.rb"))
   end
 end

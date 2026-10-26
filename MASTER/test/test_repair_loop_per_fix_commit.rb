@@ -315,7 +315,6 @@ class TestRepairLoopPerFixCommit < Minitest::Test
       assert_equal :applied, loop.send(:fix_violation, violation_in(path))
     end
   end
-end
 
   def test_immediate_delivery_stops_the_batch_after_one_delivered_fix
     Dir.mktmpdir do |root|
@@ -338,3 +337,4 @@ end
       assert_equal [violations.first[:file]], calls
     end
   end
+end

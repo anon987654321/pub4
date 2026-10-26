@@ -33,10 +33,22 @@ class TestEverySuiteFileDefinesTestsItRuns < Minitest::Test
     end
 
     def visit_def_node(node)
-      if node.name.start_with?("test_")
-        @superclasses.any? { |name| name.include?("Test") } ? @collected += 1 : @stray += 1
-      end
+      count if node.name.start_with?("test_")
       super
+    end
+
+    # A suite that generates one test per input file names it with
+    # define_method("test_...") rather than def.
+    def visit_call_node(node)
+      name = node.arguments&.arguments&.first if node.name == :define_method && node.receiver.nil?
+      count if name&.slice&.match?(/\A["']test_/)
+      super
+    end
+
+    private
+
+    def count
+      @superclasses.any? { |name| name.include?("Test") } ? @collected += 1 : @stray += 1
     end
   end
 

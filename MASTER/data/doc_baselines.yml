@@ -1,5 +1,10 @@
 ---
 doc_numbers:
+  MASTER/docs/laws_digest.md:
+  - value: 1.5rem
+    why: >-
+      Generated digest quoting the CLAMP_TYPOGRAPHY sentence of data/laws.yml verbatim;
+      the Law owns the value and the digest is regenerated from it.
 
 doc_paths:
   OPENBSD/RUNBOOK.md:

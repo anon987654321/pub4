@@ -112,7 +112,9 @@ class ImmutablePathsTest < Minitest::Test
       Master::Core::Effect.write("data/soul.yml", "absolute:\n  sacred_paths: []\n"),
       Master::Core::Effect.write("lib/review/scan/law.rb", "# scanner code may evolve\n"),
     ].each do |effect|
-      assert_instance_of Master::Core::Verdict::Allow, law.judge.call(effect, nil)
+      # The rule abstains (nil) on a path it does not guard; admit turns that into Allow.
+      verdict = Master::Core::Constitution.new(laws: [law]).admit(effect, nil)
+      assert_instance_of Master::Core::Verdict::Allow, verdict, effect.args[:path]
     end
   end
 

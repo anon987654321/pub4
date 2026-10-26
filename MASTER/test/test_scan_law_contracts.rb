@@ -1,4 +1,4 @@
-<sub># frozen_string_literal: true
+# frozen_string_literal: true
 
 require_relative "test_helper"
 require "review/scan/law_dsl"
@@ -473,4 +473,3 @@ class TestScanLawContracts < Minitest::Test
 
   def finding_lines(findings) = findings.map { |finding| finding.line.to_i }.sort
 end
-</sub>
