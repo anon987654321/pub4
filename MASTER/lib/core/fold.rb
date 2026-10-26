@@ -21,8 +21,13 @@ module Master::Core
     # so a host (a CLI, a dashboard) can stream turns without the spine growing.
     # effect_observer receives :before and :after around every World effect. Unlike
     # the UI observer, failure to publish a lifecycle event stops the fold safely.
-    def initialize(model:, constitution:, world:, memory:, max_turns: 40, observer: nil, effect_observer: nil)
+    def initialize(model:, constitution:, world:, memory:, max_turns: 40, observer: nil, effect_observer: nil, cancellation: nil)
+      if cancellation && !cancellation.respond_to?(:cancelled?)
+        raise ArgumentError, "cancellation must respond to cancelled?"
+      end
+
       @model = model
+      @cancellation = cancellation
       @law = constitution
       @world = world
       @memory = memory
@@ -34,14 +39,22 @@ module Master::Core
     end
 
     def run(goal)
+      return cancellation_done(0) if cancellation_requested?
+
       @memory.note(:goal, goal)
       blocked_effects = Hash.new(0)
       blocked_by = Hash.new(0)
 
       @max_turns.times do |turn|
-        effect = @model.propose(@memory.context, verbs: @world.verbs, scope: @memory.proof.scope)
+        return cancellation_done(turn) if cancellation_requested?
 
-        case @law.admit(effect, @memory)
+        effect = @model.propose(@memory.context, verbs: @world.verbs, scope: @memory.proof.scope)
+        return cancellation_done(turn + 1) if cancellation_requested?
+
+        verdict = @law.admit(effect, @memory)
+        return cancellation_done(turn + 1) if cancellation_requested?
+
+        case verdict
         in Verdict::Block(reason:, by:)
           observation = Observation.no("refused by #{by}: #{reason}")
           @memory.record(effect, observation)
@@ -70,6 +83,14 @@ module Master::Core
     end
 
 private
+
+    def cancellation_requested? = @cancellation&.cancelled? == true
+
+    def cancellation_done(turns)
+      reason = @cancellation.respond_to?(:reason) ? @cancellation.reason.to_s.strip : ""
+      summary = reason.empty? ? "cancelled" : "cancelled: #{reason}"
+      Done.new(reason: :cancelled, turns:, summary:)
+    end
 
     # A rule wants a person to decide. The question goes through the World like
     # any other effect, so a surface that cannot ask -- a daemon, a test --
@@ -105,6 +126,8 @@ private
     # data/spine.yml. See the old backlog, "The fold spine
     # had never been scanned".
     def apply(turn, admitted)
+      return cancellation_done(turn + 1) if cancellation_requested?
+
       if admitted.done?
         observation = Observation.ok("done")
         @memory.record(admitted, observation)
