@@ -34,11 +34,6 @@ source and tests they could not run; this pass is what measures them.
   state (DONE, PLATEAU, HUMAN_DECISION, BLOCKED, VALIDATION_FAILED, DELIVERY_FAILED, TIMEOUT)
   reached truthfully. No trial has yet reached a repair, so repair quality is unmeasured.
 
-## Law system: one catalogue
-
-`MASTER/data/laws.yml` owns Law identity; detectors sit under `MASTER/law/detectors/`.
-
-
 ## Execution contract
 
 - [ ] Map lifecycle ownership from call sites: `Core::Fold`, `Core::Constitution`, `Core::World`,
