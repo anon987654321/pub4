@@ -30,7 +30,7 @@ module Master
         data = YAML.safe_load(content, aliases: true)
         raise ArgumentError, "top-level YAML value must be a mapping" unless data.is_a?(Hash)
 
-        kind == :laws ? validate_laws(data, path:) : validate_soul(data)
+        kind == :laws ? validate_laws(data, path:, text: content) : validate_soul(data)
         nil
       rescue Psych::Exception, ArgumentError, KeyError, TypeError => e
         "configuration invariant failed: #{e.class}: #{e.message}"
@@ -64,7 +64,7 @@ module Master
         raise ArgumentError, "critical path protections missing: #{missing.join(', ')}" unless missing.empty?
       end
 
-      def validate_laws(data, path:)
+      def validate_laws(data, path:, text:)
         missing_sections = REQUIRED_LAW_SECTIONS - data.keys.map(&:to_s)
         raise ArgumentError, "required Law sections missing: #{missing_sections.join(', ')}" unless missing_sections.empty?
 
@@ -72,7 +72,7 @@ module Master
         raise ArgumentError, "law_catalogue must be a mapping" unless catalogue.is_a?(Hash)
         modalities = Array(catalogue["modalities"]).map(&:to_s).uniq.sort
         unless modalities == LAW_MODALITIES
-          raise ArgumentError, "law_catalogue.mod​​alities must be #{LAW_MODALITIES.join(', ')}"
+          raise ArgumentError, "law_catalogue.modalities must be #{LAW_MODALITIES.join(', ')}"
         end
         surfaces = Array(catalogue["surfaces"]).map(&:to_s).uniq
         raise ArgumentError, "law_catalogue.surfaces must be non-empty" if surfaces.empty?
@@ -108,7 +108,7 @@ module Master
           end
         end
 
-        validate_catalogue_key_duplicates(File.read(path, encoding: "UTF-8"), entries.keys)
+        validate_catalogue_key_duplicates(text, entries.keys)
       end
 
       def validate_catalogue_key_duplicates(text, ids)
