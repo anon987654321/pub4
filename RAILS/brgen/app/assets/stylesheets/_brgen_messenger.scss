@@ -22,7 +22,7 @@
 .messenger-artifact-header h2 {
   margin: 0;
   font-size: var(--text-sm);
-  line-height: 1.25;
+  line-height: var(--leading-tight);
 }
 .messenger-artifact-count {
   display: grid;
@@ -237,7 +237,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   background: rgb(from var(--text) r g b / var(--opacity-faint));
   color: var(--text);
   font-weight: var(--weight-bold);
-  line-height: 1;
+  line-height: var(--leading-none);
 }
 
 .messenger-room-avatar {
@@ -261,7 +261,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   white-space: nowrap;
   color: var(--text-secondary);
   font-size: var(--text-xs);
-  line-height: 1.25;
+  line-height: var(--leading-tight);
 }
 
 // The meta cell of a list row — the timestamp on a rail room and on an inbox
@@ -380,14 +380,14 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   white-space: nowrap;
   font-size: var(--text-base);
   font-weight: var(--weight-bold);
-  line-height: 1.25;
+  line-height: var(--leading-tight);
 }
 
 .messenger-header-meta {
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--text-xs);
-  line-height: 1.25;
+  line-height: var(--leading-tight);
   font-variant-numeric: lining-nums tabular-nums;
 }
 
@@ -434,7 +434,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 .messenger-details-section h2 {
   margin: 0 0 var(--space-2);
   font-size: var(--text-sm);
-  line-height: 1.25;
+  line-height: var(--leading-tight);
 }
 
 .messenger-member-list {
@@ -520,7 +520,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--text-xs);
-  line-height: 1.25;
+  line-height: var(--leading-tight);
 }
 
 .messenger-composer { margin: 0; }
@@ -589,7 +589,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   background: transparent;
   color: inherit;
   font: inherit;
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   resize: none;
 }
 
@@ -607,7 +607,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   padding-inline: var(--space-2);
   color: var(--text-secondary);
   font-size: var(--text-xs);
-  line-height: 1.25;
+  line-height: var(--leading-tight);
 }
 
 .messenger-composer-send {
@@ -744,12 +744,12 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   white-space: nowrap;
 }
 
-.messenger-inbox-name { font-size: var(--text-sm); line-height: 1.25; }
+.messenger-inbox-name { font-size: var(--text-sm); line-height: var(--leading-tight); }
 
 .messenger-inbox-preview {
   color: var(--text-secondary);
   font-size: var(--text-sm);
-  line-height: 1.25;
+  line-height: var(--leading-tight);
 }
 
 .messenger-inbox-meta mark {

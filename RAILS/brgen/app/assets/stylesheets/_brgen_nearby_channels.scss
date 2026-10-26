@@ -37,6 +37,13 @@
   animation: pulse-dot 1.8s var(--ease-in-out) infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .nearby-alert,
+  .nearby-alert-dot {
+    animation: none;
+  }
+}
+
 .nearby-alert-cta { flex-shrink: 0; }
 
 .nearby-alert-close {
@@ -122,7 +129,7 @@
 .channel-blurb {
   font-size: var(--text-base);
   color: var(--text);
-  line-height: 1.4;
+  line-height: var(--leading-snug);
 }
 
 .channel-meta {

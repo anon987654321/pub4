@@ -302,7 +302,7 @@ body.vertical-marketplace .marketplace-listing-header h1 {
 body.vertical-marketplace .store-pdp-description > div {
   max-inline-size: 66ch;
   font-family: var(--font-commerce-sans);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 
 body.vertical-marketplace .deal-card-title {

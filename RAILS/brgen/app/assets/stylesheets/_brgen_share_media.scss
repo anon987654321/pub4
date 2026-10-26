@@ -51,7 +51,7 @@
   width: 32px;
   height: 32px;
   font-size: var(--text-xs);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -145,6 +145,12 @@
   animation: nearby-in 300ms cubic-bezier(.34, 1.56, .64, 1) both;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .push-enable-btn {
+    animation: none;
+  }
+}
+
 /* Affiliate deals */
 .affiliate-deal {
   display: flex;
@@ -166,7 +172,7 @@
 .affiliate-title {
   font-size: var(--text-sm);
   font-weight: var(--weight-bold);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   margin-bottom: var(--space-1);
 }
 .affiliate-merchant { font-size: var(--text-xs); }
