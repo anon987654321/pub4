@@ -105,8 +105,19 @@ module Master
                 yaml_entry: nil,
                 streams: streams.uniq.freeze,
                 surfaces: Array(declared_surfaces).map(&:to_sym).uniq.freeze,
-                unmeasurable_reason: streams.empty? ?
-                  "conduct-only Law has no independent four-stream source assessor" : nil,
+                unmeasurable_reason: nil,
+                unmeasurable_streams: begin
+                  lexical = %i[lexical_violations lexical_opportunities]
+                  if !law.scannable?
+                    lexical
+                  elsif law.mode.to_sym == :violation
+                    [:lexical_opportunities]
+                  elsif law.mode.to_sym == :opportunity
+                    [:lexical_violations]
+                  else
+                    lexical
+                  end
+                end.freeze,
               }
             end
 
@@ -121,6 +132,13 @@ module Master
                 (law.respond_to?(:set_agent) && !law.respond_to?(:check_ast))
               streams = FourStreamAssessment::STREAMS
               surfaces = ::Law::ASSESSMENT_SURFACES
+              unmeasurable_streams = if semantic || mode == "semantic"
+                %i[lexical_violations lexical_opportunities]
+              elsif mode == "opportunity"
+                [:lexical_violations]
+              else
+                [:lexical_opportunities]
+              end
               info[id] = {
                 id:,
                 source_kind: :scanner,
@@ -130,6 +148,7 @@ module Master
                 streams: streams.freeze,
                 surfaces: surfaces.map(&:to_sym).uniq.freeze,
                 unmeasurable_reason: nil,
+                unmeasurable_streams: unmeasurable_streams.freeze,
               }
             end
 
@@ -567,8 +586,15 @@ module Master
             if info[:unmeasurable_reason]
               return assessment_result(:inconclusive, reason: info[:unmeasurable_reason], evidence:)
             end
+            if Array(info[:unmeasurable_streams]).map(&:to_sym).include?(stream)
+              return assessment_result(
+                :inconclusive,
+                reason: "Law #{law_id} has no deterministic assessor for #{stream}; it cannot be marked clean",
+                evidence:
+              )
+            end
             unless info[:streams].include?(stream)
-              return assessment_result(:not_applicable, reason: "Law has no #{stream} detector/assessor")
+              return assessment_result(:inconclusive, reason: "Law has no #{stream} assessor")
             end
 
             if info[:source_kind] != :visual &&
