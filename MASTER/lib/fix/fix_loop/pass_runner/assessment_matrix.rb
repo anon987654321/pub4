@@ -788,6 +788,27 @@ module Master
 
             if semantic
               return assessment_result(:inconclusive, reason: "semantic coverage is sampled or budgeted", evidence:) unless @scan_phase.semantic_full?
+
+              # SemanticLaw currently prompts with only a prefix of each file.
+              # A no-finding answer over a truncated artifact cannot prove the
+              # whole-file cell clean; keep it INCONCLUSIVE until chunked/full
+              # context receipts replace this adapter contract.
+              prompt_limit = if defined?(Master::Review::Scan::Laws::SemanticLaw::CODE_SNIPPET_LIMIT)
+                               Master::Review::Scan::Laws::SemanticLaw::CODE_SNIPPET_LIMIT
+                             else
+                               2_000
+                             end
+              truncated = applicable.select do |path|
+                File.file?(path) && File.size(path) > prompt_limit
+              rescue StandardError
+                true
+              end
+              return assessment_result(
+                :inconclusive,
+                reason: "semantic prompt was truncated at #{prompt_limit} chars for #{truncated.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}",
+                evidence:
+              ) if truncated.any?
+
               pending_paths, pending_unknown = assessment_gap_paths(pending, applicable)
               return assessment_result(
                 :inconclusive,
