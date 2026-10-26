@@ -831,13 +831,10 @@ module Master
           case info[:source_kind]
           when :canonical
             law = info[:law]
-            if semantic
-              return false if law.path && !(law.path.is_a?(Regexp) ? path.match?(law.path) : path.include?(law.path.to_s))
-              return false if law.path_exclude && path.match?(law.path_exclude)
-              true
-            else
-              law.applies?(path, Master.language_for(path)&.to_sym)
-            end
+            # SemanticLaw deliberately considers every active Law on every
+            # artifact. Language/path restrictions belong to the deterministic
+            # adapter and must not erase universal semantic evidence.
+            semantic || law.applies?(path, Master.language_for(path)&.to_sym)
           when :scanner
             law = info[:scanner_law]
             return true unless law.respond_to?(:applies_to?)
