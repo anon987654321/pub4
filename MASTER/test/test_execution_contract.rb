@@ -212,4 +212,54 @@ class TestExecutionContract < Minitest::Test
     refute inconclusive.complete
     refute_includes inconclusive.to_h.inspect, "browser output not available"
   end
+  def test_skill_contract_is_versioned_and_requires_fixtures_for_promotion
+    candidate = Contract::SkillContract.from_declaration(
+      name: "release-skill", revision: "b" * 64, source: :registry,
+      declaration: {
+        "schema_version" => 1,
+        "version" => "1.2.0",
+        "status" => "candidate",
+        "risk" => "medium",
+        "required_capabilities" => ["read", "network"],
+        "laws" => ["ROBUSTNESS", "CAPABILITY_STATUS_MUST_BE_TRUTHFUL"],
+        "fixtures" => ["MASTER/test/test_skills.rb"],
+        "provenance" => "reviewed-in-source"
+      }
+    )
+    legacy = Contract::SkillContract.from_declaration(
+      name: "legacy", revision: "c" * 64, source: :registry
+    )
+    incomplete = Contract::SkillContract.from_declaration(
+      name: "incomplete", revision: "d" * 64, source: :registry,
+      declaration: { "version" => "1.0.0", "status" => "candidate" }
+    )
+
+    assert_predicate candidate, :promotable?
+    assert_equal :candidate, candidate.status
+    refute_predicate candidate, :permitted_for_trigger?,
+                     "a declared candidate is not active until it is approved"
+    assert_equal :unreviewed, legacy.status
+    assert_predicate legacy, :permitted_for_trigger?,
+                     "legacy skills keep the existing behavior while migration proceeds"
+    refute_predicate incomplete, :promotable?
+  end
+
+  def test_invalid_skill_contract_never_promotes
+    contract = Contract::SkillContract.from_declaration(
+      name: "bad-skill", revision: "e" * 64, source: :registry,
+      declaration: {
+        "version" => "not-semver",
+        "status" => "self-approved",
+        "required_capabilities" => ["../admin"],
+        "mystery" => true
+      }
+    )
+
+    assert_equal :invalid, contract.status
+    refute_predicate contract, :permitted_for_trigger?
+    refute_predicate contract, :promotable?
+    assert_includes contract.errors, "invalid_version"
+    assert_includes contract.errors, "unknown_fields"
+  end
+
 end
