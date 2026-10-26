@@ -16,7 +16,8 @@ source and tests they could not run; this pass is what measures them.
   then `MASTER_TEST_JOBS=3 rake test`; check `.master/check/suite-report.json` for incomplete
   workers and mismatched start/result counts. Then `bin/check --profile=agent`.
 - [ ] RAILS: `ruby RAILS/test/contract_runner_contract_test.rb`, `ruby RAILS/test/run_all.rb`, and
-  `bin/ci` in each app in `RAILS/apps.yml`, including brgen's share-target, share-draft and job
+  `bin/ci` in each app in `RAILS/apps.yml`, including the 26 playlist, tv and takeaway tests
+  that no command ran until `Pub4TestScope`, brgen's share-target, share-draft and job
   concurrency tests and a fresh test database for amber's `account_merges` and identity migrations.
 - [ ] OPENBSD: `ruby OPENBSD/test/run_all.rb` and `ruby OPENBSD/test/test_evidence_tool.rb`, smoke-testing
   PASS, FAIL, BLOCKED, INCONCLUSIVE and TIMEOUT with process-group termination.
@@ -32,15 +33,6 @@ source and tests they could not run; this pass is what measures them.
   candidates per tree, tournament fields that survive an interrupted process, and each terminal
   state (DONE, PLATEAU, HUMAN_DECISION, BLOCKED, VALIDATION_FAILED, DELIVERY_FAILED, TIMEOUT)
   reached truthfully. No trial has yet reached a repair, so repair quality is unmeasured.
-
-## Test reach
-
-- [ ] Thirty test files no runner reaches (`test/test_runs.rb`): brgen_radio/playlist (12),
-  brgen_radio/tv (10), brgen_marketplace/engines/takeaway (4) and four in `STUDIO/test/test_*.rb`.
-  brgen's `bin/ci` convention in `MASTER/tools/repo/runs.rb` covers `brgen_*/test` but not engines
-  nested one level deeper. STUDIO's general suite globs `*_test.rb` only. Wire each, run it, fix
-  what it finds; `test_lora_replicate.rb` calls a now-private `ReplicateClient#post`, and it and
-  `idea_picture_test.rb` need `minitest/mock`, which minitest 6 no longer ships.
 
 ## Law system: one catalogue
 

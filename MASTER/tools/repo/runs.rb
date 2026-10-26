@@ -54,6 +54,8 @@ module Operator
         "RAILS/brgen/test/**/*_test.rb",
         "RAILS/brgen/engines/*/test/**/*_test.rb",
         "RAILS/brgen_*/test/**/*_test.rb",
+        "RAILS/brgen_*/*/test/**/*_test.rb",
+        "RAILS/brgen_*/engines/*/test/**/*_test.rb",
         "RAILS/__shared/test/**/*_test.rb",
       ],
       "RAILS/bsdports/bin/ci" => ["RAILS/bsdports/test/**/*_test.rb"],

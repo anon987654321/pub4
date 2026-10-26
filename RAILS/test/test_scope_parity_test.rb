@@ -1,73 +1,36 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "../__shared/config/test_scope"
 
-# `bin/rails test` and the VPS check must agree about what the suite is.
+# `bin/rails test` and the CI step must agree about what brgen's suite is.
 #
-# Rails globs test/**/*_test.rb from the app root, which never reached the
-# mountable verticals under engines/*/test. shared/config/ci.rb sets
-# DEFAULT_TEST/DEFAULT_TEST_EXCLUDE so the box runs them; nothing set it locally,
-# so the local command was the weaker one and reported the smaller number.
-#
-# It has bitten twice. ci.rb's comment records four engine tests rotting into
-# NameErrors on a stale route helper while CI stayed green. On 2026-08-10 a
-# validation-i18n change broke two takeaway engine tests, three sessions reported
-# "brgen green" from the narrow command, and the VPS check caught it — 349 runs
-# locally against CI's 381, and a blocked deploy.
-#
-# brgen sets the same globs in config/application.rb now. This asserts the two
-# stay equal, because the failure mode is silent in the direction that matters:
-# a narrower local glob still passes, just over less.
+# Rails globs test/**/*_test.rb from the app root, which never reaches the
+# mountable verticals beside it. Three copies of the widened glob drifted twice:
+# 26 engine tests went unrun while CI stayed green, and on 2026-08-10 three
+# sessions reported "brgen green" over 349 runs against CI's 381. The scope is
+# now one constant, Pub4TestScope, and this asserts both commands read it.
 class TestScopeParityTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  CI = File.join(ROOT, "__shared", "config", "ci.rb")
 
-  # Apps that carry mountable verticals, which are sibling gems (brgen_*/) beside the app. Only brgen
-  # declares them; the others have no sibling tests and Rails' default already covers them.
-  def apps_with_engines
-    @apps_with_engines ||= Dir.glob(File.join(ROOT, "brgen_*", "test")).empty? ? [] : %w[brgen]
+  def source(*path) = File.read(File.join(ROOT, *path))
+
+  def test_ci_and_brgen_read_the_one_scope
+    assert_includes source("__shared", "config", "ci.rb"), "Pub4TestScope::GLOB"
+    assert_includes source("__shared", "config", "ci.rb"), "Pub4TestScope::EXCLUDE"
+    assert_includes source("brgen", "config", "application.rb"), "Pub4TestScope::GLOB"
+    assert_includes source("brgen", "config", "application.rb"), "Pub4TestScope::EXCLUDE"
   end
 
-  def ci_source = @ci_source ||= File.read(CI)
+  # Assert on files, not prose: every vertical with a test directory is reached.
+  def test_every_vertical_test_directory_is_in_scope
+    Dir.chdir(File.join(ROOT, "brgen")) do
+      reached = Dir.glob(Pub4TestScope::GLOB)
+                   .reject { |file| File.fnmatch?(Pub4TestScope::EXCLUDE, file, File::FNM_EXTGLOB) }
+      verticals = Dir.glob("../brgen_*/**/test/**/*_test.rb").reject { |file| file.match?(%r{/test/(system|dummy|fixtures)/}) }
 
-  def ci_glob(name)
-    ci_source[/#{name}\s*=\s*"([^"]+)"/, 1]
-  end
-
-  def test_ci_still_widens_the_glob_for_engines
-    assert_equal "{test,../brgen_*/test}/**/*_test.rb", ci_glob("test_glob"),
-                 "ci.rb no longer widens DEFAULT_TEST — if the shape changed, application.rb must follow"
-    assert_equal "{test,../brgen_*/test}/{system,dummy,fixtures}/**/*_test.rb", ci_glob("test_exclude"),
-                 "ci.rb's exclude changed shape; the app-local default must match it"
-  end
-
-  def test_every_app_with_engines_matches_cis_scope_locally
-    refute_empty apps_with_engines, "no app has sibling brgen_*/test — this check has stopped measuring anything"
-
-    mismatched = apps_with_engines.reject do |app|
-      config = File.read(File.join(ROOT, app, "config", "application.rb"))
-      config.include?(ci_glob("test_glob")) && config.include?(ci_glob("test_exclude"))
-    end
-
-    assert_empty mismatched,
-                 "these apps have engine tests that `bin/rails test` does not run, while CI does — " \
-                 "set DEFAULT_TEST/DEFAULT_TEST_EXCLUDE in config/application.rb to ci.rb's values"
-  end
-
-  # The number is the thing that misled three sessions, so assert on files rather
-  # than on prose: the wide glob must actually find more than the narrow one.
-  def test_the_wider_glob_finds_engine_tests_the_narrow_one_misses
-    apps_with_engines.each do |app|
-      Dir.chdir(File.join(ROOT, app)) do
-        narrow = Dir.glob("test/**/*_test.rb")
-        excluded = "{test,../brgen_*/test}/{system,dummy,fixtures}/**/*_test.rb"
-        wide = Dir.glob("{test,../brgen_*/test}/**/*_test.rb")
-                  .reject { |f| File.fnmatch?(excluded, f, File::FNM_EXTGLOB) }
-
-        missed = wide - narrow
-        refute_empty missed,
-                     "#{app} has sibling brgen_*/test but the wide glob finds nothing extra; check the glob"
-      end
+      assert_empty verticals - reached, "vertical tests outside Pub4TestScope: no command runs them"
+      refute_empty reached - Dir.glob("test/**/*_test.rb"), "the scope finds nothing beyond brgen/test; check the glob"
     end
   end
 end

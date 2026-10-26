@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require "minitest/autorun"
-require "minitest/mock"
+require_relative "minitest_helper"
 require "open3"
 require "tmpdir"
 require_relative "../output_paths"
@@ -82,7 +81,8 @@ class TestStudioOutputPaths < Minitest::Test
     with_environment("POSTPRO_OUTPUT_DIR", nil) do
       with_environment("DILLA_OUTPUT_DIR", nil) do
         Dir.mktmpdir do |dir|
-          xdg_home = File.join(dir, "xdg")
+          # realpath: on macOS the tmpdir is a /var symlink to /private/var, and the paths resolve it.
+          xdg_home = File.join(File.realpath(dir), "xdg")
           with_environment("XDG_DATA_HOME", xdg_home) do
             at = Time.utc(2026, 1, 2)
 

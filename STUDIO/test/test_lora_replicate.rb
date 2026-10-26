@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
+require_relative "minitest_helper"
 require "fileutils"
 require "ripper"
-require "minitest/mock"
 require "tmpdir"
 require "open3"
 require "rbconfig"
@@ -51,7 +50,7 @@ class TestLoraReplicate < Minitest::Test
     error = nil
     with_http_responses([failure], requests) do
       error = assert_raises(Client::TransientError) do
-        client.post(URI("https://api.replicate.com/v1/predictions"), {})
+        client.create_model("owner/name")
       end
     end
 
@@ -68,7 +67,7 @@ class TestLoraReplicate < Minitest::Test
     accepted = Struct.new(:code, :body).new("200", '{"id":"p1"}')
 
     result = with_http_responses([throttled, accepted], requests) do
-      client.post(URI("https://api.replicate.com/v1/predictions"), {})
+      client.create_model("owner/name")
     end
 
     assert_equal({ "id" => "p1" }, result)
@@ -83,7 +82,7 @@ class TestLoraReplicate < Minitest::Test
     error = nil
     with_http_responses([exhausted], requests) do
       error = assert_raises(Client::ExhaustedError) do
-        client.post(URI("https://api.replicate.com/v1/predictions"), {})
+        client.create_model("owner/name")
       end
     end
 
@@ -99,10 +98,10 @@ class TestLoraReplicate < Minitest::Test
     accepted = Struct.new(:code, :body).new("200", '{"ok":true}')
 
     result = with_http_responses([failed, accepted], requests) do
-      client.get(URI("https://api.replicate.com/v1/account"))
+      client.model_exists?("owner/name")
     end
 
-    assert_equal({ "ok" => true }, result)
+    assert result, "the retried GET answered"
     assert_equal 2, requests.length
   end
 
@@ -268,8 +267,9 @@ class TestLoraReplicate < Minitest::Test
     assert_operator received, :<, download
     assert_operator download, :<, output_ready
     assert_includes body, "Preflight.render_receipt_action(receipt, fingerprint:)"
-    assert_includes body, "Preflight.ledger_append(LEDGER, kind: \"render_attempt\", status: \"started\")"
-    assert_includes body, "Preflight.ledger_append(LEDGER, kind: \"render_attempt\", status: \"prediction_received\")"
+    # Prefixes, not whole calls: each append carries more fields after its status.
+    assert_includes body, "Preflight.ledger_append(LEDGER, kind: \"render_attempt\", status: \"started\","
+    assert_includes body, "Preflight.ledger_append(LEDGER, kind: \"render_attempt\", status: \"prediction_received\","
     assert_includes body, "observed_render_seconds += seconds"
     assert_includes source, "unrecorded_render_seconds = [observed_render_seconds - recorded_render_delta, 0.0].max"
   end
@@ -573,7 +573,7 @@ class TestLoraReplicate < Minitest::Test
 
       Preflight.ledger_append(path, kind: "render", status: "output_ready",
                                    id: "pending-1", seconds: 4.0)
-      assert_in_delta 9.0, Preflight.ledger_seconds(path, "render"),
+      assert_in_delta 9.0, Preflight.ledger_seconds(path, "render"), 0.001,
                       "the final receipt must replace, not double-count, its prediction receipt"
       assert_in_delta 9.0 * Preflight::RENDER_USD_PER_SECOND, Preflight.ledger_usd(path)
       assert_equal 0.0, Preflight.ledger_seconds(File.join(dir, "none"), "render")

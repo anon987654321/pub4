@@ -110,7 +110,11 @@ OptionParser.new do |p|
   p.on("--steps N", Integer, "Training steps (default 1000)") { |v| options[:steps] = v }
   p.on("--lora-rank N", Integer, "LoRA rank (default 16, as train.yaml)") { |v| options[:lora_rank] = v }
   p.on("--timeout SEC", Integer, "Poll timeout seconds") { |v| options[:timeout] = v }
-  p.on("--max-usd USD", Float, "Refuse paid training above this estimated USD cost (default $10)") { |v| options[:max_usd] = v }
+  # Converted here, not by OptionParser's Float, so NaN or a typo reaches the
+  # finite-positive check below and its message rather than a backtrace.
+  p.on("--max-usd USD", "Refuse paid training above this estimated USD cost (default $10)") do |v|
+    options[:max_usd] = Float(v, exception: false)
+  end
   p.on("--webhook URL", "Replicate webhook URL") { |v| options[:webhook] = v }
   p.on("-h", "--help") { puts p; exit 0 }
 end.parse!

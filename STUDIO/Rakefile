@@ -12,7 +12,7 @@ require "rake/testtask"
 # Tests outside the tool naming family still belong to the default suite. Keep
 # each in its own process so a top-level constant from one subject cannot become
 # an accidental dependency of the next.
-GENERAL_TEST_SUITES = FileList["test/*_test.rb"]
+GENERAL_TEST_SUITES = FileList["test/*_test.rb", "test/test_*.rb"]
   .reject { |path| File.basename(path).match?(/\Atest_tools_/) }
   .reject { |path| File.basename(path) == "test_studio_check.rb" }
   .map { |path| File.basename(path, ".rb") }

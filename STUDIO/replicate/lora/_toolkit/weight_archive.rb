@@ -32,6 +32,10 @@ module Lora
             next unless name.downcase.end_with?(".safetensors")
 
             basename = File.basename(name)
+            # A tar made on macOS carries ._model.safetensors, the AppleDouble record of
+            # model.safetensors's extended attributes. It is not a checkpoint.
+            next if basename.start_with?("._")
+
             staged_path = File.join(staging, basename)
             raise ArgumentError, "duplicate weight basename #{basename.inspect}" if File.exist?(staged_path)
 

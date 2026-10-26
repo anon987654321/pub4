@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
+require_relative "minitest_helper"
 require "open3"
 require "rbconfig"
 require "tmpdir"
@@ -69,9 +69,9 @@ class DillaReferenceTest < Minitest::Test
     assert_equal "industrial_techno", profile.fetch("style_key")
     assert_equal 142, profile.fetch("target_bpm")
     params = profile.fetch("parameters")
-    assert_operator params.fetch("rumble_level"), :between?, 0.05, 0.35
-    assert_operator params.fetch("hat_probability"), :between?, 0.1, 0.98
-    assert_operator params.fetch("distortion_drive"), :between?, 1.0, 4.0
+    assert_includes 0.05..0.35, params.fetch("rumble_level")
+    assert_includes 0.1..0.98, params.fetch("hat_probability")
+    assert_includes 1.0..4.0, params.fetch("distortion_drive")
   end
 
   def test_missing_spectral_measurements_fall_back_without_crashing
@@ -146,8 +146,8 @@ class DillaReferenceTest < Minitest::Test
 
     assert_in_delta base_rumble + 0.03, profile.fetch("parameters").fetch("rumble_level"), 0.001
     assert_in_delta base_duck + 0.055, profile.fetch("parameters").fetch("rumble_duck_depth"), 0.001
-    assert_operator profile.fetch("parameters").fetch("rumble_level"), :between?, 0.05, 0.35
-    assert_operator profile.fetch("parameters").fetch("rumble_duck_depth"), :between?, 0.3, 0.95
+    assert_includes 0.05..0.35, profile.fetch("parameters").fetch("rumble_level")
+    assert_includes 0.3..0.95, profile.fetch("parameters").fetch("rumble_duck_depth")
   end
 
   def test_rhythm_summary_measures_onset_density_and_grid_looseness

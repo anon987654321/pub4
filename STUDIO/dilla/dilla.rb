@@ -6489,7 +6489,9 @@ module Dilla
         "summary" => libsonare_descriptor_summary(descriptors) }
     rescue Error => error
       { "status" => "failed", "message" => error.message }
-    rescue Errno::ENOENT, JSON::ParserError, Errno::EACCES, Errno::EIO => error
+    rescue JSON::ParserError => error
+      { "status" => "failed", "message" => "invalid libsonare output: #{error.message}" }
+    rescue Errno::ENOENT, Errno::EACCES, Errno::EIO => error
       { "status" => "failed", "message" => "libsonare analysis failed: #{error.message}" }
     ensure
       temporary&.close!
