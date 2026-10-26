@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require "tmpdir"
 require "json"
+require "digest"
 
 class ProviderHealthCacheTest < Minitest::Test
   def test_provider_telemetry_log_rotates_without_exceeding_shared_cap
@@ -83,6 +84,41 @@ class ProviderHealthCacheTest < Minitest::Test
 
       assert_in_delta 0.78, health.score("provider-a"), 0.001,
                       "score should replay the older rotated failure before the active success"
+    end
+  end
+
+  def test_provider_health_persists_error_digest_instead_of_raw_error
+    Dir.mktmpdir("provider-health-redaction-") do |dir|
+      path = File.join(dir, "provider-health.ndjson")
+      health = Master::CLI::Routing::ProviderHealth.new(path:)
+      private_error = "authorization failed at https://private.example/path?token=secret"
+
+      returned = health.record(
+        model: "provider-a", status: :provider_error, error: private_error
+      )
+      serialized = File.read(path)
+      persisted = JSON.parse(serialized.lines.last)
+
+      assert_equal Digest::SHA256.hexdigest(private_error), persisted["error_digest"]
+      assert_equal private_error.bytesize, persisted["error_bytes"]
+      refute persisted.key?("error")
+      refute_includes serialized, private_error
+      refute_includes returned.inspect, private_error
+    end
+  end
+
+  def test_missing_model_and_dispatch_failures_penalize_health
+    Dir.mktmpdir("provider-health-outcomes-") do |dir|
+      now = Time.utc(2026, 10, 26, 12, 0, 0)
+      health = Master::CLI::Routing::ProviderHealth.new(
+        path: File.join(dir, "health.ndjson"), now: -> { now }
+      )
+
+      %i[model_missing llm_call_failure].each do |status|
+        health.record(model: status.to_s, status:)
+        assert_in_delta 0.75, health.score(status.to_s), 0.001
+        assert health.recently_failed?(status.to_s, max_age_s: 60)
+      end
     end
   end
 
