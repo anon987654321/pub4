@@ -273,14 +273,15 @@ module Master
       def media_receipt(inventory, source)
         return receipt("inconclusive", reason: inventory["reason"] || source["reason"]) unless captured?(inventory, source)
 
-        assets = inventory["records"].select do |path, type, _size|
-          type == "file" && MEDIA_EXTENSIONS.include?(File.extname(path).downcase)
-        end
+        asset_records = recognized_asset_records(inventory)
         return receipt("not_applicable", reason: "target inventory contains no recognized media or font assets",
-          evidence: { "method" => "complete target inventory", "inventory_sha256" => inventory["digest"] }) if assets.empty?
+          evidence: { "method" => "complete target inventory", "inventory_sha256" => inventory["digest"] }) if asset_records.empty?
 
+        assets = asset_records.select { |_path, type, _size| type == "file" }
         failures = []
-        unmeasured = []
+        unmeasured = asset_records.select { |_path, type, _size| type == "symlink" }.map do |path, _type, _size|
+          "#{path} (symlink target not verified)"
+        end
         measured = []
         assets.each do |relative_path, _type, expected_bytes|
           path = File.expand_path(relative_path, @root)
@@ -314,6 +315,12 @@ module Master
           "asset_manifest_sha256" => digest_json(measured.sort),
           "inventory_sha256" => inventory["digest"],
         }, counts: { "assets" => measured.size })
+      end
+
+      def recognized_asset_records(inventory)
+        Array(inventory["records"]).select do |path, type, _size|
+          %w[file symlink].include?(type) && MEDIA_EXTENSIONS.include?(File.extname(path.to_s).downcase)
+        end
       end
 
       def compiled_asset_receipt(inventory, source)

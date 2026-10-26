@@ -24,6 +24,20 @@ class TestSurfaceEvidenceContract < Minitest::Test
     refute evidence.send(:valid_rendered_capture?, capture_row("rendered_status" => "inconclusive"))
   end
 
+  def test_media_inventory_does_not_ignore_symlinked_assets
+    inventory = {
+      "records" => [
+        ["public/logo.svg", "file", 120],
+        ["public/private-logo.png", "symlink", 0],
+        ["README.md", "file", 50],
+      ]
+    }
+
+    rows = evidence.send(:recognized_asset_records, inventory)
+
+    assert_equal [["public/logo.svg", "file", 120], ["public/private-logo.png", "symlink", 0]], rows
+  end
+
   def test_compact_visual_evidence_keeps_geometry_receipt_without_page_content
     row = capture_row.merge("id" => "surface-1", "url" => "https://private.invalid/path?token=secret")
     compact = evidence.send(:compact_visual_row, row)
