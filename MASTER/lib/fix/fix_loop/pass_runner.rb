@@ -82,6 +82,13 @@ module Master
             abstract = @council ? "bounded clean-streak review" : "unavailable"
             visual = @visual_pass&.applicable?(target) ? "rendered" : "not-applicable"
             lexical_opportunities = @opportunity_pass&.applicable?(target) ? "bounded-tree-heuristics" : "no-universal-adapter"
+            matrix_status = assessment_matrix_status
+            matrix_label = case matrix_status
+                           when :complete then "runtime_ledger_complete"
+                           when :incomplete then "runtime_ledger_partial"
+                           else "contract_only_not_measurement"
+                           end
+            matrix_summary = assessment_matrix_summary
             @bus&.publish(
               "fix_loop:coverage",
               pass:,
@@ -95,12 +102,13 @@ module Master
               abstract:,
               opportunity: lexical_opportunities,
               visual:,
-              assessment_matrix: "contract_only_not_measurement",
-              assessment_matrix_status: assessment_matrix_status.to_s,
+              assessment_matrix: matrix_label,
+              assessment_matrix_status: matrix_status.to_s,
+              assessment_matrix_summary: matrix_summary,
             )
             Master::Trace::Dmesg.status(
               "fix0",
-              "pass #{pass}, coverage lexical-violations=mechanical+structural lexical-opportunities=#{lexical_opportunities} semantic-violations=#{semantic} semantic-opportunities=#{semantic} visual=#{visual} law-stream-surface-matrix=NOT_MEASURED",
+              "pass #{pass}, coverage lexical-violations=mechanical+structural lexical-opportunities=#{lexical_opportunities} semantic-violations=#{semantic} semantic-opportunities=#{semantic} visual=#{visual} law-stream-surface-matrix=#{matrix_status.to_s.upcase}",
             )
           end
           @coverage_reporter = emit_coverage
