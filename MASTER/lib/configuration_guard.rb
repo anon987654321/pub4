@@ -97,23 +97,23 @@ module Master
         modalities = Array(row["modalities"]).map(&:to_s).uniq.sort
         raise ArgumentError, "Law #{id} modalities must be #{LAW_MODALITIES.join(', ')}" unless modalities == LAW_MODALITIES
 
-        validate_catalogue_sources(id, row, repo_root)
+        validate_catalogue_sources(id, row)
       end
     end
 
-    def validate_catalogue_sources(id, row, repo_root)
+    def validate_catalogue_sources(id, row)
       sources = (Array(row["definition_sources"]) + Array(row["detector_sources"])).map(&:to_s).uniq
       raise ArgumentError, "Law #{id} must name a Ruby source" if sources.empty?
-      sources.each { |source| validate_catalogue_source(id, source, repo_root) }
+      sources.each { |source| validate_catalogue_source(id, source) }
     end
 
-    def validate_catalogue_source(id, source, repo_root)
-      valid = source.start_with?("MASTER/law/") && source.end_with?(".rb") && !source.split("/").include?("..")
+    # Path syntax belongs in per-write admission. File existence belongs in the
+    # whole-tree LawRegistryAudit, because one transaction may add/move the file
+    # and update the catalogue in either write order.
+    def validate_catalogue_source(id, source)
+      valid = source.start_with?("MASTER/law/") && source.end_with?(".rb") &&
+              !source.split("/").include?("..")
       raise ArgumentError, "Law #{id} has invalid source path #{source.inspect}" unless valid
-
-      full_path = File.expand_path(source, repo_root)
-      valid_file = full_path.start_with?(repo_root + File::SEPARATOR) && File.file?(full_path)
-      raise ArgumentError, "Law #{id} source is missing: #{source}" unless valid_file
     end
 
     def validate_catalogue_key_duplicates(text, ids)
