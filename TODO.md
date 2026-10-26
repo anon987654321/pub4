@@ -596,3 +596,8 @@ The shared `Master::Execution::Contract::EffectEnvelope` now records explicit re
 ## Assessment adapter availability truth (2026-10-26)
 
 The /fix assessment adapter inventory now distinguishes a missing rendered-UI/browser-journey or lexical-opportunity adapter (`unavailable`) from an installed adapter that explicitly declares the target non-applicable (`not_applicable_to_target`). Added focused regression coverage for missing, non-applicable and applicable adapter states. This fixes the plan's capability report only; the SurfaceEvidence receipts remain the authoritative evidence, and missing browser evidence for a front-end target still cannot count as clean. The regression tests were not executed here, so validation remains INCONCLUSIVE.
+
+
+## Rendered UI evidence integrity (2026-10-26)
+
+Rendered UI receipts now require a successful render status, a SHA-256 screenshot digest, a SHA-256 geometry digest and a non-negative element count for every captured surface. Missing geometry is not accepted merely because a screenshot exists. Compact evidence retains the geometry digest and element count but excludes page URLs and page content. Regression coverage was added; tests were not executed in this session, so validation remains INCONCLUSIVE.

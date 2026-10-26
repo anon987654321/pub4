@@ -130,3 +130,8 @@ The envelope marks irreversible and unknown effects as requiring reconciliation 
 ### Adapter availability is not applicability
 
 The /fix plan's adapter inventory now reports `unavailable` when the visual or opportunity assessor is absent, and `not_applicable_to_target` only when an installed assessor explicitly returns non-applicable. An adapter inventory is still only a capability statement: `SurfaceEvidence` receipts, source stability and actual browser/test/runtime evidence determine whether an assessment is complete. This distinction prevents a missing browser tool from being described as a target that does not need browser assessment.
+
+
+### Rendered UI evidence integrity
+
+A rendered surface is accepted only when the capture reports a clean render, a valid screenshot SHA-256, a valid geometry SHA-256 and a non-negative element count. The compact evidence retains the geometry digest and element count without persisting the page URL or page content. This checks receipt integrity and presence, not semantic correctness of the layout; geometry, accessibility and browser checks remain separate evidence sources.
