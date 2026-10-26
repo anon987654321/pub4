@@ -29,7 +29,6 @@ module Master::Core
       @max_turns = max_turns
       @observer = observer
       @effect_observer = effect_observer
-      @effect_sequence = 0
       @lifecycle_failure = nil
       @lifecycle_failure_before = false
     end
@@ -201,7 +200,6 @@ private
     end
 
     def perform_effect(turn, effect, effect_id: SecureRandom.uuid)
-      @effect_sequence += 1
       notify_effect(stage: :before, turn:, effect:, effect_id:, operation: :perform)
       return Observation.no("effect not executed: lifecycle before-event publication failed") if @lifecycle_failure
 

@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require "open3"
 require "rbconfig"
+require "tmpdir"
 
 # bin/master-core is the fold and nothing else, and bin/dogfood reads its exit
 # status as the kernel smoke. It exited 0 on every run, including the ones where
@@ -13,9 +14,11 @@ class TestBinMasterCore < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
   def run_core(prelude = "")
-    script = "#{prelude}; load File.join(#{ROOT.inspect}, 'bin', 'master-core')"
-    Open3.capture2e(RbConfig.ruby, "-I#{File.join(ROOT, 'lib')}", "-e", script, "--",
-                    "--max-turns", "6", "smoke", chdir: ROOT)
+    Dir.mktmpdir("master-core-test") do |workspace|
+      script = "#{prelude}; load File.join(#{ROOT.inspect}, 'bin', 'master-core')"
+      Open3.capture2e(RbConfig.ruby, "-I#{File.join(ROOT, 'lib')}", "-e", script, "--",
+                      "--root", workspace, "--max-turns", "6", "smoke", chdir: ROOT)
+    end
   end
 
   def test_the_no_op_fold_is_refused_done_and_exits_zero

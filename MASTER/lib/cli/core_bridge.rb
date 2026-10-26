@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../design/authoring"
+require_relative "../trace/effect_observer"
 
 module Master
   module CLI
@@ -307,7 +308,9 @@ module Master
       def lifecycle_event_bus(bus:, requested_root:, workspace_root:)
         return bus if bus
 
-        telemetry_root = File.expand_path(requested_root) == Master::ROOT ? Master::ROOT : workspace_root
+        requested_root = File.expand_path(requested_root)
+        canonical_roots = [Master::ROOT, Master::REPO_ROOT].map { |path| File.expand_path(path) }
+        telemetry_root = canonical_roots.include?(requested_root) ? Master::ROOT : workspace_root
         event_log = Master::Trace::Log::Event.new(root: telemetry_root)
         Master::Trace::EventBus.new(event_log:)
       end
@@ -315,19 +318,7 @@ module Master
       # The lifecycle stream intentionally excludes effect arguments: argv, URLs,
       # prompts and write content may contain secrets or private user data.
       def build_effect_observer(bus:)
-        lambda do |stage:, turn:, effect:, effect_id:, operation: :perform, parent_effect_id: nil,
-                   checkpoint_id: nil, observation: nil, elapsed_ms: nil|
-          payload = { effect_id:, turn:, verb: effect.verb, capability: effect.capability, operation: }
-          payload[:parent_effect_id] = parent_effect_id if parent_effect_id
-          payload[:checkpoint_id] = checkpoint_id if checkpoint_id
-          if stage == :before
-            bus.publish_required("core:effect:before", payload)
-          elsif stage == :after
-            bus.publish_required("core:effect:after", payload.merge(
-              status: observation.ok? ? "ok" : "error", elapsed_ms:
-            ))
-          end
-        end
+        Master::Trace::EffectObserver.new(bus:)
       end
 
       # The part of an effect a person names it by: the file, the command, the

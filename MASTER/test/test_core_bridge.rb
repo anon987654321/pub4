@@ -72,6 +72,24 @@ class CoreBridgeTest < Minitest::Test
     assert_equal "after-event persistence failed", mission.instance_variable_get(:@failure)
   end
 
+  def test_lifecycle_events_persist_without_a_host_bus
+    Dir.mktmpdir do |root|
+      model = ScriptedModel.new(*evidence_then_done(
+        Master::Core::Effect.write("persisted.txt", "never log this payload"), summary: "ok"
+      ))
+
+      result = Master::CLI::CoreBridge.run("persist a note", root:, model:)
+
+      assert_equal :complete, result[:reason]
+      records = File.readlines(File.join(root, "runtime", "events", "activity.jsonl"))
+                      .map { |line| JSON.parse(line) }
+      events = records.select { |record| record["event"].start_with?("core:effect:") }
+      assert events.any? { |record| record["event"] == "core:effect:before" }
+      assert events.any? { |record| record["event"] == "core:effect:after" }
+      refute_includes File.read(File.join(root, "runtime", "events", "activity.jsonl")), "never log this payload"
+    end
+  end
+
   def test_core_effect_lifecycle_events_are_paired_and_redacted
     Dir.mktmpdir do |root|
       bus = FakeBus.new

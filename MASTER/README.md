@@ -89,8 +89,10 @@ check runner, preserving existing rollback and recovery behavior. This is a
 migration target, not a claim that consolidation is complete.
 
 CoreBridge attaches a lifecycle observer to the Fold even when the host does not
-supply a bus; that case uses the canonical event log at the runtime root with no
-subscribers. core:effect:before is durably published before each World effect and
+supply a bus; that case uses the event log at the task runtime root, or MASTER's
+canonical runtime root when working in pub4 itself. The standalone `bin/master-core`
+entrypoint uses the same shared Trace::EffectObserver adapter, so it does not bypass
+the lifecycle contract. core:effect:before is durably published before each World effect and
 core:effect:after records the observed outcome and elapsed time. Rollback is a
 separate audited operation linked to the failed effect and its checkpoint. If the
 required after-event cannot be persisted, the mission fails terminally instead of
