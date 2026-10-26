@@ -218,6 +218,7 @@ module Master
         when "llm:send" then @calls[Thread.current.object_id] = [payload[:model].to_s, @clock.call]
         when "llm:provider_outcome" then finish_call(payload)
         when "fix_loop:pass_start" then start_pass(payload)
+        when "fix_loop:terminal", "fix_loop:crash" then end_tree
         when "fix_loop:phase" then enter_phase(payload)
         when "council:progress" then @council = [payload[:answered].to_i, payload[:total].to_i]
         when "scan:progress" then scanned(payload)
@@ -247,6 +248,16 @@ module Master
         @council = nil
         @file_total = payload[:file_count].to_i
         @commits_at_start = @commits.call
+      end
+
+      # One pulse spans every tree of a multi-tree /fix. A tree that ended, crashed or not,
+      # leaves no pass to stall and no call to wait on; the next tree's pass_start begins anew.
+      def end_tree
+        @pass = 0
+        @stage = nil
+        @calls.clear
+        reset_pass
+        @pass_started_at = @clock.call
       end
 
       def reset_pass

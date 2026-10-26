@@ -120,6 +120,19 @@ class TestFixWatchdog < Minitest::Test
     assert stalled[:abort], "direct CLI runs must not rely on the outer wrapper watchdog"
   end
 
+  # A four-tree /fix shares one pulse. OPENBSD's pass crashed mid-call on 2026-10-26, and its
+  # pass, phase and unanswered call kept reading as a stall until the watchdog stopped STUDIO.
+  def test_a_tree_that_ended_leaves_no_pass_or_call_to_stall_the_next
+    p = pulse
+    p.observe("fix_loop:phase", stage: :stream)
+    p.observe("llm:send", model: "claude-cli:claude-sonnet-5-5")
+    p.observe("fix_loop:terminal", state: :crash, target: "OPENBSD")
+    @now = Pulse::STALL_SECONDS * 2
+
+    assert_nil p.stall(@now)
+    refute_match(/waiting on/, p.line(elapsed: @now, tokens: 0, eta: nil))
+  end
+
   def test_a_scan_that_keeps_finishing_files_is_not_a_stall_even_with_no_repair_yet
     p = pulse
     p.observe("fix_loop:phase", stage: :stream)
