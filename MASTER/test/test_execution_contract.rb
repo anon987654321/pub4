@@ -193,6 +193,24 @@ class TestExecutionContract < Minitest::Test
     refute_predicate errored, :conclusive?
   end
 
+  def test_check_result_adapter_preserves_infrastructure_outcomes
+    {
+      partial: :partial,
+      blocked: :blocked,
+      timeout: :timeout,
+      timed_out: :timeout,
+      unavailable: :unavailable,
+      skipped: :not_applicable
+    }.each do |source, expected|
+      result = Contract::VerificationResult.from_check_result(
+        FakeCheckResult.new(outcome: source, checks_ran: 0),
+        id: "check-#{source}", subject: "integration-check", verifier: "adapter"
+      )
+      assert_equal expected, result.status
+      refute_predicate result, :conclusive?
+    end
+  end
+
   def test_proof_adapter_preserves_open_claims_as_inconclusive
     proven = Master::Proof.build(
       claim: "test suite passed", law: "ROBUSTNESS", subject: "MASTER",
