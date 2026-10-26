@@ -105,7 +105,7 @@ module Master
         @halted = false
         @halt_reason = nil
         @run_mutex = Mutex.new
-        @git = git || Io::GitOperations.new(root)
+        @git = git || Io::GitOperations.new(root, event_bus: bus)
         @run_journal = RunJournal.new(root:, bus:)
         @reachability = Reachability.new(root: @root, bus:)
         @transformation_plan = TransformationPlan.new(root: Master::ROOT)
