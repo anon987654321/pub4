@@ -91,7 +91,7 @@ module Master
 
           verb = Contract.token!(verb, "effect verb").to_sym
           capability = Contract.token!(capability, "effect capability").to_sym
-          operation = operation.to_sym
+          operation = operation.to_s.to_sym
           unless Contract::EFFECT_OPERATIONS.include?(operation)
             raise ArgumentError, "unknown effect operation: #{operation}"
           end
@@ -118,10 +118,10 @@ module Master
             checkpoint_id:, run_id:, mission_id:, scope_digest: scope_digest&.freeze,
             idempotency_key:, deadline_at:
           )
-        rescue ArgumentError => e
+        rescue ArgumentError, TypeError, NoMethodError => e
           raise e if e.message.start_with?(
             "effect ", "unknown effect ", "parent effect ", "checkpoint ",
-            "run id", "mission id", "idempotency key", "scope digest"
+            "run id", "mission id", "idempotency key", "scope digest", "invalid effect envelope"
           )
 
           raise ArgumentError, "invalid effect envelope: #{e.message}"
