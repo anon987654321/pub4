@@ -21,6 +21,7 @@ class CoreBridgeTest < Minitest::Test
     attr_reader :events
     def initialize = @events = []
     def publish(name, payload = {}) = @events << [name, payload]
+    def publish_required(name, payload = {}) = @events << [name, payload]
   end
 
   # The real Constitution blocks `done` before an evidence threshold, so a
