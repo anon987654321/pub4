@@ -528,6 +528,13 @@ in `OPENBSD/CLAUDE.md`.
   whose changes go through `/soul propose` and an operator commit. Parallel `/fix`
   candidate worktrees, asked for the same day, fall under the refusal of parallel
   change streams above.
+- **No merging `Law.define` and `LawDSL` into one loader.** Identity is already one:
+  `law_catalogue` in `data/laws.yml` names every Law, and `LawRegistryAudit` fails on
+  any id the catalogue, the definitions or the registry holds alone (zero of each on
+  2026-10-26). The two shapes are different things: a constitutional definition carries
+  a statement, a question, a repair contract and examples; a detector is code that
+  fires. Rewriting some 450 definitions into one format moves no id, closes no gap and
+  risks every fixture. Reopen with a defect the two shapes cause that the audit misses.
 - **No second record beside memory.** A belief store of verified, inferred and
   contradicted facts, an execution-context object and a durable notification
   queue each copy what memory, fiber locals and `StandingOrders` already hold.
