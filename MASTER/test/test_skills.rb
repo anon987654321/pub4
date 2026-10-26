@@ -266,6 +266,7 @@ class TestSkills < Minitest::Test
       assert_equal ["ROBUSTNESS"], first[:contract].law_ids
       assert_equal ["test/test_skills.rb"], first[:contract].fixture_refs
       refute_predicate first[:contract], :permitted_for_trigger?
+      skills = Master::CLI::Skills.new(root:, approval_path:).tap(&:discover!)
       refute_includes skills.trigger_for("alpha").map { |skill| skill[:name] }, "alpha"
       assert_nil skills.body_for("alpha")
     end
