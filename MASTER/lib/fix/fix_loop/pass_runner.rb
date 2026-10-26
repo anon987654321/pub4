@@ -191,9 +191,11 @@ module Master
             streams = []
             streams << :lexical_violations if law.respond_to?(:scannable?) && law.scannable? && law.mode.to_sym == :violation
             streams << :lexical_opportunities if law.respond_to?(:scannable?) && law.scannable? && law.mode.to_sym == :opportunity
-            if law.respond_to?(:semantic?) && law.semantic?
-              streams.concat(%i[semantic_violations semantic_opportunities])
-            end
+            # SemanticLaw derives its questions from every active executable Law,
+            # using the Law's ask when present and its repair contract otherwise.
+            # Therefore both semantic streams cover the canonical population even
+            # when a Law also has a deterministic detector.
+            streams.concat(%i[semantic_violations semantic_opportunities])
             declared_surfaces = law.respond_to?(:assessment_surfaces) ? law.assessment_surfaces : []
             info[id] = {
               id:,
@@ -696,8 +698,16 @@ module Master
             rows = Array(values[:findings] || values["findings"]).select do |row|
               (row[:law] || row["law"]).to_s.casecmp?(law_id)
             end
-            status = rows.any? ? :opportunity_found : :assessed_clean
-            return assessment_result(status, evidence:, findings: rows)
+            return assessment_result(:opportunity_found, evidence:, findings: rows) if rows.any?
+
+            # OpportunityPass aggregates tree, file, and design heuristics into
+            # one finding list; it does not report which surface each heuristic
+            # examined. A zero-finding result cannot be copied onto every surface.
+            return assessment_result(
+              :inconclusive,
+              reason: "opportunity assessor does not publish per-surface clean receipts",
+              evidence:
+            )
           when :visual
             return assessment_result(:inconclusive, reason: "rendered review returned no result", evidence:) unless visual
             return assessment_result(:inconclusive, reason: visual.message.to_s, evidence:) if visual.err?
@@ -728,9 +738,13 @@ module Master
         def assessment_surface_supported?(info, surface)
           case info[:source_kind]
           when :canonical
-            %i[whole_file lines sections structured_data documentation].include?(surface)
+            # SemanticLaw sends the complete source or returns INCONCLUSIVE when
+            # its context ceiling is exceeded. Whole-file and line evidence are
+            # covered; parser-backed sections/data/docs still need their own
+            # adapters and cannot inherit cleanliness from a text scan.
+            %i[whole_file lines].include?(surface)
           when :scanner
-            return true if %i[whole_file lines sections].include?(surface)
+            return true if %i[whole_file lines].include?(surface)
             return surface == :syntax_tree if info[:scanner_law]&.respond_to?(:check_ast)
             false
           when :yaml_declarative
@@ -778,12 +792,15 @@ module Master
           when :lines
             info[:source_kind] == :canonical ? info[:law].scope.to_sym == :line : true
           when :sections
-            info[:source_kind] == :canonical ?
-              (info[:law].scope.to_sym == :file || info[:law].semantic?) : true
+            false
+          when :syntax_tree
+            %w[.rb .rake].include?(extension) && info[:source_kind] == :scanner
           when :structured_data
             %w[.yml .yaml .json .toml].include?(extension) || %w[yaml json toml].include?(language)
           when :documentation
             %w[.md .markdown .rst .txt].include?(extension) || language == "markdown"
+          when :syntax_tree
+            %w[.rb .rake].include?(extension)
           else
             false
           end
