@@ -104,18 +104,12 @@ class TestRuleCatalogue < Minitest::Test
     end
   end
 
-  # The direction that must still fire: a catalogue entry carrying its own
-  # deterministic detector, which the YamlDeclarativeLaw bridge runs, beside a
-  # law that also detects. Two things can fire, so it is a twin.
-  def test_a_lexical_entry_beside_a_law_detector_is_a_duplicate
+  def test_legacy_yaml_detector_fields_are_rejected
     body = catalogue({ "id" => "BARE_RESCUE", "tier" => "safety", "severity" => "error",
                        "detect_lexical" => "rescue$" })
-    laws = { BARE_RESCUE: Law.new(id: :BARE_RESCUE, detect: ->(_) { true }, fix: "x", severity: :error) }
     with_body(body) do
-      with_populations(laws:) do
-        assert_equal [{ law: "BARE_RESCUE", homes: ["law/", "laws.yml"] }],
-                     Operator::LawHygiene.cross_population_duplicates
-      end
+      error = assert_raises(RuntimeError) { Operator::LawHygiene.yaml_laws }
+      assert_match(/legacy YAML detector fields are unsupported/, error.message)
     end
   end
 
