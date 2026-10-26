@@ -334,4 +334,23 @@ end
     end
   end
 
+  def test_fold_result_preserves_cancellation_and_audit_failure_categories
+    cancelled = Master::CLI::TurnRouter.fold_to_result(
+      reason: :cancelled, turns: 1, summary: "cancelled", transcript: []
+    )
+    audit_failed = Master::CLI::TurnRouter.fold_to_result(
+      reason: :trace_failed, turns: 1, summary: "after-event failed", transcript: []
+    )
+    approval = Master::CLI::TurnRouter.fold_to_result(
+      reason: :needs_user, turns: 1, summary: "approval unavailable", transcript: []
+    )
+
+    assert_equal :cancelled, cancelled.category
+    assert_equal :recovery_failed, audit_failed.category
+    assert_equal :human_decision, approval.category
+    refute cancelled.ok?
+    refute audit_failed.ok?
+    refute approval.ok?
+  end
+
 end
