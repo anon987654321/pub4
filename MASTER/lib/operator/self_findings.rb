@@ -232,13 +232,8 @@ module Operator
     # A ceiling nobody can hold is decoration, and the warning half is the
     # scan-noise the old backlog already triages one entry at a time.
     #
-    # The scanner's own rules only. A law reaches the scanner through
-    # LawBridgeLaw and reports under its own id, so the STRICT_MODE_ZSH,
-    # NEVER_BATCH_DELETE, RATE_LIMITING_MISSING and MIGRATION_ADD_REFERENCE_NO_FK
-    # findings the scan returns are already members of the law row above —
-    # fifteen of them, and one fix would have moved two ratchets. Keeping only
-    # ids the scanner carries as rules of its own leaves each finding counted
-    # once.
+    # Canonical Law adapters report their original IDs. Keep each finding in
+    # one inventory population so a single repair cannot move two ratchets.
     def registry_members
       @registry_members ||= scan_registry
     end
