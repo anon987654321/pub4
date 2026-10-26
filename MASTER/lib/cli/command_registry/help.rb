@@ -142,6 +142,16 @@ detail: [
                    "/capabilities describe <tool|plugin|plugin:id:action> — inspect metadata without running it.",
                    "The inventory is not a live health check. Plugins expose only declared read-only observations here; their own policy still governs execution."],
         },
+        "skill" => {
+          summary: "review declared skill contracts and approve or revoke one exact content revision",
+          detail: [
+            "/skill list — show declared contracts, risk, full content SHA-256, promotion readiness and approval state.",
+            "/skill inspect NAME — inspect metadata, required capabilities, Law IDs and fixture references without printing the skill body.",
+            "/skill approve NAME SHA256 --confirm — approve only the exact currently loaded candidate revision, as the local operator.",
+            "/skill revoke NAME SHA256 --confirm — revoke one exact revision, including an older revision after the skill has changed.",
+            "Declared skills are not injected until an operator-owned ~/.master/skill_approvals.yml entry matches their exact revision. This command checks metadata prerequisites; it does not execute or certify the referenced fixtures.",
+          ],
+        },
         "task" => {
           summary: "keep a durable private task list with bounded steps and evidence",
           detail: ["/task — list open work and flag overdue due dates; no background notifications are sent.",
@@ -371,7 +381,7 @@ detail: [
         "fix" => "fix", "status" => "health", "doctor" => "health", "events" => "health",
         "session" => "session", "clear" => "session", "undo" => "session",
         "model" => "model", "plugin" => "model", "screen" => "session", "wake" => "model",
-        "privacy" => "constitution", "preferences" => "interface", "agenda" => "session", "task" => "session", "capabilities" => "model",
+        "privacy" => "constitution", "preferences" => "interface", "agenda" => "session", "task" => "session", "skill" => "constitution", "capabilities" => "model",
         "review" => "review", "critique" => "review", "laws" => "review",
         "why" => "review", "explain" => "review", "prove" => "review",
         "commit" => "change", "deploy" => "change", "snapshot" => "change",
