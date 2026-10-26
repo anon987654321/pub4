@@ -483,4 +483,24 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert_match(/web face keeps its own TTS path enabled/i, help)
   end
 
+  def test_fix_activates_and_forwards_the_turn_cancellation_token_before_preflight
+    token = Master::Core::CancellationToken.new
+    ctx = Master::CLI::PipelineContext.new(user_message: "/fix", args: "").merge(cancellation: token)
+    captured = nil
+    parsed = lambda do |**arguments|
+      captured = arguments
+      "preflight stubbed"
+    end
+
+    Registry.stub(:dispatch_fix_parsed, parsed) do
+      result = Registry.dispatch_fix(
+        scanner: nil, fix_loop: nil, deliberation: nil, root: Master::ROOT, bus: nil, ctx:
+      )
+      assert_equal "preflight stubbed", result
+    end
+
+    assert_predicate token, :active?
+    assert_same token, captured.fetch(:cancellation)
+  end
+
 end
