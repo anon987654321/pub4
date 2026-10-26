@@ -760,6 +760,13 @@ module Master
                                           semantic:, semantic_gaps:, pending:, evidence:)
             return assessment_result(:inconclusive, reason: "source bytes changed during this scan pass", evidence:) unless signatures_stable
 
+            stale_plan = applicable.select { |path| Array(observation[:stale_plan_paths]).include?(path) }
+            return assessment_result(
+              :inconclusive,
+              reason: "source differs from pinned FixPlan generation: #{stale_plan.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}",
+              evidence:
+            ) if stale_plan.any?
+
             unread = applicable.reject { |path| observation[:scanned].include?(path) }
             return assessment_result(
               :inconclusive,
