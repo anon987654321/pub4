@@ -148,6 +148,7 @@ class FixHardeningTest < Minitest::Test
     assert_includes report.fetch(:semantic_violations), "surface matrix not measured"
     assert_includes report.fetch(:semantic_opportunities), "surface matrix not measured"
     assert_equal "contract_only_not_measurement", report.fetch(:assessment_matrix)
+    assert_equal "not_measured", report.fetch(:assessment_matrix_status)
   end
 
   def test_clean_run_contract_has_a_two_pass_floor
