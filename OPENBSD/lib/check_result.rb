@@ -113,6 +113,7 @@ module Deploy
       case severity.to_sym
       when :soft
         @soft_failures << message
+
         if self.class.strict_soft?
           @failures << "[soft→hard] #{message}"
         else
@@ -301,6 +302,7 @@ module Deploy
           emit("Failures:", ["nothing measured, and CHECK_STRICT_INCONCLUSIVE is set " \
                              "(#{nothing_measured_reason})"])
         end
+
         :failed
       when :inconclusive
         # Deliberately not the success message: the point of the third state is
@@ -312,6 +314,7 @@ module Deploy
           puts "inconclusive: #{@checks_ran} check(s) ran, #{@unchecked.size} declared check(s) could not " \
                "(see Not checked above; this is not a pass)"
         end
+
         :inconclusive
       else
         # A pass that skipped something says so, instead of printing a clean
@@ -319,6 +322,7 @@ module Deploy
         if success_message
           detail = ["#{@checks_ran} check(s) ran"]
           detail << "#{@unchecked.size} check(s) not checked" unless @unchecked.empty?
+
           detail << "#{@live_skips} live check(s) skipped" if @live_skips.positive?
           puts conclusive? ? success_message : "#{success_message} (#{detail.join(', ')})"
         end
