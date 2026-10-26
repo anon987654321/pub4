@@ -3,6 +3,7 @@
 require "fileutils"
 require "digest"
 require "json"
+require "set"
 require "securerandom"
 require "time"
 require_relative "../io/atomic_write"
