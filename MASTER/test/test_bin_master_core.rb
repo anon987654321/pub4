@@ -25,13 +25,13 @@ class TestBinMasterCore < Minitest::Test
     out, status = run_core
 
     assert status.success?, out
-    assert_includes out, "held — done refused without passing evidence"
+    assert_includes out, "held, done refused without passing evidence"
   end
 
   def test_a_no_op_that_completes_fails_the_smoke
     out, status = run_core('require "master"; Master::Core::Proof.define_method(:proved?) { true }')
 
     refute status.success?, out
-    assert_includes out, "master-core: complete"
+    assert_includes out, "core0: complete, scripted done was not refused"
   end
 end

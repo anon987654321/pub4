@@ -12,8 +12,9 @@ require_relative "../lib/trace/dmesg"
 # This drives lib/core.rb with a scripted model unless --real.
 #
 # The scripted run is a check of the constitution, not a completed goal. It
-# execs three commands that label themselves as evidence without being able to
-# produce any, then declares done. Core::Proof scores evidence only from a
+# execs true(1) three times, each labelled as evidence it cannot produce, then
+# declares done; true, because the sandbox refuses an inline interpreter such as
+# ruby -e before it runs. Core::Proof scores evidence only from a
 # command that can produce it, so `done` must be refused: exit 0 says the fold
 # held, and exit 1 says it admitted done on self-graded evidence. With --real,
 # exit 0 means the model's goal completed.
@@ -26,9 +27,9 @@ class NullModel
   def initialize(goal)
     @goal = goal
     @script = [
-      Master::Core::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :test_pass),
-      Master::Core::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :scan_clean),
-      Master::Core::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :code_review),
+      Master::Core::Effect.exec(["true"], evidence: :test_pass),
+      Master::Core::Effect.exec(["true"], evidence: :scan_clean),
+      Master::Core::Effect.exec(["true"], evidence: :code_review),
       Master::Core::Effect.done("noop complete: #{@goal}"),
     ]
   end
@@ -107,5 +108,5 @@ if result.reason != :complete && refusals.any? { |detail| detail.include?("evide
   exit 0
 end
 
-Master::Trace::Dmesg.status("core0", "#{result.reason}, scripted done was not refused for evidence")
+Master::Trace::Dmesg.status("core0", "#{result.reason}, scripted done was not refused for evidence: #{result.summary}")
 exit 1

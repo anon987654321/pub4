@@ -148,7 +148,8 @@ class TestMasterLoop < Minitest::Test
     assert_empty parameters.select { |kind, name| kind == :keyreq && name == :rollback }
   end
 
-  def test_boot_self_test_is_opt_in
+  # On by default and beside the prompt; MASTER_BOOT_SELF_TEST=0 is the opt-out.
+  def test_boot_self_test_runs_unless_opted_out
     ran = []
     self_test = Object.new
     self_test.define_singleton_method(:call) { ran << :self_test }
@@ -161,17 +162,19 @@ class TestMasterLoop < Minitest::Test
         Master::Trace::Ledger::Reflexion.stub(:new, ledger) do
           Master::Review::Scan::SelfTest.stub(:new, ->(**) { self_test }) do
             Master::Builder.stub(:publish_self_test, nil) do
-              Master::Builder.finalize_ai_boot(bus: nil, root: Master::ROOT, infra: {}, agent: nil,
-                                               autonomous: { standing:, learnings: nil }, scanner: nil, lean_boot: true)
+              Master::Builder.stub(:watched_thread, ->(_bus, _where, &block) { block.call }) do
+                Master::Builder.finalize_ai_boot(bus: nil, root: Master::ROOT, infra: {}, agent: nil,
+                                                 autonomous: { standing:, learnings: nil }, scanner: nil, lean_boot: true)
+              end
             end
           end
         end
       end
     end
 
-    with_env("MASTER_BOOT_SELF_TEST" => nil) { finalize.call }
+    with_env("MASTER_BOOT_SELF_TEST" => "0") { finalize.call }
     assert_empty ran
-    with_env("MASTER_BOOT_SELF_TEST" => "1") { finalize.call }
+    with_env("MASTER_BOOT_SELF_TEST" => nil) { finalize.call }
     assert_equal [:self_test], ran
   end
 
