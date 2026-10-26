@@ -4,6 +4,7 @@ require "set"
 require "time"
 require_relative "scanner"
 require_relative "run_journal"
+require_relative "fix_plan"
 require_relative "reachability"
 require_relative "instrument_check"
 require_relative "fix_loop/committer"
@@ -154,6 +155,9 @@ module Master
 
         @pass_runner&.reset_gaps!
         @pass_runner.research_brief = nil if @pass_runner&.respond_to?(:research_brief=)
+        # The requested operation is the full semantic mode, not the background
+        # sampling posture. FileProcessor still obeys its pass budget and cursor.
+        @pass_runner.full_semantic! if requested && @pass_runner&.respond_to?(:full_semantic!)
         # A requested /fix owes a semantic read to every file with a cheap finding and to a rotating
         # slice of the clean ones (Ground::ModePosture.semantic_sample); a file read before and
         # unchanged is not read again (Scan::FindingCache). A pass makes only a budget's worth of
@@ -189,12 +193,33 @@ module Master
             category: :validation,
           )
         end
+        # Capture the exact pre-mutation scope and source provenance. The
+        # existing RunJournal binds this manifest and invalidates stale checkpoints
+        # if the source, Law authority, toolchain, exclusions or adapters move.
+        current_phase = :plan
+        @fix_plan = FixPlan.capture(
+          root: @root, target:, files:, laws: @laws,
+          excluded: @file_collector.skip_reasons,
+          adapters: @pass_runner.assessment_adapters(target:),
+          max_passes:, budget_seconds:
+        )
+        @bus&.publish(
+          "fix_loop:plan",
+          **@fix_plan.to_h.slice(
+            "digest", "identity_digest", "source_digest", "scope_digest", "law_digest",
+            "law_source_digest", "authority_digest", "toolchain_digest", "adapter_digest",
+            "exclusion_digest", "eligible_files", "excluded", "adapters", "max_passes",
+            "budget_seconds", "deadline_at"
+          ).transform_keys(&:to_sym)
+        )
+
         # Open the durable run and start its single budget before graph building
         # or research. Previously both expensive stages ran before the journal and
         # watchdog existed, so they could consume the whole allowance invisibly.
         current_phase = :journal
         journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
         run_id = journal["id"]
+        bind_fix_plan!(journal, run_id)
         mission = mission_for(target:, requested:)
         budget_error = exhausted_budget(journal:)
         if budget_error
@@ -215,8 +240,9 @@ module Master
           # the whole MASTER target of a four-tree /fix on 2026-10-26.
           finish_run(budget_error, target, run_id, mission:, requested:)
 
-          journal =@run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
+          journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
           run_id = journal["id"]
+          bind_fix_plan!(journal, run_id)
           mission = mission_for(target:, requested:)
           budget_error = exhausted_budget(journal:)
           return finish_run(budget_error, target, run_id, mission:, requested:) if budget_error
