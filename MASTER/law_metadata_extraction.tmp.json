@@ -4928,6 +4928,780 @@
         "good": "Values flow from their owning source, original media stays truthful, and rendered evidence confirms the outcome."
       },
       "kind": "definition"
+    },
+    {
+      "id": "RUBY_TERNARY_NOT_NESTED",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "STYLE"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "NO_ABBREVIATED_IDENTIFIERS",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "STYLE"
+        ],
+        "languages": [
+          "ruby",
+          "javascript"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "DOUBLE_QUOTES_RUBY",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "STYLE"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "EN_DASH_RANGE",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "TYPOGRAPHY"
+        ],
+        "languages": [
+          "markdown",
+          "yaml",
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "ALL_CAPS_NO_TRACKING",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "TYPOGRAPHY"
+        ],
+        "languages": [
+          "css",
+          "scss"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "TAB_CHARACTER",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "HYGIENE"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "FINAL_NEWLINE",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "HYGIENE"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "COMMENTS_AS_DEODORANT",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "CLEAN_CODE",
+          "SELF_EXPLAINING"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "VERTICAL_BREATH",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "BEAUTY"
+        ],
+        "languages": [
+          "ruby",
+          "javascript"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "CODE_SYMMETRY",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "BEAUTY"
+        ],
+        "languages": [
+          "ruby",
+          "javascript"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "TYPOGRAPHIC_GRID",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "TYPOGRAPHY"
+        ],
+        "languages": [
+          "markdown",
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "README_PROSE",
+      "path": "MASTER/law/detectors/cosmetic_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "TYPOGRAPHY",
+          "DOMAIN_LANGUAGE"
+        ],
+        "languages": [
+          "markdown"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "rubocop",
+      "path": "MASTER/law/detectors/external_linter_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "STYLE",
+          "LINT"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "reek",
+      "path": "MASTER/law/detectors/external_linter_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "SMELL",
+          "ONE_JOB"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "interconnect",
+      "path": "MASTER/law/detectors/graph_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "ONE_SOURCE"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "co_change_coupling",
+      "path": "MASTER/law/detectors/graph_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "DECOUPLE",
+          "ONE_JOB"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "CONST_BY_DEFAULT",
+      "path": "MASTER/law/detectors/js_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "IMMUTABLE"
+        ],
+        "languages": [
+          "javascript"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "QUOTE_VARIABLES",
+      "path": "MASTER/law/detectors/js_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "ROBUSTNESS"
+        ],
+        "languages": [
+          "zsh"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "DOUBLE_BRACKET",
+      "path": "MASTER/law/detectors/js_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "ROBUSTNESS"
+        ],
+        "languages": [
+          "zsh"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "JS_MODULE_SIZE",
+      "path": "MASTER/law/detectors/js_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "SMALL_PARTS"
+        ],
+        "languages": [
+          "javascript"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "MAGIC_COLOR",
+      "path": "MASTER/law/detectors/js_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "DESIGN"
+        ],
+        "languages": [
+          "css",
+          "scss",
+          "javascript",
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "OPTIONAL_CHAINING_JS",
+      "path": "MASTER/law/detectors/js_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "READABILITY"
+        ],
+        "languages": [
+          "javascript"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "NO_DEBUG",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "CLEAN_CODE"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "NO_PUTS",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "CLEAN_CODE"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "FROZEN_LITERAL",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "PERFORMANCE"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "LONG_LINE",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "READABILITY"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "TRAILING_WHITESPACE",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "HYGIENE"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "TODO_FIXME",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "COMPLETENESS"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "RESCUE_EXCEPTION",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "ERROR_HANDLING"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "SILENT_RESCUE",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "ERROR_HANDLING",
+          "FAIL_VISIBLY"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "NARROW_SILENT_RESCUE",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "ERROR_HANDLING"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "MODIFIER_SILENT_RESCUE",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "ERROR_HANDLING"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "CONSECUTIVE_BLANK_LINES",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "HYGIENE"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "DEBUG_OUTPUT",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "FAIL_VISIBLY"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "OMIT_NEEDLESS_WORDS",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "BE_CONCISE"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "TRAILING_COMMENT",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "BE_CONCISE"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "TIME_ZONE_UNSAFE",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "ROBUSTNESS"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "NO_ASCII_LINE_ART",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "BE_CONCISE"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "NO_ASCII_ART_OUTSIDE_FACE",
+      "path": "MASTER/law/detectors/lexical_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "BE_CONCISE"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "ast_omission",
+      "path": "MASTER/law/detectors/meta_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "COMPLETENESS"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "law_coverage",
+      "path": "MASTER/law/detectors/meta_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "TEST_COVERAGE"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "RUNTIME_DOCS_YAML",
+      "path": "MASTER/law/detectors/meta_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "CONSTITUTION",
+          "DOCS"
+        ],
+        "languages": [
+          "markdown"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "LEARNED_SMELLS",
+      "path": "MASTER/law/detectors/meta_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "LEARNED_SMELLS",
+          "SESSION"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "FILE_SPRAWL",
+      "path": "MASTER/law/detectors/meta_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "FLAT_HIERARCHY",
+          "COLLAPSE_BEFORE_ADDING"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "PATH_PURPOSE",
+      "path": "MASTER/law/detectors/meta_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "ONE_SOURCE",
+          "COLLAPSE_BEFORE_ADDING"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "PARAMETERIZED_SLUG",
+      "path": "MASTER/law/detectors/naming_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "FLAT_HIERARCHY",
+          "DRY"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "TYPE_IN_NAME",
+      "path": "MASTER/law/detectors/naming_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "DOMAIN_LANGUAGE",
+          "LOAD_BEARING_NAMES"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "NUMBERED_NAME",
+      "path": "MASTER/law/detectors/naming_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "DOMAIN_LANGUAGE",
+          "LOAD_BEARING_NAMES"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "FILE_SEQUENCE_NAME",
+      "path": "MASTER/law/detectors/naming_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "LOAD_BEARING_NAMES",
+          "DOMAIN_LANGUAGE"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "FILE_VAGUE_NAME",
+      "path": "MASTER/law/detectors/naming_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "LOAD_BEARING_NAMES",
+          "DOMAIN_LANGUAGE"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "STRONG_PARAMETERS",
+      "path": "MASTER/law/detectors/ruby_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "SECURITY"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "HASH_FETCH",
+      "path": "MASTER/law/detectors/ruby_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "READABILITY"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "FIND_EACH",
+      "path": "MASTER/law/detectors/ruby_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "PERFORMANCE"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "NO_UPDATE_ATTRIBUTE",
+      "path": "MASTER/law/detectors/ruby_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "DATA_INTEGRITY"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "PLUCK_OVER_MAP",
+      "path": "MASTER/law/detectors/ruby_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "PERFORMANCE"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "DEAD_CODE",
+      "path": "MASTER/law/detectors/ruby_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "CLEAN_CODE"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "ABC_SIZE",
+      "path": "MASTER/law/detectors/ruby_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "COMPLEXITY"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "TRAILING_COMMAS",
+      "path": "MASTER/law/detectors/ruby_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "STYLE"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
     }
   ]
 }
