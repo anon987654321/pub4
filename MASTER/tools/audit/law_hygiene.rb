@@ -47,8 +47,14 @@ module Operator
     # EIGHT_PX_RHYTHM. A rule's config is its own; only the populations are laws.
     def yaml_laws
       body = master_laws
-      Master.law_entries_in(body).select { |r| r.is_a?(Hash) && r["id"] } +
-        Array(body["learned_smells"]).select { |r| r.is_a?(Hash) && r["id"] }
+      rows = Master.law_entries_in(body).select { |r| r.is_a?(Hash) && r["id"] }
+      legacy = rows.select { |row| %w[detect_lexical detect_structural].any? { |key| row.key?(key) } }
+      unless legacy.empty?
+        ids = legacy.map { |row| row["id"] }.join(", ")
+        raise "legacy YAML detector fields are unsupported (#{ids}); implement the detector in Ruby and register its source in law_catalogue"
+      end
+
+      rows + Array(body["learned_smells"]).select { |r| r.is_a?(Hash) && r["id"] }
     end
 
     def law_ids
@@ -57,11 +63,19 @@ module Operator
     end
 
     def dsl_ids
-      Dir.glob(File.join(MASTER, "lib", "review", "scan", "laws", "*.rb"))
-         .flat_map { |p| File.read(p, encoding: "UTF-8").scrub.scan(/LawDSL\.law\s+:(\w+)/).flatten }
+      Dir.glob(File.join(MASTER, "law", "detectors", "*.rb")).flat_map do |path|
+        source = File.read(path, encoding: "UTF-8").scrub
+        inline = source.scan(/LawDSL\.law\s*\(?\s*:([A-Za-z0-9_]+)/).flatten
+        declared = source.scan(/declare\s+id:\s*["']([^"']+)["']/).flatten
+        inline + declared
+      end
     end
 
-    def all_ids = (yaml_laws.map { |r| r["id"] } + law_ids + dsl_ids).compact
+    def catalogue_ids
+      Master.law("law_catalogue", root: MASTER).fetch("entries").keys.map(&:to_s)
+    end
+
+    def all_ids = (catalogue_ids + yaml_laws.map { |r| r["id"] } + law_ids + dsl_ids).compact
 
     # Two ids differing only by case are two laws as far as every registry is
     # concerned and one law as far as a reader is concerned. Findings, priors
@@ -120,18 +134,12 @@ module Operator
     # this row was opened for is finished, and it stands as the guard against
     # regrowth. What the old count was hiding is in statement_conflicts below.
     #
-    # `detect_lexical` in the catalogue does count: it is a deterministic
-    # detector the YamlDeclarativeLaw bridge runs. There are none today, which
-    # is the escape hatch sitting idle rather than the check being blind.
+    # YAML owns Law identity and policy; it never executes detector code.
+    # Ruby definitions and detector adapters are the only executable sources.
     def detector_homes
       homes = Hash.new { |h, k| h[k] = [] }
       law_detectors.each { |id| homes[id] << "law/" }
-      dsl_ids.map(&:upcase).each { |id| homes[id] << "LawDSL" }
-      yaml_laws.each do |r|
-        next unless %w[detect_lexical].any? { |k| r[k].to_s.strip != "" }
-
-        homes[r["id"].to_s.upcase] << "laws.yml"
-      end
+      dsl_ids.map(&:upcase).each { |id| homes[id] << "law/detectors/" }
       homes
     end
 
