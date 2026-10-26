@@ -52,7 +52,7 @@ module Master
           )
           world = build_world(root: workspace_root, container:, capabilities:, network: network_client(container))
           mission.transition!(:execute)
-          effect_observer = build_effect_observer(bus: lifecycle_bus)
+          effect_observer = build_effect_observer(bus: lifecycle_bus, mission_id: mission.id)
           done = build_fold(root: workspace_root, model:, memory:, world:, max_turns:, observer:, effect_observer:, capabilities:, cancellation:).run(goal)
           mission.transition!(:verify, summary: continuation_summary(done))
           settle_mission(mission, done)
@@ -322,8 +322,8 @@ module Master
 
       # The lifecycle stream intentionally excludes effect arguments: argv, URLs,
       # prompts and write content may contain secrets or private user data.
-      def build_effect_observer(bus:)
-        Master::Trace::EffectObserver.new(bus:)
+      def build_effect_observer(bus:, mission_id: nil)
+        Master::Trace::EffectObserver.new(bus:, mission_id:)
       end
 
       # The part of an effect a person names it by: the file, the command, the
