@@ -14,7 +14,7 @@ module Master
     fires: "  binding.pry\n",
     does_not_fire: "debugger_enabled = false\n",
     description: "no debug breakpoints in committed code" do |src, path:|
-    next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+    next [] if path.to_s.include?("/law/detectors/")
 
     parsed = Prism.parse(src)
     next [] if parsed.failure?
@@ -119,7 +119,7 @@ module Master
     # neither is a pattern that hunts for one.
     does_not_fire: "  # the reasoning is in TODO.md\n  MARKERS = /TODO|FIXME|XXX/\n",
     description: "unresolved work markers" do |src, path:|
-    next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+    next [] if path.to_s.include?("/law/detectors/")
     # The lookahead keeps TODO.md, the repo-wide backlog, from reading as a
     # marker — see data/laws.yml `unfinished`, which learned this at :veto.
     #
@@ -381,7 +381,7 @@ module Master
     fires: "ascii_art: true\n",
     does_not_fire: "prompt = \"~/repo main %\"\n",
     description: "ASCII art outside the face renderer" do |src, path:|
-    next [] if path.to_s.match?(%r{/(?:review/scan/laws|law/detectors)/})
+    next [] if path.to_s.include?("/law/detectors/")
     next [] if path.to_s.match?(FACE_ASCII_EXCEPTIONS)
 
     lines = src.lines
