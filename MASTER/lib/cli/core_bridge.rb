@@ -332,7 +332,7 @@ module Master
         when :read then "file read"
         when :write then "file write"
         when :exec then "command"
-        when :git then "git #{effect.args[:operation]}"
+        when :git then "git action"
         when :http then "network request"
         when :ask then "approval request"
         when :note then "note"

@@ -6,7 +6,7 @@ Implemented the first lifecycle-tracing slice on MASTER's interactive Fold path 
 
 Rollback now gets its own before/after audit pair, linked to the failed effect and checkpoint. CoreBridge installs a persistent event sink when no host bus is provided, and the standalone bin/master-core path shares the same Trace::EffectObserver adapter. A trace_failed mission is marked failed rather than deferred for automatic continuation. The legacy core:turn stream no longer persists raw read output, command output, paths, prompts or note text; it retains safe action labels, status and byte/line counts.
 
-Still outstanding: unify the distinct Fold and repository-repair coordination paths; settle ownership among FixLoop, its inner repair loop, Fix::Kernel, RunJournal and Transaction from call-site evidence; standardize findings and check results; and propagate the same audited effect contract to every tool, background job and deployment path. Do not claim these broader migrations complete until the canonical suites run on the pinned toolchain. No law or sacred constitutional file was changed for this slice.
+Still outstanding: privacy-audit other persisted event families such as core:reason, tool payloads and Fix transaction events; unify the distinct Fold and repository-repair coordination paths; settle ownership among FixLoop, its inner repair loop, Fix::Kernel, RunJournal and Transaction from call-site evidence; standardize findings and check results; and propagate the same audited effect contract to every tool, background job and deployment path. Do not claim these broader migrations complete until the canonical suites run on the pinned toolchain. No law or sacred constitutional file was changed for this slice.
 
 ## GLM law-adherence port (2026-10-26)
 
