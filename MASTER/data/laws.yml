@@ -2574,8 +2574,6 @@ law_catalogue:
       definition_sources: [MASTER/law/ruby.rb]
     KISS:
       definition_sources: [MASTER/law/universal.rb]
-    law_bridge:
-      detector_sources: [MASTER/law/detectors/law_bridge_law.rb]
     law_coverage:
       detector_sources: [MASTER/law/detectors/meta_laws.rb]
     LAW_OF_DEMETER:
@@ -3084,7 +3082,7 @@ law_catalogue:
     VERTICAL_BREATH:
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
     veto_patterns:
-      detector_sources: [MASTER/law/detectors/yaml_bridge_laws.rb]
+      detector_sources: [MASTER/law/detectors/veto_pattern_law.rb]
     VISUAL_HIERARCHY:
       definition_sources: [MASTER/law/universal.rb]
     VISUAL_IDENTITY_SOURCE_OF_TRUTH:
@@ -3105,7 +3103,5 @@ law_catalogue:
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
     WHY_NOT_WHAT:
       definition_sources: [MASTER/law/universal.rb]
-    yaml_declarative:
-      detector_sources: [MASTER/law/detectors/yaml_bridge_laws.rb]
     ZSH_SHEBANG:
       definition_sources: [MASTER/law/shell.rb]
