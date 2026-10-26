@@ -2,6 +2,7 @@
 
 require "prism"
 require "yaml"
+require_relative "../configuration_guard"
 
 module Master::Core
   # Constitution — the single check. Every Effect the agent proposes folds
@@ -159,6 +160,7 @@ module Master::Core
       [
         no_secret_rule(veto),
         immutable_paths_rule(immutable, master_root:, workspace_root:),
+        configuration_invariant_rule(workspace_root:),
         ruby_parses_rule,
         structured_exec_rule,
         safe_exec_rule(veto),
@@ -174,6 +176,21 @@ module Master::Core
         new_path_rule,
         effect_reversibility_rule,
       ]
+    end
+
+    # Configuration files stay editable. Their schema and constitutional
+    # invariants are checked on the candidate content for every Fold write.
+    def self.configuration_invariant_rule(workspace_root:)
+      Law.new(id: :configuration_invariant, verbs: %i[write], judge: lambda { |effect, _memory|
+        reason = Master::ConfigurationGuard.validate(
+          path: effect.args[:path],
+          content: effect.args[:content].to_s,
+          root: workspace_root,
+        )
+        next nil unless reason
+
+        Verdict::Block.new(reason:, by: :configuration_invariant)
+      })
     end
 
     # Sacred paths are declared by soul.yml, the constitutional source. The rule
@@ -520,7 +537,7 @@ module Master::Core
     # is the idiom being measured, not the surface — see the old backlog, "The fold spine
     # had never been scanned". Unlike Memory, this class did not need splitting:
     # its count was the idiom, and Memory's was the design.
-    private_class_method :default_rules, :immutable_hit?, :no_secret_rule, :ruby_parses_rule, :scan_clean_rule, :reason_rule,
+    private_class_method :default_rules, :immutable_hit?, :configuration_invariant_rule, :no_secret_rule, :ruby_parses_rule, :scan_clean_rule, :reason_rule,
                          :safe_exec_rule, :sandboxed_exec_rule, :structured_exec_rule, :batch_delete_rule, :delete_operands,
                          :operands_after_flags, :git_clean_all?, :forbidden_file_rule, :scope_creep_rule,
                          :two_hats_rule, :evidence_for_done_rule,
