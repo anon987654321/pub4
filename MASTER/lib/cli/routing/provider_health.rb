@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require_relative "../../execution/contract"
 require "json"
 require "time"
 require_relative "../../trace/log"
@@ -38,7 +39,7 @@ module Master
             model: model.to_s,
             status: status.to_s,
             latency_ms:,
-            error: error&.to_s,
+            **Master::Execution::Contract.diagnostic_fields(error)
           }.compact
           self.class.append_json_line(path, event)
           event
