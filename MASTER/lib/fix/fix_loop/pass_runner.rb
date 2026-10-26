@@ -171,6 +171,9 @@ module Master
         # Begin the real runtime matrix with the scanner's own Law population.
         # Missing scanner Law metadata is explicit; it never fabricates a measured matrix.
         def begin_assessment_run(files:, plan:)
+          @assessment_ledger = nil
+          @assessment_observation = nil
+          @assessment_law_info = nil
           return self unless @scanner.respond_to?(:laws)
 
           rows = Array(@scanner.laws)
@@ -182,7 +185,10 @@ module Master
             entry[:laws] << law
             entry[:modes] << (law.respond_to?(:mode) ? law.mode.to_sym : :mechanical)
           end
-          return self if info.empty?
+          if info.empty?
+            stage_failures[:assessment_matrix] << "scanner exposes no identifiable Laws; matrix not measured"
+            return self
+          end
 
           @assessment_law_info = info.transform_values do |entry|
             modes = entry[:modes].uniq
@@ -252,6 +258,17 @@ module Master
           @assessment_ledger.summary.merge(status: assessment_matrix_status.to_s)
         rescue StandardError => e
           { status: "incomplete", reason: "matrix summary failed: #{e.class}: #{e.message.to_s[0, 150]}" }
+        end
+
+        def assessment_matrix_evidence
+          {
+            status: assessment_matrix_status.to_s,
+            plan_digest: @assessment_plan&.digest,
+            source_digest: @assessment_plan&.source_digest,
+            **assessment_matrix_summary,
+          }
+        rescue StandardError => e
+          { status: "incomplete", reason: "matrix evidence failed: #{e.class}: #{e.message.to_s[0, 150]}" }
         end
         def gaps? = [uninspected, stage_failures, semantic_inconclusive, semantic_pending].any? { |gap| !gap.empty? }
         def gaps = {
