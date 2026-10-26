@@ -31,7 +31,21 @@ module Master
       # output format, which a role's JSON or bullet contract overrides, and not
       # the style corpus, which is ten times the size and judged downstream.
       LAW_SECTIONS = %w[master_constitution_absolute master_constitution_kernel].freeze
-      NARROWED_SECTIONS = { core: CORE_SECTIONS, law: LAW_SECTIONS }.freeze
+      # A conversation turn: the core, and in the style slot only the rules about writing.
+      # Chat used to carry the full corpus, some 400 code, CSS and commerce rules in 44 KB,
+      # and the dozen Strunk & White rules drowned in it: replies read as small talk.
+      CHAT_SECTIONS = (CORE_SECTIONS + %w[master_style]).freeze
+      NARROWED_SECTIONS = { core: CORE_SECTIONS, law: LAW_SECTIONS, chat: CHAT_SECTIONS }.freeze
+      PROSE_LAW = /\A(?:STRUNK_WHITE|BE_CONCISE|NO_FILLER|DENSITY|PROSE_)/
+      # The structural Laws bind a reply too, read through one translation (STRUCTURE_READING):
+      # a repeated claim is duplicated code, a sentence doing two jobs is a function doing two.
+      # Liskov and dependency inversion have no honest reading in prose and stay out.
+      STRUCTURE_LAW = /\A(?:DRY|KISS|SINGULARITY|ONE_SOURCE|MERGE_BEFORE_MULTIPLY|DECOUPLE|PROXIMITY|
+                        ONE_ABSTRACTION_LEVEL|ABSTRACTION|INTERFACE_SEGREGATION)\z/x
+      STRUCTURE_READING = "The structural Laws below bind the reply as text: a paragraph is a file, a sentence a " \
+                          "function, a repeated claim duplicated code. Say each fact once, merge sentences that " \
+                          "differ by a word, flatten nested clauses, keep one claim per sentence and one level " \
+                          "of detail per paragraph."
 
       include PersonalityStyleSections
 
@@ -46,6 +60,7 @@ module Master
         add_output_format(sections)
         add_dialogue_rubric(sections)
         add_contextual_sections(sections) if context == :full
+        add_prose_rules(sections) if context == :chat
         add_disclaimer(sections)
         add_refusal_policy(sections)
         ordered_sections(sections, soul, context:)
@@ -169,6 +184,8 @@ module Master
         sections["master_identity"] = [
           sections["master_identity"],
           "<master_runtime_state>",
+          "Internal pacing only. Never report a mood, a time of day, a plan or what you are doing; " \
+            "you have no evening, feelings or schedule to tell the person about.",
           Personality::MOOD_LINES[@homeostat.mood],
           Personality::PHASE_LINES[@homeostat.circadian_phase],
           "</master_runtime_state>",
@@ -325,6 +342,26 @@ module Master
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "PromptBuilder.all_laws", severity: :cosmetic)
+        []
+      end
+
+      def add_prose_rules(sections)
+        rules = all_law_definitions.select { |law| law.id.to_s.match?(PROSE_LAW) }
+        return if rules.empty?
+
+        structure = all_law_definitions.select { |law| law.id.to_s.match?(STRUCTURE_LAW) }
+        sections["master_style"] = ["<master_style>", "Every reply obeys these writing rules:", *law_lines(rules),
+                                    STRUCTURE_READING, *law_lines(structure), "</master_style>"].join("\n")
+      end
+
+      def law_lines(laws) = laws.map { |law| "#{law.id}: #{(law.practice || law.fix).to_s.gsub(/\s+/, " ").strip}" }
+
+      def all_law_definitions
+        require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
+        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
+        ::Law.definitions.values
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "PromptBuilder.all_law_definitions", severity: :cosmetic)
         []
       end
 

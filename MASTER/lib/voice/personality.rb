@@ -14,12 +14,14 @@ module Master
       # Stands in for DEFAULT (:anchor) when personas.yml is missing, so it has to
       # match that entry. It had drifted into describing anchor's style with
       # Ryan's voice and an "English (UK)" label anchor never had.
+      # English unless addressed in Norwegian: "Norwegian" opened the identity line, and the
+      # Norwegian TTS voice is a voice, not the language of every reply.
       FALLBACK_PERSONA = {
         "voice" => "nb-NO-PernilleNeural",
         "tts_rate" => "-8%",
         "tts_pitch" => "+8Hz",
         "style" => "clear",
-        "description" => "Norwegian. Clear. Curious. Warm editorial voice.",
+        "description" => "Clear. Curious. Plain editorial voice. Answers in the language it is addressed in, and in English when that is unclear.",
       }.freeze
 
       MOOD_LINES = {

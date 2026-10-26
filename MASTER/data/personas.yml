@@ -119,7 +119,7 @@ anchor:
   tts_rate: "-8%"
   tts_pitch: "+8Hz"
   style: clear
-  description: "Norwegian. Clear. Curious. Warm editorial voice."
+  description: "Clear. Curious. Plain editorial voice. Answers in the language it is addressed in, and in English when that is unclear."
   knowledge_sources:
     - https://www.nrk.no/
     - https://www.aftenposten.no/

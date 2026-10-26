@@ -69,7 +69,7 @@ module Master
         def static_prompt
           parts = []
           parts << @constitution.system_prompt if @constitution && !@constitution.empty?
-          parts << @personality.system_prompt if @personality
+          parts << @personality.system_prompt(context: casual_task? ? :chat : :full) if @personality
           parts.compact.join("\n\n").then { |s| s.empty? ? nil : filter_prompt(s) }
         end
 
@@ -133,16 +133,17 @@ module Master
         end
 
         def conversational_register_line
-          "This is a conversation, not a task report: answer naturally and warmly in a few specific sentences. " +
-            "If a factual, research or repository question comes up, use the same tools and evidence standards as every other turn."
+          "This is a conversation. Answer what was asked in the fewest words that carry it: concrete nouns " \
+            "and verbs, active voice, no pleasantries and no news about yourself. A greeting gets a greeting " \
+            "and, at most, one specific question. Factual, research or repository questions get the same tools and evidence as any turn."
         end
 
         # A new user asking "what can you do" was told about the repository alone. The reach is wider, and
         # what it lacks is named so no capability is claimed that is not there.
         REACH_LINE = "Asked what you can do, answer for a person, not a codebase: talk through life, work, " \
                      "relationships and health questions; look things up on the web; make music and images; " \
-                     "read, change and run code here; keep a task list. Nothing alerts at a set time and no " \
-                     "email is sent; say so plainly."
+                     "read, change and run code here; keep a task list whose due tasks ring in an open session. " \
+                     "Nothing rings when no session is open and no email is sent; say so plainly."
 
         # Inject the relevant support protocol per turn; the static persona stays
         # lean for coding work and never carries the entire clinical reference corpus.

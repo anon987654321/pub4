@@ -135,4 +135,21 @@ def test_core_context_keeps_constitution_and_output_contract
     assert_same core, persona.system_prompt(context: :core)
     assert_same full, persona.system_prompt(context: :full)
   end
+
+  # A conversation carries the writing Laws, the structural ones read as prose, and none of
+  # the code, CSS or commerce corpus that buried them.
+  def test_a_chat_prompt_carries_the_writing_laws_and_not_the_code_corpus
+    prompt = Master::Voice::Personality.new.system_prompt(context: :chat)
+
+    %w[STRUNK_WHITE BE_CONCISE PROSE_ACTIVE_VOICE DRY KISS SINGULARITY].each { |id| assert_includes prompt, "#{id}:" }
+    assert_includes prompt, "a paragraph is a file"
+    refute_includes prompt, "CLAMP_TYPOGRAPHY:"
+    assert_operator prompt.bytesize, :<, 16_000
+  end
+
+  def test_the_identity_answers_in_the_language_it_is_addressed_in
+    prompt = Master::Voice::Personality.new.system_prompt(context: :chat)
+
+    assert_match(/language it is addressed in, and in English/, prompt)
+  end
 end
