@@ -20,6 +20,9 @@ REGISTRY_DEFAULT = File.join(CHECKS_DIR, "checks.yml")
 CHECK_UNIT = "checks0"
 CHECK_PARENT = ENV.fetch("PUB4_DEPLOY_APP", "rails")
 SUBPROCESS_INCONCLUSIVE = 3
+# A script check is a subprocess with a hang guard, not a performance budget:
+# one that never returns held the whole ladder. timeout_seconds on the row overrides it.
+SCRIPT_TIMEOUT_S = 1_800
 
 $LOAD_PATH.unshift(ROOT, CHECKS_DIR)
 require File.join(ROOT, "MASTER", "checks", "support", "check_autofix")
@@ -30,6 +33,7 @@ require File.join(ROOT, "MASTER", "checks", "support", "flow_coverage")
 require File.join(ROOT, "MASTER", "checks", "support", "token_reads")
 require File.join(ROOT, "MASTER", "lib", "trace", "dmesg")
 require File.join(ROOT, "MASTER", "lib", "gap")
+require File.join(ROOT, "MASTER", "lib", "io", "exec")
 
 CHECKS_FILE = ENV.fetch("CHECKS_FILE", REGISTRY_DEFAULT)
 CHECKS = YAML.safe_load_file(CHECKS_FILE).freeze
@@ -133,9 +137,15 @@ def declared_gap(row)
   spec && Master::Gap.new(**spec.to_h { |key, value| [key.to_sym, value.is_a?(String) ? value.to_sym : value] })
 end
 
-def run_script(path, args, gap: nil)
+def run_script(path, args, gap: nil, timeout: SCRIPT_TIMEOUT_S)
   command = [RbConfig.ruby, path, *args]
-  stdout, status = Open3.capture2e(ENV.to_h, *command, chdir: ROOT)
+  begin
+    stdout, status = Master::Io::Exec.capture2e(ENV.to_h, *command, chdir: ROOT, timeout:, raise_on_timeout: true)
+  rescue Master::Io::Exec::TimeoutError => e
+    result = Deploy::CheckResult.new
+    result.fail("#{File.basename(path)} timed out after #{timeout}s")
+    return [result, e.result&.first.to_s]
+  end
   stdout.to_s.lines.each { |line| log_retired(line.chomp) }
   result = Deploy::CheckResult.new
 
@@ -162,7 +172,8 @@ def run_check(name, row, args)
       require_check(row)
       if row["script"]
         path = File.join(CHECKS_DIR, row["script"].to_s)
-        result, output = run_script(path, args, gap: declared_gap(row))
+        timeout = row["timeout_seconds"].to_i.positive? ? row["timeout_seconds"].to_i : SCRIPT_TIMEOUT_S
+        result, output = run_script(path, args, gap: declared_gap(row), timeout:)
       else
         klass = constant_for(row.fetch("class"))
 
