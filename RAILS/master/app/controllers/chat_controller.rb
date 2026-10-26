@@ -2,8 +2,8 @@
 
 require "digest"
 require "json"
-require_relative "../../../../MASTER/lib/io/exec"
-require_relative "../../../../MASTER/lib/face"
+# Master::Io::Exec and Master::Face autoload through the `require "master"`
+# ApplicationController makes; this file reaches no MASTER path of its own.
 
 class ChatController < ApplicationController
   include ActionController::Live
