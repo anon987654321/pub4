@@ -12,6 +12,11 @@ class MetaFactsContractTest < Minitest::Test
     File.read(File.join(ROOT, relative))
   end
 
+  def test_checkbox_toggle_hits_the_shared_tap_floor_without_growing_its_painted_track
+    css = read("__shared/app/assets/stylesheets/components/_fields.scss")
+    assert_match(/input\[type="checkbox"\]\.toggle\s*\{[^}]*height: var\(--tap-min\);[^}]*border-block: 9px solid transparent;[^}]*background-clip: padding-box;/m, css)
+  end
+
   def test_shared_fact_row_uses_flex_gap
     css = read("__shared/app/assets/stylesheets/_shared_coverage_fills.scss")
     assert_match(/\.meta-facts\s*\{[^}]*display: flex;[^}]*column-gap: var\(--space-2\);[^}]*row-gap: var\(--space-1\);/m, css)
@@ -37,6 +42,12 @@ class MetaFactsContractTest < Minitest::Test
     paths.each do |path|
       assert_includes read(path), 'class="meta-facts"', "#{path} must render facts as separate elements"
     end
+
+    buybox = read("brgen_marketplace/app/views/marketplace/listings/_buybox.html.erb")
+    assert_includes buybox, "condition_facts.each do |fact|"
+    crossings = read("brgen_dating/app/views/dating/path_crossings/index.html.erb")
+    assert_includes crossings, 'class="meta-facts"'
+    refute_includes crossings, " · <%= time_ago_in_words(crossing.crossed_at) %>"
   end
 
   def test_post_card_bylines_do_not_embed_separator_glyphs
