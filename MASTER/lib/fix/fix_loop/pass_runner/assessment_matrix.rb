@@ -237,6 +237,9 @@ module Master
               )
               @assessment_plan = plan
               @assessment_surface_presence = nil
+              @assessment_surface_report = nil
+              @assessment_surface_receipts = {}
+              @assessment_surface_cache = {}
               @assessment_scope = plan.sources.map { |source| File.expand_path(source.path, plan.root) }.sort.freeze
             end
             @bus&.publish(
@@ -256,6 +259,9 @@ module Master
             @assessment_mutex&.synchronize do
               @assessment_plan = plan
               @assessment_surface_presence = nil
+              @assessment_surface_report = nil
+              @assessment_surface_receipts = {}
+              @assessment_surface_cache = {}
               @assessment_scope = plan.sources.map { |source| File.expand_path(source.path, plan.root) }.sort.freeze
             end
             self
@@ -565,6 +571,21 @@ module Master
             end
             unless info[:streams].include?(stream)
               return assessment_result(:not_applicable, reason: "Law has no #{stream} detector/assessor")
+            end
+
+            if info[:source_kind] != :visual &&
+               law_id.to_s.casecmp?(VisualPass::LAW_ID) &&
+               stream == :semantic_violations && surface == :rendered_ui
+              return assessment_result(:inconclusive, reason: "rendered visual review returned no result", evidence:) unless visual
+              return assessment_result(:inconclusive, reason: visual.message.to_s, evidence:) if visual.err?
+
+              visual_value = visual.value!
+              visual_rows = Array(visual_value[:findings] || visual_value["findings"]).select do |row|
+                (row[:law] || row["law"]).to_s.casecmp?(law_id)
+              end
+              visual_evidence = Array(evidence) + [{ "surface_probe" => "rendered_ui", "status" => "assessed_clean" }]
+              return assessment_result(visual_rows.any? ? :violation_found : :assessed_clean,
+                evidence: visual_evidence, findings: visual_rows)
             end
 
             surface_evidence = nil

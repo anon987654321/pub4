@@ -136,12 +136,37 @@ module Deploy
             const r = el.getBoundingClientRect();
             return r.width > 0 && r.height > 0;
           };
+          const hash = value => {
+            let result = 2166136261;
+            for (let index = 0; index < value.length; index++) {
+              result ^= value.charCodeAt(index);
+              result = Math.imul(result, 16777619);
+            }
+            return (result >>> 0).toString(16);
+          };
+          const controls = [...document.querySelectorAll("input, select, textarea")]
+            .filter(visible).slice(0, 100).map(el => {
+              const type = (el.type || el.tagName).toLowerCase();
+              const value = ["password", "file"].includes(type) ? "" : String(el.value ?? "");
+              return {
+                id: el.id || "",
+                name: el.name || "",
+                type,
+                value_hash: hash(value),
+                value_length: value.length,
+                checked: "checked" in el ? Boolean(el.checked) : null,
+                selected_index: el.tagName === "SELECT" ? el.selectedIndex : null,
+                disabled: Boolean(el.disabled),
+                expanded: el.getAttribute("aria-expanded")
+              };
+            });
           return JSON.stringify({
             url: location.href,
             active: document.activeElement?.id || document.activeElement?.tagName || "",
             text: document.body?.innerText?.slice(0, 4000) || "",
             expanded: [...document.querySelectorAll("[aria-expanded]")].filter(visible).map(el => [el.id, el.getAttribute("aria-expanded")]),
-            open: [...document.querySelectorAll("details, dialog, [popover]")].filter(visible).map(el => [el.id, el.matches("dialog") ? el.open : el.hasAttribute("open") || el.matches(":popover-open")])
+            open: [...document.querySelectorAll("details, dialog, [popover]")].filter(visible).map(el => [el.id, el.matches("dialog") ? el.open : el.hasAttribute("open") || el.matches(":popover-open")]),
+            controls
           });
         })()
       JS

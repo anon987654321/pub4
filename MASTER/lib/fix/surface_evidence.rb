@@ -648,6 +648,12 @@ module Master
               rails_apps = YAML.safe_load_file(File.join(@root, "RAILS", "apps.yml")).fetch("apps")
               inventory_by_name = apps.to_h { |row| [row.fetch("name"), row] }
               selected = selected_apps(rails_apps.keys)
+              if @target_label == "OPENBSD"
+                inventory_names = apps.map { |row| row["name"].to_s }.sort
+                problems << "OPENBSD deployment inventory names differ from RAILS/apps.yml" unless inventory_names == rails_apps.keys.map(&:to_s).sort
+                problems << "OPENBSD deploy inventory schema is unsupported" unless data["schema"].to_i == 1
+                problems << "OPENBSD deploy inventory generated_from is not RAILS/apps.yml" unless data["generated_from"].to_s == "RAILS/apps.yml"
+              end
               selected.each do |name|
                 row = inventory_by_name[name]
                 problems << "OPENBSD deploy inventory is missing #{name}" unless row
@@ -661,6 +667,29 @@ module Master
               manifests << { "inventory" => "OPENBSD/deploy_inventory.json", "apps" => apps.size }
             rescue StandardError => e
               problems << "OPENBSD/deploy_inventory.json: #{error_text(e)}"
+            end
+          else
+            problems << "OPENBSD/deploy_inventory.json is missing or symlinked"
+          end
+          vps_script = File.join(@root, "OPENBSD", "bin", "vps-deploy")
+          problems << "OPENBSD/bin/vps-deploy is missing or not executable" unless File.file?(vps_script) && !File.symlink?(vps_script) && File.executable?(vps_script)
+        end
+
+        if @target_label == "RAILS/master" || @target_label.start_with?("RAILS/master/")
+          inventory_path = File.join(@root, "OPENBSD", "deploy_inventory.json")
+          if File.file?(inventory_path) && !File.symlink?(inventory_path)
+            begin
+              data = JSON.parse(File.read(inventory_path, encoding: "UTF-8"))
+              face = data["master_face"]
+              problems << "OPENBSD deploy inventory has no master_face entry" unless face.is_a?(Hash)
+              if face.is_a?(Hash)
+                problems << "master_face deploy_root must be RAILS/master" unless face["deploy_root"].to_s == "RAILS/master"
+                problems << "master_face domain is missing" if face["domain"].to_s.empty?
+                problems << "master_face port is invalid" unless Integer(face["port"]).positive?
+                manifests << { "master_face" => face.slice("name", "domain", "port", "deploy_root") }
+              end
+            rescue StandardError => e
+              problems << "OPENBSD master_face manifest: #{error_text(e)}"
             end
           else
             problems << "OPENBSD/deploy_inventory.json is missing or symlinked"
@@ -840,6 +869,12 @@ module Master
       end
 
       def target_has_tests?(inventory)
+        if @target_label == "RAILS/__shared" || @target_label.start_with?("RAILS/__shared/")
+          return %w[amber brgen bsdports].any? do |name|
+            File.directory?(File.join(@root, "RAILS", name, "test"))
+          end
+        end
+
         inventory["records"].any? do |path, type, _size|
           type == "file" && (
             path.match?(%r{(?:\A|/)(?:test|tests|spec)(?:/|\z)}) ||
@@ -880,21 +915,27 @@ module Master
         return { failures: [], unavailable: [], checked: [] } unless rails_target?
         return { failures: [], unavailable: ["Rails boot probes deferred until a clean scanner candidate pass"], checked: [] } unless @run_expensive
 
-        app_targets = rails_app_test_targets(@target_label, @plan.sources.map(&:path))
-        if @target_label == "RAILS" || @target_label == "RAILS/__shared" || @target_label.start_with?("RAILS/__shared/")
-          app_targets = %w[amber brgen bsdports].filter_map do |name|
-            path = File.join(@root, "RAILS", name)
-            [name, path] if File.file?(File.join(path, "bin", "rails")) && !File.symlink?(File.join(path, "bin", "rails"))
-          end
-        end
+        app_names = if @target_label == "RAILS" || @target_label == "RAILS/__shared" || @target_label.start_with?("RAILS/__shared/")
+                      %w[amber brgen bsdports]
+                    else
+                      [@target_label.delete_prefix("RAILS/").split("/", 2).first]
+                    end
+        app_targets = []
         failures = []
         unavailable = []
         checked = []
-        app_targets.each do |name, app_dir|
-          break if deadline_remaining(deadline) <= 0
+        app_names.each do |name|
+          app_dir = File.join(@root, "RAILS", name)
           runner = File.join(app_dir, "bin", "rails")
-          unless File.file?(runner) && !File.symlink?(runner)
-            unavailable << "#{name}: bin/rails is unavailable"
+          unless File.directory?(app_dir) && File.file?(runner) && !File.symlink?(runner)
+            unavailable << "#{name}: Rails app directory or bin/rails launcher is unavailable"
+            next
+          end
+          app_targets << [name, app_dir]
+        end
+        app_targets.each do |name, app_dir|
+          if deadline_remaining(deadline) <= 0
+            unavailable << "Rails app boot budget exhausted before #{name}" unless checked.include?(name)
             next
           end
           row = execute_command(
@@ -908,7 +949,6 @@ module Master
             unavailable << "#{name}: Rails boot probe timed out or was unavailable"
           end
         end
-        unavailable << "Rails app boot budget exhausted" if deadline_remaining(deadline) <= 0 && checked.size < app_targets.size
         { failures:, unavailable:, checked: }
       end
 
@@ -1097,7 +1137,6 @@ module Master
         label = @target_label
         return app_names.map(&:to_s) if label == "RAILS" || label == "OPENBSD" ||
           label == "RAILS/__shared" || label.start_with?("RAILS/__shared/") ||
-          label == "RAILS/master" || label.start_with?("RAILS/master/") ||
           label.start_with?("OPENBSD/")
 
         match = label.match(%r{\ARAILS/([^/]+)})
