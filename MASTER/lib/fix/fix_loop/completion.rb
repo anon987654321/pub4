@@ -9,11 +9,14 @@ module Master
       module Completion
         private
 
-        # A run that reaches DONE after skipping files it could not scan, or
-        # stages that raised, has proved nothing about them. Every stage and pass
-        # still ran; the verdict says what they could not.
+        # DONE needs complete evidence, not just a clean scanner result. A run
+        # with skipped files, failed stages, or an unmeasured Law/stream/surface
+        # matrix must report the missing proof instead of claiming completion.
         def blocked_by_gaps(result)
-          gapped = @pass_runner&.gaps? || uninspectable.any?
+          matrix_unmeasured = @pass_runner &&
+            @pass_runner.respond_to?(:assessment_matrix_status) &&
+            @pass_runner.assessment_matrix_status == :not_measured
+          gapped = @pass_runner&.gaps? || uninspectable.any? || matrix_unmeasured
           return result unless gapped && result.ok? && terminal_state_for(result) == :done
 
           gaps = @pass_runner ? @pass_runner.gaps : { uninspected: {}, stage_failures: {} }
@@ -33,6 +36,7 @@ module Master
             parts << "#{pending.size} file(s) awaiting a semantic read (#{pending.keys.first(3).join(", ")})"
           end
           gaps[:stage_failures].each { |stage, rows| parts << "#{stage} stage failed #{rows.size}x, last #{rows.last}" }
+          parts << "law/stream/surface assessment matrix not measured; DONE withheld" if matrix_unmeasured
           Master::Trace::Dmesg.status("fix0", "finished with gaps: #{parts.join("; ")}"[0, 220])
           terminal(:blocked, "finished with gaps, #{parts.join("; ")}")
         end
