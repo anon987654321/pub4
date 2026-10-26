@@ -459,14 +459,32 @@ module Master
         snapshot_digest = Digest::SHA256.hexdigest(JSON.generate([inventory_digest, dependency_digest]))
         return { "status" => "opportunity_snapshot_checksum_mismatch" } unless snapshot_digest == receipt["snapshot_sha256"]
 
-        dependencies_by_path = dependencies.to_h { |row| [row["path"], row["sha256"]] }
+        dependencies_by_path = dependencies.to_h { |row| [row["path"], row] }
         sources_valid = source_rows.all? do |row|
-          row.is_a?(Hash) && row["path"].is_a?(String) &&
-            row["expected_sha256"].to_s.match?(/\A[a-f0-9]{64}\z/) &&
-            row["expected_sha256"] == row["actual_sha256"] &&
-            row["actual_sha256"] == dependencies_by_path[row["path"]]
+          next false unless row.is_a?(Hash) && row["path"].is_a?(String)
+          next false unless row["expected_sha256"].to_s.match?(/\A[a-f0-9]{64}\z/)
+          next false unless row["expected_sha256"] == row["actual_sha256"]
+          next false unless Integer(row["expected_bytes"]) >= 0
+          next false unless row["expected_bytes"] == row["actual_bytes"]
+
+          dependency = dependencies_by_path[row["path"]]
+          dependency && dependency["sha256"] == row["actual_sha256"] &&
+            dependency["bytes"] == row["actual_bytes"]
         end
         return { "status" => "opportunity_source_hash_mismatch" } unless sources_valid
+
+        source_paths = source_rows.map { |row| row["path"] }
+        unless source_paths.uniq.size == source_paths.size &&
+               source_paths == source_paths.sort &&
+               Digest::SHA256.hexdigest(JSON.generate(source_paths)) == receipt["scope_digest"]
+          return { "status" => "opportunity_scope_digest_mismatch" }
+        end
+        source_manifest = source_rows.map do |row|
+          [row["path"], row["expected_sha256"], Integer(row["expected_bytes"])]
+        end
+        unless Digest::SHA256.hexdigest(JSON.generate(source_manifest)) == receipt["source_digest"]
+          return { "status" => "opportunity_source_digest_mismatch" }
+        end
 
         nil
       rescue ArgumentError, TypeError, NoMethodError

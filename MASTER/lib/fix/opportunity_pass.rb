@@ -185,13 +185,24 @@ module Master
         source_rows = []
         source_hashes_verified = false
         if plan && before[:status] == "captured"
-          actual_by_path = before[:dependencies].to_h { |row| [File.expand_path(row[:path], repo_root), row[:sha256]] }
+          actual_by_path = before[:dependencies].to_h { |row| [File.expand_path(row[:path], repo_root), row] }
           source_rows = plan.sources.map do |source|
             absolute = File.expand_path(source.path, plan.root)
-            { path: source.path, expected_sha256: source.sha256, actual_sha256: actual_by_path[absolute] }
+            actual = actual_by_path[absolute]
+            {
+              path: source.path,
+              expected_sha256: source.sha256,
+              actual_sha256: actual && actual[:sha256],
+              expected_bytes: source.bytes,
+              actual_bytes: actual && actual[:bytes],
+            }
           end
           source_hashes_verified = scope_paths == plan.sources.map { |source| File.expand_path(source.path, plan.root) }.sort &&
-            source_rows.all? { |row| !row[:actual_sha256].to_s.empty? && row[:actual_sha256] == row[:expected_sha256] }
+            source_rows.all? do |row|
+              !row[:actual_sha256].to_s.empty? &&
+                row[:actual_sha256] == row[:expected_sha256] &&
+                row[:actual_bytes] == row[:expected_bytes]
+            end
           reasons << "FixPlan source hashes no longer match" unless source_hashes_verified
         end
         reasons.concat(Array(@assessment_gaps))
