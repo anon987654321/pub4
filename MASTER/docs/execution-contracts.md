@@ -35,7 +35,9 @@ approvals:
     approved_at: "2026-10-26T12:00:00Z"
 ```
 
-The library exposes `contract_for(name)` and a compact `contract_inventory` containing status, revision, promotion readiness, operator-approval state and trigger eligibility. They omit the skill body and credentials. These are inspection APIs, not an approval UI or a self-promotion command. The current task did not add a complete operator-facing approval workflow; the file must be written by the operator through a trusted host-side path. End-to-end coverage of all skill sources and the UI/command for reviewing candidates remains outstanding.
+The library exposes `contract_for(name)` and a compact `contract_inventory` containing status, revision, promotion readiness, operator-approval state and trigger eligibility. They omit the skill body and credentials. The local `/skill` command now exposes `list`/`review`, `inspect NAME`, `approve NAME FULL_SHA256 --confirm`, and `revoke NAME FULL_SHA256 --confirm`. It refuses visitors, requires an exact current revision for approval, and persists through the operator-owned manifest with a private lock and atomic mode-`0600` writes. Malformed or unsafe manifests are not overwritten. Approval records who approved the revision and when. This is a local terminal command, not a browser approval surface.
+
+Approval verifies that the declared candidate has required metadata; it does not execute the referenced fixtures or certify that they passed. The fixture references remain claims until a separate verifier produces evidence. Complete source-specific coverage of every learned or dynamically loaded skill path is still outstanding.
 
 ### Persisted telemetry privacy
 
@@ -109,6 +111,7 @@ RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_llm_dispatcher.rb
 RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_trace_support.rb
 RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_feedback_ledger.rb
 RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_reflexion_ledger.rb
+RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_command_registry_dispatch.rb
 ```
 
 After focused tests pass, run the full canonical MASTER suite and relevant operator checks. For changes that touch RAILS, OPENBSD or STUDIO, run their canonical checks too. Source inspection, a committed test, or a remote commit is never reported as an executed test or a verified deployment.
