@@ -410,21 +410,19 @@ module Master
                Integer(receipt["eligible_files"]) == source_rows.size
           return { "status" => "opportunity_receipt_count_mismatch" }
         end
-        unless inventory.all? do |row|
-                 row.is_a?(Array) && row.size == 2 &&
-                   row.all? { |value| value.is_a?(String) } &&
-                   %w[file directory symlink other].include?(row[1])
-               end
-          return { "status" => "opportunity_inventory_malformed" }
+        inventory_valid = inventory.all? do |row|
+          row.is_a?(Array) && row.size == 2 &&
+            row.all? { |value| value.is_a?(String) } &&
+            %w[file directory symlink other].include?(row[1])
         end
+        return { "status" => "opportunity_inventory_malformed" } unless inventory_valid
         return { "status" => "opportunity_inventory_duplicate" } unless inventory.uniq.size == inventory.size
-        unless dependencies.all? do |row|
-                 row.is_a?(Hash) && row["path"].is_a?(String) &&
-                   row["sha256"].to_s.match?(/\A[a-f0-9]{64}\z/) &&
-                   Integer(row["bytes"]) >= 0
-               end
-          return { "status" => "opportunity_dependencies_malformed" }
+        dependencies_valid = dependencies.all? do |row|
+          row.is_a?(Hash) && row["path"].is_a?(String) &&
+            row["sha256"].to_s.match?(/\A[a-f0-9]{64}\z/) &&
+            Integer(row["bytes"]) >= 0
         end
+        return { "status" => "opportunity_dependencies_malformed" } unless dependencies_valid
         dependency_paths = dependencies.map { |row| row["path"] }
         return { "status" => "opportunity_dependency_duplicate" } unless dependency_paths.uniq.size == dependency_paths.size
         inventory_digest = Digest::SHA256.hexdigest(JSON.generate(inventory))
@@ -435,14 +433,13 @@ module Master
         return { "status" => "opportunity_snapshot_checksum_mismatch" } unless snapshot_digest == receipt["snapshot_sha256"]
 
         dependencies_by_path = dependencies.to_h { |row| [row["path"], row["sha256"]] }
-        unless source_rows.all? do |row|
-                 row.is_a?(Hash) && row["path"].is_a?(String) &&
-                   row["expected_sha256"].to_s.match?(/\A[a-f0-9]{64}\z/) &&
-                   row["expected_sha256"] == row["actual_sha256"] &&
-                   row["actual_sha256"] == dependencies_by_path[row["path"]]
-               end
-          return { "status" => "opportunity_source_hash_mismatch" }
+        sources_valid = source_rows.all? do |row|
+          row.is_a?(Hash) && row["path"].is_a?(String) &&
+            row["expected_sha256"].to_s.match?(/\A[a-f0-9]{64}\z/) &&
+            row["expected_sha256"] == row["actual_sha256"] &&
+            row["actual_sha256"] == dependencies_by_path[row["path"]]
         end
+        return { "status" => "opportunity_source_hash_mismatch" } unless sources_valid
 
         nil
       rescue ArgumentError, TypeError, NoMethodError
