@@ -140,16 +140,34 @@ module Master
       # request to repair exactly that tree; halting it too refused every fix
       # while a single violation stood, so "fix and commit" scanned and stopped.
       def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS,
-              incremental: @incremental, requested: false)
+              incremental: @incremental, requested: false, cancellation: nil)
         @run_mutex.synchronize do
-          run_unlocked(target, max_passes:, budget_seconds:, incremental:, requested:)
+          previous_cancellation = @cancellation
+          @cancellation = cancellation
+          cancellation.activate! if cancellation&.respond_to?(:activate!)
+          begin
+            run_unlocked(target, max_passes:, budget_seconds:, incremental:, requested:)
+          ensure
+            @cancellation = previous_cancellation
+          end
         end
+      end
+
+      def cancellation_requested? = @cancellation&.cancelled? == true
+
+      def cancellation_terminal
+        reason = @cancellation.respond_to?(:reason) ? @cancellation.reason : nil
+        detail = reason.to_s.strip
+        message = detail.empty? ? "/fix cancelled at a safe stage boundary" :
+          "/fix cancelled at a safe stage boundary (#{detail})"
+        Result.err("CANCELLED: #{message}", category: :cancelled)
       end
 
       def run_unlocked(target, max_passes:, budget_seconds:, incremental:, requested:)
         mission = nil
         @last_terminal_state = nil
         current_phase = :preflight
+        return cancellation_terminal if cancellation_requested?
         return halted_result if halted? && !requested
 
         @pass_runner&.reset_gaps!
@@ -226,18 +244,22 @@ module Master
         journal["budget_clock_at"] = RunBudget.elapsed_seconds
         current_phase = :begin_run
         @convergence_discipline.begin_run(files)
+        return finish_run(cancellation_terminal, target, run_id, mission:, requested:) if cancellation_requested?
+
         if requested
           current_phase = :structure
           dependency_result = prepare_dependency_map!(files)
+          return finish_run(cancellation_terminal, target, run_id, mission:, requested:) if cancellation_requested?
           return finish_run(dependency_result, target, run_id, mission:, requested:) if dependency_result.is_a?(Master::Result)
-          current_phase = :research
           current_phase = :architecture_exploration
           architecture = ArchitectureExploration.new(root: @root, agent: @agent, bus: @bus).run(target:, files:)
+          return finish_run(cancellation_terminal, target, run_id, mission:, requested:) if cancellation_requested?
           ux_context = UXRefinementCatalog.prompt_context(target:, root: @root)
           current_phase = :research
           research = ResearchPass.new(
             agent: @agent, bus: @bus, plan: @transformation_plan, root: @root
           ).run(target:, files:)
+          return finish_run(cancellation_terminal, target, run_id, mission:, requested:) if cancellation_requested?
           @pass_runner.research_brief = [
             architecture.fetch("brief"),
             ux_context,
