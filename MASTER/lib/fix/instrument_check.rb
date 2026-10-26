@@ -5,6 +5,7 @@ require "rbconfig"
 require "tmpdir"
 require_relative "../io/exec"
 require_relative "resource_budget"
+require_relative "../execution/contract"
 
 module Master
   module Fix
@@ -39,11 +40,41 @@ module Master
       # The failures to report: none when the check is switched off.
       def broken(env: ENV) = env["MASTER_FIX_INSTRUMENT_CHECK"] == "0" ? [] : failures
 
-      def verify!
-        broken = self.broken
-        return true if broken.empty?
+      # Adapt the live preflight to the shared verifier vocabulary. A disabled
+      # preflight is NOT a pass; it is explicitly not applicable with unchecked
+      # probes recorded. Failure messages remain local to the caller.
+      def verification_result(env: ENV)
+        if env["MASTER_FIX_INSTRUMENT_CHECK"] == "0"
+          @last_failures = []
+          return Master::Execution::Contract::VerificationResult.new(
+            id: "fix-instruments", subject: "fix-instruments",
+            verifier: "fix-instrument-check", status: :not_applicable,
+            scope: @root, checked_count: 0, failure_count: 0,
+            unchecked_count: @probes.length, complete: true
+          )
+        end
 
-        @bus&.publish("fix_loop:instruments_unavailable", failures: broken)
+        @last_failures = failures
+        Master::Execution::Contract::VerificationResult.new(
+          id: "fix-instruments", subject: "fix-instruments",
+          verifier: "fix-instrument-check",
+          status: @last_failures.empty? ? :pass : :blocked,
+          scope: @root, checked_count: @probes.length,
+          failure_count: @last_failures.length, unchecked_count: 0, complete: true
+        )
+      end
+
+      def verify!
+        verification = verification_result
+        return true if %i[pass not_applicable].include?(verification.status)
+
+        broken = Array(@last_failures)
+        @bus&.publish(
+          "fix_loop:instruments_unavailable",
+          verification: verification.to_h,
+          failure_count: broken.size,
+          failure_digest: Digest::SHA256.hexdigest(broken.join("\\n"))
+        )
         raise Unavailable, "fix instruments unavailable: #{broken.join("; ")}"
       end
 
