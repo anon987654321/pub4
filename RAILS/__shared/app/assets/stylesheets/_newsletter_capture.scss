@@ -62,7 +62,7 @@
 
 .newsletter-capture-copy > p {
   max-inline-size: 42rem;
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 
 .newsletter-capture-reward {
@@ -125,7 +125,7 @@
   color: currentColor;
   font: inherit;
   font-size: 1.75rem;
-  line-height: 1;
+  line-height: var(--leading-none);
   cursor: pointer;
 }
 

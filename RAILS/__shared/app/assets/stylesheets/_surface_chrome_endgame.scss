@@ -549,7 +549,7 @@
   body[data-surface="luxury"] :is(.item-card--luxury, .wardrobe-card, .style-phase-card, .occasion-card) { min-inline-size: 0; overflow-wrap: anywhere; }
   body[data-surface="luxury"] :is(.item-card--luxury, .wardrobe-card) :is(img, picture) { display: block; inline-size: 100%; block-size: auto; }
   body[data-surface="luxury"] .item-card--luxury .item-title, body[data-surface="luxury"] .wardrobe-card :is(h2, h3) { text-wrap: balance; overflow-wrap: anywhere; }
-  body[data-surface="luxury"] .item-card--luxury .item-meta, body[data-surface="luxury"] .commerce-fit-reasons, body[data-surface="luxury"] .shop-feed-note { text-wrap: pretty; line-height: 1.5; }
+  body[data-surface="luxury"] .item-card--luxury .item-meta, body[data-surface="luxury"] .commerce-fit-reasons, body[data-surface="luxury"] .shop-feed-note { text-wrap: pretty; line-height: var(--leading-normal); }
   // A field keeps its outline (the shared README's one exception): borderless white on white hid every input.
   body[data-surface="luxury"] :is(.form input, .form select, .form textarea, .input) {
     min-block-size: var(--tap-min); border: 1px solid var(--luxury-border); border-radius: 0;

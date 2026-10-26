@@ -277,7 +277,7 @@ main[role="main"] {
   inset-inline-end: 0;
   transform: translateY(-50%);
   font-size: var(--text-xl);
-  line-height: 1;
+  line-height: var(--leading-none);
   color: var(--text-secondary);
   transition: color var(--transition-fast) var(--ease-out), opacity var(--transition-fast) var(--ease-out);
 }
@@ -402,7 +402,7 @@ main[role="main"] {
   z-index: var(--z-toast);
   padding: 0.375rem 0.75rem;
   font-size: var(--text-xs);
-  line-height: 1.4;
+  line-height: var(--leading-snug);
   color: var(--text);
   background: var(--surface-elevated);
   /* Floating chrome separates by surface, not by rule. */

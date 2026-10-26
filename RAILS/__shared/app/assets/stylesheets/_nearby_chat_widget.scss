@@ -217,7 +217,7 @@
   color: var(--text-secondary);
   cursor: pointer;
   font-size: var(--text-lg);
-  line-height: 1;
+  line-height: var(--leading-none);
   min-height: var(--tap-min);
   min-width: var(--tap-min);
   display: inline-flex;
@@ -247,7 +247,7 @@
   list-style: none;
   font-family: var(--font);
   font-size: var(--text-sm);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 
 .nearby-chat-widget-composer {
@@ -272,7 +272,7 @@
   max-height: 6.5rem;
   font-family: var(--font);
   font-size: var(--text-base);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 
 .nearby-chat-widget-composer textarea:focus {
@@ -305,7 +305,7 @@
   padding: var(--space-4) var(--space-4);
   font-family: var(--font);
   font-size: var(--text-sm);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   color: var(--text);
 }
 
@@ -330,7 +330,7 @@
   padding: var(--space-2) var(--space-3);
   font-family: var(--font);
   font-size: var(--text-sm);
-  line-height: 1.4;
+  line-height: var(--leading-snug);
   overflow-wrap: anywhere;
   border: 0;
   color: var(--text-secondary);
@@ -349,7 +349,7 @@
   padding: var(--space-1) var(--space-3);
   font-family: var(--font);
   font-size: var(--text-sm);
-  line-height: 1.4;
+  line-height: var(--leading-snug);
   border: 0;
   flex-shrink: 0;
 }

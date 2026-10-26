@@ -50,7 +50,7 @@
   font-family: var(--font-ad);
   font-size: clamp(2rem, 5vw, 4rem);
   font-weight: var(--weight-normal);
-  line-height: 1;
+  line-height: var(--leading-none);
   text-wrap: balance;
 }
 
@@ -67,7 +67,7 @@
   color: var(--promo-ink, var(--store-ink));
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: var(--weight-heavy);
-  line-height: 1;
+  line-height: var(--leading-none);
 }
 
 .store-promo-art-cta {
