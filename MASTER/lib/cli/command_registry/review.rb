@@ -3,6 +3,7 @@
 require_relative "../../review/council/critique"
 require_relative "../../fix/execution_trace"
 require_relative "../../fix/check_focus"
+require_relative "../../fix/lane_preflight"
 require_relative "../pipeline/residual"
 require_relative "../../operator/check_chain"
 require_relative "../../boot/paths"
@@ -178,6 +179,9 @@ module Master
           targets = fix_targets(target, root:)
           ::Operator::CheckChain.clear_verified_fix_snapshots! if writes_requested
           Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
+          refusal = Master::Fix::LanePreflight.check(agent: deliberation.agent) if deliberation
+          next refusal if refusal
+
           trace_scope = execution_trace_scopes(target)
 
           rendered = Master::Trace::Dmesg.with_log_voice do
