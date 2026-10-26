@@ -71,6 +71,80 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert_includes Registry.help_text("capabilities"), "/capabilities describe"
   end
 
+  def test_skill_review_command_approves_and_revokes_only_the_exact_revision
+    require "tmpdir"
+    old_visitor = Fiber[:master_visitor]
+    Fiber[:master_visitor] = nil
+
+    Dir.mktmpdir("skill-review-command") do |root|
+      data_dir = File.join(root, "data")
+      FileUtils.mkdir_p(data_dir)
+      File.write(File.join(data_dir, "patterns.yml"), <<~YAML)
+        skills_registry:
+          skills:
+            - name: release-skill
+              description: audited capability
+              triggers: ["release phrase"]
+              body: "Execute a bounded release verification."
+              execution_contract:
+                schema_version: 1
+                version: "1.0.0"
+                status: candidate
+                risk: medium
+                required_capabilities: [read]
+                laws: [ROBUSTNESS]
+                fixtures: [MASTER/test/test_command_registry_dispatch.rb]
+      YAML
+      approval_path = File.join(root, "operator", "skill_approvals.yml")
+      unapproved = Master::CLI::Skills.new(root:, approval_path:).tap(&:discover!).find("release-skill")
+      revision = unapproved.fetch(:revision)
+      refute_predicate unapproved.fetch(:contract), :permitted_for_trigger?
+
+      listed = Registry.dispatch_skill(root, ctx: { args: "list" }, approval_path:)
+      assert_includes listed, "release-skill"
+      assert_includes listed, revision
+      assert_includes Registry.help_text("skill"), "/skill approve NAME SHA256 --confirm"
+
+      visitor_denial = nil
+      Fiber[:master_visitor] = true
+      visitor_denial = Registry.dispatch_skill(
+        root, ctx: { args: "approve release-skill #{revision} --confirm" }, approval_path:
+      )
+      assert_match(/local operator only/, visitor_denial)
+      refute File.exist?(approval_path)
+      Fiber[:master_visitor] = nil
+
+      missing_confirmation = Registry.dispatch_skill(
+        root, ctx: { args: "approve release-skill #{revision}" }, approval_path:
+      )
+      assert_match(/--confirm/, missing_confirmation)
+      refute File.exist?(approval_path)
+
+      approved = Registry.dispatch_skill(
+        root, ctx: { args: "approve release-skill #{revision} --confirm" }, approval_path:
+      )
+      assert_match(/approved release-skill revision=#{revision}/, approved)
+      assert_equal 0o600, File.stat(approval_path).mode & 0o777
+      active = Master::CLI::Skills.new(root:, approval_path:).tap(&:discover!)
+      assert_equal ["release-skill"], active.trigger_for("please use release phrase").map { |row| row[:name] }
+
+      stale_revision = "0" * 64
+      mismatch = Registry.dispatch_skill(
+        root, ctx: { args: "approve release-skill #{stale_revision} --confirm" }, approval_path:
+      )
+      assert_match(/revision mismatch/, mismatch)
+      assert_empty Master::CLI::Skills.new(root:, approval_path:).tap(&:discover!).trigger_for("release phrase")
+
+      revoked = Registry.dispatch_skill(
+        root, ctx: { args: "revoke release-skill #{revision} --confirm" }, approval_path:
+      )
+      assert_match(/revoked release-skill revision=#{revision}/, revoked)
+      refute_includes Master::CLI::Skills.new(root:, approval_path:).tap(&:discover!).trigger_for("release phrase").map { |row| row[:name] }, "release-skill"
+    end
+  ensure
+    Fiber[:master_visitor] = old_visitor
+  end
+
   def test_capability_inventory_is_restricted_for_visitors
     old_visitor = Fiber[:master_visitor]
     Fiber[:master_visitor] = true
