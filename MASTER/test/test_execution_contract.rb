@@ -42,6 +42,8 @@ class TestExecutionContract < Minitest::Test
     assert_equal "run-1", payload[:run_id]
     assert_equal "attempt-1", payload[:attempt_id]
     assert_equal "mission-1", payload[:mission_id]
+    assert_equal :unknown, payload[:reversibility]
+    assert_equal true, envelope.replay_requires_reconciliation?
     assert_equal Digest::SHA256.hexdigest("private-workspace/private-name.txt"), payload[:scope_digest]
     refute_includes payload.inspect, "private-name.txt"
     refute_includes payload.inspect, "private contents"
@@ -59,6 +61,28 @@ class TestExecutionContract < Minitest::Test
     end
     assert_raises(ArgumentError) do
       Contract::EffectEnvelope.build(effect:, turn: 0, effect_id: "effect-1", operation: :unknown)
+    end
+  end
+
+  def test_reversibility_is_explicit_and_irreversible_replay_requires_reconciliation
+    effect = Master::Core::Effect.write("release.txt", "release")
+    reversible = Contract::EffectEnvelope.build(
+      effect:, turn: 1, effect_id: "effect-reversible", reversibility: :reversible
+    )
+    irreversible = Contract::EffectEnvelope.build(
+      effect:, turn: 1, effect_id: "effect-irreversible", reversibility: :irreversible,
+      idempotency_key: "release-2026-10-26"
+    )
+
+    assert_equal :reversible, reversible.to_h[:reversibility]
+    refute reversible.replay_requires_reconciliation?
+    assert_equal :irreversible, irreversible.to_h[:reversibility]
+    assert irreversible.replay_requires_reconciliation?
+
+    assert_raises(ArgumentError) do
+      Contract::EffectEnvelope.build(
+        effect:, turn: 1, effect_id: "effect-invalid", reversibility: :probably_reversible
+      )
     end
   end
 

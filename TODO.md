@@ -586,3 +586,8 @@ these missing assessors will correctly finish BLOCKED rather than report DONE.
 - [ ] Exercise requested `/fix` against the repository root and verify four independent reports (MASTER, RAILS, OPENBSD, STUDIO), each with 30–40 materially distinct candidates, grounded evidence, a local scorecard, qualified alternatives, and explicit NOT_RUN execution proof until actual verification runs.
 - [ ] Inspect the new tournament decision fields in emitted run events and confirm their persistence across process interruption; source-level integration is not durability proof.
 - [ ] Keep all 90 UI/UX micro-refinements canonical in `MASTER/data/ux_refinements.yml`; they remain acceptance contracts, not blanket styling instructions or completed implementation claims.
+
+
+## Effect replay safety (2026-10-26)
+
+The shared `Master::Execution::Contract::EffectEnvelope` now records explicit reversibility (`reversible`, `compensatable`, `irreversible`, `unknown`), defaults to `unknown`, rejects invalid classifications, and exposes `replay_requires_reconciliation?` for irreversible/unknown effects. This prevents the contract from implying that an idempotency key alone proves exactly-once behavior. A regression test covers the default, invalid values and irreversible replay. The declaration is intentionally not presented as complete runtime enforcement: inventory and classify actual effect handlers, propagate classification from callers, and add reconciliation tests before claiming replay safety across every tool/background/deployment path. Validation remains INCONCLUSIVE until the focused contract suite runs on Ruby 4.0.5.

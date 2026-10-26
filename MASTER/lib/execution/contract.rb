@@ -15,6 +15,7 @@ module Master
       ].freeze
 
       EFFECT_OPERATIONS = %i[perform rollback compensation compensation_approval].freeze
+      REVERSIBILITY = %i[reversible compensatable irreversible unknown].freeze
       EVIDENCE_STATUSES = %i[verified failed inconclusive unavailable].freeze
       TOKEN = /\A[a-zA-Z0-9][a-zA-Z0-9._:-]{0,159}\z/
       KIND = /\A[a-z][a-z0-9_.-]{0,63}\z/
@@ -342,11 +343,11 @@ module Master
       EffectEnvelope = Data.define(
         :effect_id, :turn, :verb, :capability, :operation, :parent_effect_id,
         :checkpoint_id, :run_id, :attempt_id, :mission_id, :scope_digest, :idempotency_key,
-        :deadline_at
+        :deadline_at, :reversibility
       ) do
         def self.build(effect:, turn:, effect_id:, operation: :perform, parent_effect_id: nil,
                        checkpoint_id: nil, run_id: nil, attempt_id: nil, mission_id: nil, scope: nil,
-                       idempotency_key: nil, deadline_at: nil)
+                       idempotency_key: nil, deadline_at: nil, reversibility: :unknown)
           unless effect.respond_to?(:verb) && effect.respond_to?(:capability)
             raise ArgumentError, "effect envelope requires a typed effect"
           end
@@ -355,13 +356,13 @@ module Master
           new(
             effect_id:, turn:, verb: effect.verb, capability: effect.capability, operation:,
             parent_effect_id:, checkpoint_id:, run_id:, attempt_id:, mission_id:, scope_digest,
-            idempotency_key:, deadline_at:
+            idempotency_key:, deadline_at:, reversibility:
           )
         end
 
         def initialize(effect_id:, turn:, verb:, capability:, operation: :perform, parent_effect_id: nil,
                        checkpoint_id: nil, run_id: nil, attempt_id: nil, mission_id: nil, scope_digest: nil,
-                       idempotency_key: nil, deadline_at: nil)
+                       idempotency_key: nil, deadline_at: nil, reversibility: :unknown)
           effect_id = Contract.token!(effect_id, "effect id")
           turn = Integer(turn)
           raise ArgumentError, "effect turn must be non-negative" if turn.negative?
@@ -379,6 +380,10 @@ module Master
           attempt_id = Contract.token!(attempt_id, "attempt id") if attempt_id
           mission_id = Contract.token!(mission_id, "mission id") if mission_id
           idempotency_key = Contract.token!(idempotency_key, "idempotency key") if idempotency_key
+          reversibility = reversibility.to_s.downcase.to_sym
+          unless Contract::REVERSIBILITY.include?(reversibility)
+            raise ArgumentError, "unknown effect reversibility: #{reversibility}"
+          end
 
           scope_digest = scope_digest.to_s.downcase unless scope_digest.nil?
           unless scope_digest.nil? || Contract::SHA256.match?(scope_digest)
@@ -394,12 +399,12 @@ module Master
           super(
             effect_id:, turn:, verb:, capability:, operation:, parent_effect_id:,
             checkpoint_id:, run_id:, attempt_id:, mission_id:, scope_digest: scope_digest&.freeze,
-            idempotency_key:, deadline_at:
+            idempotency_key:, deadline_at:, reversibility:
           )
         rescue ArgumentError, TypeError, NoMethodError => e
           raise e if e.message.start_with?(
             "effect ", "unknown effect ", "parent effect ", "checkpoint ",
-            "run id", "attempt id", "mission id", "idempotency key", "scope digest", "invalid effect envelope"
+            "run id", "attempt id", "mission id", "idempotency key", "scope digest", "unknown effect reversibility", "invalid effect envelope"
           )
 
           raise ArgumentError, "invalid effect envelope: #{e.message}"
@@ -409,8 +414,15 @@ module Master
           {
             schema_version: 1, effect_id:, turn:, verb:, capability:, operation:,
             parent_effect_id:, checkpoint_id:, run_id:, attempt_id:, mission_id:, scope_digest:,
-            idempotency_key:, deadline_at:
+            idempotency_key:, deadline_at:, reversibility:
           }.compact
+        end
+
+        # A durable key is useful only when the target honors it. Unknown or
+        # irreversible effects always need reconciliation before a retry; the
+        # envelope deliberately does not infer exactly-once semantics.
+        def replay_requires_reconciliation?
+          %i[irreversible unknown].include?(reversibility)
         end
       end
     end

@@ -11,7 +11,7 @@ This document describes what the current code has established and what remains t
 
 `MASTER/lib/execution/contract.rb` now owns a small set of validated, typed shapes:
 
-- `EffectEnvelope` represents an effect's identity, verb, capability, operation, parent/checkpoint/run/attempt/mission IDs, optional idempotency key and deadline. Its optional scope is stored as a SHA-256 digest. Raw arguments and scope are not part of the envelope.
+- `EffectEnvelope` represents an effect's identity, verb, capability, operation, parent/checkpoint/run/attempt/mission IDs, optional idempotency key and deadline. Its optional scope is stored as a SHA-256 digest. Raw arguments and scope are not part of the envelope. It also records reversibility as `reversible`, `compensatable`, `irreversible` or `unknown`; the conservative default is `unknown`. Irreversible and unknown effects expose `replay_requires_reconciliation?` so retry policy cannot infer exactly-once behavior from an idempotency key alone. This is a typed declaration, not proof that every runtime caller has classified its effects correctly.
 - `EvidenceReference` identifies evidence by ID, kind, status, verifier and optional digest. It carries a reference, not the underlying private content.
 - `VerificationResult` adapts existing check results, `Master::Proof`, and deterministic scanner findings into a stable outcome vocabulary. `Finding#to_verification` converts a measured violation to a failed receipt and links it by a stable finding key instead of copying the diagnostic text. A check that ran but skipped declared coverage remains partial; an unavailable check remains inconclusive; a check error is not promoted into conclusive verification. The adapter uses duck typing and does not make MASTER import the sibling-tree `Deploy::CheckResult` implementation.
 - The canonical repair terminal-state vocabulary now comes from this execution contract through `Master::Fix::OutcomePolicy`.
@@ -118,3 +118,10 @@ RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_command_registry_dispatch.r
 ```
 
 After focused tests pass, run the full canonical MASTER suite and relevant operator checks. For changes that touch RAILS, OPENBSD or STUDIO, run their canonical checks too. Source inspection, a committed test, or a remote commit is never reported as an executed test or a verified deployment.
+
+
+## Reversibility and replay semantics
+
+Effect records now make reversibility explicit. `reversible` means the operation has a known restoration path; `compensatable` means a separate corrective action is required; `irreversible` means no reliable undo is available; and `unknown` means the system has not established the recovery semantics. The default is `unknown`, never an optimistic assumption.
+
+The envelope marks irreversible and unknown effects as requiring reconciliation before replay. An idempotency key is only a request to deduplicate when the external target actually supports and honors that key; it does not itself prove exactly-once execution. This addition is backward-compatible at the schema-construction boundary, but the existing runtime callers still need an evidence-driven classification inventory and must propagate the declaration to the external-effect handlers.
