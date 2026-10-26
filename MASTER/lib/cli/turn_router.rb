@@ -416,6 +416,8 @@ module Master
         category = {
           cancelled: :cancelled,
           trace_failed: :recovery_failed,
+          unknown_outcome: :unknown_outcome,
+          recovery_failed: :recovery_failed,
           needs_user: :human_decision,
         }.fetch(fold[:reason], :policy)
         Master::Result.err(text, category:)
