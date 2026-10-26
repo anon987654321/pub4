@@ -210,11 +210,27 @@ module Master
         private
 
         def record(payload, kind)
-          reason = (payload[:reason] || payload["reason"] || kind).to_s
-          files = Array(payload[:files] || payload["files"]).map { |f| File.basename(f.to_s) }.uniq
-          append("ts" => Time.now.utc.iso8601, "kind" => kind, "reason" => reason,
-                 "files" => files, "reflection" => sentence(kind, reason, files))
-          @bus&.publish("reflexion:recorded", reason:, files:)
+          raw_reason = (payload[:reason] || payload["reason"] || kind).to_s
+          raw_files = Array(payload[:files] || payload["files"]).map { |file| File.basename(file.to_s) }.uniq
+          reason = Master::Ground::Redactor.truncate(Master::Ground::Redactor.text(raw_reason))
+          files = raw_files.map { |file| Master::Ground::Redactor.truncate(Master::Ground::Redactor.text(file)) }.uniq
+          reason_evidence = Master::Execution::Contract.diagnostic_fields(raw_reason)
+          file_evidence = Master::Execution::Contract.diagnostic_fields(raw_files.sort.join("\\0"), key: :files)
+          append(
+            {
+              "ts" => Time.now.utc.iso8601, "kind" => kind, "reason" => reason, "files" => files,
+              "reason_digest" => reason_evidence[:error_digest],
+              "reason_bytes" => reason_evidence[:error_bytes],
+              "files_count" => files.size,
+              "files_digest" => file_evidence[:files_digest],
+              "reflection" => sentence(kind, reason, files)
+            }
+          )
+          @bus&.publish(
+            "reflexion:recorded", kind:,
+            reason_digest: reason_evidence[:error_digest], reason_bytes: reason_evidence[:error_bytes],
+            files_count: files.size, files_digest: file_evidence[:files_digest]
+          )
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Ledger::Reflexion.record", event_bus: @bus)
         end
