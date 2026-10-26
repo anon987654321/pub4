@@ -46,6 +46,18 @@ class TestOutcomePolicy < Minitest::Test
     assert_equal :done, Policy.workflow_outcome(ok: true, msg: "PLATEAU: message is stale", delivered: 1, ending: :done)
   end
 
+  def test_nil_and_unrecognized_values_normalize_to_no_state
+    assert_nil Policy.normalize_state(nil)
+    assert_nil Policy.normalize_state("not a state")
+    assert_equal :done, Policy.normalize_state("DONE")
+  end
+
+  def test_success_without_a_done_state_is_never_upgraded_to_completion
+    assert_equal :incomplete, Policy.workflow_outcome(ok: true, msg: "PLATEAU: no progress", delivered: 0)
+    assert_equal :incomplete, Policy.workflow_outcome(ok: true, msg: "TIMEOUT: deadline", delivered: 0)
+    assert_equal :failed, Policy.workflow_outcome(ok: false, msg: "DONE: stale", delivered: 0, ending: :done)
+  end
+
   def test_halted_policy_accepts_done_only_as_success
     refute Policy.halted?(:done)
     refute Policy.halted?("DONE")

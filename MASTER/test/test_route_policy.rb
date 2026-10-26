@@ -78,6 +78,29 @@ class TestRoutePolicy < Minitest::Test
     assert_equal :all_answering_candidates_recently_failed, result.reason
   end
 
+  def test_only_reachable_candidates_participate_in_the_decision
+    result = decision(
+      candidates: %w[opus ghost grok],
+      reachable: %w[opus grok],
+      usable: %w[opus grok],
+    )
+
+    assert_equal %w[opus grok], result.reachable
+    assert_equal %w[opus grok], result.selected
+  end
+
+  def test_unusable_floor_fallback_is_classified_for_offline_diagnostics
+    result = decision(
+      candidates: %w[opus grok],
+      usable: %w[grok],
+      recently_failed: %w[grok],
+      meets_floor: %w[opus],
+    )
+
+    assert_equal %w[opus], result.selected
+    assert_equal :no_usable_candidates, result.reason
+  end
+
   def test_all_recent_failures_without_floor_fail_closed
     result = decision(candidates: %w[opus grok], recently_failed: %w[opus grok])
 
