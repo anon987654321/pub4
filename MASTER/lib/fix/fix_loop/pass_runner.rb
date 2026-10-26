@@ -90,6 +90,7 @@ module Master
               opportunity: lexical_opportunities,
               visual:,
               assessment_matrix: "contract_only_not_measurement",
+              assessment_matrix_status: assessment_matrix_status.to_s,
             )
             Master::Trace::Dmesg.status(
               "fix0",
@@ -118,6 +119,10 @@ module Master
         def semantic_inconclusive
           @scanner.respond_to?(:semantic_gaps) ? @scanner.semantic_gaps : {}
         end
+
+        # The real Law x stream x surface ledger is not wired to production yet.
+        # Keep the absence explicit so terminalization cannot mistake the contract for evidence.
+        def assessment_matrix_status = :not_measured
         def gaps? = [uninspected, stage_failures, semantic_inconclusive, semantic_pending].any? { |gap| !gap.empty? }
         def gaps = {
           uninspected: uninspected.dup,
