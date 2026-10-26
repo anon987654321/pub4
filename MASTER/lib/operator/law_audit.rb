@@ -111,12 +111,8 @@ module Operator
                         .sort
     end
 
-    # Symbol, because that is what production passes. LawBridgeLaw#check does
-    # `language(path)&.to_sym` and applies? compares against `languages`, which
-    # a law declares as %i[ruby]. Handing it the map's String made applies?
-    # false for every language-scoped rule, so the first version of this file
-    # measured 0 findings and reported the tree clean — an auditor with exactly
-    # the defect it was written to find.
+    # Keep the probe language in the form used by the canonical Law contract;
+    # scanner adapters resolve it through Master.language_for at the boundary.
     def language_of(path) = Master::FILE_LANGUAGE_MAP[File.extname(path)]&.to_sym
 
     # An extension the rule's own `languages` would accept. Rules that declare
