@@ -51,6 +51,12 @@ body.vertical-tv .live-badge {
   animation: tv-live-pulse 2s var(--ease-in-out) infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  body.vertical-tv .live-badge {
+    animation: none;
+  }
+}
+
 body.vertical-tv .tv {
   margin-bottom: var(--space-2);
 }
@@ -219,7 +225,7 @@ width: 100dvw;
 .live-stream-details {
   padding: var(--space-4) 0;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 
 .live-stream-chat {

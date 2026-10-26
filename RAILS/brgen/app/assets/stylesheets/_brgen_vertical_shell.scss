@@ -300,6 +300,12 @@ body[class*="vertical-"] main > section {
   animation: matchFadeIn .18s var(--ease-out) both;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .match-overlay {
+    animation: none;
+  }
+}
+
 [dir="rtl"] {
   direction: rtl;
 }

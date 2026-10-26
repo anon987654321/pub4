@@ -211,7 +211,7 @@ body.vertical-messenger article[data-from="peer"] > header .read-receipt {
 
 .feed-card-body {
   font-size: var(--text-base);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   color: var(--text);
   margin-bottom: 8px;
 }
@@ -220,7 +220,7 @@ body.vertical-messenger article[data-from="peer"] > header .read-receipt {
   font-size: var(--text-sm);
   color: var(--text-secondary);
   margin: 4px 0;
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 
 .price {
@@ -399,7 +399,7 @@ body.vertical-messenger #messages article[data-from="self"] header {
 
 body.vertical-messenger #messages article p {
   margin: 0;
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   word-break: break-word;
 }
 
