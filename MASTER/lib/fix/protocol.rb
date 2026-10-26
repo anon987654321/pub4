@@ -269,8 +269,11 @@ module Master
         stream_reach = {
           "lexical_violations" => ->(law) { law.respond_to?(:scannable?) && law.scannable? && law.mode.to_sym == :violation },
           "lexical_opportunities" => ->(law) { law.respond_to?(:scannable?) && law.scannable? && law.mode.to_sym == :opportunity },
-          "semantic_violations" => ->(law) { law.respond_to?(:semantic?) && law.semantic? },
-          "semantic_opportunities" => ->(law) { law.respond_to?(:semantic?) && law.semantic? },
+          # The runtime semantic adapter evaluates every enforceable Law,
+          # using its explicit ask where present and its repair contract/examples
+          # otherwise. This remains declaration reach, not runtime evidence.
+          "semantic_violations" => ->(_law) { true },
+          "semantic_opportunities" => ->(_law) { true },
         }
         streams = stream_reach.to_h do |stream, reachable|
           reached, missing = rows.partition(&reachable)
