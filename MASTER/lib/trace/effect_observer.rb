@@ -22,13 +22,13 @@ module Master
 
       def call(stage:, turn:, effect:, effect_id:, operation: :perform, parent_effect_id: nil,
                checkpoint_id: nil, run_id: nil, attempt_id: nil, mission_id: nil, scope: nil,
-               idempotency_key: nil, deadline_at: nil, evidence_refs: [],
+               idempotency_key: nil, deadline_at: nil, reversibility: :unknown, evidence_refs: [],
                observation: nil, elapsed_ms: nil)
         payload = Master::Execution::Contract::EffectEnvelope.build(
           effect:, turn:, effect_id:, operation:, parent_effect_id:, checkpoint_id:,
           run_id: run_id || @run_id, attempt_id: attempt_id || @attempt_id,
           mission_id: mission_id || @mission_id, scope:,
-          idempotency_key:, deadline_at:
+          idempotency_key:, deadline_at:, reversibility:
         ).to_h
         references = safe_evidence_refs(evidence_refs)
         payload[:evidence_refs] = references unless references.empty?

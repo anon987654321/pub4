@@ -32,10 +32,33 @@ class TestEffectObserver < Minitest::Test
     assert_equal :write, before.last[:verb]
     assert_equal :write, before.last[:capability]
     assert_equal :perform, before.last[:operation]
+    assert_equal :unknown, before.last[:reversibility]
     assert_equal "ok", after.last[:status]
     assert_equal 4, after.last[:elapsed_ms]
     refute_includes bus.events.inspect, "private file contents"
     refute_includes bus.events.inspect, "private-name.txt"
+  end
+
+  def test_reversibility_classification_is_carried_to_both_lifecycle_events
+    bus = RecordingBus.new
+    observer = Master::Trace::EffectObserver.new(bus:)
+    effect = Master::Core::Effect.write("release.txt", "release")
+
+    observer.call(
+      stage: :before, turn: 3, effect:, effect_id: "release-1",
+      reversibility: :irreversible, idempotency_key: "release-2026-10-26"
+    )
+    observer.call(
+      stage: :after, turn: 3, effect:, effect_id: "release-1",
+      reversibility: :irreversible, idempotency_key: "release-2026-10-26",
+      observation: Master::Core::Observation.ok("submitted")
+    )
+
+    before, after = bus.events.map(&:last)
+    assert_equal :irreversible, before[:reversibility]
+    assert_equal :irreversible, after[:reversibility]
+    assert_equal "release-2026-10-26", before[:idempotency_key]
+    assert_equal before[:effect_id], after[:effect_id]
   end
 
   def test_rollback_event_links_to_the_original_effect_and_checkpoint
