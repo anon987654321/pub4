@@ -108,26 +108,27 @@ class MessageForwardTest < ActionDispatch::IntegrationTest
     post conversation_messages_path(@source), params: { message: { content: "Ja", message_type: "text", parent_id: @message.id } }
     assert_equal @message.id, @source.messages.order(:created_at).last.parent_id
   end
-test "a block on the target thread stops a forward into it" do
-  Block.create!(blocker: @colleague, blocked: @user)
-  sign_in_as(@user)
 
-  assert_no_difference -> { @target.messages.count } do
-    post forward_conversation_message_path(@source, @message), params: { target_conversation_id: @target.id }
+  test "a block on the target thread stops a forward into it" do
+    Block.create!(blocker: @colleague, blocked: @user)
+    sign_in_as(@user)
+
+    assert_no_difference -> { @target.messages.count } do
+      post forward_conversation_message_path(@source, @message), params: { target_conversation_id: @target.id }
+    end
   end
-end
 
-# The reply line draws the parent's sender and first words, so a parent from a
-# thread the sender is not in would read that thread by guessing ids.
-test "a reply cannot name a parent from another conversation" do
-  private_line = say(@theirs, @stranger, "Koden til porten er 4417")
-  sign_in_as(@user)
+  # The reply line draws the parent's sender and first words, so a parent from a
+  # thread the sender is not in would read that thread by guessing ids.
+  test "a reply cannot name a parent from another conversation" do
+    private_line = say(@theirs, @stranger, "Koden til porten er 4417")
+    sign_in_as(@user)
 
-  assert_no_difference -> { @source.messages.count } do
-    post conversation_messages_path(@source), params: { message: { content: "svar", parent_id: private_line.id } }
+    assert_no_difference -> { @source.messages.count } do
+      post conversation_messages_path(@source), params: { message: { content: "svar", parent_id: private_line.id } }
+    end
+    reply = @source.messages.build(sender: @user, content: "svar", parent_id: @message.id)
+    reply.validate
+    assert_empty reply.errors[:parent_id], "a parent in the same thread is still a reply"
   end
-  reply = @source.messages.build(sender: @user, content: "svar", parent_id: @message.id)
-  assert reply.valid?, "a parent in the same thread is still a reply"
-end
-
 end

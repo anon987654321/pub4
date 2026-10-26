@@ -19,15 +19,15 @@ class CommentTest < ActiveSupport::TestCase
     _post, comment = build_post_with_comment
     assert_nothing_raised { Comment.where(id: comment.id).controversial.to_a }
   end
-test "a reply names a parent on its own thread, never another post's" do
-  post, comment = build_post_with_comment
-  other_post, other_comment = build_post_with_comment
 
-  assert Comment.new(user_id: comment.user_id, commentable: post, content: "svar", parent_id: comment.id).valid?
-  stray = Comment.new(user_id: comment.user_id, commentable: post, content: "svar", parent_id: other_comment.id)
-  refute stray.valid?
-  assert_includes stray.errors[:parent_id], I18n.t("errors.messages.invalid")
-  refute_nil other_post
-end
+  test "a reply names a parent on its own thread, never another post's" do
+    post, comment = build_post_with_comment
+    other_post, other_comment = build_post_with_comment
 
+    assert Comment.new(user_id: comment.user_id, commentable: post, content: "svar", parent_id: comment.id).valid?
+    stray = Comment.new(user_id: comment.user_id, commentable: post, content: "svar", parent_id: other_comment.id)
+    refute stray.valid?
+    assert_includes stray.errors[:parent_id], I18n.t("errors.messages.invalid")
+    refute_nil other_post
+  end
 end

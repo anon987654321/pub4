@@ -6,11 +6,14 @@
 # and recreated between test runs. Don't rely on the data there!
 
 Rails.application.configure do
-  # Ractor shareability failures must surface during tests, not as intermittent
-  # production-only errors. Keep this setting in the shared environment so all
-  # three applications enforce the same contract.
+  # Ractor shareability checking is off. The pinned edge Rails cannot pass it
+  # itself: :raise stopped every suite at boot on an unshareable proc inside
+  # has_secure_password (secure_password.rb reassigns `algorithm`), and :warn
+  # froze ConversationParticipant's uniqueness validator, which Rails then
+  # mutates (FrozenError). No application code can change either. Turn it back on
+  # with a Rails ref that passes its own check.
   if defined?(ActiveSupport::Ractors) && ActiveSupport::Ractors.respond_to?(:unshareable_proc_action=)
-    ActiveSupport::Ractors.unshareable_proc_action = :raise
+    ActiveSupport::Ractors.unshareable_proc_action = nil
   end
 
   # Settings specified here will take precedence over those in config/application.rb.

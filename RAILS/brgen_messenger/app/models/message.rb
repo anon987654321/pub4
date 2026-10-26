@@ -190,9 +190,10 @@ class Message < ApplicationRecord
 
   private
 
-  # By key, not through the association: a lazy load raises under strict loading.
+  # By key, not through the association: a lazy load raises under strict loading, and
+  # the error sits on parent_id because full_messages reads the attribute's value.
   def parent_in_this_conversation
-    errors.add(:parent, :invalid) unless Message.where(id: parent_id, conversation_id:).exists?
+    errors.add(:parent_id, :invalid) unless Message.where(id: parent_id, conversation_id:).exists?
   end
 
   def type_from_attachment
