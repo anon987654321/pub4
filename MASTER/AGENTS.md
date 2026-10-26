@@ -521,6 +521,13 @@ in `OPENBSD/CLAUDE.md`.
   profiles, a cost-aware self-improvement loop and live judge panels add
   nothing to it. Paid tiers, prompt collection and advisory counts sold as a
   safety score fall with them.
+- **No lifting the constitution's protection to ease a repair.** `data/soul.yml` and
+  `data/laws.yml` stay `paths.immutable` to every effect, `/fix` included. The
+  2026-10-26 backlog asked to replace path protection with invariant admission so core
+  repairs could land; that is right for ordinary sacred paths and wrong for these two,
+  whose changes go through `/soul propose` and an operator commit. Parallel `/fix`
+  candidate worktrees, asked for the same day, fall under the refusal of parallel
+  change streams above.
 - **No second record beside memory.** A belief store of verified, inferred and
   contradicted facts, an execution-context object and a durable notification
   queue each copy what memory, fiber locals and `StandingOrders` already hold.

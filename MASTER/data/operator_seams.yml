@@ -289,3 +289,46 @@ seams:
     evidence: >-
       The nine remote master/fix-pid* aliases deleted from an authorized checkout after git fetch --prune and
       git worktree list show them orphaned. Local worktrees were removed on 2026-10-20.
+  - id: assistant_calendar_or_mail_live
+    tree: MASTER
+    needs: credential
+    evidence: >-
+      One read-only calendar or mail workflow, not Google Calendar, run end to end against the operator's own
+      account with a subject-bound grant, current data and its failure states shown.
+  - id: messaging_channel_choice
+    tree: MASTER
+    needs: rights
+    evidence: >-
+      The operator names one external messaging channel (not Telegram) and the account it speaks as; the
+      channel is then built through the shared session with identity isolation and delivery receipts.
+  - id: advice_quality_human_review
+    tree: MASTER
+    needs: ears
+    evidence: >-
+      The operator's own reading of MASTER's answers to realistic personal-assistance scenarios, recorded
+      apart from the model-backed evaluation in TODO.md.
+  - id: oauth_callbacks_live
+    tree: RAILS
+    needs: credential
+    evidence: >-
+      Real Google, Facebook, Vipps and BankID callbacks in brgen and amber, including BankID without email
+      and legacy placeholder recovery, with the provider responses recorded.
+  - id: amber_outfits_on_the_real_catalogue
+    tree: RAILS
+    needs: material
+    evidence: >-
+      Outfit combination and garment scoring over amber's real catalogue and media: diversity, garment
+      identity and colour fidelity, provider limits, and any purchase or affiliate path.
+  # OPENBSD
+  - id: openbsd_native_suite
+    tree: OPENBSD
+    needs: console
+    evidence: >-
+      OPENBSD's tests run on OpenBSD itself for ksh and zsh, package signatures, service paths, permissions,
+      pledge and privilege separation, with the host and release named.
+  - id: bsdports_lifecycle_on_openbsd
+    tree: RAILS
+    needs: console
+    evidence: >-
+      A real bsdports package-index refresh and port install on a supported OpenBSD host: signed manifests,
+      pinned HTTPS, CVE edges, disk-space fallback and rollback.
