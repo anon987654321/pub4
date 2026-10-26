@@ -97,6 +97,9 @@
   --ease-linear: cubic-bezier(0,0,1,1);
   --ease-in-out: cubic-bezier(0.65,0,0.35,1);
   --ease-spring: cubic-bezier(0.32,0.72,0,1);
+  /* Display weights are optical values, not members of the body-weight ladder. */
+  --face-weight-brand: 640;
+  --face-weight-display: 560;
   /* z-scale: canvas(base) < chrome(persistent HUD) < ui < overlay(panels) < modal(blocking) < toast(errors) < skip(a11y skip-link) */
   --z-canvas: 1;
   --z-chrome: 10;
@@ -1777,7 +1780,7 @@ canvas#face { background: var(--face-bg); }
   color: rgb(226 226 226 / 88%);
   font-family: var(--font-brand);
   font-size: clamp(0.95rem, 1.5vw, 1.12rem);
-  font-weight: 640;
+  font-weight: var(--face-weight-brand);
   letter-spacing: -0.045em;
   text-transform: none;
   opacity: 0.92;
@@ -1800,7 +1803,7 @@ body[data-mode="listening"] .mic-indicator { color: #C7C7C7; }
   max-inline-size: 14ch;
   font-family: var(--font-brand);
   font-size: clamp(2.2rem, 6.8vw, 5.6rem);
-  font-weight: 560;
+  font-weight: var(--face-weight-display);
   line-height: 0.98;
   letter-spacing: -0.065em;
   text-wrap: balance;
