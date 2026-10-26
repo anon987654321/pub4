@@ -112,6 +112,8 @@ class CoreBridgeTest < Minitest::Test
       assert_equal before["effect_id"], after["effect_id"]
       assert_equal before["run_id"], after["run_id"]
       assert_equal before["mission_id"], after["mission_id"]
+      assert_equal before["checkpoint_id"], after["checkpoint_id"]
+      assert before["checkpoint_id"], "the reversible write should link its checkpoint"
       assert_equal result[:mission]["id"], before["mission_id"]
       assert_match(/\A[0-9a-f]{64}\z/, before["scope_digest"])
       assert_equal before["scope_digest"], after["scope_digest"]
