@@ -114,8 +114,20 @@ while ordinary best-effort telemetry retains its existing failure-swallowing beh
 The legacy core:turn stream is also privacy-safe now: action subjects are categorical,
 the detail is reduced to completed/failed, and read/exec output is represented by
 byte and line counts. Full observations remain only in the local operator transcript.
-This is the first slice of the external-action event contract, not yet a shared event
-adapter for every tool and /fix path.
+This contract now extends to repository transactions and Git delivery: Transaction
+records required before/after events around begin, checkpoint, finalize, rollback,
+release and delivery-state changes. The committer similarly audits the actual Git
+commit and push, and a failed transaction after-record leaves a durable
+`.master/fix_transactions/.pending-<id>` marker that makes recovery stop for manual
+review rather than silently roll back an ambiguous mutation. The persisted shared event
+stream and private tool audit retain categorical labels, identifiers and counts instead
+of raw prompts, paths, arguments, findings or error text. Live policy subscribers still
+receive their full in-memory payload, which is not written into those durable projections.
+
+This does not yet unify all of /fix: RunJournal still has a separate best-effort event
+path, and broader provider, background-job and deployment mutations need the same
+contract. The current slice preserves the existing FixLoop/RunJournal/Transaction APIs;
+it is not a replacement runner or ledger.
 
 A requested repair starts by inventorying its eligible corpus, refreshing the
 static reference graph and refusing to proceed if an eligible source could not
