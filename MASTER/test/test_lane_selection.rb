@@ -129,6 +129,15 @@ class TestLaneSelection < Minitest::Test
     Selection.watch_free_class!(false)
   end
 
+  def test_a_lane_probe_on_a_free_lane_is_not_a_warning
+    Selection.watch_free_class!
+
+    assert_nil Selection.free_class_warning(NEMOTRON, :lane_probe, alive: ALL)
+    refute_nil Selection.free_class_warning(NEMOTRON, :structural_review, alive: ALL), "the probe used up no warning"
+  ensure
+    Selection.watch_free_class!(false)
+  end
+
   def test_when_every_lane_is_dead_the_list_comes_back_for_the_typed_offline
     lanes = [AGY, OPUS]
     Quota.note(AGY, AGY_REPLY)

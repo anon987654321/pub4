@@ -309,7 +309,8 @@ module Master
 
       def free_class_warning(model, operation, cfg: config, alive: method(:alive?))
         id = model.to_s
-        return unless @watching && FREE_CLASS_KINDS.include?(kind(id))
+        # A lane probe asks every lane on purpose; that is not work on a free lane.
+        return unless @watching && FREE_CLASS_KINDS.include?(kind(id)) && operation != :lane_probe
         return if (@warned ||= {})[id]
 
         better = live_lanes(cfg:, alive:).find { |candidate| !FREE_CLASS_KINDS.include?(kind(candidate)) }

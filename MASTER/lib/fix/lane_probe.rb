@@ -45,6 +45,7 @@ module Master
       def probe(model, ask:, budget:, clock:)
         lane = Master::Io::LaneQuota.lane_of(model)
         started = clock.call
+        Fiber[:master_operation] = :lane_probe
         reply = Timeout.timeout(budget) { ask.call(model) }
         seconds = clock.call - started
         return Row.new(lane:, model:, status: :empty, seconds:, detail: "empty reply") if reply.to_s.strip.empty?
@@ -55,6 +56,8 @@ module Master
         Row.new(lane:, model:, status: :slow, seconds: clock.call - started, detail: "no answer within #{budget}s")
       rescue StandardError => e
         Row.new(lane:, model:, status: :dead, seconds: clock.call - started, detail: "#{e.class}: #{e.message}"[0, 120])
+      ensure
+        Fiber[:master_operation] = nil
       end
 
       def say(row)
