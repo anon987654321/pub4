@@ -12,6 +12,7 @@ require_relative "pass_runner/evidence_stage"
 require_relative "pass_runner/stream_stage"
 require_relative "structural_stage"
 require_relative "../scan_phase"
+require_relative "../four_stream_assessment"
 require_relative "../scan_skip_guard"
 require_relative "../transaction"
 require_relative "../resource_budget"
@@ -48,6 +49,11 @@ module Master
           @resource_budget = ResourceBudget.new(root:)
           @agent = agent
           @scanner = scanner
+          @assessment_mutex = Mutex.new
+          @assessment_ledger = nil
+          @assessment_observation = nil
+          @assessment_plan = nil
+          @assessment_last_pass = 0
           @scan_phase = ScanPhase.new(scanner:, root:, bus:)
           @skip_guard = ScanSkipGuard.new
           @preflight = preflight || Preflight.new(root:, bus:)
@@ -154,9 +160,91 @@ module Master
           self
         end
 
-        # The real Law x stream x surface ledger is not wired to production yet.
-        # Keep the absence explicit so terminalization cannot mistake the contract for evidence.
-        def assessment_matrix_status = :not_measured
+        # Begin the real runtime matrix with the scanner's own Law population.
+        # Missing scanner Law metadata is explicit; it never fabricates a measured matrix.
+        def begin_assessment_run(files:, plan:)
+          return self unless @scanner.respond_to?(:laws)
+
+          rows = Array(@scanner.laws)
+          info = rows.each_with_object({}) do |law, out|
+            id = law.respond_to?(:id) ? law.id.to_s.strip : ""
+            next if id.empty?
+
+            entry = (out[id] ||= { laws: [], modes: [] })
+            entry[:laws] << law
+            entry[:modes] << (law.respond_to?(:mode) ? law.mode.to_sym : :mechanical)
+          end
+          return self if info.empty?
+
+          @assessment_law_info = info.transform_values do |entry|
+            modes = entry[:modes].uniq
+            entry.merge(semantic: modes == [:semantic], conflicting_mode: modes.size > 1)
+          end
+          @assessment_ledger = FourStreamAssessment.new(
+            laws: @assessment_law_info.keys,
+            clean_passes: [Integer(@clean_runs_required), 2].max,
+            surfaces: FourStreamAssessment::SURFACES,
+          )
+          @assessment_plan = plan
+          @assessment_scope = Array(files).map { |path| File.expand_path(path) }.uniq.sort.freeze
+          @assessment_last_pass = 0
+          @bus&.publish(
+            "fix_loop:assessment_matrix_started",
+            laws: @assessment_law_info.size,
+            surfaces: FourStreamAssessment::SURFACES.size,
+            expected_cells: @assessment_law_info.size * FourStreamAssessment::STREAMS.size *
+              FourStreamAssessment::SURFACES.size,
+            plan_digest: plan.digest,
+            status: "incomplete_until_every_applicable_cell_is_proved",
+          )
+          self
+        rescue StandardError => e
+          stage_failures[:assessment_matrix] << "#{e.class}: #{e.message.to_s[0, 180]}"
+          @bus&.publish("fix_loop:assessment_matrix_init_failed", error_class: e.class.name, message: e.message)
+          @assessment_ledger = nil
+          self
+        end
+
+        def assessment_plan_changed!(plan)
+          return unless @assessment_ledger
+
+          @assessment_mutex.synchronize do
+            @assessment_ledger.invalidate!(
+              iteration: @assessment_last_pass,
+              reason: "fix plan changed to #{plan.digest}",
+            )
+            @assessment_plan = plan
+            @assessment_scope = plan.sources.map { |source| File.expand_path(source.path, plan.root) }.sort.freeze
+          end
+          @bus&.publish(
+            "fix_loop:assessment_generation",
+            generation: @assessment_ledger.generation,
+            iteration: @assessment_last_pass,
+            plan_digest: plan.digest,
+            source_digest: plan.source_digest,
+          )
+          self
+        rescue StandardError => e
+          stage_failures[:assessment_matrix] << "generation invalidation: #{e.class}: #{e.message.to_s[0, 150]}"
+          self
+        end
+
+        def assessment_matrix_status
+          return :not_measured unless @assessment_ledger
+
+          @assessment_ledger.clean? ? :complete : :incomplete
+        rescue StandardError => e
+          stage_failures[:assessment_matrix] << "status read: #{e.class}: #{e.message.to_s[0, 150]}"
+          :incomplete
+        end
+
+        def assessment_matrix_summary
+          return { status: "not_measured", reason: "no scanner-backed Law population was available" } unless @assessment_ledger
+
+          @assessment_ledger.summary.merge(status: assessment_matrix_status.to_s)
+        rescue StandardError => e
+          { status: "incomplete", reason: "matrix summary failed: #{e.class}: #{e.message.to_s[0, 150]}" }
+        end
         def gaps? = [uninspected, stage_failures, semantic_inconclusive, semantic_pending].any? { |gap| !gap.empty? }
         def gaps = {
           uninspected: uninspected.dup,
@@ -187,15 +275,25 @@ module Master
         end
 
         def violations_for(path)
-          return [] unless File.exist?(path)
+          unless File.exist?(path)
+            note_assessment_path(path, :failed, reason: "file absent at observation")
+            return []
+          end
 
           preflight = @preflight.findings([path])
-          return preflight.map { |finding| Violation.from_finding(finding, file: path.delete_prefix("#{@root}/")) } if preflight.any?
+          if preflight.any?
+            note_assessment_path(path, :preflight, reason: "preflight short-circuited scanner observation")
+            return preflight.map { |finding| Violation.from_finding(finding, file: path.delete_prefix("#{@root}/")) }
+          end
 
           result = @scan_phase.call(path)
-          return skip_unreadable(path, result) unless result.ok?
+          unless result.ok?
+            note_assessment_path(path, :failed, reason: result.message)
+            return skip_unreadable(path, result)
+          end
 
           findings = result.value!.map { |finding| Master::Review::Scan::LawHealth.annotate(finding) }
+          note_assessment_path(path, :scanned, findings:)
           @bus&.publish("fix_loop:scan_progress", file: path.delete_prefix("#{ @root }/"), count: findings.size) if findings.any?
           findings.select { |finding| Severity.at_least?(finding.fetch(:severity, :warning), :warning) }
                   .map { |finding| Violation.from_finding(finding, file: path.delete_prefix("#{@root}/")) }
@@ -242,7 +340,9 @@ module Master
           @human_decision_required = false
           @coverage_reporter&.call(target, pass)
           start_pass_transaction(files:, target:, pass:, transaction_id:, run_id:)
+          begin_assessment_pass(pass, files)
           found, streamed = observe_pass(files, target, pass, deadline)
+          finalize_assessment_pass(pass)
 
           visual, opportunities, found = guarded(:evidence, pass, [nil, nil, found]) do
             merge_evidence_findings(target:, files:, pass:, found:)
@@ -293,6 +393,174 @@ module Master
         end
 
         private
+
+        def begin_assessment_pass(pass, files)
+          return unless @assessment_ledger
+
+          paths = Array(files).map { |path| File.expand_path(path) }.uniq.sort
+          signatures = paths.to_h { |path| [path, assessment_signature(path)] }
+          @assessment_mutex.synchronize do
+            @assessment_observation = {
+              thread_id: Thread.current.object_id,
+              pass: Integer(pass),
+              files: paths,
+              signatures:,
+              scanned: Set.new,
+              refused: {},
+              findings: Hash.new { |hash, law| hash[law] = [] },
+            }
+          end
+        end
+
+        def assessment_signature(path)
+          return unless File.file?(path) && !File.symlink?(path)
+
+          stat = File.stat(path)
+          [stat.dev, stat.ino, stat.size, stat.mtime.to_r, stat.ctime.to_r]
+        rescue StandardError
+          nil
+        end
+
+        def note_assessment_path(path, state, reason: nil, findings: [])
+          absolute = File.expand_path(path)
+          @assessment_mutex.synchronize do
+            observation = @assessment_observation
+            return unless observation && observation[:thread_id] == Thread.current.object_id
+
+            case state
+            when :scanned
+              observation[:scanned] << absolute
+              Array(findings).each do |finding|
+                row = finding.respond_to?(:to_h) ? finding.to_h.transform_keys(&:to_sym) : {}
+                id = (row[:law] || row[:law_id] || row[:rule]).to_s.strip
+                next if id.empty?
+
+                observation[:findings][id] << {
+                  "file" => (row[:file] || absolute).to_s,
+                  "line" => row[:line].to_i,
+                  "message" => row[:message].to_s[0, 180],
+                }
+              end
+            when :preflight, :failed
+              observation[:refused][absolute] = reason.to_s[0, 200]
+            end
+          end
+        rescue StandardError => e
+          @bus&.publish("fix_loop:assessment_path_error", file: path.to_s, error: e.message)
+        end
+
+        def finalize_assessment_pass(pass)
+          observation = @assessment_mutex.synchronize do
+            current = @assessment_observation
+            @assessment_observation = nil
+            current
+          end
+          return unless observation && @assessment_ledger
+
+          signatures_stable = observation[:files].all? do |path|
+            observation[:signatures][path] == assessment_signature(path)
+          end
+          semantic_gaps = @scanner.respond_to?(:semantic_gaps) ? @scanner.semantic_gaps : {}
+          pending = semantic_pending.keys.map { |path| File.expand_path(path, @root) }.to_set
+          inconclusive = semantic_gaps.keys.map { |path| File.expand_path(path, @root) }.to_set
+          plan_digest = @assessment_plan&.source_digest.to_s
+          evidence = [
+            "adapter=Master::Fix::Scanner#scan",
+            "pass=#{pass}",
+            "source_digest=#{plan_digest}",
+            "eligible_files=#{observation[:files].size}",
+          ].freeze
+
+          @assessment_law_info.each do |law_id, info|
+            applicable = observation[:files].select do |path|
+              info[:laws].any? do |law|
+                languages = law.respond_to?(:languages) ? law.languages : nil
+                !law.respond_to?(:applies_to?) || law.applies_to?(path, languages)
+              end
+            end
+            found = Array(observation[:findings][law_id])
+            lexical = if info[:conflicting_mode]
+                        assessment_result(:inconclusive, reason: "duplicate Law id has conflicting detector modes")
+                      elsif info[:semantic]
+                        assessment_result(:not_applicable, reason: "Law uses the semantic detector stream")
+                      else
+                        assessment_result_for_scope(
+                          applicable:, found:, observation:, signatures_stable:, semantic: false,
+                          pending:, inconclusive:, evidence:
+                        )
+                      end
+            semantic = if info[:conflicting_mode]
+                         assessment_result(:inconclusive, reason: "duplicate Law id has conflicting detector modes")
+                       elsif !info[:semantic]
+                         assessment_result(:not_applicable, reason: "Law uses deterministic/structural detectors")
+                       else
+                         assessment_result_for_scope(
+                           applicable:, found:, observation:, signatures_stable:, semantic: true,
+                           pending:, inconclusive:, evidence:
+                         )
+                       end
+
+            record_assessment(law_id, :lexical_violations, pass, lexical)
+            record_assessment(law_id, :semantic_violations, pass, semantic)
+            record_assessment(
+              law_id, :lexical_opportunities, pass,
+              assessment_result(:inconclusive, reason: "no per-Law lexical opportunity assessor is registered")
+            )
+            record_assessment(
+              law_id, :semantic_opportunities, pass,
+              assessment_result(:inconclusive, reason: "opportunity observations are not attributed per Law")
+            )
+          end
+          @assessment_last_pass = Integer(pass)
+          @bus&.publish("fix_loop:assessment_matrix_pass", **@assessment_ledger.summary.merge(pass:, plan_source_digest: plan_digest))
+        rescue StandardError => e
+          stage_failures[:assessment_matrix] << "pass #{pass}: #{e.class}: #{e.message.to_s[0, 180]}"
+          @bus&.publish(
+            "fix_loop:assessment_matrix_pass_failed",
+            pass:, error_class: e.class.name, message: e.message
+          )
+        end
+
+        def assessment_result(status, reason: nil, evidence: [], findings: [])
+          { status:, reason:, evidence: Array(evidence), findings: Array(findings) }
+        end
+
+        def assessment_result_for_scope(applicable:, found:, observation:, signatures_stable:,
+                                        semantic:, pending:, inconclusive:, evidence:)
+          return assessment_result(:not_applicable, reason: "no eligible source file matches this Law scope") if applicable.empty?
+          return assessment_result(:violation_found, evidence:, findings: found) if found.any?
+          return assessment_result(:inconclusive, reason: "source bytes changed during the scan pass", evidence:) unless signatures_stable
+
+          unread = applicable.reject { |path| observation[:scanned].include?(path) }
+          return assessment_result(
+            :inconclusive,
+            reason: "scanner did not examine every applicable file: #{unread.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}",
+            evidence:
+          ) if unread.any?
+
+          if semantic
+            return assessment_result(:inconclusive, reason: "semantic coverage is sampled or budgeted", evidence:) unless @scan_phase.semantic_full?
+
+            pending_paths = applicable.select { |path| pending.include?(path) }
+            return assessment_result(:inconclusive, reason: "semantic reads pending for #{pending_paths.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}", evidence:) if pending_paths.any?
+
+            inconclusive_paths = applicable.select { |path| inconclusive.include?(path) }
+            return assessment_result(:inconclusive, reason: "semantic read inconclusive for #{inconclusive_paths.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}", evidence:) if inconclusive_paths.any?
+          end
+
+          refused = applicable.select { |path| observation[:refused].key?(path) }
+          return assessment_result(:inconclusive, reason: "scan short-circuited for #{refused.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}", evidence:) if refused.any?
+
+          assessment_result(:assessed_clean, evidence:)
+        end
+
+        def record_assessment(law_id, stream, pass, result)
+          @assessment_ledger.record(
+            law: law_id, stream:, surface: :whole_file, status: result.fetch(:status),
+            iteration: Integer(pass), generation: @assessment_ledger.generation,
+            reason: result[:reason], evidence: result[:evidence], findings: result[:findings]
+          )
+        end
 
         # A finding that needs a person was never applied, so it does not taint the pass's other
         # repairs: they are delivered, and the finding is reported for a person. Ending the run here
