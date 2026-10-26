@@ -201,21 +201,7 @@ module Master
         run_id = journal["id"]
         # Capture before any repair, against the journal's authoritative deadline.
         current_phase = :plan
-        @fix_plan = FixPlan.capture(
-          root: @root, target:, files:, laws: @laws,
-          excluded: @file_collector.skip_reasons,
-          adapters: @pass_runner.assessment_adapters(target:),
-          max_passes:, budget_seconds:, deadline_at: journal["deadline_at"]
-        )
-        @bus&.publish(
-          "fix_loop:plan",
-          **@fix_plan.to_h.slice(
-            "digest", "identity_digest", "source_digest", "scope_digest", "law_digest",
-            "law_source_digest", "authority_digest", "toolchain_digest", "adapter_digest",
-            "exclusion_digest", "eligible_files", "excluded", "adapters", "max_passes",
-            "budget_seconds", "deadline_at"
-          ).transform_keys(&:to_sym)
-        )
+        capture_fix_plan!(target:, files:, max_passes:, budget_seconds:, journal:)
         bind_fix_plan!(journal, run_id)
         mission = mission_for(target:, requested:)
         budget_error = exhausted_budget(journal:)
@@ -239,6 +225,7 @@ module Master
 
           journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
           run_id = journal["id"]
+          capture_fix_plan!(target:, files:, max_passes:, budget_seconds:, journal:)
           bind_fix_plan!(journal, run_id)
           mission = mission_for(target:, requested:)
           budget_error = exhausted_budget(journal:)
