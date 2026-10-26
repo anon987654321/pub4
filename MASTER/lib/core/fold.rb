@@ -116,9 +116,10 @@ private
       contract = admitted.reversibility
       rollbackable = contract.restorable?
       checkpoint = @world.checkpoint if rollbackable
-      observation = perform_effect(turn, admitted)
+      effect_id = SecureRandom.uuid
+      observation = perform_effect(turn, admitted, effect_id:)
       if observation.err?
-        observation = undo(checkpoint, admitted, observation) if rollbackable && !@lifecycle_failure_before
+        observation = undo(checkpoint, admitted, observation, turn:, parent_effect_id: effect_id) if rollbackable && !@lifecycle_failure_before
         observation = compensate(observation, contract, turn:) if contract.compensatable? && !@lifecycle_failure
       end
       @memory.record(admitted, observation)
@@ -135,9 +136,31 @@ private
     # What rollback reports rides on the failure, because the agent's next move
     # depends on it: a write that was undone left the tree as it was, and a
     # write that could not be undone did not.
-    def undo(checkpoint, effect, observation)
-      undone = @world.rollback(checkpoint, effect)
+    def undo(checkpoint, effect, observation, turn:, parent_effect_id:)
+      undone = perform_rollback(turn, checkpoint, effect, parent_effect_id:)
       Observation.no("#{observation.message} [#{undone.message}]")
+    end
+
+    # Rollback changes repository state, so it has its own required lifecycle
+    # pair rather than disappearing behind the failed write's after-event.
+    def perform_rollback(turn, checkpoint, effect, parent_effect_id:)
+      effect_id = SecureRandom.uuid
+      notify_effect(stage: :before, turn:, effect:, effect_id:, operation: :rollback,
+                    parent_effect_id:, checkpoint_id: checkpoint[:id])
+      return Observation.no("rollback not executed: lifecycle before-event publication failed") if @lifecycle_failure
+
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      observation = world_rollback(checkpoint, effect)
+      elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
+      notify_effect(stage: :after, turn:, effect:, effect_id:, operation: :rollback,
+                    parent_effect_id:, checkpoint_id: checkpoint[:id], observation:, elapsed_ms:)
+      observation
+    end
+
+    def world_rollback(checkpoint, effect)
+      @world.rollback(checkpoint, effect)
+    rescue StandardError, SecurityError => e
+      Observation.no("#{e.class}: #{e.message}")
     end
 
     # Run only a declared compensation, only after the original command failed,
@@ -177,16 +200,15 @@ private
       Observation.no("#{failure.message} [compensation failed: #{e.class}: #{e.message}]")
     end
 
-    def perform_effect(turn, effect)
+    def perform_effect(turn, effect, effect_id: SecureRandom.uuid)
       @effect_sequence += 1
-      effect_id = SecureRandom.uuid
-      notify_effect(stage: :before, turn:, effect:, effect_id:)
+      notify_effect(stage: :before, turn:, effect:, effect_id:, operation: :perform)
       return Observation.no("effect not executed: lifecycle before-event publication failed") if @lifecycle_failure
 
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       observation = world_observation(effect)
       elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
-      notify_effect(stage: :after, turn:, effect:, effect_id:, observation:, elapsed_ms:)
+      notify_effect(stage: :after, turn:, effect:, effect_id:, operation: :perform, observation:, elapsed_ms:)
       observation
     end
 

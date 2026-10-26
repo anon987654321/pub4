@@ -62,17 +62,25 @@ class FoldObserverTest < Minitest::Test
 
   # A world whose effects fail and whose rollback answers as told.
   class FailingWorld
-    def initialize(rollback) = @rollback = rollback
-    def verbs = Master::Core::VERBS
-    attr_reader :checkpoints
+    def initialize(rollback)
+      @rollback = rollback
+      @rollback_calls = 0
+    end
 
-  def checkpoint
-    @checkpoints = @checkpoints.to_i + 1
-    { id: "cp1", patch: "" }
-  end
+    def verbs = Master::Core::VERBS
+    attr_reader :checkpoints, :rollback_calls
+
+    def checkpoint
+      @checkpoints = @checkpoints.to_i + 1
+      { id: "cp1", patch: "" }
+    end
 
     def perform(_effect) = Master::Core::Observation.no("boom")
-    def rollback(_checkpoint, _effect) = @rollback
+
+    def rollback(_checkpoint, _effect)
+      @rollback_calls += 1
+      @rollback
+    end
   end
 
   def failed_observation(effect, rollback)
@@ -181,6 +189,44 @@ class FoldObserverTest < Minitest::Test
       assert_equal :trace_failed, done.reason
       assert_equal "payload", File.read(path), "the completed side effect must not be misreported as failed and retried"
       assert_match(/lifecycle after event publication failed/, done.summary)
+    end
+  end
+
+  def test_rollback_is_its_own_lifecycle_pair_linked_to_the_failed_effect
+    Dir.mktmpdir do |root|
+      seen = []
+      observer = lambda do |stage:, effect:, effect_id:, operation:, parent_effect_id: nil, checkpoint_id: nil, **|
+        seen << { stage:, verb: effect.verb, effect_id:, operation:, parent_effect_id:, checkpoint_id: }
+      end
+      world = FailingWorld.new(Master::Core::Observation.ok("rolled back a.txt cp1"))
+      model = ScriptedModel.new(Master::Core::Effect.write("a.txt", "x"), Master::Core::Effect.done("ok"))
+
+      done = build(model, root:, effect_observer: observer, world:).run("write safely")
+
+      assert_equal :complete, done.reason
+      assert_equal [[:before, :perform], [:after, :perform], [:before, :rollback], [:after, :rollback]],
+                   seen.map { |event| [event[:stage], event[:operation]] }
+      perform_id = seen[0][:effect_id]
+      rollback_id = seen[2][:effect_id]
+      assert_equal perform_id, seen[2][:parent_effect_id]
+      assert_equal "cp1", seen[2][:checkpoint_id]
+      refute_equal perform_id, rollback_id
+      assert_equal 1, world.rollback_calls
+    end
+  end
+
+  def test_rollback_before_event_failure_does_not_run_the_rollback
+    Dir.mktmpdir do |root|
+      world = FailingWorld.new(Master::Core::Observation.ok("rolled back"))
+      observer = lambda do |stage:, operation:, **|
+        raise "ledger unavailable" if stage == :before && operation == :rollback
+      end
+      model = ScriptedModel.new(Master::Core::Effect.write("a.txt", "x"), Master::Core::Effect.done("ok"))
+
+      done = build(model, root:, effect_observer: observer, world:).run("write safely")
+
+      assert_equal :trace_failed, done.reason
+      assert_equal 0, world.rollback_calls
     end
   end
 

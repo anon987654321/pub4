@@ -58,6 +58,20 @@ class CoreBridgeTest < Minitest::Test
     end
   end
 
+  def test_trace_failed_mission_is_terminal_not_auto_deferred
+    mission = Object.new
+    mission.define_singleton_method(:fail!) { |error| @failure = error }
+    mission.define_singleton_method(:defer!) { |**| flunk("ambiguous side effects must not auto-continue") }
+    mission.define_singleton_method(:block!) { |**| flunk("trace failure is a terminal execution error") }
+
+    done = Master::Core::Fold::Done.new(
+      reason: :trace_failed, turns: 1, summary: "after-event persistence failed"
+    )
+    Master::CLI::CoreBridge.settle_mission(mission, done)
+
+    assert_equal "after-event persistence failed", mission.instance_variable_get(:@failure)
+  end
+
   def test_core_effect_lifecycle_events_are_paired_and_redacted
     Dir.mktmpdir do |root|
       bus = FakeBus.new

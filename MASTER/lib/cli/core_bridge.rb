@@ -15,6 +15,7 @@ module Master
       def run(goal, root:, bus: nil, model: nil, model_id: nil, max_turns: 40, on_turn: nil, memory: nil,
               container: nil, risk: :low, mode: nil, allowed_tools: nil)
         workspace_root = workspace_root_for(root)
+        lifecycle_bus = lifecycle_event_bus(bus:, requested_root: root, workspace_root:)
         transcript = []
         observer = build_turn_observer(transcript, root: workspace_root, bus:, on_turn:)
 
@@ -50,7 +51,7 @@ module Master
           )
           world = build_world(root: workspace_root, container:, capabilities:, network: network_client(container))
           mission.transition!(:execute)
-          effect_observer = build_effect_observer(bus:) if bus
+          effect_observer = build_effect_observer(bus: lifecycle_bus)
           done = build_fold(root: workspace_root, model:, memory:, world:, max_turns:, observer:, effect_observer:, capabilities:).run(goal)
           mission.transition!(:verify, summary: continuation_summary(done))
           settle_mission(mission, done)
@@ -168,6 +169,10 @@ module Master
           mission.finish!(state: "completed", summary: done.summary)
         elsif %i[needs_user blocked].include?(done.reason)
           mission.block!(reason: done.summary.to_s)
+        elsif done.reason == :trace_failed
+          # The effect may already have happened, but its after-record is missing.
+          # Never auto-continue an ambiguous side effect and risk repeating it.
+          mission.fail!(done.summary.to_s)
         else
           mission.defer!(reason: "attempt #{done.reason}: #{continuation_summary(done)}")
         end
@@ -296,11 +301,25 @@ module Master
         end
       end
 
+      # Always audit even when no host supplied a bus. In that case persist to the
+      # relevant runtime root without subscribers; never turn missing UI wiring
+      # into an execution-audit bypass.
+      def lifecycle_event_bus(bus:, requested_root:, workspace_root:)
+        return bus if bus
+
+        telemetry_root = File.expand_path(requested_root) == Master::ROOT ? Master::ROOT : workspace_root
+        event_log = Master::Trace::Log::Event.new(root: telemetry_root)
+        Master::Trace::EventBus.new(event_log:)
+      end
+
       # The lifecycle stream intentionally excludes effect arguments: argv, URLs,
       # prompts and write content may contain secrets or private user data.
       def build_effect_observer(bus:)
-        lambda do |stage:, turn:, effect:, effect_id:, observation: nil, elapsed_ms: nil|
-          payload = { effect_id:, turn:, verb: effect.verb, capability: effect.capability }
+        lambda do |stage:, turn:, effect:, effect_id:, operation: :perform, parent_effect_id: nil,
+                   checkpoint_id: nil, observation: nil, elapsed_ms: nil|
+          payload = { effect_id:, turn:, verb: effect.verb, capability: effect.capability, operation: }
+          payload[:parent_effect_id] = parent_effect_id if parent_effect_id
+          payload[:checkpoint_id] = checkpoint_id if checkpoint_id
           if stage == :before
             bus.publish_required("core:effect:before", payload)
           elsif stage == :after

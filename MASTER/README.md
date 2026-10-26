@@ -88,10 +88,13 @@ coordinator, one scanner/finding contract, one transaction path and one operatio
 check runner, preserving existing rollback and recovery behavior. This is a
 migration target, not a claim that consolidation is complete.
 
-When CoreBridge is given an event bus, it attaches a lifecycle observer to the Fold:
-core:effect:before is durably published before each World effect and core:effect:after
-records the observed outcome and elapsed time. Callers without an event bus retain
-the existing observer-free behavior. Event payloads carry an effect ID,
+CoreBridge attaches a lifecycle observer to the Fold even when the host does not
+supply a bus; that case uses the canonical event log at the runtime root with no
+subscribers. core:effect:before is durably published before each World effect and
+core:effect:after records the observed outcome and elapsed time. Rollback is a
+separate audited operation linked to the failed effect and its checkpoint. If the
+required after-event cannot be persisted, the mission fails terminally instead of
+being automatically resumed against an ambiguous side effect. Event payloads carry an effect ID,
 turn, verb and capability, not raw arguments that could contain secrets. Failure to
 persist the before-event prevents the effect from running; failure to persist the
 after-event returns trace_failed rather than claiming the task completed. This
