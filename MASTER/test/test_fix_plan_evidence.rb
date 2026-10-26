@@ -69,8 +69,21 @@ class TestFixPlanEvidence < Minitest::Test
   def test_plan_and_nested_manifest_are_immutable
     plan = capture
     assert_raises(FrozenError) { plan.sources << plan.sources.first }
+    assert_raises(FrozenError) { plan.source_signatures["sample.rb"] = [] }
     assert_raises(FrozenError) { plan.to_h.fetch("adapters")["whole_file"] = "fake" }
     assert_raises(FrozenError) { plan.excluded.fetch("counts")["too_large"] = 0 }
+  end
+
+  def test_plan_carries_the_file_signatures_used_to_pin_source_hashes
+    plan = capture
+
+    plan.sources.each do |source|
+      path = File.join(@root, source.path)
+      stat = File.stat(path)
+      assert_equal [stat.dev, stat.ino, stat.size, stat.mtime.to_r, stat.ctime.to_r],
+                   plan.source_signatures.fetch(source.path)
+      assert_match(/\A[0-9a-f]{64}\z/, source.sha256)
+    end
   end
 
   def test_source_change_advances_generation_digest_but_preserves_identity
