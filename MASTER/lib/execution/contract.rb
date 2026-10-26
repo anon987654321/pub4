@@ -414,7 +414,8 @@ module Master
           {
             schema_version: 1, effect_id:, turn:, verb:, capability:, operation:,
             parent_effect_id:, checkpoint_id:, run_id:, attempt_id:, mission_id:, scope_digest:,
-            idempotency_key:, deadline_at:, reversibility:
+            idempotency_key:, deadline_at:, reversibility:,
+            replay_requires_reconciliation: replay_requires_reconciliation?
           }.compact
         end
 

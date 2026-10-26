@@ -43,6 +43,7 @@ class TestExecutionContract < Minitest::Test
     assert_equal "attempt-1", payload[:attempt_id]
     assert_equal "mission-1", payload[:mission_id]
     assert_equal :unknown, payload[:reversibility]
+    assert_equal true, payload[:replay_requires_reconciliation]
     assert_equal true, envelope.replay_requires_reconciliation?
     assert_equal Digest::SHA256.hexdigest("private-workspace/private-name.txt"), payload[:scope_digest]
     refute_includes payload.inspect, "private-name.txt"
@@ -75,8 +76,10 @@ class TestExecutionContract < Minitest::Test
     )
 
     assert_equal :reversible, reversible.to_h[:reversibility]
+    assert_equal false, reversible.to_h[:replay_requires_reconciliation]
     refute reversible.replay_requires_reconciliation?
     assert_equal :irreversible, irreversible.to_h[:reversibility]
+    assert_equal true, irreversible.to_h[:replay_requires_reconciliation]
     assert irreversible.replay_requires_reconciliation?
 
     assert_raises(ArgumentError) do
