@@ -552,3 +552,30 @@ from source review alone.
 Validation status: INCONCLUSIVE until the added focused tests, protocol tests, full MASTER
 suite and top-level /fix execution run on the pinned toolchain. The GitHub source connector
 does not provide a checked-out repo/runtime for this session. No GitHub Actions workflow was added.
+
+## /fix plan generations and Law × stream × surface runtime proof (2026-10-26)
+
+The requested /fix path now pins an immutable FixPlan after the durable run journal and
+inside the measured run budget. The plan records eligible-file SHA-256 values, scope and
+exclusion digests, governing soul/laws files, executable Law sources, runtime/toolchain
+identity, adapter inventory, and a plan digest. The existing RunJournal binds plan
+generations; changes to source, scope, Law, authority, toolchain, exclusions, or adapters
+invalidate prior convergence checkpoints. Terminal receipts include plan and assessment
+matrix provenance.
+
+The runtime assessment ledger is built from the canonical executable Law population plus
+scanner-only identities, not the LawBridge/Semantic wrapper adapters. It records the four
+independent violation/opportunity streams across the canonical surface vocabulary. Scan
+receipts are tied to the pinned plan generation; drift, unscanned inputs, semantic gaps,
+missing AST receipts, malformed structured data, failed adapters, and unsupported surfaces
+remain INCONCLUSIVE. The aggregate opportunity heuristic does not yet publish per-surface
+negative evidence, so an empty opportunity result cannot satisfy a clean cell. /fix DONE is
+withheld unless the current-generation matrix is complete and clean.
+
+Validation for this handoff: source/API review and static source assertions only. Native
+tests and live four-tree /fix were NOT_RUN in this chat (per request); do not claim the
+new behavior is test-green. Remaining implementation gaps include general rendered-UI
+and interactive-behavior evidence outside the current Rails visual adapter, complete
+cross-file and media/compiled-asset assessors, test/runtime/deployment probes, and a
+per-surface clean-receipt contract for opportunity assessment. A full matrix that exposes
+these missing assessors will correctly finish BLOCKED rather than report DONE.
