@@ -61,10 +61,13 @@ module Master
           ]
           changed = dimensions.select { |field| current.public_send(field) != replacement.public_send(field) }
           if changed.empty?
-            # Refresh the filesystem signatures even when bytes and scope are
-            # identical. A harmless touch must not leave the next pass comparing
-            # against stale stat metadata or force a false source generation.
+            # Refresh filesystem signatures even if bytes and scope are unchanged.
+            # Also keep the journal and PassRunner pinned to the exact replacement
+            # plan without advancing the evidence generation.
             @fix_plan = replacement
+            binding = bind_fix_plan!({}, run_id, replacement)
+            @pass_runner.assessment_plan_refreshed!(replacement) if
+              @pass_runner.respond_to?(:assessment_plan_refreshed!)
             return false
           end
 
