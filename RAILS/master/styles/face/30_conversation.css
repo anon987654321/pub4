@@ -288,8 +288,7 @@ body[data-mode="speaking"] #spin-btn { display: block; }
   color: var(--face-fg);
 }
 #music-btn[aria-pressed="true"]::before {
-  background: transparent;
-  border-color: var(--pub4-signal);
+  background: currentColor;
 }
 #music-btn:hover { color: var(--face-fg); }
 

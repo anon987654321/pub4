@@ -9,7 +9,7 @@
   z-index: 4;
   opacity: .28;
   mix-blend-mode: screen;
-  transition: opacity 180ms linear;
+  transition: opacity 180ms var(--ease-linear);
 }
 body[data-face-ascii="1"] .master-face-ascii-layer { opacity: .96; }
 body[data-face-ascii="1"] #face { opacity: .055; }
