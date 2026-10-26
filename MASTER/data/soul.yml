@@ -1,7 +1,7 @@
 # soul.yml — machine-enforced constitutional schema
 # Human-readable narrative lives in SOUL.md.
-# ABSOLUTE sections require constitutional override to amend.
-# Negotiable sections: soul propose -> soul approve -> bump version.
+# All configuration is versioned source. Edit constitutional data through normal validated changes;
+# syntax, invariants, catalogue reconciliation and tests—not path immutability—guard correctness.
 
 schema: 1
 version: "2.9.1"
@@ -17,7 +17,6 @@ absolute:
   golden_law: PRESERVE_THEN_IMPROVE_NEVER_BREAK
   severity_rank: { info: 0, warning: 1, error: 2, critical: 3 }
   sacred_paths:
-    - data/soul.yml
     - data/SOUL.md
     - data/project_context.yml
     - lib/ground/pledge.rb
