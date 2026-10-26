@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "json"
+
 require "tmpdir"
 require_relative "test_helper"
 require_relative "../lib/fix/transaction"
@@ -687,6 +689,42 @@ class TestFixTransaction < Minitest::Test
       assert_equal "delivered", File.read(path)
     end
   end
+  def test_transaction_lifecycle_is_persisted_to_activity_and_evidence
+    Dir.mktmpdir do |dir|
+      private_path = "private/customer-name.txt"
+      FileUtils.mkdir_p(File.join(dir, "private"))
+      File.write(File.join(dir, private_path), "private customer text")
+
+      event_log = Master::Trace::Log::Event.new(root: dir)
+      evidence_log = Master::Trace::Log::Evidence.new(root: dir)
+      bus = Master::Trace::EventBus.new(event_log:, evidence_log:)
+      tx = Master::Fix::Transaction.new(
+        root: dir, paths: [private_path], id: "evidence-audit", bus:
+      ).begin!
+      assert tx.rollback!.ok?
+
+      activity_path = File.join(dir, "runtime/events/activity.jsonl")
+      evidence_path = File.join(dir, "runtime/events/evidence.jsonl")
+      activity = File.read(activity_path)
+      evidence = File.read(evidence_path)
+      [activity, evidence].each do |contents|
+        refute_includes contents, private_path
+        refute_includes contents, "customer-name"
+        refute_includes contents, "private customer text"
+        assert_includes contents, Digest::SHA256.hexdigest(private_path)
+      end
+
+      rows = File.readlines(evidence_path, chomp: true).map { |line| JSON.parse(line) }
+      transaction_events = rows.select { |row| row["event"].to_s.start_with?("fix:transaction_") }
+      names = transaction_events.map { |row| row["event"] }
+      assert_includes names, "fix:transaction_start"
+      assert_includes names, "fix:transaction_rollback"
+      started = transaction_events.find { |row| row["event"] == "fix:transaction_start" }.fetch("payload")
+      assert_equal 1, started["paths_count"]
+      assert_equal Digest::SHA256.hexdigest(private_path), started["paths_digest"]
+    end
+  end
+
   def test_transaction_telemetry_redacts_paths_and_free_form_diagnostics
     Dir.mktmpdir do |dir|
       private_path = "private/customer-name.txt"

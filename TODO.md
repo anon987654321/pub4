@@ -652,3 +652,10 @@ Added a shared `Trace::ToolObserver` to the LLM tool-forwarding boundary and MCP
 If the after receipt cannot be persisted, or an exception leaves the operation's outcome uncertain, the observer quarantines the same tool/argument fingerprint in-process. Further equivalent calls are refused until an operator writes a reconciliation receipt with an evidence reference. Native tool calls and the ReAct fallback share the dispatcher-owned observer, and MCP wrappers share the coordinator-owned observer.
 
 This does not yet cover direct calls to every `Master::Io` class, arbitrary background jobs, transaction-internal writes or deployment adapters that bypass these entrypoints. It is not cross-process exactly-once execution; an unmatched persisted before-event after process restart still requires external reconciliation. Tests were added but not executed in this environment; validation remains INCONCLUSIVE.
+
+
+## Transaction lifecycle evidence stream (2026-10-26)
+
+The sanitized `fix:transaction_*` lifecycle events now also enter the canonical operational evidence stream, alongside activity telemetry. The transaction manifest remains the authoritative recovery record; this change does not introduce another ledger or make telemetry a prerequisite for transaction recovery. Added an integration regression contract that checks start/rollback evidence is present in both streams while private workspace paths, filenames and file content remain absent and the transaction's path digest remains correlatable.
+
+The new regression test is committed but unexecuted. Validation remains INCONCLUSIVE until it runs on the pinned Ruby toolchain.
