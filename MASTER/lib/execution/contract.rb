@@ -140,12 +140,14 @@ module Master
           source_status = proof.respond_to?(:status) ? proof.status.to_s.to_sym : :open
           status = Contract::PROOF_OUTCOMES.fetch(source_status, :inconclusive)
           subject = proof.respond_to?(:subject) ? proof.subject : nil
-          claim = proof.respond_to?(:claim) ? proof.claim.to_s : ""
+          # Claims may contain prompts or private output. The compact verification
+          # receipt names the proof by ID instead of duplicating the claim text.
+          subject = "proof:#{id}" if subject.to_s.empty?
           evidence = proof.respond_to?(:evidence) ? proof.evidence : nil
           refs = evidence.is_a?(EvidenceReference) ? [evidence] : []
 
           new(
-            id:, subject: subject.to_s.empty? ? claim : subject.to_s, verifier:, status:, scope:,
+            id:, subject:, verifier:, status:, scope:,
             evidence_refs: refs, complete: status != :inconclusive
           )
         end
@@ -163,7 +165,7 @@ module Master
         end
 
         def self.read_count(value, method)
-          value.respond_to?(method) ? optional_count(value.public_send(method)) : nil
+          value.respond_to?(method) ? Contract.optional_count(value.public_send(method)) : nil
         rescue StandardError
           nil
         end
@@ -173,7 +175,7 @@ module Master
           return nil unless value.respond_to?(method)
 
           collection = value.public_send(method)
-          collection.respond_to?(:size) ? optional_count(collection.size) : nil
+          collection.respond_to?(:size) ? Contract.optional_count(collection.size) : nil
         rescue StandardError
           nil
         end
