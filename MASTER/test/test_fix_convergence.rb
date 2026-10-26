@@ -51,6 +51,10 @@ class TestFixConvergence < Minitest::Test
     ENV["MASTER_FIX_DEEP_TRACE"] = "0"
     @root = Dir.mktmpdir("fix_convergence")
     File.write(File.join(@root, "dummy.yml"), "---\n")
+    # Sacred paths fail closed without a soul.yml, so every fixture file would
+    # read as immutable and the corpus would collect nothing.
+    Dir.mkdir(File.join(@root, "data"))
+    File.write(File.join(@root, "data", "soul.yml"), "absolute:\n  sacred_paths:\n    - data/soul.yml\n")
     # The collector fails closed without a Git inventory, so the fixture is a checkout.
     system("git", "-C", @root, "init", "-q", "--initial-branch=main", out: File::NULL, err: File::NULL) || raise("git init failed")
     @bus = FakeBus.new
@@ -1530,9 +1534,12 @@ end
     loop = build_loop([])
     terminal_rows = []
     journal = Object.new
+    opened = []
     journal.define_singleton_method(:start_or_resume) do |**|
-      { "id" => "run-timeout", "remaining_seconds" => 0.0 }
+      opened << (opened.empty? ? "run-timeout" : "run-fresh")
+      { "id" => opened.last, "remaining_seconds" => 0.0 }
     end
+    journal.define_singleton_method(:active_pass) { |_run| nil }
     journal.define_singleton_method(:terminal) do |run_id, state, message:, evidence: nil|
       terminal_rows << { run_id:, state:, message:, evidence: }
     end
@@ -1558,11 +1565,13 @@ end
       end
     end
 
-    assert_equal 1, terminal_rows.size
-    assert_equal "run-timeout", terminal_rows.first[:run_id]
+    # The expired run is closed and a fresh one opened; this fixture's journal
+    # hands back no budget for the fresh run either, so it ends there.
+    assert_equal %w[run-timeout run-fresh], opened
+    assert_equal %w[run-timeout run-fresh], terminal_rows.map { |row| row[:run_id] }
     assert_equal :timeout, terminal_rows.first[:state]
     assert_match(/budget exhausted before resume/, terminal_rows.first[:message])
-    assert_equal 1, deferred.size
+    assert_equal 2, deferred.size
     assert_match(/attempt timeout:/, deferred.first)
 
     event = @bus.events.find { |row| row[:event] == "fix_loop:terminal" }

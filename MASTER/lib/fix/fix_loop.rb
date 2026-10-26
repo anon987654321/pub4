@@ -204,7 +204,16 @@ module Master
             return finish_run(recovered, target, run_id, mission:, requested:) if recovered.err?
           end
 
-          return finish_run(budget_error, target, run_id, mission:, requested:)
+          # The expired run ends with its canonical terminal event, and this
+          # invocation's own budget opens a fresh run. Ending here instead cost
+          # the whole MASTER target of a four-tree /fix on 2026-10-26.
+          finish_run(budget_error, target, run_id, mission:, requested:)
+
+          journal =@run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
+          run_id = journal["id"]
+          mission = mission_for(target:, requested:)
+          budget_error = exhausted_budget(journal:)
+          return finish_run(budget_error, target, run_id, mission:, requested:) if budget_error
         end
 
         RunBudget.begin_run(root: Master::ROOT, max_passes:, bus: @bus, target:)
