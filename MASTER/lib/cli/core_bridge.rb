@@ -175,10 +175,10 @@ module Master
           # The effect may already have happened, but its after-record is missing.
           # Never auto-continue an ambiguous side effect and risk repeating it.
           mission.fail!(done.summary.to_s)
-        elsif done.reason == :cancelled
-          # Cancellation is terminal for this attempt. A future operator request
-          # creates a new mission; the supervisor must not replay it as a retry.
-          mission.finish!(state: "cancelled", summary: done.summary)
+        elsif %i[cancelled unknown_outcome recovery_failed].include?(done.reason)
+          # Explicit stop or an outcome that could not be reconciled is terminal
+          # for this attempt. The supervisor must not replay it as a blind retry.
+          mission.finish!(state: done.reason.to_s, summary: done.summary)
         else
           mission.defer!(reason: "attempt #{done.reason}: #{continuation_summary(done)}")
         end
