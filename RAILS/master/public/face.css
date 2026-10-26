@@ -97,9 +97,6 @@
   --ease-linear: cubic-bezier(0,0,1,1);
   --ease-in-out: cubic-bezier(0.65,0,0.35,1);
   --ease-spring: cubic-bezier(0.32,0.72,0,1);
-  /* Display weights are optical values, not members of the body-weight ladder. */
-  --face-weight-brand: 640;
-  --face-weight-display: 560;
   /* z-scale: canvas(base) < chrome(persistent HUD) < ui < overlay(panels) < modal(blocking) < toast(errors) < skip(a11y skip-link) */
   --z-canvas: 1;
   --z-chrome: 10;
@@ -120,6 +117,9 @@
    Arial, which is metrically identical, and downloads nothing. */
 :root {
   --font-brand: var(--font-mono);
+  /* Optical display weights sit outside the body 400/600/800 ladder. */
+  --face-weight-brand: 640;
+  --face-weight-display: 560;
   /* The wordmark face brgen.no sets its logo in ($brgen-logo-font in
      brgen/app/assets/stylesheets/application.scss), so ai.brgen.no reads as the
      same logo: same stack, heavy weight, tightest tracking. Operator, 2026-10-12. */

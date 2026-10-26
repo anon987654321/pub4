@@ -89,6 +89,22 @@ class VisualIdentityContractTest < Minitest::Test
     assert_includes view, 'class: "pub4-display-title"'
   end
 
+  def test_face_display_weight_tokens_live_outside_the_generated_root
+    foundation = File.read(File.join(ROOT, "master", "styles", "face", "10_foundation.css"))
+    display = File.read(File.join(ROOT, "master", "styles", "face", "40_accessibility_motion.css"))
+    compiled = File.read(FACE_COMPILED)
+    generated = compiled.split("/* BEGIN:generated-face-root", 2).last.split("/* END:generated-face-root */", 2).first
+
+    assert_includes foundation, "--face-weight-brand: 640;"
+    assert_includes foundation, "--face-weight-display: 560;"
+    assert_includes display, "font-weight: var(--face-weight-brand);"
+    assert_includes display, "font-weight: var(--face-weight-display);"
+    refute_includes generated, "--face-weight-brand"
+    refute_includes generated, "--face-weight-display"
+    assert_includes compiled, "font-weight: var(--face-weight-brand);"
+    assert_includes compiled, "font-weight: var(--face-weight-display);"
+  end
+
   def test_reduced_motion_preserves_meaning_without_perpetual_animation
     identity = Operator::MasterDesign.tokens.fetch("visual_identity")
     face_motion = File.read(FACE_MOTION, encoding: "UTF-8")
