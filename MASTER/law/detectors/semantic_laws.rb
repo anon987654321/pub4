@@ -229,15 +229,11 @@ module Master
           # produces (Law#prove!); test_semantic_rule_scope asks the same of
           # this population, because a declared language nothing emits aims a rule
           # at no file at all — which is how `rails`, `prose` and `erb` sat here.
-          def laws_for(language, path: nil)
-            @laws.select do |_, rule|
-              language_matches = rule[:languages].empty? || rule[:languages].include?(language)
-              next false unless language_matches
-              next false if path && rule[:path] && !path_matches?(path, rule[:path])
-              next false if path && rule[:path_exclude] && path_matches?(path, rule[:path_exclude])
-
-              true
-            end
+          # Every Law is assessed against every artifact, regardless of the file's
+          # implementation language. Languages are detector implementation details,
+          # not exemptions from semantic or visual review.
+          def laws_for(_language, path: nil)
+            @laws
           end
 
           def path_matches?(path, pattern)
@@ -249,7 +245,7 @@ module Master
           end
 
           def laws_mtime
-            paths = [Master::LAWS_PATH, *Dir.glob(File.join(Master::ROOT, "law", "*.rb"))]
+            paths = [Master::LAWS_PATH, *Dir.glob(File.join(Master::ROOT, "law", "**", "*.rb"))]
             paths.sort.filter_map do |path|
               next unless File.exist?(path)
 
@@ -278,21 +274,47 @@ module Master
           def from_law
             require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
             ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
+            require_relative "../../lib/review/scan/law_dsl" unless defined?(Master::Review::Scan::LawDSL)
 
-            ::Law.definitions.values.select(&:enforceable?).each_with_object({}) do |law, h|
+            laws = ::Law.definitions.values.select(&:enforceable?).each_with_object({}) do |law, entries|
+              id = law.id.to_s.upcase
               question = law.ask.to_s.strip
-              question = "Does this artifact breach #{law.id} or miss an improvement implied by its repair contract?" if question.empty?
-              h[law.id.to_s] = {
-                prompt: [question, "Repair contract: #{law.fix}", "Forbidden example: #{law.bad.strip}", "Compliant example: #{law.good.strip}"].join("\n"),
+              question = "Does this artifact breach #{id} or miss an improvement implied by its repair contract?" if question.empty?
+              entries[id] = {
+                prompt: [question, "Repair contract: #{law.fix}", "Forbidden example: #{law.bad.strip}", "Compliant example: #{law.good.strip}"].join("\\n"),
                 severity: law.severity,
-                mode: law.mode,
+                mode: :both,
                 reversibility: nil,
                 blast_radius: nil,
-                languages: law.languages.map(&:to_s),
-                path: law.path,
-                path_exclude: law.path_exclude,
+                languages: [],
+                path: nil,
+                path_exclude: nil,
               }
             end
+
+            # Inline Ruby detector implementations belong to the same Law
+            # population. They contribute behavior, never a second policy identity.
+            Master::Review::Scan::Law.registry.each do |klass|
+              next unless klass.respond_to?(:dsl_id) && !klass.dsl_id.to_s.empty?
+
+              instance = Master::Review::Scan::LawFactory.build(klass, root: Master::ROOT)
+              id = instance.id.to_s.upcase
+              next if laws.key?(id)
+
+              description = instance.description.to_s.strip
+              description = id.tr("_", " ").downcase if description.empty?
+              laws[id] = {
+                prompt: "#{description}. Evaluate the same requirement for a clear breach and for a concrete improvement.",
+                severity: instance.severity,
+                mode: :both,
+                reversibility: nil,
+                blast_radius: nil,
+                languages: [],
+                path: nil,
+                path_exclude: nil,
+              }
+            end
+            laws.freeze
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "SemanticLaw.from_law", severity: :load_bearing)
             raise
@@ -330,12 +352,10 @@ module Master
           end
 
           def build_prompt_frame(rules)
-            violations = rules.select { |_, a| a[:mode] == :violation }
-            opportunities = rules.select { |_, a| a[:mode] == :opportunity }
-            parts = []
-            parts << violation_block(violations) unless violations.empty?
-            parts << opportunity_block(opportunities) unless opportunities.empty?
-            parts.join("\n\n")
+            # Each Law participates in both streams. They are separate judgements:
+            # a breach does not satisfy or suppress the opportunity assessment.
+            build = [violation_block(rules), opportunity_block(rules)]
+            build.join("\\n\\n")
           end
 
           def violation_block(rules)
