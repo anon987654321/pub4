@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "securerandom"
+
 module Master::Core
   # Core — the fold. This is the whole control flow of the agent, and it fits
   # on a screen on purpose. The model proposes an Effect; the Constitution
@@ -177,7 +179,7 @@ private
 
     def perform_effect(turn, effect)
       @effect_sequence += 1
-      effect_id = "#{object_id}-#{@effect_sequence}"
+      effect_id = SecureRandom.uuid
       notify_effect(stage: :before, turn:, effect:, effect_id:)
       return Observation.no("effect not executed: lifecycle before-event publication failed") if @lifecycle_failure
 
