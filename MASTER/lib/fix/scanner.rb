@@ -68,7 +68,10 @@ module Master
           @law_dispatch = build_law_dispatch(@laws)
         end
 
-        attr_reader :stream_autofixes
+        # Public adapter inventory used by Fix's evidence planner.
+        # Consumers must still inspect each Law ID and its detector contract;
+        # wrapper adapters are not themselves the underlying Law population.
+        attr_reader :stream_autofixes, :laws
 
         def scan(path, depth: :deep, laws: nil)
           validate_depth!(depth)
