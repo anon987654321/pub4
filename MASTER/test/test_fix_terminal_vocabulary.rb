@@ -41,6 +41,7 @@ class TestFixTerminalVocabulary < Minitest::Test
                  Master::Fix::FixLoop::MEASURED_REPAIR_OUTCOMES
     assert_equal true, Master::Fix::OutcomePolicy::MEASURED_REPAIR_OUTCOMES.fetch(:done)
     refute Master::Fix::OutcomePolicy::MEASURED_REPAIR_OUTCOMES.fetch(:blocked)
+    refute_includes Master::Fix::OutcomePolicy::MEASURED_REPAIR_OUTCOMES.keys, :human_decision
   end
 
   def test_fix_loop_and_protocol_share_the_canonical_terminal_vocabulary
