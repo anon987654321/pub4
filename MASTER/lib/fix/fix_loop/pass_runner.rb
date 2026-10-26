@@ -676,13 +676,13 @@ module Master
                                    signatures_stable:, semantic_gaps:, pending:, evidence:,
                                    visual:, opportunities:)
           declared_surfaces = Array(info[:surfaces]).map(&:to_sym)
-          if !info[:streams].include?(stream)
-            return assessment_result(:not_applicable, reason: "Law has no #{stream} detector/assessor")
-          end
           return assessment_result(:not_applicable, reason: "Law does not declare the #{surface} surface") unless declared_surfaces.include?(surface)
 
           if info[:unmeasurable_reason]
             return assessment_result(:inconclusive, reason: info[:unmeasurable_reason], evidence:)
+          end
+          unless info[:streams].include?(stream)
+            return assessment_result(:not_applicable, reason: "Law has no #{stream} detector/assessor")
           end
 
           return assessment_result(:inconclusive, reason: "#{surface} has no assessor for this Law adapter", evidence:) unless assessment_surface_supported?(info, surface)
@@ -714,12 +714,6 @@ module Master
             assessment_law_applies?(info, path) && assessment_surface_applies?(info, surface, path)
           end
           return assessment_result(:not_applicable, reason: "no eligible file matches this Law/surface scope") if scoped_files.empty?
-
-          if %i[repository_tree directories file_names paths syntax_tree cross_file structured_data
-                documentation media_assets compiled_assets rendered_ui interactive_behavior tests runtime deployment].include?(surface) &&
-             !%i[structured_data documentation].include?(surface)
-            return assessment_result(:inconclusive, reason: "surface-specific measurement adapter is not registered", evidence:)
-          end
 
           found = Array(observation[:findings][[law_id, stream]]).select do |row|
             scoped_files.include?(row["file"])
