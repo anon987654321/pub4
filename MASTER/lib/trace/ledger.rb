@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
+require "digest"
 require "fileutils"
+require_relative "../execution/contract"
+require_relative "../ground/redactor"
 require "json"
 require "time"
 require "tempfile"
@@ -11,6 +14,17 @@ module Master
       # Feedback mirrors high-signal execution feedback into the SQLite
       # knowledge store so RSI can inspect tool results, corrections, and provider failures.
       class Feedback
+        SAFE_METADATA_FIELDS = %w[
+          tool model status category exit_code bytes ms latency_ms tokens_in tokens_out
+          cost cost_usd tokens cached cache_write estimated approximate count mode operation
+          error_digest error_bytes files_count files_digest paths_count paths_digest
+          url_digest url_bytes path_digest path_bytes query_digest query_bytes subject_digest subject_bytes
+        ].freeze
+        SENSITIVE_METADATA_FIELDS = %w[
+          error message output result content prompt args input path paths file files url query
+          subject stdout stderr body command argv headers cookie credential token authorization source
+        ].freeze
+
         def initialize(event_bus:, learnings:)
           @bus = event_bus
           @learnings = learnings
@@ -45,7 +59,7 @@ module Master
           exit_code = payload[:exit_code] || payload["exit_code"]
           status = (payload[:status] || payload["status"]).to_i
           event_type = exit_code.to_i.nonzero? || status >= 400 ? "tool_failure" : "tool_success"
-          record(event_type:, dimension: dim, value: exit_code || status.nonzero?, metadata: payload)
+          record(event_type:, dimension: dim, value: exit_code || status.nonzero?, metadata: safe_metadata(payload))
         end
 
         # read_file, list_dir, search_files and the other tools that publish no
@@ -58,27 +72,62 @@ module Master
           return unless (payload[:ok] || payload["ok"]) == true
           return if self_counted == tool_of(payload)
 
-          record(event_type: "tool_success", dimension: tool_of(payload), metadata: payload)
+          record(event_type: "tool_success", dimension: tool_of(payload), metadata: safe_metadata(payload))
         end
 
         def tool_of(payload) = payload[:tool] || payload["tool"] || "unknown"
 
+        # The learning store needs outcome telemetry, not raw tool inputs or
+        # upstream output. Keep a small allow-list of operational dimensions and
+        # fingerprint all content-bearing fields; unfamiliar future fields are
+        # represented only by a digest of their names.
+        def safe_metadata(payload)
+          fields = payload.each_with_object({}) { |(key, value), out| out[key.to_s] = value }
+          result = { schema_version: 1 }
+
+          SAFE_METADATA_FIELDS.each do |key|
+            next unless fields.key?(key)
+
+            value = fields[key]
+            next if value.nil?
+            next unless value.is_a?(String) || value.is_a?(Numeric) || value == true || value == false || value.is_a?(Symbol)
+
+            result[key.to_sym] = value.is_a?(String) ? Master::Ground::Redactor.truncate(Master::Ground::Redactor.text(value)) : value.to_s
+          end
+
+          SENSITIVE_METADATA_FIELDS.each do |key|
+            next unless fields.key?(key) && !fields[key].nil?
+
+            raw = fields[key].is_a?(String) ? fields[key] : JSON.generate(fields[key])
+            result.merge!(Master::Execution::Contract.diagnostic_fields(raw, key: key.to_sym))
+          rescue StandardError
+            result[:"#{key}_present"] = true
+          end
+
+          extra_keys = fields.keys - SAFE_METADATA_FIELDS - SENSITIVE_METADATA_FIELDS - %w[event ts conversation]
+          unless extra_keys.empty?
+            result[:extra_fields_count] = extra_keys.size
+            result[:extra_fields_digest] = Digest::SHA256.hexdigest(extra_keys.sort.join("\\0"))
+          end
+          result
+        end
+
         def record_tool_failure(payload)
           dim = payload[:tool] || payload["tool"] || "unknown"
           category = (payload[:category] || payload["category"]).to_s
-          record(event_type: "tool_failure", dimension: dim, value: category, metadata: payload)
+          record(event_type: "tool_failure", dimension: dim, value: category, metadata: safe_metadata(payload))
         end
 
         def record_llm(payload)
           model = payload[:model] || payload["model"] || "unknown"
-          record(event_type: "tool_success", dimension: "llm:#{model}", value: payload[:tokens_out] || payload["tokens_out"], metadata: payload)
+          record(event_type: "tool_success", dimension: "llm:#{model}", value: payload[:tokens_out] || payload["tokens_out"], metadata: safe_metadata(payload))
         end
 
         def record_provider(payload)
           status = (payload[:status] || payload["status"]).to_s
           model = payload[:model] || payload["model"] || "unknown"
           event_type = status == "success" ? "tool_success" : "provider_error"
-          record(event_type:, dimension: model, value: status, metadata: payload)
+          record(event_type:, dimension: model, value: status, metadata: safe_metadata(payload))
         end
 
         def record(event_type:, dimension:, value: nil, metadata: nil)
@@ -101,7 +150,10 @@ module Master
             event_type: "fix_improvement",
             dimension: law_id,
             value: files.size,
-            metadata: { files: },
+            metadata: {
+              schema_version: 1, files_count: files.size,
+              **Master::Execution::Contract.diagnostic_fields(files.sort.join("\\0"), key: :files)
+            },
           )
 
         rescue StandardError => e
