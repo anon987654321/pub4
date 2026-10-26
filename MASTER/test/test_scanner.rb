@@ -108,6 +108,19 @@ class TestScanner < Minitest::Test
     end
   end
 
+  # STUDIO/dilla/data/dilla.json is over the line limit; refusing it failed the whole STUDIO walk.
+  def test_scan_dir_skips_a_file_over_the_line_limit_without_failing_the_batch
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "long.json"), "1\n2\n3\n")
+
+      result = Master::Fix::Scan::FileProcessor.stub(:max_lines_for, 2) do
+        Master::Fix::Scanner.new(laws: []).scan_dir(dir, glob: "*.json")
+      end
+
+      assert result.ok?, result.to_s
+    end
+  end
+
   def test_scan_dir_surfaces_thread_errors_via_bus
     Dir.mktmpdir do |dir|
       path = File.join(dir, "sample.rb")

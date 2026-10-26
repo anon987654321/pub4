@@ -273,7 +273,11 @@ module Master
         def skippable_validation_error?(result)
           return false unless result.category == :validation
 
-          result.message.to_s.match?(/\A(?:file not found:|symlink not allowed:|binary file skipped:|file too large:)/)
+          # Each is a refusal FileProcessor makes before reading; the line-count one was missing, so one
+          # long data file (STUDIO/dilla/data/dilla.json) failed the whole STUDIO walk.
+          result.message.to_s.match?(
+            /\A(?:file not found:|symlink not allowed:|binary file skipped:|file too (?:large|long):)/,
+          )
         end
 
         def prune_violation_objects(pairs)
