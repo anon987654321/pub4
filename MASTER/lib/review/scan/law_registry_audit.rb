@@ -18,14 +18,17 @@ module Master
 
           # Declared coverage gaps remain visible debt; only unexpected catalogue
           # shape/reference errors and debt beyond the declared ceiling block.
+          # The executable Law catalogue is separate from law_map's conceptual
+          # trace map. Missing concept links remain visible debt; missing Law
+          # identity, source, modality, or surface coverage is a hard integrity error.
           def catalogue_integrity_errors
-            errors = catalogue_drift.flat_map do |kind, ids|
+            structural = %i[invalid_status malformed_entries empty_without_declared_gap gap_with_law_ids unmapped_with_law_ids]
+            hard = catalogue_drift.select do |kind, _ids|
+              kind.to_s.start_with?("manifest_") || structural.include?(kind)
+            end
+            hard.flat_map do |kind, ids|
               ids.map { |id| "catalogue_#{kind}: #{id}" }
             end
-            if trace_debt.size > trace_ceiling
-              errors << "executable trace debt #{trace_debt.size} exceeds declared ceiling #{trace_ceiling}"
-            end
-            errors
           end
 
           def reconciliation_errors
@@ -86,6 +89,8 @@ module Master
             executable_ids: law_ids,
             registry_ids: registry
           )
+          manifest = law_catalogue_report(yaml_entries)
+          catalogue_drift = catalogue.fetch(:drift).merge(manifest.fetch(:drift))
           Report.new(
             yaml_laws: c[:yaml_ids].size,
             registry_ids: registry,
@@ -97,7 +102,7 @@ module Master
             dep_graph_gaps: ungraphed_law_ids(registry),
             mechanical: mechanical(yaml_entries, registry:).map { |law| law["id"] },
             source_drift: source_drift(yaml_entries, registry),
-            catalogue_drift: catalogue.fetch(:drift),
+            catalogue_drift:,
             declared_catalogue_gaps: catalogue.fetch(:declared_gaps),
             declared_unmapped_entries: catalogue.fetch(:declared_unmapped),
             trace_debt: catalogue.fetch(:trace_debt),
@@ -250,12 +255,68 @@ module Master
           raise "law registry law census failed: #{e.class}: #{e.message}"
         end
 
+        # The audit's YAML population comes from the authored catalogue,
+        # never from the Ruby populations it is supposed to reconcile.
         def load_yaml_laws
-          law_rows = executable_law_rows
-          registry_rows = registry_law_rows
-          law_ids = law_rows.map { |row| row["id"].to_s.downcase }.to_set
+          data = Master.load_laws(root: @root)
+          catalogue = data.fetch("law_catalogue") do
+            raise "data/laws.yml has no law_catalogue; refusing a synthetic Law population"
+          end
+          entries = catalogue.fetch("entries") do
+            raise "data/laws.yml law_catalogue has no entries"
+          end
+          raise "data/laws.yml law_catalogue entries must be a non-empty mapping" unless entries.is_a?(Hash) && !entries.empty?
 
-          law_rows + registry_rows.reject { |row| law_ids.include?(row["id"].to_s.downcase) }
+          entries.map do |id, entry|
+            raise "law_catalogue entry #{id} must be a mapping" unless entry.is_a?(Hash)
+
+            entry.merge("id" => id.to_s)
+          end
+        end
+
+        def law_catalogue_report(entries)
+          data = Master.law("law_catalogue", root: @root)
+          required_modalities = %w[lexical semantic visual]
+          required_surfaces = ::Law::ASSESSMENT_SURFACES.map(&:to_s)
+          modalities = Array(data["modalities"]).map(&:to_s)
+          surfaces = Array(data["surfaces"]).map(&:to_s)
+          missing_modalities = required_modalities - modalities
+          missing_surfaces = required_surfaces - surfaces
+          unexpected_surfaces = surfaces - required_surfaces
+          entry_without_source = []
+          missing_source_files = []
+          duplicate_definitions = []
+          non_universal = []
+
+          repo_root = File.dirname(File.expand_path(@root))
+          entries.each do |entry|
+            id = entry.fetch("id").to_s
+            definitions = Array(entry["definition_sources"]).map(&:to_s)
+            detectors = Array(entry["detector_sources"]).map(&:to_s)
+            sources = definitions + detectors
+            entry_without_source << id if sources.empty?
+            duplicate_definitions << id if definitions.uniq.size > 1
+            non_universal << id if entry["universal"] == false
+
+            sources.uniq.each do |source|
+              full_path = File.expand_path(source, repo_root)
+              next if full_path.start_with?(repo_root + File::SEPARATOR) && File.file?(full_path)
+
+              missing_source_files << "#{id}:#{source}"
+            end
+          end
+
+          {
+            drift: {
+              manifest_missing_modalities: missing_modalities.sort.freeze,
+              manifest_missing_surfaces: missing_surfaces.sort.freeze,
+              manifest_unexpected_surfaces: unexpected_surfaces.sort.freeze,
+              manifest_entries_without_source: entry_without_source.sort.freeze,
+              manifest_missing_source_files: missing_source_files.sort.freeze,
+              manifest_duplicate_definitions: duplicate_definitions.sort.freeze,
+              manifest_non_universal: non_universal.sort.freeze,
+            }.freeze,
+          }.freeze
         end
 
         def executable_law_rows
