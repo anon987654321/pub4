@@ -165,8 +165,9 @@ module Master
           previous_output_end = 0
           findings = []
 
-          src.scan(output_pattern) do |expression|
+          src.scan(output_pattern) do
             match = Regexp.last_match
+            expression = match[1]
             output_start = match.begin(0)
             output_end = match.end(0)
             marker_end = nil
