@@ -712,6 +712,7 @@ en:
     new: New post
     guest_sign_in: " to use your name."
     posting_as_anon: Posting as
+    anon_name: anon
     text_optional: Text (optional)
   empty:
     find_people: Find people in the feed

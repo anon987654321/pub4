@@ -149,7 +149,7 @@
           <%= f.label :anonymous, t("posts.post_anonymously") %>
         </div>
       <% else %>
-        <p class="mb-12"><%= t("post.posting_as_anon") %> <strong>anon</strong>.
+        <p class="mb-12"><%= t("post.posting_as_anon") %> <strong><%= t("post.anon_name") %></strong>.
           <%= link_to t("nav.sign_in"), new_session_path %><%= t("post.guest_sign_in") %></p>
       <% end %>
 

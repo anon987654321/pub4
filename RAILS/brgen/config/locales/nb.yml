@@ -717,6 +717,7 @@ nb:
     new: Nytt innlegg
     guest_sign_in: " for å bruke navnet ditt."
     posting_as_anon: Poster som
+    anon_name: anonym
     text_optional: Tekst (valgfritt)
   empty:
     find_people: Finn folk i feeden
