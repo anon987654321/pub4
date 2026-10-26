@@ -23,7 +23,7 @@ module Master
       LEASE_RENEW_SECONDS = 60
       RETRY_BASE_SECONDS = 60
       RETRY_MAX_SECONDS = 3_600
-      STATES = %w[queued running waiting completed failed blocked interrupted cancelled].freeze
+      STATES = %w[queued running waiting completed failed blocked interrupted cancelled unknown_outcome recovery_failed].freeze
       RESUMABLE_STATES = %w[running waiting].freeze
       STAGES = %w[discover plan execute verify deliver].freeze
 
@@ -300,7 +300,7 @@ module Master
           return self unless @record
 
           @record["state"] = state
-          @record["stage"] = state == "cancelled" ? @record["stage"] : "deliver"
+          @record["stage"] = "deliver" if state == "completed"
           @record["summary"] = summary.to_s.byteslice(0, 2_048) if summary
           @record["next_wake_at"] = nil
           @record["lease_owner"] = nil
