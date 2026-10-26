@@ -51,7 +51,7 @@ module Deploy
     # trace (a bisect, someone else's tree).
     def enabled? = !%w[off 0 false no].include?(File.basename(@path.to_s).downcase)
 
-    def record(check:, outcome:, run_id:, failures: 0, warnings: 0, errors: 0, duration_ms: nil)
+    def record(check:, outcome:, run_id:, failures: 0, warnings: 0, errors: 0, duration_ms: nil, verification: nil)
       return self unless enabled?
 
       line = {
@@ -64,6 +64,11 @@ module Deploy
         errors: errors,
         duration_ms: duration_ms,
       }
+      if verification
+        raise ArgumentError, "verification receipt must be a Hash" unless verification.is_a?(Hash)
+
+        line[:verification] = verification
+      end
 
       File.open(@path, "a") { |f| f.puts(JSON.generate(line)) }
       self
