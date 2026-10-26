@@ -8,7 +8,21 @@ module Master
       # Audits executable law population vs Ruby scanner registry.
       class LawRegistryAudit
         Report = Data.define(:yaml_laws, :registry_ids, :kernel_ids, :lexical_wired, :lexical_unwired,
-                             :semantic_only, :structural_unwired, :dep_graph_gaps, :mechanical, :source_drift) do
+                             :semantic_only, :structural_unwired, :dep_graph_gaps, :mechanical, :source_drift, :catalogue_drift) do
+          def reconciled?
+            source_drift.values.all?(&:empty?) && catalogue_drift.values.all?(&:empty?)
+          end
+
+          def reconciliation_errors
+            source_drift.flat_map { |kind, ids| ids.map { |id| "#{kind}: #{id}" } } +
+              catalogue_drift.flat_map { |kind, ids| ids.map { |id| "catalogue_#{kind}: #{id}" } }
+          end
+
+          def assert_reconciled!
+            return true if reconciled?
+
+            raise "Law catalogue is not reconciled: #{reconciliation_errors.join('; ')}"
+          end
           # A clean report is only meaningful when its population is explicit.
           #
           # Counted, never subtracted. A rule may be semantic-only, mechanical-only,
@@ -57,6 +71,7 @@ module Master
             dep_graph_gaps: ungraphed_law_ids(registry),
             mechanical: mechanical(yaml_entries, registry:).map { |law| law["id"] },
             source_drift: source_drift(yaml_entries, registry),
+            catalogue_drift: catalogue_drift,
           )
         end
 
@@ -68,22 +83,31 @@ module Master
         # so principle_map can trace it, and the detector exists once, elsewhere.
         def source_drift(yaml_entries, registry)
           yaml_ids = yaml_entries.map { |rule| key_of(rule) }.to_set
-          laws = law_ids
-          registry_ids = registry.map(&:to_s).map(&:downcase).to_set
-
-          yaml_only = yaml_entries.filter_map do |rule|
-            id = key_of(rule)
-            folded = rule["folded_into"].to_s.downcase
-            next if laws.include?(id) || registry_ids.include?(id)
-            next if !folded.empty? && (laws.include?(folded) || registry_ids.include?(folded))
-
-            rule["id"]
-          end
+          executable_ids = law_ids
+          detector_ids = registry.map(&:to_s).map(&:downcase).to_set
 
           {
-            yaml_only: yaml_only.sort.freeze,
-            law_only: (laws - yaml_ids).sort.freeze,
-            registry_only: (registry_ids - laws).sort.freeze,
+            yaml_only: (yaml_ids - executable_ids - detector_ids).to_a.sort.freeze,
+            law_only: (executable_ids - yaml_ids).to_a.sort.freeze,
+            registry_only: (detector_ids - yaml_ids - executable_ids).to_a.sort.freeze,
+          }.freeze
+        end
+
+        # Cross-check the curated law-map catalogue against actual enforceable
+        # Laws. A map entry with no law_ids is a known coverage gap, not a detector.
+        # No missing reference is silently treated as covered.
+        def catalogue_drift
+          map = Master.law("law_map", root: @root)
+          entries = map.fetch("laws", {})
+          mapped = entries.values.flat_map { |entry| Array(entry["law_ids"]) }
+                          .map { |id| id.to_s.downcase }.to_set
+          executable = law_ids
+          {
+            executable_not_mapped: (executable - mapped).to_a.sort.freeze,
+            mapped_without_executable: (mapped - executable).to_a.sort.freeze,
+            catalogue_gaps: entries.filter_map do |name, entry|
+              name.to_s if Array(entry["law_ids"]).empty?
+            end.sort.freeze,
           }.freeze
         end
 

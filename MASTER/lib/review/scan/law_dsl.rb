@@ -48,6 +48,9 @@ module Master
               @severity = severity; @law_tags = dsl_tags; @auto_fix = autofix
             end
             define_method(:check) do |code, path:|
+              # Language narrows this deterministic adapter, not the Law's
+              # semantic or visual reach. Universal review is handled by those
+              # independent streams for every artifact.
               langs = self.class.dsl_langs
               return [] if langs && !langs.include?(language(path)&.to_sym)
 

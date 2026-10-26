@@ -115,6 +115,16 @@ class TestLawContract < Minitest::Test
     assert_equal law.assessment_surfaces.map(&:to_s), row.fetch("surfaces")
   end
 
+  def test_every_law_has_the_same_universal_assessment_surface_set
+    expected = Law::ASSESSMENT_SURFACES
+    assert_operator expected.length, :>, 10
+
+    Law.definitions.each_value do |law|
+      assert_equal expected, law.assessment_surfaces, law.id.to_s
+      assert law.universal?, law.id.to_s
+    end
+  end
+
   def test_law_dsl_rejects_unknown_assessment_surfaces
     builder = Law::Builder.new(:ASSESSMENT_SURFACE_PROBE)
     builder.surfaces([:made_up_surface])
