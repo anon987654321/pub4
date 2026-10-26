@@ -19,7 +19,7 @@
 # Add examples to a law with LawDSL.law(..., fires:, does_not_fire:).
 
 require_relative "test_helper"
-# rule_dsl.rb requires every laws/*.rb at the bottom, and each LawDSL.law call
+# law_dsl.rb loads the canonical law/detectors/*.rb tree at the bottom, and each LawDSL.law call
 # registers through Law.inherited. Without this the registry is empty and the
 # two assertions below pass having checked nothing.
 require_relative "../lib/review/scan/law_dsl"
