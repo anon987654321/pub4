@@ -613,3 +613,10 @@ SurfaceEvidence now includes symlinked paths with recognized media/font extensio
 The strict effect observer now validates before/after pairing in-process. It rejects an after-event without a prior before-event, duplicate effect identities, mismatched lifecycle envelopes, and negative or non-integer elapsed times. A failed after-event persistence leaves the pair pending instead of pretending it closed. Added focused regression tests for each case.
 
 This guard prevents malformed lifecycle sequences within one observer instance; it is not an exactly-once guarantee across process restarts. Unknown or irreversible effects still require durable reconciliation before replay, and the shared contract has not yet been propagated to every background, transaction and deployment effect path. Tests were not run in this environment because the local runtime cannot resolve github.com to obtain the checkout; validation remains INCONCLUSIVE.
+
+
+## Persisted tool-payload privacy (2026-10-26)
+
+Added a shared event-payload privacy transform for durable telemetry. `tool:before` and `tool:after` records now preserve bounded categorical metadata and numeric measurements while replacing all other argument values with SHA-256 digests and byte counts. Other persisted event families redact sensitive named fields such as prompts, commands, paths, outputs, messages, credentials and URLs. The private `.master/audit.ndjson` uses the same transform, so a private file location or prompt is not copied verbatim merely because the log has restrictive permissions. In-process subscribers still receive the original payload; only durable records are transformed.
+
+Regression coverage was added for both activity and private audit logs. Tests were not run in this environment; validation remains INCONCLUSIVE until the focused EventBus and EffectObserver suites pass on the pinned Ruby toolchain.

@@ -129,6 +129,42 @@ class TestEventBus < Minitest::Test
     assert Time.iso8601(audit_cli["ts"]), "the audit line keeps its wall clock"
   end
 
+
+  def test_persisted_tool_arguments_are_hashed_in_activity_and_private_audit
+    Master::Trace::Log::Audit.new(root: @dir, event_bus: @bus)
+    path = "/private/users/alex/source.rb"
+    content = "account secret and private source"
+    prompt = "please inspect my private notes"
+
+    @bus.publish(
+      "tool:before", tool: "write_file", path:, content:, prompt:,
+      op: "write", bytes: content.bytesize
+    )
+
+    activity_text = File.read(File.join(@dir, "runtime/events/activity.jsonl"))
+    audit_text = File.read(File.join(@dir, ".master/audit.ndjson"))
+    [activity_text, audit_text].each do |persisted|
+      refute_includes persisted, path
+      refute_includes persisted, content
+      refute_includes persisted, prompt
+      refute_includes persisted, "alex/source.rb"
+      assert_includes persisted, Digest::SHA256.hexdigest(path)
+      assert_includes persisted, Digest::SHA256.hexdigest(content)
+      assert_includes persisted, Digest::SHA256.hexdigest(prompt)
+    end
+
+    activity = log_lines("runtime/events/activity.jsonl").last
+    audit = log_lines(".master/audit.ndjson").last
+    [activity, audit].each do |record|
+      assert_equal "write_file", record["tool"]
+      assert_equal "write", record["op"]
+      assert_equal content.bytesize, record["bytes"]
+      assert_match(/\\A[0-9a-f]{64}\\z/, record["path_digest"])
+      assert_match(/\\A[0-9a-f]{64}\\z/, record["content_digest"])
+      assert_match(/\\A[0-9a-f]{64}\\z/, record["prompt_digest"])
+    end
+  end
+
   def test_publish_required_persists_before_dispatching_subscribers
     observed_record = nil
     @bus.subscribe("critical:before") do |_event|

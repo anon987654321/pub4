@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "monitor"
+require_relative "event_privacy"
 
 module Master
   module Trace
@@ -166,7 +167,7 @@ module Master
       end
 
       def persist_required_event(event, payload)
-        safe_payload = Master::Ground::Redactor.payload(payload)
+        safe_payload = Master::Ground::Redactor.payload(Master::Trace::EventPrivacy.persisted(event, payload))
         append_required(@event_log, event, safe_payload)
         if @evidence_log&.operational?(event)
           append_required(@evidence_log, event, safe_payload)
@@ -187,7 +188,7 @@ module Master
       end
 
       def persist_event(event, payload)
-        safe_payload = Master::Ground::Redactor.payload(payload)
+        safe_payload = Master::Ground::Redactor.payload(Master::Trace::EventPrivacy.persisted(event, payload))
         @event_log.append(event, safe_payload)
         @evidence_log&.append(event, safe_payload) if @evidence_log&.operational?(event)
       rescue StandardError => e

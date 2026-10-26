@@ -5,6 +5,7 @@ require "fileutils"
 require "json"
 require "securerandom"
 require "time"
+require_relative "event_privacy"
 
 module Master
   module Trace
@@ -193,12 +194,14 @@ module Master
 
         private
 
-        # The bus stamps its own `ts` (milliseconds since boot) and the raw
-        # conversation id; neither belongs in a log read across processes, so
-        # the wall clock and the session digest take their places.
+        # The bus sends raw payloads to trusted in-process subscribers. This
+        # private file is still durable storage, so it uses the same privacy
+        # transform as the activity log rather than persisting arguments.
         def append(event_data)
-          fields = event_data.except(:tool, :ts, :conversation).transform_values { |v| v.to_s[0, MAX_VAL] }
-          record = { ts: Time.now.utc.iso8601, session: Log.session, tool: event_data[:tool] }.merge(fields)
+          safe = EventPrivacy.persisted("tool:before", event_data)
+          fields = safe.except(:tool, :ts, :conversation)
+          tool = safe[:tool] || "unknown"
+          record = { ts: Time.now.utc.iso8601, session: Log.session, tool: tool }.merge(fields)
           Master::Trace::Telemetry.span("audit.append", tool: event_data[:tool].to_s) do
             @mutex.synchronize do
               Log.append_jsonl(@path, record, max_bytes: MAX_BYTES, mode: 0o600, directory_mode: 0o700)
