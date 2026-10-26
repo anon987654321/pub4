@@ -492,6 +492,23 @@ module Master
           @coverage_reporter&.call(target, pass)
           start_pass_transaction(files:, target:, pass:, transaction_id:, run_id:)
           begin_assessment_pass(pass, files)
+          stale_plan_paths = @assessment_mutex.synchronize do
+            Array(@assessment_observation && @assessment_observation[:stale_plan_paths]).dup
+          end
+          if stale_plan_paths.any?
+            @assessment_mutex.synchronize { @assessment_observation = nil }
+            @committer.abort_transaction!
+            @bus&.publish(
+              "fix_loop:plan_stale_before_pass",
+              pass:, files: stale_plan_paths.first(20),
+              plan_digest: @assessment_plan&.digest,
+            )
+            return PassResult.new(
+              status: :continue,
+              consecutive_clean: 0,
+              message: "source signature changed after plan capture; refreshed plan required before repair"
+            )
+          end
           found, streamed = observe_pass(files, target, pass, deadline)
 
           visual, opportunities, found = guarded(:evidence, pass, [nil, nil, found]) do
@@ -550,11 +567,16 @@ module Master
 
           paths = Array(files).map { |path| File.expand_path(path) }.uniq.sort
           signatures = paths.to_h { |path| [path, assessment_signature(path)] }
+          planned = @assessment_plan.source_signatures.to_h do |relative, signature|
+            [File.expand_path(relative, @assessment_plan.root), signature]
+          end
+          stale_plan_paths = paths.select { |path| planned[path] != signatures[path] }
           @assessment_mutex.synchronize do
             @assessment_observation = {
               pass: Integer(pass),
               files: paths,
               signatures:,
+              stale_plan_paths: stale_plan_paths.freeze,
               scanned: Set.new,
               refused: {},
               findings: Hash.new { |hash, key| hash[key] = [] },
