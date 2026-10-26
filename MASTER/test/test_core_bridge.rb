@@ -58,18 +58,20 @@ class CoreBridgeTest < Minitest::Test
     end
   end
 
-  def test_trace_failed_mission_is_terminal_not_auto_deferred
+  def test_trace_failed_mission_is_terminal_unknown_outcome_not_auto_deferred
     mission = Object.new
-    mission.define_singleton_method(:fail!) { |error| @failure = error }
+    mission.define_singleton_method(:finish!) { |state:, summary:| @finished = [state, summary] }
     mission.define_singleton_method(:defer!) { |**| flunk("ambiguous side effects must not auto-continue") }
-    mission.define_singleton_method(:block!) { |**| flunk("trace failure is a terminal execution error") }
+    mission.define_singleton_method(:fail!) { |*| flunk("unknown outcome must not be collapsed into generic failure") }
+    mission.define_singleton_method(:block!) { |**| flunk("trace failure is not a policy block") }
 
     done = Master::Core::Fold::Done.new(
       reason: :trace_failed, turns: 1, summary: "after-event persistence failed"
     )
     Master::CLI::CoreBridge.settle_mission(mission, done)
 
-    assert_equal "after-event persistence failed", mission.instance_variable_get(:@failure)
+    assert_equal ["unknown_outcome", "after-event persistence failed"],
+                 mission.instance_variable_get(:@finished)
   end
 
   def test_cancelled_fold_is_persisted_as_terminal_mission_state
