@@ -222,7 +222,7 @@ module Master
       SKILL_STATES = %i[unreviewed candidate approved deprecated blocked invalid].freeze
       SKILL_RISKS = %i[unknown low medium high critical].freeze
       SKILL_VERSION = /\A\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?\z/
-      REFERENCE = /\A[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,239}\z/
+      REFERENCE = %r{\A[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,239}\z}
       SKILL_DECLARATION_KEYS = %w[schema_version version status risk required_capabilities laws fixtures provenance].freeze
 
       SkillContract = Data.define(
@@ -355,7 +355,7 @@ module Master
           scope_digest = Digest::SHA256.hexdigest(scope.to_s) unless scope.nil? || scope.to_s.empty?
           new(
             effect_id:, turn:, verb: effect.verb, capability: effect.capability, operation:,
-            parent_effect_id:, checkpoint_id:, run_id:, attempt_id:, mission_id:, scope_digest,
+            parent_effect_id:, checkpoint_id:, run_id:, attempt_id:, mission_id:, scope_digest:,
             idempotency_key:, deadline_at:, reversibility:
           )
         end
