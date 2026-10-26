@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "time"
+require_relative "lane_reply"
 
 module Master
   module Io
@@ -40,18 +41,37 @@ module Master
         [val, skip_ttl_ms].min
       end
 
+      # A later deadline extends a park and an earlier one never shortens it, so
+      # a 30s blip after a stated six-hour reset does not bring the lane back early.
       def skip!(model, reason:, category: nil)
         cat = category&.to_sym
         return if cat && !SKIP_CATEGORIES.include?(cat)
 
-        ttl = TRANSIENT_CATEGORIES.include?(cat) ? transient_skip_ttl_ms : skip_ttl_ms
+        now_ms = (Process.clock_gettime(Process::CLOCK_REALTIME) * 1000).round
+        ttl = ttl_ms(category: cat, reason: reason.to_s, now_ms:)
         return if ttl <= 0 || model.to_s.empty?
 
-        until_ms = (Process.clock_gettime(Process::CLOCK_REALTIME) * 1000).round + ttl
         @mutex.synchronize do
+          held = @skips[model.to_s]
+          until_ms = [now_ms + ttl, held && held[:until_ms] > now_ms ? held[:until_ms] : 0].max
           @skips[model.to_s] = { until_ms:, reason: reason.to_s, category: cat&.to_s }
         end
       end
+
+      # The wait the provider stated wins. A rate limit that states none is
+      # parked like a transient failure: the flat ten minutes over-parked a 429
+      # that asked for seconds and under-parked a daily quota that asked for hours.
+      def ttl_ms(category:, reason:, now_ms:)
+        stated = LaneReply.stated_wait(reason, now_ms / 1000.0) || LaneReply.daily_reset(reason, now_ms / 1000.0)
+        return stated.clamp(1, LaneReply::MAX_WAIT_S) * 1000 if stated&.positive?
+        return transient_skip_ttl_ms if TRANSIENT_CATEGORIES.include?(category) || category == :rate_limit
+
+        skip_ttl_ms
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ModelSkipCache.ttl_ms")
+        skip_ttl_ms
+      end
+      private_class_method :ttl_ms
 
       def skipped?(model)
         entry = @mutex.synchronize { @skips[model.to_s] }
@@ -63,6 +83,11 @@ module Master
           return false
         end
         true
+      end
+
+      # Epoch milliseconds the model's park ends, nil when it is not parked.
+      def skipped_until_ms(model)
+        @mutex.synchronize { @skips[model.to_s]&.dig(:until_ms) }
       end
 
       def skip_reason(model)

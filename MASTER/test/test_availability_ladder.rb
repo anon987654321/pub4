@@ -65,6 +65,19 @@ class AvailabilityLadderTest < Minitest::Test
     end
   end
 
+  def test_failures_older_than_the_window_stop_counting
+    Dir.mktmpdir do |dir|
+      now = Time.utc(2026, 10, 26, 7, 0, 0)
+      health = Master::CLI::Routing::ProviderHealth.new(path: File.join(dir, "health.ndjson"), now: -> { now })
+      4.times { health.record(model: "old", status: :timeout, at: now - 3600) }
+      4.times { health.record(model: "new", status: :timeout, at: now - 60) }
+
+      refute health.unhealthy?("old"), "an hour-old outage no longer excludes the lane"
+      assert_in_delta 1.0, health.score("old"), 0.001
+      assert health.unhealthy?("new")
+    end
+  end
+
   def test_custom_config_can_tighten_dispatch_deadline
     subject = policy("dispatch_deadline_s" => 90)
 

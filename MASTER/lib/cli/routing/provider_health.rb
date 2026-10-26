@@ -14,6 +14,7 @@ module Master
         SUCCESS_BONUS = 0.03
         MIN_SCORE = 0.05
         MAX_SCORE = 1.25
+        WINDOW_S = 900
         MAX_BYTES = Master::Trace::Log::Event::MAX_BYTES
         FAILURES = %w[failure timeout rate_limit provider_error quota_exceeded canary_validation_failure
                       canary_failure].freeze
@@ -43,17 +44,14 @@ module Master
           event
         end
 
+        # Only the last WINDOW_S of outcomes count. The score used to fold every
+        # event the log still held, so four net failures pinned a lane at
+        # MIN_SCORE, unhealthy? dropped it from every route, and with no calls it
+        # could never earn the +0.03s back. An idle lane now returns to neutral.
         def score(model)
-          events_for(model.to_s).reduce(1.0) do |score, event|
-            case event["status"].to_s
-            when "success"
-              [score + SUCCESS_BONUS, MAX_SCORE].min
-            when *FAILURES
-              [score - FAILURE_PENALTY, MIN_SCORE].max
-            else
-              score
-            end
-          end
+          cutoff = @now.call.to_f - WINDOW_S
+          recent = events_for(model.to_s).select { |event| event_time(event).to_f >= cutoff }
+          recent.reduce(1.0) { |score, event| scored(score, event["status"].to_s) }
         end
 
         def unhealthy?(model) = score(model) <= MIN_SCORE
@@ -101,6 +99,13 @@ module Master
         end
 
         private
+
+        def scored(score, status)
+          return [score + SUCCESS_BONUS, MAX_SCORE].min if status == "success"
+          return [score - FAILURE_PENALTY, MIN_SCORE].max if FAILURES.include?(status)
+
+          score
+        end
 
         # ModelRouter#preferred and #fallback_chain both call score per
         # candidate, and a single turn's routing touches a dozen or more
