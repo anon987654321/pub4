@@ -22,6 +22,7 @@ module Master
 
           resumed = resume_active_transaction(journal:, run_id:, start_pass:)
           return finish_run(resumed, target, run_id, mission:, requested:) if resumed.err?
+          return finish_run(cancellation_terminal, target, run_id, mission:, requested:) if cancellation_requested?
 
           remaining = repair_seconds_left(journal)
           spent = budget_spent_before_pass(journal, resumed.value!) unless remaining.positive?
@@ -40,10 +41,14 @@ module Master
             start_pass: resumed.value!, run_id:, wishlist_proposals: [],
             resume_state: journal["resumed"] ? journal["pass_state"] : nil
           )
+          return finish_run(cancellation_terminal, target, run_id, mission:, requested:) if cancellation_requested? ||
+                                                                                         terminal_state_for(result) == :cancelled
           result = verify_incremental_scope(
             result, incremental:, journal:, target:, files:, max_passes:, deadline:, budget_seconds:, run_id:
           )
+          return finish_run(cancellation_terminal, target, run_id, mission:, requested:) if cancellation_requested?
           result = reflect_then_continue(result, files:, target:, max_passes:, budget_seconds:, run_id:)
+          result = cancellation_terminal if cancellation_requested? && terminal_state_for(result) == :done
           finish_run(result, target, run_id, mission:, requested:)
         end
 
