@@ -442,7 +442,7 @@ Repairs committed in this batch include:
   responses independent of account existence. Shared CSP nonce initializers exist, but real
   response headers/enforcement and targeted `html_safe` data-flow review remain unverified.
   Re-test the actual production boundary; do not close this item from source inspection alone.
-- [ ] Verify model-pool selection and fallback on the exact current HEAD with Ollama unavailable or quota-dead, each actually configured provider, and at least one healthy fallback. Exercise `test_fix_fresh_checkout_models.rb`, `test_compute_pool.rb`, `test_fallback_chain.rb`, and `test_lane_pool.rb`; record the exact test output. Check that stale saved-model pins and unreachable local/cloud lanes cannot beat a live lane, and that one unhealthy provider cannot make the pool appear healthy. These cases currently exist as source/tests, not as a run performed for this reconciliation.
+- [ ] Verify model-pool selection and fallback on the exact current HEAD with Ollama unavailable or quota-dead, each actually configured provider, and at least one healthy fallback. Exercise `test_route_policy.rb`, `test_lane_selection.rb`, `test_fix_fresh_checkout_models.rb`, `test_compute_pool.rb`, `test_fallback_chain.rb`, and `test_lane_pool.rb`; record exact output on MASTER's pinned Ruby. The current refactor extracted `ModelRouter::Selection` and pure `RoutePolicy`; source-level ownership and policy fixtures are present, but the integrated suite has not run in this session. Check that stale saved-model pins and unreachable local/cloud lanes cannot beat a live lane, and that one unhealthy provider cannot make the pool appear healthy. Keep this item open until live tests prove it.
 - [ ] Benchmark RubyLLM routing/provider gains using representative workloads: latency, success
   rate, token/context use, cost, retries, circuit breakers, and fallback quality. Keep
   measurements per provider/model and distinguish observed values from estimates.
@@ -469,9 +469,13 @@ Repairs committed in this batch include:
   reader-singularity/law-trace checks, and then a bounded suite before closing any part of this
   work. The full LawRegistryAudit reconciliation and FixLoop/RepairLoop/Kernel ownership analysis
   remain open, including the primitive `Master::Fix::Laws::LAWS` scope map and proof of any
-  `Kernel#fix` reachability claim. Also reconcile the historical /fix `--dry-run` zero-proposal
-  failure report with current behavior; do not infer it is fixed from changed source or old test
-  notes without a current regression run.
+  `Kernel#fix` reachability claim. The repair loop's terminalization, lifecycle and pass execution
+  are now separate collaborators, and the model route policy is pure; still run
+  `test_fix_terminal_vocabulary.rb`, `test_fix_protocol.rb`, `test_execution_trace.rb`,
+  `test_reliability_kernel.rb`, `test_fix_convergence.rb` and the integrated route suites on
+  MASTER's pinned Ruby. Do not infer completion from these source changes or fixtures alone.
+  Also reconcile the historical /fix `--dry-run` zero-proposal failure report with current
+  behavior; do not infer it is fixed without a current regression run.
 - [ ] Re-run the four-tree performance sweep with before/after evidence: boot, CLI response, web
   first paint and interaction latency, JS/CSS payloads, memory/CPU, background work, and Dilla
   render time. Avoid claims based only on source size or unrepresentative local machines.

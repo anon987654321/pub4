@@ -80,13 +80,22 @@ but it is a preflight stage, not a silent downgrade to dry-run. Explicit
 
 The architectural boundary matters: `Core::Fold` governs the general model-effect
 loop, while `/fix` owns repository repair and convergence. They share constitutional
-principles but are not yet one implemented coordinator. The repair path currently
-has a `FixLoop`, an inner `RepairLoop`, a primitive `Kernel`, durable mission/run
-state and a disk-backed `Transaction`. Their ownership is under review; none is
-safe to delete or merge based on its name alone. The target is one repair
-coordinator, one scanner/finding contract, one transaction path and one operational
-check runner, preserving existing rollback and recovery behavior. This is a
-migration target, not a claim that consolidation is complete.
+principles but are not the same workflow. `FixLoop` remains the public repair
+coordinator and still uses the existing `RepairLoop`, primitive `Kernel`, durable
+`Mission`/`RunJournal`, and disk-backed `Transaction`; their recovery and rollback
+contracts are not being replaced by another runner or ledger.
+
+The coordinator is split by responsibility without changing its public entry
+point: `FixLoop::Lifecycle` owns journal resume, incremental-scope proof and
+checkpoint restoration; `FixLoop::PassExecution` owns bounded repair passes,
+convergence and structural follow-ups; `FixLoop::Completion` owns gap-aware
+terminalization, mission updates and outcome receipts. The pure
+`Fix::OutcomePolicy` is the shared source for terminal states, result-category
+mapping and measured repair outcomes used by the loop, protocol and review
+scorecard. These modules preserve one coordinator and the existing journal and
+transaction paths; they are not competing workflows. Further consolidation of
+`RepairLoop`, `Kernel`, `Mission`, `RunJournal` and `Transaction` still requires
+caller tracing and explicit rollback/restart/delivery proof.
 
 A requested repair starts by inventorying its eligible corpus, refreshing the
 static reference graph and refusing to proceed if an eligible source could not
@@ -281,7 +290,7 @@ been executed in the pinned runtime for this change.
 
 ## Model pool
 
-The router discovers reachable models from the configured tiers, local Ollama installations, hosted OpenAI-compatible endpoints and provider catalogs. All requests still pass through MASTER's existing fallback, budget and provider-health policies; adding a gateway does not bypass those controls.
+The router discovers reachable models from configured tiers, local Ollama installations, hosted OpenAI-compatible endpoints and provider catalogs. `ModelRouter` delegates candidate selection to `model_router/selection.rb`; deterministic `RoutePolicy` decides from a supplied snapshot of reachable, parked, usable, recently failed and operation-floor candidates without performing I/O. Provider availability, health, quota, compute ranking and existing lane ordering remain explicit collaborators, so one failed or parked lane cannot silently become the whole policy. The focused policy fixtures live in `test/test_route_policy.rb`; runtime routing still needs verification against the configured providers and MASTER's pinned Ruby. All requests retain the existing budget, provider-health and fallback controls.
 
 An OpenAI-compatible gateway such as a local freellmpool instance is opt-in:
 
