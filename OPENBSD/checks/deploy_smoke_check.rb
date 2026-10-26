@@ -97,7 +97,7 @@ def check_master_rc(failures, rc_text = (File.read(MASTER_RC) if File.file?(MAST
 
   requests = warmup_requests(rc_text)
   failures << "rc.d/master: no warmup request to the local port" if requests.empty?
-  unless requests.any? { |path, _| public_paths.include?(path.split("?").first) }
+  unless requests.any? { |request| public_paths.include?(request.first.split("?").first) }
     failures << "rc.d/master: no warmup request asks a path AuthTier serves without a token (#{public_paths.join(' ')})"
   end
 

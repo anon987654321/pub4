@@ -127,7 +127,9 @@ def doas_run(*command)
   out, status = Open3.capture2e("doas", "-n", *command)
 
   status.success? ? out : nil
-rescue Errno::ENOENT
+rescue Errno::ENOENT => e
+  warn "config-drift: doas unavailable (#{e.message}); live files read as unreadable" unless @doas_missing_reported
+  @doas_missing_reported = true
   nil
 end
 
