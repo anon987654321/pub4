@@ -103,9 +103,10 @@ module Master
         DEFECT_ERRORS = [NameError, TypeError].freeze
         STAGE_ALIASES = { "converge" => "fix", "council" => "critique" }.freeze
 
-        def call(target: nil, apply: nil, critique: nil, aesthetic: true, only: nil)
+        def call(target: nil, apply: nil, critique: nil, aesthetic: true, only: nil, cancellation: nil)
           resolved = resolve_target(target)
           @resolved = resolved
+          @cancellation = cancellation
           posture = Master::Ground::ModePosture.current(root: @root)
           @only = normalize_stages(only)
           apply = default_apply?(posture) if apply.nil?
@@ -463,13 +464,23 @@ def default_apply?(*) = false
           state && state != :done && Master::Fix::FixLoop::TERMINAL_STATES.include?(state)
         end
 
+        def run_fix_loop(abs)
+          parameters = @fix_loop.method(:run).parameters
+          supports_cancellation = parameters.any? do |kind, name|
+            kind == :keyrest || (%i[key keyreq].include?(kind) && name == :cancellation)
+          end
+          options = { requested: true }
+          options[:cancellation] = @cancellation if supports_cancellation
+          @fix_loop.run(abs, **options)
+        end
+
         def run_fix(abs)
           # On vm23 the control plane shares this process and owns Git sync + deploy.
           # Claim the same execution slot around an interactive /fix so the control
           # plane cannot fetch, rebase or deploy while the fix loop is mutating main.
           claimed = Master::Ops::LoopOwner.with_claim("fix") do
             head = git.head
-            result = @fix_loop.run(abs, requested: true)
+            result = run_fix_loop(abs)
             fix_verdict(result, fix_commits_since(head))
           end
           return claimed unless claimed == false
