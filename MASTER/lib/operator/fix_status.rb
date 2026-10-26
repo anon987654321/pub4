@@ -7,6 +7,7 @@ require_relative "../io/lane_quota"
 require_relative "../io/lane_health"
 require_relative "../io/lane_selection"
 require_relative "../boot/paths"
+require_relative "../fix/run_journal"
 
 module Operator
   # One screen about /fix, read from what /fix already writes: the run journal
@@ -32,6 +33,7 @@ module Operator
       @trees = trees.map(&:to_s)
       @now = now
       @read_errors = {}
+      @run_journal = Master::Fix::RunJournal.new(root: File.join(@root, "MASTER"))
     end
 
     def payload
@@ -91,6 +93,7 @@ module Operator
                "files #{row[:files]} pid #{row[:pid]}#{row[:alive] ? " alive" : ""} started #{row[:started]}"
         out << "    result: #{row[:message]}" unless row[:message].empty?
         out << "    receipt: #{row[:receipt]}"
+        out << "    assessment: #{row[:assessment_proof]}"
         out << "    finished: #{row[:finished]}" unless row[:finished].empty?
       end
       mission = data[:mission]
@@ -156,7 +159,27 @@ module Operator
         finished: run["finished_at"].to_s,
         message: run["message"].to_s.gsub(/\s+/, " ").strip[0, 180],
         receipt: receipt_summary(run["evidence"]),
+        assessment_proof: assessment_proof_summary(run),
       }
+    end
+
+    # Assessment integrity is read through the same verifier that /fix uses
+    # before DONE. A complete matrix is distinct from an intact but incomplete one.
+    def assessment_proof_summary(run)
+      receipt = run["assessment_receipt"]
+      return "not recorded" unless receipt.is_a?(Hash)
+
+      verification = @run_journal.verify_assessment_report(run["id"])
+      state = verification["status"].to_s
+      return "unverified (#{state})" unless state == "verified"
+
+      matrix = verification["matrix_status"].to_s
+      digest = verification["sha256"].to_s[0, 12]
+      return "verified but matrix=#{matrix} sha256=#{digest}" unless matrix == "complete"
+
+      "verified complete sha256=#{digest}"
+    rescue StandardError => e
+      "unavailable (#{e.class})"
     end
 
     # The receipt is convergence evidence, not proof of deployment, playback or
