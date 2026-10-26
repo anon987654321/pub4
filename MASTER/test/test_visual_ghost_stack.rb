@@ -197,17 +197,15 @@ class VisualGhostStackContractTest < Minitest::Test
     surface = Deploy::GeometryProbe::Surface.new(app: "master", label: "chat", path: "/", viewport: "mobile", port: 1)
     cdp = FakeCdp.new
     probe = Deploy::GeometryProbe
-    captures = probe.stub(:with_browser, ->(**, &blk) { blk.call(cdp) }) do
-      probe.stub(:walk, { "elements" => [] }) do
-        probe.stub(:ok?, true) do
-          Deploy::CompositionProbe.stub(:capture, []) do
-            Deploy::MobileJourneyProbe.stub(:run, []) do
-              Deploy::WebPlatformProbe.stub(:run, {}) { pass.send(:capture_surfaces, [surface], pass: 1) }
-            end
-          end
-        end
-      end
-    end
+    stubs = [
+      [probe, :with_browser, ->(**, &blk) { blk.call(cdp) }],
+      [probe, :walk, { "elements" => [] }],
+      [probe, :ok?, true],
+      [Deploy::CompositionProbe, :capture, []],
+      [Deploy::MobileJourneyProbe, :measure, { "actions" => [] }],
+      [Deploy::WebPlatformProbe, :run, {}],
+    ]
+    captures = with_stubs(stubs) { pass.send(:capture_surfaces, [surface], pass: 1) }
 
     assert_equal 1, captures.size
     assert File.file?(captures.first.dig(:visual_evidence, :ghost, :screenshot))
@@ -224,5 +222,10 @@ class VisualGhostStackContractTest < Minitest::Test
      "L | registration grid", "L | 2x focus registration", "L | squint composition"].each do |label|
       assert_includes html, "<figcaption>#{label}</figcaption>"
     end
+  end
+
+  # Each [object, method, value] stubbed around the next, the first outermost.
+  def with_stubs(stubs, &body)
+    stubs.reverse.reduce(body) { |inner, (object, name, value)| -> { object.stub(name, value) { inner.call } } }.call
   end
 end

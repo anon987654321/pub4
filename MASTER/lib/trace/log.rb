@@ -28,12 +28,15 @@ module Master
 
       # A full log is renamed, then compacted in place to its newest bounded tail.
       # Renaming alone does not free disk blocks when an old multi-GB log exists.
-      def self.rotate(path, max_bytes)
+      # An appender rotates early to leave room for its next line, but the rotated
+      # generation keeps its whole cap (keep_bytes); compacting it to the early
+      # threshold would drop every record larger than half the cap.
+      def self.rotate(path, max_bytes, keep_bytes: max_bytes)
         return unless File.exist?(path) && File.size(path) > max_bytes
 
         rotated = "#{path}.1"
         File.rename(path, rotated)
-        compact_rotated(rotated, max_bytes)
+        compact_rotated(rotated, keep_bytes)
       rescue SystemCallError => e
         Master::Ground::Swallow.log(e, context: "Trace::Log.rotate", path:)
       end
@@ -71,10 +74,11 @@ module Master
           end
 
           attempts = 0
+          line_bytes = line.bytesize
           loop do
-            rotate(path, [limit - line.bytesize, 0].max)
+            rotate(path, [limit - line_bytes, 0].max, keep_bytes: limit)
             size = File.file?(path) ? File.size(path) : 0
-            if size + line.bytesize > limit
+            if size + line_bytes > limit
               unless attempts.zero? && reclaim(path)
                 raise IOError, "JSONL rotation failed to honor #{limit}-byte cap"
               end
@@ -86,7 +90,7 @@ module Master
             begin
               File.open(path, File::WRONLY | File::CREAT | File::APPEND, mode) do |io|
                 offset = 0
-                while offset < line.bytesize
+                while offset < line_bytes
                   written = io.write(line.byteslice(offset..))
                   raise IOError, "JSONL append wrote no bytes" unless written&.positive?
 

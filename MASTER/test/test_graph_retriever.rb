@@ -19,13 +19,23 @@ class TestGraphRetriever < Minitest::Test
     end
   end
 
-  def test_ranks_neighbours_by_hop_distance
-    root = "/repo"
-    graph = FakeGraph.new(root, "a.rb" => ["b.rb"], "b.rb" => ["c.rb"])
-    retriever = Master::Review::GraphRetriever.new(reference_graph: graph, root:)
+  # Neighbours must exist on disk: the retriever drops pseudo-nodes and stale paths.
+  def with_files(*names)
+    root = Dir.mktmpdir("graph-retriever")
+    names.each { |name| File.write(File.join(root, name), "") }
+    yield root
+  ensure
+    FileUtils.rm_rf(root) if root
+  end
 
-    result = retriever.neighbors(["#{root}/a.rb"], hops: 2)
-    assert_equal %w[b.rb c.rb], result.first(2)
+  def test_ranks_neighbours_by_hop_distance
+    with_files("a.rb", "b.rb", "c.rb") do |root|
+      graph = FakeGraph.new(root, "a.rb" => ["b.rb"], "b.rb" => ["c.rb"])
+      retriever = Master::Review::GraphRetriever.new(reference_graph: graph, root:)
+
+      result = retriever.neighbors(["#{root}/a.rb"], hops: 2)
+      assert_equal %w[b.rb c.rb], result.first(2)
+    end
   end
 
   def test_ignores_pseudo_nodes_from_reference_graph
@@ -43,12 +53,13 @@ class TestGraphRetriever < Minitest::Test
   end
 
   def test_excludes_seeds_and_caps_limit
-    root = "/repo"
-    graph = FakeGraph.new(root, "a.rb" => %w[b.rb c.rb d.rb])
-    retriever = Master::Review::GraphRetriever.new(reference_graph: graph, root:)
+    with_files("a.rb", "b.rb", "c.rb", "d.rb") do |root|
+      graph = FakeGraph.new(root, "a.rb" => %w[a.rb b.rb c.rb d.rb])
+      retriever = Master::Review::GraphRetriever.new(reference_graph: graph, root:)
 
-    result = retriever.neighbors(["#{root}/a.rb"], hops: 1, limit: 2)
-    assert_equal 2, result.size
-    refute_includes result, "a.rb"
+      result = retriever.neighbors(["#{root}/a.rb"], hops: 1, limit: 2)
+      assert_equal 2, result.size
+      refute_includes result, "a.rb"
+    end
   end
 end

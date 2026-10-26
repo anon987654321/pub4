@@ -57,7 +57,7 @@ class TestEventLogRotation < Minitest::Test
       original_open = File.method(:open)
       failed = false
       opener = lambda do |target, *args, **kwargs, &block|
-        if target == path && args.first == "a" && !failed
+        if target == path && args.first.is_a?(Integer) && args.first.anybits?(File::APPEND) && !failed
           failed = true
           raise Errno::ENOSPC
         end
@@ -75,14 +75,15 @@ class TestEventLogRotation < Minitest::Test
     end
   end
 
+  # The tail cut lands inside the older record; only whole JSONL lines survive.
   def test_compact_rotated_keeps_the_newest_bounded_tail
     Dir.mktmpdir do |dir|
       path = File.join(dir, "oversized.jsonl")
-      File.write(path, "abcdefghij")
+      File.write(path, %({"n":1}\n{"n":2}\n))
 
-      Master::Trace::Log.compact_rotated(path, 5)
+      Master::Trace::Log.compact_rotated(path, 10)
 
-      assert_equal "fghij", File.read(path)
+      assert_equal %({"n":2}\n), File.read(path)
     end
   end
 

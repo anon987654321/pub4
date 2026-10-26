@@ -18,8 +18,9 @@ class TestReviewModesEmbeddingsMap < Minitest::Test
     assert_equal "R: hi", modes.wrap("hi", mode: :react)
     assert_equal "D: hi", modes.wrap("hi", mode: "telepathy")
     assert_equal "hi", modes.wrap("hi", mode: "code_agent"), "a mode without a template passes the message through"
-    _, err = capture_io { assert_equal "hi", modes.wrap("hi", mode: "rewoo") }
-    assert_match(/wrap failed/, err)
+    # Dmesg status lines go to stdout, the same stream as every other unit line.
+    out, = capture_io { assert_equal "hi", modes.wrap("hi", mode: "rewoo") }
+    assert_match(/wrap failed/, out)
   ensure
     FileUtils.rm_rf(root)
   end

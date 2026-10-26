@@ -60,9 +60,18 @@ class TestRepoEcology < Minitest::Test
     Dir.mktmpdir("repo_ecology_cache") do |dir|
       # A real repository: the cache key is the commit SHA returned by
       # `git rev-parse HEAD`, not .git/HEAD's mtime. A branch can advance while
-      # .git/HEAD itself remains unchanged.
-      _, status = Open3.capture2e("git", "init", "-q", dir)
+      # .git/HEAD itself remains unchanged. An unborn HEAD has no SHA and is
+      # never cached, so the fixture needs one commit.
+      File.write(File.join(dir, "sample.rb"), "puts :one\n")
+      _output, status = Open3.capture2e("git", "init", "-q", dir)
       assert status.success?, "git init failed in the fixture"
+      _output, status = Open3.capture2e("git", "-C", dir, "add", "sample.rb")
+      assert status.success?
+      _output, status = Open3.capture2e(
+        "git", "-C", dir, "-c", "user.name=Test", "-c", "user.email=test@example.com",
+        "commit", "-qm", "one"
+      )
+      assert status.success?, "git commit failed in the fixture"
 
       first = CountingEcology.new(root: dir)
       first.snapshot
@@ -76,11 +85,11 @@ class TestRepoEcology < Minitest::Test
   def test_co_change_cache_rebuilds_after_head_advances
     Dir.mktmpdir("repo_ecology_cache_refresh") do |dir|
       File.write(File.join(dir, "sample.rb"), "puts :one\n")
-      _, status = Open3.capture2e("git", "init", "-q", dir)
+      _output, status = Open3.capture2e("git", "init", "-q", dir)
       assert status.success?
-      _, status = Open3.capture2e("git", "-C", dir, "add", "sample.rb")
+      _output, status = Open3.capture2e("git", "-C", dir, "add", "sample.rb")
       assert status.success?
-      _, status = Open3.capture2e(
+      _output, status = Open3.capture2e(
         "git", "-C", dir, "-c", "user.name=Test", "-c", "user.email=test@example.com",
         "commit", "-qm", "one"
       )
@@ -92,9 +101,9 @@ class TestRepoEcology < Minitest::Test
       assert_equal 0, cached.instance_variable_get(:@build_count).to_i
 
       File.write(File.join(dir, "sample.rb"), "puts :two\n")
-      _, status = Open3.capture2e("git", "-C", dir, "add", "sample.rb")
+      _output, status = Open3.capture2e("git", "-C", dir, "add", "sample.rb")
       assert status.success?
-      _, status = Open3.capture2e(
+      _output, status = Open3.capture2e(
         "git", "-C", dir, "-c", "user.name=Test", "-c", "user.email=test@example.com",
         "commit", "-qm", "two"
       )

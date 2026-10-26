@@ -25,7 +25,9 @@ class TestVisualAnchorThreading < Minitest::Test
       File.write(path, "a{}\n")
       seen = []
       custody = Object.new
-      custody.define_singleton_method(:verify!) { |anchors: []| seen << anchors && Master::Result.ok(state: :preserved) }
+      custody.define_singleton_method(:verify!) do |anchors: [], committer: nil|
+        seen << anchors && Master::Result.ok(state: :preserved)
+      end
       scanner = Object.new
       scanner.define_singleton_method(:scan) { |_p, laws: nil| Master::Result.ok([]) }
       loop = Master::Fix::RepairLoop.new(law: Struct.new(:id, :severity).new("TEST_RULE", :warning), agent: nil,

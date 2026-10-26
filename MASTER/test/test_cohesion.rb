@@ -324,9 +324,9 @@ end
     swap_census({ "families" => 2, "family_members" => ["lib/cli#scan", "tools#doc"] }) do
       out, = capture_io { Operator::Cohesion.report_arrivals(["lib/cli#scan", "tools#reach"]) }
 
-      assert_includes out, "+ tools#reach"
-      assert_includes out, "the recorded families are gone (tools#doc)"
-      refute_includes out, "+ lib/cli#scan"
+      assert_includes out, "arrived, tools#reach"
+      assert_includes out, "recorded families are gone, tools#doc"
+      refute_includes out, "arrived, lib/cli#scan"
     end
   end
 

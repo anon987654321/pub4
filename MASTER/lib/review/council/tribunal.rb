@@ -52,7 +52,8 @@ module Master
         private
 
         def normalize(value)
-          Array(value).filter_map do |item|
+          # Array() turns a lone Hash into key/value pairs, so one record is wrapped first.
+          (value.is_a?(Hash) ? [value] : Array(value)).filter_map do |item|
             case item
             when Evidence then item
             when Hash then Evidence.new(**symbolize(item))

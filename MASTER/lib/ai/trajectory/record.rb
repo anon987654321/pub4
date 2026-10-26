@@ -74,7 +74,7 @@ module Master
 
             # Reserve room for the new record before appending, so one large record
             # cannot push the active log past its declared cap.
-            Master::Trace::Log.rotate(path, [limit - line.bytesize, 0].max)
+            Master::Trace::Log.rotate(path, [limit - line.bytesize, 0].max, keep_bytes: limit)
             File.open(path, File::WRONLY | File::CREAT | File::APPEND, 0o600) do |io|
               io.write(line)
               io.flush

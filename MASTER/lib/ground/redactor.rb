@@ -12,6 +12,18 @@ module Master
         \A(?:password|passwd|secret|token|api[_-]?key|authorization|cookie|private[_-]?key)\z
       /ix
 
+      # Core String methods, captured at load. Redaction runs on the dependency
+      # trace path, and a later prepend on String would otherwise hand
+      # instance_method the instrumented method that calls back into #text.
+      STRING_BYTESIZE = String.instance_method(:bytesize)
+      STRING_BYTESLICE = String.instance_method(:byteslice)
+      STRING_GETBYTE = String.instance_method(:getbyte)
+
+      STRING_CONCAT = String.instance_method(:+)
+      STRING_LENGTH = String.instance_method(:length)
+      STRING_SLICE = String.instance_method(:[])
+      STRING_COPY = String.instance_method(:initialize_copy)
+
       DMESG_MAX = 240
       SHA256_DIGEST = /\A[0-9a-f]{64}\z/i
       MAX_DEPTH = 16
@@ -33,10 +45,10 @@ module Master
 
         while (match = next_secret_match(out, offset))
           start, finish = match
-          left = String.instance_method(:byteslice).bind(out).call(0, start)
-          right = String.instance_method(:byteslice).bind(out).call(finish, String.instance_method(:bytesize).bind(out).call - finish)
-          out = String.instance_method(:+).bind(left).call("[REDACTED]")
-          out = String.instance_method(:+).bind(out).call(right)
+          left = STRING_BYTESLICE.bind(out).call(0, start)
+          right = STRING_BYTESLICE.bind(out).call(finish, STRING_BYTESIZE.bind(out).call - finish)
+          out = STRING_CONCAT.bind(left).call("[REDACTED]")
+          out = STRING_CONCAT.bind(out).call(right)
           offset = start + 10
         end
 
@@ -56,9 +68,9 @@ module Master
       def self.find_prefixed_secret(value, offset, prefix)
         cursor = offset
         while (start = literal_index(value, prefix, cursor))
-          finish = start + String.instance_method(:bytesize).bind(prefix).call
+          finish = start + STRING_BYTESIZE.bind(prefix).call
           return [start, secret_run_end(value, finish, SECRET_ALPHANUMERIC_DASH)] if secret_run_length(value, finish, SECRET_ALPHANUMERIC_DASH) >= 16
-          cursor = start + String.instance_method(:bytesize).bind(prefix).call
+          cursor = start + STRING_BYTESIZE.bind(prefix).call
         end
         nil
       end
@@ -67,7 +79,8 @@ module Master
         cursor = offset
         while (start = literal_index(value, "bearer", cursor, ignore_case: true))
           separator = start + 6
-          separator += 1 while separator < String.instance_method(:bytesize).bind(value).call && ASCII_WHITESPACE.include?(String.instance_method(:getbyte).bind(value).call(separator))
+          size = STRING_BYTESIZE.bind(value).call
+          separator += 1 while separator < size && ASCII_WHITESPACE.include?(STRING_GETBYTE.bind(value).call(separator))
           length = secret_run_length(value, separator, SECRET_BEARER)
           return [start, secret_run_end(value, separator, SECRET_BEARER)] if separator > start + 6 && length >= 16
           cursor = start + 6
@@ -80,15 +93,15 @@ module Master
       # used by the dependency/bootstrap trace path. A call back into #text here
       # turns one secret into an unbounded redaction recursion.
       def self.literal_index(value, needle, offset, ignore_case: false)
-        needle_length = String.instance_method(:bytesize).bind(needle).call
-        limit = String.instance_method(:bytesize).bind(value).call - needle_length
+        needle_length = STRING_BYTESIZE.bind(needle).call
+        limit = STRING_BYTESIZE.bind(value).call - needle_length
         cursor = offset
 
         while cursor <= limit
           matched = true
           needle_length.times do |index|
-            left = String.instance_method(:getbyte).bind(value).call(cursor + index)
-            right = String.instance_method(:getbyte).bind(needle).call(index)
+            left = STRING_GETBYTE.bind(value).call(cursor + index)
+            right = STRING_GETBYTE.bind(needle).call(index)
             if ignore_case
               left -= 32 if left && left >= 97 && left <= 122
               right -= 32 if right && right >= 97 && right <= 122
@@ -106,16 +119,16 @@ module Master
 
       def self.find_plain_secret(value, offset)
         cursor = offset
-        size = String.instance_method(:bytesize).bind(value).call
+        size = STRING_BYTESIZE.bind(value).call
         while cursor < size
-          byte = String.instance_method(:getbyte).bind(value).call(cursor)
+          byte = STRING_GETBYTE.bind(value).call(cursor)
           unless alphanumeric_byte?(byte)
             cursor += 1
             next
           end
 
           start = cursor
-          cursor += 1 while cursor < size && alphanumeric_byte?(String.instance_method(:getbyte).bind(value).call(cursor))
+          cursor += 1 while cursor < size && alphanumeric_byte?(STRING_GETBYTE.bind(value).call(cursor))
           finish = cursor
           return [start, finish] if finish - start >= 32 && word_boundary?(value, start, finish)
         end
@@ -124,8 +137,8 @@ module Master
 
       def self.secret_run_length(value, offset, alphabet)
         cursor = offset
-        size = String.instance_method(:bytesize).bind(value).call
-        while cursor < size && alphabet_byte?(String.instance_method(:getbyte).bind(value).call(cursor), alphabet)
+        size = STRING_BYTESIZE.bind(value).call
+        while cursor < size && alphabet_byte?(STRING_GETBYTE.bind(value).call(cursor), alphabet)
           cursor += 1
         end
         cursor - offset
@@ -155,8 +168,8 @@ module Master
       end
 
       def self.word_boundary?(value, start, finish)
-        !word_byte?(String.instance_method(:getbyte).bind(value).call(start - 1)) &&
-          !word_byte?(String.instance_method(:getbyte).bind(value).call(finish))
+        (start.zero? || !word_byte?(STRING_GETBYTE.bind(value).call(start - 1))) &&
+          !word_byte?(STRING_GETBYTE.bind(value).call(finish))
       end
 
       def self.word_byte?(byte)
@@ -166,7 +179,7 @@ module Master
       def self.plain_string(value)
         string = String === value ? value : value.to_s
         copy = String.allocate
-        String.instance_method(:initialize_copy).bind(copy).call(string)
+        STRING_COPY.bind(copy).call(string)
         copy
       end
 
@@ -263,9 +276,9 @@ module Master
 
       def self.truncate(value)
         text = value.to_s
-        return text if String.instance_method(:length).bind(text).call <= DMESG_MAX
+        return text if STRING_LENGTH.bind(text).call <= DMESG_MAX
 
-        "#{String.instance_method(:[]).bind(text).call(0, DMESG_MAX)}…"
+        "#{STRING_SLICE.bind(text).call(0, DMESG_MAX)}…"
       end
 
       def self.public_error_message

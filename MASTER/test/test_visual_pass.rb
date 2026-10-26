@@ -59,7 +59,7 @@ class VisualPassContractTest < Minitest::Test
         Probe.stub(:walk, { "elements" => [] }) do
           Probe.stub(:ok?, true) do
             Deploy::CompositionProbe.stub(:capture, ->(_cdp, _s, dir:, pass:, limit:) { limits << limit; [] }) do
-              Deploy::MobileJourneyProbe.stub(:run, []) do
+              Deploy::MobileJourneyProbe.stub(:measure, { "actions" => [] }) do
                 Deploy::WebPlatformProbe.stub(:run, {}) { pass.send(:capture_surfaces, [surface], pass: 1) }
               end
             end

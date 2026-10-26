@@ -225,16 +225,25 @@ class WorkflowInferenceTest < Minitest::Test
     args << (critique ? "--critique" : "--no-critique")
 
     Master::CLI::CommandRegistry.stub(:observe, ->(*, **) { "clean -- no violations" }) do
-      Master::CLI::CommandRegistry.dispatch_fix(
-        scanner: FakeScanner.new,
-        fix_loop:,
-        deliberation:,
-        root: File.expand_path("..", __dir__),
-        bus: nil,
-        ctx: { args: args.join(" ") },
-      )
+      # The execution trace reads the whole shared checkout and refuses on any
+      # concurrent edit or uncommitted deletion; these tests are about the
+      # lifecycle a clean trace leads into, and test_execution_trace* own the trace.
+      Master::CLI::CommandRegistry.stub(:steady_trace, CLEAN_TRACE) do
+        Master::CLI::CommandRegistry.dispatch_fix(
+          scanner: FakeScanner.new,
+          fix_loop:,
+          deliberation:,
+          root: File.expand_path("..", __dir__),
+          bus: nil,
+          ctx: { args: args.join(" ") },
+        )
+      end
     end
   end
+
+  CLEAN_TRACE = Master::Fix::ExecutionTrace::Result.new(
+    ok: true, files: 0, bytes: 0, ruby_files: 0, phases: {}, failures: [],
+  )
 
   class FakeDeliberation
     def initialize(asked) = @asked = asked
@@ -259,7 +268,9 @@ class WorkflowInferenceTest < Minitest::Test
   end
 
   class FakeFixLoop
-    def run(_target, **) = Master::Result.ok("fix: nothing to do")
+    # Only a recognised DONE ending counts as a finished repair (Fix::OutcomePolicy).
+    def run(_target, **) = Master::Result.ok("DONE: nothing to do")
+    def last_terminal_state = :done
     def publish_pending! = :nothing_to_publish
 
     def preview(_target)
