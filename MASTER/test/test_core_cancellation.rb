@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class TestCoreCancellation < Minitest::Test
   class NeverProposes
-    def propose(*) = raise("a cancelled Fold must not ask the model for an effect")
+    def propose(_context, verbs:, scope:) = raise("a cancelled Fold must not ask the model for an effect")
   end
 
   class CancellingModel
