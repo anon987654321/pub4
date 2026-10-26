@@ -9,6 +9,19 @@ module Master
       class LawRegistryAudit
         Report = Data.define(:yaml_laws, :registry_ids, :kernel_ids, :lexical_wired, :lexical_unwired,
                              :semantic_only, :structural_unwired, :dep_graph_gaps, :mechanical, :source_drift) do
+          def reconciled?
+            source_drift.values.all?(&:empty?)
+          end
+
+          def reconciliation_errors
+            source_drift.flat_map { |kind, ids| ids.map { |id| "#{kind}: #{id}" } }
+          end
+
+          def assert_reconciled!
+            return true if reconciled?
+
+            raise "Law catalogue is not reconciled: #{reconciliation_errors.join('; ')}"
+          end
           # A clean report is only meaningful when its population is explicit.
           #
           # Counted, never subtracted. A rule may be semantic-only, mechanical-only,
@@ -68,22 +81,13 @@ module Master
         # so principle_map can trace it, and the detector exists once, elsewhere.
         def source_drift(yaml_entries, registry)
           yaml_ids = yaml_entries.map { |rule| key_of(rule) }.to_set
-          laws = law_ids
-          registry_ids = registry.map(&:to_s).map(&:downcase).to_set
-
-          yaml_only = yaml_entries.filter_map do |rule|
-            id = key_of(rule)
-            folded = rule["folded_into"].to_s.downcase
-            next if laws.include?(id) || registry_ids.include?(id)
-            next if !folded.empty? && (laws.include?(folded) || registry_ids.include?(folded))
-
-            rule["id"]
-          end
+          executable_ids = law_ids
+          detector_ids = registry.map(&:to_s).map(&:downcase).to_set
 
           {
-            yaml_only: yaml_only.sort.freeze,
-            law_only: (laws - yaml_ids).sort.freeze,
-            registry_only: (registry_ids - laws).sort.freeze,
+            yaml_only: (yaml_ids - executable_ids - detector_ids).to_a.sort.freeze,
+            law_only: (executable_ids - yaml_ids).to_a.sort.freeze,
+            registry_only: (detector_ids - yaml_ids - executable_ids).to_a.sort.freeze,
           }.freeze
         end
 
