@@ -31,7 +31,7 @@ class TestExecutionContract < Minitest::Test
   def test_effect_envelope_correlates_a_run_without_exposing_arguments_or_scope
     effect = Master::Core::Effect.write("private-name.txt", "private contents")
     envelope = Contract::EffectEnvelope.build(
-      effect:, turn: 2, effect_id: "effect-1", run_id: "run-1",
+      effect:, turn: 2, effect_id: "effect-1", run_id: "run-1", attempt_id: "attempt-1",
       mission_id: "mission-1", scope: "private-workspace/private-name.txt"
     )
     payload = envelope.to_h
@@ -39,6 +39,7 @@ class TestExecutionContract < Minitest::Test
     assert_equal 1, payload[:schema_version]
     assert_equal "effect-1", payload[:effect_id]
     assert_equal "run-1", payload[:run_id]
+    assert_equal "attempt-1", payload[:attempt_id]
     assert_equal "mission-1", payload[:mission_id]
     assert_equal Digest::SHA256.hexdigest("private-workspace/private-name.txt"), payload[:scope_digest]
     refute_includes payload.inspect, "private-name.txt"
@@ -96,7 +97,9 @@ class TestExecutionContract < Minitest::Test
 
   def test_effect_observer_adds_run_identity_and_only_typed_evidence_references
     bus = RecordingBus.new
-    observer = Master::Trace::EffectObserver.new(bus:, run_id: "run-77", mission_id: "mission-77")
+    observer = Master::Trace::EffectObserver.new(
+      bus:, run_id: "run-77", attempt_id: "attempt-77", mission_id: "mission-77"
+    )
     effect = Master::Core::Effect.write("hidden.txt", "sensitive data")
     proof = Contract::EvidenceReference.new(
       id: "proof-77", kind: "test_output", status: :verified, verifier: "focused-test"
@@ -115,6 +118,8 @@ class TestExecutionContract < Minitest::Test
     before, after = bus.events.map(&:last)
     assert_equal "run-77", before[:run_id]
     assert_equal before[:run_id], after[:run_id]
+    assert_equal "attempt-77", before[:attempt_id]
+    assert_equal before[:attempt_id], after[:attempt_id]
     assert_equal "mission-77", before[:mission_id]
     assert_equal [{ id: "proof-77", kind: "test_output", status: :verified, verifier: "focused-test" }],
                  before[:evidence_refs]
