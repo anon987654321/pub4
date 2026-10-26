@@ -116,8 +116,10 @@ the detail is reduced to completed/failed, and read/exec output is represented b
 byte and line counts. Full observations remain only in the local operator transcript.
 This contract now extends to repository transactions and Git delivery: Transaction
 records required before/after events around begin, checkpoint, finalize, rollback,
-release and delivery-state changes. The committer similarly audits the actual Git
-commit and push, and a failed transaction after-record leaves a durable
+release and delivery-state changes. The shared `Master::Io::GitOperations` gateway also emits required lifecycle
+events around mutating Git commands, covering commits and pushes from FixLoop,
+file rename, restructure, delivery recovery, and the direct reset/tag/fetch methods.
+A failed transaction after-record leaves a durable
 `.master/fix_transactions/.pending-<id>` marker that makes recovery stop for manual
 review rather than silently roll back an ambiguous mutation. The persisted shared event
 stream and private tool audit retain categorical labels, identifiers and counts instead
