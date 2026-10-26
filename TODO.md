@@ -101,5 +101,3 @@ source and tests they could not run; this pass is what measures them.
   only through the reviewed, fixture-backed skill contract.
 - [ ] Model-backed evaluation of advice quality on realistic personal-assistance scenarios,
   labelled apart from human review (a seam).
-- [ ] STUDIO billing and clip ledgers (`clips.jsonl`, per-subject `ledger.jsonl`) need an
-  archive/export contract before any rotation; they are cost provenance, not telemetry.

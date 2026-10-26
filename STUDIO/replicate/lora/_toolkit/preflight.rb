@@ -278,7 +278,10 @@ module Preflight
   def sha256(path) = Digest::SHA256.file(path).hexdigest
 
   # One JSON line per paid call, appended where the subject's output lives, so
-  # what a subject has cost is a file read.
+  # what a subject has cost is a file read. Never rotated or truncated: lora.rb
+  # and the render scripts sum it to enforce the spend cap, so dropping old rows
+  # would hand back budget already spent. It grows by about 100 bytes a call
+  # (33 KB per subject by 2026-10); clips.jsonl beside a video is the same record.
   def ledger_append(path, row)
     target = File.expand_path(path)
     raise IOError, "ledger path is a symlink: #{target}" if File.symlink?(target)
