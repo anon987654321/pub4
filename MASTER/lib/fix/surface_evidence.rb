@@ -6,6 +6,7 @@ require "open3"
 require "rbconfig"
 require "set"
 require "time"
+require "yaml"
 
 module Master
   module Fix
@@ -441,13 +442,15 @@ module Master
           )
           command.merge("label" => definition.fetch(:label))
         end
-        failed = outcomes.reject { |row| row["status"] == "passed" }
+        failed = outcomes.select { |row| row["status"] == "failed" }
+        inconclusive = outcomes.select { |row| row["status"] == "inconclusive" }
         evidence = {
           "method" => "target-specific test runner; no shell command interpolation",
           "source_sha256" => source["digest"],
           "commands" => outcomes.map { |row| row.slice("label", "status", "exit_status", "timed_out", "duration_ms", "stdout_sha256", "stderr_sha256", "message") },
         }
         return receipt("violation_found", reason: "one or more test runners failed", evidence:, findings: failed.first(20)) if failed.any?
+        return receipt("inconclusive", reason: "one or more test runners timed out or were unavailable", evidence:, findings: inconclusive.first(20)) if inconclusive.any?
 
         receipt("assessed_clean", evidence:, counts: { "commands" => outcomes.size })
       rescue StandardError => e
@@ -481,7 +484,11 @@ module Master
           ]
           outcome = execute_command(command, chdir: @root, deadline:)
           checked["ruby"] = ruby_paths.size
-          failures << outcome.merge("language" => "ruby") unless outcome["status"] == "passed"
+          if outcome["status"] == "failed"
+            failures << outcome.merge("language" => "ruby")
+          elsif outcome["status"] == "inconclusive"
+            unavailable << "Ruby syntax probe unavailable or timed out"
+          end
         end
 
         erb_paths = @plan.sources.map(&:path).select { |path| File.extname(path).downcase == ".erb" }
@@ -489,18 +496,28 @@ module Master
           loader = 'require "erb"; ARGV.each { |path| begin; source = ERB.new(File.read(path), trim_mode: "-").src; if defined?(RubyVM::InstructionSequence); RubyVM::InstructionSequence.compile(source, path); elsif !require("ripper") || !Ripper.sexp(source); raise SyntaxError, "parse failed"; end; rescue Exception => error; warn "#{path}: #{error.class}: #{error.message}"; exit 1; end }'
           outcome = execute_command([RbConfig.ruby, "-e", loader, *erb_paths.map { |path| File.expand_path(path, @root) }], chdir: @root, deadline:)
           checked["erb"] = erb_paths.size
-          failures << outcome.merge("language" => "erb") unless outcome["status"] == "passed"
+          if outcome["status"] == "failed"
+            failures << outcome.merge("language" => "erb")
+          elsif outcome["status"] == "inconclusive"
+            unavailable << "ERB probe unavailable or timed out"
+          end
         elsif erb_paths.any?
           unavailable << "ERB syntax probe exceeded runtime budget"
         end
 
         js_paths = @plan.sources.map(&:path).select do |path|
-          %w[.js .mjs .cjs .jsx .ts .tsx].include?(File.extname(path).downcase)
+          %w[.js .mjs .cjs].include?(File.extname(path).downcase)
+        end
+        typed_paths = @plan.sources.map(&:path).select do |path|
+          %w[.jsx .ts .tsx].include?(File.extname(path).downcase)
+        end
+        unless typed_paths.empty?
+          unavailable << "#{typed_paths.size} TypeScript/JSX file(s) need a project-aware parser; Node --check is not evidence for these formats"
         end
         if js_paths.any?
           node = executable_path("node")
           unless node
-            unavailable << "#{js_paths.size} JavaScript/TypeScript file(s) found but Node.js is unavailable"
+            unavailable << "#{js_paths.size} JavaScript file(s) found but Node.js is unavailable"
           else
             # Node's --check parser is file-scoped; stop at the budget and report every
             # unvisited file rather than calling a partial sample a full runtime proof.
@@ -509,10 +526,14 @@ module Master
 
               outcome = execute_command([node, "--check", File.expand_path(path, @root)], chdir: @root, deadline:)
               checked["javascript"] += 1
-              failures << outcome.merge("language" => "javascript", "file" => path) unless outcome["status"] == "passed"
+              if outcome["status"] == "failed"
+                failures << outcome.merge("language" => "javascript", "file" => path)
+              elsif outcome["status"] == "inconclusive"
+                unavailable << "#{path}: JavaScript parser unavailable or timed out"
+              end
             end
             if checked["javascript"] < js_paths.size
-              unavailable << "#{js_paths.size - checked["javascript"]} JavaScript/TypeScript file(s) not parsed before budget"
+              unavailable << "#{js_paths.size - checked["javascript"]} JavaScript file(s) not parsed before budget"
             end
           end
         end
@@ -536,7 +557,11 @@ module Master
 
             outcome = execute_command([executable, "-n", File.expand_path(path, @root)], chdir: @root, deadline:)
             checked[shell] += 1
-            failures << outcome.merge("language" => shell, "file" => path) unless outcome["status"] == "passed"
+            if outcome["status"] == "failed"
+              failures << outcome.merge("language" => shell, "file" => path)
+            elsif outcome["status"] == "inconclusive"
+              unavailable << "#{path}: #{shell} parser unavailable or timed out"
+            end
           end
           unavailable << "#{paths.size - checked[shell]} #{shell} script(s) not parsed before budget" if checked[shell] < paths.size
         end
@@ -829,32 +854,12 @@ module Master
           end
       end
 
-      def deployment_surface?
-        target_has_deployment?
-      end
-
-      def selected_apps(app_names)
-        label = @target_label
-        return app_names.map(&:to_s) if label == "RAILS" || label == "OPENBSD" || label.start_with?("OPENBSD/") ||
-          label == "RAILS/__shared" || label.start_with?("RAILS/__shared/")
-        return app_names.map(&:to_s) if label == "RAILS/master" || label.start_with?("RAILS/master/")
-
-        match = label.match(%r{\ARAILS/([^/]+)})
-        match && app_names.map(&:to_s).include?(match[1]) ? [match[1]] : []
-      end
-
       def rails_target?
         @target_label == "RAILS" || @target_label.start_with?("RAILS/")
       end
 
       def deployment_surface?
         target_has_deployment?
-      end
-
-      def runtime_receipt_for_test_target(paths)
-        # Ruby parsing is the portable minimum; Rails targets also get an actual
-        # application boot below. A parser-only pass is labeled as such in evidence.
-        true
       end
 
       def rails_runtime_probes(deadline)
@@ -883,7 +888,11 @@ module Master
             chdir: app_dir, env: { "RAILS_ENV" => "test" }, deadline:
           )
           checked << name
-          failures << row.merge("app" => name) unless row["status"] == "passed"
+          if row["status"] == "failed"
+            failures << row.merge("app" => name)
+          elsif row["status"] == "inconclusive"
+            unavailable << "#{name}: Rails boot probe timed out or was unavailable"
+          end
         end
         unavailable << "Rails app boot budget exhausted" if deadline_remaining(deadline) <= 0 && checked.size < app_targets.size
         { failures:, unavailable:, checked: }
@@ -1068,24 +1077,7 @@ module Master
         deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
       end
 
-      def target_test_paths
-        @target_label.start_with?("RAILS/") ? @files : @files
-      end
-
-      def target_test_files
-        @files.select { |path| File.file?(path) && path.match?(%r{(?:\A|/)(?:test|tests|spec)(?:/|\z)}) ||
-          File.basename(path).match?(/(?:_test|_spec)\.(?:rb|js|ts|jsx|tsx|mjs)\z/) }
-      end
-
       def rails_target? = @target_label == "RAILS" || @target_label.start_with?("RAILS/")
-
-      def deployment_surface?
-        rails_target? || @target_label == "OPENBSD" || @target_label.start_with?("OPENBSD/") ||
-          @plan.sources.any? do |source|
-            File.basename(source.path).match?(/\A(?:Procfile|Dockerfile|compose\.ya?ml|.*deploy.*|.*\.service)\z/i) ||
-              source.path.match?(%r{(?:deploy|deployment|helm|terraform|k8s)/})
-          end
-      end
 
       def selected_apps(app_names)
         label = @target_label
