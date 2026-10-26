@@ -56,7 +56,7 @@ module Master
       # coming back, or the passes ran out. HUMAN_DECISION is a safe halt when a
       # proposed fix is irreversible or spans multiple files. BLOCKED is a halt
       # outside the loop's authority, and VALIDATION_FAILED is a repair the tree refused.
-      # Protocol declares the set; this is its symbol spelling, not a second list.
+      # OutcomePolicy is canonical; Protocol derives its wire spelling from it.
       TERMINAL_STATES = OutcomePolicy::TERMINAL_STATES
       # A pass status that ends the run, and the state it ends in.
       PASS_ENDINGS = { clean: :done, blockers_cleared: :done, validation_failed: :validation_failed,
