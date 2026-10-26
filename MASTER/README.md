@@ -122,11 +122,13 @@ release and delivery-state changes. The shared `Master::Io::GitOperations` gatew
 events around mutating Git commands, covering commits and pushes from FixLoop,
 file rename, restructure, delivery recovery, and the direct reset/tag/fetch methods.
 A failed transaction after-record leaves a durable
-`.master/fix_transactions/.pending-<id>` marker that makes recovery stop for manual
-review rather than silently roll back an ambiguous mutation. The persisted shared event
-stream and private tool audit retain categorical labels, identifiers and counts instead
-of raw prompts, paths, arguments, findings or error text. Live policy subscribers still
-receive their full in-memory payload, which is not written into those durable projections.
+`.master/fix_transactions/.pending-<id>` marker; an unrecorded Git after-event leaves
+`.master/git_mutations/.pending-<id>` and blocks further Git mutations after restart.
+Both require manual review rather than an automatic retry or rollback. The persisted
+shared event stream, private tool audit, and human-readable dmesg projection retain
+categorical labels, identifiers and counts instead of raw prompts, paths, arguments,
+findings or error text. Live policy subscribers still receive their full in-memory
+payload, which is not written into those durable projections.
 
 RunJournal persistence now uses the same strict event adapter: each journal-state
 write has a required before/after pair and a durable `.master/.fix_runs.pending`
