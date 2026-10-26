@@ -300,7 +300,7 @@ module Master
           return self unless @record
 
           @record["state"] = state
-          @record["stage"] = "deliver"
+          @record["stage"] = state == "cancelled" ? @record["stage"] : "deliver"
           @record["summary"] = summary.to_s.byteslice(0, 2_048) if summary
           @record["next_wake_at"] = nil
           @record["lease_owner"] = nil
