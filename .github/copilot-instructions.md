@@ -49,7 +49,7 @@ blank line, a body saying what changed and what it cost, a blank line, and a
 the authority chain, the guards and the top-ranked laws as they are now.
 
 Operational constraints:
-- Shared checkout: write straight to main. No worktrees, branches or pull requests; keep commits path-scoped (`git commit -- <paths>`).
+- For a broad architectural change, use a disposable worktree or short-lived branch, validate it, then merge to `main`; do not mix unrelated dirty changes. Small, path-scoped corrections may go straight to `main` when the checkout is clean.
 - Rails uses strict loading in every environment. Assert localized output through I18n keys, not English literals.
 - On deploy, relayd can answer while amber and bsdports are down; inspect health, not just TLS.
 - Dilla and postpro renders are replaceable; a new run may delete the old take. Never change a rendered sound/look default by taste alone.

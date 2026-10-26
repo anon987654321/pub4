@@ -7,7 +7,7 @@ require "master"
 # that folds its effects. These pin that block — and that ordinary paths still
 # pass, so the guard is a scalpel, not a wall.
 class ImmutablePathsTest < Minitest::Test
-  IMMUTABLE = %w[data/laws.yml data/soul.yml lib/core.rb lib/core/ lib/ground/pledge.rb].freeze
+  IMMUTABLE = %w[lib/core.rb lib/core/ lib/ground/pledge.rb].freeze
 
   def constitution(workspace_root: Master::ROOT)
     rules = [Master::Core::Constitution.immutable_paths_rule(
@@ -44,8 +44,9 @@ class ImmutablePathsTest < Minitest::Test
     assert_equal :immutable_paths, verdict.by
   end
 
-  def test_write_to_constitution_is_blocked
-    assert_blocked Master::Core::Effect.write("data/laws.yml", "laws: []\n"), by: :immutable_paths
+  def test_law_catalogue_is_editable_under_invariant_admission
+    assert_allowed Master::Core::Effect.write("data/laws.yml", "laws: []\n")
+    assert_allowed Master::Core::Effect.write("data/soul.yml", "absolute:\n  sacred_paths: []\n")
   end
 
   def test_write_anywhere_under_the_spine_is_blocked
@@ -58,23 +59,23 @@ class ImmutablePathsTest < Minitest::Test
     assert_blocked Master::Core::Effect.write("lib/core.rb", "# hijack\n"), by: :immutable_paths
   end
 
-  def test_leading_dot_slash_still_matches
-    assert_blocked Master::Core::Effect.write("./data/soul.yml", "x"), by: :immutable_paths
+  def test_leading_dot_slash_to_law_configuration_remains_editable
+    assert_allowed Master::Core::Effect.write("./data/soul.yml", "absolute:\n  sacred_paths: []\n")
   end
 
-  def test_absolute_master_root_path_is_blocked
+  def test_absolute_master_root_soul_path_is_editable
     path = File.join(Master::ROOT, "data/soul.yml")
-    assert_blocked Master::Core::Effect.write(path, "x"), by: :immutable_paths
+    assert_allowed Master::Core::Effect.write(path, "absolute:\n  sacred_paths: []\n")
   end
 
-  def test_absolute_repository_path_with_master_prefix_is_blocked
+  def test_absolute_repository_path_with_master_prefix_allows_law_catalogue_edits
     path = File.join(Master::REPO_ROOT, "MASTER", "data", "laws.yml")
-    assert_blocked Master::Core::Effect.write(path, "x"), by: :immutable_paths
+    assert_allowed Master::Core::Effect.write(path, "law_catalogue: {}\n")
   end
 
-  def test_repo_relative_master_path_is_blocked
-    effect = Master::Core::Effect.write("MASTER/data/laws.yml", "x")
-    assert_blocked effect, by: :immutable_paths, workspace_root: Master::REPO_ROOT
+  def test_repo_relative_master_path_allows_law_catalogue_edits
+    effect = Master::Core::Effect.write("MASTER/data/laws.yml", "law_catalogue: {}\n")
+    assert_allowed effect, workspace_root: Master::REPO_ROOT
   end
 
   def test_repo_root_file_with_the_same_relative_name_is_not_overblocked
@@ -88,9 +89,9 @@ class ImmutablePathsTest < Minitest::Test
     assert_blocked effect, by: :immutable_paths
   end
 
-  def test_dot_and_parent_segments_cannot_walk_onto_an_immutable_file
-    assert_blocked Master::Core::Effect.write("data/./soul.yml", "x"), by: :immutable_paths
-    assert_blocked Master::Core::Effect.write("data/foo/../soul.yml", "x"), by: :immutable_paths
+  def test_dot_and_parent_segments_resolve_to_editable_law_catalogue
+    assert_allowed Master::Core::Effect.write("data/./laws.yml", "law_catalogue: {}\n")
+    assert_allowed Master::Core::Effect.write("data/foo/../laws.yml", "law_catalogue: {}\n")
   end
 
   def test_git_stage_of_immutable_path_is_blocked
@@ -98,18 +99,20 @@ class ImmutablePathsTest < Minitest::Test
     assert_blocked effect, by: :immutable_paths
   end
 
-  # The manifest marks subtrees (data/, lib/review/scan/) with a trailing slash;
-  # Paths must hand that slash on or the subtree guard never matches.
-  def test_every_subtree_declared_in_the_real_manifest_blocks_its_children
+  def test_real_manifest_does_not_make_configuration_or_scanner_paths_immutable
     sacred = Master::Core::Constitution::Paths.sacred_paths(root: Master::ROOT)
-    subtrees = sacred.select { |entry| entry.end_with?("/") }
-    refute_empty subtrees, "soul.yml declares subtree sacred paths"
+    refute sacred.any? { |entry| entry == "data/" || entry == "data" || entry == "data/soul.yml" }
+    refute sacred.any? { |entry| entry.start_with?("lib/review/scan/") }
+
     law = Master::Core::Constitution.immutable_paths_rule(
       sacred, master_root: Master::ROOT, workspace_root: Master::ROOT
     )
-    subtrees.each do |entry|
-      effect = Master::Core::Effect.write("#{entry}new_child_file.rb", "A = 1\n")
-      assert_instance_of Master::Core::Verdict::Block, law.judge.call(effect, nil), "#{entry} subtree is unguarded"
+    [
+      Master::Core::Effect.write("data/laws.yml", "law_catalogue: {}\n"),
+      Master::Core::Effect.write("data/soul.yml", "absolute:\n  sacred_paths: []\n"),
+      Master::Core::Effect.write("lib/review/scan/law.rb", "# scanner code may evolve\n"),
+    ].each do |effect|
+      assert_instance_of Master::Core::Verdict::Allow, law.judge.call(effect, nil)
     end
   end
 

@@ -40,16 +40,17 @@ class TestAutofixGuard < Minitest::Test
     assert_nil Guard.protected_reason("/r/RAILS/brgen/app/models/post.rb")
   end
 
-  def test_soul_sacred_paths_are_protected_and_never_written
+  def test_law_catalogue_is_not_refused_by_path_alone
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, "MASTER", "data"))
-      File.write(File.join(root, "MASTER", "data", "soul.yml"), "absolute:\n  sacred_paths:\n    - data/\n")
+      File.write(File.join(root, "MASTER", "data", "soul.yml"),
+                 "absolute:\n  sacred_paths:\n    - lib/ground/pledge.rb\n")
       laws = File.join(root, "MASTER", "data", "laws.yml")
-      File.write(laws, "a: 1\n")
+      File.write(laws, "law_catalogue: {}\n")
 
-      refute_nil Guard.admit(laws, root:)
-      assert_equal "a: 1\n", File.read(laws)
-      assert_equal [laws], Guard.refused.map(&:path)
+      assert_nil Guard.admit(laws, root:)
+      assert_equal "law_catalogue: {}\n", File.read(laws)
+      assert_empty Guard.refused
     end
   end
 

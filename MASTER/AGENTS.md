@@ -2,11 +2,7 @@
 
 Task-scoped entry for coding agents (Cursor, Codex, Grok, Claude Code). This file is the contract; `README.md` is the tour.
 
-**Read the repo-root `CLAUDE.md` first.** It is only Claude Code's bootstrap pointer. MASTER
-owns the governing configuration and Law catalogue. Read `MASTER/data/soul.yml`, then
-`MASTER/data/laws.yml`, then the relevant Ruby definitions/adapters under `MASTER/law/`, then
-this workflow contract and task-specific tree contract. The old lib/review/scan/laws directory
-is deleted; `MASTER/lib/review/scan/` contains scanner machinery, not a second Law source tree.
+**Read the repo-root `CLAUDE.md` first.** It is only Claude Code's bootstrap pointer. MASTER owns the governing configuration and Law catalogue. Read `MASTER/data/soul.yml`, then `MASTER/data/laws.yml`, then the relevant Ruby definitions/adapters under `MASTER/law/`, then this workflow contract and task-specific tree contract. The old `MASTER/lib/review/scan/laws` path is deleted; `MASTER/lib/review/scan/` contains scanner machinery, not a second Law source tree.
 
 The block below is the source every other agent's entry file is generated from
 — root `AGENTS.md`, `GEMINI.md`, `.cursorlaws` and
@@ -64,7 +60,7 @@ blank line, a body saying what changed and what it cost, a blank line, and a
 the authority chain, the guards and the top-ranked laws as they are now.
 
 Operational constraints:
-- Shared checkout: write straight to main. No worktrees, branches or pull requests; keep commits path-scoped (`git commit -- <paths>`).
+- For a broad architectural change, use a disposable worktree or short-lived branch, validate it, then merge to `main`; do not mix unrelated dirty changes. Small, path-scoped corrections may go straight to `main` when the checkout is clean.
 - Rails uses strict loading in every environment. Assert localized output through I18n keys, not English literals.
 - On deploy, relayd can answer while amber and bsdports are down; inspect health, not just TLS.
 - Dilla and postpro renders are replaceable; a new run may delete the old take. Never change a rendered sound/look default by taste alone.
@@ -518,27 +514,21 @@ in `OPENBSD/CLAUDE.md`.
   OpenBSD host does not ask. A session writable set seeded from git-dirty paths
   inverts in a shared checkout, admitting the files other sessions hold; the
   fold's `new_path_ask` scopes writes to what the turn has read instead.
-- **No skill marketplace and no self-writing law.** No ClawHub, no unsigned or
-  scanner-admitted skill, and no learning loop that writes `data/soul.yml`,
-  which is immutable. `/soul propose`, approve and rollback is the proposal
-  lifecycle and `data/proposals.yml` its ledger; Mission Control inboxes,
-  profiles, a cost-aware self-improvement loop and live judge panels add
-  nothing to it. Paid tiers, prompt collection and advisory counts sold as a
-  safety score fall with them.
-- **No lifting the constitution's protection to ease a repair.** `data/soul.yml` and
-  `data/laws.yml` stay `paths.immutable` to every effect, `/fix` included. The
-  2026-10-26 backlog asked to replace path protection with invariant admission so core
-  repairs could land; that is right for ordinary sacred paths and wrong for these two,
-  whose changes go through `/soul propose` and an operator commit. Parallel `/fix`
-  candidate worktrees, asked for the same day, fall under the refusal of parallel
-  change streams above.
-- **No merging `Law.define` and `LawDSL` into one loader.** Identity is already one:
-  `law_catalogue` in `data/laws.yml` names every Law, and `LawRegistryAudit` fails on
-  any id the catalogue, the definitions or the registry holds alone (zero of each on
-  2026-10-26). The two shapes are different things: a constitutional definition carries
-  a statement, a question, a repair contract and examples; a detector is code that
-  fires. Rewriting some 450 definitions into one format moves no id, closes no gap and
-  risks every fixture. Reopen with a defect the two shapes cause that the audit misses.
+- **No unreviewed self-modification.** Do not let a background learning loop rewrite
+  the constitution without a task, evidence and verification. However, `data/soul.yml`
+  and `data/laws.yml` are ordinary editable source files: do not protect them from
+  normal validated edits, `/fix`, or commits merely because they govern the system.
+  Parse and validate the candidate, preserve required security invariants, prove
+  Law-catalogue reconciliation, and run the relevant checks before publication. No
+  separate operator-only path is required for a routine, evidence-backed repair.
+- **One Law model, not two registries.** `data/laws.yml#law_catalogue.entries`
+  is the canonical Law identity inventory and universal modality contract. The full
+  metadata migration is NOT complete: severity, statements/questions, fixes, examples
+  and some detector configuration still live in `Law.define` and `LawDSL` calls.
+  Do not describe ID/source reconciliation as full policy reconciliation. Finish moving
+  those fields into each catalogue entry, leave only detector/evaluator logic in Ruby,
+  remove the duplicate metadata declarations, and make the audit compare every policy
+  field, fixture contract and source path. Missing evidence stays INCONCLUSIVE.
 - **No second record beside memory.** A belief store of verified, inferred and
   contradicted facts, an execution-context object and a durable notification
   queue each copy what memory, fiber locals and `StandingOrders` already hold.

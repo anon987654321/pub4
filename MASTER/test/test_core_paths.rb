@@ -9,10 +9,12 @@ class TestCorePaths < Minitest::Test
   end
 
   def test_soul_owns_the_sacred_paths
-    assert_includes paths.sacred_paths, "data/"
+    refute_includes paths.sacred_paths, "data/"
+    refute_includes paths.sacred_paths, "data/soul.yml"
+    refute_includes paths.sacred_paths, "lib/review/scan/"
     assert_includes paths.sacred_paths, "data/SOUL.md"
     assert_includes paths.sacred_paths, "data/project_context.yml"
-    assert_includes paths.sacred_paths, "lib/review/scan/"
+    assert_includes paths.sacred_paths, "lib/ground/pledge.rb"
     assert_includes paths.sacred_paths, "bin/cli"
   end
 

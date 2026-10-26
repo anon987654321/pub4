@@ -9,7 +9,7 @@ Before planning or taking action, load MASTER's canonical context in this order:
 1. Read `MASTER/data/soul.yml`.
 2. Read `MASTER/data/laws.yml`.
 3. For unfamiliar or broad work, run `ruby MASTER/tools/agent_context.rb --tree` and use its output to establish the repository's structure and relevant context.
-4. Read the applicable executable Laws under `MASTER/law/`, including the detector adapters under `MASTER/law/detectors/`, their fixtures, and relevant checks.
+4. Read the applicable Law entries in `MASTER/data/laws.yml`; inspect Ruby detector/evaluator implementations under `MASTER/law/` only to understand how those entries are enforced. Policy belongs in YAML; Ruby implementations must not create a parallel policy definition.
 5. Read `MASTER/AGENTS.md` for the repository workflow and task guidance before editing.
 
 Follow MASTER's current instructions for any additional context required by the task. Do not substitute remembered instructions, summaries, or assumptions for the live configuration and source.

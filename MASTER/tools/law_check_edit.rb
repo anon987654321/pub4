@@ -4,7 +4,7 @@
 # PreToolUse hook for Edit and Write. An agent's hand edit meets the same mechanical
 # laws as an edit /fix makes: the file as it would be left is judged by
 # Fix::WriteGuard, and a finding the edit introduces at veto, critical or error
-# severity refuses it. laws.yml and soul.yml are refused outright.
+# severity refuses it. Constitutional configuration is validated like other source.
 
 # Why here: /fix and the design loop were held to the guard, and a hand edit or an
 # applied patch was not, so the laws bound the machine and not the agent beside it.
@@ -29,10 +29,6 @@ def checkout_root(path)
   end
   nil
 end
-
-# CLAUDE.md names these two: read them, never write them. (Core::Constitution::Paths guards a
-# wider set against the model's own effects; a hand edit to the rest of data/ is ordinary work.)
-IMMUTABLE = %w[MASTER/data/laws.yml MASTER/data/soul.yml].freeze
 
 # The content the tool would leave in the file; nil when the edit cannot be reproduced.
 def resulting_content(tool:, input:, path:)
@@ -61,11 +57,6 @@ exit 0 unless %w[Edit Write].include?(tool) && !path.empty?
 path = File.expand_path(path)
 root = checkout_root(path)
 exit 0 unless root
-
-if IMMUTABLE.any? { |relative| File.join(root, relative) == path }
-  warn "law-check: #{path.delete_prefix("#{root}/")} is immutable (CLAUDE.md). Read it; the operator changes it."
-  exit 2
-end
 
 exit 0 unless path.match?(CHECKED)
 

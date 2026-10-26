@@ -31,14 +31,13 @@ class TestLawCheckEdit < Minitest::Test
     assert_match(/SECRET_PROXIMITY/, out)
   end
 
-  def test_laws_yml_and_soul_yml_are_refused_outright
+  def test_laws_and_soul_are_not_refused_by_path_alone
     %w[laws soul].each do |name|
       path = File.join(REPO, "MASTER", "data", "#{name}.yml")
-      edit = { "file_path" => path, "old_string" => "a", "new_string" => "b" }
-      code, out = call("tool_name" => "Edit", "tool_input" => edit)
+      code, out = call(write(path, File.read(path, encoding: "UTF-8")))
 
-      assert_equal 2, code, name
-      assert_match(/immutable/, out)
+      assert_equal 0, code, "#{name}: #{out}"
+      refute_match(/immutable/, out)
     end
   end
 

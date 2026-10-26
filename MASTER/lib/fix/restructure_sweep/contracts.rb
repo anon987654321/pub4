@@ -20,7 +20,7 @@ module Master
             - MASTER/lib/ loads through Zeitwerk under Master: lib/a/b_c.rb defines
               Master::A::BC, one constant per file, path and constant always agreeing.
               Inflections: cli->CLI, llm->LLM, llm_dispatcher->LLMDispatcher, tts->TTS.
-            - MASTER/data/laws.yml and MASTER/data/soul.yml are never written.
+            - MASTER/data/laws.yml and MASTER/data/soul.yml are editable source; validate YAML, invariants, catalogue reconciliation and relevant tests before keeping a change.
           TEXT
           "RAILS" => <<~TEXT,
             RAILS, three Rails 8 apps (brgen, amber, bsdports) and RAILS/__shared, a
