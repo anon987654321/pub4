@@ -608,7 +608,7 @@ module Master
         def reason_metadata(payload)
           digest = payload[:why_digest].to_s
           bytes = Integer(payload[:why_bytes])
-          return ["fold0: reason received (#{bytes} bytes, sha256 #{digest[0, 12]})"] if digest.match?(/\\A[0-9a-f]{64}\\z/) && bytes >= 0
+          return ["fold0: reason received (#{bytes} bytes, sha256 #{digest[0, 12]})"] if digest.match?(/\A[0-9a-f]{64}\z/) && bytes >= 0
 
           ["fold0: reason received (legacy payload redacted)"]
         rescue ArgumentError, TypeError
