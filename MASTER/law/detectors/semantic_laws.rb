@@ -244,7 +244,12 @@ module Master
           # implementation language. Languages are detector implementation details,
           # not exemptions from semantic or visual review.
           def laws_for(_language, path: nil)
-            @laws
+            @laws.select do |_id, rule|
+              next false if path && rule[:path] && !path_matches?(path, rule[:path])
+              next false if path && rule[:path_exclude] && path_matches?(path, rule[:path_exclude])
+
+              true
+            end
           end
 
           def path_matches?(path, pattern)
