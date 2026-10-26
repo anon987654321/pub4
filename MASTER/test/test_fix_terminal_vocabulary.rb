@@ -52,4 +52,25 @@ class TestFixTerminalVocabulary < Minitest::Test
     assert_equal :done, loop.send(:terminal_state_for, Master::Result.ok(:done))
   end
 
+
+  def test_every_declared_terminal_state_round_trips_through_the_policy
+    Master::Fix::OutcomePolicy::TERMINAL_STATES.each do |state|
+      result = Master::Result.ok("#{state.to_s.upcase}: fixture")
+      assert_equal state, Master::Fix::OutcomePolicy.terminal_state(result), state.to_s
+    end
+  end
+
+  def test_every_declared_error_category_maps_to_its_terminal_state
+    Master::Fix::OutcomePolicy::ERROR_STATES.each do |category, expected|
+      result = Master::Result.err("fixture", category:)
+      assert_equal expected, Master::Fix::OutcomePolicy.terminal_state(result), category.to_s
+    end
+  end
+
+  def test_unmapped_provider_errors_fail_closed
+    result = Master::Result.err("provider unavailable", category: :provider_error)
+
+    assert_equal :failed, Master::Fix::OutcomePolicy.terminal_state(result)
+  end
+
 end
