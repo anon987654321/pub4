@@ -51,7 +51,10 @@ class CheckLibTest < Minitest::Test
 
   # measured_nothing? separates "declined to measure" from "measured and passed".
   # A result that recorded nothing at all is a pass: it made no claim either way.
+  # The default mode, pinned: /fix runs every suite with CHECK_STRICT_INCONCLUSIVE=1,
+  # which turns this inconclusive into a failure.
   def test_measured_nothing_distinguishes_a_skip_from_a_check
+    strict = ENV.delete("CHECK_STRICT_INCONCLUSIVE")
     assert_equal :passed, Deploy::CheckResult.new.outcome
 
     skipped = Deploy::CheckResult.new.inconclusive!("no Chrome")
@@ -64,6 +67,8 @@ class CheckLibTest < Minitest::Test
 
     live = Deploy::CheckResult.new.skipped_live("port 61352 closed")
     assert live.measured_nothing?, "every live check skipped is nothing measured"
+  ensure
+    ENV["CHECK_STRICT_INCONCLUSIVE"] = strict if strict
   end
 
   def test_skip_reason_consults_the_needs_it_declares
