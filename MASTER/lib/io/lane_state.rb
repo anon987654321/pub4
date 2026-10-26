@@ -29,6 +29,17 @@ module Master
 
       def usable?(model) = verdict(model).usable?
 
+      HEALTH_OF = { dead: "failed", parked: "degraded", spent: "unavailable", daily_quota: "unavailable" }.freeze
+
+      # In Operator::HEALTH words. A usable lane is ready only when its latest call
+      # succeeded; one never asked is configured.
+      def health(model, succeeded: false)
+        state = verdict(model)
+        return "#{HEALTH_OF.fetch(state.source)}: #{state.reason}" unless state.usable?
+
+        succeeded ? "ready" : "configured: not asked yet"
+      end
+
       def filter(models) = Array(models).select { |model| usable?(model) }
 
       # [source, reason] for the first store that refuses the model, or nil.

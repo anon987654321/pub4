@@ -23,6 +23,7 @@ module Master
         return dispatch_runtime(root, ctx: rest) if word == "runtime"
         return dispatch_services(ctx: rest) if word == "services"
         return dispatch_security if word == "security"
+        return dispatch_lanes(root) if word == "lanes"
 
         gather_status_data(root:, fix_loop:, git:)
           .merge(rsi: rsi_opportunities(learnings))
@@ -34,6 +35,17 @@ module Master
       def dispatch_services(ctx: nil)
         name, = subcommand(ctx)
         Master::Operator.status(name).map { |service, state| "service0: #{service} #{state}" }.join("\n")
+      end
+
+      # Every model lane data/models.yml names, in the services' health vocabulary.
+      def dispatch_lanes(root)
+        health = Master::CLI::Routing::ProviderHealth.new
+        lanes = Master.load_yaml(File.join(root, "data", "models.yml")).fetch("models", {}).values.flatten
+        ids = lanes.filter_map { |lane| lane["id"] if lane.is_a?(Hash) }.uniq
+        ids.map do |id|
+          latest = health.latest_event(id)
+          "lane0: #{id} #{Master::Io::LaneState.health(id, succeeded: latest&.fetch("status", nil) == "success")}"
+        end.join("\n")
       end
 
       def dispatch_security

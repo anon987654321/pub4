@@ -89,8 +89,6 @@ source and tests they could not run; this pass is what measures them.
   directories, stale pointers; compare structural ratchets before and after.
 - [ ] Performance sweep with before/after numbers: boot, CLI response, web first paint, payloads,
   memory.
-- [ ] Put provider lanes and channels on `Operator::HEALTH` (services are), and print one concise
-  boot line per subsystem from it.
 - [ ] Adapter contracts for CLI, web, voice, browser and MCP: caller identity, scope, typed
   input and output, cancellation, timeout, error class; each reaches the same constitutional gate.
 - [ ] Separate the audit ledger, telemetry, transcript and learning store: receipts durable and
