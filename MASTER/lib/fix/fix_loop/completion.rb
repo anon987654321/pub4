@@ -57,7 +57,17 @@ module Master
           RunBudget.finish_run(reason: run_end_reason(result))
           state = terminal_state_for(result)
           @last_terminal_state = state
-          evidence = @convergence_discipline.receipt if @convergence_discipline.respond_to?(:receipt)
+          convergence_evidence = @convergence_discipline.receipt if @convergence_discipline.respond_to?(:receipt)
+          evidence = convergence_evidence&.dup || {}
+          plan_evidence = @fix_plan&.to_h&.slice(
+            "version", "digest", "identity_digest", "scope_digest", "source_digest",
+            "law_digest", "law_source_digest", "authority_digest", "toolchain_digest",
+            "exclusion_digest", "adapter_digest", "eligible_files", "deadline_at"
+          )
+          evidence[:fix_plan] = plan_evidence if plan_evidence
+          run_record = @run_journal.history(limit: RunJournal::MAX_RUNS).find { |row| row["id"] == run_id }
+          plan_generation = Array(run_record && run_record["plan_generations"]).last&.fetch("generation", nil)
+          evidence[:fix_plan_generation] = plan_generation unless plan_generation.nil?
           @run_journal.terminal(run_id, state, message: result.to_s, evidence:)
 
           if %i[cancelled unknown_outcome recovery_failed].include?(state)
@@ -77,7 +87,14 @@ module Master
 
           target_label = fix_target_label(target)
           outcome = { state:, message: result.to_s, task_id: run_id, capability: "code_repair", target: target_label, run_id: }
-          outcome[:outcome_receipt] = write_outcome_receipt(run_id:, target: target_label, state:, result:, convergence: evidence)
+          if plan_evidence
+            outcome[:plan_digest] = plan_evidence["digest"]
+            outcome[:plan_generation] = plan_generation unless plan_generation.nil?
+            outcome[:source_digest] = plan_evidence["source_digest"]
+          end
+          outcome[:outcome_receipt] = write_outcome_receipt(
+            run_id:, target: target_label, state:, result:, convergence: convergence_evidence
+          )
           outcome[:ok] = MEASURED_REPAIR_OUTCOMES.fetch(state) if MEASURED_REPAIR_OUTCOMES.key?(state)
           @bus&.publish("fix_loop:terminal", **outcome)
 
