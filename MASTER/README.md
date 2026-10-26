@@ -51,6 +51,24 @@ ceiling it must respect.
 MASTER can run offline when a local model is available. It deploys to OpenBSD
 and judges a codebase without a cloud control plane.
 
+## Skills and execution contracts
+
+Skills may declare an `execution_contract` with a semantic version, risk, required
+capabilities, Law IDs, fixture references and provenance. The declaration is
+content-addressed along with the skill; changing its body, triggers, metadata or
+bundled files changes the revision. A declaration does not grant its listed
+capabilities, and a declared skill is not injected just because its own metadata
+labels it approved.
+
+A declared skill requires a matching revision-bound entry in the operator-owned
+`~/.master/skill_approvals.yml`. The format, validation constraints and current
+migration limits are documented in [Execution contracts](docs/execution-contracts.md).
+Legacy skills remain compatible while migration proceeds. The current contract
+inventory APIs support inspection, but a full operator-facing review/approval
+command is not yet implemented. Tests have been added for approval binding,
+rejection, and skill content preservation; runtime validation remains INCONCLUSIVE
+until those tests run on the pinned Ruby toolchain.
+
 ## Visual identity
 
 The current direction is **signal and stillness**: neutral, flat surfaces; decisive
