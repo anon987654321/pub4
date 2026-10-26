@@ -64,13 +64,16 @@ capabilities, and a declared skill is not injected just because its own metadata
 labels it approved.
 
 A declared skill requires a matching revision-bound entry in the operator-owned
-`~/.master/skill_approvals.yml`. The format, validation constraints and current
-migration limits are documented in [Execution contracts](docs/execution-contracts.md).
-Legacy skills remain compatible while migration proceeds. The current contract
-inventory APIs support inspection, but a full operator-facing review/approval
-command is not yet implemented. Tests have been added for approval binding,
-rejection, and skill content preservation; runtime validation remains INCONCLUSIVE
-until those tests run on the pinned Ruby toolchain.
+`~/.master/skill_approvals.yml`. Use `/skill list` to review declared skill
+revisions, `/skill inspect NAME` to inspect their metadata, and
+`/skill approve NAME FULL_SHA256 --confirm` or
+`/skill revoke NAME FULL_SHA256 --confirm` to approve/revoke one exact revision.
+The command is local-operator-only; malformed manifests are not overwritten,
+and a change to skill content requires a new approval. Candidate fixture references
+are not proof that the tests passed. Legacy skills remain compatible while
+migration proceeds. See [Execution contracts](docs/execution-contracts.md) for
+the contract and its remaining limits. Regression tests have been added, but
+runtime validation remains INCONCLUSIVE until they run on the pinned Ruby toolchain.
 
 ## Visual identity
 
