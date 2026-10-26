@@ -4,6 +4,7 @@ require_relative "test_helper"
 require "tmpdir"
 require "json"
 require "fileutils"
+require "digest"
 
 # Reflexion episodic memory: blocked/failed commits become reflections that guide retries.
 class TestReflexionLedger < Minitest::Test
@@ -38,6 +39,29 @@ class TestReflexionLedger < Minitest::Test
     assert_equal 1, reflections.size
     assert_includes reflections.first, "syntax"
     assert_includes reflections.first, "a.rb"
+  end
+
+  def test_reflexion_event_bus_uses_fingerprints_not_raw_failure_details
+    events = []
+    bus = FakeBus.new
+    bus.subscribe("reflexion:recorded") { |payload| events << payload }
+    Master::Trace::Ledger::Reflexion.new(event_bus: bus, root: @dir).attach
+    private_reason = "authorization denied: Bearer #{'S' * 40} at private/customer-account.csv"
+    private_file = "customer-account.csv"
+
+    bus.publish("fix_loop:commit_error", reason: private_reason, files: ["lib/#{private_file}"])
+
+    event = events.fetch(0)
+    assert_equal Digest::SHA256.hexdigest(private_reason), event.fetch(:reason_digest)
+    assert_equal private_reason.bytesize, event.fetch(:reason_bytes)
+    assert_equal 1, event.fetch(:files_count)
+    assert_equal Digest::SHA256.hexdigest(private_file), event.fetch(:files_digest)
+    refute_includes events.inspect, private_reason
+    refute_includes events.inspect, private_file
+
+    persisted = File.read(File.join(@dir, "runtime", "reflexions.ndjson"))
+    refute_includes persisted, 'Bearer ' + ('S' * 40)
+    assert_includes persisted, "[REDACTED]"
   end
 
   def test_caps_reflection_history
