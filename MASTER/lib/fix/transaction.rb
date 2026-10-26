@@ -396,7 +396,7 @@ module Master
       def pending_marker_path = File.join(@root, ROOT_DIR, ".pending-#{@id}")
 
       def pending_marker?
-        File.file?(pending_marker_path) || File.symlink?(pending_marker_path)
+        File.exist?(pending_marker_path) || File.symlink?(pending_marker_path)
       rescue SystemCallError
         true
       end
