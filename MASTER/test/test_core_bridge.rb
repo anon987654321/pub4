@@ -90,6 +90,28 @@ class CoreBridgeTest < Minitest::Test
     end
   end
 
+  def test_core_turn_stream_does_not_persist_private_read_output
+    Dir.mktmpdir do |root|
+      private_text = "private customer content\nsecond private line\n"
+      File.write(File.join(root, "private.txt"), private_text)
+      bus = FakeBus.new
+      model = ScriptedModel.new(*evidence_then_done(
+        Master::Core::Effect.read("private.txt"), summary: "read complete"
+      ))
+
+      result = Master::CLI::CoreBridge.run("read a private file", root:, bus:, model:)
+
+      assert_equal :complete, result[:reason]
+      turn = bus.events.find { |name, payload| name == "core:turn" && payload[:verb] == :read }
+      assert_equal "file read", turn.last[:subject]
+      assert_equal "completed", turn.last[:detail]
+      assert_equal private_text.bytesize, turn.last[:output_bytes]
+      assert_equal private_text.lines.size, turn.last[:output_lines]
+      refute turn.last.values.include?(private_text)
+      refute bus.events.inspect.include?(private_text)
+    end
+  end
+
   def test_core_effect_lifecycle_events_are_paired_and_redacted
     Dir.mktmpdir do |root|
       bus = FakeBus.new
@@ -103,6 +125,10 @@ class CoreBridgeTest < Minitest::Test
       assert_equal %w[core:effect:before core:effect:after], events.map(&:first)
       assert_equal events.first.last[:effect_id], events.last.last[:effect_id]
       refute events.any? { |_name, payload| payload.values.include?("secret payload") }
+      turn = bus.events.find { |name, payload| name == "core:turn" && payload[:verb] == :write }
+      assert_equal "file write", turn.last[:subject]
+      assert_equal "completed", turn.last[:detail]
+      refute turn.last.key?(:content)
     end
   end
 

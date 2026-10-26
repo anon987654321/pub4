@@ -297,7 +297,8 @@ module Master
             Master::Trace::WriteTracker.current&.record(File.expand_path(effect.args[:path].to_s, root))
           end
           bus&.publish("core:turn", turn:, effect: effect.to_s, verb: effect.verb, subject: effect_subject(effect),
-                                    ok: observation.ok?, detail: observation.message)
+                                    ok: observation.ok?, detail: public_effect_detail(observation),
+                                    **public_output_metrics(effect, observation))
           on_turn&.call(line)
         end
       end
@@ -323,13 +324,34 @@ module Master
 
       # The part of an effect a person names it by: the file, the command, the
       # question. Written content stays out; it is the payload.
+      # This stream is shared and persisted. Identify the action without copying
+      # paths, argv, URLs, prompts, note text, summaries or file contents into it.
+      # The full observation remains available on the operator's local transcript.
       def effect_subject(effect)
-        args = effect.args
         case effect.verb
-        when :exec then Array(args[:argv]).join(" ")
-        when :git then [args[:operation], *Array(args[:paths])].join(" ")
-        else (args[:path] || args[:prompt] || args[:text] || args[:summary] || args[:scope]).to_s
+        when :read then "file read"
+        when :write then "file write"
+        when :exec then "command"
+        when :git then "git #{effect.args[:operation]}"
+        when :http then "network request"
+        when :ask then "approval request"
+        when :note then "note"
+        when :critique then "review"
+        when :done then "completion"
+        else effect.verb.to_s
         end
+      end
+
+      def public_effect_detail(observation)
+        observation.ok? ? "completed" : "failed"
+      end
+
+      # Keep useful speech/dashboard measurements, never the text being measured.
+      def public_output_metrics(effect, observation)
+        return {} unless %i[read exec].include?(effect.verb)
+
+        output = observation.message.to_s
+        { output_bytes: output.bytesize, output_lines: output.lines.size }
       end
 
       def build_fold(root:, model:, memory:, world:, max_turns:, observer:, effect_observer: nil,

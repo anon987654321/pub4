@@ -101,8 +101,11 @@ turn, verb and capability, not raw arguments that could contain secrets. Failure
 persist the before-event prevents the effect from running; failure to persist the
 after-event returns trace_failed rather than claiming the task completed. This
 path uses EventBus#publish_required and the event log's strict append method,
-while ordinary best-effort telemetry retains its existing failure-swallowing behavior. This
-is the first slice of the external-action event contract, not yet a shared event
+while ordinary best-effort telemetry retains its existing failure-swallowing behavior.
+The legacy core:turn stream is also privacy-safe now: action subjects are categorical,
+the detail is reduced to completed/failed, and read/exec output is represented by
+byte and line counts. Full observations remain only in the local operator transcript.
+This is the first slice of the external-action event contract, not yet a shared event
 adapter for every tool and /fix path.
 
 A requested repair starts by inventorying its eligible corpus, refreshing the
