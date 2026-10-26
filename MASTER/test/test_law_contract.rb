@@ -169,6 +169,16 @@ class TestLawContract < Minitest::Test
     first = Law::Contract.digest
     assert_equal first, JSON.parse(Law::Contract.render).fetch("law_digest")
   end
+  def test_all_executable_laws_are_universal_and_share_one_surface_catalogue
+    rows = Law::Index.validate!
+    assert rows.all? { |row| row.fetch("law_scope") == "universal" }
+    assert rows.all? { |row| row.fetch("surfaces").map(&:to_sym) == Law::ASSESSMENT_SURFACES }
+
+    contract = Law::Contract.render(full: true)
+    assert contract.include?('"surfaces"')
+    assert_equal Law::ASSESSMENT_SURFACES, Law.definitions.values.first.assessment_surfaces
+  end
+
   def test_derived_index_is_complete_and_machine_readable
     rows = Law::Index.validate!
     assert_operator rows.length, :>, 100
