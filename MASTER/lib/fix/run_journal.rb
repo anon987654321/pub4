@@ -26,6 +26,11 @@ module Master
       LOCK = ".master/fix_runs.lock"
       MAX_RUNS = 24
       ASSESSMENT_DIR = ".master/fix_assessments"
+      SURFACE_COVERAGE_SURFACES = %w[
+        repository_tree directories file_names paths cross_file media_assets compiled_assets
+        rendered_ui interactive_behavior tests runtime deployment
+      ].freeze
+      SURFACE_EVIDENCE_STATES = %w[assessed_clean not_applicable violation_found inconclusive].freeze
       RESUMABLE_STATES = %w[active crashed delivery_failed].freeze
 
       def self.instance_id
@@ -407,6 +412,69 @@ module Master
 
       private
 
+      def validate_surface_coverage_report(report, required:)
+        surface = report["surface_coverage"]
+        return { "status" => "surface_coverage_missing" } if required && !surface.is_a?(Hash)
+        return nil unless surface.is_a?(Hash)
+        return { "status" => "surface_coverage_schema_unsupported" } unless surface["schema_version"].to_i == 1
+        return { "status" => "surface_coverage_target_mismatch" } unless surface["target_absolute"].to_s == report["target"].to_s
+        %w[plan_digest source_digest].each do |key|
+          return { "status" => "surface_coverage_provenance_mismatch", "dimension" => key } unless surface[key] == report[key]
+        end
+
+        rows = surface["surfaces"]
+        details = surface["details"]
+        unless rows.is_a?(Hash) && details.is_a?(Hash) &&
+               rows.keys.sort == SURFACE_COVERAGE_SURFACES.sort &&
+               details.keys.sort == SURFACE_COVERAGE_SURFACES.sort
+          return { "status" => "surface_coverage_population_mismatch" }
+        end
+        details.each do |name, receipt|
+          row = rows[name]
+          return { "status" => "surface_coverage_row_malformed", "surface" => name } unless row.is_a?(Hash) && receipt.is_a?(Hash)
+          status = receipt["status"].to_s
+          return { "status" => "surface_coverage_state_unknown", "surface" => name } unless SURFACE_EVIDENCE_STATES.include?(status)
+          evidence = receipt["evidence"] || {}
+          return { "status" => "surface_coverage_evidence_malformed", "surface" => name } unless evidence.is_a?(Hash)
+          evidence_sha = Digest::SHA256.hexdigest(JSON.generate(evidence))
+          return { "status" => "surface_coverage_evidence_digest_mismatch", "surface" => name } unless evidence_sha == receipt["evidence_sha256"]
+          %w[status reason evidence_sha256 counts].each do |key|
+            expected = receipt[key]
+            actual = row[key]
+            next if expected.nil? && actual.nil?
+            return { "status" => "surface_coverage_summary_mismatch", "surface" => name, "field" => key } unless expected == actual
+          end
+        end
+
+        inventory = surface["inventory"]
+        source_manifest = surface["source_manifest"]
+        unless inventory.is_a?(Hash) && source_manifest.is_a?(Hash) &&
+               inventory["status"] == "captured" && inventory["truncated"] == false &&
+               source_manifest["status"] == "captured" && source_manifest["verified_after_assessment"] == true &&
+               source_manifest["digest"] == source_manifest["digest_after_assessment"]
+          return { "status" => "surface_coverage_snapshot_incomplete" } if surface["complete"] == true
+        end
+
+        calculated_complete = details.values.all? do |receipt|
+          %w[assessed_clean not_applicable].include?(receipt["status"].to_s)
+        end
+        return { "status" => "surface_coverage_truth_mismatch" } unless surface["complete"] == calculated_complete
+        if calculated_complete
+          expected_digest = Digest::SHA256.hexdigest(JSON.generate(
+            "schema_version" => surface["schema_version"],
+            "target" => surface["target"],
+            "plan_digest" => surface["plan_digest"],
+            "source_digest" => surface["source_digest"],
+            "inventory_digest" => inventory["digest"],
+            "surface_rows" => rows.sort.map { |name, row| [name, row["status"], row["evidence_sha256"]] },
+          ))
+          return { "status" => "surface_coverage_digest_mismatch" } unless surface["digest"] == expected_digest
+        end
+        nil
+      rescue ArgumentError, TypeError, NoMethodError
+        { "status" => "surface_coverage_malformed" }
+      end
+
       # Validate the opportunity pass's nested scope receipt before accepting
       # any clean or positive finding from the aggregate heuristic adapter.
       def validate_opportunity_reading(report, reading)
@@ -492,10 +560,12 @@ module Master
       end
 
       def validate_assessment_matrix_report(report)
-        return { "status" => "matrix_report_schema_unsupported" } unless report["schema_version"].to_i == 2
+        return { "status" => "matrix_report_schema_unsupported" } unless report["schema_version"].to_i == 3
 
         status = report["status"].to_s
         return { "status" => "matrix_status_unknown" } unless %w[complete incomplete not_measured].include?(status)
+        surface_failure = validate_surface_coverage_report(report, required: status == "complete")
+        return surface_failure if surface_failure
 
         ledger = report["ledger"]
         unless ledger.is_a?(Hash)
@@ -503,6 +573,7 @@ module Master
 
           return nil
         end
+
 
         return { "status" => "matrix_ledger_schema_unsupported" } unless ledger["schema_version"].to_i == 2
 
@@ -673,7 +744,9 @@ module Master
         unless summary["complete"] == complete && summary["clean"] == clean
           return { "status" => "matrix_summary_truth_mismatch" }
         end
-        unless (status == "complete") == clean
+        surface_coverage = report["surface_coverage"]
+        surface_complete = surface_coverage.is_a?(Hash) && surface_coverage["complete"] == true
+        unless (status == "complete") == (clean && surface_complete)
           return { "status" => "matrix_status_claim_mismatch" }
         end
 

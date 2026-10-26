@@ -3,6 +3,7 @@
 require "pathname"
 require "set"
 require_relative "../../four_stream_assessment"
+require_relative "../../surface_evidence"
 
 module Master
   module Fix
@@ -52,6 +53,9 @@ module Master
           # and SemanticLaw are transport adapters, never duplicate Law rows.
           def begin_assessment_run(files:, plan:)
             @assessment_plan = plan
+            @assessment_surface_cache = {}
+            @assessment_surface_report = nil
+            @assessment_surface_receipts = {}
             @assessment_ledger = nil
             @assessment_observation = nil
             @assessment_law_info = nil
@@ -171,7 +175,7 @@ module Master
                 scanner_law: nil,
                 yaml_entry: nil,
                 streams: [:semantic_violations].freeze,
-                surfaces: [:rendered_ui].freeze,
+                surfaces: %i[rendered_ui interactive_behavior].freeze,
                 unmeasurable_reason: nil,
               }
             end
@@ -263,7 +267,7 @@ module Master
           def assessment_matrix_status
             return :not_measured unless @assessment_ledger
 
-            @assessment_ledger.clean? ? :complete : :incomplete
+            @assessment_ledger.clean? && @assessment_surface_report&.fetch("complete", false) == true ? :complete : :incomplete
           rescue StandardError => e
             stage_failures[:assessment_matrix] << "status read: #{e.class}: #{e.message.to_s[0, 150]}"
             :incomplete
@@ -272,7 +276,12 @@ module Master
           def assessment_matrix_summary
             return { status: "not_measured", reason: "no scanner-backed Law population was available" } unless @assessment_ledger
 
-            @assessment_ledger.summary.merge(status: assessment_matrix_status.to_s)
+            @assessment_ledger.summary.merge(
+              status: assessment_matrix_status.to_s,
+              surface_coverage_complete: @assessment_surface_report&.fetch("complete", false) == true,
+              surface_coverage_digest: @assessment_surface_report&.fetch("digest", nil),
+              surface_coverage: surface_coverage_summary,
+            )
           rescue StandardError => e
             { status: "incomplete", reason: "matrix summary failed: #{e.class}: #{e.message.to_s[0, 150]}" }
           end
@@ -283,6 +292,7 @@ module Master
               plan_digest: @assessment_plan&.digest,
               source_digest: @assessment_plan&.source_digest,
               **assessment_matrix_summary,
+              surface_coverage: surface_coverage_summary,
             }
           rescue StandardError => e
             { status: "incomplete", reason: "matrix evidence failed: #{e.class}: #{e.message.to_s[0, 150]}" }
@@ -293,7 +303,7 @@ module Master
           def assessment_matrix_artifact
             unless @assessment_ledger
               return {
-                schema_version: 2,
+                schema_version: 3,
                 status: "not_measured",
                 reason: "no scanner-backed Law population was available",
                 target: @assessment_plan&.target,
@@ -312,8 +322,8 @@ module Master
 
             @assessment_mutex.synchronize do
               {
-                schema_version: 2,
-                status: (@assessment_ledger.clean? ? "complete" : "incomplete"),
+                schema_version: 3,
+                status: (assessment_matrix_status == :complete ? "complete" : "incomplete"),
                 target: @assessment_plan&.target,
                 plan_digest: @assessment_plan&.digest,
                 source_digest: @assessment_plan&.source_digest,
@@ -325,18 +335,64 @@ module Master
                 toolchain_digest: @assessment_plan&.toolchain_digest,
                 exclusion_digest: @assessment_plan&.exclusion_digest,
                 adapter_digest: @assessment_plan&.adapter_digest,
+                surface_coverage: @assessment_surface_report,
                 ledger: @assessment_ledger.evidence_report,
               }
             end
           rescue StandardError => e
             {
-              schema_version: 2,
+              schema_version: 3,
               status: "incomplete",
               reason: "matrix artifact failed: #{e.class}: #{e.message.to_s[0, 150]}",
             }
           end
           
           private
+
+          def surface_coverage_summary
+            report = @assessment_surface_report
+            return { status: "not_measured", reason: "surface adapters have not run" } unless report.is_a?(Hash)
+
+            surfaces = report["surfaces"].is_a?(Hash) ? report["surfaces"] : {}
+            {
+              status: report["complete"] == true ? "complete" : "incomplete",
+              digest: report["digest"],
+              measured: surfaces.count { |_name, row| %w[assessed_clean not_applicable].include?(row["status"].to_s) },
+              expected: surfaces.size,
+              blockers: surfaces.filter_map do |name, row|
+                next if %w[assessed_clean not_applicable].include?(row["status"].to_s)
+
+                { surface: name, status: row["status"], reason: row["reason"].to_s[0, 180] }
+              end.first(8),
+            }
+          end
+
+          def surface_probe_candidate_clean?(observation:, signatures_stable:, semantic_gaps:, pending:, visual:, opportunities:)
+            return false unless signatures_stable
+            return false unless observation[:unclassified_findings].empty?
+            return false unless observation[:findings].values.all?(&:empty?)
+            return false unless semantic_gaps.empty? && pending.empty?
+            return false unless @scan_phase&.semantic_full?
+
+            visual_applicable = @visual_pass&.applicable?(@assessment_plan.target) == true
+            opportunity_applicable = @opportunity_pass&.applicable?(@assessment_plan.target) == true
+            return false unless surface_stage_clean?(visual, applicable: visual_applicable)
+            return false unless surface_stage_clean?(opportunities, applicable: opportunity_applicable)
+
+            true
+          rescue StandardError
+            false
+          end
+
+          def surface_stage_clean?(result, applicable:)
+            return true unless applicable
+            return false unless result&.ok?
+
+            value = result.value!
+            value.is_a?(Hash) && Array(value[:findings] || value["findings"]).empty?
+          rescue StandardError
+            false
+          end
 
           def begin_assessment_pass(pass, files)
             return unless @assessment_ledger
@@ -452,6 +508,28 @@ module Master
               @bus&.publish("fix_loop:assessment_unclassified_findings", pass:, findings: unclassified.first(20))
             end
 
+            candidate_clean = surface_probe_candidate_clean?(
+              observation:, signatures_stable:, semantic_gaps:, pending:, visual:, opportunities:
+            )
+            @assessment_surface_report = SurfaceEvidence.capture(
+              root: @assessment_plan.root,
+              target: @assessment_plan.target,
+              plan: @assessment_plan,
+              files: observation[:files],
+              visual_result: visual,
+              reference_graph: @reference_graph,
+              cache: (@assessment_surface_cache ||= {}),
+              run_expensive: candidate_clean,
+            )
+            @assessment_surface_receipts = @assessment_surface_report.fetch("details", {})
+            @bus&.publish(
+              "fix_loop:surface_coverage",
+              target: @assessment_plan.target,
+              complete: @assessment_surface_report["complete"] == true,
+              digest: @assessment_surface_report["digest"],
+              surfaces: @assessment_surface_report.fetch("surfaces", {}).transform_values { |row| row["status"] },
+            )
+
             @assessment_law_info.each do |law_id, info|
               FourStreamAssessment::STREAMS.each do |stream|
                 FourStreamAssessment::SURFACES.each do |surface|
@@ -489,6 +567,47 @@ module Master
               return assessment_result(:not_applicable, reason: "Law has no #{stream} detector/assessor")
             end
 
+            surface_evidence = nil
+            if SurfaceEvidence::SURFACES.include?(surface.to_s)
+              surface_receipt = @assessment_surface_receipts[surface.to_s]
+              unless surface_receipt.is_a?(Hash)
+                return assessment_result(:inconclusive, reason: "target-level #{surface} surface receipt is missing", evidence:)
+              end
+
+              probe_status = (surface_receipt["status"] || surface_receipt[:status]).to_s
+              probe_reason = (surface_receipt["reason"] || surface_receipt[:reason]).to_s
+              surface_evidence = {
+                "surface_probe" => surface.to_s,
+                "status" => probe_status,
+                "evidence_sha256" => surface_receipt["evidence_sha256"] || surface_receipt[:evidence_sha256],
+                "counts" => surface_receipt["counts"] || surface_receipt[:counts],
+                "plan_digest" => @assessment_plan&.digest,
+                "source_digest" => @assessment_plan&.source_digest,
+              }.compact
+              base_evidence = Array(evidence) + [surface_evidence]
+              case probe_status
+              when "not_applicable"
+                return assessment_result(:not_applicable, reason: probe_reason.empty? ? "target has no #{surface} surface" : probe_reason, evidence: base_evidence)
+              when "inconclusive"
+                return assessment_result(:inconclusive, reason: probe_reason.empty? ? "#{surface} probe was inconclusive" : probe_reason, evidence: base_evidence,
+                  findings: Array(surface_receipt["findings"] || surface_receipt[:findings]))
+              when "violation_found"
+                findings = Array(surface_receipt["findings"] || surface_receipt[:findings])
+                if info[:source_kind] == :visual
+                  return assessment_result(:violation_found, reason: probe_reason, evidence: base_evidence, findings:)
+                end
+                return assessment_result(:inconclusive,
+                  reason: "#{surface} probe found a target-level issue not attributed to Law #{law_id}: #{probe_reason}",
+                  evidence: base_evidence, findings:)
+              when "assessed_clean"
+                # The target-level receipt proves this surface was measured. The
+                # active Law's existing scanner/semantic assessor still supplies
+                # law-specific findings over the planned source scope.
+              else
+                return assessment_result(:inconclusive, reason: "#{surface} probe returned unknown status #{probe_status.inspect}", evidence: base_evidence)
+              end
+            end
+
             case info[:source_kind]
             when :opportunity
               return assessment_result(:inconclusive, reason: "opportunity assessor returned no result", evidence:) unless opportunities
@@ -524,6 +643,9 @@ module Master
               return assessment_result(:inconclusive, reason: "source generation changed during visual assessment", evidence:) unless signatures_stable
               return assessment_result(:inconclusive, reason: "rendered review returned no result", evidence:) unless visual
               return assessment_result(:inconclusive, reason: visual.message.to_s, evidence:) if visual.err?
+              if surface == :interactive_behavior
+                return assessment_result(:assessed_clean, evidence: Array(evidence) + [surface_evidence].compact)
+              end
 
               values = visual.value!
               rows = Array(values[:findings] || values["findings"]).select do |row|
@@ -542,7 +664,7 @@ module Master
               return assessment_result(:inconclusive, reason: "#{surface} has no assessor for this Law/stream adapter", evidence:)
             end
 
-            cell_evidence = Array(evidence)
+            cell_evidence = Array(evidence) + [surface_evidence].compact
             if surface == :structured_data
               parsed = scoped_files.map { |path| parse_structured_surface(path) }
               failure = parsed.find { |row| row[:status] != :assessed_clean }
@@ -588,6 +710,8 @@ module Master
           end
 
           def assessment_surface_supported?(info, surface, stream:)
+            return true if SurfaceEvidence::SURFACES.include?(surface.to_s)
+
             semantic = %i[semantic_violations semantic_opportunities].include?(stream)
             case info[:source_kind]
             when :canonical

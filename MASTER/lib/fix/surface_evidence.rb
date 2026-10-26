@@ -101,7 +101,7 @@ module Master
           end
         end
 
-        complete = receipts.values.all? { |receipt| COMPLETE_STATUSES.include?(receipt["status"]) }
+        complete = stable && receipts.values.all? { |receipt| COMPLETE_STATUSES.include?(receipt["status"]) }
         compact = receipts.sort.to_h do |name, receipt|
           [name, {
             "status" => receipt["status"],
@@ -122,6 +122,7 @@ module Master
         {
           "schema_version" => SCHEMA_VERSION,
           "target" => @target_label,
+          "target_absolute" => @target,
           "plan_digest" => @plan&.digest,
           "source_digest" => @plan&.source_digest,
           "scope_digest" => @plan&.scope_digest,
@@ -141,6 +142,7 @@ module Master
             "after_digest" => inventory_after["digest"],
           },
           "surfaces" => compact,
+          "details" => receipts,
           "complete" => complete,
           "digest" => report_digest,
         }
@@ -387,10 +389,14 @@ module Master
         return receipt("inconclusive", reason: "rendered browser result contains no interaction receipts") if captures.empty?
 
         unresolved = []
+        violations = []
         action_count = 0
         captures.each do |row|
           journey = row_value(row, "journey")
-          next unless journey.is_a?(Hash)
+          unless journey.is_a?(Hash)
+            unresolved << { "surface" => row_value(row, "id"), "reason" => "interaction receipt missing" }
+            next
+          end
 
           status = row_value(journey, "status").to_s
           actions = Array(row_value(journey, "actions"))
@@ -399,13 +405,20 @@ module Master
           when "not_applicable"
             next
           when "assessed_clean"
-            failures = actions.reject { |action| row_value(action, "status").to_s == "assessed_clean" }
-            unresolved << { "surface" => row_value(row, "id"), "actions" => failures.first(5) } if failures.any?
+            failures = actions.select { |action| row_value(action, "status").to_s == "violation_found" }
+            unknown = actions.reject { |action| %w[assessed_clean violation_found].include?(row_value(action, "status").to_s) }
+            violations.concat(failures.map { |action| { "surface" => row_value(row, "id"), "action" => action } })
+            unresolved << { "surface" => row_value(row, "id"), "actions" => unknown.first(5) } if unknown.any?
+          when "violation_found"
+            violations.concat(Array(row_value(journey, "failures")).map { |action| { "surface" => row_value(row, "id"), "action" => action } })
+            unresolved << { "surface" => row_value(row, "id"), "reason" => "journey detected a behavioral failure" } if Array(row_value(journey, "failures")).empty?
           else
             unresolved << { "surface" => row_value(row, "id"), "reason" => row_value(journey, "reason") || "interaction probe inconclusive" }
           end
         end
-        return receipt("inconclusive", reason: "interaction evidence missing for one or more captured surfaces",
+        return receipt("violation_found", reason: "one or more safe interaction journeys failed",
+          evidence: { "violations" => violations.first(10) }, findings: violations.first(30)) if violations.any?
+        return receipt("inconclusive", reason: "interaction evidence missing or incomplete for one or more captured surfaces",
           evidence: { "unresolved" => unresolved.first(10) }) if unresolved.any?
         return receipt("not_applicable", reason: "rendered surfaces exposed no safe, measurable interactive controls",
           evidence: { "surfaces" => captures.map { |row| row_value(row, "id") }, "actions" => 0 }) if action_count.zero?
@@ -1140,11 +1153,13 @@ module Master
         {
           "schema_version" => SCHEMA_VERSION,
           "target" => @target_label,
+          "target_absolute" => @target,
           "plan_digest" => @plan&.digest,
           "source_digest" => @plan&.source_digest,
           "source_manifest" => { "status" => "inconclusive", "reason" => reason },
           "inventory" => { "status" => "inconclusive", "sample" => [] },
           "surfaces" => compact,
+          "details" => rows,
           "complete" => false,
           "digest" => digest_json(compact),
         }
