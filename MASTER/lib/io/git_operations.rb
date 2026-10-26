@@ -128,15 +128,21 @@ module Master
         end
 
         def reset_hard(ref = "origin/main")
-          Master::Io::Exec.capture2e("git", "-C", @root_path, "reset", "--hard", ref)
+          @mutation_observer.mutate(operation: "git_reset_hard", item_count: 1) do
+            Master::Io::Exec.capture2e("git", "-C", @root_path, "reset", "--hard", ref)
+          end
         end
 
         def tag(name)
-          Master::Io::Exec.capture2e("git", "-C", @root_path, "tag", name)
+          @mutation_observer.mutate(operation: "git_tag", item_count: 1) do
+            Master::Io::Exec.capture2e("git", "-C", @root_path, "tag", name)
+          end
         end
 
         def fetch
-          Master::Io::Exec.capture2e("git", "-C", @root_path, "fetch")
+          @mutation_observer.mutate(operation: "git_fetch", item_count: 0) do
+            Master::Io::Exec.capture2e("git", "-C", @root_path, "fetch")
+          end
         end
       end
 
