@@ -166,7 +166,7 @@ module Master
       end
 
       def persist_required_event(event, payload)
-        safe_payload = Master::Ground::Redactor.payload(payload)
+        safe_payload = persisted_payload(event, payload)
         append_required(@event_log, event, safe_payload)
         if @evidence_log&.operational?(event)
           append_required(@evidence_log, event, safe_payload)
@@ -187,11 +187,84 @@ module Master
       end
 
       def persist_event(event, payload)
-        safe_payload = Master::Ground::Redactor.payload(payload)
+        safe_payload = persisted_payload(event, payload)
         @event_log.append(event, safe_payload)
         @evidence_log&.append(event, safe_payload) if @evidence_log&.operational?(event)
       rescue StandardError => e
         warn_failure("persist #{event}", e)
+      end
+
+      # Persisted events are shared across sessions and survive the process.
+      # Keep raw tool payloads on the live dispatch path for policy handlers, but
+      # write only bounded metadata to the durable event and evidence logs.
+      def persisted_payload(event, payload)
+        name = event.to_s
+        value = if name == "core:reason" || name.start_with?("tool:", "fix:transaction", "fix_loop:", "fix:journal", "fix:start", "fix:resume", "fix:interrupted", "ops:commit")
+                  lifecycle_payload(payload)
+                else
+                  Master::Ground::Redactor.payload(payload)
+                end
+        # The conversation value may be a bearer cookie. Log::Event already
+        # records a non-reversible session digest, so the raw value is redundant.
+        value.reject { |key, _| key.to_s == "conversation" }
+      end
+
+      SAFE_LIFECYCLE_LABELS = %w[
+        event tool operation verb capability stage phase status category result_state
+        reason_code code effect_id parent_effect_id checkpoint_id transaction_id audit_id
+        run_id subject_type subject_id commit head_before head_after target boundary
+        previous_state state
+      ].freeze
+
+      SAFE_LIFECYCLE_COUNTS = %w[
+        turn elapsed_ms duration_ms tracked_paths path_count finding_count argument_count
+        file_count count attempt tries resume_count remaining_seconds output_bytes output_lines
+        input_bytes input_lines bytes lines violations changes additions deletions
+      ].freeze
+
+      def lifecycle_payload(payload)
+        safe = {}
+        payload.each do |raw_key, value|
+          key = raw_key.to_s
+          case key
+          when "conversation"
+            next
+          when "path"
+            safe[:path_present] = !value.to_s.empty?
+          when "paths"
+            safe[:path_count] = Array(value).size
+          when "argv", "args"
+            safe[:argument_count] = value.is_a?(Hash) ? value.size : Array(value).size
+          when "findings"
+            safe[:finding_count] = Array(value).size
+          when "why", "reason", "message", "detail", "summary", "content", "text", "prompt", "output", "error", "stderr", "stdout"
+            next if value.nil? || value.to_s.empty?
+
+            label = {
+              "why" => :reason_present, "reason" => :reason_present,
+              "message" => :message_present, "detail" => :detail_present,
+              "summary" => :summary_present, "content" => :content_present,
+              "text" => :text_present, "prompt" => :prompt_present,
+              "output" => :output_present, "error" => :error_present,
+              "stderr" => :stderr_present, "stdout" => :stdout_present,
+            }.fetch(key)
+            safe[label] = true
+            safe["#{label.to_s.delete_suffix("_present")}_bytes".to_sym] = value.to_s.bytesize
+          else
+            symbol = key.to_sym
+            if SAFE_LIFECYCLE_COUNTS.include?(key) && (value.is_a?(Numeric) || value == true || value == false)
+              safe[symbol] = value
+            elsif SAFE_LIFECYCLE_LABELS.include?(key) && value.is_a?(String) &&
+                  value.match?(/\A[a-zA-Z0-9_.:\/-]{1,128}\z/)
+              safe[symbol] = value
+            elsif SAFE_LIFECYCLE_LABELS.include?(key) && value.is_a?(Symbol)
+              safe[symbol] = value.to_s
+            elsif SAFE_LIFECYCLE_LABELS.include?(key) && (value.is_a?(Numeric) || value == true || value == false)
+              safe[symbol] = value
+            end
+          end
+        end
+        Master::Ground::Redactor.payload(safe)
       end
 
       def elapsed_ms
