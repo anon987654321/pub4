@@ -10,7 +10,9 @@ module Master
     # A strict, argument-private receipt around a tool invocation. The before
     # receipt must be durable before the caller invokes the tool. An unknown or
     # unrecorded after receipt quarantines the same tool/arguments until an
-    # operator records a reconciliation outcome.
+    # operator records a reconciliation outcome (/doctor tools). The quarantine
+    # is rebuilt from the durable receipts when an observer starts, so a restart
+    # or a crash mid-call does not forget it.
     class ToolObserver
       BEFORE_EVENT = "tool:execution:before".freeze
       AFTER_EVENT = "tool:execution:after".freeze
@@ -56,7 +58,58 @@ module Master
         @pending = {}
         @unresolved = {}
         @completed = {}
+        self.class.unresolved_in(history).each { |identity| @unresolved[signature(identity)] = identity }
       end
+
+      # Replays receipts oldest first. An after-receipt that recorded
+      # unknown_outcome stays unresolved until a reconciliation other than
+      # still_unknown names it; so does a before-receipt whose process died with
+      # no after-receipt. A before from a live process is a call still in flight,
+      # and one with no pid predates the field and is not guessed at.
+      def self.unresolved_in(records, alive: method(:process_alive?))
+        pending = {}
+        unresolved = {}
+        records.each do |record|
+          payload = record["payload"] || {}
+          id = payload["invocation_id"] or next
+          case record["event"]
+          when BEFORE_EVENT then pending[id] = payload
+          when AFTER_EVENT
+            pending.delete(id)
+            payload["status"] == "unknown_outcome" ? unresolved[id] = payload : unresolved.delete(id)
+          when RECONCILED_EVENT
+            held = pending.delete(id) || unresolved.delete(id)
+            unresolved[id] = held if held && payload["reconciliation"] == "still_unknown"
+          end
+        end
+        pending.each { |id, payload| unresolved[id] = payload if payload["pid"] && !alive.call(payload["pid"]) }
+        unresolved.values.filter_map { |payload| invocation_from(payload) }
+      end
+
+      def self.process_alive?(pid)
+        return false unless pid.is_a?(Integer) && pid.positive?
+
+        Process.kill(0, pid)
+        true
+      rescue Errno::ESRCH
+        false
+      rescue Errno::EPERM
+        true
+      end
+
+      def self.invocation_from(payload)
+        Invocation.new(
+          invocation_id: Master::Execution::Contract.token!(payload["invocation_id"], "invocation id"),
+          tool: Master::Execution::Contract.token!(payload["tool"], "tool name"),
+          tier: Master::Execution::Contract.token!(payload["tier"], "tool tier"),
+          arguments_digest: payload["arguments_digest"].to_s.match?(/\A[0-9a-f]{64}\z/) ? payload["arguments_digest"] : nil,
+          arguments_bytes: Integer(payload["arguments_bytes"])
+        ).then { |identity| identity.arguments_digest && identity }
+      rescue ArgumentError, TypeError
+        nil
+      end
+
+      def unresolved = @mutex.synchronize { @unresolved.values }
 
       # A failure to persist this event means the external operation must not
       # begin. IDs and argument fingerprints are reserved before publishing so
@@ -65,6 +118,7 @@ module Master
         identity = build_identity(tool:, tier:, args:, invocation_id:)
         key = identity.invocation_id
         sig = signature(identity)
+        release_if_reconciled_elsewhere(sig)
 
         @mutex.synchronize do
           if (unknown = @unresolved[sig])
@@ -80,7 +134,7 @@ module Master
         end
 
         begin
-          @bus.publish_required(BEFORE_EVENT, identity.to_h)
+          @bus.publish_required(BEFORE_EVENT, identity.to_h.merge(pid: Process.pid))
         rescue StandardError
           @mutex.synchronize { @pending.delete(key) if @pending[key] == identity }
           raise
@@ -151,6 +205,22 @@ module Master
           raise ArgumentError, "reconciliation invocation identity mismatch"
         end
 
+        record_reconciliation(sig, expected, outcome:, evidence_ref:)
+      end
+
+      # The same record, by invocation id alone: after a restart the operator
+      # has the receipt, not the arguments.
+      def reconcile_invocation!(invocation_id:, outcome:, evidence_ref:)
+        id = Master::Execution::Contract.token!(invocation_id, "invocation id")
+        sig, expected = @mutex.synchronize { @unresolved.find { |_, identity| identity.invocation_id == id } }
+        raise ArgumentError, "no unresolved invocation has id #{id}" unless expected
+
+        record_reconciliation(sig, expected, outcome:, evidence_ref:)
+      end
+
+      private
+
+      def record_reconciliation(sig, expected, outcome:, evidence_ref:)
         decision = outcome.to_s
         raise ArgumentError, "unknown reconciliation outcome" unless RECONCILIATIONS.include?(decision)
         reference = evidence_ref.to_s
@@ -174,7 +244,23 @@ module Master
         expected
       end
 
-      private
+      def history
+        @bus.respond_to?(:receipt_history) ? @bus.receipt_history : []
+      end
+
+      # Another observer, in this process or a later one, may have recorded the
+      # reconciliation; its durable record lifts this observer's quarantine too.
+      def release_if_reconciled_elsewhere(sig)
+        held = @mutex.synchronize { @unresolved[sig] } or return
+        settled = history.any? do |record|
+          payload = record["payload"] || {}
+          record["event"] == RECONCILED_EVENT && payload["invocation_id"] == held.invocation_id &&
+            payload["reconciliation"] != "still_unknown"
+        end
+        return unless settled
+
+        @mutex.synchronize { @unresolved.delete(sig) if @unresolved[sig]&.invocation_id == held.invocation_id }
+      end
 
       def build_identity(tool:, tier:, args:, invocation_id:)
         id = Master::Execution::Contract.token!(invocation_id, "invocation id")

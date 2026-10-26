@@ -16,7 +16,7 @@ module Master
         effect_id parent_effect_id checkpoint_id idempotency_key reconciliation evidence_ref
       ].freeze
       SAFE_NUMBERS = %w[
-        ts schema_version bytes count elapsed_ms duration_ms result_bytes attempt attempts turn turns checks_ran
+        ts pid schema_version bytes count elapsed_ms duration_ms result_bytes attempt attempts turn turns checks_ran
         failure_count warning_count unchecked_count n_handlers paths_count tracked_paths
       ].freeze
       SAFE_BOOLEANS = %w[blocked success ok cancelled complete enabled retry_requires_reconciliation].freeze

@@ -638,6 +638,7 @@ module Master
       def dispatch_doctor(root, ctx: nil)
         word, rest = subcommand(ctx)
         return dispatch_device(root, ctx: rest) if word == "device"
+        return dispatch_tools(root, ctx: rest) if word == "tools"
 
         script = File.join(root, "bin", "doctor")
         body = if File.file?(script)
@@ -650,6 +651,29 @@ module Master
         audit = Master::Ground::SecurityAudit.report(root:)
         capabilities = ::Operator::CapabilityGraph.new(root:).render(model: ENV["MASTER_MODEL"])
         [body, audit, capabilities].reject { |part| part.to_s.strip.empty? }.join("\n")
+      end
+
+      # /doctor tools lists the tool calls whose outcome nobody knows: each one
+      # blocks a repeat with the same arguments. `/doctor tools reconcile <id>
+      # <outcome> <evidence>` records what the operator verified and lifts it.
+      def dispatch_tools(root, ctx: nil)
+        bus = Master::Trace::EventBus.new(event_log: Master::Trace::Log::Event.new(root:),
+                                          evidence_log: Master::Trace::Log::Evidence.new(root:))
+        observer = Master::Trace::ToolObserver.new(bus:)
+        verb, id, outcome, evidence = arg_for(ctx).split
+        if verb == "reconcile"
+          held = observer.reconcile_invocation!(invocation_id: id, outcome:, evidence_ref: evidence)
+          return "tools0: #{held.tool} #{held.invocation_id} reconciled #{outcome}"
+        end
+
+        held = observer.unresolved
+        return "tools0: no unresolved tool outcome" if held.empty?
+
+        outcomes = Master::Trace::ToolObserver::RECONCILIATIONS.join("|")
+        (held.map { |identity| "tools0: #{identity.invocation_id} #{identity.tool} #{identity.tier} unresolved" } <<
+          "reconcile with /doctor tools reconcile <id> <#{outcomes}> <evidence_ref>").join("\n")
+      rescue ArgumentError => e
+        "tools0: #{e.message}"
       end
     end
   end

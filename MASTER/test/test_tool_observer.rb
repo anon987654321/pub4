@@ -247,4 +247,86 @@ class ToolObserverTest < Minitest::Test
                  bus.required_events.map(&:first)
     refute_includes JSON.generate(bus.required_events), "remote private input"
   end
+
+  def receipt(id, args, pid:)
+    document = JSON.generate(args.transform_keys(&:to_s).sort.to_h)
+    @bus.publish_required(
+      Master::Trace::ToolObserver::BEFORE_EVENT,
+      { schema_version: 1, invocation_id: id, tool: "write_file", tier: "guarded",
+        arguments_digest: Digest::SHA256.hexdigest(document), arguments_bytes: document.bytesize, pid: }
+    )
+  end
+
+  def dead_pid
+    pid = Process.spawn(RbConfig.ruby, "-e", "")
+    Process.wait(pid)
+    pid
+  end
+
+  def restarted = Master::Trace::ToolObserver.new(bus: @bus)
+
+  # A process that died between its before- and after-receipt may have written;
+  # the next process must not repeat the call blind.
+  def test_a_crash_mid_call_stays_quarantined_after_restart
+    args = { path: "ledger.txt" }
+    receipt("crash-1", args, pid: dead_pid)
+
+    blocked = assert_raises(Master::Trace::ToolObserver::UnknownOutcome) do
+      restarted.before(tool: "write_file", tier: "guarded", args:, invocation_id: "crash-2")
+    end
+    assert_equal "crash-1", blocked.invocation_id
+  end
+
+  def test_a_call_still_running_in_another_process_is_not_quarantined
+    args = { path: "ledger.txt" }
+    receipt("live-1", args, pid: Process.pid)
+
+    assert_equal "live-2", restarted.before(tool: "write_file", tier: "guarded", args:, invocation_id: "live-2").invocation_id
+  end
+
+  def test_an_unknown_outcome_survives_restart_until_another_observer_reconciles_it
+    args = { path: "remote.txt" }
+    identity = @observer.before(tool: "write_file", tier: "guarded", args:, invocation_id: "unknown-1")
+    @observer.after(identity:, tool: "write_file", tier: "guarded", args:, status: "unknown_outcome", elapsed_ms: 3)
+    survivor = restarted
+
+    assert_equal ["unknown-1"], survivor.unresolved.map(&:invocation_id)
+    restarted.reconcile_invocation!(invocation_id: "unknown-1", outcome: "still_unknown", evidence_ref: "verify:one")
+    assert_raises(Master::Trace::ToolObserver::UnknownOutcome) do
+      survivor.before(tool: "write_file", tier: "guarded", args:, invocation_id: "unknown-2")
+    end
+
+    restarted.reconcile_invocation!(invocation_id: "unknown-1", outcome: "confirmed_failure", evidence_ref: "verify:two")
+    assert_equal "unknown-3", survivor.before(tool: "write_file", tier: "guarded", args:, invocation_id: "unknown-3").invocation_id
+    assert_empty restarted.unresolved
+  end
+
+  # An after-receipt that never reached the log leaves only the in-memory
+  # quarantine; no durable record may lift it but a reconciliation.
+  def test_an_unpersisted_after_receipt_is_not_released_by_the_log
+    bus = StrictBus.new
+    observer = Master::Trace::ToolObserver.new(bus:)
+    def bus.receipt_history = []
+    args = { command: "mutate" }
+    observer.before(tool: "fake_tool", tier: "guarded", args:, invocation_id: "memory-1")
+    bus.fail_event = Master::Trace::ToolObserver::AFTER_EVENT
+    assert_raises(Master::Trace::ToolObserver::UnknownOutcome) do
+      observer.after(invocation_id: "memory-1", tool: "fake_tool", tier: "guarded", args:, status: "success", elapsed_ms: 1)
+    end
+    bus.fail_event = nil
+
+    assert_raises(Master::Trace::ToolObserver::UnknownOutcome) do
+      observer.before(tool: "fake_tool", tier: "guarded", args:, invocation_id: "memory-2")
+    end
+  end
+
+  def test_doctor_tools_lists_and_reconciles_unknown_outcomes
+    receipt("doctor-1", { path: "ledger.txt" }, pid: dead_pid)
+    doctor = ->(args) { Master::CLI::CommandRegistry.dispatch_doctor(@dir, ctx: { args: "tools #{args}" }) }
+
+    assert_match(/tools0: doctor-1 write_file guarded unresolved/, doctor.(""))
+    assert_equal "tools0: write_file doctor-1 reconciled safe_to_retry", doctor.("reconcile doctor-1 safe_to_retry verify:disk")
+    assert_equal "tools0: no unresolved tool outcome", doctor.("")
+    assert_match(/no unresolved invocation has id doctor-1/, doctor.("reconcile doctor-1 safe_to_retry verify:disk"))
+  end
 end

@@ -65,7 +65,9 @@ HEAD still matches (43b53ec61).
 LLMDispatcher and McpCoordinator wrap every tool call in Trace::ToolObserver: a
 durable before-receipt or no call, then an after-receipt with the outcome.
 GitOperations does the same for add, commit, push and the rebase a rejected push
-needs (ec589be8d). test_effect_boundary_inventory names every place outside
+needs (ec589be8d). A new observer rebuilds the unknown-outcome quarantine from
+those receipts, so a restart or a crash mid-call keeps it, and /doctor tools
+lists and reconciles it. test_effect_boundary_inventory names every place outside
 lib/builder.rb that builds a consequential tool.
 
 ### Deployment
@@ -80,12 +82,10 @@ rollback on the box is the operator's (operator_seams.yml).
    Heartbeat, the TaskSteward and fix_status read only MASTER's. One file would
    make the two kinds of mission supersede each other, so this needs a decision
    about whether a Fold turn and a /fix run may coexist, not a path change.
-2. The unknown-outcome quarantine is per ToolObserver instance and in memory,
-   so it does not survive a restart, and reconcile! has no production caller.
-3. A crash between commit_scoped and record_commit! in the Committer leaves a
+2. A crash between commit_scoped and record_commit! in the Committer leaves a
    commit the journal does not know; delivery asks for manual review and
    nothing provides one.
-4. Fix::Kernel is built only by replay_cli, so its hash-chained log has no
+3. Fix::Kernel is built only by replay_cli, so its hash-chained log has no
    production writer. It is the coordinator the others fold into, in the
    gated order docs/fix_coordinator_map.md sets; until a phase moves a
    responsibility, deleting it would undo that plan.

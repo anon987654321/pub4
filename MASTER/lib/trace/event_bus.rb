@@ -15,6 +15,7 @@ module Master
       PATTERN_CACHE_MAX = 512
       MAX_DISPATCHED_EVENTS = 64
       FAILURE_WARNING_LIMIT = 8
+      RECEIPT_HISTORY = 20_000
 
       def initialize(event_log: nil, evidence_log: nil)
         super()
@@ -73,6 +74,14 @@ module Master
 
         enqueue(state, event, enriched, conversation:, already_persisted: true)
         self
+      end
+
+      # The newest durable tool receipts, oldest first, from which a
+      # ToolObserver rebuilds the quarantine a restart would forget. The
+      # evidence log keeps operational events only, so its tail reaches further
+      # back than the activity log's.
+      def receipt_history(limit = RECEIPT_HISTORY)
+        (@evidence_log || @event_log).recent(limit, pattern: '\Atool:execution:')
       end
 
       private

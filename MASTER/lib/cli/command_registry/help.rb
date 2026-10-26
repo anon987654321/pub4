@@ -222,7 +222,8 @@ detail: [
           detail: ["/doctor — keys, disk, git, pairing/gateway exposure.",
                    "/doctor device — truthful Android/Termux:API hardware capability report.",
                    "/doctor device battery|camera|sensors|audio — query the matching Termux:API endpoint.",
-                   "/doctor device location [gps|network|passive] — explicitly request location; never sampled at boot."],
+                   "/doctor device location [gps|network|passive] — explicitly request location; never sampled at boot.",
+                   "/doctor tools [reconcile <id> <outcome> <evidence>] — tool calls with an unknown outcome, and their release."],
         },
         "voice" => {
           summary: "CLI speech is off by default; enable it explicitly when wanted",
