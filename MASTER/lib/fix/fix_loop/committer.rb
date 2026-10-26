@@ -473,7 +473,8 @@ def stage_commit_mode?
         end
 
         def commit_paths(message, findings, paths, transaction:)
-          commit_scoped(with_finding_ids(message, findings, paths), paths:)
+          marker = Master::Fix::Transaction::Delivery.marker(transaction.id)
+          commit_scoped("#{with_finding_ids(message, findings, paths)}\n\n#{marker}", paths:)
           head_after = @git.head
           transaction.delivery.record_commit!(head_after:)
           push_commit!(paths)

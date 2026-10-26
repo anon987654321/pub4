@@ -4,6 +4,7 @@
 # the default gem and Bundler refuses the locked version.
 require_relative "test_helper"
 require "json"
+require "open3"
 require "tmpdir"
 require_relative "../lib/fix/transaction"
 
@@ -471,6 +472,72 @@ class TestFixTransaction < Minitest::Test
 
       assert completed.ok?
       refute Master::Fix::Transaction::Recovery.persisted?(root: dir, id:)
+    end
+  end
+
+  def git(dir, *args)
+    out, status = Open3.capture2e("git", "-C", dir, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t",
+                                  "-c", "user.email=t@example.invalid", *args)
+    raise out unless status.success?
+
+    out.strip
+  end
+
+  # A process killed after its delivery commit and before record_commit!:
+  # the manifest says delivering with no head_after.
+  def crashed_delivery(dir, id, commit:)
+    git(dir, "init", "-q")
+    File.write(File.join(dir, ".gitignore"), ".master/\n")
+    path = File.join(dir, "note.txt")
+    File.write(path, "before")
+    git(dir, "add", ".gitignore", "note.txt")
+    git(dir, "commit", "-q", "-m", "Base")
+    tx = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id:).begin!
+    File.write(path, "after")
+    tx.observe!
+    tx.delivery.begin!(head_before: git(dir, "rev-parse", "HEAD"))
+    git(dir, "commit", "-q", "-m", "Repair\n\n#{Master::Fix::Transaction::Delivery.marker(id)}", "--", "note.txt") if commit
+    tx.send(:release_lock)
+    tx.instance_variable_set(:@active, false)
+    tx
+  end
+
+  def test_a_delivery_commit_the_manifest_missed_is_found_by_its_marker
+    Dir.mktmpdir do |dir|
+      crashed_delivery(dir, "landed", commit: true)
+
+      result = Master::Fix::Transaction::Recovery.recover!(root: dir, id: "landed")
+
+      assert result.ok?, -> { result.message }
+      assert_equal({ state: :delivery_pending, commit: git(dir, "rev-parse", "HEAD"), transaction_id: "landed" }, result.value!)
+      assert_equal "after", File.read(File.join(dir, "note.txt"))
+    end
+  end
+
+  def test_a_delivery_that_never_committed_rolls_back_like_an_open_pass
+    Dir.mktmpdir do |dir|
+      crashed_delivery(dir, "unlanded", commit: false)
+
+      result = Master::Fix::Transaction::Recovery.recover!(root: dir, id: "unlanded")
+
+      assert result.ok?, -> { result.message }
+      assert_equal "before", File.read(File.join(dir, "note.txt"))
+      refute Master::Fix::Transaction::Recovery.persisted?(root: dir, id: "unlanded")
+    end
+  end
+
+  # A manifest written before deliveries were marked cannot tell the two apart.
+  def test_an_unmarked_delivery_still_asks_for_review
+    Dir.mktmpdir do |dir|
+      tx = crashed_delivery(dir, "legacy", commit: false)
+      tx.instance_variable_set(:@delivery_marked, false)
+      tx.send(:persist!)
+
+      result = Master::Fix::Transaction::Recovery.recover!(root: dir, id: "legacy")
+
+      refute result.ok?
+      assert_match(/manual review required/, result.message)
+      assert_equal "after", File.read(File.join(dir, "note.txt"))
     end
   end
 

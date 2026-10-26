@@ -58,7 +58,10 @@ in conflict. A committed or rolled-back transaction refuses rollback by name
 (2ddc00247). At the start of every run, FixLoop recovers each persisted
 transaction: an open pass rolls back unless its files changed since, which
 keeps it as a conflict; a delivering one is finalised only when the recorded
-HEAD still matches (43b53ec61).
+HEAD still matches (43b53ec61). Each delivery commit carries "fix transaction
+<id>" in its body, so a delivery the process died inside before recording its
+commit is settled from git: the marked commit is the head to finalise, and no
+such commit since head_before means it never landed and the pass rolls back.
 
 ### Tool dispatch, MCP and git
 
@@ -82,10 +85,7 @@ rollback on the box is the operator's (operator_seams.yml).
    Heartbeat, the TaskSteward and fix_status read only MASTER's. One file would
    make the two kinds of mission supersede each other, so this needs a decision
    about whether a Fold turn and a /fix run may coexist, not a path change.
-2. A crash between commit_scoped and record_commit! in the Committer leaves a
-   commit the journal does not know; delivery asks for manual review and
-   nothing provides one.
-3. Fix::Kernel is built only by replay_cli, so its hash-chained log has no
+2. Fix::Kernel is built only by replay_cli, so its hash-chained log has no
    production writer. It is the coordinator the others fold into, in the
    gated order docs/fix_coordinator_map.md sets; until a phase moves a
    responsibility, deleting it would undo that plan.

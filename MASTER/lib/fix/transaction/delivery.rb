@@ -21,6 +21,7 @@ module Master
           @tx.instance_variable_set(:@state, "delivering")
           @tx.instance_variable_set(:@delivery_head_before, head_before.to_s)
           @tx.instance_variable_set(:@delivery_head_after, nil)
+          @tx.instance_variable_set(:@delivery_marked, true)
           @tx.send(:persist!)
           @tx.send(:emit, "fix:transaction_delivery_start", id: @tx.id, paths: @tx.instance_variable_get(:@paths),
                                                              head_before: head_before.to_s)
@@ -75,8 +76,28 @@ module Master
 
         private
 
+        # The line the Committer writes into each delivery commit's body, so a
+        # recovery can find the commit a crash kept the manifest from naming.
+        def self.marker(id) = "fix transaction #{id}"
+
         # Called only from Transaction#recover! while @state == "delivering".
+        # A process that died between its commit and record_commit! left no
+        # head_after. A marked delivery is settled from git: the commit that
+        # carries its marker is the head to finalise, and no such commit means
+        # it never landed, so the pass rolls back like an open one.
         def recover!
+          if !pending? && @tx.instance_variable_get(:@delivery_marked)
+            case (landed = landed_commit)
+            when String
+              @tx.instance_variable_set(:@delivery_head_after, landed)
+              @tx.send(:persist!)
+            when false
+              @tx.instance_variable_set(:@state, "open")
+              @tx.send(:persist!)
+              @tx.send(:emit, "fix:transaction_delivery_not_committed", id: @tx.id)
+              return @tx.send(:recover_open_state)
+            end
+          end
           @tx.instance_variable_set(:@active, false)
           @tx.send(:release_lock)
           if pending?
@@ -87,6 +108,21 @@ module Master
                                                                  reason: "delivery started before commit identity was recorded")
             Result.err("transaction delivery state is ambiguous; manual review required", category: :policy)
           end
+        end
+
+        # The newest commit since head_before whose body carries the marker;
+        # false when git answered and none does; nil when git could not say.
+        def landed_commit
+          before = @tx.instance_variable_get(:@delivery_head_before).to_s
+          return nil if before.empty?
+
+          out, status = Master::Io::Exec.capture2e(
+            "git", "-C", @tx.instance_variable_get(:@root), "log", "--format=%H", "--fixed-strings",
+            "--grep=#{self.class.marker(@tx.id)}", "#{before}..HEAD"
+          )
+          return nil unless status.success?
+
+          out.lines.first&.strip || false
         end
       end
     end

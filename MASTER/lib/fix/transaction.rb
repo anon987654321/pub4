@@ -466,6 +466,7 @@ module Master
           "state" => @state,
           "delivery_head_before" => @delivery_head_before,
           "delivery_head_after" => @delivery_head_after,
+          "delivery_marked" => @delivery_marked == true,
           "paths" => @paths,
           "seen" => @seen,
           "snapshots" => @snapshots.transform_values(&:to_h),
@@ -484,6 +485,7 @@ module Master
         @state = data.fetch("state")
         @delivery_head_before = data["delivery_head_before"]
         @delivery_head_after = data["delivery_head_after"]
+        @delivery_marked = data["delivery_marked"] == true
         @paths = data.fetch("paths")
         @seen = Hash.new { |hash, key| hash[key] = [] }
         data.fetch("seen").each { |key, values| @seen[key] = values }
@@ -499,6 +501,7 @@ module Master
         raise "transaction manifest malformed" unless data.is_a?(Hash) && data["version"].to_i == 1 && data["id"] == @id
         state, paths, snapshots, seen = data.values_at("state", "paths", "snapshots", "seen")
         raise "transaction manifest state unsupported" unless %w[open delivering committed rolled_back conflict].include?(state)
+        raise "transaction manifest delivery mark malformed" unless [nil, true, false].include?(data["delivery_marked"])
         raise "transaction manifest delivery heads malformed" unless data.values_at("delivery_head_before", "delivery_head_after").all? { |head| head.nil? || head.is_a?(String) }
         raise "transaction manifest paths malformed: unsafe or non-canonical path" unless paths.is_a?(Array) && paths.all? { |p| p.is_a?(String) && p != "." && normalize(p) == p }
         raise "transaction manifest snapshot set mismatch" unless snapshots.is_a?(Hash) && snapshots.keys.sort == paths.sort
