@@ -36,6 +36,25 @@ class LoopOwnerSpec < Minitest::Test
     assert_nil Master::Ops::LoopOwner.active
   end
 
+  def test_valid_pid_and_timestamp_are_accepted_without_logging
+    Dir.mktmpdir("loop-owner-valid-") do |dir|
+      path = File.join(dir, "owner.json")
+      File.write(path, JSON.generate(pid: Process.pid, at: Time.now.utc.iso8601))
+      errors = []
+
+      Master::Ops::LoopOwner.stub(:dir, dir) do
+        Master::Ops::LoopOwner.stub(:info, path) do
+          Master::Ground::Swallow.stub(:log, ->(*args, **kwargs) { errors << [args, kwargs] }) do
+            Master::Ops::LoopOwner.cleanup_stale!
+          end
+        end
+      end
+
+      assert File.file?(path), "a live owner with valid metadata must retain its claim"
+      assert_empty errors, "a valid numeric PID must not be classified as malformed"
+    end
+  end
+
   def test_corrupt_timestamp_does_not_release_a_live_owner
     Dir.mktmpdir("loop-owner-corrupt-") do |dir|
       path = File.join(dir, "owner.json")
