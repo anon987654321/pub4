@@ -118,6 +118,7 @@ module Master
         @last_repeatable_input = input if result.ok? && Master::Io::MediaIntent.repeatable?(input)
       ensure
         @pipeline_thread = nil
+        @turn_cancellation = nil
         stop_thinking_indicator
         close_unit_console
         @user_active = false
@@ -189,6 +190,7 @@ module Master
         @turn_current_started = false
         @turn_queue_paused = false
         @turn_cancel_requested = false
+        @turn_cancellation = nil
         @reading_input = false
         @activity_row_reserved = false
         @active_prompt = nil
@@ -220,7 +222,11 @@ module Master
         return Master::Result.err("turn cancelled before dispatch", category: :abort) if turn_cancel_requested?
 
         on_turn = build_on_turn_handler(accumulated, state)
-        @pipeline_thread = spawn_pipeline_thread(input, on_turn:, on_chunk: build_on_chunk_handler(accumulated, state))
+        @turn_cancellation = Master::Core::CancellationToken.new
+        @pipeline_thread = spawn_pipeline_thread(
+          input, on_turn:, on_chunk: build_on_chunk_handler(accumulated, state),
+          cancellation: @turn_cancellation
+        )
         cancel_turn(@pipeline_thread, @turn_children) if turn_cancel_requested? && @pipeline_thread&.alive?
         fetch_pipeline_result
       end
@@ -251,7 +257,7 @@ module Master
         end
       end
 
-      def spawn_pipeline_thread(input, on_turn:, on_chunk:)
+      def spawn_pipeline_thread(input, on_turn:, on_chunk:, cancellation: nil)
         @turn_children = Master::Io::Exec::Children.new
 
         Thread.new do
@@ -264,6 +270,7 @@ module Master
             felt_sense: cli_felt_sense,
             on_turn:,
             on_chunk:,
+            cancellation:,
           )
         end
       end
