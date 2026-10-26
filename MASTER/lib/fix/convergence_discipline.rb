@@ -36,7 +36,7 @@ module Master
       TEXT
 
       DEFAULTS = {
-        "clean_runs_required" => 1,
+        "clean_runs_required" => 2,
         "diminishing_delta" => 0.001,
         "diminishing_cycles" => 3,
         "working_memory_items" => 7,
