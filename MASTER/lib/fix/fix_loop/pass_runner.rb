@@ -120,6 +120,40 @@ module Master
           @scanner.respond_to?(:semantic_gaps) ? @scanner.semantic_gaps : {}
         end
 
+        # Report concrete per-target adapter capability in the plan. Capability
+        # inventory is not evidence of a successful measurement; missing assessors
+        # still leave the completion ledger INCONCLUSIVE.
+        def assessment_adapters(target:)
+          visual = @visual_pass&.applicable?(target) == true
+          opportunities = @opportunity_pass&.applicable?(target) == true
+          {
+            "whole_file" => @scan_phase ? "scanner" : "unavailable",
+            "paths" => @scanner.respond_to?(:scan) ? "scanner" : "unavailable",
+            "lines" => @scanner.respond_to?(:scan) ? "scanner" : "unavailable",
+            "syntax_tree" => @scanner.respond_to?(:scan) ? "language_dispatch" : "unavailable",
+            "structured_data" => @scanner.respond_to?(:scan) ? "scanner_path_filter" : "unavailable",
+            "cross_file" => @reference_graph&.respond_to?(:build) ? "reference_graph" : "unavailable",
+            "lexical_opportunities" => opportunities ? "opportunity_pass" : "not_applicable_to_target",
+            "semantic_violations" => @scan_phase&.semantic_full? ? "full_semantic_mode" : "sampled_or_budgeted",
+            "semantic_opportunities" => @council&.respond_to?(:improve) ? "bounded_council" : "unavailable",
+            "rendered_ui" => visual ? "visual_pass" : "not_applicable_to_target",
+            "interactive_behavior" => visual ? "browser_journeys" : "not_applicable_to_target",
+            "tests" => "target_specific_runner_only",
+            "runtime" => "target_specific_probe_only",
+            "deployment" => "external_validation_not_universal",
+          }.freeze
+        end
+
+        def plan_refresh_failed!(error)
+          stage_failures[:fix_plan] << "#{error.class}: #{error.message.to_s[0, 180]}"
+          self
+        end
+
+        def plan_refresh_succeeded!
+          stage_failures.delete(:fix_plan)
+          self
+        end
+
         # The real Law x stream x surface ledger is not wired to production yet.
         # Keep the absence explicit so terminalization cannot mistake the contract for evidence.
         def assessment_matrix_status = :not_measured
