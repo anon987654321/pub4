@@ -104,6 +104,29 @@ class TestLawContract < Minitest::Test
     end
   end
 
+  def test_law_assessment_surfaces_are_declared_and_serialized
+    law = Law.definitions.values.find { |definition| definition.assessment_surfaces.include?(:whole_file) }
+    refute_nil law
+    assert law.assessment_surfaces.all? { |surface| Law::ASSESSMENT_SURFACES.include?(surface) }
+
+    data = JSON.parse(Law::Contract.render)
+    row = data.fetch("laws").find { |entry| entry.fetch("id") == law.id.to_s }
+    refute_nil row
+    assert_equal law.assessment_surfaces.map(&:to_s), row.fetch("surfaces")
+  end
+
+  def test_law_dsl_rejects_unknown_assessment_surfaces
+    builder = Law::Builder.new(:ASSESSMENT_SURFACE_PROBE)
+    builder.surfaces([:made_up_surface])
+    builder.practice("keep a measurable contract")
+    builder.fix("inspect and report")
+    builder.bad("bad")
+    builder.good("good")
+
+    error = assert_raises(ArgumentError) { builder.build }
+    assert_includes error.message, "unknown assessment surfaces"
+  end
+
   def test_contract_has_stable_machine_readable_shape
     data = JSON.parse(Law::Contract.render)
 
