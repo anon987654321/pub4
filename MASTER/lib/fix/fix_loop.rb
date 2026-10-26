@@ -271,6 +271,8 @@ module Master
           "budget_seconds", "deadline_at"
         ).transform_keys(&:to_sym))
         bind_fix_plan!(journal, run_id)
+        @pass_runner.begin_assessment_run(files:, plan: @fix_plan) if
+          @pass_runner.respond_to?(:begin_assessment_run)
         if RunBudget.stopping || repair_seconds_left(journal) <= 0
           exhausted = RunBudget.pass_boundary(0) ||
             Result.err("wall-clock timeout during fix-plan capture; no repair pass ran", category: :timeout)
