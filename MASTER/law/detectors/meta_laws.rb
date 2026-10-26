@@ -65,7 +65,7 @@ module Master
           # `*_laws.rb` and hold nearly every law there is. And MASTER names
           # tests `test_<base>.rb`, 283 files to 1, so the glob described a
           # convention this tree does not use. Over all sixteen files it
-          # produced one finding, and `test/test_law_bridge_law.rb` existed.
+          # produced one finding, which was not sufficient evidence of coverage.
           # Fifteen skipped, one false positive, nothing correct.
           #
           # Coverage is a mention anywhere in test/ or spec/, of the class or of
