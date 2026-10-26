@@ -1,5 +1,11 @@
 # pub4 outstanding work
 
+## GLM law-adherence port (2026-10-26)
+
+The law-aligned dashboard portion of the GLM layout pass is integrated: the large polling block is now a standalone same-origin asset, with a regression contract preserving no-store fetches, hidden-tab throttling, and terminal 401/403 handling. The face stop control now has English and Norwegian translations.
+
+Other GLM proposals are being ported only where current MASTER/data/laws.yml, executable laws, token sources and current-tree evidence support them. No law detectors were weakened, no CSS budget ceilings were raised, and no operator-owned palette or shader decisions were accepted without measured visual proof. Tests are added but not run here; runtime verification remains INCONCLUSIVE.
+
 ## Kernel audit-log append complexity (2026-10-26)
 
 `Master::Fix::Kernel#append_event` now caches the last fully verified sequence/hash and byte offset per kernel instance. Subsequent appends reuse that head when the file identity and metadata are unchanged, or validate only the new suffix under the existing file lock when another instance has appended records. Truncation or inode replacement is refused. `verify_log!` and replay still validate the complete hash chain, including the final JSONL record boundary.

@@ -31,4 +31,16 @@ class PwaMasterContractTest < Minitest::Test
     assert_includes manifest_assets, "visemePacks"
     assert_includes manifest_assets, "clusterMiner"
   end
+
+  def test_dashboard_poller_is_external_and_preserves_live_state_contract
+    dashboard = read("app/views/dashboard/index.html.erb")
+    script = read("public/dashboard_live.js")
+
+    assert_includes dashboard, '<script src="/dashboard_live.js" nonce="<%= content_security_policy_nonce %>" defer></script>'
+    refute_match(/<script\b(?![^>]*\bsrc=)[^>]*>[\s\S]*?fetch\(['"]\/dashboard\/live/m, dashboard)
+    assert_includes script, "fetch('/dashboard/live'"
+    assert_includes script, "cache: 'no-store'"
+    assert_includes script, "document.hidden"
+    assert_includes script, "r.status === 401 || r.status === 403"
+  end
 end

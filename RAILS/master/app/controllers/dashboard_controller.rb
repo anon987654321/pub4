@@ -9,8 +9,8 @@ class DashboardController < ApplicationController
   end
 
   # One fetcher, the dashboard page, which is the normal shape for a JSON action. The dashboard
-  # stays out of config/face_assets.yml: it loads no face module, only an inline script and
-  # /face.css, which the manifest already covers.
+  # stays out of config/face_assets.yml: it loads no face module, only the standalone
+  # /dashboard_live.js poller and /face.css; the face manifest remains chat-specific.
   def live
     c = container
     return render(json: { error: "warming up" }, status: :service_unavailable) unless c
