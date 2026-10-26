@@ -164,7 +164,7 @@ module Operator
     end
 
     # Assessment integrity is read through the same verifier that /fix uses
-    # before DONE. A complete matrix is distinct from an intact but incomplete one.
+    # before DONE. Report missing proof as explicit work, never as an empty success.
     def assessment_proof_summary(run)
       receipt = run["assessment_receipt"]
       return "not recorded" unless receipt.is_a?(Hash)
@@ -175,7 +175,18 @@ module Operator
 
       matrix = verification["matrix_status"].to_s
       digest = verification["sha256"].to_s[0, 12]
-      return "verified but matrix=#{matrix} sha256=#{digest}" unless matrix == "complete"
+      summary = verification["matrix_summary"] || {}
+      unless matrix == "complete"
+        counts = "cells=#{summary["recorded_cells"]}/#{summary["expected_cells"]} " \
+          "pending=#{summary["pending_cells"]} inconclusive=#{summary["inconclusive_cells"]} findings=#{summary["finding_cells"]}"
+        first = Array(verification["blockers"]).first
+        detail = if first
+                   "#{first["law"]}/#{first["stream"]}/#{first["surface"]}: #{first["reason"]}".strip
+                 else
+                   "no cell-level blocker detail"
+                 end
+        return "verified matrix=#{matrix} #{counts}; next=#{detail[0, 100]} sha256=#{digest}"
+      end
 
       "verified complete sha256=#{digest}"
     rescue StandardError => e

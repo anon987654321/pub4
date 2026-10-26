@@ -259,12 +259,37 @@ module Master
           return { "status" => "receipt_provenance_incomplete", "dimensions" => missing } unless missing.empty?
         end
 
+        ledger = report["ledger"].is_a?(Hash) ? report["ledger"] : {}
+        matrix_summary = ledger["summary"].is_a?(Hash) ? ledger["summary"] : {}
+        cells = Array(ledger["cells"])
+        blockers = cells.filter_map do |cell|
+          next unless cell.is_a?(Hash)
+          next unless %w[pending inconclusive violation_found opportunity_found].include?(cell["status"].to_s)
+
+          latest = Array(cell["readings"]).last
+          {
+            "law" => cell["law"].to_s,
+            "stream" => cell["stream"].to_s,
+            "surface" => cell["surface"].to_s,
+            "status" => cell["status"].to_s,
+            "reason" => (latest.is_a?(Hash) ? latest["reason"] : nil).to_s.gsub(/\\s+/, " ").strip[0, 180],
+          }
+        end.first(5)
         {
           "status" => "verified",
           "path" => relative_path,
           "sha256" => actual_digest,
           "bytes" => payload.bytesize,
           "matrix_status" => receipt["matrix_status"],
+          "matrix_summary" => {
+            "laws" => matrix_summary["laws"].to_i,
+            "expected_cells" => matrix_summary["expected_cells"].to_i,
+            "recorded_cells" => matrix_summary["recorded_cells"].to_i,
+            "pending_cells" => matrix_summary["unassessed_cells"].to_i,
+            "inconclusive_cells" => matrix_summary["inconclusive_cells"].to_i,
+            "finding_cells" => matrix_summary["finding_cells"].to_i,
+          },
+          "blockers" => blockers,
         }
       rescue JSON::ParserError => e
         { "status" => "invalid_json", "message" => e.message.to_s[0, 180] }
