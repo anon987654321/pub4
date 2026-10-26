@@ -189,7 +189,12 @@ module Master
         receipt = run["assessment_receipt"]
         return { "status" => "receipt_missing" } unless receipt.is_a?(Hash)
 
-        expected_path = File.join(@root, ASSESSMENT_DIR, "#{id}.json")
+        master_dir = File.join(@root, ".master")
+        assessment_dir = File.join(@root, ASSESSMENT_DIR)
+        return { "status" => "journal_directory_symlink" } if File.symlink?(master_dir)
+        return { "status" => "assessment_directory_symlink" } if File.symlink?(assessment_dir)
+
+        expected_path = File.join(assessment_dir, "#{id}.json")
         relative_path = relative(expected_path)
         return { "status" => "receipt_path_mismatch" } unless receipt["path"] == relative_path
         return { "status" => "artifact_unavailable" } unless File.file?(expected_path) && !File.symlink?(expected_path)
@@ -206,17 +211,47 @@ module Master
         unless document["schema_version"].to_i == 1 && document["run_id"] == id
           return { "status" => "artifact_identity_mismatch" }
         end
+        unless document["target"].to_s == run["target"].to_s
+          return { "status" => "artifact_target_mismatch" }
+        end
 
         report = document["report"]
         return { "status" => "artifact_report_missing" } unless report.is_a?(Hash)
         unless report["status"].to_s == receipt["matrix_status"].to_s
           return { "status" => "artifact_status_mismatch" }
         end
-        %w[plan_digest identity_digest scope_digest source_digest law_digest law_source_digest authority_digest toolchain_digest exclusion_digest adapter_digest].each do |key|
+        dimensions = %w[plan_digest identity_digest scope_digest source_digest law_digest law_source_digest authority_digest toolchain_digest exclusion_digest adapter_digest]
+        dimensions.each do |key|
           expected = receipt[key]
           actual = report[key]
           next if expected.nil? && actual.nil?
           return { "status" => "provenance_mismatch", "dimension" => key } unless expected == actual
+        end
+
+        plan = run["plan"]
+        if plan.is_a?(Hash)
+          journal_dimensions = {
+            "plan_digest" => plan["digest"],
+            "identity_digest" => plan["identity_digest"],
+            "scope_digest" => plan["scope_digest"],
+            "source_digest" => plan["source_digest"],
+            "law_digest" => plan["law_digest"],
+            "law_source_digest" => plan["law_source_digest"],
+            "authority_digest" => plan["authority_digest"],
+            "toolchain_digest" => plan["toolchain_digest"],
+            "exclusion_digest" => plan["exclusion_digest"],
+            "adapter_digest" => plan["adapter_digest"],
+          }
+          journal_dimensions.each do |key, expected|
+            next if expected.nil?
+            return { "status" => "journal_plan_mismatch", "dimension" => key } unless receipt[key] == expected
+          end
+        elsif receipt["matrix_status"].to_s == "complete"
+          return { "status" => "journal_plan_missing" }
+        end
+        if receipt["matrix_status"].to_s == "complete"
+          missing = dimensions.select { |key| receipt[key].to_s.empty? }
+          return { "status" => "receipt_provenance_incomplete", "dimensions" => missing } unless missing.empty?
         end
 
         {
