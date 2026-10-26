@@ -58,7 +58,7 @@ module Operator
           end
           hits.each do |hit|
             id = (hit.respond_to?(:[]) ? hit[:law] : nil).to_s
-            id = rule.id.to_s if id.empty? || id == "law_bridge"
+            id = rule.id.to_s if id.empty?
             tally[app] += 1 if DESIGN_RULES.include?(id.upcase)
           end
         end
