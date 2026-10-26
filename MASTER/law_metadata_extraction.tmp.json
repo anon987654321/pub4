@@ -5702,6 +5702,1138 @@
         ]
       },
       "kind": "dsl"
+    },
+    {
+      "id": "adversarial",
+      "path": "MASTER/law/detectors/semantic_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "ONE_JOB",
+          "CQS",
+          "GUARD_EXPENSIVE",
+          "FAIL_VISIBLY",
+          "COMPOSABLE"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "semantic",
+      "path": "MASTER/law/detectors/semantic_laws.rb",
+      "fields": {
+        "severity": "warning"
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "comment_drift",
+      "path": "MASTER/law/detectors/semantic_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "SELF_EXPLAINING",
+          "EXPLICIT"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "FILE_LAYOUT",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "PROXIMITY",
+          "CONVENTION"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "EXPLICIT",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "EXPLICIT",
+          "CONVENTION"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "CYCLOMATIC_COMPLEXITY",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "LINEARITY",
+          "SMALL_PARTS"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "PATTERN_EXTRACTION",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "DESIGN",
+          "OPPORTUNITY"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "DATA_CLASS",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "SRP",
+          "SOLID"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "LIB_ROOT_DISCIPLINE",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "ABSTRACTION",
+          "ARCHITECTURE"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "SMALL_FILES",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "SMALL_PARTS"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "SMALL_FUNCTIONS",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "SMALL_PARTS"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "NO_GOD_CLASS",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "SOLID",
+          "SRP"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "NESTING_DEPTH",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "LINEARITY"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "CQS",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "CQS",
+          "CLEAN_CODE"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "OPEN_CLOSED",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "SOLID",
+          "OCP"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "LISKOV",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "SOLID",
+          "LSP"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "DEPENDENCY_INVERSION",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "SOLID",
+          "DIP"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "INTERFACE_SEGREGATION",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "SOLID",
+          "ISP"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "MIDDLE_MAN",
+      "path": "MASTER/law/detectors/structural_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "ENGINEERING_FIT",
+          "ABSTRACTION"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "CONFIG_HIERARCHY",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "CONFIG",
+          "HIERARCHY"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "CODE_HIERARCHY",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "ARCHITECTURE",
+          "HIERARCHY"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "LONG_PARAMETER_LIST",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "BLOATERS",
+          "API"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "PRIMITIVE_OBSESSION",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "BLOATERS",
+          "DOMAIN_MODELING"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "BOOLEAN_TRAP",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "API",
+          "DOMAIN_LANGUAGE"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "DATA_CLUMPS",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "BLOATERS",
+          "DOMAIN_MODELING"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "COUPLER_SMELLS",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "COUPLING",
+          "DEMETER"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "FEATURE_ENVY",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "COUPLING",
+          "DEMETER"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "LAZY_CLASS",
+      "path": "MASTER/law/detectors/structural_question_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "DISPENSABLES",
+          "SRP"
+        ]
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "NO_DECORATIVE_FX",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "DESIGN",
+          "AESTHETIC",
+          "PIXEL"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "FLAT_PIXELS",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "DESIGN",
+          "AESTHETIC",
+          "PIXEL"
+        ],
+        "languages": [
+          "css",
+          "scss",
+          "javascript"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "GRID_STRUCTURE",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "DESIGN",
+          "LAYOUT"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "EIGHT_PX_RHYTHM",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "DESIGN",
+          "AESTHETIC"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "LINE_HEIGHT_ON_SCALE",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "DESIGN",
+          "TYPOGRAPHY",
+          "RHYTHM"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "TOUCH_TARGET_MIN",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "DESIGN",
+          "UX",
+          "ACCESSIBILITY"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "CHOICE_OVERLOAD",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "DESIGN",
+          "UX"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "PROGRESSIVE_DISCLOSURE",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "DESIGN",
+          "UX"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "WHITESPACE_RHYTHM",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "DESIGN",
+          "AESTHETIC"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "TYPE_HIERARCHY",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "DESIGN",
+          "TYPOGRAPHY"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "CONTRAST_TOKENS",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "DESIGN",
+          "ACCESSIBILITY"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "PIXEL_EXACT",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "DESIGN",
+          "AESTHETIC",
+          "PIXEL"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "ERB_HARDCODED_CHROME",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "DESIGN",
+          "I18N",
+          "RAILS",
+          "VIEWS"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "TYPE_TITLE_TOKEN",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "DESIGN",
+          "TYPOGRAPHY"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "FORM_FOLLOWS_FUNCTION",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "DESIGN",
+          "AESTHETIC"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "SIGNAL_NOISE",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "DESIGN",
+          "AESTHETIC"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "AFFORDANCE_CLARITY",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "DESIGN",
+          "UX"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "AESTHETIC_MINIMALISM",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "DESIGN",
+          "AESTHETIC"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "HOST_CAPACITY",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "OPS"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "THIN_CONTROLLER",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "RAILS",
+          "ARCHITECTURE"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "FAT_MODEL_CALLBACK_SOUP",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "RAILS",
+          "ARCHITECTURE"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "RAILS_TAG_HELPER",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "RAILS",
+          "VIEWS"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "STIMULUS_CONTROLLER_SIZE",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "RAILS",
+          "JAVASCRIPT"
+        ],
+        "languages": [
+          "javascript"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "STIMULUS_PROGRESSIVE",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "RAILS",
+          "JAVASCRIPT",
+          "UX"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "NO_LOGIC_IN_VIEW",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "RAILS",
+          "VIEWS"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "HELPER_VIEW_ONLY",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "RAILS"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "SCSS_NESTING_DEPTH",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "RAILS",
+          "CSS",
+          "DESIGN"
+        ],
+        "languages": [
+          "scss"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "PWA_MANIFEST_HINT",
+      "path": "MASTER/law/detectors/surface_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "RAILS",
+          "PWA"
+        ],
+        "languages": [
+          "json",
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "FEW_ARGUMENTS",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "SMALL_PARTS"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "N_PLUS_ONE",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "PERFORMANCE"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "NO_FLAG_ARGUMENTS",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "SMALL_PARTS"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "LAW_OF_DEMETER",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "COUPLING"
+        ],
+        "languages": [
+          "ruby",
+          "javascript",
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "TYPOGRAPHIC_EXCELLENCE",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "TYPOGRAPHY"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "TYPOGRAPHY_DISCIPLINE",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "TYPOGRAPHY"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "ONE_SOURCE",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "COUPLING"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "SIMULATION",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "ANTI_SIMULATION",
+          "DENSITY"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "COMPLETION_THEATER",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "ROBUSTNESS",
+          "COMPLETENESS"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "SQL_INJECTION",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "SECURITY"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "CONTROL_CHARS",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "ROBUSTNESS"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "PLEDGE_STAGED",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "SECURITY"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "AUDIT_APPEND_ONLY",
+      "path": "MASTER/law/detectors/universal_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "SECURITY"
+        ],
+        "languages": [
+          "ruby"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "veto_patterns",
+      "path": "MASTER/law/detectors/veto_pattern_law.rb",
+      "fields": {
+        "severity": "veto"
+      },
+      "kind": "declared_class"
+    },
+    {
+      "id": "HTML_LANG",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "IMG_ALT",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "LAZY_IMAGES",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "PERFORMANCE"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "NO_IMPORTANT",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "MAINTAINABILITY"
+        ],
+        "languages": [
+          "css",
+          "scss"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "ARIA_LABELS",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "NO_TODO_IN_VIEWS",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "MAINTAINABILITY"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "ANTI_DIVITIS",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "DESIGN"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "PREFER_TAG_HELPERS",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "DESIGN",
+          "RAILS_IDIOM"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "ERB_HTML_SAFE",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "error",
+        "tags": [
+          "SECURITY"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "SINGLE_H1",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "SEO",
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "FORM_LABEL",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "ASYNC_STATUS",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "REDUCED_MOTION",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "css",
+          "scss"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "TABINDEX_ABOVE_ZERO",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "NO_JS_ERB",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "HOTWIRE"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "DATA_REMOTE",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "warning",
+        "tags": [
+          "HOTWIRE"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "INPUT_TYPE_SPECIFIC",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "html"
+        ]
+      },
+      "kind": "dsl"
+    },
+    {
+      "id": "FOCUS_VISIBLE",
+      "path": "MASTER/law/detectors/web_laws.rb",
+      "fields": {
+        "severity": "info",
+        "tags": [
+          "ACCESSIBILITY"
+        ],
+        "languages": [
+          "css",
+          "scss"
+        ]
+      },
+      "kind": "dsl"
     }
   ]
 }
