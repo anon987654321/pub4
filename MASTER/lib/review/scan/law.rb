@@ -265,6 +265,10 @@ module Master
       class CanonicalLawAdapter
         attr_reader :definition
 
+        # A canonical definition scans the text it is handed and nothing else, so
+        # Fix::Scan::FindingCache may replay its findings for unchanged content.
+        def self.reads_beyond_file? = false
+
         def initialize(definition)
           raise ArgumentError, "canonical law definition required" unless definition.respond_to?(:id)
 

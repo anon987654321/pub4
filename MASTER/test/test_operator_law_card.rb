@@ -24,12 +24,16 @@ class TestOperatorLawCard < Minitest::Test
   def test_executable_law_resolves_with_its_id
     out, status = card("EACH_WITH_OBJECT")
     assert status.success?, out
-    assert_includes out, "law EACH_WITH_OBJECT,"
+    assert_includes out, "law EACH_WITH_OBJECT"
+    assert_includes out, "defined at MASTER/law/"
   end
 
-  def test_declared_only_law_does_not_borrow_an_unrelated_mention
+  # Every catalogue Law has a definition under law/ now; the card must show that
+  # definition, not the first file that happens to mention the id.
+  def test_a_law_card_shows_its_own_definition_not_an_unrelated_mention
     out, = card("ROBUSTNESS")
-    assert_includes out, "no definition found"
+    assert_includes out, "defined at MASTER/law/"
+    assert_includes out, "Law.define(:ROBUSTNESS)"
   end
 
   def test_unknown_law_is_refused
