@@ -254,10 +254,11 @@ class TestSkills < Minitest::Test
                 fixtures: [test/test_skills.rb]
       YAML
       File.write(path, common)
-      first = Master::CLI::Skills.new(root:).tap(&:discover!).find("alpha")
+      approval_path = File.join(root, "skill_approvals.yml")
+      first = Master::CLI::Skills.new(root:, approval_path:).tap(&:discover!).find("alpha")
 
       File.write(path, common.sub('version: "1.0.0"', 'version: "1.0.1"'))
-      second = Master::CLI::Skills.new(root:).tap(&:discover!).find("alpha")
+      second = Master::CLI::Skills.new(root:, approval_path:).tap(&:discover!).find("alpha")
 
       refute_equal first[:revision], second[:revision]
       assert_equal :candidate, first[:contract].status
