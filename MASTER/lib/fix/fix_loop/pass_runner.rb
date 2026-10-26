@@ -879,8 +879,10 @@ module Master
           language = Master.language_for(path).to_s
           semantic = %i[semantic_violations semantic_opportunities].include?(stream)
           case surface
-          when :repository_tree, :directories, :file_names, :paths
-            true
+          when :repository_tree, :directories
+            File.directory?(@assessment_plan.target)
+          when :file_names, :paths
+            !@assessment_plan.sources.empty?
           when :whole_file
             true
           when :lines
@@ -904,7 +906,8 @@ module Master
           when :tests
             assessment_target_has_tests?
           when :runtime
-            !@assessment_plan.sources.empty?
+            runtime_extensions = %w[.rb .rake .sh .zsh .js .jsx .ts .tsx .html .erb .css .scss]
+            @assessment_plan.sources.any? { |source| runtime_extensions.include?(File.extname(source.path).downcase) }
           when :deployment
             assessment_target_has_deployment_surface?
           else
