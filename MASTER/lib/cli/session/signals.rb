@@ -29,11 +29,25 @@ module Master
           return Thread.new { stop_interactive_queue } if @turn_worker&.alive?
           return Thread.new do
             @turn_queue_mutex.synchronize { @turn_cancel_requested = true }
-            cancel_turn(turn, @turn_children)
+            request_or_interrupt_turn(turn, @turn_children, reason: "ctrl_c")
           end
         end
 
         raise Interrupt
+      end
+
+      # Fold-owned work observes cancellation between model, policy and
+      # effect boundaries. Do not kill its thread mid-transaction; non-Fold
+      # commands retain the established immediate interruption path.
+      def request_or_interrupt_turn(turn, children, reason:)
+        token = @turn_cancellation
+        token&.cancel!(reason: reason.to_s == "ctrl_c" ? "Ctrl-C requested cancellation" : "operator requested cancellation")
+        if token&.active?
+          answer_pending_terminal_ask("/deny") if terminal_ask_pending?
+          @refs.bus&.publish("user:interrupt", reason:, source: "cli", children:)
+        else
+          cancel_turn(turn, children)
+        end
       end
 
       # The thread first, so the turn takes no next step, then its children,
