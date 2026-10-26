@@ -68,6 +68,8 @@ module Master
         previous_plan = Master::Fix::CheckFocus.plan?
         previous_until = Master::Fix::CheckFocus.until_checks?
 
+        cancellation = ctx.cancellation if ctx.respond_to?(:cancellation)
+
         begin
           Master::Fix::AutofixGuard.mode = overrides[:autofix_mode] if overrides[:autofix_mode]
           Master::Fix::RunLedger.max_files = overrides[:max_files] if overrides[:max_files]
@@ -76,7 +78,7 @@ module Master
           Master::Fix::CheckFocus.until_checks! if overrides[:until_checks]
           dispatch_fix_parsed(
             scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
-            apply:, critique:, aesthetic:, only:, target:
+            apply:, critique:, aesthetic:, only:, target:, cancellation:
           )
         ensure
           Master::Fix::AutofixGuard.restore_mode_override(previous_mode)
@@ -162,7 +164,7 @@ module Master
       end
 
       def dispatch_fix_parsed(scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
-                              apply:, critique:, aesthetic:, only:, target:)
+                              apply:, critique:, aesthetic:, only:, target:, cancellation: nil)
         Master::Fix::RunBudget.with_shared_run(
           root: Master::ROOT,
           max_passes: Master::Fix::FixLoop::ABSOLUTE_MAX_PASSES,
@@ -207,7 +209,8 @@ module Master
               results = targets.map do |fix_target|
                 run_fix_target(
                   scanner:, fix_loop:, root:, deliberation:, bus:, swarm:,
-                  target: fix_target, writes_requested:, effective_critique:, critique:, aesthetic:, only:
+                  target: fix_target, writes_requested:, effective_critique:, critique:, aesthetic:, only:,
+                  cancellation:
                 )
               end
               failure = results.find { |result| result.is_a?(Master::Result::Err) }
@@ -239,12 +242,13 @@ module Master
       end
 
       def run_fix_target(scanner:, fix_loop:, root:, deliberation:, bus:, swarm:, target:,
-                         writes_requested:, effective_critique:, critique:, aesthetic:, only:)
+                         writes_requested:, effective_critique:, critique:, aesthetic:, only:, cancellation: nil)
         check_label = ::Operator::CheckChain.baseline_scope_key(target)
         # What already fails, taken before any repair, so delivery can be judged on
         # what the run added instead of on debt it did not create. This scan-only
         # check is a baseline phase, not the requested repair's execution mode.
         baseline = nil
+        return cancelled_fix_result(cancellation) if cancellation&.cancelled?
         Master::Fix::CheckFocus.reset!
         resume_from_residual(target)
         if writes_requested || Master::Fix::CheckFocus.plan?
@@ -263,9 +267,12 @@ module Master
           next_step = writes_requested ? "starting write-enabled /fix pass" : "planning, nothing is written"
           Master::Trace::Dmesg.status("check0", "scope #{check_label}: baseline ready; #{next_step}")
         end
+        return cancelled_fix_result(cancellation) if cancellation&.cancelled?
+
         value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
                          target:, apply: writes_requested, critique: effective_critique,
-                         aesthetic:, only:)
+                         aesthetic:, only:, cancellation:)
+        return cancelled_fix_result(cancellation) if cancellation&.cancelled?
         return value unless writes_requested
         return incomplete_fix_pipeline(value) if incomplete_fix_pipeline?(value)
 
@@ -273,6 +280,8 @@ module Master
         check_status = 0
         check_changed = []
         loop do
+          return cancelled_fix_result(cancellation) if cancellation&.cancelled?
+
           check_status, check_changed = ::Operator::CheckChain.verify_fix(target:, baseline:)
           check_rounds += 1
           break if check_status == 0 && check_changed.empty?
@@ -283,7 +292,8 @@ module Master
           )
           value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
                            target:, apply: true, critique: critique.nil? ? council_default : critique,
-                           aesthetic:, only: "fix")
+                           aesthetic:, only: "fix", cancellation:)
+          return cancelled_fix_result(cancellation) if cancellation&.cancelled?
           return incomplete_fix_pipeline(value) if incomplete_fix_pipeline?(value)
         end
 
@@ -323,6 +333,14 @@ module Master
         message = "fix pipeline incomplete#{head}#{tail}"
         Master::Trace::Dmesg.status("fix0", message[0, 200])
         Master::Result.err(message, category: :validation)
+      end
+
+      def cancelled_fix_result(cancellation)
+        reason = cancellation.respond_to?(:reason) ? cancellation.reason : nil
+        detail = reason.to_s.strip
+        message = detail.empty? ? "CANCELLED: /fix stopped at a safe stage boundary" :
+          "CANCELLED: /fix stopped at a safe stage boundary (#{detail})"
+        Master::Result.err(message, category: :cancelled)
       end
 
       # The first `review0: cause, <stage>: <reason>` footer line, as `<stage>: <reason>`.
