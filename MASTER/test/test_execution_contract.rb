@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require_relative "../lib/execution/contract"
+require_relative "../lib/proof"
 require_relative "../lib/trace/effect_observer"
 require_relative "../lib/fix/outcome_policy"
 
@@ -118,5 +119,72 @@ class TestExecutionContract < Minitest::Test
     end
 
     assert_match(/typed EvidenceReference/, error.message)
+  end
+
+  class FakeCheckResult
+    attr_reader :outcome, :checks_ran, :failures, :warnings, :unchecked
+
+    def initialize(outcome:, checks_ran:, failures: [], warnings: [], unchecked: [], conclusive: true)
+      @outcome = outcome
+      @checks_ran = checks_ran
+      @failures = failures
+      @warnings = warnings
+      @unchecked = unchecked
+      @conclusive = conclusive
+    end
+
+    def conclusive? = @conclusive
+  end
+
+  def test_check_result_adapter_preserves_partial_and_inconclusive_semantics
+    partial = Contract::VerificationResult.from_check_result(
+      FakeCheckResult.new(
+        outcome: :passed, checks_ran: 12, failures: [], warnings: ["one warning"],
+        unchecked: ["browser unavailable"], conclusive: false
+      ),
+      id: "check-partial", subject: "web-contract", verifier: "check-runner",
+      scope: "RAILS/master"
+    )
+    inconclusive = Contract::VerificationResult.from_check_result(
+      FakeCheckResult.new(outcome: :inconclusive, checks_ran: 0, unchecked: ["app not listening"]),
+      id: "check-inconclusive", subject: "live-layout", verifier: "check-runner"
+    )
+    failed = Contract::VerificationResult.from_check_result(
+      FakeCheckResult.new(outcome: :failed, checks_ran: 4, failures: ["fixture failure"]),
+      id: "check-failed", subject: "unit-tests", verifier: "minitest"
+    )
+
+    assert_equal :partial, partial.status
+    assert_equal 12, partial.checked_count
+    assert_equal 1, partial.warning_count
+    assert_equal 1, partial.unchecked_count
+    assert_equal Digest::SHA256.hexdigest("RAILS/master"), partial.scope_digest
+    refute partial.conclusive?
+
+    assert_equal :inconclusive, inconclusive.status
+    refute inconclusive.complete
+    assert_equal :fail, failed.status
+    assert_equal 1, failed.failure_count
+    assert_predicate failed, :conclusive?
+  end
+
+  def test_proof_adapter_preserves_open_claims_as_inconclusive
+    proven = Master::Proof.build(
+      claim: "test suite passed", law: "ROBUSTNESS", subject: "MASTER",
+      evidence: "local command receipt", source: :deterministic, status: :proven
+    )
+    open = Master::Proof.build(
+      claim: "browser output not available", law: "CAPABILITY_STATUS_MUST_BE_TRUTHFUL",
+      subject: "RAILS", source: :deterministic, status: :open
+    )
+
+    passed = proven.to_verification(id: "proof-pass", verifier: "proof-adapter", scope: "MASTER")
+    inconclusive = open.to_verification(id: "proof-open", verifier: "proof-adapter")
+
+    assert_equal :pass, passed.status
+    assert_equal Digest::SHA256.hexdigest("MASTER"), passed.scope_digest
+    assert_equal :inconclusive, inconclusive.status
+    refute inconclusive.complete
+    refute_includes inconclusive.to_h.inspect, "browser output not available"
   end
 end
