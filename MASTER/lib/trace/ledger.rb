@@ -113,7 +113,7 @@ module Master
           extra_keys = fields.keys - SAFE_METADATA_FIELDS - SENSITIVE_METADATA_FIELDS - %w[event ts conversation]
           unless extra_keys.empty?
             result[:extra_fields_count] = extra_keys.size
-            result[:extra_fields_digest] = Digest::SHA256.hexdigest(extra_keys.sort.join("\\0"))
+            result[:extra_fields_digest] = Digest::SHA256.hexdigest(extra_keys.sort.join("\0"))
           end
           result
         end
@@ -158,7 +158,7 @@ module Master
             value: files.size,
             metadata: {
               schema_version: 1, files_count: files.size,
-              **Master::Execution::Contract.diagnostic_fields(files.sort.join("\\0"), key: :files)
+              **Master::Execution::Contract.diagnostic_fields(files.sort.join("\0"), key: :files)
             },
           )
 
