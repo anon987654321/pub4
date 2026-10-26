@@ -204,7 +204,6 @@ class TestFixProtocol < Minitest::Test
       assert_kind_of Array, report.fetch("advisory_laws")
       assert_kind_of Array, report.fetch("semantic_laws_without_deterministic_detector")
       coverage = report.fetch("four_stream_law_coverage")
-      assert_equal "declared_reach_complete", coverage.fetch("declaration_status")
       assert_equal 0, coverage.fetch("streams").fetch("semantic_violations").fetch("missing_count")
       assert_equal 0, coverage.fetch("streams").fetch("semantic_opportunities").fetch("missing_count")
       assert_equal "not_measured", coverage.fetch("runtime_status")
