@@ -62,7 +62,7 @@ class TestDocPaths < Minitest::Test
       body = File.read(File.join(REPO, doc))
       assert_includes body, "MASTER/data/soul.yml"
       assert_includes body, "MASTER/data/laws.yml"
-      assert_match(/executable law.*law\/\*\.rb/m, body)
+      assert_match(%r{(?:executable laws?|ruby definitions)\b.*MASTER/law/}mi, body)
     end
 
     root = File.read(File.join(REPO, "CLAUDE.md"))
@@ -83,9 +83,18 @@ class TestDocPaths < Minitest::Test
   # docs/runbooks and docs/todo-triage.md are the evidence procedures TODO.md cites;
   # MASTER/docs/handoffs holds preserved run logs and the archived predecessor ledger.
   # These are artifacts, not substitutes for tree/project README entry points.
+  # MASTER/docs holds the execution-contract references that TODO.md, the code
+  # comments and the lifecycle work cite by path.
   MARKDOWN_REFERENCE_EXCEPTIONS = %w[
     MASTER/FACE_WORLD.md
     MASTER/data/principles/openbsd_kernel_philosophy.md
+    MASTER/docs/execution-contracts.md
+    MASTER/docs/fix_coordinator_map.md
+    MASTER/docs/handoffs/2026-10-26-master-hardening-review.md
+    MASTER/docs/laws_digest.md
+    MASTER/docs/lifecycle_ownership.md
+    MASTER/docs/mobile.md
+    MASTER/docs/restructure_assessment.md
     MASTER/docs/handoffs/2026-10-22-laws-checks-rails-fix.md
     MASTER/docs/handoffs/legacy/MEGA_ALL_APPS.md
     MASTER/lib/cli/face/contract.md
@@ -154,10 +163,13 @@ class TestDocPaths < Minitest::Test
   def test_claude_md_says_master_outranks_it
     body = File.read(File.join(REPO, "CLAUDE.md"))
 
-    assert_includes body, "MASTER is the primary configuration" # source-assertion: ok — a document has no behaviour but its text
-    # Not "rake docs:…": the sentence wraps between the two words in CLAUDE.md,
-    # and an assertion that fails on a line break is testing the paragraph.
-    assert_includes body, "docs:agent_contracts" # source-assertion: ok — a document has no behaviour but its text
+    # source-assertion: ok — a document has no behaviour but its text
+    assert_includes body, "MASTER is Claude's #1 primary configuration"
+    # It points at the soul and the Law catalogue rather than restating them.
+    %w[MASTER/data/soul.yml MASTER/data/laws.yml].each do |path|
+      # source-assertion: ok — a document has no behaviour but its text
+      assert_includes body, path
+    end
   end
 
   # The repo root has four governed trees and CLAUDE.md. bin/ moved under MASTER and
@@ -235,6 +247,8 @@ class TestDocPaths < Minitest::Test
         # documents point at code, which left the commonest citation shape
         # outside the check written to check citations.
         .map { |c| c.sub(/:\d+(?:-\d+)?\z/, "") }
+        # `data/laws.yml#visual_identity_contract` cites the file; the fragment names a key in it.
+        .map { |c| c.sub(/#[^\/]*\z/, "") }
         .reject { |c| c.match?(/[*${}<]/) }
         .reject { |c| exempt.include?(c) }
         .select { |c| repo_path?(c) }
@@ -297,9 +311,9 @@ class TestDocPaths < Minitest::Test
   # Both directions, because a predicate that answered true for everything would
   # switch this check off while reading exactly like a fix.
   def test_only_an_ignored_path_counts_as_generated
-    assert generated?("web/storage/", "MASTER/README.md"),
+    assert generated?("storage/", "RAILS/master/README.md"),
            "RAILS/master/.gitignore names storage, so a clean checkout cannot be asked for it"
-    refute generated?("web/nowhere/", "MASTER/README.md"),
+    refute generated?("nowhere/", "RAILS/master/README.md"),
            "a path nothing ignores is a citation this check must still check"
     refute generated?("priv/ssh/id_ed25519_brgen.pub", "OPENBSD/RUNBOOK.md"),
            "the root reading of that path is ignored and the document's reading is not"

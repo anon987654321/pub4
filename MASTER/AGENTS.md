@@ -2,7 +2,11 @@
 
 Task-scoped entry for coding agents (Cursor, Codex, Grok, Claude Code). This file is the contract; `README.md` is the tour.
 
-**Read the repo-root `CLAUDE.md` first.** It is only Claude Code's bootstrap pointer. MASTER owns the governing configuration and Law catalogue. Read `MASTER/data/soul.yml`, then `MASTER/data/laws.yml`, then the relevant Ruby definitions/adapters under `MASTER/law/`, then this workflow contract and task-specific tree contract. The old `MASTER/lib/review/scan/laws` path is deleted; `MASTER/lib/review/scan/` contains scanner machinery, not a second Law source tree.
+**Read the repo-root `CLAUDE.md` first.** It is only Claude Code's bootstrap pointer. MASTER
+owns the governing configuration and Law catalogue. Read `MASTER/data/soul.yml`, then
+`MASTER/data/laws.yml`, then the relevant Ruby definitions/adapters under `MASTER/law/`, then
+this workflow contract and task-specific tree contract. The old lib/review/scan/laws directory
+is deleted; `MASTER/lib/review/scan/` contains scanner machinery, not a second Law source tree.
 
 The block below is the source every other agent's entry file is generated from
 — root `AGENTS.md`, `GEMINI.md`, `.cursorlaws` and
@@ -108,7 +112,7 @@ and never report a check as done without its output.
 **A census has more than one end, and the tree has four.** A gem is used by the
 gems that require it in `Gemfile.lock` as well as by code: `tty-prompt` needs
 `tty-reader`, which needs `wisper`. Every bus topic has a consumer while the
-face is open, because `web/app/controllers/events_controller.rb` subscribes
+face is open, because `RAILS/master/app/controllers/events_controller.rb` subscribes
 `"**"`; published and never
 subscribed is all noise, and only subscribed and never published is worth
 reading. An env var set by nobody in `MASTER/` may be set in `RAILS/` or
@@ -392,7 +396,7 @@ of brgen, and "brgen" alone means the main city app only.
 
 **The face** is MASTER's WebGL front end at `ai.brgen.no`. Its runtime is
 generated: `web/public/face.part*.txt` are the sources and
-`web/public/face.runtime.js` is the build, which says in its own first line not
+`RAILS/master/public/face.runtime.js` is the build, which says in its own first line not
 to edit it by hand. Editing the build is a fix that survives until the next
 `assets:build_face_runtime` and then vanishes.
 

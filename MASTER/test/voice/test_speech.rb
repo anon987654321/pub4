@@ -844,14 +844,19 @@ class TestSpeech < Minitest::Test
     Master::Voice::Policy.reload!
   end
 
+  def declared_tts = YAML.safe_load_file(File.join(Master::ROOT, "data", "voice.yml"), aliases: true).fetch("tts")
+  def declared_rate = declared_tts["default_rate"]
+
   def test_no_profile_leaves_the_voice_exactly_as_declared
     with_profile(nil) do
       assert_equal "", Master::Voice::Policy.profile_name
-      assert_equal "+4%", Master::Voice::Policy.default_rate
+      assert_equal declared_rate, Master::Voice::Policy.default_rate
       assert_empty Master::Voice::Policy.layers
       refute Master::Voice::Layers.active?
       refute Master::Voice::Policy.fx_enabled?
-      assert_empty Master::Voice::Policy.room
+      # The room is whatever tts.room declares; the operator opened it on 2026-10-27.
+      declared_room = declared_tts["room"]
+      assert_equal declared_room["enabled"] ? declared_room : {}, Master::Voice::Policy.room
     end
   end
 
@@ -870,10 +875,13 @@ class TestSpeech < Minitest::Test
   end
 
   def test_the_dry_profile_restores_the_voice_without_a_room
+    ENV["MASTER_TTS_CHARACTER"] = "none"
     with_profile("dry") do
       assert_empty Master::Voice::Policy.room
       assert_equal Master::Voice::Policy.post_chain, Master::Voice::Policy.shaped_chain
     end
+  ensure
+    ENV.delete("MASTER_TTS_CHARACTER")
   end
 
   def test_asmr_keeps_its_own_layers_and_no_room
@@ -903,12 +911,14 @@ class TestSpeech < Minitest::Test
       # The room alone, which is what this holds to the dry voice; the dilla rack
       # is measured in test_dilla_fx.rb.
       ENV["MASTER_TTS_FX"] = "0"
+      ENV["MASTER_TTS_CHARACTER"] = "none"
       with_profile("dilla") do
         wet = loudness.call(Master::Voice::Policy.shaped_chain)
         dry = loudness.call(Master::Voice::Policy.post_chain)
         assert_in_delta dry, wet, 1.0
       end
       ENV.delete("MASTER_TTS_FX")
+      ENV.delete("MASTER_TTS_CHARACTER")
     end
   end
 
@@ -926,7 +936,7 @@ class TestSpeech < Minitest::Test
 
   def test_an_unknown_profile_speaks_the_default_voice
     with_profile("no-such-profile") do
-      assert_equal "+4%", Master::Voice::Policy.default_rate
+      assert_equal declared_rate, Master::Voice::Policy.default_rate
       refute Master::Voice::Layers.active?
     end
   end

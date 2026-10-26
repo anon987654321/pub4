@@ -104,7 +104,9 @@ class TestDillaFx < Minitest::Test
       assert_includes chain, "alimiter=limit=0.8:level=disabled"
       with_env("MASTER_TTS_FX" => "0") do
         refute Policy.fx_enabled?
-        assert_equal [Policy.post_chain, Policy.room_chain].join(","), Policy.shaped_chain
+        # The character presets voice.yml enables sit between the rack and the room.
+        expected = [Policy.post_chain, Policy.character_chain, Policy.room_chain].compact.join(",")
+        assert_equal expected, Policy.shaped_chain
         assert_equal({ enabled: false, units: [] }, Policy.fx_payload)
       end
       off = Policy.data.merge("dilla_fx" => Policy.fx_config.merge("enabled" => false))
@@ -133,7 +135,11 @@ class TestDillaFx < Minitest::Test
       payload = Policy.browser_payload
       assert_equal Policy.fx_units.size, payload.fetch(:dilla_fx).fetch(:units).size
       assert_equal({ in_db: -8.3 }, payload.fetch(:dilla_fx).slice(:in_db))
-      assert_equal [], payload.fetch(:character)
+      enabled = Policy.character_names
+      payload.fetch(:character).each do |preset|
+        assert_includes enabled, preset[:id]
+        assert_equal Policy.data["character"][preset[:id]]["filter"], preset[:filter]
+      end
       runtime = File.read(File.expand_path("../../RAILS/master/public/face_speech_runtime.js", __dir__))
       assert_includes runtime, "function buildFxRack"
       assert_includes runtime, "MASTER_VOICE_POLICY?.dilla_fx"
@@ -167,22 +173,24 @@ class TestDillaFx < Minitest::Test
     end
   end
 
-  def test_character_presets_are_off_unless_selected
-    names = Policy.data.fetch("character").keys
-    assert_equal %w[robot formant doubler glitch shimmer], names
+  # A preset is on when voice.yml enables it or MASTER_TTS_CHARACTER names it.
+  def test_character_presets_are_off_unless_enabled_or_selected
+    presets = Policy.data.fetch("character")
+    assert_equal %w[robot formant doubler glitch shimmer ionosphere midnight shortwave], presets.keys
+
     with_env("MASTER_TTS_CHARACTER" => nil) do
-      assert_empty Policy.character_names
-      assert_nil Policy.character_chain
+      assert_equal presets.select { |_name, preset| preset["enabled"] }.keys, Policy.character_names
       refute_includes Policy.shaped_chain, "sin(2*PI*t*50)"
     end
-    names.each do |name|
-      with_env("MASTER_TTS_CHARACTER" => name) do
-        assert_equal [name], Policy.character_names
-        assert_includes Policy.shaped_chain, Policy.data["character"][name]["filter"]
-        assert ffmpeg_ok?(Policy.data["character"][name]["filter"], seconds: 1), "#{name} rejected by ffmpeg" if FFMPEG
-      end
+    presets.each { |name, preset| assert_selected_preset(name, preset["filter"]) }
+    %w[none bogus].each { |value| with_env("MASTER_TTS_CHARACTER" => value) { assert_empty Policy.character_names } }
+  end
+
+  def assert_selected_preset(name, filter)
+    with_env("MASTER_TTS_CHARACTER" => name) do
+      assert_equal [name], Policy.character_names
+      assert_includes Policy.shaped_chain, filter
+      assert ffmpeg_ok?(filter, seconds: 1), "#{name} rejected by ffmpeg" if FFMPEG
     end
-    with_env("MASTER_TTS_CHARACTER" => "none") { assert_empty Policy.character_names }
-    with_env("MASTER_TTS_CHARACTER" => "bogus") { assert_empty Policy.character_names }
   end
 end
