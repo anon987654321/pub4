@@ -356,6 +356,7 @@ class TestConstitutionYamlLoading < Minitest::Test
     lib/ground/agent_brief.rb # deliberately unbooted SessionStart reader
     lib/operator/ratchets.rb
     test/test_future_face.rb
+    test/test_cli_face_contract.rb # standalone; boots no Master to load through
     lib/finance/tradedoubler.rb
     lib/review/council/inter_model_contract.rb
   ].freeze
@@ -387,7 +388,7 @@ class TestLawsPhysicalOrder < Minitest::Test
     PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES INTER_MODEL_CONTRACT languages markdown_style visual_identity_contract
     prose zsh detection_calibration phantom_recovery transformation_policy self_test veto_patterns anti_patterns
     architecture runtime_policy law_deps plugins law_ratchets law_map browser_policy
-    face_ascii personal_privacy
+    face_ascii personal_privacy law_catalogue
   ].freeze
   TRANSFORMATION_ORDER = %w[
     remove defragment flatten decouple split hoist merge relocate rename reorder

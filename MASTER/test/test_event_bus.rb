@@ -153,7 +153,8 @@ class TestEventBus < Minitest::Test
       assert_includes persisted, Digest::SHA256.hexdigest(prompt)
     end
 
-    activity = log_lines("runtime/events/activity.jsonl").last
+    # The activity log nests an event's fields under payload; the audit line is flat.
+    activity = log_lines("runtime/events/activity.jsonl").last.fetch("payload")
     audit = log_lines(".master/audit.ndjson").last
     [activity, audit].each do |record|
       assert_equal "write_file", record["tool"]
