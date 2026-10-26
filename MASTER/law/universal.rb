@@ -2195,3 +2195,66 @@ Law.define(:LINEARITY) do
   bad "Nest three conditionals inside a loop so the success path sits at the deepest indent."
   good "Return early on each failure, then run the success path unindented to the end."
 end
+
+# The remaining constitutional principles have explicit semantic evaluators.
+# Their detector adapters are modality-specific, while each Law applies to every
+# artifact surface through the canonical assessment matrix.
+Law.define(:ROBUSTNESS) do
+  source "laws.yml ROBUSTNESS — safe failure, security and edge-case handling"
+  severity :error
+  lifecycle :trusted
+  autofix :never
+  ask "Across this artifact and its real operating context, what can fail unsafely under invalid input, adversarial use, concurrency, resource pressure, missing dependencies, or partial failure? Name only evidenced failure paths; return CLEAN when the relevant boundary fails safely."
+  practice "Treat every boundary and degraded state as a first-class path, not as an exception to the design."
+  fix "Close the concrete unsafe path, preserve useful failure context, and prove both the bad and safe paths."
+  bad "The happy path succeeds, so malformed input and provider failure are assumed safe."
+  good "Input, authorization, resource bounds and failure recovery have explicit evidence-backed behavior."
+end
+
+Law.define(:PROXIMITY) do
+  source "laws.yml PROXIMITY — related concepts stay close and cohesive"
+  severity :error
+  lifecycle :trusted
+  autofix :never
+  ask "Are related responsibilities, evidence, states, controls or visual elements separated so far that their relationship is hard to understand or keep consistent? Evaluate semantic, structural and visual proximity for this artifact; return CLEAN when the grouping communicates the real relationships."
+  practice "Keep pieces together when they change together; separate them when they have distinct ownership."
+  fix "Move or group the related elements at the boundary that best reflects their shared responsibility without adding another abstraction layer."
+  bad "A control is separated from its state, or related logic is duplicated across unrelated modules."
+  good "The structure groups each responsibility and the interface groups information by its actual relationship."
+end
+
+Law.define(:ABSTRACTION) do
+  source "laws.yml ABSTRACTION — appropriate boundaries and information hiding"
+  severity :error
+  lifecycle :trusted
+  autofix :never
+  ask "Does this artifact expose implementation detail, hide a load-bearing contract, or introduce an abstraction whose indirection exceeds the problem it solves? Assess the boundary in code, prose, behavior and presentation; return CLEAN when the boundary makes the concept easier to use and verify."
+  practice "Hide volatile mechanics behind a small truthful contract; do not hide important behavior behind ceremony."
+  fix "Expose the needed contract, encapsulate the unstable detail, or delete the abstraction if direct expression is clearer."
+  bad "Callers depend on undocumented internals or traverse an abstraction that adds no useful policy."
+  good "The public surface is small, intent-revealing and sufficient to exercise the behavior."
+end
+
+Law.define(:DENSITY) do
+  source "laws.yml DENSITY — signal over noise and no needless information"
+  severity :error
+  lifecycle :trusted
+  autofix :never
+  ask "Does any part of this artifact consume attention without adding relevant meaning, evidence, action or necessary context? Look across code, prose, UI, status output and visual ornament; return CLEAN when every element earns its place."
+  practice "Prefer the shortest complete expression, not the shortest expression that omits a necessary fact."
+  fix "Remove repetition and ornament, then restore any evidence or context needed to make the result complete."
+  bad "Repeated labels, redundant prose, decoration or duplicated logic competes with the actual task."
+  good "Each statement, control, visual emphasis and abstraction contributes distinct useful meaning."
+end
+
+Law.define(:RENDERED_VALUES) do
+  source "laws.yml RENDERED_VALUES — rendered values and presentation are operator-owned"
+  severity :error
+  lifecycle :trusted
+  autofix :never
+  ask "Are colors, typography, sounds, motion, spacing, layout, content, or rendered behavior invented independently of their canonical owner or altered without evidence and approval? For nonvisual artifacts, assess other operator-owned values and contracts; return CLEAN when values remain sourced, truthful and intentional."
+  practice "Read canonical values and preserve real-world fidelity; never invent a competing design or configuration authority."
+  fix "Use the owning token, configuration, source asset or explicit operator decision and verify the actual rendered result."
+  bad "A second color/font/spacing table drifts from the canonical tokens, or a visual claim is made without inspecting the render."
+  good "Values flow from their owning source, original media stays truthful, and rendered evidence confirms the outcome."
+end
