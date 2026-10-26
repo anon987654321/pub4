@@ -47,8 +47,8 @@ module Master
         return intercepted if intercepted
 
         inferred = infer_operator_command(text, container:)
-        return dispatch_inferred(inferred, container:, felt_sense:, on_turn:) if inferred
-        return dispatch_review_pass(text, container:, felt_sense:, on_turn:) if full_workflow_intent?(text)
+        return dispatch_inferred(inferred, container:, felt_sense:, on_turn:, cancellation:) if inferred
+        return dispatch_review_pass(text, container:, felt_sense:, on_turn:, cancellation:) if full_workflow_intent?(text)
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if casual?(text)
 
         run_fold(text, container:, on_turn:, cancellation:)
@@ -108,8 +108,8 @@ module Master
         dispatch_slash("/#{word.downcase} #{args}".strip, container:)
       end
 
-      def dispatch_review_pass(text, container:, felt_sense: nil, on_turn: nil)
-        dispatch_inferred({ command: "review", args: pass_args_from(text), confidence: 0.9 }, container:, felt_sense:, on_turn:)
+      def dispatch_review_pass(text, container:, felt_sense: nil, on_turn: nil, cancellation: nil)
+        dispatch_inferred({ command: "review", args: pass_args_from(text), confidence: 0.9 }, container:, felt_sense:, on_turn:, cancellation:)
       end
 
       # Two vocabularies, and they are not the same size on purpose.
@@ -225,12 +225,12 @@ module Master
         ""
       end
 
-      def dispatch_inferred(inferred, container:, felt_sense: nil, on_turn: nil)
+      def dispatch_inferred(inferred, container:, felt_sense: nil, on_turn: nil, cancellation: nil)
         command = inferred[:command].to_s
         args = inferred[:args].to_s
         container[:bus]&.publish("infer:auto", command:, args:, confidence: inferred[:confidence])
         slash = args.empty? ? "/#{command}" : "/#{command} #{args}"
-        dispatch_slash(rewrite_slash(slash), container:, felt_sense:, on_turn:)
+        dispatch_slash(rewrite_slash(slash), container:, felt_sense:, on_turn:, cancellation:)
       end
 
       # Core::Fold's constitution requires exec evidence (test_pass, scan_clean,
