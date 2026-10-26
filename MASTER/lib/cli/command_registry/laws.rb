@@ -63,6 +63,7 @@ module Master
         audit = Master::Review::Scan::LawRegistryAudit.new(root:).call
         drift = audit.source_drift
 
+        integrity_errors = audit.catalogue_integrity_errors
         [
           "laws: source drift",
           "  yaml_only: #{drift[:yaml_only].size}",
@@ -71,6 +72,12 @@ module Master
           *drift[:law_only].map { |id| "    #{id}" },
           "  registry_only: #{drift[:registry_only].size}",
           *drift[:registry_only].map { |id| "    #{id}" },
+          "  catalogue_integrity: #{integrity_errors.empty? ? 'valid' : 'blocked'}",
+          "  catalogue_drift_items: #{audit.catalogue_drift.values.sum(&:size)}",
+          "  declared_gap_entries: #{audit.declared_catalogue_gaps.size}",
+          "  declared_unmapped_entries: #{audit.declared_unmapped_entries.size}",
+          "  executable_trace_debt: #{audit.trace_debt.size}/#{audit.trace_ceiling}",
+          *integrity_errors.map { |error| "    #{error}" },
         ].join("\n")
       rescue StandardError => e
         "laws0: source audit failed — #{e.class}: #{e.message}"

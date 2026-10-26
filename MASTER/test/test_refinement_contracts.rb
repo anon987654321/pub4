@@ -91,4 +91,11 @@ class TestRefinementContracts < Minitest::Test
     assert result.clean?
     assert_empty result.issues
   end
+
+  def test_constitution_contract_has_a_real_law_catalogue_gate
+    source = File.read(File.expand_path("../lib/operator/constitution_contract.rb", __dir__))
+
+    assert_includes source, "law_catalogue_issues"
+    assert_includes source, "report.assert_catalogue_integrity!"
+  end
 end
