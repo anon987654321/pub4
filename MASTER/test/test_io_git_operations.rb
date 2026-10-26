@@ -16,10 +16,13 @@ require "open3"
 class GitOperationsTest < Minitest::Test
   class RecordingBus
     attr_reader :events
+    attr_accessor :failure
 
     def initialize = @events = []
 
     def publish_required(name, payload = {})
+      raise IOError, "simulated audit failure" if name == failure
+
       @events << [name, payload]
       self
     end
@@ -83,6 +86,19 @@ class GitOperationsTest < Minitest::Test
     assert_equal "ok", after_event.last.fetch(:status)
     assert_operator after_event.last.fetch(:elapsed_ms), :>=, 0
     refute_includes events.inspect, @repo
+  end
+
+  def test_failed_before_audit_prevents_push
+    write("not-yet-published.txt", "local\n")
+    sh("git", "add", "--", "not-yet-published.txt", chdir: @repo)
+    sh("git", "commit", "-m", "unpublished change", chdir: @repo)
+    remote_before = sh("git", "--git-dir", @remote, "rev-parse", "refs/heads/main", chdir: @tmp).strip
+    @bus.failure = "git:mutation:before"
+
+    assert_raises(IOError) { @git.push }
+
+    remote_after = sh("git", "--git-dir", @remote, "rev-parse", "refs/heads/main", chdir: @tmp).strip
+    assert_equal remote_before, remote_after, "the remote must remain unchanged when the required before-event cannot be stored"
   end
 
   def test_a_clean_repository_reports_clean
