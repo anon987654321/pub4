@@ -92,7 +92,10 @@ input:where([type="text"], [type="email"], [type="password"], [type="tel"],
 
 input[type="checkbox"].toggle {
   width: var(--tap-min);
-  height: 26px;
+  /* Keep the painted track 26px high while the border-box meets the 44px hit floor. */
+  height: var(--tap-min);
+  border-block: 9px solid transparent;
+  background-clip: padding-box;
   appearance: none;
   background: var(--color-border);
   border-radius: var(--radius-pill);
