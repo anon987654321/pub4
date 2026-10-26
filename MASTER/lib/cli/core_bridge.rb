@@ -210,7 +210,11 @@ module Master
                                          format: format || Master::Core::Model::SCHEMA, **Hash(ladder&.pinned))
           ladder&.hear(reply)
           why = CoreBridge.reason_in(reply)
-          bus&.publish("core:reason", why:) if why
+          if why && bus
+            # The reason can echo prompts, source snippets, paths, or secrets. Persist only
+            # bounded diagnostic metadata; the local turn still owns the actual reply.
+            bus.publish("core:reason", Master::Execution::Contract.diagnostic_fields(why, key: :why))
+          end
           Reply.new(reply)
         end
       end
