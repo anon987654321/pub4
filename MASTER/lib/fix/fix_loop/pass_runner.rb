@@ -90,6 +90,7 @@ module Master
               opportunity: lexical_opportunities,
               visual:,
               assessment_matrix: "contract_only_not_measurement",
+              assessment_matrix_status: assessment_matrix_status.to_s,
             )
             Master::Trace::Dmesg.status(
               "fix0",
