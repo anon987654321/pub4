@@ -729,11 +729,11 @@ module Master
                                    visual:, opportunities:)
           declared_surfaces = Array(info[:surfaces]).map(&:to_sym)
           return assessment_result(:not_applicable, reason: "Law does not declare the #{surface} surface") unless declared_surfaces.include?(surface)
-          unless info[:streams].include?(stream)
-            return assessment_result(:not_applicable, reason: "Law has no #{stream} detector/assessor")
-          end
           if info[:unmeasurable_reason]
             return assessment_result(:inconclusive, reason: info[:unmeasurable_reason], evidence:)
+          end
+          unless info[:streams].include?(stream)
+            return assessment_result(:not_applicable, reason: "Law has no #{stream} detector/assessor")
           end
 
           case info[:source_kind]
