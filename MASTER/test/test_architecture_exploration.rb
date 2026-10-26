@@ -76,6 +76,13 @@ class TestArchitectureExploration < Minitest::Test
       assert_equal "NOT_RUN", report.fetch("winner").fetch("runtime_tests")
       assert_operator report.fetch("winner").fetch("score"), :>, 50
       assert_equal 5, report.fetch("shortlist").size
+      decision = report.fetch("decision")
+      assert_equal "local_evidence_rules", decision.fetch("scoring_authority")
+      assert_equal 30, decision.fetch("distinct_change_path_sets")
+      assert_equal 30, decision.fetch("qualified_candidates")
+      assert decision.fetch("selection_gate_passed")
+      assert_equal "NOT_RUN", decision.fetch("execution_proof")
+      assert_operator decision.fetch("winner_margin"), :>=, 0
       assert_equal 1, agent.prompts.size
       assert_includes agent.prompts.first, "PLAN ONLY"
     end
@@ -111,6 +118,10 @@ class TestArchitectureExploration < Minitest::Test
       assert_equal 30, report.fetch("accepted")
       assert_equal 0, report.fetch("qualified")
       assert_nil report.fetch("winner")
+      decision = report.fetch("decision")
+      refute decision.fetch("selection_gate_passed")
+      assert_nil decision.fetch("winner_score")
+      assert_equal "NOT_RUN", decision.fetch("execution_proof")
     end
   end
 
