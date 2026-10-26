@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 require "net/http"
 require "uri"
+require "timeout"
 
 module Master
   module Io
@@ -18,6 +19,11 @@ module Master
       TIMEOUT = 15
       MAX_BYTES = 16_000
       MAX_FULL_BYTES = 4 * 1024 * 1024
+      # read_timeout restarts on every chunk, so a server sending a byte at a time kept a fetch
+      # open for as long as it liked; this bounds the whole read.
+      DEADLINE_S = 30
+      Fetched = Data.define(:code, :body)
+      class TooLarge < StandardError; end
       HTTP_OK = "200".freeze
       TAG_RE = /<[^>]+>/.freeze
       WS_RE = /[ \t]+/.freeze
@@ -83,6 +89,8 @@ module Master
 
         response = http_get(uri, address)
         deliver(url, response, full:)
+      rescue TooLarge
+        Result.err("web_fetch: response exceeds #{MAX_FULL_BYTES} bytes; narrow the request", category: :validation)
       rescue StandardError => e
         Result.err("web_fetch: #{e.message}", category: :infrastructure)
       end
@@ -92,8 +100,6 @@ module Master
 
         # BINARY from Net::HTTP; a page's non-ASCII text must reach the prompt as UTF-8.
         raw_body = String.new(response.body.to_s, encoding: Encoding::UTF_8).scrub
-        return Result.err("web_fetch: response exceeds #{MAX_FULL_BYTES} bytes; narrow the request", category: :validation) if raw_body.bytesize > MAX_FULL_BYTES
-
         stripped = strip_html(raw_body)
         stripped = stripped.byteslice(0, MAX_BYTES).scrub("") unless full
         @bus&.publish("tool:after", tool: NAME, url:)
@@ -117,7 +123,26 @@ module Master
         http = SsrfGuard.http_for(uri, address)
         http.read_timeout = TIMEOUT
         http.open_timeout = TIMEOUT
-        http.start { |h| h.get(uri.request_uri, "User-Agent" => "MASTER/1 (web_fetch)") }
+        http.start do |h|
+          h.request(Net::HTTP::Get.new(uri.request_uri, "User-Agent" => "MASTER/1 (web_fetch)")) do |response|
+            return Fetched.new(code: response.code, body: capped_body(response))
+          end
+        end
+      end
+
+      # Streamed, so a large page is refused at the cap rather than after it is all in memory.
+      def capped_body(response)
+        return "" unless response.code == HTTP_OK
+
+        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        body = +""
+        response.read_body do |chunk|
+          body << chunk
+          raise TooLarge if body.bytesize > MAX_FULL_BYTES
+          elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+          raise Timeout::Error, "fetch exceeded #{DEADLINE_S}s" if elapsed > DEADLINE_S
+        end
+        body
       end
 
       def strip_html(body)
