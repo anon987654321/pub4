@@ -380,6 +380,75 @@ module Master
 
       private
 
+      # Validate the opportunity pass's nested scope receipt before accepting
+      # any clean or positive finding from the aggregate heuristic adapter.
+      def validate_opportunity_reading(report, reading)
+        candidates = Array(reading["evidence"]).select { |entry| entry.is_a?(Hash) }
+        receipt = candidates.find do |entry|
+          entry["schema_version"].to_i == 1 &&
+            entry["status"].to_s == "complete"
+        end
+        return { "status" => "opportunity_receipt_missing" } unless receipt
+        unless receipt["plan_digest"] == report["plan_digest"] &&
+               receipt["source_digest"] == report["source_digest"] &&
+               receipt["scope_digest"] == report["scope_digest"] &&
+               receipt["target"] == report["target"] &&
+               receipt["source_hashes_verified"] == true &&
+               receipt["snapshot_sha256"].to_s.match?(/\A[a-f0-9]{64}\z/) &&
+               receipt["snapshot_sha256"] == receipt["snapshot_after_sha256"]
+          return { "status" => "opportunity_receipt_provenance_mismatch" }
+        end
+
+        inventory = receipt["inventory"]
+        dependencies = receipt["dependencies"]
+        source_rows = receipt["source_rows"]
+        unless inventory.is_a?(Array) && dependencies.is_a?(Array) && source_rows.is_a?(Array)
+          return { "status" => "opportunity_receipt_manifest_missing" }
+        end
+        unless Integer(receipt["inventory_count"]) == inventory.size &&
+               Integer(receipt["dependency_count"]) == dependencies.size &&
+               Integer(receipt["eligible_files"]) == source_rows.size
+          return { "status" => "opportunity_receipt_count_mismatch" }
+        end
+        unless inventory.all? do |row|
+                 row.is_a?(Array) && row.size == 2 &&
+                   row.all? { |value| value.is_a?(String) } &&
+                   %w[file directory symlink other].include?(row[1])
+               end
+          return { "status" => "opportunity_inventory_malformed" }
+        end
+        return { "status" => "opportunity_inventory_duplicate" } unless inventory.uniq.size == inventory.size
+        unless dependencies.all? do |row|
+                 row.is_a?(Hash) && row["path"].is_a?(String) &&
+                   row["sha256"].to_s.match?(/\A[a-f0-9]{64}\z/) &&
+                   Integer(row["bytes"]) >= 0
+               end
+          return { "status" => "opportunity_dependencies_malformed" }
+        end
+        dependency_paths = dependencies.map { |row| row["path"] }
+        return { "status" => "opportunity_dependency_duplicate" } unless dependency_paths.uniq.size == dependency_paths.size
+        inventory_digest = Digest::SHA256.hexdigest(JSON.generate(inventory))
+        return { "status" => "opportunity_inventory_checksum_mismatch" } unless inventory_digest == receipt["inventory_sha256"]
+        dependency_digest = Digest::SHA256.hexdigest(JSON.generate(dependencies))
+        return { "status" => "opportunity_dependency_checksum_mismatch" } unless dependency_digest == receipt["dependency_sha256"]
+        snapshot_digest = Digest::SHA256.hexdigest(JSON.generate([inventory_digest, dependency_digest]))
+        return { "status" => "opportunity_snapshot_checksum_mismatch" } unless snapshot_digest == receipt["snapshot_sha256"]
+
+        dependencies_by_path = dependencies.to_h { |row| [row["path"], row["sha256"]] }
+        unless source_rows.all? do |row|
+                 row.is_a?(Hash) && row["path"].is_a?(String) &&
+                   row["expected_sha256"].to_s.match?(/\A[a-f0-9]{64}\z/) &&
+                   row["expected_sha256"] == row["actual_sha256"] &&
+                   row["actual_sha256"] == dependencies_by_path[row["path"]]
+               end
+          return { "status" => "opportunity_source_hash_mismatch" }
+        end
+
+        nil
+      rescue ArgumentError, TypeError, NoMethodError
+        { "status" => "opportunity_receipt_malformed" }
+      end
+
       def validate_assessment_matrix_report(report)
         return { "status" => "matrix_report_schema_unsupported" } unless report["schema_version"].to_i == 2
 
@@ -475,6 +544,11 @@ module Master
             unless iteration.positive? && iteration > previous_iteration && reading_generation >= previous_generation &&
                    reading_generation <= generation && allowed_readings.include?(reading_status)
               return { "status" => "matrix_reading_order_invalid", "cell" => keys[index] }
+            end
+            if keys[index] == ["CONVERGENCE_OPPORTUNITY", "lexical_opportunities", "whole_file"] &&
+               %w[assessed_clean opportunity_found].include?(reading_status)
+              receipt_failure = validate_opportunity_reading(report, reading)
+              return receipt_failure.merge("cell" => keys[index]) if receipt_failure
             end
             reading_evidence = Array(reading["evidence"])
             reading_findings = Array(reading["findings"])
