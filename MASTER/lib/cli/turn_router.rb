@@ -368,6 +368,7 @@ module Master
         ctx = PipelineContext.wrap(user_message: input, felt_sense:)
         ctx = unwrap(Stages::Intake.new(root: container.fetch(:root, Master::ROOT)).call(ctx))
         return ctx if ctx.is_a?(Master::Result)
+        ctx = ctx.merge(cancellation:) if cancellation && ctx.respond_to?(:merge)
 
         if ctx.intent == :llm
           goal = ctx.message.to_s.strip
