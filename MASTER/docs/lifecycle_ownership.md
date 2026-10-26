@@ -38,9 +38,9 @@ push at the end.
 
 Pass stages build RepairLoop; it writes source with write_atomic inside the
 pass transaction and relies on the reflexion verifier, the consensus panel, the
-collapse guard and the Committer's path validation. WatchLoop also builds one
-with no transaction or committer, so its writes have no rollback record (open,
-below).
+collapse guard and the Committer's path validation. WatchLoop builds none: a
+changed file wakes the background runner or starts an incremental FixLoop run,
+so its repairs get a transaction and a run ledger like any other.
 
 ### Fix::Mission
 
@@ -85,7 +85,4 @@ rollback on the box is the operator's (operator_seams.yml).
 3. A crash between commit_scoped and record_commit! in the Committer leaves a
    commit the journal does not know; delivery asks for manual review and
    nothing provides one.
-4. WatchLoop's RepairLoop writes outside any transaction.
-5. Fix::Kernel is never constructed; its hash-chained log has no writer.
-6. RunLedger is process-wide, so repairs WatchLoop makes outside a run count
-   toward whichever run is current.
+4. Fix::Kernel is never constructed; its hash-chained log has no writer.

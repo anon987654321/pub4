@@ -6,24 +6,22 @@ module Master
   module Fix
   # Architecture #7: file-watcher reactive trigger — no polling.
   # Linux: inotify via rb-inotify. OpenBSD: kqueue via rb-kqueue.
-  # A changed file triggers a targeted RepairLoop pass on that file only.
-  # The system quiesces naturally — no STARTUP_DELAY, no idle sleep waste.
+  # A changed file wakes the background runner, or else starts an incremental
+  # FixLoop run on that file. Repairs go through FixLoop alone, so each one has
+  # a pass transaction, a journal entry and a run ledger of its own, and
+  # FixLoop#run's mutex keeps it from overlapping an operator's /fix.
   #
   # Usage (VPS, after `gem install rb-kqueue` or `rb-inotify`):
-  #   WatchLoop.new(laws:, agent:, scanner:, root:, bus:).run
+  #   WatchLoop.new(root:, fix_loop:, bus:).run
     class WatchLoop
       DEBOUNCE_SECONDS = 5.0
       MAX_EVENTS_PER_MIN = 20
       WATCH_EXTENSIONS = %w[.rb .erb .yml .yaml .json .toml .js .css .html].freeze
       SKIP_DIRS = %w[vendor/ knowledge/ node_modules/ .git/ .bundle/ tmp/ log/ dist/].freeze
 
-      def initialize(laws:, agent:, scanner:, root:, bus: nil, learnings: nil, fix_loop: nil)
-        @laws = laws
-        @agent = agent
-        @scanner = scanner
+      def initialize(root:, fix_loop:, bus: nil)
         @root = root
         @bus = bus
-        @learnings = learnings
         @fix_loop = fix_loop
         @queue = Queue.new
         @mtime_map = {}
@@ -71,25 +69,14 @@ module Master
       def run_laws_on(path)
         return unless File.exist?(path)
         mark_in_progress(path) do
-          if @fix_loop&.background_alive?
+          if @fix_loop.background_alive?
             @fix_loop.wake_background!(reason: "source_changed", path:)
-          elsif @fix_loop
-            @fix_loop.run(path, max_passes: 3, budget_seconds: 120, incremental: true)
           else
-            run_repair_loop_on(path)
+            @fix_loop.run(path, max_passes: 3, budget_seconds: 120, incremental: true)
           end
         end
       rescue StandardError => e
         @bus&.publish("watch_loop:error", file: path, error: e.message)
-      end
-
-      def run_repair_loop_on(path)
-        applicable = @laws.select { |law| law.respond_to?(:applies_to?) ? law.applies_to?(path) : true }
-        applicable.each do |law|
-          rl = RepairLoop.new(law:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
-          result = rl.run_once([path])
-          @bus&.publish("watch_loop:file_pass", file: path, law: law.id, **result)
-        end
       end
 
       def watchable?(path)

@@ -118,7 +118,7 @@ class TestMasterLoop < Minitest::Test
     build = lambda do
       Master::Fix::WatchLoop.stub(:new, watch_loop) do
         Master::Builder.stub(:watched_thread, ->(_bus, where) { started << where }) do
-          Master::Builder.build_watch_loop(laws: nil, agent: nil, scanner: nil, root: Master::ROOT, bus: nil, learnings: nil)
+          Master::Builder.build_watch_loop(root: Master::ROOT, bus: nil, fix_loop: nil)
         end
       end
     end

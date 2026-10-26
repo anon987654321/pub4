@@ -147,7 +147,7 @@ module Master
       laws = scanner.laws
       learnings = infra[:learnings]
       fix_loop = build_fix_loop(root:, infra:, agent:, scanner:, axioms:, laws:, learnings:, bus:, git:)
-      watch_loop = build_watch_loop(laws:, agent:, scanner:, root:, bus:, learnings:, fix_loop:)
+      watch_loop = build_watch_loop(root:, bus:, fix_loop:)
       { standing:, git:, fix_loop:, watch_loop: }
     end
 
@@ -208,10 +208,10 @@ module Master
     end
 
     # MASTER_WATCH=1 enables reactive file-watching (requires rb-kqueue or rb-inotify).
-    def build_watch_loop(laws:, agent:, scanner:, root:, bus:, learnings:, fix_loop: nil)
+    def build_watch_loop(root:, bus:, fix_loop:)
       return unless ENV["MASTER_WATCH"] == "1"
 
-      wl = Fix::WatchLoop.new(laws:, agent:, scanner:, root:, bus:, learnings:, fix_loop:)
+      wl = Fix::WatchLoop.new(root:, fix_loop:, bus:)
       watched_thread(bus, "watch_loop") { wl.run }
       wl
     end

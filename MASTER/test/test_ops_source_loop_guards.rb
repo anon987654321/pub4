@@ -20,7 +20,7 @@ class SourceLoopGuardsSpec < Minitest::Test
     ["MASTER_HEARTBEAT", -> { Master::Fix::Heartbeat.new(root: Master::ROOT).start! }],
     ["MASTER_WATCHER",   -> { Master::Fix::Watcher.new(bus: nil, root: Master::ROOT).run_forever }],
     ["MASTER_WATCH",     lambda {
-      Master::Fix::WatchLoop.new(laws: nil, agent: nil, scanner: nil, root: Master::ROOT).run
+      Master::Fix::WatchLoop.new(root: Master::ROOT, fix_loop: nil).run
     }],
   ].freeze
 
