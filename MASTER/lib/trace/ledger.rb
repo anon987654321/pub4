@@ -215,7 +215,7 @@ module Master
           reason = Master::Ground::Redactor.truncate(Master::Ground::Redactor.text(raw_reason))
           files = raw_files.map { |file| Master::Ground::Redactor.truncate(Master::Ground::Redactor.text(file)) }.uniq
           reason_evidence = Master::Execution::Contract.diagnostic_fields(raw_reason)
-          file_evidence = Master::Execution::Contract.diagnostic_fields(raw_files.sort.join("\\0"), key: :files)
+          file_evidence = Master::Execution::Contract.diagnostic_fields(raw_files.sort.join("\0"), key: :files)
           append(
             {
               "ts" => Time.now.utc.iso8601, "kind" => kind, "reason" => reason, "files" => files,
