@@ -28,6 +28,18 @@ class GovernorTest < Minitest::Test
   ensure
     Fiber[:master_terminal_ask] = nil
   end
+
+  # The /fix research pass reads protocol-declared sources with no terminal to ask.
+  def test_a_protocol_read_passes_the_guarded_tier_and_nothing_else
+    governor = Master::Fix::Governor.new(config: Config.new(false))
+    Fiber[:master_protocol_read] = true
+
+    assert governor.check_permit("web_fetch", :guarded, "https://github.com/rubocop/ruby-style-guide").ok?
+    refute governor.check_permit("shell", :dangerous, "doas reboot").ok?
+  ensure
+    Fiber[:master_protocol_read] = nil
+  end
+
   def test_the_rate_ceiling_comes_from_the_data_and_is_not_three_a_minute
     assert_operator Master::Fix::Governor.rate_limits.fetch("dangerous"), :>, 10
   end

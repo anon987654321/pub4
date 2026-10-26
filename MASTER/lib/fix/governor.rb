@@ -39,7 +39,7 @@ module Master
 
         case tier
         when :safe then return Result.ok(true)
-        when :guarded then return Result.ok(true) if @auto
+        when :guarded then return granted if @auto || Fiber[:master_protocol_read]
         when :dangerous
           return Result.ok(true) if @auto && !consent_required
           return Result.ok(true) unless needs_human?(description) || consent_required
@@ -60,6 +60,9 @@ module Master
       def clear_decisions! = @decisions.clear
 
       private
+
+      # A protocol read is one Agent#research_sources makes from data-declared sources.
+      def granted = Result.ok(true)
 
       def decision_key(tool_name, description)
         [tool_name.to_s, description.to_s]

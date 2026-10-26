@@ -62,7 +62,13 @@ module Master
       # A bounded, source-backed research call for operator-requested /fix runs.
       # Web tools screen external text through the injection guard; returned text
       # remains evidence, not instructions, and repair validation stays local.
+      #
+      # The queries and URLs come from the research protocol in data, not from a
+      # model, so the guarded web reads they need are approved for the call: with
+      # no terminal the Governor refused every one ("non-TTY: cannot prompt"), and
+      # with one it would stop an unattended run to ask per page.
       def research_sources(queries:, sources:, max_queries: 2, max_sources: 3, &progress)
+        Fiber[:master_protocol_read] = true
         records = []
         query_list = Array(queries).first(max_queries.to_i.clamp(0, 5))
         web = evidence_tool("WebSearch")
@@ -126,6 +132,8 @@ module Master
           end
         end
         records
+      ensure
+        Fiber[:master_protocol_read] = nil
       end
 
       def chat(message, image: nil, stream: true, escalation_depth: 0, task_type: nil, &blk)
