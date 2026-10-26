@@ -19,7 +19,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23030303'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23fff'/%3E%3C/svg%3E">
   <link rel="manifest" href="<%= pwa_manifest_path(format: :json) %>">
   <link rel="apple-touch-icon" href="<%= asset_path("icon.png") %>">
-  <script nonce="<%= content_security_policy_nonce %>">
+  <script nonce="<%= content_security_policy_nonce %>"><%# scan: intentional — the pre-primer WebGL guard and asset-path bootstrap must run before face code %>
     // Deferred-boot contract, enforced at the platform level: no WebGL context may be
     // created before the primer tap. THREE.js parse + WebGL init is heavy enough
     // to wedge the main thread; if a stale or regressed asset boots it at page load, the
@@ -45,7 +45,7 @@
     }.merge(FaceAssets.singletons.to_h { |key, file| [key, FaceAssets.versioned(asset_path(file), file)] }) %>
     window.MASTER_ASSET_PATHS = <%= raw json_escape(asset_paths.to_json) %>;
   </script>
-  <script nonce="<%= content_security_policy_nonce %>">
+  <script nonce="<%= content_security_policy_nonce %>"><%# scan: intentional — server-derived persona and face contract values must be published before dependent modules %>
     <% persona = Rails.application.config.x.master_container&.[](:personality) %>
     <% profile = persona.respond_to?(:browser_profile) ? persona.browser_profile : {} %>
     window.MASTER_PERSONA = <%= raw json_escape(profile.to_json) %>;
@@ -70,12 +70,12 @@
       was attached never fires load again, and a preload link has no sheet to test. %>
   <link rel="preload" as="style" id="chat-upload-css" href="<%= asset_path("chat_upload.css") %>">
   <noscript><link rel="stylesheet" href="<%= asset_path("chat_upload.css") %>"></noscript>
-  <script nonce="<%= content_security_policy_nonce %>">
+  <script nonce="<%= content_security_policy_nonce %>"><%# scan: intentional — the preloaded upload stylesheet needs both load and DOMContentLoaded race handling %>
     (function(){var f=document.getElementById('chat-upload-css');if(!f)return;
       var on=function(){f.rel='stylesheet';};
       f.addEventListener('load',on);document.addEventListener('DOMContentLoaded',on);})();
   </script>
-  <style nonce="<%= content_security_policy_nonce %>">
+  <style nonce="<%= content_security_policy_nonce %>"><%# scan: intentional — the first-paint theme and canvas ground must exist before the external face stylesheet arrives %>
     html, body { background: #050505; color: #e7e7e7; } /* scan: intentional-colors — painted before any stylesheet loads; the FOUC guard cannot cite what has not arrived */
     canvas#face { display: block; position: fixed; inset: 0; width: 100%; height: 100%; background: #000; } /* scan: intentional-colors — same FOUC guard: the canvas ground exists before the stylesheet */
     #primer { background: transparent; }
@@ -158,7 +158,7 @@
       See CLAUDE.md and history of "tap to start does nothing" for this high-risk path.
       Enhancements here should preserve the _primerFired guard and dbgFrames check. %>
   <script src="<%= asset_path("boot_fsm.js") %>"></script>
-  <script nonce="<%= content_security_policy_nonce %>">
+  <script nonce="<%= content_security_policy_nonce %>"><%# scan: intentional — the primer's user-gesture handler must wire before fallback boot %>
     window.MASTER_CACHE_VERSION = <%= raw json_escape(ENV.fetch("CACHE_VERSION", "v2").to_json) %>;
     (function(){
       var p=document.getElementById('primer');
@@ -381,7 +381,7 @@
   <script src="<%= asset_path("master_events.js") %>" defer></script>
   <script src="<%= asset_path("shortcut_sheet.js") %>" defer></script>
   <script src="<%= asset_path("viewport_inset.js") %>" defer></script>
-  <script nonce="<%= content_security_policy_nonce %>">
+  <script nonce="<%= content_security_policy_nonce %>"><%# scan: intentional — runtime-config notification must be available to the face lifecycle before it settles %>
     fetch('/runtime/config').then((r) => r.ok ? r.json() : null).then((cfg) => {
       if (cfg && typeof cfg === 'object') {
         window.MASTER_RUNTIME = { ...window.MASTER_RUNTIME, ...cfg };
