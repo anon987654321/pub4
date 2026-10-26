@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "tmpdir"
+require "digest"
 
 class ProviderCanaryTest < Minitest::Test
   class Router
@@ -113,6 +114,28 @@ class ProviderCanaryTest < Minitest::Test
       assert bus.events.any? { |name, _| name == "provider:canary_summary" }
       assert_equal :success, health.latest_event("claude-cli:opus")["status"].to_sym
       assert_operator health.score("claude-cli:opus"), :>, 1.0
+    end
+  end
+
+  def test_canary_error_event_redacts_upstream_text
+    private_error = "authorization failed at https://private.example/?token=secret"
+    agent = Agent.new
+    agent.define_singleton_method(:ask_once) { |_prompt, **_options| raise IOError, private_error }
+    bus = Bus.new
+
+    Dir.mktmpdir do |dir|
+      health = Master::CLI::Routing::ProviderHealth.new(path: File.join(dir, "health.ndjson"))
+      canary = Master::CLI::Routing::ProviderCanary.new(
+        agent:, router: Router.new, event_bus: bus, health:, max_providers: 1
+      )
+
+      assert_equal "0/1 canaries passed", canary.run
+      _name, payload = bus.events.find { |name, row| name == "provider:canary" && row[:status] == :canary_failure }
+      assert_equal Digest::SHA256.hexdigest(private_error), payload[:error_digest]
+      assert_equal private_error.bytesize, payload[:error_bytes]
+      refute payload.key?(:error)
+      refute_includes bus.events.inspect, private_error
+      refute_includes File.read(health.path), private_error
     end
   end
 
