@@ -199,7 +199,7 @@ module Master
       # write only bounded metadata to the durable event and evidence logs.
       def persisted_payload(event, payload)
         name = event.to_s
-        value = if name == "core:reason" || name.start_with?("tool:", "fix:transaction", "fix_loop:", "fix:journal", "fix:start", "fix:resume", "fix:interrupted", "ops:commit")
+        value = if name == "core:reason" || name.start_with?("tool:", "git:mutation", "fix:transaction", "fix_loop:", "fix:journal", "fix:start", "fix:resume", "fix:interrupted", "ops:commit")
                   lifecycle_payload(payload)
                 else
                   Master::Ground::Redactor.payload(payload)
