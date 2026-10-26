@@ -13,7 +13,7 @@ This document describes what the current code has established and what remains t
 
 - `EffectEnvelope` represents an effect's identity, verb, capability, operation, parent/checkpoint/run/attempt/mission IDs, optional idempotency key and deadline. Its optional scope is stored as a SHA-256 digest. Raw arguments and scope are not part of the envelope.
 - `EvidenceReference` identifies evidence by ID, kind, status, verifier and optional digest. It carries a reference, not the underlying private content.
-- `VerificationResult` adapts existing check results and `Master::Proof` into a stable outcome vocabulary. A check that ran but skipped declared coverage remains partial; an unavailable check remains inconclusive; a check error is not promoted into conclusive verification. The adapter uses duck typing and does not make MASTER import the sibling-tree `Deploy::CheckResult` implementation.
+- `VerificationResult` adapts existing check results, `Master::Proof`, and deterministic scanner findings into a stable outcome vocabulary. `Finding#to_verification` converts a measured violation to a failed receipt and links it by a stable finding key instead of copying the diagnostic text. A check that ran but skipped declared coverage remains partial; an unavailable check remains inconclusive; a check error is not promoted into conclusive verification. The adapter uses duck typing and does not make MASTER import the sibling-tree `Deploy::CheckResult` implementation.
 - The canonical repair terminal-state vocabulary now comes from this execution contract through `Master::Fix::OutcomePolicy`.
 
 This is deliberately an adapter layer, not a second law registry or a replacement for `Master::Proof`, `Deploy::CheckResult`, or the repair loop's own state machine.
@@ -77,7 +77,7 @@ The current changes are the first shared-contract slice. The following work rema
 
 1. **Complete the effect-boundary inventory.** Trace all real writers, tools, MCP handlers, browser actions, media tasks, background workers, repair transactions and deployment paths. Classify each as read-only, reversible, compensatable, irreversible or unknown. Every consequential effect must pass through constitutional admission and an appropriate execution boundary.
 2. **Migrate lifecycle audit to every path.** Reuse typed effect IDs, run/mission linkage, redacted scope, mandatory before/after receipts and explicit unknown-outcome handling. In particular, audit Fix transaction and delivery events without logging raw prompts, file contents, credentials or unrestricted tool output.
-3. **Unify findings and check results at call sites.** The new `VerificationResult` adapter is available and tested in source, but scanners, the Fix scorecard, tree check runners, visual verification and delivery receipts have not all been migrated to emit or consume it. Preserve their specific semantics instead of reducing every outcome to a boolean.
+3. **Unify findings and check results at call sites.** The new `VerificationResult` adapter is covered by source tests and is now exposed by check/proof adapters plus `Finding#to_verification`. This is not a full call-site migration: the Fix scorecard, tree check runners, visual verification and delivery receipts have not all been migrated to emit or consume the shared result. Preserve their specific semantics instead of reducing every outcome to a boolean.
 4. **Finish one durable operation identity.** Carry mission, run, attempt, effect and parent IDs through every execution path. Use idempotency keys when an external API supports them; otherwise reconcile before replaying a result that may have happened but lacks a receipt. Do not claim exactly-once execution for arbitrary external effects.
 5. **Consolidate coordinator ownership from evidence.** Map `Core::Fold`, `FixLoop`, `RepairLoop`, `Fix::Kernel`, `Mission`, `RunJournal`, `RunLedger` and `Transaction` against actual call sites and restart/rollback tests. Retain one public `/fix` coordinator and the existing transaction paths until behavioral equivalence is proven. The target is a shared execution contract, not a universal mega-loop.
 6. **Harden isolation and parallel repair.** Candidate repair workers should use isolated worktrees, stable base revisions, bounded permissions and one integration/commit authority. Test conflicting edits, stale bases, worker loss, partial delivery and preservation of unrelated staged and unstaged work before making parallel repair the default.
@@ -95,6 +95,8 @@ The focused set is:
 ```zsh
 cd MASTER
 RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_execution_contract.rb
+RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_proof_adapters.rb
+RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_finding_metadata.rb
 RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_skills.rb
 RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_enhance_stage.rb
 RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_core_cancellation.rb
