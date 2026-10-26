@@ -6,6 +6,7 @@ require "fileutils"
 require "time"
 require "yaml"
 require_relative "../io/atomic_write"
+require_relative "skill_fixtures"
 
 module Master
   module CLI
@@ -89,6 +90,8 @@ module Master
         raise ArgumentError, "skill has no execution contract" unless contract&.declared?
         raise ArgumentError, "skill contract is not a promotable candidate" unless contract.promotable?
 
+        fixtures = verified_fixtures!(skill, contract)
+
         expected_revision = skill[:revision].to_s
         supplied_revision = revision.to_s.downcase
         unless Master::Execution::Contract::SHA256.match?(supplied_revision) &&
@@ -107,7 +110,8 @@ module Master
             "name" => skill[:name].to_s,
             "revision" => supplied_revision,
             "approved_by" => reviewer,
-            "approved_at" => timestamp
+            "approved_at" => timestamp,
+            "fixtures" => fixtures
           }
           write_skill_approval_rows!(rows)
         end
@@ -122,6 +126,17 @@ module Master
 
       # Revoke only the exact version named by the operator. Older revisions can
       # be revoked even after the skill body has changed.
+      # Every declared fixture, read inside the skill's own directory before approval; the
+      # digests recorded with the approval say which bytes were checked.
+      def verified_fixtures!(skill, contract)
+        root = skill[:dir] || File.join(@root, REGISTRY_FIXTURES)
+        outcomes = SkillFixtures.verify(contract.fixture_refs, root:)
+        failed = outcomes.reject(&:verified?).map { |outcome| "#{outcome.ref} (#{outcome.status})" }
+        raise ArgumentError, "fixtures not verified: #{failed.join(', ')}" unless failed.empty?
+
+        outcomes.map { |outcome| { "ref" => outcome.ref, "sha256" => outcome.sha256 } }
+      end
+
       def revoke_revision!(name:, revision:)
         skill_name = name.to_s
         supplied_revision = revision.to_s.downcase
@@ -219,7 +234,9 @@ module Master
 
       private
 
-      APPROVAL_KEYS = %w[name revision approved_by approved_at].freeze
+      APPROVAL_KEYS = %w[name revision approved_by approved_at fixtures].freeze
+      # Where a registry skill, which has no directory of its own, keeps its fixtures.
+      REGISTRY_FIXTURES = File.join("test", "fixtures", "skills")
 
       def with_approval_lock
         directory = File.dirname(@approval_path)
@@ -282,7 +299,8 @@ module Master
           raise ArgumentError, "duplicate approval entry; refusing to overwrite it" if seen[key]
 
           seen[key] = true
-          { "name" => name, "revision" => revision, "approved_by" => reviewer, "approved_at" => timestamp }
+          { "name" => name, "revision" => revision, "approved_by" => reviewer, "approved_at" => timestamp,
+            "fixtures" => Array(values["fixtures"]) }
         end
       end
 

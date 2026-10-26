@@ -79,6 +79,10 @@ class TestCommandRegistryDispatch < Minitest::Test
     Dir.mktmpdir("skill-review-command") do |root|
       data_dir = File.join(root, "data")
       FileUtils.mkdir_p(data_dir)
+      # Approval reads each fixture first; a registry skill keeps them in test/fixtures/skills.
+      fixtures = File.join(root, "test", "fixtures", "skills")
+      FileUtils.mkdir_p(fixtures)
+      File.write(File.join(fixtures, "release.yml"), "expect: bounded release verification\n")
       File.write(File.join(data_dir, "patterns.yml"), <<~YAML)
         skills_registry:
           skills:
@@ -93,7 +97,7 @@ class TestCommandRegistryDispatch < Minitest::Test
                 risk: medium
                 required_capabilities: [read]
                 laws: [ROBUSTNESS]
-                fixtures: [MASTER/test/test_command_registry_dispatch.rb]
+                fixtures: [release.yml]
       YAML
       approval_path = File.join(root, "operator", "skill_approvals.yml")
       unapproved = Master::CLI::Skills.new(root:, approval_path:).tap(&:discover!).find("release-skill")
@@ -133,7 +137,9 @@ class TestCommandRegistryDispatch < Minitest::Test
         root, ctx: { args: "approve release-skill #{stale_revision} --confirm" }, approval_path:
       )
       assert_match(/revision mismatch/, mismatch)
-      assert_empty Master::CLI::Skills.new(root:, approval_path:).tap(&:discover!).trigger_for("release phrase")
+      # A refused approval changes nothing: the exact revision approved above still stands.
+      still = Master::CLI::Skills.new(root:, approval_path:).tap(&:discover!).trigger_for("release phrase")
+      assert_equal ["release-skill"], still.map { |row| row[:name] }
 
       revoked = Registry.dispatch_skill(
         root, ctx: { args: "revoke release-skill #{revision} --confirm" }, approval_path:

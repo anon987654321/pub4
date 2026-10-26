@@ -149,7 +149,7 @@ detail: [
             "/skill inspect NAME — inspect metadata, required capabilities, Law IDs and fixture references without printing the skill body.",
             "/skill approve NAME SHA256 --confirm — approve only the exact currently loaded candidate revision, as the local operator.",
             "/skill revoke NAME SHA256 --confirm — revoke one exact revision, including an older revision after the skill has changed.",
-            "Declared skills are not injected until an operator-owned ~/.master/skill_approvals.yml entry matches their exact revision. This command checks metadata prerequisites; it does not execute or certify the referenced fixtures.",
+            "Declared skills are not injected until an operator-owned ~/.master/skill_approvals.yml entry matches their exact revision. Approval reads each declared fixture inside the skill directory and records its digest; it never executes one.",
           ],
         },
         "task" => {
@@ -379,7 +379,7 @@ detail: [
       # Keep categories here rather than duplicating a second menu in JavaScript.
       COMMAND_CATEGORIES = {
         "fix" => "fix", "status" => "health", "doctor" => "health", "events" => "health",
-        "session" => "session", "clear" => "session", "undo" => "session",
+        "session" => "session", "pair" => "session", "clear" => "session", "undo" => "session",
         "model" => "model", "plugin" => "model", "screen" => "session", "wake" => "model",
         "privacy" => "constitution", "preferences" => "interface", "agenda" => "session", "task" => "session", "skill" => "constitution", "capabilities" => "model",
         "review" => "review", "critique" => "review", "laws" => "review",

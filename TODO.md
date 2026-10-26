@@ -89,8 +89,6 @@ source and tests they could not run; this pass is what measures them.
   directories, stale pointers; compare structural ratchets before and after.
 - [ ] Performance sweep with before/after numbers: boot, CLI response, web first paint, payloads,
   memory.
-- [ ] Verify declared skill fixtures before promotion: trusted root, no traversal or symlink escape,
-  bounded verifier types, recorded outcome.
 - [ ] Unified health states (configured, authenticated, ready, degraded, failed, not tested) for
   providers, channels and services, with a concise boot report.
 - [ ] Adapter contracts for CLI, web, voice, browser and MCP: caller identity, scope, typed
