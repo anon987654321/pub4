@@ -66,8 +66,12 @@ module Master
         Subject = Data.define(:relative, :code, :laws, :ast)
 
         DIR = File.join(".master", "scan_findings")
-        SOURCES = %w[lib/review/**/*.rb lib/fix/scan/**/*.rb law/**/*.rb data/laws.yml
-                     .rubocop.yml .reek.yml config.reek].freeze
+        # Every file a cacheable law reads besides the one it judges; test_finding_cache_inputs
+        # traces the laws and fails when one reads a file missing here. data/tokens.yml is
+        # CHOICE_OVERLOAD's, through Design::Thresholds, and replayed stale findings after a
+        # token edit until it was added; a nested .rubocop.yml governs RuboCop below it.
+        SOURCES = %w[lib/review/**/*.rb lib/fix/scan/**/*.rb law/**/*.rb data/laws.yml data/tokens.yml
+                     **/.rubocop.yml .reek.yml config.reek].freeze
 
         def self.enabled? = ENV["MASTER_SCAN_CACHE"] != "0"
 

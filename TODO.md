@@ -41,12 +41,8 @@ source and tests they could not run; this pass is what measures them.
 - [ ] One catalogue-backed loader. Trace and migrate the consumers of `Law.define`, `Law::Builder`,
   `LawDSL.law`, `Review::Scan::Law.registry`, `LawFactory`, `YamlDeclarativeLaw`, `VetoPatternLaw`,
   `LawBridgeLaw`, `SemanticLaw` and the scanner's `Rule` name.
-- [ ] Derive the visual and semantic Law populations from the catalogue, not from Ruby ID lists
-  such as `VisualUsability::IDS`.
 - [ ] Run `LawRegistryAudit` and explain every member of `yaml_only`, `law_only`, `registry_only`,
   `lexical_unwired`, `structural_unwired`, `semantic_only`, `dep_graph_gaps` and `source_drift`.
-- [ ] Prove finding-cache keys include every detector input, the catalogue digest among them, and
-  that semantic scan reaches every target file.
 
 ## Execution contract
 
