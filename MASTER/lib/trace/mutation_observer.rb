@@ -12,7 +12,7 @@ module Master
       Token = Data.define(:audit_id, :operation, :started_at)
 
       STATUSES = %w[ok failed blocked ambiguous].freeze
-      LABEL = /\\A[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,127}\\z/
+      LABEL = /\A[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,127}\z/
 
       def initialize(root:, namespace:, subject_type:, subject_id:, bus: nil)
         @root = File.expand_path(root)
