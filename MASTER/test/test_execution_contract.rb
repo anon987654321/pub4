@@ -1,0 +1,121 @@
+# frozen_string_literal: true
+
+require_relative "test_helper"
+require_relative "../lib/execution/contract"
+require_relative "../lib/trace/effect_observer"
+require_relative "../lib/fix/outcome_policy"
+
+class TestExecutionContract < Minitest::Test
+  Contract = Master::Execution::Contract
+
+  class RecordingBus
+    attr_reader :events
+
+    def initialize = @events = []
+
+    def publish_required(name, payload = {})
+      @events << [name, payload]
+    end
+  end
+
+  def test_fix_uses_the_canonical_terminal_state_vocabulary
+    assert_same Contract::TERMINAL_STATES, Master::Fix::OutcomePolicy::TERMINAL_STATES
+    assert_equal :cancelled, Contract.normalize_terminal_state("CANCELLED")
+    assert_equal :unknown_outcome, Contract.normalize_terminal_state(:unknown_outcome)
+    assert_nil Contract.normalize_terminal_state("not-a-terminal-state")
+    assert_nil Contract.normalize_terminal_state(nil)
+  end
+
+  def test_effect_envelope_correlates_a_run_without_exposing_arguments_or_scope
+    effect = Master::Core::Effect.write("private-name.txt", "private contents")
+    envelope = Contract::EffectEnvelope.build(
+      effect:, turn: 2, effect_id: "effect-1", run_id: "run-1",
+      mission_id: "mission-1", scope: "private-workspace/private-name.txt"
+    )
+    payload = envelope.to_h
+
+    assert_equal 1, payload[:schema_version]
+    assert_equal "effect-1", payload[:effect_id]
+    assert_equal "run-1", payload[:run_id]
+    assert_equal "mission-1", payload[:mission_id]
+    assert_equal Digest::SHA256.hexdigest("private-workspace/private-name.txt"), payload[:scope_digest]
+    refute_includes payload.inspect, "private-name.txt"
+    refute_includes payload.inspect, "private contents"
+    refute_includes payload.inspect, "private-workspace"
+  end
+
+  def test_envelope_rejects_invalid_identity_operation_and_turn
+    effect = Master::Core::Effect.read("README.md")
+
+    assert_raises(ArgumentError) do
+      Contract::EffectEnvelope.build(effect:, turn: 0, effect_id: "bad/id")
+    end
+    assert_raises(ArgumentError) do
+      Contract::EffectEnvelope.build(effect:, turn: -1, effect_id: "effect-1")
+    end
+    assert_raises(ArgumentError) do
+      Contract::EffectEnvelope.build(effect:, turn: 0, effect_id: "effect-1", operation: :unknown)
+    end
+  end
+
+  def test_evidence_reference_is_typed_and_contains_no_content
+    reference = Contract::EvidenceReference.new(
+      id: "proof-1", kind: "test_output", status: :verified,
+      verifier: "focused-test", digest: "a" * 64
+    )
+
+    assert_equal :verified, reference.to_h[:status]
+    refute reference.to_h.key?(:content)
+    assert_raises(ArgumentError) do
+      Contract::EvidenceReference.new(
+        id: "private/path", kind: "test_output", status: :verified, verifier: "focused-test"
+      )
+    end
+    assert_raises(ArgumentError) do
+      Contract::EvidenceReference.new(
+        id: "proof-2", kind: "test_output", status: :pass, verifier: "focused-test"
+      )
+    end
+  end
+
+  def test_effect_observer_adds_run_identity_and_only_typed_evidence_references
+    bus = RecordingBus.new
+    observer = Master::Trace::EffectObserver.new(bus:, run_id: "run-77", mission_id: "mission-77")
+    effect = Master::Core::Effect.write("hidden.txt", "sensitive data")
+    proof = Contract::EvidenceReference.new(
+      id: "proof-77", kind: "test_output", status: :verified, verifier: "focused-test"
+    )
+
+    observer.call(
+      stage: :before, turn: 1, effect:, effect_id: "effect-77",
+      scope: "private/hidden.txt", evidence_refs: [proof]
+    )
+    observer.call(
+      stage: :after, turn: 1, effect:, effect_id: "effect-77",
+      scope: "private/hidden.txt", evidence_refs: [proof],
+      observation: Master::Core::Observation.ok("written"), elapsed_ms: 3
+    )
+
+    before, after = bus.events.map(&:last)
+    assert_equal "run-77", before[:run_id]
+    assert_equal before[:run_id], after[:run_id]
+    assert_equal "mission-77", before[:mission_id]
+    assert_equal [{ id: "proof-77", kind: "test_output", status: :verified, verifier: "focused-test" }],
+                 before[:evidence_refs]
+    refute_includes bus.events.inspect, "hidden.txt"
+    refute_includes bus.events.inspect, "sensitive data"
+    refute_includes bus.events.inspect, "private/"
+  end
+
+  def test_effect_observer_rejects_untyped_evidence_references
+    observer = Master::Trace::EffectObserver.new(bus: RecordingBus.new)
+    error = assert_raises(ArgumentError) do
+      observer.call(
+        stage: :before, turn: 0, effect: Master::Core::Effect.read("README.md"),
+        effect_id: "effect-1", evidence_refs: [{ id: "proof-1", content: "private" }]
+      )
+    end
+
+    assert_match(/typed EvidenceReference/, error.message)
+  end
+end
