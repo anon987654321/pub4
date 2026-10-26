@@ -150,6 +150,38 @@ class FixHardeningTest < Minitest::Test
     assert_equal "contract_only_not_measurement", report.fetch(:assessment_matrix)
   end
 
+  def test_clean_run_contract_has_a_two_pass_floor
+    assert_operator Master::Fix::FixLoop::CLEAN_RUNS, :>=, 2
+    assert_equal 2, Master::Fix::ConvergenceDiscipline::DEFAULTS.fetch("clean_runs_required")
+
+    limits = Master.load_yaml(Master.limits_path)
+    assert_equal 2, limits.fetch("convergence_discipline").fetch("clean_runs_required")
+  end
+
+  def test_clean_proof_uses_the_configured_clean_run_threshold
+    captured = nil
+    discipline = Object.new
+    discipline.define_singleton_method(:clean_proof) do |**options|
+      captured = options
+      { eligible: false, fatal: false, reason: "clean streak incomplete" }
+    end
+
+    runner = Master::Fix::FixLoop::PassRunner.allocate
+    runner.instance_variable_set(:@clean_runs_required, 4)
+    runner.instance_variable_set(:@discipline, discipline)
+    runner.instance_variable_set(:@ground_truth, nil)
+    runner.instance_variable_set(:@bus, nil)
+    runner.instance_variable_set(:@homeostat, nil)
+    runner.define_singleton_method(:ground_truth_violations) { |_files| [] }
+    runner.define_singleton_method(:quiescent?) { |_files, _mtimes| true }
+
+    result = runner.send(:handle_clean_pass, ["example.rb"], {}, 3, 2)
+
+    assert_equal 4, captured.fetch(:required_runs)
+    assert_equal 3, captured.fetch(:clean_runs)
+    assert_equal :continue, result.status
+  end
+
   def test_stream_refresh_replaces_stale_touched_findings
     runner = Master::Fix::FixLoop::PassRunner.allocate
     runner.define_singleton_method(:violations_for) do |path|
