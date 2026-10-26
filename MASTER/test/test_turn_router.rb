@@ -395,4 +395,15 @@ end
     assert_same token, captured[:cancellation]
   end
 
+  def test_fold_routing_activates_cooperative_cancellation_before_setup
+    token = Master::Core::CancellationToken.new
+    Master.stub(:llm_reachable?, false) do
+      result = Master::CLI::TurnRouter.run_fold(
+        "inspect the project", container: build_container, cancellation: token
+      )
+      refute result.ok?
+      assert_predicate token, :active?
+    end
+  end
+
 end
