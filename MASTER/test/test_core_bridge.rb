@@ -72,6 +72,26 @@ class CoreBridgeTest < Minitest::Test
     assert_equal "after-event persistence failed", mission.instance_variable_get(:@failure)
   end
 
+  def test_cancelled_fold_is_persisted_as_terminal_mission_state
+    Dir.mktmpdir do |root|
+      model = Object.new
+      model.define_singleton_method(:propose) do |*|
+        flunk("a pre-cancelled mission must not call the model")
+      end
+      cancellation = Master::Core::CancellationToken.new.cancel!(reason: "operator stopped")
+
+      result = Master::CLI::CoreBridge.run(
+        "cancel without starting work", root:, model:, cancellation:
+      )
+
+      assert_equal :cancelled, result[:reason]
+      assert_equal "cancelled: operator stopped", result[:summary]
+      record = Master::Fix::Mission.current(root:)
+      assert_equal "cancelled", record["state"]
+      assert_equal false, record["auto_continue"] if record.key?("auto_continue")
+    end
+  end
+
   def test_lifecycle_events_persist_without_a_host_bus
     Dir.mktmpdir do |root|
       model = ScriptedModel.new(*evidence_then_done(
