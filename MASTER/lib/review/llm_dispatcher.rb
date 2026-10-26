@@ -5,6 +5,7 @@ require "digest"
 require "json"
 require "open3"
 require "timeout"
+require_relative "../execution/contract"
 require_relative "llm_dispatcher/cli_sender"
 require_relative "llm_dispatcher/model_pin"
 require_relative "llm_dispatcher/pass_clock"
@@ -524,10 +525,18 @@ module Master
           Io::ModelSkipCache.skip!(model, reason: error || status.to_s, category: status)
         end
         @model_router&.record_provider_outcome(model:, status:, latency_ms:, error:)
-        @bus&.publish("llm:provider_outcome", model:, status:, latency_ms:, error:)
+        @bus&.publish(
+          "llm:provider_outcome",
+          model:, status:, latency_ms:,
+          **Master::Execution::Contract.diagnostic_fields(error)
+        )
         Io::KeyRotator.rotate_for(model) if %i[rate_limit quota_exceeded].include?(status)
       rescue StandardError => e
-        @bus&.publish("provider_health:record_error", model:, error: e.message)
+        @bus&.publish(
+          "provider_health:record_error",
+          model:,
+          **Master::Execution::Contract.diagnostic_fields(e.message)
+        )
       end
 
     end
