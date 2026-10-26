@@ -26,11 +26,13 @@ The interactive CoreBridge path supplies the durable mission ID. The standalone 
 
 ### Cooperative cancellation
 
-An interactive turn owns a `Master::Core::CancellationToken`. The token is passed explicitly through the session, TurnRouter and CoreBridge into `Core::Fold`. The Fold observes cancellation before model work, after proposals and admission, before applying an admitted effect, and at the final turn boundary.
+An interactive turn owns a `Master::Core::CancellationToken`. The token passes explicitly through the session and TurnRouter into CoreBridge and `Core::Fold`. For canonical slash commands, the same token is carried in the immutable `PipelineContext` through route/execute and into the `/fix` pipeline, `Pipeline::Pass` and `FixLoop`; no Fiber-local fallback is used for operation ownership.
 
-A cancelled Fold mission is stored as a non-resumable terminal mission state. It does not count as successful completion, and cancellation does not mark delivery as complete. The interactive host requests a cooperative stop for an active Fold instead of killing its worker in the middle of an effect.
+The Fold observes cancellation before model work, after proposals and admission, before applying an admitted effect, and at the final turn boundary. `FixLoop` checks before preflight work, between expensive preflight phases, before each pass and after the current pass has returned. If cancellation arrives during a pass, that pass is allowed to finish its bounded transaction, pass receipt and convergence checkpoint; structural or later repair work must not start afterward. A persisted active transaction is reconciled before a resumed run is stopped.
 
-**Limit:** cooperative cancellation takes effect at safe Fold boundaries. A model call or external operation already in progress must return or hit its own timeout before the Fold can observe the request. Non-Fold routes still use the prior interruption behavior. The repository repair workflow and all external-effect families do not yet share this cancellation token.
+Cancelled, unknown-outcome and recovery-failed repair missions are terminal and non-resumable. They do not count as successful completion or mark delivery complete. If a cancellation is already present before a run begins, it stops before creating a repair journal or mission; a run already underway records its terminal state.
+
+**Limit:** cancellation is cooperative, not a thread kill. A model request, check command or external operation already in progress must return or reach its own timeout before the owner can observe the request. Other non-Fold commands and background/supervisor runs not attached to an interactive token retain their existing lifecycle. The universal before/after audit contract is still not integrated into every Fix transaction, tool, browser/MCP action, background job or deployment operation.
 
 ### Explicit interrupted outcomes
 
