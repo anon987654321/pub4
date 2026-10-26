@@ -23,11 +23,14 @@ MASTER is written in Ruby, and that is the point. A law governs a system only
 when a human can read both the Law and the code that enforces it, and Ruby reads
 like intention. The constitution therefore stays legible. `data/soul.yml` holds
 the constitutional absolutes; `data/laws.yml` is the canonical declared Law
-catalogue and execution policy. `law/` and `lib/review/scan/` hold executable
-definitions, detectors and registration. Those are enforcement mechanisms, not
-separate sources of normative authority. The catalogue and detector populations
-are not yet fully reconciled: `LawRegistryAudit` reports the specific gaps, and
-MASTER must not claim complete enforcement from a file count or registry count.
+catalogue and execution policy. Executable definitions and detector-adapter
+sources share one physical home under `law/`; detector adapters live in
+`law/detectors/`. `lib/review/scan/` holds scanner machinery, and its former
+`laws/` path is only a compatibility symlink, not a second source tree. These
+are enforcement mechanisms, not alternate sources of normative authority. The
+catalogue and detector populations are not yet fully reconciled:
+`LawRegistryAudit` reports the specific gaps, and MASTER must not claim complete
+enforcement from a file count or registry count.
 A break gets a refusal with a reason, never a quiet patch.
 
 The `MASTER/bin/operator laws <ID>` view uses

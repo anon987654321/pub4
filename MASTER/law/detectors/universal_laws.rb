@@ -173,8 +173,8 @@ module Master
       # alternation, not a line continuation — moved into the law's detector
       # with each shape pinned as a good fixture, which is what the registry
       # version never had. Its /review/scan/laws/ self-exemption dies with it:
-      # law/ text arrives conducted, and rule sources that spell the pattern in
-      # strings are counted and triaged rather than excused by path.
+      # canonical `law/detectors/` sources arrive conducted, and rule sources that
+      # spell the pattern in strings are counted and triaged rather than excused by path.
 
         # :error because data/laws.yml declares ONE_SOURCE a kernel rule at
         # error, and the catalogue outranks the implementation (CLAUDE.md's
