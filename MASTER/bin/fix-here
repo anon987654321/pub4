@@ -52,8 +52,11 @@ abort USAGE if tree.to_s.empty? || args.any?
 abort "fix-here: #{tree} is not one of #{TREES.join(', ')} and not a path in this checkout" unless TREES.include?(tree) || File.exist?(File.join(ROOT, tree))
 
 # 2. Disk: a /fix run plus its tests writes logs and caches; below this tools start failing.
-out, ok = Open3.capture2e("df", "-kP", ROOT)
-free = ok ? out.lines.last.to_s.split[3].to_f / (1024 * 1024) : nil
+out, status = Open3.capture2e("df", "-kP", ROOT)
+available_kib = out.lines.last.to_s.split[3]
+free = if status.success? && available_kib&.match?(/\A\d+\z/)
+         available_kib.to_f / (1024 * 1024)
+       end
 abort "fix-here: cannot read free disk" unless free
 abort format("fix-here: %.1f GiB free, need %.1f. Free some space (bin/operator doctor lists what is large).", free, MIN_FREE_GIB) if free < MIN_FREE_GIB
 

@@ -20,6 +20,34 @@ class TestFixHere < Minitest::Test
     end
   end
 
+  def test_failed_disk_probe_is_reported_as_unreadable
+    with_worktree do |_main, worker, tools_bin|
+      df = File.join(tools_bin, "df")
+      File.write(df, "#!/bin/sh\nexit 1\n")
+      FileUtils.chmod(0o755, df)
+
+      output, status = run_fix_here(worker, tools_bin, "MASTER", "--dry")
+
+      refute status.success?
+      assert_includes output, "cannot read free disk"
+      refute_includes output, "need 2.0"
+    end
+  end
+
+  def test_malformed_disk_probe_output_is_reported_as_unreadable
+    with_worktree do |_main, worker, tools_bin|
+      df = File.join(tools_bin, "df")
+      File.write(df, "#!/bin/sh\nprintf 'not a df table\\n'\n")
+      FileUtils.chmod(0o755, df)
+
+      output, status = run_fix_here(worker, tools_bin, "MASTER", "--dry")
+
+      refute status.success?
+      assert_includes output, "cannot read free disk"
+      refute_includes output, "need 2.0"
+    end
+  end
+
   def test_model_none_clears_an_inherited_model
     with_worktree do |main, worker, tools_bin|
       write_main_model(main)
