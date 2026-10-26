@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 require "fix/scanner"
-require "review/scan/laws/external_linter_laws"
+require_relative "../law/detectors/external_linter_laws
 require "json"
 require "tmpdir"
 
