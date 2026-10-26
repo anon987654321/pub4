@@ -11,7 +11,7 @@ module Master
     module Contract
       TERMINAL_STATES = %i[
         done plateau crash skip human_decision blocked inconclusive validation_failed
-        delivery_failed timeout failed reloading cancelled unknown_outcome
+        delivery_failed timeout failed reloading cancelled unknown_outcome recovery_failed
       ].freeze
 
       EFFECT_OPERATIONS = %i[perform rollback compensation compensation_approval].freeze
