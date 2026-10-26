@@ -159,10 +159,20 @@ class TestEventBus < Minitest::Test
       assert_equal "write_file", record["tool"]
       assert_equal "write", record["op"]
       assert_equal content.bytesize, record["bytes"]
-      assert_match(/\\A[0-9a-f]{64}\\z/, record["path_digest"])
-      assert_match(/\\A[0-9a-f]{64}\\z/, record["content_digest"])
-      assert_match(/\\A[0-9a-f]{64}\\z/, record["prompt_digest"])
+      assert_equal Digest::SHA256.hexdigest(path), record["path_digest"]
+      assert_equal Digest::SHA256.hexdigest(content), record["content_digest"]
+      assert_equal Digest::SHA256.hexdigest(prompt), record["prompt_digest"]
     end
+  end
+
+
+  def test_named_sensitive_fields_are_redacted_outside_tool_events
+    command = "env API_TOKEN=secret curl https://private.invalid"
+    @bus.publish("zsh:banned_tool_warning", command:, tools: ["curl"])
+
+    activity = File.read(File.join(@dir, "runtime/events/activity.jsonl"))
+    refute_includes activity, command
+    assert_includes activity, Digest::SHA256.hexdigest(command)
   end
 
   def test_publish_required_persists_before_dispatching_subscribers

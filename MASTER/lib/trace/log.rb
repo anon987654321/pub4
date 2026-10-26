@@ -179,10 +179,9 @@ module Master
       end
 
       # Append-only tool invocation log; subscribes to tool:before on EventBus.
-      # Under .master/ because it records tool arguments, which stay out of the served event stream.
+      # It records tool identity and argument digests, never raw argument values.
       class Audit
         LOG_PATH = ".master/audit.ndjson".freeze
-        MAX_VAL = 120
         MAX_BYTES = 5 * 1024 * 1024
 
         def initialize(root:, event_bus:)
