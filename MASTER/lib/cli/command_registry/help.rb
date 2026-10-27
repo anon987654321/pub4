@@ -249,6 +249,7 @@ detail: [
                    "The counts describe your notes; they cannot show what was said."],
         },
         "reload" => {
+          summary: "restart the current session in place",
           detail: ["/reload — restart this session in place so edits to lib/ and data/ take effect.",
                    "The conversation is kept; the beat and speech stop first."],
         },
@@ -355,8 +356,9 @@ detail: [
       }.freeze
 
       def help_text(command = nil)
-        key = command.to_s.strip.sub(/\A\//, "")
+        key = command.to_s.strip.sub(/\A\//, "").downcase
         return help_summary if key.empty?
+        return "/#{key} — leave the current MASTER session." if %w[exit quit].include?(key)
 
         topic = HELP_TOPICS[key]
         return unknown_command_text(key) unless topic
