@@ -473,7 +473,7 @@ checks it names exist.
     operator's own audit trail, checkable only against a session transcript,
     which is not an artefact this repo keeps.
 
-There is one checkout and it is shared; work in it and write straight to main. It has one git index, so `git commit -a` sweeps other sessions into your commit. Path-scoped commits (`git commit -- <paths>`) are the rule, and `MASTER/tools/block_branching.rb` refuses worktrees, branches and PRs.
+Use an isolated, disposable worktree for broad, parallel, or architecture-heavy changes. The managed entrypoint is `bin/operator worktree <name> [--base REF]`; use `bin/operator worktree list` to inspect managed trees and `bin/operator worktree remove <name>` to remove a clean tree without deleting its branch. Creation refuses a dirty source checkout unless `--allow-dirty-source` is explicit; that option creates from a commit and never copies uncommitted changes. Never use `git commit -a` in a shared checkout. Keep commits path-scoped. `bin/operator land -m <message> <paths...>` runs the repository checks and pushes only the current branch; on a topic branch, integrate into main deliberately after review.
 
 ## Patch closeout
 

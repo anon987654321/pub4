@@ -346,18 +346,19 @@ entries:
     must test idempotency, partial failure and concurrent changes before expanding the set of
     compensators.
 - key: feedback_write_straight_to_main_2026_10_19
-  name: write straight to main
-  description: 2026-10-19 directive, Johann - no worktrees, branches or pull requests in pub4; always write directly to main
+  name: historical direct-to-main restriction superseded
+  description: Historical 2026-10-19 restriction; superseded by the explicit 2026-10-27 directive to restore managed worktrees and short-lived branches.
   type: feedback
   body: >-
-    Johann banned worktrees, branches and PRs on 2026-10-19; all work is written directly to
-    main in the one shared checkout. Why - every worktree or branch is a second copy that must
-    merge back, and stale copies and lost merges were the recurring failure. How to apply -
-    commit path-scoped (git commit -- paths), never git commit -a, run git log origin/main..HEAD
-    before pushing and say what went with it, land with MASTER/bin/operator land. Enforced by
-    MASTER/tools/block_branching.rb (a Claude PreToolUse hook), bin/operator worktree refuses,
-    /fix runs in the checkout (its worktree session was deleted). Removing a leftover worktree or
-    branch stays allowed. Supersedes the older worktree-by-default memories and CLAUDE.md trap 1.
+    The 2026-10-19 instruction to write every change directly to main is historical
+    and superseded by the explicit 2026-10-27 decision to restore isolated worktrees.
+    Use a managed worktree and short-lived topic branch for broad, parallel or
+    architectural work; use path-scoped direct-to-main landing only for small
+    corrections made from a clean main checkout. Never use git commit -a in a
+    shared checkout. Worktree creation refuses dirty source state unless the
+    operator explicitly opts out, and worktree removal refuses dirty trees while
+    preserving the branch. bin/operator land pushes only the current branch; a
+    topic branch reaches main only after deliberate integration.
 - key: feedback_stream_long_runs_live_2026_10_22
   name: stream long runs live
   description: 2026-10-22 directive, Johann - a suite, check or /fix run reports as it goes, never only at its end
