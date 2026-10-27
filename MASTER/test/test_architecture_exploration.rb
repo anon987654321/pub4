@@ -22,6 +22,11 @@ class TestArchitectureExploration < Minitest::Test
       { "status" => "verified", "report" => @report, "provenance" => @provenance }
     end
 
+    def seed_report(report, provenance)
+      @report = JSON.parse(JSON.generate(report))
+      @provenance = JSON.parse(JSON.generate(provenance))
+    end
+
     def persist_architecture_report(_run_id, target:, report:, provenance:)
       @report = JSON.parse(JSON.generate(report))
       @provenance = JSON.parse(JSON.generate(provenance))
@@ -131,6 +136,75 @@ class TestArchitectureExploration < Minitest::Test
     end
   end
 
+
+  def test_partial_tournament_resume_reuses_completed_trees_and_finishes_only_pending_trees
+    Dir.mktmpdir("architecture-partial-resume") do |root|
+      %w[MASTER RAILS].each { |name| FileUtils.mkdir_p(File.join(root, name)) }
+      journal = FakeJournal.new
+      provenance_input = {
+        "source_digest" => "a" * 64,
+        "scope_digest" => "b" * 64,
+        "law_digest" => "c" * 64,
+        "identity_digest" => "d" * 64,
+      }
+      explorer = Master::Fix::ArchitectureExploration.new(
+        root: root, agent: FakeAgent.new("{}"), candidate_count: 30,
+        run_journal: journal, run_id: "b" * 20, provenance: provenance_input
+      )
+      provenance = explorer.send(:provenance)
+
+      tree_report = lambda do |tree|
+        winner = {
+          "id" => "AX01", "title" => "Keep #{tree} ownership local", "score" => 82,
+          "thesis" => "Keep one bounded owner for #{tree}.",
+          "core_boundary" => "The #{tree} lifecycle remains local.",
+          "evidence_paths" => ["#{tree}/lib/owner.rb"],
+          "test_paths" => ["#{tree}/test/test_owner.rb"],
+          "verification_plan" => "Run the existing #{tree} regression test.",
+          "benefits" => ["Reduces duplicate decisions in #{tree}."],
+          "tradeoffs" => ["A bounded migration requires one additional check."],
+          "risks" => ["Compatibility changes need a baseline comparison."],
+          "rollback_plan" => "Revert the isolated change and restore its checkpoint.",
+        }
+        {
+          "tree" => tree, "status" => "COMPLETE", "requested" => 30,
+          "accepted" => 30, "qualified" => 12,
+          "decision" => {
+            "distinct_change_path_sets" => 30, "qualified_candidates" => 12,
+            "winner_margin" => 3, "execution_proof" => "NOT_RUN",
+          },
+          "winner" => winner, "shortlist" => [winner], "rejections" => [],
+          "candidates" => Array.new(30) { |i| { "id" => format("AX%02d", i + 1) } },
+          "evidence_manifest" => [{ "path" => "#{tree}/lib/owner.rb", "sha256" => tree == "MASTER" ? "d" * 64 : "e" * 64,
+                                    "excerpt_bytes" => 18 }],
+        }
+      end
+
+      # This receipt represents a process that completed MASTER then stopped
+      # before it started RAILS. The report target/provenance match this run.
+      saved = {
+        "schema_version" => 2, "target" => ".", "status" => "RUNNING",
+        "provenance" => provenance, "requested_candidates_per_tree" => 30,
+        "targets" => [tree_report.call("MASTER")], "brief" => "MASTER is complete; RAILS is pending.",
+      }
+      journal.seed_report(saved, provenance)
+      explored = []
+      explorer.define_singleton_method(:explore) do |tree, _files|
+        name = File.basename(tree)
+        explored << name
+        tree_report.call(name)
+      end
+
+      result = explorer.run(target: root, files: [])
+
+      assert_equal "COMPLETE", result.fetch("status")
+      assert_equal %w[MASTER RAILS], result.fetch("targets").map { |row| row.fetch("tree") }
+      assert_equal ["RAILS"], explored, "the completed MASTER result should not be regenerated"
+      assert_equal 30, result.fetch("targets").first.fetch("candidates").size
+      assert_equal 30, result.fetch("targets").last.fetch("candidates").size
+      assert_equal "COMPLETE", journal.writes.last.fetch("status")
+    end
+  end
 
   def test_candidates_without_test_anchors_cannot_win_even_when_their_plans_are_well_formed
     Dir.mktmpdir("architecture-quality-gate") do |root|
