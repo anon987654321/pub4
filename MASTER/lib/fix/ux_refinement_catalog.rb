@@ -2,6 +2,7 @@
 
 require "digest"
 require "yaml"
+require_relative "../io/exec"
 
 module Master
   module Fix
@@ -14,13 +15,13 @@ module Master
       AREA_NAMES = %w[input terminal diagnostics command_help browser_recovery visual_accessibility].freeze
       PROOF_TYPES = %w[accessibility browser source terminal unit visual].freeze
 
-      def self.load(path: PATH)
+      def self.load(path: PATH, root: Master::REPO_ROOT)
         payload = YAML.safe_load_file(path, permitted_classes: [], permitted_symbols: [], aliases: false)
-        validate!(payload)
+        validate!(payload, root:)
         payload
       end
 
-      def self.validate!(payload)
+      def self.validate!(payload, root: Master::REPO_ROOT)
         raise ArgumentError, "UX catalog must be a mapping" unless payload.is_a?(Hash)
         raise ArgumentError, "UX catalog schema must be #{SCHEMA_VERSION}" unless payload["schema"] == SCHEMA_VERSION
         raise ArgumentError, "UX catalog ID must be #{CATALOGUE_ID}" unless payload["catalogue_id"] == CATALOGUE_ID
@@ -55,7 +56,7 @@ module Master
           when "acceptance_required"
             # Open by design; source changes and inventory membership are not proof.
           when "verified"
-            validate_evidence!(row)
+            validate_evidence!(row, root:)
           else
             raise ArgumentError, "UX catalog row has unknown state: #{row["state"]}"
           end
@@ -68,7 +69,8 @@ module Master
       # A verified row is admissible only with real PASS receipts for every
       # declared proof type. Each receipt binds a local evidence artifact and its
       # digest to the exact source commit that was measured.
-      def self.validate_evidence!(row)
+      def self.validate_evidence!(row, root:)
+        root_path = File.realpath(root)
         receipts = row["evidence"]
         raise ArgumentError, "#{row["id"]}: verified row needs evidence receipts" unless receipts.is_a?(Array) && receipts.any?
 
@@ -85,8 +87,25 @@ module Master
             !location.include?("\\") && parts.none? { |part| part.empty? || part == "." || part == ".." }
           raise ArgumentError, "#{row["id"]}: evidence location must be a safe repository-relative path" unless safe_path
 
-          raise ArgumentError, "#{row["id"]}: evidence needs a SHA-256 digest" unless receipt["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/i)
-          raise ArgumentError, "#{row["id"]}: evidence needs a full commit SHA" unless receipt["commit"].to_s.match?(/\A[0-9a-f]{40}\z/i)
+          expected_digest = receipt["sha256"].to_s
+          raise ArgumentError, "#{row["id"]}: evidence needs a SHA-256 digest" unless expected_digest.match?(/\A[0-9a-f]{64}\z/i)
+
+          evidence_path = File.expand_path(location, root_path)
+          begin
+            resolved_path = File.realpath(evidence_path)
+          rescue SystemCallError => error
+            raise ArgumentError, "#{row["id"]}: evidence artifact is unavailable: #{error.class}"
+          end
+          unless resolved_path.start_with?(root_path + File::SEPARATOR) && File.file?(resolved_path)
+            raise ArgumentError, "#{row["id"]}: evidence artifact must be a file inside the repository"
+          end
+          actual_digest = Digest::SHA256.file(resolved_path).hexdigest
+          raise ArgumentError, "#{row["id"]}: evidence digest does not match artifact bytes" unless actual_digest.casecmp?(expected_digest)
+
+          commit = receipt["commit"].to_s
+          raise ArgumentError, "#{row["id"]}: evidence needs a full commit SHA" unless commit.match?(/\A[0-9a-f]{40}\z/i)
+          _output, status = Master::Io::Exec.capture2("git", "-C", root_path, "cat-file", "-e", "#{commit}^{commit}")
+          raise ArgumentError, "#{row["id"]}: evidence commit is not present in this repository" unless status.success?
           proof_type
         end
         missing = Array(row["proof"]).map(&:to_s).uniq - proof_types.uniq
