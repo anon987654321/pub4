@@ -189,6 +189,23 @@ class TestPostproProcessEffects < Minitest::Test
     assert_operator chroma.call(graded).avg, :<, chroma.call(frame).avg * 1.6, "the old body lifted up to 1.7x"
   end
 
+  def test_reciprocity_failure_is_a_cast_not_a_veil
+    failed = send(:reciprocity_failure, grey_ramp, 30.0, :cinestill_800t)
+    assert_equal 0, failed.crop(0, 0, 1, 8).max, "black must stay black: lost exposure cannot add light"
+    linear = failed.colourspace("scrgb")
+    assert_in_delta blue_over_green(linear, 60), blue_over_green(linear, 200), 0.02, "one cast ratio across tones"
+  end
+
+  def grey_ramp
+    level = Vips::Image.xyz(256, 8).extract_band(0).cast(:uchar)
+    level.bandjoin([level, level]).copy(interpretation: :srgb)
+  end
+
+  def blue_over_green(linear, column)
+    patch = linear.crop(column, 0, 8, 8)
+    patch.extract_band(2).avg / patch.extract_band(1).avg
+  end
+
   def test_halation_runs_before_the_film_curve_in_every_preset
     late = PRESETS.select do |_, p|
       fx = p[:fx]

@@ -1,21 +1,20 @@
 # frozen_string_literal: true
 
-# Reciprocity failure: long exposures exhibit non-linear response — blue
-# channel lags most. Per-stock shifts from RECIPROCITY_SHIFT calibrate the
-# green-magenta crossover and blue lag to measured sensitometry data.
+# Reciprocity failure: past about a second, film needs more exposure than the
+# reciprocity law says, and each layer a different amount more, so a long
+# exposure comes out underexposed and with a cast. Lost exposure is a gain
+# below one on linear light, per channel, growing with the decades past a
+# second; RECIPROCITY_SHIFT is each stock's per-layer shift in stops a decade,
+# on top of RECIPROCITY_LOSS for the whole emulsion. Adding those figures to
+# linear light as offsets, the obvious shortcut, lays a flat veil over every
+# pixel, shadows most, rather than a cast.
+RECIPROCITY_LOSS = 0.5
+
 def reciprocity_failure(image, exposure_seconds = 10.0, stock = :cinestill_800t)
-  ev = Math.log2([exposure_seconds, 1.0].max) / 10.0
-  cs = RECIPROCITY_SHIFT[stock] || RECIPROCITY_SHIFT[:cinestill_800t]
-  linear = image.colourspace("scrgb")
-  r, g, b = linear.bandsplit
-  luma = r * 0.2126 + g * 0.7152 + b * 0.0722
-  dark_w = luma.linear(-1, 1)
-  result = Vips::Image.bandjoin([
-    r + dark_w * ev * 0.03 + (ev * cs[:r]),
-    g + dark_w * ev * 0.02 + (ev * cs[:g]),
-    b + (ev * 0.15) + dark_w * ev * 0.05 + (ev * cs[:b]),
-  ])
-  safe_cast(clamp01(result).colourspace("srgb"))
+  decades = Math.log10([exposure_seconds, 1.0].max)
+  shift = RECIPROCITY_SHIFT[stock] || RECIPROCITY_SHIFT[:cinestill_800t]
+  gains = %i[r g b].map { |layer| 2.0**((shift[layer] - RECIPROCITY_LOSS) * decades) }
+  safe_cast(clamp01(image.colourspace("scrgb").linear(gains, [0, 0, 0])).colourspace("srgb"))
 rescue StandardError => e
   $logger.error "reciprocity_failure: #{e.message}"; image
 end
