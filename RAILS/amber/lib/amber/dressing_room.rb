@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
 module Amber
-  # Which garment categories hang on which part of the figure.
+  # Which garment categories belong to which dressing-room zone.
   #
-  # Lives here rather than on OutfitsController because two surfaces need it now:
-  # the signed-in dressing room, and the guest landing page, which shows the same
-  # mannequin wearing the demo wardrobe. A controller reaching into another
-  # controller for a constant is the shape that produces two copies of it later.
+  # Lives here rather than on OutfitsController because HomeLooks reads FALLBACK
+  # too. A controller reaching into another controller for a constant is the
+  # shape that produces two copies of it later.
   module DressingRoom
     ZONES = {
       head: [ "Accessories" ],
@@ -16,10 +15,8 @@ module Amber
     }.freeze
 
     # What a guest sees when no demo wardrobe has been seeded: garment names real
-    # enough to show what the feature does, per body region. The mannequin hides
-    # the overlay of a garment with no photograph and still cycles its name, and
-    # HomeLooks draws these as silhouettes, so a fresh install never shows an
-    # empty page.
+    # enough to show what the feature does, per body region. HomeLooks builds its
+    # looks from these, so a fresh install never shows an empty page.
     FALLBACK = {
       headwear: [
         { title: "Gold hoop earrings", brand: "Mejuri", color: "gold" },
@@ -51,37 +48,15 @@ module Amber
     # it is (a scarf is an accessory, not a sweater).
     FALLBACK_CATEGORY = { headwear: "Accessories", tops: "Tops", bottoms: "Bottoms", shoes: "Shoes" }.freeze
 
-    NO_PHOTOS = Object.new
-    def NO_PHOTOS.attached? = false
-
-    Placeholder = Struct.new(:id, :title, :color, keyword_init: true) do
-      def photos = NO_PHOTOS
-    end
-
-    # FALLBACK names its regions after the body; the mannequin names its own
-    # after the four overlay slots. Same four, different vocabulary.
-    FALLBACK_ZONE = { head: :headwear, top: :tops, bottom: :bottoms, shoes: :shoes }.freeze
-
     module_function
 
-    # ranker is optional: a guest has no taste history to rank by, so the demo
-    # wardrobe comes back in whatever order the scope gives, which is stable.
+    # ranker is optional: without one each zone comes back in whatever order
+    # the scope gives, which is stable.
     def zones_for(scope, ranker: nil)
       ZONES.transform_values do |categories|
         items = scope.where(category: categories)
+
         ranker ? ranker.rank(items) : items.to_a
-      end
-    end
-
-    # The landing page's mannequin: the demo wardrobe when it is seeded, the
-    # curated names when it is not, and never nothing.
-    def guest_zones
-      return zones_for(DemoWardrobe.items.with_photos_for_display) if DemoWardrobe.available?
-
-      FALLBACK_ZONE.transform_values do |key|
-        FALLBACK.fetch(key, []).each_with_index.map do |row, index|
-          Placeholder.new(id: "#{key}-#{index}", title: row[:title], color: row[:color])
-        end
       end
     end
   end

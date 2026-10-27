@@ -111,7 +111,6 @@ en:
   home:
     new_in: "New in"
     looks:
-      mannequin_label: "3D wardrobe mannequin"
       title: "Four looks from the wardrobe"
       names:
         weekend: "Weekend walk"
@@ -917,8 +916,6 @@ en:
       zoning: "Where each garment sits, planned by reach and by the path you walk through the room."
       restraint: "How much the wardrobe should hold, and what the empty rail is for."
   dressing_room:
-    mannequin_label: "3D wardrobe"
-    mannequin_hint: "Move across the figure to inspect the drape"
     title: "Mix & Match"
     zone_head: "Accessories"
     zone_top: "Tops"

@@ -121,7 +121,6 @@ class VisualSystemContractTest < Minitest::Test
       dating: "pair",
       luxury: "ambient",
       radio: "tunnel",
-      mannequin: "mannequin",
     }
 
     for (const [surface, topology] of Object.entries(surfaces)) {

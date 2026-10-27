@@ -110,7 +110,6 @@ nb:
   home:
     new_in: "Nytt"
     looks:
-      mannequin_label: "3D-mannekeng for garderoben"
       title: "Fire antrekk fra garderoben"
       names:
         weekend: "Helgetur"
@@ -915,8 +914,6 @@ nb:
       zoning: "Hvor hvert plagg står, planlagt etter rekkevidde og etter veien du går gjennom rommet."
       restraint: "Hvor mye garderoben bør romme, og hva den tomme stangen er til for."
   dressing_room:
-    mannequin_label: "3D-garderobe"
-    mannequin_hint: "Beveg deg over figuren for å se hvordan plagget faller"
     title: "Miks & match"
     zone_head: "Tilbehør"
     zone_top: "Overdeler"

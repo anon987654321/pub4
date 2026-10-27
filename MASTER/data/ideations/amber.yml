@@ -16,9 +16,19 @@ candidates:
   - { id: amber_c05, gap: amber_visual_similarity, spec: "Pixel-hash similarity on the photos.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: medium }
   - { id: amber_c06, gap: amber_visual_similarity, spec: "Defer similarity until embeddings exist.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
   # amber_fitting_room
-  - { id: amber_c07, gap: amber_fitting_room, spec: "The dressing-room mannequin (already in the visual language) renders a chosen combination — real garments on the silhouette, no body claims.", hyperlocal: low, synergy: high, cost: M, laws_delta: none, reversibility: high }
+  - id: amber_c07
+    gap: amber_fitting_room
+    spec: >-
+      A figure in the dressing room wears the chosen combination — real
+      garments on a silhouette, no body claims.
+    hyperlocal: low
+    synergy: high
+    cost: M
+    laws_delta: none
+    reversibility: high
   - { id: amber_c08, gap: amber_fitting_room, spec: "Body-scan AR try-on.", hyperlocal: low, synergy: low, cost: L, laws_delta: new-surface, reversibility: low }
-  - { id: amber_c09, gap: amber_fitting_room, spec: "A side-by-side grid of the chosen items, no mannequin.", hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
+  - { id: amber_c09, gap: amber_fitting_room, spec: "A side-by-side grid of the chosen items.",
+      hyperlocal: low, synergy: low, cost: S, laws_delta: none, reversibility: high }
   # amber_mood_matcher
   - { id: amber_c10, gap: amber_mood_matcher, spec: "Mood tags on items (quiet, sharp, soft) + a mood picker that filters the wardrobe graph — data the owner writes, no inference.", hyperlocal: low, synergy: medium, cost: S, laws_delta: none, reversibility: high }
   - { id: amber_c11, gap: amber_mood_matcher, spec: "Infer mood from calendar weather/time and pre-suggest.", hyperlocal: medium, synergy: medium, cost: M, laws_delta: new-surface, reversibility: medium }
@@ -54,9 +64,17 @@ critique:
   - { candidate: amber_c04, verdict: keep, attack: "Cosine over attribute vectors is only as good as the tagging — the real dependency is c01, and the pick must say so." }
   - { candidate: amber_c05, verdict: reject, attack: "Pixel hashes match the same photo, not the same garment; photos are retaken constantly." }
   - { candidate: amber_c06, verdict: reject, attack: "The wardrobe-scale brute-force answer removes the blocker this deferral assumes exists." }
-  - { candidate: amber_c07, verdict: keep, attack: "The mannequin is visual language, not a body claim — but rendering 'real garments' needs compositing rules that can look cheap fast; art direction is the cost." }
+  - candidate: amber_c07
+    verdict: reject
+    attack: >-
+      Built once as a 3D figure and set aside by the operator on 2026-10-27;
+      compositing garments onto a body is art direction amber is not paying for now.
   - { candidate: amber_c08, verdict: reject, attack: "Body-scanning in a privacy-first wardrobe app is a promise violation the experience principles name outright." }
-  - { candidate: amber_c09, verdict: keep, attack: "The honest baseline; kept because c07's art direction may take longer than this does." }
+  - candidate: amber_c09
+    verdict: keep
+    attack: >-
+      The honest baseline: the garments as photographed, side by side, with no
+      figure to composite them onto.
   - { candidate: amber_c10, verdict: keep, attack: "Moods are self-report; the moment they are inferred (c11) the app claims to know the reader's feelings — the brand voice says non-judgmental for a reason." }
   - { candidate: amber_c11, verdict: reject, attack: "Inferred moods plus pushed suggestions is exactly the pressure the experience principles refuse." }
   - { candidate: amber_c12, verdict: keep, attack: "Colour-first is a real alternative aesthetic; kept so the mood row never becomes a stub." }
@@ -92,9 +110,12 @@ picks:
     rationale: "Sum minus clash, one explainable sentence, same arithmetic feeding wears-well-with; the horizon row's own shape."
     losers: { amber_c23: "unexplainable by design", amber_c24: "the conscience kept on the page" }
   - gap: amber_fitting_room
-    winner: amber_c07
-    rationale: "The mannequin is already amber's visual language; rendering chosen combinations on it is product the reader can feel, with art direction named as the cost."
-    losers: { amber_c08: "a privacy promise violation", amber_c09: "the honest fallback if compositing stays cheap-looking" }
+    winner: amber_c09
+    rationale: >-
+      The chosen garments side by side, as photographed: the combination is
+      legible without a figure or compositing, and the dressing room already
+      chooses it.
+    losers: { amber_c07: "set aside by the operator, 2026-10-27", amber_c08: "a privacy promise violation" }
   - gap: amber_mood_matcher
     winner: amber_c10
     rationale: "Self-reported mood tags filter the graph the owner wrote; no inference claims to know feelings the brand promises not to judge."

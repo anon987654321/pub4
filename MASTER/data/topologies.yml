@@ -81,7 +81,6 @@ visual_fleet:
     social: { topology: terrain, purpose: city and community ambient field }
     dating: { topology: pair, purpose: proximity and connection }
     luxury: { topology: ambient, purpose: restrained fashion atmosphere }
-    mannequin: { topology: mannequin, purpose: garment silhouette }
     radio: { topology: tunnel, purpose: audio-reactive depth field }
 
 topologies:

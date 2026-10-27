@@ -6,10 +6,8 @@ module Amber
   # Flat garment cut-outs for the demo wardrobe, drawn rather than downloaded.
   #
   # The seeder used to attach picsum photographs keyed by the garment's name, so
-  # the mannequin on the landing page wore a doorway, a street scene and a beach:
-  # the zone overlays are object-fit boxes over the figure, and a photograph fills
-  # them edge to edge. A cut-out with an alpha channel is the shape that surface
-  # was built for — the figure shows through around the garment.
+  # a demo coat was a doorway, a street scene or a beach. A cut-out with an
+  # alpha channel shows the garment and nothing else.
   #
   # Drawn as SVG and rasterised through vips, so there is no image to license, no
   # network at seed time, and the colour comes from the item's own `color`.
@@ -87,51 +85,15 @@ module Amber
       end
     end
 
-    # Cut to the garment. The overlay renders object-fit: contain inside a zone
-    # box, so transparent margin around the shape is margin the garment loses:
-    # a coat drawn on a tall canvas sat as a narrow strip in the middle of a
-    # wide chest. One viewBox per shape would drift the moment a path moved.
+    # Cut to the garment. A photo renders object-fit: contain inside its box, so
+    # transparent margin around the shape is margin the garment loses: a coat
+    # drawn on a tall canvas sat as a narrow strip in the middle of the frame.
+    # One viewBox per shape would drift the moment a path moved.
     def trim_transparent(image)
       left, top, width, height = image.extract_band(3).find_trim(threshold: 1, background: [ 0 ])
       return image if width.zero? || height.zero?
 
       image.extract_area(left, top, width, height)
-    end
-
-    # The same drawing as inline SVG, its viewBox cut to the shape, for a page
-    # that lays garments on a figure. Needs no vips and no stored photograph,
-    # so it draws the same on a box where the demo wardrobe was never seeded.
-    def inline_svg(title:, color:, category: nil)
-      shape = shape_for(title: title, category: category)
-      body = PATHS.fetch(shape) { PATHS.fetch(:sweater) }.call(hex_for(color))
-      x, y, width, height = extent(body)
-      %(<svg xmlns="http://www.w3.org/2000/svg" viewBox="#{x} #{y} #{width} #{height}" aria-hidden="true" focusable="false">#{body}</svg>)
-    end
-
-    # The box every coordinate in the drawing falls inside, padded by the seam
-    # and ring strokes (16 at most). Control points count as well, so a curve's
-    # box is generous rather than tight, which costs a little margin and never
-    # clips an edge.
-    def extent(body)
-      xs, ys = (path_points(body) + rect_points(body) + circle_points(body)).transpose
-      pad = 8
-      [ xs.min - pad, ys.min - pad, xs.max - xs.min + (2 * pad), ys.max - ys.min + (2 * pad) ].map(&:round)
-    end
-
-    def path_points(body)
-      body.scan(/\bd="([^"]+)"/).flatten.flat_map { |d| d.scan(/-?\d+(?:\.\d+)?/).map(&:to_f).each_slice(2).to_a }
-    end
-
-    def rect_points(body)
-      body.scan(/<rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/).flat_map do |x, y, w, h|
-        [ [ x.to_f, y.to_f ], [ x.to_f + w.to_f, y.to_f + h.to_f ] ]
-      end
-    end
-
-    def circle_points(body)
-      body.scan(/<circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"/).flat_map do |cx, cy, r|
-        [ [ cx.to_f - r.to_f, cy.to_f - r.to_f ], [ cx.to_f + r.to_f, cy.to_f + r.to_f ] ]
-      end
     end
 
     def svg_for(shape, fill)

@@ -35,7 +35,7 @@ class OutfitsController < ApplicationController
     # in_rotation: the carousels offer garments to wear, and active_wardrobe
     # keeps declutter-box items, so a garment you had already decided to release
     # kept riding round the Tops zone.
-    base = Current.user.items.in_rotation.with_photos_for_display
+    base = Current.user.items.in_rotation
     ranker = TasteRanker.new(Current.user)
     @zones = Amber::DressingRoom.zones_for(base, ranker: ranker)
     @taste_reasons = @zones.values.flatten.to_h { |item| [ item.id, ranker.explain(item) ] }
@@ -54,8 +54,8 @@ class OutfitsController < ApplicationController
       season: season_from_month,
       occasion: params[:occasion].presence
     )
-    # Position head-to-toe so the saved outfit reads in the same order the
-    # dressing room stacked it on the mannequin.
+    # Position head-to-toe so the saved outfit reads in the same order as the
+    # dressing room's zone rows.
     zone_order = Amber::DressingRoom::ZONES.keys.each_with_index.to_h
     items.sort_by { |item| [ zone_order.fetch(zone_for(item), zone_order.size), item.id ] }
          .each_with_index { |item, index| outfit.outfit_items.build(item: item, position: index) }

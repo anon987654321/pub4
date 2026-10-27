@@ -119,9 +119,7 @@ module Amber
     # A drawn cut-out first, a photograph only if this box cannot rasterise one.
     #
     # The photographs came from picsum keyed by the garment's name, which is a
-    # random landscape: the mannequin on the landing page wore a doorway, a
-    # street scene and a beach, because the zone overlays are object-fit boxes
-    # over the figure and a photograph fills them edge to edge.
+    # random landscape: a demo coat was a doorway, a street scene or a beach.
     def attach_photo!(item, row)
       png = GarmentSilhouette.png(title: row[:title], color: row[:color], category: row[:category])
       if png.nil?

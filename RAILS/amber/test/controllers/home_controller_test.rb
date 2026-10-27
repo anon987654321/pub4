@@ -23,7 +23,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
   end
 
   # The operator's home page, 2026-09-25: two icons in the corner, the mark
-  # centred, four looks on the point-cloud figure, the footer. Nothing else.
+  # centred, four looks, the footer. Nothing else.
   def test_guest_root_is_the_mark_four_looks_and_the_footer
     get root_url
     assert_response :success
@@ -36,9 +36,6 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     css_select(".amber-look-title").each { |title| assert_predicate title.text.strip, :present? }
     assert_includes response.body, I18n.t("home.looks.names.morning")
     assert_select ".amber-look-position", minimum: 8
-    # Each look is worn by the shared 3D mannequin renderer.
-    assert_select ".amber-look [data-controller=mannequin-3d]", 4
-    assert_select ".amber-look [data-mannequin-3d-slides-value]", 4
     # Each look opens on the whole outfit, then one slide per garment.
     assert_select ".amber-look:first-of-type .amber-look-slide:first-child figcaption", /\A#{Regexp.escape(I18n.t("home.looks.whole"))}/
     refute_includes response.body, "look-zone"

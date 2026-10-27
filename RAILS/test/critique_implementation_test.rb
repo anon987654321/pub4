@@ -308,41 +308,6 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes brgen, '@use "stack_brgen" as *;'
   end
 
-  def test_amber_looks_use_one_3d_mannequin_and_wrapped_photos
-    looks = read("amber/app/views/home/_looks.html.erb")
-    mannequin = read("amber/app/javascript/controllers/mannequin_3d_controller.js")
-    carousel = read("amber/app/javascript/controllers/wardrobe_carousel_controller.js")
-    dressing = read("amber/app/views/shared/_dressing_room.html.erb")
-    css = amber_css_source
-
-    assert_includes looks, 'data-controller="mannequin-3d"'
-    assert_includes looks, "data-mannequin-3d-slides-value"
-    assert_includes looks, "responsive_image_url(garment.photos.first, widths: [720])"
-    assert_includes mannequin, "drawWrapped"
-    assert_includes mannequin, "surfacePoint"
-    assert_includes mannequin, "this.rotation"
-    assert_includes mannequin, "attendToChange"
-    assert_includes mannequin, "this.reducedMotion"
-    assert_includes mannequin, "this.attentionTurn = 0.1"
-    assert_includes carousel, "amber:mannequin-change"
-    assert_includes dressing, 'data-controller="mannequin-3d"'
-    assert_includes dressing, "data-mannequin-3d-zones-value"
-    assert_includes css, "mannequin-3d"
-  end
-
-  def test_amber_mannequin_particles_are_sparse_cool_and_open
-    css = amber_css_source
-    renderer = read("amber/app/javascript/controllers/mannequin_3d_controller.js")
-    mannequin_css = read("amber/app/assets/stylesheets/_mannequin_3d.scss")
-
-    assert_includes css, "--figure-ink: #8eaee3;"
-    assert_includes renderer, "for (let i = 0; i < 432; i += 1)"
-    assert_includes renderer, '"ambient"'
-    assert_includes renderer, "ctx.globalAlpha = 0.06 + geometry.depth * 0.22"
-    assert_includes mannequin_css, "--particle-ink: var(--figure-ink);"
-    refute_includes mannequin_css, "amber-look-figure::after"
-  end
-
   def test_shared_feed_text_uses_the_existing_leading_tokens
     minimal = read("__shared/app/assets/stylesheets/_minimal.scss")
 

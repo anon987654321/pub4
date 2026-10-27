@@ -302,9 +302,11 @@ apps:
       category: personal_wardrobe_intelligence
       promise: "Know what you own. Wear what matters."
       position: "A private wardrobe intelligence companion, not a fashion storefront: it helps a person understand, enjoy, wear and edit what they already own."
-      distinctive_mechanic: "A warm personal wardrobe graph expressed through editorial fashion, a dressing-room mannequin and subtle amber/golden cues."
+      distinctive_mechanic: >-
+        A warm personal wardrobe graph expressed through editorial fashion, a
+        mix-and-match dressing room and subtle amber/golden cues.
       voice: [warm, observant, non_judgmental, precise]
-      visual_character: [ivory, amber, ink, soft_texture, pixel_stardust, mannequin_forms]
+      visual_character: [ivory, amber, ink, soft_texture, pixel_stardust]
       experience_principles: [private_by_default, explain_why, buy_less_wear_more, delight_without_pressure, intelligence_with_honest_boundaries]
     # amberapp.art is amber's one name. amberapp.com is not ours: it is a
     # for-sale lander at another registrar, so read whois before calling a

@@ -85,12 +85,12 @@
 
 /* Four looks, stacked, with the air between them the operator asked for
    (2026-09-25, after antigravity.google): whole screens of white, a large
-   tightly tracked title, then the figure. */
+   tightly tracked title, then the track. */
 .amber-looks {
   display: flex;
   flex-direction: column;
-  gap: clamp(120px, 16vw, 200px);
-  padding-block-end: clamp(120px, 16vw, 200px);
+  gap: clamp(42px, 7vw, 86px);
+  padding-block-end: clamp(72px, 9vw, 120px);
 }
 
 main#main-content .amber-look-title {
@@ -103,41 +103,15 @@ main#main-content .amber-look-title {
   letter-spacing: -0.03em;
 }
 
-/* The figure and the slides share one box, the mannequin's 160:390, centred in the stage and
-   clear of the caption line, so a zone's percentages land on the same body
-   in both layers. */
+/* The track steps from the whole look to one garment at a time: a row of
+   captions under a hairline, snapped one per swipe. */
 .amber-look-stage {
-  position: relative;
-  height: min(78svh, 640px);
-  margin-block-start: var(--space-8);
-}
-
-.amber-look-figure,
-.amber-look-body {
-  position: absolute;
-  inset-block: 0 3rem;
-  inset-inline-start: 50%;
-  height: calc(100% - 3rem);
-  aspect-ratio: 160 / 390;
-  transform: translateX(-50%);
-}
-
-.amber-look-figure {
-  --particle-ink: var(--figure-ink);
-}
-
-/* The dressing room lets its particles spill past the mannequin; here they
-   fill the body box, so the garments land on the body the points draw. */
-.amber-look-figure .mannequin-particles {
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  min-width: 0;
 }
 
 .amber-look-track {
-  position: absolute;
-  inset: 0;
   display: flex;
+  gap: var(--space-2);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   overscroll-behavior-x: contain;
@@ -145,47 +119,27 @@ main#main-content .amber-look-title {
 }
 
 .amber-look-slide {
-  position: relative;
-  flex: 0 0 100%;
+  flex: 0 0 max-content;
+  min-width: min(78vw, 280px);
   margin: 0;
+  padding: 0;
   scroll-snap-align: start;
-}
-
-.amber-look-position {
-  margin-inline-start: var(--space-2);
-  color: var(--luxury-muted);
+  border-block-start: 1px solid var(--border);
 }
 
 .amber-look-slide figcaption {
-  position: absolute;
-  inset: auto 0 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  height: 3rem;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+  padding-inline: var(--space-2);
   font-size: var(--text-sm);
-  color: var(--text-secondary);
+  color: var(--text);
+  white-space: nowrap;
 }
 
-/* Where each garment is worn, in percent of the body box: the mannequin's
-   own 160x390 grid, where the dressing room's .zone boxes sit too. */
-.look-zone {
-  position: absolute;
-  display: block;
+.amber-look-position {
+  color: var(--luxury-muted);
+  font-variant-numeric: tabular-nums;
 }
-
-.look-zone svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.look-zone--torso { inset: 18% 6% auto; height: 34%; }
-.look-zone--dress { inset: 18% 8% auto; height: 60%; }
-.look-zone--legs { inset: 52% 10% auto; height: 43%; }
-.look-zone--feet { inset: 93% 6% auto; height: 7%; }
-.look-zone--crown { inset: 0.5% 30% auto; height: 8%; }
-.look-zone--eyes { inset: 6% 33% auto; height: 4%; }
-.look-zone--ears { inset: 8% 30% auto; height: 6%; }
-.look-zone--hand { inset: 50% -6% auto 78%; height: 10%; }
-

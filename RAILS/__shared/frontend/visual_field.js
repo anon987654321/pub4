@@ -7,7 +7,6 @@ const SURFACE_DEFAULTS = {
   dating: { topology: "pair", count: 360 },
   luxury: { topology: "ambient", count: 320 },
   radio: { topology: "tunnel", count: 420 },
-  mannequin: { topology: "mannequin", count: 520 },
   ambient: { topology: "orb", count: 320 }
 }
 
@@ -167,7 +166,6 @@ export class VisualField {
       case "terrain": return this.terrainTarget(index, now)
       case "pair": return this.pairTarget(index, now)
       case "tunnel": return this.tunnelTarget(index, now)
-      case "mannequin": return this.mannequinTarget(index, now)
       case "halo": return this.haloTarget(index, now)
       default: return this.orbTarget(index, now)
     }
@@ -239,53 +237,6 @@ export class VisualField {
       x: this.width * 0.5 + Math.cos(angle) * radius,
       y: this.height * 0.46 + Math.sin(angle) * radius * 0.68 + wobble * this.height,
       depth: 0.3 + hash(index, 61) * 0.7
-    }
-  }
-
-  mannequinTarget(index, now) {
-    const section = index % 8
-    const u = ((Math.floor(index / 8) + 0.5) / Math.ceil(this.count / 8))
-    const jitter = signedHash(index, 71)
-    const w = this.width
-    const h = this.height
-    const center = w * 0.5
-
-    if (section == 0) {
-      const angle = u * TAU
-      return {
-        x: center + Math.cos(angle) * w * 0.17 * (0.92 + 0.08 * Math.sin(now * 0.0002)),
-        y: h * 0.15 + Math.sin(angle) * h * 0.075,
-        depth: 0.75 + hash(index, 73) * 0.25
-      }
-    }
-
-    if (section <= 2) {
-      const y = h * (0.24 + u * 0.31)
-      const shoulder = w * (0.12 + 0.12 * Math.sin(Math.PI * u))
-      return {
-        x: center + (section == 1 ? -shoulder : shoulder) + jitter * 1.8,
-        y: y + Math.sin(u * Math.PI + now * 0.0002) * 1.5,
-        depth: 0.42 + hash(index, 79) * 0.58
-      }
-    }
-
-    if (section <= 5) {
-      const y = h * (0.49 + u * 0.43)
-      const side = section % 2 == 0 ? -1 : 1
-      const leg = w * 0.09 + u * w * 0.03
-      return {
-        x: center + side * leg + jitter * 2,
-        y,
-        depth: 0.35 + hash(index, 83) * 0.65
-      }
-    }
-
-    const y = h * (0.36 + u * 0.30)
-    const side = section == 6 ? -1 : 1
-    return {
-      x: center + side * (w * 0.30 + u * w * 0.07),
-      y: y + jitter * 1.6,
-      depth: 0.3 + hash(index, 89) * 0.7
     }
   }
 

@@ -1,14 +1,12 @@
 # frozen_string_literal: true
 
 module Amber
-  # The four looks on the home page: each an outfit, its garments drawn as
-  # silhouettes and laid on the figure where they are worn.
+  # The four looks on the home page: each an outfit and its garments, listed
+  # from the legs up so a coat follows the trousers it goes over.
   #
   # A signed-in reader's own outfits come first, then the demo wardrobe's, then
   # looks put together from DressingRoom::FALLBACK, so the page shows four
-  # outfits on a box where nothing was ever seeded. Garments are drawn from
-  # their title and colour rather than from stored photographs for the same
-  # reason, and so a look costs no image request.
+  # outfits on a box where nothing was ever seeded.
   module HomeLooks
     COUNT = 4
 
@@ -17,10 +15,12 @@ module Amber
     NAME_KEYS = %i[weekend studio dinner morning].freeze
 
     Garment = Data.define(:title, :color, :category, :zone)
-    Look = Data.define(:name, :garments)
+    Look = Data.define(:name, :garments) do
+      # The track's captions: the whole outfit first, then one per garment.
+      def captions(whole) = [ whole ] + garments.map(&:title)
+    end
 
-    # Where on the figure a shape is worn. The stylesheet places each zone in
-    # the figure's own proportions (.look-zone--<zone>).
+    # Where on the body a shape is worn, which sets its place in LAYER_ORDER.
     ZONE_BY_SHAPE = {
       beanie: :crown, sunglasses: :eyes, earrings: :ears, bag: :hand,
       boots: :feet, trainers: :feet,
@@ -29,8 +29,8 @@ module Amber
       coat: :torso, blazer: :torso, sweater: :torso, blouse: :torso, tee: :torso
     }.freeze
 
-    # Painted first to last, so a coat lies over the trousers and the
-    # sunglasses over the hat.
+    # Listed first to last, so a coat comes after the trousers and the
+    # sunglasses after the hat.
     LAYER_ORDER = %i[legs feet dress torso hand crown ears eyes].freeze
 
     module_function

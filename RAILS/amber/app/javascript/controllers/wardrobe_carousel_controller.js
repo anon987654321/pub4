@@ -4,8 +4,8 @@ import { Controller } from "@hotwired/stimulus"
 //
 // Four zone carousels advance on their own, adjacent zones in opposite
 // directions — head and bottom forward, top and shoes backward — so the
-// combination on the mannequin keeps changing without the same two garments
-// staying paired. Order within a zone comes from TasteRanker server-side, so
+// combination keeps changing without the same two garments staying paired.
+// Order within a zone comes from TasteRanker server-side, so
 // index 0 is always the garment this wardrobe reaches for most.
 //
 // Autoplay stops for prefers-reduced-motion, while the tab is hidden, and
@@ -108,42 +108,16 @@ export default class extends Controller {
   render(zone) {
     const items = this.zonesValue[zone] || []
     const item = items[this.idx[zone]]
-    const overlay = this.element.querySelector(`.zone--${zone} img`)
     const nameEl = this.element.querySelector(`[data-zone-label="${zone}"]`)
     const countEl = this.element.querySelector(`[data-zone-count="${zone}"]`)
     const whyEl = this.element.querySelector(`[data-zone-why="${zone}"]`)
     const pickEl = this.element.querySelector(`[data-zone-pick="${zone}"]`)
 
-    if (overlay) {
-      if (item?.url) {
-        overlay.src = item.url
-        overlay.alt = item.name || "Wardrobe item"
-        overlay.style.opacity = "1"
-      } else {
-        overlay.removeAttribute("src")
-        overlay.style.opacity = "0"
-        overlay.alt = ""
-      }
-    }
     if (nameEl) nameEl.textContent = item?.name ?? "—"
     if (countEl) countEl.textContent = items.length ? `${this.idx[zone] + 1} / ${items.length}` : "none"
     if (whyEl) whyEl.textContent = item?.why ?? ""
     // Empty rather than absent: the form posts a fixed four inputs and the
     // server drops the blanks, so a zone with no garment saves as three items.
     if (pickEl) pickEl.value = item?.id ?? ""
-    this.broadcastSelection()
-  }
-
-  broadcastSelection() {
-    const zones = Object.fromEntries(
-      ZONES.map(zone => {
-        const items = this.zonesValue[zone] || []
-        return [zone, items[this.idx[zone]] || null]
-      })
-    )
-    this.element.dispatchEvent(new CustomEvent("amber:mannequin-change", {
-      bubbles: true,
-      detail: { zones }
-    }))
   }
 }

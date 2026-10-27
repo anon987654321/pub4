@@ -1,23 +1,19 @@
 <%# locals: zones, taste_reasons, savable: %>
-<%# scan: intentional-colors — the mannequin is an illustration: its greys are drawn values, not theme surfaces %>
 <%#
-  The mannequin and its four zone carousels. Adjacent zones counter-rotate —
+  The four zone carousels. Adjacent zones counter-rotate —
   wardrobe_carousel_controller holds the directions and the pause rules — so
-  the combination on the figure keeps changing without the same two garments
-  staying paired.
+  the combination keeps changing without the same two garments staying paired.
 
-  A partial because this is the landing surface as well as a signed-in tool.
-  The guest home page renders it with the demo wardrobe; /dressing_room renders
-  it with your own and can save what it is showing, which a guest cannot.
+  savable: false renders the rotation and the controls without the save form,
+  for a reader with no account to save into.
 %>
 <% savable = local_assigns.fetch(:savable, true) %>
 <% taste_reasons = local_assigns.fetch(:taste_reasons, {}) %>
 <%
   zones_json = zones.transform_values { |items|
     items.map { |item|
-      { id: item.id, name: item.title, color: item.color.to_s,
-        why: Array(taste_reasons[item.id]).first(2).join(" · "),
-        url: item.photos.attached? ? responsive_image_url(item.photos.first, widths: [480]) : nil }
+      { id: item.id, name: item.title,
+        why: Array(taste_reasons[item.id]).first(2).join(", ") }
     }
   }.to_json
 %>
@@ -25,15 +21,6 @@
      data-controller="wardrobe-carousel"
      data-wardrobe-carousel-zones-value="<%= zones_json %>"
      data-wardrobe-carousel-interval-value="4200">
-
-  <div class="mannequin-stage"
-       data-controller="mannequin-3d"
-       data-mannequin-3d-zones-value="<%= zones_json %>">
-    <div class="mannequin-3d-caption">
-      <span class="mannequin-caption-label"><%= t("dressing_room.mannequin_label") %></span>
-      <span><%= t("dressing_room.mannequin_hint") %></span>
-    </div>
-  </div>
 
   <div class="zone-carousels">
     <% {

@@ -3,7 +3,7 @@
 require "test_helper"
 
 # The demo wardrobe's photographs came from picsum keyed by the garment's name,
-# so the landing page's mannequin wore a doorway, a street scene and a beach.
+# so a demo coat was a doorway, a street scene or a beach.
 # These pin the cut-outs that replaced them.
 class GarmentSilhouetteTest < ActiveSupport::TestCase
   test "the shape comes from what the title says the garment is" do

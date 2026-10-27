@@ -353,23 +353,6 @@ class DesignContractTest < Minitest::Test
     assert_match(/\.store-promo-art--tile \.store-promo-art-media,[\s\S]*?\.store-promo-art--portrait \.store-promo-art-media\s*\{[^}]*position:\s*absolute;/m, wide)
   end
 
-  def test_amber_mannequin_stage_is_mobile_first_and_restores_wide_geometry
-    source = File.read(File.join(ROOT, "amber", "app", "assets", "stylesheets", "_mannequin_3d.scss"))
-    mobile = source.split("@media (min-width: 768px)", 2).first
-    wide = source.split("@media (min-width: 768px)", 2).last
-
-    refute_match(/@media\s*\(\s*max-width:\s*767px\s*\)/, source,
-                 "the compact mannequin stage is the base layout, not a max-width override")
-    assert_match(/\.amber-look-stage\s*\{[^}]*height:\s*min\(70svh, 560px\);[^}]*min-height:\s*430px;/m, mobile)
-    assert_match(/\.mannequin-stage\s*\{[^}]*width:\s*min\(360px, 90vw\);/m, mobile)
-    assert_match(/\.mannequin-stage\s*\{[^}]*width:\s*min\(420px, 78vw\);/m, wide)
-    assert_match(/\.amber-look-stage\s*\{[^}]*height:\s*min\(59vh, 570px\);[^}]*min-height:\s*420px;/m, wide)
-
-    caption = File.read(File.join(ROOT, "amber", "app", "assets", "stylesheets", "_amber_dressing_room.scss"))
-    assert_match(/\.mannequin-3d-caption\s*\{[^}]*position:\s*absolute;[^}]*z-index:\s*3;[^}]*text-align:\s*center;/m, caption)
-    assert_match(/\.mannequin-caption-label\s*\{[^}]*font-weight:\s*var\(--weight-bold\);/m, caption)
-  end
-
   def test_surface_chrome_endgame_is_mobile_first_and_restores_wide_values
     source = File.read(File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_surface_chrome_endgame.scss"))
     refute_match(/@media\s*\(\s*max-width\b/, source,

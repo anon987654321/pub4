@@ -220,8 +220,8 @@ class FileLengthRatchetTest < Minitest::Test
     "brgen/app/views/conversations/show.html.erb" => 151,
     "brgen/test/helpers/application_helper_test.rb" => 323,
     "brgen_marketplace/app/views/marketplace/listings/show.html.erb" => 189,
-    "test/critique_implementation_test.rb" => 515,
-    "test/design_contract_test.rb" => 501,
+    "test/critique_implementation_test.rb" => 500,
+    "test/design_contract_test.rb" => 490,
     "test/checks/flow_coverage_test.rb" => 360,
   }.freeze
 

@@ -30,8 +30,6 @@
 // own, as Operator::CssCoverageLint finds them. They load last so they
 // complement the components above rather than compete with them. amber's are
 // token-only, no hex and no !important, so a dialect switch carries them.
-@include meta.load-css("mannequin_3d");
-
 @include meta.load-css("shared_coverage_fills");
 
 // A button that is a link, not a box. Used on five surfaces for destructive or
@@ -189,7 +187,7 @@
 .amber-look:nth-child(even) .amber-look-title{order:2}
 .amber-look:nth-child(even) .amber-look-stage{order:1}
 .amber-look-title{max-inline-size:none;margin:0;font-size:clamp(2rem,5vw,4.5rem);line-height:var(--leading-none);letter-spacing:var(--tracking-tight)}
-.amber-look-stage{min-width:0;min-height:min(60vw,620px)}
+.amber-look-stage{min-width:0}
 .amber-look-slide{min-width:min(78vw,560px)}
 .amber-messenger-composer{padding:var(--space-3);border-top:1px solid var(--border)}
 .amber-messenger-composer form{display:grid;gap:var(--space-2)}
@@ -248,7 +246,6 @@
   .amber-look:nth-child(even){grid-template-columns:minmax(0,1.45fr) minmax(12rem,.55fr)}
   .amber-look:nth-child(even) .amber-look-title{order:2}
   .amber-look:nth-child(even) .amber-look-stage{order:1}
-  .amber-look-stage{min-height:min(60vw,620px)}
   .amber-look-title{max-inline-size:8ch}
 }
 

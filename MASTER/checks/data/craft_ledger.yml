@@ -216,11 +216,11 @@ pending_evidence:
   # the ledger: by being closed, never by being deleted.
   - id: mobile-first-max-width-queries
     law: MOBILE_FIRST
-    count: 18
-    as_of: "2026-10-25"
+    count: 17
+    as_of: "2026-10-27"
     provenance: static-analysis port, RAILS tree
     surfaces: >-
-      __shared welcome_onboarding; amber commerce_polish and mannequin_3d; and
+      __shared welcome_onboarding; amber commerce_polish; and
       ten brgen shared partials (city_campaigns, feed_responsive_finish,
       listing_creation, marketplace_commerce, media_feed, dating and more) —
       the campaign report carries the full file:line list.
