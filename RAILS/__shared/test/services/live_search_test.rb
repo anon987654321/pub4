@@ -13,6 +13,15 @@ unless defined?(Rails)
   end
 end
 
+# The in-memory tables hang off their own abstract class. Connecting
+# ActiveRecord::Base to :memory: swapped the test database out from under every
+# test that ran after this file in an app suite's worker: 1421 errors in brgen's
+# rails_test on vm23, "no such table: cities" and the nil Rails.cache that
+# followed. LiveSearch asks the scope for its connection, so nothing else moves.
+class LiveSearchMemoryRecord < ActiveRecord::Base
+  self.abstract_class = true
+end
+
 class SharedLiveSearchTest < Minitest::Test
   # By hand rather than Minitest's stub: minitest 6 moved stub into the
   # minitest-mock gem, and the release check runs this file under bare ruby
@@ -29,9 +38,9 @@ class SharedLiveSearchTest < Minitest::Test
   # escapes % with a backslash and SQLite ignores that without an ESCAPE clause.
   def test_a_percent_sign_in_the_query_is_literal_on_sqlite
     require "sqlite3"
-    ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
-    ActiveRecord::Base.connection.create_table(:live_search_items) { |t| t.string :title }
-    model = Class.new(ActiveRecord::Base) { self.table_name = "live_search_items" }
+    LiveSearchMemoryRecord.establish_connection(adapter: "sqlite3", database: ":memory:")
+    LiveSearchMemoryRecord.connection.create_table(:live_search_items) { |t| t.string :title }
+    model = Class.new(LiveSearchMemoryRecord) { self.table_name = "live_search_items" }
     model.create!(title: "100% ull")
     model.create!(title: "1000 ting")
 
@@ -44,12 +53,12 @@ class SharedLiveSearchTest < Minitest::Test
   # reach the joined table instead of being prefixed with the scope's own.
   def test_a_qualified_column_searches_the_joined_table
     require "sqlite3"
-    ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
-    connection = ActiveRecord::Base.connection
+    LiveSearchMemoryRecord.establish_connection(adapter: "sqlite3", database: ":memory:")
+    connection = LiveSearchMemoryRecord.connection
     connection.create_table(:live_search_parents) { |t| t.string :title }
     connection.create_table(:live_search_children) { |t| t.string :headline; t.integer :live_search_parent_id }
-    parent = Class.new(ActiveRecord::Base) { self.table_name = "live_search_parents" }
-    child = Class.new(ActiveRecord::Base) { self.table_name = "live_search_children" }
+    parent = Class.new(LiveSearchMemoryRecord) { self.table_name = "live_search_parents" }
+    child = Class.new(LiveSearchMemoryRecord) { self.table_name = "live_search_children" }
     bike = parent.create!(title: "Racersykkel")
     child.create!(headline: "Vårsalg", live_search_parent_id: bike.id)
     child.create!(headline: "Sofa", live_search_parent_id: parent.create!(title: "Stue").id)

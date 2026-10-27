@@ -13,12 +13,15 @@ require "test_helper"
 # writes, which is the only way it shows up short of production.
 class PostFragmentCacheTest < ActionDispatch::IntegrationTest
   setup do
+    # Saved before anything that can raise: teardown runs after a failed setup,
+    # and restoring an unset ivar left Rails.cache nil for the rest of the worker.
+    @previous_store = Rails.cache
+    @previous_flag = ActionController::Base.perform_caching
+
     Brgen::CitySeed.sync! if City.table_exists?
     @city = City.find_by!(domain: "brgen.no")
     host! "brgen.no"
 
-    @previous_store = Rails.cache
-    @previous_flag = ActionController::Base.perform_caching
     Rails.cache = ActiveSupport::Cache::MemoryStore.new
     ActionController::Base.perform_caching = true
   end
