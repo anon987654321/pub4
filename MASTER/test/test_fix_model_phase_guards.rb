@@ -63,6 +63,18 @@ class TestFixModelPhaseGuards < Minitest::Test
     assert_includes Ledger.summary_lines.first, "proposals rejected 3: new_violations 2, out_of_scope 1"
   end
 
+  # The run's summary names the errors it caught and carried on past, the busiest place first.
+  def test_the_summary_names_the_errors_the_run_swallowed
+    crash = { "context" => "RepairLoop.reflexion", "error_class" => "Encoding::CompatibilityError",
+              "error_message" => "incompatible" }
+    rows = [crash, crash, { "context" => "lane", "error_class" => "NoMethodError", "error_message" => "nil" }]
+
+    lines = Master::Ground::Swallow.stub(:recent, rows) { Ledger.summary_lines }
+
+    assert_includes lines, "fix0: errors swallowed this run 3 at 2 place(s)"
+    assert_includes lines, "fix0: swallowed 2x at RepairLoop.reflexion: Encoding::CompatibilityError: incompatible"
+  end
+
   Loop = Struct.new(:law) # stands in for the loop's @law
 
   def budget_loop

@@ -31,6 +31,7 @@ module Master
         # A new run's counters; the --max-files override set for this dispatch stays.
         def begin_run!
           @mutex.synchronize do
+            @started_at = Time.now
             @reasons = Hash.new(0)
             @declined = Hash.new(0)
             @file_rejects = Hash.new(0)
@@ -164,7 +165,26 @@ module Master
           lines << "fix0: file budget spent on #{timeouts.size} file(s): #{timeouts.first(5).map { |file, _| file.split("/").last }.join(", ")}" if timeouts.any?
           drops = Master::Io::LaneQuota.run_drops
           lines << "fix0: lanes dropped this run: #{drops.map { |lane, why| "#{lane} (#{why})" }.join(", ")}" if drops.any?
-          lines
+          lines.concat(swallowed_lines)
+        end
+
+        # The errors the run caught and carried on past, by where they were caught. A verifier that
+        # crashed on every diff, and a NoMethodError behind "offline", were found only by reading
+        # swallowed_errors.jsonl by hand; the summary names them.
+        def swallowed_lines
+          return [] unless @started_at && defined?(Master::Ground::Swallow)
+
+          rows = Master::Ground::Swallow.recent(limit: 5000, since: @started_at)
+          return [] if rows.empty?
+
+          by_place = rows.group_by { |row| row["context"] }.sort_by { |place| -place.last.size }
+          ["fix0: errors swallowed this run #{rows.size} at #{by_place.size} place(s)"] +
+            by_place.first(5).map { |place, group| swallowed_line(place, group) }
+        end
+
+        def swallowed_line(place, group)
+          last = group.last
+          "fix0: swallowed #{group.size}x at #{place}: #{last["error_class"]}: #{last["error_message"].to_s[0, 120]}"
         end
       end
     end
