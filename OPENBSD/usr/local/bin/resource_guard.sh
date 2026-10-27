@@ -179,9 +179,10 @@ fi
 # file root dot-sources is the exact shape of the hole this replaced. Ships from
 # OPENBSD/usr/local/libexec/ via OPERATOR.sh install_root_configs.
 GUARD_HELPER=/usr/local/libexec/stale_ci_cleanup.ksh
+helper_loaded=0
 if [[ -f $GUARD_HELPER && ! -L $GUARD_HELPER ]]; then
   . "$GUARD_HELPER"
-  stale_ci_cleanup "$load" "$mem_avail_pct"
+  helper_loaded=1
 else
   # Loud, not silent: the previous revision skipped quietly when the helper was
   # absent, so load-shedding cleanup could stop running unnoticed.
@@ -227,6 +228,21 @@ for _flag in $DEPLOY_FLAGS; do
     logger -t resource-guard "ignoring stale deploy flag $_flag"
   fi
 done
+# The stale-CI sweep runs after the flag is read, never before it. Its patterns
+# are the deploy's own bin/ci and test run, so a sweep that ignored the flag
+# killed the CI the deploy was waiting on: on 2026-10-27 it pkilled
+# `bundle34 exec bin/ci` on three ticks of a brgen deploy whose flag the same
+# ticks honoured by not shedding. A fresh flag means the CI is the
+# work, not an orphan; a flag past DEPLOY_FLAG_MAX_AGE means it may be one.
+if [[ $helper_loaded -eq 1 ]]; then
+  if [[ $deploying -eq 1 ]]; then
+    awk -v l="$load" 'BEGIN{exit !(l>=4.0)}' \
+      && logger -t resource-guard "stale-ci cleanup skipped: deploy in progress (load=$load)"
+  else
+    stale_ci_cleanup "$load" "$mem_avail_pct"
+  fi
+fi
+
 if [[ $deploying -eq 1 ]]; then
   if [[ $shed -eq 1 ]]; then
     logger -t resource-guard \
@@ -252,10 +268,26 @@ for app in $CORE $OPTIONAL; do
   kb=$(ps -o rss= -U "$app" 2>/dev/null | awk '{ s += $1 } END { printf "%d", s }') || kb=0
   rss="$rss rss_$app=$(( ${kb:-0} / 1024 ))M"
 done
-echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) load=$load mem_avail=${mem_avail_pct}% shed=$shed deploy=$deploying$rss" \
-  >> /var/log/resource_guard_history.log 2>/dev/null || true
+# The tick's line is written once the tick has decided, not before. It used to
+# be written here, ahead of the strike counter, with shed= carrying the raw
+# breach: a first-strike tick that shed nothing read shed=1, and so did a tick
+# with nothing left to shed. That is what the history log's shed counts, and
+# what each recalibration above was measured from, so a holding tick looked
+# like an outage. shed=1 now means a service was stopped on this tick; breach=
+# and strikes= carry the pressure, appended so the earlier positions hold.
+breach=$shed
+strikes=0
+shed_svc=""
+log_tick() {
+  _shed_now=0
+  [[ -n $shed_svc ]] && _shed_now=1
+  _tick="load=$load mem_avail=${mem_avail_pct}% shed=$_shed_now deploy=$deploying$rss"
+  echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $_tick breach=$breach strikes=$strikes" \
+    >> /var/log/resource_guard_history.log 2>/dev/null || true
+}
 
 if [[ -f $ALL_APPS_FLAG ]]; then
+  log_tick
   exit 0
 fi
 
@@ -289,6 +321,7 @@ if [[ $shed -eq 1 ]]; then
     if rcctl check "$svc" 2>/dev/null | grep -q '(ok)'; then
       logger -t resource-guard "shed $svc (load=$load mem_avail=${mem_avail_pct}% strikes=$strikes)"
       rcctl stop "$svc" 2>/dev/null || true
+      shed_svc=$svc
       if ! grep -qx "$svc" "$SHED_STATE" 2>/dev/null; then
         echo "$svc" >> "$SHED_STATE"
       fi
@@ -306,6 +339,8 @@ if [[ $shed -eq 1 ]]; then
   # small idle tts-worker processes aren't what's driving load. Genuine
   # crisis-tier cleanup (LOAD_CRIT) below still reaps and respawns them.
 fi
+
+log_tick
 
 # Restore path: undo our own shedding once pressure has genuinely cleared.
 # One service per tick — the 5-minute cron interval staggers cold boots for

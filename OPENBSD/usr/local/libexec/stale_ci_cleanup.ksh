@@ -9,12 +9,12 @@
 # the shed and restore logic, and on 2026-10-23 vm23 ran with no guard from 15:45.
 stale_ci_cleanup() {
   typeset load=${1:-0}
-  typeset mem_free=${2:-100}
+  typeset mem_avail=${2:-100}
   typeset STALE_LOAD=4.0
 
   awk -v l="$load" -v t="$STALE_LOAD" 'BEGIN{exit !(l>=t)}' || return 0
 
-  logger -t resource-guard "stale-ci cleanup load=$load mem_free=${mem_free}%"
+  logger -t resource-guard "stale-ci cleanup load=$load mem_avail=${mem_avail}%"
 
   typeset pat
   for pat in \

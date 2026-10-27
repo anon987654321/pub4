@@ -170,5 +170,41 @@ FAKE_PS_IDLE="bsdports amber" FAKE_FREE=$CLEAR ksh "$SANDBOX/guard_with_helper.s
 after=$(grep -c . "$SANDBOX/log/history" 2>/dev/null || print 0)
 check "the tick reached its history line" "$((before + 1))" "$after"
 
+print "9. the history line records what the tick did, not the raw breach"
+last_line() { last=""; while IFS= read -r line; do last=$line; done < "$SANDBOX/log/history"; print -r -- "$last"; }
+fields() {
+  got=""
+  for field in $(last_line); do
+    [[ $field == shed=* || $field == breach=* || $field == strikes=* ]] && got="$got $field"
+  done
+  print -r -- "${got# }"
+}
+reset
+rm -rf "$DB/flag"
+run_tick "$BREACH"
+check "a holding first strike is a breach, not a shed" "shed=0 breach=1 strikes=1" "$(fields)"
+run_tick "$BREACH"
+check "the second strike sheds and says so" "shed=1 breach=1 strikes=2" "$(fields)"
+run_tick "$BREACH"
+run_tick "$BREACH"
+check "nothing left to shed is not a shed" "shed=0 breach=1 strikes=4" "$(fields)"
+
+print "10. the stale-CI sweep leaves a deploy's own CI alone"
+cat > "$BIN/pkill" <<EOF_
+#!/bin/ksh
+print -r -- "\$*" >> "$DB/pkills"
+exit 1
+EOF_
+chmod +x "$BIN/pkill"
+reset
+rm -f "$DB/pkills"
+mkdir -p "$DB/flag"
+: > "$DB/flag/.deploying-test"
+FAKE_LOAD=5.0 FAKE_FREE="$CLEAR" ksh "$SANDBOX/guard_with_helper.sh" >/dev/null 2>&1 || true
+check "deploy flag, load 5: no pkill" "" "$(cat "$DB/pkills" 2>/dev/null)"
+rm -f "$DB/flag/.deploying-test"
+FAKE_LOAD=5.0 FAKE_FREE="$CLEAR" ksh "$SANDBOX/guard_with_helper.sh" >/dev/null 2>&1 || true
+check "no deploy flag, load 5: the sweep ran" "yes" "$([[ -s "$DB/pkills" ]] && print yes)"
+
 rm -rf "$SANDBOX"
 [[ $fail -eq 0 ]] && print "\nALL PASS" || { print "\nFAILURES"; exit 1; }
