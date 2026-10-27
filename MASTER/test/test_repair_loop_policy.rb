@@ -518,6 +518,18 @@ class TestRepairLoopPolicy < Minitest::Test
     assert_includes prompt, "Judge correctness, not completeness"
   end
 
+  # The operator allowed snapping an off-scale value to the nearest token (2026-10-27): the
+  # verifier is told the visible change is intended, and other findings are judged as before.
+  def test_a_scale_finding_may_snap_to_its_nearest_token
+    loop = build_loop(root: Dir.pwd, bus: FakeBus.new, scanner: Scanner.new, agent: ScriptedAgent.new("SAFE"))
+    scale = { law: "LINE_HEIGHT_ON_SCALE+SMALL_FILES", line: 4, message: "line-height 1.35 off scale" }
+    other = { law: "FEW_ARGUMENTS", line: 4, message: "three positional" }
+
+    assert_includes loop.send(:reflexion_prompt, scale, "a\n", "b\n"), "do not refuse it for altering rendering"
+    refute_includes loop.send(:reflexion_prompt, other, "a\n", "b\n"), "altering rendering"
+    assert_includes loop.send(:scale_snap_rule, scale), "var(--leading-*)"
+  end
+
   # git's diff arrives as BINARY. A non-ASCII line in it raised inside the UTF-8
   # prompt, and the refusal that followed killed every such repair unread.
   def test_reflexion_reads_a_change_beside_non_ascii_text

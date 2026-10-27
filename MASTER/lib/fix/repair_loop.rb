@@ -427,6 +427,7 @@ module Master
         Rule violated: #{violation[:law]}
         Line #{violation[:line]}: #{violation[:message]}
         #{ctx[:fix_line]}
+        #{scale_snap_rule(violation)}
         #{visual_fix_context}
         #{VisualCompletion.prompt_context(root: @root, path:, custody: @visual_custody)}
         #{Master::Design::Authoring.context(path:, root: @root)}

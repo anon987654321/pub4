@@ -73,7 +73,7 @@ module Master
             behaviour and introduces no defect is SAFE; the rest are left for a later pass.
 
             VIOLATION: #{violation[:law]} line #{violation[:line]} — #{violation[:message]}
-
+            #{scale_snap_rule(violation, for_verifier: true)}
             The change, as a unified diff of the whole file:
             ```diff
             #{change_under_review(original_src, proposed_src)}
@@ -81,6 +81,27 @@ module Master
             #{signature_callers(original_src, proposed_src)}
           PROMPT
         end
+
+        # Laws whose finding is a value off a declared scale. The operator decided on 2026-10-27
+        # that /fix may snap such a value to the nearest scale token: the small visible change
+        # brings the element into line with the rest of the page. Every snap was refused as
+        # "alters rendering" before, so none of these findings could ever be repaired.
+        SCALE_LAWS = %w[EIGHT_PX_RHYTHM LINE_HEIGHT_ON_SCALE TYPOGRAPHIC_GRID WHITESPACE_RHYTHM].freeze
+
+        def scale_snap_rule(violation, for_verifier: false)
+          return "" unless violation[:law].to_s.split("+").intersect?(SCALE_LAWS)
+
+          for_verifier ? SCALE_SNAP_FOR_VERIFIER : SCALE_SNAP_FOR_REPAIR
+        end
+
+        SCALE_SNAP_FOR_VERIFIER = "A scale finding is repaired by snapping the value to the nearest token on its " \
+                                  "declared scale (a var(--…) the stylesheets define), and the visible change " \
+                                  "that brings is intended: do not refuse it for altering rendering. Refuse a raw " \
+                                  "literal, a token that is not the nearest step, or a change to anything else.\n"
+
+        SCALE_SNAP_FOR_REPAIR = "Repair a scale finding by replacing the value with the nearest token on its " \
+                                "declared scale, a var(--…) the stylesheets define (for line-height, " \
+                                "var(--leading-*)); never another raw number.\n"
 
         CALLER_LINES = 30
 
