@@ -222,7 +222,7 @@ module Master
 
         FixTrace.proposed(@law.id, violation[:file], source)
         if (outside = outside_finding_range(violation, source))
-          RunLedger.reject("out_of_scope", file: violation[:file], law: @law.id, bus: @bus, detail: outside)
+          RunLedger.reject("out_of_scope", file: violation[:file], law: @law.id, bus: @bus)
           RunLedger.refused_because(outside)
           FixTrace.rejected(@law.id, violation[:file], outside)
           refuse(:scope, violation, reason: outside)
@@ -231,7 +231,7 @@ module Master
         verified = within_file_budget(violation) { reflexion_verify(violation, source) }
         return :file_timeout if @file_timed_out
         unless verified
-          RunLedger.reject("reflexion_unsafe", file: violation[:file], law: @law.id, bus: @bus, detail: Thread.current[:reflexion_reason])
+          RunLedger.reject("reflexion_unsafe", file: violation[:file], law: @law.id, bus: @bus)
           reason = Thread.current[:reflexion_reason].to_s
           RunLedger.refused_because(reason.start_with?("no verdict") ? "the reviewer gave no usable verdict, so the change was not accepted" : "the reviewer called it unsafe: #{reason}")
           refuse(:verifier, violation, reason:)
@@ -421,7 +421,7 @@ module Master
         write_atomic(path, original)
         # The introduced violations are what the retry acts on, so they get room for quoted lines.
         detail = details.except(:before, :after).map { |key, value| value.to_s[0, key == :introduced ? 400 : 120] }.join(" ")
-        RunLedger.reject(reason, file: path, law: @law.id, bus: @bus, detail:)
+        RunLedger.reject(reason, file: path, law: @law.id, bus: @bus)
         RunLedger.refused_because([reason, detail].reject(&:empty?).join(": "))
         refuse(REJECT_GATES.fetch(reason, reason.to_sym), path, reason: [reason, detail].reject(&:empty?).join(": "))
         @bus&.publish("repair_loop:fix_rejected", law: @law.id, file: path, reason:, **details)

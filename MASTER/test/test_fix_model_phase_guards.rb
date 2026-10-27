@@ -188,11 +188,14 @@ class TestFixModelPhaseGuards < Minitest::Test
     end
   end
 
-  def test_a_rejection_names_what_it_introduced
-    out, = capture_io { Ledger.reject("higher_priority_violation", file: "lib/a.rb", law: "X", detail: "DENSITY line 12") }
+  # The ledger counts; the refusal line, with what the change introduced, is Refusals' (test_fix_refusals.rb).
+  def test_a_rejection_is_counted_and_printed_once_by_refusals_not_here
+    out, = capture_io do
+      Ledger.reject("higher_priority_violation", file: "lib/a.rb", law: "X")
+      Ledger.reject("new_violations", file: "lib/b.rb")
+    end
 
-    assert_includes out, "fix0: proposal rejected, lib/a.rb X: higher_priority_violation (DENSITY line 12)"
-    capture_io { Ledger.reject("new_violations", file: "lib/b.rb") }
+    assert_empty out
     assert_equal 2, Ledger.reasons.values.sum
   end
 
