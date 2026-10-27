@@ -383,15 +383,17 @@ module Master
           ext = File.extname(path).downcase
           count.times.filter_map do |index|
             prompt = candidate_prompt(violation:, src:, path:, style:, index:, suffix:)
+            # codes answers nil when no lane answers; `.first` on it raised for every file once the
+            # claude lane's quota ran out, and each was logged as a fresh NoMethodError.
             candidate = if model
                           response = ask_once_agent(prompt, model:, image: @visual_image).to_s
                           extract_code(response, ext)
                         else
-                          fix_attempt(violation, attempts: 1, event:).codes(
+                          Array(fix_attempt(violation, attempts: 1, event:).codes(
                             prompt:, ext:, source: src,
                             wait_context: { rule: @law.id, file: path, mode: "candidate-#{index + 1}" },
                             image: @visual_image
-                          ).first
+                          )).first
                         end
             next if candidate.to_s.strip.empty? || candidate.strip == src.strip
 
