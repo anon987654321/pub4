@@ -551,7 +551,8 @@ class VpsDeployContractTest < Minitest::Test
   end
 
   def test_the_flag_is_taken_before_ci_and_the_app_is_checked_before_ok
-    assert_operator SOURCE.index("\nhold_deploy_flag\n"), :<, SOURCE.index("OPENBSD/bin/vps_ci.sh")
+    assert_operator SOURCE.index("\nkeep_deploy_flag\n"), :<, SOURCE.index("OPENBSD/bin/vps_ci.sh")
+    assert_operator SOURCE.index("kill $flag_keeper"), :<, SOURCE.index(%(rm -f -- "$deploy_flag"))
     assert_operator SOURCE.rindex(%(admin_service check "$app")), :>, SOURCE.index(%(CHECK_AUTOFIX=0 "$RUBY" "$repo/MASTER/checks/runner.rb"))
   end
 

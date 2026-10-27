@@ -273,6 +273,17 @@ admin_request() {
 deploy_flag="$repo/.deploying-vps-deploy-${app}"
 hold_deploy_flag() { touch "$deploy_flag" 2>/dev/null || true }
 
+# The stage touches alone did not hold it: brgen's CI ran 34 minutes between two of
+# them on 2026-10-27, the flag aged out at 30, and the guard's emergency stop fired
+# mid-deploy. A keeper touches it every 4 minutes for as long as this process lives;
+# finish() stops it before removing the flag, and it exits on its own if we die.
+flag_keeper=
+keep_deploy_flag() {
+  hold_deploy_flag
+  ( while kill -0 $$ 2>/dev/null; do touch "$deploy_flag" 2>/dev/null; sleep 240; done ) &!
+  flag_keeper=$!
+}
+
 # The terminal result, recorded however the script ends.
 #
 # A failure past `rcctl stop` used to leave the app stopped under a stamp that
@@ -384,6 +395,7 @@ restore_started() {
 finish() {
   local rc=$?
   trap - EXIT
+  [[ -n $flag_keeper ]] && kill $flag_keeper 2>/dev/null
   rm -f -- "$deploy_flag"
   if (( rc != 0 )) && [[ $app == all ]]; then
     print -u2 "vps-deploy: all FAILED at stage \"$deploy_stage\" (exit $rc)"
@@ -641,7 +653,7 @@ deploy_stage=preflight
 print "vps-deploy: $app (preflight load)"
 admin_request resource-guard || true
 
-hold_deploy_flag
+keep_deploy_flag
 
 # What is about to be deployed, against what is actually running.
 #
