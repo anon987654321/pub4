@@ -1379,23 +1379,23 @@ scale:
   - 300
   baselines:
     apps:
-      off_scale_space: 7
-      off_scale_line_height: 2
+      off_scale_space: 35
+      off_scale_line_height: 23
       absolute_line_height: 0
-      off_scale_radius: 0
+      off_scale_radius: 19
       off_scale_font_weight: 0
-      off_scale_tracking: 0
+      off_scale_tracking: 7
       off_scale_opacity: 22
-      off_scale_duration: 20
+      off_scale_duration: 16
     face:
-      off_scale_space: 9
+      off_scale_space: 17
       off_scale_radius: 0
-      off_scale_line_height: 0
+      off_scale_line_height: 3
       absolute_line_height: 0
       off_scale_font_weight: 0
-      off_scale_tracking: 10
-      off_scale_opacity: 29
-      off_scale_duration: 30
+      off_scale_tracking: 12
+      off_scale_opacity: 27
+      off_scale_duration: 29
 layout_rules:
   grid:
     columns: 12
