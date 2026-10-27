@@ -225,7 +225,7 @@ module Master
           "provenance" => safe_provenance,
           "report" => json_safe_value(report),
         }
-        payload = JSON.pretty_generate(envelope) + "\\n"
+        payload = JSON.pretty_generate(envelope) + "\n"
         @lifecycle_observer.mutate(operation: "persist_architecture_report",
                                    item_count: Array(envelope.dig("report", "targets")).size) do
           write_atomic(path, payload, mode: 0o600)
