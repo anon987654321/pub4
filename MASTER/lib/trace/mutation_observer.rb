@@ -5,6 +5,7 @@ require "json"
 require "fileutils"
 require_relative "event_bus"
 require_relative "log"
+require_relative "dmesg"
 
 module Master
   module Trace
@@ -12,6 +13,72 @@ module Master
     # payloads carry identifiers and bounded metrics, never paths or contents.
     class MutationObserver
       Token = Data.define(:audit_id, :operation, :started_at)
+
+      # A lifecycle marker names the process that wrote it. A marker whose
+      # writer is gone is a failed write that process can no longer finish, so
+      # its owner resolves it once the evidence parses; one a live process
+      # holds stays refused.
+      module PendingMarker
+        module_function
+
+        def write!(path, operation:, subject:)
+          File.open(path, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |io|
+            io.write(JSON.generate(pid: Process.pid, subject: subject.to_s, operation: operation.to_s))
+            io.write("\n")
+            io.flush
+            io.fsync
+          end
+          path
+        end
+
+        # Nil when no marker is left or a gone writer's marker was cleared, else
+        # why it stays. The block proves the evidence whole and answers a note
+        # for the log line; a block that raises keeps the marker.
+        def resolve(path, label:)
+          return unless File.exist?(path) || File.symlink?(path)
+          return "#{label} is a symlink" if File.symlink?(path)
+
+          owner = owner(path)
+          return "pid #{owner["pid"]} still holds #{label}" if held?(owner)
+
+          proof = begin
+            yield
+          rescue StandardError => e
+            return "#{label} kept, evidence does not load: #{e.message}"
+          end
+
+          File.delete(path)
+          Master::Trace::Dmesg.status("fix0", "cleared #{label} left by gone #{describe(owner)}; #{proof}")
+          nil
+        rescue SystemCallError => e
+          "#{label} unreadable (#{e.class})"
+        end
+
+        # The recorded owner. A marker that names none, as the first markers
+        # did, says so; the lock its writer held proves that writer finished.
+        def owner(path)
+          data = JSON.parse(File.read(path, 4096).to_s)
+          data.is_a?(Hash) ? data : { "unparsed" => data.class.name }
+        rescue JSON::ParserError => e
+          { "unparsed" => e.class.name }
+        end
+
+        def describe(owner)
+          %w[pid subject operation].map { |key| "#{key}=#{owner.fetch(key, "unknown")}" }.join(" ")
+        end
+
+        def held?(owner)
+          pid = owner["pid"].to_i
+          return false unless pid.positive?
+
+          Process.kill(0, pid)
+          true
+        rescue Errno::ESRCH
+          false
+        rescue Errno::EPERM
+          true
+        end
+      end
 
       STATUSES = %w[ok failed blocked ambiguous].freeze
       LABEL = /\A[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,127}\z/

@@ -1072,7 +1072,7 @@ module Master
           return unless run
 
           yield run
-          persist(data)
+          persist(data, run_id:)
         end
       end
 
@@ -1092,13 +1092,16 @@ module Master
         raise "fix journal is corrupt: #{e.message}"
       end
 
-      def persist(data)
-        raise "fix journal lifecycle audit is incomplete; manual review required" if pending_marker?
+      MARKER_INCOMPLETE = "fix journal lifecycle audit is incomplete; manual review required"
+
+      # Callers hold the journal lock, so no writer is mid-persist while this runs.
+      def persist(data, run_id: active_run_id(data))
+        resolve_pending_marker!
 
         path = File.join(@root, PATH)
         FileUtils.mkdir_p(File.dirname(path))
         @lifecycle_observer.mutate(operation: "persist", item_count: Array(data["runs"]).size) do
-          create_pending_marker!
+          create_pending_marker!(run_id)
           write_atomic(path, JSON.pretty_generate(data) + "\n", mode: 0o600)
         end.tap do
           remove_pending_marker! if @pending_marker_owned
@@ -1107,21 +1110,28 @@ module Master
 
       def pending_marker_path = File.join(@root, ".master", ".fix_runs.pending")
 
-      def pending_marker?
-        File.exist?(pending_marker_path) || File.symlink?(pending_marker_path)
-      rescue SystemCallError
-        true
+      def active_run_id(data)
+        Array(data["runs"]).reverse.find { |run| run["state"] == "active" }&.fetch("id", nil)
       end
 
-      def create_pending_marker!
-        path = pending_marker_path
-        raise "fix journal lifecycle marker already exists" if File.exist?(path) || File.symlink?(path)
+      # A marker left by a process that is gone is a write that process cannot
+      # finish. The write is atomic, so once fix_runs.json parses the journal is
+      # whole and the marker goes; a marker a live process holds, a symlink, or a
+      # journal that does not parse stays refused for review.
+      def resolve_pending_marker!
+        marker = Master::Trace::MutationObserver::PendingMarker
 
-        File.open(path, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |io|
-          io.write("persist\n")
-          io.flush
-          io.fsync
+        refusal = marker.resolve(pending_marker_path, label: relative(pending_marker_path)) do
+          load
+          "#{PATH} parses"
         end
+
+        raise "#{MARKER_INCOMPLETE}: #{refusal}" if refusal
+      end
+
+      def create_pending_marker!(run_id)
+        marker = Master::Trace::MutationObserver::PendingMarker
+        marker.write!(pending_marker_path, operation: "persist", subject: run_id)
         @pending_marker_owned = true
       end
 

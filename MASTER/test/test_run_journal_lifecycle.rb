@@ -119,4 +119,45 @@ class TestRunJournalLifecycle < Minitest::Test
       assert File.file?(marker_path)
     end
   end
+  def gone_pid
+    pid = Process.spawn("true")
+    Process.wait(pid)
+    pid
+  end
+
+  def plant_marker(root, pid)
+    path = File.join(root, ".master", ".fix_runs.pending")
+    File.write(path, JSON.generate(pid:, subject: "deadrun", operation: "persist") + "\n")
+    path
+  end
+
+  def test_marker_left_by_a_gone_process_is_cleared_and_the_run_proceeds
+    Dir.mktmpdir("master-journal-dead-marker") do |root|
+      first = start_journal(root, RecordingBus.new)
+      marker = plant_marker(root, gone_pid)
+
+      out, = capture_io { @run = start_journal(root, RecordingBus.new) }
+
+      refute File.exist?(marker), "a gone writer's marker must not wedge every later run"
+      assert_match(%r{cleared \.master/\.fix_runs\.pending left by gone pid=\d+ subject=deadrun}, out)
+      assert_equal first.fetch("id"), @run.fetch("id")
+      assert @run.fetch("resumed")
+    end
+  end
+
+  def test_marker_held_by_a_live_process_still_refuses
+    Dir.mktmpdir("master-journal-live-marker") do |root|
+      start_journal(root, RecordingBus.new)
+      journal_path = File.join(root, ".master", "fix_runs.json")
+      before = File.binread(journal_path)
+      marker = plant_marker(root, Process.pid)
+
+      error = assert_raises(RuntimeError) { start_journal(root, RecordingBus.new) }
+
+      assert_match(/lifecycle audit is incomplete/, error.message)
+      assert File.file?(marker)
+      assert_equal before, File.binread(journal_path)
+    end
+  end
+
 end

@@ -324,7 +324,8 @@ module Master
       # by grepping every lib/ and test/ caller before making this private.
       def recover!(release_conflicts: false)
         return Result.err("transaction recovery refused: an active transaction holds the root lock", category: :infrastructure) unless acquire_lock(nonblock: true)
-        return Result.err("transaction recovery refused: a lifecycle audit is incomplete; manual review required", category: :infrastructure) if pending_marker?
+        refusal = resolve_pending_marker!
+        return refusal if refusal
 
         load_manifest!
         recover_for_state(release_conflicts:)
@@ -435,14 +436,27 @@ module Master
         true
       end
 
+      MARKER_REFUSED = "transaction recovery refused: a lifecycle audit is incomplete; manual review required"
+
+      # Runs under the root lock, so no live transaction is mid-mutation. A marker
+      # whose writer is gone is resolved once the manifest loads and validates;
+      # one a live process holds, a symlink, or a manifest that does not load
+      # stays refused. Answers the refusal, or nil to proceed.
+      def resolve_pending_marker!
+        label = File.join(ROOT_DIR, File.basename(pending_marker_path))
+
+        refusal = Master::Trace::MutationObserver::PendingMarker.resolve(pending_marker_path, label:) do
+          load_manifest!
+          "transaction #{@id} manifest loads, state=#{@state}"
+        end
+
+        Result.err("#{MARKER_REFUSED}: #{refusal}", category: :infrastructure) if refusal
+      end
+
       def create_pending_marker!(operation)
         path = pending_marker_path
         raise "transaction lifecycle marker is a symlink" if File.symlink?(path)
-        File.open(path, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |io|
-          io.write("#{operation}\n")
-          io.flush
-          io.fsync
-        end
+        Master::Trace::MutationObserver::PendingMarker.write!(path, operation:, subject: @id)
         @pending_marker_owned = true
       end
 
