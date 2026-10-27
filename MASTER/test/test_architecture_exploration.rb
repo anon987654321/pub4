@@ -7,6 +7,48 @@ require "fileutils"
 require "json"
 
 class TestArchitectureExploration < Minitest::Test
+  class FakeJournal
+    attr_reader :writes
+
+    def initialize
+      @writes = []
+      @report = nil
+      @provenance = nil
+    end
+
+    def verify_architecture_report(_run_id)
+      return { "status" => "receipt_missing" } unless @report
+
+      { "status" => "verified", "report" => @report, "provenance" => @provenance }
+    end
+
+    def seed_report(report, provenance)
+      @report = JSON.parse(JSON.generate(report))
+      @provenance = JSON.parse(JSON.generate(provenance))
+    end
+
+    def persist_architecture_report(_run_id, target:, report:, provenance:)
+      @report = JSON.parse(JSON.generate(report))
+      @provenance = JSON.parse(JSON.generate(provenance))
+      @writes << { "target" => target.to_s, "status" => report.fetch("status"),
+                   "targets" => @report.fetch("targets").size,
+                   "accepted" => @report.fetch("targets").sum { |row| row.fetch("accepted", 0).to_i } }
+      { "status" => "persisted", "readback_verified" => true }
+    end
+  end
+
+  class FakeBus
+    attr_reader :events
+
+    def initialize
+      @events = []
+    end
+
+    def publish(event, payload = {})
+      @events << [event, payload]
+    end
+  end
+
   class FakeAgent
     attr_reader :prompts
     def initialize(reply)
@@ -67,7 +109,13 @@ class TestArchitectureExploration < Minitest::Test
           risks: ["Migration risk includes compatibility checks for variant #{i}"] }
       end
       agent = FakeAgent.new(JSON.generate(candidates: candidates))
-      explorer = Master::Fix::ArchitectureExploration.new(root: root, agent: agent, candidate_count: 30)
+      journal = FakeJournal.new
+      provenance = { "source_digest" => "a" * 64, "scope_digest" => "b" * 64,
+                     "law_digest" => "c" * 64, "identity_digest" => "d" * 64 }
+      explorer = Master::Fix::ArchitectureExploration.new(
+        root: root, agent: agent, candidate_count: 30, run_journal: journal,
+        run_id: "a" * 20, provenance:
+      )
       result = explorer.run(target: master, files: [source_file, test_file])
       assert_equal "COMPLETE", result.fetch("status")
       report = result.fetch("targets").first
@@ -85,9 +133,117 @@ class TestArchitectureExploration < Minitest::Test
       assert_operator decision.fetch("winner_margin"), :>=, 0
       assert_equal 1, agent.prompts.size
       assert_includes agent.prompts.first, "PLAN ONLY"
+      assert_equal "COMPLETE", journal.writes.last.fetch("status")
+      assert_equal 30, report.fetch("candidates").size
+      refute_empty report.fetch("evidence_manifest")
+      assert_equal "a" * 64, journal.verify_architecture_report("a" * 20).fetch("provenance").fetch("source_digest")
+
+      retry_agent = FakeAgent.new("not JSON: a completed tournament should be reused")
+      resumed = Master::Fix::ArchitectureExploration.new(
+        root: root, agent: retry_agent, candidate_count: 30, run_journal: journal,
+        run_id: "a" * 20, provenance:
+      ).run(target: master, files: [source_file, test_file])
+      assert_equal result.fetch("targets").first, resumed.fetch("targets").first
+      assert_empty retry_agent.prompts, "matching completed evidence must resume without regenerating candidates"
     end
   end
 
+
+  def test_partial_tournament_resume_reuses_completed_trees_and_finishes_only_pending_trees
+    Dir.mktmpdir("architecture-partial-resume") do |root|
+      %w[MASTER RAILS].each { |name| FileUtils.mkdir_p(File.join(root, name)) }
+      journal = FakeJournal.new
+      provenance_input = {
+        "source_digest" => "a" * 64,
+        "scope_digest" => "b" * 64,
+        "law_digest" => "c" * 64,
+        "identity_digest" => "d" * 64,
+      }
+      explorer = Master::Fix::ArchitectureExploration.new(
+        root: root, agent: FakeAgent.new("{}"), candidate_count: 30,
+        run_journal: journal, run_id: "b" * 20, provenance: provenance_input
+      )
+      provenance = explorer.send(:provenance)
+
+      tree_report = lambda do |tree|
+        winner = {
+          "id" => "AX01", "title" => "Keep #{tree} ownership local", "score" => 82,
+          "thesis" => "Keep one bounded owner for #{tree}.",
+          "core_boundary" => "The #{tree} lifecycle remains local.",
+          "evidence_paths" => ["#{tree}/lib/owner.rb"],
+          "test_paths" => ["#{tree}/test/test_owner.rb"],
+          "verification_plan" => "Run the existing #{tree} regression test.",
+          "benefits" => ["Reduces duplicate decisions in #{tree}."],
+          "tradeoffs" => ["A bounded migration requires one additional check."],
+          "risks" => ["Compatibility changes need a baseline comparison."],
+          "rollback_plan" => "Revert the isolated change and restore its checkpoint.",
+        }
+        {
+          "tree" => tree, "status" => "COMPLETE", "requested" => 30,
+          "accepted" => 30, "qualified" => 12,
+          "decision" => {
+            "distinct_change_path_sets" => 30, "qualified_candidates" => 12,
+            "winner_margin" => 3, "execution_proof" => "NOT_RUN",
+          },
+          "winner" => winner, "shortlist" => [winner], "rejections" => [],
+          "candidates" => Array.new(30) { |i| { "id" => format("AX%02d", i + 1) } },
+          "evidence_manifest" => [{ "path" => "#{tree}/lib/owner.rb", "sha256" => tree == "MASTER" ? "d" * 64 : "e" * 64,
+                                    "excerpt_bytes" => 18 }],
+        }
+      end
+
+      # This receipt represents a process that completed MASTER then stopped
+      # before it started RAILS. The report target/provenance match this run.
+      saved = {
+        "schema_version" => 2, "target" => ".", "status" => "RUNNING",
+        "provenance" => provenance, "requested_candidates_per_tree" => 30,
+        "targets" => [tree_report.call("MASTER")], "brief" => "MASTER is complete; RAILS is pending.",
+      }
+      journal.seed_report(saved, provenance)
+      explored = []
+      explorer.define_singleton_method(:explore) do |tree, _files|
+        name = File.basename(tree)
+        explored << name
+        tree_report.call(name)
+      end
+
+      result = explorer.run(target: root, files: [])
+
+      assert_equal "COMPLETE", result.fetch("status")
+      assert_equal %w[MASTER RAILS], result.fetch("targets").map { |row| row.fetch("tree") }
+      assert_equal ["RAILS"], explored, "the completed MASTER result should not be regenerated"
+      assert_equal 30, result.fetch("targets").first.fetch("candidates").size
+      assert_equal 30, result.fetch("targets").last.fetch("candidates").size
+      assert_equal "COMPLETE", journal.writes.last.fetch("status")
+    end
+  end
+
+  def test_invalid_saved_receipt_uses_a_relative_target_in_failure_telemetry
+    Dir.mktmpdir("architecture-receipt-privacy") do |root|
+      %w[MASTER RAILS OPENBSD STUDIO].each { |name| FileUtils.mkdir_p(File.join(root, name)) }
+      journal = FakeJournal.new
+      journal.define_singleton_method(:verify_architecture_report) do |_run_id|
+        { "status" => "checksum_mismatch" }
+      end
+      bus = FakeBus.new
+      agent = FakeAgent.new("this must not be asked")
+      explorer = Master::Fix::ArchitectureExploration.new(
+        root: root, agent: agent, bus: bus, candidate_count: 30,
+        run_journal: journal, run_id: "c" * 20
+      )
+
+      result = explorer.run(target: root, files: [])
+
+      assert_equal "INCONCLUSIVE", result.fetch("status")
+      event = bus.events.find { |name, _payload| name == "fix_loop:architecture_exploration_inconclusive" }
+      # The production event bus receives the same payload. An absolute workspace
+      # path is not needed to understand this failure and should never be emitted.
+      assert event, "an invalid saved receipt must emit an inconclusive lifecycle event"
+      assert_equal ".", event.last.fetch(:target)
+      refute_includes event.last.fetch(:target), root
+      assert_empty agent.prompts, "tampered evidence must be refused before model work"
+    end
+  end
 
   def test_candidates_without_test_anchors_cannot_win_even_when_their_plans_are_well_formed
     Dir.mktmpdir("architecture-quality-gate") do |root|

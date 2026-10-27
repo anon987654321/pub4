@@ -199,7 +199,7 @@ class TestCliReplExit < Minitest::Test
   # historical shell prompt ends in host:path$.
   ENV_FOR_PTY = TestCliBootE2e::BOOT_ENV.merge(
     "MASTER_FAST" => "0", "MASTER_SKIP_BOOT_SCAN" => "1", "MASTER_SKIP_TTS" => "1", "TERM" => "xterm",
-    "MASTER_FACE_ON_START" => "0"
+    "MASTER_FACE_ON_START" => "0", "MASTER_FACE_AUTO_MIC" => "0"
   ).freeze
   READY = /\S+:\S+\$ /
 
@@ -237,6 +237,67 @@ class TestCliReplExit < Minitest::Test
     output, status = drive { |terminal| write_terminal(terminal, "\x04") }
 
     assert_equal 0, status.exitstatus, output
+    refute_match(/Error|from .+\.rb:\d+/, output)
+  end
+
+  # Opening the face must be an escape hatch from the ordinary REPL, not a
+  # terminal handoff. This does not ask a model or microphone: it proves the
+  # alternate screen is entered, exited, and followed by the same host:path$ prompt.
+  def test_face_exit_restores_the_canonical_repl_prompt
+    require "pty"
+    output = +""
+    status = nil
+    completed = false
+    PTY.spawn(boot_env, Master::BUNDLE_BIN, "exec", "ruby", "bin/cli", chdir: ROOT) do |reader, writer, pid|
+      begin
+        read_until(reader, output, READY, 30)
+        assert_match(READY, output, "CLI never showed its initial host:path$ prompt")
+        sleep 0.5
+
+        writer.write("/face\n")
+        read_until(reader, output, /\e\[\?1049h/, 15)
+        assert_match(/\e\[\?1049h/, output, "the /face command did not enter the alternate screen")
+
+        writer.write("/exit\n")
+        restored_prompt = /\e\[\?1049l.*?\S+:\S+\$ /m
+        read_until(reader, output, restored_prompt, 20)
+        assert_match(restored_prompt, output, "leaving /face did not restore the canonical REPL prompt")
+
+        writer.write("\x04")
+        deadline = Time.now + 10
+        loop do
+          done, status = Process.waitpid2(pid, Process::WNOHANG)
+          break if done
+
+          if reader.wait_readable(0.2)
+            begin
+              output << reader.readpartial(4096)
+            rescue Errno::EIO, EOFError
+              # The PTY can close just before waitpid observes the exited child.
+            end
+          end
+          flunk "CLI did not exit after Ctrl-D: #{output[-1200, 1200]}" if Time.now >= deadline
+        end
+        completed = true
+      ensure
+        unless completed
+          begin
+            Process.kill("TERM", pid)
+          rescue Errno::ESRCH
+            nil
+          end
+          begin
+            Process.wait(pid)
+          rescue Errno::ECHILD
+            nil
+          end
+        end
+        reader.close unless reader.closed?
+        writer.close unless writer.closed?
+      end
+    end
+
+    assert status&.success?, output
     refute_match(/Error|from .+\.rb:\d+/, output)
   end
 

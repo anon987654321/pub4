@@ -8,6 +8,8 @@ module Master
     class UXRefinementCatalog
       PATH = File.expand_path("../../data/ux_refinements.yml", __dir__)
       EXPECTED_COUNT = 90
+      SCHEMA_VERSION = 1
+      CATALOGUE_ID = "MASTER_UX_REFINEMENTS"
       TREE_NAMES = MasterPaths::TREES
       AREA_NAMES = %w[input terminal diagnostics command_help browser_recovery visual_accessibility].freeze
       PROOF_TYPES = %w[accessibility browser source terminal unit visual].freeze
@@ -20,6 +22,19 @@ module Master
 
       def self.validate!(payload)
         raise ArgumentError, "UX catalog must be a mapping" unless payload.is_a?(Hash)
+        raise ArgumentError, "UX catalog schema must be #{SCHEMA_VERSION}" unless payload["schema"] == SCHEMA_VERSION
+        raise ArgumentError, "UX catalog ID must be #{CATALOGUE_ID}" unless payload["catalogue_id"] == CATALOGUE_ID
+        raise ArgumentError, "UX catalog must reference a canonical Law in MASTER/data/laws.yml" unless
+          canonical_authority?(payload["authority"])
+        policy = payload["evidence_policy"]
+        raise ArgumentError, "UX catalog must declare an evidence policy" unless policy.is_a?(Hash)
+        raise ArgumentError, "UX catalog implementation state must remain acceptance_required" unless
+          policy["implementation_state"] == "acceptance_required"
+        raise ArgumentError, "UX catalog completion rule must require owner evidence" unless
+          policy["completion_rule"].to_s.match?(/only when .*records the required test or rendered\/runtime evidence/i)
+        raise ArgumentError, "UX catalog must explicitly forbid simulated runtime proof" unless
+          policy["no_simulation"].to_s.match?(/never counts as a passing runtime test/i)
+
         rows = payload["refinements"]
         raise ArgumentError, "UX catalog must contain exactly #{EXPECTED_COUNT} records" unless rows.is_a?(Array) && rows.size == EXPECTED_COUNT
         ids = rows.map { |row| row.is_a?(Hash) ? row["id"].to_s : "" }
@@ -41,6 +56,17 @@ module Master
         missing_areas = AREA_NAMES - rows.map { |row| row["area"] }.uniq
         raise ArgumentError, "UX catalog missing areas: #{missing_areas.join(",")}" unless missing_areas.empty?
         true
+      end
+
+      # The authority in the inventory is a pointer to an existing canonical
+      # Law, not a second copy of the Law's prose or rules.
+      def self.canonical_authority?(value)
+        match = value.to_s.match(%r{\AMASTER/data/laws\.yml#([a-z][a-z0-9_]*)\z})
+        return false unless match
+
+        laws_path = File.expand_path("../../data/laws.yml", __dir__)
+        laws = YAML.safe_load_file(laws_path, permitted_classes: [], permitted_symbols: [], aliases: true)
+        laws.key?(match[1])
       end
 
       def self.manifest(path: PATH)

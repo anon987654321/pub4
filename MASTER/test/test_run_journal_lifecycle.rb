@@ -34,6 +34,39 @@ class TestRunJournalLifecycle < Minitest::Test
     )
   end
 
+  def test_architecture_tournament_report_survives_journal_reconstruction_and_is_checksum_verified
+    Dir.mktmpdir("master-architecture-journal") do |root|
+      bus = RecordingBus.new
+      journal = Master::Fix::RunJournal.new(root:, bus:)
+      run = start_journal(root, bus)
+      candidate = { "id" => "AX01", "title" => "Keep current boundaries", "score" => 77,
+                    "scorecard" => { "source_evidence" => 20 }, "runtime_tests" => "NOT_RUN" }
+      report = {
+        "schema_version" => 2, "target" => "MASTER", "status" => "RUNNING",
+        "requested_candidates_per_tree" => 30,
+        "targets" => [{ "tree" => "MASTER", "status" => "COMPLETE", "requested" => 30,
+                         "accepted" => 30, "qualified" => 10, "candidates" => Array.new(30, candidate),
+                         "evidence_manifest" => [{ "path" => "MASTER/lib/owner.rb", "sha256" => "a" * 64 }] }],
+        "brief" => "Runtime tests: NOT_RUN."
+      }
+      provenance = { "source_digest" => "a" * 64, "scope_digest" => "b" * 64,
+                     "law_digest" => "c" * 64, "identity_digest" => "d" * 64 }
+      receipt = journal.persist_architecture_report(run.fetch("id"), target: File.join(root, "MASTER"), report:, provenance:)
+
+      assert receipt.fetch("readback_verified")
+      assert_match(%r{\A\.master/fix_architecture/}, receipt.fetch("path"))
+      path = File.join(root, receipt.fetch("path"))
+      assert_equal 0, File.stat(path).mode & 0o077
+      restored = Master::Fix::RunJournal.new(root:, bus:).verify_architecture_report(run.fetch("id"))
+      assert_equal "verified", restored.fetch("status")
+      assert_equal 30, restored.fetch("report").fetch("targets").first.fetch("candidates").size
+      assert_equal provenance, restored.fetch("provenance")
+
+      File.write(path, "tampered\n")
+      assert_equal "checksum_mismatch", Master::Fix::RunJournal.new(root:, bus:).verify_architecture_report(run.fetch("id")).fetch("status")
+    end
+  end
+
   def test_journal_persistence_is_bracketed_by_required_metadata_events
     Dir.mktmpdir("master-journal-audit") do |root|
       bus = RecordingBus.new
