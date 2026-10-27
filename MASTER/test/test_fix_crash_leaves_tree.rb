@@ -51,12 +51,13 @@ class TestFixCrashLeavesTree < Minitest::Test
   end
 
 # The process died with its pass open, and the journal only marked the run interrupted.
-# The next run's sweep rolls the pass back; one whose file changed since is kept as a conflict.
-def stranded_pass(root, content)
-  path = File.join(root, "a.rb").tap { |file| File.write(file, "A = 1\n") }
-  transaction = Master::Fix::Transaction.new(root:, paths: %w[a.rb])
+# The next run's sweep rolls the pass back; a file another writer changed since stays theirs and is named.
+def stranded_pass(root, content, also: nil)
+  names = ["a.rb", also].compact
+  path, *others = names.map { |name| File.join(root, name).tap { |file| File.write(file, "A = 1\n") } }
+  transaction = Master::Fix::Transaction.new(root:, paths: names)
   transaction.begin!
-  File.write(path, content)
+  [path, *others].each { |file| File.write(file, content) }
   transaction.observe!
   transaction.send(:release_lock)
   [path, transaction.id]
@@ -86,7 +87,21 @@ def test_a_stranded_pass_whose_file_changed_since_is_kept_and_named
     out = sweep(root)
 
     assert_equal "A = 2\n", File.read(path)
-    assert_includes out, "stranded transaction #{id}"
+    assert_includes out, "stranded transaction #{id}: kept 1 file(s) another writer changed since: a.rb"
+  end
+end
+
+# One file another writer changed no longer keeps the dead pass's other writes in the tree.
+def test_a_stranded_pass_rolls_back_its_own_files_around_one_another_writer_changed
+  Dir.mktmpdir do |root|
+    mine, id = stranded_pass(root, "A = 1\n\n", also: "b.rb")
+    theirs = File.join(root, "b.rb")
+    File.write(theirs, "B = 2\n")
+
+    sweep(root)
+
+    assert_equal ["A = 1\n", "B = 2\n"], [File.read(mine), File.read(theirs)]
+    refute File.directory?(File.join(root, ".master", "fix_transactions", id))
   end
 end
 

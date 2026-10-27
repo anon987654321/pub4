@@ -31,10 +31,14 @@ module Master
             raise
           end
 
-          def recover!(root:, id:, bus: nil)
+          # release_conflicts: true is the next run's sweep of a dead process's pass: files another
+          # writer changed since leave the transaction and the pass's own writes roll back. Without
+          # it one such file refused the whole rollback, and the dead pass's edits stayed everywhere.
+
+          def recover!(root:, id:, bus: nil, release_conflicts: false)
             # Construct without loading the manifest: Transaction#recover! must
             # acquire the root lock before it reads recovery state.
-            Transaction.new(root:, paths: [], id:, bus:).send(:recover!)
+            Transaction.new(root:, paths: [], id:, bus:).send(:recover!, release_conflicts:)
           end
         end
       end

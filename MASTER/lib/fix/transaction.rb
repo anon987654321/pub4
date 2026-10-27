@@ -292,11 +292,11 @@ module Master
       # Reached only via Recovery.recover! (load_persisted(...).send(:recover!))
       # -- nothing else calls an instance's own recover! directly, confirmed
       # by grepping every lib/ and test/ caller before making this private.
-      def recover!
+      def recover!(release_conflicts: false)
         return Result.err("transaction recovery refused: an active transaction holds the root lock", category: :infrastructure) unless acquire_lock(nonblock: true)
 
         load_manifest!
-        recover_for_state
+        recover_for_state(release_conflicts:)
       rescue StandardError => e
         emit("fix:transaction_recovery_failed", id: @id, error: e.message)
         Result.err("transaction recovery: #{e.message}", category: :infrastructure)
@@ -304,9 +304,9 @@ module Master
         release_lock
       end
 
-      def recover_for_state
+      def recover_for_state(release_conflicts: false)
         case @state
-        when "open" then recover_open_state
+        when "open" then recover_open_state(release_conflicts:)
         when "delivering" then delivery.send(:recover!)
         when "committed", "rolled_back" then recover_terminal_state
         when "conflict" then recover_error_state("transaction recovery found a concurrent edit", :policy)
@@ -326,11 +326,21 @@ module Master
 
       def recover_error_state(message, category) = Result.err(message, category:)
 
-      def recover_open_state
+      def recover_open_state(release_conflicts: false)
         @active = true
+        name_released(release_conflicts!) if release_conflicts
+
         result = rollback!
         emit("fix:transaction_recovered", id: @id, result: result.to_s)
         result
+      end
+
+      def name_released(paths)
+        return if paths.empty?
+
+        Master::Trace::Dmesg.status(
+          "fix0", "stranded transaction #{@id}: kept #{paths.size} file(s) another writer changed since: #{paths.first(5).join(", ")}"
+        )
       end
 
       # Transaction events are diagnostic telemetry, not the durable manifest.

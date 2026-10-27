@@ -243,8 +243,8 @@ module Master
 
         # Every transaction a previous process left behind, whatever its journal row says. The
         # journal marks a run interrupted without recovering its pass, so five manifests sat
-        # open under MASTER/.master for days. An open one rolls back unless its files changed
-        # since (then it is kept as a conflict); one a live run holds is skipped by its lock.
+        # open under MASTER/.master for days. An open one rolls back its own writes; a file another
+        # writer changed since stays as they left it and is named; one a live run holds is skipped by its lock.
         def recover_stranded_transactions!
           dir = File.join(@transaction_root, Transaction::ROOT_DIR)
           return unless File.directory?(dir)
@@ -252,7 +252,7 @@ module Master
           Dir.children(dir).sort.each do |id|
             next unless Transaction::Recovery.persisted?(root: @transaction_root, id:)
 
-            result = Transaction::Recovery.recover!(root: @transaction_root, id:, bus: @bus)
+            result = Transaction::Recovery.recover!(root: @transaction_root, id:, bus: @bus, release_conflicts: true)
             next if result.ok? && %i[committed rolled_back].include?(result.value!)
 
             outcome = result.ok? ? result.value!.inspect : result.message

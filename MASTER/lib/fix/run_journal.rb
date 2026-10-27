@@ -49,7 +49,8 @@ module Master
         with_lock do
           data = load
           resumable = data["runs"].reverse.find { |run| RESUMABLE_STATES.include?(run["state"].to_s) }
-          resumable = nil if resumable && (release_elsewhere(resumable, target) || release_spent(resumable))
+          resumable = nil if resumable && (release_elsewhere(resumable, target) || release_spent(resumable) ||
+                                           release_orphan(resumable))
           next resume_existing_run(resumable, target, data) if resumable
 
           create_new_run(target:, files:, max_passes:, budget_seconds:, data:)
@@ -803,6 +804,22 @@ module Master
         previous = run["state"]
         run["state"] = "interrupted"
         run["message"] = "left #{previous} with its budget spent; a new run started"
+        run["finished_at"] = Time.now.utc.iso8601
+        emit("fix:interrupted", run_id: run["id"], target: run["target"], previous_state: previous)
+        true
+      end
+
+      # A run whose process is gone, when the operator started a fresh one (bin/fix-here sets
+      # MASTER_FIX_FRESH=1 unless --resume). A run stopped by hand was resumed with its leftover
+      # budget, 201 seconds once, and every restart began by closing it in the journal by hand.
+      # Its open transaction is recovered before the journal is read (recover_stranded_transactions!).
+      def release_orphan(run)
+        return false unless ENV["MASTER_FIX_FRESH"] == "1"
+        return false if process_alive?(run["pid"])
+
+        previous = run["state"]
+        run["state"] = "interrupted"
+        run["message"] = "left #{previous} when its process ended; a fresh run started"
         run["finished_at"] = Time.now.utc.iso8601
         emit("fix:interrupted", run_id: run["id"], target: run["target"], previous_state: previous)
         true

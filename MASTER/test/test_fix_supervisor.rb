@@ -135,6 +135,43 @@ class FixSupervisorTest < Minitest::Test
     end
   end
 
+  # A run stopped by hand with budget left is resumed by default.
+  def test_a_stopped_run_with_budget_left_is_resumed
+    Dir.mktmpdir do |root|
+      journal, old_id = stopped_run(root)
+
+      assert_equal old_id, start_master(journal, root)["id"]
+    end
+  end
+
+  # bin/fix-here asks for a fresh run, and the stopped one is closed rather than resumed.
+  def test_a_fresh_run_releases_a_stopped_run_with_budget_left
+    Dir.mktmpdir do |root|
+      journal, old_id = stopped_run(root)
+      ENV["MASTER_FIX_FRESH"] = "1"
+
+      refute_equal old_id, start_master(journal, root)["id"]
+      assert_equal "interrupted", journal.history.find { |row| row["id"] == old_id }["state"]
+    ensure
+      ENV.delete("MASTER_FIX_FRESH")
+    end
+  end
+
+  def stopped_run(root)
+    journal = Master::Fix::RunJournal.new(root:)
+    id = start_master(journal, root).fetch("id")
+    journal.crash(id, "stopped")
+    orphan!(root, id)
+    [journal, id]
+  end
+
+  def orphan!(root, id)
+    path = File.join(root, ".master", "fix_runs.json")
+    data = JSON.parse(File.read(path))
+    data["runs"].find { |row| row["id"] == id }["pid"] = 0
+    File.write(path, JSON.generate(data))
+  end
+
   def start_master(journal, root)
     target = File.join(root, "MASTER")
     FileUtils.mkdir_p(target)
