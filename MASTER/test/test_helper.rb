@@ -43,6 +43,8 @@ ENV["MASTER_ACTIVE_LOOP_DIR"] = File.join(LIVE_STATE_DIR, "active_loop")
 # The suite runner a test drives keeps its logs and its one-suite lock apart from the
 # rake test that is running this file and holds .master/check/suite.lock.
 ENV["MASTER_CHECK_LOG_DIR"] = File.join(LIVE_STATE_DIR, "check")
+# A test that refuses a repair must not add a row to the run's own refusal log.
+ENV["MASTER_FIX_REFUSALS_PATH"] = File.join(LIVE_STATE_DIR, "fix_refusals.jsonl")
 
 # Direct test entrypoints must use the same pinned, private bundle as bin/cli.
 # Otherwise RubyGems can select a host-installed Minitest (or a native gem

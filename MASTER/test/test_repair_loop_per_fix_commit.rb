@@ -115,12 +115,18 @@ class TestRepairLoopPerFixCommit < Minitest::Test
   def test_collapse_guard_shrink_ratio_and_deletion_exempt
     guard = Master::Fix::RepairLoop::CollapseGuard
     big = "x" * 1_000
-    assert guard.collapse?("TRAILING_COMMAS", big, "x" * 100)
-    refute guard.collapse?("TRAILING_COMMAS", big, "x" * 600)
+    collapse = lambda do |law, old_src, new_src|
+      guard.collapse(Master::Fix::ChangeScope.between(old_src, new_src), law:, proposal: new_src)
+    end
+
+    assert_equal "the proposal is 10% of the file's 1000 bytes, under the 40% floor",
+                 collapse.call("TRAILING_COMMAS", big, "x" * 100)
+    assert_nil collapse.call("TRAILING_COMMAS", big, "x" * 600)
     # A DEAD_CODE fix may legitimately gut a file.
-    refute guard.collapse?("DEAD_CODE", big, "x")
+    assert_nil collapse.call("DEAD_CODE", big, "x")
     # An empty file has nothing to collapse against.
-    refute guard.collapse?("ANY_RULE", "", "x")
+    assert_nil collapse.call("ANY_RULE", "", "x")
+    assert_match(/refusal word "UNCHANGED"/, collapse.call("DEAD_CODE", big, "UNCHANGED"))
   end
 
   # The 2026-09-17 RAILS run wrote the literal word UNCHANGED over a live view.
@@ -293,22 +299,38 @@ class TestRepairLoopPerFixCommit < Minitest::Test
     end
   end
 
-  # A stream worker's "commit blocked" line never reached the run's log, so the refusal itself
-  # carries the committer's reason.
-  def test_a_blocked_commit_names_the_committers_reason
+  # The committer records its own refusal with its reason; a :blocked that recorded none is the
+  # committer's defect, and the repair says so instead of "blocked".
+  def test_a_blocked_commit_without_a_recorded_reason_is_named_as_the_committers_defect
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
       File.write(path, "violation\n")
       committer = FakeCommitter.new
       committer.define_singleton_method(:commit_if_dirty) { |*, **| :blocked }
-      committer.define_singleton_method(:last_refusal) { "house_lint, findings lint0: sample.rb:1 AbcSize" }
+
+      committer.define_singleton_method(:last_refusal) { nil }
       loop = build_loop(root:, bus: FakeBus.new, scanner: RecordingScanner.new, agent: FixingAgent.new, committer:)
+
       said = []
 
       Master::Trace::Dmesg.stub(:status, ->(unit, text) { said << "#{unit}: #{text}" }) do
         assert_equal :commit_refused, loop.send(:fix_violation, violation_in(path))
       end
-      assert(said.any? { |line| line.include?("commit refused: house_lint, findings lint0: sample.rb:1 AbcSize") })
+      assert_includes said, "fix0: sample.rb refused by commit: the committer answered :blocked and recorded no reason"
+    end
+  end
+
+  def test_a_commit_that_raises_is_recorded_with_the_exception
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "violation\n")
+      loop = build_loop(root:, bus: FakeBus.new, scanner: RecordingScanner.new, agent: FixingAgent.new,
+                        committer: FakeCommitter.new(fail: true))
+      said = []
+
+      Master::Trace::Dmesg.stub(:status, ->(unit, text) { said << "#{unit}: #{text}" }) { loop.run_once([path]) }
+
+      assert_includes said, "fix0: sample.rb refused by commit: RuntimeError: pre-commit hook refused"
     end
   end
 

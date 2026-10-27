@@ -8,6 +8,7 @@ require_relative "../../operator/ratchet_sponsor"
 require_relative "repo_scope"
 require_relative "../autofix_guard"
 require_relative "../run_budget"
+require_relative "../refusals"
 
 module Master
   module Fix
@@ -19,17 +20,21 @@ module Master
 
         module_function
 
-        # The lint0 findings, or [] when clean. A lint that fails without naming one is still a finding.
+        # The lint0 findings, or [] when clean. A lint that fails without naming one is still a
+        # finding, and its last lines of output are the reason.
         def findings(paths, root:)
           files = paths.map { |path| File.expand_path(path, root) }
           files = files.select { |path| path.start_with?("#{Master::REPO_ROOT}/") }
           return [] if files.empty?
 
-          out, _err, status = run(files)
+          out, err, status = run(files)
           return [] if status.success?
 
           named = out.lines.grep(/\Alint0: \S+:\d+/).map(&:strip)
-          named.empty? ? ["bin/operator lint failed"] : named
+          return named unless named.empty?
+
+          said = "#{out}#{err}".lines.map(&:strip).reject(&:empty?).last(3).join(" | ")
+          ["bin/operator lint failed: #{said.empty? ? "no output, exit #{status.exitstatus.inspect}" : said[0, 300]}"]
         end
 
         def run(files)
@@ -453,13 +458,14 @@ def stage_commit_mode?
         end
 
         def validate_paths(message, paths)
+          @refusing_paths = paths
           return false unless boundary_scope_ok?(paths)
           return false unless ratchet_sponsorship_ok?(paths)
 
           broken = ruby_files(paths).reject { |path| ruby_parses?(path) }
           return block_commit(broken) && false unless broken.empty?
           return block_commit_intent(message) && false unless intent_preserved?(message, paths)
-          return block_commit_ground_truth && false unless ground_truth_fresh?(paths)
+          return block_commit_ground_truth(@stale_reads) && false unless ground_truth_fresh?(paths)
           return false unless lint_changed_ruby(paths)
 
           house_lint_clean(paths)
@@ -599,29 +605,31 @@ def stage_commit_mode?
           end
           return true if foreign.empty?
 
-          boundaries = foreign.map(&:last).uniq
-          @bus&.publish(
-            "fix_loop:commit_blocked",
-            reason: "architecture_scope",
-            scope: @boundary_scope,
-            paths: foreign.map(&:first),
-            boundaries:,
-          )
-          Master::Trace::Dmesg.status(
-            "fix0",
-            "architecture scope blocked: #{boundaries.join(", ")} outside #{@boundary_scope.join(", ")}",
-          )
+          refuse_commit(reason: "architecture_scope", boundaries: foreign.map(&:last).uniq, scope: @boundary_scope,
+                        paths: foreign.map(&:first))
           false
         end
 
-        # The bus event for subscribers, and one dmesg line so the log says why a fix that passed
-        # every check was still not committed.
+        # The lint the pre-commit hook runs, and rubocop beside it, are the lint gate; every other
+        # refusal here is the commit gate.
+        LINT_REFUSALS = %w[house_lint rubocop rubocop_unavailable].freeze
+
+        # The bus event for subscribers, and one refusal row (Fix::Refusals) so the log says why a
+        # fix that passed every check was still not committed.
         def refuse_commit(**payload)
           published = @bus&.publish("fix_loop:commit_blocked", **payload)
           detail = payload.except(:reason).map { |key, value| "#{key} #{Array(value).map { |item| item.to_s.delete_prefix("#{@root}/") }.join(",")[0, 120]}" }
           @last_refusal = ([payload[:reason]] + detail).join(", ")
-          Master::Trace::Dmesg.status("deliver0", "commit blocked, #{@last_refusal}")
+
+          record_refusal(payload)
           published
+        end
+
+        def record_refusal(payload)
+          gate = LINT_REFUSALS.include?(payload[:reason].to_s) ? :lint : :commit
+          files = Array(payload[:files] || payload[:paths] || @refusing_paths)
+          files = ["(no paths)"] if files.empty?
+          Refusals.record(gate:, file: files, reason: @last_refusal, root: @root || MasterPaths::REPO)
         end
 
         def ratchet_sponsorship_ok?(paths)
@@ -629,7 +637,6 @@ def stage_commit_mode?
           true
         rescue StandardError => e
           refuse_commit(reason: "ratchet_sponsorship", error: e.message)
-          Master::Trace::Dmesg.status("fix0", e.message)
           false
         end
 
@@ -643,8 +650,8 @@ def stage_commit_mode?
           nil
         end
 
-        def block_commit_ground_truth
-          refuse_commit(reason: "ground_truth")
+        def block_commit_ground_truth(stale)
+          refuse_commit(reason: "ground_truth", files: stale)
           nil
         end
 
@@ -662,6 +669,7 @@ def stage_commit_mode?
           # the age window is for what was read, and expired a slow repair's own commit.
           truth = @ground_truth
           stale = ruby_files(paths).reject { |path| truth.fresh?(path) || truth.recorded_unchanged?(path) }
+          @stale_reads = stale
           return true if stale.empty?
 
           stale.each { |path| @ground_truth.assert_fresh!(path, reason: "commit_creation") }

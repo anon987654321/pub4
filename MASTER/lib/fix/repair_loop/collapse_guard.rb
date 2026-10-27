@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# frozen_string: true
-
 module Master
   module Fix
     class RepairLoop
@@ -32,16 +30,18 @@ module Master
           content.to_s.strip.match?(SENTINEL)
         end
 
-        # true means reject the proposal before it is written.
-        def collapse?(rule_id, old_src, new_src)
-          return true if sentinel?(new_src)
+        # Why the proposal must be rejected before it is written, or nil. The
+        # sizes are the ChangeScope's, the one reading of a change every per-fix
+        # check shares.
+        def collapse(scope, law:, proposal:)
+          return "the proposal is the refusal word #{proposal.to_s.strip.inspect}, not a file" if sentinel?(proposal)
+          return if DELETION_RULES.include?(law.to_s)
 
-          return false if DELETION_RULES.include?(rule_id.to_s)
+          ratio = scope.size_ratio
+          return unless ratio && ratio < SHRINK_FLOOR
 
-          old_bytes = old_src.to_s.bytesize
-          return false if old_bytes.zero?
-
-          new_src.to_s.bytesize < (old_bytes * SHRINK_FLOOR)
+          "the proposal is #{(ratio * 100).round}% of the file's #{scope.old_bytes} bytes, " \
+            "under the #{(SHRINK_FLOOR * 100).round}% floor"
         end
       end
     end

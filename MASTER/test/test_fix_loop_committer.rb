@@ -110,7 +110,7 @@ class TestFixLoopCommitter < Minitest::Test
     out, = capture_io { run_committer(git, bus, "fix: bad") }
 
     assert blocked?(bus)
-    assert_includes out, "deliver0: commit blocked, syntax, files lib/bad2.rb"
+    assert_includes out, "fix0: lib/bad2.rb refused by commit: syntax, files lib/bad2.rb"
   end
 
   def test_ignores_non_ruby_changes
@@ -352,14 +352,31 @@ def autofixed_wide_file
   wide
 end
 
-def test_a_lint_that_fails_without_naming_a_line_still_blocks
-  refused = Struct.new(:success?).new(false)
+def test_a_lint_that_fails_without_naming_a_line_still_blocks_and_says_what_it_printed
+  refused = Struct.new(:success?, :exitstatus).new(false, 1)
 
-  found = Master::Io::Exec.stub(:capture3, ["boom\n", "", refused]) do
+  found = Master::Io::Exec.stub(:capture3, ["boom\n", "LoadError: cannot load fix/scanner\n", refused]) do
     Master::Fix::FixLoop::HouseLint.findings(["lib/a.rb"], root: Master::ROOT)
   end
 
-  assert_equal ["bin/operator lint failed"], found
+  assert_equal ["bin/operator lint failed: boom | LoadError: cannot load fix/scanner"], found
+end
+
+# The house lint is the lint gate in the pass summary; the reason is the finding the hook would print.
+def test_a_house_lint_refusal_is_recorded_under_the_lint_gate
+  write_file("lib/ok.rb", "OK = 1\n")
+  git = FakeGit.new([], ["lib/ok.rb"])
+  committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir)
+  committer.baseline!
+  Master::Fix::Refusals.begin_run!
+
+  lint = ->(*) { ["lint0: lib/ok.rb:1, line 141 chars (max 120)"] }
+  out, = capture_io { Master::Fix::FixLoop::HouseLint.stub(:findings, lint) { committer.commit_if_dirty("fix: ok") } }
+
+  assert_empty git.commits
+  assert_equal 1, Master::Fix::Refusals.counts[:lint]
+  assert_includes out, "fix0: lib/ok.rb refused by lint: house_lint, " \
+                       "findings lint0: lib/ok.rb:1, line 141 chars (max 120)"
 end
 
 def test_the_house_lint_leaves_files_outside_the_repository_to_rubocop

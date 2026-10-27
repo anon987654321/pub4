@@ -3,6 +3,7 @@
 require "tempfile"
 require_relative "../../io/exec"
 require_relative "../best_of_n"
+require_relative "../unified_diff"
 
 module Master
   module Fix
@@ -33,9 +34,7 @@ module Master
             File.read(path, encoding: "UTF-8")
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "RepairLoop.reflexion_source_read", rule: @law.id)
-            @bus&.publish("repair_loop:reflexion_rejected", law: @law.id, file: path,
-              reason: "source read failed: #{e.message[0, 120]}")
-            return
+            return unverified(path, what: "the verifier could not read the source", error: e)
           end
           prompt = reflexion_prompt(violation, original_src, proposed_src)
           # The verdict reads a diff and answers SAFE or UNSAFE; a cheaper model
@@ -53,7 +52,14 @@ module Master
           # A check that could not run approves nothing, as a broken quorum
           # approves nothing: the fix is refused and says why.
           Master::Ground::Swallow.log(e, context: "RepairLoop.reflexion_verify", rule: @law.id)
-          @bus&.publish("repair_loop:reflexion_rejected", rule: @law.id, file: path, reason: "reflexion failed: #{e.message[0, 120]}")
+          unverified(path, what: "the verifier could not run", error: e)
+        end
+
+        # A verifier that could not judge says why: the refusal names the exception, not "UNSAFE".
+        def unverified(path, what:, error:)
+          reason = "#{what}: #{error.class}: #{error.message[0, 160]}"
+          Thread.current[:reflexion_reason] = reason
+          @bus&.publish("repair_loop:reflexion_rejected", rule: @law.id, file: path, reason:)
           nil
         end
 
@@ -141,20 +147,15 @@ module Master
         def change_under_review(original_src, proposed_src)
           return "(no change: the proposal is identical to the original)" if original_src == proposed_src
 
-          Dir.mktmpdir("reflexion") do |dir|
-            before = File.join(dir, "original")
-            after = File.join(dir, "proposed")
-            File.write(before, original_src)
-            File.write(after, proposed_src)
-            out, = Master::Io::Exec.capture2e("git", "diff", "--no-index", "--no-color", "-U5", before, after)
-            # git's bytes arrive as BINARY; any non-ASCII line in them made the UTF-8 prompt
-            # raise, and a verifier that cannot run refuses, so every such repair died unread.
-            out = out.dup.force_encoding(Encoding::UTF_8).scrub
-            lines = out.lines.drop_while { |line| !line.start_with?("@@") }
-            return lines.join if lines.size <= REVIEW_DIFF_LINES
+          # The same diff the per-fix checks read, with context for a reader; it comes back as
+          # scrubbed UTF-8, since a non-ASCII line in git's BINARY bytes made the prompt raise.
+          out = UnifiedDiff.between(original_src, proposed_src, context: 5)
+          raise "git could not diff the proposal against the original" unless out
 
-            "#{lines.first(REVIEW_DIFF_LINES).join}… #{lines.size - REVIEW_DIFF_LINES} more lines of diff\n"
-          end
+          lines = out.lines.drop_while { |line| !line.start_with?("@@") }
+          return lines.join if lines.size <= REVIEW_DIFF_LINES
+
+          "#{lines.first(REVIEW_DIFF_LINES).join}… #{lines.size - REVIEW_DIFF_LINES} more lines of diff\n"
         end
 
         # Only SAFE approves. A reply that was neither word, a refusal, a rambling

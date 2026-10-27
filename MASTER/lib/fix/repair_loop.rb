@@ -24,6 +24,8 @@ require_relative "../review/scan/law_health"
 require_relative "repair_loop/autofix_policy"
 require_relative "run_ledger"
 require_relative "repair_loop/file_budget"
+require_relative "change_scope"
+require_relative "refusals"
 
 module Master
   module Fix
@@ -223,6 +225,7 @@ module Master
           RunLedger.reject("out_of_scope", file: violation[:file], law: @law.id, bus: @bus, detail: outside)
           RunLedger.refused_because(outside)
           FixTrace.rejected(@law.id, violation[:file], outside)
+          refuse(:scope, violation, reason: outside)
           return :out_of_scope
         end
         verified = within_file_budget(violation) { reflexion_verify(violation, source) }
@@ -231,11 +234,13 @@ module Master
           RunLedger.reject("reflexion_unsafe", file: violation[:file], law: @law.id, bus: @bus, detail: Thread.current[:reflexion_reason])
           reason = Thread.current[:reflexion_reason].to_s
           RunLedger.refused_because(reason.start_with?("no verdict") ? "the reviewer gave no usable verdict, so the change was not accepted" : "the reviewer called it unsafe: #{reason}")
+          refuse(:verifier, violation, reason:)
           return (FixTrace.rejected(@law.id, violation[:file], ["reflexion verifier refused", Thread.current[:reflexion_reason]].compact.join(": ")) && :reflexion_rejected)
         end
         unless consensus_approves?(violation, verified)
           RunLedger.reject("consensus_refused", file: violation[:file], law: @law.id, bus: @bus)
           RunLedger.refused_because("the consensus panel refused it")
+          refuse(:consensus, violation, reason: "the consensus panel refused it", error: @consensus_error)
           return (FixTrace.rejected(@law.id, violation[:file], "consensus refused") && :consensus_rejected)
         end
 
@@ -259,23 +264,35 @@ module Master
           findings: [violation],
           owned_paths: [violation[:file]],
         )
-        return commit_refused(violation, @committer.last_refusal || "blocked") if result == :blocked
+        return commit_refused(violation) if result == :blocked
         return commit_refused(violation, result.message) if result.is_a?(Master::Result::Err)
 
         :applied
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "RepairLoop.commit_applied_fix", event_bus: @bus, law: @law.id)
         @bus&.publish("repair_loop:commit_refused", law: @law.id, file: violation[:file], error: e.message[0, 160])
-        commit_refused(violation, e.message)
+        commit_refused(violation, error: e)
       end
 
       # A verified fix that git would not take says why in the log: law/definition.rb's was
-      # refused by the pre-commit hook and the run printed only "1 commit_refused".
-      def commit_refused(violation, reason)
-        file = violation[:file].to_s.delete_prefix("#{@root}/")
+      # refused by the pre-commit hook and the run printed only "1 commit_refused". The
+      # committer records its own refusals; a :blocked with no reason on record is the
+      # committer's defect, and is recorded as one rather than left as "blocked".
+      def commit_refused(violation, reason = nil, error: nil)
+        if reason.nil? && error.nil?
+          return :commit_refused if @committer.last_refusal
+
+          reason = "the committer answered :blocked and recorded no reason"
+        end
         why = reason.to_s.strip.lines.last(3).join(" ")[0, 300]
-        Master::Trace::Dmesg.status("fix0", "#{file} commit refused: #{why}")
+        refuse(:commit, violation, reason: why, error:)
         :commit_refused
+      end
+
+      # One refusal row for a violation or a path.
+      def refuse(gate, target, reason: nil, error: nil)
+        file = target.is_a?(String) ? target : target[:file]
+        Refusals.record(gate:, file:, reason:, error:, law: @law.id, root: @root)
       end
 
       def stage_commit_mode?
@@ -292,6 +309,7 @@ module Master
       end
 
       def consensus_approves?(violation, candidate)
+        @consensus_error = nil
         return true unless consensus_required?(violation)
 
         @agent.consensus.approve_fix?(
@@ -302,6 +320,7 @@ module Master
       rescue StandardError => e
         # A broken quorum must not silently approve. Refuse and say why.
         Master::Ground::Swallow.log(e, context: "RepairLoop#consensus_approves?") if defined?(Master::Ground::Swallow)
+        @consensus_error = e
         false
       end
 
@@ -314,7 +333,10 @@ module Master
         if (reason = VisualCompletion.change_blocker(root: @root, path:, before: old_src, after: new_src, custody: @visual_custody))
           return reject_fix(path, old_src, "visual_operator_owned", evidence: reason)
         end
-        return reject_fix(path, old_src, "collapsed_content") if CollapseGuard.collapse?(@law.id, old_src, new_src)
+        scope = ChangeScope.between(old_src, new_src)
+        if (collapsed = collapsed_reason(scope, new_src))
+          return reject_fix(path, old_src, "collapsed_content", evidence: collapsed)
+        end
         raw_before = scan_all(path)
         log_scan_agreement(path, raw_before)
         before = check_findings(raw_before)
@@ -323,7 +345,7 @@ module Master
         after = check_findings(raw_after)
         note_semantic_drift(path, raw_before, raw_after)
         return reject_fix(path, old_src, "new_violations", before:, after:, introduced: introduced_summary(before, after, source: new_src)) if after.size > before.size
-        if (scouts = boyscout_violations(before, after, old_src, new_src)).any?
+        if (scouts = boyscout_violations(before, after, scope:)).any?
           grown = scouts.first(3).map { |violation| "#{violation[:law]} line #{violation[:line]}" }.join(", ")
           return reject_fix(path, old_src, "boyscout_violation", introduced: "#{scouts.size} more: #{grown}")
         end
@@ -351,6 +373,7 @@ module Master
       rescue StandardError => e
         @bus&.publish("repair_loop:write_error", law: @law.id, file: path, error: e.message)
         restore_after_error(path, old_src, e)
+        refuse(:exception, path, reason: "a check after the write raised, original restored", error: e)
         false
       end
 
@@ -372,40 +395,27 @@ module Master
       # whole-file boyscout would command the refactors PRESERVE_FIRST forbids;
       # this is the half of the rule that is compatible with it.
       #
-      # "New" is counted per rule, not matched by message. Messages carry the
-      # numbers they measure ("talks to manifest 5 times", "ABC size 43.0"), so
-      # a refactor that moved or eased a finding made it read as a new one, and
-      # every file repair that did not clear the file outright was refused. A
-      # rule whose findings did not grow landed nothing; a swap to another rule
-      # still grows that rule and is still refused.
-      def boyscout_violations(before, after, old_src, new_src)
-        had = before.map { |v| v[:law].to_s }.tally
-        grown = after.map { |v| v[:law].to_s }.tally.select { |law, count| count > had.fetch(law, 0) }.keys
-        landed = after.select { |v| grown.include?(v[:law].to_s) }
-        return [] if landed.empty?
-
-        ranges = changed_new_ranges(old_src, new_src)
-        landed.select { |v| ranges.any? { |range| range.cover?(v[:line].to_i) } }
+      # "New" is what introduced_findings calls new: counted per rule, not matched
+      # by message, since messages carry the numbers they measure and an eased
+      # finding read as a new one. The lines are the ChangeScope's hunks, as the
+      # scope guard and the house lint read them.
+      def boyscout_violations(before, after, scope:)
+        introduced_findings(before, after).select { |finding| scope.covers?(finding) }
       end
 
-      # The 1-based line span the fix changed, in the NEW file's coordinates —
-      # the common prefix and suffix are untouched, and the span between them
-      # is where a single-hunk minimum-change fix lives.
-      def changed_region(old_src, new_src)
-        old_lines = old_src.lines
-        new_lines = new_src.lines
-        prefix = 0
-        prefix += 1 while prefix < old_lines.size && prefix < new_lines.size && old_lines[prefix] == new_lines[prefix]
-        suffix = 0
-        limit = [old_lines.size - prefix, new_lines.size - prefix].min
-        suffix += 1 while suffix < limit && old_lines[old_lines.size - 1 - suffix] == new_lines[new_lines.size - 1 - suffix]
-        [prefix + 1, [new_lines.size - suffix, prefix + 1].max]
-      end
+      def collapsed_reason(scope, new_src) = CollapseGuard.collapse(scope, law: @law.id, proposal: new_src)
 
       def visual_source?(path)
         VISUAL_EXTENSIONS.include?(File.extname(path).downcase) &&
           path.to_s.include?("/RAILS/") && !path.to_s.include?("/RAILS/master/")
       end
+
+      # The gate each apply-time refusal is counted under in the pass summary.
+      REJECT_GATES = {
+        "visual_operator_owned" => :visual, "collapsed_content" => :collapse, "new_violations" => :new_violations,
+        "boyscout_violation" => :boyscout, "higher_priority_violation" => :priority, "test_failed" => :test,
+        "page_scoped_override" => :primitive, "visual_regression" => :visual
+      }.freeze
 
       def reject_fix(path, original, reason, **details)
         write_atomic(path, original)
@@ -413,6 +423,7 @@ module Master
         detail = details.except(:before, :after).map { |key, value| value.to_s[0, key == :introduced ? 400 : 120] }.join(" ")
         RunLedger.reject(reason, file: path, law: @law.id, bus: @bus, detail:)
         RunLedger.refused_because([reason, detail].reject(&:empty?).join(": "))
+        refuse(REJECT_GATES.fetch(reason, reason.to_sym), path, reason: [reason, detail].reject(&:empty?).join(": "))
         @bus&.publish("repair_loop:fix_rejected", law: @law.id, file: path, reason:, **details)
         FixTrace.rejected(@law.id, path, [reason, *details.except(:before, :after).values.map { |v| v.to_s[0, 120] }].join(" "))
         false
