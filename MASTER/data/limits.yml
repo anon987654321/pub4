@@ -1122,10 +1122,11 @@ process:
         warn: 1200
         crit: 1600
     # Gigabytes free, not a percentage: a run writes a few hundred megabytes,
-    # and 5% of a 228 GB volume is 11 GB.
+    # and 5% of a 228 GB volume is 11 GB. crit 2 -> 1 on 2026-10-27, the
+    # operator's call: the volume sat at 1.4-2 GB free and a run writes far less.
     disk_free_gb:
       warn: 5
-      crit: 2
+      crit: 1
 
 # What every model turn is oriented with (lib/ai/orientation.rb). `tree: fix` is the /fix Tree, with sizes
 # and the sprawl signals; read_in_full is the rule the turn is told, so an analysis reads a file whole
