@@ -69,7 +69,8 @@ module Master
 
         CALL_SITE_HUNK_MAX = 4
 
-        Hunk = Struct.new(:first, :last, :text, :size, keyword_init: true)
+        # first..last in the old file; new_first..new_last where it landed in the proposal.
+        Hunk = Struct.new(:first, :last, :text, :size, :new_first, :new_last, keyword_init: true)
 
         def hunk_in_scope?(hunk, range:, callees:)
           return true if range.cover?(hunk.first) && range.cover?(hunk.last)
@@ -124,7 +125,17 @@ module Master
             header.zip(%w[0 1 0 1]).map { |value, default| (value || default).to_i }
           text = (sides[:old][(old_first - 1), old_count].to_a + sides[:new][(new_first - 1), new_count].to_a).join
           last = old_count.zero? ? old_first : old_first + old_count - 1
-          Hunk.new(first: old_first, last:, text:, size: [old_count, new_count].max)
+          new_last = new_count.zero? ? new_first : new_first + new_count - 1
+          Hunk.new(first: old_first, last:, text:, size: [old_count, new_count].max, new_first:, new_last:)
+        end
+
+        # The proposal's changed lines, hunk by hunk: a signature change edits its callers across
+        # the file, and one first-to-last span charged it with every finding in between.
+        def changed_new_ranges(old_src, new_src)
+          hunks = git_hunks(old_src, new_src)
+          return [Range.new(*changed_region(old_src, new_src))] unless hunks
+
+          hunks.map { |hunk| hunk.new_first..hunk.new_last }
         end
 
         # The 1-based span of the OLD file that differs from the proposal, or nil

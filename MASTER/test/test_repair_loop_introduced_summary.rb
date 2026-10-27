@@ -53,6 +53,16 @@ end
     previous ? ENV["MASTER_FIX_SEMANTIC_CHECK"] = previous : ENV.delete("MASTER_FIX_SEMANTIC_CHECK")
   end
 
+  # A model's reading names its findings after registered laws too: NO_CHANGELOG_COMMENT and
+  # WHY_NOT_WHAT on comments a repair never touched refused it as new violations.
+  def test_a_model_read_named_after_a_registered_law_is_not_counted
+    loop = Master::Fix::RepairLoop.allocate
+    loop.instance_variable_set(:@scanner, Struct.new(:laws).new([Struct.new(:id).new("ABC_SIZE")]))
+    rows = [{ law: "ABC_SIZE", line: 3 }, { law: "ABC_SIZE", line: 9, stream: :semantic }]
+
+    assert_equal [{ law: "ABC_SIZE", line: 3 }], loop.check_findings(rows)
+  end
+
   def test_what_the_semantic_stream_added_is_logged_not_gated
     mechanical = Struct.new(:id).new("ABC_SIZE")
     semantic = Class.new { def id = "semantic"; def set_agent(_agent) = nil }.new

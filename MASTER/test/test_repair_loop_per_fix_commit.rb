@@ -212,6 +212,31 @@ class TestRepairLoopPerFixCommit < Minitest::Test
     end
   end
 
+  # A signature change edits its def and a caller far below it. Judged as one span, every finding
+  # between the two was the repair's; judged by hunk, a line it never touched is not.
+  def test_a_finding_between_two_hunks_is_not_the_repairs
+    Dir.mktmpdir do |root|
+      path, proposed = two_hunk_edit(root)
+      before = [{ law: "TEST_RULE", severity: :warning, line: 2, message: "fix me" }]
+      after = [{ law: "NEW_RULE", severity: :warning, line: 15, message: "untouched" }]
+      loop = build_loop(root:, bus: FakeBus.new, scanner: SequenceScanner.new(before, after), agent: FixingAgent.new)
+
+      assert loop.send(:apply, path, proposed, violation_in(path))
+    end
+  end
+
+  # Thirty lines on disk, and a proposal that changes lines 2 and 28 only.
+  def two_hunk_edit(root)
+    path = File.join(root, "sample.rb")
+    lines = (1..30).map { |n| "line_#{n} = #{n}\n" }
+    File.write(path, lines.join)
+
+    proposed = lines.dup
+    proposed[1] = "line_2 = :two\n"
+    proposed[27] = "line_28 = :two\n"
+    [path, proposed.join]
+  end
+
   # A violation the file already carried elsewhere is not the scout's business:
   # the golden rule forbids touching lines the fix did not need.
   def test_apply_keeps_a_preexisting_violation_on_an_untouched_line

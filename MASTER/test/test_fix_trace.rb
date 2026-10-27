@@ -154,6 +154,17 @@ class FixTraceTest < Minitest::Test
     assert_equal 3, verdict.lines
   end
 
+  # A patch is git's output and arrives BINARY; json warned on every accepted fix.
+  def test_a_binary_patch_is_written_as_utf8_without_a_warning
+    transcript = Transcript.new(root: @root, run_id: "binary")
+    patch = "-# Søknad\n+# Søknad, kø\n".b
+
+    _out, err = capture_io { transcript.append("fixes", { patch: }) }
+
+    refute_match(/BINARY/, err)
+    assert_equal "-# Søknad\n+# Søknad, kø\n", JSON.parse(File.read(ledger_path(transcript, "fixes")))["patch"]
+  end
+
   def test_an_edited_line_breaks_the_chain_at_that_line
     transcript = Transcript.new(root: @root, run_id: "edit")
     3.times { |n| transcript.append("fixes", { n: }) }

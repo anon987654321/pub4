@@ -62,8 +62,12 @@ module Master
           return rows if strict_semantic_check?
 
           ids = mechanical_law_ids
+          rows = rows.reject { |row| model_read?(row) }
           ids.empty? ? rows : rows.select { |row| ids.include?(row[:law].to_s) }
         end
+
+        # The scan marks what a model's reading found (Scan::FileProcessor#from_the_model).
+        def model_read?(row) = row.is_a?(Hash) && row[:stream] == :semantic
 
         def strict_semantic_check? = ENV.fetch("MASTER_FIX_SEMANTIC_CHECK", "loose") == "strict"
 
@@ -74,7 +78,9 @@ module Master
           ids = mechanical_law_ids
           return if ids.empty?
 
-          laws = ->(rows) { rows.reject { |row| ids.include?(row[:law].to_s) }.map { |row| row[:law].to_s }.tally }
+          laws = lambda do |rows|
+            rows.select { |row| model_read?(row) || !ids.include?(row[:law].to_s) }.map { |row| row[:law].to_s }.tally
+          end
           was = laws.call(raw_before)
           added = laws.call(raw_after).filter_map { |law, n| "#{law} +#{n - was.fetch(law, 0)}" if n > was.fetch(law, 0) }
           return if added.empty?

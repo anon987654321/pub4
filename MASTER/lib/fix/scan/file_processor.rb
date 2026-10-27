@@ -257,10 +257,20 @@ module Master
           # findings. A fatal deterministic hit must not suppress meaning-based
           # assessment of the same file; otherwise one early result can hide the
           # other streams.
-          findings + semantic_findings(findings, Reading.new(path:, code:, ast:, laws: semantic))
+          read = semantic_findings(findings, Reading.new(path:, code:, ast:, laws: semantic))
+          findings + Array(read).map { |finding| from_the_model(finding) }
         end
         # Public: the whole of what a scan concludes about a text, with no file read.
         public :apply_laws
+
+        # A model's reading names its findings freely, often after a registered law, and two
+        # readings of one file need not agree. Marked, so a repair's gates can tell it from a
+        # detector's: unmarked, NO_CHANGELOG_COMMENT and WHY_NOT_WHAT on lines a repair never
+        # touched refused it as new violations.
+        def from_the_model(finding)
+          row = finding.is_a?(Hash) ? finding : finding.to_h
+          row.merge(stream: :semantic)
+        end
 
         # One file's due model read, as semantic_findings replays, puts off, refuses or makes it.
         Reading = Data.define(:path, :code, :ast, :laws) do

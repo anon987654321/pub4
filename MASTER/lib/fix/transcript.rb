@@ -80,7 +80,8 @@ module Master
 
       def redact(value)
         case value
-        when String then Master::Ground::Redactor.text(value)
+        # A patch is git's output and arrives BINARY; json warns on it today and will raise in json 3.0.
+        when String then Master::Ground::Redactor.text(as_text(value))
         when Hash then value.to_h { |key, item| [key, key.to_s.match?(Master::Ground::Redactor::SENSITIVE_KEYS) ? "[REDACTED]" : redact(item)] }
         when Array then value.map { |item| redact(item) }
         when Symbol then value.to_s
@@ -93,6 +94,8 @@ module Master
       end
 
       private
+
+      def as_text(text) = text.encoding == Encoding::BINARY ? text.dup.force_encoding(Encoding::UTF_8).scrub : text
 
       def chained(name, body)
         previous = head(name)

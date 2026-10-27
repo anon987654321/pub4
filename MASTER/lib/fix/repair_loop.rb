@@ -259,12 +259,22 @@ module Master
           findings: [violation],
           owned_paths: [violation[:file]],
         )
-        return :commit_refused if result == :blocked || (result.respond_to?(:err?) && result.err?)
+        return commit_refused(violation, "blocked, reason above") if result == :blocked
+        return commit_refused(violation, result.message) if result.is_a?(Master::Result::Err)
 
         :applied
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "RepairLoop.commit_applied_fix", event_bus: @bus, law: @law.id)
         @bus&.publish("repair_loop:commit_refused", law: @law.id, file: violation[:file], error: e.message[0, 160])
+        commit_refused(violation, e.message)
+      end
+
+      # A verified fix that git would not take says why in the log: law/definition.rb's was
+      # refused by the pre-commit hook and the run printed only "1 commit_refused".
+      def commit_refused(violation, reason)
+        file = violation[:file].to_s.delete_prefix("#{@root}/")
+        why = reason.to_s.strip.lines.last(3).join(" ")[0, 300]
+        Master::Trace::Dmesg.status("fix0", "#{file} commit refused: #{why}")
         :commit_refused
       end
 
@@ -374,8 +384,8 @@ module Master
         landed = after.select { |v| grown.include?(v[:law].to_s) }
         return [] if landed.empty?
 
-        lo, hi = changed_region(old_src, new_src)
-        landed.select { |v| (lo..hi).cover?(v[:line].to_i) }
+        ranges = changed_new_ranges(old_src, new_src)
+        landed.select { |v| ranges.any? { |range| range.cover?(v[:line].to_i) } }
       end
 
       # The 1-based line span the fix changed, in the NEW file's coordinates —
