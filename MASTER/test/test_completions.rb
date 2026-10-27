@@ -41,4 +41,22 @@ class TestCompletions < Minitest::Test
     assert_operator subcommands.size, :>=, 10, "a short list means the scan of bin/operator broke"
     assert_equal subcommands, completed("_operator")
   end
+
+  def test_master_help_completion_describes_the_master_registry
+    line = File.readlines(File.join(COMPLETIONS, "_master")).find { |entry| entry.include?("'help:") }
+
+    assert_includes line, "MASTER commands"
+    assert_includes line, "syntax"
+    refute_includes line, "OpenBSD Operator"
+  end
+
+  def test_operator_completions_describe_live_behavior
+    source = File.read(File.join(COMPLETIONS, "_operator"))
+
+    assert_includes source, "'land:commit path-scoped, re-check, push current branch'"
+    assert_includes source, "'worktree:create, list or remove managed isolated worktrees'"
+    assert_includes source, "report merge/delete candidates"
+    refute_includes source, "worktree:refused"
+    refute_includes source, "push main'"
+  end
 end
