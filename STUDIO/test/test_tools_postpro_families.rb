@@ -9,6 +9,10 @@ require_relative "postpro_cli_helper"
 # where every render lands.
 class TestPostproFamilies < Minitest::Test
   include PostproCli
+  # Each case renders through the CLI, up to ten takes with redraws, so it gets a
+  # render budget rather than the 30 s one meant for a hung ffmpeg.
+  TIMEOUT = 120
+
 
   # Naming and the family.
 

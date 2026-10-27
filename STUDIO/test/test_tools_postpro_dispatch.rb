@@ -20,6 +20,10 @@ require "json"
 # chain is the expensive path in postpro: a 160-pixel frame keeps the suite's
 # cost in seconds while still exercising the full chain, sidecar and all.
 class TestPostproDispatch < Minitest::Test
+  # Each case renders through the CLI, up to ten takes with redraws, so it gets a
+  # render budget rather than the 30 s one meant for a hung ffmpeg.
+  TIMEOUT = 120
+
   include PostproCli
 
   # The bare path grades that one image, and --count beside it is honoured
