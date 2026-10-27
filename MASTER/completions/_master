@@ -17,7 +17,7 @@ _master() {
     'explain:explain the living four-tree architecture from the checkout'
     'face:open the full-screen 3D terminal face'
     'fix:observe, critique, repair, observe again until it converges'
-    'help:OpenBSD Operator command map; /fix is the primary repair operation'
+    'help:list MASTER commands and show syntax for one command'
     'ios:start iOS/PWA onboarding'
     'laws:the declared laws, one line each'
     'model:show or switch the active model, and connect its subscriptions'
