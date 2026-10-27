@@ -52,4 +52,34 @@ class TestAssessmentAdapterInventory < Minitest::Test
     assert_equal "browser_journeys", adapters.fetch("interactive_behavior")
     assert_equal "opportunity_pass", adapters.fetch("lexical_opportunities")
   end
+  ScannerOnlyOpportunity = Struct.new(:id, :mode)
+
+  def test_scanner_only_law_mode_does_not_abort_matrix_initialization
+    scanner_law = ScannerOnlyOpportunity.new("ASSESSMENT_MATRIX_SCANNER_ONLY", :opportunity)
+    scanner = Object.new
+    scanner.define_singleton_method(:laws) { [scanner_law] }
+
+    plan = Struct.new(:target, :digest, :root, :sources, :source_signatures).new(
+      Master::ROOT, "plan-digest", Master::ROOT, [], {}
+    )
+    subject = Object.new.extend(Master::Fix::FixLoop::PassRunner::AssessmentMatrix)
+    subject.instance_variable_set(:@scanner, scanner)
+    subject.instance_variable_set(:@assessment_mutex, Mutex.new)
+    subject.instance_variable_set(:@clean_runs_required, 2)
+    subject.instance_variable_set(:@visual_pass, nil)
+    subject.instance_variable_set(:@opportunity_pass, nil)
+    subject.define_singleton_method(:stage_failures) do
+      @stage_failures ||= Hash.new { |hash, key| hash[key] = [] }
+    end
+
+    subject.begin_assessment_run(files: [], plan:)
+
+    refute_nil subject.instance_variable_get(:@assessment_ledger),
+      "one scanner-only Law must not collapse the entire proof matrix to not_measured"
+    assert_empty subject.stage_failures[:assessment_matrix]
+    assert_equal [:lexical_violations],
+      subject.instance_variable_get(:@assessment_law_info)
+        .fetch("ASSESSMENT_MATRIX_SCANNER_ONLY").fetch(:unmeasurable_streams)
+  end
+
 end
