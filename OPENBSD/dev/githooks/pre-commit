@@ -3,10 +3,10 @@
 
 # One git index, many agents.
 #
-# The default checkout is shared. CLAUDE.md has described this hazard accurately
-# for months — commit path-scoped — and it keeps happening anyway, because a
-# whole-tree commit is zero effort and a path-scoped one is a decision. Branches
-# and worktrees are refused (MASTER/tools/block_branching.rb). On 2026-08-10 one push carried
+# A shared checkout can still carry another session's uncommitted changes.
+# Keep commits path-scoped, and use a disposable worktree for broad or parallel
+# work. This hook still refuses cross-tree commits, untracked files that would
+# be omitted, and Ruby files that do not parse. On 2026-08-10 one push carried
 # four commits another session had told its user were still local. On 2026-08-12
 # a session's debt write-up was committed by a different session under a message
 # about something else, and that session's own commit body says it was "carrying

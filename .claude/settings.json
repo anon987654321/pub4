@@ -24,12 +24,6 @@
           },
           {
             "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" block_branching",
-            "statusMessage": "Checking this writes straight to main",
-            "timeout": 15
-          },
-          {
-            "type": "command",
             "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" block_gnu_text_tools",
             "statusMessage": "Checking for GNU text tools",
             "timeout": 15
