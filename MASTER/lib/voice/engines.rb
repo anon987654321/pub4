@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../io/exec"
+require_relative "policy"
 require "fileutils"
 require "json"
 require "securerandom"
@@ -395,7 +396,7 @@ module Master
         delta = pitch_delta_hz(pitch)
         return 1.0 if delta.zero?
 
-        reference = Speech::Policy.prosody.fetch("pitch_reference_hz", 180).to_f.clamp(120.0, 260.0)
+        reference = Policy.prosody.fetch("pitch_reference_hz", 180).to_f.clamp(120.0, 260.0)
         ((reference + delta) / reference).clamp(0.85, 1.15)
       end
 

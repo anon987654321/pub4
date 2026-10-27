@@ -528,7 +528,7 @@ presets:
       - ../STUDIO/dilla/data/recovered_music.json
       - lib/voice/dilla.rb
       - lib/voice/production_dna.rb
-      - lib/io/analog_capabilities.rb
+      - ../STUDIO/postpro/analog_capabilities.rb
 
 # Merged from former data/prompts/council.yml — judge and juror prompt templates.
 prompts:

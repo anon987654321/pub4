@@ -9,7 +9,9 @@ require "rubygems"
 # 4.0, where json 2.18.0 and date 3.5.1 are the defaults; vm23 runs 3.4, where
 # they are older and the newer copies live only in the deploy bundle. So the
 # deploy bundle joins the gem path first, and each pinned default is activated
-# at its locked version before `require "time"` pulls in date. This runs at load
+# at its locked version before `require "time"` pulls in date. psych is pinned
+# the same way because lib/mobile requires yaml before Bundler runs, and a newer
+# psych left in the private gem store would otherwise win. This runs at load
 # time, not in prepare!, because reexec_mismatched_bundler! starts a fresh
 # process that loads this file again.
 boot_root = File.expand_path("../..", __dir__)
@@ -23,7 +25,7 @@ if deploy_bundle
 end
 boot_lockfile = File.join(boot_root, "Gemfile.lock")
 boot_lock = File.file?(boot_lockfile) ? File.binread(boot_lockfile) : ""
-%w[json date].each do |name|
+%w[json date psych].each do |name|
   pin = boot_lock[/^    #{name} \(([\d.]+)\)$/, 1]
   next unless pin
 

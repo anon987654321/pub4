@@ -28,7 +28,7 @@ class TestStimulusComponentsPreference < Minitest::Test
 
   def test_catalog_covers_current_upstream_components
     %w[animated-number carousel chartjs color-picker confirmation dialog dropdown
-       glow hotkey lightbox places-autocomplete prefetch remote-rails reveal-controller
+       glow hotkey lightbox places-autocomplete prefetch remote-rails reveal
        scroll-progress scroll-to sortable sound speech-recognition timeago].each do |name|
       assert_includes Check::UPSTREAM_COMPONENTS, name
     end

@@ -58,6 +58,7 @@ module Master
           "Typographer" => "en-GB-HollieNeural",
           "Cognitive Psychologist" => "en-US-TonyNeural",
           "NNGroup UX Researcher" => "en-US-NancyNeural",
+          "Design Lead" => "en-GB-SoniaNeural",
         }.freeze
 
         module_function
@@ -102,6 +103,7 @@ module Master
           "Typographer" => profile("en-GB-HollieNeural", "-3%", "+5Hz", :calm, "measure, rhythm, reading", :careful, 2),
           "Cognitive Psychologist" => profile("en-US-TonyNeural", "-4%", "-3Hz", :neutral, "working memory, recognition, load", :explaining, 2),
           "NNGroup UX Researcher" => profile("en-US-NancyNeural", "+1%", "+7Hz", :clear, "heuristic, task, evidence", :methodical, 1),
+          "Design Lead" => profile("en-GB-SoniaNeural", "-2%", "+1Hz", :calm, "brief, restraint, focus", :precise, 1),
         }.freeze
 
         def for(persona)

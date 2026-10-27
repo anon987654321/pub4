@@ -51,10 +51,11 @@ class TestVoicePerformance < Minitest::Test
   end
 
   def test_clause_markers_change_role_without_splitting
-    plan = Master::Voice::Performance.plan("The key is this: it matters, actually. Then continue.")
+    # Position outranks markers at the edges, so the marked clause sits mid-plan.
+    plan = Master::Voice::Performance.plan("Start here. The key is this: it matters, actually. Then continue.")
 
-    assert_equal 2, plan.length
-    assert_equal :reveal, plan[0][:role]
+    assert_equal 3, plan.length
+    assert_equal :reveal, plan[1][:role]
   end
 
   def test_phrase_variation_changes_are_smoothed
