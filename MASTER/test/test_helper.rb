@@ -143,13 +143,22 @@ Minitest::Test.class_eval do
     Minitest::Result.from(self)
   end
 
+  # The canonical registry fills only when something loads law/. A test that
+  # reads it must load it itself: under some seeds no earlier test had, and
+  # ::Law raised NameError.
+  def law_definitions
+    require_relative "../law/definition"
+    ::Law.load_all(File.expand_path("../law", __dir__)) if ::Law.definitions.empty?
+    ::Law.definitions
+  end
+
   # Run the canonical Law definition or its single registered detector
   # directly. Tests must not depend on a parallel bridge class to make a Law
   # visible to the scanner.
   def law_findings(id, code, path:)
     require_relative "../lib/review/scan/law_dsl"
     key = id.to_s.upcase
-    definition = ::Law.definitions.values.find { |law| law.id.to_s.upcase == key }
+    definition = law_definitions.values.find { |law| law.id.to_s.upcase == key }
     if definition
       return Master::Review::Scan::CanonicalLawAdapter.new(definition).check(code, path:)
     end

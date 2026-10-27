@@ -160,7 +160,7 @@ class TestScanLawContracts < Minitest::Test
   end
 
   def test_advisory_laws_do_not_enter_enforcement_adapter
-    law = Law.definitions.fetch(:BEAUTIFUL_CODE)
+    law = law_definitions.fetch(:BEAUTIFUL_CODE)
 
     assert_equal :advisory, law.lifecycle
     findings = Master::Review::Scan::CanonicalLawAdapter.new(law)
@@ -170,7 +170,7 @@ class TestScanLawContracts < Minitest::Test
   end
 
   def test_trusted_transformation_law_remains_in_semantic_population
-    law = Law.definitions.fetch(:TRANSFORMATIONS)
+    law = law_definitions.fetch(:TRANSFORMATIONS)
 
     assert_equal :trusted, law.lifecycle
     assert law.semantic?
@@ -202,7 +202,7 @@ class TestScanLawContracts < Minitest::Test
 
   def test_every_canonical_detector_reaches_findings_without_a_bridge
     RETIRED_TWINS.each do |id|
-      law = Law.definitions[id.to_sym]
+      law = law_definitions[id.to_sym]
       refute_nil law, "#{id} must exist in the canonical Law registry"
       ext = TWIN_EXT.fetch(law.languages.first&.to_s, ".rb")
       path = "#{law.path || "/lib/"}example#{ext}"
@@ -415,7 +415,7 @@ class TestScanLawContracts < Minitest::Test
   # out of the system prompt to protect against a disagreement neither half can
   # have.
   def test_canonical_law_ids_do_not_have_duplicate_detector_registrations
-    law_ids = Law.definitions.values.select(&:scannable?).map { |law| law.id.to_s.upcase }.to_set
+    law_ids = law_definitions.values.select(&:scannable?).map { |law| law.id.to_s.upcase }.to_set
     registry_ids = Master::Review::Scan::Law.registry.filter_map do |klass|
       Master::Review::Scan::LawFactory.registry_id(klass, root: Master::ROOT)&.upcase
     end
