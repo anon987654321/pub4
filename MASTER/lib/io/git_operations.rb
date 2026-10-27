@@ -49,24 +49,53 @@ module Master
         rescue RuntimeError => e
           raise unless e.message.match?(/rejected|non-fast-forward|fetch first/)
 
-          rebase_onto_upstream!
+          rebase_onto_push_target!
           git!("push", *push_target)
         end
 
-        # The upstream named outright. A /fix worktree's branch is
-        # agent/fix-<tree> tracking origin/main, and a bare push refuses a
-        # branch whose name differs from its upstream's, so the delivery that
-        # the proof had just cleared failed at the last step.
+        # Publish this branch's name, never the branch it happens to track.
+        # A repair worktree can intentionally track origin/main for comparisons,
+        # but its checkpoints must create/update origin/work/<name> rather than
+        # quietly pushing every intermediate repair straight to main. A branch
+        # without an upstream is a normal first-push case, not permission to use
+        # Git's implicit push.default behavior.
         def push_target
-          upstream, status = Master::Io::Exec.capture2e("git", "-C", @root_path, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")
-          remote, branch = upstream.to_s.strip.split("/", 2)
-          return [] unless status.success? && remote && branch
+          branch_out, branch_status = Master::Io::Exec.capture2e(
+            "git", "-C", @root_path, "symbolic-ref", "--quiet", "--short", "HEAD"
+          )
+          branch = branch_out.to_s.strip
+          raise "git push refused: checkout has no named branch" unless branch_status.success? && !branch.empty?
+
+          remotes_out, remotes_status = Master::Io::Exec.capture2e("git", "-C", @root_path, "remote")
+          remotes = remotes_status.success? ? remotes_out.lines.map(&:strip).reject(&:empty?) : []
+          raise "git push refused: no configured remote" if remotes.empty?
+
+          config = lambda do |key|
+            value, status = Master::Io::Exec.capture2e("git", "-C", @root_path, "config", "--get", key)
+            status.success? ? value.to_s.strip : nil
+          end
+          branch_push_remote = config.call("branch.#{branch}.pushRemote")
+          default_push_remote = config.call("remote.pushDefault")
+          [branch_push_remote, default_push_remote].compact.each do |remote|
+            raise "git push refused: configured push remote #{remote.inspect} does not exist" unless remotes.include?(remote)
+          end
+          branch_remote = config.call("branch.#{branch}.remote")
+          remote = branch_push_remote || default_push_remote ||
+            (branch_remote if remotes.include?(branch_remote)) ||
+            ("origin" if remotes.include?("origin")) || remotes.first
 
           [remote, "HEAD:#{branch}"]
         end
 
-        def rebase_onto_upstream!
-          git!("pull", "--rebase", "--autostash")
+        # If a fast-forward-only push loses a race, fetch and rebase onto the
+        # remote counterpart of this branch—not @{u}, which may deliberately be
+        # origin/main for a topic branch. Dirty unrelated files remain protected
+        # by Git's autostash.
+        def rebase_onto_push_target!
+          remote, target = push_target
+          branch = target.delete_prefix("HEAD:")
+          git!("fetch", remote, branch)
+          git!("rebase", "--autostash", "FETCH_HEAD")
         rescue RuntimeError
           Master::Io::Exec.capture2e("git", "-C", @root_path, "rebase", "--abort")
           raise

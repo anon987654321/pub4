@@ -276,6 +276,31 @@ class GitOperationsTest < Minitest::Test
     assert_includes sh("git", "log", "--oneline", chdir: @remote), "Pushes"
   end
 
+  def test_push_target_uses_current_topic_branch_even_when_it_tracks_main
+    sh("git", "checkout", "-b", "work/fix-topic", chdir: @repo)
+    sh("git", "branch", "--set-upstream-to", "origin/main", "work/fix-topic", chdir: @repo)
+    main_before = sh("git", "--git-dir", @remote, "rev-parse", "refs/heads/main").strip
+    write("topic.rb", "# topic\\n")
+    @git.commit("topic repair", paths: ["topic.rb"])
+
+    assert_equal ["origin", "HEAD:work/fix-topic"], @git.push_target
+    @git.push
+
+    assert_equal main_before, sh("git", "--git-dir", @remote, "rev-parse", "refs/heads/main").strip
+    assert_equal @git.head, sh("git", "--git-dir", @remote, "rev-parse", "refs/heads/work/fix-topic").strip
+  end
+
+  def test_first_push_of_a_topic_branch_does_not_require_an_upstream
+    sh("git", "checkout", "-b", "work/fresh-topic", chdir: @repo)
+    write("fresh-topic.rb", "# fresh\\n")
+    @git.commit("fresh topic", paths: ["fresh-topic.rb"])
+
+    assert_equal ["origin", "HEAD:work/fresh-topic"], @git.push_target
+    @git.push
+
+    assert_equal @git.head, sh("git", "--git-dir", @remote, "rev-parse", "refs/heads/work/fresh-topic").strip
+  end
+
   def push_from_another_clone(file, content)
     other = File.join(@tmp, "other")
     FileUtils.mkdir_p(other)
