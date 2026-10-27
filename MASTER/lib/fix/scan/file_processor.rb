@@ -9,6 +9,7 @@ require "timeout"
 
 require_relative "law_timing"
 require_relative "finding_cache"
+require_relative "source_override"
 require_relative "../check_focus"
 require_relative "../../review/scan/semantic_fingerprint"
 require_relative "../../review/scan/law_health"
@@ -176,11 +177,12 @@ module Master
 
         private
 
+        # A path with a SourceOverride is judged by that text, not by the disk.
         def read_file(path)
-          validation = validate_file(path)
-          return validation if validation.err?
+          read = SourceOverride.read(path, max_bytes: MAX_FILE_BYTES) || read_disk(path)
+          return read if read.err?
 
-          code = File.read(path, encoding: "UTF-8").scrub
+          code = read.value!.scrub
           line_count = code.count("\n")
           line_count += 1 unless code.empty? || code.end_with?("\n")
           return Result.err("file too long: #{path}", category: :validation) if line_count > self.class.max_lines_for(path)
@@ -200,6 +202,11 @@ module Master
 
           require File.join(Master::ROOT, "law", "definition") unless defined?(Law)
           Law.conduct(code)
+        end
+
+        def read_disk(path)
+          validation = validate_file(path)
+          validation.err? ? validation : Result.ok(File.read(path, encoding: "UTF-8"))
         end
 
         def validate_file(path)

@@ -76,6 +76,29 @@ class TestExternalLinterLaws < Minitest::Test
     assert_equal 2, spawns_for(contents: ["x = 1\n", "x = 2\n", "x = 1\n"])
   end
 
+  # A pre-commit lint judges the staged blob, so the linter is handed that text on stdin under the real
+  # path, and never reads the working tree's other version of the file.
+  def test_an_overridden_source_is_piped_in_under_its_real_path
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "working = :tree\n")
+
+      seen = []
+      capture = lambda do |*args, **options|
+        seen << [args, options[:stdin_data]]
+        ['{"files":[{"offenses":[]}]}', "", Struct.new(:exitstatus).new(0)]
+      end
+
+      with_linter(root:, capture:) do |rule|
+        Master::Fix::Scan::SourceOverride.with(path => "staged = :blob\n") { rule.check("", path:) }
+      end
+
+      args, stdin = seen.fetch(0)
+      assert_equal "staged = :blob\n", stdin
+      assert_equal ["--stdin", path], args.last(2)
+    end
+  end
+
   def test_empty_stdout_is_a_finding_not_a_clean_lint_result
     with_rubocop_report(stdout: "", stderr: "process failed", exitstatus: 1) do |rule|
       findings = rule.check("def sample; end\n", path: "sample.rb")

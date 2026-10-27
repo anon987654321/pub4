@@ -2,6 +2,7 @@
 
 require_relative "../../lib/operator/ruby_runner"
 require_relative "../../lib/ground/library_verify"
+require_relative "../../lib/fix/scan/source_override"
 
 require "digest"
 require "fileutils"
@@ -83,14 +84,39 @@ module Master
             report
           end
 
-          def lint_cache_key(argv)
+          # The report for +path+ as the scan reads it. A path with a Fix::Scan::SourceOverride (the
+          # staged blob a pre-commit lint judges) is piped to the linter under its real name, so its
+          # config and excludes apply and the working tree's other version is never read.
+          def report_for_path(path)
+            source = Master::Fix::Scan::SourceOverride.for(path)
+            return linter_json(*single_argv(path)) unless source
+
+            argv = stdin_argv(path)
+            key = lint_cache_key(argv, source:)
+            cached = key && read_lint_cache(key)
+            return cached if cached
+
+            report = run_linter_json(*argv, stdin_data: source)
+            write_lint_cache(key, report) if key
+            report
+          end
+
+          def lint_cache_key(argv, source: nil)
             target = File.expand_path(argv.last.to_s, @root)
-            return unless File.file?(target)
+            digest = read_digest(target, source)
+            return unless digest
 
             inputs = LINT_INPUTS.map { |name| File.join(@root, name) }.select { |path| File.file?(path) }
-            parts = [argv.first(argv.size - 1), target, Digest::SHA256.file(target).hexdigest,
+            parts = [argv.first(argv.size - 1), target, digest,
                      inputs.map { |path| input_digest(path) }]
             Digest::SHA256.hexdigest(JSON.generate(parts))
+          end
+
+          # The digest of what the linter reads: the piped source, else the file; nil with neither.
+          def read_digest(target, source)
+            return Digest::SHA256.hexdigest(source) if source
+
+            Digest::SHA256.file(target).hexdigest if File.file?(target)
           end
 
           # The lock by the versions it pins; its constraint lines flip between bundlers with no change.
@@ -119,9 +145,9 @@ module Master
             Master::Ground::Swallow.log(e, context: "lint_cache write")
           end
 
-          def run_linter_json(*argv)
+          def run_linter_json(*argv, stdin_data: nil)
             stdout, stderr, status = Master::Io::Exec.capture3(
-              ::Operator::RubyRunner.bundle_cmd(root: @root), "exec", *argv, chdir: @root
+              ::Operator::RubyRunner.bundle_cmd(root: @root), "exec", *argv, chdir: @root, stdin_data:
             )
             raise empty_report_error(argv.first, stderr:, status:) if stdout.empty?
 
@@ -158,7 +184,7 @@ module Master
             # Only MASTER carries a .rubocop.yml, so a file in another tree would be judged by rubocop's
             # defaults, which prefer single quotes where the house style is double.
             # A root without one, the repository root /fix probes from, is judged by MASTER's as well.
-            data = linter_json(*single_argv(path))
+            data = report_for_path(path)
             files = data.is_a?(Hash) ? data["files"] : nil
             unless files.is_a?(Array) && !files.empty? &&
                    files.all? { |file| file.is_a?(Hash) && file["offenses"].is_a?(Array) }
@@ -185,6 +211,8 @@ module Master
             ["rubocop", "--config", config, "--format", "json", "--no-color", path]
           end
 
+          def stdin_argv(path) = [*single_argv(path)[0...-1], "--stdin", path]
+
           # The batch report narrowed to one file, as rubocop would have answered for that file alone.
           def report_for(report, path)
             entry = Array(report["files"]).find { |file| same_file?(file["path"], path) }
@@ -207,7 +235,7 @@ module Master
           def check(_code, path:)
             return [] unless path.end_with?(".rb") && linter_available?("reek")
 
-            smells = linter_json(*single_argv(path))
+            smells = report_for_path(path)
             unless smells.is_a?(Array) &&
                    smells.all? do |smell|
                      smell.is_a?(Hash) &&
@@ -234,6 +262,8 @@ module Master
           def linter_name = "reek"
 
           def single_argv(path) = ["reek", "--format", "json", path]
+
+          def stdin_argv(path) = ["reek", "--format", "json", "--stdin-filename", path]
 
           # The smells the batch found in this file; a file with none answers an empty list.
           def report_for(report, path) = Array(report).select { |smell| same_file?(smell["source"], path) }
