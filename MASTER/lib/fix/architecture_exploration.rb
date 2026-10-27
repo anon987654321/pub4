@@ -391,7 +391,11 @@ module Master
           next unless %w[.md .yml .yaml .json .toml .rb .sh .zsh .js .ts .css .scss .erb .html .txt].include?(File.extname(path).downcase)
           content = File.read(path, encoding: "UTF-8")
           next unless content.valid_encoding? && !content.include?("\0")
-          excerpt = redact(content[0, [800, 12_000 - used].min])
+          remaining_bytes = [800, 12_000 - used].min
+          excerpt = content.byteslice(0, remaining_bytes).to_s.force_encoding(Encoding::UTF_8).scrub("")
+          excerpt = redact(excerpt)
+          next if excerpt.strip.empty?
+
           used += excerpt.bytesize
           selected += 1
           { "path" => relative(path), "sha256" => Digest::SHA256.hexdigest(content), "excerpt" => excerpt }
