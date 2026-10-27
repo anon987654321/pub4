@@ -200,6 +200,7 @@ module Deploy
                                                kind: action.fetch("kind").to_json))
         result = JSON.parse(raw_result.to_s)
         sleep 0.35
+
         if action["kind"] == "navigation"
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 3
           while Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
@@ -221,7 +222,7 @@ module Deploy
           "changed" => changed,
           "from" => baseline["url"],
           "to" => after["url"],
-          "screenshot" => screenshot
+          "screenshot" => screenshot,
         )
 
         if action["kind"] == "navigation" && after["url"] != baseline["url"]
@@ -234,7 +235,7 @@ module Deploy
             "result" => { "ok" => back["url"] == baseline["url"] },
             "changed" => back_changed,
             "from" => after["url"],
-            "to" => back["url"]
+            "to" => back["url"],
           )
           cdp.forward
           forward = state_signature(cdp)
@@ -244,7 +245,7 @@ module Deploy
             "result" => { "ok" => forward["url"] == after["url"] },
             "changed" => forward != after,
             "from" => back["url"],
-            "to" => forward["url"]
+            "to" => forward["url"],
           )
         end
       end
@@ -258,12 +259,13 @@ module Deploy
                else
                  "assessed_clean"
                end
+
       {
         "status" => status,
         "actions" => states,
         "action_count" => states.size,
         "failures" => failures.first(12),
-        "inconclusive" => unknown.first(12)
+        "inconclusive" => unknown.first(12),
       }
     rescue StandardError => e
       raise "browser journey probe failed: #{e.class}: #{e.message}"

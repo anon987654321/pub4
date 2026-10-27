@@ -47,6 +47,7 @@ module Master
     # what it exempted: when lib/now/ became lib/cli/ and this address stayed,
     # 105 findings arrived in selfcheck's largest actionable bucket overnight.
     next [] if path.to_s.match?(%r{/exe/|/spec/|/bin/|/cli/session})
+
     # A program's output is its interface, and the rule is about library code.
     # Measured over the four trees: 750 of 941 findings sat in a program — a
     # script with a shebang, a file that runs itself under a $PROGRAM_NAME
@@ -66,6 +67,7 @@ module Master
         end
       end
     end
+
     findings
   end
 
@@ -79,6 +81,7 @@ module Master
     does_not_fire: "#!/usr/bin/env ruby\n# frozen_string_literal: true\n\nvalue = 1\n",
     description: "missing frozen_string_literal magic comment" do |src, path:|
     leading = src.each_line.take_while { |line| line.strip.empty? || line.lstrip.start_with?("#") }
+
     next [] if leading.any? { |line| line.include?("frozen_string_literal") }
     magic = "# frozen_string_literal: true"
     [finding(line: 1, message: "add #{magic}")]
@@ -92,6 +95,7 @@ module Master
     does_not_fire: "#{"x" * 120}\n#{"x" * 100} # scan: intentional — the marker is not the defect\n",
     description: "lines exceeding 120 characters" do |src, path:|
     next [] if path.to_s.match?(%r{/voice/personality\.rb|/io/llm\.rb})
+
     src.each_line.with_index(1).filter_map do |line, n|
       next unless line.chomp.length > 120
       # Measured without the marker, so exempting a line does not create a
@@ -120,6 +124,7 @@ module Master
     does_not_fire: "  # the reasoning is in TODO.md\n  MARKERS = /TODO|FIXME|XXX/\n",
     description: "unresolved work markers" do |src, path:|
     next [] if path.to_s.include?("/law/detectors/")
+
     # The lookahead keeps TODO.md, the repo-wide backlog, from reading as a
     # marker — see data/laws.yml `unfinished`, which learned this at :veto.
     #
@@ -148,6 +153,7 @@ module Master
     # Exception` in a scanner rule is worth catching, and SILENT_RESCUE's note
     # below says why this population carries no path exemption.
     parsed = Prism.parse(src)
+
     next [] if parsed.failure?
 
     findings = []
@@ -179,6 +185,7 @@ module Master
     # directory than anywhere else. The one exception is the rule's own test,
     # which must spell every shape it proves — the law-conduct argument.
     next [] if path.to_s.match?(/test_silent_rescue_rule\.rb\z|test_self_test\.rb\z/)
+
     SilentRescue.scan(src, narrow: false).map { |hit| finding(line: hit[:line], message: hit[:message]) }
   end
 
@@ -244,6 +251,7 @@ module Master
     description: "no consecutive blank lines" do |src, path:|
     findings = []
     prev_blank = false
+
     src.each_line.with_index(1) do |line, n|
       blank = line.strip.empty?
       findings << finding(line: n, message: "consecutive blank line") if blank && prev_blank
@@ -260,6 +268,7 @@ module Master
     description: "debug output left in lib/" do |src, path:|
     next [] unless path.to_s.include?("/lib/")
     next [] if path.to_s.include?("/scan/rules/")
+
     # `p` is a legal variable name, so a line starting `p <<` is an append to a
     # local, not a Kernel#p call. The old pattern read both the same way and
     # flagged attention_context.rb's `p << "zoom: …"` twice — an error-severity,
@@ -273,6 +282,7 @@ module Master
     # `p <<~HEREDOC`, which the `<<` branch already spares.
     findings = scan_lines(src, /^\s*pp?\s+(?!self\b)(?!<<|[<>]|==|!=|\|\|=|&&=|[+\-*\/%|&^]?=)/,
       message: "p/pp debug call — remove or publish via event bus")
+
     findings += scan_lines(src, /\$stderr\.puts\b/, message: "$stderr.puts — use @bus.publish or $stdout")
     findings
   end
@@ -302,6 +312,7 @@ module Master
     description: "trailing comment after code" do |src, path:|
     src.each_line.with_index(1).filter_map do |line, n|
       next if line.strip.start_with?("#")
+
       # A line keeps its finding when a second trailing comment survives the
       # marker's removal; it loses it when the marker was the whole of it.
       next unless without_scan_marker(line).match?(/\S\s+#\s+\S/)
@@ -324,6 +335,7 @@ module Master
     # Spaces and tabs only before the #: \s would take the newlines of the blank lines above a comment
     # with it, and every finding after it reported the wrong line.
     src = src.gsub(/^[ \t]*#.*$/, "")
+
     # Time.now.utc and Time.now.to_i do not read Time.zone: one converts to UTC
     # explicitly, the other is epoch seconds. Every RAILS finding this rule
     # produced was one of those two forms — JWT exp/iat, a tmpfile suffix, and
@@ -331,6 +343,7 @@ module Master
     # 13 rewrites that would have changed no behaviour at all.
     findings = scan_lines(src, /(?<![A-Za-z_.])Time\.now\b(?!\s*\.\s*(?:utc|to_i|to_f|to_r))/,
                            message: "Time.now ignores Time.zone — use Time.current")
+
     findings += scan_lines(src, /(?<![A-Za-z_.])Date\.today\b/,
                            message: "Date.today ignores Time.zone — use Date.current")
     findings += scan_lines(src, /(?<![A-Za-z_.])DateTime\.now\b/,
@@ -369,7 +382,6 @@ module Master
         line.match?(IDENTITY_COMPARISON)
     end
   end
-
 
   # ASCII art is reserved for the face's own renderer. The boot, prompt,
   # source prose and UI chrome remain text; a logo made from punctuation is

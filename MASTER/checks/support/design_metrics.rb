@@ -140,6 +140,7 @@ module Deploy
     # instead"; .market-hero-kicker, the rule it names, is gone.
     def vertical_accent_pairs(tokens, rails_root = nil)
       verticals = tokens["vertical_accents"]
+
       return [] unless verticals.is_a?(Hash) && rails_root
 
       # Only measure the colour actually drawn in the vertical nav submit button:

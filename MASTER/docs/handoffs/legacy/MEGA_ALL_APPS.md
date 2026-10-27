@@ -2676,4 +2676,4 @@ echo "Log file: $LOG_FILE"
 echo "EOF: pouncekeys_setup.zsh completed successfully"
 # Line count: 110 (excluding comments)
 # Checksum: sha256sum pouncekeys_setup.zsh
-```
+```

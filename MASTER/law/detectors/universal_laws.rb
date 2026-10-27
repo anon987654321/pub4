@@ -23,6 +23,7 @@ module Master
           does_not_fire: "def place(north:, east:, depth:)\nend\n",
           description: "ideal is zero to two positional arguments" do |src, path:|
           lines = src.lines
+
           lines.each_with_index.filter_map do |line, index|
             next unless line.match?(/\bdef\s+\w+\(/)
             args = line[/\(([^)]*)\)/, 1].to_s.split(",").map(&:strip)
@@ -41,6 +42,7 @@ module Master
           description: "loading records one-by-one inside a loop" do |src, path:|
           # Only meaningful in Rails app/ trees; non-AR enumerable chains are fine.
           next [] unless path.match?(%r{/app/|/spec/|/test/})
+
           scan_lines(src, /\.(each|map|collect)\s*(do|\{).*\.\w+\.\w+/,
             message: "N+1 query candidate — use includes/eager_load")
         end
@@ -54,6 +56,7 @@ module Master
           description: "a flag that selects behavior means two things hiding as one" do |src, path:|
           src.each_line.with_index(1).filter_map do |line, n|
             next unless line.match?(/def \w+\(/)
+
             args_str = line[/\(([^)]*)\)/, 1].to_s
             args = args_str.split(",").map(&:strip)
             positional_bool = args.any? do |a|
@@ -83,9 +86,11 @@ module Master
           forEach filter reduce some every trim toString padStart padEnd toFixed toLowerCase toUpperCase
           replace startsWith endsWith
         ].to_set.freeze
+
         DEMETER_CHAIN = /(?<![\w.@$])(?:@{1,2}|\$)?\b[a-z_]\w*[?!]?(?:\(\))?(?:\.[a-z_]\w*[?!]?(?:\(\))?){3,}/
         # Platform globals every caller already knows, as a constant receiver is.
         DEMETER_GLOBALS = %w[document window globalThis].freeze
+
         DEMETER_NOISE = [
           %r{\w+://\S+},
           /%[wi]\[[^\]]*\]/,
@@ -126,8 +131,10 @@ module Master
           does_not_fire: %(warn "…"\n),
           description: "typographic excellence in user-facing text" do |src, path:|
           next [] if path.to_s.include?("/law/detectors/")
+
           src.each_line.with_index(1).filter_map do |line, n|
             next if line.match?(/Open3|capture2|capture3|gsub\(|Shellwords/)
+
             next if line.match?(/,\s*"--"\s*,|,\s*"--"\s*\)|<<\s*["']--/)
             # A leading-# line in an .erb file is a doc comment inside an ERB
             # block — its "..." is an example placeholder, not UI copy.
@@ -187,12 +194,14 @@ module Master
           does_not_fire: "path = Master::COUNCIL_PATH\n",
           description: "constants defined locally when a canonical ONE_SOURCE exists" do |src, path:|
           next [] if path.to_s.include?("/law/detectors/")
+
           next [] if path.to_s.include?("master.rb")
           patterns = [
             [/COUNCIL_PATH\s*=/, "define COUNCIL_PATH once in master.rb; reference Master::COUNCIL_PATH"],
             [/LAWS_PATH\s*=/, "define LAWS_PATH once in master.rb; reference Master::LAWS_PATH"],
             [/DATA_DIR\s*=\s*File\.join.*\bdata\b/, "use Master::DATA constant"],
           ]
+
           src.each_line.with_index(1).flat_map do |line, n|
             patterns.filter_map { |re, msg| finding(line: n, message: msg) if re.match?(line) }
           end
@@ -218,6 +227,7 @@ module Master
           does_not_fire: %(assert ok, "this test would pass having measured nothing"\n),
           description: "future tense implies without evidence — use indicative past" do |src, path:|
           next [] unless path.to_s.end_with?(".rb", ".md", ".txt", ".erb")
+
           next [] if path.to_s.include?("/law/detectors/")
           src.each_line.with_index(1).filter_map do |line, n|
             next if line.strip.start_with?("#")
@@ -246,7 +256,9 @@ module Master
         # `-` joins them for the same reason: `"etc-pre-sync"` is a label naming
         # the directory, and no abbreviation is ever hyphenated onward.
         PLACEHOLDER_ETC = %r{(?<![\w/|:\[-])etc\.?(?![\w/|\]-])}
+
         STDLIB_ETC_REQUIRE = /\brequire\s+["']etc["']/
+
         # /etc is a directory, and the exclusions above only knew it when a
         # slash was adjacent. Every other way this tree spells that path counted
         # as theater: File.join(ROOT, "etc", "rc.d"), `OPENBSD/{etc,usr,var}`,
@@ -254,6 +266,7 @@ module Master
         # rule's 40 findings on 2026-09-06, none of them a placeholder.
         # `require "etc"` is the same lesson, learned once for one line.
         PATH_ETC = /["']etc["']|\{[\w,]*\betc\b[\w,]*\}|\betc(?=\s+(?:usr|var)\b)/
+
         # A comment is a comment wherever it starts, and in whatever language.
         # The rule skipped a line that opens with `#` and read the same words as
         # theater when they followed code, so `|| continue   # skip CAM, TS,
@@ -271,6 +284,7 @@ module Master
         # its `/*` onward — leaving `"etc` at the end of the line, which then
         # read as the abbreviation. The ratchet caught it at 0 -> 1.
         HASH_COMMENT = /(?<![$\\])\#(?!\{).*\z/
+
         SLASH_COMMENT = %r{//.*\z|/\*.*?(?:\*/|\z)}
         SLASH_COMMENT_EXTENSIONS = %w[.js .mjs .ts .jsx .tsx .css .scss].freeze
 
@@ -289,6 +303,7 @@ module Master
           comment = SLASH_COMMENT_EXTENSIONS.include?(File.extname(path.to_s).downcase) ? SLASH_COMMENT : HASH_COMMENT
           src.each_line.with_index(1).filter_map do |line, n|
             stripped = line.strip
+
             next if stripped.start_with?("#")
             next if stripped.match?(STDLIB_ETC_REQUIRE)
             # The marker the framework advertises. scan_lines honours it and
@@ -332,6 +347,7 @@ module Master
           src.each_line.with_index(1).filter_map do |line, n|
             stripped = line.strip
             next if stripped.start_with?("#")
+
             # The concatenation branch wanted a closed string before the `+` and
             # never asked for one, so it read `execute("SELECT a + b FROM t")` —
             # SQL arithmetic — as concatenation, and missed
@@ -410,6 +426,7 @@ module Master
             if permissions && !permissions.empty?
               hits << finding(line: number, message: %(unveil("/", "#{permissions}") leaves the filesystem open — deny the root first))
             end
+
             if !wrapper && line.match?(/\bPledge\.(?:pledge|unveil)\s*\(/)
               hits << finding(line: number, message: "raw pledge/unveil promise — call a Ground::Pledge stage helper")
             end
@@ -434,6 +451,7 @@ module Master
           does_not_fire: %Q(bus.subscribe("tool:before") { |e| record(e) }\nFile.open(@path, "a") { |f| f.puts(line) }\n),
           description: "an audit sink appends to its log and never truncates it" do |src, path:|
           next [] if path.to_s.include?("/law/detectors/")
+
           next [] unless src.match?(/subscribe\(\s*["']tool:before["']/)
 
           src.each_line.with_index(1).filter_map do |line, number|

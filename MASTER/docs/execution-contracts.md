@@ -119,18 +119,15 @@ RBENV_VERSION=4.0.5 rbenv exec ruby -Itest test/test_command_registry_dispatch.r
 
 After focused tests pass, run the full canonical MASTER suite and relevant operator checks. For changes that touch RAILS, OPENBSD or STUDIO, run their canonical checks too. Source inspection, a committed test, or a remote commit is never reported as an executed test or a verified deployment.
 
-
 ## Reversibility and replay semantics
 
 Effect records now make reversibility explicit. `reversible` means the operation has a known restoration path; `compensatable` means a separate corrective action is required; `irreversible` means no reliable undo is available; and `unknown` means the system has not established the recovery semantics. The default is `unknown`, never an optimistic assumption.
 
 The envelope marks irreversible and unknown effects as requiring reconciliation before replay. An idempotency key is only a request to deduplicate when the external target actually supports and honors that key; it does not itself prove exactly-once execution. This addition is backward-compatible at the schema-construction boundary, but the existing runtime callers still need an evidence-driven classification inventory and must propagate the declaration to the external-effect handlers.
 
-
 ### Adapter availability is not applicability
 
 The /fix plan's adapter inventory now reports `unavailable` when the visual or opportunity assessor is absent, and `not_applicable_to_target` only when an installed assessor explicitly returns non-applicable. An adapter inventory is still only a capability statement: `SurfaceEvidence` receipts, source stability and actual browser/test/runtime evidence determine whether an assessment is complete. This distinction prevents a missing browser tool from being described as a target that does not need browser assessment.
-
 
 ### Rendered UI evidence integrity
 

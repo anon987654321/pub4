@@ -15,6 +15,7 @@ module BoundedCommand
     output, status = Master::Io::Exec.capture2e(
       *command, timeout:, raise_on_timeout: true, **options
     )
+
     [output, status]
   rescue Master::Io::Exec::TimeoutError => error
     output = Array(error.result).first.to_s

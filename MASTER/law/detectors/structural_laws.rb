@@ -12,6 +12,7 @@ module Master
           SCOPE_NODES = [
             Prism::ProgramNode, Prism::ClassNode, Prism::ModuleNode, Prism::SingletonClassNode
           ].freeze
+
           VISIBILITY_MARKERS = %w[public private protected].freeze
 
           declare id: "FILE_LAYOUT", severity: :info, tags: %i[PROXIMITY CONVENTION],
@@ -52,6 +53,7 @@ module Master
           # which `private` does not reach.
           def public_below_private(root)
             findings = []
+
             walk(root) do |node|
               next unless SCOPE_NODES.include?(node.class)
 
@@ -70,6 +72,7 @@ module Master
             sealed = false
             statements.filter_map do |statement|
               marker = visibility_marker(statement)
+
               if marker
                 visibility = marker
                 sealed ||= marker != :public
@@ -151,6 +154,7 @@ module Master
             walk(ast) do |node|
               next unless node.is_a?(Prism::DefNode)
               cc = 1 + count_cc_nodes(node)
+
               next if cc <= MAX_CC
               findings << finding(line: node.location.start_line,
                 message: "method #{node.name} has cyclomatic complexity #{cc} (max #{MAX_CC}) — extract branches")
@@ -189,6 +193,7 @@ module Master
           def def_node_finding(node, lines)
             method_lines = lines[(node.location.start_line - 1)...node.location.end_line].join
             branch_count = branch_dispatch_count(method_lines)
+
             if branch_count >= BRANCH_THRESHOLD
               finding(
                 line: node.location.start_line,
@@ -235,6 +240,7 @@ module Master
               next unless node.body
               children = node.body.child_nodes.compact
               accessor_calls = children.count { |n| n.is_a?(Prism::CallNode) && %w[attr_accessor attr_reader attr_writer].include?(n.name.to_s) }
+
               real_defs = children.count { |n| n.is_a?(Prism::DefNode) && !%w[initialize to_s inspect].include?(n.name.to_s) }
               next unless accessor_calls >= 2 && real_defs == 0
               findings << finding(line: node.location.start_line,
@@ -246,6 +252,7 @@ module Master
           private
 
         end
+
         # Enforces "core stays lean" as a live check, not just an aspiration --
         # matches OpenClaw's explicit policy (VISION.md: "we are generally
         # slimming down core... bar for adding optional plugins to core is
@@ -313,6 +320,7 @@ module Master
       # bundles set aside, so reading it here reported every long script twice.
         class SmallFilesLaw < Law
           LIMIT = 300
+
           NOT_MODULAR = %w[json yaml markdown javascript].freeze
           DATA_EXTENSIONS = %w[.lock .txt .conf .ipynb .csv].freeze
 
@@ -438,6 +446,7 @@ module Master
           # "fix" the span offered was deleting the law's own reasoning.
           def class_breach(name, nodes, lines)
             public_defs = nodes.sum { |node| CodeMetrics.public_method_count(node) }
+
             if public_defs > METHOD_LIMIT
               return "god class #{name} has #{public_defs} public methods (max #{METHOD_LIMIT}) — decompose"
             end
@@ -495,6 +504,7 @@ module Master
               body = node.body
               next unless body
               mutates = body_contains?(body, Prism::InstanceVariableWriteNode, Prism::InstanceVariableOperatorWriteNode)
+
               returns_value = body_has_explicit_return?(body)
               if mutates && returns_value && !memoized_reader?(body)
                 findings << finding(line: node.location.start_line,
@@ -560,6 +570,7 @@ module Master
         class OpenClosedLaw < Law
           MIN_BRANCHES = 3
           TYPE_PREDICATE = /\.(class|type|kind)\b/
+
           # No trailing \b. A word boundary needs a word character on one side,
           # and `?` is not one — so `\bis_a\?\b` required a word character right
           # after the question mark, which no call has: `is_a?(Header)` and
@@ -578,6 +589,7 @@ module Master
             walk(ast) do |node|
               next unless node.is_a?(Prism::CaseNode)
               next unless node.conditions.size >= MIN_BRANCHES
+
               next unless type_dispatch?(node)
               findings << finding(line: node.location.start_line,
                 message: "case dispatches on type across #{node.conditions.size} branches — new types require editing this switch; consider polymorphism or a lookup table")
@@ -608,6 +620,7 @@ module Master
             classes.each_value do |info|
               parent = classes[info[:superclass]]
               next unless parent
+
               info[:methods].each do |name, def_node|
                 parent_def = parent[:methods][name]
                 next unless parent_def
@@ -627,6 +640,7 @@ module Master
                 message: "#{sub_def.name} refuses the parent's contract (raises #{match[1]}) — use composition if substitutability fails")
             end
             sub_required = required_param_count(sub_def)
+
             parent_required = required_param_count(parent_def)
             if sub_required > parent_required
               findings << finding(line: sub_def.location.start_line,
@@ -646,6 +660,7 @@ module Master
             walk(ast) do |node|
               next unless node.is_a?(Prism::ClassNode)
               methods = {}
+
               node.body&.body&.each do |child|
                 methods[child.name] = child if child.is_a?(Prism::DefNode)
               end
@@ -671,6 +686,7 @@ module Master
               next unless node.body
               walk(node.body) do |call|
                 next unless call.is_a?(Prism::CallNode) && call.name == :new && call.receiver
+
                 const = call.receiver.slice
                 next unless const.match?(COLLABORATOR_SUFFIX)
                 next if params.include?(const.to_sym)
@@ -706,6 +722,7 @@ module Master
             findings = []
             modules.each do |name, method_count|
               next if method_count <= METHOD_LIMIT
+
               users = includers[name] || []
               next if users.size < 2
               findings << finding(line: 1,
@@ -732,6 +749,7 @@ module Master
               next unless node.is_a?(Prism::ClassNode)
               node.body&.body&.each do |child|
                 next unless child.is_a?(Prism::CallNode) && child.name == :include
+
                 arg = child.arguments&.arguments&.first
                 includers[arg.slice.to_sym] << node.name if arg
               end

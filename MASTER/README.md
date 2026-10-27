@@ -590,7 +590,6 @@ After pairing locally and granting the existing personal-memory scope with `/pri
 
 Read `personal_privacy` in `data/laws.yml` before enabling personal-device, companion or financial workflows. `Master::Ground::PersonalPermissions` is a local, default-deny ledger with expiry, immediate revocation and inspectable audit events. Personal-memory grants are bound to one paired subject; `PersonalWorkspace` and `OwnerProfile` refuse reads/writes without the exact `read and write personal profile and memory` purpose grant. Run `/privacy status`, `/privacy grant personal_memory`, or `/privacy revoke personal_memory` in a local, non-visitor paired session. An unpaired `MemoryRecord` user fact is refused rather than written to shared `data/project_context.yml`. Pairing no longer duplicates the owner label into memory before consent. These are source changes, not a claimed test pass: the Ruby suite and Android/Termux acceptance have not been run. Microphone, speech recognition, camera, location, contacts, messages, notifications, financial data/actions, purchases, deployment and destructive operations remain unintegrated and must stay disabled until their adapters enforce this policy and any native OS permission. A paired person is not automatically the operator; public visitors cannot grant. See the single repository backlog for remaining adapter integration and real-device proof.
 
-
 ## /fix architecture tournament and interaction acceptance
 
 A requested /fix targeting the repository root or an exact top-level MASTER, RAILS,

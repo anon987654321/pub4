@@ -29,6 +29,7 @@ require File.join(ROOT, "MASTER", "checks", "support", "check_autofix")
 require File.join(ROOT, "MASTER", "checks", "support", "check_result")
 require File.join(ROOT, "MASTER", "lib", "execution", "contract")
 require File.join(ROOT, "MASTER", "checks", "support", "check_ledger")
+
 require File.join(ROOT, "MASTER", "checks", "support", "flow_coverage")
 require File.join(ROOT, "MASTER", "checks", "support", "token_reads")
 require File.join(ROOT, "MASTER", "lib", "trace", "dmesg")
@@ -51,6 +52,7 @@ invalid_registry_rows = CHECKS.filter_map do |name, row|
     "#{name} must declare class: or script:"
   end
 end
+
 abort "checks: invalid registry: #{invalid_registry_rows.join("; ")}" unless invalid_registry_rows.empty?
 
 LEDGER = Deploy::CheckLedger.new
@@ -146,6 +148,7 @@ def run_script(path, args, gap: nil, timeout: SCRIPT_TIMEOUT_S)
     result.fail("#{File.basename(path)} timed out after #{timeout}s")
     return [result, e.result&.first.to_s]
   end
+
   stdout.to_s.lines.each { |line| log_retired(line.chomp) }
   result = Deploy::CheckResult.new
 
@@ -197,6 +200,7 @@ def record(name, result, duration_ms)
     verifier: "pub4-check-runner",
     scope: CHECKS_FILE,
   )
+
   LEDGER.record(
     check: name,
     outcome: result.outcome,
@@ -319,7 +323,7 @@ names.each_with_index do |name, index|
     log_retired("#{CHECK_UNIT} at #{CHECK_PARENT}: #{name} passed")
   else
     result.render
-    verdict = outcome == :errored ? 'errored, blocked nothing' : outcome
+    verdict = outcome == :errored ? "errored, blocked nothing" : outcome
     down = outcome == :inconclusive ? Deploy::FlowCoverage.down_apps(result) : []
     say(["#{name} #{verdict}", ("skipped:app-down #{down.join(',')}" unless down.empty?),
          (result.gaps.values.first&.clause if outcome == :inconclusive)].compact.join(", "))

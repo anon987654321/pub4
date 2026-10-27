@@ -9,6 +9,7 @@ module Master
         module NeedsModel
           def set_agent(agent)
             @agent = agent
+
             self
           end
 
@@ -19,8 +20,14 @@ module Master
           # [] on every file without recording why is what makes a run of
           # unscanned files read as a clean bill of health, so the skip is
           # named on the check before it is taken.
-          OFFLINE_ERRORS_PATTERN = /missing configuration|api.?key|unauthorized|no.*provider|no.*claude.*path|no.*on.*path/i.freeze
-          LANE_SILENCE_PATTERN = /\Ano lane answered \d+ calls in a row; model work is skipped for \d+ minutes\./i.freeze
+          OFFLINE_ERRORS_PATTERN = Regexp.new(
+            "missing configuration|api.?key|unauthorized|no.*provider|no.*claude.*path|no.*on.*path",
+            Regexp::IGNORECASE,
+          ).freeze
+          LANE_SILENCE_PATTERN = Regexp.new(
+            '\Ano lane answered \d+ calls in a row; model work is skipped for \d+ minutes\.',
+            Regexp::IGNORECASE,
+          ).freeze
           MAX_MODEL_CONTEXT_BYTES = Integer(ENV.fetch("MASTER_FIX_SEMANTIC_CONTEXT_MAX_BYTES", 320_000))
 
           # Never issue a semantic verdict from a clipped source prefix.
@@ -45,6 +52,7 @@ module Master
           # per-file failure was recorded per file.
           def note_model_failure(error)
             message = error.message.to_s
+
             if message.match?(LANE_SILENCE_PATTERN)
               Master::Io::QuotaCheck.skipped("semantic Laws")
               return true
@@ -62,6 +70,7 @@ module Master
           # the round cap, a third of every call during a 1,199-file scan.
           def ask_without_tools(prompt, operation:)
             previous = Fiber[:master_no_tools]
+
             Fiber[:master_no_tools] = true
             @agent.ask(prompt, operation:).to_s
           ensure
@@ -122,9 +131,10 @@ module Master
 
             prompt = complete_source_prompt(
               format(PROMPT_TEMPLATE, path: File.basename(path), lang:, code:),
-              path:
+              path:,
             )
             response = ask_without_tools(prompt, operation: :scan_adversarial)
+
             parse_findings(response)
           rescue StandardError => e
             # Missing credentials/capability and an exhausted provider are explicit
@@ -202,6 +212,7 @@ module Master
               operation = stream == :violation ? :scan_semantic_violations : :scan_semantic_opportunities
               prompt = complete_source_prompt(build_prompt(code, path, scoped, mode: stream), path:)
               response = ask_without_tools(prompt, operation:)
+
               @cache[cache_key] = parse_findings(response, scoped, mode: stream)
             end
           rescue StandardError => e
@@ -287,9 +298,18 @@ module Master
             laws = ::Law.definitions.values.select(&:enforceable?).each_with_object({}) do |law, entries|
               id = law.id.to_s.upcase
               question = law.ask.to_s.strip
-              question = "Does this artifact breach #{id} or miss an improvement implied by its repair contract?" if question.empty?
+              if question.empty?
+                question = "Does this artifact breach #{id} or miss an improvement " \
+                           "implied by its repair contract?"
+              end
+
               entries[id] = {
-                prompt: [question, "Repair contract: #{law.fix}", "Forbidden example: #{law.bad.strip}", "Compliant example: #{law.good.strip}"].join("\n"),
+                prompt: [
+                  question,
+                  "Repair contract: #{law.fix}",
+                  "Forbidden example: #{law.bad.strip}",
+                  "Compliant example: #{law.good.strip}",
+                ].join("\n"),
                 severity: law.severity,
                 mode: :both,
                 reversibility: nil,
@@ -311,8 +331,10 @@ module Master
 
               description = instance.description.to_s.strip
               description = id.tr("_", " ").downcase if description.empty?
+
               laws[id] = {
-                prompt: "#{description}. Evaluate the same requirement for a clear breach and for a concrete improvement.",
+                prompt: "#{description}. Evaluate the same requirement for a clear breach " \
+                        "and for a concrete improvement.",
                 severity: instance.severity,
                 mode: :both,
                 reversibility: nil,
@@ -322,6 +344,7 @@ module Master
                 path_exclude: nil,
               }
             end
+
             laws.freeze
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "SemanticLaw.from_law", severity: :load_bearing)
@@ -335,10 +358,13 @@ module Master
                "Find only clear breaches of the stated laws. Do not list improvements."]
             when :opportunity
               ["SEMANTIC OPPORTUNITIES", "NONE",
-               "Independently find specific improvements that better satisfy the stated laws, even when the current code is not in violation. Do not relabel existing violations as opportunities."]
+               "Independently find specific improvements that better satisfy the stated laws, " \
+               "even when the current code is not in violation. " \
+               "Do not relabel existing violations as opportunities."]
             else
               raise ArgumentError, "unknown semantic assessment mode: #{mode.inspect}"
             end
+
             rules = scoped.map { |id, axiom| "#{id}: #{axiom[:prompt]}" }.join("\n")
             <<~PROMPT
             #{heading}: review #{File.basename(path)}.
@@ -390,6 +416,7 @@ module Master
           # back where it was.
           def parse_findings(response, scoped, mode: nil)
             stream = (mode || :violation).to_sym
+
             expected_empty = stream == :opportunity ? "NONE" : "CLEAN"
             lines = response.to_s.lines.map(&:strip).reject(&:empty?)
             return [] if lines == [expected_empty]
@@ -398,7 +425,8 @@ module Master
             lines.map do |stripped|
               match = stripped.match(/\A([A-Z_][A-Z0-9_]*):(\d+):(.+)\z/)
               unless match
-                raise "semantic assessment INCONCLUSIVE: malformed #{stream} response record: #{stripped[0, 120].inspect}"
+                raise "semantic assessment INCONCLUSIVE: malformed #{stream} response record: " \
+                      "#{stripped[0, 120].inspect}"
               end
 
               law_id = match[1]
@@ -461,6 +489,7 @@ module Master
             pairs = extract_pairs(code)
             return [] if pairs.empty?
             response = @agent.ask(build_prompt(pairs, path), operation: :scan_comment_drift).to_s
+
             parse_findings(response, pairs)
           rescue StandardError => e
             # An absent CLI and an exhausted provider are explicit non-results.
@@ -494,6 +523,7 @@ module Master
             lines = code.lines
             pairs = []
             i = 0
+
             while i < lines.size && pairs.size < MAX_PAIRS_PER_FILE
               comment_start = i
               while i < lines.size && lines[i] =~ /\A\s*#/
@@ -507,11 +537,12 @@ module Master
               end
               i += 1
             end
+
             pairs
           end
 
-          def format_pair(p, idx)
-            "[#{idx}] line #{p[:line]}\nCOMMENT: #{p[:comment]}\nCODE:\n#{p[:body]}"
+          def format_pair(pair, idx)
+            "[#{idx}] line #{pair[:line]}\nCOMMENT: #{pair[:comment]}\nCODE:\n#{pair[:body]}"
           end
 
           def build_prompt(pairs, path)
@@ -535,6 +566,7 @@ module Master
               pair_index = match[1].to_i
               pair = pairs[pair_index]
               next unless pair
+
               finding(line: pair[:line], message: "comment drift — #{match[2].strip}")
             end
           end

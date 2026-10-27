@@ -64,6 +64,7 @@ module Deploy
         errors:,
         duration_ms:,
       }
+
       if verification
         raise ArgumentError, "verification receipt must be a Hash" unless verification.is_a?(Hash)
 

@@ -41,6 +41,7 @@ module Master
           @stimulus_limits ||= begin
             entry = Master.law_entries(root: Master::ROOT)
                           .find { |r| r["id"].to_s.upcase == "STIMULUS_CONTROLLER_SIZE" }
+
             config = entry && entry["detect_structural"]
             config.is_a?(Hash) ? config : {}
           end
@@ -62,6 +63,7 @@ module Master
           # value is prose, and its continuation lines do not start with * .
           without_block_comments(src).each_line.with_index(1) do |line, num|
             next if line.strip.start_with?("//", "/*", "*")
+
             # Allow a suppressed shadow — `none`, or an all-zero value. The old
             # pattern matched `0\s`, which is the first token of every real
             # shadow too: `box-shadow: 0 2px 8px rgba(0,0,0,.3)` was skipped as
@@ -91,11 +93,13 @@ module Master
           fires: "ctx.imageSmoothingEnabled = true;\n",
           does_not_fire: "ctx.imageSmoothingEnabled = false;\n" do |src, path:|
           findings = []
+
           if path.to_s.match?(/\.(js|ts)\z/) || File.basename(path.to_s).match?(/face/)
             src.each_line.with_index(1) do |line, num|
               if line.match?(/imageSmoothingEnabled\s*=\s*true/i)
                 findings << finding(line: num, message: "imageSmoothingEnabled=true — pixel field requires false (integer scale)")
               end
+
               # `particle` is out of this list. bloom, scanline, vaporwave and crt
               # name decorative effects a flat surface does not want; a particle
               # is a rendering primitive, and this product's face is built from
@@ -110,6 +114,7 @@ module Master
               end
             end
           end
+
           findings
         end
 
@@ -135,6 +140,7 @@ module Master
             match = Regexp.last_match
             selector = match[1].strip
             body = match[2]
+
             next unless selector.match?(/(?:grid|cards|items|results|columns|layout|feed)\b/i)
             next unless selector.match?(/>\s*\*/)
             next unless body.match?(/\bposition\s*:\s*absolute\b/i)
@@ -165,6 +171,7 @@ module Master
           findings = []
           src.each_line.with_index(1) do |line, num|
             next if line.strip.start_with?("//", "/*", "*")
+
             # (?<![\w-]) so a property name is not matched inside a longer one.
             # Without it `border-bottom-width: 1px` matched as `bottom-width` and
             # a one-pixel border was reported as spacing off the rhythm — which is
@@ -176,6 +183,7 @@ module Master
 
               findings << finding(line: num, message: "#{px}px spacing off 8px rhythm — use #{allowed.select { |n| n.between?(px - 8, px + 8) }.join('/')} (design_rules)")
             end
+
             # Token *definitions* (e.g. --space-7: 1.75rem), not just call
             # sites — a usage-only scan is structurally blind to a bad value
             # baked into the token itself, and rem needs converting to px
@@ -184,6 +192,7 @@ module Master
             # invisible to the px-only usage scan above.
             line.scan(/--[\w-]*(?:space|gap)[\w-]*\s*:\s*(-?[\d.]+)(px|rem)\b/i) do |value, unit|
               px = unit.downcase == "rem" ? (value.to_f * 16).round : value.to_i.abs
+
               next if allowed.include?(px) || px.zero?
               next if px % 4 == 0 && px <= 96
 
@@ -245,6 +254,7 @@ module Master
           button_re = Master::Fix::Scan::AstFixer::WebTransforms::TOUCH_SELECTOR
           findings = []
           current_selector = ""
+
           src.each_line.with_index(1) do |line, num|
             # Standard SCSS puts the selector and its width/height on
             # separate lines (`.carousel-btn {` then `width: 12px;` on the
@@ -255,6 +265,7 @@ module Master
             # doesn't handle deep nesting (e.g. `&:hover {}` losing outer
             # context), but covers the common flat-block case.
             current_selector = line if line.include?("{")
+
             next unless line.match?(/min-(?:width|height)|height|width/i)
             next unless "#{current_selector}\n#{line}".match?(button_re) ||
                         (line.match?(/min-height|height/) && path.to_s.include?("button"))
@@ -280,6 +291,7 @@ module Master
 
           max = ::Master::Review::Scan::Laws.thresholds.max_visible_choices.to_i
           findings = []
+
           # count sibling <li> or nav links in a single block
           #
           # A bare <ul> is not a choice surface. Hick's law is about how long it
@@ -290,14 +302,17 @@ module Master
           # <select> are choice surfaces by definition and still count; a <ul> only
           # counts when it says it is one.
           menu_ul = /<ul[^>]*(?:role=["']menu|class=["'][^"']*(?:menu|nav|tabs|filters))/i
+
           src.scan(/<(?:ul|nav|select)[^>]*>(.*?)<\/(?:ul|nav|select)>/im) do |body|
             chunk = body[0].to_s
+
             # From the character BEFORE the body, or rindex answers with the
             # body's own first `<`: a chunk that opens `<li>` made every plain
             # <ul> look like a <li> and skipped the exemption below, which is
             # the whole reason this rule reads the opening tag. Found by its own
             # worked example, 2026-09-06.
             start = src.index(chunk)
+
             opening = src[start ? (src.rindex("<", [start - 1, 0].max) || 0) : 0, 200].to_s
             next if opening.start_with?("<ul") && !opening.match?(menu_ul)
             count = chunk.scan(/<li\b/i).size
@@ -318,6 +333,7 @@ module Master
             # the real count statically, so this is advisory, not a hard
             # count — skip if the block already shows a grouping signal.
             next unless count <= 1 && chunk.match?(/<%[-=]?\s*[\w."'\[\]]+\.each(?:_with_index)?\s+do\s*\|/)
+
             next if chunk.match?(/role=["']group["']|data-controller=["'][^"']*(?:group|collapse|disclosure)/i)
             next if chunk.scan(/\.each(?:_with_index)?\s+do\s*\|/).size > 1 # already chunked into sub-groups
 
@@ -332,6 +348,7 @@ module Master
           does_not_fire: %(<form class="settings">\n<details><summary>Advanced</summary>\n<input name=\"f1\">\n<input name=\"f2\">\n<input name=\"f3\">\n<input name=\"f4\">\n<input name=\"f5\">\n<input name=\"f6\">\n</details>\n</form>\n),
           description: "advanced controls should not dump all options at once" do |src, path:|
           next [] unless path.to_s.include?("/app/views/") || path.to_s.include?("web/")
+
           # "Dumping all options at once" needs options to dump. This fired on any
           # view containing the word settings/options/advanced anywhere — a link
           # label, a translation key, a URL — so a community's edit page and a
@@ -351,6 +368,7 @@ module Master
           does_not_fire: ".card { gap: var(--sp); }\n",
           description: "ma — breathing room via gap/section spacing tokens" do |src, path:|
           next [] unless ::Master::Review::Scan::Laws.ui_path?(path)
+
           # The keyword has to be a selector this file styles, not a word anywhere
           # in it. brgen's application.scss is a list of @use lines and nothing
           # else; it was reported for lacking section spacing because one of the
@@ -393,6 +411,7 @@ module Master
             next if hex.empty?
             # crude: light gray text
             next unless hex.match?(/\A([ef]{3}|[ef]{6}|ccc|ddd|eee)\z/i)
+
             # …but light text is only low-contrast against a light background, and
             # this read the foreground alone. #navBar declares `background-color:
             # #131921` and `color: #fff` on adjacent lines — white on near-black,
@@ -440,6 +459,7 @@ module Master
               )
             end
           end
+
           findings
         end
 
@@ -520,6 +540,7 @@ module Master
           # observers, which are correctly divs. Element-scoped click/keydown on a
           # bare div is the case this rule is actually about.
           activation = /onclick|data-action="[^"]*(?<!@window|@document)\b(?:click|keydown|keyup)->/i
+
           scan_lines(src, /<(div|span)[^>]*#{activation}[^>]*>/i,
             message: "interactive div/span — use <button> or explicit role+tabindex+keyboard handler")
         end
@@ -624,6 +645,7 @@ module Master
         def method_body_end_line(lines, start)
           depth = 0
           j = start
+
           while j < lines.size
             depth += lines[j].scan(/\b(do|def|class|module|if|unless|begin|case)\b/).size
             depth -= lines[j].scan(/\bend\b/).size
@@ -646,6 +668,7 @@ module Master
           # fat action: many lines between def and end of public action methods
           lines = src.lines
           i = 0
+
           while i < lines.size
             if lines[i].match?(/^\s*def\s+\w+/)
               start = i
@@ -664,6 +687,7 @@ module Master
               i += 1
             end
           end
+
           findings
         end
 
@@ -675,6 +699,7 @@ module Master
           does_not_fire: "  before_validation :normalise_slug\n  after_commit :broadcast\n",
           example_path: "/repo/app/models/example.rb" do |src, path:|
           next [] unless path.to_s.include?("/models/")
+
           count = src.scan(/^\s*(?:before|after|around)_(?:validation|save|create|update|destroy|commit)/).size
           next [] if count <= 5
           [finding(line: 1, message: "#{count} AR callbacks — prefer services/events over callback soup")]
@@ -687,6 +712,7 @@ module Master
           does_not_fire: %(<%= tag.p @post.title %>\n) do |src, path:|
           next [] unless path.to_s.include?("/app/views/") && path.to_s.end_with?(".erb")
           findings = []
+
           src.each_line.with_index(1) do |line, num|
             if line.match?(/<(?:p|div|span|h[1-6])[^>]*>\s*<%=\s*(?!tag\.|content_tag|link_to|button_to|image_tag|t\(|translate)/)
               findings << finding(line: num, message: "raw HTML around <%= — prefer tag.p / content_tag per rails_conventions")
@@ -703,6 +729,7 @@ module Master
           fires: "export default class extends Controller {\n#{"  step();\n" * 199}}\n",
           does_not_fire: "export default class extends Controller {\n  connect() {}\n}\n" do |src, path:|
           limits = ::Master::Review::Scan::Laws.stimulus_limits
+
           max = limits.fetch("max_lines", 200).to_i
           # The declared pattern is Stimulus's own naming convention, so it is
           # narrower than the guess it replaces and finds the same four files in
@@ -721,6 +748,7 @@ module Master
           fires: %(<div data-controller="map"></div>\n),
           does_not_fire: %(<div data-controller="map"><a href="/kart">Kart</a></div>\n) do |src, path:|
           next [] unless path.to_s.include?("/app/views/")
+
           next [] unless src.match?(/data-controller=/)
           next [] if src.match?(/<form\b|<a\s+href=|<button\b/i)
           [finding(line: 1, message: "Stimulus island without form/link fallback — progressive enhancement")]
@@ -734,6 +762,7 @@ module Master
           does_not_fire: %(<%= render @posts %>\n) do |src, path:|
           next [] unless path.to_s.include?("/app/views/") && path.to_s.end_with?(".erb")
           findings = []
+
           src.each_line.with_index(1) do |line, num|
             next unless line.include?("<%")
             if line.match?(/<%[^=].*\b(?:each|map|select|where|find|create|update|destroy|save!)\b/)
@@ -750,6 +779,7 @@ module Master
           fires: "def recent_posts\n  Post.where(published: true)\nend\n",
           does_not_fire: "def title_for(post)\n  post.title.upcase\nend\n" do |src, path:|
           next [] unless path.to_s.include?("/helpers/")
+
           next [] unless src.match?(/\b(?:ActiveRecord|ApplicationRecord|\.where\(|\.find\()/)
           [finding(line: 1, message: "AR access in helper — helpers format only; queries belong in models")]
         end
@@ -762,8 +792,10 @@ module Master
           fires: ".a {\n  .b {\n    .c {\n      .d {\n        .e {\n          color: red;\n        }\n      }\n    }\n  }\n}\n",
           does_not_fire: ".a {\n  .b {\n    color: red;\n  }\n}\n" do |src, path:|
           next [] unless ::Master::Review::Scan::Laws.rails_path?(path) || path.to_s.include?("/assets/")
+
           max = 0
           depth = 0
+
           src.each_line do |line|
             depth += line.count("{")
             depth -= line.count("}")
@@ -781,6 +813,7 @@ module Master
           fires: "<html>\n<head><title>Brgen</title></head>\n</html>\n",
           does_not_fire: %(<html>\n<head><link rel="manifest" href="/manifest.json"></head>\n</html>\n) do |src, path:|
           next [] unless path.to_s.match?(/layout|application\.html|manifest/i)
+
           if path.to_s.end_with?(".erb", ".html") && src.match?(/<html/i)
             next [] if src.match?(/rel=["']manifest["']|webmanifest/i)
             [finding(line: 1, message: "layout missing web app manifest link (PWA convention)")]

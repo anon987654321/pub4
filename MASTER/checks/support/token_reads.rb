@@ -27,6 +27,7 @@ module Deploy
     class Map < Hash
       def initialize(values = {}, path = [])
         super()
+
         @path = path
         values.each do |key, value|
           self[key] = wrap_value(value, @path + [key])
@@ -102,6 +103,7 @@ module Deploy
         report.fail("token_reads: a check read #{key} and tokens.yml has no such key; the check that needs it measured nothing")
       end
       stale.each { |key| report.fail("token_reads: #{key} is set in tokens.yml and still declared unset in TokenReads::UNSET") }
+
       (missed & UNSET.keys).each { |key| report.warn("token_reads: #{key} unset: #{UNSET.fetch(key)}") }
       report
     end

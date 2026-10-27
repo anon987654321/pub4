@@ -7,6 +7,7 @@ require_relative "support/utf8"
 require "json"
 require "digest"
 require_relative "support/cdp_session"
+
 require_relative "support/geometry_probe"
 require "fileutils"
 require "uri"
@@ -118,6 +119,7 @@ module VisualContractCheck
     baseline_pixels = baseline.pixels
     current_pixels = current.pixels
     diff_count = baseline_pixels.each_index.count { |i| baseline_pixels[i] != current_pixels[i] }
+
     if diff_count.positive?
       pixels = Array.new(baseline_pixels.length) do |i|
         baseline_pixels[i] == current_pixels[i] ? ChunkyPNG::Color::TRANSPARENT : ChunkyPNG::Color.rgba(255, 0, 64, 255)
@@ -139,6 +141,7 @@ module VisualContractCheck
   #   drift — reported always; a rolling baseline makes any intended change drift.
   def grade(results, strict: false, drift_max: nil)
     drift_max = normalize_drift_max(drift_max) unless drift_max.nil?
+
     hard = []
     soft = []
 
@@ -223,11 +226,13 @@ module VisualContractCheck
         width, height = cell[:dimensions]
         cdp.viewport(width, height, mobile: width < 500)
         cdp.headers(Deploy::GeometryProbe::PROBE_HEADERS)
+
         cdp.clear_cookies
         cdp.clear_events
         url = URI.join(base, cell[:route]).to_s
         cdp.navigate(url)
         slug = [cell[:app], cell[:state], cell[:viewport]].join("-")
+
         screenshot = File.join(output, "#{slug}.png")
         baseline_bytes = File.binread(screenshot) if File.file?(screenshot)
         cdp.evaluate(mask_script)
@@ -251,6 +256,7 @@ module VisualContractCheck
         }
       end
     end
+
     results
   rescue Deploy::CdpSession::Unavailable, Deploy::CdpSession::Error, SystemCallError => e
     raise CannotMeasure, "could not measure with Chrome/CDP (#{e.class}: #{e.message})"
@@ -265,6 +271,7 @@ end
 return unless $PROGRAM_NAME == __FILE__
 
 rows = VisualContractCheck.validate!
+
 unless ARGV.delete("--capture")
   # Exit 3, not 0. Without --capture this run reads the matrix declaration and
   # navigates nothing: no screenshot, no status, no drift. It reported that as a
@@ -287,6 +294,7 @@ app_i = ARGV.index("--app")
 base_i = ARGV.index("--base")
 app = (app_i && ARGV[app_i + 1]) || abort("--app brgen|amber|bsdports required")
 base = (base_i && ARGV[base_i + 1]) || abort("--base URL required")
+
 results = begin
   VisualContractCheck.capture(base:, app:)
 rescue VisualContractCheck::CannotMeasure => e
@@ -316,6 +324,7 @@ verdict = VisualContractCheck.grade(
 # clean pass, and Chrome-absent is the normal state on a machine that has not
 # booted the apps. 3 is the runner's code for inconclusive.
 measured = results.count { |row| row[:status].to_i.positive? }
+
 if measured.zero?
   warn "visual_contract: no state navigated (#{results.length} attempted) — Chrome and a booted app are required"
   warn "visual_contract: nothing measured, so nothing is claimed"
@@ -331,6 +340,7 @@ unless duplicates.empty?
   warn "visual_contract: states that captured an identical page from different routes —"
   duplicates.each do |(viewport, sha), rows|
     cells = rows.map { |row| "#{row[:state]}(#{row[:route]})" }.join(" ")
+
     warn "  #{viewport} #{sha[0, 8]}: #{cells}"
   end
   warn "visual_contract: those cells measured nothing of their own"

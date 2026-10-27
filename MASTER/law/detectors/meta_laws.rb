@@ -95,6 +95,7 @@ module Master
           def subclasses(code)
             code.enum_for(:scan, /^\s*class (\w+Law) < Law\b/).map do
               name = Regexp.last_match(1)
+
               [name, code[Regexp.last_match.end(0), 2000][/declare\s+id:\s*["']([\w.]+)["']/, 1]]
             end
           end
@@ -133,6 +134,7 @@ module Master
           fires: "# a runtime doc that should have been YAML\n",
           description: "runtime-read docs must be YAML — forbid stray .md under data/" do |_src, path:|
           rel = RuntimeDocsPaths.data_relative(path)
+
           next [] unless rel&.start_with?("data/") && rel.end_with?(".md")
 
           allowed = %w[
@@ -210,11 +212,13 @@ module Master
             # was first written for had to see the raw line or every comment would
             # read as trailing space.
             source = smell["skip_comments"] ? code_only(code) : code
+
             source.each_line.with_index(1).filter_map do |line, line_number|
               next if line.match?(/scan:\s*intentional\b/)
               next unless line.match?(pattern)
 
               law_id = smell["id"].to_s
+
               Finding.build(
                 law: law_id.empty? ? @id : law_id,
                 message: smell_message(smell),
@@ -243,6 +247,7 @@ module Master
           # bracket, a comma, an operator or the line start — because `ms / 60 /
           # 60` has two slashes and no regex.
           QUOTED = /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\\n]|\\.)*`/
+
           REGEX_OPERAND = /(?:^|(?<=[(\[{,=~!|&;:])|(?<=[(\[{,=~!|&;:]\s))\/(?:[^\/\\\n]|\\.)+\/[mixo]*|%r\{[^}\n]*\}[mixo]*/
           TRAILING_COMMENT = /\s(?:#|\/\/)\s[^\n]*|\/\*[^\n]*?\*\//
           SLICE_BOUND = /(?<=[\w\])])\[\s*-?\d+\s*(?:,\s*-?\d+\s*|\.\.\.?\s*-?\d*\s*)?\]|\.(?:first|last|take|truncate)\(\s*\d+\s*\)/
@@ -463,6 +468,7 @@ module Master
           def owned
             @owned ||= begin
               y = Master.load_yaml(File.join(@root, "PATH_OWNERSHIP.yml")) || {}
+
               Array((y["ownership"] || {}).keys)
             rescue StandardError => e
               # An unreadable ownership file must not retire the whole corpus:
@@ -495,6 +501,7 @@ module Master
             # rather than every level beneath it: web/ once, not web/app/,
             # web/app/models/ and eleven more under it.
             top = shallowest_gap(dir)
+
             # The repair is an entry in PATH_OWNERSHIP.yml, never an edit to the
             # file the finding lands on, so the one-file repair loop hands it on.
             [finding(line: 1, message: "PATH_PURPOSE: #{top}/ has no entry in PATH_OWNERSHIP.yml — " \

@@ -9,6 +9,7 @@ module Master
         # would rebuild them every time.
         module CosmeticRuleSupport
           LITERAL_QUOTE_CALLS = %w[require require_relative gem].freeze
+
           MEANING_CHANGES_RE = Regexp.union('"', "\\", '#{', "\#$", "\#@")
 
           # True for a single-quoted string literal whose content means the
@@ -43,6 +44,7 @@ module Master
 
         ABBREV_IDENT_RE = /\b(?:def|class|module|\|)\s+.*\b(tmp|idx|cfg|ctx|num|val|obj|str|arr|buf|temp|ret)\b/.freeze
         EN_DASH_RANGE_RE = /\b\d+\s?-\s?\d+\b/.freeze
+
         # Three things wear the shape of a range without being one, and this tree is
         # full of all three: an ISO date is a single day, a model or version id is a
         # name, and a hyphen inside a regex character class or a code span is syntax.
@@ -53,6 +55,7 @@ module Master
         # a range. CSS specificity is written 0-1-0 and reads as two ranges to a
         # two-number pattern.
         EN_DASH_NOT_A_RANGE = %r{`[^`]*`|\b\d+(?:-\d+){2,}\b|\b\d{4}-\d{2}(?:-\d{2})?\b|\[[^\]]*\]|[A-Za-z][\w.]*-\d[\w.]*(?:-[\w.]+)*}.freeze
+
         # In YAML a mapping line's value is data, and a hyphen in data is a
         # character some reader parses. Measured over the tracked markdown and
         # YAML: 39 findings, of which 32 were mapping values — 28 of those
@@ -124,6 +127,7 @@ module Master
               findings << finding(line: node.location.start_line,
                 message: "nested ternary — expand to if/elsif/else or case")
             end
+
             node.child_nodes.compact.each { |child| walk.call(child) }
           end
           walk.call(result.value)
@@ -136,6 +140,7 @@ module Master
           does_not_fire: "def call(temporary_path)\nend\n",
           description: "spell identifiers in full — no tmp/idx/cfg/ctx" do |src, path:|
           next [] if path.to_s.include?("/law/detectors/")
+
           src.each_line.with_index(1).filter_map do |line, number|
             next if line.strip.start_with?("#", "//")
             next unless line.match?(ABBREV_IDENT_RE)
@@ -193,10 +198,12 @@ module Master
           does_not_fire: "The band is 45–75 wide.\n",
           description: "numeric ranges use en dash not hyphen" do |src, path:|
           next [] if path.to_s.include?("/law/detectors/")
+
           next [] if path.end_with?(".rb", ".js", ".css", ".scss")
           data_file = path.end_with?(".yml", ".yaml")
           src.each_line.with_index(1).filter_map do |line, number|
             stripped = line.strip
+
             next if stripped.start_with?("#", "//", "detect_lexical:", "- id:")
             next unless stripped.gsub(EN_DASH_NOT_A_RANGE, " ").match?(EN_DASH_RANGE_RE)
             next if stripped.match?(/^\s*-\s+\w/) # YAML list item
@@ -262,6 +269,7 @@ module Master
         # train people to delete the comments that earn their place.
         COMMENT_STOPWORDS = %w[the and for that with not its this are was were does def end
                                self new nil true false].freeze
+
         COMMENT_RESTATEMENT_FLOOR = 3
         COMMENT_RESTATEMENT_RATIO = 0.75
 
@@ -303,6 +311,7 @@ module Master
           does_not_fire: "a = 1\n\nb = 2\n",
           description: "vertical breath — avoid dense blocks of 10+ lines without a blank line" do |src, path:|
           next [] if path.to_s.include?("/law/detectors/")
+
           findings = []
           lines = src.lines
           dense_count = 0
@@ -319,6 +328,7 @@ module Master
               dense_count += 1
             end
           end
+
           # A dense block that reaches end of file without a trailing blank
           # line misses the check above — every file that reaches EOF mid-block
           # (the common case) went unreported.
@@ -334,16 +344,19 @@ module Master
           does_not_fire: "def foo\n  return true\nend\n",
           description: "source symmetry — avoid jagged indentation shifts" do |src, path:|
           next [] if path.to_s.include?("/law/detectors/")
+
           findings = []
           lines = src.lines
           lines.each_with_index.each_slice(2) do |pair|
             next unless pair.size == 2
             l1, l2 = pair[0][0], pair[1][0]
+
             line2_number = pair[1][1]
             # a jagged shift is a sudden jump of 4+ spaces for a single line
             indent1 = l1[/\A\s*/].size
             indent2 = l2[/\A\s*/].size
             l2_stripped = l2.strip
+
             if (indent1 - indent2).abs >= 4 && l2_stripped.size < 40 && l2_stripped.match?(/^(?:return|break|next|raise)/)
               findings << finding(line: line2_number + 1, message: "jagged symmetry — align this line with its block")
             end
@@ -360,6 +373,7 @@ module Master
           next [] if path.to_s.include?("/law/detectors/")
           findings = []
           lines = src.lines
+
           lines.each_with_index do |line, n|
             # Bringhurst's ideal measure is ~66 characters; we allow 100 for technical prose
             if line.size > 100 && !line.match?(/\A\s*`.*`\s*\z/)
@@ -377,6 +391,7 @@ module Master
           description: "a README is prose — a bold visionary opening, tables never, code only under the final heading" do |src, path:|
           next [] unless path.to_s.end_with?("README.md")
           findings = []
+
           lines = src.lines
           # A demonstration — a terminal transcript, one prized source excerpt —
           # earns its place once the argument is made, under the closing heading.
@@ -385,6 +400,7 @@ module Master
           last_heading = lines.rindex { |line| line.start_with?("## ") } || -1
           lines.each_with_index do |line, index|
             findings << finding(line: index + 1, message: "a code block interrupts the prose — a demonstration belongs under the final heading, not mid-argument") if line.start_with?("```") && index < last_heading
+
             findings << finding(line: index + 1, message: "README carries a table — say it in a sentence") if line.match?(/\A\s*\|.*\|\s*\z/)
           end
           lead = src.sub(/\A#\s+[^\n]+\n+/, "").lstrip
@@ -392,6 +408,7 @@ module Master
           # title and the opening line — skip it before checking the opening is
           # bold, so the face can lead the page and the prose still has to.
           lead = lead.sub(HERO, "").lstrip
+
           findings << finding(line: 1, message: "README opening is not bold — lead with one bold, visionary sentence") unless lead.empty? || lead.start_with?("**")
           findings
         end
