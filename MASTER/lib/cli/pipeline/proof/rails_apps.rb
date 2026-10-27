@@ -30,15 +30,16 @@ module Master
 
           def apps_for(paths, repo_root:)
             named = Master::Fix::RailsApp.named_apps(repo_root:)
+            engine = Master::Fix::RailsApp.engine_apps(repo_root:)
             paths.each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |path, apps|
-              owners(path, named).each { |app| apps[app] << path }
+              owners(path, named:, engine:).each { |app| apps[app] << path }
             end
           end
 
-          def owners(path, named)
+          def owners(path, named:, engine:)
             component = path[%r{\ARAILS/([^/]+)/}, 1]
             return [] unless component
-            return named if component == "__shared"
+            return engine if component == "__shared"
             return ["brgen"] if component.start_with?("brgen_") && named.include?("brgen")
 
             named.include?(component) ? [component] : []

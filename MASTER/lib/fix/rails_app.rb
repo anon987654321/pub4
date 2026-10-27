@@ -40,6 +40,15 @@ module Master
         YAML.safe_load_file(registry, aliases: true).fetch("apps").keys.map(&:to_s).sort.freeze
       end
 
+      # The registered apps that mount the shared engine (RAILS/__shared, gem "pub4-shared"). master
+      # is registered and loads none of it, so a shared-engine change is not proved there.
+      def self.engine_apps(repo_root:)
+        named_apps(repo_root:).select do |name|
+          gemfile = File.join(File.expand_path(repo_root), "RAILS", name, "Gemfile")
+          File.file?(gemfile) && File.read(gemfile).include?('gem "pub4-shared"')
+        end
+      end
+
       def self.app_name(target, repo_root:)
         name = relative_path(target, repo_root:)&.match(%r{\ARAILS/([^/]+)(?:/|\z)})&.captures&.first
         name if name && named_apps(repo_root:).include?(name)

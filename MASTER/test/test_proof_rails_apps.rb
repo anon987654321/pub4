@@ -13,7 +13,8 @@ class TestProofRailsApps < Minitest::Test
   def test_a_path_is_proved_in_the_app_that_loads_it
     assert_equal %w[brgen], owners("RAILS/brgen/app/models/bookmark.rb")
     assert_equal %w[brgen], owners("RAILS/brgen_dating/app/models/dating/daily_pick.rb")
-    assert_equal Master::Fix::RailsApp.named_apps(repo_root: ROOT).sort, owners("RAILS/__shared/app/models/x.rb")
+    assert_equal %w[amber brgen bsdports], owners("RAILS/__shared/app/models/x.rb")
+    assert_equal %w[master], owners("RAILS/master/app/controllers/dashboard_controller.rb")
     assert_empty owners("RAILS/apps.yml")
   end
 
