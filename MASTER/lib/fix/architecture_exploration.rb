@@ -145,7 +145,7 @@ module Master
         report
       rescue StandardError => error
         publish("fix_loop:architecture_exploration_inconclusive",
-          target: target.to_s, reason: safe_reason(error), error_class: error.class.name)
+          target: relative_target(target), reason: safe_reason(error), error_class: error.class.name)
         report = {
           "schema_version" => 2,
           "status" => "INCONCLUSIVE",

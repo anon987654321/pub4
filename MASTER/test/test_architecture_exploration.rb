@@ -37,6 +37,18 @@ class TestArchitectureExploration < Minitest::Test
     end
   end
 
+  class FakeBus
+    attr_reader :events
+
+    def initialize
+      @events = []
+    end
+
+    def publish(event, payload = {})
+      @events << [event, payload]
+    end
+  end
+
   class FakeAgent
     attr_reader :prompts
     def initialize(reply)
@@ -203,6 +215,33 @@ class TestArchitectureExploration < Minitest::Test
       assert_equal 30, result.fetch("targets").first.fetch("candidates").size
       assert_equal 30, result.fetch("targets").last.fetch("candidates").size
       assert_equal "COMPLETE", journal.writes.last.fetch("status")
+    end
+  end
+
+  def test_invalid_saved_receipt_uses_a_relative_target_in_failure_telemetry
+    Dir.mktmpdir("architecture-receipt-privacy") do |root|
+      %w[MASTER RAILS OPENBSD STUDIO].each { |name| FileUtils.mkdir_p(File.join(root, name)) }
+      journal = FakeJournal.new
+      journal.define_singleton_method(:verify_architecture_report) do |_run_id|
+        { "status" => "checksum_mismatch" }
+      end
+      bus = FakeBus.new
+      agent = FakeAgent.new("this must not be asked")
+      explorer = Master::Fix::ArchitectureExploration.new(
+        root: root, agent: agent, bus: bus, candidate_count: 30,
+        run_journal: journal, run_id: "c" * 20
+      )
+
+      result = explorer.run(target: root, files: [])
+
+      assert_equal "INCONCLUSIVE", result.fetch("status")
+      event = bus.events.find { |name, _payload| name == "fix_loop:architecture_exploration_inconclusive" }
+      # The production event bus receives the same payload. An absolute workspace
+      # path is not needed to understand this failure and should never be emitted.
+      assert event, "an invalid saved receipt must emit an inconclusive lifecycle event"
+      assert_equal ".", event.last.fetch(:target)
+      refute_includes event.last.fetch(:target), root
+      assert_empty agent.prompts, "tampered evidence must be refused before model work"
     end
   end
 
