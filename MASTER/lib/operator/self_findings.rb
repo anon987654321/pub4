@@ -303,6 +303,29 @@ module Operator
 
     def recorded_members(name = "law") = Array(recorded[KEYS.fetch(name)[:members]])
 
+    # The stored total, per-rule tally and member list are written atomically by
+    # rewritten_ceiling. If they disagree, attribution is not trustworthy even
+    # when the current finding count is below its ceiling.
+    def baseline_integrity_errors(name = "law")
+      total = ceiling(name)
+      members = recorded_members(name).size
+      counts = recorded_by_rule(name).values
+      errors = []
+      unless total.is_a?(Integer) && total >= 0
+        errors << "stored total must be a nonnegative integer (got #{total.inspect})"
+        return errors
+      end
+
+      errors << "stored total #{total} != member count #{members}" unless total == members
+      if counts.any? { |count| !count.is_a?(Integer) || count.negative? }
+        errors << "per-rule counts must be nonnegative integers"
+      else
+        by_rule_total = counts.sum
+        errors << "per-rule total #{by_rule_total} != member count #{members}" unless by_rule_total == members
+      end
+      errors
+    end
+
     # A recorded member is stale if its file/line disappeared OR the current
     # lexical/registry census no longer emits that exact Law path:line. Checking
     # only line existence missed deleted findings when a neighboring line remained.
@@ -391,17 +414,23 @@ module Operator
       # populations still fit their existing ceilings, and never ratchet away
       # an actual increase in findings.
       if ratchet
-        stale = POPULATIONS.any? { |name| stale_recorded_members(name).any? }
-        within_ceilings = POPULATIONS.all? { |name| population(name).size <= ceiling(name) }
-        return record if stale && within_ceilings
+        needs_refresh = POPULATIONS.any? do |name|
+          stale_recorded_members(name).any? || baseline_integrity_errors(name).any?
+        end
+        within_ceilings = POPULATIONS.all? do |name|
+          baseline = ceiling(name)
+          baseline.is_a?(Integer) && population(name).size <= baseline
+        end
+        return record if needs_refresh && within_ceilings
 
-        if stale && !within_ceilings
+        if needs_refresh && !within_ceilings
+          warn "self_findings: refusing to refresh stale/inconsistent attribution when a population exceeds its valid ceiling"
           POPULATIONS.each do |name|
             current = population(name).size
             baseline = ceiling(name)
-            next unless current > baseline
+            next unless baseline.is_a?(Integer) && current > baseline
 
-            warn "self_findings #{name}: refusing to refresh stale attribution while findings exceed baseline — #{current} > #{baseline}"
+            warn "self_findings #{name}: findings exceed baseline — #{current} > #{baseline}"
           end
         end
       end
@@ -423,12 +452,15 @@ module Operator
       counts = tally(current)
       puts "self_findings #{name}: #{current.size} across #{files.size} files from #{rules_behind(name)} rules"
       counts.first(10).each { |id, n| puts format("  %-26s %5d", id, n) }
+      integrity_errors = baseline_integrity_errors(name)
+      integrity_errors.each { |message| warn "self_findings #{name}: inconsistent baseline — #{message}" }
       stale = stale_recorded_members(name)
       unless stale.empty?
         warn "self_findings #{name}: #{stale.size} recorded member(s) stale — fresh attribution required"
         stale.first(20).each { |member| warn "  stale: #{member}" }
         return false
       end
+      return false unless integrity_errors.empty?
       return true unless current.size > ceiling(name)
 
       warn "self_findings #{name}: exceeds baseline — #{current.size} > #{ceiling(name)}"

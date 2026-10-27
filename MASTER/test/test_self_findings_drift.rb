@@ -175,7 +175,7 @@ class TestSelfFindingsDrift < Minitest::Test
           Tool.stub(:ceiling, ->(name = "law") { ceilings.fetch(name) }) do
             Tool.stub(:record, -> { records += 1; true }) do
               _stdout, stderr = capture_io { refute Tool.run(ratchet: true) }
-              assert_match(/refusing to refresh stale attribution while findings exceed baseline/, stderr)
+              assert_match(/refusing to refresh stale\/inconsistent attribution/, stderr)
             end
           end
         end
@@ -206,6 +206,70 @@ class TestSelfFindingsDrift < Minitest::Test
   # counted the 145 rules the scanner builds. Both baselines live in one file,
   # the registry's under a prefix, so every reader here is the same reader with
   # an argument.
+  def test_baseline_integrity_checks_total_rule_tally_and_member_count
+    with_baseline({
+      "findings" => 3,
+      "by_rule" => { "RULE_A" => 1 },
+      "finding_members" => ["RULE_A a.rb:1", "RULE_A b.rb:2"],
+      "registry_findings" => 4,
+      "registry_by_rule" => { "RULE_B" => 3 },
+      "registry_finding_members" => ["RULE_B c.rb:1"],
+    }) do
+      law_errors = Tool.baseline_integrity_errors("law")
+      assert_includes law_errors, "stored total 3 != member count 2"
+      assert_includes law_errors, "per-rule total 1 != member count 2"
+
+      registry_errors = Tool.baseline_integrity_errors("registry")
+      assert_includes registry_errors, "stored total 4 != member count 1"
+      assert_includes registry_errors, "per-rule total 3 != member count 1"
+    end
+  end
+
+  def test_ratchet_repairs_inconsistent_attribution_only_when_current_counts_fit
+    records = 0
+    current = { "law" => Array.new(10), "registry" => Array.new(5) }
+    ceilings = { "law" => 10, "registry" => 5 }
+
+    Tool.stub(:report, false) do
+      Tool.stub(:stale_recorded_members, []) do
+        Tool.stub(:baseline_integrity_errors, ["baseline mismatch"]) do
+          Tool.stub(:population, ->(name) { current.fetch(name) }) do
+            Tool.stub(:ceiling, ->(name = "law") { ceilings.fetch(name) }) do
+              Tool.stub(:record, -> { records += 1; true }) do
+                assert Tool.run(ratchet: true)
+              end
+            end
+          end
+        end
+      end
+    end
+
+    assert_equal 1, records
+  end
+
+  def test_ratchet_will_not_reconcile_metadata_by_raising_a_ceiling
+    records = 0
+    current = { "law" => Array.new(11), "registry" => Array.new(5) }
+    ceilings = { "law" => 10, "registry" => 5 }
+
+    Tool.stub(:report, false) do
+      Tool.stub(:stale_recorded_members, []) do
+        Tool.stub(:baseline_integrity_errors, ["baseline mismatch"]) do
+          Tool.stub(:population, ->(name) { current.fetch(name) }) do
+            Tool.stub(:ceiling, ->(name = "law") { ceilings.fetch(name) }) do
+              Tool.stub(:record, -> { records += 1; true }) do
+                _stdout, stderr = capture_io { refute Tool.run(ratchet: true) }
+                assert_match(/refusing to refresh stale\/inconsistent attribution/, stderr)
+              end
+            end
+          end
+        end
+      end
+    end
+
+    assert_equal 0, records
+  end
+
   def test_the_registry_total_is_read_from_its_own_key
     with_baseline({ "findings" => 151, "registry_findings" => 108 }) do
       assert_equal 108, Tool.registry_ceiling
