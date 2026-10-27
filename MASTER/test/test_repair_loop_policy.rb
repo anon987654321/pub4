@@ -505,6 +505,19 @@ class TestRepairLoopPolicy < Minitest::Test
     refute_includes prompt, "line_1 = 1\n", "unchanged lines far from the fix stay out"
   end
 
+  # The verifier cannot read files: a changed signature carries its callers, and a partial
+  # repair of a group is judged on correctness, not on fixing every finding.
+  def test_reflexion_sees_the_callers_of_a_changed_signature
+    original = "def zz_reflexion_probe(lines, path)\n  lines\nend\n"
+    proposed = "def zz_reflexion_probe(lines, path:)\n  lines\nend\n"
+    finding = { law: "FEW_ARGUMENTS", line: 1, message: "two positional" }
+    prompt = build_loop(root: Dir.pwd, bus: FakeBus.new, scanner: Scanner.new, agent: ScriptedAgent.new("SAFE"))
+               .send(:reflexion_prompt, finding, original, proposed)
+
+    assert_includes prompt, "Callers of zz_reflexion_probe, whose parameters changed"
+    assert_includes prompt, "Judge correctness, not completeness"
+  end
+
   # git's diff arrives as BINARY. A non-ASCII line in it raised inside the UTF-8
   # prompt, and the refusal that followed killed every such repair unread.
   def test_reflexion_reads_a_change_beside_non_ascii_text

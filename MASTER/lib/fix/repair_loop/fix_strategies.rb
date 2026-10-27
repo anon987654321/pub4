@@ -62,9 +62,15 @@ module Master
         # bin/doctor was invisible, both excerpts matched, and the verifier
         # rightly called the fix byte-identical and refused it. Every repair
         # below a file's first screen died the same way.
+        #
+        # A repair may take one of a group's findings and leave the rest for a later pass; the
+        # verifier refused those as "fixes none of the cited lines". And it cannot read files, so
+        # a changed signature was refused as unverifiable: the callers ride along instead.
         def reflexion_prompt(violation, original_src, proposed_src)
           <<~PROMPT
             Verify this proposed code fix is correct. Reply ONLY with "SAFE" or "UNSAFE: <reason>".
+            Judge correctness, not completeness: a change that resolves some of the findings, keeps
+            behaviour and introduces no defect is SAFE; the rest are left for a later pass.
 
             VIOLATION: #{violation[:law]} line #{violation[:line]} — #{violation[:message]}
 
@@ -72,7 +78,41 @@ module Master
             ```diff
             #{change_under_review(original_src, proposed_src)}
             ```
+            #{signature_callers(original_src, proposed_src)}
           PROMPT
+        end
+
+        CALLER_LINES = 30
+
+        # Every call site in the repository of a method whose parameter list the change rewrote.
+        def signature_callers(original_src, proposed_src)
+          names = changed_signatures(original_src, proposed_src)
+          return "" if names.empty?
+
+          sites = names.flat_map { |name| call_sites(name) }.uniq.first(CALLER_LINES)
+          listing = sites.empty? ? "(none found outside the definition)" : sites.join("\n")
+          "Callers of #{names.join(", ")}, whose parameters changed:\n```\n#{listing}\n```"
+        end
+
+        DEF_LINE = /^\s*def\s+(?:self\.)?([a-z_]\w*[?!=]?)(.*)$/
+
+        def changed_signatures(original_src, proposed_src)
+          before, after = [original_src, proposed_src].map do |src|
+            src.scan(DEF_LINE).to_h { |name, rest| [name, rest.strip] }
+          end
+          before.select { |name, params| after.key?(name) && after[name] != params }.keys
+        end
+
+        def call_sites(name)
+          out, status = Master::Io::Exec.capture2e("git", "-C", Master::REPO_ROOT, "grep", "-n", "-w", "-I",
+                                                   "-e", name, "--", "*.rb", "*.rake", timeout: 30)
+          return [] unless status&.success?
+
+          out.dup.force_encoding(Encoding::UTF_8).scrub.lines.map(&:strip)
+             .reject { |line| line.match?(/:\s*def\s+(?:self\.)?#{Regexp.escape(name)}\b/) }
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "RepairLoop.call_sites")
+          []
         end
 
         REVIEW_DIFF_LINES = 400
