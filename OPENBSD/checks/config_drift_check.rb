@@ -112,7 +112,9 @@ CRONTAB_KEY = "@root-crontab"
 REMOTE = ARGV.include?("--remote")
 SSH_HOST = ENV.fetch("SSH_HOST", "dev@brgen.no")
 SSH_KEY = File.expand_path(ENV.fetch("SSH_KEY", "~/.ssh/id_ed25519_brgen"))
-MARKER = "@@PUB4_CONFIG_DRIFT@@"
+# Two literals: this file is VERBATIM-read over ssh, and holding the joined
+# marker cut its own body short, so --remote always reported it as drift.
+MARKER = "@@PUB4_" "CONFIG_DRIFT@@"
 
 def on_vps?
   File.file?("/etc/relayd.conf") || ENV["DEPLOY_ASSUME_VPS"] == "1"
