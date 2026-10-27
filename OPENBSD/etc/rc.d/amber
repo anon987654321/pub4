@@ -44,11 +44,59 @@ pexp="ruby[0-9.]*.*${PORT}"
 rc_bg=YES
 rc_reload=NO
 
+# port holders: begin
+# The pkills match falcon by its argv, so a process bound to the port under any
+# other name (a worker that retitled itself, a hand-started server, a test run)
+# survives them, the next falcon dies on EADDRINUSE, and rc reports a start that
+# never serves. fstat(1) names every process with a socket on the port whatever
+# its argv. Its socket lines read USER CMD PID FD internet stream tcp ADDR
+# LOCAL [ARROW PEER]; a listener is the line with no peer, which leaves relayd's
+# connections to the port and the app's accepted ones alone.
+port_holders() {
+  fstat 2>/dev/null | while read -r _u _c _pid _fd _kind _type _proto _addr _local _rest; do
+    [[ $_kind == internet || $_kind == internet6 ]] || continue
+    [[ $_proto == tcp && -z $_rest ]] || continue
+    [[ $_local == *:"$PORT" ]] && print -n -- "$_pid "
+  done
+}
+
+# Sends signal $1 to every holder, one pid at a time.
+signal_holders() {
+  for _p in $(port_holders); do
+    kill "-$1" "$_p" 2>/dev/null
+  done
+}
+
+# TERM whatever still holds the port, KILL it after the grace period, and fail
+# when the port is still held, so the start is refused with the reason logged.
+free_port() {
+  _holders=$(port_holders)
+  [[ -n $_holders ]] || return 0
+  logger -t "$PORT_OWNER" "stale :${PORT} holder(s) ${_holders% } before start, TERM"
+  signal_holders TERM
+  _w=0
+  while [[ -n $(port_holders) ]] && (( _w < ${PORT_GRACE:-20} )); do
+    sleep 1
+    _w=$((_w + 1))
+  done
+  _holders=$(port_holders)
+  [[ -n $_holders ]] || return 0
+  logger -t "$PORT_OWNER" "stale :${PORT} holder(s) ${_holders% } survived TERM, KILL"
+  signal_holders KILL
+  sleep 1
+  [[ -z $(port_holders) ]] && return 0
+  logger -t "$PORT_OWNER" "CRITICAL: :${PORT} still held after TERM and KILL, refusing to start"
+  return 1
+}
+# port holders: end
+
 rc_pre() {
   touch /home/dev/pub4/.deploying-amber 2>/dev/null || true
   pkill -f "falcon.*${PORT}" 2>/dev/null || true
   pkill -f "ruby[0-9.]*.*${PORT}" 2>/dev/null || true
   sleep 1
+  PORT_OWNER=amber
+  free_port || { rm -f /home/dev/pub4/.deploying-amber 2>/dev/null; return 1; }
 }
 
 rc_cmd $1
@@ -60,7 +108,7 @@ if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
     _i=0
     _up_ok=0
     while [[ "$_i" -lt 300 ]]; do
-      curl -fsS "http://127.0.0.1:${PORT}/up" >/dev/null 2>&1 && { _up_ok=1; break; }
+      curl -fsS -m 5 "http://127.0.0.1:${PORT}/up" >/dev/null 2>&1 && { _up_ok=1; break; }
       sleep 1
       _i=$((_i + 1))
     done
