@@ -18,6 +18,7 @@ require_relative "visual_custody"
 require_relative "visual_completion"
 require_relative "../design/visual_language"
 require_relative "visual_runtime"
+require_relative "work_lane"
 require_relative "../../checks/support/mobile_journey_probe"
 require_relative "../../checks/support/composition_probe"
 require_relative "../../checks/support/web_platform_probe"
@@ -68,7 +69,10 @@ module Master
         @runtime = VisualRuntime.new(root:, bus:)
       end
 
+      # Each pass renders its surfaces again, so only --lane all runs it; the visual lane groups one sweep instead.
       def applicable?(target)
+        return false unless WorkLane.runs?(:visual_pass)
+
         relative = repo_relative(target)
         relative == "RAILS" || relative.start_with?("RAILS/") ||
           relative == "RAILS/master" || relative.start_with?("RAILS/master/")

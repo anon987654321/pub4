@@ -111,6 +111,7 @@ module Master
           resumed = resume_active_transaction(journal:, run_id:, start_pass:)
           return finish_run(resumed, target, run_id, mission:, requested:) if resumed.err?
           return finish_run(cancellation_terminal, target, run_id, mission:, requested:) if cancellation_requested?
+          return finish_run(run_visual_lane(target), target, run_id, mission:, requested:) if WorkLane.visual?
 
           remaining = repair_seconds_left(journal)
           spent = budget_spent_before_pass(journal, resumed.value!) unless remaining.positive?

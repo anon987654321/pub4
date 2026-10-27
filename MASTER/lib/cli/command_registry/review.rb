@@ -3,6 +3,7 @@
 require_relative "../../review/council/critique"
 require_relative "../../fix/execution_trace"
 require_relative "../../fix/check_focus"
+require_relative "../../fix/work_lane"
 require_relative "../../fix/lane_preflight"
 require_relative "../pipeline/residual"
 require_relative "../../operator/check_chain"
@@ -67,6 +68,7 @@ module Master
         previous_blockers = Master::Fix::CheckFocus.blockers?
         previous_plan = Master::Fix::CheckFocus.plan?
         previous_until = Master::Fix::CheckFocus.until_checks?
+        previous_lane = Master::Fix::WorkLane.current
 
         cancellation = ctx.cancellation if ctx.respond_to?(:cancellation)
         cancellation.activate! if cancellation&.respond_to?(:activate!)
@@ -77,6 +79,7 @@ module Master
           Master::Fix::CheckFocus.blockers! if overrides[:blockers]
           Master::Fix::CheckFocus.plan! if overrides[:plan]
           Master::Fix::CheckFocus.until_checks! if overrides[:until_checks]
+          Master::Fix::WorkLane.set!(overrides.fetch(:lane))
           dispatch_fix_parsed(
             scanner:, fix_loop:, deliberation:, root:, bus:, swarm:, raw:,
             apply:, critique:, aesthetic:, only:, target:, cancellation:
@@ -87,6 +90,7 @@ module Master
           Master::Fix::CheckFocus.restore_blockers(previous_blockers)
           Master::Fix::CheckFocus.restore_plan(previous_plan)
           Master::Fix::CheckFocus.restore_until_checks(previous_until)
+          Master::Fix::WorkLane.restore(previous_lane)
         end
       end
 
@@ -189,6 +193,9 @@ module Master
           targets = fix_targets(target, root:)
           ::Operator::CheckChain.clear_verified_fix_snapshots! if writes_requested
           Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
+          lane_refusal = Master::Fix::WorkLane.refusal(target)
+          next Master::Result.err("fix: #{lane_refusal}", category: :validation) if lane_refusal
+          Master::Trace::Dmesg.status("fix0", Master::Fix::WorkLane.summary)
           refusal = Master::Fix::LanePreflight.check(agent: deliberation.agent) if deliberation
           next cancelled_fix_result(cancellation) if cancellation&.cancelled?
           next refusal if refusal
@@ -452,8 +459,11 @@ module Master
       # Repair only the files a red check names, without semantic reads (Fix::CheckFocus).
       BLOCKERS_FLAG = /\A--blockers\z/i
 
+      # code, visual or all: which half of /fix runs (Fix::WorkLane).
+      LANE_FLAG = /\A--lane=(code|visual|all)\z/i
+
       # Flags read per dispatch (execution_overrides), never part of the target.
-      DISPATCH_FLAG = Regexp.union(AUTOFIX_FLAG, MAX_FILES_FLAG, BLOCKERS_FLAG, /\A--until-checks\z/i)
+      DISPATCH_FLAG = Regexp.union(AUTOFIX_FLAG, MAX_FILES_FLAG, BLOCKERS_FLAG, LANE_FLAG, /\A--until-checks\z/i)
 
       # Status messages are one-line operator evidence. Do not let a path label
       # inject terminal controls or forged log lines into the dmesg stream.
@@ -466,7 +476,8 @@ module Master
 
       def execution_overrides(raw)
         tokens = raw.to_s.split(/\s+/).map(&:downcase)
-        overrides = { autofix_mode: nil, max_files: nil, blockers: false, plan: tokens.include?("--plan"),
+        lane = tokens.filter_map { |token| token[LANE_FLAG, 1] }.last || Master::Fix::WorkLane::DEFAULT.to_s
+        overrides = { autofix_mode: nil, max_files: nil, blockers: false, lane:, plan: tokens.include?("--plan"),
                       until_checks: tokens.include?("--until-checks") }
         raw.to_s.split(/\s+/).each do |token|
           if (match = AUTOFIX_FLAG.match(token))

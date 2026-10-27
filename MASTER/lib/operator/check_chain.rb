@@ -18,6 +18,7 @@ require_relative "check_heartbeat"
 require_relative "../trace/dmesg"
 require_relative "../boot/paths"
 require_relative "../fix/resource_budget"
+require_relative "../fix/work_lane"
 require_relative "../io/exec"
 
 module Operator
@@ -252,7 +253,9 @@ module Operator
       end
       untracked_fingerprint = paths.sort.map { |relative| fingerprint_untracked(root, relative) }.join("\0")
       scope = baseline_scope_key_for(tree_names)
-      Digest::SHA256.hexdigest([head.strip, scope, diff, untracked_fingerprint, verification_only.join(",")].join("\0"))
+      # The lane is part of the key: a code-lane baseline measured no browser check.
+      Digest::SHA256.hexdigest([head.strip, scope, diff, untracked_fingerprint, verification_only.join(","),
+                                Master::Fix::WorkLane.current].join("\0"))
     end
 
     # The bytes of every changed or untracked path in the whole repository, root-level files
@@ -342,6 +345,9 @@ module Operator
       # with their suites (Pass's proof), RAILS with the source stage, which owns the complete
       # Rails premerge proof. Running the suites here as well ran them four times per /fix.
       selected = selected.reject { |stage| stage.name == "suites" } if (trees - PASS_PROVEN_TREES).empty?
+      # The visual lane's own sweep, taken before its repairs and again after them, is its proof;
+      # the source stage would render the same routes twice more around it.
+      selected = selected.reject { |stage| stage.name == "source" } if Master::Fix::WorkLane.visual?
       # Verification is measurement only. Every selected stage is scan-only;
       # a verification tail must never become a second repair pass under
       # another name. Council stays excluded because provider availability is
@@ -658,7 +664,7 @@ module Operator
     # the stage reported one refusal as its whole result.
 def rails_checks(scan_only:, strict_inconclusive: false)
   CheckHeartbeat.around("rails checks") do |progress|
-    env = strict_env.merge(progress).merge("CHECK_AUTOFIX" => scan_only ? "0" : "1")
+    env = strict_env.merge(progress).merge("CHECK_AUTOFIX" => scan_only ? "0" : "1", **Master::Fix::WorkLane.check_env)
     # A proof cannot pass a check that measured nothing. The normal contribution
     # mode remains permissive; /fix opts into strict inconclusive handling here
     # because this child environment is constructed explicitly.

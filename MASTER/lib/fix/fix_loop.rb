@@ -14,6 +14,8 @@ require_relative "fix_loop/file_collector"
 require_relative "fix_loop/order"
 require_relative "fix_loop/pass_runner"
 require_relative "check_focus"
+require_relative "work_lane"
+require_relative "visual_lane_world"
 require_relative "fix_loop/convergence_config"
 require_relative "fix_loop/background_runner"
 require_relative "fix_loop/pass_runner_builder"
@@ -36,6 +38,7 @@ require_relative "research_pass"
 require_relative "convergence_discipline"
 require_relative "reflection"
 require_relative "run_budget"
+require_relative "run_ledger"
 require_relative "../boot/paths"
 
 module Master
@@ -89,10 +92,6 @@ module Master
       WISHLIST_MAX_ROUNDS = Integer(ENV.fetch("MASTER_FIX_WISHLIST_ROUNDS", 0))
       WISHLIST_MAX_PASSES = 3
       WISHLIST_MIN_REMAINING_SECONDS = 60
-      # Thirty minutes suits API lanes. A run whose every call goes through a
-      # subscription CLI (MASTER_MODEL=claude-cli:...) spends that on one
-      # council, so the run can be given more.
-      RUN_BUDGET_SECONDS = Integer(ENV.fetch("MASTER_FIX_RUN_BUDGET_S", 30 * 60))
 
       def initialize(laws:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil,
                      incremental: false, ground_truth: nil, preserve_user_intent: nil,
@@ -148,7 +147,7 @@ module Master
       # watcher, when MASTER's own tree reads red. An operator's /fix is the
       # request to repair exactly that tree; halting it too refused every fix
       # while a single violation stood, so "fix and commit" scanned and stopped.
-      def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS,
+      def run(target = @root, max_passes: max_passes_default, budget_seconds: FixTime.run_s,
               incremental: @incremental, requested: false, cancellation: nil)
         @run_mutex.synchronize do
           previous_cancellation = @cancellation
@@ -299,25 +298,17 @@ module Master
           return finish_run(cancellation_terminal, target, run_id, mission:, requested:) if cancellation_requested?
           return finish_run(dependency_result, target, run_id, mission:, requested:) if dependency_result.is_a?(Master::Result)
           current_phase = :architecture_exploration
-          architecture = ArchitectureExploration.new(root: @root, agent: @agent, bus: @bus).run(target:, files:)
+          architecture = explore_architecture(target:, files:)
           return finish_run(cancellation_terminal, target, run_id, mission:, requested:) if cancellation_requested?
           ux_context = UXRefinementCatalog.prompt_context(target:, root: @root)
           current_phase = :research
-          research = ResearchPass.new(
-            agent: @agent, bus: @bus, plan: @transformation_plan, root: @root
-          ).run(target:, files:)
+          research = run_research(target:, files:)
           return finish_run(cancellation_terminal, target, run_id, mission:, requested:) if cancellation_requested?
           @pass_runner.research_brief = [
             architecture.fetch("brief"),
             ux_context,
             research.fetch(:brief),
           ].reject { |part| part.to_s.strip.empty? }.join("\n\n")
-          Master::Trace::Dmesg.status(
-            "research0",
-            "#{research.fetch(:status)} domain=#{research.fetch(:domain)} " \
-            "fetched=#{research.fetch(:fetched_count)} queries=#{research.fetch(:query_count)} " \
-            "hosts=#{research.fetch(:independent_hosts, 0)} target=#{target}",
-          )
         end
         current_phase = :pass
         run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:, requested:, incremental:)
@@ -490,6 +481,72 @@ module Master
       end
 
       private
+
+      # --lane visual: one sweep, grouped, mechanical fixers first, the model once per group left.
+      def run_visual_lane(target)
+        outcome = VisualLane.new(
+          world: visual_world, repo_root: Master::REPO_ROOT,
+          say: ->(line) { Master::Trace::Dmesg.status("visual0", line) },
+          stop: -> { cancellation_requested? || RunBudget.stopping }
+        ).run
+        @bus&.publish("fix_loop:visual_lane", target:, **outcome.to_h)
+        return cancellation_terminal if cancellation_requested?
+
+        visual_terminal(outcome)
+      end
+
+      def visual_world
+        tools = { reachability: @reachability, committer: @committer,
+                  repair_loop: ->(brief) { visual_repair_loop(brief) } }
+        VisualLaneWorld.new(repo_root: Master::REPO_ROOT, tools:, bus: @bus).world
+      end
+
+      # The lane proves only what its resweep shows, so a repaired but unmeasured group never
+      # reads as DONE, and the ending says which lane ran and what it left.
+      def visual_terminal(outcome)
+        resweep = outcome.resweep ? "" : " (no repair, no resweep)"
+        detail = "#{outcome.findings} rendered finding(s) in #{outcome.groups} group(s), " \
+                 "#{outcome.cleared} cleared, #{outcome.remaining} group(s) remain#{resweep}; report #{outcome.report}"
+        Master::Trace::Dmesg.status("visual0", "#{WorkLane.summary}; #{detail}")
+        return terminal(:done, "visual lane: the sweep reported no rendered finding") if outcome.findings.zero?
+
+        terminal(:plateau, "visual lane: #{detail}")
+      end
+
+      def visual_repair_loop(brief)
+        RepairLoop.new(
+          law: VisualPass::Law.new(VisualPass::LAW_ID), agent: @agent, scanner: @repair_kit.fetch(:scanner),
+          root: @root, bus: @bus, learnings: @repair_kit.fetch(:learnings), committer: @committer, stage_commit: true
+        ).tap { |loop| loop.injected_preamble = [@repair_kit.fetch(:preamble), brief].join("\n\n") }
+      end
+
+      # Both cost minutes of model and web time before the first repair; only --lane all asks for them.
+      def explore_architecture(target:, files:)
+        unless WorkLane.runs?(:architecture)
+          Master::Trace::Dmesg.status("fix0", "architecture exploration skipped, lane=#{WorkLane.current}")
+          return { "status" => "SKIPPED", "targets" => [], "brief" => "" }
+        end
+
+        ArchitectureExploration.new(root: @root, agent: @agent, bus: @bus).run(target:, files:)
+      end
+
+      def run_research(target:, files:)
+        unless WorkLane.runs?(:research)
+          Master::Trace::Dmesg.status("research0", "skipped, lane=#{WorkLane.current}")
+          return { status: "SKIPPED", brief: "" }
+        end
+
+        pass = ResearchPass.new(agent: @agent, bus: @bus, plan: @transformation_plan, root: @root)
+        research = pass.run(target:, files:)
+
+        Master::Trace::Dmesg.status(
+          "research0",
+          "#{research.fetch(:status)} domain=#{research.fetch(:domain)} " \
+          "fetched=#{research.fetch(:fetched_count)} queries=#{research.fetch(:query_count)} " \
+          "hosts=#{research.fetch(:independent_hosts, 0)} target=#{target}",
+        )
+        research
+      end
 
       # The look back over the tree after the repair passes: structural consolidation,
       # then naming cleanup. Both work from the repository root.

@@ -11,6 +11,14 @@ class VisualPassContractTest < Minitest::Test
   Pass = Master::Fix::VisualPass
   Probe = Deploy::GeometryProbe
 
+  # A per-pass rendered review belongs to --lane all; these tests drive that lane.
+  def setup
+    @lane = Master::Fix::WorkLane.current
+    Master::Fix::WorkLane.set!(:all)
+  end
+
+  def teardown = Master::Fix::WorkLane.restore(@lane)
+
   # Answers the expressions CompositionProbe sends, by what they ask.
   class ScriptedCdp
     attr_reader :expressions, :shots
@@ -135,6 +143,16 @@ class VisualPassContractTest < Minitest::Test
     refute pass.applicable?(File.join(root, "MASTER/lib"))
     refute pass.applicable?(File.join(root, "STUDIO"))
     refute pass.applicable?(File.join(root, "RAILSX"))
+  end
+
+  def test_the_code_and_visual_lanes_render_no_per_pass_review
+    pass = Pass.new(agent: Object.new, root: File.expand_path("..", Master::ROOT))
+    rails = File.expand_path("../RAILS", Master::ROOT)
+
+    %i[code visual].each do |lane|
+      Master::Fix::WorkLane.set!(lane)
+      refute pass.applicable?(rails), "lane #{lane}"
+    end
   end
 
   def test_surface_selection_is_application_agnostic

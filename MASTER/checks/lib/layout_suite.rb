@@ -104,9 +104,19 @@ module Deploy
     # No checked! of its own: a composite measured whatever its leaves
     # measured, and merge! carries their check counts up. Counting here as well
     # would claim a check this class never ran.
+    # CHECK_LANE=code (/fix --lane code) measures the source leaves only: the rendered
+    # suite is the 214-cell browser sweep, and the visual lane is where it runs.
+    def leaves
+      return LEAVES unless ENV["CHECK_LANE"] == "code"
+
+      LEAVES - [RenderedSuiteCheck]
+    end
+
     def run_leaves
       result = CheckResult.new
-      LEAVES.each do |klass|
+      result.warn("coverage0: layout/RenderedSuiteCheck NOT RUN — lane=code; rendered evidence is the visual lane's") if
+        leaves.size < LEAVES.size
+      leaves.each do |klass|
         name = klass.name.split("::").last
 
         leaf = begin

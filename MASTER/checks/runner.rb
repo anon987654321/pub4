@@ -93,7 +93,18 @@ def selected_names(all:, requested:)
   abort "checks: unknown check(s): #{unknown.join(", ")}" unless unknown.empty?
   return names unless all
 
-  names.reject { |name| registry.fetch(name).is_a?(Hash) && registry.fetch(name)["covered_by"] }
+  names = names.reject { |name| registry.fetch(name).is_a?(Hash) && registry.fetch(name)["covered_by"] }
+  code_lane(names)
+end
+
+# CHECK_LANE=code (a /fix --lane code proof) leaves out every check that opens a browser, and says
+# which, so a code-lane pass is never read as rendered evidence. The visual lane renders them.
+def code_lane(names)
+  return names unless ENV["CHECK_LANE"] == "code"
+
+  browser, rest = names.partition { |name| Array(registry.fetch(name).to_h["needs"]).map(&:to_s).include?("browser") }
+  say("lane=code, browser checks not run: #{browser.join(", ")}") unless browser.empty?
+  rest
 end
 
 def constant_for(name)

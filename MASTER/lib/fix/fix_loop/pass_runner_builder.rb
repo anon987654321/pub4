@@ -19,6 +19,7 @@ module Master
           visual_pass = VisualPass.new(agent:, root:, bus:)
           opportunity_pass = OpportunityPass.new(root:, bus:)
           preamble = self.class.preamble_from_soul
+          @repair_kit = { scanner:, learnings:, preamble: }
 
           PassRunner.new(
             bus:, committer:, conflict_resolver:, llm_router:, root:,

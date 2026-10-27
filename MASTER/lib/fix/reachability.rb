@@ -3,14 +3,19 @@
 require "yaml"
 require_relative "fix_loop/file_collector"
 require_relative "../boot/paths"
+require_relative "work_lane"
 
 module Master
   module Fix
     # Mandatory deterministic reachability preflight for every /fix run.
     # It proves the collector's complete writable corpus reaches the pass,
     # and that a RAILS run reaches every declared app and the canonical layout suite.
+    # The layout sweep itself renders only in a lane that asks for it (WorkLane).
     class Reachability
       TOP_LEVEL_TREES = MasterPaths::TREES
+
+      # The last layout sweep's CheckResult, for the visual lane to group; nil when none ran.
+      attr_reader :layout_sweep
 
       def initialize(root:, bus: nil)
         @root = File.expand_path(root)
@@ -23,6 +28,7 @@ module Master
       # collector's; never more, and never outside it.
       def verify!(target, files:, subset: false)
         target = File.expand_path(target)
+        @layout_sweep = nil
         raise "target #{target} is outside MASTER repository" unless inside_repo?(target)
 
         expected = collected(target)
@@ -35,6 +41,13 @@ module Master
         @bus&.publish("fix_loop:reachability_failed", target:, error: e.message)
         Master::Trace::Dmesg.status("reach0", "blocked: #{e.message[0, 180]}")
         raise
+      end
+
+      # One layout sweep, kept as layout_sweep. The visual lane on a path inside RAILS has no
+      # fleet check to start it, so the lane calls this itself.
+      def observe_layout_suite!
+        require File.join(@repo_root, "MASTER", "checks", "lib", "layout_suite.rb")
+        sweep_layout_suite!
       end
 
       private
@@ -95,35 +108,34 @@ module Master
         missing_apps = names - auditor_apps
         raise "frontend auditor misses Rails app(s): #{missing_apps.join(", ")}" if missing_apps.any?
 
-        observe_layout_suite!
+        if WorkLane.runs?(:layout_sweep)
+          observe_layout_suite!
+        else
+          Master::Trace::Dmesg.status("layout0", "RAILS family sweep not run, lane=#{WorkLane.current}")
+        end
         @fleet_verified = true
       end
 
-      def observe_layout_suite!
+      def sweep_layout_suite!
         saved = ENV["CHECK_AUTOFIX"]
         ENV["CHECK_AUTOFIX"] = "0"
-        result = Deploy::LayoutSuiteCheck.run
-
-        @bus&.publish(
-          "fix_loop:layout_sweep",
-          outcome: result.outcome,
-          checks: result.checks_ran,
-          failures: result.failures.size,
-          warnings: result.warnings.size,
-          unchecked: result.unchecked.size,
-          errors: result.errors.size,
-        )
-        Master::Trace::Dmesg.status(
-          "layout0",
-          "RAILS family sweep: #{result.outcome}, checks=#{result.checks_ran}, " \
-          "failures=#{result.failures.size}, warnings=#{result.warnings.size}, " \
-          "unchecked=#{result.unchecked.size}",
-        )
+        result = @layout_sweep = Deploy::LayoutSuiteCheck.run
+        publish_layout_sweep(result)
         report_layout_diagnostics!(result)
-
         raise "layout suite check errored: #{result.errors.first}" if result.errored?
+
+        result
       ensure
         saved.nil? ? ENV.delete("CHECK_AUTOFIX") : ENV["CHECK_AUTOFIX"] = saved
+      end
+
+      def publish_layout_sweep(result)
+        counts = %i[failures warnings unchecked errors].to_h { |kind| [kind, result.public_send(kind).size] }
+        @bus&.publish("fix_loop:layout_sweep", outcome: result.outcome, checks: result.checks_ran, **counts)
+
+        detail = counts.except(:errors).map { |kind, size| "#{kind}=#{size}" }.join(", ")
+        line = "RAILS family sweep: #{result.outcome}, checks=#{result.checks_ran}, #{detail}"
+        Master::Trace::Dmesg.status("layout0", line)
       end
 
       # A count tells the operator that the sweep failed, not what to repair.
