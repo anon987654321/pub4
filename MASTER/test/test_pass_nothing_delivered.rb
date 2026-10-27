@@ -10,6 +10,12 @@ class TestPassNothingDelivered < Minitest::Test
   # Exposes the delivery check.
   class Pass < Master::CLI::Pipeline::Pass
     def delivered_nothing_since?(head) = nothing_delivered?(head)
+
+    def failed_repair_since(head, changes)
+      @repair_before = head
+      fail_stage("fix", "transaction recovery found a concurrent edit")
+      repair_unproven(changes)
+    end
   end
 
   def setup = Master::Fix::AutofixGuard.reset!
@@ -41,6 +47,18 @@ class TestPassNothingDelivered < Minitest::Test
       Master::Fix::AutofixGuard.note_written(File.join(root, "a.rb"))
 
       refute Pass.new(scanner: nil, fix_loop: nil, root:).delivered_nothing_since?(head)
+    end
+  end
+
+  # Another writer's edit fills the diff, but the failed repair delivered
+  # nothing: the tree-wide re-observe after it would only re-read obs0's tree.
+  def test_a_failed_repair_that_delivered_nothing_skips_the_reread
+    Dir.mktmpdir do |root|
+      head = committed_repo(root)
+      File.write(File.join(root, "theirs.rb"), "B = 1\n")
+      pass = Pass.new(scanner: nil, fix_loop: nil, root:)
+
+      assert_equal Pass::REPAIR_UNPROVEN, pass.failed_repair_since(head, "uncommitted, in the working tree")
     end
   end
 end

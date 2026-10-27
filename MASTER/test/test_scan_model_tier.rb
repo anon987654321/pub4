@@ -59,12 +59,36 @@ class ScanModelTierTest < Minitest::Test
     assert_equal 1, model.calls
   end
 
-  def test_full_semantic_coverage_wins_over_a_mechanical_reading
+  def test_the_operator_asking_for_every_file_wins_over_a_mechanical_reading
     model = ModelLaw.new
     sc = scanner(model)
-    sc.full_semantic!
-    sc.mechanical_only { sc.scan(@path) }
+
+    with_env("MASTER_SCAN_SEMANTIC_SAMPLE" => "1") do
+      sc.full_semantic!
+      sc.mechanical_only { sc.scan(@path) }
+    end
     assert_equal 1, model.calls
+  end
+
+  # A requested /fix sets full coverage on the scanner it shares with the
+  # pipeline; the re-observe after it must still be a mechanical reading.
+  def test_a_repairs_full_coverage_does_not_reach_the_observation
+    model = ModelLaw.new
+    sc = scanner(model, findings: [FINDING])
+
+    with_env("MASTER_SCAN_SEMANTIC_SAMPLE" => "0.1") do
+      sc.full_semantic!
+      sc.mechanical_only { sc.scan(@path) }
+    end
+    assert_equal 0, model.calls
+  end
+
+  def with_env(pairs)
+    saved = pairs.keys.to_h { |key| [key, ENV.fetch(key, nil)] }
+    pairs.each { |key, value| ENV[key] = value }
+    yield
+  ensure
+    saved.each { |key, value| ENV[key] = value }
   end
 
   # The budget: the real law set over a real prose file, behind an agent that

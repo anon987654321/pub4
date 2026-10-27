@@ -295,8 +295,14 @@ module Master
 
         REPAIR_UNPROVEN = "skipped: the repair failed and changed nothing, so there is nothing to read again or prove"
 
-        # A repair that died before writing leaves the tree as the first reading saw it.
-        def repair_failed_without_changes?(changes) = @failed_stages.include?("fix") && changes == "nothing changed"
+        # A repair that died before writing leaves the tree as the first reading saw it. The diff
+        # text alone cannot say so in the shared checkout, where other writers' edits always show;
+        # what this run delivered is its commits and its autofix writes.
+        def repair_failed_without_changes?(changes)
+          return false unless @failed_stages.include?("fix")
+
+          changes == "nothing changed" || (@repair_before && nothing_delivered?(@repair_before))
+        end
 
         REPAIR_CRASHED = "skipped: the repair crashed, so nothing after it reads, proves or delivers the tree"
 

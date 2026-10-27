@@ -143,10 +143,14 @@ module Master
         # A tree-wide observation is a mechanical reading: 75% of RAILS files
         # carry a finding, so "run the model when the cheap passes found
         # something" put about 5,000 model calls of 50 to 190 seconds each
-        # inside one walk. Asking for full semantic coverage still wins.
+        # inside one walk. The operator asking for every file to be read
+        # (MASTER_SCAN_SEMANTIC_SAMPLE=1, or a mode at 1.0) still wins. A
+        # requested /fix's own full_semantic! does not: it is set on the shared
+        # scanner for the repair's budgeted passes, and leaking into the
+        # re-observe it sent all 2,049 MASTER files to the model inline.
         def mechanical_only
           previous = @skip_semantic
-          @skip_semantic = true unless semantic_full?
+          @skip_semantic = true unless Master::Ground::ModePosture.semantic_sample >= 1.0
           yield
         ensure
           @skip_semantic = previous
