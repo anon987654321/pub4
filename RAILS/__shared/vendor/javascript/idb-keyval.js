@@ -12,20 +12,21 @@ const ensureStore = (request, storeName) => {
 // reopened a version higher to add it: pinned at version 1, the second store a page asked for
 // threw "One of the specified object stores was not found" on every composer.
 
-const openDb = (storeName) => new Promise((resolve, reject) => {
-  const request = indexedDB.open(DB_NAME)
+// Two calls can race (the draft store clears its draft and queue together): both find a store
+// missing and both ask for the next version, and the second, finding it already there, gets no
+// upgrade. So every open checks again, a few times, before it hands the database back.
+
+const openDb = (storeName, version = undefined, tries = 4) => new Promise((resolve, reject) => {
+  const request = version ? indexedDB.open(DB_NAME, version) : indexedDB.open(DB_NAME)
   ensureStore(request, storeName)
   request.onerror = () => reject(request.error)
   request.onsuccess = () => {
     const db = request.result
-    if (db.objectStoreNames.contains(storeName)) return resolve(db)
+    if (db.objectStoreNames.contains(storeName) || tries <= 0) return resolve(db)
 
-    const version = db.version + 1
+    const next = db.version + 1
     db.close()
-    const upgrade = indexedDB.open(DB_NAME, version)
-    ensureStore(upgrade, storeName)
-    upgrade.onsuccess = () => resolve(upgrade.result)
-    upgrade.onerror = () => reject(upgrade.error)
+    openDb(storeName, next, tries - 1).then(resolve, reject)
   }
 })
 
