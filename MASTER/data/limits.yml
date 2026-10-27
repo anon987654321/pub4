@@ -1074,6 +1074,22 @@ fix_budget:
   run_tokens: 10000000
   law_shares: {}
 
+# How long a /fix run, one file in it, and a pass with nothing attempted may take, in seconds.
+# Reader: Master::Fix::FixTime. A lane entry (keyed as LaneQuota.lane_of names it) replaces the
+# default for a run pinned to that lane; MASTER_FIX_FILE_BUDGET_S / _RUN_BUDGET_S / _STALL_S
+# override one run. claude-cli answers a repair, its retry and the verifier in two to four
+# minutes each, so the default 240 s file budget timed out every Opus repair on 2026-10-27.
+fix_time:
+  default:
+    file_s: 240
+    run_s: 1800
+    stall_s: 600
+  lanes:
+    claude-cli:
+      file_s: 900
+      run_s: 7200
+      stall_s: 900
+
 # Loop/process budgets — moved from data/ops/process.yml; reader is Ops::ProcessBudget.
 process:
   defaults:

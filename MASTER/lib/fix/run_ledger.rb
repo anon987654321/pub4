@@ -13,10 +13,6 @@ module Master
     module RunLedger
       MAX_REJECTS_PER_FILE = 2
       LANE_FAILURES_BEFORE_DROP = 2
-      # A repair is a proposal, a retry when its patch does not apply, and a verifier call: three or four
-      # model calls, and the claude-cli lane answers each in twenty to sixty seconds. Ninety seconds spent
-      # the budget on the second proposal, after the first patch failed, and the file was skipped.
-      FILE_BUDGET_S = 240
 
       @mutex = Mutex.new
       @reasons = Hash.new(0)
@@ -44,10 +40,9 @@ module Master
           end
         end
 
-        # Wall-clock seconds one file may spend in the model phase.
-        def file_budget_s
-          Integer(ENV.fetch("MASTER_FIX_FILE_BUDGET_S", FILE_BUDGET_S.to_s), exception: false) || FILE_BUDGET_S
-        end
+        # Wall-clock seconds one file may spend in the model phase: a proposal, a retry when its patch
+        # does not apply, and a verifier call, at the pinned lane's pace (data/limits.yml#fix_time).
+        def file_budget_s = FixTime.file_s
 
         # --max-files N caps model repairs. Bounded runs retain early-stop
         # behavior unless MASTER_FIX_RANK=1 asks for full-scan impact ranking;
@@ -171,6 +166,45 @@ module Master
           lines << "fix0: lanes dropped this run: #{drops.map { |lane, why| "#{lane} (#{why})" }.join(", ")}" if drops.any?
           lines
         end
+      end
+    end
+
+    # How long a /fix run, one file in it, and a quiet pass may take, read from
+    # data/limits.yml#fix_time for the lane the run is pinned to. The numbers sat
+    # in three constants tuned for free lanes that answer in seconds; every Opus
+    # repair ran out of its 240 s, and each run needed three environment variables
+    # to get the times the lane actually takes. MASTER_FIX_FILE_BUDGET_S,
+    # MASTER_FIX_RUN_BUDGET_S and MASTER_FIX_STALL_S still override one run.
+    module FixTime
+      module_function
+
+      # The variable that overrides each time for one run.
+      KEYS = {
+        file_s: "MASTER_FIX_FILE_BUDGET_S",
+        run_s: "MASTER_FIX_RUN_BUDGET_S",
+        stall_s: "MASTER_FIX_STALL_S",
+      }.freeze
+
+      def file_s(model: ENV["MASTER_MODEL"]) = seconds(:file_s, model)
+      def run_s(model: ENV["MASTER_MODEL"]) = seconds(:run_s, model)
+      def stall_s(model: ENV["MASTER_MODEL"]) = seconds(:stall_s, model)
+
+      def seconds(key, model)
+        override = Integer(ENV[KEYS.fetch(key)].to_s, exception: false)
+        return override if override&.positive?
+
+        lane = model.to_s.empty? ? nil : Master::Io::LaneQuota.lane_of(model)
+        Integer(config.dig("lanes", lane, key.to_s) || config.fetch("default").fetch(key.to_s))
+      end
+
+      # Read on every call: a run is long and one file read is cheap next to a model call, and a cached
+      # copy would make a test that writes its own limits depend on the order the suite ran in.
+      def config
+        data = Master.load_yaml(Master.limits_path, default: {}) || {}
+        section = data["fix_time"]
+        raise "data/limits.yml has no fix_time section" unless section.is_a?(Hash) && section["default"].is_a?(Hash)
+
+        section
       end
     end
   end

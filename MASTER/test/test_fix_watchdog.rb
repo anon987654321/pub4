@@ -47,7 +47,7 @@ class TestFixWatchdog < Minitest::Test
     run.announce(target: @root, bus:)
     bus.publish("fix_loop:pass_start", pass: 1, file_count: 100)
     bus.publish("fix_loop:phase", stage: :stream)
-    @now = Pulse::STALL_SECONDS + 1
+    @now = Master::Fix::FixTime.stall_s + 1
 
     run.watch_for_stall
 
@@ -111,7 +111,7 @@ class TestFixWatchdog < Minitest::Test
   def test_a_non_advisory_pass_with_no_files_attempted_aborts_at_the_stall_limit
     p = pulse
     p.observe("fix_loop:phase", stage: :stream)
-    @now = Pulse::STALL_SECONDS + 1
+    @now = Master::Fix::FixTime.stall_s + 1
 
     stalled = p.stall(@now)
 
@@ -127,7 +127,7 @@ class TestFixWatchdog < Minitest::Test
     p.observe("fix_loop:phase", stage: :stream)
     p.observe("llm:send", model: "claude-cli:claude-sonnet-5-5")
     p.observe("fix_loop:terminal", state: :crash, target: "OPENBSD")
-    @now = Pulse::STALL_SECONDS * 2
+    @now = Master::Fix::FixTime.stall_s * 2
 
     assert_nil p.stall(@now)
     refute_match(/waiting on/, p.line(elapsed: @now, tokens: 0, eta: nil))
@@ -136,7 +136,7 @@ class TestFixWatchdog < Minitest::Test
   def test_a_scan_that_keeps_finishing_files_is_not_a_stall_even_with_no_repair_yet
     p = pulse
     p.observe("fix_loop:phase", stage: :stream)
-    @now = Pulse::STALL_SECONDS + 1
+    @now = Master::Fix::FixTime.stall_s + 1
     p.observe("scan:complete", path: "app/models/post.rb", count: 0)
     @now += 60
 
@@ -149,7 +149,7 @@ class TestFixWatchdog < Minitest::Test
     p = pulse
     p.observe("fix_loop:phase", stage: :stream)
     p.observe("repair_loop:proposal_rejected", reason: "reflexion_unsafe")
-    @now = Pulse::STALL_SECONDS + 1
+    @now = Master::Fix::FixTime.stall_s + 1
     p.observe("scan:complete", path: "law/detectors/lexical_laws.rb", count: 3)
     @now += 60
 
@@ -162,7 +162,7 @@ class TestFixWatchdog < Minitest::Test
     ENV["MASTER_FIX_FILE_BUDGET_S"] = "900"
     p = pulse
     p.observe("fix_loop:phase", stage: :stream)
-    @now = Pulse::STALL_SECONDS + 1
+    @now = Master::Fix::FixTime.stall_s + 1
     p.observe("repair_loop:proposal_rejected", reason: "reflexion_unsafe")
 
     assert_nil p.stall(@now + 600), "ten minutes into a fifteen-minute file is not a stall"
@@ -174,7 +174,7 @@ class TestFixWatchdog < Minitest::Test
   def test_a_scan_that_stopped_finishing_files_stalls_again
     p = pulse
     p.observe("fix_loop:phase", stage: :stream)
-    @now = Pulse::STALL_SECONDS + 1
+    @now = Master::Fix::FixTime.stall_s + 1
     p.observe("scan:complete", path: "app/models/post.rb", count: 0)
     @now += Pulse::FINISH_WINDOW_SECONDS + 1
 
@@ -184,7 +184,7 @@ class TestFixWatchdog < Minitest::Test
   def test_an_advisory_pass_stall_is_skipped_instead_of_aborting_the_run
     p = pulse
     p.observe("fix_loop:phase", stage: :council)
-    @now = Pulse::STALL_SECONDS + 1
+    @now = Master::Fix::FixTime.stall_s + 1
 
     stalled = p.stall(@now)
 
@@ -198,7 +198,7 @@ class TestFixWatchdog < Minitest::Test
     p = pulse
     p.observe("fix_loop:phase", stage: :stream)
     run.instance_variable_set(:@pulse, p)
-    @now = Pulse::STALL_SECONDS + 1
+    @now = Master::Fix::FixTime.stall_s + 1
 
     run.send(:watch_for_stall)
 
@@ -213,7 +213,7 @@ class TestFixWatchdog < Minitest::Test
     p = pulse
     p.observe("fix_loop:phase", stage: :stream)
     run.instance_variable_set(:@pulse, p)
-    @now = Pulse::STALL_SECONDS + 1
+    @now = Master::Fix::FixTime.stall_s + 1
 
     run.send(:watch_for_stall)
 
@@ -227,7 +227,7 @@ class TestFixWatchdog < Minitest::Test
     p = pulse
     p.observe("fix_loop:phase", stage: :council)
     run.instance_variable_set(:@pulse, p)
-    @now = Pulse::STALL_SECONDS + 1
+    @now = Master::Fix::FixTime.stall_s + 1
 
     run.send(:watch_for_stall)
 

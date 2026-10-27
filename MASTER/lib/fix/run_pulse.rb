@@ -15,7 +15,6 @@ module Master
       WAITING_AFTER = 5
       FILE_CHARS = 24
       BUS_PATTERNS = %w[llm:* fix_loop:* repair_loop:* scan:* council:*].freeze
-      STALL_SECONDS = 600
       # No file finished (fixed, failed or rejected) in this long is a stall.
       FINISH_WINDOW_SECONDS = 300
       # A run with this many attempts and nothing fixed after this long has no yield worth waiting for.
@@ -164,7 +163,7 @@ module Master
       end
 
       def pass_stall(now)
-        seconds = Integer(ENV.fetch("MASTER_FIX_STALL_S", STALL_SECONDS.to_s), exception: false) || STALL_SECONDS
+        seconds = FixTime.stall_s
         waited = now - @pass_started_at
         return unless @pass.positive? && waited > seconds
 
