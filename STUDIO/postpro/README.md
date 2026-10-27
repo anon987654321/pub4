@@ -134,6 +134,14 @@ fetched out of band into `STUDIO/postpro/models/depth/`, never committed, and ea
 plane is cached there. That directory does not exist on a fresh checkout. Without the gems or
 the weights everything falls back to the proxies, with one quiet log line.
 
+The weights are the fp16 export of `onnx-community/depth-anything-v2-small-ONNX` (Apache-2.0),
+a 180 KB graph and 50 MB of external data; the fetch command is under Commands below.
+
+A first estimate takes about twelve seconds a frame on a laptop CPU; later takes of the same
+frame read the cached plane. onnxruntime aborts in its native teardown at exit on macOS, so a
+command-line run that loaded the model leaves by `exit!` with its own status. `POSTPRO_DEPTH=0`
+keeps the proxies, and the test suites set it.
+
 ## Random chains and heavy mode
 
 A bare path, or `--random` with a path (`--random photo.jpg` or `--random --count 10
@@ -262,4 +270,11 @@ ruby STUDIO/postpro/postpro.rb --list-presets
 ruby STUDIO/postpro/postpro.rb --describe-preset noir
 ruby STUDIO/postpro/postpro.rb --export-lut cinematic --output cinematic.cube
 ruby STUDIO/postpro/postpro.rb --capabilities
+
+# the depth model, once, into the gitignored models/depth/
+mkdir -p STUDIO/postpro/models/depth
+for f in model_fp16.onnx model_fp16.onnx_data; do
+  curl -fL -o STUDIO/postpro/models/depth/$f \
+    https://huggingface.co/onnx-community/depth-anything-v2-small-ONNX/resolve/main/onnx/$f
+done
 ```

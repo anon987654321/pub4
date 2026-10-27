@@ -188,4 +188,21 @@ end
 
 POSTPRO_LIB.each { |name| require_relative "lib/#{name}" }
 
-auto_launch if __FILE__ == $0
+# onnxruntime aborts the process in its native teardown at exit on macOS
+# ("recursive_mutex lock failed"), after every write has finished, and a caller
+# reads that abort as a failed grade. A run that loaded the depth model leaves
+# by exit!, with the status it was about to return; any other run exits as usual.
+
+if __FILE__ == $0
+  status = begin
+    auto_launch
+    0
+  rescue SystemExit => e
+    e.status
+  end
+  exit(status) unless Postpro::Depth.loaded?
+
+  $stdout.flush
+  $stderr.flush
+  exit!(status)
+end

@@ -17,6 +17,9 @@
 # replicate all define top-level constants and several of the names collide.
 
 ENV["MT_NO_PLUGINS"] = "1"
+# postpro grades on its depth proxies under test, deterministic and quick; the
+# CLI subprocesses inherit this too.
+ENV["POSTPRO_DEPTH"] ||= "0"
 gem "minitest", "~> 5.25"
 require "minitest/autorun"
 require "timeout"

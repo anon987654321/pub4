@@ -56,14 +56,26 @@ module Postpro
 
     # Loaded once, and quietly absent when either the binding or the weights
     # are — `nil` is the contract every caller is written against.
+    # The answer is kept either way, so an absent model costs one warning per
+    # run rather than one per frame.
     def self.model
-      require "onnxruntime"
-      @model ||= OnnxRuntime::Model.new(ONNX_GRAPH)
-    rescue LoadError, StandardError => e
-      @model = nil
-      warn "depth: estimator unavailable (#{e.message}) — postpro.rb's cues stand in"
-      nil
+      load_model unless defined?(@model)
+      @model
     end
+
+    # POSTPRO_DEPTH=0 keeps the proxies: the test suites set it, so they stay
+    # deterministic and never load a 50 MB model or its native teardown.
+    def self.load_model
+      @model = nil
+      return if ENV["POSTPRO_DEPTH"] == "0"
+
+      require "onnxruntime"
+      @model = OnnxRuntime::Model.new(ONNX_GRAPH)
+    rescue LoadError, StandardError => e
+      warn "depth: estimator unavailable (#{e.message}) — postpro.rb's cues stand in"
+    end
+
+    def self.loaded? = !@model.nil?
 
     # The processor: square up on srgb 0-1, take ImageNet normalisation away
     # off the channels, and return the CHW plane of floats — the batch axis
