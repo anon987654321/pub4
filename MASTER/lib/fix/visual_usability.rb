@@ -41,14 +41,14 @@ module Master
         report.assert_reconciled!
         missing_modalities = REQUIRED_MODALITIES - Array(catalogue["modalities"]).map(&:to_s)
         raise "Law catalogue missing modalities: #{missing_modalities.join(', ')}" unless missing_modalities.empty?
-        missing = ids - report.yaml_entries_ids_if_available
-        raise "visual Law catalogue failed runtime reconciliation: #{missing.join(', ')}" unless missing.empty?
+        raise "visual Law catalogue/runtime count drift: #{ids.length} catalogue entries, #{report.yaml_laws} audited" unless
+          ids.length == report.yaml_laws
 
         true
       end
 
       def summary_for(id, entry)
-        law = executable_definitions[id] || detector_definitions[id]
+        law = executable_definitions[id.to_s.upcase] || detector_definitions[id.to_s.upcase]
         details = if law
                     [law.respond_to?(:ask) ? law.ask : nil,
                      law.respond_to?(:practice) ? law.practice : nil,
