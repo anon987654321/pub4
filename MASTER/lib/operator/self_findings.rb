@@ -310,6 +310,9 @@ module Operator
     # do not force another full census.
     def stale_recorded_members(name = "law", root: ROOT)
       current = nil
+      # A fixture/custom root has no relationship to the canonical repo census.
+      # Only compare against the live populations when auditing that exact root.
+      compare_live_population = File.expand_path(root) == File.expand_path(ROOT)
       recorded_members(name).filter_map do |member|
         match = member.to_s.match(/\A\S+\s+(.+):(\d+)\z/)
         next member unless match
@@ -321,6 +324,8 @@ module Operator
         line_number = line.to_i
         next member unless line_number.positive?
         next member if File.foreach(absolute, encoding: "UTF-8").take(line_number).length < line_number
+
+        next unless compare_live_population
 
         current ||= population(name).to_set
         member unless current.include?(member)
