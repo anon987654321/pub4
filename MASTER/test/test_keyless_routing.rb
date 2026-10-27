@@ -123,17 +123,14 @@ class TestKeylessRouting < Minitest::Test
     router.define_singleton_method(:ollama_installed_models) { ["llama3.2:3b", "nomic-embed-text:latest"] }
 
     local = router.fallback_chain(task_type: :exploration).grep(/\Aollama[:\/]/)
-                  .reject { |id| id.end_with?(":cloud", "-cloud") }
 
     assert_empty local, "only allowlisted local Gemma may enter the fallback tier"
   ensure
     ENV.delete("OLLAMA_BASE_URL")
   end
 
-  # Cloud routing is disabled to avoid the exhausted account quota; local Gemma stays available.
-  # Installed Ollama models are no longer an automatic fallback pool.
-  #
-  def test_cloud_quota_disable_keeps_only_the_allowlisted_local_gemma
+  # Cloud IDs are rejected outright; only the explicitly allowlisted local Gemma is eligible.
+  def test_cloud_models_are_unsupported_and_only_local_gemma_is_allowed
     local_ollama!
     router = Master::CLI::Routing::ModelRouter.new(
       config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
@@ -143,9 +140,8 @@ class TestKeylessRouting < Minitest::Test
     end
     router.define_singleton_method(:ollama_size) { |_name| 0 }
 
-    assert_empty router.send(:ollama_cloud_catalog)
-    assert_empty router.send(:ollama_cloud_models)
     assert_equal ["ollama:gemma3:4b"], router.local_models
+    assert_equal "ollama cloud models are unsupported", router.unreachable_reason("ollama:glm-5.3-flash:cloud")
     refute router.reachable?("ollama:glm-5.3-flash:cloud")
     refute_includes router.fallback_chain(task_type: :exploration), "ollama:qwen2.5-coder:3b"
     refute_includes router.fallback_chain(task_type: :exploration), "ollama:granite4.2:3b"
@@ -515,7 +511,6 @@ class TestKeylessRouting < Minitest::Test
     router.define_singleton_method(:agy_catalog_models) { [] }
     router.define_singleton_method(:cli_lane_models) { |wait: false| [] }
     router.define_singleton_method(:continuity_models) { ["openrouter/free-model:free"] }
-    router.define_singleton_method(:ollama_cloud_models) { [] }
     router.define_singleton_method(:hosted_models) { ["llm7:free-model"] }
     router.define_singleton_method(:hosted_model?) { |model| model.start_with?("llm7:") }
     router.define_singleton_method(:hosted_endpoint_for) { |_model| { key: nil } }

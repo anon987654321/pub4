@@ -119,13 +119,10 @@ module Master
 
 def ollama_model?(model_id) = model_id.to_s.start_with?("ollama:", "ollama/")
 
-# models.yml names the local chain, and a name nobody pulled answers
-# "ollama has no model" and falls through to a paid provider. The daemon
-# lists what it holds at /api/tags, so an enabled tier offers only those.
-# When the daemon cannot say — down, slow, or answering nonsense — the
-# configured list stands and the dispatcher names the failure per call.
+# The local chain is allowlisted in models.yml and presence-checked against
+# /api/tags. When discovery is unavailable, the configured fallback remains
+# available and the dispatcher reports any actual provider failure.
 def ollama_pulled?(model_id)
-  return true if ollama_cloud_model?(model_id) && ollama_cloud_catalog.include?(model_id)
   installed = ollama_installed_models
   return true if installed.nil?
 
@@ -141,38 +138,17 @@ def ollama_installed_models
   @ollama_installed_models = fetch_ollama_tags
 end
 
+# Remotely executed Ollama cloud IDs are recognized only so routing can reject
+# them. There is deliberately no cloud catalogue or opt-in path.
 def ollama_cloud_model?(model_id)
   name = model_id.to_s.sub(%r{\Aollama[:/]}, "")
   name.end_with?(":cloud", "-cloud")
 end
 
-# Cloud models are remotely executed by Ollama and consume its account quota.
-# Their catalogue remains in models.yml, but cloud_enabled: false excludes them
-# from every route without disabling the local Gemma fallback.
-def ollama_cloud_enabled?
-  ollama_enabled? && @rules.dig("ollama", "cloud_enabled") != false
-end
-
-def ollama_cloud_catalog
-  return [] unless ollama_cloud_enabled?
-
-  Array(@rules.dig("ollama", "cloud_models"))
-end
-
-# The local tier as the daemon holds it, best first: the models.yml chain in
-# its own order where pulled, then whatever else is pulled, so a machine that
-# pulled a different model still has a local lane. Embedding models are left
-# out because /api/chat refuses them. When the daemon cannot say, the
-# configured chain stands if the tier is enabled and nothing is offered if not.
-#
-# This is the method the CLI agent calls for an offline default, and the one
-# FallbackChain walks when a paid lane fails with no network.
-#
-# And what runs on this machine. A :cloud tag answers from ollama.com, so
-# an offline boot pinned glm-5.3-flash:cloud and asked the network it had
-# found missing. A model past LOCAL_FIT of physical memory pages for every
-# token, as gemma4:26b's 17 GB does on an 8 GB laptop. Among the rest, the
-# largest the machine holds leads.
+# The local tier is limited to configured, explicitly allowlisted models.
+# Discovery checks presence but never expands the allowlist. If the daemon is
+# unavailable, the declared local fallback remains available with truthful
+# provider-level failure reporting.
 LOCAL_FIT = 0.6
 
 def local_models

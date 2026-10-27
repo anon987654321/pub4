@@ -187,16 +187,6 @@ model_defs:
     id: google/gemma-2-27b-it
     <<: *model_defaults
     score: { quality: 0.82, speed: 0.78, cost: 0.92 }
-  gemma_4_31b: &gemma_4_31b
-    id: ollama:gemma4:31b-cloud
-    <<: *model_defaults
-    context_window: 128000
-    score: { quality: 0.94, speed: 0.82, cost: 1.0 }
-  glm_5_3: &glm_5_3
-    id: ollama:glm4:latest
-    <<: *model_defaults
-    context_window: 128000
-    score: { quality: 0.96, speed: 0.85, cost: 1.0 }
   command_r_plus: &command_r_plus
     id: cohere/command-r-plus-08-2024
     <<: *model_defaults
@@ -221,54 +211,11 @@ model_defs:
     id: web-chat:gemini
     <<: *model_defaults
     score: { quality: 0.83, speed: 0.35, cost: 1.0 }
-  ollama_qwen: &ollama_qwen
-    id: ollama:qwen3.5:27b
-    <<: *model_defaults
-    context_window: 256000
-    score: { quality: 0.92, speed: 0.72, cost: 1.0 }
-  ollama_qwen_large: &ollama_qwen_large
-    id: ollama:qwen3.5:35b
-    <<: *model_defaults
-    context_window: 256000
-    score: { quality: 0.95, speed: 0.62, cost: 1.0 }
-  ollama_glm_flash: &ollama_glm_flash
-    id: ollama:glm-5.3-flash:cloud
-    <<: *model_defaults
-    context_window: 128000
-    score: { quality: 0.96, speed: 0.86, cost: 1.0 }
   ollama_gemma: &ollama_gemma
     id: ollama:gemma3:4b
     <<: *model_defaults
     context_window: 128000
     score: { quality: 0.90, speed: 0.76, cost: 1.0 }
-  # The two small models installed on this machine: the tail of every tier and
-  # role list, because they need no network and no quota.
-  ollama_qwen_coder: &ollama_qwen_coder
-    id: ollama:qwen2.5-coder:3b
-    <<: *model_defaults
-    context_window: 32000
-    score: { quality: 0.70, speed: 0.90, cost: 1.0 }
-  ollama_granite: &ollama_granite
-    id: ollama:granite4.2:3b
-    <<: *model_defaults
-    context_window: 128000
-    score: { quality: 0.68, speed: 0.90, cost: 1.0 }
-  ollama_nemotron: &ollama_nemotron
-    id: ollama:nemotron-3.5-lightning
-    <<: *model_defaults
-    context_window: 128000
-    score: { quality: 0.88, speed: 0.94, cost: 1.0 }
-  ollama_laguna_xs: &ollama_laguna_xs
-    id: ollama:laguna-xs-2.1
-    <<: *model_defaults
-    context_window: 128000
-    score: { quality: 0.90, speed: 0.92, cost: 1.0 }
-  ollama_lfm: &ollama_lfm
-    id: ollama:lfm2.5
-    <<: *model_defaults
-    context_window: 128000
-    score: { quality: 0.78, speed: 0.98, cost: 1.0 }
-
 models:
   grok_primary:
     - *grok_cli_auto
@@ -541,42 +488,16 @@ replicate_chat:
   - google/gemini-2.5-flash
   - moonshotai/kimi-k2.5
 
-# Tier-D (Ollama). Keep one explicitly allowlisted local Gemma fallback; do not
-# automatically add other installed Ollama models or offer the quota-limited cloud
-# tier. Cloud model IDs remain documented below, but cloud_enabled=false keeps them
-# out of routing until the operator explicitly re-enables them after a quota probe.
-# keep_alive holds a model in memory between the turns of one fold instead of
-# reloading it for each; max_num_ctx caps the window the sender sizes to each
-# request (ollama_sender.rb).
+# Tier-D is the local Ollama fallback. The only enabled model is the explicitly
+# allowlisted Gemma 3 4B; remotely executed Ollama cloud models have no catalogue
+# or route to re-enable accidentally. Discovery proves presence, not permission.
+# keep_alive holds the local model in memory between turns; max_num_ctx caps the
+# request window (ollama_sender.rb).
 ollama:
-  # Local routing is restricted to the requested Gemma fallback; discovery is a
-  # presence check, not permission to add every model installed on the machine.
-  # Cloud routing is disabled independently so local Gemma remains available.
   default_base_url: "http://localhost:11434"
   keep_alive: 30m
   max_num_ctx: 16384
-  cloud_enabled: false
   local_model_allowlist: ["ollama:gemma3:4b"]
-  cloud_models:
-    - ollama:glm-5.3-flash:cloud
-    - ollama:glm-5.3:cloud
-    - ollama:glm-5.2:cloud
-    - ollama:glm-5.1:cloud
-    - ollama:deepseek-v4.1-flash:cloud
-    - ollama:deepseek-v4-flash:cloud
-    - ollama:deepseek-v4-pro:cloud
-    - ollama:kimi-k3:cloud
-    - ollama:kimi-k2.7-code:cloud
-    - ollama:kimi-k2.6:cloud
-    - ollama:minimax-m3:cloud
-    - ollama:minimax-m2.7:cloud
-    - ollama:gemma4:cloud
-    - ollama:qwen3.5:cloud
-    - ollama:nemotron-3-ultra:cloud
-    - ollama:nemotron-3-super:cloud
-    - ollama:nemotron-3-nano:cloud
-    - ollama:mistral-large-3:cloud
-    - ollama:gpt-oss:cloud
 
 # media_providers was deleted here on 2026-08-21: nothing read it. The env
 # vars live in providers.yml replicate.env (ReplicateClient reads ENV

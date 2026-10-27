@@ -29,6 +29,7 @@ source and tests they could not run; this pass is what measures them.
 - [ ] The route suites on MASTER's pinned Ruby with Ollama absent: `test_route_policy.rb`,
   `test_lane_selection.rb`, `test_fix_fresh_checkout_models.rb`, `test_compute_pool.rb`,
   `test_fallback_chain.rb`, `test_lane_pool.rb`.
+- [ ] Refresh `MASTER/data/self_findings.yml` through `ruby MASTER/lib/operator/self_findings.rb --ratchet` after source changes settle. Review the law and registry member deltas and both counts; the ratchet must refuse to raise either existing ceiling.
 - [ ] Then `/fix` on the repository root: four independent reports, 30–40 grounded tournament
   candidates per tree, tournament fields that survive an interrupted process, and each terminal
   state (DONE, PLATEAU, HUMAN_DECISION, BLOCKED, VALIDATION_FAILED, DELIVERY_FAILED, TIMEOUT)
@@ -46,7 +47,9 @@ source and tests they could not run; this pass is what measures them.
   web separately, on current HEAD (17.6 s boot and 13–16 s replies on 2026-10-23). Stream the
   first words of a reply; a failed stream says so before switching lanes.
 - [ ] CLI cancellation in a PTY: Ctrl-C mid-generation, Ctrl-D, SIGTERM, child timeout; terminal
-  modes restored; NO_COLOR, TERM=dumb and non-TTY piping; no face in a dumb terminal.
+  modes restored; NO_COLOR, TERM=dumb and non-TTY piping; no face in a dumb terminal. Compare
+  prompt rendering with the exact historical implementation and verify entering/leaving `/face`
+  restores the canonical REPL prompt; do not infer historical glyphs from documentation.
 - [ ] Measure provider failover at the boundary: the provider, model and credential actually used
   under auth failure, rate limit, timeout, malformed reply and budget exhaustion.
 
@@ -76,5 +79,6 @@ source and tests they could not run; this pass is what measures them.
   or unresolved reference-graph entries.
 - [ ] Learned skills and memory: provenance, correction and retraction, retrieval tests; promotion
   only through the reviewed, fixture-backed skill contract.
+- [ ] Work through `MASTER/data/ux_refinements.yml` UX001–UX090 using the declared proof per row. Keep every row `acceptance_required` until its real test, browser, terminal, accessibility, or rendered-runtime evidence is recorded.
 - [ ] Model-backed evaluation of advice quality on realistic personal-assistance scenarios,
   labelled apart from human review (a seam).

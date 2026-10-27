@@ -73,7 +73,7 @@ module Master
             return local_only_chain(task_type:) if local_only?
 
             lanes = { pref: [preferred(task_type:)], tiers: tier_ids.reject { |id| ollama_model?(id) },
-                      free: continuity_models + ollama_cloud_models + hosted_models + browser_chat_models + local_server_models,
+                      free: continuity_models + hosted_models + browser_chat_models + local_server_models,
                       subscription: agy_catalog_models + Ground::AuthProfileLane.models_for_router(self) + primary_models + cli_lane_models }
             order = task_type.to_sym == :chitchat ? %i[pref tiers free subscription] : %i[subscription pref tiers free]
             order.flat_map { |lane| lanes.fetch(lane) } + Io::PaidTail.models + replicate_models + local_models + [@config.model]
