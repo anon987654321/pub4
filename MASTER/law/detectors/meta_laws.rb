@@ -190,13 +190,13 @@ module Master
             return [] if @learned_smells.empty?
 
             language = self.language(path)&.to_s
-            @learned_smells.flat_map { |smell| findings_for_smell(smell, code, language) }
+            @learned_smells.flat_map { |smell| findings_for_smell(smell, code:, language:) }
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "LearnedSmellsLaw.check", severity: :load_bearing, path:)
             raise "learned smell scan failed: #{e.class}: #{e.message}"
           end
 
-          def findings_for_smell(smell, code, language)
+          def findings_for_smell(smell, code:, language:)
             return [] unless applies_to_smell?(smell, language)
 
             pattern = smell_pattern(smell)
