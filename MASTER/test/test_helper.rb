@@ -45,6 +45,8 @@ ENV["MASTER_ACTIVE_LOOP_DIR"] = File.join(LIVE_STATE_DIR, "active_loop")
 ENV["MASTER_CHECK_LOG_DIR"] = File.join(LIVE_STATE_DIR, "check")
 # A test that refuses a repair must not add a row to the run's own refusal log.
 ENV["MASTER_FIX_REFUSALS_PATH"] = File.join(LIVE_STATE_DIR, "fix_refusals.jsonl")
+# Nor a test's deliberate swallow a row in the error log the run summary reads.
+ENV["MASTER_SWALLOW_LOG_PATH"] = File.join(LIVE_STATE_DIR, "swallowed_errors.jsonl")
 
 # Direct test entrypoints must use the same pinned, private bundle as bin/cli.
 # Otherwise RubyGems can select a host-installed Minitest (or a native gem

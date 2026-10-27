@@ -88,4 +88,16 @@ class TestSwallow < Minitest::Test
     entry = Master::Ground::Swallow.recent(limit: 5, context: ctx).last
     assert_equal "load_bearing", entry["severity"]
   end
+
+  def test_the_suite_writes_a_scratch_log_never_the_one_a_fix_run_reads
+    ctx = unique_context("scratch")
+    real = Master::Ground::Swallow::LOG_PATH
+    before = File.file?(real) ? File.size(real) : 0
+    Master::Ground::Swallow.log(RuntimeError.new("x"), context: ctx)
+
+    refute_equal real, Master::Ground::Swallow.log_path
+    assert_equal ENV.fetch("MASTER_SWALLOW_LOG_PATH"), Master::Ground::Swallow.log_path
+    assert_includes File.read(Master::Ground::Swallow.log_path), ctx
+    assert_equal before, File.file?(real) ? File.size(real) : 0
+  end
 end
