@@ -117,4 +117,16 @@ class TestPathPurposeRule < Minitest::Test
   def test_a_file_at_the_root_has_no_directory_to_declare
     in_tree { |rule, root| assert_empty rule.check("", path: File.join(root, "Rakefile.rb")) }
   end
+
+  # The skip pattern wants a slash before test/, and the house lint hands the
+  # rule paths relative to MASTER, so a new test file is judged by MASTER's own
+  # ownership entry. Without one, every new test drew a finding at commit time.
+  def test_a_new_test_file_in_masters_own_tree_is_declared
+    rule = Master::Review::Scan::Laws::PathPurposeLaw.new(root: Master::ROOT)
+
+    Dir.chdir(Master::ROOT) do
+      assert_empty rule.check("", path: "test/test_not_written_yet.rb")
+      refute_empty rule.check("", path: "undeclared_probe_dir/thing.rb")
+    end
+  end
 end

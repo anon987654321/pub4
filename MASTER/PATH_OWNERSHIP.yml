@@ -87,6 +87,12 @@ ownership:
     purpose: personality, speech, TTS, rendering
     risk: medium
     check: bin/check
+  test/:
+    purpose: Minitest suite for MASTER's lib/, law/, bin/ and tools/, one test_<subject>.rb
+      per subject, booted through test/test_helper.rb with live state redirected to a
+      scratch directory; fixtures/ holds their inputs
+    risk: medium
+    check: rake test
   test/voice/:
     purpose: speech and TTS regression tests grouped by the runtime subsystem they protect
     risk: medium
