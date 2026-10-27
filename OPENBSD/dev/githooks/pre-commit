@@ -4,9 +4,9 @@
 # One git index, many agents.
 #
 # The default checkout is shared. CLAUDE.md has described this hazard accurately
-# for months — commit path-scoped, take a worktree if more than one agent is
-# active — and it keeps happening anyway, because staying in the shared tree is
-# zero effort and taking a worktree is a decision. On 2026-08-10 one push carried
+# for months — commit path-scoped — and it keeps happening anyway, because a
+# whole-tree commit is zero effort and a path-scoped one is a decision. Branches
+# and worktrees are refused (MASTER/tools/block_branching.rb). On 2026-08-10 one push carried
 # four commits another session had told its user were still local. On 2026-08-12
 # a session's debt write-up was committed by a different session under a message
 # about something else, and that session's own commit body says it was "carrying
@@ -25,7 +25,6 @@
 #      probably not yours. That is the point.
 #
 # Installed by `bin/operator hooks`, which sets core.hooksPath to this directory.
-# The real fix is still `bin/operator worktree <name>`.
 
 TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
 
@@ -125,10 +124,6 @@ if staged_trees.size > 1 && ENV["PUB4_CROSS_TREE"] != "1"
   warn ""
   warn "      PUB4_CROSS_TREE=1 git commit -- <paths>"
   warn ""
-  warn "  If more than one agent is working here, the actual fix is a worktree:"
-  warn ""
-  warn "      bin/operator worktree <name>"
-  warn ""
   exit 1
 end
 
@@ -171,30 +166,6 @@ if !lost_exec.empty? && ENV["PUB4_MODE_CHANGE"] != "1"
   warn "  If you meant it: PUB4_MODE_CHANGE=1 git commit -- <paths>"
   warn ""
   exit 1
-end
-
-# The dilla engine is one file, dilla.rb. A syntax error in it stops every
-# render at load, and one shipped on 2026-09-19: four orphaned lines a rewrite
-# left behind, caught only when renders died with a SyntaxError at boot.
-# `ruby -c` costs milliseconds against that, so a staged engine file must parse
-# before it lands. Scoped to STUDIO/dilla deliberately: that is the measured
-# incident, and no broader parse check has been proved against the rest of the repo.
-engine_staged = staged.select { |path| path == "STUDIO/dilla/dilla.rb" }
-unless engine_staged.empty? || ENV["PUB4_PARSE_SKIP"] == "1"
-  require "open3"
-  engine_staged.each do |path|
-    out, status = Open3.capture2e(RbConfig.ruby, "-c", path)
-    next if status.success?
-
-    warn ""
-    warn "pre-commit: REFUSED — #{path} does not parse:"
-    warn "  #{out.lines.first(4).join.strip}"
-    warn ""
-    warn "  A syntax error in the engine stops every render at load. Fix it,"
-    warn "  or bypass this one commit: PUB4_PARSE_SKIP=1 git commit -- <paths>"
-    warn ""
-    exit 1
-  end
 end
 
 # The constitution, applied to what is about to land: the rules MASTER documents

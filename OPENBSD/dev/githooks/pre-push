@@ -18,7 +18,7 @@
 #
 #     PUB4_PUSH_ALL=1 git push
 #
-# Installed by `bin/operator hooks`. The real fix is still `bin/operator worktree <name>`.
+# Installed by `bin/operator hooks`.
 
 ZERO = "0" * 40
 # Rebuild the four source mirrors immediately before every manual push. They are
@@ -121,7 +121,5 @@ warn "  Read them first:   git log -p origin/main..HEAD"
 warn "  Then, if you mean it:"
 warn ""
 warn "      PUB4_PUSH_ALL=1 git push"
-warn ""
-warn "  To stop sharing an index at all:  bin/operator worktree <name>"
 warn ""
 exit 1
