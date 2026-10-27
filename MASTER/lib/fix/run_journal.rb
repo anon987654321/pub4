@@ -198,7 +198,7 @@ module Master
       # after the journal points to the new revision, older revisions may be pruned safely.
       def persist_architecture_report(run_id, target:, report:, provenance:)
         id = run_id.to_s
-        raise ArgumentError, "invalid fix run id" unless id.match?(/\\A[a-f0-9]{20}\\z/)
+        raise ArgumentError, "invalid fix run id" unless id.match?(/\A[a-f0-9]{20}\z/)
         raise ArgumentError, "architecture report must be a hash" unless report.is_a?(Hash)
         raise ArgumentError, "architecture provenance must be a hash" unless provenance.is_a?(Hash)
 
@@ -269,7 +269,7 @@ module Master
       # checksum, target, schema and provenance digest all still agree.
       def verify_architecture_report(run_id)
         id = run_id.to_s
-        return { "status" => "invalid_run_id" } unless id.match?(/\\A[a-f0-9]{20}\\z/)
+        return { "status" => "invalid_run_id" } unless id.match?(/\A[a-f0-9]{20}\z/)
 
         master_dir = File.join(@root, ".master")
         directory = File.join(@root, ARCHITECTURE_DIR)
@@ -283,7 +283,7 @@ module Master
 
         relative_path = receipt["path"].to_s
         name = File.basename(relative_path)
-        match = name.match(/\\A#{Regexp.escape(id)}-([a-f0-9]{12})-([a-f0-9]{12})\\.json\\z/)
+        match = name.match(/\A#{Regexp.escape(id)}-([a-f0-9]{12})-([a-f0-9]{12})\.json\z/)
         return { "status" => "receipt_path_mismatch" } unless match
         expected_path = File.join(directory, name)
         return { "status" => "receipt_path_mismatch" } unless relative(expected_path) == relative_path
@@ -308,7 +308,7 @@ module Master
 
         report = envelope["report"]
         return { "status" => "report_malformed" } unless report.is_a?(Hash)
-        return { "status" => "report_status_mismatch" unless report["status"].to_s == receipt["report_status"].to_s
+        return { "status" => "report_status_mismatch" } unless report["status"].to_s == receipt["report_status"].to_s
         return { "status" => "report_target_mismatch" } unless Array(report["targets"]).all? do |row|
           row.is_a?(Hash) && !row["tree"].to_s.empty?
         end
@@ -334,7 +334,7 @@ module Master
         end.to_set
         removed = 0
         Dir.children(directory).each do |name|
-          next unless name.match?(/\\A[a-f0-9]{20}-[a-f0-9]{12}-[a-f0-9]{12}\\.json\\z/)
+          next unless name.match?(/\A[a-f0-9]{20}-[a-f0-9]{12}-[a-f0-9]{12}\.json\z/)
 
           path = File.join(directory, name)
           next if File.symlink?(path) || !File.file?(path)

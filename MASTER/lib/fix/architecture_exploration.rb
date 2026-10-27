@@ -187,7 +187,7 @@ module Master
       end
 
       def saved_report
-        return nil unless @run_journal && @run_id.match?(/\\A[a-f0-9]{20}\\z/)
+        return nil unless @run_journal && @run_id.match?(/\A[a-f0-9]{20}\z/)
 
         receipt = @run_journal.verify_architecture_report(@run_id)
         return nil if receipt["status"] == "receipt_missing"
@@ -263,19 +263,18 @@ module Master
           "provenance" => provenance,
           "requested_candidates_per_tree" => @count,
           "targets" => ordered,
-          "brief" => ordered.reject { |row| row["status"] == "PENDING" }.map { |row| brief(row) }.join("\\n\\n"),
+          "brief" => ordered.reject { |row| row["status"] == "PENDING" }.map { |row| brief(row) }.join("\n\n"),
         }
       end
 
       def persist_report(target:, trees:, rows:, status:, provenance:, final_report: nil)
-        return unless @run_journal && @run_id.match?(/\\A[a-f0-9]{20}\\z/)
+        return unless @run_journal && @run_id.match?(/\A[a-f0-9]{20}\z/)
 
         report = final_report || aggregate_report(target:, trees:, rows:, provenance:)
         report["status"] = status
         @run_journal.persist_architecture_report(@run_id, target:, report:, provenance:)
       end
 
-      def explore(tree, files)
       def explore(tree, files)
         name = File.basename(tree)
         paths = files.map { |path| File.expand_path(path, @root) }

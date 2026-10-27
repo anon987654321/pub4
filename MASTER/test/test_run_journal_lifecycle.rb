@@ -54,7 +54,7 @@ class TestRunJournalLifecycle < Minitest::Test
       receipt = journal.persist_architecture_report(run.fetch("id"), target: File.join(root, "MASTER"), report:, provenance:)
 
       assert receipt.fetch("readback_verified")
-      assert_match(%r{\\A\\.master/fix_architecture/}, receipt.fetch("path"))
+      assert_match(%r{\A\.master/fix_architecture/}, receipt.fetch("path"))
       path = File.join(root, receipt.fetch("path"))
       assert_equal 0, File.stat(path).mode & 0o077
       restored = Master::Fix::RunJournal.new(root:, bus:).verify_architecture_report(run.fetch("id"))
@@ -62,7 +62,7 @@ class TestRunJournalLifecycle < Minitest::Test
       assert_equal 30, restored.fetch("report").fetch("targets").first.fetch("candidates").size
       assert_equal provenance, restored.fetch("provenance")
 
-      File.write(path, "tampered\\n")
+      File.write(path, "tampered\n")
       assert_equal "checksum_mismatch", Master::Fix::RunJournal.new(root:, bus:).verify_architecture_report(run.fetch("id")).fetch("status")
     end
   end
