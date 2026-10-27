@@ -48,7 +48,7 @@ module Studio
         path = File.join(@directory, "#{stamp}.jpg")
         output = client.predict(still_model, still_input(words), timeout: 600)
         client.download_url(first_url(output), path)
-        grade(path, stamp)
+        grade(path)
       end
 
       def render_film(words, still, stamp, duration)
@@ -134,23 +134,30 @@ module Studio
         raise "invalid training manifest #{path}: #{error.message}"
       end
 
-      def grade(path, stamp)
-        script = File.join(ROOT, "postpro", "postpro.rb")
-        output_dir = File.join(Studio::OutputPaths.render_directory, "photograph-#{stamp}")
-        env = { "POSTPRO_OUTPUT_DIR" => output_dir }
-        stdout, stderr, status = Studio::Subprocess.capture3(
-          env, RbConfig.ruby, script, "--rough", "--count", "1", path, timeout: 600
-        )
-        output = [stdout, stderr].compact.join("\n")
-        raise "postpro failed: #{output.lines.last.to_s.strip}" unless status.success?
-
-        ext = File.extname(path)
-        stem = File.basename(path, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
-        generated = Dir[File.join(output_dir, "postpro_#{stem}_*_v1#{ext}")]
-        graded = generated.max_by { |file| File.mtime(file) }
-        raise "postpro succeeded but produced no graded still under #{output_dir}" unless graded
+      # postpro writes its grade beside the still it was given.
+      def grade(path)
+        run_postpro(path)
+        graded = Dir[graded_pattern(path)].max_by { |file| File.mtime(file) }
+        raise "postpro succeeded but produced no graded still under #{File.dirname(path)}" unless graded
 
         graded
+      end
+
+      def run_postpro(path)
+        script = File.join(ROOT, "postpro", "postpro.rb")
+        stdout, stderr, status = Studio::Subprocess.capture3(
+          {}, RbConfig.ruby, script, "--rough", "--count", "1", path, timeout: 600
+        )
+        return if status.success?
+
+        raise "postpro failed: #{[stdout, stderr].compact.join("\n").lines.last.to_s.strip}"
+      end
+
+      # Where postpro names a one-take grade of `path`: beside it.
+      def graded_pattern(path)
+        ext = File.extname(path)
+        stem = File.basename(path, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
+        File.join(File.dirname(path), "postpro_#{stem}_*_v1#{ext}")
       end
 
       def first_url(output)

@@ -346,7 +346,7 @@ class TestPostproFilm < Minitest::Test
   def test_effect_inventory_includes_late_preset_case_arms
     source = File.read(POSTPRO_SOURCE)
     implemented = send(:preset_effect_names)
-    body = send(:postpro_source_method, source, "preset")
+    body = send(:postpro_source_method, source, EFFECT_DISPATCH)
 
     %w[optical_blur lens_flare cinemascope_bars dilla_console_sum].each do |name|
       assert_includes implemented, name
@@ -356,7 +356,7 @@ class TestPostproFilm < Minitest::Test
   end
 
   def test_effect_inventory_ignores_comment_and_string_decoys
-    source = <<~RUBY
+    source = <<~'RUBY'
       def preset
         fx = "fixture"
         processed = case fx
@@ -431,9 +431,10 @@ class TestPostproFilm < Minitest::Test
       0.5
     )
     assert_in_delta 1.0, levels.fetch(:valid)
+
     assert_equal 1, problems.length
     assert_match(/grain must be a finite nonnegative number/, problems.first)
-    refute problems.any? { |issue| issue.include?("valid") }
+    refute problems.any? { |issue| issue.start_with?("valid:") }
   end
 
   def test_finishing_grain_probe_records_failure_and_keeps_the_checker_alive
@@ -452,7 +453,7 @@ class TestPostproFilm < Minitest::Test
     source = File.read(POSTPRO_SOURCE)
     methods = send(:postpro_source_methods, source)
     required_calls = {
-      "process_file" => "apply_finishing_grain",
+      "process_file" => "refuse_failed_family!",
       "run_random" => "process_file(",
       "run_watch" => "grade_watched("
     }
@@ -512,7 +513,7 @@ class TestPostproFilm < Minitest::Test
 
   def test_preset_effect_key_readers_verify_the_actual_case_arm
     source = File.read(POSTPRO_SOURCE)
-    preset_source = send(:postpro_source_method, source, "preset")
+    preset_source = send(:postpro_source_method, source, EFFECT_DISPATCH)
     pairs = [
       ["spectral_temp", :temp], ["color_temp", :temp],
       ["print_film", :print_stock], ["push_pull", :stops],
@@ -603,7 +604,7 @@ class TestPostproFilm < Minitest::Test
     assert_empty send(:postpro_case_label_duplicates, same_arm, :fx),
                  "repeated alternatives in one when arm do not shadow another arm"
 
-    preset_source = send(:postpro_source_method, File.read(POSTPRO_SOURCE), "preset")
+    preset_source = send(:postpro_source_method, File.read(POSTPRO_SOURCE), EFFECT_DISPATCH)
     assert_empty send(:postpro_case_label_duplicates, preset_source, :fx),
                  "the production effect dispatch must not contain unreachable duplicate arms"
   end
@@ -727,7 +728,9 @@ class TestPostproFilm < Minitest::Test
   # both detail and contrast to act on. INERT lists the ones known to be
   # no-ops on this probe for an honest reason, so the list itself is the record.
   INERT = {
-    newton_rings: "amplitude is below 8-bit quantisation at every intensity it is called with"
+    newton_rings: "amplitude is below 8-bit quantisation at every intensity it is called with",
+    shadow_lift: "a target, not an amount: the probe's blacks already sit at the toe it lifts to",
+    double_exposure: "needs a second image; a recipe step without one blends the frame with itself",
   }.freeze
 
   def test_preset_fails_closed_when_an_effect_has_no_implementation
@@ -778,12 +781,7 @@ class TestPostproFilm < Minitest::Test
 
     probe = build_probe
     unchanged = RECIPE_ALLOWED.reject { |name| INERT.key?(name.to_sym) }.select do |name|
-      adapter = RECIPE_ADAPTERS[name]
-      out = if adapter
-              adapter.call(probe, 1.0, {})
-            elsif respond_to?(name, true)
-              send(name, probe, 1.0)
-            end
+      out = send(:recipe_step, probe, name, 1.0, { blur: 1.0, curve: 1.0, fringe: 1.0, vignette: 1.0 })
       out.nil? || (out.cast("float") - probe.cast("float")).abs.max.zero?
     rescue StandardError
       false # a raising effect is a different defect; vocab_check owns that
@@ -864,11 +862,13 @@ class TestPostproFilm < Minitest::Test
   # a chain stays inside one family without anyone declaring the families.
   def test_every_step_co_occurs_with_every_other_in_some_preset
     40.times do |seed|
-      names = random_chain(Random.new(seed)).map(&:first) - [RANDOM_ALWAYS] - RANDOM_SHAPES
+      names = (random_chain(Random.new(seed)).map(&:first) - [RANDOM_ALWAYS] - RANDOM_SHAPES).uniq
+
       # Only the optional wildcard may disagree with the affinity graph. The
       # generator marks it indirectly, so identify the single highest-conflict
       # effect and verify every remaining pair is supported by a real preset.
       stranger = names.max_by { |fx| (names - [fx]).count { |other| random_affinity[[fx, other].sort].zero? } }
+
       (names - [stranger]).combination(2) do |a, b|
         assert_operator random_affinity[[a, b].sort], :>, 0,
                         "no preset puts #{a} with #{b}: #{names.inspect}"
@@ -989,13 +989,13 @@ class TestPostproFilm < Minitest::Test
     end
   end
 
-  # Quieter than it was, deliberately, and the wear shelf is out unless asked for.
-  def test_heavy_mode_is_the_documented_default
+  # Light is the documented default; heavy is asked for.
+  def test_light_mode_is_the_documented_default
     had_value = ENV.key?("POSTPRO_HEAVY")
     value = ENV["POSTPRO_HEAVY"]
     ENV.delete("POSTPRO_HEAVY")
 
-    assert heavy_mode?
+    refute heavy_mode?
   ensure
     had_value ? ENV["POSTPRO_HEAVY"] = value : ENV.delete("POSTPRO_HEAVY")
   end

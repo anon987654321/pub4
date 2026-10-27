@@ -10,8 +10,8 @@ require_relative "../output_paths"
 
 module Postpro
   module Constitution
-    # All default renders share STUDIO's dated, external output contract.
-    # POSTPRO_OUTPUT_DIR remains the explicit override for managed callers.
+    # Renders of a photograph sit beside it (output_dir_for). This dated directory
+    # is only for output with no source photograph, such as an exported LUT.
     OUTPUT_DIR = Studio::OutputPaths.render_directory.freeze
     LAW_PATHS = [
       File.expand_path("../../MASTER/law/universal.rb", __dir__),
@@ -89,14 +89,11 @@ module Postpro
       raise ArgumentError, "constitutional batch must generate five to ten variations per source by default"
     end
 
-    # A render sits beside its source. POSTPRO_OUTPUT_DIR overrides that, and a
-    # source inside the checkout renders to the dated directory instead, because
-    # generated images are never committed and never belong in the tree.
+    # A render sits beside its source, always: no environment variable and no
+    # location redirects it. Inside the checkout the root .gitignore keeps
+    # postpro_* renders out of git, so the tree stays clean without moving them.
     def output_dir_for(source)
-      return OUTPUT_DIR unless ENV.fetch("POSTPRO_OUTPUT_DIR", "").empty?
-
-      beside = File.dirname(File.expand_path(source))
-      Studio::OutputPaths.inside_repository?(beside) ? OUTPUT_DIR : beside
+      File.dirname(File.expand_path(source))
     end
 
     # Renders are replaceable: a new family for a source removes the old one first.
@@ -126,7 +123,7 @@ module Postpro
       return if @announced_output_dirs.include?(directory)
 
       FileUtils.mkdir_p(directory)
-      warn "postpro: renders go to #{directory} (set POSTPRO_OUTPUT_DIR to choose)"
+      warn "postpro: renders go to #{directory}"
       @announced_output_dirs << directory
     end
 
@@ -176,8 +173,9 @@ module Postpro
       output = File.expand_path(output_path)
       verify_distinct_source!(input_path: input, output_path: output)
       unless File.dirname(output) == output_dir_for(input)
-        raise ArgumentError, "constitutional output must sit beside its source or in the Postpro output directory"
+        raise ArgumentError, "constitutional output must sit beside its source"
       end
+
       unless File.basename(output).start_with?("postpro_")
         raise ArgumentError, "constitutional output must use postpro_ prefix"
       end

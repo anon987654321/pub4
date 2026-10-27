@@ -41,15 +41,16 @@ BOOTSTRAP = PostproBootstrap.run
 # budget it is held to; a path that cannot do those is not worth having back.
 POSTPRO_USAGE = <<~TXT
   usage: postpro.rb [flags]           with no flags, asks what to grade
-  usage: postpro.rb IMAGE | DIR       five to ten analog variations per image
+  usage: postpro.rb IMAGE... | DIR... ten light analog takes per image and a contact
+                                      sheet, all written beside the image
 
     --input FILE --output FILE --preset NAME   grade one image
     --reference FILE                  add a quality report against a reference
     --compare                         side-by-side after a one-shot grade
     --random [--count N] [--rough]    five to ten analog variations per image
-    --heavy                           five variations: lane deal subtle→bleeding edge,
-                                      12–24-step chains, bands lifted (the default);
-                                      POSTPRO_HEAVY=0 opts out unless --heavy is passed
+    --heavy                           start each take from a named look (noir, neon
+                                      night...); lane deal subtle→bleeding edge, at most
+                                      ten steps a take; also POSTPRO_HEAVY=1
     --watch [DIR] [--preset NAME]     grade every new photo that lands in DIR
     --auto                            grade the default globs without prompting
     --from-replicate                   grade what replicate just wrote
@@ -97,8 +98,8 @@ if one_shot_requested && !complete_one_shot && !dedicated_mode
   exit 2
 end
 
-# Heavy is the standing default; --heavy makes that choice explicit for a
-# single invocation, even when POSTPRO_HEAVY=0 is inherited from the environment.
+# Light is the default; --heavy opts one invocation into the named-look takes,
+# even when POSTPRO_HEAVY=0 is inherited from the environment.
 ENV["POSTPRO_HEAVY"] = "1" if ARGV.include?("--heavy")
 
 # What is wrong with this photograph, and which half a grade can reach.
@@ -586,16 +587,18 @@ PRESETS = {
   polaroid: { fx: %w[optical_blur spectral_temp film_curve faded_print warmth bloom_pro shadow_lift grain],
               stock: :kodak_portra, temp: 5000, intensity: 0.85 },
 
-  landscape: { fx: %w[optical_blur vintage_lens spectral_temp film_curve stock_matrix color_separate halation micro_contrast grain],
+  landscape: { fx: %w[optical_blur vintage_lens spectral_temp halation film_curve stock_matrix color_separate
+                      micro_contrast grain],
                stock: :fuji_velvia, temp: 5800, intensity: 0.90, lens: "zeiss" },
 
-  magic_hour: { fx: %w[optical_blur spectral_temp film_curve halation warmth bloom_pro grain],
+  magic_hour: { fx: %w[optical_blur spectral_temp halation film_curve warmth bloom_pro grain],
                 stock: :fuji_velvia, temp: 4800, intensity: 0.90 },
 
-  reversal: { fx: %w[optical_blur spectral_temp film_curve stock_matrix color_separate halation highlight_roll micro_contrast grain],
+  reversal: { fx: %w[optical_blur spectral_temp halation film_curve stock_matrix color_separate highlight_roll
+                     micro_contrast grain],
               stock: :fuji_velvia, temp: 5600, intensity: 0.90 },
 
-  process_e6: { fx: %w[optical_blur spectral_temp push_pull film_curve color_separate halation highlight_roll grain],
+  process_e6: { fx: %w[optical_blur spectral_temp push_pull halation film_curve color_separate highlight_roll grain],
                 stock: :ektachrome_100, temp: 5600, intensity: 0.90, stops: 2.0 },
 
   cinematic: { fx: %w[optical_blur spectral_temp halation tonemap film_curve orange_mask shadow_lift print_film grain],
@@ -610,15 +613,18 @@ PRESETS = {
   bleached: { fx: %w[optical_blur spectral_temp tonemap bleach_bypass film_curve split_grade highlight_roll grain],
               stock: :kodak_vision3, temp: 4800, intensity: 0.90 },
 
-  neon_night: { fx: %w[optical_blur spectral_temp push_pull reciprocity_failure film_curve orange_mask halation bloom_pro grain],
+  neon_night: { fx: %w[optical_blur spectral_temp push_pull reciprocity_failure halation film_curve orange_mask
+                       bloom_pro grain],
                 stock: :cinestill_800t, temp: 3200, intensity: 0.90,
                 stops: 0.5, exposure_secs: 30.0 },
 
-  tokyo_night: { fx: %w[optical_blur spectral_temp push_pull reciprocity_failure film_curve orange_mask halation teal_orange grain],
+  tokyo_night: { fx: %w[optical_blur spectral_temp push_pull reciprocity_failure halation film_curve orange_mask
+                        teal_orange grain],
                  stock: :cinestill_800t, temp: 3000, intensity: 0.90,
                  stops: 1.0, exposure_secs: 45.0 },
 
-  tungsten: { fx: %w[optical_blur spectral_temp reciprocity_failure film_curve orange_mask halation push_pull shadow_lift grain],
+  tungsten: { fx: %w[optical_blur spectral_temp reciprocity_failure halation film_curve orange_mask push_pull
+                     shadow_lift grain],
               stock: :kodak_vision3_500t, temp: 3200, intensity: 0.90,
               stops: 0.3, exposure_secs: 8.0 },
 
@@ -637,10 +643,10 @@ PRESETS = {
   noir: { fx: %w[optical_blur spectral_temp tonemap push_pull film_curve bleach_bypass desaturate shadow_lift grain],
           stock: :tri_x, temp: 5600, intensity: 0.90, stops: 2.0 },
 
-  dream: { fx: %w[optical_blur spectral_temp vintage_lens film_curve halation bloom_pro desaturate split_toning grain],
+  dream: { fx: %w[optical_blur spectral_temp vintage_lens halation film_curve bloom_pro desaturate split_toning grain],
            stock: :ektachrome_100, temp: 5800, intensity: 0.85, lens: "leica" },
 
-  dreamscape: { fx: %w[optical_blur spectral_temp film_curve halation bloom_pro split_toning grain],
+  dreamscape: { fx: %w[optical_blur spectral_temp halation film_curve bloom_pro split_toning grain],
                 stock: :ektachrome_100, temp: 5800, intensity: 0.85 },
 
   lo_fi: { fx: %w[optical_blur spectral_temp vintage_lens film_curve push_pull faded_print warmth chromatic_aberration grain],
@@ -687,7 +693,7 @@ PRESETS = {
   aged_kodachrome: { fx: %w[optical_blur spectral_temp film_curve dye_fade kodachrome_sim dir_coupler grain],
                      stock: :kodachrome, temp: 5600, intensity: 0.88, age: 0.50 },
 
-  wide_angle: { fx: %w[optical_blur lens_distortion spectral_temp film_curve halation grain],
+  wide_angle: { fx: %w[optical_blur lens_distortion spectral_temp halation film_curve grain],
                 stock: :fuji_velvia, temp: 5800, intensity: 0.90, k1: -0.14 },
 
   cinema_scan: { fx: %w[optical_blur spectral_temp longitudinal_ca halation tonemap film_curve orange_mask bokeh_rendering print_film grain],
@@ -714,7 +720,7 @@ PRESETS = {
   # arrives from a frame edge and fogs the shadows first, so it belongs after
   # the curve — the fog is light the emulsion received, not a grade applied to
   # what it recorded.
-  light_leak: { fx: %w[optical_blur spectral_temp film_curve light_leaks halation grain],
+  light_leak: { fx: %w[optical_blur spectral_temp halation film_curve light_leaks grain],
                 stock: :kodak_portra, temp: 5600, intensity: 0.85 },
 
   # Daylight printed as moonlight. A convention rather than a process — real
@@ -729,7 +735,7 @@ PRESETS = {
   ortho: { fx: %w[optical_blur spectral_temp ortho_film film_curve adjacency_effects grain],
            stock: :tri_x, temp: 5600, intensity: 0.85 },
 
-  tilt_shift_look: { fx: %w[optical_blur spectral_temp film_curve tilt_shift halation grain],
+  tilt_shift_look: { fx: %w[optical_blur spectral_temp halation film_curve tilt_shift grain],
                      stock: :kodak_portra, temp: 5200, intensity: 0.80 },
 
   haunted: { fx: %w[optical_blur spectral_temp expired_film reticulation fixing_bath_fog lens_ghosting gate_weave grain],
@@ -1249,13 +1255,18 @@ end
 # taking the headroom out of the faces.
 SKIN_SAT_CEILING = 128.0
 
-def skin_protect(image, intensity = 1.0)
-  hsv = image.colourspace("hsv")
-  h, s, v = hsv.bandsplit
+# Where skin is, 0 to 1: the CIELAB hue band skin occupies (20 to 75 degrees;
+# most skin sits under 55), at the chroma and lightness skin has. The HSV band
+# this file used before, 36 to 90 degrees, was yellow and missed most faces.
+# Shared by skin_protect, teal_orange and the take check's skin budget.
+def skin_key(image)
+  lightness, chroma, hue = rgb_bands(image).cast("float").copy(interpretation: :srgb).colourspace(:lch).bandsplit
+  skin_tones(lightness, chroma, hue).cast("float") / 255.0
+end
 
-  hue_mask = (h > 25.5) & (h < 63.75)
-  sat_mask = (s > 51) & (s < 153)
-  skin = (hue_mask & sat_mask).cast("float") / 255.0 * intensity.clamp(0.0, 1.0)
+def skin_protect(image, intensity = 1.0)
+  h, s, v = image.colourspace("hsv").bandsplit
+  skin = skin_key(image) * intensity.clamp(0.0, 1.0)
 
   s_f = s.cast("float")
   capped = (s_f > SKIN_SAT_CEILING).ifthenelse(SKIN_SAT_CEILING, s_f)
@@ -1944,48 +1955,65 @@ rescue StandardError => e
   $logger.error "dir_coupler: #{e.message}"; image
 end
 
-# Bleach bypass: skip bleach step, retain silver alongside dye. Screen-blend of
-# a B&W layer over the colour image. Shadow neutral lift models the base silver
-# density — retained metallic silver adds a grey floor to the darkest zones.
+# Bleach bypass leaves the silver in, and silver is neutral density. On the
+# print, Kodak's description: shadows darker and richer, contrast up, colour
+# muted. Density adds in log space, so in transmittance every channel is
+# multiplied by the scene's own luminance to a power: out = in * Y^k. Shadows,
+# where Y is small, crush most; highlights, where Y is near 1, hold. The dyes
+# keep their differences while the silver greys them, so saturation falls, and
+# a little more is taken to match the muted colour. A screen blend with a lifted
+# shadow floor, the tempting shortcut, makes the picture lighter and milkier,
+# the opposite of the look, and costs more structure than any other step.
+BLEACH_SILVER_POWER = 0.8
+BLEACH_DESATURATION = 0.3
+
 def bleach_bypass(image, intensity = 0.5)
-  img_f = image.cast("float") / 255.0
-  gray_f = image.colourspace("grey16").colourspace("srgb").cast("float") / 255.0
-  screen = (img_f.linear(-1, 1) * gray_f.linear(-1, 1)).linear(-1, 1)
-  # gray_f is three bands (grey16 converted back to sRGB), so bandjoining it to
-  # two copies of itself made a NINE-band image, and adding that to a three-band
-  # one raised "add: not one band or 9 bands" -- caught by the rescue below,
-  # which returned the input. Every bleached, blockbuster, street, war_doc,
-  # noir, horror, arctic and infrared_look render has been missing its bleach
-  # bypass. The shadow term wants a single luminance band to triple.
-  luma_f = image.colourspace("b-w").cast("float") / 255.0
-  shadow_base = (luma_f.linear(-1, 1)**2.0) * intensity * 0.18
-  base_rgb = shadow_base.bandjoin([shadow_base, shadow_base])
-  result = img_f * (1.0 - intensity) + screen * intensity + base_rgb * intensity
-  safe_cast(clamp01(result) * 255.0)
+  linear = image.colourspace("scrgb")
+  r, g, b = linear.bandsplit
+  luma = clamp01(r * 0.2126 + g * 0.7152 + b * 0.0722)
+  silver = ((luma > 1e-4).ifthenelse(luma, 1e-4)**(BLEACH_SILVER_POWER * intensity))
+  dense = linear * silver.bandjoin([silver, silver])
+  grey = (dense.extract_band(0) * 0.2126 + dense.extract_band(1) * 0.7152 + dense.extract_band(2) * 0.0722)
+  share = BLEACH_DESATURATION * intensity
+  muted = dense * (1.0 - share) + grey.bandjoin([grey, grey]) * share
+  safe_cast(clamp01(muted).colourspace("srgb"))
 rescue StandardError => e
   $logger.error "bleach_bypass: #{e.message}"; image
 end
 
-# Push/pull processing. Per-stock per-channel response: blue dye layer develops
-# faster under push (reaches Dmax sooner), so PUSH_RESPONSE attenuates it to
-# match measured sensitometry curves for each stock.
+# Push and pull are development, not exposure. A push rates the film faster,
+# underexposing it by `stops`, and develops longer to make up for it: midtones
+# come back to about where they belong, the curve steepens so contrast rises,
+# thin shadows stay thin, and the densest highlights block up toward a shoulder
+# instead of clipping. A pull is the reverse, a softer curve. Per channel the
+# steepening follows PUSH_RESPONSE, since the layers develop at different rates.
+# This used to multiply linear light by 2^stops and clip, which on noir's
+# two-stop push was four times the exposure and burnt highlights: a gain, which
+# no lab ever applied.
+PUSH_GAMMA_PER_STOP = 0.15
+PUSH_PIVOT = 0.18
+PUSH_SHOULDER = 0.80
+
 def push_pull(image, stops = 1.0, stock = :kodak_portra)
   resp = PUSH_RESPONSE[stock] || { g: 1.00, b: 0.94 }
   linear = image.colourspace("scrgb")
-  factor = 2.0**stops
-  r, g, b = linear.bandsplit
-  adj = Vips::Image.bandjoin([
-    clamp01(r * factor),
-    clamp01(g * factor * resp[:g]),
-    clamp01(b * factor * resp[:b]),
-  ])
-  if stops > 0
-    shadow_add = adj.linear(-1, 1) ** 2.0 * (stops * 0.04)
-    adj = clamp01(adj + shadow_add)
+  developed = linear.bandsplit.zip([1.0, resp[:g], resp[:b]]).map do |channel, response|
+    gamma = (1.0 + PUSH_GAMMA_PER_STOP * stops * response).clamp(0.4, 2.0)
+    positive = (channel > 1e-6).ifthenelse(channel, 1e-6)
+    push_shoulder(((positive / PUSH_PIVOT)**gamma) * PUSH_PIVOT)
   end
-  safe_cast(adj.colourspace("srgb"))
+  safe_cast(Vips::Image.bandjoin(developed).colourspace("srgb"))
 rescue StandardError => e
   $logger.error "push_pull: #{e.message}"; image
+end
+
+# Above the shoulder density builds ever more slowly, an exponential approach
+# to white, so a pushed highlight blocks up rather than clipping.
+def push_shoulder(value)
+  head = 1.0 - PUSH_SHOULDER
+  over = value - PUSH_SHOULDER
+  rolled = over.linear(-1.0 / head, 0).exp.linear(-head, PUSH_SHOULDER + head)
+  (over > 0).ifthenelse(rolled, value)
 end
 
 # Split toning: shadow and highlight color casts weighted by luminance.
@@ -2106,17 +2134,27 @@ rescue StandardError => e
   $logger.error "lith_print: #{e.message}"; image
 end
 
-# Technicolor 3-strip: per-channel strip registration offset + heavy dye saturation.
+# Technicolor three-strip dye transfer printed each colour record with its own
+# pure dye, so colours separated and grew dense rather than merely saturated,
+# and the three matrices never registered perfectly. Approximated by stronger
+# separation (the crosstalk removal color_separate does), a chroma lift in Lab
+# that eases off where colour is already strong, and the one-pixel misregister.
+# A global HSV saturation boost is the Photoshop slider, not the process: it
+# brightens saturated colours and drags neutrals with them.
+TECHNICOLOR_CHROMA_LIFT = 0.35
+TECHNICOLOR_CHROMA_KNEE = 60.0
+
 def technicolor(image, intensity = 0.60)
   r, g, b = image.bandsplit
-  r2 = r.embed(1, 0, image.width, image.height)
-  b2 = b.embed(-1, 1, image.width, image.height)
-  combined = Vips::Image.bandjoin([r2, g, b2])
-  hsv = combined.colourspace("hsv")
-  h, s, v = hsv.bandsplit
-  s_hi = safe_cast(s.linear([1.0 + intensity * 0.7], [0]))
-  boosted = Vips::Image.bandjoin([h, s_hi, v]).colourspace("srgb")
-  safe_cast((image.cast("float") * (1.0 - intensity) + boosted.cast("float") * intensity).cast("uchar"))
+  registered = Vips::Image.bandjoin([r.embed(1, 0, image.width, image.height), g,
+                                     b.embed(-1, 1, image.width, image.height)])
+  separated = color_separate(registered, intensity)
+  l, a, bb = clamp01(separated.cast("float") / 255.0).linear(255.0, 0).cast("uchar")
+             .copy(interpretation: :srgb).colourspace(:lab).bandsplit
+  chroma = ((a * a) + (bb * bb))**0.5
+  gain = (chroma.linear(1.0 / TECHNICOLOR_CHROMA_KNEE, 1.0)**-1).linear(TECHNICOLOR_CHROMA_LIFT * intensity, 1.0)
+  dyed = l.bandjoin([a * gain, bb * gain]).copy(interpretation: :lab).colourspace(:srgb)
+  safe_cast(image.cast("float") * (1.0 - intensity) + dyed.cast("float") * intensity)
 rescue StandardError => e
   $logger.error "technicolor: #{e.message}"; image
 end
@@ -2750,18 +2788,147 @@ rescue StandardError => e
   image
 end
 
-# A radical take may change everything except that there is still a picture. One
-# that has gone nearly black, burnt out or flat is refused and drawn again.
-TAKE_MEAN_RANGE = (45.0..210.0)
-TAKE_MIN_SPREAD = 55
+# A take must stay a grade of its source, judged on what a colourist protects
+# rather than on whether the palette moved, since moving it is often the point
+# of a look. Measured against the source at TAKE_PROBE_EDGE px, every take must
+# keep the source's shapes, keep its black and white points (no more than
+# TAKE_MAX_CLIP of the frame newly blown or crushed) and keep at least half its
+# tonal spread. Colour may move within the look's own budget: how far overall
+# colourfulness may rise, how far neutral greys may be tinted (mean C*), and how
+# far skin may turn in hue, which is held tightest, as a colourist holds it on
+# the skin-tone line. A take that drains colour on purpose (black and white,
+# toned) is judged on shapes and tones alone. Every bound is relative to the
+# source, so a low-key photograph is judged against its own darkness; the fixed
+# brightness window this replaced refused every faithful grade of one. Default
+# budgets sit at the 90th percentile of the light takes of nine photographs
+# (2026-10-27): chroma 1.8x, neutral C* 10.4, skin 17.6 degrees, which is how far
+# an ordinary film grade moves them. The heavy takes testers called destroyed ran
+# 6.7x, 58.6 and 90.8 at the same percentile. Colourfulness is judged only where
+# the source has colour to compare against; a grey source is all neutral.
+TAKE_PROBE_EDGE = 512.0
+TAKE_MIN_STRUCTURE = 0.5
+TAKE_MAX_CLIP = 0.05
+TAKE_MIN_SPREAD_RATIO = 0.5
+TAKE_TONED_CHROMA = 0.6
+TAKE_BUDGET = { chroma: 1.8, neutral: 10.0, skin: 18.0 }.freeze
+TAKE_MIN_SOURCE_CHROMA = 4.0
+# Looks whose point is a new palette get more of it; skin still has a ceiling.
+LOOK_BUDGETS = {
+  day_for_night: { chroma: 2.6, neutral: 20.0, skin: 30.0 },
+  cross_process: { chroma: 2.8, neutral: 18.0, skin: 25.0 },
+  tokyo_night: { chroma: 2.8, neutral: 18.0, skin: 20.0 },
+  neon_night: { chroma: 2.8, neutral: 18.0, skin: 20.0 },
+  infrared_look: { chroma: 2.0, neutral: 16.0, skin: 40.0 },
+  technicolor_3strip: { chroma: 2.6, neutral: 12.0, skin: 22.0 },
+  golden_age: { chroma: 2.6, neutral: 14.0, skin: 22.0 },
+  magic_hour: { chroma: 2.6, neutral: 16.0, skin: 22.0 },
+  blockbuster: { chroma: 2.4, neutral: 16.0, skin: 22.0 },
+  cinematic: { chroma: 2.2, neutral: 14.0, skin: 22.0 },
+}.freeze
 
-def check_take_survives!(image)
-  luma = image.bandmean.cast("uchar")
-  mean = luma.avg
-  spread = luma.percent(95) - luma.percent(5)
-  return if TAKE_MEAN_RANGE.cover?(mean) && spread >= TAKE_MIN_SPREAD
+def take_budget(look) = TAKE_BUDGET.merge(LOOK_BUDGETS.fetch(look&.to_sym, {}))
 
-  raise ArgumentError, "take refused: mean luma #{mean.round} spread #{spread}"
+def check_take_survives!(take, source, look = nil)
+  problems = take_problems(take_readings(source, take), take_budget(look))
+  return if problems.empty?
+
+  raise ArgumentError, "take refused: #{problems.join(", ")}"
+end
+
+def take_problems(readings, budget = TAKE_BUDGET)
+  problems = []
+  problems << format("structure %.2f", readings[:structure]) if readings[:structure] < TAKE_MIN_STRUCTURE
+  problems << format("clipping +%.1f%%", 100 * readings[:clip]) if readings[:clip] > TAKE_MAX_CLIP
+  problems << format("spread %.2fx", readings[:spread]) if readings[:spread] < TAKE_MIN_SPREAD_RATIO
+  problems.concat(palette_problems(readings, budget))
+end
+
+def palette_problems(readings, budget)
+  return [] if readings[:chroma] && readings[:chroma] < TAKE_TONED_CHROMA
+
+  problems = []
+  problems << format("colour %.1fx", readings[:chroma]) if readings[:chroma].to_f > budget[:chroma]
+  problems << format("neutrals tinted C* %.0f", readings[:neutral]) if readings[:neutral].to_f > budget[:neutral]
+  problems << format("skin turned %.0f deg", readings[:skin]) if readings[:skin].to_f > budget[:skin]
+  problems
+end
+
+# Readings of a take against its source: edge-map correlation for structure,
+# then palette, clipping and spread. Colour is read on a light blur, so grain
+# counts as texture and not as a change of palette.
+def take_readings(source, take)
+  before = take_probe(source)
+  after = take_probe(take)
+  after = after.resize(before.width.to_f / after.width, vscale: before.height.to_f / after.height)
+  {
+    structure: edge_correlation(before, after),
+    clip: take_extremes(after) - take_extremes(before),
+    spread: take_spread(after) / [take_spread(before), 1.0].max,
+  }.merge(take_palette(before.gaussblur(2), after.gaussblur(2)))
+end
+
+def take_probe(image)
+  rgb = rgb_bands(image).cast(:uchar).copy(interpretation: :srgb)
+  rgb.resize(TAKE_PROBE_EDGE / [rgb.width, rgb.height].max).copy_memory
+end
+
+def take_luma(image) = image.colourspace(:b_w).extract_band(0).cast(:float)
+
+def edge_correlation(before, after)
+  left = take_luma(before).sobel.cast(:float)
+  right = take_luma(after).sobel.cast(:float)
+  spread = left.deviate * right.deviate
+  return 1.0 if spread.zero?
+
+  ((left * right).avg - (left.avg * right.avg)) / spread
+end
+
+def take_extremes(image)
+  luma = take_luma(image)
+  ((luma >= 250).avg + (luma <= 5).avg) / 255.0
+end
+
+# A float, because the ratio of two integer spreads divided to zero for every
+# take with less spread than its source.
+def take_spread(image)
+  luma = take_luma(image).cast(:uchar)
+  (luma.percent(95) - luma.percent(5)).to_f
+end
+
+# Overall chroma ratio; the mean C* a take gives what was neutral grey in the
+# source; and the mean hue turn over what was skin. Neutral and skin read nil
+# when too little of the frame holds either for the number to mean anything.
+SKIN_LAB_HUE = (20.0..75.0)
+SKIN_LAB_CHROMA = (8.0..55.0)
+SKIN_LAB_LIGHTNESS = (25.0..92.0)
+NEUTRAL_CHROMA = 6.0
+
+def take_palette(before, after)
+  lightness, chroma_before, hue_before = before.colourspace(:lch).bandsplit
+  _, chroma_after, hue_after = after.colourspace(:lch).bandsplit
+  {
+    chroma: chroma_before.avg < TAKE_MIN_SOURCE_CHROMA ? nil : chroma_after.avg / chroma_before.avg,
+    neutral: masked_mean(chroma_after, chroma_before < NEUTRAL_CHROMA, 0.02),
+    skin: masked_mean(hue_turn(hue_before, hue_after), skin_tones(lightness, chroma_before, hue_before), 0.01),
+  }
+end
+
+def skin_tones(lightness, chroma, hue)
+  [[hue, SKIN_LAB_HUE], [chroma, SKIN_LAB_CHROMA], [lightness, SKIN_LAB_LIGHTNESS]]
+    .map { |band, range| (band > range.first) & (band < range.last) }.reduce(:&)
+end
+
+def hue_turn(before, after)
+  turn = (before - after).abs
+  (turn > 180).ifthenelse(turn * -1 + 360, turn)
+end
+
+# The mean of `values` over a 0/255 mask, or nil below `min_share` of the frame.
+def masked_mean(values, mask, min_share)
+  share = mask.avg / 255.0
+  return if share < min_share
+
+  (values * (mask / 255)).avg / share
 end
 
 # Filmic shoulder + toe: raised shadow floor + soft highlight rolloff.
@@ -2832,23 +2999,48 @@ rescue StandardError => e
   $logger.error "selective_sharpen: #{e.message}"; image
 end
 
+# Complementary grading as a colourist does it: shadows toward teal, highlights
+# toward warm, each by a luminance key, with skin held back by a hue key so
+# faces stay faces. It used to apply flat gains to every pixel (red x1.25 + 8,
+# blue x1.35), which is a colour cast rather than a grade, and it was the effect
+# most associated with destroyed takes (96% against 58% without it, 2026-10-27).
+TEAL_SHIFT = [-0.05, 0.015, 0.06].freeze
+ORANGE_SHIFT = [0.06, 0.02, -0.05].freeze
+TEAL_ORANGE_SKIN_HOLD = 0.85
+
 def teal_orange(image, intensity = 1.0)
-  protected = skin_protect(image, 0.8)
-  r, g, b = protected.bandsplit
-
-  r_enhanced = r.linear([1 + 0.25 * intensity], [8 * intensity])
-  g_balanced = g.linear([1 - 0.08 * intensity], [0])
-  b_enhanced = b.linear([1 + 0.35 * intensity], [0])
-
-  safe_cast(Vips::Image.bandjoin([r_enhanced, g_balanced, b_enhanced]))
+  colour = image.cast("float") / 255.0
+  luma = clamp01(image.colourspace("b-w").cast("float") / 255.0)
+  free = skin_key(image).gaussblur(2).linear(-TEAL_ORANGE_SKIN_HOLD, 1.0) * intensity
+  shadows = (luma.linear(-1, 1)**2) * free
+  highlights = (luma**2) * free
+  shifted = colour.bandsplit.each_with_index.map do |channel, i|
+    channel + shadows * TEAL_SHIFT[i] + highlights * ORANGE_SHIFT[i]
+  end
+  safe_cast(clamp01(Vips::Image.bandjoin(shifted)) * 255.0)
+rescue StandardError => e
+  $logger.error "teal_orange: #{e.message}"; image
 end
 
+# A diffusion filter (a Pro-Mist): glass in front of the lens scatters a share
+# of every point's light into a wide kernel. It conserves energy, so it is a mix
+# in linear light, (1 - p) * E + p * (K * E), with no threshold: highlights glow
+# because they have the most light to spread, shadows lift a little from their
+# neighbours, and the frame's total light is unchanged. K is a core, a halo and a
+# long bloom, after spektrafilm's Pro-Mist family (weights 0.28, 0.42, 0.30), and
+# p rises with strength as theirs does, about 0.35 at full. It used to double the
+# whole frame and add its blur back, adding light that was never there, so every
+# pixel glowed and the picture went milky.
+BLOOM_KERNEL = [[1.0 / 400, 0.28], [1.0 / 60, 0.42], [1.0 / 15, 0.30]].freeze
+BLOOM_MIX = 0.35
+
 def bloom_pro(image, intensity = 1.0)
-  bright = image.linear([2.0 * intensity], [0])
-  bloom_1 = bright.gaussblur(8 * intensity)
-  bloom_2 = bright.gaussblur(16 * intensity)
-  combined = (bloom_1 + bloom_2 * 0.5) * 0.2
-  safe_cast(image + combined)
+  linear = image.colourspace("scrgb")
+  spread = BLOOM_KERNEL.map { |reach, weight| linear.gaussblur([image.width * reach, 0.5].max) * weight }.reduce(:+)
+  mix = (BLOOM_MIX * intensity).clamp(0.0, 0.9)
+  safe_cast(clamp01(linear * (1.0 - mix) + spread * mix).colourspace("srgb"))
+rescue StandardError => e
+  $logger.error "bloom_pro: #{e.message}"; image
 end
 
 # Halation in linear (exposure) space. Bright light penetrates the emulsion,
@@ -2883,23 +3075,12 @@ HALATION_GAIN = 2.6
 # over-exposed highlights on any channel trigger the halo. Per-channel blur
 # radii R>G>>B model wavelength-dependent penetration depth in the emulsion
 # stack. Output clamp prevents HDR overshoot from adding solarization.
-# Starved in five presets, and it is an ordering interaction rather than a bug
-# here.
-#
 # This gates on luma > HALATION_THRESHOLD (0.7) in LINEAR scRGB, where 8-bit
-# white is 1.0 — so it fires on any real highlight. Measured standalone on a
-# probe carrying a blown specular it moves the picture by 0.042 mean absolute,
-# which is not subtle.
-#
-# But in cinematic, blockbuster, kodachrome_look, anamorphic and cinema_scan it
-# runs AFTER film_curve, and film_curve compresses hard: POSTPRO_EXPLAIN=1 shows
-# it dropping spread by 24.7 on the same probe. By the time halation arrives
-# there is nothing left above 0.7, so it contributes exactly nothing and the log
-# still reports the step as having run.
-#
-# Two fixes and both change what those presets look like — move halation ahead
-# of film_curve, or lower the threshold — so neither is taken here. Found by
-# POSTPRO_EXPLAIN=1, which is what that flag is for.
+# white is 1.0, so it fires on any real highlight. It belongs before
+# film_curve, because it is exposure: light returning into the emulsion before
+# anything is developed. Run after the curve, which compresses hard, nothing is
+# left above the threshold and the step changes nothing while the log reports
+# it ran (found with POSTPRO_EXPLAIN=1). Every preset now orders it first.
 # The returned light, as a ring of radius sigma plus the scatter that stayed.
 def halation_ring(bright, sigma)
   core = bright.gaussblur([sigma * 0.55, 0.3].max)
@@ -3138,7 +3319,7 @@ rescue StandardError => e
   # A measurement failure must not cost the grade. Full strength is what every
   # preset did before this existed.
   $logger.error "source_headroom: #{e.message}"
-  { blur: 1.0, curve: 1.0, reading: nil }
+  { blur: 1.0, curve: 1.0, fringe: 1.0, vignette: 1.0, reading: nil }
 end
 
 # 1.0 at or below `floor`, `minimum` at or above `native`, linear between.
@@ -3179,6 +3360,217 @@ def curve_strength(tonal_range)
   CURVE_FLOOR + ((tonal_range - TONAL_FLOOR) / (TONAL_NATIVE - TONAL_FLOOR)) * (1.0 - CURVE_FLOOR)
 end
 
+# How much of a look's intensity each effect gets. A preset or a recipe step
+# names one intensity for the whole look; each effect is mixed down from it by
+# its own factor here, calibrated per effect, because a colourist runs a look
+# below full strength and some effects (a bloom, a bleach) read at a quarter of
+# the strength others need. Effects not listed take the intensity as it comes,
+# or scale it in their own arm of grade_step where the source also has a say.
+EFFECT_MIX = {
+  "adaptive_contrast" => 0.70,
+  "adjacency_effects" => 0.25,
+  "aerial_depth" => 0.45,
+  "anamorphic_flare" => 0.50,
+  "bleach_bypass" => 0.40,
+  "bloom_pro" => 0.25,
+  "bokeh_rendering" => 0.35,
+  "clarity" => 0.65,
+  "color_separate" => 0.55,
+  "color_temp" => 0.50,
+  "cross_fade" => 0.40,
+  "crt_phosphor_bloom" => 0.50,
+  "crt_scanlines" => 0.35,
+  "darkroom_print" => 0.50,
+  "day_for_night" => 0.70,
+  "desaturate" => 0.45,
+  "dir_coupler" => 0.12,
+  "dodgeburn_artifacts" => 0.40,
+  "dust_and_hair" => 0.50,
+  "edge_aware_nr" => 0.55,
+  "film_shoulder" => 0.75,
+  "fixing_bath_fog" => 0.30,
+  "gate_weave" => 0.40,
+  "green_push" => 0.15,
+  "halation" => 0.60,
+  "hi8_chroma_noise" => 0.40,
+  "highlight_roll" => 0.50,
+  "infrared" => 0.85,
+  "kodachrome_sim" => 0.75,
+  "lens_ghosting" => 0.35,
+  "light_leaks" => 0.45,
+  "lith_print" => 0.75,
+  "longitudinal_ca" => 0.50,
+  "micro_contrast" => 0.20,
+  "minidv_block_dropout" => 0.35,
+  "newton_rings" => 0.12,
+  "orange_mask" => 0.90,
+  "ortho_film" => 0.80,
+  "paper_texture" => 0.35,
+  "print_film" => 0.70,
+  "relight" => 0.55,
+  "reticulation" => 0.50,
+  "scan_noise" => 0.40,
+  "selective_sharpen" => 0.65,
+  "selenium_tone" => 0.45,
+  "spectral_temp" => 0.50,
+  "split_grade" => 0.25,
+  "stock_matrix" => 0.85,
+  "teal_orange" => 0.80,
+  "technicolor" => 0.55,
+  "tilt_shift" => 0.70,
+  "tonemap" => 0.85,
+  "vhs_chroma_delay" => 0.40,
+  "vhs_head_switch_band" => 0.40,
+  "vhs_interlace_comb" => 0.40,
+  "vhs_luma_bleed" => 0.40,
+  "vhs_tracking_noise" => 0.40,
+  "vintage_lens" => 0.70,
+  "warmth" => 0.25,
+}.freeze
+
+# One step of a grade, calibrated. Every effect is mixed down from the look's
+# intensity by its own factor here, the subtractive ones are scaled by what the
+# source arrived with (`head`), and the stock, print stock, stops and the rest
+# come from `p`. preset() and recipe() both grade through this, so a random
+# take built from a look is that look and not its effects at raw strength:
+# measured 2026-10-27, the uncalibrated path ran bloom at four times and bleach
+# at two and a half times the strength the presets give them, blurred sharp
+# photographs the taper would have spared, and wrecked 69% of its takes.
+def grade_step(fx, processed, p, head, owner = "chain")
+  level = p[:intensity]
+  mix = level * EFFECT_MIX.fetch(fx, 1.0)
+  stock = p[:stock]
+  case fx
+  when "optical_blur"        then optical_blur(processed, 0.5 * head[:blur])
+  when "tonemap"             then tonemap(processed, type: p.fetch(:tonemap, :aces2), exposure: p.fetch(:tonemap_ev, 0.0), intensity: mix)
+  when "halation"            then halation(processed, mix, tint: halation_tint_for(stock))
+  when "film_curve"          then film_curve(processed, stock, level * head[:curve])
+  when "stock_matrix"        then stock_matrix(processed, stock, mix)
+  when "spectral_temp"       then spectral_temp(processed, source_kelvin: 6504, target_kelvin: p[:temp], intensity: mix)
+  when "color_temp"          then color_temp(processed, p[:temp], mix)
+  when "dir_coupler"         then dir_coupler(processed, mix)
+  when "push_pull"           then push_pull(processed, p.fetch(:stops, 1.0), stock)
+  when "bleach_bypass"       then bleach_bypass(processed, mix)
+  when "reciprocity_failure" then reciprocity_failure(processed, p.fetch(:exposure_secs, 10.0), stock)
+  when "orange_mask"         then orange_mask(processed, stock, mix)
+  when "print_film"          then print_film(processed, p.fetch(:print_stock, :kodak_2383), mix)
+  when "split_grade"         then split_grade(processed, intensity: mix)
+  when "split_toning"        then split_toning(processed)
+  when "skin_protect"        then skin_protect(processed, level)
+  when "shadow_lift"         then shadow_lift(processed, SHADOW_TOE_TARGET, true)
+  when "light_leaks"         then light_leaks(processed, mix)
+  when "day_for_night"       then day_for_night(processed, mix)
+  when "highlight_roll"      then highlight_roll(processed, 200, mix)
+  when "micro_contrast"      then micro_contrast(processed, 5, mix)
+  # Was a hard-coded 800 for every preset. grain's whole ISO term is
+  # sqrt(iso/100), so a constant made it a constant: Velvia 50 and
+  # Delta 3200 were graining at the same speed and differed only by
+  # their sigma. Now each stock states its own box speed, and a push
+  # raises the effective one, which is what pushing IS -- rating the
+  # film faster than it is and paying for it in grain. Safe to change
+  # today of all days: grain raised on every call until this session,
+  # so no render anywhere has a grain pattern to preserve.
+  when "grain"               then grain(processed, preset_effective_iso(p), stock, level)
+  when "color_separate"      then color_separate(processed, mix)
+  when "chromatic_aberration" then chromatic_aberration(processed, level * 0.25 * head[:fringe])
+  when "vintage_lens"        then vintage_lens(processed, p.fetch(:lens, "zeiss"), mix)
+  when "teal_orange"         then teal_orange(processed, mix)
+  when "bloom_pro"           then bloom_pro(processed, mix)
+  # The measured depth map rides along on both shape stages; a cache
+  # miss costs about twelve seconds, which the chain spends in
+  # glows anyway. nil degrades both to their own cues.
+  when "relight"             then relight(processed, mix, azimuth: p.fetch(:azimuth, 135.0), shape: p.fetch(:shape, 1.25), depth: Postpro::Depth.near(processed))
+  when "aerial_depth"        then aerial_depth(processed, mix, depth: Postpro::Depth.near(processed))
+  when "desaturate"          then desaturate(processed, mix)
+  when "warmth"              then warmth(processed, mix)
+  when "green_push"          then green_push(processed, mix)
+  when "cross_fade"          then cross_fade(processed, mix)
+  when "infrared"            then infrared(processed, mix)
+  when "lith_print"          then lith_print(processed, mix)
+  when "kodachrome_sim"      then kodachrome_sim(processed, mix)
+  when "technicolor"         then technicolor(processed, mix)
+  when "cyanotype"           then cyanotype(processed, level)
+  when "faded_print"         then faded_print(processed, p.fetch(:age, 0.40))
+  when "base_tint"           then base_tint(processed, [255, 250, 242], 0.07)
+  when "dual_base_density"   then dual_base_density(processed, [255, 248, 236], 0.06)
+  when "emulsion_defocus"    then emulsion_defocus(processed, stock)
+  when "adjacency_effects"   then adjacency_effects(processed, mix)
+  when "longitudinal_ca"     then longitudinal_ca(processed, mix)
+  when "lens_distortion"     then lens_distortion(processed, p.fetch(:k1, -0.12))
+  when "bokeh_rendering"     then bokeh_rendering(processed, mix)
+  when "anamorphic_flare"    then anamorphic_flare(processed, mix)
+  when "diffraction_blur"    then diffraction_blur(processed, p.fetch(:f_number, 16.0))
+  when "scan_noise"          then scan_noise(processed, mix)
+  when "newton_rings"        then newton_rings(processed, mix)
+  when "dust_and_hair"       then dust_and_hair(processed, mix)
+  when "film_curl_vignette"  then film_curl_vignette(processed, level * 0.45 * head[:vignette])
+  when "selenium_tone"       then selenium_tone(processed, mix)
+  when "dye_fade"            then dye_fade(processed, stock, p.fetch(:age, 0.50))
+  when "darkroom_print"      then darkroom_print(processed, mix)
+  when "film_base_density"   then film_base_density(processed, stock, 0.06)
+  when "paper_texture"       then paper_texture(processed, mix)
+  when "dodgeburn_artifacts" then dodgeburn_artifacts(processed, mix)
+  when "fixing_bath_fog"     then fixing_bath_fog(processed, mix)
+  when "reticulation"        then reticulation(processed, mix)
+  when "expired_film"        then expired_film(processed, p.fetch(:age, 0.60))
+  when "gate_weave"          then gate_weave(processed, mix)
+  when "lens_ghosting"       then lens_ghosting(processed, mix)
+  when "ortho_film"          then ortho_film(processed, mix)
+  when "tilt_shift"          then tilt_shift(processed, mix)
+  when "adaptive_contrast"   then adaptive_contrast(processed, mix)
+  when "film_shoulder"       then film_shoulder(processed, mix)
+  when "clarity"             then clarity(processed, 15, mix)
+  when "edge_aware_nr"       then edge_aware_nr(processed, mix)
+  when "selective_sharpen"   then selective_sharpen(processed, mix)
+  when "vhs_luma_bleed"      then vhs_luma_bleed(processed, mix)
+  when "vhs_chroma_delay"    then vhs_chroma_delay(processed, mix)
+  when "vhs_head_switch_band" then vhs_head_switch_band(processed, mix)
+  when "vhs_tracking_noise"  then vhs_tracking_noise(processed, mix)
+  when "vhs_interlace_comb"  then vhs_interlace_comb(processed, mix)
+  when "crt_phosphor_bloom"  then crt_phosphor_bloom(processed, mix)
+  when "crt_scanlines"       then crt_scanlines(processed, mix)
+  when "minidv_block_dropout" then minidv_block_dropout(processed, mix)
+  when "hi8_chroma_noise"    then hi8_chroma_noise(processed, mix)
+  when "double_exposure"     then double_exposure(processed, p[:second_image], p.fetch(:blend_mode, "over"))
+  when "polaroid_frame"      then polaroid_frame(processed, level, p.fetch(:border_style, "classic"))
+  when "tape_degradation"    then tape_degradation(processed, level)
+  when "frame_distortion"    then frame_distortion(processed, level)
+  when "super8_flicker"      then super8_flicker(processed, level)
+  when "cinemascope_bars"    then cinemascope_bars(processed, level, p.fetch(:aspect_ratio, "2.35:1"))
+  when "halftone_print"      then halftone_print(processed, level)
+  when "film_scratches"      then film_scratches(processed, level)
+  when "film_stock_emulation" then film_stock_emulation(processed, level, p.fetch(:stock, "kodak_portra"))
+  when "sprocket_holes"      then sprocket_holes(processed, level)
+  when "lens_flare"          then lens_flare(processed, level)
+  when "vhs_degrade"         then vhs_degrade(processed, level)
+  when "color_fade"          then color_fade(processed, level)
+  when "anamorphic_simulation" then anamorphic_simulation(processed, level)
+  when "soft_focus"          then soft_focus(processed, level)
+  when "film_grain"          then film_grain(processed, level)
+  when "film_halation"       then film_halation(processed, level)
+  when "bloom_effect"        then bloom_effect(processed, level)
+  when "cross_process"       then cross_process(processed, level)
+  when "golden_hour_glow"    then golden_hour_glow(processed, level)
+  when "lomo"                then lomo(processed, level)
+  when "sepia"               then sepia(processed, level)
+  when "teal_and_orange"     then teal_and_orange(processed, level)
+  when "glitch"              then glitch(processed, level)
+  when "dilla_head_bump"      then dilla_head_bump(processed, level)
+  when "dilla_tape_saturation" then dilla_tape_saturation(processed, level)
+  when "dilla_vinyl_bandlimit" then dilla_vinyl_bandlimit(processed, level)
+  when "dilla_phasy"          then dilla_phasy(processed, level)
+  when "dilla_console_sum"    then dilla_console_sum(processed, level)
+  else
+    # Was a bare `else processed` — an fx name with no arm here returned
+    # the image untouched, and the dmesg line below then reported the
+    # step as having run. A preset could be four steps short of what
+    # it says it is and the log would agree with the preset.
+    message = "fx=#{fx} has no implementation; #{owner} is short a step"
+    PostproBootstrap.dmesg "ERROR #{message}"
+    raise ArgumentError, message
+  end
+end
+
 # `stock:` swaps the film under an otherwise unchanged chain, which is how the
 # stock sheet shows one grade on every emulsion.
 def preset(image, name, stock: nil)
@@ -3212,135 +3604,7 @@ def preset(image, name, stock: nil)
     # does not cover the arm that exists, runs, and changes nothing — which looks
     # identical from outside.
     before_stats = PostproExplain.snapshot(processed)
-    processed = case fx
-             when "optical_blur"        then optical_blur(processed, 0.5 * head[:blur])
-             when "tonemap"             then tonemap(processed, type: p.fetch(:tonemap, :aces2), exposure: p.fetch(:tonemap_ev, 0.0), intensity: p[:intensity] * 0.85)
-             when "halation"            then halation(processed, p[:intensity] * 0.60, tint: halation_tint_for(p[:stock]))
-             when "film_curve"          then film_curve(processed, p[:stock], p[:intensity] * head[:curve])
-             when "stock_matrix"        then stock_matrix(processed, p[:stock], p[:intensity] * 0.85)
-             when "spectral_temp"       then spectral_temp(processed, source_kelvin: 6504, target_kelvin: p[:temp], intensity: p[:intensity] * 0.50)
-             when "color_temp"          then color_temp(processed, p[:temp], p[:intensity] * 0.50)
-             when "dir_coupler"         then dir_coupler(processed, p[:intensity] * 0.12)
-             when "push_pull"           then push_pull(processed, p.fetch(:stops, 1.0), p[:stock])
-             when "bleach_bypass"       then bleach_bypass(processed, p[:intensity] * 0.40)
-             when "reciprocity_failure" then reciprocity_failure(processed, p.fetch(:exposure_secs, 10.0), p[:stock])
-             when "orange_mask"         then orange_mask(processed, p[:stock], p[:intensity] * 0.90)
-             when "print_film"          then print_film(processed, p.fetch(:print_stock, :kodak_2383), p[:intensity] * 0.70)
-             when "split_grade"         then split_grade(processed, intensity: p[:intensity] * 0.25)
-             when "split_toning"        then split_toning(processed)
-             when "skin_protect"        then skin_protect(processed, p[:intensity])
-             when "shadow_lift"         then shadow_lift(processed, SHADOW_TOE_TARGET, true)
-             when "light_leaks"         then light_leaks(processed, p[:intensity] * 0.45)
-             when "day_for_night"       then day_for_night(processed, p[:intensity] * 0.70)
-             when "highlight_roll"      then highlight_roll(processed, 200, p[:intensity] * 0.50)
-             when "micro_contrast"      then micro_contrast(processed, 5, p[:intensity] * 0.20)
-             # Was a hard-coded 800 for every preset. grain's whole ISO term is
-             # sqrt(iso/100), so a constant made it a constant: Velvia 50 and
-             # Delta 3200 were graining at the same speed and differed only by
-             # their sigma. Now each stock states its own box speed, and a push
-             # raises the effective one, which is what pushing IS -- rating the
-             # film faster than it is and paying for it in grain. Safe to change
-             # today of all days: grain raised on every call until this session,
-             # so no render anywhere has a grain pattern to preserve.
-             when "grain"               then grain(processed, preset_effective_iso(p), p[:stock], p[:intensity])
-             when "color_separate"      then color_separate(processed, p[:intensity] * 0.55)
-             when "chromatic_aberration" then chromatic_aberration(processed, p[:intensity] * 0.25 * head[:fringe])
-             when "vintage_lens"        then vintage_lens(processed, p.fetch(:lens, "zeiss"), p[:intensity] * 0.70)
-             when "teal_orange"         then teal_orange(processed, p[:intensity] * 0.80)
-             when "bloom_pro"           then bloom_pro(processed, p[:intensity] * 0.25)
-             # The measured depth map rides along on both shape stages; a cache
-             # miss costs about twelve seconds, which the chain spends in
-             # glows anyway. nil degrades both to their own cues.
-             when "relight"             then relight(processed, p[:intensity] * 0.55, azimuth: p.fetch(:azimuth, 135.0), shape: p.fetch(:shape, 1.25), depth: Postpro::Depth.near(processed))
-             when "aerial_depth"        then aerial_depth(processed, p[:intensity] * 0.45, depth: Postpro::Depth.near(processed))
-             when "desaturate"          then desaturate(processed, p[:intensity] * 0.45)
-             when "warmth"              then warmth(processed, p[:intensity] * 0.25)
-             when "green_push"          then green_push(processed, p[:intensity] * 0.15)
-             when "cross_fade"          then cross_fade(processed, p[:intensity] * 0.40)
-             when "infrared"            then infrared(processed, p[:intensity] * 0.85)
-             when "lith_print"          then lith_print(processed, p[:intensity] * 0.75)
-             when "kodachrome_sim"      then kodachrome_sim(processed, p[:intensity] * 0.75)
-             when "technicolor"         then technicolor(processed, p[:intensity] * 0.55)
-             when "cyanotype"           then cyanotype(processed, p[:intensity])
-             when "faded_print"         then faded_print(processed, p.fetch(:age, 0.40))
-             when "base_tint"           then base_tint(processed, [255, 250, 242], 0.07)
-             when "dual_base_density"   then dual_base_density(processed, [255, 248, 236], 0.06)
-             when "emulsion_defocus"    then emulsion_defocus(processed, p[:stock])
-             when "adjacency_effects"   then adjacency_effects(processed, p[:intensity] * 0.25)
-             when "longitudinal_ca"     then longitudinal_ca(processed, p[:intensity] * 0.50)
-             when "lens_distortion"     then lens_distortion(processed, p.fetch(:k1, -0.12))
-             when "bokeh_rendering"     then bokeh_rendering(processed, p[:intensity] * 0.35)
-             when "anamorphic_flare"    then anamorphic_flare(processed, p[:intensity] * 0.50)
-             when "diffraction_blur"    then diffraction_blur(processed, p.fetch(:f_number, 16.0))
-             when "scan_noise"          then scan_noise(processed, p[:intensity] * 0.40)
-             when "newton_rings"        then newton_rings(processed, p[:intensity] * 0.12)
-             when "dust_and_hair"       then dust_and_hair(processed, p[:intensity] * 0.50)
-             when "film_curl_vignette"  then film_curl_vignette(processed, p[:intensity] * 0.45 * head[:vignette])
-             when "selenium_tone"       then selenium_tone(processed, p[:intensity] * 0.45)
-             when "dye_fade"            then dye_fade(processed, p[:stock], p.fetch(:age, 0.50))
-             when "darkroom_print"      then darkroom_print(processed, p[:intensity] * 0.50)
-             when "film_base_density"   then film_base_density(processed, p[:stock], 0.06)
-             when "paper_texture"       then paper_texture(processed, p[:intensity] * 0.35)
-             when "dodgeburn_artifacts" then dodgeburn_artifacts(processed, p[:intensity] * 0.40)
-             when "fixing_bath_fog"     then fixing_bath_fog(processed, p[:intensity] * 0.30)
-             when "reticulation"        then reticulation(processed, p[:intensity] * 0.50)
-             when "expired_film"        then expired_film(processed, p.fetch(:age, 0.60))
-             when "gate_weave"          then gate_weave(processed, p[:intensity] * 0.40)
-             when "lens_ghosting"       then lens_ghosting(processed, p[:intensity] * 0.35)
-             when "ortho_film"          then ortho_film(processed, p[:intensity] * 0.80)
-             when "tilt_shift"          then tilt_shift(processed, p[:intensity] * 0.70)
-             when "adaptive_contrast"   then adaptive_contrast(processed, p[:intensity] * 0.70)
-             when "film_shoulder"       then film_shoulder(processed, p[:intensity] * 0.75)
-             when "clarity"             then clarity(processed, 15, p[:intensity] * 0.65)
-             when "edge_aware_nr"       then edge_aware_nr(processed, p[:intensity] * 0.55)
-             when "selective_sharpen"   then selective_sharpen(processed, p[:intensity] * 0.65)
-             when "vhs_luma_bleed"      then vhs_luma_bleed(processed, p[:intensity] * 0.40)
-             when "vhs_chroma_delay"    then vhs_chroma_delay(processed, p[:intensity] * 0.40)
-             when "vhs_head_switch_band" then vhs_head_switch_band(processed, p[:intensity] * 0.40)
-             when "vhs_tracking_noise"  then vhs_tracking_noise(processed, p[:intensity] * 0.40)
-             when "vhs_interlace_comb"  then vhs_interlace_comb(processed, p[:intensity] * 0.40)
-             when "crt_phosphor_bloom"  then crt_phosphor_bloom(processed, p[:intensity] * 0.50)
-             when "crt_scanlines"       then crt_scanlines(processed, p[:intensity] * 0.35)
-             when "minidv_block_dropout" then minidv_block_dropout(processed, p[:intensity] * 0.35)
-             when "hi8_chroma_noise"    then hi8_chroma_noise(processed, p[:intensity] * 0.40)
-             when "double_exposure"     then double_exposure(processed)
-             when "polaroid_frame"      then polaroid_frame(processed, p[:intensity], p.fetch(:border_style, "classic"))
-             when "tape_degradation"    then tape_degradation(processed, p[:intensity])
-             when "frame_distortion"    then frame_distortion(processed, p[:intensity])
-             when "super8_flicker"      then super8_flicker(processed, p[:intensity])
-             when "cinemascope_bars"    then cinemascope_bars(processed, p[:intensity], p.fetch(:aspect_ratio, "2.35:1"))
-             when "halftone_print"      then halftone_print(processed, p[:intensity])
-             when "film_scratches"      then film_scratches(processed, p[:intensity])
-             when "film_stock_emulation" then film_stock_emulation(processed, p[:intensity], p.fetch(:stock, "kodak_portra"))
-             when "sprocket_holes"      then sprocket_holes(processed, p[:intensity])
-             when "lens_flare"          then lens_flare(processed, p[:intensity])
-             when "vhs_degrade"         then vhs_degrade(processed, p[:intensity])
-             when "color_fade"          then color_fade(processed, p[:intensity])
-             when "anamorphic_simulation" then anamorphic_simulation(processed, p[:intensity])
-             when "soft_focus"          then soft_focus(processed, p[:intensity])
-             when "film_grain"          then film_grain(processed, p[:intensity])
-             when "film_halation"       then film_halation(processed, p[:intensity])
-             when "bloom_effect"        then bloom_effect(processed, p[:intensity])
-             when "cross_process"       then cross_process(processed, p[:intensity])
-             when "golden_hour_glow"    then golden_hour_glow(processed, p[:intensity])
-             when "lomo"                then lomo(processed, p[:intensity])
-             when "sepia"               then sepia(processed, p[:intensity])
-             when "teal_and_orange"     then teal_and_orange(processed, p[:intensity])
-             when "glitch"              then glitch(processed, p[:intensity])
-             when "dilla_head_bump"      then dilla_head_bump(processed, p[:intensity])
-             when "dilla_tape_saturation" then dilla_tape_saturation(processed, p[:intensity])
-             when "dilla_vinyl_bandlimit" then dilla_vinyl_bandlimit(processed, p[:intensity])
-             when "dilla_phasy"          then dilla_phasy(processed, p[:intensity])
-             when "dilla_console_sum"    then dilla_console_sum(processed, p[:intensity])
-             else
-               # Was a bare `else processed` — an fx name with no arm here returned
-               # the image untouched, and the dmesg line below then reported the
-               # step as having run. A preset could be four steps short of what
-               # it says it is and the log would agree with the preset.
-               message = "fx=#{fx} has no implementation; preset #{name} is short a step"
-               PostproBootstrap.dmesg "ERROR #{message}"
-               raise ArgumentError, message
-             end
+    processed = grade_step(fx, processed, p, head, "preset #{name}")
     processed = processed.copy_memory
     GC.start(full_mark: false) if (i % 4).zero?
     PostproBootstrap.dmesg "fx=#{fx} step=#{i + 1}/#{n_steps} time=%.3fs%s" %
@@ -3444,6 +3708,7 @@ RANDOM_LEADS = (1..2)
 # a chain about texture, and texture is the shallow half of a photograph. One
 # of these runs in every picture, and it leads.
 RANDOM_SHAPES = %w[relight aerial_depth].freeze
+
 # The wear shelf: dust, scanner noise, tape dropouts, fogged fixer, gate weave.
 #
 # Off by default, and that is the change. These may not lead — dust and hair at
@@ -3460,6 +3725,7 @@ RANDOM_WEAR = %w[dust_and_hair newton_rings scan_noise gate_weave
                         vhs_tracking_noise vhs_interlace_comb
                         crt_phosphor_bloom crt_scanlines minidv_block_dropout
                         hi8_chroma_noise].freeze
+
 # A lead has to read. At 0.38 to 0.66 with supports at 0.05 to 0.16 the stack summed
 # to almost nothing and five takes of one frame looked like one take (operator
 # review, 2026-10-20), so the leads sit high and the supports are audible.
@@ -3469,47 +3735,28 @@ RANDOM_SUPPORT_STRENGTH = (0.12..0.28)
 # only coherent is a template; the interest is in the one thing that should not
 # be there, at a strength that makes it a suggestion rather than a joke.
 RANDOM_WILDCARD_CHANCE = 0.5
+
 RANDOM_WILDCARD_STRENGTH = (0.1..0.25)
-# The operator's standing directive (2026-10-03): every random run is five
-# radically different results, from subtle analog to experimental, through
-# heavy filters arranged at random, and the chain may get quite long. Heavy
-# mode deals the four lanes round-robin so one run spans the whole range,
-# widens the chain to nine to sixteen steps, lifts every strength band by half
-# and admits the wear shelf. POSTPRO_HEAVY=0 returns to the default taste.
-HEAVY_CHAIN_LENGTH = (12..24).freeze
-HEAVY_STRENGTH = 1.35
-# Amplitude-class effects are exempt from the widening: grain and the wear
-# shelf are loud by construction, so a doubled strength reads as a destroyed
-# scan rather than an emulation, and the picture never survives two of them.
-# Long chains and wide look-bands carry the radical variety (the standing
-# directive); amplitude does not, or the emulsion stops being believable.
-HEAVY_AMPLITUDE_STRENGTH = 1.1
-AMPLITUDE_CAPPED = (RANDOM_WEAR + %w[grain]).freeze
-# Glow-class steps barely widen either, and only halation is singled out of
-# the leads for it: research 2026-10-03 says halation bolted on everything is
-# the most-singled-out "cheugy" effect, and a glowed grain pass is the industry
-# example of the destroyed look. On film halation lives on wide-open
-# speculars; doubling its band in a 24-step chain makes every frame bloom.
-HEAVY_GLOW_STRENGTH = 1.15
-GLOW_CAPPED = %w[halation bloom_pro golden_hour_glow].freeze
+# Heavy mode (--heavy) starts each take from a named look and deals the lanes
+# round-robin so one run spans subtle analog to bleeding edge. It is opt-in:
+# measured on nine photographs (2026-10-27), 69% of its takes lost the
+# source's colour or shapes against 10% of light takes, and its damage rose
+# with chain length (53% at 9-11 steps, 100% past 15) and with the strength
+# lift it used to apply. A look keeps all its own steps; the random steps grown
+# around it stop at HEAVY_MAX_STEPS, and every strength sits in the same band
+# as a light take's, since professional practice mixes a look below full
+# strength rather than above it.
+HEAVY_MAX_STEPS = 10
+
+# Ten takes per photograph in either mode, the top of the constitution's
+# five-to-ten range: heavy's lane deal goes round twice and HEAVY_LOOKS has
+# eighteen looks, so no two of ten share one. --count sets any other number.
+RANDOM_TAKES = 10
 HEAVY_LANE_DEAL = %i[
   subtle_analog cinematic_color artistic_analog bleeding_edge_analog bleeding_edge_analog
 ].freeze
 
-def heavy_mode? = ENV.fetch("POSTPRO_HEAVY", "1") == "1"
-
-# Heavy widens a band for the look steps and barely for the amplitude ones.
-# The effect's own name decides its class, so the caller only has to pass it.
-def random_band(band, fx = nil)
-  return band unless heavy_mode?
-
-  wide = if AMPLITUDE_CAPPED.include?(fx) then HEAVY_AMPLITUDE_STRENGTH
-         elsif GLOW_CAPPED.include?(fx) then HEAVY_GLOW_STRENGTH
-         else HEAVY_STRENGTH
-         end
-  high = band.first + (band.last - band.first) * wide
-  [(band.first * wide).round(2), [high, 1.0].min.round(2)]
-end
+def heavy_mode? = ENV.fetch("POSTPRO_HEAVY", "0") == "1"
 # Two marks of wear is a print that has been handled. Five is a prop.
 RANDOM_WEAR_CEILING = 2
 # A repeat is a second pass, not a second effect: halation twice at different
@@ -3614,7 +3861,7 @@ def random_common_spine
   end
 end
 
-def random_chain_length = heavy_mode? ? HEAVY_CHAIN_LENGTH : RANDOM_CHAIN_LENGTH
+def random_chain_length = RANDOM_CHAIN_LENGTH
 
 # Grow from one effect, admitting only what some preset puts beside all of it.
 def random_draw(rng, lane:)
@@ -3692,13 +3939,13 @@ def random_finish(picked, wildcard, rng, avoid = [], lane: random_lane(rng))
   seen = Hash.new(0)
   chain = ordered.map do |fx|
     repeat = (seen[fx] += 1) > 1
-    band = if repeat || fx == wildcard then random_band(wildcard_or_repeat_strength(fx, wildcard), fx)
-           elsif leads.include?(fx) then random_band(RANDOM_LEAD_STRENGTH, fx)
-           else random_band(RANDOM_SUPPORT_STRENGTH, fx)
+    band = if repeat || fx == wildcard then wildcard_or_repeat_strength(fx, wildcard)
+           elsif leads.include?(fx) then RANDOM_LEAD_STRENGTH
+           else RANDOM_SUPPORT_STRENGTH
            end
     [fx, (band.first + rng.rand * (band.last - band.first)).round(2)]
   end
-  band = random_band(RANDOM_LANES.fetch(lane).fetch(:strength), RANDOM_ALWAYS)
+  band = RANDOM_LANES.fetch(lane).fetch(:strength)
   chain << [RANDOM_ALWAYS, { "intensity" => (band.first + rng.rand * (band.last - band.first)).round(2),
                              "stock" => random_stock(rng, avoid).to_s }]
 end
@@ -3736,11 +3983,24 @@ def preset_as_recipe(name)
   Array(data[:fx]).map(&:to_s).uniq.filter_map do |fx|
     next unless RECIPE_ALLOWED.include?(fx)
 
-    params = { "intensity" => intensity, "stock" => stock }
-    params["target_kelvin"] = data[:temp].to_f if fx == "spectral_temp" && data[:temp]
-    params["kelvin"] = data[:temp].to_f if fx == "color_temp" && data[:temp]
-    [fx, params]
+    [fx, look_step_params(data, fx, intensity, stock)]
   end
+end
+
+# Everything the preset tells its own steps, so a look-led take runs the look as
+# the preset does: its stops, exposure time, print stock, lens and age, not
+# only its intensity and stock.
+def look_step_params(data, fx, intensity, stock)
+  params = { "intensity" => intensity, "stock" => stock }
+  params["target_kelvin"] = data[:temp].to_f if fx == "spectral_temp" && data[:temp]
+  params["kelvin"] = data[:temp].to_f if fx == "color_temp" && data[:temp]
+  params["stops"] = data[:stops].to_f if fx == "push_pull" && data[:stops]
+  params["exposure_seconds"] = data[:exposure_secs].to_f if fx == "reciprocity_failure" && data[:exposure_secs]
+  params["print_stock"] = data[:print_stock].to_s if fx == "print_film" && data[:print_stock]
+  params["lens"] = data[:lens].to_s if fx == "vintage_lens" && data[:lens]
+  params["age"] = data[:age].to_f if data[:age] && %w[faded_print dye_fade expired_film].include?(fx)
+  params["tonemap"] = data[:tonemap].to_s if fx == "tonemap" && data[:tonemap]
+  params
 end
 
 # Each take must differ from the last in kind. The next look is drawn from the
@@ -3752,12 +4012,15 @@ def next_heavy_look(rng, used)
   fresh.find { |look| !stocks.include?(PRESETS.fetch(look)[:stock]) } || fresh.first || HEAVY_LOOKS.sample(random: rng)
 end
 
-# The look's own steps, then a random chain of light, texture and wear drawn
-# around them, in physical order with one grain pass last.
+# The look's own steps, then the strongest few steps of a random chain of light,
+# texture and wear, up to HEAVY_MAX_STEPS in all, in physical order with one
+# grain pass last.
 def look_led_chain(rng, look:, avoid: [], lane: nil)
   base = preset_as_recipe(look)
   taken = base.map(&:first)
-  tail = random_chain(rng, avoid:, lane:).reject { |fx, _| taken.include?(fx) || fx == RANDOM_ALWAYS }
+  drawn = random_chain(rng, avoid:, lane:).reject { |fx, _| taken.include?(fx) || fx == RANDOM_ALWAYS }
+  # One step of the cap is always the closing grain pass.
+  tail = strongest_steps(drawn, HEAVY_MAX_STEPS - 1 - base.count { |fx, _| fx != RANDOM_ALWAYS })
   stock = (PRESETS.fetch(look.to_sym)[:stock] || :kodak_portra).to_s
   grain = base.find { |fx, _| fx == RANDOM_ALWAYS } || [RANDOM_ALWAYS, { "intensity" => 0.6, "stock" => stock }]
   rank = random_stage_rank
@@ -3765,6 +4028,32 @@ def look_led_chain(rng, look:, avoid: [], lane: nil)
          .each_with_index.sort_by { |(fx, _), index| [rank.fetch(fx, 0.85), index] }.map(&:first)
   body << grain
 end
+
+# The `room` strongest steps of a drawn chain, in their drawn order.
+def strongest_steps(chain, room)
+  return [] unless room.positive?
+
+  kept = chain.each_with_index.max_by(room) { |(_, params), _| params.is_a?(Numeric) ? params : params["intensity"].to_f }
+  kept.sort_by(&:last).map(&:first)
+end
+
+# A random take is named for what it is: its place in the run, the look it was
+# built on, and the lane it was dealt. The number keeps one family's takes apart
+# and in draw order; the dealt lane is named over the inferred one, which can
+# read a bleeding-edge take as subtle. Without a take the chain stays in the
+# name, which separates one-off random grades of the same photograph.
+def random_take_label(chain, take = nil)
+  lane = (take&.lane || random_chain_lane(chain)).to_s
+
+  return "#{lane}_#{random_chain_name(chain)[0, 50]}" unless take
+
+  [format("%02d", take.number), take.look, lane].compact.join("_")
+end
+
+# One take of a random run: its place in the run, the named look it was built
+# on (nil outside heavy mode), and the lane it was dealt. It names the file and
+# goes into the sidecar; every caller outside a random run leaves it out.
+RandomTake = Data.define(:number, :look, :lane)
 
 def random_chain_lane(chain)
   effects = chain.map(&:first).map(&:to_s)
@@ -3796,110 +4085,63 @@ RECIPE_ALLOWED = %w[
   dilla_phasy dilla_console_sum
 ].freeze
 
-# Where a recipe's single number actually belongs.
-#
-# The effects do not share one call signature: their second positional argument
-# can be a film stock, an RGB triplet, Kelvin, a pixel radius, ISO, an f-number,
-# a distortion coefficient, a threshold or a lens name. Some effects require
-# keyword arguments. Passing every recipe number as an intensity can therefore
-# either raise and discard an image or silently produce the wrong grade.
-#
-# Each adapter maps intensity onto the parameter the effect actually uses, and
-# reads optional controls from an object when provided:
-# {"grain": {"intensity": 0.5, "stock": "tri_x", "iso": 1600}}.
+# The stock a recipe step names, or the default when it names none it knows.
 def recipe_stock(params, default = :kodak_portra)
   name = params["stock"]&.to_sym
   STOCKS.key?(name) ? name : default
 end
 
-RECIPE_ADAPTERS = {
-  # second positional is a film stock
-  "film_curve" => ->(img, i, p) { film_curve(img, recipe_stock(p), i) },
-  "stock_matrix" => ->(img, i, p) { stock_matrix(img, recipe_stock(p), i) },
-  "emulsion_defocus" => ->(img, _i, p) { emulsion_defocus(img, recipe_stock(p)) },
-  "dye_fade" => ->(img, i, p) { dye_fade(img, recipe_stock(p), i) },
-  "film_base_density" => ->(img, i, p) { film_base_density(img, recipe_stock(p), i * 0.12) },
-  "grain" => ->(img, i, p) { grain(img, (p["iso"] || 800).to_i, recipe_stock(p), i) },
-  # second positional is an RGB triplet
-  "split_toning" => ->(img, i, _p) { split_toning(img, [45, 35, 60], [255, 240, 210], i) },
-  "split_grade" => ->(img, i, _p) { split_grade(img, intensity: i) },
-  "base_tint" => ->(img, i, _p) { base_tint(img, [252, 248, 240], i * 0.15) },
-  "dual_base_density" => ->(img, i, _p) { dual_base_density(img, [255, 248, 235], i * 0.14) },
-  # second positional is a physical quantity on its own scale
-  "highlight_roll" => ->(img, i, p) { highlight_roll(img, (p["threshold"] || 200).to_i, i) },
-  "micro_contrast" => ->(img, i, p) { micro_contrast(img, (p["radius"] || 5).to_i, i) },
-  "clarity" => ->(img, i, p) { clarity(img, (p["radius"] || 15).to_i, i) },
-  "color_temp" => ->(img, i, p) { color_temp(img, (p["kelvin"] || 5600).to_f, i) },
-  "diffraction_blur" => ->(img, i, p) { diffraction_blur(img, (p["f_number"] || 16.0).to_f, i) },
-  # A negative coefficient is barrel distortion, which is what a lens does and
-  # what every preset here asks for. Intensity scales toward it, not away.
-  "lens_distortion" => ->(img, i, p) { lens_distortion(img, (p["k1"] || -(0.05 + (i * 0.15))).to_f) },
-  # Reciprocity failure is a function of exposure TIME. Half a second is no
-  # failure at all, so intensity picks a plausible long exposure instead.
-  "reciprocity_failure" => ->(img, i, p) {
-    reciprocity_failure(img, (p["exposure_seconds"] || (1.0 + (i * 60.0))).to_f, recipe_stock(p, :cinestill_800t))
-  },
-  "relight" => ->(img, i, p) {
-    relight(img, i, azimuth: (p["azimuth"] || 135.0).to_f, shape: (p["shape"] || 1.25).to_f)
-  },
-  # keyword-only signatures: these raised rather than misfired
-  "tonemap" => ->(img, i, p) { tonemap(img, type: (p["type"] || "aces").to_sym, exposure: (p["exposure"] || 0.0).to_f, intensity: i) },
-  "spectral_temp" => ->(img, i, p) {
-    spectral_temp(img, source_kelvin: (p["source_kelvin"] || 6504).to_f, target_kelvin: (p["target_kelvin"] || 5600).to_f, intensity: i)
-  },
-  # second positional is a lens name, not a number
-  "vintage_lens" => ->(img, i, p) {
-    type = p["type"].to_s
-    vintage_lens(img, LENSES.key?(type.to_sym) ? type : "zeiss", i)
-  },
-  "double_exposure" => ->(img, _i, p) {
-    second = p["second_image_path"] || p["image"]
-    raise ArgumentError, "double_exposure requires second_image_path" if second.to_s.empty?
-    double_exposure(img, second, p.fetch("blend_mode", "over"), p.fetch("mode", "professional"))
-  },
-  "cinemascope_bars" => ->(img, i, p) {
-    cinemascope_bars(img, i, p.fetch("aspect_ratio", "2.35:1"))
-  },
-  "film_stock_emulation" => ->(img, i, p) {
-    film_stock_emulation(img, i, p.fetch("stock", "kodak_portra"))
-  },
-
-}.freeze
-
+# A recipe grades exactly as a preset does: every step through grade_step, so
+# it gets the same per-effect mix, the same source-aware taper and the same
+# float pipeline with one clamp at the end. It used to call each effect at its
+# raw recipe number with none of the three, and that difference, not the
+# effects, is what wrecked most random takes.
 def recipe(image, recipe_data)
-  processed = image
-  recipe_data.each do |fx, params|
-    opts = params.is_a?(Hash) ? params : {}
-    # nil.to_f is 0.0, so the object form — which exists so you can set the
-    # other keys, and is therefore exactly where omitting this one is likely —
-    # ran the effect at zero and changed nothing. Absent means default, not off.
-    intensity = if params.is_a?(Hash)
-                  params.key?("intensity") ? params["intensity"].to_f : 1.0
-                else
-                  params.to_f
-                end
-    method = fx.gsub("_professional", "")
-    unless RECIPE_ALLOWED.include?(method)
-      $cli_logger.warn "recipe: #{fx} is not an allowed effect — skipped"
-      next
-    end
-    adapter = RECIPE_ADAPTERS[method]
-    processed = if adapter
-               adapter.call(processed, intensity, opts)
-             elsif respond_to?(method, true)
-               # The remaining effects genuinely do take an intensity, an age, a
-               # lift, a sigma or a number of stops second, all of which a 0..1
-               # figure means the obvious thing for.
-               send(method, processed, intensity)
-             else
-               $cli_logger.warn "recipe: #{fx} is allowed but has no implementation — skipped"
-               processed
-             end
+  head = source_headroom(image)
+  $postpro_float_pipeline = true
+  processed = recipe_data.reduce(image) do |picture, (fx, params)|
     # Evaluated per step, as preset does: left lazy, the take check and the
     # write each ran the whole nested gaussblur chain, so a chain cost twice.
-    processed = processed.copy_memory
+    recipe_step(picture, fx, params, head).copy_memory
   end
-  processed
+  $postpro_float_pipeline = false
+  safe_cast(processed)
+ensure
+  $postpro_float_pipeline = false
+end
+
+def recipe_step(image, fx, params, head)
+  method = fx.gsub("_professional", "")
+  unless RECIPE_ALLOWED.include?(method)
+    $cli_logger.warn "recipe: #{fx} is not an allowed effect — skipped"
+    return image
+  end
+
+  grade_step(method, image, recipe_preset(params), head, "recipe step #{fx}")
+end
+
+# A recipe step's numbers in the shape grade_step reads from a preset. A bare
+# number is the intensity; the object form may also name a stock, a print
+# stock, a temperature, stops, an exposure time, an age, a lens or a tonemap.
+# nil.to_f is 0.0, so an object without "intensity" runs at 1.0: absent means
+# default, not off.
+def recipe_preset(params)
+  opts = params.is_a?(Hash) ? params : {}
+  intensity = params.is_a?(Hash) ? opts.fetch("intensity", 1.0).to_f : params.to_f
+  {
+    intensity:, stock: recipe_stock(opts),
+    temp: (opts["target_kelvin"] || opts["kelvin"] || 5600).to_f,
+    print_stock: PRINT_STOCKS.key?(opts["print_stock"]&.to_sym) ? opts["print_stock"].to_sym : nil,
+    # A random push_pull step's number is its stops, as it always was.
+    stops: (opts["stops"] || intensity).to_f,
+    # Reciprocity failure is a function of time; a step's number picks a long
+    # exposure of up to half a minute, a night frame rather than a star trail.
+    exposure_secs: (opts["exposure_seconds"] || (1.0 + (intensity * 30.0))).to_f,
+    age: (opts["age"] || intensity).to_f,
+    lens: LENSES.key?((opts["lens"] || opts["type"]).to_s.to_sym) ? (opts["lens"] || opts["type"]).to_s : nil,
+    tonemap: opts["tonemap"]&.to_sym, iso: opts["iso"],
+    second_image: opts["second_image_path"] || opts["image"], blend_mode: opts["blend_mode"],
+  }.compact
 end
 
 # Export a 3D LUT (.cube) for a preset. size³ lattice points; 17 is standard
@@ -3994,97 +4236,144 @@ def preset_chain(image, names)
   names.reduce(image) { |img, name| preset(img, name) }
 end
 
-def process_file(file, variations, preset_name = nil, recipe_data = nil, random_effects = nil, mode = "professional")
-  recipe_data ||= random_effects
+# The method whose `case fx` is the effect dispatch, read by --vocab-check.
+EFFECT_DISPATCH = "grade_step"
+
+# What one call of process_file grades: the source, its camera-corrected
+# picture, and either a preset or a random recipe with the take it belongs to.
+GradeRequest = Data.define(:file, :image, :preset_name, :recipe, :take)
+
+# Grades `file` `variations` times through a preset or a random recipe and
+# returns how many variations were written. `take` is the RandomTake a random
+# run is drawing, or nil for every other caller.
+def process_file(file, variations, preset_name = nil, recipe_data = nil, take: nil)
   image = load_image(file)
   return 0 unless image
 
-  # The body's own colour response, before anything else touches the picture.
-  #
-  # ON BY DEFAULT, and set false only by someone who has a reason. It was
-  # `if CONFIG["apply_camera_profile_first"]` against a CONFIG that is {} unless
-  # a master.json exists, so the answer was nil on every invocation this file
-  # has ever had — fifty lines of matching and matrix application that had never
-  # run, aimed at a profiles directory that had never existed.
-  #
-  # Both halves are real now: camera_profiles.json holds 121 bodies across
-  # six vendors, recovered from a VSCO DCP archive. A default of off would have
-  # kept them as decorative as the code that reads them.
-  #
-  # It no-ops safely on anything without EXIF Make/Model, which is every
-  # generated image — so a render is unaffected and a photograph is corrected.
-  unless CONFIG.fetch("apply_camera_profile_first", true) == false
-    profile = get_camera_profile(image)
-    if profile
-      image = apply_camera_profile(image, profile)
-      PostproBootstrap.dmesg "camera_profile src=#{File.basename(file)}"
-    end
+  request = GradeRequest.new(file:, image: camera_corrected(image, file), preset_name:, recipe: recipe_data, take:)
+  written, failed = write_variations(request, variations)
+  refuse_failed_family!(file, variations, failed) if written.zero? && failed.positive?
+  written
+end
+
+# The body's own colour response, before anything else touches the picture.
+#
+# ON BY DEFAULT, and set false only by someone who has a reason. It was
+# `if CONFIG["apply_camera_profile_first"]` against a CONFIG that is {} unless
+# a master.json exists, so the answer was nil on every invocation this file
+# has ever had — fifty lines of matching and matrix application that had never
+# run, aimed at a profiles directory that had never existed.
+#
+# Both halves are real now: camera_profiles.json holds 121 bodies across
+# six vendors, recovered from a VSCO DCP archive. A default of off would have
+# kept them as decorative as the code that reads them.
+#
+# It no-ops safely on anything without EXIF Make/Model, which is every
+# generated image — so a render is unaffected and a photograph is corrected.
+def camera_corrected(image, file)
+  return image if CONFIG.fetch("apply_camera_profile_first", true) == false
+
+  profile = get_camera_profile(image)
+  return image unless profile
+
+  corrected = apply_camera_profile(image, profile)
+  PostproBootstrap.dmesg "camera_profile src=#{File.basename(file)}"
+  corrected
+end
+
+# Every variation is attempted; one that raises costs only itself. Returns the
+# number written and the number that failed.
+def write_variations(request, variations)
+  failed = 0
+  written = variations.times.count do |index|
+    write_variation(request, index)
+  rescue StandardError => e
+    failed += 1
+    report_failed_variation(index + 1, e)
+    false
   end
+  [written, failed]
+end
 
-  processed_count = 0
-  failed_variations = 0
-  variations.times do |i|
-    begin
-      processed = if preset_name
-                     preset(image, preset_name)
-                   elsif recipe_data
-                     recipe(image, recipe_data)
-                   else
-                     next
-                   end
+# One variation: grade, finish, name, write, record. Returns the path written,
+# or nil when there was nothing to grade.
+def write_variation(request, index)
+  processed = graded_variation(request)
+  return unless processed
 
-      next unless processed
+  output = variation_output_path(request, index)
+  Postpro::Constitution.verify_chain!(chain: request.recipe, stage_rank: random_stage_rank) if request.recipe
+  quality = CONFIG["jpeg_quality"] || 95
+  write_graded_image(processed, output, quality)
+  write_variation_sidecar(request, output, processed)
+  PostproBootstrap.dmesg "write out=#{File.basename(output)} q=#{quality}"
+  output
+end
 
-      grained = recipe_data&.any? { |fx, _| fx.to_s == RANDOM_ALWAYS }
-      processed = anchor_tones(processed)
-      check_take_survives!(processed) if recipe_data
-      processed = apply_finishing_grain(processed, preset_name, grained:)
-      processed = rgb_bands(processed)
-      lane = recipe_data ? random_chain_lane(recipe_data) : nil
-      suffix = preset_name || (recipe_data ? "#{lane}_#{random_chain_name(recipe_data)[0, 50]}" : "processed")
-      # Built from dirname + basename, not String#sub on the extension: sub
-      # matches the first occurrence anywhere in the path, so a directory
-      # component containing the extension (shoots/2024.jpg/frame.jpg) was
-      # rewritten and the write went to a path that does not exist.
-      ext = File.extname(file)
-      safe_stem = File.basename(file, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
-      output_ext = ARGV.include?("--tiff16") ? ".tif" : ext
-      output = File.join(Postpro::Constitution.output_dir_for(file),
-                         "postpro_#{safe_stem}_#{suffix}_v#{i + 1}#{output_ext}")
-      output = Postpro::Constitution.available_output_path(output)
-      Postpro::Constitution.verify_output!(input_path: file, output_path: output)
-      Postpro::Constitution.verify_chain!(chain: recipe_data, stage_rank: random_stage_rank) if recipe_data
+# The grade itself, then the finish every variation shares: the tone anchor,
+# the survival check a random take must pass, the last grain, and three bands.
+def graded_variation(request)
+  processed = if request.preset_name then preset(request.image, request.preset_name)
+              elsif request.recipe then recipe(request.image, request.recipe)
+              end
+  return unless processed
 
-      quality = CONFIG["jpeg_quality"] || 95
-      if ARGV.include?("--tiff16") || output.end_with?(".tif", ".tiff")
-        processed.cast("ushort").write_to_file(output)
-      else
-        processed.write_to_file(output, Q: quality)
-      end
-      # A random chain cannot be looked up again at all, so its recipe goes out
-      # beside the picture or it is gone. A preset can, but its tables change,
-      # so the grade's version and what it did to the picture go out too.
-      if recipe_data
-        write_chain_sidecar(file, output, recipe_data)
-      else
-        write_grade_sidecar(file, output, preset_name, image, processed)
-      end
-      PostproBootstrap.dmesg "write out=#{File.basename(output)} q=#{quality}"
-      processed_count += 1
+  grained = request.recipe&.any? { |fx, _| fx.to_s == RANDOM_ALWAYS }
+  processed = anchor_tones(processed)
+  check_take_survives!(processed, request.image, request.take&.look) if request.recipe
+  rgb_bands(apply_finishing_grain(processed, request.preset_name, grained:))
+end
 
-    rescue StandardError => e
-      failed_variations += 1
-      $logger.error "Variation #{i + 1} failed: #{e.message} at #{e.backtrace&.first(4)&.join(' <- ')}"
-      $cli_logger.error "Variation #{i + 1} failed: #{e.message}"
-    end
+# Built from dirname + basename, not String#sub on the extension: sub matches
+# the first occurrence anywhere in the path, so a directory component
+# containing the extension (shoots/2024.jpg/frame.jpg) was rewritten and the
+# write went to a path that does not exist.
+def variation_output_path(request, index)
+  file = request.file
+  ext = File.extname(file)
+  safe_stem = File.basename(file, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
+  output_ext = ARGV.include?("--tiff16") ? ".tif" : ext
+  name = "postpro_#{safe_stem}_#{variation_suffix(request)}_v#{index + 1}#{output_ext}"
+  output = Postpro::Constitution.available_output_path(File.join(Postpro::Constitution.output_dir_for(file), name))
+  Postpro::Constitution.verify_output!(input_path: file, output_path: output)
+  output
+end
+
+def variation_suffix(request)
+  return request.preset_name.to_s if request.preset_name
+
+  request.recipe ? random_take_label(request.recipe, request.take) : "processed"
+end
+
+def write_graded_image(processed, output, quality)
+  if ARGV.include?("--tiff16") || output.end_with?(".tif", ".tiff")
+    processed.cast("ushort").write_to_file(output)
+  else
+    processed.write_to_file(output, Q: quality)
   end
+end
 
-  if processed_count.zero? && failed_variations.positive?
-    raise RuntimeError,
-          "all #{failed_variations}/#{variations} variations failed for #{File.basename(file)}; no output was written"
+# A random chain cannot be looked up again at all, so its recipe goes out
+# beside the picture or it is gone. A preset can, but its tables change, so the
+# grade's version and what it did to the picture go out too.
+def write_variation_sidecar(request, output, processed)
+  if request.recipe
+    write_chain_sidecar(request.file, output, request.recipe, take: request.take)
+  else
+    write_grade_sidecar(request.file, output, request.preset_name, request.image, processed)
   end
+end
 
-  processed_count
+def report_failed_variation(number, error)
+  message = error.message
+  $logger.error "Variation #{number} failed: #{message} at #{error.backtrace&.first(4)&.join(' <- ')}"
+  $cli_logger.error "Variation #{number} failed: #{message}"
+end
+
+# run_random reads the "all " at the front of this message as a take that
+# destroyed the picture, and draws that take again on another look.
+def refuse_failed_family!(file, variations, failed)
+  raise "all #{failed}/#{variations} variations failed for #{File.basename(file)}; no output was written"
 end
 
 # Main Workflow
@@ -4218,7 +4507,7 @@ def write_grade_sidecar(input_path, output_path, presets, original, processed)
   write_sidecar(output_path, data)
 end
 
-def write_chain_sidecar(input_path, output_path, chain)
+def write_chain_sidecar(input_path, output_path, chain, take: nil)
   write_sidecar(output_path, {
     schema: "postpro.chain.v1",
     generated_at: Time.now.utc.iso8601,
@@ -4226,7 +4515,9 @@ def write_chain_sidecar(input_path, output_path, chain)
     output: File.expand_path(output_path),
     grade_version: GRADE_VERSION,
     seed: $postpro_seed,
-    lane: random_chain_lane(chain).to_s,
+    take: take&.number,
+    look: take&.look&.to_s,
+    lane: (take&.lane || random_chain_lane(chain)).to_s,
     chain: chain.map { |fx, params| { fx => params } },
   })
 rescue StandardError => e
@@ -4490,7 +4781,7 @@ end
 
 def preset_effect_names
   source = File.read(__FILE__)
-  postpro_case_labels(postpro_source_method(source, "preset"), :fx)
+  postpro_case_labels(postpro_source_method(source, EFFECT_DISPATCH), :fx)
 end
 
 # A named step is not enough: the case arm must consume the value it promises
@@ -4708,7 +4999,7 @@ end
 def vocab_check
   source = File.read(__FILE__)
   source_methods = postpro_source_methods(source)
-  preset_source = source_methods["preset"]
+  preset_source = source_methods[EFFECT_DISPATCH]
   implemented = postpro_case_labels(preset_source, :fx)
   problems = []
   valid_presets, malformed_preset_problems = auditable_preset_rows(PRESETS)
@@ -4746,32 +5037,10 @@ def vocab_check
     (table.keys - STOCKS.keys).each { |s| problems << "#{label} has a row for #{s}, which is not in STOCKS" }
   end
 
-  # Every recipe-allowed effect has to be callable the way recipe() calls it.
-  RECIPE_ALLOWED.each do |m|
-    unless respond_to?(m, true)
-      problems << "RECIPE_ALLOWED lists #{m}, which is not defined"
-      next
-    end
-    next if RECIPE_ADAPTERS.key?(m)
-
-    params = method(m).parameters
-    if params.any? { |kind, _| kind == :keyreq }
-      problems << "#{m} has a required keyword argument and no RECIPE_ADAPTERS entry, so recipe() raises on it"
-      next
-    end
-    # What matters is the SECOND POSITIONAL slot, since that is the one
-    # recipe()'s send fills. An optional keyword after it is fine -- halation's
-    # tint: has a default and never sees the intensity.
-    second = params.select { |kind, _| %i[req opt].include?(kind) }[1]
-    if second.nil?
-      problems << "#{m} takes no second positional argument and has no RECIPE_ADAPTERS entry, so recipe() raises on it"
-      next
-    end
-    next if second[1].to_s.match?(/intensity|amount|strength|opacity|lift|age|stops|sigma/)
-    problems << "#{m}'s second parameter is :#{second[1]}, not an intensity, and it has no RECIPE_ADAPTERS entry"
-  end
-  RECIPE_ADAPTERS.each_key do |m|
-    problems << "RECIPE_ADAPTERS has an entry for #{m}, which RECIPE_ALLOWED does not list" unless RECIPE_ALLOWED.include?(m)
+  # recipe() grades every step through grade_step, so an allowed effect
+  # with no arm there raises instead of grading.
+  (RECIPE_ALLOWED - implemented).each do |m|
+    problems << "RECIPE_ALLOWED lists #{m}, which has no arm in #{EFFECT_DISPATCH}(), so recipe() raises on it"
   end
 
   # Reachability. An effect nothing can select is a comment with a runtime cost.
@@ -4797,7 +5066,7 @@ def vocab_check
   # Validate the effect implementation as well as the preset's list. Otherwise
   # a name can remain in the chain while its case arm silently stops reading the
   # very field that made the preset configurable.
-  preset_source = source_methods["preset"]
+  preset_source = source_methods[EFFECT_DISPATCH]
   key_readers.each do |key, readers|
     readers.each do |reader|
       next if preset_effect_reads_key?(preset_source, reader, key)
@@ -5134,9 +5403,49 @@ VALUE_FLAGS = %w[
   --against --set --fit-grain
 ].freeze
 
-def positional_subject
+# Every bare path on the line is a subject, so `postpro.rb a.jpg b.jpg c.jpg`
+# grades all three; it used to grade the first and drop the rest in silence.
+# `uplift` is a mode word for --random, not a path.
+def positional_subjects
   flag_values = VALUE_FLAGS.filter_map { |flag| argv_flag(flag) }
-  ARGV.find { |token| !token.start_with?("-") && !flag_values.include?(token) }
+  ARGV.reject { |token| token.start_with?("-") || flag_values.include?(token) || token == "uplift" }
+end
+
+def positional_subject = positional_subjects.first
+
+# --random names its subjects either as its own value (`--random photo.jpg`) or
+# as bare paths anywhere else on the line. Without this, `--random --count 10
+# photo.jpg` ignored the photograph and graded whatever sat in ~/Downloads.
+def random_subjects
+  named = argv_flag("--random")
+  named = nil if named.nil? || named.start_with?("-") || named == "uplift" || !File.exist?(named)
+  ([named] + positional_subjects).compact.uniq
+end
+
+# A batch is refused whole, before anything renders, when one of its paths is
+# neither an image nor a folder: a typo at the end of the line must not cost
+# the renders at the start of it a half-finished run.
+def refuse_bad_subjects!(subjects)
+  subjects.each do |subject|
+    problem = subject_problem(subject)
+    next unless problem
+
+    $cli_logger.error "#{problem}: #{subject}"
+    exit 1
+  end
+end
+
+def subject_problem(subject)
+  return "No such file or directory" unless File.exist?(subject)
+
+  "Not an image" if File.file?(subject) && !subject.match?(/\.(jpe?g|png|webp)\z/i)
+end
+
+def run_random_subjects(subjects)
+  return run_random if subjects.empty?
+
+  refuse_bad_subjects!(subjects)
+  subjects.each { |subject| run_random(subject) }
 end
 
 # Resolve the best available downloads directory on Android/Termux or desktop.
@@ -5153,8 +5462,9 @@ end
 
 # --random [DIR] [uplift] [--count N], or a bare positional IMAGE | DIR
 #
-# Three to five pictures per run, each through its own chain, written to the
-# shared dated output directory unless POSTPRO_OUTPUT_DIR redirects it.
+# Five to ten pictures per photograph (five in heavy mode, or exactly --count),
+# each through its own chain, numbered in the order they were drawn and written
+# beside the photograph they came from.
 #
 # The default used to be a pair of stacked presets applied to every image in
 # the folder, which for a folder of two hundred is a long afternoon and two
@@ -5162,6 +5472,7 @@ end
 # attempts, which is what random is for. `uplift` still stacks presets.
 def run_random(subject = nil)
   dir = subject || downloads_dir
+
   files =
     if subject && File.file?(subject)
       [subject]
@@ -5169,6 +5480,7 @@ def run_random(subject = nil)
       Dir.glob(File.join(dir, "**", "*.{jpg,jpeg,JPG,JPEG,png,PNG,webp,WEBP}"))
          .reject { |f| File.basename(f).match?(/processed|masterpiece|postpro|_v\d+_/) }
     end
+
   if files.empty?
     $cli_logger.error "No images in #{dir}"
     return
@@ -5182,30 +5494,35 @@ def run_random(subject = nil)
   $postpro_seed = Random.new_seed % 2_147_483_647 unless ENV.key?("POSTPRO_SEED")
   rng = Random.new(postpro_seed)
   override = (argv_flag("--count") || argv_flag("-n"))&.to_i
-  PostproBootstrap.dmesg "random subject=#{subject || dir} pool=#{files.count} variations=#{override || "#{RANDOM_VARIATIONS.first}-#{RANDOM_VARIATIONS.last}"} seed=#{$postpro_seed}"
+  variations = override || RANDOM_TAKES
+  PostproBootstrap.dmesg "random subject=#{subject || dir} pool=#{files.count} " \
+                         "variations=#{variations} seed=#{$postpro_seed}"
 
-  # Generate a curated family for each source. The default deliberately makes
-  # five to ten materially different attempts per image; --count remains an
-  # explicit escape hatch for small probes and operator-directed runs.
-  # Heavy mode fixes the count at five and deals the four lanes round-robin, so
-  # one run always spans subtle analog to bleeding edge; the fifth pick lands
-  # on the bleeding edge again, the experimental end having the last word.
+  # A family of RANDOM_TAKES materially different attempts per image; --count
+  # sets any other number. Heavy mode deals the lanes round-robin, so one run
+  # always spans subtle analog to bleeding edge, and at ten it does so twice.
   files.each_with_index do |file, file_index|
-    count = (override || (heavy_mode? ? 5 : rng.rand(RANDOM_VARIATIONS))).clamp(1, 24)
+    count = (override || RANDOM_TAKES).clamp(1, 24)
+
     Postpro::Constitution.verify_batch!(variation_count: count, explicit_count: !override.nil?)
     drawn = []
     looks = []
     Postpro::Constitution.retire_previous_renders!(file)
     count.times do |index|
+      number = index + 1
       lane = heavy_mode? ? HEAVY_LANE_DEAL[index % HEAVY_LANE_DEAL.size] : nil
+
       attempts = 0
       refused = []
       begin
         look = heavy_mode? ? next_heavy_look(rng, looks + refused) : nil
         chain = look ? look_led_chain(rng, look:, avoid: drawn, lane:) : random_chain(rng, avoid: drawn, lane:)
         Postpro::Constitution.verify_chain!(chain: chain, stage_rank: random_stage_rank)
-        $cli_logger.info "#{file_index + 1}/#{files.count} #{index + 1}/#{count}: #{File.basename(file)} — #{look} #{random_chain_name(chain)}"
-        process_file(file, 1, nil, chain)
+        drew = "#{File.basename(file)} — #{look} #{random_chain_name(chain)}"
+        $cli_logger.info "#{file_index + 1}/#{files.count} #{number}/#{count}: #{drew}"
+
+        take = RandomTake.new(number:, look:, lane: lane || random_chain_lane(chain))
+        process_file(file, 1, nil, chain, take:)
         drawn << chain
         looks << look if look
       rescue RuntimeError => e
@@ -5217,12 +5534,108 @@ def run_random(subject = nil)
       end
     rescue StandardError => e
       # One refused chain costs one take, not the rest of the family.
-      $logger.error "random #{File.basename(file)} take #{index + 1}: #{e.message}"
-      $cli_logger.error "take #{index + 1} failed: #{e.message}"
+      failure = "take #{number} failed: #{e.message}"
+      $logger.error "random #{File.basename(file)} #{failure}"
+      $cli_logger.error failure
     end
+
+    write_contact_sheet(file) if contact_sheet?
   rescue StandardError => e
     $logger.error "random #{File.basename(file)}: #{e.message}"
   end
+end
+
+# The contact sheet is on by default: a family of ten is judged side by side,
+# not by opening ten files. POSTPRO_CONTACT=0 leaves it out.
+def contact_sheet? = ENV.fetch("POSTPRO_CONTACT", "1") != "0"
+
+# The takes of a source's current family, in draw order, read back from their
+# sidecars rather than remembered, so the sheet shows what is on disk.
+def family_takes(file)
+  input = File.expand_path(file)
+  sidecars = Dir.glob(File.join(Postpro::Constitution.output_dir_for(input), "postpro_*.json"))
+  sidecars.filter_map { |sidecar| family_take(sidecar, input) }.sort_by { |entry| [entry[:take], entry[:path]] }
+end
+
+# One sidecar read as a take of `input`, or nil when it belongs to another
+# source, is not a chain, has lost its picture, or cannot be read.
+def family_take(sidecar, input)
+  data = JSON.parse(File.read(sidecar, encoding: "UTF-8"))
+  media = sidecar.delete_suffix(".json")
+  return unless data["schema"] == "postpro.chain.v1" && data["input"] == input && File.file?(media)
+
+  { take: data["take"].to_i, look: (data["look"] || data["lane"]).to_s, path: media }
+rescue JSON::ParserError, SystemCallError => e
+  $logger.debug "contact sheet skips #{File.basename(sidecar)}: #{e.message}"
+  nil
+end
+
+CONTACT_TILE = [480, 720].freeze
+CONTACT_ACROSS = 5
+CONTACT_BACKGROUND = [17, 17, 17].freeze
+
+# One picture of the whole family: every take tiled in draw order with its
+# number and look beneath it, written beside the source like every render and
+# carrying a sidecar, so the next run of that source retires it with the rest.
+def write_contact_sheet(file)
+  takes = family_takes(file)
+  return if takes.size < 2
+
+  output = contact_sheet_path(file)
+  contact_sheet_image(takes).write_to_file(output, Q: 90)
+  write_contact_sidecar(file, output:, takes:)
+  $cli_logger.info "contact sheet: #{takes.size} takes in #{File.basename(output)}"
+
+  output
+rescue StandardError => e
+  # The takes are the work; a sheet that cannot be drawn costs only itself.
+  $logger.error "contact sheet #{File.basename(file)}: #{e.message}"
+  $cli_logger.error "contact sheet failed: #{e.message}"
+  nil
+end
+
+def contact_sheet_path(file)
+  safe_stem = File.basename(file, File.extname(file)).gsub(/[^0-9A-Za-z_-]+/, "_")
+  output = File.join(Postpro::Constitution.output_dir_for(file), "postpro_#{safe_stem}_contact.jpg")
+  output = Postpro::Constitution.available_output_path(output)
+  Postpro::Constitution.verify_output!(input_path: file, output_path: output)
+  output
+end
+
+def contact_sheet_image(takes)
+  cells = takes.map { |entry| contact_cell(entry) }
+  Vips::Image.arrayjoin(cells, across: [CONTACT_ACROSS, cells.size].min, shim: 6,
+                               background: CONTACT_BACKGROUND, valign: :low)
+end
+
+# A take's tile with its caption strip beneath it.
+def contact_cell(entry)
+  tile = rgb_bands(Vips::Image.thumbnail(entry[:path], CONTACT_TILE.first, height: CONTACT_TILE.last))
+  caption = format("%02d  %s", entry[:take], entry[:look].tr("_", " "))
+  tile.join(contact_label(caption, tile.width), :vertical, expand: true, background: CONTACT_BACKGROUND)
+end
+
+def write_contact_sidecar(file, output:, takes:)
+  listed = takes.map { |entry| { take: entry[:take], look: entry[:look], file: File.basename(entry[:path]) } }
+
+  write_sidecar(output, {
+    schema: "postpro.contact.v1",
+    generated_at: Time.now.utc.iso8601,
+    input: File.expand_path(file),
+    output: File.expand_path(output),
+    seed: $postpro_seed,
+    takes: listed,
+  })
+end
+
+# A caption strip as wide as its tile. libvips draws text through Pango; a build
+# without it still gets a sheet, captionless, rather than no sheet.
+def contact_label(caption, width)
+  text = Vips::Image.text(caption, dpi: 96, font: "sans 14")
+  mask = text.embed(10, 8, width, text.height + 16)
+  mask.ifthenelse([230, 230, 230], CONTACT_BACKGROUND, blend: true)
+rescue Vips::Error
+  (Vips::Image.black(width, 1) + CONTACT_BACKGROUND).cast(:uchar)
 end
 
 # The older behaviour, kept because stacking two presets is a different and
@@ -5312,22 +5725,16 @@ def auto_launch
   return run_stock_sheet if ARGV.include?("--stock-sheet")
   return run_watch       if watch_mode?
   return run_one_shot    if one_shot_mode?
-  return run_random      if random_mode?
-  # A bare path is a subject, not a typo the menu swallows: one image gets the
-  # chains --random would draw for it, a directory a few picks from it. A path
-  # that is neither file nor directory is named and refused, because a menu
-  # opened on a typo reads as a hang.
-  subject = positional_subject
-  if subject
-    if !File.exist?(subject)
-      $cli_logger.error "No such file or directory: #{subject}"
-      exit 1
-    elsif File.file?(subject) && !subject.match?(/\.(jpe?g|png|webp)\z/i)
-      $cli_logger.error "Not an image: #{subject}"
-      exit 1
-    end
-    return run_random(subject)
-  end
+  return run_random_subjects(random_subjects) if random_mode?
+
+  # A bare path is a subject, not a typo the menu swallows: an image gets the
+  # chains --random would draw for it, a directory a few picks from it, and
+  # several paths get one family each. A path that is neither file nor
+  # directory is named and refused, because a menu opened on a typo reads as a
+  # hang.
+  subjects = positional_subjects
+
+  return run_random_subjects(subjects) if subjects.any?
   if ARGV.include?("--auto") || (!$stdin.tty? && ARGV.include?("--from-replicate"))
     input = auto_mode
   elsif ARGV.include?("--from-replicate") && REPLICATE_PRESENT

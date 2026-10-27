@@ -126,37 +126,35 @@ class TestStudioOutputPaths < Minitest::Test
 end
 
 class TestIdeaPictureOutput < Minitest::Test
-  def test_grade_returns_the_external_render_not_the_original_still
+  def test_grade_returns_the_render_beside_the_still_not_the_still_itself
     Dir.mktmpdir do |dir|
       source = File.join(dir, "portrait source.jpg")
       File.write(source, "source")
       picture = Studio::Visual::IdeaPicture.new(directory: dir)
-      render_root = File.join(dir, "renders")
-      status = successful_status
 
-      runner = lambda do |env, *args, timeout:|
-        script = File.join(Studio::Visual::IdeaPicture::ROOT, "postpro", "postpro.rb")
-        assert_equal 600, timeout
-        assert_equal script, args.fetch(1)
-        output_dir = env.fetch("POSTPRO_OUTPUT_DIR")
-        FileUtils.mkdir_p(output_dir)
-        File.write(File.join(output_dir, "postpro_portrait_source_test_v1.jpg"), "graded")
-        ["postpro0: ok write", "", status]
-      end
-
-      Dir.mktmpdir do |working_directory|
+      graded = Dir.mktmpdir do |working_directory|
         Dir.chdir(working_directory) do
-          Studio::OutputPaths.stub(:render_directory, render_root) do
-            Studio::Subprocess.stub(:capture3, runner) do
-              graded = picture.send(:grade, source, "stamp")
-              assert_equal File.join(render_root, "photograph-stamp",
-                                     "postpro_portrait_source_test_v1.jpg"), graded
-              refute_equal source, graded
-              assert_equal "graded", File.read(graded)
-            end
-          end
+          Studio::Subprocess.stub(:capture3, postpro_writing_beside(dir)) { picture.send(:grade, source) }
         end
       end
+
+      assert_equal File.join(dir, "postpro_portrait_source_test_v1.jpg"), graded
+      refute_equal source, graded
+      assert_equal "graded", File.read(graded)
+    end
+  end
+
+  # A stand-in for the postpro subprocess: it checks how it was called and
+  # writes its grade beside the still, the way postpro does.
+  def postpro_writing_beside(dir)
+    status = successful_status
+    lambda do |env, *args, timeout:|
+      script = File.join(Studio::Visual::IdeaPicture::ROOT, "postpro", "postpro.rb")
+      assert_equal [600, script], [timeout, args.fetch(1)]
+
+      refute env.key?("POSTPRO_OUTPUT_DIR"), "the grade lands beside the still, unredirected"
+      File.write(File.join(dir, "postpro_portrait_source_test_v1.jpg"), "graded")
+      ["postpro0: ok write", "", status]
     end
   end
 
@@ -166,11 +164,9 @@ class TestIdeaPictureOutput < Minitest::Test
       File.write(source, "source")
       picture = Studio::Visual::IdeaPicture.new(directory: dir)
 
-      Studio::OutputPaths.stub(:render_directory, File.join(dir, "renders")) do
-        Studio::Subprocess.stub(:capture3, ->(_env, *_args, timeout:) { ["postpro0: ok", "", successful_status] }) do
-          error = assert_raises(RuntimeError) { picture.send(:grade, source, "stamp") }
-          assert_match(/produced no graded still/, error.message)
-        end
+      Studio::Subprocess.stub(:capture3, ->(_env, *_args, timeout:) { ["postpro0: ok", "", successful_status] }) do
+        error = assert_raises(RuntimeError) { picture.send(:grade, source) }
+        assert_match(/produced no graded still/, error.message)
       end
     end
   end

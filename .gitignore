@@ -295,9 +295,21 @@ STUDIO/postpro/models/
 # Postpro source captures and generated renders. These rules prevent future
 # untracked additions; they do not untrack originals that are already in Git.
 # The publication and history decision is recorded in MASTER/data/operator_seams.yml.
+# A render always sits beside its source, wherever in the tree that is, so the
+# render rules apply repo-wide.
 STUDIO/postpro/IMG_*
-STUDIO/postpro/postpro_*.jpg
-STUDIO/postpro/postpro_*.jpg.json
+postpro_*.jpg
+postpro_*.jpeg
+postpro_*.png
+postpro_*.webp
+postpro_*.tif
+postpro_*.tiff
+postpro_*.jpg.json
+postpro_*.jpeg.json
+postpro_*.png.json
+postpro_*.webp.json
+postpro_*.tif.json
+postpro_*.tiff.json
 
 # Claude Code per-machine permission allowlist. settings.json is the shared
 # one; this file names local paths and belongs to the repo, not the checkout.

@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
-require_relative "tool_test_helper"
+require_relative "tools_helper"
+require_relative "postpro_cli_helper"
 require "vips"
+ToolTest::Tools.load_tool("postpro/postpro.rb")
 require "tmpdir"
 require "fileutils"
 require "open3"
@@ -10,37 +12,15 @@ require "json"
 
 # Exercise the actual CLI because ARGV dispatch cannot be exercised in-process:
 # the load guard suppresses auto_launch, and the positional path is resolved by
-# that entrypoint. Each subprocess gets its own render directory so output-path
-# assertions never depend on the caller's current directory.
+# that entrypoint. Renders land beside their source, so each test's frames sit
+# in their own temporary directory and output-path assertions never depend on
+# the caller's current directory.
 #
 # A fixture is generated rather than committed, and small, because a random
 # chain is the expensive path in postpro: a 160-pixel frame keeps the suite's
 # cost in seconds while still exercising the full chain, sidecar and all.
 class TestPostproDispatch < Minitest::Test
-  POSTPRO = File.expand_path("../postpro/postpro.rb", __dir__)
-  SEED = "4242"
-
-  def run_postpro(dir, *args, env: {})
-    defaults = {
-      "POSTPRO_SEED" => SEED,
-      "DILLA_QUIET" => "1",
-      "POSTPRO_OUTPUT_DIR" => render_dir(dir),
-    }
-    Open3.capture2e(defaults.merge(env), RbConfig.ruby, POSTPRO, *args)
-  end
-
-  def render_dir(dir) = File.join(dir, "renders")
-
-  def frame(dir, name = "frame.jpg")
-    path = File.join(dir, name)
-    band = (Vips::Image.black(160, 160).cast(:float) + 140).cast(:uchar)
-    band.bandjoin([band, band]).write_to_file("#{path}[Q=95]")
-    path
-  end
-
-  def graded_outputs(dir, name)
-    Dir[File.join(render_dir(dir), "postpro_#{File.basename(name, File.extname(name))}_*_v1.jpg")]
-  end
+  include PostproCli
 
   # The bare path grades that one image, and --count beside it is honoured
   # rather than read as a second subject ("3" is a count, not a file).
@@ -92,25 +72,26 @@ class TestPostproDispatch < Minitest::Test
     end
   end
 
-  def test_outputs_use_postpro_prefix_in_the_postpro_directory
+  def test_outputs_use_postpro_prefix_beside_the_source
     Dir.mktmpdir do |dir|
-      subject = frame(dir)
+      subject = scene(dir)
       out, status = run_postpro(dir, subject, "--count", "2")
       assert status.success?, "prefixed output failed:
 #{out}"
-      outputs = graded_outputs(dir, "frame.jpg")
+      outputs = graded_outputs(dir, "scene.jpg")
+
       assert_equal 2, outputs.size
-      assert outputs.all? { |path| File.dirname(path) == render_dir(dir) }
+      assert outputs.all? { |path| File.dirname(path) == File.dirname(subject) }
       assert outputs.all? { |path| File.basename(path).start_with?("postpro_") }
     end
   end
 
-  def test_a_bare_image_is_graded_to_the_configured_render_directory
+  def test_a_bare_image_is_graded_beside_itself
     Dir.mktmpdir do |dir|
-      subject = frame(dir)
+      subject = scene(dir)
       out, status = run_postpro(dir, subject, "--count", "2")
       assert status.success?, "positional grade failed:\n#{out}"
-      outputs = graded_outputs(dir, "frame.jpg")
+      outputs = graded_outputs(dir, "scene.jpg")
       assert_equal 2, outputs.size, "expected two variations, wrote:\n#{outputs}"
 
       sidecar = JSON.parse(File.read("#{outputs.first}.json"))
@@ -119,24 +100,41 @@ class TestPostproDispatch < Minitest::Test
     end
   end
 
-  def test_default_output_is_dated_and_outside_the_input_directory
+  # Every render sits beside its source. An output-directory variable in the
+  # environment no longer moves it anywhere else.
+  def test_output_directory_variable_does_not_move_renders_away_from_the_source
     Dir.mktmpdir do |dir|
       source_dir = File.join(dir, "source")
+      elsewhere = File.join(dir, "elsewhere")
       FileUtils.mkdir_p(source_dir)
       subject = frame(source_dir)
-      xdg_home = File.join(dir, "xdg")
-      date = Time.now.utc.strftime("%Y-%m-%d")
 
-      out, status = run_postpro(
-        dir, subject, "--count", "1",
-        env: { "POSTPRO_OUTPUT_DIR" => nil, "XDG_DATA_HOME" => xdg_home },
-      )
-      assert status.success?, "default output path failed:\n#{out}"
+      env = { "POSTPRO_OUTPUT_DIR" => elsewhere, "XDG_DATA_HOME" => File.join(dir, "xdg") }
+      out, status = run_postpro(dir, subject, "--count", "1", env:)
+      assert status.success?, "grade failed:\n#{out}"
 
-      output_dir = File.join(xdg_home, "dilla-renders", date)
-      outputs = Dir[File.join(output_dir, "postpro_frame_*_v1.jpg")]
-      assert_equal 1, outputs.size, "expected the dated render outside the source folder:\\n#{out}"
-      assert_empty Dir[File.join(source_dir, "postpro_*.jpg")]
+      assert_equal 1, graded_outputs(source_dir, "frame.jpg").size,
+                   "expected the render beside its source:\n#{out}"
+      assert_empty Dir[File.join(elsewhere, "**", "postpro_*")]
+      assert_empty Dir[File.join(dir, "xdg", "**", "postpro_*")]
+    end
+  end
+
+  # --random beside an explicit photograph grades that photograph, not
+  # whatever else sits in the downloads folder or the working directory.
+  def test_random_with_an_explicit_image_grades_only_that_image
+    Dir.mktmpdir do |dir|
+      subject = frame(dir, "chosen.jpg")
+      frame(dir, "bystander.jpg")
+
+      out, status = run_postpro(dir, "--random", "--count", "1", subject)
+      assert status.success?, "random grade failed:\n#{out}"
+      assert_equal 1, graded_outputs(dir, "chosen.jpg").size, "the named image was not graded:\n#{out}"
+      assert_empty graded_outputs(dir, "bystander.jpg"), "an unnamed image was graded:\n#{out}"
+
+      out, status = run_postpro(dir, "--count", "1", "--random", subject)
+      assert status.success?, "random grade with an inline subject failed:\n#{out}"
+      assert_empty graded_outputs(dir, "bystander.jpg"), "an unnamed image was graded:\n#{out}"
     end
   end
 
@@ -170,11 +168,9 @@ class TestPostproDispatch < Minitest::Test
 
       out, status = run_postpro(dir, source_dir, "--count", "1")
       assert status.success?, "positional directory grade failed:\n#{out}"
-      outputs = Dir[File.join(render_dir(dir), "postpro_one_*_v1.jpg")]
+      outputs = graded_outputs(source_dir, "one.jpg")
       assert_equal 1, outputs.size,
-                   "the directory's image should have been graded once:\n#{out}"
-      assert_empty Dir[File.join(source_dir, "postpro_*.jpg")],
-                   "generated files must stay out of the input directory"
+                   "the directory's image should have been graded once, beside itself:\n#{out}"
     end
   end
 end

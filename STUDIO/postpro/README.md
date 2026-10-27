@@ -8,13 +8,13 @@ size and a statistics, a base that reflects light back into the layer it came th
 curve that spends contrast instead of adding it, and a print stock after that. It is the
 house grade for stills, and its entry point is `STUDIO/postpro/postpro.rb`.
 
-Give it `--input`, `--output` and `--preset` and it grades one image headless. Give it a bare
-path and the path is the subject: an image goes through several random chains written to the
-Postpro output directory, a directory gives a few random picks from it, and a path that is
-neither is named and refused. Output defaults to the folder of the source photograph, or to the
-shared dated render directory when the source sits inside the checkout; `POSTPRO_OUTPUT_DIR`
-chooses another directory. Give it nothing and it asks what to
-grade. The command `postpro.rb --help` lists every flag. `--capabilities` reports the analogue
+Give it `--input`, `--output` and `--preset` and it grades one image headless. Give it bare
+paths and each is a subject: an image goes through ten random takes, a directory gives a
+few random picks from it, and a path that is neither is named and refuses the whole batch
+before anything renders. Every render lands in the folder of its source photograph, inside
+the checkout or out of it; the root `.gitignore` keeps `postpro_*` renders out of git
+wherever they land. Give it nothing and it asks what to grade.
+The command `postpro.rb --help` lists every flag. `--capabilities` reports the analogue
 direction catalogue and its readiness state; a catalogue entry is not a promise that the
 corresponding effect is implemented or enabled on this machine.
 
@@ -134,21 +134,40 @@ the weights everything falls back to the proxies, with one quiet log line.
 
 ## Random chains and heavy mode
 
-A bare path, or `--random`, renders several variations of a photograph, each through its own
-chain, with a JSON sidecar naming every effect and the seed. By default the media and sidecars
-sit beside the source photograph; a source inside the checkout renders to the shared dated
-directory outside it. Set `POSTPRO_OUTPUT_DIR` to choose another output directory. A new run
+A bare path, or `--random` with a path (`--random photo.jpg` or `--random --count 10
+photo.jpg`), renders several variations of that photograph, each through its own chain, with a
+JSON sidecar naming every effect, the seed, the take number, the look and the lane. `--random`
+with no path draws from the downloads folder instead. Several paths on one line get one family
+each. A take is named for what it is, in draw order:
+`postpro_photo_03_neon_night_artistic_analog_v1.jpg`. A family of two or more also gets
+`postpro_photo_contact.jpg`, every take tiled with its number and look beneath it, so the
+family is judged side by side; `POSTPRO_CONTACT=0` leaves it out. The media, sidecars and
+contact sheet always sit beside the source photograph. A new run
 first removes the earlier renders of the same source, since renders are replaceable. If a
 generated name still exists, Postpro preserves it and chooses a timestamped sibling.
 
-Heavy mode is the standing default: five variations with long chains, and each take must
-differ from the last in kind. A take starts from a named look at full strength (noir, neon
-night, Technicolor, cross process, infrared and a dozen more), drawn so that no two takes of
-one run share a look or a stock, and a random chain of light, texture and wear is grown around
-it. The leads and supports run strong enough to read. A take that comes out nearly black,
-burnt out or flat is refused and drawn again on another look, up to three times, because a
-radical take may change everything except that there is still a picture. `POSTPRO_HEAVY=0`
-returns to the lighter taste.
+A take is graded exactly as a preset is. Every step, drawn or from a preset, goes through one
+dispatch, `grade_step`, which mixes each effect down from the look intensity by its own
+factor, scales the subtractive steps by what the source arrived with, and runs the chain in
+float with one clamp at the end. Random takes used to call each effect at its raw number with
+none of that, and measured on nine photographs (2026-10-27) 69% of them lost the source's
+colour or shapes, against 10% of the lighter takes.
+
+Light takes are the default: short chains grown from the presets, ten of them. `--heavy` (or
+`POSTPRO_HEAVY=1`) starts each take from a named look instead (noir, neon night, Technicolor,
+cross process, infrared and a dozen more), runs that look as its preset does, with its own
+stops, exposure time, print stock and lens, and adds at most a few supporting steps, ten in
+all. No two takes of a heavy run share a look, and no two share a stock while an unused one
+remains.
+
+Every take is then judged against its source on what a colourist protects. It must keep the
+source's shapes, its black and white points and at least half its tonal spread. Colour may
+move within the look's own budget: how far colourfulness may rise, how far neutral greys may
+be tinted, and how far skin may turn in hue, held tightest. The default budgets sit at the
+90th percentile of measured light takes, and the palette looks (day for night, cross process,
+the night stocks) get more. A take that drains colour on purpose is judged on shapes and
+tones alone. Every bound is relative to the source, so a low-key photograph is judged against
+its own darkness. A refused take is drawn again, up to three times.
 
 Each run draws a fresh seed and prints it, and `POSTPRO_SEED` renders a family again.
 
@@ -163,9 +182,9 @@ the others and takes a stock no other picture used.
 Other modes grade in bulk. The `--watch` flag grades every new photo that lands in a folder,
 `--auto` grades the default globs, and `--from-replicate` grades what replicate wrote last.
 The `--gallery` flag writes an `index.html` contact page of every render in a folder, beside the
-renders it lists. The `--stock-sheet` flag tiles one frame through every stock. Bulk grades,
-stock sheets and LUT exports follow the same rule: grades and stock sheets sit beside their source, and LUT
-exports go to the shared dated directory. `POSTPRO_OUTPUT_DIR` chooses another directory; pass
+renders it lists. The `--stock-sheet` flag tiles one frame through every stock. Bulk grades and
+stock sheets sit beside their source like every other render. A LUT export has no source
+photograph, so it goes to the shared dated directory, which `POSTPRO_OUTPUT_DIR` can move; pass
 `--output` where the command accepts an explicit destination.
 
 ## Reading a frame, and a set
@@ -230,6 +249,7 @@ Run these from the repository root.
 
 ```sh
 ruby STUDIO/postpro/postpro.rb photo.jpg
+ruby STUDIO/postpro/postpro.rb one.jpg two.jpg ~/Pictures/trip
 ruby STUDIO/postpro/postpro.rb --input in.jpg --output out.jpg --preset portrait
 ruby STUDIO/postpro/postpro.rb --random --rough
 ruby STUDIO/postpro/postpro.rb --vocab-check
