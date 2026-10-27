@@ -107,7 +107,8 @@ class FixTraceTest < Minitest::Test
     text = File.read(File.join(transcript.dir, "fixes.ndjson"))
     refute_includes text, secret
     assert_includes text, "[REDACTED]"
-    refute transcript.append("fixes", { prompt: "z" * 2000 })
+    # Words, not one long run: a 2000-character token reads as a secret and is redacted to fit.
+    refute transcript.append("fixes", { prompt: "word " * 400 })
     assert_includes File.read(File.join(transcript.dir, "critique.ndjson")), "truncated"
 
     %w[old1 old2 old3].each_with_index do |name, i|

@@ -8,7 +8,7 @@ module Master
     class UXRefinementCatalog
       PATH = File.expand_path("../../data/ux_refinements.yml", __dir__)
       EXPECTED_COUNT = 90
-      TREE_NAMES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+      TREE_NAMES = MasterPaths::TREES
       AREA_NAMES = %w[input terminal diagnostics command_help browser_recovery visual_accessibility].freeze
       PROOF_TYPES = %w[accessibility browser source terminal unit visual].freeze
 

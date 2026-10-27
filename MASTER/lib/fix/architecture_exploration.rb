@@ -7,7 +7,8 @@ require_relative "ux_refinement_catalog"
 module Master
   module Fix
     class ArchitectureExploration
-      TREE_NAMES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+      TREE_NAMES = MasterPaths::TREES
+      REPORT_FIELDS = %w[tree status requested accepted qualified decision winner shortlist rejections].freeze
       DEFAULT_CANDIDATES = 36
       MIN_CANDIDATES = 30
       MAX_CANDIDATES = 40
@@ -120,7 +121,7 @@ module Master
         state = states.all? { |value| value == "COMPLETE" } ? "COMPLETE" :
           (reports.any? { |row| row["winner"] } ? "PARTIAL" : "INCONCLUSIVE")
         { "status" => state,
-          "targets" => reports.map { |row| row.slice("tree", "status", "requested", "accepted", "qualified", "winner", "shortlist", "rejections") },
+          "targets" => reports.map { |row| row.slice(*REPORT_FIELDS) },
           "brief" => reports.map { |row| brief(row) }.join("\n\n") }
       rescue StandardError => error
         publish("fix_loop:architecture_exploration_inconclusive",

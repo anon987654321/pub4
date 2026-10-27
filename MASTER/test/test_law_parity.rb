@@ -5,11 +5,11 @@ require "master"
 require_relative "../lib/fix/law_parity"
 
 class TestLawParity < Minitest::Test
-  def test_all_priority_constitutional_laws_are_audited_and_uncovered_law_is_explicit
+  # RENDERED_VALUES was the one uncovered priority Law; it has a definition under law/ now.
+  def test_all_priority_constitutional_laws_are_audited
     parity = Master::Fix::LawParity.new
-    gaps = parity.call
-    assert_equal ["RENDERED_VALUES"], gaps.map(&:id), parity.report
-    assert_equal 7, gaps.first.priority
+
+    assert_empty parity.call, parity.report
   end
 
   def test_law_loader_errors_are_not_swallowed_as_an_empty_registry
