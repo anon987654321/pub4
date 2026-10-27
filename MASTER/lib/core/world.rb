@@ -278,8 +278,16 @@ module Master::Core
     # refusing every config file in the tree.
     SECRET_PATH = %r{(?:\A|/)\.master/config\.ya?ml\z}i
 
+    # And one ordinary file has a secret's name: data/tokens.yml is MASTER's
+    # design tokens (colour, type, the face), and refusing it crashed /fix
+    # mid-pass. Its place in the tree is what clears it; tokens.yml elsewhere
+    # is still refused.
+    DESIGN_TOKENS_PATH = %r{(?:\A|/)data/tokens\.yml\z}
+
     def self.secret?(path)
       text = path.to_s
+      return false if DESIGN_TOKENS_PATH.match?(text)
+
       SECRET_BASENAME.match?(File.basename(text)) || SECRET_PATH.match?(text)
     end
 

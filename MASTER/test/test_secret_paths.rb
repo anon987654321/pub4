@@ -40,4 +40,12 @@ class TestSecretPaths < Minitest::Test
     assert guard(".master/config.yml")
     refute guard("config.yml")
   end
+
+  # MASTER's design tokens share a secret's name; only their place clears them.
+  def test_the_design_token_file_is_readable_by_path_and_other_tokens_files_are_not
+    refute guard("data/tokens.yml")
+    refute guard("/Users/mac/Documents/GitHub/pub4/MASTER/data/tokens.yml")
+    assert guard("tokens.yml")
+    assert guard("config/tokens.yml")
+  end
 end
