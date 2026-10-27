@@ -101,10 +101,13 @@ test("face boot defaults to automatic activation and preserves an explicit prime
   assert.match(view, /if\s*\(\s*!window\._primerFired\s*&&\s*\/webgl\/i\.test\(String\(type\)\)\)\s*return null/);
 });
 
-test("MASTER web face uses the same monospaced presentation contract as the CLI", () => {
+test("the chat keeps the CLI's monospaced presentation; the chrome takes brgen's sans", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
   const rules = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
-  assert.match(css, /html, body \{[\s\S]*?font:\s*16px\/1\.5 var\(--font-mono\)/);
+
+  assert.match(css, /html, body \{[\s\S]*?font:\s*16px\/1\.5 var\(--font\)/);
+  assert.match(css, /#chat-log \{[^}]*font:\s*1rem\/1\.5 var\(--font-mono\)/);
+  assert.match(css, /#zsh input, #zsh textarea \{[^}]*font:\s*400 16px\/1\.5 var\(--font-mono\)/);
   assert.match(css, /--font-label:\s*"JetBrainsMono Nerd Font"/);
   assert.match(rules, /face_interface:/);
   assert.match(rules, /prompt:\s*\n\s+font: font_code/);
@@ -645,18 +648,20 @@ test("face.css keeps primer and prompt layering stable", () => {
   assert.match(css, /#primer/);
   assert.match(css, /z-index:\s*var\(--z-modal\)/);
   assert.match(css, /body:not\(\.face-ready\) #zsh:not\(\.live\)/);
-  // face_root.palette in MASTER/data/tokens.yml is the grayscale face.
-  assert.match(css, /--x-text:\s*#E7E7E7/);
-  assert.match(css, /--face-bg:\s*#050505/);
+  // face_root.palette reads brgen's family tokens; the ground is brgen's --bg.
+  assert.match(css, /--x-text:\s*var\(--text\)/);
+  assert.match(css, /--face-bg:\s*#000000/);
   assert.match(css, /body\[data-runtime-profile="calm"\]/);
 });
 
-test("MASTER web and CLI share one monospaced face contract", () => {
+test("MASTER web and CLI share one monospaced chat contract", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
   const rules = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
+
   assert.match(rules, /face_root:[\s\S]*font_label:.*JetBrainsMono/);
   assert.match(css, /--font-label:\s*"JetBrainsMono/);
-  assert.match(css, /html, body[\s\S]*font:\s*16px\/1\.5 var\(--font-mono\)/);
+  assert.match(css, /html, body[\s\S]*font:\s*16px\/1\.5 var\(--font\)/);
+  assert.match(css, /--font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;/);
   assert.doesNotMatch(css, /var\(--font-label\)/, "MASTER face may not fall back to a second typography contract");
   assert.match(css, /\.message\.user,\s*\n\.message\.assistant[\s\S]*border:\s*0;[\s\S]*background:\s*transparent/);
   assert.match(css, /#chat-log[\s\S]*max-inline-size:\s*66ch/);
@@ -1029,35 +1034,58 @@ test("constitutional ASCII face is wired as an overlay and a fallback", () => {
 });
 
 
-test("Ghostty-inspired chrome uses canonical graphite tokens without weakening mobile targets", () => {
+test("session chrome reads brgen's family tokens and band without weakening mobile targets", () => {
   const tokens = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
   const generated = readFileSync(join(railsRoot, "__shared", "design_tokens.yml"), "utf8");
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
+  const brgen = readFileSync(join(railsRoot, "brgen", "app", "assets", "stylesheets", "application.scss"), "utf8");
+  const cssVar = (name) => `--${name.replaceAll("_", "-")}`;
+
+  // The family block comes first so the face root's var() references resolve to it.
+  const family = css.indexOf("/* BEGIN:generated-family-tokens");
+  const face = css.indexOf("/* BEGIN:generated-face-root");
+  assert.ok(family >= 0 && face > family, "family tokens must precede the face root");
+  assert.doesNotMatch(css, /--text-secondary:\s*var\(--text-secondary\)/, "a self-alias leaves the property invalid");
 
   for (const [name, value] of [
-    ["chrome_bg", "#111111"],
-    ["chrome_surface", "#171717"],
+    ["chrome_bg", "var(--surface)"],
+    ["chrome_surface", "var(--surface)"],
     ["chrome_surface_active", "#222222"],
-    ["chrome_border", "#303030"],
-    ["chrome_focus", "#C8C8C8"]
+    ["chrome_border", "var(--border)"],
+    ["chrome_text", "var(--text)"],
+    ["chrome_muted", "var(--text-secondary)"],
+    ["chrome_focus", "var(--accent)"]
   ]) {
-    assert.ok(tokens.includes(name + ': "' + value + '"'), "canonical token missing " + name);
-    assert.ok(generated.includes(name + ': "' + value + '"'), "generated token missing " + name);
-    assert.ok(css.includes("--" + name.replaceAll("_", "-") + ": " + value), "CSS projection missing " + name);
+    assert.ok(tokens.includes(`${name}: "${value}"`), `canonical token missing ${name}`);
+    const quoted = generated.includes(`${name}: "${value}"`);
+    assert.ok(quoted || generated.includes(`${name}: ${value}`), `generated token missing ${name}`);
+    assert.ok(css.includes(`${cssVar(name)}: ${value}`), `CSS projection missing ${name}`);
   }
+
+  // master's titlebar is brgen's header band, so the two values may not drift apart.
+  const hex = (source, pattern) => Object.fromEntries([...source.matchAll(pattern)].map((m) => [m[1], m[2]]));
+  const band = hex(brgen, /--brgen-header-(bg|ink|muted):\s*(#[0-9a-fA-F]{6});/g);
+  const faceBand = hex(css, /--chrome-band(|-ink|-muted):\s*(#[0-9a-fA-F]{6});/g);
+
+  assert.equal(Object.keys(band).length, 3, "brgen no longer declares its header band");
+  assert.deepEqual(faceBand, { "": band.bg, "-ink": band.ink, "-muted": band.muted }, "the band drifted from brgen's");
+
+  assert.match(css, /\.master-titlebar \{[^}]*background: var\(--chrome-band\); color: var\(--chrome-band-ink\);/);
   assert.match(css, /body\.mission-control \.panel \{[^}]*border-inline-start: 0;/s);
   assert.match(css, /body\.mission-control \.panel \{[^}]*padding-inline-start: 0;/s);
+
   // The session chrome is mobile-first: the base rules carry the tap target and
   // the wider breakpoint only relaxes spacing, never the target size.
   assert.match(css, /\.master-session-tab \{[^}]*min-inline-size: var\(--tap-min\); min-block-size: var\(--tap-min\);/);
   const tapTargets = /#photo-button, #music-btn, #spin-btn \{[^}]*/;
   assert.match(css, new RegExp(`${tapTargets.source}min-inline-size: var\\(--tap-min\\); min-block-size: var\\(--tap-min\\);`));
-  const wide = css.match(/@media \(min-width: 480px\) \{[\s\S]*?\n\}/)?.[0] ?? "";
+
+  const wide =css.match(/@media \(min-width: 480px\) \{[\s\S]*?\n\}/)?.[0] ?? "";
   assert.match(wide, /\.master-session-tab \{ padding-inline:/);
   assert.doesNotMatch(wide, /min-(inline|block)-size/);
 });
 
-test("shell chrome uses plain CLI prompt words and the monospace source font", () => {
+test("shell chrome uses plain CLI prompt words and downloads no font", () => {
   const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
 
@@ -1066,17 +1094,9 @@ test("shell chrome uses plain CLI prompt words and the monospace source font", (
   assert.doesNotMatch(view, /class="sep2"|\$ <\/span>/);
   // face_root.font_mono in MASTER/data/tokens.yml leads with JetBrainsMono.
   assert.match(css, /--font-mono:\s*"JetBrainsMono Nerd Font"/);
-  assert.match(css, /font-family:\s*"Source Sans 3"/);
-  assert.match(css, /url\("\/fonts\/SourceSans3-Regular\.woff2"\)/);
-  assert.match(css, /url\("\/fonts\/SourceCodePro-Regular\.woff2"\)/);
-  for (const file of [
-    "SourceSans3-Regular.woff2",
-    "SourceSans3-Bold.woff2",
-    "SourceCodePro-Regular.woff2",
-    "SourceCodePro-Bold.woff2"
-  ]) {
-    assert.ok(existsSync(join(railsRoot, "__shared/public/fonts", file)), `missing bundled font: ${file}`);
-  }
+  // brgen's one family and the mono stack are installed faces; master serves no
+  // /fonts/, so an @font-face here would only be a 404 waiting for a rule to name it.
+  assert.doesNotMatch(css, /@font-face/);
   assert.doesNotMatch(css, /\.wordmark\s*\{/);
 });
 

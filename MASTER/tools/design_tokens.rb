@@ -134,7 +134,6 @@ module DesignTokens
         --color-accent: var(--accent);
         --color-border: var(--border);
         --text-primary: var(--text);
-        --text-secondary: var(--text-secondary);
       }
       @media (prefers-color-scheme: light) {
         :root {
@@ -148,7 +147,6 @@ module DesignTokens
           --color-background: var(--bg);
           --color-highlight: var(--bg);
           --text-primary: var(--text);
-          --text-secondary: var(--text-secondary);
         }
       }
     CSS
@@ -228,6 +226,17 @@ module DesignTokens
 
     File.write(path, updated)
     true
+  end
+
+  # The dark :root of tokens.css, the family block master embeds ahead of its
+  # own root. Only the dark half: the face is one-theme dark, and the light media
+  # block would turn the chrome ink dark while the canvas stays black. Sliced
+  # from static_tokens_css so the two can never hold different values.
+  def family_tokens_block
+    root = static_tokens_css[/^:root \{\n.*?^\}\n/m] || abort("design_tokens: tokens.css has no :root")
+
+    "/* BEGIN:generated-family-tokens — the :root of RAILS/__shared/public/styles/tokens.css */\n" \
+      "#{root}/* END:generated-family-tokens */"
   end
 
   def face_root_block

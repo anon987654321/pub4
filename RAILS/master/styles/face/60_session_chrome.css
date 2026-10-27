@@ -53,14 +53,21 @@ body[data-queue-active="1"] .turn-queue-status { opacity: .9; }
   display: flex; align-items: center; gap: .25rem; inline-size: 100%; width: 100%; max-inline-size: none; max-width: none;
   block-size: calc(var(--face-bar-height) + var(--safe-top)); margin: 0;
   padding-block-start: var(--safe-top); padding-inline-start: var(--inset-l); padding-inline-end: calc(var(--inset-r) + var(--tap-min));
-  background: var(--chrome-bg); color: var(--chrome-text);
+  background: var(--chrome-band); color: var(--chrome-band-ink);
 }
+/* brgen's deep-blue header band, the one surface the face shares with brgen's
+   chrome: links in the band's muted ink, the current one in its full ink with
+   the signal rule under it, as brgen's .nav_link.active is. The mic toggle sits
+   on the band's right end, where #6b6b6b measured 1.9:1; its off state takes the
+   band's muted ink (7.25:1) and open stays --c-danger (3.32:1, an icon's 3:1). */
+#mic-dot { --c-mic-off: var(--chrome-band-muted); }
 .master-titlebar .brand-mark {
   display: none; position: static; inset: auto; z-index: auto; flex: 0 0 auto; align-items: center;
   min-inline-size: 0; min-block-size: var(--tap-min); padding-inline-end: .75rem;
-  color: var(--chrome-muted); pointer-events: auto; cursor: pointer; transition: color var(--transition-fast) var(--ease-out);
+  color: var(--chrome-band-muted); pointer-events: auto; cursor: pointer;
+  transition: color var(--transition-fast) var(--ease-out);
 }
-.master-titlebar .brand-mark:hover { color: var(--chrome-text); }
+.master-titlebar .brand-mark:hover { color: var(--chrome-band-ink); }
 .master-titlebar .brand-mark:focus-visible { outline: 2px solid var(--chrome-focus); outline-offset: -2px; }
 .master-session-tabs {
   display: flex; flex: 1 1 auto; align-self: stretch; align-items: stretch; gap: .25rem; min-inline-size: 0;
@@ -71,11 +78,12 @@ body[data-queue-active="1"] .turn-queue-status { opacity: .9; }
 .master-session-tab {
   position: relative; display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center;
   min-inline-size: var(--tap-min); min-block-size: var(--tap-min); padding-inline: .625rem;
-  color: var(--chrome-muted); font: var(--text-meta)/1 var(--font-mono); text-decoration: none; white-space: nowrap; scroll-snap-align: start;
+  color: var(--chrome-band-muted); font: var(--text-meta)/1 var(--font);
+  text-decoration: none; white-space: nowrap; scroll-snap-align: start;
   transition: background-color var(--transition-fast) var(--ease-out), color var(--transition-fast) var(--ease-out);
 }
-.master-session-tab:hover { background: var(--chrome-hover); color: var(--chrome-text); }
-.master-session-tab[aria-current="page"] { background: var(--chrome-surface-active); color: var(--chrome-text); font-weight: 600; }
+.master-session-tab:hover { background: var(--chrome-hover); color: var(--chrome-band-ink); }
+.master-session-tab[aria-current="page"] { background: transparent; color: var(--chrome-band-ink); font-weight: 600; }
 .master-session-tab[aria-current="page"]::after {
   position: absolute; inset-inline: .65rem; inset-block-end: 0; block-size: 0;
   border-block-end: 2px solid var(--pub4-signal); content: "";

@@ -76,7 +76,7 @@
       f.addEventListener('load',on);document.addEventListener('DOMContentLoaded',on);})();
   </script>
   <style nonce="<%= content_security_policy_nonce %>"><%# scan: intentional — the first-paint theme and canvas ground must exist before the external face stylesheet arrives %>
-    html, body { background: #050505; color: #e7e7e7; } /* scan: intentional-colors — painted before any stylesheet loads; the FOUC guard cannot cite what has not arrived */
+    html, body { background: #000000; color: #efefef; } /* scan: intentional-colors — FOUC guard */
     canvas#face { display: block; position: fixed; inset: 0; width: 100%; height: 100%; background: #000; } /* scan: intentional-colors — same FOUC guard: the canvas ground exists before the stylesheet */
     #primer { background: transparent; }
     #zsh { background: #000; }

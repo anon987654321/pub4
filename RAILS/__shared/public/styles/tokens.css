@@ -41,7 +41,6 @@
   --color-accent: var(--accent);
   --color-border: var(--border);
   --text-primary: var(--text);
-  --text-secondary: var(--text-secondary);
 }
 @media (prefers-color-scheme: light) {
   :root {
@@ -55,6 +54,5 @@
     --color-background: var(--bg);
     --color-highlight: var(--bg);
     --text-primary: var(--text);
-    --text-secondary: var(--text-secondary);
   }
 }

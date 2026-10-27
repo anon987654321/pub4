@@ -2,33 +2,7 @@
    (SURFACES.md): its #000 grounds and print inversion follow no palette. */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* Locally bundled OFL fonts. Do not depend on installed desktop fonts. */
-@font-face {
-  font-family: "Source Sans 3";
-  src: url("/fonts/SourceSans3-Regular.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Source Sans 3";
-  src: url("/fonts/SourceSans3-Bold.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Source Code Pro";
-  src: url("/fonts/SourceCodePro-Regular.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Source Code Pro";
-  src: url("/fonts/SourceCodePro-Bold.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-}
+/* No font is downloaded: the face sets brgen's one sans family (--font,
+   Helvetica Neue Pro to Arial) for chrome and the mono stack for the chat,
+   both installed faces. */
 

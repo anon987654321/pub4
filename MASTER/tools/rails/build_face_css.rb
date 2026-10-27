@@ -2,8 +2,11 @@
 # frozen_string_literal: true
 
 # Assemble MASTER's browser face from ordered, editable CSS sources. The public
-# face.css remains the single file consumers load; the :root block stays owned
-# by MASTER/data/tokens.yml through DesignTokens.
+# face.css remains the single file consumers load; the :root blocks stay owned
+# by MASTER/data/tokens.yml through DesignTokens. The brgen family's dark tokens
+# go in first and the face's own :root after them, so face values that read
+# var(--text), var(--surface) or var(--font) resolve to brgen's, and the face's
+# deliberate differences (flat radii, the grey signal) win by order.
 require "fileutils"
 require_relative "../design_tokens"
 
@@ -32,7 +35,7 @@ module MasterFaceStylesheet
       File.read(File.join(SOURCE_DIR, name), encoding: "UTF-8")
     end.join
 
-    "#{base}#{DesignTokens.face_root_block}#{remaining}"
+    "#{base}#{DesignTokens.family_tokens_block}\n#{DesignTokens.face_root_block}#{remaining}"
   end
 
   def run(check: false)

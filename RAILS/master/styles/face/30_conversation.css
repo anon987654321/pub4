@@ -67,7 +67,7 @@ body.mission-control {
            calc(var(--chrome-inset, 0.75rem) + var(--safe-right, 0px))
            calc(var(--chrome-inset, 0.75rem) + var(--safe-bottom, 0px))
            calc(var(--chrome-inset, 0.75rem) + var(--safe-left, 0px));
-  font-family: var(--font-mono);
+  font-family: var(--font);
   font-size: var(--text-meta);
   touch-action: manipulation;
   user-select: text;

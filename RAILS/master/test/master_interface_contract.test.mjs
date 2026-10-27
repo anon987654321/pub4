@@ -226,11 +226,11 @@ test("canonical theme token reaches CSS, routes and PWA manifest", () => {
   const rootEnd = faceCss.indexOf("/* END:generated-face-root */", rootStart);
   assert.ok(rootStart >= 0 && rootEnd > rootStart, "generated face token block is missing");
   const root = faceCss.slice(rootStart, rootEnd);
-  // face_root.palette is the grayscale face; anchors keep the older tinted values.
-  assert.match(tokens, /face_bg: "#050505"/);
-  assert.match(tokens, /palette:[\s\S]*?x_text: "#E7E7E7"/);
-  assert.match(root, /--face-bg: #050505;/);
-  assert.match(root, /--x-text: #E7E7E7;/);
+  // face_root.palette reads brgen's family tokens; anchors keep the older tinted values.
+  assert.match(tokens, /face_bg: "#000000"/);
+  assert.match(tokens, /palette:[\s\S]*?x_text: "var\(--text\)"/);
+  assert.match(root, /--face-bg: #000000;/);
+  assert.match(root, /--x-text: var\(--text\);/);
   // raw keeps ActionView from HTML-escaping the JSON string's quotes.
   assert.match(pwaManifest, /"background_color": <%= raw theme_color\.to_json %>/);
   assert.match(pwaManifest, /"theme_color": <%= raw theme_color\.to_json %>/);
@@ -244,7 +244,7 @@ test("canonical theme token reaches CSS, routes and PWA manifest", () => {
 });
 
 test("session chrome is mobile-first, nuanced, flat and touch-ready", () => {
-  assert.ok(faceChrome.includes("background: var(--chrome-bg)"));
+  assert.ok(faceChrome.includes("background: var(--chrome-band)"));
   assert.ok(faceChrome.includes("background: var(--chrome-surface-active)"));
   assert.ok(faceChrome.includes("outline: 2px solid var(--chrome-focus)"));
   assert.ok(faceChrome.includes('.master-session-tab[aria-current="page"]::after'));
@@ -264,7 +264,8 @@ test("session chrome is mobile-first, nuanced, flat and touch-ready", () => {
 
 
 test("served face.css is generated from the ordered editable sources", () => {
-  const rootStart = faceCss.indexOf("/* BEGIN:generated-face-root");
+  // Two generated blocks follow the base module: brgen's family tokens, then the face root.
+  const rootStart = faceCss.indexOf("/* BEGIN:generated-family-tokens");
   const rootMarker = "/* END:generated-face-root */";
   const rootEnd = faceCss.indexOf(rootMarker, rootStart);
   assert.ok(rootStart >= 0 && rootEnd >= 0, "generated token block is missing");

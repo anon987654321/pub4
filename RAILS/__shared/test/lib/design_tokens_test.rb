@@ -119,6 +119,19 @@ DesignTokens.face_root_css.lines.grep(/--#{key.to_s.tr('_', '-')}/).first.to_s.s
     assert_equal DesignTokens.load, artifact
   end
 
+  # The face carries brgen's family :root verbatim, so its var(--text) and
+  # var(--font) are brgen's. face_bg stays a literal because the views print it
+  # into theme-color, which is why it is held equal to the family ground here.
+  def test_face_embeds_the_family_root_and_shares_its_ground
+    css = File.read(FACE_CSS, encoding: "UTF-8")
+    tokens = DesignTokens.load
+
+    assert_includes css, DesignTokens.family_tokens_block
+    assert_operator css.index("BEGIN:generated-family-tokens"), :<, css.index("BEGIN:generated-face-root")
+    assert_equal tokens.fetch("social").fetch("bg"), tokens.fetch("face_root").fetch("face_bg")
+    refute_match(/--text-secondary:\s*var\(--text-secondary\)/, DesignTokens.static_tokens_css)
+  end
+
   def test_committed_static_tokens_css_matches_master_projection
     path = File.join(DesignTokens::ROOT, "RAILS/__shared/public/styles/tokens.css")
 

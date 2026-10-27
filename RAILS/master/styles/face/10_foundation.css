@@ -1,14 +1,14 @@
 
 
 /* Not a generated token. generate_face_root_css.rb owns the block above, so a
-   hand-added line inside it is drift the deploy check stops. The wordmark
-   names its face as the brand, and the brand is the one sans family the owner
-   set for every surface, so it reads --font-label rather than restating the
-   stack. Helvetica Neue Pro is licensed per seat and cannot ship as a webfont;
-   the stack names it where it is installed and falls to Helvetica Neue, then
-   Arial, which is metrically identical, and downloads nothing. */
+   hand-added line inside it is drift the deploy check stops. The brand face is
+   the one sans family the owner set for every surface, so it reads the family
+   block's --font rather than restating the stack, the same value brgen's
+   app-root-tokens gives --font-brand. Helvetica Neue Pro is licensed per seat
+   and cannot ship as a webfont; the stack names it where it is installed and
+   falls to Helvetica Neue, then Arial, and downloads nothing. */
 :root {
-  --font-brand: var(--font-mono);
+  --font-brand: var(--font);
   /* Optical display weights sit outside the body 400/600/800 ladder. */
   --face-weight-brand: 640;
   --face-weight-display: 560;
@@ -22,7 +22,7 @@ html, body {
   height: 100%;
   background: var(--face-bg);
   color: var(--face-fg);
-  font: 16px/1.5 var(--font-mono);
+  font: 16px/1.5 var(--font);
   font-feature-settings: "ss01","ss03","cv05","kern" 1;
   text-rendering: optimizeLegibility;
   overflow: hidden;

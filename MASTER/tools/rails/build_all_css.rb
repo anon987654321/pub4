@@ -197,9 +197,12 @@ def verify_face_css
   # face.css is built from face_root.palette; the anchors keep the earlier blue-tinted values,
   # so checking the anchor failed CI on vm23 once the grey palette (5ba499b4e) shipped.
   palette = DesignTokens.load.fetch("face_root").fetch("palette")
+  # The face's palette values are var() references into brgen's family :root, so
+  # without that block they resolve to nothing; it is checked whole.
   missing = [
     "--x-text: #{palette.fetch('x_text')}",
     "JetBrainsMono Nerd Font",
+    DesignTokens.family_tokens_block,
   ].reject { |m| body.include?(m) }
   missing.map { |m| "RAILS/master face.css missing #{m}" }
 end

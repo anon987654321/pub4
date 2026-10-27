@@ -12,7 +12,7 @@
   color: var(--face-fg);
   border: 1px solid var(--border-strong);
   border-radius: 0;
-  font: var(--text-meta)/1 var(--font-mono);
+  font: var(--text-meta)/1 var(--font);
   text-decoration: none;
   width: 44px;
   height: 44px;
@@ -524,7 +524,9 @@ body[data-mode="listening"] .mic-indicator { color: #C7C7C7; }
 #primer .primer-consent {
   max-inline-size: 44ch;
   margin: 22px auto 0;
-  color: rgb(156 156 156 / 72%);
+  /* --chrome-muted on the primer's --chrome-bg is 7.49:1; the alpha grey it
+     replaces measured 4.10, under the 4.5 body-text floor. */
+  color: var(--chrome-muted);
   font: 400 0.75rem/1.6 var(--font-brand);
 }
 

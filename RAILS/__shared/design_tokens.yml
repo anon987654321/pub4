@@ -62,7 +62,9 @@ visual_identity:
     technical: font-mono
     wordmark: original pub4 artwork only
   adaptations:
-    master: mineral-lime signal on ink; organic face remains the sole expressive centerpiece
+    master: 'brgen''s dark family: #000 ground, #111 surfaces, #efefef ink and one
+      Helvetica sans for chrome under brgen''s deep-blue band; mono only in the chat;
+      the particle face stays greyscale and the sole expressive centerpiece'
     brgen: retain deep-blue city identity and local editorial photography; signal
       is a sparse semantic accent only
     amber: retain neutral fashion surfaces and truthful garment colour; signal never
@@ -315,10 +317,10 @@ face_root:
     signal: "#D4D4D4"
     signal_ink: "#080808"
     signal_on_light: "#3A3A3A"
-    c_text: oklch(93% 0 0)
-    x_text: "#E7E7E7"
+    c_text: var(--text)
+    x_text: var(--text)
     c_accent: var(--pub4-signal)
-    c_danger: oklch(78% 0 0)
+    c_danger: var(--danger)
     c_code: oklch(81% 0 0)
   anchors:
     c_text: oklch(93% 0.025 250)
@@ -330,10 +332,10 @@ face_root:
     Code", ui-monospace, monospace'
   font_label: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira
     Code", ui-monospace, monospace'
-  face_bg: "#050505"
+  face_bg: "#000000"
   derived:
     face_fg: var(--x-text)
-    face_muted: "#A1A1A1"
+    face_muted: var(--text-secondary)
     face_dim: rgb(176 176 176 / 18%)
     face_soft: rgb(176 176 176 / 7%)
     face_alert: color-mix(in oklch, var(--c-danger) 75%, white)
@@ -343,14 +345,17 @@ face_root:
     border_soft: rgb(164 164 164 / 23%)
     border_strong: rgb(175 175 175 / 34%)
     hover_tint: color-mix(in srgb, var(--face-fg) 8%, transparent)
-    chrome_bg: "#111111"
-    chrome_surface: "#171717"
+    chrome_bg: var(--surface)
+    chrome_surface: var(--surface)
     chrome_surface_active: "#222222"
-    chrome_border: "#303030"
-    chrome_hover: rgb(183 183 183 / 8%)
-    chrome_text: "#DCDCDC"
-    chrome_muted: "#A0A0A0"
-    chrome_focus: "#C8C8C8"
+    chrome_border: var(--border)
+    chrome_hover: var(--hover)
+    chrome_text: var(--text)
+    chrome_muted: var(--text-secondary)
+    chrome_focus: var(--accent)
+    chrome_band: "#143d5b"
+    chrome_band_ink: "#f5f7fa"
+    chrome_band_muted: "#c4d0dc"
   layout:
     tap-min: 44px
     text-meta: 0.8125rem

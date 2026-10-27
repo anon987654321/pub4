@@ -301,7 +301,9 @@ apps:
   # of the MASTER runtime. It shares Brgen's aesthetics by the operator's
   # decision, so its brand voice and visual_character follow brgen's and not
   # amber's luxury palette. local_photography is the one brgen trait left out:
-  # the face is the only image master shows.
+  # the face is the only image master shows. face.css embeds brgen's family
+  # tokens and paints its titlebar in brgen's header band; the particle head
+  # stays greyscale and the chat stays monospaced, as the CLI face is.
   master:
     title: MASTER
     domain: ai.brgen.no
@@ -315,7 +317,7 @@ apps:
         A particle face that speaks, listens and shows its own state while the
         model only proposes.
       voice: [local, direct, lively, uncorporate]
-      visual_character: [deep_blue, editorial_type, flat_surfaces, restrained_motion]
+      visual_character: [deep_blue, editorial_type, flat_surfaces, restrained_motion, greyscale_face, monospaced_chat]
       experience_principles: [truth_before_gloss, visible_state, voice_first, useful_over_noisy]
     port: 53187
     stack_now: SQLite3, Rails 8.2.0.alpha, Falcon, MASTER runtime, OpenBSD, relayd
