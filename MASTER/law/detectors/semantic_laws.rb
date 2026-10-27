@@ -24,6 +24,7 @@ module Master
             "missing configuration|api.?key|unauthorized|no.*provider|no.*claude.*path|no.*on.*path",
             Regexp::IGNORECASE,
           ).freeze
+
           LANE_SILENCE_PATTERN = Regexp.new(
             '\Ano lane answered \d+ calls in a row; model work is skipped for \d+ minutes\.',
             Regexp::IGNORECASE,
@@ -526,19 +527,27 @@ module Master
 
             while i < lines.size && pairs.size < MAX_PAIRS_PER_FILE
               comment_start = i
-              while i < lines.size && lines[i] =~ /\A\s*#/
-                i += 1
-              end
-              comment_lines = lines[comment_start...i]
-              if comment_lines.any? && i < lines.size && lines[i] =~ /\A\s*def\s/
-                comment_text = comment_lines.map { |l| l.strip.delete_prefix("#").strip }.join(" ")
-                body = lines[i, BODY_SNIPPET].join
-                pairs << { line: comment_start + 1, comment: comment_text, body: } unless comment_text.empty?
-              end
+              i = skip_comments(lines, i)
+              pair = pair_at(lines, from: comment_start, to: i)
+              pairs << pair if pair
               i += 1
             end
 
             pairs
+          end
+
+          def skip_comments(lines, index)
+            index += 1 while index < lines.size && lines[index] =~ /\A\s*#/
+            index
+          end
+
+          def pair_at(lines, from:, to:)
+            return unless to > from && to < lines.size && lines[to] =~ /\A\s*def\s/
+
+            comment_text = lines[from...to].map { |l| l.strip.delete_prefix("#").strip }.join(" ")
+            return if comment_text.empty?
+
+            { line: from + 1, comment: comment_text, body: lines[to, BODY_SNIPPET].join }
           end
 
           def format_pair(pair, idx)
