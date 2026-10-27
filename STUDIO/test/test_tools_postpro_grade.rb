@@ -189,6 +189,25 @@ class TestPostproProcessEffects < Minitest::Test
     assert_operator chroma.call(graded).avg, :<, chroma.call(frame).avg * 1.6, "the old body lifted up to 1.7x"
   end
 
+  def test_cross_fade_has_no_step_where_the_blur_crosses_mid_grey
+    assert_operator largest_step(send(:cross_fade, grey_ramp, 1.0)), :<=, 3, "a hard step prints as a blotch"
+  end
+
+  def scanline(image) = image.crop(0, 4, 256, 1).extract_band(0)
+
+  def largest_step(image)
+    row = scanline(image).cast(:float)
+    (row.crop(1, 0, 255, 1) - row.crop(0, 0, 255, 1)).abs.max
+  end
+
+  def test_day_for_night_keeps_the_darkness_it_is_for
+    take = RandomTake.new(number: 1, look: :day_for_night, lane: :cinematic_color)
+    request = GradeRequest.new(file: "x", image: frame, preset_name: nil, recipe: [["film_curve", 0.5]], take:)
+    assert send(:exposure_is_the_look?, request)
+    noir = RandomTake.new(number: 1, look: :noir, lane: :subtle_analog)
+    refute send(:exposure_is_the_look?, request.with(take: noir))
+  end
+
   def test_reciprocity_failure_is_a_cast_not_a_veil
     failed = send(:reciprocity_failure, grey_ramp, 30.0, :cinestill_800t)
     assert_equal 0, failed.crop(0, 0, 1, 8).max, "black must stay black: lost exposure cannot add light"

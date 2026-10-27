@@ -19,12 +19,19 @@ rescue StandardError => e
   $logger.error "reciprocity_failure: #{e.message}"; image
 end
 
+# The light branch is 1 - 2(1-a)(1-b), which meets the dark branch 2ab exactly
+# where the blur crosses mid grey. A plain screen there jumps by up to half the
+# scale at that crossing, and every place the blurred copy passed 0.5 printed
+# as a hard-edged blotch.
+def soft_light(base, blend)
+  lighter = (base.linear(-1, 1) * blend.linear(-1, 1)).linear(-2, 1)
+  (blend < 0.5).ifthenelse(base * blend * 2.0, lighter)
+end
+
 # Dreamy soft cross-fade: soft-light blend of a blurred copy over the image.
 def cross_fade(image, intensity = 0.4)
-  blur_f = image.gaussblur(12.0).cast("float") / 255.0
-  img_f = image.cast("float") / 255.0
-  screen = (img_f.linear(-1, 1) * blur_f.linear(-1, 1)).linear(-1, 1)
-  soft = (blur_f < 0.5).ifthenelse(img_f * blur_f * 2.0, screen)
+  img_f = clamp01(image.cast("float") / 255.0)
+  soft = soft_light(img_f, clamp01(image.gaussblur(12.0).cast("float") / 255.0))
   result = img_f * (1.0 - intensity) + soft * intensity
   safe_cast(clamp01(result) * 255.0)
 rescue StandardError => e

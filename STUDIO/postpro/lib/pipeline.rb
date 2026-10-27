@@ -77,9 +77,23 @@ def graded_variation(request)
 
   balanced = balance_source(request.image)
   grains, body = request.recipe.partition { |step| step.first.to_s == RANDOM_ALWAYS }
-  processed = hold_exposure(anchor_tones(recipe(balanced, body)), balanced)
+  processed = settle_exposure(anchor_tones(recipe(balanced, body)), balanced:, request:)
   check_take_survives!(processed, request.image, request.take&.look)
   rgb_bands(finish_with_grain(processed, grains))
+end
+
+# Day for night darkens on purpose: holding its exposure to the source's undid
+# the one thing the look is for.
+EXPOSURE_LOOKS = %w[day_for_night].freeze
+
+def exposure_is_the_look?(request)
+  return true if EXPOSURE_LOOKS.include?(request.take&.look.to_s)
+
+  request.recipe.any? { |step| EXPOSURE_LOOKS.include?(step.first.to_s) }
+end
+
+def settle_exposure(processed, balanced:, request:)
+  exposure_is_the_look?(request) ? processed : hold_exposure(processed, balanced)
 end
 
 def finish_with_grain(processed, grains)

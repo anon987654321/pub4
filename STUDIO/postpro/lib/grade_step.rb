@@ -23,6 +23,9 @@ EFFECT_MIX = {
   "darkroom_print" => 0.50,
   "day_for_night" => 0.70,
   "desaturate" => 0.45,
+  # A band-pass lift of 2.8x its intensity: at full look strength it embossed
+  # the frame. This lands it beside clarity, about a third of the band at most.
+  "dilla_head_bump" => 0.12,
   "dir_coupler" => 0.12,
   "dodgeburn_artifacts" => 0.40,
   "dust_and_hair" => 0.50,
@@ -195,7 +198,7 @@ def grade_step(fx, processed, p, head, owner = "chain")
   when "sepia"               then sepia(processed, level)
   when "teal_and_orange"     then teal_and_orange(processed, level)
   when "glitch"              then glitch(processed, level)
-  when "dilla_head_bump"      then dilla_head_bump(processed, level)
+  when "dilla_head_bump"      then dilla_head_bump(processed, mix)
   when "dilla_tape_saturation" then dilla_tape_saturation(processed, level)
   when "dilla_vinyl_bandlimit" then dilla_vinyl_bandlimit(processed, level)
   when "dilla_phasy"          then dilla_phasy(processed, level)
