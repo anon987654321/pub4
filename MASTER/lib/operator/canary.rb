@@ -314,7 +314,7 @@ module Operator
       return [false, "HEAD #{sha[0, 9]} is not origin/main (#{git.call(root, 'rev-parse', 'origin/main')[0, 9]}); the box deploys origin/main, so push and deploy from that commit"] unless git.call(root, "rev-parse", "origin/main") == sha
 
       dirty = git.call(root, "status", "--porcelain", "-uno", "--", "MASTER", "RAILS", "OPENBSD")
-      return [false, "tracked files are modified, so the preflight would judge your edits, not the commit:\n#{dirty.lines.first(5).join}Use a clean worktree (bin/operator worktree <name>)."] unless dirty.empty?
+      return [false, "commit these first:\n#{dirty.lines.first(5).join}"] unless dirty.empty?
 
       lead = "cd /home/dev/pub4 && VPS_DEPLOY_SHA=#{sha}"
       tail = "zsh OPENBSD/bin/vps-deploy #{app}"

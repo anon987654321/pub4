@@ -39,7 +39,8 @@ def disk
   return say(:warn, "disk", "cannot read free space") unless free_gb
 
   text = format("%.1f GiB free", free_gb)
-  if free_gb < 2 then say(:FAIL, "disk", "#{text}: tools fail with ENOSPC under ~1 GiB; remove merged worktrees (bin/operator worktree finish --remove)")
+  if free_gb < 2
+    say(:FAIL, "disk", "#{text}: tools fail with ENOSPC under ~1 GiB; git worktree remove any leftover worktree")
   elsif free_gb < 5 then say(:warn, "disk", "#{text}: a full-suite run or a render can fill this")
   else say(:ok, "disk", text)
   end
