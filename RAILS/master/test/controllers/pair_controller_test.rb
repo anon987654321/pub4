@@ -45,7 +45,7 @@ class PairControllerTest < ActionDispatch::IntegrationTest
     post "/pair", params: { code: issued[:code] }
 
     body = JSON.parse(response.body)
-    assert_match(/bin\/cli/, body["notice"])
+    assert_match(/bin\/master/, body["notice"])
   end
 
   test "issue and list require authentication" do
