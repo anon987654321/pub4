@@ -91,12 +91,17 @@ class TestPostproTakeCheck < Minitest::Test
     assert refused_for?((scene.cast(:float) * 0.2 + 100).cast(:uchar), "spread")
   end
 
-  def test_a_look_budget_only_widens_what_it_names
+  def test_a_look_budget_only_widens_its_baseline
     budget = send(:take_budget, :infrared_look)
     assert_equal TAKE_BUDGET.keys, budget.keys
     assert_equal LOOK_BUDGETS[:infrared_look][:skin], budget[:skin]
+    assert_equal LOOK_BUDGET[:neutral], budget[:neutral], "a smaller own figure must not undercut the look baseline"
     assert_equal TAKE_BUDGET, send(:take_budget, nil)
-    assert_equal TAKE_BUDGET, send(:take_budget, :a_look_with_no_budget)
+    assert_equal LOOK_BUDGET, send(:take_budget, :a_look_with_no_budget)
+  end
+
+  def test_a_named_look_may_tint_more_than_a_light_take
+    LOOK_BUDGET.each { |key, allowance| assert_operator allowance, :>=, TAKE_BUDGET[key] }
   end
 
   def test_every_look_budget_names_a_heavy_look

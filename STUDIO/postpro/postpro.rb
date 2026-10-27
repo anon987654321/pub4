@@ -2811,22 +2811,33 @@ TAKE_MAX_CLIP = 0.05
 TAKE_MIN_SPREAD_RATIO = 0.5
 TAKE_TONED_CHROMA = 0.6
 TAKE_BUDGET = { chroma: 1.8, neutral: 10.0, skin: 18.0 }.freeze
+# A named look tints neutrals and lifts colour by design, as its stock and print do.
+LOOK_BUDGET = { chroma: 2.2, neutral: 16.0, skin: 22.0 }.freeze
 TAKE_MIN_SOURCE_CHROMA = 4.0
+# Colourfulness is measured against at least this mean C*, so a frame that is
+# mostly grey wall does not turn a modest tint into a tenfold rise.
+TAKE_CHROMA_FLOOR = 10.0
 # Looks whose point is a new palette get more of it; skin still has a ceiling.
 LOOK_BUDGETS = {
-  day_for_night: { chroma: 2.6, neutral: 20.0, skin: 30.0 },
+  day_for_night: { chroma: 2.6, neutral: 30.0, skin: 30.0 },
   cross_process: { chroma: 2.8, neutral: 18.0, skin: 25.0 },
   tokyo_night: { chroma: 2.8, neutral: 18.0, skin: 20.0 },
   neon_night: { chroma: 2.8, neutral: 18.0, skin: 20.0 },
   infrared_look: { chroma: 2.0, neutral: 16.0, skin: 40.0 },
   technicolor_3strip: { chroma: 2.6, neutral: 12.0, skin: 22.0 },
-  golden_age: { chroma: 2.6, neutral: 14.0, skin: 22.0 },
+  golden_age: { chroma: 2.6, neutral: 18.0, skin: 22.0 },
+  # A toning process: blue neutrals are its point, and skin goes blue with them.
+  cyanotype_look: { chroma: 3.0, neutral: 40.0, skin: 90.0 },
   magic_hour: { chroma: 2.6, neutral: 16.0, skin: 22.0 },
-  blockbuster: { chroma: 2.4, neutral: 16.0, skin: 22.0 },
+  blockbuster: { chroma: 2.4, neutral: 28.0, skin: 22.0 },
   cinematic: { chroma: 2.2, neutral: 14.0, skin: 22.0 },
 }.freeze
 
-def take_budget(look) = TAKE_BUDGET.merge(LOOK_BUDGETS.fetch(look&.to_sym, {}))
+# A look's own budget only ever widens the baseline it starts from.
+def take_budget(look)
+  base = look ? LOOK_BUDGET : TAKE_BUDGET
+  base.merge(LOOK_BUDGETS.fetch(look&.to_sym, {})) { |_key, floor, own| [floor, own].max }
+end
 
 def check_take_survives!(take, source, look = nil)
   problems = take_problems(take_readings(source, take), take_budget(look))
@@ -2907,7 +2918,7 @@ def take_palette(before, after)
   lightness, chroma_before, hue_before = before.colourspace(:lch).bandsplit
   _, chroma_after, hue_after = after.colourspace(:lch).bandsplit
   {
-    chroma: chroma_before.avg < TAKE_MIN_SOURCE_CHROMA ? nil : chroma_after.avg / chroma_before.avg,
+    chroma: chroma_before.avg < TAKE_MIN_SOURCE_CHROMA ? nil : chroma_after.avg / [chroma_before.avg, TAKE_CHROMA_FLOOR].max,
     neutral: masked_mean(chroma_after, chroma_before < NEUTRAL_CHROMA, 0.02),
     skin: masked_mean(hue_turn(hue_before, hue_after), skin_tones(lightness, chroma_before, hue_before), 0.01),
   }
@@ -4313,16 +4324,86 @@ end
 # The grade itself, then the finish every variation shares: the tone anchor,
 # the survival check a random take must pass, the last grain, and three bands.
 def graded_variation(request)
-  processed = if request.preset_name then preset(request.image, request.preset_name)
-              elsif request.recipe then recipe(request.image, request.recipe)
-              end
-  return unless processed
+  return preset_variation(request) if request.preset_name
+  return unless request.recipe
 
-  grained = request.recipe&.any? { |fx, _| fx.to_s == RANDOM_ALWAYS }
-  processed = anchor_tones(processed)
-  check_take_survives!(processed, request.image, request.take&.look) if request.recipe
-  rgb_bands(apply_finishing_grain(processed, request.preset_name, grained:))
+  balanced = balance_source(request.image)
+  processed = hold_exposure(anchor_tones(recipe(balanced, request.recipe)), balanced)
+  check_take_survives!(processed, request.image, request.take&.look)
+  grained = request.recipe.any? { |fx, _| fx.to_s == RANDOM_ALWAYS }
+  rgb_bands(apply_finishing_grain(processed, nil, grained:))
 end
+
+def preset_variation(request)
+  processed = anchor_tones(preset(request.image, request.preset_name))
+  rgb_bands(apply_finishing_grain(processed, request.preset_name, grained: nil))
+end
+
+# Balance before the look, as a colourist does: a look graded onto a frame that
+# is off in white balance or exposure carries the error into every take. Only
+# part of the way to neutral and to mid grey, and never further than
+# BALANCE_MAX_CAST or BALANCE_MAX_EV, because a warm or a low-key frame may be
+# that way on purpose.
+BALANCE_SHARE = 0.5
+BALANCE_MAX_CAST = 8.0
+BALANCE_MAX_EV = 0.75
+BALANCE_NEUTRAL_CHROMA = 10.0
+MID_GREY = 0.18
+
+def balance_source(image)
+  expose_toward_grey(neutralise(rgb_bands(image).cast(:uchar).copy(interpretation: :srgb)))
+rescue StandardError => e
+  $logger.error "balance_source: #{e.message}"
+  image
+end
+
+# Gray world on what is nearly grey already: the mean a* and b* of the
+# near-neutral pixels is the cast, and half of it comes out.
+def neutralise(image)
+  lightness, red_green, yellow_blue = image.colourspace(:lab).bandsplit
+  chroma = ((red_green * red_green) + (yellow_blue * yellow_blue))**0.5
+  neutral = (chroma < BALANCE_NEUTRAL_CHROMA) & (lightness > 20) & (lightness < 90)
+  shifts = [red_green, yellow_blue].map { |band| masked_mean(band, neutral, 0.05) }
+  return image if shifts.any?(&:nil?)
+
+  a_shift, b_shift = shifts.map { |mean| (-mean * BALANCE_SHARE).clamp(-BALANCE_MAX_CAST, BALANCE_MAX_CAST) }
+  lightness.bandjoin([red_green + a_shift, yellow_blue + b_shift]).copy(interpretation: :lab)
+           .colourspace(:srgb).cast(:uchar)
+end
+
+# Part of the way toward a mid-grey median, in linear light, with a shoulder so
+# a lifted highlight rolls instead of clipping.
+def expose_toward_grey(image)
+  median = HD.srgb_to_linear(image.colourspace("b-w").extract_band(0).percent(50) / 255.0)
+  return image if median <= 1e-4
+
+  ev = (Math.log2(MID_GREY / median) * BALANCE_SHARE).clamp(-BALANCE_MAX_EV, BALANCE_MAX_EV)
+  return image if ev.abs < 0.05
+
+  exposed = push_shoulder(image.colourspace("scrgb") * (2.0**ev))
+  safe_cast(clamp01(exposed).colourspace("srgb"))
+end
+
+# A look moves palette and contrast; it should not move exposure. Measured on
+# nine photographs, takes drifted darker than their source, faces first. This
+# bends the graded luminance so its median returns to the reference's, with
+# black and white held (a power curve on 0..1) and every channel scaled by the
+# same ratio, so hue holds.
+EXPOSURE_HOLD_RANGE = (0.6..1.6)
+
+def hold_exposure(graded, reference)
+  target = luma_median(reference)
+  current = luma_median(graded)
+  return graded if target <= 0.01 || current <= 0.01 || current >= 0.99 || (target - current).abs < 0.01
+
+  gamma = (Math.log(target) / Math.log(current)).clamp(EXPOSURE_HOLD_RANGE.first, EXPOSURE_HOLD_RANGE.last)
+  luma = clamp01(graded.colourspace("b-w").extract_band(0).cast(:float) / 255.0)
+  lifted = (luma > 1e-4).ifthenelse(luma, 1e-4)
+  ratio = (lifted**gamma) / lifted
+  safe_cast(clamp01(graded.cast(:float) / 255.0 * ratio.bandjoin([ratio, ratio])) * 255.0)
+end
+
+def luma_median(image) = rgb_bands(image).colourspace("b-w").extract_band(0).cast(:uchar).percent(50) / 255.0
 
 # Built from dirname + basename, not String#sub on the extension: sub matches
 # the first occurrence anywhere in the path, so a directory component
