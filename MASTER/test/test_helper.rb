@@ -31,6 +31,7 @@ ENV["MASTER_NO_ENV_FILES"] = "1"
 # `bin/fix-here --model` exports the operator's pin, and the proof inherits it: four routing tests
 # graded that pin instead of the choice they set up, so every pinned /fix proved red against itself.
 ENV.delete("MASTER_MODEL")
+ENV.delete("MASTER_MODEL_STRICT")
 
 LIVE_STATE_DIR = Dir.mktmpdir("master-test-lanes-")
 ENV["MASTER_LANE_QUOTA_PATH"] = File.join(LIVE_STATE_DIR, "lane_quota.yml")

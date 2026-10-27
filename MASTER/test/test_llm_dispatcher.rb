@@ -689,6 +689,42 @@ end
     ENV["MASTER_MODEL"] = saved
   end
 
+  # A quota-dead pin yields to the router's lane, unless the operator made it the only lane.
+  def test_a_strict_pin_is_asked_even_when_its_lane_is_parked
+    dispatcher, asked = recording_dispatcher
+    saved = %w[MASTER_MODEL MASTER_MODEL_STRICT].to_h { |key| [key, ENV.fetch(key, nil)] }
+    ENV["MASTER_MODEL"] = "claude-cli:claude-opus-4-8"
+    ask = -> { dispatcher.send_with_cache("routed-model", [{ role: "user", content: "hi" }]) }
+
+    Master.stub(:any_api_key_present?, true) do
+      Master::Io::LaneState.stub(:usable?, false) do
+        ask.call
+        ENV["MASTER_MODEL_STRICT"] = "1"
+        ask.call
+      end
+    end
+
+    assert_equal ["routed-model", "claude-cli:claude-opus-4-8"], asked
+  ensure
+    saved.each { |key, value| ENV[key] = value }
+  end
+
+  # A dispatcher whose network is a list of the models it was asked for.
+  def recording_dispatcher
+    dispatcher, = build_dispatcher
+    asked = []
+    breaker = Object.new
+    breaker.define_singleton_method(:call) { |_cost, &blk| blk.call }
+    cache = Object.new
+    cache.define_singleton_method(:fetch) { |_key, _model, &blk| blk.call }
+
+    dispatcher.instance_variable_set(:@cache, cache)
+    dispatcher.define_singleton_method(:breaker_for) { |_model| breaker }
+    dispatcher.define_singleton_method(:record_provider_result) { |**| nil }
+    dispatcher.define_singleton_method(:send_llm_request) { |model, *, **| (asked << model) && Master::Result.ok("hi") }
+    [dispatcher, asked]
+  end
+
   def test_the_catalog_verifies_zero_from_the_providers_row_not_the_price_column
     require "io/catalog_index"
     Dir.mktmpdir do |dir|
