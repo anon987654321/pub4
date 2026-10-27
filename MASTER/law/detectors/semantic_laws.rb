@@ -308,6 +308,10 @@ module Master
 
             definitions = ::Law.definitions.values.to_h { |law| [law.id.to_s.upcase, law] }
             detector_definitions = Master::Review::Scan::Law.registry.each_with_object({}) do |klass, result|
+              # This law reads the catalogue; it is no detector in it. Building it here built
+              # it again from its own constructor, and boot ended in SystemStackError.
+              next if klass <= self.class
+
               location = klass.name && Object.const_source_location(klass.name)&.first
               next if location&.match?(%r{(?:\A|/)(?:test|spec)/})
 
