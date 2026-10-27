@@ -143,6 +143,19 @@ class TestFixWatchdog < Minitest::Test
     assert_nil p.stall(@now), "one clean file a minute is a slow semantic scan, not a hang"
   end
 
+  # The pass's budgeted semantic reads follow its first repairs. Opus took two minutes a file,
+  # and the third MASTER run of 2026-10-27 was cut as "0 files finished in 5m" mid-read.
+  def test_a_scan_still_finishing_files_after_the_first_repairs_is_not_a_stall
+    p = pulse
+    p.observe("fix_loop:phase", stage: :stream)
+    p.observe("repair_loop:proposal_rejected", reason: "reflexion_unsafe")
+    @now = Pulse::STALL_SECONDS + 1
+    p.observe("scan:complete", path: "law/detectors/lexical_laws.rb", count: 3)
+    @now += 60
+
+    assert_nil p.stall(@now)
+  end
+
   def test_a_scan_that_stopped_finishing_files_stalls_again
     p = pulse
     p.observe("fix_loop:phase", stage: :stream)

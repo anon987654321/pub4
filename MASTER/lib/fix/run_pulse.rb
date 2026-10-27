@@ -170,7 +170,10 @@ module Master
         pass_attempts = @pass_ok + @pass_failed + @pass_rejected + @pass_errored
         # The semantic scan reads one file at a time at a minute or so each, and a clean
         # file queues no repair: a scan that keeps finishing files is working, not stalled.
-        return if pass_attempts.zero? && scan_advancing?(now)
+        # That holds after the pass's first repairs too: the pass's budgeted semantic reads
+        # run after them, and Opus reading two files was cut as "0 files finished in 5m".
+        # A repair that hangs is the file budget's to end.
+        return if scan_advancing?(now)
 
         recent = @finished.count { |at| now - at <= FINISH_WINDOW_SECONDS }
         tail = if pass_attempts.zero? then "0 files attempted"
