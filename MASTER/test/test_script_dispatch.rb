@@ -65,8 +65,12 @@ class TestScriptDispatch < Minitest::Test
         puts [ENV["BUNDLE_GEMFILE"], ENV["BUNDLE_PATH"], ENV["GEM_HOME"], ENV["RUBYOPT"]].map(&:inspect).join(" ")
       RUBY
 
-      previous = ENV.to_h.select { |key, _| key.start_with?("BUNDLE_") || %w[GEM_HOME GEM_PATH RUBYOPT].include?(key) }
+      # The runner's own BUNDLER_SETUP and BUNDLE_LOCKFILE would pair its lockfile with the fake Gemfile.
+      runtime = %w[GEM_HOME GEM_PATH RUBYOPT RUBYLIB]
+      previous = ENV.to_h.select { |key, _value| key.start_with?("BUNDLE") || runtime.include?(key) }
       begin
+        previous.each_key { |key| ENV.delete(key) }
+
         File.write(File.join(root, "Gemfile"), "source \"https://rubygems.org\"\n")
         ENV["BUNDLE_GEMFILE"] = File.join(root, "Gemfile")
         ENV["BUNDLE_PATH"] = File.join(root, "bundle")
@@ -79,8 +83,8 @@ class TestScriptDispatch < Minitest::Test
         assert result.ok?, -> { result.message.to_s }
         assert_equal %Q{"#{ENV["BUNDLE_GEMFILE"]}" "#{ENV["BUNDLE_PATH"]}" "#{ENV["GEM_HOME"]}" ""}, result.value!
       ensure
-        ENV.keys.grep(/\ABUNDLE_/).each { |key| ENV.delete(key) }
-        %w[GEM_HOME GEM_PATH RUBYOPT].each { |key| ENV.delete(key) }
+        ENV.keys.grep(/\ABUNDLE/).each { |key| ENV.delete(key) }
+        %w[GEM_HOME GEM_PATH RUBYOPT RUBYLIB].each { |key| ENV.delete(key) }
         previous.each { |key, value| ENV[key] = value }
       end
     end

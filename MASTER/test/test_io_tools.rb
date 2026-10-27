@@ -169,9 +169,10 @@ class TestIoTools < Minitest::Test
 
   def test_batch_replace_leaves_sacred_paths_alone
     with_root(manifest: true) do |root|
-      # The sacred file the manifest names, not all of data/: data/ was blanket-protected once.
-      sacred = File.join(root, "data", "soul.yml")
-      File.write(sacred, File.read(sacred) + "old: 1\n")
+      # A file soul.yml names sacred, not all of data/: data/ was blanket-protected once.
+      # soul.yml itself is editable through validated writes, so it is not the probe.
+      assert_includes Master::Io::PathGuard::SACRED_PATHS, "data/SOUL.md"
+      sacred = write(root, "data/SOUL.md", "old\n")
       before = File.read(sacred)
       ordinary = write(root, "lib/x.txt", "old\n")
 

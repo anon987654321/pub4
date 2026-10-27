@@ -19,7 +19,13 @@ class TestFixLoopFileCollector < Minitest::Test
 
   def collector(root, bus: nil) = Master::Fix::FixLoop::FileCollector.new(root:, bus:)
 
+  # The sacred-path policy fails closed without a soul.yml, so every fixture tree
+  # carries one that protects only itself.
   def write(root, rel, body = "x = 1\n")
+    soul = File.join(root, "data", "soul.yml")
+    FileUtils.mkdir_p(File.dirname(soul))
+    File.write(soul, "absolute:\n  sacred_paths:\n    - data/soul.yml\n") unless File.exist?(soul)
+
     path = File.join(root, rel)
     FileUtils.mkdir_p(File.dirname(path))
     File.write(path, body)
@@ -85,10 +91,11 @@ class TestFixLoopFileCollector < Minitest::Test
       assert_equal 1, counted.collect(dir).size
       skipped = bus.events.select { |name, _| name == "fix_loop:skipped" }
       refute_empty skipped, "narrowing the fix input must be announced"
-      assert_equal 1, skipped.first.last[:count]
+      # The fixture's sacred soul.yml is the second skip beside the generated bundle.
+      assert_equal 2, skipped.first.last[:count]
       assert_includes skipped.first.last[:sample], "RAILS/master/public/face.runtime.js"
-      assert_equal 2, counted.candidate_count
-      assert_equal 1, bus.events.select { |name, _| name == "fix_loop:skipped" }.first.last[:count]
+      assert_equal 3, counted.candidate_count
+      assert_equal({ "immutable" => 1, "scanner_path_filter" => 1 }, counted.skip_reasons)
     end
   end
 
@@ -182,8 +189,10 @@ class TestFixLoopFileCollector < Minitest::Test
   def test_sacred_paths_are_never_collected
     files = collector(Master::ROOT).collect(Master::ROOT).map { |f| f.delete_prefix("#{Master::ROOT}/") }
 
-    refute_includes files, "data/laws.yml"
-    refute_includes files, "data/soul.yml"
+    sacred = Master::Core::Constitution::Paths.sacred_paths(root: Master::ROOT)
+
+    assert_includes sacred, "lib/ground/pledge.rb"
+    sacred.each { |entry| refute_includes files, entry.delete_suffix("/") }
     assert_includes files, "lib/core/constitution.rb"
     assert_includes files, "lib/fix/fix_loop.rb"
   end

@@ -131,7 +131,7 @@ class TestOpenCrabsGuards < Minitest::Test
     secret = "/private/home/member.txt"
     bus = PayloadBus.new
     tool = Object.new
-    tool.define_singleton_method(:call) { |**| Master::Result.err("cannot read #{secret}", category: :io) }
+    tool.define_singleton_method(:call) { |**| Master::Result.err("cannot read #{secret}", category: :infrastructure) }
     wrapper = Wrapper.new(tool, bus:)
 
     wrapper.run(path: secret)

@@ -63,7 +63,7 @@ class TraceDmesgTest < Minitest::Test
     end
     writer.join
 
-    assert_equal "prompt ready\\nirc0: incoming\\n", io.string
+    assert_equal "prompt ready\nirc0: incoming\n", io.string
   end
 
   def test_zsh_law_is_available_before_shell_class_loads

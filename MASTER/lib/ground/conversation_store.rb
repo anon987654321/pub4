@@ -63,8 +63,12 @@ module Master
         speaker = role.to_s
         raise ArgumentError, "role must be user or assistant" unless ROLES.include?(speaker)
 
-        body = Master::Ground::Redactor.text(content.to_s)
-        raise ArgumentError, "message exceeds #{MAX_MESSAGE_BYTES} bytes" if body.bytesize > MAX_MESSAGE_BYTES
+        # The bound is on what arrived: redaction collapses a long token run to a marker,
+        # and must not admit an oversized message as a short one.
+        raw = content.to_s
+        raise ArgumentError, "message exceeds #{MAX_MESSAGE_BYTES} bytes" if raw.bytesize > MAX_MESSAGE_BYTES
+
+        body = Master::Ground::Redactor.text(raw)
 
         with_lock(id) do
           state = read_state(id)

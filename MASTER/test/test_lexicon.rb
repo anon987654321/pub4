@@ -63,11 +63,13 @@ class TestLexicon < Minitest::Test
     assert_includes Master::Voice::Speech.clean_text("Restarting relayd now."), "relay D"
   end
 
+  # Shaping speaks a link as its host and inline code as its text; scheme and fences never reach the engine.
   def test_clean_text_still_strips_what_it_stripped_before
     cleaned = Master::Voice::Speech.clean_text("See https://example.com and ```x = 1``` now.")
 
-    assert_includes cleaned, "link omitted"
-    assert_includes cleaned, "code omitted"
+    assert_includes cleaned, "example.com"
+    refute_includes cleaned, "https://"
+    refute_includes cleaned, "`"
   end
 
   def test_an_absent_table_is_not_an_error

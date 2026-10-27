@@ -4,7 +4,8 @@ require_relative "test_helper"
 require "operator/word_rename"
 
 # The gate -> check rename of 2026-10-22, in miniature: every spelling of the word renamed in text and path,
-# the words that only contain it left alone, a kept second meaning left alone, and the immutable Law untouched.
+# the words that only contain it left alone, and a kept second meaning left alone. laws.yml is ordinary
+# versioned source since configuration lost its path immutability, so it renames with the rest.
 class TestWordRename < Minitest::Test
   SOURCE = <<~RUBY
     class GateChain
@@ -24,7 +25,7 @@ class TestWordRename < Minitest::Test
       assert_equal expected.gsub('\Agates', '\Achecks'),
                    File.read(File.join(root, "lib/check_chain.rb"))
       refute File.exist?(File.join(root, "lib/gate_chain.rb"))
-      assert_equal "gates: lexical\n", File.read(File.join(root, "MASTER/data/laws.yml"))
+      assert_equal "checks: lexical\n", File.read(File.join(root, "MASTER/data/laws.yml"))
     end
   end
 

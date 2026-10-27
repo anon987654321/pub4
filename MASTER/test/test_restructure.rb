@@ -27,6 +27,8 @@ class TestRestructure < Minitest::Test
     end
     write("MASTER/lib/big.rb", "class Big\n  def a = 1\n  def b = 2\nend\n")
     write("MASTER/lib/tiny.rb", "TINY = 1\n")
+    # The sacred-path policy fails closed without a soul.yml.
+    write("MASTER/data/soul.yml", "absolute:\n  sacred_paths:\n    - data/soul.yml\n")
     # RailsProof proves the apps RAILS/apps.yml registers.
     write("RAILS/apps.yml", "apps:\n  brgen: {}\n  amber: {}\n  bsdports: {}\n")
     sh("git", "add", "-A", chdir: @repo)
@@ -279,13 +281,18 @@ class TestRestructure < Minitest::Test
     TEXT
     ratcheted = restructure.send(:ratcheted_plan, plan)
 
-    assert_equal "  core_recursive_files: 1\n", ratcheted.writes.fetch("MASTER/data/spine.yml")
+    assert_equal "spine:\n  core_recursive_files: 1\n", ratcheted.writes.fetch("MASTER/data/spine.yml")
+  end
+
+  # One stem across controller, service and policy is the parallel hierarchy the scan names.
+  def write_user_hierarchy
+    %w[Controller Service Policy].each do |role|
+      write("MASTER/lib/user_#{role.downcase}.rb", "class User#{role}; def run; 1; end; end\n")
+    end
   end
 
   def test_cross_file_architecture_is_restructure_evidence
-    write("MASTER/lib/alpha_service.rb", "class AlphaService; def run; 1; end; end\n")
-    write("MASTER/lib/beta_service.rb", "class BetaService; def run; 1; end; end\n")
-    write("MASTER/lib/gamma_service.rb", "class GammaService; def run; 1; end; end\n")
+    write_user_hierarchy
     sh("git", "add", "-A", chdir: @repo)
     sh("git", "commit", "-m", "parallel architecture", chdir: @repo)
 
@@ -313,6 +320,7 @@ class TestRestructure < Minitest::Test
   end
 
   def test_context_shows_related_architecture_files
+    write_user_hierarchy
     context = Master::Fix::RestructureSweep::Context.new(
       @repo,
       File.join(@repo, "MASTER/lib/user_controller.rb"),
@@ -323,9 +331,8 @@ class TestRestructure < Minitest::Test
     )
 
     text = context.to_s
-    assert_includes text, "Related architecture evidence:"
-    assert_includes text, "MASTER/lib/user_service.rb"
-    assert_includes text, "MASTER/lib/user_policy.rb"
+    assert_includes text, "Related file, MASTER/lib/user_service.rb:"
+    assert_includes text, "Related file, MASTER/lib/user_policy.rb:"
   end
 
   def test_restructure_exit_reports_done_after_a_fresh_empty_scan
@@ -460,12 +467,15 @@ class TestRestructure < Minitest::Test
   end
 
   def test_rails_proof_includes_mounted_engine_tests
-    FileUtils.mkdir_p(File.join(@repo, "RAILS/brgen/engines/takeaway/test/models/takeaway"))
-    engine_test = File.join(@repo, "RAILS/brgen/engines/takeaway/test/models/takeaway/order_test.rb")
+    # A brgen vertical is an engine beside brgen at RAILS/brgen_<name>, reached from brgen.
+    FileUtils.mkdir_p(File.join(@repo, "RAILS/brgen/test"))
+    FileUtils.mkdir_p(File.join(@repo, "RAILS/brgen_takeaway/test/models/takeaway"))
+    engine_test = File.join(@repo, "RAILS/brgen_takeaway/test/models/takeaway/order_test.rb")
     File.write(engine_test, "class OrderTest < Minitest::Test; end\n")
-    plan = Restructure::Plan.parse("OPERATIONS: split\n=== WRITE RAILS/brgen/engines/takeaway/app/models/takeaway/order.rb\nmodule Takeaway\nend\n=== END\n")
+    order = "RAILS/brgen_takeaway/app/models/takeaway/order.rb"
+    plan = Restructure::Plan.parse("OPERATIONS: split\n=== WRITE #{order}\nmodule Takeaway\nend\n=== END\n")
     proof = Restructure::RailsProof.new(repo_root: @repo, tree: "RAILS")
-    assert_includes proof.send(:test_files, plan), engine_test
+    assert_includes proof.send(:test_files, plan).map { |file| File.expand_path(file) }, engine_test
   end
 
   def test_unaliased_move_is_refused

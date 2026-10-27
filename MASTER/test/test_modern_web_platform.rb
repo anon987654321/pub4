@@ -6,6 +6,9 @@ require "master"
 require_relative "../lib/fix/visual_pass"
 # VisualPass#run loads the probe only when it runs; capture_resting needs it here.
 require_relative "../../MASTER/checks/support/geometry_probe"
+# Law loads lazily inside VisualUsability; tests that read it directly cannot rely on run order.
+require File.join(Master::ROOT, "law", "definition")
+Law.load_all(File.join(Master::ROOT, "law")) if Law.definitions.empty?
 
 # The web-platform probe gathers mobile evidence without touching the page, the
 # visual pass hands that evidence to the council, and the modern-web laws are
@@ -79,7 +82,7 @@ class TestModernWebPlatformEvidence < Minitest::Test
       pass.instance_variable_set(:@dir, dir)
       Deploy::GeometryProbe.stub(:walk, payload) do
         Deploy::GeometryProbe.stub(:ok?, true) do
-          Deploy::MobileJourneyProbe.stub(:run, []) do
+          Deploy::MobileJourneyProbe.stub(:measure, { "actions" => [] }) do
             Deploy::WebPlatformProbe.stub(:run, platform) { pass.send(:capture_resting, RecordingCdp.new("{}"), surface) }
           end
         end
@@ -152,12 +155,10 @@ class TestModernWebPlatformEvidence < Minitest::Test
   end
 
   def test_web_defaults_prefer_native_features_and_safe_fallbacks
-    platform = Law.definitions.fetch(:WEB_PLATFORM_DEFAULTS)
-    assert_includes platform.fix, "Baseline Widely available"
-    assert_includes platform.fix, "@supports"
-    assert_includes platform.fix, "feature detection"
-    assert_includes platform.fix, "Modern Web Guidance"
-    assert_includes platform.fix, "network access"
+    # The Law text wraps at heredoc line breaks; a phrase may span one.
+    platform = Law.definitions.fetch(:WEB_PLATFORM_DEFAULTS).fix.split.join(" ")
+    ["Baseline Widely available", "@supports", "feature detection", "Modern Web Guidance", "network access"]
+      .each { |phrase| assert_includes platform, phrase }
 
     mobile = Law.definitions.fetch(:MOBILE_ACCESSIBILITY_DEFAULTS)
     %w[320 24 44 prefers-reduced-motion].each do |expectation|

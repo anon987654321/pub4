@@ -30,7 +30,7 @@ class WebScreenshotSpec < Minitest::Test
   end
 
   def test_screenshot_tool_fails_if_browser_missing
-    assert_includes source, "chromium/google-chrome not found"
+    assert_includes source, "chromium or google-chrome not found"
     assert_includes source, "URL required"
   end
 end

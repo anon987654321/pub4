@@ -14,15 +14,16 @@ class TestBoundedCommand < Minitest::Test
 
   def test_timeout_is_distinct_from_a_nonzero_exit
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    # A child that inherits bundler's RUBYOPT takes ~0.2s to boot; the budget lets it print first.
     output, status = BoundedCommand.capture2e(
-      RbConfig.ruby, "-e", "STDOUT.write('started'); sleep 10", timeout: 0.1
+      RbConfig.ruby, "-e", "STDOUT.write('started'); sleep 10", timeout: 1.5
     )
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
 
     assert BoundedCommand.timed_out?(status)
     refute BoundedCommand.success?(status)
-    assert_includes output, "TIMEOUT after 0.1s"
+    assert_includes output, "TIMEOUT after 1.5s"
     assert_includes output, "started"
-    assert_operator elapsed, :<, 3
+    assert_operator elapsed, :<, 5
   end
 end

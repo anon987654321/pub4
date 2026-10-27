@@ -2,6 +2,9 @@
 
 require_relative "test_helper"
 require "yaml"
+# Law loads lazily inside VisualUsability; tests that read it directly cannot rely on run order.
+require File.join(Master::ROOT, "law", "definition")
+Law.load_all(File.join(Master::ROOT, "law")) if Law.definitions.empty?
 
 class TestVisualConstitution < Minitest::Test
   IDS = %w[
@@ -37,7 +40,7 @@ class TestVisualConstitution < Minitest::Test
 
     assert_includes law.source, "xsa/openbsd-dmesgs"
     assert_includes law.fix, "one concise factual line per event"
-    assert_includes law.fix, "Do not create a second logging/presentation format"
+    assert_includes law.fix, "Do not create a second event logging format"
   end
 
   def test_visual_rubric_places_console_style_above_prompt_trends
