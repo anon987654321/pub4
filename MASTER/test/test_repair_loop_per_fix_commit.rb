@@ -293,6 +293,25 @@ class TestRepairLoopPerFixCommit < Minitest::Test
     end
   end
 
+  # A stream worker's "commit blocked" line never reached the run's log, so the refusal itself
+  # carries the committer's reason.
+  def test_a_blocked_commit_names_the_committers_reason
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "violation\n")
+      committer = FakeCommitter.new
+      committer.define_singleton_method(:commit_if_dirty) { |*, **| :blocked }
+      committer.define_singleton_method(:last_refusal) { "house_lint, findings lint0: sample.rb:1 AbcSize" }
+      loop = build_loop(root:, bus: FakeBus.new, scanner: RecordingScanner.new, agent: FixingAgent.new, committer:)
+      said = []
+
+      Master::Trace::Dmesg.stub(:status, ->(unit, text) { said << "#{unit}: #{text}" }) do
+        assert_equal :commit_refused, loop.send(:fix_violation, violation_in(path))
+      end
+      assert(said.any? { |line| line.include?("commit refused: house_lint, findings lint0: sample.rb:1 AbcSize") })
+    end
+  end
+
   # :commit_refused still counts as work the stage must account for — counting
   # only :applied would strand the refused fixes with llm_fixed == 0 and no
   # stage-end commit ever chasing them.

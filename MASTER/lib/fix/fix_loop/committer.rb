@@ -244,7 +244,12 @@ module Master
           Result.err("visual baseline observation failed: #{e.class}: #{e.message}", category: :infrastructure)
         end
 
+        # Why the last commit was refused: a stream worker's deliver0 line did not reach the log, and
+        # the repair that asked could only say "blocked".
+        attr_reader :last_refusal
+
         def commit_if_dirty(message, findings: [], owned_paths: nil)
+          @last_refusal = nil
           @commit_mutex.synchronize do
             drop_ended_transaction!
             if @transaction
@@ -614,7 +619,8 @@ def stage_commit_mode?
         def refuse_commit(**payload)
           published = @bus&.publish("fix_loop:commit_blocked", **payload)
           detail = payload.except(:reason).map { |key, value| "#{key} #{Array(value).map { |item| item.to_s.delete_prefix("#{@root}/") }.join(",")[0, 120]}" }
-          Master::Trace::Dmesg.status("deliver0", (["commit blocked, #{payload[:reason]}"] + detail).join(", "))
+          @last_refusal = ([payload[:reason]] + detail).join(", ")
+          Master::Trace::Dmesg.status("deliver0", "commit blocked, #{@last_refusal}")
           published
         end
 

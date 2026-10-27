@@ -259,7 +259,7 @@ module Master
           findings: [violation],
           owned_paths: [violation[:file]],
         )
-        return commit_refused(violation, "blocked, reason above") if result == :blocked
+        return commit_refused(violation, @committer.last_refusal || "blocked") if result == :blocked
         return commit_refused(violation, result.message) if result.is_a?(Master::Result::Err)
 
         :applied
