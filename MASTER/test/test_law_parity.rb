@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "master"
+require "yaml"
 require_relative "../lib/fix/law_parity"
 
 class TestLawParity < Minitest::Test
@@ -10,6 +11,25 @@ class TestLawParity < Minitest::Test
     parity = Master::Fix::LawParity.new
 
     assert_empty parity.call, parity.report
+  end
+
+  def test_priority_ceiling_covers_the_highest_current_constitutional_priority
+    laws = YAML.safe_load_file(Master::Fix::LawParity::LAWS_PATH, aliases: true)
+    overlay_path = File.join(File.dirname(Master::Fix::LawParity::LAWS_PATH), "law_enforcement.yml")
+    overlay = YAML.safe_load_file(overlay_path, aliases: true) || {}
+    priorities = laws.filter_map do |id, original|
+      next unless original.is_a?(Hash)
+
+      extra = overlay[id]
+      spec = extra.is_a?(Hash) ? original.merge(extra) : original
+      next unless spec["tier"].to_s == "constitutional" && spec.key?("priority")
+
+      Integer(spec["priority"])
+    end
+
+    assert_operator priorities.length, :>, 0
+    assert_operator priorities.max, :<=, Master::Fix::LawParity::MAX_PRIORITY,
+                    "a new constitutional priority must not slip outside the LawParity audit ceiling"
   end
 
   def test_law_loader_errors_are_not_swallowed_as_an_empty_registry

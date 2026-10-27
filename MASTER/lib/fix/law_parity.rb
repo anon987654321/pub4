@@ -9,9 +9,9 @@ module Master
     # prose-only: each must have an executable detector, tag coverage, or an
     # explicit deferred enforcement with a future expiry.
     class LawParity
-      # Audit every priority-ranked constitutional law. At 8, the current
-      # uncovered RENDERED_VALUES entry is reported honestly until a tagged
-      # detector or an operator-approved deferral is recorded.
+      # Keep the ceiling wide enough to include every priority-ranked
+      # constitutional row currently declared. The parity gate must expose
+      # coverage debt; lowering the cutoff must not make a gap disappear.
       MAX_PRIORITY = 8
       LAWS_PATH = File.join(Master::ROOT, "data", "laws.yml").freeze
 
