@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "minitest/mock"
 require "json"
 require "net/http"
-require_relative "../../../../MASTER/contracts/master_client"
+require_relative "../../lib/shared/contracts"
+# On vm23 __shared sits under /home/<app>, so a path four levels up lands on /home/MASTER.
+Shared::Contracts.require_contract("master_client")
 
 class MasterClientTest < Minitest::Test
   def test_health_uses_ingress_health
