@@ -88,7 +88,7 @@ class TestCliBootE2e < Minitest::Test
       end
 
       assert status.success?, "bin/ruby cli boot failed: #{output[0, 1000]}"
-      assert_match(/boot0:|status|ready/i, output)
+      assert_match(/master: .*posture|boot0:/, output)
     ensure
       writer&.close unless writer&.closed?
       reader&.close unless reader&.closed?
@@ -122,7 +122,7 @@ class TestCliBootE2e < Minitest::Test
       end
 
       assert status.success?, "cli fast tty boot failed: #{output[0, 1000]}"
-      assert_match(/boot0:|status|ready/i, output)
+      assert_match(/master: .*posture|boot0:/, output)
     ensure
       writer&.close unless writer&.closed?
       reader&.close unless reader&.closed?
