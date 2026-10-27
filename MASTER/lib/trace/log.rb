@@ -6,6 +6,7 @@ require "json"
 require "securerandom"
 require "time"
 require_relative "event_privacy"
+require_relative "../boot/paths"
 
 module Master
   module Trace
@@ -57,7 +58,7 @@ module Master
         directory_stat = File.lstat(directory)
         raise ArgumentError, "JSONL directory is not a real directory" unless
           directory_stat.directory? && !directory_stat.symlink?
-        File.chmod(directory_mode, directory) if directory_mode
+        tighten_directory(directory, directory_mode) if directory_mode
 
         lock_path = "#{path}.lock"
         raise ArgumentError, "JSONL lock is a symlink" if File.symlink?(lock_path)
@@ -115,6 +116,9 @@ module Master
       # records within max_bytes. The tail is read before truncating; the old
       # allocation is freed before the bounded bytes are written back, so recovery
       # still works on a full disk. A partial first record is discarded.
+      # Others lose access; a group the directory was handed to keeps it (MasterPaths).
+      def self.tighten_directory(directory, base) = File.chmod(MasterPaths.private_dir_mode(directory, base), directory)
+
       def self.compact_rotated(path, max_bytes)
         return unless File.file?(path)
 

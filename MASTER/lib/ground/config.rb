@@ -4,6 +4,7 @@ require "yaml"
 require "fileutils"
 require "did_you_mean"
 require_relative "../io/atomic_write"
+require_relative "../boot/paths"
 
 module Master
   module Ground
@@ -78,7 +79,7 @@ module Master
       def save!
         directory = File.dirname(@path)
         FileUtils.mkdir_p(directory, mode: 0o700)
-        File.chmod(0o700, directory)
+        File.chmod(MasterPaths.private_dir_mode(directory), directory)
         errs = validate if respond_to?(:validate)
         warn "config: validation issues before save: #{errs.join('; ')}" if errs && !errs.empty?
         # config.yml may include web_token and web_secret_key_base.

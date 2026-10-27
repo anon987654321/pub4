@@ -20,4 +20,17 @@ module MasterPaths
   def data(*parts) = File.join(DATA, *parts)
   def reports(*parts) = File.join(REPORTS, *parts)
   def state(*parts) = File.join(STATE, *parts)
+
+  # The mode a private state directory is tightened to: others never keep access,
+  # and the owner always has it. A directory handed to a group other than the
+  # caller's own keeps that group's bits, because the hand-off is deliberate: on
+  # vm23 MASTER/.master is dev:master so the master Rails app, running as master,
+  # reads its config and reaches the TTS sockets, and a plain 0700 locked it out.
+  # Where the directory carries the caller's own group this is base unchanged.
+  def private_dir_mode(dir, base = 0o700)
+    stat = File.stat(dir)
+    return base if stat.gid == Process.egid
+
+    base | (stat.mode & 0o2070)
+  end
 end

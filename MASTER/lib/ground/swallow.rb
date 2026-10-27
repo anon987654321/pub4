@@ -202,7 +202,7 @@ module Master
           raise IOError, "swallow log directory is a symlink" if File.symlink?(directory)
 
           FileUtils.mkdir_p(directory, mode: 0o700)
-          File.chmod(0o700, directory)
+          File.chmod(MasterPaths.private_dir_mode(directory), directory)
         end
 
         # Called under the lock, so rotation and the append see one file.

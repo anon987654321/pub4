@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../io/atomic_write"
+require_relative "../boot/paths"
 
 require "fileutils"
 require "open3"
@@ -79,7 +80,7 @@ module Master
         config_dir = File.join(root, ".master")
         config_path = File.join(config_dir, "config.yml")
         FileUtils.mkdir_p(config_dir, mode: 0o700)
-        File.chmod(0o700, config_dir)
+        File.chmod(MasterPaths.private_dir_mode(config_dir), config_dir)
         existing = YAML.safe_load_file(config_path, permitted_classes: [Symbol], aliases: true) rescue {}
         # The file contains web_secret_key_base and web_token. An explicit mode
         # prevents a fresh or pre-existing permissive file leaking bearer secrets.
