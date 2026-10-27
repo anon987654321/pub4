@@ -13,7 +13,7 @@ require "test_helper"
 # lookup happened outside that rescue, so it propagated and turned a successful
 # save into a 500. 38 models pass `actor:`; every one with an `updated:` event
 # was affected.
-class ActivityTrackableTest < ActiveSupport::TestCase
+class ActivityTrackableConcernTest < ActiveSupport::TestCase
   setup do
     Brgen::CitySeed.sync! if City.table_exists?
     @city = City.find_by!(domain: "brgen.no")
