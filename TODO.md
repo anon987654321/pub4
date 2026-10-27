@@ -31,9 +31,11 @@ source and tests they could not run; this pass is what measures them.
   `test_fallback_chain.rb`, `test_lane_pool.rb`.
 - [ ] Refresh `MASTER/data/self_findings.yml` through `ruby MASTER/lib/operator/self_findings.rb --ratchet` after source changes settle. Review the law and registry member deltas and both counts; the ratchet must refuse to raise either existing ceiling.
 - [ ] Then `/fix` on the repository root: four independent reports, 30–40 grounded tournament
-  candidates per tree, tournament fields that survive an interrupted process, and each terminal
-  state (DONE, PLATEAU, HUMAN_DECISION, BLOCKED, VALIDATION_FAILED, DELIVERY_FAILED, TIMEOUT)
-  reached truthfully. No trial has yet reached a repair, so repair quality is unmeasured.
+  candidates per tree, and each terminal state (DONE, PLATEAU, HUMAN_DECISION, BLOCKED,
+  VALIDATION_FAILED, DELIVERY_FAILED, TIMEOUT) reached truthfully. The checksum-verified
+  `.master/fix_architecture` sidecar and provenance-gated reuse are implemented; still run a real
+  process-interruption/restart probe and preserve its receipt. No trial has yet reached a repair,
+  so repair quality is unmeasured.
 
 ## Execution contract
 
@@ -47,9 +49,9 @@ source and tests they could not run; this pass is what measures them.
   web separately, on current HEAD (17.6 s boot and 13–16 s replies on 2026-10-23). Stream the
   first words of a reply; a failed stream says so before switching lanes.
 - [ ] CLI cancellation in a PTY: Ctrl-C mid-generation, Ctrl-D, SIGTERM, child timeout; terminal
-  modes restored; NO_COLOR, TERM=dumb and non-TTY piping; no face in a dumb terminal. Compare
-  prompt rendering with the exact historical implementation and verify entering/leaving `/face`
-  restores the canonical REPL prompt; do not infer historical glyphs from documentation.
+  modes restored; NO_COLOR, TERM=dumb and non-TTY piping; no face in a dumb terminal. A PTY
+  regression now covers `/face` exit and canonical `host:path$` prompt restoration; run it on the
+  pinned Ruby and compare the visible output with historical prompt commit `c70f54b06be1`.
 - [ ] Measure provider failover at the boundary: the provider, model and credential actually used
   under auth failure, rate limit, timeout, malformed reply and budget exhaustion.
 
