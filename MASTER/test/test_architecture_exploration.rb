@@ -172,6 +172,40 @@ class TestArchitectureExploration < Minitest::Test
   end
 
 
+  def test_complete_saved_row_without_a_qualified_winner_is_regenerated
+    Dir.mktmpdir("architecture-invalid-complete-row") do |root|
+      master = File.join(root, "MASTER")
+      FileUtils.mkdir_p(File.join(master, "lib"))
+      source = File.join(master, "lib", "owner.rb")
+      File.write(source, "module Owner; end\n")
+      journal = FakeJournal.new
+      agent = FakeAgent.new("not JSON")
+      explorer = Master::Fix::ArchitectureExploration.new(
+        root: root, agent: agent, candidate_count: 30,
+        run_journal: journal, run_id: "c" * 20
+      )
+      provenance = explorer.send(:provenance)
+      bad_row = {
+        "tree" => "MASTER", "status" => "COMPLETE", "requested" => 30,
+        "accepted" => 30, "qualified" => 0, "winner" => nil, "shortlist" => [],
+        "decision" => { "selection_gate_passed" => false, "qualified_candidates" => 0, "execution_proof" => "NOT_RUN" },
+        "candidates" => Array.new(30) { |i| { "id" => format("AX%02d", i + 1), "score" => 0,
+          "scorecard" => { "total" => 0 } } },
+        "evidence_manifest" => [{ "path" => "MASTER/lib/owner.rb", "sha256" => "d" * 64, "excerpt_bytes" => 18 }]
+      }
+      journal.seed_report({
+        "schema_version" => 2, "target" => "MASTER", "status" => "COMPLETE",
+        "provenance" => provenance, "requested_candidates_per_tree" => 30,
+        "targets" => [bad_row], "brief" => "invalid saved row"
+      }, provenance)
+
+      result = explorer.run(target: master, files: [source])
+
+      assert_equal "INCONCLUSIVE", result.fetch("status")
+      assert_equal 1, agent.prompts.size, "a malformed COMPLETE row must not be resumed"
+    end
+  end
+
   def test_partial_tournament_resume_reuses_completed_trees_and_finishes_only_pending_trees
     Dir.mktmpdir("architecture-partial-resume") do |root|
       %w[MASTER RAILS].each { |name| FileUtils.mkdir_p(File.join(root, name)) }
@@ -191,6 +225,11 @@ class TestArchitectureExploration < Minitest::Test
       tree_report = lambda do |tree|
         winner = {
           "id" => "AX01", "title" => "Keep #{tree} ownership local", "score" => 82,
+          "scorecard" => {
+            "source_evidence" => 20, "test_anchors" => 18, "verification" => 15,
+            "rollback" => 7, "scope" => 12, "law_alignment" => 5,
+            "tradeoff_analysis" => 5, "total" => 82
+          },
           "thesis" => "Keep one bounded owner for #{tree}.",
           "core_boundary" => "The #{tree} lifecycle remains local.",
           "evidence_paths" => ["#{tree}/lib/owner.rb"],
@@ -206,10 +245,22 @@ class TestArchitectureExploration < Minitest::Test
           "accepted" => 30, "qualified" => 12,
           "decision" => {
             "distinct_change_path_sets" => 30, "qualified_candidates" => 12,
-            "winner_margin" => 3, "execution_proof" => "NOT_RUN",
+            "selection_gate_passed" => true, "winner_margin" => 3, "execution_proof" => "NOT_RUN",
           },
           "winner" => winner, "shortlist" => [winner], "rejections" => [],
-          "candidates" => Array.new(30) { |i| { "id" => format("AX%02d", i + 1) } },
+          "candidates" => Array.new(30) do |i|
+            card = i < 12 ? {
+              "source_evidence" => 20, "test_anchors" => 18, "verification" => 15,
+              "rollback" => 7, "scope" => 12, "law_alignment" => 5,
+              "tradeoff_analysis" => 5, "total" => 82
+            } : {
+              "source_evidence" => 0, "test_anchors" => 0, "verification" => 0,
+              "rollback" => 0, "scope" => 0, "law_alignment" => 0,
+              "tradeoff_analysis" => 0, "total" => 0
+            }
+            { "id" => format("AX%02d", i + 1), "score" => card["total"],
+              "scorecard" => card, "lens" => Master::Fix::ArchitectureExploration::LENSES[i][:name] }
+          end,
           "evidence_manifest" => [{ "path" => "#{tree}/lib/owner.rb", "sha256" => tree == "MASTER" ? "d" * 64 : "e" * 64,
                                     "excerpt_bytes" => 18 }],
         }

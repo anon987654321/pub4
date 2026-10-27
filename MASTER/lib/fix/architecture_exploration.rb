@@ -206,11 +206,47 @@ module Master
       end
 
       def complete_tree_row?(row)
-        row.is_a?(Hash) && row["status"].to_s == "COMPLETE" &&
-          row["requested"].to_i.between?(MIN_CANDIDATES, MAX_CANDIDATES) &&
-          row["accepted"].to_i == row["requested"].to_i &&
-          Array(row["candidates"]).size == row["requested"].to_i &&
-          Array(row["evidence_manifest"]).any?
+        return false unless row.is_a?(Hash) && row["status"].to_s == "COMPLETE"
+        return false unless row["requested"].to_i == @count
+
+        requested = row["requested"].to_i
+        candidates = Array(row["candidates"])
+        return false unless row["accepted"].to_i == requested && candidates.size == requested
+
+        ids = candidates.filter_map do |candidate|
+          candidate["id"].to_s if candidate.is_a?(Hash) && !candidate["id"].to_s.empty?
+        end
+        return false unless ids.size == requested && ids.uniq.size == requested
+
+        qualified = candidates.select { |candidate| persisted_candidate_qualified?(candidate) }
+        return false unless qualified.size == row["qualified"].to_i && qualified.size >= MIN_QUALIFIED_CANDIDATES
+
+        winner = row["winner"]
+        return false unless winner.is_a?(Hash) && qualified.any? { |candidate| candidate["id"].to_s == winner["id"].to_s }
+        return false unless winner["score"].to_i >= MIN_WINNER_SCORE
+        return false unless Array(row["shortlist"]).any? { |candidate| candidate.is_a?(Hash) && candidate["id"].to_s == winner["id"].to_s }
+
+        decision = row["decision"]
+        return false unless decision.is_a?(Hash) && decision["selection_gate_passed"] == true
+        return false unless decision["qualified_candidates"].to_i == qualified.size
+        return false unless decision["execution_proof"].to_s == "NOT_RUN"
+
+        Array(row["evidence_manifest"]).any? do |entry|
+          entry.is_a?(Hash) && !entry["path"].to_s.empty? &&
+            entry["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/i) &&
+            entry["excerpt_bytes"].to_i.between?(1, 12_000)
+        end
+      end
+
+      def persisted_candidate_qualified?(candidate)
+        return false unless candidate.is_a?(Hash)
+
+        scorecard = candidate["scorecard"]
+        return false unless scorecard.is_a?(Hash)
+        return false unless scorecard["total"].to_i >= MIN_WINNER_SCORE
+        return false unless QUALITY_FLOORS.all? { |dimension, floor| scorecard[dimension.to_s].to_i >= floor }
+
+        candidate["score"].to_i == scorecard["total"].to_i
       end
 
       def reusable_complete_report?(report, target, trees, current_provenance)
