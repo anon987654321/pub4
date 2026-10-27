@@ -117,6 +117,8 @@ if probe && model
 end
 
 FileUtils.mkdir_p(File.dirname(log))
+# Read before the run overwrites the log: when the last run reached its first repair.
+puts Operator::RunPlan.line(File.basename(tree), log)
 puts "fix0 at fix-here: running; follow it with: tail -f #{log}"
 
 # 5. A RAILS run is judged on what is rendered: the visual pass, the layout snapshot, the

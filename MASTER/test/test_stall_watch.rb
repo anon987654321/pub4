@@ -36,4 +36,28 @@ class TestStallWatch < Minitest::Test
     end
     assert_equal "", Operator::StallWatch.tail("/nonexistent/fix.log")
   end
+
+  # A RAILS run spent fifty-six minutes before its first repair and said nothing about it; the
+  # next run opens with how long the last one took to get there.
+  LOG = <<~LOG
+    fix0: pass 0/60 source0 files 0/10 (0%) fixes 0 ok 0 failed elapsed = 240s (4m00s) eta unknown
+    fix0: pass 0/60 source0 files 0/10 (0%) fixes 0 ok 0 failed elapsed = 600s (10m00s) eta unknown
+    fix0: pass 0/60 reach0 files 0/10 (0%) fixes 0 ok 0 failed elapsed = 2000s (33m20s) eta unknown
+    fix0: pass 1/60 fix0 phase fast fixes files 0/10 (0%) fixes 0 ok 0 failed elapsed = 3390s (56m30s) eta unknown
+  LOG
+
+  def test_the_plan_names_each_stage_once_and_when_repairs_began
+    Dir.mktmpdir do |dir|
+      log = File.join(dir, "fix-RAILS.log")
+      File.write(log, LOG)
+
+      line = Operator::RunPlan.line("RAILS", log)
+
+      assert_includes line, "last RAILS run: source 4m, reach 33m; repairs began at 56m"
+    end
+  end
+
+  def test_without_an_earlier_run_the_plan_says_so
+    assert_match(/no earlier STUDIO run/, Operator::RunPlan.line("STUDIO", "/nonexistent/fix-STUDIO.log"))
+  end
 end
