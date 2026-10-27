@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
+require "pathname"
 require_relative "../../operator/ruby_runner"
+require_relative "../rails_app"
 
 module Master
   module Fix
@@ -142,8 +144,8 @@ module Master
         # every test sharing a common stem. nil means the test passed or there
         # is none; a string names the failure.
         def failing_test_for(path)
-          suite, test = FixVerification.rails_test_for(File.expand_path(path.to_s, @root))
-          return run_own_test([RbConfig.ruby, "bin/rails", "test", test], suite:, test:) if test
+          app, test = FixVerification.rails_test_for(File.expand_path(path.to_s, @root))
+          return run_rails_test(app, test) if test
 
           test = own_test_for(path)
           return unless test
@@ -157,25 +159,47 @@ module Master
           status.success? ? nil : "#{File.basename(test)}: #{out.lines.last(3).join.strip}"
         end
 
+        # Under the app's own Ruby and bundle (RailsApp.capture), not MASTER's: run from inside
+        # MASTER, bin/rails inherited BUNDLE_GEMFILE and stopped on bootsnap/setup, so every repair
+        # to an app file with a test was refused for a test that never ran.
+        def run_rails_test(app, test)
+          out, status = RailsApp.capture(app, "bin/rails", "test", test, env: { "RAILS_ENV" => "test" })
+          status.success? ? nil : "#{File.basename(test)}: #{out.lines.last(3).join.strip}"
+        end
+
         # Run as the suite runs it: lib/ and test/ on the load path, so
         # test_helper loads, and through the bundle when the suite has one.
         # A suite with no Gemfile has no bundle to run under, and `bundle exec`
         # there fails with "Could not locate Gemfile" whatever the fix.
+        # MASTER's own suite runs in the bundle this process already holds, by its own interpreter and
+        # environment: `bundle exec` picked rbenv's bundler, which ran Homebrew's Ruby against MASTER's
+        # gem store and failed in rubygems before test_doctor.rb loaded.
         def own_test_command(suite, test)
           ruby = [RbConfig.ruby, "-Ilib", "-Itest", test]
-          File.file?(File.join(suite, "Gemfile")) ? [::Operator::RubyRunner.bundle_cmd(root: @root), "exec", *ruby] : ruby
+          own = File.expand_path(suite) == File.expand_path(Master::ROOT)
+          return ruby if own || !File.file?(File.join(suite, "Gemfile"))
+
+          [::Operator::RubyRunner.bundle_cmd(root: @root), "exec", *ruby]
         end
 
         # A Rails file's test follows the Rails layout: app/models/user.rb is tested by
-        # test/models/user_test.rb in the same app, and runs through that app's bin/rails.
-        RAILS_FILE = %r{\A(?<app>.+/RAILS/[^/]+)/app/(?<kind>[^/]+)/(?<rest>.+)\.rb\z}
+        # test/models/user_test.rb beside the same app/. An engine (RAILS/brgen_dating,
+        # RAILS/brgen_radio/tv) and the shared engine have no bin/rails of their own; they
+        # run inside brgen, which mounts them and whose suite already holds their tests.
+        # Answers [app root, test path relative to it].
+        RAILS_FILE = %r{\A(?<rails>.+/RAILS)/(?<component>.+?)/app/(?<kind>[^/]+)/(?<rest>.+)\.rb\z}
+        MOUNTED_BY = "brgen"
 
         def self.rails_test_for(path)
           found = path.to_s.match(RAILS_FILE)
           return unless found
 
-          test = File.join(found[:app], "test", found[:kind], "#{found[:rest]}_test.rb")
-          [found[:app], test] if File.file?(test) && File.file?(File.join(found[:app], "bin", "rails"))
+          component = File.join(found[:rails], found[:component])
+          test = File.join(component, "test", found[:kind], "#{found[:rest]}_test.rb")
+          app = File.file?(File.join(component, "bin", "rails")) ? component : File.join(found[:rails], MOUNTED_BY)
+          return unless File.file?(test) && File.file?(File.join(app, "bin", "rails"))
+
+          [app, Pathname(test).relative_path_from(Pathname(app)).to_s]
         end
 
         def own_test_for(path)

@@ -68,10 +68,19 @@ module Master
         defined?(Bundler) ? Bundler.with_unbundled_env(&run) : run.call
       end
 
+      # MASTER runs from its own gem store (~/.master/bundler), set before Bundler starts, so
+      # with_unbundled_env puts that store back rather than clearing it: the app then booted
+      # against MASTER's gems and stopped on bootsnap/setup. These name only MASTER's store and
+      # bundle; nil unsets them, and the app's bin/rails finds its own Gemfile.
+      FOREIGN_BUNDLE = %w[
+        GEM_HOME GEM_PATH RUBYOPT RUBYLIB BUNDLE_GEMFILE BUNDLE_LOCKFILE BUNDLE_PATH BUNDLE_APP_CONFIG
+        BUNDLE_USER_CONFIG BUNDLE_DISABLE_SHARED_GEMS BUNDLE_FROZEN BUNDLE_BIN_PATH BUNDLER_VERSION BUNDLER_SETUP
+      ].freeze
+
       def self.env(root)
         version = File.join(root, ".ruby-version")
         shims = File.expand_path("~/.rbenv/shims")
-        {}.tap do |env|
+        FOREIGN_BUNDLE.to_h { |key| [key, nil] }.tap do |env|
           env["RBENV_VERSION"] = File.read(version).strip if File.file?(version)
           env["PATH"] = "#{shims}:#{ENV.fetch("PATH", "")}" if File.directory?(shims)
         end
