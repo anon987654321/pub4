@@ -468,65 +468,6 @@ class TestAstFixerTransforms < Minitest::Test
   end
 
   # A brace-expansion glob starts a line with { and ended the old line-walk before it reached the %w[ opener.
-  # VERTICAL_BREATH asks for a blank line in any run of ten or more lines. The fixer puts it between two sibling
-  # statements, which is the one place whitespace cannot change what the code means.
-  DENSE_BODY = [
-    "# frozen_string_literal: true", "", "def run", *Array.new(12) { |n| "  v#{n} = #{n}" }, "  v11", "end", ""
-  ].join("\n")
-
-  # The most lines the source holds without a blank one.
-  def densest(text)
-    blocks = text.split(/\n\s*\n/)
-    blocks.map { |block| block.count("\n") + 1 }.max
-  end
-
-  def test_a_dense_body_gets_a_blank_line_between_two_statements
-    result = fix("breath.rb", DENSE_BODY)
-
-    assert_includes result[:transforms], :vertical_breath
-    assert_equal DENSE_BODY.delete(" \n"), result[:content].delete(" \n"), "only whitespace was added"
-    assert_operator densest(result[:content]), :<, 10
-  end
-
-  def test_the_blank_line_pass_is_idempotent
-    once = fix("breath.rb", DENSE_BODY)[:content]
-
-    twice = fix("breath.rb", once)
-
-    refute_includes twice[:transforms], :vertical_breath
-    assert_equal once, twice[:content]
-  end
-
-  # A heredoc body is data: a blank line inside it would change the string the program builds.
-  def test_a_blank_line_never_lands_inside_a_heredoc
-    source = "def text\n  a = 1\n  b = 2\n  c = 3\n  d = 4\n  e = 5\n  body = <<~TEXT\n    one\n    two\n    three\n" \
-             "    four\n  TEXT\n  body\nend\n"
-
-    result = fix("heredoc.rb", source)
-
-    assert_includes result[:content], "    one\n    two\n    three\n    four\n  TEXT\n"
-  end
-
-  # A when branch is one thought. /fix MASTER put a blank line between `@stage = "scan"` and the
-  # `@violations` line under it in cli/activity.rb, inside the branch.
-  def test_a_blank_line_never_splits_a_case_branch
-    branches = Array.new(6) { |n| "  when #{n}\n    @stage = #{n}\n    @count = #{n}\n" }.join
-    source = "# frozen_string_literal: true\n\ndef track(event)\n  case event\n#{branches}  end\nend\n"
-
-    result = fix("branches.rb", source)
-
-    assert_equal source, result[:content]
-  end
-
-  def test_a_dense_run_with_no_statement_boundary_is_left_alone
-    rows = Array.new(11) { |n| "  k#{n}: #{n}," }
-    source = "TABLE = {\n#{rows.join("\n")}\n}.freeze\n"
-
-    result = fix("table.rb", source)
-
-    refute_includes result[:transforms], :vertical_breath
-  end
-
   def test_trailing_commas_skip_a_percent_word_array_whose_item_starts_with_a_brace
     source = <<~RUBY
       globs = %w[

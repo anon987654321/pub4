@@ -7,7 +7,6 @@ require "strscan"
 require_relative "ast_fixer/syntax_transforms"
 require_relative "ast_fixer/web_transforms"
 require_relative "ast_fixer/dead_code_and_commas"
-require_relative "ast_fixer/vertical_breath"
 
 module Master
   module Fix
@@ -34,7 +33,7 @@ module Master
           Strategy.new(
             predicate: :ruby?,
             transforms: %i[add_frozen_header fix_bare_rescue freeze_mutable_constants remove_immediate_dead_code
-                           add_trailing_commas add_vertical_breath],
+                           add_trailing_commas],
           ),
           Strategy.new(predicate: :sql_context?, transforms: %i[normalise_null_comparison]),
           Strategy.new(predicate: :shell?, transforms: %i[add_strict_mode]),
@@ -60,7 +59,6 @@ module Master
         include SyntaxTransforms
         include WebTransforms
         include DeadCodeAndCommas
-        include VerticalBreath
 
         # A transform that takes code out is a different risk from one that puts
         # an attribute in, and this is the one place that knows which is which.
