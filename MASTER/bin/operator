@@ -294,10 +294,28 @@ when "lint"
       touched[current].concat((start...(start + (hunk[2] || "1").to_i)).to_a)
     end
   end
+  # A file-size finding sits on line 1, so a repair that touched line 1 (a header comment)
+  # inherited the file's standing length and every fix to a long stylesheet was refused.
+  # In changed-lines mode it counts only when this diff made the file longer.
+  file_size_laws = %w[SMALL_FILES JS_MODULE_SIZE].freeze
+  base_ref = diff_base == "HEAD" ? "HEAD" : ""
+
+  grew = lambda do |path|
+    spec = "#{base_ref}:#{path.delete_prefix("#{ROOT}/")}"
+    before, status = Master::Io::Exec.capture2e("git", "-C", ROOT, "show", spec)
+    !status.success? || before.lines.size < File.foreach(path).count
+  end
+
+  in_diff = lambda do |path, finding|
+    return grew.call(path) if file_size_laws.include?(finding[:law].to_s)
+
+    touched.fetch(path, []).include?(finding[:line])
+  end
+
   findings = files.flat_map do |path|
     result = scanner.scan(path, depth: :deep)
     rows = result.ok? ? Array(result.value!) : []
-    rows = rows.select { |finding| touched.fetch(path, []).include?(finding[:line]) } if touched
+    rows = rows.select { |finding| in_diff.call(path, finding) } if touched
     rows.map { |finding| [path, finding] }
   end
   if findings.empty?
