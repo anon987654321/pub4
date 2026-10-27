@@ -28,6 +28,10 @@ ENV["MASTER_BED"] = "0"
 # ~/.config/master/env and the live health log each changed which lane a test
 # saw first. The suite routes against empty state of its own.
 ENV["MASTER_NO_ENV_FILES"] = "1"
+# `bin/fix-here --model` exports the operator's pin, and the proof inherits it: four routing tests
+# graded that pin instead of the choice they set up, so every pinned /fix proved red against itself.
+ENV.delete("MASTER_MODEL")
+
 LIVE_STATE_DIR = Dir.mktmpdir("master-test-lanes-")
 ENV["MASTER_LANE_QUOTA_PATH"] = File.join(LIVE_STATE_DIR, "lane_quota.yml")
 ENV["MASTER_MODEL_QUOTA_PATH"] = File.join(LIVE_STATE_DIR, "model_quota.json")
