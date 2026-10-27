@@ -37,11 +37,11 @@ module Master
 
         LawDSL.law :N_PLUS_ONE,
           severity: :warning, tags: %i[PERFORMANCE],
-          fires: "posts.each { |post| post.author.name }\n",
+          fires: "posts.each { |post| post.author.name }\n", example_path: "/repo/RAILS/x/app/models/y.rb",
           does_not_fire: "posts.each { |post| post.title }\n",
           description: "loading records one-by-one inside a loop" do |src, path:|
-          # Only meaningful in Rails app/ trees; non-AR enumerable chains are fine.
-          next [] unless path.match?(%r{/app/|/spec/|/test/})
+          # Only meaningful in Rails trees; non-AR enumerable chains are fine.
+          next [] unless path.match?(%r{(?:\A|/)RAILS/.*/(?:app|spec|test)/})
 
           scan_lines(src, /\.(each|map|collect)\s*(do|\{).*\.\w+\.\w+/,
             message: "N+1 query candidate — use includes/eager_load")

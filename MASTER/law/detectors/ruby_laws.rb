@@ -158,8 +158,12 @@ module Master
           severity: :info, tags: %i[PERFORMANCE], applies_to: %i[ruby],
           fires: "  ids = order.items.map(&:id)\n",
           does_not_fire: "  ids = order.items.pluck(:id)\n",
+          example_path: "/repo/RAILS/brgen/app/models/example.rb",
           description: "prefer pluck over map for single columns" do |src, path:|
-          next [] unless path.match?(%r{/app/|/spec/|/test/})
+          # pluck is ActiveRecord's; a plain Ruby array has no columns. The
+          # guard was any /app/, /spec/ or /test/ path, so STUDIO's tool tests
+          # were told to pluck from arrays.
+          next [] unless path.match?(%r{(?:\A|/)RAILS/.*/(?:app|spec|test)/})
           scan_lines(src, /\.\w+\.map\(&:\w+\)/, message: "use pluck(:column) to avoid loading full objects")
         end
 

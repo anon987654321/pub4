@@ -323,7 +323,8 @@ module Master
                   description: "inappropriate intimacy through reflective access"
 
           def check(code, path:)
-            return [] unless path.to_s.end_with?(".rb", ".rake")
+            # Tests reach private engine methods by `send` on purpose (STUDIO/test/tool_test_helper.rb).
+            return [] if !path.to_s.end_with?(".rb", ".rake") || path.to_s.match?(%r{(?:\A|/)test/})
 
             code.lines.each_with_index.filter_map do |line, index|
               next if line.lstrip.start_with?("#") || !line.match?(INTIMACY)
@@ -389,13 +390,16 @@ module Master
           # info, as the catalogue declares it — see PRIMITIVE_OBSESSION above.
           declare id: "LAZY_CLASS", severity: :info, tags: %i[DISPENSABLES SRP],
                   description: "classes should own behavior, not only delegate"
+          # A delegate is `delegate`, or a method whose whole body is one call on another object.
+          DELEGATE = /^[ \t]*(?:delegate\b|def[ \t]+(?!self\.)\w+[!?=]?(?:\([^)\n]*\))?[ \t]*(?:;|\n)
+                      [ \t]*@?\w+\.\w+[^\n;]*(?:;|\n)[ \t]*end\b)/x
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
 
             classes(code).filter_map do |line, body|
               defs = body.scan(/^\s*def\s+/).size
-              delegates = body.scan(/^\s*(?:delegate\b|def\s+(?!self\.)\w+[!?=]?\s*;?\s*@?\w+\.\w+)/).size
+              delegates = body.scan(DELEGATE).size
               if defs.positive? && delegates >= defs && body.lines.size < 50
                 finding(line:, message: "lazy class only delegates — inline it or give it a real responsibility")
               end
