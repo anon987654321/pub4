@@ -135,7 +135,9 @@ class MasterWebAsciiFaceContractTest < Minitest::Test
   end
 
   def test_every_number_the_view_needs_is_in_the_contract_the_page_receives
-    assert_match(/window\.MASTER_FACE_CONTRACT = <%= raw Master\.tokens\.fetch\("face_interface", \{\}\)\.to_json %>/, view)
+    # json_escape keeps a "</script>" inside a token from closing the script element.
+    contract = /window\.MASTER_FACE_CONTRACT = <%= raw json_escape\(/
+    assert_match(/#{contract}Master\.tokens\.fetch\("face_interface", \{\}\)\.to_json\) %>/, view)
     web = ascii.fetch("web")
 
     assert_kind_of Integer, web.fetch("rows")
@@ -149,9 +151,12 @@ class MasterWebAsciiFaceContractTest < Minitest::Test
 
   def test_the_shell_uses_plain_prompt_text_without_ascii_art
     refute ascii.key?("wordmark")
-    refute ascii.key?("prompt")
+    # ascii.prompt holds the terminal shell's glyphs (Master::Face.glyph); the web
+    # shell never reads them and labels turns with plain words.
+    refute_includes read(PUBLIC, "chat.js"), "ascii.prompt"
     refute_match(/<pre id="wordmark"/, view)
-    assert_includes view, '<span class="pp" aria-hidden="true"><%= Master::Face::Contract.user_token %></span>'
+    # The web prompt shows host:path$ like the terminal, from the same contract.
+    assert_match(%r{<span class="pp" aria-hidden="true"><%= Master::Face::Contract\.shell_prompt %></span>}, view)
     refute_includes view, 'class="sep2"'
     tokens = read(ROOT, "MASTER", "data", "tokens.yml")
     assert_match(/user_token: "user"/, tokens)

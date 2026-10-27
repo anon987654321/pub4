@@ -75,7 +75,7 @@ class ChromeAuditFlatContractTest < Minitest::Test
     newsletter = read("__shared/app/assets/stylesheets/_newsletter_capture.scss")
 
     [modal, cookie, affiliate, commerce, offline, widgets, newsletter].each do |source|
-      refute_match(/box-shadow:\s*(?!none)/, source)
+      refute_match(/box-shadow:(?!\s*none\b)/, source)
     end
 
     assert_includes modal, ".dialog {"

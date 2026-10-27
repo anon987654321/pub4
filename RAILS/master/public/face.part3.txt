@@ -488,8 +488,10 @@ function frame(t) {
     if (!reducedMotion) head.scale.setScalar(breath);
     State.lean = (State.lean || 0) * 0.97;
     if (!reducedMotion && State.shake > 0.01 && isRichMotionProfile()) {
-      head.position.x = (Math.random() - 0.5) * State.shake * 0.18;
-      head.position.y = (Math.random() - 0.5) * State.shake * 0.18;
+      // Seeded per 60 Hz frame so the shake is deterministic like the orbital field.
+      const shakeFrame = Math.floor(sec * 60);
+      head.position.x = (faceFieldSample(shakeFrame, 11) - 0.5) * State.shake * 0.18;
+      head.position.y = (faceFieldSample(shakeFrame, 12) - 0.5) * State.shake * 0.18;
       head.position.z = State.lean;
       State.shake *= 0.86;
     } else if (!reducedMotion) {

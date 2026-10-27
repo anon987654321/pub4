@@ -14,7 +14,8 @@ class FormAndOverlaySurfaceContractTest < Minitest::Test
   def test_text_controls_have_a_shared_surface_and_focus_state
     assert_includes CSS, 'input[type="datetime-local"]'
     assert_includes CSS, "min-block-size: var(--tap-min)"
-    assert_includes CSS, "border-color: var(--accent)"
+    # Text fields are borderless, so focus shows as the shared outline ring.
+    assert_match(/\):not\(\.btn\):focus-visible \{\s*outline: var\(--focus-ring\);/, CSS)
     assert_includes CSS, ':not(.btn):user-invalid'
   end
 

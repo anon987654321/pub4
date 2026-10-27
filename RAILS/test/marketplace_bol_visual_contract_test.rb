@@ -116,6 +116,7 @@ class MarketplaceBolVisualContractTest < Minitest::Test
 
   def test_marketplace_hero_has_one_responsive_geometry_owner
     campaigns = File.read(CITY_CAMPAIGNS_CSS)
+    commerce = File.read(File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_marketplace_commerce.scss"))
 
     refute_includes campaigns, "min-height: 240px;",
                     "the late campaign layer must not replace the fluid hero media height"

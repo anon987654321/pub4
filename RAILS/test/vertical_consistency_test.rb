@@ -159,7 +159,10 @@ class VerticalConsistencyTest < Minitest::Test
     end
 
     widths.reject! { |vertical, _| READING_COLUMNS.include?(vertical) }
-    hardcoded = widths.reject { |_, value| value.include?("var(--container-max)") || value == "100%" }
+    # "none" and "100%" both leave main without a width of its own.
+    hardcoded = widths.reject do |_vertical, value|
+      value.include?("var(--container-max)") || %w[100% none].include?(value)
+    end
     assert_empty hardcoded, <<~MSG.strip
       these verticals hardcode their page width instead of using --container-max:
 

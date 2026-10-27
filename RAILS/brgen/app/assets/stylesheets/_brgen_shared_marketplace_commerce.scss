@@ -248,7 +248,7 @@ body.vertical-marketplace .store-buybox .price {
   }
 
   body.vertical-marketplace .bol-filter-column .listing-filters[open] > summary {
-    margin-bottom: 16px;
+    margin-bottom: var(--space-4);
   }
 
   body.vertical-marketplace .deal-grid {

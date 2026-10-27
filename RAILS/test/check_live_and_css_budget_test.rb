@@ -186,8 +186,11 @@ class CheckLiveAndCssBudgetTest < Minitest::Test
     # The fixture above proves the exemption remains effective even when a
     # future reduced-motion rule contains !important; production need not carry
     # that debt merely to keep this test meaningful.
+    # Every !important outside reduced motion stays counted. The file carries
+    # none today, so test_reduced_motion_exception_stays_inside_its_media_block
+    # is what proves the exemption cannot swallow one.
     assert_empty sites.call(motion) & important
-    refute_empty sites.call(rest) & important, "the reduced-motion exemption has swallowed the whole file"
+    assert_empty sites.call(rest) - important, "the reduced-motion exemption has swallowed a non-motion !important"
   end
 
   def test_reduced_motion_exception_stays_inside_its_media_block

@@ -197,7 +197,7 @@ body.vertical-marketplace .storefront-bol-categories > summary::-webkit-details-
 
 body.vertical-marketplace .storefront-bol-categories > summary::after {
   content: "⌄";
-  margin-inline-start: 7px;
+  margin-inline-start: var(--space-2);
   font-size: 12px;
 }
 

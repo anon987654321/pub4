@@ -77,7 +77,8 @@ class LayoutCheckEnforcementContractTest < Minitest::Test
     # Ultra-minimalism removes decorative rules, not functional controls or
     # visible keyboard affordances.
     assert_includes source, "main#main-content :is(input, select, textarea)"
-    assert_includes source, ":focus-visible { border-color: var(--accent); outline: var(--focus-ring); outline-offset: 2px; }"
+    # Text fields are borderless; keyboard focus is the shared outline ring.
+    assert_includes source, ":focus-visible { border: 0; outline: var(--focus-ring); outline-offset: 2px; }"
     assert_includes source, "body.wscons :is(input, select, textarea, button, .btn):focus-visible"
 
     assert_includes File.read(BRGEN_OVERRIDES, encoding: "UTF-8"), "@include endgame.brgen;"

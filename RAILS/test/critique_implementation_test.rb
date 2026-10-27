@@ -62,14 +62,13 @@ class CritiqueImplementationTest < Minitest::Test
     end
     refute_includes home, "sort-tabs"
     assert_match(/home\.intro_title|Bergen/, home)
-    # Was assert_includes compose, "Post to Bergen" — which pinned the single-city
-    # copy in place. brgen serves a different city per domain, so the composer
-    # heading has to interpolate: oshlo.no rendered "Post to Bergen" for as long
-    # as this assertion held.
-    assert_includes compose, "Post to %{city}"
-    assert_includes compose, "city: city_name"
+    # brgen serves a different city per domain, so the composer heading comes from
+    # the locale with the domain's city passed in, and its copy never names one
+    # city: oshlo.no once rendered "Post to Bergen".
+    assert_includes compose, 't("feed.compose_title", city: city_name)'
+    refute_match(/Bergen/, en_value("brgen", "feed.compose_title"))
     assert_includes compose, 't("feed.posting_as_guest")'
-    assert_equal "Posting as a guest", en_value("brgen", "feed.posting_as_guest")
+    assert_equal "Anon", en_value("brgen", "feed.posting_as_guest")
     assert_match(/post\.share|Share post/, post)
     assert_includes post, "shared/post_card"
     # Either spelling, on the feed action's own rule. The stylesheet writes
@@ -181,7 +180,7 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes search, "width: 480px;"
     assert_includes search, "border-radius: 30px;"
     assert_includes search, "box-shadow: none;"
-    refute_match(/box-shadow:\s*(?!none)/, search)
+    refute_match(/box-shadow:(?!\s*none\b)/, search)
     assert_includes affiliate, 'data-controller="parallax-tilt"'
     assert_includes affiliate, 'data-parallax-tilt-target="tile"'
     assert_match(/\.affiliate_feed_label\s*\{[^}]*font-size:\s*var\(--text-xs\);/m, affiliate_css)
@@ -371,9 +370,10 @@ class CritiqueImplementationTest < Minitest::Test
     assert_match(/\.commerce-fit-source\s*\{[^}]*line-height:\s*var\(--leading-tight\);/m, amber_polish)
     refute_match(/\.commerce-fit-source\s*\{[^}]*font-size:\s*11px;/m, amber_polish)
     assert_includes seller, 'class="store-seller-center"'
-    assert_includes item, 'class="commerce-fit-list"'
-    assert_includes item, 'class="commerce-fit-source"'
-    assert_includes item, 'class="commerce-fit-reasons"'
+    # The fit list composes with layout utilities (stack, tag), so assert the class token.
+    %w[commerce-fit-list commerce-fit-source commerce-fit-reasons].each do |name|
+      assert_match(/class="[^"]*\b#{name}\b[^"]*"/, item)
+    end
   end
 
   def test_brgen_new_post_is_progressive_and_photo_first
@@ -444,6 +444,7 @@ class CritiqueImplementationTest < Minitest::Test
     controller = read("brgen/app/controllers/home_controller.rb")
     feed = read("brgen/app/views/home/_live_search_results.html.erb")
     card = read("brgen/app/views/home/_media_card.html.erb")
+    add_card = read("brgen/app/views/home/_media_add_card.html.erb")
     css = brgen_css_source
 
     assert_includes home, "home.feed_view"
@@ -453,8 +454,8 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes feed, 'params[:view].to_s == "media"'
     assert_includes feed, 'render "home/media_card"'
     assert_includes feed, '<% if params[:view].to_s == "media" %>'
-    assert_includes feed, "brgen-media-add-link"
     assert_includes feed, 'render "home/media_add_card"'
+    assert_includes add_card, "brgen-media-add-link"
     assert_includes card, "responsive_image_tag(post.image"
     assert_includes card, "video_tag post.video"
     assert_includes card, 'controls: true'
@@ -492,7 +493,9 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes feed, 'variant: :prose'
     assert_includes feed, 'show_votes: true'
     assert_includes feed, 'post_url: post_path(post)'
-    assert_includes feed, 'link_to "…", post_url'
+    # The "…" read-more link lives in the shared card the feed renders.
+    assert_includes feed, 'render "shared/post_card"'
+    assert_includes read("__shared/app/views/shared/_post_card.html.erb"), 'link_to "…", post_url'
     assert_includes show, 'render "shared/post_vote_rail"'
     assert_includes show, 'class="post-show-actions feed-card-actions"'
     assert_includes css, ".post-show-comments"

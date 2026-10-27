@@ -36,7 +36,7 @@ class VisualSystemContractTest < Minitest::Test
       constructor(name, options = {}) {
         this.type = name
         this.detail = options.detail || {}
-      },
+      }
     }
     globalThis.document = {
       hidden: false,
@@ -170,7 +170,7 @@ class VisualSystemContractTest < Minitest::Test
       social
       dating
       luxury
-      radio,
+      radio
     ].each { |token| assert_includes source, token }
   end
 

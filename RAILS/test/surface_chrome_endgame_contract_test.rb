@@ -22,7 +22,7 @@ class SurfaceChromeEndgameContractTest < Minitest::Test
     all_sources = "#{app}\n#{features}"
 
     [".radio-home-header {", ".radio-track-card-art {", ".playlist-transport-bar {",
-     "body.vertical-messenger #new_message {", "body.vertical-marketplace .bol-market-hero {"].each do |selector|
+     "body.vertical-messenger #new_message", "body.vertical-marketplace .bol-market-hero {"].each do |selector|
       assert_includes all_sources, selector
     end
 
@@ -37,7 +37,7 @@ class SurfaceChromeEndgameContractTest < Minitest::Test
                   .map { |path| File.read(path, encoding: "UTF-8") }.join("\n")
     all_sources = "#{app}\n#{features}"
 
-    [".feed-post {", ".amber-editorial-nav{", ".amber-messenger-composer textarea,.amber-messenger-composer select {",
+    [".feed-post {", ".amber-editorial-nav{", ".amber-messenger-composer textarea,.amber-messenger-composer select",
      'body[data-surface="luxury"] .item-card--luxury {'].each do |selector|
       assert_includes all_sources, selector
     end
@@ -48,7 +48,8 @@ class SurfaceChromeEndgameContractTest < Minitest::Test
 
   def test_endgame_file_has_no_shadow_or_important_vetoes
     source = source("__shared/app/assets/stylesheets/_surface_chrome_endgame.scss")
-    refute_includes source, "box-shadow"
+    # Resetting to none is how the endpoint flattens earlier chrome; any other value is a shadow.
+    refute_match(/box-shadow:(?!\s*none\b)/, source)
     refute_includes source, "!important"
   end
 end
