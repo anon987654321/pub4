@@ -5,6 +5,7 @@ require "open3"
 require_relative "run_pulse"
 require_relative "autofix_guard"
 require_relative "run_ledger"
+require_relative "refusals"
 require_relative "tool_breaker"
 require_relative "resource_budget"
 require_relative "../review/llm_dispatcher/pass_clock"
@@ -45,6 +46,7 @@ module Master
           finish_run
           ToolBreaker.reset!
           RunLedger.begin_run!
+          Refusals.begin_run!
           Master::Review::LLMDispatcher::PassClock.cap_calls!(call_cap_s)
           @current = new(root:, max_passes:).start!.tap { |run| run.announce(target:, bus:) }
         end
@@ -308,6 +310,7 @@ module Master
         lines = @pulse.pass_summary(pass, tokens: spend.last)
         lines.concat(AutofixGuard.summary_lines)
         lines.concat(RunLedger.summary_lines)
+        lines << Refusals.pass_summary_line
         lines << "fix0: pass #{pass} #{fused} tuples fused" if fused.positive?
         lines << "fix0: pass #{pass} #{@laws_over.size} laws over budget" if @laws_over.any?
         lines.each { |text| @say.call(text) }

@@ -320,6 +320,20 @@ class TestFixRunBudget < Minitest::Test
     assert_match(/\Afix0: pass 1 commits = \d+ tokens = 5000 \(5K\)\z/, @said[2])
   end
 
+  # Every gate is named at the pass boundary, a zero included, and the next pass counts afresh.
+  def test_the_pass_summary_counts_refusals_by_gate
+    run = budget
+    Master::Fix::Refusals.begin_run!
+    capture_io { Master::Fix::Refusals.record(gate: :scope, file: "a.rb", reason: "changes lines 90-91") }
+    run.pass_end(1)
+    run.pass_end(2)
+
+    summaries = @said.grep(/\Afix0: refusals this pass: /)
+    assert_includes summaries.first, " scope=1 "
+    assert_includes summaries.first, " verifier=0 "
+    assert_includes summaries.last, " scope=0 "
+  end
+
   def test_banner_is_dmesg_shaped_with_not_configured_lines
     lines = Master::Fix::RunPulse::Banner.lines(
       root: "/r/MASTER", target: "RAILS", max_passes: 8, limits: "budget $50.0 / 480m", now: Time.at(0).utc,
