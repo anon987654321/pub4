@@ -240,6 +240,31 @@ class TestFixModelPhaseGuards < Minitest::Test
     end
   end
 
+  # A signature change edits its callers wherever they are; a small hunk at a
+  # call of the method is in scope, and a rewrite elsewhere still is not.
+  def test_a_signature_change_may_reach_its_call_sites_and_nothing_else
+    Dir.mktmpdir do |root|
+      path = File.join(root, "a.rb")
+      lines = ["def resize(width, height, depth, unit)\n", "  [width, height, depth, unit]\n", "end\n"]
+      lines += (4..120).map { |n| "x#{n} = #{n}\n" }
+      lines[99] = "box = resize(1, 2, 3, :cm)\n"
+      File.write(path, lines.join)
+
+      loop = budget_loop
+      violation = { file: path, line: 1 }
+
+      signature = lines.dup
+      signature[0] = "def resize(size)\n"
+      signature[1] = "  size.values_at(:width, :height, :depth, :unit)\n"
+      signature[99] = "box = resize(width: 1, height: 2, depth: 3, unit: :cm)\n"
+      assert_nil loop.send(:outside_finding_range, violation, signature.join)
+
+      unrelated = signature.dup
+      unrelated[109] = "x110 = :rewritten\n"
+      assert_match(/changes lines 110-110/, loop.send(:outside_finding_range, violation, unrelated.join))
+    end
+  end
+
   class Stream
     include Master::Fix::FixLoop::PassRunner::StreamStage
     def initialize = @root = "/r"

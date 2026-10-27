@@ -40,22 +40,91 @@ module Master
         # The lines each finding of this repair points at.
         def scope_lines(violation) = [violation[:line].to_i]
 
-        # nil when every changed line lies within SCOPE_PAD of a finding, else a
-        # sentence saying where. A finding with no line (a whole-file rule)
-        # leaves the proposal unchecked.
+        # nil when every changed hunk lies within SCOPE_PAD of a finding, or is a
+        # small edit at a call of a method defined in that range, else a sentence
+        # saying where. A finding with no line (a whole-file rule) leaves the
+        # proposal unchecked.
+
+        # Hunks, not one first-to-last span: changing a method's signature
+        # (FEW_ARGUMENTS) means editing its callers, which sit anywhere in the
+        # file. Judged as one span, every such repair read as a rewrite of the
+        # lines between and was refused, and the model's only in-scope answer was
+        # to hide the arguments behind a splat.
         def outside_finding_range(violation, proposed_src)
           lines = scope_lines(violation).select(&:positive?)
           return if lines.empty? || !File.file?(violation[:file].to_s)
 
-          old_src = File.read(violation[:file], encoding: "UTF-8")
-          first, last = changed_old_region(old_src, proposed_src)
-          return unless first
+          range = (lines.min - SCOPE_PAD)..(lines.max + SCOPE_PAD)
+          stray = stray_hunks(File.read(violation[:file], encoding: "UTF-8"), proposed_src, range)
+          return if stray.empty?
 
-          low = lines.min - SCOPE_PAD
-          high = lines.max + SCOPE_PAD
-          return if first >= low && last <= high
+          "changes lines #{stray.map(&:first).min}-#{stray.map(&:last).max}, " \
+            "finding range is #{[range.begin, 1].max}-#{range.end}"
+        end
 
-          "changes lines #{first}-#{last}, finding range is #{[low, 1].max}-#{high}"
+        def stray_hunks(old_src, new_src, range)
+          callees = methods_defined_in(old_src.lines, range)
+          changed_hunks(old_src, new_src).reject { |hunk| hunk_in_scope?(hunk, range:, callees:) }
+        end
+
+        CALL_SITE_HUNK_MAX = 4
+
+        Hunk = Struct.new(:first, :last, :text, :size, keyword_init: true)
+
+        def hunk_in_scope?(hunk, range:, callees:)
+          return true if range.cover?(hunk.first) && range.cover?(hunk.last)
+          return false if hunk.size > CALL_SITE_HUNK_MAX
+
+          callees.any? { |name| hunk.text.match?(/(?<![\w@$])#{Regexp.escape(name)}(?!\w)/) }
+        end
+
+        # Methods whose def sits in the finding's range: their call sites may
+        # change with them. Short or generic names would match too much.
+        def methods_defined_in(old_lines, range)
+          old_lines[[range.begin - 1, 0].max..(range.end - 1)].to_a
+            .filter_map { |line| line[/\bdef\s+(?:self\.)?([a-z_]\w*[?!=]?)/, 1] }
+            .reject { |name| name.length < 4 || %w[call initialize].include?(name) }
+            .uniq
+        end
+
+        # Each changed region of the old file, from git's own diff; one span
+        # when git cannot say.
+        def changed_hunks(old_src, new_src)
+          git_hunks(old_src, new_src) || span_hunk(old_src, new_src)
+        end
+
+        def span_hunk(old_src, new_src)
+          first, last = changed_old_region(old_src, new_src)
+          return [] unless first
+
+          [Hunk.new(first:, last:, text: old_src.lines[(first - 1)..(last - 1)].to_a.join, size: last - first + 1)]
+        end
+
+        def git_hunks(old_src, new_src)
+          Dir.mktmpdir("fix-scope") do |dir|
+            before = File.join(dir, "before")
+            after = File.join(dir, "after")
+            File.write(before, old_src)
+            File.write(after, new_src)
+
+            out, status = Master::Io::Exec.capture2e("git", "diff", "--no-index", "-U0", "--no-color", before, after)
+            return nil unless [0, 1].include?(status.exitstatus)
+
+            sides = { old: old_src.lines, new: new_src.lines }
+            out.scan(/^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/).map { |header| hunk_from(header, sides) }
+          end
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "RepairLoop.git_hunks")
+          nil
+        end
+
+        # One @@ header: the old span it replaces and the text on both sides.
+        def hunk_from(header, sides)
+          old_first, old_count, new_first, new_count =
+            header.zip(%w[0 1 0 1]).map { |value, default| (value || default).to_i }
+          text = (sides[:old][(old_first - 1), old_count].to_a + sides[:new][(new_first - 1), new_count].to_a).join
+          last = old_count.zero? ? old_first : old_first + old_count - 1
+          Hunk.new(first: old_first, last:, text:, size: [old_count, new_count].max)
         end
 
         # The 1-based span of the OLD file that differs from the proposal, or nil
