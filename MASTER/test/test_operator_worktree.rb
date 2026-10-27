@@ -64,6 +64,15 @@ class TestOperatorWorktree < Minitest::Test
     assert File.directory?(entry.path)
   end
 
+  def test_list_and_remove_refuse_a_symlinked_managed_root
+    outside = File.join(@workspace, "outside")
+    FileUtils.mkdir_p(outside)
+    File.symlink(outside, @manager.managed_root)
+
+    assert_raises(Operator::Worktree::Error) { @manager.list }
+    assert_raises(Operator::Worktree::Error) { @manager.remove("anything") }
+  end
+
   def test_rejects_traversal_and_does_not_overwrite_an_existing_branch
     assert_raises(Operator::Worktree::Error) { @manager.create("../outside") }
     git!("branch", "work/existing")
