@@ -38,14 +38,14 @@ module Operator
       raise Error, "branch #{branch} already exists; choose another name or inspect it with bin/operator branches" if branch_exists?(branch)
 
       revision = git!("rev-parse", "--verify", "#{base}^{commit}").strip
-      ensure_managed_root!
+      ensure_managed_root!(create: true)
       raise Error, "worktree path already exists: #{path}" if File.exist?(path) || File.symlink?(path)
       git!("worktree", "add", "-b", branch, path, revision)
       Entry.new(name:, path:, branch:, revision:)
     end
 
     def list
-      return [] unless File.directory?(managed_root) && !File.symlink?(managed_root)
+      return [] unless ensure_managed_root!(create: false)
 
       registered_worktrees.filter_map do |entry|
         path = File.expand_path(entry[:path])
@@ -57,6 +57,8 @@ module Operator
 
     def remove(name)
       name = validate_name(name)
+      raise Error, "no registered managed worktree named #{name}" unless ensure_managed_root!(create: false)
+
       path = managed_path(name)
       entry = registered_worktrees.find { |item| File.expand_path(item[:path]) == path }
       raise Error, "no registered managed worktree named #{name}" unless entry
@@ -131,12 +133,19 @@ module Operator
       File.join(managed_root, validate_name(name))
     end
 
-    def ensure_managed_root!
+    def ensure_managed_root!(create:)
       raise Error, "managed worktree directory may not be a symlink: #{managed_root}" if File.symlink?(managed_root)
-      FileUtils.mkdir_p(managed_root)
+      if create
+        FileUtils.mkdir_p(managed_root)
+      else
+        return false unless File.directory?(managed_root)
+      end
+
       resolved = File.realpath(managed_root)
       expected = File.expand_path(managed_root)
       raise Error, "managed worktree directory resolves outside its declared location" unless resolved == expected
+
+      true
     end
 
     def branch_exists?(branch)
