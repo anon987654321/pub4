@@ -36,11 +36,16 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     Rails.application.config.x.master_container = nil
 
     # The Accept header dashboard_live.js sends; a GET does not take its format from as: :json.
+    # rearm! starts a thread that boots the real MASTER where one is installed; it raced the
+    # request and answered 200, so the loader is held still here (minitest 6 has no stub).
+    rearm = MasterContainerLoader.method(:rearm!)
+    MasterContainerLoader.define_singleton_method(:rearm!) { |*| nil }
     get "/dashboard/live", headers: auth_headers.merge("Accept" => "application/json")
 
     assert_response :service_unavailable
     assert_equal "warming up", JSON.parse(response.body)["error"]
   ensure
+    MasterContainerLoader.define_singleton_method(:rearm!, rearm) if rearm
     Rails.application.config.x.master_container = stub_master_container
   end
 
