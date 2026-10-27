@@ -358,7 +358,7 @@ module Master
               reason: "matrix artifact failed: #{e.class}: #{e.message.to_s[0, 150]}",
             }
           end
-          
+
           private
 
           def surface_coverage_summary
@@ -456,7 +456,7 @@ module Master
                   unless law_id
                     observation[:unclassified_findings] << {
                       "law" => raw_id, "file" => absolute,
-                      "reason" => "finding identity is absent from the runtime assessment population",
+                      "reason" => "finding identity is absent from the runtime assessment population"
                     }
                     next
                   end
@@ -475,7 +475,7 @@ module Master
                   unless stream && info[:streams].include?(stream)
                     observation[:unclassified_findings] << {
                       "law" => law_id, "file" => absolute,
-                      "reason" => "finding stream could not be resolved from explicit tags",
+                      "reason" => "finding stream could not be resolved from explicit tags"
                     }
                     next
                   end
@@ -521,7 +521,7 @@ module Master
             end
 
             candidate_clean = surface_probe_candidate_clean?(
-              observation:, signatures_stable:, semantic_gaps:, pending:, visual:, opportunities:
+              observation:, signatures_stable:, semantic_gaps:, pending:, visual:, opportunities:,
             )
             @assessment_surface_report = SurfaceEvidence.capture(
               root: @assessment_plan.root,
@@ -557,13 +557,13 @@ module Master
             @assessment_last_pass = Integer(pass)
             @bus&.publish(
               "fix_loop:assessment_matrix_pass",
-              **@assessment_ledger.summary.merge(pass:, plan_source_digest: plan_digest)
+              **@assessment_ledger.summary.merge(pass:, plan_source_digest: plan_digest),
             )
           rescue StandardError => e
             stage_failures[:assessment_matrix] << "pass #{pass}: #{e.class}: #{e.message.to_s[0, 180]}"
             @bus&.publish(
               "fix_loop:assessment_matrix_pass_failed",
-              pass:, error_class: e.class.name, message: e.message
+              pass:, error_class: e.class.name, message: e.message,
             )
           end
 
@@ -594,7 +594,7 @@ module Master
               return assessment_result(
                 :inconclusive,
                 reason: "Law #{law_id} has no deterministic assessor for #{stream}; it cannot be marked clean",
-                evidence:
+                evidence:,
               )
             end
             unless info[:streams].include?(stream)
@@ -759,7 +759,7 @@ module Master
                 return assessment_result(
                   :inconclusive,
                   reason: "syntax tree receipt missing/stale for #{missing.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}",
-                  evidence: cell_evidence
+                  evidence: cell_evidence,
                 )
               end
               cell_evidence += receipt_evidence
@@ -1017,21 +1017,21 @@ module Master
             return assessment_result(
               :inconclusive,
               reason: "source differs from pinned FixPlan generation: #{stale_plan.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}",
-              evidence:
+              evidence:,
             ) if stale_plan.any?
 
             unread = applicable.reject { |path| observation[:scanned].include?(path) }
             return assessment_result(
               :inconclusive,
               reason: "scanner did not examine every applicable file: #{unread.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}",
-              evidence:
+              evidence:,
             ) if unread.any?
 
             refused = applicable.select { |path| observation[:refused].key?(path) }
             return assessment_result(
               :inconclusive,
               reason: "scan short-circuited for #{refused.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}",
-              evidence:
+              evidence:,
             ) if refused.any?
 
             if found.any?
@@ -1046,7 +1046,7 @@ module Master
               return assessment_result(
                 :inconclusive,
                 reason: "semantic reads pending for #{pending_paths.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}",
-                evidence:
+                evidence:,
               ) if pending_paths.any?
               return assessment_result(
                 :inconclusive, reason: "semantic gap paths could not be scoped: #{pending_unknown.first(4).join(", ")}", evidence:
@@ -1056,7 +1056,7 @@ module Master
               return assessment_result(
                 :inconclusive,
                 reason: "semantic read inconclusive for #{gap_paths.first(4).map { |path| path.delete_prefix("#{@root}/") }.join(", ")}",
-                evidence:
+                evidence:,
               ) if gap_paths.any?
               return assessment_result(
                 :inconclusive, reason: "semantic gap paths could not be scoped: #{gap_unknown.first(4).join(", ")}", evidence:

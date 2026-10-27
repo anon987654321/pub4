@@ -34,7 +34,7 @@ class TestAssessmentAdapterInventory < Minitest::Test
   def test_present_but_non_applicable_adapters_are_distinguished_from_missing
     adapters = runner(
       visual: Applicable.new(false),
-      opportunities: Applicable.new(false)
+      opportunities: Applicable.new(false),
     ).assessment_adapters(target: "MASTER")
 
     assert_equal "not_applicable_to_target", adapters.fetch("rendered_ui")
@@ -45,7 +45,7 @@ class TestAssessmentAdapterInventory < Minitest::Test
   def test_applicable_visual_adapter_advertises_both_render_and_interaction_probes
     adapters = runner(
       visual: Applicable.new(true),
-      opportunities: Applicable.new(true)
+      opportunities: Applicable.new(true),
     ).assessment_adapters(target: "RAILS")
 
     assert_equal "visual_pass", adapters.fetch("rendered_ui")
@@ -110,6 +110,5 @@ class TestAssessmentAdapterInventory < Minitest::Test
   ensure
     audit_class.define_singleton_method(:new, original_new) if audit_class && original_new
   end
-
 
 end

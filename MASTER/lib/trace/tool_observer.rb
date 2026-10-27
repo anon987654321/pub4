@@ -34,7 +34,7 @@ module Master
             tool:,
             tier:,
             arguments_digest:,
-            arguments_bytes:
+            arguments_bytes:,
           }
         end
       end
@@ -103,7 +103,7 @@ module Master
           tool: Master::Execution::Contract.token!(payload["tool"], "tool name"),
           tier: Master::Execution::Contract.token!(payload["tier"], "tool tier"),
           arguments_digest: payload["arguments_digest"].to_s.match?(/\A[0-9a-f]{64}\z/) ? payload["arguments_digest"] : nil,
-          arguments_bytes: Integer(payload["arguments_bytes"])
+          arguments_bytes: Integer(payload["arguments_bytes"]),
         ).then { |identity| identity.arguments_digest && identity }
       rescue ArgumentError, TypeError
         nil
@@ -124,7 +124,7 @@ module Master
           if (unknown = @unresolved[sig])
             raise UnknownOutcome.new(
               invocation_id: unknown.invocation_id,
-              message: "previous tool outcome is unresolved; verify state and reconcile before retrying"
+              message: "previous tool outcome is unresolved; verify state and reconcile before retrying",
             )
           end
           raise ArgumentError, "duplicate tool invocation identity" if @pending.key?(key) || @completed.key?(key)
@@ -166,7 +166,7 @@ module Master
             status: outcome,
             elapsed_ms: elapsed,
             result_bytes: bytes,
-            retry_requires_reconciliation: outcome == "unknown_outcome"
+            retry_requires_reconciliation: outcome == "unknown_outcome",
           ).compact
           payload.merge!(Master::Execution::Contract.diagnostic_fields(error)) unless error.nil?
           @bus.publish_required(AFTER_EVENT, payload)
@@ -174,7 +174,7 @@ module Master
           mark_unresolved(expected)
           raise UnknownOutcome.new(
             invocation_id: id,
-            message: "tool after-receipt unavailable; verify current state and reconcile before retrying (#{e.class})"
+            message: "tool after-receipt unavailable; verify current state and reconcile before retrying (#{e.class})",
           )
         end
 
@@ -230,7 +230,7 @@ module Master
 
         @bus.publish_required(
           RECONCILED_EVENT,
-          expected.to_h.merge(reconciliation: decision, evidence_ref: reference)
+          expected.to_h.merge(reconciliation: decision, evidence_ref: reference),
         )
 
         unless decision == "still_unknown"
@@ -272,7 +272,7 @@ module Master
           tool: name,
           tier: level,
           arguments_digest: Digest::SHA256.hexdigest(document),
-          arguments_bytes: document.bytesize
+          arguments_bytes: document.bytesize,
         )
       end
 

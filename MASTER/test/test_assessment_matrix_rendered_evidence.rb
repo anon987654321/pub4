@@ -31,7 +31,7 @@ class TestAssessmentMatrixRenderedEvidence < Minitest::Test
       "reason" => reason,
       "evidence_sha256" => "c" * 64,
       "counts" => { "surfaces" => surfaces&.size || 0 },
-      "evidence" => evidence
+      "evidence" => evidence,
     }.compact
   end
 
@@ -40,7 +40,7 @@ class TestAssessmentMatrixRenderedEvidence < Minitest::Test
       "rendered_status" => "assessed_clean",
       "screenshot_sha256" => "a" * 64,
       "geometry_sha256" => "b" * 64,
-      "element_count" => 12
+      "element_count" => 12,
     }
   end
 
@@ -53,7 +53,7 @@ class TestAssessmentMatrixRenderedEvidence < Minitest::Test
         source_kind: :canonical,
         streams: [:semantic_violations],
         surfaces: [:rendered_ui],
-        unmeasurable_reason: nil
+        unmeasurable_reason: nil,
       },
       stream: :semantic_violations,
       surface: :rendered_ui,
@@ -64,7 +64,7 @@ class TestAssessmentMatrixRenderedEvidence < Minitest::Test
       pending: [],
       evidence: ["source_sha256=" + ("d" * 64)],
       visual:,
-      opportunities: nil
+      opportunities: nil,
     )
   end
 
@@ -96,7 +96,7 @@ class TestAssessmentMatrixRenderedEvidence < Minitest::Test
     receipts = { "rendered_ui" => rendered_receipt(surfaces: [capture]) }
     findings = [
       { law: "OTHER_LAW", message: "not this law" },
-      { law: LAW_ID, message: "misaligned rendered control" }
+      { law: LAW_ID, message: "misaligned rendered control" },
     ]
     result = assess(matrix(receipts), visual: visual_result(findings:))
 

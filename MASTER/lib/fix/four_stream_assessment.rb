@@ -153,8 +153,8 @@ module Master
         end
         {
           laws: laws.size,
-          generation: generation,
-          last_mutation_iteration: last_mutation_iteration,
+          generation:,
+          last_mutation_iteration:,
           clean_passes_required: clean_passes,
           expected_cells: keys.size,
           recorded_cells: latest.count { |_key, row| !row.nil? },
@@ -199,14 +199,14 @@ module Master
           laws: laws.size,
           generation: @generation,
           clean_passes_required: clean_passes,
-          last_mutation_iteration: last_mutation_iteration,
+          last_mutation_iteration:,
           streams: STREAMS.map(&:to_s),
           surfaces: surfaces.map(&:to_s),
           expected_cells: cells.size,
           recorded_cells: latest_by_cell.count { |_, row| !row.nil? },
           complete: complete?,
           clean: clean?,
-          stream_summary: stream_summary,
+          stream_summary:,
           open_findings: latest_by_cell.filter_map do |key, row|
             next unless row && (
               %i[violation_found opportunity_found].include?(row.status) ||
@@ -229,7 +229,6 @@ module Master
         }
       end
 
-
       # Durable per-cell proof, including the complete transition history. The
       # compact terminal summary is intentionally separate from this audit record.
       def evidence_report
@@ -237,8 +236,8 @@ module Master
           schema_version: 2,
           streams: STREAMS.map(&:to_s),
           surfaces: surfaces.map(&:to_s),
-          laws: laws,
-          summary: summary,
+          laws:,
+          summary:,
           invalidations: Array(@invalidations).map do |entry|
             {
               iteration: entry[:iteration],
@@ -280,7 +279,7 @@ module Master
       end
 
       def repair_evidence(repair)
-        return nil if repair.nil?
+        return if repair.nil?
 
         if repair.is_a?(Hash)
           {
@@ -346,7 +345,7 @@ module Master
         end
 
         outcome = normalize_outcome(assessor.call(
-          law:, stream:, surface:, iteration:, prior: history[key].dup.freeze
+          law:, stream:, surface:, iteration:, prior: history[key].dup.freeze,
         ))
 
         unless FINDING_STATES.include?(outcome[:status])

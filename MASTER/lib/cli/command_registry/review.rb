@@ -142,7 +142,6 @@ module Master
           return results
         end
 
-
         reasoning = Master::Fix::TreeReasoning.new(agent: deliberation.agent, root: Master.repo_root, bus:)
         targets.each do |tree_target|
           return results if cancellation&.cancelled?
@@ -206,13 +205,13 @@ module Master
             with_dmesg_verbosity(raw, default: "trace") do
               next cancelled_fix_result(cancellation) if cancellation&.cancelled?
               first_read_results = first_read(
-                deliberation:, bus:, targets:, persist: writes_requested, cancellation:
+                deliberation:, bus:, targets:, persist: writes_requested, cancellation:,
               )
               next cancelled_fix_result(cancellation) if cancellation&.cancelled?
 
               unless ENV["MASTER_FIX_DEEP_TRACE"] == "0"
                 trace = steady_trace(
-                  scope: trace_scope, dependencies: { scanner:, fix_loop:, deliberation:, bus: }, cancellation:
+                  scope: trace_scope, dependencies: { scanner:, fix_loop:, deliberation:, bus: }, cancellation:,
                 )
                 next cancelled_fix_result(cancellation) if cancellation&.cancelled?
                 Master::Trace::Dmesg.status("trace0", trace.summary)
@@ -225,7 +224,7 @@ module Master
               end
 
               structural_review(
-                deliberation:, bus:, targets:, persist: writes_requested, first_read_results:, cancellation:
+                deliberation:, bus:, targets:, persist: writes_requested, first_read_results:, cancellation:,
               )
               next cancelled_fix_result(cancellation) if cancellation&.cancelled?
 

@@ -234,7 +234,7 @@ module Master
           transaction_id = stranded.is_a?(Hash) ? stranded["transaction_id"] : nil
           if transaction_id && Transaction::Recovery.persisted?(root: @transaction_root, id: transaction_id)
             recovered = resume_active_transaction(
-              journal:, run_id:, start_pass: @run_journal.next_pass(journal)
+              journal:, run_id:, start_pass: @run_journal.next_pass(journal),
             )
             return finish_run(recovered, target, run_id, mission:, requested:) if recovered.err?
           end
@@ -559,11 +559,10 @@ module Master
                       expanded_root
                     end
         restructure = RestructureSweep.new(
-          agent:, repo_root:, bus:, transformation_plan: @transformation_plan, ground_truth:, preserve_user_intent:
+          agent:, repo_root:, bus:, transformation_plan: @transformation_plan, ground_truth:, preserve_user_intent:,
         )
         [restructure, RenameSweep.new(agent:, repo_root:, bus:, ground_truth:, preserve_user_intent:)]
       end
-
 
     end
   end
