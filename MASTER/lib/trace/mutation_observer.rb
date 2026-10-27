@@ -178,7 +178,15 @@ module Master
         canonical_roots = []
         canonical_roots << File.expand_path(Master::ROOT) if defined?(Master::ROOT)
         canonical_roots << File.expand_path(Master::REPO_ROOT) if defined?(Master::REPO_ROOT)
-        telemetry_root = canonical_roots.include?(@root) && defined?(Master::ROOT) ? Master::ROOT : @root
+        # Any other root is a tree /fix is repairing. Its receipts go under its
+        # .master/, which every checkout ignores: a runtime/ dropped into that
+        # tree reads as a new excluded file, changes the plan's exclusion digest
+        # each pass and resets the loop's stagnation and cycle counters.
+        telemetry_root = if canonical_roots.include?(@root) && defined?(Master::ROOT)
+                           Master::ROOT
+                         else
+                           File.join(@root, ".master")
+                         end
         event_log = Master::Trace::Log::Event.new(root: telemetry_root)
         Master::Trace::EventBus.new(event_log:)
       end
