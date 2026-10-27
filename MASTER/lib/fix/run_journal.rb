@@ -27,6 +27,7 @@ module Master
       LOCK = ".master/fix_runs.lock"
       MAX_RUNS = 24
       ASSESSMENT_DIR = ".master/fix_assessments"
+      ARCHITECTURE_DIR = ".master/fix_architecture"
       SURFACE_COVERAGE_SURFACES = %w[
         repository_tree directories file_names paths cross_file media_assets compiled_assets
         rendered_ui interactive_behavior tests runtime deployment
@@ -190,6 +191,163 @@ module Master
         )
         prune_assessment_reports!(keep_ids: history(limit: MAX_RUNS).map { |entry| entry["id"] })
         receipt
+      end
+
+      # Persist every stage of the architecture tournament, including its complete accepted
+      # candidate population. Each revision is immutable until its checksum receipt is indexed;
+      # after the journal points to the new revision, older revisions may be pruned safely.
+      def persist_architecture_report(run_id, target:, report:, provenance:)
+        id = run_id.to_s
+        raise ArgumentError, "invalid fix run id" unless id.match?(/\\A[a-f0-9]{20}\\z/)
+        raise ArgumentError, "architecture report must be a hash" unless report.is_a?(Hash)
+        raise ArgumentError, "architecture provenance must be a hash" unless provenance.is_a?(Hash)
+
+        master_dir = File.join(@root, ".master")
+        directory = File.join(@root, ARCHITECTURE_DIR)
+        raise "refusing symlinked .master directory" if File.symlink?(master_dir)
+        raise "refusing symlinked architecture directory" if File.symlink?(directory)
+        FileUtils.mkdir_p(directory, mode: 0o700)
+        mode = File.stat(directory).mode & 0o777
+        raise "architecture report directory permissions are not private" unless (mode & 0o077).zero?
+
+        safe_provenance = json_safe_value(provenance)
+        provenance_digest = Digest::SHA256.hexdigest(JSON.generate(safe_provenance.sort.to_h))
+        revision = SecureRandom.hex(6)
+        name = "#{id}-#{provenance_digest[0, 12]}-#{revision}.json"
+        path = File.join(directory, name)
+        raise "refusing symlinked architecture report" if File.symlink?(path)
+
+        envelope = {
+          "schema_version" => 1,
+          "run_id" => id,
+          "target" => relative(target),
+          "created_at" => Time.now.utc.iso8601,
+          "provenance" => safe_provenance,
+          "report" => json_safe_value(report),
+        }
+        payload = JSON.pretty_generate(envelope) + "\\n"
+        @lifecycle_observer.mutate(operation: "persist_architecture_report",
+                                   item_count: Array(envelope.dig("report", "targets")).size) do
+          write_atomic(path, payload, mode: 0o600)
+        end
+        stored_payload = File.binread(path)
+        digest = Digest::SHA256.hexdigest(payload)
+        raise "architecture report read-back mismatch" unless stored_payload == payload
+        raise "architecture report checksum mismatch after write" unless Digest::SHA256.hexdigest(stored_payload) == digest
+        file_mode = File.stat(path).mode & 0o777
+        raise "architecture report permissions are not private" unless (file_mode & 0o077).zero?
+
+        targets = Array(envelope.dig("report", "targets"))
+        receipt = {
+          "status" => "persisted",
+          "readback_verified" => true,
+          "path" => relative(path),
+          "sha256" => digest,
+          "bytes" => stored_payload.bytesize,
+          "target" => envelope["target"],
+          "report_status" => envelope.dig("report", "status").to_s,
+          "target_count" => targets.size,
+          "accepted_candidates" => targets.sum { |row| row.is_a?(Hash) ? row["accepted"].to_i : 0 },
+          "provenance_digest" => provenance_digest[0, 12],
+          "updated_at" => Time.now.utc.iso8601,
+        }
+        updated = update(id) do |run|
+          run["architecture_receipt"] = receipt
+          receipt
+        end
+        raise "fix run disappeared before architecture receipt was indexed" unless updated
+
+        emit("fix:architecture_receipt_persisted",
+             run_id: id, path: receipt["path"], sha256: digest,
+             status: receipt["report_status"], targets: receipt["target_count"],
+             accepted_candidates: receipt["accepted_candidates"])
+        prune_architecture_reports!
+        receipt
+      end
+
+      # The tournament may be resumed only from an indexed artifact whose path, permissions,
+      # checksum, target, schema and provenance digest all still agree.
+      def verify_architecture_report(run_id)
+        id = run_id.to_s
+        return { "status" => "invalid_run_id" } unless id.match?(/\\A[a-f0-9]{20}\\z/)
+
+        master_dir = File.join(@root, ".master")
+        directory = File.join(@root, ARCHITECTURE_DIR)
+        return { "status" => "journal_directory_symlink" } if File.symlink?(master_dir)
+        return { "status" => "architecture_directory_symlink" } if File.symlink?(directory)
+
+        run = history(limit: MAX_RUNS).find { |entry| entry["id"] == id }
+        return { "status" => "run_not_found" } unless run
+        receipt = run["architecture_receipt"]
+        return { "status" => "receipt_missing" } unless receipt.is_a?(Hash)
+
+        relative_path = receipt["path"].to_s
+        name = File.basename(relative_path)
+        match = name.match(/\\A#{Regexp.escape(id)}-([a-f0-9]{12})-([a-f0-9]{12})\\.json\\z/)
+        return { "status" => "receipt_path_mismatch" } unless match
+        expected_path = File.join(directory, name)
+        return { "status" => "receipt_path_mismatch" } unless relative(expected_path) == relative_path
+        return { "status" => "artifact_unavailable" } unless File.file?(expected_path) && !File.symlink?(expected_path)
+
+        file_mode = File.stat(expected_path).mode & 0o777
+        return { "status" => "artifact_permissions_insecure", "mode" => format("%04o", file_mode) } unless (file_mode & 0o077).zero?
+
+        payload = File.binread(expected_path)
+        actual_digest = Digest::SHA256.hexdigest(payload)
+        return { "status" => "checksum_mismatch" } unless actual_digest == receipt["sha256"]
+
+        envelope = JSON.parse(payload)
+        return { "status" => "schema_unsupported" } unless envelope["schema_version"].to_i == 1
+        return { "status" => "artifact_run_mismatch" } unless envelope["run_id"] == id
+        return { "status" => "target_mismatch" } unless envelope["target"] == run["target"]
+        provenance = envelope["provenance"]
+        return { "status" => "provenance_malformed" } unless provenance.is_a?(Hash)
+        fingerprint = Digest::SHA256.hexdigest(JSON.generate(provenance.sort.to_h))
+        return { "status" => "provenance_digest_mismatch" } unless fingerprint[0, 12] == match[1]
+        return { "status" => "receipt_provenance_mismatch" } unless receipt["provenance_digest"] == match[1]
+
+        report = envelope["report"]
+        return { "status" => "report_malformed" } unless report.is_a?(Hash)
+        return { "status" => "report_status_mismatch" unless report["status"].to_s == receipt["report_status"].to_s
+        return { "status" => "report_target_mismatch" } unless Array(report["targets"]).all? do |row|
+          row.is_a?(Hash) && !row["tree"].to_s.empty?
+        end
+
+        { "status" => "verified", "path" => relative_path, "sha256" => actual_digest,
+          "target" => envelope["target"], "provenance" => provenance, "report" => report }
+      rescue JSON::ParserError => e
+        { "status" => "invalid_json", "message" => e.message.to_s[0, 180] }
+      rescue StandardError => e
+        { "status" => "verification_failed", "error_class" => e.class.name, "message" => e.message.to_s[0, 180] }
+      end
+
+      # Retain only the latest indexed artifact for each retained run. Superseded and
+      # unindexed orphan revisions are removed by exact generated filename shape.
+      def prune_architecture_reports!
+        master_dir = File.join(@root, ".master")
+        directory = File.join(@root, ARCHITECTURE_DIR)
+        return if File.symlink?(master_dir) || File.symlink?(directory) || !File.directory?(directory)
+
+        retained_paths = history(limit: MAX_RUNS).filter_map do |run|
+          receipt = run["architecture_receipt"]
+          receipt["path"].to_s if receipt.is_a?(Hash)
+        end.to_set
+        removed = 0
+        Dir.children(directory).each do |name|
+          next unless name.match?(/\\A[a-f0-9]{20}-[a-f0-9]{12}-[a-f0-9]{12}\\.json\\z/)
+
+          path = File.join(directory, name)
+          next if File.symlink?(path) || !File.file?(path)
+          next if retained_paths.include?(relative(path))
+
+          File.delete(path)
+          removed += 1
+        rescue SystemCallError => e
+          emit("fix:architecture_prune_entry_failed", path: name, error: e.message.to_s[0, 160])
+        end
+        emit("fix:architecture_reports_pruned", removed:) if removed.positive?
+      rescue StandardError => e
+        emit("fix:architecture_prune_failed", error_class: e.class.name, message: e.message.to_s[0, 160])
       end
 
       # Keep evidence storage aligned with the bounded run journal. Only

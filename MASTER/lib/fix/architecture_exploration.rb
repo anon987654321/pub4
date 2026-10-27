@@ -8,7 +8,7 @@ module Master
   module Fix
     class ArchitectureExploration
       TREE_NAMES = MasterPaths::TREES
-      REPORT_FIELDS = %w[tree status requested accepted qualified decision winner shortlist rejections].freeze
+      REPORT_FIELDS = %w[tree status requested accepted qualified decision winner shortlist rejections candidates evidence_manifest].freeze
       DEFAULT_CANDIDATES = 36
       MIN_CANDIDATES = 30
       MAX_CANDIDATES = 40
@@ -67,7 +67,7 @@ module Master
       end
 
       def self.contract
-        { "version" => 1, "trees" => TREE_NAMES, "default_candidates_per_tree" => 36,
+        { "version" => 2, "trees" => TREE_NAMES, "default_candidates_per_tree" => 36,
           "minimum_candidates_for_selection" => 30, "maximum_candidates_per_tree" => 40,
           "score_weights" => SCORES, "model_scores" => "ignored",
           "quality_gate" => { "minimum_score" => MIN_WINNER_SCORE, "minimum_qualified_candidates" => MIN_QUALIFIED_CANDIDATES,
@@ -75,13 +75,17 @@ module Master
           "required_consequence_fields" => %w[benefits tradeoffs risks],
           "diversity_gate" => "reject highly similar plans, especially when they target nearly identical path sets",
           "mutation" => "planning_only; selected architecture never authorizes a rewrite",
+          "persistence" => "checksum_verified per-run revisions; reuse only complete tree rows whose provenance still matches",
           "execution_evidence" => "NOT_RUN until actual tree verification commands execute" }
       end
 
-      def initialize(root:, agent:, bus: nil, candidate_count: nil)
+      def initialize(root:, agent:, bus: nil, candidate_count: nil, run_journal: nil, run_id: nil, provenance: nil)
         @root = File.expand_path(root)
         @agent = agent
         @bus = bus
+        @run_journal = run_journal
+        @run_id = run_id.to_s
+        @provided_provenance = provenance
         @count = Integer(candidate_count || self.class.candidate_count).clamp(30, 40)
       rescue ArgumentError, TypeError
         @count = DEFAULT_CANDIDATES
@@ -116,21 +120,162 @@ module Master
       def run(target:, files:)
         trees = self.class.eligible_targets(root: @root, target: target)
         return { "status" => "SKIPPED", "targets" => [], "brief" => "" } if trees.empty?
-        reports = trees.map { |tree| explore(tree, files) }
-        states = reports.map { |row| row.fetch("status") }
-        state = states.all? { |value| value == "COMPLETE" } ? "COMPLETE" :
-          (reports.any? { |row| row["winner"] } ? "PARTIAL" : "INCONCLUSIVE")
-        { "status" => state,
-          "targets" => reports.map { |row| row.slice(*REPORT_FIELDS) },
-          "brief" => reports.map { |row| brief(row) }.join("\n\n") }
+
+        current_provenance = provenance
+        previous = saved_report
+        if reusable_complete_report?(previous, target, trees, current_provenance)
+          publish("fix_loop:architecture_exploration_resumed",
+                  target: relative_target(target), trees: trees.size, source_digest: current_provenance["source_digest"])
+          return previous
+        end
+
+        reusable_rows = reusable_tree_rows(previous, target, trees, current_provenance)
+        rows = {}
+        reusable_rows.each { |name, row| rows[name] = row }
+        persist_report(target:, trees:, rows:, status: "RUNNING", provenance: current_provenance)
+
+        trees.each do |tree|
+          name = File.basename(tree)
+          rows[name] ||= explore(tree, files)
+          persist_report(target:, trees:, rows:, status: "RUNNING", provenance: current_provenance)
+        end
+
+        report = aggregate_report(target:, trees:, rows:, provenance: current_provenance)
+        persist_report(target:, trees:, rows:, status: report.fetch("status"), provenance: current_provenance, final_report: report)
+        report
       rescue StandardError => error
         publish("fix_loop:architecture_exploration_inconclusive",
           target: target.to_s, reason: safe_reason(error), error_class: error.class.name)
-        { "status" => "INCONCLUSIVE", "targets" => [],
-          "brief" => "ARCHITECTURE EXPLORATION INCONCLUSIVE: #{error.class}: #{safe_reason(error)}. Continue ordinary /fix." }
+        report = {
+          "schema_version" => 2,
+          "status" => "INCONCLUSIVE",
+          "target" => relative_target(target),
+          "provenance" => (defined?(current_provenance) ? current_provenance : provenance),
+          "targets" => (defined?(rows) && rows.is_a?(Hash) ? rows.values : []),
+          "brief" => "ARCHITECTURE EXPLORATION INCONCLUSIVE: #{error.class}: #{safe_reason(error)}. Continue ordinary /fix.",
+          "requested_candidates_per_tree" => @count,
+        }
+        begin
+          persist_report(target:, trees: (defined?(trees) ? trees : []), rows: (defined?(rows) && rows.is_a?(Hash) ? rows : {}),
+                         status: "INCONCLUSIVE", provenance: report.fetch("provenance"), final_report: report) if
+            trees && !trees.empty? && !@persistence_blocked
+        rescue StandardError => persist_error
+          publish("fix_loop:architecture_report_persistence_failed",
+                  reason: safe_reason(persist_error), error_class: persist_error.class.name)
+        end
+        report
       end
 
       private
+
+      def provenance
+        supplied = @provided_provenance.respond_to?(:to_h) ? @provided_provenance.to_h : {}
+        keys = %w[
+          source_digest scope_digest law_digest law_source_digest authority_digest toolchain_digest
+          exclusion_digest adapter_digest identity_digest
+        ]
+        values = keys.to_h { |key| [key, supplied[key] || supplied[key.to_sym]] }
+        values["architecture_contract_version"] = self.class.contract.fetch("version")
+        values["architecture_engine_sha256"] = Digest::SHA256.file(__FILE__).hexdigest
+        values["requested_candidates"] = @count
+        values
+      end
+
+      def relative_target(target)
+        path = File.expand_path(target.to_s, @root)
+        path == @root ? "." : path.delete_prefix(@root + File::SEPARATOR)
+      end
+
+      def saved_report
+        return nil unless @run_journal && @run_id.match?(/\\A[a-f0-9]{20}\\z/)
+
+        receipt = @run_journal.verify_architecture_report(@run_id)
+        return nil if receipt["status"] == "receipt_missing"
+        unless receipt["status"] == "verified"
+          @persistence_blocked = true
+          raise "saved architecture report is not trustworthy: #{receipt["status"]}"
+        end
+
+        receipt["report"]
+      end
+
+      def report_matches?(report, target, current_provenance)
+        report.is_a?(Hash) &&
+          report["target"].to_s == relative_target(target) &&
+          report["provenance"] == current_provenance
+      end
+
+      def complete_tree_row?(row)
+        row.is_a?(Hash) && row["status"].to_s == "COMPLETE" &&
+          row["requested"].to_i.between?(MIN_CANDIDATES, MAX_CANDIDATES) &&
+          row["accepted"].to_i == row["requested"].to_i &&
+          Array(row["candidates"]).size == row["requested"].to_i &&
+          Array(row["evidence_manifest"]).any?
+      end
+
+      def reusable_complete_report?(report, target, trees, current_provenance)
+        return false unless report_matches?(report, target, current_provenance)
+        return false unless report["status"] == "COMPLETE"
+
+        by_name = Array(report["targets"]).each_with_object({}) do |row, result|
+          result[row["tree"].to_s] = row if row.is_a?(Hash)
+        end
+        names = trees.map { |tree| File.basename(tree) }
+        by_name.keys.sort == names.sort && names.all? { |name| complete_tree_row?(by_name[name]) }
+      end
+
+      def reusable_tree_rows(report, target, trees, current_provenance)
+        return {} unless report_matches?(report, target, current_provenance)
+
+        by_name = Array(report["targets"]).each_with_object({}) do |row, result|
+          result[row["tree"].to_s] = row if row.is_a?(Hash) && !row["tree"].to_s.empty?
+        end
+        names = trees.map { |tree| File.basename(tree) }
+        return {} unless (by_name.keys - names).empty?
+
+        names.each_with_object({}) do |name, result|
+          row = by_name[name]
+          result[name] = row if complete_tree_row?(row)
+        end
+      end
+
+      def pending_tree_row(tree)
+        { "tree" => File.basename(tree), "status" => "PENDING", "requested" => @count,
+          "accepted" => 0, "qualified" => 0, "decision" => nil, "winner" => nil,
+          "shortlist" => [], "rejections" => [], "candidates" => [], "evidence_manifest" => [] }
+      end
+
+      def aggregate_status(rows)
+        states = rows.map { |row| row.fetch("status") }
+        states.all? { |value| value == "COMPLETE" } ? "COMPLETE" :
+          (rows.any? { |row| row["winner"] } ? "PARTIAL" : "INCONCLUSIVE")
+      end
+
+      def aggregate_report(target:, trees:, rows:, provenance:)
+        ordered = trees.map do |tree|
+          row = rows[File.basename(tree)] || pending_tree_row(tree)
+          row.slice(*REPORT_FIELDS)
+        end
+        {
+          "schema_version" => 2,
+          "target" => relative_target(target),
+          "status" => aggregate_status(ordered),
+          "provenance" => provenance,
+          "requested_candidates_per_tree" => @count,
+          "targets" => ordered,
+          "brief" => ordered.reject { |row| row["status"] == "PENDING" }.map { |row| brief(row) }.join("\\n\\n"),
+        }
+      end
+
+      def persist_report(target:, trees:, rows:, status:, provenance:, final_report: nil)
+        return unless @run_journal && @run_id.match?(/\\A[a-f0-9]{20}\\z/)
+
+        report = final_report || aggregate_report(target:, trees:, rows:, provenance:)
+        report["status"] = status
+        @run_journal.persist_architecture_report(@run_id, target:, report:, provenance:)
+      end
+
+      def explore(tree, files)
       def explore(tree, files)
         name = File.basename(tree)
         paths = files.map { |path| File.expand_path(path, @root) }
@@ -179,7 +324,12 @@ module Master
         report = { "tree" => name, "status" => status, "requested" => @count,
           "accepted" => candidates.size, "qualified" => qualified.size, "rejections" => rejected,
           "decision" => tournament_decision(candidates, qualified, selected),
-          "winner" => selected && compact(selected), "shortlist" => shortlist }
+          "winner" => selected && compact(selected), "shortlist" => shortlist,
+          "candidates" => candidates.map { |candidate| compact(candidate) },
+          "evidence_manifest" => evidence.map do |entry|
+            { "path" => entry.fetch("path"), "sha256" => entry.fetch("sha256"),
+              "excerpt_bytes" => entry.fetch("excerpt").bytesize }
+          end }
         publish("fix_loop:architecture_exploration_complete", tree: name, status: status,
           requested: @count, accepted: candidates.size, qualified: qualified.size, winner: report.dig("winner", "id"))
         report
@@ -187,7 +337,8 @@ module Master
         publish("fix_loop:architecture_exploration_inconclusive", tree: File.basename(tree),
           reason: safe_reason(error), error_class: error.class.name)
         { "tree" => File.basename(tree), "status" => "INCONCLUSIVE", "requested" => @count,
-          "accepted" => 0, "qualified" => 0, "rejections" => [safe_reason(error)], "winner" => nil, "shortlist" => [] }
+          "accepted" => 0, "qualified" => 0, "rejections" => [safe_reason(error)], "winner" => nil, "shortlist" => [],
+          "candidates" => [], "evidence_manifest" => [] }
       end
 
       def evidence_for(paths)

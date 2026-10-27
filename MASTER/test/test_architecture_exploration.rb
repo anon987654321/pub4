@@ -7,6 +7,31 @@ require "fileutils"
 require "json"
 
 class TestArchitectureExploration < Minitest::Test
+  class FakeJournal
+    attr_reader :writes
+
+    def initialize
+      @writes = []
+      @report = nil
+      @provenance = nil
+    end
+
+    def verify_architecture_report(_run_id)
+      return { "status" => "receipt_missing" } unless @report
+
+      { "status" => "verified", "report" => @report, "provenance" => @provenance }
+    end
+
+    def persist_architecture_report(_run_id, target:, report:, provenance:)
+      @report = JSON.parse(JSON.generate(report))
+      @provenance = JSON.parse(JSON.generate(provenance))
+      @writes << { "target" => target.to_s, "status" => report.fetch("status"),
+                   "targets" => @report.fetch("targets").size,
+                   "accepted" => @report.fetch("targets").sum { |row| row.fetch("accepted", 0).to_i } }
+      { "status" => "persisted", "readback_verified" => true }
+    end
+  end
+
   class FakeAgent
     attr_reader :prompts
     def initialize(reply)
@@ -67,7 +92,13 @@ class TestArchitectureExploration < Minitest::Test
           risks: ["Migration risk includes compatibility checks for variant #{i}"] }
       end
       agent = FakeAgent.new(JSON.generate(candidates: candidates))
-      explorer = Master::Fix::ArchitectureExploration.new(root: root, agent: agent, candidate_count: 30)
+      journal = FakeJournal.new
+      provenance = { "source_digest" => "a" * 64, "scope_digest" => "b" * 64,
+                     "law_digest" => "c" * 64, "identity_digest" => "d" * 64 }
+      explorer = Master::Fix::ArchitectureExploration.new(
+        root: root, agent: agent, candidate_count: 30, run_journal: journal,
+        run_id: "a" * 20, provenance:
+      )
       result = explorer.run(target: master, files: [source_file, test_file])
       assert_equal "COMPLETE", result.fetch("status")
       report = result.fetch("targets").first
@@ -85,6 +116,18 @@ class TestArchitectureExploration < Minitest::Test
       assert_operator decision.fetch("winner_margin"), :>=, 0
       assert_equal 1, agent.prompts.size
       assert_includes agent.prompts.first, "PLAN ONLY"
+      assert_equal "COMPLETE", journal.writes.last.fetch("status")
+      assert_equal 30, report.fetch("candidates").size
+      refute_empty report.fetch("evidence_manifest")
+      assert_equal "a" * 64, journal.verify_architecture_report("a" * 20).fetch("provenance").fetch("source_digest")
+
+      retry_agent = FakeAgent.new("not JSON: a completed tournament should be reused")
+      resumed = Master::Fix::ArchitectureExploration.new(
+        root: root, agent: retry_agent, candidate_count: 30, run_journal: journal,
+        run_id: "a" * 20, provenance:
+      ).run(target: master, files: [source_file, test_file])
+      assert_equal result.fetch("targets").first, resumed.fetch("targets").first
+      assert_empty retry_agent.prompts, "matching completed evidence must resume without regenerating candidates"
     end
   end
 
