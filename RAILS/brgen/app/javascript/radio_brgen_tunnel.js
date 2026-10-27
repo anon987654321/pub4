@@ -206,7 +206,7 @@ class AudioEngine {
     this.loadCurrentTrack()
     this.updateTrackDisplay()
     this.#syncMediaSession()
-    this.#publishTrack()
+    this.publishTrack()
   }
 
   publishTrack() {
@@ -228,7 +228,7 @@ class AudioEngine {
     this.loadCurrentTrack()
     this.updateTrackDisplay()
     this.#syncMediaSession()
-    this.#publishTrack()
+    this.publishTrack()
   }
 
   getAudioData() {
