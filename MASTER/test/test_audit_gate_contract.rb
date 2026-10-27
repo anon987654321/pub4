@@ -24,6 +24,16 @@ class TestAuditGateContract < Minitest::Test
                  "defined lint tasks omitted from AUDIT_CHECKS never run during rake audit: #{missing.join(', ')}"
   end
 
+  def test_law_trace_loads_the_canonical_detector_registry
+    task = @rakefile[/task :law_trace do\n(.*?)\n  end/m, 1]
+
+    refute_nil task, "Rakefile must define lint:law_trace"
+    assert_includes task, 'require "review/scan/law_dsl"',
+                  "the canonical DSL loader imports detector implementations from MASTER/law/detectors"
+    refute_match(%r{lib/review/scan/laws}, task,
+                 "the deleted compatibility path must not be a loader input")
+  end
+
   def test_runtime_contract_and_boot_smokes_are_part_of_the_full_audit_gate
     %w[selfcheck architecture boot_smoke].each do |name|
       assert_includes @checks, name, "#{name} is a declared non-model check but is omitted from AUDIT_CHECKS"

@@ -752,7 +752,7 @@ end
     require "yaml"
     $LOAD_PATH.unshift(File.join(__dir__, "lib"))
     require "master"
-    Dir.glob(File.join(__dir__, "lib", "review", "scan", "laws", "**", "*.rb")).sort.each { |f| require f }
+    require "review/scan/law_dsl"
 
     map = Master::Ground::Map::LawMap.load(root: __dir__)
     registered = Master::Review::Scan::Law.registry.filter_map do |klass|

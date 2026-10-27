@@ -3,8 +3,9 @@
 module Master
   module Review
     module Scan
-    # Inline Ruby Law definition — executable alternative to laws.yml entries.
-    # Defined laws auto-register via Law.inherited; no YAML required.
+    # Executable detector adapter DSL. Normative Law identity, scope and universal
+    # contract live in data/laws.yml; this DSL binds Ruby detection logic to those
+    # catalogue IDs and registers the implementation for scanner execution.
     # Rule subclasses inherit Law.auto_build? == true; specialized laws that
     # need constructor arguments override self.auto_build? = false explicitly.
     #
