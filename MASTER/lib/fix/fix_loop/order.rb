@@ -12,6 +12,20 @@ module Master
         # key was constant. NO_GOD_CLASS is SIMPLEST_WORKS, FEATURE_ENVY is
         # the SRP detector, FEW_ARGUMENTS is the conciseness one.
         TIER2_QUALITY_LAW_IDS = %w[NO_GOD_CLASS FEATURE_ENVY FEW_ARGUMENTS].freeze
+        # What a user meets first outranks what a reviewer reads. A JavaScript exception, a
+        # route answering 4xx/5xx or a stylesheet that never arrives breaks the page; a
+        # rendered defect makes it worse; a code law makes the source worse. The browser
+        # checks found the first kind and /fix repaired a RuboCop line before any of them.
+        IMPACT_TIERS = %i[runtime rendered code].freeze
+        RUNTIME_EVIDENCE = Regexp.union(
+          /uncaught JavaScript exception/i,
+          /browser console error/i,
+          /\bHTTP [45]\d\d\b/,
+          /first-party (?:resource|executable request|request) failed/i,
+          /network-error page/i,
+          /broken asset|asset (?:missing|not found)/i,
+        )
+        RENDERED_LAW_IDS = %w[RENDERED_VISUAL_REFINEMENT SCALE_SNAP].freeze
         AGE_PATH = File.join("data", "violation_age.yml").freeze
 
         def initialize(laws:, learnings:, bus:, root:)
@@ -27,8 +41,9 @@ module Master
           law_resolver = Master::Ground::LawResolver.new
           laws_index = Priority.laws_index(root: @root)
           sorted = @laws.each_with_index.sort_by do |r, i|
-            frequency = violation_counts.fetch(r.id, 1).to_f
-            quality = @learnings&.fix_quality(law: r.id) || 0.5
+            id = r.id
+            frequency = violation_counts.fetch(id, 1).to_f
+            quality = @learnings&.fix_quality(law: id) || 0.5
             # tier2 stays a strict lexicographic primary key, not folded into
             # score()'s additive bonus: a high-frequency generic rule's score
             # can exceed a rare tier2 rule's +50 bonus, which would silently
@@ -36,10 +51,10 @@ module Master
             # test_fix_loop_priorities.rb depends on. score() still computes
             # law- and quality-aware ranking for everything else.
             score = Priority.score(
-              law_id: r.id, severity: law_severity(r), frequency:,
-              age_days: law_age_days(r.id), law_resolver:, laws_index:, quality:
+              law_id: id, severity: law_severity(r), frequency:,
+              age_days: law_age_days(id), law_resolver:, laws_index:, quality:
             )
-            [tier2?(r.id) ? 0 : 1, -score, i]
+            [law_impact(id), tier2?(id) ? 0 : 1, -score, i]
           end.map(&:first)
           topo_sort(sorted, deps)
         end
@@ -61,6 +76,24 @@ module Master
         def tier2?(law_id)
           TIER2_QUALITY_LAW_IDS.include?(law_id.to_s)
         end
+
+        # A law's tier when all that is known is its id.
+        def law_impact(law_id) = IMPACT_TIERS.index(RENDERED_LAW_IDS.include?(law_id.to_s) ? :rendered : :code)
+
+        # A finding's tier, read from what it says: its evidence outranks its law, because
+        # a console error filed under a rendered law is still a broken page.
+        def self.impact(finding)
+          row = finding.to_h.transform_keys(&:to_s)
+          said = row["impact"].to_s
+          evidence = "#{row["message"]} #{row["evidence"]}"
+          return IMPACT_TIERS.index(:runtime) if said == "runtime" || evidence.match?(RUNTIME_EVIDENCE)
+
+          rendered = said == "rendered" || RENDERED_LAW_IDS.include?(row["law"].to_s)
+          IMPACT_TIERS.index(rendered ? :rendered : :code)
+        end
+
+        # The most urgent tier among a file's findings, for the worklist's first key.
+        def self.file_impact(rows) = Array(rows).map { |row| impact(row) }.min || IMPACT_TIERS.index(:code)
 
         private
 

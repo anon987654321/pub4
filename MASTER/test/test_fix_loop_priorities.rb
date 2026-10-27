@@ -58,4 +58,36 @@ class TestFixLoopPriorities < Minitest::Test
       assert_equal "OLD_ERROR", ordered.first
     end
   end
+
+  # A broken page outranks a rendered defect, and a rendered defect outranks a code law.
+  def test_findings_users_meet_are_ranked_first
+    order = Master::Fix::FixLoop::LawOrder
+    tier = ->(finding) { order::IMPACT_TIERS.fetch(order.impact(finding)) }
+
+    assert_equal :runtime, tier.({ law: "RUBOCOP", message: "uncaught JavaScript exception: TypeError" })
+    assert_equal :runtime, tier.({ message: "document returned HTTP 404" })
+    assert_equal :runtime, tier.({ message: "first-party resource failed: HTTP 500 /assets/app.css (Stylesheet)" })
+    assert_equal :runtime, tier.({ "message" => "browser console error: network: Failed to load resource" })
+    assert_equal :rendered, tier.({ law: "RENDERED_VISUAL_REFINEMENT", message: "card padding drifts" })
+    assert_equal :rendered, tier.({ law: "SCALE_SNAP", message: "off-scale space" })
+    assert_equal :code, tier.({ law: "FEATURE_ENVY", message: "method reaches into another object" })
+  end
+
+  def test_a_file_ranks_by_its_most_urgent_finding
+    order = Master::Fix::FixLoop::LawOrder
+    rows = [{ law: "FEATURE_ENVY", message: "x" }, { law: "X", message: "document returned HTTP 500" }]
+
+    assert_equal 0, order.file_impact(rows)
+    assert_equal 2, order.file_impact([{ law: "FEATURE_ENVY" }])
+  end
+
+  def test_rendered_laws_precede_tier2_and_generic_code_laws
+    Dir.mktmpdir do |dir|
+      laws = [Law.new("GENERIC", :error), Law.new("FEATURE_ENVY", :warning),
+              Law.new("RENDERED_VISUAL_REFINEMENT", :warning)]
+      order = Master::Fix::FixLoop::LawOrder.new(laws:, learnings: nil, bus: nil, root: dir)
+
+      assert_equal %w[RENDERED_VISUAL_REFINEMENT FEATURE_ENVY GENERIC], order.ordered(violation_counts: {}).map(&:id)
+    end
+  end
 end

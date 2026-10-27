@@ -222,14 +222,14 @@ module Master
             ENV.fetch("MASTER_FIX_RANK", "1") != "0"
           end
 
-          # A file a red check names comes first (CheckFocus). Then severity wins before volume: one
-          # error is more urgent than many style findings. Weighted total impact and finding count
-          # break ties, then the stable path makes the order reproducible. LawOrder separately
-          # enforces the declared dependency order inside each file's repair.
+          # What users meet comes first (LawOrder.impact: runtime, then rendered, then code), then a
+          # file a red check names (CheckFocus). Then severity before volume: one error is more urgent
+          # than many style findings; weighted impact, count and the stable path break ties. LawOrder
+          # separately enforces the declared dependency order inside each file's repair.
           def enqueue_ranked(ranked, queue, streamed)
             ordered = ranked.sort_by do |path, rows|
               peak, total, count = worklist_priority(rows)
-              [CheckFocus.covers?(path) ? 0 : 1, -peak, -total, -count, path]
+              [LawOrder.file_impact(rows), CheckFocus.covers?(path) ? 0 : 1, -peak, -total, -count, path]
             end
 
             # The stream intentionally starts repairs before the whole corpus has
