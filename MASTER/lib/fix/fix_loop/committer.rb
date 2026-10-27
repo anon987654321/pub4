@@ -90,7 +90,7 @@ module Master
           @baseline = changed_everywhere.reject { |path| AutofixGuard.still_as_written?(File.expand_path(path, @root)) }
           @boundary_scope = normalize_boundary_scope(scope)
         rescue StandardError => e
-          @bus&.publish("fix_loop:commit_error", error: e.message)
+          @bus&.publish("fix_loop:commit_error", error_class: e.class.name, error_present: true)
           raise "cannot establish fix transaction baseline: #{e.class}: #{e.message}"
         end
 
@@ -140,7 +140,7 @@ module Master
 
             deliver_and_commit(transaction:, message:, findings:, prepared:)
           rescue StandardError => e
-            @bus&.publish("fix_loop:commit_error", error: e.message)
+            @bus&.publish("fix_loop:commit_error", error_class: e.class.name, error_present: true)
             @transaction = nil
             transaction&.delivery&.preserve! if transaction&.active?
             Result.err("fix transaction delivery: #{e.message}", category: :infrastructure)
@@ -193,7 +193,7 @@ module Master
           mine, foreign = paths.partition { |path| written_unchanged?(path) }
           unless foreign.empty?
             named = foreign.first(3).join(", ")
-            Master::Trace::Dmesg.status("deliver0", "left #{foreign.size} file(s) /fix did not write: #{named}")
+            Master::Trace::Dmesg.status("deliver0", "left #{foreign.size} file(s) /fix did not write")
           end
           mine
         end
@@ -341,7 +341,7 @@ def stage_commit_mode?
             raise checkpoint.message if checkpoint.err?
 
             Master::Trace::Dmesg.status(
-              "deliver0", "commit=#{@git.head} push=#{push_each? ? "ok" : "deferred"} paths=#{paths.join(", ")}"
+              "deliver0", "commit=#{@git.head} push=#{push_each? ? "ok" : "deferred"} paths=#{paths.size}"
             )
             result
           rescue StandardError => e
@@ -393,8 +393,7 @@ def stage_commit_mode?
         # The bus carries the event; dmesg says which files a rollback did not put back.
         def report_rollback(result, left)
           unless left.empty?
-            Master::Trace::Dmesg.status("fix0", "rollback left #{left.size} file(s) another writer changed: " \
-                                                "#{left.first(5).join(", ")}")
+            Master::Trace::Dmesg.status("fix0", "rollback left #{left.size} file(s) another writer changed")
           end
           return if result.ok?
 
@@ -408,8 +407,7 @@ def stage_commit_mode?
           foreign = transaction.release!(transaction.conflicts)
           return foreign if foreign.empty?
 
-          Master::Trace::Dmesg.status("deliver0", "left #{foreign.size} file(s) another writer changed: " \
-                                                  "#{foreign.first(3).join(", ")}")
+          Master::Trace::Dmesg.status("deliver0", "left #{foreign.size} file(s) another writer changed")
           foreign
         end
 
@@ -448,12 +446,12 @@ def stage_commit_mode?
 
           promote_known_good(@git.head, paths)
           Master::Trace::Dmesg.status(
-            "deliver0", "commit=#{@git.head} push=#{push_each? ? "ok" : "deferred"} paths=#{paths.join(", ")}"
+            "deliver0", "commit=#{@git.head} push=#{push_each? ? "ok" : "deferred"} paths=#{paths.size}"
           )
-          @bus&.publish("ops:commit", message: message.to_s[0, 120], head: @git.head, paths:, findings:)
+          @bus&.publish("ops:commit", operation: "commit", head: @git.head, path_count: paths.size, finding_count: Array(findings).size)
           Result.ok(:committed)
         rescue StandardError => e
-          @bus&.publish("fix_loop:commit_error", error: e.message)
+          @bus&.publish("fix_loop:commit_error", error_class: e.class.name, error_present: true)
           raise
         end
 
@@ -528,7 +526,7 @@ def stage_commit_mode?
           transaction.delivery.record_commit!(head_after:)
           push_commit!(paths)
           promote_known_good(head_after, paths)
-          @bus&.publish("ops:commit", message: message.to_s[0, 120], head: head_after, paths:, findings:)
+          @bus&.publish("ops:commit", operation: "commit", head: head_after, path_count: paths.size, finding_count: Array(findings).size)
           Result.ok(:committed)
         end
 

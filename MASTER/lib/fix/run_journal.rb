@@ -7,6 +7,7 @@ require "set"
 require "securerandom"
 require "time"
 require_relative "../io/atomic_write"
+require_relative "../trace/mutation_observer"
 require_relative "outcome_policy"
 
 module Master
@@ -43,6 +44,11 @@ module Master
       def initialize(root:, bus: nil)
         @root = root
         @bus = bus
+        @lifecycle_observer = Master::Trace::MutationObserver.new(
+          root: @root, namespace: "fix:journal_lifecycle",
+          subject_type: "run_journal", subject_id: "runs", bus: @bus
+        )
+        @pending_marker_owned = false
       end
 
       def start_or_resume(target:, files:, max_passes:, budget_seconds:)
@@ -929,9 +935,43 @@ module Master
       end
 
       def persist(data)
+        raise "fix journal lifecycle audit is incomplete; manual review required" if pending_marker?
+
         path = File.join(@root, PATH)
         FileUtils.mkdir_p(File.dirname(path))
-        write_atomic(path, JSON.pretty_generate(data) + "\n", mode: 0o600)
+        @lifecycle_observer.mutate(operation: "persist", item_count: Array(data["runs"]).size) do
+          create_pending_marker!
+          write_atomic(path, JSON.pretty_generate(data) + "\n", mode: 0o600)
+        end.tap do
+          remove_pending_marker! if @pending_marker_owned
+        end
+      end
+
+      def pending_marker_path = File.join(@root, ".master", ".fix_runs.pending")
+
+      def pending_marker?
+        File.exist?(pending_marker_path) || File.symlink?(pending_marker_path)
+      rescue SystemCallError
+        true
+      end
+
+      def create_pending_marker!
+        path = pending_marker_path
+        raise "fix journal lifecycle marker already exists" if File.exist?(path) || File.symlink?(path)
+
+        File.open(path, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |io|
+          io.write("persist\n")
+          io.flush
+          io.fsync
+        end
+        @pending_marker_owned = true
+      end
+
+      def remove_pending_marker!
+        path = pending_marker_path
+        File.delete(path) if File.exist?(path) || File.symlink?(path)
+        @pending_marker_owned = false
+        true
       end
 
       def with_lock
