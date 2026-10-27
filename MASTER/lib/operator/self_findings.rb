@@ -235,6 +235,8 @@ module Operator
     #
     # Canonical Law adapters report their original IDs. Keep each finding in
     # one inventory population so a single repair cannot move two ratchets.
+    # The adapters are shipped rules, so shipped? alone keeps them: the law
+    # row's ids are taken out by name, by the predicate the drift test asserts.
     def registry_members
       @registry_members ||= scan_registry
     end
@@ -242,9 +244,8 @@ module Operator
     # Built the way every other caller builds it, and the way tools/example_scan.rb
     # documents: InfraHelpers, then `findings`. There is no scan_file.
     def scan_registry
-      law # loads Master, as scan_corpus does
       scanner = Master::Fix::Scanner.build(root: MASTER_DIR)
-      own = scanner.laws.select { |rule| shipped?(rule) }.map { |rule| rule.id.to_s }
+      own = scanner.laws.select { |rule| shipped?(rule) }.map { |rule| rule.id.to_s } - law_row_ids
       @registry_rule_count = own.size
       corpus = files.reject { |path| Master::Fix::Scanner.skip_path?(path, root: ROOT) }
       scanner.findings(corpus, depth: :deep).filter_map do |hit|
@@ -268,6 +269,9 @@ module Operator
       registry_members
       @registry_rule_count
     end
+
+    # Loads Master too, which scan_registry needs before it builds a scanner.
+    def law_row_ids = law.select { |_, rule| !rule.semantic? && rule.scannable? }.keys.map(&:to_s)
 
     def recorded = YAML.safe_load_file(CEILING) || {}
 

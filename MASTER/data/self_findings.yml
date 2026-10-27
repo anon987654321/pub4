@@ -1,53 +1,54 @@
 ---
-findings: 214
+# Both baselines below were recorded above the ones before them, under the
+# operator's authority over ratchet calls, because the rise is the instrument's
+# and not the code's. The law row reads every brgen vertical and counts thirteen
+# law ids the earlier record never had, while four it held no longer exist. The
+# registry row runs rules the earlier record did not, and a sample of its new
+# findings sits on lines older than that record. --ratchet refuses any rise, so
+# Operator::SelfFindings.record, the writer it calls, wrote this one. From here
+# the ratchet only falls.
+findings: 294
 by_rule:
-  BARE_DIV_WRAPPER: 4
-  BEM_IN_VIEWS: 12
   BLANK_LINE_RUN: 1
-  CONFIGURATION_SHAPE: 28
+  CONFIGURATION_SHAPE: 36
   EXPLICIT_HTTP_TIMEOUT: 1
-  FACE_POINT_IS_ONE_PIXEL: 1
-  FIXED_HEIGHT: 1
-  GUARD_CLAUSE: 2
-  I18N_COVERAGE: 6
-  MEANINGFUL_NAMES: 14
+  FACE_POINT_IS_ONE_PIXEL: 3
+  GUARD_CLAUSE: 6
+  MEANINGFUL_NAMES: 24
   MEASURE_OPTIMUM: 7
   MIGRATION_REMOVE_COLUMN: 1
-  MOBILE_FIRST: 30
-  NEVER_BATCH_DELETE: 7
+  MOBILE_FIRST: 18
+  MONKEY_PATCH_CORE: 1
+  NEVER_BATCH_DELETE: 12
+  NO_CHANGELOG_COMMENT: 2
   NO_COLUMN_ALIGN: 8
-  NO_INLINE_SCRIPT_BLOCK: 10
-  NULLISH_COALESCING: 55
-  OPTIONAL_CHAINING: 1
+  NO_DECORATIVE_GRADIENT: 5
+  NO_DOT_SEPARATED_META: 15
+  NO_EYEBROW_LABEL: 15
+  NO_INLINE_SCRIPT_BLOCK: 1
+  NULLISH_COALESCING: 58
+  OPTIONAL_CHAINING: 2
+  PROSE_ACTIVE_VOICE: 3
+  PROSE_OMIT_QUALIFIERS: 15
+  RATE_LIMITING_MISSING: 1
   RUBY_NUMERIC_UNDERSCORE: 6
-  SAFE_NAVIGATION: 1
-  STRICT_MODE_ZSH: 4
-  TEMPLATE_LITERALS: 1
-  USE_THEN: 11
+  RUBY_SNAKE_METHODS: 5
+  RUBY_SYMBOL_TO_PROC: 8
+  SAFE_NAVIGATION: 12
+  SINGLE_PRIVATE_SECTION: 1
+  STRICT_MODE_ZSH: 3
+  TEMPLATE_LITERALS: 3
+  UNBOUNDED_RETRY: 1
+  USE_THEN: 15
   WHY_NOT_WHAT: 4
+  ZSH_SHEBANG: 1
 finding_members:
-  - BARE_DIV_WRAPPER RAILS/__shared/app/views/shared/_affiliate_feed_unit.html.erb:10
-  - BARE_DIV_WRAPPER RAILS/__shared/app/views/shared/_cookie_banner.html.erb:25
-  - BARE_DIV_WRAPPER RAILS/__shared/app/views/shared/_post_card.html.erb:38
-  - BARE_DIV_WRAPPER RAILS/__shared/app/views/shared/_welcome_onboarding.html.erb:45
-  - BEM_IN_VIEWS RAILS/__shared/app/views/shared/_toast.html.erb:8
-  - BEM_IN_VIEWS RAILS/__shared/app/views/shared/_toast.html.erb:9
-  - BEM_IN_VIEWS RAILS/amber/app/views/items/wear.turbo_stream.erb:4
-  - BEM_IN_VIEWS RAILS/amber/app/views/items/wear.turbo_stream.erb:5
-  - BEM_IN_VIEWS RAILS/brgen/app/views/home/_vertical_promo_unit.html.erb:14
-  - BEM_IN_VIEWS RAILS/brgen/app/views/home/_vertical_promo_unit.html.erb:15
-  - BEM_IN_VIEWS RAILS/brgen/app/views/home/_vertical_promo_unit.html.erb:16
-  - BEM_IN_VIEWS RAILS/brgen/app/views/home/_vertical_promo_unit.html.erb:19
-  - BEM_IN_VIEWS RAILS/brgen/app/views/home/_vertical_promo_unit.html.erb:20
-  - BEM_IN_VIEWS RAILS/brgen/app/views/home/_vertical_promo_unit.html.erb:21
-  - BEM_IN_VIEWS RAILS/brgen/app/views/home/_vertical_promo_unit.html.erb:22
-  - BEM_IN_VIEWS RAILS/brgen/app/views/home/_vertical_promo_unit.html.erb:23
   - BLANK_LINE_RUN RAILS/master/app/views/chat/index.html.erb:1
   - CONFIGURATION_SHAPE OPENBSD/data/domain_inventory.yml:1
   - CONFIGURATION_SHAPE OPENBSD/etc/litestream.yml:1
   - CONFIGURATION_SHAPE RAILS/__shared/config/demo_link_embeds.yml:1
-  - CONFIGURATION_SHAPE RAILS/__shared/config/locales/affiliate.en.yml:1
-  - CONFIGURATION_SHAPE RAILS/__shared/config/locales/affiliate.nb.yml:1
+  - CONFIGURATION_SHAPE RAILS/__shared/config/locales/email_verification.en.yml:1
+  - CONFIGURATION_SHAPE RAILS/__shared/config/locales/email_verification.nb.yml:1
   - CONFIGURATION_SHAPE RAILS/__shared/config/locales/legal.en.yml:1
   - CONFIGURATION_SHAPE RAILS/__shared/config/locales/legal.nb.yml:1
   - CONFIGURATION_SHAPE RAILS/__shared/config/locales/social.en.yml:1
@@ -65,6 +66,14 @@ finding_members:
   - CONFIGURATION_SHAPE RAILS/brgen/config/locales/promo.nb.yml:1
   - CONFIGURATION_SHAPE RAILS/brgen/config/radio_bergen/tracks.yml:1
   - CONFIGURATION_SHAPE RAILS/brgen/config/recurring.yml:1
+  - CONFIGURATION_SHAPE RAILS/brgen_dating/config/locales/en.yml:1
+  - CONFIGURATION_SHAPE RAILS/brgen_dating/config/locales/nb.yml:1
+  - CONFIGURATION_SHAPE RAILS/brgen_marketplace/config/locales/en.yml:1
+  - CONFIGURATION_SHAPE RAILS/brgen_marketplace/config/locales/nb.yml:1
+  - CONFIGURATION_SHAPE RAILS/brgen_marketplace/config/locales/seller_center.en.yml:1
+  - CONFIGURATION_SHAPE RAILS/brgen_marketplace/config/locales/seller_center.nb.yml:1
+  - CONFIGURATION_SHAPE RAILS/brgen_radio/playlist/config/locales/en.yml:1
+  - CONFIGURATION_SHAPE RAILS/brgen_radio/playlist/config/locales/nb.yml:1
   - CONFIGURATION_SHAPE RAILS/bsdports/config/cable.yml:1
   - CONFIGURATION_SHAPE RAILS/bsdports/config/locales/en.yml:1
   - CONFIGURATION_SHAPE RAILS/bsdports/config/locales/nb.yml:1
@@ -72,93 +81,124 @@ finding_members:
   - CONFIGURATION_SHAPE RAILS/master/config/locales/nb.yml:1
   - CONFIGURATION_SHAPE RAILS/master/public/face_music_packs.json:1
   - EXPLICIT_HTTP_TIMEOUT OPENBSD/ptr_openbsd_amsterdam.rb:1
-  - FACE_POINT_IS_ONE_PIXEL RAILS/master/test/face_boot.test.mjs:173
-  - FIXED_HEIGHT RAILS/brgen/app/assets/stylesheets/application.scss:9847
+  - FACE_POINT_IS_ONE_PIXEL RAILS/master/test/face_boot.test.mjs:279
+  - FACE_POINT_IS_ONE_PIXEL RAILS/master/test/face_boot.test.mjs:280
+  - FACE_POINT_IS_ONE_PIXEL RAILS/master/test/face_stipple.test.mjs:275
   - GUARD_CLAUSE RAILS/__shared/app/controllers/concerns/shared/passwords_actions.rb:1
   - GUARD_CLAUSE RAILS/__shared/app/controllers/two_factor_setups_controller.rb:1
-  - I18N_COVERAGE RAILS/__shared/app/views/shared/changelog.html.erb:6
-  - I18N_COVERAGE RAILS/__shared/app/views/shared/changelog.html.erb:7
-  - I18N_COVERAGE RAILS/__shared/app/views/shared/changelog.html.erb:8
-  - I18N_COVERAGE RAILS/brgen/app/views/abandoned_cart_mailer/reminder.html.erb:2
-  - I18N_COVERAGE RAILS/brgen/app/views/email_subscription_mailer/confirm.html.erb:2
-  - I18N_COVERAGE RAILS/brgen/app/views/posts/new.html.erb:152
-  - MEANINGFUL_NAMES MASTER/lib/fix/repair_memory.rb:37
-  - MEANINGFUL_NAMES MASTER/lib/fix/repair_memory.rb:66
-  - MEANINGFUL_NAMES MASTER/lib/fix/repair_memory.rb:80
+  - GUARD_CLAUSE RAILS/amber/app/controllers/privacy_settings_controller.rb:1
+  - GUARD_CLAUSE RAILS/brgen_marketplace/app/controllers/marketplace/checkouts_controller.rb:1
+  - GUARD_CLAUSE RAILS/brgen_marketplace/app/controllers/marketplace/orders_controller.rb:1
+  - GUARD_CLAUSE RAILS/brgen_marketplace/engines/takeaway/app/controllers/takeaway/restaurants_controller.rb:1
+  - MEANINGFUL_NAMES MASTER/lib/execution/contract.rb:235
+  - MEANINGFUL_NAMES MASTER/lib/fix/best_of_n.rb:166
+  - MEANINGFUL_NAMES MASTER/lib/fix/best_of_n.rb:285
+  - MEANINGFUL_NAMES MASTER/lib/fix/repair_memory.rb:38
+  - MEANINGFUL_NAMES MASTER/lib/fix/repair_memory.rb:67
+  - MEANINGFUL_NAMES MASTER/lib/fix/repair_memory.rb:81
   - MEANINGFUL_NAMES MASTER/lib/fix/repair_outcomes.rb:46
-  - MEANINGFUL_NAMES MASTER/lib/fix/run_journal.rb:226
-  - MEANINGFUL_NAMES MASTER/lib/fix/run_journal.rb:41
+  - MEANINGFUL_NAMES MASTER/lib/fix/run_journal.rb:56
+  - MEANINGFUL_NAMES MASTER/lib/fix/run_journal.rb:912
   - MEANINGFUL_NAMES MASTER/lib/fix/supervisor.rb:27
-  - MEANINGFUL_NAMES MASTER/lib/operator/fix_status.rb:43
+  - MEANINGFUL_NAMES MASTER/lib/fix/surface_evidence.rb:158
+  - MEANINGFUL_NAMES MASTER/lib/fix/taste_memory.rb:43
   - MEANINGFUL_NAMES MASTER/lib/io/process_spawn.rb:12
-  - MEANINGFUL_NAMES MASTER/tools/design_tokens.rb:119
-  - MEANINGFUL_NAMES MASTER/tools/design_tokens.rb:167
-  - MEANINGFUL_NAMES MASTER/tools/design_tokens.rb:239
+  - MEANINGFUL_NAMES MASTER/lib/mobile/personality.rb:17
+  - MEANINGFUL_NAMES MASTER/lib/mobile/session.rb:19
+  - MEANINGFUL_NAMES MASTER/lib/operator/fix_status.rb:58
+  - MEANINGFUL_NAMES MASTER/lib/trace/mutation_observer.rb:38
+  - MEANINGFUL_NAMES MASTER/lib/voice/stt/session_bridge.rb:20
+  - MEANINGFUL_NAMES MASTER/tools/design_tokens.rb:208
+  - MEANINGFUL_NAMES MASTER/tools/design_tokens.rb:258
+  - MEANINGFUL_NAMES MASTER/tools/design_tokens.rb:338
   - MEANINGFUL_NAMES MASTER/tools/event_bus_reach.rb:340
   - MEANINGFUL_NAMES MASTER/tools/event_bus_reach.rb:362
-  - MEASURE_OPTIMUM RAILS/amber/app/assets/stylesheets/application.scss:2201
-  - MEASURE_OPTIMUM RAILS/amber/app/assets/stylesheets/application.scss:2206
-  - MEASURE_OPTIMUM RAILS/amber/app/assets/stylesheets/application.scss:2225
-  - MEASURE_OPTIMUM RAILS/amber/app/assets/stylesheets/application.scss:2251
-  - MEASURE_OPTIMUM RAILS/amber/app/assets/stylesheets/application.scss:2261
-  - MEASURE_OPTIMUM RAILS/amber/app/assets/stylesheets/application.scss:350
-  - MEASURE_OPTIMUM RAILS/amber/app/assets/stylesheets/application.scss:382
+  - MEANINGFUL_NAMES RAILS/amber/app/controllers/ai_controller.rb:53
+  - MEASURE_OPTIMUM RAILS/amber/app/assets/stylesheets/_amber_chrome.scss:122
+  - MEASURE_OPTIMUM RAILS/amber/app/assets/stylesheets/_amber_chrome.scss:154
+  - MEASURE_OPTIMUM RAILS/amber/app/assets/stylesheets/_amber_shared_overrides.scss:179
+  - MEASURE_OPTIMUM RAILS/amber/app/assets/stylesheets/_amber_shared_overrides.scss:184
+  - MEASURE_OPTIMUM RAILS/amber/app/assets/stylesheets/_amber_shared_overrides.scss:203
+  - MEASURE_OPTIMUM RAILS/amber/app/assets/stylesheets/_amber_shared_overrides.scss:229
+  - MEASURE_OPTIMUM RAILS/amber/app/assets/stylesheets/_amber_shared_overrides.scss:239
   - MIGRATION_REMOVE_COLUMN RAILS/brgen/db/migrate/20260913130000_drop_unwritten_tv_video_counters.rb:1
-  - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_affiliate_feed_unit.scss:145
-  - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_affiliate_feed_unit.scss:151
-  - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_affiliate_feed_unit.scss:273
-  - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_cookie_banner.scss:143
-  - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_newsletter_capture.scss:151
-  - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_post_voting.scss:50
-  - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_post_voting.scss:59
-  - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_promotional_art.scss:138
-  - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_surface_chrome_endgame.scss:340
-  - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_surface_chrome_endgame.scss:365
-  - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_surface_chrome_endgame.scss:386
   - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_welcome_onboarding.scss:164
   - MOBILE_FIRST RAILS/amber/app/assets/stylesheets/_commerce_polish.scss:98
+  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/_brgen_dating.scss:382
+  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/_brgen_shared_city_campaigns.scss:241
+  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/_brgen_shared_feed_responsive_finish.scss:1
+  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/_brgen_shared_listing_creation.scss:297
+  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/_brgen_shared_marketplace_commerce.scss:169
+  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/_brgen_shared_marketplace_commerce.scss:339
+  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/_brgen_shared_media_feed.scss:105
+  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/_brgen_shared_media_feed.scss:159
+  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/_brgen_shared_media_feed.scss:288
+  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/_brgen_shared_typography.scss:158
+  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/_brgen_shared_typography.scss:94
+  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/_brgen_vertical_radio_library.scss:248
   - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/_commerce_polish.scss:176
   - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/_vertical_promo.scss:103
-  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:10117
-  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:10232
-  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:10537
-  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:10672
-  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:10726
-  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:10851
-  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:11106
-  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:11190
-  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:11295
-  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:11360
-  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:5037
-  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:6417
-  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:9706
-  - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:9870
-  - MOBILE_FIRST RAILS/master/public/face.css:1582
-  - NEVER_BATCH_DELETE MASTER/lib/fix/restructure.rb:152
-  - NEVER_BATCH_DELETE MASTER/lib/fix/transcript.rb:82
+  - MOBILE_FIRST RAILS/master/public/face.css:1715
+  - MOBILE_FIRST RAILS/master/styles/face/40_accessibility_motion.css:405
+  - MONKEY_PATCH_CORE MASTER/lib/fix/kernel.rb:16
+  - NEVER_BATCH_DELETE MASTER/lib/cli/context_window.rb:159
+  - NEVER_BATCH_DELETE MASTER/lib/fix/restructure.rb:161
+  - NEVER_BATCH_DELETE MASTER/lib/fix/transaction.rb:207
+  - NEVER_BATCH_DELETE MASTER/lib/fix/transcript.rb:141
   - NEVER_BATCH_DELETE MASTER/lib/fix/visual_ghost_stack.rb:241
-  - NEVER_BATCH_DELETE MASTER/lib/voice/engines.rb:332
-  - NEVER_BATCH_DELETE MASTER/lib/voice/engines.rb:480
+  - NEVER_BATCH_DELETE MASTER/lib/io/semantic_cache.rb:40
+  - NEVER_BATCH_DELETE MASTER/lib/trace/recorder.rb:104
+  - NEVER_BATCH_DELETE MASTER/lib/voice/engines.rb:334
+  - NEVER_BATCH_DELETE MASTER/lib/voice/engines.rb:482
   - NEVER_BATCH_DELETE MASTER/lib/voice/human.rb:130
+  - NEVER_BATCH_DELETE OPENBSD/usr/local/libexec/rails-sync.ksh:135
   - NEVER_BATCH_DELETE RAILS/master/test/controllers/tts_controller_test.rb:24
+  - NO_CHANGELOG_COMMENT RAILS/brgen_dating/app/models/dating/profile.rb:55
+  - NO_CHANGELOG_COMMENT RAILS/brgen_marketplace/test/models/marketplace/order_test.rb:20
   - NO_COLUMN_ALIGN RAILS/master/app/controllers/events_controller.rb:67
   - NO_COLUMN_ALIGN RAILS/master/app/controllers/events_controller.rb:68
   - NO_COLUMN_ALIGN RAILS/master/app/controllers/events_controller.rb:74
   - NO_COLUMN_ALIGN RAILS/master/app/controllers/events_controller.rb:75
   - NO_COLUMN_ALIGN RAILS/master/app/controllers/events_controller.rb:77
-  - NO_COLUMN_ALIGN RAILS/master/app/controllers/events_controller.rb:78
+  - NO_COLUMN_ALIGN RAILS/master/app/controllers/events_controller.rb:79
   - NO_COLUMN_ALIGN RAILS/master/public/face_semantics.js:397
   - NO_COLUMN_ALIGN RAILS/master/public/face_semantics.js:445
-  - NO_INLINE_SCRIPT_BLOCK RAILS/bsdports/public/406-unsupported-browser.html:10
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master/app/views/chat/index.html.erb:155
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master/app/views/chat/index.html.erb:21
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master/app/views/chat/index.html.erb:375
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master/app/views/chat/index.html.erb:47
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master/app/views/chat/index.html.erb:71
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master/app/views/chat/index.html.erb:76
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master/app/views/dashboard/index.html.erb:53
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master/public/406-unsupported-browser.html:9
-  - NO_INLINE_SCRIPT_BLOCK RAILS/master/public/offline.html:7
+  - NO_DECORATIVE_GRADIENT RAILS/__shared/app/assets/stylesheets/_empty_state.scss:154
+  - NO_DECORATIVE_GRADIENT RAILS/amber/app/assets/stylesheets/_amber_chrome.scss:235
+  - NO_DECORATIVE_GRADIENT RAILS/amber/app/assets/stylesheets/_amber_chrome.scss:26
+  - NO_DECORATIVE_GRADIENT RAILS/amber/app/assets/stylesheets/_amber_guest_compose.scss:20
+  - NO_DECORATIVE_GRADIENT RAILS/brgen/app/assets/stylesheets/_brgen_city_surfaces.scss:441
+  - NO_DOT_SEPARATED_META RAILS/__shared/app/views/shared/_link_embed.html.erb:30
+  - NO_DOT_SEPARATED_META RAILS/amber/app/views/declutter/index.html.erb:25
+  - NO_DOT_SEPARATED_META RAILS/amber/app/views/declutter/review.html.erb:86
+  - NO_DOT_SEPARATED_META RAILS/amber/app/views/demo_wardrobe/_item.html.erb:9
+  - NO_DOT_SEPARATED_META RAILS/amber/app/views/demo_wardrobe/show.html.erb:10
+  - NO_DOT_SEPARATED_META RAILS/amber/app/views/demo_wardrobe/show.html.erb:11
+  - NO_DOT_SEPARATED_META RAILS/amber/app/views/home/_today_look.html.erb:18
+  - NO_DOT_SEPARATED_META RAILS/amber/app/views/items/_item.html.erb:3
+  - NO_DOT_SEPARATED_META RAILS/brgen/app/views/home/_local_activity.html.erb:24
+  - NO_DOT_SEPARATED_META RAILS/brgen/app/views/posts/_live_search_results.html.erb:12
+  - NO_DOT_SEPARATED_META RAILS/brgen_dating/app/views/dating/home/_card.html.erb:25
+  - NO_DOT_SEPARATED_META RAILS/brgen_dating/app/views/dating/picks/index.html.erb:25
+  - NO_DOT_SEPARATED_META RAILS/brgen_marketplace/app/views/marketplace/_top_offers.html.erb:36
+  - NO_DOT_SEPARATED_META RAILS/brgen_marketplace/app/views/marketplace/listings/_card.html.erb:37
+  - NO_DOT_SEPARATED_META RAILS/brgen_marketplace/app/views/marketplace/saved_searches/index.html.erb:26
+  - NO_EYEBROW_LABEL RAILS/__shared/app/views/layouts/_mailer_styles.html.erb:1
+  - NO_EYEBROW_LABEL RAILS/amber/public/404.html:1
+  - NO_EYEBROW_LABEL RAILS/amber/public/406-unsupported-browser.html:1
+  - NO_EYEBROW_LABEL RAILS/amber/public/422.html:1
+  - NO_EYEBROW_LABEL RAILS/amber/public/500.html:1
+  - NO_EYEBROW_LABEL RAILS/brgen/app/views/home/_vertical_promo_unit.html.erb:1
+  - NO_EYEBROW_LABEL RAILS/brgen/public/404.html:1
+  - NO_EYEBROW_LABEL RAILS/brgen/public/406-unsupported-browser.html:1
+  - NO_EYEBROW_LABEL RAILS/brgen/public/422.html:1
+  - NO_EYEBROW_LABEL RAILS/brgen/public/500.html:1
+  - NO_EYEBROW_LABEL RAILS/brgen_marketplace/app/views/marketplace/listings/index.html.erb:1
+  - NO_EYEBROW_LABEL RAILS/bsdports/public/404.html:1
+  - NO_EYEBROW_LABEL RAILS/bsdports/public/406-unsupported-browser.html:1
+  - NO_EYEBROW_LABEL RAILS/bsdports/public/422.html:1
+  - NO_EYEBROW_LABEL RAILS/bsdports/public/500.html:1
+  - NO_INLINE_SCRIPT_BLOCK MASTER/lib/mobile/web/face.html:9
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/lazy_image_controller.js:65
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/lazy_image_controller.js:66
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/listing_form_controller.js:51
@@ -166,25 +206,28 @@ finding_members:
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/listing_form_controller.js:53
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/listing_form_controller.js:54
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/listing_form_controller.js:55
-  - NULLISH_COALESCING RAILS/master/public/chat.js:259
-  - NULLISH_COALESCING RAILS/master/public/chat.js:276
-  - NULLISH_COALESCING RAILS/master/public/chat.js:363
-  - NULLISH_COALESCING RAILS/master/public/chat.js:445
-  - NULLISH_COALESCING RAILS/master/public/chat.js:575
-  - NULLISH_COALESCING RAILS/master/public/chat.js:588
-  - NULLISH_COALESCING RAILS/master/public/chat.js:902
+  - NULLISH_COALESCING RAILS/brgen_radio/playlist/app/javascript/controllers/playlist_player_controller.js:362
+  - NULLISH_COALESCING RAILS/brgen_radio/tv/app/javascript/controllers/tv_feed_controller.js:77
+  - NULLISH_COALESCING RAILS/master/public/chat.js:1032
+  - NULLISH_COALESCING RAILS/master/public/chat.js:333
+  - NULLISH_COALESCING RAILS/master/public/chat.js:350
+  - NULLISH_COALESCING RAILS/master/public/chat.js:491
+  - NULLISH_COALESCING RAILS/master/public/chat.js:573
+  - NULLISH_COALESCING RAILS/master/public/chat.js:704
+  - NULLISH_COALESCING RAILS/master/public/chat.js:717
   - NULLISH_COALESCING RAILS/master/public/chat_actions.js:340
   - NULLISH_COALESCING RAILS/master/public/chat_actions.js:8
-  - NULLISH_COALESCING RAILS/master/public/face_2d_fallback.js:149
+  - NULLISH_COALESCING RAILS/master/public/face_ascii.js:1647
+  - NULLISH_COALESCING RAILS/master/public/face_ascii.js:531
   - NULLISH_COALESCING RAILS/master/public/face_council_multi.js:30
-  - NULLISH_COALESCING RAILS/master/public/face_micro_interactions.js:59
+  - NULLISH_COALESCING RAILS/master/public/face_micro_interactions.js:117
   - NULLISH_COALESCING RAILS/master/public/face_semantics.js:250
   - NULLISH_COALESCING RAILS/master/public/face_semantics.js:259
   - NULLISH_COALESCING RAILS/master/public/face_semantics.js:267
-  - NULLISH_COALESCING RAILS/master/public/face_speech_runtime.js:1182
-  - NULLISH_COALESCING RAILS/master/public/face_speech_runtime.js:794
-  - NULLISH_COALESCING RAILS/master/public/face_speech_runtime.js:861
-  - NULLISH_COALESCING RAILS/master/public/face_state.js:192
+  - NULLISH_COALESCING RAILS/master/public/face_speech_runtime.js:1213
+  - NULLISH_COALESCING RAILS/master/public/face_speech_runtime.js:1285
+  - NULLISH_COALESCING RAILS/master/public/face_speech_runtime.js:1606
+  - NULLISH_COALESCING RAILS/master/public/face_state.js:220
   - NULLISH_COALESCING RAILS/master/public/face_tts_bridge.js:8
   - NULLISH_COALESCING RAILS/master/public/face_vision_a.js:129
   - NULLISH_COALESCING RAILS/master/public/face_vision_b.js:271
@@ -212,67 +255,358 @@ finding_members:
   - NULLISH_COALESCING RAILS/master/public/particle_kernel.js:54
   - NULLISH_COALESCING RAILS/master/public/particle_kernel.js:55
   - NULLISH_COALESCING RAILS/master/public/particle_kernel.js:56
-  - NULLISH_COALESCING RAILS/master/public/visual_bridge.js:361
+  - NULLISH_COALESCING RAILS/master/public/visual_bridge.js:359
   - NULLISH_COALESCING RAILS/master/public/visual_governor.js:16
   - OPTIONAL_CHAINING RAILS/master/public/face_semantics.js:175
+  - OPTIONAL_CHAINING RAILS/master/test/face_ascii.test.mjs:117
+  - PROSE_ACTIVE_VOICE MASTER/lib/cli/fold_risk.rb:12
+  - PROSE_ACTIVE_VOICE MASTER/lib/operator/check_ladder.rb:207
+  - PROSE_ACTIVE_VOICE RAILS/brgen_messenger/app/models/conversation/unread.rb:33
+  - PROSE_OMIT_QUALIFIERS MASTER/lib/fix/fix_loop/committer.rb:237
+  - PROSE_OMIT_QUALIFIERS MASTER/lib/fix/fix_loop/lifecycle.rb:235
+  - PROSE_OMIT_QUALIFIERS MASTER/lib/voice/disfluency.rb:67
+  - PROSE_OMIT_QUALIFIERS MASTER/lib/voice/narrator.rb:39
+  - PROSE_OMIT_QUALIFIERS MASTER/lib/voice/narrator.rb:41
+  - PROSE_OMIT_QUALIFIERS MASTER/tools/snapshot.rb:413
+  - PROSE_OMIT_QUALIFIERS RAILS/__shared/lib/shared/subprocess.rb:13
+  - PROSE_OMIT_QUALIFIERS RAILS/brgen/config/demo_media/README.md:39
+  - PROSE_OMIT_QUALIFIERS RAILS/brgen_dating/app/models/dating/profile.rb:63
+  - PROSE_OMIT_QUALIFIERS RAILS/brgen_marketplace/engines/takeaway/app/controllers/takeaway/group_orders_controller.rb:62
+  - PROSE_OMIT_QUALIFIERS RAILS/brgen_marketplace/engines/takeaway/app/models/takeaway/delivery_driver.rb:28
+  - PROSE_OMIT_QUALIFIERS RAILS/brgen_marketplace/engines/takeaway/app/models/takeaway/order.rb:62
+  - PROSE_OMIT_QUALIFIERS RAILS/brgen_messenger/app/controllers/conversations_controller.rb:52
+  - PROSE_OMIT_QUALIFIERS RAILS/brgen_messenger/app/controllers/invites_controller.rb:48
+  - PROSE_OMIT_QUALIFIERS RAILS/brgen_messenger/test/models/messageable_scope_test.rb:7
+  - RATE_LIMITING_MISSING RAILS/__shared/app/controllers/concerns/shared/email_registration.rb:1
   - RUBY_NUMERIC_UNDERSCORE MASTER/lib/cli/face/ear.rb:23
   - RUBY_NUMERIC_UNDERSCORE MASTER/lib/music/audio_sink.rb:29
   - RUBY_NUMERIC_UNDERSCORE MASTER/lib/music/audio_sink.rb:30
   - RUBY_NUMERIC_UNDERSCORE OPENBSD/test/test_disk_usage.rb:10
   - RUBY_NUMERIC_UNDERSCORE OPENBSD/test/test_disk_usage.rb:11
   - RUBY_NUMERIC_UNDERSCORE OPENBSD/test/test_disk_usage.rb:9
-  - SAFE_NAVIGATION MASTER/lib/voice/playback.rb:218
-  - STRICT_MODE_ZSH OPENBSD/dev/operator_stage_2.zsh:1
-  - STRICT_MODE_ZSH OPENBSD/dev/operator_usage.zsh:1
+  - RUBY_SNAKE_METHODS RAILS/brgen/test/controllers/session_boundaries_test.rb:124
+  - RUBY_SNAKE_METHODS RAILS/brgen/test/controllers/session_boundaries_test.rb:48
+  - RUBY_SNAKE_METHODS RAILS/brgen/test/controllers/session_boundaries_test.rb:97
+  - RUBY_SNAKE_METHODS RAILS/brgen/test/controllers/users_controller_test.rb:121
+  - RUBY_SNAKE_METHODS RAILS/brgen/test/integration/authorization_matrix_test.rb:117
+  - RUBY_SYMBOL_TO_PROC MASTER/law/detectors/ruby_laws.rb:140
+  - RUBY_SYMBOL_TO_PROC MASTER/law/detectors/ruby_laws.rb:141
+  - RUBY_SYMBOL_TO_PROC MASTER/law/detectors/universal_laws.rb:41
+  - RUBY_SYMBOL_TO_PROC MASTER/lib/fix/scss_parser.rb:126
+  - RUBY_SYMBOL_TO_PROC MASTER/lib/fix/visual_completion.rb:121
+  - RUBY_SYMBOL_TO_PROC MASTER/lib/fix/visual_completion.rb:135
+  - RUBY_SYMBOL_TO_PROC MASTER/lib/trace/mutation_observer.rb:161
+  - RUBY_SYMBOL_TO_PROC OPENBSD/test/test_githooks.rb:68
+  - SAFE_NAVIGATION MASTER/law/detectors/js_laws.rb:237
+  - SAFE_NAVIGATION MASTER/lib/cli/routing/model_router/selection.rb:129
+  - SAFE_NAVIGATION MASTER/lib/fix/best_of_n.rb:579
+  - SAFE_NAVIGATION MASTER/lib/fix/kernel.rb:259
+  - SAFE_NAVIGATION MASTER/lib/fix/kernel.rb:513
+  - SAFE_NAVIGATION MASTER/lib/fix/visual_completion.rb:61
+  - SAFE_NAVIGATION MASTER/lib/io/host_files.rb:53
+  - SAFE_NAVIGATION MASTER/lib/voice/playback.rb:231
+  - SAFE_NAVIGATION MASTER/tools/snapshot.rb:426
+  - SAFE_NAVIGATION MASTER/tools/snapshot.rb:427
+  - SAFE_NAVIGATION RAILS/__shared/app/controllers/omniauth_callbacks_controller.rb:64
+  - SAFE_NAVIGATION RAILS/brgen_messenger/app/models/conversation.rb:91
+  - SINGLE_PRIVATE_SECTION MASTER/lib/core.rb:162
   - STRICT_MODE_ZSH OPENBSD/usr/local/bin/declutter-hygiene.sh:1
   - STRICT_MODE_ZSH OPENBSD/usr/local/bin/ports-import.sh:1
-  - TEMPLATE_LITERALS RAILS/master/public/voice_surface.js:76
+  - STRICT_MODE_ZSH OPENBSD/usr/local/libexec/stale_ci_cleanup.ksh:1
+  - TEMPLATE_LITERALS RAILS/master/test/face_boot.test.mjs:1044
+  - TEMPLATE_LITERALS RAILS/master/test/face_boot.test.mjs:1045
+  - TEMPLATE_LITERALS RAILS/master/test/master_interface_contract.test.mjs:140
+  - UNBOUNDED_RETRY MASTER/lib/io/media_lanes.rb:278
   - USE_THEN MASTER/lib/cli/command_registry.rb:1
   - USE_THEN MASTER/lib/cli/face/window.rb:1
-  - USE_THEN MASTER/lib/review/council/deliberation.rb:1
-  - USE_THEN MASTER/lib/voice/renderer/prompt_components.rb:1
-  - USE_THEN RAILS/__shared/app/controllers/omniauth_callbacks_controller.rb:1
+  - USE_THEN MASTER/lib/device/owner_preferences.rb:1
+  - USE_THEN MASTER/lib/fix/conflict_resolver.rb:1
+  - USE_THEN MASTER/lib/fix/cross_app_consistency.rb:1
+  - USE_THEN MASTER/lib/io/browser_agent.rb:1
+  - USE_THEN MASTER/lib/io/media_transport.rb:1
   - USE_THEN RAILS/__shared/app/services/shared/newsletter_visuals.rb:1
   - USE_THEN RAILS/__shared/app/services/shared/tradedoubler.rb:1
   - USE_THEN RAILS/brgen/test/controllers/paginated_index_test.rb:1
   - USE_THEN RAILS/brgen/test/controllers/wiki_controller_test.rb:1
   - USE_THEN RAILS/brgen/test/system/dating_swipe_test.rb:1
+  - USE_THEN RAILS/brgen_messenger/test/controllers/conversation_handling_test.rb:1
+  - USE_THEN RAILS/bsdports/test/integration/port_mutations_test.rb:1
   - USE_THEN RAILS/master/script/browser_probe_support.rb:1
-  - WHY_NOT_WHAT MASTER/lib/cli/command_registry/model.rb:49
+  - WHY_NOT_WHAT MASTER/lib/cli/command_registry/model.rb:50
   - WHY_NOT_WHAT MASTER/lib/fix/visual_ghost_stack.rb:19
   - WHY_NOT_WHAT RAILS/__shared/app/controllers/concerns/shared/findable_by_slug.rb:15
   - WHY_NOT_WHAT RAILS/brgen/app/jobs/listing_expiry_job.rb:26
-registry_findings: 31
+  - ZSH_SHEBANG MASTER/tools/device/termux/install.sh:1
+registry_findings: 261
 registry_by_rule:
-  NO_GOD_CLASS: 24
-  SILENT_RESCUE: 5
+  AUDIT_APPEND_ONLY: 1
+  DEBUG_OUTPUT: 2
+  ERB_HTML_SAFE: 1
+  FAIL_VISIBLY: 2
+  NO_ASCII_ART_OUTSIDE_FACE: 38
+  NO_GOD_CLASS: 88
+  ONE_SOURCE: 3
+  QUOTE_VARIABLES: 20
+  SILENT_RESCUE: 106
 registry_finding_members:
-  - NO_GOD_CLASS RAILS/master/app/services/chat_service.rb:7
-  - NO_GOD_CLASS RAILS/master/app/services/tts_job.rb:7
-  - NO_GOD_CLASS OPENBSD/lib/check_result.rb:33
-  - NO_GOD_CLASS RAILS/amber/app/controllers/ai_controller.rb:5
+  - AUDIT_APPEND_ONLY MASTER/lib/trace/log.rb:138
+  - DEBUG_OUTPUT MASTER/lib/voice/speech.rb:167
+  - DEBUG_OUTPUT MASTER/lib/voice/speech.rb:172
+  - ERB_HTML_SAFE RAILS/brgen_dating/app/views/dating/matches/_match.html.erb:8
+  - FAIL_VISIBLY MASTER/lib/fix/surface_evidence.rb:500
+  - FAIL_VISIBLY MASTER/lib/fix/surface_evidence.rb:514
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/law/definition.rb:368
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/law/definition.rb:90
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/cli/pipeline/proof/reading.rb:25
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/core/world.rb:265
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/fix/dead_css_static.rb:20
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/fix/primitive_first.rb:15
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/fix/scan/ast_fixer/syntax_transforms.rb:25
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/ground/policy/sandbox.rb:20
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/ground/policy/sandbox.rb:35
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/ground/policy/sandbox.rb:49
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/operator/snapshot_map.rb:15
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/review/scan/source_masking.rb:251
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/voice/expression.rb:150
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/voice/narrator/sanitizer.rb:10
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/voice/renderer/text_formatting.rb:48
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/voice/renderer/text_formatting.rb:77
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/voice/shaping.rb:87
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/voice/strunk_pass.rb:12
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/tools/block_git_stash.rb:26
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/tools/event_bus_reach.rb:18
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/tools/event_bus_reach.rb:21
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/tools/event_bus_reach.rb:28
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/tools/event_bus_reach.rb:33
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/tools/history_valuables.rb:29
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/tools/rails/operator/fallback_drift_lint.rb:30
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/tools/rails/operator/fallback_drift_lint.rb:35
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/tools/rails/operator/fallback_drift_lint.rb:40
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/tools/security_sweep.rb:15
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/tools/security_sweep.rb:55
+  - NO_ASCII_ART_OUTSIDE_FACE MASTER/tools/typography_lint.rb:16
+  - NO_ASCII_ART_OUTSIDE_FACE OPENBSD/lib/secret_redaction.rb:21
+  - NO_ASCII_ART_OUTSIDE_FACE OPENBSD/test/test_config_drift_check.rb:69
+  - NO_ASCII_ART_OUTSIDE_FACE RAILS/__shared/app/services/shared/strunk_white_pass.rb:29
+  - NO_ASCII_ART_OUTSIDE_FACE RAILS/__shared/app/services/shared/strunk_white_pass.rb:9
+  - NO_ASCII_ART_OUTSIDE_FACE RAILS/__shared/app/views/shared/_storefront_promo.html.erb:19
+  - NO_ASCII_ART_OUTSIDE_FACE RAILS/brgen/public/500.html:23
+  - NO_ASCII_ART_OUTSIDE_FACE RAILS/master/public/face_speech_runtime.js:1383
+  - NO_ASCII_ART_OUTSIDE_FACE RAILS/master/test/visual_bridge_topics.test.mjs:55
+  - NO_GOD_CLASS MASTER/lib/boot/dependency_manager.rb:22
+  - NO_GOD_CLASS MASTER/lib/cli/face/ascii.rb:18
+  - NO_GOD_CLASS MASTER/lib/cli/face/mesh.rb:12
+  - NO_GOD_CLASS MASTER/lib/cli/face/window.rb:17
+  - NO_GOD_CLASS MASTER/lib/cli/pipeline/pass.rb:13
+  - NO_GOD_CLASS MASTER/lib/cli/pipeline/pass.rb:14
+  - NO_GOD_CLASS MASTER/lib/cli/routing/model_router/pool.rb:12
+  - NO_GOD_CLASS MASTER/lib/cli/routing/provider_health.rb:12
+  - NO_GOD_CLASS MASTER/lib/cli/session/repl_flow.rb:7
+  - NO_GOD_CLASS MASTER/lib/cli/skills.rb:13
+  - NO_GOD_CLASS MASTER/lib/cognition/state.rb:8
+  - NO_GOD_CLASS MASTER/lib/core.rb:300
+  - NO_GOD_CLASS MASTER/lib/core/constitution.rb:15
+  - NO_GOD_CLASS MASTER/lib/device/agent.rb:17
+  - NO_GOD_CLASS MASTER/lib/fix/architecture_exploration.rb:9
+  - NO_GOD_CLASS MASTER/lib/fix/best_of_n.rb:111
+  - NO_GOD_CLASS MASTER/lib/fix/change_scope.rb:13
+  - NO_GOD_CLASS MASTER/lib/fix/convergence_discipline.rb:16
+  - NO_GOD_CLASS MASTER/lib/fix/design_edit.rb:13
+  - NO_GOD_CLASS MASTER/lib/fix/fix_loop.rb:50
+  - NO_GOD_CLASS MASTER/lib/fix/fix_loop/committer.rb:15
+  - NO_GOD_CLASS MASTER/lib/fix/fix_loop/committer.rb:59
+  - NO_GOD_CLASS MASTER/lib/fix/fix_loop/pass_runner.rb:25
+  - NO_GOD_CLASS MASTER/lib/fix/fix_loop/pass_runner.rb:26
+  - NO_GOD_CLASS MASTER/lib/fix/fix_loop/pass_runner/assessment_matrix.rb:10
+  - NO_GOD_CLASS MASTER/lib/fix/fix_loop/pass_runner/assessment_matrix.rb:11
+  - NO_GOD_CLASS MASTER/lib/fix/fix_loop/pass_runner/stream_stage.rb:8
+  - NO_GOD_CLASS MASTER/lib/fix/fix_loop/pass_runner/stream_stage.rb:9
+  - NO_GOD_CLASS MASTER/lib/fix/four_stream_assessment.rb:13
+  - NO_GOD_CLASS MASTER/lib/fix/kernel.rb:16
+  - NO_GOD_CLASS MASTER/lib/fix/mission.rb:14
+  - NO_GOD_CLASS MASTER/lib/fix/opportunity_pass.rb:13
+  - NO_GOD_CLASS MASTER/lib/fix/repair_loop.rb:40
+  - NO_GOD_CLASS MASTER/lib/fix/repair_loop/fix_strategies.rb:10
+  - NO_GOD_CLASS MASTER/lib/fix/restructure_sweep.rb:20
+  - NO_GOD_CLASS MASTER/lib/fix/restructure_sweep/context.rb:5
+  - NO_GOD_CLASS MASTER/lib/fix/restructure_sweep/context.rb:9
+  - NO_GOD_CLASS MASTER/lib/fix/run_budget.rb:20
+  - NO_GOD_CLASS MASTER/lib/fix/run_journal.rb:22
+  - NO_GOD_CLASS MASTER/lib/fix/run_pulse.rb:14
+  - NO_GOD_CLASS MASTER/lib/fix/scan/file_processor.rb:22
+  - NO_GOD_CLASS MASTER/lib/fix/scanner.rb:15
+  - NO_GOD_CLASS MASTER/lib/fix/surface_evidence.rb:16
+  - NO_GOD_CLASS MASTER/lib/fix/transaction.rb:22
+  - NO_GOD_CLASS MASTER/lib/fix/transformation_plan.rb:10
+  - NO_GOD_CLASS MASTER/lib/fix/visual_pass.rb:44
+  - NO_GOD_CLASS MASTER/lib/fix/wishlist.rb:21
+  - NO_GOD_CLASS MASTER/lib/ground/assistant_tasks.rb:15
+  - NO_GOD_CLASS MASTER/lib/ground/memory/store.rb:9
+  - NO_GOD_CLASS MASTER/lib/ground/redactor.rb:5
+  - NO_GOD_CLASS MASTER/lib/io/browser_agent.rb:21
+  - NO_GOD_CLASS MASTER/lib/review/agent.rb:13
+  - NO_GOD_CLASS MASTER/lib/review/council/deliberation.rb:10
+  - NO_GOD_CLASS MASTER/lib/review/llm_dispatcher.rb:22
+  - NO_GOD_CLASS MASTER/lib/review/reference_graph.rb:18
+  - NO_GOD_CLASS MASTER/lib/review/scan/law.rb:12
+  - NO_GOD_CLASS MASTER/lib/review/scan/law.rb:265
+  - NO_GOD_CLASS MASTER/lib/voice/narrator.rb:29
+  - NO_GOD_CLASS MASTER/lib/voice/narrator/script.rb:8
+  - NO_GOD_CLASS MASTER/lib/voice/renderer/prompt_components.rb:8
+  - NO_GOD_CLASS RAILS/__shared/app/services/shared/growth_report.rb:11
+  - NO_GOD_CLASS RAILS/amber/app/controllers/ai_controller.rb:6
   - NO_GOD_CLASS RAILS/amber/app/controllers/items_controller.rb:3
   - NO_GOD_CLASS RAILS/amber/app/controllers/outfits_controller.rb:3
   - NO_GOD_CLASS RAILS/amber/app/models/item.rb:5
-  - NO_GOD_CLASS RAILS/amber/app/services/wardrobe_ai.rb:6
+  - NO_GOD_CLASS RAILS/amber/app/models/user.rb:5
+  - NO_GOD_CLASS RAILS/amber/app/services/wardrobe_ai.rb:7
   - NO_GOD_CLASS RAILS/brgen/app/models/community.rb:3
   - NO_GOD_CLASS RAILS/brgen/app/models/event.rb:11
-  - NO_GOD_CLASS RAILS/brgen/app/models/message.rb:3
   - NO_GOD_CLASS RAILS/brgen/app/models/post.rb:3
   - NO_GOD_CLASS RAILS/brgen/app/models/user.rb:3
+  - NO_GOD_CLASS RAILS/brgen/app/services/channel_bot.rb:13
+  - NO_GOD_CLASS RAILS/brgen/app/services/marketplace/payments/dintero_checkout.rb:7
+  - NO_GOD_CLASS RAILS/brgen/app/services/marketplace/payments/dintero_client.rb:9
   - NO_GOD_CLASS RAILS/brgen/app/services/partner_attribution_report.rb:24
-  - NO_GOD_CLASS RAILS/brgen/engines/dating/app/models/dating/profile.rb:3
-  - NO_GOD_CLASS RAILS/brgen/engines/marketplace/app/models/marketplace/listing.rb:3
-  - NO_GOD_CLASS RAILS/brgen/engines/marketplace/app/models/marketplace/order.rb:3
-  - NO_GOD_CLASS RAILS/brgen/lib/brgen/bergen_demo_seeder.rb:8
+  - NO_GOD_CLASS RAILS/brgen/lib/brgen/bergen_demo_seeder.rb:9
+  - NO_GOD_CLASS RAILS/brgen/lib/brgen/domain_registry.rb:4
   - NO_GOD_CLASS RAILS/brgen/lib/brgen/irc/bridge.rb:10
-  - NO_GOD_CLASS RAILS/brgen/lib/brgen/radio_bergen_manifest.rb:7
-  - NO_GOD_CLASS MASTER/checks/lib/rendered/rendered_geometry.rb:26
-  - NO_GOD_CLASS MASTER/checks/lib/research/design_metrics.rb:17
-  - NO_GOD_CLASS MASTER/checks/support/cdp_session.rb:31
-  - NO_GOD_CLASS MASTER/checks/support/geometry_probe.rb:20
-  - SILENT_RESCUE MASTER/lib/core/routing/model_catalog.rb:30
-  - SILENT_RESCUE MASTER/tools/check.rb:474
-  - SILENT_RESCUE MASTER/tools/lora/_toolkit/curate.rb:163
-  - SILENT_RESCUE MASTER/tools/postpro/postpro.rb:291
-  - SILENT_RESCUE MASTER/tools/postpro/postpro.rb:302
+  - NO_GOD_CLASS RAILS/brgen/lib/brgen/radio_bergen_manifest.rb:11
+  - NO_GOD_CLASS RAILS/brgen_dating/app/models/dating/profile.rb:3
+  - NO_GOD_CLASS RAILS/brgen_marketplace/app/models/marketplace/checkout.rb:9
+  - NO_GOD_CLASS RAILS/brgen_marketplace/app/models/marketplace/listing.rb:3
+  - NO_GOD_CLASS RAILS/brgen_marketplace/app/models/marketplace/order.rb:3
+  - NO_GOD_CLASS RAILS/brgen_messenger/app/models/conversation.rb:3
+  - NO_GOD_CLASS RAILS/brgen_messenger/app/models/message.rb:3
+  - NO_GOD_CLASS RAILS/master/app/controllers/chat_controller.rb:8
+  - NO_GOD_CLASS RAILS/master/app/services/chat_service.rb:7
+  - NO_GOD_CLASS RAILS/master/app/services/tts_job.rb:7
+  - ONE_SOURCE MASTER/lib/fix/law_parity.rb:16
+  - ONE_SOURCE MASTER/lib/operator/law_inventory.rb:16
+  - ONE_SOURCE MASTER/lib/operator/law_inventory.rb:17
+  - QUOTE_VARIABLES MASTER/tools/termux_install_agent_service.sh:43
+  - QUOTE_VARIABLES OPENBSD/test/resource_guard_test.sh:139
+  - QUOTE_VARIABLES OPENBSD/test/resource_guard_test.sh:154
+  - QUOTE_VARIABLES OPENBSD/test/resource_guard_test.sh:158
+  - QUOTE_VARIABLES OPENBSD/test/resource_guard_test.sh:160
+  - QUOTE_VARIABLES OPENBSD/test/resource_guard_test.sh:198
+  - QUOTE_VARIABLES OPENBSD/usr/local/libexec/ci-run.ksh:33
+  - QUOTE_VARIABLES OPENBSD/usr/local/libexec/rails-sync.ksh:107
+  - QUOTE_VARIABLES OPENBSD/usr/local/libexec/rails-sync.ksh:115
+  - QUOTE_VARIABLES OPENBSD/usr/local/libexec/rails-sync.ksh:121
+  - QUOTE_VARIABLES OPENBSD/usr/local/libexec/rails-sync.ksh:33
+  - QUOTE_VARIABLES OPENBSD/usr/local/libexec/rails-sync.ksh:37
+  - QUOTE_VARIABLES OPENBSD/usr/local/libexec/rails-sync.ksh:96
+  - QUOTE_VARIABLES OPENBSD/usr/local/libexec/rails-task.ksh:36
+  - QUOTE_VARIABLES OPENBSD/usr/local/libexec/rails-task.ksh:40
+  - QUOTE_VARIABLES OPENBSD/usr/local/libexec/rails-task.ksh:47
+  - QUOTE_VARIABLES OPENBSD/usr/local/libexec/rails-task.ksh:55
+  - QUOTE_VARIABLES OPENBSD/usr/local/libexec/rails-task.ksh:66
+  - QUOTE_VARIABLES OPENBSD/usr/local/libexec/rails-task.ksh:73
+  - QUOTE_VARIABLES OPENBSD/usr/local/libexec/rails-task.ksh:87
+  - SILENT_RESCUE MASTER/lib/ai/operator_contract.rb:90
+  - SILENT_RESCUE MASTER/lib/boot/dependency_manager.rb:665
+  - SILENT_RESCUE MASTER/lib/cli/face/sizing.rb:46
+  - SILENT_RESCUE MASTER/lib/cli/face/transcriber.rb:114
+  - SILENT_RESCUE MASTER/lib/cli/routing/compute_pool.rb:235
+  - SILENT_RESCUE MASTER/lib/cli/routing/compute_pool.rb:330
+  - SILENT_RESCUE MASTER/lib/cli/routing/model_router/pool.rb:476
+  - SILENT_RESCUE MASTER/lib/cli/routing/provider_health.rb:71
+  - SILENT_RESCUE MASTER/lib/convergence/receipt.rb:72
+  - SILENT_RESCUE MASTER/lib/design/visual_language.rb:178
+  - SILENT_RESCUE MASTER/lib/design/visual_language.rb:392
+  - SILENT_RESCUE MASTER/lib/device/agent.rb:183
+  - SILENT_RESCUE MASTER/lib/device/audio.rb:62
+  - SILENT_RESCUE MASTER/lib/device/wake_word.rb:112
+  - SILENT_RESCUE MASTER/lib/execution/contract.rb:144
+  - SILENT_RESCUE MASTER/lib/execution/contract.rb:193
+  - SILENT_RESCUE MASTER/lib/execution/contract.rb:203
+  - SILENT_RESCUE MASTER/lib/fix/architecture_exploration.rb:209
+  - SILENT_RESCUE MASTER/lib/fix/architecture_exploration.rb:509
+  - SILENT_RESCUE MASTER/lib/fix/best_of_n.rb:103
+  - SILENT_RESCUE MASTER/lib/fix/best_of_n.rb:703
+  - SILENT_RESCUE MASTER/lib/fix/convergence_discipline.rb:413
+  - SILENT_RESCUE MASTER/lib/fix/convergence_discipline.rb:710
+  - SILENT_RESCUE MASTER/lib/fix/fix_loop/council_round.rb:191
+  - SILENT_RESCUE MASTER/lib/fix/fix_loop/pass_runner/assessment_matrix.rb:437
+  - SILENT_RESCUE MASTER/lib/fix/fix_trace.rb:178
+  - SILENT_RESCUE MASTER/lib/fix/fix_trace.rb:46
+  - SILENT_RESCUE MASTER/lib/fix/layout_score_store.rb:105
+  - SILENT_RESCUE MASTER/lib/fix/layout_score_store.rb:91
+  - SILENT_RESCUE MASTER/lib/fix/primitive_first.rb:89
+  - SILENT_RESCUE MASTER/lib/fix/protocol.rb:331
+  - SILENT_RESCUE MASTER/lib/fix/resource_budget.rb:200
+  - SILENT_RESCUE MASTER/lib/fix/resource_budget.rb:218
+  - SILENT_RESCUE MASTER/lib/fix/resource_budget.rb:229
+  - SILENT_RESCUE MASTER/lib/fix/resource_budget.rb:241
+  - SILENT_RESCUE MASTER/lib/fix/resource_budget.rb:248
+  - SILENT_RESCUE MASTER/lib/fix/resource_budget.rb:260
+  - SILENT_RESCUE MASTER/lib/fix/resource_budget.rb:279
+  - SILENT_RESCUE MASTER/lib/fix/restructure_sweep/context.rb:80
+  - SILENT_RESCUE MASTER/lib/fix/run_budget.rb:479
+  - SILENT_RESCUE MASTER/lib/fix/run_pulse.rb:409
+  - SILENT_RESCUE MASTER/lib/fix/run_pulse.rb:441
+  - SILENT_RESCUE MASTER/lib/fix/run_pulse.rb:451
+  - SILENT_RESCUE MASTER/lib/fix/surface_evidence.rb:1019
+  - SILENT_RESCUE MASTER/lib/fix/surface_evidence.rb:1114
+  - SILENT_RESCUE MASTER/lib/fix/surface_evidence.rb:1195
+  - SILENT_RESCUE MASTER/lib/fix/task_steward.rb:32
+  - SILENT_RESCUE MASTER/lib/fix/transaction.rb:416
+  - SILENT_RESCUE MASTER/lib/fix/transaction.rb:422
+  - SILENT_RESCUE MASTER/lib/fix/visual_conformance.rb:124
+  - SILENT_RESCUE MASTER/lib/fix/visual_drift_budget.rb:64
+  - SILENT_RESCUE MASTER/lib/fix/visual_ghost_stack.rb:104
+  - SILENT_RESCUE MASTER/lib/fix/visual_ghost_stack.rb:119
+  - SILENT_RESCUE MASTER/lib/fix/visual_ghost_stack.rb:137
+  - SILENT_RESCUE MASTER/lib/fix/visual_ghost_stack.rb:146
+  - SILENT_RESCUE MASTER/lib/fix/visual_ghost_stack.rb:193
+  - SILENT_RESCUE MASTER/lib/fix/visual_ghost_stack.rb:205
+  - SILENT_RESCUE MASTER/lib/fix/visual_pass.rb:320
+  - SILENT_RESCUE MASTER/lib/fix/visual_pass.rb:443
+  - SILENT_RESCUE MASTER/lib/fix/visual_pass.rb:453
+  - SILENT_RESCUE MASTER/lib/fix/visual_pass.rb:461
+  - SILENT_RESCUE MASTER/lib/fix/visual_pass.rb:471
+  - SILENT_RESCUE MASTER/lib/fix/visual_quality_checks.rb:188
+  - SILENT_RESCUE MASTER/lib/ground/assistant_tasks.rb:294
+  - SILENT_RESCUE MASTER/lib/ground/orders.rb:233
+  - SILENT_RESCUE MASTER/lib/io/browser_agent.rb:368
+  - SILENT_RESCUE MASTER/lib/io/lane_selection.rb:146
+  - SILENT_RESCUE MASTER/lib/io/lane_selection.rb:321
+  - SILENT_RESCUE MASTER/lib/io/lane_selection.rb:357
+  - SILENT_RESCUE MASTER/lib/io/llm.rb:157
+  - SILENT_RESCUE MASTER/lib/io/media_intent.rb:220
+  - SILENT_RESCUE MASTER/lib/io/media_lanes.rb:224
+  - SILENT_RESCUE MASTER/lib/operator/dream_observer.rb:60
+  - SILENT_RESCUE MASTER/lib/operator/dream_observer.rb:75
+  - SILENT_RESCUE MASTER/lib/operator/law_inventory.rb:227
+  - SILENT_RESCUE MASTER/lib/operator/law_inventory.rb:235
+  - SILENT_RESCUE MASTER/lib/operator/law_inventory.rb:245
+  - SILENT_RESCUE MASTER/lib/operator/law_inventory.rb:277
+  - SILENT_RESCUE MASTER/lib/operator/snapshot_verify.rb:144
+  - SILENT_RESCUE MASTER/lib/runtime/box.rb:68
+  - SILENT_RESCUE MASTER/lib/runtime/compute.rb:235
+  - SILENT_RESCUE MASTER/lib/runtime/compute.rb:264
+  - SILENT_RESCUE MASTER/lib/runtime/compute.rb:274
+  - SILENT_RESCUE MASTER/lib/runtime/compute.rb:284
+  - SILENT_RESCUE MASTER/lib/trace/event_bus.rb:165
+  - SILENT_RESCUE MASTER/lib/trace/event_bus.rb:174
+  - SILENT_RESCUE MASTER/lib/trace/log.rb:161
+  - SILENT_RESCUE MASTER/lib/trace/logging.rb:84
+  - SILENT_RESCUE MASTER/lib/trace/logging.rb:98
+  - SILENT_RESCUE MASTER/lib/voice/benchmark.rb:158
+  - SILENT_RESCUE MASTER/lib/voice/playback.rb:673
+  - SILENT_RESCUE MASTER/lib/voice/playback.rb:686
+  - SILENT_RESCUE MASTER/lib/voice/quality.rb:41
+  - SILENT_RESCUE MASTER/lib/voice/quality.rb:71
+  - SILENT_RESCUE MASTER/lib/voice/stt/vosk_backend.rb:108
+  - SILENT_RESCUE MASTER/lib/voice/stt/vosk_backend.rb:59
+  - SILENT_RESCUE MASTER/lib/voice/stt/whisper_cpp_backend.rb:20
+  - SILENT_RESCUE MASTER/lib/voice/vad/silero_backend.rb:92
+  - SILENT_RESCUE MASTER/tools/fan_ops_digest.rb:108
+  - SILENT_RESCUE MASTER/tools/rails/triangle.rb:77
+  - SILENT_RESCUE MASTER/tools/rails/view_surfaces/resolve_route_params.rb:26
+  - SILENT_RESCUE RAILS/__shared/app/services/shared/commerce.rb:61
+  - SILENT_RESCUE RAILS/__shared/app/services/shared/master_messenger.rb:30
+  - SILENT_RESCUE RAILS/brgen_marketplace/app/services/marketplace/search_ranker.rb:93
+  - SILENT_RESCUE RAILS/master/app/controllers/events_controller.rb:126
+  - SILENT_RESCUE RAILS/master/script/probe_primer_external.rb:75
