@@ -194,9 +194,11 @@ def verify_face_css
   return [] unless File.file?(path)
 
   body = File.read(path)
-  anchors = DesignTokens.load.fetch("face_root").fetch("anchors")
+  # face.css is built from face_root.palette; the anchors keep the earlier blue-tinted values,
+  # so checking the anchor failed CI on vm23 once the grey palette (5ba499b4e) shipped.
+  palette = DesignTokens.load.fetch("face_root").fetch("palette")
   missing = [
-    "--x-text: #{anchors.fetch('x_text')}",
+    "--x-text: #{palette.fetch('x_text')}",
     "JetBrainsMono Nerd Font",
   ].reject { |m| body.include?(m) }
   missing.map { |m| "RAILS/master face.css missing #{m}" }
