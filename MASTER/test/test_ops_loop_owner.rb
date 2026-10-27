@@ -5,15 +5,73 @@ require "fileutils"
 require "json"
 require "tmpdir"
 require "time"
+require "socket"
+require "rbconfig"
 require_relative "../lib/ops"
 
 class LoopOwnerSpec < Minitest::Test
+  # A tmp slot keeps these tests off the checkout's real claim, which a live
+  # /fix on this machine may hold.
   def setup
-    Master::Ops::LoopOwner.release
+    @slot_root = Dir.mktmpdir("loop-owner-slot-")
+    @previous_dir = ENV["MASTER_ACTIVE_LOOP_DIR"]
+    ENV["MASTER_ACTIVE_LOOP_DIR"] = File.join(@slot_root, "active_loop")
   end
 
   def teardown
     Master::Ops::LoopOwner.release
+    ENV["MASTER_ACTIVE_LOOP_DIR"] = @previous_dir
+    FileUtils.rm_rf(@slot_root)
+  end
+
+  def write_claim(**fields)
+    dir = Master::Ops::LoopOwner.dir
+    FileUtils.mkdir_p(dir)
+    File.write(Master::Ops::LoopOwner.info, JSON.generate(fields))
+    dir
+  end
+
+  def test_live_owner_older_than_the_stale_window_keeps_its_claim
+    dir = write_claim(loop: "fix", pid: Process.pid, host: Socket.gethostname,
+                      at: (Time.now.utc - (Master::Ops::LoopOwner::STALE_SECONDS * 5)).iso8601)
+
+    Master::Ops::LoopOwner.cleanup_stale!
+
+    assert File.directory?(dir), "a live owner's claim must survive however long its run takes"
+    assert_equal "fix", Master::Ops::LoopOwner.active.fetch("loop")
+  end
+
+  def test_dead_local_owner_is_released_without_a_swallow_row
+    dead = Process.spawn(RbConfig.ruby, "-e", "exit 0")
+    Process.wait(dead)
+    dir = write_claim(loop: "fix", pid: dead, host: Socket.gethostname, at: Time.now.utc.iso8601)
+    errors = []
+
+    Master::Ground::Swallow.stub(:log, ->(*args, **kwargs) { errors << [args, kwargs] }) do
+      Master::Ops::LoopOwner.cleanup_stale!
+    end
+
+    refute File.exist?(dir), "a dead owner's claim must be released"
+    assert_empty errors, "ESRCH means the owner is gone, not a swallowed failure"
+  end
+
+  def test_foreign_host_claim_ages_out
+    dir = write_claim(loop: "fix", pid: Process.pid, host: "elsewhere.invalid",
+                      at: (Time.now.utc - (Master::Ops::LoopOwner::STALE_SECONDS + 60)).iso8601)
+
+    Master::Ops::LoopOwner.cleanup_stale!
+
+    refute File.exist?(dir), "a claim from another host can only age out"
+  end
+
+  def test_release_leaves_another_owners_claim_alone
+    dir = write_claim(loop: "control_plane", pid: Process.ppid, host: Socket.gethostname,
+                      at: Time.now.utc.iso8601)
+
+    Master::Ops::LoopOwner.release
+
+    assert File.directory?(dir), "release must remove only this process's claim"
+    assert_equal "control_plane", Master::Ops::LoopOwner.active.fetch("loop")
   end
 
   def test_claim_records_active_loop
