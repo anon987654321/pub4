@@ -276,7 +276,7 @@ module Master
 
             return ["rails checks", -> {
               held, out = rails_proof(*chain.rails_checks(scan_only: true, strict_inconclusive: ENV[PROOF_ENV] == "1"))
-              apps_held, apps_out = RailsApps.prove(rails_repair_paths)
+              apps_held, apps_out = RailsApps.prove(rails_repair_paths, before: @repair_before)
               [held && apps_held, Array(out) + apps_out]
             }]
           end

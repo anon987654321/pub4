@@ -44,6 +44,26 @@ class TestRepairLoopOwnTest < Minitest::Test
     assert_nil loop.send(:failing_test_for, model)
   end
 
+  # main is not always green: a test that also fails on the original source is not the change's failure,
+  # and the original goes back to the change after the second run.
+  def test_a_test_that_failed_before_the_change_is_not_held_against_it
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "a.rb").tap { |file| File.write(file, "new\n") }
+      loop = Master::Fix::RepairLoop.allocate
+      broken_always = ->(_path) { "a_test.rb: broken" }
+      broken_by_change = ->(file) { File.read(file) == "new\n" ? "a_test.rb: broken" : nil }
+
+      judge = ->(test) { loop.stub(:own_test_failure, test) { loop.failing_test_for(path, before: "old\n") } }
+
+      out, = capture_io { assert_nil judge.call(broken_always) }
+      refused = judge.call(broken_by_change)
+
+      assert_includes out, "already failed before the change"
+      assert_equal "a_test.rb: broken", refused
+      assert_equal "new\n", File.read(path)
+    end
+  end
+
   def test_a_file_outside_rails_has_no_rails_test
     assert_nil Master::Fix::RepairLoop::FixVerification.rails_test_for(File.join(Master::ROOT, "lib", "master.rb"))
   end

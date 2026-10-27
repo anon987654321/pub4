@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "pathname"
 require_relative "../../../fix/rails_app"
 require_relative "../../../io/exec"
+require_relative "reading"
 
 module Master
   module CLI
@@ -23,8 +25,9 @@ module Master
           module_function
 
           # [held, lines] for the RAILS paths (relative to the repository root) a pass changed.
-          def prove(paths, repo_root: Master::REPO_ROOT)
-            runs = apps_for(paths, repo_root:).map { |app, changed| prove_app(app, changed, repo_root:) }
+          # `before` is the commit the pass started from: a test that fails there too is not the pass's.
+          def prove(paths, repo_root: Master::REPO_ROOT, before: nil)
+            runs = apps_for(paths, repo_root:).map { |app, changed| prove_app(app, changed, repo_root:, before:) }
             [runs.all?(&:first), runs.flat_map(&:last)]
           end
 
@@ -45,11 +48,16 @@ module Master
             named.include?(component) ? [component] : []
           end
 
-          def prove_app(app, changed, repo_root:)
+          def prove_app(app, changed, repo_root:, before: nil)
             root = File.join(repo_root, "RAILS", app)
             booted, lines = boot(app, root)
             tests = booted ? tests_for(app, changed, repo_root:) : []
             tested, test_lines = tests.empty? ? [true, []] : run_tests(app, root:, tests:)
+            unless tested || before.nil?
+              rerun = -> { at_revision(changed, before, repo_root:) { run(root, "test", *tests).first } }
+              tested, test_lines = failing_before(app, tests:, output: test_lines, rerun:)
+            end
+
             held = booted && tested
             [held, ["proof suite #{app}: #{held ? "ok" : "FAIL"}", *lines, *test_lines]]
           end
@@ -65,6 +73,37 @@ module Master
             out, status = run(root, "test", *tests)
             [status.success?, ["#{app}: #{tests.size} test file(s)", *out.lines.map(&:chomp)]]
           end
+
+          # main is not always green. The failing tests run again with the pass's changes undone, and
+          # failures that were there already are named, not printed as failures, so the judge does not
+          # count them as the pass's. A run that names no failure (a crash) still fails.
+          def failing_before(app, tests:, output:, rerun:)
+            failed = Reading.parse(false, output).failing
+            fresh = failed - Reading.parse(false, rerun.call.lines.map(&:chomp)).failing
+            return [false, output] if failed.empty? || fresh.any?
+
+            [true, ["#{app}: #{tests.size} test file(s); #{failed.size} failing before the pass too, " \
+                    "not held against it: #{failed.to_a.sort.first(5).join(", ")}"]]
+          end
+
+          # The paths as they were at `revision` while the block runs, then as the pass left them.
+          def at_revision(paths, revision, repo_root:)
+            saved = paths.to_h { |path| [path, read_or_nil(File.join(repo_root, path))] }
+            paths.each { |path| put(File.join(repo_root, path), show(revision, path, repo_root:)) }
+            yield
+          ensure
+            saved&.each { |path, content| put(File.join(repo_root, path), content) }
+          end
+
+          def show(revision, path, repo_root:)
+            out, status = Master::Io::Exec.capture2("git", "show", "#{revision}:#{path}",
+                                                    chdir: repo_root, binmode: true)
+            status.success? ? out : nil
+          end
+
+          def read_or_nil(file) = File.file?(file) ? File.binread(file) : nil
+
+          def put(file, content) = content ? File.binwrite(file, content) : FileUtils.rm_f(file)
 
           # Production eager-loads, so the proof does: zeitwerk:check. The master app never does (its
           # production.rb: MASTER's own loader trips Zeitwerk), so there it proves that the app boots.

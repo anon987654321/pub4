@@ -132,11 +132,12 @@ class TestRepairLoopPolicy < Minitest::Test
   end
 
   # A rescan says the rule stopped firing; the file's own test says whether the
-  # behaviour survived. A fix its test rejects is rolled back.
+  # behaviour survived. A fix its test rejects is rolled back. The original passes
+  # its test, so the failure is the fix's own.
   def test_a_fix_its_own_test_rejects_is_rolled_back
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
-      File.write(path, "violation\n")
+      File.write(path, "kept violation\n")
       FileUtils.mkdir_p(File.join(root, "test"))
       File.write(File.join(root, "test", "test_sample.rb"),
                  %(exit(File.read(File.join(__dir__, "..", "sample.rb")).include?("kept") ? 0 : 1)\n))
@@ -144,13 +145,13 @@ class TestRepairLoopPolicy < Minitest::Test
       loop = build_loop(root:, bus:, scanner: RecordingScanner.new, agent: Agent.new)
       violation = { law: "TEST_RULE", file: path, line: 1 }
 
-      refute loop.send(:apply, path, "clean\n", violation), "a fix its test fails must not stand"
-      assert_equal "violation\n", File.read(path)
+      refute loop.send(:apply, path, "clean grain\n", violation), "a fix its test fails must not stand"
+      assert_equal "kept violation\n", File.read(path)
       rejected = bus.events.find { |event, _| event == "repair_loop:fix_rejected" }
       assert_equal "test_failed", rejected&.last&.fetch(:reason)
 
-      assert loop.send(:apply, path, "kept\n", violation), "a fix its test passes stands"
-      assert_equal "kept\n", File.read(path)
+      assert loop.send(:apply, path, "kept as clean\n", violation), "a fix its test passes stands"
+      assert_equal "kept as clean\n", File.read(path)
     end
   end
 

@@ -354,7 +354,7 @@ module Master
           blocker = @conflicts.last_blocker
           return reject_fix(path, old_src, "higher_priority_violation", introduced: "#{blocker["law"]} line #{blocker["line"]}")
         end
-        if (failure = failing_test_for(path))
+        if (failure = failing_test_for(path, before: old_src))
           return reject_fix(path, old_src, "test_failed", test: failure)
         end
         if (broken = SourceCompile.failure(path))

@@ -30,6 +30,35 @@ class TestProofRailsApps < Minitest::Test
     assert_equal "boots", Apps.boot_check(File.join(ROOT, "RAILS", "master")).first
   end
 
+  FAILED = ["  1) Failure:", "BookmarkTest#test_belongs_to_user [test/models/bookmark_test.rb:9]:",
+            "1 runs, 1 failures"].freeze
+
+  # A failure the starting commit has too is named, not printed as a failure; a new one still fails.
+  def test_a_failure_the_pass_did_not_introduce_is_not_held_against_it
+    judge = ->(before) { Apps.failing_before("brgen", tests: %w[t.rb], output: FAILED, rerun: -> { before * "\n" }) }
+
+    held, lines = judge.call(FAILED)
+    refused, = judge.call(["1 runs"])
+
+    assert held
+    assert_match(/1 failing before the pass too/, lines.first)
+    refute refused
+  end
+
+  def test_the_files_are_as_they_were_at_the_revision_while_the_block_runs
+    Dir.mktmpdir do |repo|
+      file = File.join(repo, "a.rb")
+      git = ->(*args) { system("git", *args, chdir: repo, out: File::NULL, err: File::NULL) }
+      git.call("init", "-q") && File.write(file, "old\n")
+      git.call("add", "a.rb") && git.call("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "a")
+      File.write(file, "new\n")
+
+      seen = Apps.at_revision(%w[a.rb], "HEAD", repo_root: repo) { File.read(file) }
+
+      assert_equal ["old\n", "new\n"], [seen, File.read(file)]
+    end
+  end
+
   # Each app is its own suite, so the judge names its failures against the baseline.
   def test_an_app_failure_is_named_in_the_reading
     out = ["proof suite brgen: FAIL", "brgen: boots and eager-loads: ok", "  1) Failure:",

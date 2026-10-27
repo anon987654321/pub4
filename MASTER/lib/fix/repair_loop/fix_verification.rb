@@ -142,8 +142,29 @@ module Master
         # rule stopped firing; only the test proves the behaviour survived it.
         # Named exactly, test_<stem>.rb, because test_file_for's loose match finds
         # every test sharing a common stem. nil means the test passed or there
-        # is none; a string names the failure.
-        def failing_test_for(path)
+        # is none; a string names the failure. With `before`, a test that also fails on the
+        # file as it was is not this change's failure: main is not always green, and such a
+        # test refused every repair to its file whatever the repair did.
+        def failing_test_for(path, before: nil)
+          failure = own_test_failure(path)
+          return failure unless failure && before && failing_before?(path, before)
+
+          name = File.basename(path.to_s)
+          Master::Trace::Dmesg.status("fix0", "#{name}: its test already failed before the change, " \
+                                              "so it is not held against it: #{failure[0, 160]}")
+          nil
+        end
+
+        # The test run again on the original source, which then goes back to the change.
+        def failing_before?(path, before)
+          after = File.read(path, encoding: "UTF-8")
+          write_atomic(path, before)
+          !own_test_failure(path).nil?
+        ensure
+          write_atomic(path, after) if after
+        end
+
+        def own_test_failure(path)
           app, test = FixVerification.rails_test_for(File.expand_path(path.to_s, @root))
           return run_rails_test(app, test) if test
 
