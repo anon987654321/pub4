@@ -25,7 +25,7 @@ class TestAuditGateContract < Minitest::Test
   end
 
   def test_runtime_contract_and_boot_smokes_are_part_of_the_full_audit_gate
-    %w[architecture boot_smoke].each do |name|
+    %w[selfcheck architecture boot_smoke].each do |name|
       assert_includes @checks, name, "#{name} is a declared non-model check but is omitted from AUDIT_CHECKS"
     end
   end
