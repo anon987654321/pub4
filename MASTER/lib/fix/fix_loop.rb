@@ -298,7 +298,7 @@ module Master
           return finish_run(cancellation_terminal, target, run_id, mission:, requested:) if cancellation_requested?
           return finish_run(dependency_result, target, run_id, mission:, requested:) if dependency_result.is_a?(Master::Result)
           current_phase = :architecture_exploration
-          architecture = explore_architecture(target:, files:)
+          architecture = explore_architecture(target:, files:, run_id:)
           return finish_run(cancellation_terminal, target, run_id, mission:, requested:) if cancellation_requested?
           ux_context = UXRefinementCatalog.prompt_context(target:, root: @root)
           current_phase = :research
@@ -521,13 +521,14 @@ module Master
       end
 
       # Both cost minutes of model and web time before the first repair; only --lane all asks for them.
-      def explore_architecture(target:, files:)
+      def explore_architecture(target:, files:, run_id:)
         unless WorkLane.runs?(:architecture)
           Master::Trace::Dmesg.status("fix0", "architecture exploration skipped, lane=#{WorkLane.current}")
           return { "status" => "SKIPPED", "targets" => [], "brief" => "" }
         end
 
-        ArchitectureExploration.new(root: @root, agent: @agent, bus: @bus).run(target:, files:)
+        ArchitectureExploration.new(root: @root, agent: @agent, bus: @bus,
+          run_journal: @run_journal, run_id:, provenance: @fix_plan&.to_h).run(target:, files:)
       end
 
       def run_research(target:, files:)
