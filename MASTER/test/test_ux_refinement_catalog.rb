@@ -50,29 +50,50 @@ class TestUXRefinementCatalog < Minitest::Test
     payload = Marshal.load(Marshal.dump(Master::Fix::UXRefinementCatalog.load))
     row = payload.fetch("refinements").first
     row["state"] = "verified"
-    row["evidence"] = row.fetch("proof").map do |proof_type|
-      {
-        "proof_type" => proof_type,
-        "result" => "PASS",
-        "location" => "MASTER/test/test_ux_refinement_catalog.rb",
-        "sha256" => "a" * 64,
-        "commit" => "b" * 40
-      }
+    Dir.mktmpdir("ux-evidence-receipts") do |root|
+      out, status = Master::Io::Exec.capture2e("git", "-C", root, "init", "--quiet")
+      assert status.success?, out
+      evidence_path = File.join(root, "evidence.txt")
+      evidence_text = "actual test output: PASS\n"
+      File.write(evidence_path, evidence_text)
+      _add_out, add_status = Master::Io::Exec.capture2e("git", "-C", root, "add", "evidence.txt")
+      assert add_status.success?
+      commit_out, commit_status = Master::Io::Exec.capture2e(
+        "git", "-C", root, "-c", "user.name=UX Test", "-c", "user.email=ux-test@example.invalid",
+        "commit", "--quiet", "-m", "fixture evidence"
+      )
+      assert commit_status.success?, commit_out
+      commit, commit_status = Master::Io::Exec.capture2("git", "-C", root, "rev-parse", "HEAD")
+      assert commit_status.success?
+
+      row["evidence"] = row.fetch("proof").map do |proof_type|
+        {
+          "proof_type" => proof_type,
+          "result" => "PASS",
+          "location" => "evidence.txt",
+          "sha256" => Digest::SHA256.hexdigest(evidence_text),
+          "commit" => commit.strip
+        }
+      end
+
+      assert Master::Fix::UXRefinementCatalog.validate!(payload, root:)
+
+      incomplete = Marshal.load(Marshal.dump(payload))
+      incomplete.fetch("refinements").first.fetch("evidence").pop
+      assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(incomplete, root:) }
+
+      no_digest = Marshal.load(Marshal.dump(payload))
+      no_digest.fetch("refinements").first.fetch("evidence").first.delete("sha256")
+      assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(no_digest, root:) }
+
+      unsafe_path = Marshal.load(Marshal.dump(payload))
+      unsafe_path.fetch("refinements").first.fetch("evidence").first["location"] = "../external.log"
+      assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(unsafe_path, root:) }
+
+      tampered = Marshal.load(Marshal.dump(payload))
+      File.write(evidence_path, "edited after PASS\n")
+      assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(tampered, root:) }
     end
-
-    assert Master::Fix::UXRefinementCatalog.validate!(payload)
-
-    incomplete = Marshal.load(Marshal.dump(payload))
-    incomplete.fetch("refinements").first.fetch("evidence").pop
-    assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(incomplete) }
-
-    no_digest = Marshal.load(Marshal.dump(payload))
-    no_digest.fetch("refinements").first.fetch("evidence").first.delete("sha256")
-    assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(no_digest) }
-
-    unsafe_path = Marshal.load(Marshal.dump(payload))
-    unsafe_path.fetch("refinements").first.fetch("evidence").first["location"] = "../external.log"
-    assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(unsafe_path) }
   end
 
   def test_catalog_rejects_gaps_in_the_id_sequence_and_false_completion_states
