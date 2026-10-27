@@ -61,7 +61,7 @@ class TermuxInstallerTest < Minitest::Test
   end
 
   def test_launcher_forwards_arguments_without_shell_interpolation
-    assert_includes source, 'exec ruby bin/cli "$@"'
+    assert_includes source, 'exec ruby bin/master "$@"'
   end
 
   def test_script_has_valid_bash_syntax

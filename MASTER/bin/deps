@@ -12,12 +12,12 @@ manager = Master::Boot::DependencyManager.new(root: ROOT)
 command = ARGV.fetch(0, "install")
 result = case command
          when "boot"
-           cli = File.join(ROOT, "bin", "cli")
-           Master::Trace::Dmesg.status("deps0", "probing #{cli} --fast")
-           # Do not inherit MASTER_FAST: bin/cli intentionally has a non-TTY
+           master = File.join(ROOT, "bin", "master")
+           Master::Trace::Dmesg.status("deps0", "probing #{master} --fast")
+           # Do not inherit MASTER_FAST: bin/master intentionally has a non-TTY
            # shortcut under that flag, while this command exists to prove the
            # real Master.boot path regardless of whether a caller has a pipe.
-           system({ "MASTER_FAST" => nil, "MASTER_BOOT_STATUS" => "1" }, cli, "--fast")
+           system({ "MASTER_FAST" => nil, "MASTER_BOOT_STATUS" => "1" }, master, "--fast")
          when "check", "status"
            status = manager.status
            Master::Trace::Dmesg.status("deps0", "ruby #{status[:ruby]}, required #{status[:ruby_required].empty? ? "none" : status[:ruby_required]}")

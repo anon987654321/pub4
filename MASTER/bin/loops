@@ -11,7 +11,7 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 #   MASTER/bin/loops shell      loop2 only
 #
 # loop1 is the MASTER face reading the README aloud, with the ai.brgen.no
-# wordmark in the corner. loop2 is a shell booting bin/cli on vm23.
+# wordmark in the corner. loop2 is a shell booting bin/master on vm23.
 #
 # Both carry STUDIO/dilla/out/loop.wav, which
 # `cd STUDIO/dilla && ruby dilla.rb --out out/loop.wav` writes. loop1 MIXES it under the narration rather

@@ -24,7 +24,7 @@ class TestCompletions < Minitest::Test
   end
 
   def test_master_completion_serves_both_entrypoints
-    assert_match(/\A#compdef master cli$/, File.read(File.join(COMPLETIONS, "_master")))
+    assert_match(/\A#compdef master$/, File.read(File.join(COMPLETIONS, "_master")))
   end
 
   def test_operator_check_is_the_ladder_command

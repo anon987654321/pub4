@@ -9,7 +9,7 @@ class CheckContractSpec < Minitest::Test
   # The ladder bin/check --ladder loads, which bin/gate was until 2026-10-22.
   CHECK = File.join(ROOT, "lib", "operator", "check_ladder.rb")
 
-  # The command reaches bin/cli on stdin, and the check does not wait forever for
+  # The command reaches bin/master on stdin, and the check does not wait forever for
   # an answer.
   #
   # This asserted the literal string "stdin_data", which was capture2e's keyword.
@@ -47,7 +47,7 @@ class CheckContractSpec < Minitest::Test
     semantic = source[/^  semantic = (.*?)$/, 1].to_s
 
     assert_equal 1, lexical.scan(%r{/\w+}).size,
-                 "the lexical tier boots bin/cli once: /scan already fixes and re-scans"
+                 "the lexical tier boots bin/master once: /scan already fixes and re-scans"
     assert_equal 1, semantic.scan(%r{/\w+}).size,
                  "/critique and /review name one stage; running both runs the council twice"
   end
@@ -88,7 +88,7 @@ class CheckContractSpec < Minitest::Test
   def test_check_deploy_paths_exist
     # Any flags, not one named flag. This listed --no-autofix alone and read
     # --apply as a directory the moment the full-fix line grew one.
-    paths = check_explain.scan(%r{bin/cli /\w+((?:\s+--[\w-]+)*)\s+(\S+)}).map(&:last).uniq
+    paths = check_explain.scan(%r{bin/master /\w+((?:\s+--[\w-]+)*)\s+(\S+)}).map(&:last).uniq
 
     assert_operator paths.size, :>=, 4, "expected the default ladder to name all four trees"
     paths.each do |relative|

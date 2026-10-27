@@ -20,7 +20,7 @@ absolute:
     - data/SOUL.md
     - data/project_context.yml
     - lib/ground/pledge.rb
-    - bin/cli
+    - bin/master
   anti_simulation:
     forbidden: [will, would, could, might]
     require_evidence:

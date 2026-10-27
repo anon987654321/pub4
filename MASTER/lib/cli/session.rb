@@ -348,7 +348,7 @@ module Master
         tip = Master::Ground::HostBudget.heavy_repo_message
         "failed to allocate memory — #{tip}"
       rescue StandardError
-        "failed to allocate memory — use /fix lib or bin/cli --fast"
+        "failed to allocate memory — use /fix lib or bin/master --fast"
       end
 
       def budget_block_if_exceeded

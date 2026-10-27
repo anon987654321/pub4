@@ -22,7 +22,7 @@ with proof." Everything here serves that sentence.
 
 | Class | Size | Self-description (docstring) | External call sites | Verdict |
 |---|---|---|---|---|
-| `Fix::Kernel` | 686 lines + `transaction/` | "The small, auditable repair core." | `bin/master.rb:21` (`Kernel.replay_cli`) | Canonical survivor. Receives responsibilities; deletes nothing itself. |
+| `Fix::Kernel` | 686 lines + `transaction/` | "The small, auditable repair core." | `bin/master replay` (`Kernel.replay_cli`) | Canonical survivor. Receives responsibilities; deletes nothing itself. |
 | `Fix::FixLoop` | 976 lines + `fix_loop/` (13 files) | LLM repair loop: pass runners, council rounds, llm_router, background runner | `tools/boot_smoke.rb`, `lib/cli/command_registry/review.rb`, `lib/operator/canary.rb`, `lib/cli/pipeline/pass.rb`, `lib/operator/snapshot_pack.rb`, `lib/builder/ai_boot.rb` | Adapter. Folds into Kernel responsibility-by-responsibility behind parity receipts. |
 | `Fix::RepairLoop` | 569 lines + `repair_loop/` (6 files) | Autofix policy, collapse guard, file budget, outcome tracking | `lib/ground/laws.rb`, `lib/review/scan/semantic_fingerprint.rb`, `lib/review/scan/law.rb` | Adapter. Same folding discipline as FixLoop; its `collapse_guard` and `file_budget` are recovery machinery that must move with tests, not be rewritten. |
 | `Fix::Mission` | 668 lines | "The durable objective. A FixLoop execution is only one attempt to advance it; process death must never erase the work that remains." | `lib/cli/command_registry.rb:585`, `lib/operator/services.rb:85-87` | Keep. Kernel has no durability story; Mission is the only owner of survive-process-death semantics. |

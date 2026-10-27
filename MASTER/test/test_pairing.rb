@@ -110,7 +110,7 @@ class TestPairing < Minitest::Test
     result = Master::Ground::Pairing.redeem(issued[:code], root: @root)
     notice = Master::Ground::Pairing.redeem_notice(result)
     assert_match(/messaging/, notice)
-    assert_match(/bundle exec ruby bin\/cli/, notice)
+    assert_match(/bundle exec ruby bin\/master/, notice)
     refute_match(/bodyguard/i, notice)
   end
 

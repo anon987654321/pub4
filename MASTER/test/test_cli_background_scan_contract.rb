@@ -50,7 +50,7 @@ class TestCliBackgroundScanContract < Minitest::Test
   end
 
   def test_public_entrypoint_defaults_boot_scanning_off_but_allows_explicit_opt_in
-    source = File.read(File.expand_path("../bin/master.rb", __dir__))
+    source = File.read(File.expand_path("../bin/master", __dir__))
 
     assert_includes source, 'ENV["MASTER_BACKGROUND_SCAN"] ||= "0"'
     assert_includes source, 'ENV["MASTER_SKIP_BOOT_SCAN"] ||= (ENV["MASTER_BACKGROUND_SCAN"] == "1" ? "0" : "1")'

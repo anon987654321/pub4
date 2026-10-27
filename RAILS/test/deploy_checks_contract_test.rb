@@ -208,8 +208,8 @@ class DeployChecksContractTest < Minitest::Test
     start = source.index("master_scan_dep()")
     body = source[start, source.index("\n}\n", start) - start + 3]
 
-    assert_match(/\[\[ -x \$\{master\}\/bin\/cli \]\] \|\| \{.*return 1; \}/m, body)
-    refute_match(/\[\[ -x \$\{master\}\/bin\/cli \]\] \|\| return 0/, body)
+    assert_match(/\[\[ -x \$\{master\}\/bin\/master \]\] \|\| \{.*return 1; \}/m, body)
+    refute_match(/\[\[ -x \$\{master\}\/bin\/master \]\] \|\| return 0/, body)
     assert_includes body, "var/db/pub4"
   end
 

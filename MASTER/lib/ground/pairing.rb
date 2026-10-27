@@ -17,7 +17,9 @@ module Master
       TOKEN_BYTES = 24
       DEFAULT_TTL = 600
       DEFAULT_ALLOWLIST = ".master/pairing/allowlist.yml"
-      REDEEM_NOTICE = "paired — messaging tools on. This is not operator access. Shell stays off. For a private assistant: clone pub4, bundle exec ruby bin/cli, /pair issue, and point the PWA at your host — not the shared public face.".freeze
+      REDEEM_NOTICE = "paired — messaging tools on. This is not operator access. Shell stays off. " \
+                      "For a private assistant: clone pub4, bundle exec ruby bin/master, /pair issue, " \
+                      "and point the PWA at your host — not the shared public face.".freeze
 
       extend ::Master::Io::AtomicWrite
 

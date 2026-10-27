@@ -69,7 +69,9 @@ module Master
           "MASTER_HEARTBEAT" => "0",
           "MASTER_SELF_EVOLUTION" => "0",
         }
-        out, status = Master::Io::Exec.capture2e(env, ::Operator::RubyRunner.bundle_cmd(root:), "exec", ::Operator::RubyRunner.ruby_cmd(root:), "bin/cli", "--message", message, chdir: root)
+        runner = ::Operator::RubyRunner
+        out, status = Master::Io::Exec.capture2e(env, runner.bundle_cmd(root:), "exec", runner.ruby_cmd(root:),
+                                                 "bin/master", "--message", message, chdir: root)
         { status: status.success? ? :ok : :failed, output: out.to_s.lines.last(80).join }
       end
 

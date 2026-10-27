@@ -47,7 +47,7 @@ cat > "$HOME/.local/bin/master" <<'LAUNCHER'
 # MASTER_TERMUX_LAUNCHER
 set -eu
 cd "$HOME/pub4/MASTER"
-exec ruby bin/cli "$@"
+exec ruby bin/master "$@"
 LAUNCHER
 chmod 700 "$HOME/.local/bin/master"
 

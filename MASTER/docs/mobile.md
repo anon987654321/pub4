@@ -40,7 +40,7 @@ before-and-after effect envelope the Fold uses, so a package list never
 reaches the audit stream, only its digest. MASTER_MOBILE_AUTO_APPROVE=0 makes
 it ask instead.
 
-Each utterance goes to `bin/cli -m` as a child process, with the person's
+Each utterance goes to `bin/master -m` as a child process, with the person's
 remembered preferences and the last eight turns ahead of it. The session
 (.master/mobile/session.json) keeps forty turns so a reconnecting face picks
 the conversation up. Listening happens only while the listen button is

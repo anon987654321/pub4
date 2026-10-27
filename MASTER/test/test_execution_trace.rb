@@ -99,7 +99,7 @@ class TestExecutionTrace < Minitest::Test
       result = trace.run
 
       refute result.clean?
-      assert result.failures.any? { |failure| failure.include?("MASTER/bin/cli: missing") }
+      assert result.failures.any? { |failure| failure.include?("MASTER/bin/master: missing") }
       assert result.failures.any? { |failure| failure.include?("MASTER/data/laws.yml: missing") }
     end
   end

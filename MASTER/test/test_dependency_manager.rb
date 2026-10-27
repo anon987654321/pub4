@@ -206,7 +206,7 @@ class TestDependencyManager < Minitest::Test
     assert status.success?, "git #{args.join(" ")} failed: #{out}"
   end
 
-  # bin/master, bin/cli, bin/check, rake and the tests all build a
+  # bin/master, bin/check, rake and the tests all build a
   # DependencyManager from their own MASTER/ directory. A /fix worker runs in a
   # linked worktree under the system temp directory; it must land on the main
   # checkout's gem store instead of running a fresh bundle install.
@@ -670,8 +670,8 @@ class TestDependencyManager < Minitest::Test
     source = File.read(File.join(Master::ROOT, "bin", "deps"))
 
     assert_match(/when "boot"/, source)
-    assert_includes source, 'cli, "--fast")'
-    assert_match(%r{cli = File\.join\(ROOT, "bin", "cli"\)}, source)
+    assert_includes source, 'master, "--fast")'
+    assert_match(%r{master = File\.join\(ROOT, "bin", "master"\)}, source)
   end
 
   def test_disabled_automatic_boot_is_a_noop

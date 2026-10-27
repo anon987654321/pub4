@@ -3,8 +3,9 @@
 module Master
   module Io
     # Spawn options for every child MASTER creates. The control-plane flock is
-    # intentionally inherited only across the single bin/master -> bin/cli exec;
-    # media players, ffmpeg and test subprocesses must never become lock holders.
+    # held by bin/master and closed on exec, and a descriptor named in
+    # MASTER_PROCESS_LOCK_FD is closed here as well: media players, ffmpeg and
+    # test subprocesses must never become lock holders.
     module ProcessSpawn
       module_function
 

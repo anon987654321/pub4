@@ -126,8 +126,8 @@ caller tracing and explicit rollback/restart/delivery proof.
 
 CoreBridge attaches a lifecycle observer to the Fold even when the host does not
 supply a bus; that case uses the event log at the task runtime root, or MASTER's
-canonical runtime root when working in pub4 itself. The standalone `bin/master-core`
-entrypoint uses the same shared Trace::EffectObserver adapter, so it does not bypass
+canonical runtime root when working in pub4 itself. The standalone `bin/master core`
+subcommand uses the same shared Trace::EffectObserver adapter, so it does not bypass
 the lifecycle contract. `core:effect:before` is durably published before each World effect and
 `core:effect:after` records the observed outcome and elapsed time. Rollback is a
 separate audited operation linked to the failed effect and its checkpoint. If the
@@ -456,8 +456,8 @@ repair permission, and /fix remains an explicit instruction.
 `bin/master "<instruction>"` runs one instruction across the repository, and
 bare `bin/master` opens a session. A question goes to the agent, which reads and
 searches the checkout before it answers; only an instruction or a slash command
-reaches a command. `bin/cli` is the same runtime without the
-repository-wide setup. `bin/operator` is the operator's surface: it runs the
+reaches a command. `bin/master core` drives the fold spine alone, and
+`bin/master --help` lists every flag. `bin/operator` is the operator's surface: it runs the
 check ladder, reports status, lints files by the laws with no model, runs the
 tests that prove a change, manages the production box, boots the
 Rails apps with `triangle`, and writes snapshots. `bin/operator snapshot` writes

@@ -2,10 +2,10 @@
 
 require_relative "test_helper"
 
-# bin/cli is a script, so the two argv helpers are evaluated from its source
+# bin/master is a script, so the two argv helpers are evaluated from its source
 # rather than booting the runtime.
 class TestCliCommandFlags < Minitest::Test
-  SOURCE = File.read(File.expand_path("../bin/cli", __dir__))
+  SOURCE = File.read(File.expand_path("../bin/master", __dir__))
   HELPERS = SOURCE[/^COMMAND_FLAG.*?(?=^# Flags are read before the runtime boots)/m]
 
   def setup
@@ -47,6 +47,18 @@ class TestCliCommandFlags < Minitest::Test
     out, err = capture_io { @host.send(:initial_message_from_argv, ["/fix", "MASTER", "--max-files=3"]) }
 
     refute_match(/option error/, err + out)
+  end
+
+  # --model forces one model on every lane, as bin/cli's flag did before bin/master
+  # absorbed it; the message the flag wraps is unchanged.
+  def test_model_flag_forces_master_model
+    previous = ENV.fetch("MASTER_MODEL", nil)
+    ENV.delete("MASTER_MODEL")
+
+    assert_equal "/status", @host.send(:initial_message_from_argv, ["--model", "x-ai/grok-4", "/status"])
+    assert_equal "x-ai/grok-4", ENV.fetch("MASTER_MODEL")
+  ensure
+    previous.nil? ? ENV.delete("MASTER_MODEL") : ENV["MASTER_MODEL"] = previous
   end
 
   def test_other_unknown_flags_are_still_dropped

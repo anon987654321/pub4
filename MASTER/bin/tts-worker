@@ -427,7 +427,7 @@ if ARGV[0] == "--daemon"
   trap("TERM", &cleanup)
 
   # Idle daemons exit. Nothing reaps them otherwise, and nothing ever did: every
-  # boot of bin/cli spawns a pool of two, none of them stops when the session
+  # boot of bin/master spawns a pool of two, none of them stops when the session
   # ends, and they outlive the checkout they were spawned from. Twenty-one were
   # found alive on 2026-09-11 across nine trees, six of which had been deleted
   # hours earlier — a laptop that had run the suite a few times was carrying a

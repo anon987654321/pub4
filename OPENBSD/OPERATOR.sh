@@ -367,7 +367,7 @@ sync_openbsd_apply() {
       return 1
     fi
     log WARN "MASTER scan skipped by explicit fast-deploy acknowledgement"
-  elif [[ -x /home/dev/pub4/MASTER/bin/cli ]]; then
+  elif [[ -x /home/dev/pub4/MASTER/bin/master ]]; then
     typeset scan_log_dir=/var/db/pub4
     typeset scan_log=$scan_log_dir/master_deploy_scan.log
     mkdir -p "$scan_log_dir" || { log ERROR "cannot create $scan_log_dir"; return 1 }

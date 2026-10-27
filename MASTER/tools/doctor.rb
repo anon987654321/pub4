@@ -131,7 +131,8 @@ end
 # --- stray processes that hold CPU, RAM or a worktree ----------------------------------------
 def processes
   out, = run("ps", "-axo", "pid=,etime=,command=")
-  hits = out.lines.select { |l| l =~ %r{bin/(cli|master) /fix|demucs|afplay|ruby dilla\.rb|mlx_audio\.server} && l !~ /doctor/ }
+  busy = %r{bin/master /fix|demucs|afplay|ruby dilla\.rb|mlx_audio\.server}
+  hits = out.lines.select { |l| l =~ busy && l !~ /doctor/ }
   return say(:ok, "procs", "no /fix, audio or render processes running") if hits.empty?
 
   say(:warn, "procs", "#{hits.size} running: " + hits.first(4).map { |l| l.split(" ", 3).then { |p, e, c| "#{p}(#{e}) #{c[0, 38]}" } }.join("; "))

@@ -16,7 +16,7 @@ module Master
       veto_patterns law_map transformation_policy law_catalogue
     ].freeze
     REQUIRED_SACRED_PATHS = %w[
-      data/SOUL.md data/project_context.yml lib/ground/pledge.rb bin/cli
+      data/SOUL.md data/project_context.yml lib/ground/pledge.rb bin/master
     ].freeze
     FORBIDDEN_SACRED_PATHS = %w[
       data/ data data/soul.yml data/laws.yml lib/review/scan/

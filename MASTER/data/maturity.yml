@@ -40,7 +40,7 @@ subsystems:
     status: verified
     meaning: per-rule fix outcomes actually reach the KnowledgeStore from the CLI-driven /fix path
     evidence: 'commit a77b3fb22 -- record_outcomes used String#presence (ActiveSupport-only);
-      bin/cli never loads Rails, so every call silently NoMethodError''d, swallowed by the
+      bin/master never loads Rails, so every call silently NoMethodError''d, swallowed by the
       surrounding rescue. fix_quality had been returning the hardcoded 0.5 default for every
       rule since this code was written.
       Re-verified 2026-09-10: OutcomeTracking#record_outcomes builds its extension tally with filter_map

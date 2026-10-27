@@ -73,7 +73,7 @@ class PledgeProfileTest < Minitest::Test
   end
 
   def test_exec_worker_sets_execpromises_before_the_command
-    source = File.read(File.expand_path("../bin/cli", __dir__))
+    source = File.read(File.expand_path("../bin/master", __dir__))
 
     assert_operator source.index('if ARGV.first == "--exec-worker"'), :<,
                     source.index('require_relative "../lib/boot/entrypoint"')

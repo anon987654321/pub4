@@ -5,7 +5,7 @@ set -euo pipefail
 
 if [[ ${1:-} == -h || ${1:-} == --help ]]; then
   print "usage: zsh OPENBSD/bin/vps_master_scan.sh [scan args...]"
-  print "  MASTER bin/cli under the CI lock, refused while the 5-minute load is over PUB4_CI_MAX_LOAD"
+  print "  MASTER bin/master under the CI lock, refused while the 5-minute load is over PUB4_CI_MAX_LOAD"
   exit 0
 fi
 
@@ -35,4 +35,4 @@ print "vps_master_scan: lock $lock $*"
 # scan. bin/with-ci-lock is the same idea in the one language this box is
 # guaranteed to have.
 "$RUBY" "$repo/OPENBSD/bin/with-ci-lock" \
-  env MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1 "$BUNDLE" exec "$RUBY" bin/cli "$@"
+  env MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1 "$BUNDLE" exec "$RUBY" bin/master "$@"

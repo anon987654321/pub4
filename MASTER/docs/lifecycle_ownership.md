@@ -8,12 +8,12 @@ true, so a change to that file is a change to this page.
 ### Core::Fold
 
 CoreBridge builds it (lib/cli/core_bridge.rb, build_fold), reached from the
-TaskSteward and the interactive session; bin/master-core builds the standalone
+TaskSteward and the interactive session; `bin/master core` builds the standalone
 one. It keeps no state of its own. Every effect passes Constitution#admit,
 compensations included, and EffectObserver brackets it with durable
 core:effect:before and after events. A trace failure ends the turn as
 unknown_outcome, which stops automatic continuation. Delivery is a path-scoped
-World git commit; the Fold never pushes. bin/master-core admits with the same
+World git commit; the Fold never pushes. `bin/master core` admits with the same
 scan verifier and shell sandbox as CoreBridge since 50e3fc1e6.
 
 ### Core::Constitution and Core::World

@@ -156,7 +156,7 @@ end
 
 # A stage that could not measure did not pass.
 #
-# bin/cli exits 0 when a command runs to completion, and /critique runs to
+# bin/master exits 0 when a command runs to completion, and /critique runs to
 # completion whether or not its council answered. A green check claims the code
 # was reviewed, so when a stage says in its own output that it reached no
 # verdict, that is the verdict. MASTER/AGENTS.md states the rule under
@@ -275,7 +275,7 @@ puts "check: mode=#{SCAN_ONLY ? 'scan-only' : 'full-fix'} tier=#{TIER} trees=#{S
 if EXPLAIN
   COMMANDS.each do |name, lines|
     puts "  #{name}:"
-    lines.each { |line| puts "    bin/cli #{line}" }
+    lines.each { |line| puts "    bin/master #{line}" }
   end
   puts "check: --explain, so nothing above was run"
   exit 0

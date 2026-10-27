@@ -48,26 +48,26 @@ class TestBootBanner < Minitest::Test
     refute_respond_to Master::CLI::BootBanner, :wordmark
   end
 
-  # `bin/cli --help` prints usage without building the runtime. The option
+  # `bin/master --help` prints usage without building the runtime. The option
   # parser ran only after Master.boot, so help cost a full boot and exited 1
   # whenever that boot raised. The banner prints on the way into the boot, so
   # its absence proves help returned first, whether or not a boot would succeed.
   def test_cli_help_returns_before_the_boot_banner
-    cli = File.join(Master::ROOT, "bin", "cli")
-    out, status = Open3.capture2e({ "MASTER_BOOT_STATUS" => "1" }, RbConfig.ruby, cli, "--help",
+    master = File.join(Master::ROOT, "bin", "master")
+    out, status = Open3.capture2e({ "MASTER_BOOT_STATUS" => "1" }, RbConfig.ruby, master, "--help",
                                   chdir: Master::ROOT, stdin_data: "")
-    assert status.success?, "bin/cli --help exited #{status.exitstatus}: #{out.lines.last(3).join}"
-    assert_includes out, "Usage: bin/cli"
-    refute_includes out, "boot0 at mainbus0: safe", "bin/cli --help started the boot"
+    assert status.success?, "bin/master --help exited #{status.exitstatus}: #{out.lines.last(3).join}"
+    assert_includes out, "Usage: bin/master"
+    refute_includes out, "boot0 at mainbus0: safe", "bin/master --help started the boot"
   end
 
   # The Claude Code print-mode flags are parsed before the boot, so help can list
   # them and a permission mode can warn without building the runtime.
   def test_cli_help_lists_the_print_mode_flags
-    cli = File.join(Master::ROOT, "bin", "cli")
-    out, status = Open3.capture2e(RbConfig.ruby, cli, "--permission-mode", "bypassPermissions", "--help",
+    master = File.join(Master::ROOT, "bin", "master")
+    out, status = Open3.capture2e(RbConfig.ruby, master, "--permission-mode", "bypassPermissions", "--help",
                                   chdir: Master::ROOT, stdin_data: "")
-    assert status.success?, "bin/cli --help exited #{status.exitstatus}: #{out.lines.last(3).join}"
+    assert status.success?, "bin/master --help exited #{status.exitstatus}: #{out.lines.last(3).join}"
     %w[--model --output-format --permission-mode --allowedTools].each { |flag| assert_includes out, flag }
     assert_includes out, "bypasses nothing"
   end

@@ -1,6 +1,413 @@
-#!/usr/bin/env zsh
-# Ruby bootstrap: bin/ruby is the only interpreter selector.
-set -eu
+#!/usr/bin/env ruby
+# frozen_string_literal: true
 
-MASTER=${0:A:h:h}
-exec "${MASTER}/bin/ruby" "${MASTER}/bin/master.rb" "$@"
+# The one MASTER entrypoint. `bin/master` boots the full runtime (soul, scan,
+# voice) and routes slash commands; `bin/master core` drives only the fold spine;
+# `bin/master replay` and `--fix-context` answer without a boot. `--help` lists
+# every form.
+
+# Core::World routes model-proposed commands here before normal boot, through
+# `ruby --disable-gems bin/master --exec-worker -- argv`. This branch is sacred:
+# the worker pledges before it executes the proposed argv, so nothing may load
+# above it.
+def prepare_exec_worker_load_path
+  return unless RUBY_PLATFORM.include?("openbsd")
+
+  require "rbconfig"
+  gem_root = File.join(RbConfig::CONFIG.fetch("libdir"), "ruby", "gems",
+                       RbConfig::CONFIG.fetch("ruby_version"))
+  # RubyGems is disabled for this bootstrap, so expose Fiddle only from the system
+  # installation, never from a user-writable GEM_HOME or GEM_PATH.
+  $LOAD_PATH.unshift(
+    *Dir.glob(File.join(gem_root, "gems", "fiddle-*", "lib")),
+    *Dir.glob(File.join(gem_root, "extensions", "*", RbConfig::CONFIG.fetch("ruby_version"), "fiddle-*")),
+  )
+end
+
+def run_exec_worker
+  ARGV.shift
+  unless ARGV.shift == "--" && !ARGV.empty?
+    warn "exec-worker: expected -- followed by a command"
+    return 64
+  end
+
+  prepare_exec_worker_load_path
+  require_relative "../lib/ground/pledge"
+  guard = Master::Ground::Pledge
+  guard.pledge(guard::STAGE2_PROMISES, guard::EXEC_PROMISES)
+  exec(*ARGV)
+rescue StandardError => e
+  warn "exec-worker: #{e.class}: #{e.message}"
+  126
+end
+
+exit(run_exec_worker) if ARGV.first == "--exec-worker"
+
+# The shebang finds whatever `ruby` PATH names, which on a Mac can be the system
+# 2.6 that cannot parse the boot code, or a Homebrew Ruby whose gems were not
+# built for the checkout's bundle. bin/ruby is the interpreter selector, so a
+# direct run hops through it once. The marker is removed on arrival, so no child
+# inherits it and skips its own hop. Under `bundle exec` the caller already chose,
+# and its bundle environment must not be carried into a different Ruby.
+if ENV.delete("MASTER_RUBY_SELECTED") != "1" && ENV["MASTER_RUBY_REEXEC_DONE"] != "1" && !ENV.key?("BUNDLE_BIN_PATH")
+  exec({ "MASTER_RUBY_SELECTED" => "1" }, File.expand_path("ruby", __dir__), File.expand_path(__FILE__), *ARGV)
+end
+
+require "rbconfig"
+require_relative "../lib/trace/dmesg"
+
+master_root = File.expand_path("..", __dir__)
+
+if ARGV.first == "core"
+  require_relative "../lib/boot/entrypoint"
+  # Before the shift: a Ruby or Bundler switch re-execs with ARGV, and must land here again.
+  Master::Boot::Entrypoint.prepare!(root: master_root)
+  ARGV.shift
+  $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+  require "master"
+  exit Master::CLI::CoreCommand.run(ARGV, master_root:)
+end
+
+ENV["PUB4_ROOT"] ||= File.dirname(master_root)
+# The terminal runtime is a quiet, local instruction surface. Repository-wide scanning is opt-in.
+# MASTER_BACKGROUND_SCAN=1 opts in; an explicit skip always wins.
+ENV["MASTER_WEB"] ||= "0"
+ENV["MASTER_BACKGROUND_SCAN"] ||= "0"
+ENV["MASTER_SKIP_BOOT_SCAN"] ||= (ENV["MASTER_BACKGROUND_SCAN"] == "1" ? "0" : "1")
+ENV["MASTER_CLI_QUIET"] ||= "1"
+
+if ARGV.first == "replay"
+  require_relative "../lib/fix/kernel"
+  exit Master::Fix::Kernel.replay_cli(root: File.dirname(master_root), seq: ARGV[1])
+end
+
+if ARGV.first == "--fix-context"
+  target = ARGV[1] && !ARGV[1].start_with?("-") ? ARGV[1] : File.dirname(master_root)
+  full = ARGV.include?("--full")
+
+  exec(
+    RbConfig.ruby,
+    File.join(master_root, "tools", "agent_context.rb"),
+    "--fix-context",
+    target,
+    *(["--full"] if full),
+  )
+end
+
+# Flags the slash commands read from their own argument text (/fix --max-files=25,
+# /fix --no-critique, /fix --dry-run). The top-level parser does not know them and
+# must not reject them or drop them: a dropped --dry-run is a write run.
+COMMAND_FLAG = %r{\A--(?:(?:autofix|max-files|only)=|
+                 (?:dry-run|no-autofix|apply|(?:no-)?critique|no-aesthetic|blockers|plan|until-checks)\z)}x
+
+def initial_message_from_argv(argv)
+  kept = argv.select { |arg| arg.match?(COMMAND_FLAG) }
+  rest = argv.reject { |arg| arg.match?(COMMAND_FLAG) }
+  options = parse_initial_message_options(rest)
+  message = options[:message]
+  return [*rest, *kept].join(" ").strip if message.nil?
+
+  tail = rest.reject { |arg| arg.start_with?("--") }
+  [message, *tail, *kept].join(" ").strip
+rescue OptionParser::ParseError => e
+  # The flags are parsed once before boot and again where the message is wanted;
+  # a bad flag is reported on the first pass only.
+  Master::Trace::Dmesg.status("cli0", "option error, #{e.message}", io: $stderr) unless $MASTER_OPTION_ERROR_SEEN
+  $MASTER_OPTION_ERROR_SEEN = true
+  argv.reject { |arg| arg.start_with?("--") && !arg.match?(COMMAND_FLAG) }.join(" ").strip
+end
+
+HELP_USAGE = <<~HELP
+  master — instruct the MASTER runtime with the whole repo in scope
+
+  Usage:
+    bin/master
+    bin/master "<instruction>"
+    bin/master --fold "<goal>"
+    bin/master -p "<goal>" --output-format json [--model ID] [--permission-mode plan] [--allowedTools "Read Edit"]
+    bin/master core [--root PATH] [--max-turns N] [--real [--model ID]] GOAL
+    bin/master --fix-context [target] [--full]
+    bin/master replay <sequence>
+    bin/master --daemon
+    bin/master --fast
+    echo '/status' | bin/master
+
+  `core` drives the fold spine alone: exit 0 when its scripted done is refused,
+  1 when it is admitted, 64 without a goal.
+  MASTER/bin/ruby selects a supported Ruby when PATH's is too old to boot.
+  PreToolUse hooks for the Fold are read from ~/.master/hooks.yml (MASTER_HOOKS
+  overrides); see lib/cli/tool_hooks.rb.
+HELP
+
+def print_master_help
+  help = [
+    HELP_USAGE,
+    initial_message_parser({}).to_s,
+    "Checks: MASTER/bin/check --profile=contributor|agent|full",
+    "Offline: MASTER_LOCAL_ONLY=1",
+    "VPS: auto-skips TTS, boot-scan and web; scope scans to a path",
+  ].join("\n")
+  Master::Trace::Dmesg::Report.print("/help", help)
+  exit 0
+end
+
+def initial_message_parser(options)
+  OptionParser.new do |opts|
+    opts.banner = "Usage: bin/master [-p PROMPT|-m MSG] [--continue [ID]|--session ID|--fork [ID]|--sessions] [--effort low|medium|high] [--model ID] [--output-format text|json|stream-json] [--permission-mode MODE] [--allowedTools LIST] [--headless] [--fast] [--daemon] [--verbose|--trace] [--web|--no-web] [--boot-status]"
+    opts.on("-h", "--help") { print_master_help }
+    opts.on("-m", "--message TEXT") { |text| options[:message] = text }
+    opts.on("-p", "--prompt TEXT") { |text| options[:message] = text }
+    opts.on("--effort LEVEL", %w[low medium high]) { |level| ENV["MASTER_EFFORT"] = level }
+    opts.on("--headless", "run one autonomous goal and emit one JSON mission receipt") do
+      ENV["MASTER_HEADLESS"] = "1"
+      ENV["MASTER_FOLD"] = "1"
+      ENV["MASTER_FAST"] = "1"
+      ENV["MASTER_SKIP_BOOT_SCAN"] = "1"
+      ENV["MASTER_SKIP_TTS"] = "1"
+      ENV["MASTER_WEB"] = "0"
+    end
+    opts.on("-c", "--continue [ID]") { |id| options[:message] = "/session continue #{id}".strip }
+    opts.on("--resume [ID]") { |id| options[:message] = "/session continue #{id}".strip }
+    opts.on("-s", "--session ID") { |id| options[:message] = "/session continue #{id}" }
+    opts.on("--fork [ID]") { |id| options[:message] = "/session fork #{id}".strip }
+    opts.on("--sessions") { options[:message] = "/session" }
+    opts.on("--fold", "run the message through the core Fold, then exit") { ENV["MASTER_FOLD"] = "1" }
+    opts.on("--model ID", "force one model on every lane (MASTER_MODEL)") { |id| ENV["MASTER_MODEL"] = id }
+    opts.on("--output-format FORMAT", %w[text json stream-json],
+            "text, json (one result object) or stream-json (a line per turn, then the result); runs the Fold") do |format|
+      ENV["MASTER_OUTPUT_FORMAT"] = format
+      ENV["MASTER_FOLD"] = "1"
+    end
+    opts.on("--permission-mode MODE", %w[default acceptEdits plan bypassPermissions],
+            "plan reads and proposes; the rest run the repair profile, and the Constitution still judges every effect") do |mode|
+      ENV["MASTER_PERMISSION_MODE"] = mode
+      if mode == "bypassPermissions"
+        Master::Trace::Dmesg.status("cli0", "bypassPermissions bypasses nothing, the Constitution still judges every effect", io: $stderr)
+      end
+      ENV["MASTER_FOLD"] = "1"
+    end
+    opts.on("--allowedTools LIST", "--allowed-tools LIST",
+            "narrow the Fold to these tools: Read Edit Write Bash WebFetch (scoped Bash(...) entries are ignored)") do |list|
+      ENV["MASTER_ALLOWED_TOOLS"] = list
+      ENV["MASTER_FOLD"] = "1"
+    end
+    opts.on("--web") { ENV["MASTER_WEB"] = "1" }
+    opts.on("--no-web") { ENV["MASTER_WEB"] = "0" }
+    opts.on("--boot-status") { ENV["MASTER_BOOT_STATUS"] = "1" }
+    opts.on("--verbose", "show verbose status and boot detail (unit lines print by default; MASTER_CLI_QUIET=1 hides them)") { ENV["MASTER_CLI_VERBOSE"] = "1" }
+    opts.on("--trace", "show verbose progress and full boot diagnostics") do
+      ENV["MASTER_CLI_TRACE"] = "1"
+      ENV["MASTER_CLI_VERBOSE"] = "1"
+      ENV["MASTER_BOOT_STATUS"] = "1"
+    end
+    opts.on("--fast") do
+      ENV["MASTER_FAST"] = "1"
+      ENV["MASTER_SKIP_BOOT_SCAN"] = "1"
+      ENV["MASTER_SKIP_TTS"] = "1"
+      ENV["MASTER_WEB"] = "0"
+    end
+  end
+end
+
+def parse_initial_message_options(argv)
+  options = {}
+  initial_message_parser(options).parse!(argv)
+  options
+end
+
+# Flags are read before the runtime boots. Help must print without a boot, which
+# costs seconds and can raise first.
+if ARGV.first == "--help" || ARGV.first == "-h"
+  require "optparse"
+  print_master_help
+end
+
+# An interactive session says something at once, from live state, before the boot below. In its own
+# process: it reads JSON and git before the bundle pins json, date and psych, and loading them here first
+# made Bundler refuse to activate.
+if ARGV.empty? && $stdout.tty? && ENV["MASTER_INTERNAL_CHILD"] != "1"
+  system(RbConfig.ruby, "--disable-gems", File.join(master_root, "lib", "cli", "welcome.rb"), master_root)
+end
+
+require_relative "../lib/boot/entrypoint"
+Master::Boot::Entrypoint.prepare!(root: master_root)
+
+Encoding.default_external = Encoding::UTF_8
+Encoding.default_internal = Encoding::UTF_8
+$stdout.set_encoding("UTF-8")
+$stderr.set_encoding("UTF-8")
+# Always unbuffered so tee/logs capture progress before EOF (scan can run minutes).
+$stdout.sync = true
+$stderr.sync = true
+
+daemon = ARGV.delete("--daemon")
+internal_master_child = ENV["MASTER_INTERNAL_CHILD"] == "1"
+
+if daemon
+  ENV["MASTER_CONTROL_PLANE"] = "1"
+elsif internal_master_child
+  ENV.delete("MASTER_CONTROL_PLANE")
+end
+# The control-plane flock is held by this process and closed on exec; a child
+# that names a descriptor would be naming one it does not hold.
+ENV.delete("MASTER_PROCESS_LOCK_FD")
+
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+# The runtime's tree is MASTER/, whatever directory the caller stood in.
+Dir.chdir(master_root)
+require "ground/env_loader"
+Master::Ground::EnvLoader.load!
+
+require "optparse"
+require "master"
+require "ops"
+
+$MASTER_PROCESS_LOCK = if internal_master_child
+                         Master::Trace::Dmesg.status("master0", "internal child, parent owns control plane", io: $stderr)
+                         nil
+                       else
+                         lock_mode = daemon ? "control_plane" : "interactive"
+                         Master::Ops::ProcessLock.acquire!(root: Master::ROOT, mode: lock_mode)
+                       end
+
+unless internal_master_child || $MASTER_PROCESS_LOCK
+  owner = Master::Ops::ProcessLock.owner
+  detail = owner.empty? ? "" : " pid=#{owner["pid"]} host=#{owner["host"]} mode=#{owner["mode"]}"
+  Master::Trace::Dmesg.status("master0", "another process owns the control plane#{detail}", io: $stderr)
+  exit 75
+end
+
+if !$stdin.tty? && ENV["MASTER_FAST"] == "1"
+  $stdin.each_line do |line|
+    command = line.strip
+    body = case command
+           when "/status"
+             ["status", "fast pipe", "service master/not-booted", "pipeline fast"].join("\n")
+           when "/help", "/?"
+             "/status and /help are available in fast pipe mode; /fix is the primary repair operation in the interactive console"
+           else
+             "/status and /help are the only fast-pipe commands; use the interactive console for /fix"
+           end
+    Master::Trace::Dmesg::Report.print(command.empty? ? "/help" : command, body)
+  end
+  exit!(0)
+end
+
+# The Fold, fast and headless switches are tested below from the environment,
+# which only this parse sets.
+initial_message_from_argv(ARGV.dup)
+
+cli = nil
+control_plane = nil
+
+def save_cli_session_safely(cli)
+  cli&.container&.dig(:session)&.save!
+rescue StandardError => e
+  Master::Trace::Dmesg.status("cli0", "session save failed, #{e.class}: #{e.message}", io: $stderr)
+end
+
+def stop_cli_background_loop_safely(cli)
+  cli&.send(:stop_background_loop)
+rescue StandardError => e
+  Master::Trace::Dmesg.status("cli0", "background stop failed, #{e.class}: #{e.message}", io: $stderr)
+end
+
+def stop_control_plane_safely(control_plane)
+  control_plane&.stop!
+rescue StandardError => e
+  Master::Trace::Dmesg.status("control0", "stop failed, #{e.class}: #{e.message}", io: $stderr)
+end
+
+trap("INT") { Master::Trace::Dmesg.status("cli0", "interrupt, exiting", io: $stderr); exit!(130) }
+trap("TERM") { exit!(143) }
+trap("TSTP") do
+  Master::Trace::Dmesg.status("cli0", "suspended, fg then /exit; Ctrl-Z leaves ~200MB ruby on 1GB hosts", io: $stderr)
+  trap("TSTP", "DEFAULT")
+  Process.kill("STOP", Process.pid)
+end
+
+fast_boot = ARGV.include?("--fast") || ENV["MASTER_FAST"] == "1"
+require "ground/host_budget"
+Master::Ground::HostBudget.warn_or_reap_suspended!
+unless $stdin.tty?
+  ENV["MASTER_PIPE"] = "1"
+  ENV["MASTER_SKIP_BOOT_SCAN"] = "1"
+  ENV["MASTER_SKIP_TTS"] = "1"
+end
+cli = Master.boot(root: Dir.pwd)
+Master::Ops::RuntimeLoopGuards.install!
+
+if ENV["MASTER_CONTROL_PLANE"] == "1" && !fast_boot && ENV["MASTER_FOLD"] != "1"
+  control_plane = Master::Ops::ControlPlane.start!(
+    root: Dir.pwd,
+    interval: ENV["MASTER_CONTROL_INTERVAL"],
+    out: $stderr
+  )
+  interval = ENV["MASTER_CONTROL_INTERVAL"].to_i
+  interval = Master::Ops::ControlPlane::DEFAULT_INTERVAL unless interval.positive?
+  warn "control0: vm23 sync/deploy active every #{interval}s"
+end
+
+# --fold routes one coding goal through the core Fold, then exits. Plain-language
+# agent turns and /run <goal> use the Fold; other slash commands dispatch directly.
+if ENV["MASTER_FOLD"] == "1"
+  goal = initial_message_from_argv(ARGV)
+  container = cli.container
+  format = ENV.fetch("MASTER_OUTPUT_FORMAT") { ENV["MASTER_HEADLESS"] == "1" ? "json" : "text" }
+  streamed = ->(line) { puts JSON.generate(type: "turn", line:) } if format == "stream-json"
+  result = Master::CLI::CoreBridge.run(
+    goal, root: Dir.pwd, bus: container[:bus], model_id: container[:agent]&.model,
+    mode: Master::CLI::CoreBridge.mode_for_permission(ENV["MASTER_PERMISSION_MODE"]),
+    allowed_tools: ENV["MASTER_ALLOWED_TOOLS"], on_turn: streamed
+  )
+  if format == "json" || format == "stream-json"
+    complete = result[:reason] == :complete
+    receipt = format == "json" ? result : result.except(:transcript)
+    puts JSON.generate(receipt.merge(type: "result", subtype: complete ? "success" : "inconclusive",
+                                     is_error: !complete, result: result[:summary], num_turns: result[:turns],
+                                     status: complete ? "SUCCESS" : "INCONCLUSIVE"))
+  else
+    header = "core: #{result[:reason]} turns=#{result[:turns]}"
+    puts [header, *result[:transcript], result[:summary]].compact.join("\n")
+  end
+  save_cli_session_safely(cli)
+  exit!(result[:reason] == :complete ? 0 : 1)
+end
+
+if $stdin.tty?
+  message = initial_message_from_argv(ARGV)
+  message = "/status" if fast_boot && message.empty?
+  if !fast_boot && Master::CLI::Face::Window.asked?(message.split)
+    result = Master::CLI::CommandRegistry.dispatch_face
+    puts result if result && result != "face0: closed"
+    stop_control_plane_safely(control_plane)
+    stop_cli_background_loop_safely(cli)
+    save_cli_session_safely(cli)
+    exit!(0)
+  end
+  if fast_boot
+    cli.pipe(message) unless message.empty?
+    stop_control_plane_safely(control_plane)
+    stop_cli_background_loop_safely(cli)
+    save_cli_session_safely(cli)
+    exit!(cli.exit_code || 0)
+  else
+    cli.run(message.empty? ? nil : message)
+  end
+else
+  $stdout.sync = true
+  # Pipe mode used to ignore ARGV, so `bin/master /scan RAILS` with no TTY
+  # printed nothing and exited 0. Honor the argument, then stdin.
+  message = initial_message_from_argv(ARGV)
+  cli.pipe(message) unless message.empty?
+  $stdin.each_line { |line| cli.pipe(line) }
+  stop_control_plane_safely(control_plane)
+  stop_cli_background_loop_safely(cli)
+  save_cli_session_safely(cli)
+  $stdout.flush
+  $stderr.flush
+  exit!(cli.exit_code || 0)
+end
+
+stop_control_plane_safely(control_plane)
+exit(cli.exit_code || 0)

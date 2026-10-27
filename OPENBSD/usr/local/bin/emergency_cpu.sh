@@ -63,7 +63,7 @@ for pat in \
   'assets:build_face' \
   'bin/rails db:seed' \
   'bin/rails test' \
-  'ruby.*bin/cli' \
+  'ruby.*bin/master' \
   'RAILS/master/script/probe_face' \
   'tts-worker --daemon'
 do

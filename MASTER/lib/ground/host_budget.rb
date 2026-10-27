@@ -49,7 +49,7 @@ module Master
         return unless constrained?
 
         mb = total_mem_mb
-        "host0: #{mb}MB ram — /fix lib · bin/cli --fast · avoid full-repo prompts"
+        "host0: #{mb}MB ram — /fix lib · bin/master --fast · avoid full-repo prompts"
       end
 
       def refuse_heavy_prompt?(text)
@@ -74,7 +74,7 @@ module Master
 
       def heavy_repo_message
         mb = total_mem_mb || "low"
-        "host budget: full-repo analyze/autofix OOMs on #{mb}MB — use /fix lib, or bin/cli --fast"
+        "host budget: full-repo analyze/autofix OOMs on #{mb}MB — use /fix lib, or bin/master --fast"
       end
 
       def suspended_ruby_pids(user: ENV["USER"])
@@ -84,7 +84,7 @@ module Master
         out.each_line.filter_map do |line|
           pid, stat, *cmd = line.split
           next unless stat&.include?("T")
-          next unless cmd.join(" ").match?(/bin\/cli|tts-worker/)
+          next unless cmd.join(" ").match?(/bin\/master(?:\s|\z)|tts-worker/)
 
           pid.to_i if pid&.match?(/\A\d+\z/)
         end

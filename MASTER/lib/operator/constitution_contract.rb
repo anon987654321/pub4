@@ -10,7 +10,7 @@ module Operator
       MASTER/data/laws.yml
       MASTER/data/SOUL.md
       MASTER/data/project_context.yml
-      MASTER/bin/cli
+      MASTER/bin/master
       MASTER/lib/review/scan
       MASTER/law/definition.rb
       RAILS/CLAUDE.md

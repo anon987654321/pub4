@@ -776,7 +776,7 @@ guidance:
     - lib/fix/
     - lib/ground/
     - lib/review/security.rb
-    - bin/cli
+    - bin/master
     - data/state.yml
     autoloop_action: skip with publish autoloop:throttled event; surface to user
   adversarial_questioning:

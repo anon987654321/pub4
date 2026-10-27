@@ -88,9 +88,9 @@ module Deploy
     attr_reader :measured
 
     def run
-      cli = File.join(MASTER, "bin", "cli")
-      unless File.file?(cli)
-        @result.fail("missing MASTER/bin/cli")
+      master = File.join(MASTER, "bin", "master")
+      unless File.file?(master)
+        @result.fail("missing MASTER/bin/master")
         return @result
       end
 
@@ -255,7 +255,7 @@ module Deploy
     # :timeout — the child is killed, so a stalled scan costs SCAN_TIMEOUT_S
     # rather than the rest of the day.
     def bounded_scan(line)
-      Open3.popen2e(SAFE_ENV, RUBY, BUNDLE, "exec", RUBY, "bin/cli", chdir: MASTER) do |stdin, out, wait|
+      Open3.popen2e(SAFE_ENV, RUBY, BUNDLE, "exec", RUBY, "bin/master", chdir: MASTER) do |stdin, out, wait|
         stdin.write("#{line}\n")
         stdin.close
         output = +""

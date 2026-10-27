@@ -9,7 +9,7 @@ class BootSafetySpec < Minitest::Test
   # these focused modules (extend MasterRuntime / extend MasterBoot in master.rb).
   MASTER_RUNTIME = File.join(ROOT, "lib", "boot", "runtime.rb")
   MASTER_BOOT = File.join(ROOT, "lib", "boot", "master_boot.rb")
-  CLI = File.join(ROOT, "bin", "cli")
+  CLI = File.join(ROOT, "bin", "master")
 
   # Called, not grepped. This asserted seven string literals in runtime.rb, so
   # it passed whether or not apply_process_defaults! ever set anything — the

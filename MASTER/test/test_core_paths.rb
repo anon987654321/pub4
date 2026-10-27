@@ -15,7 +15,7 @@ class TestCorePaths < Minitest::Test
     assert_includes paths.sacred_paths, "data/SOUL.md"
     assert_includes paths.sacred_paths, "data/project_context.yml"
     assert_includes paths.sacred_paths, "lib/ground/pledge.rb"
-    assert_includes paths.sacred_paths, "bin/cli"
+    assert_includes paths.sacred_paths, "bin/master"
   end
 
   def test_authored_fix_code_is_not_sacred
@@ -28,13 +28,13 @@ class TestCorePaths < Minitest::Test
       FileUtils.mkdir_p(File.join(root, "MASTER/data"))
       File.write(
         File.join(root, "MASTER/data/soul.yml"),
-        "absolute:\n  sacred_paths:\n    - data/\n    - bin/cli\n",
+        "absolute:\n  sacred_paths:\n    - data/\n    - bin/master\n",
       )
       repo_paths = Master::Core::Constitution::Paths.new(root:)
 
       assert_includes repo_paths.sacred_paths, "MASTER/data/"
       assert repo_paths.sacred?(File.join(root, "MASTER/data/laws.yml"))
-      assert repo_paths.sacred?(File.join(root, "MASTER/bin/cli"))
+      assert repo_paths.sacred?(File.join(root, "MASTER/bin/master"))
       refute repo_paths.sacred?(File.join(root, "RAILS/app/models/post.rb"))
     end
   end

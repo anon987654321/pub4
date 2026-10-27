@@ -148,7 +148,7 @@ module Master::Core
       # The worker sets OpenBSD execpromises before replacing itself with argv.
       # Keep those promises off this parent: trusted operator controls retain their
       # separate, explicit privilege path.
-      worker = File.join(Master::ROOT, "bin", "cli")
+      worker = File.join(Master::ROOT, "bin", "master")
       child_env = ENV.keys.grep(CREDENTIAL_ENV_RX).to_h { |name| [name, nil] }
       # These variables run code before Ruby starts the worker, ahead of pledge.
       %w[RUBYOPT RUBYLIB RUBYPATH RUBYGEMS_GEMDEPS].each { |name| child_env[name] = nil }

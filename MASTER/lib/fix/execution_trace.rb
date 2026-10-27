@@ -19,7 +19,7 @@ module Master
       include ExecutionSnapshot
       BOOT_CHAIN = %w[
         MASTER/bin/ruby
-        MASTER/bin/cli
+        MASTER/bin/master
         MASTER/lib/boot/entrypoint.rb
         MASTER/lib/boot/dependency_manager.rb
         MASTER/lib/master.rb

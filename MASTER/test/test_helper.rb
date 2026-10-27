@@ -48,7 +48,7 @@ ENV["MASTER_FIX_REFUSALS_PATH"] = File.join(LIVE_STATE_DIR, "fix_refusals.jsonl"
 # Nor a test's deliberate swallow a row in the error log the run summary reads.
 ENV["MASTER_SWALLOW_LOG_PATH"] = File.join(LIVE_STATE_DIR, "swallowed_errors.jsonl")
 
-# Direct test entrypoints must use the same pinned, private bundle as bin/cli.
+# Direct test entrypoints must use the same pinned, private bundle as bin/master.
 # Otherwise RubyGems can select a host-installed Minitest (or a native gem
 # built against another Ruby) before the suite has a chance to activate MASTER.
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))

@@ -31,7 +31,7 @@ class TestHostBudget < Minitest::Test
 
   def test_suspended_ruby_pids_parses_stopped_cli
     fake = <<~PS
-      60670 Tpu /usr/local/bin/ruby bin/cli
+      60670 Tpu /usr/local/bin/ruby bin/master
       22489 S ruby34: http://127.0.0.1:53187
       63744 T /usr/local/bin/ruby34 tts-worker
     PS

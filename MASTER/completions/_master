@@ -1,4 +1,4 @@
-#compdef master cli
+#compdef master
 
 # The slash surface is generated from CommandRegistry's public help contract.
 # test/test_completions.rb keeps this list equal to the live command registry.

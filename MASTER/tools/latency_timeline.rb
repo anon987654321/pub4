@@ -81,7 +81,7 @@ message = ARGV.first || "hi, what time is it in Oslo?"
 marks = {}
 started = now
 
-PTY.spawn(ENV_FOR_PTY, RbConfig.ruby, File.join(ROOT, "bin", "cli"), chdir: ROOT) do |reader, writer, pid|
+PTY.spawn(ENV_FOR_PTY, RbConfig.ruby, File.join(ROOT, "bin", "master"), chdir: ROOT) do |reader, writer, pid|
   boot = collect(reader, started, BOOT_LIMIT_S) { |chunks| chunks.map(&:last).join.match?(PROMPT) }
   marks[:first_byte] = boot.find { |_, text| !text.empty? }&.first
   marks[:prompt] = boot.last&.first if boot.map(&:last).join.match?(PROMPT)

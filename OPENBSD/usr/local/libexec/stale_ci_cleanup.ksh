@@ -23,12 +23,12 @@ stale_ci_cleanup() {
     'bin/rails db:seed' \
     'bin/rails test' \
     'bin/rails dartsass' \
-    'ruby.*bin/cli'
+    'ruby.*bin/master'
   do
     pkill -f "$pat" 2>/dev/null && logger -t resource-guard "stale-ci pkill: $pat"
   done
 
-  pkill -U dev -f 'ruby.*bin/cli' 2>/dev/null || true
+  pkill -U dev -f 'ruby.*bin/master' 2>/dev/null || true
 }
 
 # heal_doas_conf removed deliberately. It ran at load time, so merely sourcing

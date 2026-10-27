@@ -127,7 +127,7 @@ CHECKS = {
     cwd: MASTER_ROOT,
   },
   "dogfood" => {
-    desc: "MASTER CLI dogfood (bundle exec ruby bin/cli + chitchat)",
+    desc: "MASTER CLI dogfood (bundle exec ruby bin/master + chitchat)",
     cmd: [RUBY, File.join(MASTER_ROOT, "bin", "dogfood")],
     cwd: MASTER_ROOT,
   },

@@ -8,7 +8,7 @@ require "pty"
 
 class TestCliBootE2e < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  CLI = File.join(ROOT, "bin", "cli")
+  CLI = File.join(ROOT, "bin", "master")
   COMMAND_TIMEOUT = 45
   # The booted child keeps the Ruby that runs this test: the entrypoint would
   # otherwise re-exec into another installed Ruby that inherits this process's
@@ -177,16 +177,6 @@ class TestCliBootE2e < Minitest::Test
   end
 end
 
-class TestMasterRubyHandoff < Minitest::Test
-  def test_master_reuses_the_selected_interpreter_for_child_execs
-    source = File.read(File.expand_path("../bin/master.rb", __dir__))
-
-    assert_includes source, 'require "rbconfig"'
-    assert_includes source, "exec(RbConfig.ruby, CLI, *args)"
-    refute_match(/File\.join\(MASTER,\s*"bin",\s*"ruby"\)/, source)
-  end
-end
-
 # The REPL on a real terminal, because the exit path only exists there: Reline
 # owns the line, ^C arrives as SIGINT through the terminal driver, and ^D as an
 # end of file. Every ^C in the 2026-09-13 sessions was the operator trying to
@@ -248,7 +238,7 @@ class TestCliReplExit < Minitest::Test
     output = +""
     status = nil
     completed = false
-    PTY.spawn(boot_env, Master::BUNDLE_BIN, "exec", "ruby", "bin/cli", chdir: ROOT) do |reader, writer, pid|
+    PTY.spawn(boot_env, Master::BUNDLE_BIN, "exec", "ruby", "bin/master", chdir: ROOT) do |reader, writer, pid|
       begin
         read_until(reader, output, READY, 30)
         assert_match(READY, output, "CLI never showed its initial host:path$ prompt")
@@ -325,7 +315,7 @@ class TestCliReplExit < Minitest::Test
   def drive_conversation(message)
     require "pty"
     output = +""
-    PTY.spawn(boot_env, Master::BUNDLE_BIN, "exec", "ruby", "bin/cli", chdir: ROOT) do |reader, writer, pid|
+    PTY.spawn(boot_env, Master::BUNDLE_BIN, "exec", "ruby", "bin/master", chdir: ROOT) do |reader, writer, pid|
       read_until(reader, output, READY, 30)
       sleep 0.5
       writer.write("#{message}\n")
@@ -340,7 +330,7 @@ class TestCliReplExit < Minitest::Test
   def drive
     require "pty"
     output = +""
-    PTY.spawn(boot_env, Master::BUNDLE_BIN, "exec", "ruby", "bin/cli", chdir: ROOT) do |reader, writer, pid|
+    PTY.spawn(boot_env, Master::BUNDLE_BIN, "exec", "ruby", "bin/master", chdir: ROOT) do |reader, writer, pid|
       read_until(reader, output, READY, 30)
       sleep 0.5
       yield writer

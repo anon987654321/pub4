@@ -97,9 +97,9 @@ failures << "auth_tier" unless step("auth tier") do
   [ok, "visitor/auth/token separation failed"]
 end
 
-failures << "launcher" unless step("bin/ruby bin/cli boot") do
+failures << "launcher" unless step("bin/ruby bin/master boot") do
   ruby_wrapper = File.expand_path("ruby", __dir__)
-  cli = File.expand_path("cli", __dir__)
+  master = File.expand_path("master", __dir__)
   output = +""
   status = nil
 
@@ -120,7 +120,7 @@ failures << "launcher" unless step("bin/ruby bin/cli boot") do
       "MASTER_SKIP_BOOT_SCAN" => "1", "MASTER_BACKGROUND" => "0",
       "MASTER_AUTOFIX" => "0", "MASTER_WATCH" => "0", "MASTER_WATCHER" => "0",
       "MASTER_HEARTBEAT" => "0" },
-    ruby_wrapper, cli, "--fast",
+    ruby_wrapper, master, "--fast",
   ) do |reader, writer, pid|
     writer.close
     deadline = Time.now + PIPE_TIMEOUT_SECONDS

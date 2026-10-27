@@ -18,7 +18,7 @@ master_scan_dep() {
     log_warn "MASTER scan skipped by explicit fast-deploy acknowledgement"
     return 0
   fi
-  [[ -x ${master}/bin/cli ]] || { log_err "MASTER scan unavailable at ${master}"; return 1; }
+  [[ -x ${master}/bin/master ]] || { log_err "MASTER scan unavailable at ${master}"; return 1; }
   mkdir -p "$log_dir" || { log_err "cannot create ${log_dir} for MASTER scan log"; return 1; }
   chmod 700 "$log_dir"
   log "MASTER rules scan (OPERATOR) pre-bundle"

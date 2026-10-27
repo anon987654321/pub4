@@ -100,14 +100,14 @@ class TestBootEntrypoint < Minitest::Test
       Master::Boot::Entrypoint.stub(:exec, ->(clean, program, *argv, **options) { captured = [clean, program, argv, options] }) do
         Gem.stub(:loaded_specs, { "bundler" => active }) do
           Master::Boot::Entrypoint.reexec_mismatched_bundler!(
-            root:, env:, out: StringIO.new, argv: ["--fast"], program: "/tmp/bin/cli",
+            root:, env:, out: StringIO.new, argv: ["--fast"], program: "/tmp/bin/master",
           )
         end
       end
 
       refute_nil captured
       clean, program, argv, options = captured
-      assert_equal "/tmp/bin/cli", program
+      assert_equal "/tmp/bin/master", program
       assert_equal ["--fast"], argv
       assert_equal({ unsetenv_others: true }, options)
       assert_equal "1", clean["MASTER_BUNDLER_REEXEC_DONE"]

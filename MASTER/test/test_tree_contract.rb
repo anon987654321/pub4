@@ -8,7 +8,7 @@ class TreeContractTest < Minitest::Test
 
   BOOT_FILES = %w[
     bin/ruby
-    bin/cli
+    bin/master
     lib/boot/entrypoint.rb
     lib/boot/dependency_manager.rb
     lib/master.rb
@@ -69,7 +69,7 @@ class TreeContractTest < Minitest::Test
   end
 
   def test_boot_spine_uses_relative_lib_loader
-    cli = File.read(File.join(ROOT, "bin/cli"), encoding: "UTF-8")
+    cli = File.read(File.join(ROOT, "bin/master"), encoding: "UTF-8")
     entrypoint = File.read(File.join(ROOT, "lib/boot/entrypoint.rb"), encoding: "UTF-8")
 
     assert_includes cli, 'require_relative "../lib/boot/entrypoint"'

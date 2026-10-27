@@ -5,7 +5,7 @@ require "timeout"
 
 module Master
   module Mobile
-    # Hands one utterance to bin/cli as a child process and returns what it
+    # Hands one utterance to bin/master as a child process and returns what it
     # printed. The child runs as MASTER_INTERNAL_CHILD, so it does not contend
     # for the control-plane lock the host already holds.
     class Bridge
@@ -29,11 +29,11 @@ module Master
         return failed("empty utterance") if text.empty?
 
         out, err, status = Timeout.timeout(@timeout_s) do
-          @capture.call(CHILD_ENV, File.join(@root, "bin", "cli"), "-m", text, chdir: @root)
+          @capture.call(CHILD_ENV, File.join(@root, "bin", "master"), "-m", text, chdir: @root)
         end
         return Result.new(ok: true, output: out.to_s, error: nil) if status.success?
 
-        failed(err.to_s.strip.empty? ? "bin/cli exited #{status.exitstatus}" : err.to_s.strip)
+        failed(err.to_s.strip.empty? ? "bin/master exited #{status.exitstatus}" : err.to_s.strip)
       rescue Timeout::Error
         failed("no answer within #{@timeout_s}s")
       rescue SystemCallError => e

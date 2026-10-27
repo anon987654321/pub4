@@ -74,7 +74,7 @@ def rows
   # Only characters BootBanner printed. Invented ssh/motd lines were a film
   # of a session that did not happen.
   [
-    { kind: "cmd2", text: "bundle exec ruby bin/cli" },
+    { kind: "cmd2", text: "bundle exec ruby bin/master" },
     *BANNER.map { |line| { kind: "boot", text: line } },
     { kind: "ready", text: "" },
   ]

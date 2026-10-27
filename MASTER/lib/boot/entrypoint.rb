@@ -51,7 +51,7 @@ module Master
       def prepare!(root:, env: ENV, out: $stderr, argv: ARGV, program: $PROGRAM_NAME)
         # Every source file and data file in pub4 is UTF-8. A non-login shell on vm23 has no
         # locale, so Ruby read files as US-ASCII and the deploy preflight's boot died on 2026-10-22
-        # matching a regex against domain_registry.rb's Norwegian letters. bin/cli pinned this for
+        # matching a regex against domain_registry.rb's Norwegian letters. bin/master pinned this for
         # itself; every MASTER process boots through here.
         Encoding.default_external = Encoding::UTF_8
         root = File.expand_path(root)

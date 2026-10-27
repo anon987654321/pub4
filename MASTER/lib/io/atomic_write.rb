@@ -11,7 +11,7 @@ module Master
     module AtomicWrite
       # A rewrite keeps the file's own mode unless one is asked for: the rename
       # replaced it with 0644, and an executable rewritten here stopped being one.
-      # The bytes go out as given. bin/cli sets Encoding.default_internal, so a
+      # The bytes go out as given. bin/master sets Encoding.default_internal, so a
       # text-mode temp file transcoded on write, and restoring a binread
       # snapshot of any file holding a non-ASCII byte raised mid-rollback.
       def write_atomic(path, content, fsync: true, fsync_dir: true, mode: nil)

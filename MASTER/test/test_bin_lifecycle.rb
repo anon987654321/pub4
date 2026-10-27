@@ -38,7 +38,7 @@ class TestBinLifecycle < Minitest::Test
       assert holder.flock(File::LOCK_EX | File::LOCK_NB)
 
       out, status = run_script(
-        File.join(BIN, "master.rb"),
+        File.join(BIN, "master"),
         "--fast", "/status",
         env: {
           "MASTER_INTERNAL_CHILD" => "1",
@@ -58,7 +58,7 @@ class TestBinLifecycle < Minitest::Test
 
   def test_master_core_holds_done_without_evidence
     Dir.mktmpdir do |scratch|
-      out, status = run_script(File.join(BIN, "master-core"), "--root", scratch, "noop")
+      out, status = run_script(File.join(BIN, "master"), "core", "--root", scratch, "noop")
 
       assert status.success?, out
       assert_includes out, "core0 at master0: held, done refused without passing evidence"
@@ -66,10 +66,10 @@ class TestBinLifecycle < Minitest::Test
   end
 
   def test_master_core_without_a_goal_prints_usage
-    out, status = run_script(File.join(BIN, "master-core"))
+    out, status = run_script(File.join(BIN, "master"), "core")
 
     assert_equal 64, status.exitstatus
-    assert_includes out, "usage: master-core"
+    assert_includes out, "usage: bin/master core"
   end
 
   def test_cleanup_refuses_a_dirty_tree_and_only_reports_on_a_clean_one

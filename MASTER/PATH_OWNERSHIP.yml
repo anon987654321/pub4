@@ -208,6 +208,6 @@ ownership:
     risk: low
     check: none
   completions/:
-    purpose: zsh completions for bin/master, bin/cli and bin/operator
+    purpose: zsh completions for bin/master and bin/operator
     risk: low
     check: ruby -Ilib:test test/test_completions.rb

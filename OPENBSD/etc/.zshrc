@@ -37,4 +37,4 @@ source "${PUB4_ROOT}/OPENBSD/lib/zshrc.shared"
 
 (cd ~/pub4 && RUBYOPT=-W0 git pull -q 2>/dev/null)
 source "${PUB4_ROOT}/OPENBSD/lib/ruby_select.sh"
-cd ~/pub4/MASTER && exec "$BUNDLE" exec "$RUBY" bin/cli
+cd ~/pub4/MASTER && exec "$BUNDLE" exec "$RUBY" bin/master
