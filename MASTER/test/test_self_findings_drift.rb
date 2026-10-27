@@ -95,6 +95,15 @@ class TestSelfFindingsDrift < Minitest::Test
     end
   end
 
+  def test_stale_members_are_detected_when_the_source_line_remains_but_the_finding_disappears
+    member = "RULE MASTER/lib/operator/self_findings.rb:1"
+    with_baseline({ "findings" => 1, "finding_members" => [member] }) do
+      Tool.stub(:population, []) do
+        assert_equal [member], Tool.stale_recorded_members("law")
+      end
+    end
+  end
+
   def test_stale_members_make_the_report_inconclusive
     with_baseline({
       "findings" => 1,

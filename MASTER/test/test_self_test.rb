@@ -16,6 +16,13 @@ class TestSelfTest < Minitest::Test
     end
   end
 
+  def test_runtime_self_test_checks_match_laws_yml_contract
+    declared = Master.load_laws(root: Master::ROOT).fetch("self_test").keys.map(&:to_s).sort
+    runtime = Master::Review::Scan::SelfTest.new(root: Master::ROOT).send(:law_checks).map(&:first).sort
+
+    assert_equal declared, runtime, "every declarative self_test entry must have exactly one runtime check"
+  end
+
   def test_runs_all_configured_law_checks
     Dir.mktmpdir do |root|
       write_fixture_tree(root)

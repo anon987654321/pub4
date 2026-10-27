@@ -52,8 +52,7 @@ module Master
           def pool(wait: false)
             start_pool_probes
             lanes = [primary_models, cli_lane_models(wait:), agy_catalog_models, tier_ids, Master::Io::PaidTail.models, continuity_models,
-                     ollama_cloud_catalog, ollama_cloud_models, hosted_models, live_catalog_models,
-                     browser_chat_models, local_server_models, replicate_models, local_models]
+                     hosted_models, live_catalog_models, browser_chat_models, local_server_models, replicate_models, local_models]
             lanes.flatten.uniq.select { |id| unreachable_reason(id, wait:).nil? }
           end
 
@@ -440,7 +439,7 @@ module Master
 
           def ollama_problem(id)
             return "ollama switched off (MASTER_NO_OLLAMA=1)" unless ollama_enabled?
-            return "ollama cloud routing is disabled" if ollama_cloud_model?(id) && !ollama_cloud_enabled?
+            return "ollama cloud models are unsupported" if ollama_cloud_model?(id)
 
             name = id.sub(%r{\Aollama[:/]}, "")
             installed = ollama_installed_models
@@ -459,13 +458,6 @@ module Master
             return if name.end_with?(":cloud", "-cloud")
 
             ("#{name} needs more memory than this machine has" unless runs_here?(id))
-          end
-
-          def ollama_cloud_models
-            return [] unless ollama_cloud_enabled?
-
-            Array(ollama_installed_models).select { |name| name.end_with?(":cloud", "-cloud") }
-                                          .map { |name| "ollama:#{name}" }
           end
 
           def local_server_models = local_server_index.keys

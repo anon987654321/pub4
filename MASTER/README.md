@@ -27,12 +27,13 @@ like intention. The constitution therefore stays legible. `data/soul.yml` holds
 the constitutional absolutes; `data/laws.yml` is the canonical declared Law
 catalogue and execution policy. Executable definitions and detector-adapter
 sources share one physical home under `law/`; detector adapters live in
-`law/detectors/`. `lib/review/scan/` holds scanner machinery, and its former
-`laws/` path is only a compatibility symlink, not a second source tree. These
-are enforcement mechanisms, not alternate sources of normative authority. The
-catalogue and detector populations are not yet fully reconciled:
-`LawRegistryAudit` reports the specific gaps, and MASTER must not claim complete
-enforcement from a file count or registry count.
+`law/detectors/`. `lib/review/scan/` holds scanner machinery, registration,
+auditing, and orchestration—not a second Law source tree. These are enforcement
+mechanisms, not alternate sources of normative authority. `LawRegistryAudit`
+checks Law identity and source integrity and reports declared coverage debt
+separately. Reconciliation does not prove that every Law has a deterministic
+detector or that every runtime surface has actually been assessed; MASTER must
+not claim complete enforcement from a file count or registry count.
 A break gets a refusal with a reason, never a quiet patch.
 
 The `MASTER/bin/operator laws <ID>` view uses

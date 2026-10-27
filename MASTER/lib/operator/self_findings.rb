@@ -31,6 +31,7 @@ require_relative "../io/exec"
 
 require "English"
 require "json"
+require "set"
 
 module Operator
   module SelfFindings
@@ -302,7 +303,13 @@ module Operator
 
     def recorded_members(name = "law") = Array(recorded[KEYS.fetch(name)[:members]])
 
+    # A recorded member is stale if its file/line disappeared OR the current
+    # lexical/registry census no longer emits that exact Law path:line. Checking
+    # only line existence missed deleted findings when a neighboring line remained.
+    # Resolve the current population lazily so clearly missing/out-of-range records
+    # do not force another full census.
     def stale_recorded_members(name = "law", root: ROOT)
+      current = nil
       recorded_members(name).filter_map do |member|
         match = member.to_s.match(/\A\S+\s+(.+):(\d+)\z/)
         next member unless match
@@ -312,13 +319,15 @@ module Operator
         next member unless File.file?(absolute)
 
         line_number = line.to_i
-        next unless line_number.positive?
+        next member unless line_number.positive?
+        next member if File.foreach(absolute, encoding: "UTF-8").take(line_number).length < line_number
 
-        member if File.foreach(absolute, encoding: "UTF-8").take(line_number).length < line_number
+        current ||= population(name).to_set
+        member unless current.include?(member)
       end
     rescue StandardError => e
       Master::Ground::Swallow.log(e, context: "self_findings.stale_members", path: root)
-      []
+      raise "self_findings stale-member audit failed (#{name}): #{e.class}: #{e.message}"
     end
 
     # Which rules moved since the baseline, and by how much.
