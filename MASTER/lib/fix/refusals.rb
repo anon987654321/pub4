@@ -20,7 +20,7 @@ module Master
       KEEP_BACKUPS = 3
 
       # The order the pass summary names them in; a gate not listed still counts.
-      GATES = %i[budget scope verifier consensus collapse new_violations boyscout priority test primitive visual
+      GATES = %i[budget scope verifier consensus collapse new_violations boyscout priority test compile primitive visual
                  exception lint commit].freeze
 
       class MissingReason < ArgumentError; end

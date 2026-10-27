@@ -23,6 +23,7 @@ require_relative "tool_breaker"
 require_relative "../review/scan/law_health"
 require_relative "repair_loop/autofix_policy"
 require_relative "run_ledger"
+require_relative "source_compile"
 require_relative "repair_loop/file_budget"
 require_relative "change_scope"
 require_relative "refusals"
@@ -356,6 +357,9 @@ module Master
         if (failure = failing_test_for(path))
           return reject_fix(path, old_src, "test_failed", test: failure)
         end
+        if (broken = SourceCompile.failure(path))
+          return reject_fix(path, old_src, "does_not_compile", evidence: broken)
+        end
 
         if (why = PrimitiveFirst.check(path, old_src, new_src, root: @root))
           return reject_fix(path, old_src, "page_scoped_override", evidence: why)
@@ -414,7 +418,7 @@ module Master
       REJECT_GATES = {
         "visual_operator_owned" => :visual, "collapsed_content" => :collapse, "new_violations" => :new_violations,
         "boyscout_violation" => :boyscout, "higher_priority_violation" => :priority, "test_failed" => :test,
-        "page_scoped_override" => :primitive, "visual_regression" => :visual
+        "does_not_compile" => :compile, "page_scoped_override" => :primitive, "visual_regression" => :visual
       }.freeze
 
       def reject_fix(path, original, reason, **details)
