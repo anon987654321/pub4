@@ -28,7 +28,7 @@ module Master
               observation.sacred_path?(path)
             end
           },
-          repair: nil
+          repair: nil,
         ),
         Kernel::Law.new(
           name: "CAPABILITY_STATUS_MUST_BE_TRUTHFUL",
@@ -37,12 +37,13 @@ module Master
           check: lambda { |observation|
             observation.modified_paths.any? do |path|
               file = observation.file(path)
+
               next false unless file && file.content
 
               file.content.match?(CAPABILITY_OPTIMISTIC_READY)
             end
           },
-          repair: nil
+          repair: nil,
         ),
       ].freeze
     end
