@@ -15,7 +15,14 @@ class NewsletterCaptureContractTest < Minitest::Test
   EDITION = File.join(ROOT, "__shared/app/views/shared/newsletter/_edition.html.erb")
   MODEL = File.join(File.expand_path("../..", __dir__), "brgen/app/models/newsletter_edition.rb")
 
-  def test_popup_is_shared_and_time_capped
+# brgen's tree beside __shared exists only in the repo checkout; brgen's own CI
+# on vm23 sees /home/brgen/app, so the brgen half of the contract skips there.
+def require_brgen_beside_shared!
+  skip "brgen is not beside __shared in this layout" unless File.directory?(File.join(ROOT, "brgen", "app"))
+end
+
+def test_popup_is_shared_and_time_capped
+  require_brgen_beside_shared!
     body = File.read(VIEW)
     controller = File.read(CONTROLLER)
 
@@ -46,6 +53,7 @@ class NewsletterCaptureContractTest < Minitest::Test
   end
 
   def test_newsletters_carry_replicate_artwork
+    require_brgen_beside_shared!
     visuals = File.read(VISUALS)
     composer = File.read(COMPOSER)
     edition = File.read(EDITION)

@@ -76,7 +76,10 @@ class FrontendAuditorTest < Minitest::Test
   end
 
   def test_brgen_views_have_no_invalid_paragraph_blocks
-    brgen_root = Pathname(__dir__).join("..", "..", "..", "brgen").realpath
+brgen_root = Pathname(__dir__).join("..", "..", "..", "brgen")
+# Only the repo checkout has brgen beside __shared; vm23's copy-tree does not.
+skip "brgen is not beside __shared in this layout" unless brgen_root.join("app").directory?
+brgen_root = brgen_root.realpath
     findings = Shared::FrontendAuditor.call(root: brgen_root)
     violations = findings.select { |finding| finding.rule == :invalid_paragraph_block }
 

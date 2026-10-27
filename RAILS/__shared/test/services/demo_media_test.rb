@@ -13,8 +13,10 @@ require_relative "../../app/services/shared/demo_media"
 class DemoMediaTest < Minitest::Test
   CATALOG = Pathname.new(__dir__).join("../../../brgen/config/demo_media/bergen.yml").expand_path
 
+  # skip_attach? is also true whenever Rails.env is test, which it is inside an
+  # app's suite, so refuting it there failed brgen's rails_test on every run.
   def test_skip_attach_when_env_flag_set
-    refute Shared::DemoMedia.skip_attach? unless ENV["SKIP_DEMO_MEDIA"]
+    assert_equal Rails.env.test?, Shared::DemoMedia.skip_attach? unless ENV["SKIP_DEMO_MEDIA"]
   end
 
   def test_skip_attach_with_env_override
