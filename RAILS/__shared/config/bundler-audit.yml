@@ -10,4 +10,9 @@
 # An entry here is an argument, not a silence. Write why the advisory cannot
 # reach this tree, and delete the entry the moment that stops being true.
 
-ignore: []
+ignore:
+  # mcp 0.25.0 reaches brgen only through rubocop (group :development, :test), which loads it
+  # for `rubocop --mcp`, an MCP server this repo never starts; production bundles skip
+  # development:test. rubocop 1.85.1 pins mcp ~> 0.6, so the fix waits on rubocop. Delete this
+  # entry once the lock carries mcp >= 1.2.0. Added 2026-10-27.
+  - GHSA-4m5j-jjfc-97gx
