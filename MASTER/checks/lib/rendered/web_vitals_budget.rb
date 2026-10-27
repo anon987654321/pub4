@@ -78,6 +78,12 @@ module Deploy
     end
 
     def measure_live
+      # /fix --lane code opens no browser; the source half above still ran.
+      if ENV["CHECK_LANE"] == "code"
+        @result.skipped_live("web_vitals_budget: code lane — paint budget not measured")
+        return
+      end
+
       unless GeometryProbe.available?
         @result.inconclusive!("web_vitals_budget: no Chrome/Chromium — LCP and CLS not measured", gap: Master::Gap::NO_BROWSER)
         return

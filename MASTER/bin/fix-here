@@ -140,8 +140,12 @@ puts "fix0 at fix-here: running; follow it with: tail -f #{log}"
 # 5. A RAILS run is judged on what is rendered: the visual pass, the layout snapshot, the
 # geometry and tap-target checks all answer "nothing listening" and count as inconclusive
 # when no app is up, and a run that measured no layout cannot improve one. So the apps
-# are booted around the run and stopped after it, whatever the run did.
-live = (tree == "RAILS" || tree.start_with?("RAILS/")) && (check_stages.empty? || check_stages.split(/[,\s]+/).include?("source"))
+# are booted around the run and stopped after it, whatever the run did. The code lane (the
+# default) renders nothing, so it leaves them down: booting four apps cost minutes and a
+# gigabyte of an 8 GB machine for a run that only reads source.
+lane = passthrough.find { |arg| arg.start_with?("--lane=") }.to_s.delete_prefix("--lane=")
+live = (tree == "RAILS" || tree.start_with?("RAILS/")) && !["", "code"].include?(lane) &&
+       (check_stages.empty? || check_stages.split(/[,\s]+/).include?("source"))
 operator = File.join(MASTER, "bin", "operator")
 triangle_log = File.join(File.dirname(log), "triangle-#{File.basename(tree)}.log")
 if live
