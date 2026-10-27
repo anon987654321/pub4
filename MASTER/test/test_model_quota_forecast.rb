@@ -34,6 +34,21 @@ class ModelQuotaForecastTest < Minitest::Test
     end
   end
 
+  # vm23's deploy boot check runs as another user than the daemon that writes this file
+  # owner-only; it must start from an empty day there, while corrupt state still stops it.
+  def test_a_quota_file_this_process_may_not_read_is_an_empty_day_and_a_corrupt_one_raises
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "model_quota.json")
+      File.write(path, "{}")
+
+      Check.stub(:path, path) do
+        File.stub(:read, ->(*) { raise Errno::EACCES, path }) { assert_equal 0, Check.count("demo:free") }
+        File.write(path, "{ not json")
+        assert_raises(RuntimeError) { Check.count("demo:free") }
+      end
+    end
+  end
+
   def test_non_trackable_model_has_no_forecast
     refute Check.forecast("claude-cli:opus")
     refute Check.burn_risk?("claude-cli:opus")

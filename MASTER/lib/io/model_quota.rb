@@ -140,6 +140,12 @@ module Master
       def load_data
         return {} unless File.file?(path)
         JSON.parse(File.read(path))
+      rescue Errno::EACCES => e
+        # The daemon writes this file owner-only, and the deploy's boot check runs as another
+        # user: it failed vm23's deploy on a file it is not the owner of. The daemon that owns
+        # the quota enforces it; another reader starts from an empty day. Corrupt state still raises.
+        Master::Ground::Swallow.log(e, context: "ModelQuota.load_data")
+        {}
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "ModelQuota.load_data")
         raise "model quota state unreadable: #{e.class}: #{e.message}"
