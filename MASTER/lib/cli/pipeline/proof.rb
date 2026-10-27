@@ -7,6 +7,7 @@ require "set"
 require_relative "../../operator/check_chain"
 require_relative "proof/reading"
 require_relative "proof/affected"
+require_relative "proof/rails_apps"
 require_relative "../../fix/check_focus"
 require_relative "../../fix/rails_app"
 
@@ -235,6 +236,12 @@ module Master
         # What the repair changed under this pass's root, its own and anything else written since.
         def repair_paths = @repair_before ? Array(git.paths_since(@repair_before)) : []
 
+        # The pass's root is MASTER, so git.paths_since never lists a RAILS file; the app proof
+        # reads what changed from the repository root.
+        def rails_repair_paths
+          @repair_before ? Array(repo_git.paths_since(@repair_before)).grep(%r{\ARAILS/}) : []
+        end
+
         # A whole-MASTER pass proves with the tests that name what it changed when it has what was red
         # before to judge them by: its baseline if one was kept, else the tree's known-red record
         # (Proof::Affected). Nil keeps the whole suite.
@@ -268,7 +275,9 @@ module Master
             return unless chain.verification_stage?("source")
 
             return ["rails checks", -> {
-              rails_proof(*chain.rails_checks(scan_only: true, strict_inconclusive: ENV[PROOF_ENV] == "1"))
+              held, out = rails_proof(*chain.rails_checks(scan_only: true, strict_inconclusive: ENV[PROOF_ENV] == "1"))
+              apps_held, apps_out = RailsApps.prove(rails_repair_paths)
+              [held && apps_held, Array(out) + apps_out]
             }]
           end
 

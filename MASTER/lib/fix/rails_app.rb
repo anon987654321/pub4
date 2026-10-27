@@ -71,10 +71,13 @@ module Master
       # MASTER runs from its own gem store (~/.master/bundler), set before Bundler starts, so
       # with_unbundled_env puts that store back rather than clearing it: the app then booted
       # against MASTER's gems and stopped on bootsnap/setup. These name only MASTER's store and
-      # bundle; nil unsets them, and the app's bin/rails finds its own Gemfile.
+      # bundle; nil unsets them, and the app's bin/rails finds its own Gemfile. MT_NO_PLUGINS is
+      # MASTER's test setting: Rails' test runner is a minitest plugin, and with it off
+      # `bin/rails test a_test.rb b_test.rb` ran 0 tests and exited 0.
       FOREIGN_BUNDLE = %w[
         GEM_HOME GEM_PATH RUBYOPT RUBYLIB BUNDLE_GEMFILE BUNDLE_LOCKFILE BUNDLE_PATH BUNDLE_APP_CONFIG
         BUNDLE_USER_CONFIG BUNDLE_DISABLE_SHARED_GEMS BUNDLE_FROZEN BUNDLE_BIN_PATH BUNDLER_VERSION BUNDLER_SETUP
+        MT_NO_PLUGINS
       ].freeze
 
       def self.env(root)
