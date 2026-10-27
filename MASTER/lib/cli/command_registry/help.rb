@@ -54,13 +54,13 @@ module Master
           ],
         },
         "play" => {
-summary: "play the curated Blue Hour Dilla showcase or a named progression through the canonical effects rig",
-detail: [
-  "/play — render and play the canonical Blue Hour Dilla showcase through the same arrangement and effects pipeline as ruby STUDIO/dilla/dilla.rb; video encoding is skipped.",
-  "/play <progression> [drum pattern] — name either, or both; `ruby STUDIO/dilla/dilla.rb --list` prints the names.",
-  "Bare /play renders the same arrangement as `ruby STUDIO/dilla/dilla.rb`; named progression requests use the Dilla pocket at 92 BPM unless an explicit or reference tempo applies.",
-  "Each audition writes a distinct dated WAV and leaves reference dilla.wav and dilla_norsk.wav untouched.",
-],
+          summary: "play the curated Blue Hour Dilla showcase or a named progression through the canonical effects rig",
+          detail: [
+            "/play — render and play the canonical Blue Hour Dilla showcase through the same arrangement and effects pipeline as ruby STUDIO/dilla/dilla.rb; video encoding is skipped.",
+            "/play <progression> [drum pattern] — name either, or both; `ruby STUDIO/dilla/dilla.rb --list` prints the names.",
+            "Bare /play renders the same arrangement as `ruby STUDIO/dilla/dilla.rb`; named progression requests use the Dilla pocket at 92 BPM unless an explicit or reference tempo applies.",
+            "Each audition writes a distinct dated WAV and leaves reference dilla.wav and dilla_norsk.wav untouched.",
+          ],
         },
         "support" => {
           summary: "practical personal support and a bounded synthetic quality benchmark",
@@ -249,6 +249,7 @@ detail: [
                    "The counts describe your notes; they cannot show what was said."],
         },
         "reload" => {
+          summary: "restart the current session in place",
           detail: ["/reload — restart this session in place so edits to lib/ and data/ take effect.",
                    "The conversation is kept; the beat and speech stop first."],
         },
@@ -355,8 +356,9 @@ detail: [
       }.freeze
 
       def help_text(command = nil)
-        key = command.to_s.strip.sub(/\A\//, "")
+        key = command.to_s.strip.sub(/\A\//, "").downcase
         return help_summary if key.empty?
+        return "/#{key} — leave the current MASTER session." if %w[exit quit].include?(key)
 
         topic = HELP_TOPICS[key]
         return unknown_command_text(key) unless topic

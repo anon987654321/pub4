@@ -50,6 +50,19 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert_equal Registry.slash_commands.sort, surface
   end
 
+  def test_help_resolves_exit_aliases_and_normalizes_case
+    assert_match(%r{\A/exit — }, Registry.help_text("exit"))
+    assert_match(%r{\A/quit — }, Registry.help_text("/quit"))
+    assert_equal Registry.help_text("fix"), Registry.help_text("Fix")
+  end
+
+  def test_every_public_help_topic_has_a_summary_and_detail_list
+    Registry::HELP_TOPICS.each do |name, topic|
+      refute_empty topic.fetch(:summary).to_s, "#{name} needs a useful summary"
+      assert_instance_of Array, topic.fetch(:detail), "#{name} needs a detail list"
+    end
+  end
+
   def test_command_categories_are_shared_with_the_web_surface
     surface = Registry.command_surface
     assert_equal "fix", surface.find { |entry| entry[:cmd] == "/fix" }.fetch(:category)
