@@ -83,7 +83,7 @@ module Master
             return [] unless path.include?("/law/detectors/") && path.end_with?(".rb")
 
             subclasses(code).reject { |name, id| covered?(name, id) }
-              .map { |name, _| finding(line: 1, message: "law_coverage: no test names #{name}") }
+              .map { |name, _id| finding(line: 1, message: "law_coverage: no test names #{name}") }
           end
 
           private
@@ -248,9 +248,15 @@ module Master
           # 60` has two slashes and no regex.
           QUOTED = /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\\n]|\\.)*`/
 
-          REGEX_OPERAND = /(?:^|(?<=[(\[{,=~!|&;:])|(?<=[(\[{,=~!|&;:]\s))\/(?:[^\/\\\n]|\\.)+\/[mixo]*|%r\{[^}\n]*\}[mixo]*/
+          REGEX_OPERAND = Regexp.union(
+            /(?:^|(?<=[(\[{,=~!|&;:])|(?<=[(\[{,=~!|&;:]\s))\/(?:[^\/\\\n]|\\.)+\/[mixo]*/,
+            /%r\{[^}\n]*\}[mixo]*/,
+          )
           TRAILING_COMMENT = /\s(?:#|\/\/)\s[^\n]*|\/\*[^\n]*?\*\//
-          SLICE_BOUND = /(?<=[\w\])])\[\s*-?\d+\s*(?:,\s*-?\d+\s*|\.\.\.?\s*-?\d*\s*)?\]|\.(?:first|last|take|truncate)\(\s*\d+\s*\)/
+          SLICE_BOUND = Regexp.union(
+            /(?<=[\w\])])\[\s*-?\d+\s*(?:,\s*-?\d+\s*|\.\.\.?\s*-?\d*\s*)?\]/,
+            /\.(?:first|last|take|truncate)\(\s*\d+\s*\)/,
+          )
 
           def code_only(code)
             [QUOTED, REGEX_OPERAND, TRAILING_COMMENT, SLICE_BOUND].reduce(without_comment_lines(code)) do |text, region|
@@ -265,7 +271,8 @@ module Master
           end
 
           def reload_learned_smells!
-            @learned_smells = Array((Master.load_laws(root: @root) || {}).fetch("learned_smells", [])).select { |item| item.is_a?(Hash) }
+            laws = Master.load_laws(root: @root) || {}
+            @learned_smells = Array(laws.fetch("learned_smells", [])).select { |item| item.is_a?(Hash) }
             @laws_mtime = laws_mtime
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "LearnedSmellsLaw.reload", severity: :load_bearing, path: laws_path)
@@ -376,7 +383,7 @@ module Master
 
             dir = File.dirname(path)
             siblings, subdirs = dir_shape(dir)
-            [lone_file_finding(dir, siblings, subdirs), tiny_file_finding(code, dir, siblings)].compact
+            [lone_file_finding(dir, siblings:, subdirs:), tiny_file_finding(code, dir:, siblings:)].compact
           end
 
           private
@@ -386,7 +393,7 @@ module Master
           # repo_ecology/co_change_graph.rb, so the directory is the nesting, not
           # sprawl. tools/sprawl_census.rb forgives the same shape for the same
           # reason, and a law and its census that disagree report one tree twice.
-          def lone_file_finding(dir, siblings, subdirs)
+          def lone_file_finding(dir, siblings:, subdirs:)
             return unless siblings == 1 && subdirs.zero? && dir != @root
             return if File.file?("#{dir}.rb")
 
@@ -398,7 +405,7 @@ module Master
             )
           end
 
-          def tiny_file_finding(code, dir, siblings)
+          def tiny_file_finding(code, dir:, siblings:)
             lines = CodeMetrics.code_lines(code)
             return unless lines < TINY_CODE_LINES && siblings > 1
 
@@ -430,7 +437,8 @@ module Master
           end
 
           def rails_root?(dir)
-            File.file?(File.join(dir, "config", "application.rb")) || Dir.glob(File.join(dir, "lib", "*", "engine.rb")).any?
+            File.file?(File.join(dir, "config", "application.rb")) ||
+              Dir.glob(File.join(dir, "lib", "*", "engine.rb")).any?
           end
 
           # A sibling tree's path is named from the repository root, so a
