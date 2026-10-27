@@ -3,6 +3,8 @@
 require "test_helper"
 require "tmpdir"
 require "json"
+require "open3"
+require "rbconfig"
 
 class TestRunJournalLifecycle < Minitest::Test
   class RecordingBus
@@ -64,6 +66,59 @@ class TestRunJournalLifecycle < Minitest::Test
 
       File.write(path, "tampered\n")
       assert_equal "checksum_mismatch", Master::Fix::RunJournal.new(root:, bus:).verify_architecture_report(run.fetch("id")).fetch("status")
+    end
+  end
+
+  def test_architecture_checkpoint_survives_a_real_child_process_exit
+    Dir.mktmpdir("master-architecture-process-boundary") do |root|
+      FileUtils.mkdir_p(File.join(root, "MASTER"))
+      script = <<~'RUBY'
+        require "json"
+        require "master"
+        require "fix/run_journal"
+
+        class ProcessBoundaryBus
+          def publish_required(*) = self
+          def publish(*) = self
+        end
+
+        root = ARGV.fetch(0)
+        journal = Master::Fix::RunJournal.new(root:, bus: ProcessBoundaryBus.new)
+        run = journal.start_or_resume(
+          target: File.join(root, "MASTER"), files: [], max_passes: 2, budget_seconds: 60
+        )
+        provenance = {
+          "source_digest" => "a" * 64, "scope_digest" => "b" * 64,
+          "law_digest" => "c" * 64, "identity_digest" => "d" * 64
+        }
+        report = {
+          "schema_version" => 2, "target" => "MASTER", "status" => "RUNNING",
+          "requested_candidates_per_tree" => 30,
+          "targets" => [{
+            "tree" => "MASTER", "status" => "COMPLETE", "requested" => 30,
+            "accepted" => 30, "qualified" => 0, "winner" => nil,
+            "candidates" => [], "evidence_manifest" => []
+          }],
+          "brief" => "Interrupted after one checkpoint."
+        }
+        journal.persist_architecture_report(
+          run.fetch("id"), target: File.join(root, "MASTER"), report:, provenance:
+        )
+        puts JSON.generate("run_id" => run.fetch("id"))
+      RUBY
+
+      output, status = Open3.capture2e(
+        RbConfig.ruby, "-I", File.join(Master::ROOT, "lib"), "-e", script, root,
+        chdir: Master::ROOT
+      )
+      assert status.success?, "checkpoint writer process failed: #{output}"
+      run_id = JSON.parse(output.lines.last).fetch("run_id")
+
+      restored = Master::Fix::RunJournal.new(root:, bus: RecordingBus.new).verify_architecture_report(run_id)
+
+      assert_equal "verified", restored.fetch("status")
+      assert_equal "RUNNING", restored.dig("report", "status")
+      assert_equal "Interrupted after one checkpoint.", restored.dig("report", "brief")
     end
   end
 
