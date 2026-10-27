@@ -109,8 +109,8 @@ ownership:
     risk: critical
     check: OPENBSD/bin/check-openbsd
   lib/:
-    purpose: the check kernel every tree's checks return (why it lives here is the
-      comment atop lib/check_result.rb) plus the shared shell helpers
+    purpose: the path every tree's checks require for the check kernel (a reader of
+      MASTER/checks/support/check_result.rb) plus the shared shell helpers
     risk: critical
     check: ruby OPENBSD/test/test_check_lib.rb
   checks/:

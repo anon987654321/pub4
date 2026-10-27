@@ -134,16 +134,17 @@ class TestGap < Minitest::Test
     assert_equal Master::Gap::OPERATOR_DECISION, missing.gap
   end
 
-  # OPENBSD carries the check kernel and does not reach into MASTER for it. The
-  # runner loads both files into one class, so the later load redefines every
+  # The runner loads both paths into one class, so a second body redefines every
   # method the first one set: a copy two commits behind turned
   # inconclusive!(reason, gap:) into an ArgumentError and ended the ladder at the
-  # first check with no browser. Only the ownership line differs.
-  def test_openbsd_carries_the_check_kernel_unchanged
-    kernel = File.readlines(File.join(Master::ROOT, "checks", "support", "check_result.rb"))
-    carried = File.readlines(File.join(Master::ROOT, "..", "OPENBSD", "lib", "check_result.rb"))
-    differing = (0...[kernel.size, carried.size].max).reject { |index| kernel[index] == carried[index] }
+  # first check with no browser. OPENBSD's path therefore holds no body of its
+  # own, only the require that reaches MASTER's.
+  def test_openbsd_reads_the_check_kernel_rather_than_carrying_it
+    reader = File.join(Master::ROOT, "..", "OPENBSD", "lib", "check_result.rb")
+    code = File.readlines(reader).map(&:strip).reject { |line| line.empty? || line.start_with?("#") }
 
-    assert_equal [2], differing, "OPENBSD/lib/check_result.rb drifted from MASTER/checks/support/check_result.rb"
+    assert_equal ['require_relative "../../MASTER/checks/support/check_result"'], code
+    kernel = File.expand_path(File.join(File.dirname(reader), "../../MASTER/checks/support/check_result.rb"))
+    assert_equal File.join(Master::ROOT, "checks", "support", "check_result.rb"), kernel
   end
 end
