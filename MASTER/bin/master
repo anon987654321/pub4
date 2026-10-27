@@ -97,12 +97,30 @@ end
 # Flags the slash commands read from their own argument text (/fix --max-files=25,
 # /fix --no-critique, /fix --dry-run). The top-level parser does not know them and
 # must not reject them or drop them: a dropped --dry-run is a write run.
-COMMAND_FLAG = %r{\A--(?:(?:autofix|max-files|only)=|
-                 (?:dry-run|no-autofix|apply|(?:no-)?critique|no-aesthetic|blockers|plan|until-checks)\z)}x
+COMMAND_FLAG = %r{\A--(?:(?:autofix|max-files|only|lane)=|
+                 (?:dry-run|no-autofix|apply|(?:no-)?critique|no-aesthetic|blockers|plan|until-checks|normal|quiet)\z)}x
+COMMAND_FLAG_WITH_VALUE = %w[--only].freeze
 
 def initial_message_from_argv(argv)
-  kept = argv.select { |arg| arg.match?(COMMAND_FLAG) }
-  rest = argv.reject { |arg| arg.match?(COMMAND_FLAG) }
+  kept = []
+  rest = []
+  index = 0
+  while index < argv.length
+    arg = argv[index]
+    if arg.match?(COMMAND_FLAG)
+      kept << arg
+    elsif COMMAND_FLAG_WITH_VALUE.include?(arg)
+      kept << arg
+      if argv[index + 1] && !argv[index + 1].start_with?("--")
+        kept << argv[index + 1]
+        index += 1
+      end
+    else
+      rest << arg
+    end
+    index += 1
+  end
+
   options = parse_initial_message_options(rest)
   message = options[:message]
   return [*rest, *kept].join(" ").strip if message.nil?
@@ -114,7 +132,9 @@ rescue OptionParser::ParseError => e
   # a bad flag is reported on the first pass only.
   Master::Trace::Dmesg.status("cli0", "option error, #{e.message}", io: $stderr) unless $MASTER_OPTION_ERROR_SEEN
   $MASTER_OPTION_ERROR_SEEN = true
-  argv.reject { |arg| arg.start_with?("--") && !arg.match?(COMMAND_FLAG) }.join(" ").strip
+  argv.reject do |arg|
+    arg.start_with?("--") && !arg.match?(COMMAND_FLAG) && !COMMAND_FLAG_WITH_VALUE.include?(arg)
+  end.join(" ").strip
 end
 
 HELP_USAGE = <<~HELP
