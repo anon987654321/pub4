@@ -10,10 +10,16 @@ require "rbconfig"
 class TestToolsMedia < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   POSTPRO = File.join(ROOT, "MASTER/tools", "postpro", "postpro.rb")
+
+  # postpro.rb loads its methods from lib/, so its source is the entry file and lib/ together.
+  def postpro_source
+    files = [POSTPRO] + Dir[File.join(File.dirname(POSTPRO), "lib", "*.rb")].sort
+    files.map { |path| File.read(path) }.join("\n")
+  end
   REPLICATE = File.join(ROOT, "MASTER/tools", "replicate", "replicate.rb")
 
   def test_postpro_key_readers_cover_every_declared_preset_knob
-    source = File.read(POSTPRO)
+    source = postpro_source
     expected = {
       "stops" => %w[push_pull],
       "age" => %w[faded_print dye_fade expired_film],
@@ -52,7 +58,7 @@ class TestToolsMedia < Minitest::Test
   end
 
   def test_postpro_rejects_unknown_presets_instead_of_silently_returning_the_input
-    source = File.read(POSTPRO)
+    source = postpro_source
     body = method_body(source, "preset")
 
     assert body, "preset resolver must exist"
@@ -61,7 +67,7 @@ class TestToolsMedia < Minitest::Test
   end
 
   def test_method_body_reader_covers_nested_blocks_without_absorbing_neighbours
-    source = File.read(POSTPRO)
+    source = postpro_source
     methods = method_bodies(source)
     random = methods.fetch("run_random")
     watch = methods.fetch("run_watch")
@@ -85,7 +91,7 @@ class TestToolsMedia < Minitest::Test
   end
 
   def test_postpro_finishing_grain_uses_the_preset_stock
-    source = File.read(POSTPRO)
+    source = postpro_source
     methods = method_bodies(source)
     assert_includes source, "def apply_finishing_grain"
     assert_includes source, "GRAIN_REFERENCE_WIDTH"
