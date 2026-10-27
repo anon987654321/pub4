@@ -6,10 +6,19 @@ require "active_support/core_ext/digest"
 require "active_record"
 require "active_record/migration"
 require "securerandom"
-module Shared
-  class AnonymousPostQuota < ActiveRecord::Base
-    self.table_name = "anonymous_post_quotas"
-    LIMIT = 2
+# Under bare ruby there is no app, so the quota model is stubbed on an in-memory
+# database. Inside an app's suite the real model (< ApplicationRecord) is loaded
+# by an earlier test, and reopening it on ActiveRecord::Base raised a superclass
+# mismatch that stopped brgen's whole rails_test before a test ran. Rails itself
+# is defined under bare ruby too once ActiveRecord loads, so the test is whether
+# an app has booted.
+ANONYMOUS_POST_IN_APP = defined?(Rails.application) && Rails.application&.initialized? ? true : false
+unless ANONYMOUS_POST_IN_APP
+  module Shared
+    class AnonymousPostQuota < ActiveRecord::Base
+      self.table_name = "anonymous_post_quotas"
+      LIMIT = 2
+    end
   end
 end
 
@@ -21,6 +30,12 @@ class AnonymousPostTest < Minitest::Test
     Shared::AnonymousPostQuota.delete_all
     @guest = GuestUser.new(guest: true)
     @member = GuestUser.new(guest: false)
+  end
+
+  # Minitest::Test has no transaction around it, so inside an app's suite the
+  # rows this file writes would outlive it.
+  def teardown
+    Shared::AnonymousPostQuota.delete_all if ANONYMOUS_POST_IN_APP && Shared::AnonymousPostQuota.table_exists?
   end
 
   def test_guest_allowed_until_limit
@@ -56,7 +71,15 @@ class AnonymousPostTest < Minitest::Test
     Shared::AnonymousPost.new(request:, user:)
   end
 
+  # Inside an app suite this uses the app test database: establishing a
+  # connection on ActiveRecord::Base there would swap it for every test that
+  # runs after this file. An app whose schema has no quota table skips.
   def setup_database
+    if ANONYMOUS_POST_IN_APP
+      skip "anonymous_post_quotas is not in this app schema" unless Shared::AnonymousPostQuota.table_exists?
+      return
+    end
+
     ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
     return if ActiveRecord::Base.connection.data_source_exists?("anonymous_post_quotas")
 
