@@ -402,6 +402,20 @@ textarea { min-height: 120px; resize: vertical; line-height: var(--leading-loose
 .feed-card-text a { color: var(--text); text-decoration: none; }
 .feed-card-text a:hover { text-decoration: underline; }
 
+/* The byline name and the post title are each a card's own way somewhere, so
+   each box reaches --tap-min: padding grows it and an equal negative margin
+   hands the space back, leaving the line box and the card's rhythm as drawn.
+   The guards keep a title whose line already clears the floor untouched. */
+.feed-card-name a,
+.feed-post-byline .author a,
+.feed-card-text a,
+.post-reading-title a {
+  display: inline-block;
+  min-inline-size: var(--tap-min);
+  padding-block: max(0px, (var(--tap-min) - 1lh) / 2);
+  margin-block: min(0px, (1lh - var(--tap-min)) / 2);
+}
+
 .post-feed { display: block; }
 /* Padding is the only thing separating one post from the next, so it carries
    that job at every breakpoint. */

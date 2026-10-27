@@ -553,6 +553,11 @@ footer {
 .post-reading-title{margin:0 0 var(--space-2);font-size:clamp(1.15rem,2.4vw,1.6rem);line-height:1.2;font-weight:var(--weight-heavy);letter-spacing:var(--tracking-tight)}
 .post-reading-title a{color:inherit;text-decoration:none}
 .post-reading-title a:hover,.post-reading-title a:focus-visible{text-decoration:underline;text-underline-offset:.12em}
+/* Byline name and title are a card's own links: each box reaches --tap-min,
+   and an equal negative margin hands the padding back to the line box. */
+.feed-card-name a,.feed-post-byline .author a,.feed-card-text a,.post-reading-title a{
+  display:inline-block;min-inline-size:var(--tap-min);
+  padding-block:max(0px,(var(--tap-min) - 1lh) / 2);margin-block:min(0px,(1lh - var(--tap-min)) / 2)}
 .post-reading-preview{position:relative;max-width:72ch}
 .post-reading-body-preview{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
 .post-reading-more{display:inline-flex;align-items:center;justify-content:center;min-width:var(--tap-min);min-height:var(--tap-min);margin-inline-start:2px;font-size:1.2em;font-weight:var(--weight-heavy);line-height:var(--leading-none);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.16em}

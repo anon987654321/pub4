@@ -1,22 +1,22 @@
 /* Legal pages and footer typography.
  *
  * Reading copy uses the shared 66ch measure and canonical type/leading tokens.
- * Chrome links retain the shared 44px interaction floor without changing their
- * visible line box.
+ * Chrome links keep the shared --tap-min interaction floor without changing
+ * their visible line box.
  */
 
-.site-legal nav a {
-  position: relative;
-}
-
-.site-legal nav a::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  inset-block-start: 50%;
-  block-size: var(--tap-min);
+/* The link's own box is the hit box: padding grows it to --tap-min and an
+   equal negative margin hands the space back, so the line box and the gap
+   between links stay where they were. An ::after overlay is not enough: the
+   box a finger is measured against is the element's own, not its pseudo's.
+   City links carry their own --tap-min box and stay out of it. */
+.site-legal nav a:not(.city-network-item),
+.site-legal .site-footer-col a:not(.city-network-item),
+.site-legal .site-footer-build a {
+  display: inline-block;
   min-inline-size: var(--tap-min);
-  transform: translateY(-50%);
+  padding-block: max(0px, (var(--tap-min) - 1lh) / 2);
+  margin-block: min(0px, (1lh - var(--tap-min)) / 2);
 }
 
 .site-legal .site-verify {

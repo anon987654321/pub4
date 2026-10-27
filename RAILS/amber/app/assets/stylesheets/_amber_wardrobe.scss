@@ -77,6 +77,10 @@
   font-weight: var(--weight-bold);
   line-height: 1.35;
   overflow-wrap: anywhere;
+  /* The title is the card's way to the garment: its box reaches --tap-min,
+     and an equal negative margin hands the padding back to the card's gap. */
+  padding-block: max(0px, (var(--tap-min) - 1lh) / 2);
+  margin-block: min(0px, (1lh - var(--tap-min)) / 2);
 }
 
 /* A demo card has one destination and a 26px-tall title as its only way
