@@ -1,14 +1,32 @@
 const DB_NAME = `${typeof location !== "undefined" ? location.hostname : "app"}-idb-keyval`
-const DB_VERSION = 1
 
-const openDb = (storeName) => new Promise((resolve, reject) => {
-  const request = indexedDB.open(DB_NAME, DB_VERSION)
+const ensureStore = (request, storeName) => {
   request.onupgradeneeded = () => {
     const db = request.result
     if (!db.objectStoreNames.contains(storeName)) db.createObjectStore(storeName)
   }
-  request.onsuccess = () => resolve(request.result)
+}
+
+// One database holds every store (the draft store keeps a draft and a queue). A store is
+// created only in an upgrade, so a database that already exists without the one asked for is
+// reopened a version higher to add it: pinned at version 1, the second store a page asked for
+// threw "One of the specified object stores was not found" on every composer.
+
+const openDb = (storeName) => new Promise((resolve, reject) => {
+  const request = indexedDB.open(DB_NAME)
+  ensureStore(request, storeName)
   request.onerror = () => reject(request.error)
+  request.onsuccess = () => {
+    const db = request.result
+    if (db.objectStoreNames.contains(storeName)) return resolve(db)
+
+    const version = db.version + 1
+    db.close()
+    const upgrade = indexedDB.open(DB_NAME, version)
+    ensureStore(upgrade, storeName)
+    upgrade.onsuccess = () => resolve(upgrade.result)
+    upgrade.onerror = () => reject(upgrade.error)
+  }
 })
 
 const transact = (db, storeName, mode, callback) => new Promise((resolve, reject) => {

@@ -38,7 +38,9 @@ export default class extends Controller {
 
   openDb() {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName(), 1)
+      // No version: idb-keyval raises the database's version when it adds a store, and opening
+      // a lower one than the database holds fails with VersionError.
+      const request = indexedDB.open(this.dbName())
       request.onupgradeneeded = () => {
         const db = request.result
         if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME)
