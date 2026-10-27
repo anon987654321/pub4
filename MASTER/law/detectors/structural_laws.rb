@@ -116,10 +116,14 @@ module Master
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
             findings = []
-            findings.concat(scan_lines(code, /\bmethod_missing\s*[(:]/, message: "method_missing without respond_to_missing? — add respond_to_missing?")) \
-              if code.include?("method_missing") && !code.include?("respond_to_missing?")
-            findings.concat(scan_lines(code, /\bconst_missing\s*[(:]/, message: "const_missing — prefer explicit require"))
-            findings.concat(scan_lines(code, /\bautoload\s*[(:]/, message: "autoload — prefer explicit require_relative"))
+            if code.include?("method_missing") && !code.include?("respond_to_missing?")
+              findings.concat(scan_lines(code, /\bmethod_missing\s*[(:]/,
+                message: "method_missing without respond_to_missing? — add respond_to_missing?"))
+            end
+            findings.concat(scan_lines(code, /\bconst_missing\s*[(:]/,
+              message: "const_missing — prefer explicit require"))
+            findings.concat(scan_lines(code, /\bautoload\s*[(:]/,
+              message: "autoload — prefer explicit require_relative"))
             findings
           end
 
@@ -197,7 +201,8 @@ module Master
             if branch_count >= BRANCH_THRESHOLD
               finding(
                 line: node.location.start_line,
-                message: "Strategy opportunity in #{node.name}: #{branch_count} dispatch branches — extract named handlers",
+                message: "Strategy opportunity in #{node.name}: #{branch_count} dispatch branches — " \
+                  "extract named handlers",
               )
             elsif pipeline_step_count(method_lines) >= PIPELINE_STEP_THRESHOLD
               finding(
@@ -244,7 +249,8 @@ module Master
               real_defs = children.count { |n| n.is_a?(Prism::DefNode) && !%w[initialize to_s inspect].include?(n.name.to_s) }
               next unless accessor_calls >= 2 && real_defs == 0
               findings << finding(line: node.location.start_line,
-                message: "#{node.constant_path.slice} has #{accessor_calls} accessors and no behavior — use Struct or Data.define")
+                message: "#{node.constant_path.slice} has #{accessor_calls} accessors and no behavior — " \
+                  "use Struct or Data.define")
             end
             findings
           end
@@ -476,7 +482,8 @@ module Master
             return [] unless ast
             deep = []
             scan_depth(node: ast, depth: 0, violations: deep)
-            deep.map { |line| finding(line:, message: "nesting depth exceeds #{MAX_DEPTH} — flatten with guard clauses or extract methods") }
+            message = "nesting depth exceeds #{MAX_DEPTH} — flatten with guard clauses or extract methods"
+            deep.map { |line| finding(line:, message:) }
           end
 
           private
@@ -592,7 +599,8 @@ module Master
 
               next unless type_dispatch?(node)
               findings << finding(line: node.location.start_line,
-                message: "case dispatches on type across #{node.conditions.size} branches — new types require editing this switch; consider polymorphism or a lookup table")
+                message: "case dispatches on type across #{node.conditions.size} branches — new types require " \
+                  "editing this switch; consider polymorphism or a lookup table")
             end
             findings
           end
@@ -637,14 +645,16 @@ module Master
             body_text = sub_def.body&.slice.to_s.strip
             if (match = body_text.match(/\Araise\s+(NotImplementedError|NoMethodError)\b/))
               findings << finding(line: sub_def.location.start_line,
-                message: "#{sub_def.name} refuses the parent's contract (raises #{match[1]}) — use composition if substitutability fails")
+                message: "#{sub_def.name} refuses the parent's contract (raises #{match[1]}) — " \
+                  "use composition if substitutability fails")
             end
             sub_required = required_param_count(sub_def)
 
             parent_required = required_param_count(parent_def)
             if sub_required > parent_required
               findings << finding(line: sub_def.location.start_line,
-                message: "#{sub_def.name} requires #{sub_required} args, parent requires #{parent_required} — narrows what callers can pass, breaking substitutability")
+                message: "#{sub_def.name} requires #{sub_required} args, parent requires #{parent_required} — " \
+                  "narrows what callers can pass, breaking substitutability")
             end
             findings
           end
@@ -726,7 +736,8 @@ module Master
               users = includers[name] || []
               next if users.size < 2
               findings << finding(line: 1,
-                message: "module #{name} has #{method_count} public methods, included by #{users.size} classes — split into smaller role-based modules")
+                message: "module #{name} has #{method_count} public methods, included by #{users.size} classes — " \
+                  "split into smaller role-based modules")
             end
             findings
           end
@@ -783,7 +794,8 @@ module Master
               next if receivers.any?(&:nil?) || receivers.uniq.size != 1
 
               finding(line: node.location.start_line,
-                message: "#{node.name} forwards all #{defs.size} methods to #{receivers.first} — inline it, or let callers hold #{receivers.first} directly")
+                message: "#{node.name} forwards all #{defs.size} methods to #{receivers.first} — " \
+                  "inline it, or let callers hold #{receivers.first} directly")
             end
           end
 
@@ -807,7 +819,8 @@ module Master
 
             receiver = call.receiver
             return receiver.name.to_s if receiver.is_a?(Prism::InstanceVariableReadNode)
-            return receiver.name.to_s if receiver.is_a?(Prism::CallNode) && receiver.receiver.nil? && receiver.arguments.nil?
+            return receiver.name.to_s if receiver.is_a?(Prism::CallNode) &&
+                                         receiver.receiver.nil? && receiver.arguments.nil?
 
             nil
           end
