@@ -311,10 +311,13 @@ function frame(t) {
         pressureLine
       ].filter(Boolean).join(' · ');
     }
-    if (!reducedMotion && fpsEma < 16 && FACE_RENDER_SCALE > FACE_RENDER_SCALE_MIN + 0.02) {
+    // frame() declares its reducedMotion further down; read here, before that line, it threw
+    // "Cannot access 'reducedMotion' before initialization" once a second and stopped the face.
+    const motionReduced = faceReducedMotionActive();
+    if (!motionReduced && fpsEma < 16 && FACE_RENDER_SCALE > FACE_RENDER_SCALE_MIN + 0.02) {
       FACE_RENDER_SCALE = Math.max(FACE_RENDER_SCALE_MIN, FACE_RENDER_SCALE - 0.03);
       resize();
-    } else if (!reducedMotion && fpsEma > 26 && FACE_RENDER_SCALE < FACE_RENDER_SCALE_MAX - 0.02) {
+    } else if (!motionReduced && fpsEma > 26 && FACE_RENDER_SCALE < FACE_RENDER_SCALE_MAX - 0.02) {
       FACE_RENDER_SCALE = Math.min(FACE_RENDER_SCALE_MAX, FACE_RENDER_SCALE + 0.02);
       resize();
     }
