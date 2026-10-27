@@ -344,7 +344,7 @@ class TestPostproFilm < Minitest::Test
   # The effect inventory must span the complete preset body and stop at
   # its AST method boundary, not at a nested `end` or the next constant.
   def test_effect_inventory_includes_late_preset_case_arms
-    source = File.read(POSTPRO_SOURCE)
+    source = send(:postpro_source)
     implemented = send(:preset_effect_names)
     body = send(:postpro_source_method, source, EFFECT_DISPATCH)
 
@@ -450,7 +450,7 @@ class TestPostproFilm < Minitest::Test
   end
 
   def test_source_method_reader_covers_output_dispatch_bodies
-    source = File.read(POSTPRO_SOURCE)
+    source = send(:postpro_source)
     methods = send(:postpro_source_methods, source)
     required_calls = {
       "process_file" => "refuse_failed_family!",
@@ -468,7 +468,7 @@ class TestPostproFilm < Minitest::Test
   end
 
   def test_finishing_grain_reachability_follows_calls_not_comments_or_strings
-    source = File.read(POSTPRO_SOURCE)
+    source = send(:postpro_source)
     methods = send(:postpro_source_methods, source)
     calls = methods.transform_values { |body| send(:postpro_method_calls, body) }
 
@@ -512,7 +512,7 @@ class TestPostproFilm < Minitest::Test
   end
 
   def test_preset_effect_key_readers_verify_the_actual_case_arm
-    source = File.read(POSTPRO_SOURCE)
+    source = send(:postpro_source)
     preset_source = send(:postpro_source_method, source, EFFECT_DISPATCH)
     pairs = [
       ["spectral_temp", :temp], ["color_temp", :temp],
@@ -604,7 +604,7 @@ class TestPostproFilm < Minitest::Test
     assert_empty send(:postpro_case_label_duplicates, same_arm, :fx),
                  "repeated alternatives in one when arm do not shadow another arm"
 
-    preset_source = send(:postpro_source_method, File.read(POSTPRO_SOURCE), EFFECT_DISPATCH)
+    preset_source = send(:postpro_source_method, send(:postpro_source), EFFECT_DISPATCH)
     assert_empty send(:postpro_case_label_duplicates, preset_source, :fx),
                  "the production effect dispatch must not contain unreachable duplicate arms"
   end
@@ -831,7 +831,7 @@ class TestPostproFilm < Minitest::Test
   # Crystal size and observer blur are separate parameters. They were one, and
   # the blur sat at half the grain it was filtering at every resolution.
   def test_the_scan_blur_does_not_track_the_crystal
-    source = File.read(POSTPRO_SOURCE)
+    source = send(:postpro_source)
     body = send(:postpro_source_method, source, "grain_field")
     assert body, "grain_field must exist"
     assert_includes body, "gaussblur(GRAIN_SCAN_SIGMA)",
@@ -1111,7 +1111,7 @@ class TestPostproFilm < Minitest::Test
   end
 
   def test_the_toy_filter_pool_is_gone
-    source = File.read(POSTPRO_SOURCE)
+    source = send(:postpro_source)
     %w[grain_basic sepia_basic glitch_basic random_fx].each do |name|
       refute_includes source, "def #{name}", "#{name} survived the collapse into recipe()"
     end

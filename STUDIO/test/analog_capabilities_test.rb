@@ -41,7 +41,7 @@ class AnalogCapabilitiesTest < Minitest::Test
   def test_readiness_promotion_requires_real_source_methods_and_regression_tests
     verified = {
       status: :verified,
-      implementation: "STUDIO/postpro/postpro.rb#halation".freeze,
+      implementation: "STUDIO/postpro/lib/effects_finish.rb#halation".freeze,
       regression_test: "STUDIO/test/test_tools_postpro.rb#test_halation_returns_more_red_than_blue".freeze
     }.freeze
     unavailable = {
@@ -52,17 +52,17 @@ class AnalogCapabilitiesTest < Minitest::Test
     }.freeze
     missing_test = {
       status: :verified,
-      implementation: "STUDIO/postpro/postpro.rb#halation".freeze,
+      implementation: "STUDIO/postpro/lib/effects_finish.rb#halation".freeze,
       regression_test: "STUDIO/test/test_tools_postpro.rb#test_method_that_does_not_exist".freeze
     }.freeze
     missing_method = {
       status: :verified,
-      implementation: "STUDIO/postpro/postpro.rb#made_up_effect".freeze,
+      implementation: "STUDIO/postpro/lib/effects_finish.rb#made_up_effect".freeze,
       regression_test: "STUDIO/test/test_tools_postpro.rb#test_halation_returns_more_red_than_blue".freeze
     }.freeze
     mutable_reference = {
       status: :verified,
-      implementation: "STUDIO/postpro/postpro.rb#halation".dup,
+      implementation: "STUDIO/postpro/lib/effects_finish.rb#halation".dup,
       regression_test: "STUDIO/test/test_tools_postpro.rb#test_halation_returns_more_red_than_blue".freeze
     }.freeze
 

@@ -18,14 +18,16 @@ The command `postpro.rb --help` lists every flag. `--capabilities` reports the a
 direction catalogue and its readiness state; a catalogue entry is not a promise that the
 corresponding effect is implemented or enabled on this machine.
 
-The code is a handful of files. The file `postpro.rb` holds the grade, the presets, the film
-tables and the command line. The file `legacy_effects.rb` holds the creative effects recovered
-from the older `pub/postpro` line, and `LEGACY_RESTORE.md` records which of them already had
-current equivalents. The file `dilla_analog.rb` translates mechanisms from dilla's analog
-chains into still images, so that temporal wow and flutter become spatial registration error.
-The file `uncanny.rb` measures whether a picture looks rendered, `rescue.rb` diagnoses a bad
-photograph, `frame_set.rb` reads a folder as a set, and `depth.rb` supplies a real depth map
-when its model is installed.
+The code spans several files. The file `postpro.rb` is the entry point: it boots, runs the
+early modes and loads `lib/`, whose files hold the grade, the presets, the film tables and the
+command line, one subject per file in the load order `POSTPRO_LIB` names. `--vocab-check` reads
+`postpro.rb` and every `lib/` file as one source. The file `legacy_effects.rb` holds the
+creative effects recovered from the older `pub/postpro` line, and `LEGACY_RESTORE.md` records
+which of them already had current equivalents. The file `dilla_analog.rb` translates mechanisms
+from dilla's analog chains into still images, so that temporal wow and flutter become spatial
+registration error. The file `uncanny.rb` measures whether a picture looks rendered,
+`rescue.rb` diagnoses a bad photograph, `frame_set.rb` reads a folder as a set, and `depth.rb`
+supplies a real depth map when its model is installed.
 
 The file `constitution.rb` is the boundary where MASTER's laws
 become image-generation invariants, `analog_capabilities.rb` backs `--capabilities`, and
