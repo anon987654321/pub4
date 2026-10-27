@@ -12,6 +12,7 @@ require_relative "../../../lib/gap"
 require_relative "../../support/check_result"
 require_relative "../../support/png_diff"
 require_relative "../../support/geometry_probe"
+require_relative "sweep_replay"
 
 module Deploy
   # Browser-runtime evidence for the canonical RAILS surface inventory.
@@ -159,8 +160,13 @@ module Deploy
         return @result
       end
 
-      run_id = Time.now.utc.strftime("%Y%m%dT%H%M%SZ-#{Process.pid}")
       base = File.expand_path(ENV.fetch("CHECK_BROWSER_DIAGNOSTICS_OUTPUT", DEFAULT_OUTPUT))
+      replay = SweepReplay.new(base:)
+      key = replay.key(SweepReplay.inputs(root: ROOT, check_code: __FILE__, live_ids: live.map(&:id)))
+      recorded = replay.rows(key)
+      return replayed(recorded, since: replay.recorded_at(key)) if recorded
+
+      run_id = Time.now.utc.strftime("%Y%m%dT%H%M%SZ-#{Process.pid}")
       output = File.join(base, run_id)
       screenshot_dir = File.join(output, "screenshots")
       begin
@@ -204,6 +210,7 @@ module Deploy
         return @result
       end
 
+      replay.remember(key:, manifest:)
       measured = rows.count { |row| %w[PASS FAIL].include?(row.fetch("status")) }
       @result.checked!(measured)
       if measured.zero?
@@ -219,7 +226,29 @@ module Deploy
       @result.inconclusive!("browser_diagnostics: Chrome/CDP could not complete the inventory (#{e.class}: #{e.message})")
     end
 
+    # The recorded sweep's verdicts, as the rendered one would have reported them.
+    def replayed(rows, since:)
+      @result ||= CheckResult.new
+      print_replay(since)
+      rows.each { |row| replay_row(row) }
+
+      measured = rows.count { |row| %w[PASS FAIL].include?(row["status"]) }
+      @result.checked!(measured)
+      @result.warn("browser_diagnostics: #{measured}/#{rows.size} route/viewport cells replayed, RAILS unchanged")
+      @result
+    end
+
     private
+
+    def print_replay(since) = puts("browser0: RAILS unchanged since #{since.strftime("%H:%M")}, replaying that sweep")
+
+    def replay_row(row)
+      id = [row["app"], row["surface"], row["viewport"]].join("/")
+      return @result.inconclusive!("browser_diagnostics: #{id} #{row["reason"]}") if row["status"] == "INCONCLUSIVE"
+
+      Array(row["warnings"]).each { |message| @result.fail("browser_diagnostics: #{id} — #{message}", severity: :soft) }
+      Array(row["failure_reasons"]).each { |message| @result.fail("browser_diagnostics: #{id} — #{message}") }
+    end
 
     def skipped_row(surface)
       {
