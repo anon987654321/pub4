@@ -271,7 +271,7 @@ model_defs:
 
 models:
   grok_primary:
-    - *glm_5_3
+    - *grok_cli_auto
     - *nemotron_super
   keyless:
     - *web_chat_grok
@@ -282,26 +282,19 @@ models:
     - *claude_cli_opus
     - *claude_cli_sonnet
     - *agy_auto
-    - *glm_5_3
     - *nemotron_super
     - *gemini_flash_openrouter
     - *ollama_gemma
-    - *ollama_qwen_coder
-    - *ollama_granite
   primary:
     - *claude_cli_opus
     - *claude_cli_sonnet
     - *agy_auto
     - *claude_opus_api
-    - *glm_5_3
     - *nemotron_super
     - *ollama_gemma
-    - *ollama_qwen_coder
-    - *ollama_granite
   strong:
     - *claude_cli_opus
     - *claude_cli_sonnet
-    - *ollama_glm_flash
     - *claude_opus_api
     - *deepseek_reasoner
     - *deepseek_chat
@@ -310,11 +303,8 @@ models:
     - *gpt_4o
     - *gemini_flash
     - *command_r_plus
-    - *gemma_4_31b
     - *grok_cli_auto
     - *ollama_gemma
-    - *ollama_qwen_coder
-    - *ollama_granite
   vision:
     - *gemini_flash
     - *claude_sonnet
@@ -339,20 +329,12 @@ models:
     - *gemini_flash
     - *gemini_flash_openrouter
   free:
-    - *ollama_glm_flash
     - *nemotron_super
   claude_code:
     - *claude_cli_opus
     - *claude_cli_sonnet
   local:
-    - *ollama_glm_flash
-    - *ollama_qwen_large
-    - *ollama_qwen
     - *ollama_gemma
-    - *ollama_nemotron
-    - *ollama_laguna_xs
-    - *ollama_lfm
-    - *gemma_4_31b
 
 routes:
   detect_lexical: free
@@ -485,7 +467,7 @@ three_mirror_redundancy:
   # Three models vote; ship only on >= 2 agreement for critical fixes.
   # Source: cross-cutting reunification (#95).
   enabled_for:   [tier1_critical, security_relevant, irreversible]
-  pool:          ["claude-sonnet-5-5", "ollama:gemma4:31b-cloud", "moonshotai/kimi-k2"]
+  pool:          ["claude-sonnet-5-5", "grok-cli:auto", "moonshotai/kimi-k2"]
   quorum:        2
   on_disagreement: "fall back to council vote with all dissent recorded"
 
@@ -559,23 +541,22 @@ replicate_chat:
   - google/gemini-2.5-flash
   - moonshotai/kimi-k2.5
 
-# Tier-D (Ollama). Ollama is probed at localhost by default; every pulled model
-# that fits in memory joins the pool dynamically. Cloud models come from the
-# explicit cloud_models catalogue and therefore do not need to appear in
-# /api/tags. OLLAMA_BASE_URL names another daemon. MASTER_NO_OLLAMA disables
-# the lane. The sender speaks Ollama's own /api/chat at the host root, so a
-# /v1 suffix here is read past.
+# Tier-D (Ollama). Keep one explicitly allowlisted local Gemma fallback; do not
+# automatically add other installed Ollama models or offer the quota-limited cloud
+# tier. Cloud model IDs remain documented below, but cloud_enabled=false keeps them
+# out of routing until the operator explicitly re-enables them after a quota probe.
 # keep_alive holds a model in memory between the turns of one fold instead of
 # reloading it for each; max_num_ctx caps the window the sender sizes to each
 # request (ollama_sender.rb).
 ollama:
-  # Ollama is a first-class local provider. It probes localhost by default;
-  # MASTER_NO_OLLAMA=1 disables the lane. OLLAMA_BASE_URL can point at another
-  # Ollama daemon. Installed local models are discovered dynamically, so this
-  # list is a curated fast path rather than a closed catalogue.
+  # Local routing is restricted to the requested Gemma fallback; discovery is a
+  # presence check, not permission to add every model installed on the machine.
+  # Cloud routing is disabled independently so local Gemma remains available.
   default_base_url: "http://localhost:11434"
   keep_alive: 30m
   max_num_ctx: 16384
+  cloud_enabled: false
+  local_model_allowlist: ["ollama:gemma3:4b"]
   cloud_models:
     - ollama:glm-5.3-flash:cloud
     - ollama:glm-5.3:cloud

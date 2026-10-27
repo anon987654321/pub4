@@ -146,10 +146,16 @@ def ollama_cloud_model?(model_id)
   name.end_with?(":cloud", "-cloud")
 end
 
-# Cloud models are remotely executed by Ollama, so they must not depend on
-# /api/tags. Keep this list in models.yml so the operator can update it without
-# changing Ruby; local discovery remains fully dynamic through /api/tags.
+# Cloud models are remotely executed by Ollama and consume its account quota.
+# Their catalogue remains in models.yml, but cloud_enabled: false excludes them
+# from every route without disabling the local Gemma fallback.
+def ollama_cloud_enabled?
+  ollama_enabled? && @rules.dig("ollama", "cloud_enabled") != false
+end
+
 def ollama_cloud_catalog
+  return [] unless ollama_cloud_enabled?
+
   Array(@rules.dig("ollama", "cloud_models"))
 end
 
@@ -173,10 +179,21 @@ def local_models
   return [] unless ollama_enabled?
 
   configured = Array(@rules.dig("models", "local")).filter_map { |row| row["id"] }
+  ollama_rules = @rules["ollama"].is_a?(Hash) ? @rules["ollama"] : {}
+  allowlist_configured = ollama_rules.key?("local_model_allowlist")
+  if allowlist_configured
+    allowed = Array(ollama_rules["local_model_allowlist"]).map(&:to_s)
+    configured = configured.select { |id| allowed.include?(id.to_s) }
+  end
+
   installed = ollama_installed_models
   return configured if installed.nil?
 
   pulled = configured.select { |id| ollama_pulled?(id) }
+  # An explicit local allowlist makes discovery a presence check. It must not
+  # silently expand the fallback to every model installed on the host.
+  return pulled.select { |id| runs_here?(id) } if allowlist_configured
+
   extra = installed.reject { |name| name.match?(/embed/i) }
                    .each_with_index.sort_by { |name, index| [-ollama_size(name), index] }
                    .map { |name, _| "ollama:#{name.delete_suffix(':latest')}" }

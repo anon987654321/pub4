@@ -440,6 +440,7 @@ module Master
 
           def ollama_problem(id)
             return "ollama switched off (MASTER_NO_OLLAMA=1)" unless ollama_enabled?
+            return "ollama cloud routing is disabled" if ollama_cloud_model?(id) && !ollama_cloud_enabled?
 
             name = id.sub(%r{\Aollama[:/]}, "")
             installed = ollama_installed_models
@@ -461,7 +462,7 @@ module Master
           end
 
           def ollama_cloud_models
-            return [] unless ollama_enabled?
+            return [] unless ollama_cloud_enabled?
 
             Array(ollama_installed_models).select { |name| name.end_with?(":cloud", "-cloud") }
                                           .map { |name| "ollama:#{name}" }

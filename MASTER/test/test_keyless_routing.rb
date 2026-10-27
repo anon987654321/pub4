@@ -125,14 +125,34 @@ class TestKeylessRouting < Minitest::Test
     local = router.fallback_chain(task_type: :exploration).grep(/\Aollama[:\/]/)
                   .reject { |id| id.end_with?(":cloud", "-cloud") }
 
-    assert_equal ["ollama:llama3.2:3b"], local
+    assert_empty local, "only allowlisted local Gemma may enter the fallback tier"
   ensure
     ENV.delete("OLLAMA_BASE_URL")
   end
 
-  # MASTER_NO_OLLAMA used to count only while the daemon was silent: with it
-  # running, every pulled model joined the chain, and qwen2.5-coder:3b timed
-  # out 1,046 times on this Mac while switched off.
+  # Cloud routing is disabled to avoid the exhausted account quota; local Gemma stays available.
+  # Installed Ollama models are no longer an automatic fallback pool.
+  #
+  def test_cloud_quota_disable_keeps_only_the_allowlisted_local_gemma
+    local_ollama!
+    router = Master::CLI::Routing::ModelRouter.new(
+      config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
+    )
+    router.define_singleton_method(:ollama_installed_models) do
+      ["glm-5.3-flash:cloud", "gemma3:4b", "qwen2.5-coder:3b", "granite4.2:3b"]
+    end
+    router.define_singleton_method(:ollama_size) { |_name| 0 }
+
+    assert_empty router.send(:ollama_cloud_catalog)
+    assert_empty router.send(:ollama_cloud_models)
+    assert_equal ["ollama:gemma3:4b"], router.local_models
+    refute router.reachable?("ollama:glm-5.3-flash:cloud")
+    refute_includes router.fallback_chain(task_type: :exploration), "ollama:qwen2.5-coder:3b"
+    refute_includes router.fallback_chain(task_type: :exploration), "ollama:granite4.2:3b"
+    ollama_fallbacks = router.fallback_chain(task_type: :exploration).grep(/\Aollama[:\/]/).uniq
+    assert_equal ["ollama:gemma3:4b"], ollama_fallbacks
+  end
+
   def test_ollama_switched_off_offers_no_ollama_lane_while_the_daemon_answers
     router = Master::CLI::Routing::ModelRouter.new(
       config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
@@ -156,10 +176,10 @@ class TestKeylessRouting < Minitest::Test
     assert_equal "ollama pull qwen3.5:35b", router.send(:ollama_problem, "ollama:qwen3.5:35b")
   end
 
-  # Offline with no OLLAMA_BASE_URL the daemon is still asked, and a model
-  # pulled outside models.yml ranks after the configured ones it holds.
-  # Offline, a :cloud tag needs the network the session found missing, and a
-  # model larger than the machine pages for every token.
+  # Only the configured Gemma fallback is eligible; other installed models
+  # and remotely executed :cloud models must not enter the local pool.
+  # Cloud routing is disabled independently of the local Gemma fallback.
+  #
   def test_local_models_offer_only_what_runs_on_this_machine
     local_ollama!
     router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT)
@@ -167,17 +187,17 @@ class TestKeylessRouting < Minitest::Test
     router.instance_variable_set(:@ollama_sizes, { "glm-5.3-flash:cloud" => 317, "gemma3:4b" => 3_338_801_804,
                                                    "gemma4:26b" => 18_604_148_513, "llama3:latest" => 4_661_224_676 })
 
-    # data/lanes.yml hand-kills ollama:glm today; this test grades the memory rule.
+    # Cloud routing is disabled independently of the local Gemma fallback.
     Master::Io::LaneQuota.stub(:manual_dead, []) do
       Master::Core::Memory.stub(:host_memory_mb, 8192) do
-        assert_equal %w[ollama:gemma3:4b ollama:llama3], router.local_models
+        assert_equal ["ollama:gemma3:4b"], router.local_models
         refute router.reachable?("ollama:gemma4:26b")
-        assert router.reachable?("ollama:glm-5.3-flash:cloud")
+        refute router.reachable?("ollama:glm-5.3-flash:cloud")
       end
     end
   end
 
-  def test_local_models_rank_what_the_daemon_holds_without_the_env_check
+  def test_local_models_obey_the_allowlist_without_the_env_check
     local_ollama!
     ENV.delete("OLLAMA_BASE_URL")
     router = Master::CLI::Routing::ModelRouter.new(
@@ -188,12 +208,12 @@ class TestKeylessRouting < Minitest::Test
     end
 
     assert_equal "http://localhost:11434", router.ollama_tags_base_url
-    # The configured model first, then what else the daemon holds.
-    assert_equal ["ollama:gemma3:4b", "ollama:mistral"], router.local_models
+    # The explicit allowlist is the local fallback policy, not a ranking hint.
+    assert_equal ["ollama:gemma3:4b"], router.local_models
 
     router.define_singleton_method(:ollama_installed_models) { nil }
-    # The tier is on without the variable (8b29ed46d), so a silent daemon leaves
-    # the configured list standing; MASTER_NO_OLLAMA is what turns it off.
+    # A silent daemon leaves the allowlisted Gemma fallback standing;
+    # MASTER_NO_OLLAMA still disables the whole local lane.
     assert_includes router.local_models, "ollama:gemma3:4b"
     ENV["MASTER_NO_OLLAMA"] = "1"
     assert_empty router.local_models, "a silent daemon offered models while the tier is off"
