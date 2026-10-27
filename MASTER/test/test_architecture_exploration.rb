@@ -127,8 +127,8 @@ class TestArchitectureExploration < Minitest::Test
 
       evidence = explorer.send(:evidence_for, paths)
 
-      assert_operator evidence.size, :<=, 12
-      assert_operator evidence.sum { |entry| entry.fetch("excerpt").bytesize }, :<=, 12_000
+      assert_equal 8, evidence.size, "the 12 KB budget should retain full excerpts until the final bounded excerpt"
+      assert_equal 12_000, evidence.sum { |entry| entry.fetch("excerpt").bytesize }
       assert evidence.all? { |entry| entry.fetch("excerpt").valid_encoding? }
     end
   end
