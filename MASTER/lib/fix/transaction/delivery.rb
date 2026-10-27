@@ -18,23 +18,28 @@ module Master
           raise "transaction not active" unless @tx.send(:active?)
           raise "transaction is not open: #{@tx.state}" unless @tx.state == "open"
 
-          @tx.instance_variable_set(:@state, "delivering")
-          @tx.instance_variable_set(:@delivery_head_before, head_before.to_s)
-          @tx.instance_variable_set(:@delivery_head_after, nil)
-          @tx.instance_variable_set(:@delivery_marked, true)
-          @tx.send(:persist!)
-          @tx.send(:emit, "fix:transaction_delivery_start", id: @tx.id, paths: @tx.instance_variable_get(:@paths),
-                                                             head_before: head_before.to_s)
-          true
+          @tx.send(:lifecycle_mutation, :delivery_begin, item_count: @tx.instance_variable_get(:@paths).size) do
+            @tx.instance_variable_set(:@state, "delivering")
+            @tx.instance_variable_set(:@delivery_head_before, head_before.to_s)
+            @tx.instance_variable_set(:@delivery_head_after, nil)
+            @tx.instance_variable_set(:@delivery_marked, true)
+            @tx.send(:persist!)
+            true
+          end
+          @tx.send(:emit, "fix:transaction_delivery_start", id: @tx.id,
+                                                            paths: @tx.instance_variable_get(:@paths),
+                                                            head_before: head_before.to_s)
         end
 
         def record_commit!(head_after:)
           raise "transaction not active" unless @tx.send(:active?)
           raise "transaction is not delivering" unless @tx.state == "delivering"
 
-          @tx.instance_variable_set(:@delivery_head_after, head_after.to_s)
-          @tx.send(:persist!)
-          true
+          @tx.send(:lifecycle_mutation, :record_commit, item_count: @tx.instance_variable_get(:@paths).size) do
+            @tx.instance_variable_set(:@delivery_head_after, head_after.to_s)
+            @tx.send(:persist!)
+            true
+          end
         end
 
         def pending?
@@ -47,16 +52,19 @@ module Master
           raise "transaction is not pending delivery" unless pending?
           raise "delivery HEAD mismatch" unless head.to_s == head_after
 
-          @tx.instance_variable_set(:@state, "committed")
-          @tx.instance_variable_set(:@active, false)
-          @tx.send(:persist!)
+          @tx.send(:lifecycle_mutation, :delivery_finalize, item_count: @tx.instance_variable_get(:@paths).size) do
+            @tx.instance_variable_set(:@state, "committed")
+            @tx.instance_variable_set(:@active, false)
+            @tx.send(:persist!)
+            Result.ok(:committed)
+          end
           @tx.send(:cleanup!)
           @tx.send(:release_lock)
           @tx.send(:emit, "fix:transaction_delivery_recovered", id: @tx.id, commit: head.to_s)
           Result.ok(:committed)
         rescue StandardError => e
           @tx.send(:emit, "fix:transaction_delivery_finalize_failed", id: @tx.id, error: e.message)
-          Result.err("transaction delivery finalize: #{e.message}", category: :infrastructure)
+          Result.err("transaction delivery finalize: #{e.class}", category: :infrastructure)
         ensure
           # A loaded recovery transaction owns the root lock. Release it on both
           # success and failure so a rejected/mismatched finalization cannot
