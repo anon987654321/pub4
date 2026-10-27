@@ -33,8 +33,9 @@ TAKE_CHROMA_FLOOR = 10.0
 LOOK_BUDGETS = {
   day_for_night: { chroma: 2.6, neutral: 30.0, skin: 30.0 },
   cross_process: { chroma: 2.8, neutral: 18.0, skin: 25.0 },
-  tokyo_night: { chroma: 2.8, neutral: 18.0, skin: 20.0 },
-  neon_night: { chroma: 2.8, neutral: 18.0, skin: 20.0 },
+  # Tungsten stocks on a daylight frame go cool and magenta-blue by design.
+  tokyo_night: { chroma: 3.4, neutral: 50.0, skin: 26.0 },
+  neon_night: { chroma: 3.0, neutral: 34.0, skin: 24.0 },
   infrared_look: { chroma: 2.0, neutral: 16.0, skin: 40.0 },
   technicolor_3strip: { chroma: 2.6, neutral: 12.0, skin: 22.0 },
   golden_age: { chroma: 2.6, neutral: 18.0, skin: 22.0 },
@@ -42,7 +43,7 @@ LOOK_BUDGETS = {
   cyanotype_look: { chroma: 3.0, neutral: 40.0, skin: 90.0 },
   magic_hour: { chroma: 2.6, neutral: 16.0, skin: 22.0 },
   blockbuster: { chroma: 2.4, neutral: 28.0, skin: 22.0 },
-  cinematic: { chroma: 2.2, neutral: 14.0, skin: 22.0 },
+  cinematic: { chroma: 2.4, neutral: 26.0, skin: 22.0 },
 }.freeze
 
 # A look's own budget only ever widens the baseline it starts from.

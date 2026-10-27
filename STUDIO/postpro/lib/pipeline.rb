@@ -69,15 +69,23 @@ end
 
 # The grade itself, then the finish every variation shares: the tone anchor,
 # the survival check a random take must pass, the last grain, and three bands.
+# Grain lands last, on the exposure the take will be seen at: lifting the shadows
+# after it amplified the grain there, threefold in a dark face.
 def graded_variation(request)
   return preset_variation(request) if request.preset_name
   return unless request.recipe
 
   balanced = balance_source(request.image)
-  processed = hold_exposure(anchor_tones(recipe(balanced, request.recipe)), balanced)
+  grains, body = request.recipe.partition { |step| step.first.to_s == RANDOM_ALWAYS }
+  processed = hold_exposure(anchor_tones(recipe(balanced, body)), balanced)
   check_take_survives!(processed, request.image, request.take&.look)
-  grained = request.recipe.any? { |fx, _| fx.to_s == RANDOM_ALWAYS }
-  rgb_bands(apply_finishing_grain(processed, nil, grained:))
+  rgb_bands(finish_with_grain(processed, grains))
+end
+
+def finish_with_grain(processed, grains)
+  return apply_finishing_grain(processed, nil, grained: false) if grains.empty?
+
+  recipe(processed, grains)
 end
 
 def preset_variation(request)
