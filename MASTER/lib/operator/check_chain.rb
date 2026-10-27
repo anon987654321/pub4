@@ -207,6 +207,10 @@ module Operator
       # before saving any baseline; it includes tracked diffs and non-ignored
       # untracked files even when their paths were already dirty at stage start.
       moved = checkout_changes(checkout_before)
+      # The stages measure `trees`; a change in another tree is another writer's in the shared
+      # checkout, not a read-only stage's write. A STUDIO edit made during a MASTER baseline
+      # blocked the whole run, so those are named and the baseline stands.
+      changed, moved = [changed, moved].map { |paths| inside_trees(paths, trees) }
       if changed.any? || moved.any?
         paths = (changed + moved).uniq
         details = paths.first(12).join(", ")
@@ -382,6 +386,18 @@ module Operator
     def verification_stage?(name)
       only = verification_only
       only.empty? || only.include?(name.to_s)
+    end
+
+    # Paths in another of the four trees are another writer's: named and dropped. The measured trees
+    # and anything at the repository root still count, since no other tree's owner writes there.
+    def inside_trees(paths, trees)
+      others = TREES - trees
+      outside, inside = Array(paths).partition { |path| others.any? { |tree| path.start_with?("#{tree}/") } }
+      unless outside.empty?
+        Master::Trace::Dmesg.status("baseline0", "another writer changed #{outside.size} path(s) outside #{trees.join(", ")} " \
+                                                 "during the baseline: #{outside.first(5).join(", ")}")
+      end
+      inside
     end
 
     def trees_for_target(target)

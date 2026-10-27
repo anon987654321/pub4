@@ -429,6 +429,20 @@ class TestCheckChain < Minitest::Test
     assert_includes error.message, "MASTER/lib/changed.rb"
   end
 
+  # Another writer's edit in another tree is named, and the baseline stands.
+  def test_a_change_in_another_tree_does_not_block_the_baseline
+    stage = G::Stage.new(name: "source", purpose: "measurement", mutates: false, run: -> {})
+    outside = ->(_selected, scan_only:, trees:, return_results:) { [0, ["STUDIO/postpro/lib/stocks.rb"]] }
+    saved = []
+    stubs = { verification_stages: [stage], trees_for_target: ["MASTER"], baseline_key: "baseline-outside-test",
+              read_baseline: nil, report: outside, write_baseline: ->(*args) { saved << args } }
+
+    out, = capture_io { with_stubs(G, stubs) { G.baseline(target: "MASTER") } }
+
+    assert_equal 1, saved.size
+    assert_includes out, "another writer changed 1 path(s) outside MASTER during the baseline: STUDIO/postpro/lib/stocks.rb"
+  end
+
 
   def test_rails_fix_verification_uses_the_rails_source_proof_without_generic_suite_duplication
     source = G::Stage.new(name: "source", purpose: "source", mutates: false, run: -> {})
