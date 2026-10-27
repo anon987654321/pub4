@@ -38,7 +38,8 @@ class CanvasController < ApplicationController
       return head :accepted
     end
     if topic == "face:metrics"
-      metrics = raw.slice("face_boot_ms", "particle_worker_alive", "feature_count", "bench_fps").transform_keys(&:to_sym)
+      metrics = raw.slice("face_boot_ms", "particle_worker_alive", "feature_count",
+"bench_fps").transform_keys(&:to_sym)
       Rails.cache.write("face:metrics:#{request.remote_ip}", metrics, expires_in: 5.minutes)
       return head :accepted
     end

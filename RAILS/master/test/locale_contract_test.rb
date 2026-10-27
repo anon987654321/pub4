@@ -26,7 +26,7 @@ class LocaleContractTest < ActionDispatch::IntegrationTest
   end
 
   def test_no_locale_file_repeats_a_key
-    duplicates = locale_files.flat_map { |path| duplicate_keys(path).map { |dup| [path, dup] } }
+    duplicates = locale_files.flat_map { |path| duplicate_keys(path).map { |dup| [ path, dup ] } }
 
     assert_empty duplicates, <<~MSG
       #{duplicates.size} duplicate key(s). YAML keeps the last one and discards
@@ -56,7 +56,7 @@ class LocaleContractTest < ActionDispatch::IntegrationTest
   def flat_keys(path, node = nil, prefix = [], out = [])
     node ||= (YAML.safe_load_file(path, aliases: true) || {}).values.first || {}
     node.each do |key, value|
-      path_keys = prefix + [key.to_s]
+      path_keys = prefix + [ key.to_s ]
       value.is_a?(Hash) ? flat_keys(path, value, path_keys, out) : out << path_keys.join(".")
     end
     out
@@ -72,11 +72,11 @@ class LocaleContractTest < ActionDispatch::IntegrationTest
         name = key_node.respond_to?(:value) ? key_node.value : key_node.to_s
         line = key_node.start_line + 1
         if seen[name]
-          out << [(prefix + [name]).join("."), line, seen[name]]
+          out << [ (prefix + [ name ]).join("."), line, seen[name] ]
         else
           seen[name] = line
         end
-        duplicate_keys(path, value_node, prefix + [name], out)
+        duplicate_keys(path, value_node, prefix + [ name ], out)
       end
     elsif node.respond_to?(:children) && node.children
       node.children.each { |child| duplicate_keys(path, child, prefix, out) }

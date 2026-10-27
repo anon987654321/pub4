@@ -19,14 +19,14 @@ class TtsController < ApplicationController
     performance = Master::Voice::Performance.timeline(
       text,
       style: synth_style,
-      rate: rate,
-      pitch: pitch,
+      rate:,
+      pitch:,
       voice: voice_key,
     )
     container[:bus]&.publish("tts:anticipate", style: synth_style.to_s, expression: pre)
     container[:bus]&.publish(
       "tts:performance",
-      performance: performance,
+      performance:,
       performance_id: performance[:performance_id],
     )
     publish_tts_style(voice_key, synth_style, text:)
@@ -140,7 +140,7 @@ class TtsController < ApplicationController
     synth_style = resolve_tts_style(params[:style], text)
     rate = params[:rate].presence || personality&.tts_rate
     pitch = params[:pitch].presence || personality&.tts_pitch
-    [voice_key, synth_style, rate, pitch]
+    [ voice_key, synth_style, rate, pitch ]
   end
 
   # The speech policy chooses the voice from the text. A caller cannot force an
@@ -204,7 +204,8 @@ class TtsController < ApplicationController
     end
 
     bytes = job.bytes
-    return render(json: { job: job.job_id, status: "failed", error: "empty audio" }, status: :service_unavailable) if bytes.nil? || bytes.empty?
+    return render(json: { job: job.job_id, status: "failed", error: "empty audio" },
+status: :service_unavailable) if bytes.nil? || bytes.empty?
 
     meta = job.meta
     if meta
@@ -237,12 +238,13 @@ class TtsController < ApplicationController
   end
 
   def publish_tts_style(voice_key, synth_style, text: nil)
-    return if [:neutral, :normal].include?(synth_style)
+    return if [ :neutral, :normal ].include?(synth_style)
     return unless Master::Voice::Speech::STYLES.key?(synth_style)
 
     cfg = Master::Voice::Speech.style_config_for(voice_key, synth_style)
     expr = Master::Voice::Expression.for_tts_style(synth_style)
-    container[:bus]&.publish("tts:style:active", style: synth_style.to_s, rate: cfg[:rate], pitch: cfg[:pitch], expression: expr)
+    container[:bus]&.publish("tts:style:active", style: synth_style.to_s, rate: cfg[:rate], pitch: cfg[:pitch],
+expression: expr)
     stream = text ? Master::Voice::Expression.viseme_stream(text, style: synth_style) : {}
     blendshapes = Master::Voice::Expression.blendshapes_for(synth_style)
     container[:bus]&.publish(

@@ -15,7 +15,7 @@ class SmartTurnOptInContractTest < Minitest::Test
 
   def test_no_view_or_asset_manifest_names_the_heavy_files
     files = Dir[ROOT.join("app/views/**/*").to_s].select { |path| File.file?(path) } +
-            [ROOT.join("config/face_assets.yml").to_s]
+            [ ROOT.join("config/face_assets.yml").to_s ]
     offenders = files.select { |path| File.read(path).match?(HEAVY) }
 
     assert_empty offenders.map { |path| Pathname(path).relative_path_from(ROOT).to_s }
@@ -27,7 +27,8 @@ class SmartTurnOptInContractTest < Minitest::Test
                        .select { |path| File.read(path).match?(HEAVY) }
 
     assert_operator sources.size, :>, 20, "the scan must read the face sources, not an empty glob"
-    assert_match HEAVY, ROOT.join("public/smart_turn.js").read, "the pattern must still see the one file allowed to match"
+    assert_match HEAVY, ROOT.join("public/smart_turn.js").read,
+"the pattern must still see the one file allowed to match"
     assert_empty offenders.map { |path| File.basename(path) }
   end
 

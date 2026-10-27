@@ -9,14 +9,14 @@ class HtmlNoStore
 
   def call(env)
     status, headers, body = @app.call(env)
-    return [status, headers, body] unless html_response?(env, headers)
+    return [ status, headers, body ] unless html_response?(env, headers)
 
     headers = headers.dup
     headers.delete("ETag")
     headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
     headers["Pragma"] = "no-cache"
     headers["Expires"] = "0"
-    [status, headers, body]
+    [ status, headers, body ]
   end
 
   private

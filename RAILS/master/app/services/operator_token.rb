@@ -18,7 +18,7 @@ class OperatorToken
 
   def self.read
     cfg = if File.exist?(config_path)
-      YAML.safe_load_file(config_path, permitted_classes: [Symbol], aliases: true)
+      YAML.safe_load_file(config_path, permitted_classes: [ Symbol ], aliases: true)
     else
       {}
     end

@@ -46,7 +46,7 @@ def build_browser(path)
       "ignore-certificate-errors" => nil,
       "remote-allow-origins" => "*",
     },
-    timeout: 90
+    timeout: 90,
   )
 end
 
@@ -60,7 +60,9 @@ puts "probe: #{URL}"
 puts "chrome: #{chrome || '(none)'}"
 
 skip_probe("no Chrome executable — set CHROME_PATH or use probe_http") unless chrome
-skip_probe("macOS headless Ferrum unreliable here — set PROBE_FORCE_BROWSER=1 to try") if RUBY_PLATFORM.include?("darwin") && !FORCE
+if RUBY_PLATFORM.include?("darwin") && !FORCE
+  skip_probe("macOS headless Ferrum unreliable here — set PROBE_FORCE_BROWSER=1 to try")
+end
 skip_probe("Chrome --version failed — use probe_http") unless chrome_version_ok?(chrome)
 
 browser = nil

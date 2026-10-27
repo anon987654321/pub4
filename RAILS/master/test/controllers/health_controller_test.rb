@@ -25,9 +25,9 @@ class HealthControllerTest < ActionDispatch::IntegrationTest
 
     body = JSON.parse(response.body)
     assert_kind_of String, body["status"]
-    body["checks"].each_value { |value| assert_includes [true, false], value }
-    assert_includes [String, NilClass], body.dig("deploy", "git_sha").class
-    assert_includes [true, false], body.dig("deploy", "tts_socket")
+    body["checks"].each_value { |value| assert_includes [ true, false ], value }
+    assert_includes [ String, NilClass ], body.dig("deploy", "git_sha").class
+    assert_includes [ true, false ], body.dig("deploy", "tts_socket")
     assert_kind_of Hash, body.dig("deploy", "voice_policy")
   end
 

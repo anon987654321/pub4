@@ -80,7 +80,7 @@ class TtsJob
   # network round-trips even on a 1-vCPU box.
   def self.spawn_workers_locked!
     @workers.reject!(&:alive?)
-    wanted = [Master::Voice::TtsSupervisor.pool_size, 1].max
+    wanted = [ Master::Voice::TtsSupervisor.pool_size, 1 ].max
     return if @workers.size >= wanted
 
     (wanted - @workers.size).times { @workers << spawn_worker }
@@ -209,7 +209,7 @@ class TtsJob
     # entry. Guessing an id requires the utterance, and the mp3 holds nothing beyond it;
     # TtsController#readable_job still checks ownership of a pending job.
     @fingerprint = Digest::SHA256.hexdigest(
-      "#{CACHE_VERSION}|#{@voice}|#{@style}|#{@rate}|#{@pitch}|#{@text}"
+      "#{CACHE_VERSION}|#{@voice}|#{@style}|#{@rate}|#{@pitch}|#{@text}",
     )
     @job_id = @fingerprint[0, 32]
   end

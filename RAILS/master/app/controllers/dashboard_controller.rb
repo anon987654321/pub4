@@ -46,7 +46,7 @@ class DashboardController < ApplicationController
       rtk: Master::Io::OutputFilter.stats(root),
       rsi_inbox: rsi_inbox(root),
       active_plan: Master::Ground::ActivePlan.read(root),
-      skills: Array(c[:skills]&.loaded).map { |s| s[:name] },
+      skills: Array(c[:skills]&.loaded).pluck(:name),
       context_pressure: pressure,
       provider_health: provider_health(c),
       cache_efficiency: Master::Trace::CacheEfficiency.snapshot,
@@ -99,7 +99,7 @@ class DashboardController < ApplicationController
   def recent_lines(path)
     File.open(path, "rb") do |file|
       size = file.stat.size
-      offset = [size - PANEL_TAIL_BYTES, 0].max
+      offset = [ size - PANEL_TAIL_BYTES, 0 ].max
       file.seek(offset)
       tail = file.read(PANEL_TAIL_BYTES).to_s
       if offset.positive?

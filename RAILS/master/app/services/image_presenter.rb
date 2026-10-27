@@ -31,18 +31,18 @@ class ImagePresenter
   end
 
   def store(upload)
-    return [:bad_request, { error: "missing photo" }] unless upload.respond_to?(:read)
+    return [ :bad_request, { error: "missing photo" } ] unless upload.respond_to?(:read)
 
     ext, mime = sniffed_image(upload)
-    return [:unsupported_media_type, { error: "unsupported image type" }] unless ext
-    return [:payload_too_large, { error: "photo too large" }] if upload_size(upload) > PHOTO_MAX_BYTES
+    return [ :unsupported_media_type, { error: "unsupported image type" } ] unless ext
+    return [ :payload_too_large, { error: "photo too large" } ] if upload_size(upload) > PHOTO_MAX_BYTES
 
     FileUtils.mkdir_p(PHOTO_UPLOAD_DIR)
     cleanup_old_photos!
     write_upload(upload, mime, ext)
   rescue StandardError => e
     @logger.warn("photo upload failed: #{e.class}: #{e.message}")
-    [500, { error: "photo upload failed" }]
+    [ 500, { error: "photo upload failed" } ]
   end
 
   def payload(token)
@@ -80,13 +80,13 @@ class ImagePresenter
     upload.rewind if upload.respond_to?(:rewind)
     case head
     when /\A\xFF\xD8\xFF/n
-      [".jpg", "image/jpeg"]
+      [ ".jpg", "image/jpeg" ]
     when /\A\x89PNG\r\n\x1A\n/n
-      [".png", "image/png"]
+      [ ".png", "image/png" ]
     when /\ARIFF.{4}WEBP/n
-      [".webp", "image/webp"]
+      [ ".webp", "image/webp" ]
     when /\A....ftyp(?:heic|heif|mif1|msf1)/n
-      [".heic", "image/heic"]
+      [ ".heic", "image/heic" ]
     end
   end
 
@@ -101,7 +101,7 @@ class ImagePresenter
     final_path = processed && File.file?(processed_path) ? processed_path : original_path
     info = metadata(token, final_path, original_path, safe_name, mime, processed_path)
     File.write(PHOTO_UPLOAD_DIR.join("#{token}.json"), JSON.pretty_generate(info))
-    [:ok, { token:, name: safe_name, processed: info["processed"], preset: DEFAULT_POSTPRO_PRESET }]
+    [ :ok, { token:, name: safe_name, processed: info["processed"], preset: DEFAULT_POSTPRO_PRESET } ]
   end
 
   def metadata(token, final_path, original_path, safe_name, mime, processed_path)
@@ -146,9 +146,10 @@ class ImagePresenter
     script = File.join(Master::REPO_ROOT, "STUDIO", "postpro", "postpro.rb")
     return false unless File.file?(script)
 
-    argv = [RbConfig.ruby, script, "--input", input_path, "--output", output_path, "--preset", DEFAULT_POSTPRO_PRESET]
+    argv = [ RbConfig.ruby, script, "--input", input_path, "--output", output_path, "--preset", DEFAULT_POSTPRO_PRESET ]
     out, status = run_bounded(argv, chdir: File.dirname(script))
-    @logger.info("postpro photo=#{File.basename(input_path)} status=#{status&.exitstatus.inspect} out=#{out.to_s.lines.last}")
+    @logger.info("postpro photo=#{File.basename(input_path)} status=#{status&.exitstatus.inspect} " \
+                 "out=#{out.to_s.lines.last}")
     status&.success? || false
   rescue StandardError => e
     @logger.warn("postpro failed: #{e.class}: #{e.message}")
@@ -162,9 +163,9 @@ class ImagePresenter
       unless waiter.join(timeout_s)
         Process.kill("KILL", -waiter.pid)
         @logger.warn("postpro killed after #{timeout_s}s")
-        return [reader.value, nil]
+        return [ reader.value, nil ]
       end
-      [reader.value, waiter.value]
+      [ reader.value, waiter.value ]
     end
   end
 end

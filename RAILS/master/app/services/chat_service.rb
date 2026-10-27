@@ -24,7 +24,8 @@ class ChatService
   # hears is "An internal error occurred. Retry or check server logs."
   ERROR_PREFIX = "ERROR: "
 
-  def initialize(container:, params:, stream:, logger:, tier:, unlocked:, author:, paired: false, pair_token: nil, conversation: nil)
+  def initialize(container:, params:, stream:, logger:, tier:, unlocked:, author:, paired: false, pair_token: nil,
+conversation: nil)
     @container = container
     @params = params
     @stream = stream
@@ -125,15 +126,20 @@ class ChatService
     subscribe("compaction:done") { |ev| write_compaction_event(ev) }
     subscribe("phantom:detected") { |ev| write_json_event("phantom", phantom_payload(ev)) }
     subscribe("pipeline:stage_start") { |ev| write_json_event("stage", { stage: ev[:stage], phase: "start" }) }
-    subscribe("pipeline:stage_complete") { |ev| write_json_event("stage", { stage: ev[:stage], phase: "done", ms: ev[:ms] }) }
+    subscribe("pipeline:stage_complete") { |ev|
+ write_json_event("stage", { stage: ev[:stage], phase: "done", ms: ev[:ms] }) }
     subscribe("skills:triggered") { |ev| write_json_event("thought", "skill #{ev[:skill]}") }
-    subscribe("felt:sense") { |ev| write_json_event("felt", { mood: ev[:mood], entropy: ev[:entropy], confidence: ev[:confidence] }) }
-    subscribe("fold:risk") { |ev| write_json_event("dmesg", "fold0 at master0: risk=#{ev[:risk]} intent=#{ev[:intent]}") }
+    subscribe("felt:sense") { |ev|
+ write_json_event("felt", { mood: ev[:mood], entropy: ev[:entropy], confidence: ev[:confidence] }) }
+    subscribe("fold:risk") { |ev|
+ write_json_event("dmesg", "fold0 at master0: risk=#{ev[:risk]} intent=#{ev[:intent]}") }
     subscribe("ideation:start") { |ev| write_json_event("dmesg", "ideation0 at master0: start risk=#{ev[:risk]}") }
-    subscribe("ideation:done") { |ev| write_json_event("dmesg", "ideation0 at master0: #{ev[:ideas]} approaches synthesized") }
+    subscribe("ideation:done") { |ev|
+ write_json_event("dmesg", "ideation0 at master0: #{ev[:ideas]} approaches synthesized") }
     subscribe("council:start") { |ev| write_json_event("thought", "council reviewing diff") }
     subscribe("council:pass") { |ev| write_json_event("dmesg", "council0 at master0: pass jurors=#{ev[:jurors]}") }
-    subscribe("council:veto") { |ev| write_json_event("dmesg", "council0 at master0: veto #{ev[:message].to_s[0, 120]}") }
+    subscribe("council:veto") { |ev|
+ write_json_event("dmesg", "council0 at master0: veto #{ev[:message].to_s[0, 120]}") }
     subscribe("infer:resolved") { |ev| write_json_event("dmesg", dmesg_format("infer:resolved", ev)) }
     subscribe("infer:confidence") { |ev| write_json_event("dmesg", dmesg_format("infer:confidence", ev)) }
     subscribe("**") do |ev|
@@ -417,9 +423,9 @@ class ChatService
   def verdict_for(event)
     if event[:vetoes].to_i.positive?
 "veto"
-else
+    else
 (event[:judge] ? "pass" : "unclear")
-end
+    end
   end
 
   def track_mutation(event)

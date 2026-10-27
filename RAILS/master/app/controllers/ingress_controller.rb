@@ -39,8 +39,8 @@ class IngressController < ApplicationController
   def health
     body = { ok: true, service: "master-ingress" }
     if ingress_token_valid?
-      body[:cron_jobs] = Master::Io::IngressJobs.cron_jobs.map { |j| j["name"] }
-      body[:webhooks] = Master::Io::IngressJobs.webhook_jobs.map { |j| j["name"] }
+      body[:cron_jobs] = Master::Io::IngressJobs.cron_jobs.pluck("name")
+      body[:webhooks] = Master::Io::IngressJobs.webhook_jobs.pluck("name")
     end
     render json: body
   end
@@ -101,9 +101,9 @@ class IngressController < ApplicationController
     value = result.ok? ? result.value! : nil
     output = if value.is_a?(Hash)
                value[:rendered] || value[:output] || value.to_s
-             else
+    else
                value || result.message
-             end
+    end
     {
       ok: result.ok?,
       output: output.to_s,

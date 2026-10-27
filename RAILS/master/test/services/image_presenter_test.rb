@@ -26,7 +26,7 @@ class ImagePresenterTest < ActiveSupport::TestCase
     presenter = ImagePresenter.new
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
-    _out, status = presenter.send(:run_bounded, [RbConfig.ruby, "-e", "sleep 30"], chdir: Dir.tmpdir, timeout_s: 1)
+    _out, status = presenter.send(:run_bounded, [ RbConfig.ruby, "-e", "sleep 30" ], chdir: Dir.tmpdir, timeout_s: 1)
 
     assert_nil status
     assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 10

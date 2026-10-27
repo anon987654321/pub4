@@ -16,9 +16,9 @@ class HealthController < ActionController::API
     critical_ok = critical.all? { |key| checks[key] }
     status = if critical_ok
                checks.values.all? { |value| value == true } ? "ok" : "degraded"
-             else
+    else
                "unavailable"
-             end
+    end
     http = critical_ok ? :ok : :service_unavailable
     body = { status:, checks:, deploy: deploy_confidence }
     # Only when it is down, so the healthy payload keeps its shape and its size.

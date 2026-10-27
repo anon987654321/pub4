@@ -114,7 +114,7 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
     File.write(@cache_dir.join("#{job.job_id}.job"), { text:, voice:, style: }.to_json)
     File.write(
       @cache_dir.join("#{job.job_id}.meta.json"),
-      { job_id: job.job_id, viseme_plan: [{ shape: "E", amp: 0.8, t: 0, ms: 50 }] }.to_json,
+      { job_id: job.job_id, viseme_plan: [ { shape: "E", amp: 0.8, t: 0, ms: 50 } ] }.to_json,
     )
 
     get "/chat/tts/status", params: { job: job.job_id }

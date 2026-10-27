@@ -28,7 +28,7 @@ class RateLimitTest < ActionDispatch::IntegrationTest
     declared = Master.load_yaml(Master.data_path("security.yml")).fetch("web_rate_limits")
 
     declared.each do |name, row|
-      assert_equal [row["per_window"], row["window_seconds"]], ApplicationController.web_rate_limit(name.to_sym)
+      assert_equal [ row["per_window"], row["window_seconds"] ], ApplicationController.web_rate_limit(name.to_sym)
     end
     assert_equal ApplicationController::WEB_RATE_LIMIT_DEFAULTS.keys.map(&:to_s).sort, declared.keys.sort
   end

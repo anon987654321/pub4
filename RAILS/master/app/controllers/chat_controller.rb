@@ -102,7 +102,7 @@ class ChatController < ApplicationController
       pw = cmd.sub(/^\/unlock\s+/, "").strip
       token = OperatorToken.read
       if token.empty? || pw.bytesize != token.bytesize || !Rack::Utils.secure_compare(pw, token)
-        render(json: { output: "unlock denied" }, status: 401) and return
+        render(json: { output: "unlock denied" }, status: :unauthorized) and return
       end
       set_unlock_cookie
       render(json: { output: "unlocked — full tool access enabled." }) and return
@@ -131,7 +131,7 @@ class ChatController < ApplicationController
       render json: { output:, client_actions: }
     end
   rescue StandardError => e
-    render json: { output: "Error: #{e.message}" }, status: 500
+    render json: { output: "Error: #{e.message}" }, status: :internal_server_error
   end
 
   def research
@@ -146,7 +146,8 @@ class ChatController < ApplicationController
     items = body.to_s.scan(/<entry>(.*?)<\/entry>/m).map do |entry|
       entry = entry.first
       t = entry[/<title>(.*?)<\/title>/m, 1].to_s.gsub(/\s+/, " ").strip
-      s = entry[/<summary>(.*?)<\/summary>/m, 1].to_s.gsub(/\s+/, " ").strip.split(/(?<=[.!?])\s+/).first(2).to_a.join(" ")
+      s = entry[/<summary>(.*?)<\/summary>/m, 1].to_s.gsub(/\s+/,
+" ").strip.split(/(?<=[.!?])\s+/).first(2).to_a.join(" ")
       next if t.empty?
       "#{t}. #{s}".slice(0, 480)
     end.compact
@@ -231,9 +232,9 @@ class ChatController < ApplicationController
     body = if result
              set_pair_cookie(result[:token])
              Master::Ground::Pairing.redeem_notice(result)
-           else
+    else
              "pair: invalid or expired code"
-           end
+    end
     stream_plain(body)
   end
 
@@ -286,11 +287,10 @@ class ChatController < ApplicationController
 
   def stream_smoke_reply(input)
     body = case input.to_s.strip.downcase
-           when "ping" then "pong"
-           when "pong" then "ping"
-           else "ok"
-           end
+    when "ping" then "pong"
+    when "pong" then "ping"
+    else "ok"
+    end
     stream_plain(body)
   end
-
 end

@@ -15,14 +15,14 @@ class ApplicationController < ActionController::Base
   # data/security.yml#web_rate_limits is the source; these literals are the
   # fallback for a checkout without it, as IngressController does for ingress.
   WEB_RATE_LIMIT_DEFAULTS = {
-    chat: [30, 60], tts: [30, 60], tts_poll: [300, 60], read: [120, 60], write: [60, 60]
+    chat: [ 30, 60 ], tts: [ 30, 60 ], tts_poll: [ 300, 60 ], read: [ 120, 60 ], write: [ 60, 60 ]
   }.freeze
 
   # [per_window, window_seconds] for one budget.
   def self.web_rate_limit(name)
     per, window = WEB_RATE_LIMIT_DEFAULTS.fetch(name)
     row = web_rate_limits_config[name.to_s] || {}
-    [Integer(row["per_window"] || per), Integer(row["window_seconds"] || window)]
+    [ Integer(row["per_window"] || per), Integer(row["window_seconds"] || window) ]
   end
 
   def self.web_rate_limits_config
@@ -325,7 +325,9 @@ class ApplicationController < ActionController::Base
     return true if path == "/pair" || path.start_with?("/pair/")
     return true if smoke_chat_probe?
     return true if path.start_with?("/assets/", "/runtime/")
-    return true if path.match?(%r{\A/(?:face\.|three\.module|chat-|particle_|cognition_|visual_|face3d_|face_|face_vision|face_deferred|topology_|cluster_|domain_cluster|mask|sw\.js|manifest\.json|icon\.|offline\.html)})
+    return true if path.match?(%r{\A/(?:face\.|three\.module|chat-|particle_|cognition_|visual_|face3d_|face_|
+                                    face_vision|face_deferred|topology_|cluster_|domain_cluster|mask|sw\.js|
+                                    manifest\.json|icon\.|offline\.html)}x)
 
     false
   end

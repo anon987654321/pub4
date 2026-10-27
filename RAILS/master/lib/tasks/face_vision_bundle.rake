@@ -13,5 +13,5 @@ namespace :assets do
 end
 
 if Rake::Task.task_defined?("assets:precompile")
-  Rake::Task["assets:precompile"].enhance(["assets:build_face_vision_bundle"])
+  Rake::Task["assets:precompile"].enhance([ "assets:build_face_vision_bundle" ])
 end

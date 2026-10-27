@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+
 # Screenshot-first calibration loop (laws.yml automated_iteration).
 # Captures primer + post-tap session at desktop/mobile, writes manifest + latest symlink.
 # Prereq: MASTER web on loopback (53187). Sync CSS first:
@@ -35,8 +36,8 @@ abort("screenshot_calibrate: no Chrome executable") unless chrome
 require "ferrum"
 
 VIEWPORTS = {
-  "desktop" => [1440, 900],
-  "mobile" => [390, 844],
+  "desktop" => [ 1440, 900 ],
+  "mobile" => [ 390, 844 ],
 }.freeze
 
 FileUtils.mkdir_p(options[:out])
@@ -71,7 +72,8 @@ def capture!(browser, path, label, manifest, viewport: nil)
     sleep 0.2
   end
   browser.screenshot(path:, full: false)
-  manifest[:shots] << { label:, path:, viewport: viewport || browser.evaluate("[window.innerWidth, window.innerHeight]") }
+  manifest[:shots] << { label:, path:,
+viewport: viewport || browser.evaluate("[window.innerWidth, window.innerHeight]") }
   puts "ok: #{label} -> #{path}"
 end
 
@@ -123,11 +125,15 @@ begin
 
   # StyleCoach heuristics from project_context.yml
   checks = []
-  checks << ["primer-consent", "12px", "16px", "Consent copy below 16px body minimum on mobile"] if browser.at_css("#primer .primer-consent")
-  checks << ["chat-log", "11.5px", "12px", "Chat log microtype below readable HUD floor"] if browser.at_css("#chat-log")
-  checks << ["provider-chip", "9px", "10px", "Provider chip at HUD micro scale — acceptable if non-interactive"] if browser.at_css(".provider-chip")
+  checks << [ "primer-consent", "12px", "16px",
+"Consent copy below 16px body minimum on mobile" ] if browser.at_css("#primer .primer-consent")
+  checks << [ "chat-log", "11.5px", "12px",
+"Chat log microtype below readable HUD floor" ] if browser.at_css("#chat-log")
+  checks << [ "provider-chip", "9px", "10px",
+"Provider chip at HUD micro scale — acceptable if non-interactive" ] if browser.at_css(".provider-chip")
 
-  manifest[:stylecoach] = checks.map { |element, current, suggested, reason| { element:, current:, suggested:, reason: } }
+  manifest[:stylecoach] = checks.map { |element, current, suggested, reason|
+ { element:, current:, suggested:, reason: } }
 
   manifest_path = File.join(run_dir, "manifest.json")
   File.write(manifest_path, JSON.pretty_generate(manifest) + "\n")

@@ -74,14 +74,15 @@ class EventsController < ApplicationController
     bus      = container[:bus]
     mine     = conversation_id
     received = SizedQueue.new(QUEUE_CAP)
-    subs     = STREAM_PATTERNS.map { |pattern| bus.subscribe(pattern) { |ev| offer(received, ev, visitor_tier:, mine:) } }
+    subs     = STREAM_PATTERNS.map { |pattern| bus.subscribe(pattern) { |ev|
+ offer(received, ev, visitor_tier:, mine:) } }
     deadline       = Time.now + MAX_STREAM_S
     next_keepalive = Time.now + KEEPALIVE_EVERY_S
     stream_started_at = Time.now.to_f
     last_wake_id = nil
 
     while Time.now < deadline
-      timeout = [next_keepalive - Time.now, 0.25].min
+      timeout = [ next_keepalive - Time.now, 0.25 ].min
       timeout = 0 if timeout.negative?
       event = received.pop(timeout:)
       if event

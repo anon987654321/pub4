@@ -70,5 +70,5 @@ namespace :assets do
 end
 
 if Rake::Task.task_defined?("assets:precompile")
-  Rake::Task["assets:precompile"].enhance(["assets:build_face_runtime", "assets:build_boot_sound"])
+  Rake::Task["assets:precompile"].enhance([ "assets:build_face_runtime", "assets:build_boot_sound" ])
 end

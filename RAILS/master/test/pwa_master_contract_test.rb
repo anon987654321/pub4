@@ -21,7 +21,7 @@ class PwaMasterContractTest < Minitest::Test
     dashboard = read("app/views/dashboard/index.html.erb")
     manifest = read("app/views/pwa/manifest.json.erb")
 
-    [index, dashboard].each do |page|
+    [ index, dashboard ].each do |page|
       assert_match(/pwa_manifest_path/, page)
       assert_match(/theme_color = Master\.tokens\.fetch\("face_root"\)\.fetch\("face_bg"\)/, page)
     end
@@ -53,7 +53,8 @@ class PwaMasterContractTest < Minitest::Test
     dashboard = read("app/views/dashboard/index.html.erb")
     script = read("public/dashboard_live.js")
 
-    assert_includes dashboard, '<script src="/dashboard_live.js" nonce="<%= content_security_policy_nonce %>" defer></script>'
+    assert_includes dashboard,
+'<script src="/dashboard_live.js" nonce="<%= content_security_policy_nonce %>" defer></script>'
     refute_match(/<script\b(?![^>]*\bsrc=)[^>]*>[\s\S]*?fetch\(['"]\/dashboard\/live/m, dashboard)
     assert_includes script, "fetch('/dashboard/live'"
     assert_includes script, "cache: 'no-store'"

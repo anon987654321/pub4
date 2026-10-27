@@ -31,7 +31,7 @@ class ServiceWorkerNoCache
   def call(env)
     status, headers, body = @app.call(env)
     headers["Cache-Control"] = "no-cache, no-store, must-revalidate" if env["PATH_INFO"] == "/sw.js"
-    [status, headers, body]
+    [ status, headers, body ]
   end
 end
 

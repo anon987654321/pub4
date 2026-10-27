@@ -28,7 +28,8 @@ class TtsJobConversationTest < ActiveSupport::TestCase
   end
 
   test "a stranger cannot poll a pending job they did not enqueue" do
-    job = TtsJob.new(text: "secret reply", voice: :ara, style: :default, conversation: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+    job = TtsJob.new(text: "secret reply", voice: :ara, style: :default,
+conversation: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
     job.write_token
 
     assert TtsJob.owned?(job.job_id, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
@@ -68,7 +69,8 @@ class TtsJobConversationTest < ActiveSupport::TestCase
   end
 
   test "cancel removes every supported native audio format" do
-    job = TtsJob.new(text: "cancel native", voice: :jenny, style: :brief, conversation: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+    job = TtsJob.new(text: "cancel native", voice: :jenny, style: :brief,
+conversation: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
     job.write_token
     File.binwrite(TtsJob::CACHE_DIR.join("#{job.job_id}.wav"), "wav")
     File.binwrite(TtsJob::CACHE_DIR.join("#{job.job_id}.m4a"), "m4a")
@@ -77,5 +79,4 @@ class TtsJobConversationTest < ActiveSupport::TestCase
     refute File.exist?(TtsJob::CACHE_DIR.join("#{job.job_id}.wav"))
     refute File.exist?(TtsJob::CACHE_DIR.join("#{job.job_id}.m4a"))
   end
-
 end

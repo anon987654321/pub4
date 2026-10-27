@@ -11,4 +11,4 @@
 # design), so the digested tree is fully regenerable — this is NOT the
 # brgen situation, where clobber once broke a page whose asset existed
 # only precompiled.
-Rake::Task["assets:precompile"].enhance(["assets:clobber"]) if Rake::Task.task_defined?("assets:precompile")
+Rake::Task["assets:precompile"].enhance([ "assets:clobber" ]) if Rake::Task.task_defined?("assets:precompile")

@@ -7,7 +7,8 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :success
-    assert_match(%r{<noscript><p id="primer-noscript"[^>]*>#{Regexp.escape(I18n.t("face.primer_noscript"))}</p></noscript>}, response.body)
+    noscript = Regexp.escape(I18n.t("face.primer_noscript"))
+    assert_match(%r{<noscript><p id="primer-noscript"[^>]*>#{noscript}</p></noscript>}, response.body)
   end
 
   test "index renders chat shell" do

@@ -52,7 +52,7 @@ class AuthTier
 
     status, headers, body = @app.call(env)
     headers = with_cookie(headers, env, tok) if authed && source == :url
-    [status, headers, body]
+    [ status, headers, body ]
   end
 
   private
@@ -64,18 +64,18 @@ class AuthTier
   def extract_candidate(env)
     qs = Rack::Utils.parse_nested_query(env["QUERY_STRING"].to_s)
     bearer = env["HTTP_AUTHORIZATION"].to_s.sub(/\ABearer\s+/i, "")
-    return [bearer, :bearer] unless bearer.empty?
+    return [ bearer, :bearer ] unless bearer.empty?
 
     xtoken = env["HTTP_X_TOKEN"].to_s
-    return [xtoken, :header] unless xtoken.empty?
+    return [ xtoken, :header ] unless xtoken.empty?
 
     cookie_tok = parse_cookie(env)
-    return [cookie_tok, :cookie] unless cookie_tok.empty?
+    return [ cookie_tok, :cookie ] unless cookie_tok.empty?
 
     url_tok = qs["token"].to_s
-    return [url_tok, :url] unless url_tok.empty?
+    return [ url_tok, :url ] unless url_tok.empty?
 
-    ["", nil]
+    [ "", nil ]
   end
 
   def parse_cookie(env)
@@ -84,12 +84,12 @@ class AuthTier
 
   def handshake_redirect(env, tok)
     cookie = build_cookie(env, tok)
-    [302,
+    [ 302,
      { "Location" => clean_url(env),
        "Set-Cookie" => cookie,
        "Cache-Control" => "no-store",
        "Content-Length" => "0" },
-     []]
+     [] ]
   end
 
   def with_cookie(headers, env, tok)
@@ -101,8 +101,8 @@ class AuthTier
   end
 
   def build_cookie(env, value)
-    parts = ["#{COOKIE_NAME}=#{value}", "HttpOnly", "SameSite=Strict",
-             "Path=/", "Max-Age=#{COOKIE_MAX_AGE}"]
+    parts = [ "#{COOKIE_NAME}=#{value}", "HttpOnly", "SameSite=Strict",
+             "Path=/", "Max-Age=#{COOKIE_MAX_AGE}" ]
     parts << "Secure" if https?(env)
     parts.join("; ")
   end
@@ -150,12 +150,12 @@ class AuthTier
   end
 
   def read_config(config_path)
-    [YAML.safe_load_file(config_path, permitted_classes: [Symbol], aliases: true) || {}, true]
+    [ YAML.safe_load_file(config_path, permitted_classes: [ Symbol ], aliases: true) || {}, true ]
   rescue Errno::ENOENT => _e
-    [{}, true]
+    [ {}, true ]
   rescue StandardError => e
     warn "auth_tier: config unreadable (#{e.class}): #{e.message} — declining to seed"
-    [{}, false]
+    [ {}, false ]
   end
 
   def seed_token(config_path, cfg)
@@ -163,7 +163,7 @@ class AuthTier
     lock_path = "#{config_path}.lock"
     File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |lock|
       lock.flock(File::LOCK_EX)
-      existing = YAML.safe_load_file(config_path, permitted_classes: [Symbol], aliases: true) rescue nil
+      existing = YAML.safe_load_file(config_path, permitted_classes: [ Symbol ], aliases: true) rescue nil
       if existing.is_a?(Hash) && existing["web_token"].to_s.length >= MIN_TOKEN_LENGTH
         return existing["web_token"]
       end

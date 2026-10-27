@@ -119,7 +119,8 @@ module MasterContainerLoader
         if due.any?
           results = container[:standing].run_due!
           results.each do |r|
-            Master::Ground::Swallow.safe_call(context: "MasterContainerLoader.scheduler_publish", event_bus: container[:bus]) do
+            Master::Ground::Swallow.safe_call(context: "MasterContainerLoader.scheduler_publish",
+event_bus: container[:bus]) do
               container[:bus].publish("scheduler:ran", name: r[:name])
             end
           end

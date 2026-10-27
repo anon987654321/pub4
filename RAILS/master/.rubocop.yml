@@ -1,0 +1,8 @@
+# The pub4 family's RuboCop rules, as brgen, amber and bsdports run them.
+inherit_from: ../__shared/.rubocop.yml
+
+# This task writes face.runtime.js line for line from the JavaScript in these strings;
+# breaking them for Ruby's line length would change the generated file's source.
+Layout/LineLength:
+  Exclude:
+    - "lib/tasks/face_runtime.rake"
