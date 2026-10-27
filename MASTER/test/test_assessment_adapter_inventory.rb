@@ -81,5 +81,35 @@ class TestAssessmentAdapterInventory < Minitest::Test
       subject.instance_variable_get(:@assessment_law_info)
         .fetch("ASSESSMENT_MATRIX_SCANNER_ONLY").fetch(:unmeasurable_streams)
   end
+  def test_matrix_refuses_to_initialize_from_unreconciled_law_catalogue
+    require_relative "../lib/review/scan/law_registry_audit"
+    audit_class = Master::Review::Scan::LawRegistryAudit
+    original_new = audit_class.method(:new)
+    report = Object.new
+    report.define_singleton_method(:assert_reconciled!) { raise "fixture catalogue drift" }
+    fake_audit = Object.new
+    fake_audit.define_singleton_method(:call) { report }
+    audit_class.define_singleton_method(:new) { |root:| fake_audit }
+
+    subject = Object.new.extend(Master::Fix::FixLoop::PassRunner::AssessmentMatrix)
+    subject.instance_variable_set(:@scanner, Object.new)
+    subject.instance_variable_set(:@clean_runs_required, 2)
+    subject.instance_variable_set(:@visual_pass, nil)
+    subject.instance_variable_set(:@opportunity_pass, nil)
+    subject.define_singleton_method(:stage_failures) do
+      @stage_failures ||= Hash.new { |hash, key| hash[key] = [] }
+    end
+    plan = Struct.new(:target, :digest, :root, :sources, :source_signatures).new(
+      Master::ROOT, "plan-digest", Master::ROOT, [], {}
+    )
+
+    subject.begin_assessment_run(files: [], plan:)
+
+    assert_nil subject.instance_variable_get(:@assessment_ledger)
+    assert subject.stage_failures[:assessment_matrix].any? { |failure| failure.include?("fixture catalogue drift") }
+  ensure
+    audit_class.define_singleton_method(:new, original_new) if audit_class && original_new
+  end
+
 
 end
