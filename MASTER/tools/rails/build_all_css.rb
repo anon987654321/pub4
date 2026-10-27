@@ -182,7 +182,7 @@ def try_npx_sass(app_dir)
 end
 
 def verify_build(app, out)
-  body = File.read(out)
+  body = File.read(out, encoding: "UTF-8")
   missing = social_token_markers.reject { |m| body.include?(m) }
   return [] if missing.empty?
 
@@ -193,7 +193,8 @@ def verify_face_css
   path = File.join(ROOT, "RAILS", "master", "public", "face.css")
   return [] unless File.file?(path)
 
-  body = File.read(path)
+  body = File.read(path, encoding: "UTF-8")
+
   # face.css is built from face_root.palette; the anchors keep the earlier blue-tinted values,
   # so checking the anchor failed CI on vm23 once the grey palette (5ba499b4e) shipped.
   palette = DesignTokens.load.fetch("face_root").fetch("palette")
