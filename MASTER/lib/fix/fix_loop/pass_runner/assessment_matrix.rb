@@ -84,6 +84,9 @@ module Master
 
             require File.join(Master::ROOT, "law", "definition") unless defined?(::Law::Definition)
             ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
+            require File.join(Master::ROOT, "lib", "review", "scan", "law_registry_audit") unless
+              defined?(Master::Review::Scan::LawRegistryAudit)
+            Master::Review::Scan::LawRegistryAudit.new(root: Master::ROOT).call.assert_reconciled!
 
             info = {}
             Array(::Law.definitions.values).each do |law|
