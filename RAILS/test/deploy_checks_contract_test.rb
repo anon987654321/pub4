@@ -307,7 +307,7 @@ class DeployChecksContractTest < Minitest::Test
   end
 
   def test_check_result_supports_severity
-    source = File.read(File.join(OPENBSD_ROOT, "lib", "check_result.rb"))
+    source = File.read(File.join(MASTER_CHECKS, "support", "check_result.rb"))
     assert_includes source, "severity:"
     assert_includes source, "soft_failures"
     assert_includes source, "CHECK_STRICT_SOFT"
