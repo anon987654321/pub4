@@ -61,6 +61,7 @@ def usage
       bin/operator branches               every branch against main: merged, active, conflicts, deletes_heavily or ready
       bin/operator design [--app A] [--surface S] [--rounds N]  screenshot, edit one layout rule, keep it if the score rises, commit each
       bin/operator land -m <msg> <path>...  commit path-scoped, re-check, push main
+      bin/operator push                   replay unpublished main commits onto a moved origin/main and push, no stash
             bin/operator triangle <up|status|down> [app...]  boot brgen, amber, bsdports and the master face on the ports the live checks probe
       bin/operator visual review [--app A,B] [--surface ID] [--no-critique] [--no-open] [--out DIR]  read-only rendered review, no fixing
       bin/operator visual <seed [app...] [--yes]|unseed|status|approve <surface>>  believable local content for the visual pass, development database only
@@ -368,6 +369,11 @@ when "land"
   push_out, pushed = run!("git", "push", "origin", "HEAD:main")
   abort("land: push refused\n#{push_out}") unless pushed
   Master::Trace::Dmesg.status("land0", "on origin/main")
+when "push"
+  # land's rebase refuses a dirty shared tree; this replays instead and touches
+  # the working tree only after origin confirms the push. Operator::ReplayPush.
+  require "operator/replay_push"
+  exit(Operator::ReplayPush.new(root: ROOT).run ? 0 : 1)
 when "design"
   # The design loop: screenshot the weakest surfaces, ask the vision model for one
   # layout edit at a time, keep each edit that scores higher as its own commit on

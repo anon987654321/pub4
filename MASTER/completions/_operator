@@ -12,6 +12,7 @@ _operator() {
     'lint:judge files by the law, no model'
     'test:smallest complete proof for the paths'
     'land:commit path-scoped, re-check, push main'
+    'push:replay unpublished main commits onto a moved origin/main and push'
     'snapshot:regenerate the snapshot packs'
     'post-pull:the checklist after a pull'
     'worktree:refused, this repository writes straight to main'
