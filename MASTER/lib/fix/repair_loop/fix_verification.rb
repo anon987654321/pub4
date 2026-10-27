@@ -105,9 +105,8 @@ module Master
         # With the repaired source the first offending line is quoted, so the retry sees the code itself.
         def introduced_summary(before, after, source: nil, limit: 3)
           text = source.to_s.lines
-          had = law_counts(before)
           added = introduced_findings(before, after).group_by { |row| row[:law].to_s }.map do |law, rows|
-            grown = rows.size - had.fetch(law, 0)
+            grown = rows.size
             numbers = rows.filter_map { |row| row[:line] }.uniq.first(3)
             quoted = text[numbers.first.to_i - 1].to_s.strip[0, 70] if numbers.any?
             where = numbers.empty? ? "" : " (line #{numbers.join(", ")}#{quoted.to_s.empty? ? "" : ": `#{quoted}`"})"
@@ -116,16 +115,10 @@ module Master
           added.first(limit).join("; ")
         end
 
-        # Every finding of each law whose count the repair grew. "New" is counted per law, not
-        # matched by message: messages carry the numbers they measure ("ABC size 43.0"), so a
-        # refactor that eased a finding read as a new one. The summary and boyscout share it.
-        def introduced_findings(before, after)
-          had = law_counts(before)
-          grown = law_counts(after).select { |law, count| count > had.fetch(law, 0) }
-          after.select { |row| grown.key?(row[:law].to_s) }
-        end
-
-        def law_counts(rows) = rows.map { |row| row[:law].to_s }.tally
+        # The findings the repair added (ChangeScope.introduced_findings): only a law whose count grew
+        # has any, since messages carry the numbers they measure ("ABC size 43.0") and a refactor that
+        # eased a finding read as a new one. The summary, boyscout and the priority check share it.
+        def introduced_findings(before, after) = ChangeScope.introduced_findings(before, after)
 
         def note_unverified_fix(violation)
           return if test_file_for(violation[:file]).any?

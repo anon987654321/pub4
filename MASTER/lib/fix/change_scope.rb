@@ -19,6 +19,30 @@ module Master
           new(hunks_between(old_src, new_src), old_bytes: old_src.bytesize, new_bytes: new_src.bytesize)
         end
 
+        # The findings a change introduced: those of a law whose count grew, less the ones that match a
+        # finding that stood before by everything an edit does not move (its line and the file's
+        # fingerprint). A count alone flagged every row of a grown law; an exact match alone read a
+        # finding whose message carries a number ("25 lines" to "26") as new. Rows may use symbol or
+        # string keys; boyscout, the new-violations summary and the priority check all ask this.
+        MOVES_WITH_AN_EDIT = %w[line fingerprint].freeze
+
+        def introduced_findings(before, after)
+          standing = before.map { |row| identity(row) }.tally
+          grown_laws(before, after).then { |grown| after.select { |row| grown.key?(law_of(row)) } }.reject do |row|
+            key = identity(row)
+            standing[key].to_i.positive? && (standing[key] -= 1)
+          end
+        end
+
+        def grown_laws(before, after)
+          had = before.map { |row| law_of(row) }.tally
+          after.map { |row| law_of(row) }.tally.select { |law, count| count > had.fetch(law, 0) }
+        end
+
+        def law_of(row) = (row[:law] || row["law"]).to_s
+
+        def identity(row) = row.to_h { |key, value| [key.to_s, value] }.except(*MOVES_WITH_AN_EDIT)
+
         # One scope per file of a multi-file `git diff -U0`, keyed by path.
         def from_diff(text) = UnifiedDiff.per_file(text).transform_values { |body| new(UnifiedDiff.hunks(body)) }
 

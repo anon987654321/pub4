@@ -11,7 +11,9 @@ class TestRepairLoopIntroducedSummary < Minitest::Test
     before = [{ law: "ABC_SIZE", line: 3 }]
     after = [{ law: "ABC_SIZE", line: 3 }, { law: "ABC_SIZE", line: 12 }, { law: "THIN_CONTROLLER", line: 7 }]
 
-    assert_equal "ABC_SIZE +1 (line 3, 12); THIN_CONTROLLER +1 (line 7)", loop_for_summary.introduced_summary(before, after)
+    # Line 3 stood before the repair; only line 12 is its.
+    assert_equal "ABC_SIZE +1 (line 12); THIN_CONTROLLER +1 (line 7)",
+                 loop_for_summary.introduced_summary(before, after)
   end
 
 def test_quotes_the_first_offending_line_when_given_the_repaired_source

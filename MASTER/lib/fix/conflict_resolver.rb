@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "yaml"
 require "time"
+require_relative "change_scope"
 require_relative "severity"
 require_relative "priority"
 require_relative "../trace/log"
@@ -109,28 +110,12 @@ module Master
         }
       end
 
-      # What an edit moves or restamps without changing the finding: its line, and the
-      # fingerprint of the file's content, which every finding carries and every edit changes.
-      # Compared with them, an edit above a standing finding made it look new, and one
-      # outranking the fixed law refused a correct repair.
-      MOVES_WITH_AN_EDIT = %w[line fingerprint].freeze
-
-      # Findings present after the fix that were not present before it, counted one
-      # for one: a finding that stood before is matched by its law, severity and message
-      # wherever it now sits, and only the surplus is new.
+      # The repair loop's own definition of a new finding (ChangeScope.introduced_findings), so
+      # the priority check and boyscout never disagree about what a change introduced.
       def findings_introduced(before:, after:, path:)
         stamped = ->(rows) { rows.map { |finding| normalize(finding).merge("file" => path) } }
-        standing = stamped.call(before).map { |finding| identity(finding) }.tally
-        stamped.call(after).reject do |finding|
-          key = identity(finding)
-          next false unless standing[key].to_i.positive?
-
-          standing[key] -= 1
-          true
-        end
+        ChangeScope.introduced_findings(stamped.call(before), stamped.call(after))
       end
-
-      def identity(finding) = finding.except(*MOVES_WITH_AN_EDIT)
 
       attr_reader :root, :bus, :config
 
