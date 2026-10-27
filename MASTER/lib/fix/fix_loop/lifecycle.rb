@@ -254,7 +254,8 @@ module Master
             next unless Transaction::Recovery.persisted?(root: @transaction_root, id:)
 
             result = Transaction::Recovery.recover!(root: @transaction_root, id:, bus: @bus, release_conflicts: true)
-            next if result.ok? && %i[committed rolled_back].include?(result.value!)
+            # A rollback answers the paths it restored, recovery of a closed one its state.
+            next if result.ok? && (result.value!.is_a?(Array) || %i[committed rolled_back].include?(result.value!))
 
             outcome = result.ok? ? result.value!.inspect : result.message
             Master::Trace::Dmesg.status("fix0", "stranded transaction #{id}: #{outcome[0, 160]}")

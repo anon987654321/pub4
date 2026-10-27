@@ -64,7 +64,8 @@ module Master
           Result.ok(:committed)
         rescue StandardError => e
           @tx.send(:emit, "fix:transaction_delivery_finalize_failed", id: @tx.id, error: e.message)
-          Result.err("transaction delivery finalize: #{e.class}", category: :infrastructure)
+          # The Result is the operator's answer, not the durable manifest: it names the reason.
+          Result.err("transaction delivery finalize: #{e.class}: #{e.message}", category: :infrastructure)
         ensure
           # A loaded recovery transaction owns the root lock. Release it on both
           # success and failure so a rejected/mismatched finalization cannot

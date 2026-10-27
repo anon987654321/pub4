@@ -76,9 +76,10 @@ class TestFixLoopCommitter < Minitest::Test
     bus = FakeBus.new
     run_committer(git, bus, "fix: ok")
     assert_equal [["fix: ok", ["lib/ok.rb"]]], git.commits
+    # The bus event carries counts, not workspace paths; the commit itself names the file.
     commit_event = bus.events.find { |event, _| event == "ops:commit" }
-    assert_equal ["lib/ok.rb"], commit_event.last[:paths]
-    assert_equal [], commit_event.last[:findings]
+    assert_equal 1, commit_event.last[:path_count]
+    assert_equal 0, commit_event.last[:finding_count]
     refute blocked?(bus)
   end
 

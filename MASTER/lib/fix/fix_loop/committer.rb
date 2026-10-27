@@ -193,7 +193,7 @@ module Master
           mine, foreign = paths.partition { |path| written_unchanged?(path) }
           unless foreign.empty?
             named = foreign.first(3).join(", ")
-            Master::Trace::Dmesg.status("deliver0", "left #{foreign.size} file(s) /fix did not write")
+            Master::Trace::Dmesg.status("deliver0", "left #{foreign.size} file(s) /fix did not write: #{named}")
           end
           mine
         end
@@ -341,7 +341,7 @@ def stage_commit_mode?
             raise checkpoint.message if checkpoint.err?
 
             Master::Trace::Dmesg.status(
-              "deliver0", "commit=#{@git.head} push=#{push_each? ? "ok" : "deferred"} paths=#{paths.size}"
+              "deliver0", "commit=#{@git.head} push=#{push_each? ? "ok" : "deferred"} paths=#{paths.join(", ")}"
             )
             result
           rescue StandardError => e
@@ -393,7 +393,8 @@ def stage_commit_mode?
         # The bus carries the event; dmesg says which files a rollback did not put back.
         def report_rollback(result, left)
           unless left.empty?
-            Master::Trace::Dmesg.status("fix0", "rollback left #{left.size} file(s) another writer changed")
+            Master::Trace::Dmesg.status("fix0", "rollback left #{left.size} file(s) another writer changed: " \
+                                                "#{left.first(5).join(", ")}")
           end
           return if result.ok?
 
@@ -407,7 +408,8 @@ def stage_commit_mode?
           foreign = transaction.release!(transaction.conflicts)
           return foreign if foreign.empty?
 
-          Master::Trace::Dmesg.status("deliver0", "left #{foreign.size} file(s) another writer changed")
+          Master::Trace::Dmesg.status("deliver0", "left #{foreign.size} file(s) another writer changed: " \
+                                                  "#{foreign.first(3).join(", ")}")
           foreign
         end
 
@@ -446,7 +448,7 @@ def stage_commit_mode?
 
           promote_known_good(@git.head, paths)
           Master::Trace::Dmesg.status(
-            "deliver0", "commit=#{@git.head} push=#{push_each? ? "ok" : "deferred"} paths=#{paths.size}"
+            "deliver0", "commit=#{@git.head} push=#{push_each? ? "ok" : "deferred"} paths=#{paths.join(", ")}"
           )
           @bus&.publish("ops:commit", operation: "commit", head: @git.head, path_count: paths.size, finding_count: Array(findings).size)
           Result.ok(:committed)

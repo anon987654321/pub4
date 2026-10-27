@@ -371,7 +371,8 @@ module Master
         return if paths.empty?
 
         Master::Trace::Dmesg.status(
-          "fix0", "stranded transaction #{@id}: kept #{paths.size} file(s) another writer changed"
+          "fix0", "stranded transaction #{@id}: kept #{paths.size} file(s) another writer changed since: " \
+                  "#{paths.first(5).join(", ")}"
         )
       end
 
