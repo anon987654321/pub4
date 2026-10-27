@@ -12,7 +12,7 @@ require_relative "../../../lib/gap"
 require_relative "../../support/check_result"
 require_relative "../../support/png_diff"
 require_relative "../../support/geometry_probe"
-require_relative "sweep_replay"
+require_relative "../../support/sweep_replay"
 
 module Deploy
   # Browser-runtime evidence for the canonical RAILS surface inventory.
