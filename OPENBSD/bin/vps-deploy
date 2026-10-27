@@ -588,6 +588,10 @@ write_stamp() {
 deploy_stage=master
 if [[ $app == master ]]; then
   print "vps-deploy: master web"
+  # master's bundle, native gem builds and precompile run as long as an app's CI,
+  # and this branch never reached the keeper below: on 2026-10-27 the guard read
+  # deploy=0 through a 30-minute master deploy and shed amber and bsdports twice.
+  keep_deploy_flag
   settle_boots
   if zsh "$repo/OPENBSD/bin/vps_deploy_master.sh"; then
     # The loopback journeys that need no browser, for this app only.

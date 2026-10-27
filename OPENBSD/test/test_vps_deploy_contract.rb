@@ -552,6 +552,12 @@ class VpsDeployContractTest < Minitest::Test
     assert_operator SOURCE.rindex(%(admin_service check "$app")), :>, SOURCE.index(%(CHECK_AUTOFIX=0 "$RUBY" "$repo/MASTER/checks/runner.rb"))
   end
 
+  def test_a_master_deploy_holds_the_flag_before_its_build
+    master_branch = SOURCE[/^if \[\[ \$app == master \]\]; then\n.*?^fi$/m]
+
+    assert_operator master_branch.index("keep_deploy_flag"), :<, master_branch.index("vps_deploy_master.sh")
+  end
+
   # The copy-tree on vm23 keeps path gems beside app/, so every ../X an app
   # Gemfile names must be a directory vps_ci.sh syncs there. The layout moved
   # (shared became __shared, engines/ became sibling brgen_* directories) and the
