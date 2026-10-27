@@ -23,6 +23,15 @@ class TestLawParity < Minitest::Test
   end
 
 
+  def test_law_parity_is_part_of_the_full_audit_gate
+    rakefile = File.read(File.join(Master::ROOT, "Rakefile"))
+    checks = rakefile[/^AUDIT_CHECKS = %w\[\s*(.*?)\s*\]\.freeze/m, 1]
+
+    refute_nil checks, "Rakefile must declare the full audit gate"
+    assert_includes checks.split, "lint:law_parity",
+                    "a parity check omitted from AUDIT_CHECKS is never run by rake audit"
+  end
+
   def test_report_ok_string_when_clean
     parity = Master::Fix::LawParity.new
     assert_match(/law_parity: ok/, parity.report) if parity.ok?

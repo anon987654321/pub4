@@ -871,7 +871,7 @@ end
 AUDIT_CHECKS = %w[
   dogfood constitution selftest tools core_smoke security_sweep
   lint:frozen lint:data_singularity lint:spine lint:autoload
-  lint:law_trace lint:scan_coverage lint:reader_singularity lint:doc_citations
+  lint:law_trace lint:law_parity lint:scan_coverage lint:reader_singularity lint:doc_citations
   lint:do_not_touch lint:instruments lint:constant_collisions
   lint:capability lint:cohesion lint:law_reach lint:models lint:dedup
   lint:word_boundary lint:test_naming
