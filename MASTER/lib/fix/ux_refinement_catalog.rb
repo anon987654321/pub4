@@ -51,10 +51,47 @@ module Master
           raise ArgumentError, "UX catalog row has unknown area" unless AREA_NAMES.include?(row["area"])
           raise ArgumentError, "UX catalog row has no valid proof type" unless row["proof"].is_a?(Array) &&
             row["proof"].any? && (row["proof"] - PROOF_TYPES).empty?
-          raise ArgumentError, "UX catalog rows remain acceptance targets, not completed work" unless row["state"] == "acceptance_required"
+          case row["state"]
+          when "acceptance_required"
+            # Open by design; source changes and inventory membership are not proof.
+          when "verified"
+            validate_evidence!(row)
+          else
+            raise ArgumentError, "UX catalog row has unknown state: #{row["state"]}"
+          end
         end
         missing_areas = AREA_NAMES - rows.map { |row| row["area"] }.uniq
         raise ArgumentError, "UX catalog missing areas: #{missing_areas.join(",")}" unless missing_areas.empty?
+        true
+      end
+
+      # A verified row is admissible only with real PASS receipts for every
+      # declared proof type. Each receipt binds a local evidence artifact and its
+      # digest to the exact source commit that was measured.
+      def self.validate_evidence!(row)
+        receipts = row["evidence"]
+        raise ArgumentError, "#{row["id"]}: verified row needs evidence receipts" unless receipts.is_a?(Array) && receipts.any?
+
+        proof_types = receipts.map do |receipt|
+          raise ArgumentError, "#{row["id"]}: evidence receipt must be a mapping" unless receipt.is_a?(Hash)
+
+          proof_type = receipt["proof_type"].to_s
+          raise ArgumentError, "#{row["id"]}: evidence has undeclared proof type" unless row["proof"].include?(proof_type)
+          raise ArgumentError, "#{row["id"]}: evidence result must be PASS" unless receipt["result"] == "PASS"
+
+          location = receipt["location"].to_s.strip
+          parts = location.split("/")
+          safe_path = !location.empty? && !location.start_with?("/") && !location.match?(/\A[A-Za-z]:/) &&
+            !location.include?("\\") && parts.none? { |part| part.empty? || part == "." || part == ".." }
+          raise ArgumentError, "#{row["id"]}: evidence location must be a safe repository-relative path" unless safe_path
+
+          raise ArgumentError, "#{row["id"]}: evidence needs a SHA-256 digest" unless receipt["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/i)
+          raise ArgumentError, "#{row["id"]}: evidence needs a full commit SHA" unless receipt["commit"].to_s.match?(/\A[0-9a-f]{40}\z/i)
+          proof_type
+        end
+        missing = Array(row["proof"]).map(&:to_s).uniq - proof_types.uniq
+        raise ArgumentError, "#{row["id"]}: verified row is missing proof receipts for #{missing.join(",")}" unless missing.empty?
+
         true
       end
 
@@ -83,8 +120,9 @@ module Master
           "by_owner_tree" => TREE_NAMES.to_h { |tree| [tree, rows.count { |row| row.fetch("owner_trees").include?(tree) }] },
           "by_proof_type" => rows.flat_map { |row| row.fetch("proof") }.tally.sort.to_h,
           "acceptance_required_count" => rows.count { |row| row.fetch("state") == "acceptance_required" },
+          "verified_count" => rows.count { |row| row.fetch("state") == "verified" },
           "owner_trees" => TREE_NAMES,
-          "state_semantics" => "acceptance_required is not implementation evidence",
+          "state_semantics" => "acceptance_required is open; verified requires PASS receipts for every proof type, each bound to a commit and SHA-256",
         }
       end
 
@@ -104,11 +142,12 @@ module Master
         lines = [
           "UX REFINEMENT ACCEPTANCE CONTRACT",
           "Canonical inventory: MASTER/data/ux_refinements.yml (#{rows.size} applicable rows; the full catalogue contains #{EXPECTED_COUNT}).",
-          "These are acceptance targets, not evidence that the behavior exists. Inspect the relevant owner and add/run the declared proof; never claim completion from this list alone.",
+          "Rows marked acceptance_required remain open. A verified row must carry PASS receipts for every declared proof type, each bound to a repository-relative evidence artifact, SHA-256 and exact commit. Never infer completion from inventory membership alone.",
           "Keep one canonical Ruby REPL prompt. The face is a presentation adapter, never a second authority. Preserve source and operator-owned values; do not apply unrelated visual items blindly."
         ]
         rows.each do |row|
-          lines << "#{row.fetch("id")} [#{row.fetch("area")}] #{row.fetch("title")}: #{row.fetch("contract")} Proof=#{Array(row.fetch("proof")).join("+")}."
+          receipt_count = Array(row["evidence"]).size
+          lines << "#{row.fetch("id")} [#{row.fetch("area")}; state=#{row.fetch("state")}] #{row.fetch("title")}: #{row.fetch("contract")} Proof=#{Array(row.fetch("proof")).join("+")}.#{row["state"] == "verified" ? " Verified receipts=#{receipt_count}." : ""}"
         end
         lines.join("\n")
       end
