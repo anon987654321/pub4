@@ -12,9 +12,16 @@ One pass on one commit, recorded as PASS, FAIL, INCONCLUSIVE, BLOCKED or
 TIMEOUT per command. The 2026-10-25 and 2026-10-26 connector sessions committed
 source and tests they could not run; this pass is what measures them.
 
-- [ ] MASTER: `MASTER_TEST_START_MARKERS=1 MASTER_TEST_JOBS=1 MASTER_TEST_PROGRESS_EVERY=25 rake test`,
+- [ ] MASTER focused regressions on the pinned Ruby: from `MASTER/`, run
+  `bundle exec ruby -Ilib:test test/test_law_parity.rb`,
+  `bundle exec ruby -Ilib:test test/test_architecture_exploration.rb`,
+  `bundle exec ruby -Ilib:test test/test_run_journal_lifecycle.rb`, and
+  `bundle exec ruby -Ilib:test test/test_cli_boot_e2e.rb` (the last exercises the real
+  PTY prompt/face lifecycle; its live-model case remains opt-in).
+- [ ] MASTER full suite: `MASTER_TEST_START_MARKERS=1 MASTER_TEST_JOBS=1 MASTER_TEST_PROGRESS_EVERY=25 rake test`,
   then `MASTER_TEST_JOBS=3 rake test`; check `.master/check/suite-report.json` for incomplete
-  workers and mismatched start/result counts. Then `bin/check --profile=agent`.
+  workers and mismatched start/result counts. Then run `rake audit` (the complete declared lint
+  inventory), followed by `bin/check --profile=agent`.
 - [ ] RAILS: `ruby RAILS/test/contract_runner_contract_test.rb`, `ruby RAILS/test/run_all.rb`, and
   `bin/ci` in each app in `RAILS/apps.yml`, including the 26 playlist, tv and takeaway tests
   that no command ran until `Pub4TestScope`, brgen's share-target, share-draft and job
