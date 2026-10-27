@@ -30,6 +30,8 @@ const code = [
   extract("dbToGain", /function dbToGain\(text\) \{[\s\S]*?\n\}/),
   extract("buildChorus", /function buildChorus\(ctx, args\) \{[\s\S]*?\n\}/),
   extract("buildPhaser", /function buildPhaser\(ctx, args\) \{[\s\S]*?\n\}/),
+  extract("buildAeval", /function buildAeval\(ctx, args\) \{[\s\S]*?\n\}/),
+  extract("buildAcrusher", /function buildAcrusher\(ctx, args\) \{[\s\S]*?\n\}/),
   extract("buildChainNode", /function buildChainNode\(ctx, name, args\) \{[\s\S]*?\n\}/),
   extract("buildVoiceChain", /function buildVoiceChain\(ctx, chainText\) \{[\s\S]*?\n\}/),
 ].join("\n");
@@ -132,8 +134,9 @@ test("the phaser sweeps allpass stages at the declared speed", () => {
 // quietly builds seven of its eight filters is a voice that differs from the
 // server's without saying so.
 test("an unsupported filter is reported, not swallowed", () => {
-  const { chain } = build("highpass=f=200,acrusher=bits=8");
-  assert.equal(chain.skipped.join(","), "acrusher");
+  // afreqshift has no WebAudio node; only the server chain applies it.
+  const { chain } = build("highpass=f=200,afreqshift=shift=-120");
+  assert.equal(chain.skipped.join(","), "afreqshift");
   assert.equal(chain.stages, 1);
 });
 

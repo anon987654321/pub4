@@ -288,7 +288,12 @@ body[data-mode="speaking"] #spin-btn { display: block; }
   color: var(--face-fg);
 }
 #music-btn[aria-pressed="true"]::before {
-  background: currentColor;
+  /* The playing state is the one signal moment on this surface: the drawn
+     square turns signal as its state marker. The marker is the border, with
+     the fill left open — the signal marks meaning here, it does not paint
+     the control. */
+  background: transparent;
+  border-color: var(--pub4-signal);
 }
 #music-btn:hover { color: var(--face-fg); }
 

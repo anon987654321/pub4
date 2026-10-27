@@ -311,6 +311,15 @@ promotional_art:
     - hard crop
     - cut-off product
 face_root:
+  palette:
+    signal: "#D4D4D4"
+    signal_ink: "#080808"
+    signal_on_light: "#3A3A3A"
+    c_text: oklch(93% 0 0)
+    x_text: "#E7E7E7"
+    c_accent: var(--pub4-signal)
+    c_danger: oklch(78% 0 0)
+    c_code: oklch(81% 0 0)
   anchors:
     c_text: oklch(93% 0.025 250)
     x_text: "#e7eeff"
@@ -321,27 +330,27 @@ face_root:
     Code", ui-monospace, monospace'
   font_label: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira
     Code", ui-monospace, monospace'
-  face_bg: "#050710"
+  face_bg: "#050505"
   derived:
     face_fg: var(--x-text)
-    face_muted: "#a1acc5"
-    face_dim: "rgb(176 194 232 / 18%)"
-    face_soft: "rgb(176 194 232 / 7%)"
+    face_muted: "#A1A1A1"
+    face_dim: rgb(176 176 176 / 18%)
+    face_soft: rgb(176 176 176 / 7%)
     face_alert: color-mix(in oklch, var(--c-danger) 75%, white)
     mood_accent: var(--c-accent)
     canvas_mood_accent: var(--c-accent)
-    border_faint: "rgb(164 190 244 / 16%)"
-    border_soft: "rgb(164 190 244 / 23%)"
-    border_strong: "rgb(175 202 255 / 34%)"
+    border_faint: rgb(164 164 164 / 16%)
+    border_soft: rgb(164 164 164 / 23%)
+    border_strong: rgb(175 175 175 / 34%)
     hover_tint: color-mix(in srgb, var(--face-fg) 8%, transparent)
-    chrome_bg: "#11131a"
-    chrome_surface: "#171a23"
-    chrome_surface_active: "#202431"
-    chrome_border: "#303747"
-    chrome_hover: "rgb(183 182 239 / 8%)"
-    chrome_text: "#dce1eb"
-    chrome_muted: "#a0a8b8"
-    chrome_focus: "#b7b6ef"
+    chrome_bg: "#111111"
+    chrome_surface: "#171717"
+    chrome_surface_active: "#222222"
+    chrome_border: "#303030"
+    chrome_hover: rgb(183 183 183 / 8%)
+    chrome_text: "#DCDCDC"
+    chrome_muted: "#A0A0A0"
+    chrome_focus: "#C8C8C8"
   layout:
     tap-min: 44px
     text-meta: 0.8125rem
@@ -670,6 +679,9 @@ face_interface:
       W: 0.201
       "@": 0.2099
     mode: dark
+    tone_far: "#555555"
+    tone_mid: "#A6A6A6"
+    tone_near: "#F0F0F0"
     fit: 0.92
     camera: 3.2
     aspect: 2.0
@@ -773,6 +785,12 @@ face_interface:
       bob_rate: 1.1
       blink_period: 3.4
       blink_length: 0.16
+      glance_initial: 0.72
+      glance_interval:
+      - 0.28
+      - 1.85
+      glance_horizontal: 0.065
+      glance_vertical: 0.028
       dolly:
         idle: 1.0
         listening: 1.018
@@ -965,27 +983,29 @@ face_interface:
         density: 1.32
         fracture: 0.12
     morphology:
-      model: speculative_distant_human_2026_r2
-      generation: 9
-      cranium_scale: 1.18
-      cranial_width: 1.06
-      cranial_height: 1.04
-      upper_face_scale: 0.96
-      lower_face_scale: 0.8
-      facial_verticalization: 1.04
-      masticatory_scale: 0.78
-      orbital_scale: 1.1
-      orbital_vertical_scale: 1.06
-      brow_scale: 0.66
-      nose_scale: 0.86
-      nasal_projection: 0.86
-      mouth_scale: 0.84
-      facial_projection: 0.82
-      jaw_projection: 0.8
-      pupil_scale: 0.88
-      asymmetry: 0.01
+      model: speculative_distant_human_2026_r3
+      generation: 10
+      cranium_scale: 1.22
+      cranial_width: 1.07
+      cranial_height: 1.08
+      upper_face_scale: 0.95
+      lower_face_scale: 0.76
+      facial_verticalization: 1.07
+      masticatory_scale: 0.74
+      orbital_scale: 1.08
+      orbital_vertical_scale: 1.04
+      brow_scale: 0.6
+      nose_scale: 0.82
+      nasal_projection: 0.82
+      mouth_scale: 0.86
+      facial_projection: 0.78
+      jaw_projection: 0.76
+      jaw_softening: 0.95
+      malar_scale: 0.96
+      pupil_scale: 0.86
+      asymmetry: 0.012
       asymmetry_seed: 73421
-      variation_band: 0.025
+      variation_band: 0.028
       climate_variant: neutral
     shell:
       radius: 1.58

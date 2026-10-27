@@ -185,6 +185,17 @@ body[data-laughter="1"] canvas { filter: contrast(1.08) saturate(1.06); }
 body[data-face-flash="1"] canvas {
   filter: saturate(1.08) contrast(1.04);
 }
+/* Calm damps the flash-class canvas responses (operator request 2026-10-27: a
+   soothing face). The state still lands in the field — the stipples carry it —
+   but calm drops the whole-canvas contrast kicks. The profile may sit on html
+   or body depending on which setter wrote it, so both are matched, each
+   outranking the flash rule above it. */
+html[data-runtime-profile="calm"][data-topology-flash="1"] canvas,
+body[data-runtime-profile="calm"][data-topology-flash="1"] canvas,
+html[data-runtime-profile="calm"] body[data-laughter="1"] canvas,
+body[data-runtime-profile="calm"][data-laughter="1"] canvas,
+html[data-runtime-profile="calm"] body[data-face-flash="1"] canvas,
+body[data-runtime-profile="calm"][data-face-flash="1"] canvas { filter: none; }
 
 body[data-focus-mode="1"] .top-left-logo,
 body[data-focus-mode="1"] .ui-status,
@@ -1988,7 +1999,10 @@ body[data-queue-active="1"] .turn-queue-status { opacity: .9; }
 }
 .master-session-tab:hover { background: var(--chrome-hover); color: var(--chrome-text); }
 .master-session-tab[aria-current="page"] { background: var(--chrome-surface-active); color: var(--chrome-text); font-weight: 600; }
-.master-session-tab[aria-current="page"]::after { position: absolute; inset-inline: .65rem; inset-block-end: 0; block-size: 0; border-block-end: 2px solid var(--pub4-signal); content: ""; }
+.master-session-tab[aria-current="page"]::after {
+  position: absolute; inset-inline: .65rem; inset-block-end: 0; block-size: 0;
+  border-block-end: 2px solid var(--pub4-signal); content: "";
+}
 .master-session-tab:focus-visible { z-index: 1; outline: 2px solid var(--chrome-focus); outline-offset: -3px; }
 body.mission-control .master-titlebar { max-width: none; max-inline-size: none; margin: 0; padding-inline-end: var(--inset-r); }
 body.mission-control .mission-heading { max-inline-size: 80ch; margin: 0 0 1rem; }

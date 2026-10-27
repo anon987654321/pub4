@@ -35,7 +35,6 @@ body.zen #zsh.revealed { transform: translate(-50%,0); }
 #photo-button:hover, #music-btn:hover, #spin-btn:hover { background: var(--chrome-hover); color: var(--chrome-text); }
 #photo-button:focus-visible, #music-btn:focus-visible, #spin-btn:focus-visible { outline: 2px solid var(--chrome-focus); outline-offset: -2px; }
 #music-btn::before { inset: 15px; border-radius: 0; border-color: currentColor; }
-#music-btn[aria-pressed="true"]::before { background: var(--pub4-signal); border-color: var(--pub4-signal); }
 #spin-btn { padding-inline: 8px; font-family: var(--font-brand); }
 #zsh-status { color: var(--chrome-muted); font-size: var(--text-meta); }
 .turn-queue-status { color: var(--chrome-muted); font: 400 .72rem/1.2 var(--font-mono); white-space: nowrap; pointer-events: none; margin-inline-start: 4px; }
@@ -77,7 +76,10 @@ body[data-queue-active="1"] .turn-queue-status { opacity: .9; }
 }
 .master-session-tab:hover { background: var(--chrome-hover); color: var(--chrome-text); }
 .master-session-tab[aria-current="page"] { background: var(--chrome-surface-active); color: var(--chrome-text); font-weight: 600; }
-.master-session-tab[aria-current="page"]::after { position: absolute; inset-inline: .65rem; inset-block-end: 0; block-size: 2px; background: var(--pub4-signal); content: ""; }
+.master-session-tab[aria-current="page"]::after {
+  position: absolute; inset-inline: .65rem; inset-block-end: 0; block-size: 0;
+  border-block-end: 2px solid var(--pub4-signal); content: "";
+}
 .master-session-tab:focus-visible { z-index: 1; outline: 2px solid var(--chrome-focus); outline-offset: -3px; }
 body.mission-control .master-titlebar { max-width: none; max-inline-size: none; margin: 0; padding-inline-end: var(--inset-r); }
 body.mission-control .mission-heading { max-inline-size: 80ch; margin: 0 0 1rem; }

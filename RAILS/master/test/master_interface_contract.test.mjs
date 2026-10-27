@@ -153,7 +153,9 @@ test("message action menu is localized, safe to render, and viewport-aware", () 
   }
 });
 test("face shell stays flat and square", () => {
-  assert.doesNotMatch(faceCss, /backdrop-filter\s*:\s*(?!none\b)[^;]+;/i);
+  // The lookahead sits before the whitespace so "backdrop-filter: none;" cannot
+  // slip past it by backtracking \s*.
+  assert.doesNotMatch(faceCss, /backdrop-filter\s*:(?!\s*none\b)[^;]+;/i);
   assert.doesNotMatch(faceCss, /filter\s*:\s*[^;]*\b(?:blur|drop-shadow)\(/i);
 
   const pip = faceCss.match(/body\[data-face-pip="1"\] canvas\s*\{[^}]+\}/);
@@ -189,14 +191,19 @@ test("evidence events retain their event name and reach the shared FaceWorld clo
 });
 
 test("mission control distinguishes fresh, failed and terminal live states", () => {
+  // The view owns the status node and localized strings; dashboard_live.js polls.
+  const poller = readFileSync(join(publicDir, "dashboard_live.js"), "utf8");
   assert.match(dashboard, /id="refresh-state"[^>]*role="status"/);
-  assert.match(dashboard, /if \(!r\.ok \|\| d\.error\)/);
-  assert.match(dashboard, /catch \(error\)/);
-  assert.match(dashboard, /document\.hidden/);
-  assert.match(dashboard, /inFlight/);
-  assert.match(dashboard, /i18nRefreshFailed/);
-  assert.match(dashboard, /i18nUpdated/);
-  assert.match(dashboard, /closeDoor\(\)/);
+  assert.match(dashboard, /data-i18n-refresh-failed=/);
+  assert.match(dashboard, /data-i18n-updated=/);
+  assert.match(dashboard, /<script src="\/dashboard_live\.js"/);
+  assert.match(poller, /if \(!r\.ok \|\| d\.error\)/);
+  assert.match(poller, /catch \(error\)/);
+  assert.match(poller, /document\.hidden/);
+  assert.match(poller, /inFlight/);
+  assert.match(poller, /i18nRefreshFailed/);
+  assert.match(poller, /i18nUpdated/);
+  assert.match(poller, /closeDoor\(\)/);
 });
 
 test("chat and mission control share accessible Ghostty-inspired session tabs", () => {
@@ -219,12 +226,14 @@ test("canonical theme token reaches CSS, routes and PWA manifest", () => {
   const rootEnd = faceCss.indexOf("/* END:generated-face-root */", rootStart);
   assert.ok(rootStart >= 0 && rootEnd > rootStart, "generated face token block is missing");
   const root = faceCss.slice(rootStart, rootEnd);
-  assert.match(tokens, /face_bg: "#050710"/);
-  assert.match(tokens, /x_text: "#e7eeff"/);
-  assert.match(root, /--face-bg: #050710;/);
-  assert.match(root, /--x-text: #e7eeff;/);
-  assert.match(pwaManifest, /"background_color": <%= theme_color\.to_json %>/);
-  assert.match(pwaManifest, /"theme_color": <%= theme_color\.to_json %>/);
+  // face_root.palette is the grayscale face; anchors keep the older tinted values.
+  assert.match(tokens, /face_bg: "#050505"/);
+  assert.match(tokens, /palette:[\s\S]*?x_text: "#E7E7E7"/);
+  assert.match(root, /--face-bg: #050505;/);
+  assert.match(root, /--x-text: #E7E7E7;/);
+  // raw keeps ActionView from HTML-escaping the JSON string's quotes.
+  assert.match(pwaManifest, /"background_color": <%= raw theme_color\.to_json %>/);
+  assert.match(pwaManifest, /"theme_color": <%= raw theme_color\.to_json %>/);
   for (const page of [chatIndex, dashboard]) {
     assert.match(page, /theme_color = Master\.tokens\.fetch\("face_root"\)\.fetch\("face_bg"\)/);
     assert.match(page, /meta name="theme-color" content="<%= theme_color %>"/);

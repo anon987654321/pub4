@@ -69,7 +69,11 @@ test("web face queues follow-up turns and exposes stop/resume state", () => {
 
 test("thinking star animates in calm mode but respects reduced motion and battery mode", () => {
   const source = readFileSync(join(publicDir, "face.part1.txt"), "utf8");
-  assert.match(source, /v === 'thinking' && !State\.reducedMotion && runtimeProfile\(\) !== 'battery'/);
+  // faceReducedMotionActive() folds State.reducedMotion together with the
+  // canonical FaceState, the document-root projection and the media query.
+  assert.match(source, /v === 'thinking' && !faceReducedMotionActive\(\) && runtimeProfile\(\) !== 'battery'/);
+  const reducedMotion = /function faceReducedMotionActive\(\) \{[\s\S]*?Boolean\(State\.reducedMotion\)/;
+  assert.match(source, new RegExp(`${reducedMotion.source}[\\s\\S]*?prefers-reduced-motion: reduce`));
 });
 
 test("face surface owns the full viewport", () => {
@@ -126,7 +130,8 @@ test("FaceWorld keeps portrait rendering separate from repository overlays", () 
   assert.match(world, /const portrait = topology === "face" \|\| topology === "papua-mask";/);
   assert.match(world, /node\.visible = !portrait/);
   assert.match(world, /edges\.visible = !portrait/);
-  assert.match(world, /splatProxy\.visible = !portrait/);
+  // The splat field stays off a portrait unless a semantic subject is morphing in.
+  assert.match(world, /splatProxy\.visible = [^;]*\(!portrait \|\| subjectActive\)/);
   assert.match(world, /sprite\.visible = !portrait/);
   assert.match(world, /jawTaper/);
   assert.match(world, /cheekFull/);
@@ -270,7 +275,10 @@ test("face.modules.bundle.js is generated from face module entry", () => {
   assert.match(sparse, /master:evidence/);
   assert.match(sparse, /master:law/);
   assert.match(sparse, /super_void/);
-  assert.match(sparse, /gl_PointSize = clamp\([^;]*1\.0, 4\.0\)/);
+  // FACE_POINT_IS_ONE_PIXEL: depth attenuates brightness, never point size.
+  assert.match(sparse, /gl_PointSize = 1\.0;/);
+  assert.doesNotMatch(sparse, /gl_PointSize = clamp\(/);
+  assert.match(sparse, /vOpacity = aOpacity \* clamp\([^;]*-mv\.z\)/);
   assert.match(sparse, /voice trace|Speaking grows a filament/i);
   assert.match(sparse, /semantic particles|Semantic particles remember/i);
   assert.match(sparse, /ghostSerial/);
@@ -637,8 +645,9 @@ test("face.css keeps primer and prompt layering stable", () => {
   assert.match(css, /#primer/);
   assert.match(css, /z-index:\s*var\(--z-modal\)/);
   assert.match(css, /body:not\(\.face-ready\) #zsh:not\(\.live\)/);
-  assert.match(css, /--x-text:\s*#e7eeff/);
-  assert.match(css, /--face-bg:\s*#050710/);
+  // face_root.palette in MASTER/data/tokens.yml is the grayscale face.
+  assert.match(css, /--x-text:\s*#E7E7E7/);
+  assert.match(css, /--face-bg:\s*#050505/);
   assert.match(css, /body\[data-runtime-profile="calm"\]/);
 });
 
@@ -1020,17 +1029,17 @@ test("constitutional ASCII face is wired as an overlay and a fallback", () => {
 });
 
 
-test("Ghostty-inspired chrome uses canonical graphite and violet tokens without weakening mobile targets", () => {
+test("Ghostty-inspired chrome uses canonical graphite tokens without weakening mobile targets", () => {
   const tokens = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
   const generated = readFileSync(join(railsRoot, "__shared", "design_tokens.yml"), "utf8");
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
 
   for (const [name, value] of [
-    ["chrome_bg", "#11131a"],
-    ["chrome_surface", "#171a23"],
-    ["chrome_surface_active", "#202431"],
-    ["chrome_border", "#303747"],
-    ["chrome_focus", "#b7b6ef"]
+    ["chrome_bg", "#111111"],
+    ["chrome_surface", "#171717"],
+    ["chrome_surface_active", "#222222"],
+    ["chrome_border", "#303030"],
+    ["chrome_focus", "#C8C8C8"]
   ]) {
     assert.ok(tokens.includes(name + ': "' + value + '"'), "canonical token missing " + name);
     assert.ok(generated.includes(name + ': "' + value + '"'), "generated token missing " + name);
@@ -1038,7 +1047,14 @@ test("Ghostty-inspired chrome uses canonical graphite and violet tokens without 
   }
   assert.match(css, /body\.mission-control \.panel \{[^}]*border-inline-start: 0;/s);
   assert.match(css, /body\.mission-control \.panel \{[^}]*padding-inline-start: 0;/s);
-  assert.match(css, /@media \(max-width: 479px\) \{[\s\S]*?min-inline-size: var\(--tap-min\);[\s\S]*?min-block-size: var\(--tap-min\);/);
+  // The session chrome is mobile-first: the base rules carry the tap target and
+  // the wider breakpoint only relaxes spacing, never the target size.
+  assert.match(css, /\.master-session-tab \{[^}]*min-inline-size: var\(--tap-min\); min-block-size: var\(--tap-min\);/);
+  const tapTargets = /#photo-button, #music-btn, #spin-btn \{[^}]*/;
+  assert.match(css, new RegExp(`${tapTargets.source}min-inline-size: var\\(--tap-min\\); min-block-size: var\\(--tap-min\\);`));
+  const wide = css.match(/@media \(min-width: 480px\) \{[\s\S]*?\n\}/)?.[0] ?? "";
+  assert.match(wide, /\.master-session-tab \{ padding-inline:/);
+  assert.doesNotMatch(wide, /min-(inline|block)-size/);
 });
 
 test("shell chrome uses plain CLI prompt words and the monospace source font", () => {
@@ -1048,7 +1064,8 @@ test("shell chrome uses plain CLI prompt words and the monospace source font", (
   assert.doesNotMatch(view, /id="wordmark"|Contract\.wordmark|Contract\.glyph/);
   assert.match(view, /class="pp"[^>]*><%= Master::Face::Contract\.shell_prompt %><\/span>/);
   assert.doesNotMatch(view, /class="sep2"|\$ <\/span>/);
-  assert.match(css, /--font-mono:\s*"Source Code Pro"/);
+  // face_root.font_mono in MASTER/data/tokens.yml leads with JetBrainsMono.
+  assert.match(css, /--font-mono:\s*"JetBrainsMono Nerd Font"/);
   assert.match(css, /font-family:\s*"Source Sans 3"/);
   assert.match(css, /url\("\/fonts\/SourceSans3-Regular\.woff2"\)/);
   assert.match(css, /url\("\/fonts\/SourceCodePro-Regular\.woff2"\)/);

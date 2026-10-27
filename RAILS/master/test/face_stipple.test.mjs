@@ -271,7 +271,9 @@ test("stipple shares face state and obeys point and motion budgets", () => {
   assert.match(sparseField, /sharedBudget\.constrained_device/);
   assert.match(system, /buildFromSamples/);
   assert.match(system, /uPointSizeReferenceDepth: \{ value: clamp\(pointSize\.reference_depth/);
-  assert.match(system, /gl_PointSize = clamp\(biasedSize \* distanceScale,\s+uPointSizeOutputMin, uPointSizeOutputMax\)/);
+  // FACE_POINT_IS_ONE_PIXEL: distance attenuates alpha, never point size.
+  assert.match(system, /gl_PointSize = 1\.0;/);
+  assert.match(system, /vAlpha = clamp\([^;]*\* distanceScale, 0\.0, 1\.0\)/);
   assert.match(system, /vThreshold = aThreshold/);
   assert.match(system, /vThreshold > uDensity/);
 });
