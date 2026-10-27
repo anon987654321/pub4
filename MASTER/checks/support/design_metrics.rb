@@ -109,11 +109,11 @@ module Deploy
       light_only.select { |_, only| only }.keys
     end
 
-    # The vertical accent ink, read from the stylesheet that sets it. #110f19 was
+    # The vertical accent ink, from the shared dialect tokens that set it. #110f19 was
     # chosen against the accent column and measured there — "dark 5.10 to 9.94",
     # which is the accent column exactly. Nobody measured it against hover.
     def vertical_accent_ink(rails_root)
-      sheet = File.join(rails_root, "brgen/app/assets/stylesheets/application.scss")
+      sheet = File.join(rails_root, "__shared/app/assets/stylesheets/_dialect_tokens.scss")
       File.read(sheet)[/\$vertical-accent-ink:\s*(#[0-9a-fA-F]{3,8})/, 1]
     rescue StandardError => e
       raise "design_metrics: vertical accent ink unreadable (#{e.class}: #{e.message})"

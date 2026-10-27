@@ -367,4 +367,6 @@ end
 exit 1 if failed.any?
 exit 1 if errored.any? && Deploy::CheckResult.strict_errors?
 exit 1 if inconclusive.any? && Deploy::CheckResult.strict_inconclusive?
+# An unmeasured check is the third state, neither pass nor block; check_chain reads 3 as skipped.
+exit 3 if inconclusive.any?
 exit 0

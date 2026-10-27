@@ -187,7 +187,7 @@ apps:
       active_storage/disk#show:
       - "/rails/active_storage/disk/:encoded_key/*filename"
   brgen:
-    digest: f337b5653ee9b5f0
+    digest: 6e09f3282f162d57
     routes:
       shared/changelog#show:
       - "/changelog"
@@ -203,6 +203,8 @@ apps:
       rails/pwa#service_worker:
       - "/service-worker"
       - "/service-worker.js"
+      share_drafts#show:
+      - "/share_drafts/:id"
       internal#status:
       - "/internal/status"
       sso#from_master:

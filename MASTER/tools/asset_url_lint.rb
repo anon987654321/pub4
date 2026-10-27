@@ -199,7 +199,9 @@ module Operator
     def body_of(path)
       raw = File.read(path, encoding: "UTF-8")
       css = path.end_with?(".erb") ? raw.scan(%r{<style[^>]*>(.*?)</style>}m).flatten.join("\n") : raw
-      css.gsub(%r{/\*.*?\*/}m, " ").gsub(%r{(?<!:)//[^\n]*}, " ")
+      # A protocol-relative url("//cdn…") is not a line comment: stripping it
+      # swallowed the rest of the line and the next url() with it.
+      css.gsub(%r{/\*.*?\*/}m, " ").gsub(%r{(?<![:"'(])//[^\n]*}, " ")
     end
 
     def engine_dirs = EngineRoots.glob(RAILS_ROOT, "brgen", "")
