@@ -60,7 +60,9 @@ def usage
       bin/operator test [<path>...]       smallest complete proof for the paths (default: dirty files)
       bin/operator branches               every branch against main: merged, active, conflicts, deletes_heavily or ready
       bin/operator design [--app A] [--surface S] [--rounds N]  screenshot, edit one layout rule, keep it if the score rises, commit each
-      bin/operator land -m <msg> <path>...  commit path-scoped, re-check, push main
+      bin/operator land -m <msg> <path>...  commit path-scoped, re-check, push current branch
+      bin/operator worktree <name> [--base REF] [--allow-dirty-source]  create managed isolated worktree
+      bin/operator worktree list | remove <name>  inspect or remove a clean worktree; preserve its branch
       bin/operator push                   replay unpublished main commits onto a moved origin/main and push, no stash
             bin/operator triangle <up|status|down> [app...]  boot brgen, amber, bsdports and the master face on the ports the live checks probe
       bin/operator visual review [--app A,B] [--surface ID] [--no-critique] [--no-open] [--out DIR]  read-only rendered review, no fixing
@@ -327,13 +329,40 @@ when "land"
   die("land", "nothing committed, paths matched no changes?") unless ok
 
   run!("git", "fetch", "-q", "origin")
-  # The checkout is shared, so it may hold other sessions' uncommitted files and a
-  # rebase refuses a dirty tree. A rebase is only needed when origin/main has
-  # commits this one lacks.
-  _, current = run!("git", "merge-base", "--is-ancestor", "origin/main", "HEAD")
-  unless current
-    rebase_out, rebased = run!("git", "rebase", "-q", "origin/main")
-    abort("land: rebase onto origin/main failed, resolve (or wait for the other session's uncommitted files to be committed), then run land again\n#{rebase_out}") unless rebased
+  current_branch, branch_ok = run!("git", "branch", "--show-current")
+  die("land", "detached HEAD has no destination branch; switch to main or a named topic branch") unless branch_ok && !current_branch.empty?
+
+  if current_branch == "main"
+    # main is the only branch pushed directly to origin/main.
+    _, current = run!("git", "merge-base", "--is-ancestor", "origin/main", "HEAD")
+    unless current
+      rebase_out, rebased = run!("git", "rebase", "-q", "origin/main")
+      abort("land: rebase onto origin/main failed; resolve and rerun land\n#{rebase_out}") unless rebased
+    end
+  else
+    remote_ref = "origin/#{current_branch}"
+    _, remote_exists = run!("git", "show-ref", "--verify", "--quiet", "refs/remotes/#{remote_ref}")
+    if remote_exists
+      # Never rewrite a published topic branch. Bring its remote commits in, then
+      # merge main if needed so the push remains fast-forward-only.
+      _, includes_remote = run!("git", "merge-base", "--is-ancestor", remote_ref, "HEAD")
+      unless includes_remote
+        merge_out, merged = run!("git", "merge", "--no-edit", remote_ref)
+        abort("land: merging #{remote_ref} failed; resolve and rerun land\n#{merge_out}") unless merged
+      end
+      _, includes_main = run!("git", "merge-base", "--is-ancestor", "origin/main", "HEAD")
+      unless includes_main
+        merge_out, merged = run!("git", "merge", "--no-edit", "origin/main")
+        abort("land: merging origin/main into #{current_branch} failed; resolve and rerun land\n#{merge_out}") unless merged
+      end
+    else
+      # An unpublished topic can be rebased onto current main before first push.
+      _, includes_main = run!("git", "merge-base", "--is-ancestor", "origin/main", "HEAD")
+      unless includes_main
+        rebase_out, rebased = run!("git", "rebase", "-q", "origin/main")
+        abort("land: rebase onto origin/main failed; resolve and rerun land\n#{rebase_out}") unless rebased
+      end
+    end
   end
 
   # The same measurement again. A rebase brings other people's commits under
@@ -364,11 +393,11 @@ when "land"
   Master::Trace::Dmesg.status("land0", "runtime boots")
 
   ahead, = run!("git", "log", "--oneline", "origin/main..HEAD")
-  Master::Trace::Dmesg.attach("land0", "master0", "publishing")
+  Master::Trace::Dmesg.attach("land0", "master0", "publishing to origin/#{current_branch}")
   ahead.each_line { |line| Master::Trace::Dmesg.status("land0", line.chomp) }
-  push_out, pushed = run!("git", "push", "origin", "HEAD:main")
-  abort("land: push refused\n#{push_out}") unless pushed
-  Master::Trace::Dmesg.status("land0", "on origin/main")
+  push_out, pushed = run!("git", "push", "origin", "HEAD:#{current_branch}")
+  abort("land: push refused to origin/#{current_branch}; no force push was attempted\n#{push_out}") unless pushed
+  Master::Trace::Dmesg.status("land0", "on origin/#{current_branch}")
 when "push"
   # land's rebase refuses a dirty shared tree; this replays instead and touches
   # the working tree only after origin confirms the push. Operator::ReplayPush.
@@ -445,13 +474,8 @@ when "triangle", "premerge", "ci", "coverage"
   # RAILS tools in MASTER/tools/rails and are reached only through here.
   exec(RbConfig.ruby, File.join(ROOT, "MASTER", "tools", "rails", "#{command}.rb"), *ARGV)
 when "worktree"
-  # The one command, because the friction was the whole problem. CLAUDE.md has
-  # said "take a worktree if more than one agent is active" for months while the
-  # worktree took a remembered path to a shell script and the shared tree took
-  # nothing. Sessions kept picking nothing, and kept committing each other's work.
-  # finish rebases onto origin/main and pushes the branch — it does not merge
-  # to local main, which is how another session's push published commits twice.
-  die("worktree", "refused: this repository writes straight to main. No worktrees, branches or pull requests; commit path-scoped with bin/operator land -m <msg> <path>...", 64)
+  require "operator/worktree"
+  exit Operator::Worktree.command(ARGV, root: ROOT)
 when "law:silent"
   output = Operator::LawInventory.render_collection(:silent, json: ARGV.include?("--json"))
   if output
