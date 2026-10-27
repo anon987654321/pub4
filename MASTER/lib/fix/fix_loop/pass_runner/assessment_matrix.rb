@@ -130,6 +130,7 @@ module Master
               class_name = law.class.name.to_s
               semantic = class_name.match?(/AdversarialLaw|CommentDriftLaw|SemanticLaw/) ||
                 (law.respond_to?(:set_agent) && !law.respond_to?(:check_ast))
+              mode = law.respond_to?(:mode) ? law.mode.to_s : ""
               streams = FourStreamAssessment::STREAMS
               surfaces = ::Law::ASSESSMENT_SURFACES
               unmeasurable_streams = if semantic || mode == "semantic"
