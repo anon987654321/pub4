@@ -12,7 +12,9 @@ class TestToolEntrypoints < Minitest::Test
     paths = source.scan(%r{["'](tools/[^"']+\.rb)["']}).flatten.uniq.sort
 
     refute_empty paths
-    missing = paths.reject { |path| File.file?(File.join(ROOT, path)) }
+    # A test-file glob such as tools/test/test_*.rb is declared, not a file: it
+    # must match at least one.
+    missing = paths.reject { |path| Dir.glob(File.join(ROOT, path)).any? { |hit| File.file?(hit) } }
     assert_empty missing, "Rakefile references missing tool file(s): #{missing.join(', ')}"
   end
 

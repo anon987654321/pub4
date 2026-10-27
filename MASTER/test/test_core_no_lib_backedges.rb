@@ -2,6 +2,7 @@
 
 require "minitest/autorun"
 require "pathname"
+require_relative "../lib/execution/contract"
 
 class NoLibBackedgesTest < Minitest::Test
   # Scoped to the class: three files in one test process defined a top-level
@@ -74,9 +75,13 @@ class NoLibBackedgesTest < Minitest::Test
     assert_includes fix_loop, "class FixLoop"
     assert_includes fix_loop, 'require_relative "run_journal"'
     assert_includes fix_loop, 'require_relative "protocol"'
-    assert_includes protocol, "TERMINAL_STATES ="
-    %w[DONE PLATEAU HUMAN_DECISION BLOCKED INCONCLUSIVE VALIDATION_FAILED DELIVERY_FAILED TIMEOUT FAILED RELOADING].each do |state|
-      assert_includes protocol, state
+    # Protocol derives its terminal states from the shared execution vocabulary
+    # through OutcomePolicy, so the states are proved on that vocabulary.
+    assert_includes protocol, "TERMINAL_STATES = OutcomePolicy::TERMINAL_STATES"
+    states = Master::Execution::Contract::TERMINAL_STATES
+    %i[done plateau human_decision blocked inconclusive validation_failed delivery_failed
+       timeout failed reloading].each do |state|
+      assert_includes states, state
     end
   end
 

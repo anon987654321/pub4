@@ -13,10 +13,12 @@ class TestLawsReflow < Minitest::Test
     ABSTRACTION
     DENSITY
     RENDERED_VALUES
+    INTER_MODEL_CONTRACT
   ].freeze
 
-  # The file's own header promises the eight priority-ranked laws come first and
-  # that everything after them is an execution-policy block.
+  # The file's own header promises the nine priority-ranked laws (eight operating
+  # principles plus the inter-model protocol) come first and that everything
+  # after them is an execution-policy block.
   def test_ranked_laws_come_first_then_policy_blocks
     path = File.join(Master::ROOT, "data", "laws.yml")
     body = File.read(path, encoding: "UTF-8")

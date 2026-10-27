@@ -586,7 +586,7 @@ module Master
       end
 
       def deep_copy(value)
-        Marshal.load(Marshal.dump(value))
+        JSON.parse(JSON.generate(value))
       end
 
       def now

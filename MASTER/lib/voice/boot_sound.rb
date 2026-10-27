@@ -22,7 +22,7 @@ module Master
 
       module_function
 
-      def config = Master.load_yaml(Master.data_path("voice.yml"), default: {}).fetch("boot_sound", {})
+      def config = Policy.section("boot_sound")
 
       def enabled?(settings = config)
         return false if ENV["MASTER_BOOT_SOUND"] == "0" || ENV["MASTER_SKIP_TTS"] == "1" || ENV["CI"]

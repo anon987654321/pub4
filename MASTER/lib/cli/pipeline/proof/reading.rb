@@ -90,6 +90,22 @@ module Master
             end
           end
 
+          # The stored baseline is JSON, so reading it back runs no code.
+          def self.from_stored(row)
+            units = row.fetch("units").transform_values do |unit|
+              { ok: unit.fetch("ok"), keys: unit.fetch("keys").to_set, passed: unit.fetch("passed"),
+                total: unit.fetch("total"), unmeasured: unit.fetch("unmeasured").to_set }
+            end
+            new(ok: row.fetch("ok"), units:, rows: row.fetch("rows"), finished: row.fetch("finished"))
+          end
+
+          def to_stored
+            stored_units = units.transform_values do |unit|
+              unit.merge(keys: unit[:keys].to_a, unmeasured: unit[:unmeasured].to_a)
+            end
+            { "ok" => ok, "units" => stored_units, "rows" => rows, "finished" => finished }
+          end
+
           def failing = units.values.flat_map { |unit| unit[:keys].to_a }.to_set
           def unmeasured = units.values.flat_map { |unit| unit[:unmeasured].to_a }.to_set
           def passed = units.values.sum { |unit| unit[:passed] }

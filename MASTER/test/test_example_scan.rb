@@ -19,8 +19,8 @@ class TestExampleScan < Minitest::Test
 
       assert status.success?, out
       assert_match(/\d+ laws registered/, out)
-      assert_match(%r{sample\.rb:4: \[TRAILING_WHITESPACE\]}, out)
-      count = out[/^(\d+) finding\(s\)$/, 1]
+      assert_match(/sample\.rb:4, TRAILING_WHITESPACE, /, out)
+      count = out[/^example0: (\d+) finding\(s\)$/, 1]
       refute_nil count, out
       assert_operator count.to_i, :>, 0
     end

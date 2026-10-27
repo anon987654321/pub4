@@ -2,7 +2,6 @@
 
 require "prism"
 require "yaml"
-require_relative "../configuration_guard"
 
 module Master::Core
   # Constitution — the single check. Every Effect the agent proposes folds
@@ -180,6 +179,9 @@ module Master::Core
 
     # Configuration files stay editable. Their schema and constitutional
     # invariants are checked on the candidate content for every Fold write.
+    # The guard is shared with lib/fix/write_guard.rb and sits outside the
+    # fold's seven-file concept budget (data/spine.yml core_files), so it is
+    # resolved through the shared loader rather than required from lib/.
     def self.configuration_invariant_rule(workspace_root:)
       Law.new(id: :configuration_invariant, verbs: %i[write], judge: lambda { |effect, _memory|
         reason = Master::ConfigurationGuard.validate(

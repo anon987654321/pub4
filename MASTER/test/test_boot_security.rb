@@ -7,7 +7,7 @@ require_relative "../lib/cli/boot_banner"
 class BootSecurityLinesTest < Minitest::Test
   def test_boot_describes_real_security_layers
     lines = Master::CLI::BootBanner.security_lines
-    assert_includes lines.join("\n"), "constitutional admission"
+    assert_match(/\Asecurity0 at master0: .*\badmission\b/, lines.first)
     assert_includes lines.join("\n"), "staged reduction"
     assert_includes lines.join("\n"), "transaction-backed self-change"
     assert_includes lines.join("\n"), "proposal-only"

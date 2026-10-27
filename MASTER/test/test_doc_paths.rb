@@ -57,12 +57,14 @@ class TestDocPaths < Minitest::Test
 
   def test_authority_order_puts_executable_law_above_harnesses
     docs = %w[CLAUDE.md MASTER/AGENTS.md RAILS/CLAUDE.md OPENBSD/CLAUDE.md]
-    required = "MASTER/data/soul.yml > `MASTER/data/laws.yml`"
     docs.each do |doc|
       body = File.read(File.join(REPO, doc))
-      assert_includes body, "MASTER/data/soul.yml"
-      assert_includes body, "MASTER/data/laws.yml"
-      assert_match(%r{(?:executable laws?|ruby definitions)\b.*MASTER/law/}mi, body)
+      soul = body.index("MASTER/data/soul.yml")
+      laws = body.index("MASTER/data/laws.yml")
+      assert soul && laws && soul < laws, "#{doc} must put soul.yml before laws.yml"
+      # Each names MASTER/law/ as the Ruby that enforces the catalogue, below it.
+      enforcement = body.index(%r{(?:executable law|ruby)\b[^\n]*MASTER/law/}i)
+      assert enforcement && enforcement > laws, "#{doc} must name MASTER/law/ as enforcement after laws.yml"
     end
 
     root = File.read(File.join(REPO, "CLAUDE.md"))

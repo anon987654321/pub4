@@ -844,7 +844,7 @@ class TestSpeech < Minitest::Test
     Master::Voice::Policy.reload!
   end
 
-  def declared_tts = YAML.safe_load_file(File.join(Master::ROOT, "data", "voice.yml"), aliases: true).fetch("tts")
+  def declared_tts = Master.load_yaml(File.join(Master::ROOT, "data", "voice.yml")).fetch("tts")
   def declared_rate = declared_tts["default_rate"]
 
   def test_no_profile_leaves_the_voice_exactly_as_declared

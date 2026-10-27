@@ -299,11 +299,17 @@ module Master
         ].join(",")
       end
 
-      # voice.yml `face:`, the one home of how both faces attend and shape the
-      # mouth. Read at top level, beside `tts:`, so no profile overlays it.
-      def face_section(key)
+      # A top-level voice.yml section, read beside `tts:` so no profile overlays
+      # it. Policy is the one reader of voice.yml; other voice code asks here.
+      def section(key)
         raw = Master.load_yaml(Master.data_path("voice.yml"), default: {}) || {}
-        value = (raw["face"] || {})[key]
+        value = raw[key]
+        value.is_a?(Hash) ? value : {}
+      end
+
+      # voice.yml `face:`, the one home of how both faces attend and shape the mouth.
+      def face_section(key)
+        value = section("face")[key]
         value.is_a?(Hash) ? value : {}
       end
 

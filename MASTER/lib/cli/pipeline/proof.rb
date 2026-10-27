@@ -2,6 +2,7 @@
 
 require "digest"
 require "fileutils"
+require "json"
 require "set"
 require_relative "../../operator/check_chain"
 require_relative "proof/reading"
@@ -167,17 +168,16 @@ module Master
           tree = abs.delete_prefix("#{Master::REPO_ROOT}/").split("/").first
           content = ::Operator::CheckChain.baseline_key(tree, trees: [tree])
           key = Digest::SHA256.hexdigest([content, name, abs].join("\0"))
-          File.join(store_dir, "#{key}.bin")
+          File.join(store_dir, "#{key}.json")
         end
 
         def stored_baseline(abs, name)
           path = store_path(abs, name)
           return unless path && File.file?(path)
 
-          # Written by store_baseline in this runtime's own .master directory.
-          reading, named = Marshal.load(File.binread(path))
-          Master::Fix::CheckFocus.note(named)
-          reading
+          stored = JSON.parse(File.read(path, encoding: "UTF-8"))
+          Master::Fix::CheckFocus.note(stored.fetch("named"))
+          Reading.from_stored(stored.fetch("reading"))
         rescue StandardError => e
           Master::Trace::Dmesg.status("check0", "stored baseline unreadable, measuring again: #{e.class}")
           nil
@@ -188,7 +188,8 @@ module Master
           return unless path && reading&.measured?
 
           FileUtils.mkdir_p(File.dirname(path))
-          File.binwrite(path, Marshal.dump([reading, Master::Fix::CheckFocus.named.to_a]))
+          stored = { "reading" => reading.to_stored, "named" => Master::Fix::CheckFocus.named.to_a }
+          File.write(path, JSON.generate(stored))
         end
 
         def measure_baseline(name, sha:, runner:)

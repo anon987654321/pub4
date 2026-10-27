@@ -2,7 +2,11 @@
 
 Task-scoped entry for coding agents (Cursor, Codex, Grok, Claude Code). This file is the contract; `README.md` is the tour.
 
-**Read the repo-root `CLAUDE.md` first.** It is only Claude Code's bootstrap pointer. MASTER owns the governing configuration and Law catalogue. Read `MASTER/data/soul.yml`, then `MASTER/data/laws.yml`, then the relevant Ruby definitions/adapters under `MASTER/law/`, then this workflow contract and task-specific tree contract. The old `MASTER/lib/review/scan/laws` path is deleted; `MASTER/lib/review/scan/` contains scanner machinery, not a second Law source tree.
+**Read the repo-root `CLAUDE.md` first.** It is only Claude Code's bootstrap pointer. MASTER
+owns the governing configuration and Law catalogue. Read `MASTER/data/soul.yml`, then
+`MASTER/data/laws.yml`, then the relevant Ruby definitions/adapters under `MASTER/law/`, then
+this workflow contract and task-specific tree contract. `MASTER/lib/review/scan/` contains
+scanner machinery, not a second Law source tree.
 
 The block below is the source every other agent's entry file is generated from
 — root `AGENTS.md`, `GEMINI.md`, `.cursorlaws` and
