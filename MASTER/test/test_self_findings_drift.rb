@@ -104,6 +104,28 @@ class TestSelfFindingsDrift < Minitest::Test
     end
   end
 
+  def test_custom_root_does_not_compare_against_the_main_repository_census
+    Dir.mktmpdir("self_findings_custom_root") do |root|
+      File.write(File.join(root, "fixture.rb"), "class Fixture; end\n")
+      member = "RULE fixture.rb:1"
+      with_baseline({ "findings" => 1, "finding_members" => [member] }) do
+        Tool.stub(:population, ->(_name) { raise "must not scan the canonical repository for a fixture root" }) do
+          assert_empty Tool.stale_recorded_members("law", root:)
+        end
+      end
+    end
+  end
+
+  def test_live_census_failure_is_not_silently_reported_as_clean
+    member = "RULE MASTER/lib/operator/self_findings.rb:1"
+    with_baseline({ "findings" => 1, "finding_members" => [member] }) do
+      Tool.stub(:population, ->(_name) { raise IOError, "census unavailable" }) do
+        error = assert_raises(RuntimeError) { Tool.stale_recorded_members("law") }
+        assert_match(/self_findings stale-member audit failed/, error.message)
+      end
+    end
+  end
+
   def test_stale_members_make_the_report_inconclusive
     with_baseline({
       "findings" => 1,
