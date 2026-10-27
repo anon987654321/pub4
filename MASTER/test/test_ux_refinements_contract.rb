@@ -5,7 +5,7 @@ require "yaml"
 
 class TestUxRefinementsContract < Minitest::Test
   PATH = File.join(Master::ROOT, "data", "ux_refinements.yml")
-  ALLOWED_STATES = %w[acceptance_required implemented verified blocked not_applicable].freeze
+  ALLOWED_STATES = %w[acceptance_required verified].freeze
 
   def catalogue
     YAML.safe_load_file(PATH)
@@ -38,9 +38,18 @@ class TestUxRefinementsContract < Minitest::Test
       next unless row.fetch("state").to_s == "verified"
 
       evidence = row["evidence"]
-      assert_kind_of Hash, evidence, "#{id} cannot be verified without an evidence receipt"
-      refute_empty evidence.fetch("location", "").to_s.strip, "#{id} evidence needs a location"
-      assert_match(/\A[0-9a-f]{64}\z/i, evidence.fetch("sha256", "").to_s, "#{id} evidence needs a SHA-256 digest")
+      assert_kind_of Array, evidence, "#{id} cannot be verified without evidence receipts"
+      proof_types = evidence.map do |receipt|
+        assert_kind_of Hash, receipt, "#{id} evidence receipt must be a mapping"
+        assert_equal "PASS", receipt.fetch("result")
+        assert_includes row.fetch("proof"), receipt.fetch("proof_type")
+        refute_empty receipt.fetch("location", "").to_s.strip
+        assert_match(/\A[0-9a-f]{64}\z/i, receipt.fetch("sha256", "").to_s)
+        assert_match(/\A[0-9a-f]{40}\z/i, receipt.fetch("commit", "").to_s)
+        receipt.fetch("proof_type")
+      end
+      assert_empty Array(row.fetch("proof")).map(&:to_s).uniq - proof_types.uniq,
+                   "#{id} has no evidence receipt for every declared proof type"
     end
   end
 

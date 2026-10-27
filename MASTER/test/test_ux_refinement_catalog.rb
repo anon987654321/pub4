@@ -15,6 +15,7 @@ class TestUXRefinementCatalog < Minitest::Test
     manifest = Master::Fix::UXRefinementCatalog.manifest
     assert_equal 90, manifest.fetch("loaded_count")
     assert_equal 90, manifest.fetch("acceptance_required_count")
+    assert_equal 0, manifest.fetch("verified_count")
     assert_equal 90, manifest.fetch("by_area").values.sum
     assert_equal %w[MASTER OPENBSD RAILS STUDIO], manifest.fetch("by_owner_tree").select { |_tree, count| count.positive? }.keys.sort
     assert_equal %w[accessibility browser source terminal unit visual], manifest.fetch("by_proof_type").keys.sort
@@ -43,6 +44,35 @@ class TestUXRefinementCatalog < Minitest::Test
     duplicate.fetch("refinements").last["id"] = duplicate.fetch("refinements").first.fetch("id")
     assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(duplicate) }
     assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!({ "refinements" => [] }) }
+  end
+
+  def test_verified_state_requires_pass_evidence_for_every_declared_proof_type
+    payload = Marshal.load(Marshal.dump(Master::Fix::UXRefinementCatalog.load))
+    row = payload.fetch("refinements").first
+    row["state"] = "verified"
+    row["evidence"] = row.fetch("proof").map do |proof_type|
+      {
+        "proof_type" => proof_type,
+        "result" => "PASS",
+        "location" => "MASTER/test/test_ux_refinement_catalog.rb",
+        "sha256" => "a" * 64,
+        "commit" => "b" * 40
+      }
+    end
+
+    assert Master::Fix::UXRefinementCatalog.validate!(payload)
+
+    incomplete = Marshal.load(Marshal.dump(payload))
+    incomplete.fetch("refinements").first.fetch("evidence").pop
+    assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(incomplete) }
+
+    no_digest = Marshal.load(Marshal.dump(payload))
+    no_digest.fetch("refinements").first.fetch("evidence").first.delete("sha256")
+    assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(no_digest) }
+
+    unsafe_path = Marshal.load(Marshal.dump(payload))
+    unsafe_path.fetch("refinements").first.fetch("evidence").first["location"] = "../external.log"
+    assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(unsafe_path) }
   end
 
   def test_catalog_rejects_gaps_in_the_id_sequence_and_false_completion_states
