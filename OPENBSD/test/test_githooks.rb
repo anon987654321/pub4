@@ -110,7 +110,7 @@ class TestGitHooks < Minitest::Test
     out, _status = commit("spans two trees")
 
     assert_match(/PUB4_CROSS_TREE=1/, out)
-    assert_match(/git commit -- <paths>/, out, "the refusal should name a path-scoped commit, not only the override")
+    assert_match(/git commit -- <paths>(?m:.*)bin\/operator worktree/, out, "name both ways out, not only the override")
   end
 
   def test_the_cross_tree_override_is_honoured
@@ -300,7 +300,7 @@ class TestGitHooks < Minitest::Test
     refute status.success?, "a three-commit push was allowed:\n#{out}"
     assert_match(/REFUSED — 3 commits would be published, not 1/, out)
     assert_match(/PUB4_PUSH_ALL=1/, out)
-    assert_match(/git log -p origin\/main\.\.HEAD/, out, "the refusal should say how to read what would go out")
+    assert_match(/git log -p origin\/main\.\.HEAD(?m:.*)bin\/operator worktree/, out, "read, or stop sharing")
   ensure
     FileUtils.remove_entry(remote) if remote && File.directory?(remote)
   end

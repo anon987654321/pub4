@@ -40,7 +40,7 @@ def disk
 
   text = format("%.1f GiB free", free_gb)
   if free_gb < 2
-    say(:FAIL, "disk", "#{text}: tools fail with ENOSPC under ~1 GiB; git worktree remove any leftover worktree")
+    say(:FAIL, "disk", "#{text}: ENOSPC below ~1 GiB; bin/operator worktree remove <name> frees merged trees")
   elsif free_gb < 5 then say(:warn, "disk", "#{text}: a full-suite run or a render can fill this")
   else say(:ok, "disk", text)
   end

@@ -124,6 +124,10 @@ if staged_trees.size > 1 && ENV["PUB4_CROSS_TREE"] != "1"
   warn ""
   warn "      PUB4_CROSS_TREE=1 git commit -- <paths>"
   warn ""
+  warn "  For broad or parallel work, take a managed worktree:"
+  warn ""
+  warn "      bin/operator worktree <name>"
+  warn ""
   exit 1
 end
 
