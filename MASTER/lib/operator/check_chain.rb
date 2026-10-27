@@ -19,6 +19,7 @@ require_relative "../trace/dmesg"
 require_relative "../boot/paths"
 require_relative "../fix/resource_budget"
 require_relative "../fix/work_lane"
+require_relative "../fix/rails_app"
 require_relative "../io/exec"
 
 module Operator
@@ -759,6 +760,20 @@ end
       [both, plan_body + body + dup_body + [verdict], both ? 0 : 1]
     end
 
+    # Every stage child is a Ruby that activates its own bundle, often a
+    # different Ruby: a parent on MASTER's private store handed rbenv's ruby
+    # Homebrew's bundler/setup in RUBYOPT and asked for bundler 4.0.11, which it
+    # does not have, and the child exited 1 before its first line. Nor does a
+    # check stage need the parent's lock: a descriptor number without the
+    # descriptor is a poisoned inheritance path, so the caller cannot pass it.
+    def stage_child_env(env)
+      foreign = Master::Fix::RailsApp::FOREIGN_BUNDLE.to_h { |key| [key, nil] }
+
+      foreign.merge("MASTER_INTERNAL_CHILD" => "1", "MASTER_CONTROL_PLANE" => "0")
+             .merge(env)
+             .merge("MASTER_PROCESS_LOCK_FD" => nil)
+    end
+
     # [ok, body, exitstatus] — the status, because 3 is a third state a boolean
     # cannot carry.
     #
@@ -779,21 +794,13 @@ end
         return [false, [reason], 1]
       end
 
-      child_env = {
-        "MASTER_INTERNAL_CHILD" => "1",
-        "MASTER_CONTROL_PLANE" => "0",
-        "MASTER_PROCESS_LOCK_FD" => nil,
-      }.merge(env)
-      # Check stages are internal children and never need the parent's lock. A
-      # descriptor number without the descriptor is a poisoned inheritance path.
-      child_env["MASTER_PROCESS_LOCK_FD"] = nil
       runner = lambda do
         output = +""
         stopped_for = nil
         stop_lock = Mutex.new
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         watchdog = nil
-        Open3.popen2e(ENV.to_h.merge(child_env), *cmd, chdir:, pgroup: true) do |stdin, stream, wait|
+        Open3.popen2e(ENV.to_h.merge(stage_child_env(env)), *cmd, chdir:, pgroup: true) do |stdin, stream, wait|
           stdin.close
           last_heartbeat = 0.0
           watchdog = Thread.new do

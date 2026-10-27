@@ -612,6 +612,18 @@ class TestCheckChain < Minitest::Test
     previous.nil? ? ENV.delete("MASTER_PROCESS_LOCK_FD") : ENV["MASTER_PROCESS_LOCK_FD"] = previous
   end
 
+  def test_internal_stage_children_do_not_inherit_the_parents_bundle
+    previous = %w[RUBYOPT BUNDLE_GEMFILE].to_h { |key| [key, ENV.fetch(key, nil)] }
+    ENV["BUNDLE_GEMFILE"] = File.join(G::MASTER, "Gemfile")
+    ENV["RUBYOPT"] = "-W0"
+    probe = 'abort "bundle leaked" if ENV["BUNDLE_GEMFILE"] || ENV["RUBYOPT"]'
+    _ok, body, status = G.send(:capture, G::RUBY, "-e", probe)
+
+    assert_equal 0, status, body.join("\n")
+  ensure
+    previous.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+  end
+
   def test_generated_paths_are_recognised_in_every_tree_that_has_them
     %w[STUDIO/replicate/lora/.cache/x.json RAILS/brgen/app/assets/builds/application.css
        RAILS/amber/public/assets/x.js MASTER/Gemfile.lock].each do |path|
