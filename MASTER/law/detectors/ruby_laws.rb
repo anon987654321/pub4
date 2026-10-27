@@ -185,6 +185,9 @@ module Master
 
             indent, rest = match[1], match[3]
             next if rest.match?(/\b(if|unless)\b/) || rest.match?(/&&|\|\|/) || rest.include?("?")
+            # A statement that continues (`raise "…" \`, a trailing comma or operator, an
+            # open bracket) does not end on this line, so the next line is still part of it.
+            next if rest.rstrip.match?(/[\\,(\[{+*\/-]\z/) || rest.count("([{") > rest.count(")]}")
 
             following = lines[index + 1]
             next unless following
