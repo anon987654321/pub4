@@ -94,7 +94,7 @@ module Master
 
         # One smoothed noise stream that runs on through both channels, as the hiss always has.
         def hiss_source(tape)
-          random = Random.new(tape.fetch("seed"))
+          random = ::Random.new(tape.fetch("seed"))
           smoothing = tape.fetch("hiss_smoothing")
           level = 10**(tape.fetch("hiss_dbfs") / 20.0)
           noise = 0.0

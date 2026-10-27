@@ -66,7 +66,8 @@ module Master
 
       def tracks(config) = Dir.glob(File.join(cache_dir(config), "*.wav")).select { |path| File.size?(path) }
 
-      def cached(config, random: Random.new) = tracks(config).sample(random:)
+      # ::Random is Ruby's; inside Master a bare Random is Master::Random, a module with no new.
+      def cached(config, random: ::Random.new) = tracks(config).sample(random:)
 
       def stop
         @stopping = true
@@ -129,7 +130,7 @@ module Master
         path if File.file?(path)
       end
 
-      def live_command(config, random: Random.new)
+      def live_command(config, random: ::Random.new)
         dilla = tool(config)
         return unless dilla
 
@@ -153,7 +154,7 @@ module Master
       end
 
       # One nice'd render at a time, until the cache holds `cache_target` tracks.
-      def prerender(config, random: Random.new)
+      def prerender(config, random: ::Random.new)
         return false if rendering? || tracks(config).size >= config.fetch("cache_target", 4)
 
         dilla = tool(config)
