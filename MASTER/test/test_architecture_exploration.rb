@@ -91,6 +91,48 @@ class TestArchitectureExploration < Minitest::Test
     end
   end
 
+  def test_evidence_selection_skips_empty_text_files_without_spending_slots
+    Dir.mktmpdir("architecture-empty-evidence") do |root|
+      master = File.join(root, "MASTER")
+      FileUtils.mkdir_p(master)
+      empty_paths = 12.times.map do |index|
+        path = File.join(master, format("%02d_empty.rb", index))
+        File.write(path, "")
+        path
+      end
+      source = File.join(master, "z_owner.rb")
+      File.write(source, "module Owner; end\n")
+      explorer = Master::Fix::ArchitectureExploration.new(
+        root: root, agent: FakeAgent.new("{}"), candidate_count: 30
+      )
+
+      evidence = explorer.send(:evidence_for, empty_paths + [source])
+
+      assert_equal ["MASTER/z_owner.rb"], evidence.map { |entry| entry.fetch("path") }
+    end
+  end
+
+  def test_evidence_excerpt_budget_is_a_byte_limit_for_utf8_text
+    Dir.mktmpdir("architecture-evidence-byte-budget") do |root|
+      master = File.join(root, "MASTER")
+      FileUtils.mkdir_p(master)
+      paths = 12.times.map do |index|
+        path = File.join(master, format("%02d_owner.rb", index))
+        File.write(path, "ø" * 800)
+        path
+      end
+      explorer = Master::Fix::ArchitectureExploration.new(
+        root: root, agent: FakeAgent.new("{}"), candidate_count: 30
+      )
+
+      evidence = explorer.send(:evidence_for, paths)
+
+      assert_operator evidence.size, :<=, 12
+      assert_operator evidence.sum { |entry| entry.fetch("excerpt").bytesize }, :<=, 12_000
+      assert evidence.all? { |entry| entry.fetch("excerpt").valid_encoding? }
+    end
+  end
+
   def test_only_repository_root_and_exact_top_level_trees_are_eligible
     Dir.mktmpdir("architecture-targets") do |root|
       %w[MASTER RAILS OPENBSD STUDIO].each { |name| Dir.mkdir(File.join(root, name)) }
