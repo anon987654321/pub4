@@ -21,6 +21,22 @@ class TestUXRefinementCatalog < Minitest::Test
     assert_equal 64, manifest.fetch("sha256").length
   end
 
+  def test_catalog_requires_versioned_metadata_and_real_evidence_policy
+    payload = Master::Fix::UXRefinementCatalog.load
+
+    wrong_schema = Marshal.load(Marshal.dump(payload))
+    wrong_schema["schema"] = 2
+    assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(wrong_schema) }
+
+    wrong_authority = Marshal.load(Marshal.dump(payload))
+    wrong_authority["authority"] = "MASTER/data/laws.yml#does_not_exist"
+    assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(wrong_authority) }
+
+    weakened_policy = Marshal.load(Marshal.dump(payload))
+    weakened_policy.fetch("evidence_policy")["no_simulation"] = "A checklist may stand in for runtime proof."
+    assert_raises(ArgumentError) { Master::Fix::UXRefinementCatalog.validate!(weakened_policy) }
+  end
+
   def test_catalog_rejects_missing_or_duplicate_contracts
     payload = Master::Fix::UXRefinementCatalog.load
     duplicate = Marshal.load(Marshal.dump(payload))
