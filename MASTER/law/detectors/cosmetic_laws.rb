@@ -54,7 +54,13 @@ module Master
         # A fourth wears it too: three or more hyphenated numbers is a tuple, not
         # a range. CSS specificity is written 0-1-0 and reads as two ranges to a
         # two-number pattern.
-        EN_DASH_NOT_A_RANGE = %r{`[^`]*`|\b\d+(?:-\d+){2,}\b|\b\d{4}-\d{2}(?:-\d{2})?\b|\[[^\]]*\]|[A-Za-z][\w.]*-\d[\w.]*(?:-[\w.]+)*}.freeze
+        EN_DASH_NOT_A_RANGE = %r{
+          `[^`]*` |
+          \b\d+(?:-\d+){2,}\b |
+          \b\d{4}-\d{2}(?:-\d{2})?\b |
+          \[[^\]]*\] |
+          [A-Za-z][\w.]*-\d[\w.]*(?:-[\w.]+)*
+        }x.freeze
 
         # In YAML a mapping line's value is data, and a hyphen in data is a
         # character some reader parses. Measured over the tracked markdown and
@@ -357,7 +363,8 @@ module Master
             indent2 = l2[/\A\s*/].size
             l2_stripped = l2.strip
 
-            if (indent1 - indent2).abs >= 4 && l2_stripped.size < 40 && l2_stripped.match?(/^(?:return|break|next|raise)/)
+            if (indent1 - indent2).abs >= 4 && l2_stripped.size < 40 &&
+               l2_stripped.match?(/^(?:return|break|next|raise)/)
               findings << finding(line: line2_number + 1, message: "jagged symmetry — align this line with its block")
             end
           end
@@ -388,7 +395,8 @@ module Master
           example_path: "/repo/README.md",
           fires: "# Title\n\n| one | two |\n",
           does_not_fire: "# Title\n\n**One bold sentence carrying the argument.**\n",
-          description: "a README is prose — a bold visionary opening, tables never, code only under the final heading" do |src, path:|
+          description: "a README is prose — a bold visionary opening, " \
+            "tables never, code only under the final heading" do |src, path:|
           next [] unless path.to_s.end_with?("README.md")
           findings = []
 
@@ -399,9 +407,15 @@ module Master
           # exists to protect; a table chops it anywhere.
           last_heading = lines.rindex { |line| line.start_with?("## ") } || -1
           lines.each_with_index do |line, index|
-            findings << finding(line: index + 1, message: "a code block interrupts the prose — a demonstration belongs under the final heading, not mid-argument") if line.start_with?("```") && index < last_heading
+            if line.start_with?("```") && index < last_heading
+              findings << finding(line: index + 1,
+                                  message: "a code block interrupts the prose — a demonstration belongs " \
+                                           "under the final heading, not mid-argument")
+            end
 
-            findings << finding(line: index + 1, message: "README carries a table — say it in a sentence") if line.match?(/\A\s*\|.*\|\s*\z/)
+            if line.match?(/\A\s*\|.*\|\s*\z/)
+              findings << finding(line: index + 1, message: "README carries a table — say it in a sentence")
+            end
           end
           lead = src.sub(/\A#\s+[^\n]+\n+/, "").lstrip
           # A hero image or video (and its HTML comment) may sit between the
@@ -409,7 +423,10 @@ module Master
           # bold, so the face can lead the page and the prose still has to.
           lead = lead.sub(HERO, "").lstrip
 
-          findings << finding(line: 1, message: "README opening is not bold — lead with one bold, visionary sentence") unless lead.empty? || lead.start_with?("**")
+          unless lead.empty? || lead.start_with?("**")
+            findings << finding(line: 1,
+                                message: "README opening is not bold — lead with one bold, visionary sentence")
+          end
           findings
         end
       end
