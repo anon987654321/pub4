@@ -175,7 +175,14 @@ end
 # off for one commit. --changed-lines scopes it to the lines this commit adds, so
 # a file's standing debt never blocks the change that merely touched it. A launch
 # failure proceeds; only a real finding refuses.
-if ENV["LINT"] != "0" && ENV["LINT_SKIP"] != "1"
+#
+# The lint reads pub4's own index, so it runs only when the commit is being made
+# in pub4 itself, as the pre-push snapshot does. Committed from any other
+# repository wired to these hooks (the githooks suite's throwaway repos), it
+# judged whatever other sessions had staged in pub4 instead of that commit.
+pub4_root = File.expand_path("../../..", __dir__)
+committing_in_pub4 = IO.popen(%w[git rev-parse --show-toplevel], &:read).to_s.strip == pub4_root
+if committing_in_pub4 && ENV["LINT"] != "0" && ENV["LINT_SKIP"] != "1"
   pub4 = File.expand_path("../../../MASTER/bin/operator", __dir__)
   master = File.expand_path("../../../MASTER", __dir__)
   ran = system(RbConfig.ruby, pub4, "lint", "--staged", "--changed-lines", chdir: master)
