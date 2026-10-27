@@ -1,4 +1,4 @@
-// ============================================================ pages: dressing room
+// Pages: dressing room
 
 // Intentional FLAT_UI exception: 3D mannequin model uses perspective /
 // preserve-3d so the dressing-room preview can rotate in depth. Do not
@@ -218,7 +218,7 @@
   }
 }
 
-// ============================================================ components: visualization
+// Components: visualization
 
 // Information visualization for the analytics page.
 //
@@ -255,7 +255,7 @@
   font-size: var(--text-xs);
 }
 
-// Ranked bars -----------------------------------------------------------
+// Ranked bars
 
 .viz-rows {
   list-style: none;
@@ -314,7 +314,7 @@
   white-space: nowrap;
 }
 
-// Column distribution ---------------------------------------------------
+// Column distribution
 
 .viz-plot {
   list-style: none;
