@@ -2,6 +2,7 @@
 
 require "etc"
 require "socket"
+require_relative "run_ledger"
 
 module Master
   module Fix
@@ -175,9 +176,10 @@ module Master
         # A repair that hangs is the file budget's to end.
         return if scan_advancing?(now)
 
-        recent = @finished.count { |at| now - at <= FINISH_WINDOW_SECONDS }
+        window = finish_window
+        recent = @finished.count { |at| now - at <= window }
         tail = if pass_attempts.zero? then "0 files attempted"
-               elsif recent.zero? then "0 files finished in #{FINISH_WINDOW_SECONDS / 60}m"
+               elsif recent.zero? then "0 files finished in #{window / 60}m"
                end
         return unless tail
 
@@ -193,8 +195,12 @@ module Master
       end
 
       def scan_advancing?(now)
-        !@scan_completed_at.nil? && now - @scan_completed_at <= FINISH_WINDOW_SECONDS
+        !@scan_completed_at.nil? && now - @scan_completed_at <= finish_window
       end
+
+      # One file may spend its whole budget before it finishes, so the window is never shorter
+      # than that budget and a minute: at Opus's 900 s a file, five minutes cut working repairs.
+      def finish_window = [FINISH_WINDOW_SECONDS, RunLedger.file_budget_s + 60].max
 
       def lane_id
         model, = @calls.values.min_by { |_, at| at }

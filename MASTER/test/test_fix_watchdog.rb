@@ -156,6 +156,21 @@ class TestFixWatchdog < Minitest::Test
     assert_nil p.stall(@now)
   end
 
+  # Opus needs minutes a call, so a run gives each file 900 s; a five-minute finish window
+  # would cut a repair still inside its own budget.
+  def test_the_finish_window_is_never_shorter_than_a_files_budget
+    ENV["MASTER_FIX_FILE_BUDGET_S"] = "900"
+    p = pulse
+    p.observe("fix_loop:phase", stage: :stream)
+    @now = Pulse::STALL_SECONDS + 1
+    p.observe("repair_loop:proposal_rejected", reason: "reflexion_unsafe")
+
+    assert_nil p.stall(@now + 600), "ten minutes into a fifteen-minute file is not a stall"
+    assert_match(/0 files finished in 16m/, p.stall(@now + 1000)[:line])
+  ensure
+    ENV.delete("MASTER_FIX_FILE_BUDGET_S")
+  end
+
   def test_a_scan_that_stopped_finishing_files_stalls_again
     p = pulse
     p.observe("fix_loop:phase", stage: :stream)
