@@ -68,6 +68,29 @@ class TestArchitectureExploration < Minitest::Test
     assert_equal 40, Master::Fix::ArchitectureExploration::LENSES.size
   end
 
+  def test_evidence_selection_skips_unsupported_files_until_text_evidence_is_found
+    Dir.mktmpdir("architecture-evidence-selection") do |root|
+      master = File.join(root, "MASTER")
+      FileUtils.mkdir_p(master)
+      unsupported = 12.times.map do |index|
+        path = File.join(master, format("%02d.png", index))
+        File.write(path, "non-text asset payload")
+        path
+      end
+      source = File.join(master, "z_owner.rb")
+      File.write(source, "module Owner; end\n")
+      explorer = Master::Fix::ArchitectureExploration.new(
+        root: root, agent: FakeAgent.new("{}"), candidate_count: 30
+      )
+
+      evidence = explorer.send(:evidence_for, unsupported + [source])
+
+      assert_equal ["MASTER/z_owner.rb"], evidence.map { |entry| entry.fetch("path") }
+      assert_match(/\A[0-9a-f]{64}\z/, evidence.first.fetch("sha256"))
+      assert_operator evidence.first.fetch("excerpt").bytesize, :<=, 800
+    end
+  end
+
   def test_only_repository_root_and_exact_top_level_trees_are_eligible
     Dir.mktmpdir("architecture-targets") do |root|
       %w[MASTER RAILS OPENBSD STUDIO].each { |name| Dir.mkdir(File.join(root, name)) }

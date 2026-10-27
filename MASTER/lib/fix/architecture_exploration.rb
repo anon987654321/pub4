@@ -349,12 +349,15 @@ module Master
           [rank, path]
         end
         used = 0
-        ordered.first(12).filter_map do |path|
+        selected = 0
+        ordered.filter_map do |path|
+          next if selected >= 12 || used >= 12_000
           next unless %w[.md .yml .yaml .json .toml .rb .sh .zsh .js .ts .css .scss .erb .html .txt].include?(File.extname(path).downcase)
           content = File.read(path, encoding: "UTF-8")
           next unless content.valid_encoding? && !content.include?("\0")
           excerpt = redact(content[0, [800, 12_000 - used].min])
           used += excerpt.bytesize
+          selected += 1
           { "path" => relative(path), "sha256" => Digest::SHA256.hexdigest(content), "excerpt" => excerpt }
         rescue StandardError
           nil
