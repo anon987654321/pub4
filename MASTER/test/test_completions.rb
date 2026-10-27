@@ -59,4 +59,17 @@ class TestCompletions < Minitest::Test
     refute_includes source, "worktree:refused"
     refute_includes source, "push main'"
   end
+
+  def test_master_completion_descriptions_match_the_registry_summaries
+    source = File.read(File.join(COMPLETIONS, "_master"))
+
+    Master::CLI::CommandRegistry::HELP_TOPICS.each do |name, topic|
+      summary = topic.fetch(:summary).gsub("'", "'\\''")
+      assert_includes source, "    '#{name}:#{summary}'", "/#{name} completion drifted from its help summary"
+    end
+
+    %w[exit quit].each do |name|
+      assert_includes source, "    '#{name}:leave the current MASTER session'"
+    end
+  end
 end
