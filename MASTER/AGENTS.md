@@ -64,11 +64,14 @@ blank line, a body saying what changed and what it cost, a blank line, and a
 the authority chain, the guards and the top-ranked laws as they are now.
 
 Operational constraints:
-- Work in the one shared checkout and write straight to `main`: worktrees,
-  branches and pull requests are refused (`MASTER/tools/block_branching.rb`,
-  `bin/operator worktree`). Commit path-scoped with `git commit -- <paths>`
-  or `bin/operator land -m <msg> <path>...`, and never sweep another
-  session's dirty files into a commit.
+- Use isolated, managed worktrees for broad, parallel or architecture-heavy work:
+  `bin/operator worktree <name> [--base REF]`. Creation refuses a dirty source
+  checkout unless `--allow-dirty-source` is explicit and never copies uncommitted
+  changes. `bin/operator worktree list` inspects managed trees; `remove` refuses
+  dirty worktrees and preserves their branches. Keep commits path-scoped and
+  never use `git commit -a` in a shared checkout. `bin/operator land -m <msg>
+  <paths...>` commits path-scoped changes and pushes only the current branch;
+  integrate a topic branch into `main` deliberately after review. Never force-push.
 - Rails uses strict loading in every environment. Assert localized output through I18n keys, not English literals.
 - On deploy, relayd can answer while amber and bsdports are down; inspect health, not just TLS.
 - Dilla and postpro renders are replaceable; a new run may delete the old take. Never change a rendered sound/look default by taste alone.
@@ -96,17 +99,20 @@ that a fresh agent gets wrong on its first attempt.
 
 **Ruby is pinned by `MASTER/.ruby-version` for development.** It is currently 4.0.5. On OpenBSD, `MASTER/bin/ruby` accepts the packaged Ruby 3.3.x/3.4.x lane instead of requiring 4.0.5; bare `ruby` is not the project contract.
 
-**The checkout is shared and usually dirty.** Never `git add -A`. Commit
-path-scoped: `git commit -- <paths>`. When the pre-commit hook refuses over
-untracked files that are not yours, `PUB4_UNTRACKED=1 git commit -- <paths>`
-says so explicitly.
+**The checkout is shared and usually dirty.** Never `git add -A` or
+`git commit -a`. For broad, parallel or architecture-heavy work, create a
+managed worktree with `bin/operator worktree <name> [--base REF]`; creation
+refuses a dirty source checkout unless `--allow-dirty-source` is explicit and
+starts from a commit rather than copying uncommitted changes. Commit path-scoped
+with `git commit -- <paths>`.
 
 **Never read-modify-write a file another session may hold.** Read, edit and
-write is three moments; a commit landing between the read and the write is
-silently reverted by your write. Keep the gap short: read the file, edit it and
-`git commit -- <paths>` in one step, then `git fetch origin`, check
-`git log --oneline origin/main..HEAD` and `git push origin HEAD:main`
-(`PUB4_PUSH_ALL=1` when more than your commit goes).
+write are three moments; a commit landing between the read and the write can be
+silently reverted by your write. Keep that gap short. Use
+`bin/operator land -m <msg> <paths...>` to check, commit path-scoped changes and
+push only the current branch. A topic branch is integrated into `main` only
+deliberately after review; never push a topic branch directly to `main`, and
+never force-push.
 
 **Verify the instrument before the finding.** Measurement code here is wrong
 about the code more often than the code is wrong about the world. Check a probe

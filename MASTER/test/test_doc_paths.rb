@@ -145,6 +145,22 @@ class TestDocPaths < Minitest::Test
                  "non-README Markdown needs a documented exception: #{extras.join(", ")}"
   end
 
+  def test_agent_contract_does_not_ban_the_managed_worktree_workflow
+    source = File.read(File.join(REPO, "MASTER/AGENTS.md"))
+    block = source[/<!-- agent-contract:begin -->\n(.*?)<!-- agent-contract:end -->/m, 1]
+    refute_nil block
+
+    refute_match(/branches and pull requests are refused|write straight to `main`|block_branching/, block)
+    assert_includes block, "Use isolated, managed worktrees"
+    assert_includes block, "pushes only the current branch"
+
+    HARNESS_FILES.each do |relative|
+      body = File.read(File.join(REPO, relative))
+      refute_match(/branches and pull requests are refused|block_branching/, body, "#{relative} retains the removed restriction")
+      assert_includes body, "Use isolated, managed worktrees", "#{relative} does not teach the active workflow"
+    end
+  end
+
   def test_every_harness_file_points_at_the_law
     missing = HARNESS_FILES.reject { |relative| File.file?(File.join(REPO, relative)) }
 
