@@ -294,49 +294,50 @@ module Master
           def from_law
             require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
             ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
-            require_relative "../../lib/review/scan/law_dsl" unless defined?(Master::Review::Scan::LawDSL)
+            require File.join(Master::ROOT, "lib", "review", "scan", "law_dsl") unless
+              defined?(Master::Review::Scan::LawDSL)
+            require File.join(Master::ROOT, "lib", "review", "scan", "law_factory") unless
+              defined?(Master::Review::Scan::LawFactory)
 
-            laws = ::Law.definitions.values.select(&:enforceable?).each_with_object({}) do |law, entries|
-              id = law.id.to_s.upcase
-              question = law.ask.to_s.strip
-              if question.empty?
-                question = "Does this artifact breach #{id} or miss an improvement " \
-                           "implied by its repair contract?"
-              end
+            # The YAML catalogue owns Law identity and membership. Ruby files
+            # provide detectors and explanatory text; they cannot add, remove,
+            # or scope a Law out of semantic assessment.
+            catalogue = Master.law("law_catalogue", root: Master::ROOT)
+            entries = catalogue.fetch("entries")
+            raise "canonical Law catalogue is empty" unless entries.is_a?(Hash) && !entries.empty?
 
-              entries[id] = {
-                prompt: [
-                  question,
-                  "Repair contract: #{law.fix}",
-                  "Forbidden example: #{law.bad.strip}",
-                  "Compliant example: #{law.good.strip}",
-                ].join("\n"),
-                severity: law.severity,
-                mode: :both,
-                reversibility: nil,
-                blast_radius: nil,
-                languages: [],
-                path: nil,
-                path_exclude: nil,
-              }
-            end
-
-            # Inline Ruby detector implementations belong to the same Law
-            # population. They contribute behavior, never a second policy identity.
-            Master::Review::Scan::Law.registry.each do |klass|
-              next unless klass.respond_to?(:dsl_id) && !klass.dsl_id.to_s.empty?
+            definitions = ::Law.definitions.values.to_h { |law| [law.id.to_s.upcase, law] }
+            detector_definitions = Master::Review::Scan::Law.registry.each_with_object({}) do |klass, result|
+              location = klass.name && Object.const_source_location(klass.name)&.first
+              next if location&.match?(%r{(?:\A|/)(?:test|spec)/})
 
               instance = Master::Review::Scan::LawFactory.build(klass, root: Master::ROOT)
               id = instance.id.to_s.upcase
-              next if laws.key?(id)
+              result[id] ||= instance unless id.empty?
+            end
 
-              description = instance.description.to_s.strip
-              description = id.tr("_", " ").downcase if description.empty?
+            entries.each_with_object({}) do |(raw_id, manifest), laws|
+              id = raw_id.to_s.upcase
+              definition = definitions[id]
+              detector = detector_definitions[id]
+              question = definition&.ask.to_s.strip
+              question = detector.description.to_s.strip if question.empty? && detector&.respond_to?(:description)
+              question = definition.practice.to_s.strip if question.empty? && definition&.respond_to?(:practice)
+              question = definition.fix.to_s.strip if question.empty? && definition&.respond_to?(:fix)
+              question = id.tr("_", " ").downcase if question.empty?
+
+              prompt = [
+                question,
+                ("Repair contract: #{definition.fix}" if definition&.respond_to?(:fix) && !definition.fix.to_s.empty?),
+                ("Forbidden example: #{definition.bad.strip}" if definition&.respond_to?(:bad) && !definition.bad.to_s.empty?),
+                ("Compliant example: #{definition.good.strip}" if definition&.respond_to?(:good) && !definition.good.to_s.empty?),
+                ("Canonical source: #{(Array(manifest["definition_sources"]) + Array(manifest["detector_sources"])).join(", ")}"),
+                "Evaluate this same invariant for a clear breach and a concrete improvement.",
+              ].compact.join("\n")
 
               laws[id] = {
-                prompt: "#{description}. Evaluate the same requirement for a clear breach " \
-                        "and for a concrete improvement.",
-                severity: instance.severity,
+                prompt: prompt,
+                severity: definition&.severity || detector&.severity || :warning,
                 mode: :both,
                 reversibility: nil,
                 blast_radius: nil,
@@ -344,9 +345,7 @@ module Master
                 path: nil,
                 path_exclude: nil,
               }
-            end
-
-            laws.freeze
+            end.freeze
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "SemanticLaw.from_law", severity: :load_bearing)
             raise

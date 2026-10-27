@@ -231,6 +231,17 @@ class VisualPassContractTest < Minitest::Test
     end
   end
 
+  def test_visual_review_uses_every_canonical_law
+    catalogue = Master.law("law_catalogue").fetch("entries").keys.map(&:to_s).sort
+
+    assert_equal catalogue, Master::Fix::VisualUsability.ids
+    context = Master::Fix::VisualUsability.context
+
+    assert_includes context, "CANONICAL UNIVERSAL LAW CATALOGUE"
+    assert_includes context, catalogue.last
+    assert_includes context, "Do not filter by programming language, source file type"
+  end
+
   # /fix constructs the pass with MASTER's own directory as root; RAILS must
   # still read as RAILS, or the whole rendered review silently skips.
   def test_rails_is_a_visual_target_when_root_is_master

@@ -122,6 +122,15 @@ class TestSemanticLawScope < Minitest::Test
   # for it; laws.yml carried `rails`, `prose` and `erb` across 13 rows for the
   # same reason — nothing emits them, and while the key was unread nothing said
   # so. Now that it is read, a phantom language aims a rule at no file at all.
+  def test_semantic_population_matches_the_canonical_law_catalogue
+    catalogue = Master.law("law_catalogue").fetch("entries").keys.map(&:upcase).sort
+    assessed = rule.send(:load_semantic_laws).keys.sort
+
+    assert_equal catalogue, assessed
+    assert_includes assessed, "RUBOCOP", "class-based detectors must not be omitted from semantic review"
+    assert_includes assessed, "INTERCONNECT", "non-DSL detector classes must not be omitted"
+  end
+
   def test_no_declared_language_is_one_no_file_can_carry
     known = Master::FILE_LANGUAGE_MAP.values.uniq
     declared = Master.law_entries(root: Master::ROOT)
