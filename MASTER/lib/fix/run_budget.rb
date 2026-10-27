@@ -287,7 +287,20 @@ module Master
         limits = "budget #{show(@max_cost, "$")} / #{show(@max_minutes, "", "m")}"
         RunPulse::Banner.lines(root: @root, target: target || @root, max_passes: @max_passes, limits:).each { |text| @say.call(text) }
         @pulse.attach(bus) if bus
+        @guard_scope = guard_scope(target)
         @protected_baseline = AutofixGuard.protected_changes(@root)
+      end
+
+      # The tree a run can write, as a repository-relative prefix ("RAILS/"), or nil for the whole
+      # repository: another writer's STUDIO edit stopped a RAILS run, which cannot touch STUDIO.
+      def guard_scope(target)
+        relative = File.expand_path(target.to_s, @root).delete_prefix("#{File.expand_path(Master::REPO_ROOT)}/")
+        tree = relative.split("/").first
+
+        tree && MasterPaths::TREES.include?(tree) ? "#{tree}/" : nil
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "RunBudget.guard_scope")
+        nil
       end
 
       def pass_end(pass)
@@ -387,7 +400,10 @@ module Master
         abort_run!("protected path changed: #{fresh.first(3).join(", ")}", force: true) unless fresh.empty?
       end
 
-      def new_protected_changes = AutofixGuard.protected_changes(@root) - @protected_baseline
+      def new_protected_changes
+        fresh = AutofixGuard.protected_changes(@root) - @protected_baseline
+        @guard_scope ? fresh.select { |path| path.start_with?(@guard_scope) } : fresh
+      end
 
       def self_check_line
         return "fix0: self-check: protected paths unchecked" unless @protected_baseline

@@ -368,6 +368,26 @@ class TestFixWatchdog < Minitest::Test
     refute File.exist?(other)
   end
 
+  # Another writer's edit to STUDIO/postpro stopped a RAILS run fifty minutes in. A run's
+  # guard watches the tree it can write; a protected change elsewhere is someone else's.
+  def test_a_protected_change_outside_the_runs_tree_does_not_stop_it
+    git("init", "-q")
+    tokens = File.join(@root, "MASTER", "data", "tokens.yml")
+    FileUtils.mkdir_p(File.dirname(tokens))
+    File.write(tokens, "a: 1\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "base")
+
+    run = budget
+    run.instance_variable_set(:@protected_baseline, Master::Fix::AutofixGuard.protected_changes(@root))
+    run.instance_variable_set(:@guard_scope, "RAILS/")
+    File.write(tokens, "a: 2\n")
+    @now = 301.0
+    run.send(:guard_check, @now)
+
+    assert_empty @killed
+  end
+
   def test_the_wrapper_ends_a_run_on_the_no_yield_line_and_on_nothing_else_new
     line = "fix0: STALLED no yield: 0 fixed after 22m, 7 attempts\n"
 
