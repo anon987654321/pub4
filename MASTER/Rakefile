@@ -869,7 +869,7 @@ end
 # called it. A check defined and uncalled is a check that has stopped measuring
 # without anyone deciding it should.
 AUDIT_CHECKS = %w[
-  dogfood constitution selftest tools core_smoke security_sweep
+  dogfood constitution selftest tools core_smoke architecture boot_smoke security_sweep
   lint:frozen lint:data_singularity lint:spine lint:autoload
   lint:law_trace lint:law_parity lint:agent_contracts lint:laws_digest lint:scan_coverage lint:reader_singularity lint:doc_citations
   lint:do_not_touch lint:instruments lint:swallowed lint:law_audit lint:autofix_reach
