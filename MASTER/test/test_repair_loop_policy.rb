@@ -505,6 +505,18 @@ class TestRepairLoopPolicy < Minitest::Test
     refute_includes prompt, "line_1 = 1\n", "unchanged lines far from the fix stay out"
   end
 
+  # git's diff arrives as BINARY. A non-ASCII line in it raised inside the UTF-8
+  # prompt, and the refusal that followed killed every such repair unread.
+  def test_reflexion_reads_a_change_beside_non_ascii_text
+    original = "# Søknad — kø\nvalue = 1\n"
+    proposed = original.sub("value = 1", "value = 2")
+    prompt = build_loop(root: Dir.pwd, bus: FakeBus.new, scanner: Scanner.new, agent: ScriptedAgent.new("SAFE"))
+               .send(:reflexion_prompt, { law: "TEST_RULE", line: 2, message: "fix — me" }, original, proposed)
+
+    assert_includes prompt, "# Søknad — kø"
+    assert_includes prompt, "+value = 2"
+  end
+
   # The fallback returned the model's raw reply, prose and fences included, or
   # the literal UNCHANGED, and apply wrote that over the source.
   def test_the_whole_file_fallback_returns_code_or_nothing

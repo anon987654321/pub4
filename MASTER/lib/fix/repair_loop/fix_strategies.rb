@@ -86,6 +86,9 @@ module Master
             File.write(before, original_src)
             File.write(after, proposed_src)
             out, = Master::Io::Exec.capture2e("git", "diff", "--no-index", "--no-color", "-U5", before, after)
+            # git's bytes arrive as BINARY; any non-ASCII line in them made the UTF-8 prompt
+            # raise, and a verifier that cannot run refuses, so every such repair died unread.
+            out = out.dup.force_encoding(Encoding::UTF_8).scrub
             lines = out.lines.drop_while { |line| !line.start_with?("@@") }
             return lines.join if lines.size <= REVIEW_DIFF_LINES
 
