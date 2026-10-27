@@ -1,5 +1,5 @@
 ---
-findings: 217
+findings: 214
 by_rule:
   BARE_DIV_WRAPPER: 4
   BEM_IN_VIEWS: 12
@@ -13,11 +13,11 @@ by_rule:
   MEANINGFUL_NAMES: 14
   MEASURE_OPTIMUM: 7
   MIGRATION_REMOVE_COLUMN: 1
-  MOBILE_FIRST: 31
+  MOBILE_FIRST: 30
   NEVER_BATCH_DELETE: 7
   NO_COLUMN_ALIGN: 8
   NO_INLINE_SCRIPT_BLOCK: 10
-  NULLISH_COALESCING: 57
+  NULLISH_COALESCING: 55
   OPTIONAL_CHAINING: 1
   RUBY_NUMERIC_UNDERSCORE: 6
   SAFE_NAVIGATION: 1
@@ -117,7 +117,6 @@ finding_members:
   - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_surface_chrome_endgame.scss:386
   - MOBILE_FIRST RAILS/__shared/app/assets/stylesheets/_welcome_onboarding.scss:164
   - MOBILE_FIRST RAILS/amber/app/assets/stylesheets/_commerce_polish.scss:98
-  - MOBILE_FIRST RAILS/amber/app/assets/stylesheets/_mannequin_3d.scss:160
   - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/_commerce_polish.scss:176
   - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/_vertical_promo.scss:103
   - MOBILE_FIRST RAILS/brgen/app/assets/stylesheets/application.scss:10117
@@ -160,8 +159,6 @@ finding_members:
   - NO_INLINE_SCRIPT_BLOCK RAILS/master/app/views/dashboard/index.html.erb:53
   - NO_INLINE_SCRIPT_BLOCK RAILS/master/public/406-unsupported-browser.html:9
   - NO_INLINE_SCRIPT_BLOCK RAILS/master/public/offline.html:7
-  - NULLISH_COALESCING RAILS/amber/app/javascript/controllers/mannequin_3d_controller.js:372
-  - NULLISH_COALESCING RAILS/amber/app/javascript/controllers/mannequin_3d_controller.js:373
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/lazy_image_controller.js:65
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/lazy_image_controller.js:66
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/listing_form_controller.js:51
