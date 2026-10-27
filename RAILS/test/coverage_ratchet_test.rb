@@ -71,7 +71,9 @@ class CoverageRatchetTest < Minitest::Test
 # controllers 21 -> 23 and models 55 -> 56: the verified-business review
 # arrived with its own controller and model tests, and the fleet health
 # controller with the test for the 503 it used to answer.
-    "brgen" => { "controllers" => 23, "models" => 57 },
+# controllers 23 -> 26, models 57 -> 58: the ratchet found tested classes above
+# the floor.
+    "brgen" => { "controllers" => 26, "models" => 58 },
     # models 1 -> 8 on 2026-08-16. bsdports had one model test (user) against
     # thirteen models, and it was the smallest tree in the repo — Port, the record
     # everything else hangs off, had nothing naming it. Writing them found two
@@ -79,7 +81,8 @@ class CoverageRatchetTest < Minitest::Test
     # validation, so a duplicate came back as RecordNotUnique rather than as a
     # form error, and ports_fts turned out to be absent from every schema-loaded
     # database (RAILS/test/raw_schema_objects_test.rb).
-    "bsdports" => { "controllers" => 2, "models" => 8 },
+    # models 8 -> 9: the ratchet found a tested model above the floor.
+    "bsdports" => { "controllers" => 2, "models" => 9 },
   }.freeze
 
   # The app's own app/ dir, plus any mounted vertical engines (engines/*/app).

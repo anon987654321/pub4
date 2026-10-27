@@ -53,10 +53,13 @@ class PwaInstallableCheckTest < Minitest::Test
     write(File.join(root, "__shared/public/icon-mask.png"), "png")
   end
 
+  # CHECK::ROOT is the repository root and the check joins RAILS/ itself, so the
+  # fixture apps live under <root>/RAILS and that is the root tests edit.
   def with_tree(manifest: MANIFEST)
     Dir.mktmpdir("pwa-installable") do |root|
-      plant(root, manifest: manifest)
-      with_const(CHECK, :ROOT, root) { yield root }
+      rails = File.join(root, "RAILS")
+      plant(rails, manifest:)
+      with_const(CHECK, :ROOT, root) { yield rails }
     end
   end
 
@@ -129,7 +132,7 @@ class PwaInstallableCheckTest < Minitest::Test
   end
 
   def test_it_has_no_precondition_it_can_decline_to_measure
-    source = File.read(File.join(CHECK::ROOT, "checks/lib/source/pwa_installable.rb"))
+    source = File.read(File.join(CHECK::ROOT, "MASTER/checks/lib/source/pwa_installable.rb"))
 
     refute_match(/inconclusive!|skipped_live|CdpSession|port_open\?/, source,
                  "a live half added here needs a third state, or a skipped manifest check reads as a pass")

@@ -84,7 +84,7 @@ class DeployDriftCheckTest < Minitest::Test
     drift = result.failures.grep(/master is running/)
     skip "HEAD~1 touched no MASTER path" if drift.empty?
 
-    assert_match(/commit\(s\) since then touch MASTER\/web, MASTER\/lib, MASTER\/data/, drift.join)
+    assert_match(/commit\(s\) since then touch RAILS\/master, MASTER\/lib, MASTER\/data/, drift.join)
   end
 
   # A SHA this checkout has never seen is not drift and not cleanliness — the check

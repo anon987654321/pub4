@@ -190,10 +190,13 @@ class MethodLengthRatchetTest < Minitest::Test
     MSG
   end
 
+  # Only downward, as in file_length_ratchet_test.rb: growth is
+  # test_no_area_exceeds_its_ceiling's to report, and an inequality here would
+  # tell the reader to record a regression as the new ceiling.
   def test_ceilings_are_not_slack
     counts, worst, = measure
     slack = CEILINGS.filter_map do |area, (max_count, max_lines)|
-      next if counts[area] == max_count && worst[area] == max_lines
+      next unless counts[area] < max_count || worst[area] < max_lines
 
       "#{area}: now #{counts[area]}/#{worst[area]}, recorded #{max_count}/#{max_lines}"
     end

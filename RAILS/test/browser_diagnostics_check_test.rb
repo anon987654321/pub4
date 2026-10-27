@@ -225,7 +225,9 @@ class BrowserDiagnosticsCheckTest < Minitest::Test
 
     assert_operator pixel_surfaces.size, :>, 0
     assert_operator pixel_surfaces.size, :<, structural_surfaces.size
-    %w[master/chat amber/home amber/wardrobe bsdports/home bsdports/ports_index
+    # bsdports/home renders the same structure as bsdports/ports_index
+    # (snapshot_aliases), so only ports_index carries the pixel baseline.
+    %w[master/chat amber/home amber/wardrobe bsdports/ports_index
        brgen/core brgen/marketplace brgen/dating brgen/maps brgen/messenger].each do |key|
       app, label = key.split("/", 2)
       assert pixel_surfaces.any? { |surface| surface.app == app && surface.label == label }, key

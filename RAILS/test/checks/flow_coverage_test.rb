@@ -50,12 +50,15 @@ class FlowCoverageTest < Minitest::Test
   end
 
   # A $name in a path, a parameter or a pattern must have been produced by an
-  # earlier step (capture, capture_final_path, a mail capture), be $unique, or be
+  # earlier step (capture, capture_final_path, a mail capture), be one of the
+  # per-run values FlowJourney binds ($unique and the throwaway passwords), or be
   # a credential the flow declares. Otherwise the request goes out with the
   # literal "$name" and the failure reads as a broken page.
+  RUN_BOUND = %w[unique flow_password flow_wrong_password flow_new_password].freeze
+
   def test_every_placeholder_is_bound_before_it_is_used
     FLOWS.each do |flow|
-      bound = %w[unique] + Array(flow["requires_credentials"])
+      bound = RUN_BOUND + Array(flow["requires_credentials"])
       flow["steps"].each do |step|
         label = "#{flow["id"]}/#{step["name"]}"
         used = strings_in(step.reject { |key, _| %w[capture number count mail needs].include?(key) })

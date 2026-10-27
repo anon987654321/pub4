@@ -130,8 +130,10 @@ class VisualContractBlindnessTest < Minitest::Test
         RbConfig.ruby, RUNNER, "visual_contract"
       )
 
-      assert_includes out, "checks0 at rails: visual_contract inconclusive, checked nothing"
-      assert_match(/^checks0 at rails: 0 of 1 passed .*; visual_contract inconclusive$/, out)
+      assert_match(/^checks0 at rails: visual_contract inconclusive, gap: /, out)
+      assert_match(
+        /^checks0 at rails: 0 pass, 0 fail, 0 skip, 1 inconclusive, 0 error .*; inconclusive=visual_contract$/, out
+      )
       assert_equal 3, status.exitstatus, "an unmeasured check is the third state, neither pass nor block:\n#{out}"
     end
   end
