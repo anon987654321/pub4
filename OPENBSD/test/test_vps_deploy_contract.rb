@@ -27,11 +27,7 @@ class VpsDeployContractTest < Minitest::Test
   def test_the_fleet_it_deploys_is_the_fleet_apps_yml_declares
     refute_nil deploy_all, "DEPLOY_ALL not found — the scan broke, not the script"
 
-    # master is not in apps.yml: it is not a Rails app under /home/*/app, which is
-    # the reason an operator enumerating the apps leaves it behind and the reason
-    # it is named here at all.
-    assert_equal APPS.sort, (deploy_all - ["master"]).sort
-    assert_includes deploy_all, "master"
+    assert_equal APPS.sort, deploy_all.sort
   end
 
   # The script's own comment carries the argument: master leads because it is
@@ -571,7 +567,9 @@ class VpsDeployContractTest < Minitest::Test
     # A directory the repo no longer has must not survive the sync, or its stale tests keep running.
     assert_includes sync, '[ -d "$src/engines" ] || rm -rf "$app_dir/engines"'
 
-    APPS.each do |app|
+    # master has no copy-tree and no vps_ci.sh run (vps_ci_all.sh skips it), so
+    # its ../.. path to MASTER is never mirrored.
+    (APPS - ["master"]).each do |app|
       gemfile = File.join(ROOT, "RAILS", app, "Gemfile")
       next unless File.file?(gemfile)
 

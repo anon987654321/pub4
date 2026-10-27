@@ -47,9 +47,9 @@ class TestSurfaceEvidenceContract < Minitest::Test
 
     assert_equal rails.fetch("apps").keys.sort, inventory.fetch("apps").map { |row| row.fetch("name") }.sort
     assert_equal "RAILS/apps.yml", inventory.fetch("generated_from")
-    face = inventory.fetch("master_face")
-    assert_equal "RAILS/master", face.fetch("deploy_root")
-    assert_operator Integer(face.fetch("port")), :>, 0
+    master = inventory.fetch("apps").find { |row| row.fetch("name") == "master" }
+    assert_equal rails.dig("apps", "master", "port"), master.fetch("port")
+    assert_equal "RAILS/master", rails.dig("apps", "master", "deploy_root")
     assert File.executable?(File.join(root, "OPENBSD", "bin", "vps-deploy"))
   end
 

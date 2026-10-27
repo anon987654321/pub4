@@ -132,7 +132,7 @@ module Master
         "rails: feature_truth=RAILS/apps.yml; architecture=RAILS/CLAUDE.md; " +
         "shared=RAILS/__shared; tools=MASTER/tools/rails; design=MASTER/data/laws.yml; entry=MASTER/bin/operator triangle; " +
         "coupling=shared engine + sibling copy-tree affects every Rails app; " +
-        "deployed_copy=/home/<app>/app + /home/<app>/shared; " +
+        "deployed_copy=/home/<app>/app + /home/<app>/shared, master in place at /home/dev/pub4/RAILS/master; " +
         "proof=MASTER/checks/checks.yml+MASTER/bin/operator triangle+<app>/bin/ci; " +
         "live=OPENBSD/bin/check-vps+OPENBSD/bin/vps-state; " +
         "rendered=Chrome/CDP via rendered_suite; " +
@@ -178,8 +178,6 @@ module Master
 
           [app["name"], app["domain"], app["port"]].compact.join(":")
         end
-        face = data["master_face"]
-        master = face.is_a?(Hash) ? [face["domain"], face["port"]].compact.join(":") : "inventory unavailable"
         "openbsd: deploy_identity=OPENBSD/deploy_inventory.json; " +
         "recipes=OPENBSD/data/operator.yml; runbook=OPENBSD/RUNBOOK.md; configs=OPENBSD/etc; " +
         "service_lifecycle=rcctl; privilege_boundary=doas; sandbox_model=MASTER/lib/ground/pledge.rb; " +
@@ -188,7 +186,7 @@ module Master
         "dns_tls=httpd/acme-client/nsd; proof=OPENBSD/bin/check-openbsd+check-vps+vps-state; " +
         "live=target host diagnostics and public health; " +
         "recovery=tmux+vps-deploy; resource_guard=OPENBSD/bin/resource_guard.sh; " +
-        "apps=#{apps.join(", ")}; master=#{master}"
+        "apps=#{apps.join(", ")}"
       rescue StandardError
         "openbsd: deploy identity or operational inventory unavailable; " +
         "inspect OPENBSD/CLAUDE.md and OPENBSD/RUNBOOK.md"

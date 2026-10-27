@@ -98,10 +98,6 @@ failures = []
 skips = []
 targets = []
 
-manifest.fetch("master", {}).then do |spec|
-  next unless spec["browser"]
-  targets << ["master", spec["port"], spec["browser"]]
-end
 manifest.fetch("apps", {}).each do |name, spec|
   next unless spec["browser"]
   targets << [name, spec["port"], spec["browser"]]

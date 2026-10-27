@@ -310,7 +310,6 @@ typeset -a own_stops
 typeset -A deploy_ports
 load_deploy_ports() {
   (( $#deploy_ports )) && return 0
-  deploy_ports[master]=53187
   local line
   for line in ${(f)"$("$RUBY" -ryaml -e 'YAML.safe_load_file(ARGV[0]).fetch("apps").each { |n, v| puts "#{n} #{v["port"]}" if v["port"] }' "$repo/RAILS/apps.yml" 2>/dev/null)"}; do
     deploy_ports[${line%% *}]=${line##* }
@@ -497,7 +496,7 @@ fi
 
 # The whole fleet, in the order that survives its own side effects.
 #
-# master is not under /home/*/app, so an operator enumerating the Rails apps does
+# master is not under /home/*/app, so an operator enumerating the app homes does
 # not see it and a typed list leaves it behind. Naming the four here makes the
 # set a definition rather than a habit.
 #

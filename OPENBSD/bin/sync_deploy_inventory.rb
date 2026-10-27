@@ -28,12 +28,6 @@ payload = {
   "schema" => 1,
   "generated_from" => "RAILS/apps.yml",
   "apps" => apps,
-  "master_face" => {
-    "name" => "master",
-    "domain" => "ai.brgen.no",
-    "port" => 53_187,
-    "deploy_root" => "RAILS/master",
-  },
 }
 
 expected = JSON.pretty_generate(payload) + "\n"

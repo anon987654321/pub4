@@ -20,7 +20,7 @@ require_relative "../../../MASTER/checks/lib/live/user_flow"
 class FlowCoverageTest < Minitest::Test
   ROOT = File.expand_path("../../..", __dir__)
   FLOWS = YAML.safe_load_file(File.join(ROOT, "MASTER", "checks", "data", "flows.yml")).fetch("flows")
-  APPS = YAML.safe_load_file(File.join(ROOT, "RAILS", "apps.yml")).fetch("apps").keys + ["master"]
+  APPS = YAML.safe_load_file(File.join(ROOT, "RAILS", "apps.yml")).fetch("apps").keys
 
   STEP_KEYS = %w[
     name get post host params expect_status expect_final_path expect_body expect_any forbid_body

@@ -40,8 +40,6 @@ module Deploy
 
       flows = flows.select { |flow| only.include?(flow["app"]) } unless only.empty?
       ports = Inventory.new(root: @root).apps.to_h { |a| [a.name, a.port] }
-      # MASTER web is not a RAILS/apps.yml row — face + mission control.
-      ports["master"] ||= 53_187
       # FLOW_<APP>_PORT points one app's flows at a copy booted on a spare port.
       ports.each { |name, port| ports[name] = FlowCoverage.port_for(name, port) }
 

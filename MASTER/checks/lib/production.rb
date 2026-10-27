@@ -70,6 +70,8 @@ module Deploy
       failures = []
       prod_active = production_lines(production)
 
+      return check_master_app(name, app_dir:, prod_active:) if name == "master"
+
       @result.checked!(6)
       check_production_config(failures, prod_active, domain)
       check_routes(failures, app_dir)
@@ -81,6 +83,49 @@ module Deploy
       failures.each { |failure| @result.fail("#{name}: #{failure}") }
     end
 
+    # master shares only TLS at relayd with the other apps here; its Rails pin is
+    # RAILS/test/rails_stack_contract_test.rb's. It mounts no pub4-shared (no
+    # shared fleet route or CI), relayd forwards it only ai.brgen.no and it sends
+    # no mail (open host_authorization, no mailer host), it configures no queue
+    # adapter, and vps_deploy_master.sh restarts it in place. check_master_web in
+    # deploy_smoke_check.rb and the nested MasterWebAssetsCheck and
+    # MasterTtsCheck hold the rest.
+    def check_master_app(name, app_dir:, prod_active:)
+      failures = []
+
+      @result.checked!(2)
+      check_tls(failures, prod_active)
+      check_master_ci(failures, app_dir)
+
+      failures.each { |failure| @result.fail("#{name}: #{failure}") }
+    end
+
+    # Its bin/ci runs bundler-audit, Brakeman and the Rails tests; it has no RuboCop step.
+    def check_master_ci(app_failures, app_dir)
+      ci_bin = File.join(app_dir, "bin", "ci")
+      return fail_app!(app_failures, "missing bin/ci") unless File.file?(ci_bin)
+
+      ci_config = File.join(app_dir, "config", "ci.rb")
+      ci_text = [File.read(ci_bin), File.file?(ci_config) ? File.read(ci_config) : ""].join("\n")
+      fail_app!(app_failures, "bin/ci must be executable") unless File.executable?(ci_bin)
+      steps = { "bundler-audit" => "bundler-audit", "brakeman" => "Brakeman", "rails test" => "Rails tests" }
+      steps.each do |needle, step|
+        fail_app!(app_failures, "bin/ci must run #{step}") unless ci_text.include?(needle)
+      end
+    end
+
+    def check_tls(app_failures, prod_active)
+      if prod_active.any? { |line| line.include?("example.com") }
+        fail_app!(app_failures, "production config still has active example.com placeholder")
+      end
+      unless prod_active.any? { |line| line.match?(/\bconfig\.assume_ssl\s*=\s*true\b/) }
+        fail_app!(app_failures, "production config must trust relayd with config.assume_ssl = true")
+      end
+      return unless prod_active.any? { |line| line.match?(/\bconfig\.force_ssl\s*=\s*true\b/) }
+
+      fail_app!(app_failures, "TLS terminates at relayd; do not enable config.force_ssl in Rails")
+    end
+
     # The baseline is only in force when the app's own production.rb includes it.
     def production_lines(production)
       baseline = File.join(RAILS_ROOT, "__shared", "config", "environments", "production_baseline.rb")
@@ -90,9 +135,7 @@ module Deploy
     end
 
     def check_production_config(app_failures, prod_active, domain)
-      fail_app!(app_failures, "production config still has active example.com placeholder") if prod_active.any? { |line| line.include?("example.com") }
-      fail_app!(app_failures, "production config must trust relayd with config.assume_ssl = true") unless prod_active.any? { |line| line.match?(/\bconfig\.assume_ssl\s*=\s*true\b/) }
-      fail_app!(app_failures, "TLS terminates at relayd; do not enable config.force_ssl in Rails") if prod_active.any? { |line| line.match?(/\bconfig\.force_ssl\s*=\s*true\b/) }
+      check_tls(app_failures, prod_active)
       mailer_ok = prod_active.any? { |line| line.include?(domain) && (line.include?("action_mailer.default_url_options") || line.include?("mailer_host:")) }
       fail_app!(app_failures, "production mailer host must use #{domain}") unless mailer_ok
 

@@ -13,10 +13,9 @@ class TriangleContractTest < Minitest::Test
     @source ||= File.read(File.join(ROOT, "..", "MASTER", "tools", "rails", "triangle.rb"))
   end
 
-  test "triangle derives app surfaces from apps.yml and keeps master explicit" do
+  test "triangle derives every surface, master included, from apps.yml" do
     assert_includes source, 'YAML.safe_load_file(File.join(RAILS_ROOT, "apps.yml"))'
-    assert_match(/name: "master", port: 53_?187/, source)
-    refute_match(/port:\s*38\d{3}/, source)
+    refute_match(/53_?187|38_?\d{3}/, source)
   end
 
   test "triangle prepares databases and invalidates the development asset manifest before boot" do

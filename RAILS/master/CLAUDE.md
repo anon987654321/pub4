@@ -289,6 +289,10 @@ missing.
 
 ## Deploy state
 
+- `RAILS/apps.yml` registers master beside brgen, amber and bsdports, with
+  its port and domain. It is not a copy-tree app: `zsh OPENBSD/bin/vps-deploy
+  master` runs `OPENBSD/bin/vps_deploy_master.sh`, which pulls and restarts it
+  in place under `/home/dev/pub4/RAILS/master`.
 - `rcctl restart master` runs a real `rc_pre()`: kills stale processes,
   regenerates the face bundles if missing, precompiles assets if a content
   digest changed, runs the check above, then starts Falcon and waits for

@@ -16,12 +16,11 @@
       "name": "bsdports",
       "domain": "bsdports.org",
       "port": 47312
+    },
+    {
+      "name": "master",
+      "domain": "ai.brgen.no",
+      "port": 53187
     }
-  ],
-  "master_face": {
-    "name": "master",
-    "domain": "ai.brgen.no",
-    "port": 53187,
-    "deploy_root": "RAILS/master"
-  }
+  ]
 }

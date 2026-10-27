@@ -69,7 +69,10 @@ typeset -a APPS
 APPS=(${(f)"$("$RUBY" -ryaml -e 'puts YAML.safe_load_file(ARGV[0]).fetch("apps").keys' "${PUB4}/RAILS/apps.yml")"})
 (( ${#APPS} )) || { log "ERR: no apps read from ${PUB4}/RAILS/apps.yml"; exit 1 }
 
+# master is in apps.yml but was installed above: it runs in place under
+# RAILS/master, and it has no <app>.sh copy-tree script to run here.
 for app in $APPS; do
+  [[ $app == master ]] && continue
   case "$app" in brgen|amber|bsdports) ;; *) log "ERR: refused app from apps.yml: $app"; failed=$((failed + 1)); continue ;; esac
   typeset script="${PUB4}/RAILS/${app}/${app}.sh"
   log "=== Rails: ${app} ==="
@@ -95,7 +98,6 @@ for app in $APPS; do
   printf '  %s: ' "$app"
   admin_service check "$app" 2>/dev/null || print "not running"
 done
-admin_service check master 2>/dev/null || true
 if (( failed > 0 )); then
   log "FAILED: $failed step(s) — $LOG"
   exit 1

@@ -38,10 +38,4 @@ class TestInventoriesAgree < Minitest::Test
 
     assert_empty missing, "apps.yml domains with no relayd tls keypair: #{missing.join(', ')}"
   end
-
-  def test_the_master_face_domain_has_a_relayd_keypair
-    face = JSON.parse(File.read(File.join(ROOT, "OPENBSD", "deploy_inventory.json"), encoding: "UTF-8")).fetch("master_face")
-
-    assert_includes File.read(File.join(ROOT, "OPENBSD", "etc", "relayd.conf"), encoding: "UTF-8"), %(tls keypair "#{face.fetch('domain')}")
-  end
 end

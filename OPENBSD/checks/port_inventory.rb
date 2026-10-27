@@ -30,9 +30,6 @@ module Deploy
       "OPENBSD/usr/local/bin/keep-warm.sh",
     ].freeze
 
-    # MASTER's face is not a Rails app and has no apps.yml row.
-    MASTER_PORT = 53_187
-
     # Every file that states two or more app ports, and why it is allowed to.
     #
     # A file naming one port is using a number; a file naming the whole fleet is
@@ -62,6 +59,10 @@ module Deploy
       "OPENBSD/CLAUDE.md" => "prose: same triage note",
       "OPENBSD/RUNBOOK.md" => "prose: operator reference",
       "MASTER/checks/PAGE_SIM.md" => "generated report",
+      "MASTER/test/test_ai_orientation.rb" => "fixture: a two-app apps.yml and the deploy inventory it generates",
+      "MASTER/test/test_relayd.rb" => "fixture: a relayd.conf excerpt for the parser under test",
+      "OPENBSD/usr/local/bin/emergency_cpu.sh" => "unchecked: root runs it from /usr/local/bin with no checkout " \
+                                                  "to read, and it names only master and brgen, the two it restarts",
     }.freeze
 
     FLEET_SCAN_GLOB = "{RAILS,OPENBSD,MASTER,bin}/**/*.{rb,sh,yml,yaml,json,conf,mjs,js,md,erb,exp}"
@@ -194,7 +195,6 @@ module Deploy
 
     def check_smoke_probes(result, apps, root: ROOT, scripts: SMOKE_SCRIPTS)
       by_name = apps.to_h { |app| [app.name, app.port] }
-      known = by_name.values + [MASTER_PORT]
 
       scripts.each do |relative|
         path = File.join(root, relative)
@@ -204,19 +204,24 @@ module Deploy
         end
 
         File.readlines(path).each_with_index do |line, index|
-          numbers = line.scan(PORT_TOKEN).flatten.map(&:to_i).uniq
-          next if numbers.empty?
-
-          named = by_name.keys.select { |name| line.include?(name) }
-          allowed = named.empty? ? known : named.map { |name| by_name.fetch(name) } + [MASTER_PORT]
-
-          (numbers - allowed).each do |port|
-            result.fail(
-              "#{relative}:#{index + 1} probes port #{port}, which no app in apps.yml listens on" \
-              "#{named.empty? ? '' : " (line names #{named.join(', ')})"}",
-            )
-          end
+          check_probe_line(result, line, where: "#{relative}:#{index + 1}", by_name:)
         end
+      end
+    end
+
+    # A line naming apps may probe only their ports; a line naming none, any app's.
+    def check_probe_line(result, line, where:, by_name:)
+      numbers = line.scan(PORT_TOKEN).flatten.map(&:to_i).uniq
+      return if numbers.empty?
+
+      named = by_name.keys.select { |name| line.include?(name) }
+      allowed = named.empty? ? by_name.values : by_name.values_at(*named)
+
+      (numbers - allowed).each do |port|
+        result.fail(
+          "#{where} probes port #{port}, which no app in apps.yml listens on" \
+          "#{named.empty? ? '' : " (line names #{named.join(', ')})"}",
+        )
       end
     end
 
@@ -298,22 +303,35 @@ module Deploy
 
     def check_deploy_scripts(result, apps)
       apps.each do |app|
+        name = app.name
         path = File.join(ROOT, app.deploy_script)
         unless File.file?(path)
-          result.fail("#{app.name}: missing deploy script #{app.deploy_script}")
+          result.fail("#{name}: missing deploy script #{app.deploy_script}")
           next
         end
+
+        next check_master_rc_port(result, app) if name == "master"
 
         text = File.read(path)
 
         {
-          "APP_NAME=#{app.name}" => "APP_NAME",
+          "APP_NAME=#{name}" => "APP_NAME",
           "APP_DOMAIN=#{app.domain}" => "APP_DOMAIN",
           "APP_PORT=#{app.port}" => "APP_PORT"
         }.each do |needle, label|
-          result.fail("#{app.name}: deploy script #{label} must mirror apps.yml") unless text.include?(needle)
+          result.fail("#{name}: deploy script #{label} must mirror apps.yml") unless text.include?(needle)
         end
       end
+    end
+
+    # master is not a copy-tree app: vps_deploy_master.sh restarts rc.d/master in
+    # place, and the PORT= in that rc.d script is what falcon binds and what
+    # relayd's <master> table reaches, so that line is master's mirror.
+    def check_master_rc_port(result, app)
+      rc = File.join(ROOT, "OPENBSD", "etc", "rc.d", "master")
+      return if File.file?(rc) && File.read(rc).match?(/^PORT=#{app.port}$/)
+
+      result.fail("master: OPENBSD/etc/rc.d/master PORT must mirror apps.yml #{app.port}")
     end
 
     def openbsd_ports
@@ -359,7 +377,9 @@ module Deploy
       end
 
       actual = match[:apps].scan(/"([^"]+)"/).flatten.sort
-      expected = apps.map(&:name).sort
+      # master serves its own public/sw.js, which owns the face's boot and offline
+      # contract; the shared Workbox worker is built for the engine-mounting apps.
+      expected = apps.map(&:name).reject { |name| name == "master" }.sort
       result.fail("Workbox APPS must mirror RAILS/apps.yml active apps") unless actual == expected
     end
 
@@ -372,8 +392,10 @@ module Deploy
       result.fail("RAILS/README.md app count must mirror apps.yml (#{count_word} Rails apps)") unless root_readme.match?(/\b#{count_word} Rails apps\b/)
 
       apps.each do |app|
-        readme_path = File.join(ROOT, app.deploy_root, "README.md")
-        unless File.file?(readme_path)
+        # master's human entry is its CLAUDE.md; RAILS/master has no README.
+        readme_path = %w[README.md CLAUDE.md].map { |name| File.join(ROOT, app.deploy_root, name) }
+                                             .find { |path| File.file?(path) }
+        unless readme_path
           result.fail("#{app.name}: missing README.md")
           next
         end

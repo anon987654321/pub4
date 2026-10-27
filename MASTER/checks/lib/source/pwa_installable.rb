@@ -115,7 +115,8 @@ module Deploy
     end
 
     def check_required_sizes(app, icons)
-      any = icons.select { |icon| icon[:purpose] == "any" }
+      # purpose is a space-separated list, so "any maskable" serves both.
+      any = icons.select { |icon| icon[:purpose].split.include?("any") }
       REQUIRED_SIZES.each do |size|
         @result.checked!
         next if any.any? { |icon| icon[:sizes] == size }
@@ -129,6 +130,8 @@ module Deploy
       @result.checked!
       worker = File.join(rails_root, app, "app/views/pwa/service-worker.js")
       return if File.file?(worker)
+      # master serves a static worker from public/sw.js, which AuthTier lists as public.
+      return if File.file?(File.join(rails_root, app, "public", "sw.js"))
 
       @result.fail("pwa_installable: #{app} has no service worker at #{rel(worker)}")
     end

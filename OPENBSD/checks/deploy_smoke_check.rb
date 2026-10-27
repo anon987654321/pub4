@@ -34,17 +34,6 @@ def check_relayd(failures)
   apps.each do |name, metadata|
     assert_forward(relayd, failures, name, metadata.fetch("port"), metadata.fetch("domain"))
   end
-
-  master_json = File.join(ROOT, "OPENBSD", "deploy_inventory.json")
-  if File.file?(master_json)
-    inventory = JSON.parse(File.read(master_json))
-    if (master_entry = inventory.dig("master_face"))
-      master_port = master_entry.fetch("port")
-
-      failures << "relayd: master backend missing" unless relayd.include?("forward to <master>")
-      failures << "relayd: master missing http /up check" unless relayd.include?("forward to <master> port #{master_port} check http \"/up\"")
-    end
-  end
 end
 
 # Port 80 is httpd's, and the part of it that matters is the ACME location:
@@ -124,6 +113,11 @@ def check_apps_production(failures)
     # Fix: /up check was performance theater (matching /upload)
     failures << "#{name}: production.rb missing /up host_authorization exclude" unless text.include?("/up")
     failures << "#{name}: production.rb missing /health host_authorization exclude" unless text.include?("/health")
+
+    # master does not mount the shared engine: its own HealthController answers
+    # /health with TTS, git and container state, which check_master_web and
+    # health_check.rb read, so the shared fleet route is not asked of it.
+    next if name == "master"
 
     routes = File.join(RAILS_ROOT, name, "config", "routes.rb")
     failures << "#{name}: routes must load shared fleet health endpoint" if File.file?(routes) && !File.read(routes).include?("fleet.rb")

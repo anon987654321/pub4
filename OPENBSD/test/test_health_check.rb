@@ -17,7 +17,6 @@ class HealthCheckBehaviourTest < Minitest::Test
   OPENBSD = File.expand_path("..", __dir__)
   SCRIPT = File.join(OPENBSD, "checks", "health_check.rb")
   APPS = YAML.safe_load_file(File.join(OPENBSD, "..", "RAILS", "apps.yml")).fetch("apps")
-  FACE = JSON.parse(File.read(File.join(OPENBSD, "deploy_inventory.json"))).fetch("master_face")
 
   def stub_curl(dir, body)
     path = File.join(dir, "curl")
@@ -44,7 +43,6 @@ class HealthCheckBehaviourTest < Minitest::Test
       _, err, status = run_public_only(stub_curl(dir, "echo 'curl: (7) Failed to connect' >&2; exit 7"))
       refute status.success?
       APPS.each_value { |meta| assert_includes err, "#{meta.fetch('domain')} https" }
-      assert_includes err, "#{FACE.fetch('domain')} https", "master's public name must come from deploy_inventory.json"
     end
   end
 

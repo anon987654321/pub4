@@ -30,14 +30,11 @@ module Deploy
     # Auth surfaces where the wall is the product (sign-in / register).
     AUTH_WALL_OK = %r{/session/new|/registration/new|/passwords}
 
-    # MASTER's face is not a Rails app and has no apps.yml row, so its port is
-    # the one literal here. The three Rails ports are read from apps.yml rather
-    # than restated: a stale copy would not fail this check, it would point the
-    # live half at a closed port and skip every page as unreachable.
-    MASTER_PORT = 53_187
+    # Read from apps.yml rather than restated: a stale copy would not fail this
+    # check, it would point the live half at a closed port and skip every page
+    # as unreachable.
     PORTS = Inventory.new(root: ROOT)
       .apps.to_h { |app| [app.name, app.port] }
-      .merge("master" => MASTER_PORT)
       .freeze
 
     def self.run = new.run

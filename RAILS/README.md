@@ -1,9 +1,10 @@
 # Rails apps
 
-**Three Rails apps, one shared engine, and one process that answers to a hundred
+**Four Rails apps, one shared engine, and one process that answers to a hundred
 hostnames, each built so that a stranger on a phone sees a single, quiet product
 and never the machinery beneath it.** brgen is the city network, amber is the
-wardrobe, and bsdports is a search of the ports tree. They run on SQLite behind
+wardrobe, bsdports is a search of the ports tree, and master is MASTER's face
+on `ai.brgen.no`. They run on SQLite behind
 Falcon, on one box called vm23, and everything they share lives in one engine
 so that a fix made once is made everywhere.
 
@@ -30,8 +31,9 @@ loads it by local path. On the box, the copy-tree deploy puts each app at
 `/home/<app>/app` and gives it its own copy of the engine at `/home/<app>/shared`,
 a sibling and never a subdirectory. Syncing to the wrong one makes the asset
 precompile a silent no-op. `__shared/README.md` describes what the engine owns.
-The MASTER web face, which serves `ai.brgen.no`, is a fourth Rails surface in
-`master`, and its own `CLAUDE.md` governs it.
+master does not mount the engine and is not copied: it runs in place under
+`/home/dev/pub4/RAILS/master`, deployed by `OPENBSD/bin/vps_deploy_master.sh`,
+and its own `CLAUDE.md` governs it.
 
 Everything that builds, tests or probes these apps now lives under MASTER. The
 old RAILS `bin` directory is gone, and its work moved into `MASTER/tools/rails`,
@@ -79,7 +81,9 @@ values are generated from `MASTER/data/tokens.yml`. Shared hierarchy and the
 semantic signal may travel across apps; product dialects do not collapse into one
 palette. Brgen retains its local editorial identity, Amber protects garment colour
 and neutral presentation, bsdports remains terminal-green, and MASTER's face uses
-the signal on ink. Review generated assets and rendered screenshots, not source
+the signal on ink. master shares Brgen's brand character by the operator's
+decision, recorded in `apps.yml`; its pages still render only the face's own
+stylesheet. Review generated assets and rendered screenshots, not source
 tokens alone.
 
 ## Running it

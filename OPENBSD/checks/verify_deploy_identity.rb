@@ -87,12 +87,27 @@ metadata.each do |app, expected|
   domains[expected.fetch("domain")] << app
 
   failures << "missing app directory for #{app}: #{app_path}" unless Dir.exist?(app_path)
-  failures << "missing README for #{app}: #{readme}" unless File.file?(readme)
+  failures << "missing README for #{app}: #{readme}" unless app == "master" || File.file?(readme)
   failures << "missing Gemfile for #{app}: #{gemfile}" unless File.file?(gemfile)
   failures << "missing routes for #{app}: #{routes}" unless File.file?(routes)
 
   unless File.file?(script)
     failures << "missing deploy script for #{app}: #{script}"
+    next
+  end
+
+  # master is not a copy-tree app, so none of the _deploy.sh contract below is
+  # asked of it: vps_deploy_master.sh pulls and restarts RAILS/master in place,
+  # and its human entry is CLAUDE.md, which must name that script.
+  if app == "master"
+    contract = File.join(app_path, "CLAUDE.md")
+    named = File.file?(contract) && File.read(contract).include?(expected.fetch("deploy_script"))
+    failures << "#{contract} must name #{expected.fetch('deploy_script')}" unless named
+
+    failures << "missing strict mode for #{app}" unless File.read(script).include?("set -eo pipefail")
+    healthy = !File.file?(routes) || File.read(routes).include?("rails/health#show")
+    failures << "missing health route for #{app}" unless healthy
+
     next
   end
 

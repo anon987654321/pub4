@@ -135,11 +135,18 @@ module Master
         dirs.select { |d| File.directory?(File.join(d, "app")) }.to_h { |d| [d.delete_prefix(rails + "/"), d] }
       end
 
+      # The engine's CSS is judged against the apps that mount it; master does not,
+      # so a class only its face names cannot keep a shared rule alive.
       def corpus_roots(app)
-        all = app_names.map { |a| File.join(rails, a) } + engine_roots.values
+        all = app_names.reject { |a| standalone?(a) }.map { |a| File.join(rails, a) } + engine_roots.values
         return [*all, shared_root] if app == "__shared"
 
         [File.join(rails, app), shared_root, *(app == "brgen" ? engine_roots.values : [])]
+      end
+
+      def standalone?(app)
+        gemfile = File.join(rails, app, "Gemfile")
+        File.file?(gemfile) && !File.read(gemfile).include?('gem "pub4-shared"')
       end
 
       # "__shared" is used when any app rendered it.

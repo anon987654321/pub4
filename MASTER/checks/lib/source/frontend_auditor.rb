@@ -6,6 +6,11 @@ require_relative "../../support/check_result"
 module Deploy
   class FrontendAuditorCheck
     ROOT = File.expand_path("../../../..", __dir__)
+    # The apps that mount pub4-shared. master is left out: the auditor's rules
+    # assume the engine's application layout and asset pipeline, and master's
+    # face shell inlines its boot script and owns its <main> by its own boot
+    # contract (RAILS/master/CLAUDE.md), so every finding there would be the
+    # model misapplied rather than a defect.
     APPS = %w[amber brgen bsdports].freeze
     SHARED = Pathname.new(File.join(ROOT, "RAILS", "__shared"))
 

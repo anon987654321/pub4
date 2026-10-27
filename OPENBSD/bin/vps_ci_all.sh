@@ -38,7 +38,11 @@ wait_for_load() {
   done
 }
 
+# master is skipped: vps_ci.sh and pub4-admin ci-sync run CI in a copy-tree under
+# /home/<app>/app, and master has none — it runs in place under RAILS/master, so
+# its bin/ci runs from the checkout (MASTER/tools/rails/premerge.rb), not here.
 for app in $apps; do
+  [[ $app == master ]] && continue
   wait_for_load
   zsh "$script" "$app" || exit $?
   sleep 10

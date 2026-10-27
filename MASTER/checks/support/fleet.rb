@@ -15,17 +15,14 @@ require "yaml"
 # CheckResult, no bundle — because its callers include probes and the standalone
 # RAILS/test suite, which run under bare ruby outside any app bundle.
 #
-# MASTER's face is here too. It is not a Rails app and has no apps.yml row, so
-# every consumer that wanted all four surfaces had to add the fourth by hand;
-# stating it once here is what makes `local_urls` complete enough to replace the
-# hand-written maps rather than merely shorten them.
+# master, MASTER's face, is an apps.yml app like the others, so `local_urls`
+# names all four surfaces. It does not mount the shared engine, which is why the
+# stylesheet and shared-view consumers read `engine_apps` instead.
 module Fleet
   ROOT = File.expand_path("../../..", __dir__)
 
   APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
 
-  MASTER_NAME = "master"
-  MASTER_PORT = 53_187
   LOOPBACK = "127.0.0.1"
 
   module_function
@@ -48,27 +45,34 @@ module Fleet
     app_ports.keys.sort
   end
 
-  # Source directories that define the fleet's shipped stylesheet contracts.
-  # The shared engine is not an app in apps.yml, but its CSS is mounted by all
-  # three apps and must be measured beside their local stylesheets.
-  def asset_roots
-    (app_names + ["__shared"]).uniq.sort
+  # The apps whose Gemfile mounts pub4-shared, so they carry its views, its
+  # stylesheets and its app/assets layout. master does not: its pages render the
+  # face's own CSS from public/.
+  def engine_apps
+    app_names.select do |name|
+      gemfile = File.join(ROOT, "RAILS", name, "Gemfile")
+      File.file?(gemfile) && File.read(gemfile).include?('gem "pub4-shared"')
+    end
   end
 
-  # The apps plus MASTER's face, which is the set the browser probes walk.
+  # Source directories that define the fleet's shipped stylesheet contracts.
+  # The shared engine is not an app in apps.yml, but its CSS is mounted by
+  # every engine app and must be measured beside their local stylesheets.
+  def asset_roots
+    (engine_apps + ["__shared"]).uniq.sort
+  end
+
+  # Every surface the browser probes walk, master's face included.
   def ports
-    app_ports.merge(MASTER_NAME => MASTER_PORT)
+    app_ports
   end
 
   # The Host header an app answers to, from apps.yml's `domain`. A probe against
   # the loopback carries no host, and production sets config.hosts, so Rails
   # answers 403 before the app sees the path — a live check that omits this can
   # pass in development, where the allow list is permissive, and can never pass
-  # against the deployed app. MASTER's face has no apps.yml row and answers on
-  # ai.brgen.no.
+  # against the deployed app.
   def public_host(name)
-    return "ai.brgen.no" if name.to_s == MASTER_NAME
-
     data = YAML.safe_load_file(APPS_YML, permitted_classes: [Symbol])
     row = data.fetch("apps", {})[name.to_s]
     row["domain"] if row.is_a?(Hash)

@@ -38,7 +38,6 @@ skips = []
 apps = CrawlSupport.load_apps_yml
 
 targets = []
-manifest.fetch("master", {}).then { |master| targets << ["master", master["port"], master.fetch("paths", [])] }
 manifest.fetch("apps", {}).each { |name, spec| targets << [name, spec["port"], spec.fetch("paths", [])] }
 
 targets.each do |name, port, paths|

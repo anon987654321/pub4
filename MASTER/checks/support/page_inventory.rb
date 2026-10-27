@@ -34,7 +34,9 @@ module Deploy
       "maps" => "#{BrgenVerticalSurfaces.registry_subdomain('MAPS_SUBDOMAINS')}.#{APEX}",
     }.freeze
 
-    APPS = Fleet.app_names.to_h { |app| [app, { views: File.join(ROOT, "RAILS", app, "app", "views"), port_key: app }] }
+    # master's pages are the MASTER_PAGES rows rather than a walk of its views.
+    APPS = Fleet.engine_apps
+      .to_h { |app| [app, { views: File.join(ROOT, "RAILS", app, "app", "views"), port_key: app }] }
       .merge("master" => { views: nil, port_key: "master" }).freeze
 
     SHARED_ROOT = File.join(ROOT, "RAILS", "__shared", "app", "views")
@@ -155,7 +157,7 @@ module Deploy
     def shared_pages
       SHARED_PAGES.flat_map do |parts, row|
         shared_abs = File.join(SHARED_ROOT, "#{parts.join("/")}.html.erb")
-        Array(row[:apps] || Fleet.app_names).map do |app|
+        Array(row.fetch(:apps) { Fleet.engine_apps }).map do |app|
           abs = app_override(app, parts) || shared_abs
 
           {

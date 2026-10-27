@@ -101,20 +101,9 @@ module Deploy
         map
       end
 
-      def master_port(root)
-        rc = File.join(root, "OPENBSD", "etc", "rc.d", "master")
-        File.read(rc)[/^PORT=(\d+)/, 1]&.to_i
-      rescue SystemCallError
-        nil
-      end
-
-      # master is not a RAILS app, so RAILS/apps.yml -- which is what Inventory
-      # reads -- does not and should not describe it. Its port comes from the
-      # rc.d script that actually binds it, rather than becoming a fourth copy
-      # of 53187 beside rc.d, operator triangle and relayd.conf.
+      # master included; port_inventory holds rc.d/master's PORT= to its row.
       def app_ports(root: ROOT)
         Inventory.new(root:).apps.to_h { |a| [a.name, a.port] }
-                 .merge("master" => master_port(root))
       end
 
       def app_up?(app, root: ROOT)

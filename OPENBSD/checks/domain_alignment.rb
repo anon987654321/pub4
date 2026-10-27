@@ -55,34 +55,27 @@ module Deploy
         result.fail("routes radio lists unknown label #{label}")
       end
 
-      master = parse_deploy_inventory
+      inventory = parse_deploy_inventory
       relayd_keys = parse_relayd_keypairs
 
-      if master[:apps] && !master[:apps].empty?
-        # Derived from apps.yml, not restated. A literal table of the same three
-        # domain/port pairs makes the check a fifth copy
-        # of the fact it exists to protect: edit apps.yml and the check keeps
-        # asserting the old numbers, and passes. port_inventory checks the other
-        # four mirrors against apps.yml but does not read checks/lib, so nothing
-        # would have caught the drift.
+      if inventory[:apps] && !inventory[:apps].empty?
+        # Derived from apps.yml, not restated: a literal table here would be one
+        # more copy of the fact this check protects, and would keep passing on
+        # the old numbers after apps.yml changed.
         expected_apps = Inventory.new(root: ROOT.to_s).apps.to_h do |app|
           [app.name, { domain: app.domain, port: app.port }]
         end
 
         expected_apps.each do |name, exp|
-          entry = master[:apps][name]
+          entry = inventory[:apps][name]
 
           unless entry
             result.fail("deploy_inventory.json missing #{name}")
             next
           end
+
           result.fail("deploy_inventory.json domain mismatch for #{name}: #{entry['domain']} != #{exp[:domain]}") if entry["domain"] != exp[:domain]
           result.fail("deploy_inventory.json port mismatch for #{name}: #{entry['port']} != #{exp[:port]}") if entry["port"].to_i != exp[:port]
-        end
-
-        m = master[:master] || {}
-        if m["domain"] != "ai.brgen.no" || m["port"].to_i != 53_187
-          result.fail("deploy_inventory.json master_face mismatch: #{m['domain']}:#{m['port']}")
         end
       end
 
@@ -91,7 +84,7 @@ module Deploy
       # inside the check whose whole purpose is proving the fleet agrees.
       # A fourth app would have shipped with no keypair assertion and the check would
       # have passed, which is exactly how relayd.conf drifted unnoticed for ports.
-      live_apexes(master).each do |dom|
+      live_apexes.each do |dom|
         result.fail("relayd.conf missing tls keypair for #{dom}") unless relayd_keys.include?(dom)
       end
 
@@ -142,14 +135,10 @@ module Deploy
       result.checked!(declared.size)
     end
 
-    # Every domain that terminates TLS on vm23: the apps from apps.yml plus the
-    # MASTER face, which is not a Rails app and so lives in deploy_inventory.json's
-    # master_face rather than apps.yml.
-    def live_apexes(master)
-      apps = Inventory.new(root: ROOT.to_s).apps.map(&:domain)
-
-      face = master.dig(:master, "domain")
-      (apps + [face]).compact.uniq
+    # Every domain that terminates TLS on vm23: one per app in apps.yml, master's
+    # ai.brgen.no among them.
+    def live_apexes
+      Inventory.new(root: ROOT.to_s).apps.map(&:domain).compact.uniq
     rescue StandardError => e
       raise "domain_alignment: inventory unreadable: #{e.class}: #{e.message}"
     end
@@ -196,8 +185,7 @@ module Deploy
 
       data = JSON.parse(DEPLOY_INVENTORY.read)
       apps = (data["apps"] || []).each_with_object({}) { |a, h| h[a["name"]] = a }
-      master = data["master_face"] || {}
-      { apps: apps, master: master }
+      { apps: }
     end
 
     # A keypair line behind a hash mark is a certificate relayd does not load,

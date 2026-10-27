@@ -683,17 +683,11 @@ module Master
           inventory_path = File.join(@root, "OPENBSD", "deploy_inventory.json")
           if File.file?(inventory_path) && !File.symlink?(inventory_path)
             begin
-              data = JSON.parse(File.read(inventory_path, encoding: "UTF-8"))
-              face = data["master_face"]
-              problems << "OPENBSD deploy inventory has no master_face entry" unless face.is_a?(Hash)
-              if face.is_a?(Hash)
-                problems << "master_face deploy_root must be RAILS/master" unless face["deploy_root"].to_s == "RAILS/master"
-                problems << "master_face domain is missing" if face["domain"].to_s.empty?
-                problems << "master_face port is invalid" unless Integer(face["port"]).positive?
-                manifests << { "master_face" => face.slice("name", "domain", "port", "deploy_root") }
-              end
+              found, manifest = master_inventory_findings(inventory_path)
+              problems.concat(found)
+              manifests << manifest if manifest
             rescue StandardError => e
-              problems << "OPENBSD master_face manifest: #{error_text(e)}"
+              problems << "OPENBSD master manifest: #{error_text(e)}"
             end
           else
             problems << "OPENBSD/deploy_inventory.json is missing or symlinked"
@@ -1136,6 +1130,22 @@ module Master
       end
 
       def rails_target? = @target_label == "RAILS" || @target_label.start_with?("RAILS/")
+
+      # master's row in the deploy inventory must carry apps.yml's domain and port.
+      def master_inventory_findings(inventory_path)
+        row = master_inventory_row(inventory_path)
+        metadata = YAML.safe_load_file(File.join(@root, "RAILS", "apps.yml")).dig("apps", "master")
+        return [["OPENBSD deploy inventory has no master app"], nil] unless row.is_a?(Hash)
+        return [["RAILS/apps.yml has no master app"], nil] unless metadata.is_a?(Hash)
+
+        drift = %w[domain port].reject { |key| row[key].to_s == metadata[key].to_s }
+        [drift.map { |key| "master: deploy inventory #{key} differs from RAILS/apps.yml" }, { "master" => row }]
+      end
+
+      def master_inventory_row(inventory_path)
+        apps = Array(JSON.parse(File.read(inventory_path, encoding: "UTF-8"))["apps"])
+        apps.find { |app| app["name"] == "master" }&.slice("name", "domain", "port")
+      end
 
       def selected_apps(app_names)
         label = @target_label

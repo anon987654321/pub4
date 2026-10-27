@@ -9,6 +9,9 @@ require "json"
 require "digest"
 
 class TestAiOrientation < Minitest::Test
+  BRGEN_PORT = 38_182
+  MASTER_PORT = 53_187
+
   def setup
     @root = Dir.mktmpdir("orientation_")
     @master = File.join(@root, "MASTER")
@@ -53,13 +56,19 @@ class TestAiOrientation < Minitest::Test
           deploy_script: RAILS/brgen/brgen.sh
           deploy_root: RAILS/brgen
           public: true
+        master:
+          domain: ai.brgen.no
+          port: #{MASTER_PORT}
+          deploy_script: OPENBSD/bin/vps_deploy_master.sh
+          deploy_root: RAILS/master
+          public: true
     YAML
     File.write(File.join(@root, "OPENBSD", "RUNBOOK.md"), "edge runbook\n")
     File.write(File.join(@root, "OPENBSD", "data", "operator.yml"), "meta:\n  source: runtime authority\n")
     File.write(File.join(@root, "OPENBSD", "deploy_inventory.json"), <<~JSON)
       {
-        "apps": [{"name": "brgen", "domain": "brgen.no", "port": 38182}],
-        "master_face": {"name": "master", "domain": "ai.brgen.no", "port": 53187}
+        "apps": [{"name": "brgen", "domain": "brgen.no", "port": #{BRGEN_PORT}},
+                 {"name": "master", "domain": "ai.brgen.no", "port": #{MASTER_PORT}}]
       }
     JSON
     # Wishes are claimed against a git HEAD, so the fixture is a repository, and it ignores runtime
@@ -103,7 +112,7 @@ class TestAiOrientation < Minitest::Test
     assert_includes text, "feature_truth=RAILS/apps.yml"
     assert_includes text, "brgen:brgen.no:38182"
     assert_includes text, "deploy_identity=OPENBSD/deploy_inventory.json"
-    assert_includes text, "ai.brgen.no:53187"
+    assert_includes text, "master:ai.brgen.no:53187"
     assert_includes text, "edge=pf→relayd→loopback"
     assert_includes text, "design=MASTER/data/laws.yml"
     assert_includes text, "sandbox_model=MASTER/lib/ground/pledge.rb"
@@ -123,7 +132,8 @@ class TestAiOrientation < Minitest::Test
   def test_render_surfaces_inventory_drift
     File.write(
       File.join(@root, "OPENBSD", "deploy_inventory.json"),
-      '{"apps":[{"name":"brgen","domain":"brgen.no","port":99999}],"master_face":{"domain":"ai.brgen.no","port":53187}}',
+      JSON.generate("apps" => [{ "name" => "brgen", "domain" => "brgen.no", "port" => 99_999 },
+                               { "name" => "master", "domain" => "ai.brgen.no", "port" => MASTER_PORT }]),
     )
 
     text = Master::AI::Orientation.render(root: @master)

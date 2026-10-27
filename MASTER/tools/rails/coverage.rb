@@ -20,8 +20,11 @@ SYSTEM_TESTS = ENV.fetch("COVERAGE_SYSTEM", "1") == "1"
 $LOAD_PATH.unshift(File.join(ROOT, "..", "MASTER", "lib"))
 require "operator/ruby_runner"
 
+# master is left out on purpose: it does not load __shared/test/coverage.rb, so it
+# writes no SimpleCov resultset and has no floor in coverage_floors.yml to judge.
 apps = YAML.safe_load_file(APPS_FILE).fetch("apps").filter_map do |name, spec|
   next unless spec["public"]
+  next if name == "master"
   next unless File.file?(File.join(ROOT, name, "bin", "rails"))
 
   name

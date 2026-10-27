@@ -29,19 +29,13 @@ master,https://ai.brgen.no/up
 amber,https://amberapp.art/up
 bsdports,https://bsdports.org/up'
 
-# name,url per line. The master face is not in apps.yml — it is not a Rails app
-# under /home/*/app — so its domain comes from the deploy inventory beside it.
+# name,url per line, master's ai.brgen.no among them.
 app_targets() {
-  ruby34 -ryaml -rjson -e '
+  ruby34 -ryaml -e '
     root = ARGV[0]
     rows = YAML.safe_load(File.read(File.join(root, "RAILS", "apps.yml")))
               .fetch("apps")
               .map { |name, meta| [name.to_s, meta.fetch("domain").to_s] }
-    inventory = File.join(root, "OPENBSD", "deploy_inventory.json")
-    if File.file?(inventory)
-      face = JSON.parse(File.read(inventory))["master_face"]
-      rows << [face["name"].to_s, face["domain"].to_s] if face && face["domain"]
-    end
     rows.each { |name, domain| puts "#{name},https://#{domain}/up" }
   ' "$PUB4_ROOT" 2>/dev/null
 }

@@ -66,7 +66,7 @@ class TestFixProtocol < Minitest::Test
       File.write(File.join(root, "OPENBSD", "data", "operator.yml"), "meta:\n  source: runtime authority\n")
       File.write(
         File.join(root, "OPENBSD", "deploy_inventory.json"),
-        '{"apps":[{"name":"brgen","domain":"brgen.no","port":38182}],"master_face":{"domain":"ai.brgen.no","port":53187}}',
+        '{"apps":[{"name":"brgen","domain":"brgen.no","port":38182}]}',
       )
 
       context = Master::Fix::Protocol.context(root:, target: File.join(root, "OPENBSD"))

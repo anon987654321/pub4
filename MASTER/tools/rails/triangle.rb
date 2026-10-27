@@ -36,9 +36,7 @@ module Deploy
     def self.apps
       @apps ||= begin
         config = YAML.safe_load_file(File.join(RAILS_ROOT, "apps.yml")).fetch("apps")
-        rows = config.map { |name, row| { name:, port: row.fetch("port"), dir: File.join(RAILS_ROOT, name), rails: true } }
-        rows << { name: "master", port: 53_187, dir: File.join(RAILS_ROOT, "master"), rails: true }
-        rows
+        config.map { |name, row| { name:, port: row.fetch("port"), dir: File.join(RAILS_ROOT, name), rails: true } }
       end
     end
 

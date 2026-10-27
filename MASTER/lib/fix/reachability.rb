@@ -72,18 +72,19 @@ module Master
         names = apps.keys.map(&:to_s)
         raise "RAILS apps.yml declares no apps" if names.empty?
 
+        engine_names = names.select { |name| engine_app?(File.join(rails, name)) }
         names.each do |name|
           path = File.join(rails, name)
           raise "RAILS app missing from filesystem: #{name}" unless File.directory?(path)
 
-          %w[
-            Gemfile
-            bin/rails
-            bin/ci
-            config/routes.rb
-            app/views/layouts/application.html.erb
-            app/assets/stylesheets/application.scss
-          ].each do |rel|
+          surfaces = %w[Gemfile bin/rails bin/ci config/routes.rb]
+          # An app that does not mount pub4-shared (master) has no engine layout or
+          # application.scss: its pages are single-file shells over public/ CSS.
+          if engine_names.include?(name)
+            surfaces += %w[app/views/layouts/application.html.erb app/assets/stylesheets/application.scss]
+          end
+
+          surfaces.each do |rel|
             full = File.join(path, rel)
             raise "RAILS app #{name} missing wired surface: #{rel}" unless File.exist?(full)
           end
@@ -105,7 +106,7 @@ module Master
         raise "layout suite wiring incomplete: #{broken.map(&:to_s).join(", ")}" if broken.any?
 
         auditor_apps = Deploy::FrontendAuditorCheck::APPS.map(&:to_s)
-        missing_apps = names - auditor_apps
+        missing_apps = engine_names - auditor_apps
         raise "frontend auditor misses Rails app(s): #{missing_apps.join(", ")}" if missing_apps.any?
 
         if WorkLane.runs?(:layout_sweep)
@@ -114,6 +115,11 @@ module Master
           Master::Trace::Dmesg.status("layout0", "RAILS family sweep not run, lane=#{WorkLane.current}")
         end
         @fleet_verified = true
+      end
+
+      def engine_app?(path)
+        gemfile = File.join(path, "Gemfile")
+        File.file?(gemfile) && File.read(gemfile).include?('gem "pub4-shared"')
       end
 
       def sweep_layout_suite!

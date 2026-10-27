@@ -25,7 +25,7 @@ options = {
 OptionParser.new do |parser|
   parser.banner = "Usage: ruby OPENBSD/checks/health_check.rb [--core|--all-ready-apps] [--public|--public-only] [--json]"
   parser.on("--core", "Core services only: nsd, httpd, relayd, smtpd (required — it carries johann@brgen.no), " \
-                      "brgen, and master, which is a service rather than an apps.yml app") { options[:core] = true }
+                      "brgen, and master") { options[:core] = true }
   parser.on("--all-ready-apps", "Require every app listed in RAILS/apps.yml") { options[:all_ready_apps] = true }
   parser.on("--public", "Check public HTTPS endpoints, cert files, and externally-routed names") { options[:public] = true }
 
@@ -47,7 +47,6 @@ options[:all_ready_apps] = false if options[:core]
 failures = []
 # Written by load_apps when it cannot read the fleet, read once apps are loaded.
 APPS_UNREADABLE = +""
-MASTER_FACE_UNREADABLE = +""
 
 # A missing binary is a named failure, not a backtrace. This raised Errno::ENOENT
 # out of Open3 and killed the whole run at the first check: off the box that is
@@ -85,19 +84,16 @@ rescue StandardError => e
   {}
 end
 
-# master is not an apps.yml app — it is not under /home/*/app — so its domain
-# and port come from the deploy inventory, the one other place the fleet is
-# written down, rather than from a literal here. The fallback keeps a run with
-# no inventory checking something, and the failure it records says why.
-MASTER_FACE_FALLBACK = { "domain" => "ai.brgen.no", "port" => 53_187 }.freeze
+# master is a core service, so it is checked even when apps.yml cannot be read.
+# The fallback keeps that run checking something; APPS_UNREADABLE, or the
+# missing-row failure below, says why it was needed.
+MASTER_FALLBACK = { "domain" => "ai.brgen.no", "port" => 53_187 }.freeze
 
-def master_face
-  path = File.join(ROOT, "OPENBSD", "deploy_inventory.json")
-  face = JSON.parse(File.read(path)).fetch("master_face")
-  { "domain" => face.fetch("domain").to_s, "port" => Integer(face.fetch("port")) }
-rescue StandardError => e
-  MASTER_FACE_UNREADABLE.replace("deploy_inventory.json master_face unreadable: #{e.class}: #{e.message}")
-  MASTER_FACE_FALLBACK
+def master_row(apps, failures)
+  apps.fetch("master") do
+    failures << "apps.yml has no master row" unless apps.empty?
+    MASTER_FALLBACK
+  end
 end
 
 def service_running?(service)
@@ -120,8 +116,7 @@ end
 
 apps = load_apps
 failures << APPS_UNREADABLE unless APPS_UNREADABLE.empty?
-master = master_face
-failures << MASTER_FACE_UNREADABLE unless MASTER_FACE_UNREADABLE.empty?
+master = master_row(apps, failures)
 app_ports = apps.transform_values { |metadata| metadata.fetch("port") }
 app_domains = apps.transform_values { |metadata| metadata.fetch("domain") }
 

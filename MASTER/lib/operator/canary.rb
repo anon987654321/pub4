@@ -31,7 +31,6 @@ module Operator
     HEADER_LIMIT_BYTES = 8 * 1024
     DEFAULT_BUDGET_MS = 3000
     SERVICES = %w[master brgen amber bsdports relayd].freeze
-    MASTER = { "domain" => "ai.brgen.no", "port" => 53_187 }.freeze
     SKIPPED_PREFIXES = %w[/internal /rails /cable /admin].freeze
     Reply = Struct.new(:status, :headers, :body, :elapsed_ms, keyword_init: true)
     Result = Struct.new(:name, :ok, :detail, keyword_init: true)
@@ -112,8 +111,8 @@ module Operator
 
       def load_apps(only)
         data = YAML.safe_load_file(File.join(@root, "RAILS", "apps.yml"), aliases: true).fetch("apps")
-        apps = data.select { |_, v| v["public"] && v["port"] }.transform_values { |v| v.slice("domain", "port") }
-        apps["master"] = MASTER.dup
+        apps = data.select { |_name, row| row["public"] && row["port"] }
+                   .transform_values { |row| row.slice("domain", "port") }
         only ? apps.slice(*only) : apps
       end
 
@@ -141,6 +140,8 @@ module Operator
       end
 
       def paths_for(app)
+        # master's routes are its own chat and face endpoints, most of them
+        # streams or behind AuthTier, so its canary is liveness alone.
         return ["/up"] if app == "master"
 
         manifest = Master::Fix::RoutesManifest.new(app_root: File.join(@root, "RAILS", app), shared_root: File.join(@root, "RAILS", "__shared"))
