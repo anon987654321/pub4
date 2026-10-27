@@ -104,9 +104,9 @@ class TestSelfFindingsDrift < Minitest::Test
       Tool.stub(:population, ["RULE RAILS/deleted.rb:1"]) do
         Tool.stub(:files, []) do
           Tool.stub(:rules_behind, 1) do
-            out, = capture_io { refute Tool.report("law") }
+            _out, err = capture_io { refute Tool.report("law") }
 
-            assert_match(/recorded member\(s\) stale/, out)
+            assert_match(/recorded member\(s\) stale/, err)
           end
         end
       end

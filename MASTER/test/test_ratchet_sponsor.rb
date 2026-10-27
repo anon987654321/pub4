@@ -13,7 +13,7 @@ class TestRatchetSponsor < Minitest::Test
     git("init")
     git("config", "user.email", "test@example.com")
     git("config", "user.name", "test")
-    write("MASTER/data/spine.yml", "spine:\n  lib_body_ceiling: 100\npub4_source_ceilings:\n  master: 1\n")
+    write("MASTER/data/spine.yml", "spine:\n  lib_body_ceiling: 100\npub4_source_ceilings:\n  MASTER: 1\n")
     write("MASTER/lib/a.rb", "A = 1\n")
     git("add", ".")
     git("commit", "-m", "base")
@@ -34,7 +34,7 @@ class TestRatchetSponsor < Minitest::Test
 
   def test_source_file_addition_is_sponsored_when_the_ceiling_is_changed
     write("MASTER/lib/b.rb", "B = 1\n")
-    write("MASTER/data/spine.yml", "spine:\n  lib_body_ceiling: 101\npub4_source_ceilings:\n  master: 2\n")
+    write("MASTER/data/spine.yml", "spine:\n  lib_body_ceiling: 101\npub4_source_ceilings:\n  MASTER: 2\n")
 
     assert Operator::RatchetSponsor.validate!(
       root: @dir,
@@ -53,7 +53,7 @@ class TestRatchetSponsor < Minitest::Test
 
   def test_rejects_an_irrelevant_spine_edit_as_sponsorship
     write("MASTER/lib/a.rb", "A = 1\nB = 2\n")
-    write("MASTER/data/spine.yml", "spine:\n  lib_body_ceiling: 100\npub4_source_ceilings:\n  master: 1\n")
+    write("MASTER/data/spine.yml", "spine:\n  lib_body_ceiling: 100\npub4_source_ceilings:\n  MASTER: 1\n")
 
     error = assert_raises(RuntimeError) do
       Operator::RatchetSponsor.validate!(root: @dir, changed_paths: ["MASTER/lib/a.rb", "MASTER/data/spine.yml"])
@@ -63,7 +63,7 @@ class TestRatchetSponsor < Minitest::Test
 
   def test_new_untracked_master_lib_body_is_priced
     write("MASTER/lib/new.rb", "NEW = 1\n")
-    write("MASTER/data/spine.yml", "spine:\n  lib_body_ceiling: 101\npub4_source_ceilings:\n  master: 2\n")
+    write("MASTER/data/spine.yml", "spine:\n  lib_body_ceiling: 101\npub4_source_ceilings:\n  MASTER: 2\n")
 
     assert Operator::RatchetSponsor.validate!(
       root: @dir,

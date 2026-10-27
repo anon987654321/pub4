@@ -26,8 +26,7 @@ class TestTokenReads < Minitest::Test
   end
 
   def test_typography_hierarchy_thresholds_are_declared
-    tokens = Master.load_yaml(File.join(Master::ROOT, "data", "tokens.yml"))
-    hierarchy = tokens.dig("typography", "hierarchy")
+    hierarchy = Master.tokens.dig("typography", "hierarchy")
 
     %w[h1 h2 h3].each do |level|
       min = hierarchy.fetch("#{level}_body_min_ratio")

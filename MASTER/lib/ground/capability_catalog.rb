@@ -59,8 +59,7 @@ module Master
       end
 
       def builtin_tools(root: Master::ROOT)
-        path = File.join(root, "data", "tools.yml")
-        rows = Master.load_yaml(path)
+        rows = Master.tools_config(root:)
         raise ArgumentError, "tool registry must be an array" unless rows.is_a?(Array)
 
         allowed = Tool::Profile.allowlist

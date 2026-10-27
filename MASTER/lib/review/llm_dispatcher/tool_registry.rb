@@ -74,8 +74,7 @@ module Master
         end
 
         def load_tool_registry
-          path = File.join(Master::ROOT, "data", "tools.yml")
-          rows = Master.load_yaml(path)
+          rows = Master.tools_config
           base = rows.is_a?(Array) ? rows.select { |row| row.is_a?(Hash) } : []
           base.to_h { |row| [row["name"].to_s, row] }
         end

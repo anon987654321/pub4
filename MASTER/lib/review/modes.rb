@@ -25,8 +25,7 @@ module Master
       def load_prompt(mode)
         # One prompts.yml keyed by mode — was four mode_<name>.yml files whose
         # only reader interpolated the filename, which no grep could follow.
-        path = File.join(@root, "data", "prompts.yml")
-        (Master.load_yaml(path) || {})[mode.to_s] || {}
+        Master.prompts_config(root: @root)[mode.to_s] || {}
       end
     end
   end

@@ -13,11 +13,17 @@ class TestLawEvidence < Minitest::Test
     assert_includes pledge, "unveil(\"/\", \"\")"
   end
 
+  # Two invocations leave two records: the audit appends rather than rewrites.
   def test_audit_logging_appends_tool_invocations
-    audit = File.read(File.join(Master::ROOT, "lib/trace/log.rb"))
-    assert_includes audit, "event_bus.subscribe(\"tool:before\")"
-    assert_includes audit, "File.open(@path, \"a\")"
-    refute_includes audit.gsub(/^\s*#.*$/, ""), "File.write(@path"
+    Dir.mktmpdir do |root|
+      bus = Master::Trace::EventBus.new(event_log: Master::Trace::Log::Event.new(root:))
+      Master::Trace::Log::Audit.new(root:, event_bus: bus)
+      bus.publish("tool:before", tool: "read_file")
+      bus.publish("tool:before", tool: "shell")
+
+      records = File.readlines(File.join(root, Master::Trace::Log::Audit::LOG_PATH)).map { |line| JSON.parse(line) }
+      assert_equal %w[read_file shell], records.map { |record| record["tool"] }
+    end
   end
 
   def test_secrets_rotation_is_not_a_silent_rotator

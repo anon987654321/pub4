@@ -66,8 +66,10 @@ class TestLawInventory < Minitest::Test
     assert_equal Operator::LawInventory::COUNCIL_PATH, observed_path
   end
 
+  # Reach is a firing rate, so it is measured on a Law with a detector;
+  # ONE_SOURCE is judged semantically and has no rate to report.
   def test_health_reach_uses_the_live_law_audit
-    row = Operator::LawInventory.health("ONE_SOURCE")
+    row = Operator::LawInventory.health("FAIL_VISIBLY")
     refute_nil row
     assert_operator row.fetch(:health).fetch(:applicable), :>, 0
     assert row.fetch(:health).key?(:hits)

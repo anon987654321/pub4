@@ -123,15 +123,14 @@ module Master
       end
 
       # Three populations, counted from what is loaded rather than from a number
-      # in prose. They are allowed to differ — 78 declared laws resolve through
-      # a fold and carry no detector — but a receipt that prints one of them as
-      # the total is the misreport this exists to prevent.
-      # `laws:` is a flat array, whatever CLAUDE.md's enumeration snippet says
-      # about scopes — that snippet raises on this file. Counting the array is
-      # the reading that matches the data.
+      # in prose. They are allowed to differ — catalogued Laws without a
+      # detector are judged semantically — but a receipt that prints one of them
+      # as the total is the misreport this exists to prevent. Declared Laws are
+      # the entries of law_catalogue, the one place a Law identity is written;
+      # the top-level principles of laws.yml are nine constitutional headings.
       def law(root: MasterPaths::ROOT)
         {
-          declared: Master.law_entries(root:).size,
+          declared: Master.law("law_catalogue", root:).fetch("entries").size,
           registry: Review::Scan::Law.registry.size,
           domain: domain_law_count(root),
         }

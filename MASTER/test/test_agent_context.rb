@@ -16,8 +16,8 @@ class TestAgentContext < Minitest::Test
 
   def test_fix_context_is_explicitly_executable
     text = Operator::AgentContext.fix_context
-    assert_includes text, "MASTER /fix external-agent contract v2"
-    assert_includes text, "Semantic ask rules are executable"
+    assert_match(/\AMASTER \/fix external-agent contract v\d+$/, text)
+    assert_includes text, "The model is the semantic analyst"
     assert_includes text, "No deterministic fixer exists"
   end
 

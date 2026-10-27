@@ -55,8 +55,7 @@ module Master
 
       # The declared spacing steps, read once.
       def self.scale
-        tokens = Master.load_yaml(Master.data_path("tokens.yml"))
-        @scale ||= Array(tokens.dig("tokens", "scale", "space_px")).map(&:to_f)
+        @scale ||= Array(Master.tokens.dig("scale", "space_px")).map(&:to_f)
       end
 
       def initialize(proposal, rules = NO_RULES)

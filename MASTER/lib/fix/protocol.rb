@@ -336,8 +336,11 @@ end
         target = File.realpath(target)
         root = File.realpath(root)
         all = Dir.glob(File.join(target, "**", "*"), File::FNM_DOTMATCH).select { |path| File.file?(path) }
+        # One collector for the walk: each one loads the sacred-path policy, and
+        # a collector per file made a repository-wide inventory take half an hour.
+        collector = Master::Fix::FixLoop::FileCollector.new(root:)
         classified = all.group_by do |path|
-          excluded_reason(path, root:)
+          excluded_reason(path, root:, collector:)
         end
         included = classified.delete(nil) || []
         skipped = classified.map do |reason, paths|
@@ -348,8 +351,8 @@ end
         {"error" => "#{e.class}: #{e.message}"}
       end
 
-      def excluded_reason(path, root:)
-        reason = Master::Fix::FixLoop::FileCollector.new(root:).send(:skip_reason, path)
+      def excluded_reason(path, root:, collector: Master::Fix::FixLoop::FileCollector.new(root:))
+        reason = collector.send(:skip_reason, path)
         reason&.to_s
       rescue StandardError
         "unreadable_or_unclassifiable"

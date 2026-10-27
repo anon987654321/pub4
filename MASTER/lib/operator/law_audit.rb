@@ -155,15 +155,21 @@ module Operator
     end
 
     def rates
-      files = corpus.map { |path| [path, language_of(path), source_of(path)] }
-      law.values.select(&:scannable?).filter_map do |entry|
-        applicable = files.select { |path, lang, _| entry.applies?(path, lang) }
-        next if applicable.empty?
-
-        hits = applicable.count { |path, _, text| !entry.scan(text, file: path).empty? }
-        { law: entry.id.to_s, hits:, applicable: applicable.size, rate: hits.fdiv(applicable.size) }
-      end
+      files = corpus_files
+      law.values.select(&:scannable?).filter_map { |entry| rate(entry, files) }
     end
+
+    # One law's firing rate. A caller asking about one law reads this rather
+    # than #rates, which scans the corpus once per detector.
+    def rate(entry, files = corpus_files)
+      applicable = files.select { |path, lang, _text| entry.applies?(path, lang) }
+      return if applicable.empty?
+
+      hits = applicable.count { |path, _lang, text| !entry.scan(text, file: path).empty? }
+      { law: entry.id.to_s, hits:, applicable: applicable.size, rate: hits.fdiv(applicable.size) }
+    end
+
+    def corpus_files = corpus.map { |path| [path, language_of(path), source_of(path)] }
 
     # "Which laws are never asked" belongs to tools/law_reach.rb, which counts
     # 57 and had counted them before this file existed. A version of it here

@@ -157,6 +157,14 @@ end
     load_yaml(File.join(root, "data", "models.yml")) || {}
   end
 
+  # The one reader of data/tools.yml: the tool rows as written, an array its callers validate.
+  def self.tools_config(root: ROOT) = load_yaml(File.join(root, "data", "tools.yml"))
+
+  # The one reader of data/prompts.yml, keyed by mode with the inference strategies beside them.
+  def self.prompts_config(root: ROOT)
+    load_yaml(File.join(root, "data", "prompts.yml"), default: {}) || {}
+  end
+
   def self.patterns_config(root: ROOT)
     load_yaml(File.join(root, "data", "patterns.yml")) || {}
   end

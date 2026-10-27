@@ -87,8 +87,8 @@ class TestBootReceipt < Minitest::Test
   # The receipt's own use of it, end to end. `commit` read <root>/../.git/HEAD
   # by hand, which does not resolve when .git is a file, so this suite has only
   # ever run where the answer was "unknown".
-  def test_domain_rule_count_resolves_laws_from_repository_root
-    count = Receipt.domain_rule_count(Master::REPO_ROOT)
+  def test_domain_law_count_resolves_laws_from_repository_root
+    count = Receipt.domain_law_count(Master::REPO_ROOT)
 
     assert_operator count, :>, 100
   end

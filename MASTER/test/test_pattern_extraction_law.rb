@@ -27,7 +27,7 @@ class TestPatternExtractionRule < Minitest::Test
     findings = @rule.check(code, path: "router.rb")
 
     assert_equal 1, findings.size
-    assert_equal "PATTERN_EXTRACTION", findings.first.rule
+    assert_equal "PATTERN_EXTRACTION", findings.first.law_id
     assert_match(/Strategy opportunity/, findings.first.message)
   end
 

@@ -27,9 +27,12 @@ class TestLimitsSplit < Minitest::Test
     "loc_body_budgets" => %w[Rakefile loc_body_budgets],
     "dmesg" => ["lib/trace/dmesg.rb", "dmesg"],
     "fix_budget" => ["lib/fix/run_budget.rb", "fix_budget"],
+    "governor" => ["lib/fix/governor.rb", "governor"],
     "law_groups" => ["lib/cli/scan/request.rb", "law_groups"],
+    "orientation" => ["lib/ai/orientation.rb", "orientation"],
     "process" => ["lib/ops.rb", "process"],
     "scan_profiles" => ["lib/cli/scan/request.rb", "scan_profiles"],
+    "scan_workers" => ["lib/fix/scan/transport.rb", "scan_workers"],
     "session_modes" => ["lib/ground/mode_posture.rb", "session_modes"],
     "zeitwerk" => ["lib/master.rb", "zeitwerk"],
   }.freeze

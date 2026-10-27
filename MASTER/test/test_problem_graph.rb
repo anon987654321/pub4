@@ -62,7 +62,7 @@ class TestProblemGraph < Minitest::Test
     problem = @graph.call(rows).first
 
     assert_equal %w[defragment decouple flatten merge split relocate simplify], problem.candidate_operations
-    assert_equal %w[merge decouple], problem.primary_operations
+    assert_equal %w[decouple merge], problem.primary_operations
   end
 
   def test_problem_is_bounded

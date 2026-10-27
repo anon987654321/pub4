@@ -116,7 +116,9 @@ module Master
 
       def problem(group)
         files = group.flat_map(&:last).uniq.sort
+        # Plan order, so the problem's primary operation does not depend on the order findings arrived in.
         primary = group.map { |_path, law, _message, _related| LAW_OPERATIONS.fetch(law, "recommend") }.uniq
+          .sort_by { |operation| operation_position(operation) }
         candidates = primary.flat_map { |operation| OPERATION_ALTERNATIVES.fetch(operation, [operation]) }
           .select { |operation| operation == "recommend" || operation_exists?(operation) }
           .uniq

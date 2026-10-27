@@ -30,8 +30,9 @@ module Operator
         rule = law_rules[id]
         scan = registry[id]
         row = catalogue[id] || {}
+        # Keys are folded for lookup; the row names the Law as its source spells it.
         [id, {
-          id:,
+          id: (rule&.id || row["id"] || scan&.id || id).to_s,
           name: row["name"],
           tier: row["tier"],
           severity: (rule&.severity || row["severity"])&.to_s,
@@ -56,10 +57,11 @@ module Operator
       end
     end
 
+    # Reach is measured for the one row asked about: across every row it scanned
+    # the corpus once per Law per row, and a single health query never finished.
     def one(id, deep: false)
-      key = id.to_s.downcase
-      rows = all(deep:)
-      rows.values.find { |row| row[:id].to_s.downcase == key }
+      row = all.values.find { |item| item[:id].to_s.casecmp?(id.to_s) }
+      deep && row ? row.merge(health: reach(row[:id])) : row
     end
 
     def health(id)
@@ -263,7 +265,8 @@ end
 
     def reach(id)
       require "operator/law_audit"
-      row = Operator::LawAudit.rates.find { |item| item[:rule].to_s.downcase == id.to_s.downcase }
+      entry = Operator::LawAudit.law.values.find { |law| law.id.to_s.casecmp?(id.to_s) }
+      row = Operator::LawAudit.rate(entry) if entry&.scannable?
       return {} unless row
 
       {

@@ -264,9 +264,12 @@ module Master
           # device.rb (Termux capabilities), plugin.rb (the plugin manifest
           # loader) and snapshot.rb (the tree snapshot generator) are the same
           # shape: one file, one top-level Master constant that autoloads from it.
+          # So are configuration_guard, convergence, face, gap, law_vocabulary,
+          # md, pdf, phoenix and proof, each the single file of its constant.
           ALLOWED_ROOT_FILES = %w[
-            builder.rb core.rb design.rb device.rb master.rb ops.rb plugin.rb
-            result.rb security_error.rb snapshot.rb unwrap_error.rb
+            builder.rb configuration_guard.rb convergence.rb core.rb design.rb device.rb
+            face.rb gap.rb law_vocabulary.rb master.rb md.rb ops.rb pdf.rb phoenix.rb
+            plugin.rb proof.rb result.rb security_error.rb snapshot.rb unwrap_error.rb
           ].freeze
 
           def self.auto_build? = false

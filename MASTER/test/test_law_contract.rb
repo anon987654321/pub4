@@ -5,6 +5,19 @@ require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
 ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
 class TestLawContract < Minitest::Test
+  # Law.define accepts only ids the catalogue holds. The reload probes are not
+  # Laws, so they are catalogued for the length of the test and nowhere else.
+  def with_catalogued(*ids)
+    original = Law.method(:catalogue_entry)
+    probe = { "universal" => true, "modalities" => %w[lexical semantic visual] }
+    Law.define_singleton_method(:catalogue_entry) do |id|
+      ids.include?(id.to_sym) ? probe : original.call(id)
+    end
+    yield
+  ensure
+    Law.define_singleton_method(:catalogue_entry, original)
+  end
+
   def test_concurrent_law_loads_share_one_registry
     dir = File.expand_path("../law", __dir__)
     threads = 8.times.map { Thread.new { Law.load_all(dir) } }
@@ -16,91 +29,95 @@ class TestLawContract < Minitest::Test
   end
 
   def test_law_loader_restores_previous_registry_when_reload_fails
-    Dir.mktmpdir do |dir|
-      path = File.join(dir, "probe.rb")
-      File.write(path, <<~RUBY)
-        Law.define(:LOAD_ROLLBACK_PROBE) do
-          source "test"
-          severity :info
-          practice "stable"
-          fix "keep it"
-          bad "bad"
-          good "good"
-        end
-      RUBY
+    with_catalogued(:LOAD_ROLLBACK_PROBE) do
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, "probe.rb")
+        File.write(path, <<~RUBY)
+          Law.define(:LOAD_ROLLBACK_PROBE) do
+            source "test"
+            severity :info
+            practice "stable"
+            fix "keep it"
+            bad "bad"
+            good "good"
+          end
+        RUBY
 
-      Law.load_all(dir)
-      assert_equal "stable", Law.definitions.fetch(:LOAD_ROLLBACK_PROBE).practice
+        Law.load_all(dir)
+        assert_equal "stable", Law.definitions.fetch(:LOAD_ROLLBACK_PROBE).practice
 
-      File.write(path, <<~RUBY)
-        Law.define(:LOAD_ROLLBACK_PROBE) do
-          source "test"
-          severity :info
-          practice "updated"
-          fix "keep it"
-          bad "bad"
-          good "good"
-        end
-      RUBY
+        File.write(path, <<~RUBY)
+          Law.define(:LOAD_ROLLBACK_PROBE) do
+            source "test"
+            severity :info
+            practice "updated"
+            fix "keep it"
+            bad "bad"
+            good "good"
+          end
+        RUBY
 
-      Law.load_all(dir)
-      assert_equal "updated", Law.definitions.fetch(:LOAD_ROLLBACK_PROBE).practice
+        Law.load_all(dir)
+        assert_equal "updated", Law.definitions.fetch(:LOAD_ROLLBACK_PROBE).practice
 
-      File.write(path, <<~RUBY)
-        Law.define(:LOAD_ROLLBACK_PROBE) do
-          source "test"
-          severity :info
-          practice "broken"
-          fix "keep it"
-          bad "bad"
-          good "good"
-        end
-        raise "broken law shard"
-      RUBY
+        File.write(path, <<~RUBY)
+          Law.define(:LOAD_ROLLBACK_PROBE) do
+            source "test"
+            severity :info
+            practice "broken"
+            fix "keep it"
+            bad "bad"
+            good "good"
+          end
+          raise "broken law shard"
+        RUBY
 
-      assert_raises(RuntimeError) { Law.load_all(dir) }
-      assert_equal "updated", Law.definitions.fetch(:LOAD_ROLLBACK_PROBE).practice
-    ensure
-      Law.load_all(File.join(Master::ROOT, "law"))
+        assert_raises(RuntimeError) { Law.load_all(dir) }
+        assert_equal "updated", Law.definitions.fetch(:LOAD_ROLLBACK_PROBE).practice
+      ensure
+        Law.load_all(File.join(Master::ROOT, "law"))
+      end
     end
   end
 
   def test_law_reload_never_exposes_a_partial_registry
-    Dir.mktmpdir do |dir|
-      path = File.join(dir, "probe.rb")
-      File.write(path, <<~RUBY)
-        sleep 0.2
-        Law.define(:ATOMIC_RELOAD_PROBE) do
-          source "test"
-          severity :info
-          practice "new"
-          fix "keep it"
-          bad "bad"
-          good "good"
-        end
-      RUBY
+    with_catalogued(:ATOMIC_RELOAD_PROBE) do
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, "probe.rb")
+        File.write(path, <<~RUBY)
+          sleep 0.2
+          Law.define(:ATOMIC_RELOAD_PROBE) do
+            source "test"
+            severity :info
+            practice "new"
+            fix "keep it"
+            bad "bad"
+            good "good"
+          end
+        RUBY
 
-      original = Law.definitions.dup
-      original[:ATOMIC_RELOAD_PROBE] = Law::Definition.new(
-        id: :ATOMIC_RELOAD_PROBE, source: "test", severity: :info, mode: :violation,
-        languages: [], scope: :line, surfaces: nil, law_scope: :universal, lifecycle: :active,
-        autofix: :review, path: nil, path_exclude: nil, absent: nil, detect: nil,
-        ask: nil, practice: "old", fix: "keep it", bad: "bad", good: "good",
-        reads_comments: false
-      )
-      Law.load_all(File.join(Master::ROOT, "law"))
+        original = Law.definitions.dup
+        original[:ATOMIC_RELOAD_PROBE] = Law::Definition.new(
+          id: :ATOMIC_RELOAD_PROBE, source: "test", severity: :info, mode: :violation,
+          languages: [], scope: :line, surfaces: nil, law_scope: :universal, lifecycle: :active,
+          autofix: :review, path: nil, path_exclude: nil, absent: nil, detect: nil,
+          ask: nil, practice: "old", fix: "keep it", bad: "bad", good: "good",
+          reads_comments: false
+        )
+        Law.load_all(File.join(Master::ROOT, "law"))
 
-      loaded = Thread.new { Law.load_all(dir) }
-      sleep 0.05
+        loaded = Thread.new { Law.load_all(dir) }
+        sleep 0.05
 
-      assert_equal :trusted, Law.definitions.fetch(:VERIFICATION_REQUIRED_FOR_COMPLETION).lifecycle
-      refute Law.definitions.key?(:ATOMIC_RELOAD_PROBE)
+        assert_equal :trusted, Law.definitions.fetch(:VERIFICATION_REQUIRED_FOR_COMPLETION).lifecycle
+        refute Law.definitions.key?(:ATOMIC_RELOAD_PROBE)
 
-      loaded.join
-      assert_equal "new", Law.definitions.fetch(:ATOMIC_RELOAD_PROBE).practice
-    ensure
-      loaded&.join
-      Law.load_all(File.join(Master::ROOT, "law"))
+        loaded.join
+        assert_equal "new", Law.definitions.fetch(:ATOMIC_RELOAD_PROBE).practice
+      ensure
+        loaded&.join
+        Law.load_all(File.join(Master::ROOT, "law"))
+      end
     end
   end
 
@@ -109,7 +126,7 @@ class TestLawContract < Minitest::Test
     refute_nil law
     assert law.assessment_surfaces.all? { |surface| Law::ASSESSMENT_SURFACES.include?(surface) }
 
-    data = JSON.parse(Law::Contract.render)
+    data = JSON.parse(Law::Contract.render(full: true))
     row = data.fetch("laws").find { |entry| entry.fetch("id") == law.id.to_s }
     refute_nil row
     assert_equal law.assessment_surfaces.map(&:to_s), row.fetch("surfaces")

@@ -40,7 +40,7 @@ module Master
       # Every model lane data/models.yml names, in the services' health vocabulary.
       def dispatch_lanes(root)
         health = Master::CLI::Routing::ProviderHealth.new
-        lanes = Master.load_yaml(File.join(root, "data", "models.yml")).fetch("models", {}).values.flatten
+        lanes = Master.model_tiers(root:).values.flatten
         ids = lanes.filter_map { |lane| lane["id"] if lane.is_a?(Hash) }.uniq
         ids.map do |id|
           latest = health.latest_event(id)

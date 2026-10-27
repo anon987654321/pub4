@@ -128,8 +128,12 @@ module Operator
       out.split("\x00").reject(&:empty?).to_set
     end
 
+    # Renames off: a staged `git mv` would otherwise come back as one rename row
+    # (R100, old path, new path) that names neither path alone, and the move
+    # would count as a deletion with no matching addition.
     def diff_statuses(root, paths = [])
-      out, status = Master::Io::Exec.capture2e("git", "-C", root, "diff", "--name-status", "HEAD", "--", *paths)
+      out, status = Master::Io::Exec.capture2e("git", "-C", root, "diff", "--name-status", "--no-renames", "HEAD",
+                                               "--", *paths)
       return {} unless status.success?
 
       out.lines.each_with_object({}) do |line, result|

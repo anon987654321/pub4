@@ -99,7 +99,7 @@ class TestTransformationPlan < Minitest::Test
 
   def test_missing_policy_reports_source_and_available_sections
     original = Master.method(:load_laws)
-    Master.define_singleton_method(:load_laws) { |_root:| { "prose" => {} } }
+    Master.define_singleton_method(:load_laws) { |**| { "prose" => {} } }
 
     error = assert_raises(ArgumentError) do
       Master::Fix::TransformationPlan.new(root: Master::ROOT)

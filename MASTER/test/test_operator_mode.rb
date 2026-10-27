@@ -19,8 +19,11 @@ class OperatorModeTest < Minitest::Test
     assert Master::Operator::Mode.capabilities(:deploy).allow?(:deploy)
   end
 
+  # A file read is the router's low-risk intent; "check" routes to
+  # verify_patch_landed, which the router prices medium.
   def test_assessment_uses_existing_risk_router
-    assessed = Master::Operator::Mode.assess("check the code", root: Master::ROOT)
+    assessed = Master::Operator::Mode.assess("read lib/ops.rb", root: Master::ROOT)
+
     assert_equal :observe, assessed[:mode]
     assert_equal :low, assessed[:risk]
     assert_equal :cheap, assessed[:model_tier]

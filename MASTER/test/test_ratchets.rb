@@ -63,8 +63,16 @@ class TestRatchets < Minitest::Test
     end
   end
 
+  # law_trace is a deep row, so it is built here with the rake command unrun.
   def test_law_trace_reads_the_recorded_ceiling
-    row = rows.find { |candidate| candidate.name == "law_trace" }
+    unrun = lambda do |name, _dir, _command, _pattern, ceiling|
+      Operator::Ratchets::Row.new(name:, current: nil, ceiling:, direction: :down, source: "", note: nil)
+    end
+
+    deep = Operator::Ratchets.stub(:shell_row, unrun) do
+      Operator::Ratchets.stub(:name_rows, []) { Operator::Ratchets.deep_rows(rails: false) }
+    end
+    row = deep.find { |candidate| candidate.name == "law_trace" }
     laws = Master.load_yaml(File.join(Operator::Ratchets::MASTER, "data", "laws.yml"))
     recorded = laws.dig("law_map", "law_trace_ceiling")
 

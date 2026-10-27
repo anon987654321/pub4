@@ -137,8 +137,7 @@ module Master
         end
 
         def inference_config
-          data = Master.load_yaml(File.join(@root, "data", "prompts.yml"), default: {}) || {}
-          data.fetch("inference", {})
+          Master.prompts_config(root: @root).fetch("inference", {})
         end
 
         def default_constraints

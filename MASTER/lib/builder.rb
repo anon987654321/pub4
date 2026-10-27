@@ -158,8 +158,7 @@ module Master
     end
 
     def build_tools(root:, infra:)
-      path = File.join(root, "data", "tools.yml")
-      defs = Master.load_yaml(path)
+      defs = Master.tools_config(root:)
       return [] unless defs.is_a?(Array)
 
       registry = ::Master::Builder::DEFAULT_TOOL_MAP
