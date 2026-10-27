@@ -15,8 +15,15 @@ class MigrationSafetyContractTest < Minitest::Test
     end
   end
 
+  # The review comment arrived on 2026-10-25 (0a2dce650). Migrations from
+  # before it have run everywhere and are history, never edited to satisfy a
+  # later rule, so the rule reads only migrations written after it.
+  REVIEW_RULE_SINCE = "20261025154230"
+
   def test_migrations_review_each_destructive_table_drop
     Dir.glob(File.join(ROOT, "{brgen,amber,bsdports}", "db/migrate/*.rb")).each do |path|
+      next if File.basename(path) < REVIEW_RULE_SINCE
+
       lines = File.readlines(path, chomp: true)
       lines.each_with_index do |line, index|
         next unless line.match?(/\bdrop_table\b/)
