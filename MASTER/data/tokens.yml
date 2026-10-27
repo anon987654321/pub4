@@ -1201,7 +1201,10 @@ tokens:
   # column, not just the one you need — the `hover` column is the one that has
   # been missed twice.
   vertical_accents:
-    marketplace: { accent: "#2563EB", hover: "#1D4ED8", light: "#1E40AF" }
+    # Marketplace's blues are dark enough that the shared dark ink measured 3.67, 2.83 and 2.18:1
+    # on its accent, hover and light fill; brgen's light ink reads 4.80, 6.23 and 8.11. A vertical
+    # names its own `ink` only where the shared one fails on what it paints.
+    marketplace: { accent: "#2563EB", hover: "#1D4ED8", light: "#1E40AF", ink: "#f7f6fa" }
     tv: { accent: "#dc635c", hover: "#b83a33", light: "#dc635c" }
     dating: { accent: "#00d4aa", hover: "#00b391", light: "#009579" }
     takeaway: { accent: "#e07b39", hover: "#c26a30", light: "#c26a30" }

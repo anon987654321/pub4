@@ -1287,6 +1287,7 @@ vertical_accents:
     accent: "#2563EB"
     hover: "#1D4ED8"
     light: "#1E40AF"
+    ink: "#f7f6fa"
   tv:
     accent: "#dc635c"
     hover: "#b83a33"

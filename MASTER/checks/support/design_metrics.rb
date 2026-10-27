@@ -151,7 +151,7 @@ module Deploy
       verticals.filter_map do |vertical, row|
         next unless row.is_a?(Hash)
 
-        hover_fill_pairs(vertical:, row:, ink:).first
+        hover_fill_pairs(vertical:, row:, ink: row["ink"] || ink).first
       end
     end
 

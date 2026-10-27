@@ -209,8 +209,10 @@ module DesignTokens
     accents = data.fetch("vertical_accents")
     ink = data.fetch("vertical_accent_ink")
     lines = ["/* BEGIN:generated-vertical-accents — ruby MASTER/tools/design_tokens.rb sync_dialect_tokens */", "$vertical-accents: ("]
+    # The fourth value is the ink painted on the accent: the vertical's own, or the shared one.
     accents.each do |name, values|
-      lines << "  #{name}: (#{values.fetch('accent')}, #{values.fetch('hover')}, #{values.fetch('light')}),"
+      lines << "  #{name}: (#{values.fetch('accent')}, #{values.fetch('hover')}, #{values.fetch('light')}, " \
+               "#{values.fetch('ink', ink)}),"
     end
     lines << ");"
     lines << "$vertical-accent-ink: #{ink};"

@@ -123,7 +123,7 @@
 @each $v, $c in x.$vertical-accents {
   body.vertical-#{$v} {
     --accent: #{list.nth($c, 1)};
-    --accent-ink: #{x.$vertical-accent-ink};
+    --accent-ink: #{list.nth($c, 4)};
     // The marketplace bol layer reads its hover by name (--bol-blue-dark);
     // every other vertical paints through --accent alone.
     @if $v == marketplace {
@@ -133,7 +133,7 @@
   /* Light restates rather than carries: the dataset is the one light path. */
   :root[data-theme="light"] body.vertical-#{$v} {
     --accent: #{list.nth($c, 3)};
-    --accent-ink: #{x.$vertical-accent-ink};
+    --accent-ink: #{list.nth($c, 4)};
   }
 }
 
