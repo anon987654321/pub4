@@ -124,7 +124,11 @@ module Law
     ".html" => "html", ".yml" => "yaml", ".sh" => "zsh", ".md" => "markdown", ".json" => "json"
   }.freeze
 
-  MEMBERS = %i[id source severity mode languages scope surfaces law_scope lifecycle autofix path path_exclude absent detect ask practice fix bad good reads_comments].freeze
+  MEMBERS = %i[
+    id source severity mode languages scope surfaces law_scope lifecycle autofix
+    path path_exclude absent detect ask practice fix bad good reads_comments
+  ].freeze
+
   Definition = Data.define(*MEMBERS) do
     # `path` takes a Regexp or a substring; `path_exclude` was already a Regexp,
     # and one member of a pair reading its argument the other way is a trap for
@@ -285,8 +289,10 @@ module Law
 
       extensions.each do |extension|
         as_file = "fixture#{extension}"
-        raise ArgumentError, "#{id}: bad fixture flagged on \"-\" but not on #{extension} — " \
-                             "considered_text blanks its subject first (set reads_comments?)" if scan(bad, file: as_file).empty?
+        if scan(bad, file: as_file).empty?
+          raise ArgumentError, "#{id}: bad fixture flagged on \"-\" but not on #{extension} — " \
+                               "considered_text blanks its subject first (set reads_comments?)"
+        end
         raise ArgumentError, "#{id}: good fixture clean on \"-\" but flagged on #{extension}" unless scan(good, file: as_file).empty?
       end
 
@@ -410,9 +416,18 @@ module Law
   }.freeze)
 
   class Builder
-    %i[source severity mode languages scope surfaces law_scope lifecycle autofix path path_exclude absent ask practice fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
+    %i[
+      source severity mode languages scope surfaces law_scope lifecycle autofix
+      path path_exclude absent ask practice fix bad good reads_comments
+    ].each { |a| define_method(a) { |v| @h[a] = v } }
 
-    def initialize(id) = @h = { id:, severity: :warn, mode: :violation, languages: [], scope: :line, surfaces: nil, law_scope: nil, lifecycle: :active, autofix: :review, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil, practice: nil, reads_comments: false }
+    def initialize(id)
+      @h = {
+        id:, severity: :warn, mode: :violation, languages: [], scope: :line, surfaces: nil, law_scope: nil,
+        lifecycle: :active, autofix: :review, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil,
+        practice: nil, reads_comments: false
+      }
+    end
     def detect(&block) = @h[:detect] = block
 
     # A law can carry more than one enforcement surface without becoming more
@@ -426,7 +441,9 @@ module Law
       if @h[:surfaces]
         @h[:surfaces] = Array(@h[:surfaces]).map(&:to_sym).uniq
         unknown_surfaces = @h[:surfaces] - ASSESSMENT_SURFACES
-        raise ArgumentError, "#{@h[:id]}: unknown assessment surfaces #{unknown_surfaces.join(", ")}" if unknown_surfaces.any?
+        if unknown_surfaces.any?
+          raise ArgumentError, "#{@h[:id]}: unknown assessment surfaces #{unknown_surfaces.join(", ")}"
+        end
       end
       # `fix` is in this list because Data requires it and Builder does not
       # default it, so a rule that omitted it died with "missing keyword: :fix"
@@ -470,7 +487,9 @@ module Law
     POLICY = {
       "lifecycle" => {
         "states" => Definition::LIFECYCLE_TRANSITIONS.keys.map(&:to_s),
-        "transitions" => Definition::LIFECYCLE_TRANSITIONS.transform_keys(&:to_s).transform_values { |states| states.map(&:to_s) },
+        "transitions" => Definition::LIFECYCLE_TRANSITIONS
+          .transform_keys(&:to_s)
+          .transform_values { |states| states.map(&:to_s) },
       },
       "autofix" => {
         "policies" => %w[never review automatic],
@@ -568,7 +587,7 @@ module Law
       raise ArgumentError, "law index is empty" if definitions.empty?
 
       ids = definitions.map { |law| law.id.to_s }
-      duplicate = ids.tally.select { |_, count| count > 1 }.keys
+      duplicate = ids.tally.select { |_id, count| count > 1 }.keys
       raise ArgumentError, "duplicate executable law ids: #{duplicate.join(', ')}" unless duplicate.empty?
 
       invalid = definitions.reject { |law| Definition::LIFECYCLE_TRANSITIONS.key?(law.lifecycle) }
