@@ -689,8 +689,8 @@ end
     ENV["MASTER_MODEL"] = saved
   end
 
-  # A quota-dead pin yields to the router's lane, unless the operator made it the only lane.
-  def test_a_strict_pin_is_asked_even_when_its_lane_is_parked
+  # A pin is asked even when its lane is parked; only MASTER_MODEL_STRICT=0 lets it yield to the router.
+  def test_a_pin_is_asked_even_when_its_lane_is_parked_unless_failover_is_asked_for
     dispatcher, asked = recording_dispatcher
     saved = %w[MASTER_MODEL MASTER_MODEL_STRICT].to_h { |key| [key, ENV.fetch(key, nil)] }
     ENV["MASTER_MODEL"] = "claude-cli:claude-opus-4-8"
@@ -699,12 +699,12 @@ end
     Master.stub(:any_api_key_present?, true) do
       Master::Io::LaneState.stub(:usable?, false) do
         ask.call
-        ENV["MASTER_MODEL_STRICT"] = "1"
+        ENV["MASTER_MODEL_STRICT"] = "0"
         ask.call
       end
     end
 
-    assert_equal ["routed-model", "claude-cli:claude-opus-4-8"], asked
+    assert_equal ["claude-cli:claude-opus-4-8", "routed-model"], asked
   ensure
     saved.each { |key, value| ENV[key] = value }
   end

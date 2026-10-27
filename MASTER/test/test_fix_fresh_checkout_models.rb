@@ -174,12 +174,22 @@ class TestFixFreshCheckoutModels < Minitest::Test
     assert(agent.asked.none? { |id| Selection::FREE_CLASS_KINDS.include?(Selection.kind(id)) })
   end
 
-  # A pin is the first choice, not the only one. The dispatcher door sends the
-  # pinned lane while it is live and gives the call back to the router's lane when
-  # the pin is quota-dead or has just failed, so a failover hop is not routed
-  # back onto the lane that failed.
-  def test_a_pinned_lane_yields_to_the_next_live_lane_when_dead_or_failed
+  # A pin is the only lane. With MASTER_MODEL_STRICT=0 it is the first choice instead:
+  # the dispatcher door sends the pinned lane while it is live and gives the call back
+  # to the router's lane when the pin is quota-dead or has just failed, so a failover
+  # hop is not routed back onto the lane that failed.
+  def test_a_strict_pin_is_asked_even_after_its_lane_failed
     ENV["MASTER_MODEL"] = OPUS
+    Master::Io::ModelSkipCache.skip!(OPUS, reason: "claude exited 1")
+
+    assert_equal OPUS, Master::Review::LLMDispatcher.allocate.send(:answering_model, GROK, nil)
+  ensure
+    Master::Io::ModelSkipCache.clear!
+  end
+
+  def test_a_pinned_lane_yields_to_the_next_live_lane_only_when_failover_is_asked_for
+    ENV["MASTER_MODEL"] = OPUS
+    ENV["MASTER_MODEL_STRICT"] = "0"
     door = Master::Review::LLMDispatcher.allocate
     asked = []
     answer = ->(selected) { door.send(:answering_model, selected, nil).tap { |m| asked << m } }
@@ -194,6 +204,7 @@ class TestFixFreshCheckoutModels < Minitest::Test
     assert_equal GROK, answer.call(GROK), "a quota-dead pin yields"
     assert_equal [OPUS, GROK, GROK], asked
   ensure
+    ENV.delete("MASTER_MODEL_STRICT")
     Master::Io::ModelSkipCache.clear!
   end
 

@@ -327,13 +327,20 @@ module Master
         Master::Trace::Dmesg.status("fix0", text) if text
       end
 
+      # A MASTER_MODEL pin is the only lane; MASTER_MODEL_STRICT=0 lets it fail over.
+      def strict_pin?(env = ENV) = env["MASTER_MODEL_STRICT"].to_s != "0"
+
+      def pin_label(env = ENV)
+        strict_pin?(env) ? "pinned (MASTER_MODEL), no failover" : "pinned (MASTER_MODEL), failover on"
+      end
+
       # What /model and fix status print: the effective #1 lane and why.
       def primary_report(env: ENV, saved: nil, cfg: config, alive: method(:alive?))
         lane, source = boot_choice(env:, saved:, cfg:, alive:)
         return "primary: no live lane (every catalogue lane is dead or absent)" if lane.to_s.empty?
 
         why = {
-          "MASTER_MODEL" => "pinned (MASTER_MODEL), failover on",
+          "MASTER_MODEL" => pin_label(env),
           "saved preference" => "saved preference, live",
           "availability" => "first live lane by availability (#{SUBSCRIPTION_LANES.join(" > ")}, then APIs, paid tail, local, free)"
         }.fetch(source)

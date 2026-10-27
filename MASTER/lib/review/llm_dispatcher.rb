@@ -204,15 +204,17 @@ module Master
         # A pin is the first choice, not the only one: a pinned lane that is quota-dead
         # or has just failed (parked in the skip cache) yields to the router's lane,
         # so a failover hop is not sent back to the lane that failed.
-        # MASTER_MODEL_STRICT=1 makes the pin the only lane: an operator who asked for one model
-        # on every lane had a quota-dead Opus hand /fix's repairs to free lanes mid-run.
-        return forced_model if strict_pin?
+        # A pin is the only lane unless MASTER_MODEL_STRICT=0 asks for failover: an operator who
+        # asked for one model on every lane had a quota-dead Opus hand /fix's repairs to grok-cli
+        # mid-run, because the strict switch was a second flag the run had been started without.
+        # A per-call pin (MASTER_FIX_VERIFIER_MODEL) is also the operator's, so it still wins.
+        return ModelPin.current || forced_model if strict_pin?
 
         model = [ModelPin.current, forced_model].find { |m| m && Io::LaneState.usable?(m) } || selected_model
         image_present?(image) ? vision_model_for(model) : model
       end
 
-      def strict_pin? = ENV["MASTER_MODEL_STRICT"] == "1" && !forced_model.nil?
+      def strict_pin? = Io::LaneSelection.strict_pin?(ENV) && !forced_model.nil?
 
       # One model for every lane, for one run. Set MASTER_MODEL and the router's
       # choice is overridden at the single door every request passes through —

@@ -116,7 +116,10 @@ class TestLaneSelection < Minitest::Test
   def test_the_primary_report_names_the_lane_and_why
     Quota.note(AGY, AGY_REPLY)
     assert_match(/\Aprimary: #{Regexp.escape(OPUS)} \(first live lane by availability.*; dead: agy/, Selection.primary_report(env: {}, alive: ALL))
-    assert_match(/pinned \(MASTER_MODEL\), failover on/, Selection.primary_report(env: { "MASTER_MODEL" => GROK }, alive: ALL))
+    assert_match(/pinned \(MASTER_MODEL\), no failover/,
+                 Selection.primary_report(env: { "MASTER_MODEL" => GROK }, alive: ALL))
+    assert_match(/pinned \(MASTER_MODEL\), failover on/,
+                 Selection.primary_report(env: { "MASTER_MODEL" => GROK, "MASTER_MODEL_STRICT" => "0" }, alive: ALL))
   end
 
   def test_a_free_class_lane_warns_once_while_a_live_lane_exists

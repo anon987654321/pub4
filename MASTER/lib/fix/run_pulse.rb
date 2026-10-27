@@ -402,7 +402,7 @@ module Master
           lane, source = choice
           return "model0 at fix0: no live lane (source: #{source || "availability"})" if lane.to_s.empty?
 
-          "model0 at fix0: #{lane} (source: #{source == "MASTER_MODEL" ? "pinned (MASTER_MODEL), failover on" : source})"
+          "model0 at fix0: #{lane} (source: #{source == "MASTER_MODEL" ? Master::Io::LaneSelection.pin_label : source})"
         end
 
         def boot_choice
