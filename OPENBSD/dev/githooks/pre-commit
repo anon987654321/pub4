@@ -188,4 +188,45 @@ if ENV["LINT"] != "0" && ENV["LINT_SKIP"] != "1"
   end
 end
 
+# A commit that stops MASTER booting is refused here, not at push: a law change
+# that made the boot recurse forever was caught only by pre-push, after it had
+# been committed and built on. Only a commit touching what the boot reads pays the
+# 20-40 s. It boots the working tree, as pre-push does, so another session's
+# unstaged edit there can fail it too; the smoke's own output names the error. A
+# boot that never returns is stopped at the deadline and refused, not waited on.
+BOOT_PATHS = %w[MASTER/lib/ MASTER/law/ MASTER/data/].freeze
+BOOT_SMOKE_DEADLINE_S = 180
+
+def boot_smoke_status(ruby, smoke)
+  pid = Process.spawn(ruby, smoke, out: $stderr, pgroup: true)
+  deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + BOOT_SMOKE_DEADLINE_S
+  until Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+    _, status = Process.wait2(pid, Process::WNOHANG)
+    return status if status
+
+    sleep 0.25
+  end
+  Process.kill("KILL", -pid)
+  Process.wait(pid)
+  nil
+end
+
+if ENV["PUB4_SKIP_BOOT_SMOKE"] != "1" && staged.any? { |path| path.start_with?(*BOOT_PATHS) }
+  root = File.expand_path("../../..", __dir__)
+  smoke = File.join(root, "MASTER", "tools", "boot_smoke.rb")
+
+  status = File.file?(smoke) ? boot_smoke_status(File.join(root, "MASTER", "bin", "ruby"), smoke) : true
+
+  unless status == true || status&.success?
+    verdict = status ? "boot smoke failed" : "boot smoke still running after #{BOOT_SMOKE_DEADLINE_S}s"
+
+    warn ""
+    warn "pre-commit: REFUSED — #{verdict}."
+    warn "  MASTER must boot with what this commit touches in MASTER/lib, law or data."
+    warn "  Bypass only this one commit: PUB4_SKIP_BOOT_SMOKE=1 git commit -- <paths>"
+    warn ""
+    exit 1
+  end
+end
+
 exit 0
