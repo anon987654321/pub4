@@ -309,7 +309,7 @@ module Master
             definitions = ::Law.definitions.values.to_h { |law| [law.id.to_s.upcase, law] }
             detector_definitions = Master::Review::Scan::Law.registry.each_with_object({}) do |klass, result|
               location = klass.name && Object.const_source_location(klass.name)&.first
-              next if location&.match?(%r{(?:\\A|/)(?:test|spec)/})
+              next if location&.match?(%r{(?:\A|/)(?:test|spec)/})
 
               instance = Master::Review::Scan::LawFactory.build(klass, root: Master::ROOT)
               id = instance.id.to_s.upcase
@@ -333,7 +333,7 @@ module Master
                 ("Compliant example: #{definition.good.strip}" if definition&.respond_to?(:good) && !definition.good.to_s.empty?),
                 ("Canonical source: #{(Array(manifest["definition_sources"]) + Array(manifest["detector_sources"])).join(", ")}"),
                 "Evaluate this same invariant for a clear breach and a concrete improvement.",
-              ].compact.join("\\n")
+              ].compact.join("\n")
 
               laws[id] = {
                 prompt: prompt,
