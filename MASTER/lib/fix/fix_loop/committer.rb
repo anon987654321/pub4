@@ -131,6 +131,7 @@ module Master
 
             prepared, blocked = prepare_for_delivery(transaction, message, paths)
             return blocked if blocked
+            return finish_empty_transaction(transaction) if prepared.empty?
 
             deliver_and_commit(transaction:, message:, findings:, prepared:)
           rescue StandardError => e
@@ -320,6 +321,7 @@ def stage_commit_mode?
 
           prepared = validate_paths(message, paths)
           return :blocked unless prepared
+          return :noop if prepared.empty?
 
           head_before = @git.head
           transaction.delivery.begin!(head_before:)
@@ -425,8 +427,12 @@ def stage_commit_mode?
         def commit_if_dirty!(message, findings: [], owned_paths: nil)
           paths = written_here(own_changes(owned_paths))
           return :noop if paths.empty?
-          return :blocked unless validate_paths(message, paths)
 
+          delivered = validate_paths(message, paths)
+          return :blocked unless delivered
+          return :noop if delivered.none?
+
+          paths = delivered
           commit_scoped(with_finding_ids(message, findings, paths), paths:)
           push_commit!(paths)
 
@@ -450,19 +456,45 @@ def stage_commit_mode?
           return block_commit_intent(message) && false unless intent_preserved?(message, paths)
           return block_commit_ground_truth && false unless ground_truth_fresh?(paths)
           return false unless lint_changed_ruby(paths)
-          return false unless house_lint_clean?(paths)
 
-          paths
+          house_lint_clean(paths)
         end
 
         # The pre-commit hook runs `bin/operator lint --staged --changed-lines` and refuses a finding in any line a
         # commit adds; rubocop --fail-level E passes a 141-character line it refuses, so the same lint runs here first.
-        def house_lint_clean?(paths)
+        # Answers the paths to deliver, or false.
+        def house_lint_clean(paths)
           found = HouseLint.findings(paths, root: @root)
-          return true if found.empty?
+          return paths if found.empty?
+
+          kept = paths - put_back_refused_autofix(paths, found)
+          return kept if kept.size < paths.size && HouseLint.findings(kept, root: @root).empty?
 
           refuse_commit(reason: "house_lint", findings: found.first(3))
           false
+        end
+
+        # An autofix rewrite is not worth a pass. When every finding names a file the autofix wrote and
+        # nothing has changed since, those files go back to what they held and the rest delivers: the
+        # trailing comma rubocop added to a 141-character line ended every MASTER pass at its first delivery.
+        def put_back_refused_autofix(paths, found)
+          absolute = paths.to_h { |path| [File.expand_path(path, @root), path] }
+          named = lint_blamed(absolute.keys, found)
+          return [] unless named&.all? { |path| AutofixGuard.still_as_written?(path) }
+
+          reverted, = AutofixGuard.revert_written!(named)
+          Master::Trace::Dmesg.status("deliver0", "put back #{reverted.size} autofix file(s) the house lint refused")
+          absolute.values_at(*reverted)
+        end
+
+        # The delivered files each finding names, or nil when one names no file among them. The lint names
+        # a path from the repository root; the delivery holds it from the tree's.
+        def lint_blamed(files, found)
+          named = found.map do |line|
+            rel = line[/\Alint0: (\S+?):\d+/, 1]
+            rel && files.find { |path| path.end_with?("/#{rel}") }
+          end
+          named.include?(nil) ? nil : named.uniq
         end
 
         def finish_empty_transaction(transaction)

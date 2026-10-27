@@ -325,6 +325,33 @@ def test_a_change_the_hook_would_refuse_is_named_before_staging
   assert_equal ["lint0: MASTER/lib/a.rb:85, line 141 chars (max 120)"], found
 end
 
+# The autofix's trailing comma on a 141-character line ended every MASTER pass at its first
+# delivery. A file only the autofix wrote goes back and the pass's own repair still lands.
+def test_an_autofix_write_the_house_lint_refuses_goes_back_and_the_repair_delivers
+  wide = autofixed_wide_file
+  git = FakeGit.new([], %w[lib/ok.rb lib/wide.rb])
+  committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir)
+  committer.baseline!
+
+  answers = [["lint0: lib/wide.rb:1, line 141 chars (max 120)"], []]
+  lint = ->(*) { answers.shift || [] }
+  capture_io { Master::Fix::FixLoop::HouseLint.stub(:findings, lint) { committer.commit_if_dirty("fix: ok") } }
+
+  assert_equal ["lib/ok.rb"], git.commits.flat_map(&:last)
+  assert_equal "WIDE = 1\n", File.read(wide)
+ensure
+  Master::Fix::AutofixGuard.reset!
+end
+
+def autofixed_wide_file
+  write_file("lib/ok.rb", "OK = 1\n")
+  Master::Fix::AutofixGuard.reset!
+  wide = File.join(@dir, "lib/wide.rb")
+  write_file("lib/wide.rb", "WIDE = [1,].freeze\n")
+  Master::Fix::AutofixGuard.note_written(wide, before: "WIDE = 1\n")
+  wide
+end
+
 def test_a_lint_that_fails_without_naming_a_line_still_blocks
   refused = Struct.new(:success?).new(false)
 
