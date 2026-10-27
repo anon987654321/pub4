@@ -51,6 +51,12 @@ module Master
         new_ranges.any? { |range| range.cover?(line) }
       end
 
+      # Whether any hunk lands inside +range+ of the new file, as one does in a
+      # method's lines when an edit anywhere in it, a deletion included, changes it.
+      def touches?(range)
+        new_ranges.any? { |hunk| hunk.begin <= range.end && range.begin <= hunk.end }
+      end
+
       # Lines added minus lines removed; the file grew when this is positive.
       def line_delta = hunks.sum { |hunk| hunk.new_count - hunk.old_count }
 

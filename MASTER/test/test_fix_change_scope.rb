@@ -100,4 +100,19 @@ class TestFixChangeScope < Minitest::Test
     assert_in_delta 0.0, emptied.size_ratio
     assert_in_delta 0.5, Scope.between("x" * 100, "x" * 50).size_ratio
   end
+  def test_touches_a_range_an_edit_lands_in
+    old = numbered(20)
+    edited = Scope.between(old.join, old.dup.tap { |lines| lines[11] = "twelve\n" }.join)
+
+    assert edited.touches?(5..15), "an edit inside a method's lines changes the method"
+    refute edited.touches?(1..10)
+  end
+
+  def test_touches_a_range_a_deletion_lands_in
+    old = numbered(20)
+    deleted = Scope.between(old.join, old.dup.tap { |lines| lines.delete_at(11) }.join)
+
+    assert deleted.touches?(5..15), "a deletion inside a method's lines changes it too"
+    refute deleted.touches?(13..20)
+  end
 end

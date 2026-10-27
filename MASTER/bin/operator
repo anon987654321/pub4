@@ -267,55 +267,16 @@ when "lint"
   # whatever files an agent touched, so claude, grok or codex can run it on a
   # diff before committing and be held to the constitution regardless of which
   # tool typed the change. Paths given are scanned as named; with none, the diff
-  # against HEAD is.
+  # against HEAD is. Operator::Lint says what --staged and --changed-lines read.
   require "master"
   require "fix/scanner"
-  # --changed-lines judges only the lines this diff added, so a file's standing
-  # debt does not block the commit that merely touched it — the shape a
-  # pre-commit hook wants.
+  require "operator/lint"
   changed_only = !ARGV.delete("--changed-lines").nil?
-  # --staged reads the index (what this commit includes), the scope a pre-commit
-  # hook wants; without it, the whole working tree against HEAD.
-  diff_base = ARGV.delete("--staged").nil? ? "HEAD" : "--cached"
+  staged = !ARGV.delete("--staged").nil?
   scanner = Master::Fix::Scanner.build(root: Master::ROOT, agent: nil)
-  changed, = Master::Io::Exec.capture2e("git", "-C", ROOT, "diff", "--name-only", diff_base)
-  targets = ARGV.empty? ? changed.lines.map { |line| File.join(ROOT, line.chomp) } : ARGV
-  files = targets.flat_map { |t| File.directory?(t) ? Dir.glob(File.join(t, "**/*")) : [t] }.select { |p| File.file?(p) }
-  # The lines this diff changed are Fix::ChangeScope's, the reading /fix's own per-fix checks
-  # use, so a repair the house lint passes is one the hook passes too.
-  require "fix/change_scope"
-  scopes = nil
-  if changed_only
-    diff, = Master::Io::Exec.capture2e("git", "-C", ROOT, "diff", "-U0", diff_base)
-    scopes = Master::Fix::ChangeScope.from_diff(diff)
-  end
-  base_ref = diff_base == "HEAD" ? "HEAD" : ""
-
-  # A path the diff does not name is unchanged, unless git does not hold it at the base:
-  # then every line of it is new.
-  scope_of = Hash.new do |memo, path|
-    rel = File.expand_path(path).delete_prefix("#{ROOT}/")
-    memo[path] = scopes.fetch(rel) do
-      _, held = Master::Io::Exec.capture2e("git", "-C", ROOT, "cat-file", "-e", "#{base_ref}:#{rel}")
-      Master::Fix::ChangeScope.between("", held.success? ? "" : File.read(path))
-    end
-  end
-
-  # A file-size finding sits on line 1, so a repair that touched line 1 (a header comment)
-  # inherited the file's standing length and every fix to a long stylesheet was refused.
-  # In changed-lines mode it counts only when this diff made the file longer.
-  file_size_laws = %w[SMALL_FILES JS_MODULE_SIZE].freeze
-  in_diff = lambda do |path, finding|
-    scope = scope_of[path]
-    file_size_laws.include?(finding[:law].to_s) ? scope.grew? : scope.covers?(finding)
-  end
-
-  findings = files.flat_map do |path|
-    result = scanner.scan(path, depth: :deep)
-    rows = result.ok? ? Array(result.value!) : []
-    rows = rows.select { |finding| in_diff.call(path, finding) } if scopes
-    rows.map { |finding| [path, finding] }
-  end
+  lint = Operator::Lint.new(root: ROOT, scanner:, staged:, changed_only:)
+  files = lint.targets(ARGV)
+  findings = lint.findings(files)
   if findings.empty?
     Master::Trace::Dmesg.status("lint0", "clean, #{files.size} files, no law broken")
     exit 0
