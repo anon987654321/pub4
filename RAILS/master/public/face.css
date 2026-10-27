@@ -97,11 +97,6 @@
   --ease-linear: cubic-bezier(0,0,1,1);
   --ease-in-out: cubic-bezier(0.65,0,0.35,1);
   --ease-spring: cubic-bezier(0.32,0.72,0,1);
-  /* Brand display weights: the mark and the primer title are variable-font
-     optical values, outside the body 400/600/800 ladder and outside this
-     surface's reach into the RAILS token pipeline. */
-  --face-weight-brand: 640;
-  --face-weight-display: 560;
   /* z-scale: canvas(base) < chrome(persistent HUD) < ui < overlay(panels) < modal(blocking) < toast(errors) < skip(a11y skip-link) */
   --z-canvas: 1;
   --z-chrome: 10;

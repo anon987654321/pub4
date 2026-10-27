@@ -91,7 +91,6 @@ en:
     # Mirrors social.nb.yml. See there for why these live in the engine.
     options: "Sign in options"
     or_email: "or email"
-    with_github: "Sign in with GitHub"
     with_google: "Sign in with Google"
     with_facebook: "Sign in with Facebook"
     with_bankid: "Sign in with BankID"
@@ -132,7 +131,6 @@ en:
     choose_recipient: "Choose recipient"
     to: "To %{name}"
     from: "From %{name}"
-    unread: "was unread"
     read: "read"
     inbox_clear: "Inbox clear."
     artifacts_label: "Shared in the conversation"
@@ -154,10 +152,8 @@ en:
     email_placeholder: "your@email.com"
     heading: "The city letter"
     blurb: "One email a week. Curated, not cluttered. Unsubscribe any time."
-    marketing_opt_in: "Send me partner offers and sponsored picks (optional)"
     subscribe: "Subscribe"
     unavailable: "Newsletter signup opens after email routes are configured for this app."
-    unsubscribe: "Unsubscribe"
     affiliate_disclosure: "Some links are affiliate links. We may earn a commission."
   # Plural, and separate from post: — shared/_action_bar asks for posts.share.
   posts:

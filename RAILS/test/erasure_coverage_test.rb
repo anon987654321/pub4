@@ -145,7 +145,7 @@ class ErasureCoverageTest < Minitest::Test
     assert_includes job, '{ model: "ActivityEvent", key: :actor_id }'
     assert_includes job, '{ model: "ConversationParticipant", key: :user_id }'
     assert_includes job, '[ "ActivityEvent", :subject_type, :subject_id ]'
-    assert_includes job, '[ "Shared::Reaction", :reactable_type, :reactable_id ]'
+    assert_includes job, '[ "Reaction", :reactable_type, :reactable_id ]'
     assert_includes job, '[ "Shared::OutboundClick", :subject_type, :subject_id ]'
     assert_includes job, 'where(id_column => message_ids)'
     assert_includes job, 'rows = rows.where(type_column => "Message") if type_column'

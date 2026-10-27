@@ -268,17 +268,19 @@ class LocaleContractTest < Minitest::Test
     end
   end
 
-  # The source that can load a unit's locale files. brgen's engines mount only in
-  # brgen, and shared's keys are read by all three apps.
+  # The source that can load a unit's locale files. brgen's engines (brgen_*) mount
+  # only in brgen, so brgen, each engine and shared all load into one store and any
+  # of their sources can read the others' keys; shared's keys are read by all three apps.
   def sources_for(unit)
     trees = case unit
             when "shared" then %w[brgen amber bsdports __shared]
-            when %r{\Abrgen(?:/|\z)} then %w[brgen __shared]
+            when %r{\Abrgen(?:[/_]|\z)} then %w[brgen __shared]
             else [unit, "__shared"]
             end
+
     @sources ||= {}
     paths = trees.flat_map { |tree| Dir.glob(File.join(ROOT, tree, "**/*.{rb,erb,js,rake,jbuilder,yml,json}")) }
-    if unit == "brgen"
+    if trees.include?("brgen")
       paths.concat(Dir.glob(File.join(ROOT, "#{EngineRoots::GLOB}/**/*.{rb,erb,js,rake,jbuilder,yml,json}")))
     end
     @sources[trees] ||= paths.uniq.reject { |path| path.match?(READER_SKIP) }

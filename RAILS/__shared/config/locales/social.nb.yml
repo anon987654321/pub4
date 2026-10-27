@@ -91,7 +91,6 @@ nb:
     # nav.oauth_*, so amber and bsdports showed the English sign-in buttons.
     options: "Innloggingsvalg"
     or_email: "eller e-post"
-    with_github: "Logg inn med GitHub"
     with_google: "Logg inn med Google"
     with_facebook: "Logg inn med Facebook"
     with_bankid: "Logg inn med BankID"
@@ -130,7 +129,6 @@ nb:
     choose_recipient: "Velg mottaker"
     to: "Til %{name}"
     from: "Fra %{name}"
-    unread: "var ulest"
     read: "lest"
     inbox_clear: "Innboksen er tom."
     artifacts_label: "Delt i samtalen"
@@ -152,10 +150,8 @@ nb:
     email_placeholder: "din@epost.com"
     heading: "Bybrevet"
     blurb: "Én e-post i uken. Kuratert, ikke rotete. Meld deg av når du vil."
-    marketing_opt_in: "Send meg partnertilbud og sponsede utvalg (valgfritt)"
     subscribe: "Abonner"
     unavailable: "Nyhetsbrevet åpner når e-postrutene er satt opp for denne appen."
-    unsubscribe: "Meld deg av"
     affiliate_disclosure: "Noen lenker er affiliatelenker. Vi kan tjene provisjon."
   # Plural, and separate from post: — shared/_action_bar asks for posts.share.
   posts:

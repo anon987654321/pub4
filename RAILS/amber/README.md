@@ -150,6 +150,7 @@ The layer headings below keep the original identity and wardrobe structure. The 
 - `GarmentEmbedding`: a legacy JSON-backed vector record; this does not imply an active embedding-generation or vector-search pipeline.
 - `IdentityVerification`: account verification evidence, handled as private identity data.
 - `LiveStream`: the record for a user's live-stream activity.
+- `Reaction`: one like per person and target, so a like counts once per user.
 
 **Services**
 

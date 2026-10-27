@@ -20,16 +20,16 @@
 
   <%= form_with url: publish_share_draft_path(@share_draft), scope: :post, method: :post do |f| %>
     <div class="field">
-      <%= f.label :community_id, t("posts.community_optional", default: "Community (optional)") %>
+      <%= f.label :community_id, t("posts.community_optional") %>
       <%= f.collection_select :community_id, @communities, :id, :name,
-            { include_blank: t("posts.no_community", default: "No community"), selected: @post&.community_id } %>
+            { include_blank: t("posts.no_community"), selected: @post&.community_id } %>
     </div>
     <div class="field">
       <%= f.label :title %>
       <%= f.text_field :title, value: @post&.title || @share_draft.title, maxlength: 300, required: true %>
     </div>
     <div class="field">
-      <%= f.label :content, t("posts.body_optional", default: "Text (optional)") %>
+      <%= f.label :content, t("posts.body_optional") %>
       <%= f.text_area :content, value: @post&.content || @share_draft.content, rows: 6, maxlength: 40000 %>
     </div>
     <div class="field field--check">
@@ -42,6 +42,7 @@
     </div>
   <% end %>
 
-  <%= button_to t("actions.delete", default: "Discard draft"), share_draft_path(@share_draft),
-        method: :delete, class: "btn btn-ghost" %>
+  <%= button_to t("actions.delete"), share_draft_path(@share_draft),
+        method: :delete, class: "btn btn-ghost",
+        data: { turbo_confirm: t("actions.confirm_delete") } %>
 </div>

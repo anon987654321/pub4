@@ -393,11 +393,6 @@ en:
     like: "Like"
   pwa:
     queued: "Saved for offline"
-    description: "Social fashion. Share outfits, keep a wardrobe, and dress with people you follow."
-    add_item: "Add item"
-    item: "Item"
-    create_outfit: "Create outfit"
-    outfit: "Outfit"
   install:
     title: "Install Amber"
     body: "Amber on the home screen — feed, outfits and wear tracking when you are online."
@@ -655,7 +650,6 @@ en:
     title: "Messages"
     inbox_clear: "Inbox is clear."
     choose_recipient: "Choose a connection…"
-    unread: "unread"
     empty_body: "Send a note to someone you are connected with."
     no_recipients: "Accept a connection before you can message anyone."
     composer: "New message"
@@ -1038,7 +1032,6 @@ en:
     marked_as_worn_again: "Marked as worn again."
     outfit_planned: "Planned."
     anonymous_post_limit: "Sign up to post more (%{limit} anonymous posts per browser)."
-    welcome: "Welcome to Amber."
   # Shared::PlaceHelper renders these wherever an item carries coordinates.
   place:
     within_a_km: "less than 1 km away"

@@ -17,6 +17,7 @@ class RecoveryContractTest < Minitest::Test
     source = File.read(File.join(ROOT, "RAILS/__shared/app/controllers/concerns/shared/idempotency.rb"))
     assert_includes source, 'if response.status >= 500'
     assert_includes source, "Rails.cache.delete(idempotency_cache_key)"
-    assert_includes source, '"X-Idempotency-Key"'
+    # Rack's name for the X-Idempotency-Key header pwa_runtime.js sends on replay.
+    assert_includes source, '"HTTP_X_IDEMPOTENCY_KEY"'
   end
 end

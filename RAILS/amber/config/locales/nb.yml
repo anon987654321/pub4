@@ -392,11 +392,6 @@ nb:
     like: "Lik"
   pwa:
     queued: "Lagret for offline"
-    description: "Sosial mote. Del antrekk, hold orden på garderoben og kle deg sammen med folk du følger."
-    add_item: "Legg til plagg"
-    item: "Plagg"
-    create_outfit: "Opprett antrekk"
-    outfit: "Antrekk"
   install:
     title: "Installer Amber"
     body: "Amber på hjem-skjermen — feed, antrekk og bruks-sporing når du er på nett."
@@ -654,7 +649,6 @@ nb:
     title: "Meldinger"
     inbox_clear: "Innboksen er tom."
     choose_recipient: "Velg en forbindelse…"
-    unread: "ulest"
     empty_body: "Send en melding til noen du er forbundet med."
     no_recipients: "Godta en forbindelse før du kan sende meldinger."
     composer: "Ny melding"
@@ -1040,7 +1034,6 @@ nb:
     marked_as_worn_again: "Merket som brukt igjen."
     outfit_planned: "Planlagt."
     anonymous_post_limit: "Registrer deg for å poste mer (%{limit} anonyme innlegg per nettleser)."
-    welcome: "Velkommen til Amber."
   # Shared::PlaceHelper renders these wherever an item carries coordinates.
   place:
     within_a_km: "under 1 km unna"

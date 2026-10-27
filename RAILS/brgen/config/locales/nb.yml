@@ -77,7 +77,6 @@ nb:
       tv: TV
     vertical_badge_new: "nytt!"
     pagination: Sidenavigasjon
-    trending_tags: Populære emneknagger
     home: Hjem
     explore: Utforsk
     notifications: Varsler
@@ -85,7 +84,6 @@ nb:
     sign_out: Logg ut
     new_post: Nytt innlegg
     communities: Fellesskap
-    hide: Skjul
     new_community: "+ Nytt fellesskap"
     messages: Meldinger
     nearby: I nærheten
@@ -471,13 +469,11 @@ nb:
     confirm_block: Blokkere denne personen? Dere kan ikke skrive til hverandre før blokkeringen er opphevet. Personen får ikke beskjed.
     blocked_by_me: Du har blokkert denne personen. Opphev blokkeringen for å skrive igjen.
     blocked_either: Du kan ikke sende meldinger i denne samtalen.
-    report_message: Rapporter melding
     delivery_sent: sendt
     read_by: "lest av %{count}"
     unread_badge:
       one: "%{count} ulest melding"
       other: "%{count} uleste meldinger"
-    open_messenger: Åpne meldinger
     disappearing_options:
       "off": Av
       "1m": 1 minutt
@@ -488,7 +484,6 @@ nb:
     disappearing_note: Skjermbilde kan ikke hindres. Den du skriver til kan fortsatt ta bilde av skjermen eller kopiere teksten.
     view_once_chip: forsvinner når den er lest
     offline: Du er frakoblet. Meldingen sendes når du er på nett igjen.
-    retry: Prøv igjen
   comments:
     sort_label: Sorter kommentarer
   push:
@@ -861,8 +856,6 @@ nb:
     anywhere_in: "Hvor som helst i %{city}"
     body_label: Tekst
     score: Poengsum
-    upvote: Stem opp
-    downvote: Stem ned
     share_post: Del innlegg
     view_community: Se fellesskap
     about: Om
@@ -1560,8 +1553,6 @@ nb:
     unsubscribe_link: "Meld av"
     title: Byoppdateringer
     body: Nyheter og tilbud fra byen din, én gang i uken.
-    marketing_consent: Jeg godtar å motta tilbud og partnerforslag (valgfritt, avmeld
-      når som helst)
     view_offer: Se tilbudet
     curated_offers: Utvalgte tilbud
     today_in: I dag i %{city}

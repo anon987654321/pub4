@@ -51,7 +51,8 @@ class ShareDraftsController < ApplicationController
       community: @community,
       user: Current.user,
       city: @share_draft.city,
-      anonymous: ActiveModel::Type::Boolean.new.cast(attributes[:anonymous])
+      # An absent checkbox casts to nil, and posts.anonymous is NOT NULL.
+      anonymous: ActiveModel::Type::Boolean.new.cast(attributes[:anonymous]) || false,
     )
     image_blobs = @share_draft.images.blobs
     @post.image.attach(image_blobs.first) if image_blobs.any?

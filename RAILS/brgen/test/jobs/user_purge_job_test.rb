@@ -165,7 +165,8 @@ class UserPurgeJobTest < ActiveJob::TestCase
         actor: @user, event_name: "MessageSent", source_vertical: "messages",
         subject_type: "Message", subject_id: message.id, visibility: "private"
       )
-      reaction = Shared::Reaction.create!(user: other, reactable: message, kind: "love")
+      reaction = Reaction.create!(user: other, reactable: message, kind: "love")
+      own_reaction = Reaction.create!(user: @user, reactable: message, kind: "like")
       vote = Vote.create!(user: other, votable: message, value: 1)
       click = Shared::OutboundClick.create!(
         app: "brgen", url_host: "merchant.example", subject_type: "Message",
@@ -190,7 +191,8 @@ class UserPurgeJobTest < ActiveJob::TestCase
       refute Notification.exists?(authored_notification.id), "notification retained the erased sender"
       refute ActivityEvent.exists?(message_event.id), "activity pointed at a private message"
       refute ActivityEvent.exists?(authored_event.id), "activity retained the erased sender"
-      refute Shared::Reaction.exists?(reaction.id), "reaction pointed at a private message"
+      refute Reaction.exists?(reaction.id), "reaction pointed at a private message"
+      refute Reaction.exists?(own_reaction.id), "reaction retained the erased user"
       refute Vote.exists?(vote.id), "vote pointed at a private message"
       refute Shared::OutboundClick.exists?(click.id), "outbound attribution pointed at a private message"
       assert_empty MessageReceipt.where(message_id: message.id),

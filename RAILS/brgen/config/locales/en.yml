@@ -73,7 +73,6 @@ en:
       tv: TV
     vertical_badge_new: "new!"
     pagination: Pagination
-    trending_tags: Trending tags
     home: Home
     explore: Explore
     notifications: Notifications
@@ -81,7 +80,6 @@ en:
     sign_out: Sign out
     new_post: New post
     communities: Communities
-    hide: Hide
     new_community: "+ New community"
     messages: Messages
     nearby: Nearby
@@ -467,13 +465,11 @@ en:
     confirm_block: Block this person? You cannot message each other until you unblock. They are not told.
     blocked_by_me: You blocked this person. Unblock to write again.
     blocked_either: You cannot send messages in this conversation.
-    report_message: Report message
     delivery_sent: sent
     read_by: "read by %{count}"
     unread_badge:
       one: "%{count} unread message"
       other: "%{count} unread messages"
-    open_messenger: Open messages
     disappearing_options:
       "off": Off
       "1m": 1 minute
@@ -484,7 +480,6 @@ en:
     disappearing_note: A screenshot cannot be prevented. The person you write to can still photograph the screen or copy the text.
     view_once_chip: disappears once read
     offline: You are offline. The message is sent when you are back online.
-    retry: Try again
   comments:
     sort_label: Sort comments
   push:
@@ -856,8 +851,6 @@ en:
     anywhere_in: "Anywhere in %{city}"
     body_label: Body
     score: Post score
-    upvote: Upvote
-    downvote: Downvote
     share_post: Share post
     view_community: View community
     about: About
@@ -1554,8 +1547,6 @@ en:
     unsubscribe_link: "Unsubscribe"
     title: City updates
     body: News and deals from your city, once a week.
-    marketing_consent: I agree to receive deals and partner offers (optional, unsubscribe
-      any time)
     view_offer: View offer
     curated_offers: Curated offers
     today_in: Today in %{city}

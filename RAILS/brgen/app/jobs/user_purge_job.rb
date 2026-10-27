@@ -52,7 +52,7 @@ class UserPurgeJob < ApplicationJob
     { model: "Notification", key: :user_id },
     { model: "Notification", key: :actor_id },
     { model: "ActivityEvent", key: :actor_id },
-    { model: "Shared::Reaction", key: :user_id },
+    { model: "Reaction", key: :user_id },
     { model: "Vote", key: :user_id },
     { model: "Shared::OutboundClick", key: :user_id },
     { model: "IdentityAssurance", key: :user_id },
@@ -122,8 +122,12 @@ class UserPurgeJob < ApplicationJob
         model = resolve!(row[:model])
         next unless model
 
-        model.where(row[:key] => user.id).find_each(&:destroy)
+        # Destroy callbacks read the record a row points at (a reaction's
+        # target), which strict loading refuses.
+        owned = model.strict_loading(false).where(row[:key] => user.id)
+        owned.find_each(&:destroy)
       end
+
       erase_authored_messages(user)
       NULLIFY.each { |row| nullify(row, user) }
       erase_email_subscription(former_email)
@@ -140,7 +144,7 @@ class UserPurgeJob < ApplicationJob
     [ "Notification", :source_type, :source_id ],
 
     [ "ActivityEvent", :subject_type, :subject_id ],
-    [ "Shared::Reaction", :reactable_type, :reactable_id ],
+    [ "Reaction", :reactable_type, :reactable_id ],
     [ "Vote", :votable_type, :votable_id ],
     [ "Shared::OutboundClick", :subject_type, :subject_id ],
   ].freeze
