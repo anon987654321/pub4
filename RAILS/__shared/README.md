@@ -25,13 +25,15 @@ outline gives no target.
 
 The dialects are deliberate. brgen and its verticals wear a grayscale called
 brgen_old, with a per-vertical accent. Amber wears warm paper and its own editorial
-faces. bsdports wears the green of a wscons console with square corners. The face
-is black with lavender, square, in a monospace. The theme is one mechanism
-everywhere: shared `theme_toggle` and `theme_bootstrap` partials write the theme
-onto the document element, and the stylesheets read it from there. Declared is not
-worn, so read the built bundle before you describe what an app paints. The
-typeface is the same family in every app, and a fifth face is a decision and not an
-accident.
+faces. BSDPorts is an ultra-minimal white search surface inspired by the classic
+Google front page: Arial, blue result links, neutral grey metadata, and compact,
+flat geometry. Its `wscons` body class remains a compatibility hook for flat and
+square shared-component rules; it does not define a dark palette. The face is black
+with lavender, square, in a monospace. The theme is one mechanism everywhere:
+shared `theme_toggle` and `theme_bootstrap` partials write the theme onto the
+document element, and the stylesheets read it from there. Declared is not worn, so
+read the built bundle before you describe what an app paints. The typeface is the
+same family in every app, and a fifth face is a decision and not an accident.
 
 Each app compiles one stylesheet, `application.scss`, into one built
 `application.css`, and a layout links that file and nothing else. The brgen
