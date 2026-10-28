@@ -53,12 +53,12 @@ module Operator
         Probe.new(unit: "locbudget", trees: %w[MASTER], run: -> { rake("loc_budget") }),
         Probe.new(unit: "cohesion", trees: TREES, scoped: true,
                   run: ->(tree) { tool("cohesion.rb", "--census", "--tree=#{tree}") }),
-        Probe.new(unit: "dupcensus", trees: %w[MASTER], run: -> { tool("dup_census.rb") }),
-        Probe.new(unit: "datareach", trees: %w[MASTER], run: -> { tool("data_reach.rb") }),
+        Probe.new(unit: "dupcensus", trees: %w[MASTER], run: -> { tool("audit/dup_census.rb") }),
+        Probe.new(unit: "datareach", trees: %w[MASTER], run: -> { tool("audit/data_reach.rb") }),
         Probe.new(unit: "readersing", trees: %w[MASTER], run: -> { tool("reader_singularity.rb") }),
         Probe.new(unit: "lawreach", trees: %w[MASTER], run: -> { tool("law_reach.rb") }),
         Probe.new(unit: "namespace", trees: %w[MASTER], run: -> { tool("namespace_ratchet.rb") }),
-        Probe.new(unit: "designbase", trees: %w[RAILS], run: -> { tool("design_baseline.rb") }),
+        Probe.new(unit: "designbase", trees: %w[RAILS], run: -> { tool("audit/design_baseline.rb") }),
 # OPENBSD's declarations and their readers live in different files by
 # design — crontab names a path, OPERATOR.sh installs it, rc.d holds the
 # service, nsd.conf names the zone — and nothing failed when a pair

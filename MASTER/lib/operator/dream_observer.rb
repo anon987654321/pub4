@@ -62,7 +62,7 @@ module Master
       end
 
       def add_duplicates(items, root)
-        tool = File.join(root, "MASTER", "tools", "dup_census.rb")
+        tool = File.join(root, "MASTER", "tools", "audit", "dup_census.rb")
         return unless File.file?(tool)
 
         out = IO.popen([RbConfig.ruby, tool, "--list"], chdir: root, err: File::NULL, &:read)

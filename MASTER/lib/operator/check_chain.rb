@@ -770,7 +770,7 @@ end
       census = [RUBY, File.join(MASTER, "lib", "operator", "sprawl_census.rb")]
       census << "--ratchet" unless scan_only
       ok, body = capture(*census)
-      dup_ok, dup_body = capture(RUBY, File.join(MASTER, "tools", "dup_census.rb"))
+      dup_ok, dup_body = capture(RUBY, File.join(MASTER, "tools", "audit", "dup_census.rb"))
       both = plan_ok && ok && dup_ok
       verdict = "sprawl: #{both ? "at or under every recorded low" : "over a recorded low"}"
       [both, plan_body + body + dup_body + [verdict], both ? 0 : 1]

@@ -117,16 +117,7 @@ class TestToolsHierarchy < Minitest::Test
   def test_audit_implementations_live_in_their_canonical_family
     AUDIT_TOOLS.each do |name|
       assert File.file?(File.join(TOOLS_ROOT, "audit", name)), "missing tools/audit/#{name}"
-      assert File.file?(File.join(TOOLS_ROOT, name)), "legacy entrypoint disappeared: tools/#{name}"
-    end
-  end
-
-  def test_legacy_audit_entrypoints_delegate_to_canonical_sources
-    AUDIT_TOOLS.each do |name|
-      source = File.read(File.join(TOOLS_ROOT, name))
-      assert_includes source, "File.expand_path(\"audit/#{name}\", __dir__)"
-      assert_includes source, "load target"
-      assert_includes source, "require_relative \"audit/#{name.delete_suffix('.rb')}\""
+      refute File.exist?(File.join(TOOLS_ROOT, name)), "no second entrypoint: tools/#{name}"
     end
   end
 
@@ -184,7 +175,6 @@ class TestToolsHierarchy < Minitest::Test
 
   def test_design_baseline_implementation_lives_in_its_canonical_family
     assert File.file?(File.join(TOOLS_ROOT, "audit", "design_baseline.rb")), "missing tools/audit/design_baseline.rb"
-    assert File.file?(File.join(TOOLS_ROOT, "design_baseline.rb")), "legacy design baseline entrypoint disappeared"
   end
 
   def test_design_baseline_keeps_master_and_rails_roots_after_the_move
