@@ -317,6 +317,88 @@ class TestRunJournalLifecycle < Minitest::Test
       assert File.file?(marker_path)
     end
   end
+  def test_journal_reader_refuses_a_symlinked_journal_file
+    Dir.mktmpdir("master-journal-read-symlink") do |root|
+      journal = Master::Fix::RunJournal.new(root:, bus: RecordingBus.new)
+      state = File.join(root, ".master")
+      Dir.mkdir(state, 0o700)
+      target = File.join(root, "outside-journal.json")
+      original = %({"version":1,"runs":[]}\n)
+      File.write(target, original)
+      File.chmod(0o600, target)
+      File.symlink(target, File.join(state, "fix_runs.json"))
+
+      error = assert_raises(IOError) { journal.history }
+
+      assert_match(/symlinked, hard-linked or non-regular/, error.message)
+      assert_equal original, File.read(target)
+    end
+  end
+
+  def test_journal_reader_refuses_a_hard_linked_journal_file
+    Dir.mktmpdir("master-journal-read-hardlink") do |root|
+      journal = Master::Fix::RunJournal.new(root:, bus: RecordingBus.new)
+      state = File.join(root, ".master")
+      Dir.mkdir(state, 0o700)
+      target = File.join(root, "outside-journal.json")
+      original = %({"version":1,"runs":[]}\n)
+      File.write(target, original)
+      File.chmod(0o600, target)
+      File.link(target, File.join(state, "fix_runs.json"))
+
+      error = assert_raises(IOError) { journal.send(:load) }
+
+      assert_match(/symlinked, hard-linked or non-regular/, error.message)
+      assert_equal original, File.read(target)
+    end
+  end
+
+  def test_journal_reader_refuses_group_or_world_readable_state
+    Dir.mktmpdir("master-journal-read-mode") do |root|
+      journal = Master::Fix::RunJournal.new(root:, bus: RecordingBus.new)
+      state = File.join(root, ".master")
+      Dir.mkdir(state, 0o700)
+      path = File.join(state, "fix_runs.json")
+      original = %({"version":1,"runs":[]}\n)
+      File.write(path, original)
+      File.chmod(0o644, path)
+
+      error = assert_raises(IOError) { journal.send(:load) }
+
+      assert_match(/permissions must be private/, error.message)
+      assert_equal original, File.read(path)
+    end
+  end
+
+  def test_journal_reader_refuses_a_symlinked_state_directory
+    Dir.mktmpdir("master-journal-read-state-symlink") do |root|
+      journal = Master::Fix::RunJournal.new(root:, bus: RecordingBus.new)
+      outside = File.join(root, "outside")
+      Dir.mkdir(outside, 0o700)
+      File.symlink(outside, File.join(root, ".master"))
+
+      error = assert_raises(IOError) { journal.send(:load) }
+
+      assert_match(/symlinked journal state directory/, error.message)
+      refute File.exist?(File.join(outside, "fix_runs.json"))
+    end
+  end
+
+  def test_journal_reader_refuses_invalid_utf8
+    Dir.mktmpdir("master-journal-read-utf8") do |root|
+      journal = Master::Fix::RunJournal.new(root:, bus: RecordingBus.new)
+      state = File.join(root, ".master")
+      Dir.mkdir(state, 0o700)
+      path = File.join(state, "fix_runs.json")
+      File.binwrite(path, [0xFF].pack("C"))
+      File.chmod(0o600, path)
+
+      error = assert_raises(EncodingError) { journal.send(:load) }
+
+      assert_match(/invalid UTF-8/, error.message)
+    end
+  end
+
   def test_journal_lock_refuses_a_symlinked_state_directory
     Dir.mktmpdir("master-journal-lock-directory-symlink") do |root|
       outside = File.join(root, "outside")
