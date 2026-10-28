@@ -107,23 +107,25 @@ but it is a preflight stage, not a silent downgrade to dry-run. Explicit
 
 The architectural boundary matters: `Core::Fold` governs the general model-effect
 loop, while `/fix` owns repository repair and convergence. They share constitutional
-principles but are not the same workflow. `FixLoop` remains the public repair
-coordinator and still uses the existing `RepairLoop`, durable `Mission`/`RunJournal`,
-and disk-backed `Transaction`; their recovery and rollback contracts are not
-being replaced by another runner or ledger.
+principles but are not the same workflow. Production boot creates one
+`Fix::Kernel` and obtains the convergence adapter through `Kernel#build_fix_loop`.
+The public `FixLoop` constant aliases `Kernel::ConvergenceAdapter`, `RepairLoop`
+aliases `Kernel::RepairAdapter`, and `RunJournal` aliases
+`Kernel::LifecycleJournal`. The journal's on-disk schema and disk-backed
+`Transaction` recovery format remain unchanged; `Mission` remains the durable
+objective and lease owner.
 
-The coordinator is split by responsibility without changing its public entry
-point: `FixLoop::Lifecycle` owns journal resume, incremental-scope proof and
-checkpoint restoration; `FixLoop::PassExecution` owns bounded repair passes,
-convergence and structural follow-ups; `FixLoop::Completion` owns gap-aware
-terminalization, mission updates and outcome receipts. The pure
-`Fix::OutcomePolicy` is the shared source for terminal states, result-category
-mapping and measured repair outcomes used by the loop, protocol and review
-scorecard. These modules preserve one coordinator and the existing journal and
-transaction paths; they are not competing workflows. Further consolidation of
-`RepairLoop`, `Mission`, `RunJournal` and `Transaction` still requires the recovery
-tests `docs/fix_coordinator_map.md` lists. `Fix::Kernel` is only the reader behind
-`master replay`.
+Kernel now owns the outer execution lock, hash-chained run start/terminal receipts,
+the shared journal accessor, repair factory and bounded repair-outcome receipts.
+It does not replace transaction rollback or Mission persistence. The convergence
+adapter remains split into `Lifecycle`, `PassExecution` and `Completion`
+modules, and `Fix::OutcomePolicy` remains the shared terminal vocabulary for the
+loop, protocol and review scorecard. The public aliases preserve existing callers.
+Process-kill/restart regressions are authored for byte-exact transaction rollback,
+run resumption, orphaned Kernel receipt reconciliation, and Mission/checkpoint
+survival after run-journal deletion. These tests, the adapter-parity matrix and a
+real repository-wide `/fix` trial have **not** been executed on the pinned Ruby
+4.0.5 host; the migration is source-reviewed only, not runtime-proven.
 
 CoreBridge attaches a lifecycle observer to the Fold even when the host does not
 supply a bus; that case uses the event log at the task runtime root, or MASTER's
