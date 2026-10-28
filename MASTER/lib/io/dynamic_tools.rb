@@ -109,6 +109,10 @@ module Master
           row.merge("method" => method.is_a?(String) ? method.upcase : method)
         end
 
+        duplicates = normalized.group_by { |row| row.fetch("name") }
+                               .select { |_name, entries| entries.size > 1 }.keys
+        errors << "#{path} has duplicate name(s): #{duplicates.sort.join(', ')}" unless duplicates.empty?
+
         raise ArgumentError, errors.uniq.join("; ") unless errors.empty?
         normalized
       end
