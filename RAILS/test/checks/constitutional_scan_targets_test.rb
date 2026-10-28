@@ -91,6 +91,47 @@ class ConstitutionalScanTargetsTest < Minitest::Test
     assert_equal 6, check.skipped.size
   end
 
+  def test_changed_path_inventory_includes_untracked_files_and_preserves_spaces
+    previous = ENV["CHECK_SCAN_CHANGED"]
+    ENV["CHECK_SCAN_CHANGED"] = "0"
+    check = Deploy::ConstitutionalScanCheck.allocate
+    check.send(:initialize)
+    success = Struct.new(:ok) { def success? = ok }.new(true)
+    calls = []
+    capture = lambda do |*command, **_options|
+      calls << command
+      if command.include?("diff")
+        [["MASTER/tracked.rb", ""].join(0.chr), success]
+      elsif command.include?("ls-files")
+        [["MASTER/untracked.rb", "RAILS/brgen/new file.rb", ""].join(0.chr), success]
+      else
+        flunk "unexpected command: #{command.inspect}"
+      end
+    end
+
+    BoundedCommand.stub(:capture2e, capture) do
+      assert_equal [
+        "MASTER/tracked.rb",
+        "MASTER/untracked.rb",
+        "RAILS/brgen/new file.rb"
+      ], check.send(:changed_paths)
+    end
+    assert calls.any? { |command| command.include?("--name-only") && command.include?("-z") }
+    assert calls.any? { |command| command.include?("--others") && command.include?("--exclude-standard") && command.include?("-z") }
+  ensure
+    previous ? ENV["CHECK_SCAN_CHANGED"] = previous : ENV.delete("CHECK_SCAN_CHANGED")
+  end
+
+  def test_changed_only_with_no_applicable_target_is_inconclusive_not_a_pass
+    check = build(changed: ["docs/notes.md"])
+
+    result = check.run
+
+    assert_empty check.targets
+    assert_equal :inconclusive, result.outcome
+    assert_includes result.unchecked.join("\n"), "no changed targets"
+  end
+
   # A path that merely contains an app's name must not select it.
   def test_selection_matches_on_the_app_directory_not_a_substring
     check = build(changed: ["docs/brgen-notes.md", "RAILS/brgen_extra/thing.rb"])
