@@ -214,6 +214,84 @@ class TestFixKernelLifecycle < Minitest::Test
     end
   end
 
+  def test_independent_kernel_instances_share_the_process_execution_lease
+    with_workspace do |root|
+      first = K.new(root:)
+      second = K.new(root:)
+      first_entered = Queue.new
+      release_first = Queue.new
+      second_attempting = Queue.new
+      second_entered = Queue.new
+
+      first_adapter = Object.new
+      first_adapter.define_singleton_method(:last_terminal_state) { :done }
+      first_adapter.define_singleton_method(:run_unlocked) do |_target, **_options|
+        first_entered << :entered
+        release_first.pop
+        Master::Result.ok("DONE: first fixture")
+      end
+
+      second_adapter = Object.new
+      second_adapter.define_singleton_method(:last_terminal_state) { :done }
+      second_adapter.define_singleton_method(:run_unlocked) do |_target, **_options|
+        second_entered << :entered
+        Master::Result.ok("DONE: second fixture")
+      end
+
+      first_thread = Thread.new do
+        first.run_fix_loop(
+          first_adapter, target: root, max_passes: 2, budget_seconds: 60,
+          incremental: false, requested: true
+        )
+      end
+      second_thread = nil
+      begin
+        assert_equal :entered, Timeout.timeout(5) { first_entered.pop }
+        second_thread = Thread.new do
+          second_attempting << :attempting
+          second.run_fix_loop(
+            second_adapter, target: root, max_passes: 2, budget_seconds: 60,
+            incremental: false, requested: true
+          )
+        end
+        assert_equal :attempting, Timeout.timeout(5) { second_attempting.pop }
+        assert_raises(Timeout::Error) { Timeout.timeout(0.15) { second_entered.pop } }
+        release_first << :finish
+        assert first_thread.value.ok?
+        assert_equal :entered, Timeout.timeout(5) { second_entered.pop }
+        assert second_thread.value.ok?
+      ensure
+        release_first << :finish if first_thread&.alive?
+        [first_thread, second_thread].compact.each { |thread| thread.join(5) }
+      end
+    end
+  end
+
+  def test_kernel_repair_receipt_preserves_fixed_count_and_breakdown
+    with_workspace do |root|
+      kernel = K.new(root:)
+      law = Struct.new(:id, :severity).new("TEST_REPAIR", :warning)
+      repair = kernel.build_repair_loop(law:, agent: nil, scanner: Object.new, root:)
+      repair.define_singleton_method(:scan_files) do |_files|
+        [{ law: "TEST_REPAIR", file: "sample.rb" }]
+      end
+      repair.define_singleton_method(:fix_batch) do |_violations|
+        @batch_breakdown = { applied: 2, rejected: 1 }
+        2
+      end
+      repair.define_singleton_method(:pass_outcome) { |_fixed| :fixed }
+      repair.define_singleton_method(:record_outcomes) { |_files, _status| nil }
+
+      result = repair.run_once(["sample.rb"])
+      event = kernel.verify_log!.find { |row| row["kind"] == "repair_pass" }
+
+      assert_equal 2, result.fetch(:fixed)
+      assert_equal :fixed, result.fetch(:status)
+      assert_equal 2, event.dig("payload", "fixed")
+      assert_equal({ "applied" => 2, "rejected" => 1 }, event.dig("payload", "breakdown"))
+    end
+  end
+
   def test_repair_scan_failure_is_recorded_as_an_error_outcome
     with_workspace do |root|
       kernel = K.new(root:)
