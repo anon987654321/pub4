@@ -149,55 +149,55 @@ class TestLawsYamlRegistry < Minitest::Test
     assert strunk, "voice.yml must define voice.strunk"
   end
 
-# A rotation is additive: single_voice stays the contract, every name in the
-# list has to be a voice the synthesiser knows, and an absent or single-entry
-# rotation must leave the one-voice behaviour exactly as it was. The last
-# clause is the one worth holding — it is what lets this be reverted by
-# deleting four lines of YAML.
-# A chain nothing applies is a declaration with no reader, which is this
-# tree's most-recorded defect — so this holds that Speech reaches for it, not
-# merely that voice.yml contains it.
-def test_the_post_chain_is_read_and_applied
-  chain = Master::Voice::Policy.post_chain
-  refute_nil chain, "voice.yml declares no post_chain"
-  assert_equal chain, Master::Voice::Policy.browser_payload[:post_chain],
-               "the face shapes from browser_payload; it must carry the same chain"
+  # A chain nothing applies is a declaration with no reader, which is this
+  # tree's most-recorded defect — so this holds that Speech reaches for it, not
+  # merely that voice.yml contains it.
+  def test_the_post_chain_is_read_and_applied
+    chain = Master::Voice::Policy.post_chain
+    refute_nil chain, "voice.yml declares no post_chain"
+    assert_equal chain, Master::Voice::Policy.browser_payload[:post_chain],
+                 "the face shapes from browser_payload; it must carry the same chain"
 
-  ran = shape_with_recorded_ffmpeg
-  assert_equal ["-af", Master::Voice::Policy.shaped_chain], ran[:argv][ran[:argv].index("-af"), 2],
-               "Speech never applies the chain (post_chain plus the room)"
-  assert ran[:argv][ran[:argv].index("-af") + 1].start_with?(chain)
-  assert ran[:result].end_with?("_shaped.mp3"), "Speech kept the unshaped file"
+    ran = shape_with_recorded_ffmpeg
+    assert_equal ["-af", Master::Voice::Policy.shaped_chain], ran[:argv][ran[:argv].index("-af"), 2],
+                 "Speech never applies the chain (post_chain plus the room)"
+    assert ran[:argv][ran[:argv].index("-af") + 1].start_with?(chain)
+    assert ran[:result].end_with?("_shaped.mp3"), "Speech kept the unshaped file"
 
-  # No per-file normalisation: the chain runs once per utterance, and loudnorm
-  # levelled every sentence to the same loudness (measured: two clips 20 dB
-  # apart both left it at -3.9 LUFS).
-  refute_includes chain, "loudnorm", "a per-utterance chain must not normalise per file"
-  assert_operator chain.index("volume="), :<, chain.index("alimiter"),
-                  "the gain must come before the limiter"
-end
-
-# Speech.shaped over a scratch mp3, with ffmpeg replaced by a recorder that
-# writes the output it was asked for.
-def shape_with_recorded_ffmpeg
-  exec = Master::Io::Exec
-  original = exec.method(:capture3)
-  argv = nil
-  exec.define_singleton_method(:capture3) do |*args, **|
-    argv = args
-    File.write(args.last, "shaped")
-    ["", "", Struct.new(:success?).new(true)]
+    # No per-file normalisation: the chain runs once per utterance, and loudnorm
+    # levelled every sentence to the same loudness (measured: two clips 20 dB
+    # apart both left it at -3.9 LUFS).
+    refute_includes chain, "loudnorm", "a per-utterance chain must not normalise per file"
+    assert_operator chain.index("volume="), :<, chain.index("alimiter"),
+                    "the gain must come before the limiter"
   end
-  Dir.mktmpdir do |dir|
-    clip = File.join(dir, "utterance.mp3")
-    File.write(clip, "raw")
-    result = Master::Voice::Speech.shaped(clip)
-    { argv:, result: }
-  end
-ensure
-  exec.define_singleton_method(:capture3, original) if original
-end
 
+  # Speech.shaped over a scratch mp3, with ffmpeg replaced by a recorder that
+  # writes the output it was asked for.
+  def shape_with_recorded_ffmpeg
+    exec = Master::Io::Exec
+    original = exec.method(:capture3)
+    argv = nil
+    exec.define_singleton_method(:capture3) do |*args, **|
+      argv = args
+      File.write(args.last, "shaped")
+      ["", "", Struct.new(:success?).new(true)]
+    end
+    Dir.mktmpdir do |dir|
+      clip = File.join(dir, "utterance.mp3")
+      File.write(clip, "raw")
+      result = Master::Voice::Speech.shaped(clip)
+      { argv:, result: }
+    end
+  ensure
+    exec.define_singleton_method(:capture3, original) if original
+  end
+
+  # A rotation is additive: single_voice stays the contract, every name in the
+  # list has to be a voice the synthesiser knows, and an absent or single-entry
+  # rotation must leave the one-voice behaviour exactly as it was. The last
+  # clause is the one worth holding — it is what lets this be reverted by
+  # deleting four lines of YAML.
   def test_voice_rotation_is_additive
     tts = Master.load_yaml(File.join(DATA, "voice.yml"))["tts"] || {}
     rotation = Array(tts["rotation"])
@@ -282,10 +282,6 @@ end
 
   def data
     @data ||= Master.load_yaml(File.join(DATA, "laws.yml"))
-  end
-
-  def merged_rules
-    @merged_rules ||= Master.load_laws(root: File.expand_path("..", __dir__))
   end
 
   def patterns

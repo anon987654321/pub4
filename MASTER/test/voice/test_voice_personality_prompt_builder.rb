@@ -41,31 +41,31 @@ class TestPersonalityPromptBuilder < Minitest::Test
   end
 
   # voice.yml's strunk block carries apply_to, never_apply_to and safeguards.
-# All three had no reader, so the prompt banned preambles and hedges without
-# ever saying what they were banned from -- and an unscoped ban on "will",
-# "could" and "might" is a ban on the words an algorithm's own comment needs.
-def test_strunk_scope_reaches_the_constitution
-  prompt = Master::Voice::Personality.new(:anchor).system_prompt(context: :core)
+  # All three had no reader, so the prompt banned preambles and hedges without
+  # ever saying what they were banned from -- and an unscoped ban on "will",
+  # "could" and "might" is a ban on the words an algorithm's own comment needs.
+  def test_strunk_scope_reaches_the_constitution
+    prompt = Master::Voice::Personality.new(:anchor).system_prompt(context: :core)
 
-  assert_includes prompt, "style_applies_to: prose, comments, documentation, strings"
-  assert_includes prompt, "style_never_touches: code_logic, algorithms, data_structures"
-  assert_includes prompt, "style_safeguards: never_delete_variable_names"
-end
+    assert_includes prompt, "style_applies_to: prose, comments, documentation, strings"
+    assert_includes prompt, "style_never_touches: code_logic, algorithms, data_structures"
+    assert_includes prompt, "style_safeguards: never_delete_variable_names"
+  end
 
-# A role prompt sets its own output contract, so the law context carries
-# soul's absolute and kernel tiers and nothing that would contradict the role.
-def test_law_context_is_the_constitution_alone
-  prompt = Master::Voice::Personality.new(:anchor).system_prompt(context: :law)
+  # A role prompt sets its own output contract, so the law context carries
+  # soul's absolute and kernel tiers and nothing that would contradict the role.
+  def test_law_context_is_the_constitution_alone
+    prompt = Master::Voice::Personality.new(:anchor).system_prompt(context: :law)
 
-  assert_includes prompt, "<master_constitution tier=\"absolute\">"
-  assert_includes prompt, "<master_constitution tier=\"kernel\">"
-  assert_includes prompt, "anti_simulation:"
-  refute_includes prompt, "master_output_format"
-  refute_includes prompt, "master_identity"
-  refute_includes prompt, "<master_style>"
-end
+    assert_includes prompt, "<master_constitution tier=\"absolute\">"
+    assert_includes prompt, "<master_constitution tier=\"kernel\">"
+    assert_includes prompt, "anti_simulation:"
+    refute_includes prompt, "master_output_format"
+    refute_includes prompt, "master_identity"
+    refute_includes prompt, "<master_style>"
+  end
 
-def test_core_context_keeps_constitution_and_output_contract
+  def test_core_context_keeps_constitution_and_output_contract
     persona = Master::Voice::Personality.new(:medic)
     core_prompt = persona.system_prompt(context: :core)
 

@@ -30,7 +30,6 @@ class TestVoiceBed < Minitest::Test
     refute_includes args, "--drums"
   end
 
-
   def test_two_renders_need_not_sound_the_same
     seeds = Array.new(6) { |n| Bed.pick_args(config, Random.new(n)).last }
 

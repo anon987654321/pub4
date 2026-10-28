@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
-
-$LOAD_PATH.unshift File.expand_path("lib", __dir__)
-require "master"
+# Tests that sit one level below MASTER/ reach the suite helper through this
+# path. It delegates so they get the same pinned bundle and the same redirected
+# live state (swallow log, lane quota, loop claim) as every other test.
+require_relative "test/test_helper"

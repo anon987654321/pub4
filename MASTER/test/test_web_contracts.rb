@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "master"
-
-require "minitest/autorun"
 require_relative "support_face_manifest_helper"
 
 class MasterNamespaceSpec < Minitest::Test
@@ -28,7 +25,6 @@ class MasterNamespaceSpec < Minitest::Test
   end
 end
 
-# frozen_string_literal: true
 class TestSmokeChatProbe < Minitest::Test
   def test_smoke_chat_bypasses_container_warmup
     app = File.read(File.join(Master::ROOT, "..", "RAILS", "master", "app", "controllers", "application_controller.rb"))
@@ -39,7 +35,6 @@ class TestSmokeChatProbe < Minitest::Test
   end
 end
 
-# frozen_string_literal: true
 class TestPropshaftPaths < Minitest::Test
   def test_excludes_digest_output_directory
     app_rb = File.read(File.join(Master::ROOT, "..", "RAILS", "master", "config", "application.rb"))

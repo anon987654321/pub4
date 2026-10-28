@@ -4,7 +4,10 @@ require_relative "../test_helper"
 require "minitest/mock"
 
 class TtsWorkerContractTest < Minitest::Test
+  ENV_KEYS = %w[MASTER_TTS_TIMEOUT MASTER_TTS_STREAM_TIMEOUT MASTER_TTS_WIRE].freeze
+
   def setup
+    @env = ENV_KEYS.to_h { |key| [key, ENV[key]] }
     @speech_class = Class.new do
       include Master::Voice::SpeechWorker
       def self.name; "TestSpeech"; end
@@ -12,6 +15,10 @@ class TtsWorkerContractTest < Minitest::Test
       def fast_tts_mode?; false; end
     end
     @speech = @speech_class.new
+  end
+
+  def teardown
+    @env.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
   end
 
   def test_edge_worker_rejects_nil_process_arguments_before_spawn
@@ -43,8 +50,6 @@ class TtsWorkerContractTest < Minitest::Test
   def test_worker_timeout_respects_env_override
     ENV["MASTER_TTS_TIMEOUT"] = "123"
     assert_equal 123, @speech.worker_timeout(100)
-  ensure
-    ENV.delete("MASTER_TTS_TIMEOUT")
   end
 
   def test_worker_timeout_fast_mode_calculates_correctly
@@ -71,16 +76,12 @@ class TtsWorkerContractTest < Minitest::Test
     assert_equal 20, @speech.stream_timeout(100)
     assert_equal 36, @speech.stream_timeout(300)
     assert_equal 90, @speech.stream_timeout(2000)
-  ensure
-    ENV.delete("MASTER_TTS_STREAM_TIMEOUT")
   end
 
   def test_stream_timeout_respects_explicit_override
     ENV["MASTER_TTS_STREAM_TIMEOUT"] = "123"
 
     assert_equal 123, @speech.stream_timeout(300)
-  ensure
-    ENV.delete("MASTER_TTS_STREAM_TIMEOUT")
   end
 
   def test_normal_stream_timeout_preserves_the_worker_budget
@@ -97,8 +98,6 @@ class TtsWorkerContractTest < Minitest::Test
   def test_stream_wire_enabled_raw_disables
     ENV["MASTER_TTS_WIRE"] = "raw"
     refute @speech.stream_wire_enabled?
-  ensure
-    ENV.delete("MASTER_TTS_WIRE")
   end
 
   def test_missing_replacement_socket_preserves_the_failed_retry_state
@@ -163,12 +162,11 @@ class TtsWorkerContractTest < Minitest::Test
     # The misread "header" is the first eight bytes of the mp3, so it is forwarded too.
     assert_equal ([huge].pack("Q>") + "raw mp3 data").b, sink.string.b
   end
+
   def test_daemon_race_probe_accepts_the_versioned_health_reply
     source = File.read(File.join(Master::ROOT, "bin", "tts-worker"), encoding: "UTF-8")
 
     assert_match(/probe\.gets\.to_s\.strip\.start_with\?\("ok "\)/, source)
     refute_match(/probe\.gets\.to_s\.strip\s*==\s*"ok"/, source)
   end
-
-
 end

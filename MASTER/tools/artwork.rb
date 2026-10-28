@@ -6,6 +6,7 @@ require "digest"
 require "fileutils"
 require "json"
 require "optparse"
+require "tmpdir"
 require "uri"
 require_relative "../lib/trace/dmesg"
 

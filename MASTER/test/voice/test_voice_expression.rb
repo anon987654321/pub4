@@ -132,6 +132,7 @@ class TestExpression < Minitest::Test
     assert result[:rate].match?(/%/)
     assert result[:pitch].match?(/Hz/)
   end
+
   def test_warm_erratic_accepts_locked_default_and_soulful_styles
     voice = Master::Voice::Policy.single_voice_key
     { warm: "Hello there.", soulful: "Great, all done!" }.each do |style, text|
@@ -143,5 +144,4 @@ class TestExpression < Minitest::Test
       assert result[:pitch].match?(/Hz/)
     end
   end
-
 end

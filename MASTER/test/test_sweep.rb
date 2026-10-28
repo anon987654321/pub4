@@ -56,28 +56,28 @@ class TestSweep < Minitest::Test
     end
   end
 
-# OPENBSD and STUDIO had one probe each against MASTER's eleven, so their
-# headings reported a repo-wide cohesion number and nothing else — a sweep
-# that measures almost nothing still prints a clean-looking block.
-def test_every_tree_has_a_probe_of_its_own
-  S::TREES.each do |tree|
-    own = S.probes.select { |p| p.trees == [tree] }
+  # OPENBSD and STUDIO had one probe each against MASTER's eleven, so their
+  # headings reported a repo-wide cohesion number and nothing else — a sweep
+  # that measures almost nothing still prints a clean-looking block.
+  def test_every_tree_has_a_probe_of_its_own
+    S::TREES.each do |tree|
+      own = S.probes.select { |p| p.trees == [tree] }
 
-    refute_empty own, "#{tree} has no probe that speaks only for it"
+      refute_empty own, "#{tree} has no probe that speaks only for it"
+    end
   end
-end
 
-def test_sibling_probes_point_at_a_script_that_exists
-  # OPENBSD's obsdreach probe runs bin/reach: the module moved to lib/reach.rb
-  # when OPENBSD/tools/ was deleted (6e09c6919), because require cannot load an
-  # extensionless file, and bin/reach stayed as the executable shim the probe
-  # names. STUDIO's probe runs its check.rb.
-  { "OPENBSD" => "bin/reach", "STUDIO" => "check.rb" }.each do |tree, script|
-    path = File.join(S::ROOT, tree, script)
+  def test_sibling_probes_point_at_a_script_that_exists
+    # OPENBSD's obsdreach probe runs bin/reach: the module moved to lib/reach.rb
+    # when OPENBSD/tools/ was deleted (6e09c6919), because require cannot load an
+    # extensionless file, and bin/reach stayed as the executable shim the probe
+    # names. STUDIO's probe runs its check.rb.
+    { "OPENBSD" => "bin/reach", "STUDIO" => "check.rb" }.each do |tree, script|
+      path = File.join(S::ROOT, tree, script)
 
-    assert File.file?(path), "#{tree} probe runs #{script}, which is not there"
+      assert File.file?(path), "#{tree} probe runs #{script}, which is not there"
+    end
   end
-end
 
   def test_the_ledger_parses_and_every_row_is_shaped
     rows = S.ledger.fetch("proposals")

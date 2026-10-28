@@ -166,11 +166,10 @@ module Operator
           path = File.join(dir, name)
           stat = File.lstat(path)
           seen += 1
-          suffix = if stat.symlink?
-"@"
-else
-stat.directory? ? "/" : ""
-end
+          suffix = if stat.symlink? then "@"
+                   elsif stat.directory? then "/"
+                   else ""
+                   end
           lines << "#{indent}+-- #{name}#{suffix}"
 
           if stat.directory? && !stat.symlink?

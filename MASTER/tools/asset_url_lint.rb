@@ -152,7 +152,8 @@ module Operator
       return false if APPS.include?(tree_of(path))
 
       APPS.all? do |app|
- satisfied?(ref, [ File.join(RAILS_ROOT, app, "public"), File.join(RAILS_ROOT, app, "app/assets") ]) end
+        satisfied?(ref, [ File.join(RAILS_ROOT, app, "public"), File.join(RAILS_ROOT, app, "app/assets") ])
+      end
     end
 
     # A root-absolute ref is a path under the root. A relative one is resolved

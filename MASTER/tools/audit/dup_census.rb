@@ -96,15 +96,15 @@ module Operator
       (recorded_members - current).each { |set| Master::Trace::Dmesg.status("dup0", "gone, #{set}") }
     end
 
-# The prose above `duplicate_sets:` records what each past collapse cost
-# somebody — thirty lines of it, including the warning that this tool reads
-# content from disk in a shared checkout. A bare to_yaml dump ate all of it
-# the first time this wrote members. Preserved, not regenerated.
-def rewritten_ceiling(count, member_list)
-  existing = File.exist?(CEILING) ? File.read(CEILING) : "---\n"
-  prose = existing.sub(/^duplicate_sets: .*\n(?:duplicate_members:\n(?:- .*\n)*)?\z/, "")
-  "#{prose}duplicate_sets: #{count}\nduplicate_members:\n#{member_list.map { |m| "- #{m}\n" }.join}"
-end
+    # The prose above `duplicate_sets:` records what each past collapse cost
+    # somebody — thirty lines of it, including the warning that this tool reads
+    # content from disk in a shared checkout. A bare to_yaml dump ate all of it
+    # the first time this wrote members. Preserved, not regenerated.
+    def rewritten_ceiling(count, member_list)
+      existing = File.exist?(CEILING) ? File.read(CEILING) : "---\n"
+      prose = existing.sub(/^duplicate_sets: .*\n(?:duplicate_members:\n(?:- .*\n)*)?\z/, "")
+      "#{prose}duplicate_sets: #{count}\nduplicate_members:\n#{member_list.map { |m| "- #{m}\n" }.join}"
+    end
 
     def run(ratchet: false, list: false)
       d = sets

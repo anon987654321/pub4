@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "../test_helper"
-require "master"
 
 class TestReplicateKokoroEngine < Minitest::Test
   def test_available_when_token_env_set

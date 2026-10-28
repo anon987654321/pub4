@@ -44,19 +44,19 @@ require_relative "../lib/trace/dmesg"
 
 module Operator
   module Cohesion
-MIN_FAMILY = 3
+    MIN_FAMILY = 3
 
-# SMALL_FILES flags a file over 300 lines, and this tool exists to
-# counterbalance it — its own header says so: "SMALL_FILES, NO_GOD_CLASS and
-# INTEGRATED_SYSTEMS all say split further. None says these three are one
-# thing." A counterbalance with no upper bound is not a counterbalance.
-#
-# It had none. Run against STUDIO/dilla it proposed six merges producing
-# files of 1076 to 2925 lines — up to ten times the threshold the same tree
-# enforces — and the three dilla_* files say in their own headers that they
-# were "split out of dilla.rb". The proposal was to undo a deliberate split
-# and recreate the file, under the name of the file it came from.
-MAX_MERGED_LINES = 300
+    # SMALL_FILES flags a file over 300 lines, and this tool exists to
+    # counterbalance it — its own header says so: "SMALL_FILES, NO_GOD_CLASS and
+    # INTEGRATED_SYSTEMS all say split further. None says these three are one
+    # thing." A counterbalance with no upper bound is not a counterbalance.
+    #
+    # It had none. Run against STUDIO/dilla it proposed six merges producing
+    # files of 1076 to 2925 lines — up to ten times the threshold the same tree
+    # enforces — and the three dilla_* files say in their own headers that they
+    # were "split out of dilla.rb". The proposal was to undo a deliberate split
+    # and recreate the file, under the name of the file it came from.
+    MAX_MERGED_LINES = 300
 
     module_function
 
@@ -211,20 +211,20 @@ MAX_MERGED_LINES = 300
       members = files - [parent].compact
       subdir = File.join(dir, name)
 
-# A destination that is already taken means the family is not one kind:
-# three files sharing a prefix, one of whose moves lands on a file that is
-# already there, are different things wearing one word, and the generated
-# plan moves the second on top of the first. data/proposals.yml
-# memory-is-a-family-in-lib-ground records the case that taught it.
-#
-# Cheaper than any similarity heuristic, and it is the check that actually
-# fires: if the shelf already holds something of that name, the two are
-# different things wearing one prefix.
-collisions = members.filter_map do |f|
-  stem = move_for(f, name, kind)[:to]
-  stem if File.exist?(File.join(dir, stem))
-end
-return if collisions.any?
+      # A destination that is already taken means the family is not one kind:
+      # three files sharing a prefix, one of whose moves lands on a file that is
+      # already there, are different things wearing one word, and the generated
+      # plan moves the second on top of the first. data/proposals.yml
+      # memory-is-a-family-in-lib-ground records the case that taught it.
+      #
+      # Cheaper than any similarity heuristic, and it is the check that actually
+      # fires: if the shelf already holds something of that name, the two are
+      # different things wearing one prefix.
+      collisions = members.filter_map do |f|
+        stem = move_for(f, name, kind)[:to]
+        stem if File.exist?(File.join(dir, stem))
+      end
+      return if collisions.any?
 
       {
         plan: "regroup",

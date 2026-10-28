@@ -277,9 +277,6 @@ module Operator
       "empty_copy" => 0,
     }.freeze
 
-    # Kept for callers that referenced the old single number.
-    BASELINE = 0
-
     Finding = Struct.new(:file, :line, :kind)
 
     extend Operator::BaselineRatchet

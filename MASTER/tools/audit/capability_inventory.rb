@@ -18,13 +18,13 @@ module Operator
     MASTER = File.expand_path("../..", __dir__)
     REPO = File.expand_path("..", MASTER)
 
+    # Each named surface and the file it is read from.
     SOURCES = {
       slashes: "lib/cli/command_registry.rb",
       help: "lib/cli/command_registry/help.rb",
       personas: "data/council.yml",
       biases: "data/laws.yml",
       constitution: "lib/core/constitution.rb",
-      law_files: nil,
     }.freeze
 
     LAW_FILES = %w[soul.yml laws.yml limits.yml voice.yml].freeze
@@ -68,11 +68,11 @@ module Operator
 
     def inventory(ref)
       {
-        slashes: slashes(read("lib/cli/command_registry.rb", ref)),
-        help: slashes(read("lib/cli/command_registry/help.rb", ref)),
-        personas: personas(read("data/council.yml", ref)),
-        biases: biases(read("data/laws.yml", ref)),
-        constitution: rule_ids(read("lib/core/constitution.rb", ref)),
+        slashes: slashes(read(SOURCES.fetch(:slashes), ref)),
+        help: slashes(read(SOURCES.fetch(:help), ref)),
+        personas: personas(read(SOURCES.fetch(:personas), ref)),
+        biases: biases(read(SOURCES.fetch(:biases), ref)),
+        constitution: rule_ids(read(SOURCES.fetch(:constitution), ref)),
         law_files: law_files(ref),
       }
     end

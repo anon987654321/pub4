@@ -165,16 +165,16 @@ class TestVisualStress < Minitest::Test
     end
   end
 
-def test_list_is_found_and_resized_to_empty_one_and_two_hundred
-  { 0 => 0, 1 => 1, 200 => 200 }.each do |asked, expected|
-    with_page do |cdp|
-      assert_equal 3, cdp.evaluate(Deploy::StressScripts::LIST_DETECT_JS)["count"]
-      cdp.evaluate(Deploy::StressScripts::LIST_SET_JS.sub("__COUNT__", asked.to_s))
-      assert_equal expected, cdp.evaluate("document.querySelectorAll('#feed > article').length")
-      assert_equal 0, cdp.evaluate("document.querySelectorAll('[id]:not(#feed)').length")
+  def test_list_is_found_and_resized_to_empty_one_and_two_hundred
+    { 0 => 0, 1 => 1, 200 => 200 }.each do |asked, expected|
+      with_page do |cdp|
+        assert_equal 3, cdp.evaluate(Deploy::StressScripts::LIST_DETECT_JS)["count"]
+        cdp.evaluate(Deploy::StressScripts::LIST_SET_JS.sub("__COUNT__", asked.to_s))
+        assert_equal expected, cdp.evaluate("document.querySelectorAll('#feed > article').length")
+        assert_equal 0, cdp.evaluate("document.querySelectorAll('[id]:not(#feed)').length")
+      end
     end
   end
-end
 
   def test_capture_states_end_to_end_and_restore_the_viewport
     with_page do |cdp|

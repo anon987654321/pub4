@@ -26,7 +26,8 @@ class TestVisualAnchorThreading < Minitest::Test
       seen = []
       custody = Object.new
       custody.define_singleton_method(:verify!) do |anchors: [], committer: nil|
-        seen << anchors && Master::Result.ok(state: :preserved)
+        seen << anchors
+        Master::Result.ok(state: :preserved)
       end
       scanner = Object.new
       scanner.define_singleton_method(:scan) { |_p, laws: nil| Master::Result.ok([]) }

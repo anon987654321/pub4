@@ -11,16 +11,16 @@ require "rbconfig"
 class TestVoiceSupport < Minitest::Test
   PB = Master::Voice::Playback
 
-# The gate is a hash of the text, so the same reply is always tagged the same
-# way: one tag, never on the first sentence.
-def test_enrich_tags_a_later_sentence_deterministically
-  emotion = { primary: :humor, scores: { humor: 1.0 } }
-  text = "One. Two. Three."
+  # The gate is a hash of the text, so the same reply is always tagged the same
+  # way: one tag, never on the first sentence.
+  def test_enrich_tags_a_later_sentence_deterministically
+    emotion = { primary: :humor, scores: { humor: 1.0 } }
+    text = "One. Two. Three."
 
-  assert_equal "One. [chuckle] Two. Three.", Master::Voice::Enrich.apply(text, emotion, tags: true)
-  assert_equal "One. [chuckle] Two. Three.", Master::Voice::Enrich.apply(text, emotion, tags: true)
-  assert_equal "A. B. C.", Master::Voice::Enrich.apply("A. B. C.", emotion, tags: true)
-end
+    assert_equal "One. [chuckle] Two. Three.", Master::Voice::Enrich.apply(text, emotion, tags: true)
+    assert_equal "One. [chuckle] Two. Three.", Master::Voice::Enrich.apply(text, emotion, tags: true)
+    assert_equal "A. B. C.", Master::Voice::Enrich.apply("A. B. C.", emotion, tags: true)
+  end
 
   def test_enrich_leaves_single_sentences_and_quiet_comfort_alone
     assert_equal "Only one.", Master::Voice::Enrich.apply("Only one.", { primary: :humor }, tags: true)
@@ -42,9 +42,9 @@ end
     previous.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
   end
 
-# Playback.which prefers the Homebrew directories, so a test that builds a
-# PATH of fake players looks only in that PATH.
-def path_only_which = ->(cmd) { Master::Io::Exec.which(cmd) }
+  # Playback.which prefers the Homebrew directories, so a test that builds a
+  # PATH of fake players looks only in that PATH.
+  def path_only_which = ->(cmd) { Master::Io::Exec.which(cmd) }
 
   def test_playback_speak_now_falls_back_to_native_speech_when_synthesis_is_missing
     spoken = []
@@ -284,34 +284,34 @@ def path_only_which = ->(cmd) { Master::Io::Exec.which(cmd) }
     PB.instance_variable_set(:@generation, 0)
   end
 
-# One Edge round trip carried the whole reply, so a long answer stood silent
-# for its entire synthesis and then spoke. Speech.chunks packed sentences and
-# had no caller.
-def test_a_reply_is_spoken_sentence_by_sentence_so_the_first_words_come_first
-  queued = []
-  reply = "The pool is every model this machine can reach. A lane joins it when it can answer. " \
-          "A model outside it carries the one thing to do about that. " \
-          "The council argues inside the loop, and its picks ride into the repair as context."
-  PB.instance_variable_set(:@pending, nil)
-  PB.instance_variable_set(:@last_said, nil)
+  # One Edge round trip carried the whole reply, so a long answer stood silent
+  # for its entire synthesis and then spoke. Speech.chunks packed sentences and
+  # had no caller.
+  def test_a_reply_is_spoken_sentence_by_sentence_so_the_first_words_come_first
+    queued = []
+    reply = "The pool is every model this machine can reach. A lane joins it when it can answer. " \
+            "A model outside it carries the one thing to do about that. " \
+            "The council argues inside the loop, and its picks ride into the repair as context."
+    PB.instance_variable_set(:@pending, nil)
+    PB.instance_variable_set(:@last_said, nil)
 
-  PB.stub(:enabled?, true) do
-    PB.stub(:available?, true) do
-      PB.stub(:transcendent_mode?, false) do
-        PB.stub(:ensure_queue, queued) do
-          PB.stub(:start_worker!, nil) { PB.speak(reply) }
+    PB.stub(:enabled?, true) do
+      PB.stub(:available?, true) do
+        PB.stub(:transcendent_mode?, false) do
+          PB.stub(:ensure_queue, queued) do
+            PB.stub(:start_worker!, nil) { PB.speak(reply) }
+          end
         end
       end
     end
-  end
 
-  assert_operator queued.size, :>, 1, "the reply went out as one utterance"
-  assert_equal reply, queued.map { |job| job[1] }.join(" "), "the words changed on the way out"
-  assert_equal [false] * (queued.size - 1) + [true], queued.map { |job| job[2] }, "only the last utterance closes the reply"
-ensure
-  PB.instance_variable_set(:@pending, nil)
-  PB.instance_variable_set(:@last_said, nil)
-end
+    assert_operator queued.size, :>, 1, "the reply went out as one utterance"
+    assert_equal reply, queued.map { |job| job[1] }.join(" "), "the words changed on the way out"
+    assert_equal [false] * (queued.size - 1) + [true], queued.map { |job| job[2] }, "only the last utterance closes the reply"
+  ensure
+    PB.instance_variable_set(:@pending, nil)
+    PB.instance_variable_set(:@last_said, nil)
+  end
 
   def test_transcendent_reply_stays_one_synthesis_unit
     queued = []
@@ -408,6 +408,7 @@ end
     assert_raises(KeyError) { DNA.chords_for(:j_dilla, :not_an_album) }
     assert_kind_of Hash, DNA.preset(:dilla_drum_bus)
   end
+
   def test_edge_stream_returns_structured_result_and_byte_count
     audio = StringIO.new
     sock = StringIO.new([5].pack("Q>") + "hello" + [0].pack("Q>"))
@@ -523,5 +524,4 @@ end
     assert_equal Encoding::BINARY, observed_encoding
     assert outcome.ok
   end
-
 end

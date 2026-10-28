@@ -174,12 +174,13 @@ class TestVisualProbes < Minitest::Test
   end
 
   def test_env_narrows_the_locales
+    previous = ENV["MASTER_VISUAL_LOCALES"]
     ENV["MASTER_VISUAL_LOCALES"] = "nb"
     cdp = LocaleCdp.new(html_lang: "nb")
     assert_equal({ "elements" => [] }, Deploy::LocaleProbe.attach(cdp, surface, { "elements" => [] }))
     assert_empty cdp.urls
   ensure
-    ENV.delete("MASTER_VISUAL_LOCALES")
+    ENV["MASTER_VISUAL_LOCALES"] = previous
   end
 
   # --- focus order -----------------------------------------------------------

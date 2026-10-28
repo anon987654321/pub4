@@ -44,10 +44,8 @@ class FaceSpeechRuntimeSpec < Minitest::Test
 
   def test_retired_partial_tts_path_is_absent
     source = read("../RAILS/master/public/face_speech_runtime.js")
-    bundle = read("../RAILS/master/public/face.runtime.js")
     runtime = read("data/runtime.yml")
 
-    refute_includes source, "function tryPartialTTSPlay"
     refute_includes source, "function tryPartialTTSPlay"
     refute_includes runtime, "tts_audio_stream"
     refute_includes runtime, "enh_tts_audio_stream"
@@ -55,12 +53,8 @@ class FaceSpeechRuntimeSpec < Minitest::Test
 
   def test_council_speech_never_bypasses_the_serial_tts_queue
     source = read("../RAILS/master/public/face.part5.txt")
-    bundle = read("../RAILS/master/public/face.runtime.js")
 
-    expected = "enqueueSpeech(text, { quirky: false });"
-    assert_includes source, expected
-    assert_includes source, expected
-    refute_includes source, "playDuo([[guardVoice(voice), text]]"
+    assert_includes source, "enqueueSpeech(text, { quirky: false });"
     refute_includes source, "playDuo([[guardVoice(voice), text]]"
   end
 
@@ -79,6 +73,7 @@ class FaceSpeechRuntimeSpec < Minitest::Test
     assert_equal built, on_disk,
                  "face.part*.txt on disk and the assets:build_face_runtime segment list disagree"
   end
+
   def test_voice_preview_uses_the_single_tts_playback_path
     source = read("../RAILS/master/public/face.part5.txt")
 
@@ -92,7 +87,6 @@ class FaceSpeechRuntimeSpec < Minitest::Test
   def test_live_stream_tts_does_not_replay_already_spoken_text
     source = read("../RAILS/master/public/face.part1.txt")
     consumer = read("../RAILS/master/public/face.part5.txt")
-    bundle = read("../RAILS/master/public/face.runtime.js")
 
     assert_includes source, "const alreadySpoken = Math.max(0, Math.min(text.length, Number(opts.spokenLen) || 0));"
     assert_includes source, "let rest = text.slice(alreadySpoken).trimStart();"

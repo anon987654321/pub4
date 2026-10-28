@@ -40,6 +40,7 @@ class SpeechContractSpec < Minitest::Test
     ENV["MASTER_TTS_VOICE"] = old_voice
     ENV["MASTER_TTS_STYLE"] = old_style
   end
+
   def test_transcendent_engine_chain_can_be_overridden
     old = ENV["MASTER_TTS_ENGINE_CHAIN"]
     ENV["MASTER_TTS_ENGINE_CHAIN"] = "edge,say"

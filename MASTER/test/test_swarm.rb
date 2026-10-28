@@ -42,9 +42,7 @@ class TestSwarm < Minitest::Test
   # Swarm result votes when reviewer casts explicit approved: true
   def test_votes_approved_when_reviewer_approves
     agent = FakeAgent.new(default: '{"approved": true, "violations": []}')
-    coord = build_coordinator(agent)
-
-    reviewer = Master::Review::Swarm::Workers::Reviewer.new(agent:, event_bus: @bus)
+    reviewer =Master::Review::Swarm::Workers::Reviewer.new(agent:, event_bus: @bus)
     result   = reviewer.call(task: "check code", context_slice: { code: "puts 1" })
     assert result.ok?
     assert result.value!["approved"]
@@ -138,20 +136,25 @@ class TestSwarm < Minitest::Test
   end
 
   def test_worker_fallback_fires_when_preferred_raises
+    workers = Master::Review::Swarm::Workers
+    agent = FailingAgent.new('{"summary": "ok", "issues": []}')
+    analyst = workers::Analyst.new(agent:, event_bus: @bus)
+
+    result = analyst.call(task: "check", context_slice: {})
+
+    assert result.ok?
+    assert_equal [workers::Analyst::PREFERRED_MODEL, workers::Analyst::FALLBACK_MODEL],
+                 agent.calls.map { |call| call[:model] }
+  end
+
+  def test_worker_without_fallback_reports_the_failure
     agent = FailingAgent.new('{"approved": true}')
     reviewer = Master::Review::Swarm::Workers::Reviewer.new(agent:, event_bus: @bus)
 
-    # Patch FALLBACK_MODEL on this instance's class temporarily
-    reviewer.class.stub_const(:FALLBACK_MODEL, "openrouter/auto") do
-      result = reviewer.call(task: "check", context_slice: {})
-      assert result.ok?
-      fallback_events = @bus.events.select { |e| e[:event] == "swarm_worker_fallback" }
-      assert_equal 1, fallback_events.size
-    end
-  rescue NoMethodError
-    # stub_const not available — test the fallback path directly
-    r = reviewer.send(:ask_with_fallback, "test prompt") rescue nil
-    pass # fallback path exists and raises without fallback model
+    result = reviewer.call(task: "check", context_slice: {})
+
+    refute result.ok?
+    assert_equal 1, agent.calls.size
   end
 
   def test_consensus_predicate

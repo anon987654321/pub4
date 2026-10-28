@@ -284,6 +284,7 @@ class TestVoiceHuman < Minitest::Test
     playback.instance_variable_set(:@queue, queue)
     jobs = %w[one two three four].map { |t| { text: t, last: t == "four", generation: playback.current_generation } }
     jobs.drop(1).each { |j| queue << j }
+    prefetch = ENV["MASTER_TTS_PREFETCH"]
     prepare = ->(job, live: true) { Struct.new(:text, :path, :generation).new(job[:text], nil, job[:generation]) }
     consume = lambda do |prepared|
       active += 1
@@ -304,7 +305,7 @@ class TestVoiceHuman < Minitest::Test
     assert_equal %w[one two three four], played
     refute overlap
   ensure
-    ENV.delete("MASTER_TTS_PREFETCH")
+    prefetch.nil? ? ENV.delete("MASTER_TTS_PREFETCH") : ENV["MASTER_TTS_PREFETCH"] = prefetch
     playback.instance_variable_set(:@queue, nil)
   end
 

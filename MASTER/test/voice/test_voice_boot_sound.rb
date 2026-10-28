@@ -99,10 +99,11 @@ class TestVoiceBootSound < Minitest::Test
 
   def test_it_is_on_by_default_and_silent_with_the_switch
     assert_equal true, Sound.config["enabled"]
+    previous = ENV["MASTER_BOOT_SOUND"]
     ENV["MASTER_BOOT_SOUND"] = "0"
 
     refute Sound.enabled?
   ensure
-    ENV.delete("MASTER_BOOT_SOUND")
+    previous.nil? ? ENV.delete("MASTER_BOOT_SOUND") : ENV["MASTER_BOOT_SOUND"] = previous
   end
 end

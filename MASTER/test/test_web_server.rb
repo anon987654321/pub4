@@ -5,6 +5,12 @@ require "stringio"
 require "tmpdir"
 
 class TestWebServer < Minitest::Test
+  def setup = @previous_web = ENV["MASTER_WEB"]
+
+  def teardown
+    @previous_web.nil? ? ENV.delete("MASTER_WEB") : ENV["MASTER_WEB"] = @previous_web
+  end
+
   def test_openbsd_status_uses_dmesg_shape
     ENV["MASTER_WEB"] = "1"
     config = { "web_public_url" => "https://ai.brgen.no", "web_token" => "" }
@@ -13,16 +19,13 @@ class TestWebServer < Minitest::Test
       Master::CLI::WebServer.openbsd_status(config:, host: "127.0.0.1", port: 53_187, io: out)
     end
     assert_includes out.string, "web0: https://ai.brgen.no, up"
-  ensure
-    ENV.delete("MASTER_WEB")
   end
+
   def test_start_is_a_no_op_when_master_web_is_not_enabled
     ENV["MASTER_WEB"] = "0"
     io = StringIO.new
     Master::CLI::WebServer.start({}, io:)
     assert_empty io.string
-  ensure
-    ENV.delete("MASTER_WEB")
   end
 
   def test_openbsd_status_reports_down_when_no_process_matches
@@ -59,6 +62,7 @@ class TestWebServer < Minitest::Test
       assert_nil env[key], "expected #{key} to be stripped from the spawn env"
     end
   end
+
   def test_persist_secret_writes_private_config_and_tightens_existing_mode
     Dir.mktmpdir("web-secret-mode") do |root|
       Master::CLI::WebServer.send(:persist_secret, "s" * 64, root:)
@@ -87,6 +91,4 @@ class TestWebServer < Minitest::Test
       assert_equal 0o600, File.stat(path).mode & 0o777
     end
   end
-
-
 end

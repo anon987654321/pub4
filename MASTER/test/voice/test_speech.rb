@@ -86,20 +86,16 @@ class TestSpeech < Minitest::Test
   # Entrypoint has already made the parent's bundle MASTER's own, so the daemon
   # inherits that context; only the Gemfile is pinned to the daemon's root.
   def test_daemon_env_carries_the_prepared_bundle_and_pins_the_gemfile
-    Dir.mktmpdir("master_tts_env") do |root|
-      ENV["BUNDLE_PATH"] = "/prepared/bundle"
-      ENV["BUNDLE_GEMFILE"] = "/wrong/web/Gemfile"
-      ENV["GEM_HOME"] = "/prepared/gems"
-      env = Master::Voice::TtsSupervisor.daemon_env(root)
-      assert_equal "/prepared/bundle", env["BUNDLE_PATH"]
-      assert_equal "/prepared/gems", env["GEM_HOME"]
-      assert_equal File.join(root, "Gemfile"), env["BUNDLE_GEMFILE"]
-      assert_equal ENV.fetch("HOME", ""), env["HOME"]
+    vars = { "BUNDLE_PATH" => "/prepared/bundle", "BUNDLE_GEMFILE" => "/wrong/web/Gemfile", "GEM_HOME" => "/prepared/gems" }
+    with_env(vars) do
+      Dir.mktmpdir("master_tts_env") do |root|
+        env = Master::Voice::TtsSupervisor.daemon_env(root)
+        assert_equal "/prepared/bundle", env["BUNDLE_PATH"]
+        assert_equal "/prepared/gems", env["GEM_HOME"]
+        assert_equal File.join(root, "Gemfile"), env["BUNDLE_GEMFILE"]
+        assert_equal ENV.fetch("HOME", ""), env["HOME"]
+      end
     end
-  ensure
-    ENV.delete("BUNDLE_PATH")
-    ENV.delete("BUNDLE_GEMFILE")
-    ENV.delete("GEM_HOME")
   end
 
   # Regression: confirmed live on vm23 -- Falcon's own process has RUBYLIB
@@ -108,16 +104,14 @@ class TestSpeech < Minitest::Test
   # daemons resolved web's lockfile against MASTER's Gemfile and crashed with
   # Bundler::GemNotFound on every single spawn.
   def test_daemon_env_strips_rubylib_and_bundle_lockfile_pollution
-    Dir.mktmpdir("master_tts_env") do |root|
-      ENV["RUBYLIB"] = "/wrong/web/vendor/bundle/ruby/3.4/gems/bundler-4.0.7/lib"
-      ENV["BUNDLE_LOCKFILE"] = "/wrong/web/Gemfile.lock"
-      env = Master::Voice::TtsSupervisor.daemon_env(root)
-      assert_nil env["RUBYLIB"]
-      assert_nil env["BUNDLE_LOCKFILE"]
+    vars = { "RUBYLIB" => "/wrong/web/vendor/bundle/ruby/3.4/gems/bundler-4.0.7/lib", "BUNDLE_LOCKFILE" => "/wrong/web/Gemfile.lock" }
+    with_env(vars) do
+      Dir.mktmpdir("master_tts_env") do |root|
+        env = Master::Voice::TtsSupervisor.daemon_env(root)
+        assert_nil env["RUBYLIB"]
+        assert_nil env["BUNDLE_LOCKFILE"]
+      end
     end
-  ensure
-    ENV.delete("RUBYLIB")
-    ENV.delete("BUNDLE_LOCKFILE")
   end
 
   # The assertions above read the hash, but Process.spawn merges the hash onto
@@ -529,10 +523,6 @@ class TestSpeech < Minitest::Test
     assert_equal "fake-mp3-bytes", bytes
   end
 
-  # Wire v2: a daemon answering "stream":true sends 8-byte length-prefixed
-  # chunks and a zero-length frame. The file must hold exactly the payloads,
-  # assembled as they arrived. A legacy daemon that ignores "stream" and
-  # closes whole-file is still accepted — the eof test above covers it.
   def test_synthesize_edge_socket_retries_once_after_a_truncated_first_response
     calls = 0
     wire = lambda do |client|
@@ -554,6 +544,10 @@ class TestSpeech < Minitest::Test
     assert_equal 2, calls, "a socket request gets one retry, not a retry per caller layer"
   end
 
+  # Wire v2: a daemon answering "stream":true sends 8-byte length-prefixed
+  # chunks and a zero-length frame. The file must hold exactly the payloads,
+  # assembled as they arrived. A legacy daemon that ignores "stream" and
+  # closes whole-file is still accepted — the eof test above covers it.
   def test_synthesize_edge_socket_assembles_framed_stream
     wire = lambda do |client|
       client.write([5].pack("Q>"))
@@ -794,10 +788,9 @@ class TestSpeech < Minitest::Test
   end
 
   def test_worker_timeout_respects_explicit_env_override_regardless_of_length
-    ENV["MASTER_TTS_TIMEOUT"] = "7"
-    assert_equal 7, Master::Voice::Speech.send(:worker_timeout, 4000)
-  ensure
-    ENV.delete("MASTER_TTS_TIMEOUT")
+    with_env("MASTER_TTS_TIMEOUT" => "7") do
+      assert_equal 7, Master::Voice::Speech.send(:worker_timeout, 4000)
+    end
   end
 
   # StrunkPass (lib/voice/strunk_pass.rb) had zero callers anywhere until
@@ -832,6 +825,14 @@ class TestSpeech < Minitest::Test
   def test_clean_text_preserves_newline_to_period_pacing
     result = Master::Voice::Speech.clean_text("First line no period\nSecond line no period")
     assert_equal "First line no period. Second line no period", result
+  end
+
+  def with_env(vars)
+    saved = vars.keys.to_h { |key| [key, ENV[key]] }
+    vars.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+    yield
+  ensure
+    saved.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
   end
 
   def with_profile(name)
@@ -875,13 +876,12 @@ class TestSpeech < Minitest::Test
   end
 
   def test_the_dry_profile_restores_the_voice_without_a_room
-    ENV["MASTER_TTS_CHARACTER"] = "none"
-    with_profile("dry") do
-      assert_empty Master::Voice::Policy.room
-      assert_equal Master::Voice::Policy.post_chain, Master::Voice::Policy.shaped_chain
+    with_env("MASTER_TTS_CHARACTER" => "none") do
+      with_profile("dry") do
+        assert_empty Master::Voice::Policy.room
+        assert_equal Master::Voice::Policy.post_chain, Master::Voice::Policy.shaped_chain
+      end
     end
-  ensure
-    ENV.delete("MASTER_TTS_CHARACTER")
   end
 
   def test_asmr_keeps_its_own_layers_and_no_room
@@ -910,15 +910,13 @@ class TestSpeech < Minitest::Test
       end
       # The room alone, which is what this holds to the dry voice; the dilla rack
       # is measured in test_dilla_fx.rb.
-      ENV["MASTER_TTS_FX"] = "0"
-      ENV["MASTER_TTS_CHARACTER"] = "none"
-      with_profile("dilla") do
-        wet = loudness.call(Master::Voice::Policy.shaped_chain)
-        dry = loudness.call(Master::Voice::Policy.post_chain)
-        assert_in_delta dry, wet, 1.0
+      with_env("MASTER_TTS_FX" => "0", "MASTER_TTS_CHARACTER" => "none") do
+        with_profile("dilla") do
+          wet = loudness.call(Master::Voice::Policy.shaped_chain)
+          dry = loudness.call(Master::Voice::Policy.post_chain)
+          assert_in_delta dry, wet, 1.0
+        end
       end
-      ENV.delete("MASTER_TTS_FX")
-      ENV.delete("MASTER_TTS_CHARACTER")
     end
   end
 

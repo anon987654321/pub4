@@ -49,7 +49,7 @@ class TestVoiceStt < Minitest::Test
   def test_whisper_binary_resolution_uses_the_shared_pathext_lookup
     Dir.mktmpdir("whisper-path") do |dir|
       binary = File.join(dir, "whisper-cli.EXE")
-      File.write(binary, "#!/bin/sh\\n")
+      File.write(binary, "#!/bin/sh\n")
       File.chmod(0o755, binary)
       original_path = ENV["PATH"]
       original_pathext = ENV["PATHEXT"]

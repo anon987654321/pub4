@@ -88,13 +88,14 @@ class TestVisualSeed < Minitest::Test
   end
 
   def test_unknown_apps_and_a_database_url_are_refused
+    previous = ENV["DATABASE_URL"]
     tree do |root|
       seed, = seeder(root, [])
       assert_raises(ArgumentError) { seed.seed(%w[master], yes: true) }
       ENV["DATABASE_URL"] = "postgres://prod"
       assert_equal 2, seed.seed(%w[amber], yes: true)
-    ensure
-      ENV.delete("DATABASE_URL")
     end
+  ensure
+    ENV["DATABASE_URL"] = previous
   end
 end

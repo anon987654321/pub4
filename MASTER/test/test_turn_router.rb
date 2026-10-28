@@ -30,66 +30,60 @@ class TurnRouterTest < Minitest::Test
     Fiber[:master_visitor] = nil
   end
 
-  # Security: ai.brgen.no serves the open internet, and AuthTier only *labels*
-  # tokenless requests "visitor" rather than rejecting them. Everything past the
-  # visitor check in TurnRouter.call can reach real capability — the Fold reaches
-  # Core::World#do_exec with model-chosen argv, and infer_operator_command
-  # reconstructs slash commands from plain English (defeating the leading-"/"
-  # block in chat_controller#message). Visitors must land on casual_reply only.
-# /fix is the verb that writes, and the words that mean "go through the tree
-# and change it" are spellings of it. The reading words argue and change
-# nothing. /scan is only a spelling of /fix: a reading nobody acts on is what /fix absorbed.
-# A question is answered, not dispatched: command inference would turn its words into a
-# council review or a shell lookup.
-def test_a_question_goes_to_the_agent_and_never_to_command_inference
-  questions = ["In one sentence, what does MASTER/lib/face.rb do?",
-               "Which file defines Master::Face::Contract.stipple_profile?",
-               "why aren't you reading tts out loud?",
-               "how do I run the review pass through master?",
-               "is the council enabled"]
-  questions.each do |message|
-    reached = nil
-    Master::CLI::TurnRouter.stub(:casual_reply, ->(*, **) { reached = :casual; Master::Result.ok({ rendered: "" }) }) do
-      Master::CLI::TurnRouter.stub(:infer_operator_command, ->(*, **) { reached = :inferred; nil }) do
-        Master::CLI::TurnRouter.call(message:, container: build_container)
+  # A question is answered, not dispatched: command inference would turn its words into a
+  # council review or a shell lookup.
+  def test_a_question_goes_to_the_agent_and_never_to_command_inference
+    questions = ["In one sentence, what does MASTER/lib/face.rb do?",
+                 "Which file defines Master::Face::Contract.stipple_profile?",
+                 "why aren't you reading tts out loud?",
+                 "how do I run the review pass through master?",
+                 "is the council enabled"]
+    questions.each do |message|
+      reached = nil
+      Master::CLI::TurnRouter.stub(:casual_reply, ->(*, **) { reached = :casual; Master::Result.ok({ rendered: "" }) }) do
+        Master::CLI::TurnRouter.stub(:infer_operator_command, ->(*, **) { reached = :inferred; nil }) do
+          Master::CLI::TurnRouter.call(message:, container: build_container)
+        end
       end
+      assert_equal :casual, reached, message
     end
-    assert_equal :casual, reached, message
   end
-end
 
-def test_an_instruction_is_still_not_a_question
-  refute Master::CLI::TurnRouter.question?("run the tests in lib/io")
-  refute Master::CLI::TurnRouter.question?("review rails")
-  assert Master::CLI::TurnRouter.question?("what is the current model")
-end
+  def test_an_instruction_is_still_not_a_question
+    refute Master::CLI::TurnRouter.question?("run the tests in lib/io")
+    refute Master::CLI::TurnRouter.question?("review rails")
+    assert Master::CLI::TurnRouter.question?("what is the current model")
+  end
 
-def test_a_writing_word_reaches_fix_and_a_reading_word_reaches_the_council
-  router = Master::CLI::TurnRouter
+  # /fix is the verb that writes, and the words that mean "go through the tree
+  # and change it" are spellings of it. The reading words argue and change
+  # nothing. /scan is only a spelling of /fix: a reading nobody acts on is what /fix absorbed.
+  def test_a_writing_word_reaches_fix_and_a_reading_word_reaches_the_council
+    router = Master::CLI::TurnRouter
 
-  assert_equal "/fix lib/io", router.rewrite_slash("/fix lib/io")
-  assert_equal "/fix RAILS --no-autofix", router.rewrite_slash("/scan RAILS --no-autofix")
-  assert_equal "/fix x", router.rewrite_slash("/sweep x")
-  assert_equal "/fix", router.rewrite_slash("/triad")
-  assert_equal "/review --only critique lib", router.rewrite_slash("/critique lib")
-  assert_equal "/review --only critique lib", router.rewrite_slash("/council lib")
-  assert_equal "/review master", router.rewrite_slash("/review master")
-end
+    assert_equal "/fix lib/io", router.rewrite_slash("/fix lib/io")
+    assert_equal "/fix RAILS --no-autofix", router.rewrite_slash("/scan RAILS --no-autofix")
+    assert_equal "/fix x", router.rewrite_slash("/sweep x")
+    assert_equal "/fix", router.rewrite_slash("/triad")
+    assert_equal "/review --only critique lib", router.rewrite_slash("/critique lib")
+    assert_equal "/review --only critique lib", router.rewrite_slash("/council lib")
+    assert_equal "/review master", router.rewrite_slash("/review master")
+  end
 
-def test_scan_is_a_spelling_of_fix_not_a_command
-  router = Master::CLI::TurnRouter
+  def test_scan_is_a_spelling_of_fix_not_a_command
+    router = Master::CLI::TurnRouter
 
-  refute_includes router::PIPELINE_COMMANDS, "scan"
-  assert_equal "/fix lib/io", router.rewrite_slash("/scan lib/io")
-end
+    refute_includes router::PIPELINE_COMMANDS, "scan"
+    assert_equal "/fix lib/io", router.rewrite_slash("/scan lib/io")
+  end
 
-# The RAILS constitutional check asks for a reading it can grep and no writes.
-# The flag rides along rather than being eaten as a path.
-def test_a_read_only_fix_keeps_the_flag_the_rails_check_passes
-  rewritten = Master::CLI::TurnRouter.rewrite_slash("/fix --dry-run ../RAILS/amber")
+  # The RAILS constitutional check asks for a reading it can grep and no writes.
+  # The flag rides along rather than being eaten as a path.
+  def test_a_read_only_fix_keeps_the_flag_the_rails_check_passes
+    rewritten = Master::CLI::TurnRouter.rewrite_slash("/fix --dry-run ../RAILS/amber")
 
-  assert_equal "/fix --dry-run ../RAILS/amber", rewritten
-end
+    assert_equal "/fix --dry-run ../RAILS/amber", rewritten
+  end
 
   def test_deployment_intent_understands_natural_variants
     router = Master::CLI::TurnRouter
@@ -129,6 +123,12 @@ end
     refute Master::CLI::TurnRouter.casual?("read CLAUDE.md")
   end
 
+  # Security: ai.brgen.no serves the open internet, and AuthTier only *labels*
+  # tokenless requests "visitor" rather than rejecting them. Everything past the
+  # visitor check in TurnRouter.call can reach real capability — the Fold reaches
+  # Core::World#do_exec with model-chosen argv, and infer_operator_command
+  # reconstructs slash commands from plain English (defeating the leading-"/"
+  # block in chat_controller#message). Visitors must land on casual_reply only.
   def test_visitor_cannot_reach_fold_or_command_registry
     ["fix the bug", "run master through itself", "implement pagination for posts"].each do |message|
       Fiber[:master_visitor] = true
@@ -266,12 +266,15 @@ end
     assert_nil inferred, "no handler answers /dmesg, so the sentence must reach the model"
   end
 
-  def test_slash_routes_to_command_registry
-    calls = []
-    pipeline = Object.new
-    pipeline.define_singleton_method(:call) { |*| calls << :pipeline }
-    Master::CLI::TurnRouter.call(message: "/status", container: build_container)
-    assert_empty calls
+  def test_slash_routes_to_command_registry_not_fold_or_chat
+    ran = []
+    command = Master::CLI::CommandRegistry::Command.new { ran << :status; "status-ok" }
+    Master::CLI::TurnRouter.stub(:run_fold, ->(*, **) { flunk "/status reached the fold" }) do
+      Master::CLI::TurnRouter.stub(:casual_reply, ->(*, **) { flunk "/status reached casual chat" }) do
+        Master::CLI::TurnRouter.call(message: "/status", container: build_container(commands: { "status" => command }))
+      end
+    end
+    assert_equal [:status], ran
   end
 
   def test_slash_status_renders_command_output

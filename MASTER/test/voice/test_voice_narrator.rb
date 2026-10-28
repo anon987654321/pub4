@@ -313,10 +313,11 @@ class TestVoiceNarrator < Minitest::Test
 
   def test_facade_is_quiet_without_a_speaker
     Narrator.reset_instance!
+    previous = ENV["MASTER_CLI_SPEAK"]
     ENV["MASTER_CLI_SPEAK"] = "0"
     refute Narrator.observe("scan0: reading")
   ensure
-    ENV.delete("MASTER_CLI_SPEAK")
+    previous.nil? ? ENV.delete("MASTER_CLI_SPEAK") : ENV["MASTER_CLI_SPEAK"] = previous
     Narrator.reset_instance!
   end
 

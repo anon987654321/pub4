@@ -240,7 +240,7 @@ module Operator
 # notice is a toast now (shared/_flash_toasts), so the four sheets that styled
 # an inline notice styled nothing. .toast--error went the same way — a toast
 # only ever carries a confirmation, because an alert stays in the page.
-BASELINES = { "undefined_class" => 0, "unused_selector" => 89 }.freeze
+    BASELINES = { "undefined_class" => 0, "unused_selector" => 89 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
@@ -269,7 +269,8 @@ BASELINES = { "undefined_class" => 0, "unused_selector" => 89 }.freeze
 
     def scan
       undefined_classes.map do |name|
- Finding.new("undefined_class", name, used_names[name].size, rel(used_names[name].first)) end +
+        Finding.new("undefined_class", name, used_names[name].size, rel(used_names[name].first))
+      end +
         unused_selectors.map { |name| Finding.new("unused_selector", name, 0, nil) }
     end
 

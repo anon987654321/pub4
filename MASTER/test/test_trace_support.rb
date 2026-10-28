@@ -285,21 +285,21 @@ class TestTraceSupport < Minitest::Test
     FileUtils.rm_rf(root)
   end
 
-# What reaches disk is what the event log keeps: no chat text, no tool query, owner-only.
-def test_a_recorded_turn_keeps_its_words_off_disk
-  root = Dir.mktmpdir("recorder_")
-  bus = Bus.new
-  Master::Trace::Recorder.new(root:, event_bus: bus)
-  bus.emit("gateway:*", { event: "gateway:turn_start", turn_id: "t1", channel: :web, message: "my bank pin is 4417", ts: 1 })
-  bus.emit("tool:after", { event: "tool:after", tool: "web_search", query: "4417 bank", ts: 2 })
-  bus.emit("gateway:*", { event: "gateway:turn_done", ts: 3 })
+  # What reaches disk is what the event log keeps: no chat text, no tool query, owner-only.
+  def test_a_recorded_turn_keeps_its_words_off_disk
+    root = Dir.mktmpdir("recorder_")
+    bus = Bus.new
+    Master::Trace::Recorder.new(root:, event_bus: bus)
+    bus.emit("gateway:*", { event: "gateway:turn_start", turn_id: "t1", channel: :web, message: "my bank pin is 4417", ts: 1 })
+    bus.emit("tool:after", { event: "tool:after", tool: "web_search", query: "4417 bank", ts: 2 })
+    bus.emit("gateway:*", { event: "gateway:turn_done", ts: 3 })
 
-  file = Dir.glob(File.join(root, ".master", "traces", "*.jsonl")).first
-  refute_includes File.read(file), "4417"
-  assert_equal 0o600, File.stat(file).mode & 0o777
-ensure
-  FileUtils.rm_rf(root)
-end
+    file = Dir.glob(File.join(root, ".master", "traces", "*.jsonl")).first
+    refute_includes File.read(file), "4417"
+    assert_equal 0o600, File.stat(file).mode & 0o777
+  ensure
+    FileUtils.rm_rf(root)
+  end
 
   def test_events_outside_a_turn_are_not_recorded
     root = Dir.mktmpdir("recorder_")
@@ -313,7 +313,7 @@ end
   end
 
   # The fallback format is for an event the console gives no line, which is
-  # normal mode; under verbose, the default, every event has a console line.
+  # normal mode, the default; under verbose every event has a console line.
   def test_report_attaches_plain_output_to_one_unit
     rendered = Master::Trace::Dmesg::Report.render(
       unit: "check0",
