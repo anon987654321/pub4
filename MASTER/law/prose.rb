@@ -14,10 +14,11 @@
 # these two English-only by accident, so the vocabulary, the senses to keep, the
 # passive's shape and the fixtures all live in data/laws.yml under `prose:`,
 # and this file turns each entry into a pair of laws. A second language is a
-# data edit.
+# data edit: a `prose:` entry and its two law_catalogue entries.
 #
-# `spoken_in` scopes each language to the files it is written in, and that
-# scoping is what makes the whole design safe: Norwegian `bare` (only) is an
+# Each Law's catalogue entry scopes its language to the files it is written
+# in (languages and path_pattern), and that scoping is what makes the design
+# safe: Norwegian `bare` (only) is an
 # English word this tree uses constantly — "a bare regex", "bare true" — so a
 # vocabulary let loose outside its own files returns nothing but noise.
 #
@@ -67,8 +68,6 @@ end
 
 Law::Prose::CONFIG.each_value do |language|
   reads = language["reads"]
-  scope = Regexp.new(language["spoken_in"])
-  tongue = language["file_languages"].map(&:to_sym)
 
   # Most of the words a leech list attracts are only sometimes leeches, and the
   # other sense is load-bearing every time. Judged over 172 English hits:
@@ -95,9 +94,6 @@ Law::Prose::CONFIG.each_value do |language|
 
   Law.define(language["ids"]["qualifiers"].to_sym) do
     source "Strunk, Elements of Style (1918) — the leech words"
-    severity :warn
-    languages tongue
-    path scope
     reads_comments true
     detect do |line|
       said = Law::Prose.said(line, reads)
@@ -124,9 +120,6 @@ Law::Prose::CONFIG.each_value do |language|
 
   Law.define(language["ids"]["passive"].to_sym) do
     source "Strunk, Elements of Style (1918) Rule 10 — use the active voice"
-    severity :info
-    languages tongue
-    path scope
     reads_comments true
     detect do |line|
       said = Law::Prose.said(line, reads)

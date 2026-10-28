@@ -290,7 +290,7 @@ module Master
 
         def law_catalogue_report(entries, registry:)
           data = Master.law("law_catalogue", root: @root)
-          required_modalities = %w[lexical semantic visual]
+          required_modalities = Master::LawVocabulary::MODALITIES
           required_surfaces = ::Law::ASSESSMENT_SURFACES.map(&:to_s)
           modalities = Array(data["modalities"]).map(&:to_s)
           surfaces = Array(data["surfaces"]).map(&:to_s)

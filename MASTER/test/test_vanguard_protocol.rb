@@ -26,7 +26,7 @@ class TestVanguardProtocol < Minitest::Test
   # auto-built one, so without the opt-out this fixture joins every scan the
   # process runs afterwards and fails each file it is handed.
   class ExplodingAstRule < Review::Scan::Law
-    declare id: "exploding_ast", severity: :error
+    declare id: "exploding_ast"
 
     def self.auto_build? = false
 

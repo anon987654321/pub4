@@ -11,7 +11,7 @@ module Master
           MAX_DEPTH = 4
           TOP_LEVEL_LIMIT = 12
 
-          declare id: "CONFIG_HIERARCHY", severity: :warning, tags: %i[CONFIG HIERARCHY],
+          declare id: "CONFIG_HIERARCHY", tags: %i[CONFIG HIERARCHY],
                   description: "config keys are grouped, non-duplicated, and shallow"
 
           # A file whose shape another program's schema dictates: Rails looks a
@@ -152,7 +152,7 @@ module Master
         class CodeHierarchyLaw < Law
           TOP_LEVEL_LIMIT = 5
 
-          declare id: "CODE_HIERARCHY", severity: :warning, tags: %i[ARCHITECTURE HIERARCHY],
+          declare id: "CODE_HIERARCHY", tags: %i[ARCHITECTURE HIERARCHY],
                   description: "related classes are grouped under clear namespaces"
 
           def check(code, path:)
@@ -182,7 +182,7 @@ module Master
         class LongParameterListLaw < Law
           LIMIT = 4
 
-          declare id: "LONG_PARAMETER_LIST", severity: :warning, tags: %i[BLOATERS API],
+          declare id: "LONG_PARAMETER_LIST", tags: %i[BLOATERS API],
                   description: "methods accept at most four parameters"
 
           def check(code, path:)
@@ -205,10 +205,7 @@ module Master
         class PrimitiveObsessionLaw < Law
           PRIMITIVE_HINTS = /\b(id|name|type|status|flag|count|price|amount|date|email|phone|url)\b|_id\z/i
 
-          # data/laws.yml declares this one info, and the catalogue owns a
-          # rule's severity — it is the file that must carry tier and severity
-          # for every rule, which rule_hygiene.missing_metadata enforces.
-          declare id: "PRIMITIVE_OBSESSION", severity: :info, tags: %i[BLOATERS DOMAIN_MODELING],
+          declare id: "PRIMITIVE_OBSESSION", tags: %i[BLOATERS DOMAIN_MODELING],
                   description: "clusters of primitives should become small domain objects"
 
           def check(code, path:)
@@ -234,7 +231,7 @@ module Master
         # Keyword parameters are exempt: `def render(path, cache: true)` already
         # forces the call site to say what is true, which is the whole point.
         class BooleanTrapLaw < Law
-          declare id: "BOOLEAN_TRAP", severity: :info, tags: %i[API DOMAIN_LANGUAGE],
+          declare id: "BOOLEAN_TRAP", tags: %i[API DOMAIN_LANGUAGE],
                   description: "a positional boolean parameter makes every call site a riddle"
 
           def check_ast(ast, _code, path:)
@@ -271,7 +268,7 @@ module Master
           MIN_CLUMP = 3
           MIN_SIGNATURES = 3
 
-          declare id: "DATA_CLUMPS", severity: :info, tags: %i[BLOATERS DOMAIN_MODELING],
+          declare id: "DATA_CLUMPS", tags: %i[BLOATERS DOMAIN_MODELING],
                   description: "the same parameters travelling together are a record struggling to be born"
 
           def check_ast(ast, _code, path:)
@@ -319,7 +316,7 @@ module Master
         class CouplerLaw < Law
           INTIMACY = /\.(?:instance_variable_get|instance_variable_set)\s*\(|\.(?:public_)?send\s*\(\s*[:"']/
 
-          declare id: "COUPLER_SMELLS", severity: :warning, tags: %i[COUPLING DEMETER],
+          declare id: "COUPLER_SMELLS", tags: %i[COUPLING DEMETER],
                   description: "inappropriate intimacy through reflective access"
 
           def check(code, path:)
@@ -340,7 +337,7 @@ module Master
         # under COUPLER_SMELLS. This gives it a real matching id and a single
         # responsibility of its own.
         class FeatureEnvyLaw < Law
-          declare id: "FEATURE_ENVY", severity: :warning, tags: %i[COUPLING DEMETER],
+          declare id: "FEATURE_ENVY", tags: %i[COUPLING DEMETER],
                   description: "method talks to one collaborator's internals more than its own"
 
           def check(code, path:)
@@ -387,8 +384,7 @@ module Master
         end
 
         class LazyClassLaw < Law
-          # info, as the catalogue declares it — see PRIMITIVE_OBSESSION above.
-          declare id: "LAZY_CLASS", severity: :info, tags: %i[DISPENSABLES SRP],
+          declare id: "LAZY_CLASS", tags: %i[DISPENSABLES SRP],
                   description: "classes should own behavior, not only delegate"
           # A delegate is `delegate`, or a method whose whole body is one call on another object.
           DELEGATE = /^[ \t]*(?:delegate\b|def[ \t]+(?!self\.)\w+[!?=]?(?:\([^)\n]*\))?[ \t]*(?:;|\n)

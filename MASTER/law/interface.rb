@@ -6,10 +6,7 @@
 
 Law.define(:NO_TRANSPORT_WRAPPER_IN_SOURCE) do
   source "MASTER source integrity — presentation wrappers do not belong in source files"
-  severity :error
-  languages %i[ruby]
   scope :file
-  path_exclude %r{/law/}
   detect do |text|
     text.match?(/\A\s*<(?:sub|sup|pre|code)>/i) ||
       text.match?(/\n\s*<\/(?:sub|sup|pre|code)>\s*\z/i)
@@ -33,9 +30,6 @@ end
 
 Law.define(:CLI_TREE_TARGET_RESOLUTION) do
   source "MASTER CLI — four-tree target addressing"
-  severity :error
-  languages %i[ruby]
-  path "MASTER/lib/cli/"
   ask "When an operator explicitly names MASTER, RAILS, OPENBSD or STUDIO, does the command resolve that target from the repository root through the canonical target resolver rather than assuming the current working directory is MASTER? Return CLEAN when every explicit sibling-tree target follows the shared resolver contract."
   fix "Resolve explicit four-tree targets from Master::REPO_ROOT through TargetResolver; never reinterpret a sibling tree relative to MASTER/lib or the current process directory."
   bad <<~X
@@ -48,10 +42,6 @@ end
 
 Law.define(:CLI_PROMPT_COMPOSITION) do
   source "OpenBSD dmesg console discipline; shell line editing remains the input transport"
-  severity :warning
-  mode :opportunity
-  languages %i[ruby]
-  path "MASTER/lib/voice/renderer/"
   ask "Does the interactive prompt remain a restrained OpenBSD-console line that shows the checkout/tree, current directory, active conversation destination, Git state, meaningful phase/error state and input token, with no Starship/powerline-style segments or decorative emphasis? Is it bounded, single-line, plain in scrollback and cheap to redraw? Return CLEAN when it follows the dmesg-first house style."
   fix "Keep one compact text line with checkout/tree-relative path, active destination, plain Git state, phase and shell token. Prefer ASCII and stable spacing; avoid badges, icon glyphs, color-coded segments, boxes and duplicated status. Cache or bound Git probes and move detail to /status, /doctor or /help."
   # Quoted heredocs: the examples quote instance and local variables, and an
@@ -72,10 +62,6 @@ end
 
 Law.define(:OPENBSD_DMESG_CONSOLE_STYLE) do
   source "OpenBSD dmesg — xsa/openbsd-dmesgs and Master::Trace::Dmesg"
-  severity :warning
-  mode :opportunity
-  languages %i[ruby]
-  path "MASTER/lib/voice/"
   ask "For startup, status, progress and operational events, does CLI output follow the native console idiom: append-only, one factual event per line, a stable subsystem0: or unit0 at parent: prefix, truthful status, and useful scrollback? Look for banners, decorative panels, ASCII art outside the face, badge-like status, repeated progress chatter, and information hidden behind color alone. Conversational replies may retain plain Markdown when structure serves the content. Return CLEAN when operational output remains clear in a pipe, serial terminal and saved transcript."
   fix "Use Master::Trace::Dmesg's existing unit0: grammar for operational events; emit one concise factual line per event, order events by occurrence, keep state and recovery explicit, and preserve plain-text meaning without relying on ANSI or animation. Conversational replies may use restrained, width-aware Markdown. Do not create a second event logging format."
   bad <<~'X'
@@ -92,10 +78,6 @@ end
 
 Law.define(:VOICE_FAILURES_ARE_ACTIONABLE) do
   source "OpenBSD-style explicit failure reporting — degraded capability is state, not noise"
-  severity :info
-  mode :opportunity
-  languages %i[ruby]
-  path "MASTER/lib/voice/"
   ask "When synthesis, transport, or playback fails, does the runtime produce one bounded actionable state, preserve a useful last_error, and use the declared fallback chain without replaying or spawning uncontrolled work? Return CLEAN when the failure path is already explicit and bounded."
   fix "Return an explicit failure/result, retain the reason for /status or /doctor, rate-limit repeated diagnostics, and fall through only to declared voice/audio fallbacks."
   bad <<~'X'
@@ -115,9 +97,6 @@ end
 
 Law.define(:CLI_ANALYZE_TARGET_ROUTING) do
   source "MASTER CLI — deterministic repository analysis targets"
-  severity :error
-  languages %i[yaml]
-  path "MASTER/data/patterns.yml"
   scope :file
   ask "Does natural-language analysis of an explicit repository path enter the deterministic operator route instead of falling through to the model and guessing about file existence?"
   fix "Register analyze/analyse/inspect with a path capture and map it to the canonical review route."
@@ -143,9 +122,6 @@ end
 
 Law.define(:CLI_FACE_DEDICATED_TTY) do
   source "Terminal discipline — full-screen face must not share line-editor input"
-  severity :error
-  languages %i[ruby]
-  path "MASTER/lib/cli/command_registry.rb"
   scope :file
   ask "Does the /face command obtain an independent terminal stream instead of sharing Reline/session stdin with the full-screen face?"
   fix "Open /dev/tty and pass that handle as both the face input and output; close it after the face exits."
@@ -164,11 +140,6 @@ end
 
 Law.define(:CAPABILITY_STATUS_MUST_BE_TRUTHFUL) do
   source "OpenBSD-style status reporting — unavailable capabilities are not ready"
-  severity :error
-  # Every surface that reports state, not only services.rb: a chat message shown as sent
-  # before the server answered, or a progress bar at 100% before the work ended, is the
-  # same false ready. The detector still reads only the services.rb shape it was built on.
-  languages %i[ruby javascript html]
   ask "Does a status, progress, success, pending, sent or delivered label, or a service readiness report, " \
       "claim a state the system has not observed: from a flag, an optimistic default, or before the " \
       "server or capability answered? State must derive from observed outcome and keep the failure reason."
@@ -189,10 +160,6 @@ end
 
 Law.define(:SIGNATURE_MOMENT) do
   source "Interaction design — distinctive, frequent, functional moments"
-  severity :info
-  mode :opportunity
-  languages %i[html javascript css scss]
-  path "RAILS/"
   ask "Does this product surface have one deliberately distinctive interaction that users encounter often, improves the task rather than merely decorating it, matches the product's character, and remains effortless and accessible? Return CLEAN when an existing interaction already serves this role."
   fix "Choose one existing high-frequency interaction and give it immediate, restrained, distinctive feedback. Do not invent a feature solely for delight, duplicate the pattern elsewhere, or make motion or haptics the only signal."
   bad "Add a decorative animation with no relationship to the user's action."
@@ -201,10 +168,6 @@ end
 
 Law.define(:DIRECT_MANIPULATION_FEEDBACK) do
   source "Direct manipulation — immediate perceptual feedback"
-  severity :warning
-  mode :opportunity
-  languages %i[html javascript css scss]
-  path "RAILS/"
   ask "When a user directly presses, drags, swipes, or dismisses something, does the interface acknowledge that input immediately rather than waiting for a delayed release or network result? Check pointer, keyboard, touch, visual state, and failure recovery together."
   fix "Respond at input start with a small state change, keep the gesture tied to the pointer while it moves, and retain a non-motion keyboard equivalent. Do not make the early feedback imply success before the action is actually committed."
   bad "click -> request -> finally show any indication that the press happened"
@@ -213,10 +176,6 @@ end
 
 Law.define(:WAITING_STATE_MEANING) do
   source "Interaction status — useful feedback during dead time"
-  severity :info
-  mode :opportunity
-  languages %i[html css scss javascript]
-  path "RAILS/"
   ask "When a user is waiting for a meaningful result, does the surface identify what is happening or what is being prepared, rather than exposing only a generic spinner or unexplained motion? Keep the message brief, truthful, localised, and independent of animation."
   fix "Expose a short status label alongside the existing progress or skeleton state. Keep it accurate and persistent long enough to orient the user; never invent progress or use animation as the only meaning."
   bad "<div class=\"spinner\" aria-label=\"Loading\"></div>"
@@ -226,9 +185,6 @@ end
 
 Law.define(:NO_ASCII_ART_OUTSIDE_FACE) do
   source "Rendered-values law — ASCII art is reserved for the face itself"
-  severity :error
-  languages %i[ruby javascript html yaml markdown zsh css]
-  path_exclude %r{(?:MASTER/lib/cli/face|RAILS/master/public/(?:face_ascii|face_2d_fallback)\.js|RAILS/master/test/face_ascii\.test\.mjs|MASTER/test/test_cli_ascii_face\.rb|MASTER/test/fixtures/face_ascii_frames\.json|MASTER/tools/face_ascii_fixtures\.rb)}
   ask "Does this file add ASCII-art logos, boot banners, decorative prompt drawings, or other typographic pictures outside the face renderer? ASCII art is forbidden everywhere except the face itself and the fixtures that prove its rendering. Ordinary text, a real wordmark set in a font, shell prompt characters, and dmesg-like status lines are not ASCII art. Return CLEAN when no decorative ASCII picture exists outside the face."
   fix "Delete ASCII-art banners, wordmarks, and prompt drawings. Keep ASCII geometry only inside the terminal/browser face renderer and its matching fixtures."
   bad <<~'X'

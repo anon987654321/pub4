@@ -118,7 +118,7 @@ module Master
         # this version had learned ported there (2026-08-21 twin retirement).
 
         LawDSL.law :RUBY_TERNARY_NOT_NESTED,
-          severity: :warning, tags: %i[STYLE], applies_to: %i[ruby],
+          tags: %i[STYLE], applies_to: %i[ruby],
           fires: "value = a ? (b ? 1 : 2) : 3\n",
           does_not_fire: "value = a ? 1 : 2\n",
           description: "no nested ternaries" do |src, path:|
@@ -141,7 +141,7 @@ module Master
         end
 
         LawDSL.law :NO_ABBREVIATED_IDENTIFIERS,
-          severity: :info, tags: %i[STYLE], applies_to: %i[ruby javascript],
+          tags: %i[STYLE], applies_to: %i[ruby javascript],
           fires: "def call(tmp)\nend\n",
           does_not_fire: "def call(temporary_path)\nend\n",
           description: "spell identifiers in full — no tmp/idx/cfg/ctx" do |src, path:|
@@ -171,7 +171,7 @@ module Master
         # once the parse tree is read instead of the line, MASTER holds 376
         # single-quoted strings and every one of them sits inside a `#{}`.
         LawDSL.law :DOUBLE_QUOTES_RUBY,
-          severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
+          tags: %i[STYLE], applies_to: %i[ruby],
           fires: %(name = 'osman'\n),
           does_not_fire: %(name = "osman"\n),
           description: "double-quoted strings per style.yml" do |src, path:|
@@ -198,7 +198,7 @@ module Master
         end
 
         LawDSL.law :EN_DASH_RANGE,
-          severity: :info, tags: %i[TYPOGRAPHY], applies_to: %i[markdown yaml html],
+          tags: %i[TYPOGRAPHY], applies_to: %i[markdown yaml html],
           example_path: "/repo/docs/example.md",
           fires: "The band is 45-75 wide.\n",
           does_not_fire: "The band is 45–75 wide.\n",
@@ -221,7 +221,7 @@ module Master
         end
 
         LawDSL.law :ALL_CAPS_NO_TRACKING,
-          severity: :info, tags: %i[TYPOGRAPHY], applies_to: %i[css scss],
+          tags: %i[TYPOGRAPHY], applies_to: %i[css scss],
           fires: ".label { text-transform: uppercase; }\n",
           does_not_fire: ".label { text-transform: uppercase; letter-spacing: 0.08em; }\n",
           description: "all-caps labels need letter-spacing" do |src, path:|
@@ -237,7 +237,7 @@ module Master
         TAB_DELIMITED_BASENAMES = %w[login.conf newsyslog.conf].freeze
 
         LawDSL.law :TAB_CHARACTER,
-          severity: :warning, tags: %i[HYGIENE],
+          tags: %i[HYGIENE],
           fires: "def call\n\tvalue\nend\n",
           does_not_fire: "def call\n  value\nend\n",
           description: "tabs forbidden — use two spaces" do |src, path:|
@@ -247,7 +247,7 @@ module Master
         end
 
         LawDSL.law :FINAL_NEWLINE,
-          severity: :info, tags: %i[HYGIENE],
+          tags: %i[HYGIENE],
           fires: "puts 1",
           does_not_fire: "puts 1\n",
           description: "files end with a single newline" do |src, path:|
@@ -286,7 +286,7 @@ module Master
         end
 
         LawDSL.law :COMMENTS_AS_DEODORANT,
-          severity: :warning, tags: %i[CLEAN_CODE SELF_EXPLAINING], applies_to: %i[ruby],
+          tags: %i[CLEAN_CODE SELF_EXPLAINING], applies_to: %i[ruby],
           fires: "# increment the wear count\nincrement_wear_count\n",
           does_not_fire: "# a torn hem is still a wearing\nincrement_wear_count\n",
           description: "a comment that restates the line below it says nothing the code did not" do |src, path:|
@@ -312,7 +312,7 @@ module Master
         end
 
         LawDSL.law :VERTICAL_BREATH,
-          severity: :info, autofix: "add_vertical_breath", tags: %i[BEAUTY], applies_to: %i[ruby javascript],
+          autofix: "add_vertical_breath", tags: %i[BEAUTY], applies_to: %i[ruby javascript],
           fires: (1..10).map { |i| "line#{i} = 1\n" }.join,
           does_not_fire: "a = 1\n\nb = 2\n",
           description: "vertical breath — avoid dense blocks of 10+ lines without a blank line" do |src, path:|
@@ -345,7 +345,7 @@ module Master
         end
 
         LawDSL.law :CODE_SYMMETRY,
-          severity: :info, tags: %i[BEAUTY], applies_to: %i[ruby javascript],
+          tags: %i[BEAUTY], applies_to: %i[ruby javascript],
           fires: "def foo\n        return true\nend\n",
           does_not_fire: "def foo\n  return true\nend\n",
           description: "source symmetry — avoid jagged indentation shifts" do |src, path:|
@@ -372,7 +372,7 @@ module Master
         end
 
         LawDSL.law :TYPOGRAPHIC_GRID,
-          severity: :info, tags: %i[TYPOGRAPHY], applies_to: %i[markdown html],
+          tags: %i[TYPOGRAPHY], applies_to: %i[markdown html],
           fires: "#{"x" * 105}\n",
           does_not_fire: "short line\n",
           example_path: "/repo/README.md",
@@ -391,7 +391,7 @@ module Master
         end
 
         LawDSL.law :README_PROSE,
-          severity: :info, tags: %i[TYPOGRAPHY DOMAIN_LANGUAGE], applies_to: %i[markdown],
+          tags: %i[TYPOGRAPHY DOMAIN_LANGUAGE], applies_to: %i[markdown],
           example_path: "/repo/README.md",
           fires: "# Title\n\n| one | two |\n",
           does_not_fire: "# Title\n\n**One bold sentence carrying the argument.**\n",

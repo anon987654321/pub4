@@ -536,13 +536,15 @@ in `OPENBSD/CLAUDE.md`.
   Law-catalogue reconciliation, and run the relevant checks before publication. No
   separate operator-only path is required for a routine, evidence-backed repair.
 - **One Law model, not two registries.** `data/laws.yml#law_catalogue.entries`
-  is the canonical Law identity inventory and universal modality contract. The full
-  metadata migration is NOT complete: severity, statements/questions, fixes, examples
-  and some detector configuration still live in `Law.define` and `LawDSL` calls.
-  Do not describe ID/source reconciliation as full policy reconciliation. Finish moving
-  those fields into each catalogue entry, leave only detector/evaluator logic in Ruby,
-  remove the duplicate metadata declarations, and make the audit compare every policy
-  field, fixture contract and source path. Missing evidence stays INCONCLUSIVE.
+  is the canonical Law identity inventory and universal modality contract. Each entry
+  also owns its enforcement policy — severity, mode, languages, `path`/`path_pattern`,
+  `path_exclude`, lifecycle, autofix and assessment surfaces, over the catalogue's
+  `defaults` — and `Law::Builder` and the scanner read it from there; a `Law.define`
+  block has no method to declare it again. The migration is NOT complete: statements/
+  questions, fixes, examples, line/file scope and the registry adapters' `applies_to`
+  and transform names still live in `Law.define` and `LawDSL` calls. Do not describe
+  ID/source reconciliation as full policy reconciliation. Missing evidence stays
+  INCONCLUSIVE.
 - **No second record beside memory.** A belief store of verified, inferred and
   contradicted facts, an execution-context object and a durable notification
   queue each copy what memory, fiber locals and `StandingOrders` already hold.

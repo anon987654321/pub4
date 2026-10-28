@@ -11,7 +11,7 @@ module Master
         VENDORED_JS_RE = %r{/public/three\.module\.js\z}.freeze
 
         LawDSL.law :CONST_BY_DEFAULT,
-          severity: :warning, tags: %i[IMMUTABLE], applies_to: %i[javascript],
+          tags: %i[IMMUTABLE], applies_to: %i[javascript],
           fires: "let total = 0\n",
           does_not_fire: "let total = 0\ntotal += 1\n",
           description: "use const unless reassigned" do |src, path:|
@@ -45,7 +45,7 @@ module Master
         # FOR_OF lives once, in law/javascript.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
         LawDSL.law :QUOTE_VARIABLES,
-          severity: :error, tags: %i[ROBUSTNESS], applies_to: %i[zsh],
+          tags: %i[ROBUSTNESS], applies_to: %i[zsh],
           fires: "#!/bin/bash\ngrep $pattern file\n",
           does_not_fire: "#!/bin/zsh\ngrep $pattern file\n",
           description: "quote $variables where the shell word-splits" do |src, path:|
@@ -104,7 +104,7 @@ module Master
         end
 
         LawDSL.law :DOUBLE_BRACKET,
-          severity: :warning, tags: %i[ROBUSTNESS], applies_to: %i[zsh],
+          tags: %i[ROBUSTNESS], applies_to: %i[zsh],
           fires: "#!/bin/zsh\nif [ -f x ]; then echo y; fi\n",
           does_not_fire: "#!/bin/zsh\nif [[ -f x ]]; then echo y; fi\n",
           description: "use [[ ]] over [ ]" do |src, path:|
@@ -120,7 +120,7 @@ module Master
         # this version had learned ported there (2026-08-21 twin retirement).
 
         LawDSL.law :JS_MODULE_SIZE,
-          severity: :warning, tags: %i[SMALL_PARTS], applies_to: %i[javascript],
+          tags: %i[SMALL_PARTS], applies_to: %i[javascript],
           fires: ("// line\n" * 301),
           does_not_fire: ("// line\n" * 300),
           description: "JS files over 300 lines — split at module boundaries" do |src, path:|
@@ -160,7 +160,7 @@ module Master
       # who chose it can answer. Six passes over this rule removed 596 findings
       # and every one was the rule misreading something; none was a substitution.
         LawDSL.law :MAGIC_COLOR,
-          severity: :warning, tags: %i[DESIGN], applies_to: %i[css scss javascript html],
+          tags: %i[DESIGN], applies_to: %i[css scss javascript html],
           fires: ".btn { color: #c0392b; }\n",
           does_not_fire: ":root { --danger: #c0392b; }\n",
           description: "color values must reference design tokens, not raw hex/rgb" do |src, path:|
@@ -233,7 +233,7 @@ module Master
 
       # A11 OPTIONAL_CHAINING_JS — && guard chains in JavaScript (OPTIONAL_CHAINING).
         LawDSL.law :OPTIONAL_CHAINING_JS,
-          severity: :warning, tags: %i[READABILITY], applies_to: %i[javascript],
+          tags: %i[READABILITY], applies_to: %i[javascript],
           fires: "const name = user && user.name\n",
           does_not_fire: "const name = user?.name\n",
           description: "use ?. over && chains" do |src, path:|

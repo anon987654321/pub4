@@ -9,7 +9,7 @@ class TestLawContract < Minitest::Test
   # Laws, so they are catalogued for the length of the test and nowhere else.
   def with_catalogued(*ids)
     original = Law.method(:catalogue_entry)
-    probe = { "universal" => true, "modalities" => %w[lexical semantic visual] }
+    probe = { "universal" => true, "modalities" => %w[lexical semantic visual], "severity" => "info" }
     Law.define_singleton_method(:catalogue_entry) do |id|
       ids.include?(id.to_sym) ? probe : original.call(id)
     end
@@ -35,7 +35,6 @@ class TestLawContract < Minitest::Test
         File.write(path, <<~RUBY)
           Law.define(:LOAD_ROLLBACK_PROBE) do
             source "test"
-            severity :info
             practice "stable"
             fix "keep it"
             bad "bad"
@@ -49,7 +48,6 @@ class TestLawContract < Minitest::Test
         File.write(path, <<~RUBY)
           Law.define(:LOAD_ROLLBACK_PROBE) do
             source "test"
-            severity :info
             practice "updated"
             fix "keep it"
             bad "bad"
@@ -63,7 +61,6 @@ class TestLawContract < Minitest::Test
         File.write(path, <<~RUBY)
           Law.define(:LOAD_ROLLBACK_PROBE) do
             source "test"
-            severity :info
             practice "broken"
             fix "keep it"
             bad "bad"
@@ -88,7 +85,6 @@ class TestLawContract < Minitest::Test
           sleep 0.2
           Law.define(:ATOMIC_RELOAD_PROBE) do
             source "test"
-            severity :info
             practice "new"
             fix "keep it"
             bad "bad"
@@ -140,18 +136,6 @@ class TestLawContract < Minitest::Test
       assert_equal expected, law.assessment_surfaces, law.id.to_s
       assert law.universal?, law.id.to_s
     end
-  end
-
-  def test_law_dsl_rejects_unknown_assessment_surfaces
-    builder = Law::Builder.new(:ASSESSMENT_SURFACE_PROBE)
-    builder.surfaces([:made_up_surface])
-    builder.practice("keep a measurable contract")
-    builder.fix("inspect and report")
-    builder.bad("bad")
-    builder.good("good")
-
-    error = assert_raises(ArgumentError) { builder.build }
-    assert_includes error.message, "unknown assessment surfaces"
   end
 
   def test_contract_has_stable_machine_readable_shape

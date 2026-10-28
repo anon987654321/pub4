@@ -87,7 +87,7 @@ module Master
         # Scoped to /app/ rather than /app/controllers/ because a service or
         # model object handed the params hash carries the same risk.
         LawDSL.law :STRONG_PARAMETERS,
-          severity: :error, tags: %i[SECURITY], applies_to: %i[ruby],
+          tags: %i[SECURITY], applies_to: %i[ruby],
           fires: "Post.create(params[:post])\n",
           does_not_fire: "Post.create(params.require(:post).permit(:title))\n",
           description: "mass assignment goes through explicitly permitted attributes" do |src, path:|
@@ -108,7 +108,7 @@ module Master
         # this version had learned ported there (2026-08-21 twin retirement).
 
         LawDSL.law :HASH_FETCH,
-          severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
+          tags: %i[READABILITY], applies_to: %i[ruby],
           fires: "value = options[:size] || 10\n",
           does_not_fire: "value = options.fetch(:size, 10)\n",
           description: "prefer Hash#fetch over [] with ||" do |src, path:|
@@ -136,7 +136,7 @@ module Master
         # this version had learned ported there (2026-08-21 twin retirement).
 
         LawDSL.law :FIND_EACH,
-          severity: :warning, tags: %i[PERFORMANCE], applies_to: %i[ruby],
+          tags: %i[PERFORMANCE], applies_to: %i[ruby],
           fires: "  User.all.each { |u| u.touch }\n",
           does_not_fire: "  User.find_each(batch_size: 500) { |u| u.touch }\n",
           description: "use find_each for batch processing" do |src, path:|
@@ -146,7 +146,7 @@ module Master
         end
 
         LawDSL.law :NO_UPDATE_ATTRIBUTE,
-          severity: :error, tags: %i[DATA_INTEGRITY], applies_to: %i[ruby],
+          tags: %i[DATA_INTEGRITY], applies_to: %i[ruby],
           fires: "  user.update_attribute(:name, name)\n",
           does_not_fire: "  user.update!(name: name)\n",
           description: "replace update_attribute with update!" do |src, path:|
@@ -155,7 +155,7 @@ module Master
         end
 
         LawDSL.law :PLUCK_OVER_MAP,
-          severity: :info, tags: %i[PERFORMANCE], applies_to: %i[ruby],
+          tags: %i[PERFORMANCE], applies_to: %i[ruby],
           fires: "  ids = order.items.map(&:id)\n",
           does_not_fire: "  ids = order.items.pluck(:id)\n",
           example_path: "/repo/RAILS/brgen/app/models/example.rb",
@@ -172,7 +172,7 @@ module Master
         # :warn and one at :info, and every 3+-positional def carried both.
 
         LawDSL.law :DEAD_CODE,
-          severity: :warning, autofix: "remove_immediate_dead_code", tags: %i[CLEAN_CODE], applies_to: %i[ruby],
+          autofix: "remove_immediate_dead_code", tags: %i[CLEAN_CODE], applies_to: %i[ruby],
           fires: "  return value\n  log(value)\n",
           # A guard clause keeps the next line reachable, which is the shape a bare
           # \b(return|raise)\b read as unreachable across the whole tree.
@@ -221,7 +221,7 @@ module Master
         # worst (top: 85.5 in brgen's application_helper); walk it down as
         # they fall: 40 -> 30 (81) -> 25 (169) -> 17 (560).
         LawDSL.law :ABC_SIZE,
-          severity: :warning, tags: %i[COMPLEXITY], applies_to: %i[ruby], autofix: false,
+          tags: %i[COMPLEXITY], applies_to: %i[ruby], autofix: false,
           description: "method ABC size over the ratchet threshold — extract until the pieces name themselves",
           example_path: "/repo/lib/example.rb",
           fires: "def dense(x)\n" + Array.new(20) { |i| "  v#{i} = x.call(#{i}) if x.ok?(#{i})\n" }.join + "end\n",
@@ -253,7 +253,7 @@ module Master
         # of which the great majority were a method's last expression or an
         # assertion message, and the fixer would have touched none of them.
         LawDSL.law :TRAILING_COMMAS,
-          severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
+          tags: %i[STYLE], applies_to: %i[ruby],
           fires: %(LIST = [\n  "one"\n]\n),
           does_not_fire: %(LIST = [\n  "one",\n]\n),
           description: "trailing commas in multi-line collections" do |src, path:|

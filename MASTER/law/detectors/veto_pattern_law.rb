@@ -18,7 +18,7 @@ module Master
         class VetoPatternLaw < Law
           def self.auto_build? = false
 
-          declare id: "veto_patterns", severity: :veto,
+          declare id: "veto_patterns",
                   description: "Unconditional merge blockers from laws.yml veto_patterns"
 
           def initialize(root: Master::ROOT)

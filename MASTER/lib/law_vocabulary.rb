@@ -7,6 +7,11 @@ module Master
   module LawVocabulary
     CANONICAL = "law"
 
+    # The modalities every Law is assessed in. laws.yml declares them for the
+    # catalogue and each entry; this is the set those declarations must equal,
+    # held once for the loader, the registry audit and the configuration guard.
+    MODALITIES = %w[lexical semantic visual].freeze
+
     TERMS = {
       "law" => :synonym,
       "laws" => :synonym,

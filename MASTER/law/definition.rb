@@ -15,9 +15,8 @@ require_relative "../lib/law_vocabulary"
 # Contract: `rake dogfood` is the archaeological audit. A capability that goes
 # missing is a fixture that stops passing — nothing to compare by hand.
 module Law
-  # laws.yml owns the catalogue and global assessment surface contract. Ruby
-  # source files implement detectors; they do not create another Law identity or
-  # a separate list of supported surfaces.
+  # laws.yml owns the catalogue, each Law's policy and the surface contract; Ruby
+  # implements detectors and creates no second identity, policy or surface list.
   require_relative "../lib/master" unless defined?(Master::ROOT)
   LAW_CATALOGUE = Master.load_laws.fetch("law_catalogue").freeze
   ASSESSMENT_SURFACES = Array(LAW_CATALOGUE.fetch("surfaces")).map(&:to_sym).freeze
@@ -30,11 +29,30 @@ module Law
 
     raise ArgumentError, "Law #{key} is not marked universal in laws.yml" unless entry["universal"] == true
     modalities = Array(entry["modalities"]).map(&:to_s).sort
-    expected = %w[lexical semantic visual]
+    expected = Master::LawVocabulary::MODALITIES
     raise ArgumentError, "Law #{key} modalities must be #{expected.join(', ')}" unless modalities == expected
 
     entry
   end
+
+  # A Law's enforcement policy is its catalogue entry over the catalogue's
+  # defaults; Ruby carries only the detector. `path` is a substring and
+  # `path_pattern` a regexp; `path_exclude` is a regexp or a list of alternatives.
+  def self.catalogue_policy(id, entry = catalogue_entry(id))
+    policy = LAW_CATALOGUE.fetch("defaults", {}).merge(entry)
+    raise ArgumentError, "Law #{id} has no severity in laws.yml law_catalogue" if policy["severity"].to_s.empty?
+
+    named = policy.slice("severity", "mode", "lifecycle", "autofix").to_h { |key, value| [key.to_sym, value.to_sym] }
+    named.merge(reach(policy))
+  end
+
+  def self.reach(policy)
+    { languages: Array(policy["languages"]).map(&:to_s), surfaces: policy["surfaces"]&.map(&:to_sym),
+      path: policy["path_pattern"] ? Regexp.new(policy["path_pattern"]) : policy["path"],
+      path_exclude: pattern(policy["path_exclude"]) }
+  end
+
+  def self.pattern(source) = source && Regexp.union(Array(source).map { |part| Regexp.new(part) })
 
   Finding = Data.define(:id, :file, :line, :text)
 
@@ -130,9 +148,8 @@ module Law
   ].freeze
 
   Definition = Data.define(*MEMBERS) do
-    # `path` takes a Regexp or a substring; `path_exclude` was already a Regexp,
-    # and one member of a pair reading its argument the other way is a trap for
-    # whoever writes the next law.
+    # `path` is a substring (catalogue `path`) or a Regexp (catalogue
+    # `path_pattern`); `path_exclude` is always a Regexp.
     # A law that names no language applies everywhere. A law that names one
     # applies to a file resolved to that language, and to nothing else.
     #
@@ -160,14 +177,10 @@ module Law
     # rather than raise on a nil detect.
     def semantic? = !ask.nil?
 
-    # Universal Laws apply across the canonical surface vocabulary. A
-    # deliberate surfaces: declaration may narrow the adapter contract; without
-    # one, absent surface assessors remain INCONCLUSIVE rather than disappearing.
-    def assessment_surfaces
-      # Every Law is assessed on every canonical surface. Adapters may be
-      # domain-specific, but a missing adapter is INCONCLUSIVE, never an exemption.
-      ::Law::ASSESSMENT_SURFACES
-    end
+    # A Law is assessed on every canonical surface unless its catalogue entry
+    # declares `surfaces:`, which narrows it to the ones named. A surface the
+    # Law reaches but no adapter measures stays INCONCLUSIVE, never exempt.
+    def assessment_surfaces = surfaces || ::Law::ASSESSMENT_SURFACES
 
     # Universal describes the invariant, not the detector syntax. A universal
     # principle may have Ruby, zsh, Rails or another domain adapter.
@@ -415,17 +428,16 @@ module Law
     retired: %i[proposed],
   }.freeze)
 
+  # Ruby declares what a Law detects and how it reads; its policy comes from
+  # the catalogue entry, so the block has no method to declare severity,
+  # languages, paths, lifecycle or autofix a second time.
   class Builder
-    %i[
-      source severity mode languages scope surfaces law_scope lifecycle autofix
-      path path_exclude absent ask practice fix bad good reads_comments
-    ].each { |a| define_method(a) { |v| @h[a] = v } }
+    %i[source scope absent ask practice fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
 
     def initialize(id)
       @h = {
-        id:, severity: :warn, mode: :violation, languages: [], scope: :line, surfaces: nil, law_scope: nil,
-        lifecycle: :active, autofix: :review, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil,
-        practice: nil, reads_comments: false
+        id:, scope: :line, law_scope: nil, absent: nil, detect: nil, ask: nil, practice: nil, reads_comments: false,
+        **::Law.catalogue_policy(id)
       }
     end
     def detect(&block) = @h[:detect] = block
@@ -438,27 +450,15 @@ module Law
     def build
       kinds = %i[detect ask practice].select { |k| @h[k] }
       raise ArgumentError, "#{@h[:id]}: needs detect, ask or practice" if kinds.empty?
-      if @h[:surfaces]
-        @h[:surfaces] = Array(@h[:surfaces]).map(&:to_sym).uniq
-        unknown_surfaces = @h[:surfaces] - ASSESSMENT_SURFACES
-        if unknown_surfaces.any?
-          raise ArgumentError, "#{@h[:id]}: unknown assessment surfaces #{unknown_surfaces.join(", ")}"
-        end
+      unknown_surfaces = Array(@h[:surfaces]) - ASSESSMENT_SURFACES
+      if unknown_surfaces.any?
+        raise ArgumentError, "#{@h[:id]}: unknown assessment surfaces #{unknown_surfaces.join(", ")}"
       end
-      # `fix` is in this list because Data requires it and Builder does not
-      # default it, so a rule that omitted it died with "missing keyword: :fix"
-      # from Data#initialize — a message about the implementation rather than
-      # about the rule. Every existing law sets it; only the error changes.
+      # Named here so a law missing one hears about the law, not Data#initialize.
       missing = %i[bad good fix].reject { |k| @h.key?(k) }
       raise ArgumentError, "#{@h[:id]}: missing #{missing.join(', ')}" unless missing.empty?
 
-      # Strings, because the files a law is judged on arrive as "ruby" and a symbol list never matched them.
-      @h[:languages] = Array(@h[:languages]).map(&:to_s)
-      catalogue = ::Law.catalogue_entry(@h.fetch(:id))
-      @h[:law_scope] = catalogue.fetch("universal") ? :universal : :domain
-      @h[:surfaces] = ::Law::ASSESSMENT_SURFACES
-      @h[:lifecycle] ||= :active
-      @h[:autofix] ||= :review
+      @h[:law_scope] = ::Law.catalogue_entry(@h.fetch(:id)).fetch("universal") ? :universal : :domain
 
       Definition.new(**@h.slice(*MEMBERS)).prove!
     end

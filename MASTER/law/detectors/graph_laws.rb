@@ -20,7 +20,7 @@ module Master
 
           def self.auto_build? = false
 
-          declare id: "interconnect", severity: :warning, tags: %i[ONE_SOURCE],
+          declare id: "interconnect", tags: %i[ONE_SOURCE],
                   description: "Phantom YAML key reads and orphan data keys"
 
           def initialize(root:)
@@ -124,7 +124,7 @@ module Master
 
           def self.auto_build? = false
 
-          declare id: "co_change_coupling", severity: :info, tags: %i[DECOUPLE ONE_JOB], autofix: true,
+          declare id: "co_change_coupling", tags: %i[DECOUPLE ONE_JOB], autofix: true,
                   description: "Files co-change with N+ peers across module boundaries — hidden coupling"
 
           def initialize(root: nil, ecology: nil)

@@ -5,7 +5,6 @@ module Master
     module Scan
       module Laws
         LawDSL.law :PARAMETERIZED_SLUG,
-          severity: :warning,
           tags: %i[FLAT_HIERARCHY DRY],
           applies_to: %i[ruby],
           autofix: false,
@@ -59,7 +58,7 @@ module Master
             play_list guest_list old_string new_string old_str new_str
           ].freeze
 
-          declare id: "TYPE_IN_NAME", severity: :info, tags: %i[DOMAIN_LANGUAGE LOAD_BEARING_NAMES],
+          declare id: "TYPE_IN_NAME", tags: %i[DOMAIN_LANGUAGE LOAD_BEARING_NAMES],
                   description: "a name that encodes its own type says nothing the code did not"
 
           def check_ast(ast, _code, path:)
@@ -114,7 +113,7 @@ module Master
                float|int|uint|bit|px|rem|em|ms|hz|db|k|fp|bf|q|load|capture)\d+\z
           /x
 
-          declare id: "NUMBERED_NAME", severity: :info, tags: %i[DOMAIN_LANGUAGE LOAD_BEARING_NAMES],
+          declare id: "NUMBERED_NAME", tags: %i[DOMAIN_LANGUAGE LOAD_BEARING_NAMES],
                   description: "numbered siblings name no difference between themselves"
 
           def check_ast(ast, _code, path:)
@@ -166,7 +165,7 @@ module Master
         # the name says how; if it cannot, they are one file or the difference
         # is not yet understood.
         LawDSL.law :FILE_SEQUENCE_NAME,
-          severity: :warning, reads_beyond_file: true,
+          reads_beyond_file: true,
           does_not_fire: "class AddThing < ActiveRecord::Migration[8.0]; end\n",
           example_path: "/repo/db/migrate/20260101000000_add_thing_v2.rb",
           tags: %i[LOAD_BEARING_NAMES DOMAIN_LANGUAGE],
@@ -200,7 +199,6 @@ module Master
         # shared and core_ext were in this list and came out: all four are ordinary
         # Ruby structure, and base.rb accounted for 3 of 6 findings, all false.
         LawDSL.law :FILE_VAGUE_NAME,
-          severity: :info,
           does_not_fire: "module FormatHelper; end\n",
           example_path: "/repo/app/helpers/format_helper.rb",
           tags: %i[LOAD_BEARING_NAMES DOMAIN_LANGUAGE],

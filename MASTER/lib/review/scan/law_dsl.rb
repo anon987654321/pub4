@@ -9,7 +9,7 @@ module Master
     # Rule subclasses inherit Law.auto_build? == true; specialized laws that
     # need constructor arguments override self.auto_build? = false explicitly.
     #
-    #   LawDSL.law :NO_PUTS, severity: :warning, applies_to: %i[ruby] do |src, path:|
+    #   LawDSL.law :NO_PUTS, applies_to: %i[ruby] do |src, path:|
     #     scan_lines(src, /\bputs\b/, message: "puts in production code")
     #   end
       module LawDSL
@@ -26,7 +26,7 @@ module Master
         #   LawDSL.law :TIME_ZONE_UNSAFE, ...,
         #     fires: "Time.now.beginning_of_day",
         #     does_not_fire: "Time.now.utc.iso8601"
-        def self.law(id, severity: :warning, tags: [], applies_to: nil, autofix: true, description: nil,
+        def self.law(id, tags: [], applies_to: nil, autofix: true, description: nil,
                       fires: nil, does_not_fire: nil, example_path: nil, detect_semantic: nil, detect_structural: nil,
                       reads_beyond_file: false, &block)
           raise ArgumentError, "block required" unless block
@@ -34,19 +34,19 @@ module Master
           dsl_id = id.to_s
           dsl_desc = description || dsl_id.tr("_", " ")
           dsl_tags = Array(tags)
-          cls = build_dsl_law_class(dsl_id:, dsl_desc:, dsl_tags:, severity:, applies_to:, autofix:, block:,
+          cls = build_dsl_law_class(dsl_id:, dsl_desc:, dsl_tags:, applies_to:, autofix:, block:,
                                     fires:, does_not_fire:, example_path:, detect_semantic:, detect_structural:)
           cls.define_singleton_method(:reads_beyond_file?) { true } if reads_beyond_file
           cls
         end
 
-        def self.build_dsl_law_class(dsl_id:, dsl_desc:, dsl_tags:, severity:, applies_to:, autofix:, block:,
+        def self.build_dsl_law_class(dsl_id:, dsl_desc:, dsl_tags:, applies_to:, autofix:, block:,
                                            fires: nil, does_not_fire: nil, example_path: nil, detect_semantic: nil, detect_structural: nil)
           cls = Class.new(Law) do
             define_method(:initialize) do
               super()
               @id = dsl_id; @description = dsl_desc
-              @severity = severity; @law_tags = dsl_tags; @auto_fix = autofix
+              @severity = self.class.catalogue_severity(dsl_id); @law_tags = dsl_tags; @auto_fix = autofix
             end
             define_method(:check) do |code, path:|
               # Language narrows this deterministic adapter, not the Law's

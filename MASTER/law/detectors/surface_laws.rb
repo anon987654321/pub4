@@ -48,7 +48,7 @@ module Master
         end
 
         LawDSL.law :NO_DECORATIVE_FX,
-          severity: :warning, tags: %i[DESIGN AESTHETIC PIXEL], applies_to: CSS_LANGS, autofix: true,
+          tags: %i[DESIGN AESTHETIC PIXEL], applies_to: CSS_LANGS, autofix: true,
           description: "flat UI — no blur, glow, or ornamental shadow",
           detect_semantic: "Does the element use shadows or glows that serve no functional purpose?",
           detect_structural: "Check for 'glow' or 'shadow' in filenames or directory names",
@@ -83,7 +83,7 @@ module Master
         end
 
         LawDSL.law :FLAT_PIXELS,
-          severity: :warning, tags: %i[DESIGN AESTHETIC PIXEL], applies_to: %i[css scss javascript], autofix: true,
+          tags: %i[DESIGN AESTHETIC PIXEL], applies_to: %i[css scss javascript], autofix: true,
           description: "canvas/pixel layers stay crisp — no smoothing/glow language",
           detect_semantic: "Is the rendering intent 'crisp' or 'pixel-art', yet smoothing is enabled?",
           detect_structural: "Check for 'smoothing' or 'blur' in JS filename/path",
@@ -125,7 +125,7 @@ module Master
         # The static pass catches only a high-signal anti-pattern; it leaves unusual
         # but legitimate overlays to the semantic review and rendered geometry checks.
         LawDSL.law :GRID_STRUCTURE,
-          severity: :warning, tags: %i[DESIGN LAYOUT], applies_to: CSS_LANGS, autofix: false,
+          tags: %i[DESIGN LAYOUT], applies_to: CSS_LANGS, autofix: false,
           description: "grid structure — shared tracks, consistent alignment and parent-owned gap",
           detect_semantic: "Does the interface express repeated relationships with coherent grid or flex tracks and parent-owned gap rather than arbitrary per-child offsets and widths?",
           detect_structural: "Find grid-like containers whose direct children combine absolute positioning, a fixed physical offset and a fixed wide width.",
@@ -157,7 +157,7 @@ module Master
         end
 
         LawDSL.law :EIGHT_PX_RHYTHM,
-          severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: CSS_LANGS, autofix: true,
+          tags: %i[DESIGN AESTHETIC], applies_to: CSS_LANGS, autofix: true,
           description: "spacing on 8px rhythm (4px hairline allowed) — Müller-Brockmann grid module",
           detect_semantic: "Does the spacing create a visual rhythm that deviates from the 8px grid?",
           detect_structural: "Verify if layout files follow the 8px naming convention (e.g., _grid_8.scss)",
@@ -203,7 +203,7 @@ module Master
         end
 
         LawDSL.law :LINE_HEIGHT_ON_SCALE,
-          severity: :warning, tags: %i[DESIGN TYPOGRAPHY RHYTHM], applies_to: CSS_LANGS, autofix: false,
+          tags: %i[DESIGN TYPOGRAPHY RHYTHM], applies_to: CSS_LANGS, autofix: false,
           description: "unitless line-height must be on design_rules / ScaleLint scale",
           example_path: "/repo/app/assets/stylesheets/_example.scss",
           fires: ".prose { line-height: 1.45; }\n",
@@ -240,7 +240,7 @@ module Master
         end
 
         LawDSL.law :TOUCH_TARGET_MIN,
-          severity: :warning, tags: %i[DESIGN UX ACCESSIBILITY], applies_to: CSS_LANGS, autofix: true,
+          tags: %i[DESIGN UX ACCESSIBILITY], applies_to: CSS_LANGS, autofix: true,
           description: "Fitts — interactive targets ≥44px",
           detect_semantic: "Is the interactive element's hit area too small for comfortable thumb use?",
           detect_structural: "Check if mobile-specific views lack minimum target constraints",
@@ -281,7 +281,7 @@ module Master
         end
 
         LawDSL.law :CHOICE_OVERLOAD,
-          severity: :info, tags: %i[DESIGN UX], applies_to: HTML_LANGS, autofix: false,
+          tags: %i[DESIGN UX], applies_to: HTML_LANGS, autofix: false,
           description: "Hick — too many peer choices without grouping",
           fires: "<nav>#{(1..8).map { |n| "<a href=\"/#{n}\">#{n}</a>" }.join}</nav>\n",
           # A plain <ul> is content being browsed, not options being chosen
@@ -343,7 +343,7 @@ module Master
         end
 
         LawDSL.law :PROGRESSIVE_DISCLOSURE,
-          severity: :info, tags: %i[DESIGN UX], applies_to: HTML_LANGS, autofix: false,
+          tags: %i[DESIGN UX], applies_to: HTML_LANGS, autofix: false,
           fires: %(<form class="settings">\n<input name=\"f1\">\n<input name=\"f2\">\n<input name=\"f3\">\n<input name=\"f4\">\n<input name=\"f5\">\n<input name=\"f6\">\n</form>\n),
           does_not_fire: %(<form class="settings">\n<details><summary>Advanced</summary>\n<input name=\"f1\">\n<input name=\"f2\">\n<input name=\"f3\">\n<input name=\"f4\">\n<input name=\"f5\">\n<input name=\"f6\">\n</details>\n</form>\n),
           description: "advanced controls should not dump all options at once" do |src, path:|
@@ -363,7 +363,7 @@ module Master
         end
 
         LawDSL.law :WHITESPACE_RHYTHM,
-          severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: CSS_LANGS, autofix: true,
+          tags: %i[DESIGN AESTHETIC], applies_to: CSS_LANGS, autofix: true,
           fires: ".card { color: red; }\n",
           does_not_fire: ".card { gap: var(--sp); }\n",
           description: "ma — breathing room via gap/section spacing tokens" do |src, path:|
@@ -382,7 +382,7 @@ module Master
         end
 
         LawDSL.law :TYPE_HIERARCHY,
-          severity: :info, tags: %i[DESIGN TYPOGRAPHY], applies_to: CSS_LANGS, autofix: false,
+          tags: %i[DESIGN TYPOGRAPHY], applies_to: CSS_LANGS, autofix: false,
           fires: ".s1 { font-size: 11px; }\n.s2 { font-size: 12px; }\n.s3 { font-size: 13px; }\n.s4 { font-size: 14px; }\n.s5 { font-size: 15px; }\n.s6 { font-size: 16px; }\n.s7 { font-size: 17px; }\n.s8 { font-size: 18px; }\n.s9 { font-size: 19px; }\n",
           does_not_fire: ".s1 { font-size: 11px; }\n.s2 { font-size: 12px; }\n.s3 { font-size: 13px; }\n.s4 { font-size: 14px; }\n.s5 { font-size: 15px; }\n.s6 { font-size: 16px; }\n.s7 { font-size: 17px; }\n.s8 { font-size: 18px; }\n",
           description: "modular type scale — flag one-off font sizes" do |src, path:|
@@ -398,7 +398,7 @@ module Master
         end
 
         LawDSL.law :CONTRAST_TOKENS,
-          severity: :info, tags: %i[DESIGN ACCESSIBILITY], applies_to: CSS_LANGS, autofix: false,
+          tags: %i[DESIGN ACCESSIBILITY], applies_to: CSS_LANGS, autofix: false,
           fires: ".meta { color: #ccc; }\n",
           does_not_fire: ".meta { color: var(--text-secondary); }\n",
           description: "prefer token colors over low-contrast gray-on-gray magic" do |src, path:|
@@ -426,7 +426,7 @@ module Master
         end
 
         LawDSL.law :PIXEL_EXACT,
-          severity: :info, tags: %i[DESIGN AESTHETIC PIXEL], applies_to: CSS_LANGS, autofix: false,
+          tags: %i[DESIGN AESTHETIC PIXEL], applies_to: CSS_LANGS, autofix: false,
           fires: ".card { width: 12.5px; }\n",
           does_not_fire: ".card { width: 12px; }\n",
           description: "avoid subpixel/fractional layout that breaks integer grids" do |src, path:|
@@ -438,7 +438,7 @@ module Master
 
         # Family polish (design_rules ui_polish) — ERB chrome must be i18n; titles use tokens.
         LawDSL.law :ERB_HARDCODED_CHROME,
-          severity: :warning, tags: %i[DESIGN I18N RAILS VIEWS], applies_to: HTML_LANGS, autofix: false,
+          tags: %i[DESIGN I18N RAILS VIEWS], applies_to: HTML_LANGS, autofix: false,
           description: "empty/search chrome uses t() not hardcoded English (default_locale nb)",
           fires: %(<%= render "shared/empty", title: "No results" %>\n),
           does_not_fire: %(<%= render "shared/empty", title: t("empty.results") %>\n) do |src, path:|
@@ -464,7 +464,7 @@ module Master
         end
 
         LawDSL.law :TYPE_TITLE_TOKEN,
-          severity: :info, tags: %i[DESIGN TYPOGRAPHY], applies_to: CSS_LANGS, autofix: false,
+          tags: %i[DESIGN TYPOGRAPHY], applies_to: CSS_LANGS, autofix: false,
           description: "page titles use --text-title token not raw 20px",
           fires: ".page-header h1 { font-size: 20px; }\n",
           does_not_fire: ".page-header h1 { font-size: var(--text-title, 1.25rem); }\n" do |src, path:|
@@ -487,7 +487,7 @@ module Master
         end
 
         LawDSL.law :FORM_FOLLOWS_FUNCTION,
-          severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: HTML_LANGS, autofix: false,
+          tags: %i[DESIGN AESTHETIC], applies_to: HTML_LANGS, autofix: false,
           description: "decorative empty wrappers without content/role",
           fires: %(<div class="decor"></div>\n),
           # The same class carrying something is the wrapper doing work.
@@ -499,7 +499,7 @@ module Master
         end
 
         LawDSL.law :SIGNAL_NOISE,
-          severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: HTML_LANGS, autofix: false,
+          tags: %i[DESIGN AESTHETIC], applies_to: HTML_LANGS, autofix: false,
           description: "too many competing visual classes on one node",
           fires: %(<div class="card card--wide is-open u-mt-2 u-p-1 shadow rounded muted">x</div>\n),
           does_not_fire: %(<div class="card card--wide is-open">x</div>\n) do |src, path:|
@@ -516,7 +516,7 @@ module Master
         end
 
         LawDSL.law :AFFORDANCE_CLARITY,
-          severity: :warning, tags: %i[DESIGN UX], applies_to: HTML_LANGS, autofix: false,
+          tags: %i[DESIGN UX], applies_to: HTML_LANGS, autofix: false,
           description: "clickable non-buttons need clear affordance",
           fires: %(<div data-action="click->dropdown#toggle">Menu</div>\n),
           # A click-outside listener on the window says nothing about the div
@@ -546,7 +546,7 @@ module Master
         end
 
         LawDSL.law :AESTHETIC_MINIMALISM,
-          severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: HTML_LANGS, autofix: false,
+          tags: %i[DESIGN AESTHETIC], applies_to: HTML_LANGS, autofix: false,
           description: "Rams less-but-better — flag icon+label+badge pileups",
           fires: %(<button class="btn"><svg class="icon"></svg><span>Save</span></button>\n),
           does_not_fire: %(<button class="btn">Save</button>\n) do |src, path:|
@@ -575,7 +575,7 @@ module Master
 
         %w[USEFUL UNDERSTANDABLE UNOBTRUSIVE HONEST THOROUGH].each do |trait|
           LawDSL.law :"RAMS_#{trait}",
-            severity: :info, tags: %i[DESIGN RAMS], applies_to: HTML_LANGS, autofix: false,
+            tags: %i[DESIGN RAMS], applies_to: HTML_LANGS, autofix: false,
             description: "Rams checklist tag: #{trait.downcase}",
             fires: RAMS_FIXTURES.fetch(trait)[0],
             does_not_fire: RAMS_FIXTURES.fetch(trait)[1] do |src, path:|
@@ -615,7 +615,7 @@ module Master
         end
 
         LawDSL.law :HOST_CAPACITY,
-          severity: :warning, tags: %i[OPS], applies_to: %i[ruby], autofix: false,
+          tags: %i[OPS], applies_to: %i[ruby], autofix: false,
           description: "carrying capacity — avoid full-repo scan/fix in hot paths",
           example_path: "/repo/lib/example.rb",
           fires: "scanner.scan_dir(Master::ROOT)\n",
@@ -656,7 +656,7 @@ module Master
         end
 
         LawDSL.law :THIN_CONTROLLER,
-          severity: :warning, tags: %i[RAILS ARCHITECTURE], applies_to: %i[ruby], autofix: false,
+          tags: %i[RAILS ARCHITECTURE], applies_to: %i[ruby], autofix: false,
           description: "thin controllers — business logic belongs in models/services",
           example_path: "/repo/app/controllers/example_controller.rb",
           fires: %(def index\n  @posts = Post.where("created_at > ? AND city_id = ? AND published = ?", a, b, c)\nend\n),
@@ -692,7 +692,7 @@ module Master
         end
 
         LawDSL.law :FAT_MODEL_CALLBACK_SOUP,
-          severity: :info, tags: %i[RAILS ARCHITECTURE], applies_to: %i[ruby], autofix: false,
+          tags: %i[RAILS ARCHITECTURE], applies_to: %i[ruby], autofix: false,
           description: "limit model callback piles",
           fires: %w[before_validation before_save after_save after_create after_update after_commit]
                  .map { |cb| "  #{cb} :touch_feed\n" }.join,
@@ -706,7 +706,7 @@ module Master
         end
 
         LawDSL.law :RAILS_TAG_HELPER,
-          severity: :info, tags: %i[RAILS VIEWS], applies_to: %i[html], autofix: false,
+          tags: %i[RAILS VIEWS], applies_to: %i[html], autofix: false,
           description: "prefer tag helpers over raw HTML for dynamic content",
           fires: %(<p><%= @post.title %></p>\n),
           does_not_fire: %(<%= tag.p @post.title %>\n) do |src, path:|
@@ -722,7 +722,7 @@ module Master
         end
 
         LawDSL.law :STIMULUS_CONTROLLER_SIZE,
-          severity: :warning, tags: %i[RAILS JAVASCRIPT], applies_to: %i[javascript], autofix: false,
+          tags: %i[RAILS JAVASCRIPT], applies_to: %i[javascript], autofix: false,
           description: "Stimulus controllers stay focused",
           # 201 lines against the ceiling of 200, so the example proves the
           # boundary rather than a number far from it.
@@ -743,7 +743,7 @@ module Master
         end
 
         LawDSL.law :STIMULUS_PROGRESSIVE,
-          severity: :info, tags: %i[RAILS JAVASCRIPT UX], applies_to: %i[html], autofix: false,
+          tags: %i[RAILS JAVASCRIPT UX], applies_to: %i[html], autofix: false,
           description: "interactive UI should degrade without JS when possible",
           fires: %(<div data-controller="map"></div>\n),
           does_not_fire: %(<div data-controller="map"><a href="/kart">Kart</a></div>\n) do |src, path:|
@@ -755,7 +755,7 @@ module Master
         end
 
         LawDSL.law :NO_LOGIC_IN_VIEW,
-          severity: :warning, tags: %i[RAILS VIEWS], applies_to: %i[html], autofix: false,
+          tags: %i[RAILS VIEWS], applies_to: %i[html], autofix: false,
           description: "views present; models/helpers compute",
           fires: %(<% @posts.select { |p| p.published? }.each do |post| %>\n),
           # Rendering a collection is presentation, and `<%=` is the tell.
@@ -773,7 +773,7 @@ module Master
         end
 
         LawDSL.law :HELPER_VIEW_ONLY,
-          severity: :info, tags: %i[RAILS], applies_to: %i[ruby], autofix: false,
+          tags: %i[RAILS], applies_to: %i[ruby], autofix: false,
           description: "helpers format for views only",
           example_path: "/repo/app/helpers/example_helper.rb",
           fires: "def recent_posts\n  Post.where(published: true)\nend\n",
@@ -785,7 +785,7 @@ module Master
         end
 
         LawDSL.law :SCSS_NESTING_DEPTH,
-          severity: :warning, tags: %i[RAILS CSS DESIGN], applies_to: %i[scss], autofix: false,
+          tags: %i[RAILS CSS DESIGN], applies_to: %i[scss], autofix: false,
           description: "avoid deep SCSS nesting / preprocessor bloat",
           # Depth is read at each line's end, so the example nests the way SCSS
           # is written. The same five levels on one line measure zero.
@@ -807,7 +807,7 @@ module Master
         end
 
         LawDSL.law :PWA_MANIFEST_HINT,
-          severity: :info, tags: %i[RAILS PWA], applies_to: %i[json html], autofix: false,
+          tags: %i[RAILS PWA], applies_to: %i[json html], autofix: false,
           description: "PWA surfaces declare manifest",
           example_path: "/repo/app/views/layouts/application.html.erb",
           fires: "<html>\n<head><title>Brgen</title></head>\n</html>\n",

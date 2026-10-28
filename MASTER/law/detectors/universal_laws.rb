@@ -18,7 +18,7 @@ module Master
         # this version had learned ported there (2026-08-21 twin retirement).
 
         LawDSL.law :FEW_ARGUMENTS,
-          severity: :warning, tags: %i[SMALL_PARTS],
+          tags: %i[SMALL_PARTS],
           fires: "def place(north, east, depth)\nend\n",
           does_not_fire: "def place(north:, east:, depth:)\nend\n",
           description: "ideal is zero to two positional arguments" do |src, path:|
@@ -36,7 +36,7 @@ module Master
         end
 
         LawDSL.law :N_PLUS_ONE,
-          severity: :warning, tags: %i[PERFORMANCE],
+          tags: %i[PERFORMANCE],
           fires: "posts.each { |post| post.author.name }\n", example_path: "/repo/RAILS/x/app/models/y.rb",
           does_not_fire: "posts.each { |post| post.title }\n",
           description: "loading records one-by-one inside a loop" do |src, path:|
@@ -50,7 +50,7 @@ module Master
       # Only positional boolean defaults are flag arguments. Keyword defaults
       # (stream: false, enabled: true) are not — they're fine API design.
         LawDSL.law :NO_FLAG_ARGUMENTS,
-          severity: :warning, tags: %i[SMALL_PARTS],
+          tags: %i[SMALL_PARTS],
           fires: "def render(body, cache = true)\nend\n",
           does_not_fire: "def render(body, cache: true)\nend\n",
           description: "a flag that selects behavior means two things hiding as one" do |src, path:|
@@ -100,7 +100,7 @@ module Master
         ].freeze
 
         LawDSL.law :LAW_OF_DEMETER,
-          severity: :warning, tags: %i[COUPLING], applies_to: %i[ruby javascript html],
+          tags: %i[COUPLING], applies_to: %i[ruby javascript html],
           fires: "city = order.buyer.profile.address\n",
           does_not_fire: "names = files.uniq.sort.reject(&:empty?)\n",
           description: "only talk to immediate friends" do |src, path:|
@@ -124,7 +124,7 @@ module Master
       # `result` are contextually meaningful in most Ruby code.
 
         LawDSL.law :TYPOGRAPHIC_EXCELLENCE,
-          severity: :info, tags: %i[TYPOGRAPHY],
+          tags: %i[TYPOGRAPHY],
           # A quote against the ellipsis: the rule reads a bare quoted
           # ellipsis as the placeholder, not prose that happens to contain dots.
           fires: %(warn "..."\n),
@@ -151,7 +151,7 @@ module Master
         BOX_DRAWING = /[─-╿]/
 
         LawDSL.law :TYPOGRAPHY_DISCIPLINE,
-          severity: :info, tags: %i[TYPOGRAPHY],
+          tags: %i[TYPOGRAPHY],
           fires: "# ╭──── section ────╮\n",
           does_not_fire: "| name | purpose |\n|------|---------|\n",
           description: "hierarchy via weight and brightness, not decoration" do |src, path:|
@@ -183,13 +183,8 @@ module Master
       # canonical `law/detectors/` sources arrive conducted, and rule sources that
       # spell the pattern in strings are counted and triaged rather than excused by path.
 
-        # :error because data/laws.yml declares ONE_SOURCE a kernel rule at
-        # error, and the catalogue outranks the implementation (CLAUDE.md's
-        # authority order). Measured before the change: this rule finds nothing
-        # in any of the four trees today, so the severity is a promise about the
-        # next collision rather than a new check failure.
         LawDSL.law :ONE_SOURCE,
-          severity: :error, tags: %i[COUPLING],
+          tags: %i[COUPLING],
           fires: %(COUNCIL_PATH = "data/council.yml"\n),
           does_not_fire: "path = Master::COUNCIL_PATH\n",
           description: "constants defined locally when a canonical ONE_SOURCE exists" do |src, path:|
@@ -222,7 +217,7 @@ module Master
         /x
 
         LawDSL.law :SIMULATION,
-          severity: :warning, tags: %i[ANTI_SIMULATION DENSITY],
+          tags: %i[ANTI_SIMULATION DENSITY],
           fires: %(warn "the deploy will restart relayd"\n),
           does_not_fire: %(assert ok, "this test would pass having measured nothing"\n),
           description: "future tense implies without evidence — use indicative past" do |src, path:|
@@ -289,7 +284,7 @@ module Master
         SLASH_COMMENT_EXTENSIONS = %w[.js .mjs .ts .jsx .tsx .css .scss].freeze
 
         LawDSL.law :COMPLETION_THEATER,
-          severity: :error, tags: %i[ROBUSTNESS COMPLETENESS],
+          tags: %i[ROBUSTNESS COMPLETENESS],
           fires: "handle(first, second, etc.)\n",
           does_not_fire: %(require "etc"\n),
           description: "ellipsis or etcetera as placeholder violates completeness" do |src, path:|
@@ -334,7 +329,7 @@ module Master
         INTERPOLATION = /\#\{([^{}]*)\}/
 
         LawDSL.law :SQL_INJECTION,
-          severity: :error, tags: %i[SECURITY],
+          tags: %i[SECURITY],
           fires: %q(conn.execute("DELETE FROM #{table}")) + "\n",
           does_not_fire: %q(conn.execute("DELETE FROM #{conn.quote_table_name(table)}")) + "\n",
           description: "parameterize all SQL — never interpolate user input" do |src, path:|
@@ -376,7 +371,7 @@ module Master
         # this version had learned ported there (2026-08-21 twin retirement).
 
         LawDSL.law :CONTROL_CHARS,
-          severity: :error, tags: %i[ROBUSTNESS],
+          tags: %i[ROBUSTNESS],
           # An escape, not a literal, so this file keeps carrying no control
           # character of its own — which is why the rule counts by ordinal.
           fires: "value = 1\u0001\n",
@@ -411,7 +406,7 @@ module Master
         # call from a mention — and an `include Pledge` caller writing bare
         # `pledge("stdio")` is outside this rule's reach.
         LawDSL.law :PLEDGE_STAGED,
-          severity: :error, tags: %i[SECURITY], applies_to: %i[ruby], autofix: false,
+          tags: %i[SECURITY], applies_to: %i[ruby], autofix: false,
           fires: %q(Master::Ground::Pledge.unveil("/", "r")) + "\n",
           does_not_fire: "Master::Ground::Pledge.stage1_boot!(root)\n",
           description: "restrict the process through Ground::Pledge's stages, never a hand-written promise" do |src, path:|
@@ -446,7 +441,7 @@ module Master
         # to read — so a tool that mutates without publishing is outside its reach
         # and stays the gap data/laws.yml#law_map audit_logging records.
         LawDSL.law :AUDIT_APPEND_ONLY,
-          severity: :error, tags: %i[SECURITY], applies_to: %i[ruby], autofix: false,
+          tags: %i[SECURITY], applies_to: %i[ruby], autofix: false,
           fires: %Q(bus.subscribe("tool:before") { |e| record(e) }\nFile.open(@path, "w") { |f| f.puts(line) }\n),
           does_not_fire: %Q(bus.subscribe("tool:before") { |e| record(e) }\nFile.open(@path, "a") { |f| f.puts(line) }\n),
           description: "an audit sink appends to its log and never truncates it" do |src, path:|

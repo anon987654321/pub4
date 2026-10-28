@@ -7,8 +7,6 @@
 # law/ruby.rb — every ruby law, one Law.define per law.
 Law.define(:EACH_WITH_OBJECT) do
   source "Ruby Style Guide / RuboCop Style/EachWithObject"
-  severity :warn
-  languages %i[ruby]
   detect { |line| line.match?(/\.(inject|reduce)\(\s*(\{\s*\}|\[\s*\])\s*\)/) }
   fix "Only when the argument is a literal {} or [] that the block mutates in place. Do NOT rewrite reduce/inject whose block returns the next accumulator (a rebuilt string, a running total, a folded hash) — each_with_object discards that return value and the fold becomes a no-op. If in doubt, leave reduce alone."
   bad  "items.inject({}) { |h, i| h[i] = 1; h }"
@@ -24,8 +22,6 @@ end
 
 Law.define(:FROZEN_STRING_LITERAL) do
   source "Ruby Style Guide / RuboCop Style/FrozenStringLiteralComment"
-  severity :warn
-  languages %i[ruby]
   scope :file
   # Its subject IS a comment, so it has to be allowed to see one. Without this,
   # considered_text blanks line 1 before the detector reads it and the file looks
@@ -51,8 +47,6 @@ end
 
 Law.define(:GUARD_CLAUSE) do
   source "Ruby Style Guide / RuboCop Style/GuardClause"
-  severity :info
-  languages %i[ruby]
   scope :file
   # No /m, and [^\n]* rather than .*: with /m the `.` after `def \w+` matched
   # newlines, so the pattern swallowed the whole file and backtracked — any
@@ -120,9 +114,7 @@ end
 
 Law.define(:IMMUTABLE) do
   source "Effective Java — minimize mutability (Joshua Bloch); FP"
-  severity :info
   ask "Are mutable objects shared across threads or scopes where immutable data would be safer?"
-  languages %i[ruby]
   detect { |line| line.match?(/^\s*[A-Z][A-Z_]*\s*=\s*(?:\[[^\]\n]*\]|\{[^}\n]*\})\s*$/) }
   fix "Freeze collections. Use frozen/const by default."
   bad  "COLORS = [:red, :blue]"
@@ -131,8 +123,6 @@ end
 
 Law.define(:KERNEL_COERCION) do
   source "Ruby Style Guide — Integer()/Float() over to_i/to_f"
-  severity :info
-  languages %i[ruby]
   # The `|| []` arm left. The fix line names one substitution — the explicit
   # nil-ternary — and `x || []` is not that: Array() splats a Hash into pairs
   # and wraps a String, so swapping it in is a behaviour change wherever the
@@ -161,9 +151,6 @@ end
 
 Law.define(:MIGRATION_ADD_REFERENCE_NO_FK) do
   source "Rails migrations — foreign_key: true (Strong Migrations)"
-  severity :error
-  languages %i[ruby]
-  path "/db/migrate/"
   # A polymorphic reference names no single table, so it cannot carry a
   # foreign key; asking for one is asking for a migration that will not run.
   detect { |line| line.match?(/add_reference(?!.*(?:foreign_key:|polymorphic:\s*true))/) }
@@ -174,9 +161,6 @@ end
 
 Law.define(:MIGRATION_FIND_OR_CREATE_BY) do
   source "Rails best practice — find_or_create_by races"
-  severity :warn
-  languages %i[ruby]
-  path "/db/migrate/"
   detect { |line| line.match?(/find_or_create_by/) }
   fix "Back find_or_create_by with a unique index to prevent duplicates."
   bad  "Role.find_or_create_by(name: 'admin')"
@@ -185,9 +169,6 @@ end
 
 Law.define(:MIGRATION_REMOVE_COLUMN) do
   source "Strong Migrations — safe column removal (Andrew Kane)"
-  severity :error
-  languages %i[ruby]
-  path "/db/migrate/"
   # Whether the migration documents its path is a question about the migration,
   # not about the line. amber's convert_money_to_ore does the safe thing eight
   # times — add_column, backfill with an UPDATE, then remove_column — and a
@@ -215,8 +196,6 @@ end
 
 Law.define(:PERCENT_LITERAL) do
   source "Ruby Style Guide — %w/%i array literals"
-  severity :info
-  languages %i[ruby]
   detect { |line| line.match?(/\[:[a-z_]+,\s*:[a-z_]+,\s*:[a-z_]+/) }
   fix "Use %i[a b c] for symbol arrays."
   bad  "[:a, :b, :c]"
@@ -224,12 +203,8 @@ Law.define(:PERCENT_LITERAL) do
 end
 
 Law.define(:RATE_LIMITING_MISSING) do
-  law_scope :universal
   source "OWASP API Security — rate limiting"
-  severity :error
-  languages %i[ruby]
   scope :file
-  path "/app/controllers/"
   # A controller that includes the shared actions module inherits its limits,
   # and the module is scanned on its own.
   absent /rate_limit|throttle|include\s+(?:\w+::)*\w*(?:Sessions|Passwords|Registrations)Actions\b/
@@ -259,8 +234,6 @@ end
 
 Law.define(:RESCUE_ON_DEF) do
   source "Ruby Style Guide — rescue in method definitions"
-  severity :info
-  languages %i[ruby]
   scope :file
   # Same /m defect as GUARD_CLAUSE above: the pattern spanned unrelated methods,
   # gluing a def to a rescue hundreds of lines away and reporting it at line 1.
@@ -298,8 +271,6 @@ end
 
 Law.define(:RUBY_BLOCK_DELIMITER) do
   source "Ruby Style Guide / RuboCop Style/BlockDelimiters"
-  severity :info
-  languages %i[ruby]
   detect { |line| line.match?(/\bdo\b\s*(\|[^|]*\|)?[^\n]*\bend\s*$/) }
   fix "Single-line block on one line -> use { }. Reserve do/end for multi-line."
   bad  "list.each do |x| puts x end"
@@ -308,8 +279,6 @@ end
 
 Law.define(:RUBY_CAMEL_CLASS) do
   source "Ruby Style Guide / RuboCop Naming/ClassAndModuleCamelCase"
-  severity :warn
-  languages %i[ruby]
   # A declaration ends the line, or continues only into a superclass. A sentence
   # keeps going, and prose in a heredoc is not blanked the way a comment is:
   # "module into shared/vendor/javascript, or pin it preload: false and" is a
@@ -323,8 +292,6 @@ end
 
 Law.define(:RUBY_NUMERIC_UNDERSCORE) do
   source "Ruby Style Guide / RuboCop Style/NumericLiterals"
-  severity :info
-  languages %i[ruby]
   # A long run of digits inside a string is not a numeric literal. Unmasked, this
   # read a port out of "http://127.0.0.1:38182/", an ffmpeg filter's
   # sample_rates=44100, the hex in '#010203', and the digits in this rule's own
@@ -354,8 +321,6 @@ end
 
 Law.define(:RUBY_SNAKE_METHODS) do
   source "Ruby Style Guide / RuboCop Naming/MethodName"
-  severity :warn
-  languages %i[ruby]
   detect { |line| line.match?(/\bdef\s+[a-z][a-z0-9_]*[A-Z]/) }
   fix "Rename to snake_case: def fetchAlbum -> def fetch_album."
   bad  "def fetchAlbum"
@@ -364,8 +329,6 @@ end
 
 Law.define(:RUBY_SYMBOL_TO_PROC) do
   source "Ruby Style Guide / RuboCop Style/SymbolProc"
-  severity :info
-  languages %i[ruby]
   detect { |line| line.match?(/\{\s*\|(\w+)\|\s*\1\.[a-z_]+\s*\}/) }
   fix "Collapse { |x| x.name } -> (&:name)."
   bad  "names = users.map { |u| u.name }"
@@ -380,9 +343,7 @@ end
 # alias of another constant is spared for the same reason.
 Law.define(:RUBY_SCREAMING_CONST) do
   source "Ruby Style Guide / RuboCop Naming/ConstantName"
-  severity :info
   ask "Is a Ruby value constant named in a case other than SCREAMING_SNAKE_CASE?"
-  languages %i[ruby]
   detect do |line|
     match = line.match(/^\s*([A-Z][A-Za-z0-9]*)\s*=(?!=|~|>)\s*(.*)$/)
     next false unless match && match[1].match?(/[a-z]/)
@@ -402,8 +363,6 @@ end
 
 Law.define(:SAFE_NAVIGATION) do
   source "Ruby Style Guide / RuboCop Style/SafeNavigation"
-  severity :warn
-  languages %i[ruby]
   detect { |line| line.match?(/(\w+)\s*&&\s*\1\.\w+/) && !line.match?(/[!=<>]=|[<>]|\?\s*\w/) }
   fix "Rewrite to x&.foo&.bar"
   bad  "user && user.name"
@@ -415,8 +374,6 @@ end
 
 Law.define(:SINGLE_PRIVATE_SECTION) do
   source "Ruby Style Guide / RuboCop Style/AccessModifierDeclarations"
-  severity :info
-  languages %i[ruby]
   detect { |line| line.match?(/private\s+:\w+/) }
   fix "Use a single 'private' keyword with methods below it."
   bad  "private :helper"
@@ -429,10 +386,7 @@ end
 
 Law.define(:STRICT_LOADING_MISSING) do
   source "Rails strict_loading — N+1 prevention (Rails Guides)"
-  severity :info
-  languages %i[ruby]
   scope :file
-  path "/app/models/"
   absent /\bstrict_loading_by_default\b/
   # The base class is where the default is set, and subclasses inherit it.
   # Matching `< ApplicationRecord` too asked all thirty of amber's models to
@@ -454,8 +408,6 @@ end
 
 Law.define(:TRANSFORM_KEYS) do
   source "Ruby idiom — Hash#transform_keys/values"
-  severity :info
-  languages %i[ruby]
   detect { |line| line.match?(/\.each_with_object\(\{\}\)\s*\{\s*\|\(k,\s*v\),\s*h\|/) }
   fix "Use .transform_values { |v| ... }"
   bad  "h.each_with_object({}) { |(k, v), h| h[k] = v * 2 }"
@@ -464,8 +416,6 @@ end
 
 Law.define(:USE_THEN) do
   source "Ruby idiom — Object#then (yield_self) for pipelines"
-  severity :info
-  languages %i[ruby]
   scope :file
   # The same defect GUARD_CLAUSE carried and had fixed above: `/m` makes `.`
   # match newlines, so `\(.*\)` ran to the last paren in the file and any file
@@ -510,9 +460,6 @@ end
 # without the blast radius.
 Law.define(:MONKEY_PATCH_CORE) do
   source "Polished Ruby Programming, 2nd ed. (Jeremy Evans, 2026) — core class hygiene"
-  severity :warn
-  languages %i[ruby]
-  path_exclude %r{/test/}
   detect { |line| line.match?(/\A\s*class\s+(?:String|Array|Hash|Integer|Float|Symbol|Object|Kernel|NilClass|Numeric|Range|Time|Comparable|Enumerable)\s*\z/) }
   fix "Use a refinement, a helper module, or a wrapping method instead of reopening the core class."
   bad  "class String"
@@ -528,9 +475,6 @@ end
 # because naming rules earn their width by not crying wolf.
 Law.define(:NOISE_NAME) do
   source "Clean Code, 2nd ed. (Robert C. Martin, 2025) — class names are domain nouns, not noise words"
-  severity :info
-  languages %i[ruby]
-  path_exclude %r{/test/|/fixtures/}
   detect do |line|
     line.match?(/\A\s*(?:class|module)\s+(?:[A-Z]\w*::)*(?:Manager|Utils?|Utilit(?:y|ies)|Misc|Stuff|Things?|Handlers|Foo|Bar|Baz|Te?mp)\b\s*(?:<.*)?\z/)
   end
@@ -543,8 +487,6 @@ end
 # symlinks the way the old idiom does not.
 Law.define(:DIRNAME_FILE) do
   source "Polished Ruby Programming, 2nd ed. (Jeremy Evans, 2026) — prefer __dir__"
-  severity :info
-  languages %i[ruby]
   detect { |line| line.match?(/File\.dirname\(__FILE__\)/) }
   fix "Use __dir__."
   bad  "File.expand_path(File.dirname(__FILE__))"
@@ -561,8 +503,6 @@ end
 # costs more noise than the finding is worth.
 Law.define(:FILTER_MAP) do
   source "Fowler, Refactoring, 2nd ed. (2018) — Replace Loop with Pipeline"
-  severity :warn
-  languages %i[ruby]
   # \b after compact so compact_blank, a different operation with no
   # filter_map twin, does not fire.
   detect { |line| line.match?(/\.map\s*(?:\{[^}]*\}|&:[\w!?]+)\s*\.compact\b/) }
@@ -582,13 +522,7 @@ end
 # covers its HTTP too — a narrowing, recorded here, that keeps the honest
 # idioms quiet.
 Law.define(:EXPLICIT_HTTP_TIMEOUT) do
-  law_scope :universal
   source "Kleppmann, DDIA — timeouts on every outbound call"
-  severity :warn
-  languages %i[ruby]
-  # The shared boundary already enforces this for everything routed through
-  # it; a finding here names a call that bypassed it.
-  path_exclude %r{(?:outbound_http|ssrf_guard)\.rb\z}
   scope :file
   detect do |text|
     text.match?(/Net::HTTP\.(?:start|get)\b|URI\([^)]*\)\.open\b/) &&
@@ -611,9 +545,6 @@ end
 # cry wolf until the rule was ignored.
 Law.define(:MIGRATION_NOT_NULL_NO_DEFAULT) do
   source "Kleppmann, DDIA — schema evolution under rolling deploy"
-  severity :error
-  languages %i[ruby]
-  path "/db/migrate/"
   detect do |line|
     line.match?(/\badd_column\b/) && line.match?(/null:\s*false/) && !line.match?(/default:\s/)
   end

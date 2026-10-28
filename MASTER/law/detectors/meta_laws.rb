@@ -11,7 +11,7 @@ module Master
 
           def self.auto_build? = false
 
-          declare id: "ast_omission", severity: :warning, tags: %i[COMPLETENESS],
+          declare id: "ast_omission", tags: %i[COMPLETENESS],
                   description: "symbol dropped vs recent commits"
 
           def initialize(root: Dir.pwd, depth: CommitGuard::DEFAULT_DEPTH)
@@ -48,7 +48,7 @@ module Master
 
           def self.auto_build? = false
 
-          declare id: "law_coverage", severity: :warning, tags: %i[TEST_COVERAGE],
+          declare id: "law_coverage", tags: %i[TEST_COVERAGE],
                   description: "Law subclass has no corresponding test file"
 
           def initialize(root:)
@@ -122,7 +122,6 @@ module Master
 
         # Runtime authority lives in YAML — not markdown under data/.
         LawDSL.law :RUNTIME_DOCS_YAML,
-          severity: :error,
           tags: %i[CONSTITUTION DOCS],
           applies_to: %i[markdown],
           autofix: false,
@@ -176,7 +175,7 @@ module Master
         class LearnedSmellsLaw < Law
           def self.reads_beyond_file? = true
 
-          declare id: "LEARNED_SMELLS", severity: :warning, tags: %i[LEARNED_SMELLS SESSION],
+          declare id: "LEARNED_SMELLS", tags: %i[LEARNED_SMELLS SESSION],
                   description: "session-learned smell patterns from laws.yml"
 
           def initialize(root: Master::ROOT)
@@ -362,7 +361,7 @@ module Master
           RAILS_NAMED = %r{\A(?:app|config|db)/|\Alib/[^/]+/(?:engine|version)\.rb\z}
           def self.auto_build? = false
 
-          declare id: "FILE_SPRAWL", severity: :warning, tags: %i[FLAT_HIERARCHY COLLAPSE_BEFORE_ADDING],
+          declare id: "FILE_SPRAWL", tags: %i[FLAT_HIERARCHY COLLAPSE_BEFORE_ADDING],
                   description: "one-file directories and tiny files merge into their owners"
 
           def initialize(root: Master::ROOT)
@@ -462,10 +461,7 @@ module Master
           SKIP_RE = %r{/(?:test|spec|fixtures|node_modules|vendor|tmp|log|scratch|frames?_|renders?)/|/\.}
           def self.auto_build? = false
 
-          # error, not warning: WriteGuard blocks on veto/critical/error, and a
-          # directory nobody has taken responsibility for is exactly what
-          # should be refused at write time rather than reported afterwards.
-          declare id: "PATH_PURPOSE", severity: :error, tags: %i[ONE_SOURCE COLLAPSE_BEFORE_ADDING],
+          declare id: "PATH_PURPOSE", tags: %i[ONE_SOURCE COLLAPSE_BEFORE_ADDING],
                   description: "every directory declares its purpose in PATH_OWNERSHIP.yml"
 
           def initialize(root: Master::ROOT)

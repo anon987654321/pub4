@@ -6,9 +6,6 @@
 
 Law.define(:NO_INFINITY_TO_I) do
   source "MASTER post-incident /fix hardening — finite convergence ranks"
-  severity :error
-  languages %i[ruby]
-  path_exclude %r{/law/fix_hygiene\.rb\z}
   detect do |line|
     code = line.gsub(/(['"]).*?\1/, "").sub(/#.*\z/, "")
     code.match?(
@@ -23,9 +20,6 @@ end
 
 Law.define(:NO_OVERESCAPED_NONCAPTURING) do
   source "MASTER post-incident /fix hardening — extract-then-match regex integrity"
-  severity :error
-  languages %i[ruby]
-  path_exclude %r{/law/fix_hygiene\.rb\z}
   detect do |line|
     code = line.gsub(/(['"]).*?\1/, "")
     code.include?("\\\\(?:")

@@ -9,8 +9,6 @@
 
 Law.define(:ARIA_INTERACTIVE) do
   source "WAI-ARIA (W3C) — roles for interactive elements"
-  severity :warn
-  languages %i[html]
   detect { |line| line.match?(/<(div|span)\s+[^>]*onclick/) }
   fix "Add role= and tabindex= for accessibility."
   bad  "<div onclick=\"go()\">"
@@ -35,11 +33,6 @@ end
 # structure.
 Law.define(:BARE_DIV_WRAPPER) do
   source "HTML5 semantics / WCAG 1.3.1 — an element with no meaning carries none"
-  severity :warn
-  languages %i[html]
-  # Same reason as META_CHARSET: bad_brgen_home.html is a bare-div document
-  # written to be caught, and grading it grades the test data.
-  path_exclude %r{/checks/fixtures/}
   # A div grouping a dt/dd pair inside a <dl> is the HTML 5.2 idiom, not a
   # styling wrapper — the spec added it precisely so the pair could share a
   # layout box.
@@ -57,9 +50,6 @@ end
 
 Law.define(:BEM_IN_VIEWS) do
   source "style.yml bare_tag_targeting — no BEM in ERB"
-  severity :warn
-  languages %i[html]
-  path "/app/views/"
   detect { |line| line.match?(/class=["'][^"']*__[^"']*["']/) }
   fix "Target bare tags in SCSS; remove __block__element classes from ERB."
   bad  "<div class=\"card__title\">"
@@ -75,8 +65,6 @@ end
 # line is correct, and only its neighbour makes it wrong.
 Law.define(:BLANK_LINE_RUN) do
   source "Strunk & White I.1 — vigorous writing is concise, and so is its spacing"
-  severity :warn
-  languages %i[html]
   scope :file
   # Whitespace-only lines count as blank: a line holding two spaces looks
   # identical to an empty one and is the usual way a run of them survives.
@@ -96,8 +84,6 @@ end
 
 Law.define(:BUTTON_OVER_ANCHOR) do
   source "WAI-ARIA Authoring Practices — button vs link (W3C)"
-  severity :warn
-  languages %i[html]
   detect { |line| line.match?(/<a\s+href=["']#["']/) }
   fix "Use <button>. Accessible by default."
   bad  "<a href=\"#\">Open</a>"
@@ -128,8 +114,6 @@ end
 # content-section restates itself and goes.
 Law.define(:CLASS_RESTATES_TAG) do
   source "style.yml bare_tag_targeting — the tag is already the name"
-  severity :warn
-  languages %i[html]
   detect { |line| line.match?(/<(header|footer|nav|main|section|article|aside|form|figure|dialog|details|summary|table)\b[^>]*class=["'](?:[^"']*\s)?(?:(?:content|inner|outer|wrapper|container|box|main|site|app)-)?\1(?:-(?:content|inner|outer|wrapper|container|box|area|block))?(?:\s[^"']*)?["']/) }
   fix "Drop the filler class and select the bare tag; a prefix that names which of several coexisting elements this is may stay."
   bad  "<header class=\"content-header\">"
@@ -144,9 +128,6 @@ end
 
 Law.define(:I18N_COVERAGE) do
   source "Rails i18n best practice (no hardcoded strings)"
-  severity :warn
-  languages %i[html]
-  path "/app/views/"
   scope :file
   # Element content, not attribute text. Three shapes were being read as prose
   # and none of them renders as any:
@@ -192,14 +173,7 @@ end
 # declares its encoding.
 Law.define(:META_CHARSET) do
   source "HTML Living Standard — meta charset utf-8 (WHATWG)"
-  severity :error
-  languages %i[html]
   scope :file
-  # A check fixture is a specimen, not a page. MASTER/checks/fixtures holds
-  # hand-written good_ and bad_ documents that exist to be graded BY the checks,
-  # and the bad ones are wrong on purpose — nine of this law's findings were its
-  # own test data, including four files whose names say so.
-  path_exclude %r{/checks/fixtures/}
   # Both spellings count. The http-equiv form is the older one, and mail clients
   # honour it more reliably than the HTML5 short form — so shared/layouts/mailer
   # declares its encoding that way on purpose, and a detector accepting only the
@@ -221,38 +195,6 @@ end
 # with src or href suffers none of that, so this ignores them.
 Law.define(:NO_INLINE_SCRIPT_BLOCK) do
   source "CSP script-src / separation of concerns — assets are files"
-  severity :warn
-  languages %i[html]
-  # Two pages that cannot reach an asset pipeline, which is the only reason this
-  # rule yields.
-  #
-  # A static error page renders when Rails is not answering: no
-  # stylesheet_link_tag, no digested URL, nothing served by the app that
-  # failed. Inline is the only thing that works there, which is why every app's
-  # 404/422/500 carries its own style block.
-  #
-  # A probe fixture beside its script is loaded as a data: URL with no server at
-  # all, so an external src has nothing to resolve against. probe_webgl_guard's
-  # inline block is also the subject under test — it proves the pre-boot WebGL
-  # guard from chat/index.html.erb, which is inline by design because a blocking
-  # <script src> above it delays handler wiring and early taps look dead.
-  #
-  # This clause was written twice, identically, with its reason above each copy.
-  # The second silently replaced the first, so half of it had never been read by
-  # anything.
-  # Two owned surfaces have a different transport contract:
-  # mailer styles must be embedded because mail clients do not load the web asset
-  # pipeline, and theme_bootstrap is a nonce-bearing first-paint script whose
-  # blocking position is intentional so the chosen theme is present before paint.
-  #
-  # The face and its two static companions are the same class as the 4xx pages:
-  # chat/index.html.erb carries the pre-boot WebGL guard and the FOUC theme
-  # blocks, which are inline by design because a blocking <script src> above
-  # them delays handler wiring and early taps look dead (frontend_production
-  # asserts those inline boot markers exist), and the two public pages below are
-  # served by the service worker or by relayd precisely when no app, and so no
-  # asset pipeline, is answering.
-  path_exclude %r{/public/\d{3}\.html\z|/public/(?:offline|406-unsupported-browser)\.html\z|/script/probe_\w+\.html\z|/_mailer_styles\.html\.erb\z|/_theme_bootstrap\.html\.erb\z|/app/views/chat/index\.html\.erb\z}
   detect { |line| line.match?(/<script(?![^>]*\bsrc=)|<style\b(?![^>]*\bhref=)/) }
   fix "Move it to an asset file and reference it with javascript_include_tag or stylesheet_link_tag."
   bad  "<div><script>boot()</script></div>"
@@ -261,13 +203,6 @@ end
 
 Law.define(:NO_INLINE_STYLES) do
   source "CSP / separation of concerns — no inline styles"
-  severity :warn
-  languages %i[html]
-  # A static error page renders when Rails is not answering, so it cannot
-  # reach the asset pipeline: no stylesheet_link_tag, no digested URL, nothing
-  # served by the app that just failed. Inline is the only thing that works
-  # there, which is why 404/422/500 carry their own style block.
-  path_exclude %r{/public/\d{3}\.html\z}
   # A style attribute carrying only custom properties is a data channel to
   # the stylesheet — style="--swatch: teal" hands a value to a rule that
   # lives in CSS (color: var(--swatch)), which is the separation this law
@@ -288,8 +223,6 @@ end
 
 Law.define(:NO_JQUERY) do
   source "RAILS/__shared frontend convention"
-  severity :warn
-  languages %i[javascript html]
   detect { |line| line.match?(/jQuery\(|\$\((?=\s*["\x27#.])/) }
   fix "Replace the selector call with a Stimulus target or querySelector."
   bad  "$('#menu').show()"
@@ -318,8 +251,6 @@ end
 # can quietly override them.
 Law.define(:PRESENTATIONAL_CLASS_NAME) do
   source "CSS naming — classes name meaning, not appearance"
-  severity :warn
-  languages %i[html]
   # The marker convention applies: a class whose word is a domain term rather
   # than a rendering decision ("seller center", the management area) states so
   # at the element instead of being renamed away from its own meaning.
@@ -331,8 +262,6 @@ end
 
 Law.define(:SEMANTIC_ELEMENTS) do
   source "HTML5 semantics / WCAG 1.3.1 (W3C)"
-  severity :warn
-  languages %i[html]
   detect { |line| line.match?(/<div\s+class="(header|footer|nav|main|sidebar|article|section)"/) }
   fix "Use <header>, <footer>, <nav>, <main>, <aside>, <article>, <section>."
   bad  "<div class=\"header\">"
@@ -353,11 +282,7 @@ end
 # this rule ever produced in RAILS were mailer layouts.
 Law.define(:SKIP_TO_MAIN) do
   source "WCAG 2.4.1 Bypass Blocks / style.yml accessibility"
-  severity :warn
-  languages %i[html]
   scope :file
-  path "/app/views/layouts/"
-  path_exclude %r{mailer}
   detect { |text| text.match?(/<body\b/) && !text.match?(/skip|#main-content/) }
   fix "Add a skip link to #main-content in the layout."
   bad  "<body><nav></nav><main></main></body>"
@@ -380,9 +305,6 @@ end
 
 Law.define(:UTILITY_CLASS_SOUP) do
   source "style.yml html.forbidden.framework_class_explosion"
-  severity :warn
-  languages %i[html]
-  path "/app/views/"
   detect { |line| line.match?(/class=["'][^"']*(?:\b(?:mt|mb|ml|mr|px|py|col|row|d-flex|flex|grid|w-|h-)\b[^"']*){3,}[^"']*["']/i) }
   fix "Move layout to SCSS with bare tag targeting."
   bad  "<div class=\"row col mt mb\">"

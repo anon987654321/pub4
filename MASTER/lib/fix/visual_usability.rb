@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
+require_relative "../law_vocabulary"
+
 module Master
   module Fix
     module VisualUsability
       CATALOGUE_SECTION = "law_catalogue"
-      REQUIRED_MODALITIES = %w[lexical semantic visual].freeze
+      REQUIRED_MODALITIES = Master::LawVocabulary::MODALITIES
       SUMMARY_LIMIT = 112
 
       module_function

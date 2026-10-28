@@ -10,7 +10,7 @@ module Master
   # each id is a name the law addresses, and delegating renames the law.
 
   LawDSL.law :NO_DEBUG,
-    severity: :error, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
+    tags: %i[CLEAN_CODE], applies_to: %i[ruby],
     fires: "  binding.pry\n",
     does_not_fire: "debugger_enabled = false\n",
     description: "no debug breakpoints in committed code" do |src, path:|
@@ -34,7 +34,7 @@ module Master
   PROGRAM_PATH = %r{/test/|/db/seeds(?:\.rb\z|/)|\.rake\z|/Rakefile\z}
 
   LawDSL.law :NO_PUTS,
-    severity: :warning, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
+    tags: %i[CLEAN_CODE], applies_to: %i[ruby],
     fires: "  puts(\"ready\")\n",
     # A local named p is not Kernel#p: assignment, a method call on it, and a
     # bare p (which prints nothing) all stay quiet.
@@ -72,7 +72,7 @@ module Master
   end
 
   LawDSL.law :FROZEN_LITERAL,
-    severity: :warning, tags: %i[PERFORMANCE], applies_to: %i[ruby],
+    tags: %i[PERFORMANCE], applies_to: %i[ruby],
     fires: "value = 1\n# frozen_string_literal: true\n",
     # Ruby reads the magic comment anywhere in the leading comments, and a
     # script's first line is its shebang: reading line one alone flagged every
@@ -88,7 +88,7 @@ module Master
   end
 
   LawDSL.law :LONG_LINE,
-    severity: :info, tags: %i[READABILITY], autofix: false,
+    tags: %i[READABILITY], autofix: false,
     fires: "#{"x" * 121}\n",
     # Two cases that must not fire: a line at the limit, and a line that is only
     # over it because a reviewer wrote down why the line is deliberate.
@@ -107,7 +107,7 @@ module Master
   end
 
   LawDSL.law :TRAILING_WHITESPACE,
-    severity: :info, tags: %i[HYGIENE],
+    tags: %i[HYGIENE],
     fires: "value = 1   \n",
     does_not_fire: "value = 1\n\n",
     description: "trailing whitespace" do |src, path:|
@@ -117,7 +117,7 @@ module Master
   end
 
   LawDSL.law :TODO_FIXME,
-    severity: :info, tags: %i[COMPLETENESS], autofix: false,
+    tags: %i[COMPLETENESS], autofix: false,
     fires: "  # FIXME: the retry has no cap\n",
     # Both exemptions as worked cases: naming the backlog is not a marker, and
     # neither is a pattern that hunts for one.
@@ -138,7 +138,7 @@ module Master
   end
 
   LawDSL.law :RESCUE_EXCEPTION,
-    severity: :warning, tags: %i[ERROR_HANDLING], applies_to: %i[ruby],
+    tags: %i[ERROR_HANDLING], applies_to: %i[ruby],
     # A rule's worked example is the one place its own forbidden shape is
     # legitimately spelled, and FAIL_VISIBLY reads this file like any other. The
     # marker has to sit on the matching line, not above it.
@@ -171,7 +171,7 @@ module Master
   end
 
   LawDSL.law :SILENT_RESCUE,
-    severity: :error, tags: %i[ERROR_HANDLING FAIL_VISIBLY], applies_to: %i[ruby],
+    tags: %i[ERROR_HANDLING FAIL_VISIBLY], applies_to: %i[ruby],
     # The examples are escaped strings on one physical line, and that is what
     # makes them possible here. SilentRescue reads a line that *starts* with
     # `rescue`, so a fixture spelled this way is a worked example everywhere and
@@ -190,7 +190,7 @@ module Master
   end
 
   LawDSL.law :NARROW_SILENT_RESCUE,
-    severity: :warning, tags: %i[ERROR_HANDLING], applies_to: %i[ruby],
+    tags: %i[ERROR_HANDLING], applies_to: %i[ruby],
     # Named class, same discard. The pair with SILENT_RESCUE above is the point:
     # these two split one subject on the class named, and a shared predicate is
     # where a change to one silently becomes a change to both.
@@ -206,7 +206,7 @@ module Master
   MODIFIER_RESCUE_DISCARD = %r{(?<![=!<>*+/%|&^-])=(?!=)[^=\n]*\S\s+rescue\s+(?:nil|false|\[\]|\{\})\s*(?:#.*)?$}
 
   LawDSL.law :MODIFIER_SILENT_RESCUE,
-    severity: :warning, tags: %i[ERROR_HANDLING], applies_to: %i[ruby],
+    tags: %i[ERROR_HANDLING], applies_to: %i[ruby],
     # The third spelling, and the one the two rules above are blind to by
     # construction: SilentRescue.matches_mode? reads a line that *starts* with
     # `rescue`, so `value = parse(raw) rescue nil` is a blanket StandardError
@@ -245,7 +245,7 @@ module Master
   # NARROW_SILENT_RESCUE.
 
   LawDSL.law :CONSECUTIVE_BLANK_LINES,
-    severity: :info, tags: %i[HYGIENE],
+    tags: %i[HYGIENE],
     fires: "a = 1\n\n\nb = 2\n",
     does_not_fire: "a = 1\n\nb = 2\n",
     description: "no consecutive blank lines" do |src, path:|
@@ -261,7 +261,7 @@ module Master
   end
 
   LawDSL.law :DEBUG_OUTPUT,
-    severity: :error, tags: %i[FAIL_VISIBLY], applies_to: %i[ruby],
+    tags: %i[FAIL_VISIBLY], applies_to: %i[ruby],
     example_path: "/repo/lib/example.rb",
     fires: "p value\n",
     does_not_fire: "p << value\n",
@@ -288,7 +288,7 @@ module Master
   end
 
   LawDSL.law :OMIT_NEEDLESS_WORDS,
-    severity: :info, tags: %i[BE_CONCISE],
+    tags: %i[BE_CONCISE],
     fires: "# This is a helper for totals\n",
     does_not_fire: "# Sums the line items\n",
     description: "Strunk & White: omit needless words in comments" do |src, path:|
@@ -304,7 +304,7 @@ module Master
   end
 
   LawDSL.law :TRAILING_COMMENT,
-    severity: :info, tags: %i[BE_CONCISE],
+    tags: %i[BE_CONCISE],
     fires: "value = 1 # why one\n",
     # The marker is itself a trailing comment, so a line carrying only the
     # marker must not read as one.
@@ -322,7 +322,7 @@ module Master
   end
 
   LawDSL.law :TIME_ZONE_UNSAFE,
-    severity: :warning, tags: %i[ROBUSTNESS], applies_to: %i[ruby],
+    tags: %i[ROBUSTNESS], applies_to: %i[ruby],
     description: "bare Time.now/Date.today bypasses Rails Time.zone",
     example_path: "/repo/app/models/example.rb",
     fires: "stamp = Time.now.beginning_of_day\n",
@@ -361,7 +361,7 @@ module Master
   IDENTITY_COMPARISON = /[\w)\]}'"]\s*===\s*[\w({\[!'"@$:]/
 
   LawDSL.law :NO_ASCII_LINE_ART,
-    severity: :warning, tags: %i[BE_CONCISE],
+    tags: %i[BE_CONCISE],
     # A divider is decoration in a comment, so this rule must read comments and
     # cannot blank them the way RESCUE_EXCEPTION above does. Its own worked
     # example is the one legitimate divider in the tree, and the marker on that
@@ -389,7 +389,7 @@ module Master
   FACE_ASCII_EXCEPTIONS = %r{(?:^|/)(?:MASTER/lib/cli/face(?:/|\.rb\z)|RAILS/master/public/(?:face_ascii|face_2d_fallback)\.js\z|RAILS/master/test/face_ascii\.test\.mjs\z|MASTER/test/test_cli_ascii_face\.rb\z|MASTER/test/fixtures/face_ascii_frames\.json\z|MASTER/tools/face_ascii_fixtures\.rb\z|MASTER/law/interface\.rb\z)}
 
   LawDSL.law :NO_ASCII_ART_OUTSIDE_FACE,
-    severity: :error, tags: %i[BE_CONCISE],
+    tags: %i[BE_CONCISE],
     fires: "ascii_art: true\n",
     does_not_fire: "prompt = \"~/repo main %\"\n",
     description: "ASCII art outside the face renderer" do |src, path:|

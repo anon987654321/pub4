@@ -38,19 +38,24 @@ module Master
         # for unchanged content, so a law that reads further must say so here.
         def self.reads_beyond_file? = false
 
-        # What a law *is*, declared once at the class level.
-        #
-        # Forty-two laws opened with the same constructor — `super()` and
-        # five instance variables holding literals — which cross_file_analysis
-        # reported as twenty-three byte-identical structures. Identity is a
-        # declaration, so it reads as one, and LawDSL's generated classes say
-        # the same five things through the same names.
-        #
-        # autofix defaults to false because a law that names no transform
-        # cannot apply one, and a subclass that declares nothing gets false too.
-        def self.declare(id:, description: "", severity: :warning, tags: [], autofix: false)
-          @declaration = { id: id.to_s, description: description.to_s, severity:,
-                           law_tags: Array(tags), auto_fix: autofix }
+        # What a law *is*, declared once at the class level, as LawDSL's
+        # generated classes declare it. autofix defaults to false: a law that
+        # names no transform cannot apply one. Severity is not declared: a
+        # detector reports at its Law's laws.yml severity.
+        def self.declare(id:, description: "", tags: [], autofix: false)
+          @declaration = { id: id.to_s, description: description.to_s, law_tags: Array(tags), auto_fix: autofix }
+        end
+
+        # law/ writes :warn where the scanner reports :warning.
+        def self.normalize_severity(value) = value.to_sym == :warn ? :warning : value.to_sym
+
+        # An id the catalogue does not hold is no shipped Law (LawRegistryAudit
+        # names a shipped one as registry_only drift) and reports :warning.
+        def self.catalogue_severity(id)
+          require_relative "../../../law/definition" unless defined?(::Law::LAW_CATALOGUE)
+          normalize_severity(::Law.catalogue_policy(id).fetch(:severity))
+        rescue KeyError
+          :warning
         end
 
         # Inherited, so a subclass of a declared rule keeps its parent's identity
@@ -68,7 +73,7 @@ module Master
           declared = self.class.declaration
           @id = declared&.fetch(:id, nil) || self.class.name&.split("::")&.last&.downcase || "unknown"
           @description = declared ? declared[:description] : ""
-          @severity = declared ? declared[:severity] : :warning
+          @severity = self.class.catalogue_severity(@id)
           @law_tags = declared ? declared[:law_tags] : []
           @auto_fix = declared ? declared[:auto_fix] : false
         end
@@ -278,7 +283,7 @@ module Master
 
         def id = @id
         def description = definition.ask.to_s.empty? ? definition.practice.to_s : definition.ask.to_s
-        def severity = normalize_severity(definition.severity)
+        def severity = Law.normalize_severity(definition.severity)
         def law_tags = [definition.id.to_s]
         def auto_fix = false
         def autofix = definition.autofix
@@ -304,12 +309,6 @@ module Master
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "CanonicalLawAdapter#check", severity: :load_bearing, path:)
           raise "canonical Law #{id} detector failed for #{path}: #{e.class}: #{e.message}"
-        end
-
-        private
-
-        def normalize_severity(value)
-          { warn: :warning, warning: :warning, info: :info, error: :error, critical: :critical, veto: :veto }.fetch(value.to_sym, value.to_sym)
         end
       end
 

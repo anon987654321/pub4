@@ -171,7 +171,7 @@ module Master
 
           def self.auto_build? = false
 
-          declare id: "rubocop", severity: :warning, tags: %i[STYLE LINT], description: "RuboCop style/lint violation"
+          declare id: "rubocop", tags: %i[STYLE LINT], description: "RuboCop style/lint violation"
 
           def initialize(root:)
             super()
@@ -225,7 +225,7 @@ module Master
 
           def self.auto_build? = false
 
-          declare id: "reek", severity: :warning, tags: %i[SMELL ONE_JOB], description: "Reek code smell detected"
+          declare id: "reek", tags: %i[SMELL ONE_JOB], description: "Reek code smell detected"
 
           def initialize(root:)
             super()

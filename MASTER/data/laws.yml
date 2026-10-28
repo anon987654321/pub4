@@ -166,8 +166,8 @@ visual_identity_contract:
 
 prose:
   en:
-    spoken_in: '.'
-    file_languages: [markdown, ruby]
+    # Which files each language is spoken in is the Laws' own reach, held on
+    # their law_catalogue entries (languages, path_pattern).
     # Where the language is written inside those files. English here is the
     # prose in comments, so the detector has to skip the code around them;
     # `values` reads a locale file, where the strings are the prose and the keys
@@ -199,10 +199,6 @@ prose:
       participle: '(?:\w+ly\s+)?\w+ed'
       agent: 'by'
   nb:
-    # Bokmål reaches the tree through the Rails locale files and nowhere else;
-    # every comment in the repo is English. Scoped there, `bare` is Norwegian.
-    spoken_in: '(?:\A|[/.])nb\.yml\z'
-    file_languages: [yaml]
     reads: values
     ids:
       qualifiers: PROSE_OMIT_QUALIFIERS_NB
@@ -2179,1861 +2175,2670 @@ law_catalogue:
   modalities: [lexical, semantic, visual]
   surfaces: [repository_tree, directories, file_names, paths, whole_file, sections, lines, syntax_tree, cross_file, structured_data, documentation, media_assets, compiled_assets, rendered_ui, interactive_behavior, tests, runtime, deployment]
   missing_assessor: inconclusive
+  # Policy an entry takes unless it names its own. Every entry names its severity.
+  defaults:
+    mode: violation
+    lifecycle: active
+    autofix: review
+    languages: []
   entries:
     A_FINDING_IS_A_HYPOTHESIS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     ABC_SIZE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+      severity: warning
     ABSTRACTION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      lifecycle: trusted
+      autofix: never
     adversarial:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/semantic_laws.rb]
+      severity: error
     AESTHETIC_DISCIPLINE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: info
+      lifecycle: advisory
+      autofix: never
     AESTHETIC_FLAT_SEMANTIC:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/rails.rb]
+      severity: info
+      mode: opportunity
+      languages: [css, scss, html, javascript]
     AESTHETIC_MINIMALISM:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     AESTHETIC_RAMS_SEMANTIC:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/rails.rb]
+      severity: info
+      mode: opportunity
+      languages: [html, css, scss]
     AFFORDANCE_CLARITY:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: warning
     ALL_CAPS_NO_TRACKING:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      severity: info
     ANALOG_WARMTH:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     ANCHOR_RELATIONSHIPS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: info
+      languages: [css, scss]
     ANTI_DIVITIS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: warning
     ARIA_INTERACTIVE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
+      severity: warn
+      languages: [html]
     ARIA_LABELS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: warning
     ARTIFICIAL_COUPLING:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     ast_omission:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/meta_laws.rb]
+      severity: warning
     ASYNC_AWAIT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
+      severity: warn
+      languages: [javascript]
     ASYNC_STATUS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: info
     AUDIO_SMOOTHING:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     AUDIT_APPEND_ONLY:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      severity: error
     AUTOFIX_REQUIRES_CONFIDENCE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      lifecycle: trusted
+      autofix: never
     BARE_DIV_WRAPPER:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
+      severity: warn
+      languages: [html]
+      # Same reason as META_CHARSET: bad_brgen_home.html is a bare-div document
+      # written to be caught, and grading it grades the test data.
+      path_exclude: '/checks/fixtures/'
     BASELINE_COMPATIBILITY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
+      mode: opportunity
     BE_CONCISE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     BEAUTIFUL_CODE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
+      languages: [ruby]
+      lifecycle: advisory
     BEM_IN_VIEWS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
+      severity: warn
+      languages: [html]
+      path: '/app/views/'
     BIG_TENT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
+      languages: [ruby]
+      lifecycle: advisory
     BLANK_LINE_RUN:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
+      severity: warn
+      languages: [html]
     BOOLEAN_TRAP:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      severity: info
     BOUNDARY_ISOLATION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     BROKEN_WINDOWS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     BUTTON_OVER_ANCHOR:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
+      severity: warn
+      languages: [html]
     CACHE_LLM:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     CAPABILITY_REDUCTION_IS_MONOTONIC:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/capability.rb]
+      severity: error
+      languages: [ruby]
+      path: 'MASTER/lib/core.rb'
     CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
+      severity: error
+      # Every surface that reports state, not only services.rb: a chat message shown as sent
+      # before the server answered, or a progress bar at 100% before the work ended, is the
+      # same false ready. The detector still reads only the services.rb shape it was built on.
+      languages: [ruby, javascript, html]
     CHESTERTONS_FENCE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     CHOICE_OVERLOAD:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     CINEMA_PALETTE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     CLAMP_TYPOGRAPHY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: info
+      languages: [css, scss]
     CLASS_RESTATES_TAG:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
+      severity: warn
+      languages: [html]
     CLI_ANALYZE_TARGET_ROUTING:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
+      severity: error
+      languages: [yaml]
+      path: 'MASTER/data/patterns.yml'
     CLI_FACE_DEDICATED_TTY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
+      severity: error
+      languages: [ruby]
+      path: 'MASTER/lib/cli/command_registry.rb'
     CLI_PROMPT_COMPOSITION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
+      severity: warning
+      mode: opportunity
+      languages: [ruby]
+      path: 'MASTER/lib/voice/renderer/'
     CLI_TREE_TARGET_RESOLUTION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
+      severity: error
+      languages: [ruby]
+      path: 'MASTER/lib/cli/'
     co_change_coupling:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/graph_laws.rb]
+      severity: info
     CODE_HIERARCHY:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      severity: warning
     CODE_SYMMETRY:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      severity: info
     COLLAPSE_BEFORE_ADDING:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     comment_drift:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/semantic_laws.rb]
+      severity: warning
     COMMENTS_AS_DEODORANT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      severity: warning
     COMMERCE_AMBER_DOES_NOT_OWN_BRGEN:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/commerce.rb]
+      severity: error
+      path: 'RAILS/amber/'
     COMMERCE_BRGEN_DOES_NOT_OWN_AMBER:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/commerce.rb]
+      severity: error
+      path: 'RAILS/brgen_marketplace/'
     COMMERCE_EXTERNAL_SOURCES_STAY_EXPLAINABLE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/commerce.rb]
+      severity: error
+      path: 'RAILS/amber/app/services/'
     COMPLETE_MEDIATION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
     COMPLETION_THEATER:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      severity: error
     COMPLEX_SYSTEMS_FAIL:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     COMPOSABLE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     COMPOSITION_OVER_INHERITANCE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     CONFIG_HIERARCHY:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      severity: warning
     CONFIGURATION_AS_CODE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     CONFIGURATION_SHAPE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
+      severity: warn
+      mode: opportunity
+      languages: [json, yaml]
     CONSECUTIVE_BLANK_LINES:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      severity: info
     CONSISTENCY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     CONSISTENT_ERROR_STRATEGY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     CONST_BY_DEFAULT:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/js_laws.rb]
+      severity: warning
     CONTAINER_RESPONSIVENESS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: info
+      languages: [css, scss]
     CONTEXTUAL_STATUS_CUES:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
+      mode: opportunity
     CONTRAST_TOKENS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     CONTROL_CHARS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      severity: error
     CONVENTION_OVER_CONFIG:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
+      languages: [ruby]
     CORE_WEB_VITALS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
+      mode: opportunity
     COST_TRANSPARENCY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     COUNCIL_WHEN_RISKY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     COUPLER_SMELLS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      severity: warning
     CQS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      severity: warning
     CYCLOMATIC_COMPLEXITY:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      severity: warning
     DATA_CLASS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      severity: info
     DATA_CLUMPS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      severity: info
     DATA_REMOTE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: warning
     DEAD_CODE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+      severity: warning
     DEBUG_OUTPUT:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      severity: error
     DECOUPLE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
     DEEP_MODULES:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     DEEP_SCAN_ONLY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     DEFENSIVE_INPUT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     DEFINE_ERRORS_OUT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     DEGRADE_GRACEFULLY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
     DENSITY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      lifecycle: trusted
+      autofix: never
     DEPENDENCY_INVERSION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      severity: warning
     DESIGN_BY_CONTRACT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     DESIGN_IT_TWICE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     DEVICE_LIMITS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     DIFFERENT_LAYER_DIFFERENT_ABSTRACTION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     DIRECT_MANIPULATION_FEEDBACK:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
+      severity: warning
+      mode: opportunity
+      languages: [html, javascript, css, scss]
+      path: 'RAILS/'
     DIRNAME_FILE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: info
+      languages: [ruby]
     DIVERGED_BRANCH_SYNC:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     DIVERGENT_CHANGE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     DOCUMENTATION_FOLLOWS_CODE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: error
     DOLLAR_PAREN:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/shell.rb]
+      severity: warn
+      languages: [zsh]
     DOMAIN_LANGUAGE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     DONT_OUTRUN_HEADLIGHTS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     DOUBLE_BRACKET:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/js_laws.rb]
+      severity: warning
     DOUBLE_QUOTES_RUBY:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      severity: info
     DRY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     DUAL_DETECTION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     EACH_WITH_OBJECT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: warn
+      languages: [ruby]
     ECONOMY_OF_MECHANISM:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     EIGHT_PX_RHYTHM:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     EN_DASH_RANGE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      severity: info
     ENGINEERING_FIT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     ENTROPY_RESISTANCE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     ERB_HARDCODED_CHROME:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: warning
     ERB_HTML_SAFE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: error
     ERROR_CONTEXT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     ERROR_RECOVERY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     ETC:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     EVIDENCE_BY_INTENT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     EXECUTE_NOT_INSTRUCT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     EXEMPTIONS_EXPIRE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     EXPLICIT:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      severity: warning
     EXPLICIT_HTTP_TIMEOUT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: warn
+      languages: [ruby]
+      # The shared boundary already enforces this for everything routed through
+      # it; a finding here names a call that bypassed it.
+      path_exclude: '(?:outbound_http|ssrf_guard)\.rb\z'
     EXPLICIT_TRADEOFF:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     FACE_POINT_IS_ONE_PIXEL:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
+      severity: error
+      languages: [javascript]
     FAIL_FAST:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     FAIL_SAFE_DEFAULTS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
     FAIL_VISIBLY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      # Ruby only: `rescue` at a line end in Markdown is the English word, as in
+      # "search-and-rescue" closing a sentence in AEGIS.md.
+      languages: [ruby]
     FAT_MODEL_CALLBACK_SOUP:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     FEATURE_ENVY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      severity: warning
     FEEDBACK_LOOPS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     FEW_ARGUMENTS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      severity: warning
     FILE_LAYOUT:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      severity: info
     FILE_SEQUENCE_NAME:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/naming_laws.rb]
+      severity: warning
     FILE_SPRAWL:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/meta_laws.rb]
+      severity: warning
     FILE_VAGUE_NAME:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/naming_laws.rb]
+      severity: info
     FILTER_MAP:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: warn
+      languages: [ruby]
     FINAL_NEWLINE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      severity: info
     FIND_EACH:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+      severity: warning
     FIXED_HEIGHT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: info
+      languages: [css, scss]
     FLAT_HIERARCHY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     FLAT_PIXELS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: warn
     FLAT_UI:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     FLEXIBILITY_EFFICIENCY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     FOCUS_VISIBLE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: info
     FOR_OF:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
+      severity: error
+      languages: [javascript]
+      path_exclude: '/public/three\.module\.js\z'
     FORM_FOLLOWS_FUNCTION:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     FORM_LABEL:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: warning
     FROZEN_LITERAL:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      severity: warning
     FROZEN_STRING_LITERAL:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: warn
+      languages: [ruby]
     FULL_BY_DEFAULT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warn
     FUNCTIONAL_CORE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     GALLS_LAW:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     GESTURE_OWNERSHIP:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: warning
+      mode: opportunity
+      languages: [html, css, scss, javascript]
+      path: 'RAILS/'
     GIT_COMMITS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     GRACEFUL_BOUNDARIES:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     GRACEFUL_LOAD:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     GRICE_COOPERATIVE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     GRID_STRUCTURE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: warning
     GUARD_CLAUSE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: info
+      languages: [ruby]
     GUARD_EXPENSIVE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
     GUARD_EXPENSIVE_OPS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      languages: [ruby, zsh]
+      path_exclude: '/test/|/spec/|/db/seeds|/db/migrate/|seeder|demo_seed|_seed\b'
     HAPTIC_SINGLE_SOURCE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
+      severity: info
+      mode: opportunity
+      languages: [javascript]
+      path: 'RAILS/'
     HASH_FETCH:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+      severity: info
     HELP_AND_DOCUMENTATION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     HELPER_VIEW_ONLY:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     HOST_CAPACITY:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: warning
     HOSTILE_AUDIT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     HTML_CSS_STYLE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     HTML_HEADING_HIERARCHY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
+      severity: warning
+      mode: opportunity
+      languages: [html]
     HTML_LANG:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: error
     HUMBLE_OBJECT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     HYRUM:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     I18N_COVERAGE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
+      severity: warn
+      languages: [html]
+      path: '/app/views/'
     IDEMPOTENT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     IMG_ALT:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: error
     IMMUTABLE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: info
+      languages: [ruby]
     IMPORTANCE_ORDER:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     INAPPROPRIATE_INTIMACY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     INCONCLUSIVE_IS_NOT_PASS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      lifecycle: trusted
+      autofix: never
     INFORMATION_HIDING:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     INPUT_TYPE_SPECIFIC:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: info
     INSTRUMENT_MUST_PROVE_ITSELF:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      lifecycle: trusted
+      autofix: never
     INTEGRATED_SYSTEMS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
+      languages: [ruby]
     INTER_MODEL_CONTRACT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/inter_model.rb]
+      severity: error
+      languages: [ruby]
+      path: 'MASTER/lib/review/council/'
     INTERACTION_PERFORMANCE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: warning
+      mode: opportunity
+      languages: [css, scss]
+      path: 'RAILS/'
     INTERACTION_SEMANTICS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
+      severity: warning
+      mode: opportunity
+      languages: [html]
     interconnect:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/graph_laws.rb]
+      severity: warning
     INTERFACE_SEGREGATION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      severity: warning
     INTRINSIC_LAYOUT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: warning
+      languages: [css, scss]
     INVERTED_PYRAMID:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     JS_MODULE_SIZE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/js_laws.rb]
+      severity: warning
     KERNEL_COERCION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: info
+      languages: [ruby]
     KISS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     law_coverage:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/meta_laws.rb]
+      severity: warning
     LAW_OF_DEMETER:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      severity: warning
     LAZY_CLASS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      severity: info
     LAZY_IMAGES:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: info
     LEARNED_SMELLS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/meta_laws.rb]
+      severity: warning
     LEAST_ASTONISHMENT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     LEAST_PRIVILEGE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
     LEVELS_OF_SCALE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     LIB_ROOT_DISCIPLINE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      severity: warning
     LINE_HEIGHT_ON_SCALE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: warning
     LINEARITY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      lifecycle: trusted
+      autofix: never
     LINT_BEAUTIFY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     LISKOV:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      severity: warning
     LOAD_BEARING_NAMES:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     LOGICAL_PROPERTIES:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: info
+      # scss too: the fleet's styles are authored in .scss, and a css-only scope
+      # made this law inert everywhere it mattered — the registry twin was the
+      # live one until its retirement carried the language here.
+      languages: [css, scss]
     LONG_LINE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      severity: info
     LONG_PARAMETER_LIST:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      severity: warning
     MAGIC_COLOR:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/js_laws.rb]
+      severity: warning
     MAKE_ILLEGAL_STATES_UNREPRESENTABLE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
     MASS_GENERATE_CURATE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     MASTER_PROMPT_AESTHETIC:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     MATCH_REAL_WORLD:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     MEANINGFUL_NAMES:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     MEASURE_OPTIMUM:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: info
+      languages: [css, scss]
     MERGE_BEFORE_MULTIPLY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     META_CHARSET:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
+      severity: error
+      languages: [html]
+      # A check fixture is a specimen, not a page. MASTER/checks/fixtures holds
+      # hand-written good_ and bad_ documents that exist to be graded BY the checks,
+      # and the bad ones are wrong on purpose — nine of this law's findings were its
+      # own test data, including four files whose names say so.
+      path_exclude: '/checks/fixtures/'
     META_FRAMING:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     MICRO_REFINEMENTS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     MIDDLE_MAN:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      severity: info
     MIGRATION_ADD_REFERENCE_NO_FK:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: error
+      languages: [ruby]
+      path: '/db/migrate/'
     MIGRATION_FIND_OR_CREATE_BY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: warn
+      languages: [ruby]
+      path: '/db/migrate/'
     MIGRATION_NOT_NULL_NO_DEFAULT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: error
+      languages: [ruby]
+      path: '/db/migrate/'
     MIGRATION_REMOVE_COLUMN:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: error
+      languages: [ruby]
+      path: '/db/migrate/'
     MINIMAL_FOOTPRINT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: error
     MIRROR_EXPERTISE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     MOBILE_ACCESSIBILITY_DEFAULTS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
+      mode: opportunity
     MOBILE_FIRST:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: warn
+      languages: [css, scss]
     MOBILE_VIEWPORT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: warning
+      languages: [css, scss]
     MODERN_FORMS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: info
+      languages: [css, scss]
     MODIFIER_SILENT_RESCUE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      severity: warning
     MONKEY_PATCH_CORE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: warn
+      languages: [ruby]
+      path_exclude: '/test/'
     MONOLITH_FIRST:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     MOTION_ACCESSIBILITY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: warning
+      languages: [css, scss]
     MOTION_COLOR_GRADING:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     N_PLUS_ONE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      severity: warning
     NARROW_SILENT_RESCUE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      severity: warning
     NATIVE_DISCLOSURE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: info
+      languages: [css, scss]
     NAVIGATION_CONTINUITY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: info
     NESTING_DEPTH:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      severity: warning
     NEVER_BATCH_DELETE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/shell.rb]
+      severity: error
+      # zsh, not shell: FILE_LANGUAGE_MAP emits "zsh" for .sh/.zsh/.bash and no file
+      # can ever carry the language "shell", so applies? returned false for every
+      # shell script in the repo — 73 of them, including both glob-rm sites. This
+      # law exists because of the 2026-01-05 incident where 16 files were deleted by
+      # one glob, and it has only ever been able to see the Ruby half.
+      languages: [ruby, zsh]
     NO_ABBREVIATED_IDENTIFIERS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      severity: info
     NO_ASCII_ART_OUTSIDE_FACE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      severity: error
+      languages: [ruby, javascript, html, yaml, markdown, zsh, css]
+      path_exclude:
+        - 'MASTER/lib/cli/face'
+        - 'RAILS/master/public/(?:face_ascii|face_2d_fallback)\.js'
+        - 'RAILS/master/test/face_ascii\.test\.mjs'
+        - 'MASTER/test/test_cli_ascii_face\.rb'
+        - 'MASTER/test/fixtures/face_ascii_frames\.json'
+        - 'MASTER/tools/face_ascii_fixtures\.rb'
     NO_ASCII_DECORATION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     NO_ASCII_LINE_ART:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      severity: warning
     NO_CHANGELOG_COMMENT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warn
     NO_COLUMN_ALIGN:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     NO_CONSECUTIVE_BLANK_LINES:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     NO_DEAD_ENDS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     NO_DEBUG:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      severity: error
     NO_DECORATIVE_FX:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: warning
     NO_DECORATIVE_GRADIENT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: info
+      languages: [css, scss]
     NO_DOT_SEPARATED_META:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: info
+      languages: [html]
     NO_EYEBROW_LABEL:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: info
+      languages: [css, scss, html]
     NO_FILLER:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     NO_FLAG_ARGUMENTS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      severity: warning
     NO_GOD_CLASS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      severity: error
     NO_HIDDEN_GLOBAL_STATE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
     NO_IMPORT_SCSS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: warn
+      languages: [scss]
     NO_IMPORTANT:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: warning
     NO_INFINITY_TO_I:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/fix_hygiene.rb]
+      severity: error
+      languages: [ruby]
+      path_exclude: '/law/fix_hygiene\.rb\z'
     NO_INLINE_ASSETS_IN_SHELL:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/shell.rb]
+      severity: warn
+      languages: [zsh]
     NO_INLINE_SCRIPT_BLOCK:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
+      severity: warn
+      languages: [html]
+      # Two pages that cannot reach an asset pipeline, which is the only reason this
+      # rule yields.
+      #
+      # A static error page renders when Rails is not answering: no
+      # stylesheet_link_tag, no digested URL, nothing served by the app that
+      # failed. Inline is the only thing that works there, which is why every app's
+      # 404/422/500 carries its own style block.
+      #
+      # A probe fixture beside its script is loaded as a data: URL with no server at
+      # all, so an external src has nothing to resolve against. probe_webgl_guard's
+      # inline block is also the subject under test — it proves the pre-boot WebGL
+      # guard from chat/index.html.erb, which is inline by design because a blocking
+      # <script src> above it delays handler wiring and early taps look dead.
+      #
+      # This clause was written twice, identically, with its reason above each copy.
+      # The second silently replaced the first, so half of it had never been read by
+      # anything.
+      # Two owned surfaces have a different transport contract:
+      # mailer styles must be embedded because mail clients do not load the web asset
+      # pipeline, and theme_bootstrap is a nonce-bearing first-paint script whose
+      # blocking position is intentional so the chosen theme is present before paint.
+      #
+      # The face and its two static companions are the same class as the 4xx pages:
+      # chat/index.html.erb carries the pre-boot WebGL guard and the FOUC theme
+      # blocks, which are inline by design because a blocking <script src> above
+      # them delays handler wiring and early taps look dead (frontend_production
+      # asserts those inline boot markers exist), and the two public pages below are
+      # served by the service worker or by relayd precisely when no app, and so no
+      # asset pipeline, is answering.
+      path_exclude:
+        - '/public/\d{3}\.html\z'
+        - '/public/(?:offline|406-unsupported-browser)\.html\z'
+        - '/script/probe_\w+\.html\z'
+        - '/_mailer_styles\.html\.erb\z'
+        - '/_theme_bootstrap\.html\.erb\z'
+        - '/app/views/chat/index\.html\.erb\z'
     NO_INLINE_STYLES:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
+      severity: warn
+      languages: [html]
+      # A static error page renders when Rails is not answering, so it cannot
+      # reach the asset pipeline: no stylesheet_link_tag, no digested URL, nothing
+      # served by the app that just failed. Inline is the only thing that works
+      # there, which is why 404/422/500 carry their own style block.
+      path_exclude: '/public/\d{3}\.html\z'
     NO_JQUERY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
+      severity: warn
+      languages: [javascript, html]
     NO_JS_ERB:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: warning
     NO_LOGIC_IN_VIEW:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: warning
     NO_LONG_TRANSITION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: warn
+      languages: [css, scss]
     NO_MAGIC:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     NO_MULTIPLE_LANGUAGES:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: warn
+      languages: [ruby, javascript, css, scss, zsh]
+      # Three places where speaking a second language is the job rather than the
+      # defect, and the rule is about a document mixing them — the shape
+      # RAILS/CLAUDE.md names when it says split large mixed HTML/CSS/JS files.
+      #
+      # A database adapter speaks SQL; flagging it asks the layer to stop doing the
+      # one thing it exists for. A migration is the same: amber's
+      # convert_money_to_ore backfills through `execute <<~SQL.squish`, which is how
+      # a column move is done safely.
+      #
+      # And a file whose job is to detect another language has to quote it — the
+      # distinction Law.conduct already draws for law/. web_laws.rb carries an ERB
+      # regex, an operator message reading "<tag><%= … %></tag>" and advice about
+      # auto-escaped <%= %>; none is a template, all three are about one.
+      path_exclude: '/(?:knowledge_store|catalog_index)\.rb\z|/memory/search\.rb\z|/db/migrate/'
     NO_NEW_FILES:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     NO_ONE_PARADIGM:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
+      languages: [ruby]
     NO_ORDINAL_ORNAMENT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: info
+      languages: [css, scss, html]
     NO_OUTPUT_ARGUMENTS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     NO_OVERESCAPED_NONCAPTURING:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/fix_hygiene.rb]
+      severity: error
+      languages: [ruby]
+      path_exclude: '/law/fix_hygiene\.rb\z'
     NO_PUTS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      severity: warning
     NO_SELECTOR_ARGUMENTS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     NO_SHOTGUN_SURGERY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     NO_SIDE_EFFECTS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     NO_TODO_IN_VIEWS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: warning
     NO_TRAILING_ARROW:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: info
+      languages: [html]
     NO_TRANSPORT_WRAPPER_IN_SOURCE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
+      severity: error
+      languages: [ruby]
+      path_exclude: '/law/'
     NO_UPDATE_ATTRIBUTE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+      severity: error
     NO_VAR:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
+      severity: error
+      languages: [javascript]
+      path_exclude: '/public/three\.module\.js\z'
     NO_WEBGL_GLOW_PASS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
+      severity: error
+      languages: [javascript]
     NOISE_NAME:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: info
+      languages: [ruby]
+      path_exclude: '/test/|/fixtures/'
     NULL_BLINDNESS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
     NULLISH_COALESCING:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
+      severity: info
+      languages: [javascript]
+      path_exclude: '/public/three\.module\.js\z'
     NUMBERED_NAME:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/naming_laws.rb]
+      severity: info
     OMAKASE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
+      languages: [ruby]
+      lifecycle: advisory
     OMIT_NEEDLESS_WORDS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      severity: info
     ONE_ABSTRACTION_LEVEL:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     ONE_JOB:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     ONE_SOURCE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      # error: ONE_SOURCE is a kernel Law. Measured when it was raised, its detector
+      # found nothing in any of the four trees, so the severity is a promise about the
+      # next collision rather than a new check failure.
+      severity: error
     OPEN_CLOSED:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      severity: warning
     OPENBSD_DMESG_CONSOLE_STYLE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
+      severity: warning
+      mode: opportunity
+      languages: [ruby]
+      path: 'MASTER/lib/voice/'
     OPERATOR_AUTONOMY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     OPTIONAL_CHAINING:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
+      severity: warn
+      languages: [javascript]
+      path_exclude: '/public/three\.module\.js\z'
     OPTIONAL_CHAINING_JS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/js_laws.rb]
+      severity: warning
     ORTHOGONALITY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     PARALLEL_INHERITANCE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     PARAMETERIZED_SLUG:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/naming_laws.rb]
+      severity: warning
     PARSE_DONT_VALIDATE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     PATH_PURPOSE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/meta_laws.rb]
+      # error, not warning: WriteGuard blocks on veto/critical/error, and a
+      # directory nobody has taken responsibility for is exactly what
+      # should be refused at write time rather than reported afterwards.
+      severity: error
     PATTERN_EXTRACTION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      severity: info
     PERCENT_LITERAL:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: info
+      languages: [ruby]
     PIXEL_EXACT:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     PLEDGE_STAGED:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      severity: error
     PLUCK_OVER_MAP:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+      severity: info
     POINTER_FEEDBACK_EARLY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
+      severity: info
+      mode: opportunity
+      languages: [javascript]
+      path: 'RAILS/'
     POKA_YOKE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     POSTEL:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
+      lifecycle: advisory
     PRECOMPUTE_MATH:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     PREEMPT_FOLLOWUP:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     PREFER_TAG_HELPERS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: info
     PRESENTATIONAL_CLASS_NAME:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
+      severity: warn
+      languages: [html]
     PRESERVE_FIRST:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: error
     PRIMITIVE_OBSESSION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      severity: info
     PROBE_BEFORE_SHIP:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     PROGRAMMER_HAPPINESS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
+      languages: [ruby]
+      lifecycle: advisory
     PROGRESS_OVER_STABILITY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
+      languages: [ruby]
+      lifecycle: advisory
     PROGRESSIVE_DISCLOSURE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     PROPERTY_BASED_TESTING:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     PROSE_ACTIVE_VOICE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/prose.rb]
+      severity: info
+      languages: [markdown, ruby]
+      path_pattern: '.'
     PROSE_ACTIVE_VOICE_NB:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/prose.rb]
+      severity: info
+      languages: [yaml]
+      path_pattern: '(?:\A|[/.])nb\.yml\z'
     PROSE_OMIT_QUALIFIERS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/prose.rb]
+      severity: warn
+      languages: [markdown, ruby]
+      path_pattern: '.'
     PROSE_OMIT_QUALIFIERS_NB:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/prose.rb]
+      severity: warn
+      languages: [yaml]
+      # Bokmål reaches the tree through the Rails locale files and nowhere else;
+      # every comment in the repo is English. Scoped there, `bare` is Norwegian.
+      path_pattern: '(?:\A|[/.])nb\.yml\z'
     PROSE_ONE_TOPIC_PARAGRAPH:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     PROSE_PARALLEL_FORM:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     PROSE_POSITIVE_FORM:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     PROSE_RELATED_WORDS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     PROXIMITY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      lifecycle: trusted
+      autofix: never
     PSYCHOLOGICAL_ACCEPTABILITY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     PULL_COMPLEXITY_DOWN:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     PURE_FUNCTIONS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     PWA_MANIFEST_HINT:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     PWA_RESILIENCE_DEFAULTS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
+      mode: opportunity
     QUOTE_VARIABLES:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/js_laws.rb]
+      severity: error
     RAILS_TAG_HELPER:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     RAILS_THIN_CONTROLLER_SEMANTIC:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/rails.rb]
+      severity: warning
+      languages: [ruby]
     RAILS_VIEW_PURITY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/rails.rb]
+      severity: warning
+      languages: [html]
     RAMS_HONEST:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     RAMS_THOROUGH:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     RAMS_UNDERSTANDABLE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     RAMS_UNOBTRUSIVE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     RAMS_USEFUL:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     RATCHET_INTEGRITY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      lifecycle: trusted
+      autofix: never
     RATE_LIMITING_MISSING:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: error
+      languages: [ruby]
+      path: '/app/controllers/'
     README_PROSE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      severity: info
     README_VISION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
+      severity: info
+      mode: opportunity
+      languages: [markdown]
+      path: 'MASTER/README.md'
     RECOGNITION_OVER_RECALL:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     REDUCED_MOTION:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: info
     reek:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/external_linter_laws.rb]
+      severity: warning
     REFUSED_BEQUEST:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     REGISTER_STABLE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     RENDERED_VALUES:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      lifecycle: trusted
+      autofix: never
     RESCUE_EXCEPTION:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      severity: warning
     RESCUE_ON_DEF:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: info
+      languages: [ruby]
     RESTART_RAILS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     REVERSIBILITY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     ROBUSTNESS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      lifecycle: trusted
+      autofix: never
     RTFM_FIRST:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     rubocop:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/external_linter_laws.rb]
+      severity: warning
     RUBY_BLOCK_DELIMITER:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: info
+      languages: [ruby]
     RUBY_CAMEL_CLASS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: warn
+      languages: [ruby]
     RUBY_NUMERIC_UNDERSCORE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: info
+      languages: [ruby]
     RUBY_SCREAMING_CONST:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: info
+      languages: [ruby]
     RUBY_SNAKE_METHODS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: warn
+      languages: [ruby]
     RUBY_SYMBOL_TO_PROC:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: info
+      languages: [ruby]
     RUBY_TERNARY_NOT_NESTED:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      severity: warning
     RUNTIME_DOCS_YAML:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/meta_laws.rb]
+      severity: error
     SAFE_NAVIGATION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: warn
+      languages: [ruby]
     SCAN_SWEEP_CONVERGENCE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     SCOPED_CSS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: info
+      languages: [css, scss]
     SCROLL_INTEGRITY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: warning
+      languages: [css, scss]
     SCSS_NESTING_DEPTH:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: warning
     SECRET_PROXIMITY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      # A literal "password" in a test or seed IS the fixture — both fleet hits
+      # were user.password = "password" in exactly those files (2026-08-22).
+      path_exclude: '/test/|/spec/|/db/seeds'
     SELF_EXPLAINING:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     semantic:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/semantic_laws.rb]
+      severity: warning
     SEMANTIC_ELEMENTS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
+      severity: warn
+      languages: [html]
     SHARP_KNIVES:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
+      languages: [ruby]
+      lifecycle: advisory
     SHELL_DISCIPLINE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     SIGNAL_COLOR_IS_SEMANTIC:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: warn
+      languages: [css, scss]
     SIGNAL_NOISE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     SIGNATURE_MOMENT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
+      severity: info
+      mode: opportunity
+      languages: [html, javascript, css, scss]
+      path: 'RAILS/'
     SILENCE_ON_SUCCESS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     SILENT_RESCUE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      severity: error
     SIMPLEST_WORKS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: error
     SIMULATION:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      severity: warning
     SINGLE_H1:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: warning
     SINGLE_PRIVATE_SECTION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: info
+      languages: [ruby]
     SINGULARITY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      lifecycle: trusted
+      autofix: never
     SKIP_TO_MAIN:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
+      severity: warn
+      languages: [html]
+      path: '/app/views/layouts/'
+      path_exclude: 'mailer'
     SMALL_FILES:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      severity: warning
     SMALL_FUNCTIONS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      severity: warning
     SPECULATIVE_GENERALITY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     SQL_INJECTION:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      severity: error
     SQUINT_TEST:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     SRP:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     STATE_CHOREOGRAPHY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/css.rb]
+      severity: warning
+      mode: opportunity
+      languages: [html, css, scss, javascript]
+      path: 'RAILS/'
     STEPDOWN:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     STIMULUS_CONTROLLER_SIZE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: warning
     STIMULUS_PROGRESSIVE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     STRICT_LOADING_MISSING:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: info
+      languages: [ruby]
+      path: '/app/models/'
     STRICT_MODE_ZSH:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/shell.rb]
+      severity: error
+      languages: [zsh]
+      # daily.local, weekly.local and monthly.local are sourced into /etc/daily,
+      # /etc/weekly and /etc/monthly, so `set -e` in one would abort the base
+      # system's own maintenance run at its first non-zero command.
+      path_exclude: '/etc/(?:daily|weekly|monthly)\.local\z'
     STRONG_CENTERS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     STRONG_PARAMETERS:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+      severity: error
     STRUCTURAL_HONESTY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     STRUNK_WHITE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     STYLE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     STYLE_FOLLOWS_STRUCTURE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
+      severity: info
+      mode: opportunity
+      languages: [html, css, scss]
     SURFACE_AREA:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     SURFACE_ERRORS_FIRST:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     SYSTEM_STATUS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     TAB_CHARACTER:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      severity: warning
     TABINDEX_ABOVE_ZERO:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/web_laws.rb]
+      severity: warning
     TACTILE_FEEDBACK:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
+      severity: info
+      mode: opportunity
+      languages: [javascript]
+      path: 'RAILS/'
     TEMPLATE_LITERALS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/javascript.rb]
+      severity: warn
+      languages: [javascript]
+      path_exclude: '/public/three\.module\.js\z'
     TEMPORAL_COUPLING:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
     THIN_CONTROLLER:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: warning
     TIME_ZONE_UNSAFE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      severity: warning
     TODO_FIXME:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      severity: info
     TOUCH_TARGET_MIN:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: warning
     TRACER_BULLETS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     TRAILING_COMMAS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+      severity: info
+      languages: [ruby, javascript]
     TRAILING_COMMENT:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      severity: info
     TRAILING_WHITESPACE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      severity: info
     TRANSFORM_KEYS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: info
+      languages: [ruby]
     TRANSFORMATIONS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
+      lifecycle: trusted
     TYPE_HIERARCHY:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     TYPE_IN_NAME:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/naming_laws.rb]
+      severity: info
     TYPE_TITLE_TOKEN:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     TYPOGRAPHIC_EXCELLENCE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      severity: info
     TYPOGRAPHIC_GRID:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      severity: info
     TYPOGRAPHY_DISCIPLINE:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      severity: info
     UNBOUNDED_RETRY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      # `retry` is a Ruby keyword and nothing else. Undeclared, this read every
+      # language in the tree, and its one standing finding was the word in a
+      # sentence on 406-unsupported-browser.html — "then retry", English prose in
+      # HTML, at :error. Every narrowing in its detector tells the keyword from
+      # the word; declaring the language is the same job done at the file.
+      languages: [ruby]
     UNIVERSAL_CROSS_DISCIPLINARY_RULES:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     UNIX_PHILOSOPHY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     UNTRUSTED_CONTENT_IS_DATA:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: error
     USE_THEN:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/ruby.rb]
+      severity: info
+      languages: [ruby]
     USER_CONTROL:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     UTILITY_CLASS_SOUP:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/html.rb]
+      severity: warn
+      languages: [html]
+      path: '/app/views/'
     VERIFICATION_REQUIRED_FOR_COMPLETION:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: error
+      lifecycle: trusted
+      autofix: never
     VERIFY_THE_INSTRUMENT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     VERTICAL_BREATH:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      severity: info
     veto_patterns:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/veto_pattern_law.rb]
+      severity: veto
     VISUAL_HIERARCHY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
+      mode: opportunity
     VISUAL_IDENTITY_SOURCE_OF_TRUTH:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
+      severity: warning
+      languages: [yaml]
+      path: 'MASTER/data/tokens.yml'
     VISUAL_PARTICLE_STIPPLE_PRIMARY:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/recovered_design_semantics.rb]
+      severity: warning
+      languages: [yaml]
+      path: 'MASTER/data/tokens.yml'
     VOICE_FAILURES_ARE_ACTIONABLE:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
+      severity: info
+      mode: opportunity
+      languages: [ruby]
+      path: 'MASTER/lib/voice/'
     VOICE_TERSE_UNIX:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     VPS_SERIAL_TRUTH:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/practice.rb]
+      severity: warn
     WAITING_STATE_MEANING:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/interface.rb]
+      severity: info
+      mode: opportunity
+      languages: [html, css, scss, javascript]
+      path: 'RAILS/'
     WEB_PLATFORM_DEFAULTS:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: warning
+      mode: opportunity
     WHITESPACE_RHYTHM:
       universal: true
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      severity: info
     WHY_NOT_WHAT:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
+      severity: info
     ZSH_SHEBANG:
       universal: true
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/shell.rb]
+      severity: warn
+      languages: [zsh]

@@ -12,8 +12,6 @@
 # Baseline record during review rather than treating this snapshot as evergreen.
 Law.define(:BASELINE_COMPATIBILITY) do
   source "MDN Web Platform Baseline — compatibility is not accessibility"
-  severity :warning
-  mode :opportunity
   ask <<~'ASK'.strip
     Does a web change depend on a newly available HTML, CSS, JavaScript, or PWA API without checking the
     supported browser/device matrix, fallback behavior, accessibility, and security contract?
@@ -32,8 +30,6 @@ end
 
 Law.define(:CORE_WEB_VITALS) do
   source "web.dev Core Web Vitals thresholds — field data, not a lab-only claim"
-  severity :warning
-  mode :opportunity
   ask <<~'ASK'.strip
     Does a web performance or interaction-quality claim lack representative real-user evidence for 75th-percentile
     LCP ≤ 2.5 s, INP ≤ 200 ms, and CLS ≤ 0.1, especially on mobile?
@@ -48,8 +44,6 @@ end
 
 Law.define(:WEB_PLATFORM_DEFAULTS) do
   source "GoogleChrome Modern Web Guidance and MDN Web Platform Baseline"
-  severity :warning
-  mode :opportunity
   ask <<~'ASK'.strip
     Does new HTML, CSS, or browser JavaScript recreate native platform behavior, add a dependency before checking native capabilities, or
     treat a Baseline Newly available feature as universal without a fallback?
@@ -72,8 +66,6 @@ end
 
 Law.define(:MOBILE_ACCESSIBILITY_DEFAULTS) do
   source "WCAG 2.2 and W3C mobile guidance"
-  severity :warning
-  mode :opportunity
   ask <<~'ASK'.strip
     Does a mobile-first web change fail to reflow at 320 CSS pixels, hide keyboard focus, rely on pointer-only interaction, or ignore reduced motion?
   ASK
@@ -94,8 +86,6 @@ end
 
 Law.define(:PWA_RESILIENCE_DEFAULTS) do
   source "MDN Progressive Web Apps and service-worker caching guidance"
-  severity :warning
-  mode :opportunity
   ask <<~'ASK'.strip
     Does a PWA assume optional APIs exist, offer no honest offline state, or cache or replay data without explicit freshness and safety rules?
   ASK
@@ -117,11 +107,7 @@ end
 
 Law.define(:FAIL_VISIBLY) do
   source "Fail Fast (Jim Shore, IEEE Software 2004)"
-  severity :error
   ask "Does this code swallow exceptions or fail silently instead of surfacing the error with useful context?"
-  # Ruby only: `rescue` at a line end in Markdown is the English word, as in
-  # "search-and-rescue" closing a sentence in AEGIS.md.
-  languages %i[ruby]
   detect { |line| line.match?(/(?<![\w:.])rescue\s*$|(?<![\w:.])rescue\s+Exception\b/) }
   fix "Catch specific errors, log context, re-raise or return Result."
   bad "rescue Exception"
@@ -130,7 +116,6 @@ end
 
 Law.define(:FULL_BY_DEFAULT) do
   source "MASTER-native (no shallow/lite tiers by default)"
-  severity :warn
   ask "Does this API expose a do-less tier such as shallow, standard, quick, lite, basic, or light alongside a full tier where users routinely need the full behavior? If the cost tradeoff is real, name the cost rather than the quality."
   # Both words have to be list items, not two adjectives that happen to meet.
   # "sculpted soft key light, deep muted tones" is a prompt describing a
@@ -145,10 +130,7 @@ end
 
 Law.define(:GUARD_EXPENSIVE_OPS) do
   source "MASTER-native (guard expensive operations); Nielsen heuristic 5, error prevention"
-  severity :error
-  languages %i[ruby zsh]
   ask "Does this execute an expensive or destructive operation without confirmation, bounds, or relevant preconditions?"
-  path_exclude %r{/test/|/spec/|/db/seeds|/db/migrate/|seeder|demo_seed|_seed\b}
   # `rm -rf` left for NEVER_BATCH_DELETE, which already owned file deletion and
   # already knew a scoped path from an unbounded one. Both laws claiming it was
   # one question with two instruments, and every one of the twelve hits here was
@@ -176,7 +158,6 @@ end
 
 Law.define(:MEANINGFUL_NAMES) do
   source "Clean Code — meaningful names (Robert C. Martin)"
-  severity :info
   # The right-hand side has to already carry a better name, which is what the
   # fixtures below describe: `tmp = load` wastes the name `load` that is right
   # there. Any generic name on the left was 484 findings, and a sample of them
@@ -211,7 +192,6 @@ end
 
 Law.define(:NO_COLUMN_ALIGN) do
   source "Ruby Style Guide / RuboCop Layout — no token alignment"
-  severity :info
   # The character class before `=` is optional. Required, it could only match by
   # backtracking into the run of spaces, so `name    = 1` was caught on three
   # spaces and `result  = x` slipped through on exactly two — the commonest
@@ -238,7 +218,6 @@ end
 
 Law.define(:NULL_BLINDNESS) do
   source "SQL/Ruby — explicit NULL/nil handling"
-  severity :error
   # `= NULL` with no word boundary matched `<= NULL_FLOOR_DB` and
   # `>= NULL_FLOOR_DB` — a float comparison against a dB floor, flagged at
   # error severity, which then gated those files out of the semantic pass
@@ -262,10 +241,6 @@ end
 
 Law.define(:SECRET_PROXIMITY) do
   source "OWASP — no hardcoded secrets/credentials"
-  severity :error
-  # A literal "password" in a test or seed IS the fixture — both fleet hits
-  # were user.password = "password" in exactly those files (2026-08-22).
-  path_exclude %r{/test/|/spec/|/db/seeds}
   # The value must be a CLOSED quoted literal, and the identifier must not
   # itself sit inside a string. `[^'"]{8,}` had no reason to stay inside a
   # quote, so it matched the source BETWEEN two literals — the "secret" it
@@ -290,7 +265,6 @@ end
 
 Law.define(:SQUINT_TEST) do
   source "Squint Test readability heuristic (Sandi Metz)"
-  severity :info
   ask "Does this file have dense blocks with no visual breaks, or ragged indentation?"
   scope :file
   # Comment lines are content for this law, not noise. considered_text replaces
@@ -326,13 +300,6 @@ end
 
 Law.define(:UNBOUNDED_RETRY) do
   source "Release It! — retry budgets / bounded retries (Nygard)"
-  severity :error
-  # `retry` is a Ruby keyword and nothing else. Undeclared, this read every
-  # language in the tree, and its one standing finding was the word in a
-  # sentence on 406-unsupported-browser.html — "then retry", English prose in
-  # HTML, at :error. Every narrowing above is about telling the keyword from
-  # the word; declaring the language is the same job done at the file.
-  languages %i[ruby]
   # Every finding this produced was a false positive, all five of them. Three
   # narrowings, each against one of those shapes:
   #
@@ -369,7 +336,6 @@ end
 
 Law.define(:NO_CHANGELOG_COMMENT) do
   source "MASTER-native — git holds history; comments hold reasons"
-  severity :warn
   reads_comments true
   detect do |line|
     line.match?(/^\s*(?:#|\/\/|\*)\s*(?:RAISED|RATCHETED|LOWERED|BUMPED|TRIMMED|UPDATED?|RENAMED|MOVED|CHANGED|REVERTED|REMOVED|ADDED|DEPRECATED|NARROWED|REDUCED|FIXED)\b[^\n]{0,40}\d{4}-\d{2}-\d{2}/i) ||
@@ -383,7 +349,6 @@ end
 
 Law.define(:WHY_NOT_WHAT) do
   source "Clean Code / Code Complete — comments explain why, not what"
-  severity :info
   reads_comments true
   # Two guards, and the second is the one that matters. Anchoring to the start
   # of the comment is not enough, because these words are nouns as often as
@@ -417,7 +382,6 @@ end
 
 Law.define(:FUNCTIONAL_CORE) do
   source "Functional Core, Imperative Shell (Gary Bernhardt)"
-  severity :info
   ask "Are IO, database, network, filesystem, or process side effects scattered deep inside business logic instead of isolated at the edges?"
   fix "Return values from the core and move IO to the shell."
   bad <<~'X'
@@ -430,8 +394,6 @@ end
 
 Law.define(:CONVENTION_OVER_CONFIG) do
   source "Convention over Configuration (Rails Doctrine, DHH)"
-  severity :info
-  languages %i[ruby]
   ask "Does this require explicit configuration where an established local convention already provides the correct behavior?"
   fix "Use the existing convention; add configuration only when it changes a real requirement."
   bad <<~'X'
@@ -443,10 +405,7 @@ Law.define(:CONVENTION_OVER_CONFIG) do
 end
 
 Law.define(:PROGRAMMER_HAPPINESS) do
-  lifecycle :advisory
   source "Optimize for Programmer Happiness (Rails Doctrine, DHH)"
-  severity :info
-  languages %i[ruby]
   ask "Does this design impose ceremony or friction that does not buy meaningful safety or clarity?"
   fix "Remove unnecessary ceremony and keep the common path expressive."
   bad <<~'X'
@@ -458,10 +417,7 @@ Law.define(:PROGRAMMER_HAPPINESS) do
 end
 
 Law.define(:OMAKASE) do
-  lifecycle :advisory
   source "The Menu Is Omakase (Rails Doctrine, DHH)"
-  severity :info
-  languages %i[ruby]
   ask "Does this introduce a competing tool when the application already has a suitable integrated default?"
   fix "Use the existing integrated default unless a concrete requirement justifies deviation."
   bad <<~'X'
@@ -474,8 +430,6 @@ end
 
 Law.define(:NO_ONE_PARADIGM) do
   source "No One Paradigm (Rails Doctrine, DHH)"
-  severity :info
-  languages %i[ruby]
   ask "Does this force one programming paradigm where a pragmatic combination would make the design clearer?"
   fix "Mix paradigms where each fits the problem; do not enforce uniformity for ideology's sake."
   bad <<~'X'
@@ -487,10 +441,7 @@ Law.define(:NO_ONE_PARADIGM) do
 end
 
 Law.define(:BEAUTIFUL_CODE) do
-  lifecycle :advisory
   source "Exalt Beautiful Code (Rails Doctrine, DHH)"
-  severity :info
-  languages %i[ruby]
   ask "Would a reader find this merely correct rather than clear, coherent, and aesthetically deliberate?"
   fix "Rewrite for structural and aesthetic clarity, not merely passing tests."
   bad <<~'X'
@@ -502,10 +453,7 @@ Law.define(:BEAUTIFUL_CODE) do
 end
 
 Law.define(:SHARP_KNIVES) do
-  lifecycle :advisory
   source "Provide Sharp Knives (Rails Doctrine, DHH)"
-  severity :info
-  languages %i[ruby]
   ask "Does this restrict a capable operator's legitimate power mainly to guard against a rare misuse?"
   fix "Preserve useful capability; document dangerous edges and require deliberate use."
   bad <<~'X'
@@ -518,8 +466,6 @@ end
 
 Law.define(:INTEGRATED_SYSTEMS) do
   source "Value Integrated Systems (Rails Doctrine, DHH)"
-  severity :info
-  languages %i[ruby]
   ask "Does this fragment a cohesive concern into separate services or gems without a concrete boundary that justifies it?"
   fix "Keep the concern integrated until an actual boundary, ownership, or scaling need requires extraction."
   bad <<~'X'
@@ -531,10 +477,7 @@ Law.define(:INTEGRATED_SYSTEMS) do
 end
 
 Law.define(:PROGRESS_OVER_STABILITY) do
-  lifecycle :advisory
   source "Progress Over Stability (Rails Doctrine, DHH)"
-  severity :info
-  languages %i[ruby]
   ask "Is a beneficial breaking change being avoided solely to preserve compatibility when a clear upgrade path exists?"
   fix "Take the justified breaking change and provide an explicit migration path."
   bad <<~'X'
@@ -546,10 +489,7 @@ Law.define(:PROGRESS_OVER_STABILITY) do
 end
 
 Law.define(:BIG_TENT) do
-  lifecycle :advisory
   source "Push Up a Big Tent (Rails Doctrine, DHH)"
-  severity :info
-  languages %i[ruby]
   ask "Does this unnecessarily exclude contributors through needless cleverness, jargon, or unexplained conventions?"
   fix "Prefer clear language and approachable structure without lowering technical rigor."
   bad <<~'X'
@@ -562,7 +502,6 @@ end
 
 Law.define(:MONOLITH_FIRST) do
   source "MonolithFirst (Martin Fowler)"
-  severity :info
   ask "Is this splitting a cohesive application into services before a concrete extraction boundary or operational need exists?"
   fix "Keep the feature in the application until extraction is clearly justified."
   bad <<~'X'
@@ -575,7 +514,6 @@ end
 
 Law.define(:CONSISTENT_ERROR_STRATEGY) do
   source "MASTER-native (uniform error handling)"
-  severity :warning
   ask "Does this module mix Result objects, exceptions, and nil returns for equivalent failure paths?"
   fix "Choose one error strategy per module and use it consistently."
   bad <<~'X'
@@ -588,7 +526,6 @@ end
 
 Law.define(:EVIDENCE_BY_INTENT) do
   source "MASTER-native (intent-to-evidence routing)"
-  severity :warning
   ask "Does an answer depend on current, niche, uncertain, repository, browser, device, or externally verifiable facts without first selecting the evidence surface that can actually observe them?"
   fix "Route the turn by evidence need: read/search the repository for repository facts, use device capability for local hardware, use browser capability for page state, and use local knowledge or current web sources for unfamiliar or time-sensitive facts; never substitute memory for available evidence."
   bad <<~'X'
@@ -602,7 +539,6 @@ end
 
 Law.define(:DUAL_DETECTION) do
   source "MASTER-native (lexical + semantic detection)"
-  severity :info
   ask "Does verification rely only on regex or only on an LLM when the subject can be checked with both deterministic and semantic evidence?"
   fix "Layer deterministic detection with semantic review where both add independent evidence."
   bad <<~'X'
@@ -615,7 +551,6 @@ end
 
 Law.define(:MASS_GENERATE_CURATE) do
   source "MASTER-native (generate then curate)"
-  severity :info
   ask "Is a high-stakes creative or design decision accepting the first plausible draft without exploring alternatives?"
   fix "Generate several materially different candidates, then curate against explicit constraints."
   bad <<~'X'
@@ -628,7 +563,6 @@ end
 
 Law.define(:NO_SHOTGUN_SURGERY) do
   source "Refactoring code smell: Shotgun Surgery (Fowler)"
-  severity :warning
   ask "Does one conceptual change require edits across many unrelated files because the missing abstraction has no single home?"
   fix "Create the missing abstraction or single source so one conceptual change has one owner."
   bad <<~'X'
@@ -641,7 +575,6 @@ end
 
 Law.define(:NO_HIDDEN_GLOBAL_STATE) do
   source "Clean Code — avoid global mutable state (R.C. Martin)"
-  severity :error
   ask "Are global variables or mutable class-level values shared across modules without explicit ownership?"
   fix "Inject configuration and state through explicit boundaries."
   bad <<~'X'
@@ -654,7 +587,6 @@ end
 
 Law.define(:TRACER_BULLETS) do
   source "The Pragmatic Programmer — tracer bullets"
-  severity :info
   ask "Is infrastructure being built without first proving the simplest end-to-end path through the real system?"
   fix "Wire the smallest end-to-end path first, prove it works, then add depth."
   bad <<~'X'
@@ -667,7 +599,6 @@ end
 
 Law.define(:ORTHOGONALITY) do
   source "The Pragmatic Programmer — orthogonality"
-  severity :warning
   ask "Does changing one dimension force unrelated changes in another, such as database details leaking into UI or style changing structure?"
   fix "Decouple dimensions so changes remain local."
   bad <<~'X'
@@ -680,8 +611,6 @@ end
 
 Law.define(:TRANSFORMATIONS) do
   source "Transformation Priority Premise (Robert C. Martin)"
-  severity :info
-  lifecycle :trusted
   ask "Is the design modeling work as scattered mutable state when it can be expressed as a clear sequence of transformations?"
   practice "On a structural or prose cleanup, inventory and classify first; defragment, decouple, flatten, merge, split, relocate, rename, reorder, remove, reflow and simplify in that order, then prove preservation."
   fix "Express the flow as input-to-output transformations with explicit stages."
@@ -695,7 +624,6 @@ end
 
 Law.define(:DEEP_MODULES) do
   source "A Philosophy of Software Design (John Ousterhout)"
-  severity :warning
   ask "Is this module shallow, exposing a complex interface while doing little work behind it?"
   fix "Absorb complexity behind a small interface that provides substantial capability."
   bad <<~'X'
@@ -710,7 +638,6 @@ end
 
 Law.define(:ONE_SOURCE) do
   source "DRY — The Pragmatic Programmer (Hunt & Thomas, 1999)"
-  severity :error
   ask "Is the same logic or data defined in multiple authoritative places?"
   fix "Extract one authoritative representation and make all consumers reference it."
   bad <<~'X'
@@ -723,7 +650,6 @@ end
 
 Law.define(:DECOUPLE) do
   source "The Pragmatic Programmer — decoupling"
-  severity :error
   ask "Are there implicit couplings between modules that should be explicit dependencies?"
   fix "Inject dependencies through explicit boundaries; avoid hidden global state."
   bad <<~'X'
@@ -736,7 +662,6 @@ end
 
 Law.define(:DEGRADE_GRACEFULLY) do
   source "Release It! — graceful degradation (Michael Nygard)"
-  severity :error
   ask "Does a partial dependency failure crash the whole operation when a bounded fallback is possible?"
   fix "Use timeouts, circuit breakers, bounded retries, or a safe fallback."
   bad <<~'X'
@@ -749,7 +674,6 @@ end
 
 Law.define(:GALLS_LAW) do
   source "Gall's Law — Systemantics (John Gall, 1975)"
-  severity :info
   ask "Is a complex system being built from scratch without first proving a smaller working system?"
   fix "Start with the simplest working system, prove it, then extend."
   bad <<~'X'
@@ -762,7 +686,6 @@ end
 
 Law.define(:CHESTERTONS_FENCE) do
   source "Chesterton's Fence (G.K. Chesterton, 1929)"
-  severity :warning
   ask "Is existing code being removed or changed without first understanding why it exists?"
   fix "Read history, tests, callers, and rationale before removing it."
   bad <<~'X'
@@ -775,7 +698,6 @@ end
 
 Law.define(:UNIX_PHILOSOPHY) do
   source "Unix philosophy — do one thing well (Doug McIlroy)"
-  severity :info
   ask "Does one module perform several unrelated jobs that could compose through a clear boundary?"
   fix "Split unrelated responsibilities into focused components and compose them."
   bad <<~'X'
@@ -788,7 +710,6 @@ end
 
 Law.define(:DRY) do
   source "DRY — Don't Repeat Yourself"
-  severity :warning
   ask "Are two units expressing the same knowledge independently rather than sharing one authoritative source?"
   fix "Merge the duplicated knowledge or make one representation authoritative."
   bad <<~'X'
@@ -801,7 +722,6 @@ end
 
 Law.define(:KISS) do
   source "KISS — Keep It Simple"
-  severity :warning
   ask "Does this introduce complexity the problem does not require?"
   fix "Flatten the design to the simplest structure that solves the actual problem."
   bad <<~'X'
@@ -814,7 +734,6 @@ end
 
 Law.define(:LEAST_ASTONISHMENT) do
   source "Principle of Least Astonishment"
-  severity :warning
   ask "Do names, APIs, or behavior contradict what a reasonable reader would expect?"
   fix "Rename or reshape the interface so behavior matches its apparent meaning."
   bad <<~'X'
@@ -829,7 +748,6 @@ end
 
 Law.define(:NO_GOD_CLASS) do
   source "Refactoring code smell: Large Class / God Object (Fowler)"
-  severity :error
   ask "Does one class accumulate unrelated responsibilities that should have separate owners?"
   fix "Decompose into focused objects with explicit responsibilities."
   bad <<~'X'
@@ -842,7 +760,6 @@ end
 
 Law.define(:FILE_SPRAWL) do
   source "MASTER-native — collapse before adding; flat hierarchy"
-  severity :warning
   ask "Are tiny files or one-file directories adding structure without carrying meaningful independent responsibility?"
   fix "Absorb tiny artifacts into their natural owner before creating another boundary."
   bad <<~'X'
@@ -855,7 +772,6 @@ end
 
 Law.define(:INFORMATION_HIDING) do
   source "Information hiding (David Parnas; Ousterhout)"
-  severity :warning
   ask "Do implementation details leak across a module boundary so changing one decision forces unrelated callers to change?"
   fix "Encapsulate the decision behind a stable interface."
   bad <<~'X'
@@ -868,7 +784,6 @@ end
 
 Law.define(:DIFFERENT_LAYER_DIFFERENT_ABSTRACTION) do
   source "A Philosophy of Software Design — different layers, different abstractions"
-  severity :warning
   ask "Do adjacent layers merely relay the same abstraction without transforming it?"
   fix "Make each layer add a meaningful abstraction or remove the layer."
   bad <<~'X'
@@ -881,7 +796,6 @@ end
 
 Law.define(:STRUCTURAL_HONESTY) do
   source "MASTER-native — structure mirrors intent"
-  severity :warning
   ask "Does the artifact's structure contradict the conceptual shape of the problem?"
   fix "Align modules, sections, layout, and boundaries with the actual domain."
   bad <<~'X'
@@ -894,7 +808,6 @@ end
 
 Law.define(:GRACEFUL_BOUNDARIES) do
   source "Boundaries (Gary Bernhardt) — values at the edges"
-  severity :info
   ask "Does a boundary assume perfect fidelity or that the other side will never change?"
   fix "Translate and validate at boundaries; define safe degradation."
   bad <<~'X'
@@ -907,7 +820,6 @@ end
 
 Law.define(:PULL_COMPLEXITY_DOWN) do
   source "A Philosophy of Software Design — complexity belongs behind the interface"
-  severity :info
   ask "Is complexity being pushed onto callers instead of absorbed by the implementation?"
   fix "Move complexity behind a small, stable interface."
   bad <<~'X'
@@ -920,7 +832,6 @@ end
 
 Law.define(:ETC) do
   source "The Pragmatic Programmer — Easier To Change"
-  severity :info
   ask "Does this decision unnecessarily close future options or make change expensive?"
   fix "Prefer decoupled, replaceable, reversible choices where costs are comparable."
   bad <<~'X'
@@ -933,7 +844,6 @@ end
 
 Law.define(:BROKEN_WINDOWS) do
   source "The Pragmatic Programmer — broken windows"
-  severity :warning
   ask "Is visible decay being left in place: dead code, stale references, broken links, or contradictory documentation?"
   fix "Fix visible decay when encountered instead of normalizing it."
   bad <<~'X'
@@ -946,7 +856,6 @@ end
 
 Law.define(:ENTROPY_RESISTANCE) do
   source "The Pragmatic Programmer — software entropy"
-  severity :warning
   ask "Is disorder accumulating through inconsistent names, exceptions, stale conventions, or abandoned paths?"
   fix "Remove drift and consolidate exceptions before they become a second system."
   bad <<~'X'
@@ -959,7 +868,6 @@ end
 
 Law.define(:DONT_OUTRUN_HEADLIGHTS) do
   source "The Pragmatic Programmer — don't outrun your headlights"
-  severity :info
   ask "Is the design specifying distant hypothetical scenarios more precisely than current evidence allows?"
   fix "Take small deliberate steps and reassess after each measured result."
   bad <<~'X'
@@ -972,7 +880,6 @@ end
 
 Law.define(:REVERSIBILITY) do
   source "The Pragmatic Programmer — reversibility"
-  severity :info
   ask "Is a hard-to-reverse decision being made when a reversible option provides the same present value?"
   fix "Prefer rollback paths, replaceable boundaries, and staged changes."
   bad <<~'X'
@@ -985,7 +892,6 @@ end
 
 Law.define(:DESIGN_IT_TWICE) do
   source "A Philosophy of Software Design — Design it Twice"
-  severity :info
   ask "Was a consequential design committed without considering at least one materially different approach?"
   fix "Sketch and compare alternatives before committing."
   bad <<~'X'
@@ -998,7 +904,6 @@ end
 
 Law.define(:PROPERTY_BASED_TESTING) do
   source "Property-based testing — QuickCheck"
-  severity :info
   ask "Do tests check only a few examples when the important invariant can be stated as a property?"
   fix "State the invariant and exercise many generated cases."
   bad <<~'X'
@@ -1011,7 +916,6 @@ end
 
 Law.define(:EXPLICIT_TRADEOFF) do
   source "Polished Ruby Programming — contextual trade-offs"
-  severity :info
   ask "Where several valid implementations exist, is the chosen one presented as universally correct instead of justified by context?"
   fix "State the access pattern, failure mode, or constraint that makes the choice fit."
   bad <<~'X'
@@ -1024,7 +928,6 @@ end
 
 Law.define(:LEAST_PRIVILEGE) do
   source "Saltzer & Schroeder — least privilege"
-  severity :error
   ask "Does a component hold broader authority than its task requires?"
   fix "Grant exactly the required scope for exactly the required duration."
   bad <<~'X'
@@ -1037,7 +940,6 @@ end
 
 Law.define(:FAIL_SAFE_DEFAULTS) do
   source "Saltzer & Schroeder — fail-safe defaults"
-  severity :error
   ask "Does the default path permit access when no explicit rule granted it?"
   fix "Default to denial and require an explicit grant."
   bad <<~'X'
@@ -1050,7 +952,6 @@ end
 
 Law.define(:COMPLETE_MEDIATION) do
   source "Saltzer & Schroeder — complete mediation"
-  severity :error
   ask "Is authority checked once and then trusted across later accesses whose state may have changed?"
   fix "Re-check authority at each access boundary."
   bad <<~'X'
@@ -1063,7 +964,6 @@ end
 
 Law.define(:ECONOMY_OF_MECHANISM) do
   source "Saltzer & Schroeder — economy of mechanism"
-  severity :warning
   ask "Is the security-critical path too large or branchy to inspect and verify as a small mechanism?"
   fix "Shrink and isolate the trusted path."
   bad <<~'X'
@@ -1076,7 +976,6 @@ end
 
 Law.define(:PSYCHOLOGICAL_ACCEPTABILITY) do
   source "Saltzer & Schroeder — psychological acceptability"
-  severity :warning
   ask "Does the secure path impose enough friction that users are pushed toward an unsafe shortcut?"
   fix "Make the safe path the easy path and remove unnecessary security ceremony."
   bad <<~'X'
@@ -1091,7 +990,6 @@ end
 
 Law.define(:MAKE_ILLEGAL_STATES_UNREPRESENTABLE) do
   source "Yaron Minsky — make illegal states unrepresentable"
-  severity :error
   ask "Can an invalid combination of fields or values be constructed at all, or must every caller remember a runtime check?"
   fix "Encode the invariant in the data shape, constructor, type, or boundary."
   bad <<~'X'
@@ -1104,7 +1002,6 @@ end
 
 Law.define(:PARSE_DONT_VALIDATE) do
   source "Alexis King — parse, don't validate"
-  severity :warning
   ask "Is the same input re-checked at many call sites instead of being parsed once into a value carrying the guarantee?"
   fix "Parse once at the boundary and pass the proven value inward."
   bad <<~'X'
@@ -1117,7 +1014,6 @@ end
 
 Law.define(:POKA_YOKE) do
   source "Toyota Production System — poka-yoke"
-  severity :warning
   ask "Can this API be called in the wrong order, with swappable same-typed arguments, or in a meaningless state?"
   fix "Make invalid sequences or arguments difficult or impossible to express."
   bad <<~'X'
@@ -1130,7 +1026,6 @@ end
 
 Law.define(:COMPLEX_SYSTEMS_FAIL) do
   source "Richard Cook — How Complex Systems Fail; resilience engineering"
-  severity :warning
   ask "Does this path assume the happy case or rely on a single safeguard with no defined degraded mode?"
   fix "Define independent safeguards and a bounded degraded mode."
   bad <<~'X'
@@ -1143,7 +1038,6 @@ end
 
 Law.define(:STRONG_CENTERS) do
   source "Christopher Alexander — strong centers"
-  severity :info
   ask "Does this artifact have one identifiable center of meaning that its parts reinforce, or is it a flat bag of unrelated pieces?"
   fix "Strengthen the central purpose and remove or relocate unrelated pieces."
   bad <<~'X'
@@ -1156,7 +1050,6 @@ end
 
 Law.define(:LEVELS_OF_SCALE) do
   source "Christopher Alexander — levels of scale"
-  severity :info
   ask "Does the design jump abruptly between granularities without useful intermediate levels?"
   fix "Introduce meaningful intermediate structure where it clarifies the whole."
   bad <<~'X'
@@ -1169,7 +1062,6 @@ end
 
 Law.define(:GUARD_EXPENSIVE) do
   source "MASTER-native — guard expensive operations"
-  severity :error
   ask "Does this file perform expensive operations without checking relevant preconditions or bounds?"
   fix "Check prerequisites, estimate cost, and bound the operation before executing it."
   bad <<~'X'
@@ -1182,7 +1074,6 @@ end
 
 Law.define(:ARTIFICIAL_COUPLING) do
   source "The Pragmatic Programmer — avoid artificial coupling"
-  severity :warning
   ask "Are unrelated concepts coupled merely because they share a container, proximity, or formatting convention?"
   fix "Separate unrelated concerns and couple only through meaningful interfaces."
   bad <<~'X'
@@ -1195,7 +1086,6 @@ end
 
 Law.define(:SELF_EXPLAINING) do
   source "Clean Code — self-documenting code"
-  severity :info
   ask "Does this name clearly reveal intent without requiring a comment to decode it?"
   fix "Rename around the domain action, value, or invariant."
   bad <<~'X'
@@ -1208,8 +1098,6 @@ end
 
 Law.define(:TRAILING_COMMAS) do
   source "Ruby/JS style — trailing commas in multiline literals"
-  severity :info
-  languages %i[ruby javascript]
   ask "Does a multiline collection or argument list omit a trailing comma that stabilizes diffs?"
   fix "Add the trailing comma to multiline collections and argument lists."
   bad <<~'X'
@@ -1222,7 +1110,6 @@ end
 
 Law.define(:SILENCE_ON_SUCCESS) do
   source "Unix philosophy — Rule of Silence"
-  severity :info
   ask "Does a successful operation emit output that the operator does not need?"
   fix "Report errors and meaningful state; stay quiet on ordinary success."
   bad <<~'X'
@@ -1235,7 +1122,6 @@ end
 
 Law.define(:PRECOMPUTE_MATH) do
   source "MASTER-native — precompute constant math"
-  severity :info
   ask "Are invariant trig, noise, or lookup calculations repeated per frame or per object?"
   fix "Precompute invariant values once and reuse them."
   bad <<~'X'
@@ -1248,7 +1134,6 @@ end
 
 Law.define(:AUDIO_SMOOTHING) do
   source "MASTER-native — audio smoothing"
-  severity :info
   ask "Do visual elements jump erratically because raw audio samples drive motion directly?"
   fix "Smooth or envelope audio-derived control values before applying visual motion."
   bad <<~'X'
@@ -1261,7 +1146,6 @@ end
 
 Law.define(:GRACEFUL_LOAD) do
   source "Web performance — progressive loading"
-  severity :warning
   ask "Does this run at full quality until resource exhaustion instead of degrading in measured stages?"
   fix "Start with a safe baseline and progressively add quality within resource bounds."
   bad <<~'X'
@@ -1274,7 +1158,6 @@ end
 
 Law.define(:ANALOG_WARMTH) do
   source "MASTER-native — Dilla audio aesthetic"
-  severity :info
   ask "Is generated audio unnaturally perfect because noise floor, saturation, timing drift, or humanized variation has been eliminated entirely?"
   fix "Introduce restrained, purposeful imperfection where the aesthetic calls for it."
   bad <<~'X'
@@ -1287,7 +1170,6 @@ end
 
 Law.define(:DOMAIN_LANGUAGE) do
   source "Domain-Driven Design — Ubiquitous Language (Eric Evans)"
-  severity :warning
   ask "Does this code or document use generic terms where the domain has a clearer established term?"
   fix "Use the vocabulary the domain actually uses."
   bad <<~'X'
@@ -1300,7 +1182,6 @@ end
 
 Law.define(:LOAD_BEARING_NAMES) do
   source "Clean Code — names carry intent"
-  severity :warning
   ask "Are names vague, generic, or misleading enough that a reader cannot tell what they hold or do?"
   fix "Choose names that expose role, value, or domain meaning."
   bad <<~'X'
@@ -1313,7 +1194,6 @@ end
 
 Law.define(:ERROR_CONTEXT) do
   source "Context-rich error handling"
-  severity :warning
   ask "Does an error or rejection omit the context needed to locate the cause and decide the next action?"
   fix "Include relevant operation, subject, and cause without leaking secrets."
   bad <<~'X'
@@ -1326,7 +1206,6 @@ end
 
 Law.define(:COMMENTS_AS_DEODORANT) do
   source "Refactoring — comments as deodorant (Fowler/Beck)"
-  severity :warning
   ask "Is a comment compensating for code or prose that could instead be rewritten to make the intent obvious?"
   fix "Refactor the underlying artifact first; keep comments for rationale that cannot be encoded directly."
   bad <<~'X'
@@ -1338,9 +1217,7 @@ Law.define(:COMMENTS_AS_DEODORANT) do
 end
 
 Law.define(:POSTEL) do
-  lifecycle :advisory
   source "Postel's Law / Robustness Principle"
-  severity :info
   ask "Does this boundary reject safely normalizable valid variation or emit unnecessarily strict structure that callers do not need?"
   fix "Normalize harmless variation at the boundary and keep emitted contracts deliberate."
   bad <<~'X'
@@ -1353,7 +1230,6 @@ end
 
 Law.define(:HYRUM) do
   source "Hyrum's Law"
-  severity :warning
   ask "Is a change removing or altering behavior that callers may already depend on despite it never being formally documented?"
   fix "Search actual consumers and observed behavior before changing the contract; preserve or version what is relied upon."
   bad <<~'X'
@@ -1366,7 +1242,6 @@ end
 
 Law.define(:TEMPORAL_COUPLING) do
   source "The Pragmatic Programmer — temporal coupling"
-  severity :warning
   ask "Must callers invoke methods in a specific order without the API enforcing that sequence?"
   fix "Encode required state transitions or provide one operation representing the valid sequence."
   bad <<~'X'
@@ -1379,7 +1254,6 @@ end
 
 Law.define(:HUMBLE_OBJECT) do
   source "Humble Object pattern (Gerard Meszaros)"
-  severity :info
   ask "Is business or decision logic tangled with IO, rendering, or external APIs so isolated tests become difficult?"
   fix "Move decisions into a testable core and keep the boundary object thin."
   bad <<~'X'
@@ -1392,7 +1266,6 @@ end
 
 Law.define(:PATTERN_EXTRACTION) do
   source "MASTER-native — extract recurring structure"
-  severity :info
   ask "Is the code close to a known reusable pattern whose extraction would genuinely reduce complexity rather than add ceremony?"
   fix "Extract a pattern only when recurring structure earns the abstraction."
   bad <<~'X'
@@ -1407,7 +1280,6 @@ end
 
 Law.define(:SRP) do
   source "SOLID — Single Responsibility Principle (Robert C. Martin)"
-  severity :warning
   ask "Does this class or module have more than one reason to change?"
   fix "Give each responsibility a distinct owner and boundary."
   bad <<~'X'
@@ -1420,7 +1292,6 @@ end
 
 Law.define(:OPEN_CLOSED) do
   source "Open-Closed Principle (Bertrand Meyer; SOLID)"
-  severity :warning
   ask "Must existing core code be modified whenever a new supported variant is added?"
   fix "Extend through stable interfaces, registries, or composition where that reduces repeated core edits."
   bad <<~'X'
@@ -1433,7 +1304,6 @@ end
 
 Law.define(:LISKOV) do
   source "Liskov Substitution Principle (Barbara Liskov, 1987)"
-  severity :warning
   ask "Does a subtype violate assumptions or guarantees established by the type it replaces?"
   fix "Make subtype behavior satisfy the established contract or use a different abstraction."
   bad <<~'X'
@@ -1446,7 +1316,6 @@ end
 
 Law.define(:INTERFACE_SEGREGATION) do
   source "SOLID — Interface Segregation"
-  severity :warning
   ask "Does an interface force implementations to stub or ignore methods they do not need?"
   fix "Split broad interfaces into focused contracts."
   bad <<~'X'
@@ -1459,7 +1328,6 @@ end
 
 Law.define(:DEPENDENCY_INVERSION) do
   source "SOLID — Dependency Inversion Principle"
-  severity :warning
   ask "Does high-level policy directly instantiate concrete dependencies that should be replaceable?"
   fix "Depend on stable abstractions and inject concrete implementations at the boundary."
   bad <<~'X'
@@ -1472,7 +1340,6 @@ end
 
 Law.define(:ONE_JOB) do
   source "SRP / Unix philosophy — do one thing"
-  severity :warning
   ask "Does this module handle unrelated responsibilities instead of one coherent job?"
   fix "Give the module one job and compose it with neighboring modules."
   bad <<~'X'
@@ -1485,7 +1352,6 @@ end
 
 Law.define(:COMPOSABLE) do
   source "Unix philosophy / functional composition"
-  severity :info
   ask "Is this operation monolithic when it could be cleanly composed from smaller independent parts?"
   fix "Expose small units with explicit inputs and outputs so they can be composed."
   bad <<~'X'
@@ -1498,7 +1364,6 @@ end
 
 Law.define(:LAW_OF_DEMETER) do
   source "Law of Demeter (Ian Holland)"
-  severity :warning
   ask "Does this code reach through several objects or expose knowledge of a collaborator's internals?"
   fix "Talk only to immediate collaborators and encapsulate the traversal."
   bad <<~'X'
@@ -1511,7 +1376,6 @@ end
 
 Law.define(:COMPOSITION_OVER_INHERITANCE) do
   source "Design Patterns (Gang of Four)"
-  severity :info
   ask "Is inheritance being used mainly for code reuse rather than a genuine substitutability relationship?"
   fix "Prefer composition when behavior can vary independently of type identity."
   bad <<~'X'
@@ -1524,7 +1388,6 @@ end
 
 Law.define(:ONE_ABSTRACTION_LEVEL) do
   source "Clean Code — one level of abstraction per function"
-  severity :info
   ask "Does this function mix policy-level operations with low-level representation or IO details?"
   fix "Keep each function at one conceptual level and delegate detail downward."
   bad <<~'X'
@@ -1539,7 +1402,6 @@ end
 
 Law.define(:STEPDOWN) do
   source "Clean Code — Stepdown Rule"
-  severity :info
   ask "Does the code fail to read top-down from high-level intent into progressively smaller details?"
   fix "Arrange definitions so each step introduces the detail used by the next."
   bad <<~'X'
@@ -1552,7 +1414,6 @@ end
 
 Law.define(:BOUNDARY_ISOLATION) do
   source "Boundaries (Gary Bernhardt) / Clean Architecture"
-  severity :warning
   ask "Does third-party API or framework surface leak directly into core logic?"
   fix "Translate external contracts at a boundary and keep the core independent."
   bad <<~'X'
@@ -1565,7 +1426,6 @@ end
 
 Law.define(:NO_MAGIC) do
   source "Clean Code — no magic numbers"
-  severity :warning
   ask "Are unexplained numeric literals or booleans carrying domain meaning instead of named concepts?"
   fix "Name the domain meaning and keep the value in one source."
   bad <<~'X'
@@ -1578,7 +1438,6 @@ end
 
 Law.define(:FAIL_FAST) do
   source "Fail Fast (Jim Shore)"
-  severity :warning
   ask "Does the system defer reporting a known invalid state instead of stopping at the point it is detected?"
   fix "Reject invalid state immediately with actionable context."
   bad <<~'X'
@@ -1591,7 +1450,6 @@ end
 
 Law.define(:IDEMPOTENT) do
   source "REST / distributed systems idempotency"
-  severity :info
   ask "Would repeating the same operation with the same intended input produce an unintended different result?"
   fix "Make repeat calls converge to the same state or use an idempotency key."
   bad <<~'X'
@@ -1604,7 +1462,6 @@ end
 
 Law.define(:DEFENSIVE_INPUT) do
   source "Defensive programming / safe boundaries"
-  severity :warning
   ask "Is external or untrusted input used without checking its shape, range, encoding, or allowed values?"
   fix "Validate or parse input at the boundary before it reaches trusted logic."
   bad <<~'X'
@@ -1617,7 +1474,6 @@ end
 
 Law.define(:NO_SIDE_EFFECTS) do
   source "Functional programming / Clean Code"
-  severity :info
   ask "Does this function silently modify external state in addition to returning its conceptual result?"
   fix "Separate side effects from pure transformation where practical."
   bad <<~'X'
@@ -1630,7 +1486,6 @@ end
 
 Law.define(:PURE_FUNCTIONS) do
   source "Functional programming — referential transparency"
-  severity :info
   ask "Does this function depend on hidden mutable state or ambient inputs that callers cannot see?"
   fix "Pass dependencies explicitly and keep deterministic logic pure."
   bad <<~'X'
@@ -1643,7 +1498,6 @@ end
 
 Law.define(:PRIMITIVE_OBSESSION) do
   source "Refactoring — Primitive Obsession (Fowler)"
-  severity :info
   ask "Are primitives carrying domain rules that would be clearer and safer as a value object?"
   fix "Create a focused value object when the primitive has behavior or invariants."
   bad <<~'X'
@@ -1656,7 +1510,6 @@ end
 
 Law.define(:FEATURE_ENVY) do
   source "Refactoring — Feature Envy (Fowler)"
-  severity :warning
   ask "Is this method more interested in another object's data than its own?"
   fix "Move the behavior toward the data it operates on or extract a suitable collaborator."
   bad <<~'X'
@@ -1669,7 +1522,6 @@ end
 
 Law.define(:MIDDLE_MAN) do
   source "Refactoring — Middle Man (Fowler)"
-  severity :info
   ask "Does this class mostly delegate methods to another object without adding meaningful policy?"
   fix "Remove the unnecessary middle layer or give it a real abstraction."
   bad <<~'X'
@@ -1682,7 +1534,6 @@ end
 
 Law.define(:LAZY_CLASS) do
   source "Refactoring — Lazy Class (Fowler)"
-  severity :info
   ask "Is this class too small or trivial to justify a separate abstraction boundary?"
   fix "Inline or merge it unless the boundary provides independent value."
   bad <<~'X'
@@ -1695,7 +1546,6 @@ end
 
 Law.define(:DIVERGENT_CHANGE) do
   source "Refactoring — Divergent Change (Fowler)"
-  severity :warning
   ask "Is one class repeatedly changed for several unrelated causes?"
   fix "Separate the responsibilities so each has a focused reason to change."
   bad <<~'X'
@@ -1708,7 +1558,6 @@ end
 
 Law.define(:SPECULATIVE_GENERALITY) do
   source "Refactoring — Speculative Generality; YAGNI"
-  severity :info
   ask "Is code generalized for a future requirement that has no present evidence or consumer?"
   fix "Remove speculative hooks and add abstraction when a real use case arrives."
   bad <<~'X'
@@ -1721,7 +1570,6 @@ end
 
 Law.define(:INAPPROPRIATE_INTIMACY) do
   source "Refactoring — Inappropriate Intimacy (Fowler)"
-  severity :warning
   ask "Does one class access another class's internals instead of using its public contract?"
   fix "Expose the needed behavior through the owner's interface."
   bad <<~'X'
@@ -1736,7 +1584,6 @@ end
 
 Law.define(:SYSTEM_STATUS) do
   source "Nielsen Heuristic #1 — Visibility of system status"
-  severity :info
   ask "Does a long-running operation provide enough timely feedback for the user to know what is happening?"
   fix "Show meaningful progress, current state, or the last completed checkpoint."
   bad <<~'X'
@@ -1749,8 +1596,6 @@ end
 
 Law.define(:VISUAL_HIERARCHY) do
   source "Visual hierarchy — information scent, typographic scale, Gestalt grouping"
-  severity :warning
-  mode :opportunity
   ask "On the rendered surface, can a first-time reader distinguish the primary task/content, supporting information, and tertiary controls at a glance? Does visual emphasis follow the user's current goal rather than decoration or implementation convenience?"
   fix "Name the primary, secondary and tertiary elements for the task; use the existing type, spacing and contrast tokens to establish their order; verify the result in rendered screenshots at mobile and desktop widths without hiding required actions."
   bad "A product card gives its seller metadata, badge, price, title and purchase action equal size and contrast."
@@ -1759,8 +1604,6 @@ end
 
 Law.define(:CONTEXTUAL_STATUS_CUES) do
   source "Visibility of system status — contextual, persistent, actionable feedback"
-  severity :warning
-  mode :opportunity
   ask "At the point a user must decide or wait, does the interface explain the relevant state, what changed, and what action is available next? Is essential meaning retained after transient motion or color feedback ends?"
   fix "Show truthful status beside the affected task; use persistent text or semantics for success and failure, announce important asynchronous updates accessibly, and provide a concrete recovery action when one exists."
   bad "A save button spins briefly, returns to its idle appearance, and leaves the user unsure whether the save succeeded."
@@ -1769,7 +1612,6 @@ end
 
 Law.define(:USER_CONTROL) do
   source "Nielsen Heuristic #3 — User control and freedom"
-  severity :info
   ask "Can the user cancel or undo a consequential operation when doing so is technically feasible?"
   fix "Provide an explicit cancel, undo, or rollback path."
   bad <<~'X'
@@ -1782,7 +1624,6 @@ end
 
 Law.define(:ERROR_RECOVERY) do
   source "Nielsen Heuristic #9 — help users recover from errors"
-  severity :warning
   ask "Does an error explain what happened and what the user can do next?"
   fix "State the failed operation, relevant cause, and concrete recovery action."
   bad <<~'X'
@@ -1795,7 +1636,6 @@ end
 
 Law.define(:AESTHETIC_MINIMALISM) do
   source "Nielsen Heuristic #8 — aesthetic and minimalist design"
-  severity :info
   ask "Does this output contain information that does not earn its place for the current task?"
   fix "Remove redundant status, decoration, and secondary detail from the primary path."
   bad <<~'X'
@@ -1808,7 +1648,6 @@ end
 
 Law.define(:MATCH_REAL_WORLD) do
   source "Nielsen Heuristic #2 — match between system and real world"
-  severity :info
   ask "Does the interface expose implementation jargon where a familiar real-world term would be clearer?"
   fix "Use the user's domain vocabulary for labels, actions, and concepts."
   bad <<~'X'
@@ -1821,7 +1660,6 @@ end
 
 Law.define(:RECOGNITION_OVER_RECALL) do
   source "Nielsen Heuristic #6 — recognition rather than recall"
-  severity :info
   ask "Does the user need to remember information across steps that could be shown at the point of use?"
   fix "Keep relevant context, choices, and state visible where decisions happen."
   bad <<~'X'
@@ -1834,7 +1672,6 @@ end
 
 Law.define(:FLEXIBILITY_EFFICIENCY) do
   source "Nielsen Heuristic #7 — flexibility and efficiency"
-  severity :info
   ask "Does the interface serve only novices or only experts when defaults and accelerators could coexist?"
   fix "Provide a sensible default plus efficient shortcuts for experienced users."
   bad <<~'X'
@@ -1847,7 +1684,6 @@ end
 
 Law.define(:HELP_AND_DOCUMENTATION) do
   source "Nielsen Heuristic #10 — help and documentation"
-  severity :info
   ask "When the user gets stuck, is concrete, searchable, task-focused help available near the action?"
   fix "Provide focused guidance where the question arises, with an actionable next step."
   bad <<~'X'
@@ -1862,7 +1698,6 @@ end
 
 Law.define(:CONSISTENCY) do
   source "Nielsen Heuristic #4 — consistency and standards"
-  severity :warning
   ask "Are the same concepts, actions, or states named or presented differently in different places?"
   fix "Choose one vocabulary and interaction pattern and reuse it."
   bad <<~'X'
@@ -1875,7 +1710,6 @@ end
 
 Law.define(:COST_TRANSPARENCY) do
   source "MASTER-native — surface LLM token cost"
-  severity :warning
   ask "Are LLM calls made without exposing enough token or cost information to the operator when that information is available?"
   fix "Surface measured input, output, and cost data at the appropriate operator boundary."
   bad <<~'X'
@@ -1888,7 +1722,6 @@ end
 
 Law.define(:CACHE_LLM) do
   source "MASTER-native — cache repeat LLM work"
-  severity :info
   ask "Is the same expensive LLM request repeated when the input and relevant context are unchanged?"
   fix "Cache deterministic or safely repeatable requests with an explicit invalidation boundary."
   bad <<~'X'
@@ -1901,7 +1734,6 @@ end
 
 Law.define(:NO_FLAG_ARGUMENTS) do
   source "Clean Code — no flag arguments"
-  severity :warning
   ask "Does a boolean argument make one function perform two different jobs or select unrelated behavior?"
   fix "Split the responsibilities into named operations or objects."
   bad <<~'X'
@@ -1914,7 +1746,6 @@ end
 
 Law.define(:NO_OUTPUT_ARGUMENTS) do
   source "Clean Code — no output arguments"
-  severity :warning
   ask "Does this function mutate an input argument to return a result indirectly?"
   fix "Return the result explicitly instead of using output parameters."
   bad <<~'X'
@@ -1927,7 +1758,6 @@ end
 
 Law.define(:NO_SELECTOR_ARGUMENTS) do
   source "Flag arguments / selector arguments"
-  severity :warning
   ask "Is an argument used mainly as a switch between distinct behaviors rather than as data?"
   fix "Expose distinct operations or strategy objects instead of hiding a dispatch behind a flag."
   bad <<~'X'
@@ -1940,7 +1770,6 @@ end
 
 Law.define(:DESIGN_BY_CONTRACT) do
   source "Design by Contract (Bertrand Meyer)"
-  severity :info
   ask "Are important preconditions, postconditions, and invariants left implicit at an interface?"
   fix "State and enforce the contract at the boundary."
   bad <<~'X'
@@ -1953,7 +1782,6 @@ end
 
 Law.define(:DEFINE_ERRORS_OUT) do
   source "A Philosophy of Software Design — define errors out of existence"
-  severity :info
   ask "Is the interface handling errors that could instead be prevented by making invalid states unrepresentable or normalizing inputs earlier?"
   fix "Redesign the interface so the problematic state cannot arise on the normal path."
   bad <<~'X'
@@ -1968,7 +1796,6 @@ end
 
 Law.define(:SURFACE_AREA) do
   source "API design — minimize public surface area"
-  severity :warning
   ask "Is the public interface larger than necessary, exposing entry points or exceptions callers do not need?"
   fix "Reduce the public contract to the smallest useful surface and keep internals private."
   bad <<~'X'
@@ -1981,7 +1808,6 @@ end
 
 Law.define(:PROGRESSIVE_DISCLOSURE) do
   source "Progressive disclosure (Jakob Nielsen, NN/g)"
-  severity :info
   ask "Does this present all complexity at once instead of revealing detail as the user's task requires it?"
   fix "Lead with the common path and reveal advanced controls when they become relevant."
   bad <<~'X'
@@ -1994,7 +1820,6 @@ end
 
 Law.define(:FEEDBACK_LOOPS) do
   source "Nielsen feedback / checkpoint principle"
-  severity :warning
   ask "Does this perform substantial work without reporting progress, checkpoints, or a recoverable state?"
   fix "Add meaningful progress or checkpoints proportional to operation duration and risk."
   bad <<~'X'
@@ -2007,7 +1832,6 @@ end
 
 Law.define(:DATA_CLASS) do
   source "Refactoring — Data Class (Fowler)"
-  severity :info
   ask "Does this class mainly hold data while behavior that belongs with that data is scattered across other modules?"
   fix "Move cohesive behavior toward the data owner or replace the holder with a meaningful domain abstraction."
   bad <<~'X'
@@ -2020,7 +1844,6 @@ end
 
 Law.define(:PARALLEL_INHERITANCE) do
   source "Refactoring — Parallel Inheritance Hierarchies (Fowler)"
-  severity :warning
   ask "Does adding a type in one hierarchy require adding a corresponding type in another hierarchy?"
   fix "Collapse the parallel hierarchies or compose the varying dimensions."
   bad <<~'X'
@@ -2033,7 +1856,6 @@ end
 
 Law.define(:REFUSED_BEQUEST) do
   source "Refactoring — Refused Bequest (Fowler)"
-  severity :info
   ask "Does a subtype or variant inherit capabilities it cannot honor and then reject or ignore most of them?"
   fix "Choose an abstraction that matches the subtype's real contract or use composition."
   bad <<~'X'
@@ -2046,7 +1868,6 @@ end
 
 Law.define(:PROSE_POSITIVE_FORM) do
   source "Strunk, Elements of Style — put statements in positive form"
-  severity :info
   ask "Is a statement phrased as a negation when a direct positive verb or construction says the same thing more clearly?"
   fix "Prefer the direct positive form when it preserves meaning."
   bad <<~'X'
@@ -2059,7 +1880,6 @@ end
 
 Law.define(:PROSE_PARALLEL_FORM) do
   source "Strunk, Elements of Style — coordinate ideas in similar form"
-  severity :info
   ask "Do items in a list or series mix grammatical forms where parallel structure would make the relationship clearer?"
   fix "Use the same grammatical form for coordinated items."
   bad <<~'X'
@@ -2072,7 +1892,6 @@ end
 
 Law.define(:PROSE_RELATED_WORDS) do
   source "Strunk, Elements of Style — keep related words together"
-  severity :info
   ask "Is a modifier or subject separated from its referent so the sentence misreads on the first pass?"
   fix "Keep words that belong together close enough that the intended relation is immediate."
   bad <<~'X'
@@ -2085,7 +1904,6 @@ end
 
 Law.define(:PROSE_ONE_TOPIC_PARAGRAPH) do
   source "Strunk, Elements of Style — paragraph as the unit"
-  severity :info
   ask "Does a paragraph mix unrelated topics or bury its main point below secondary detail?"
   fix "Give each paragraph one controlling topic and state its point early."
   bad <<~'X'
@@ -2098,7 +1916,6 @@ end
 
 Law.define(:GRICE_COOPERATIVE) do
   source "Grice — cooperative principle (quantity, quality, relation, manner)"
-  severity :info
   ask "Does this communication say too much or too little, assert what is unverified, drift off-topic, or obscure the point through needless complexity?"
   fix "Provide the needed information, qualify uncertain claims, stay relevant, and make the path clear."
   bad <<~'X'
@@ -2114,9 +1931,6 @@ end
 
 Law.define(:INSTRUMENT_MUST_PROVE_ITSELF) do
   source "MASTER constitutional self-test policy"
-  severity :error
-  lifecycle :trusted
-  autofix :never
   ask "Does every detector or check that can influence a decision have a known-positive and known-negative proof, or an explicit semantic evaluation path?"
   practice "A measuring instrument must demonstrate what it catches and what it spares before its findings can drive automatic action."
   fix "Add polarity fixtures or a semantic evaluation contract before trusting the instrument."
@@ -2126,9 +1940,6 @@ end
 
 Law.define(:VERIFICATION_REQUIRED_FOR_COMPLETION) do
   source "MASTER constitutional completion policy"
-  severity :error
-  lifecycle :trusted
-  autofix :never
   ask "Does this claim of completion have direct evidence from the actual resulting artifact or executed check, rather than intention, absence of an error, or an unrun test?"
   practice "Completion is an observed state, not a promise."
   fix "Run the relevant proof and report the observed result; otherwise report the work as unresolved."
@@ -2138,9 +1949,6 @@ end
 
 Law.define(:INCONCLUSIVE_IS_NOT_PASS) do
   source "MASTER constitutional capability-status policy"
-  severity :error
-  lifecycle :trusted
-  autofix :never
   ask "Did an unavailable dependency, skipped probe, timeout, missing permission, or unmeasured check get treated as success?"
   practice "Unknown, skipped and unavailable are distinct from pass."
   fix "Return an explicit inconclusive/degraded result and preserve the unresolved evidence."
@@ -2150,9 +1958,6 @@ end
 
 Law.define(:RATCHET_INTEGRITY) do
   source "MASTER ratchet policy"
-  severity :error
-  lifecycle :trusted
-  autofix :never
   ask "Does a ratchet or threshold change preserve its meaning, or was the threshold moved merely to absorb new debt or make the current tree pass?"
   practice "A ratchet may make progress harder to lose, never easier to redefine."
   fix "Keep the existing threshold or justify a measured structural improvement before changing it."
@@ -2162,9 +1967,6 @@ end
 
 Law.define(:AUTOFIX_REQUIRES_CONFIDENCE) do
   source "MASTER autofix safety policy"
-  severity :error
-  lifecycle :trusted
-  autofix :never
   ask "Is this finding sufficiently deterministic that an automatic edit can be applied without guessing at user intent or hidden semantics?"
   practice "LLM-generated text is not evidence that an automatic transformation is safe."
   fix "Downgrade to review-only or add deterministic evidence and preservation tests before automatic repair."
@@ -2174,9 +1976,6 @@ end
 
 Law.define(:SINGULARITY) do
   source "laws.yml SINGULARITY — one source of truth; the DRY principle of The Pragmatic Programmer"
-  severity :error
-  lifecycle :trusted
-  autofix :never
   ask "Does this change define a fact, rule, threshold or type a second time when an existing definition already owns it, so the two copies can drift apart?"
   practice "Every fact has one owner; everything else reads it."
   fix "Find the existing owner and read from it. If none exists, create one and move every copy onto it in the same change."
@@ -2186,9 +1985,6 @@ end
 
 Law.define(:LINEARITY) do
   source "laws.yml LINEARITY — sequential flow with minimal branches; cyclomatic complexity, McCabe 1976"
-  severity :error
-  lifecycle :trusted
-  autofix :never
   ask "Does this change make the path through the code harder to follow in order, with deeper nesting, extra branches, or control flow that jumps back and forth instead of running top to bottom?"
   practice "Read the code once, top to bottom, and arrive at the result."
   fix "Flatten with guard clauses, extract the branch that breaks the sequence, and order steps as they run."
@@ -2201,9 +1997,6 @@ end
 # artifact surface through the canonical assessment matrix.
 Law.define(:ROBUSTNESS) do
   source "laws.yml ROBUSTNESS — safe failure, security and edge-case handling"
-  severity :error
-  lifecycle :trusted
-  autofix :never
   ask "Across this artifact and its real operating context, what can fail unsafely under invalid input, adversarial use, concurrency, resource pressure, missing dependencies, or partial failure? Name only evidenced failure paths; return CLEAN when the relevant boundary fails safely."
   practice "Treat every boundary and degraded state as a first-class path, not as an exception to the design."
   fix "Close the concrete unsafe path, preserve useful failure context, and prove both the bad and safe paths."
@@ -2213,9 +2006,6 @@ end
 
 Law.define(:PROXIMITY) do
   source "laws.yml PROXIMITY — related concepts stay close and cohesive"
-  severity :error
-  lifecycle :trusted
-  autofix :never
   ask "Are related responsibilities, evidence, states, controls or visual elements separated so far that their relationship is hard to understand or keep consistent? Evaluate semantic, structural and visual proximity for this artifact; return CLEAN when the grouping communicates the real relationships."
   practice "Keep pieces together when they change together; separate them when they have distinct ownership."
   fix "Move or group the related elements at the boundary that best reflects their shared responsibility without adding another abstraction layer."
@@ -2225,9 +2015,6 @@ end
 
 Law.define(:ABSTRACTION) do
   source "laws.yml ABSTRACTION — appropriate boundaries and information hiding"
-  severity :error
-  lifecycle :trusted
-  autofix :never
   ask "Does this artifact expose implementation detail, hide a load-bearing contract, or introduce an abstraction whose indirection exceeds the problem it solves? Assess the boundary in code, prose, behavior and presentation; return CLEAN when the boundary makes the concept easier to use and verify."
   practice "Hide volatile mechanics behind a small truthful contract; do not hide important behavior behind ceremony."
   fix "Expose the needed contract, encapsulate the unstable detail, or delete the abstraction if direct expression is clearer."
@@ -2237,9 +2024,6 @@ end
 
 Law.define(:DENSITY) do
   source "laws.yml DENSITY — signal over noise and no needless information"
-  severity :error
-  lifecycle :trusted
-  autofix :never
   ask "Does any part of this artifact consume attention without adding relevant meaning, evidence, action or necessary context? Look across code, prose, UI, status output and visual ornament; return CLEAN when every element earns its place."
   practice "Prefer the shortest complete expression, not the shortest expression that omits a necessary fact."
   fix "Remove repetition and ornament, then restore any evidence or context needed to make the result complete."
@@ -2249,9 +2033,6 @@ end
 
 Law.define(:RENDERED_VALUES) do
   source "laws.yml RENDERED_VALUES — rendered values and presentation are operator-owned"
-  severity :error
-  lifecycle :trusted
-  autofix :never
   ask "Are colors, typography, sounds, motion, spacing, layout, content, or rendered behavior invented independently of their canonical owner or altered without evidence and approval? For nonvisual artifacts, assess other operator-owned values and contracts; return CLEAN when values remain sourced, truthful and intentional."
   practice "Read canonical values and preserve real-world fidelity; never invent a competing design or configuration authority."
   fix "Use the owning token, configuration, source asset or explicit operator decision and verify the actual rendered result."

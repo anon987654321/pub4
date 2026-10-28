@@ -8,10 +8,6 @@ require "yaml"
 
 Law.define(:README_VISION) do
   source "pub3 master.json documentation.readme_structure.vision — project vision leads README"
-  severity :info
-  mode :opportunity
-  languages %i[markdown]
-  path "MASTER/README.md"
   scope :file
   detect do |text|
     paragraph = text.split(/\n\s*\n/).find do |block|
@@ -41,9 +37,6 @@ end
 
 Law.define(:HTML_HEADING_HIERARCHY) do
   source "pub prompt lineage — semantic HTML5 structure; h1 for title, h2 for sections, h3 for subsections"
-  severity :warning
-  mode :opportunity
-  languages %i[html]
   ask "Does the rendered document expose a coherent heading hierarchy? Require one meaningful page heading, then descend one level at a time through sections; do not use heading tags for visual sizing or skip from h1 to h3 merely for styling. Return CLEAN when the hierarchy matches the information architecture."
   fix "Use heading levels to express document structure, then control visual size with typography tokens instead of heading-tag jumps."
   bad <<~X
@@ -60,9 +53,6 @@ end
 
 Law.define(:VISUAL_IDENTITY_SOURCE_OF_TRUTH) do
   source "pub4 visual identity contract — canonical tokens, measured contrast and semantic face accent"
-  severity :warning
-  languages %i[yaml]
-  path "MASTER/data/tokens.yml"
   scope :file
   detect do |text|
     document = YAML.safe_load(text, aliases: true)
@@ -186,9 +176,6 @@ end
 
 Law.define(:VISUAL_PARTICLE_STIPPLE_PRIMARY) do
   source "pub4 primary material — greyscale particle stipple, many carriers resolving into one form"
-  severity :warning
-  languages %i[yaml]
-  path "MASTER/data/tokens.yml"
   scope :file
 
   detect do |text|
@@ -267,9 +254,6 @@ end
 
 Law.define(:INTERACTION_SEMANTICS) do
   source "pub3 master.json HTML semantics + WAI-ARIA — navigation is a link, an action is a button"
-  severity :warning
-  mode :opportunity
-  languages %i[html]
   ask "For interactive controls, is the native element honest about the action? Use an anchor for navigation, a button for an in-page action, and a form control for form input. Reject clickable div/span substitutes, href=# used as an action, and ARIA used to repair a native-element choice. Return CLEAN when native interaction semantics are already correct."
   fix "Use the native interactive element that matches the user's action, then add ARIA only for state or additional semantics."
   bad <<~X
@@ -284,9 +268,6 @@ end
 
 Law.define(:CONFIGURATION_SHAPE) do
   source "pub2 master.json anti_sectionitis — consolidate related configuration; keep nesting shallow"
-  severity :warn
-  mode :opportunity
-  languages %i[json yaml]
   scope :file
   detect do |text|
     value = YAML.safe_load(text)
@@ -334,9 +315,6 @@ end
 
 Law.define(:STYLE_FOLLOWS_STRUCTURE) do
   source "pub3 anti_divitis + anti_sectionitis — structure before decoration"
-  severity :info
-  mode :opportunity
-  languages %i[html css scss]
   ask "Before adding CSS selectors, wrappers, spacing hacks, or decorative rules, is the HTML structure itself semantic, minimal, and ordered for the content? Prefer changing the structural source over painting around a malformed hierarchy. Return CLEAN when semantic structure already carries the hierarchy and styling follows it."
   fix "Fix semantic structure and content hierarchy first; then simplify selectors and tokens to style that structure."
   bad <<~X

@@ -20,7 +20,6 @@ module Operator
     LAW_DIR = File.join(ROOT, "MASTER", "law")
     OUTPUT = File.join(ROOT, "MASTER", "docs", "laws_digest.md")
     DEFINE = /\ALaw\.define\(:([A-Z_0-9]+)\) do\s*\z/.freeze
-    SEVERITY = /\A\s+severity\s+:(\w+)\s*\z/.freeze
     FIX = /\A\s+fix\s+"(.*)"\s*\z/.freeze
 
     attr_reader :entry_count
@@ -80,6 +79,12 @@ module Operator
 
     private
 
+    # A Law's severity is its law_catalogue entry's.
+    def severity_of(id)
+      @entries ||= YAML.safe_load_file(@catalogue_path).dig("law_catalogue", "entries") || {}
+      @entries.dig(id, "severity")
+    end
+
     # Block-scoped, not regex-global: a law is the lines between its
     # Law.define header and the column-0 end that closes it, so a comment
     # mentioning another law's id or a fixture string can never be counted.
@@ -89,12 +94,11 @@ module Operator
       lines.each do |line|
         if current.nil?
           header = line.match(DEFINE)
-          current = { id: header[1], severity: nil, fix: nil } if header
+          current = { id: header[1], severity: severity_of(header[1]), fix: nil } if header
         elsif line == "end"
           laws << current
           current = nil
         else
-          current[:severity] ||= line.match(SEVERITY)&.[](1)
           current[:fix] ||= line.match(FIX)&.[](1)
         end
       end

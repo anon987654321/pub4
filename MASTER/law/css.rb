@@ -9,8 +9,6 @@
 
 Law.define(:CLAMP_TYPOGRAPHY) do
   source "CSS fluid typography — clamp() (web.dev)"
-  severity :info
-  languages %i[css scss]
   detect { |line| line.match?(/@media.*\{[^}]*font-size:/) }
   fix "Use font-size: clamp(1rem, 2.5vw, 1.5rem)."
   bad  "@media (min-width: 40em) { h1 { font-size: 2rem; } }"
@@ -19,11 +17,6 @@ end
 
 Law.define(:LOGICAL_PROPERTIES) do
   source "CSS Logical Properties and Values (W3C)"
-  severity :info
-  # scss too: the fleet's styles are authored in .scss, and a css-only scope
-  # made this law inert everywhere it mattered — the registry twin was the
-  # live one until its retirement carried the language here.
-  languages %i[css scss]
   detect { |line| line.match?(/(margin|padding)-(left|right):/) }
   fix "Use margin-inline-start/end, padding-inline-start/end."
   bad  "margin-left: 8px;"
@@ -37,8 +30,6 @@ end
 
 Law.define(:MEASURE_OPTIMUM) do
   source "Bringhurst, Elements of Typographic Style — the measure (45–75 chars)"
-  severity :info
-  languages %i[css scss]
   # A media query bound is a viewport question, not a text measure.
   detect { |line| !line.include?("@media") && line.match?(/max-width:\s*([89]\d{2}|\d{4,})px/) }
   fix "Bound running-text columns to ~66ch (≈ 33rem), not wide px values."
@@ -48,8 +39,6 @@ end
 
 Law.define(:MOBILE_FIRST) do
   source "Mobile First (Luke Wroblewski, 2011)"
-  severity :warn
-  languages %i[css scss]
   detect { |line| line.match?(/@media\s*\(\s*max-width/) }
   fix "Use min-width (mobile-first, progressive enhancement)."
   bad  "@media (max-width: 600px) {"
@@ -58,8 +47,6 @@ end
 
 Law.define(:NO_IMPORT_SCSS) do
   source "Sass best practice — @use over @import (Sass team)"
-  severity :warn
-  languages %i[scss]
   detect { |line| line.match?(/@import\s+["']/) }
   fix "@import is deprecated. Use @use/@forward."
   bad  "@import \"base\";"
@@ -68,8 +55,6 @@ end
 
 Law.define(:NO_LONG_TRANSITION) do
   source "style.yml motion budget / FrontendLawSet MOTION"
-  severity :warn
-  languages %i[css scss]
   detect { |line| line.match?(/transition(?:-duration)?\s*:[^;]*?\b(?:[4-9]\d\d|\d{4,})\s*ms/i) }
   fix "Keep transitions ≤300ms."
   bad  ".card { transition: opacity 500ms var(--ease-out); }"
@@ -97,23 +82,7 @@ end
 # tag smuggles a grammar in.
 Law.define(:NO_MULTIPLE_LANGUAGES) do
   source "MASTER-native (one language per file)"
-  severity :warn
   ask "Does this file embed multiple languages or notations, or does the artifact mix incompatible frameworks or media layers?"
-  languages %i[ruby javascript css scss zsh]
-  # Three places where speaking a second language is the job rather than the
-  # defect, and the rule is about a document mixing them — the shape
-  # RAILS/CLAUDE.md names when it says split large mixed HTML/CSS/JS files.
-  #
-  # A database adapter speaks SQL; flagging it asks the layer to stop doing the
-  # one thing it exists for. A migration is the same: amber's
-  # convert_money_to_ore backfills through `execute <<~SQL.squish`, which is how
-  # a column move is done safely.
-  #
-  # And a file whose job is to detect another language has to quote it — the
-  # distinction Law.conduct already draws for law/. web_laws.rb carries an ERB
-  # regex, an operator message reading "<tag><%= … %></tag>" and advice about
-  # auto-escaped <%= %>; none is a template, all three are about one.
-  path_exclude %r{/(?:knowledge_store|catalog_index)\.rb\z|/memory/search\.rb\z|/db/migrate/}
   # A regex that matches `<%` is not ERB, and a string naming a heredoc tag is
   # not a heredoc. Unmasked this flagged the scanner's own ERB detectors, the
   # source-masking constants and css_coverage_lint's comment stripper — 35 of 72
@@ -160,8 +129,6 @@ end
 # knows. It stays a review judgment, not a detector.
 Law.define(:FIXED_HEIGHT) do
   source "Every Layout (Bell & Pickering) — the content sizes the box"
-  severity :info
-  languages %i[css scss]
   # A drawn stage — an art frame, a product-photo crop window — sizes itself
   # by contract, not by its content. Those lines carry scan: intentional with
   # the reason; the marker keeps the law on flowing-content boxes.
@@ -176,8 +143,6 @@ end
 
 Law.define(:INTRINSIC_LAYOUT) do
   source "Modern CSS intrinsic layout — web.dev Learn CSS"
-  severity :warning
-  languages %i[css scss]
   ask "Does the layout solve content and component sizing with fixed dimensions or breakpoint patches where intrinsic sizing could express the relationship?"
   fix "Prefer min/max-content, fit-content, auto, flex/grid, clamp(), and content-sized controls before adding fixed dimensions or breakpoint overrides."
   bad "card { width: 420px; }"
@@ -186,8 +151,6 @@ end
 
 Law.define(:CONTAINER_RESPONSIVENESS) do
   source "CSS Container Queries — web.dev Learn CSS"
-  severity :info
-  languages %i[css scss]
   ask "Does a reusable component respond to the viewport even though its actual constraint is the size of its containing component?"
   fix "Use a named or nearest container query when the component's behavior depends on container size."
   bad "@media (max-width: 700px) { .card { ... } }"
@@ -196,8 +159,6 @@ end
 
 Law.define(:MODERN_FORMS) do
   source "CSS field-sizing — Baseline 2026"
-  severity :info
-  languages %i[css scss]
   ask "Does a form control use brittle fixed sizing where its content, label, validation state, or user input should determine its size?"
   fix "Prefer intrinsic form sizing and field-sizing when it improves the control without harming predictability."
   bad "textarea { height: 96px; }"
@@ -206,8 +167,6 @@ end
 
 Law.define(:NATIVE_DISCLOSURE) do
   source "Popover and dialog — web.dev Learn CSS"
-  severity :info
-  languages %i[css scss]
   ask "Does the interface recreate a disclosure, popover, or dialog primitive with unnecessary custom state and positioning?"
   fix "Prefer semantic dialog, popover, details, and native open-state behavior when their contracts match the interaction."
   bad ".menu.is-open { display: block; }"
@@ -216,8 +175,6 @@ end
 
 Law.define(:ANCHOR_RELATIONSHIPS) do
   source "CSS Anchor Positioning — web.dev Learn CSS"
-  severity :info
-  languages %i[css scss]
   ask "Is a floating element positioned relative to another element through brittle coordinates or JavaScript when their spatial relationship is stable?"
   fix "Prefer declarative anchor positioning where browser support and the interaction contract permit it."
   bad ".menu { left: 183px; top: 72px; }"
@@ -226,8 +183,6 @@ end
 
 Law.define(:SCOPED_CSS) do
   source "CSS @scope — Baseline 2026"
-  severity :info
-  languages %i[css scss]
   ask "Can a component's styles leak across unrelated DOM regions because its selectors are broader than its ownership boundary?"
   fix "Prefer component-local selectors or @scope where it removes selector leakage without adding unnecessary abstraction."
   bad ".card h2 { ... }"
@@ -236,8 +191,6 @@ end
 
 Law.define(:MOBILE_VIEWPORT) do
   source "Modern viewport units — web platform"
-  severity :warning
-  languages %i[css scss]
   ask "Does a mobile layout assume a stable viewport height when browser chrome, safe areas, or the virtual keyboard can change the available space?"
   fix "Use svh, dvh, lvh, env(safe-area-inset-*), and intrinsic layout according to the actual interaction requirement."
   bad ".screen { height: 100vh; }"
@@ -246,8 +199,6 @@ end
 
 Law.define(:SCROLL_INTEGRITY) do
   source "CSS overflow and modern scroll containers — web.dev Learn CSS"
-  severity :warning
-  languages %i[css scss]
   ask "Does the layout create accidental page overflow, nested scroll traps, or a scroll container that breaks sticky or touch interaction?"
   fix "Give each scroll container one intentional axis and verify the rendered scroll and sticky behavior at mobile widths."
   bad ".shell { overflow: auto; }"
@@ -256,8 +207,6 @@ end
 
 Law.define(:MOTION_ACCESSIBILITY) do
   source "Web accessibility and reduced motion — web.dev"
-  severity :warning
-  languages %i[css scss]
   ask "Does motion ignore the user's reduced-motion preference or animate a state whose continuity can be communicated without motion?"
   fix "Respect prefers-reduced-motion and keep transitions short, purposeful, and nonessential."
   bad ".page { animation: zoom 2s infinite; }"
@@ -266,7 +215,6 @@ end
 
 Law.define(:NAVIGATION_CONTINUITY) do
   source "View Transitions and Navigation API — Baseline 2026"
-  severity :info
   ask "Does a same-origin navigation or state transition unnecessarily destroy context when continuity would make the relationship between states clearer?"
   fix "Preserve scroll, focus, state, and visual continuity first; use View Transitions or the Navigation API only when they simplify a real transition."
   bad "navigate_to(result); reset_all_page_state"
@@ -275,10 +223,6 @@ end
 
 Law.define(:INTERACTION_PERFORMANCE) do
   source "Web rendering performance — compositor-safe interaction motion"
-  severity :warning
-  mode :opportunity
-  languages %i[css scss]
-  path "RAILS/"
   ask "Does frequent interaction motion stay on transform and opacity where possible, avoid layout properties such as top/width/height, and avoid permanent will-change or expensive visual effects?"
   fix "Animate transform and opacity for interaction feedback; let layout properties remain stable, and add will-change only around a measured animation boundary when it removes a real hitch."
   bad ".card { transition: width 300ms, top 300ms; }"
@@ -287,10 +231,6 @@ end
 
 Law.define(:STATE_CHOREOGRAPHY) do
   source "Interaction feedback — loading, success and failure are observable states"
-  severity :warning
-  mode :opportunity
-  languages %i[html css scss javascript]
-  path "RAILS/"
   ask "Does an action expose a coherent state sequence such as idle → working → success/failure, with the final state remaining understandable after motion stops? Do not rely on color, motion, or a short-lived flash as the only evidence."
   fix "Give each important action an explicit state, choreograph its transition with the shared motion tokens, and keep a static success or failure representation for reduced motion."
   bad "Tap Pay; briefly spin; disappear with no persistent result."
@@ -299,10 +239,6 @@ end
 
 Law.define(:GESTURE_OWNERSHIP) do
   source "Pointer Events and touch-action — gesture ownership"
-  severity :warning
-  mode :opportunity
-  languages %i[html css scss javascript]
-  path "RAILS/"
   ask "Does a drag or swipe surface explicitly declare which pan remains with the browser and which axis belongs to the interaction? A direct-manipulation gesture must not compete silently with page scrolling, navigation gestures, or pull-to-refresh."
   fix "Declare touch-action on the gesture surface: use pan-y for horizontal swipes in a vertical page, pan-x for vertical rails, or none when the interaction deliberately owns both axes. Keep an equivalent keyboard/control path."
   bad ".card-stack { touch-action: auto; }"
@@ -402,8 +338,6 @@ end
 
 Law.define(:NO_EYEBROW_LABEL) do
   source "DENSITY — a small tracked all-caps line above a heading restates the heading's role; Strunk, omit needless words"
-  severity :info
-  languages %i[css scss html]
   scope :file
   detect do |text|
     DesignMarks.eyebrow_blocks(text).any? || text.each_line.any? { |line| DesignMarks.eyebrow_class?(line) }
@@ -415,8 +349,6 @@ end
 
 Law.define(:NO_TRAILING_ARROW) do
   source "DENSITY — a link already says it can be followed; an arrow glyph in its text adds no information"
-  severity :info
-  languages %i[html]
   detect { |line| DesignMarks.arrow_label?(line) }
   fix "Write the verb and the object (\"Les saken\"); the link styling carries the affordance."
   bad  '<a href="/news">Les mer →</a>'
@@ -425,8 +357,6 @@ end
 
 Law.define(:NO_DOT_SEPARATED_META) do
   source "LINEARITY — structure belongs to the element tree; glyphs between words make a flat string the reader must parse"
-  severity :info
-  languages %i[html]
   detect { |line| DesignMarks.dotted_meta?(line) }
   fix "Put each fact in its own element (a list item or a span) and let spacing or a border separate them."
   bad  "<p>Bergen · 3 timer siden · 12 svar</p>"
@@ -435,8 +365,6 @@ end
 
 Law.define(:NO_DECORATIVE_GRADIENT) do
   source "RENDERED_VALUES and flat design — a gradient wash is a colour the operator did not choose; surfaces are flat tokens"
-  severity :info
-  languages %i[css scss]
   detect { |line| DesignMarks.gradient_wash?(line) }
   fix "Paint the surface with its token colour. A fade to transparent over an edge or a scrim under text is allowed."
   bad  ".hero { background: linear-gradient(135deg, var(--a), var(--b)); }"
@@ -445,8 +373,6 @@ end
 
 Law.define(:NO_ORDINAL_ORNAMENT) do
   source "LINEARITY — a 01, 02, 03 marker promises a sequence; on items with no order it is decoration"
-  severity :info
-  languages %i[css scss html]
   detect { |line| DesignMarks.ordinal_ornament?(line) }
   fix "Drop the number, or make the items an ordered list when the order is real."
   bad  ".card::before { content: counter(card, decimal-leading-zero); }"
@@ -456,8 +382,6 @@ end
 
 Law.define(:SIGNAL_COLOR_IS_SEMANTIC) do
   source "pub4 visual identity contract — signal colour is a semantic marker, never a general surface or body-text colour"
-  severity :warn
-  languages %i[css scss]
   scope :file
   detect do |text|
     unsafe_signal_background = text.scan(/([^{}]+)\{([^{}]*)\}/m).any? do |selector, declarations|

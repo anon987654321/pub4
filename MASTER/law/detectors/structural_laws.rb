@@ -15,7 +15,7 @@ module Master
 
           VISIBILITY_MARKERS = %w[public private protected].freeze
 
-          declare id: "FILE_LAYOUT", severity: :info, tags: %i[PROXIMITY CONVENTION],
+          declare id: "FILE_LAYOUT", tags: %i[PROXIMITY CONVENTION],
                   description: "frozen header → requires → module/class → public → private"
 
           def check(code, path:)
@@ -110,7 +110,7 @@ module Master
 
         # B06 EXPLICIT — implicit requires, magic coupling, method_missing without respond_to_missing?.
         class ExplicitLaw < Law
-          declare id: "EXPLICIT", severity: :warning, tags: %i[EXPLICIT CONVENTION],
+          declare id: "EXPLICIT", tags: %i[EXPLICIT CONVENTION],
                   description: "no implicit requires or magic coupling"
 
           def check(code, path:)
@@ -149,7 +149,7 @@ module Master
             Prism::OrNode
           ].freeze
 
-          declare id: "CYCLOMATIC_COMPLEXITY", severity: :warning, tags: %i[LINEARITY SMALL_PARTS],
+          declare id: "CYCLOMATIC_COMPLEXITY", tags: %i[LINEARITY SMALL_PARTS],
                   description: "cyclomatic complexity under 10 per method"
 
           def check_ast(ast, _code, path:)
@@ -180,7 +180,7 @@ module Master
           BRANCH_THRESHOLD = 3
           PIPELINE_STEP_THRESHOLD = 4
 
-          declare id: "PATTERN_EXTRACTION", severity: :info, tags: %i[DESIGN OPPORTUNITY],
+          declare id: "PATTERN_EXTRACTION", tags: %i[DESIGN OPPORTUNITY],
                   description: "file is close to a named design pattern"
 
           def check_ast(ast, code, path:)
@@ -234,7 +234,7 @@ module Master
 
         # B10 DATA_CLASS — class with only attr_accessor and no real methods.
         class DataClassLaw < Law
-          declare id: "DATA_CLASS", severity: :info, tags: %i[SRP SOLID],
+          declare id: "DATA_CLASS", tags: %i[SRP SOLID],
                   description: "data class with no behavior — use Struct or Data"
 
           def check_ast(ast, _code, path:)
@@ -287,7 +287,7 @@ module Master
 
           def self.auto_build? = false
 
-          declare id: "LIB_ROOT_DISCIPLINE", severity: :warning, tags: %i[ABSTRACTION ARCHITECTURE],
+          declare id: "LIB_ROOT_DISCIPLINE", tags: %i[ABSTRACTION ARCHITECTURE],
                   description: "new files shouldn't land directly in lib/ root"
 
           def initialize(root: Master::ROOT)
@@ -330,7 +330,7 @@ module Master
           NOT_MODULAR = %w[json yaml markdown javascript].freeze
           DATA_EXTENSIONS = %w[.lock .txt .conf .ipynb .csv].freeze
 
-          declare id: "SMALL_FILES", severity: :warning, tags: %i[SMALL_PARTS], description: "files under 300 lines"
+          declare id: "SMALL_FILES", tags: %i[SMALL_PARTS], description: "files under 300 lines"
 
           def check(code, path:)
             return [] if NOT_MODULAR.include?(language(path.to_s).to_s)
@@ -348,7 +348,7 @@ module Master
           IDEAL = 10
           MAX = 20
 
-          declare id: "SMALL_FUNCTIONS", severity: :warning, tags: %i[SMALL_PARTS],
+          declare id: "SMALL_FUNCTIONS", tags: %i[SMALL_PARTS],
                   description: "methods under 10 lines ideal, max 20"
 
           # Counts *code* lines, not the raw start..end span.
@@ -400,7 +400,7 @@ module Master
           METHOD_LIMIT = 10
           LINE_LIMIT = 300
 
-          declare id: "NO_GOD_CLASS", severity: :error, tags: %i[SOLID SRP], description: "no god classes"
+          declare id: "NO_GOD_CLASS", tags: %i[SOLID SRP], description: "no god classes"
 
           def check_ast(ast, code, path:)
             return [] unless ast
@@ -476,7 +476,7 @@ module Master
             Prism::BlockNode
           ].freeze
 
-          declare id: "NESTING_DEPTH", severity: :warning, tags: %i[LINEARITY], description: "nesting depth under 4"
+          declare id: "NESTING_DEPTH", tags: %i[LINEARITY], description: "nesting depth under 4"
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -500,7 +500,7 @@ module Master
 
       # B04 CQS — method that both mutates state and returns a meaningful value.
         class CqsLaw < Law
-          declare id: "CQS", severity: :warning, tags: %i[CQS CLEAN_CODE],
+          declare id: "CQS", tags: %i[CQS CLEAN_CODE],
                   description: "command-query separation — mutate OR return, not both"
 
           def check_ast(ast, _code, path:)
@@ -587,7 +587,7 @@ module Master
           # does work, keeping `foo_is_a?` out.
           TYPE_CHECK = /\b(is_a\?|instance_of\?)/
 
-          declare id: "OPEN_CLOSED", severity: :warning, tags: %i[SOLID OCP],
+          declare id: "OPEN_CLOSED", tags: %i[SOLID OCP],
                   description: "case/when or is_a? chains that must grow on every new type"
 
           def check_ast(ast, _code, path:)
@@ -618,7 +618,7 @@ module Master
         end
 
         class LiskovLaw < Law
-          declare id: "LISKOV", severity: :warning, tags: %i[SOLID LSP],
+          declare id: "LISKOV", tags: %i[SOLID LSP],
                   description: "subclass breaks the parent's contract via refused bequest or narrowed signature"
 
           def check_ast(ast, _code, path:)
@@ -684,7 +684,7 @@ module Master
         class DependencyInversionLaw < Law
           COLLABORATOR_SUFFIX = /(Service|Client|Adapter|Gateway|Repository|Provider)\z/
 
-          declare id: "DEPENDENCY_INVERSION", severity: :warning, tags: %i[SOLID DIP],
+          declare id: "DEPENDENCY_INVERSION", tags: %i[SOLID DIP],
                   description: "constructor hardcodes a concrete collaborator instead of accepting it as a dependency"
 
           def check_ast(ast, _code, path:)
@@ -722,7 +722,7 @@ module Master
         class InterfaceSegregationLaw < Law
           METHOD_LIMIT = 8
 
-          declare id: "INTERFACE_SEGREGATION", severity: :warning, tags: %i[SOLID ISP],
+          declare id: "INTERFACE_SEGREGATION", tags: %i[SOLID ISP],
                   description: "large module forces includers to stub methods they don't use"
 
           def check_ast(ast, _code, path:)
@@ -778,7 +778,7 @@ module Master
         class MiddleManLaw < Law
           MIN_METHODS = 3
 
-          declare id: "MIDDLE_MAN", severity: :info, tags: %i[ENGINEERING_FIT ABSTRACTION],
+          declare id: "MIDDLE_MAN", tags: %i[ENGINEERING_FIT ABSTRACTION],
                   description: "a class that only forwards to one object adds a name, not behaviour"
 
           def check_ast(ast, _code, path:)

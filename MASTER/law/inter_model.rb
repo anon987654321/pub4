@@ -4,9 +4,6 @@
 # by the shared adapter, so this detector guards against bypassing that adapter.
 Law.define(:INTER_MODEL_CONTRACT) do
   source "MASTER/data/inter_model.yml — machine-validated peer-model exchanges"
-  severity :error
-  languages %i[ruby]
-  path "MASTER/lib/review/council/"
   detect { |line| line.match?(/@agent\.ask(?:_once)?\(\s*prompt\b/) }
   ask <<~'ASK'.strip
     Do every MASTER-to-model council turn use InterModelContract to construct a structured request envelope,

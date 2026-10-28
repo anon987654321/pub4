@@ -12,7 +12,7 @@ module Master
         # (test_scan_rule_contracts proves each reaches findings through the bridge).
 
         LawDSL.law :HTML_LANG,
-          severity: :error, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          tags: %i[ACCESSIBILITY], applies_to: %i[html],
           fires: %(<html>\n),
           does_not_fire: %(<html lang="nb">\n),
           description: "lang attribute on <html>" do |src, path:|
@@ -27,7 +27,7 @@ module Master
         # TAG, and law/ scans lines — the attribute-per-line spelling made
         # every multi-line <img> a finding. tag_source flattens first.
         LawDSL.law :IMG_ALT,
-          severity: :error, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          tags: %i[ACCESSIBILITY], applies_to: %i[html],
           fires: %(<img src="a.png">\n),
           does_not_fire: %(<img src="a.png" alt="a garment">\n),
           description: "require alt on every <img>" do |src, path:|
@@ -35,7 +35,7 @@ module Master
         end
 
         LawDSL.law :LAZY_IMAGES,
-          severity: :info, tags: %i[PERFORMANCE], applies_to: %i[html],
+          tags: %i[PERFORMANCE], applies_to: %i[html],
           fires: %(<img src="a.png" alt="a">\n),
           does_not_fire: %(<img src="a.png" alt="a" loading="lazy">\n),
           description: "loading=lazy on below-fold images" do |src, path:|
@@ -43,7 +43,7 @@ module Master
         end
 
         LawDSL.law :NO_IMPORTANT,
-          severity: :warning, tags: %i[MAINTAINABILITY], applies_to: %i[css scss],
+          tags: %i[MAINTAINABILITY], applies_to: %i[css scss],
           fires: ".btn { background: #c00 !important; }\n",
           does_not_fire: ".btn { border: none !important; }\n",
           description: "no !important" do |src, path:|
@@ -91,7 +91,7 @@ module Master
         # this version had learned ported there (2026-08-21 twin retirement).
 
         LawDSL.law :ARIA_LABELS,
-          severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          tags: %i[ACCESSIBILITY], applies_to: %i[html],
           fires: %(<button class="icon-only"><svg></svg></button>\n),
           does_not_fire: %(<button class="icon-only" aria-label="Close"><svg></svg></button>\n),
           description: "interactive controls need accessible names" do |src, path:|
@@ -103,7 +103,7 @@ module Master
         end
 
         LawDSL.law :NO_TODO_IN_VIEWS,
-          severity: :warning, tags: %i[MAINTAINABILITY], applies_to: %i[html],
+          tags: %i[MAINTAINABILITY], applies_to: %i[html],
           fires: %(<%# FIXME: wire the filter %>\n),
           does_not_fire: %(<%# the filter is Marketplace::ListingFacets %>\n),
           description: "no TODO/FIXME in shipped views" do |src, path:|
@@ -112,7 +112,7 @@ module Master
         end
 
         LawDSL.law :ANTI_DIVITIS,
-          severity: :warning, tags: %i[DESIGN], applies_to: %i[html],
+          tags: %i[DESIGN], applies_to: %i[html],
           fires: %(<div class="header">\n),
           does_not_fire: %(<header class="header">\n),
           description: "avoid styling-only wrappers and semantic div substitutes" do |src, path:|
@@ -131,7 +131,7 @@ module Master
         }ix.freeze
 
         LawDSL.law :PREFER_TAG_HELPERS,
-          severity: :info, tags: %i[DESIGN RAILS_IDIOM], applies_to: %i[html],
+          tags: %i[DESIGN RAILS_IDIOM], applies_to: %i[html],
           fires: %(<p><%= t("hello_world") %></p>\n),
           does_not_fire: %(<%= tag.p t("hello_world") %>\n),
           description: "prefer Rails tag helpers over raw HTML wrapping a single ERB expression" do |src, path:|
@@ -148,7 +148,7 @@ module Master
         # this version had learned ported there (2026-08-21 twin retirement).
 
         LawDSL.law :ERB_HTML_SAFE,
-          severity: :error, tags: %i[SECURITY], applies_to: %i[html],
+          tags: %i[SECURITY], applies_to: %i[html],
           fires: %(<%= @post.body.html_safe %>\n),
           does_not_fire: %(<%= sanitize(@post.body).html_safe %>\n),
           description: "html_safe only after sanitize" do |src, path:|
@@ -197,7 +197,7 @@ module Master
         end
 
         LawDSL.law :SINGLE_H1,
-          severity: :warning, tags: %i[SEO ACCESSIBILITY], applies_to: %i[html],
+          tags: %i[SEO ACCESSIBILITY], applies_to: %i[html],
           fires: %(<h1>Bergen</h1>\n<h1>Oslo</h1>\n),
           does_not_fire: %(<h1>Bergen</h1>\n<h2>Oslo</h2>\n),
           description: "one h1 per view surface" do |src, path:|
@@ -211,7 +211,7 @@ module Master
         end
 
         LawDSL.law :FORM_LABEL,
-          severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          tags: %i[ACCESSIBILITY], applies_to: %i[html],
           fires: %(<input type="text" name="query">\n),
           does_not_fire: %(<label>Search<input type="text" name="query"></label>\n),
           description: "inputs require labels or aria-label" do |src, path:|
@@ -224,7 +224,7 @@ module Master
         # this version had learned ported there (2026-08-21 twin retirement).
 
         LawDSL.law :ASYNC_STATUS,
-          severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          tags: %i[ACCESSIBILITY], applies_to: %i[html],
           fires: %(<turbo-frame id="feed"></turbo-frame>\n),
           does_not_fire: %(<turbo-frame id="feed" aria-live="polite"></turbo-frame>\n),
           description: "async regions expose status for screen readers" do |src, path:|
@@ -241,7 +241,7 @@ module Master
         # this version had learned ported there (2026-08-21 twin retirement).
 
         LawDSL.law :REDUCED_MOTION,
-          severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[css scss],
+          tags: %i[ACCESSIBILITY], applies_to: %i[css scss],
           description: "animations respect prefers-reduced-motion",
           example_path: "/repo/app/assets/stylesheets/_example.scss",
           fires: "@keyframes spin { to { transform: rotate(360deg); } }\n",
@@ -259,7 +259,7 @@ module Master
         end
 
         LawDSL.law :TABINDEX_ABOVE_ZERO,
-          severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          tags: %i[ACCESSIBILITY], applies_to: %i[html],
           fires: %(<a href="/" tabindex="3">Home</a>\n),
           does_not_fire: %(<a href="/" tabindex="0">Home</a>\n),
           description: "tabindex above zero disrupts natural tab order" do |src, path:|
@@ -269,7 +269,7 @@ module Master
         end
 
         LawDSL.law :NO_JS_ERB,
-          severity: :warning, tags: %i[HOTWIRE], applies_to: %i[html],
+          tags: %i[HOTWIRE], applies_to: %i[html],
           fires: %(<%= render "posts/create.js.erb" %>\n),
           does_not_fire: %(<%= render "posts/create.turbo_stream.erb" %>\n),
           description: "RJS and format.js — migrate to Turbo Streams" do |src, path:|
@@ -280,7 +280,7 @@ module Master
         end
 
         LawDSL.law :DATA_REMOTE,
-          severity: :warning, tags: %i[HOTWIRE], applies_to: %i[html],
+          tags: %i[HOTWIRE], applies_to: %i[html],
           fires: %(<%= link_to "Slett", post_path(post), remote: true %>\n),
           does_not_fire: %(<%= link_to "Slett", post_path(post), data: { turbo_method: :delete } %>\n),
           description: "rails-ujs data-remote — use Turbo native forms" do |src, path:|
@@ -296,7 +296,7 @@ module Master
         /ix.freeze
 
         LawDSL.law :INPUT_TYPE_SPECIFIC,
-          severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          tags: %i[ACCESSIBILITY], applies_to: %i[html],
           fires: %(<input type="text" name="email_address">\n),
           does_not_fire: %(<input type="email" name="email_address">\n),
           description: "semantic input types for email/url/tel/date" do |src, path:|
@@ -306,7 +306,7 @@ module Master
         end
 
         LawDSL.law :FOCUS_VISIBLE,
-          severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[css scss],
+          tags: %i[ACCESSIBILITY], applies_to: %i[css scss],
           example_path: "/repo/app/assets/stylesheets/application.scss",
           fires: ".btn:hover { background: var(--hover); }\n",
           does_not_fire: ".btn:hover { background: var(--hover); }\n.btn:focus-visible { outline: 2px solid; }\n",

@@ -3,8 +3,6 @@
 # law/shell.rb — every shell law, one Law.define per law.
 Law.define(:DOLLAR_PAREN) do
   source "ShellCheck SC2006 — $() over backticks"
-  severity :warn
-  languages %i[zsh]
   # A backtick followed by a method call is Ruby, not shell. drain-jobs.sh and
   # prune-guests.sh both embed `ruby34 -e '...'` to read the load average, and
   # inside that the backticks are Ruby's own command substitution — where they
@@ -26,15 +24,7 @@ end
 # files batch-deleted before a conversion step) that did not survive the
 # master.yml -> MASTER migration. Consequence class: unrecoverable data loss.
 Law.define(:NEVER_BATCH_DELETE) do
-  law_scope :universal
   source "master.yml v66 file_deletion_protocol — never batch-delete files"
-  severity :error
-  # zsh, not shell: FILE_LANGUAGE_MAP emits "zsh" for .sh/.zsh/.bash and no file
-  # can ever carry the language "shell", so applies? returned false for every
-  # shell script in the repo — 73 of them, including both glob-rm sites. This
-  # law exists because of the 2026-01-05 incident where 16 files were deleted by
-  # one glob, and it has only ever been able to see the Ruby half.
-  languages %i[ruby zsh]
   # File deletion lives here, and only here. GUARD_EXPENSIVE_OPS carried a bare
   # `rm -rf` too, so one question had two instruments free to disagree; it keeps
   # the database sweeps, this keeps the filesystem. The root and home targets
@@ -78,8 +68,6 @@ end
 
 Law.define(:NO_INLINE_ASSETS_IN_SHELL) do
   source "RAILS/__shared frontend convention"
-  severity :warn
-  languages %i[zsh]
   detect { |line| line.match?(/<style\b|<script\b/) }
   fix "Move the markup into app/views and the style into a tracked stylesheet."
   bad  "print '<style>body{}</style>' > index.html"
@@ -101,8 +89,6 @@ end
 # one interpreter that is neither portable nor the house dialect.
 Law.define(:ZSH_SHEBANG) do
   source "House rule: zsh, not bash — no bash in OpenBSD base, zsh is the operator dialect"
-  severity :warn
-  languages %i[zsh]
   scope :file
   detect { |text| text.match?(%r{\A#![^\n]*\bbash\b}) }
   fix "Use #!/usr/bin/env zsh, or #!/bin/sh when vm23 must run it."
@@ -118,8 +104,6 @@ end
 
 Law.define(:STRICT_MODE_ZSH) do
   source "Shell strict mode set -euo pipefail (Google Shell Style Guide)"
-  severity :error
-  languages %i[zsh]
   scope :file
   # A law that fires on what is MISSING cannot be silenced by blanking a line,
   # which is all `scan: intentional` does — considered_text removes the marker
@@ -128,10 +112,6 @@ Law.define(:STRICT_MODE_ZSH) do
   # an all-night rotation script needs one: aborting on the first non-zero exit
   # would end the night at its first failed render.
   absent %r{scan:\s*intentional}
-  # daily.local, weekly.local and monthly.local are sourced into /etc/daily,
-  # /etc/weekly and /etc/monthly, so `set -e` in one would abort the base
-  # system's own maintenance run at its first non-zero command.
-  path_exclude %r{/etc/(?:daily|weekly|monthly)\.local\z}
   # Only a shell shebang, not any shebang: a #!/usr/bin/env ruby script has no
   # set -euo pipefail to add, and flagging one is the false positive an
   # extensionless bin/ tool trips when its language cannot be read from a suffix.

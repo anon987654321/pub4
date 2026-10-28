@@ -115,7 +115,7 @@ module Master
           %<code>s
         PROMPT
 
-          declare id: "adversarial", severity: :error, tags: %i[ONE_JOB CQS GUARD_EXPENSIVE FAIL_VISIBLY COMPOSABLE],
+          declare id: "adversarial", tags: %i[ONE_JOB CQS GUARD_EXPENSIVE FAIL_VISIBLY COMPOSABLE],
                   autofix: true, description: "Red-team scan: steelman then challenge — suppresses false positives"
 
           def initialize(agent: nil)
@@ -176,7 +176,7 @@ module Master
         class SemanticLaw < Law
           def self.reads_beyond_file? = true
 
-          declare id: "semantic", severity: :warning, autofix: true,
+          declare id: "semantic", autofix: true,
                   description: "LLM-based rule review (violations + opportunities)"
 
           def initialize(agent: nil)
@@ -475,7 +475,7 @@ module Master
           # Lines of method body sent to LLM for drift comparison.
           BODY_SNIPPET = 20
 
-          declare id: "comment_drift", severity: :warning, tags: %i[SELF_EXPLAINING EXPLICIT], autofix: true,
+          declare id: "comment_drift", tags: %i[SELF_EXPLAINING EXPLICIT], autofix: true,
                   description: "Comment claim doesn't match method body — comment is lying"
 
           def initialize(agent: nil)

@@ -3,8 +3,6 @@
 # law/javascript.rb — every javascript law, one Law.define per law.
 Law.define(:ASYNC_AWAIT) do
   source "ECMAScript 2017 — async/await over raw promises"
-  severity :warn
-  languages %i[javascript]
   detect { |line| line.match?(/\.then\(.*\.then\(.*\.then\(/) }
   fix "Use async/await for readability."
   bad  "a().then(b).then(c).then(d)"
@@ -18,9 +16,6 @@ end
 
 Law.define(:FOR_OF) do
   source "Airbnb JS Style Guide — for...of over for...in"
-  severity :error
-  languages %i[javascript]
-  path_exclude %r{/public/three\.module\.js\z}
   detect { |line| line.match?(/for\s*\(\s*(const|let|var)\s+\w+\s+in\s+/) }
   fix "for...in iterates prototype properties. Use for...of."
   bad  "for (const k in list) {"
@@ -29,9 +24,6 @@ end
 
 Law.define(:NO_VAR) do
   source "Airbnb JS Style Guide — no var (ES6 let/const)"
-  severity :error
-  languages %i[javascript]
-  path_exclude %r{/public/three\.module\.js\z}
   # A declaration sits at a statement position: the start of a line, or straight
   # after a brace, a semicolon or an opening paren. \bvar\s+\w alone matched the
   # word anywhere, including inside a string — stt_endpointing.test.mjs carries
@@ -47,9 +39,6 @@ end
 
 Law.define(:NULLISH_COALESCING) do
   source "ECMAScript 2020 — nullish coalescing (??)"
-  severity :info
-  languages %i[javascript]
-  path_exclude %r{/public/three\.module\.js\z}
   # The fix line already says when `??` is the answer: where 0 or '' are valid
   # values. A bare `\w+ \|\| \w+` says nothing about that and fired on 21 of 41
   # JavaScript files — every boolean condition in the tree, where `??` is not an
@@ -77,9 +66,6 @@ end
 
 Law.define(:OPTIONAL_CHAINING) do
   source "ECMAScript 2020 — optional chaining (?.)"
-  severity :warn
-  languages %i[javascript]
-  path_exclude %r{/public/three\.module\.js\z}
   detect { |line| line.match?(/(\w+)\s*&&\s*\1\.\w+/) }
   fix "Rewrite to obj?.foo?.bar"
   bad  "user && user.name"
@@ -88,9 +74,6 @@ end
 
 Law.define(:TEMPLATE_LITERALS) do
   source "Airbnb JS Style Guide — template literals (ES6)"
-  severity :warn
-  languages %i[javascript]
-  path_exclude %r{/public/three\.module\.js\z}
   detect { |line| line.match?(/["']\s*\+\s*\w+\s*\+\s*["']/) }
   fix "Use `Hello ${name}!` template literals."
   bad  "'Hello ' + name + '!'"
@@ -106,8 +89,6 @@ end
 # always carried form.
 Law.define(:FACE_POINT_IS_ONE_PIXEL) do
   source "pixel_perfection — MASTER/data/laws.yml, extended to WebGL"
-  severity :error
-  languages %i[javascript]
   detect do |line|
     line.match?(/gl_PointSize\s*=/) && !line.match?(/gl_PointSize\s*=\s*1\.0\s*;/)
   end
@@ -125,8 +106,6 @@ end
 # twice as bright. A knob cannot switch off a layer that should not exist.
 Law.define(:NO_WEBGL_GLOW_PASS) do
   source "pixel_perfection forbidden_css: soft glow — the WebGL spelling of it"
-  severity :error
-  languages %i[javascript]
   detect { |line| line.match?(/blending:\s*THREE\.AdditiveBlending/) }
   fix "Delete the additive pass. Brightness states form; a second offset pass is a glow."
   bad  "    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending"
@@ -135,10 +114,6 @@ end
 
 Law.define(:TACTILE_FEEDBACK) do
   source "Haptic interaction feedback — optional secondary signal"
-  severity :info
-  mode :opportunity
-  languages %i[javascript]
-  path "RAILS/"
   ask "When haptic feedback is used, is it attached to a meaningful user action or threshold, fired at the start of direct manipulation when appropriate, gracefully unavailable, power-conscious, and never the only confirmation?"
   fix "Keep haptics short and optional, trigger them only for meaningful interactions, suppress them when the page is hidden or the device is power-constrained, and preserve a visible or semantic equivalent."
   bad "navigator.vibrate([100,100,100,100,100]) for every hover or pointermove"
@@ -147,10 +122,6 @@ end
 
 Law.define(:POINTER_FEEDBACK_EARLY) do
   source "Pointer Events — early input acknowledgement"
-  severity :info
-  mode :opportunity
-  languages %i[javascript]
-  path "RAILS/"
   ask "Does a direct-manipulation interaction acknowledge pointer input at pointerdown or an equivalent active state instead of making a click handler carry all perceived responsiveness? Preserve keyboard and assistive-technology behavior."
   fix "Move only the immediate acknowledgement to pointerdown/active state; leave the actual command and confirmation semantics on the existing action path."
   bad "button.addEventListener('click', showPressedState)"
@@ -159,10 +130,6 @@ end
 
 Law.define(:HAPTIC_SINGLE_SOURCE) do
   source "Shared RAILS haptics controller — one tactile implementation"
-  severity :info
-  mode :opportunity
-  languages %i[javascript]
-  path "RAILS/"
   ask "Does Rails interaction code use the shared haptics implementation instead of reaching directly for navigator.vibrate, so suppression, timing and future native adapters remain one source of truth?"
   fix "Import the shared pub4/haptics controller or its pulse API. Keep raw navigator.vibrate behind that shared implementation."
   bad "navigator.vibrate(10)"

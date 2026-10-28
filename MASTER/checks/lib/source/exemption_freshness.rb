@@ -10,8 +10,8 @@ module Deploy
   # passed. The ledger's own header said so — "a stale_exemptions-style reader
   # is future work on a Ruby host". This is that reader, moved from obligation
   # to enforcement. It reads the ledger and the law files; it grants nothing
-  # and skips nothing, exactly as the ledger's boundary #2 states: the
-  # executable path_exclude markers in law/ still decide what scanners skip.
+  # and skips nothing, exactly as the ledger's boundary #2 states: each Law's
+  # path_exclude in data/laws.yml law_catalogue.entries decides what scanners skip.
   #
   # A row hard-fails when its review date has passed (the re-argument is
   # overdue — re-argue it or retire the exemption), when a promised field is
