@@ -51,7 +51,6 @@ import RemoteRails from "@stimulus-components/remote-rails"
 import Prefetch from "@stimulus-components/prefetch"
 import PlacesAutocomplete from "stimulus-places-autocomplete"
 import Hotkey from "@stimulus-components/hotkey"
-import Glow from "stimulus-glow"
 import Dialog from "@stimulus-components/dialog"
 import ContentLoader from "@stimulus-components/content-loader"
 import Confirmation from "@stimulus-components/confirmation"
@@ -73,7 +72,6 @@ const COMPONENT_REGISTRATIONS = [
   [ "content-loader", ContentLoader ],
   [ "dialog", Dialog ],
   [ "dropdown", Dropdown ],
-  [ "glow", Glow ],
   [ "hotkey", Hotkey ],
   [ "lightbox", Lightbox ],
   [ "notification", Notification ],
