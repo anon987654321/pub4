@@ -1077,10 +1077,64 @@ module Master
       end
 
       def load
-        path = File.join(@root, PATH)
-        return { "version" => VERSION, "runs" => [] } unless File.file?(path)
+        workspace = File.expand_path(@root)
+        root_stat = File.lstat(workspace)
+        unless root_stat.directory? && !root_stat.symlink?
+          raise IOError, "refusing non-directory or symlinked journal workspace"
+        end
 
-        raw = JSON.parse(File.read(path, encoding: "UTF-8"))
+        directory = File.join(workspace, ".master")
+        path = File.join(workspace, PATH)
+        unless File.exist?(directory) || File.symlink?(directory)
+          return { "version" => VERSION, "runs" => [] } unless File.exist?(path) || File.symlink?(path)
+
+          raise IOError, "fix journal exists without its state directory"
+        end
+
+        directory_stat = File.lstat(directory)
+        unless directory_stat.directory? && !directory_stat.symlink?
+          raise IOError, "refusing non-directory or symlinked journal state directory"
+        end
+        if (directory_stat.mode & 0o022).positive?
+          raise IOError, "refusing group/world-writable journal state directory"
+        end
+        return { "version" => VERSION, "runs" => [] } unless File.exist?(path) || File.symlink?(path)
+
+        path_stat = File.lstat(path)
+        unless path_stat.file? && !path_stat.symlink? && path_stat.nlink == 1
+          raise IOError, "refusing symlinked, hard-linked or non-regular fix journal"
+        end
+        if (path_stat.mode & 0o077).positive?
+          raise IOError, "fix journal permissions must be private (0600 or stricter)"
+        end
+
+        flags = File::RDONLY
+        flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+        content = File.open(path, flags) do |file|
+          opened_stat = file.stat
+          current_stat = File.lstat(path)
+          unless current_stat.file? && !current_stat.symlink? &&
+                 current_stat.nlink == 1 &&
+                 current_stat.dev == opened_stat.dev && current_stat.ino == opened_stat.ino
+            raise IOError, "fix journal path changed while opening"
+          end
+
+          bytes = file.read
+          text = bytes.force_encoding(Encoding::UTF_8)
+          raise EncodingError, "fix journal contains invalid UTF-8" unless text.valid_encoding?
+
+          after_stat = File.lstat(path)
+          unless after_stat.file? && !after_stat.symlink? &&
+                 after_stat.nlink == 1 &&
+                 after_stat.dev == opened_stat.dev && after_stat.ino == opened_stat.ino &&
+                 after_stat.size == opened_stat.size &&
+                 after_stat.mtime == opened_stat.mtime && after_stat.ctime == opened_stat.ctime
+            raise IOError, "fix journal changed while reading"
+          end
+          text
+        end
+
+        raw = JSON.parse(content)
         raise "fix journal version #{raw["version"]} is unsupported" unless raw["version"].to_i == VERSION
 
         runs = raw["runs"]
