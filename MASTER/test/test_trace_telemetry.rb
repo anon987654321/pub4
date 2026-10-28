@@ -77,12 +77,3 @@ class TraceTelemetryExporterTest < Minitest::Test
     end
   end
 end
-    Dir.mktmpdir("trace-exporter-oversize-") do |dir|
-      path = File.join(dir, "traces.log")
-      exporter = Master::Trace::Telemetry::JsonlExporter.new(path, max_bytes: 40)
-
-      assert_equal Master::Trace::Telemetry::JsonlExporter::FAILURE, exporter.export([span(1)])
-      refute File.exist?(path)
-    end
-  end
-end
