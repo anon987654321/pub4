@@ -37,6 +37,20 @@ class DillaSoundFxTest < Minitest::Test
     assert_equal first, second
   end
 
+  def test_player_resolution_ignores_relative_path_entries
+    Dir.mktmpdir("dilla-fx-player-") do |directory|
+      fake_player = File.join(directory, "ffplay")
+      File.write(fake_player, "#!/bin/sh\nexit 0\n")
+      File.chmod(0o755, fake_player)
+      previous = ENV.fetch("PATH", nil)
+      ENV["PATH"] = [".", directory].join(File::PATH_SEPARATOR)
+
+      assert_equal fake_player, Dilla::SoundFx.send(:executable_path, "ffplay")
+    ensure
+      previous.nil? ? ENV.delete("PATH") : ENV["PATH"] = previous
+    end
+  end
+
   def test_events_have_distinct_sonic_signatures
     start = Dilla::SoundFx.render("start", sound_data: SOUND_DATA, engine_data: ENGINE_DATA, seed: 7)
     failure = Dilla::SoundFx.render("error", sound_data: SOUND_DATA, engine_data: ENGINE_DATA, seed: 7)

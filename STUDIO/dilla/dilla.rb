@@ -7822,13 +7822,24 @@ module Dilla
     # file is consumed. Keep the temporary file alive for the cue duration, then stop
     # the service so an API/player failure cannot leave a looping or stale sound behind.
     def termux_player?(options)
-      options[:player].nil? && RUBY_PLATFORM.downcase.include?("android") && executable("termux-media-player")
+      options[:player].nil? && termux_host? && !executable_path("termux-media-player").nil?
     end
     private_class_method :termux_player?
 
+    def termux_host?
+      RUBY_PLATFORM.downcase.include?("android") || ENV.fetch("PREFIX", "").include?("/com.termux/")
+    end
+    private_class_method :termux_host?
+
+    # Termux:API starts media in an Android service and its command may exit before the
+    # file is consumed. Keep the temporary file alive for the cue duration, then stop
+    # the service so an API/player failure cannot leave a looping or stale sound behind.
     def play_termux(path, duration_s:)
+      player = executable_path("termux-media-player")
+      raise ArgumentError, "Termux:API media player is not installed" unless player
+
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      pid = Process.spawn("termux-media-player", "play", path, out: File::NULL, err: File::NULL, pgroup: true)
+      pid = Process.spawn(player, "play", path, out: File::NULL, err: File::NULL, pgroup: true)
       begin
         _waited_pid, status = Timeout.timeout([duration_s + 1.0, 4.0].min) { Process.wait2(pid) }
       rescue Timeout::Error
@@ -7839,13 +7850,13 @@ module Dilla
 
       remaining = duration_s + 0.18 - (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started)
       sleep(remaining) if remaining.positive?
-      stop_termux
+      stop_termux(player)
       0
     end
     private_class_method :play_termux
 
-    def stop_termux
-      pid = Process.spawn("termux-media-player", "stop", out: File::NULL, err: File::NULL, pgroup: true)
+    def stop_termux(player)
+      pid = Process.spawn(player, "stop", out: File::NULL, err: File::NULL, pgroup: true)
       _waited_pid, status = Timeout.timeout(1) { Process.wait2(pid) }
       raise ArgumentError, "Termux:API could not stop the cue player" unless status.success?
     rescue Timeout::Error
@@ -7878,12 +7889,12 @@ module Dilla
         return [*command, path]
       end
 
-      if RUBY_PLATFORM.include?("darwin") && executable("afplay")
-        ["afplay", path]
-      elsif executable("ffplay")
-        ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", path]
-      elsif executable("play")
-        ["play", "-q", path]
+      if RUBY_PLATFORM.include?("darwin") && (player = executable_path("afplay"))
+        [player, path]
+      elsif (player = executable_path("ffplay"))
+        [player, "-nodisp", "-autoexit", "-loglevel", "quiet", path]
+      elsif (player = executable_path("play"))
+        [player, "-q", path]
       else
         raise ArgumentError, "no supported audio player found; install afplay, ffplay, SoX play, or Termux:API"
       end
@@ -7901,15 +7912,19 @@ module Dilla
     end
     private_class_method :terminate_player
 
-    def executable(name)
-      ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |directory|
-        next false if directory.empty? || !directory.start_with?(File::SEPARATOR)
+    # Only execute players found at an explicit absolute PATH entry. Passing the resolved
+    # executable path to spawn prevents an earlier relative PATH component from shadowing
+    # the checked binary. The explicit --player option remains an operator-owned override.
+    def executable_path(name)
+      ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).each do |directory|
+        next if directory.empty? || !directory.start_with?(File::SEPARATOR)
 
         candidate = File.join(directory, name)
-        File.file?(candidate) && File.executable?(candidate)
+        return candidate if File.file?(candidate) && File.executable?(candidate)
       end
+      nil
     end
-    private_class_method :executable
+    private_class_method :executable_path
 
     def result_payload(event, frame, seed)
       metrics = Mastering.report(frame)
