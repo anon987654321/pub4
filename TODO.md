@@ -47,9 +47,10 @@ source and tests they could not run; this pass is what measures them.
 - [ ] Then `/fix` on the repository root: four independent reports, 30–40 grounded tournament
   candidates per tree, and each terminal state (DONE, PLATEAU, HUMAN_DECISION, BLOCKED,
   VALIDATION_FAILED, DELIVERY_FAILED, TIMEOUT) reached truthfully. The checksum-verified
-  `.master/fix_architecture` sidecar and provenance-gated reuse are implemented. A process-kill
-  recovery regression now exists at `MASTER/test/test_fix_interruption_restart.rb`; run it on pinned
-  Ruby, preserve its receipt, then run a real repository-wide `/fix` and measure repair outcomes.
+  `.master/fix_architecture` sidecar and provenance-gated reuse are implemented. The process-kill
+  regression at `MASTER/test/test_fix_interruption_restart.rb` now covers transaction rollback,
+  durable-run resumption and orphaned Kernel-receipt recovery; run it on pinned Ruby, preserve its
+  receipt, then run a real repository-wide `/fix` and measure repair outcomes.
   The crash/restart test is authored but unexecuted here; no live repository-wide trial has been
   measured, so repair quality remains unmeasured.
 
