@@ -67,6 +67,34 @@ class TestFixKernel < Minitest::Test
     end
   end
 
+  def test_append_revalidates_the_prefix_when_another_writer_extends_the_ledger
+    with_workspace do |root|
+      kernel = K.new(root:)
+      first = kernel.append_event("first", {}, run_id: "prefix-tamper")
+      path = kernel.log_path
+
+      original = File.binread(path)
+      tampered = original.sub('"kind":"first"', '"kind":"other"')
+      refute_equal original, tampered
+      assert_equal original.bytesize, tampered.bytesize
+      File.binwrite(path, tampered)
+
+      body = {
+        "seq" => 2, "at" => "2026-10-28T00:00:01Z", "run_id" => "prefix-tamper",
+        "kind" => "external", "payload" => {}, "prev" => first.fetch("hash")
+      }
+      external_row = body.merge("hash" => Digest::SHA256.hexdigest(JSON.generate(body)))
+      File.open(path, "ab", 0o600) { |file| file.write(JSON.generate(external_row) + "\n") }
+      before_append = File.binread(path)
+
+      error = assert_raises(K::LedgerCorruption) do
+        kernel.append_event("must_not_land", {}, run_id: "prefix-tamper")
+      end
+      assert_match(/hash mismatch/, error.message)
+      assert_equal before_append, File.binread(path), "refusal must not append to a corrupt ledger"
+    end
+  end
+
   def test_full_verification_refuses_an_incomplete_final_record
     with_workspace do |root|
       path = write_log(root, [%w[terminal a]])
