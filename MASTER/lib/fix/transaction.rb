@@ -27,6 +27,7 @@ module Master
       ROOT_DIR = ".master/fix_transactions"
       LOCK = ".master/fix_transaction.lock"
       MANIFEST = "manifest.json"
+      DELIVERY_FIELDS = %i[state active head_before head_after marked].freeze
 
       def self.normalize_id(id)
         value = id.to_s
@@ -165,14 +166,10 @@ module Master
         false
       end
 
-      # The delivery sub-machine (begin_delivery! / record_commit! /
-      # delivery_pending? / delivery_head_after / finalize_delivery!) lives in
-      # Delivery, reached through this one accessor, so those five methods no
-      # longer count against Transaction's own surface. Delivery is a thin
-      # wrapper around this instance, not a second copy of its state: it reads
-      # and writes the same @state/@delivery_head_* ivars and calls the same
-      # private persist!/emit this class already had, so the persisted
-      # manifest format and every emitted event name are unchanged.
+      # The delivering state machine lives in Delivery, reached through this
+      # accessor. Delivery keeps no state: it changes this transaction only
+      # through the delivery door below, so the manifest format and every event
+      # name stay this class's own.
       def delivery
         @delivery ||= Delivery.new(self)
       end
@@ -305,6 +302,40 @@ module Master
       def state = @state
       def active? = @active
 
+      # The delivery door: what Delivery reads and the steps by which it changes
+      # this transaction. Nothing else writes the delivery fields.
+      def enlisted_paths = @paths.dup
+      def delivery_head_before = @delivery_head_before
+      def delivery_head_after = @delivery_head_after
+      def delivery_marked? = @delivery_marked == true
+
+      # Sets the given DELIVERY_FIELDS and persists them, inside the named lifecycle
+      # mutation when one is given; persist: false changes memory only.
+      def update_delivery!(operation = nil, persist: true, **fields)
+        unknown = fields.keys - DELIVERY_FIELDS
+        raise ArgumentError, "unknown delivery field: #{unknown.join(", ")}" unless unknown.empty?
+
+        write = lambda do
+          @state = fields.fetch(:state, @state)
+          @active = fields.fetch(:active, @active)
+          @delivery_head_before = fields.fetch(:head_before, @delivery_head_before)
+          @delivery_head_after = fields.fetch(:head_after, @delivery_head_after)
+          @delivery_marked = fields.fetch(:marked, @delivery_marked)
+
+          persist! if persist
+          true
+        end
+        operation ? lifecycle_mutation(operation, item_count: @paths.size, &write) : write.call
+      end
+
+      def delivery_event(event, **payload) = emit(event, **payload)
+
+      # Releases the root lock, first removing the transaction directory when asked.
+      def close!(cleanup: false)
+        cleanup! if cleanup
+        release_lock
+      end
+
       private
 
       def reject_rollback_conflict(conflicts)
@@ -340,12 +371,17 @@ module Master
       def recover_for_state(release_conflicts: false)
         case @state
         when "open" then recover_open_state(release_conflicts:)
-        when "delivering" then delivery.send(:recover!)
+        when "delivering" then recover_delivering_state
         when "committed", "rolled_back" then recover_terminal_state
         when "conflict" then recover_error_state("transaction recovery found a concurrent edit", :policy)
         when "trace_failed" then recover_error_state("transaction lifecycle audit failed; manual review required", :infrastructure)
         else recover_error_state("unknown transaction state: #{@state}", :infrastructure)
         end
+      end
+
+      def recover_delivering_state
+        outcome = delivery.recover!
+        outcome == :not_committed ? recover_open_state : outcome
       end
 
       # cleanup! is called for its side effect (remove the transaction
@@ -550,8 +586,8 @@ module Master
 
       def inside?(path, dir) = path == dir || path.start_with?(dir + File::SEPARATOR)
 
-      def absolute(path) = path_guard.send(:within, File.join(@root, path))
-      def path_guard = (@path_guard ||= Master::Core::World.allocate.tap { |world| world.instance_variable_set(:@root, outer_root) })
+      def absolute(path) = path_guard.within(File.join(@root, path))
+      def path_guard = (@path_guard ||= Master::Core::World.new(root: outer_root))
 
       def snapshot(path, versioned: false)
         abs = absolute(path)
@@ -656,9 +692,7 @@ module Master
                     item["exists"] == true && item["mode"].is_a?(Integer) && item["mode"].between?(0, 0o7777))
           raise "transaction manifest snapshot invalid: #{path}" unless valid
           if item["kind"] == "symlink"
-            link = item["link"]
-            target = link.is_a?(String) ? File.expand_path(link, File.dirname(File.join(@root, path))) : ""
-            raise "transaction manifest snapshot invalid: #{path}" unless link.is_a?(String) && item["store"].nil? && path_guard.send(:within, target) == target
+            raise "transaction manifest snapshot invalid: #{path}" unless symlink_snapshot_contained?(path, item)
           elsif item["kind"] == "file"
             store = item["store"].to_s
             dir = File.expand_path(File.join(@dir, "files"))
@@ -671,6 +705,15 @@ module Master
           end
         end
         raise "transaction manifest fingerprints malformed" unless seen.is_a?(Hash) && seen.keys.sort == paths.sort && paths.all? { |p| seen[p].is_a?(Array) && seen[p].all? { |v| v.is_a?(String) } }
+      end
+
+      # A symlink snapshot is restorable only when its link resolves inside the sandbox.
+      def symlink_snapshot_contained?(path, item)
+        link = item["link"]
+        return false unless link.is_a?(String) && item["store"].nil?
+
+        target = File.expand_path(link, File.dirname(File.join(@root, path)))
+        path_guard.within(target) == target
       end
 
       def restore(path, snapshot)

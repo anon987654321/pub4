@@ -107,6 +107,28 @@ module Master::Core
       Observation.no("rollback failed: #{e.class}: #{e.message}")
     end
 
+    # Paths are sandboxed to root; public so Fix::Transaction shares the sandbox.
+    def within(path)
+      raise "credential path refused: #{path}" if secret_path?(path)
+      abs = File.expand_path(path, @root)
+      raise "path escapes workspace: #{path}" unless under_root?(abs, @root)
+
+      # expand_path does not follow a symlink the agent just created with ln.
+      # realpath of the existing ancestor must still sit under the real root.
+      real_root = File.realpath(@root)
+      existing = abs
+      existing = File.dirname(existing) until File.exist?(existing)
+      raise "path escapes workspace: #{path}" unless under_root?(File.realpath(existing), real_root)
+
+      if File.exist?(abs)
+        canonical_file = File.realpath(abs)
+        raise "path escapes workspace: #{path}" unless under_root?(canonical_file, real_root)
+        raise "credential path refused: #{path}" if secret_path?(canonical_file)
+      end
+
+      abs
+    end
+
     private
 
     def do_read(path:, **)
@@ -297,28 +319,6 @@ module Master::Core
     end
 
     def secret_path?(path) = World.secret?(path)
-
-    # Paths are sandboxed to root; nothing escapes the workspace.
-    def within(path)
-      raise "credential path refused: #{path}" if secret_path?(path)
-      abs = File.expand_path(path, @root)
-      raise "path escapes workspace: #{path}" unless under_root?(abs, @root)
-
-      # expand_path does not follow a symlink the agent just created with ln.
-      # realpath of the existing ancestor must still sit under the real root.
-      real_root = File.realpath(@root)
-      existing = abs
-      existing = File.dirname(existing) until File.exist?(existing)
-      raise "path escapes workspace: #{path}" unless under_root?(File.realpath(existing), real_root)
-
-      if File.exist?(abs)
-        canonical_file = File.realpath(abs)
-        raise "path escapes workspace: #{path}" unless under_root?(canonical_file, real_root)
-        raise "credential path refused: #{path}" if secret_path?(canonical_file)
-      end
-
-      abs
-    end
 
     def under_root?(abs, root)
       abs == root || abs.start_with?(root + File::SEPARATOR)
