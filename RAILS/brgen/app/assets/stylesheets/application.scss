@@ -3200,14 +3200,10 @@ textarea { min-height: 120px; resize: vertical; line-height: var(--leading-loose
      @stimulus-components/popover's show() appends the
      <template data-popover-target="content"> markup as a real child of the
      trigger, so only that injected [data-popover-target="card"] node and its
-     arrow need styling: one element, one filter: drop-shadow(). Focus and blur
-     trigger it as well as hover, so it works on touch (tapping a button focuses
-     it) with no @media (hover: none) exclusion.
-
-     Shadow kept intentionally: the card and page share the same background,
-     so the shadow is the arrow's only depth cue. The author's explicit call
-     overrides the flat default for this one component only
-     (design_laws.yml pixel_perfection.exception_policy). */
+     border-built arrow need styling. Focus and blur trigger it as well as hover,
+     so it works on touch without a hover-only exclusion. Keep the surface flat:
+     the tooltip's position, solid fill and triangular border establish the
+     relationship without an ornamental depth effect. */
   position: relative;
 }
 
@@ -3282,7 +3278,6 @@ textarea { min-height: 120px; resize: vertical; line-height: var(--leading-loose
   transform: translateX(-50%);
   border: 6px solid transparent;
   border-top-color: var(--surface-elevated);
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35)); // scan: intentional — the author's recorded 2026-07-21 exception: the arrow's only depth cue
 }
 
 /* Brgen extensions on shared shell_widgets — cards, sort tabs, feed article chrome
