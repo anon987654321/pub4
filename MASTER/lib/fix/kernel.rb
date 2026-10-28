@@ -1,7 +1,13 @@
 # frozen_string_literal: true
 
 require "digest"
+require "fileutils"
 require "json"
+require "securerandom"
+require "socket"
+require "time"
+require_relative "kernel/lifecycle_journal"
+require_relative "kernel/lifecycle"
 
 module Master
   module Fix
@@ -10,10 +16,62 @@ module Master
     # reader stays so an existing log can still be verified and replayed, and it
     # refuses a broken chain rather than returning a partial history.
     class Kernel
+      include Lifecycle
+
       GENESIS = "0" * 64
       LOG_RELATIVE_PATH = ".master/log.jsonl"
 
       class LedgerCorruption < StandardError; end
+
+      # Kernel coordinates /fix and owns its hash-chained run receipts. The
+      # legacy replay API below remains the same; lifecycle metadata lives in
+      # the separate, schema-preserving RunJournal adapter.
+      def initialize(root:, actor: "master", bus: nil, log_path: nil, lifecycle_journal: nil)
+        @root = File.expand_path(root)
+        @workspace_root = self.class.send(:locate_workspace, @root)
+        @actor = actor.to_s
+        @bus = bus
+        @log_path = File.expand_path(log_path || File.join(@workspace_root, LOG_RELATIVE_PATH))
+        @lifecycle_journal = lifecycle_journal
+        @lifecycle_mutex = Mutex.new
+        @execution_mutex = Mutex.new
+        @current_run_id = nil
+      end
+
+      attr_reader :root, :workspace_root, :actor, :log_path, :execution_mutex
+
+      def verify_log!
+        self.class.read_log(@log_path)
+      end
+
+      # Append under an exclusive file lock and verify the prior chain before
+      # assigning the next sequence. A torn or edited prefix is a hard refusal.
+      def append_event(kind, payload, run_id: nil)
+        FileUtils.mkdir_p(File.dirname(@log_path), mode: 0o700)
+        File.open(@log_path, File::RDWR | File::CREAT, 0o600) do |file|
+          file.flock(File::LOCK_EX)
+          previous = self.class.read_log_io(file).last
+          body = {
+            "seq" => previous ? previous.fetch("seq") + 1 : 1,
+            "at" => Time.now.utc.iso8601(6),
+            "run_id" => run_id,
+            "kind" => kind.to_s,
+            "payload" => payload,
+            "prev" => previous ? previous.fetch("hash") : GENESIS
+          }
+          row = body.merge("hash" => Digest::SHA256.hexdigest(JSON.generate(body)))
+          line = JSON.generate(row) + "\n"
+          file.seek(0, IO::SEEK_END)
+          written = file.write(line)
+          raise IOError, "ledger append wrote #{written || 0} of #{line.bytesize} bytes" unless written == line.bytesize
+
+          file.flush
+          file.fsync
+          row
+        ensure
+          file.flock(File::LOCK_UN) rescue nil
+        end
+      end
 
       def self.replay_events(root:, seq:)
         number = Integer(seq)
