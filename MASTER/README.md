@@ -627,3 +627,8 @@ The existing `surface_schema` check now validates the five declared Brgen surfac
 The metadata attribute checks respect the active quote delimiter, so valid apostrophes inside titles and descriptions remain accepted; relative canonicals and duplicate/empty metadata remain invalid. A dedicated negative/positive regression covers this distinction.
 
 The OpenBSD tracked PF ruleset guard is registered in the single check runner as `openbsd_pf_policy`. It checks the repository-specific default-deny, explicit interface scope on pass rules, and SSH/bruteforce ordering invariants; the current ICMP type allowlist is a named exception; `pfctl -nf` remains the authority for native PF syntax on OpenBSD.
+
+
+## Response security header contract
+
+The registered `security_headers_source` check guards the current split: relayd owns HSTS and common edge headers, while Rails owns per-app nonce CSP and the frame-ancestor allowlist used for intentional Brgen/Amber embedding. It rejects a global CSP setter at relayd because that overwrites the Rails nonce policy, and it rejects wildcard or `unsafe-eval` script sources. This is source-policy evidence only. CSP remains report-only until the operator enables and verifies `PUB4_CSP_ENFORCE=1` on vm23; see the `csp_enforced_on_vm23` operator seam for live evidence.

@@ -100,3 +100,8 @@ cd RAILS/brgen && bin/ci
 ## Public-page metadata contract
 
 The central rendered `surface_schema` check measures the existing Brgen home, marketplace, cart, dating and messenger surfaces for unique title, description, absolute canonical URL, and Open Graph title/description/URL. The corresponding positive fixtures carry complete metadata, and focused MASTER tests prove missing/duplicate/relative metadata is rejected. These contracts do not yet replace the outstanding live audit of every owned hostname, alias redirect, robots.txt, sitemap and JSON-LD document in the repository TODO.
+
+
+## Response security headers
+
+The root check runner's `security_headers_source` contract checks the shared Rails security-header initializer, relayd's edge headers, and both nonce-CSP initializers. CSP must remain app-owned: a global relayd CSP can replace the app's nonce-bearing policy and break the MASTER face. The check does not claim production enforcement; `PUB4_CSP_ENFORCE=1` remains a live operator change and must be verified against real vm23 response headers.

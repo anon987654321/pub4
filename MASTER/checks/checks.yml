@@ -478,3 +478,10 @@ openbsd_pf_policy:
   require: OPENBSD/checks/pf_policy_check
   class: Deploy::PfPolicyCheck
   pass: "PF policy: default-deny, scoped ingress and SSH/bruteforce ordering intact"
+
+# Source contract for the split edge/app response-security policy. This does not claim live CSP enforcement.
+security_headers_source:
+  require: lib/source/security_headers
+  class: Deploy::SecurityHeadersSourceCheck
+  pass: "security headers: edge/app ownership and nonce-CSP source contracts intact"
+  covered_by: release

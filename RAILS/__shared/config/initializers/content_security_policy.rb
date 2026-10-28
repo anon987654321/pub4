@@ -23,6 +23,8 @@ Rails.application.configure do
     policy.style_src :self, :https, :unsafe_inline
     policy.connect_src :self, :https, "wss:"
     policy.frame_src :self, :https
+    # This app may be framed only by itself; MASTER has its own explicit embedding allowlist.
+    policy.frame_ancestors :self
     policy.worker_src :self, :blob
     policy.manifest_src :self
     policy.form_action :self
