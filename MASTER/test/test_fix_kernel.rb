@@ -105,6 +105,19 @@ class TestFixKernel < Minitest::Test
     end
   end
 
+  def test_blank_records_are_refused
+    with_workspace do |root|
+      path = write_log(root, [%w[observation a], %w[terminal a]])
+      File.write(path, File.read(path).sub("\n", "\n\n"))
+      File.chmod(path, 0o600)
+
+      error = assert_raises(K::LedgerCorruption) { K.read_log(path) }
+
+      assert_match(/blank record/, error.message)
+      assert_match(/line 2/, error.message)
+    end
+  end
+
   def test_sequence_gap_is_refused
     with_workspace do |root|
       path = write_log(root, [%w[observation a], %w[terminal a]])
