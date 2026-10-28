@@ -45,19 +45,44 @@ class SecurityHeadersSourceCheckTest < Minitest::Test
     end
   end
 
+  def test_quoted_wildcard_script_source_is_rejected
+    with_source_tree do |root|
+      path = File.join(root, Deploy::SecurityHeadersSourceCheck::SHARED_CSP)
+      source = File.read(path)
+      source = replace_once(source, 'policy.script_src :self, "https://link.tradedoubler.com"',
+                                     'policy.script_src :self, "*"')
+      File.write(path, source)
+
+      result = Deploy::SecurityHeadersSourceCheck.run(root:)
+      assert_includes result.failures.join("\n"), "overly broad script-src"
+    end
+  end
+
   def test_missing_edge_hsts_is_rejected
     with_source_tree do |root|
       path = File.join(root, Deploy::SecurityHeadersSourceCheck::RELAYD)
       source = File.read(path)
       source = replace_once(
         source,
-        '  match response header set "Strict-Transport-Security" value "max-age=31536000; includeSubDomains; preload"\n',
+        'match response header set "Strict-Transport-Security" value "max-age=31536000; includeSubDomains; preload"',
         ""
       )
       File.write(path, source)
 
       result = Deploy::SecurityHeadersSourceCheck.run(root:)
       assert_includes result.failures.join("\n"), "Strict-Transport-Security"
+    end
+  end
+
+  def test_shared_apps_must_declare_same_origin_frame_ancestors
+    with_source_tree do |root|
+      path = File.join(root, Deploy::SecurityHeadersSourceCheck::SHARED_CSP)
+      source = File.read(path)
+      source = replace_once(source, "    policy.frame_ancestors :self\n", "")
+      File.write(path, source)
+
+      result = Deploy::SecurityHeadersSourceCheck.run(root:)
+      assert_includes result.failures.join("\n"), "policy.frame_ancestors :self"
     end
   end
 
