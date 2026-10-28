@@ -6,6 +6,23 @@ require_relative "../postpro/lib/quality_analyzer"
 require_relative "../postpro/lib/correction_proposer"
 require_relative "../replicate/replay_manifest"
 
+class StudioFakePixelImage
+  attr_reader :width, :height, :bands
+
+  def initialize(bytes, width: 2, height: 2, bands: 3)
+    @bytes, @width, @height, @bands = bytes, width, height, bands
+  end
+
+  def thumbnail_image(_width, height:, size:)
+    raise ArgumentError unless height.positive? && size == :down
+    self
+  end
+
+  def colourspace(_space) = self
+  def cast(_format) = self
+  def write_to_memory = @bytes
+end
+
 class StudioQualityAndReplayTest < Minitest::Test
   def test_quality_report_is_bounded_and_truthful
     report = Postpro::QualityAnalyzer.report(luminance: [0.0, 0.2, 0.5, 0.8, 1.0])
@@ -13,6 +30,17 @@ class StudioQualityAndReplayTest < Minitest::Test
     assert_equal 20.0, report.dig(:exposure, :clipped_highlights_pct)
     assert_includes report[:not_assessed], :composition
     refute report.dig(:colour, :available)
+  end
+
+  def test_image_adapter_downsamples_rgb_pixels_and_returns_dimensions
+    pixels = [0, 0, 0, 64, 64, 64, 128, 128, 128, 255, 255, 255].pack("C*")
+    image = StudioFakePixelImage.new(pixels, width: 3200, height: 2400)
+    report = Postpro::QualityAnalyzer.report_image(image)
+
+    assert_equal [3200, 2400], report[:dimensions]
+    assert_equal [2, 2], report[:sample_dimensions]
+    assert_equal 4, report[:sample_count]
+    assert_equal "uniform thumbnail; encoded-sRGB luminance approximation", report[:sampling]
   end
 
   def test_empty_luminance_is_rejected
