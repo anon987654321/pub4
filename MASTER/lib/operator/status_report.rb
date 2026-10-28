@@ -7,6 +7,8 @@ require_relative "environment"
 # Only "yaml" itself is behind this — requiring it does not boot the Master
 # runtime, so the standalone contract above holds.
 require_relative "../operator/operator_docs"
+# Domain skew helpers live under OPENBSD; load without booting Master.
+require_relative "../../../OPENBSD/lib/domain_signals"
 
 module Operator
   class StatusReport
@@ -58,6 +60,9 @@ module Operator
       lines << "ports:"
       payload[:ports].each { |name, state| lines << "  #{name.ljust(14)} #{state}" }
       lines << ""
+      # Domain/relay skew only when non-empty — silence is the success case
+      # (experiment 1: no separate command to remember).
+      Array(payload[:domain_signals]).each { |line| lines << line }
       lines << "next: #{payload[:next_command]}"
       lines
     end
@@ -82,7 +87,14 @@ module Operator
         services: service_states,
         ports: port_states,
         next_command: Environment.next_command_for,
+        domain_signals: domain_signal_lines,
       }
+    end
+
+    def domain_signal_lines
+      DomainSignals.status_lines(@root)
+    rescue StandardError
+      []
     end
 
     def dirty_by_tree
