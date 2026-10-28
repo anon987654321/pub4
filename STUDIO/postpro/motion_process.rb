@@ -93,7 +93,13 @@ module Postpro
         "-framerate", probe.rate, "-i", File.join(graded, "%06d.png")
       ]
       if probe.has_audio
-        args.concat(["-i", source, "-map", "0:v:0", "-map", "1:a?", "-c:a", "copy", "-shortest"])
+        # Keep every decoded video frame. -shortest would truncate the image
+        # sequence when a source's audio stream ends early. Bound muxing to the
+        # sequence's rational duration instead, while copying audio packets.
+        args.concat([
+          "-i", source, "-map", "0:v:0", "-map", "1:a?",
+          "-c:a", "copy", "-t", format("%.9f", probe.frames.to_f / probe.fps)
+        ])
       else
         args.concat(["-map", "0:v:0"])
       end
