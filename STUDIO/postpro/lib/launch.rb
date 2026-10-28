@@ -99,7 +99,9 @@ def run_quality_analysis
     exit 2
   end
 
-  puts JSON.pretty_generate(Postpro::QualityAnalyzer.report_image(image))
+  report = Postpro::QualityAnalyzer.report_image(image)
+  report[:style_contract] = $postpro_style_contract if $postpro_style_contract
+  puts JSON.pretty_generate(report)
 end
 
 def validate_postpro_style_contract
