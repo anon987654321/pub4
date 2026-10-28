@@ -121,20 +121,20 @@ end
     refute_includes chosen, "T/test/t_test.rb", "tests come last, after the room is gone"
   end
 
-def test_a_file_that_others_mention_is_ranked_ahead_of_one_nothing_mentions
-  files = [
-    { path: "T/lib/hub.rb", minified: "class Hub\nend\n" },
-    { path: "T/lib/leaf.rb", minified: "class Leaf\n  Hub.call\nend\n" },
-    { path: "T/lib/other.rb", minified: "Hub.call\nLeaf.call\n" },
-    { path: "T/data/x.yml", minified: "a: 1\n" }
-  ]
+  def test_a_file_that_others_mention_is_ranked_ahead_of_one_nothing_mentions
+    files = [
+      { path: "T/lib/hub.rb", minified: "class Hub\nend\n" },
+      { path: "T/lib/leaf.rb", minified: "class Leaf\n  Hub.call\nend\n" },
+      { path: "T/lib/other.rb", minified: "Hub.call\nLeaf.call\n" },
+      { path: "T/data/x.yml", minified: "a: 1\n" }
+    ]
 
-  ranked = Pack.rank_centrality(files).to_h { |f| [f[:path], f[:centrality]] }
+    ranked = Pack.rank_centrality(files).to_h { |f| [f[:path], f[:centrality]] }
 
-  assert_equal 2, ranked["T/lib/hub.rb"], "two other files name Hub"
-  assert_equal 1, ranked["T/lib/leaf.rb"]
-  assert_equal 0, ranked["T/data/x.yml"], "only Ruby files carry a constant to count"
-end
+    assert_equal 2, ranked["T/lib/hub.rb"], "two other files name Hub"
+    assert_equal 1, ranked["T/lib/leaf.rb"]
+    assert_equal 0, ranked["T/data/x.yml"], "only Ruby files carry a constant to count"
+  end
 
   def test_a_file_over_the_cap_and_a_test_are_never_inlined_whatever_the_room
     files = [file("T/lib/huge.rb", 100, inlinable: false), file("T/lib/ok.rb", 100)]
@@ -399,27 +399,27 @@ end
       Thread.current[:snapshot_repo] = nil
     end
   end
-  # A host standing in for tools/snapshot.rb: a repo root, its tracked files, the same predicates.
-class Host
-  TREE_PATHS = { "DEMO" => "DEMO" }.freeze
+    # A host standing in for tools/snapshot.rb: a repo root, its tracked files, the same predicates.
+  class Host
+    TREE_PATHS = { "DEMO" => "DEMO" }.freeze
 
-  class << self
-    def const_missing(name) = name == :REPO ? Thread.current[:snapshot_repo] : super
+    class << self
+      def const_missing(name) = name == :REPO ? Thread.current[:snapshot_repo] : super
 
-    def tracked(_tree)
-      repo = Thread.current[:snapshot_repo]
-      Dir.glob("DEMO/**/*", base: repo).select { |p| File.file?(File.join(repo, p)) }.sort
+      def tracked(_tree)
+        repo = Thread.current[:snapshot_repo]
+        Dir.glob("DEMO/**/*", base: repo).select { |p| File.file?(File.join(repo, p)) }.sort
+      end
+
+      def all_tracked(_tree)
+        repo = Thread.current[:snapshot_repo]
+        Dir.glob("DEMO/**/*", File::FNM_DOTMATCH, base: repo).select { |p| File.file?(File.join(repo, p)) }.sort
+      end
+
+      def binary?(_path) = false
+      def head_sha = "abc1234"
     end
-
-    def all_tracked(_tree)
-      repo = Thread.current[:snapshot_repo]
-      Dir.glob("DEMO/**/*", File::FNM_DOTMATCH, base: repo).select { |p| File.file?(File.join(repo, p)) }.sort
-    end
-
-    def binary?(_path) = false
-    def head_sha = "abc1234"
   end
-end
 
   def test_regenerating_deletes_every_old_snapshot_file_of_the_tree_first
     Dir.mktmpdir do |repo|

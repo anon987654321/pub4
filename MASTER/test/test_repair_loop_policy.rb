@@ -70,13 +70,10 @@ class TestRepairLoopPolicy < Minitest::Test
     end
   end
 
-  # apply passed `encoding:` to write_atomic, which takes no such keyword, so
-  # every model fix raised at the write, was logged as a write error, and
-  # nothing a model proposed was ever applied.
   def test_measurement_only_finding_is_not_sent_to_the_model
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
-      File.write(path, "puts :x\\n")
+      File.write(path, "puts :x\n")
       scanner = Object.new
       scanner.define_singleton_method(:scan) do |_path, laws: nil|
         Master::Result.ok([{ law: "CQS", severity: :warning, line: 1, message: "measured" }])
@@ -116,6 +113,9 @@ class TestRepairLoopPolicy < Minitest::Test
     refute loop.send(:visual_source?, "/repo/RAILS/master/public/face.css")
   end
 
+  # apply passed `encoding:` to write_atomic, which takes no such keyword, so
+  # every model fix raised at the write, was logged as a write error, and
+  # nothing a model proposed was ever applied.
   def test_an_accepted_fix_is_written
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
@@ -578,25 +578,25 @@ class TestRepairLoopPolicy < Minitest::Test
     end
   end
 
-# A reply that is a tool call, not a verdict, is asked for again with the diff stated as the whole
-# change; the second answer decides. Only SAFE approves either way.
-def test_a_verdictless_reply_is_asked_for_again_once
-  replies = ["<invoke name=\"ReadFile\">", "SAFE"]
-  assert_equal "puts :y\n", verdict_for(-> { replies.shift })
-  replies = ["<invoke name=\"ReadFile\">", "still thinking aloud"]
-  assert_nil verdict_for(-> { replies.shift })
-  assert_equal 0, replies.size
-end
+  # A reply that is a tool call, not a verdict, is asked for again with the diff stated as the whole
+  # change; the second answer decides. Only SAFE approves either way.
+  def test_a_verdictless_reply_is_asked_for_again_once
+    replies = ["<invoke name=\"ReadFile\">", "SAFE"]
+    assert_equal "puts :y\n", verdict_for(-> { replies.shift })
+    replies = ["<invoke name=\"ReadFile\">", "still thinking aloud"]
+    assert_nil verdict_for(-> { replies.shift })
+    assert_equal 0, replies.size
+  end
 
-def test_a_nonverdict_is_logged_as_no_verdict_not_as_unsafe
-  loop = Master::Fix::RepairLoop.allocate
-  Thread.current[:reflexion_reason] = nil
+  def test_a_nonverdict_is_logged_as_no_verdict_not_as_unsafe
+    loop = Master::Fix::RepairLoop.allocate
+    Thread.current[:reflexion_reason] = nil
 
-  assert_nil loop.send(:handle_reflexion_response, "<invoke name=\"ReadFile\">", "f.rb", "src")
-  assert_match(/\Ano verdict from the reviewer/, Thread.current[:reflexion_reason])
-ensure
-  Thread.current[:reflexion_reason] = nil
-end
+    assert_nil loop.send(:handle_reflexion_response, "<invoke name=\"ReadFile\">", "f.rb", "src")
+    assert_match(/\Ano verdict from the reviewer/, Thread.current[:reflexion_reason])
+  ensure
+    Thread.current[:reflexion_reason] = nil
+  end
 
   # The verifier answers "UNSAFE: <reason>"; the reason has to reach the rejection line, not
   # only a bus event nobody reads.

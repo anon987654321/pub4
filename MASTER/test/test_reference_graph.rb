@@ -156,11 +156,11 @@ class TestReferenceGraph < Minitest::Test
       radius = graph.blast_radius(shared)
 
       assert_includes radius[:inbound], "lib/jobs/persist.rb"
-      assert result[:edges].any? do |edge|
+      assert(result[:edges].any? do |edge|
         edge[:from] == "lib/jobs/persist.rb" &&
           edge[:to] == "lib/services/shared_service.rb" &&
           edge[:type] == :method_call
-      end
+      end)
       assert_equal Digest::SHA256.hexdigest(File.read(shared)), graph.source_digest(shared)
       assert_empty result[:analysis_failures]
     end

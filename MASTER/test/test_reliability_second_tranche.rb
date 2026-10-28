@@ -100,8 +100,10 @@ class TestReliabilitySecondTranche < Minitest::Test
   end
 
   def test_transaction_rejects_path_traversal_ids
-    assert_raises(ArgumentError) do
-      Master::Fix::Transaction.new(root: Dir.mktmpdir, paths: [], id: "../escape")
+    Dir.mktmpdir("master-tx") do |root|
+      assert_raises(ArgumentError) do
+        Master::Fix::Transaction.new(root:, paths: [], id: "../escape")
+      end
     end
   end
 

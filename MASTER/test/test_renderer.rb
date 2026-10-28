@@ -153,8 +153,6 @@ class TestRenderer < Minitest::Test
     assert_match(/\A\S+:.+\$ \z/, strip_ansi(prompt))
   end
 
-  # A dmesg is legible on a serial console: no box drawing, no arrows, no
-  # check marks, nothing that a pipe or a 7-bit terminal turns into gibberish.
   def test_cli_prompt_uses_face_interface_geometry
     contract = Master::Design.face_interface(root: Master::ROOT)
     refute_empty contract
@@ -328,6 +326,8 @@ class TestRenderer < Minitest::Test
     end
   end
 
+  # A dmesg is legible on a serial console: no box drawing, no arrows, no
+  # check marks, nothing that a pipe or a 7-bit terminal turns into gibberish.
   def test_splash_is_plain_ascii_in_dmesg_shape
     lines = $stdout.stub(:tty?, false) do
       FakeRenderer.new(config: {}).splash("model").lines.map { |l| strip_ansi(l).chomp }

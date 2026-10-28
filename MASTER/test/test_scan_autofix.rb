@@ -28,16 +28,16 @@ class TestScanAutofix < Minitest::Test
     end
   end
 
-# MechanicalAutofix leaves a file alone when git cannot say it is clean, so
-# a write test needs a repository to ask.
-def git_tmpdir(&block)
-  Dir.mktmpdir do |root|
-    _out, status = Master::Io::Exec.capture2e("git", "-C", root, "init", "-q")
-    raise "git init failed" unless status.success?
+  # MechanicalAutofix leaves a file alone when git cannot say it is clean, so
+  # a write test needs a repository to ask.
+  def git_tmpdir(&block)
+    Dir.mktmpdir do |root|
+      _out, status = Master::Io::Exec.capture2e("git", "-C", root, "init", "-q")
+      raise "git init failed" unless status.success?
 
-    block.call(root)
+      block.call(root)
+    end
   end
-end
 
   def finding(rule)
     {

@@ -68,18 +68,18 @@ class TestRefinementContracts < Minitest::Test
   end
 
   def test_capability_graph_does_not_call_an_unobserved_model_healthy
-    root = Dir.mktmpdir("master-capabilities")
-    graph = Operator::CapabilityGraph.new(root:)
-    payload = graph.refresh(model: "ollama:test")
-    assert_equal "unknown", payload.dig("nodes", "model")
+    Dir.mktmpdir("master-capabilities") do |root|
+      payload = Operator::CapabilityGraph.new(root:).refresh(model: "ollama:test")
+      assert_equal "unknown", payload.dig("nodes", "model")
+    end
   end
 
   def test_capability_graph_persists_a_state_record
-    root = Dir.mktmpdir("master-capabilities")
-    graph = Operator::CapabilityGraph.new(root:)
-    payload = graph.refresh
-    assert File.file?(File.join(root, ".master", "capabilities.json"))
-    assert payload.fetch("nodes").key?("constitution")
+    Dir.mktmpdir("master-capabilities") do |root|
+      payload = Operator::CapabilityGraph.new(root:).refresh
+      assert File.file?(File.join(root, ".master", "capabilities.json"))
+      assert payload.fetch("nodes").key?("constitution")
+    end
   end
 
   def test_base_tree_contracts_are_present

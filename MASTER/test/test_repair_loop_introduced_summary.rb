@@ -16,12 +16,12 @@ class TestRepairLoopIntroducedSummary < Minitest::Test
                  loop_for_summary.introduced_summary(before, after)
   end
 
-def test_quotes_the_first_offending_line_when_given_the_repaired_source
-  source = "a = 1\nuser.profile.name\n"
-  after = [{ law: "LAW_OF_DEMETER", line: 2 }]
+  def test_quotes_the_first_offending_line_when_given_the_repaired_source
+    source = "a = 1\nuser.profile.name\n"
+    after = [{ law: "LAW_OF_DEMETER", line: 2 }]
 
-  assert_equal "LAW_OF_DEMETER +1 (line 2: `user.profile.name`)", loop_for_summary.introduced_summary([], after, source:)
-end
+    assert_equal "LAW_OF_DEMETER +1 (line 2: `user.profile.name`)", loop_for_summary.introduced_summary([], after, source:)
+  end
 
   def test_a_law_that_did_not_grow_is_not_named
     before = [{ law: "LONG_LINE", line: 4 }, { law: "LONG_LINE", line: 9 }]

@@ -131,55 +131,55 @@ class TestSilentRescueRule < Minitest::Test
 
     assert_empty @silent.check(code, path: "law/detectors/lexical_laws.rb")
   end
-# In a predicate, false IS the handling — the health-check idiom: the error
-# becomes the answer. Outside one, the same false is still a discard.
-def test_a_predicate_rescuing_to_false_is_not_silent
-  src = "def tts_healthy?
-  probe
-rescue StandardError => _
-  false
-end
-"
-  assert_empty Master::Review::Scan::Laws::SilentRescue.scan(src, narrow: false)
-end
+  # In a predicate, false IS the handling — the health-check idiom: the error
+  # becomes the answer. Outside one, the same false is still a discard.
+  def test_a_predicate_rescuing_to_false_is_not_silent
+    src = "def tts_healthy?
+    probe
+  rescue StandardError => _
+    false
+  end
+  "
+    assert_empty Master::Review::Scan::Laws::SilentRescue.scan(src, narrow: false)
+  end
 
-def test_a_non_predicate_rescuing_to_false_is_still_silent
-  src = "def fetch_config
-  load_it
-rescue StandardError
-  false
-end
-"
-  refute_empty Master::Review::Scan::Laws::SilentRescue.scan(src, narrow: false)
-end
+  def test_a_non_predicate_rescuing_to_false_is_still_silent
+    src = "def fetch_config
+    load_it
+  rescue StandardError
+    false
+  end
+  "
+    refute_empty Master::Review::Scan::Laws::SilentRescue.scan(src, narrow: false)
+  end
 
-# --- MODIFIER_SILENT_RESCUE: the shape the other two cannot see -------------
-#
-# SilentRescue reads a line that starts with `rescue`, so both rules above are
-# blind to the modifier form by construction. These four are the pair the
-# check doctrine asks for: the shape it must flag and the shapes it must not.
+  # --- MODIFIER_SILENT_RESCUE: the shape the other two cannot see -------------
+  #
+  # SilentRescue reads a line that starts with `rescue`, so both rules above are
+  # blind to the modifier form by construction. These four are the pair the
+  # check doctrine asks for: the shape it must flag and the shapes it must not.
 
-def modifier_rule
-  Master::Review::Scan::Law.registry.find { |k| k.new.id == "MODIFIER_SILENT_RESCUE" }&.new
-end
+  def modifier_rule
+    Master::Review::Scan::Law.registry.find { |k| k.new.id == "MODIFIER_SILENT_RESCUE" }&.new
+  end
 
-def test_modifier_rescue_binding_nil_is_flagged
-  findings = modifier_rule.check("value = parse(raw) rescue nil\n", path: "x.rb")
-  refute_empty findings
-  assert_equal :warning, findings.first[:severity]
-end
+  def test_modifier_rescue_binding_nil_is_flagged
+    findings = modifier_rule.check("value = parse(raw) rescue nil\n", path: "x.rb")
+    refute_empty findings
+    assert_equal :warning, findings.first[:severity]
+  end
 
-def test_modifier_rescue_on_a_bare_call_is_not_flagged
-  assert_empty modifier_rule.check("File.delete(path) rescue nil\n", path: "x.rb"),
-               "a best-effort side effect whose value nobody reads is the idempotence, not a swallow"
-end
+  def test_modifier_rescue_on_a_bare_call_is_not_flagged
+    assert_empty modifier_rule.check("File.delete(path) rescue nil\n", path: "x.rb"),
+                 "a best-effort side effect whose value nobody reads is the idempotence, not a swallow"
+  end
 
-def test_modifier_rescue_binding_a_meaningful_value_is_not_flagged
-  assert_empty modifier_rule.check("value = parse(raw) rescue default_for(raw)\n", path: "x.rb")
-end
+  def test_modifier_rescue_binding_a_meaningful_value_is_not_flagged
+    assert_empty modifier_rule.check("value = parse(raw) rescue default_for(raw)\n", path: "x.rb")
+  end
 
-def test_a_comparison_is_not_a_binding
-  assert_empty modifier_rule.check("puts \"a == b rescue nil\"\n", path: "x.rb")
-end
+  def test_a_comparison_is_not_a_binding
+    assert_empty modifier_rule.check("puts \"a == b rescue nil\"\n", path: "x.rb")
+  end
 
 end

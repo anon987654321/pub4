@@ -70,31 +70,31 @@ class TestScanRuleFalsePositives < Minitest::Test
     assert_empty findings(:NO_GOD_CLASS, source), "A::Same and B::Same are two classes, not one of sixteen methods"
   end
 
-# --- DOUBLE_BRACKET ----------------------------------------------------
-# [[ ]] is a keyword in zsh and bash, not in POSIX sh — telling an sh
-# script to use it is a syntax error prescription.
-def test_double_bracket_leaves_posix_sh_alone
-  sh = "#!/bin/sh
-if [ -f x ]; then echo ok; fi
-"
-  assert_empty findings(:DOUBLE_BRACKET, sh, path: "script.sh")
-end
+  # --- DOUBLE_BRACKET ----------------------------------------------------
+  # [[ ]] is a keyword in zsh and bash, not in POSIX sh — telling an sh
+  # script to use it is a syntax error prescription.
+  def test_double_bracket_leaves_posix_sh_alone
+    sh = "#!/bin/sh
+  if [ -f x ]; then echo ok; fi
+  "
+    assert_empty findings(:DOUBLE_BRACKET, sh, path: "script.sh")
+  end
 
-def test_double_bracket_still_fires_on_zsh
-  zsh = "#!/usr/bin/env zsh
-if [ -f x ]; then echo ok; fi
-"
-  refute_empty findings(:DOUBLE_BRACKET, zsh, path: "script.zsh")
-end
+  def test_double_bracket_still_fires_on_zsh
+    zsh = "#!/usr/bin/env zsh
+  if [ -f x ]; then echo ok; fi
+  "
+    refute_empty findings(:DOUBLE_BRACKET, zsh, path: "script.zsh")
+  end
 
-# A sourced library declares its dialect in its opening comment, and a comment
-# quoting a test is not one.
-def test_double_bracket_leaves_a_posix_sh_library_and_comments_alone
-  library = "# POSIX sh — sourced by zsh and sh callers alike.\n[ -e lock ] || : > lock\n"
-  assert_empty findings(:DOUBLE_BRACKET, library, path: "lib/ci_lock.sh")
-  comment = "#!/usr/bin/env zsh\n# it guards on `[ -x /usr/local/bin/tool ]`\n"
-  assert_empty findings(:DOUBLE_BRACKET, comment, path: "OPERATOR.sh")
-end
+  # A sourced library declares its dialect in its opening comment, and a comment
+  # quoting a test is not one.
+  def test_double_bracket_leaves_a_posix_sh_library_and_comments_alone
+    library = "# POSIX sh — sourced by zsh and sh callers alike.\n[ -e lock ] || : > lock\n"
+    assert_empty findings(:DOUBLE_BRACKET, library, path: "lib/ci_lock.sh")
+    comment = "#!/usr/bin/env zsh\n# it guards on `[ -x /usr/local/bin/tool ]`\n"
+    assert_empty findings(:DOUBLE_BRACKET, comment, path: "OPERATOR.sh")
+  end
 
   # --- COMPLETION_THEATER -------------------------------------------------
 

@@ -20,7 +20,7 @@ class TestRuntimeBox < Minitest::Test
   end
 
   def test_box_requires_startup_enablement
-    return if Master::Runtime::Box.available?
+    skip "Ruby::Box is enabled, so there is no unavailable path to exercise" if Master::Runtime::Box.available?
 
     error = assert_raises(Master::Runtime::Box::Unavailable) do
       Master::Runtime::Box.new_box
@@ -29,7 +29,7 @@ class TestRuntimeBox < Minitest::Test
   end
 
   def test_box_evaluation_preserves_explicit_box_requirement
-    return if Master::Runtime::Box.available?
+    skip "Ruby::Box is enabled, so there is no unavailable path to exercise" if Master::Runtime::Box.available?
 
     assert_raises(Master::Runtime::Box::Unavailable) do
       Master::Runtime::Box.evaluate("1 + 1")

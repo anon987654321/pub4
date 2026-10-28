@@ -475,9 +475,9 @@ class TestSkills < Minitest::Test
       skills = Master::CLI::Skills.new(root:, event_bus: bus, approval_path: link_path)
       skills.discover!
       assert_empty skills.trigger_for("alpha")
-      assert bus.events.any? do |name, payload|
+      assert(bus.events.any? do |name, payload|
         name == "skills:approval_manifest_invalid" && payload[:reason] == "symlink"
-      end
+      end)
     end
   end
 

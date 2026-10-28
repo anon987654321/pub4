@@ -41,19 +41,19 @@ class TestRailsApp < Minitest::Test
     end
   end
 
-# Rails is read from the tree: an engine counts, a tree-level file under RAILS counts, and a
-# Rails project beside the checkout does not make MASTER Rails.
-def test_tree_target_reads_rails_from_the_files
-  with_repository do |root|
-    FileUtils.mkdir_p(File.join(root, "RAILS", "brgen_maps", "lib", "maps"))
-    File.write(File.join(root, "RAILS", "brgen_maps", "lib", "maps", "engine.rb"), "module Maps; end\n")
-    FileUtils.mkdir_p(File.join(root, "MASTER", "lib"))
+  # Rails is read from the tree: an engine counts, a tree-level file under RAILS counts, and a
+  # Rails project beside the checkout does not make MASTER Rails.
+  def test_tree_target_reads_rails_from_the_files
+    with_repository do |root|
+      FileUtils.mkdir_p(File.join(root, "RAILS", "brgen_maps", "lib", "maps"))
+      File.write(File.join(root, "RAILS", "brgen_maps", "lib", "maps", "engine.rb"), "module Maps; end\n")
+      FileUtils.mkdir_p(File.join(root, "MASTER", "lib"))
 
-    assert RailsApp.tree_target?("RAILS/brgen_maps/app/models/place.rb", repo_root: root)
-    assert RailsApp.tree_target?("RAILS/test/check_test.rb", repo_root: root)
-    refute RailsApp.tree_target?("MASTER/lib", repo_root: root)
+      assert RailsApp.tree_target?("RAILS/brgen_maps/app/models/place.rb", repo_root: root)
+      assert RailsApp.tree_target?("RAILS/test/check_test.rb", repo_root: root)
+      refute RailsApp.tree_target?("MASTER/lib", repo_root: root)
+    end
   end
-end
 
   def test_invalid_app_registry_fails_loudly
     Dir.mktmpdir("rails-app-registry-invalid") do |root|

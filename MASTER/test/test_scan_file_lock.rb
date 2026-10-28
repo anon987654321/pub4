@@ -8,9 +8,12 @@ require "test_helper"
 class ScanFileLockTest < Minitest::Test
   def setup
     @processor = Master::Fix::Scan::FileProcessor.new
-    @target = File.join(Dir.mktmpdir("scan-lock"), "subject.rb")
+    @dir = Dir.mktmpdir("scan-lock")
+    @target = File.join(@dir, "subject.rb")
     File.write(@target, "x = 1\n")
   end
+
+  def teardown = FileUtils.remove_entry(@dir)
 
   def lock(&) = @processor.send(:with_file_lock, @target, &)
 

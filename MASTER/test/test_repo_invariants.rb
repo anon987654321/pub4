@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "fileutils"
 require "master"
 
 class MasterPathsTest < Minitest::Test
@@ -12,17 +13,12 @@ class MasterPathsTest < Minitest::Test
   end
 end
 
-require "minitest/autorun"
-require_relative "../lib/master"
-
 class RepoPathsTest < Minitest::Test
   def test_repo_root_is_pub4_monorepo
     assert_equal Master::REPO_ROOT, Master.repo_root
     assert_equal File.expand_path("..", Master::ROOT), Master.repo_root
   end
 end
-
-require "fileutils"
 
 class TestRepoMap < Minitest::Test
   def test_brief_respects_token_budget

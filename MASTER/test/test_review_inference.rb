@@ -6,49 +6,49 @@ require "fix/tree_reasoning"
 require "fix/structural_review"
 
 class TestThroughInference < Minitest::Test
-# --only names stages, and the names have to mean the same thing everywhere.
-# `fix` is the convergence lifecycle — observe, repair, observe again — and
-# `council` is a spelling of `critique`. `scan` is not a stage: the reading is
-# how a fix starts.
-def test_only_accepts_stage_names_and_their_spellings
-  pipeline = Master::CLI::Pipeline::Pass.allocate
+  # --only names stages, and the names have to mean the same thing everywhere.
+  # `fix` is the convergence lifecycle — observe, repair, observe again — and
+  # `council` is a spelling of `critique`. `scan` is not a stage: the reading is
+  # how a fix starts.
+  def test_only_accepts_stage_names_and_their_spellings
+    pipeline = Master::CLI::Pipeline::Pass.allocate
 
-  assert_nil pipeline.send(:normalize_stages, nil)
-  assert_equal %w[fix], pipeline.send(:normalize_stages, "fix")
-  assert_equal %w[fix], pipeline.send(:normalize_stages, "converge")
-  assert_equal %w[critique], pipeline.send(:normalize_stages, "council")
-  assert_equal %w[fix critique], pipeline.send(:normalize_stages, "fix,critique")
-  assert_empty pipeline.send(:normalize_stages, "scan")
-end
+    assert_nil pipeline.send(:normalize_stages, nil)
+    assert_equal %w[fix], pipeline.send(:normalize_stages, "fix")
+    assert_equal %w[fix], pipeline.send(:normalize_stages, "converge")
+    assert_equal %w[critique], pipeline.send(:normalize_stages, "council")
+    assert_equal %w[fix critique], pipeline.send(:normalize_stages, "fix,critique")
+    assert_empty pipeline.send(:normalize_stages, "scan")
+  end
 
-# A misspelled stage must not silently widen the pass to everything, which is
-# what dropping the unknown name and falling back to nil would do.
-def test_an_unknown_stage_runs_nothing_and_is_named
-  pipeline = Master::CLI::Pipeline::Pass.allocate
+  # A misspelled stage must not silently widen the pass to everything, which is
+  # what dropping the unknown name and falling back to nil would do.
+  def test_an_unknown_stage_runs_nothing_and_is_named
+    pipeline = Master::CLI::Pipeline::Pass.allocate
 
-  assert_empty pipeline.send(:normalize_stages, "bogus")
-  assert_equal %w[bogus], pipeline.instance_variable_get(:@unknown_stages)
+    assert_empty pipeline.send(:normalize_stages, "bogus")
+    assert_equal %w[bogus], pipeline.instance_variable_get(:@unknown_stages)
 
-  assert_equal %w[fix], pipeline.send(:normalize_stages, "fix,bogus")
-  assert_equal %w[bogus], pipeline.instance_variable_get(:@unknown_stages)
-end
+    assert_equal %w[fix], pipeline.send(:normalize_stages, "fix,bogus")
+    assert_equal %w[bogus], pipeline.instance_variable_get(:@unknown_stages)
+  end
 
-# The flag parser is the other half: /review --only scan x and
-# --only=scan must both leave the path alone.
-def test_the_only_flag_is_parsed_in_both_spellings
-  registry = Master::CLI::CommandRegistry
+  # The flag parser is the other half: /review --only scan x and
+  # --only=scan must both leave the path alone.
+  def test_the_only_flag_is_parsed_in_both_spellings
+    registry = Master::CLI::CommandRegistry
 
-  assert_equal [nil, nil, true, "fix", "lib/io"], registry.parse_pass_flags("--only fix lib/io")
-  assert_equal [nil, nil, true, "critique", "lib"], registry.parse_pass_flags("--only=critique lib")
-  assert_equal [false, nil, true, "fix", "../RAILS/amber"],
-               registry.parse_pass_flags("--only fix --no-autofix ../RAILS/amber")
-  assert_equal [nil, nil, true, nil, "MASTER"],
-               registry.parse_pass_flags("--trace MASTER")
-  assert_equal [nil, nil, true, nil, "MASTER"],
-               registry.parse_pass_flags("--verbose MASTER")
-  assert_equal [nil, nil, true, nil, "MASTER"],
-               registry.parse_pass_flags("--quiet MASTER")
-end
+    assert_equal [nil, nil, true, "fix", "lib/io"], registry.parse_pass_flags("--only fix lib/io")
+    assert_equal [nil, nil, true, "critique", "lib"], registry.parse_pass_flags("--only=critique lib")
+    assert_equal [false, nil, true, "fix", "../RAILS/amber"],
+                 registry.parse_pass_flags("--only fix --no-autofix ../RAILS/amber")
+    assert_equal [nil, nil, true, nil, "MASTER"],
+                 registry.parse_pass_flags("--trace MASTER")
+    assert_equal [nil, nil, true, nil, "MASTER"],
+                 registry.parse_pass_flags("--verbose MASTER")
+    assert_equal [nil, nil, true, nil, "MASTER"],
+                 registry.parse_pass_flags("--quiet MASTER")
+  end
 
   def test_infer_promotes_through_master_phrase
     ctx = Master::CLI::PipelineContext.build(
@@ -281,7 +281,7 @@ end
     )
     refute_nil inferred
     assert_match(%r{\A/fix}, Master::CLI::TurnRouter.rewrite_slash("/#{inferred[:command]} #{inferred[:args]}".strip))
-    assert_match(/master|self|/, inferred[:args].to_s)
+    assert_includes %w[master self], inferred[:args].to_s, "the self phrase must name MASTER, not a stray word"
   end
 
   def test_through_pipeline_resolves_rails_alias
