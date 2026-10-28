@@ -102,7 +102,24 @@ def run_quality_analysis
   puts JSON.pretty_generate(Postpro::QualityAnalyzer.report_image(image))
 end
 
+def validate_postpro_style_contract
+  name = argv_flag("--style-contract")
+  return unless name
+
+  entry = Studio::StyleRegistry.resolve(style_id: name, modality: "image")
+  $postpro_style_contract = {
+    id: entry["style_id"], version: entry["version"], modality: entry["modality"],
+    registry_sha256: Digest::SHA256.file(Studio::StyleRegistry::REGISTRY_PATH).hexdigest,
+    mapping_applied: false,
+    note: "contract validated and recorded; renderer parameters are not yet compiled from this entry"
+  }
+rescue Studio::StyleRegistry::InvalidStyle => e
+  $cli_logger.error "style contract rejected: #{e.message}"
+  exit 2
+end
+
 def auto_launch
+  validate_postpro_style_contract
   return run_quality_analysis if ARGV.include?("--quality")
   return run_introspect if introspect_mode?
   return run_stock_sheet if ARGV.include?("--stock-sheet")
