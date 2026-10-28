@@ -154,6 +154,11 @@ def write_chain_sidecar(input_path, output_path, chain, take: nil, original: nil
   }
   if original && processed
     data[:quality] = postpro_quality_report(original, processed, argv_flag("--reference"))
+    data[:quality_analysis] = {
+      before: Postpro::QualityAnalyzer.report_image(original),
+      after: Postpro::QualityAnalyzer.report_image(processed),
+      interpretation: "sampled pixel diagnostics only; does not score composition, focus or intent"
+    }
     data[:uncanny] = uncanny_readings(original, processed)
   end
   write_sidecar(output_path, data)
