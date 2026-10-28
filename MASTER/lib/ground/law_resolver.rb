@@ -6,7 +6,7 @@ module Master
     # in laws.yml (lower priority number wins).
     class LawResolver
       def initialize(laws_data: nil)
-        data = laws_data || Master.load_yaml(Master::LAWS_PATH)
+        data = laws_data || Master.load_laws
         @laws = law_entries(data)
           .transform_keys(&:to_s)
           .transform_values { |value| value["priority"].to_i }

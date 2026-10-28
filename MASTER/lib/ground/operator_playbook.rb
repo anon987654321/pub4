@@ -3,10 +3,8 @@
 module Master
   module Ground
     class OperatorPlaybook
-      PATH = File.join(Master::DATA, "patterns.yml").freeze
-
       def self.load
-        (Master.load_yaml(PATH, default: {}) || {})["operator_playbook"] || { "lessons" => [] }
+        Master.patterns_config["operator_playbook"] || { "lessons" => [] }
       end
 
       def self.lessons

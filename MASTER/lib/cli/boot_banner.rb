@@ -60,10 +60,7 @@ module Master
       end
 
       def motd_spotlight
-        path = File.join(Master::DATA, "patterns.yml")
-        return "scan+face+council" unless File.exist?(path)
-
-        spots = Array(Master.load_yaml(path).dig("motd", "spots"))
+        spots = Array(Master.patterns_config.dig("motd", "spots"))
         return "scan+face+council" if spots.empty?
 
         index = Time.now.to_i / 86_400 % spots.size

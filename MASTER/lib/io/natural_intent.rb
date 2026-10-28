@@ -36,8 +36,7 @@ module Master
       end
 
       def patterns
-        path = File.expand_path("../../data/patterns.yml", __dir__)
-        YAML.safe_load_file(path) || {}
+        Master.patterns_config
       end
 
       def normalize(text)

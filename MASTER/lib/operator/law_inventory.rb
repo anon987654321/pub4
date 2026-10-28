@@ -13,8 +13,6 @@ module Operator
     ROOT = File.expand_path("../../..", __dir__)
     MASTER = File.join(ROOT, "MASTER")
     LAW_ROOT = File.join(MASTER, "law")
-    LAWS_PATH = File.join(MASTER, "data", "laws.yml")
-    COUNCIL_PATH = File.join(MASTER, "data", "council.yml")
 
     module_function
 
@@ -230,7 +228,7 @@ end
 
     def council_rows
       require "master"
-      raw = Master.load_yaml(COUNCIL_PATH) || {}
+      raw = Master.load_yaml(Master::COUNCIL_PATH) || {}
       Array(raw.fetch("personas", []))
     rescue StandardError
       []

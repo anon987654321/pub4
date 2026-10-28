@@ -70,7 +70,7 @@ module Master
       end
 
       def soul
-        @soul ||= Master.load_yaml(File.join(@root, "data", "soul.yml")) || {}
+        @soul ||= Master.soul_config(root: @root)
       end
 
       def executable_law(key)

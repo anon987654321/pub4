@@ -5,7 +5,6 @@ module Master
     # Owns subscription authentication by delegating to the provider's official
     # CLI. MASTER never handles passwords, cookies, OAuth codes or session files.
     module SubscriptionAuth
-      CONFIG_PATH = File.join(Master::ROOT, "data", "patterns.yml").freeze
       LOGIN_TIMEOUT = 300
 
       module_function

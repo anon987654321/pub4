@@ -5,7 +5,6 @@ module Master
     # OAuth-before-key ordering (OpenCrabs/OpenClaw): prefer subscription/CLI lanes
     # before burning API keys on the same turn's fallback chain.
     module AuthProfileLane
-      CONFIG_PATH = File.join(Master::ROOT, "data", "patterns.yml").freeze
 
       module_function
 

@@ -172,8 +172,7 @@ module Master
       stamp = [stat.size, stat.ino, stat.mtime.to_r]
       return @phantom_policy if @phantom_policy && @phantom_policy_stamp == stamp
 
-      data = Master.load_yaml(path)
-      policy = data.fetch("phantom_recovery")
+      policy = Master.law("phantom_recovery")
       raise ArgumentError, "phantom_recovery must be a Hash" unless policy.is_a?(Hash)
 
       @phantom_policy_stamp = stamp

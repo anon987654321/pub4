@@ -120,9 +120,7 @@ module Master
         match = value.to_s.match(%r{\AMASTER/data/laws\.yml#([a-z][a-z0-9_]*)\z})
         return false unless match
 
-        laws_path = File.expand_path("../../data/laws.yml", __dir__)
-        laws = YAML.safe_load_file(laws_path, permitted_classes: [], permitted_symbols: [], aliases: true)
-        laws.key?(match[1])
+        Master.load_laws.key?(match[1])
       end
 
       def self.manifest(path: PATH)

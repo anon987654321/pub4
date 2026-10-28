@@ -241,10 +241,10 @@ module Master
       end
 
       def load_jobs
-        path = File.join(@root, "data", "patterns.yml")
-        return default_jobs unless File.exist?(path)
+        # A foreign root without the file runs the defaults, quietly.
+        return default_jobs unless File.exist?(File.join(@root, "data", "patterns.yml"))
 
-        result = (Master.load_yaml(path) || {})["heartbeat"]
+        result = Master.patterns_config(root: @root)["heartbeat"]
         jobs = result.is_a?(Array) ? result : default_jobs
         jobs.select { |j| j["enabled"] != false }
       rescue StandardError => e

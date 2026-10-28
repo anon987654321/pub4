@@ -63,7 +63,7 @@ class TestLawInventory < Minitest::Test
       rows = Operator::LawInventory.council_rows
       assert_equal %w[Operator Reviewer], rows.map { |row| row.fetch("name") }
     end
-    assert_equal Operator::LawInventory::COUNCIL_PATH, observed_path
+    assert_equal Master::COUNCIL_PATH, observed_path
   end
 
   # Reach is a firing rate, so it is measured on a Law with a detector;
