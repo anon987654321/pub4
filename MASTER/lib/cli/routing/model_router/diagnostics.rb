@@ -23,23 +23,14 @@ module Master
             end.sort_by { |x| -x[:total] }
           end
 
-          # Through ProviderQuarantine, not past it.
-          #
-          # This called @provider_health.record directly, and record_and_assess
-          # was the only caller of `quarantine` anywhere — so nothing ever wrote
-          # a quarantine entry, and `quarantined?` read an empty log for every
-          # provider forever. RuntimeRegistry#provider_pool and #status both ask
-          # it, so the quarantine has been decorative since it was written: a
-          # provider could fail every call and stay in the pool.
-          #
-          # Assessment is what ProviderQuarantine adds over ProviderHealth — record the
-          # outcome, then park the provider when its score falls to the
-          # threshold. Stranding is not a risk: provider_pool falls back to the
-          # full candidate list when every one is quarantined.
+          # The outcome feeds ProviderHealth, whose score the router routes on. A provider
+          # that keeps failing is parked by Io::LaneState's skip cache, the one place every
+          # "may I call this model" question asks; the separate quarantine log this once
+          # wrote had no reader left, so a parked provider stayed in the pool regardless.
           def record_provider_outcome(model:, status:, latency_ms: nil, error: nil)
             return unless @provider_health
 
-            quarantine.record_and_assess(model:, status:, latency_ms:, error:)
+            @provider_health.record(model:, status:, latency_ms:, error:)
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "Diagnostics.record_provider_outcome")
             nil
@@ -63,12 +54,6 @@ module Master
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "Diagnostics.record_capability_outcome")
             nil
-          end
-
-          # Wrapping the router's own health object rather than a second one, so
-          # the score that triggers a quarantine is the score the router routes on.
-          def quarantine
-            @quarantine ||= ProviderQuarantine.new(health: @provider_health)
           end
         end
       end

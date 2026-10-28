@@ -72,9 +72,8 @@ module Master
         def tool_capable?(model_id) = Review::LLMDispatcher::TOOL_CAPABLE_RE.match?(model_id.to_s.downcase)
 
         def record_provider_outcome(model:, status:, latency_ms: nil, error: nil)
-          # Delegate to Diagnostics first: it records the health event and
-          # applies ProviderQuarantine. This method shadows the included
-          # module method, so explicit super keeps the enforcement wired.
+          # Diagnostics records the health event first. This method shadows the included
+          # module method, so the explicit super keeps that recording wired.
           super
           @compute_pool&.record(model:, status:, latency_ms:, error:)
         rescue StandardError => e
