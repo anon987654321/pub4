@@ -177,4 +177,34 @@ class TestPostproDispatch < Minitest::Test
                    "the directory's image should have been graded once, beside itself:\n#{out}"
     end
   end
+
+  def test_quality_report_is_read_only_and_returns_structured_pixel_diagnostics
+    Dir.mktmpdir do |dir|
+      subject = frame(dir, "source.jpg")
+      out, status = run_postpro(dir, "--quality", subject)
+
+      assert status.success?, "quality report failed:\n#{out}"
+      report = JSON.parse(out)
+      assert_operator report.fetch("sample_count"), :>, 0
+      assert_equal [160, 160], report.fetch("dimensions")
+      assert_match(/does not score/, report.fetch("not_assessed").inspect)
+      assert_empty graded_outputs(dir, "source.jpg"), "diagnosis must not write a render"
+    end
+  end
+
+  def test_stabilization_is_opt_in_and_recorded_before_the_style_grade
+    Dir.mktmpdir do |dir|
+      subject = frame(dir, "source.jpg")
+      output = File.join(dir, "graded.jpg")
+      out, status = run_postpro(dir, "--input", subject, "--output", output, "--preset", "house", "--stabilize")
+
+      assert status.success?, "stabilized one-shot grade failed:\n#{out}"
+      sidecar = JSON.parse(File.read("#{output}.json"))
+      stabilization = sidecar.fetch("stabilization")
+      assert_equal "balance_source", stabilization.fetch("method")
+      assert_equal false, stabilization.fetch("proposals_applied_verbatim")
+      assert stabilization.dig("before", "exposure", "mean_luminance")
+      assert stabilization.dig("after", "exposure", "mean_luminance")
+    end
+  end
 end
