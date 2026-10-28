@@ -15,6 +15,8 @@ class TestEcosystemFeatures < Minitest::Test
         Master::Io::ModelQuota.record(model)
         assert Master::Io::ModelQuota.over_quota?(model)
         refute Master::Io::ModelQuota.trackable?("deepseek-chat")
+        refute Master::Io::ModelQuota.trackable?("openrouter/auto")
+        refute Master::Io::ModelQuota.trackable?("openrouter/anthropic/claude")
       end
     end
   ensure
