@@ -8,6 +8,7 @@ module Master
       # Kernel-owned convergence coordinator. The implementation is loaded only
       # after this identity exists, so every nested pass module opens the same class.
       class ConvergenceAdapter; end unless const_defined?(:ConvergenceAdapter, false)
+      class RepairAdapter; end unless const_defined?(:RepairAdapter, false)
 
       module Lifecycle
         # The Kernel owns /fix lifecycle coordination. RunJournal is currently its
@@ -30,8 +31,7 @@ module Master
         end
 
         def build_repair_loop(**options)
-          require_relative "repair_adapter" unless defined?(Kernel::RepairAdapter)
-          Master::Fix.const_set(:RepairLoop, Kernel::RepairAdapter) unless Master::Fix.const_defined?(:RepairLoop, false)
+          require_relative "repair_adapter"
           Kernel::RepairAdapter.new(**options, kernel: self)
         end
 
@@ -113,5 +113,6 @@ module Master
       end
     end
     FixLoop = Kernel::ConvergenceAdapter unless const_defined?(:FixLoop, false)
+    RepairLoop = Kernel::RepairAdapter unless const_defined?(:RepairLoop, false)
   end
 end
