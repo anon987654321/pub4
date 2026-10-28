@@ -39,11 +39,13 @@ module Master
 
           if safe_metadata?(field, value)
             safe[field.to_sym] = normalize_metadata(field, value)
-          elsif tool_event || field.match?(SENSITIVE_FIELD) || value.is_a?(Hash) || value.is_a?(Array)
-            # A seemingly harmless container can hold a sensitive nested key
-            # (or an arbitrary free-form string). Keep the evidence of its size
-            # without recursively persisting a structure whose privacy contract
-            # was never declared.
+          elsif tool_event || field.match?(SENSITIVE_FIELD) || value.is_a?(Hash) || value.is_a?(Array) ||
+                SAFE_CATEGORIES.include?(field) || SAFE_NUMBERS.include?(field) || SAFE_BOOLEANS.include?(field) ||
+                field.end_with?("_digest", "_bytes")
+            # A seemingly harmless container can hold a sensitive nested key,
+            # and malformed reserved metadata is not safe just because its key
+            # is normally low risk. Keep evidence of size without preserving
+            # values outside the explicit metadata contract.
             raw = canonical_value(value)
             safe["#{field}_digest".to_sym] = Digest::SHA256.hexdigest(raw)
             safe["#{field}_bytes".to_sym] = raw.bytesize
