@@ -47,10 +47,20 @@ module Master
       end
 
       def require_pass!(report, current_contract: self.contract, placement:)
-        unless report.is_a?(Hash) && report[:passed] == true &&
-               report[:token_version] == token_version(current_contract) &&
-               report[:placement].to_s == placement.to_s &&
-               LAW_IDS.all? { |law| report.fetch(:checks, []).any? { |check| check[:law] == law && check[:pass] == true } }
+        checks = report.is_a?(Hash) ? (report[:checks] || report["checks"] || []) : []
+        passed = report.is_a?(Hash) ? (report[:passed] || report["passed"]) : false
+        version = report.is_a?(Hash) ? (report[:token_version] || report["token_version"]) : nil
+        report_placement = report.is_a?(Hash) ? (report[:placement] || report["placement"]) : nil
+        unless report.is_a?(Hash) && passed == true &&
+               version == token_version(current_contract) &&
+               report_placement.to_s == placement.to_s &&
+               LAW_IDS.all? do |law|
+                 checks.any? do |check|
+                   check_law = check[:law] || check["law"]
+                   check_pass = check[:pass] || check["pass"]
+                   check_law == law && check_pass == true
+                 end
+               end
           raise VisualAuditRejected, rejection_reason(report, current_contract, placement)
         end
         true
@@ -202,9 +212,9 @@ module Master
 
       def rejection_reason(report, current_contract, placement)
         return "visual audit report missing" unless report.is_a?(Hash)
-        return "visual audit failed" unless report[:passed] == true
-        return "visual audit token version is stale" unless report[:token_version] == token_version(current_contract)
-        return "visual audit placement does not match" unless report[:placement].to_s == placement.to_s
+        return "visual audit failed" unless (report[:passed] || report["passed"]) == true
+        return "visual audit token version is stale" unless (report[:token_version] || report["token_version"]) == token_version(current_contract)
+        return "visual audit placement does not match" unless (report[:placement] || report["placement"]).to_s == placement.to_s
         "visual audit is incomplete"
       end
 
