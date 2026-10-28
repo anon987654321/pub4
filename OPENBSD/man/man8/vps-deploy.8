@@ -46,6 +46,21 @@ Unknown targets are refused before deployment.
 Commit to deploy.
 The default is fetched from
 .Cm origin/main
+.It Ev VPS_DEPLOY_LOG
+Aggregate deploy log path.
+Default
+.Pa /var/log/pub4/vps-deploy.log .
+Rotated when larger than 10 MB.
+.It Ev VPS_DEPLOY_LOG_DIR
+Directory for aggregate and per-run logs.
+Default
+.Pa /var/log/pub4 .
+.It Ev VPS_DEPLOY_RUN_LOG
+Per-run log path.
+Default is a timestamped file under
+.Pa /var/log/pub4/runs/ .
+Symlinked from
+.Pa /home/dev/vps-deploy-latest.log .
 once.
 .It Ev VPS_DEPLOY_PREFLIGHT_SHA
 Commit whose boot was already proved by the operator's machine.

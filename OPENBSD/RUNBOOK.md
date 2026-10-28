@@ -14,7 +14,7 @@ From a clean workstation checkout on `origin/main`:
 
 Hands-off: local preflight → pin SHA → `tmux` session `pub4-deploy` on vm23 →
 `vps-deploy` as **root** (git still as `dev`) → streams the log until finished →
-`vps-state` + public canary. Survives SSH disconnect. Log: `/home/dev/vps-deploy.log`.
+`vps-state` + public canary. Survives SSH disconnect. Logs: `/var/log/pub4/vps-deploy.log` (aggregate), `/var/log/pub4/runs/deploy-*.log` (per run), also `/home/dev/vps-deploy.log` and `vps-deploy-latest.log` symlinks.
 Attach: `tmux attach -t pub4-deploy`.
 
 Already on the box: `zsh OPENBSD/bin/redeploy`.

@@ -16,6 +16,9 @@ usage() {
   SKIP_CI=1    skip vps_ci.sh; \${app}.sh and its runtime check still run
   VPS_DEPLOY_DRIFT=fail   refuse to deploy when the box's configs differ from the repo
   PUB4_DEPLOY_BROWSER_CHECKS=1   add the browser checks after restart
+  VPS_DEPLOY_LOG=/path            aggregate log (default /var/log/pub4/vps-deploy.log)
+  VPS_DEPLOY_LOG_DIR=/path        log directory (default /var/log/pub4)
+  VPS_DEPLOY_RUN_LOG=/path        per-run log (default auto under LOG_DIR/runs/)
 
   Git fetch/checkout always runs as user dev so the /home/dev/pub4 tree and the
   GitHub deploy key stay owned and reachable. Service control uses pub4-admin
@@ -235,20 +238,73 @@ acquire_deploy_lock() {
 # The re-entrant children of `all` carry VPS_DEPLOY_LOCK_HELD and take nothing.
 [[ -n ${VPS_DEPLOY_LOCK_HELD:-} ]] || acquire_deploy_lock
 
+# Durable deploy logging.
+#
 # A full deploy outlives the ssh session that starts it. When that session is
-# cut — a timeout, a dropped link — the pipe carrying its output dies with it and
-# the only record of what happened is gone, while the deploy itself carries on to
-# completion on the box. Twice now the outcome had to be reconstructed from
-# rcctl and curl afterwards. tee keeps a copy that survives the caller.
-# Once per run, not once per app. `vps-deploy all` re-invokes itself for each
-# app, and without this guard every child added its own tee to the same file:
-# the child output then passed through both and every line landed twice.
-deploy_log=${VPS_DEPLOY_LOG:-$DEPLOY_HOME/vps-deploy.log}
+# cut the only surviving record is the log file. We keep:
+#   - a rolling aggregate log (VPS_DEPLOY_LOG / /var/log/pub4/vps-deploy.log)
+#   - a per-run log under /var/log/pub4/runs/ with the pid and app in the name
+#   - a stable symlink at $DEPLOY_HOME/vps-deploy.log for operators who still
+#     tail the home path
+# Once per run, not once per app: `vps-deploy all` re-invokes itself and children
+# inherit VPS_DEPLOY_LOGGING so they do not double-tee.
+deploy_log_dir=${VPS_DEPLOY_LOG_DIR:-/var/log/pub4}
+deploy_log=${VPS_DEPLOY_LOG:-$deploy_log_dir/vps-deploy.log}
+deploy_run_log=${VPS_DEPLOY_RUN_LOG:-}
+
+log_ts() { date -u '+%Y-%m-%dT%H:%M:%SZ'; }
+
+# Structured line: timestamp host pid app stage message. Always goes to stdout
+# (which is already teed into the log files).
+log() {
+  print -r -- "$(log_ts) host=$(hostname -s) pid=$$ app=${app:-?} stage=${deploy_stage:-?} $*"
+}
+
+# Stage transitions are the recovery breadcrumbs. set_stage both mutates
+# deploy_stage and emits a log line so a grepped run log tells the story.
+set_stage() {
+  deploy_stage=$1
+  log "enter"
+}
+
+rotate_deploy_log() {
+  # Cap the aggregate log so a year of deploys does not fill /var. Keep one
+  # rotated sibling; nothing fancier — newsyslog can take over later.
+  local max_bytes=${VPS_DEPLOY_LOG_MAX_BYTES:-10485760}
+  [[ -f $deploy_log ]] || return 0
+  local size
+  size=$(stat -f %z "$deploy_log" 2>/dev/null) || return 0
+  (( size >= max_bytes )) || return 0
+  mv -f -- "$deploy_log" "$deploy_log.1" 2>/dev/null || true
+}
+
 if [[ -z ${VPS_DEPLOY_LOGGING:-} ]]; then
   export VPS_DEPLOY_LOGGING=1
-  print "vps-deploy: $app, logging to $deploy_log"
-  exec > >(tee -a "$deploy_log") 2>&1
-  print "==> vps-deploy $app started $(date '+%Y-%m-%d %H:%M:%S')"
+  mkdir -p -- "$deploy_log_dir/runs" 2>/dev/null || {
+    # Fall back to the deploy user's home when /var/log/pub4 is not writable
+    # yet (broker/OPERATOR not installed). Still durable across SSH drops.
+    deploy_log_dir=$DEPLOY_HOME
+    deploy_log=${VPS_DEPLOY_LOG:-$DEPLOY_HOME/vps-deploy.log}
+    mkdir -p -- "$deploy_log_dir/runs" 2>/dev/null || true
+  }
+  rotate_deploy_log
+  if [[ -z $deploy_run_log ]]; then
+    deploy_run_log="$deploy_log_dir/runs/deploy-$(date -u '+%Y%m%d-%H%M%S')-${app}-$$.log"
+  fi
+  export VPS_DEPLOY_LOG=$deploy_log
+  export VPS_DEPLOY_RUN_LOG=$deploy_run_log
+  export VPS_DEPLOY_LOG_DIR=$deploy_log_dir
+  # Stable path operators already know about.
+  if [[ -d $DEPLOY_HOME ]]; then
+    ln -sfn "$deploy_log" "$DEPLOY_HOME/vps-deploy.log" 2>/dev/null || true
+    ln -sfn "$deploy_run_log" "$DEPLOY_HOME/vps-deploy-latest.log" 2>/dev/null || true
+  fi
+  # Tee stdout/stderr into both the aggregate and the per-run log. process
+  # substitution keeps a single stream so line order stays honest.
+  exec > >(tee -a "$deploy_log" "$deploy_run_log") 2>&1
+  set_stage start
+  log "start target=$app uid=$(id -u) user=$(id -un) log=$deploy_log run_log=$deploy_run_log"
+  log "argv: $*"
 fi
 
 repo=${PUB4_ROOT:-/home/dev/pub4}
@@ -442,8 +498,16 @@ finish() {
   if (( rc != 0 )) && (( lock_owner )); then
     restore_started || print -u2 "vps-deploy: production is NOT fully restored - see the lines above"
   fi
-  print -r -- "==> vps-deploy $app finished $(date '+%Y-%m-%d %H:%M:%S') exit=$rc stage=$deploy_stage" \
-    >> "${deploy_log:-$HOME/vps-deploy.log}" 2>/dev/null || true
+  log "finished exit=$rc"
+  # Write the verdict straight to the files as well: if the tee pipe died with
+  # the ssh session the last structured line can still land on disk.
+  {
+    print -r -- "$(log_ts) host=$(hostname -s) pid=$$ app=$app stage=$deploy_stage finished exit=$rc"
+  } >> "${deploy_log:-/var/log/pub4/vps-deploy.log}" 2>/dev/null || true
+  if [[ -n ${deploy_run_log:-${VPS_DEPLOY_RUN_LOG:-}} ]]; then
+    print -r -- "$(log_ts) host=$(hostname -s) pid=$$ app=$app stage=$deploy_stage finished exit=$rc" \
+      >> "${deploy_run_log:-$VPS_DEPLOY_RUN_LOG}" 2>/dev/null || true
+  fi
   release_deploy_lock
   exit $rc
 }
@@ -471,9 +535,9 @@ trap 'exit 143' TERM
 # MASTER-only subset itself on the pinned commit, detached, so a refusal leaves the
 # checkout where it was. VPS_DEPLOY_SKIP_PREFLIGHT=1 is break-glass and, like the
 # runtime-check skip, needs the human-only I_UNDERSTAND_FAST_DEPLOY=1.
-deploy_refuse() { print -u2 "vps-deploy: refused - $1"; print -u2 "            Nothing was stopped."; exit 1 }
+deploy_refuse() { log "refused: $1"; print -u2 "vps-deploy: refused - $1"; print -u2 "            Nothing was stopped."; exit 1 }
 if (( lock_owner )); then
-  deploy_stage=pin
+  set_stage pin
   source "$repo/OPENBSD/lib/ruby_select.sh"
   git_as_deploy_user fetch -q origin main || deploy_refuse "git fetch origin main failed (as $DEPLOY_USER)"
   pin=$(git_as_deploy_user rev-parse --verify -q "${VPS_DEPLOY_SHA:-FETCH_HEAD}^{commit}") \
@@ -492,7 +556,7 @@ if (( lock_owner )); then
       || deploy_refuse "VPS_DEPLOY_SKIP_PREFLIGHT=1 needs the human-only I_UNDERSTAND_FAST_DEPLOY=1"
     print "vps-deploy: WARNING - preflight skipped (break-glass); $pin was not proven to boot"
   else
-    deploy_stage=preflight-boot
+    set_stage preflight-boot
     print "vps-deploy: preflight on $pin (syntax, law files, boot smoke)"
     back_to=$(git_as_deploy_user symbolic-ref -q --short HEAD || print -r -- "$head_before")
     # A box left detached (a killed deploy does that) comes back to its commit, not to a branch.
@@ -506,7 +570,7 @@ if (( lock_owner )); then
     git_as_deploy_user switch -q "${back_flag[@]}" "$back_to" || deploy_refuse "cannot return to $back_to"
   fi
   git_as_deploy_user merge -q --ff-only "$pin" || deploy_refuse "cannot fast-forward $repo to $pin"
-  deploy_stage=snapshot
+  set_stage snapshot
   VPS_DEPLOY_STARTED="$(admin_service list-started 2>/dev/null)"
   VPS_DEPLOY_STARTED=${VPS_DEPLOY_STARTED//$'\n'/ }
   export VPS_DEPLOY_STARTED
@@ -583,7 +647,7 @@ if [[ $app == all ]]; then
     # Re-entrant rather than inlined: each app gets the full path including its
     # own health check and deploy stamp, and a failure halts the pass instead of
     # deploying the next one on top of a broken box.
-    deploy_stage="all:$one"
+    set_stage "all:$one"
     zsh "$0" "$one" || { halted_app=$one; print -u2 "vps-deploy: all halted at $one"; exit 1 }
   done
   print "vps-deploy: all ok ($deploy_order)"
@@ -604,7 +668,7 @@ write_stamp() {
   admin_request stamp "$name" "$sha" "$stamp_status"
 }
 
-deploy_stage=master
+set_stage master
 if [[ $app == master ]]; then
   print "vps-deploy: master web"
   # master's bundle, native gem builds and precompile run as long as an app's CI,
@@ -614,14 +678,14 @@ if [[ $app == master ]]; then
   settle_boots
   if zsh "$repo/OPENBSD/bin/vps_deploy_master.sh"; then
     # The loopback journeys that need no browser, for this app only.
-    deploy_stage=master-flows
+    set_stage master-flows
     hold_deploy_flag
     if ! FLOW_APP=master MASTER_STRICT=deploy CHECK_AUTOFIX=0 CHECK_REQUIRE_LIVE=1 "$RUBY" "$repo/MASTER/checks/runner.rb" flow_journey; then
       write_stamp master failed
       print -u2 "vps-deploy: master flow journeys failed - see the per-flow lines above"
       exit 1
     fi
-    deploy_stage=restore-shed
+    set_stage restore-shed
     restore_started && restore_ok=1 || restore_ok=0
     write_stamp master ok
     (( restore_ok )) || { print -u2 "vps-deploy: master deployed, but a service that was running before is still down"; exit 1 }
@@ -640,7 +704,7 @@ fi
 # syncs whatever the VPS checkout already holds, which can lag origin/main by
 # days. master pulls inside vps_deploy_master.sh; this is the matching step for
 # the three copy-tree apps.
-deploy_stage=pull
+set_stage pull
 # No pull here: the top-level process pinned one SHA and moved the checkout to it.
 # A checkout that has moved off it since means another hand touched the box.
 print "vps-deploy: $app (checkout must be ${VPS_DEPLOY_SHA:?no pinned SHA, run through the top-level vps-deploy})"
@@ -653,7 +717,7 @@ print "vps-deploy: $app (checkout must be ${VPS_DEPLOY_SHA:?no pinned SHA, run t
 # /home holds the checkout, the app trees, bundles and storage (3.9 GB free of
 # 17 GB on 2026-10-12), so it is the filesystem that fills. The floor is a
 # variable because it is a measurement of this box, not a law.
-deploy_stage=preflight-disk
+set_stage preflight-disk
 min_free_kb=${VPS_DEPLOY_MIN_FREE_KB:-1048576}
 for mount_point in /home /var; do
   free_kb=${${(z)${${(f)"$(${VPS_DEPLOY_DF:-df} -Pk $mount_point 2>/dev/null)"}[2]}}[4]:-}
@@ -671,7 +735,7 @@ for mount_point in /home /var; do
   fi
 done
 
-deploy_stage=preflight
+set_stage preflight
 print "vps-deploy: $app (preflight load)"
 admin_request resource-guard || true
 
@@ -732,7 +796,7 @@ else
     admin_service stop "$jobs_service" >/dev/null 2>&1 && { jobs_was_up=1; own_stops+=("$jobs_service") }
   fi
 
-  deploy_stage=ci+sync
+  set_stage ci+sync
   print "vps-deploy: $app (ci + sync)"
   # `|| ci_status=$?` rather than a bare call and `ci_status=$?` after it. This
   # script runs under `set -e`, so a bare failing CI run exits here and the
@@ -759,7 +823,7 @@ fi
 # reaches production: on 2026-07-29 brgen shipped a counter-cache column its
 # views already read, and every feed render 500'd until an operator ran the
 # three pending migrations by hand.
-deploy_stage=migrate
+set_stage migrate
 print "vps-deploy: $app (primary db migrate + secondary schemas)"
 . "$repo/RAILS/_core.sh"
 . "$repo/RAILS/_bundle.sh"
@@ -781,12 +845,12 @@ db_create_migrate_as_app "$app" "/home/${app}/app"
 # never created for a plain `vps-deploy $app` run, so Propshaft 404s
 # every asset_path() and the page renders with no CSS at all. Safe to
 # call unconditionally: Propshaft precompile is idempotent.
-deploy_stage=precompile
+set_stage precompile
 print "vps-deploy: $app (assets precompile)"
 settle_boots
 rails_assets_precompile_as_app "$app" "/home/${app}/app" || exit 1
 
-deploy_stage=restart
+set_stage restart
 print "vps-deploy: $app (restart)"
 hold_deploy_flag
 if ! admin_service restart "$app" || ! admin_service check "$app"; then
@@ -794,8 +858,7 @@ if ! admin_service restart "$app" || ! admin_service check "$app"; then
   exit 1
 fi
 app_stopped=0
-deploy_stage=health
-
+set_stage health
 port=$("$RUBY" -ryaml -e 'puts YAML.safe_load(File.read("'"$repo"'/RAILS/apps.yml")).dig("apps","'"$app"'","port")')
 up_ok=0
 for i in {1..150}; do
@@ -836,7 +899,7 @@ else
   print "vps-deploy: $app no /assets stylesheet linked on / — nothing to verify"
 fi
 
-deploy_stage=solid_queue
+set_stage solid_queue
 queue_schema="$repo/RAILS/${app}/db/queue_schema.rb"
 if [[ -f $queue_schema ]] && ! "$RUBY" -e 'exit File.read(ARGV[0]).include?("define(version: 0)")' "$queue_schema"; then
   print "vps-deploy: $app (solid_queue proof)"
@@ -855,7 +918,7 @@ fi
 # `vps-deploy all` folds the restore into its ordering; this pass gives a
 # single-app deploy, the common case, the same restore. Reported, not silent — a
 # service that needed restoring is a fact about the box worth seeing.
-deploy_stage=restore-shed
+set_stage restore-shed
 restore_failed=0
 restore_started || restore_failed=1
 
@@ -894,7 +957,7 @@ check_names=(production port_inventory generated_asset schema_migration
 if [[ -n ${PUB4_DEPLOY_BROWSER_CHECKS:-} ]]; then
   check_names+=(rendered_suite layout_suite)
 fi
-deploy_stage=checks
+set_stage checks
 print "vps-deploy: $app (checks: ${check_names})"
 hold_deploy_flag
 if ! FLOW_APP="$app" MASTER_STRICT=deploy CHECK_AUTOFIX=0 "$RUBY" "$repo/MASTER/checks/runner.rb" "${check_names[@]}"; then
@@ -904,7 +967,7 @@ if ! FLOW_APP="$app" MASTER_STRICT=deploy CHECK_AUTOFIX=0 "$RUBY" "$repo/MASTER/
   exit 1
 fi
 
-deploy_stage=final-check
+set_stage final-check
 # The app deployed last has to be the app still running when the deploy says ok.
 # Every check above ran minutes ago, and a deploy whose own app is down on exit
 # is the one outcome the stamp must never call ok.
