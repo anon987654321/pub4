@@ -7603,6 +7603,284 @@ module Dilla
   end
 end
 
+
+# ---------------------------------------------------------------- sound events
+# Short, manifest-driven lifecycle cues. They use the same sample rate, WAV writer,
+# Sonitex colour, dub echo, plate, tape and master chain as Dilla's music. No speech
+# samples or external sound-effect runtime is required.
+module Dilla
+  module SoundFx
+    module_function
+
+    EVENTS = %w[start submit complete error notification precompact session_end].freeze
+    MANIFEST_PATH = File.join(__dir__, "data", "sound_fx.json")
+    ENGINE_DATA_PATH = File.join(__dir__, "data", "dilla.json")
+    USAGE = "Usage: ruby dilla.rb sound-fx EVENT [--play | --out PATH] [--seed N] [--volume 0..100]"
+
+    def run(argv)
+      event = argv.shift
+      sound_data = JSON.parse(File.read(MANIFEST_PATH))
+      return list(sound_data) if event == "list"
+      raise ArgumentError, USAGE unless EVENTS.include?(event)
+
+      options = { seed: Random.new_seed & 0xffff_ffff, play: false, replace: false, volume: 45 }
+      OptionParser.new(USAGE) do |parser|
+        parser.on("--out PATH", "Write a WAV to PATH rather than the default render directory") { |value| options[:out] = value }
+        parser.on("--seed N", Integer, "Deterministic synthesis seed") { |value| options[:seed] = value }
+        parser.on("--play", "Play the cue locally without keeping a WAV") { options[:play] = true }
+        parser.on("--volume N", Integer, "Player volume, 0..100 (default 45)") { |value| options[:volume] = value }
+        parser.on("--player CMD", "Explicit player command, passed as argv (no shell)") { |value| options[:player] = value }
+        parser.on("--replace", "Allow replacing an existing --out WAV") { options[:replace] = true }
+      end.parse!(argv)
+      raise ArgumentError, "unexpected arguments: #{argv.join(' ')}" unless argv.empty?
+      raise ArgumentError, "--volume must be 0..100" unless (0..100).cover?(options[:volume])
+      raise ArgumentError, "--replace requires --out" if options[:replace] && !options[:out]
+      raise ArgumentError, "choose either --play or --out, not both" if options[:play] && options[:out]
+
+      engine_data = JSON.parse(File.read(ENGINE_DATA_PATH))
+      frame = render(event, sound_data:, engine_data:, seed: options[:seed])
+      if options[:play]
+        play_temporary(frame, event, options)
+      else
+        path = destination(event, options)
+        WAV.write(path, frame, replace: options[:replace])
+        puts JSON.generate(result_payload(event, frame, options[:seed]).merge("path" => path, "played" => false))
+      end
+      0
+    rescue ArgumentError, KeyError, OptionParser::ParseError, JSON::ParserError, SystemCallError => error
+      warn "dilla-fx0: #{error.class}: #{error.message}"
+      2
+    end
+
+    def list(sound_data = JSON.parse(File.read(MANIFEST_PATH)))
+      validate_manifest!(sound_data)
+      puts JSON.generate(status: "ready", events: EVENTS)
+      0
+    rescue ArgumentError, KeyError, JSON::ParserError, SystemCallError => error
+      warn "dilla-fx0: #{error.class}: #{error.message}"
+      2
+    end
+
+    # Public for deterministic unit tests and other Ruby callers. Returns stereo Float samples
+    # in [-1, 1], already coloured and peak-controlled through Dilla's own mastering path.
+    def render(event, sound_data: JSON.parse(File.read(MANIFEST_PATH)),
+               engine_data: JSON.parse(File.read(ENGINE_DATA_PATH)), seed: 0)
+      validate_manifest!(sound_data)
+      raise ArgumentError, "unknown sound event #{event.inspect}" unless EVENTS.include?(event.to_s)
+
+      spec = sound_data.fetch("events").fetch(event.to_s)
+      validate_event!(spec)
+      note_end_ms = spec.fetch("notes").map do |note|
+        note.fetch("at_ms") + note.fetch("duration_ms") + note.fetch("release_ms")
+      end.max
+      click_end_ms = Array(spec["transients"]).map do |click|
+        click.fetch("at_ms") + (click.fetch("decay_ms") * 7)
+      end.max || 0
+      duration_ms = [note_end_ms, click_end_ms].max + spec.fetch("tail_ms", sound_data.fetch("tail_ms"))
+      raise ArgumentError, "cue duration exceeds 3 seconds" unless duration_ms.between?(100, 3000)
+
+      frames = (duration_ms * SAMPLE_RATE / 1000.0).ceil
+      frame = Array.new(2) { Array.new(frames, 0.0) }
+      spec.fetch("notes").each_with_index { |note, index| add_note(frame, note, index) }
+      Array(spec["transients"]).each_with_index do |click, index|
+        add_transient(frame, click, Random.new(seed.to_i + ((index + 1) * 10_007)))
+      end
+
+      # Dilla's own colour → ping-pong echo → plate → tape/mastering chain.
+      treated = Ambient.treat(frame, settings: engine_data.fetch("ambient"), data: engine_data, seed: seed.to_i)
+      peak_control(treated, target_dbfs: sound_data.fetch("target_peak_dbfs", -13.0))
+    end
+
+    def validate_manifest!(sound_data)
+      raise ArgumentError, "sound FX manifest schema must be 1" unless sound_data.fetch("schema") == 1
+      raise ArgumentError, "sound FX events must exactly match the lifecycle contract" unless
+        sound_data.fetch("events").keys.sort == EVENTS.sort
+      true
+    end
+    private_class_method :validate_manifest!
+
+    def validate_event!(spec)
+      notes = spec.fetch("notes")
+      raise ArgumentError, "event needs at least one note" unless notes.is_a?(Array) && !notes.empty?
+      notes.each do |note|
+        midi = Integer(note.fetch("midi"))
+        raise ArgumentError, "MIDI note must be 24..96" unless (24..96).cover?(midi)
+        validate_range!(note.fetch("at_ms"), 0, 1800, "note at_ms")
+        validate_range!(note.fetch("duration_ms"), 20, 600, "note duration_ms")
+        validate_range!(note.fetch("release_ms"), 20, 900, "note release_ms")
+        validate_range!(note.fetch("attack_ms", 5), 1, 100, "note attack_ms")
+        validate_range!(note.fetch("gain"), 0.0, 1.0, "note gain")
+        validate_range!(note.fetch("pan", 0.0), -1.0, 1.0, "note pan")
+        validate_range!(note.fetch("overtone", 0.0), 0.0, 0.5, "note overtone")
+      end
+      Array(spec["transients"]).each do |click|
+        validate_range!(click.fetch("at_ms"), 0, 1800, "transient at_ms")
+        validate_range!(click.fetch("decay_ms"), 2, 120, "transient decay_ms")
+        validate_range!(click.fetch("gain"), 0.0, 0.2, "transient gain")
+        validate_range!(click.fetch("lowpass_hz"), 400, 12_000, "transient lowpass_hz")
+        validate_range!(click.fetch("pan", 0.0), -1.0, 1.0, "transient pan")
+      end
+      true
+    end
+    private_class_method :validate_event!
+
+    def validate_range!(value, minimum, maximum, label)
+      number = Float(value)
+      raise ArgumentError, "#{label} must be within #{minimum}..#{maximum}" unless number.finite? && (minimum..maximum).cover?(number)
+      number
+    end
+    private_class_method :validate_range!
+
+    def add_note(frame, note, order)
+      start = (note.fetch("at_ms") * SAMPLE_RATE / 1000.0).round
+      held = [(note.fetch("duration_ms") * SAMPLE_RATE / 1000.0).round, 1].max
+      release = [(note.fetch("release_ms") * SAMPLE_RATE / 1000.0).round, 1].max
+      attack = [(note.fetch("attack_ms", 5) * SAMPLE_RATE / 1000.0).round, 1].max
+      hz = Chords.hz(note.fetch("midi"))
+      gain = note.fetch("gain").to_f
+      pan = note.fetch("pan", 0.0).to_f
+      overtone = note.fetch("overtone", 0.0).to_f
+      left = Math.cos((pan + 1.0) * Math::PI / 4.0)
+      right = Math.sin((pan + 1.0) * Math::PI / 4.0)
+      count = [held + release, frame.first.size - start].min
+      return unless count.positive?
+
+      count.times do |offset|
+        envelope = if offset < attack
+                     0.5 - (0.5 * Math.cos(Math::PI * offset / attack))
+                   elsif offset < held
+                     1.0
+                   else
+                     Math.exp(-5.0 * (offset - held).to_f / release)
+                   end
+        phase = (2.0 * Math::PI * hz * offset / SAMPLE_RATE) + (order * 0.017)
+        sample = gain * envelope * (Math.sin(phase) + (overtone * Math.sin(phase * 2.0)))
+        index = start + offset
+        frame[0][index] += sample * left
+        frame[1][index] += sample * right
+      end
+    end
+    private_class_method :add_note
+
+    def add_transient(frame, click, random)
+      start = (click.fetch("at_ms") * SAMPLE_RATE / 1000.0).round
+      decay = [(click.fetch("decay_ms") * SAMPLE_RATE / 1000.0).round, 1].max
+      finish = [start + (decay * 7), frame.first.size].min
+      return if start >= finish
+
+      filters = Array.new(2) { Stream::Lowpass.new(click.fetch("lowpass_hz")) }
+      pan = click.fetch("pan", 0.0).to_f
+      gains = [Math.cos((pan + 1.0) * Math::PI / 4.0), Math.sin((pan + 1.0) * Math::PI / 4.0)]
+      (start...finish).each do |index|
+        elapsed = index - start
+        impulse = ((random.rand * 2.0) - 1.0) * click.fetch("gain").to_f * Math.exp(-5.0 * elapsed / decay)
+        filters.each_with_index do |filter, channel|
+          frame[channel][index] += filter.step(impulse) * gains[channel]
+        end
+      end
+    end
+    private_class_method :add_transient
+
+    def peak_control(frame, target_dbfs:)
+      target = Float(target_dbfs)
+      raise ArgumentError, "target peak must be -24..-6 dBFS" unless target.finite? && (-24.0..-6.0).cover?(target)
+      peak = frame.flatten.map(&:abs).max.to_f
+      raise ArgumentError, "sound FX render is silent or invalid" unless peak.positive? && peak.finite?
+      gain = (10.0**(target / 20.0)) / peak
+      frame.map { |channel| channel.map { |sample| sample * gain } }
+    end
+    private_class_method :peak_control
+
+    def destination(event, options)
+      stamp = Time.now.utc.strftime("%Y%m%dT%H%M%SZ")
+      filename = "dilla-fx-#{event}-#{stamp}-#{options.fetch(:seed)}.wav"
+      path = File.expand_path(options.fetch(:out) { File.join(Studio::OutputPaths.dilla_render_directory, filename) })
+      raise ArgumentError, "refusing to overwrite existing take: #{path}; pass --replace" if File.exist?(path) && !options[:replace]
+      path
+    end
+    private_class_method :destination
+
+    def play_temporary(frame, event, options)
+      Dir.mktmpdir("dilla-sound-fx-") do |directory|
+        path = File.join(directory, "#{event}.wav")
+        playback = frame.map { |channel| channel.map { |sample| sample * (options.fetch(:volume) / 100.0) } }
+        WAV.write(path, playback)
+        command = player_argv(path, options)
+        pid = Process.spawn(*command, out: File::NULL, err: File::NULL, pgroup: true)
+        begin
+          _waited_pid, status = Timeout.timeout(4) { Process.wait2(pid) }
+        rescue Timeout::Error
+          terminate_player(pid)
+          raise ArgumentError, "audio player exceeded the 4-second cue budget"
+        end
+        raise ArgumentError, "audio player exited with status #{status.exitstatus || status.termsig}" unless status.success?
+
+        puts JSON.generate(result_payload(event, frame, options[:seed]).merge("path" => nil, "played" => true,
+                                                                               "playback_exit" => status.exitstatus,
+                                                                               "playback_volume_percent" => options.fetch(:volume)))
+      end
+    end
+    private_class_method :play_temporary
+
+    def player_argv(path, options)
+      if options[:player]
+        command = Shellwords.split(options[:player].to_s)
+        raise ArgumentError, "--player must name a command" if command.empty?
+        return [*command, path]
+      end
+
+      if RUBY_PLATFORM.include?("darwin") && executable("afplay")
+        ["afplay", path]
+      elsif executable("ffplay")
+        ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", path]
+      elsif executable("play")
+        ["play", "-q", path]
+      else
+        raise ArgumentError, "no supported audio player found; install afplay, ffplay, SoX play, or Termux:API"
+      end
+    end
+    private_class_method :player_argv
+
+    def terminate_player(pid)
+      Process.kill("TERM", -pid)
+      sleep 0.1
+      Process.kill("KILL", -pid)
+    rescue Errno::ESRCH, Errno::EPERM
+      nil
+    ensure
+      Process.wait(pid) rescue nil
+    end
+    private_class_method :terminate_player
+
+    def executable(name)
+      ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |directory|
+        next false if directory.empty? || !directory.start_with?(File::SEPARATOR)
+
+        candidate = File.join(directory, name)
+        File.file?(candidate) && File.executable?(candidate)
+      end
+    end
+    private_class_method :executable
+
+    def result_payload(event, frame, seed)
+      metrics = Mastering.report(frame)
+      { status: "rendered", event:, seed:, sample_rate: SAMPLE_RATE, frames: frame.first.size,
+        duration_s: frame.first.size.fdiv(SAMPLE_RATE).round(3),
+        sample_peak_dbfs: peak_dbfs(frame),
+        true_peak_db: metrics.fetch(:true_peak_db), integrated_lufs: metrics.fetch(:lufs),
+        style_chain: "dilla_ambient_colour_echo_plate_master" }
+    end
+    private_class_method :result_payload
+
+    def peak_dbfs(frame)
+      peak = frame.flatten.map(&:abs).max.to_f
+      peak.positive? ? 20.0 * Math.log10(peak) : -Float::INFINITY
+    end
+    private_class_method :peak_dbfs
+  end
+end
+
+
 # --- engine.rb ---
 # Reference analysis and industrial-techno generation stay in their own modules.
 
@@ -7639,6 +7917,7 @@ def run(argv)
   return Dilla::Reference.run(rest) if subcommand == "reference"
   return Dilla::IndustrialTechno.run(rest) if subcommand == "industrial-techno"
   return Dilla::Ambient.run(rest) if subcommand == "ambient"
+  return Dilla::SoundFx.run(rest) if subcommand == "sound-fx"
   return dilla_output_path(rest) if subcommand == "output-path"
   RubyVM::YJIT.enable if defined?(RubyVM::YJIT) && !RubyVM::YJIT.enabled? && !ENV.key?('DILLA_NO_YJIT') # about a third off every render
   live_argument = argv.first == 'live'

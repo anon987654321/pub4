@@ -1,0 +1,272 @@
+{
+  "schema": 1,
+  "description": "Short synthetic lifecycle cues rendered through the existing Dilla audio and mastering chain. No third-party voice clips.",
+  "target_peak_dbfs": -13,
+  "tail_ms": 780,
+  "events": {
+    "start": {
+      "notes": [
+        {
+          "midi": 50,
+          "at_ms": 0,
+          "duration_ms": 150,
+          "release_ms": 140,
+          "attack_ms": 8,
+          "gain": 0.34,
+          "overtone": 0.08,
+          "pan": -0.12
+        },
+        {
+          "midi": 57,
+          "at_ms": 46,
+          "duration_ms": 190,
+          "release_ms": 220,
+          "attack_ms": 10,
+          "gain": 0.24,
+          "overtone": 0.06,
+          "pan": 0.18
+        }
+      ],
+      "transients": [
+        {
+          "at_ms": 12,
+          "decay_ms": 10,
+          "gain": 0.035,
+          "lowpass_hz": 5600,
+          "pan": -0.2
+        }
+      ],
+      "tail_ms": 820
+    },
+    "submit": {
+      "notes": [
+        {
+          "midi": 53,
+          "at_ms": 0,
+          "duration_ms": 68,
+          "release_ms": 90,
+          "attack_ms": 4,
+          "gain": 0.31,
+          "overtone": 0.18,
+          "pan": -0.1
+        },
+        {
+          "midi": 57,
+          "at_ms": 55,
+          "duration_ms": 86,
+          "release_ms": 130,
+          "attack_ms": 5,
+          "gain": 0.26,
+          "overtone": 0.14,
+          "pan": 0.12
+        }
+      ],
+      "transients": [
+        {
+          "at_ms": 0,
+          "decay_ms": 4,
+          "gain": 0.025,
+          "lowpass_hz": 7800,
+          "pan": 0.05
+        }
+      ],
+      "tail_ms": 820
+    },
+    "complete": {
+      "notes": [
+        {
+          "midi": 50,
+          "at_ms": 0,
+          "duration_ms": 205,
+          "release_ms": 230,
+          "attack_ms": 12,
+          "gain": 0.31,
+          "overtone": 0.07,
+          "pan": -0.2
+        },
+        {
+          "midi": 57,
+          "at_ms": 44,
+          "duration_ms": 230,
+          "release_ms": 250,
+          "attack_ms": 12,
+          "gain": 0.25,
+          "overtone": 0.06,
+          "pan": 0.05
+        },
+        {
+          "midi": 60,
+          "at_ms": 92,
+          "duration_ms": 210,
+          "release_ms": 270,
+          "attack_ms": 13,
+          "gain": 0.24,
+          "overtone": 0.05,
+          "pan": 0.18
+        },
+        {
+          "midi": 64,
+          "at_ms": 150,
+          "duration_ms": 185,
+          "release_ms": 310,
+          "attack_ms": 16,
+          "gain": 0.2,
+          "overtone": 0.04,
+          "pan": 0.32
+        }
+      ],
+      "transients": [],
+      "tail_ms": 820
+    },
+    "error": {
+      "notes": [
+        {
+          "midi": 57,
+          "at_ms": 0,
+          "duration_ms": 92,
+          "release_ms": 120,
+          "attack_ms": 5,
+          "gain": 0.28,
+          "overtone": 0.14,
+          "pan": 0
+        },
+        {
+          "midi": 53,
+          "at_ms": 96,
+          "duration_ms": 105,
+          "release_ms": 145,
+          "attack_ms": 7,
+          "gain": 0.27,
+          "overtone": 0.12,
+          "pan": -0.05
+        },
+        {
+          "midi": 50,
+          "at_ms": 202,
+          "duration_ms": 138,
+          "release_ms": 210,
+          "attack_ms": 10,
+          "gain": 0.23,
+          "overtone": 0.08,
+          "pan": 0.08
+        }
+      ],
+      "transients": [
+        {
+          "at_ms": 0,
+          "decay_ms": 8,
+          "gain": 0.018,
+          "lowpass_hz": 2600,
+          "pan": 0
+        }
+      ],
+      "tail_ms": 850
+    },
+    "notification": {
+      "notes": [
+        {
+          "midi": 62,
+          "at_ms": 0,
+          "duration_ms": 80,
+          "release_ms": 150,
+          "attack_ms": 6,
+          "gain": 0.25,
+          "overtone": 0.11,
+          "pan": -0.1
+        },
+        {
+          "midi": 69,
+          "at_ms": 82,
+          "duration_ms": 115,
+          "release_ms": 200,
+          "attack_ms": 8,
+          "gain": 0.2,
+          "overtone": 0.08,
+          "pan": 0.12
+        }
+      ],
+      "transients": [],
+      "tail_ms": 820
+    },
+    "precompact": {
+      "notes": [
+        {
+          "midi": 45,
+          "at_ms": 0,
+          "duration_ms": 170,
+          "release_ms": 150,
+          "attack_ms": 10,
+          "gain": 0.3,
+          "overtone": 0.06,
+          "pan": -0.1
+        },
+        {
+          "midi": 52,
+          "at_ms": 100,
+          "duration_ms": 150,
+          "release_ms": 220,
+          "attack_ms": 12,
+          "gain": 0.23,
+          "overtone": 0.05,
+          "pan": 0.16
+        },
+        {
+          "midi": 57,
+          "at_ms": 205,
+          "duration_ms": 115,
+          "release_ms": 260,
+          "attack_ms": 10,
+          "gain": 0.17,
+          "overtone": 0.04,
+          "pan": 0.22
+        }
+      ],
+      "transients": [
+        {
+          "at_ms": 4,
+          "decay_ms": 5,
+          "gain": 0.022,
+          "lowpass_hz": 2100,
+          "pan": -0.1
+        }
+      ],
+      "tail_ms": 820
+    },
+    "session_end": {
+      "notes": [
+        {
+          "midi": 64,
+          "at_ms": 0,
+          "duration_ms": 130,
+          "release_ms": 170,
+          "attack_ms": 10,
+          "gain": 0.25,
+          "overtone": 0.05,
+          "pan": 0.16
+        },
+        {
+          "midi": 60,
+          "at_ms": 115,
+          "duration_ms": 145,
+          "release_ms": 205,
+          "attack_ms": 12,
+          "gain": 0.23,
+          "overtone": 0.04,
+          "pan": 0
+        },
+        {
+          "midi": 57,
+          "at_ms": 245,
+          "duration_ms": 200,
+          "release_ms": 290,
+          "attack_ms": 18,
+          "gain": 0.19,
+          "overtone": 0.03,
+          "pan": -0.18
+        }
+      ],
+      "transients": [],
+      "tail_ms": 850
+    }
+  }
+}

@@ -276,3 +276,21 @@ The evidence-based research notes, provenance warnings, and measurement plan for
 reference mixes are in [REFERENCE_STUDY.md](REFERENCE_STUDY.md). That document distinguishes
 published production history and tracklist metadata from measurements that still require bounded
 audio excerpts; it does not invent BPM or microtiming data for audio the analyzer has not processed.
+
+
+## Lifecycle sound cues (Claude Code / OpenCode compatible)
+
+Dilla can generate its own short synthetic lifecycle cues without importing third-party voice clips or requiring another sound-effects engine:
+
+```sh
+ruby dilla.rb sound-fx list
+ruby dilla.rb sound-fx complete --play
+ruby dilla.rb sound-fx error --play --volume 35
+ruby dilla.rb sound-fx complete --seed 112 --out /tmp/dilla-complete.wav
+```
+
+The event names mirror common Claude Code / OpenCode sound-hook vocabulary: `start`, `submit`, `complete`, `error`, `notification`, `precompact` and `session_end`. They are backed by `data/sound_fx.json`, then rendered through Dilla's existing colour, dub-echo, plate and mastering chain. The cues are original synthesis, not downloaded speech samples. `--play` uses an already-installed local player and writes only a temporary WAV; it never installs software or starts a network relay. Without a player, use `--out` to render a file for another local workflow.
+
+For an installed Claude Code hook, point its command at `sound_fx_hook.sh EVENT` in this directory. The adapter only accepts the seven allow-listed event names; it does not evaluate event payloads, read plugin configuration via interpolated Python, or forward audio across the network. Permission approval popups are not part of this event contract and cannot be represented as hook events.
+
+Each render reports the seed, event, duration, integrated loudness and true-peak measurement as JSON. The regression test enforces exact event coverage, deterministic rendering for a fixed seed, bounded duration and the configured sample-peak ceiling. These are local signal checks, not subjective listening approval.
