@@ -9,7 +9,12 @@
 
 require "test_helper"
 require "tmpdir"
+require "open3"
+require "rbconfig"
+require "json"
 require_relative "../lib/fix/transaction"
+require_relative "../lib/fix/mission"
+require_relative "../lib/fix/checkpoint"
 
 module Master
   module Fix
@@ -49,7 +54,72 @@ module Master
       end
 
       def test_2_mission_survives_process_kill_and_reports_remaining_work
-        skip "wire Fix::Mission lease and .master/mission.json to a child-process restart"
+        Dir.mktmpdir("fix-recovery-gate-mission") do |root|
+          scope = File.join(root, "MASTER")
+          FileUtils.mkdir_p(scope)
+          File.write(File.join(root, "sample.rb"), "checkpoint survives process death\n")
+          goal = "resume after a killed /fix worker"
+
+          checkpoint_writer = lambda do |id:, root:, files:|
+            Master::Fix::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints"))
+                                 .create(label: "mission-#{id}", files:)
+          end
+          child = <<~'RUBY'
+            require "json"
+            require "fix/mission"
+            require "fix/checkpoint"
+
+            root, scope, goal = ARGV
+            checkpoint_writer = lambda do |id:, root:, files:|
+              Master::Fix::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints"))
+                                   .create(label: "mission-#{id}", files:)
+            end
+            mission = Master::Fix::Mission.new(root:, checkpoint: checkpoint_writer).start!(
+              goal:, scope:, origin: "manual"
+            )
+            mission.checkpoint!(files: ["sample.rb"])
+            puts JSON.generate(
+              "id" => mission.id,
+              "checkpoint_id" => mission.record.dig("checkpoint", "id"),
+              "pid" => Process.pid
+            )
+            STDOUT.flush
+            sleep 60
+          RUBY
+
+          stdin, stdout, stderr, writer = Open3.popen3(
+            RbConfig.ruby, "-I", File.join(Master::ROOT, "lib"), "-e", child,
+            root, scope, goal, chdir: Master::ROOT
+          )
+          stdin.close
+          ready = IO.select([stdout], nil, nil, 10)
+          refute_nil ready, "mission child did not publish its durable checkpoint receipt"
+          receipt_line = stdout.gets
+          refute_nil receipt_line, -> { stderr.read }
+          child_receipt = JSON.parse(receipt_line)
+          assert_equal writer.pid, child_receipt.fetch("pid")
+          Process.kill("KILL", writer.pid)
+          Process.wait(writer.pid)
+          writer = nil
+
+          resumed = Master::Fix::Mission.new(root:, checkpoint: checkpoint_writer).start_or_resume!(
+            goal:, scope:, origin: "manual"
+          )
+          saved = Master::Fix::Mission.current(root:)
+
+          assert_equal child_receipt.fetch("id"), resumed.id, "restart must resume the original objective"
+          assert_equal "running", resumed.record.fetch("state")
+          assert_operator resumed.record.fetch("attempt_count"), :>=, 2
+          assert_equal child_receipt.fetch("checkpoint_id"), saved.dig("checkpoint", "id")
+          assert_equal "checkpoint survives process death\n",
+                       File.read(File.join(root, ".master", "checkpoints", child_receipt.fetch("checkpoint_id"), "sample.rb"))
+        ensure
+          if writer
+            Process.kill("KILL", writer.pid) rescue nil
+            Process.wait(writer.pid) rescue nil
+          end
+          [stdin, stdout, stderr].compact.each { |io| io.close unless io.closed? }
+        end
       end
 
       def test_3_journal_deletion_is_reconstructible_from_git_and_checkpoint
