@@ -14,6 +14,9 @@ module Master
       def call(message:, container:, felt_sense: nil, on_turn: nil, on_chunk: nil, image: nil, cancellation: nil)
         text = message.to_s.strip
         return Master::Result.err("empty message", category: :validation) if text.empty?
+        if visitor? && text.start_with?("/") && !visitor_pair_redemption?(text)
+          return Master::Result.err("slash commands are not available to visitors", category: :policy)
+        end
         return dispatch_slash(rewrite_slash(text), container:, felt_sense:, on_turn:, cancellation:) if text.start_with?("/")
 
         # Visitors (no web token — i.e. the open internet on ai.brgen.no) get the
@@ -55,6 +58,17 @@ module Master
       end
 
       def visitor? = Fiber[:master_visitor] == true
+
+      # Keep remote pairing possible without opening the rest of the command registry.
+      def visitor_pair_redemption?(text)
+        match = text.to_s.match(%r{\A/pair\s+(\S+)\s*\z}i)
+        return false unless match && defined?(Master::Ground::Pairing)
+
+        code = match[1]
+        alphabet = Master::Ground::Pairing::ALPHABET
+        code.length == Master::Ground::Pairing::CODE_BYTES &&
+          code.upcase.each_char.all? { |character| alphabet.include?(character) }
+      end
 
       # /fix writes code, so a line opening with "fix" is the command only when it names a file path or a
       # tree, is about code, or is the word alone; "fix the broken heater in my flat" is a person talking.
