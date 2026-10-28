@@ -8,8 +8,17 @@ class TestSecurityAudit < Minitest::Test
     assert_includes report, "security-audit: clean", report
     assert_includes report, "pairing-required"
     assert_includes report, "visitor-slash"
+    assert_includes report, "gateway-remote"
     assert_includes report, "public-profile"
     refute_includes report, "FAIL"
+  end
+
+  def test_runtime_security_probes_pass_for_visitor_authorization_and_remote_pairing
+    checks = Master::Ground::SecurityAudit.checks
+    %w[visitor-slash gateway-remote].each do |name|
+      check = checks.find { |row| row.name == name }
+      assert check&.ok, "#{name}: #{check&.detail || "missing check"}"
+    end
   end
 
   def test_public_and_messaging_profiles_exclude_shell
