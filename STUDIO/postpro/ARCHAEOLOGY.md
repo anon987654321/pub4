@@ -16,9 +16,9 @@ Scope: source and history in `anon987654321/pub`, `pub2`, `pub3`, and `pub4`, se
 
 Sources:
 - [postpro.rb](https://github.com/anon987654321/pub/blob/main/postpro/postpro.rb)
-- [README.md](https://github.com/anon987654321/pub/blob/a3185f4ec6e6a27e35eeee6718ae3afa11bf49da/postpro/README.md)
-- [README2.md](https://github.com/anon987654321/pub/blob/a3185f4ec6e6a27e35eeee6718ae3afa11bf49da/postpro/README2.md)
-- [IMPLEMENTATION_COMPLETE.md](https://github.com/anon987654321/pub/blob/a3185f4ec6e6a27e35eeee6718ae3afa11bf49da/postpro/IMPLEMENTATION_COMPLETE.md)
+- [README.md](https://github.com/anon987654321/pub/blob/main/postpro/README.md)
+- [README2.md](https://github.com/anon987654321/pub/blob/main/postpro/README2.md)
+- [IMPLEMENTATION_COMPLETE.md](https://github.com/anon987654321/pub/blob/main/postpro/IMPLEMENTATION_COMPLETE.md)
 - [completion commit — 29 effects](https://github.com/anon987654321/pub/commit/512715ac6eddfd3100269019bb361927de371968)
 
 The early interface was an interactive batch tool: select professional or experimental mode, choose random treatments or a JSON recipe, match file patterns (including recursive patterns), choose 1–5 variations and 1–5 effects per variation, and see progress and aggregate statistics. It documented retry-on-failure, rotation/debug logging, RGB/RGBA handling, and finishing/polish steps. Professional mode was deliberately restrained; experimental mode admitted stronger distortion. JSON recipes could set simple intensities or effect-specific parameters such as blend modes and borders.
@@ -33,8 +33,8 @@ Historical wording worth retaining as provenance:
 
 Sources:
 - [postpro/postpro.rb](https://github.com/anon987654321/pub2/blob/main/postpro/postpro.rb)
-- [postpro/postpro_README.md](https://github.com/anon987654321/pub2/blob/ad05242c97fff1b01450434974aad628d7de8628/postpro/postpro_README.md)
-- [multimedia/postpro.rb](https://github.com/anon987654321/pub2/blob/ad05242c97fff1b01450434974aad628d7de8628/multimedia/postpro.rb)
+- [postpro/postpro_README.md](https://github.com/anon987654321/pub2/blob/main/postpro/postpro_README.md)
+- [multimedia/postpro.rb](https://github.com/anon987654321/pub2/blob/main/multimedia/postpro.rb)
 - [bootstrap commit](https://github.com/anon987654321/pub2/commit/08ce8802f9374ed62e9d1be61c664d2bf6b53bb8)
 
 The code and README existed under both `postpro/` and `multimedia/`. The v14 line emphasised cinematic presets, one-command integration with Repligen, config-driven options, and dmesg-style startup diagnostics. Both copies are archaeological evidence, not a reason to keep duplicate implementations in the current tree.
@@ -43,7 +43,7 @@ The code and README existed under both `postpro/` and `multimedia/`. The v14 lin
 
 Sources:
 - [multimedia/postpro.rb](https://github.com/anon987654321/pub3/blob/main/multimedia/postpro.rb)
-- [multimedia/postpro/README.md](https://github.com/anon987654321/pub3/blob/835f9199d605b6a6ae1f32cd207919c115a06b47/multimedia/postpro/README.md)
+- [multimedia/postpro/README.md](https://github.com/anon987654321/pub3/blob/main/multimedia/postpro/README.md)
 - [move-to-root commit](https://github.com/anon987654321/pub3/commit/b0f76f553de9a6056b07ed4b987acf49407fc11f)
 
 The documented core had Portra, Vision3, Velvia and Tri-X; camera-profile corrections; portrait skin protection; film curves and highlight roll-off; micro-contrast; Portrait, Landscape, Street and Blockbuster presets; random exploration; and an explicit Repligen handoff. The pipeline wording was: generate, save, process, final output. The user-visible presets and concepts survive in the current preset/stock/effect system, even where the old implementation or numbers have been replaced.
@@ -88,7 +88,7 @@ The implementation commit [9ac4b113](https://github.com/anon987654321/pub4/commi
 
 The removal commit [ec2cdf45](https://github.com/anon987654321/pub4/commit/ec2cdf458f6f571692fea1ea97e8335881b56135) explains why that implementation is not to be restored verbatim: it launched a fresh Ruby process per frame; measured render time was about an hour per minute of 1080p rather than the promised six minutes, and two tests timed out. Its own estimate was therefore not trustworthy.
 
-The replacement on this branch implements the central correction: ffmpeg streams packed RGB frames through one process, each frame is graded by the live Postpro methods in memory, and only compressed graded frames are spooled under a cumulative byte cap. It estimates work before decoding, enforces maximum frames/pixels/runtime/storage, refuses frame-rate ambiguity and metadata/decoded-frame count mismatches, copies audio without re-encoding, writes to a same-directory temporary MP4, and renames only after successful assembly. Tests cover fractional rates, seed modes, dimensions, audio, repeatability, held-vs-moving output and preservation of a pre-existing output on failure. The GitHub-only edit environment did not execute those tests; `cd STUDIO && rake test:motion` and the full `cd STUDIO && rake check test` remain required evidence before describing this path as verified on a real host.
+The replacement on this branch implements the central correction: ffmpeg streams packed RGB frames through one process, each frame is graded by the live Postpro methods in memory, and only compressed graded frames are spooled under a cumulative byte cap. It estimates work before decoding, enforces maximum frames/pixels and a runtime budget checked around every frame operation and subprocess (native libvips processing within a single frame is not forcibly interruptible), refuses frame-rate ambiguity and metadata/decoded-frame count mismatches, copies audio without re-encoding, assembles to a temporary MP4 and publishes the video plus checksum sidecar with same-directory atomic links only after successful grading. Tests cover fractional rates, seed modes, dimensions, audio, repeatability, held-vs-moving output and preservation of a pre-existing output on failure. The GitHub-only edit environment did not execute those tests; `cd STUDIO && rake test:motion` and the full `cd STUDIO && rake check test` remain required evidence before describing this path as verified on a real host.
 
 ## Verification boundary
 
