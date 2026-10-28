@@ -28,13 +28,44 @@ end
 # It no-ops safely on anything without EXIF Make/Model, which is every
 # generated image — so a render is unaffected and a photograph is corrected.
 def camera_corrected(image, file)
-  return image if CONFIG.fetch("apply_camera_profile_first", true) == false
+  $postpro_stabilization_report = nil
+  corrected = image
+  unless CONFIG.fetch("apply_camera_profile_first", true) == false
+    profile = get_camera_profile(image)
+    if profile
+      corrected = apply_camera_profile(image, profile)
+      PostproBootstrap.dmesg "camera_profile src=#{File.basename(file)}"
+    end
+  end
 
-  profile = get_camera_profile(image)
-  return image unless profile
+  # Opt-in technical balancing happens before the style chain. It uses the
+  # already-bounded source-balancing path; proposals are recorded for review
+  # but are not falsely described as the exact parameters applied.
+  if ARGV.include?("--stabilize")
+    begin
+      before = Postpro::QualityAnalyzer.report_image(corrected)
+      proposals = Postpro::CorrectionProposer.propose(before)
+      stabilized = balance_source(corrected)
+      after = Postpro::QualityAnalyzer.report_image(stabilized)
+      $postpro_stabilization_report = {
+        method: "balance_source",
+        before: before,
+        after: after,
+        proposals: proposals,
+        proposals_applied_verbatim: false,
+        note: "bounded source balancing ran before styling; proposal values are advisory"
+      }
+      PostproBootstrap.dmesg format(
+        "stabilize mean_luma=%.3f->%.3f clipped_high=%.2f%%->%.2f%%",
+        before.dig(:exposure, :mean_luminance), after.dig(:exposure, :mean_luminance),
+        before.dig(:exposure, :clipped_highlights_pct), after.dig(:exposure, :clipped_highlights_pct)
+      )
+      corrected = stabilized
+    rescue StandardError => e
+      PostproBootstrap.dmesg "WARN stabilize unavailable; original technical balance retained: #{e.message}"
+    end
+  end
 
-  corrected = apply_camera_profile(image, profile)
-  PostproBootstrap.dmesg "camera_profile src=#{File.basename(file)}"
   corrected
 end
 
