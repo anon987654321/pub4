@@ -33,6 +33,11 @@ module Master
         # RunJournal constant remains an alias, and every production writer enters
         # through this accessor so a run has one journal owner and one on-disk format.
         def lifecycle_journal
+          # Directly loading the canonical journal file intentionally does not
+          # consume Zeitwerk's historical RunJournal autoload. Install that
+          # compatibility constant at the owner boundary before any adapter
+          # refers to RunJournal::MAX_RUNS or other persisted-schema constants.
+          require_relative "../run_journal"
           @lifecycle_mutex.synchronize do
             @lifecycle_journal ||= LifecycleJournal.new(root: @root, bus: @bus)
           end
