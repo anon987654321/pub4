@@ -229,6 +229,29 @@ class TestFixKernel < Minitest::Test
     end
   end
 
+  def test_kernel_repair_receipt_preserves_fixed_count_and_breakdown
+    with_workspace do |root|
+      kernel = K.new(root:)
+      law = Struct.new(:id, :severity).new("TEST_REPAIR", :warning)
+      loop = kernel.build_repair_loop(law:, agent: nil, scanner: Object.new, root:)
+      loop.define_singleton_method(:scan_files) { |_files| [{ law: "TEST_REPAIR", file: "sample.rb" }] }
+      loop.define_singleton_method(:fix_batch) do |_violations|
+        @batch_breakdown = { applied: 2, rejected: 1 }
+        2
+      end
+      loop.define_singleton_method(:pass_outcome) { |_fixed| :fixed }
+      loop.define_singleton_method(:record_outcomes) { |_files, _status| nil }
+
+      result = loop.run_once(["sample.rb"])
+      event = kernel.verify_log!.find { |row| row["kind"] == "repair_pass" }
+
+      assert_equal 2, result.fetch(:fixed)
+      assert_equal :fixed, result.fetch(:status)
+      assert_equal 2, event.dig("payload", "fixed")
+      assert_equal({ "applied" => 2, "rejected" => 1 }, event.dig("payload", "breakdown"))
+    end
+  end
+
   def test_auto_repair_is_verified_and_the_log_is_hash_chained
     with_workspace do |root|
       File.write(File.join(root, "sample.txt"), "bad\n")
