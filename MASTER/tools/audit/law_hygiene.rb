@@ -195,9 +195,12 @@ module Operator
     end
 
     def conflict(id, home, fix, severity, entry)
+      declared = entry["severity"] ||
+                 master_laws.dig("law_catalogue", "entries", id, "severity") ||
+                 master_laws.dig("law_catalogue", "defaults", "severity")
       reasons = []
-      reasons << "severity: #{normalised(entry["severity"])} declared, #{normalised(severity)} enforced" if
-        normalised(severity) != normalised(entry["severity"])
+      reasons << "severity: #{normalised(declared)} declared, #{normalised(severity)} enforced" if
+        normalised(severity) != normalised(declared)
       # Once a semantic law is migrated, absence of a catalogue fix means the
       # executable law is authoritative. Legacy non-Law entries still compare fixes.
       reasons << "fix" if entry.key?("fix") && !entry["fix"].nil? &&
