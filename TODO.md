@@ -85,13 +85,16 @@ source and tests they could not run; this pass is what measures them.
   verify redirects/canonicals for owned aliases (`amberapp.no`, `amberapp.online`,
   `bsdports.net`) before treating them as indexable equivalents. Include representative
   Brgen vertical hosts and city apexes; explicitly decide whether the MASTER face should
-  be indexed. Record timestamped HTTP/redirect results, robots and sitemap coverage,
-  canonical/title/description/Open Graph metadata, JSON-LD validity, indexability and
-  measured performance where available. Claude SEO may be used as a reviewed advisory
-  crawler, with optional paid/API extensions disabled unless approved; preserve raw
-  evidence and falsifiable recommendations. Reuse `content_honesty`, `surface_schema`,
-  the SEO kit and existing structured-data tests; do not add duplicate checks or new Law
-  IDs until the audit proves a distinct, repeatable invariant that the current checks miss.
+  be indexed. The rendered surface schemas now require exactly one non-empty title, meta
+  description, absolute canonical URL, Open Graph title/description/URL for the five
+  current Brgen surface contracts, with good fixtures and focused negative tests. The full
+  hostname crawl remains open: record timestamped HTTP/redirect results, robots and sitemap
+  coverage, JSON-LD validity, indexability and measured performance where available.
+  Claude SEO may be used as a reviewed advisory crawler, with optional paid/API extensions
+  disabled unless approved; preserve raw evidence and falsifiable recommendations. Reuse
+  `content_honesty`, `surface_schema`, the SEO kit and existing structured-data tests; do
+  not add duplicate checks or new Law IDs until the audit proves a distinct, repeatable
+  invariant that the current checks miss.
 
 ## Cross-tree
 
