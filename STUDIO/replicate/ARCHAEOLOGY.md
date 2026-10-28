@@ -1,6 +1,6 @@
 # Replicate / Repligen archaeological recovery record
 
-Scope: `anon987654321/pub`, `pub2`, `pub3`, and the live `pub4/STUDIO/replicate` line. The earlier product name was **Repligen**; the live directory and executable are **Replicate**. This record preserves the old product ideas and exact lineage while distinguishing implemented behaviour from old assumptions that are no longer safe.
+Scope: `anon987654321/pub`, `pub2`, `pub3`, and the live `pub4/STUDIO/replicate` line. The earlier product name was **Repligen**. In `pub4` history it was renamed wholesale to **Preprompt**, then the current tool settled as **Replicate**. The live directory and executable are `STUDIO/replicate/replicate.rb`. This record preserves the old product ideas and exact lineage while distinguishing implemented behaviour from old assumptions that are no longer safe.
 
 ## Historical wording and product intent
 
@@ -20,9 +20,9 @@ The older repository has Replicate references in the assistant code and older me
 
 Sources:
 - [repligen.rb](https://github.com/anon987654321/pub2/blob/main/repligen/repligen.rb)
-- [README](https://github.com/anon987654321/pub2/blob/ad05242c97fff1b01450434974aad628d7de8628/repligen/repligen_README.md)
-- [model scraper](https://github.com/anon987654321/pub2/blob/ad05242c97fff1b01450434974aad628d7de8628/repligen/scrape_models.rb)
-- [Explore-page scraper](https://github.com/anon987654321/pub2/blob/ad05242c97fff1b01450434974aad628d7de8628/repligen/scrape_replicate_explore.rb)
+- [README](https://github.com/anon987654321/pub2/blob/main/repligen/repligen_README.md)
+- [model scraper](https://github.com/anon987654321/pub2/blob/main/repligen/scrape_models.rb)
+- [Explore-page scraper](https://github.com/anon987654321/pub2/blob/main/repligen/scrape_replicate_explore.rb)
 - [bootstrap and fallback commit](https://github.com/anon987654321/pub2/commit/08ce8802f9374ed62e9d1be61c664d2bf6b53bb8)
 
 The v7.3.0 material specified named `quick`, `video`, `full`, `creative` and `chaos` workflows; model-specific request formatting; output filenames with source/chain/time; cost checks; batch generation from prompt files; postpro handoff; LoRA training; SQLite operation history; caching/deduplication; retry/backoff and timeout handling; progress/webhook ideas; and a fallback when SQLite or Ferrum was unavailable. The README was duplicated at both `repligen/` and `multimedia/`; it is historical duplication, not a current directory contract.
@@ -35,16 +35,39 @@ The old model/scrape cost figures and model chain examples (Imagen3, Wan, MusicG
 
 Sources:
 - [Repligen README](https://github.com/anon987654321/pub3/blob/main/multimedia/repligen/README.md)
-- [interactive usage and menu](https://github.com/anon987654321/pub3/blob/835f9199d605b6a6ae1f32cd207919c115a06b47/multimedia/repligen/USAGE.md)
-- [interactive implementation](https://github.com/anon987654321/pub3/blob/835f9199d605b6a6ae1f32cd207919c115a06b47/multimedia/repligen/repligen.rb)
-- [CLI wrapper](https://github.com/anon987654321/pub3/blob/835f9199d605b6a6ae1f32cd207919c115a06b47/multimedia/repligen/bin/repligen)
-- [chain command](https://github.com/anon987654321/pub3/blob/835f9199d605b6a6ae1f32cd207919c115a06b47/multimedia/repligen/bin/repligen-chain)
-- [sync command](https://github.com/anon987654321/pub3/blob/835f9199d605b6a6ae1f32cd207919c115a06b47/multimedia/repligen/bin/repligen-sync)
-- [search command](https://github.com/anon987654321/pub3/blob/835f9199d605b6a6ae1f32cd207919c115a06b47/multimedia/repligen/bin/repligen-search)
+- [interactive usage and menu](https://github.com/anon987654321/pub3/blob/main/multimedia/repligen/USAGE.md)
+- [interactive implementation](https://github.com/anon987654321/pub3/blob/main/multimedia/repligen/repligen.rb)
+- [CLI wrapper](https://github.com/anon987654321/pub3/blob/main/multimedia/repligen/bin/repligen)
+- [chain command](https://github.com/anon987654321/pub3/blob/main/multimedia/repligen/bin/repligen-chain)
+- [sync command](https://github.com/anon987654321/pub3/blob/main/multimedia/repligen/bin/repligen-sync)
+- [search command](https://github.com/anon987654321/pub3/blob/main/multimedia/repligen/bin/repligen-search)
 
 The interactive menu had Generate with LoRA URL, Sync models, Search models, Show statistics, Run chain workflow and Exit. The README also documented scraping a very large catalogue, random 8–20 stage “masterpiece” chains, 5+ image LoRA training, SQLite full-text search and cost monitoring. The utility decomposition is valuable; the specific browser scraper and its historical count are not a source of truth.
 
-### `pub4`: strict provider boundary and named chains
+### `pub4`: Repligen → Preprompt → Replicate
+
+The intermediate rename is a substantive part of the history, not merely a spelling change.
+The [rename commit](https://github.com/anon987654321/pub4/commit/f048de714a26ca972707b5abe8aafe8559aa21c3)
+states that Repligen “named a service it called” while Preprompt named the tool's job of
+composing prompts and the model chains they feed. It deliberately removed aliases across the
+directory, entry point, module, tests, rake tasks, slash-command route, postpro handoff,
+environment variables, cache/config paths, deployment path helper and CSS class. The rename
+also warned that an old `REPLIGEN_*` setting left on the VPS would stop applying silently.
+The current `Replicate` name describes the provider-facing tool; neither old name should
+be revived as a second executable or hidden compatibility alias.
+
+The [reference-upload fix](https://github.com/anon987654321/pub4/commit/f6de2e2d0b60c7225dbbfaacb51dad7d0c9f15bb)
+is another important invariant: a local path is not a URL. A provider accepts remotely fetchable
+HTTPS/data references, not a developer's filesystem path; upload local images exactly once,
+pass already remote URLs and `data:` URIs through unchanged, and make dry-runs free. The
+same requirement applies both to one-shot image editing and inherited images inside chains,
+because discovering the defect after the first stage could leave a paid prediction behind.
+
+The [chain-validator correction](https://github.com/anon987654321/pub4/commit/be7c57109a1883f332de9792a61e83dcf9347474)
+records why stage validation must use each model's real input vocabulary: FLUX 2 accepts plural
+`input_images`, while earlier editors used singular `input_image`. Refusal must be based on
+the specific model schema, not a guessed universal key.
+
 
 The present implementation lives at `STUDIO/replicate/replicate.rb`; `MASTER/tools/replicate` is a compatibility symlink. Main components:
 - [replicate.rb](./replicate.rb): CLI, vocabularies, capability/request construction and offline `vocab-check`;
