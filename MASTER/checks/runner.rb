@@ -232,7 +232,7 @@ def explain
   end
   puts "  CHECK_AUDITOR_STRICT advisory"
   puts "  CHECK_STRICT_INCONCLUSIVE blocks inconclusive checks"
-  puts "  CHECK_STRICT_ERRORS blocks errored checks"
+  puts "  errored checks always make the run non-successful"
 
   puts "  CHECK_STRICT_SOFT promotes soft failures"
   puts "  CHECKS_FILE selects the check registry"
@@ -334,7 +334,7 @@ names.each_with_index do |name, index|
     log_retired("#{CHECK_UNIT} at #{CHECK_PARENT}: #{name} passed")
   else
     result.render
-    verdict = outcome == :errored ? "errored, blocked nothing" : outcome
+    verdict = outcome == :errored ? "errored, run cannot pass" : outcome
     down = outcome == :inconclusive ? Deploy::FlowCoverage.down_apps(result) : []
     say(["#{name} #{verdict}", ("skipped:app-down #{down.join(',')}" unless down.empty?),
          (result.gaps.values.first&.clause if outcome == :inconclusive)].compact.join(", "))
@@ -376,7 +376,7 @@ else
 end
 
 exit 1 if failed.any?
-exit 1 if errored.any? && Deploy::CheckResult.strict_errors?
+exit 1 if errored.any?
 exit 1 if inconclusive.any? && Deploy::CheckResult.strict_inconclusive?
 # An unmeasured check is the third state, neither pass nor block; check_chain reads 3 as skipped.
 exit 3 if inconclusive.any?

@@ -99,16 +99,17 @@ requires the other checks to catch them. The calibration check keeps the design
 metrics honest against fixed good and bad exemplars, which sit under
 `fixtures`.
 
-## Three outcomes
+## Four outcomes
 
 A check passes, fails or is inconclusive, and a check that raises is recorded as
 errored. The difference matters. A check that could not measure anything, because
 the browser was missing or the apps were down, is inconclusive. It must never
-read as a pass. The runner prints a summary of each outcome and exits non-zero
-on a failure. The environment variables `CHECK_STRICT_INCONCLUSIVE` and
-`CHECK_STRICT_ERRORS` make the other two block as well, and `CHECK_STRICT_SOFT`
-promotes soft findings to failures. Every run is appended to a ledger, and
-`--ledger` prints what the ledger holds.
+read as a pass. The runner prints a summary of each outcome and exits non-zero on a
+failure or errored check. A check crash remains a distinct `errored` outcome
+for diagnosis, but it can never count as a pass and cannot be made successful
+by an environment switch. `CHECK_STRICT_INCONCLUSIVE` makes an inconclusive
+result blocking, and `CHECK_STRICT_SOFT` promotes soft findings to failures.
+Every run is appended to a ledger, and `--ledger` prints what the ledger holds.
 
 The two flow checks, `user_flow` and `flow_journey`, say what happened to each
 app. An app whose port is closed is reported as skipped because the app is down,

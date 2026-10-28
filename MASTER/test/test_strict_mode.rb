@@ -10,11 +10,12 @@ class TestStrictMode < Minitest::Test
     assert_equal "0", Operator::StrictMode.flags(env)["CHECK_REQUIRE_LIVE"]
   end
 
-  def test_deploy_enables_all_four_strict_check_dimensions
+  def test_deploy_enables_all_three_configurable_strict_check_dimensions
     env = { "MASTER_STRICT" => "deploy" }
     assert Operator::StrictMode.enabled?(env)
-    assert_equal %w[1 1 1 1],
-      %w[CHECK_STRICT_INCONCLUSIVE CHECK_STRICT_ERRORS CHECK_STRICT_SOFT CHECK_REQUIRE_LIVE].map { |key| Operator::StrictMode.flags(env)[key] }
+    assert_equal %w[1 1 1],
+      %w[CHECK_STRICT_INCONCLUSIVE CHECK_STRICT_SOFT CHECK_REQUIRE_LIVE].map { |key| Operator::StrictMode.flags(env)[key] }
+    refute Operator::StrictMode.flags(env).key?("CHECK_STRICT_ERRORS")
   end
 
   def test_release_is_an_alias_for_deploy

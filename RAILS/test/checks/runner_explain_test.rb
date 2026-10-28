@@ -30,10 +30,11 @@ class RunnerExplainTest < Minitest::Test
   end
 
   def test_it_documents_the_auditor_strict_switch_and_the_strict_family
-    %w[CHECK_AUDITOR_STRICT CHECK_STRICT_INCONCLUSIVE CHECK_STRICT_ERRORS CHECK_STRICT_SOFT].each do |var|
+    %w[CHECK_AUDITOR_STRICT CHECK_STRICT_INCONCLUSIVE CHECK_STRICT_SOFT].each do |var|
       assert_match(/^  #{var}\s+\S/, explain, "#{var} undocumented in --explain")
     end
     assert_match(/CHECK_AUDITOR_STRICT.*advisory/, explain)
+    refute_match(/CHECK_STRICT_ERRORS/, explain)
   end
 
   def test_it_runs_no_check
