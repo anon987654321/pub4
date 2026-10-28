@@ -70,7 +70,23 @@ module Master
               # so it is not asked until one is set.
               next if key.nil? && !spec.key?("keyless")
 
-              hosted_ids(spec, key).each { |id| index["#{name}:#{id}"] ||= { base: spec["base"], key: } }
+              endpoint = {
+                base: spec["base"],
+                key:,
+                quota_bucket: (spec["quota_bucket"] || name).to_s,
+              }
+              concurrency_key = if key.nil? && spec.key?("keyless_max_concurrency")
+                                   "keyless_max_concurrency"
+                                 else
+                                   "max_concurrency"
+                                 end
+              if spec.key?(concurrency_key)
+                endpoint[:max_concurrency] = Integer(spec.fetch(concurrency_key))
+                raise ArgumentError, "openai_compatible.#{name}.#{concurrency_key} must be positive" unless endpoint[:max_concurrency].positive?
+                endpoint[:concurrency_wait_seconds] = Float(spec.fetch("concurrency_wait_seconds", 15))
+                raise ArgumentError, "openai_compatible.#{name}.concurrency_wait_seconds cannot be negative" if endpoint[:concurrency_wait_seconds].negative?
+              end
+              hosted_ids(spec, key).each { |id| index["#{name}:#{id}"] ||= endpoint }
             end
           end
 

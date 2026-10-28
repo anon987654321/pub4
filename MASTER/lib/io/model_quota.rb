@@ -8,7 +8,7 @@ require_relative "atomic_write"
 
 module Master
   module Io
-    # Per-model daily request budget for OpenRouter :free slugs (200/day/key typical).
+    # Per-model daily request budget for OpenRouter :free slugs; config is authoritative.
     # One of three quota objects, each answering a different question: this one
     # counts calls per free model per day; QuotaCheck says whether a paid
     # provider still has credit (test/test_quota_check.rb); ModelSkipCache
@@ -17,7 +17,7 @@ module Master
       extend self
       include ::Master::Io::AtomicWrite
       FREE_RE = /:free\z|\Aopenrouter\//.freeze
-      DEFAULT_DAILY = 200
+      DEFAULT_DAILY = 50
 
       @mutex = Mutex.new
 

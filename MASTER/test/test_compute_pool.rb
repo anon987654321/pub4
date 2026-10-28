@@ -39,6 +39,29 @@ class TestComputePool < Minitest::Test
     assert_equal 1, stat[:failures]
   end
 
+  def test_task_strengths_boost_matching_capabilities_only
+    @pool.instance_variable_set(:@rules, {
+      "task_strengths" => {
+        "code_generation" => ["coding"],
+        "architecture" => ["reasoning", "long_context", "coding"],
+      },
+    })
+    candidate = Master::CLI::Routing::ComputePool::Candidate.new(id: "deepseek-coder")
+
+    assert_in_delta 1.04, @pool.send(:task_factor, candidate, :code_generation), 0.001
+    assert_in_delta 1.08, @pool.send(:task_factor, candidate, :architecture), 0.001
+    assert_equal 1.0, @pool.send(:task_factor, candidate, :unknown_task)
+  end
+
+  def test_models_configuration_declares_task_specific_strengths
+    policy = Master.load_yaml(File.join(Master::ROOT, "data", "models.yml"))
+    strengths = policy.fetch("task_strengths")
+
+    assert_includes strengths.fetch("code_generation"), "coding"
+    assert_includes strengths.fetch("architecture"), "reasoning"
+    assert_includes strengths.fetch("chitchat"), "fast"
+  end
+
   def test_snapshot_is_independent
     @pool.record(model: "ollama:qwen3.5:27b", status: :success, latency_ms: 100)
     copy = @pool.snapshot

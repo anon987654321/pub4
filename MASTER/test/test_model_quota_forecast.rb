@@ -6,6 +6,18 @@ require "time"
 class ModelQuotaForecastTest < Minitest::Test
   Check = Master::Io::ModelQuota
 
+  def test_missing_openrouter_quota_uses_the_conservative_fifty_request_default
+    Master.stub(:models_config, {}) do
+      assert_equal 50, Check.daily_limit
+    end
+  end
+
+  def test_openrouter_quota_override_remains_authoritative
+    Master.stub(:models_config, { "openrouter" => { "daily_quota_per_model" => 17 } }) do
+      assert_equal 17, Check.daily_limit
+    end
+  end
+
   def test_forecast_projects_current_burn_to_the_whole_day
     now = Time.utc(2026, 9, 28, 12, 0, 0)
 

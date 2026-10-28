@@ -308,6 +308,33 @@ routes:
   fallback_default: default
   vision: vision
 
+# Additional bounded task-aware nudges inside the eligible, reachable pool.
+# These do not override routes, operation quality floors, quota checks, health,
+# or the fallback order. ComputePool applies at most a 12% preference for up to
+# three matching capabilities; observed success, latency, tool support, cost,
+# and context window still participate in the score.
+task_strengths:
+  chitchat: [fast]
+  help: [fast]
+  detect_lexical: [fast]
+  scan_comment_drift: [fast]
+  scan_semantic_violations: [fast]
+  scan_semantic_opportunities: [fast]
+  scan_adversarial: [reasoning]
+  explanation: [fast, long_context]
+  exploration: [fast, long_context]
+  code: [coding]
+  code_generation: [coding]
+  refactoring: [coding, reasoning]
+  architecture: [reasoning, long_context, coding]
+  review: [reasoning, coding]
+  council: [reasoning, long_context]
+  name_review: [fast, reasoning]
+  file_write: [coding, reasoning]
+  autoloop: [reasoning, coding]
+  sweep: [reasoning, coding]
+  destructive: [reasoning, coding]
+
 # Which model families read images, by id pattern (case-insensitive), for an
 # id the OpenRouter catalog has no input_modalities row for. `blind` wins over
 # `reads_images`. Io::LaneSelection.vision? is the one reader; the dispatcher
@@ -380,7 +407,9 @@ openrouter:
   # reality and read the 429s as flapping. See docs/free_compute.md for the
   # full landscape and its dates.
   daily_quota_per_model: 50
-  # Multiple keys rotate LRU to spread free-tier rate limits (20 req/min, 200/day each).
+  # Multiple operator-configured keys rotate on rate-limit outcomes. The local daily
+  # per-model guard remains conservative and is not multiplied by key count; shared
+  # account/organization limits still apply, and rotation must not defeat them.
   keys_env:
     - OPENROUTER_API_KEY
     - OPENROUTER_API_KEY_2
@@ -486,6 +515,11 @@ openai_compatible:
   llm7:
     base: https://api.llm7.io/v1
     key_env: [LLM7_API_KEY]
+    # Conservative per-process burst control for the keyless/free lane only.
+    # Keyed traffic follows the provider account's configured limits.
+    keyless_max_concurrency: 1
+    concurrency_wait_seconds: 20
+    quota_bucket: llm7
     keyless:
       tier: turbo
       usage_based_only: false

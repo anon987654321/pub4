@@ -901,7 +901,7 @@ end
       socket.close
     end
     dispatcher, = build_dispatcher
-    endpoint = { base: "http://127.0.0.1:#{server.addr[1]}/v1", key: "sk-free" }
+    endpoint = { base: "http://127.0.0.1:#{server.addr[1]}/v1", key: "sk-free", max_concurrency: 1, quota_bucket: "dispatcher-hosted-test" }
     router = Object.new
     router.define_singleton_method(:hosted_endpoint_for) { |id| endpoint if id.start_with?("freehost:") }
     dispatcher.instance_variable_set(:@model_router, router)
@@ -917,13 +917,22 @@ end
     server&.close
   end
 
-  def test_an_http_lane_names_a_refused_key_and_a_spent_balance
+  def test_an_http_lane_names_auth_budget_and_rate_limit_categories
     dispatcher, = build_dispatcher
-    response = ->(code) { Struct.new(:code, :body).new(code, "no") }
+    response_class = Struct.new(:code, :body, :fields) do
+      def get_fields(name)
+        fields[name]
+      end
+    end
+    response = ->(code, fields = {}) { response_class.new(code, "no", fields) }
 
     assert_equal :no_api_key, dispatcher.send(:http_lane_error, "replicate", response.call("401")).category
     assert_equal :budget, dispatcher.send(:http_lane_error, "replicate", response.call("402")).category
     assert_equal :provider_error, dispatcher.send(:http_lane_error, "replicate", response.call("503")).category
+
+    limited = dispatcher.send(:http_lane_error, "freehost", response.call("429", "Retry-After" => ["30"]))
+    assert_equal :rate_limit, limited.category
+    assert_match(/Retry-After: 30/, limited.message)
   end
 
   private

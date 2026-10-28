@@ -1,102 +1,130 @@
-# Free compute in MASTER — the design of record
+# Free compute in MASTER — implementation status
 
-Written 2026-10-27 from the operator's ask ("are there any clever ways we can
-add free models / get free compute in MASTER? anything exciting on GitHub,
-ar5iv.org, etc.") and a same-day research pass over the providers' own docs.
-Every number carries its date; every lane carries its gate. This file is the
-record, not a promise: no lane here was callable at write time (no network, no
-Ruby runtime in the writing session), and the gates say exactly what turns
-each one from prose into wiring.
+Updated 2026-10-28 against the live routing code. This document separates
+implemented paths from proposals: a configured provider is not proof that it is
+reachable, free at the point of use, or unlimited.
 
-## What already runs free
+## The practical answer
 
-The tree already rides free compute three ways, and none of them are new:
+There is no unlimited free inference switch. Reliable free capacity comes from
+independent, provider-permitted free tiers plus transparent quota accounting,
+fallback, and locally owned compute. Limits, latency, privacy terms, and
+availability still apply.
 
-- **OpenRouter free slugs.** `data/models.yml` pins
-  `nvidia/nemotron-3-super-120b-a12b:free` as the free anchor and
-  `openrouter.use_live_catalog: true` merges every live `:free` slug from the
-  SQLite provider catalog (pool.rb refreshes it when a day old). Key rotation
-  (`OPENROUTER_API_KEY` ×3, LRU) spreads per-key limits.
-- **Keyless web-chat.** The ferrum lane (`web-chat:` prefix) drives chat
-  sites through headless Chrome with no API key at all — ToS-sensitive and
-  correctly gated behind `MASTER_WEB_CHAT` / keyless auto-activation, never
-  a default when paid keys exist.
-- **Local models.** `ollama:` ids route to the operator's own hardware —
-  zero marginal cost, zero logging, the only lane whose quota is the RAM.
+## Already implemented in MASTER
 
-## The one executable correction (landed with this file)
+- **OpenRouter free catalog.** `data/models.yml` enables live `:free` model
+  discovery through the SQLite provider catalog and configures a daily
+  per-model guard. The router's key rotator supports the explicitly configured
+  OpenRouter key variables and rotates after rate-limit/quota outcomes.
+- **Hosted OpenAI-compatible providers.** `ModelRouter::HostedEndpoints`
+  discovers models from the `openai_compatible` section. The current config
+  includes LLM7 (with a keyless catalogue filter), Groq, Cerebras, and NVIDIA
+  NIM. Groq, Cerebras, and NVIDIA only become available when the operator
+  configures the relevant API key; quota and availability depend on each
+  provider's current terms and account.
+- **A user-owned OpenAI-compatible gateway.** Setting
+  `MASTER_LLM_GATEWAY_URL` opts a local gateway into the same model discovery,
+  health, and fallback route. Remote plaintext HTTP is refused; loopback HTTP
+  is accepted.
+- **Browser chat.** Existing `web-chat:` lanes are an explicitly gated,
+  best-effort browser fallback. They are fragile, may have provider-specific
+  terms, and are not treated as an API entitlement.
+- **Local inference.** The configured Ollama lane is restricted to the
+  explicitly allowlisted local Gemma model. This uses the operator's hardware
+  and has no API token charge, but is bounded by available RAM, CPU/GPU,
+  throughput, and power.
+- **Cooldown and health.** The existing lane quota, model skip, provider health,
+  and fallback components record failures and stop repeatedly asking a lane
+  that just refused or exhausted its quota. These are finite safeguards, not a
+  promise that every fallback is always online.
 
-`openrouter.daily_quota_per_model` was 200 against a "~200/day/key" comment.
-OpenRouter's own terms as of 2026-10-27: **free models default to 50
-requests/day per model**, and a one-time $10 credit raises the allowance to
-**1,000/day**. The router used the stale number to decide when to skip a
-slug, so it hammered four times past the real limit and read the resulting
-429s as provider flapping. Corrected to 50 in the same commit as this file.
-Also recorded there: **GitHub Models was fully retired 2026-07-30**
-(playground, catalog, inference API and BYOK all withdrawn; GitHub points
-new work at Azure AI Foundry) — the guard comment exists so no future pass
-adds a dead provider to a fallback chain, the exact failure mode
-`tools/model_catalog_check.rb` was written to catch.
+## Quota accounting contract
 
-## The 2026 free-tier landscape (dated numbers)
+`openrouter.daily_quota_per_model` is configured as **50** in
+`data/models.yml`. The executable fallback in `Io::ModelQuota` now uses the
+same value when that setting is absent or invalid, rather than silently falling
+back to 200. The configuration remains authoritative when it contains a
+positive override. Regression tests cover both the conservative fallback and
+the configured override.
 
-Provider terms move; the dates make drift visible.
+The local counter is deliberately conservative: it does not multiply its
+per-model allowance by the number of configured keys. A provider may impose
+shared limits at account, organization, IP, model, or endpoint level; rotating
+credentials does not erase those boundaries. Provider-issued 429 responses,
+reset headers, and account policy remain authoritative.
 
-| Lane | Free allowance (as of) | Notes |
+## Task-aware selection versus failover
+
+MASTER already has a task-selection layer in addition to its resilience chain:
+
+- `ModelRouter::IntentClassification` classifies natural-language work into
+  chitchat, code generation, refactoring, architecture, review, explanation,
+  or exploration using deterministic patterns.
+- `Review::Agent::ModelSelector` uses that classification when no explicit
+  task type was supplied, then asks the existing router for the matching chain.
+- `data/models.yml#routes` chooses the tier for each task. The existing
+  `operation_constraints` declare hard quality floors for operations such as
+  file writes, sweeps, architecture, and destructive work.
+- `ComputePool` ranks eligible models using configured quality, speed, cost,
+  context window, tool support, and measured success/latency/capability signals.
+  Its `task_strengths` hook existed but had no declarative entries; the
+  configuration now activates modest, explainable capability nudges for common
+  task types. The preference is bounded to 4% per matching capability and at
+  most three matches; it does not override availability, health, hard quality
+  floors, quotas, or the fallback order.
+- If the first model fails, the established fallback and cooldown machinery
+  remains responsible for retrying another eligible lane. Selection and
+  resilience are complementary layers, not competing routers.
+
+This is deterministic task-aware routing, not an LLM judge. A separate model
+judge is deliberately not inserted before every request: it would add another
+provider call, latency, and an additional failure mode, and has not yet shown
+that its expected savings outweigh those costs. If a later benchmark justifies
+a judge, it should be opt-in and measured against this deterministic baseline.
+
+## Local provider concurrency
+
+A small in-process gate can enforce an operator-declared simultaneous-request
+limit for an explicitly configured hosted endpoint. It shares a bucket across
+models when those models consume the same provider/account concurrency budget,
+rejects conflicting limits for the same bucket, and returns a typed saturation
+failure after a bounded wait so existing fallback can continue. This is a
+local scheduling limit, not a claim about the provider's token quota or remote
+rate-limit policy. The current LLM7 keyless entry is conservatively limited to
+one in-flight request; remote 429 responses and provider terms remain
+authoritative. Additional endpoints should receive such a cap only when a
+documented or deliberately conservative operator limit is available.
+
+## How the newer suggestions fit
+
+| Proposal | Status in MASTER | Decision |
 | --- | --- | --- |
-| OpenRouter free models | 50 RPD per model; $10 one-time credit → 1,000 RPD (2026-10) | `openrouter/free` router + model fallback chains; free providers may log prompts |
-| Groq free tier | llama-3.1-8b-instant 30 RPM / 14,400 RPD / 500K TPD; llama-3.3-70b 1,000 RPD; gpt-oss-120b/20b 1,000 RPD (2026-03 docs snapshot) | 72× the OpenRouter per-key allowance; OpenAI-compatible endpoint; cached tokens don't count against limits |
-| Groq Whisper STT | whisper-large-v3 / -turbo: 20 RPM / 2,000 RPD / 7,200 audio-seconds per hour (2026-03) | The genuinely clever one for MASTER: a free server-side STT lane beside the client-side whisper_mel.js path |
-| OVHcloud AI Endpoints | keyless anonymous 2 RPM per IP per model; 400 RPM with a key (2026-10) | No signup at all; EU-hosted; a genuine emergency last resort, not a workhorse |
-| Kilo Code free pool | 200 req/hour per IP, no key (2026-10) | Router may log prompts; trial-grade |
-| LLM7.io free token | 1 RPS / 60 RPM / 250 req/h / 100K tokens per 24h (2026-10) | Catalog rotates frequently |
-| Ollama Cloud | session limits reset every 5h, weekly limits (2026-10) | OpenAI-compatible at ollama.com/v1 |
-| Alibaba API-Inference | 2,000 RPD free (2026-10) | Requires real-name verification |
-| Gemini API free tier | slashed 2025-12 — headline models cut to ~20 RPD (2026-10) | Spend-based caps on top; fine for a trickle, not a lane |
-| GitHub Models | **retired 2026-07-30** | Not a lane. Guard comment lives in models.yml |
+| Pool free models from multiple providers | Existing provider/model fallback already does this | Prefer independent supported providers and measured availability over a second router |
+| OpenRouter multi-key rotation | Implemented for configured OpenRouter keys | Keep quota accounting conservative; do not infer multiplied capacity |
+| Generic local key-pool proxy | Can be reached through `MASTER_LLM_GATEWAY_URL` | Optional and operator-owned; inspect its credential, quota, and logging behavior |
+| Puter.js browser bridge | Not implemented | Verify the supported interface, account terms, and user-pays behavior before adding an adapter |
+| Fingerprint-rotated browser sessions | Not implemented | Do not impersonate browser identities or add jitter to defeat rate limits |
+| Private GLM/mobile API proxies and token harvesting | Not implemented | Do not capture or replay browser/app credentials or depend on undocumented private APIs |
+| GitHub Actions as an inference server | Not implemented | Actions minutes and platform policies are finite. Do not turn public CI into an unbounded prompt-serving endpoint; use runners for bounded repository CI/tasks instead |
+| Prompt-injection-driven CI execution | Out of scope | Never pass untrusted model output into shell commands or broaden workflow permissions to obtain compute |
 
-Sources: OpenRouter and Groq official docs; docs.github.com retirement
-notice; provider changelogs as listed in the pass-3 ideation record
-(`data/ideations/master_web_dilla_free.yml`).
+The seven-layer sketch is a useful way to classify possible resources, but it
+is not seven independent entitlements. A local proxy may funnel several keys
+into one shared quota, browser sessions may share IP/account limits, and public
+CI is subject to usage rules and concurrency limits. Adding layers without
+tracking the actual quota boundary would make the pool look larger without
+making it more reliable.
 
-## The clever lanes, ranked
+## Future admission gates
 
-1. **Groq as the volume lane** (design only; gate: a key + wiring on a Ruby
-   host). An OpenAI-compatible base URL is the whole trick — RubyLLM 2 owns
-   the registry, and MASTER already supplies only the OpenRouter
-   unknown-model fallback (`lib/io/ruby_llm_patch.rb`). A `groq:` section
-   mirroring the openrouter one (keys_env, its own daily quota rows) plus the
-   8B workhorse at 14,400 RPD would out-carry every OpenRouter free key
-   combined. Its free Whisper is the second prize: MASTER does STT
-   client-side (whisper_mel.js, smart_turn) — a Groq lane would give the
-   server a free transcription fallback for degraded clients.
-2. **OVH as the last resort** (gate: none — it is keyless). 2 RPM is
-   nothing per minute and everything in an outage: a lane that answers when
-   every keyed lane has burned its day. Rate-limit awareness belongs in the
-   router before this is safe to leave on.
-3. **OpenRouter free with the corrected quota** (landed). With 50/day as
-   the truth, the router skips honestly; the $10 unlock note is the operator
-   lever when 50 is too few.
-4. **arXiv/ar5iv as the knowledge lane** (pattern, not code). ar5iv serves
-   full-text HTML of arXiv papers — the citation habit `lib/core/model.rb`
-   already exercises (arXiv 2408.02442 in the schema comment) generalises:
-   research claims in comments and docs should name the arXiv id, and ar5iv
-   is the free full-text endpoint an operator can read or fetch by hand.
-   Deliberately NOT built: a scheduled harvester crawling papers into a
-   corpus would be unbounded fetches on a 1-vCPU, 1 GB box — the resource
-   crisis CLAUDE.md documents, re-run on purpose. The knowledge ask is
-   served by recording where the full text lives, not by feeding a crawler
-   nobody asked to maintain.
+A new provider adapter belongs in MASTER only after these questions have
+deterministic answers: Is the endpoint supported and documented? Which exact
+quota boundary applies? How are 429, 401/403, retry-after, and reset windows
+classified? What happens when local quota state is unreadable? Does the adapter
+log prompts or credentials? Is it opt-in when the provider's terms require it?
+Is it covered by routing, cooldown, privacy, and failure tests?
 
-## Gates
-
-- **Groq wiring**: first Ruby host with network + a `GROQ_API_KEY`; add the
-  `groq:` section, its quota rows, and extend `tools/model_catalog_check.rb`
-  reach (its OpenRouter-only `live_ids` needs a second source or a
-  Groq-specific check before groq ids in chains are verifiable).
-- **OVH lane**: same host, plus rate-limit awareness in the router (2 RPM is
-  below the router's retry cadence today).
-- **Quota truth**: re-check provider terms on each pass; the dates in the
-  table above are the comparison points.
-- **GitHub Models**: none. It is retired. The comment in models.yml is the
-  guard.
+A provider catalog entry alone is not a successful runtime probe. Any change to
+the pool should preserve the existing route policy, budget limits, operation
+quality floors, and evidence requirements.

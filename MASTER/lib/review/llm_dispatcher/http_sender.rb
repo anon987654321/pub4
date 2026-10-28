@@ -3,6 +3,7 @@
 require "json"
 require "net/http"
 require "uri"
+require_relative "../../io/provider_concurrency"
 
 module Master
   module Review
@@ -40,7 +41,18 @@ module Master
           endpoint = @model_router.hosted_endpoint_for(selected_model)
           name, model = selected_model.split(":", 2)
           headers = endpoint[:key] ? { "Authorization" => "Bearer #{endpoint[:key]}" } : {}
-          openai_chat(endpoint[:base], model, messages, sys:, temperature:, headers:, lane: name)
+          request = lambda do
+            openai_chat(endpoint[:base], model, messages, sys:, temperature:, headers:, lane: name)
+          end
+          return request.call unless endpoint[:max_concurrency]
+
+          Io::ProviderConcurrency.with_slot(
+            bucket: endpoint[:quota_bucket] || name,
+            limit: endpoint[:max_concurrency],
+            wait_seconds: endpoint.fetch(:concurrency_wait_seconds, 15),
+          ) { request.call }
+        rescue Io::ProviderConcurrency::Saturated
+          Result.err("#{name}: concurrency budget is saturated; trying the next lane", category: :timeout)
         end
 
         def openai_chat(base, model, messages, sys:, temperature:, lane:, headers: {})
@@ -99,6 +111,11 @@ module Master
         # moves for the chain, so each gets the category that makes it.
         def http_lane_error(lane, response)
           said = "#{lane} #{response.code}: #{response.body.to_s[0, 300]}"
+          retry_after = response.get_fields("Retry-After")&.first if response.respond_to?(:get_fields)
+          # Preserve numeric provider cooldown hints in the diagnostic passed to
+          # LaneReply/LaneQuota. Ignore HTTP-date values here; never guess a
+          # reset interval from an arbitrary date string.
+          said += " Retry-After: #{retry_after}" if response.code == "429" && retry_after.to_s.match?(/\A\d+\z/)
           category = { "401" => :no_api_key, "402" => :budget, "404" => :model_missing, "429" => :rate_limit }
                      .fetch(response.code) { response.code.start_with?("4") ? :validation : :provider_error }
           Result.err(said, category:)
