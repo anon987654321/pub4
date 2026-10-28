@@ -78,10 +78,10 @@ class DillaSoundFxTest < Minitest::Test
       FileUtils.mkdir_p(bin)
       capture = File.join(directory, "argv.txt")
       fake_ruby = File.join(bin, "ruby")
-      File.write(fake_ruby, "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$DILLA_CAPTURED_ARGS\"\n")
+      File.write(fake_ruby, "#!/bin/sh\nif [ \"${1:-}\" = \"-rjson\" ]; then\n  exec \"$DILLA_REAL_RUBY\" \"$@\"\nfi\nprintf \"%s\\n\" \"$@\" > \"$DILLA_CAPTURED_ARGS\"\n")
       File.chmod(0o755, fake_ruby)
       env = { "PATH" => [bin, "/usr/bin", "/bin"].join(File::PATH_SEPARATOR),
-              "DILLA_CAPTURED_ARGS" => capture }
+              "DILLA_CAPTURED_ARGS" => capture, "DILLA_REAL_RUBY" => RbConfig.ruby }
 
       _output, status = Open3.capture2e(env, "/bin/sh", hook, "complete")
       assert status.success?
@@ -94,6 +94,43 @@ class DillaSoundFxTest < Minitest::Test
     end
   end
 
+  def test_hook_adapter_maps_claude_and_opencode_json_events
+    hook = File.join(DIR, "sound_fx_hook.sh")
+    Dir.mktmpdir("dilla-fx-hook-json-") do |directory|
+      bin = File.join(directory, "bin")
+      FileUtils.mkdir_p(bin)
+      capture = File.join(directory, "argv.txt")
+      fake_ruby = File.join(bin, "ruby")
+      fake = [
+        "#!/bin/sh",
+        'if [ "${1:-}" = "-rjson" ]; then',
+        '  exec "$DILLA_REAL_RUBY" "$@"',
+        "fi",
+        'printf "%s\\n" "$@" > "$DILLA_CAPTURED_ARGS"',
+        ""
+      ].join("\\n")
+      File.write(fake_ruby, fake)
+      File.chmod(0o755, fake_ruby)
+      env = { "PATH" => [bin, "/usr/bin", "/bin"].join(File::PATH_SEPARATOR),
+              "DILLA_CAPTURED_ARGS" => capture, "DILLA_REAL_RUBY" => RbConfig.ruby }
+
+      claude_payload = JSON.generate("hook_event_name" => "SessionStart")
+      _output, status = Open3.capture2e(env, "/bin/sh", hook, stdin_data: claude_payload)
+      assert status.success?
+      assert_equal [SCRIPT, "sound-fx", "start", "--play"], File.readlines(capture, chomp: true)
+
+      FileUtils.rm_f(capture)
+      opencode_payload = JSON.generate("event" => { "type" => "session.idle" })
+      _output, status = Open3.capture2e(env, "/bin/sh", hook, stdin_data: opencode_payload)
+      assert status.success?
+      assert_equal [SCRIPT, "sound-fx", "complete", "--play"], File.readlines(capture, chomp: true)
+
+      FileUtils.rm_f(capture)
+      _output, status = Open3.capture2e(env, "/bin/sh", hook, stdin_data: "{not-json")
+      assert status.success?
+      refute File.exist?(capture), "invalid payload must not invoke Dilla or the player"
+    end
+  end
   def test_cli_writes_one_shot_wav_and_refuses_overwrite
     Dir.mktmpdir("dilla-fx-test-") do |directory|
       path = File.join(directory, "complete.wav")
