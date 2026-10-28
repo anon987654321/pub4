@@ -1,13 +1,7 @@
 # frozen_string_literal: true
 
-# Compatibility entry point. The implementation and coordinator identity live
-# under Fix::Kernel; legacy callers keep the historical require path and constant.
+# Compatibility entry point. The canonical implementation and identity live
+# under Fix::Kernel; the adapter installs the legacy constant before its child
+# modules load so every pass module reopens the same class object.
 require_relative "kernel"
 require_relative "kernel/convergence_adapter"
-
-module Master
-  module Fix
-    remove_const(:FixLoop) if autoload?(:FixLoop, false)
-    const_set(:FixLoop, Kernel::ConvergenceAdapter) unless const_defined?(:FixLoop, false)
-  end
-end
