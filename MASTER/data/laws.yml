@@ -4843,8 +4843,10 @@ law_catalogue:
       severity: warn
       languages: [zsh]
 
-# Style contracts shared by postpro, replicate and dilla. These laws govern
-# provenance and validation; aesthetic choices remain operator-owned.
+# Style contracts shared by postpro, replicate and dilla. These domain policies
+# are enforced by STUDIO's registry and modality adapters. They enter MASTER's
+# priority constitutional parity gate only if matching MASTER detector coverage
+# is added; aesthetic choices remain operator-owned.
 STYLE_REGISTRY:
   tier: policy
   severity: error
