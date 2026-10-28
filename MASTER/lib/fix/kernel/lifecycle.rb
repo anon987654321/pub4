@@ -31,6 +31,7 @@ module Master
 
         def build_repair_loop(**options)
           require_relative "repair_adapter" unless defined?(Kernel::RepairAdapter)
+          Master::Fix.const_set(:RepairLoop, Kernel::RepairAdapter) unless Master::Fix.const_defined?(:RepairLoop, false)
           Kernel::RepairAdapter.new(**options, kernel: self)
         end
 
