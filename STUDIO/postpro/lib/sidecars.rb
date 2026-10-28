@@ -134,6 +134,7 @@ def write_grade_sidecar(input_path, output_path, presets, original, processed)
     uncanny: uncanny_readings(original, processed),
     capabilities: Studio::AnalogCapabilities.for(:postpro).map { |entry| entry[:id] },
   }
+  data[:stabilization] = $postpro_stabilization_report if $postpro_stabilization_report
   write_sidecar(output_path, data)
 end
 
@@ -159,6 +160,7 @@ def write_chain_sidecar(input_path, output_path, chain, take: nil, original: nil
       after: Postpro::QualityAnalyzer.report_image(processed),
       interpretation: "sampled pixel diagnostics only; does not score composition, focus or intent"
     }
+    data[:stabilization] = $postpro_stabilization_report if $postpro_stabilization_report
     data[:uncanny] = uncanny_readings(original, processed)
   end
   write_sidecar(output_path, data)
