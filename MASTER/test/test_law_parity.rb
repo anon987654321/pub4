@@ -6,11 +6,36 @@ require "yaml"
 require_relative "../lib/fix/law_parity"
 
 class TestLawParity < Minitest::Test
-  # RENDERED_VALUES was the one uncovered priority Law; it has a definition under law/ now.
-  def test_all_priority_constitutional_laws_are_audited
+  # A Law.define with no detect is not a detector. Six priority Laws only ask a
+  # model question; they are semantic coverage and stay gaps until a detector
+  # or an authorised deferral lands. When one gains a detector, move it.
+  SEMANTIC_ONLY = %w[SINGULARITY LINEARITY PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES].freeze
+
+  def test_priority_coverage_is_counted_from_real_detectors
+    coverage = Master::Fix::LawParity.new.coverage
+
+    assert_equal %w[CAPABILITY_STATUS_MUST_BE_TRUTHFUL INTER_MODEL_CONTRACT],
+                 coverage.select { |_id, kind| kind == :deterministic }.keys.sort
+    assert_equal({ "ROBUSTNESS" => :tagged }, coverage.select { |_id, kind| kind == :tagged })
+    assert_equal SEMANTIC_ONLY.sort, coverage.select { |_id, kind| kind == :semantic_only }.keys.sort
+  end
+
+  def test_semantic_only_laws_are_reported_as_gaps
+    parity = Master::Fix::LawParity.new
+    gaps = parity.call
+
+    assert_equal SEMANTIC_ONLY.sort, gaps.map(&:id).sort, parity.report
+    assert gaps.all? { |gap| gap.reason.start_with?("semantic only") }
+    assert_match(/deterministic=2 semantic_only=6 tagged=1/, parity.report)
+  end
+
+  # The self-naming detector_ids rows in law_enforcement.yml (SINGULARITY
+  # names SINGULARITY) count only when that id runs without a model.
+  def test_a_definition_without_detect_is_not_a_detector
     parity = Master::Fix::LawParity.new
 
-    assert_empty parity.call, parity.report
+    refute_includes parity.send(:registered_detector_ids), "singularity"
+    assert_includes parity.send(:registered_detector_ids), "capability_status_must_be_truthful"
   end
 
   def test_priority_ceiling_covers_the_highest_current_constitutional_priority

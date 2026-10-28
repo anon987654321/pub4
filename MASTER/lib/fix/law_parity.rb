@@ -6,8 +6,11 @@ require "set"
 module Master
   module Fix
     # Asserts priority-ranked constitutional entries in data/laws.yml are not
-    # prose-only: each must have an executable detector, tag coverage, or an
-    # explicit deferred enforcement with a future expiry.
+    # prose-only: each must have a deterministic detector (a Law.define with a
+    # detect block, or a scan-registry detector under its id), a registry
+    # detector carrying its tag, or an explicit deferred enforcement with a
+    # future expiry. A Law that only asks a model question is semantic coverage,
+    # reported apart from the gaps it still is.
     class LawParity
       # Keep the ceiling wide enough to include every priority-ranked
       # constitutional row currently declared. The parity gate must expose
@@ -49,10 +52,17 @@ module Master
 
       def report
         gaps = call
-        return "law_parity: ok (priority<=#{MAX_PRIORITY} constitutional covered)" if gaps.empty?
+        tally = coverage.values.tally.sort.map { |kind, count| "#{kind}=#{count}" }.join(" ")
+        return "law_parity: ok (priority<=#{MAX_PRIORITY} constitutional covered; #{tally})" if gaps.empty?
 
         lines = gaps.map { |g| "  #{g.id} (priority #{g.priority}): #{g.reason}" }
-        "law_parity: #{gaps.size} gap(s)\n#{lines.join("\n")}"
+        "law_parity: #{gaps.size} gap(s) (#{tally})\n#{lines.join("\n")}"
+      end
+
+      # How each priority Law is covered: :deterministic, :tagged, :deferred,
+      # :semantic_only (an ask with no detector) or :none.
+      def coverage
+        priority_constitutional_entries.to_h { |id, spec| [id, coverage_kind(id, spec)] }
       end
 
       private
@@ -79,20 +89,24 @@ module Master
         end
       end
 
+      def coverage_kind(id, spec)
+        return :deferred if deferred_valid?(spec)
+        return :deterministic if detector_covered?(id, spec, registered_detector_ids)
+        return :tagged if tag_covered?(id, spec, registered_tag_names)
+
+        semantic_ids.include?(id.to_s) ? :semantic_only : :none
+      end
+
       def covered?(id, spec, detectors, tags)
-        return true if deferred_valid?(spec)
-        return true if detectors.include?(id.to_s)
-        return true if detectors.include?(id.to_s.downcase)
+        deferred_valid?(spec) || detector_covered?(id, spec, detectors) || tag_covered?(id, spec, tags)
+      end
 
-        explicit = Array(spec["detector_ids"]).map(&:to_s)
-        return true if explicit.any? { |d| detectors.include?(d) }
+      def detector_covered?(id, spec, detectors)
+        ([id.to_s] + Array(spec["detector_ids"]).map(&:to_s)).any? { |name| detectors.include?(name.downcase) }
+      end
 
-        if spec["coverage"].to_s == "tagged_detectors"
-          tag = id.to_s.upcase
-          return true if tags.include?(tag) || tags.include?(id.to_s)
-        end
-
-        false
+      def tag_covered?(id, spec, tags)
+        spec["coverage"].to_s == "tagged_detectors" && tags.include?(id.to_s.upcase)
       end
 
       def deferred_valid?(spec)
@@ -114,15 +128,24 @@ module Master
           return "deferred expired on #{exp}"
         end
 
+        return "semantic only: the Law asks a model question and has no deterministic detector" if
+          semantic_ids.include?(id.to_s)
+
         "no detector, detector_ids, tagged coverage, or valid deferred enforcement"
       end
 
+      # Ids, downcased, that something can run without a model: a Law.define
+      # whose detect is set, or a scan-registry detector. A definition that only
+      # asks or practises is not one, and neither is a Law.define in source text.
       def registered_detector_ids
-        ids = Set.new
-        ids.merge(law_pack_ids)
-        ids.merge(scan_registry_ids)
-        ids.merge(law_define_ids_from_source)
-        ids
+        @registered_detector_ids ||= (law_pack_ids + scan_registry_ids).to_set(&:downcase)
+      end
+
+      def semantic_ids
+        @semantic_ids ||= begin
+          law_pack_ids
+          ::Law.definitions.values.select { |law| law.ask && !law.detect }.to_set { |law| law.id.to_s }
+        end
       end
 
       def registered_tag_names
@@ -135,7 +158,7 @@ module Master
         ids = Set.new
         require_relative "../../law/definition" unless defined?(::Law)
         ::Law.load_all if ::Law.respond_to?(:load_all)
-        ::Law.definitions.each_key { |key| ids << key.to_s } if defined?(::Law) && ::Law.respond_to?(:definitions)
+        ::Law.definitions.each_value { |law| ids << law.id.to_s if law.detect }
         ids
       rescue StandardError, ScriptError => e
         Master::Ground::Swallow.log(e, context: "Fix::LawParity.law_pack_ids", severity: :load_bearing)
@@ -143,18 +166,20 @@ module Master
       end
 
       def scan_registry_ids
-        ids = Set.new
-        return ids unless File.file?(File.expand_path("../review/scan/law.rb", __dir__))
+        return Set.new unless File.file?(File.expand_path("../review/scan/law.rb", __dir__))
 
         require_relative "../review/scan/law_dsl"
-        Master::Review::Scan::Law.registry.each do |klass|
-          declaration = klass.respond_to?(:declaration) ? klass.declaration : nil
-          ids << declaration[:id].to_s if declaration && declaration[:id]
-        end
-        ids
+        Master::Review::Scan::Law.registry.filter_map { |klass| registry_id(klass) }.to_set
       rescue StandardError, ScriptError => e
         Master::Ground::Swallow.log(e, context: "Fix::LawParity.scan_registry_ids", severity: :load_bearing)
         raise
+      end
+
+      # LawDSL classes carry their id as dsl_id; declared classes in their declaration.
+      def registry_id(klass)
+        id = klass.dsl_id if klass.singleton_class.method_defined?(:dsl_id)
+        id ||= klass.declaration&.[](:id)
+        id&.to_s
       end
 
       def scan_registry_tags
@@ -168,24 +193,6 @@ module Master
         tags
       rescue StandardError, ScriptError => e
         Master::Ground::Swallow.log(e, context: "Fix::LawParity.scan_registry_tags", severity: :load_bearing)
-        raise
-      end
-
-      def law_define_ids_from_source
-        ids = Set.new
-        dir = File.expand_path("../../law", __dir__)
-        return ids unless File.directory?(dir)
-
-        Dir.glob(File.join(dir, "*.rb")).each do |file|
-          content = File.read(file, mode: "r:bom|utf-8", invalid: :replace, undef: :replace)
-          content.each_line do |line|
-            match = line.match(/Law\.define\(:(\w+)/)
-            ids << match[1] if match
-          end
-        end
-        ids
-      rescue StandardError, ScriptError => e
-        Master::Ground::Swallow.log(e, context: "Fix::LawParity.law_define_ids_from_source", severity: :load_bearing)
         raise
       end
     end

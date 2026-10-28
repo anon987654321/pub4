@@ -7,24 +7,20 @@
 # expires_on: required when deferred (ISO date)
 
 CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
-  severity: error
   enforcement: active
   detector_ids:
     - CAPABILITY_STATUS_MUST_BE_TRUTHFUL
 
 ROBUSTNESS:
-  severity: error
   enforcement: active
   coverage: tagged_detectors
 
 SINGULARITY:
-  severity: error
   enforcement: active
   detector_ids:
     - SINGULARITY
 
 LINEARITY:
-  severity: error
   enforcement: active
   detector_ids:
     - LINEARITY
