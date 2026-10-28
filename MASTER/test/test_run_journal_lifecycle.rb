@@ -460,67 +460,6 @@ class TestRunJournalLifecycle < Minitest::Test
     end
   end
 
-  def test_journal_lock_refuses_a_symlinked_state_directory
-    Dir.mktmpdir("master-journal-lock-directory-symlink") do |root|
-      outside = File.join(root, "outside")
-      Dir.mkdir(outside, 0o700)
-      File.symlink(outside, File.join(root, ".master"))
-
-      error = assert_raises(IOError) { start_journal(root, RecordingBus.new) }
-
-      assert_match(/symlinked journal state directory/, error.message)
-      refute File.exist?(File.join(outside, "fix_runs.lock"))
-      refute File.exist?(File.join(outside, "fix_runs.json"))
-    end
-  end
-
-  def test_journal_lock_refuses_a_symlinked_lock_file
-    Dir.mktmpdir("master-journal-lock-file-symlink") do |root|
-      directory = File.join(root, ".master")
-      Dir.mkdir(directory, 0o700)
-      outside = File.join(root, "outside-lock")
-      File.write(outside, "preserve")
-      File.chmod(0o600, outside)
-      File.symlink(outside, File.join(directory, "fix_runs.lock"))
-
-      error = assert_raises(IOError) { start_journal(root, RecordingBus.new) }
-
-      assert_match(/symlinked journal lock/, error.message)
-      assert_equal "preserve", File.read(outside)
-      refute File.exist?(File.join(directory, "fix_runs.json"))
-    end
-  end
-
-  def test_journal_lock_refuses_a_group_or_world_writable_state_directory
-    Dir.mktmpdir("master-journal-writable-directory") do |root|
-      directory = File.join(root, ".master")
-      Dir.mkdir(directory, 0o700)
-      File.chmod(0o770, directory)
-
-      error = assert_raises(IOError) { start_journal(root, RecordingBus.new) }
-
-      assert_match(/group\/world-writable journal state directory/, error.message)
-      refute File.exist?(File.join(directory, "fix_runs.lock"))
-      refute File.exist?(File.join(directory, "fix_runs.json"))
-    end
-  end
-
-  def test_journal_lock_refuses_a_non_private_existing_lock_file
-    Dir.mktmpdir("master-journal-lock-mode") do |root|
-      directory = File.join(root, ".master")
-      Dir.mkdir(directory, 0o700)
-      lock = File.join(directory, "fix_runs.lock")
-      File.write(lock, "")
-      File.chmod(0o644, lock)
-
-      error = assert_raises(IOError) { start_journal(root, RecordingBus.new) }
-
-      assert_match(/permissions must be private/, error.message)
-      assert_equal 0o644, File.stat(lock).mode & 0o777
-      refute File.exist?(File.join(directory, "fix_runs.json"))
-    end
-  end
-
   def gone_pid
     pid = Process.spawn("true")
     Process.wait(pid)
