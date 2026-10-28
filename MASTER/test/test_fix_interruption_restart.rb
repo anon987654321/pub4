@@ -29,6 +29,11 @@ class TestFixInterruptionRestart < Minitest::Test
 
         root, marker = ARGV
         sample = File.join(root, "sample.rb")
+        kernel = Master::Fix::Kernel.new(root:, actor: "restart-probe")
+        coordinator_run_id = kernel.begin_coordinated_run(
+          target: File.join(root, "MASTER"), max_passes: 2,
+          budget_seconds: 60, requested: false
+        )
         journal = Master::Fix::RunJournal.new(root:)
         run = journal.start_or_resume(
           target: File.join(root, "MASTER"),
@@ -43,7 +48,10 @@ class TestFixInterruptionRestart < Minitest::Test
         File.write(sample, "partial mutation\n")
         transaction.observe!
         journal.pass_start(run.fetch("id"), 1, transaction_id: "restart-probe")
-        File.write(marker, JSON.generate("run_id" => run.fetch("id"), "pid" => Process.pid))
+        File.write(marker, JSON.generate(
+          "run_id" => run.fetch("id"), "coordinator_run_id" => coordinator_run_id,
+          "pid" => Process.pid
+        ))
         sleep 60
       RUBY
 
@@ -76,6 +84,14 @@ class TestFixInterruptionRestart < Minitest::Test
         require "fix/fix_loop"
 
         root = ARGV.fetch(0)
+        kernel = Master::Fix::Kernel.new(root:, actor: "restart-probe")
+        kernel.send(:reconcile_coordinated_runs!)
+        coordinator_events = kernel.verify_log!
+        coordinator = coordinator_events.find do |row|
+          row["kind"] == "coordinator_terminal" &&
+            row["run_id"] == ARGV.fetch(1)
+        end
+
         loop = Master::Fix::FixLoop.allocate
         loop.instance_variable_set(:@root, root)
         loop.instance_variable_set(:@transaction_root, root)
@@ -102,6 +118,9 @@ class TestFixInterruptionRestart < Minitest::Test
         puts JSON.generate(
           "run_id" => run.fetch("id"),
           "resumed" => run.fetch("resumed"),
+          "coordinator_run_id" => coordinator && coordinator.fetch("run_id"),
+          "coordinator_state" => coordinator && coordinator.dig("payload", "state"),
+          "coordinator_recovered" => coordinator && coordinator.dig("payload", "recovered"),
           "start_pass" => start_pass,
           "recovery_start" => recovered.value!,
           "content" => File.read(sample),
@@ -112,12 +131,15 @@ class TestFixInterruptionRestart < Minitest::Test
       RUBY
       output, restart_status = Open3.capture2e(
         RbConfig.ruby, "-I", File.join(Master::ROOT, "lib"), "-e", restart, root,
-        chdir: Master::ROOT
+        marker_record.fetch("coordinator_run_id"), chdir: Master::ROOT
       )
       assert restart_status.success?, "restart process failed: #{output}"
       receipt = JSON.parse(output.lines.last)
 
       assert_equal marker_record.fetch("run_id"), receipt.fetch("run_id")
+      assert_equal marker_record.fetch("coordinator_run_id"), receipt.fetch("coordinator_run_id")
+      assert_equal "unknown_outcome", receipt.fetch("coordinator_state")
+      assert_equal true, receipt.fetch("coordinator_recovered")
       assert receipt.fetch("resumed"), "the prior durable /fix run should resume"
       assert_equal 1, receipt.fetch("start_pass")
       assert_equal 1, receipt.fetch("recovery_start")
