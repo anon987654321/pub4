@@ -157,6 +157,16 @@ end
     assert_equal :casual, reached
   end
 
+  def test_visitor_can_attempt_pair_code_redemption_but_not_pair_status_or_other_slash_commands
+    Fiber[:master_visitor] = true
+    router = Master::CLI::TurnRouter
+    assert router.visitor_pair_redemption?("/pair ABCDEFGH")
+    refute router.visitor_pair_redemption?("/pair")
+    refute router.visitor_pair_redemption?("/pair issue")
+    refute router.visitor_pair_redemption?("/fix")
+    refute router.visitor_pair_redemption?("/pair ABCDEFGI")
+  end
+
   def test_run_fold_refuses_visitors_directly
     Fiber[:master_visitor] = true
     result = Master::CLI::TurnRouter.run_fold("do something", container: build_container)
