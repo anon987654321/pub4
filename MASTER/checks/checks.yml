@@ -472,3 +472,9 @@ browser_policy:
   require: lib/source/browser_policy
   class: Deploy::BrowserPolicyCheck
   pass: "browser policy intact"
+
+# Narrow source-level guard for the tracked firewall policy; pfctl remains the syntax authority.
+openbsd_pf_policy:
+  require: OPENBSD/checks/pf_policy_check
+  class: Deploy::PfPolicyCheck
+  pass: "PF policy: default-deny, scoped ingress and SSH/bruteforce ordering intact"
