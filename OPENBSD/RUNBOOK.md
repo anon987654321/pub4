@@ -12,11 +12,12 @@ From a clean workstation checkout on `origin/main`:
 ./bin/redeploy
 ```
 
-That preflights locally, deploys under `tmux` session `pub4-deploy` on vm23 as
-`dev` (never `doas`), and runs the post-deploy canary. Survives SSH disconnect.
-Log: `~/vps-deploy.log` on the box. Attach: `ssh brgen -- tmux attach -t pub4-deploy`.
+Hands-off: local preflight → pin SHA → `tmux` session `pub4-deploy` on vm23 as
+`dev` (broker steps escalate with passwordless doas; you do not run the whole
+deploy as root) → streams the log until finished → `vps-state` + public canary.
+Survives SSH disconnect. Log: `~/vps-deploy.log`. Attach: `tmux attach -t pub4-deploy`.
 
-Already on the box: `zsh OPENBSD/bin/redeploy` (or `zsh OPENBSD/bin/vps-deploy all`).
+Already on the box: `zsh OPENBSD/bin/redeploy`.
 
 ## Repo layout
 

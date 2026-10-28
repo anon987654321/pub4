@@ -41,7 +41,7 @@ def usage
       bin/operator fix status [--trees=A,B] [--json]  /fix runs, queue, pass, logs, commits and retained worktrees; read-only
       bin/operator vps state [--json] [--remote]
       bin/operator vps master <status|start|stop|restart> [--remote]
-      bin/operator vps deploy <app|all|master> [--remote] [--follow]  --remote preflights here, pins SHA, deploys under tmux on the box (./bin/redeploy is the one-liner)
+      bin/operator vps deploy <app|all|master> [--remote] [--follow|--detach]  --remote: preflight, pin SHA, tmux on box; default waits + canary (./bin/redeploy)
       bin/operator vps logs <app> [--lines N] [--remote]
       bin/operator vps canary [--remote] [--app a,b] [--budget-ms N]  post-deploy probe: ports, rcctl, every public GET route (--remote runs on the box, otherwise the public domains)
       bin/operator vps rollback <sha>     prints the manual rollback; vps-deploy takes no SHA, so nothing is run
@@ -839,46 +839,93 @@ when "vps"
     app = ARGV.shift
     remote = !ARGV.delete("--remote").nil?
     follow = !ARGV.delete("--follow").nil?
-    die("vps", "usage, bin/operator vps deploy <app|all|master> [--remote] [--follow]", 64) if app.to_s.empty?
-    die("vps", "--follow requires --remote", 64) if follow && !remote
+    detach = !ARGV.delete("--detach").nil?
+    die("vps", "usage, bin/operator vps deploy <app|all|master> [--remote] [--follow|--detach]", 64) if app.to_s.empty?
+    die("vps", "--follow and --detach require --remote", 64) if (follow || detach) && !remote
+    die("vps", "use only one of --follow or --detach", 64) if follow && detach
     if remote
       # Prove the commit boots here, then send the box that exact SHA; the box
       # refuses a different one. See Operator::DeployPreflight.
-      # Remote deploys run under tmux so an SSH drop cannot kill the work, enable
-      # the post-deploy canary by default, and print how to attach or read the log.
+      #
+      # Default remote path is hands-off: tmux so disconnects cannot kill the
+      # deploy, wait until the session ends, then print the log tail and exit
+      # with the deploy's status. --follow attaches interactively; --detach
+      # starts and returns immediately. Canary runs inside vps-deploy unless
+      # PUB4_DEPLOY_CANARY=0.
       require "operator/canary"
       ok, command = Operator::DeployPreflight.remote_command(root: ROOT, app: Shellwords.escape(app))
       die("vps", "deploy refused, #{command}", 1) unless ok
       canary_env = ENV.fetch("PUB4_DEPLOY_CANARY", "1") == "0" ? "" : "PUB4_DEPLOY_CANARY=1 "
       command = "#{canary_env}#{command}"
       session = "pub4-deploy"
-      inner = Shellwords.escape("#{command}; ec=$?; print \"vps-deploy: finished exit=$ec\"; sleep 3; exit $ec")
-      follow_ruby = follow ? "true" : "false"
+      # Marker files the waiter uses so SSH drops do not lose the exit status.
+      marker = "$HOME/.pub4-deploy-last"
+      inner = Shellwords.escape(
+        "#{command}; ec=$?; print \"vps-deploy: finished exit=$ec\"; "         "print -r -- \"$ec $(date -u +%Y-%m-%dT%H:%M:%SZ)\" > #{marker}; "         "sleep 2; exit $ec"
+      )
+      mode = follow ? "follow" : (detach ? "detach" : "wait")
       remote_script = <<~ZSH
         set -euo pipefail
         cd /home/dev/pub4
-        if command -v tmux >/dev/null 2>&1; then
-          if tmux has-session -t #{session} 2>/dev/null; then
-            print -u2 "vps-deploy: session #{session} already running"
-            print -u2 "  attach: tmux attach -t #{session}"
-            print -u2 "  log:    ~/vps-deploy.log"
-            exit 75
-          fi
-          tmux new-session -d -s #{session} "zsh -lc #{inner}"
-          print "vps-deploy: started in tmux session #{session}"
-          print "  attach:  ssh -i ~/.ssh/id_ed25519_brgen dev@brgen.no -- tmux attach -t #{session}"
-          print "  log:     ~/vps-deploy.log on vm23"
-          if #{follow_ruby}; then
-            exec tmux attach -t #{session}
-          fi
-          sleep 2
-          if [[ -f $HOME/vps-deploy.log ]]; then
-            print "--- last lines of ~/vps-deploy.log ---"
-            tail -n 15 "$HOME/vps-deploy.log" || true
-          fi
-          exit 0
+        session=#{session}
+        marker=#{marker}
+        if ! command -v tmux >/dev/null 2>&1; then
+          #{command}
+          exit $?
         fi
-        #{command}
+        if tmux has-session -t "$session" 2>/dev/null; then
+          print -u2 "vps-deploy: session $session already running"
+          print -u2 "  attach: tmux attach -t $session"
+          print -u2 "  log:    ~/vps-deploy.log"
+          exit 75
+        fi
+        rm -f -- "$marker"
+        tmux new-session -d -s "$session" "zsh -lc #{inner}"
+        print "vps-deploy: started in tmux session $session (mode=#{mode})"
+        print "  attach:  tmux attach -t $session"
+        print "  log:     ~/vps-deploy.log"
+        case #{mode} in
+        follow)
+          exec tmux attach -t "$session"
+          ;;
+        detach)
+          sleep 2
+          [[ -f $HOME/vps-deploy.log ]] && { print "--- log ---"; tail -n 12 "$HOME/vps-deploy.log" || true; }
+          print "vps-deploy: detached; re-check with: tmux attach -t $session"
+          exit 0
+          ;;
+        wait)
+          # Poll until the session ends. Print new log lines as they appear so
+          # the operator sees progress without attaching.
+          log=$HOME/vps-deploy.log
+          : >>"$log"
+          exec 3<"$log"
+          # Seek to end so we only show new lines from this deploy.
+          while IFS= read -r -u 3; do :; done
+          while tmux has-session -t "$session" 2>/dev/null; do
+            while IFS= read -r -u 3 line; do print -r -- "$line"; done
+            sleep 3
+          done
+          while IFS= read -r -u 3 line; do print -r -- "$line"; done
+          exec 3<&-
+          if [[ -r $marker ]]; then
+            read -r ec _ < "$marker" || ec=1
+          else
+            print -u2 "vps-deploy: session ended with no exit marker; inspect ~/vps-deploy.log"
+            ec=1
+          fi
+          print "vps-deploy: finished exit=$ec"
+          # Hands-off closeout: state + public canary when the deploy itself succeeded.
+          if (( ec == 0 )); then
+            . OPENBSD/lib/ruby_select.sh
+            print "vps-deploy: post-check state"
+            "$RUBY" OPENBSD/bin/vps-state 2>/dev/null || true
+            print "vps-deploy: post-check public canary"
+            "$RUBY" OPENBSD/bin/canary --public 2>/dev/null || print -u2 "vps-deploy: public canary reported failures (deploy stamps still ok)"
+          fi
+          exit "$ec"
+          ;;
+        esac
       ZSH
       ssh_run(Shellwords.join(["zsh", "-fc", remote_script]))
     else

@@ -41,9 +41,10 @@ recipes:
   - want: Redeploy production (the one command)
     run: ./bin/redeploy
     expect: >-
-      Preflight on this machine, pin origin/main SHA, deploy under tmux on vm23
-      (master → brgen → amber → bsdports), canary after each app. Survives SSH
-      drop. Follow with --follow or: ssh brgen -- tmux attach -t pub4-deploy
+      Hands-off: local preflight, pin origin/main SHA, deploy under tmux on vm23
+      as dev (doas nopass for broker steps), wait until finished streaming the log,
+      then vps-state + public canary. Survives SSH drop. --follow attaches;
+      --detach starts and returns.
   - want: Redeploy one app
     run: ./bin/redeploy brgen
     expect: same path, single app

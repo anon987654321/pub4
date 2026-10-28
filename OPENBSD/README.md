@@ -28,14 +28,15 @@ own renderer.
 **Redeploy production (one command, from a clean `origin/main` checkout):**
 
 ```zsh
-./bin/redeploy
-# or one app:  ./bin/redeploy brgen
-# attach live: ./bin/redeploy --follow
+./bin/redeploy                 # wait until done, then state + canary
+./bin/redeploy brgen           # one app
+./bin/redeploy --follow        # attach to the box tmux session
+./bin/redeploy --detach        # start and return immediately
 ```
 
-That is `MASTER/bin/operator vps deploy all --remote`: local preflight, pinned
-SHA, tmux on vm23 so an SSH drop cannot kill the deploy, canary after each app.
-Log on the box: `~/vps-deploy.log`. Attach: `ssh brgen -- tmux attach -t pub4-deploy`.
+Hands-off path: local preflight, pin SHA, tmux on vm23 as `dev` (broker via
+passwordless doas), stream progress until finished, then `vps-state` + public
+canary. Log: `~/vps-deploy.log`. Session: `pub4-deploy`.
 
 The commands live in one place. `data/operator.yml` is the source of the command
 recipes, so do not write another catalogue. From the repository root, the operator

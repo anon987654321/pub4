@@ -1,31 +1,32 @@
 #!/usr/bin/env zsh
-# Redeploy production (vm23) in one command from a clean origin/main checkout.
+# Redeploy production (vm23) — one command, hands-off by default.
 #
-#   ./bin/redeploy                 # all apps
+#   ./bin/redeploy                 # all apps; wait until done; state + canary
 #   ./bin/redeploy brgen           # one app
-#   ./bin/redeploy --follow        # all apps, attach to tmux on the box
-#   ./bin/redeploy amber --follow  # one app, attach
+#   ./bin/redeploy --follow        # attach to the box tmux session
+#   ./bin/redeploy --detach        # start and return immediately
 #
-# Always remote. HEAD must equal origin/main with clean MASTER/RAILS/OPENBSD.
-# Survives SSH disconnect via tmux session pub4-deploy on vm23.
-# Log: ~/vps-deploy.log on the box.
+# Requires: clean origin/main, SSH as dev@brgen.no. doas is nopass on vm23.
+# Survives SSH drop via tmux session pub4-deploy. Log: ~/vps-deploy.log.
 set -euo pipefail
 root=$(cd -- "$(dirname "$0")/.." && pwd)
 app=all
-follow=()
+mode=()
 for arg in "$@"; do
   case $arg in
-    --follow) follow=(--follow) ;;
+    --follow) mode=(--follow) ;;
+    --detach) mode=(--detach) ;;
     -h|--help)
-      print -r -- "usage: ./bin/redeploy [all|master|brgen|amber|bsdports] [--follow]"
+      print -r -- "usage: ./bin/redeploy [all|master|brgen|amber|bsdports] [--follow|--detach]"
+      print -r -- "  default: wait for deploy, print progress, run state + public canary"
       exit 0
       ;;
     all|master|brgen|amber|bsdports) app=$arg ;;
     *)
       print -u2 "redeploy: unknown argument: $arg"
-      print -u2 "usage: ./bin/redeploy [all|master|brgen|amber|bsdports] [--follow]"
+      print -u2 "usage: ./bin/redeploy [all|master|brgen|amber|bsdports] [--follow|--detach]"
       exit 2
       ;;
   esac
 done
-exec "$root/MASTER/bin/operator" vps deploy "$app" --remote "${follow[@]}"
+exec "$root/MASTER/bin/operator" vps deploy "$app" --remote "${mode[@]}"
