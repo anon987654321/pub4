@@ -189,8 +189,6 @@ module Operator
       parts << "targets: #{listed_names(targets)}" unless targets.empty?
       parts << "values: #{listed_names(values)}" unless values.empty?
       parts << "methods: #{listed_names(methods)}" unless methods.empty?
-      return nil if parts.empty?
-
       parts.join(" | ")
     end
 

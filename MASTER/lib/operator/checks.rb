@@ -151,8 +151,8 @@ module Deploy
 
     # The full repository surface, not the Rails half. MASTER judges every effect
     # against its constitution; MASTER/tools is part of MASTER, while OPENBSD is a
-    # sibling deployment tree. Scanning only RAILS left laws that never opened the
-        # govern them anyway. Each target carries its own ceiling in
+    # sibling deployment tree. Scanning only RAILS left the trees MASTER and OPENBSD
+    # unread by laws that govern them anyway. Each target carries its own ceiling in
     # constitutional_budget.yml, so a tree can be over without hiding another.
     #
     # MASTER is here too, and it is not a duplicate of `rake selfcheck`: that
@@ -401,13 +401,22 @@ module Deploy
     def self.check_host_backend(result)
       return unless ENV["MASTER_TTS_REQUIRE_HOST_BACKEND"] == "1"
 
-      host_backend = system("command", "-v", "edge-tts", out: File::NULL, err: File::NULL) ||
-        system("command", "-v", "espeak", out: File::NULL, err: File::NULL) ||
+      host_backend = %w[edge-tts espeak].any? { |name| on_path?(name) } ||
         File.executable?("/usr/local/bin/espeak") ||
         File.executable?("/usr/bin/espeak")
       result.fail("host missing edge-tts/espeak backend") unless host_backend
     end
     private_class_method :check_host_backend
+
+    # `command -v` is a shell builtin: spawned as argv it has no executable and
+    # always failed, so the PATH is searched here instead.
+    def self.on_path?(name)
+      ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |dir|
+        candidate = File.join(dir, name)
+        File.file?(candidate) && File.executable?(candidate)
+      end
+    end
+    private_class_method :on_path?
   end
 end
 
@@ -460,7 +469,11 @@ module Deploy
     def self.check_manifest(result)
       return check_manifest_missing(result) unless File.file?(MANIFEST)
 
-      manifest = JSON.parse(File.read(MANIFEST))
+      manifest = begin
+        JSON.parse(File.read(MANIFEST))
+      rescue JSON::ParserError => e
+        return result.fail("#{MANIFEST} unreadable: #{e.message[0, 120]}")
+      end
       REQUIRED.each { |logical| check_manifest_entry(result, manifest, logical) }
     end
     private_class_method :check_manifest

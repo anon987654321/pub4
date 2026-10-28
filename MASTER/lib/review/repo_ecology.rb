@@ -363,7 +363,7 @@ module Master
       end
 
       def relative(file)
-        File.expand_path(file).sub(%r{\A#{Regexp.escape(@root)}/?}, "")
+        File.expand_path(file).sub(%r{\A#{Regexp.escape(@root)}(?:/|\z)}, "")
       end
     end
   end

@@ -51,6 +51,7 @@ module Master
 
             raise "Law catalogue is not reconciled: #{reconciliation_errors.join('; ')}"
           end
+
           # A clean report is only meaningful when its population is explicit.
           #
           # Counted, never subtracted. A rule may be semantic-only, mechanical-only,
@@ -76,7 +77,6 @@ module Master
             # replaced.
             (mechanical.size * 100.0 / yaml_laws).round(1)
           end
-
         end
 
         def initialize(root: Master::ROOT)
@@ -234,12 +234,6 @@ module Master
 
         private
 
-        def executable_semantic_ids
-          require File.join(@root, "law", "definition") unless defined?(::Law)
-          ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
-          ::Law.definitions.values.select(&:semantic?).map { |law| law.id.to_s.downcase }.to_set
-        end
-
         def law_detector?(id)
           return false if id.to_s.empty?
 
@@ -248,14 +242,6 @@ module Master
           # Callers hand in the downcased key every population compares on; Law ids are upper case.
           law = ::Law.definitions[id.to_s.upcase.to_sym] || ::Law.definitions[id.to_sym]
           law&.detect
-        end
-
-        def detected?(registry, id)
-          key = id.to_s.downcase
-          return false if key.empty?
-
-          detector = law_detector?(key)
-          detector || registry.include?(key)
         end
 
         # Asked of the loaded registry, not of the source text: law/prose.rb
@@ -342,41 +328,6 @@ module Master
           }.freeze
         end
 
-        def executable_law_rows
-          require File.join(Master::ROOT, "lib", "master") unless defined?(::Master::ROOT)
-          require File.join(@root, "law", "definition") unless defined?(::Law)
-          ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
-          ::Law.definitions.values.map do |law|
-            law.contract_entry.merge(
-              "detect" => !law.detect.nil?,
-              "semantic" => !law.ask.nil?,
-              "practice" => !law.practice.nil?,
-            )
-          end
-        end
-
-        def registry_law_rows
-          return @registry_law_rows if defined?(@registry_law_rows)
-
-          require File.join(Master::ROOT, "lib", "master") unless defined?(::Master::ROOT)
-          Review::Scan::LawDSL
-          @registry_law_rows = Review::Scan::Law.registry
-            .select { |klass| shipped?(klass) }
-            .map { |klass| LawFactory.build(klass, root: @root) }
-             .map do |law|
-              {
-                "id" => law.id.to_s,
-                "severity" => law.severity.to_s,
-                "mode" => law.mode.to_s,
-                "languages" => Array(law.languages).map(&:to_s),
-                "autofix" => law.autofix.to_s,
-                "detect" => true,
-                "semantic" => false,
-                "practice" => false,
-              }
-            end
-        end
-
         # The reference loads the rule files, and a class in a multi-class file is
         # invisible to Zeitwerk until it does: asked cold, the registry answered
         # 81 mechanical laws where a loaded one answers 115.
@@ -405,7 +356,6 @@ module Master
         def key_of(law) = law["id"].to_s.downcase
         def ids_of(laws) = laws.map { |law| law["id"] }
       end
-
-          end
+    end
   end
 end

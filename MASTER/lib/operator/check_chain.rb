@@ -9,7 +9,6 @@ require "tempfile"
 require "open3"
 require "rbconfig"
 require "tmpdir"
-require "operator/check_heartbeat"
 require "operator/ruby_runner"
 require "bundler"
 require_relative "strict_mode"
@@ -679,17 +678,17 @@ module Operator
     # Under the Ruby the repo pins, as the app suites below run. runner.rb refuses
     # any other, so launched with this process's Ruby every check was skipped and
     # the stage reported one refusal as its whole result.
-def rails_checks(scan_only:, strict_inconclusive: false)
-  CheckHeartbeat.around("rails checks") do |progress|
-    env = strict_env.merge(progress).merge("CHECK_AUTOFIX" => scan_only ? "0" : "1", **Master::Fix::WorkLane.check_env)
-    # A proof cannot pass a check that measured nothing. The normal contribution
-    # mode remains permissive; /fix opts into strict inconclusive handling here
-    # because this child environment is constructed explicitly.
-    env["CHECK_STRICT_INCONCLUSIVE"] = "1" if strict_inconclusive
-    capture(RUBY, File.join(MASTER, "checks", "runner.rb"), "--all",
-            chdir: File.join(ROOT, "RAILS"), env:)
-  end
-end
+    def rails_checks(scan_only:, strict_inconclusive: false)
+      CheckHeartbeat.around("rails checks") do |progress|
+        env = strict_env.merge(progress).merge("CHECK_AUTOFIX" => scan_only ? "0" : "1", **Master::Fix::WorkLane.check_env)
+        # A proof cannot pass a check that measured nothing. The normal contribution
+        # mode remains permissive; /fix opts into strict inconclusive handling here
+        # because this child environment is constructed explicitly.
+        env["CHECK_STRICT_INCONCLUSIVE"] = "1" if strict_inconclusive
+        capture(RUBY, File.join(MASTER, "checks", "runner.rb"), "--all",
+                chdir: File.join(ROOT, "RAILS"), env:)
+      end
+    end
 
     # The repair-aware runner owns deterministic source/rendered corrections;
     # premerge is the read-only proof that every Rails test, coverage dimension
@@ -701,9 +700,9 @@ end
       premerge = File.join(MASTER, "tools", "rails", "premerge.rb")
       return [false, body + ["rails premerge missing: #{premerge}"], 1] unless File.file?(premerge)
 
-verified, verification_body, verification_status = CheckHeartbeat.around("rails premerge") do |_progress|
-  capture(RUBY, premerge, chdir: File.join(ROOT, "RAILS"), env: strict_env.merge("MASTER_FIX_VERIFY" => "1"))
-end
+      verified, verification_body, verification_status = CheckHeartbeat.around("rails premerge") do |_progress|
+        capture(RUBY, premerge, chdir: File.join(ROOT, "RAILS"), env: strict_env.merge("MASTER_FIX_VERIFY" => "1"))
+      end
       [verified, body + ["rails premerge: #{verified ? "ok" : "FAIL"}"] + verification_body, verification_status]
     end
 

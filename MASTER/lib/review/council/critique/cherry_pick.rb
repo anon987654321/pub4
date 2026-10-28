@@ -31,7 +31,9 @@ module Master
             rank(feedback, ideas_text(ideation_result))
           end
 
+          # An errored ideation proposes nothing: its to_s is the error message.
           def ideas_text(ideation_result)
+            return "" if ideation_result.respond_to?(:err?) && ideation_result.err?
             return ideation_result.to_s unless ideation_result.respond_to?(:value)
 
             value = ideation_result.value

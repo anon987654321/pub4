@@ -18,8 +18,12 @@ module Operator
 
     module_function
 
+    # A git that cannot list the tree has measured nothing, so it raises rather than
+    # reporting an empty list that every caller reads as "everything parses".
     def tracked(root)
-      out = IO.popen(["git", "-C", root, "ls-files", "-z", "--", "*.rb"], &:read)
+      out = IO.popen(["git", "-C", root, "ls-files", "-z", "--", "*.rb"], err: File::NULL, &:read)
+      raise "parse_sweep: git ls-files failed under #{root}" unless $?.success?
+
       out.split("\0").reject(&:empty?)
     end
 

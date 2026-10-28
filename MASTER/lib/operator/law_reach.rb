@@ -95,7 +95,8 @@ module Operator
         return out.size <= limit ? 0 : 1
       end
 
-      puts "law_reach: #{all.size} Laws — #{mech.size} deterministic, #{asked.size} prompted, "            "#{conduct.size} practice, #{out.size} unreachable (ceiling #{limit})"
+      puts "law_reach: #{all.size} Laws — #{mech.size} deterministic, #{asked.size} prompted, " \
+           "#{conduct.size} practice, #{out.size} unreachable (ceiling #{limit})"
       out.each { |law| puts "  #{law["id"]}" }
       puts "law_reach: every executable Law has a reachable enforcement surface" if out.empty?
       return 0 if out.size <= limit

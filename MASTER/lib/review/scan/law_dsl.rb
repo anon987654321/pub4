@@ -72,9 +72,7 @@ module Master
         def self.dsl_law_attrs(cls, attrs)
           attrs.each { |k, v| cls.instance_variable_set("@dsl_#{k}", v) }
         end
-
       end
-
     end
   end
 end

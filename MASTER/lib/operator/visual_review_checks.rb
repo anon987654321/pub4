@@ -49,8 +49,9 @@ module Operator
       now = Master::Fix::VisualDriftBudget.chrome_rects(payload)
       (base.keys & now.keys).flat_map { |key| Master::Fix::VisualDriftBudget.deltas(key, base[key], now[key], []) }
                             .map { |line| "chrome drift #{line}" }
-    rescue JSON::ParserError
-      []
+    rescue JSON::ParserError => e
+      # A baseline that cannot be read measured nothing; saying so keeps the row from reading clean.
+      ["chrome drift baseline unreadable, #{e.message.lines.first.to_s.strip[0, 120]}"]
     end
 
     # Every picture a capture owns besides its main screenshot.

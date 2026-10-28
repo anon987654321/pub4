@@ -161,7 +161,7 @@ module Master
             errors.concat((finding_required - finding.keys).map { |key| "missing_finding_field:#{key}" })
             errors << "unexpected_finding_field" unless (finding.keys - finding_required).empty?
             errors << "invalid_finding_severity" unless allowed_severities.include?(finding["severity"])
-            finding_required.drop(1).each do |key|
+            (finding_required - ["severity"]).each do |key|
               errors << "empty_finding_field:#{key}" unless nonblank?(finding[key])
             end
           end

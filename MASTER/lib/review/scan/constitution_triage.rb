@@ -7,24 +7,10 @@ module Master
       # `rake constitution` reports a number an operator can act on rather than
       # one dominated by the scanner reading itself.
       #
-      # This class was deleted on 2026-08-28 as having no consumer. It had one:
-      # the Rakefile requires it and calls it four times, and `rake constitution`
-      # is the second task in `rake audit`, so the deletion took the whole audit
-      # down with it — `bin/check --profile=full` included. The dead-file census
-      # behind it searched for the constant in lib/ and never looked at a
-      # Rakefile, which is the instrument failure VERIFY_THE_INSTRUMENT names.
-      #
-      # The objection that commit raised was right, and is answered below rather
-      # than restored with the class: RULE_RETUNE_IDS was fifty rule ids copied
-      # by hand out of data/laws.yml with nothing asserting the two still agree.
-      # Eight named no live rule in any of the three registries — five of them
-      # the lowercase spelling of a rule since renamed (debug_output, long_line,
-      # god_class, prose_active_voice, prose_omit_qualifiers) — and message_chain
-      # is `folded_into: LAW_OF_DEMETER` with `detect_lexical: ~`, so it has no
-      # detector to be noisy with and Demeter already stands in this list.
-      #
-      # All eight are gone, and test_constitution_triage.rb fails when an id here
-      # stops naming a rule, which is what EXEMPTIONS_EXPIRE asks of an allowlist.
+      # Its consumer is the Rakefile (`rake constitution`, part of `rake audit`),
+      # not lib/, so a dead-file census over lib/ alone reads it as unused.
+      # test_constitution_triage.rb fails when an id in RULE_RETUNE_IDS stops
+      # naming a rule, which is what EXEMPTIONS_EXPIRE asks of an allowlist.
       class ConstitutionTriage
         # law/ holds the Law definitions and their detectors, each of which
         # carries the pattern it forbids.
@@ -36,14 +22,8 @@ module Master
 
         # Laws under active retune: noisy enough that gating on them would check
         # on the detector rather than on the code. Every id here must name a law
-        # the scanner, data/laws.yml or law/ still defines.
-        #
-        # FILE_LAYOUT and DOUBLE_QUOTES_RUBY came off on 2026-09-08, when both
-        # detectors were rewritten onto the parse tree. They were not noisy
-        # rules; they were line readings of scope-shaped law, and together they
-        # reported 849 findings over MASTER of which 842 were the law being
-        # obeyed. A rule parked here for a detector fault is parked forever,
-        # because the parking is what stops anyone measuring it.
+        # the scanner, data/laws.yml or law/ still defines. A detector fault is
+        # fixed in the detector, not parked here: parking stops anyone measuring it.
         RULE_RETUNE_IDS = %w[
           COMPLETION_THEATER
           CONSECUTIVE_BLANK_LINES

@@ -16,7 +16,11 @@ module Master
         :structure,
         :anchors,
         :provenance,
-      ) do
+      )
+
+      # Reopened rather than given a Data.define block: a constant assigned in that
+      # block lands on Council, not on Evidence.
+      class Evidence
         STATUSES = %i[observed inconclusive failed].freeze
 
         def initialize(

@@ -207,7 +207,7 @@ module Master
           code.each_line.with_index(1).filter_map do |line, num|
             # The law engine honours the same marker: a line that declares
             # itself intentional carries a reviewer's reason beside it.
-            next if line.match?(/scan:\s*intentional\b/)
+            next if line.match?(SCAN_MARKER)
             finding(line: num, message:, fix:) if line.match?(pattern)
           end
         end
@@ -311,7 +311,6 @@ module Master
           raise "canonical Law #{id} detector failed for #{path}: #{e.class}: #{e.message}"
         end
       end
-
     end
   end
 end

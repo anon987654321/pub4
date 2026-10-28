@@ -31,36 +31,6 @@ module Master
       end
 
       module VoiceProfile
-        VOICES = {
-          "Architect" => "en-US-AndrewNeural",
-          "Data Steward" => "en-US-JaneNeural",
-          "Ethics & Policy" => "en-US-AriaNeural",
-          "Maintainer" => "en-US-BrianNeural",
-          "Performance" => "en-US-DavisNeural",
-          "Product Strategist" => "en-US-EmmaNeural",
-          "QA Engineer" => "en-GB-RyanNeural",
-          "Pragmatist" => "en-US-GuyNeural",
-          "Reliability" => "en-GB-NoahNeural",
-          "Security" => "en-GB-ThomasNeural",
-          "Skeptic" => "en-GB-EthanNeural",
-          "User Advocate" => "en-CA-LiamNeural",
-          "Accessibility" => "en-CA-ClaraNeural",
-          "Graphic Designer" => "en-US-BreeNeural",
-          "Web Designer" => "en-GB-LibbyNeural",
-          "Electronic Music Producer" => "en-US-AvaNeural",
-          "Layperson" => "en-NZ-MitchellNeural",
-          "Hip-Hop Producer" => "en-US-KaiNeural",
-          "Sound Engineer" => "en-US-JasonNeural",
-          "Sound Designer" => "en-US-LunaNeural",
-          "Label Executive" => "en-GB-OliverNeural",
-          "Organ Composer" => "en-IE-ConnorNeural",
-          "Google CSS Engineer" => "en-US-SaraNeural",
-          "Typographer" => "en-GB-HollieNeural",
-          "Cognitive Psychologist" => "en-US-TonyNeural",
-          "NNGroup UX Researcher" => "en-US-NancyNeural",
-          "Design Lead" => "en-GB-SoniaNeural",
-        }.freeze
-
         module_function
 
         def profile(voice, rate, pitch, style, vernacular, speech_pattern, pause_after)

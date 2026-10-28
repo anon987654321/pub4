@@ -237,12 +237,6 @@ module Master
         )
       end
 
-def single_call_failover_categories
-  @single_call_failover_categories ||=
-    (@model_router.respond_to?(:failover_skip_categories) && @model_router.failover_skip_categories) ||
-    SINGLE_CALL_FAILOVER
-end
-
       # Both single-shot doors — ask and ask_once — used to raise on the first
       # broke model. One hop to the claude_code chain head on any category a
       # retry cannot cure; the 2026-08-20 proof runs showed the error-severity
@@ -570,13 +564,18 @@ end
         end
       end
 
+      # The ensure belongs to the swap alone: on the early return it wrote nil over
+      # the configured task type.
       def with_task_type(type)
         return yield unless type && !type.empty?
+
         old = @config["task_type"]
-        @config["task_type"] = type
-        yield
-      ensure
-        @config["task_type"] = old
+        begin
+          @config["task_type"] = type
+          yield
+        ensure
+          @config["task_type"] = old
+        end
       end
     end
   end

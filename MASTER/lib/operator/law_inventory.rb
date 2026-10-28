@@ -86,10 +86,15 @@ module Operator
       costs.sort_by { |row| [-row[:cost_ms].to_f, row[:id].to_s] }
     end
 
+    # The three sources are read once: each read of the registry builds a scanner.
     def twins
-      ids = all.values
-      ids.filter_map do |row|
-        status = twin_status(row[:id])
+      sources = begin
+        twin_sources
+      rescue StandardError
+        nil
+      end
+      all.values.filter_map do |row|
+        status = twin_status(row[:id], sources:)
         row.merge(twin: status) if status[:duplicate]
       end
     end
@@ -109,11 +114,7 @@ module Operator
     end
 
     def render(id:, deep: false, json: false)
-      row = if id
-deep ? health(id) : one(id)
-else
-nil
-end
+      row = (deep ? health(id) : one(id)) if id
       return JSON.pretty_generate(row) if json
       return "rule: #{id}: not found" unless row
 
@@ -309,12 +310,14 @@ end
       end
     end
 
-    def twin_status(id)
-      require "operator/law_audit"
-      registry = load_registry.key?(id.to_s.downcase)
-      law = load_law.key?(id.to_s.downcase)
-      catalogue = catalogue_rows.key?(id.to_s.downcase)
-      present = [catalogue && :catalogue, law && :law, registry && :registry].compact
+    def twin_sources
+      { catalogue: catalogue_rows.keys, law: load_law.keys, registry: load_registry.keys }
+    end
+
+    def twin_status(id, sources: nil)
+      sources ||= twin_sources
+      key = id.to_s.downcase
+      present = %i[catalogue law registry].select { |source| sources.fetch(source).include?(key) }
       {
         duplicate: present.size > 1,
         kind: present.join("+"),

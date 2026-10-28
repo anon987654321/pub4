@@ -77,7 +77,6 @@ module Master
           File.join(@root, CO_CHANGE_CACHE_PATH)
         end
 
-        # git resolves HEAD's path, because a worktree keeps its own under the
         # Key the cache by the commit itself. .git/HEAD is only the current
         # symbolic ref and normally does not change when a branch advances, so
         # its mtime cannot tell us that git log has new history.

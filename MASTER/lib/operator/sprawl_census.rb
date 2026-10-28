@@ -81,7 +81,8 @@ module Operator
     end
 
     def all_tracked
-      @all_tracked ||= `git -C #{ROOT} ls-files -z`.split("\0")
+      # argv, not a shell string: a checkout path holding a space or a quote split the command.
+      @all_tracked ||= IO.popen(["git", "-C", ROOT, "ls-files", "-z"], &:read).split("\0")
                        .select { |f| File.file?(File.join(ROOT, f)) }
     end
 

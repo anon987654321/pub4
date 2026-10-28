@@ -35,7 +35,8 @@ module Master
       end
 
       def self.tree_hash(signatures)
-        Digest::SHA256.hexdigest(signatures.sort.map { |file, sig| "#{file}\0#{sig.join(':')}" }.join("\n"))
+        # A file that vanished between the glob and its stat has a nil signature.
+        Digest::SHA256.hexdigest(signatures.sort.map { |file, sig| "#{file}\0#{Array(sig).join(':')}" }.join("\n"))
       end
 
       # { symbols:, references:, signatures:, tree_hash: } or nil when absent or stale.
@@ -68,6 +69,7 @@ module Master
         File.write(tmp, JSON.generate(body))
         File.rename(tmp, @path)
       rescue SystemCallError
+        FileUtils.rm_f(tmp) if tmp
         nil
       end
 

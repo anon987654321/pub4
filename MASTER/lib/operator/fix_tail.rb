@@ -55,8 +55,10 @@ module Operator
     end
 
     def print_history(path, limit, offsets, io)
-      text = File.binread(path).force_encoding("UTF-8").scrub
-      offsets[path] = text.bytesize
+      raw = File.binread(path)
+      # The offset counts file bytes; scrub can widen an invalid byte to three.
+      offsets[path] = raw.bytesize
+      text = raw.force_encoding("UTF-8").scrub
       text.lines.last(limit).each { |line| io.puts(render(path, line)) }
       io.flush
     end
@@ -67,12 +69,13 @@ module Operator
       from = 0 if size < from
       return if size == from
 
-      chunk = File.open(path, "rb") { |file| file.seek(from) && file.read }.to_s.force_encoding("UTF-8").scrub
-      return unless chunk.include?("\n")
+      chunk = File.open(path, "rb") { |file| file.seek(from) && file.read }.to_s
+      newline = chunk.rindex("\n")
+      return unless newline
 
-      complete = chunk[0..chunk.rindex("\n")]
+      complete = chunk.byteslice(0, newline + 1)
       offsets[path] = from + complete.bytesize
-      complete.lines.each { |line| io.puts(render(path, line)) }
+      complete.force_encoding("UTF-8").scrub.lines.each { |line| io.puts(render(path, line)) }
       io.flush
     end
 

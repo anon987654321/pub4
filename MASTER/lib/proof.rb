@@ -7,9 +7,11 @@ module Master
   # This is intentionally not Master::Core::Proof: that object owns Fold evidence
   # scoring, generations, writes and council state. Stage 1 only gives consumers
   # one stable shape without changing those semantics.
-  Proof = Data.define(
-    :claim, :law, :subject, :evidence, :source, :status, :metadata
-  ) do
+  Proof = Data.define(:claim, :law, :subject, :evidence, :source, :status, :metadata)
+
+  # Reopened rather than given a Data.define block: a constant assigned in that block
+  # lands on Master, where every module nested in it would read Master::SOURCES.
+  class Proof
     SOURCES = { deterministic: 0, council: 1, llm: 2 }.freeze
     STATUSES = %i[proven failed open].freeze
 

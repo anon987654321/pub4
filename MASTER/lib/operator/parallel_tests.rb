@@ -233,8 +233,6 @@ module Operator
       nil
     end
 
-    def summary_present?(worker) = !summary_data(worker).nil?
-
     def worker_failures(worker)
       failures = []
       File.foreach(worker.fetch(:log), encoding: "UTF-8", invalid: :replace, undef: :replace) do |raw_line|
@@ -257,6 +255,13 @@ module Operator
       "passed"
     end
 
+    def known_red?(worker)
+      summary = worker[:summary]
+      red_summary = summary && (summary["failures"].positive? || summary["errors"].positive?)
+      red_exit = worker[:status] && !worker[:status].success?
+      !!(red_summary || !worker[:failure_result_lines].empty? || red_exit)
+    end
+
     def write_suite_report(workers, completed_results, out)
       payload = {
         "schema" => 1,
@@ -276,7 +281,7 @@ module Operator
             "summary" => worker[:summary],
             "last_started_test" => last_started_test(worker),
             "failure_result_lines" => worker[:failure_result_lines],
-            "known_red" => !!(worker[:summary] && (worker[:summary]["failures"].positive? || worker[:summary]["errors"].positive?)) || !worker[:failure_result_lines].empty? || (worker[:status] && !worker[:status].success?)
+            "known_red" => known_red?(worker)
           }
         end
       }

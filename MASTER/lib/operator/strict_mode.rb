@@ -41,14 +41,5 @@ module Operator
     def enabled?(env = ENV)
       %i[deploy strict].include?(mode(env))
     end
-
-    def release?(env = ENV)
-      %i[deploy strict].include?(mode(env))
-    end
-
-    def describe(env = ENV)
-      current = mode(env)
-      "#{current}: #{MODES.fetch(current).reject { |_, value| value == "0" }.keys.join(", ")}"
-    end
   end
 end

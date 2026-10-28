@@ -32,8 +32,14 @@ module Master
         []
       end
 
+      # Heartbeat passes MASTER's own root; a repository root holds MASTER beneath it.
+      def master_dir(root)
+        nested = File.join(root, "MASTER")
+        File.directory?(nested) ? nested : root
+      end
+
       def add_todo(items, root)
-        path = File.join(root, "MASTER", "data", "operator_seams.yml")
+        path = File.join(master_dir(root), "data", "operator_seams.yml")
         return unless File.file?(path)
 
         seams = (YAML.safe_load_file(path) || {}).fetch("seams", [])
@@ -62,7 +68,7 @@ module Master
       end
 
       def add_duplicates(items, root)
-        tool = File.join(root, "MASTER", "tools", "audit", "dup_census.rb")
+        tool = File.join(master_dir(root), "tools", "audit", "dup_census.rb")
         return unless File.file?(tool)
 
         out = IO.popen([RbConfig.ruby, tool, "--list"], chdir: root, err: File::NULL, &:read)

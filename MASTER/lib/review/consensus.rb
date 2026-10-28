@@ -90,7 +90,8 @@ module Master
           "reason" => data["reason"].to_s,
         }
       rescue JSON::ParserError
-        { "approved" => text.match?(/\bapprove[ds]?\b/i), "reason" => text[0, 240] }
+        # A vote that is not the JSON asked for approves nothing: "not approved" contains the word.
+        { "approved" => false, "reason" => "unparseable vote: #{text[0, 220]}" }
       end
     end
   end

@@ -32,6 +32,7 @@ require_relative "../io/exec"
 require "English"
 require "json"
 require "set"
+require "yaml"
 
 module Operator
   module SelfFindings
@@ -112,6 +113,7 @@ module Operator
         )
       end
     end
+
     # Every extension a law can declare, not just Ruby. The corpus globbed
     # `*.rb` while the laws claim nine languages, so every css, scss, yaml,
     # markdown, html, json and shell law in the registry was measured against
@@ -506,8 +508,6 @@ module Operator
     end
   end
 end
-
-require "yaml"
 
 if $PROGRAM_NAME == __FILE__
   ok = Operator::SelfFindings.run(json: ARGV.include?("--json"), ratchet: ARGV.include?("--ratchet"))

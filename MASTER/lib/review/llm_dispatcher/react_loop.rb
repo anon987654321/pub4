@@ -140,10 +140,13 @@ module Master
             return "<tool_result name=\"#{name}\">error: tool denied</tool_result>"
           end
 
+          return "<tool_result name=\"#{name}\">error: args must be an object</tool_result>" unless args.is_a?(Hash)
+
           out = invoke_react_tool(tool, args.transform_keys(&:to_sym))
           "<tool_result name=\"#{name}\">\n#{out}\n</tool_result>"
         rescue StandardError => e
-          "<tool_result name=\"#{name}\">error: #{e.message}</tool_result>"
+          # name is unset when the lookup itself raised; the model's own spelling still labels the result.
+          "<tool_result name=\"#{name || requested}\">error: #{e.message}</tool_result>"
         end
 
         # Case, underscores and hyphens are spelling, not identity: a model

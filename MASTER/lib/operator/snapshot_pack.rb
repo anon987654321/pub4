@@ -81,6 +81,7 @@ module Operator
 
       Digest::SHA256.hexdigest(text[0...match.begin(0)]) == match[1]
     end
+
     # Lower is read first: the documents that say what the tree is, then the entry points, then
     # the top of lib, and tests last because a test is evidence about code, not the code.
     def priority(path)
@@ -378,12 +379,12 @@ module Operator
       []
     end
 
+    # write raises before this on a pack over its budget, so the line reports size alone.
     def report(job, path, text, io:)
-      over = text.bytesize > job.budget ? " — OVER the budget: the map is too large, narrow with --only" : ""
       Master::Trace::Dmesg.status(
         "snapshot0",
         "#{job.tree}, #{File.basename(path)}, #{text.bytesize} bytes (~#{text.bytesize / 4000}K tokens), " \
-        "inlined #{job.chosen.size} of #{job.files.size} files#{over}",
+        "inlined #{job.chosen.size} of #{job.files.size} files",
         io:,
       )
     end

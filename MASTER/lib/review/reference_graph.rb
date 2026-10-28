@@ -481,11 +481,6 @@ module Master
                   .find { |candidate| @nodes.include?(candidate) }
       end
 
-      def relative_source_reference?(specifier)
-        specifier.start_with?("./", "../", "@/") &&
-          !specifier.match?(%r{\A(?:https?:|//|data:|mailto:|tel:|javascript:|#)}i)
-      end
-
       def ruby_source?(rel, content:)
         return true if %w[.rb .rake .gemspec .ru].include?(File.extname(rel))
         return true if %w[Rakefile Gemfile Guardfile Podfile Appfile Fastfile].include?(File.basename(rel))
@@ -704,7 +699,8 @@ module Master
       end
 
       def relative(path)
-        File.expand_path(path).sub(%r{\A#{Regexp.escape(@root)}/?}, "")
+        # The separator is part of the prefix: /a/pub4x must not shed /a/pub4.
+        File.expand_path(path).sub(%r{\A#{Regexp.escape(@root)}(?:/|\z)}, "")
       end
 
       public :relative

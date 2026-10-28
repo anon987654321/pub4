@@ -108,6 +108,29 @@ class ControlPlaneSpec < Minitest::Test
     end
   end
 
+  # cycle claims the slot before it deploys, so its own claim must not read as a busy slot.
+  def test_cycle_deploys_under_its_own_claim
+    Dir.mktmpdir("master-control") do |root|
+      plane = Master::Ops::ControlPlane.new(root:, interval: 5, out: StringIO.new)
+      deployed = []
+      plane.define_singleton_method(:clean?) { true }
+      plane.define_singleton_method(:fetch!) { nil }
+      plane.define_singleton_method(:synchronize_refs!) { nil }
+      plane.define_singleton_method(:text_command) { |*_argv| "c" * 40 }
+      plane.define_singleton_method(:save_state) { |_sha, _status| nil }
+      plane.define_singleton_method(:run_deploy) do |*argv|
+        deployed << argv
+        ["", "", Status.new(true)]
+      end
+
+      plane.cycle
+
+      assert_equal 1, deployed.size, "the control plane never deployed under its own slot claim"
+    ensure
+      Master::Ops::LoopOwner.release
+    end
+  end
+
   def test_cycle_rejects_a_non_main_checkout
     Dir.mktmpdir("master-control") do |root|
       out = StringIO.new

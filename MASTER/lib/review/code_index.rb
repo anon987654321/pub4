@@ -194,7 +194,7 @@ module Master
         exact = @symbols[name]
         return [exact] if exact
         suffix = name.to_s
-        @symbols.values.select { |sym| fqn = sym.fqn; fqn.end_with?(suffix) || fqn.include?(suffix) }
+        @symbols.values.select { |sym| sym.fqn.include?(suffix) }
       end
 
       def format_summary_entry(sym)

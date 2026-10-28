@@ -24,18 +24,16 @@ require_relative "../io/exec"
 require "open3"
 $stdout.sync = true
 require_relative "ruby_runner"
-require_relative "strict_mode"
 
 ROOT = File.expand_path("../..", __dir__)
 REPO = File.expand_path("..", ROOT)
 RUBY = Operator::RubyRunner.ruby_cmd
 BUNDLE = Operator::RubyRunner.bundle_cmd
+
 # Two autofix switches, both off. MASTER_AUTOFIX checks the background fix loop;
 # MASTER_SCAN_AUTOFIX checks the deterministic AstFixer pass, which defaults on
 # and would otherwise write before the repair stage is reached.
 # MASTER/checks/lib/constitutional_scan.rb carries the same pair.
-STRICT_ENV = Operator::StrictMode.flags
-
 SAFE_ENV = {
   "MASTER_SAFE_MODE" => "1",
   "MASTER_BACKGROUND" => "0",
@@ -225,9 +223,9 @@ def capture_with_timeout(line)
     stdin.puts(line)
     stdin.close
     reader = Thread.new do
-      out.each_line do |line|
-        buffer << line
-        $stdout.write(line)
+      out.each_line do |chunk|
+        buffer << chunk
+        $stdout.write(chunk)
         $stdout.flush
       end
     end

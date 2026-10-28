@@ -54,14 +54,6 @@ module Master
           nil
         end
 
-        def circuit_open?
-          breaker = @agent.respond_to?(:circuit_breaker) ? @agent.circuit_breaker : nil
-          false unless breaker.respond_to?(:open_models)
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "Ideation.circuit_open?")
-          false
-        end
-
         def brainstorm(prompt:, prior:, constraints:)
           context = prior.any? ? "Prior ideas (avoid repeating): #{prior.join('; ')}\n\n" : ""
           constraint_prefix = constraints.any? ? "Constraints: #{constraints.join(', ')}\n\n" : ""

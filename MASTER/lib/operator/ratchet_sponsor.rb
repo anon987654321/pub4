@@ -32,6 +32,7 @@ module Operator
       raise "ratchet sponsorship required: #{TREE_CEILING} must change with source growth/deletion " \
             "(files +#{additions}/-#{deletions}, MASTER/lib body #{format("%+d", body_delta)} lines)"
     end
+
     def source_population_delta(root, paths)
       tracked = tracked_paths(root)
       statuses = diff_statuses(root, paths)
@@ -57,6 +58,7 @@ module Operator
       deletions = -deltas.values.select(&:negative?).sum
       [deltas, additions, deletions]
     end
+
     def master_lib_body_delta(root, paths)
       lib_paths = paths.select { |path| path.start_with?("MASTER/lib/") }
       return 0 if lib_paths.empty?
@@ -88,6 +90,7 @@ module Operator
       end
       added - deleted + untracked_body
     end
+
     def sponsored_ceiling?(root, tree_deltas, body_delta)
       before, status = Master::Io::Exec.capture2e("git", "-C", root, "show", "HEAD:#{TREE_CEILING}")
       raise "ratchet sponsorship: #{TREE_CEILING} unreadable at HEAD: #{before}" unless status.success?

@@ -45,9 +45,6 @@ module Operator
       candidates = []
       candidates << RbConfig.ruby if File.executable?(RbConfig.ruby)
       candidates.concat(Dir.glob(File.join(rbenv_root_for(root), "versions", "*", "bin", "ruby")))
-      if Environment.on_openbsd?
-        candidates.concat(%w[ruby34 ruby33].filter_map { |name| path = command_path(name); path.empty? ? nil : path })
-      end
       RUBY_NAMES.each do |name|
         path = command_path(name)
         candidates << path unless path.empty?
@@ -95,8 +92,7 @@ module Operator
       version = pinned_version(root)
       return if version.empty?
 
-      rbenv_root = ENV["RBENV_ROOT"].to_s
-      rbenv_root = File.expand_path("~/.rbenv") if rbenv_root.empty?
+      rbenv_root = rbenv_root_for(root)
       direct = File.join(rbenv_root, "versions", version, "bin", name)
       return direct if File.executable?(direct)
 

@@ -11,8 +11,6 @@ require "yaml"
 module Master
   module Ops
     module ProcessLock
-      PATH = File.join(Master::ROOT, ".master", "process.lock").freeze
-
       module_function
 
       # The e2e boot tests point the lock at their own tmpdir through this
@@ -27,6 +25,8 @@ module Master
         path ||= lock_path(root)
         FileUtils.mkdir_p(File.dirname(path))
         attempts = 0
+        # Declared here so the rescue below closes the handle the loop opened.
+        io = nil
 
         loop do
           io = File.open(path, File::RDWR | File::CREAT, 0o600)
@@ -140,14 +140,6 @@ module Master
         false
       rescue Errno::EPERM
         true
-      end
-
-      def read_metadata(path)
-        return {} unless File.file?(path)
-
-        JSON.parse(File.read(path))
-      rescue JSON::ParserError, SystemCallError
-        {}
       end
 
       # On a locked file, metadata can lag the real process after a crash/restart.

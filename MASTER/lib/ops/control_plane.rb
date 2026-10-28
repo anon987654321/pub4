@@ -124,7 +124,7 @@ module Master
         elsif ancestor?(remote, head)
           raise CommandError.new(
             %w[git sync main],
-            "local main is ahead of origin/main; publish through the GitHub PR path, never from the control plane",
+            "local main is ahead of origin/main; publish from a working session with bin/operator land, never from the control plane",
           )
         else
           raise CommandError.new(%w[git sync main], "main and origin/main have diverged")
@@ -136,7 +136,9 @@ module Master
         state = load_state
         return if state["deployed_sha"] == head
 
-        return report("control0: waiting — loop slot active") if LoopOwner.active
+        # cycle holds the slot itself, so only a claim that is not this process's means wait.
+        owner = LoopOwner.active
+        return report("control0: waiting — #{owner.fetch("loop", "loop")} owns the execution slot") if owner && !LoopOwner.own?(owner)
 
         report("control0: deploying #{short(head)} -> master brgen amber bsdports")
         _stdout, stderr, status = run_deploy("zsh", @deploy, "all")
