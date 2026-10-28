@@ -32,12 +32,24 @@ module Master
       def load_path(path)
         return [] unless File.file?(path)
 
-        source = File.read(path, encoding: "UTF-8")
-        rows = Master.load_yaml(path)
+        validate_source(File.read(path, encoding: "UTF-8"), path:)
+      end
+
+      # Shared by boot preflight and ConfigurationGuard so the file accepted for
+      # editing is exactly the file shape that the runtime can load.
+      def validate_source(source, path: "<inline>")
+        rows = YAML.safe_load(source, aliases: true)
         if rows.nil?
           empty_source = source.lines.all? { |line| line.strip.empty? || line.lstrip.start_with?("#") }
           return [] if empty_source # comments-only file is an intentionally empty catalogue
         end
+
+        validate_rows(rows, path:)
+      rescue Psych::Exception => error
+        raise ArgumentError, "dynamic tool catalogue #{path} has invalid YAML: #{error.message}"
+      end
+
+      def validate_rows(rows, path: "<inline>")
         unless rows.is_a?(Array)
           raise ArgumentError, "dynamic tool catalogue #{path} must be a YAML list"
         end
@@ -97,10 +109,12 @@ module Master
           row.merge("method" => method.is_a?(String) ? method.upcase : method)
         end
 
+        duplicates = normalized.group_by { |row| row.fetch("name") }
+                               .select { |_name, entries| entries.size > 1 }.keys
+        errors << "#{path} has duplicate name(s): #{duplicates.sort.join(', ')}" unless duplicates.empty?
+
         raise ArgumentError, errors.uniq.join("; ") unless errors.empty?
         normalized
-      rescue Psych::Exception => error
-        raise ArgumentError, "dynamic tool catalogue #{path} has invalid YAML: #{error.message}"
       end
 
       # Per row, at call time. Every row reaches a model through the one

@@ -15,6 +15,7 @@ module Master
 
       class << self
         def run(root: Dir.pwd, strict: false)
+          root = Master.master_root(root:)
           results = [
             check_master_dir(root),
             check_config_readable(root),
@@ -24,6 +25,7 @@ module Master
             check_laws_yaml(root),
             check_tokens_yaml(root),
             check_providers_yaml(root),
+            check_dynamic_tools_yaml(root),
             check_models_yaml(root),
             check_voice_yaml(root),
             check_limits_yaml(root),
@@ -134,6 +136,21 @@ module Master
 
         def check_models_yaml(root)
           check_catalogue_yaml(root, "data/models.yml", "models_yaml")
+        end
+
+        def check_dynamic_tools_yaml(root)
+          master_root = Master.master_root(root:)
+          path = File.join(master_root, "data", "tools.dynamic.yml")
+          return ok("dynamic_tools_yaml", "optional file absent") unless File.file?(path)
+
+          Master::Io::DynamicTools.validate_source(File.read(path, encoding: "UTF-8"), path:)
+          # The canonical runtime also reads ~/.master/tools.dynamic.yml. Load the
+          # combined registry here so duplicate names across either source fail
+          # before the runtime silently chooses one.
+          Master::Io::DynamicTools.load_definitions if File.expand_path(master_root) == File.expand_path(Master::ROOT)
+          ok("dynamic_tools_yaml", "dynamic tool catalogue schema valid")
+        rescue StandardError => error
+          fail("dynamic_tools_yaml", "dynamic tool catalogue invalid: #{error.class}: #{error.message}")
         end
 
         # Real MASTER needs both routing catalogues. Isolated test/workspace roots

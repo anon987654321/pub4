@@ -96,6 +96,21 @@ class TestRuntimeCatalogueValidation < Minitest::Test
     assert_match(/model_defs\.agy_auto\.score\.quality must be between 0 and 1/, error)
   end
 
+  def test_boot_checks_reject_invalid_dynamic_tool_catalogue
+    Dir.mktmpdir("master-dynamic-tool-boot") do |root|
+      data_dir = File.join(root, "data")
+      FileUtils.mkdir_p(data_dir)
+      path = File.join(data_dir, "tools.dynamic.yml")
+      File.write(path, YAML.dump("name" => "broken_tool", "url" => "https://example.com"))
+
+      result = BootChecks.send(:check_dynamic_tools_yaml, root)
+
+      refute result.ok
+      assert_equal :fatal, result.severity
+      assert_match(/must be a YAML list/, result.message)
+    end
+  end
+
   def test_canonical_boot_validates_token_catalogue
     result = BootChecks.send(:check_tokens_yaml, Master::ROOT)
 

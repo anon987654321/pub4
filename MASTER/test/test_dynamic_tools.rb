@@ -102,6 +102,15 @@ class TestDynamicTools < Minitest::Test
     end
   end
 
+  def test_duplicate_names_inside_one_catalogue_are_rejected
+    row = valid_row
+    with_catalogues(YAML.dump([row, row])) do
+      error = assert_raises(ArgumentError) { DYNAMIC_TOOLS.load_definitions }
+
+      assert_match(/tools-0\.yml has duplicate name\(s\): status_ping/, error.message)
+    end
+  end
+
   def test_duplicate_names_across_system_and_user_catalogues_are_rejected
     row = YAML.dump([valid_row])
     with_catalogues(row, row) do

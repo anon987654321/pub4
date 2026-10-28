@@ -49,6 +49,21 @@ class TestConfigurationGuard < Minitest::Test
     assert_match(/tokens\.face_interface\.state\.default_mode must be listed in modes/, reason)
   end
 
+  def test_dynamic_tool_catalogue_uses_the_runtime_schema
+    path = File.join(Master::ROOT, "data", "tools.dynamic.yml")
+
+    assert_nil Guard.validate(path:, content: File.read(path, encoding: "UTF-8"))
+  end
+
+  def test_dynamic_tool_catalogue_cannot_hide_a_mapping_instead_of_a_list
+    path = File.join(Master::ROOT, "data", "tools.dynamic.yml")
+    content = YAML.dump("name" => "status_ping", "url" => "https://example.com")
+
+    reason = Guard.validate(path:, content:)
+
+    assert_match(/dynamic tool catalogue .* must be a YAML list/, reason)
+  end
+
   def test_malformed_law_yaml_is_refused
     reason = Guard.validate(path: laws_path, content: "law_catalogue: [\n")
     assert_match(/configuration invariant failed/, reason)

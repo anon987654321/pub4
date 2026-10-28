@@ -41,6 +41,11 @@ module Master
       kind = kind_for(absolute)
       return unless kind
 
+      if kind == :dynamic_tools
+        Master::Io::DynamicTools.validate_source(content, path: absolute)
+        return nil
+      end
+
       data = YAML.safe_load(content, aliases: true)
       raise ArgumentError, "top-level YAML value must be a mapping" unless data.is_a?(Hash)
 
@@ -65,6 +70,7 @@ module Master
       return :providers if normalized.match?(%r{/MASTER/data/providers\.yml\z})
       return :models if normalized.match?(%r{/MASTER/data/models\.yml\z})
       return :tokens if normalized.match?(%r{/MASTER/data/tokens\.yml\z})
+      return :dynamic_tools if normalized.match?(%r{/MASTER/data/tools\.dynamic\.yml\z})
 
       nil
     end
