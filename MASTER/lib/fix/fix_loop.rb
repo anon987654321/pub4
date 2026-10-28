@@ -115,9 +115,9 @@ module Master
         @incremental = incremental
         @halted = false
         @halt_reason = nil
-        @run_mutex = Mutex.new
         @git = git || Io::GitOperations.new(root)
         @kernel = kernel || Kernel.new(root: path_root, actor: "fix-loop", bus:)
+        @run_mutex = @kernel.execution_mutex
         @run_journal = @kernel.lifecycle_journal
         @reachability = Reachability.new(root: @root, bus:)
         @transformation_plan = TransformationPlan.new(root: Master::ROOT)
