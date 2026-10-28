@@ -74,9 +74,10 @@ class TestFixKernel < Minitest::Test
         target: root, max_passes: 2, budget_seconds: 60, requested: false
       )
 
-      refute kernel.verify_log!.any? do |row|
+      terminalized = kernel.verify_log!.any? do |row|
         row["kind"] == "coordinator_terminal" && row["run_id"] == "same-process-run"
-      end, "another Kernel instance in this process must not terminalize a live peer"
+      end
+      refute terminalized, "another Kernel instance in this process must not terminalize a live peer"
     end
   end
 
