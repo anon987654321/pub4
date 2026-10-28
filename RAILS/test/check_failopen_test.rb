@@ -74,7 +74,8 @@ class CheckFailOpenTest < Minitest::Test
     end
   end
 
-  # Fail-open without a record is how a broken check goes unguarded for weeks.
+  # The ledger keeps the error named and attributable even when the overall run
+  # correctly exits non-zero.
   def test_the_ledger_records_every_check_of_the_run_by_name_and_outcome
     run_fixture_suite do |_out, _status, ledger|
       rows = ledger.summary
