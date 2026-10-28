@@ -39,7 +39,11 @@ module Master
           # refers to RunJournal::MAX_RUNS or other persisted-schema constants.
           require_relative "../run_journal"
           @lifecycle_mutex.synchronize do
-            @lifecycle_journal ||= LifecycleJournal.new(root: @root, bus: @bus)
+            # Compatibility factories can still substitute RunJournal in tests
+            # and legacy embeddings; the public constant aliases the same canonical
+            # Kernel::LifecycleJournal implementation.
+            require_relative "../run_journal" unless defined?(RunJournal)
+            @lifecycle_journal ||= RunJournal.new(root: @root, bus: @bus)
           end
         end
 
