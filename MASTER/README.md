@@ -122,12 +122,14 @@ repair-outcome receipts. Its startup reconciliation marks an orphaned coordinato
 promote an unverified outcome to DONE. The convergence, journal and repair
 implementations now live under Kernel while the old public constants remain usable.
 
-The convergence adapter remains split by responsibility: `FixLoop::Lifecycle`
-owns journal resume, incremental-scope proof and checkpoint restoration;
-`FixLoop::PassExecution` owns bounded repair passes, convergence and structural
-follow-ups; `FixLoop::Completion` owns gap-aware terminalization, mission updates
-and outcome receipts. The pure `Fix::OutcomePolicy` is still the shared source for
-terminal states, result-category mapping and measured repair outcomes. A
+The canonical convergence adapter remains split by responsibility:
+`Kernel::ConvergenceAdapter::Lifecycle` owns journal resume, incremental-scope
+proof and checkpoint restoration; `Kernel::ConvergenceAdapter::PassExecution`
+owns bounded repair passes, convergence and structural follow-ups;
+`Kernel::ConvergenceAdapter::Completion` owns gap-aware terminalization, mission
+updates and outcome receipts. The public `FixLoop` alias preserves old callers.
+The pure `Fix::OutcomePolicy` remains the shared source for terminal states,
+result-category mapping and measured repair outcomes. A
 process-kill/restart regressions now exercise transaction rollback, resumed
 run state, orphaned Kernel-receipt recovery, and deletion of the run journal while
 the Mission and checkpoint survive. The tests are authored, not run on the pinned
