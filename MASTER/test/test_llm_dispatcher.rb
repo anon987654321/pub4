@@ -104,6 +104,7 @@ class TestLLMDispatcher < Minitest::Test
     assert_nil result, "the preflight fallback policy remains unchanged"
     _name, payload = bus.events.find { |name, _| name == "llm:preflight_error" }
     assert_equal "ollama:qwen3:8b", payload[:model]
+    assert_equal "IOError", payload[:error_class]
     assert_equal Digest::SHA256.hexdigest(private_error), payload[:error_digest]
     assert_equal private_error.bytesize, payload[:error_bytes]
     refute payload.key?(:error)
