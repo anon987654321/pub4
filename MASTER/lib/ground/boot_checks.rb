@@ -139,8 +139,8 @@ module Master
         # Real MASTER needs both routing catalogues. Isolated test/workspace roots
         # may omit them, but a missing catalogue in the canonical installation must
         # never become an empty routing table.
-        def check_catalogue_yaml(root, relative_path, name)
-          required = File.expand_path(root) == File.expand_path(Master::ROOT)
+        def check_catalogue_yaml(root, relative_path, name, required: nil)
+          required = File.expand_path(root) == File.expand_path(Master::ROOT) if required.nil?
           basic = check_yaml_file(root, relative_path, name, required:)
           return basic unless basic.ok
           path = File.join(root, relative_path)
@@ -159,7 +159,7 @@ module Master
         end
 
         def check_limits_yaml(root)
-          check_yaml_file(root, "data/limits.yml", "limits_yaml")
+          check_catalogue_yaml(root, "data/limits.yml", "limits_yaml", required: true)
         end
 
         def check_yaml_file(root, rel_path, name, required: true)
