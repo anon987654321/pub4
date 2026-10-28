@@ -30,6 +30,23 @@ class TestEventPrivacy < Minitest::Test
     refute_includes json, "another secret"
   end
 
+  def test_malformed_reserved_metadata_is_digest_only
+    persisted = Master::Trace::EventPrivacy.persisted(
+      "route:chosen",
+      status: "private status token=secret",
+      elapsed_ms: "duration token=secret",
+      success: "secret-not-a-boolean"
+    )
+    json = JSON.generate(persisted)
+
+    assert_equal 64, persisted.fetch(:status_digest).length
+    assert_equal 64, persisted.fetch(:elapsed_ms_digest).length
+    assert_equal 64, persisted.fetch(:success_digest).length
+    refute_includes json, "private status token=secret"
+    refute_includes json, "duration token=secret"
+    refute_includes json, "secret-not-a-boolean"
+  end
+
   def test_sensitive_scalars_remain_digest_only
     persisted = Master::Trace::EventPrivacy.persisted(
       "route:chosen", query: "https://internal.invalid/?token=secret", outcome: "ok"
