@@ -102,7 +102,9 @@ extensions are refused before the provider call. Chain stages derive the same se
 actual stage-output path so intermediate files are not mislabeled.
 
 Each saved output gets a content-addressed blob, a checksum, a provenance sidecar and a line in
-`.master/media/gallery.jsonl`. The gallery's alt text describes the subject, the crop, the
+`.master/media/gallery.jsonl`. The sidecar stores the actual prediction ID, provider version,
+status and provider metrics returned by Replicate; `owner/name` alone is not enough to reproduce
+an image after the provider moves its `latest` pointer. The gallery's alt text describes the subject, the crop, the
 camera height and the background, which is what the image is of, and not the compiled prompt,
 which is how it was made. Missing credentials, missing outputs, provider failures,
 cancellation and timeouts are explicit failures, and the tool never substitutes a model
