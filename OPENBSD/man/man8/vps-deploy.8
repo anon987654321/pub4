@@ -24,6 +24,15 @@ so the production tree and GitHub credentials stay correctly owned.
 Service control calls
 .Nm pub4-admin
 directly.
+When started as
+.Cm dev ,
+passwordless
+.Xr doas 1
+re-executes the script as root through
+.Pa /usr/bin/env
+with an explicit allowlist of
+.Ev VPS_DEPLOY_*
+and related variables so the pinned SHA and preflight proof survive.
 .Pp
 The command validates its target, checks required local broker availability,
 validates bounded timing and capacity settings, obtains the deploy lock, and

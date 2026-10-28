@@ -32,13 +32,28 @@ esac
 # operator can still type the command as dev. Git never runs as root: root has
 # no GitHub host key by design, and a root checkout would leave root-owned files
 # in the dev tree. Service control calls the broker directly when uid 0.
+#
+# doas strips the caller environment (the dev rule has no keepenv — intentional,
+# so RUBYOPT and friends cannot cross the privilege boundary). Re-exec through
+# /usr/bin/env with an explicit allowlist so VPS_DEPLOY_SHA, preflight proof,
+# logging and retry knobs survive. Widen the list only with the same care as
+# OPENBSD/etc/doas.conf setenv.
 if [[ $(id -u) -ne 0 ]]; then
   if command -v doas >/dev/null 2>&1; then
     self=$0
     if [[ $self != /* ]]; then
       self="$(cd -- "$(dirname -- "$self")" && pwd)/$(basename -- "$self")"
     fi
-    exec doas -n zsh "$self" "$@"
+    typeset -a deploy_env
+    for _name in       VPS_DEPLOY_SHA VPS_DEPLOY_PREFLIGHT_SHA VPS_DEPLOY_SKIP_PREFLIGHT       VPS_DEPLOY_LOGGING VPS_DEPLOY_LOG VPS_DEPLOY_LOG_DIR VPS_DEPLOY_RUN_LOG       VPS_DEPLOY_LOG_MAX_BYTES VPS_DEPLOY_LOCK_DIR VPS_DEPLOY_LOCK_HELD       VPS_DEPLOY_LOCK_TTL VPS_DEPLOY_USER VPS_DEPLOY_HOME VPS_DEPLOY_POLL       VPS_DEPLOY_RESTORE_WAIT VPS_DEPLOY_SETTLE_WAIT VPS_DEPLOY_MIN_FREE_KB       VPS_DEPLOY_MASTER_MIN_AVAIL VPS_DEPLOY_GIT_RETRIES VPS_DEPLOY_SERVICE_RETRIES       VPS_DEPLOY_SERVICE_RETRY_DELAY VPS_DEPLOY_DRIFT VPS_DEPLOY_DF       VPS_DEPLOY_SHED_FILE VPS_DEPLOY_STARTED VPS_DEPLOY_GUARD_LOG       PUB4_DEPLOY_CANARY PUB4_DEPLOY_BROWSER_CHECKS PUB4_DEPLOY_COOLDOWN       PUB4_ROOT SKIP_CI I_UNDERSTAND_FAST_DEPLOY
+    do
+      # -v: only pass variables actually set in this environment (including empty).
+      if [[ -v $_name ]]; then
+        _val=${(P)_name}
+        deploy_env+=("$_name=$_val")
+      fi
+    done
+    exec doas -n /usr/bin/env "${deploy_env[@]}" zsh "$self" "$@"
   fi
   print -u2 "vps-deploy: must run as root (or with passwordless doas)"
   print -u2 "            try: doas zsh OPENBSD/bin/vps-deploy ${1:-all}"
