@@ -4,6 +4,7 @@ require "yaml"
 require_relative "law_vocabulary"
 require_relative "provider_catalogue_guard"
 require_relative "model_catalogue_guard"
+require_relative "limits_catalogue_guard"
 
 module Master
   # Validates the governing YAML by its invariants. Who may write it is a
@@ -50,6 +51,7 @@ module Master
       when :providers then ProviderCatalogueGuard.validate(data)
       when :models then ModelCatalogueGuard.validate(data, path: absolute)
       when :tokens then validate_tokens(data)
+      when :limits then LimitsCatalogueGuard.validate(data)
       end
       nil
     rescue Psych::Exception, ArgumentError, KeyError, TypeError => e
@@ -65,6 +67,7 @@ module Master
       return :providers if normalized.match?(%r{/MASTER/data/providers\.yml\z})
       return :models if normalized.match?(%r{/MASTER/data/models\.yml\z})
       return :tokens if normalized.match?(%r{/MASTER/data/tokens\.yml\z})
+      return :limits if normalized.match?(%r{/MASTER/data/limits\.yml\z})
 
       nil
     end
