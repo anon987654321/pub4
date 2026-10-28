@@ -18,6 +18,13 @@ class TestFixInterruptionRestart < Minitest::Test
   def test_losing_run_journal_does_not_lose_mission_checkpoint_or_transaction_recovery
     Dir.mktmpdir("fix-journal-loss-restart") do |root|
       FileUtils.mkdir_p(File.join(root, "MASTER"))
+      File.write(File.join(root, ".pub4"), <<~YAML)
+        schema: 1
+        tree: restart
+        allows:
+          master: read_write
+        adapters: []
+      YAML
       sample = File.join(root, "sample.rb")
       marker = File.join(root, "crash-ready.json")
       File.write(sample, "before\n")
@@ -160,6 +167,13 @@ class TestFixInterruptionRestart < Minitest::Test
   def test_killed_fix_pass_rolls_back_and_resumes_from_durable_state
     Dir.mktmpdir("fix-interruption-restart") do |root|
       FileUtils.mkdir_p(File.join(root, "MASTER"))
+      File.write(File.join(root, ".pub4"), <<~YAML)
+        schema: 1
+        tree: restart
+        allows:
+          master: read_write
+        adapters: []
+      YAML
       sample = File.join(root, "sample.rb")
       marker = File.join(root, "crash-ready.json")
       File.write(sample, "before\n")
