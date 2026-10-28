@@ -247,6 +247,7 @@ class TestFixInterruptionRestart < Minitest::Test
       writer = support + <<~'RUBY'
         root, marker = ARGV
         ENV["MASTER_FIX_CRASH_PROBE"] = "1"
+        ENV.delete("MASTER_FIX_FRESH")
         loop = quiet_outcome_guidance(build_restart_probe_loop(root))
 
         checkpoint = lambda do |id:, root:, files:|
@@ -317,6 +318,8 @@ class TestFixInterruptionRestart < Minitest::Test
 
       restart = support + <<~'RUBY'
         root, old_run_id, old_coordinator_id, old_transaction_id = ARGV
+        ENV.delete("MASTER_FIX_CRASH_PROBE")
+        ENV.delete("MASTER_FIX_FRESH")
         loop = quiet_outcome_guidance(build_restart_probe_loop(root))
         result = loop.run(
           root, max_passes: 2, budget_seconds: 60,
