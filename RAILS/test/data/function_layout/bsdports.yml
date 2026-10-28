@@ -1,10 +1,10 @@
-# bsdports function + layout inventory. Terminal dialect, ports catalogue.
+# bsdports function + layout inventory. Ultra-minimal white search surface, classic Google front-page dialect.
 app: bsdports
 checks:
   # --- chrome ---
   - {id: chrome.skip_link, in: bsdports/app/views/layouts/application.html.erb, has: [skip-link, 'href="#main-content"']}
   - {id: chrome.viewport, in: bsdports/app/views/layouts/application.html.erb, has: [viewport-fit=cover]}
-  - {id: chrome.dark, in: bsdports/app/views/layouts/application.html.erb, has: ['color-scheme" content="dark"', "wscons"]}
+  - {id: chrome.light, in: bsdports/app/views/layouts/application.html.erb, has: ['color-scheme" content="light"', 'data-theme="light"', "wscons"], lack: ['color-scheme" content="dark"']}
   - {id: chrome.csrf, in: bsdports/app/views/layouts/application.html.erb, has: [csrf_meta_tags]}
   - {id: chrome.importmap, in: bsdports/app/views/layouts/application.html.erb, has: [javascript_importmap_tags]}
   - {id: chrome.pwa, in: bsdports/app/views/layouts/application.html.erb, has: [pwa_manifest]}
