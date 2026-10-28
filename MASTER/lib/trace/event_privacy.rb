@@ -12,7 +12,8 @@ module Master
       TOOL_ARGUMENT_EVENTS = %w[tool:before tool:after tool:execution:before tool:execution:after tool:execution:reconciled].freeze
       SAFE_CATEGORIES = %w[
         event tool op operation tier profile mode risk status outcome capability verb
-        stage state kind method reason_code invocation_id run_id mission_id attempt_id
+        stage state kind method reason_code model provider lane route channel backend engine adapter
+        component service subsystem severity phase invocation_id run_id mission_id attempt_id
         effect_id parent_effect_id checkpoint_id idempotency_key reconciliation evidence_ref
       ].freeze
       SAFE_NUMBERS = %w[
@@ -41,7 +42,7 @@ module Master
             safe[field.to_sym] = normalize_metadata(field, value)
           elsif tool_event || field.match?(SENSITIVE_FIELD) || value.is_a?(Hash) || value.is_a?(Array) ||
                 SAFE_CATEGORIES.include?(field) || SAFE_NUMBERS.include?(field) || SAFE_BOOLEANS.include?(field) ||
-                field.end_with?("_digest", "_bytes")
+                field.end_with?("_digest", "_bytes") || value.is_a?(String) || value.is_a?(Symbol)
             # A seemingly harmless container can hold a sensitive nested key,
             # and malformed reserved metadata is not safe just because its key
             # is normally low risk. Keep evidence of size without preserving
