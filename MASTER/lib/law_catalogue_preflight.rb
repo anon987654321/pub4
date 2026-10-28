@@ -20,6 +20,7 @@ module Master
       declarations.concat(normalize_generated(generated_declarations))
       detector_declarations = source_detector_declarations(File.join(law_root, "detectors"), repository_root)
       errors = []
+      validate_manifest!(catalogue, entries, errors)
 
       declarations.group_by { |row| row[:id] }.each do |id, rows|
         next if rows.size < 2
@@ -48,6 +49,11 @@ module Master
           next
         end
 
+        unless entry.is_a?(Hash)
+          errors << "catalogue entry #{id} must be a mapping"
+          next
+        end
+
         sources = Array(entry["definition_sources"]).map(&:to_s)
         next if sources.include?(declaration.fetch(:source))
 
@@ -60,10 +66,16 @@ module Master
         next unless entry.is_a?(Hash)
 
         Array(entry["definition_sources"]).map(&:to_s).each do |source|
-          next unless source.start_with?("MASTER/law/")
+          unless source.start_with?("MASTER/law/") && !source.split("/").include?("..")
+            errors << "#{id} has invalid definition source path: #{source}"
+            next
+          end
 
           resolved = File.expand_path(source, repository_root)
-          next unless resolved == law_root || resolved.start_with?(law_root + File::SEPARATOR)
+          unless resolved == law_root || resolved.start_with?(law_root + File::SEPARATOR)
+            errors << "#{id} definition source escapes the direct Law directory: #{source}"
+            next
+          end
 
           unless File.file?(resolved)
             errors << "#{id} definition source does not exist: #{source}"
@@ -80,12 +92,15 @@ module Master
         end
 
         Array(entry["detector_sources"]).map(&:to_s).each do |source|
-          next unless source.start_with?("MASTER/law/detectors/")
+          unless source.start_with?("MASTER/law/detectors/") && !source.split("/").include?("..")
+            errors << "#{id} has invalid detector source path: #{source}"
+            next
+          end
 
           resolved = File.expand_path(source, repository_root)
           expected_root = File.expand_path(File.join(law_root, "detectors"))
-          unless resolved.start_with?(expected_root + File::SEPARATOR) && File.file?(resolved)
-            errors << "#{id} detector source does not exist inside the detector directory: #{source}"
+          unless resolved.start_with?(expected_root + File::SEPARATOR) && File.dirname(resolved) == expected_root && File.file?(resolved)
+            errors << "#{id} detector source does not exist directly inside the detector directory: #{source}"
             next
           end
 
@@ -109,6 +124,52 @@ module Master
       raise ArgumentError, "Law catalogue preflight failed:\n- #{errors.uniq.join("\n- ")}" unless errors.empty?
 
       true
+    end
+
+    def validate_manifest!(catalogue, entries, errors)
+      expected_modalities = Master::LawVocabulary::MODALITIES.map(&:to_s).sort
+      declared_modalities = Array(catalogue["modalities"]).map(&:to_s).uniq.sort
+      errors << "law_catalogue.modalities must be #{expected_modalities.join(', ')}" unless declared_modalities == expected_modalities
+
+      surfaces = catalogue["surfaces"]
+      unless surfaces.is_a?(Array) && !surfaces.empty? && surfaces.all? { |surface| !surface.to_s.strip.empty? } &&
+             surfaces.map(&:to_s).uniq.size == surfaces.size
+        errors << "law_catalogue.surfaces must be a non-empty, unique list of named surfaces"
+      end
+
+      defaults = catalogue.fetch("defaults", {})
+      errors << "law_catalogue.defaults must be a mapping" unless defaults.is_a?(Hash)
+      normalized_ids = entries.keys.map(&:to_s)
+      invalid_ids = normalized_ids.reject { |id| id.match?(/\\A[A-Za-z][A-Za-z0-9_]*\\z/) }
+      errors << "invalid Law catalogue identity(ies): #{invalid_ids.uniq.join(', ')}" unless invalid_ids.empty?
+      duplicate_ids = normalized_ids.group_by(&:downcase).select { |_id, keys| keys.uniq.size > 1 }.keys
+      errors << "case-insensitive duplicate Law identities: #{duplicate_ids.join(', ')}" unless duplicate_ids.empty?
+
+      entries.each do |id, entry|
+        unless entry.is_a?(Hash)
+          errors << "catalogue entry #{id} must be a mapping"
+          next
+        end
+
+        errors << "Law #{id} must be marked universal" unless entry["universal"] == true
+        modalities = Array(entry["modalities"]).map(&:to_s).uniq.sort
+        errors << "Law #{id} modalities must be #{expected_modalities.join(', ')}" unless modalities == expected_modalities
+        severity = defaults.merge(entry)["severity"].to_s.strip
+        errors << "Law #{id} has no effective severity" if severity.empty?
+
+        %w[definition_sources detector_sources].each do |field|
+          next unless entry.key?(field)
+          unless entry[field].is_a?(Array) && entry[field].all? { |source| source.is_a?(String) && !source.strip.empty? }
+            errors << "Law #{id} #{field} must be a list of non-empty paths"
+          end
+        end
+
+        definition_sources = Array(entry["definition_sources"]).map(&:to_s)
+        detector_sources = Array(entry["detector_sources"]).map(&:to_s)
+        if (definition_sources + detector_sources).empty?
+          errors << "Law #{id} has no definition_sources or detector_sources"
+        end
+      end
     end
 
     def source_declarations(law_root, repository_root)
@@ -140,7 +201,7 @@ module Master
         body.scan(/LawDSL\.law\s+:"([^"]*#\{([A-Za-z_]\w*)\}[^"]*)"/).each do |template, variable|
           enum = body.scan(/%w\[([^\]]+)\]\.each\s+do\s+\|#{Regexp.escape(variable)}\|/).flatten
           ids.concat(enum.flat_map do |values|
-            values.split.map { |value| template.gsub("#\{#{variable}\}", value) }
+            values.split.map { |value| template.gsub("\#{#{variable}}", value) }
           end)
         end
 
