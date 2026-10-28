@@ -27,18 +27,19 @@ module Master
           CATALOG_MODEL_LIMIT = 5_000
           CREDITS_URL = "https://openrouter.ai/api/v1/credits"
           KEY_FILES = "~/.config/master/env (or /etc/master.env on OpenBSD)"
+          LANE_SOURCES = %i[dead].freeze
 
           def reachable?(model_id) = unreachable_reason(model_id).nil?
 
           # nil when the model can be asked, otherwise what to do about it.
-          # LaneQuota owns manual exclusions and failures learned at runtime; applying
-          # it here keeps /model, boot selection, and turn failover on one availability rule.
+          # A dead lane is out of /model, boot selection and turn failover alike.
+          # Only :dead: a parked model or a silent lane is still reachable, so the
+          # route keeps it as a candidate for the typed offline diagnosis, and a
+          # lane silent at boot still gets its sign-in probe.
           def unreachable_reason(model_id, wait: false)
             id = model_id.to_s
-            if Master::Io::LaneQuota.dead?(id)
-              return Master::Io::LaneQuota.report_for(id) ||
-                     "lane excluded by data/lanes.yml or recent failure state"
-            end
+            lane = Master::Io::LaneState.verdict(id, sources: LANE_SOURCES)
+            return lane.reason unless lane.usable?
 
             case lane_of(id)
             when :cli_lane then cli_lane_problem(id, wait:)
@@ -89,7 +90,8 @@ module Master
 
             # A login probe cannot rehabilitate a lane the canonical quota record
             # has excluded; don't spend boot work on it outside its explicit canary.
-            candidates = cli_lanes.keys.reject { |name| Master::Io::LaneQuota.dead?("#{name}:") }
+            lanes = Master::Io::LaneState
+            candidates = cli_lanes.keys.select { |name| lanes.usable?("#{name}:", sources: LANE_SOURCES) }
             @pool_probes ||= candidates.to_h { |name| [name, Thread.new { probe_cli_lane(name) }] }.merge(
               "openrouter_credits" => Thread.new { probe_openrouter_credits },
               "provider_catalogs" => Thread.new { refresh_provider_catalogs },
@@ -248,7 +250,8 @@ module Master
 
             @live_catalog_models = catalog_rows("openrouter").filter_map do |row|
               id = row["id"].to_s
-              next if id.empty? || id.end_with?(":free") && Master::Io::ModelQuota.over_quota?(id)
+              # The list lives as long as the router, so only the day-long refusal keeps a model out.
+              next if id.empty? || !Master::Io::LaneState.usable?(id, sources: %i[daily_quota])
               next unless chat_catalog_model?(row)
 
               id

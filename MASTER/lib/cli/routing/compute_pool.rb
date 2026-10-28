@@ -5,6 +5,7 @@ require_relative "../../io/atomic_write"
 require_relative "../../io/model_quota"
 require_relative "../../io/quota_check"
 require_relative "../../io/catalog_index"
+require_relative "../../io/lane_state"
 
 module Master
   module CLI
@@ -325,17 +326,20 @@ module Master
           calls.zero? ? nil : stat.fetch(:successes, 0).to_f / calls
         end
 
+        QUOTA_WORD = { daily_quota: :exhausted }.freeze
+
         def quota_remaining(id)
           Master::Io::ModelQuota.remaining(id)
         rescue StandardError
           nil
         end
 
+        # /model list's column: the store that refuses the model, in its own word.
         def quota_state(id)
-          return :exhausted if Master::Io::ModelQuota.over_quota?(id)
-          return Master::Io::QuotaCheck.state if paid_model?(id)
+          source = Master::Io::LaneState.verdict(id).source
+          return QUOTA_WORD.fetch(source, source) unless source.nil? || source == :spent
 
-          :available
+          source == :spent || paid_model?(id) ? Master::Io::QuotaCheck.state : :available
         rescue StandardError
           :unknown
         end

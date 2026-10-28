@@ -33,7 +33,9 @@ module Master
 
             candidates = Routing::RoutePolicy.normalize(chain_for(task_type))
             reachable = candidates.select { |id| reachable?(id) }
-            parked = reachable.select { |id| Io::ModelSkipCache.skipped?(id) }
+            # Parked apart from unusable: a silent or spent lane stays a candidate when
+            # nothing is usable, so the dispatcher can name why; a parked model does not.
+            parked = reachable.reject { |id| Io::LaneState.usable?(id, sources: %i[parked]) }
             unparked = reachable.reject { |id| parked.include?(id) }
 
             recently_failed = unparked.select { |id| recently_failed?(id) }
@@ -59,7 +61,7 @@ module Master
               ),
               task_type,
             )
-            priority_fallback_order(Io::ModelSkipCache.filter(selected))
+            priority_fallback_order(selected)
           end
 
           # Greetings are explicitly routed to the free tier. A locally installed
