@@ -14,8 +14,8 @@ module Deploy
   # Four outcomes, not two.
   #
   # :passed, :failed, :inconclusive (the check declined to measure), :errored
-  # (the check tried and broke). The first three are below; :errored and its
-  # fail-open policy are documented on `errored!`.
+  # (the check tried and broke). These remain distinct for diagnosis, but an
+  # errored result can never make a runner or report claim success.
   #
   # `ok?` only ever meant "no hard failures", so a check that could not run —
   # no Chrome, no app listening, no deploy stamp, a missing gem — reported the
@@ -56,10 +56,6 @@ module Deploy
     # half, so the absence of it is loud instead of a warning line.
     def self.require_live?(env = ENV) = flag?("CHECK_REQUIRE_LIVE", env)
 
-    # CHECK_STRICT_ERRORS=1 makes a check's own crash blocking. See errored! for
-    # why the default is the other way.
-    def self.strict_errors?(env = ENV) = flag?("CHECK_STRICT_ERRORS", env)
-
     def initialize
       @failures = []
       @warnings = []
@@ -74,28 +70,12 @@ module Deploy
     end
 
     # The check itself broke — an exception escaped its own run, not a finding
-    # it made about the tree.
-    #
-    # Fail-open, from arXiv 2607.07405 §"deterministic checks": "if a check itself
-    # raises an exception, the harness records the error and allows the original
-    # call." Their reason is precision. A check that crashes and blocks produces a
-    # false block on every subsequent call, and a suite whose blocks are mostly
-    # its own bugs is one people learn to route around — which is how a check
-    # fleet stops being read at all.
-    #
-    # pub4's version of that was worse than a false block: MASTER/checks/runner.rb
-    # called `klass.run` with no rescue, so one check raising killed the process
-    # and every check after it in the --all order never ran. Forty-six checks
-    # reporting nothing, exit 1, and a backtrace where the summary should be.
-    #
-    # So this is a fourth state and not a failure: it never blocks by default,
-    # it is counted and named separately from both :passed and :failed, and it
-    # can never be mistaken for a pass. CHECK_STRICT_ERRORS=1 promotes it for CI
-    # on the deploy host, where a check that cannot run is itself the news.
+    # it made about the tree. Keep the fourth state so the report names the
+    # broken instrument rather than mislabelling its crash as a tree finding.
+    # A runner must still finish the remaining checks, record this outcome, and
+    # exit non-zero: a missing verdict is not a pass.
     def errored!(reason)
       @errors << reason
-
-      @failures << "[check-error] #{reason}" if self.class.strict_errors?
       self
     end
 
@@ -223,8 +203,10 @@ module Deploy
       parts.empty? ? "no checks ran" : parts.join(", ")
     end
 
+    # An errored check has no verdict; callers must not confuse its empty
+    # finding list with success.
     def ok?
-      @failures.empty?
+      @failures.empty? && @errors.empty?
     end
 
     # Did this check check everything it exists to check?
@@ -247,7 +229,7 @@ module Deploy
     def errored? = !@errors.empty?
 
     def outcome
-      return :failed unless ok?
+      return :failed unless @failures.empty?
       return :errored if errored?
       return :failed if measured_nothing? && self.class.strict_inconclusive?
 
@@ -287,13 +269,12 @@ module Deploy
     def render(success_message = nil)
       emit("Warnings:", @warnings)
       emit("Not checked:", @unchecked.map { |reason| @gaps[reason] ? "#{reason} (#{@gaps[reason].clause})" : reason })
-      emit("Check errors (fail-open — nothing was blocked by these):", @errors)
+      emit("Check errors (no verdict produced):", @errors)
       emit("Failures:", @failures)
 
       case outcome
       when :errored
-        puts "errored: the check itself broke and blocked nothing — " \
-             "#{@errors.size} error(s) above (set CHECK_STRICT_ERRORS=1 to treat as failure)"
+        puts "errored: the check itself broke — #{@errors.size} error(s) above; this run cannot pass"
         :errored
       when :failed
         # The strict-mode failure has no message of its own -- the promotion moved
@@ -332,7 +313,7 @@ module Deploy
     end
 
     def report!(success_message)
-      exit 1 if render(success_message) == :failed
+      exit 1 if %i[failed errored].include?(render(success_message))
     end
 
     private
