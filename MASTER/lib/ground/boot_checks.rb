@@ -3,7 +3,6 @@
 require "fileutils"
 require "yaml"
 require_relative "../configuration_guard"
-require_relative "../io/dynamic_tools"
 
 module Master
   module Ground
