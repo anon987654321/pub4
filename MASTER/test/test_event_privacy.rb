@@ -116,7 +116,7 @@ class TestEventPrivacy < Minitest::Test
         refute_nil publisher, "#{relative_path} lost publisher for #{event}"
         assert_includes publisher, "Master::Execution::Contract.diagnostic_fields", event
         assert_includes publisher, "error_class:", event
-        refute_match(/\\berror:\\s*(?:e|err)\\.message/, publisher, "#{event} leaked raw exception text")
+        refute_match(/\berror:\s*(?:e|err)\.message/, publisher, "#{event} leaked raw exception text")
       end
     end
   end
