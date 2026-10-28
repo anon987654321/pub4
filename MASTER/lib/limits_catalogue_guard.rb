@@ -214,11 +214,10 @@ module Master
       errors << "limits.yml fix_budget.run_tokens must be a positive integer" unless
         tokens.is_a?(Integer) && tokens.positive?
       shares = value["law_shares"]
-      unless shares.is_a?(Hash) && shares.all? do |id, fraction|
+      shares_valid = shares.is_a?(Hash) && shares.all? do |id, fraction|
         id.to_s.match?(/\A[A-Za-z][A-Za-z0-9_]*\z/) && fraction.is_a?(Numeric) && fraction.positive? && fraction <= 1
       end
-        errors << "limits.yml fix_budget.law_shares must map valid Law IDs to fractions in (0, 1]"
-      end
+      errors << "limits.yml fix_budget.law_shares must map valid Law IDs to fractions in (0, 1]" unless shares_valid
     end
 
     def validate_fix_time(value, errors)
