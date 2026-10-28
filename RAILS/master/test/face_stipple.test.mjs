@@ -411,7 +411,7 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   assert.equal(typeof window.MASTER_FACE_STIPPLE?.snapshot, "function");
   assert.equal(typeof window.MASTER_FACE_STIPPLE?.uninstall, "function");
   assert.equal(window.MASTER_FACE_STIPPLE.profiles.idle.density, 0.44);
-  assert.equal(window.MASTER_FACE_STIPPLE.snapshot().pointCeiling, 200);
+  assert.equal(window.MASTER_FACE_STIPPLE.snapshot().pointCeiling, 240);
   assert.equal(window.MASTER_FACE_STIPPLE.snapshot().context, "ready");
 
   class BufferAttribute {
@@ -520,17 +520,17 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   window.MASTER_FACE.State.reducedMotion = false;
 
   // The layer never exceeds the canonical desktop/mobile point ceiling.
-  assert.equal(api.createDefault(THREE, 5000).count, 200);
+  assert.equal(api.createDefault(THREE, 5000).count, 240);
   coarsePointer = true;
-  assert.equal(api.createDefault(THREE, 5000).count, 120);
+  assert.equal(api.createDefault(THREE, 5000).count, 240);
   coarsePointer = false;
   narrowViewport = true;
-  assert.equal(api.createDefault(THREE, 5000).count, 120);
+  assert.equal(api.createDefault(THREE, 5000).count, 240);
   narrowViewport = false;
   hardwareCores = 4;
-  assert.equal(api.createDefault(THREE, 5000).count, 120);
+  assert.equal(api.createDefault(THREE, 5000).count, 240);
   faceState = { mode: "idle", reducedMotion: true };
-  assert.equal(api.createDefault(THREE, 5000).count, 64);
+  assert.equal(api.createDefault(THREE, 5000).count, 240);
   faceState = {};
 });
 
