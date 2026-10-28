@@ -79,6 +79,23 @@ class TestTraceRecorderStorage < Minitest::Test
     end
   end
 
+  def test_shared_master_state_directory_keeps_its_canonical_group_access
+    Dir.mktmpdir("trace-storage-shared-group") do |root|
+      state = File.join(root, ".master")
+      Dir.mkdir(state)
+      groups = Process.groups - [Process.egid]
+      skip "this account belongs to no second group" if groups.empty?
+
+      File.chown(nil, groups.first, state)
+      File.chmod(0o770, state)
+
+      recorder(root)
+
+      assert_equal MasterPaths.private_dir_mode(state, 0o700), File.stat(state).mode & 0o7777
+      assert_equal 0o700, File.stat(trace_directory(root)).mode & 0o777
+    end
+  end
+
   def test_non_private_trace_directory_is_refused
     Dir.mktmpdir("trace-storage-directory-mode") do |root|
       FileUtils.mkdir_p(trace_directory(root), mode: 0o700)
