@@ -1,6 +1,70 @@
-/* Sommerseth Eiendom — varm minimalisme
-   papir #F7F2E9 · blekk #1E322D · signal (rav) #C97E1E · hårsbredder */
+/*
+ * Sommerseth Eiendom — varm minimalisme
+ * papir #F7F2E9 · blekk #1E322D · signal (rav) #C97E1E · hårsbredder
+ *
+ * Én fil: reset + bevegelses-CSS + merkevaren. Ingen byggetrinn.
+ * Bevegelsen krever html.js og (prefers-reduced-motion: no-preference);
+ * ellers vises alt flatt, fullt og umiddelbart.
+ */
 
+/* ——— Fonter (selvhostet, latin-subsett — dekker æ ø å) ——— */
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/instrument-serif-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/instrument-serif-400i.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/geist-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/geist-mono-400.woff2") format("woff2");
+}
+
+/* ——— Reset ——— */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+img {
+  max-width: 100%;
+}
+
+/* ——— Siden ——— */
 .page {
   --paper: #f7f2e9;
   --ink: #1e322d;
@@ -8,12 +72,17 @@
   --signal: #c97e1e;
   --line: rgba(30, 50, 45, 0.16);
   --cur: #1e322d;
+  --font-display: "Instrument Serif", Georgia, serif;
+  --font-body: "Geist", system-ui, sans-serif;
+  --font-mono: "Geist Mono", monospace;
 
   background: var(--paper);
   color: var(--ink);
   min-height: 100vh;
+  font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
@@ -37,8 +106,14 @@
   filter: saturate(0.94) contrast(1.02);
 }
 
+.page a:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
 /* ——— Nav ——— */
-.nav {
+.page .nav {
   position: sticky;
   top: 0;
   z-index: 20;
@@ -52,33 +127,33 @@
   border-bottom: 1px solid var(--line);
 }
 
-.brand {
+.page .brand {
   display: inline-flex;
   align-items: center;
   gap: 0.7rem;
   color: inherit;
   text-decoration: none;
-  font-family: var(--font-display), Georgia, serif;
+  font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 400;
   letter-spacing: 0;
   white-space: nowrap;
 }
 
-.links {
+.page .links {
   display: flex;
   align-items: center;
   gap: clamp(1rem, 2.5vw, 2.2rem);
 }
 
-.links a {
+.page .links a {
   color: inherit;
   text-decoration: none;
   font-size: 0.925rem;
   position: relative;
 }
 
-.links a:not(.cta)::after {
+.page .links a:not(.cta)::after {
   content: "";
   position: absolute;
   left: 0;
@@ -89,38 +164,32 @@
   transition: right 0.25s ease;
 }
 
-.links a:not(.cta):hover::after {
+.page .links a:not(.cta):hover::after {
   right: 0;
 }
 
-.cta {
+.page .cta {
   border: 1.5px solid var(--ink);
   border-radius: 999px;
   padding: 0.45rem 1.15rem;
   transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
 
-.cta:hover {
+.page .cta:hover {
   background: var(--signal);
   border-color: var(--signal);
   color: var(--paper);
 }
 
-.page a:focus-visible {
-  outline: 2px solid var(--signal);
-  outline-offset: 3px;
-  border-radius: 2px;
-}
-
 /* ——— Hero ——— */
-.hero {
+.page .hero {
   padding: clamp(4rem, 10vw, 8.5rem) clamp(1.25rem, 5vw, 4rem)
     clamp(2.5rem, 5vw, 4rem);
   max-width: 78rem;
 }
 
-.kicker {
-  font-family: var(--font-mono), monospace;
+.page .kicker {
+  font-family: var(--font-mono);
   font-size: 0.75rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -128,7 +197,7 @@
   margin: 0 0 1.6rem;
 }
 
-.kicker::before {
+.page .kicker::before {
   content: "";
   display: inline-block;
   width: 0.55rem;
@@ -139,8 +208,8 @@
   vertical-align: 1px;
 }
 
-.display {
-  font-family: var(--font-display), Georgia, serif;
+.page .display {
+  font-family: var(--font-display);
   font-weight: 400;
   font-size: clamp(2.9rem, 7.2vw, 6.6rem);
   line-height: 1.02;
@@ -149,27 +218,27 @@
   max-width: 12em;
 }
 
-.display em,
-.h2 em {
+.page .display em,
+.page .h2 em {
   font-style: italic;
   color: var(--signal);
 }
 
-.lead {
+.page .lead {
   font-size: clamp(1.05rem, 1.4vw, 1.25rem);
   color: var(--muted);
   max-width: 34em;
   margin: 0 0 2.2rem;
 }
 
-.heroCtas {
+.page .heroCtas {
   display: flex;
   flex-wrap: wrap;
   gap: 1.1rem;
   align-items: center;
 }
 
-.primary {
+.page .primary {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
@@ -182,12 +251,12 @@
   transition: background 0.25s ease, transform 0.25s ease;
 }
 
-.primary:hover {
+.page .primary:hover {
   background: var(--signal);
   transform: translateY(-1px);
 }
 
-.quiet {
+.page .quiet {
   color: inherit;
   text-decoration: none;
   font-size: 0.975rem;
@@ -196,16 +265,16 @@
 }
 
 /* ——— Bilder (parallaksrammer) ——— */
-.heroFig {
+.page .heroFig {
   margin: 0;
 }
 
-.heroFig .pl-frame {
+.page .heroFig .pl-frame {
   height: min(62vh, 41rem);
 }
 
-.heroFig figcaption {
-  font-family: var(--font-mono), monospace;
+.page .heroFig figcaption {
+  font-family: var(--font-mono);
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -214,7 +283,7 @@
 }
 
 /* ——— Faktastripping ——— */
-.facts {
+.page .facts {
   list-style: none;
   margin: 0;
   padding: 0 clamp(1.25rem, 5vw, 4rem);
@@ -223,33 +292,33 @@
   border-block: 1px solid var(--line);
 }
 
-.facts li {
+.page .facts li {
   padding: 1.7rem 1.4rem 1.7rem 0;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
 }
 
-.facts li + li {
+.page .facts li + li {
   border-left: 1px solid var(--line);
   padding-left: 1.4rem;
 }
 
-.facts strong {
-  font-family: var(--font-display), Georgia, serif;
+.page .facts strong {
+  font-family: var(--font-display);
   font-weight: 400;
   font-size: clamp(1.7rem, 2.8vw, 2.4rem);
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
 
-.facts span {
+.page .facts span {
   font-size: 0.875rem;
   color: var(--muted);
 }
 
 /* ——— Delte seksjoner ——— */
-.label {
+.page .label {
   font-size: 0.8rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -257,8 +326,8 @@
   margin: 0 0 1.1rem;
 }
 
-.h2 {
-  font-family: var(--font-display), Georgia, serif;
+.page .h2 {
+  font-family: var(--font-display);
   font-weight: 400;
   font-size: clamp(2rem, 4.2vw, 3.6rem);
   line-height: 1.06;
@@ -266,7 +335,7 @@
   margin: 0 0 1.5rem;
 }
 
-.split {
+.page .split {
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
   gap: clamp(2rem, 5vw, 5rem);
@@ -274,39 +343,39 @@
   align-items: center;
 }
 
-.splitText p:not(.label) {
+.page .splitText p:not(.label) {
   color: var(--muted);
   max-width: 36em;
   margin: 0 0 1.1rem;
 }
 
-.splitFig {
+.page .splitFig {
   aspect-ratio: 4 / 5;
   max-height: 34rem;
 }
 
 /* ——— Eiendommene ——— */
-.props {
+.page .props {
   padding: clamp(1rem, 2vw, 2rem) 0 clamp(4rem, 9vw, 8rem);
 }
 
-.props .label,
-.props .h2 {
+.page .props .label,
+.page .props .h2 {
   padding-inline: clamp(1.25rem, 5vw, 4rem);
 }
 
-.wideFig {
+.page .wideFig {
   height: min(52vh, 34rem);
   margin-block: 2.4rem;
   padding-inline: 0;
 }
 
-.rows {
+.page .rows {
   padding-inline: clamp(1.25rem, 5vw, 4rem);
   border-top: 1px solid var(--line);
 }
 
-.row {
+.page .row {
   display: grid;
   grid-template-columns: 4rem 1.1fr 1.6fr 2.4rem;
   align-items: baseline;
@@ -318,62 +387,62 @@
   transition: background 0.25s ease;
 }
 
-.row:hover {
+.page .row:hover {
   background: rgba(201, 126, 30, 0.06);
 }
 
-.rowN {
-  font-family: var(--font-mono), monospace;
+.page .rowN {
+  font-family: var(--font-mono);
   font-size: 0.72rem;
   color: var(--signal);
   letter-spacing: 0.1em;
 }
 
-.rowT {
-  font-family: var(--font-display), Georgia, serif;
+.page .rowT {
+  font-family: var(--font-display);
   font-weight: 400;
   font-size: clamp(1.35rem, 2.1vw, 1.8rem);
   letter-spacing: -0.01em;
 }
 
-.rowD {
+.page .rowD {
   color: var(--muted);
   font-size: 0.975rem;
 }
 
-.rowA {
+.page .rowA {
   justify-self: end;
   transition: transform 0.25s ease;
 }
 
-.row:hover .rowA {
+.page .row:hover .rowA {
   transform: translateX(8px);
   color: var(--signal);
 }
 
 /* ——— Verdier ——— */
-.values {
+.page .values {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   border-block: 1px solid var(--line);
 }
 
-.value {
+.page .value {
   padding: clamp(2rem, 4vw, 3.4rem) clamp(1.4rem, 3vw, 2.6rem);
 }
 
-.value + .value {
+.page .value + .value {
   border-left: 1px solid var(--line);
 }
 
-.value h3 {
-  font-family: var(--font-display), Georgia, serif;
+.page .value h3 {
+  font-family: var(--font-display);
   font-weight: 400;
   font-size: 1.5rem;
   margin: 0 0 0.8rem;
 }
 
-.value h3::before {
+.page .value h3::before {
   content: "";
   display: block;
   width: 1.6rem;
@@ -382,19 +451,19 @@
   margin-bottom: 1rem;
 }
 
-.value p {
+.page .value p {
   color: var(--muted);
   font-size: 0.95rem;
   margin: 0;
 }
 
 /* ——— Kontakt ——— */
-.contact {
+.page .contact {
   padding: clamp(4.5rem, 10vw, 9rem) clamp(1.25rem, 5vw, 4rem);
 }
 
-.display2 {
-  font-family: var(--font-display), Georgia, serif;
+.page .display2 {
+  font-family: var(--font-display);
   font-weight: 400;
   font-size: clamp(3rem, 8vw, 7rem);
   line-height: 1;
@@ -402,14 +471,14 @@
   margin: 0 0 2.2rem;
 }
 
-.contactRows {
+.page .contactRows {
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
   font-size: clamp(1.1rem, 1.8vw, 1.4rem);
 }
 
-.contactRows a {
+.page .contactRows a {
   color: inherit;
   text-decoration: none;
   width: fit-content;
@@ -417,18 +486,18 @@
   padding-bottom: 2px;
 }
 
-.contactRows a:hover {
+.page .contactRows a:hover {
   color: var(--signal);
 }
 
-.contactNote {
+.page .contactNote {
   color: var(--muted);
   margin-top: 1.8rem;
   font-size: 0.925rem;
 }
 
 /* ——— Footer ——— */
-.footer {
+.page .footer {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -440,35 +509,148 @@
   color: var(--muted);
 }
 
-.sister {
+.page .sister {
   color: inherit;
   text-decoration: none;
 }
 
-.sister:hover {
+.page .sister:hover {
   color: var(--signal);
+}
+
+/* ——— Bevegelse: ordmasker ——— */
+.wr {
+  display: inline-block;
+}
+
+.wr-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+
+.wr-word {
+  display: inline-block;
+  will-change: transform;
+}
+
+/* ——— Bevegelse: parallaksramme — bildet er 114 % høyt og puster i rammen ——— */
+.pl-frame {
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  margin: 0;
+}
+
+.pl-inner {
+  height: 114%;
+  margin-top: -7%;
+}
+
+.pl-inner img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ——— Bevegelse: innganger og ord — kun med JS, kun uten redusert bevegelse ——— */
+@media (prefers-reduced-motion: no-preference) {
+  html.js [data-reveal] {
+    opacity: 0;
+    transform: translateY(26px);
+    filter: blur(8px);
+    transition:
+      opacity 0.85s cubic-bezier(0.2, 0.6, 0.2, 1),
+      transform 0.85s cubic-bezier(0.2, 0.6, 0.2, 1),
+      filter 0.85s cubic-bezier(0.2, 0.6, 0.2, 1);
+    transition-delay: var(--reveal-delay, 0s);
+    will-change: opacity, transform, filter;
+  }
+
+  html.js [data-reveal].is-in {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  html.js .wr-word {
+    transform: translateY(112%);
+    transition: transform 0.75s cubic-bezier(0.2, 0.6, 0.2, 1);
+    transition-delay: var(--d, 0s);
+  }
+
+  html.js .wr.is-in .wr-word {
+    transform: translateY(0);
+  }
+}
+
+/* ——— Markør (kun pekerenheter) ——— */
+.cur-dot,
+.cur-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  border-radius: 50%;
+  display: none;
+}
+
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  html.js .cur-dot,
+  html.js .cur-ring {
+    display: block;
+  }
+}
+
+.cur-dot {
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  background: var(--cur, #1e322d);
+}
+
+.cur-ring {
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border: 1px solid var(--cur, #1e322d);
+  opacity: 0.4;
+  transition: opacity 0.25s ease, scale 0.25s ease;
+}
+
+.cur-ring.cur-hot,
+.cur-dot.cur-hot {
+  opacity: 0.9;
+}
+
+.cur-ring.cur-hot {
+  scale: 1.35;
 }
 
 /* ——— Responsivt ——— */
 @media (max-width: 900px) {
-  .split {
+  .page .split {
     grid-template-columns: 1fr;
   }
-  .splitFig {
+  .page .splitFig {
     order: -1;
     max-height: 26rem;
   }
-  .values {
+  .page .values {
     grid-template-columns: 1fr;
   }
-  .value + .value {
+  .page .value + .value {
     border-left: none;
     border-top: 1px solid var(--line);
   }
-  .facts {
+  .page .facts {
     grid-template-columns: 1fr;
   }
-  .facts li + li {
+  .page .facts li + li {
     border-left: none;
     border-top: 1px solid var(--line);
     padding-left: 0;
@@ -476,16 +658,16 @@
 }
 
 @media (max-width: 680px) {
-  .links a:not(.cta) {
+  .page .links a:not(.cta) {
     display: none;
   }
-  .row {
+  .page .row {
     grid-template-columns: 3rem 1fr 2rem;
   }
-  .rowD {
+  .page .rowD {
     display: none;
   }
-  .footer {
+  .page .footer {
     flex-direction: column;
     align-items: flex-start;
   }

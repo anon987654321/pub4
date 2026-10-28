@@ -1,0 +1,250 @@
+<!doctype html>
+<!--
+  Sommerseth Eiendom — thor.brgen.no
+  Statisk HTML. Ingen byggetrinn, ingen avhengigheter — hele designet bor i
+  assets/site.css, hele bevegelsen i assets/motion.js (progressiv forbedring:
+  uten JS eller med prefers-reduced-motion vises alt flatt og fullt).
+  Merkene er regnet ut av Bergen-snittet v1 (MASTER/data/tokens.yml).
+-->
+<html lang="nb" class="no-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sommerseth Eiendom — utleie med omsorg i Fyllingsdalen</title>
+    <meta
+      name="description"
+      content="Familieeid utleievirksomhet i Fyllingsdalen, Bergen. Vi leier ut, drifter og steller hjem som folk trives i — siden 2021."
+    />
+    <link rel="icon" href="sommerseth-mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="assets/site.css" />
+    <script>
+      document.documentElement.classList.replace("no-js", "js");
+    </script>
+  </head>
+  <body>
+    <div class="page">
+      <div class="cur-dot" aria-hidden="true"></div>
+      <div class="cur-ring" aria-hidden="true"></div>
+
+      <header class="nav">
+        <a href="./" class="brand">
+          <svg width="30" height="30" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <path d="M4 38 H44" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" />
+            <path d="M8.5 38 A6.5 6.5 0 0 1 21.5 38 Z" fill="var(--signal, #C97E1E)" />
+            <path d="M15 38 L30 13 L45 38" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          </svg>
+          <span>Sommerseth&nbsp;Eiendom</span>
+        </a>
+        <nav class="links" aria-label="Hovedmeny">
+          <a href="#eiendommene">Eiendommene</a>
+          <a href="#om-oss">Om oss</a>
+          <a href="#verdier">Verdier</a>
+          <a href="#kontakt" class="cta">Kontakt oss</a>
+        </nav>
+      </header>
+
+      <main>
+        <!-- ——— Hero ——— -->
+        <section class="hero">
+          <div data-reveal>
+            <p class="kicker">Familieeid utleie · Fyllingsdalen · siden 2021</p>
+          </div>
+          <h1 class="display">
+            <span class="wr" aria-label="Hjem er et">
+              <span class="wr-mask" aria-hidden="true"><span class="wr-word" style="--d: 0s">Hjem&nbsp;</span></span>
+              <span class="wr-mask" aria-hidden="true"><span class="wr-word" style="--d: 0.055s">er&nbsp;</span></span>
+              <span class="wr-mask" aria-hidden="true"><span class="wr-word" style="--d: 0.11s">et&nbsp;</span></span>
+            </span>
+            <em>
+              <span class="wr" aria-label="løfte vi holder.">
+                <span class="wr-mask" aria-hidden="true"><span class="wr-word" style="--d: 0.28s">løfte&nbsp;</span></span>
+                <span class="wr-mask" aria-hidden="true"><span class="wr-word" style="--d: 0.335s">vi&nbsp;</span></span>
+                <span class="wr-mask" aria-hidden="true"><span class="wr-word" style="--d: 0.39s">holder.</span></span>
+              </span>
+            </em>
+          </h1>
+          <div data-reveal data-reveal-delay="0.5">
+            <p class="lead">
+              Sommerseth Eiendom er en familie som leier ut, drifter og steller
+              hjem i Fyllingsdalen. Vi kjenner hver bolig sine særpreg — og hver
+              leietaker sitt navn.
+            </p>
+            <div class="heroCtas">
+              <span class="mag" data-magnetic>
+                <a class="primary" href="#eiendommene">Se eiendommene <span aria-hidden="true">↓</span></a>
+              </span>
+              <a class="quiet" href="#om-oss">Møt familien</a>
+            </div>
+          </div>
+        </section>
+
+        <div data-reveal>
+          <figure class="heroFig">
+            <div class="pl-frame" data-parallax>
+              <div class="pl-inner">
+                <img src="images/som-hero.jpg" alt="Rødt trehus ved fjorden i kveldslys, med fjell i bakgrunnen" />
+              </div>
+            </div>
+            <figcaption>Fyllingsdalen i kveldslys — der husene våre står.</figcaption>
+          </figure>
+        </div>
+
+        <!-- ——— Faktastripping ——— -->
+        <div data-reveal>
+          <ul class="facts">
+            <li>
+              <strong><span data-counter data-to="2021">2021</span></strong>
+              <span>etablert av familien</span>
+            </li>
+            <li>
+              <strong><span data-counter data-to="100">100</span>&nbsp;%</strong>
+              <span>familieeid og lokalt drevet</span>
+            </li>
+            <li>
+              <strong>Fyllingsdalen</strong>
+              <span>ti minutter fra sentrum, ett skritt fra Lyderhorn</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- ——— Om oss ——— -->
+        <section id="om-oss" class="split">
+          <div class="splitText" data-reveal>
+            <p class="label">Om oss</p>
+            <h2 class="h2">Ingen meglerkjede. <em>Bare en familie.</em></h2>
+            <p>
+              Sommerseth Eiendom startet i 2021 med én bolig og en enkel tanke:
+              utleie skal føles trygg for begge parter. Vi eier hjemmene vi
+              forvalter, og svarer for dem med eget navn. Det gjør avstandene
+              korte — både de på kartet og de i samtalen.
+            </p>
+            <p>
+              Vi fikser før det blir et problem, ringer tilbake samme dag og
+              følger med på husene slik man følger med på et familiemedlem.
+              Leietakerne hos oss blir boende i gjennomsnitt i flere år — mange
+              lenge nok til at barna deres starter i barnehagen her.
+            </p>
+          </div>
+          <div class="splitFig" data-reveal data-reveal-delay="0.12">
+            <div class="pl-frame" data-parallax data-amount="8">
+              <div class="pl-inner">
+                <img src="images/som-interior.jpg" alt="Lyst stuehjørne med sofa, teppe og plante i ettermiddagssol" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ——— Eiendommene ——— -->
+        <section id="eiendommene" class="props">
+          <div data-reveal>
+            <p class="label">Eiendommene</p>
+            <h2 class="h2">Boliger som bærer preg <em>av stedet.</em></h2>
+          </div>
+          <div data-reveal data-reveal-delay="0.1">
+            <div class="wideFig">
+              <div class="pl-frame" data-parallax>
+                <div class="pl-inner">
+                  <img src="images/som-houses.jpg" alt="Rekke av norske trehus i hvitt, gult og rødt under fjellet" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="rows">
+            <div data-reveal>
+              <a href="#kontakt" class="row" data-cursor>
+                <span class="rowN">01</span>
+                <span class="rowT">Eneboliger og rekkehus</span>
+                <span class="rowD">Trehus med hage og rom for hele familien.</span>
+                <span class="rowA" aria-hidden="true">→</span>
+              </a>
+            </div>
+            <div data-reveal data-reveal-delay="0.09">
+              <a href="#kontakt" class="row" data-cursor>
+                <span class="rowN">02</span>
+                <span class="rowT">Leiligheter</span>
+                <span class="rowD">Lyse hjem med ett til fire soverom, klare for innflytting.</span>
+                <span class="rowA" aria-hidden="true">→</span>
+              </a>
+            </div>
+            <div data-reveal data-reveal-delay="0.18">
+              <a href="#kontakt" class="row" data-cursor>
+                <span class="rowN">03</span>
+                <span class="rowT">Langtidsleie</span>
+                <span class="rowD">Trygge kontrakter og forutsigbarhet — for begge parter.</span>
+                <span class="rowA" aria-hidden="true">→</span>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <!-- ——— Verdier ——— -->
+        <section id="verdier" class="values">
+          <div class="value" data-reveal>
+            <h3>Nærhet</h3>
+            <p>
+              Vi bor i samme bydel som hjemmene vi leier ut. Det skal merkes i
+              responstid, i vedlikehold og i at vi alltid kan møte deg ansikt
+              til ansikt.
+            </p>
+          </div>
+          <div class="value" data-reveal data-reveal-delay="0.1">
+            <h3>Tillit</h3>
+            <p>
+              Åpen kontrakt, åpen regning og en telefon du faktisk når. Tillit
+              er ikke en verdi hos oss — det er selve driftsformen.
+            </p>
+          </div>
+          <div class="value" data-reveal data-reveal-delay="0.2">
+            <h3>Enkelhet</h3>
+            <p>
+              Én kontakt, én avtale, én løsning som fungerer. Vi fjerner det som
+              er unødvendig, slik at hjemmet kan stå igjen i fred.
+            </p>
+          </div>
+        </section>
+
+        <!-- ——— Kontakt ——— -->
+        <section id="kontakt" class="contact">
+          <div data-reveal>
+            <p class="label">Kontakt</p>
+            <h2 class="display2">
+              <span class="wr" aria-label="Si">
+                <span class="wr-mask" aria-hidden="true"><span class="wr-word" style="--d: 0s">Si&nbsp;</span></span>
+              </span>
+              <em>
+                <span class="wr" aria-label="hei.">
+                  <span class="wr-mask" aria-hidden="true"><span class="wr-word" style="--d: 0.2s">hei.</span></span>
+                </span>
+              </em>
+            </h2>
+            <div class="contactRows">
+              <a href="mailto:hei@thor.brgen.no">hei@thor.brgen.no</a>
+              <a href="tel:+4755902021">+47 55 90 20 21</a>
+              <span>Fyllingsdalen, Bergen</span>
+            </div>
+            <p class="contactNote">
+              Vi svarer på henvendelser samme virkedag — som regel raskere.
+            </p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <div class="brand">
+          <svg width="26" height="26" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <path d="M4 38 H44" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" />
+            <path d="M8.5 38 A6.5 6.5 0 0 1 21.5 38 Z" fill="var(--signal, #C97E1E)" />
+            <path d="M15 38 L30 13 L45 38" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          </svg>
+          <span>Sommerseth&nbsp;Eiendom</span>
+        </div>
+        <span>© 2026 Sommerseth Eiendom AS · Fyllingsdalen, Bergen</span>
+        <a href="https://alfa.brgen.no" class="sister">
+          Søstermerket vårt i bybildet: Alfa Bergen <span aria-hidden="true">↗</span>
+        </a>
+      </footer>
+    </div>
+
+    <script src="assets/motion.js"></script>
+  </body>
+</html>

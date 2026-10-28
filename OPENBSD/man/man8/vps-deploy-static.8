@@ -3,7 +3,7 @@
 .Os
 .Sh NAME
 .Nm vps-deploy-static
-.Nd build and install the RAILS/__other static brand exports on the production VPS
+.Nd install the RAILS/__other static sites on the production VPS
 .Sh SYNOPSIS
 .Nm
 .Cm all | sommerseth | alfa
@@ -18,7 +18,10 @@ serves alfa.brgen.no from /var/www/alfa on loopback port 38192, behind the
 same relayd TLS termination as the Rails fleet. It is not a
 .Xr vps-deploy 8
 target: those deploy rcctl-managed Rails apps, and these sites are served by
-httpd vhosts with no daemon to restart.
+httpd vhosts with no daemon to restart. The sites are plain trees of
+HTML, CSS, vanilla JS, self-hosted fonts and images \(em no build step,
+no package manager, no node_modules; the tree in git is the tree that
+serves.
 .Pp
 Run it on vm23 as the unprivileged account
 .Cm dev ,
@@ -27,36 +30,33 @@ not as root and not wrapped in
 the script escalates only for the individual steps that require it, and root
 cannot reach the git remote for the pull that should precede a deploy.
 .Pp
-For each target the script builds the Next.js export in place (bun with a
-frozen lockfile when the box has it, otherwise npm ci), replaces the chroot
-tree wholesale — the previous tree is removed first, because a stale hashed
-_next chunk that stale HTML still references is exactly the almost-works a
-static site must never ship — and then verifies that the loopback vhost
-answers and returns the site's title. A green exit therefore means deployed
-and serving on loopback, not merely copied. When nothing listens on the
-loopback port the failure names the activation steps recorded at the bottom
-of OPENBSD/etc/relayd.conf (certificate SANs, config install, restart) rather
-than pretending the site is up.
+For each target the script checks that the tree looks like a site
+(index.html, assets/, images/), replaces the chroot tree wholesale with
+its content files — the previous tree is removed first, because a
+half-updated tree, old assets next to new HTML, is exactly the
+almost-works a static site must never ship; README.md documents the tree
+and is deliberately not installed — and then verifies that the loopback
+vhost answers and returns the site's title. A green exit therefore means
+deployed and serving on loopback, not merely copied. When nothing listens
+on the loopback port the failure names the activation steps recorded at
+the bottom of OPENBSD/etc/relayd.conf (certificate SANs, config install,
+restart) rather than pretending the site is up.
 .Pp
 The accepted targets are
 .Cm all ,
 .Cm sommerseth ,
 and
 .Cm alfa .
-Unknown targets are refused before anything is built or copied.
+Unknown targets are refused before anything is copied.
 .Sh ENVIRONMENT
-.Bl -tag -width "VPS_STATIC_OUT_SRC"
-.It Ev VPS_STATIC_OUT_SRC
-Install this ready-made out/ tree instead of building, skipping npm and bun
-entirely. The directory must contain index.html. This is the escape hatch for
-a box with no node runtime: build on the workstation, ship the tree, rerun.
+.Bl -tag -width "REMOTE_PUB4"
 .It Ev REMOTE_PUB4
 Path to the pub4 checkout on the box. The default is /home/dev/pub4.
 .El
 .Sh EXIT STATUS
 .Bl -tag -width "1"
 .It 0
-Every target was built (or installed), installed into the chroot, and answered
+Every target was installed into the chroot and answered
 on its loopback port with the expected title.
 .It 1
 At least one target failed; earlier targets that succeeded stay deployed.

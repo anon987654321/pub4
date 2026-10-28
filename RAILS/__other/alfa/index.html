@@ -1,0 +1,271 @@
+<!doctype html>
+<!--
+  Alfa Bergen — alfa.brgen.no
+  Statisk HTML. Ingen byggetrinn, ingen avhengigheter — hele designet bor i
+  assets/site.css, hele bevegelsen i assets/motion.js (progressiv forbedring:
+  uten JS eller med prefers-reduced-motion vises alt flatt og fullt).
+  Merkene er regnet ut av Bergen-snittet v1 (MASTER/data/tokens.yml).
+-->
+<html lang="nb" class="no-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alfa Bergen — fra flytting til forvaltning, siden 2006</title>
+    <meta
+      name="description"
+      content="Familieeid eiendomsdrift i Bergen. Flytting, forvaltning, drift og vedlikehold — med samme presisjon siden 2006."
+    />
+    <link rel="icon" href="alfa-mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="assets/site.css" />
+    <script>
+      document.documentElement.classList.replace("no-js", "js");
+    </script>
+  </head>
+  <body>
+    <div class="page">
+      <div class="cur-dot" aria-hidden="true"></div>
+      <div class="cur-ring" aria-hidden="true"></div>
+      <div class="edgeL" aria-hidden="true"></div>
+      <div class="edgeR" aria-hidden="true"></div>
+
+      <header class="nav">
+        <a href="./" class="brand">
+          <svg width="28" height="28" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <path d="M4 38 H44" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" />
+            <path d="M8 38 L24 13 L40 38" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            <path d="M18.8 38 A5.2 5.2 0 0 1 29.2 38 Z" fill="var(--signal, #A4762F)" />
+          </svg>
+          <span>Alfa&nbsp;Bergen</span>
+        </a>
+        <nav class="links" aria-label="Hovedmeny">
+          <a href="#historie">Historie</a>
+          <a href="#tjenester">Tjenester</a>
+          <a href="#bygget">Bygget</a>
+          <a href="#kontakt" class="cta">Kontakt</a>
+        </nav>
+      </header>
+
+      <main>
+        <!-- ——— Hero ——— -->
+        <section class="hero">
+          <div data-reveal>
+            <p class="kicker">Eiendomsdrift · Bergen · siden 2006</p>
+          </div>
+          <h1 class="display">
+            <span class="wr" aria-label="Fra flytting til">
+              <span class="wr-mask" aria-hidden="true"><span class="wr-word" style="--d: 0s">Fra&nbsp;</span></span>
+              <span class="wr-mask" aria-hidden="true"><span class="wr-word" style="--d: 0.055s">flytting&nbsp;</span></span>
+              <span class="wr-mask" aria-hidden="true"><span class="wr-word" style="--d: 0.11s">til&nbsp;</span></span>
+            </span>
+            <em>
+              <span class="wr" aria-label="forvaltning.">
+                <span class="wr-mask" aria-hidden="true"><span class="wr-word" style="--d: 0.32s">forvaltning.</span></span>
+              </span>
+            </em>
+          </h1>
+          <div data-reveal data-reveal-delay="0.5">
+            <p class="lead">
+              Alfa Bergen begynte som et flyttebyrå i 2006. I dag driver,
+              forvalter og vedlikeholder vi eiendommer i hele Bergen — med samme
+              presisjon som da vi bar de første kassene på trappa.
+            </p>
+            <div class="heroCtas">
+              <span class="mag" data-magnetic>
+                <a class="primary" href="#tjenester">Se tjenestene <span aria-hidden="true">↓</span></a>
+              </span>
+              <a class="quiet" href="#historie">Les historien</a>
+            </div>
+          </div>
+        </section>
+
+        <div data-reveal>
+          <div class="heroFig">
+            <div class="pl-frame" data-parallax>
+              <div class="pl-inner">
+                <img src="images/alfa-hero.jpg" alt="Mørk trebekledd bygning med skarp geometri under grå himmel" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div data-reveal>
+          <div class="metaRow">
+            <span>Møllendalsveien</span>
+            <span>Bergen by</span>
+            <span>Est. 2006</span>
+          </div>
+        </div>
+
+        <!-- ——— Arbeidsfelt (marquee) ——— -->
+        <div class="strip">
+          <div class="mq">
+            <div class="mq-row mq-anim" style="animation-duration: 30s">
+              <span class="stripItem">Flytting <i aria-hidden="true">—</i></span>
+              <span class="stripItem">Forvaltning <i aria-hidden="true">—</i></span>
+              <span class="stripItem">Drift <i aria-hidden="true">—</i></span>
+              <span class="stripItem">Vedlikehold <i aria-hidden="true">—</i></span>
+              <span class="stripItem">Utleie <i aria-hidden="true">—</i></span>
+              <span class="stripItem" aria-hidden="true">Flytting <i>—</i></span>
+              <span class="stripItem" aria-hidden="true">Forvaltning <i>—</i></span>
+              <span class="stripItem" aria-hidden="true">Drift <i>—</i></span>
+              <span class="stripItem" aria-hidden="true">Vedlikehold <i>—</i></span>
+              <span class="stripItem" aria-hidden="true">Utleie <i>—</i></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ——— 01 Historie ——— -->
+        <section id="historie" class="section">
+          <div class="sectionHead" data-reveal>
+            <span class="no">01</span>
+            <h2 class="h2">Nitten år med tunge løft.</h2>
+          </div>
+          <div class="twoCol">
+            <div data-reveal>
+              <p>
+                Det startet med én varebil og en familie som aldri var redd for
+                å jobbe. Flyttebyrået vokste — ikke fordi vi lovet mye, men
+                fordi vi møtte opp. Kontrakt for kontrakt ble tilliten til
+                virksomheten større enn lastebilen vår.
+              </p>
+              <p>
+                Da kundene begynte å spørre om vi også kunne drifte bygningene
+                de flyttet fra, svarte vi ja. Så vokste det stille og helt
+                naturlig: fra flytting til forvaltning, fra kasser til
+                kontrakter, fra én varebil til en hel beredskap.
+              </p>
+            </div>
+            <div data-reveal data-reveal-delay="0.12">
+              <figure class="colFig">
+                <div class="pl-frame" data-parallax data-amount="8">
+                  <div class="pl-inner">
+                    <img src="images/alfa-city.jpg" alt="Bergens havnefront i blå timen, med fjell bak" />
+                  </div>
+                </div>
+                <figcaption>Bergen i blå timen — arbeidsområdet vårt.</figcaption>
+              </figure>
+            </div>
+          </div>
+        </section>
+
+        <!-- ——— 02 Tjenester ——— -->
+        <section id="tjenester" class="section">
+          <div class="sectionHead" data-reveal>
+            <span class="no">02</span>
+            <h2 class="h2">Fire felter. Én standard.</h2>
+          </div>
+          <div class="rows">
+            <div data-reveal>
+              <a href="#kontakt" class="row" data-cursor>
+                <span class="rowN">01</span>
+                <span class="rowT">Flytting og transport</span>
+                <span class="rowD">Der vi startet. Forberedt, pakket og levert — uten drama.</span>
+                <span class="rowA" aria-hidden="true">→</span>
+              </a>
+            </div>
+            <div data-reveal data-reveal-delay="0.08">
+              <a href="#kontakt" class="row" data-cursor>
+                <span class="rowN">02</span>
+                <span class="rowT">Eiendomsforvaltning</span>
+                <span class="rowD">Kontrakter, leietakere og regnskap — ryddig ført, alltid synlig for eier.</span>
+                <span class="rowA" aria-hidden="true">→</span>
+              </a>
+            </div>
+            <div data-reveal data-reveal-delay="0.16">
+              <a href="#kontakt" class="row" data-cursor>
+                <span class="rowN">03</span>
+                <span class="rowT">Drift og vedlikehold</span>
+                <span class="rowD">Beredskap hele døgnet. Vi fikser det før det blir et krav.</span>
+                <span class="rowA" aria-hidden="true">→</span>
+              </a>
+            </div>
+            <div data-reveal data-reveal-delay="0.24">
+              <a href="#kontakt" class="row" data-cursor>
+                <span class="rowN">04</span>
+                <span class="rowT">Utleie</span>
+                <span class="rowD">Boliger stilt frem ærlig, leid ut til mennesker som blir boende.</span>
+                <span class="rowA" aria-hidden="true">→</span>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <!-- ——— 03 Bygget ——— -->
+        <section id="bygget" class="section">
+          <div class="sectionHead" data-reveal>
+            <span class="no">03</span>
+            <h2 class="h2">Et hus med flere liv.</h2>
+          </div>
+          <div class="twoCol">
+            <div data-reveal>
+              <p>
+                Hovedkvarteret på Møllendalsveien har levd flere liv — først som
+                hotell, så kontor, nå som base for en familie som aldri har
+                vært redd for å ta på seg hansker. Treverket, betongen og
+                messingdetaljene i fasaden forteller historien bedre enn vi kan.
+              </p>
+              <p>
+                Vi behandler bygninger slik vi behandler kontrakter: med
+                respekt for det som står der fra før, og med en plan for det som
+                kommer. Det er hele filosofien bak Alfa Bergen.
+              </p>
+            </div>
+            <div data-reveal data-reveal-delay="0.12">
+              <figure class="colFig">
+                <div class="pl-frame" data-parallax data-amount="8">
+                  <div class="pl-inner">
+                    <img src="images/alfa-detail.jpg" alt="Detalj av svart timber, betong og innfelt messinglys" />
+                  </div>
+                </div>
+                <figcaption>Materialestandarden: tre, betong, messing.</figcaption>
+              </figure>
+            </div>
+          </div>
+        </section>
+
+        <!-- ——— 04 Kontakt ——— -->
+        <section id="kontakt" class="contact">
+          <div data-reveal>
+            <span class="no">04</span>
+            <h2 class="display2">
+              <span class="wr" aria-label="Snakk">
+                <span class="wr-mask" aria-hidden="true"><span class="wr-word" style="--d: 0s">Snakk&nbsp;</span></span>
+              </span>
+              <em>
+                <span class="wr" aria-label="med oss.">
+                  <span class="wr-mask" aria-hidden="true"><span class="wr-word" style="--d: 0.2s">med&nbsp;</span></span>
+                  <span class="wr-mask" aria-hidden="true"><span class="wr-word" style="--d: 0.255s">oss.</span></span>
+                </span>
+              </em>
+            </h2>
+            <div class="contactRows">
+              <a href="mailto:post@alfa.brgen.no">post@alfa.brgen.no</a>
+              <a href="tel:+4755302010">+47 55 30 20 10</a>
+              <span>Møllendalsveien · Bergen</span>
+            </div>
+            <p class="contactNote">
+              Kontoret er bemannet hverdager 08–16. Beredskapen er det ikke.
+            </p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <div class="brand">
+          <svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <path d="M4 38 H44" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" />
+            <path d="M8 38 L24 13 L40 38" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            <path d="M18.8 38 A5.2 5.2 0 0 1 29.2 38 Z" fill="var(--signal, #A4762F)" />
+          </svg>
+          <span>Alfa&nbsp;Bergen</span>
+        </div>
+        <span>© 2026 Alfa Bergen AS · Bergen</span>
+        <a href="https://thor.brgen.no" class="sister">
+          Søstermerket: Sommerseth Eiendom <span aria-hidden="true">↗</span>
+        </a>
+      </footer>
+    </div>
+
+    <script src="assets/motion.js"></script>
+  </body>
+</html>

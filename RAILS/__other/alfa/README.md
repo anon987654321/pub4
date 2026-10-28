@@ -1,31 +1,42 @@
-# Alfa Bergen — RAILS/\_\_other
+# Alfa Bergen — alfa.brgen.no
 
-Standalone merkevarenettsted (Next.js, statisk eksport). Søstermerket
-Sommerseth Eiendom lever i `RAILS/__other/sommerseth/` — begge er bygget på
-Bergen-snittet v1 og doktrinen i
-`MASTER/docs/visual/bergen_brand_systems.md` (lover: `MASTER/law/brand.rb`,
-tokens: `MASTER/data/tokens.yml#brand_systems`).
+Statisk HTML. Ingen byggetrinn, ingen pakkeadministrator, ingen
+node_modules — treet er det som serveres. Favoroppgave for familien
+bak flyttebyrået (siden 2006), ikke et produkt i stakkmatrisen.
 
-- Identitet: arkitektonisk minimalisme — Bricolage Grotesque 700 / Geist /
-  Geist Mono, papir `#F2F4F6`, blekk `#14212E`, signal (messing) `#A4762F`,
-  skarpe hjørner, blåkopp-hårsbredder på sidene.
-- Merket: parametrisk (A-scråtak med hvelvdør) — `src/lib/marks.ts`,
-  favicons regenereres med `node scripts/gen-marks.mjs` i dev-treet.
-- Språk: norsk bokmål (snl.no-orthografi).
-- Bevegelse: Lenis + framer-motion (`src/components/motion.tsx`), alt
-  respekterer `prefers-reduced-motion`.
-
-## Bygg og drift
+## Treet
 
 ```
-bun install
-bun run build     # → out/ (statisk eksport)
+index.html              hele siden — fire nummererte seksjoner + kontakt
+assets/site.css         reset + bevegelses-CSS + merkevaren (kaldt papir/messing)
+assets/motion.js        vanilje-bevegelse: innganger, ordmasker, parallaks,
+                        marquee, magnetiske knapper, markør
+assets/fonts/           Bricolage Grotesque (variabel 200–800), Geist 400,
+                        Geist Mono 400 — selvhostet latin-subsett (æ ø å)
+images/                 fotografiene
+alfa-mark.svg           favicon (Bergen-snittet v1: A-scråtak + halvsirkeldør)
 ```
 
-`out/` serveres av OpenBSD httpd med relayd-TLS; se `OPENBSD/etc/httpd.conf`
-og `RAILS/apps.yml` (`static_exports`). Domene er planlagt, ikke kjøpt:
-`alfabergen.no` (Domeneshop, som de øvrige) — legges i
-`OPENBSD/data/dns.yml` først når kjøpet er på plass.
+Totalt under 600 kB. Merkene er regnet ut av konstruksjonsgrammatikken
+i `MASTER/data/tokens.yml#tokens.brand_systems` (skråtak stigning 25
+over halv bredde 16, dør `r=5.2` — 0,8 × Sommerseths sol).
 
-Planlagt status: `planned` i apps.yml inntil domene og første deploy er
-verifisert — ikke oppgrader statusen uten et kjørt deploy-sjekk.
+## Bevegelseskontrakten
+
+Alt er progressivt: uten JavaScript, eller med
+`prefers-reduced-motion: reduce`, vises siden flat og fullstendig —
+marqueen står stille, ordene står på plass. Lenis og framer-motion er
+byttet ut med native `scroll-behavior` og ~140 linjer vanilje-JS
+(`assets/motion.js`), med samme timingkurve
+`cubic-bezier(0.2, 0.6, 0.2, 1)`.
+
+## Drift
+
+Serveres av OpenBSD httpd fra chroot `/var/www/alfa`
+(loopback 38192) bak relayd-TLS på `alfa.brgen.no` — SAN på
+brgen.no-sertifikatet, DNS i `OPENBSD/var/nsd/zones/master/brgen.no.zone`.
+Deploy: `zsh OPENBSD/bin/vps-deploy-static alfa` kopierer treet
+(uten denne filen) til chrooten og verifiserer serving på loopback.
+Porter og status registreres i `RAILS/apps.yml#static_exports`;
+status der er `planned` inntil første verifiserte deploy — ikke
+oppgrader den uten en kjørt sjekk.

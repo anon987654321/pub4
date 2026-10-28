@@ -495,7 +495,7 @@ static_exports:
       voice: [warm, local, honest, unrushed]
       visual_character: [warm_paper, fjord_green_ink, amber_signal, serif_display, instrument_serif]
     port: 38191
-    stack_now: Next.js 16, statisk eksport (out/), Lenis + framer-motion
+    stack_now: Statisk HTML/CSS/JS — ingen byggetrinn, ingen node_modules
     deploy_root: RAILS/__other/sommerseth
     deploy_script: OPENBSD/bin/vps-deploy-static
     served_by: httpd (loopback 38191) bak relayd-TLS
@@ -511,7 +511,7 @@ static_exports:
       voice: [precise, authoritative, understated, experienced]
       visual_character: [cool_paper, ink_blue, brass_signal, grotesk_caps, blueprint_hairlines]
     port: 38192
-    stack_now: Next.js 16, statisk eksport (out/), Lenis + framer-motion
+    stack_now: Statisk HTML/CSS/JS — ingen byggetrinn, ingen node_modules
     deploy_root: RAILS/__other/alfa
     deploy_script: OPENBSD/bin/vps-deploy-static
     served_by: httpd (loopback 38192) bak relayd-TLS

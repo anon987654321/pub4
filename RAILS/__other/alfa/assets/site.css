@@ -1,7 +1,64 @@
-/* Alfa Bergen — arkitektonisk minimalisme
-   kaldt papir #F2F4F6 · blekk #14212E · signal (messing) #A4762F
-   skarpe hjørner · hårsbredder · mono-etiketter */
+/*
+ * Alfa Bergen — arkitektonisk minimalisme
+ * kaldt papir #F2F4F6 · blekk #14212E · signal (messing) #A4762F
+ * skarpe hjørner · hårsbredder · mono-etiketter
+ *
+ * Én fil: reset + bevegelses-CSS + merkevaren. Ingen byggetrinn.
+ * Bevegelsen krever html.js og (prefers-reduced-motion: no-preference);
+ * ellers vises alt flatt, fullt og umiddelbart.
+ */
 
+/* ——— Fonter (selvhostet, latin-subsett — dekker æ ø å) ——— */
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("fonts/bricolage-grotesque-var.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/geist-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/geist-mono-400.woff2") format("woff2");
+}
+
+/* ——— Reset ——— */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+img {
+  max-width: 100%;
+}
+
+/* ——— Siden ——— */
 .page {
   --paper: #f2f4f6;
   --ink: #14212e;
@@ -9,13 +66,18 @@
   --signal: #a4762f;
   --line: rgba(20, 33, 46, 0.16);
   --cur: #14212e;
+  --font-display: "Bricolage Grotesque", Arial, sans-serif;
+  --font-body: "Geist", system-ui, sans-serif;
+  --font-mono: "Geist Mono", monospace;
 
   background: var(--paper);
   color: var(--ink);
   min-height: 100vh;
+  font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.6;
   position: relative;
+  -webkit-font-smoothing: antialiased;
 }
 
 @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
@@ -39,9 +101,14 @@
   filter: saturate(0.82) contrast(1.04);
 }
 
+.page a:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 3px;
+}
+
 /* Blåkoppenes sidehårsbredder */
-.edgeL,
-.edgeR {
+.page .edgeL,
+.page .edgeR {
   position: fixed;
   top: 0;
   bottom: 0;
@@ -50,16 +117,16 @@
   z-index: 15;
 }
 
-.edgeL {
+.page .edgeL {
   left: clamp(0.5rem, 1.2vw, 1.25rem);
 }
 
-.edgeR {
+.page .edgeR {
   right: clamp(0.5rem, 1.2vw, 1.25rem);
 }
 
 /* ——— Nav (mono, offisiell) ——— */
-.nav {
+.page .nav {
   position: sticky;
   top: 0;
   z-index: 20;
@@ -73,13 +140,13 @@
   border-bottom: 1px solid var(--line);
 }
 
-.brand {
+.page .brand {
   display: inline-flex;
   align-items: center;
   gap: 0.7rem;
   color: inherit;
   text-decoration: none;
-  font-family: var(--font-display), Arial, sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
   font-size: 1rem;
   letter-spacing: 0.06em;
@@ -87,23 +154,23 @@
   white-space: nowrap;
 }
 
-.links {
+.page .links {
   display: flex;
   align-items: center;
   gap: clamp(1rem, 2.5vw, 2.2rem);
 }
 
-.links a {
+.page .links a {
   color: inherit;
   text-decoration: none;
-  font-family: var(--font-mono), monospace;
+  font-family: var(--font-mono);
   font-size: 0.78rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   position: relative;
 }
 
-.links a:not(.cta)::after {
+.page .links a:not(.cta)::after {
   content: "";
   position: absolute;
   left: 0;
@@ -114,36 +181,31 @@
   transition: right 0.25s ease;
 }
 
-.links a:not(.cta):hover::after {
+.page .links a:not(.cta):hover::after {
   right: 0;
 }
 
-.cta {
+.page .cta {
   border: 1.5px solid var(--ink);
   padding: 0.5rem 1.15rem;
   transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
 
-.cta:hover {
+.page .cta:hover {
   background: var(--signal);
   border-color: var(--signal);
   color: var(--paper);
 }
 
-.page a:focus-visible {
-  outline: 2px solid var(--signal);
-  outline-offset: 3px;
-}
-
 /* ——— Hero ——— */
-.hero {
+.page .hero {
   padding: clamp(4rem, 10vw, 8.5rem) clamp(1.5rem, 5vw, 4.5rem)
     clamp(2.5rem, 5vw, 4rem);
   max-width: 80rem;
 }
 
-.kicker {
-  font-family: var(--font-mono), monospace;
+.page .kicker {
+  font-family: var(--font-mono);
   font-size: 0.75rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -151,7 +213,7 @@
   margin: 0 0 1.6rem;
 }
 
-.kicker::before {
+.page .kicker::before {
   content: "";
   display: inline-block;
   width: 0.5rem;
@@ -161,8 +223,8 @@
   vertical-align: 1px;
 }
 
-.display {
-  font-family: var(--font-display), Arial, sans-serif;
+.page .display {
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: clamp(2.8rem, 7.4vw, 6.8rem);
   line-height: 1;
@@ -171,28 +233,28 @@
   margin: 0 0 1.8rem;
 }
 
-.display em,
-.h2 em,
-.display2 em {
+.page .display em,
+.page .h2 em,
+.page .display2 em {
   font-style: normal;
   color: var(--signal);
 }
 
-.lead {
+.page .lead {
   font-size: clamp(1rem, 1.4vw, 1.2rem);
   color: var(--muted);
   max-width: 36em;
   margin: 0 0 2.2rem;
 }
 
-.heroCtas {
+.page .heroCtas {
   display: flex;
   flex-wrap: wrap;
   gap: 1.1rem;
   align-items: center;
 }
 
-.primary {
+.page .primary {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
@@ -200,22 +262,22 @@
   color: var(--paper);
   text-decoration: none;
   padding: 0.85rem 1.6rem;
-  font-family: var(--font-mono), monospace;
+  font-family: var(--font-mono);
   font-size: 0.82rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   transition: background 0.25s ease, transform 0.25s ease;
 }
 
-.primary:hover {
+.page .primary:hover {
   background: var(--signal);
   transform: translateY(-1px);
 }
 
-.quiet {
+.page .quiet {
   color: inherit;
   text-decoration: none;
-  font-family: var(--font-mono), monospace;
+  font-family: var(--font-mono);
   font-size: 0.82rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -224,17 +286,17 @@
 }
 
 /* ——— Bilder ——— */
-.heroFig {
+.page .heroFig {
   height: min(64vh, 42rem);
   border-block: 1px solid var(--line);
 }
 
-.metaRow {
+.page .metaRow {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
   padding: 0.8rem clamp(1.5rem, 5vw, 4.5rem);
-  font-family: var(--font-mono), monospace;
+  font-family: var(--font-mono);
   font-size: 0.72rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -243,48 +305,48 @@
 }
 
 /* ——— Arbeidsfelt (marquee) ——— */
-.strip {
+.page .strip {
   padding: 1.1rem 0;
-  font-family: var(--font-mono), monospace;
+  font-family: var(--font-mono);
   font-size: clamp(0.8rem, 1.4vw, 1rem);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   border-bottom: 1px solid var(--line);
 }
 
-.stripItem {
+.page .stripItem {
   display: inline-flex;
   align-items: center;
 }
 
-.stripItem i {
+.page .stripItem i {
   font-style: normal;
   color: var(--signal);
   padding-inline: 2.2rem;
 }
 
 /* ——— Sekjoner ——— */
-.section {
+.page .section {
   padding: clamp(4rem, 9vw, 8rem) clamp(1.5rem, 5vw, 4.5rem);
   border-bottom: 1px solid var(--line);
 }
 
-.sectionHead {
+.page .sectionHead {
   display: flex;
   align-items: baseline;
   gap: 1.4rem;
   margin-bottom: clamp(2rem, 4vw, 3.4rem);
 }
 
-.no {
-  font-family: var(--font-mono), monospace;
+.page .no {
+  font-family: var(--font-mono);
   font-size: 0.85rem;
   color: var(--signal);
   letter-spacing: 0.1em;
 }
 
-.h2 {
-  font-family: var(--font-display), Arial, sans-serif;
+.page .h2 {
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: clamp(1.9rem, 4vw, 3.4rem);
   line-height: 1.05;
@@ -293,29 +355,29 @@
   margin: 0;
 }
 
-.twoCol {
+.page .twoCol {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: clamp(2rem, 5vw, 5rem);
   align-items: start;
 }
 
-.twoCol p {
+.page .twoCol p {
   color: var(--muted);
   max-width: 34em;
   margin: 0 0 1.1rem;
 }
 
-.colFig {
+.page .colFig {
   margin: 0;
 }
 
-.colFig img {
+.page .colFig img {
   aspect-ratio: 16 / 11;
 }
 
-.colFig figcaption {
-  font-family: var(--font-mono), monospace;
+.page .colFig figcaption {
+  font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -324,11 +386,11 @@
 }
 
 /* ——— Tjenesterader ——— */
-.rows {
+.page .rows {
   border-top: 1px solid var(--line);
 }
 
-.row {
+.page .row {
   display: grid;
   grid-template-columns: 4rem 1.2fr 1.6fr 2.4rem;
   align-items: baseline;
@@ -340,47 +402,47 @@
   transition: padding-left 0.25s ease;
 }
 
-.row:hover {
+.page .row:hover {
   padding-left: 0.8rem;
 }
 
-.rowN {
-  font-family: var(--font-mono), monospace;
+.page .rowN {
+  font-family: var(--font-mono);
   font-size: 0.78rem;
   color: var(--signal);
   letter-spacing: 0.1em;
 }
 
-.rowT {
-  font-family: var(--font-display), Arial, sans-serif;
+.page .rowT {
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: clamp(1.15rem, 1.9vw, 1.55rem);
   letter-spacing: 0;
   text-transform: uppercase;
 }
 
-.rowD {
+.page .rowD {
   color: var(--muted);
   font-size: 0.95rem;
 }
 
-.rowA {
+.page .rowA {
   justify-self: end;
   transition: transform 0.25s ease;
 }
 
-.row:hover .rowA {
+.page .row:hover .rowA {
   transform: translateX(8px);
   color: var(--signal);
 }
 
 /* ——— Kontakt ——— */
-.contact {
+.page .contact {
   padding: clamp(4.5rem, 10vw, 9rem) clamp(1.5rem, 5vw, 4.5rem);
 }
 
-.display2 {
-  font-family: var(--font-display), Arial, sans-serif;
+.page .display2 {
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: clamp(2.6rem, 7vw, 6.2rem);
   line-height: 1;
@@ -389,15 +451,15 @@
   margin: 0 0 2.2rem;
 }
 
-.contactRows {
+.page .contactRows {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  font-family: var(--font-mono), monospace;
+  font-family: var(--font-mono);
   font-size: clamp(1rem, 1.6vw, 1.25rem);
 }
 
-.contactRows a {
+.page .contactRows a {
   color: inherit;
   text-decoration: none;
   width: fit-content;
@@ -405,20 +467,20 @@
   padding-bottom: 3px;
 }
 
-.contactRows a:hover {
+.page .contactRows a:hover {
   color: var(--signal);
 }
 
-.contactNote {
+.page .contactNote {
   color: var(--muted);
   margin-top: 1.8rem;
-  font-family: var(--font-mono), monospace;
+  font-family: var(--font-mono);
   font-size: 0.8rem;
   letter-spacing: 0.06em;
 }
 
 /* ——— Footer ——— */
-.footer {
+.page .footer {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -426,50 +488,197 @@
   gap: 1rem;
   padding: 1.5rem clamp(1.5rem, 5vw, 4.5rem);
   border-top: 1px solid var(--line);
-  font-family: var(--font-mono), monospace;
+  font-family: var(--font-mono);
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
-.sister {
+.page .sister {
   color: inherit;
   text-decoration: none;
 }
 
-.sister:hover {
+.page .sister:hover {
   color: var(--signal);
+}
+
+/* ——— Bevegelse: ordmasker ——— */
+.wr {
+  display: inline-block;
+}
+
+.wr-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+
+.wr-word {
+  display: inline-block;
+  will-change: transform;
+}
+
+/* ——— Bevegelse: parallaksramme — bildet er 114 % høyt og puster i rammen ——— */
+.pl-frame {
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  margin: 0;
+}
+
+.pl-inner {
+  height: 114%;
+  margin-top: -7%;
+}
+
+.pl-inner img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ——— Marquee: kontinuerlig, respektfullt ——— */
+.mq {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.mq-row {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.mq-anim {
+  animation-name: mq-scroll;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes mq-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mq-anim {
+    animation: none;
+  }
+}
+
+/* ——— Bevegelse: innganger og ord — kun med JS, kun uten redusert bevegelse ——— */
+@media (prefers-reduced-motion: no-preference) {
+  html.js [data-reveal] {
+    opacity: 0;
+    transform: translateY(26px);
+    filter: blur(8px);
+    transition:
+      opacity 0.85s cubic-bezier(0.2, 0.6, 0.2, 1),
+      transform 0.85s cubic-bezier(0.2, 0.6, 0.2, 1),
+      filter 0.85s cubic-bezier(0.2, 0.6, 0.2, 1);
+    transition-delay: var(--reveal-delay, 0s);
+    will-change: opacity, transform, filter;
+  }
+
+  html.js [data-reveal].is-in {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  html.js .wr-word {
+    transform: translateY(112%);
+    transition: transform 0.75s cubic-bezier(0.2, 0.6, 0.2, 1);
+    transition-delay: var(--d, 0s);
+  }
+
+  html.js .wr.is-in .wr-word {
+    transform: translateY(0);
+  }
+}
+
+/* ——— Markør (kun pekerenheter) ——— */
+.cur-dot,
+.cur-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  border-radius: 50%;
+  display: none;
+}
+
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  html.js .cur-dot,
+  html.js .cur-ring {
+    display: block;
+  }
+}
+
+.cur-dot {
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  background: var(--cur, #14212e);
+}
+
+.cur-ring {
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border: 1px solid var(--cur, #14212e);
+  opacity: 0.4;
+  transition: opacity 0.25s ease, scale 0.25s ease;
+}
+
+.cur-ring.cur-hot,
+.cur-dot.cur-hot {
+  opacity: 0.9;
+}
+
+.cur-ring.cur-hot {
+  scale: 1.35;
 }
 
 /* ——— Responsivt ——— */
 @media (max-width: 900px) {
-  .twoCol {
+  .page .twoCol {
     grid-template-columns: 1fr;
   }
-  .colFig {
+  .page .colFig {
     order: -1;
   }
 }
 
 @media (max-width: 680px) {
-  .links a:not(.cta) {
+  .page .links a:not(.cta) {
     display: none;
   }
-  .row {
+  .page .row {
     grid-template-columns: 3rem 1fr 2rem;
   }
-  .rowD {
+  .page .rowD {
     display: none;
   }
-  .metaRow span:nth-child(2) {
+  .page .metaRow span:nth-child(2) {
     display: none;
   }
-  .footer {
+  .page .footer {
     flex-direction: column;
     align-items: flex-start;
   }
-  .stripItem i {
+  .page .stripItem i {
     padding-inline: 1.2rem;
   }
 }

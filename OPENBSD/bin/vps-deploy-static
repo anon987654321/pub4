@@ -1,14 +1,12 @@
 #!/usr/bin/env zsh
-# Static brand exports (RAILS/__other) — build on this box and install into
-# httpd's chroot. The Rails apps have vps-deploy; these two are not Rails, so
-# they get their own entrypoint instead of a case branch pretending they are.
+# Static brand exports (RAILS/__other) — plain trees of HTML/CSS/JS/fonts/
+# images, no build step and no package manager. This script installs a tree
+# into httpd's chroot and proves it serves. The Rails apps have vps-deploy;
+# these two are not Rails and not even built, so they get their own
+# entrypoint instead of a case branch pretending they are either.
 #
 # Usage (on vm23, as dev — never under doas, same reasoning as vps-deploy):
 #   zsh OPENBSD/bin/vps-deploy-static all|sommerseth|alfa
-#
-# Skip the build and install a tree built elsewhere (workstation CI, for
-# example, when the box has no node runtime):
-#   VPS_STATIC_OUT_SRC=/tmp/sommerseth-out zsh OPENBSD/bin/vps-deploy-static sommerseth
 #
 # Status honesty: a green exit means the files are deployed AND the loopback
 # vhost answers. Serving is not gated on anything the box does not already
@@ -24,10 +22,7 @@ set -euo pipefail
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 
 usage() {
-  print -r -- "usage: zsh OPENBSD/bin/vps-deploy-static all|sommerseth|alfa   (run as dev)
-
-  VPS_STATIC_OUT_SRC=<dir>   install this ready-made out/ tree instead of building
-                             (skips npm/bun; the dir must contain index.html)"
+  print -r -- "usage: zsh OPENBSD/bin/vps-deploy-static all|sommerseth|alfa   (run as dev)"
 }
 case ${1:-} in
   -h|--help) usage; exit 0 ;;
@@ -49,71 +44,48 @@ case $site in
   *) print -u2 "vps-deploy-static: unknown site \"$site\" — allowed: all, sommerseth, alfa"; exit 2 ;;
 esac
 
-# Port and chroot root per site. Two places name these numbers (here and the
-# vhosts in OPENBSD/etc/httpd.conf); apps.yml#static_exports is the
-# registry both answer to, and config_drift_check compares the live httpd.conf
-# against the repo copy once the vhosts go live.
+# Port, chroot root, page title and favicon file per site. Two places name
+# these numbers (here and the vhosts in OPENBSD/etc/httpd.conf);
+# apps.yml#static_exports is the registry both answer to, and
+# config_drift_check compares the live httpd.conf against the repo copy once
+# the vhosts go live.
 # One assignment per line: zsh accepts several name=value words on a line, but
 # with array subscripts that reading is fragile, and the whole point of these
-# three maps is that nothing about them is clever.
-typeset -A PORT WWWROOT TITLE
+# four maps is that nothing about them is clever.
+typeset -A PORT WWWROOT TITLE MARK
 PORT[sommerseth]=38191
 WWWROOT[sommerseth]=/var/www/sommerseth
 TITLE[sommerseth]="Sommerseth Eiendom"
+MARK[sommerseth]=sommerseth-mark.svg
 PORT[alfa]=38192
 WWWROOT[alfa]=/var/www/alfa
 TITLE[alfa]="Alfa Bergen"
+MARK[alfa]=alfa-mark.svg
 
 fail=0
 for s in $sites; do
   src="${pub4_root}/RAILS/__other/${s}"
-  out_src=${VPS_STATIC_OUT_SRC:-}
 
   print -r -- "── ${s} ──────────────────────────────"
 
-  if [[ -n $out_src ]]; then
-    [[ -f ${out_src}/index.html ]] || {
-      print -u2 "  FAIL: ${out_src}/index.html missing — VPS_STATIC_OUT_SRC must be a built out/ tree"
-      fail=1; continue
-    }
-  else
-    [[ -f ${src}/package.json ]] || {
-      print -u2 "  FAIL: ${src}/package.json missing — is pub4 checked out at ${pub4_root}?"
-      fail=1; continue
-    }
-    # Runtime choice: bun if the box has it, node+npm otherwise, honest
-    # refusal when neither exists — the message names the escape hatch
-    # (build on the workstation, ship the tree, rerun with VPS_STATIC_OUT_SRC).
-    print -r -- "  building in ${src}..."
-    if command -v bun >/dev/null 2>&1; then
-      if (cd "${src}" && bun install --frozen-lockfile && bun run build); then :; else
-        print -u2 "  FAIL: build failed"; fail=1; continue
-      fi
-    elif command -v npm >/dev/null 2>&1; then
-      if (cd "${src}" && npm ci --no-audit --no-fund && npm run build); then :; else
-        print -u2 "  FAIL: build failed"; fail=1; continue
-      fi
-    else
-      print -u2 "  FAIL: no bun and no npm on this box. Build elsewhere and ship the tree:"
-      print -u2 "        rsync -az RAILS/__other/${s}/out/ ${SSH_USER:-dev}@vm23:/tmp/${s}-out/"
-      print -u2 "        VPS_STATIC_OUT_SRC=/tmp/${s}-out zsh OPENBSD/bin/vps-deploy-static ${s}"
-      fail=1; continue
-    fi
-    out_src="${src}/out"
-    [[ -f ${out_src}/index.html ]] || {
-      print -u2 "  FAIL: ${out_src}/index.html missing after build — output:export changed shape?"
-      fail=1; continue
-    }
-  fi
+  # The tree is the artifact. If index.html is missing the checkout is wrong;
+  # there is nothing to build and nothing to forgive.
+  [[ -f ${src}/index.html && -d ${src}/assets && -d ${src}/images ]] || {
+    print -u2 "  FAIL: ${src} does not look like a site tree (index.html, assets/, images/)"
+    print -u2 "        — is pub4 checked out at ${pub4_root}?"
+    fail=1; continue
+  }
 
-  # Install into the chroot. rm first: hashed _next/static assets accumulate
-  # across deploys, and a stale chunk that a stale HTML still references is
-  # exactly the kind of almost-works a static site must never ship. The path
-  # is the literal WWWROOT[${s}] set above, nothing interpolated from input.
-  print -r -- "  installing into ${WWWROOT[$s]}..."
+  # Install into the chroot: the content files only. README.md documents the
+  # tree, it is not part of the site. rm first: a half-updated tree — old
+  # assets next to new HTML — is exactly the almost-works a static site must
+  # never ship. The paths are the literal values set above, nothing
+  # interpolated from input.
+  print -r -- "  installing ${src} into ${WWWROOT[$s]}..."
   doas rm -rf "${WWWROOT[$s]}"
   doas mkdir -p "${WWWROOT[$s]}"
-  doas cp -R "${out_src}/." "${WWWROOT[$s]}/" || { print -u2 "  FAIL: copy into chroot failed"; fail=1; continue }
+  doas cp -R "${src}/index.html" "${src}/assets" "${src}/images" "${src}/${MARK[$s]}" "${WWWROOT[$s]}/" \
+    || { print -u2 "  FAIL: copy into chroot failed"; fail=1; continue }
   doas chown -R root:daemon "${WWWROOT[$s]}" 2>/dev/null || true
 
   # Serving check. The vhosts are live in the repo's httpd.conf, so after
