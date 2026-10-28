@@ -64,8 +64,16 @@ cognitive_spine:
     role: constitutional fold kernel entrypoint
   - path: lib/core/
     role: constitutional fold spine implementations
+  - path: lib/fix/kernel/convergence_adapter.rb
+    role: canonical bounded observe-repair convergence loop
+  - path: lib/fix/kernel/lifecycle.rb
+    role: canonical /fix coordinator, shared lock and terminal receipts
+  - path: lib/fix/kernel/lifecycle_journal.rb
+    role: canonical durable /fix pass and run journal
+  - path: lib/fix/kernel/repair_adapter.rb
+    role: canonical single-pass repair policy, budget and collapse guard
   - path: lib/fix/fix_loop.rb
-    role: bounded observe-repair convergence loop
+    role: compatibility entrypoint for Kernel convergence adapter
   - path: lib/io/exec.rb
     role: bounded subprocess execution primitive
   - path: lib/trace/ledger.rb
