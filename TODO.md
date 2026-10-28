@@ -111,11 +111,6 @@ compatibility alias ahead of the execution-contract gates.
 - [ ] Run the authored recovery gates on the pinned Ruby, preserve receipts,
   then retarget callers to the Kernel-owned names and delete the
   compatibility aliases per the existing execution-contract gate.
-- [ ] `bin/test <file>`: a helper that reports `SKIP <file>: needs <gem>`
-  instead of crashing at require on a bundle-less checkout; private gems
-  move to an optional Gemfile group.
-- [ ] Lint CLAUDE.md as the fifth agent door: fail when it reproduces
-  canonical config or contradicts the generated agent-contract block.
 - [ ] `rake docs:map` + `rake lint:map`: a committed per-file map of
   constants, require graph and the boot chain; a stale map fails lint.
 - [ ] laws.yml entry with a lexical detector: no module-open-time

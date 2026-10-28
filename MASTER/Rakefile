@@ -523,7 +523,37 @@ task :agent_contracts do
   abort "lint:agent_contracts: #{drifted.join(", ")} drifted from MASTER/AGENTS.md — " \
         "edit the marked block there and run `rake docs:agent_contracts`" if drifted.any?
 
-  puts "lint:agent_contracts: #{AGENT_CONTRACT_TARGETS.size} harness files match their source"
+  # Claude Code reads CLAUDE.md, deliberately hand-written: a pure pointer
+  # into MASTER, not a fifth generated target. A hand-written door drifts
+  # quietly, so its pointer contract is asserted: the canonical reads stay
+  # named, the generated-block markers stay absent, and no law id from
+  # laws.yml is quoted — policy quoted here is policy forked here.
+  claude_path = File.join(root, "CLAUDE.md")
+  abort "lint:agent_contracts: CLAUDE.md missing" unless File.file?(claude_path)
+  claude = File.read(claude_path)
+  missing_refs = ["MASTER/data/soul.yml", "MASTER/data/laws.yml", "MASTER/AGENTS.md"]
+                   .reject { |ref| claude.include?(ref) }
+  abort "lint:agent_contracts: CLAUDE.md no longer points at #{missing_refs.join(", ")}" if missing_refs.any?
+  abort "lint:agent_contracts: CLAUDE.md carries the generated-block markers; " \
+        "it is the one hand-written door and must stay so" if claude.include?("agent-contract:begin")
+  require "yaml"
+  law_ids = []
+  walk = lambda do |node|
+    case node
+    when Hash
+      node.each do |key, value|
+        law_ids << value if key == "id" && value.is_a?(String) && value.include?("_")
+        walk.call(value)
+      end
+    when Array then node.each { |value| walk.call(value) }
+    end
+  end
+  walk.call(YAML.safe_load_file(File.join(__dir__, "data", "laws.yml"), aliases: true))
+  quoted = law_ids.select { |id| claude.include?(id) }
+  abort "lint:agent_contracts: CLAUDE.md quotes law ids #{quoted.join(", ")} — " \
+        "point at the catalogue, do not reproduce it" if quoted.any?
+
+  puts "lint:agent_contracts: #{AGENT_CONTRACT_TARGETS.size} harness files match their source; CLAUDE.md pointer contract holds"
 end
 
 desc "docs/laws_digest.md matches what data/laws.yml and law/*.rb generate"

@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Run focused test files and report what actually happened, per file. Each
+# file runs in a child ruby with MASTER's lib and test on the load path, the
+# way the focused battery runs it; a file whose dependencies are not
+# installed on this machine is SKIP with the missing gem named, because a
+# crash at require measures nothing and a suite the executor cannot run must
+# say so instead of failing like a bug. PASS and SKIP let the run end zero;
+# any FAIL, or a file that does not exist, ends it one. `bundle exec` is the
+# caller's choice — the wrapper measures the environment it is given.
+
+require "open3"
+
+lib = File.expand_path("../lib", __dir__)
+test_dir = File.expand_path("../test", __dir__)
+
+files = ARGV.reject { |arg| arg.start_with?("-") }
+if files.empty?
+  warn "usage: bin/test test/test_io_atomic_write.rb [more files...]"
+  exit 2
+end
+
+passed = []
+skipped = []
+failed = []
+
+files.each do |file|
+  path = File.expand_path(file)
+  unless File.file?(path)
+    failed << "#{file} (no such file)"
+    next
+  end
+
+  out, err, status = Open3.capture3(RbConfig.ruby, "-I#{lib}", "-I#{test_dir}", path)
+  ran = out.match?(/^\d+ runs?/)
+  missing_gem = err[/cannot load such file -- (.+)/, 1]
+  deps0 = err[/^deps0: (.+)$/, 1]
+
+  if status.success?
+    passed << file
+    puts "bin/test: PASS #{file}"
+  elsif !ran && missing_gem
+    skipped << "#{file} (needs #{missing_gem})"
+    puts "bin/test: SKIP #{file} — needs #{missing_gem}"
+  elsif !ran && deps0
+    # test_helper's DependencyManager aborted: this machine cannot provide
+    # the pinned bundle. That is an environment verdict, not a bug verdict.
+    skipped << "#{file} (deps0: #{deps0})"
+    puts "bin/test: SKIP #{file} — deps0: #{deps0}"
+  else
+    failed << file
+    puts "bin/test: FAIL #{file}"
+    warn err.lines.last(12).join
+  end
+end
+
+summary = "#{passed.size} pass, #{skipped.size} skip, #{failed.size} fail"
+puts "bin/test: #{summary}"
+unless skipped.empty?
+  puts "bin/test: skipped here, not everywhere: #{skipped.join('; ')}"
+end
+exit failed.any? ? 1 : 0
