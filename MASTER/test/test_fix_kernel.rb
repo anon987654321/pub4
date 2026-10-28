@@ -7,6 +7,7 @@ require "json"
 require "digest"
 require "stringio"
 require "socket"
+require "timeout"
 require_relative "../lib/fix/kernel"
 require_relative "../lib/fix/fix_loop"
 require_relative "../lib/fix/repair_loop"
@@ -148,6 +149,60 @@ class TestFixKernel < Minitest::Test
         row["kind"] == "coordinator_terminal" && row["run_id"] == "same-process-run"
       end
       refute terminalized, "another Kernel instance in this process must not terminalize a live peer"
+    end
+  end
+
+  def test_independent_kernel_instances_share_the_process_execution_lease
+    with_workspace do |root|
+      first = K.new(root:)
+      second = K.new(root:)
+      first_entered = Queue.new
+      allow_first_to_finish = Queue.new
+      second_attempting = Queue.new
+      second_entered = Queue.new
+
+      first_adapter = Object.new
+      first_adapter.define_singleton_method(:last_terminal_state) { :done }
+      first_adapter.define_singleton_method(:run_unlocked) do |_target, **_options|
+        first_entered << :entered
+        allow_first_to_finish.pop
+        Master::Result.ok("DONE: first fixture")
+      end
+
+      second_adapter = Object.new
+      second_adapter.define_singleton_method(:last_terminal_state) { :done }
+      second_adapter.define_singleton_method(:run_unlocked) do |_target, **_options|
+        second_entered << :entered
+        Master::Result.ok("DONE: second fixture")
+      end
+
+      first_thread = Thread.new do
+        first.run_fix_loop(
+          first_adapter, target: root, max_passes: 2, budget_seconds: 60,
+          incremental: false, requested: true
+        )
+      end
+      second_thread = nil
+      begin
+        assert_equal :entered, Timeout.timeout(5) { first_entered.pop }
+        second_thread = Thread.new do
+          second_attempting << :attempting
+          second.run_fix_loop(
+            second_adapter, target: root, max_passes: 2, budget_seconds: 60,
+            incremental: false, requested: true
+          )
+        end
+        assert_equal :attempting, Timeout.timeout(5) { second_attempting.pop }
+        assert_raises(Timeout::Error) { Timeout.timeout(0.15) { second_entered.pop } }
+        allow_first_to_finish << :finish
+        assert first_thread.value.ok?
+        assert first_thread.status == false || first_thread.status == "sleep" || first_thread.status == nil
+        assert_equal :entered, Timeout.timeout(5) { second_entered.pop }
+        assert second_thread.value.ok?
+      ensure
+        allow_first_to_finish << :finish if first_thread&.alive?
+        [first_thread, second_thread].compact.each { |thread| thread.join(5) }
+      end
     end
   end
 
