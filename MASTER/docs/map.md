@@ -4,7 +4,7 @@
 
 # MASTER/lib map
 
-773 files under `lib/`, sorted. Per file: the constants it declares
+775 files under `lib/`, sorted. Per file: the constants it declares
 (nesting approximated from two-space indentation) and the files under
 `lib/` it require_relatives. The boot chain this map serves:
 `bin/master` → `lib/boot/master_boot.rb` → `bootstrap_container` →
@@ -598,7 +598,7 @@ Declares: `Master`, `Master::Cognition`, `Master::Cognition::State`
 ## `lib/configuration_guard.rb`
 
 Declares: `Master`, `Master::ConfigurationGuard`
-Requires: `law_vocabulary`, `provider_catalogue_guard`, `model_catalogue_guard`
+Requires: `law_vocabulary`, `provider_catalogue_guard`, `model_catalogue_guard`, `limits_catalogue_guard`
 
 ## `lib/content.rb`
 
@@ -2132,6 +2132,10 @@ Requires: `io/lane_quota`
 Declares: `Master`, `Master::Io`, `Master::Io::LaneState`
 Requires: `io/lane_quota`, `io/lane_health`, `io/lane_silence`, `io/model_skip_cache`, `io/model_quota`, `io/quota_check`
 
+## `lib/io/ledger.rb`
+
+Declares: `Master`, `Master::Io`, `Master::Io::Ledger`, `Master::Io::Ledger::Error`, `Master::Io::Ledger::Malformed`, `Master::Io::Ledger::SchemaMismatch`
+
 ## `lib/io/list_dir.rb`
 
 Declares: `Master`, `Master::Io`, `Master::Io::ListDir`
@@ -2326,6 +2330,10 @@ Declares: `Master`, `Master::LawCataloguePreflight`
 ## `lib/law_vocabulary.rb`
 
 Declares: `Master`, `Master::LawVocabulary`
+
+## `lib/limits_catalogue_guard.rb`
+
+Declares: `Master`, `Master::LimitsCatalogueGuard`
 
 ## `lib/master.rb`
 
