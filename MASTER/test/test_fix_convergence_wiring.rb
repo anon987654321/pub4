@@ -13,8 +13,8 @@ class FixConvergenceWiringTest < Minitest::Test
     evidence_source = File.read(File.expand_path("../lib/fix/fix_loop/pass_runner/evidence_stage.rb", __dir__))
     llm_source = File.read(File.expand_path("../lib/fix/fix_loop/pass_runner/llm_stage.rb", __dir__))
     wishlist_source = File.read(File.expand_path("../lib/fix/wishlist.rb", __dir__))
-    journal_source = File.read(File.expand_path("../lib/fix/run_journal.rb", __dir__))
-    repair_source = File.read(File.expand_path("../lib/fix/repair_loop.rb", __dir__))
+    journal_source = File.read(File.expand_path("../lib/fix/kernel/lifecycle_journal.rb", __dir__))
+    repair_source = File.read(File.expand_path("../lib/fix/kernel/repair_adapter.rb", __dir__))
 
     assert_includes loop_source, 'require_relative "visual_pass"'
     assert_includes loop_source, 'require_relative "opportunity_pass"'
@@ -44,8 +44,8 @@ class FixConvergenceWiringTest < Minitest::Test
     assert_includes repair_source, "external_violations:"
     assert_includes repair_source, "image:"
     assert_includes repair_source, "@stage_commit"
-    assert_includes repair_source, 'require_relative "../review/scan/law_health"'
-    refute_includes repair_source, 'require_relative "law_health"'
+    assert_includes repair_source, 'require_relative "../../review/scan/law_health"'
+    refute_includes repair_source, 'require_relative "../review/scan/law_health"'
   end
 
   def test_rendered_geometry_consumes_the_visual_measurement_payload
