@@ -60,7 +60,13 @@ module Postpro
       # Actual presentation timestamps below are the authority for variable timing.
       rate = parse_fps(average_rate).positive? ? average_rate : nominal_rate
       fps = parse_fps(rate)
-      duration = document.dig("format", "duration").to_f
+      stream_duration = video["duration"].to_f
+      format_duration = document.dig("format", "duration").to_f
+      duration = stream_duration.positive? ? stream_duration : format_duration
+      if rotated_stream?(video)
+        raise Unavailable,
+              "video has display rotation metadata; normalise orientation before grading so frame dimensions remain stable"
+      end
       frames = video["nb_frames"].to_s.to_i
       frames = (duration * fps).ceil if frames <= 0 && duration.positive? && fps.positive?
       unless frames.positive? && fps.positive?
@@ -82,6 +88,18 @@ module Postpro
       )
     rescue JSON::ParserError => e
       raise Unavailable, "ffprobe returned invalid JSON: #{e.message}"
+    end
+
+    def self.rotated_stream?(stream)
+      values = [stream.dig("tags", "rotate")]
+      values.concat(
+        Array(stream["side_data_list"]).select { |item| item["side_data_type"].to_s.match?(/display matrix/i) }
+                                       .map { |item| item["rotation"] }
+      )
+      values.compact.filter_map { |value| Float(value, exception: false) }.any? do |degrees|
+        remainder = degrees.abs % 360
+        remainder > 0.01 && (360 - remainder) > 0.01
+      end
     end
 
     # Keep rational rates exact: 24000/1001 is not 24, and accumulating that
