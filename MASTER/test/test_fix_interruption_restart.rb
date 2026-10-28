@@ -166,33 +166,43 @@ class TestFixInterruptionRestart < Minitest::Test
         require "master"
         require "fix/transaction"
         require "fix/run_journal"
+        require "fix/fix_loop"
 
         root, marker = ARGV
         sample = File.join(root, "sample.rb")
+        target = File.join(root, "MASTER")
         kernel = Master::Fix::Kernel.new(root:, actor: "restart-probe")
-        coordinator_run_id = kernel.begin_coordinated_run(
-          target: File.join(root, "MASTER"), max_passes: 2,
-          budget_seconds: 60, requested: false
-        )
-        journal = Master::Fix::RunJournal.new(root:)
-        run = journal.start_or_resume(
-          target: File.join(root, "MASTER"),
-          files: [sample],
-          max_passes: 2,
-          budget_seconds: 60
-        )
-        transaction = Master::Fix::Transaction.new(
-          root:, paths: ["sample.rb"], id: "restart-probe"
-        )
-        transaction.begin!
-        File.write(sample, "partial mutation\n")
-        transaction.observe!
-        journal.pass_start(run.fetch("id"), 1, transaction_id: "restart-probe")
-        File.write(marker, JSON.generate(
-          "run_id" => run.fetch("id"), "coordinator_run_id" => coordinator_run_id,
-          "pid" => Process.pid
-        ))
-        sleep 60
+        journal = kernel.lifecycle_journal
+        adapter = Master::Fix::FixLoop.allocate
+        adapter.instance_variable_set(:@kernel, kernel)
+        adapter.instance_variable_set(:@run_mutex, kernel.execution_mutex)
+        adapter.instance_variable_set(:@root, root)
+        adapter.instance_variable_set(:@transaction_root, root)
+        adapter.instance_variable_set(:@bus, nil)
+        adapter.instance_variable_set(:@run_journal, journal)
+
+        # Keep the interruption deterministic at a pass boundary seam, while the
+        # public FixLoop#run entry point and Kernel coordinator are production code.
+        adapter.define_singleton_method(:run_unlocked) do |_target, max_passes:, budget_seconds:, incremental:, requested:|
+          run = journal.start_or_resume(
+            target:, files: [sample], max_passes:, budget_seconds:
+          )
+          transaction = Master::Fix::Transaction.new(
+            root:, paths: ["sample.rb"], id: "restart-probe"
+          )
+          transaction.begin!
+          File.write(sample, "partial mutation\n")
+          transaction.observe!
+          journal.pass_start(run.fetch("id"), 1, transaction_id: "restart-probe")
+          coordinator = kernel.verify_log!.reverse.find { |row| row["kind"] == "coordinator_started" }
+          File.write(marker, JSON.generate(
+            "run_id" => run.fetch("id"), "coordinator_run_id" => coordinator.fetch("run_id"),
+            "max_passes" => max_passes, "budget_seconds" => budget_seconds,
+            "incremental" => incremental, "requested" => requested, "pid" => Process.pid
+          ))
+          sleep 60
+        end
+        adapter.run(target, max_passes: 2, budget_seconds: 60, incremental: false, requested: false)
       RUBY
 
       pid = Process.spawn(
