@@ -8,9 +8,9 @@ the commit that carries its evidence; nothing here records finished work.
 
 ## Session note 2026-10-28
 
-- MASTER Gemfile compatibility was widened to Ruby >= 3.2 so focused checks can
-  use an available runtime; the repository's preferred development pin remains
-  documented separately. This change does not claim test results.
+- MASTER/.ruby-version now uses the available Ruby 3.3.8; MASTER/Gemfile accepts
+  >= 3.2 for constrained environments. The root pin remains 4.0.5 for the broader
+  app stack. This compatibility change does not claim test results.
 - Added the token-owned face swarm under face_interface.swarm, the shared
   Master::Face::Swarm module, CLI frame overlay, and web stipple integration.
   Coverage was added for token reading, deterministic seeding, force direction,
@@ -95,7 +95,7 @@ source and tests they could not run; this pass is what measures them.
   this gate until wired to real fixtures and verified red then green.
 
 - [ ] Run the MASTER swarm tests on the available Ruby:
-  from MASTER/, run `ruby -Ilib:test test/test_face_swarm.rb` plus the focused
+  from MASTER/, run `bundle exec ruby -Ilib:test test/test_face_swarm.rb` plus the focused
   face contract/CLI tests; in RAILS/master/, run
   `node --test test/face_stipple.test.mjs`. Capture actual output and rendered
   narrow/wide browser frames before marking the swarm integration verified.
