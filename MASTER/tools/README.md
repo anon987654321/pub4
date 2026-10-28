@@ -22,7 +22,8 @@ Repository maintenance tools live in `repo/`: tracked-tree inventory, entrypoint
 
 Research and benchmarking tools live in `research/`: cognition outcome benchmarking, mutation-oriented challenge checks, and LLM trajectory reporting. Their former `tools/` root paths remain compatibility entrypoints for existing invocations.
 
-Design baseline measurement lives in `audit/` alongside the other repository-wide checks. The former `tools/design_baseline.rb` path remains a command-compatible entrypoint; the canonical baseline is `tools/audit/design_baseline.rb`.
+Design baseline measurement lives in `audit/` alongside the other repository-wide checks:
+`tools/audit/design_baseline.rb`.
 
 Voice tooling is grouped in `voice/`: `voice_benchmark.rb`, `voice_measure.rb` and `voice_quality.rb` are canonical there. Their former `tools/` root paths remain thin command-compatible entrypoints for existing invocations. Runtime speech and TTS implementations remain in `lib/voice/`.
 

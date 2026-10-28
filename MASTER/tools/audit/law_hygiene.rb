@@ -196,8 +196,10 @@ module Operator
 
     def conflict(id, home, fix, severity, entry)
       reasons = []
-      reasons << "severity: #{normalised(entry["severity"])} declared, #{normalised(severity)} enforced" if
-        normalised(severity) != normalised(entry["severity"])
+
+      declared = declared_severity(id, entry)
+      reasons << "severity: #{normalised(declared)} declared, #{normalised(severity)} enforced" if
+        normalised(severity) != normalised(declared)
       # Once a semantic law is migrated, absence of a catalogue fix means the
       # executable law is authoritative. Legacy non-Law entries still compare fixes.
       reasons << "fix" if entry.key?("fix") && !entry["fix"].nil? &&
@@ -205,6 +207,14 @@ module Operator
       return if reasons.empty?
 
       { law: id, home:, reasons: }
+    end
+
+    # A Law's severity is declared on its law_catalogue entry, the one owner since policy moved
+    # out of law/; the priority rows above the catalogue no longer carry it, and reading them
+    # reported five agreeing laws as conflicts. A row outside the catalogue still declares its own.
+    def declared_severity(id, entry)
+      @catalogue_entries ||= master_laws.dig("law_catalogue", "entries") || {}
+      @catalogue_entries.dig(id, "severity") || entry["severity"]
     end
 
     # law/ writes :warn where the catalogue writes "warning", and they are the
