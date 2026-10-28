@@ -57,13 +57,15 @@ source and tests they could not run; this pass is what measures them.
 
 ## Execution contract
 
-- [ ] Complete the Kernel consolidation in `MASTER/docs/fix_coordinator_map.md`: production
-  `/fix` now enters Kernel; Kernel owns the outer execution lock, lifecycle receipts, journal
-  accessor and RepairLoop factory. Remaining: move RunJournal's state machine and RepairLoop's
-  budget/collapse/autofix policy behind Kernel contracts; test Mission survival, journal-loss
-  reconstruction and every existing CLI adapter for byte-equivalent receipts. The subprocess
-  transaction-recovery test is unexecuted until a host with the pinned Ruby 4.0.5 is available.
-  Do not delete adapter files before those gates pass.
+- [ ] Complete and verify the Kernel consolidation in `MASTER/docs/fix_coordinator_map.md`:
+  production `/fix` now enters Kernel; the convergence, lifecycle-journal and repair-policy
+  implementations live under `Fix::Kernel`, with compatibility constants retained. Kernel owns
+  the execution lock, coordinator receipts, shared journal accessor, repair factory and
+  unknown-outcome reconciliation. The subprocess tests cover transaction rollback, deletion of
+  the run journal with Mission/checkpoint survival, resumption when the journal remains, and
+  orphan-receipt recovery, but are unexecuted. Run them on pinned Ruby 4.0.5, then prove
+  budget/collapse and zero-repair ledger honesty, the full adapter receipt-parity matrix, and one
+  real repository-wide `/fix` trial. Do not remove compatibility aliases until those gates pass.
 
 ## MASTER behaviour
 
