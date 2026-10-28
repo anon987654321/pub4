@@ -113,8 +113,6 @@ compatibility alias ahead of the execution-contract gates.
   compatibility aliases per the existing execution-contract gate.
 - [ ] `rake docs:map` + `rake lint:map`: a committed per-file map of
   constants, require graph and the boot chain; a stale map fails lint.
-- [ ] laws.yml entry with a lexical detector: no module-open-time
-  `const_set`/`remove_const` outside the single guarded alias file.
 - [ ] One Ruby pin stated once, and it is the owner's call: AGENTS.md and the
   execution contract name 4.0.5 (the operator's machine), while the
   .ruby-version files at root and MASTER hold 3.3.8 from the constrained

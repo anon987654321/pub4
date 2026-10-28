@@ -904,10 +904,15 @@ task "lint:map" do
   sh RbConfig.ruby, File.join(__dir__, "tools", "tree_map.rb"), "--check"
 end
 
+desc "const_set/remove_const stay inside the recorded alias installation sites"
+task "lint:alias_sites" do
+  sh RbConfig.ruby, File.join(__dir__, "tools", "alias_site_guard.rb")
+end
+
 AUDIT_CHECKS = %w[
   dogfood constitution selftest selfcheck tools core_smoke architecture boot_smoke kernel_autoload_smoke security_sweep
   lint:frozen lint:data_singularity lint:spine lint:autoload
-  lint:law_trace lint:law_parity lint:agent_contracts lint:laws_digest lint:scan_coverage lint:agent_map lint:reader_singularity lint:doc_citations lint:map
+  lint:law_trace lint:law_parity lint:agent_contracts lint:laws_digest lint:scan_coverage lint:agent_map lint:reader_singularity lint:doc_citations lint:map lint:alias_sites
   lint:do_not_touch lint:instruments lint:swallowed lint:law_audit lint:autofix_reach
   lint:rule_hygiene lint:constant_collisions lint:capability lint:cohesion lint:law_reach
   lint:models lint:dedup lint:word_boundary lint:test_naming ad_organ:test_browserless
