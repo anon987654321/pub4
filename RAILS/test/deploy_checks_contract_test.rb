@@ -328,13 +328,20 @@ class DeployChecksContractTest < Minitest::Test
   def test_composites_own_their_leaves
     {
       "master_web_assets" => "production", "apps_yml" => "production",
-      "domain_alignment" => "release", "surface_schema" => "layout_suite",
+      "domain_alignment" => "release", "security_headers_source" => "release",
+      "surface_schema" => "layout_suite",
       "design_metrics" => "layout_suite", "visual_quality" => "layout_suite",
       "calibration" => "layout_suite", "rendered_suite" => "layout_suite", "rendered_geometry" => "rendered_suite",
     }.each do |leaf, parent|
       assert_equal parent, CHECKS.dig(leaf, "covered_by"), "#{leaf} should be covered by #{parent}"
     end
     assert_includes File.read(File.join(MASTER_CHECKS, "runner.rb")), %(["covered_by"])
+  end
+
+  def test_security_headers_source_contract_is_owned_by_release
+    source = File.read(File.join(MASTER_CHECKS, "release.rb"))
+    assert_includes source, "Deploy::SecurityHeadersSourceCheck"
+    assert_equal "release", CHECKS.dig("security_headers_source", "covered_by")
   end
 
   def test_apps_yml_validator_points_at_the_canonical_rails_inventory
