@@ -1,30 +1,584 @@
-// BSDPorts has one application entrypoint and ordered feature modules.
-// The sequence is a cascade contract: base, components, shared chrome, token
-// overrides, layout, pages, states, then the final dialect pass. Keep it stable.
-
-@use "stack" as *;
 @use "surface_chrome_endgame" as endgame;
 @use "sass:meta";
+@use "dialect_tokens" as x;
 
-// ============================================================ base
-@include meta.load-css("bsdports_base");
+@include meta.load-css("stack");
+
+// ============================================================ module: bsdports_base
+// BSDPorts stylesheet module; loaded by application.scss in cascade order.
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  // The two wrapped 44px link boxes, 8px row gap and nav's vertical padding
+  // determine the mobile bar. Add one spacing step after it and include the notch.
+  padding-block-start: calc(var(--tap-min) + var(--tap-min) + var(--space-2) + 1rem + var(--safe-top) + var(--space-1));
+}
+
+kbd { padding: var(--space-0-5) 4px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: var(--radius-xs); font-family: var(--font-mono); }
+// ============================================================ /module: bsdports_base
 
 // ============================================================ components
-@include meta.load-css("bsdports_components");
+// ============================================================ module: bsdports_components
+// BSDPorts stylesheet module; loaded by application.scss in cascade order.
+
+// The dependency graph is an inline SVG on the port page.
+.dep-graph {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-block-start: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.dep-graph line {
+  stroke: var(--border);
+}
+
+.dep-graph circle {
+  fill: var(--surface-elevated);
+  stroke: var(--text-secondary);
+}
+
+.dep-graph text {
+  fill: var(--text);
+  font-family: var(--font);
+}
+
+.logo {
+  text-indent: -9999px;
+  overflow: hidden;
+  margin: 0 0 var(--space-8);
+  width: 182px;
+  height: 44px;
+  background-image: url("bsdports_182x44.svg");
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+// ============================================================ /module: bsdports_components
 
 // ============================================================ shared chrome
-@include meta.load-css("bsdports_shared_chrome");
+// ============================================================ module: bsdports_shared_chrome
+// BSDPorts stylesheet module; loaded by application.scss in cascade order.
+
+
+@include meta.load-css("site_legal");
+
+// The shared brand mark sits fixed at the top inline-start, where the primary
+// nav also starts. --z-brand keeps the mark above the nav; this padding keeps
+// the nav's first link out from under the mark, so a tap there reaches the link.
+nav[data-pwa-primary-nav] {
+  padding-inline-start: calc(var(--brand-mark-inline) + var(--space-2, 0.5rem));
+}
+
+nav[data-pwa-primary-nav] a[aria-current="page"] {
+  color: var(--accent);
+  font-weight: var(--weight-bold);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.25em;
+}
+
+@include meta.load-css("shell_widgets");
+
+// The jOx logo and the yep search are product pens: their geometry is the
+// pen's own, and only the palette is this dialect's.
+.jox-logo {
+  display: flex;
+  position: relative;
+  min-height: 56px;
+  margin: 8px 0 16px;
+}
+
+.jox-logo .frames div {
+  height: 50px;
+  width: 20px;
+  position: absolute;
+  opacity: 0;
+}
+
+.jox-logo .frames div:nth-of-type(1) {
+  top: 8px;
+  left: 4px;
+}
+
+.jox-logo .frames div:nth-of-type(2) {
+  top: 0px;
+  left: 16px;
+}
+
+.jox-logo .frames div:nth-of-type(3) {
+  top: -0px;
+  left: 24px;
+}
+
+.jox-logo .type {
+  height: 19px;
+  width: 116px;
+  position: relative;
+  top: 16px;
+  left: 84px;
+  transform: scale(1.4);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wide);
+}
+
+@include meta.load-css("auth_form");
+
+@include meta.load-css("focus_ring");
+
+// Classes the markup uses that no component defines. They load before the
+// ports shell so the shell's own rules win wherever both apply.
+@include meta.load-css("shared_coverage_fills");
+// ============================================================ /module: bsdports_shared_chrome
 
 // ============================================================ ports shell
-@include meta.load-css("bsdports_tokens");
+// ============================================================ module: bsdports_tokens
+// BSDPorts stylesheet module; loaded by application.scss in cascade order.
+
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+// A light ground like the other two apps. The palette comes from
+// app-root-tokens and the shared light semantics; this dialect keeps its zero
+// radii and dense type scale. The family face is the shared chrome font, and
+// only code, kbd and the install command use --font-mono, because a reader
+// copies them.
+//
+// Operator, 2026-10-28: bsdports mirrors the classic google.com frontpage —
+// white paper, square corners (already this dialect's own), Arial, the blue
+// serpentine of #1a0dab links, Google's #f8f9fa button grey and #f2f2f2
+// footer. Google's own greys are re-picked where they sit under the tree's
+// floors: #5f6368 secondary is 5.97:1, so the dialect takes Google's own
+// results-snippet grey #4d5156 at 8.0:1. Arial needs no download — that IS
+// the classic frontpage's face — so this app alone pins no bundled webfont.
+:root {
+  @include x.app-root-tokens;
+  // The classic frontpage palette.
+  --text: #202124;
+  --text-secondary: #4d5156;
+  --accent: #1a0dab;
+  --accent-ink: #ffffff;
+  --font: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  // The status ambers are picked for a light ground: each clears WCAG AA
+  // against --bg #ffffff at the small sizes this app sets.
+  --status-stale-border: #a1660a;
+  --status-stale-text: #6b4405;
+  color-scheme: light;
+  // rem, not px, so the dense listing keeps the auditor's body_font_px floor.
+  --font-size: var(--text-xs);
+  --line-height: 1rem;
+  --radius-pill: 0;
+  --radius-card: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --focus-ring: 2px solid var(--accent);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+}
+
+/* The frontpage's serpentine: every link is #1a0dab, visited goes the classic
+   purple #609, and the underline appears on hover only — the 2005–2017
+   frontpage behaviour. 12.4:1 and 7.3:1 on white, both clear. */
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+a:visited {
+  color: #609;
+}
+
+// Meta text on <time> and .meta is text a reader needs, so it holds 4.5:1
+// (4.62 to 5.43 across the surfaces it sits on).
+.meta, time {
+  color: var(--text-secondary);
+}
+// ============================================================ /module: bsdports_tokens
 
 // ============================================================ ports shell: layout
-@include meta.load-css("bsdports_layout");
+// ============================================================ module: bsdports_layout
+// BSDPorts stylesheet module; loaded by application.scss in cascade order.
+
+.port-row {
+  font-family: var(--font);
+  font-size: var(--font-size);
+}
+
+main#main-content :is(button, input, select, textarea, a):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+// The nav lives inside .app-shell and uses a localized accessible name.
+// Its stable identity is the shared PWA marker, not its DOM ancestry or copy.
+nav[data-pwa-primary-nav] {
+  min-height: var(--nav-swiper-h);
+  padding-block-start: calc(0.5rem + var(--safe-top));
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}
+
+nav[data-pwa-primary-nav] a[aria-current="page"] {
+  color: var(--text);
+  font-weight: var(--weight-bold);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 6px;
+  text-decoration-thickness: 2px;
+}
+
+main#main-content {
+  justify-content: flex-start;
+  width: min(100%, 760px);
+  margin-inline: auto;
+  padding: clamp(2rem, 6vw, 4.5rem) clamp(1rem, 4vw, 2rem) 4rem;
+}
+
+main#main-content :is(button, input[type="submit"], .btn) {
+  min-height: var(--tap-min);
+}
+
+// The sign-in link and the search submit sit outside main#main-content, so the
+// tap floor above misses them. The sign-in anchor carries btn-ghost alone,
+// which is why `.nav-actions .btn` would not match it.
+div.nav-actions > a.btn-ghost,
+div.search-form > input.btn.btn-sm {
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+}
+// ============================================================ /module: bsdports_layout
 
 // ============================================================ ports shell: pages
-@include meta.load-css("bsdports_pages");
+// ============================================================ module: bsdports_pages
+// BSDPorts stylesheet module; loaded by application.scss in cascade order.
+
+article,
+#comments {
+  width: 100%;
+}
+
+// Keep the port intro in normal flow while the primary nav can wrap.
+article > header {
+  display: block;
+  max-width: none;
+  margin-block-end: var(--space-4);
+  padding-block: 0.5rem;
+  background: var(--bg);
+  border: 0;
+}
+
+article > header h1 {
+  overflow-wrap: anywhere;
+  line-height: var(--leading-normal);
+}
+
+article dl {
+  display: grid;
+  margin-block: var(--space-6);
+  grid-template-columns: 1fr;
+  gap: var(--space-1);
+}
+
+article dt {
+  color: var(--text-secondary);
+  font-weight: var(--weight-bold);
+}
+
+article dd,
+article code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+article pre {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: var(--space-3);
+  border: 0;
+  border: 0;
+  background: var(--surface-elevated);
+}
+
+article > h2,
+article > section,
+#comments {
+  margin-block-start: var(--space-8);
+}
+
+// shell_widgets' .page-header is a slim sticky section bar; this page's header
+// is an intro block (h1, description, search), so it takes the height of its
+// content instead of the bar's and never spills up into the logo.
+header.page-header {
+  height: auto;
+  position: static;
+  top: auto;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: var(--space-4);
+  max-width: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+header.page-header h1 {
+  margin: 0;
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  line-height: var(--leading-normal);
+  letter-spacing: var(--tracking-tightest);
+}
+
+header.page-header > p {
+  max-width: 62ch;
+  line-height: var(--leading-loose);
+}
+
+header.page-header > nav {
+  position: static;
+  transform: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+header {
+  width: 100%;
+  max-width: 660px;
+  display: flex;
+  justify-content: flex-end;
+
+  .tabs {
+    display: flex;
+    margin-top: var(--space-4);
+    color: var(--text-secondary);
+  border: 0;
+    font-family: var(--font);
+    font-size: var(--text-sm);
+
+    p {
+      padding: 0 var(--space-1) var(--space-2);
+      margin-inline-end: var(--space-6);
+
+      &.active {
+        color: var(--text);
+        border: 0;
+        text-decoration: underline;
+        text-underline-offset: 0.18em;
+        font-weight: var(--weight-bold);
+
+        &::before {
+          content: "* ";
+        }
+      }
+    }
+  }
+}
+
+.search-form {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  grid-template-columns: 1fr;
+}
+
+.search-form input[type="search"] {
+  min-width: 0;
+  width: 100%;
+  min-height: var(--tap-min);
+}
+
+#live_search_results,
+turbo-frame {
+  display: block;
+  width: 100%;
+}
+
+.port-list {
+  width: 100%;
+  max-width: none;
+  margin-top: var(--space-8);
+}
+
+// Rows part with a 1px hairline, never a shadow.
+.port-row {
+  display: grid;
+  align-items: start;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border: 0;
+  transition: background var(--transition-fast) var(--ease-out);
+}
+
+.port-row > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-3); }
+.port-row > div code, .install-panel input, article dd code { font-family: var(--font-mono); }
+.data-state { display: inline-flex; width: fit-content; padding: var(--space-0-5) var(--space-1); border: 0; border-radius: 0; color: var(--text-secondary); font-size: var(--text-xs); }
+.data-state--stale { border-color: var(--status-stale-border); color: var(--status-stale-text); }
+.ports-purpose { max-width: 58ch; font-size: var(--text-lg); line-height: var(--leading-normal); color: var(--text); }
+.install-panel { margin-block: var(--space-6); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-elevated); }
+.install-panel [data-controller="clipboard"] { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); }
+.install-panel input { min-width: 0; background: var(--bg); color: var(--text); border: 0; border-radius: 0; box-shadow: none; padding: var(--space-3); }
+
+.port-row:hover {
+  background: var(--hover-subtle);
+}
+
+.port-name {
+  font-family: var(--font);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.port-name:hover {
+  text-decoration: underline;
+}
+
+.categories {
+  width: 100%;
+  max-width: none;
+  margin-top: var(--space-6);
+}
+
+.empty {
+  width: 100%;
+  margin-block-start: var(--space-6);
+  padding: var(--space-8) var(--space-4);
+  border: 0;
+  border: 0;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+article dd + dt {
+  margin-block-start: var(--space-3);
+}
+
+// From 640px the nav fits one row, the search puts its button beside the
+// field, and a port's terms sit beside their definitions.
+@media (min-width: 640px) {
+  // The primary nav fits one row at this width. Anchor its meta strip and
+  // the document clearance to the shared nav height, including safe-area insets.
+  article > header {
+    position: sticky;
+    top: var(--nav-swiper-h);
+    z-index: 5;
+  }
+
+  body {
+    padding-block-start: calc(var(--nav-swiper-h) + var(--space-1));
+  }
+
+  nav[data-pwa-primary-nav] {
+    flex-wrap: nowrap;
+    gap: var(--space-4);
+  }
+
+  .search-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  article dl {
+    grid-template-columns: minmax(7rem, max-content) minmax(0, 1fr);
+    gap: var(--space-2) var(--space-4);
+  }
+
+  article dd + dt {
+    margin-block-start: 0;
+  }
+}
+
+.category-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.category-list .chip {
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border: 0;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.category-list .chip:hover {
+  background: var(--hover);
+  color: var(--text);
+  text-decoration: none;
+}
+// ============================================================ /module: bsdports_pages
 
 // ============================================================ states and overrides
-@include meta.load-css("bsdports_states");
+// ============================================================ module: bsdports_states
+// BSDPorts stylesheet module; loaded by application.scss in cascade order.
+
+// Empty states and search misses keep the terminal's square, flat tone.
+.empty-state {
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font);
+  max-width: 36rem;
+}
+
+.empty-state-icon {
+  border-radius: 0;
+  font-family: var(--font);
+}
+
+.empty-state-title {
+  font-family: var(--font);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  text-transform: none;
+  letter-spacing: var(--tracking-normal);
+}
+
+.skeleton {
+  border-radius: 0;
+  min-height: 0.75rem;
+  background: rgb(from var(--accent) r g b / var(--opacity-soft));
+  border: 1px solid var(--border);
+}
+
+// Version numbers line up down the listing.
+.port-row {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --border: var(--text-secondary);
+    --text-secondary: var(--text);
+  }
+
+  a { text-decoration: underline; }
+}
+// ============================================================ /module: bsdports_states
 
 @include endgame.bsdports;

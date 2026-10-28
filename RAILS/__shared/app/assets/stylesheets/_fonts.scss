@@ -52,3 +52,22 @@
   font-weight: 700;
   font-display: swap;
 }
+
+/* Source Serif 4 — the family's editorial display face, variable weight and
+   its italic. Bundled for apps whose dialect reads serif headlines (amber's
+   New Yorker + Outnet mirror, operator 2026-10-28). The variable file covers
+   the 200–900 weight ladder in one download. */
+@font-face {
+  font-family: "Source Serif 4";
+  src: url("/fonts/SourceSerif4Variable.woff2") format("woff2");
+  font-weight: 200 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Source Serif 4";
+  src: url("/fonts/SourceSerif4Variable-Italic.woff2") format("woff2");
+  font-weight: 200 900;
+  font-style: italic;
+  font-display: swap;
+}
