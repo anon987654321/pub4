@@ -15,6 +15,7 @@ require "json"
 require_relative "../lib/fix/transaction"
 require_relative "../lib/fix/mission"
 require_relative "../lib/fix/checkpoint"
+require_relative "../lib/fix/run_journal"
 
 module Master
   module Fix
@@ -123,8 +124,64 @@ module Master
         end
       end
 
-      def test_3_journal_deletion_is_reconstructible_from_git_and_checkpoint
-        skip "delete .master/fix_runs.json and its lock during a pass; reconstruct from Git and Checkpoint"
+      def test_3_source_recovery_survives_journal_deletion_using_git_and_checkpoint
+        Dir.mktmpdir("fix-recovery-gate-journal-loss") do |root|
+          FileUtils.mkdir_p(File.join(root, "MASTER"))
+          tracked_path = File.join(root, "tracked.rb")
+          untracked_path = File.join(root, "untracked.rb")
+          tracked_bytes = "tracked baseline from Git\\n".b
+          checkpoint_bytes = "untracked baseline from Checkpoint\\n".b
+
+          git = lambda do |*args|
+            output, status = Open3.capture2e("git", *args, chdir: root)
+            assert status.success?, "git #{args.join(' ')} failed: #{output}"
+            output
+          end
+          git.call("init", "--quiet")
+          File.binwrite(tracked_path, tracked_bytes)
+          git.call("add", "--", "tracked.rb")
+          git.call("-c", "user.name=Recovery Gate", "-c", "user.email=recovery-gate@example.invalid",
+                   "commit", "--quiet", "-m", "recovery baseline")
+          File.binwrite(untracked_path, checkpoint_bytes)
+
+          checkpoint_store = Master::Fix::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints"))
+          checkpoint = checkpoint_store.create(label: "journal-loss", files: ["untracked.rb"])
+          journal = Master::Fix::RunJournal.new(root:)
+          original_run = journal.start_or_resume(
+            target: File.join(root, "MASTER"),
+            files: [tracked_path, untracked_path],
+            max_passes: 2,
+            budget_seconds: 60
+          )
+
+          File.binwrite(tracked_path, "modified tracked source\\n")
+          File.binwrite(untracked_path, "modified untracked source\\n")
+          journal_path = File.join(root, ".master", "fix_runs.json")
+          lock_path = File.join(root, ".master", "fix_runs.lock")
+          File.delete(journal_path)
+          File.delete(lock_path)
+
+          # The lifecycle journal is run metadata, not the only copy of source
+          # state: Git restores tracked files; the independent Checkpoint restores
+          # pre-pass files Git cannot recover (including new/untracked paths).
+          git.call("checkout", "--", "tracked.rb")
+          checkpoint_store.restore(checkpoint.fetch("id"))
+
+          assert_equal tracked_bytes, File.binread(tracked_path)
+          assert_equal checkpoint_bytes, File.binread(untracked_path)
+
+          # With the metadata deliberately missing, a fresh journal must create a
+          # new run, not fabricate a successful resume or reuse the forgotten ID.
+          replacement = Master::Fix::RunJournal.new(root:).start_or_resume(
+            target: File.join(root, "MASTER"),
+            files: [tracked_path, untracked_path],
+            max_passes: 2,
+            budget_seconds: 60
+          )
+          refute_equal original_run.fetch("id"), replacement.fetch("id")
+          refute replacement.fetch("resumed")
+          assert_equal "active", replacement.fetch("state")
+        end
       end
 
       def test_4_file_budget_exhaustion_trips_collapse_guard
