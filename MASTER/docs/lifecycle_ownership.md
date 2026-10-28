@@ -28,10 +28,10 @@ compensations cover one path at a time.
 
 Production boot creates one `Fix::Kernel` and obtains the convergence adapter
 through `Kernel#build_fix_loop`. The public `FixLoop` constant aliases
-`Kernel::ConvergenceAdapter`; its `run` delegates the outer lock and coordinator
-start/terminal receipts to Kernel. Repair outcomes carry the active coordinator
+`Kernel::ConvergenceAdapter`; its `run` delegates to Kernel's process-shared `.master/fix-execution.lock`
+and coordinator start/terminal receipts. Repair outcomes carry the active coordinator
 run ID, and startup reconciles orphaned receipts to `unknown_outcome` only after
-proving the same-host writer is gone.
+proving the same-host writer is gone; the recovery sweep is separately serialized.
 
 The durable journal implementation is `Kernel::LifecycleJournal`, with
 `RunJournal` retained as a compatibility alias and its disk schema unchanged.
