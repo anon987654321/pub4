@@ -178,12 +178,6 @@ module Master
         end
       end
     end
-    # Cancel pending Zeitwerk entries before installing compatibility aliases.
-    # A bare const_defined? treats an autoload as present and could leave a
-    # second class load path beside these canonical implementations.
-    remove_const(:FixLoop) if autoload?(:FixLoop, false)
-    remove_const(:RunJournal) if autoload?(:RunJournal, false)
-    const_set(:FixLoop, Kernel::ConvergenceAdapter) unless const_defined?(:FixLoop, false)
-    const_set(:RunJournal, Kernel::LifecycleJournal) unless const_defined?(:RunJournal, false)
+
   end
 end
