@@ -66,7 +66,7 @@ module Master
         directory_stat = File.lstat(directory)
         raise ArgumentError, "JSONL directory is not a real directory" unless
           directory_stat.directory? && !directory_stat.symlink?
-        tighten_directory(directory, directory_mode) if directory_mode
+        tighten_directory(directory, directory_mode || 0o700)
 
         lock_path = "#{path}.lock"
         raise ArgumentError, "JSONL lock is a symlink" if File.symlink?(lock_path)
