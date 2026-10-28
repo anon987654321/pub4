@@ -1,14 +1,12 @@
 const F_FACE_LOOPS = window.MASTER_FACE || {};
 const F_FACE_TTS = F_FACE_LOOPS.tts || window.tts;
 
-// The face's browser music loop. Chords come from face_music_packs.json —
-// one voiced table per artist (J Dilla, Madlib, Flying Lotus, Röyksopp), each
-// entry with its transcription source — so the loop is music with a named
-// harmony, not a fixed four-chord wall. Timing, drums and the lo-fi bus are
-// the Dilla pocket; the pack's swing and bpm reshape them per artist.
+// Optional user-invoked browser music. Chords come from face_music_packs.json;
+// the pack's swing and bpm shape the groove. The loop ducks under the voice
+// when started explicitly, and is never started automatically during MASTER boot.
 //
-// It is background audio: it ducks under the voice and never speaks. The
-// loop may play. It may not talk.
+// It may play only after an explicit music-chip or user-requested Dilla action.
+// It never speaks.
 
 window._faceMusic = (() => {
   let ctx, master, padFilt, padGain, bassBus, kickBus, shelf, hatGain, conv, convGain;
@@ -243,16 +241,4 @@ window._faceMusic = (() => {
   };
 })();
 
-// Ambient: once the face is up, the loop is on low as the bed and ducks
-// under the voice. The module itself is loaded post-primer, so starting here
-// honours the gesture check without touching the boot contract.
-window._faceMusic.__ambientArmed = false;
-setTimeout(() => {
-  if (window._faceMusic.__ambientArmed) return;
-  window._faceMusic.__ambientArmed = true;
-  window._faceMusic.start();
-}, 12000);
-
-// speakPickup() removed 2026-08-14: it spoke a random pick-up line 12s after
-// the loop started and every 48s after that, unprompted. The music stays; the
-// flirting does not. MASTER speaks when spoken to.
+// No page-load timer: playback begins only after an explicit visitor action.
