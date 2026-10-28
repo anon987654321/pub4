@@ -26,6 +26,10 @@ the commit that carries its evidence; nothing here records finished work.
 - Added docs/seo_audit_2026-10-28.md from session-provided observations. Raw HTTP
   captures were not attached to this commit, so those observations are advisory;
   re-probe and preserve timestamped headers/bodies before closing the SEO audit.
+- Post-merge static review removed duplicate appended test definitions from the
+  RunJournal, quota, ComputePool, RoutePolicy and trace JSONL/storage test files,
+  and added `test_recovery_gates.rb` to the focused release battery. These were
+  source-structure repairs only; no project test command has been executed.
 
 ## Verification run, after the fixes below land
 
