@@ -172,6 +172,22 @@ class TestFaceSwarm < Minitest::Test
     assert_equal before, simulation.particles.map(&:to_h)
   end
 
+  def test_current_cli_face_renderer_uses_the_swarm_and_can_disable_it
+    original = ENV["MASTER_FACE_SWARM"]
+    ENV["MASTER_FACE_SWARM"] = "1"
+    face = Master::CLI::Face
+    options = { state: :idle, rows: 12, cols: 24, t: 0.0, motion: face::Motion.new, show_laws: false }
+    particle_frame = face.frame(**options)
+
+    assert_match(/[·˙∘•○●]/, particle_frame)
+
+    ENV["MASTER_FACE_SWARM"] = "0"
+    plain_frame = face.frame(**options)
+    refute_match(/[·˙∘•○●]/, plain_frame)
+  ensure
+    ENV["MASTER_FACE_SWARM"] = original
+  end
+
   def test_cli_projection_is_bounded_and_near_particles_win_collisions
     frame_class = Struct.new(:chars, :depth)
     frame = frame_class.new(Array.new(15) { Array.new(31, " ") }, Array.new(15) { Array.new(31, 1) })
