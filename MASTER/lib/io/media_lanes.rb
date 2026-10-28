@@ -8,6 +8,7 @@ require "time"
 require_relative "catalog_index"
 require_relative "lane_selection"
 require_relative "lane_health"
+require_relative "lane_state"
 require_relative "media_transport"
 require_relative "../boot/paths"
 
@@ -15,7 +16,7 @@ module Master
   module Io
     # Image and video generation by availability, the way Io::LaneSelection picks a
     # text model: the lanes data/models.yml `media_lanes` lists per kind, the live
-    # ones only (key present, not parked by Io::LaneQuota, not silent), free first
+    # ones only (key present, not refused by Io::LaneState), free first
     # and then the cheapest. A reply that says quota, credits or a refused key parks
     # the lane through LaneQuota after one call and the next live lane answers; a
     # timeout silences it for the cool-off. When no lane is left the answer is a
@@ -169,9 +170,7 @@ module Master
         return "already tried" if skip.include?(lane.id)
         return "no key (#{config.dig("providers", lane.provider, "env").join("/")})" unless key_for(lane.provider, env:)
         return "paid lanes off (MASTER_MEDIA_PAID=0)" if !paid? && !free?(lane)
-        return LaneQuota.report.find { |row| row.start_with?("#{lane.lane}: ") } || "parked" if LaneQuota.dead?(lane.id)
-
-        "silent (cool-off)" if LaneSilence.silent?(lane.lane)
+        LaneState.verdict(lane.id).reason
       end
 
       def over(kind, cost)

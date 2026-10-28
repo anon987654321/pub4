@@ -130,4 +130,30 @@ class TestLaneStateSites < Minitest::Test
     Quota.stub(:manual_dead, ["gemini"]) { assert_equal :dead, pool.send(:quota_state, HAND) }
     refute_includes %i[parked silent dead exhausted], pool.send(:quota_state, LIVE)
   end
+
+  def test_a_media_lane_any_store_refuses_is_skipped
+    media = Master::Io::MediaLanes
+    lane = ->(provider) { media::Lane.new(kind: :image, provider:, model: "m", row: { "free" => true }) }
+    media.config = { "providers" => { "gemini" => { "env" => ["K"] }, "xai" => { "env" => ["K"] } } }
+    env = { "K" => "key" }
+    Skip.skip!("media-xai:m", reason: "HTTP 503", category: :provider_error)
+    Silence.silence("media-gemini", reason: "timed out")
+
+    assert_match(/\Aparked: HTTP 503/, media.send(:unavailable, lane.call("xai"), env, []))
+    assert_match(/\Ano media-gemini answer/, media.send(:unavailable, lane.call("gemini"), env, []))
+  ensure
+    media.config = nil
+    Silence.record(true, "media-gemini")
+  end
+
+  def test_the_door_refuses_down_lanes_and_still_sends_to_a_parked_model
+    door = Master::Review::LLMDispatcher.allocate
+
+    Master.stub(:llm_reachable?, true) do
+      assert_nil door.send(:refusal_before_send, PARKED), "a parked model is the caller's to skip"
+      refused = door.send(:refusal_before_send, SILENT)
+      assert_equal :no_api_key, refused.category
+      assert_match(/\Ano deepseek answer/, refused.message)
+    end
+  end
 end

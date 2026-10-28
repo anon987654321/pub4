@@ -478,6 +478,7 @@ module Master
         def lane_skipped(persona, verdict)
           source = verdict.source
           spent = source == :spent
+
           @bus&.publish("council:persona_skipped", persona: persona.name, reason: spent ? :quota : source,
                                                    detail: verdict.reason)
           tally = spent ? "skipped_spend_limit" : "skipped_#{source}"

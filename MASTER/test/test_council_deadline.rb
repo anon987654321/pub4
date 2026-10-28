@@ -10,7 +10,7 @@ require_relative "support_council_answer"
 # a lane that blows its deadline stays quiet, and a stalled advisory phase is cut.
 class TestCouncilDeadline < Minitest::Test
   Clock = Master::Review::LLMDispatcher::PassClock
-  Silence = Master::Review::LLMDispatcher::LaneSilence
+  Silence = Master::Io::LaneSilence
 
   def setup
     @saved = %w[MASTER_COUNCIL_CALL_TIMEOUT_S MASTER_COUNCIL_PASS_BUDGET_S MASTER_FIX_COUNCIL MASTER_FIX_STALL_S].to_h { |k| [k, ENV.delete(k)] }

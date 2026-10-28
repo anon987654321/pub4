@@ -13,7 +13,8 @@ require_relative "llm_dispatcher/react_loop"
 require_relative "llm_dispatcher/ollama_sender"
 require_relative "llm_dispatcher/ruby_llm_sender"
 require_relative "llm_dispatcher/tool_registry"
-require_relative "llm_dispatcher/lane_silence"
+require_relative "../io/lane_silence"
+require_relative "../io/lane_state"
 require_relative "llm_dispatcher/http_sender"
 require_relative "../cli/routing/availability_policy"
 
@@ -252,11 +253,13 @@ module Master
       # provider timeout. Subsequent requests can move to the next available lane.
       def call_deadline_exceeded(model, started)
         seconds = elapsed_ms(started) / 1000
-        lane = LaneSilence.lane_of(model)
-        LaneSilence.silence(lane, reason: "no answer in #{seconds}s")
+        lane = Io::LaneSilence.lane_of(model)
+        Io::LaneSilence.silence(lane, reason: "no answer in #{seconds}s")
         record_provider_outcome(model, :timeout, latency_ms: elapsed_ms(started), error: "deadline")
         unit = PassClock.active? ? "council0" : "llm0"
-        Master::Trace::Dmesg.status(unit, "#{model} gave no answer in #{seconds}s; #{lane} is skipped for #{LaneSilence::SILENCE_COOLOFF_S / 60} minutes")
+        cooloff = Io::LaneSilence::SILENCE_COOLOFF_S / 60
+        Master::Trace::Dmesg.status(unit,
+                                    "#{model} gave no answer in #{seconds}s; #{lane} is skipped for #{cooloff} minutes")
         Result.err("#{model} exceeded its #{call_deadline_for(model)}s call deadline", category: :timeout)
       end
 
@@ -284,7 +287,8 @@ module Master
       # treat as permanent and skip rather than retry.
       def refusal_before_send(selected_model)
         return Result.err(PassClock.refusal, category: :timeout) if PassClock.expired?
-        return Result.err(LaneSilence.refusal(selected_model), category: :no_api_key) if LaneSilence.refuses?(selected_model)
+        down = Io::LaneState.verdict(selected_model, sources: Io::LaneState::DOWN)
+        return Result.err(down.reason, category: :no_api_key) unless down.usable?
 
         reason = forced_lane_unavailable(selected_model)
         return Result.err(reason[:message], category: reason[:category]) if reason
@@ -367,20 +371,23 @@ module Master
       # rather than reading it two hundred times.
       def note_lane_silence(result, model)
         outcome = Result.wrap(result)
-        Io::LaneQuota.note(model, outcome.message) unless outcome.ok?
-        lane = LaneSilence.lane_of(model)
-        if !outcome.ok? && local_runtime_failure?(model, outcome.message)
-          LaneSilence.silence(lane, reason: outcome.message)
-          Master::Trace::Dmesg.once("llm0-#{lane}",
-            "#{lane} local runtime failed; skipped for #{LaneSilence::SILENCE_COOLOFF_S / 60} minutes " \
-            "(last: #{outcome.message.lines.first.to_s.strip[0, 160]})")
-          @bus&.publish("llm:lanes_silent", lane:, after: LaneSilence::SILENCE_COOLOFF_S, reason: :local_runtime_failure)
-          return
-        end
-        return unless LaneSilence.record(outcome.ok?, lane, reason: outcome.ok? ? nil : outcome.message)
+        failure = outcome.ok? ? nil : outcome.message.to_s
+        Io::LaneQuota.note(model, failure) if failure
+        lane = Io::LaneSilence.lane_of(model)
+        return silence_local_runtime(lane, failure) if failure && local_runtime_failure?(model, failure)
+        return unless Io::LaneSilence.record(failure.nil?, lane, reason: failure)
 
-        Master::Trace::Dmesg.once("llm0-#{lane}", LaneSilence.message(lane))
-        @bus&.publish("llm:lanes_silent", lane:, after: LaneSilence::SILENT_AFTER)
+        Master::Trace::Dmesg.once("llm0-#{lane}", Io::LaneSilence.message(lane))
+        @bus&.publish("llm:lanes_silent", lane:, after: Io::LaneSilence::SILENT_AFTER)
+      end
+
+      def silence_local_runtime(lane, failure)
+        cooloff = Io::LaneSilence::SILENCE_COOLOFF_S
+        Io::LaneSilence.silence(lane, reason: failure)
+        last = failure.lines.first.to_s.strip[0, 160]
+        Master::Trace::Dmesg.once("llm0-#{lane}",
+                                  "#{lane} local runtime failed; skipped for #{cooloff / 60} minutes (last: #{last})")
+        @bus&.publish("llm:lanes_silent", lane:, after: cooloff, reason: :local_runtime_failure)
       end
 
       # One local runner crash affects every model using its daemon until it recovers.

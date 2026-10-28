@@ -2,6 +2,7 @@
 
 require "test_helper"
 require "minitest/mock"
+require "open3"
 require "tmpdir"
 
 # The always-online guarantee. Every remote lane is exhausted in turn with the
@@ -11,7 +12,7 @@ require "tmpdir"
 class TestLaneFailover < Minitest::Test
   Quota = Master::Io::LaneQuota
   Health = Master::Io::LaneHealth
-  Silence = Master::Review::LLMDispatcher::LaneSilence
+  Silence = Master::Io::LaneSilence
   Selection = Master::Io::LaneSelection
 
   CLAUDE = "You've hit your session limit · resets 5pm (Europe/Oslo)"

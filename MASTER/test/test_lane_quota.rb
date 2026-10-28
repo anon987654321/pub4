@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "open3"
 require "tmpdir"
 
 # 2026-10-11: agy answered "Individual quota reached ... Resets in 165h22m49s"
@@ -8,7 +9,7 @@ require "tmpdir"
 # until the stated reset, across processes, and every path reads one function.
 class TestLaneQuota < Minitest::Test
   Quota = Master::Io::LaneQuota
-  Silence = Master::Review::LLMDispatcher::LaneSilence
+  Silence = Master::Io::LaneSilence
   Health = Master::Io::LaneHealth
   AGY_REPLY = "agy: error: Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 165h22m49s."
 
@@ -19,7 +20,10 @@ class TestLaneQuota < Minitest::Test
     Quota.clock = -> { @now }
   end
 
+  # A door test parks the model it failed; selection reads that park, so it
+  # must not reach the next test (seed 63433 ordered one ahead of agy's).
   def teardown
+    Master::Io::ModelSkipCache.clear!
     Quota.path = nil
     Quota.clock = -> { Time.now.to_f }
     FileUtils.remove_entry(@dir)
