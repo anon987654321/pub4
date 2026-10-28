@@ -183,7 +183,7 @@ class TestFaceSwarm < Minitest::Test
 
     assert_match(/[·˙∘•○●]/, particle_frame)
     swarm_key = [12, 24, 20]
-    assert_equal 20, face::SWARMS.fetch(swarm_key).particles.length
+    assert_equal 20, Master::CLI::Face::SWARMS.fetch(swarm_key).particles.length
 
     ENV["MASTER_FACE_SWARM"] = "0"
     plain_frame = face.frame(**options)
