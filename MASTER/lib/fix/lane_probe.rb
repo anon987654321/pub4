@@ -39,11 +39,12 @@ module Master
       end
 
       def pick(models, max_lanes)
-        Master::Io::LaneSelection.order(Array(models)).uniq { |model| Master::Io::LaneQuota.lane_of(model) }.first(max_lanes)
+        lanes = Master::Io::LaneState
+        Master::Io::LaneSelection.order(Array(models)).uniq { |model| lanes.lane_of(model) }.first(max_lanes)
       end
 
       def probe(model, ask:, budget:, clock:)
-        lane = Master::Io::LaneQuota.lane_of(model)
+        lane = Master::Io::LaneState.lane_of(model)
         started = clock.call
         Fiber[:master_operation] = :lane_probe
         reply = Timeout.timeout(budget) { ask.call(model) }

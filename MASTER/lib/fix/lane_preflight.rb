@@ -42,7 +42,7 @@ module Master
       # One line per catalogue lane LaneState refuses, with the store and its
       # reason, so a run says which lanes it is not using and why.
       def explain_skipped
-        lanes = Master::Io::LaneSelection.catalogue.uniq { |id| Master::Io::LaneQuota.lane_of(id) }
+        lanes = Master::Io::LaneSelection.catalogue.uniq { |id| Master::Io::LaneState.lane_of(id) }
         lanes.map { |id| Master::Io::LaneState.verdict(id) }.reject(&:usable?).each do |verdict|
           say("skipped #{verdict.model}: #{verdict.source}, #{verdict.reason}")
         end

@@ -65,7 +65,7 @@ module Master
         # one real canary probe per run; a successful answer retires the stale
         # exclusion in the effective state, without editing operator-owned data/.
         def retest_dead_lanes
-          Master::Io::LaneQuota.due_probes.each do |lane|
+          Master::Io::LaneState.due_probes.each do |lane|
             model = Master::Io::LaneHealth.model_for_lane(lane)
             next unless model
 
@@ -75,7 +75,7 @@ module Master
 
           return unless defined?(Master::Review::Agent) && @agent.is_a?(Master::Review::Agent)
 
-          manual_models = Master::Io::LaneQuota.manual_dead.filter_map do |lane|
+          manual_models = Master::Io::LaneState.manual_dead.filter_map do |lane|
             model = Master::Io::LaneHealth.model_for_lane(lane)
             [lane, model] if model
           end.to_h

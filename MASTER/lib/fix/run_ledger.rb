@@ -136,11 +136,11 @@ module Master
         # A lane failing again and again is dropped for the run, so the next file
         # does not wait out the same failure. Returns true when this call dropped it.
         def lane_failed(model)
-          lane = Master::Io::LaneQuota.lane_of(model)
+          lane = Master::Io::LaneState.lane_of(model)
           return false if lane.empty?
 
           count = @mutex.synchronize { @lane_failures[lane] += 1 }
-          return false if count < LANE_FAILURES_BEFORE_DROP || Master::Io::LaneQuota.run_drops.key?(lane)
+          return false if count < LANE_FAILURES_BEFORE_DROP || Master::Io::LaneState.run_drops.key?(lane)
 
           Master::Io::LaneQuota.drop_for_run!(lane, "failed #{count} calls this run")
           Master::Trace::Dmesg.status("fix0", "lane #{lane} dropped for this run, #{count} failed calls")
@@ -163,7 +163,7 @@ module Master
             lines << "fix0: no proposal #{declined_total}: #{parts.join(", ")}"
           end
           lines << "fix0: file budget spent on #{timeouts.size} file(s): #{timeouts.first(5).map { |file, _| file.split("/").last }.join(", ")}" if timeouts.any?
-          drops = Master::Io::LaneQuota.run_drops
+          drops = Master::Io::LaneState.run_drops
           lines << "fix0: lanes dropped this run: #{drops.map { |lane, why| "#{lane} (#{why})" }.join(", ")}" if drops.any?
           lines.concat(swallowed_lines)
         end
@@ -213,7 +213,7 @@ module Master
         override = Integer(ENV[KEYS.fetch(key)].to_s, exception: false)
         return override if override&.positive?
 
-        lane = model.to_s.empty? ? nil : Master::Io::LaneQuota.lane_of(model)
+        lane = model.to_s.empty? ? nil : Master::Io::LaneState.lane_of(model)
         Integer(config.dig("lanes", lane, key.to_s) || config.fetch("default").fetch(key.to_s))
       end
 

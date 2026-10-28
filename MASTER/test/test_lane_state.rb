@@ -54,4 +54,40 @@ end
     assert State.usable?("x-ai/grok-4.3", sources: State::DOWN)
     assert_equal :parked, State.verdict("x-ai/grok-4.3").source
   end
+
+  STORE_READS = {
+    "LaneHealth" => %w[dead?],
+    "LaneSilence" => %w[refuses? silent? refusal],
+    "LaneQuota" => %w[dead? until_for report_for report reasons manual_dead dead_lanes run_drops lane_of
+                      revival_in due_probes raw table],
+    "ModelSkipCache" => %w[skipped? filter skip_reason skipped_until_ms],
+    "QuotaCheck" => %w[blocked?],
+    "ModelQuota" => %w[over_quota?],
+  }.freeze
+
+  STORE_READ_PATTERNS = STORE_READS.map do |store, names|
+    /\b#{store}\.(?:#{names.map { |name| Regexp.escape(name) }.join("|")})(?![\w?!])/
+  end
+
+  LIB = File.expand_path("../lib", __dir__)
+
+  OWNERS = (Dir[File.join(LIB, "io", "lane_*.rb")] +
+            %w[model_skip_cache model_quota quota_check].map { |name| File.join(LIB, "io", "#{name}.rb") }).freeze
+
+  # A store read outside the lane files is a second answer to "may I call this
+  # model". The stores keep their writers (note, skip!, silence, trip!, record)
+  # and their own metrics; these are the reads LaneState owns.
+  def test_no_store_refusal_is_read_outside_the_lane_files
+    found = (Dir[File.join(LIB, "**", "*.rb")] - OWNERS).flat_map { |path| store_reads_in(path) }
+
+    assert_empty found, "ask Io::LaneState (with sources: when a site must keep something) instead"
+  end
+
+  def store_reads_in(path)
+    File.readlines(path).each_with_index.filter_map do |line, index|
+      next if line.lstrip.start_with?("#") || STORE_READ_PATTERNS.none? { |read| read.match?(line) }
+
+      "#{path.delete_prefix("#{LIB}/")}:#{index + 1}: #{line.strip}"
+    end
+  end
 end
