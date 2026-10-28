@@ -157,7 +157,8 @@ class TestFixInterruptionRestart < Minitest::Test
       assert_includes %w[running waiting], receipt.fetch("mission_state")
       assert receipt.fetch("checkpoint_exists"), "the objective checkpoint must outlive run-journal deletion"
       assert_equal "before\n", receipt.fetch("checkpoint_sample")
-      assert_equal "before\n", receipt.fetch("sample"), "transaction recovery must restore bytes without the run journal"
+      assert_equal "before\n", receipt.fetch("sample"),
+                   "transaction recovery must restore bytes without the run journal"
       refute receipt.fetch("transaction_persisted")
       assert_equal "unknown_outcome", receipt.fetch("coordinator_state")
       assert_equal true, receipt.fetch("coordinator_recovered")
