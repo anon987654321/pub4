@@ -7,8 +7,10 @@ Startup diagnostics, dependency probing and the explicit opt-in dependency-insta
 **Film is a physical process, and postpro models the process rather than imitating the
 result.** A filter is a lookup table with an opinion. This is an emulsion: crystals with a
 size and a statistics, a base that reflects light back into the layer it came through, a
-curve that spends contrast instead of adding it, and a print stock after that. It is the
-house grade for stills, and its entry point is `STUDIO/postpro/postpro.rb`.
+curve that spends contrast instead of adding it, and a print stock after that. It is the house grade for stills and bounded, constant-rate MP4 clips. Its entry point is
+`STUDIO/postpro/postpro.rb`; the video path uses the same grade in-process under explicit frame,
+pixel, temporary-storage and runtime budgets. Variable-rate inputs are refused rather than
+silently retimed. See [the video archaeology record](./ARCHAEOLOGY.md).
 
 Give it `--input`, `--output` and `--preset` and it grades one image headless. Give it bare
 paths and each is a subject: an image goes through ten random takes, a directory gives a
@@ -23,7 +25,7 @@ corresponding effect is implemented or enabled on this machine.
 The code spans several files. The file `postpro.rb` is the entry point: it boots, runs the
 early modes and loads `lib/`, whose files hold the grade, the presets, the film tables and the
 command line, one subject per file in the load order `POSTPRO_LIB` names. `--vocab-check` reads
-`postpro.rb` and every `lib/` file as one source. The file `legacy_effects.rb` holds the
+`postpro.rb`, `motion.rb` and every `lib/` file as one source. The file `legacy_effects.rb` holds the
 creative effects recovered from the older `pub/postpro` line, and `LEGACY_RESTORE.md` records
 which of them already had current equivalents. The file `dilla_analog.rb` translates mechanisms
 from dilla's analog chains into still images, so that temporal wow and flutter become spatial
@@ -144,6 +146,26 @@ frame read the cached plane. onnxruntime aborts in its native teardown at exit o
 command-line run that loaded the model leaves by `exit!` with its own status. `POSTPRO_DEPTH=0`
 keeps the proxies, and the test suites set it.
 
+## Bounded video grading
+
+A short, constant-rate clip can use the house grade without launching a new Ruby process for
+every frame:
+
+\`ruby STUDIO/postpro/postpro.rb --video input.mp4 --output graded.mp4 --preset portrait\`
+
+The output contract is MP4. The reader probes the streams, preserves rational frame rates, and
+refuses ambiguous/variable-rate inputs because silently normalising their timestamps would
+change the edit. Audio is copied instead of re-encoded. Grain moves deterministically by frame
+by default; `--grain-hold` pins it for a scanned-print texture. Work is bounded before decoding
+(600 frames, 500 million pixel-frames, a 300-second budget and a 1 GB graded-frame spool by
+default); `POSTPRO_VIDEO_MAX_FRAMES`, `POSTPRO_VIDEO_MAX_PIXELS`,
+`POSTPRO_VIDEO_MAX_SECONDS`, `POSTPRO_VIDEO_MAX_TEMP_BYTES` and
+`POSTPRO_VIDEO_SECONDS_PER_FRAME` allow a validated operator adjustment within hard maxima.
+The time estimate is a preflight estimate, not a performance claim; the run checks the budget
+between frames and during ffmpeg decode/mux. The output is assembled to a same-directory
+temporary file and renamed only after successful muxing. The focused test suite is
+`cd STUDIO && rake test:motion`.
+
 ## Random chains and heavy mode
 
 A bare path, or `--random` with a path (`--random photo.jpg` or `--random --count 10
@@ -248,9 +270,10 @@ and lora grades its renders the same way. Programmatic invocation goes through
 through `Io::MediaIntent` as `/postpro`. Route new path references through those, and do not
 hardcode the file location. `MASTER/tools/postpro` is a compatibility symlink into this folder.
 
-The file `video.yml` is the one video-facing piece. Postpro remains an image engine and never
-runs once per video frame; the recipes in it are for whatever renders video to read in a single
-ffmpeg pass after capture. `DILLA_VIDEO_POSTPRO=0` gives an untreated export.
+The file `video.yml` remains the video-generation recipe contract. Postpro no longer starts a
+separate Ruby process per frame: `postpro.rb --video` streams frames through the live in-process
+grade and then muxes them into MP4 under explicit limits. `DILLA_VIDEO_POSTPRO=0` still gives
+a Dilla video export without its optional post-capture treatment.
 
 ## Trust
 
