@@ -104,8 +104,9 @@ class StudioAdaptersTest < Minitest::Test
   def test_mix_parameters_are_bounded
     assert_equal :ready, Dilla::StyleAdapter.validate_mix_parameters!({ "vocal" => { gain_db: 2.0, pan: 0.1 } })[:status]
     assert_raises(ArgumentError) { Dilla::StyleAdapter.validate_mix_parameters!({ "vocal" => { pan: 2.0 } }) }
-    assert_equal "blue_hour", Dilla::StyleAdapter
-      .validate_mix_parameters!({ "vocal" => { gain_db: 1.0 } }, style_id: "blue_hour")
-      .dig(:style_contract, :id)
+    styled_mix = Dilla::StyleAdapter.validate_mix_parameters!(
+      { "vocal" => { gain_db: 1.0 } }, style_id: "blue_hour"
+    )
+    assert_equal "blue_hour", styled_mix.dig(:style_contract, :id)
   end
 end
