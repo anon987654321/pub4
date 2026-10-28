@@ -48,6 +48,24 @@ class StudioStyleRegistryTest < Minitest::Test
     assert_includes error.message, "strength"
   end
 
+  def test_reference_derived_styles_require_a_source_fingerprint_per_attribute
+    bad = entry.merge(
+      "origin_class" => "reference_derived",
+      "reference_hashes" => ["a" * 64]
+    )
+    error = assert_raises(Studio::StyleRegistry::InvalidStyle) { Studio::StyleRegistry.validate!(bad) }
+    assert_includes error.message, "scope groove_rhythm requires its own source fingerprint"
+
+    good = entry.merge(
+      "origin_class" => "reference_derived",
+      "reference_hashes" => ["a" * 64],
+      "scope_attributes" => {
+        "groove_rhythm" => { "source" => "b" * 64, "strength" => 0.8 }
+      }
+    )
+    assert Studio::StyleRegistry.validate!(good)
+  end
+
   def test_invalid_deprecation_date_is_rejected
     bad = entry.merge("deprecation_target" => "not-a-date")
     assert_raises(Studio::StyleRegistry::InvalidStyle) { Studio::StyleRegistry.validate!(bad) }
