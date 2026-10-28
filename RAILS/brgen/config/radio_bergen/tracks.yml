@@ -82,3 +82,154 @@ external_reference:
       title: BTS Radio 2006
       id: 6nWdggkulHk
       start: 1364
+
+curated_playlist:
+  name: "Radio Bergen — Selected Crate"
+  album: "Radio Bergen — Selected Crate"
+  source_archive: "anon987654321/pub2"
+  source_revision: "ad05242c97fff1b01450434974aad628d7de8628"
+  original_manifest: "mp3/playlist.json"
+  original_order_preserved: true
+  description: "A Radio Bergen listening crate built around James Yancey (Jay Dee / J Dilla), with music from local collaborators and the surrounding scene. Track order and original credits are preserved."
+  rights_policy: "Do not publish audio until the operator confirms distribution rights for every recording."
+  tracks:
+    - ordinal: 1
+      artist: "J Dilla"
+      title: "Players (Second Version)"
+      source_file: "j_dilla-players_second_version.mp3"
+    - ordinal: 2
+      artist: "Johann"
+      title: "Amiga"
+      source_file: "johann-amiga.mp3"
+    - ordinal: 3
+      artist: "Johann"
+      title: "Radio Bergen 1"
+      source_file: "johann-radio_bergen_1.mp3"
+    - ordinal: 4
+      artist: "Johann"
+      title: "Rauingar"
+      source_file: "johann-rauingar.mp3"
+    - ordinal: 5
+      artist: "Haisam & Johann"
+      title: "PB1"
+      source_file: "haisam_and_johann-pb1.mp3"
+    - ordinal: 6
+      artist: "Mike T & Johann"
+      title: "Alt Kan Skje"
+      source_file: "mike_t_and_johann-alt_kan_skje.mp3"
+    - ordinal: 7
+      artist: "Jan Hakim & Johann"
+      title: "Stailings A"
+      source_file: "jan_hakim_and_johann-stailings_a.mp3"
+    - ordinal: 8
+      artist: "Jan Hakim & Johann"
+      title: "Stailings B"
+      source_file: "jan_hakim_and_johann-stailings_b.mp3"
+    - ordinal: 9
+      artist: "Johann"
+      title: "Lofi"
+      source_file: "johann-lofi.mp3"
+    - ordinal: 10
+      artist: "Angelo Reira & Johann"
+      title: "Sandviken Hotell A"
+      source_file: "angelo_reira_and_johann-sandviken_hotell_a.mp3"
+    - ordinal: 11
+      artist: "Angelo Reira & Johann"
+      title: "Sandviken Hotell B"
+      source_file: "angelo_reira_and_johann-sandviken_hotell_b.mp3"
+    - ordinal: 12
+      artist: "Whyppedcream"
+      title: "Hemmelig 3"
+      source_file: "whyppedcream-hemmelig_3.mp3"
+    - ordinal: 13
+      artist: "Whyppedcream"
+      title: "Hemmelig 2"
+      source_file: "whyppedcream-hemmelig_2.mp3"
+    - ordinal: 14
+      artist: "Whyppedcream"
+      title: "Hemmelig 1"
+      source_file: "whyppedcream-hemmelig_1.mp3"
+    - ordinal: 15
+      artist: "Whyppedcream"
+      title: "Medium"
+      source_file: "whyppedcream-medium.mp3"
+    - ordinal: 16
+      artist: "Whyppedcream"
+      title: "Heavy"
+      source_file: "whyppedcream-heavy.mp3"
+    - ordinal: 17
+      artist: "Whyppedcream"
+      title: "Regular"
+      source_file: "whyppedcream-regular.mp3"
+    - ordinal: 18
+      artist: "Whyppedcream"
+      title: "Light"
+      source_file: "whyppedcream-light.mp3"
+    - ordinal: 19
+      artist: "Chase Swayze"
+      title: "Concrete Street"
+      source_file: "chase_swayze-concrete_street.mp3"
+    - ordinal: 20
+      artist: "Chase Swayze"
+      title: "Greenery"
+      source_file: "chase_swayze-greenery.mp3"
+    - ordinal: 21
+      artist: "Chase Swayze"
+      title: "Shit Is Real"
+      source_file: "chase_swayze-shit_is_real.mp3"
+    - ordinal: 22
+      artist: "Chase Swayze"
+      title: "Scott Free"
+      source_file: "chase_swayze-scott_free.mp3"
+    - ordinal: 23
+      artist: "Chase Swayze"
+      title: "Living Daylights"
+      source_file: "chase_swayze-living_daylights.mp3"
+    - ordinal: 24
+      artist: "Chase Swayze"
+      title: "Chilly"
+      source_file: "chase_swayze-chilly.mp3"
+    - ordinal: 25
+      artist: "Chase Swayze"
+      title: "Revenge"
+      source_file: "chase_swayze-revenge.mp3"
+    - ordinal: 26
+      artist: "Chase Swayze"
+      title: "Ants"
+      source_file: "chase_swayze-ants.mp3"
+    - ordinal: 27
+      artist: "Chase Swayze"
+      title: "Underated"
+      source_file: "chase_swayze-underated.mp3"
+    - ordinal: 28
+      artist: "Chase Swayze"
+      title: "Jimmy Johnson"
+      source_file: "chase_swayze-jimmy_johnson.mp3"
+    - ordinal: 29
+      artist: "Chase Swayze"
+      title: "Eleven"
+      source_file: "chase_swayze-eleven.mp3"
+    - ordinal: 30
+      artist: "Chase Swayze"
+      title: "Unobtanium"
+      source_file: "chase_swayze-unobtanium.mp3"
+    - ordinal: 31
+      artist: "Chase Swayze"
+      title: "Sardines"
+      source_file: "chase_swayze-sardines.mp3"
+    - ordinal: 32
+      artist: "Chase Swayze"
+      title: "Cinnamonsistagirl"
+      source_file: "chase_swayze-cinnamonsistagirl.mp3"
+    - ordinal: 33
+      artist: "Chase Swayze"
+      title: "Hannah"
+      source_file: "chase_swayze-hannah.mp3"
+    - ordinal: 34
+      artist: "Chase Swayze"
+      title: "I Just Wanna Fuck U"
+      source_file: "chase_swayze-ijustwannafucku.mp3"
+    - ordinal: 35
+      artist: "Chase Swayze"
+      title: "Strange"
+      source_file: "chase_swayze-strange.mp3"
