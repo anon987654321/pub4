@@ -11,7 +11,7 @@ module Master
         # incremental without changing the persisted format or recovery contract.
         def lifecycle_journal
           @lifecycle_mutex.synchronize do
-            @lifecycle_journal ||= RunJournal.new(root: @root, bus: @bus)
+            @lifecycle_journal ||= LifecycleJournal.new(root: @root, bus: @bus)
           end
         end
 
