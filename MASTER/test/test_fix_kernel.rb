@@ -61,6 +61,17 @@ class TestFixKernel < Minitest::Test
     end
   end
 
+  def test_legacy_fix_constants_are_the_canonical_kernel_classes
+    assert_same K::ConvergenceAdapter, Master::Fix::FixLoop
+    assert_same K::LifecycleJournal, Master::Fix::RunJournal
+    assert_same K::RepairAdapter, Master::Fix::RepairLoop
+
+    # These constants would land on a separate legacy class if the adapter's
+    # child files loaded before its canonical identity was established.
+    assert_same K::RepairAdapter::FixVerification, Master::Fix::RepairLoop::FixVerification
+    assert_same K::ConvergenceAdapter::Lifecycle, Master::Fix::FixLoop::Lifecycle
+  end
+
   def test_kernel_owns_one_durable_run_journal
     with_workspace do |root|
       kernel = K.new(root:)
