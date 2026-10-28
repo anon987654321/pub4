@@ -32,8 +32,12 @@ module Master
       def load_path(path)
         return [] unless File.file?(path)
 
+        source = File.read(path, encoding: "UTF-8")
         rows = Master.load_yaml(path)
-        return [] if rows.nil? # comments-only file is an intentionally empty catalogue
+        if rows.nil?
+          empty_source = source.lines.all? { |line| line.strip.empty? || line.lstrip.start_with?("#") }
+          return [] if empty_source # comments-only file is an intentionally empty catalogue
+        end
         unless rows.is_a?(Array)
           raise ArgumentError, "dynamic tool catalogue #{path} must be a YAML list"
         end
