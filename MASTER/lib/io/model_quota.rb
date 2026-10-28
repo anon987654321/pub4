@@ -8,7 +8,7 @@ require_relative "atomic_write"
 
 module Master
   module Io
-    # Per-model daily request budget for OpenRouter :free slugs (200/day/key typical).
+    # Per-model daily request budget for OpenRouter :free slugs; config is authoritative.
     # One of three quota objects, each answering a different question: this one
     # counts calls per free model per day; QuotaCheck says whether a paid
     # provider still has credit (test/test_quota_check.rb); ModelSkipCache
@@ -16,8 +16,8 @@ module Master
     module ModelQuota
       extend self
       include ::Master::Io::AtomicWrite
-      FREE_RE = /:free\z|\Aopenrouter\//.freeze
-      DEFAULT_DAILY = 200
+      FREE_RE = /:free\z/.freeze
+      DEFAULT_DAILY = 50
 
       @mutex = Mutex.new
 
@@ -38,13 +38,15 @@ module Master
         return unless trackable?(model)
 
         @mutex.synchronize do
-          data = load_data
-          day = today_key
-          data[day] ||= {}
-          key = model.to_s
-          data[day][key] = data[day].fetch(key, 0) + 1
-          prune_old_days!(data, day)
-          save_data(data)
+          with_state_lock do
+            data = load_data
+            day = today_key
+            data[day] ||= {}
+            key = model.to_s
+            data[day][key] = data[day].fetch(key, 0) + 1
+            prune_old_days!(data, day)
+            save_data(data)
+          end
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "model_quota.record", model: model.to_s)
@@ -131,6 +133,51 @@ module Master
         }
       end
 
+      # Process-local Mutex protects threads; the sidecar flock protects the
+      # read-modify-write transaction across independent MASTER processes.
+      def with_state_lock
+        destination = File.expand_path(path)
+        directory = File.dirname(destination)
+        raise IOError, "refusing symlinked model quota directory" if File.symlink?(directory)
+
+        FileUtils.mkdir_p(directory, mode: 0o700)
+        directory_stat = File.lstat(directory)
+        unless directory_stat.directory? && !directory_stat.symlink? && (directory_stat.mode & 0o002).zero?
+          raise IOError, "model quota directory must be a real, non-world-writable directory"
+        end
+
+        lock_path = "#{destination}.lock"
+        raise IOError, "refusing symlinked model quota lock" if File.symlink?(lock_path)
+        flags = File::RDWR | File::CREAT
+        flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+        File.open(lock_path, flags, 0o600) do |file|
+          opened = file.stat
+          unless opened.file? && opened.nlink == 1 && (opened.mode & 0o077).zero?
+            raise IOError, "model quota lock must be a private singly linked regular file"
+          end
+
+          current = File.lstat(lock_path)
+          unless current.file? && !current.symlink? && current.nlink == 1 &&
+                 current.dev == opened.dev && current.ino == opened.ino
+            raise IOError, "model quota lock path changed while opening"
+          end
+          raise IOError, "could not acquire model quota lock" unless file.flock(File::LOCK_EX)
+
+          begin
+            current = File.lstat(lock_path)
+            unless current.file? && !current.symlink? && current.nlink == 1 &&
+                   current.dev == opened.dev && current.ino == opened.ino
+              raise IOError, "model quota lock path changed while waiting for its lock"
+            end
+            yield
+          ensure
+            file.flock(File::LOCK_UN)
+          end
+        end
+      rescue SystemCallError => e
+        raise IOError, "cannot safely lock model quota state: #{e.class}: #{e.message}"
+      end
+
       def path
         ENV["MASTER_MODEL_QUOTA_PATH"] || File.join(Master::ROOT, ".master", "model_quota.json")
       end
@@ -138,12 +185,47 @@ module Master
       def today_key = Time.now.utc.strftime("%Y-%m-%d")
 
       def load_data
-        return {} unless File.file?(path)
-        JSON.parse(File.read(path))
+        state_path = File.expand_path(path)
+        directory = File.dirname(state_path)
+        return {} unless File.exist?(directory) || File.symlink?(directory)
+
+        directory_stat = File.lstat(directory)
+        unless directory_stat.directory? && !directory_stat.symlink? && (directory_stat.mode & 0o002).zero?
+          raise IOError, "model quota directory must be a real, non-world-writable directory"
+        end
+        return {} unless File.exist?(state_path) || File.symlink?(state_path)
+
+        before = File.lstat(state_path)
+        unless before.file? && !before.symlink? && before.nlink == 1
+          raise IOError, "model quota state must be a singly linked regular file"
+        end
+        if (before.mode & 0o077).positive?
+          raise IOError, "model quota state permissions must be private (0600 or stricter)"
+        end
+
+        flags = File::RDONLY
+        flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+        File.open(state_path, flags) do |file|
+          opened = file.stat
+          current = File.lstat(state_path)
+          unless current.file? && !current.symlink? && current.nlink == 1 &&
+                 current.dev == opened.dev && current.ino == opened.ino
+            raise IOError, "model quota state path changed while opening"
+          end
+
+          raw = file.read
+          after = File.lstat(state_path)
+          unless after.file? && !after.symlink? && after.nlink == 1 &&
+                 after.dev == opened.dev && after.ino == opened.ino &&
+                 after.size == opened.size && after.mtime == opened.mtime && after.ctime == opened.ctime
+            raise IOError, "model quota state changed while reading"
+          end
+          JSON.parse(raw)
+        end
       rescue Errno::EACCES => e
-        # The daemon writes this file owner-only, and the deploy's boot check runs as another
-        # user: it failed vm23's deploy on a file it is not the owner of. The daemon that owns
-        # the quota enforces it; another reader starts from an empty day. Corrupt state still raises.
+        # The daemon writes this file owner-only, and a deploy boot check may run
+        # as another user. That diagnostic reader cannot enforce the daemon's
+        # quota, so preserve the documented empty-view behavior for EACCES only.
         Master::Ground::Swallow.log(e, context: "ModelQuota.load_data")
         {}
       rescue StandardError => e

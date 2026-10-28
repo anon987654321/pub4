@@ -333,6 +333,7 @@ class TestKeylessRouting < Minitest::Test
     end
     ENV.delete("MASTER_NO_POOL_PROBES")
     spec = { "base" => "http://127.0.0.1:#{server.addr[1]}/v1", "key_env" => ["HOSTED_TEST_KEY"],
+             "keyless_max_concurrency" => 1, "quota_bucket" => "freehost-account",
              "keyless" => { "tier" => "turbo", "usage_based_only" => false } }
     build = lambda do
       router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT)
@@ -343,6 +344,8 @@ class TestKeylessRouting < Minitest::Test
 
     keyless = build.call
     assert_equal ["freehost:open-flash"], keyless.hosted_models
+    assert_equal 1, keyless.hosted_endpoint_for("freehost:open-flash")[:max_concurrency]
+    assert_equal "freehost-account", keyless.hosted_endpoint_for("freehost:open-flash")[:quota_bucket]
     assert keyless.reachable?("freehost:open-flash")
     assert_equal "free", keyless.lane_label("freehost:open-flash")
 
@@ -350,6 +353,7 @@ class TestKeylessRouting < Minitest::Test
     keyed = build.call
     assert_equal %w[freehost:open-flash freehost:metered freehost:big-pro], keyed.hosted_models
     assert_equal "sk-test", keyed.hosted_endpoint_for("freehost:big-pro")[:key]
+    assert_nil keyed.hosted_endpoint_for("freehost:big-pro")[:max_concurrency]
     assert_nil seen_auth.first
     assert_equal "Authorization: Bearer sk-test", seen_auth.last
   ensure

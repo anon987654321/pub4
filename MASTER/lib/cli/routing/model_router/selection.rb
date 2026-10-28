@@ -212,7 +212,16 @@ module Master
           end
 
           def unhealthy?(model_id)
-            quota = Io::ModelQuota.forecast(model_id)
+            quota = begin
+              Io::ModelQuota.forecast(model_id)
+            rescue StandardError => e
+              # A corrupt/unreadable free-model quota ledger must not make the
+              # quota-tracked lane look healthy. ModelQuota returns nil without
+              # I/O for non-free lanes, so this only parks a candidate whose
+              # budget could not be established.
+              Master::Ground::Swallow.log(e, context: "ModelRouter.quota", model: model_id, severity: :load_bearing)
+              return Io::ModelQuota.trackable?(model_id)
+            end
             return true if quota && quota[:remaining].zero?
             return true if quota && quota[:projected_daily] >= quota[:limit] * 0.8
             # llm_dispatcher.rb writes every failed call here regardless of which

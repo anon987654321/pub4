@@ -66,7 +66,80 @@ class TestRoutePolicy < Minitest::Test
     assert_equal :answering_candidates, result.reason
   end
 
+  def test_unreadable_free_model_quota_parks_only_quota_tracked_lanes
+    router = Master::CLI::Routing::ModelRouter.allocate
+    quota_error = ->(_model, **) { raise IOError, "quota state corrupt" }
+
+    Master::Io::ModelQuota.stub(:forecast, quota_error) do
+      assert router.send(:unhealthy?, "google/gemma-4-31b-it:free")
+      refute router.send(:unhealthy?, "claude-cli:claude-sonnet-5-5")
+    end
+  end
+
   def test_all_recent_failures_fall_back_to_floor_and_prefer_local_floor
+    result = decision(
+      candidates: %w[opus local],
+      recently_failed: %w[opus local],
+      meets_floor: %w[opus local],
+      local: %w[local],
+    )
+
+    assert_equal %w[local], result.selected
+    assert_equal :all_answering_candidates_recently_failed, result.reason
+  end
+
+  def test_only_reachable_candidates_participate_in_the_decision
+    result = decision(
+      candidates: %w[opus ghost grok],
+      reachable: %w[opus grok],
+      usable: %w[opus grok],
+    )
+
+    assert_equal %w[opus grok], result.reachable
+    assert_equal %w[opus grok], result.selected
+  end
+
+  def test_unusable_floor_fallback_is_classified_for_offline_diagnostics
+    result = decision(
+      candidates: %w[opus grok],
+      usable: %w[grok],
+      recently_failed: %w[grok],
+      meets_floor: %w[opus],
+    )
+
+    assert_equal %w[opus], result.selected
+    assert_equal :no_usable_candidates, result.reason
+  end
+
+  def test_all_recent_failures_without_floor_fail_closed
+    result = decision(candidates: %w[opus grok], recently_failed: %w[opus grok])
+
+    assert_empty result.selected
+    assert_equal :recent_failures_without_floor, result.reason
+  end
+
+  def test_parked_candidates_never_enter_the_selected_route
+    result = decision(candidates: %w[opus grok], parked: %w[opus])
+
+    assert_equal %w[grok], result.selected
+    assert_equal %w[opus], result.parked
+  end
+
+  def test_no_reachable_candidates_is_explicit
+    result = decision(candidates: %w[opus grok], reachable: [])
+
+    assert_empty result.selected
+    assert_equal :no_reachable_candidates, result.reason
+  end
+
+  def test_unusable_candidates_remain_classified_for_offline_diagnostics
+    result = decision(candidates: %w[opus], usable: [])
+
+    assert_equal %w[opus], result.selected
+    assert_equal :no_usable_candidates, result.reason
+    assert_empty result.usable
+  end
+end
     result = decision(
       candidates: %w[opus local],
       recently_failed: %w[opus local],
