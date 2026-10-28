@@ -25,6 +25,22 @@ class TestPostproMotion < Minitest::Test
     refute Postpro::Motion.rotated_stream?({})
   end
 
+  def test_frame_timestamps_survive_h264_side_data
+    output = {
+      "frames" => [
+        {
+          "best_effort_timestamp_time" => "0.000000",
+          "side_data_list" => [{ "side_data_type" => "H.26[45] User Data Unregistered SEI message" }]
+        },
+        { "best_effort_timestamp_time" => "0.250000" },
+        { "best_effort_timestamp_time" => "0.500000" },
+        { "best_effort_timestamp_time" => "0.750000" }
+      ]
+    }.to_json
+
+    assert_equal [0.0, 0.25, 0.5, 0.75], Postpro::Motion.parse_frame_timestamps(output)
+  end
+
   def test_grain_modes_are_deterministic_and_distinct
     assert_equal [100, 101, 102, 103], (0..3).map { |i| Postpro::Motion.seed_for(i, 100) }
     assert_equal [100, 100, 100, 100], (0..3).map { |i| Postpro::Motion.seed_for(i, 100, grain: :hold) }
