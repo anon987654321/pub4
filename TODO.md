@@ -365,6 +365,8 @@ source and tests they could not run; this pass is what measures them.
 
 ## 2026-10-28 — legacy archive follow-through
 
+- [ ] BLOCKER: Do not run the Radio Bergen archive-import task until it explicitly selects the Brgen city tenant and local tests prove it cannot create a tenantless/global playlist.
+
 - [ ] Read `docs/pub3_archaeology_2026-10-28.md` and `docs/pub2_misc_plugin_assessment_2026-10-28.md`; use their explicit dispositions before any further restoration.
 - [ ] Radio Bergen: confirm distribution rights individually for the 35 selected recordings, then run `radio_bergen:import_curated` from `RAILS/brgen` against the local `pub2` checkout and verify the public Playlist/Active Storage streaming path in a local Rails test environment. The importer is committed; the audio itself is not yet imported.
 - [ ] Adjust the RadioBrgen tunnel's opening-track fallback so a curated local queue starts at its first ordered item (the current engine randomizes when its legacy YouTube opener ID is absent); cover it with a focused JS test.
