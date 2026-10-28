@@ -203,11 +203,12 @@ module Master
         unknown = definition.keys.map(&:to_s) - TOOL_FIELDS
         errors << "row #{index + 1} has unknown field(s): #{unknown.join(', ')}" unless unknown.empty?
 
-        name = definition["name"].to_s
-        if name.empty? || !name.match?(/\A[A-Za-z][A-Za-z0-9]*\z/)
-          errors << "row #{index + 1} has invalid name #{name.inspect}"
+        raw_name = definition["name"]
+        unless raw_name.is_a?(String) && raw_name.match?(/\A[A-Za-z][A-Za-z0-9]*\z/)
+          errors << "row #{index + 1} has invalid name #{raw_name.inspect}"
           next
         end
+        name = raw_name
         rows << [name, definition]
         %w[elevated visitor default].each do |field|
           errors << "#{name}.#{field} must be boolean" unless [true, false].include?(definition[field])
