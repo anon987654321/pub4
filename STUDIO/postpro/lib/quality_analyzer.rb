@@ -32,6 +32,38 @@ module Postpro
       }
     end
 
+    # Downsample before extracting pixels so reports have a fixed upper
+    # cost independent of source resolution. This reports measurable pixel
+    # properties, not photographic intent or semantic quality.
+    def self.report_image(image, max_dimension: 128)
+      raise ArgumentError, "image must respond to thumbnail_image" unless image.respond_to?(:thumbnail_image)
+      size = Integer(max_dimension)
+      raise ArgumentError, "max_dimension must be between 8 and 512" unless size.between?(8, 512)
+
+      sample = image.thumbnail_image(size, height: size, size: :down).colourspace("srgb").cast("uchar")
+      sample = if sample.bands == 1
+                 sample.bandjoin([sample, sample])
+               elsif sample.bands == 2
+                 first = sample.extract_band(0)
+                 second = sample.extract_band(1)
+                 first.bandjoin([second, first])
+               elsif sample.bands > 3
+                 sample.extract_band(0, n: 3)
+               else
+                 sample
+               end
+      bytes = sample.write_to_memory.unpack("C*")
+      raise ArgumentError, "sample image contained no pixels" if bytes.empty? || (bytes.length % 3) != 0
+
+      rgb = bytes.each_slice(3).map { |r, g, b| [r / 255.0, g / 255.0, b / 255.0] }
+      luminance = rgb.map { |r, g, b| 0.2126 * r + 0.7152 * g + 0.0722 * b }
+      report(luminance: luminance, rgb_samples: rgb).merge(
+        dimensions: [image.width, image.height],
+        sample_dimensions: [sample.width, sample.height],
+        sampling: "uniform thumbnail; encoded-sRGB luminance approximation"
+      )
+    end
+
     def self.percentile(sorted, percent)
       return 0.0 if sorted.empty?
       position = (sorted.length - 1) * percent / 100.0
