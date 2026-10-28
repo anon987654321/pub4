@@ -45,6 +45,8 @@ module Master
       nil
     rescue Psych::Exception, ArgumentError, KeyError, TypeError => e
       "configuration invariant failed: #{e.class}: #{e.message}"
+    rescue StandardError => e
+      "configuration invariant failed: #{e.class}: #{e.message}"
     end
 
     def kind_for(path)
