@@ -48,4 +48,10 @@ def test_health_reads_in_the_one_vocabulary
   assert_match(/\Adegraded: parked/, State.health("x-ai/grok-4.3", succeeded: true))
 end
 
+  def test_a_narrower_question_names_only_its_own_stores
+    Master::Io::ModelSkipCache.skip!("x-ai/grok-4.3", reason: "HTTP 429", category: :rate_limit)
+
+    assert State.usable?("x-ai/grok-4.3", sources: State::DOWN)
+    assert_equal :parked, State.verdict("x-ai/grok-4.3").source
+  end
 end
