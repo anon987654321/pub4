@@ -301,7 +301,80 @@ class TraceLogAppendJsonlTest < Minitest::Test
     end
   end
 
+  def test_event_recent_redacts_legacy_raw_payloads_before_returning_them
+    Dir.mktmpdir("trace-event-reader-legacy-privacy-") do |root|
+      path = File.join(root, "runtime", "events", "activity.jsonl")
+      FileUtils.mkdir_p(File.dirname(path), mode: 0o700)
+      raw = {
+        "event" => "custom:legacy",
+        "payload" => {
+          "query" => "https://internal.invalid/?token=legacy-secret",
+          "metadata" => { "authorization" => "Bearer legacy-private" }
+        }
+      }
+      File.write(path, JSON.generate(raw) + "\n")
+      File.chmod(0o600, path)
+
+      records = Master::Trace::Log::Event.new(root:).recent(10)
+
+      assert_equal 1, records.length
+      payload = records.first.fetch("payload")
+      assert_equal 64, payload.fetch(:query_digest).length
+      assert_equal 64, payload.fetch(:metadata_digest).length
+      serialized = JSON.generate(records)
+      refute_includes serialized, "legacy-secret"
+      refute_includes serialized, "legacy-private"
+      assert_includes File.read(path), "legacy-secret",
+                      "reading should redact legacy content without rewriting history"
+    end
+  end
+
   def test_event_recent_refuses_a_symlinked_log
+    Dir.mktmpdir("trace-event-reader-symlink-") do |root|
+      Dir.mktmpdir("trace-event-reader-target-") do |outside|
+        path = File.join(root, "runtime", "events", "activity.jsonl")
+        target = File.join(outside, "private.jsonl")
+        FileUtils.mkdir_p(File.dirname(path), mode: 0o700)
+        File.write(target, JSON.generate("event" => "private", "payload" => "secret") + "\n")
+        File.chmod(0o600, target)
+        File.symlink(target, path)
+
+        events = Master::Trace::Log::Event.new(root:)
+        assert_empty events.recent(10)
+        assert_equal "secret", JSON.parse(File.read(target)).fetch("payload")
+      end
+    end
+  end
+
+  def test_event_recent_refuses_a_hard_linked_log
+    Dir.mktmpdir("trace-event-reader-hardlink-") do |root|
+      path = File.join(root, "runtime", "events", "activity.jsonl")
+      FileUtils.mkdir_p(File.dirname(path), mode: 0o700)
+      target = File.join(root, "private.jsonl")
+      File.write(target, JSON.generate("event" => "private", "payload" => "secret") + "\n")
+      File.chmod(0o600, target)
+      File.link(target, path)
+
+      events = Master::Trace::Log::Event.new(root:)
+      assert_empty events.recent(10)
+      assert_equal "secret", JSON.parse(File.read(target)).fetch("payload")
+    end
+  end
+
+  def test_refuses_a_symlink_destination
+    Dir.mktmpdir("trace-jsonl-symlink-") do |dir|
+      path = File.join(dir, "events.ndjson")
+      target = File.join(dir, "target.ndjson")
+      File.write(target, "keep\n")
+      File.symlink(target, path)
+
+      assert_raises(ArgumentError) do
+        LOG.append_jsonl(path, { "event" => "should-not-write" })
+      end
+      assert_equal "keep\n", File.read(target)
+    end
+  end
+end
     Dir.mktmpdir("trace-event-reader-symlink-") do |root|
       Dir.mktmpdir("trace-event-reader-target-") do |outside|
         path = File.join(root, "runtime", "events", "activity.jsonl")
