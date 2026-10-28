@@ -30,9 +30,11 @@ ai_boot builds the FixLoop (in the background when MASTER_AUTOFIX=1) and the
 /fix command builds one per run. FixLoop works on the repository root but keeps
 @transaction_root, the root it was given, for transactions (2de776cde).
 RunJournal persists runs in MASTER/.master/fix_runs.json with plan
-generations and assessment receipts. RunLedger is process memory reset at each
-run start. Delivery is the Committer: a commit per kept fix and a push, or one
-push at the end.
+generations and assessment receipts. Its `.master/fix_runs.lock` rejects symlinked
+state/lock paths, group/world-writable state directories, non-regular lock files,
+non-private lock permissions and lock path/inode replacement before or after
+acquiring `flock`. RunLedger is process memory reset at each run start. Delivery
+is the Committer: a commit per kept fix and a push, or one push at the end.
 
 ### The inner repair loop
 
