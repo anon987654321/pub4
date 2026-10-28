@@ -714,7 +714,7 @@ class TestPostproFilm < Minitest::Test
     methods = send(:postpro_source_methods, source)
     calls = methods.transform_values { |body| send(:postpro_method_calls, body) }
 
-    %w[process_file run_uplift run_one_shot grade_watched run_stock_sheet].each do |name|
+    %w[process_file run_uplift run_one_shot run_watch grade_watched run_stock_sheet].each do |name|
       assert send(:postpro_method_reaches?, methods, name, "camera_corrected", calls: calls),
              "#{name} must apply camera-profile correction before grading the image"
     end
