@@ -210,7 +210,10 @@
         uPointSizeDistanceMax: { value: clamp(pointSize.distance_max, DEFAULT_POINT_SIZE.distance_max, 0.1, 2.0) },
         uPointSizeOutputMin: { value: clamp(pointSize.output_min, DEFAULT_POINT_SIZE.output_min, 1.0, 1.5) },
         uPointSizeOutputMax: { value: clamp(pointSize.output_max, DEFAULT_POINT_SIZE.output_max, 1.0, 1.5) },
-        uTime: { value: 0 }, uDensity: { value: idle.density },
+        uTime: { value: 0 },
+        uDepthFromRank: { value: swarmConfiguration().size_from_depth === true ? 1.0 : 0.0 },
+        uDepthSteps: { value: Math.max(2, Array.isArray(swarmConfiguration().glyph_ramp) ? swarmConfiguration().glyph_ramp.length : 2) },
+        uDensity: { value: idle.density },
         uRipple: { value: idle.ripple }, uTurbulence: { value: idle.turbulence },
         uLuminosity: { value: idle.luminosity }, uAttract: { value: idle.attract },
         uOpacity: { value: 0.74 }, uEntropy: { value: 0.18 },
@@ -275,6 +278,8 @@
         uniform vec3 uColor;
         uniform float uOpacity;
         uniform float uDensity;
+        uniform float uDepthFromRank;
+        uniform float uDepthSteps;
         varying float vAlpha;
         varying float vZone;
         varying float vThreshold;
@@ -284,7 +289,11 @@
           if (vThreshold > uDensity || length(p) > 0.5) discard;
           float zoneTone = vZone < 2.0 ? 1.0 : (vZone > 5.0 ? 0.84 : 0.93);
           // One-pixel law: the shared depth rank affects brightness, never size.
-          float depthTone = mix(0.68, 1.0, clamp(vDepthRank, 0.0, 1.0));
+          float depthRank = clamp(vDepthRank, 0.0, 1.0);
+          float depthBucket = floor(depthRank * (uDepthSteps - 1.0) + 0.5);
+          float depthTone = uDepthFromRank > 0.5
+            ? mix(0.68, 1.0, depthBucket / max(1.0, uDepthSteps - 1.0))
+            : 1.0;
           gl_FragColor = vec4(uColor * zoneTone * depthTone, vAlpha * uOpacity);
         }
       `,
