@@ -32,18 +32,19 @@ module Master
       # An appender rotates early to leave room for its next line, but the rotated
       # generation keeps its whole cap (keep_bytes); compacting it to the early
       # threshold would drop every record larger than half the cap.
-      def self.rotate(path, max_bytes, keep_bytes: max_bytes)
+      def self.rotate(path, max_bytes, keep_bytes: max_bytes, mode: 0o600)
         return unless File.exist?(path) || File.symlink?(path)
 
         stat = File.lstat(path)
         unless stat.file? && !stat.symlink? && stat.nlink == 1
           raise ArgumentError, "JSONL rotation source must be a singly linked regular file"
         end
+        stat = with_private_file(path, File::RDONLY, mode:, label: "JSONL rotation source") { |file| file.stat }
         return if stat.size <= max_bytes
 
         rotated = "#{path}.1"
         File.rename(path, rotated)
-        compact_rotated(rotated, keep_bytes)
+        compact_rotated(rotated, keep_bytes, mode:)
       rescue SystemCallError => e
         Master::Ground::Swallow.log(e, context: "Trace::Log.rotate", path:)
       end
@@ -88,10 +89,10 @@ module Master
             end
 
             loop do
-              rotate(path, [limit - line_bytes, 0].max, keep_bytes: limit)
+              rotate(path, [limit - line_bytes, 0].max, keep_bytes: limit, mode:)
               size = File.file?(path) ? File.size(path) : 0
               if size + line_bytes > limit
-                unless attempts.zero? && reclaim(path)
+                unless attempts.zero? && reclaim(path, mode:)
                   raise IOError, "JSONL rotation failed to honor #{limit}-byte cap"
                 end
 
@@ -163,17 +164,17 @@ module Master
       # Others lose access; a group the directory was handed to keeps it (MasterPaths).
       def self.tighten_directory(directory, base) = File.chmod(MasterPaths.private_dir_mode(directory, base), directory)
 
-      def self.compact_rotated(path, max_bytes)
+      def self.compact_rotated(path, max_bytes, mode: 0o600)
         return unless File.exist?(path) || File.symlink?(path)
 
         stat = File.lstat(path)
         unless stat.file? && !stat.symlink? && stat.nlink == 1
           raise ArgumentError, "rotated JSONL log must be a singly linked regular file"
         end
-        size = stat.size
+        size = with_private_file(path, File::RDONLY, mode:, label: "rotated JSONL log") { |file| file.stat.size }
         return size if size <= max_bytes
 
-        tail = with_private_file(path, File::RDONLY, mode: 0o600, label: "rotated JSONL log") do |file|
+        tail = with_private_file(path, File::RDONLY, mode:, label: "rotated JSONL log") do |file|
           file.seek(-max_bytes, IO::SEEK_END)
           start = file.pos
           bytes = file.read(max_bytes)
@@ -186,7 +187,7 @@ module Master
           end
           bytes || +"" .b
         end
-        with_private_file(path, File::RDWR, mode: 0o600, label: "rotated JSONL log") do |file|
+        with_private_file(path, File::RDWR, mode:, label: "rotated JSONL log") do |file|
           file.truncate(0)
           file.write(tail)
           file.flush
@@ -216,7 +217,7 @@ module Master
       # Last resort after ENOSPC: discard one rotated generation first, or
       # compact the active log to a recent tail. This frees blocks before another
       # write is attempted, instead of silently losing every subsequent event.
-      def self.reclaim(path, keep_bytes: 1024 * 1024)
+      def self.reclaim(path, keep_bytes: 1024 * 1024, mode: 0o600)
         rotated = "#{path}.1"
         if File.file?(rotated)
           File.delete(rotated)
@@ -225,7 +226,7 @@ module Master
 
         return false unless File.file?(path) && File.size(path) > keep_bytes
 
-        !compact_rotated(path, keep_bytes).nil?
+        !compact_rotated(path, keep_bytes, mode:).nil?
       rescue Errno::ENOENT
         false
       rescue SystemCallError => e
