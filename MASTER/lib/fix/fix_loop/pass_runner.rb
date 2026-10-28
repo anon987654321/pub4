@@ -161,9 +161,10 @@ module Master
         # attached to a Kernel, repair stages use its factory and receipt boundary;
         # standalone tests/legacy adapters retain the original constructor path.
         def build_repair_loop(**options)
-          return RepairLoop.new(**options) unless @kernel
+          return @kernel.build_repair_loop(**options) if @kernel
 
-          @kernel.build_repair_loop(**options)
+          require_relative "../kernel/repair_adapter" unless defined?(Kernel::RepairAdapter)
+          Kernel::RepairAdapter.new(**options)
         end
 
         def violations(files)
