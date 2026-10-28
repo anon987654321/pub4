@@ -34,6 +34,20 @@ class TestCheckRunnerRegistry < Minitest::Test
     end
   end
 
+  def test_registry_rejects_blank_class_with_script
+    run_registry("blank_class" => { "class" => " ", "script" => "architecture.rb" }) do |output, status|
+      refute status.success?
+      assert_includes output, "class:/script: must be a non-empty string when declared"
+    end
+  end
+
+  def test_registry_rejects_blank_script_with_class
+    run_registry("blank_script" => { "class" => "Deploy::CheckResult", "script" => "" }) do |output, status|
+      refute status.success?
+      assert_includes output, "class:/script: must be a non-empty string when declared"
+    end
+  end
+
   def test_registry_rejects_script_paths_that_escape_checks_tree
     run_registry("bad_script" => { "script" => "../README.md" }) do |output, status|
       refute status.success?
