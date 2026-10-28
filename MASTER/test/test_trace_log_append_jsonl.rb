@@ -154,6 +154,28 @@ class TraceLogAppendJsonlTest < Minitest::Test
     end
   end
 
+  def test_rejects_a_log_path_replaced_after_the_file_was_opened
+    Dir.mktmpdir("trace-jsonl-path-replaced-") do |dir|
+      path = File.join(dir, "events.ndjson")
+      replacement = File.join(dir, "replacement.ndjson")
+      File.write(path, "original\n")
+      File.chmod(0o600, path)
+
+      File.open(path, File::RDWR) do |opened|
+        File.rename(path, replacement)
+        File.write(path, "different inode\n")
+        File.chmod(0o600, path)
+
+        error = assert_raises(ArgumentError) do
+          LOG.verify_file_identity!(opened, path, "JSONL destination")
+        end
+        assert_match(/path changed while opening/, error.message)
+        assert_equal "different inode\n", File.read(path)
+        assert_equal "original\n", File.read(replacement)
+      end
+    end
+  end
+
   def test_refuses_a_symlink_destination
     Dir.mktmpdir("trace-jsonl-symlink-") do |dir|
       path = File.join(dir, "events.ndjson")
