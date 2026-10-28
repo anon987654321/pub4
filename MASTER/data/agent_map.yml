@@ -154,7 +154,7 @@ patch_briefs:
     check: bin/check
     topic: tts
     tests: [test/test_speech.rb, bin/check]
-  core/:
+  lib/core/:
     check: rake test:core
     tests: [rake test:core, MASTER/bin/master core --real "dogfood noop"]
     note: constitutional fold spine — new ability = Effect verb in world.rb

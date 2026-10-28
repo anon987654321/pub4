@@ -776,6 +776,7 @@ end
   end
 
   TOOL_LINT_TASKS = {
+    agent_map: ["Every agent-map file and patch-brief path resolves in the checkout", "tools/agent_map_integrity.rb"],
     scan_coverage: ["Every Ruby-bearing tree in MASTER is scanned by its own law or exempt with a written reason", "tools/scan_coverage.rb"],
     capability: ["Named capabilities must not disappear vs origin/main", "tools/audit/capability_inventory.rb"],
     reader_singularity: ["One loader per data file — a second direct reader is a second implementation", "tools/reader_singularity.rb"],
@@ -861,7 +862,7 @@ end
 AUDIT_CHECKS = %w[
   dogfood constitution selftest selfcheck tools core_smoke architecture boot_smoke security_sweep
   lint:frozen lint:data_singularity lint:spine lint:autoload
-  lint:law_trace lint:law_parity lint:agent_contracts lint:laws_digest lint:scan_coverage lint:reader_singularity lint:doc_citations
+  lint:law_trace lint:law_parity lint:agent_contracts lint:laws_digest lint:scan_coverage lint:agent_map lint:reader_singularity lint:doc_citations
   lint:do_not_touch lint:instruments lint:swallowed lint:law_audit lint:autofix_reach
   lint:rule_hygiene lint:constant_collisions lint:capability lint:cohesion lint:law_reach
   lint:models lint:dedup lint:word_boundary lint:test_naming ad_organ:test_browserless

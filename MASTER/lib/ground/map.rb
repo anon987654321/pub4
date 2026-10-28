@@ -8,8 +8,68 @@ module Master
         PATH = File.join(Master::ROOT, "data", "agent_map.yml").freeze
 
         class << self
-          def load
-            Master.load_yaml(PATH, default: {}) || {}
+          def load(root: Master::ROOT)
+            path = File.expand_path(root) == File.expand_path(Master::ROOT) ? PATH : File.join(root, "data", "agent_map.yml")
+            Master.load_yaml(path, default: {}) || {}
+          end
+
+          # The navigation map is guidance, but stale paths silently send repairs
+          # to dead code or make directory-specific patch briefs unreachable.
+          # Validate both topic file lists and patch-brief keys against the tree.
+          def integrity(root: Master::ROOT)
+            master_root = File.expand_path(root)
+            repository_root = File.dirname(master_root)
+            data = load(root: master_root)
+            findings = []
+            topics = data["topics"]
+            unless topics.is_a?(Hash) && !topics.empty?
+              findings << "agent_map topics must be a non-empty mapping"
+              return findings
+            end
+
+            topics.each do |name, entry|
+              unless entry.is_a?(Hash)
+                findings << "agent_map topics.#{name} must be a mapping"
+                next
+              end
+
+              files = entry["files"]
+              unless files.is_a?(Array) && !files.empty?
+                findings << "agent_map topics.#{name}.files must be a non-empty list"
+                next
+              end
+
+              files.each do |reference|
+                issue = path_reference_issue(
+                  reference, context: "topics.#{name}.files",
+                  master_root:, repository_root:
+                )
+                findings << issue if issue
+              end
+            end
+
+            briefs = data["patch_briefs"]
+            unless briefs.is_a?(Hash)
+              findings << "agent_map patch_briefs must be a mapping"
+              return findings
+            end
+
+            briefs.each do |path, brief|
+              unless brief.is_a?(Hash)
+                findings << "agent_map patch_briefs.#{path} must be a mapping"
+                next
+              end
+
+              issue = path_reference_issue(
+                path, context: "patch_briefs",
+                master_root:, repository_root:
+              )
+              findings << issue if issue
+            end
+
+            findings.uniq
+          rescue StandardError => e
+            ["agent_map could not be validated: #{e.class}: #{e.message}"]
           end
 
           def topic(name)
@@ -49,6 +109,25 @@ module Master
           def normalize_patch_key(relative_path)
             relative_path.to_s.delete_prefix("/").delete_prefix("MASTER/")
           end
+
+          def path_reference_issue(value, context:, master_root:, repository_root:)
+            path = value.to_s.strip.tr("\\", "/")
+            return "agent_map #{context} has an empty path" if path.empty?
+            return "agent_map #{context} has an unsafe path #{path.inspect}" if
+              path.start_with?("/") || path.match?(/\\A[A-Za-z]:/) || path.split("/").include?("..")
+
+            relative = path.sub(%r{/+\\z}, "")
+            base = relative.match?(%r{\\A(?:MASTER|RAILS|OPENBSD|STUDIO)/}) ? repository_root : master_root
+            resolved = File.expand_path(relative, base)
+            unless resolved.start_with?(repository_root + File::SEPARATOR)
+              return "agent_map #{context} path escapes the repository: #{path}"
+            end
+            return "agent_map #{context} references missing path #{path}" unless File.file?(resolved) || File.directory?(resolved)
+
+            nil
+          end
+
+          private :path_reference_issue
 
           def format_topics
             topics = load["topics"] || {}
