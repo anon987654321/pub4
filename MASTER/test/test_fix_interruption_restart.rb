@@ -169,13 +169,6 @@ class TestFixInterruptionRestart < Minitest::Test
       sample = File.join(root, "sample.rb")
       marker = File.join(root, "crash-ready.json")
       File.write(sample, "before\n")
-      File.write(File.join(root, ".pub4"), <<~YAML)
-        schema: 1
-        tree: #{File.basename(root).downcase}
-        allows:
-          master: read_write
-        adapters: []
-      YAML
       FileUtils.mkdir_p(File.join(root, "data"))
       File.write(
         File.join(root, "data", "soul.yml"),
