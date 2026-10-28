@@ -136,6 +136,9 @@ module Studio
           source = declaration["source"]
           strength = declaration["strength"]
           errors << "scope #{name} source must be SHA-256 or null" unless source.nil? || source.to_s.match?(/\A[0-9a-f]{64}\z/i)
+          if %w[reference_derived datasheet_derived].include?(entry["origin_class"]) && source.nil?
+            errors << "scope #{name} requires its own source fingerprint for #{entry["origin_class"]} styles"
+          end
           errors << "scope #{name} strength must be between 0 and 1" unless strength.is_a?(Numeric) && strength.between?(0.0, 1.0)
         end
       end
