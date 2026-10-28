@@ -57,6 +57,22 @@ class TestCheckRunnerRegistry < Minitest::Test
     end
   end
 
+  def test_registry_rejects_missing_script_files
+    run_registry("missing_script" => { "script" => "no_such_check.rb" }) do |output, status|
+      refute status.success?
+      assert_includes output, "script: path does not identify an existing file"
+    end
+  end
+
+  def test_registry_rejects_missing_require_files
+    run_registry(
+      "missing_require" => { "require" => "lib/no_such_check", "class" => "Deploy::NoSuchCheck" }
+    ) do |output, status|
+      refute status.success?
+      assert_includes output, "require: path does not identify an existing file"
+    end
+  end
+
   def test_registry_rejects_absolute_script_paths
     run_registry("bad_script" => { "script" => File.join(Dir.tmpdir, "arbitrary.rb") }) do |output, status|
       refute status.success?
