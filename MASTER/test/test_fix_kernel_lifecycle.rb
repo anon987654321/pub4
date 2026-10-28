@@ -292,6 +292,57 @@ class TestFixKernelLifecycle < Minitest::Test
     end
   end
 
+  def test_kernel_refuses_a_symlinked_audit_ledger
+    with_workspace do |root|
+      kernel = K.new(root:)
+      directory = File.join(root, ".master")
+      Dir.mkdir(directory, 0o700)
+      external = File.join(root, "external-ledger.jsonl")
+      original = "leave this file untouched\\n"
+      File.write(external, original)
+      File.chmod(0o600, external)
+      File.symlink(external, File.join(directory, "log.jsonl"))
+
+      assert_raises(K::LedgerCorruption) do
+        kernel.append_event("coordinator_started", { target: "." }, run_id: "symlink-test")
+      end
+      assert_raises(K::LedgerCorruption) do
+        K.read_log(File.join(directory, "log.jsonl"))
+      end
+      assert_equal original, File.read(external)
+    end
+  end
+
+  def test_kernel_refuses_a_symlinked_audit_directory
+    with_workspace do |root|
+      kernel = K.new(root:)
+      outside = File.join(root, "outside")
+      Dir.mkdir(outside, 0o700)
+      File.symlink(outside, File.join(root, ".master"))
+
+      assert_raises(K::LedgerCorruption) do
+        kernel.append_event("coordinator_started", { target: "." }, run_id: "symlink-test")
+      end
+      refute File.exist?(File.join(outside, "log.jsonl"))
+    end
+  end
+
+  def test_kernel_refuses_a_non_private_existing_audit_ledger
+    with_workspace do |root|
+      kernel = K.new(root:)
+      directory = File.join(root, ".master")
+      Dir.mkdir(directory, 0o700)
+      ledger = File.join(directory, "log.jsonl")
+      File.write(ledger, "")
+      File.chmod(0o644, ledger)
+
+      assert_raises(K::LedgerCorruption) do
+        kernel.append_event("coordinator_started", { target: "." }, run_id: "mode-test")
+      end
+      assert_empty File.read(ledger)
+    end
+  end
+
   def test_execution_lock_refuses_a_symlinked_master_directory
     with_workspace do |root|
       kernel = K.new(root:)
