@@ -27,6 +27,7 @@ module Studio
         style_id: value(style, :style_id),
         style_version: value(style, :version),
         modality: value(style, :modality),
+        temporal_schedule_hash: temporal_schedule_hash(style),
         model_id: value(model, :id),
         model_version: value(model, :version),
         model_hash: value(model, :hash),
@@ -45,6 +46,14 @@ module Studio
     end
     private_class_method :value
 
+    def temporal_schedule_hash(style)
+      variation = value(style, :temporal_variation)
+      return nil unless variation.is_a?(Hash)
+
+      value(variation, :schedule_hash)
+    end
+    private_class_method :temporal_schedule_hash
+
     def digest(manifest)
       Digest::SHA256.hexdigest(JSON.generate(canonicalize(manifest)))
     end
@@ -62,9 +71,9 @@ module Studio
     end
 
     def replayable?(manifest, registry)
-      style_id = manifest[:style_id] || manifest["style_id"]
-      version = manifest[:style_version] || manifest["style_version"]
-      modality = manifest[:modality] || manifest["modality"]
+      style_id = value(manifest, :style_id)
+      version = value(manifest, :style_version)
+      modality = value(manifest, :modality)
       return false if style_id.to_s.empty? || version.to_s.empty?
       return false unless registry.is_a?(Hash)
 
@@ -73,26 +82,37 @@ module Studio
       style = styles[style_id.to_s] || styles[style_id.to_s.to_sym]
       return false unless style.is_a?(Hash)
 
-      if style["versions"].is_a?(Hash) || style[:versions].is_a?(Hash)
-        versions = style["versions"] || style[:versions]
-        selected = versions[version.to_s] || versions[version.to_sym]
-        return false unless selected.is_a?(Hash)
-        modalities = selected["modalities"] || selected[:modalities] || selected
-        if modality
-          entry = modalities[modality.to_s] || modalities[modality.to_sym]
-          return entry.is_a?(Hash) && (entry["version"] || entry[:version]).to_s == version.to_s
-        end
-        return modalities.values.any? do |entry|
-          entry.is_a?(Hash) && (entry["version"] || entry[:version]).to_s == version.to_s
-        end
+      versioned = style["versions"] || style[:versions]
+      modalities = if versioned.is_a?(Hash)
+                     selected = versioned[version.to_s] || versioned[version.to_sym]
+                     return false unless selected.is_a?(Hash)
+                     selected["modalities"] || selected[:modalities] || selected
+                   else
+                     style
+                   end
+      return false unless modalities.is_a?(Hash)
+
+      entry = if modality
+                modalities[modality.to_s] || modalities[modality.to_sym]
+              else
+                modalities.values.find do |candidate|
+                  candidate.is_a?(Hash) && value(candidate, :version).to_s == version.to_s
+                end
+              end
+      return false unless entry.is_a?(Hash) && value(entry, :version).to_s == version.to_s
+
+      temporal = value(entry, :temporal_variation)
+      manifest_schedule = value(manifest, :temporal_schedule_hash)
+      if temporal.is_a?(Hash)
+        expected_schedule = value(temporal, :schedule_hash)
+        return false unless expected_schedule.to_s.match?(/\A[0-9a-f]{64}\z/i)
+        return false unless manifest_schedule == expected_schedule
+      else
+        return false unless temporal == "none"
+        return false unless manifest_schedule.nil? || manifest_schedule.to_s.empty?
       end
 
-      if modality
-        entry = style[modality.to_s] || style[modality.to_sym]
-        entry.is_a?(Hash) && (entry["version"] || entry[:version]).to_s == version.to_s
-      else
-        style.values.any? { |entry| entry.is_a?(Hash) && (entry["version"] || entry[:version]).to_s == version.to_s }
-      end
+      true
     end
 
     def canonicalize(value)
