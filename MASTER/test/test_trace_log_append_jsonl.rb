@@ -66,6 +66,32 @@ class TraceLogAppendJsonlTest < Minitest::Test
     end
   end
 
+  def test_rejects_non_writable_or_non_private_file_modes
+    Dir.mktmpdir("trace-jsonl-invalid-mode-") do |dir|
+      path = File.join(dir, "events.ndjson")
+
+      [0o400, 0o644, 0o700].each do |mode|
+        assert_raises(ArgumentError) do
+          LOG.append_jsonl(path, { "event" => "must-not-write" }, mode:)
+        end
+      end
+      refute File.exist?(path)
+    end
+  end
+
+  def test_rejects_world_access_directory_mode_before_mutating
+    Dir.mktmpdir("trace-jsonl-invalid-directory-mode-") do |dir|
+      path = File.join(dir, "events.ndjson")
+      File.chmod(0o755, dir)
+
+      assert_raises(ArgumentError) do
+        LOG.append_jsonl(path, { "event" => "must-not-write" }, directory_mode: 0o755)
+      end
+      assert_equal 0o755, File.stat(dir).mode & 0o777
+      refute File.exist?(path)
+    end
+  end
+
   def test_existing_directory_is_tightened_when_directory_mode_is_omitted
     Dir.mktmpdir("trace-jsonl-default-directory-mode-") do |dir|
       File.chmod(0o755, dir)
