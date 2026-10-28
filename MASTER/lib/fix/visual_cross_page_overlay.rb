@@ -30,7 +30,7 @@ module Master
       MAX_HEIGHT_PX = 4000
       ROLE_TOKENS = {
         "index" => "index", "list" => "index", "results" => "index", "feed" => "index",
-        "show" => "show", "new" => "form", "edit" => "form", "form" => "form", "in" => "form",
+        "show" => "show", "new" => "form", "edit" => "form", "form" => "form", "in" => "form"
       }.freeze
 
       # The role a surface label plays: its last word, with a trailing "_2" dropped.
@@ -114,7 +114,7 @@ module Master
         VisualCrossPagePages.overlay(
           title: "cross-page overlay · #{group[:label]}",
           note: "#{members.size} pages at #{opacity} opacity, top-left aligned, 1:1 pixels. A sharp edge is shared structure; a double edge or smear is chrome that moved between pages.",
-          layers:, width: layers.map { |l| l[:w] }.max, height: [layers.map { |l| l[:h] }.max, MAX_HEIGHT_PX].min,
+          layers:, width: layers.map { |l| l[:w] }.max, height: [layers.map { |l| l[:h] }.max, MAX_HEIGHT_PX].min
         )
       end
 
@@ -127,7 +127,7 @@ module Master
         page = VisualCrossPagePages.overlay(
           title: "viewport overlay · #{group[:label]}",
           note: "Desktop clipped to the mobile frame's width, not scaled, under mobile. Content the desktop shows there but mobile moved or dropped appears as a ghost.",
-          layers:, width: mw, height: [[mh, dh].max, MAX_HEIGHT_PX].min,
+          layers:, width: mw, height: [[mh, dh].max, MAX_HEIGHT_PX].min
         )
         [text, page]
       end

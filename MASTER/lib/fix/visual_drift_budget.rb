@@ -80,7 +80,7 @@ module Master
       # number of chrome boxes blessed, or nil when nothing is pending.
       def approve(surface_id, root:)
         pending = file(root, surface_id, "pending")
-        return nil unless File.file?(pending)
+        return unless File.file?(pending)
 
         rects = JSON.parse(File.read(pending))
         write(file(root, surface_id, "baseline"), rects)

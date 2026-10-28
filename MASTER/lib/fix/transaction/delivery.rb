@@ -121,13 +121,13 @@ module Master
         # false when git answered and none does; nil when git could not say.
         def landed_commit
           before = @tx.delivery_head_before.to_s
-          return nil if before.empty?
+          return if before.empty?
 
           out, status = Master::Io::Exec.capture2e(
             "git", "-C", @tx.root, "log", "--format=%H", "--fixed-strings",
             "--grep=#{self.class.marker(@tx.id)}", "#{before}..HEAD"
           )
-          return nil unless status.success?
+          return unless status.success?
 
           out.lines.first&.strip || false
         end

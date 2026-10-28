@@ -33,7 +33,7 @@ module Master
         },
       }.freeze
 
-      MONO = %w[monospace ui-monospace sf\ mono menlo monaco consolas courier\ new courier].freeze
+      MONO = ["monospace", "ui-monospace", "sf mono", "menlo", "monaco", "consolas", "courier new", "courier"].freeze
 
       CHECKS = {
         "forbid_generic" => lambda { |tokens, args, _el, _key|
