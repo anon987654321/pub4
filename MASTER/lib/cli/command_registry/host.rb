@@ -498,44 +498,6 @@ module Master
 
       def screen_running?(name) = screen_list.match?(/\d+\.#{Regexp.escape(name)}\s/)
 
-      # /owner — local paired owner profile. Values are explicit, bounded and reversible.
-      def dispatch_owner(root, ctx: nil)
-        return "owner: local-only" if Fiber[:master_visitor] == true
-
-        subject = Master::Device::Agent.owner_subject(root:)
-        return "owner: unpaired — use /pair owner [label]" if subject.empty?
-
-        arg = arg_for(ctx)
-        case arg
-        when "", "status"
-          values = Master::Device::OwnerProfile.values(root:, subject:)
-          values.empty? ? "owner: no profile fields set" : values.map { |key, value| "#{key}=#{value}" }.join("\n")
-        when "intro"
-          Master::Device::OwnerProfile.onboarding_prompt(root:, subject:)
-        when /\Aforget\s+(\w+)\z/
-          Master::Device::OwnerProfile.forget(root:, subject:, key: $1)
-          "owner: forgot #{$1}"
-        when /\Aset\s+(.+)\z/
-          fields = parse_owner_fields($1)
-          return "owner: usage /owner set name=... pet_name=... language=... locale=... timezone=... communication_style=... interests=..." if fields.empty?
-          Master::Device::OwnerProfile.set(root:, subject:, **fields)
-          Master::Device::OwnerProfile.onboarding_prompt(root:, subject:)
-        else
-          "owner: status | intro | set key=value [...] | forget <key>"
-        end
-      rescue ArgumentError => e
-        "owner0: #{e.message}"
-      rescue StandardError => e
-        "owner0: unavailable — #{e.class}: #{e.message}"
-      end
-
-      def parse_owner_fields(text)
-        allowed = Master::Device::OwnerProfile::KEYS
-        text.scan(/(#{allowed.join("|")})=(?:"([^"]+)"|'([^']+)'|(\S+))/).each_with_object({}) do |(key, a, b, c), fields|
-          fields[key.to_sym] = (a || b || c).to_s.strip
-        end
-      end
-
       # /deploy — canonical remote vm23 deployment. Command#review_check requires
       # --confirm before this handler can mutate production.
       def dispatch_deploy(_root, ctx: nil)
@@ -618,19 +580,6 @@ module Master
         end
       rescue StandardError => e
         "wake0: unavailable — #{e.class}: #{e.message}"
-      end
-
-      # /device — local Android companion status and ownership boundary.
-      def dispatch_device_agent(root, ctx: nil)
-        return "device: local-only" if Fiber[:master_visitor] == true
-
-        _word, _rest = subcommand(ctx)
-        status = Master::Device::Agent.status(root:)
-        paired = status[:paired] ? "paired" : "unpaired"
-        owner = status[:owner_label].to_s.empty? ? "" : " owner=#{status[:owner_label]}"
-        "device: #{paired}#{owner} id=#{status[:device_id]} last_tick=#{status[:last_tick_at] || "never"}"
-      rescue StandardError => e
-        "device: unavailable — #{e.class}: #{e.message}"
       end
 
       # /doctor — bin/doctor's report followed by the security audit.

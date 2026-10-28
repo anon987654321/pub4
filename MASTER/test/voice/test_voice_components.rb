@@ -15,12 +15,6 @@ class TestReplicateKokoroEngine < Minitest::Test
       ENV["REPLICATE_API_TOKEN"] = token
     end
   end
-
-  def test_provider_registry_lists_replicate
-    providers = Master::Io::ProviderRegistry.providers
-    assert providers.key?(:replicate)
-    assert_includes providers[:replicate][:strengths], :tts
-  end
 end
 
 class TestCouncilFace < Minitest::Test

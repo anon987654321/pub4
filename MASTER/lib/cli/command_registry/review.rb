@@ -528,44 +528,6 @@ module Master
         Master::Trace::Dmesg.with_verbosity(level) { yield }
       end
 
-      def run_deliberation(deliberation:, payload:, context:)
-        return "deliberation: not configured" unless deliberation
-
-        result = deliberation.review_convergent(payload, context:)
-        return result.message if result.err?
-
-        yield result.value!
-      end
-
-      # Same persona-panel -> ideation -> cherry-pick pipeline the product
-      # critiques (ui/sound/dilla) use, generalized to whatever the scan stage
-      # just processed instead of a fixed file list.
-      def general_council_critique(deliberation, path)
-        files = File.directory?(path) ? snapshot_files(path) : [path]
-        return "critique: no reviewable files under #{path}" if files.empty?
-
-        critic = Master::Review::Council::Critique.new(
-          mode: :general, agent: deliberation.agent, event_bus: deliberation.bus, files:,
-        )
-        result = critic.run
-        return "critique: #{result.message}" unless result.ok?
-
-        general_critique_report(result.value!, path)
-      rescue StandardError => e
-        "critique failed: #{e.class}: #{e.message}"
-      end
-
-      def general_critique_report(data, path)
-        lines = ["critique #{path}: #{Array(data[:cherry_picks]).size} cherry-pick(s) (MASTER council)"]
-        Array(data[:feedback]).each do |f|
-          first = f[:feedback].to_s.lines.first.to_s.strip
-          lines << "  [#{f[:persona]}] #{first}"
-        end
-        Array(data[:cherry_picks]).each { |p| lines << "  cherry: #{p}" }
-        lines << "  harvested: #{data[:harvest]}" if data[:harvest]
-        lines.join("\n")
-      end
-
       def snapshot_artifact(abs_path)
         return "not found: #{abs_path}" unless File.exist?(abs_path)
         return snapshot_truncate(File.read(abs_path), SNAPSHOT_FILE_BYTES) if File.file?(abs_path)

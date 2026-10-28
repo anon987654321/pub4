@@ -2,7 +2,6 @@
 
 require_relative "test_helper"
 require "review/council/personas"
-require "review/council/selector"
 require_relative "support_council_answer"
 
 class TestCouncilPersonas < Minitest::Test
@@ -32,32 +31,6 @@ class TestCouncilPersonas < Minitest::Test
     assert_includes names, "Typographer"
     assert_includes names, "Cognitive Psychologist"
     assert_includes names, "Electronic Music Producer"
-  end
-
-  def test_ui_selector_includes_human_factors_personas
-    names = Master::Review::Council::Selector.for(task: :ui)
-
-    assert_includes names, "Web Designer"
-    assert_includes names, "Typographer"
-    assert_includes names, "Cognitive Psychologist"
-    assert_includes names, "NNGroup UX Researcher"
-  end
-
-  def test_selector_unions_task_and_risk_instead_of_raising
-    names = Master::Review::Council::Selector.for(task: :ui, risk: :high)
-
-    assert_includes names, "Web Designer"
-    assert_includes names, "Security"
-    assert_includes names, "Maintainer"
-  end
-
-  def test_selector_available_filter_is_not_dead
-    names = Master::Review::Council::Selector.for(
-      task: :ui,
-      available: ["Web Designer", "Maintainer", "Typographer"],
-    )
-
-    assert_equal ["Web Designer", "Typographer", "Maintainer"].sort, names.sort
   end
 
   # Critique.build_panel downcases preset names and keeps the intersection

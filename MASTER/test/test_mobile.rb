@@ -4,7 +4,6 @@ require "test_helper"
 require "socket"
 require "mobile/bootstrap"
 require "mobile/doctor"
-require "mobile/face_client"
 require "mobile/face_bridge_http"
 require "mobile/host"
 require "trace/effect_observer"
@@ -130,21 +129,35 @@ class TestMobileFace < Minitest::Test
     end
   end
 
+  # The companion end of the face protocol, as small as the server needs to be driven.
+  def exchange(server, message, wanted:)
+    UNIXSocket.open(server.socket_path) do |io|
+      read_type(io, "hello_ok")
+      io.puts(JSON.generate(message))
+      read_type(io, wanted)
+    end
+  end
+
+  def read_type(io, wanted)
+    20.times do
+      line = Timeout.timeout(5) { io.gets } or raise IOError, "face socket closed"
+      message = JSON.parse(line)
+      return message if message["type"] == wanted
+    end
+    raise IOError, "no #{wanted} within 20 messages"
+  end
+
   def test_hello_then_ping_round_trip
     with_server do |server|
-      client = Master::Mobile::FaceClient.new(socket_path: server.socket_path).connect!
-
-      assert_equal "pong", client.ping["type"]
-      client.close
+      assert_equal "pong", exchange(server, { "type" => "ping" }, wanted: "pong")["type"]
     end
   end
 
   def test_an_utterance_is_answered_with_say
     with_server(on_utterance: ->(text, _source) { "heard #{text}" }) do |server|
-      client = Master::Mobile::FaceClient.new(socket_path: server.socket_path).connect!
+      say = exchange(server, { "type" => "utterance", "text" => "hi", "source" => "companion" }, wanted: "say")
 
-      assert_equal "heard hi", client.utterance("hi")["text"]
-      client.close
+      assert_equal "heard hi", say["text"]
     end
   end
 

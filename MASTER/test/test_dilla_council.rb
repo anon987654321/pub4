@@ -3,7 +3,6 @@
 require_relative "test_helper"
 require "review/council/critique"
 require "review/council/personas"
-require "review/council/selector"
 require "review/council/quality_framework"
 require "voice/mix_metrics"
 
@@ -43,13 +42,6 @@ class TestDillaCouncil < Minitest::Test
     ].each do |name|
       assert_includes names, name
     end
-  end
-
-  def test_sonic_selector_includes_full_mix_panel
-    names = Master::Review::Council::Selector.for(task: :sonic)
-    assert_includes names, "Sound Engineer"
-    assert_includes names, "Organ Composer"
-    assert_includes names, "Label Executive"
   end
 
   def test_quality_framework_maps_new_sound_personas
