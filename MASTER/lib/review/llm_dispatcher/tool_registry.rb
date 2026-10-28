@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../../execution/contract"
 require_relative "../../trace/tool_observer"
 
 module Master
@@ -42,7 +43,7 @@ module Master
             wrapper.new(tool, bus: @bus, tool_observer: tool_observer)
           end
         rescue StandardError => err
-          @bus&.publish("agent:llm_tools_error", error: err.message)
+          @bus&.publish("agent:llm_tools_error", error_class: err.class.name, **Master::Execution::Contract.diagnostic_fields(err.message))
           []
         end
 
