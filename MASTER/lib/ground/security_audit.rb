@@ -53,9 +53,16 @@ module Master
       end
 
       def visitor_slash_blocked
-        body = source(CHAT)
-        ok = body.include?('visitor? && input.start_with?("/")')
-        Check.new(ok:, name: "visitor-slash", detail: ok ? "chat slash forbidden for visitors" : "visitor slash check missing")
+        previous_visitor = Fiber[:master_visitor]
+        Fiber[:master_visitor] = true
+        result = Master::CLI::TurnRouter.call(message: "/fix", container: {})
+        ok = result.err? && result.category == :policy && result.message.to_s.match?(/visitors/i)
+        detail = ok ? "TurnRouter rejects /fix before command dispatch" : "TurnRouter did not reject visitor slash input at the shared boundary"
+        Check.new(ok:, name: "visitor-slash", detail:)
+      rescue StandardError => e
+        Check.new(ok: false, name: "visitor-slash", detail: "behavior probe failed: #{e.class}: #{e.message}")
+      ensure
+        Fiber[:master_visitor] = previous_visitor
       end
 
       def visitor_fiber_set
@@ -85,9 +92,23 @@ module Master
       end
 
       def gateway_remote_gated
-        body = File.read(File.join(Master::ROOT, "lib/io/gateway.rb"))
-        ok = body.include?("Pairing.apply_remote!")
-        Check.new(ok:, name: "gateway-remote", detail: ok ? "irc/matrix apply pairing" : "gateway does not apply pairing")
+        previous = { visitor: Fiber[:master_visitor], paired: Fiber[:master_paired],
+                     elevated: Fiber[:master_elevated], subject: Fiber[:master_pair_subject] }
+        Fiber[:master_visitor] = nil
+        Fiber[:master_paired] = nil
+        Fiber[:master_elevated] = nil
+        Fiber[:master_pair_subject] = nil
+        gateway = Master::Io::Gateway.new(pipeline: nil, session: nil)
+        gateway.receive(channel: :irc, message: "status")
+        ok = Fiber[:master_visitor] == true
+        Check.new(ok:, name: "gateway-remote", detail: ok ? "unpaired IRC turn becomes a visitor" : "unpaired IRC turn was not restricted")
+      rescue StandardError => e
+        Check.new(ok: false, name: "gateway-remote", detail: "behavior probe failed: #{e.class}: #{e.message}")
+      ensure
+        Fiber[:master_visitor] = previous[:visitor] if previous
+        Fiber[:master_paired] = previous[:paired] if previous
+        Fiber[:master_elevated] = previous[:elevated] if previous
+        Fiber[:master_pair_subject] = previous[:subject] if previous
       end
 
       def source(relative)

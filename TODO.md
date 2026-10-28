@@ -14,6 +14,10 @@ source and tests they could not run; this pass is what measures them.
 
 - [ ] MASTER focused regressions on the pinned Ruby: from `MASTER/`, run
   `bundle exec ruby -Ilib:test test/test_law_parity.rb`,
+  `bundle exec ruby -Ilib:test test/test_ingress_jobs.rb`,
+  `bundle exec ruby -Ilib:test test/test_security_audit.rb`,
+  `bundle exec ruby -Ilib:test test/test_turn_router.rb`,
+  `bundle exec ruby -Ilib:test test/test_command_registry_dispatch.rb`,
   `bundle exec ruby -Ilib:test test/test_architecture_exploration.rb`,
   `bundle exec ruby -Ilib:test test/test_run_journal_lifecycle.rb`, and
   `bundle exec ruby -Ilib:test test/test_cli_boot_e2e.rb` (the last exercises the real
@@ -57,64 +61,7 @@ source and tests they could not run; this pass is what measures them.
   first words of a reply; a failed stream says so before switching lanes.
 - [ ] CLI cancellation in a PTY: Ctrl-C mid-generation, Ctrl-D, SIGTERM, child timeout; terminal
   modes restored; NO_COLOR, TERM=dumb and non-TTY piping; no face in a dumb terminal. The PTY
-  regression covers `/face` exit and canonical `host:path# pub4 outstanding work
-
-The one cross-tree backlog: work an agent in this checkout can do. Work that
-needs the operator, a device, a credential, a paid call, ears or a console on
-vm23 is a seam in `MASTER/data/operator_seams.yml`. Refusals live under
-"Refused, and why" in `MASTER/AGENTS.md`. An item closes by being deleted in
-the commit that carries its evidence; nothing here records finished work.
-
-## Verification run, after the fixes below land
-
-One pass on one commit, recorded as PASS, FAIL, INCONCLUSIVE, BLOCKED or
-TIMEOUT per command. The 2026-10-25 and 2026-10-26 connector sessions committed
-source and tests they could not run; this pass is what measures them.
-
-- [ ] MASTER focused regressions on the pinned Ruby: from `MASTER/`, run
-  `bundle exec ruby -Ilib:test test/test_law_parity.rb`,
-  `bundle exec ruby -Ilib:test test/test_architecture_exploration.rb`,
-  `bundle exec ruby -Ilib:test test/test_run_journal_lifecycle.rb`, and
-  `bundle exec ruby -Ilib:test test/test_cli_boot_e2e.rb` (the last exercises the real
-  PTY prompt/face lifecycle; its live-model case remains opt-in).
-- [ ] MASTER full suite: `MASTER_TEST_START_MARKERS=1 MASTER_TEST_JOBS=1 MASTER_TEST_PROGRESS_EVERY=25 rake test`,
-  then `MASTER_TEST_JOBS=3 rake test`; check `.master/check/suite-report.json` for incomplete
-  workers and mismatched start/result counts. Then run `rake audit` (the complete declared lint
-  inventory), followed by `bin/check --profile=agent`.
-- [ ] RAILS: `ruby RAILS/test/contract_runner_contract_test.rb`, `ruby RAILS/test/run_all.rb`, and
-  `bin/ci` in each app in `RAILS/apps.yml`, including the 26 playlist, tv and takeaway tests
-  that no command ran until `Pub4TestScope`, brgen's share-target, share-draft and job
-  concurrency tests and a fresh test database for amber's `account_merges` and identity migrations.
-- [ ] OPENBSD: `ruby OPENBSD/test/run_all.rb` and `ruby OPENBSD/test/test_evidence_tool.rb`, smoke-testing
-  PASS, FAIL, BLOCKED, INCONCLUSIVE and TIMEOUT with process-group termination.
-- [ ] STUDIO: `cd STUDIO && rake check test`, including the full `test/dilla_test.rb` (25 minutes;
-  seven failures on 2026-10-23, reconciled in source on 2026-10-24 and never rerun).
-- [ ] Generated outputs match their sources: `RAILS/__shared/design_tokens.yml`,
-  `RAILS/master/public/face.runtime.js`, `face.css`, and `rake docs:agent_contracts` followed by
-  `rake lint:agent_contracts`.
-- [ ] The route suites on MASTER's pinned Ruby with Ollama absent: `test_route_policy.rb`,
-  `test_lane_selection.rb`, `test_fix_fresh_checkout_models.rb`, `test_compute_pool.rb`,
-  `test_fallback_chain.rb`, `test_lane_pool.rb`.
-- [ ] Refresh `MASTER/data/self_findings.yml` through `ruby MASTER/lib/operator/self_findings.rb --ratchet` after source changes settle. Review the law and registry member deltas and both counts; the ratchet must refuse to raise either existing ceiling.
-- [ ] Then `/fix` on the repository root: four independent reports, 30–40 grounded tournament
-  candidates per tree, and each terminal state (DONE, PLATEAU, HUMAN_DECISION, BLOCKED,
-  VALIDATION_FAILED, DELIVERY_FAILED, TIMEOUT) reached truthfully. The checksum-verified
-  `.master/fix_architecture` sidecar and provenance-gated reuse are implemented; still run a real
-  process-interruption/restart probe and preserve its receipt. No trial has yet reached a repair,
-  so repair quality is unmeasured.
-
-## Execution contract
-
-- [ ] Fold FixLoop, RepairLoop and RunJournal into `Fix::Kernel` in the gated order
-  `MASTER/docs/fix_coordinator_map.md` sets, recovery tests first; the one gap left in
-  `MASTER/docs/lifecycle_ownership.md`.
-
-## MASTER behaviour
-
-- [ ] Latency: a monotonic timeline for boot, first token, completed reply and greeting, CLI and
-  web separately, on current HEAD (17.6 s boot and 13–16 s replies on 2026-10-23). Stream the
-  first words of a reply; a failed stream says so before switching lanes.
- restoration; run
+  regression covers `/face` exit and canonical `host:path` restoration; run
   `bundle exec ruby -Ilib:test test/test_cli_boot_e2e.rb` on the pinned Ruby and record the actual
   terminal output. Do not reintroduce the deleted `Master::Io::Chat.destination_label`; the current
   model-only route uses the renderer's `llm` destination default.
