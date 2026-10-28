@@ -2,8 +2,21 @@
 
 require "digest"
 require "tempfile"
+
+# Declare the canonical class and public compatibility constant before loading
+# subordinate modules: their `class RepairLoop` bodies must reopen this exact
+# object, rather than creating a second policy class beside Kernel.
+module Master
+  module Fix
+    class Kernel
+      class RepairAdapter; end unless const_defined?(:RepairAdapter, false)
+    end
+    RepairLoop = Kernel::RepairAdapter unless const_defined?(:RepairLoop, false)
+  end
+end
+
 require_relative "../../io/atomic_write"
-require_relative "../design/authoring"
+require_relative "../../design/authoring"
 require_relative "../conflict_resolver"
 require_relative "../constants"
 require_relative "../attempt"
