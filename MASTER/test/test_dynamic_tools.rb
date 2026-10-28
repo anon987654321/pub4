@@ -47,6 +47,14 @@ class TestDynamicTools < Minitest::Test
     end
   end
 
+  def test_yaml_null_is_not_confused_with_a_comments_only_catalogue
+    with_catalogues("null\n") do
+      error = assert_raises(ArgumentError) { DYNAMIC_TOOLS.load_definitions }
+
+      assert_match(/must be a YAML list/, error.message)
+    end
+  end
+
   def test_malformed_yaml_is_reported_with_the_source_path
     with_catalogues(":\n- [broken\n") do
       error = assert_raises(ArgumentError) { DYNAMIC_TOOLS.load_definitions }
