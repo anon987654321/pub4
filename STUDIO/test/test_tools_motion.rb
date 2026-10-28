@@ -39,7 +39,9 @@ class TestPostproMotion < Minitest::Test
   end
 
   def grade(source, target, seed: 42, grain: :moving)
-    Postpro::Motion.grade(source, target, preset: :portrait, seed:, grain:, io: StringIO.new) do |bytes, width, height, output, frame_seed|
+    Postpro::Motion.grade(
+      source, target, preset: :portrait, seed:, grain:, io: StringIO.new
+    ) do |bytes, width, height, output, frame_seed|
       postpro_video_grade_frame(bytes, width, height, output, :portrait, frame_seed)
     end
   end
@@ -53,6 +55,48 @@ class TestPostproMotion < Minitest::Test
       assert_in_delta 4.0, probe.fps, 0.01
       assert_equal 4, probe.frames
       assert probe.has_audio
+    end
+  end
+
+
+  def test_a_file_without_video_stream_is_refused
+    skip "ffmpeg/ffprobe not on PATH — nothing was measured" unless Postpro::Motion.available?
+
+    Dir.mktmpdir do |directory|
+      audio_only = File.join(directory, "tone.m4a")
+      _output, status = Open3.capture2e(
+        "ffmpeg", "-nostdin", "-v", "error", "-y", "-f", "lavfi",
+        "-i", "sine=frequency=440:duration=1", audio_only
+      )
+      assert status.success?, "could not build the audio-only fixture"
+
+      error = assert_raises(Postpro::Motion::Unavailable) do
+        Postpro::Motion.probe(audio_only)
+      end
+      assert_match(/no video stream/, error.message)
+    end
+  end
+
+  def test_frame_budget_refuses_work_before_invoking_the_grader
+    skip "ffmpeg/ffprobe not on PATH — nothing was measured" unless Postpro::Motion.available?
+
+    Dir.mktmpdir do |directory|
+      source = clip(directory, audio: false)
+      target = File.join(directory, "over-budget.mp4")
+      previous = ENV["POSTPRO_VIDEO_MAX_FRAMES"]
+      ENV["POSTPRO_VIDEO_MAX_FRAMES"] = "2"
+      begin
+        error = assert_raises(Postpro::Motion::Unavailable) do
+          Postpro::Motion.grade(source, target, preset: :portrait, io: StringIO.new) do
+            flunk "the frame-grading callback must not run after preflight rejects the clip"
+          end
+        end
+        assert_match(/exceeds the 2-frame budget/, error.message)
+        refute File.exist?(target)
+        refute File.exist?("#{target}.json")
+      ensure
+        previous ? ENV["POSTPRO_VIDEO_MAX_FRAMES"] = previous : ENV.delete("POSTPRO_VIDEO_MAX_FRAMES")
+      end
     end
   end
 
