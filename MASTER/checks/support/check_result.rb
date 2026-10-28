@@ -17,7 +17,9 @@ module Deploy
   # (the check tried and broke). These remain distinct for diagnosis, but an
   # errored result can never make a runner or report claim success.
   #
-  # `ok?` only ever meant "no hard failures", so a check that could not run —
+  # `ok?` is not a pass verdict: it means no hard failure or check error has
+  # occurred. `outcome` distinguishes a measured pass from an inconclusive run.
+  # A check that could not run —
   # no Chrome, no app listening, no deploy stamp, a missing gem — reported the
   # same green as a check that ran and found nothing. Sixteen checks in the RAILS
   # suite take that path, which is why a green run of the whole suite meant less
