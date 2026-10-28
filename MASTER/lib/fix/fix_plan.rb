@@ -24,6 +24,7 @@ module Master
         lib/fix/four_stream_assessment.rb
         lib/fix/fix_plan.rb
         lib/fix/kernel.rb
+        lib/fix/kernel/convergence_adapter.rb
         lib/fix/kernel/lifecycle.rb
         lib/fix/kernel/lifecycle_journal.rb
         lib/fix/kernel/repair_adapter.rb
