@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "tmpdir"
+require "fileutils"
 require_relative "../lib/configuration_guard"
 require_relative "../lib/ground/boot_checks"
 
@@ -27,6 +29,15 @@ class TestLimitsCatalogueGuard < Minitest::Test
     reason = Guard.validate(path: limits_path, content: YAML.dump(data))
 
     assert_match(/limits\.yml has unknown top-level field\(s\): unexpected_budget_section/, reason)
+  end
+
+  def test_scan_profile_must_reference_a_declared_law_group
+    data = load_live_limits
+    data.fetch("scan_profiles").fetch("full")["laws"] = "missing_law_group"
+
+    reason = Guard.validate(path: limits_path, content: YAML.dump(data))
+
+    assert_match(/scan_profiles\.full\.laws must be '\*' or reference a declared law group/, reason)
   end
 
   def test_session_mode_must_reference_a_declared_scan_profile
