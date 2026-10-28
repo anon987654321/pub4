@@ -4,6 +4,7 @@ require "json"
 require "fileutils"
 require "digest"
 require_relative "event_privacy"
+require_relative "../boot/paths"
 
 module Master
   module Trace
@@ -92,11 +93,11 @@ module Master
 
       def prepare_storage_directory!
         state_directory = File.dirname(@dir)
-        ensure_private_directory!(state_directory)
+        ensure_private_directory!(state_directory, shared_state: true)
         ensure_private_directory!(@dir)
       end
 
-      def ensure_private_directory!(path)
+      def ensure_private_directory!(path, shared_state: false)
         raise IOError, "refusing symlinked trace directory" if File.symlink?(path)
 
         FileUtils.mkdir_p(path, mode: 0o700)
@@ -104,8 +105,17 @@ module Master
         unless stat.directory? && !stat.symlink?
           raise IOError, "trace storage path is not a real directory"
         end
+
+        # The checkout's .master directory is deliberately shared with the
+        # service group on vm23. Apply its existing canonical permission policy
+        # instead of breaking the Rails service by forcing 0700; the per-trace
+        # directory and files remain owner-private.
+        expected_mode = shared_state ? MasterPaths.private_dir_mode(path, 0o700) : 0o700
+        File.chmod(expected_mode, path) if (stat.mode & 0o7777) != expected_mode
+        current = File.lstat(path)
+        unsafe_mask = shared_state ? 0o0007 : 0o0077
         raise IOError, "trace storage directory permissions must be private" unless
-          (stat.mode & 0o077).zero?
+          (current.mode & unsafe_mask).zero?
       end
 
       def append_private_line(path, line)
