@@ -143,7 +143,7 @@ class TestFixInterruptionRestart < Minitest::Test
       refute_equal marker_record.fetch("run_id"), receipt.fetch("run_id")
       assert_equal marker_record.fetch("mission_id"), receipt.fetch("mission_id")
       assert_equal "fix MASTER after restart", receipt.fetch("mission_goal")
-      assert_equal File.join(root, "MASTER"), receipt.fetch("mission_scope")
+      assert_equal "MASTER", receipt.fetch("mission_scope")
       assert_includes %w[running waiting], receipt.fetch("mission_state")
       assert receipt.fetch("checkpoint_exists"), "the objective checkpoint must outlive run-journal deletion"
       assert_equal "before\n", receipt.fetch("checkpoint_sample")
