@@ -57,7 +57,7 @@ module Master
           SWARMS.clear if SWARMS.size >= 4
           requested = ENV["MASTER_FACE_SWARM_BUDGET"]
           configured_budget = Integer(Master::Face::Swarm.config.fetch("particle_budget"))
-          count = requested&.match?(/\\A-?\\d+\\z/) ? Integer(requested).clamp(0, configured_budget) : nil
+          count = requested&.match?(/\A-?\d+\z/) ? Integer(requested).clamp(0, configured_budget) : nil
           swarm_key = [rows, cols, count]
           swarm = (SWARMS[swarm_key] ||= Master::Face::Swarm::Simulation.new(count:))
           swarm.step(mode: state, time: t, reduced_motion: ENV["MASTER_REDUCED_MOTION"] == "1")
