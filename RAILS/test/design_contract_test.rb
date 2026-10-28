@@ -279,17 +279,17 @@ class DesignContractTest < Minitest::Test
 
   def test_decorative_glow_controller_is_not_part_of_general_ui_chrome
     boot = File.read(STIMULUS_BOOT_JS, encoding: "UTF-8")
-    refute_match(/import\\s+Glow\\s+from\\s+["']stimulus-glow["']/, boot)
-    refute_match(/\\[\\s*["']glow["']\\s*,\\s*Glow\\s*\\]/, boot)
+    refute_match(/import\s+Glow\s+from\s+["']stimulus-glow["']/, boot)
+    refute_match(/\[\s*["']glow["']\s*,\s*Glow\s*\]/, boot)
 
     views = Dir.glob(File.join(ROOT, "**/*.{erb,html}")).reject do |path|
       path.match?(UI_STYLESHEET_EXCLUSIONS)
     end
     uses = views.filter_map do |path|
       body = File.read(path, encoding: "UTF-8")
-      "#{path.sub("#{ROOT}/", "")}: data-controller glow" if body.match?(/data-controller\\s*=\\s*["'][^"']*\\bglow\\b/i)
+      "#{path.sub("#{ROOT}/", "")}: data-controller glow" if body.match?(/data-controller\s*=\s*["'][^"']*\bglow\b/i)
     end
-    assert_empty uses, "general UI surfaces must not opt into decorative glow controllers:\\n  #{uses.join("\\n  ")}"
+    assert_empty uses, "general UI surfaces must not opt into decorative glow controllers:\n  #{uses.join("\n  ")}"
   end
 
   def test_theme_toggle_sets_document_element_dataset
