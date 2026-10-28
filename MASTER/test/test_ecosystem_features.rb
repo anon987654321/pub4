@@ -30,6 +30,7 @@ class TestEcosystemFeatures < Minitest::Test
     path = File.join(dir, "model_quota.json")
     script = <<~'RUBY'
       require "master"
+      require "io/model_quota"
       10.times { Master::Io::ModelQuota.record("qwen/qwen3-coder:free") }
     RUBY
     workers = 4.times.map do
