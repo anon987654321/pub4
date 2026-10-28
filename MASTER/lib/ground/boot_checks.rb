@@ -15,6 +15,7 @@ module Master
 
       class << self
         def run(root: Dir.pwd, strict: false)
+          root = Master.master_root(root:)
           results = [
             check_master_dir(root),
             check_config_readable(root),
