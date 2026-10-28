@@ -4,6 +4,7 @@ require "set"
 require "time"
 require_relative "scanner"
 require_relative "run_journal"
+require_relative "kernel"
 require_relative "fix_plan"
 require_relative "reachability"
 require_relative "instrument_check"
@@ -48,7 +49,7 @@ module Master
     # in one of TERMINAL_STATES and says which: "complete" for a run that merely
     # ran out of passes is the false completion this loop exists to refuse.
     class FixLoop
-      attr_reader :homeostat
+      attr_reader :homeostat, :kernel
       # How the last run ended, as a TERMINAL_STATES symbol, for the pass to read instead of its message.
       attr_reader :last_terminal_state
 
@@ -95,7 +96,7 @@ module Master
 
       def initialize(laws:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil,
                      incremental: false, ground_truth: nil, preserve_user_intent: nil,
-                     law_resolver: nil, homeostat: nil, reference_graph: nil)
+                     law_resolver: nil, homeostat: nil, reference_graph: nil, kernel: nil)
         @laws = laws
         @axioms = axioms
         @agent = agent
@@ -116,7 +117,8 @@ module Master
         @halt_reason = nil
         @run_mutex = Mutex.new
         @git = git || Io::GitOperations.new(root)
-        @run_journal = RunJournal.new(root:, bus:)
+        @kernel = kernel || Kernel.new(root: path_root, actor: "fix-loop", bus:)
+        @run_journal = @kernel.lifecycle_journal
         @reachability = Reachability.new(root: @root, bus:)
         @transformation_plan = TransformationPlan.new(root: Master::ROOT)
         @wishlist = Wishlist.new(root: @root, agent: @agent, event_bus: @bus)
@@ -149,7 +151,10 @@ module Master
       # while a single violation stood, so "fix and commit" scanned and stopped.
       def run(target = @root, max_passes: max_passes_default, budget_seconds: FixTime.run_s,
               incremental: @incremental, requested: false, cancellation: nil)
-        @run_mutex.synchronize do
+        coordinator_run_id = @kernel.begin_coordinated_run(
+          target:, max_passes:, budget_seconds:, requested:
+        )
+        result = @run_mutex.synchronize do
           previous_cancellation = @cancellation
           @cancellation = cancellation
           cancellation.activate! if cancellation&.respond_to?(:activate!)
@@ -159,6 +164,18 @@ module Master
             @cancellation = previous_cancellation
           end
         end
+        state = @last_terminal_state || terminal_state_for(result) || :unknown_outcome
+        @kernel.finish_coordinated_run(run_id: coordinator_run_id, state:, outcome: result)
+        result
+      rescue StandardError => error
+        if coordinator_run_id
+          begin
+            @kernel.finish_coordinated_run(run_id: coordinator_run_id, state: :unknown_outcome, error:)
+          rescue StandardError => journal_error
+            Master::Ground::Swallow.log(journal_error, context: "fix_kernel.coordinator_terminal", event_bus: @bus)
+          end
+        end
+        raise
       end
 
       def cancellation_requested? = @cancellation&.cancelled? == true
