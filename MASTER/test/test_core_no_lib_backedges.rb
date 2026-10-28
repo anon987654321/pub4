@@ -79,6 +79,7 @@ class NoLibBackedgesTest < Minitest::Test
     assert_includes fix_loop, 'require_relative "kernel/convergence_adapter"'
     refute_includes fix_loop, "class FixLoop"
     assert_includes convergence, "class ConvergenceAdapter"
+    assert_includes convergence, 'require_relative "../kernel"'
     assert_includes convergence, 'require_relative "../protocol"'
     assert_includes kernel, 'require_relative "kernel/lifecycle_journal"'
     assert_includes lifecycle, "def run_fix_loop"
