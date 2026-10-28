@@ -12,42 +12,16 @@ module Master
         keyword_init: true
       )
 
-      DEFAULTS = {
-        "enabled" => true,
-        "particle_budget" => 240,
-        "damping" => 0.86,
-        "cohesion_radius" => 0.11,
-        "cohesion_strength" => 0.045,
-        "separation_radius" => 0.035,
-        "separation_strength" => 0.08,
-        "noise_scale" => 0.014,
-        "size_from_depth" => true,
-        "glyph_ramp" => ["·", "˙", "∘", "•", "○", "●"],
-        "target_field" => {
-          "head" => { "center" => [0.0, 0.05, 0.0], "scale" => [1.18, 1.02, 0.82], "weight" => 1.0 },
-          "eyes" => {
-            "left" => { "pos" => [-0.29, 0.21, 0.58], "radius" => 0.17, "weight" => 1.40 },
-            "right" => { "pos" => [0.29, 0.21, 0.58], "radius" => 0.17, "weight" => 1.40 }
-          },
-          "mouth" => { "pos" => [0.0, -0.31, 0.50], "radius" => 0.34, "weight" => 1.12 },
-          "softness" => 0.72
-        },
-        "mode_multipliers" => {
-          "idle" => { "eyes" => 1.0, "core" => 1.0, "noise" => 0.14 },
-          "attentive" => { "eyes" => 1.35, "core" => 1.05, "noise" => 0.07 },
-          "thinking" => { "eyes" => 1.15, "core" => 1.30, "noise" => 0.22 }
-        }
-      }.freeze
+      # No renderer-side constants for visual values: tokens.yml is the only authority.
 
       module_function
 
       def config(root: Master::ROOT)
-        configured = Contract.data(root:).fetch("swarm", {})
-        DEFAULTS.merge(configured)
+        Contract.data(root:).fetch("swarm", {})
       end
 
       def enabled?(root: Master::ROOT)
-        config(root:).fetch("enabled", true) == true
+        config(root:).fetch("enabled", false) == true
       end
 
       def canonical_mode(mode)
@@ -74,7 +48,7 @@ module Master
                        else
                          "desktop_particles"
                        end
-        limits = [Integer(config.fetch("particle_budget", 240))]
+        limits = [Integer(config.fetch("particle_budget", spatial[contract_key] || 1))]
         spatial_limit = spatial[contract_key]
         limits << Integer(spatial_limit) if spatial_limit && Integer(spatial_limit).positive?
         limits.min
