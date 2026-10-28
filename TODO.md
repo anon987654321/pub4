@@ -16,13 +16,27 @@ source and tests they could not run; this pass is what measures them.
   `bundle exec ruby -Ilib:test test/test_law_parity.rb`,
   `bundle exec ruby -Ilib:test test/test_ingress_jobs.rb`,
   `bundle exec ruby -Ilib:test test/test_security_audit.rb`,
+  `bundle exec ruby -Ilib:test test/test_io_atomic_write.rb`,
   `bundle exec ruby -Ilib:test test/test_security_headers_source_check.rb`,
-  `bundle exec ruby -Ilib:test test/test_check_chain.rb`,
-  `bundle exec ruby -Ilib:test test/test_strict_mode.rb`,
+  `bundle exec ruby -Ilib:test test/test_io_atomic_write.rb`,
+  `bundle exec ruby -Ilib:test test/test_check_runner_registry.rb`,
   `bundle exec ruby -Ilib:test test/test_turn_router.rb`,
   `bundle exec ruby -Ilib:test test/test_command_registry_dispatch.rb`,
   `bundle exec ruby -Ilib:test test/test_architecture_exploration.rb`,
   `bundle exec ruby -Ilib:test test/test_run_journal_lifecycle.rb`,
+  `bundle exec ruby -Ilib:test test/test_fix_kernel.rb`,
+  `bundle exec ruby -Ilib:test test/test_check_chain.rb`,
+  `bundle exec ruby -Ilib:test test/test_strict_mode.rb`,
+  `bundle exec ruby -Ilib:test test/test_ecosystem_features.rb`,
+  `bundle exec ruby -Ilib:test test/test_compute_pool.rb`,
+  `bundle exec ruby -Ilib:test test/test_provider_concurrency.rb`,
+  `bundle exec ruby -Ilib:test test/test_keyless_routing.rb`,
+  `bundle exec ruby -Ilib:test test/test_llm_dispatcher.rb`,
+  `bundle exec ruby -Ilib:test test/test_event_privacy.rb`,
+  `bundle exec ruby -Ilib:test test/test_trace_log_append_jsonl.rb`,
+  `bundle exec ruby -Ilib:test test/test_trace_metrics_log.rb`,
+  `bundle exec ruby -Ilib:test test/test_trace_telemetry.rb`,
+  `bundle exec ruby -Ilib:test test/test_trace_recorder_storage.rb`,
   `bundle exec ruby -Ilib:test test/test_dom_surface_seo_metadata.rb`, and
   `bundle exec ruby -Ilib:test test/test_cli_boot_e2e.rb` (the last exercises the real
   PTY prompt/face lifecycle; its live-model case remains opt-in).
@@ -30,7 +44,7 @@ source and tests they could not run; this pass is what measures them.
   then `MASTER_TEST_JOBS=3 rake test`; check `.master/check/suite-report.json` for incomplete
   workers and mismatched start/result counts. Then run `rake audit` (the complete declared lint
   inventory), followed by `bin/check --profile=agent`.
-- [ ] RAILS: `ruby RAILS/test/contract_runner_contract_test.rb`, `ruby RAILS/test/deploy_checks_contract_test.rb`, `ruby RAILS/test/check_failopen_test.rb`, `ruby RAILS/test/checks/runner_explain_test.rb`, `ruby RAILS/test/run_all.rb`, and
+- [ ] RAILS: `ruby RAILS/test/contract_runner_contract_test.rb`, `ruby RAILS/test/deploy_checks_contract_test.rb`, `ruby RAILS/test/check_failopen_test.rb`, `ruby RAILS/test/checks/runner_explain_test.rb`, `ruby RAILS/test/checks/constitutional_scan_targets_test.rb`, `ruby RAILS/test/run_all.rb`, and
   `bin/ci` in each app in `RAILS/apps.yml`, including the 26 playlist, tv and takeaway tests
   that no command ran until `Pub4TestScope`, brgen's share-target, share-draft and job
   concurrency tests and a fresh test database for amber's `account_merges` and identity migrations.
@@ -45,7 +59,7 @@ source and tests they could not run; this pass is what measures them.
   `rake lint:agent_contracts`.
 - [ ] The route suites on MASTER's pinned Ruby with Ollama absent: `test_route_policy.rb`,
   `test_lane_selection.rb`, `test_fix_fresh_checkout_models.rb`, `test_compute_pool.rb`,
-  `test_fallback_chain.rb`, `test_lane_pool.rb`.
+  `test_fallback_chain.rb`, `test_lane_pool.rb`, `test_ecosystem_features.rb`.
 - [ ] Refresh `MASTER/data/self_findings.yml` through `ruby MASTER/lib/operator/self_findings.rb --ratchet` after source changes settle. Review the law and registry member deltas and both counts; the ratchet must refuse to raise either existing ceiling.
 - [ ] Then `/fix` on the repository root: four independent reports, 30–40 grounded tournament
   candidates per tree, and each terminal state (DONE, PLATEAU, HUMAN_DECISION, BLOCKED,
