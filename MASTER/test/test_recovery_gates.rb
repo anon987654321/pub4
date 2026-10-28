@@ -379,6 +379,8 @@ module Master
             trace = Struct.new(:failures, :summary) do
               def clean? = true
             end.new([], "controlled trace clean")
+            # The public CommandRegistry /fix pre/post boundary and Kernel receipts are real;
+            # only Pipeline::Pass is replaced by a bounded fixture so no model or tree repair runs.
             run_pass = lambda do |dependencies, **options|
               resolved_target = File.expand_path(options.fetch(:target), cli_root)
               result = dependencies.fetch(:fix_loop).run(
