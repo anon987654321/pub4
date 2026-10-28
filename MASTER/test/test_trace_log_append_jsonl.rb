@@ -66,6 +66,19 @@ class TraceLogAppendJsonlTest < Minitest::Test
     end
   end
 
+  def test_existing_directory_is_tightened_when_directory_mode_is_omitted
+    Dir.mktmpdir("trace-jsonl-default-directory-mode-") do |dir|
+      File.chmod(0o755, dir)
+      path = File.join(dir, "events.ndjson")
+
+      LOG.append_jsonl(path, { "event" => "private" })
+
+      expected = MasterPaths.private_dir_mode(dir, 0o700)
+      assert_equal expected, File.stat(dir).mode & 0o7777
+      assert_equal 0o600, File.stat(path).mode & 0o777
+    end
+  end
+
   def test_event_stream_persists_private_fields_as_digests
     Dir.mktmpdir("trace-event-private-payload-") do |root|
       event_log = Master::Trace::Log::Event.new(root:)
