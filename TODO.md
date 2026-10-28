@@ -76,6 +76,9 @@ source and tests they could not run; this pass is what measures them.
   pinned Ruby 4.0.5, then prove
   budget/collapse and zero-repair ledger honesty, the full adapter receipt-parity matrix, and one
   real repository-wide `/fix` trial. Do not remove compatibility aliases until those gates pass.
+- [ ] Define a retention/segmentation policy for the hash-chained `.master/log.jsonl`
+  before long-running production use. Any compaction must preserve verifiable chain
+  continuity with explicit segment checkpoints; never truncate arbitrary prefixes.
 
 ## MASTER behaviour
 
