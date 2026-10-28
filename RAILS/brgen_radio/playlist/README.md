@@ -39,3 +39,29 @@ The engine depends on `pub4-shared` for `User`, authentication, tenancy and the 
 On screen it uses an immersive stage with a transport bar, and it publishes the bar's height so
 floating widgets clear it. Its stylesheet rules live in brgen's single `application.scss`,
 scoped under `body.vertical-playlist`.
+
+
+## Radio Bergen tunnel and curated archive
+
+The Playlist home now renders the existing Radio Bergen tunnel through the Rails
+engine view and Stimulus controller rather than a standalone HTML page. Playback
+starts after a user gesture. Once the selected crate is imported, the tunnel
+plays same-origin Active Storage audio and analyses the actual audio signal.
+
+The exact 35-track selection and ordering live in
+`RAILS/brgen/config/radio_bergen/tracks.yml`; filenames map to the archive-root
+files in `pub2`, not the stale `mp3/akmd-…` URLs. Audio is deliberately not
+committed into Git. After confirming that all recordings may be distributed, run
+from `RAILS/brgen`:
+
+```sh
+RADIO_BERGEN_ARCHIVE_ROOT=/absolute/path/to/pub2 \
+RADIO_BERGEN_OWNER_EMAIL=your-existing-account@example.invalid \
+RADIO_BERGEN_RIGHTS_CONFIRMED=1 \
+bin/rails radio_bergen:import_curated
+```
+
+The task preflights all source files, attaches them through Active Storage, and
+creates the playlist in the original order. It is idempotent for matching audio
+and refuses to silently overwrite a changed attachment. The confirmation flag
+is an operator attestation, not a legal determination.
