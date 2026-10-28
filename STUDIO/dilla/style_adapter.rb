@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require_relative "../style_registry"
 
 module Dilla
   # Adapter boundary for symbolic proposals. This module validates artifacts;
@@ -8,9 +9,10 @@ module Dilla
   module StyleAdapter
     REQUIRED_ABC_HEADERS = %w[X: T: M: L: K:].freeze
 
-    def self.validate_abc!(abc, validator: nil, negative_list: [], matcher: nil)
+    def self.validate_abc!(abc, validator: nil, negative_list: [], matcher: nil, style_id: nil, registry: nil)
       text = abc.to_s
       raise ArgumentError, "ABC score is empty" if text.strip.empty?
+      style_entry = Studio::StyleRegistry.resolve(style_id: style_id, modality: "audio", registry: registry) if style_id
       missing = REQUIRED_ABC_HEADERS.reject { |header| text.lines.any? { |line| line.start_with?(header) } }
       raise ArgumentError, "invalid ABC score; missing #{missing.join(', ')}" unless missing.empty?
       raise ArgumentError, "ABC validator must be supplied by the engine" unless validator.respond_to?(:call)
@@ -21,10 +23,15 @@ module Dilla
         hit = Array(negative_list).find { |item| matcher.call(text, item) }
         raise Refused, "STYLE_REFUSAL: #{hit}" if hit
       end
-      { status: :ready, abc: text, sha256: Digest::SHA256.hexdigest(text) }
+      result = { status: :ready, abc: text, sha256: Digest::SHA256.hexdigest(text) }
+      result[:style_contract] = {
+        id: style_entry["style_id"], version: style_entry["version"],
+        modality: style_entry["modality"]
+      } if style_entry
+      result
     end
 
-    def self.validate_mix_parameters!(tracks)
+    def self.validate_mix_parameters!(tracks, style_id: nil, registry: nil)
       raise ArgumentError, "mix parameters must be a track map" unless tracks.is_a?(Hash) && !tracks.empty?
       tracks.each do |track, params|
         raise ArgumentError, "track #{track} parameters must be a map" unless params.is_a?(Hash)
@@ -35,7 +42,12 @@ module Dilla
           raise ArgumentError, "track #{track} pan out of range"
         end
       end
-      { status: :ready, tracks: tracks }
+      result = { status: :ready, tracks: tracks }
+      if style_id
+        entry = Studio::StyleRegistry.resolve(style_id: style_id, modality: "audio", registry: registry)
+        result[:style_contract] = { id: entry["style_id"], version: entry["version"], modality: entry["modality"] }
+      end
+      result
     end
 
     class Refused < ArgumentError; end
