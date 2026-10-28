@@ -19,7 +19,8 @@ source and tests they could not run; this pass is what measures them.
   `bundle exec ruby -Ilib:test test/test_turn_router.rb`,
   `bundle exec ruby -Ilib:test test/test_command_registry_dispatch.rb`,
   `bundle exec ruby -Ilib:test test/test_architecture_exploration.rb`,
-  `bundle exec ruby -Ilib:test test/test_run_journal_lifecycle.rb`, and
+  `bundle exec ruby -Ilib:test test/test_run_journal_lifecycle.rb`,
+  `bundle exec ruby -Ilib:test test/test_dom_surface_seo_metadata.rb`, and
   `bundle exec ruby -Ilib:test test/test_cli_boot_e2e.rb` (the last exercises the real
   PTY prompt/face lifecycle; its live-model case remains opt-in).
 - [ ] MASTER full suite: `MASTER_TEST_START_MARKERS=1 MASTER_TEST_JOBS=1 MASTER_TEST_PROGRESS_EVERY=25 rake test`,
@@ -30,8 +31,10 @@ source and tests they could not run; this pass is what measures them.
   `bin/ci` in each app in `RAILS/apps.yml`, including the 26 playlist, tv and takeaway tests
   that no command ran until `Pub4TestScope`, brgen's share-target, share-draft and job
   concurrency tests and a fresh test database for amber's `account_merges` and identity migrations.
-- [ ] OPENBSD: `ruby OPENBSD/test/run_all.rb` and `ruby OPENBSD/test/test_evidence_tool.rb`, smoke-testing
-  PASS, FAIL, BLOCKED, INCONCLUSIVE and TIMEOUT with process-group termination.
+- [ ] OPENBSD: `ruby OPENBSD/test/test_pf_policy_check.rb`, `ruby OPENBSD/test/run_all.rb` and
+  `ruby OPENBSD/test/test_evidence_tool.rb`, smoke-testing PASS, FAIL, BLOCKED, INCONCLUSIVE and TIMEOUT
+  with process-group termination. The PF policy test includes a negative case for protocol-specific
+  unscoped pass rules; validate native syntax separately on OpenBSD with `pfctl -nf /etc/pf.conf`.
 - [ ] STUDIO: `cd STUDIO && rake check test`, including the full `test/dilla_test.rb` (25 minutes;
   seven failures on 2026-10-23, reconciled in source on 2026-10-24 and never rerun).
 - [ ] Generated outputs match their sources: `RAILS/__shared/design_tokens.yml`,
