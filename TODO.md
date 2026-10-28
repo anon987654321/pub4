@@ -62,6 +62,8 @@ TIMEOUT per command. The 2026-10-25 and 2026-10-26 connector sessions committed
 source and tests they could not run; this pass is what measures them.
 
 - [ ] MASTER focused regressions on the pinned Ruby: from `MASTER/`, run
+  `bundle exec ruby -Ilib:test test/test_final_cleanup.rb`,
+  `bundle exec ruby -Ilib:test test/test_fix_loop_observability.rb`,
   `bundle exec ruby -Ilib:test test/test_law_parity.rb`,
   `bundle exec ruby -Ilib:test test/test_fix_kernel_lifecycle.rb`,
   `bundle exec ruby -Ilib:test test/test_recovery_gates.rb`,
