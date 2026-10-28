@@ -7,26 +7,43 @@ module Studio
   module ReplayManifest
     module_function
 
-    def build(output_path:, prompt:, model:, style:, params:, parent_digest: nil, adapter: nil, postpro_chain: [])
+    def build(output_path:, prompt:, model:, style: nil, params:, parent_digest: nil, adapter: nil, postpro_chain: [])
       raise ArgumentError, "output file is missing" unless File.file?(output_path)
+      origin = value(style, :origin_class)
+      lineage = value(style, :lineage) || (style && {
+        origin_class: origin,
+        reference_hashes: value(style, :reference_hashes) || [],
+        registry_entry: value(style, :style_id)
+      })
+      influence = value(style, :influence) || (style && {
+        metric: nil, value: nil,
+        reason: "style contract is declarative; output influence was not measured"
+      })
       {
         schema_version: 1,
         output_sha256: Digest::SHA256.file(output_path).hexdigest,
         prompt_sha256: Digest::SHA256.hexdigest(prompt.to_s),
         parent_manifest_sha256: parent_digest,
-        style_id: style.fetch(:style_id),
-        style_version: style.fetch(:version),
-        model_id: model.fetch(:id),
-        model_version: model[:version],
-        model_hash: model[:hash],
-        adapter_id: adapter && adapter[:id],
-        adapter_hash: adapter && adapter[:hash],
+        style_id: value(style, :style_id),
+        style_version: value(style, :version),
+        modality: value(style, :modality),
+        model_id: value(model, :id),
+        model_version: value(model, :version),
+        model_hash: value(model, :hash),
+        adapter_id: value(adapter, :id),
+        adapter_hash: value(adapter, :hash),
         parameters: params,
         postpro_chain: postpro_chain,
-        lineage: style[:lineage],
-        influence: style[:influence]
+        lineage: lineage,
+        influence: influence
       }
     end
+
+    def value(hash, key)
+      return nil unless hash.is_a?(Hash)
+      hash.key?(key) ? hash[key] : hash[key.to_s]
+    end
+    private_class_method :value
 
     def digest(manifest)
       Digest::SHA256.hexdigest(JSON.generate(canonicalize(manifest)))
