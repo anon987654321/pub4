@@ -88,7 +88,8 @@ ownership:
     risk: medium
     check: bin/check
   docs/:
-    purpose: Design records and generated digests a reader consults: the coordinator map, lifecycle
+    purpose: >-
+      Design records and generated digests a reader consults: the coordinator map, lifecycle
       ownership, the free-compute record, the laws digest; handoffs/ keeps dated session notes
     risk: low
     check: rake test
