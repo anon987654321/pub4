@@ -90,6 +90,35 @@ class TraceLogAppendJsonlTest < Minitest::Test
     end
   end
 
+  def test_refuses_to_append_after_an_incomplete_final_jsonl_record
+    Dir.mktmpdir("trace-jsonl-incomplete-tail-") do |dir|
+      path = File.join(dir, "events.ndjson")
+      original = %({"event":"incomplete"})
+      File.write(path, original)
+      File.chmod(0o600, path)
+
+      error = assert_raises(IOError) do
+        LOG.append_jsonl(path, { "event" => "next" }, max_bytes: 500)
+      end
+
+      assert_match(/incomplete JSONL record/, error.message)
+      assert_equal original, File.read(path)
+    end
+  end
+
+  def test_rotation_drops_incomplete_records_at_both_tail_boundaries
+    Dir.mktmpdir("trace-jsonl-incomplete-rotation-") do |dir|
+      path = File.join(dir, "events.ndjson")
+      File.write(path, "discard-this-record\nkeep-me\npartial")
+      File.chmod(0o644, path)
+
+      LOG.compact_rotated(path, 20)
+
+      assert_equal "keep-me\n", File.read(path)
+      assert_equal 0o600, File.stat(path).mode & 0o777
+    end
+  end
+
   def test_rotation_makes_an_existing_public_log_private_before_preserving_it
     Dir.mktmpdir("trace-jsonl-rotation-permissions-") do |dir|
       path = File.join(dir, "events.ndjson")
