@@ -31,13 +31,15 @@ module Postpro
 
     # Use stream metadata, not the filename. VFR is refused because converting
     # it to a constant-rate image sequence would silently alter frame timing.
-    def self.probe(path)
+    def self.probe(path, deadline: nil)
+      deadline ||= monotonic + 30
       raise Unavailable, "video input is not a readable file: #{path}" unless File.file?(path)
       raise Unavailable, "ffmpeg and ffprobe are not on PATH" unless available?
 
-      output, status = Open3.capture2e(
-        "ffprobe", "-v", "error", "-print_format", "json",
-        "-show_streams", "-show_format", path.to_s
+      output, status = capture_command(
+        ["ffprobe", "-v", "error", "-print_format", "json",
+         "-show_streams", "-show_format", path.to_s],
+        deadline:
       )
       raise Unavailable, "ffprobe could not read #{path}: #{output.lines.last.to_s.strip}" unless status.success?
 
@@ -119,17 +121,18 @@ module Postpro
         raise Unavailable, "refusing to replace an existing video or sidecar; choose a new output path"
       end
 
-      probe = probe(input)
       limits = limits_from_env
+      started = monotonic
+      deadline = started + limits[:max_seconds]
+      probe = probe(input, deadline:)
       estimate = estimate(probe, seconds_per_frame: limits[:seconds_per_frame])
       raise Unavailable, "estimate #{estimate[:frames]} frames exceeds the #{limits[:max_frames]}-frame budget" if estimate[:frames] > limits[:max_frames]
       total_pixels = probe.width * probe.height * estimate[:frames]
       raise Unavailable, "estimate exceeds the #{limits[:max_pixels]}-pixel processing budget" if total_pixels > limits[:max_pixels]
       raise Unavailable, "estimate #{estimate[:seconds]}s exceeds the #{limits[:max_seconds]}s runtime budget" if estimate[:seconds] > limits[:max_seconds]
 
+      verify_constant_rate!(input, probe, deadline:)
       FileUtils.mkdir_p(File.dirname(target))
-      started = monotonic
-      deadline = started + limits[:max_seconds]
       io.puts "motion: #{probe.width}x#{probe.height} #{probe.rate}fps #{estimate[:frames]} frames" \
               "#{probe.has_audio ? ' + audio' : ''}; estimated #{estimate[:seconds]}s, hard budget #{limits[:max_seconds]}s"
       io.puts "motion: seed=#{seed} grain=#{grain}"
@@ -287,8 +290,41 @@ module Postpro
       run_command(args, deadline:)
     end
 
+    def self.verify_constant_rate!(input, probe, deadline:)
+      output, status = capture_command(
+        ["ffprobe", "-v", "error", "-select_streams", "v:0",
+         "-show_entries", "frame=best_effort_timestamp_time", "-of", "csv=p=0", input],
+        deadline:
+      )
+      raise Unavailable, "ffprobe could not read video frame timestamps" unless status.success?
+
+      timestamps = output.lines.filter_map { |line| Float(line.strip, exception: false) }
+      unless timestamps.length == probe.frames
+        raise Unavailable, "frame timestamp count #{timestamps.length} differs from metadata count #{probe.frames}; refusing ambiguous timing"
+      end
+
+      expected = 1.0 / probe.fps
+      tolerance = [0.001, expected * 0.02].max
+      intervals = timestamps.each_cons(2).map { |a, b| b - a }
+      if intervals.any? { |interval| interval <= 0 || (interval - expected).abs > tolerance }
+        raise Unavailable, "variable frame timing detected; normalise it explicitly before grading"
+      end
+      true
+    end
+
     def self.run_command(args, deadline:)
-      Tempfile.create(["postpro-motion-assemble-", ".log"]) do |log|
+      output, status = capture_command(args, deadline:)
+      unless status.success?
+        raise Unavailable, "ffmpeg assembly failed: #{output.lines.last(3).join(' ').strip}"
+      end
+
+      true
+    end
+
+    # A bounded child process whose stdout/stderr land in a temp log, not an
+    # unbounded pipe or a shell. Used for ffprobe output and the final mux.
+    def self.capture_command(args, deadline:)
+      Tempfile.create(["postpro-motion-command-", ".log"]) do |log|
         pid = Process.spawn(*args, in: File::NULL, out: log, err: [:child, :out], pgroup: true)
         status = nil
         loop do
@@ -301,17 +337,15 @@ module Postpro
             terminate_child(pid, group: true)
             Process.waitpid(pid) rescue nil
             log.rewind
-            raise Unavailable, "ffmpeg assembly exceeded its runtime budget: #{log.read.lines.last(3).join(' ').strip}"
+            raise Unavailable, "#{File.basename(args.first)} exceeded the video runtime budget: #{log.read.lines.last(3).join(' ').strip}"
           end
           sleep 0.05
         end
-        unless status.success?
-          log.rewind
-          raise Unavailable, "ffmpeg assembly failed: #{log.read.lines.last(3).join(' ').strip}"
-        end
+        log.rewind
+        [log.read, status]
       end
     rescue Errno::ENOENT => e
-      raise Unavailable, "ffmpeg is unavailable: #{e.message}"
+      raise Unavailable, "#{File.basename(args.first)} is unavailable: #{e.message}"
     end
 
     def self.limits_from_env
