@@ -341,11 +341,11 @@ module Master
           detail: [
             "/face — open the MASTER face in the alternate terminal screen, as large as the terminal allows.",
             "/face size auto|small|large|WxH — choose the face's size (WxH is columns by rows) and open it; the choice holds for the session.",
-            "Bare bin/master opens the original Ruby REPL prompt; /face opens its full-screen visual stage.",
+            "Bare bin/master opens the full-screen face with the same live operator prompt; /face opens it from the shell.",
             "The face renders the same live prompt and session rather than creating a host:path shell prompt.",
             "Ctrl-C interrupts active listening, thinking or speech, or clears a draft; it never exits the face. Ctrl-D returns to the REPL.",
             "The web chat and terminal share the location-aware Operator prompt, TurnRouter and command registry.",
-            "MASTER_FACE_ON_START=1 opens the face at start. /fix and other long commands run on the shell surface.",
+            "MASTER_FACE_ON_START=0 keeps the plain REPL as the default. /fix and other long commands run on the shell surface.",
             "While idle it listens through the microphone and says so on its status line (mic on).",
             "Type to take the floor.",
             "It uses the same TurnRouter, ear, mouth and runtime event bus as the shell.",

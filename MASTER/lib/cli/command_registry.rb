@@ -480,10 +480,9 @@ module Master
       end
 
       # Restart this session in place so edits to lib/ and data/ take effect. The conversation is saved,
-      # the beat and speech stop first, and the process lock is dropped so the fresh bin/master takes it.
+      # speech stops first, and the process lock is dropped so the fresh bin/master takes it.
       def dispatch_reload
         Trace::Dmesg.status("master0", "reloading")
-        Voice::Bed.stop
         Voice::Playback.interrupt!("reload")
 
         $stdin.cooked! if $stdin.tty?

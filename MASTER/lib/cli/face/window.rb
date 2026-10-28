@@ -317,11 +317,10 @@ module Master
 
         def hearing? = @hearing&.alive?
 
-        # Hands free is the data default: the face listens when idle, ends a take on silence and answers without
-        # Enter. It holds off while MASTER speaks (the face's voice, the speech queue, a bed the bard started), so
-        # it does not hear itself. The quiet Dilla chord bed plays under listening.
+        # Hands free is the data default: listen while idle and quiet, ending a take on silence. Hold off while
+        # speech is playing so the microphone does not hear MASTER and answer itself.
         def auto_mic?
-          return false if Master::Voice::Bed.foreground? || Master::Voice::Playback.backlog.positive?
+          return false if Master::Voice::Playback.backlog.positive?
           return false if Master::Voice::Playback.external_speaking?
 
           auto_mic_setting?

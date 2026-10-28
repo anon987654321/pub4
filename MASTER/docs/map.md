@@ -3209,10 +3209,6 @@ Declares: `Master`, `Master::Visual`, `Master::Visual::AdAudit`, `Master::Visual
 
 Declares: `Master`, `Master::Voice`, `Master::Voice::Aesthetic`
 
-## `lib/voice/bed.rb`
-
-Declares: `Master`, `Master::Voice`, `Master::Voice::Bed`
-
 ## `lib/voice/benchmark.rb`
 
 Declares: `Master`, `Master::Voice`, `Master::Voice::Benchmark`

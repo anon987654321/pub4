@@ -73,7 +73,6 @@ module Master
         greet_from_model unless initial_message
         @running = true
         play_boot_sound
-        start_bed
         start_reminder_watch
         if face_on_start?(initial_message)
           @face_open = true
@@ -83,9 +82,8 @@ module Master
         repl_loop
       end
 
-      # Interactive sessions open on the original prompt. The face opens at start only when
-      # face_on_start is enabled by the data or MASTER_FACE_ON_START=1; /face opens it any time.
-      # Command-line messages and non-TTY pipes stay plain so automation never receives terminal animation.
+      # Bare interactive TTY sessions open on the face; its input row uses the same live operator prompt.
+      # MASTER_FACE_ON_START=0 restores shell-first entry. Messages and non-TTY pipes remain plain.
       def face_on_start?(initial_message)
         return false if initial_message || ENV["MASTER_FACE_ON_START"] == "0"
         return false unless $stdin.tty? && $stdout.tty?
@@ -157,17 +155,6 @@ module Master
         Master::Voice::BootSound.play
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.boot_sound", event_bus: @refs.bus)
-      end
-
-      # The Dilla chord bed starts with the session whether or not the bard speaks; closing the session stops
-      # it, and MASTER_BED=0 keeps it silent.
-      def start_bed
-        return unless $stdout.tty?
-
-        Master::Voice::Bed.boot(Master::Voice::Narrator.load_config(:bard)["bed"])
-        Master::Trace::Dmesg.status("bed0", "Dilla chord bed on") if Master::Voice::Bed.held?
-      rescue StandardError => e
-        Master::Trace::Dmesg.status("bed0", "ambient failed, #{e.class}: #{e.message}")
       end
 
       def init_session_state!

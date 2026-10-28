@@ -129,7 +129,6 @@ module Master
       def disable!
         @override = false
         halt!
-        Bed.release
       end
 
       def audible? = @audible.call
@@ -218,7 +217,6 @@ module Master
       end
 
       def stop
-        Bed.release
         @stopping = true
         @thread&.kill
         @thread = nil
@@ -281,7 +279,6 @@ module Master
         return unless now - [@last_event_at, @last_spoken_at].max >= @config.fetch("task_idle_s")
 
         reset_task
-        Bed.release
       end
 
       # The events of one beat, oldest first. Over the cap, findings stay and the
@@ -477,7 +474,6 @@ module Master
       end
 
       def speak_to_playback(sentence)
-        Bed.start(@config["bed"])
         Playback.enqueue(sentence, **delivery)
       end
 

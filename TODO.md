@@ -6,6 +6,19 @@ vm23 is a seam in `MASTER/data/operator_seams.yml`. Refusals live under
 "Refused, and why" in `MASTER/AGENTS.md`. An item closes by being deleted in
 the commit that carries its evidence; nothing here records finished work.
 
+## Session note 2026-10-28 (face-first boot and Dilla bed removal)
+
+- Bare interactive `bin/master` now opens the existing terminal face by default;
+  it carries the same live operator prompt. `MASTER_FACE_ON_START=0` keeps the
+  shell-first prompt for diagnosis. Scripted messages and pipes remain plain.
+- Removed the persistent Dilla bed as a runtime feature: no boot start, narrator
+  restart, held-bed cleanup, or face microphone coupling; removed its config and
+  module. Dilla remains available for deliberate Studio and `/play` work.
+- Regression tests were updated for the new prompt default and the absence of
+  ambient-bed configuration/runtime calls. Ruby tests and a live PTY launch were
+  **NOT_RUN** through the GitHub editing surface. The full verification list below
+  remains open; no suite or visual test is claimed as passing.
+
 ## Session note 2026-10-28 (A/B/C/D execution)
 
 - **B — branch hygiene:** deleted 40 stale agent/fix/session/codex/claude/work
@@ -126,6 +139,8 @@ TIMEOUT per command. The 2026-10-25 and 2026-10-26 connector sessions committed
 source and tests they could not run; this pass is what measures them.
 
 - [ ] MASTER focused regressions on the pinned Ruby: from `MASTER/`, run
+  `bundle exec ruby -Ilib:test test/test_cli_face_on_start.rb`,
+  `bundle exec ruby -Ilib:test test/voice/test_voice_bed.rb`,
   `bundle exec ruby -Ilib:test test/test_final_cleanup.rb`,
   `bundle exec ruby -Ilib:test test/test_fix_loop_observability.rb`,
   `bundle exec ruby -Ilib:test test/test_law_parity.rb`,
