@@ -295,6 +295,8 @@ test("the swarm geometry, force constants, modes and glyph ramp live in face tok
   assert.match(system, /Number\(config\.noise_scale\)/);
   assert.match(system, /Number\(config\.cohesion_strength\)/);
   assert.match(system, /Number\(config\.separation_strength\)/);
+  assert.match(system, /uDepthFromRank: \{ value: swarmConfiguration\(\)\.size_from_depth === true \? 1\.0 : 0\.0 \}/);
+  assert.match(system, /uDepthSteps: \{ value: Math\.max\(2, Array\.isArray\(swarmConfiguration\(\)\.glyph_ramp\)/);
   assert.doesNotMatch(system, /const SWARM_(?:DAMPING|RAMP|TARGET_FIELD)/);
 });
 
@@ -460,7 +462,13 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   assert.equal(api.isFaceScene({ children: [{ type: "Group", children: [] }] }), false);
   const stipple = api.buildFromSamples(THREE, [{ x: 0, y: 0, z: 0, zone: 0, bias: 1 }]);
   assert.equal(stipple.count, 1);
+  assert.equal(stipple.material.uniforms.uDepthFromRank.value, 1);
+  assert.equal(stipple.material.uniforms.uDepthSteps.value, 6);
   assert.equal(stipple.material.uniforms.uDensity.value, 0.44);
+  window.MASTER_FACE_CONTRACT.swarm.size_from_depth = false;
+  const flatDepth = api.buildFromSamples(THREE, [{ x: 0, y: 0, z: 0, zone: 0, bias: 1 }]);
+  assert.equal(flatDepth.material.uniforms.uDepthFromRank.value, 0);
+  window.MASTER_FACE_CONTRACT.swarm.size_from_depth = true;
   assert.equal(stipple.material.uniforms.uRipple.value, 0.03);
   assert.equal(stipple.material.uniforms.uTurbulence.value, 0.04);
   assert.equal(stipple.material.uniforms.uLuminosity.value, 0.76);
