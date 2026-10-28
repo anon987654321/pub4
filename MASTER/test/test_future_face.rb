@@ -3,9 +3,9 @@
 require "yaml"
 require "minitest/autorun"
 
-ROOT = File.expand_path("..", __dir__)
-
 class TestFutureFaceContract < Minitest::Test
+  ROOT = File.expand_path("..", __dir__)
+
   def setup
     @tokens = YAML.safe_load_file(File.join(ROOT, "data", "tokens.yml"), aliases: true).fetch("tokens")
     @morphology = @tokens.fetch("face_interface").fetch("spatial").fetch("morphology")

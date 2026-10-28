@@ -8,8 +8,20 @@ require_relative "../lib/music/synth"
 class MediaIntentSpec < Minitest::Test
   MediaIntent = Master::Io::MediaIntent
 
-  # ScriptDispatch.run hits real tools, so the routing tests swap it out the way
-  # Ruby itself does a singleton. minitest's stub is not available on this box.
+  # Reference profiles and renders live under XDG_DATA_HOME; every test gets its own so the
+  # operator's saved active style never steers a routing assertion.
+  def setup
+    @saved_xdg = ENV["XDG_DATA_HOME"]
+    @xdg = Dir.mktmpdir("media-intent-xdg")
+    ENV["XDG_DATA_HOME"] = @xdg
+  end
+
+  def teardown
+    @saved_xdg ? ENV["XDG_DATA_HOME"] = @saved_xdg : ENV.delete("XDG_DATA_HOME")
+    FileUtils.rm_rf(@xdg)
+  end
+
+  # ScriptDispatch.run hits real tools, so the routing tests swap it out.
   def with_dispatch_stub(runner)
     klass = Master::Io::ScriptDispatch
     orig = klass.method(:run)
@@ -102,42 +114,42 @@ class MediaIntentSpec < Minitest::Test
     end
   end
 
-def test_a_beat_request_renders_a_progression_with_a_drum_pattern_to_a_wav
-  Dir.mktmpdir do |home|
-    calls = []
-    with_dispatch_stub(dilla_runner(calls)) do
-      stub = MediaIntent.method(:render_dilla)
-      MediaIntent.define_singleton_method(:render_dilla) { |text, root:, output: nil| stub.call(text, root:, output: output && File.join(home, File.basename(output))) }
-      begin
-        result = MediaIntent.dispatch("make me a Flying Lotus beat")
-        assert result.ok?
-        assert_equal :dilla, result.value![:media]
-      ensure
-        MediaIntent.define_singleton_method(:render_dilla, stub)
+  def test_a_beat_request_renders_a_progression_with_a_drum_pattern_to_a_wav
+    Dir.mktmpdir do |home|
+      calls = []
+      with_dispatch_stub(dilla_runner(calls)) do
+        stub = MediaIntent.method(:render_dilla)
+        MediaIntent.define_singleton_method(:render_dilla) { |text, root:, output: nil| stub.call(text, root:, output: output && File.join(home, File.basename(output))) }
+        begin
+          result = MediaIntent.dispatch("make me a Flying Lotus beat")
+          assert result.ok?
+          assert_equal :dilla, result.value![:media]
+        ensure
+          MediaIntent.define_singleton_method(:render_dilla, stub)
+        end
       end
+      assert_equal ["--list"], [calls.first[:arg]]
+      render = calls.last
+      assert_equal "dilla", render[:tool]
+      words = Shellwords.split(render[:arg])
+      assert_includes %w[0 1], words[words.index("--progression") + 1]
+      assert_includes %w[boom_bap offbeat_inversion sparse], words[words.index("--drums") + 1]
+      assert_match(/\.wav\z/, words[words.index("--out") + 1])
     end
-    assert_equal ["--list"], [calls.first[:arg]]
-    render = calls.last
-    assert_equal "dilla", render[:tool]
-    words = Shellwords.split(render[:arg])
-    assert_includes %w[0 1], words[words.index("--progression") + 1]
-    assert_includes %w[boom_bap offbeat_inversion sparse], words[words.index("--drums") + 1]
-    assert_match(/\.wav\z/, words[words.index("--out") + 1])
   end
-end
 
-def test_a_beat_request_that_names_a_progression_and_a_pattern_gets_them
-  Dir.mktmpdir do |dir|
-    calls = []
-    with_dispatch_stub(dilla_runner(calls)) do
-      result = MediaIntent.render_dilla("make a progression 1 beat on offbeat_inversion", root: dir, output: File.join(dir, "x.wav"))
-      assert result.ok?
+  def test_a_beat_request_that_names_a_progression_and_a_pattern_gets_them
+    Dir.mktmpdir do |dir|
+      calls = []
+      with_dispatch_stub(dilla_runner(calls)) do
+        result = MediaIntent.render_dilla("make a progression 1 beat on offbeat_inversion", root: dir, output: File.join(dir, "x.wav"))
+        assert result.ok?
+      end
+      words = Shellwords.split(calls.last[:arg])
+      assert_equal %w[--progression 1 --out], [words[0], words[1], words[2]]
+      assert_equal "offbeat_inversion", words[words.index("--drums") + 1]
     end
-    words = Shellwords.split(calls.last[:arg])
-    assert_equal %w[--progression 1 --out], [words[0], words[1], words[2]]
-    assert_equal "offbeat_inversion", words[words.index("--drums") + 1]
   end
-end
 
   def test_routes_explicit_image_requests_to_replicate
     captured = nil
@@ -163,141 +175,141 @@ end
     [bus, events]
   end
 
-def test_play_live_music_renders_then_plays_the_wav
-  Dir.mktmpdir do |dir|
+  def test_play_live_music_renders_then_plays_the_wav
+    Dir.mktmpdir do |dir|
+      with_clean_player do
+        calls = []
+        ENV["XDG_DATA_HOME"], saved = dir, ENV["XDG_DATA_HOME"]
+        begin
+          with_player do |played|
+            with_dispatch_stub(dilla_runner(calls)) do
+              result = MediaIntent.play_live_music("")
+              assert result.ok?, result.inspect
+              assert_equal :dilla_live, result.value![:media]
+              assert_equal [result.value![:path]], played
+              assert_match(%r{/dilla-renders/\d{4}-\d{2}-\d{2}/.+\.wav\z}, played.first)
+            end
+          end
+        ensure
+          saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+        end
+        assert_equal 1, calls.size
+        assert_equal "dilla", calls.first[:tool]
+        words = Shellwords.split(calls.first[:arg])
+        assert_includes words, "--showcase"
+        assert_includes words, "--no-video"
+        assert_match(/blue-hour-\d{8}T\d{6}Z(?:-\d+)?\.wav\z/, words[words.index("--out") + 1])
+      end
+    end
+  end
+
+  def test_dilla_render_paths_add_suffixes_instead_of_reusing_existing_takes
+    Dir.mktmpdir do |home|
+      saved = ENV["XDG_DATA_HOME"]
+      ENV["XDG_DATA_HOME"] = home
+      at = Time.utc(2026, 10, 19, 12, 34, 56)
+      first = MediaIntent.dilla_unique_render_path("blue-hour", at:)
+      FileUtils.mkdir_p(File.dirname(first))
+      File.write(first, "preserve")
+      second = MediaIntent.dilla_unique_render_path("blue-hour", at:)
+
+      assert_equal "blue-hour-20261019T123456Z.wav", File.basename(first)
+      assert_equal "blue-hour-20261019T123456Z-1.wav", File.basename(second)
+      assert_equal "preserve", File.read(first)
+    ensure
+      saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+    end
+  end
+
+  def test_play_live_music_honours_a_named_progression_and_pattern
+    Dir.mktmpdir do |dir|
+      with_clean_player do
+        calls = []
+        ENV["XDG_DATA_HOME"], saved = dir, ENV["XDG_DATA_HOME"]
+        begin
+          with_player do
+            with_dispatch_stub(dilla_runner(calls)) { assert MediaIntent.play_live_music("progression 1 sparse").ok? }
+          end
+        ensure
+          saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+        end
+        words = Shellwords.split(calls.last[:arg])
+        assert_equal "1", words[words.index("--progression") + 1]
+        assert_equal "sparse", words[words.index("--drums") + 1]
+      end
+    end
+  end
+
+  def test_play_live_music_honours_a_bare_progression_number
+    Dir.mktmpdir do |dir|
+      with_clean_player do
+        calls = []
+        ENV["XDG_DATA_HOME"], saved = dir, ENV["XDG_DATA_HOME"]
+        begin
+          with_player do
+            with_dispatch_stub(dilla_runner(calls)) { assert MediaIntent.play_live_music("1 sparse").ok? }
+          end
+        ensure
+          saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+        end
+        words = Shellwords.split(calls.last[:arg])
+        assert_equal "1", words[words.index("--progression") + 1]
+        assert_equal "sparse", words[words.index("--drums") + 1]
+      end
+    end
+  end
+
+  def test_play_list_names_the_choices_and_plays_nothing
     with_clean_player do
-      calls = []
-      ENV["XDG_DATA_HOME"], saved = dir, ENV["XDG_DATA_HOME"]
-      begin
-        with_player do |played|
-          with_dispatch_stub(dilla_runner(calls)) do
-            result = MediaIntent.play_live_music("")
+      with_player do |played|
+        calls = []
+        with_dispatch_stub(dilla_runner(calls)) do
+          %w[list --list].each do |word|
+            result = MediaIntent.play_live_music(word)
             assert result.ok?, result.inspect
-            assert_equal :dilla_live, result.value![:media]
-            assert_equal [result.value![:path]], played
-            assert_match(%r{/dilla-renders/\d{4}-\d{2}-\d{2}/.+\.wav\z}, played.first)
+            assert_match(/progressions \d+\.\.\d+/, result.value![:rendered])
+            assert_includes result.value![:rendered], "sparse"
           end
         end
-      ensure
-        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+        assert_empty played
+        assert_equal ["--list"], calls.map { |call| call[:arg] }.uniq
       end
-      assert_equal 1, calls.size
-      assert_equal "dilla", calls.first[:tool]
-      words = Shellwords.split(calls.first[:arg])
-      assert_includes words, "--showcase"
-      assert_includes words, "--no-video"
-      assert_match(/blue-hour-\d{8}T\d{6}Z(?:-\d+)?\.wav\z/, words[words.index("--out") + 1])
     end
   end
-end
 
-def test_dilla_render_paths_add_suffixes_instead_of_reusing_existing_takes
-  Dir.mktmpdir do |home|
-    saved = ENV["XDG_DATA_HOME"]
-    ENV["XDG_DATA_HOME"] = home
-    at = Time.utc(2026, 10, 19, 12, 34, 56)
-    first = MediaIntent.dilla_unique_render_path("blue-hour", at:)
-    FileUtils.mkdir_p(File.dirname(first))
-    File.write(first, "preserve")
-    second = MediaIntent.dilla_unique_render_path("blue-hour", at:)
-
-    assert_equal "blue-hour-20261019T123456Z.wav", File.basename(first)
-    assert_equal "blue-hour-20261019T123456Z-1.wav", File.basename(second)
-    assert_equal "preserve", File.read(first)
-  ensure
-    saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
-  end
-end
-
-def test_play_live_music_honours_a_named_progression_and_pattern
-  Dir.mktmpdir do |dir|
+  def test_play_live_music_reports_a_failed_render_without_playing
     with_clean_player do
-      calls = []
-      ENV["XDG_DATA_HOME"], saved = dir, ENV["XDG_DATA_HOME"]
-      begin
-        with_player do
-          with_dispatch_stub(dilla_runner(calls)) { assert MediaIntent.play_live_music("progression 1 sparse").ok? }
+      with_player do |played|
+        failing = lambda do |**kwargs|
+          kwargs[:arg] == "--list" ? Master::Result.ok(LISTING) : Master::Result.err("dilla: exit=1")
         end
-      ensure
-        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
+        with_dispatch_stub(failing) { refute MediaIntent.play_live_music("").ok? }
+        assert_empty played
       end
-      words = Shellwords.split(calls.last[:arg])
-      assert_equal "1", words[words.index("--progression") + 1]
-      assert_equal "sparse", words[words.index("--drums") + 1]
     end
   end
-end
 
-def test_play_live_music_honours_a_bare_progression_number
-  Dir.mktmpdir do |dir|
+  def test_background_music_publishes_the_named_artist_to_the_bus
+    bus, events = with_fake_bus
     with_clean_player do
-      calls = []
-      ENV["XDG_DATA_HOME"], saved = dir, ENV["XDG_DATA_HOME"]
-      begin
-        with_player do
-          with_dispatch_stub(dilla_runner(calls)) { assert MediaIntent.play_live_music("1 sparse").ok? }
-        end
-      ensure
-        saved ? ENV["XDG_DATA_HOME"] = saved : ENV.delete("XDG_DATA_HOME")
-      end
-      words = Shellwords.split(calls.last[:arg])
-      assert_equal "1", words[words.index("--progression") + 1]
-      assert_equal "sparse", words[words.index("--drums") + 1]
-    end
-  end
-end
-
-def test_play_list_names_the_choices_and_plays_nothing
-  with_clean_player do
-    with_player do |played|
-      calls = []
-      with_dispatch_stub(dilla_runner(calls)) do
-        %w[list --list].each do |word|
-          result = MediaIntent.play_live_music(word)
-          assert result.ok?, result.inspect
-          assert_match(/progressions \d+\.\.\d+/, result.value![:rendered])
-          assert_includes result.value![:rendered], "sparse"
+      with_player do
+        with_dispatch_stub(dilla_runner([])) do
+          assert MediaIntent.play_background_music("play some royksopp in the background", bus:).ok?
         end
       end
-      assert_empty played
-      assert_equal ["--list"], calls.map { |call| call[:arg] }.uniq
     end
+    assert_equal [["client_action", { action: "dilla_bg", artist: "royksopp" }]], events
   end
-end
 
-def test_play_live_music_reports_a_failed_render_without_playing
-  with_clean_player do
-    with_player do |played|
-      failing = lambda do |**kwargs|
-        kwargs[:arg] == "--list" ? Master::Result.ok(LISTING) : Master::Result.err("dilla: exit=1")
-      end
-      with_dispatch_stub(failing) { refute MediaIntent.play_live_music("").ok? }
-      assert_empty played
-    end
-  end
-end
-
-def test_background_music_publishes_the_named_artist_to_the_bus
-  bus, events = with_fake_bus
-  with_clean_player do
-    with_player do
-      with_dispatch_stub(dilla_runner([])) do
-        assert MediaIntent.play_background_music("play some royksopp in the background", bus:).ok?
+  def test_background_music_publishes_a_bare_toggle_without_an_artist
+    bus, events = with_fake_bus
+    with_clean_player do
+      with_player do
+        with_dispatch_stub(dilla_runner([])) { assert MediaIntent.play_background_music("play some background music", bus:).ok? }
       end
     end
+    assert_equal [["client_action", { action: "dilla_bg" }]], events
   end
-  assert_equal [["client_action", { action: "dilla_bg", artist: "royksopp" }]], events
-end
-
-def test_background_music_publishes_a_bare_toggle_without_an_artist
-  bus, events = with_fake_bus
-  with_clean_player do
-    with_player do
-      with_dispatch_stub(dilla_runner([])) { assert MediaIntent.play_background_music("play some background music", bus:).ok? }
-    end
-  end
-  assert_equal [["client_action", { action: "dilla_bg" }]], events
-end
 
   def test_live_stop_publishes_the_browser_stop_and_says_when_nothing_plays
     bus, events = with_fake_bus
@@ -669,7 +681,7 @@ end
 
   def test_followup_generation_uses_the_most_recent_industrial_reference
     Dir.mktmpdir do |dir|
-      home, saved = ENV["XDG_DATA_HOME"], ENV["XDG_DATA_HOME"]
+      saved = ENV["XDG_DATA_HOME"]
       ENV["XDG_DATA_HOME"] = dir
       FileUtils.mkdir_p(File.join(dir, "dilla-references"))
       File.write(File.join(dir, "dilla-references", "latest_profile.json"), JSON.generate("style_key" => "industrial_techno"))
@@ -854,5 +866,4 @@ end
     argv = Shellwords.split(calls.fetch(0).fetch(:arg))
     assert_equal "j_dilla", argv[argv.index("--style") + 1]
   end
-
 end

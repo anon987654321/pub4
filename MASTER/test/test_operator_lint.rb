@@ -7,9 +7,9 @@ require "review/scan/law_dsl"
 require "operator/lint"
 
 # The pre-commit lint, `bin/operator lint --staged --changed-lines`, on a scratch
-# repository with the real scanner and the real complexity law. Each case is one
-# the old reading got wrong: a def-line finding judged by the def line alone, and
-# a staged commit judged by the working tree's text.
+# repository with the real scanner and the real complexity law. A def-line
+# finding is not judged by the def line alone, and a staged commit is not
+# judged by the working tree's text.
 module OperatorLintRepo
   BRANCHY = 12
 
@@ -93,7 +93,6 @@ class TestOperatorLintMethodDebt < Minitest::Test
 
     assert_equal 1, complexity.size
   end
-
 end
 
 # With --staged the commit's text is judged, whatever the working tree holds.

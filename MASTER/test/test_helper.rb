@@ -66,11 +66,8 @@ if ENV["COVERAGE"] == "1"
   require "simplecov"
   SimpleCov.start do
     add_filter "/test/"
-    # The groups name directories that exist. They read lib/master/scan,
-    # lib/master/stages and lib/master/council, a path shape from before the lib
-    # rename, so three panes of this report were empty for as long as anyone ran
-    # it with COVERAGE=1. Groups shape the report rather than the threshold, so
-    # the 85% minimum was never wrong; the reading of it was.
+    # Each group names a directory that exists: a group over a missing path is an
+    # empty pane, and groups shape the report, not the 85% threshold.
     add_group "Scan", "lib/review/scan"
     add_group "Stages", "lib/cli/stages"
     add_group "Council", "lib/review/council"
@@ -82,6 +79,7 @@ gem "minitest", "~> 5.25"
 require "minitest/autorun"
 require "minitest/mock"
 require "tmpdir"
+require "fileutils"
 require "timeout"
 
 # Load MASTER without booting the CLI
@@ -98,6 +96,14 @@ require "master"
 # other 1593 tests from catching a real one.
 MASTER_TEST_TIMEOUT = Integer(ENV.fetch("MASTER_TEST_TIMEOUT", "30"))
 MASTER_TEST_PID = Process.pid
+# The lane-state scratch directory and the residual file are this run's own; a forked child must
+# not remove them while the parent is still running.
+Minitest.after_run do
+  next unless Process.pid == MASTER_TEST_PID
+
+  FileUtils.rm_rf(LIVE_STATE_DIR)
+  FileUtils.rm_f(ENV["MASTER_FIX_RESIDUAL"])
+end
 Minitest::Test.class_eval do
   alias_method :run_without_timeout, :run
 
@@ -112,8 +118,8 @@ Minitest::Test.class_eval do
     Timeout.timeout(test_timeout) { run_without_timeout(*args) }
   rescue Timeout::Error
     failed_with(Timeout::Error.new("timed out after #{test_timeout}s"))
-  # Minitest passes SystemExit through, so a test that reached exit or abort ended the whole run
-  # with no report: on 2026-10-22 rake test stopped after 3,632 tests and named no failure.
+  # Minitest passes SystemExit through, so a test that reached exit or abort would end the whole
+  # run with no report and name no failure.
   rescue SystemExit => e
     # A forked child's exit ends that child: caught there, the child ran the rest of the suite too.
     raise unless Process.pid == MASTER_TEST_PID

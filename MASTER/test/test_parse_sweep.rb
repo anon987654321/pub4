@@ -6,8 +6,8 @@ require "tmpdir"
 require "open3"
 
 class TestParseSweep < Minitest::Test
-  # The array that stopped MASTER booting for three hours: a string literal
-  # followed by another with no comma between them.
+  # A string literal followed on the next line by another with no comma between
+  # them is a syntax error that stops MASTER booting.
   MISSING_COMMA = <<~RUBY
     HELP = [
       "/chat quit — disconnect."

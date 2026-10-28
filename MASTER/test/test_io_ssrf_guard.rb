@@ -2,8 +2,7 @@
 
 require "test_helper"
 
-# the old backlog, Test coverage: no test named SsrfGuard. It is the only thing standing
-# between a prompt-injection payload and the runtime's own internal network, and
+# SsrfGuard is the only thing standing between a prompt-injection payload and the runtime's own internal network, and
 # its whole contract is a list of ranges — the cheapest possible thing to get
 # wrong silently and the cheapest possible thing to pin.
 class SsrfGuardTest < Minitest::Test
@@ -90,6 +89,7 @@ class SsrfGuardTest < Minitest::Test
     end
     refute called, "overlong DNS name must be rejected before resolving"
   end
+
   # The socket goes to the address the check approved, so a second DNS answer
   # at connect time cannot move it; the hostname still carries TLS.
   def test_http_for_pins_the_connection_to_the_checked_address
@@ -99,10 +99,11 @@ class SsrfGuardTest < Minitest::Test
     assert_equal "example.com", http.address
     assert_nil http.proxy_address, "an environment proxy must not bypass the pinned destination"
     assert http.use_ssl?
-    %w[240.0.0.1 192.88.99.1].each do |address|
-      assert Guard.blocked_ip?(IPAddr.new(address)), "#{address} must be blocked"
-    end
-    %w[64:ff9b::a00:1 64:ff9b:1::a00:1 2002:0a00:0001::1].each do |address|
+  end
+
+  # Reserved, 6to4 relay and NAT64/6to4 forms that embed a private IPv4 address.
+  def test_blocks_reserved_and_translated_forms
+    %w[240.0.0.1 192.88.99.1 64:ff9b::a00:1 64:ff9b:1::a00:1 2002:0a00:0001::1].each do |address|
       assert Guard.blocked_ip?(IPAddr.new(address)), "#{address} must be blocked"
     end
   end

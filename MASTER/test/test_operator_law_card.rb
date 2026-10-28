@@ -4,8 +4,8 @@ require_relative "test_helper"
 require "open3"
 
 # `bin/operator laws <ID> --card` is how an agent reads one Law before writing.
-# It broke twice without a test noticing: a require pointed at a renamed file,
-# and the declaration walk looked for an `id:` field that laws.yml keys by name.
+# It must load its requires and find a declaration that laws.yml keys by name,
+# not by an `id:` field.
 class TestOperatorLawCard < Minitest::Test
   OPERATOR = File.join(Master::ROOT, "bin", "operator")
 

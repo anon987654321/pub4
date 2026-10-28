@@ -9,7 +9,6 @@ require_relative "../lib/operator/replay_push"
 # A bare origin and two clones of it: `ours` is the shared checkout, `theirs`
 # the other session that pushed first.
 module ReplayPushRepos
-
   def push
     out = StringIO.new
     ok = Operator::ReplayPush.new(root: @ours, out:).run

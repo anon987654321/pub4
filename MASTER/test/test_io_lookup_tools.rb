@@ -2,10 +2,10 @@
 
 require_relative "test_helper"
 
-# SearchKnowledge and SymbolLookup are the two read-only lookups the agent can
-# call, and IngressRunner is how a webhook, bridge or cron message becomes a
-# turn. The lookups must stay inside what they index; the runner must never
-# leave a turn's authority behind on the fiber.
+# SearchKnowledge is a read-only lookup the agent can call, and IngressRunner is
+# how a webhook, bridge or cron message becomes a turn. The lookup must stay
+# inside what it indexes; the runner must never leave a turn's authority behind
+# on the fiber. SymbolLookup and the topic-escape refusal are in test_io_tools.rb.
 class TestIoLookupTools < Minitest::Test
   def setup
     @root = File.realpath(Dir.mktmpdir("lookup_"))
@@ -28,13 +28,6 @@ class TestIoLookupTools < Minitest::Test
     assert_includes text, "### openbsd/relayd.md:3\n1: one\n2: two\n3: relayd header limit\n4: four\n5: five\n"
   end
 
-  def test_a_topic_cannot_climb_out_of_knowledge
-    result = search(query: "relayd", topic: "../knowledge_private")
-
-    assert result.err?
-    assert_match(/unknown topic/, result.message)
-  end
-
   def test_an_invalid_regexp_is_searched_literally
     File.write(File.join(@root, "knowledge", "openbsd", "brackets.md"), "a [b\n")
 
@@ -43,26 +36,6 @@ class TestIoLookupTools < Minitest::Test
 
   def test_topics_are_the_visible_directories
     assert_equal ["openbsd"], Master::Io::SearchKnowledge.new(root: @root).available_topics
-  end
-
-  Index = Struct.new(:built, :answer) do
-    def built? = built
-    def query(_name) = answer
-  end
-
-  def test_symbol_lookup_formats_definitions_and_references
-    hit = { fqn: "Master::Io::Clean", type: :class, file: "lib/io/clean.rb", line: 9, parent: "Object", used_in: [] }
-    other = hit.merge(fqn: "Master::X", parent: "Base", used_in: ["lib/a.rb:3"])
-    text = Master::Io::SymbolLookup.new(code_index: Index.new(true, [hit, other])).call(name: "Clean").value!
-
-    assert_equal "Master::Io::Clean (class)\n  defined: lib/io/clean.rb:9\n  used in: (no cross-file references found)" \
-                 "\n\nMaster::X (class)\n  defined: lib/io/clean.rb:9\n  parent: Base\n  used in:\n    lib/a.rb:3", text
-  end
-
-  def test_symbol_lookup_refuses_before_the_index_is_built_and_passes_index_errors_on
-    refute Master::Io::SymbolLookup.new(code_index: Index.new(false, [])).call(name: "X").ok?
-    assert_equal "symbol_lookup: bad name",
-                 Master::Io::SymbolLookup.new(code_index: Index.new(true, { error: "bad name" })).call(name: "?").message
   end
 
   Gateway = Struct.new(:seen) do

@@ -3,7 +3,7 @@
 require_relative "test_helper"
 
 # After a repair the second reading covers the files the repair changed. The rest carry the first
-# reading's counts, so a repair of eleven files no longer rescans eighteen hundred.
+# reading's counts, so a repair of a few files does not rescan the whole tree.
 class TestPassReobserve < Minitest::Test
   Reobservation = Master::CLI::Pipeline::Reobservation
   Git = Struct.new(:paths) do
@@ -42,11 +42,12 @@ class TestPassReobserve < Minitest::Test
   end
 
   def test_the_opt_out_reads_everything_again
+    previous = ENV.fetch("MASTER_FIX_FULL_REOBSERVE", nil)
     ENV["MASTER_FIX_FULL_REOBSERVE"] = "1"
 
     assert_nil reobservation(paths: ["MASTER/lib/cli/x.rb"]).scope("abc123", @lib)
   ensure
-    ENV.delete("MASTER_FIX_FULL_REOBSERVE")
+    previous.nil? ? ENV.delete("MASTER_FIX_FULL_REOBSERVE") : ENV["MASTER_FIX_FULL_REOBSERVE"] = previous
   end
 
   def test_the_total_swaps_the_changed_files_old_counts_for_their_new_ones

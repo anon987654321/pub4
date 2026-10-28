@@ -3,10 +3,8 @@
 require_relative "test_helper"
 require "prism"
 
-# Applied to every committed write, and untested.
-#
-# That is the wrong pairing. This runs over source the agent is about to commit,
-# and its one dangerous operation -- squeezing runs of internal spaces -- must
+# Applied to every committed write. This runs over source the agent is about to
+# commit, and its one dangerous operation -- squeezing runs of internal spaces -- must
 # not reach inside a string literal or a heredoc. A normalizer that rewrites the
 # contents of a string changes what the program does, silently, on a code path
 # whose whole purpose is to be unremarkable.

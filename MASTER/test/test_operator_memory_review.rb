@@ -141,5 +141,4 @@ class TestOperatorMemoryReview < Minitest::Test
     assert_includes script, 'when "memory"'
     assert_includes script, "Operator::MemoryReview.run(ARGV, root: ROOT)"
   end
-
 end

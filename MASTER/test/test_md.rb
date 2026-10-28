@@ -25,6 +25,7 @@ class TestMD < Minitest::Test
   def test_style_reads_laws_yml
     assert_equal "tadao_ando", Master::MD.style.fetch("aesthetic")
   end
+
   def test_pdf_engine_failure_is_explicit
     refute Master::PDF.available?(command: "master-command-that-does-not-exist")
   end

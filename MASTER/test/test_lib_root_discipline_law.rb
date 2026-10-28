@@ -4,9 +4,8 @@ require_relative "test_helper"
 require_relative "../law/detectors/structural_laws"
 
 class TestLibRootDisciplineRule < Minitest::Test
-  # "core stays lean" as a live check (OpenClaw's VISION.md policy) -- new
-  # files shouldn't land directly in lib/ root without a deliberate,
-  # visible decision (adding to ALLOWED_ROOT_FILES).
+  # "core stays lean" as a live check: new files do not land directly in lib/
+  # root without a deliberate, visible decision (adding to ALLOWED_ROOT_FILES).
   def setup
     @rule = Master::Review::Scan::Laws::LibRootDisciplineLaw.new(root: Master::ROOT)
   end
@@ -38,14 +37,11 @@ class TestLibRootDisciplineRule < Minitest::Test
   end
 
   # Both directions at once, against the tree rather than a fixture, because the
-  # tree is where the drift happens. An allowance for a file nobody can add back
-  # is a hole in the check that nobody can see, precisely because the thing it
-  # excuses is invisible — the rule's own comment says so about autonomy.rb and
-  # nothing enforced it. And a root file missing from the list is the deliberate
-  # decision the rule exists to force, which had not been made for two of them:
-  # the finding is `severity: :warning`, and `rake selfcheck` reads veto,
-  # critical and error only, so the rule fired into a report nobody opened.
-  # rake lint:autoload is the shape being copied.
+  # tree is where the drift happens. An allowance for a missing file is an
+  # invisible hole in the check, and a root file missing from the list is the
+  # deliberate decision the rule exists to force. The finding is a warning, which
+  # `rake selfcheck` does not read, so this test is what holds it. rake
+  # lint:autoload is the shape being copied.
   def test_the_allowance_names_lib_root_exactly
     allowed = Master::Review::Scan::Laws::LibRootDisciplineLaw::ALLOWED_ROOT_FILES
     present = Dir.glob(File.join(Master::ROOT, "lib", "*.rb")).map { |p| File.basename(p) }

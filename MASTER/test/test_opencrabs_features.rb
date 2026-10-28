@@ -32,8 +32,8 @@ class TestOpenCrabsFeatures < Minitest::Test
 
   def test_hashline_stale_anchor_rejects
     content = "alpha\nbeta\n"
-    id = Master::Io::Hashline.line_id("alpha")
-    result = Master::Io::Hashline.replace_line(content, line_no: 1, id: "ff", new_line: "gamma")
+    stale = Master::Io::Hashline.line_id("alpha") == "ff" ? "00" : "ff"
+    result = Master::Io::Hashline.replace_line(content, line_no: 1, id: stale, new_line: "gamma")
     assert result.err?
   end
 

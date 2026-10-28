@@ -139,21 +139,21 @@ class TestObjectProbe < Minitest::Test
     assert_raises(ArgumentError) { Probe.new(receivers: []) }
   end
 
-def test_a_recursive_capture_is_refused_and_the_outer_capture_survives
-  worker = ObjectProbeFixtures::Worker.new
-  probe = Master::Trace::ObjectProbe.new(receivers: [worker], methods: %i[call])
-  refusal = nil
+  def test_a_recursive_capture_is_refused_and_the_outer_capture_survives
+    worker = ObjectProbeFixtures::Worker.new
+    probe = Master::Trace::ObjectProbe.new(receivers: [worker], methods: %i[call])
+    refusal = nil
 
-  probe.capture do
-    worker.call(1)
-    refusal = assert_raises(RuntimeError) { probe.capture { worker.call(:inner) } }
-    worker.call(2)
+    probe.capture do
+      worker.call(1)
+      refusal = assert_raises(RuntimeError) { probe.capture { worker.call(:inner) } }
+      worker.call(2)
+    end
+
+    assert_match(/already capturing/, refusal.message)
+    assert_equal 4, probe.events.size, "both outer calls were recorded, the refused inner one was not"
+    assert_equal :ok, probe.capture { worker.call(:ok) }, "the probe is reusable afterwards"
   end
-
-  assert_match(/already capturing/, refusal.message)
-  assert_equal 4, probe.events.size, "both outer calls were recorded, the refused inner one was not"
-  assert_equal :ok, probe.capture { worker.call(:ok) }, "the probe is reusable afterwards"
-end
 
   def test_calls_on_other_threads_are_not_recorded
     worker = ObjectProbeFixtures::Worker.new
@@ -165,6 +165,6 @@ end
     end
 
     assert_equal 2, probe.events.size, "only the owner thread's call and return are kept"
-    assert_equal [:call, :return], probe.events.map(&:event)
+    assert_equal %i[call return], probe.events.map(&:event)
   end
 end

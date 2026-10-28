@@ -2,6 +2,7 @@
 
 require "minitest/autorun"
 require "tmpdir"
+require "fileutils"
 require_relative "../lib/master"
 require_relative "../lib/ops"
 
@@ -19,9 +20,11 @@ class RuntimeLoopGuardsSpec < Minitest::Test
     old.nil? ? ENV.delete("MASTER_HEARTBEAT") : ENV["MASTER_HEARTBEAT"] = old
   end
 
-  def build_heartbeat
-    Dir.mktmpdir { |dir| return Master::Fix::Heartbeat.new(root: dir) }
-  end
+  # The root outlives the heartbeat built on it; Dir.mktmpdir's block form would delete it on return.
+  def setup = @root = Dir.mktmpdir
+  def teardown = FileUtils.rm_rf(@root)
+
+  def build_heartbeat = Master::Fix::Heartbeat.new(root: @root)
 
   def test_heartbeat_start_is_blocked_without_explicit_env
     Master::Ops::RuntimeLoopGuards.install!

@@ -1,16 +1,12 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "timeout"
 require_relative "../lib/master"
 
-# MASTER never starts a background loop unless explicitly asked.
-#
-# This file used to assert that each of the three entry points *contained* the
-# string `return unless ENV["..."] == "1"`. That passes against a guard moved
-# below the work it guards, against a guard commented out with the text intact
-# in a heredoc, and against a method whose body is otherwise `raise` — while
-# failing if anyone reformats the line. The claim is trivially executable, so
-# it is executed: call each entry point with a clean environment and require
+# MASTER never starts a background loop unless explicitly asked. A grep for
+# the guard's text passes against a guard moved below the work it guards, so
+# the claim is executed instead: call each entry point with a clean environment and require
 # that it returns without doing anything.
 class SourceLoopGuardsSpec < Minitest::Test
   # Constructed with the minimum each requires. The collaborators are nil
@@ -33,13 +29,11 @@ class SourceLoopGuardsSpec < Minitest::Test
     had ? ENV[var] = old : ENV.delete(var)
   end
 
-  # Each returns promptly and starts nothing. The timeout is the assertion that
-  # matters: a loop that ignored its guard would not come back.
-  # Returning promptly is not enough on its own: Heartbeat#start! and
+  # Each returns promptly and starts nothing. Returning promptly is not enough
+  # on its own: Heartbeat#start! and
   # WatchLoop#run spawn a Thread and return immediately, so a timeout alone
   # passes whether or not the guard is there. The observable claim is that
-  # nothing is left running afterwards, so that is what is asserted — and
-  # verified by deleting the guard and watching this fail.
+  # nothing is left running afterwards, so that is what is asserted.
   def threads_after
     before = Thread.list.size
     yield

@@ -3,9 +3,9 @@
 require_relative "test_helper"
 require "minitest/mock"
 
-# the old backlog, Test coverage: no test named KeyRotator. It decides which OpenRouter key
-# every free-tier call uses, and its "single key makes every method a no-op"
-# contract is the kind of thing that quietly becomes false.
+# KeyRotator decides which OpenRouter key every free-tier call uses, and its
+# "single key makes every method a no-op" contract is the kind of thing that
+# quietly becomes false.
 class KeyRotatorTest < Minitest::Test
   Rotator = Master::Io::KeyRotator
   # Two variables of our own, so the multi-key branches run whatever
@@ -55,12 +55,29 @@ class KeyRotatorTest < Minitest::Test
     end
   end
 
-  # The whole reason this module exists is spreading free-tier limits, so a
-  # rotatable model with two keys must actually advance.
   def test_rotation_is_a_noop_with_fewer_than_two_keys
     with_env(Rotator.env_vars.to_h { |var| [var, nil] }.merge(Rotator.env_vars.first => long("a"))) do
       refute Rotator.rotate_for("z-ai/glm-4.5-air:free")
       assert_equal @index, Rotator.instance_variable_get(:@index)
+    end
+  end
+
+  # The whole reason this module exists is spreading free-tier limits, so a
+  # rotatable model with two keys must actually advance. configure_current! is
+  # stubbed so the process-wide RubyLLM key is left alone.
+  def test_a_rotatable_model_with_two_keys_advances_the_index
+    values = TWO_VARS.each_with_index.to_h { |var, i| [var, long((97 + i).chr)] }
+    with_env(values) do
+      Rotator.stub(:env_vars, TWO_VARS) do
+        Rotator.stub(:configure_current!, true) do
+          Rotator.instance_variable_set(:@index, 0)
+          first = Rotator.active_key
+
+          assert Rotator.rotate_for("z-ai/glm-4.5-air:free")
+          assert_equal 1, Rotator.instance_variable_get(:@index)
+          refute_equal first, Rotator.active_key
+        end
+      end
     end
   end
 

@@ -13,11 +13,9 @@ class TestHeartbeat < Minitest::Test
     end
   end
 
-  # Heartbeat#load_jobs reads data/patterns.yml#heartbeat. These fixtures used
-  # to write data/heartbeat.yml, a file that does not exist in the product, so
-  # every test here silently ran Heartbeat's *default* job list instead of the
-  # one it had just written — including snapshot and prune_undo. This one
-  # passed only because the default self_test interval happens to be hourly.
+  # Heartbeat#load_jobs reads data/patterns.yml#heartbeat; a fixture written
+  # anywhere else runs the default job list instead, which the snapshot refute
+  # below would catch.
   def test_self_test_job_is_enabled_hourly_from_config
     Dir.mktmpdir do |root|
       write_heartbeat_jobs(root, <<~YAML)
@@ -108,12 +106,10 @@ class TestHeartbeat < Minitest::Test
         interval_seconds: 0
         enabled: true
     YAML
-    # SelfTest's LAW_MAP check reports "missing laws.yml#law_map"
-    # against a bare fixture root, which made the "clean scan" case impossible
-    # to reach — it always published heartbeat:violations instead. An empty map
-    # satisfies integrity (nothing to be inconsistent about).
-    # Merged with the case's own laws, not written over them: a second write erased the
-    # duplicate ids the violations case exists to find.
+    # SelfTest's LAW_MAP check reports "missing laws.yml#law_map" against a bare
+    # fixture root, so the clean case needs an empty map, which satisfies
+    # integrity. It is merged with the case's own laws, not written over them,
+    # because the violations case needs its duplicate ids.
     law_map = { "schema" => 1, "version" => "test-fixture", "laws" => {} }
     laws = (YAML.safe_load(rules_yaml) || {}).merge("law_map" => law_map)
     File.write(File.join(root, "data", "laws.yml"), laws.to_yaml)

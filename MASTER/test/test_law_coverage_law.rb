@@ -5,9 +5,8 @@ require "review/scan/law_dsl"
 require "tmpdir"
 require "fileutils"
 
-# The check asks whether each scanner Law subclass is referenced by a test.
-# Its former filename heuristics skipped most detector files and used a test
-# naming convention this tree does not follow, so it falsely reported existing tests.
+# The check asks whether each scanner Law subclass is referenced by a test,
+# whatever the detector file or the test file is called.
 #
 # Both halves are pinned below, because either one regressing restores a check
 # that reports nothing and looks green doing it.
@@ -39,8 +38,7 @@ class TestLawCoverageLaw < Minitest::Test
     end
   end
 
-  # The regression that matters most: a plural filename must be examined. The
-  # old rule skipped every one of these, which is fifteen of sixteen real files.
+  # A plural filename must be examined: most real detector files are plural.
   def test_a_plural_rules_file_is_examined
     found = messages(ONE_CLASS)
 
@@ -69,11 +67,9 @@ class TestLawCoverageLaw < Minitest::Test
     refute_empty messages(ONE_CLASS, test_files: { "test_bulk.rb" => "# widget behaviour" })
   end
 
-  # The id needle read `@id = "..."` and no Rule subclass in this tree has ever
-  # written that; every one declares itself with `declare id:`. So the needle
-  # matched nothing, only the class-name half did any work, and the fixtures here
-  # kept it green by writing a shape the tree does not use. Both directions: the
-  # shape the tree writes must be found, and the shape it abandoned must not.
+  # Every Law subclass declares itself with `declare id:`, so that is where the
+  # id is read. Both directions: the shape the tree writes must be found, and
+  # an `@id = "..."` assignment, which the tree does not use, must not.
   def test_the_id_is_read_from_the_declaration_the_tree_writes
     assert_empty messages(ONE_CLASS, test_files: { "test_bulk.rb" => 'rule("WIDGET")' })
     refute_empty messages(<<~RUBY, test_files: { "test_bulk.rb" => 'rule("WIDGET")' })
@@ -83,15 +79,13 @@ class TestLawCoverageLaw < Minitest::Test
     RUBY
   end
 
-  # LearnedSmellsLaw's only test is spec/learned_smells_rule_spec.rb, and a rule
-  # covered from spec/ read as uncovered — this rule inventing a gap of its own.
+  # A Law covered from spec/ is covered; reading only test/ would invent a gap.
   def test_a_class_named_from_spec_is_covered
     assert_empty messages(ONE_CLASS, test_files: { "widget_rule_spec.rb" => "WidgetLaw" }, dir: "spec")
   end
 
-  # The name of the test file is not the question. This is the false positive
-  # the old glob produced: a real test, named the way this tree names tests,
-  # reported as missing.
+  # The name of the test file is not the question: a real test, named any way,
+  # is coverage.
   def test_the_test_file_name_is_irrelevant
     assert_empty messages(ONE_CLASS, test_files: { "test_widget_rule.rb" => "WidgetLaw" })
     assert_empty messages(ONE_CLASS, test_files: { "wildly_unrelated.rb" => "WidgetLaw" })

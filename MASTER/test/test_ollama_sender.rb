@@ -4,17 +4,10 @@ require_relative "test_helper"
 require "json"
 require "socket"
 
-# The local tier could be enabled and could not answer.
-#
-# models.yml has declared `ollama:` ids since the tier was written, and
-# ModelRouter learned to drop them when OLLAMA_BASE_URL is unset — but
-# provider_availability.rb's own comment records the other half: with no branch
-# in the dispatcher, an id that *passed* the check fell through to RubyLLM, which
-# handed `ollama:llama3:latest` to OpenRouter and got an error. Enabling the tier
-# was the way to break it.
-#
-# Every case here runs against a real socket rather than a stubbed client,
-# because what was wrong was the wiring and a stub would have proved the stub.
+# An enabled `ollama:` id must reach the local daemon through its own branch in
+# the dispatcher; one that falls through to RubyLLM is handed to OpenRouter and
+# fails. Every case here runs against a real socket rather than a stubbed
+# client, because the wiring is what is under test and a stub proves the stub.
 class TestOllamaSender < Minitest::Test
   class FakeBus
     attr_reader :events
@@ -96,8 +89,8 @@ class TestOllamaSender < Minitest::Test
     end
   end
 
-  # A small model broke the effect JSON at temperature 0.8 in a 4k window
-  # that dropped the transcript's head. A schema-bound call is held to the
+  # A small model breaks the effect JSON at a high temperature in a 4k window
+  # that drops the transcript's head. A schema-bound call is held to the
   # schema, decodes at 0, keeps the model loaded and sizes its window.
   def test_a_schema_bound_call_sends_format_options_and_keep_alive
     body = JSON.generate("message" => { "content" => "{}" }, "done" => true, "eval_count" => 1)
@@ -186,8 +179,8 @@ class TestOllamaSender < Minitest::Test
     end
   end
 
-  # The defect itself: the dispatcher had no branch, so an enabled local id went
-  # to RubyLLM and out to a paid provider.
+  # An enabled local id must take the dispatcher's ollama branch, never RubyLLM
+  # and a paid provider.
   def test_the_dispatcher_routes_an_ollama_id_before_ruby_llm
     dispatcher = Master::Review::LLMDispatcher.allocate
     reached = []

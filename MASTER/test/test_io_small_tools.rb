@@ -42,7 +42,9 @@ class TestIoSmallTools < Minitest::Test
     File.write(File.join(root, "a.txt"), "x  \n")
     denied = Master::Result.err("no", category: :policy)
 
-    assert_equal :validation, Master::Io::Clean.new(root:, governor: Governor.new(denied)).call(path: "nope").category
+    missing = Master::Io::Clean.new(root:, governor: Governor.new(Master::Result.ok("ok"))).call(path: "nope")
+    assert_equal :validation, missing.category
+    assert_match(/path not found/, missing.message)
     assert_same denied, Master::Io::Clean.new(root:, governor: Governor.new(denied)).call
     assert_equal "x  \n", File.read(File.join(root, "a.txt"))
   ensure

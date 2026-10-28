@@ -74,7 +74,7 @@ class TestKeylessRouting < Minitest::Test
 
   # The local tier is whatever the daemon holds, with or without
   # OLLAMA_BASE_URL, and a pulled model closes the chain. Ollama is on unless
-  # MASTER_NO_OLLAMA says otherwise (8b29ed46d), so a daemon that cannot list
+  # MASTER_NO_OLLAMA says otherwise, so a daemon that cannot list
   # its models leaves the configured local chain standing, as it does with the
   # variable set.
   def test_local_tier_is_what_the_daemon_lists_and_closes_the_chain
@@ -111,8 +111,8 @@ class TestKeylessRouting < Minitest::Test
     ENV.delete("OLLAMA_BASE_URL")
   end
 
-  # models.yml names three local models and nothing checked any was pulled; a
-  # missing one answered "no model" and the chain fell through to a paid lane.
+  # models.yml names local models the daemon may not hold; an unpulled one answers
+  # "no model" and the chain falls through to a paid lane.
   def test_local_tier_offers_only_the_models_the_daemon_holds
     local_ollama!
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-#{'a' * 64}"
@@ -190,8 +190,6 @@ class TestKeylessRouting < Minitest::Test
 
   # Only the configured Gemma fallback is eligible; other installed models
   # and remotely executed :cloud models must not enter the local pool.
-  # Cloud routing is disabled independently of the local Gemma fallback.
-  #
   def test_local_models_offer_only_what_runs_on_this_machine
     local_ollama!
     router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT)
@@ -257,14 +255,14 @@ class TestKeylessRouting < Minitest::Test
     ENV.delete("OLLAMA_BASE_URL")
   end
 
-  # gemini-2.5-flash is Google's own endpoint; with only an OpenRouter key the
-  # session chose it, every call failed, and the error claimed no LLM was wired.
+  # gemini-2.5-flash is Google's own endpoint; with only an OpenRouter key it must
+  # leave the pool and name the missing key, not fail every call.
   def test_a_model_whose_key_is_unset_leaves_the_pool_naming_the_key
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-#{'a' * 64}"
     router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT)
     router.define_singleton_method(:ollama_installed_models) { [] }
 
-    # data/lanes.yml hand-kills gemini today; this test grades the missing-key reason.
+    # Manual kills in data/lanes.yml are stubbed out; this test grades the missing-key reason.
     Master::Io::LaneQuota.stub(:manual_dead, []) do
       assert_match(/GEMINI_API_KEY/, router.unreachable_reason("gemini-2.5-flash"))
       assert router.reachable?("google/gemini-2.5-flash")

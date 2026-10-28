@@ -41,6 +41,7 @@ class TestOpenbsdConfig < Minitest::Test
     result = @validator.validate_file("/etc/nginx.conf")
     assert result.err?
   end
+
   # data/openbsd.yml and OPENBSD/etc describe the same daemons from two trees.
   # Every config the validator knows must carry its required patterns, so a
   # rule that stops matching the deployed file fails here instead of on the box.

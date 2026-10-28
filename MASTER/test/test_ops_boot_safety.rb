@@ -5,17 +5,15 @@ require_relative "../lib/master"
 
 class BootSafetySpec < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  # apply_process_defaults!/install_process_guards! moved out of master.rb into
-  # these focused modules (extend MasterRuntime / extend MasterBoot in master.rb).
+  # apply_process_defaults!/install_process_guards! live in these modules,
+  # which master.rb extends as MasterRuntime and MasterBoot.
   MASTER_RUNTIME = File.join(ROOT, "lib", "boot", "runtime.rb")
   MASTER_BOOT = File.join(ROOT, "lib", "boot", "master_boot.rb")
   CLI = File.join(ROOT, "bin", "master")
 
-  # Called, not grepped. This asserted seven string literals in runtime.rb, so
-  # it passed whether or not apply_process_defaults! ever set anything — the
-  # exact shape TestSourceAssertions counts. Running it in a clean environment
-  # and reading ENV back proves the defaults land, and proves the opt-out and
-  # the "||=" semantics with them.
+  # Called, not grepped: running it in a clean environment and reading ENV back
+  # proves the defaults land, and proves the opt-out and the "||=" semantics
+  # with them.
   def test_master_boot_sets_safe_defaults
     with_clean_process_env do
       Master.apply_process_defaults!
@@ -67,9 +65,7 @@ class BootSafetySpec < Minitest::Test
   end
 
   # Guards install twice: once indirectly via prepare_runtime! (called before
-  # any Master.boot call) and once explicitly right after boot returns — not
-  # as two literal calls in the same file, which is what this spec used to
-  # (too brittle) assert.
+  # any Master.boot call) and once explicitly right after boot returns.
   def test_cli_installs_guards_before_and_after_boot
     source = File.read(CLI)
     assert_includes source, "RuntimeLoopGuards.install!"

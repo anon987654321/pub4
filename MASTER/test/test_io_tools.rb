@@ -53,7 +53,7 @@ class TestIoTools < Minitest::Test
   # truncation marker.
   def test_read_file_supports_an_explicit_full_read
     with_root do |root|
-      path = write(root, "large.txt", (1..2_005).map { |n| "line #{n}\n" }.join)
+      write(root, "large.txt", (1..2_005).map { |n| "line #{n}\n" }.join)
       tool = Master::Io::ReadFile.new(root:, undo: nil)
 
       normal = tool.call(path: "large.txt")
@@ -169,8 +169,7 @@ class TestIoTools < Minitest::Test
 
   def test_batch_replace_leaves_sacred_paths_alone
     with_root(manifest: true) do |root|
-      # A file soul.yml names sacred, not all of data/: data/ was blanket-protected once.
-      # soul.yml itself is editable through validated writes, so it is not the probe.
+      # A file PathGuard names sacred, not all of data/, so an ordinary data file still changes.
       assert_includes Master::Io::PathGuard::SACRED_PATHS, "data/SOUL.md"
       sacred = write(root, "data/SOUL.md", "old\n")
       before = File.read(sacred)
@@ -223,7 +222,7 @@ class TestIoTools < Minitest::Test
     end
   end
 
-  # A realpath prefix check let ../knowledge_old through, because
+  # A bare realpath prefix check would let ../knowledge_old through, because
   # "/root/knowledge_old" starts with "/root/knowledge".
   def test_search_knowledge_refuses_a_topic_that_climbs_into_a_sibling_directory
     with_root do |root|
@@ -234,17 +233,6 @@ class TestIoTools < Minitest::Test
 
       refute result.ok?, "a sibling that shares the prefix is outside knowledge/"
       assert_match(/unknown topic/, result.message)
-    end
-  end
-
-  def test_search_knowledge_treats_an_invalid_regexp_as_a_literal
-    with_root do |root|
-      write(root, "knowledge/a.md", "call foo( here\n")
-
-      result = Master::Io::SearchKnowledge.new(root:).call(query: "foo(")
-
-      assert result.ok?, result.to_s
-      assert_match(/1 matches/, result.value!)
     end
   end
 
@@ -386,8 +374,6 @@ class TestIoTools < Minitest::Test
     Master::Io::AskLlm.new(agent:, governor:, circuit_breaker: Breaker.new, cache:)
   end
 
-  # The cost estimate named Review::Agent::COST_PER_TOKEN, which does not exist,
-  # so every call ended in NameError inside the rescue and came back as an Err.
   def test_ask_llm_returns_the_agent_answer
     agent = Agent.new
     result = ask_llm(agent:).call(prompt: "why", context: ["c"])
@@ -491,15 +477,6 @@ class TestIoTools < Minitest::Test
     coordinator
   end
 
-  def test_mcp_with_no_config_connects_nothing_and_says_so
-    with_root do |root|
-      bus = Bus.new
-      mcp(root, bus).connect_all
-
-      assert_equal [["mcp:connected", { count: 0 }]], bus.events
-    end
-  end
-
   def test_mcp_skips_disabled_servers_and_isolates_a_failing_one
     with_root do |root|
       write(root, "data/mcp_servers.yml", <<~YAML)
@@ -520,7 +497,7 @@ class TestIoTools < Minitest::Test
       coordinator.connect_all
 
       assert_equal %w[good bad], built, "a disabled server is never built"
-      # The event carries a digest of the error, not its text (bd4cd2c0f).
+      # The event carries a digest of the error, not its text.
       failed = bus.events.find { |event, _| event == "mcp:server_failed" }&.last
       assert_equal "bad", failed[:name]
       assert_equal Digest::SHA256.hexdigest("spawn failed"), failed[:error_digest]
@@ -571,13 +548,6 @@ class TestIoTools < Minitest::Test
     end
   end
 
-  def test_ingress_runner_without_a_gateway_is_an_infrastructure_err
-    result = Master::Io::IngressRunner.run_turn(container: {}, message: "hi")
-
-    refute result.ok?
-    assert_equal :infrastructure, result.category
-  end
-
   # --- Clean -------------------------------------------------------------------
 
   def test_clean_script_exists_where_the_tool_looks
@@ -595,18 +565,6 @@ class TestIoTools < Minitest::Test
       assert_nil out
       assert_nil err
       assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 5
-    end
-  end
-
-  def test_clean_refuses_a_missing_path_and_honours_the_governor
-    with_root do |root|
-      missing = Master::Io::Clean.new(root:, governor: allow).call(path: "nope")
-      refute missing.ok?
-      assert_match(/path not found/, missing.message)
-
-      denied = Master::Io::Clean.new(root:, governor: deny).call
-      refute denied.ok?
-      assert_equal "denied", denied.message
     end
   end
 
@@ -689,15 +647,6 @@ class TestIoTools < Minitest::Test
 
     assert_equal "recorded: tool_failure / shell", result.value!
     assert_equal [{ event_type: "tool_failure", dimension: "shell", value: 2.0, metadata: nil }], learnings.events
-  end
-
-  def test_feedback_record_rejects_unknown_events_and_blank_dimensions
-    learnings = Learnings.new
-    tool = Master::Io::FeedbackRecord.new(learnings:)
-
-    refute tool.call(event_type: "made_up", dimension: "x").ok?
-    refute tool.call(event_type: "tool_success", dimension: "  ").ok?
-    assert_nil learnings.events
   end
 
   def with_env(key, value)

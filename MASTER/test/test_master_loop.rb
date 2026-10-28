@@ -10,10 +10,8 @@ class TestMasterLoop < Minitest::Test
       two = File.join(workspace, "two")
       FileUtils.mkdir_p(File.join(one, "data"))
       FileUtils.mkdir_p(File.join(two, "data"))
-      File.write(File.join(one, "data", "laws.yml"), "one: true
-")
-      File.write(File.join(two, "data", "laws.yml"), "two: true
-")
+      File.write(File.join(one, "data", "laws.yml"), "one: true\n")
+      File.write(File.join(two, "data", "laws.yml"), "two: true\n")
 
       original = Master.method(:load_laws)
       first_call = Queue.new
@@ -188,7 +186,7 @@ class TestMasterLoop < Minitest::Test
 
   # The early-boot mode map and data/limits.yml#process are the same fact in two
   # places; this pins them so heartbeat->env and the "fix"/"autofix" alias cannot
-  # drift the way they had ("MASTER_BACKGROUND" vs "MASTER_HEARTBEAT").
+  # drift apart.
   def test_loop_flags_agree_with_process_yaml
     from_yaml = Master::Ops::ProcessBudget.env_by_loop
                      .transform_keys { |name| name == "autofix" ? "fix" : name }
@@ -200,8 +198,7 @@ class TestMasterLoop < Minitest::Test
       master = File.join(repo, "MASTER")
       FileUtils.mkdir_p(File.join(master, "law"))
       FileUtils.mkdir_p(File.join(master, "data"))
-      File.write(File.join(master, "data", "laws.yml"), "{}
-")
+      File.write(File.join(master, "data", "laws.yml"), "{}\n")
 
       assert_equal master, Master.master_root(root: repo)
       assert_equal master, Master.master_root(root: master)
@@ -209,8 +206,7 @@ class TestMasterLoop < Minitest::Test
       standalone = File.join(repo, "standalone")
       FileUtils.mkdir_p(File.join(standalone, "law"))
       FileUtils.mkdir_p(File.join(standalone, "data"))
-      File.write(File.join(standalone, "data", "laws.yml"), "{}
-")
+      File.write(File.join(standalone, "data", "laws.yml"), "{}\n")
 
       assert_equal standalone, Master.master_root(root: standalone)
     end
@@ -273,12 +269,10 @@ class TestMasterLoop < Minitest::Test
     assert Master.tokens.key?("scale")
   end
 
-  # The operator's standing orders live in soul.yml, not in the catalogue the
-  # file scanner reads. They govern how to work rather than what source text may
-  # look like, so no detector can match one, and laws.yml offered them a shape
-  # with a severity and a tier they could never use. soul reaches the prompt
-  # whole through PersonalityPromptBuilder#add_rules; Ground::Constitution cut
-  # them to 480 characters, which took 358 off FLAT_HIERARCHY alone.
+  # The operator's conduct laws govern how to work rather than what source text
+  # may look like, so no detector can match one: they are not an
+  # operator_principles block in laws.yml, and soul.yml holds no second rules
+  # registry beside law/.
   def test_operator_conduct_is_a_rule_like_any_other
     rules = Master::Ground::Laws.new.laws
 

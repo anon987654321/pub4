@@ -3,9 +3,11 @@
 require "test_helper"
 require "open3"
 require "tmpdir"
+require "open3"
+require "rbconfig"
 
-# 2026-10-11: agy answered "Individual quota reached ... Resets in 165h22m49s"
-# and every selection path went on asking it. One spent reply now kills the lane
+# A provider that answers "Individual quota reached ... Resets in 165h22m49s"
+# must not be asked again by any selection path: one spent reply kills the lane
 # until the stated reset, across processes, and every path reads one function.
 class TestLaneQuota < Minitest::Test
   Quota = Master::Io::LaneQuota
@@ -126,8 +128,6 @@ class TestLaneQuota < Minitest::Test
     assert(Quota.manual_dead.none? { |e| e.include?("=>") })
   end
 
-  # The dispatcher learns from one settled reply, then neither the door, the
-  # council's pinned critic, nor failover reaches agy; claude still answers.
   def test_recovery_canary_resolves_manually_disabled_lanes_across_all_tiers
     gemini = Health.model_for_lane("gemini")
     codex = Health.model_for_lane("codex-cli")
@@ -159,6 +159,8 @@ class TestLaneQuota < Minitest::Test
     refute_includes Quota.manual_dead, "gemini"
   end
 
+  # The dispatcher learns from one settled reply, then neither the door, the
+  # council's pinned critic, nor failover reaches agy; claude still answers.
   def test_dispatcher_door_pin_and_failover_honour_it
     dispatcher = Master::Review::LLMDispatcher.allocate
     dispatcher.instance_variable_set(:@bus, nil)
@@ -195,6 +197,7 @@ class TestLaneQuota < Minitest::Test
 
     assert_equal %w[claude-cli:claude-sonnet-5-5], hops
   end
+
   def test_openrouter_free_pool_quota_is_shared_across_vendor_prefixed_models
     reply = "rate_limit: Rate limit exceeded: free-models-per-day-high-balance."
     Quota.note("nvidia/nemotron-3-super-120b-a12b:free", reply)
@@ -255,6 +258,4 @@ class TestLaneQuota < Minitest::Test
       refuses: ->(model) { Quota.dead?(model) },
     )
   end
-
-
 end

@@ -18,9 +18,8 @@ class TestMaturityScorecard < Minitest::Test
         last_checked: '2026-01-02'
   YAML
 
-  # Matches OpenClaw's taxonomy.yaml -- a scorecard of what's actually
-  # proven, not just claimed, embodying soul.yml's own SURFACE_ERRORS_FIRST
-  # / anti_simulation rules.
+  # A scorecard of what is proven, not just claimed, in the spirit of
+  # soul.yml's anti_simulation rules.
   def test_loads_subsystems_and_summary_line
     Dir.mktmpdir do |root|
       write_fixture(root)

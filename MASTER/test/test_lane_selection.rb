@@ -19,6 +19,11 @@ class TestLaneSelection < Minitest::Test
   LOCAL = "ollama:gemma3:4b"
   NEMOTRON = "nvidia/nemotron-3-super-120b-a12b:free"
   NANO = "nvidia/nemotron-3.5-lightning:free"
+  DEEPSEEK = "deepseek-chat"
+  AGY_REPLY = "agy: error: Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 165h22m49s."
+  CLAUDE_REPLY = "You've hit your session limit · resets 5pm (Europe/Oslo)"
+  ALL = ->(_model) { true }
+  NOON = Time.utc(2026, 10, 11, 12, 0, 0).to_f
 
   # models.yml is parsed once per change and handed out frozen; an edit is seen on the next read.
   def test_the_models_file_is_read_again_only_when_it_changes
@@ -34,11 +39,6 @@ class TestLaneSelection < Minitest::Test
       assert_equal %w[a b], Selection.tier("default", cfg: Selection.config(path))
     end
   end
-  DEEPSEEK = "deepseek-chat"
-  AGY_REPLY = "agy: error: Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 165h22m49s."
-  CLAUDE_REPLY = "You've hit your session limit · resets 5pm (Europe/Oslo)"
-  ALL = ->(_model) { true }
-  NOON = Time.utc(2026, 10, 11, 12, 0, 0).to_f
 
   def setup
     @dir = Dir.mktmpdir
@@ -286,6 +286,7 @@ class TestLaneSelection < Minitest::Test
     assert_equal [OPUS, NEMOTRON], router.fallback_chain(task_type: :exploration)
     assert_equal NEMOTRON, router.preferred(task_type: :exploration)
   end
+
   Config = Struct.new(:task_type, :model, :reasoning_mode, keyword_init: true)
 
   # The fix loop asks through the real Agent: ask -> routed chain -> router ->

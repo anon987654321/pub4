@@ -6,13 +6,10 @@ require "tmpdir"
 require "fileutils"
 
 # PATH_PURPOSE is :error, and WriteGuard blocks on error, so this rule can
-# refuse a write. That is why its exemptions matter more than most: the comment
-# in the rule records a period when the prefix strip was a no-op outside the
-# root and every file in RAILS, OPENBSD and STUDIO drew a finding, which
-# refused every write outside MASTER for as long as it stood.
-#
-# Both halves of that incident are pinned below — the sibling trees are out of
-# scope, and an unreadable ownership file must not turn into a blanket refusal.
+# refuse a write, and its exemptions matter more than most: a prefix strip that
+# is a no-op outside the root would refuse every write in RAILS, OPENBSD and
+# STUDIO. Both halves are pinned below — the sibling trees are out of scope,
+# and an unreadable ownership file must not turn into a blanket refusal.
 class TestPathPurposeRule < Minitest::Test
   # The three key forms the rule supports, one of each. The trailing slash is
   # what makes a key cover a subtree — `lib/` covers `lib/voice/speech.rb` and a
@@ -75,8 +72,7 @@ class TestPathPurposeRule < Minitest::Test
     end
   end
 
-  # The incident this rule carries a paragraph about. PATH_OWNERSHIP.yml
-  # describes MASTER and says nothing about its siblings, so it cannot judge
+  # PATH_OWNERSHIP.yml describes MASTER and says nothing about its siblings, so it cannot judge
   # them — and at :error, judging them refused every write outside MASTER.
   def test_a_path_outside_the_root_is_out_of_scope
     in_tree do |rule, _root|
@@ -120,7 +116,7 @@ class TestPathPurposeRule < Minitest::Test
 
   # The skip pattern wants a slash before test/, and the house lint hands the
   # rule paths relative to MASTER, so a new test file is judged by MASTER's own
-  # ownership entry. Without one, every new test drew a finding at commit time.
+  # ownership entry; without one, every new test draws a finding at commit time.
   def test_a_new_test_file_in_masters_own_tree_is_declared
     rule = Master::Review::Scan::Laws::PathPurposeLaw.new(root: Master::ROOT)
 

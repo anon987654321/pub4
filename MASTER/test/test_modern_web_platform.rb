@@ -5,7 +5,7 @@ require "open3"
 require "master"
 require_relative "../lib/fix/visual_pass"
 # VisualPass#run loads the probe only when it runs; capture_resting needs it here.
-require_relative "../../MASTER/checks/support/geometry_probe"
+require_relative "../checks/support/geometry_probe"
 # Law loads lazily inside VisualUsability; tests that read it directly cannot rely on run order.
 require File.join(Master::ROOT, "law", "definition")
 Law.load_all(File.join(Master::ROOT, "law")) if Law.definitions.empty?
@@ -46,7 +46,6 @@ class TestModernWebPlatformEvidence < Minitest::Test
     assert_equal true, payload["disclosure"]
     assert_equal [:evaluate], mobile.calls, "the probe did more than read the page"
   end
-
 
   def test_geometry_walk_marks_only_rectangles_intersecting_viewport
     expression = Deploy::GeometryProbe::WALK[/onscreen:\s*(.+?),\s*\n\s*hit:/m, 1]
@@ -172,6 +171,4 @@ class TestModernWebPlatformEvidence < Minitest::Test
     end
     assert_includes pwa.fix, "personalized responses"
   end
-
-
 end

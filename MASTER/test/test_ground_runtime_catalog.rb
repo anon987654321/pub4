@@ -89,18 +89,14 @@ class TestRuntimeCatalog < Minitest::Test
     assert_equal "/runtime/config", payload[:config_path]
     assert payload[:enhancements_pending_count].is_a?(Integer)
     assert payload[:enhancements].is_a?(Array)
-    # Was %w[wscons phosphor], which pinned the retro modes as the only legal
-    # answers — so this went red the moment brutalist became the house default
-    # in 02e798aca and stayed red, unnoticed, because test/lib/** is outside
-    # `rake test`'s flat glob. Assert against MODES: the payload's contract is
-    # that it reports a real aesthetic, not that it reports a particular one.
+    # The payload's contract is that it reports a real aesthetic, not a
+    # particular one, so the house default can change without this going red.
     assert_includes Master::Voice::Aesthetic::MODES, payload[:aesthetic]
     refute payload.key?(:topologies)
   end
 
-  # Through `load`, the one documented door. Named readers for these three
-  # sections existed for this test alone and are gone; the sections and the
-  # shape they promise are what matters, and both are still asserted.
+  # Through `load`, the one documented door: the sections and the shape they
+  # promise are the contract, not a named reader per section.
   def test_invariants_and_event_registry
     inv = Master::Ground::RuntimeCatalog.load("invariants")
     assert inv["invariants"].is_a?(Array)

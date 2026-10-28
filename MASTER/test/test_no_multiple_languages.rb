@@ -2,12 +2,9 @@
 
 require_relative "test_helper"
 
-# NO_MULTIPLE_LANGUAGES matched every `<%`, so it reported 6,619 of the 14,552
-# findings across RAILS and no Rails view could ever have cleared it. A check
-# whose zero is unreachable measures nothing.
-#
-# Since the 2026-08-21 twin retirement the duty is split where the law files
-# say it is: NO_MULTIPLE_LANGUAGES (law/css.rb) reads code files for a second
+# A law that matched every `<%` would make every Rails view a finding, and a
+# check whose zero is unreachable measures nothing. The duty is split where
+# the law files say it is: NO_MULTIPLE_LANGUAGES (law/css.rb) reads code files for a second
 # grammar — an ERB tag or an opening heredoc that smuggles SQL — and never
 # reads templates at all, because a template is two languages by definition.
 # The inline <script>/<style> case in a template is NO_INLINE_SCRIPT_BLOCK

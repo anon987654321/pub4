@@ -8,10 +8,9 @@ require_relative "../lib/operator/law_reach"
 
 class TestLawRegistryAudit < Minitest::Test
   # Defined here on purpose: Law.inherited registers every subclass in the
-  # process, so this class is in the registry the moment this file loads. It is
-  # the shape that made law_deps.ungraphed read 133 alone and 135 under
-  # `rake test` — a census answering a different number depending on what else
-  # the process had run.
+  # process, so this class is in the registry the moment this file loads, and a
+  # census that counted it would answer a different number depending on what
+  # else the process had run.
   class LawDefinedByATest < Master::Review::Scan::Law
     def initialize
       super
@@ -38,24 +37,18 @@ class TestLawRegistryAudit < Minitest::Test
     assert_operator report.adherence_pct, :>, 20.0
   end
 
-  # Adherence used to average registry coverage against a term that read
-  # `(wired + unwired) / (wired + unwired)`, so it could not fall below 55 and
-  # SelfTest's "below 35 is a violation" check could not fire. An empty registry
-  # is the input that proves the floor is gone.
+  # SelfTest's "below 35 is a violation" check can fire only if adherence has no
+  # floor. An empty registry is the input that proves there is none.
   def test_adherence_can_reach_zero
     empty = audit.call.with(mechanical: [])
 
     assert_in_delta 0.0, empty.adherence_pct
   end
 
-  # Three check banners and lib/operator/law_reach.rb print a count of one population,
-  # and they read 107 and 115 for as long as one of them subtracted rather than
-  # counted. The count is still counted, not subtracted.
-  #
-  # They have converged, by design, since 2026-10-26: every catalogue Law goes to
-  # the semantic adapter, so semantic_only is exactly the Laws with no detector and
-  # the subtraction now equals the count. The guard asserted they differ; it now
-  # asserts the partition, which breaks if a Law lands in both or neither.
+  # Three check banners and lib/operator/law_reach.rb print a count of one
+  # population, so it is counted, not subtracted. Every catalogue Law goes to the
+  # semantic adapter, so semantic_only is exactly the Laws with no detector; the
+  # partition assertion breaks if a Law lands in both or neither.
   def test_coverage_agrees_with_law_reach
     report = audit.call
     reach = Operator::LawReach.mechanical(Operator::LawReach.laws).size

@@ -4,6 +4,8 @@ require "test_helper"
 require "minitest/mock"
 require "open3"
 require "tmpdir"
+require "open3"
+require "rbconfig"
 
 # The always-online guarantee. Every remote lane is exhausted in turn with the
 # reply that provider really sends, the next lane in the tier answers, and
@@ -288,7 +290,6 @@ class TestLaneFailover < Minitest::Test
     skip_cache&.clear!
   end
 
-
   def test_failed_one_shot_model_is_parked_for_the_next_request
     skip_cache = Master::Io::ModelSkipCache
     skip_cache.clear!
@@ -320,5 +321,4 @@ class TestLaneFailover < Minitest::Test
   ensure
     skip_cache&.clear!
   end
-
 end

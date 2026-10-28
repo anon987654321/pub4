@@ -3,9 +3,8 @@
 require_relative "test_helper"
 require "fileutils"
 
-# the old backlog, Test coverage: no test named StandingOrders. This is the runtime's
-# autonomous scheduler — it decides, unattended, which commands run and how often,
-# including event-triggered ones with regex filters. Nothing pinned any of it.
+# StandingOrders is the runtime's autonomous scheduler: it decides, unattended,
+# which commands run and how often, including event-triggered ones with regex filters.
 #
 # STATE_PATH is a constant under the real .master/, so the file is saved and put
 # back: a test must not silently reset the operator's live order state.
@@ -21,8 +20,8 @@ class StandingOrdersTest < Minitest::Test
   end
 
   RecordingBus = Struct.new(:events) do
-    def publish(event, payload = {})
-      events << [event, payload]
+    def publish(name, **payload)
+      events << [name, payload]
     end
   end
 
@@ -64,11 +63,7 @@ class StandingOrdersTest < Minitest::Test
     router = Object.new
     router.define_singleton_method(:pool) { |wait:| [] }
     agent.define_singleton_method(:model_router) { router }
-    bus = Struct.new(:events) do
-      def publish(name, **payload)
-        events << [name, payload]
-      end
-    end.new([])
+    bus = RecordingBus.new([])
 
     callable = Master::Ground::Orders::AvailabilityPosture.new(container: { agent:, root: Master::ROOT, bus: })
     result = callable.call
@@ -284,20 +279,13 @@ class StandingOrdersTest < Minitest::Test
     assert_match(/no router/, result.message)
   end
 
-  # /orders run executes whatever is due with nobody watching, so a hard reset,
-  # a push or doas written as an order must never reach the router.
-
   FakeStatus = Struct.new(:ok) do
     def success? = ok
   end
 
   def test_autocommit_pushes_after_a_successful_commit
     root = Dir.mktmpdir("master-autocommit-")
-    bus = Struct.new(:events) do
-      def publish(name, **payload)
-        events << [name, payload]
-      end
-    end.new([])
+    bus = RecordingBus.new([])
     File.write(File.join(root, "file.rb"), "puts :ok\n")
     repo = File.expand_path("..", root)
     relative = File.join(File.basename(root), "file.rb")
@@ -331,11 +319,7 @@ class StandingOrdersTest < Minitest::Test
     File.write(File.join(root, "file.rb"), "puts :ok\n")
     relative = File.join(File.basename(root), "file.rb")
     event = { path: File.join(root, "file.rb") }
-    bus = Struct.new(:events) do
-      def publish(name, **payload)
-        events << [name, payload]
-      end
-    end.new([])
+    bus = RecordingBus.new([])
     # The commit, then the push: Autocommit commits path-scoped with no `git add` before it.
     responses = [
       ["", FakeStatus.new(true)],
@@ -358,12 +342,6 @@ class StandingOrdersTest < Minitest::Test
   end
 
   # A standing order commits with nobody watching, so it is held to git!'s refusal of a sacred path.
-  RecordingBus = Struct.new(:events) do
-    def publish(name, **payload)
-      events << [name, payload]
-    end
-  end
-
   def sacred_laws_tree(repo)
     root = File.join(repo, "MASTER")
     FileUtils.mkdir_p(File.join(root, "data"))
@@ -399,6 +377,8 @@ class StandingOrdersTest < Minitest::Test
     FileUtils.remove_entry(repo) if repo && Dir.exist?(repo)
   end
 
+  # /orders run executes whatever is due with nobody watching, so a hard reset,
+  # a push or doas written as an order must never reach the router.
   def test_run_due_refuses_destructive_commands_before_routing
     routed = []
     pipeline = ->(input) { routed << input.value![:user_message]; Master::Result.ok("ran") }
@@ -517,6 +497,7 @@ class StandingOrdersTest < Minitest::Test
     assert_equal({ bus: :bus, domain: "household" }, Master::Ground::Tool::Domain.container("household", full))
     assert_equal full.merge(domain: "coding"), Master::Ground::Tool::Domain.container("coding", full)
   end
+
   def test_orders_add_reads_fields_whose_values_keep_their_spaces
     saved = []
     standing = Object.new.tap { |o| o.define_singleton_method(:upsert) { |**kw| saved << kw } }

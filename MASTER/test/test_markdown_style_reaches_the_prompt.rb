@@ -2,18 +2,11 @@
 
 require_relative "test_helper"
 
-# data/laws.yml's markdown_style section had no reader. Its applies_to names
-# MASTER, claude, grok and codex — every agent that writes markdown here — and
-# nothing in the tree named the key, so the aesthetic it declares reached no
-# prompt and each agent invented its own house style. data_reach had counted it
-# unread since it was restored after the 2026-08 read-modify-write that reverted
-# it, and 48-against-46 was the only trace.
-#
-# Same defect the builder's own add_attention comment records about
-# attention_context.yml: a section that specified its audience and was never
-# consulted. So the test that matters is not "the words appear" but "the words
-# come from the file" — a restatement in the builder would satisfy the first and
-# fail the second, and would be the thing the section exists to prevent.
+# data/laws.yml's markdown_style section names every agent that writes
+# markdown here; unread, each agent invents its own house style. So the test
+# that matters is not "the words appear" but "the words come from the file" — a
+# restatement in the builder would satisfy the first and fail the second, and
+# would be the thing the section exists to prevent.
 class TestMarkdownStyleReachesThePrompt < Minitest::Test
   # A host for the module under test, so the section can be swapped without
   # constructing a Personality and its whole dependency graph.

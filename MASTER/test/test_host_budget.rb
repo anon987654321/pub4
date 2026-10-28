@@ -42,6 +42,7 @@ class TestHostBudget < Minitest::Test
       refute_includes pids, 22_489
     end
   end
+
   # HostBudget measures the host; OPENBSD/vm_resource.yml declares it. The two
   # must agree that the declared box is constrained, or vm23 boots with TTS, the
   # boot scan and the background loops on.

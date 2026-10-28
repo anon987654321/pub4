@@ -37,6 +37,7 @@ class OpportunityPassTest < Minitest::Test
       assert findings.any? { |finding| finding[:message].include?("parallel tool/operator") }
     end
   end
+
   def test_subtree_fix_does_not_surface_outside_files
     Dir.mktmpdir do |root|
       rails = File.join(root, "RAILS")

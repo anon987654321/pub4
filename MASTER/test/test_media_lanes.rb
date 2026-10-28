@@ -4,6 +4,7 @@ require "test_helper"
 require "tmpdir"
 require "base64"
 require "json"
+require "digest"
 
 # Image and video generation chooses a lane by availability and cost, parks a lane
 # the first time its provider says the quota is spent, and counts spend against a
@@ -280,6 +281,7 @@ class TestMediaLanes < Minitest::Test
   ensure
     Wire.replicate = ->(token) { Master::Io::ReplicateClient.new(token:) }
   end
+
   def test_the_image_intent_keeps_the_replicate_tool_when_replicate_leads_or_nothing_is_configured
     intent = Master::Io::MediaIntent
     asked = []

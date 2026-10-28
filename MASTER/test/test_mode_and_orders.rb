@@ -23,8 +23,8 @@ class TestModeAndOrders < Minitest::Test
     assert_empty duplicated, "same dispatch name defined in two files; the later load silently wins: #{duplicated}"
   end
 
-  # Ground::Orders::Backup existed, was reachable by no key, and pointed three
-  # directories above MASTER instead of one.
+  # Ground::Orders::Backup must be reachable by its key and back up the
+  # directory one above MASTER.
   def test_backup_order_is_registered
     assert_equal Master::Ground::Orders::Backup, Master::Ground::Orders::Registry.lookup("backup")
   end

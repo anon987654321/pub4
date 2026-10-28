@@ -2,6 +2,8 @@
 
 require "test_helper"
 require "socket"
+require "json"
+require "stringio"
 require "mobile/bootstrap"
 require "mobile/doctor"
 require "mobile/face_bridge_http"
@@ -192,12 +194,18 @@ class TestMobileHost < Minitest::Test
     def speak!(text) = Master::Mobile::Ambient::Result.new(ok: true, text:, error: nil)
   end
 
-  def host(dir, heard: "")
+  # The host reads MASTER_MEMORY_PATH while it is built; the caller's value is put back after.
+  def self.with_memory_path(dir)
+    previous = ENV.fetch("MASTER_MEMORY_PATH", nil)
     ENV["MASTER_MEMORY_PATH"] = File.join(dir, "memory.yml")
-    @bridge = Bridge.new
-    Master::Mobile::Host.new(root: dir, bridge: @bridge, ambient: Ears.new(heard))
+    yield
   ensure
-    ENV.delete("MASTER_MEMORY_PATH")
+    previous.nil? ? ENV.delete("MASTER_MEMORY_PATH") : ENV["MASTER_MEMORY_PATH"] = previous
+  end
+
+  def host(dir, heard: "")
+    @bridge = Bridge.new
+    self.class.with_memory_path(dir) { Master::Mobile::Host.new(root: dir, bridge: @bridge, ambient: Ears.new(heard)) }
   end
 
   def test_a_second_utterance_carries_the_first_and_the_name
@@ -230,12 +238,10 @@ end
 
 class TestMobileBridgeHttp < Minitest::Test
   def app(dir)
-    ENV["MASTER_MEMORY_PATH"] = File.join(dir, "memory.yml")
-    host = Master::Mobile::Host.new(root: dir, bridge: TestMobileHost::Bridge.new,
-                                    ambient: TestMobileHost::Ears.new(""))
+    host = TestMobileHost.with_memory_path(dir) do
+      Master::Mobile::Host.new(root: dir, bridge: TestMobileHost::Bridge.new, ambient: TestMobileHost::Ears.new(""))
+    end
     Master::Mobile::FaceBridgeHttp.new(root: dir, host:)
-  ensure
-    ENV.delete("MASTER_MEMORY_PATH")
   end
 
   def test_the_face_page_and_its_script_are_served

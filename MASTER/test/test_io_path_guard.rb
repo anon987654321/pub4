@@ -47,8 +47,8 @@ class PathGuardTest < Minitest::Test
   end
 end
 
-# The prefix check alone passed a symlink inside the root that points out of it,
-# and passed credential files to ReadFile. These run the tools on a scratch root.
+# A prefix check alone passes a symlink inside the root that points out of it,
+# and passes credential files to ReadFile. These run the tools on a scratch root.
 class PathGuardEscapeTest < Minitest::Test
   def setup
     @dir = File.realpath(Dir.mktmpdir("path_guard"))
@@ -128,13 +128,20 @@ class PathGuardEscapeTest < Minitest::Test
     File.symlink(".env", File.join(@root, "visible.txt"))
     refute_includes search.call(pattern: "SECRET", glob: "*").value!, "hunter2"
   end
+
+  # The model-facing tool passes its `path` (default ".") as the glob; a directory
+  # means its tree, not a glob that matches the directory and no file.
+  def test_search_files_treats_a_directory_as_its_tree
+    search = Master::Io::SearchFiles.new(root: @root)
+    assert_includes search.call(pattern: "\\A", glob: ".").value!, "notes.txt"
+  end
 end
 
 # GitContext#show is the one operation in that class taking no path: its argument
 # is a git ref, handed straight to `git show`. `git show <rev>:<path>` prints that
-# path's blob, so the colon form was a file read that never passed through
-# PathGuard at all — any tracked file, at any revision, including ones deleted
-# since — and Io::LLM::GitContext exposes it to a model. Refused at the ref.
+# path's blob, so the colon form is a file read that never passes through
+# PathGuard — any tracked file, at any revision, including ones deleted since —
+# and Io::LLM::GitContext exposes it to a model. Refused at the ref.
 class GitContextShowTest < Minitest::Test
   def setup
     @git = Master::Io::GitContext.new(root: Master::ROOT)
@@ -158,8 +165,6 @@ class GitContextShowTest < Minitest::Test
     end
   end
 
-  # The refusal is the colon, not a filename-looking argument: a ref that merely
-  # reads file-ish is still a ref.
   def test_git_context_refuses_credential_paths
     result = @git.call(operation: "blame", path: ".env")
 
@@ -167,6 +172,8 @@ class GitContextShowTest < Minitest::Test
     assert_match(/credential path refused/, result.message.to_s)
   end
 
+  # The refusal is the colon, not a filename-looking argument: a ref that merely
+  # reads file-ish is still a ref.
   def test_the_refusal_is_the_colon_and_not_the_shape
     assert show("HEAD").ok?
     refute show("HEAD:").ok?

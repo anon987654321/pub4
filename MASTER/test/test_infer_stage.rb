@@ -150,10 +150,8 @@ class InferStageTest < Minitest::Test
     assert_equal :general, out.task_type
   end
 
-  # Regression: bare "persona <word>" (no imperative verb) used to match the
-  # persona infer pattern, so a plain sentence mentioning "persona council"
-  # got silently dispatched as a /persona command instead of reaching the
-  # LLM -- see production incident 2026-07-20.
+  # A bare "persona <word>" with no imperative verb is a sentence about a
+  # persona, not a /persona command, and must reach the model.
   def test_bare_persona_mention_is_not_promoted_to_command
     result = @infer.call(ctx("Persona Council"))
     assert result.ok?

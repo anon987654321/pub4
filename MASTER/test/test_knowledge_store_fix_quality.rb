@@ -46,9 +46,8 @@ class TestKnowledgeStoreFixQuality < Minitest::Test
     end
   end
 
-  # Pre-existing DBs had a CHECK (outcome IN ('fixed','stuck')) constraint --
-  # inserting 'skipped' would silently fail (swallowed by the rescue) unless
-  # the table gets migrated on open.
+  # A database created with CHECK (outcome IN ('fixed','stuck')) refuses 'skipped',
+  # and record_fix only warns, so the table must be migrated on open.
   def test_migrates_a_pre_existing_db_with_the_old_check_constraint
     Dir.mktmpdir do |root|
       db_path = File.join(root, ".master", "knowledge.sqlite3")
@@ -67,9 +66,14 @@ class TestKnowledgeStoreFixQuality < Minitest::Test
       old_db.close
 
       store = Master::Ground::KnowledgeStore.new(root:)
-      store.record(law: "OLD_RULE", file_type: "rb", outcome: "skipped")
+      _out, err = capture_io { store.record(law: "OLD_RULE", file_type: "rb", outcome: "skipped") }
 
+      assert_empty err, "the skipped insert hit the old CHECK constraint"
       assert_in_delta 1.0, store.fix_quality(law: "OLD_RULE"), 0.001
+      reader = SQLite3::Database.new(db_path)
+      outcomes = reader.execute("SELECT outcome FROM fix_outcomes WHERE rule = ? ORDER BY id", ["OLD_RULE"]).flatten
+      reader.close
+      assert_equal %w[fixed skipped], outcomes, "the migrated table keeps the old row and takes the new one"
     ensure
       store&.close
     end

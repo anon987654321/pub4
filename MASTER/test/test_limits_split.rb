@@ -2,28 +2,19 @@
 
 require_relative "test_helper"
 
-# The finding this closed: "Roughly 28 of data/limits.yml's 39 top-level keys
-# have no reader, and the generic accessor workflow_rule(key) has zero call sites —
-# ~70% of 794 lines of Tier-1 'law' is decoration."
-#
-# Measured 2026-08-02: 29 of 38, 477 of 794 lines. Both generic accessors are gone
-# and the unread keys moved under `guidance:`, which is a relabelling — reading
-# limits` still serves the file whole. This test is what stops the two halves blurring
-# back together, and it is the same shape as test_security_defaults.rb.
+# data/limits.yml has two halves: top-level keys a named file reads, and the
+# unread remainder under `guidance:`. Reading `limits` still serves the file
+# whole; this test is what stops the two halves blurring back together, and it
+# is the same shape as test_security_defaults.rb.
 class TestLimitsSplit < Minitest::Test
   PATH = Master.limits_path
 
   # enforced key => [file that reads it, the expression it reads it with]
-  # Four of these were false and passed anyway, because the check below was a
-  # bare substring match on the file's text: `zeitwerk` matched the gem's own
-  # `require "zeitwerk"` and `validation` matched `category: :validation`.
-  # `conflicts` and `sweep` had no reader at all and now live under guidance:;
-  # `dmesg` and `validation` were pointed at files that never open limits.yml.
   READERS = {
     "autoloop" => ["lib/fix/supervisor.rb", "autoloop"],
     "convergence_discipline" => ["lib/fix/convergence_discipline.rb", "convergence_discipline"],
-    # Renamed with its unit on 2026-08-25 — raw lines to body lines — which is
-    # the mechanism lint:spine uses so a stale number cannot pass quietly.
+    # Named with its unit (body lines), the mechanism lint:spine uses so a stale
+    # number cannot pass quietly.
     "loc_body_budgets" => %w[Rakefile loc_body_budgets],
     "dmesg" => ["lib/trace/dmesg.rb", "dmesg"],
     "fix_budget" => ["lib/fix/run_budget.rb", "fix_budget"],
@@ -56,10 +47,8 @@ class TestLimitsSplit < Minitest::Test
       src = source(relative)
       assert_includes src, expression,
                       "#{relative} no longer reads #{key} — move it under guidance: or fix the reader"
-      # The name alone is not evidence: this file's whole purpose is keeping
-      # unread law from blurring back into enforced law, and a bare
-      # assert_includes passed on four false claims — `zeitwerk` matched the
-      # gem's own require line. The named file must at least open limits.
+      # The name alone is not evidence: `zeitwerk` also matches the gem's own
+      # require line. The named file must at least open limits.
       assert_match(/limits/i, src,
                    "#{relative} contains the word #{key} but never opens #{PATH} — " \
                    "the claim is a coincidence, not a reader")
@@ -74,18 +63,15 @@ class TestLimitsSplit < Minitest::Test
   end
 
   # The direction that matters. A guidance key that grows a reader is not guidance
-  # any more, and leaving it below the line is how this file filled up with rules
-  # nothing applied.
+  # any more, and leaving it below the line hides an enforced rule.
   def test_nothing_under_guidance_has_grown_a_reader
-    sources = Dir.glob(File.join(Master::ROOT, "{lib,core,bin,../RAILS/master/app}", "**", "*.rb"))
+    sources = Dir.glob(File.join(Master::ROOT, "{lib,bin,../RAILS/master/app}", "**", "*.rb"))
                  .reject { |path| path.end_with?("law_accessors.rb", "laws.rb") }
     bodies = sources.to_h { |path| [path.sub("#{Master::ROOT}/", ""), File.read(path)] }
 
     # Both halves, or this is the same coincidence in the other direction: a
-    # file must open limits AND name the key. scan/report.rb contains the word
-    # "conflicts" and has never read limits.yml, which is exactly how the
-    # forward map came to carry four false claims. limits.yml is string-keyed,
-    # so only a quoted key is a read; a `:phases` symbol is some other hash.
+    # file must open limits AND name the key. limits.yml is string-keyed, so
+    # only a quoted key is a read; a `:phases` symbol is some other hash.
     promoted = limits.fetch("guidance").keys.filter_map do |key|
       readers = bodies.select do |_, body|
         body.match?(/["']#{Regexp.escape(key)}\b/) && body.match?(/limits/i)

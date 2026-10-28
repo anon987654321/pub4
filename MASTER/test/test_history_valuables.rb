@@ -3,10 +3,9 @@
 require_relative "test_helper"
 require_relative "../tools/history_valuables"
 
-# the old backlog closes an entry by deleting it, so its deletions must not read as
+# The backlog closes an entry by deleting it, so its deletions must not read as
 # lost valuables; the same line deleted from any other file still must.
 class TestHistoryValuables < Minitest::Test
-
   LOG = <<~LOG
     commit aaaa1111
     diff --git a/TODO.md b/TODO.md

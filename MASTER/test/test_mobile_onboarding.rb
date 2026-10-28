@@ -46,8 +46,8 @@ class TestMobileOnboarding < Minitest::Test
 
       assert_includes output, "name"
       assert_includes output, "language"
-    ensure
-      Fiber[:master_pair_subject] = nil
     end
+  ensure
+    Fiber[:master_pair_subject] = nil
   end
 end

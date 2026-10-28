@@ -5,9 +5,8 @@ require File.join(Master::ROOT, "law", "definition")
 
 # A path-scoped Law that names a directory nobody has can never fire, and
 # nothing reports it: applies? is false for every file, so the scan finds
-# nothing and reads as clean. COMMERCE_BRGEN_DOES_NOT_OWN_AMBER named
-# RAILS/brgen/engines/marketplace/ after the marketplace became the sibling
-# RAILS/brgen_marketplace/ app.
+# nothing and reads as clean. The marketplace is the sibling
+# RAILS/brgen_marketplace/ app, so that is what the commerce scopes must name.
 class TestLawCommerce < Minitest::Test
   REPO = File.expand_path("../..", __dir__)
 

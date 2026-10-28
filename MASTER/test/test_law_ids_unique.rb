@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+# Loads the detector tree so Law.registry holds every class the scanner builds.
+require_relative "../lib/review/scan/law_dsl"
 
-# SINGULARITY, applied to the scanner itself. On 2026-08-01 the same rule id
-# (MAGIC_COLOR) was registered by two classes — js_rules.rb and universal_rules.rb —
-# and every matching line was counted twice. Nothing caught it because the one place
-# that enumerates the registry, LawRegistryAudit#build_registry_ids, folds ids into
-# a Set (`.to_set`) before anyone looks — a duplicate collapses to one and vanishes.
+# SINGULARITY, applied to the scanner itself. One id registered by two classes
+# counts every matching line twice, and LawRegistryAudit#build_registry_ids folds
+# ids into a Set (`.to_set`) before anyone looks, so a duplicate vanishes there.
 #
 # The built scanner does NOT dedup: `scanner.laws` holds one instance per registered
 # class, so two classes claiming one id appear as two entries with the same #id. That
@@ -14,10 +14,9 @@ require_relative "test_helper"
 # walks on every file.
 class TestLawIdsUnique < Minitest::Test
   def test_scanner_registry_uses_law_as_the_canonical_concept
-    assert_same Master::Review::Scan::Law, Master::Review::Scan::Law
-    assert_same Master::Review::Scan::LawDSL, Master::Review::Scan::LawDSL
-    assert_same Master::Review::Scan::LawFactory, Master::Review::Scan::LawFactory
-    assert_same Master::Review::Scan::LawRegistryAudit, Master::Review::Scan::LawRegistryAudit
+    %i[Law LawDSL LawFactory LawRegistryAudit].each do |name|
+      assert Master::Review::Scan.const_get(name, false), "Master::Review::Scan::#{name} is the scanner's Law vocabulary"
+    end
   end
 
   def scanner
@@ -34,10 +33,9 @@ class TestLawIdsUnique < Minitest::Test
                  "Give one a distinct id or delete the duplicate registration."
   end
 
-  # The audit's Set-folding is where the last dup hid. Pin that the pre-fold count
-  # equals the post-fold count, so the audit can never again mask a collision.
+  # The audit folds ids into a Set. Pin that the pre-fold count equals the
+  # post-fold count, so the audit cannot mask a collision.
   def test_the_registry_audit_does_not_mask_a_collision
-    Master::Review::Scan::LawDSL
     audit = Master::Review::Scan::LawRegistryAudit.new(root: Master::ROOT)
     built = Master::Review::Scan::Law.registry
       .select { |klass| audit.shipped?(klass) }

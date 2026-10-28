@@ -33,7 +33,6 @@ class TestReplicateClientTrain < Minitest::Test
   end
 end
 
-
 class TestReplicateClientRetry < Minitest::Test
   Client = Master::Io::ReplicateClient
 

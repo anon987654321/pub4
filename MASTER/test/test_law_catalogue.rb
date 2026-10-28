@@ -5,24 +5,17 @@ require_relative "../tools/audit/law_hygiene"
 require_relative "../lib/operator/autofix_reach"
 require_relative "../lib/operator/law_reach"
 
-# The two checks over the law catalogue itself — tools/rule_hygiene.rb on its
-# ids, aliases and metadata, tools/autofix_reach.rb on whether a rule fix
-# promise reaches code. One file because they read one subject, and because
-# each was measuring itself rather than the catalogue in the same way: hygiene
-# counted the check names inside a rule config as laws, and autofix_reach
-# asked whether a rule can be FOUND by reading three columns in laws.yml when
-# ten of the twelve it named have a detector in law/ or the registry.
+# The two checks over the law catalogue itself — tools/audit/law_hygiene.rb on
+# its ids, aliases and metadata, Operator::AutofixReach and Operator::LawReach on
+# whether a fix promise reaches code. One file because they read one subject:
+# hygiene must not count the check names inside a law's config as laws, and
+# reach must find a detector in law/ or the registry, not in laws.yml columns.
 #
-# Both directions are pinned throughout: the false positives are gone AND every
-# check still fires on the thing it exists to find.
-
+# Both directions are pinned throughout: no false positive, and every check
+# still fires on the thing it exists to find.
 class TestRuleCatalogue < Minitest::Test
   Law = Struct.new(:id, :detect, :fix, :severity, keyword_init: true)
 
-  # A design rule with a nested `config:` beside two ordinary laws. Shaped after
-  # AUTOMATED_CSS_ANALYSIS, which is where the false positives came from: eight
-  # check names under `config.checks`, each with an `id` and — correctly — no
-  # tier and no severity, because a check name is not a rule.
   # laws.yml's own shape: each law a top-level key carrying a priority and a statement. `catalogue` builds one
   # from rows with an id; the extra keys (learned_smells) sit beside them as they do in the file.
   def catalogue(*rows, **extra)
@@ -34,13 +27,16 @@ class TestRuleCatalogue < Minitest::Test
     entries.merge(identities, extra.transform_keys(&:to_s))
   end
 
+  # A design law with a nested `config:` beside an ordinary one, shaped after
+  # AUTOMATED_CSS_ANALYSIS: check names under `config.checks`, each with an `id`
+  # and no tier or severity, because a check name is not a law.
   def body_with_checks
     catalogue(
       { "id" => "EIGHT_PX_RHYTHM", "tier" => "design", "severity" => "warning" },
       { "id" => "AUTOMATED_CSS_ANALYSIS", "tier" => "design", "severity" => "warning",
         "config" => { "checks" => [{ "id" => "eight_px_rhythm", "enforce" => ["Operator::ScaleLint"] },
                                    { "id" => "touch_target", "enforce" => ["TOUCH_TARGET_MIN"] }] } },
-      learned_smells: [{ "id" => "magic_number", "pattern" => "\d", "severity" => "warning" }],
+      learned_smells: [{ "id" => "magic_number", "pattern" => "\\d", "severity" => "warning" }],
     )
   end
 
@@ -81,8 +77,7 @@ class TestRuleCatalogue < Minitest::Test
     with_body(body) { assert_equal ["C"], Operator::LawHygiene.missing_metadata }
   end
 
-  # A law double: the four things the hygiene checks below read off one.
-
+  # Replaces the three populations the hygiene checks below read.
   def with_populations(laws: {}, registry: {})
     hygiene = Operator::LawHygiene
     originals = { loaded_laws: hygiene.method(:loaded_laws), dsl_ids: hygiene.method(:dsl_ids),
@@ -115,8 +110,8 @@ class TestRuleCatalogue < Minitest::Test
     end
   end
 
-  # What the old duplicate count was reaching for: not that an id lives in two
-  # files, but that the two tell a reader different things.
+  # A conflict is not that an id lives in two places, but that the two tell a
+  # reader different things.
   def test_a_conflicting_fix_or_severity_is_reported_and_agreement_is_not
     body = catalogue({ "id" => "AGREES", "severity" => "error", "fix" => "Same words." },
                      { "id" => "DRIFTED", "severity" => "error", "fix" => "An older draft." },
@@ -166,17 +161,16 @@ class TestRuleCatalogue < Minitest::Test
 
   # --- autofix_reach: does a rule's fix promise reach code -------------------
   #
-  # Detection is RuleReach's question and these pin the three populations it has
+  # Detection is LawReach's question and these pin the three populations it has
   # to see. `mechanical` loads the laws rather than grepping for a literal
-  # `Law.define(:ID)`, which is why law/prose.rb's four generated laws are
-  # visible to it and were not to the grep that came before.
+  # `Law.define(:ID)`, so generated laws such as law/prose.rb's are visible to it.
 
   def test_timeout = 120
 
   def ids(laws) = Operator::LawReach.mechanical(laws).map { |r| r["id"] }
 
   # FAIL_VISIBLY's detector lives in law/universal.rb and its laws.yml row
-  # carries no detect_lexical — the shape the old count called undetectable.
+  # carries no detect_lexical.
   def test_a_detector_in_law_is_a_detector
     assert_equal ["FAIL_VISIBLY"], ids([{ "id" => "FAIL_VISIBLY", "autofix" => true }])
   end
@@ -193,14 +187,13 @@ class TestRuleCatalogue < Minitest::Test
                  ids([{ "id" => "MADE_UP_FOR_THIS_TEST", "folded_into" => "FAIL_VISIBLY" }])
   end
 
-  # The other direction. Narrowing this to silence the twelve would have turned
-  # the check off, so an id nothing anywhere detects must still come back empty.
+  # The other direction: an id nothing anywhere detects must still come back empty,
+  # or the check has been turned off rather than narrowed.
   def test_an_id_no_population_knows_is_not_mechanical
     assert_empty ids([{ "id" => "NO_SUCH_RULE_ANYWHERE" }])
   end
 
-  # The invariant the correction bought, written so that fixing a rule keeps it
-  # green: raise a severity, add a detector or say `autofix: false` and this
+  # Written so that fixing a law keeps it green: raise a severity, add a detector or say `autofix: false` and this
   # passes. It cannot be satisfied by a rule going quiet.
   def test_no_autofix_claim_is_unreportable
     stranded = Operator::AutofixReach.bare_true.reject { |row| row[:detected] }

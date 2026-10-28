@@ -3,6 +3,8 @@
 require_relative "test_helper"
 require "tmpdir"
 require "digest"
+require "json"
+require "socket"
 
 class TestLLMDispatcher < Minitest::Test
   class FakeBus
@@ -41,9 +43,8 @@ class TestLLMDispatcher < Minitest::Test
   ReplyWithContent = Struct.new(:content)
   ReplyWithCost = Struct.new(:tokens, :cost, :content)
 
-  # 2026-09-16: a /fix ran 194 model calls and 178 failed — the free tier out
-  # for the day, Gemini out of quota, the claude binary hung and killed, a 3B
-  # local model timing out at 250s — and every rule still walked all four lanes.
+  # A lane that keeps failing — quota out, a hung binary, a local model timing
+  # out — must stop being asked rather than walked again for every rule.
   def test_the_door_stops_asking_once_a_lane_stops_answering
     dispatcher, = build_dispatcher
     door = Master::Io::LaneSilence
@@ -66,8 +67,8 @@ class TestLLMDispatcher < Minitest::Test
     Master::Io::LaneSilence.record(true, "any-model")
   end
 
-  # 2026-10-11: agy's spent quota failed twelve council calls and the shared
-  # door refused claude-cli, which answers in four seconds, before it was asked.
+  # One lane's spent quota must not make the shared door refuse another lane
+  # that still answers.
   def test_a_spent_lane_does_not_silence_the_others
     door = Master::Io::LaneSilence
     door::SILENT_AFTER.times { door.record(false, "agy", reason: "Individual quota reached") }
@@ -79,9 +80,8 @@ class TestLLMDispatcher < Minitest::Test
     door.record(true, "agy")
   end
 
-  # "claude-cli:" and a blank, a hundred and seventy-eight times: `claude
-  # --print` from inside a session hangs and is killed, which is exit 124 and
-  # two empty streams.
+  # `claude --print` from inside a session can hang and be killed, which is exit
+  # 124 and two empty streams; the error must say so rather than "claude-cli:".
   def test_a_cli_that_dies_silently_says_what_it_did
     dispatcher, = build_dispatcher
     killed = Struct.new(:success?, :exitstatus).new(false, 124)
@@ -211,13 +211,10 @@ class TestLLMDispatcher < Minitest::Test
   def test_cache_key_differs_by_system_prompt
     dispatcher, = build_dispatcher
 
-    # Regression: Enhance#enhance calls ask_once(msg, system: ENHANCE_SYSTEM)
-    # with the raw user message text; the real turn calls chat(msg) with the
-    # persona system prompt. Both produce messages.last[:content] == msg, so
-    # a cache key built without the system prompt let the real turn's answer
-    # get served the Enhance call's cached completion when the message text
-    # matched (confirmed live: "tell me a short joke" returned Enhance's
-    # <think> reasoning about JSON rewrite rules instead of a joke).
+    # Enhance#enhance calls ask_once(msg, system: ENHANCE_SYSTEM) with the raw
+    # user message; the real turn sends the same text under the persona system
+    # prompt. A key built without the system prompt would serve one the other's
+    # cached completion.
     key_enhance = dispatcher.send(:cache_key_for, "tell me a short joke", [], "some-model", "you are a message clarity editor")
     key_turn    = dispatcher.send(:cache_key_for, "tell me a short joke", [], "some-model", "you are MASTER, a constitutional coding agent")
 
@@ -235,9 +232,8 @@ class TestLLMDispatcher < Minitest::Test
   end
 
   # A billing or rate-limit refusal cannot succeed on an in-place retry, and
-  # :llm_call_failure is not in fallback_policy.on — seven rule passes died
-  # on "Insufficient credits" with claude-cli unused in the same chain
-  # (2026-08-19). :budget and :rate_limit make the chain walk on.
+  # :llm_call_failure is not in fallback_policy.on, so these must classify as
+  # :budget and :rate_limit to make the chain walk on.
   def test_billing_and_rate_errors_classify_as_failover_categories
     dispatcher, = build_dispatcher
 
@@ -348,12 +344,8 @@ class TestLLMDispatcher < Minitest::Test
     result = dispatcher.send(:send_claude_cli, "claude-sonnet-4-6", [{ role: "user", content: "hi" }], sys: nil)
     assert_instance_of Master::Result::Err, result
     assert_equal :timeout, result.category
-    # Asserts that the message reports THE configured timeout, not that the
-    # configured timeout is any particular number. Pinning the literal 60 here
-    # meant the one test covering this path failed the moment the default was
-    # corrected — a test that fails when a value is tuned is testing the value,
-    # and the value is not what this test is for. test_claude_cli_timeout_reads_env_override
-    # below already covers where the number comes from.
+    # The message reports the configured timeout, whatever its value;
+    # test_claude_cli_timeout_reads_env_override covers where the number comes from.
     expected = Master::Review::LLMDispatcher.const_get(:CLAUDE_CLI_TIMEOUT_S)
     assert_match(/timed out after #{expected}s/, result.message)
   end
@@ -367,36 +359,34 @@ class TestLLMDispatcher < Minitest::Test
     old.nil? ? ENV.delete("MASTER_CLAUDE_CLI_TIMEOUT") : ENV["MASTER_CLAUDE_CLI_TIMEOUT"] = old
   end
 
-# Every LLM call in the tree passes through send_with_cache. With no provider
-# key each caller used to fail slowly somewhere below it — the council spent
-# its whole budget discovering this one persona at a time — so the refusal
-# belongs at the door, before the breaker, the cache or the request.
-def test_no_provider_key_refuses_at_the_door
-  dispatcher = Master::Review::LLMDispatcher.allocate
-  result = Master.stub(:any_api_key_present?, false) do
-    dispatcher.send_with_cache("any-model", [{ role: "user", content: "hi" }])
+  # Every LLM call in the tree passes through send_with_cache. With no provider
+  # key every caller would fail slowly somewhere below it, one persona at a time,
+  # so the refusal belongs at the door, before the breaker, the cache or the request.
+  def test_no_provider_key_refuses_at_the_door
+    dispatcher = Master::Review::LLMDispatcher.allocate
+    result = Master.stub(:any_api_key_present?, false) do
+      dispatcher.send_with_cache("any-model", [{ role: "user", content: "hi" }])
+    end
+
+    assert_predicate result, :err?
+    assert_equal :no_api_key, result.category
   end
 
-  assert_predicate result, :err?
-  assert_equal :no_api_key, result.category
-end
+  def test_local_only_rejects_a_remote_model_before_send
+    dispatcher = Master::Review::LLMDispatcher.allocate
+    previous = ENV["MASTER_LOCAL_ONLY"]
+    ENV["MASTER_LOCAL_ONLY"] = "1"
 
-def test_local_only_rejects_a_remote_model_before_send
-  dispatcher = Master::Review::LLMDispatcher.allocate
-  previous = ENV["MASTER_LOCAL_ONLY"]
-  ENV["MASTER_LOCAL_ONLY"] = "1"
+    result = dispatcher.send(:local_only_refusal, "anthropic/claude-sonnet-4")
 
-  result = dispatcher.send(:local_only_refusal, "anthropic/claude-sonnet-4")
+    assert_instance_of Master::Result::Err, result
+    assert_equal :offline, result.category
+  ensure
+    ENV["MASTER_LOCAL_ONLY"] = previous
+  end
 
-  assert_instance_of Master::Result::Err, result
-  assert_equal :offline, result.category
-ensure
-  ENV["MASTER_LOCAL_ONLY"] = previous
-end
-
-  # Two claude subprocesses at once, process-wide: the dispatcher's latency
-  # table measured four-way contention doubling per-call latency, and the
-  # 2026-08-20 proof run showed CLI calls dying empty-stderr under it.
+  # Two claude subprocesses at once, process-wide: four-way contention doubles
+  # per-call latency and CLI calls die empty-stderr under it.
   def test_claude_cli_concurrency_is_capped_at_two
     dispatcher, = build_dispatcher
     require "monitor"
@@ -457,8 +447,8 @@ end
     assert_includes captured_args, "gemini-2.5-pro"
   end
 
-  # With its tools, `claude --print` committed twice inside the /fix worktree,
-  # past every check /fix makes. The lane answers in text only.
+  # With its tools, `claude --print` can commit inside the /fix checkout past
+  # every check /fix makes. The lane answers in text only.
   def test_the_claude_cli_lane_runs_without_tools
     dispatcher, = build_dispatcher
     ok_status = Struct.new(:success?).new(true)
@@ -477,8 +467,8 @@ end
     assert JSON.parse(settings)["disableAllHooks"], "the operator's Claude Code hooks must not run on MASTER's calls"
   end
 
-  # A screenshot given to the claude lane used to be dropped: the lane sent the
-  # text and the model judged a layout from numbers. Images ride stream-json.
+  # A screenshot given to the claude lane must reach the model, or it judges a
+  # layout from numbers. Images ride stream-json.
   def test_the_claude_cli_lane_carries_images_as_stream_json_content_blocks
     dispatcher, = build_dispatcher
     ok_status = Struct.new(:success?).new(true)
@@ -522,7 +512,7 @@ end
     refute captured_env.key?("CLAUDE_CODE_OAUTH_TOKEN"), "the OAuth token can carry the login"
   end
 
-  # Exit 0 and the limit on stdout: /fix took it as the model's answer.
+  # Exit 0 with the limit on stdout is a quota, not the model's answer.
   def test_a_subscription_limit_is_a_quota_not_an_answer
     dispatcher, = build_dispatcher
     ok_status = Struct.new(:success?).new(true)
@@ -681,27 +671,14 @@ end
   # MASTER_MODEL rewrites the model at the door, so the answer carries the
   # model that was asked, not the one the caller named.
   def test_an_answer_names_the_model_the_door_actually_asked
-    dispatcher, = build_dispatcher
-    asked = []
-    breaker = Object.new
-    breaker.define_singleton_method(:call) { |_cost, &blk| blk.call }
-    cache = Object.new
-    cache.define_singleton_method(:fetch) { |_key, _model, &blk| blk.call }
-    dispatcher.instance_variable_set(:@cache, cache)
-    dispatcher.define_singleton_method(:breaker_for) { |_model| breaker }
-    dispatcher.define_singleton_method(:record_provider_result) { |**| nil }
-    dispatcher.define_singleton_method(:send_llm_request) do |model, *, **|
-      asked << model
-      Master::Result.ok("hello")
-    end
-
+    dispatcher, asked = recording_dispatcher
     saved = ENV["MASTER_MODEL"]
     ENV["MASTER_MODEL"] = "claude-cli:claude-opus-4-8"
     result = Master.stub(:any_api_key_present?, true) do
       dispatcher.send_with_cache("routed-model", [{ role: "user", content: "hi" }])
     end
 
-    assert_equal "hello", result.value!
+    assert_equal "hi", result.value!
     assert_equal ["claude-cli:claude-opus-4-8"], asked
     assert_equal "claude-cli:claude-opus-4-8", result.model
   ensure
@@ -772,7 +749,7 @@ end
     RubyLLM.config.openrouter_api_key = "key-before"
     chat = dispatcher.stub(:llm_tools, []) do
       dispatcher.stub(:build_final_system, []) do
-        dispatcher.send(:build_chat_session, openrouter_model,[{ role: "user", content: "hi" }], sys: nil, image: nil)
+        dispatcher.send(:build_chat_session, openrouter_model, [{ role: "user", content: "hi" }], sys: nil, image: nil)
       end
     end
     RubyLLM.config.openrouter_api_key = "key-after"
@@ -796,22 +773,24 @@ end
     assert_equal ["LAW\n\nanswer in JSON"], role.map { |block| block[:text] }
     assert_equal %w[PERSONA TURN], persona.map { |block| block[:text] }
   end
-  # A CLI lane without its binary answered ENOENT, a retriable provider_error,
-  # so a chain slept through backoff on it once per file of a scan.
+
+  # A CLI lane without its binary must refuse permanently: a retriable ENOENT
+  # would make a chain sleep through backoff on it once per file of a scan.
   def test_a_cli_lane_without_its_binary_refuses_permanently
     dispatcher, = build_dispatcher
     previous = ENV["MASTER_NO_CLAUDE_CLI"]
     ENV["MASTER_NO_CLAUDE_CLI"] = "1"
     result = dispatcher.send(:send_claude_cli, "claude-sonnet-4-6", [{ role: "user", content: "hei" }], sys: nil)
-    ENV["MASTER_NO_CLAUDE_CLI"] = previous
 
     assert_predicate result, :err?
     assert_predicate result, :permanent?
     assert_includes result.message, "no claude on PATH"
+  ensure
+    ENV["MASTER_NO_CLAUDE_CLI"] = previous
   end
 
-  # A reasoning model sends its working beside its answer. Appended, it was
-  # printed at the terminal and every other reader had to strip it.
+  # A reasoning model sends its working beside its answer; appended, every
+  # reader would have to strip it.
   def test_a_reasoning_replys_working_stays_out_of_its_answer
     dispatcher, = build_dispatcher
     thinking = Struct.new(:text).new("the user asked who I am, so I introduce myself")
@@ -829,8 +808,8 @@ end
     assert_equal "still deciding", dispatcher.send(:extract_response, reply)
   end
 
-  # A schema-bound reply arrives parsed, and Hash#to_s is Ruby's inspect: the
-  # fold's parser read `{"verb" => "note"}` as no JSON object at all.
+  # A schema-bound reply arrives parsed, and Hash#to_s is Ruby's inspect, which
+  # the fold's parser cannot read as a JSON object.
   def test_a_parsed_schema_reply_goes_back_out_as_json
     dispatcher, = build_dispatcher
     reply = Struct.new(:content).new({ "verb" => "note", "why" => "look first", "args" => {} })
@@ -965,5 +944,4 @@ end
     dispatcher.instance_variable_set(:@availability, Master::CLI::Routing::AvailabilityPolicy.new(config: {}))
     [dispatcher, session, bus]
   end
-
 end

@@ -5,9 +5,8 @@ require "tmpdir"
 require "fileutils"
 require "open3"
 
-# the old backlog, Test coverage: no test named GitOperations. It is the runtime's only
-# git surface — status, ahead/behind, and the mutation half (add/commit/push)
-# that autocommit and the deploy path drive.
+# GitOperations is the runtime's only git surface — status, ahead/behind, and
+# the mutation half (add/commit/push) that autocommit and the deploy path drive.
 #
 # Every command is `git -C @root_path`, so the whole file is exercised against a
 # throwaway repository under Dir.mktmpdir with its own bare remote. Nothing here
@@ -107,7 +106,7 @@ class GitOperationsTest < Minitest::Test
   end
 
   def test_changed_paths_include_a_deleted_tracked_file
-    write("lib/deleted.rb", "# deleted\\n")
+    write("lib/deleted.rb", "# deleted\n")
     sh("git", "add", "lib/deleted.rb", chdir: @repo)
     sh("git", "commit", "-m", "add deleted fixture", chdir: @repo)
     FileUtils.rm_f(File.join(@repo, "lib/deleted.rb"))
@@ -189,8 +188,8 @@ class GitOperationsTest < Minitest::Test
     assert_includes sh("git", "diff", "--cached", "--name-only", chdir: @repo), "lib/staged.rb"
   end
 
-  # A pre-commit hook that refuses used to read as a commit, and ops:commit
-  # was published for a commit that never happened.
+  # A pre-commit hook that refuses is not a commit, so ops:commit must not be
+  # published for one.
   def test_a_refused_commit_raises
     hook = File.join(@repo, ".git", "hooks", "pre-commit")
     File.write(hook, "#!/bin/sh\nexit 1\n")
@@ -296,7 +295,7 @@ class GitOperationsTest < Minitest::Test
     sh("git", "checkout", "-b", "work/fix-topic", chdir: @repo)
     sh("git", "branch", "--set-upstream-to", "origin/main", "work/fix-topic", chdir: @repo)
     main_before = sh("git", "--git-dir", @remote, "rev-parse", "refs/heads/main", chdir: @repo).strip
-    write("topic.rb", "# topic\\n")
+    write("topic.rb", "# topic\n")
     @git.commit("topic repair", paths: ["topic.rb"])
 
     assert_equal ["origin", "HEAD:work/fix-topic"], @git.push_target
@@ -308,7 +307,7 @@ class GitOperationsTest < Minitest::Test
 
   def test_first_push_of_a_topic_branch_does_not_require_an_upstream
     sh("git", "checkout", "-b", "work/fresh-topic", chdir: @repo)
-    write("fresh-topic.rb", "# fresh\\n")
+    write("fresh-topic.rb", "# fresh\n")
     @git.commit("fresh topic", paths: ["fresh-topic.rb"])
 
     assert_equal ["origin", "HEAD:work/fresh-topic"], @git.push_target
@@ -367,6 +366,7 @@ class GitOperationsTest < Minitest::Test
 
     assert_equal [0, 1], @git.ahead_behind
   end
+
   def test_a_commit_leaves_a_receipt_with_neither_its_message_nor_its_paths
     write("notes/private-name.md", "x\n")
     @git.commit("Mention the secret plan", paths: ["notes/private-name.md"])

@@ -292,5 +292,4 @@ class TestLawMapRuntime < Minitest::Test
       assert_includes findings, "law duplicated repeats law_ids: SAME_RULE"
     end
   end
-
 end

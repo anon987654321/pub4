@@ -44,7 +44,7 @@ class LoraIntentTest < Minitest::Test
     assert result.ok?
     argv = calls.first[:argv]
     assert_equal "lora", calls.first[:tool]
-    assert_equal %w[--subject johann --generate-replicate --set selfies], argv.first(5).values_at(0, 1, 2, 3, 4)
+    assert_equal %w[--subject johann --generate-replicate --set selfies], argv.first(5)
     assert_includes argv, "--dry-run"
     assert_match(/nothing was spent/, result.value![:output])
     assert result.value![:dry_run]

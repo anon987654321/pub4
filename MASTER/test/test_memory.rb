@@ -329,9 +329,11 @@ class TestMemory < Minitest::Test
   end
 
   def test_context_summary_nil_when_empty
-    mem = Master::Ground::Memory.new(root: Dir.mktmpdir("empty_mem_test"))
-    without_brain_keys(mem)
-    assert_nil mem.context_summary
+    Dir.mktmpdir("empty_mem_test") do |root|
+      mem = Master::Ground::Memory.new(root:)
+      without_brain_keys(mem)
+      assert_nil mem.context_summary
+    end
   end
 
   def test_all_returns_flat_values

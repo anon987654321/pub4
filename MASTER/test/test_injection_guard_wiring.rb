@@ -2,10 +2,9 @@
 
 require_relative "test_helper"
 
-# The injection guard was built at builder/ai_boot.rb:37, stashed in the boot
-# bundle as `guard:`, and read by nothing. WebFetch is where text from outside
-# the tree becomes prompt, and it has been publishing tool:untrusted_output
-# about that text to nobody the whole time.
+# WebFetch and SearchKnowledge are where text from outside the tree becomes
+# prompt, so each must route that text through the injection guard; a guard
+# built and never read protects nothing.
 class TestInjectionGuardWiring < Minitest::Test
   Guard = Master::Review::Security::InjectionGuard
 

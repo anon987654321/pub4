@@ -5,8 +5,8 @@ require "open3"
 require "rbconfig"
 
 # Production's master container loads every law file at boot, and Law.define raises ArgumentError for a
-# law that lacks bad, good or fix. A missing example once took the container down on vm23 while the
-# local boot smoke stayed green, so each file loads in its own process here.
+# law that lacks bad, good or fix. A missing example takes the container down while a local boot
+# smoke that loads them together can stay green, so each file loads in its own process here.
 class TestLawFilesLoad < Minitest::Test
   LAW_DIR = File.expand_path("../law", __dir__)
 

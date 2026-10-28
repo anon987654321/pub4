@@ -4,11 +4,9 @@ require_relative "test_helper"
 require "fileutils"
 require "tmpdir"
 
-# Melody plans a rest between phrases, and the rest used to be spent as
-# `sleep(pause_ms / 1000.0)` inside the synthesis loop — latency in the Ruby
-# process, nothing in the audio. concat_mp3 then joined the phrases back to
-# back, so every planned rest was inaudible. These pin that the rest reaches the
-# file.
+# Melody plans a rest between phrases. A rest spent as a sleep in the synthesis
+# loop is latency in the Ruby process and nothing in the audio, so these pin
+# that concat_mp3 writes the rest into the file.
 class TestMelodicConcat < Minitest::Test
   E = Master::Voice::Engines
 

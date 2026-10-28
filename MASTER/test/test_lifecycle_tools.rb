@@ -7,18 +7,13 @@ class LifecycleToolsSpec < Minitest::Test
 
   # repo_inventory reports anything at the repo root that is not on one of its
   # two allowlists, so a stale list is wrong in both directions at once: it
-  # excuses what is gone and reports what belongs. Both had gone stale — five of
-  # seven files and four of six directories named subjects that do not exist,
-  # while MASTER, RAILS, OPENBSD and STUDIO were reported as non-canonical
-  # top-level directories. Held against the tree rather than a fixture, because
-  # the tree is what the tool reads.
+  # excuses what is gone and reports what belongs. Held against the tree rather
+  # than a fixture, because the tree is what the tool reads.
   def test_the_root_allowlists_name_the_repo_root_exactly
     load_inventory
     repo = File.expand_path("..", ROOT)
-    # The tool own reading rather than a second one beside it: root_entries
-    # drops what git ignores, and a spec that re-derived the list from
-    # Dir.children failed on .DS_Store and the check ledger while the tool was
-    # right.
+    # The tool's own reading rather than a second one beside it: root_entries
+    # drops what git ignores, which Dir.children would not.
     present = root_entries
     files, dirs = present.partition { |name| File.file?(File.join(repo, name)) }
     assert_equal files.sort, Object.const_get(:ALLOWED_ROOT_FILES).sort,
@@ -28,7 +23,7 @@ class LifecycleToolsSpec < Minitest::Test
   end
 
   def test_media_tool_compatibility_links_point_at_studio
-    # lora trains through Replicate and lives under it (4d1250d28).
+    # lora trains through Replicate and lives under it.
     homes = { "dilla" => "dilla", "lora" => "replicate/lora", "postpro" => "postpro", "replicate" => "replicate" }
     homes.each do |tool, home|
       link = File.join(ROOT, "tools", tool)

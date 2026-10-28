@@ -101,43 +101,43 @@ class MediaIntentTest < Minitest::Test
     end
   end
 
-def test_plain_live_music_language_routes_to_dilla
-  assert Master::Io::MediaIntent.handles?("play some music in real time")
-  assert Master::Io::MediaIntent.handles?("play some music locally")
-  calls = []
+  def test_plain_live_music_language_routes_to_dilla
+    assert Master::Io::MediaIntent.handles?("play some music in real time")
+    assert Master::Io::MediaIntent.handles?("play some music locally")
+    calls = []
 
-  without_sound do
-    Master::Io::ScriptDispatch.stub(:run, dilla_stub(calls)) do
-      result = Master::Io::MediaIntent.dispatch("play some music locally", root: MasterPaths.root)
-      assert result.ok?, -> { result.message.to_s }
+    without_sound do
+      Master::Io::ScriptDispatch.stub(:run, dilla_stub(calls)) do
+        result = Master::Io::MediaIntent.dispatch("play some music locally", root: MasterPaths.root)
+        assert result.ok?, -> { result.message.to_s }
+      end
     end
+
+    assert_equal %w[dilla dilla], calls.map { |call| call[:tool] }
+    assert_equal "--list", calls.first[:arg]
   end
 
-  assert_equal %w[dilla dilla], calls.map { |call| call[:tool] }
-  assert_equal "--list", calls.first[:arg]
-end
+  def test_bare_play_renders_the_curated_blue_hour_showcase_and_plays_the_wav
+    calls = []
+    result = nil
 
-def test_bare_play_renders_the_curated_blue_hour_showcase_and_plays_the_wav
-  calls = []
-  result = nil
-
-  without_sound do
-    Master::Io::ScriptDispatch.stub(:run, dilla_stub(calls)) do
-      result = Master::Io::MediaIntent.play_live_music("", root: MasterPaths.root)
-      assert result.ok?, -> { result.message.to_s }
-      assert_match(/\.wav\z/, result.value![:path])
+    without_sound do
+      Master::Io::ScriptDispatch.stub(:run, dilla_stub(calls)) do
+        result = Master::Io::MediaIntent.play_live_music("", root: MasterPaths.root)
+        assert result.ok?, -> { result.message.to_s }
+        assert_match(/\.wav\z/, result.value![:path])
+      end
     end
-  end
 
-  words = Shellwords.split(calls.fetch(0)[:arg])
-  assert_includes words, "--showcase"
-  assert_includes words, "--no-video"
-  assert_equal "Blue Hour — Dilla Minor Dub Cut", result.value!.fetch(:style)
-  assert_equal "dilla_shadow_full", result.value!.fetch(:drums)
-  assert_equal "kit_dust", result.value!.fetch(:kit)
-  refute_includes words, "--list"
-  assert_match(/blue-hour-\d{8}T\d{6}Z(?:-\d+)?\.wav\z/, words[words.index("--out") + 1])
-end
+    words = Shellwords.split(calls.fetch(0)[:arg])
+    assert_includes words, "--showcase"
+    assert_includes words, "--no-video"
+    assert_equal "Blue Hour — Dilla Minor Dub Cut", result.value!.fetch(:style)
+    assert_equal "dilla_shadow_full", result.value!.fetch(:drums)
+    assert_equal "kit_dust", result.value!.fetch(:kit)
+    refute_includes words, "--list"
+    assert_match(/blue-hour-\d{8}T\d{6}Z(?:-\d+)?\.wav\z/, words[words.index("--out") + 1])
+  end
 
   def test_postpro_capability_question_does_not_require_source_path
     result = Master::Io::MediaIntent.dispatch("can you use postpro.rb?", root: MasterPaths.root)
@@ -146,18 +146,18 @@ end
     assert_match(/provide an existing image file or directory path/, result.value!.fetch(:rendered))
   end
 
-def test_background_music_is_a_media_intent
-  assert Master::Io::MediaIntent.handles?("play your music in the background")
-  calls = []
-  without_sound do
-    Master::Io::ScriptDispatch.stub(:run, dilla_stub(calls)) do
-      result = Master::Io::MediaIntent.dispatch("play your music in the background", root: MasterPaths.root)
-      assert result.ok?
+  def test_background_music_is_a_media_intent
+    assert Master::Io::MediaIntent.handles?("play your music in the background")
+    calls = []
+    without_sound do
+      Master::Io::ScriptDispatch.stub(:run, dilla_stub(calls)) do
+        result = Master::Io::MediaIntent.dispatch("play your music in the background", root: MasterPaths.root)
+        assert result.ok?
+      end
     end
+    assert_equal "dilla", calls.first[:tool]
+    assert_equal "--list", calls.first[:arg]
   end
-  assert_equal "dilla", calls.first[:tool]
-  assert_equal "--list", calls.first[:arg]
-end
 
   def test_desktop_postpro_variations_keep_the_desktop_source
     Dir.mktmpdir("master-home") do |home|

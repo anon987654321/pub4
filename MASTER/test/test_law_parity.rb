@@ -62,10 +62,11 @@ class TestLawParity < Minitest::Test
     end
   end
 
-
   def test_report_ok_string_when_clean
     parity = Master::Fix::LawParity.new
-    assert_match(/law_parity: ok/, parity.report) if parity.ok?
+
+    assert parity.ok?, parity.report
+    assert_match(/law_parity: ok/, parity.report)
   end
 
   def test_empty_catalogue_is_not_reported_as_clean

@@ -6,17 +6,14 @@ require "rbconfig"
 
 class CheckContractSpec < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  # The ladder bin/check --ladder loads, which bin/gate was until 2026-10-22.
+  # The ladder bin/check --ladder loads.
   CHECK = File.join(ROOT, "lib", "operator", "check_ladder.rb")
 
   # The command reaches bin/master on stdin, and the check does not wait forever for
   # an answer.
   #
-  # This asserted the literal string "stdin_data", which was capture2e's keyword.
-  # The check moved to popen2e on 2026-08-12 for the timeout below — same
-  # contract, same stdin, different spelling — and the spec failed on the
-  # spelling. Asserting the two properties instead: something is written to the
-  # child's stdin, and there is a wall clock on the wait. A stage that hangs is
+  # Two properties, not one spelling: something is written to the child's
+  # stdin, and there is a wall clock on the wait. A stage that hangs is
   # the one failure INCONCLUSIVE cannot catch, because every pattern in that
   # list is something a stage says on its way out.
   def test_check_runs_master_cli
@@ -29,15 +26,9 @@ class CheckContractSpec < Minitest::Test
                     "returns produces no output for INCONCLUSIVE to match on"
   end
 
-  # One boot per tier per tree, because one boot does the whole tier.
-  #
-  # The lexical pass was `/scan`, `/fix`, `/scan` — three runtime boots for a
-  # pipeline that already scans, fixes and re-scans inside one. /scan is
-  # /review --only scan, and that stage's sections are the aesthetic pass, the
-  # deep pass, the fix, and the re-scan that proves it; running the word three
-  # times ran that sequence three times. The semantic pass was `/critique` then
-  # `/review`, and both words name the critique stage, so the tier that costs
-  # the most ran twice.
+  # One boot per tier per tree, because one boot does the whole tier: /scan
+  # already scans, fixes and re-scans, and /critique and /review both name the
+  # critique stage, so repeating either reruns the whole sequence.
   #
   # Asserted on the shape rather than the literal line, since the flag spellings
   # move: what must hold is that no tier repeats a stage.
@@ -54,10 +45,6 @@ class CheckContractSpec < Minitest::Test
 
   # The chain ends with a clean tree, and that tree is MASTER plus whatever
   # --tree named.
-  #
-  # This used to read a literal fourth-tree assertion; the target list is now computed.
-  # until --tree made the list a computed one: same contract, different
-  # spelling, which is the failure this file already records at the top.
   def test_check_is_expected_to_keep_repo_clean
     source = File.read(CHECK)
     assert_includes source, "assert_clean(*ASSERT_PATHS)"
@@ -65,9 +52,6 @@ class CheckContractSpec < Minitest::Test
   end
 
   # The check must cover every sibling tree CLAUDE.md names, not a subset.
-  #
-  # It carried RAILS and OPENBSD and reported the repo clean on that basis.
-  # MASTER/tools is now part of MASTER, so its coverage is exercised through the MASTER tree and tool suite.
   #
   # Read out of `--explain` rather than out of the source, because the target
   # list is computed: --tree narrows it, and a spec grepping for a literal
@@ -83,11 +67,10 @@ class CheckContractSpec < Minitest::Test
     end
   end
 
-  # Every path the ladder names must exist — OPERATOR was folded into OPENBSD,
-  # and a stale entry means the check /scans a directory that is not there.
+  # Every path the ladder names must exist; a stale entry means the check
+  # /scans a directory that is not there.
   def test_check_deploy_paths_exist
-    # Any flags, not one named flag. This listed --no-autofix alone and read
-    # --apply as a directory the moment the full-fix line grew one.
+    # Any flags, not one named flag, so a new flag is never read as a directory.
     paths = check_explain.scan(%r{bin/master /\w+((?:\s+--[\w-]+)*)\s+(\S+)}).map(&:last).uniq
 
     assert_operator paths.size, :>=, 4, "expected the default ladder to name all four trees"
@@ -158,11 +141,9 @@ class CheckContractSpec < Minitest::Test
     assert_includes source, '"MASTER_HEARTBEAT" => "0"'
   end
 
-  # The assertions above are string matches, and a string match is what let this
-  # break: bin/check --ladder listed MASTER_AUTOFIX=0 and its comment claimed /scan was
-  # read-only under it, while MechanicalAutofix read MASTER_SCAN_AUTOFIX and
-  # consulted MASTER_AUTOFIX nowhere. Every key was present and the tree was
-  # still written to. So this one asks the consumer instead of the spelling.
+  # The assertions above are string matches; a key can be present and still not
+  # be the one MechanicalAutofix reads. So this one asks the consumer instead of
+  # the spelling.
   def test_check_safe_env_actually_disables_scan_autofix
     require_relative "../lib/fix/scan/mechanical_autofix"
 
@@ -181,6 +162,7 @@ class CheckContractSpec < Minitest::Test
     body = File.read(CHECK)[/SAFE_ENV = \{(.*?)\}\.freeze/m, 1].to_s
     body.scan(/"([A-Z_]+)"\s*=>\s*"([^"]*)"/).to_h
   end
+
   def test_web_command_palette_matches_the_slash_surface
     require_relative "../lib/cli/command_registry/help"
     surface = Master::CLI::CommandRegistry.command_surface
@@ -196,17 +178,18 @@ class CheckContractSpec < Minitest::Test
     refute_includes chat, "const COMMANDS = ["
   end
 
-private
+  # The ladder, without running it. Cached because both tests read the same
+  # answer and the script boots a bare ruby to print it.
+  def self.check_explain
+    @check_explain ||= begin
+      out, status = Open3.capture2e(RbConfig.ruby, CHECK, "--explain", chdir: ROOT)
+      raise "bin/check --explain failed: #{out}" unless status.success?
 
-# The ladder, without running it. Cached because both tests read the same
-# answer and the script boots a bare ruby to print it.
-def check_explain
-  @@check_explain ||= begin
-    out, status = Open3.capture2e(RbConfig.ruby, CHECK, "--explain", chdir: ROOT)
-    raise "bin/check --explain failed: #{out}" unless status.success?
-
-    out
+      out
+    end
   end
-end
 
+  private
+
+  def check_explain = self.class.check_explain
 end

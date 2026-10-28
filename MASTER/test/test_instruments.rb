@@ -3,12 +3,9 @@
 # My measurement code is wrong more often than my reasoning, and a wrong
 # instrument is expensive because its output is plausible.
 #
-# On 2026-08-12 a hand-rolled method-length counter scored `def x = expr` as
-# running to the next `end`, reported MASTER's longest method as 60 lines when
-# it was 34, and made a tightly factored codebase read as needing a refactor.
-# The same day, a verification regex with broken escaping reported zero matches
-# for a pattern that had two. Neither was caught by a test; both would have been
-# caught in seconds by a file whose right answers were already written down.
+# A method-length counter that scores `def x = expr` as running to the next
+# `end`, or a regex with broken escaping that reports zero matches, is caught in
+# seconds by a fixture whose right answers are already written down.
 
 require "minitest/autorun"
 require_relative "../tools/instruments"
@@ -35,8 +32,7 @@ class TestInstruments < Minitest::Test
                     "`# instrument:` header and is being measured against nothing"
   end
 
-  # The endless-def case specifically, because that is the one that was got
-  # wrong for real. Four methods, none of them long.
+  # The endless-def case specifically: four methods, none of them long.
   def test_an_endless_def_is_not_a_long_method
     source = File.read(File.expand_path("fixtures/endless_defs.rb", __dir__))
     measured = Operator::Instruments.measured(source)
@@ -46,8 +42,8 @@ class TestInstruments < Minitest::Test
                  "an endless method is being measured as if it ran to the next `end`"
   end
 
-  # Comments are not length — the 2026-08-10 decision that made lint:spine and
-  # [DENSITY] agree. If this flips, one of the two checks has drifted back.
+  # Comments are not length, which is what keeps lint:spine and [DENSITY]
+  # agreeing. If this flips, one of the two checks has drifted.
   def test_comments_do_not_count_as_length
     source = File.read(File.expand_path("fixtures/documented_method.rb", __dir__))
 

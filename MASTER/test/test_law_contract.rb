@@ -77,6 +77,7 @@ class TestLawContract < Minitest::Test
     end
   end
 
+  # Readers keep the previous registry until a reload finishes, never a half-built one.
   def test_law_reload_never_exposes_a_partial_registry
     with_catalogued(:ATOMIC_RELOAD_PROBE) do
       Dir.mktmpdir do |dir|
@@ -92,14 +93,6 @@ class TestLawContract < Minitest::Test
           end
         RUBY
 
-        original = Law.definitions.dup
-        original[:ATOMIC_RELOAD_PROBE] = Law::Definition.new(
-          id: :ATOMIC_RELOAD_PROBE, source: "test", severity: :info, mode: :violation,
-          languages: [], scope: :line, surfaces: nil, law_scope: :universal, lifecycle: :active,
-          autofix: :review, path: nil, path_exclude: nil, absent: nil, detect: nil,
-          ask: nil, practice: "old", fix: "keep it", bad: "bad", good: "good",
-          reads_comments: false
-        )
         Law.load_all(File.join(Master::ROOT, "law"))
 
         loaded = Thread.new { Law.load_all(dir) }
@@ -199,10 +192,11 @@ class TestLawContract < Minitest::Test
     assert_match(/\A[0-9a-f]{64}\z/, data.fetch("law_source").fetch("law_map_digest"))
   end
 
-  def test_digest_changes_with_the_executable_law_set
+  def test_the_rendered_contract_carries_the_current_digest
     first = Law::Contract.digest
     assert_equal first, JSON.parse(Law::Contract.render).fetch("law_digest")
   end
+
   def test_all_executable_laws_are_universal_and_share_one_surface_catalogue
     rows = Law::Index.validate!
     assert rows.all? { |row| row.fetch("law_scope") == "universal" }
@@ -282,5 +276,4 @@ class TestLawContract < Minitest::Test
     observed = candidate.with(lifecycle: :observed)
     assert observed.can_transition_to?(:trusted)
   end
-
 end

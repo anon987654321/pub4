@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "master"
 require_relative "../lib/operator/services"
 
@@ -30,6 +31,7 @@ class OperatorServicesTest < Minitest::Test
     assert_raises(Master::SecurityError) { Master::Operator.run_rcctl("restart", "relayd") }
     assert_raises(Master::SecurityError) { Master::Operator.run_rcctl("stop", "brgen") }
   end
+
   def test_embedded_services_cannot_be_stopped_as_if_they_were_rcctl_daemons
     assert_raises(ArgumentError) { Master::Operator.stop("cognition") }
     assert_raises(ArgumentError) { Master::Operator.restart("memory") }

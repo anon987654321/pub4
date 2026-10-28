@@ -2,17 +2,9 @@
 
 # Every scan rule that carries worked examples must satisfy them.
 #
-# Across seven categories audited in RAILS/FINAL_the old backlog, six failed the same
-# way: the law matched a pattern adjacent to the law it enforced.
-#
-#   TIME_ZONE_UNSAFE     matched Time.now; the law is about Time.zone, and
-#                        Time.now.utc / Time.now.to_i read neither.
-#   rb_long_method       counted the start..end span; the law is about how much
-#                        logic a method holds, so it penalised comments.
-#   css_px_width         read an @media condition as an element width.
-#   target_no_controller knew one of the three ways a controller registers.
-#
-# Every one of those is a false *positive*: the law fires where the law is
+# The common failure is a law matching a pattern adjacent to the one it
+# enforces — Time.now for a Time.zone law, an @media condition read as an
+# element width — a false *positive*: the law fires where the law is
 # satisfied. A rule that carries the case it must not fire on cannot drift that
 # way in silence, which is why does_not_fire matters more here than fires.
 #
@@ -27,10 +19,9 @@ require_relative "../lib/review/scan/law_dsl"
 class TestLawFixtures < Minitest::Test
   Law = Master::Review::Scan::Law
 
-  # `html` is what the web rules declare in applies_to:, and it was missing, so
-  # every one of them fell through to the ruby path — a view rule guarded by
-  # `path.include?("/app/views/")` could not fire on its own worked example, and
-  # the only way to give it one was to spell example_path by hand.
+  # Each language a rule declares in applies_to: needs a path of its own, or a
+  # rule guarded by `path.include?("/app/views/")` falls through to the ruby
+  # path and cannot fire on its own worked example.
   DEFAULT_PATHS = {
     ruby: "/repo/app/models/example.rb",
     scss: "/repo/app/assets/stylesheets/_example.scss",
@@ -39,9 +30,7 @@ class TestLawFixtures < Minitest::Test
     erb: "/repo/app/views/example.html.erb",
     js: "/repo/app/javascript/controllers/example_controller.js",
     # `javascript` and `zsh` are what applies_to actually declares; `js` is not a
-    # language any rule names. Without these two the JS and shell rules landed at
-    # a Ruby model path, which none of them reads — but the next one to grow a
-    # path guard would have failed its own example for a reason nothing states.
+    # language any rule names.
     javascript: "/repo/app/javascript/controllers/example_controller.js",
     zsh: "/repo/bin/example.sh",
   }.freeze
@@ -101,9 +90,9 @@ class TestLawFixtures < Minitest::Test
     assert_operator self.class.fixtured.size, :>=, 2,
                     "only #{self.class.fixtured.size} laws carry examples — fixtures stopped being read"
   end
-  # The other 89: rules with NO worked example at all. A law cannot load
-  # without fixtures; a registry law can, and that gap is where the twin
-  # campaign found every silent drift. This ceiling only moves down — a new
+
+  # Rules with NO worked example at all. A law cannot load without fixtures;
+  # a registry law can, and that gap is where twins drift in silence. This ceiling only moves down — a new
   # rule must carry fires:/does_not_fire:, and adding examples to an old one
   # lowers the recorded number by hand (data/laws.yml, law_ratchets.fixture_debt).
   def test_the_unfixtured_registry_only_shrinks
@@ -115,11 +104,12 @@ class TestLawFixtures < Minitest::Test
     assert_operator unfixtured.size, :<=, ceiling,
       "a new registry law without fires:/does_not_fire: — carry the worked examples, the way every law must"
     return unless unfixtured.size < ceiling
+
     puts "rule_fixture_debt: #{unfixtured.size} < ceiling #{ceiling} — record the new low in data/laws.yml law_ratchets.fixture_debt"
   end
 
-  # Comment lines are blanked before the scan and a finding keeps the line it is on: the pattern that
-  # blanked them took the newlines of the blank lines above a comment with it.
+  # Comment lines are blanked before the scan and a finding keeps the line it is on, so blanking must
+  # not take the newlines of the blank lines above a comment with it.
   def test_time_zone_finding_reports_its_own_line_after_blank_lines_and_comments
     law = Law.registry.find { |klass| law_id(klass).to_s == "TIME_ZONE_UNSAFE" }
     source = "a = 1\n\n\n# a comment\n\n" + format("b = %s.now\n", "Time")

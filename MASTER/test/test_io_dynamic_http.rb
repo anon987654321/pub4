@@ -9,9 +9,8 @@ require "test_helper"
 #
 #     return Result.err(...) unless SsrfGuard.safe_uri?(uri)
 #
-# SsrfGuard itself has twelve tests. This class had none, so the guard was well
-# covered and its only call site was not — reorder those two lines, or drop the
-# `unless`, and every one of those twelve tests still passes.
+# SsrfGuard's own tests cover the guard, not this call site: reorder those two
+# lines, or drop the `unless`, and every one of them still passes.
 #
 # Nothing here opens a socket. Every case is refused before perform_request, which
 # is the point: a test that needed the network could not prove a refusal.

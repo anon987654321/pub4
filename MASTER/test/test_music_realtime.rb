@@ -61,11 +61,11 @@ class TestMusicRealtime < Minitest::Test
   end
 
   def test_stream_player_discovery_works_from_a_minimal_path
+    old_path = ENV["PATH"]
     Dir.mktmpdir do |dir|
       sox = File.join(dir, "sox")
       File.write(sox, "#!/bin/sh\n")
       File.chmod(0o755, sox)
-      old_path = ENV["PATH"]
       ENV["PATH"] = dir
       # Homebrew's bins are tried before PATH, as Io::Exec does, so a host with sox installed finds that one.
       preferred = %w[/opt/homebrew/bin/sox /usr/local/bin/sox].find { |path| File.executable?(path) }
