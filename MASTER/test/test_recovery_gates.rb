@@ -380,8 +380,9 @@ module Master
               def clean? = true
             end.new([], "controlled trace clean")
             run_pass = lambda do |dependencies, **options|
+              resolved_target = File.expand_path(options.fetch(:target), cli_root)
               result = dependencies.fetch(:fix_loop).run(
-                options.fetch(:target), max_passes: 2, budget_seconds: 60,
+                resolved_target, max_passes: 2, budget_seconds: 60,
                 incremental: false, requested: true
               )
               raise "controlled Kernel run failed: #{result.message}" unless result.ok?
