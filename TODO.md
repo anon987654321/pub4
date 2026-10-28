@@ -79,6 +79,19 @@ source and tests they could not run; this pass is what measures them.
   dating, messenger, radio and takeaway, with authorisation boundaries and empty and error states.
 - [ ] Guest-to-account conversion and guest-transfer retry tests through every sign-in path.
 - [ ] Re-measure CSS, JS and PWA budgets from a fresh build against the ratchets.
+- [ ] Run an evidence-backed public SEO/indexability audit across the hostnames and
+  surfaces recorded in `RAILS/apps.yml` and the deployment inventory. Start with the
+  canonical app hosts (`brgen.no`, `ai.brgen.no`, `amberapp.art`, `bsdports.org`) and
+  verify redirects/canonicals for owned aliases (`amberapp.no`, `amberapp.online`,
+  `bsdports.net`) before treating them as indexable equivalents. Include representative
+  Brgen vertical hosts and city apexes; explicitly decide whether the MASTER face should
+  be indexed. Record timestamped HTTP/redirect results, robots and sitemap coverage,
+  canonical/title/description/Open Graph metadata, JSON-LD validity, indexability and
+  measured performance where available. Claude SEO may be used as a reviewed advisory
+  crawler, with optional paid/API extensions disabled unless approved; preserve raw
+  evidence and falsifiable recommendations. Reuse `content_honesty`, `surface_schema`,
+  the SEO kit and existing structured-data tests; do not add duplicate checks or new Law
+  IDs until the audit proves a distinct, repeatable invariant that the current checks miss.
 
 ## Cross-tree
 
