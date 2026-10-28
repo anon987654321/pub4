@@ -208,14 +208,18 @@ module Master
 
         pattern = row["path_pattern"]
         unless pattern.nil? || pattern.to_s.empty?
-          Regexp.new(pattern.to_s)
-        rescue RegexpError => error
-          errors << "Law #{name} has invalid path_pattern: #{error.message}"
+          begin
+            Regexp.new(pattern.to_s)
+          rescue RegexpError => error
+            errors << "Law #{name} has invalid path_pattern: #{error.message}"
+          end
         end
-        Array(row["path_exclude"]).each do |pattern|
-          Regexp.new(pattern.to_s)
-        rescue RegexpError => error
-          errors << "Law #{name} has invalid path_exclude: #{error.message}"
+        Array(row["path_exclude"]).each do |excluded_pattern|
+          begin
+            Regexp.new(excluded_pattern.to_s)
+          rescue RegexpError => error
+            errors << "Law #{name} has invalid path_exclude: #{error.message}"
+          end
         end
 
         definition_sources = row["definition_sources"]
