@@ -6,6 +6,7 @@ require "fileutils"
 require "json"
 require "socket"
 require_relative "../lib/fix/kernel"
+require_relative "../lib/fix/run_journal"
 require_relative "../lib/fix/kernel/repair_adapter"
 
 class TestFixKernel < Minitest::Test
