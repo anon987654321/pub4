@@ -61,7 +61,7 @@ module Deploy
       # An opened engine, or nil with the reason recorded in `unavailable`.
       # A failed engine is not retried within the run.
       def open(name, host_map: {}, factory: nil)
-        return nil if @unavailable.key?(name)
+        return if @unavailable.key?(name)
 
         engine = (factory || method(:build)).call(name, host_map:)
         engine.open

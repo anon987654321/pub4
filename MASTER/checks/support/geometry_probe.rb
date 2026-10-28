@@ -244,7 +244,7 @@ module Deploy
     rescue CdpSession::Error => e
       {
         "glyphs_status" =>
-          "unverified: #{e.class.name.split("::").last} #{e.message.to_s[0, 80]} — fallback faces not measured"
+          "unverified: #{e.class.name.split("::").last} #{e.message.to_s[0, 80]} — fallback faces not measured",
       }
     end
 

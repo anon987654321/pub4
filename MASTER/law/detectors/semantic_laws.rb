@@ -340,7 +340,7 @@ module Master
               ].compact.join("\n")
 
               laws[id] = {
-                prompt: prompt,
+                prompt:,
                 severity: definition&.severity || detector&.severity || :warning,
                 mode: :both,
                 reversibility: nil,

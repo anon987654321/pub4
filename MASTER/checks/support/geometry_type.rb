@@ -343,7 +343,7 @@ module Deploy
       )
     rescue StandardError => e
       result.incomplete!(
-        "geometry micro_type: #{surface.id} could not be measured (#{e.class}: #{e.message})"
+        "geometry micro_type: #{surface.id} could not be measured (#{e.class}: #{e.message})",
       )
     end
   end

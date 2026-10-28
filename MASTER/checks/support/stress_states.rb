@@ -127,7 +127,7 @@ module Deploy
       nil
     end
 
-    def mutate(cdp, name, scan)
+    def mutate(cdp, name, _scan)
       if name == :compound
         script = StressScripts::COMPOUND_JS.sub("__WORDS__") { COMPOUNDS.to_json }.sub("__LIMIT__", "8")
         return cdp.evaluate(script) || :unavailable

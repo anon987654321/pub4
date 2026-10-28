@@ -379,7 +379,6 @@ Law.define(:NO_ORDINAL_ORNAMENT) do
   good "ol.steps li::marker { content: counter(list-item) \". \"; }"
 end
 
-
 Law.define(:SIGNAL_COLOR_IS_SEMANTIC) do
   source "pub4 visual identity contract — signal colour is a semantic marker, never a general surface or body-text colour"
   scope :file
@@ -418,4 +417,3 @@ Law.define(:SIGNAL_COLOR_IS_SEMANTIC) do
     }
   CSS
 end
-

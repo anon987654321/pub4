@@ -195,7 +195,7 @@ module Master
               file["offenses"].map do |offense|
                 finding(
                   line: offense.dig("location", "line") || 1,
-                  message: "rubocop: #{offense["cop_name"]} — #{offense["message"]}"
+                  message: "rubocop: #{offense["cop_name"]} — #{offense["message"]}",
                 )
               end
             end

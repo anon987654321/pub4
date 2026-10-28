@@ -15,7 +15,7 @@ module Deploy
         next if status < 400
 
         {
-          status: status,
+          status:,
           status_text: response["statusText"].to_s,
           url: response["url"].to_s,
           resource_type: params["type"].to_s,
@@ -33,7 +33,7 @@ module Deploy
         request = params["request"] || {}
         requests[params["requestId"]] = {
           url: request["url"].to_s,
-          resource_type: params["type"].to_s
+          resource_type: params["type"].to_s,
         }
       end
 
@@ -49,9 +49,9 @@ module Deploy
         {
           url: request[:url].to_s,
           resource_type: request[:resource_type].to_s,
-          error: error,
+          error:,
           blocked_reason: params["blockedReason"].to_s,
-          canceled: false
+          canceled: false,
         }
       end.uniq { |row| [row[:url], row[:resource_type], row[:error], row[:blocked_reason]] }
     end

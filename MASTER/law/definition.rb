@@ -653,7 +653,7 @@ module Law
           law_dir: dir,
           catalogue: LAW_CATALOGUE,
           repo_root: File.dirname(Master::ROOT),
-          generated_declarations: generated
+          generated_declarations: generated,
         )
       end
 
