@@ -66,6 +66,9 @@ module Postpro
       height = video["height"].to_i
       raise Unavailable, "video has invalid dimensions #{width}x#{height}" unless width.positive? && height.positive?
       raise Unavailable, "frame is too large (#{width}x#{height})" if width * height > MAX_FRAME_PIXELS
+      if width.odd? || height.odd?
+        raise Unavailable, "MP4 yuv420p output requires even dimensions (#{width}x#{height}); resize explicitly before grading"
+      end
 
       Probe.new(
         width:, height:, fps:, frames:, duration:,
@@ -134,7 +137,7 @@ module Postpro
       verify_constant_rate!(input, probe, deadline:)
       FileUtils.mkdir_p(File.dirname(target))
       io.puts "motion: #{probe.width}x#{probe.height} #{probe.rate}fps #{estimate[:frames]} frames" \
-              "#{probe.has_audio ? ' + audio' : ''}; estimated #{estimate[:seconds]}s, hard budget #{limits[:max_seconds]}s"
+              "#{probe.has_audio ? ' + audio' : ''}; estimated #{estimate[:seconds]}s, runtime cap #{limits[:max_seconds]}s"
       io.puts "motion: seed=#{seed} grain=#{grain}"
 
       Dir.mktmpdir(".postpro-motion-", File.dirname(target)) do |work|
@@ -187,11 +190,16 @@ module Postpro
 
         # The work directory is a sibling of the destination, so links are
         # atomic and cannot silently replace a path that appeared during grading.
-        File.link(temporary_output, target)
+        published_video = false
         begin
+          File.link(temporary_output, target)
+          published_video = true
           File.link(temporary_sidecar, sidecar)
+        rescue SystemCallError => e
+          FileUtils.rm_f(target) if published_video
+          raise Unavailable, "could not publish output without replacing another file: #{e.message}"
         rescue StandardError
-          FileUtils.rm_f(target)
+          FileUtils.rm_f(target) if published_video
           raise
         end
       end
