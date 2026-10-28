@@ -2,6 +2,11 @@
 
 require "minitest/autorun"
 require "digest"
+require "json"
+require "tmpdir"
+require "fileutils"
+require "open3"
+require "rbconfig"
 require_relative "../replicate/scene_compiler"
 require_relative "../dilla/style_adapter"
 
@@ -49,6 +54,42 @@ class StudioAdaptersTest < Minitest::Test
     result = STUDIO::Replicate::SceneCompiler.compile({ subject: "dragon" }, vocabulary: ["portrait"])
     assert_equal :rejected, result[:status]
     assert_match(/unresolved vocabulary/, result[:warnings].join)
+  end
+
+  def test_score_check_uses_abc2midi_and_does_not_render
+    Dir.mktmpdir do |dir|
+      score = File.join(dir, "score.abc")
+      File.write(score, "X:1\nT:Test\nM:4/4\nL:1/8\nK:C\nCDEF|\n")
+      bin = File.join(dir, "bin")
+      FileUtils.mkdir_p(bin)
+      checker = File.join(bin, "abc2midi")
+      File.write(checker, "#!/bin/sh\nexit 0\n")
+      FileUtils.chmod(0o755, checker)
+      env = { "PATH" => [bin, ENV.fetch("PATH", "")].join(File::PATH_SEPARATOR) }
+      script = File.expand_path("../dilla/score_check.rb", __dir__)
+      output, status = Open3.capture2e(env, RbConfig.ruby, script, "--abc", score)
+
+      assert status.success?, output
+      result = JSON.parse(output)
+      assert_equal "ready", result["status"]
+      assert_equal "abc2midi", result["validator"]
+      assert_equal false, result["rendered"]
+      assert_equal "blue_hour", result.dig("style_contract", "id")
+    end
+  end
+
+  def test_score_check_reports_unavailable_parser_without_claiming_success
+    Dir.mktmpdir do |dir|
+      score = File.join(dir, "score.abc")
+      File.write(score, "X:1\nT:Test\nM:4/4\nL:1/8\nK:C\nCDEF|\n")
+      script = File.expand_path("../dilla/score_check.rb", __dir__)
+      output, status = Open3.capture2e({ "PATH" => dir }, RbConfig.ruby, script, "--abc", score)
+
+      assert_equal 3, status.exitstatus
+      result = JSON.parse(output)
+      assert_equal "unavailable", result["status"]
+      assert_match(/not installed/, result["reason"])
+    end
   end
 
   def test_abc_requires_engine_validator_and_headers
