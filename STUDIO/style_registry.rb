@@ -185,7 +185,11 @@ module Studio
       validate!(candidate)
       raise InvalidStyle, "owner required" if owner.to_s.strip.empty?
       raise InvalidStyle, "change rationale required" if rationale.to_s.strip.empty?
-      old_version = previous.fetch("version").to_s.split(".").map(&:to_i)
+      previous_version = previous.fetch("version").to_s
+      predecessor = candidate["predecessor"] || candidate[:predecessor]
+      raise InvalidStyle, "predecessor must reference #{previous_version}" unless predecessor.to_s == previous_version
+
+      old_version = previous_version.split(".").map(&:to_i)
       new_version = candidate.fetch("version").to_s.split(".").map(&:to_i)
       raise InvalidStyle, "new version must increase" unless (new_version <=> old_version) == 1
       raise InvalidStyle, "style_id cannot change across versions" unless previous.fetch("style_id") == candidate.fetch("style_id")
