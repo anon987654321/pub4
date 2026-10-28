@@ -130,6 +130,11 @@ module Master
             end
 
             file.flock(File::LOCK_EX)
+            current_stat = File.lstat(@log_path)
+            unless current_stat.file? && !current_stat.symlink? &&
+                   current_stat.dev == opened_stat.dev && current_stat.ino == opened_stat.ino
+              raise LedgerCorruption, "ledger path changed while waiting for its lock"
+            end
             head = append_head(file)
             body = {
               "seq" => head.fetch(:seq) + 1, "at" => Time.now.utc.iso8601(6),
