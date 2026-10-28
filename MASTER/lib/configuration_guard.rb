@@ -4,7 +4,6 @@ require "yaml"
 require_relative "law_vocabulary"
 require_relative "provider_catalogue_guard"
 require_relative "model_catalogue_guard"
-require_relative "io/dynamic_tools"
 
 module Master
   # Validates the governing YAML by its invariants. Who may write it is a
