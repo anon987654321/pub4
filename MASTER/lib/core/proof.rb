@@ -146,7 +146,8 @@ module Master::Core
       @generation += 1
     end
 
-    def remember_write(effect)      @generation += 1
+    def remember_write(effect)
+      @generation += 1
       tree = effect.args[:path].to_s.split("/").find { |part| Constitution::REPO_TREES.include?(part) }
       @write_trees << tree if tree
       @write_lines += effect.args[:content].to_s.lines.size

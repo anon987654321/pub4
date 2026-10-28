@@ -123,7 +123,7 @@ module Master
       def structured_body(data, tier:)
         lines = ["[Context compacted — #{tier}; schema #{CONTEXT_SCHEMA}]"]
         STRUCTURED_KEYS.each do |key|
-          value = key == "goal" ? data[key] : data[key]
+          value = data[key]
           next if value.respond_to?(:empty?) && value.empty?
 
           lines << "#{key}:"

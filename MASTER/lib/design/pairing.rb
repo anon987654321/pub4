@@ -41,7 +41,7 @@ module Master
       end
 
       def candidates(school:, root: Master::ROOT)
-        registry.filter_map do |name, spec|
+        registry(root:).filter_map do |name, spec|
           next unless spec.fetch("school").to_s == school.to_s
           next unless deployable?(spec, root:)
 

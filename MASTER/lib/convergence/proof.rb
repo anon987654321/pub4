@@ -20,11 +20,10 @@ module Master
         ]
         failed = checks.select { |row| row[:state] == "fail" }
         inconclusive = checks.select { |row| row[:state] == "inconclusive" }
-        state = if failed.any?
-:fail
-else
-(inconclusive.any? ? :inconclusive : :pass)
-end
+        state = if failed.any? then :fail
+                elsif inconclusive.any? then :inconclusive
+                else :pass
+                end
         receipt = Receipt.write(root:, command: "convergence.prove", state:, details: { checks: })
         { state:, checks:, receipt: }
       end

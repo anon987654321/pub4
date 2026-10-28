@@ -60,7 +60,7 @@ module Master
 
       def git_identity(root)
         {
-          head: Measure.inventory(root:)[:git],
+          head: Measure.git_head(root),
           branch: capture_git(root, "symbolic-ref", "--short", "HEAD"),
           dirty: !capture_git(root, "status", "--porcelain").to_s.strip.empty?,
         }

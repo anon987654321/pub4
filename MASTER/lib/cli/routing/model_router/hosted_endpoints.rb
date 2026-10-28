@@ -94,20 +94,6 @@ module Master
             Array(spec["key_env"]).map { |env| ENV[env].to_s }.find { |value| !value.empty? }
           end
 
-          def zero_priced_chat_model?(row)
-            pricing = row["pricing"]
-            return false unless pricing.is_a?(Hash)
-
-            %w[prompt completion].all? do |kind|
-              value = pricing[kind]
-              begin
-                !value.nil? && Float(value).zero?
-              rescue ArgumentError, TypeError
-                false
-              end
-            end
-          end
-
           def hosted_ids(spec, key)
             headers = key ? { "Authorization" => "Bearer #{key}" } : {}
             body = get_json("#{spec["base"].chomp("/")}/models", headers:, timeout: HOSTED_TIMEOUT_S)

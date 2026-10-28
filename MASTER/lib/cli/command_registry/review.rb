@@ -397,8 +397,10 @@ module Master
         trees = MasterPaths::TREES.dup
         return [target] unless tokens.size > 1 && tokens.all? { |token| trees.include?(token) }
 
+        # The session root is the directory bin/master started in; a start inside any tree
+        # (RAILS/brgen, MASTER/lib) still names the four trees of this checkout.
         repo_root = File.expand_path(root)
-        repo_root = Master::REPO_ROOT if repo_root == Master::ROOT
+        repo_root = Master::REPO_ROOT if repo_root.start_with?("#{Master::REPO_ROOT}/")
         tokens.uniq.map { |tree| File.join(repo_root, tree) }
       end
 

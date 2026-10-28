@@ -206,17 +206,22 @@ module Master
         return :unhandled unless command
 
         result = command.call(args: match[:args].to_s)
+        # Pipe mode (`bin/master /fix RAILS` with no TTY) reaches commands here, and bin/master
+        # exits with @exit_code: a failed command must not exit 0.
         text = if result.is_a?(Master::Result)
                  @last_ok = result.ok?
+                 @exit_code = result.ok? ? 0 : exit_code_for(result)
                  result.ok? ? result.value!.to_s : result.message.to_s
                else
                  @last_ok = true
+                 @exit_code = 0
                  result.to_s
                end
         print_terminal_output(text, mode: @last_ok ? :dim : :error) unless text.empty?
         result
       rescue StandardError => e
         @last_ok = false
+        @exit_code = 2
         text = "cmd0: /#{name} failed — #{e.class}: #{e.message}"
         print_terminal_output(text, mode: :error)
         nil
