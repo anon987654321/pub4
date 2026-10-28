@@ -16,7 +16,7 @@ class TestFourStreamAssessment < Minitest::Test
 
   def test_four_streams_and_artifact_surfaces_are_explicit
     assert_equal %i[
-      lexical_violations lexical_opportunities semantic_violations semantic_opportunities
+      lexical_violations lexical_opportunities semantic_violations semantic_opportunities visual
     ], Master::Fix::FourStreamAssessment::STREAMS
     %i[repository_tree directories file_names paths whole_file sections lines syntax_tree cross_file
        structured_data documentation media_assets compiled_assets rendered_ui interactive_behavior tests runtime deployment].each do |surface|
@@ -24,11 +24,31 @@ class TestFourStreamAssessment < Minitest::Test
     end
 
     report = build(surfaces: %i[paths whole_file cross_file]).report
-    assert_equal 12, report[:expected_cells]
+    assert_equal 15, report[:expected_cells]
     assert_equal 0, report[:recorded_cells]
     refute report[:complete]
     refute report[:clean]
-    assert_equal 12, report[:unassessed].size
+    assert_equal 15, report[:unassessed].size
+  end
+
+  # Coverage separates what can be measured from what no assessor can and from
+  # what does not apply, per stream, instead of one INCOMPLETE.
+  def test_coverage_counts_measurable_unmeasurable_and_not_applicable_cells
+    assessment = build(surfaces: %i[whole_file])
+    law = assessment.laws.first
+    assessment.record(law:, stream: :lexical_violations, surface: :whole_file, status: :assessed_clean,
+                      iteration: 1, evidence: ["read"])
+    assessment.record(law:, stream: :lexical_opportunities, surface: :whole_file, status: :not_applicable,
+                      iteration: 1, reason: "violation mode")
+    assessment.record(law:, stream: :visual, surface: :whole_file, status: :inconclusive, iteration: 1,
+                      reason: "no per-Law visual verdict")
+    coverage = assessment.coverage(unmeasurable: Set[[law, :visual, :whole_file]])
+    counts = ->(stream) { coverage.fetch(stream).values_at(:cells, :measurable, :unmeasurable, :not_applicable) }
+
+    assert_equal [1, 1, 0, 0], counts.call("lexical_violations")
+    assert_equal [1, 0, 0, 1], counts.call("lexical_opportunities")
+    assert_equal [1, 0, 1, 0], counts.call("visual")
+    refute assessment.complete?, "an unmeasurable cell still blocks DONE"
   end
 
   def test_each_stream_iterates_until_two_clean_assessments_after_a_repair
@@ -79,7 +99,7 @@ class TestFourStreamAssessment < Minitest::Test
 
     refute report[:complete]
     refute report[:clean]
-    assert_equal 3, report[:inconclusive].size
+    assert_equal 4, report[:inconclusive].size
     assert report[:inconclusive].all? { |row| row[:reason].include?("no assessor registered") }
   end
 
@@ -162,7 +182,7 @@ class TestFourStreamAssessment < Minitest::Test
     refute assessment.clean?
     summary = assessment.summary
     assert_equal 1, summary[:generation]
-    assert_equal 4, summary[:recorded_cells]
+    assert_equal 5, summary[:recorded_cells]
     assert_equal 0, summary[:unassessed_cells]
   end
 

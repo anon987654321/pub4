@@ -109,11 +109,25 @@ module Master
             )
             Master::Trace::Dmesg.status(
               "fix0",
-              "pass #{pass}, coverage lexical-violations=mechanical+structural lexical-opportunities=#{lexical_opportunities} semantic-violations=#{semantic} semantic-opportunities=#{semantic} visual=#{visual} law-stream-surface-matrix=#{matrix_status.to_s.upcase}",
+              "pass #{pass}, coverage lexical-violations=mechanical+structural " \
+              "lexical-opportunities=#{lexical_opportunities} semantic-violations=#{semantic} " \
+              "semantic-opportunities=#{semantic} visual=#{visual} " \
+              "law-stream-surface-matrix=#{matrix_status.to_s.upcase}#{matrix_cells(matrix_summary)}",
             )
           end
           @coverage_reporter = emit_coverage
           @pass_progress = false
+        end
+
+        # Measurable/unmeasurable/not-applicable cells per stream, so INCOMPLETE says how.
+        def matrix_cells(summary)
+          coverage = summary.is_a?(Hash) ? summary[:stream_coverage] : nil
+          return "" unless coverage.is_a?(Hash)
+
+          cells = coverage.map do |stream, row|
+            " #{stream}=#{row.values_at(:measurable, :unmeasurable, :not_applicable).join("/")}"
+          end
+          cells.join
         end
 
         def full_semantic!

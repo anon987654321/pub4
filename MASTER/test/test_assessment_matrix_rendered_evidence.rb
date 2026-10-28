@@ -51,11 +51,11 @@ class TestAssessmentMatrixRenderedEvidence < Minitest::Test
       info: {
         id: LAW_ID,
         source_kind: :canonical,
-        streams: [:semantic_violations],
+        streams: [:visual],
         surfaces: [:rendered_ui],
         unmeasurable_reason: nil,
       },
-      stream: :semantic_violations,
+      stream: :visual,
       surface: :rendered_ui,
       pass: 1,
       observation: {},
@@ -111,5 +111,41 @@ class TestAssessmentMatrixRenderedEvidence < Minitest::Test
     assert_equal :assessed_clean, result.fetch(:status)
     assert_equal "c" * 64, result.fetch(:evidence).last.fetch("evidence_sha256")
     assert_equal({ "surfaces" => 1 }, result.fetch(:evidence).last.fetch("counts"))
+  end
+  def cell(instance, spec)
+    law_id, stream, surface = spec.values_at(:law_id, :stream, :surface)
+    row = { id: law_id, source_kind: :canonical, streams: Master::Fix::FourStreamAssessment::STREAMS,
+            surfaces: [surface], unmeasurable_reason: nil, mode: :violation,
+            unowned_streams: [:lexical_opportunities], unmeasurable_streams: [] }.merge(spec.fetch(:info, {}))
+    instance.send(:assessment_cell_result, law_id:, info: row, stream:, surface:, pass: 1, observation: {},
+                  signatures_stable: true, semantic_gaps: {}, pending: [], evidence: ["fixture"],
+                  visual: nil, opportunities: nil)
+  end
+
+  def test_a_stream_the_mode_does_not_own_is_not_applicable_with_evidence
+    result = cell(matrix, law_id: "OTHER_LAW", stream: :lexical_opportunities, surface: :lines)
+
+    assert_equal :not_applicable, result.fetch(:status)
+    assert_equal ["law_catalogue OTHER_LAW mode=violation"], result.fetch(:evidence)
+  end
+
+  def test_an_owned_stream_without_a_detector_is_unmeasurable_not_clean
+    result = cell(matrix, law_id: "OTHER_LAW", stream: :lexical_violations, surface: :lines,
+                          info: { unmeasurable_streams: [:lexical_violations] })
+
+    assert_equal [:inconclusive, true], result.values_at(:status, :unmeasurable)
+  end
+
+  # The rendered evaluator gives no verdict per Law, so a Law's visual cell on
+  # rendered UI is unmeasurable, and on a source surface it does not apply.
+  def test_a_laws_visual_cell_is_unmeasurable_on_rendered_ui_and_absent_on_source
+    instance = matrix
+    instance.instance_variable_set(:@assessment_surface_presence, { rendered_ui: true })
+
+    rendered = cell(instance, law_id: "OTHER_LAW", stream: :visual, surface: :rendered_ui)
+    source = cell(instance, law_id: "OTHER_LAW", stream: :visual, surface: :lines)
+
+    assert_equal [:inconclusive, true], rendered.values_at(:status, :unmeasurable)
+    assert_equal :not_applicable, source.fetch(:status)
   end
 end

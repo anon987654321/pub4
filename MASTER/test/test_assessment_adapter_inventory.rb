@@ -77,9 +77,10 @@ class TestAssessmentAdapterInventory < Minitest::Test
     refute_nil subject.instance_variable_get(:@assessment_ledger),
       "one scanner-only Law must not collapse the entire proof matrix to not_measured"
     assert_empty subject.stage_failures[:assessment_matrix]
-    assert_equal [:lexical_violations],
-      subject.instance_variable_get(:@assessment_law_info)
-        .fetch("ASSESSMENT_MATRIX_SCANNER_ONLY").fetch(:unmeasurable_streams)
+    row = subject.instance_variable_get(:@assessment_law_info).fetch("ASSESSMENT_MATRIX_SCANNER_ONLY")
+    assert_equal [:lexical_violations], row.fetch(:unowned_streams),
+                 "an opportunity detector does not own the violation stream"
+    assert_empty row.fetch(:unmeasurable_streams)
   end
   def test_matrix_refuses_to_initialize_from_unreconciled_law_catalogue
     require_relative "../lib/review/scan/law_registry_audit"

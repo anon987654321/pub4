@@ -261,25 +261,35 @@ module Master
         }
       end
 
-      # Reports declaration reach, not runtime assessment. A law's current
-      # single mode does not automatically provide both lexical streams, and a
-      # semantic prompt being declared is not proof that a model call succeeded.
+      # Reports declaration reach, not runtime assessment. A Law's mode owns one
+      # lexical stream and the other does not apply to it; a semantic prompt being
+      # declared is not proof that a model call succeeded. Visual reach is none:
+      # the rendered evaluator reports its own Law, not a verdict per Law.
+      STREAM_REACH = {
+        "lexical_violations" => ->(law) { lexical_reach(law, :violation) },
+        "lexical_opportunities" => ->(law) { lexical_reach(law, :opportunity) },
+        # The runtime semantic adapter evaluates every catalogued Law, using its
+        # explicit ask where present and its repair contract/examples otherwise.
+        "semantic_violations" => ->(_law) { :reached },
+        "semantic_opportunities" => ->(_law) { :reached },
+        "visual" => ->(_law) { :missing },
+      }.freeze
+
+      def lexical_reach(law, mode)
+        return :not_applicable unless law.mode.to_sym == mode
+
+        law.scannable? ? :reached : :missing
+      end
+
       def four_stream_law_coverage(laws)
         rows = Array(laws).select { |law| !law.respond_to?(:enforceable?) || law.enforceable? }
-        stream_reach = {
-          "lexical_violations" => ->(law) { law.respond_to?(:scannable?) && law.scannable? && law.mode.to_sym == :violation },
-          "lexical_opportunities" => ->(law) { law.respond_to?(:scannable?) && law.scannable? && law.mode.to_sym == :opportunity },
-          # The runtime semantic adapter evaluates every enforceable Law,
-          # using its explicit ask where present and its repair contract/examples
-          # otherwise. This remains declaration reach, not runtime evidence.
-          "semantic_violations" => ->(_law) { true },
-          "semantic_opportunities" => ->(_law) { true },
-        }
-        streams = stream_reach.to_h do |stream, reachable|
-          reached, missing = rows.partition(&reachable)
+        streams = STREAM_REACH.to_h do |stream, reach|
+          by_kind = rows.group_by(&reach)
+          missing = by_kind.fetch(:missing, [])
           [stream, {
-            declared_reach: reached.size,
+            declared_reach: by_kind.fetch(:reached, []).size,
             missing_count: missing.size,
+            not_applicable: by_kind.fetch(:not_applicable, []).size,
             missing_law_sample: missing.first(20).map { |law| law.id.to_s },
           }]
         end

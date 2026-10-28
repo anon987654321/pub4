@@ -80,6 +80,7 @@ module Master
             @assessment_observation = nil
             @assessment_law_info = nil
             @assessment_unclassified = []
+            @assessment_unmeasurable = Set.new
             @assessment_last_pass = 0
 
             require File.join(Master::ROOT, "law", "definition") unless defined?(::Law::Definition)
@@ -89,38 +90,26 @@ module Master
             Master::Review::Scan::LawRegistryAudit.new(root: Master::ROOT).call.assert_reconciled!
 
             info = {}
+            # Every catalogued Law is in the population, advisory ones too: the
+            # catalogue calls them universal and the semantic reviewer asks them.
+            # A lexical stream the Law's mode does not own is NOT_APPLICABLE; an
+            # owned one no detector the scanner runs can measure is unmeasurable,
+            # INCONCLUSIVE by construction, and keeps DONE out of reach.
             Array(::Law.definitions.values).each do |law|
-              next if law.respond_to?(:enforceable?) && !law.enforceable?
-
               id = assessment_law_id(law)
               next if id.empty?
 
-              # Every Law is assessed in every stream. An adapter may return
-              # NOT_APPLICABLE only with evidence; a missing assessor stays
-              # INCONCLUSIVE and cannot turn into a clean result.
-              streams = FourStreamAssessment::STREAMS
-              declared_surfaces = law.respond_to?(:assessment_surfaces) ? law.assessment_surfaces : []
+              measurable = law.scannable? && law.enforceable?
               info[id] = {
                 id:,
                 source_kind: :canonical,
                 law:,
                 scanner_law: nil,
                 yaml_entry: nil,
-                streams: streams.uniq.freeze,
-                surfaces: Array(declared_surfaces).map(&:to_sym).uniq.freeze,
+                streams: FourStreamAssessment::STREAMS,
+                surfaces: Array(law.assessment_surfaces).map(&:to_sym).uniq.freeze,
                 unmeasurable_reason: nil,
-                unmeasurable_streams: begin
-                  lexical = %i[lexical_violations lexical_opportunities]
-                  if !law.scannable?
-                    lexical
-                  elsif law.mode.to_sym == :violation
-                    [:lexical_opportunities]
-                  elsif law.mode.to_sym == :opportunity
-                    [:lexical_violations]
-                  else
-                    lexical
-                  end
-                end.freeze,
+                **assessment_lexical_ownership(law.mode, measurable:),
               }
             end
 
@@ -133,26 +122,18 @@ module Master
               class_name = law.class.name.to_s
               semantic = class_name.match?(/AdversarialLaw|CommentDriftLaw|SemanticLaw/) ||
                 (law.respond_to?(:set_agent) && !law.respond_to?(:check_ast))
-              mode = law.respond_to?(:mode) ? law.mode.to_s : ""
-              streams = FourStreamAssessment::STREAMS
-              surfaces = ::Law::ASSESSMENT_SURFACES
-              unmeasurable_streams = if semantic || mode == "semantic"
-                %i[lexical_violations lexical_opportunities]
-              elsif mode == "opportunity"
-                [:lexical_violations]
-              else
-                [:lexical_opportunities]
-              end
+              mode = law.mode.to_sym
+              measurable = !(semantic || mode == :semantic)
               info[id] = {
                 id:,
                 source_kind: :scanner,
                 law: nil,
                 scanner_law: law,
                 yaml_entry: nil,
-                streams: streams.freeze,
-                surfaces: surfaces.map(&:to_sym).uniq.freeze,
+                streams: FourStreamAssessment::STREAMS,
+                surfaces: ::Law::ASSESSMENT_SURFACES,
                 unmeasurable_reason: nil,
-                unmeasurable_streams: unmeasurable_streams.freeze,
+                **assessment_lexical_ownership(mode, measurable:),
               }
             end
 
@@ -180,7 +161,7 @@ module Master
                 law: nil,
                 scanner_law: nil,
                 yaml_entry: nil,
-                streams: [:semantic_violations].freeze,
+                streams: [:visual].freeze,
                 surfaces: %i[rendered_ui interactive_behavior].freeze,
                 unmeasurable_reason: nil,
               }
@@ -219,6 +200,20 @@ module Master
             @bus&.publish("fix_loop:assessment_matrix_init_failed", error_class: e.class.name, message: e.message)
             @assessment_ledger = nil
             self
+          end
+
+          LEXICAL_STREAM_FOR_MODE = { opportunity: :lexical_opportunities }.freeze
+
+          # The lexical stream a detector's mode owns: an opportunity detector
+          # owns lexical_opportunities and every other mode (violation,
+          # mechanical, structural, semantic) lexical_violations.
+          def assessment_lexical_ownership(mode, measurable:)
+            owned = LEXICAL_STREAM_FOR_MODE.fetch(mode.to_sym, :lexical_violations)
+            {
+              mode: mode.to_sym,
+              unowned_streams: (%i[lexical_violations lexical_opportunities] - [owned]).freeze,
+              unmeasurable_streams: (measurable ? [] : [owned]).freeze,
+            }
           end
 
           def assessment_law_id(law)
@@ -290,6 +285,7 @@ module Master
 
             @assessment_ledger.summary.merge(
               status: assessment_matrix_status.to_s,
+              stream_coverage: @assessment_ledger.coverage(unmeasurable: @assessment_unmeasurable || Set.new),
               surface_coverage_complete: @assessment_surface_report&.fetch("complete", false) == true,
               surface_coverage_digest: @assessment_surface_report&.fetch("digest", nil),
               surface_coverage: surface_coverage_summary,
@@ -471,6 +467,8 @@ module Master
                     stream = :semantic_violations
                   elsif stream.nil? && info[:streams].one?
                     stream = info[:streams].first
+                  elsif stream.nil? && info[:source_kind] == :scanner && info[:unmeasurable_streams].empty?
+                    stream = LEXICAL_STREAM_FOR_MODE.fetch(info[:mode], :lexical_violations)
                   end
                   unless stream && info[:streams].include?(stream)
                     observation[:unclassified_findings] << {
@@ -587,23 +585,15 @@ module Master
                                      visual:, opportunities:)
             declared_surfaces = Array(info[:surfaces]).map(&:to_sym)
             return assessment_result(:not_applicable, reason: "Law does not declare the #{surface} surface") unless declared_surfaces.include?(surface)
-            if info[:unmeasurable_reason]
-              return assessment_result(:inconclusive, reason: info[:unmeasurable_reason], evidence:)
-            end
-            if Array(info[:unmeasurable_streams]).map(&:to_sym).include?(stream)
-              return assessment_result(
-                :inconclusive,
-                reason: "Law #{law_id} has no deterministic assessor for #{stream}; it cannot be marked clean",
-                evidence:,
-              )
-            end
-            unless info[:streams].include?(stream)
-              return assessment_result(:inconclusive, reason: "Law has no #{stream} assessor")
-            end
+            owned = assessment_stream_ownership(law_id:, info:, stream:, evidence:)
+            return owned if owned
+
+            per_law_visual = assessment_visual_cell(law_id:, info:, stream:, surface:, evidence:)
+            return per_law_visual if per_law_visual
 
             if info[:source_kind] != :visual &&
                law_id.to_s.casecmp?(VisualPass::LAW_ID) &&
-               stream == :semantic_violations && surface == :rendered_ui
+               stream == :visual && surface == :rendered_ui
               return assessment_result(:inconclusive, reason: "rendered visual review returned no result", evidence:) unless visual
               return assessment_result(:inconclusive, reason: visual.message.to_s, evidence:) if visual.err?
 
@@ -727,7 +717,7 @@ module Master
             end
             return assessment_result(:not_applicable, reason: "no eligible file matches this Law/surface scope") if scoped_files.empty?
             unless assessment_surface_supported?(info, surface, stream:)
-              return assessment_result(:inconclusive, reason: "#{surface} has no assessor for this Law/stream adapter", evidence:)
+              return assessment_unmeasurable("#{surface} has no assessor for this Law/stream adapter", evidence)
             end
 
             cell_evidence = Array(evidence) + [surface_evidence].compact
@@ -773,6 +763,46 @@ module Master
               semantic: %i[semantic_violations semantic_opportunities].include?(stream),
               semantic_gaps:, pending:, evidence: cell_evidence
             )
+          end
+
+          VISUAL_SURFACES = %i[rendered_ui interactive_behavior].freeze
+
+          # The visual stream reads rendered output. The rendered evaluator reports
+          # its own RENDERED_VISUAL_REFINEMENT findings, not a verdict per Law, so
+          # a Law's visual cell on a target with rendered UI is unmeasurable rather
+          # than clean; on a source surface, or a target with no UI, it does not apply.
+          def assessment_visual_cell(law_id:, info:, stream:, surface:, evidence:)
+            return unless stream == :visual
+            return if info[:source_kind] == :visual || law_id.to_s.casecmp?(VisualPass::LAW_ID)
+            unless VISUAL_SURFACES.include?(surface)
+              return assessment_result(:not_applicable, reason: "visual reads rendered output, not #{surface}")
+            end
+            unless assessment_target_has_rendered_ui?
+              return assessment_result(:not_applicable, reason: "target has no rendered UI")
+            end
+
+            reason = "the rendered evaluator reports #{VisualPass::LAW_ID} findings, not a verdict on #{law_id}"
+            assessment_unmeasurable(reason, evidence)
+          end
+
+          # A stream the Law's mode does not own does not apply to it; one it owns
+          # that nothing can measure is unmeasurable. nil when the stream is live.
+          def assessment_stream_ownership(law_id:, info:, stream:, evidence:)
+            if Array(info[:unowned_streams]).include?(stream)
+              reason = "Law #{law_id} detects in #{info[:mode]} mode; #{stream} is not its stream"
+              evidence = ["law_catalogue #{law_id} mode=#{info[:mode]}"]
+              return assessment_result(:not_applicable, reason:, evidence:)
+            end
+            return assessment_unmeasurable(info[:unmeasurable_reason], evidence) if info[:unmeasurable_reason]
+            if Array(info[:unmeasurable_streams]).include?(stream)
+              reason = "Law #{law_id} has no deterministic assessor for #{stream}; it cannot be marked clean"
+              return assessment_unmeasurable(reason, evidence)
+            end
+            assessment_unmeasurable("Law has no #{stream} assessor", []) unless info[:streams].include?(stream)
+          end
+
+          def assessment_unmeasurable(reason, evidence)
+            assessment_result(:inconclusive, reason:, evidence:).merge(unmeasurable: true)
           end
 
           def assessment_surface_supported?(info, surface, stream:)
@@ -1072,6 +1102,9 @@ module Master
 
           def record_assessment(law_id, stream, surface, pass, result)
             @assessment_mutex.synchronize do
+              @assessment_unmeasurable ||= Set.new
+              key = [law_id, stream, surface]
+              result[:unmeasurable] ? @assessment_unmeasurable << key : @assessment_unmeasurable.delete(key)
               @assessment_ledger.record(
                 law: law_id, stream:, surface:, status: result.fetch(:status),
                 iteration: Integer(pass), generation: @assessment_ledger.generation,

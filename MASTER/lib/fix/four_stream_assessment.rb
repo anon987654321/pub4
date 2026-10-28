@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
+require "set"
 require_relative "../../law/definition"
 
 module Master
   module Fix
-    # Runs every active law through four independent assessment streams on each
-    # declared surface. Missing assessors are INCONCLUSIVE, never clean.
+    # Runs every Law through five independent assessment streams on each
+    # declared surface: lexical and semantic violations and opportunities, and
+    # visual, which reads rendered output. Missing assessors are INCONCLUSIVE,
+    # never clean.
     #
     # This is deliberately adapter-driven: language parsers, path inventories,
     # cross-file analyzers, browser probes and model reviewers each keep their
@@ -16,6 +19,7 @@ module Master
         lexical_opportunities
         semantic_violations
         semantic_opportunities
+        visual
       ].freeze
 
       SURFACES = ::Law::ASSESSMENT_SURFACES
@@ -177,6 +181,22 @@ module Master
           (latest.status == :not_applicable && latest.generation == generation) ||
             (latest.status == :assessed_clean && clean_streak(key) >= clean_passes)
         end
+      end
+
+      # Per stream, how many cells something can measure, how many no assessor
+      # can (the caller names those: inconclusive by construction, so they keep
+      # DONE out of reach), and how many do not apply.
+      def coverage(unmeasurable: Set.new)
+        STREAMS.to_h { |stream| [stream.to_s, stream_coverage(stream, unmeasurable)] }
+      end
+
+      def stream_coverage(stream, unmeasurable)
+        keys = cells.select { |key| key[1] == stream }
+        states = keys.to_h { |key| [key, history[key].last&.status] }
+        not_applicable = states.count { |_key, state| state == :not_applicable }
+        blind = states.count { |key, state| state == :inconclusive && unmeasurable.include?(key) }
+
+        { cells: keys.size, measurable: keys.size - not_applicable - blind, unmeasurable: blind, not_applicable: }
       end
 
       def clean?
