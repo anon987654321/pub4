@@ -121,6 +121,7 @@ module Master
               begin
                 with_private_file(path, File::RDWR | File::CREAT | File::APPEND, mode:, label: "JSONL destination") do |io|
                   verify_file_identity!(lock, lock_path, "JSONL lock")
+                  verify_file_identity!(io, path, "JSONL destination")
                   if io.stat.size.positive?
                     io.seek(-1, IO::SEEK_END)
                     unless io.read(1) == "\n"
@@ -345,6 +346,7 @@ module Master
               recent_lines << line
               recent_lines.shift if recent_lines.length > count
             end
+            Master::Trace::Log.verify_file_identity!(file, @path, "event log")
             recent_lines
           end
 
