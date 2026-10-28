@@ -54,7 +54,10 @@ module Master
     end
 
     def build_agent_bundle(root:, infra:, bus:)
-      tools = build_tools(root:, infra:) + infra[:mcp].tools
+      master_root = Master.master_root(root:)
+      tool_catalogue_path = File.join(master_root, "data", "tools.yml")
+      tool_definitions = File.file?(tool_catalogue_path) ? Master.tools_config(root: master_root) : nil
+      tools = build_tools(root:, infra:, definitions: tool_definitions) + infra[:mcp].tools
       deps = Review::Agent::Dependencies.from_kwargs(
         config: infra[:config], session: infra[:session], tools:,
         circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus,
@@ -65,8 +68,10 @@ module Master
       )
       agent = Review::Agent.new(deps:)
       soul_doc = Voice::Soul.new(root:, agent:)
-      tools << Io::AskLlm.new(agent:, governor: infra[:governor],
-        circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus)
+      if tool_enabled?(tool_definitions, "AskLlm", missing_default: tool_definitions.nil?)
+        tools << Io::AskLlm.new(agent:, governor: infra[:governor],
+          circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus)
+      end
       ctx = CLI::ContextWindow.new(session: infra[:session], agent:, model_context: Master.context_window(agent.model),
         event_bus: bus, root:)
       ctx.check_and_compact!

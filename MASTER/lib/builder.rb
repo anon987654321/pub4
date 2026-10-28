@@ -9,6 +9,13 @@ module Master
   module Builder
     MUTATING_TOOLS = %w[write_file str_replace ast_edit].freeze
     RING_SIZE = 1000
+    # AskLlm needs the live Review::Agent, so ai_boot attaches it after constructing
+    # the agent instead of using a factory in DEFAULT_TOOL_MAP.
+    SPECIAL_TOOL_NAMES = %w[AskLlm].freeze
+    TOOL_FIELDS = %w[
+      name elevated visitor default description file_types required_context usage_rules error_recovery
+    ].freeze
+    REQUIRED_TOOL_FIELDS = %w[name elevated visitor default description].freeze
 
     # Default tool factories. data/tools.yml overrides them.
     DEFAULT_TOOL_MAP = {
@@ -157,20 +164,99 @@ module Master
       GroundBoot.new(root:, config:, homeostat:).call
     end
 
-    def build_tools(root:, infra:)
-      defs = Master.tools_config(root:)
-      return [] unless defs.is_a?(Array)
+    def build_tools(root:, infra:, definitions: nil)
+      master_root = Master.master_root(root:)
+      if definitions.nil?
+        path = File.join(master_root, "data", "tools.yml")
+        unless File.file?(path)
+          return [] unless File.expand_path(master_root) == File.expand_path(Master::ROOT)
+
+          raise ArgumentError, "required tool catalogue is missing: #{path}"
+        end
+        definitions = Master.tools_config(root: master_root)
+      end
+      validate_tool_catalogue!(definitions)
 
       registry = ::Master::Builder::DEFAULT_TOOL_MAP
-      defs.filter_map do |defn|
-        next unless defn["default"] == true
-        factory = registry[defn["name"].to_s]
-        unless factory
-          infra[:bus]&.publish("builder:tool_skipped", tool: defn["name"])
+      definitions.filter_map do |definition|
+        next unless definition["default"] == true
+        # Special adapters are attached by build_agent_bundle when their runtime
+        # dependencies exist. Their enabled state still belongs to the catalogue.
+        next if SPECIAL_TOOL_NAMES.include?(definition["name"])
+
+        registry.fetch(definition.fetch("name")).call(root, infra)
+      end
+    end
+
+    def validate_tool_catalogue!(definitions, registry: DEFAULT_TOOL_MAP, special_names: SPECIAL_TOOL_NAMES)
+      errors = []
+      unless definitions.is_a?(Array) && !definitions.empty?
+        raise ArgumentError, "data/tools.yml must be a non-empty list of tool mappings"
+      end
+
+      names = []
+      definitions.each_with_index do |definition, index|
+        unless definition.is_a?(Hash)
+          errors << "row #{index + 1} must be a mapping"
           next
         end
-        factory.call(root, infra)
+
+        keys = definition.keys.map(&:to_s)
+        missing = REQUIRED_TOOL_FIELDS - keys
+        errors << "row #{index + 1} is missing #{missing.join(', ')}" unless missing.empty?
+        unknown = keys - TOOL_FIELDS
+        errors << "row #{index + 1} has unknown field(s): #{unknown.join(', ')}" unless unknown.empty?
+
+        name = definition["name"]
+        unless name.is_a?(String) && name.match?(/\A[A-Za-z][A-Za-z0-9]*\z/)
+          errors << "row #{index + 1} has invalid name #{name.inspect}"
+          next
+        end
+        names << name
+
+        %w[elevated visitor default].each do |field|
+          errors << "#{name}.#{field} must be boolean" unless [true, false].include?(definition[field])
+        end
+        errors << "#{name}.description must be non-empty text" unless
+          definition["description"].is_a?(String) && !definition["description"].strip.empty?
+
+        if definition.key?("file_types")
+          file_types = definition["file_types"]
+          unless file_types.is_a?(Array) && file_types.all? { |value| value.is_a?(String) && value.match?(/\A\.[A-Za-z0-9]+\z/) }
+            errors << "#{name}.file_types must be a list of dotted extensions"
+          end
+        end
+        %w[required_context error_recovery].each do |field|
+          next unless definition.key?(field)
+
+          errors << "#{name}.#{field} must be non-empty text" unless
+            definition[field].is_a?(String) && !definition[field].strip.empty?
+        end
+        if definition.key?("usage_rules")
+          rules = definition["usage_rules"]
+          unless rules.is_a?(Array) && rules.all? { |rule| rule.is_a?(String) && !rule.strip.empty? }
+            errors << "#{name}.usage_rules must be a list of non-empty strings"
+          end
+        end
       end
+
+      duplicates = names.tally.select { |_name, count| count > 1 }.keys
+      errors << "duplicate tool name(s): #{duplicates.sort.join(', ')}" unless duplicates.empty?
+
+      available = (registry.keys + special_names).map(&:to_s).uniq
+      unknown_names = names - available
+      errors << "tools without a builder: #{unknown_names.sort.join(', ')}" unless unknown_names.empty?
+      missing_names = available - names
+      errors << "builder tools missing from data/tools.yml: #{missing_names.sort.join(', ')}" unless missing_names.empty?
+
+      raise ArgumentError, "tool catalogue invalid:\n- #{errors.uniq.join("\n- ")}" unless errors.empty?
+
+      true
+    end
+
+    def tool_enabled?(definitions, name, missing_default: false)
+      row = Array(definitions).find { |entry| entry.is_a?(Hash) && entry["name"].to_s == name.to_s }
+      row ? row["default"] == true : missing_default
     end
 
     def build_runtime(root:, infra:, ai:)

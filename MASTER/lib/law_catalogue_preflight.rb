@@ -127,6 +127,18 @@ module Master
     end
 
     def validate_manifest!(catalogue, entries, errors)
+      allowed_manifest_fields = %w[schema identity_source universal_by_default modalities surfaces missing_assessor defaults entries]
+      unknown_manifest_fields = catalogue.keys.map(&:to_s) - allowed_manifest_fields
+      errors << "law_catalogue has unknown field(s): #{unknown_manifest_fields.sort.join(', ')}" unless unknown_manifest_fields.empty?
+      errors << "law_catalogue.schema must be 1" unless catalogue["schema"] == 1
+      errors << "law_catalogue.identity_source must be this_section" unless catalogue["identity_source"] == "this_section"
+      errors << "law_catalogue.universal_by_default must be true" unless catalogue["universal_by_default"] == true
+      errors << "law_catalogue.missing_assessor must be inconclusive" unless catalogue["missing_assessor"] == "inconclusive"
+
+      allowed_entry_fields = %w[
+        universal modalities definition_sources detector_sources severity mode lifecycle autofix
+        languages surfaces path path_pattern path_exclude
+      ]
       expected_modalities = Master::LawVocabulary::MODALITIES.map(&:to_s).sort
       declared_modalities = Array(catalogue["modalities"]).map(&:to_s).uniq.sort
       errors << "law_catalogue.modalities must be #{expected_modalities.join(', ')}" unless declared_modalities == expected_modalities
@@ -141,6 +153,34 @@ module Master
       defaults_valid = defaults.is_a?(Hash)
       errors << "law_catalogue.defaults must be a mapping" unless defaults_valid
       defaults = {} unless defaults_valid
+
+      allowed_severities = %w[info warn warning error critical veto]
+      allowed_modes = %w[violation opportunity]
+      allowed_lifecycles = %w[proposed proven active observed trusted advisory retired]
+      allowed_autofix = %w[never review automatic]
+      allowed_languages = Master::FILE_LANGUAGE_MAP.values.uniq
+      default_severity = defaults["severity"]
+      if !default_severity.nil? && !allowed_severities.include?(default_severity.to_s)
+        errors << "law_catalogue.defaults has invalid severity #{default_severity.inspect}"
+      end
+      default_mode = defaults["mode"]
+      if !default_mode.nil? && !allowed_modes.include?(default_mode.to_s)
+        errors << "law_catalogue.defaults has invalid mode #{default_mode.inspect}"
+      end
+      default_lifecycle = defaults["lifecycle"]
+      if !default_lifecycle.nil? && !allowed_lifecycles.include?(default_lifecycle.to_s)
+        errors << "law_catalogue.defaults has invalid lifecycle #{default_lifecycle.inspect}"
+      end
+      default_autofix = defaults["autofix"]
+      if !default_autofix.nil? && !allowed_autofix.include?(default_autofix.to_s)
+        errors << "law_catalogue.defaults has invalid autofix policy #{default_autofix.inspect}"
+      end
+      default_languages = defaults["languages"]
+      unless default_languages.nil? || (default_languages.is_a?(Array) &&
+        default_languages.all? { |language| allowed_languages.include?(language.to_s) })
+        errors << "law_catalogue.defaults has invalid languages"
+      end
+
       normalized_ids = entries.keys.map(&:to_s)
       invalid_ids = normalized_ids.reject { |id| id.match?(/\A[A-Za-z][A-Za-z0-9_]*\z/) }
       errors << "invalid Law catalogue identity(ies): #{invalid_ids.uniq.join(', ')}" unless invalid_ids.empty?
@@ -153,11 +193,54 @@ module Master
           next
         end
 
+        unknown_entry_fields = entry.keys.map(&:to_s) - allowed_entry_fields
+        errors << "Law #{id} has unknown catalogue field(s): #{unknown_entry_fields.sort.join(', ')}" unless unknown_entry_fields.empty?
         errors << "Law #{id} must be marked universal" unless entry["universal"] == true
         modalities = Array(entry["modalities"]).map(&:to_s).uniq.sort
         errors << "Law #{id} modalities must be #{expected_modalities.join(', ')}" unless modalities == expected_modalities
-        severity = defaults.merge(entry)["severity"].to_s.strip
-        errors << "Law #{id} has no effective severity" if severity.empty?
+        policy = defaults.merge(entry)
+        severity = policy["severity"].to_s.strip
+        if severity.empty?
+          errors << "Law #{id} has no effective severity"
+        elsif !allowed_severities.include?(severity)
+          errors << "Law #{id} has invalid severity #{severity.inspect}"
+        end
+        mode = policy["mode"].to_s
+        errors << "Law #{id} has invalid mode #{mode.inspect}" unless allowed_modes.include?(mode)
+        lifecycle = policy["lifecycle"].to_s
+        errors << "Law #{id} has invalid lifecycle #{lifecycle.inspect}" unless allowed_lifecycles.include?(lifecycle)
+        autofix = policy["autofix"].to_s
+        errors << "Law #{id} has invalid autofix policy #{autofix.inspect}" unless allowed_autofix.include?(autofix)
+
+        if entry.key?("languages")
+          languages = entry["languages"]
+          unless languages.is_a?(Array) && languages.all? { |language| allowed_languages.include?(language.to_s) }
+            errors << "Law #{id} has invalid languages"
+          end
+        end
+        surfaces = catalogue["surfaces"]
+        if entry.key?("surfaces")
+          scoped_surfaces = entry["surfaces"]
+          unless scoped_surfaces.is_a?(Array) && (scoped_surfaces.map(&:to_s) - Array(surfaces).map(&:to_s)).empty?
+            errors << "Law #{id} has unknown assessment surfaces"
+          end
+        end
+
+        pattern = entry["path_pattern"]
+        unless pattern.nil? || pattern.to_s.empty?
+          begin
+            Regexp.new(pattern.to_s)
+          rescue RegexpError => error
+            errors << "Law #{id} has invalid path_pattern: #{error.message}"
+          end
+        end
+        Array(entry["path_exclude"]).each do |excluded_pattern|
+          begin
+            Regexp.new(excluded_pattern.to_s)
+          rescue RegexpError => error
+            errors << "Law #{id} has invalid path_exclude: #{error.message}"
+          end
+        end
 
         %w[definition_sources detector_sources].each do |field|
           next unless entry.key?(field)
