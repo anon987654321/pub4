@@ -110,6 +110,49 @@ class AtomicWriteTest < Minitest::Test
     assert_empty Dir.glob(File.join(@dir, ".master_atomic_*"))
   end
 
+  def test_refuses_a_symlinked_parent_directory
+    outside = File.join(@dir, "outside")
+    Dir.mkdir(outside, 0o700)
+    File.symlink(outside, File.join(@dir, "redirect"))
+
+    error = assert_raises(IOError) do
+      @writer.write_atomic(File.join(@dir, "redirect", "escaped.txt"), "private")
+    end
+
+    assert_match(/symlinked atomic-write directory/, error.message)
+    refute File.exist?(File.join(outside, "escaped.txt"))
+    assert_empty Dir.glob(File.join(@dir, ".master_atomic_*"))
+  end
+
+  def test_refuses_a_symlinked_destination_without_changing_its_target
+    target = path("outside-target.txt")
+    File.write(target, "original target\n")
+    destination = path("link.txt")
+    File.symlink(target, destination)
+
+    error = assert_raises(IOError) { @writer.write_atomic(destination, "replacement") }
+
+    assert_match(/singly linked regular file/, error.message)
+    assert File.symlink?(destination)
+    assert_equal "original target\n", File.read(target)
+    assert_empty Dir.glob(File.join(@dir, ".master_atomic_*"))
+  end
+
+  def test_refuses_a_hard_linked_destination_without_changing_its_target
+    target = path("hard-target.txt")
+    File.write(target, "original target\n")
+    destination = path("hard-link.txt")
+    File.link(target, destination)
+
+    error = assert_raises(IOError) { @writer.write_atomic(destination, "replacement") }
+
+    assert_match(/singly linked regular file/, error.message)
+    assert_equal "original target\n", File.read(target)
+    assert_equal "original target\n", File.read(destination)
+    assert_equal 2, File.stat(target).nlink
+    assert_empty Dir.glob(File.join(@dir, ".master_atomic_*"))
+  end
+
   def test_cleanup_tolerates_a_missing_temp
     assert_nil @writer.cleanup_atomic_temp(nil)
   end
