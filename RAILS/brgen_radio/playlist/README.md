@@ -61,7 +61,9 @@ RADIO_BERGEN_RIGHTS_CONFIRMED=1 \
 bin/rails radio_bergen:import_curated
 ```
 
-The task preflights all source files, attaches them through Active Storage, and
-creates the playlist in the original order. It is idempotent for matching audio
+**Do not run the import task yet.** A follow-up review found that the import code must explicitly establish and enforce the `brgen.no` tenant context before creating the public playlist. The current request-less rake path does not yet prove that invariant; running it now could create a nil-city/global playlist. This is a hard blocker until the tenant guard is implemented and tested locally.
+
+The task is intended to preflight all source files, attach them through Active Storage, and
+create the playlist in the original order. It is idempotent for matching audio
 and refuses to silently overwrite a changed attachment. The confirmation flag
 is an operator attestation, not a legal determination.
