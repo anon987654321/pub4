@@ -8,7 +8,7 @@ module STUDIO
     # Deterministic compiler: structured scene data is authoritative; unknown
     # fields and unresolved references are reported, never silently invented.
     module SceneCompiler
-      FIELDS = %w[subject action setting composition lighting palette medium mood].freeze
+      FIELDS = %w[subject action setting composition lighting palette medium mood characters].freeze
 
       def self.compile(scene, vocabulary:, characters: {}, format: :natural)
         scene = scene.transform_keys(&:to_s)
@@ -22,6 +22,10 @@ module STUDIO
 
         values = scene.each_with_object({}) do |(key, value), result|
           next unless FIELDS.include?(key) && !value.to_s.strip.empty?
+          if key == "characters"
+            result[key] = Array(value).map { |name| characters[name] || characters[name.to_sym] }
+            next
+          end
           terms = value.is_a?(Array) ? value : [value]
           unknown_terms = terms.map(&:to_s).reject { |term| vocabulary.include?(term) }
           warnings << "unresolved vocabulary for #{key}: #{unknown_terms.join(', ')}" unless unknown_terms.empty?
