@@ -7,7 +7,23 @@ module Master
       # The public FixLoop constant is an adapter name for this canonical
       # Kernel-owned convergence coordinator. The implementation is loaded only
       # after this identity exists, so every nested pass module opens the same class.
-      class ConvergenceAdapter; end unless const_defined?(:ConvergenceAdapter, false)
+      class ConvergenceAdapter
+        # Keep the public FixLoop constant lazy: read-only Kernel users must not
+        # boot the full pass graph, but any real constructor or nested constant
+        # access must load the implementation before dispatch.
+        def self.new(...)
+          require_relative "../fix_loop"
+          super
+        end
+
+        def self.const_missing(name)
+          require_relative "../fix_loop"
+          return const_get(name, false) if const_defined?(name, false)
+
+          super
+        end
+      end
+
       class RepairAdapter; end unless const_defined?(:RepairAdapter, false)
 
       module Lifecycle
