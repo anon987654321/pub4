@@ -122,6 +122,149 @@ class TestRunJournalLifecycle < Minitest::Test
     end
   end
 
+  def test_assessment_verifier_refuses_a_symlinked_artifact
+    Dir.mktmpdir("master-assessment-symlink-artifact") do |root|
+      journal = Master::Fix::RunJournal.new(root:, bus: RecordingBus.new)
+      run = start_journal(root, RecordingBus.new)
+      report = {
+        "status" => "complete",
+        "ledger" => { "summary" => { "expected_cells" => 0 }, "cells" => [] },
+        "cells" => [],
+        "dimensions" => {},
+      }
+      receipt = journal.persist_assessment_report(run.fetch("id"), target: File.join(root, "MASTER"), report:)
+      path = File.join(root, receipt.fetch("path"))
+      target = File.join(root, "outside-assessment.json")
+      original = File.binread(path)
+      File.write(target, original)
+      File.chmod(0o600, target)
+      File.unlink(path)
+      File.symlink(target, path)
+
+      result = journal.verify_assessment_report(run.fetch("id"))
+
+      assert_equal "artifact_path_unsafe", result.fetch("status")
+      assert_equal original, File.binread(target)
+    end
+  end
+
+  def test_assessment_verifier_refuses_a_hard_linked_artifact
+    Dir.mktmpdir("master-assessment-hardlink-artifact") do |root|
+      journal = Master::Fix::RunJournal.new(root:, bus: RecordingBus.new)
+      run = start_journal(root, RecordingBus.new)
+      report = {
+        "status" => "complete",
+        "ledger" => { "summary" => { "expected_cells" => 0 }, "cells" => [] },
+        "cells" => [],
+        "dimensions" => {},
+      }
+      receipt = journal.persist_assessment_report(run.fetch("id"), target: File.join(root, "MASTER"), report:)
+      path = File.join(root, receipt.fetch("path"))
+      target = File.join(root, "outside-assessment.json")
+      File.link(path, target)
+
+      result = journal.verify_assessment_report(run.fetch("id"))
+
+      assert_equal "artifact_path_unsafe", result.fetch("status")
+      assert_equal 2, File.stat(path).nlink
+      assert File.file?(target)
+    end
+  end
+
+  def test_architecture_verifier_refuses_a_symlinked_artifact
+    Dir.mktmpdir("master-architecture-symlink-artifact") do |root|
+      journal = Master::Fix::RunJournal.new(root:, bus: RecordingBus.new)
+      run = start_journal(root, RecordingBus.new)
+      report = {
+        "schema_version" => 2, "target" => "MASTER", "status" => "RUNNING",
+        "targets" => [{ "tree" => "MASTER", "status" => "COMPLETE", "requested" => 1,
+                        "accepted" => 1, "qualified" => 0, "winner" => nil,
+                        "candidates" => [], "evidence_manifest" => [] }]
+      }
+      provenance = { "source_digest" => "a" * 64 }
+      receipt = journal.persist_architecture_report(run.fetch("id"), target: File.join(root, "MASTER"), report:, provenance:)
+      path = File.join(root, receipt.fetch("path"))
+      target = File.join(root, "outside-architecture.json")
+      original = File.binread(path)
+      File.write(target, original)
+      File.chmod(0o600, target)
+      File.unlink(path)
+      File.symlink(target, path)
+
+      result = journal.verify_architecture_report(run.fetch("id"))
+
+      assert_equal "artifact_path_unsafe", result.fetch("status")
+      assert_equal original, File.binread(target)
+    end
+  end
+
+  def test_assessment_verifier_rejects_invalid_utf8_before_json_parsing
+    Dir.mktmpdir("master-assessment-invalid-utf8") do |root|
+      journal = Master::Fix::RunJournal.new(root:, bus: RecordingBus.new)
+      run = start_journal(root, RecordingBus.new)
+      report = {
+        "status" => "complete",
+        "ledger" => { "summary" => { "expected_cells" => 0 }, "cells" => [] },
+        "cells" => [],
+        "dimensions" => {},
+      }
+      receipt = journal.persist_assessment_report(run.fetch("id"), target: File.join(root, "MASTER"), report:)
+      path = File.join(root, receipt.fetch("path"))
+      File.binwrite(path, [0xFF, 0xFE].pack("C*"))
+      File.chmod(0o600, path)
+
+      result = journal.verify_assessment_report(run.fetch("id"))
+
+      assert_equal "artifact_invalid_encoding", result.fetch("status")
+      assert_equal [0xFF, 0xFE], File.binread(path).bytes
+    end
+  end
+
+  def test_assessment_writer_tightens_an_existing_public_artifact_directory
+    Dir.mktmpdir("master-assessment-private-directory") do |root|
+      directory = File.join(root, ".master", "fix_assessments")
+      FileUtils.mkdir_p(directory, mode: 0o755)
+      File.chmod(0o755, directory)
+      journal = Master::Fix::RunJournal.new(root:, bus: RecordingBus.new)
+      run = start_journal(root, RecordingBus.new)
+      report = {
+        "status" => "complete",
+        "ledger" => { "summary" => { "expected_cells" => 0 }, "cells" => [] },
+        "cells" => [],
+        "dimensions" => {},
+      }
+
+      journal.persist_assessment_report(run.fetch("id"), target: File.join(root, "MASTER"), report:)
+
+      assert_equal 0o700, File.stat(directory).mode & 0o777
+      artifact = Dir.children(directory).map { |name| File.join(directory, name) }.find { |path| File.file?(path) }
+      refute_nil artifact
+      assert_equal 0o600, File.stat(artifact).mode & 0o777
+    end
+  end
+
+  def test_artifact_verifier_rejects_a_world_readable_artifact_directory
+    Dir.mktmpdir("master-artifact-public-directory") do |root|
+      journal = Master::Fix::RunJournal.new(root:, bus: RecordingBus.new)
+      run = start_journal(root, RecordingBus.new)
+      report = {
+        "schema_version" => 2, "target" => "MASTER", "status" => "RUNNING",
+        "targets" => [{ "tree" => "MASTER", "status" => "COMPLETE", "requested" => 1,
+                        "accepted" => 1, "qualified" => 0, "winner" => nil,
+                        "candidates" => [], "evidence_manifest" => [] }]
+      }
+      provenance = { "source_digest" => "a" * 64 }
+      receipt = journal.persist_architecture_report(run.fetch("id"), target: File.join(root, "MASTER"), report:, provenance:)
+      directory = File.dirname(File.join(root, receipt.fetch("path")))
+      File.chmod(0o755, directory)
+
+      result = journal.verify_architecture_report(run.fetch("id"))
+
+      assert_equal "artifact_directory_permissions_insecure", result.fetch("status")
+      assert_equal "0755", result.fetch("mode")
+    end
+  end
+
   def test_journal_persistence_is_bracketed_by_required_metadata_events
     Dir.mktmpdir("master-journal-audit") do |root|
       bus = RecordingBus.new
@@ -174,6 +317,149 @@ class TestRunJournalLifecycle < Minitest::Test
       assert File.file?(marker_path)
     end
   end
+  def test_journal_reader_refuses_a_symlinked_journal_file
+    Dir.mktmpdir("master-journal-read-symlink") do |root|
+      journal = Master::Fix::RunJournal.new(root:, bus: RecordingBus.new)
+      state = File.join(root, ".master")
+      Dir.mkdir(state, 0o700)
+      target = File.join(root, "outside-journal.json")
+      original = %({"version":1,"runs":[]}\n)
+      File.write(target, original)
+      File.chmod(0o600, target)
+      File.symlink(target, File.join(state, "fix_runs.json"))
+
+      error = assert_raises(IOError) { journal.history }
+
+      assert_match(/symlinked, hard-linked or non-regular/, error.message)
+      assert_equal original, File.read(target)
+    end
+  end
+
+  def test_journal_reader_refuses_a_hard_linked_journal_file
+    Dir.mktmpdir("master-journal-read-hardlink") do |root|
+      journal = Master::Fix::RunJournal.new(root:, bus: RecordingBus.new)
+      state = File.join(root, ".master")
+      Dir.mkdir(state, 0o700)
+      target = File.join(root, "outside-journal.json")
+      original = %({"version":1,"runs":[]}\n)
+      File.write(target, original)
+      File.chmod(0o600, target)
+      File.link(target, File.join(state, "fix_runs.json"))
+
+      error = assert_raises(IOError) { journal.send(:load) }
+
+      assert_match(/symlinked, hard-linked or non-regular/, error.message)
+      assert_equal original, File.read(target)
+    end
+  end
+
+  def test_journal_reader_refuses_group_or_world_readable_state
+    Dir.mktmpdir("master-journal-read-mode") do |root|
+      journal = Master::Fix::RunJournal.new(root:, bus: RecordingBus.new)
+      state = File.join(root, ".master")
+      Dir.mkdir(state, 0o700)
+      path = File.join(state, "fix_runs.json")
+      original = %({"version":1,"runs":[]}\n)
+      File.write(path, original)
+      File.chmod(0o644, path)
+
+      error = assert_raises(IOError) { journal.send(:load) }
+
+      assert_match(/permissions must be private/, error.message)
+      assert_equal original, File.read(path)
+    end
+  end
+
+  def test_journal_reader_refuses_a_symlinked_state_directory
+    Dir.mktmpdir("master-journal-read-state-symlink") do |root|
+      journal = Master::Fix::RunJournal.new(root:, bus: RecordingBus.new)
+      outside = File.join(root, "outside")
+      Dir.mkdir(outside, 0o700)
+      File.symlink(outside, File.join(root, ".master"))
+
+      error = assert_raises(IOError) { journal.send(:load) }
+
+      assert_match(/symlinked journal state directory/, error.message)
+      refute File.exist?(File.join(outside, "fix_runs.json"))
+    end
+  end
+
+  def test_journal_reader_refuses_invalid_utf8
+    Dir.mktmpdir("master-journal-read-utf8") do |root|
+      journal = Master::Fix::RunJournal.new(root:, bus: RecordingBus.new)
+      state = File.join(root, ".master")
+      Dir.mkdir(state, 0o700)
+      path = File.join(state, "fix_runs.json")
+      File.binwrite(path, [0xFF].pack("C"))
+      File.chmod(0o600, path)
+
+      error = assert_raises(EncodingError) { journal.send(:load) }
+
+      assert_match(/invalid UTF-8/, error.message)
+    end
+  end
+
+  def test_journal_lock_refuses_a_symlinked_state_directory
+    Dir.mktmpdir("master-journal-lock-directory-symlink") do |root|
+      outside = File.join(root, "outside")
+      Dir.mkdir(outside, 0o700)
+      File.symlink(outside, File.join(root, ".master"))
+
+      error = assert_raises(IOError) { start_journal(root, RecordingBus.new) }
+
+      assert_match(/symlinked journal state directory/, error.message)
+      refute File.exist?(File.join(outside, "fix_runs.lock"))
+      refute File.exist?(File.join(outside, "fix_runs.json"))
+    end
+  end
+
+  def test_journal_lock_refuses_a_symlinked_lock_file
+    Dir.mktmpdir("master-journal-lock-file-symlink") do |root|
+      directory = File.join(root, ".master")
+      Dir.mkdir(directory, 0o700)
+      outside = File.join(root, "outside-lock")
+      File.write(outside, "preserve")
+      File.chmod(0o600, outside)
+      File.symlink(outside, File.join(directory, "fix_runs.lock"))
+
+      error = assert_raises(IOError) { start_journal(root, RecordingBus.new) }
+
+      assert_match(/symlinked journal lock/, error.message)
+      assert_equal "preserve", File.read(outside)
+      refute File.exist?(File.join(directory, "fix_runs.json"))
+    end
+  end
+
+  def test_journal_lock_refuses_a_group_or_world_writable_state_directory
+    Dir.mktmpdir("master-journal-writable-directory") do |root|
+      directory = File.join(root, ".master")
+      Dir.mkdir(directory, 0o700)
+      File.chmod(0o770, directory)
+
+      error = assert_raises(IOError) { start_journal(root, RecordingBus.new) }
+
+      assert_match(/group\/world-writable journal state directory/, error.message)
+      refute File.exist?(File.join(directory, "fix_runs.lock"))
+      refute File.exist?(File.join(directory, "fix_runs.json"))
+    end
+  end
+
+  def test_journal_lock_refuses_a_non_private_existing_lock_file
+    Dir.mktmpdir("master-journal-lock-mode") do |root|
+      directory = File.join(root, ".master")
+      Dir.mkdir(directory, 0o700)
+      lock = File.join(directory, "fix_runs.lock")
+      File.write(lock, "")
+      File.chmod(0o644, lock)
+
+      error = assert_raises(IOError) { start_journal(root, RecordingBus.new) }
+
+      assert_match(/permissions must be private/, error.message)
+      assert_equal 0o644, File.stat(lock).mode & 0o777
+      refute File.exist?(File.join(directory, "fix_runs.json"))
+    end
+  end
+
   def test_journal_lock_refuses_a_symlinked_state_directory
     Dir.mktmpdir("master-journal-lock-directory-symlink") do |root|
       outside = File.join(root, "outside")
