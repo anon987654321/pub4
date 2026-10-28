@@ -327,7 +327,7 @@ rescue StandardError => e
 end
 
 def stop_cli_background_loop_safely(cli)
-  cli&.send(:stop_background_loop)
+  cli&.stop_background_loop
 rescue StandardError => e
   Master::Trace::Dmesg.status("cli0", "background stop failed, #{e.class}: #{e.message}", io: $stderr)
 end

@@ -20,7 +20,8 @@ module Master
         end
       end
 
-      def stop_background_loop
+      # Public: bin/master stops the loop on its way out.
+      public def stop_background_loop
         @boot_scan_thread&.kill
         @boot_scan_thread = nil
         return unless @bg_thread
