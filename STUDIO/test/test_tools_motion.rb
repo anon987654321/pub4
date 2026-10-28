@@ -66,6 +66,11 @@ class TestPostproMotion < Minitest::Test
       assert_equal [96, 64], [probe.width, probe.height]
       assert probe.has_audio
       assert_equal 4, probe.frames
+      sidecar = JSON.parse(File.read("#{target}.json"))
+      assert_equal 42, sidecar.dig("grade", "seed")
+      assert_equal "moving", sidecar.dig("grade", "grain")
+      assert_equal 4, sidecar.dig("video", "frame_count")
+      assert_equal Digest::SHA256.file(target).hexdigest, sidecar.dig("output", "sha256")
     end
   end
 
@@ -86,11 +91,24 @@ class TestPostproMotion < Minitest::Test
     end
   end
 
-  def test_a_failed_grade_does_not_replace_an_existing_output
+  def test_existing_video_is_never_clobbered
     Dir.mktmpdir do |directory|
       source = clip(directory, audio: false)
       target = File.join(directory, "keep.mp4")
       File.write(target, "earlier output")
+
+      error = assert_raises(Postpro::Motion::Unavailable) do
+        grade(source, target)
+      end
+      assert_match(/refusing to replace an existing video/, error.message)
+      assert_equal "earlier output", File.read(target)
+    end
+  end
+
+  def test_a_failed_grade_publishes_neither_video_nor_sidecar
+    Dir.mktmpdir do |directory|
+      source = clip(directory, audio: false)
+      target = File.join(directory, "failed.mp4")
 
       error = assert_raises(Postpro::Motion::Unavailable) do
         Postpro::Motion.grade(source, target, preset: :portrait, io: StringIO.new) do
@@ -98,7 +116,8 @@ class TestPostproMotion < Minitest::Test
         end
       end
       assert_match(/grading frame/, error.message)
-      assert_equal "earlier output", File.read(target)
+      refute File.exist?(target)
+      refute File.exist?("#{target}.json")
     end
   end
 end
