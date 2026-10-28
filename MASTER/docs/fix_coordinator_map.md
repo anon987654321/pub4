@@ -43,8 +43,10 @@ file maps implementations; it is not a second policy surface.
   `tap_target_pad.rb`, `tools/dead_css_sweep.rb`.
 - **`Fix::Kernel`**: production coordinator boundary and hash-chained receipt
   writer, while retaining `bin/master replay` and the existing log verification API.
-  It owns the execution mutex, run start/terminal receipts, the shared lifecycle
-  journal accessor and the repair factory. It does not apply source edits.
+  It owns the process-shared execution lock, run start/terminal receipts, the
+  shared lifecycle journal accessor and the repair factory. It does not apply source
+  edits. The hash-chained ledger is private and rejects symlinked paths, non-regular
+  files, and non-private ledger permissions; retention/segmentation remains open.
 - **`Fix::Kernel::ConvergenceAdapter`**: canonical class for the former `FixLoop`
   implementation and its pass modules. `FixLoop` remains a compatibility constant
   and entry-point file; existing command and operator callers keep their API.
