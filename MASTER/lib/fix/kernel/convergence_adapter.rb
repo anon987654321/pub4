@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../kernel"
+require_relative "../final_cleanup"
 
 # Install the historical constant before child files reopen FixLoop. Keeping
 # both names on the same class object prevents parallel coordinator graphs.
@@ -360,8 +361,25 @@ module Master
         end
         result
       ensure
-        @committer.lease_guard = nil if @committer.respond_to?(:lease_guard=)
-        @pass_runner&.cleanup_visual_runtime
+        cleanup_run_resources(target:, run_id: (defined?(run_id) ? run_id : nil))
+      end
+
+      # Final cleanup is separate from repair decisions: it releases only resources
+      # owned by this invocation, prunes journal-indexed artifacts, and reports
+      # any failure without masking the actual repair result or crash.
+      def cleanup_run_resources(target:, run_id:)
+        FinalCleanup.new(
+          root: @root, bus: @bus, kernel: @kernel, committer: @committer,
+          pass_runner: @pass_runner, run_journal: @run_journal
+        ).run(target:, run_id:, terminal_state: @last_terminal_state)
+      rescue StandardError => error
+        @bus&.publish(
+          "fix_loop:cleanup",
+          run_id:, target: "(cleanup stage error)", terminal_state: @last_terminal_state.to_s,
+          status: "warning", warnings: [{ step: "cleanup_stage", error_class: error.class.name }],
+        )
+        Master::Trace::Dmesg.status("cleanup0", "warning, #{error.class}: #{error.message.to_s[0, 160]}") rescue nil
+        nil
       end
 
       # Before a requested /fix can write, read every eligible text source
