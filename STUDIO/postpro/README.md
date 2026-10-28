@@ -161,9 +161,11 @@ by default; `--grain-hold` pins it for a scanned-print texture. Work is bounded 
 default); `POSTPRO_VIDEO_MAX_FRAMES`, `POSTPRO_VIDEO_MAX_PIXELS`,
 `POSTPRO_VIDEO_MAX_SECONDS`, `POSTPRO_VIDEO_MAX_TEMP_BYTES` and
 `POSTPRO_VIDEO_SECONDS_PER_FRAME` allow a validated operator adjustment within hard maxima.
-The time estimate is a preflight estimate, not a performance claim; the run checks the budget
-between frames and during ffmpeg decode/mux. The output is assembled to a same-directory
-temporary file and renamed only after successful muxing. The focused test suite is
+The time estimate is a preflight estimate, not a performance claim. Runtime is checked between
+frames and during ffmpeg decode/mux; a single native libvips frame operation cannot be forcibly
+interrupted. The video and `.mp4.json` sidecar are published with same-directory atomic links
+only after successful muxing. The sidecar records source/output SHA-256, preset, seed/grain,
+frame dimensions/rate/count, audio-copy status and measured duration/temporary bytes. The focused test suite is
 `cd STUDIO && rake test:motion`.
 
 ## Random chains and heavy mode
