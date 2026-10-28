@@ -145,19 +145,20 @@ class TestDocPaths < Minitest::Test
                  "non-README Markdown needs a documented exception: #{extras.join(", ")}"
   end
 
-  def test_agent_contract_does_not_ban_the_managed_worktree_workflow
+  # The operator's rule is one shared checkout written straight to main; the
+  # contract and every harness copy must teach that and nothing else.
+  def test_agent_contract_teaches_the_single_checkout_workflow
     source = File.read(File.join(REPO, "MASTER/AGENTS.md"))
     block = source[/<!-- agent-contract:begin -->\n(.*?)<!-- agent-contract:end -->/m, 1]
     refute_nil block
 
-    refute_match(/branches and pull requests are refused|write straight to `main`|block_branching/, block)
-    assert_includes block, "Use isolated, managed worktrees"
-    assert_includes block, "pushes only the current branch"
+    assert_includes block, "commit straight to `main`"
+    refute_match(/managed worktrees|topic branch/, block)
 
     HARNESS_FILES.each do |relative|
       body = File.read(File.join(REPO, relative))
-      refute_match(/branches and pull requests are refused|block_branching/, body, "#{relative} retains the removed restriction")
-      assert_includes body, "Use isolated, managed worktrees", "#{relative} does not teach the active workflow"
+      assert_includes body, "commit straight to `main`", "#{relative} does not teach the active workflow"
+      refute_match(/managed worktrees|topic branch/, body, "#{relative} still teaches worktrees")
     end
   end
 

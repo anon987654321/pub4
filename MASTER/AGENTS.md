@@ -64,14 +64,11 @@ blank line, a body saying what changed and what it cost, a blank line, and a
 the authority chain, the guards and the top-ranked laws as they are now.
 
 Operational constraints:
-- Use isolated, managed worktrees for broad, parallel or architecture-heavy work:
-  `bin/operator worktree <name> [--base REF]`. Creation refuses a dirty source
-  checkout unless `--allow-dirty-source` is explicit and never copies uncommitted
-  changes. `bin/operator worktree list` inspects managed trees; `remove` refuses
-  dirty worktrees and preserves their branches. Keep commits path-scoped and
-  never use `git commit -a` in a shared checkout. `bin/operator land -m <msg>
-  <paths...>` commits path-scoped changes and pushes only the current branch;
-  integrate a topic branch into `main` deliberately after review. Never force-push.
+- Work in the one shared checkout and commit straight to `main`: no worktree,
+  branch or pull request. Commit path-scoped (`git commit -- <paths>`), never
+  `git commit -a` or `git add -A`, and never stage another session's files.
+  `bin/operator land -m <msg> <paths...>` checks, commits path-scoped changes
+  and pushes. Never force-push.
 - Rails uses strict loading in every environment. Assert localized output through I18n keys, not English literals.
 - On deploy, relayd can answer while amber and bsdports are down; inspect health, not just TLS.
 - Dilla and postpro renders are replaceable; a new run may delete the old take. Never change a rendered sound/look default by taste alone.
@@ -100,19 +97,14 @@ that a fresh agent gets wrong on its first attempt.
 **Ruby is pinned by `MASTER/.ruby-version` for development.** It is currently 4.0.5. On OpenBSD, `MASTER/bin/ruby` accepts the packaged Ruby 3.3.x/3.4.x lane instead of requiring 4.0.5; bare `ruby` is not the project contract.
 
 **The checkout is shared and usually dirty.** Never `git add -A` or
-`git commit -a`. For broad, parallel or architecture-heavy work, create a
-managed worktree with `bin/operator worktree <name> [--base REF]`; creation
-refuses a dirty source checkout unless `--allow-dirty-source` is explicit and
-starts from a commit rather than copying uncommitted changes. Commit path-scoped
-with `git commit -- <paths>`.
+`git commit -a`, and take no worktree or branch: every session writes to
+`main` in this one checkout. Commit path-scoped with `git commit -- <paths>`.
 
 **Never read-modify-write a file another session may hold.** Read, edit and
 write are three moments; a commit landing between the read and the write can be
 silently reverted by your write. Keep that gap short. Use
 `bin/operator land -m <msg> <paths...>` to check, commit path-scoped changes and
-push only the current branch. A topic branch is integrated into `main` only
-deliberately after review; never push a topic branch directly to `main`, and
-never force-push.
+push; never force-push.
 
 **Verify the instrument before the finding.** Measurement code here is wrong
 about the code more often than the code is wrong about the world. Check a probe
@@ -479,7 +471,10 @@ checks it names exist.
     operator's own audit trail, checkable only against a session transcript,
     which is not an artefact this repo keeps.
 
-Use an isolated, disposable worktree for broad, parallel, or architecture-heavy changes. The managed entrypoint is `bin/operator worktree <name> [--base REF]`; use `bin/operator worktree list` to inspect managed trees and `bin/operator worktree remove <name>` to remove a clean tree without deleting its branch. Creation refuses a dirty source checkout unless `--allow-dirty-source` is explicit; that option creates from a commit and never copies uncommitted changes. Never use `git commit -a` in a shared checkout. Keep commits path-scoped. `bin/operator land -m <message> <paths...>` runs the repository checks and pushes only the current branch; on a topic branch, integrate into main deliberately after review.
+One checkout, written straight to `main`, as the refusal of parallel change
+streams below says. Never use `git commit -a` in a shared checkout; keep commits
+path-scoped. `bin/operator land -m <message> <paths...>` runs the repository
+checks, commits the named paths and pushes.
 
 ## Patch closeout
 
@@ -603,9 +598,12 @@ because agents read the Law one identity at a time. Reopen with a duplicate body
   introduced for it. `Ground::Policy` is authorisation, a different concept.
   Whether `check`, `lint`, `probe`, `audit` and `verify` name one act is
   unmeasured.
-- **No docs/ directory.** Human documentation is one `README.md` per boundary,
-  held by `test/test_doc_paths.rb`; Aegis, cognition and the contract examples
-  live in `README.md`, and the Do Not Touch list lives here.
+- **No documentation outside its boundary.** Human documentation is one
+  `README.md` per boundary; Aegis, cognition and the contract examples live in
+  `README.md`, and the Do Not Touch list lives here. `MASTER/docs/` holds only
+  the execution-contract references, the generated Law digest, the glossary and
+  preserved handoffs that `test/test_doc_paths.rb` names one by one; a new file
+  there needs its entry in that test.
 - **Media generation lives behind STUDIO.** Dilla, postpro, replicate and
   lora are tool boundaries under `STUDIO/`; `MASTER/tools/` keeps compatibility
   entrypoints, and `lib/core/world.rb` routes to them instead of owning their

@@ -49,14 +49,11 @@ blank line, a body saying what changed and what it cost, a blank line, and a
 the authority chain, the guards and the top-ranked laws as they are now.
 
 Operational constraints:
-- Use isolated, managed worktrees for broad, parallel or architecture-heavy work:
-  `bin/operator worktree <name> [--base REF]`. Creation refuses a dirty source
-  checkout unless `--allow-dirty-source` is explicit and never copies uncommitted
-  changes. `bin/operator worktree list` inspects managed trees; `remove` refuses
-  dirty worktrees and preserves their branches. Keep commits path-scoped and
-  never use `git commit -a` in a shared checkout. `bin/operator land -m <msg>
-  <paths...>` commits path-scoped changes and pushes only the current branch;
-  integrate a topic branch into `main` deliberately after review. Never force-push.
+- Work in the one shared checkout and commit straight to `main`: no worktree,
+  branch or pull request. Commit path-scoped (`git commit -- <paths>`), never
+  `git commit -a` or `git add -A`, and never stage another session's files.
+  `bin/operator land -m <msg> <paths...>` checks, commits path-scoped changes
+  and pushes. Never force-push.
 - Rails uses strict loading in every environment. Assert localized output through I18n keys, not English literals.
 - On deploy, relayd can answer while amber and bsdports are down; inspect health, not just TLS.
 - Dilla and postpro renders are replaceable; a new run may delete the old take. Never change a rendered sound/look default by taste alone.
