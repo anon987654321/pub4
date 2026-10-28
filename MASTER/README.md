@@ -115,8 +115,10 @@ aliases `Kernel::RepairAdapter`, and `RunJournal` aliases
 `Transaction` recovery format remain unchanged; `Mission` remains the durable
 objective and lease owner.
 
-Kernel now owns the outer execution lock, hash-chained run start/terminal receipts,
-the shared journal accessor, repair factory and bounded repair-outcome receipts.
+Kernel now owns a process-shared execution lease (`.master/fix-execution.lock`),
+hash-chained run start/terminal receipts, the shared journal accessor, repair factory
+and bounded repair-outcome receipts. Its recovery scan has a separate lock so two
+Kernel instances cannot both terminalize the same orphaned run.
 It does not replace transaction rollback or Mission persistence. The convergence
 adapter remains split into `Lifecycle`, `PassExecution` and `Completion`
 modules, and `Fix::OutcomePolicy` remains the shared terminal vocabulary for the
