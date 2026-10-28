@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+# Tracked-file counts per tree (git ls-files). No model, no bundle.
+root = File.expand_path("../..", __dir__)
+Dir.chdir(root) do
+  %w[MASTER RAILS OPENBSD STUDIO].each do |tree|
+    n = `git ls-files #{tree}`.lines.count
+    puts format("%-8s %5d files", tree, n)
+  end
+  puts format("%-8s %5d files", "TOTAL", `git ls-files`.lines.count)
+end

@@ -81,6 +81,11 @@ def usage
       bin/operator event-bus [--strict] [--json]  census Ruby publishers/subscribers and browser event references
       bin/operator wishlist [--all]     show the current bounded next-work queue
       bin/operator spark [TREE] [--seed N]  high-creativity constrained experiment (no model)
+      bin/operator cities               owned_domains from apps.yml
+      bin/operator domain-ghosts        inventory vs owned vs residual relayd Hosts
+      bin/operator deploy-story [log]   stage timeline from deploy log
+      bin/operator tree-weight          tracked file counts per tree
+      bin/operator law-weight           MASTER/law/*.rb line counts
 
     Profiles (passed through to check scripts):
       OPENBSD/bin/check --profile=contributor
@@ -501,6 +506,16 @@ when "snapshot"
   # stale at a commit no checkout still has and nothing could refresh them.
   # Lives in MASTER/tools so it is one implementation, reachable from here.
   exec(RbConfig.ruby, File.join(ROOT, "MASTER", "tools", "snapshot.rb"), *ARGV)
+when "cities"
+  exec(File.join(__dir__, "cities"), *ARGV)
+when "domain-ghosts"
+  exec(File.join(__dir__, "domain-ghosts"), *ARGV)
+when "deploy-story"
+  exec(File.join(__dir__, "deploy-story"), *ARGV)
+when "tree-weight"
+  exec(File.join(__dir__, "tree-weight"), *ARGV)
+when "law-weight"
+  exec(File.join(__dir__, "law-weight"), *ARGV)
 when "spark"
   exec(File.join(__dir__, "spark"), *ARGV)
 when "wishlist"

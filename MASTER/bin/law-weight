@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+root = File.expand_path("../..", __dir__)
+dir = File.join(root, "MASTER/law")
+rows = Dir[File.join(dir, "*.rb")].map { |f| [File.basename(f), File.foreach(f).count] }
+rows.sort_by! { |_, n| n }
+rows.each { |name, n| puts format("%5d  %s", n, name) }
+puts format("%5d  TOTAL", rows.sum { |_, n| n })

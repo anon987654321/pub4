@@ -1,0 +1,77 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+#
+# Compare domain_inventory.yml, RAILS owned_domains, and relayd Host matches.
+# Usage: domain-ghosts [--json]
+#
+# "ghost" here means: available names sitting in inventory, owned names missing
+# from inventory, or relayd hosts that are not in the four production apps'
+# domain story.
+
+require "yaml"
+require "json"
+
+root = File.expand_path("../..", __dir__)
+json_out = ARGV.include?("--json")
+
+inv_path = File.join(root, "OPENBSD/data/domain_inventory.yml")
+apps_path = File.join(root, "RAILS/apps.yml")
+relayd_path = File.join(root, "OPENBSD/etc/relayd.conf")
+
+inv = File.file?(inv_path) ? YAML.safe_load_file(inv_path) : {}
+apps = File.file?(apps_path) ? YAML.safe_load_file(apps_path) : {}
+owned = Array(apps["owned_domains"]).map(&:to_s)
+inv = inv.is_a?(Hash) ? inv : {}
+
+available = inv.select { |_, v| v.is_a?(Hash) && v["state"].to_s == "available" }.keys.map(&:to_s).sort
+registered = inv.select { |_, v| v.is_a?(Hash) && v["state"].to_s == "registered" }.keys.map(&:to_s).sort
+owned_missing_inv = (owned - inv.keys.map(&:to_s)).sort
+inv_not_owned = (registered - owned).sort
+
+# Host values that look like hostnames in relayd
+relay_hosts = []
+if File.file?(relayd_path)
+  File.foreach(relayd_path, encoding: "UTF-8", invalid: :replace, replace: "") do |line|
+    if line =~ /match request header "Host" value "([^"]+)"/
+      relay_hosts << Regexp.last_match(1)
+    end
+  end
+end
+relay_hosts = relay_hosts.uniq.sort
+# Known production hosts: owned apexes, www., brgen verticals, ai face.
+brgen_verticals = %w[tv dating radio takeaway markedsplass maps messenger]
+known = owned.dup
+owned.each { |d| known << "www.#{d}" }
+known << "ai.brgen.no"
+brgen_verticals.each { |v| known << "#{v}.brgen.no" }
+relay_residual = (relay_hosts - known).sort
+
+payload = {
+  available_count: available.size,
+  available: available,
+  registered_count: registered.size,
+  owned_count: owned.size,
+  owned_missing_from_inventory: owned_missing_inv,
+  registered_not_in_owned_domains: inv_not_owned,
+  relay_hosts: relay_hosts,
+  relay_residual: relay_residual
+}
+
+if json_out
+  puts JSON.pretty_generate(payload)
+  exit 0
+end
+
+puts "domain-ghosts0: inventory vs owned vs relayd"
+puts "  available (inventory):     #{available.size}"
+available.first(15).each { |d| puts "    · #{d}" }
+puts "    … #{available.size - 15} more" if available.size > 15
+puts "  registered (inventory):    #{registered.size}"
+puts "  owned_domains (apps.yml):  #{owned.size}"
+puts "  owned missing inventory:   #{owned_missing_inv.size}"
+owned_missing_inv.each { |d| puts "    · #{d}" }
+puts "  registered not owned:      #{inv_not_owned.size}"
+inv_not_owned.first(10).each { |d| puts "    · #{d}" }
+puts "  relay Host matches:        #{relay_hosts.size}"
+puts "  relay residual (odd):      #{relay_residual.size}"
+relay_residual.each { |d| puts "    · #{d}" }

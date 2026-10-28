@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+root = File.expand_path("../..", __dir__)
+script = File.join(root, "OPENBSD/bin/deploy-story")
+# sh script
+exec "/bin/sh", script, *ARGV
