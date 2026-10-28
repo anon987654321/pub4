@@ -81,4 +81,28 @@ class TestFixLoopObservability < Minitest::Test
     assert_match(/crash FloatDomainError @ begin_run/, output)
     refute_match(/corpus .*FloatDomainError/i, output)
   end
+  def test_unlocked_run_always_attempts_final_cleanup_on_cancellation
+    loop = Master::Fix::FixLoop.allocate
+    cleanup_calls = []
+    loop.define_singleton_method(:cancellation_requested?) { true }
+    loop.define_singleton_method(:cancellation_terminal) do
+      Master::Result.err("CANCELLED: test stop", category: :cancelled)
+    end
+    loop.define_singleton_method(:cleanup_run_resources) do |target:, run_id:|
+      cleanup_calls << [target, run_id]
+    end
+
+    result = loop.send(
+      :run_unlocked,
+      "requested-target",
+      max_passes: 1,
+      budget_seconds: 30,
+      incremental: false,
+      requested: false,
+    )
+
+    assert result.err?
+    assert_equal [["requested-target", nil]], cleanup_calls
+  end
+
 end
