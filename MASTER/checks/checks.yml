@@ -484,3 +484,4 @@ security_headers_source:
   require: lib/source/security_headers
   class: Deploy::SecurityHeadersSourceCheck
   pass: "security headers: edge/app ownership and nonce-CSP source contracts intact"
+  covered_by: release
