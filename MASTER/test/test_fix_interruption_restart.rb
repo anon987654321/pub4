@@ -231,17 +231,16 @@ class TestFixInterruptionRestart < Minitest::Test
       writer = support + <<~'RUBY'
         root, marker = ARGV
         loop = quiet_outcome_guidance(build_restart_probe_loop(root))
-        loop.define_singleton_method(:run_passes) do |
-          files:, target:, max_passes:, deadline:, budget_seconds:, start_pass:,
-          run_id:, wishlist_proposals: [], resume_state: nil
-        |
+        loop.define_singleton_method(:run_passes) do |**options|
+          run_id = options.fetch(:run_id)
+          start_pass = options.fetch(:start_pass)
           checkpoint = lambda do |id:, root:, files:|
             Master::Fix::Checkpoint.new(
               root:, dir: File.join(root, ".master", "checkpoints")
             ).create(label: "mission-#{id}", files:)
           end
           mission = Master::Fix::Mission.new(root:, checkpoint:).start_or_resume!(
-            goal: "fix .", scope: root, origin: "supervisor"
+            goal: "fix #{root}", scope: root, origin: "supervisor"
           )
           mission.checkpoint!(files: ["sample.rb"])
 
@@ -292,7 +291,7 @@ class TestFixInterruptionRestart < Minitest::Test
       end
 
       restart = support + <<~'RUBY'
-        root, old_coordinator_id = ARGV
+        root, old_run_id, old_coordinator_id = ARGV
         loop = quiet_outcome_guidance(build_restart_probe_loop(root))
         result = loop.run(
           root, max_passes: 2, budget_seconds: 60,
@@ -301,7 +300,7 @@ class TestFixInterruptionRestart < Minitest::Test
 
         journal = loop.instance_variable_get(:@run_journal)
         run = journal.history(limit: Master::Fix::RunJournal::MAX_RUNS).find do |row|
-          row["id"] == ARGV.fetch(1) && row["id"] == journal.history.last["id"]
+          row["id"] == old_run_id
         end
         mission = Master::Fix::Mission.current(root:)
         kernel_events = loop.kernel.verify_log!
@@ -331,7 +330,7 @@ class TestFixInterruptionRestart < Minitest::Test
       RUBY
       output, restart_status = Open3.capture2e(
         RbConfig.ruby, "-I", File.join(Master::ROOT, "lib"), "-e", restart, root,
-        marker_record.fetch("coordinator_run_id"), chdir: Master::ROOT
+        marker_record.fetch("run_id"), marker_record.fetch("coordinator_run_id"), chdir: Master::ROOT
       )
       assert restart_status.success?, "public FixLoop restart failed: #{output}"
       receipt = JSON.parse(output.lines.last)
@@ -341,7 +340,7 @@ class TestFixInterruptionRestart < Minitest::Test
                       "the durable run must be resumed, not silently replaced"
       assert_equal "before\n", receipt.fetch("sample"), "startup recovery must roll back the dead pass"
       assert_equal marker_record.fetch("mission_id"), receipt.fetch("mission_id")
-      assert_equal "fix .", receipt.fetch("mission_goal")
+      assert_equal "fix #{root}", receipt.fetch("mission_goal")
       assert_equal ".", receipt.fetch("mission_scope")
       assert_equal "before\n", receipt.fetch("checkpoint_sample"),
                    "the independent Mission checkpoint must survive process death"
