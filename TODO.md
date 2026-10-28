@@ -55,6 +55,7 @@ source and tests they could not run; this pass is what measures them.
   `bundle exec ruby -Ilib:test test/test_command_registry_dispatch.rb`,
   `bundle exec ruby -Ilib:test test/test_architecture_exploration.rb`,
   `bundle exec ruby -Ilib:test test/test_run_journal_lifecycle.rb`,
+  `bundle exec ruby -Ilib:test test/test_recovery_gates.rb`,
   `bundle exec ruby -Ilib:test test/test_fix_kernel.rb`,
   `bundle exec ruby -Ilib:test test/test_check_chain.rb`,
   `bundle exec ruby -Ilib:test test/test_strict_mode.rb`,
@@ -118,8 +119,13 @@ source and tests they could not run; this pass is what measures them.
   recovery, but are unexecuted. Run them on pinned Ruby 4.0.5, then prove budget/collapse and
   zero-repair ledger honesty, the full adapter receipt-parity matrix and a real repository-wide
   `/fix` trial. Do not remove compatibility aliases until those gates pass.
-  Six named recovery-gate skips remain in `MASTER/test/test_recovery_gates.rb`; none closes this
-  gate until wired to real fixtures and verified red then green.
+  No recovery gate remains as a placeholder skip. Gates 1–6 now have concrete tests for rollback,
+  Mission restart, Git/Checkpoint source recovery after journal deletion, budget/collapse refusal,
+  per-file zero-repair evidence, and the public CommandRegistry-to-Kernel receipt contract. Gate 6
+  controls Pipeline::Pass so it does not invoke a model or mutate a real tree; the wider adapter
+  matrix and end-to-end process-interruption trial remain separate gates. All are authored but
+  unexecuted; run the focused file on pinned Ruby 4.0.5 and preserve its actual output before
+  treating any consolidation gate as closed.
 - [ ] Define a retention/segmentation policy for hash-chained `.master/log.jsonl` before
   long-running production use. Any compaction must preserve verifiable chain continuity with
   explicit segment checkpoints; never truncate arbitrary prefixes.
