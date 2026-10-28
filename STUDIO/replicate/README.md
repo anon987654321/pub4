@@ -1,5 +1,7 @@
 # Replicate
 
+The earlier Repligen versions and the decisions behind this stricter runtime are mapped in [ARCHAEOLOGY.md](./ARCHAEOLOGY.md), including which historical workflows are preserved, evolved or intentionally not revived.
+
 **A photograph is a set of decisions, and replicate makes each of them nameable.** Film
 stock, lens, light, weather, hour, distance and focus become words the tool knows, so a house
 style is a handful of flags and not a paragraph someone has to remember. The tool refuses what
