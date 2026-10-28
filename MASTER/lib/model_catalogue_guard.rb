@@ -128,11 +128,17 @@ module Master
               errors << "models.#{tier}[#{index}] must be a mapping"
               next
             end
+            unknown_fields = row.keys.map(&:to_s) - %w[id score context_window]
+            errors << "models.#{tier}[#{index}] has unknown field(s): #{unknown_fields.sort.join(', ')}" unless unknown_fields.empty?
             id = row["id"]
             unless id.is_a?(String) && definition_ids.key?(id)
               errors << "models.#{tier}[#{index}] references unknown model id #{id.inspect}"
             end
             validate_scores(row["score"], "models.#{tier}[#{index}].score", errors)
+            if row.key?("context_window")
+              window = row["context_window"]
+              errors << "models.#{tier}[#{index}].context_window must be a positive integer" unless window.is_a?(Integer) && window.positive?
+            end
           end
         end
       end
@@ -172,6 +178,8 @@ module Master
           errors << "models.yml operation_constraints.#{operation} must be a mapping"
           next
         end
+        unknown_fields = row.keys.map(&:to_s) - %w[min_quality preferred_tier]
+        errors << "models.yml operation_constraints.#{operation} has unknown field(s): #{unknown_fields.sort.join(', ')}" unless unknown_fields.empty?
         quality = row["min_quality"]
         unless quality.is_a?(Numeric) && quality >= 0 && quality <= 1
           errors << "models.yml operation_constraints.#{operation}.min_quality must be between 0 and 1"
@@ -193,7 +201,8 @@ module Master
     def validate_nested_catalogues(data, tiers, errors)
       strict_fields(data["routing"], %w[enabled strategy escalation_enabled escalation_tier provider],
                     "models.yml routing", errors)
-      unless tiers.key?(data.dig("routing", "escalation_tier"))
+      routing_config = data["routing"].is_a?(Hash) ? data["routing"] : {}
+      unless tiers.key?(routing_config["escalation_tier"])
         errors << "models.yml routing.escalation_tier must reference a declared model tier"
       end
       strict_fields(data["fallback_policy"], ["on"], "models.yml fallback_policy", errors)
@@ -202,14 +211,14 @@ module Master
                     "models.yml failover", errors)
       strict_fields(data["defaults"], ["score"], "models.yml defaults", errors)
       strict_fields(data["continuity"], %w[enabled updated_at], "models.yml continuity", errors)
-      continuity = data["continuity"]
+      continuity = data["continuity"].is_a?(Hash) ? data["continuity"] : {}
       errors << "models.yml continuity.enabled must be boolean" unless [true, false].include?(continuity["enabled"])
       errors << "models.yml continuity.updated_at must be non-empty text" unless
         continuity["updated_at"].is_a?(String) && !continuity["updated_at"].strip.empty?
 
       strict_fields(data["openrouter"], %w[use_live_catalog daily_quota_per_model keys_env free_latest],
                     "models.yml openrouter", errors)
-      openrouter = data["openrouter"]
+      openrouter = data["openrouter"].is_a?(Hash) ? data["openrouter"] : {}
       errors << "models.yml openrouter.use_live_catalog must be boolean" unless [true, false].include?(openrouter["use_live_catalog"])
       errors << "models.yml openrouter.daily_quota_per_model must be a positive integer" unless
         openrouter["daily_quota_per_model"].is_a?(Integer) && openrouter["daily_quota_per_model"].positive?
@@ -219,7 +228,7 @@ module Master
       strict_fields(data["ferrum_web_chat"],
                     %w[enabled_when_env auto_when_keyless profile_dir free_latest providers],
                     "models.yml ferrum_web_chat", errors)
-      ferrum = data["ferrum_web_chat"]
+      ferrum = data["ferrum_web_chat"].is_a?(Hash) ? data["ferrum_web_chat"] : {}
       %w[enabled_when_env profile_dir].each do |field|
         errors << "models.yml ferrum_web_chat.#{field} must be non-empty text" unless
           ferrum[field].is_a?(String) && !ferrum[field].strip.empty?
@@ -242,7 +251,7 @@ module Master
       errors << "models.yml ferrum_web_chat.providers must not be empty" if ferrum_providers.empty?
 
       strict_fields(data["three_mirror_redundancy"], %w[pool quorum], "models.yml three_mirror_redundancy", errors)
-      mirrors = data["three_mirror_redundancy"]
+      mirrors = data["three_mirror_redundancy"].is_a?(Hash) ? data["three_mirror_redundancy"] : {}
       validate_string_list(mirrors["pool"], "models.yml three_mirror_redundancy.pool", errors, nonempty: true)
       errors << "models.yml three_mirror_redundancy.quorum must be between 1 and pool size" unless
         mirrors["quorum"].is_a?(Integer) && mirrors["quorum"].positive? &&
@@ -304,7 +313,7 @@ module Master
 
       strict_fields(data["ollama"], %w[default_base_url keep_alive max_num_ctx local_model_allowlist],
                     "models.yml ollama", errors)
-      ollama = data["ollama"]
+      ollama = data["ollama"].is_a?(Hash) ? data["ollama"] : {}
       %w[default_base_url keep_alive].each do |field|
         errors << "models.yml ollama.#{field} must be non-empty text" unless ollama[field].is_a?(String) && !ollama[field].empty?
       end
@@ -313,14 +322,15 @@ module Master
 
       strict_fields(data["free_tier"], %w[neutral_latency_s unmeasured_timeout_s call_timeout_s],
                     "models.yml free_tier", errors)
-      data["free_tier"].each do |field, value|
+      free_tier = data["free_tier"].is_a?(Hash) ? data["free_tier"] : {}
+      free_tier.each do |field, value|
         errors << "models.yml free_tier.#{field} must be positive" unless value.is_a?(Numeric) && value.positive?
       end
 
       strict_fields(data["paid_tail"],
                     %w[enabled max_prompt_usd_per_m max_completion_usd_per_m run_cap_usd max_models],
                     "models.yml paid_tail", errors)
-      paid = data["paid_tail"]
+      paid = data["paid_tail"].is_a?(Hash) ? data["paid_tail"] : {}
       errors << "models.yml paid_tail.enabled must be boolean" unless [true, false].include?(paid["enabled"])
       %w[max_prompt_usd_per_m max_completion_usd_per_m run_cap_usd].each do |field|
         errors << "models.yml paid_tail.#{field} must be positive" unless paid[field].is_a?(Numeric) && paid[field].positive?
@@ -330,7 +340,7 @@ module Master
       strict_fields(data["media_lanes"],
                     %w[budget_usd call_cap_usd image_tokens video_seconds timeouts catalog_merge providers image video],
                     "models.yml media_lanes", errors)
-      media = data["media_lanes"]
+      media = data["media_lanes"].is_a?(Hash) ? data["media_lanes"] : {}
       %w[budget_usd call_cap_usd].each do |field|
         validate_fields(media[field], %w[image video], "models.yml media_lanes.#{field}", errors)
         values = media[field].is_a?(Hash) ? media[field] : {}
@@ -342,11 +352,12 @@ module Master
         errors << "models.yml media_lanes.#{field} must be a positive integer" unless media[field].is_a?(Integer) && media[field].positive?
       end
       strict_fields(media["timeouts"], %w[call_s video_total_s poll_s max_polls], "models.yml media_lanes.timeouts", errors)
-      media["timeouts"].each do |field, value|
+      timeouts = media["timeouts"].is_a?(Hash) ? media["timeouts"] : {}
+      timeouts.each do |field, value|
         errors << "models.yml media_lanes.timeouts.#{field} must be positive" unless value.is_a?(Numeric) && value.positive?
       end
       strict_fields(media["catalog_merge"], %w[max_prompt_usd_per_m max_models], "models.yml media_lanes.catalog_merge", errors)
-      catalog_merge = media["catalog_merge"]
+      catalog_merge = media["catalog_merge"].is_a?(Hash) ? media["catalog_merge"] : {}
       errors << "models.yml media_lanes.catalog_merge.max_prompt_usd_per_m must be positive" unless
         catalog_merge["max_prompt_usd_per_m"].is_a?(Numeric) && catalog_merge["max_prompt_usd_per_m"].positive?
       errors << "models.yml media_lanes.catalog_merge.max_models must be a positive integer" unless
