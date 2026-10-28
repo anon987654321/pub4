@@ -55,6 +55,30 @@ class TestToolCatalogue < Minitest::Test
     assert_match(/duplicate tool name\(s\): ReadFile/, error.message)
   end
 
+  def test_unknown_tool_fields_are_rejected
+    error = assert_raises(ArgumentError) do
+      BUILDER.validate_tool_catalogue!(
+        [row("ReadFile", "tier" => "safe")],
+        registry: { "ReadFile" => ->(*) {} },
+        special_names: []
+      )
+    end
+
+    assert_match(/row 1 has unknown field\(s\): tier/, error.message)
+  end
+
+  def test_non_string_tool_names_are_rejected
+    error = assert_raises(ArgumentError) do
+      BUILDER.validate_tool_catalogue!(
+        [row(123)],
+        registry: {},
+        special_names: []
+      )
+    end
+
+    assert_match(/row 1 has invalid name 123/, error.message)
+  end
+
   def test_invalid_exposure_flag_is_rejected
     error = assert_raises(ArgumentError) do
       BUILDER.validate_tool_catalogue!(
