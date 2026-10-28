@@ -102,6 +102,10 @@ source and tests they could not run; this pass is what measures them.
   not add duplicate checks or new Law IDs until the audit proves a distinct, repeatable
   invariant that the current checks miss.
 
+## Production security evidence
+
+- [ ] Close the live CSP operator seam in `MASTER/data/operator_seams.yml` (`csp_enforced_on_vm23`): the operator must enable `PUB4_CSP_ENFORCE=1` for the intended app environments, inspect real HTTPS response headers on `brgen.no`, `ai.brgen.no` and `amberapp.art`, and verify the MASTER face still embeds from the approved Brgen/Amber origins. Record the host, timestamp, headers and embed result. The source contract and report-only responses are not proof of enforcement; do not install a global CSP in relayd.
+
 ## Cross-tree
 
 - [ ] DRY and duplication census: duplicate decisions, one-use abstractions, single-child
