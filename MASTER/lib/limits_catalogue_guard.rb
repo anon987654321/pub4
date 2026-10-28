@@ -36,7 +36,7 @@ module Master
         data["scan_workers"].is_a?(Integer) && data["scan_workers"].positive?
 
       validate_law_groups(data["law_groups"], errors)
-      validate_scan_profiles(data["scan_profiles"], errors)
+      validate_scan_profiles(data["scan_profiles"], data["law_groups"], errors)
       validate_autoloop(data["autoloop"], errors)
       validate_zeitwerk(data["zeitwerk"], errors)
       validate_dmesg(data["dmesg"], errors)
@@ -64,7 +64,7 @@ module Master
       end
     end
 
-    def validate_scan_profiles(value, errors)
+    def validate_scan_profiles(value, law_groups, errors)
       return unless value.is_a?(Hash)
 
       default = value["default"]
@@ -80,8 +80,13 @@ module Master
         end
         unknown = row.keys.map(&:to_s) - SCAN_PROFILE_FIELDS
         errors << "limits.yml scan_profiles.#{name} has unknown field(s): #{unknown.sort.join(', ')}" unless unknown.empty?
+        laws = row["laws"]
         errors << "limits.yml scan_profiles.#{name}.laws must be non-empty text" unless
-          row["laws"].is_a?(String) && !row["laws"].strip.empty?
+          laws.is_a?(String) && !laws.strip.empty?
+        if laws.is_a?(String) && !laws.empty? && laws != "*" &&
+           !(law_groups.is_a?(Hash) && law_groups.key?(laws))
+          errors << "limits.yml scan_profiles.#{name}.laws must be '*' or reference a declared law group"
+        end
         errors << "limits.yml scan_profiles.#{name}.description must be non-empty text" unless
           row["description"].is_a?(String) && !row["description"].strip.empty?
         if row.key?("aliases")
@@ -209,8 +214,10 @@ module Master
       errors << "limits.yml fix_budget.run_tokens must be a positive integer" unless
         tokens.is_a?(Integer) && tokens.positive?
       shares = value["law_shares"]
-      unless shares.is_a?(Hash) && shares.all? { |_id, fraction| fraction.is_a?(Numeric) && fraction.positive? && fraction <= 1 }
-        errors << "limits.yml fix_budget.law_shares must map Law IDs to fractions in (0, 1]"
+      unless shares.is_a?(Hash) && shares.all? do |id, fraction|
+        id.to_s.match?(/\A[A-Za-z][A-Za-z0-9_]*\z/) && fraction.is_a?(Numeric) && fraction.positive? && fraction <= 1
+      end
+        errors << "limits.yml fix_budget.law_shares must map valid Law IDs to fractions in (0, 1]"
       end
     end
 
