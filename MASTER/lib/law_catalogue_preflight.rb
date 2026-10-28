@@ -206,12 +206,11 @@ module Master
           end
         end
 
-        { "path_pattern" => row["path_pattern"], "path" => row["path"] }.each do |field, pattern|
-          next if pattern.nil? || pattern.to_s.empty?
-
+        pattern = row["path_pattern"]
+        unless pattern.nil? || pattern.to_s.empty?
           Regexp.new(pattern.to_s)
         rescue RegexpError => error
-          errors << "Law #{name} has invalid #{field}: #{error.message}"
+          errors << "Law #{name} has invalid path_pattern: #{error.message}"
         end
         Array(row["path_exclude"]).each do |pattern|
           Regexp.new(pattern.to_s)
