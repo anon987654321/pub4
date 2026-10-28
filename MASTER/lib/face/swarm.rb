@@ -262,10 +262,11 @@ module Master
           @root = root
           @config = Swarm.config(root:)
           @particles = Swarm.build(root:, config: @config, seed:, count:, mobile:)
+          @rng = Random.new(Integer(seed) + 1)
           @last_time = nil
         end
 
-        def step(mode:, time:, reduced_motion: false, rng: Random.new)
+        def step(mode:, time:, reduced_motion: false, rng: nil)
           now = Float(time)
           if reduced_motion
             @last_time = now
@@ -274,7 +275,7 @@ module Master
 
           delta = @last_time ? now - @last_time : 1.0 / 20.0
           @last_time = now
-          Swarm.update!(particles, mode:, dt: delta, config: @config, rng:)
+          Swarm.update!(particles, mode:, dt: delta, config: @config, rng: rng || @rng)
         end
 
         def overlay!(frame)
