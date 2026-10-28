@@ -604,7 +604,7 @@ module Master
           @bus&.publish(name, law: violation[:law], file: violation[:file], error: message[0, 120])
         end
 
-        end
+      end
     end
     RepairLoop = Kernel::RepairAdapter unless const_defined?(:RepairLoop, false)
   end
