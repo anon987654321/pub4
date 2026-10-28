@@ -164,76 +164,124 @@ class TestFixInterruptionRestart < Minitest::Test
     end
   end
 
-  def test_killed_fix_pass_rolls_back_and_resumes_from_durable_state
-    Dir.mktmpdir("fix-interruption-restart") do |root|
-      FileUtils.mkdir_p(File.join(root, "MASTER"))
-      File.write(File.join(root, ".pub4"), <<~YAML)
-        schema: 1
-        tree: restart
-        allows:
-          master: read_write
-        adapters: []
-      YAML
+  def test_public_fix_run_rolls_back_and_resumes_after_process_death
+    Dir.mktmpdir("fix-public-run-restart") do |root|
       sample = File.join(root, "sample.rb")
       marker = File.join(root, "crash-ready.json")
       File.write(sample, "before\n")
+      FileUtils.mkdir_p(File.join(root, "data"))
+      File.write(
+        File.join(root, "data", "soul.yml"),
+        "absolute:\n  sacred_paths:\n    - data/soul.yml\n"
+      )
+      git_status = system(
+        "git", "-C", root, "init", "-q", "--initial-branch=main",
+        out: File::NULL, err: File::NULL
+      )
+      assert git_status, "the process fixture must be a real Git checkout"
+      File.write(File.join(root, ".git", "info", "exclude"), ".master/\nruntime/\n")
 
-      child = <<~'RUBY'
+      support = <<~'RUBY'
         require "json"
         require "master"
+        require "operator/check_chain"
         require "fix/transaction"
         require "fix/run_journal"
+        require "fix/mission"
+        require "fix/checkpoint"
         require "fix/fix_loop"
 
-        root, marker = ARGV
-        sample = File.join(root, "sample.rb")
-        target = File.join(root, "MASTER")
-        kernel = Master::Fix::Kernel.new(root:, actor: "restart-probe")
-        journal = kernel.lifecycle_journal
-        adapter = Master::Fix::FixLoop.allocate
-        adapter.instance_variable_set(:@kernel, kernel)
-        adapter.instance_variable_set(:@run_mutex, kernel.execution_mutex)
-        adapter.instance_variable_set(:@root, root)
-        adapter.instance_variable_set(:@transaction_root, root)
-        adapter.instance_variable_set(:@bus, nil)
-        adapter.instance_variable_set(:@run_journal, journal)
+        Operator::CheckChain.define_singleton_method(:baseline) { |**| {} }
 
-        # Keep the interruption deterministic at a pass boundary seam, while the
-        # public FixLoop#run entry point and Kernel coordinator are production code.
-        adapter.define_singleton_method(:run_unlocked) do |_target, max_passes:, budget_seconds:, incremental:, requested:|
-          run = journal.start_or_resume(
-            target:, files: [sample], max_passes:, budget_seconds:
+        class RestartProbeScanner
+          def scan(_path, laws: nil) = Master::Result.ok([])
+        end
+
+        class RestartProbeAgent
+          Breaker = Struct.new(:ignored) do
+            def open_models = ["stub-model"]
+            def open?(model_id) = model_id.to_s == "stub-model"
+          end
+
+          def circuit_breaker = Breaker.new(nil)
+          def model = "stub-model"
+        end
+
+        class RestartProbeGit
+          def changed_paths = []
+          def commit(_message, paths:) = nil
+        end
+
+        def build_restart_probe_loop(root)
+          law = Struct.new(:id, :severity).new("RESTART_PROBE", :warning)
+          Master::Fix::FixLoop.new(
+            laws: [law], agent: RestartProbeAgent.new, scanner: RestartProbeScanner.new,
+            root:, bus: nil, git: RestartProbeGit.new
           )
+        end
+
+        def quiet_outcome_guidance(loop)
+          loop.define_singleton_method(:outcome_guidance) do |target:, incremental:|
+            { incremental: false, prediction: nil }
+          end
+          loop
+        end
+      RUBY
+
+      writer = support + <<~'RUBY'
+        root, marker = ARGV
+        loop = quiet_outcome_guidance(build_restart_probe_loop(root))
+        loop.define_singleton_method(:run_passes) do |
+          files:, target:, max_passes:, deadline:, budget_seconds:, start_pass:,
+          run_id:, wishlist_proposals: [], resume_state: nil
+        |
+          checkpoint = lambda do |id:, root:, files:|
+            Master::Fix::Checkpoint.new(
+              root:, dir: File.join(root, ".master", "checkpoints")
+            ).create(label: "mission-#{id}", files:)
+          end
+          mission = Master::Fix::Mission.new(root:, checkpoint:).start_or_resume!(
+            goal: "fix .", scope: root, origin: "supervisor"
+          )
+          mission.checkpoint!(files: ["sample.rb"])
+
           transaction = Master::Fix::Transaction.new(
             root:, paths: ["sample.rb"], id: "restart-probe"
           )
           transaction.begin!
-          File.write(sample, "partial mutation\n")
+          File.write(File.join(root, "sample.rb"), "partial mutation\n")
           transaction.observe!
-          journal.pass_start(run.fetch("id"), 1, transaction_id: "restart-probe")
-          coordinator = kernel.verify_log!.reverse.find { |row| row["kind"] == "coordinator_started" }
+          loop.instance_variable_get(:@run_journal).pass_start(
+            run_id, start_pass, transaction_id: "restart-probe"
+          )
+          kernel = loop.instance_variable_get(:@kernel)
           File.write(marker, JSON.generate(
-            "run_id" => run.fetch("id"), "coordinator_run_id" => coordinator.fetch("run_id"),
-            "max_passes" => max_passes, "budget_seconds" => budget_seconds,
-            "incremental" => incremental, "requested" => requested, "pid" => Process.pid
+            "run_id" => run_id,
+            "coordinator_run_id" => kernel.instance_variable_get(:@current_run_id),
+            "mission_id" => mission.id,
+            "pid" => Process.pid
           ))
           sleep 60
         end
-        adapter.run(target, max_passes: 2, budget_seconds: 60, incremental: false, requested: false)
+
+        loop.run(
+          root, max_passes: 2, budget_seconds: 60,
+          incremental: false, requested: false
+        )
       RUBY
 
       pid = Process.spawn(
-        RbConfig.ruby, "-I", File.join(Master::ROOT, "lib"), "-e", child, root, marker,
+        RbConfig.ruby, "-I", File.join(Master::ROOT, "lib"), "-e", writer, root, marker,
         out: File::NULL, err: File::NULL, chdir: Master::ROOT
       )
       begin
-        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 8
-        sleep 0.02 until File.file?(marker) || Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
-        assert File.file?(marker), "child did not reach the durable in-pass checkpoint"
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 30
+        sleep 0.03 until File.file?(marker) || Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+        assert File.file?(marker), "public FixLoop#run did not reach its controlled pass boundary"
         marker_record = JSON.parse(File.read(marker))
         Process.kill("KILL", pid)
         _waited_pid, child_status = Process.wait2(pid)
-        refute child_status.success?, "the writer must be interrupted, not allowed to finalize"
+        refute child_status.success?, "the writer must die before FixLoop terminalization"
       ensure
         begin
           Process.kill("KILL", pid)
@@ -243,75 +291,64 @@ class TestFixInterruptionRestart < Minitest::Test
         end
       end
 
-      restart = <<~'RUBY'
-        require "json"
-        require "master"
-        require "fix/transaction"
-        require "fix/run_journal"
-        require "fix/fix_loop"
+      restart = support + <<~'RUBY'
+        root, old_coordinator_id = ARGV
+        loop = quiet_outcome_guidance(build_restart_probe_loop(root))
+        result = loop.run(
+          root, max_passes: 2, budget_seconds: 60,
+          incremental: false, requested: false
+        )
 
-        root = ARGV.fetch(0)
-        kernel = Master::Fix::Kernel.new(root:, actor: "restart-probe")
-        kernel.send(:reconcile_coordinated_runs!)
-        coordinator_events = kernel.verify_log!
-        coordinator = coordinator_events.find do |row|
-          row["kind"] == "coordinator_terminal" &&
-            row["run_id"] == ARGV.fetch(1)
+        journal = loop.instance_variable_get(:@run_journal)
+        run = journal.history(limit: Master::Fix::RunJournal::MAX_RUNS).find do |row|
+          row["id"] == ARGV.fetch(1) && row["id"] == journal.history.last["id"]
+        end
+        mission = Master::Fix::Mission.current(root:)
+        kernel_events = loop.kernel.verify_log!
+        coordinator = kernel_events.find do |row|
+          row["kind"] == "coordinator_terminal" && row["run_id"] == old_coordinator_id
         end
 
-        loop = Master::Fix::FixLoop.allocate
-        loop.instance_variable_set(:@root, root)
-        loop.instance_variable_set(:@transaction_root, root)
-        loop.instance_variable_set(:@bus, nil)
-
-        # This is the same recovery sweep run_unlocked invokes before it opens
-        # or resumes a journaled /fix pass.
-        loop.send(:recover_stranded_transactions!)
-        journal = Master::Fix::RunJournal.new(root:)
-        loop.instance_variable_set(:@run_journal, journal)
-        sample = File.join(root, "sample.rb")
-        run = journal.start_or_resume(
-          target: File.join(root, "MASTER"),
-          files: [sample],
-          max_passes: 2,
-          budget_seconds: 60
-        )
-        start_pass = journal.next_pass(run)
-        recovered = loop.send(
-          :resume_active_transaction, journal:, run_id: run.fetch("id"), start_pass:
-        )
-        raise recovered.message if recovered.err?
-
         puts JSON.generate(
-          "run_id" => run.fetch("id"),
-          "resumed" => run.fetch("resumed"),
-          "coordinator_run_id" => coordinator && coordinator.fetch("run_id"),
-          "coordinator_state" => coordinator && coordinator.dig("payload", "state"),
-          "coordinator_recovered" => coordinator && coordinator.dig("payload", "recovered"),
-          "start_pass" => start_pass,
-          "recovery_start" => recovered.value!,
-          "content" => File.read(sample),
+          "run_id" => run && run.fetch("id"),
+          "run_state" => run && run.fetch("state"),
+          "resume_count" => run && run.fetch("resume_count", 0),
+          "sample" => File.read(File.join(root, "sample.rb")),
+          "mission_id" => mission.fetch("id"),
+          "mission_goal" => mission.fetch("goal"),
+          "mission_scope" => mission.fetch("scope"),
+          "checkpoint_id" => mission.dig("checkpoint", "id"),
+          "checkpoint_sample" => File.read(
+            File.join(root, ".master", "checkpoints", mission.dig("checkpoint", "id"), "sample.rb")
+          ),
           "transaction_persisted" => Master::Fix::Transaction::Recovery.persisted?(
             root:, id: "restart-probe"
-          )
+          ),
+          "coordinator_state" => coordinator && coordinator.dig("payload", "state"),
+          "coordinator_recovered" => coordinator && coordinator.dig("payload", "recovered"),
+          "result_category" => result.respond_to?(:category) ? result.category.to_s : nil
         )
       RUBY
       output, restart_status = Open3.capture2e(
         RbConfig.ruby, "-I", File.join(Master::ROOT, "lib"), "-e", restart, root,
         marker_record.fetch("coordinator_run_id"), chdir: Master::ROOT
       )
-      assert restart_status.success?, "restart process failed: #{output}"
+      assert restart_status.success?, "public FixLoop restart failed: #{output}"
       receipt = JSON.parse(output.lines.last)
 
       assert_equal marker_record.fetch("run_id"), receipt.fetch("run_id")
-      assert_equal marker_record.fetch("coordinator_run_id"), receipt.fetch("coordinator_run_id")
+      assert_operator receipt.fetch("resume_count"), :>=, 1,
+                      "the durable run must be resumed, not silently replaced"
+      assert_equal "before\n", receipt.fetch("sample"), "startup recovery must roll back the dead pass"
+      assert_equal marker_record.fetch("mission_id"), receipt.fetch("mission_id")
+      assert_equal "fix .", receipt.fetch("mission_goal")
+      assert_equal ".", receipt.fetch("mission_scope")
+      assert_equal "before\n", receipt.fetch("checkpoint_sample"),
+                   "the independent Mission checkpoint must survive process death"
+      refute receipt.fetch("transaction_persisted")
       assert_equal "unknown_outcome", receipt.fetch("coordinator_state")
       assert_equal true, receipt.fetch("coordinator_recovered")
-      assert receipt.fetch("resumed"), "the prior durable /fix run should resume"
-      assert_equal 1, receipt.fetch("start_pass")
-      assert_equal 1, receipt.fetch("recovery_start")
-      assert_equal "before\n", receipt.fetch("content"), "partial writes must roll back after process death"
-      refute receipt.fetch("transaction_persisted"), "recovery must settle and remove the stranded transaction"
     end
   end
+
 end
