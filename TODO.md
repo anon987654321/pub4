@@ -43,6 +43,7 @@ the commit that carries its evidence; nothing here records finished work.
 ## Carried-forward requests from earlier sessions
 
 - [ ] **Complete AI3 archive archaeology:** the bounded findings and no-port decision are recorded in [`docs/ai3_legacy_audit_2026-10-28.md`](docs/ai3_legacy_audit_2026-10-28.md). The visible AI3 tree and extracted reports were inspected, but the historical archive blobs were not all extracted; preserve this item as open until that source recovery is actually completed. No AI3 feature claim counts as working behavior without implementation and runtime evidence.
+- [ ] **pub2 restoration follow-through:** repo-wide findings and the no-bulk-import decision are recorded in [`docs/pub2_archaeology_2026-10-28.md`](docs/pub2_archaeology_2026-10-28.md). Confirm Radio's old seven-mode/six-theme visualizer parity against the current Brgen Radio controller and rendered page; inspect any missing mode before porting. Record an explicit owner disposition for BAIBL, Blognet, Hjerterom and Privcam. Do not copy stale generators, audio binaries, local settings, old governance or OpenBSD state. Keep runtime claims open until targeted tests/evidence exist.
 
 These requests were visible in prior conversations or handoffs but lacked an explicit,
 actionable root-backlog item. Keep them open until the relevant evidence exists.
