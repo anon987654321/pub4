@@ -16,6 +16,35 @@ class StudioAdaptersTest < Minitest::Test
     assert_equal Digest::SHA256.hexdigest(first[:prompt]), first[:prompt_sha256]
   end
 
+  def test_scene_json_compiles_through_declared_prompt_vocabularies
+    vocabularies = {
+      stock: { "portra" => "Portra film response" },
+      lighting: { "window" => "soft window light" }
+    }
+    compiler = ->(prompt, options) { [prompt, options[:stock], options[:lighting]].compact.join(", ") }
+    result = STUDIO::Replicate::SceneCompiler.compile_fields(
+      { "prompt" => "a candid portrait", "fields" => { "stock" => "Portra", "lighting" => "window" } },
+      options: {}, vocabularies: vocabularies, compiler: compiler
+    )
+
+    assert_equal :ready, result[:status]
+    assert_equal "a candid portrait, portra, window", result[:compiled_prompt]
+    assert_equal 64, result[:compiled_prompt_sha256].length
+  end
+
+  def test_scene_json_rejects_unknown_fields_and_values_before_compilation
+    called = false
+    result = STUDIO::Replicate::SceneCompiler.compile_fields(
+      { "prompt" => "portrait", "fields" => { "unknown" => "value" } },
+      options: {}, vocabularies: { stock: { "portra" => "film" } },
+      compiler: ->(*) { called = true; "should not run" }
+    )
+
+    assert_equal :rejected, result[:status]
+    refute called
+    assert_match(/unknown vocabulary field/, result[:warnings].join)
+  end
+
   def test_scene_compiler_rejects_unknown_terms
     result = STUDIO::Replicate::SceneCompiler.compile({ subject: "dragon" }, vocabulary: ["portrait"])
     assert_equal :rejected, result[:status]
