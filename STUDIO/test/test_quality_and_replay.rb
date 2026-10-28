@@ -55,6 +55,25 @@ class StudioQualityAndReplayTest < Minitest::Test
     assert_includes proposal[:not_addressed], :focus_quality
   end
 
+  def test_high_variance_detail_is_not_misclassified_as_missing_detail
+    report = Postpro::QualityAnalyzer.report(luminance: [0.0, 0.24, 0.76, 1.0])
+    assert_operator report.dig(:tonal, :shadow_detail_ratio), :>, 0.9
+    assert_operator report.dig(:tonal, :highlight_detail_ratio), :>, 0.9
+
+    proposal = Postpro::CorrectionProposer.propose(report)
+    refute proposal.fetch(:tone_curve, {}).key?(:shadow_lift)
+    refute proposal.fetch(:tone_curve, {}).key?(:highlight_rolloff)
+  end
+
+  def test_missing_shadow_and_highlight_samples_do_not_trigger_tone_curve_proposals
+    report = Postpro::QualityAnalyzer.report(luminance: [0.5, 0.5, 0.5, 0.5])
+    assert_nil report.dig(:tonal, :shadow_detail_ratio)
+    assert_nil report.dig(:tonal, :highlight_detail_ratio)
+
+    proposal = Postpro::CorrectionProposer.propose(report)
+    refute proposal.key?(:tone_curve)
+  end
+
   def test_replay_manifest_hashes_output_and_prompt_without_storing_prompt
     Tempfile.create("studio-output") do |file|
       file.write("rendered bytes")
