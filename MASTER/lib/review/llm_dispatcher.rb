@@ -332,7 +332,7 @@ module Master
           end
         { message: reason, category: }
       rescue StandardError => e
-        @bus&.publish("llm:preflight_error", model:, error: e.message)
+        @bus&.publish("llm:preflight_error", model:, error_class: e.class.name, **Master::Execution::Contract.diagnostic_fields(e.message))
         nil
       end
 

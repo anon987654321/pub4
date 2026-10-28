@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../../execution/contract"
 require "base64"
 require "securerandom"
 require "tempfile"
@@ -149,7 +150,7 @@ end)
             cost_override: reported_cost, cache_write_cost:, cache_write_details:, server_tool_use:,
           )
         rescue StandardError => e
-          @bus&.publish("cost:record_error", error: e.message)
+          @bus&.publish("cost:record_error", error_class: e.class.name, **Master::Execution::Contract.diagnostic_fields(e.message))
         end
 
         # RubyLLM reports ordinary input separately from cache reads and writes.
@@ -165,7 +166,7 @@ end)
 
           nonnegative_cost(cost.cache_write)
         rescue StandardError => e
-          @bus&.publish("cost:cache_write_pricing_error", error: e.message)
+          @bus&.publish("cost:cache_write_pricing_error", error_class: e.class.name, **Master::Execution::Contract.diagnostic_fields(e.message))
           nil
         end
 

@@ -531,7 +531,7 @@ end
           "verified" => verified,
         ).append!(File.join(Master::ROOT, ".master", "trajectories", "trajectories.ndjson"))
       rescue StandardError => e
-        @bus&.publish("llm:record_error", error: e.message)
+        @bus&.publish("llm:record_error", error_class: e.class.name, **Master::Execution::Contract.diagnostic_fields(e.message))
       ensure
         Fiber[:master_trajectory_events] = nil
       end

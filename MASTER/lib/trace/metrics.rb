@@ -2,6 +2,7 @@
 
 require "json"
 require_relative "log"
+require_relative "../execution/contract"
 
 module Master
   module Trace
@@ -84,7 +85,7 @@ module Master
             escalated: ev[:escalated] == true,
           )
         rescue StandardError => e
-          @bus&.publish("metrics:record_error", error: e.message)
+          @bus&.publish("metrics:record_error", error_class: e.class.name, **Master::Execution::Contract.diagnostic_fields(e.message))
         end
       end
 
@@ -94,7 +95,7 @@ module Master
           Master::Trace::Log.append_jsonl(@path, entry, mode: 0o600, directory_mode: 0o700)
         end
       rescue StandardError => e
-        @bus&.publish("metrics:append_error", error: e.message)
+        @bus&.publish("metrics:append_error", error_class: e.class.name, **Master::Execution::Contract.diagnostic_fields(e.message))
       end
     end
   end

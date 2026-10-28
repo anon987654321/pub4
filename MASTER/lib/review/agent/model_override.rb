@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../../execution/contract"
 module Master
   module Review
     class Agent
@@ -21,7 +22,7 @@ module Master
           @runtime_model = nil if live
           routed_models.first
         rescue StandardError => e
-          @bus&.publish("llm:model_state_error", error: e.message)
+          @bus&.publish("llm:model_state_error", error_class: e.class.name, **Master::Execution::Contract.diagnostic_fields(e.message))
           routed_models.first
         end
 
@@ -50,7 +51,7 @@ module Master
           return true unless @model_router.respond_to?(:unreachable_reason)
           @model_router.unreachable_reason(model_id, wait: false).nil?
         rescue StandardError => e
-          @bus&.publish("llm:model_reachability_error", model: model_id, error: e.message)
+          @bus&.publish("llm:model_reachability_error", model: model_id, error_class: e.class.name, **Master::Execution::Contract.diagnostic_fields(e.message))
           false
         end
 
@@ -91,7 +92,7 @@ module Master
           @runtime_model = to.to_s
           @bus&.publish("llm:model_switched", from:, to: @runtime_model, reason: "fallback_success")
         rescue StandardError => e
-          @bus&.publish("llm:model_switch_error", from:, to:, error: e.message)
+          @bus&.publish("llm:model_switch_error", from:, to:, error_class: e.class.name, **Master::Execution::Contract.diagnostic_fields(e.message))
         end
 
         def model_for(operation:)

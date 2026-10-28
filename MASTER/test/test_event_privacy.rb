@@ -97,7 +97,58 @@ class TestEventPrivacy < Minitest::Test
     refute_includes json, "secret-not-a-boolean"
   end
 
+  def test_exception_telemetry_publishers_use_digest_only_diagnostics
+    publishers = {
+      "lib/review/agent.rb" => %w[llm:record_error],
+      "lib/review/agent/model_selector.rb" => %w[llm:pinned_model_unavailable llm:route_error],
+      "lib/review/agent/model_override.rb" => %w[llm:model_state_error llm:model_reachability_error llm:model_switch_error],
+      "lib/review/agent/fallback_chain.rb" => %w[llm:dynamic_route_error],
+      "lib/review/llm_dispatcher.rb" => %w[llm:preflight_error],
+      "lib/review/llm_dispatcher/tool_registry.rb" => %w[agent:llm_tools_error],
+      "lib/review/llm_dispatcher/ruby_llm_sender.rb" => %w[cost:record_error cost:cache_write_pricing_error],
+      "lib/trace/metrics.rb" => %w[metrics:record_error metrics:append_error],
+    }
+
+    publishers.each do |relative_path, events|
+      source = File.read(File.join(Master::ROOT, relative_path))
+      events.each do |event|
+        publisher = source.lines.find { |line| line.include?("publish(\"#{event}\"") }
+        refute_nil publisher, "#{relative_path} lost publisher for #{event}"
+        assert_includes publisher, "Master::Execution::Contract.diagnostic_fields", event
+        assert_includes publisher, "error_class:", event
+        refute_match(/\berror:\s*(?:e|err)\.message/, publisher, "#{event} leaked raw exception text")
+      end
+    end
+  end
+
   def test_common_identity_and_location_fields_are_digest_only
+    private_fields = {
+      username: "private-user",
+      email: "person@example.invalid",
+      address: "1 Private Road",
+      display_name: "Private Person",
+      details: "confidential details",
+      value: "one-time-token-value"
+    }
+    persisted = Master::Trace::EventPrivacy.persisted("profile:updated", private_fields)
+    json = JSON.generate(persisted)
+
+    private_fields.each do |field, value|
+      assert_equal 64, persisted.fetch("#{field}_digest".to_sym).length
+      refute_includes json, value
+    end
+  end
+
+  def test_sensitive_scalars_remain_digest_only
+    persisted = Master::Trace::EventPrivacy.persisted(
+      "route:chosen", query: "https://internal.invalid/?token=secret", outcome: "ok"
+    )
+
+    assert_equal "ok", persisted.fetch(:outcome)
+    assert_equal 64, persisted.fetch(:query_digest).length
+    refute_includes JSON.generate(persisted), "token=secret"
+  end
+end
     private_fields = {
       username: "private-user",
       email: "person@example.invalid",

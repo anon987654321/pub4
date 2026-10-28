@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../../execution/contract"
 require "set"
 
 module Master
@@ -162,7 +163,7 @@ module Master
           current = queue.map { |attempt| [attempt[:model], attempt[:mode]] }.to_set
           queue + mode_chain_for(fresh).reject { |attempt| current.include?([attempt[:model], attempt[:mode]]) }
         rescue StandardError => e
-          @bus&.publish("llm:dynamic_route_error", error: e.message)
+          @bus&.publish("llm:dynamic_route_error", error_class: e.class.name, **Master::Execution::Contract.diagnostic_fields(e.message))
           queue
         end
 
