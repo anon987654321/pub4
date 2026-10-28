@@ -216,6 +216,9 @@ model_defs:
     <<: *model_defaults
     context_window: 128000
     score: { quality: 0.90, speed: 0.76, cost: 1.0 }
+# Ollama remains available as a local fallback, but is deliberately excluded
+# from ordinary default/primary/strong routes while the operator's remote quota
+# constraint is active. Re-enable it in those tiers only after an explicit review.
 models:
   grok_primary:
     - *grok_cli_auto
@@ -231,14 +234,12 @@ models:
     - *agy_auto
     - *nemotron_super
     - *gemini_flash_openrouter
-    - *ollama_gemma
   primary:
     - *claude_cli_opus
     - *claude_cli_sonnet
     - *agy_auto
     - *claude_opus_api
     - *nemotron_super
-    - *ollama_gemma
   strong:
     - *claude_cli_opus
     - *claude_cli_sonnet
@@ -251,7 +252,6 @@ models:
     - *gemini_flash
     - *command_r_plus
     - *grok_cli_auto
-    - *ollama_gemma
   vision:
     - *gemini_flash
     - *claude_sonnet
