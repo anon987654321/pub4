@@ -69,12 +69,12 @@ class DillaSoundFxTest < Minitest::Test
       env = { "PATH" => [bin, "/usr/bin", "/bin"].join(File::PATH_SEPARATOR),
               "DILLA_CAPTURED_ARGS" => capture }
 
-      _output, status = Open3.capture2e("/bin/sh", hook, "complete", env:)
+      _output, status = Open3.capture2e(env, "/bin/sh", hook, "complete")
       assert status.success?
       assert_equal [SCRIPT, "sound-fx", "complete", "--play"], File.readlines(capture, chomp: true)
 
       FileUtils.rm_f(capture)
-      _output, status = Open3.capture2e("/bin/sh", hook, "permission_prompt", env:)
+      _output, status = Open3.capture2e(env, "/bin/sh", hook, "permission_prompt")
       assert status.success?
       refute File.exist?(capture), "non-contract event must not invoke the player/runtime"
     end
