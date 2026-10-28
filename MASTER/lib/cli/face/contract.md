@@ -10,11 +10,13 @@ The optional white swarm is another projection of that same contract. Its geomet
 attractors, force constants, mode multipliers, particle ceiling and glyph ramp live
 under face_interface.swarm in tokens.yml and are read by Master::Face::Swarm.
 The terminal overlays depth-ranked glyphs onto the current frame from far to near;
-MASTER_FACE_SWARM=0 disables this CLI layer. The browser uses the same target field
-and depth mapping in face_stipple_system.js, while respecting the existing
-one-pixel sprite rule: depth affects brightness there, never point size. Reduced
-motion freezes positions and velocities rather than respawning or shrinking the
-field. The token ceiling is subordinate to the existing shared point allocation.
+MASTER_FACE_SWARM=0 disables this CLI layer. The browser uses the same target field and rank buckets in
+face_stipple_system.js. The CLI maps rank through the six-glyph ramp; the web
+maps those same rank buckets to neutral brightness because the existing
+one-pixel sprite rule keeps physical point size fixed. The size_from_depth token
+enables or flattens that rank-based emphasis. Reduced motion freezes positions
+and velocities rather than respawning or shrinking the field. The token ceiling
+is subordinate to the existing shared point allocation.
 
 ## Surface responsibilities
 
