@@ -185,12 +185,47 @@ module Master
       def today_key = Time.now.utc.strftime("%Y-%m-%d")
 
       def load_data
-        return {} unless File.file?(path)
-        JSON.parse(File.read(path))
+        state_path = File.expand_path(path)
+        directory = File.dirname(state_path)
+        return {} unless File.exist?(directory) || File.symlink?(directory)
+
+        directory_stat = File.lstat(directory)
+        unless directory_stat.directory? && !directory_stat.symlink? && (directory_stat.mode & 0o002).zero?
+          raise IOError, "model quota directory must be a real, non-world-writable directory"
+        end
+        return {} unless File.exist?(state_path) || File.symlink?(state_path)
+
+        before = File.lstat(state_path)
+        unless before.file? && !before.symlink? && before.nlink == 1
+          raise IOError, "model quota state must be a singly linked regular file"
+        end
+        if (before.mode & 0o077).positive?
+          raise IOError, "model quota state permissions must be private (0600 or stricter)"
+        end
+
+        flags = File::RDONLY
+        flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+        File.open(state_path, flags) do |file|
+          opened = file.stat
+          current = File.lstat(state_path)
+          unless current.file? && !current.symlink? && current.nlink == 1 &&
+                 current.dev == opened.dev && current.ino == opened.ino
+            raise IOError, "model quota state path changed while opening"
+          end
+
+          raw = file.read
+          after = File.lstat(state_path)
+          unless after.file? && !after.symlink? && after.nlink == 1 &&
+                 after.dev == opened.dev && after.ino == opened.ino &&
+                 after.size == opened.size && after.mtime == opened.mtime && after.ctime == opened.ctime
+            raise IOError, "model quota state changed while reading"
+          end
+          JSON.parse(raw)
+        end
       rescue Errno::EACCES => e
-        # The daemon writes this file owner-only, and the deploy's boot check runs as another
-        # user: it failed vm23's deploy on a file it is not the owner of. The daemon that owns
-        # the quota enforces it; another reader starts from an empty day. Corrupt state still raises.
+        # The daemon writes this file owner-only, and a deploy boot check may run
+        # as another user. That diagnostic reader cannot enforce the daemon's
+        # quota, so preserve the documented empty-view behavior for EACCES only.
         Master::Ground::Swallow.log(e, context: "ModelQuota.load_data")
         {}
       rescue StandardError => e
