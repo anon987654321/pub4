@@ -43,7 +43,7 @@ source and tests they could not run; this pass is what measures them.
   `rake lint:agent_contracts`.
 - [ ] The route suites on MASTER's pinned Ruby with Ollama absent: `test_route_policy.rb`,
   `test_lane_selection.rb`, `test_fix_fresh_checkout_models.rb`, `test_compute_pool.rb`,
-  `test_fallback_chain.rb`, `test_lane_pool.rb`.
+  `test_fallback_chain.rb`, `test_lane_pool.rb`, `test_ecosystem_features.rb`.
 - [ ] Refresh `MASTER/data/self_findings.yml` through `ruby MASTER/lib/operator/self_findings.rb --ratchet` after source changes settle. Review the law and registry member deltas and both counts; the ratchet must refuse to raise either existing ceiling.
 - [ ] Then `/fix` on the repository root: four independent reports, 30–40 grounded tournament
   candidates per tree, and each terminal state (DONE, PLATEAU, HUMAN_DECISION, BLOCKED,
