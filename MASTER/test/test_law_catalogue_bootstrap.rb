@@ -142,6 +142,34 @@ class TestLawCatalogueBootstrap < Minitest::Test
     end
   end
 
+  def test_invalid_path_pattern_is_reported_before_law_definition_loading
+    Dir.mktmpdir("law-catalogue-invalid-pattern") do |root|
+      law_dir = File.join(root, "MASTER", "law")
+      FileUtils.mkdir_p(law_dir)
+      File.write(File.join(law_dir, "live.rb"), "Law.define(:LIVE_ID) do\nend\n")
+      catalogue = {
+        "modalities" => %w[lexical semantic visual],
+        "surfaces" => %w[whole_file],
+        "defaults" => { "mode" => "violation", "lifecycle" => "active", "autofix" => "review", "languages" => [] },
+        "entries" => {
+          "LIVE_ID" => {
+            "universal" => true,
+            "modalities" => %w[lexical semantic visual],
+            "definition_sources" => ["MASTER/law/live.rb"],
+            "severity" => "warning",
+            "path_pattern" => "["
+          }
+        }
+      }
+
+      error = assert_raises(ArgumentError) do
+        Master::LawCataloguePreflight.validate!(law_dir:, catalogue:, repo_root: root)
+      end
+
+      assert_match(/Law LIVE_ID has invalid path_pattern/, error.message)
+    end
+  end
+
   def test_duplicate_static_definitions_are_reported_as_one_preflight_error
     Dir.mktmpdir("law-catalogue-duplicate") do |root|
       law_dir = File.join(root, "MASTER", "law")
