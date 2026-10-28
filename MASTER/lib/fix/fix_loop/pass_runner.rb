@@ -163,7 +163,7 @@ module Master
         def build_repair_loop(**options)
           return @kernel.build_repair_loop(**options) if @kernel
 
-          require_relative "../kernel/repair_adapter" unless defined?(Kernel::RepairAdapter)
+          require_relative "../kernel/repair_adapter"
           Kernel::RepairAdapter.new(**options)
         end
 
