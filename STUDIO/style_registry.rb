@@ -2,6 +2,7 @@
 
 require "digest"
 require "date"
+require "yaml"
 
 module Studio
   # Validates immutable, modality-specific style contracts before an adapter
@@ -19,6 +20,44 @@ module Studio
     ].freeze
 
     class InvalidStyle < ArgumentError; end
+
+    REGISTRY_PATH = File.expand_path("styles/registry.yml", __dir__).freeze
+
+    def self.load_registry(path: REGISTRY_PATH)
+      document = YAML.safe_load_file(path, permitted_classes: [], aliases: false)
+      raise InvalidStyle, "registry root must be a map" unless document.is_a?(Hash)
+      raise InvalidStyle, "registry has no styles map" unless document["styles"].is_a?(Hash)
+
+      document
+    rescue Psych::Exception => e
+      raise InvalidStyle, "registry YAML invalid: #{e.message}"
+    end
+
+    def self.resolve(style_id:, modality:, version: nil, registry: nil)
+      raise InvalidStyle, "invalid modality #{modality.inspect}" unless MODALITIES.include?(modality.to_s)
+      document = registry || load_registry
+      style = document.fetch("styles", {}).fetch(style_id.to_s, nil)
+      raise InvalidStyle, "unknown style #{style_id.inspect}" unless style.is_a?(Hash)
+
+      # Current registry entries are grouped by modality; histories may be
+      # represented under a versions/<semver> key without changing consumers.
+      if style["versions"].is_a?(Hash)
+        versions = style["versions"]
+        selected_version = version || versions.keys.max_by { |value| value.to_s.split(".").map(&:to_i) }
+        selected = versions[selected_version.to_s]
+        raise InvalidStyle, "unknown style version #{selected_version.inspect}" unless selected.is_a?(Hash)
+        modalities = selected["modalities"].is_a?(Hash) ? selected["modalities"] : selected
+        entry = modalities[modality.to_s]
+      else
+        entry = style[modality.to_s]
+        if entry.is_a?(Hash) && version && entry["version"].to_s != version.to_s
+          raise InvalidStyle, "unknown style version #{version.inspect}"
+        end
+      end
+      raise InvalidStyle, "style #{style_id.inspect} has no #{modality} entry" unless entry.is_a?(Hash)
+      validate!(entry)
+      entry
+    end
 
     def self.validate!(entry, manifest: nil)
       errors = []
