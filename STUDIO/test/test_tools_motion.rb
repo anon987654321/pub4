@@ -41,6 +41,21 @@ class TestPostproMotion < Minitest::Test
     assert_equal [0.0, 0.25, 0.5, 0.75], Postpro::Motion.parse_frame_timestamps(output)
   end
 
+  def test_missing_and_non_finite_frame_timestamps_are_rejected
+    invalid_documents = [
+      { "frames" => [{}] },
+      { "frames" => [{ "best_effort_timestamp_time" => "1e999" }] },
+      { "frames" => [] }
+    ]
+
+    invalid_documents.each do |document|
+      error = assert_raises(Postpro::Motion::Unavailable) do
+        Postpro::Motion.parse_frame_timestamps(document.to_json)
+      end
+      assert_match(/timestamp/i, error.message)
+    end
+  end
+
   def test_grain_modes_are_deterministic_and_distinct
     assert_equal [100, 101, 102, 103], (0..3).map { |i| Postpro::Motion.seed_for(i, 100) }
     assert_equal [100, 100, 100, 100], (0..3).map { |i| Postpro::Motion.seed_for(i, 100, grain: :hold) }
