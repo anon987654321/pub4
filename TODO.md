@@ -6,6 +6,24 @@ vm23 is a seam in `MASTER/data/operator_seams.yml`. Refusals live under
 "Refused, and why" in `MASTER/AGENTS.md`. An item closes by being deleted in
 the commit that carries its evidence; nothing here records finished work.
 
+## Session note 2026-10-28
+
+- MASTER Gemfile compatibility was widened to Ruby >= 3.2 so focused checks can
+  use an available runtime; the repository's preferred development pin remains
+  documented separately. This change does not claim test results.
+- Added the token-owned face swarm under face_interface.swarm, the shared
+  Master::Face::Swarm module, CLI frame overlay, and web stipple integration.
+  Coverage was added for token reading, deterministic seeding, force direction,
+  cohesion/separation, bounded integration, depth/ramp mapping, spatial budget,
+  reduced-motion freeze, and CLI/web adapter contracts. The Ruby and Node suites
+  still need to run against a checkout.
+- Added six named recovery gates before any Fix::Kernel fold. They are explicit
+  skipped tests, not completed recovery proofs; wire each to the production
+  recovery path and make it fail then pass before folding coordinator owners.
+- Added docs/seo_audit_2026-10-28.md from session-provided observations. Raw HTTP
+  captures were not attached to this commit, so those observations are advisory;
+  re-probe and preserve timestamped headers/bodies before closing the SEO audit.
+
 ## Verification run, after the fixes below land
 
 One pass on one commit, recorded as PASS, FAIL, INCONCLUSIVE, BLOCKED or
@@ -73,6 +91,14 @@ source and tests they could not run; this pass is what measures them.
 - [ ] Fold FixLoop, RepairLoop and RunJournal into `Fix::Kernel` in the gated order
   `MASTER/docs/fix_coordinator_map.md` sets, recovery tests first; the one gap left in
   `MASTER/docs/lifecycle_ownership.md`.
+  Six named recovery-gate skips are in `MASTER/test/test_recovery_gates.rb`; none closes
+  this gate until wired to real fixtures and verified red then green.
+
+- [ ] Run the MASTER swarm tests on the available Ruby:
+  from MASTER/, run `ruby -Ilib:test test/test_face_swarm.rb` plus the focused
+  face contract/CLI tests; in RAILS/master/, run
+  `node --test test/face_stipple.test.mjs`. Capture actual output and rendered
+  narrow/wide browser frames before marking the swarm integration verified.
 
 ## MASTER behaviour
 
