@@ -15,6 +15,12 @@ The block below is the source every other agent's entry file is generated from
 a generated file drifts from it. One source, four harnesses, no second copy to
 rot.
 
+## Local test execution and /fix cleanup
+
+Tests are run by the local Ruby toolchain in the checked-out repository, not by Vercel or another hosted CI service. Use `MASTER/bin/operator test <paths...>` for the smallest complete proof, then `cd MASTER && MASTER_TEST_JOBS=1 bundle exec rake test` for the full MASTER suite. Resolve local runtime and dependency blockers where possible; if a command cannot actually run, record the exact blocker as NOT_RUN or INCONCLUSIVE rather than treating a hosted status, authored test, or static inspection as a pass.
+
+Every `/fix` exit runs `Master::Fix::FinalCleanup`. It releases the current invocation's commit lease, stops its owned visual runtime, removes that invocation's temporary visual captures, prunes only exact-named assessment/architecture artifacts outside the retained journal window, and emits a cleanup receipt. Cleanup warnings must be observable and must not overwrite the repair result. Never treat cleanup as permission to delete source changes, user files, checkpoints, transaction/recovery evidence, the durable audit ledger, or test logs.
+
 ## The contract every agent gets
 
 <!-- agent-contract:begin -->
