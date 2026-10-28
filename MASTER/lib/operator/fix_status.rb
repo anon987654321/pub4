@@ -3,8 +3,8 @@
 require "json"
 require_relative "../io/exec"
 require "time"
-require_relative "../io/lane_quota"
 require_relative "../io/lane_health"
+require_relative "../io/lane_state"
 require_relative "../io/lane_selection"
 require_relative "../boot/paths"
 require_relative "../fix/kernel"
@@ -48,7 +48,7 @@ module Operator
         logs: log_rows,
         commits: commit_row,
         retained: retained_rows,
-        dead_lanes: ::Master::Io::LaneQuota.report,
+        dead_lanes: ::Master::Io::LaneState.report,
         online: online_line,
         primary: primary_line,
         heartbeat: heartbeat_line,
@@ -128,7 +128,8 @@ module Operator
       health = ::Master::Io::LaneHealth
       daemon = nil
       down = lambda do |model|
-        health.dead?(model) || (health.local_model?(model) && !(daemon = daemon.nil? ? health.ollama_up? : daemon))
+        !::Master::Io::LaneState.usable?(model, sources: ::Master::Io::LaneState::DOWN) ||
+          (health.local_model?(model) && !(daemon = daemon.nil? ? health.ollama_up? : daemon))
       end
       health.line(::Master::Io::LaneSelection.catalogue, refuses: down)
     end
