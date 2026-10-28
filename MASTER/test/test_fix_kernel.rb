@@ -32,6 +32,57 @@ class TestFixKernel < Minitest::Test
     )
   end
 
+  def test_kernel_owns_one_durable_run_journal
+    with_workspace do |root|
+      kernel = K.new(root:)
+
+      assert_instance_of Master::Fix::RunJournal, kernel.lifecycle_journal
+      assert_same kernel.lifecycle_journal, kernel.run_journal
+
+      run = kernel.lifecycle_journal.start_or_resume(
+        target: root, files: [], max_passes: 2, budget_seconds: 60
+      )
+      assert File.file?(File.join(root, ".master", "fix_runs.json"))
+      assert_equal run.fetch("id"), kernel.lifecycle_journal.history.last.fetch("id")
+    end
+  end
+
+  def test_coordinated_fix_run_is_written_to_the_hash_chained_kernel_ledger
+    with_workspace do |root|
+      kernel = K.new(root:, actor: "fix-test")
+      run_id = kernel.begin_coordinated_run(
+        target: root, max_passes: 3, budget_seconds: 60, requested: true
+      )
+      kernel.finish_coordinated_run(
+        run_id:, state: :done, outcome: Master::Result.ok("DONE: fixture")
+      )
+
+      events = kernel.verify_log!
+      start = events.find { |event| event["kind"] == "coordinator_started" }
+      terminal = events.find { |event| event["kind"] == "coordinator_terminal" }
+      assert_equal run_id, start.fetch("run_id")
+      assert_equal ".", start.dig("payload", "target")
+      assert_equal 3, start.dig("payload", "max_passes")
+      assert_equal "done", terminal.dig("payload", "state")
+      assert_equal "ok", terminal.dig("payload", "result")
+    end
+  end
+
+  def test_kernel_factory_owns_repair_loop_and_records_its_outcome
+    with_workspace do |root|
+      kernel = K.new(root:)
+      law = Struct.new(:id, :severity).new("TEST_REPAIR", :warning)
+      loop = kernel.build_repair_loop(law:, agent: nil, scanner: Object.new, root:)
+
+      assert_same kernel, loop.kernel
+      result = loop.run_once([])
+      assert_equal :clean, result.fetch(:status)
+      event = kernel.verify_log!.find { |row| row["kind"] == "repair_pass" }
+      assert_equal "TEST_REPAIR", event.dig("payload", "law")
+      assert_equal "clean", event.dig("payload", "status")
+    end
+  end
+
   def test_auto_repair_is_verified_and_the_log_is_hash_chained
     with_workspace do |root|
       File.write(File.join(root, "sample.txt"), "bad\n")
