@@ -34,6 +34,7 @@ RELEASE_CHECK_CLASSES = %w[
   Deploy::DomainAlignmentCheck
   Deploy::FrontendAuditorCheck
   Deploy::FrontendProductionCheck
+  Deploy::SecurityHeadersSourceCheck
   Deploy::StimulusComponentsCheck
 ].freeze
 
@@ -165,6 +166,7 @@ end
 [
   ["domain_alignment_check", Deploy::DomainAlignmentCheck],
   ["frontend_production_check", Deploy::FrontendProductionCheck],
+  ["security_headers_source", Deploy::SecurityHeadersSourceCheck],
   ["frontend_auditor", Deploy::FrontendAuditorCheck],
   ["stimulus_components", Deploy::StimulusComponentsCheck],
 ].each do |label, check|
