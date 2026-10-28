@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "json"
 require_relative "../../support/check_result"
 require_relative "../../../lib/gap"
 require_relative "../../support/cdp_session"
@@ -70,22 +71,26 @@ module Deploy
       @result
     end
 
-private
+    private
 
-# Read through the class rather than the constant directly: a constant in a
-# method body resolves lexically, so a subclass pointing this at a page with
-# no canvas — which is how the test proves the check can fail — would silently
-# measure the same surface as the parent.
-def surfaces = self.class::SURFACES
+    # Read through the class rather than the constant directly: a constant in a
+    # method body resolves lexically, so a subclass pointing this at a page with
+    # no canvas — which is how the test proves the check can fail — would silently
+    # measure the same surface as the parent.
+    def surfaces = self.class::SURFACES
 
     def unavailable
       @result.inconclusive!("webgl_surfaces: no Chrome, so no WebGL surface was measured", gap: Master::Gap::NO_BROWSER)
       @result
     end
 
+    # From surfaces, as viewport_spill does, so a subclass's own host resolves
+    # to the loopback rather than to the public internet.
     def host_map(ports)
-      port = ports["brgen"]
-      port ? { "maps.brgen.no" => "127.0.0.1:#{port}" } : {}
+      surfaces.filter_map do |surface|
+        port = ports[surface[:app]]
+        [surface[:host], "127.0.0.1:#{port}"] if port
+      end.to_h
     end
 
     def measure(cdp, surface, ports)
@@ -105,9 +110,9 @@ def surfaces = self.class::SURFACES
         return @result.fail("webgl_surfaces: #{surface[:label]} drawing buffer is #{probe["width"]}x#{probe["height"]}")
       end
 
-# Counted, so "measured nothing" and "measured and passed" are
-# distinguishable — which is the complaint this check answers.
-@result.checked!
+      # Counted, so "measured nothing" and "measured and passed" are
+      # distinguishable — which is the complaint this check answers.
+      @result.checked!
     end
   end
 end

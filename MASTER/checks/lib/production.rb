@@ -7,11 +7,10 @@ require_relative "../support/check_result"
 require_relative "../support/bounded_command"
 require_relative "../lib/source/apps_yml"
 
-# MASTER/checks, because these two measure MASTER rather than a Rails app. They
-# were siblings here until 2026-09-11 and the composite still folds their
-# verdicts into the production check, which is why the path reaches across.
-# Both check classes live in MASTER/lib/operator/checks.rb.
-require_relative "../../../MASTER/lib/operator/checks"
+# MasterWebAssetsCheck and MasterTtsCheck measure MASTER rather than a Rails
+# app, so they live in MASTER/lib/operator/checks.rb; this composite folds
+# their verdicts into the production check.
+require_relative "../../lib/operator/checks"
 
 module Deploy
   class ProductionCheck
@@ -268,12 +267,10 @@ module Deploy
         fail_app!(app_failures, "shared CI must use Operator::CiGuard") unless ci_text.include?("Operator::CiGuard")
         fail_app!(app_failures, "shared CI must skip importmap on VPS") unless ci_text.include?("unless vps_host")
 
-        # RuboCop no longer skips on the VPS, so this asserts the opposite of what it
-        # used to. vm23 is where the deploy check actually runs; skipping there left
-        # the only Ruby-style enforcement a local bin/ci nothing runs automatically,
-        # and this check passed the whole time because line 139 tests for the word
-        # "rubocop" being present in the file — which it was, inside the branch that
-        # skipped it.
+        # RuboCop must run on the VPS: vm23 is where the deploy check actually runs,
+        # and skipping there leaves the only Ruby-style enforcement in a local
+        # bin/ci nothing runs automatically. The presence check above cannot see
+        # this, because the word "rubocop" is in the file inside a skipping branch too.
         fail_app!(app_failures, "shared CI must run RuboCop on the VPS too") if
           ci_text.match?(/rubocop[^\n]*unless vps_host|step[ (]"rubocop"[^\n]*unless vps_host/)
 

@@ -50,8 +50,13 @@ module Deploy
     def self.visual_baseline_path(surface)
       return unless surface.pixel_snapshot
 
-      slug = [surface.app, surface.label, surface.viewport].map { |part| part.to_s.gsub(/[^a-zA-Z0-9_-]+/, "_").sub(/\A_+/, "").sub(/_+\z/, "") }.join("-")
-      File.join(VISUAL_BASELINE_DIR, "#{slug}.png")
+      File.join(VISUAL_BASELINE_DIR, "#{surface_slug(surface)}.png")
+    end
+
+    # One spelling for the screenshot and its approved baseline, so the two
+    # names cannot drift apart.
+    def self.surface_slug(surface)
+      [surface.app, surface.label, surface.viewport].map { |part| part.to_s.gsub(/[^a-zA-Z0-9_-]+/, "_").sub(/\A_+/, "").sub(/_+\z/, "") }.join("-")
     end
 
     def self.grade(surface:, status:, console_messages:, http_failures:, request_failures:, browser_error: false)
@@ -279,8 +284,7 @@ module Deploy
       status = safely { cdp.status }
       title = safely { cdp.evaluate("document.title") }
       browser_error = safely { cdp.evaluate("location.protocol === 'chrome-error:'") } == true
-      slug = [surface.app, surface.label, surface.viewport].map { |part| safe_slug(part) }.join("-")
-      screenshot = File.join(screenshot_dir, "#{slug}.png")
+      screenshot = File.join(screenshot_dir, "#{self.class.surface_slug(surface)}.png")
       screenshot_error = capture_screenshot(cdp, screenshot)
       screenshot_sha256 = Digest::SHA256.file(screenshot).hexdigest if File.file?(screenshot)
 
@@ -414,10 +418,6 @@ module Deploy
       yield
     rescue CdpSession::Error, SystemCallError
       nil
-    end
-
-    def safe_slug(value)
-      value.to_s.gsub(/[^a-zA-Z0-9_-]+/, "_").sub(/\A_+/, "").sub(/_+\z/, "")
     end
 
     def print_row(surface, row)

@@ -254,7 +254,7 @@ module Deploy
     # that writes no file leaves the journey inconclusive, never failed -- it is
     # the environment that cannot be read, not the product that is wrong.
     def read_mail(label, spec, app, vars)
-      dir = ENV["FLOW_#{app.upcase}_MAIL_DIR"] || File.join(@root, "RAILS", app == "master" ? "master" : app, "tmp", "mails")
+      dir = ENV["FLOW_#{app.upcase}_MAIL_DIR"] || File.join(@root, "RAILS", app, "tmp", "mails")
 
       path = File.join(dir, interpolate(spec.fetch("to"), vars))
       deadline = Time.now + spec.fetch("within", 10).to_f
@@ -281,13 +281,16 @@ module Deploy
 
     # The file holds raw MIME. Quoted-printable would split a long link across
     # lines, and base64 would hide it; a 7bit part is left alone, because a
-    # signed token may contain =XX that is not an escape.
+    # signed token may contain =XX that is not an escape. Quoted-printable is
+    # decoded as bytes and read back as UTF-8: an escape decodes to a single
+    # byte, and splicing that into a UTF-8 string holding "å" raises.
     def mail_text(raw)
       decoded = raw.gsub(/^([A-Za-z0-9+\/=]{40,})$/) { Regexp.last_match(1).unpack1("m").force_encoding(Encoding::UTF_8).scrub } if raw.match?(/Content-Transfer-Encoding: base64/i)
       decoded ||= raw
       return decoded.scrub unless raw.match?(/Content-Transfer-Encoding: quoted-printable/i)
 
-      decoded.gsub(/=\r?\n/, "").gsub(/=([0-9A-F]{2})/) { Regexp.last_match(1).hex.chr }.scrub
+      decoded.b.gsub(/=\r?\n/n, "").gsub(/=([0-9A-F]{2})/n) { Regexp.last_match(1).hex.chr }
+             .force_encoding(Encoding::UTF_8).scrub
     end
 
     def unique_token = "#{Time.now.to_i.to_s(36)}#{rand(36**3).to_s(36)}"
@@ -314,7 +317,6 @@ module Deploy
     end
 
     def check_step(label, step, response, captures, vars = {})
-
       expected = Array(step["expect_status"]).map(&:to_i)
       expected = [200] if expected.empty?
       unless expected.include?(response.code)

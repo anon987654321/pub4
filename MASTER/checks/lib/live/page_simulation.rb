@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "time"
 require "yaml"
 require_relative "../../support/deploy_inventory"
 require_relative "../../support/check_result"
@@ -393,7 +394,8 @@ module Deploy
           paths = grouped.map { |page| page[:path] }.uniq
 
           @result.warn(
-            "page_simulation: #{app} #{paths.size} guest page(s) need a record id and got no live probe — "             "#{paths.join(", ")} — #{reason}",
+            "page_simulation: #{app} #{paths.size} guest page(s) need a record id and got no live probe — " \
+            "#{paths.join(", ")} — #{reason}",
           )
         end
       end

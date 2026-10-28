@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "json"
 require_relative "../../support/check_result"
 require_relative "../../../lib/gap"
 require_relative "../../support/cdp_session"
@@ -39,7 +40,7 @@ module Deploy
       { app: "brgen", host: "maps.brgen.no", paths: %w[/] },
       { app: "brgen", host: "messenger.brgen.no", paths: %w[/] },
       { app: "amber", host: "amberapp.art", paths: %w[/ /items] },
-      { app: "bsdports", host: "bsdports.brgen.no", paths: %w[/] },
+      { app: "bsdports", host: "bsdports.org", paths: %w[/] },
     ].freeze
 
     PROBE = <<~JS

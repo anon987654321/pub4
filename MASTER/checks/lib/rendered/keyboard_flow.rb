@@ -165,7 +165,7 @@ module Deploy
       unless GeometryProbe.ok?(payload)
         err = payload["error"] || "HTTP #{payload["status"]}"
 
-        if err.to_s.match?(/timeout|Timeout/i)
+        if GeometryProbe.timeout?(payload)
           @result.warn("keyboard_flow: #{label} skipped (#{err})")
         else
           @result.fail("keyboard_flow: #{label} unreachable (#{err})")
@@ -231,8 +231,8 @@ module Deploy
       true
     end
 
-# One row per marked control: its painted state at rest and under each of
-# STATES. A read that fails costs that control, not the walk.
+    # One row per marked control: its painted state at rest and under each of
+    # STATES. A read that fails costs that control, not the walk.
     def read_states(cdp)
       selectors = cdp.evaluate(STATE_MARK)
       return [] unless selectors.is_a?(Array)

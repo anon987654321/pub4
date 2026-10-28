@@ -73,8 +73,10 @@ module Deploy
 
     def run
       result = CheckResult.new
-      inventory = Inventory.new(root: ROOT)
-      inventory.apps.each do |app|
+      # The walkthrough reads Rails views, so it walks the apps APP_FILES maps.
+      # apps.yml also lists master, the face, which has no visitor nav to walk;
+      # fetching its row raised KeyError and errored the whole check.
+      Inventory.new(root: ROOT).apps.select { |app| APP_FILES.key?(app.name) }.each do |app|
         source_checks(result, app)
         live_checks(result, app)
       end
@@ -83,18 +85,17 @@ module Deploy
 
     private
 
-# A layout and every partial its own views/layouts and views/shared hold.
-# Which file a piece of chrome sits in is an organisation decision; this
-# check is about whether the chrome exists.
-def layout_with_partials(app)
-  root = File.join(@rails_root, app.name)
-  layout = File.read(File.join(root, "app/views/layouts/application.html.erb"))
+    # A layout and every partial its own views/layouts and views/shared hold.
+    # Which file a piece of chrome sits in is an organisation decision; this
+    # check is about whether the chrome exists. source_checks has already read
+    # the layout through read_required_app_file!, so it is passed in rather
+    # than read again behind a rescue that turned an unreadable file into "".
+    def layout_with_partials(app, layout)
+      root = File.join(@rails_root, app.name)
 
-  layout + Dir.glob(File.join(root, "app/views/{layouts,shared}/_*.erb"))
-              .map { |partial| File.read(partial) }.join
-rescue StandardError
-  ""
-end
+      layout + Dir.glob(File.join(root, "app/views/{layouts,shared}/_*.erb"))
+                  .map { |partial| File.read(partial) }.join
+    end
 
     def read_required_app_file!(app, relative)
       path = File.join(@rails_root, app, relative)
@@ -184,18 +185,17 @@ end
       result.checked!(3 + files.fetch(:nav).length)
 
       return unless app.name == "brgen"
-# layout_with_partials, not layout: brgen's sidebar moved into
-# layouts/_sidebar.html.erb when the layout was split for length, and
-# the search form went with it. The rendered markup did not change.
-unless layout_with_partials(app).include?("global_search_path")
-  result.fail("brgen: sidebar search must submit to global_search_path")
-end
 
-        Array(files[:mobile_tabs]).each_with_index do |pat, i|
-          result.fail("brgen: mobile tab missing aria/i18n marker ##{i + 1}") unless nav_source.match?(pat)
-        end
-        result.checked!(1 + Array(files[:mobile_tabs]).size)
+      # layout_with_partials, not layout: brgen's sidebar lives in
+      # layouts/_sidebar.html.erb, and the search form with it.
+      unless layout_with_partials(app, layout).include?("global_search_path")
+        result.fail("brgen: sidebar search must submit to global_search_path")
+      end
 
+      Array(files[:mobile_tabs]).each_with_index do |pat, i|
+        result.fail("brgen: mobile tab missing aria/i18n marker ##{i + 1}") unless nav_source.match?(pat)
+      end
+      result.checked!(1 + Array(files[:mobile_tabs]).size)
     end
 
     def nokogiri_available?
@@ -218,7 +218,7 @@ end
 
       html = response.body.to_s
       ["Exception", "Routing Error"].each do |bad|
-        result.fail("#{app.name}: visitor saw #{bad.tr('\\', '')}") if html.include?(bad.tr("\\", ""))
+        result.fail("#{app.name}: visitor saw #{bad}") if html.include?(bad)
       end
       result.checked!(3)
 
