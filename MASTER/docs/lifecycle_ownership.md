@@ -33,7 +33,11 @@ RunJournal persists runs in MASTER/.master/fix_runs.json with plan
 generations and assessment receipts. Its `.master/fix_runs.lock` rejects symlinked
 state/lock paths, group/world-writable state directories, non-regular lock files,
 non-private lock permissions and lock path/inode replacement before or after
-acquiring `flock`. RunLedger is process memory reset at each run start. Delivery
+acquiring `flock`. The journal reader uses the same fail-closed boundary: it
+refuses symlinked/hard-linked/non-regular or group/world-readable journal files,
+checks the path against the opened inode, validates UTF-8, and detects changes
+during the read. A malformed or unsafe journal stops history/resume rather than
+being treated as an empty run list. RunLedger is process memory reset at each run start. Delivery
 is the Committer: a commit per kept fix and a push, or one push at the end.
 
 ### The inner repair loop
