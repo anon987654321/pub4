@@ -1,0 +1,73 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+# Run the focused MASTER regression list from TODO.md on the pinned Ruby.
+# Usage (from MASTER/): bin/verify-focused
+# Exit 0 only if every listed file reports 0 failures and 0 errors.
+
+require "rbconfig"
+require "open3"
+
+ROOT = File.expand_path("..", __dir__)
+Dir.chdir(ROOT)
+
+ruby = RbConfig.ruby
+puts "ruby=#{RUBY_VERSION} path=#{ruby}"
+puts "cwd=#{ROOT}"
+
+tests = %w[
+  test/test_final_cleanup.rb
+  test/test_fix_loop_observability.rb
+  test/test_law_parity.rb
+  test/test_fix_kernel_lifecycle.rb
+  test/test_recovery_gates.rb
+  test/test_fix_convergence.rb
+  test/test_fix_convergence_wiring.rb
+  test/test_fix_mission.rb
+  test/test_core_no_lib_backedges.rb
+  test/test_fix_interruption_restart.rb
+  test/test_ingress_jobs.rb
+  test/test_security_audit.rb
+  test/test_io_atomic_write.rb
+  test/test_security_headers_source_check.rb
+  test/test_check_runner_registry.rb
+  test/test_turn_router.rb
+  test/test_command_registry_dispatch.rb
+  test/test_architecture_exploration.rb
+  test/test_run_journal_lifecycle.rb
+  test/test_fix_kernel.rb
+  test/test_check_chain.rb
+  test/test_strict_mode.rb
+  test/test_ecosystem_features.rb
+  test/test_compute_pool.rb
+  test/test_provider_concurrency.rb
+  test/test_keyless_routing.rb
+  test/test_llm_dispatcher.rb
+  test/test_event_privacy.rb
+  test/test_trace_log_append_jsonl.rb
+  test/test_trace_metrics_log.rb
+  test/test_trace_telemetry.rb
+  test/test_trace_recorder_storage.rb
+  test/test_dom_surface_seo_metadata.rb
+  test/test_cli_boot_e2e.rb
+]
+
+missing = tests.reject { |t| File.file?(t) }
+if missing.any?
+  warn "MISSING test files:\n#{missing.join("\n")}"
+end
+
+results = []
+tests.each do |t|
+  next unless File.file?(t)
+  cmd = ["bundle", "exec", ruby, "-Ilib:test", t]
+  puts "\n## #{t}"
+  out, status = Open3.capture2e(*cmd)
+  puts out.lines.last(12).join
+  results << [t, status.exitstatus, out]
+end
+
+failed = results.select { |_, code, _| code != 0 }
+puts "\n== summary =="
+puts "ran=#{results.size} failed=#{failed.size} missing=#{missing.size}"
+failed.each { |t, code, _| puts "FAIL #{t} exit=#{code}" }
+exit(failed.empty? && missing.empty? ? 0 : 1)

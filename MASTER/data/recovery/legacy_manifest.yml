@@ -55,21 +55,21 @@ legacy_roots:
       importer into MASTER plugins/council roles.
 
   - path: bplans/consolidated/
-    state: missing
+    state: archived
     priority: high
-    target_path: owner decision — archive, import, or explicitly retire the source
+    target_path: retained only in anon987654321/pub history (not imported)
+    decided: "2026-10-28"
     reason: >
       The 2026-09-06 source measurement found 163 historical bplans files in pub,
-      but no generator or shared HTML template. pub4 deliberately retired the
-      dead generator brief instead of inventing a pipeline. Some source pages are
-      personal or sensitive, so copying them into public pub4 is an owner decision.
+      but no generator or shared HTML template. Some source pages are personal or
+      sensitive. Owner decision 2026-10-28: keep provenance in the private/legacy
+      pub history; do not copy into public pub4; do not invent a generator.
     known_files:
       - bplans/consolidated/README.md
       - bplans/technology/rails-ecosystem-overview.md
       - bplans/__letters/thor.html
     action: >
-      Preserve the source in pub history or record an explicit archive/retirement
-      decision. Do not rebuild a generator that never existed.
+      Closed. Source remains in pub history. No further restore work.
 
   - path: plugin_schema_v1.json
     state: archived

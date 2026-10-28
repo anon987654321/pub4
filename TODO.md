@@ -6,6 +6,24 @@ vm23 is a seam in `MASTER/data/operator_seams.yml`. Refusals live under
 "Refused, and why" in `MASTER/AGENTS.md`. An item closes by being deleted in
 the commit that carries its evidence; nothing here records finished work.
 
+## Session note 2026-10-28 (A/B/C/D execution)
+
+- **B — branch hygiene:** deleted 40 stale agent/fix/session/codex/claude/work
+  branches that were 1-ahead/1-behind concurrent tips. Remote now has **only
+  `main`**. Archaeology remains in commit history and tags.
+- **C — bplans:** owner decision recorded as **archived** (not imported into
+  public pub4). Updated `MASTER/data/recovery/pub_restore.yml` and
+  `legacy_manifest.yml`. Provenance stays in `anon987654321/pub`.
+- **D — CSP probe (external):** 2026-10-28 HTTPS probes show
+  `Content-Security-Policy-Report-Only` on `brgen.no`, `amberapp.art`, and
+  `ai.brgen.no` — enforcement not live. Evidence in
+  `docs/evidence/csp_probe_2026-10-28.md`. Seam `csp_enforced_on_vm23` stays
+  open until operator sets `PUB4_CSP_ENFORCE=1` on vm23 and re-probes.
+- **A — verification:** full focused suite still needs pinned Ruby ≥ 3.3.8 and
+  `bundle install`. Added `MASTER/bin/verify-focused` to run the TODO list and
+  report per-file exit codes. Dependency-light FinalCleanup remains
+  3/17/0 on Ruby 3.2.3 in this executor.
+
 ## Session note 2026-10-28 (Grok triage + light proof)
 
 - Branch inventory: ~40 agent/fix/session/codex/claude/work branches remain on

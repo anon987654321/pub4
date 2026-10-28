@@ -4,7 +4,7 @@ name: pub_restore_contract
 # which this file already names under checks.file_presence. Both keys stood here
 # too, with the same two values and no reader in either tree — a second copy that
 # could only drift. lint:data_singularity and lint:dedup both failed on the pair.
-updated: "2026-10-08"
+updated: "2026-10-28"
 layout_note: >-
   Paths naming DEPLOY/ predate its split into RAILS/, OPENBSD/ and the
   MASTER/tools plane. Those paths are repointed; DEPLOY/bp and DEPLOY/sh have no
@@ -39,13 +39,13 @@ critical_items:
     # matches neither "generate" nor "template" at any path. The pipeline this
     # row has been waiting to restore was the pages themselves, built by hand.
     #
-    # So the check below cannot be met by restoring a generator that never
-    # existed. What is left is a decision the owner has to make and an agent
-    # must not: the content is personal and some of it is explicitly sensitive
-    # (some archived personal documents and correspondence), and pub4 is public.
-    expected_target: owner decision — import the pages, or record them as archived in pub
-    current_state: source_measured_no_generator
-    check: owner_decision
+    # Owner decision 2026-10-28: archived in pub history, not imported into
+    # public pub4. Content includes personal/sensitive material; no generator
+    # ever existed to restore. Provenance remains in anon987654321/pub.
+    expected_target: archived in source repo pub; not imported into public pub4
+    current_state: archived
+    decided: "2026-10-28"
+    check: retirement_or_archive_note
   - id: privcam_active_decision
     source: __OLD_BACKUPS/MEGA_ALL_APPS.md
     expected_target: retired, with the reason in recovery/legacy_manifest.yml
