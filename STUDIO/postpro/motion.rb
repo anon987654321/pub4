@@ -104,8 +104,11 @@ module Postpro
       raise ArgumentError, "a frame-grading block is required" unless grade_frame
       raise Unavailable, "grain must be :moving or :hold" unless %i[moving hold].include?(grain.to_sym)
 
+      raise Unavailable, "video input is not a readable file: #{input}" unless File.file?(input.to_s)
+
       input = File.realpath(input.to_s)
       target = File.expand_path(output.to_s)
+      grain = grain.to_sym
       raise Unavailable, "video output must use .mp4 so its codec/container contract is explicit" unless File.extname(target).downcase == ".mp4"
       raise Unavailable, "refusing to replace the input video" if input == target
       raise Unavailable, "refusing to replace an output symlink" if File.symlink?(target)
@@ -137,6 +140,9 @@ module Postpro
           end
         end
         raise Unavailable, "ffmpeg produced no video frames" if frames_written.zero?
+        if frames_written != estimate[:frames]
+          raise Unavailable, "metadata estimated #{estimate[:frames]} frames but ffmpeg decoded #{frames_written}; refusing to alter timing"
+        end
 
         temporary_output = File.join(work, "result.mp4")
         assemble(graded, input, temporary_output, probe, deadline)
@@ -144,7 +150,7 @@ module Postpro
 
         File.rename(temporary_output, target)
       end
-      io.puts "motion: wrote #{target} frames=#{estimate[:frames]} elapsed=#{(monotonic - started).round(2)}s"
+      io.puts "motion: wrote #{target} frames=#{frames_written} elapsed=#{(monotonic - started).round(2)}s"
       target
     end
 
@@ -173,7 +179,11 @@ module Postpro
 
                 target = File.join(graded, format("%06d.png", count))
                 frame_seed = seed_for(count - 1, seed, grain:)
-                grade_frame.call(bytes, probe.width, probe.height, target, frame_seed)
+                begin
+                  grade_frame.call(bytes, probe.width, probe.height, target, frame_seed)
+                rescue StandardError => e
+                  raise Unavailable, "grading frame #{count} failed: #{e.class}: #{e.message}"
+                end
                 unless File.file?(target) && File.size(target).positive?
                   raise Unavailable, "frame #{count} did not produce a readable output"
                 end
@@ -231,7 +241,7 @@ module Postpro
       else
         args.concat(["-map", "0:v:0"])
       end
-      args.concat(["-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "16", "-movflags", "+faststart", output])
+      args.concat(["-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "16", "-metadata", "creation_time=1970-01-01T00:00:00Z", "-movflags", "+faststart", output])
       run_command(args, deadline:)
     end
 
