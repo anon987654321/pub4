@@ -8,23 +8,10 @@ require "json"
 require_relative "../../OPENBSD/lib/check_result"
 require_relative "../../OPENBSD/lib/check_ledger"
 
-# A check that breaks must not decide anything, and must not disappear.
-#
-# arXiv 2607.07405 audits its own four-check suite and finds one check blocking at
-# 100% precision over 161 fires and another at 5%, which is why its harness
-# "records the error and allows the original call" when a check raises: a check
-# whose blocks are mostly its own bugs teaches people to route around the suite.
-#
-# pub4's version was worse than a false block. MASTER/checks/runner.rb built its
-# whole outcome table in one `to_h`, with `klass.run` unguarded inside it, so a
-# single raising check ended the process — every check after it in --all order
-# never ran, and the summary was a backtrace. Measured against the committed
-# runner before the fix, with the fixture registry below: it died at check 2 of 4.
-#
-# Fail-open on its own would only move the failure somewhere quieter, so the two
-# halves are tested together. Deploy::CheckLedger is what stops a crashed check
-# being silently absent forever, and this asserts it names the check rather than
-# just counting it.
+# A crashing check remains a distinct error outcome, but it cannot
+# contribute to a successful run. The runner must continue through the registry,
+# record the failed instrument in its ledger, and exit non-zero after reporting
+# every check. This keeps diagnostics complete without turning a crash into green.
 class CheckFailOpenTest < Minitest::Test
   CHECKS_DIR = File.expand_path("../../MASTER/checks", __dir__)
   RUNNER = File.join(CHECKS_DIR, "runner.rb")
@@ -53,19 +40,20 @@ class CheckFailOpenTest < Minitest::Test
   def test_a_raising_check_does_not_stop_the_checks_after_it
     run_fixture_suite do |out, status, _ledger, retired|
       assert_includes retired, "checks0 at rails: ok_before passed", out
-      assert_includes out, "checks0 at rails: raiser errored, blocked nothing", out
+      assert_includes out, "checks0 at rails: raiser errored, run cannot pass", out
       assert_includes retired, "checks0 at rails: ok_after passed", "a check after the raising one never ran:\n#{out}"
       refute_includes out, "ok_after passed", "a passing check printed to the terminal:\n#{out}"
-      assert_equal 0, status.exitstatus, "a crashed check must not block by default:\n#{out}"
+      assert_equal 1, status.exitstatus, "an errored check cannot make the run successful:\n#{out}"
     end
   end
 
   # NameError from a renamed class and NoMethodError from a refactor are the two
   # shapes this has actually taken. Both must land as :errored, not :failed.
-  def test_a_missing_check_class_errors_rather_than_failing
-    run_fixture_suite do |out, _status, _ledger|
-      assert_includes out, "missing_class errored, blocked nothing", out
+  def test_a_missing_check_class_errors_and_blocks_the_run
+    run_fixture_suite do |out, status, _ledger|
+      assert_includes out, "missing_class errored, run cannot pass", out
       assert_includes out, "uninitialized constant", out
+      assert_equal 1, status.exitstatus, out
     end
   end
 
@@ -78,11 +66,10 @@ class CheckFailOpenTest < Minitest::Test
     end
   end
 
-  # The deploy host wants the other policy: a check that cannot run is itself the
-  # news, and the run should stop.
-  def test_strict_errors_promotes_a_crash_to_a_blocking_failure
-    run_fixture_suite("CHECK_STRICT_ERRORS" => "1") do |out, status, _ledger|
-      assert_match(summary_line("2 pass, 2 fail, 0 skip, 0 inconclusive, 0 error", "failed=raiser,missing_class"), out)
+  # The former opt-out is inert: a caller cannot turn a crash into a pass.
+  def test_errored_checks_block_even_when_legacy_opt_out_is_set
+    run_fixture_suite("CHECK_STRICT_ERRORS" => "0") do |out, status, _ledger|
+      assert_match(summary_line("2 pass, 0 fail, 0 skip, 0 inconclusive, 2 error", "errored=raiser,missing_class"), out)
       assert_equal 1, status.exitstatus, out
     end
   end
@@ -127,14 +114,23 @@ class CheckFailOpenTest < Minitest::Test
   end
 
   # CheckResult's own contract, independent of the runner.
-  def test_errored_outcome_ranks_above_inconclusive_and_never_reads_as_a_pass
+  def test_errored_outcome_ranks_above_inconclusive_and_is_not_ok
     result = Deploy::CheckResult.new
     result.errored!("boom")
 
     assert_predicate result, :errored?
     assert_equal :errored, result.outcome
-    assert_predicate result, :ok?, "fail-open: an errored check records no failure by default"
+    refute_predicate result, :ok?, "a check without a verdict is not ok"
     assert_empty result.failures
+  end
+
+  def test_report_exits_nonzero_for_an_errored_check
+    result = Deploy::CheckResult.new.errored!("boom")
+
+    error = assert_raises(SystemExit) do
+      capture_io { result.report!("should not print success") }
+    end
+    assert_equal 1, error.status
   end
 
   # A composite that swallows a crashed leaf is the same false green one level up.
