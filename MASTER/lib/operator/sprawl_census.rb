@@ -24,6 +24,7 @@
 # adding it.
 
 require "yaml"
+require_relative "../ground/parameterized_slug"
 
 module Operator
   module SprawlCensus
@@ -55,8 +56,7 @@ module Operator
     ].freeze
 
     # A name that says nothing on its own, in a stack trace or a diff.
-    VAGUE = %w[base common shared misc util utils helper helpers main data
-               stuff extras things new old temp tmp code lib].freeze
+    VAGUE = Master::Ground::ParameterizedSlug::VAGUE_WORDS
     # Structural anchors only: each governed tree keeps its own base contract.
     # These names do not replace any tree's authority; they catch accidental deletion
     # of the front door while leaving Rails and OpenBSD free to keep their own shape.

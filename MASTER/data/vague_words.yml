@@ -1,0 +1,43 @@
+# Words that name a category or a moment rather than a subject: a file, path or
+# slug token made of them says nothing on its own, in a stack trace or a diff.
+#
+# One list for every reader: Operator::SprawlCensus (a whole basename),
+# FILE_VAGUE_NAME (a filename token), Fix::RenameSweep (which names it reviews
+# first) and Ground::ParameterizedSlug (filler a dense slug drops). Each keeps
+# only its own match shape; the words live here, read once into
+# Ground::ParameterizedSlug::VAGUE_WORDS.
+#
+# Merged 2026-10-28 from those four readers' own lists. Measured over every
+# tracked file, these were in one reader's list and out: each, as a token,
+# named the subject in every file it hit (55 FILE_VAGUE_NAME findings, none
+# true; 15 rename-sweep picks, all RAILS stylesheets).
+#   base, common, shared  Ruby and Rails structure: base_controller.rb,
+#                         lib/io/base.rb, __shared/; FILE_VAGUE_NAME had
+#                         already dropped them for the same reason
+#   data, code, lib, info structured_data_test.rb, code_index.rb, check_lib
+#   service, object       ranking_service.rb (Rails), object_probe.rb
+#   copy                  text copy in RAILS: city_copy_contract_test.rb
+schema: 1
+words:
+  # A category: the shape of a box rather than what is in it.
+  - misc
+  - util
+  - utils
+  - helper
+  - helpers
+  - handler
+  - handlers
+  - manager
+  - main
+  - stuff
+  - thing
+  - things
+  - extras
+  # A moment: when the file was made, not what it holds.
+  - new
+  - old
+  - temp
+  - tmp
+  - final
+  - latest
+  - bak

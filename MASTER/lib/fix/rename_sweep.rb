@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require_relative "../ground/parameterized_slug"
 require_relative "name_review"
 require_relative "file_rename"
 require_relative "../boot/paths"
@@ -19,7 +20,9 @@ module Master
       RENAMES = 2
       FIRST_REVIEWS = 1
       FIRST_RENAMES = 1
-      SUSPECT = /(?:\A_?(?:zen|x|my|new|old|tmp|temp|misc)_|(?:_|\A_?)(?:util|utils|misc|stuff|things|manager|handler|helper2|copy|final|latest|bak|v\d+)(?:_|\z)|\d+\z)/
+      # Scratch prefixes, a vague word (data/vague_words.yml) anywhere, a version or a trailing number.
+      VAGUE = Master::Ground::ParameterizedSlug::VAGUE_ALTERNATION
+      SUSPECT = /(?:\A_?(?:zen|x|my)_|(?:_|\A_?)(?:#{VAGUE}|helper2|v\d+)(?:_|\z)|\d+\z)/
 
       def initialize(agent:, repo_root:, bus: nil, review: nil, rename: nil, preserve_user_intent: nil, ground_truth: nil)
         @repo_root = repo_root

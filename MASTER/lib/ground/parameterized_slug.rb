@@ -1,15 +1,21 @@
 # frozen_string_literal: true
 
+require "yaml"
+
 module Master
   module Ground
     # Rails-parameterize slug density for paths — snake_case, Strunk-clean tokens.
     module ParameterizedSlug
       MAX_TOKENS = 4
+      # The one vague-name list (data/vague_words.yml), here because a slug's filler is
+      # its first reader; the sprawl census, FILE_VAGUE_NAME and the rename sweep read
+      # it from this constant. yaml only, so the census needs no booted runtime.
+      VAGUE_WORDS_PATH = File.expand_path("../../data/vague_words.yml", __dir__)
+      VAGUE_WORDS = YAML.safe_load_file(VAGUE_WORDS_PATH).fetch("words").map(&:to_s).freeze
+      VAGUE_ALTERNATION = VAGUE_WORDS.map { |word| Regexp.escape(word) }.join("|").freeze
       FOLD_SUFFIXES = %w[_support _helper _util _helpers _utils].freeze
-      FILLER_TOKENS = %w[
-        main misc base util helper handlers handler manager service object thing stuff
-        tmp old new copy final v2 data info the a an
-      ].freeze
+      # The vague words, plus articles and a bare version, which carry no subject either.
+      FILLER_TOKENS = (VAGUE_WORDS + %w[the a an v2]).uniq.freeze
       FORBIDDEN_ABBREVS = %w[idx sig tmp buf val ret obj str arr num cnt ptr msg].freeze
       SUSPICIOUS = /\b(tmp|misc|old|new|copy|final\d*|v2|_fixed)\b/i.freeze
 

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../lib/ground/parameterized_slug"
+
 module Master
   module Review
     module Scan
@@ -195,9 +197,9 @@ module Master
           end
 
         # A category is not a thing. util/manager/handler name the shape of a box
-        # rather than what is in it, so the next reader must open it. base, common,
-        # shared and core_ext were in this list and came out: all four are ordinary
-        # Ruby structure, and base.rb accounted for 3 of 6 findings, all false.
+        # rather than what is in it, so the next reader must open it. The words are
+        # data/vague_words.yml, shared with the sprawl census, the rename sweep and
+        # the slug filler; why base, common and shared are not among them is there.
         LawDSL.law :FILE_VAGUE_NAME,
           does_not_fire: "module FormatHelper; end\n",
           example_path: "/repo/app/helpers/format_helper.rb",
@@ -206,12 +208,13 @@ module Master
           autofix: false,
           description: "a filename names its subject, not a category" do |_src, path:|
             stem = File.basename(path.to_s, ".*")
-            # Rails resolves *_helper.rb and application_* by name, so those are
-            # framework contracts rather than chosen names.
+            # Rails resolves *_helper.rb, *_helpers and application_* by name, and
+            # their tests mirror them, so those are framework contracts rather than
+            # chosen names.
             next [] if path.to_s.match?(%r{/(?:node_modules|vendor|db/migrate)/}) ||
-                       stem.end_with?("_helper") || stem.start_with?("application_")
+                       stem.match?(/_helpers?(?:_test)?\z/) || stem.start_with?("application_")
 
-            hit = stem[/(?:\A|_)(misc|util|utils|stuff|things|manager|handler)(?:_|\z)/, 1]
+            hit = stem[/(?:\A|_)(#{Master::Ground::ParameterizedSlug::VAGUE_ALTERNATION})(?:_|\z)/, 1]
             next [] unless hit
 
             [finding(line: 1, message: "FILE_VAGUE_NAME: #{File.basename(path)} — " \
