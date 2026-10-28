@@ -1,0 +1,42 @@
+#!/usr/bin/env sh
+# Turn structured vps-deploy log lines into a stage timeline.
+# Usage: deploy-story [log path]
+# Default: /var/log/pub4/vps-deploy.log or /home/dev/vps-deploy.log or stdin.
+
+set -eu
+
+log=${1:-}
+if [ -z "$log" ]; then
+  if [ -f /var/log/pub4/vps-deploy.log ]; then
+    log=/var/log/pub4/vps-deploy.log
+  elif [ -f /home/dev/vps-deploy.log ]; then
+    log=/home/dev/vps-deploy.log
+  elif [ -f "$HOME/vps-deploy.log" ]; then
+    log=$HOME/vps-deploy.log
+  fi
+fi
+
+if [ -n "${log:-}" ] && [ -f "$log" ]; then
+  input=$log
+  echo "deploy-story: $log"
+else
+  input="-"
+  echo "deploy-story: stdin"
+fi
+
+# Prefer lines that carry stage= (structured logger). Fall back to ==> markers.
+if [ "$input" = "-" ]; then
+  cat
+else
+  cat "$input"
+fi | awk '
+  /stage=/ {
+    ts=""; app=""; stage=""; rest=$0
+    if (match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:,Z+-]+/)) ts=substr($0, RSTART, RLENGTH)
+    if (match($0, /app=[^ ]+/)) app=substr($0, RSTART+4, RLENGTH-4)
+    if (match($0, /stage=[^ ]+/)) stage=substr($0, RSTART+6, RLENGTH-6)
+    printf "%s  %-10s  %s\n", (ts==""?"?":ts), (app==""?"-":app), (stage==""?"?":stage)
+    next
+  }
+  /vps-deploy:.*enter|==> vps-deploy/ { print }
+' | tail -n 80

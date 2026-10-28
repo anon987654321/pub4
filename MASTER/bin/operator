@@ -80,6 +80,7 @@ def usage
       bin/operator snapshot [TREE...] [--part-bytes=N] [--code | --code-only] [--verify]  full source, one untruncated file per tree (exact; --part-bytes=N opts in to numbered parts; --code adds the comment-free variant), verified after writing; --verify checks the files at the root; --budget=BYTES [--since=REF] [--only=a,b] [--tests] writes a reading pack; --since keeps the full Map but inlines changed tracked paths and reports deletions/renames; requires --budget
       bin/operator event-bus [--strict] [--json]  census Ruby publishers/subscribers and browser event references
       bin/operator wishlist [--all]     show the current bounded next-work queue
+      bin/operator spark [TREE] [--seed N]  high-creativity constrained experiment (no model)
 
     Profiles (passed through to check scripts):
       OPENBSD/bin/check --profile=contributor
@@ -500,6 +501,8 @@ when "snapshot"
   # stale at a commit no checkout still has and nothing could refresh them.
   # Lives in MASTER/tools so it is one implementation, reachable from here.
   exec(RbConfig.ruby, File.join(ROOT, "MASTER", "tools", "snapshot.rb"), *ARGV)
+when "spark"
+  exec(File.join(__dir__, "spark"), *ARGV)
 when "wishlist"
   # Wishlist state is machine-owned JSON under .master, never another markdown
   # backlog. Display the same queue /fix reads, so the operator and fixer cannot

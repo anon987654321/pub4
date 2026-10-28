@@ -1,0 +1,65 @@
+---
+schema: 1
+app: meta
+pass: 1
+date: "2026-10-28"
+authorization: >
+  High-creativity /fix simulation. Sacred paths (soul, laws, pledge, bin/master)
+  stay human-only. Experiments must be reversible, tree-local, and prove with a
+  command when claimed done.
+method: >
+  Observe four trees. Propose hyperlocal experiments. Prefer data and small CLIs
+  over new frameworks. Adversarial note kept on each candidate.
+candidates:
+  - id: spark_cli
+    tree: MASTER
+    spec: >
+      bin/spark and operator spark — no model. Reads creativity_lab.yml, prints one
+      random safe experiment plus tree README pointer. Forces the next session to
+      pick a constrained toy instead of boiling the ocean.
+    cost: S
+    reversibility: high
+  - id: deploy_story
+    tree: OPENBSD
+    spec: >
+      bin/deploy-story — read structured vps-deploy log lines (stage=) and print a
+      vertical timeline. Ops poetry that is also a debugger.
+    cost: S
+    reversibility: high
+  - id: city_pack_stub
+    tree: RAILS
+    spec: >
+      Read-only JSON city pack endpoint later; this pass only documents the shape
+      in ideations, no route yet (needs apps.yml + auth design).
+    cost: M
+    reversibility: high
+  - id: semantic_canary
+    tree: OPENBSD
+    spec: >
+      Soft brand-score canary after deploy; log-only. Deferred — needs model budget
+      and rubric, not a drive-by.
+    cost: L
+    reversibility: medium
+  - id: dilla_fixture_wav
+    tree: STUDIO
+    spec: >
+      Deterministic 0.5s WAV fixture for voice tests without network. Deferred to
+      a STUDIO-focused pass with golden hash.
+    cost: M
+    reversibility: high
+picks:
+  - id: spark_cli
+    rationale: Zero dependency on models; teaches constrained creativity.
+  - id: deploy_story
+    rationale: Uses logs we already write; earns its keep on the next failed deploy.
+rejects:
+  - id: semantic_canary
+    attack: Without a fixed rubric and offline eval it becomes another flaky check.
+  - id: city_pack_stub
+    attack: Docs-only stubs rot; wait for a real consumer in RAILS/master.
+
+implemented:
+  - id: spark_cli
+    proof: "ruby MASTER/bin/spark --seed 42"
+  - id: deploy_story
+    proof: "echo stage=ci+sync | sh OPENBSD/bin/deploy-story"

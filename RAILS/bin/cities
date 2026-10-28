@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+# Read-only: owned city apexes from apps.yml (no Rails boot).
+require "yaml"
+root = File.expand_path("../..", __dir__)
+apps = YAML.safe_load_file(File.join(root, "RAILS/apps.yml"))
+domains = Array(apps["owned_domains"])
+live = apps.dig("apps", "brgen", "brand") || {}
+puts "cities0: #{domains.size} owned_domains"
+domains.each { |d| puts "  #{d}" }
+puts "brand: #{live["promise"]}" if live["promise"]

@@ -1,0 +1,50 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# High-creativity orientation without a model.
+# Usage: bin/spark [tree] [--seed N]
+
+require "yaml"
+
+root = File.expand_path("../..", __dir__)
+lab_path = File.join(root, "MASTER/data/ideations/creativity_lab.yml")
+abort "spark: missing #{lab_path}" unless File.file?(lab_path)
+
+seed = nil
+tree_filter = nil
+args = ARGV.dup
+while (arg = args.shift)
+  case arg
+  when /\A--seed=(\d+)\z/ then seed = Regexp.last_match(1).to_i
+  when "--seed" then seed = Integer(args.shift)
+  when "-h", "--help"
+    puts "usage: bin/spark [MASTER|RAILS|OPENBSD|STUDIO] [--seed N]"
+    exit 0
+  when /\A[A-Za-z]+\z/ then tree_filter = arg.upcase
+  else
+    abort "spark: unknown argument #{arg.inspect}"
+  end
+end
+
+lab = YAML.safe_load_file(lab_path)
+candidates = Array(lab["candidates"]).select { |c| c["id"] && c["tree"] }
+picked = Array(lab["picks"]).filter_map { |p| p["id"] }
+candidates.select! { |c| picked.include?(c["id"]) } unless picked.empty?
+candidates.select! { |c| c["tree"].to_s.upcase == tree_filter } if tree_filter
+abort "spark: no candidates" if candidates.empty?
+
+rng = Random.new(seed || Time.now.to_i)
+choice = candidates.sample(random: rng)
+tree = choice["tree"]
+readme = File.join(root, tree, "README.md")
+
+puts "spark0: high-creativity pick (seed=#{seed || "time"})"
+puts "  id:    #{choice["id"]}"
+puts "  tree:  #{tree}"
+puts "  cost:  #{choice["cost"]}"
+puts "  read:  #{tree}/README.md#{File.file?(readme) ? "" : " (missing)"}"
+puts "  do not: touch data/soul.yml data/laws.yml lib/ground/pledge.rb bin/master"
+puts ""
+puts choice["spec"].to_s.gsub(/\s+/, " ").strip
+puts ""
+puts "next: implement only this id, prove with a command, leave sacred paths alone"
