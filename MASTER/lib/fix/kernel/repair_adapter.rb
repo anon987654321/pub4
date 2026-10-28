@@ -11,7 +11,10 @@ module Master
     class Kernel
       class RepairAdapter; end unless const_defined?(:RepairAdapter, false)
     end
-    RepairLoop = Kernel::RepairAdapter unless const_defined?(:RepairLoop, false)
+    # Remove a pending Zeitwerk autoload before child modules reopen RepairLoop;
+    # otherwise their class declarations could recursively load the shim file.
+    remove_const(:RepairLoop) if autoload?(:RepairLoop, false)
+    const_set(:RepairLoop, Kernel::RepairAdapter) unless const_defined?(:RepairLoop, false)
   end
 end
 
@@ -620,6 +623,6 @@ module Master
 
       end
     end
-    RepairLoop = Kernel::RepairAdapter unless const_defined?(:RepairLoop, false)
+    const_set(:RepairLoop, Kernel::RepairAdapter) unless const_defined?(:RepairLoop, false)
   end
 end
