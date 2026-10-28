@@ -185,6 +185,7 @@ module Postpro
           source: { basename: File.basename(input), sha256: Digest::SHA256.file(input).hexdigest },
           output: { basename: File.basename(target), sha256: Digest::SHA256.file(temporary_output).hexdigest },
           grade: { preset: preset.to_s, seed: seed, grain: grain.to_s },
+          grade_version: GRADE_VERSION,
           video: {
             width: probe.width, height: probe.height, frame_rate: probe.rate,
             frame_count: frames_written, duration_seconds: probe.duration,
