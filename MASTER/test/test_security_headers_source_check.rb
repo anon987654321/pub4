@@ -110,6 +110,22 @@ class SecurityHeadersSourceCheckTest < Minitest::Test
     end
   end
 
+  def test_subdomain_wildcard_script_source_is_rejected
+    with_source_tree do |root|
+      path = File.join(root, Deploy::SecurityHeadersSourceCheck::SHARED_CSP)
+      source = File.read(path)
+      source = replace_once(
+        source,
+        'policy.script_src :self, "https://link.tradedoubler.com"',
+        'policy.script_src :self, "https://*.example.com"'
+      )
+      File.write(path, source)
+
+      result = Deploy::SecurityHeadersSourceCheck.run(root:)
+      assert_includes result.failures.join("\n"), "overly broad script-src"
+    end
+  end
+
   def test_data_and_blob_script_sources_are_rejected
     ['data:text/javascript,alert(1)', 'blob:https://attacker.example/id'].each do |url|
       with_source_tree do |root|
