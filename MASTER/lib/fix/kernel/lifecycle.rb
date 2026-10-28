@@ -151,7 +151,11 @@ module Master
             next unless payload["host"].to_s == Socket.gethostname
 
             pid = Integer(payload["pid"]) rescue nil
-            next if pid && pid.positive? && pid != Process.pid && coordinator_process_alive?(pid)
+            # A PID owned by this process may belong to another live Kernel
+            # instance (for example, a foreground command beside the watcher).
+            # Keep it open; this reconciliation is deliberately cross-process.
+            next unless pid && pid.positive?
+            next if pid == Process.pid || coordinator_process_alive?(pid)
 
             append_event("coordinator_terminal", {
               state: "unknown_outcome",
