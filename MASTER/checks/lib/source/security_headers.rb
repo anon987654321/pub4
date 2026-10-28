@@ -113,8 +113,8 @@ module Deploy
       end
 
       directives.each do |directive|
-        if directive.match?(/(?:^|[\\s,]):https\\b|unsafe[-_]eval/i) ||
-           directive.match?(/["']\\*["']|(?:^|[\\s,])\\*(?:[\\s,]|$)/)
+        if directive.match?(/(?:^|[\s,]):https\b|unsafe[-_]eval/i) ||
+           directive.match?(/["']\*["']|(?:^|[\s,])\*(?:[\s,]|$)/)
           result.fail("security_headers: #{label} has an overly broad script-src: #{directive.strip}")
         end
       end
@@ -124,7 +124,7 @@ module Deploy
       return unless source
 
       setters = source.lines.select do |line|
-        line.match?(/^\\s*match\\s+response\\s+header\\s+(?:set|append|remove)\\s+["']Content-Security-Policy(?:-Report-Only)?["']/i)
+        line.match?(/^\s*match\s+response\s+header\s+(?:set|append|remove)\s+["']Content-Security-Policy(?:-Report-Only)?["']/i)
       end
       return if setters.empty?
 
