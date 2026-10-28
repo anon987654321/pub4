@@ -60,7 +60,7 @@ module Master
             usable: usable_ids.freeze,
             recently_failed: failed.freeze,
             selected: selected.freeze,
-            reason: reason,
+            reason:,
           )
         end
 

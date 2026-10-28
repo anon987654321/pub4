@@ -97,13 +97,13 @@ module Master
         key = "ctx:#{Digest::SHA256.hexdigest(context.to_s.strip)[0, 24]}"
         streams = predictions["streams"]
         unless streams.is_a?(Hash)
-          return nil unless create
+          return unless create
 
           streams = predictions["streams"] = {}
         end
         stream = streams[key]
         if stream && !stream.is_a?(Hash)
-          return nil unless create
+          return unless create
 
           stream = nil
         end

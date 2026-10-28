@@ -47,7 +47,7 @@ module Master
             usable = unparked.select { |id| Io::LaneState.usable?(id) }
 
             decision = Routing::RoutePolicy.call(
-              candidates:, reachable:, parked:, usable:, recently_failed:, meets_floor:, local:
+              candidates:, reachable:, parked:, usable:, recently_failed:, meets_floor:, local:,
             )
 
             ranked = @provider_health.rank(decision.selected)

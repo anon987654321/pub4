@@ -182,7 +182,7 @@ module Master
       end
 
       def probability_value(value)
-        return nil if value.nil?
+        return if value.nil?
 
         number = Float(value)
         raise ArgumentError, "predicted probability must be between 0 and 1" unless number.between?(0.0, 1.0)

@@ -394,7 +394,7 @@ module Master
         "size" => "interface",
         "play" => "media", "android" => "media", "ios" => "media",
         "support" => "review",
-        "soul" => "constitution", "help" => "help", "exit" => "session", "quit" => "session",
+        "soul" => "constitution", "help" => "help", "exit" => "session", "quit" => "session"
       }.freeze
 
       CATEGORY_ORDER = %w[fix health session model review change interface media constitution help].freeze

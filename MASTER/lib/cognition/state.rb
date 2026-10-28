@@ -265,10 +265,10 @@ module Master
       # them during the in-memory schema migration instead of exposing stale values.
       def migrate_proxy_metrics!
         @data["identity"].delete("continuity") if @data["identity"].is_a?(Hash)
-        if @data["metrics"].is_a?(Hash)
+        return unless @data["metrics"].is_a?(Hash)
           @data["metrics"].delete("continuity")
           @data["metrics"].delete("integration")
-        end
+
       end
 
       # One reader per section of the schema, from the schema. Nine of these were

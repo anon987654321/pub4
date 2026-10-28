@@ -338,7 +338,7 @@ module Master
 
       def face_size(arg)
         words = arg.to_s.split
-        return nil unless words.first == "size"
+        return unless words.first == "size"
 
         mode = Face::Sizing.parse(words[1..].join)
         return "face0: size is auto, small, large or WxH (columns by rows); now #{Face::Sizing.mode}" unless mode

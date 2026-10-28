@@ -125,7 +125,7 @@ module Master
         row = performance[name] ||= {
           "attempts" => 0, "successes" => 0, "failures" => 0,
           "confidence_observations" => 0, "confidence_sum" => 0.0, "brier_sum" => 0.0,
-          "last_at" => 0,
+          "last_at" => 0
         }
         row["attempts"] = row.fetch("attempts", 0).to_i + 1
         outcome_key = success ? "successes" : "failures"
@@ -162,10 +162,10 @@ module Master
         beliefs.drop(MAX_BELIEFS).each { |key| model.delete(key) }
 
         performance = model["performance"]
-        if performance.is_a?(Hash) && performance.size > MAX_PERFORMANCE_BUCKETS
+        return unless performance.is_a?(Hash) && performance.size > MAX_PERFORMANCE_BUCKETS
           performance.keys.sort_by { |name| -performance.dig(name, "last_at").to_i }
                      .drop(MAX_PERFORMANCE_BUCKETS).each { |name| performance.delete(name) }
-        end
+
       end
     end
   end

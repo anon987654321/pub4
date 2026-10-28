@@ -77,7 +77,7 @@ module Master
       private_class_method :fetch
 
       def mean(values)
-        return nil if values.empty?
+        return if values.empty?
 
         (values.sum.to_f / values.size).round(4)
       end
