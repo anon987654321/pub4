@@ -24,7 +24,20 @@ class TestFaceSwarm < Minitest::Test
     assert_equal true, settings.fetch("enabled")
     assert_equal true, Swarm.enabled?
     assert_equal 240, settings.fetch("particle_budget")
+    assert_equal 0.86, settings.fetch("damping")
+    assert_equal 0.11, settings.fetch("cohesion_radius")
+    assert_equal 0.045, settings.fetch("cohesion_strength")
+    assert_equal 0.035, settings.fetch("separation_radius")
+    assert_equal 0.08, settings.fetch("separation_strength")
+    assert_equal 0.014, settings.fetch("noise_scale")
+    assert_equal true, settings.fetch("size_from_depth")
     assert_equal ["·", "˙", "∘", "•", "○", "●"], settings.fetch("glyph_ramp")
+    assert_equal({ "eyes" => 1.00, "core" => 1.00, "noise" => 0.14 },
+                 settings.dig("mode_multipliers", "idle"))
+    assert_equal({ "eyes" => 1.35, "core" => 1.05, "noise" => 0.07 },
+                 settings.dig("mode_multipliers", "attentive"))
+    assert_equal({ "eyes" => 1.15, "core" => 1.30, "noise" => 0.22 },
+                 settings.dig("mode_multipliers", "thinking"))
     assert_equal [1.18, 1.02, 0.82], settings.dig("target_field", "head", "scale")
     assert_equal [-0.29, 0.21, 0.58], settings.dig("target_field", "eyes", "left", "pos")
     assert_equal [0.29, 0.21, 0.58], settings.dig("target_field", "eyes", "right", "pos")
