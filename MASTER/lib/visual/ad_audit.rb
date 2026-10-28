@@ -51,16 +51,16 @@ module Master
         passed = report.is_a?(Hash) ? (report[:passed] || report["passed"]) : false
         version = report.is_a?(Hash) ? (report[:token_version] || report["token_version"]) : nil
         report_placement = report.is_a?(Hash) ? (report[:placement] || report["placement"]) : nil
+        complete = LAW_IDS.all? do |law|
+          checks.any? do |check|
+            check_law = check[:law] || check["law"]
+            check_pass = check[:pass] || check["pass"]
+            check_law == law && check_pass == true
+          end
+        end
         unless report.is_a?(Hash) && passed == true &&
                version == token_version(current_contract) &&
-               report_placement.to_s == placement.to_s &&
-               LAW_IDS.all? do |law|
-                 checks.any? do |check|
-                   check_law = check[:law] || check["law"]
-                   check_pass = check[:pass] || check["pass"]
-                   check_law == law && check_pass == true
-                 end
-               end
+               report_placement.to_s == placement.to_s && complete
           raise VisualAuditRejected, rejection_reason(report, current_contract, placement)
         end
         true
