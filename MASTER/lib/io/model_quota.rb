@@ -136,14 +136,16 @@ module Master
       # Process-local Mutex protects threads; the sidecar flock protects the
       # read-modify-write transaction across independent MASTER processes.
       def with_state_lock
-        destination = File.expand_path(path)
-        directory = File.dirname(destination)
-        raise IOError, "refusing symlinked model quota directory" if File.symlink?(directory)
+        expanded = File.expand_path(path)
+        directory = verified_atomic_directory(File.dirname(expanded))
+        destination = File.join(directory, File.basename(expanded))
 
         FileUtils.mkdir_p(directory, mode: 0o700)
         directory_stat = File.lstat(directory)
-        unless directory_stat.directory? && !directory_stat.symlink? && (directory_stat.mode & 0o002).zero?
-          raise IOError, "model quota directory must be a real, non-world-writable directory"
+        unless directory_stat.directory? && !directory_stat.symlink? &&
+               (directory_stat.mode & 0o022).zero? &&
+               verified_atomic_directory(directory) == directory
+          raise IOError, "model quota directory must be a stable, real, non-writable-by-group/world directory"
         end
 
         lock_path = "#{destination}.lock"
@@ -185,13 +187,16 @@ module Master
       def today_key = Time.now.utc.strftime("%Y-%m-%d")
 
       def load_data
-        state_path = File.expand_path(path)
-        directory = File.dirname(state_path)
+        expanded = File.expand_path(path)
+        directory = verified_atomic_directory(File.dirname(expanded))
+        state_path = File.join(directory, File.basename(expanded))
         return {} unless File.exist?(directory) || File.symlink?(directory)
 
         directory_stat = File.lstat(directory)
-        unless directory_stat.directory? && !directory_stat.symlink? && (directory_stat.mode & 0o002).zero?
-          raise IOError, "model quota directory must be a real, non-world-writable directory"
+        unless directory_stat.directory? && !directory_stat.symlink? &&
+               (directory_stat.mode & 0o022).zero? &&
+               verified_atomic_directory(directory) == directory
+          raise IOError, "model quota directory must be a stable, real, non-writable-by-group/world directory"
         end
         return {} unless File.exist?(state_path) || File.symlink?(state_path)
 
