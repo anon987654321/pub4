@@ -2,6 +2,15 @@
 
 require_relative "../kernel"
 
+# Install the historical constant before child files reopen FixLoop. Keeping
+# both names on the same class object prevents parallel coordinator graphs.
+module Master
+  module Fix
+    remove_const(:FixLoop) if autoload?(:FixLoop, false)
+    const_set(:FixLoop, Kernel::ConvergenceAdapter) unless const_defined?(:FixLoop, false)
+  end
+end
+
 require "set"
 require "time"
 require_relative "../scanner"
