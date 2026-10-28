@@ -113,7 +113,6 @@ module Master
       end
     end
     FixLoop = Kernel::ConvergenceAdapter unless const_defined?(:FixLoop, false)
-    RepairLoop = Kernel::RepairAdapter unless const_defined?(:RepairLoop, false)
     RunJournal = Kernel::LifecycleJournal unless const_defined?(:RunJournal, false)
   end
 end
