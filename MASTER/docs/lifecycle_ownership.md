@@ -64,8 +64,8 @@ claimed a mission may write only that mission while it holds the lease; any
 other write raises Mission::Fenced (c296719e1). The Supervisor, Heartbeat and
 TaskSteward read it and wake work whose lease expired. Two missions coexist: the
 Fold's under MASTER's root and /fix's under the repository root
-(FixLoop#mission_root); FixLoop's run mutex and the transaction lock already
-serialise their writes. Heartbeat wakes /fix's, the TaskSteward tends the
+(FixLoop#mission_root); Kernel's process-shared execution lease and the
+transaction lock serialize /fix writes. Heartbeat wakes /fix's, the TaskSteward tends the
 Fold's, and /status mission, fix_status and the service check name each.
 
 ### Fix::Transaction and Delivery
