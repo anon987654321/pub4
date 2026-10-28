@@ -14,12 +14,12 @@ module Master
         # boot the full pass graph, but any real constructor or nested constant
         # access must load the implementation before dispatch.
         def self.new(...)
-          require_relative "../fix_loop"
+          require_relative "convergence_adapter"
           super
         end
 
         def self.const_missing(name)
-          require_relative "../fix_loop"
+          require_relative "convergence_adapter"
           return const_get(name, false) if const_defined?(name, false)
 
           super
@@ -44,7 +44,7 @@ module Master
         # Production factories make Kernel the shared owner while the old loop
         # classes remain behavior-preserving adapters until their parity gates pass.
         def build_fix_loop(**options)
-          require_relative "../fix_loop"
+          require_relative "convergence_adapter"
           Kernel::ConvergenceAdapter.new(**options, kernel: self)
         end
 
