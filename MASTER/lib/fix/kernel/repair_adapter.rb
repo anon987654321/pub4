@@ -116,7 +116,10 @@ module Master
         include AutofixPolicy
         include FileBudget
 
+        attr_reader :kernel
+
         def initialize(law:, agent:, scanner:, root:, **options)
+          @kernel = options[:kernel]
           @law = law
           @agent = agent
           @scanner = scanner
@@ -141,24 +144,35 @@ module Master
         def run_once(files, external_violations: nil, image: nil)
           @visual_image = image
           violations = external_violations || scan_files(files)
-          return { fixed: 0, status: :clean, breakdown: {} } if violations.empty?
+          return record_kernel_outcome(fixed: 0, status: :clean, breakdown: {}) if violations.empty?
 
           fixed = fix_batch(violations)
           status = pass_outcome(fixed)
           record_outcomes(files, status)
           @bus&.publish("repair_loop:pass", law: @law.id, violations: violations.size, fixed:, status:)
-          { fixed:, status:, breakdown: @batch_breakdown }
+          record_kernel_outcome(fixed:, status:, breakdown: @batch_breakdown)
         rescue StandardError => e
           @bus&.publish("repair_loop:error", law: @law.id, error: e.message)
           # Bus-only meant a crashed rule pass was indistinguishable from a
           # quiet one in the dmesg stream the operator actually reads.
           Master::Trace::Dmesg.status("fix0", "#{@law.id}: #{e.class}: #{e.message[0, 90]}")
-          { fixed: 0, status: :error, breakdown: { error: 1 } }
+          applied = fixed.is_a?(Numeric) ? fixed.to_i : 0
+          breakdown = @batch_breakdown.is_a?(Hash) ? @batch_breakdown.dup : { error: 1 }
+          breakdown[:kernel_receipt_failed] = 1 if @kernel
+          { fixed: applied, status: :error, breakdown:, error: "#{e.class}: #{e.message}" }
         ensure
           @visual_image = nil
         end
 
         private
+
+        def record_kernel_outcome(fixed:, status:, breakdown:)
+          result = { fixed: fixed.to_i, status:, breakdown: (breakdown || {}).dup }
+          @kernel&.record_repair_outcome(
+            law: @law.id, status:, fixed: result[:fixed], breakdown: result[:breakdown]
+          )
+          result
+        end
 
         def scan_files(files)
           files.flat_map do |path|
