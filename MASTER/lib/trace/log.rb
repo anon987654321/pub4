@@ -33,7 +33,13 @@ module Master
       # generation keeps its whole cap (keep_bytes); compacting it to the early
       # threshold would drop every record larger than half the cap.
       def self.rotate(path, max_bytes, keep_bytes: max_bytes)
-        return unless File.exist?(path) && File.size(path) > max_bytes
+        return unless File.exist?(path) || File.symlink?(path)
+
+        stat = File.lstat(path)
+        unless stat.file? && !stat.symlink? && stat.nlink == 1
+          raise ArgumentError, "JSONL rotation source must be a singly linked regular file"
+        end
+        return if stat.size <= max_bytes
 
         rotated = "#{path}.1"
         File.rename(path, rotated)
@@ -48,6 +54,7 @@ module Master
       def self.append_jsonl(path, value, max_bytes: Event::MAX_BYTES, mode: 0o600, directory_mode: nil, sync: true)
         limit = Integer(max_bytes)
         raise ArgumentError, "JSONL byte limit must be positive" unless limit.positive?
+        raise ArgumentError, "JSONL mode must not grant group or world access" unless (Integer(mode) & 0o077).zero?
 
         line = JSON.generate(value) + "\n"
         raise ArgumentError, "JSONL record exceeds #{limit}-byte cap" if line.bytesize > limit
@@ -62,54 +69,91 @@ module Master
 
         lock_path = "#{path}.lock"
         raise ArgumentError, "JSONL lock is a symlink" if File.symlink?(lock_path)
-        File.open(lock_path, File::RDWR | File::CREAT, mode) do |lock|
-          File.chmod(mode, lock_path)
-          lock.flock(File::LOCK_EX)
+        attempts = 0
+        line_bytes = line.bytesize
 
-          raise ArgumentError, "JSONL destination is a symlink" if File.symlink?(path)
-          if File.exist?(path)
-            path_stat = File.lstat(path)
-            raise ArgumentError, "JSONL destination is not a regular file" unless path_stat.file? && !path_stat.symlink?
+        with_private_file(lock_path, File::RDWR | File::CREAT, mode:, label: "JSONL lock") do |lock|
+          raise ArgumentError, "could not acquire JSONL lock" unless lock.flock(File::LOCK_EX)
 
-            File.chmod(mode, path)
-          end
+          begin
+            verify_file_identity!(lock, lock_path, "JSONL lock")
+            raise ArgumentError, "JSONL lock permissions are not private" unless
+              (lock.stat.mode & 0o077).zero?
 
-          attempts = 0
-          line_bytes = line.bytesize
-          loop do
-            rotate(path, [limit - line_bytes, 0].max, keep_bytes: limit)
-            size = File.file?(path) ? File.size(path) : 0
-            if size + line_bytes > limit
-              unless attempts.zero? && reclaim(path)
-                raise IOError, "JSONL rotation failed to honor #{limit}-byte cap"
+            if File.exist?(path) || File.symlink?(path)
+              path_stat = File.lstat(path)
+              unless path_stat.file? && !path_stat.symlink? && path_stat.nlink == 1
+                raise ArgumentError, "JSONL destination must be a singly linked regular file"
               end
-
-              attempts += 1
-              next
             end
 
-            begin
-              File.open(path, File::WRONLY | File::CREAT | File::APPEND, mode) do |io|
-                offset = 0
-                while offset < line_bytes
-                  written = io.write(line.byteslice(offset..))
-                  raise IOError, "JSONL append wrote no bytes" unless written&.positive?
-
-                  offset += written
+            loop do
+              rotate(path, [limit - line_bytes, 0].max, keep_bytes: limit)
+              size = File.file?(path) ? File.size(path) : 0
+              if size + line_bytes > limit
+                unless attempts.zero? && reclaim(path)
+                  raise IOError, "JSONL rotation failed to honor #{limit}-byte cap"
                 end
-                io.flush
-                io.fsync if sync
-              end
-              break
-            rescue Errno::ENOSPC
-              raise unless attempts.zero? && reclaim(path)
 
-              attempts += 1
+                attempts += 1
+                next
+              end
+
+              begin
+                with_private_file(path, File::WRONLY | File::CREAT | File::APPEND, mode:, label: "JSONL destination") do |io|
+                  verify_file_identity!(lock, lock_path, "JSONL lock")
+                  offset = 0
+                  while offset < line_bytes
+                    written = io.write(line.byteslice(offset..))
+                    raise IOError, "JSONL append wrote no bytes" unless written&.positive?
+
+                    offset += written
+                  end
+                  io.flush
+                  io.fsync if sync
+                end
+                break
+              rescue Errno::ENOSPC
+                raise unless attempts.zero? && reclaim(path)
+
+                attempts += 1
+              end
             end
+          ensure
+            lock.flock(File::LOCK_UN)
           end
-        ensure
-          lock.flock(File::LOCK_UN) if lock
         end
+      end
+
+      # Open a private append target without following its final path component.
+      # The descriptor, not the path string, is used for chmod so a replacement
+      # cannot redirect the permission change to another file.
+      def self.with_private_file(path, flags, mode:, label:)
+        flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+        File.open(path, flags, mode) do |file|
+          verify_file_identity!(file, path, label)
+          file.chmod(mode)
+          verify_file_identity!(file, path, label)
+          raise ArgumentError, "#{label} permissions are not private" unless
+            (file.stat.mode & 0o077).zero?
+
+          yield file
+        end
+      end
+
+      def self.verify_file_identity!(file, path, label)
+        opened = file.stat
+        raise ArgumentError, "#{label} is not a regular file" unless opened.file?
+        raise ArgumentError, "#{label} must not be hard-linked" unless opened.nlink == 1
+
+        current = File.lstat(path)
+        unless current.file? && !current.symlink? &&
+               current.dev == opened.dev && current.ino == opened.ino
+          raise ArgumentError, "#{label} path changed while opening"
+        end
+        opened
+      rescue Errno::ENOENT => e
+        raise ArgumentError, "#{label} path changed while opening: #{e.message}"
       end
 
       # Release oversized rotated JSONL logs while preserving the newest complete
@@ -120,12 +164,16 @@ module Master
       def self.tighten_directory(directory, base) = File.chmod(MasterPaths.private_dir_mode(directory, base), directory)
 
       def self.compact_rotated(path, max_bytes)
-        return unless File.file?(path)
+        return unless File.exist?(path) || File.symlink?(path)
 
-        size = File.size(path)
+        stat = File.lstat(path)
+        unless stat.file? && !stat.symlink? && stat.nlink == 1
+          raise ArgumentError, "rotated JSONL log must be a singly linked regular file"
+        end
+        size = stat.size
         return size if size <= max_bytes
 
-        tail = File.open(path, "rb") do |file|
+        tail = with_private_file(path, File::RDONLY, mode: 0o600, label: "rotated JSONL log") do |file|
           file.seek(-max_bytes, IO::SEEK_END)
           start = file.pos
           bytes = file.read(max_bytes)
@@ -133,12 +181,12 @@ module Master
             file.seek(start - 1, IO::SEEK_SET)
             unless file.read(1) == "\n"
               first_newline = bytes.index("\n")
-              bytes = first_newline ? bytes.byteslice(first_newline + 1..) : +"".b
+              bytes = first_newline ? bytes.byteslice(first_newline + 1..) : +"" .b
             end
           end
-          bytes || +"".b
+          bytes || +"" .b
         end
-        File.open(path, "r+b") do |file|
+        with_private_file(path, File::RDWR, mode: 0o600, label: "rotated JSONL log") do |file|
           file.truncate(0)
           file.write(tail)
           file.flush
@@ -149,7 +197,6 @@ module Master
         Master::Ground::Swallow.log(e, context: "Trace::Log.compact_rotated", path:)
         nil
       end
-
       # A failing log says so once per path and error. On a full disk every
       # event fails the same way, and a line per event lands mid-prompt.
       def self.warn_once(key, message)
