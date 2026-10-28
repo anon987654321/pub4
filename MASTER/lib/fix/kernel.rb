@@ -321,7 +321,7 @@ module Master
         file.each_line.with_index(1) do |line, line_number|
           begin
             raise LedgerCorruption, "line #{line_number}: incomplete final record" unless line.end_with?("\n")
-            next if line.strip.empty?
+            raise LedgerCorruption, "line #{line_number}: blank record" if line.strip.empty?
 
             row = JSON.parse(line)
             body = row.reject { |key, _| key == "hash" }
