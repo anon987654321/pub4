@@ -1,5 +1,7 @@
 # Legacy Postpro restore
 
+For the repository-by-repository lineage and the disposition of other historical behaviors, see [ARCHAEOLOGY.md](./ARCHAEOLOGY.md).
+
 The archived `anon987654321/pub/postpro` v13.3.14 line exposed 29 user-facing creative
 effects.
 
@@ -53,9 +55,7 @@ The old internal `apply_effects`, `apply_effects_from_recipe` and random driver
 functions are not restored because current postpro already has a safer recipe engine,
 measured random-chain generator, provenance, and validation.
 
-This restore does not resurrect the old frame-by-frame video path. Current postpro still
-needs an in-process ffmpeg video pipeline with a frame-stable grain seed, stable
-halation, shutter-angle treatment, bounded work, and still/video parity checks.
+This restore does not resurrect the old frame-by-frame video path. It was introduced in [9ac4b113](https://github.com/anon987654321/pub4/commit/9ac4b11332762333da58f8ec4358eec7cbbcb1d4) and removed in [ec2cdf45](https://github.com/anon987654321/pub4/commit/ec2cdf458f6f571692fea1ea97e8335881b56135): it launched a fresh Ruby interpreter for every frame (about 0.46 seconds of boot each), measured roughly an hour per minute of 1080p against its six-minute estimate, and had two of eight tests time out. The product idea is preserved, but that implementation was a regression and must not be restored verbatim. A replacement needs in-process frame grading, deterministic moving/held grain, stable halation, shutter-angle treatment, bounded storage and work, original audio/frame-rate preservation, and end-to-end still/video parity checks. See [ARCHAEOLOGY.md](./ARCHAEOLOGY.md) for the full contract.
 
 ## Dilla analog bridge
 
