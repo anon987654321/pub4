@@ -65,6 +65,7 @@ module Master
                                  .create(label: "mission-#{id}", files:)
           end
           child = <<~'RUBY'
+            require "master"
             require "json"
             require "fix/mission"
             require "fix/checkpoint"
@@ -99,7 +100,7 @@ module Master
           child_receipt = JSON.parse(receipt_line)
           assert_equal writer.pid, child_receipt.fetch("pid")
           Process.kill("KILL", writer.pid)
-          Process.wait(writer.pid)
+          writer.value
           writer = nil
 
           resumed = Master::Fix::Mission.new(root:, checkpoint: checkpoint_writer).start_or_resume!(
@@ -116,7 +117,7 @@ module Master
         ensure
           if writer
             Process.kill("KILL", writer.pid) rescue nil
-            Process.wait(writer.pid) rescue nil
+            writer.value rescue nil
           end
           [stdin, stdout, stderr].compact.each { |io| io.close unless io.closed? }
         end
