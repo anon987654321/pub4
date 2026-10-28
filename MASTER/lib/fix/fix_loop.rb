@@ -532,7 +532,7 @@ module Master
       end
 
       def visual_repair_loop(brief)
-        RepairLoop.new(
+        @kernel.build_repair_loop(
           law: VisualPass::Law.new(VisualPass::LAW_ID), agent: @agent, scanner: @repair_kit.fetch(:scanner),
           root: @root, bus: @bus, learnings: @repair_kit.fetch(:learnings), committer: @committer, stage_commit: true
         ).tap { |loop| loop.injected_preamble = [@repair_kit.fetch(:preamble), brief].join("\n\n") }
