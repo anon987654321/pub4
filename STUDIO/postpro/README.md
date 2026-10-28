@@ -24,8 +24,10 @@ corresponding effect is implemented or enabled on this machine.
 
 The code spans several files. The file `postpro.rb` is the entry point: it boots, runs the
 early modes and loads `lib/`, whose files hold the grade, the presets, the film tables and the
-command line, one subject per file in the load order `POSTPRO_LIB` names. `--vocab-check` reads
-`postpro.rb`, `motion.rb` and every `lib/` file as one source. The file `legacy_effects.rb` holds the
+command line, one subject per file in the load order `POSTPRO_LIB` names. Video is split across
+`motion.rb` (the grade contract and CLI) and `motion_process.rb` (bounded frame IO and child processes),
+so neither file becomes another entrypoint monolith. `--vocab-check` reads
+`postpro.rb`, `motion.rb`, `motion_process.rb` and every `lib/` file as one source. The file `legacy_effects.rb` holds the
 creative effects recovered from the older `pub/postpro` line, and `LEGACY_RESTORE.md` records
 which of them already had current equivalents. The file `dilla_analog.rb` translates mechanisms
 from dilla's analog chains into still images, so that temporal wow and flutter become spatial
