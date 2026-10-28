@@ -334,7 +334,28 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   const window = {
     location: { search: "" },
     MASTER_FACE_CONTRACT: {
-      spatial: { budget: { desktop_points: 1200, mobile_points: 420 } },
+      spatial: { budget: {
+        desktop_points: 1200, mobile_points: 420, desktop_particles: 200, mobile_particles: 120,
+        reduced_motion_particles: 64, point_allocation: { stipple_fraction: 0.75, world_fraction: 0.25 }
+      } },
+      swarm: {
+        enabled: true, particle_budget: 240, damping: 0.86, cohesion_radius: 0.11, cohesion_strength: 0.045,
+        separation_radius: 0.035, separation_strength: 0.08, noise_scale: 0.014,
+        glyph_ramp: ["·", "˙", "∘", "•", "○", "●"],
+        target_field: {
+          head: { center: [0, 0.05, 0], scale: [1.18, 1.02, 0.82], weight: 1 },
+          eyes: {
+            left: { pos: [-0.29, 0.21, 0.58], radius: 0.17, weight: 1.4 },
+            right: { pos: [0.29, 0.21, 0.58], radius: 0.17, weight: 1.4 }
+          },
+          mouth: { pos: [0, -0.31, 0.5], radius: 0.34, weight: 1.12 }, softness: 0.72
+        },
+        mode_multipliers: {
+          idle: { eyes: 1, core: 1, noise: 0.14 },
+          attentive: { eyes: 1.35, core: 1.05, noise: 0.07 },
+          thinking: { eyes: 1.15, core: 1.3, noise: 0.22 }
+        }
+      },
       stipple: {
         point_size: {
           base: 0.90, bias_scale: 0.35, bias_min: 0.25, bias_max: 1.50,
@@ -347,7 +368,7 @@ test("stipple module boots and builds from the canonical idle profile", () => {
         }
       }
     },
-    navigator: { hardwareConcurrency: hardwareCores },
+    navigator: { get hardwareConcurrency() { return hardwareCores; } },
     MASTER_FACE_STATE: {
       snapshot: () => faceState,
       renderBudget: () => {
@@ -390,7 +411,7 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   assert.equal(typeof window.MASTER_FACE_STIPPLE?.snapshot, "function");
   assert.equal(typeof window.MASTER_FACE_STIPPLE?.uninstall, "function");
   assert.equal(window.MASTER_FACE_STIPPLE.profiles.idle.density, 0.44);
-  assert.equal(window.MASTER_FACE_STIPPLE.snapshot().pointCeiling, 900);
+  assert.equal(window.MASTER_FACE_STIPPLE.snapshot().pointCeiling, 200);
   assert.equal(window.MASTER_FACE_STIPPLE.snapshot().context, "ready");
 
   class BufferAttribute {
@@ -430,6 +451,25 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   assert.equal(stipple.material.uniforms.uPointSizeDistanceMax.value, 1.25);
   assert.equal(stipple.material.uniforms.uPointSizeOutputMin.value, 1.0);
   assert.equal(stipple.material.uniforms.uPointSizeOutputMax.value, 1.5);
+
+  // Shared token ramp and semantic modes are visible to the runtime, not redefined here.
+  assert.equal(api.glyphForDepth(0), "·");
+  assert.equal(api.glyphForDepth(1), "●");
+  assert.equal(api.canonicalSwarmMode({ mode: "listening" }), "attentive");
+  assert.equal(api.modeMultipliersFor({ mode: "thinking" }).noise, 0.22);
+  assert.match(system, /gl_PointSize = 1\.0;/);
+
+  const moving = api.buildFromSamples(THREE, [
+    { x: 0.8, y: 0, z: 0, zone: 0, bias: 1 },
+    { x: 0.7, y: 0.03, z: 0.1, zone: 0, bias: 1 }
+  ]);
+  const beforeMove = Array.from(moving.geometry.attributes.position.array);
+  assert.equal(api.updateSwarm(moving, { mode: "idle", reducedMotion: false }, 0.05, 1), true);
+  assert.notDeepEqual(Array.from(moving.geometry.attributes.position.array), beforeMove);
+  assert.equal(moving.geometry.attributes.aDepthRank.needsUpdate, true);
+  const frozen = Array.from(moving.geometry.attributes.position.array);
+  assert.equal(api.updateSwarm(moving, { mode: "idle", reducedMotion: true }, 0.05, 2), false);
+  assert.deepEqual(Array.from(moving.geometry.attributes.position.array), frozen);
 
   // An absent pressure event must preserve the mode's canonical density.
   api.tick(stipple, { mode: "idle", reducedMotion: false }, 0);
@@ -480,15 +520,18 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   window.MASTER_FACE.State.reducedMotion = false;
 
   // The layer never exceeds the canonical desktop/mobile point ceiling.
-  assert.equal(api.createDefault(THREE, 5000).count, 900);
+  assert.equal(api.createDefault(THREE, 5000).count, 200);
   coarsePointer = true;
-  assert.equal(api.createDefault(THREE, 5000).count, 315);
+  assert.equal(api.createDefault(THREE, 5000).count, 120);
   coarsePointer = false;
   narrowViewport = true;
-  assert.equal(api.createDefault(THREE, 5000).count, 315);
+  assert.equal(api.createDefault(THREE, 5000).count, 120);
   narrowViewport = false;
   hardwareCores = 4;
-  assert.equal(api.createDefault(THREE, 5000).count, 315);
+  assert.equal(api.createDefault(THREE, 5000).count, 120);
+  faceState = { mode: "idle", reducedMotion: true };
+  assert.equal(api.createDefault(THREE, 5000).count, 64);
+  faceState = {};
 });
 
 test("stipple lifecycle is observable and reversible", () => {
