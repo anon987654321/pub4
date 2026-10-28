@@ -44,9 +44,10 @@ file maps implementations; it is not a second policy surface.
 ## What Kernel is now
 
 Kernel began as the verifier/replay API for `.master/log.jsonl`. It now also owns
-the production `/fix` run boundary: an exclusive execution lock, hash-chained
-start/terminal receipts, correlation of bounded repair outcome summaries, and a
-shared accessor for the schema-preserving run journal. It reconciles a missing
+the production `/fix` run boundary: a process-shared `.master/fix-execution.lock`,
+hash-chained start/terminal receipts, correlation of bounded repair outcome
+summaries, and a shared accessor for the schema-preserving run journal. A separate
+recovery lock serializes the inspect-and-terminalize sweep across Kernel instances. It reconciles a missing
 terminal receipt to `unknown_outcome` only when same-host process-death evidence
 exists; a live or unverifiable writer is left open.
 
