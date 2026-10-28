@@ -108,10 +108,6 @@ coverage and acceptance criteria per item: `docs/wishlist_2026-10-28.md`.
 Half the items finish disciplines the tree already started; none removes a
 compatibility alias ahead of the execution-contract gates.
 
-- [ ] Dependency-light boot check under zeitwerk: eager-load every managed
-  constant, assert FixLoop/RepairLoop/RunJournal object identity with their
-  Kernel-owned classes, runnable without the private bundle, wired into
-  `rake audit`. Prove it catches the crash by reverting 346da8e.
 - [ ] Run the authored recovery gates on the pinned Ruby, preserve receipts,
   then retarget callers to the Kernel-owned names and delete the
   compatibility aliases per the existing execution-contract gate.
@@ -124,8 +120,13 @@ compatibility alias ahead of the execution-contract gates.
   constants, require graph and the boot chain; a stale map fails lint.
 - [ ] laws.yml entry with a lexical detector: no module-open-time
   `const_set`/`remove_const` outside the single guarded alias file.
-- [ ] One Ruby pin stated once: reconcile the 3.3.8 session note with the
-  4.0.5 execution-contract mentions; check doc mentions against the pin.
+- [ ] One Ruby pin stated once, and it is the owner's call: AGENTS.md and the
+  execution contract name 4.0.5 (the operator's machine), while the
+  .ruby-version files at root and MASTER hold 3.3.8 from the constrained
+  2026-10-28 executors, and MASTER/Gemfile accepts 3.2–4.1. Pick the
+  canonical pin, align the .ruby-version files or the AGENTS.md sentence,
+  and state which lane MASTER/bin/ruby serves; do not guess by editing one
+  side silently.
 - [ ] Fail-closed schema check on read for the `.master/*.json` ledgers
   (fix_ideas.json, content_board.json, state files): refuse with file path,
   found schema, expected schema.

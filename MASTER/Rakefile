@@ -196,6 +196,11 @@ task :boot_smoke do
   sh RbConfig.ruby, File.join(__dir__, "tools", "boot_smoke.rb")
 end
 
+desc "Boot the kernel chain under zeitwerk without the bundle; assert the alias contract where the fix graph's gems exist"
+task :kernel_autoload_smoke do
+  sh RbConfig.ruby, File.join(__dir__, "tools", "kernel_autoload_smoke.rb")
+end
+
 desc "Run test/test_core_smoke.rb — Effect → Constitution → World loop"
 task :core_smoke do
   sh RbConfig.ruby, "-I#{File.join(__dir__, "lib")}", File.join(__dir__, "test", "test_core_smoke.rb")
@@ -860,7 +865,7 @@ end
 # called it. A check defined and uncalled is a check that has stopped measuring
 # without anyone deciding it should.
 AUDIT_CHECKS = %w[
-  dogfood constitution selftest selfcheck tools core_smoke architecture boot_smoke security_sweep
+  dogfood constitution selftest selfcheck tools core_smoke architecture boot_smoke kernel_autoload_smoke security_sweep
   lint:frozen lint:data_singularity lint:spine lint:autoload
   lint:law_trace lint:law_parity lint:agent_contracts lint:laws_digest lint:scan_coverage lint:agent_map lint:reader_singularity lint:doc_citations
   lint:do_not_touch lint:instruments lint:swallowed lint:law_audit lint:autofix_reach
