@@ -1,0 +1,89 @@
+---
+schema: 1
+app: master
+pass: 3
+date: 2026-10-27
+ledger: data/gaps.yml
+authorization: >
+  Operator follow-up of 2026-10-27 (chat e2c7ceca), same chain as passes 1–2:
+  "can we improve the beauty of our dilla chord progressions?" and "are there any
+  clever ways we can add free models / get free compute in MASTER? (anything
+  exciting on GitHub, ar5iv.org, etc.)", followed by "research J Dilla
+  exhaustively (he is the greatest composer since Bach)". The research pass is the
+  evidence base: Hein's Dilla Time essays (get-dis-money, memory-songs, dilla-time),
+  the 21st Century Funk microtiming paper (academia 29812748), the Diaz Donuts
+  thesis (SFA scholarworks 197), WhoSampled-derived album breakdowns
+  (samplingdonuts.com, apoplife, guiorecords), the Guardian's Suite for Ma Dukes
+  interview, Soundfly's swing transcriptions and HookTheory's Dorian entry. The
+  music-theory-laws boundary: chord spellings here are transcription and theory
+  data, not new executable rules; every addition cites its source and nothing
+  removes or rewrites an existing row.
+method: >
+  Same method as passes 1–2: candidates at spec level, critique adversarial per
+  candidate, winners need a reason while losers keep theirs. Grammar candidates
+  were read against the file's own contract (canonical, additive-safe, parser
+  consumes named rows); corpus candidates against the two-source verification
+  rule (nothing enters that only one uncorroborated page claims); free-compute
+  candidates against the honesty rule that a lane wired here could never be
+  called (no network, no Ruby runtime).
+gaps: [dilla_grammar_beauty, dilla_corpus_depth, free_model_lanes]
+candidates:
+  # dilla_grammar_beauty
+  - { id: dilla_g01, gap: dilla_grammar_beauty, spec: "Add five researched movement grammars to music_theory_chords.yml using only the file's existing roman vocabulary: j5_donut_loop [IVmaj7, iii7, vi7, ii7] (Time: Donut of the Heart / Jackson 5, All I Do Is Think of You); relative_answer [Imaj7, vi7, IVmaj7, ii7] (each major answered by its relative minor, Get Dis Money's sampled phrase per Hein); dorian_four [i9, IV9] (minor key with the Dorian major fourth, Everytime per HookTheory, Forget Me Nots' G#m7 in F-sharp minor); flexible_sixth [i9, vm11, Vmaj9] (Remind Me's dual reading — i of D minor and pivot of A major, Hein; vm11 follows the file's im7 precedent); mediant_lift [Imaj7, iii7, IIImaj7] (Climax's ascending chromatic mediant). Each row commented with its source.", hyperlocal: high, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: dilla_g02, gap: dilla_grammar_beauty, spec: "Rewrite the twenty existing progressions into 'more beautiful' variants — richer extensions, stronger resolutions.", hyperlocal: low, synergy: low, cost: M, laws_delta: none, reversibility: low }
+  - { id: dilla_g03, gap: dilla_grammar_beauty, spec: "Add a descriptive voicings section beside families (so_what_quartal, rootless_ninth, add2_cluster, pedal_planing, flexible_sixth, voice_leading) — how the vocabulary is actually played, stated as guidance the way families is, citing the Glasper three-voicing practice and Hein's Am11-as-Em7-over-A reading.", hyperlocal: medium, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: dilla_g04, gap: dilla_grammar_beauty, spec: "Implement the new grammars directly in STUDIO/dilla.rb so the generator plays them immediately.", hyperlocal: low, synergy: medium, cost: L, laws_delta: path-ownership, reversibility: low }
+  # dilla_corpus_depth
+  - { id: dilla_c01, gap: dilla_corpus_depth, spec: "Fill the verified sample facts: Waves gets 10cc's Johnny, Don't Do It (1973) + Mantronix's King of the Beats (1988); Lightworks gets Raymond Scott & Dorothy Collins's Lightworks + Mantronix; Workinonit gets 10cc's The Worst Band in the World (1975); Stop gets Dionne Warwick with the exact side marked unconfirmed; Time: Donut of the Heart gets the Jackson 5's All I Do Is Think of You (1975) + Sweet Charles's Yes It's You; so_far_to_go gets its missing Isley Brothers sample line; two new sourced rows — don't_cry (The Escorts, I Can't Stand (To See You Cry); George Kirby's Temptations comedy routine) and two_can_won (The Sylvers, Only One Can Win); every row carries its reference URL. Two-source rule: only what at least two independent pages or the Diaz thesis confirm.", hyperlocal: high, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: dilla_c02, gap: dilla_corpus_depth, spec: "Add timing.measured to the j_dilla producer: the 21st Century Funk constants (melodic parts anticipate drums by ~100 ms; bass and snare anticipate by a 32nd; 10 of 13 kick notes in the measured bar fall off the grid, kicks erratic while snare and hats are the stable frame) plus the Soundfly per-subdivision feel map (on-beat hats straight, upbeat hats nudged back, snares ahead, kicks as anchors) and Hein's repetition principle (deviations repeat identically every bar — meticulous, never sloppy).", hyperlocal: high, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: dilla_c03, gap: dilla_corpus_depth, spec: "Record the lineage and form: a lineage row (cello as a child; sampled Bach's Toccata and Fugue in D minor through Mike Hankinson's synthesizer LP; Satie through the Velvet Gentleman album; Atwood-Ferguson's Satie/Ravel/Debussy/Poulenc parallel; Suite for Ma Dukes recreating melodies, harmonies and basslines) and a form row (parts looped in threes, fives and sevens against the strict four — Get Dis Money's seven-bar loop, the non-4 bar counts Hein tabulated).", hyperlocal: medium, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  - { id: dilla_c04, gap: dilla_corpus_depth, spec: "Transcribe the empty Donuts chord arrays note by note from the recordings — Waves, Lightworks, Stop, Workinonit, the rest.", hyperlocal: low, synergy: low, cost: L, laws_delta: none, reversibility: medium }
+  # free_model_lanes
+  - { id: free_f01, gap: free_model_lanes, spec: "Correct the executable quota: openrouter.daily_quota_per_model 200 -> 50 with the 2026 reality in the comment (free models default to 50 requests/day per model; a one-time $10 credit unlocks 1,000/day; cached tokens and the Free Models Router noted) and add the GitHub Models retirement guard (retired 2026-07-30 — playground, catalog, inference API and BYOK all gone; successor pointer Azure AI Foundry) so nobody adds a dead lane.", hyperlocal: high, synergy: medium, cost: S, laws_delta: none, reversibility: high }
+  - { id: free_f02, gap: free_model_lanes, spec: "Write docs/free_compute.md as the design of record: the 2026 free-tier landscape with numbers and terms (Groq free — llama-3.1-8b-instant at 30 RPM/14,400 RPD/500K TPD, llama-3.3-70b at 1,000 RPD, gpt-oss-120b/20b, whisper-large-v3-turbo free STT at 2,000 RPD and 7,200 audio-seconds/hour, cached tokens free; OVHcloud AI Endpoints — permanent keyless anonymous 2 RPM per IP per model, EU-hosted; OpenRouter free router and model fallbacks; Ollama local as the zero-cost lane on hosts that can afford the RAM; the existing ferrum keyless web-chat lane stays ToS-gated opt-in), the ar5iv/arXiv knowledge-lane pattern (full-text HTML of arXiv papers, the same citation habit model.rb already exercises), and the named gates: key provisioning, quota rows per provider, and a live catalog check that actually reaches the network.", hyperlocal: medium, synergy: high, cost: S, laws_delta: none, reversibility: high }
+  - { id: free_f03, gap: free_model_lanes, spec: "Wire Groq as a live provider lane now — openai-compatible base URL, keys_env entries, a groq section in models.yml with id rows.", hyperlocal: low, synergy: low, cost: M, laws_delta: new-surface, reversibility: low }
+  - { id: free_f04, gap: free_model_lanes, spec: "Build an arXiv/ar5iv harvester that pulls papers into a local knowledge corpus on a schedule.", hyperlocal: low, synergy: low, cost: M, laws_delta: new-surface, reversibility: medium }
+critique:
+  - { candidate: dilla_g01, verdict: keep, attack: "New roman rows are inert to every consumer that reads a fixed name, and the generator that iterates all names gets new material — the win and the risk are the same fact. The honest attack: five rows chosen by one research pass is taste wearing a citation; the comment on each row says who said it, so a better ear can prune without archaeology." }
+  - { candidate: dilla_g02, verdict: reject, attack: "The file's header says canonical — shared with STUDIO/dilla. Rewriting existing rows silently re-tunes every existing render and the shared contract at once; enrichment is the only direction the word canonical permits." }
+  - { candidate: dilla_g03, verdict: keep, attack: "Guidance sections drift toward being a second rulebook — the families section already crosses that line and was accepted for it. The defence is status, not content: voicings states what the recordings show and names who heard it, deliberately descriptive like families, executable by nothing." }
+  - { candidate: dilla_g04, verdict: reject, attack: "STUDIO is a host-side sibling outside every reconstructed tree, and PATH_OWNERSHIP plus the studio contract exist precisely so MASTER does not reach into STUDIO's internals. Data flows to the generator through the vocabulary file — that is the contract working as designed." }
+  - { candidate: dilla_c01, verdict: keep, attack: "Sample facts on WhoSampled-derived pages are crowd-curated and the Stop attribution is genuinely half-confirmed — which is why the row carries only two-source-confirmed facts, marks the unconfirmed side as unconfirmed, and cites the Diaz thesis where it is the stronger source. An unsourced empty array is strictly worse than a sourced one with a visible seam." }
+  - { candidate: dilla_c02, verdict: keep, attack: "Measured numbers from one paper on early beats generalise imperfectly to the whole catalogue — the block says which beats and which paper, and descriptive keys never reach brief(), so nothing downstream can mistake measurement for configuration." }
+  - { candidate: dilla_c03, verdict: keep, attack: "A lineage row is biography, not craft — but the operator's framing (greatest composer since Bach) is itself the lineage claim, and Atwood-Ferguson's orchestral recreations are evidence of harmonic content worth naming. Kept because the same constants feed the generator's human brief." }
+  - { candidate: dilla_c04, verdict: reject, attack: "There are no ears here — no audio, no Dilla on disk, no host to play it on. Transcription from memory would be fabrication with footnotes; the corpus rule is verified sourcing or nothing." }
+  - { candidate: free_f01, verdict: keep, attack: "The stale number makes the router hammer a limit four times past reality (200 assumed vs 50 actual) and read 429s as flapping instead of quota — the correction is executable today and grounded in the provider's own docs. The risk is that limits move again; the comment carries the date and the unlock rule so the next check has something to compare against." }
+  - { candidate: free_f02, verdict: keep, attack: "A doc with numbers dates itself the day a provider changes a tier — that is why it is a design of record with dates on every row, not a promise: the gates section names what turns each lane from prose into wiring, and the fleet-panel precedent shows declared-not-implemented is an honest state the ledger already knows how to carry." }
+  - { candidate: free_f03, verdict: reject, attack: "No network and no Ruby runtime here means not one Groq call can be proven before delivery — a wired-but-never-called lane is the exact declared-working dishonesty the tree's own honesty rules refuse. The doc carries the design; the first Ruby host with a key does the wiring." }
+  - { candidate: free_f04, verdict: reject, attack: "Unbounded fetches on a 1-vCPU, 1 GB box against a corpus nobody maintains is how the VPS-wide resource crisis CLAUDE.md documents starts again; the knowledge ask is served by recording where free full-text lives (ar5iv), not by building a crawler nobody asked to feed." }
+picks:
+  - gap: dilla_grammar_beauty
+    winner: dilla_g01
+    rationale: >
+      Additive grammar rows are the only change the canonical contract permits
+      and the exact thing the operator asked for: the generator's raw material
+      gets five devices the research actually documents, each with its source
+      in a comment so a better ear can prune without archaeology. g03 ships
+      inside this pick — the voicings section is the interpretive half of the
+      same enrichment, same status as families, same file.
+    losers: { dilla_g02: "canonical means additive; rewrites re-tune every existing render and the shared contract", dilla_g04: "STUDIO is out of tree and out of ownership; the vocabulary file is the designed channel" }
+  - gap: dilla_corpus_depth
+    winner: dilla_c01
+    rationale: >
+      The corpus stops asserting samples it cannot name and names them, with
+      the two-source rule visible in every row and the one weak attribution
+      (Stop) marked as the seam it is. c02 and c03 ship inside this pick:
+      timing.measured, form and lineage are the same batch in the same file —
+      measurements, form constants and the Bach/Satie lineage that the
+      operator's own framing singles out.
+    losers: { dilla_c04: "transcription without ears is fabrication with footnotes; verified sourcing or nothing" }
+  - gap: free_model_lanes
+    winner: free_f02
+    rationale: >
+      The design of record is what this session can honestly deliver: numbers
+      with dates, terms with their logging caveats, the ar5iv knowledge-lane
+      pattern, and the gates that turn prose into wiring on the first host
+      that has a key and a network. f01 ships inside it — the quota
+      correction and the GitHub Models retirement guard are the two facts the
+      router should act on today, and they are one YAML value plus comments.
+    losers: { free_f03: "wired-but-never-callable is the dishonesty the tree refuses; the doc carries the design instead", free_f04: "unbounded fetches on the 1 GB box re-run a recorded incident; the knowledge ask is served by the record, not a crawler" }

@@ -242,12 +242,18 @@ workstreams:
     state: partial
     title: The stipple field breathes in brightness only, frozen by reduced motion twice over
     implementation: RAILS/master/public/face_stipple_system.js
-    proof: shaders static-checked; breath rides vAlpha with uMotionScale and uTime both zeroed by the reduced-motion path
+    proof: >-
+      shaders static-checked; breath rides vAlpha with uMotionScale and uTime both zeroed by the
+      reduced-motion path
   - id: master_voice_browser_dsp
     state: partial
-    title: The browser builds the declared character presets — ring-mod aeval shapes, WaveShaper acrusher bits, the asetrate idiom as one modulated-delay shifter
+    title: >-
+      The browser builds the declared character presets — ring-mod aeval shapes, WaveShaper acrusher bits,
+      the asetrate idiom as one modulated-delay shifter
     implementation: RAILS/master/public/face_speech_runtime.js
-    proof: both-lane buildability proven per preset by scripts/verify_face_voice_batch.py against the ported builder grammar
+    proof: >-
+      both-lane buildability proven per preset by scripts/verify_face_voice_batch.py against the ported
+      builder grammar
   - id: master_voice_cooler_default
     state: partial
     title: Doubler and the room ship on as the default voice; ionosphere, midnight and shortwave are one env var away
@@ -263,3 +269,24 @@ workstreams:
     title: model_quota and cache_efficiency stop being computed and dropped — the status strip renders them
     implementation: RAILS/master/app/views/dashboard
     proof: dashboard status strip on a Ruby host
+  - id: dilla_grammar_voicings
+    state: landed
+    title: >-
+      The shared harmonic vocabulary gains researched Dilla movement grammars (relative-minor answers, the
+      J5 IV-iii-vi-ii loop), additive only, every row sourced
+    implementation: MASTER/data/music_theory_chords.yml
+    proof: STUDIO/test/test_music_theory_catalog.rb (every row uses the file's roman vocabulary)
+  - id: dilla_corpus_measures
+    state: partial
+    title: >-
+      Producer timing carries measured J Dilla microtiming as sourced observations; nothing reads them
+      yet, so they inform without tuning
+    implementation: MASTER/lib/voice/production_dna.rb
+    proof: ruby -c and boot smoke; brief() reads only the configured keys
+  - id: free_compute_design_of_record
+    state: partial
+    title: >-
+      The free-compute landscape is on record with dated numbers and named gates, and the router's
+      free-model quota matches OpenRouter's 50/day per model
+    implementation: MASTER/docs/free_compute.md + MASTER/data/models.yml
+    proof: MASTER/test/test_model_quota_forecast.rb; no lane in the doc is wired until its gate is met

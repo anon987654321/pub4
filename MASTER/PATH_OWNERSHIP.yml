@@ -87,6 +87,11 @@ ownership:
     purpose: personality, speech, TTS, rendering
     risk: medium
     check: bin/check
+  docs/:
+    purpose: Design records and generated digests a reader consults: the coordinator map, lifecycle
+      ownership, the free-compute record, the laws digest; handoffs/ keeps dated session notes
+    risk: low
+    check: rake test
   test/:
     purpose: Minitest suite for MASTER's lib/, law/, bin/ and tools/, one test_<subject>.rb
       per subject, booted through test/test_helper.rb with live state redirected to a

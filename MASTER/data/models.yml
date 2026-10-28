@@ -373,13 +373,22 @@ openrouter:
   # When true, the router merges live :free slugs from the SQLite provider catalog,
   # which the pool refreshes from OpenRouter when it is a day old (pool.rb).
   use_live_catalog: true
-  # Per-model daily cap before router skips the slug (OpenRouter free tier ~200/day/key).
-  daily_quota_per_model: 200
+  # Per-model daily cap before the router skips the slug. Corrected 2026-10-27
+  # against the provider's own terms: OpenRouter free models default to 50
+  # requests/day per model; a one-time $10 credit raises the allowance to
+  # 1,000/day. The old 200 made the router hammer a limit four times past
+  # reality and read the 429s as flapping. See docs/free_compute.md for the
+  # full landscape and its dates.
+  daily_quota_per_model: 50
   # Multiple keys rotate LRU to spread free-tier rate limits (20 req/min, 200/day each).
   keys_env:
     - OPENROUTER_API_KEY
     - OPENROUTER_API_KEY_2
     - OPENROUTER_API_KEY_3
+  # GitHub Models is NOT a lane: retired 2026-07-30 (playground, catalog,
+  # inference API and BYOK all withdrawn; GitHub points at Azure AI Foundry).
+  # Recorded so no future pass adds a dead provider to a fallback chain —
+  # the failure mode model_catalog_check.rb exists to catch.
   free_latest:
     - nvidia/nemotron-3-super-120b-a12b:free
 
