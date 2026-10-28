@@ -176,7 +176,7 @@ class TestFaceSwarm < Minitest::Test
     original = ENV["MASTER_FACE_SWARM"]
     ENV["MASTER_FACE_SWARM"] = "1"
     face = Master::CLI::Face
-    options = { state: :idle, rows: 12, cols: 24, t: 0.0, motion: face::Motion.new, show_laws: false }
+    options = { state: :idle, rows: 12, cols: 24, t: 0.0, motion: Master::CLI::Face::Motion.new, show_laws: false }
     particle_frame = face.frame(**options)
 
     assert_match(/[·˙∘•○●]/, particle_frame)
