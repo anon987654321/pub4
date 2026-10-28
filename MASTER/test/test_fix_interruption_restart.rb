@@ -10,9 +10,10 @@ require_relative "../lib/fix/transaction"
 require_relative "../lib/fix/run_journal"
 require_relative "../lib/fix/fix_loop"
 
-# This is deliberately a process-boundary test, not a mocked "resume" call:
-# the writer process is killed after a persisted transaction records a partial
-# tree mutation; a second Ruby process runs FixLoop's actual startup recovery.
+# Process-boundary regression for /fix's durable lifecycle, not a full
+# repository-wide repair trial: the writer is killed after real journal and
+# transaction state record a partial mutation; restart executes FixLoop's
+# startup recovery and reconciles the abandoned Kernel run receipt.
 class TestFixInterruptionRestart < Minitest::Test
   def test_killed_fix_pass_rolls_back_and_resumes_from_durable_state
     Dir.mktmpdir("fix-interruption-restart") do |root|
