@@ -354,12 +354,13 @@ module Master
 
         def build_record(event, payload)
           now = Time.now.utc
+          safe_payload = EventPrivacy.persisted(event.to_s, payload || {})
           {
             id: SecureRandom.uuid,
             timestamp: now.iso8601(6),
             session: Log.session,
             event: event.to_s,
-            payload: payload || {},
+            payload: safe_payload,
           }
         end
 
