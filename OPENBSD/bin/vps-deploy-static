@@ -1,0 +1,143 @@
+#!/usr/bin/env zsh
+# Static brand exports (RAILS/__other) — build on this box and install into
+# httpd's chroot. The Rails apps have vps-deploy; these two are not Rails, so
+# they get their own entrypoint instead of a case branch pretending they are.
+#
+# Usage (on vm23, as dev — never under doas, same reasoning as vps-deploy):
+#   zsh OPENBSD/bin/vps-deploy-static all|sommerseth|alfa
+#
+# Skip the build and install a tree built elsewhere (workstation CI, for
+# example, when the box has no node runtime):
+#   VPS_STATIC_OUT_SRC=/tmp/sommerseth-out zsh OPENBSD/bin/vps-deploy-static sommerseth
+#
+# Status honesty: a green exit means the files are deployed AND the loopback
+# vhost answers. Serving is not gated on anything the box does not already
+# have: thor.brgen.no and alfa.brgen.no are SANs on the brgen.no certificate
+# and the httpd/relayd blocks are live in the repo. If nothing listens on the
+# loopback port, that is a real failure — the message says which step of the
+# activation (relayd.conf bottom block) was skipped. Status in
+# RAILS/apps.yml#static_exports moves to done when this script reports
+# serving: yes for both sites and https answers publicly.
+set -euo pipefail
+
+# SSH executes this as a non-login shell on vm23; pin the OpenBSD package path.
+export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
+
+usage() {
+  print -r -- "usage: zsh OPENBSD/bin/vps-deploy-static all|sommerseth|alfa   (run as dev)
+
+  VPS_STATIC_OUT_SRC=<dir>   install this ready-made out/ tree instead of building
+                             (skips npm/bun; the dir must contain index.html)"
+}
+case ${1:-} in
+  -h|--help) usage; exit 0 ;;
+esac
+
+if [[ $(id -u) -eq 0 ]]; then
+  print -u2 "vps-deploy-static: run this as dev, not root — it escalates per step and"
+  print -u2 "                  root cannot reach github for the git pull that should precede it."
+  exit 2
+fi
+
+pub4_root=${REMOTE_PUB4:-/home/dev/pub4}
+site=${1:-}
+[[ -n $site ]] || { usage >&2; exit 2 }
+
+case $site in
+  all) sites=(sommerseth alfa) ;;
+  sommerseth|alfa) sites=($site) ;;
+  *) print -u2 "vps-deploy-static: unknown site \"$site\" — allowed: all, sommerseth, alfa"; exit 2 ;;
+esac
+
+# Port and chroot root per site. Two places name these numbers (here and the
+# vhosts in OPENBSD/etc/httpd.conf); apps.yml#static_exports is the
+# registry both answer to, and config_drift_check compares the live httpd.conf
+# against the repo copy once the vhosts go live.
+# One assignment per line: zsh accepts several name=value words on a line, but
+# with array subscripts that reading is fragile, and the whole point of these
+# three maps is that nothing about them is clever.
+typeset -A PORT WWWROOT TITLE
+PORT[sommerseth]=38191
+WWWROOT[sommerseth]=/var/www/sommerseth
+TITLE[sommerseth]="Sommerseth Eiendom"
+PORT[alfa]=38192
+WWWROOT[alfa]=/var/www/alfa
+TITLE[alfa]="Alfa Bergen"
+
+fail=0
+for s in $sites; do
+  src="${pub4_root}/RAILS/__other/${s}"
+  out_src=${VPS_STATIC_OUT_SRC:-}
+
+  print -r -- "── ${s} ──────────────────────────────"
+
+  if [[ -n $out_src ]]; then
+    [[ -f ${out_src}/index.html ]] || {
+      print -u2 "  FAIL: ${out_src}/index.html missing — VPS_STATIC_OUT_SRC must be a built out/ tree"
+      fail=1; continue
+    }
+  else
+    [[ -f ${src}/package.json ]] || {
+      print -u2 "  FAIL: ${src}/package.json missing — is pub4 checked out at ${pub4_root}?"
+      fail=1; continue
+    }
+    # Runtime choice: bun if the box has it, node+npm otherwise, honest
+    # refusal when neither exists — the message names the escape hatch
+    # (build on the workstation, ship the tree, rerun with VPS_STATIC_OUT_SRC).
+    print -r -- "  building in ${src}..."
+    if command -v bun >/dev/null 2>&1; then
+      if (cd "${src}" && bun install --frozen-lockfile && bun run build); then :; else
+        print -u2 "  FAIL: build failed"; fail=1; continue
+      fi
+    elif command -v npm >/dev/null 2>&1; then
+      if (cd "${src}" && npm ci --no-audit --no-fund && npm run build); then :; else
+        print -u2 "  FAIL: build failed"; fail=1; continue
+      fi
+    else
+      print -u2 "  FAIL: no bun and no npm on this box. Build elsewhere and ship the tree:"
+      print -u2 "        rsync -az RAILS/__other/${s}/out/ ${SSH_USER:-dev}@vm23:/tmp/${s}-out/"
+      print -u2 "        VPS_STATIC_OUT_SRC=/tmp/${s}-out zsh OPENBSD/bin/vps-deploy-static ${s}"
+      fail=1; continue
+    fi
+    out_src="${src}/out"
+    [[ -f ${out_src}/index.html ]] || {
+      print -u2 "  FAIL: ${out_src}/index.html missing after build — output:export changed shape?"
+      fail=1; continue
+    }
+  fi
+
+  # Install into the chroot. rm first: hashed _next/static assets accumulate
+  # across deploys, and a stale chunk that a stale HTML still references is
+  # exactly the kind of almost-works a static site must never ship. The path
+  # is the literal WWWROOT[${s}] set above, nothing interpolated from input.
+  print -r -- "  installing into ${WWWROOT[$s]}..."
+  doas rm -rf "${WWWROOT[$s]}"
+  doas mkdir -p "${WWWROOT[$s]}"
+  doas cp -R "${out_src}/." "${WWWROOT[$s]}/" || { print -u2 "  FAIL: copy into chroot failed"; fail=1; continue }
+  doas chown -R root:daemon "${WWWROOT[$s]}" 2>/dev/null || true
+
+  # Serving check. The vhosts are live in the repo's httpd.conf, so after
+  # OPERATOR.sh --stage-2 has run on this box, httpd owns these ports.
+  # Body is captured, not piped into grep -q: under pipefail, grep -q exiting
+  # early can SIGPIPE curl mid-transfer and report a matching page as a failure.
+  if nc -z 127.0.0.1 ${PORT[$s]} 2>/dev/null; then
+    body=$(curl -fs "http://127.0.0.1:${PORT[$s]}/" 2>/dev/null) || {
+      print -u2 "  FAIL: :${PORT[$s]} accepts connections but curl could not fetch /"
+      fail=1; continue
+    }
+    if [[ $body == *"${TITLE[$s]}"* ]]; then
+      print -r -- "  serving: yes — loopback :${PORT[$s]} returns ${TITLE[$s]}"
+    else
+      print -u2 "  serving: WRONG CONTENT on :${PORT[$s]} — something else claimed the port"
+      fail=1
+    fi
+  else
+    print -u2 "  FAIL: nothing listens on :${PORT[$s]}. The httpd vhost is live in"
+    print -u2 "        OPENBSD/etc/httpd.conf — apply it: doas zsh OPENBSD/OPERATOR.sh --stage-2"
+    print -u2 "        (first-time activation, incl. certs: OPENBSD/etc/relayd.conf bottom block)."
+    fail=1
+  fi
+done
+
+(( fail )) && exit 1
+print -r -- "vps-deploy-static: done — deployed and serving on loopback for: ${sites[*]}."

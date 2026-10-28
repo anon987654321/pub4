@@ -8,7 +8,7 @@ module Master
     TREE_PATHS = MasterPaths::TREES.to_h { |tree| [tree, tree] }.freeze
     DEFAULT_TREES = TREE_PATHS.keys.freeze
     DEFAULT_OUTPUT = File.join(REPO_ROOT, "snapshot_MASTER.md")
-    SKIP = %w[.git .bundle node_modules vendor tmp temp log logs coverage storage cache dist build output generated].freeze
+    SKIP = %w[.git .bundle node_modules vendor tmp temp log logs coverage storage cache dist build output generated out].freeze
     BINARY_EXTENSIONS = %w[
       .7z .aac .avi .bin .bmp .class .db .db3 .dll .dmg .doc .docx .eot .exe .flac
       .gif .gz .ico .jpeg .jpg .m4a .mov .mp3 .mp4 .ogg .otf .pdf .png .ppt .pptx

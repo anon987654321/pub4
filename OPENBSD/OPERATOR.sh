@@ -582,7 +582,7 @@ OWNED_DOMAINS=(
 )
 
 ALL_DOMAINS=(
-  brgen.no:markedsplass,radio,dating,tv,takeaway,maps,messenger,ai
+  brgen.no:markedsplass,radio,dating,tv,takeaway,maps,messenger,ai,thor,alfa
   longyearbyn.no:markedsplass,radio,dating,tv,takeaway,maps,messenger
   oshlo.no:markedsplass,radio,dating,tv,takeaway,maps,messenger
   stvanger.no:markedsplass,radio,dating,tv,takeaway,maps,messenger

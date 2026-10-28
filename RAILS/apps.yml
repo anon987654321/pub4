@@ -481,12 +481,13 @@ archived_subsystems:
 
 # Statiske merkevareeksporter (ikke-Rails) — RAILS/__other.
 # Statuse reglene gjelder som for appene: status leses av landet kode, ikke
-# av minne. `planned` inntil domene er kjøpt, zonen delegert og første
-# deploy er verifisert med OPENBSD-checks (domain_alignment, deploy_smoke).
+# av minne. `planned` inntil første deploy er verifisert på vm23 —
+# vps-deploy-static rapporterer "serving: yes" på loopback, og
+# https://thor.brgen.no / https://alfa.brgen.no svarer — deretter `done`.
 static_exports:
   sommerseth:
     title: Sommerseth Eiendom
-    domain: sommerseth.no            # planlagt — Domeneshop, ikke kjøpt
+    domain: thor.brgen.no            # SAN på brgen.no-sertifikatet
     brand:
       category: family_rental
       promise: "Utleie med omsorg."
@@ -496,13 +497,13 @@ static_exports:
     port: 38191
     stack_now: Next.js 16, statisk eksport (out/), Lenis + framer-motion
     deploy_root: RAILS/__other/sommerseth
-    deploy_script: null              # statisk: cp -r out/* /var/www/sommerseth/
+    deploy_script: OPENBSD/bin/vps-deploy-static
     served_by: httpd (loopback 38191) bak relayd-TLS
     public: true
-    status: planned
+    status: planned                  # → done etter første verifiserte deploy
   alfa:
     title: Alfa Bergen
-    domain: alfabergen.no            # planlagt — Domeneshop, ikke kjøpt
+    domain: alfa.brgen.no            # SAN på brgen.no-sertifikatet
     brand:
       category: property_operations
       promise: "Fra flytting til forvaltning."
@@ -512,7 +513,7 @@ static_exports:
     port: 38192
     stack_now: Next.js 16, statisk eksport (out/), Lenis + framer-motion
     deploy_root: RAILS/__other/alfa
-    deploy_script: null              # statisk: cp -r out/* /var/www/alfa/
+    deploy_script: OPENBSD/bin/vps-deploy-static
     served_by: httpd (loopback 38192) bak relayd-TLS
     public: true
-    status: planned
+    status: planned                  # → done etter første verifiserte deploy
