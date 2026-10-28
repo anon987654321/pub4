@@ -659,9 +659,16 @@
   }
 
   function applyPalette(system, palette = {}) {
+    const target = system?.material?.uniforms?.uColor?.value;
+    if (!target) return false;
+    if (swarmConfiguration().enabled === true) {
+      // The locked swarm identity stays pure white even when app chrome changes palette.
+      target.setRGB(1, 1, 1);
+      return false;
+    }
     const color = String(palette.accent || palette.color || "").trim();
-    if (!color || !system?.material?.uniforms?.uColor) return false;
-    system.material.uniforms.uColor.value.set(color);
+    if (!color) return false;
+    target.set(color);
     return true;
   }
 
