@@ -124,17 +124,17 @@ module Master
         end
 
         def check_providers_yaml(root)
-          check_catalogue_yaml(root, "data/providers.yml", "providers_yaml", :providers)
+          check_catalogue_yaml(root, "data/providers.yml", "providers_yaml")
         end
 
         def check_models_yaml(root)
-          check_catalogue_yaml(root, "data/models.yml", "models_yaml", :models)
+          check_catalogue_yaml(root, "data/models.yml", "models_yaml")
         end
 
         # Real MASTER needs both routing catalogues. Isolated test/workspace roots
         # may omit them, but a missing catalogue in the canonical installation must
         # never become an empty routing table.
-        def check_catalogue_yaml(root, relative_path, name, kind)
+        def check_catalogue_yaml(root, relative_path, name)
           required = File.expand_path(root) == File.expand_path(Master::ROOT)
           basic = check_yaml_file(root, relative_path, name, required:)
           return basic unless basic.ok
