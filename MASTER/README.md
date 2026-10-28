@@ -618,3 +618,10 @@ target-relevant acceptance contracts to the repair context. The visual Law's req
 evidence includes prompt contracts, input recovery, browser reconnection, visible state,
 keyboard accessibility and terminal modes. A catalogue row is not proof that the behavior
 is implemented or passing; close it only with the declared test or live/rendered evidence.
+
+
+## Rendered surface and public metadata checks
+
+The existing `surface_schema` check now validates the five declared Brgen surfaces for exactly one non-empty document title, meta description, absolute canonical URL, Open Graph title/description/URL, as well as their existing layout and interaction markers. Positive fixtures exercise complete metadata; `MASTER/test/test_dom_surface_seo_metadata.rb` proves missing descriptions, duplicate canonicals and relative canonical URLs are detected. This is source/fixture coverage, not proof of a full public-host crawl; the broader hostname, redirect, robots, sitemap and JSON-LD audit remains in the root TODO.
+
+The OpenBSD tracked PF ruleset guard is registered in the single check runner as `openbsd_pf_policy`. It checks the repository-specific default-deny, ingress-scope and SSH/bruteforce ordering invariants; `pfctl -nf` remains the authority for native PF syntax on OpenBSD.
