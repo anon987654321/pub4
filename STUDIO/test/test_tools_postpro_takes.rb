@@ -98,9 +98,36 @@ class TestPostproRunDefaults < Minitest::Test
         steps = chain.map(&:first)
         assert_operator steps.size, :<=, [HEAVY_MAX_STEPS, send(:preset_as_recipe, look).size + 1].max, "#{look}: #{steps.inspect}"
         assert_equal RANDOM_ALWAYS, steps.last, "#{look} must close on one grain pass"
-        assert_empty send(:preset_as_recipe, look).map(&:first) - steps, "#{look} lost one of its own steps"
+        own = send(:preset_as_recipe, look).map(&:first) - RANDOM_UNCLEAN
+        assert_empty own - steps, "#{look} lost one of its own clean steps"
       end
     end
+  end
+
+  def test_no_light_take_draws_a_blur_relief_or_artefact
+    with_env("POSTPRO_HEAVY", "0") { assert_clean_draws(heavy: false) }
+  end
+
+  def test_no_heavy_take_draws_a_blur_relief_or_artefact
+    with_env("POSTPRO_HEAVY", "1") { assert_clean_draws(heavy: true) }
+  end
+
+  def assert_clean_draws(heavy:)
+    20.times do |seed|
+      drawn = random_steps(seed, heavy)
+      assert_empty drawn & RANDOM_UNCLEAN, "heavy=#{heavy} seed #{seed}: #{drawn.inspect}"
+    end
+  end
+
+  def test_a_black_and_white_stock_develops_a_monochrome_picture
+    developed = send(:film_curve, process_frame, :tri_x, 0.9).cast(:float)
+    assert_operator (developed.extract_band(0) - developed.extract_band(2)).abs.max, :<, 1.0
+  end
+
+  def random_steps(seed, heavy)
+    rng = Random.new(seed)
+    chain = heavy ? send(:look_led_chain, rng, look: HEAVY_LOOKS[seed % HEAVY_LOOKS.size]) : send(:random_chain, rng)
+    chain.map(&:first)
   end
 
   def test_heavy_strengths_sit_in_the_light_bands

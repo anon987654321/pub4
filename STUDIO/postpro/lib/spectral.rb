@@ -185,6 +185,7 @@ end
 
 def film_curve(image, stock = :kodak_portra, intensity = 1.0)
   data = STOCKS[stock] || STOCKS[:kodak_portra]
+  image = panchromatic(image) if MONOCHROME_STOCKS.include?(stock)
   developed = HD.apply(image, data)
   safe_cast(image * (1 - intensity) + developed * intensity)
 end

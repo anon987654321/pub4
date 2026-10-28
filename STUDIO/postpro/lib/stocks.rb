@@ -91,6 +91,18 @@ STOCKS = {
                    hd: { r: [0.15, 0.86, 0.20, 0.95], g: [0.14, 0.85, 0.20, 0.93], b: [0.13, 0.84, 0.22, 0.90] } },
 }.freeze
 
+# Black-and-white stocks record one silver image of the scene's luminance. Their
+# equal per-channel curves only discard a colour cast, so a chain on one of them
+# kept the photograph's colour (a "silver gelatin" take came out in colour).
+# film_curve develops these from a panchromatic luminance image instead.
+MONOCHROME_STOCKS = %i[tri_x ilford_hp5 ilford_delta3200].freeze
+
+def panchromatic(image)
+  r, g, b = rgb_bands(image).cast("float").bandsplit
+  luma = r * 0.2126 + g * 0.7152 + b * 0.0722
+  luma.bandjoin([luma, luma]).copy(interpretation: :srgb)
+end
+
 # Lens character: data-driven table drives vintage_lens().
 # vignette/glow/micro_contrast/chroma are intensity multipliers [0,1].
 LENSES = {

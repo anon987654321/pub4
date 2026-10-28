@@ -184,10 +184,15 @@ Each run draws a fresh seed and prints it, and `POSTPRO_SEED` renders a family a
 A chain is grown and not sampled. A random subset of the whole effect list is the Photoshop
 filter menu and looks like one. A step may join only where some preset already places it
 beside everything already picked, so the steps belong to one process. One or two steps carry
-the look and the rest sit quietly beneath them. The wear shelf of dust, scanner noise and tape
-dropouts stays off unless `--rough` admits it, and grain is never optional, because a chain with
-no crystals in it is a colour filter with opinions. Within a run each picture is drawn against
-the others and takes a stock no other picture used.
+the look and the rest sit quietly beneath them. A random take is a clean film grade: nothing
+that softens (lens and defocus simulations, diffusion, cross-fades, faded prints), nothing that
+prints a relief or a halo (band lifts, edge effects, local contrast), no fringes or distortion,
+no frames or overlays, and none of the wear shelf of dust, scanner noise and tape dropouts.
+`RANDOM_UNCLEAN` lists them, they are dropped from a look's own steps too, and only `--rough`
+admits them. Grain is never optional, because a chain with no crystals in it is a colour filter
+with opinions, but it runs at no more than 0.45, felt rather than seen. Black-and-white stocks
+develop a panchromatic luminance image, so their looks come out monochrome. Within a run each
+picture is drawn against the others and takes a stock no other picture used.
 
 Other modes grade in bulk. The `--watch` flag grades every new photo that lands in a folder,
 `--auto` grades the default globs, and `--from-replicate` grades what replicate wrote last.

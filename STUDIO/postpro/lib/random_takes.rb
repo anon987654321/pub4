@@ -152,12 +152,19 @@ end
 # The look's own steps, then the strongest few steps of a random chain of light,
 # texture and wear, up to HEAVY_MAX_STEPS in all, in physical order with one
 # grain pass last.
+# A look's own steps, less the unclean ones unless --rough admits them.
+def clean_look_steps(look)
+  steps = preset_as_recipe(look)
+  ARGV.include?("--rough") ? steps : steps.reject { |step| RANDOM_UNCLEAN.include?(step.first) }
+end
+
 def look_led_chain(rng, look:, avoid: [], lane: nil)
-  base = preset_as_recipe(look)
+  base = clean_look_steps(look)
   taken = base.map(&:first)
   drawn = random_chain(rng, avoid:, lane:).reject { |fx, _| taken.include?(fx) || fx == RANDOM_ALWAYS }
   # One step of the cap is always the closing grain pass.
   tail = strongest_steps(drawn, HEAVY_MAX_STEPS - 1 - base.count { |fx, _| fx != RANDOM_ALWAYS })
+
   stock = (PRESETS.fetch(look.to_sym)[:stock] || :kodak_portra).to_s
   grain = base.find { |fx, _| fx == RANDOM_ALWAYS } || [RANDOM_ALWAYS, { "intensity" => 0.6, "stock" => stock }]
   rank = random_stage_rank

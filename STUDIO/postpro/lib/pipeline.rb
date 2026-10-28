@@ -96,10 +96,21 @@ def settle_exposure(processed, balanced:, request:)
   exposure_is_the_look?(request) ? processed : hold_exposure(processed, balanced)
 end
 
+# Grain should be felt rather than seen: a random take's grain runs at no more
+# than RANDOM_GRAIN_CAP, where a look's own figure (0.9 for most) or a loud lane
+# (up to 0.88) printed it as noise.
+RANDOM_GRAIN_CAP = 0.45
+
 def finish_with_grain(processed, grains)
   return apply_finishing_grain(processed, nil, grained: false) if grains.empty?
 
-  recipe(processed, grains)
+  recipe(processed, grains.map { |fx, params| [fx, capped_grain(params)] })
+end
+
+def capped_grain(params)
+  return [params.to_f, RANDOM_GRAIN_CAP].min unless params.is_a?(Hash)
+
+  params.merge("intensity" => [params.fetch("intensity", 1.0).to_f, RANDOM_GRAIN_CAP].min)
 end
 
 def preset_variation(request)

@@ -153,13 +153,30 @@ def random_seeds(lane = nil)
   (random_pool(lane) - random_common_spine) & random_affinity.keys.flatten.uniq
 end
 
+# What softens: lens and defocus simulations, diffusion, cross-fades, and the
+# two effects that blur as a side effect (faded_print, vinyl band-limit).
+RANDOM_SOFTENING = %w[
+  optical_blur emulsion_defocus diffraction_blur tilt_shift bokeh_rendering soft_focus
+  cross_fade cross_process bloom_pro golden_hour_glow vintage_lens faded_print dilla_vinyl_bandlimit
+].freeze
+
+# What prints a relief or a halo, fringes or bends the frame, or lays something over it.
+RANDOM_ARTEFACTS = %w[
+  dilla_head_bump adjacency_effects micro_contrast clarity selective_sharpen edge_aware_nr
+  chromatic_aberration longitudinal_ca lens_distortion dilla_phasy lens_flare
+  polaroid_frame film_scratches double_exposure
+].freeze
+
+# A random take never draws these unless --rough asks for them. Seen on the
+# operator's photos, they made takes look embossed, blurred or broken; a random
+# take is a clean film grade without them.
+RANDOM_UNCLEAN = (RANDOM_SOFTENING + RANDOM_ARTEFACTS + RANDOM_WEAR).freeze
+
 def random_pool(lane = nil)
-  rough = ARGV.include?("--rough")
   allowed = lane ? RANDOM_LANES.fetch(lane).fetch(:effects) : RECIPE_ALLOWED - [RANDOM_ALWAYS] - RANDOM_SHAPES
   allowed &= RECIPE_ALLOWED
   allowed -= RANDOM_SHAPES
-  allowed -= RANDOM_WEAR unless rough || lane == :bleeding_edge_analog || heavy_mode?
-  allowed
+  ARGV.include?("--rough") ? allowed : allowed - RANDOM_UNCLEAN
 end
 
 # Which effects a colourist actually puts together, counted off the presets.
