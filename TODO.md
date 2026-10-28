@@ -17,9 +17,12 @@ the commit that carries its evidence; nothing here records finished work.
   cohesion/separation, bounded integration, depth/ramp mapping, spatial budget,
   reduced-motion freeze, and CLI/web adapter contracts. The Ruby and Node suites
   still need to run against a checkout.
-- Added six named recovery gates before any Fix::Kernel fold. They are explicit
-  skipped tests, not completed recovery proofs; wire each to the production
-  recovery path and make it fail then pass before folding coordinator owners.
+- Added six named recovery gates before any Fix::Kernel fold. Gate 1 now
+  exercises a real aborted Transaction and checks byte-exact binary restoration,
+  file mode/owner/group, and deletion of a newly created path. That source test
+  has not yet been run here. Gates 2–6 remain explicit skips; wire each to the
+  production recovery path and prove red then green before folding coordinator
+  owners.
 - Added docs/seo_audit_2026-10-28.md from session-provided observations. Raw HTTP
   captures were not attached to this commit, so those observations are advisory;
   re-probe and preserve timestamped headers/bodies before closing the SEO audit.
