@@ -22,11 +22,11 @@ with proof." Everything here serves that sentence.
 
 | Class | Size | Self-description (docstring) | External call sites | Verdict |
 |---|---|---|---|---|
-| `Fix::Kernel` | 700+ lines + `transaction/` | Audited repair core and lifecycle coordinator | `bin/master replay`; production /fix via `lib/builder/ai_boot.rb` | Canonical owner. Emits hash-chained run receipts, owns the lifecycle-journal accessor, and builds the legacy loop adapters. |
-| `Fix::FixLoop` | 976 lines + `fix_loop/` (13 files) | LLM repair loop: pass runners, council rounds, llm_router, background runner | `tools/boot_smoke.rb`, `lib/cli/command_registry/review.rb`, `lib/operator/canary.rb`, `lib/cli/pipeline/pass.rb`, `lib/operator/snapshot_pack.rb`, `lib/builder/ai_boot.rb` | Compatibility adapter. Kernel now owns run-lock/lifecycle receipts and journal acquisition; pass execution and recovery logic remain here pending parity proof. |
-| `Fix::RepairLoop` | 569 lines + `repair_loop/` (6 files) | Autofix policy, collapse guard, file budget, outcome tracking | `lib/ground/laws.rb`, `lib/review/scan/semantic_fingerprint.rb`, `lib/review/scan/law.rb`; Kernel-owned FixLoop pass factory | Compatibility adapter. FixLoop pass stages and visual repairs use Kernel's factory and record bounded outcomes. Budget/collapse/policy implementation has not yet moved. |
+| `Fix::Kernel` | Core ledger/observation/repair API plus `kernel/` lifecycle adapters | `bin/master replay`, production /fix via `lib/builder/ai_boot.rb` | Canonical owner. Production execution, the journal accessor, bounded repair receipts, and factories are routed through Kernel. |
+| `Fix::FixLoop` | Compatibility constant for `Kernel::ConvergenceAdapter`; pass modules remain split under `fix_loop/` | `lib/builder/ai_boot.rb`, CLI/operator callers | The implementation class is now nested under Kernel. Kernel owns the top-level lock and terminal receipts; the adapter preserves convergence/pass contracts for parity-tested migration. |
+| `Fix::RepairLoop` | Compatibility constant for `Kernel::RepairAdapter` in `kernel/repair_adapter.rb` | legacy direct callers and Kernel pass factory | The implementation and policy now have one Kernel-owned class; prompt-free outcome summaries are recorded in Kernel's ledger. Preserve the old constant until callers migrate. |
 | `Fix::Mission` | 668 lines | Durable objective and lease fencing | `lib/cli/command_registry.rb:585`, `lib/operator/services.rb:85-87` | Keep. Mission remains the durable objective/ownership boundary; Kernel does not replace its state machine. |
-| `Fix::RunJournal` | Lifecycle, assessment and architecture receipts | Accessed through `Kernel#lifecycle_journal`; status reads through the same Kernel accessor | no new direct production writer beyond the compatibility accessor | Persistence implementation remains as a schema/recovery compatibility adapter behind Kernel. It is not yet deleted or copied wholesale; the state-machine move still needs recovery and adapter-parity evidence. |
+| `Fix::RunJournal` | Compatibility constant for `Kernel::LifecycleJournal` in `kernel/lifecycle_journal.rb` | Kernel's journal accessor and legacy callers | The durable journal implementation is nested under Kernel; schema and recovery semantics remain unchanged. Keep the old constant while parity tests exercise persisted runs. |
 | `Fix::RunLedger` | 177 lines | "What one /fix run has learned about its own model phase … why proposals were rejected (and how often per file), which files ran out of wall-clock, which lanes keep failing." | `lib/cli/command_registry/review.rb` | Keep until FixLoop folds; then decide whether Kernel receipts subsume it. Its 2026-10-12 origin (runs that fixed nothing and only said "0 fixed") is the requirement it exists to keep. |
 | `Fix::Transaction` | 559 lines + `transaction/` | Transaction path for staged writes | `tools/dead_css_sweep.rb` | Map against Kernel's own staging before any move; if `dead_css_sweep` uses the same class, it is a second entry point the merge must keep working. |
 
@@ -41,24 +41,27 @@ them.
 
 ## Integration landed 2026-10-28 (source changes; runtime proof pending)
 
-- `Builder::AI` now creates the production `Fix::Kernel` and obtains its
-  `FixLoop` adapter through `Kernel#build_fix_loop`.
-- `FixLoop#run` delegates the outer execution lock, coordinator start/terminal
-  receipts and correlated repair-outcome events to Kernel.
-- `FixLoop` obtains `RunJournal` from `Kernel#lifecycle_journal`; opportunity,
-  visual, wishlist, improvement and per-Law repairs use the Kernel factory.
-- `Operator::FixStatus` reads the same journal accessor.
-- `test/test_fix_interruption_restart.rb` starts a separate Ruby process,
-  persists a partially applied transaction, kills the writer, then invokes the
-  actual FixLoop startup recovery in a second process and asserts byte-exact
-  rollback plus resumption of the durable run. This test has been authored but
-  not executed on the pinned Ruby runtime here.
+- Production boot creates `Fix::Kernel`; `Kernel::Lifecycle#build_fix_loop` loads
+  the legacy source adapter as `Kernel::ConvergenceAdapter`, with `FixLoop` retained
+  as a compatibility constant for existing call sites.
+- `FixLoop#run` delegates the outer execution lock and coordinator start/terminal
+  receipts to Kernel. Repair summaries correlate to the coordinator run id.
+- The durable run journal implementation is `Kernel::LifecycleJournal`; the old
+  `RunJournal` constant points to the same class. Kernel and `Operator::FixStatus`
+  use the shared accessor, preserving the existing on-disk format.
+- The repair implementation is `Kernel::RepairAdapter`; `RepairLoop` is a
+  compatibility constant to the same class. Pass stages and visual repairs use
+  the Kernel factory and write bounded outcome summaries to the Kernel ledger.
+- `test/test_fix_kernel.rb` and `test/test_fix_convergence.rb` exercise source
+  ownership and receipts. `test/test_fix_interruption_restart.rb` starts a separate
+  Ruby process, persists a partial transaction, kills the writer, then exercises
+  FixLoop's real startup-recovery sweep in a second process and asserts byte-exact
+  rollback plus durable-run resumption. These tests are authored but unexecuted here.
 
-The next substantive move is the internal journal state machine and the
-RepairLoop budget/collapse/outcome policy. Those are still in compatibility
-adapters until recovery and adapter-parity gates can run; the adapters are not
-safe to delete based on source inspection alone.
-
+The structural move is landed with compatibility aliases retained. The remaining
+gates are runtime proof on pinned Ruby 4.0.5, Mission survival, journal-loss
+reconstruction, pass/delivery adapter parity, and a real repository-wide `/fix`
+trial. Do not delete the compatibility aliases until those gates pass.
 ## Merge order
 
 Each phase is gated, and a gate that cannot run is a stop, not a formality.
