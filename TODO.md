@@ -30,6 +30,11 @@ the commit that carries its evidence; nothing here records finished work.
   RunJournal, quota, ComputePool, RoutePolicy and trace JSONL/storage test files,
   and added `test_recovery_gates.rb` to the focused release battery. These were
   source-structure repairs only; no project test command has been executed.
+- Follow-up STUDIO review normalized shadow/highlight detail ratios before using
+  them in correction thresholds, made missing pixel bands produce no tone-curve
+  proposal, and tightened JSON-round-trip replay-manifest verification plus exact
+  modality-version checks. Regression cases were added; the STUDIO and MASTER
+  project suites remain NOT_RUN in this environment.
 
 ## Verification run, after the fixes below land
 
