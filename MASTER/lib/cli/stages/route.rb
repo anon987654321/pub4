@@ -35,7 +35,7 @@ module Master
           unless cmd
             suggestion = closest_command(ctx.command)
             error_message = "unknown command: /#{ctx.command}"
-            error_message += " -- did you mean /#{suggestion}?" if suggestion
+            error_message += " — did you mean /#{suggestion}?" if suggestion
             return Result.err(error_message, category: :validation)
           end
           destructive = DestructiveRoutes.destructive_command?(ctx.command)
@@ -47,11 +47,33 @@ module Master
         # disagree on one-edit typos of the command list: SpellChecker catches
         # transpositions this misses, and misses the first-letter slips and short
         # commands this catches. That is a trade, not a fold.
+        #
+        # Before distance is measured at all, a shared stem wins: /movie and
+        # /movs are spellings of /mov, not neighbours of /review and /ios. An
+        # old suggestion paired /mov with /ios — two edits apart — because the
+        # bar did not scale with the word's length, and distance alone cannot
+        # tell a stem from a slip.
         def closest_command(name)
-          best = @commands.keys.min_by { |k| levenshtein(k, name) }
-          return unless best && levenshtein(best, name) <= [name.length, 3].min
+          return if name.to_s.empty?
 
-          best
+          stem = @commands.keys.select { |k| k.start_with?(name) || name.start_with?(k) }
+                             .min_by(&:length)
+          return stem if stem
+
+          @commands.keys.map { |k| [levenshtein(k, name), k] }
+                   .select { |distance, _| distance <= allowed_distance(name) }
+                   .min_by { |distance, k| [distance, k.start_with?(name[0, 1]) ? 0 : 1, k] }
+                   &.last
+        end
+
+        # Short words forgive less: one edit is already a third of "mov", while
+        # three edits in "capabilities" is still recognisably the same word.
+        def allowed_distance(name)
+          case name.length
+          when 0..3 then 1
+          when 4..7 then 2
+          else 3
+          end
         end
 
         def levenshtein(a, b)

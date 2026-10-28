@@ -245,7 +245,7 @@ module Master
         forbidden = design.dig("pixel_perfection", "forbidden_css")
         return if Array(forbidden).empty?
 
-        "Forbidden CSS: #{Array(forbidden).join(', ')} -- flat UI only; exceptions need a documented, scoped reason (design_rules.pixel_perfection.exception_policy)."
+        "Forbidden CSS: #{Array(forbidden).join(', ')} — flat UI only; exceptions need a documented, scoped reason (design_rules.pixel_perfection.exception_policy)."
       end
 
       # laws.yml markdown_style was codified for MASTER and the three coding
@@ -267,7 +267,7 @@ module Master
         beauty = @laws.data(:rules)["beauty"]
         return unless beauty.is_a?(Hash) && !beauty.empty?
 
-        "Aesthetic touchstones: #{beauty.keys.join(', ')} (rules.beauty) -- cite these for conceptual design judgment design_laws.yml can't measure lexically."
+        "Aesthetic touchstones: #{beauty.keys.join(', ')} (rules.beauty) — cite these for conceptual design judgment design_laws.yml can't measure lexically."
       end
     end
   end

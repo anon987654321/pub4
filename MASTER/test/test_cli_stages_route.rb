@@ -24,7 +24,24 @@ class TestCliStagesRoute < Minitest::Test
     result = route("status", "review", "rollback").call(command("stauts"))
 
     refute result.ok?
-    assert_equal "unknown command: /stauts -- did you mean /status?", result.message
+    assert_equal "unknown command: /stauts — did you mean /status?", result.message
+  end
+
+  # A shared stem is not an edit distance: /movie is a spelling of /mov, and
+  # the old distance-only table answered /ios for /mov because two edits fit
+  # any three-letter word.
+  def test_a_stem_suggests_its_command_before_distance_runs
+    result = route("mov", "ios", "review").call(command("movie"))
+
+    refute result.ok?
+    assert_equal "unknown command: /movie — did you mean /mov?", result.message
+  end
+
+  def test_a_short_typo_does_not_suggest_across_the_alphabet
+    result = route("mov", "ios").call(command("moc"))
+
+    refute result.ok?
+    assert_equal "unknown command: /moc — did you mean /mov?", result.message
   end
 
   def test_nothing_close_enough_suggests_nothing

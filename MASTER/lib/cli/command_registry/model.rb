@@ -122,7 +122,7 @@ module Master
                    "fail=#{row[:failures]} success=#{(row[:rate] * 100).round(1)}% avg_ok=#{average}"
         end
         hidden = measured.size - 30
-        lines << "  ... #{hidden} more models" if hidden.positive?
+        lines << "  … #{hidden} more models" if hidden.positive?
         lines.join("\n")
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "command_registry.model_health")

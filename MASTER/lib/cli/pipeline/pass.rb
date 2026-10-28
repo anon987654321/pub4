@@ -98,10 +98,11 @@ module Master
         # would double them and blow the pass budget — and the RAILS rendered
         # half stays with the ladder, which already reaches the deploy host's
         # browser.
-        STAGES = %w[fix critique map].freeze
+        STAGES = %w[fix critique map style].freeze
         # A NameError or TypeError is a MASTER defect, not a target finding; formatting it into the report hid live crashes.
         DEFECT_ERRORS = [NameError, TypeError].freeze
-        STAGE_ALIASES = { "converge" => "fix", "council" => "critique" }.freeze
+        STAGE_ALIASES = { "converge" => "fix", "council" => "critique", "cosmetic" => "style",
+                          "typography" => "style" }.freeze
 
         def call(target: nil, apply: nil, critique: nil, aesthetic: true, only: nil, cancellation: nil)
           resolved = resolve_target(target)
@@ -144,6 +145,7 @@ module Master
           end
           sections.concat(guarded_fix_sections(resolved:, shell:, posture:, aesthetic:, critique:)) if run?("fix")
           sections << ["scorecard", scorecard_line] if @scored
+          sections << style_section(shell) if run?("style")
           sections << ["council", COUNCIL_OFFER] if offer_council?(critique)
           sections << critique_section(resolved, shell) if critique && run?("critique") && !run?("fix")
           sections << ["principle map", log_phase("map0", "principle_map", nil) { map_line }] if run?("map")
@@ -151,6 +153,15 @@ module Master
         end
 
         COUNCIL_OFFER = "not run during /fix; /critique convenes it on this result"
+
+        # The typographic law's audit half: the marks the operator-facing
+        # strings actually wear. It reads, never writes — a mark set wrong is
+        # named so a repair can set it right.
+        def style_section(shell)
+          ["style", log_phase("style0", "typography", "path=#{shell}") do
+            Master::Fix::TypographyAudit.new(root: @root).call
+          end]
+        end
 
         def scorecard_line
           counts = @observation_totals.values_at("obs0", "obs1")
@@ -376,7 +387,8 @@ module Master
 
         def dmesg_boot(resolved, posture, apply, critique, aesthetic)
           stages = [("aesthetic" if aesthetic && run?("fix")), ("fix" if run?("fix")),
-                    ("critique" if critique && run?("critique")), ("map" if run?("map"))].compact.join(", ")
+                    ("critique" if critique && run?("critique")), ("map" if run?("map")),
+                    ("style" if run?("style"))].compact.join(", ")
           Master::Trace::Dmesg.attach(@unit, "master0",
             "#{resolved}, #{apply ? "writes" : "read-only"}, #{stages}")
           Master::Trace::Dmesg.attach(

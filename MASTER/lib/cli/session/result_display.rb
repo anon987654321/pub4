@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../capability_stamp"
+require_relative "../../voice/typography"
 
 module Master
   module CLI
@@ -22,15 +23,23 @@ module Master
           @exit_code = exit_code_for(err)
           return exit_cli if err.category == :shutdown
 
-          Master::Trace::Dmesg.status("err0", format_error_message(err))
+          print_error(err)
         end
       end
 
-      # The error and nothing else, on one line. The category sets the exit
-      # code; a playbook lesson on another subject is noise beside an error.
-      def format_error_message(err)
+      # One line for a one-line error; its own lines for a structured one. The
+      # fold reports as header, turn evidence and summary — flattened into a
+      # ribbon and cut mid-word, that evidence was unreadable, which is a
+      # second error on top of the first.
+      def print_error(err)
         text = err.message.to_s
-        text.length <= ERROR_TEXT_MAX_CHARS ? text : "#{text[0, ERROR_TEXT_MAX_CHARS - 1]}…"
+        return Master::Trace::Dmesg.status("err0", bounded_line(text)) if text.lines.one?
+
+        Master::Trace::Dmesg.block("err0", text)
+      end
+
+      def bounded_line(text)
+        Master::Voice::Typography.ellipsis(text.gsub(/\s+/, " ").strip, ERROR_TEXT_MAX_CHARS)
       end
 
       def display_ok(ok:, accumulated:, streamed:)

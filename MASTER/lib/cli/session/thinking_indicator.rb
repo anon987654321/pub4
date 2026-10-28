@@ -2,6 +2,7 @@
 
 require "tty-screen"
 require_relative "../stream_accumulator"
+require_relative "../../voice/typography"
 
 module Master
   module CLI
@@ -316,10 +317,12 @@ module Master
       # The spinner repaints with \r\e[K, which clears one row. A line wider
       # than the screen wraps onto a second row that nothing clears, and every
       # tick left another copy behind it. Unit lines are printed once and may
-      # wrap.
+      # wrap. The spinner's own row cuts at a word's edge on one ellipsis.
       def one_row(text)
         width = TTY::Screen.width - 1
-        text.length > width ? "#{text[0, width - 3]}..." : text
+        return text unless width.positive? && text.length > width
+
+        Master::Voice::Typography.ellipsis(text, width)
       rescue StandardError
         text
       end

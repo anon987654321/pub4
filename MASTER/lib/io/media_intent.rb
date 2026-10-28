@@ -9,6 +9,7 @@ require_relative "../../contracts/studio"
 require_relative "script_dispatch"
 require_relative "natural_intent"
 require_relative "lora_intent"
+require_relative "mov"
 
 module Master
   module Io
@@ -78,6 +79,7 @@ module Master
 
       def handles?(text)
         return false if text.match?(ADVICE_RE) || text.match?(DISCUSSION_RE)
+        return true if Mov.handles?(text)
 
         LoraIntent.handles?(text) || reference_audio_request?(text) || reference_followup_request?(text) || text.match?(INDUSTRIAL_TECHNO_RE) || text.match?(TECHNO_TRACK_RE) || text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || text.match?(LIVE_AUDIO_STOP_RE) || live_synth?(text) || POSTPRO_CAPABILITY_RE.match?(text) ||
           text.match?(BACKGROUND_MUSIC_RE) || text.match?(LIVE_AUDIO_DIAGNOSTIC_RE) || text.match?(AUDIO_RE) || postpro_intent?(text) ||
@@ -85,6 +87,7 @@ module Master
       end
 
       def dispatch(text, root: MasterPaths.root, bus: nil)
+        return Mov.dispatch(text) if Mov.handles?(text)
         return LoraIntent.dispatch(text, root:) if LoraIntent.handles?(text)
         if reference_audio_request?(text)
           return analyze_and_generate_reference(text, root:) if reference_generation_request?(text)
@@ -386,7 +389,8 @@ module Master
       end
 
       def repeatable?(text)
-        text.match?(PLAY_LAST_RE) ||
+        Mov.repeatable?(text) ||
+          text.match?(PLAY_LAST_RE) ||
           text.match?(LIVE_MUSIC_RE) ||
           text.match?(SYNTH_RE) && text.match?(LIVE_RE) && !text.match?(FILE_RE) ||
           live_synth?(text) && text.match?(LIVE_RE)

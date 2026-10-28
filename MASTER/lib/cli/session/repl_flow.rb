@@ -128,12 +128,24 @@ module Master
         prompt
       end
 
-      # The state line prints only when it moves, so the prompt stays one shape.
+      # The state line prints only when its meaning moves, so the prompt keeps
+      # one shape. Token drift is not news: the context count moves with every
+      # turn, and a line that moved for that alone repainted the same fact.
+      # Lane, model, violations and error are the meaning; the count rides
+      # along whenever the line prints at all.
+      STATE_TOKEN_COUNT = /\s+\d+(?:\.\d+)?[kM]\/\d+(?:\.\d+)?[kM](?=, |\z)/
+
       def announce_state(state)
-        return if state.nil? || state == @announced_state
+        return if state.nil? || same_state_meaning?(state, @announced_state)
 
         @announced_state = state
         terminal_puts(state)
+      end
+
+      def same_state_meaning?(state, previous)
+        return false if previous.nil?
+
+        state.to_s.sub(STATE_TOKEN_COUNT, "") == previous.to_s.sub(STATE_TOKEN_COUNT, "")
       end
 
       # An empty line does nothing, as in a shell: Enter never runs an action

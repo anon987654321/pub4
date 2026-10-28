@@ -20,7 +20,7 @@ module Master
 
       def render(section = nil)
         keys = section.to_s.empty? ? SECTIONS : [section.to_sym].select { |k| SECTIONS.include?(k) }
-        return "diag: unknown section -- valid: #{SECTIONS.join(", ")}" if keys.empty?
+        return "diag: unknown section — valid: #{SECTIONS.join(", ")}" if keys.empty?
         lines = []
         lines.concat(keys.flat_map { |k| send("section_#{k}") })
         lines.join("\n")
@@ -36,14 +36,14 @@ module Master
       end
 
       def section_drives
-        return ["drives: -- (no homeostat)"] unless @homeostat
+        return ["drives: — (no homeostat)"] unless @homeostat
         return [@homeostat.summary] if @homeostat.respond_to?(:summary)
 
         ["drives: #{@homeostat.to_h}"]
       end
 
       def section_breaker
-        return ["breaker: -- (no breaker)"] unless @breaker
+        return ["breaker: — (no breaker)"] unless @breaker
         open = @breaker.open_models
         total = @breaker.respond_to?(:session_total) ? @breaker.session_total.to_f : 0.0
         ["breaker: session=$#{format('%.4f', total)} open=(#{open.empty? ? "" : open.join(",")})"]
@@ -62,13 +62,13 @@ module Master
       end
 
       def section_laws
-        return ["laws: -- (no registry)"] unless @registry
+        return ["laws: — (no registry)"] unless @registry
         count = @registry.respond_to?(:registry) ? @registry.registry.size : 0
         ["laws: #{count} registered"]
       end
 
       def section_ring
-        return ["ring: -- (no logging)"] unless @logging
+        return ["ring: — (no logging)"] unless @logging
         tail = @logging.dmesg(RING_LINES).lines.map(&:chomp).reject(&:empty?)
         ["ring (last #{tail.size}):", *tail.map { |l| "  #{l}" }]
       end

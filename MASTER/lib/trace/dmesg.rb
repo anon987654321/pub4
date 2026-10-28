@@ -4,6 +4,7 @@ require "set"
 # DmesgUnit names each event component's unit. It lives in logging.rb, and no
 # autoload reaches it by that name.
 require_relative "logging"
+require_relative "../voice/typography"
 
 module Master
   module Trace
@@ -113,6 +114,28 @@ module Master
       def status(unit, msg, io: $stdout)
         Master::Fix::RunBudget.note_output(unit, msg) if defined?(Master::Fix::RunBudget)
         emit("#{unit}: #{msg}", io:)
+      end
+
+      # A multi-line message keeps its lines. emit flattens whitespace by
+      # design — one fact per line means the caller owns the lines — so a
+      # structured report hands its lines over one by one, each attached to
+      # the same unit, the way Report.print attaches prose to a command's
+      # unit. The fold's evidence read as one 200-character ribbon when this
+      # did not exist; flattened by emit, then truncated again by the caller,
+      # twice destroyed.
+      def block(unit, text, io: $stdout)
+        lines = text.to_s.scrub.delete("\r").split("\n", -1)
+        lines.each_with_index do |line, index|
+          body = line.strip
+          next emit("", io:) if body.empty?
+
+          if index.zero?
+            status(unit, body, io:)
+          else
+            emit("#{unit}: #{body}", io:)
+          end
+        end
+        nil
       end
 
       # A line that ends in what is known about its gap: whether it resolves on
@@ -717,7 +740,7 @@ module Master
 
         def clip(text, limit = DETAIL_CHARS)
           flat = text.to_s.gsub(/\s+/, " ").strip
-          flat.length > limit ? "#{flat[0, limit - 1]}…" : flat
+          Master::Voice::Typography.ellipsis(flat, limit)
         end
       end
     end

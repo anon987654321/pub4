@@ -386,7 +386,7 @@ module Master
 
       def summarize_message(msg)
         content = msg[:content].to_s.gsub(/\s+/, " ").strip
-        summary = content.bytesize > SUMMARY_MAX_CHARS ? "#{content.byteslice(0, SUMMARY_MAX_CHARS)}..." : content
+        summary = content.bytesize > SUMMARY_MAX_CHARS ? "#{content.byteslice(0, SUMMARY_MAX_CHARS)}…" : content
         msg.merge(content: "[summary] #{summary}", summarized: true)
       end
 

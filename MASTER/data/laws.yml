@@ -164,6 +164,24 @@ visual_identity_contract:
     required: [canonical_tokens, generated_artifact_sync, executable_law_fixtures, contrast, semantic_states, reduced_motion, reduced_motion_runtime, aggregate_render_budget, renderer_lifecycle, render_state_regression, device_performance_evidence, typography_roles, product_dialect_contracts, media_fidelity, narrow_and_wide_screens, rendered_screenshots, original_brand_assets, ux_refinement_catalog, cli_prompt_contract, input_recovery, browser_reconnection, visible_status, keyboard_accessibility, terminal_modes]
     evidence: "Record commit, generator/test output, viewport dimensions and before/after screenshots; source inspection alone is not visual proof."
 
+# Typographic law, after Robert Bringhurst's The Elements of Typographic Style:
+# typography exists to honour content. The executable counterparts are
+# lib/voice/typography.rb (the cut), Renderer#beautify (the marks) and the
+# style stage of the /fix pass (the audit).
+
+typography:
+  source: "Robert Bringhurst, The Elements of Typographic Style"
+  applies_to: [terminal, prose, cli, docs]
+  rules:
+    - measure: 45-75 characters, 66 where one number must serve; a surface picks one measure and keeps it — terminal prose wraps at 72
+    - rhythm: word space is the smallest unit of rhythm; one space between sentences; blank lines separate blocks and never pad them
+    - line_breaks: break at word boundaries; a ragged edge is a shape, not a saw; a cut ends on one true ellipsis at the last boundary the budget allows
+    - punctuation: one true mark per meaning — "…" not "...", "—" for the aside, "–" for the range; straight quotes only where a machine reads the line
+    - figures: lining figures, as the machine counted them — 1.0M, 45.2s, 3 of 5; no decorative separators
+    - scale: two weights on a terminal, plain and dim; emphasis is structural, never louder
+    - alignment: columns align only where a column exists; prose is never justified and never space-padded into a fake table
+    - content_first: typography honours content; a surface that needs decoration to be read is a surface that needs editing instead
+
 prose:
   en:
     # Which files each language is spoken in is the Laws' own reach, held on

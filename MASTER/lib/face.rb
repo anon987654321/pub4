@@ -47,14 +47,21 @@ module Master
 
       # The OpenBSD Operator prompt, host:path$, e.g. vm23:~/pub4$. One shape
       # for the terminal and the web face; the path is home-relative and keeps
-      # its last segments when it must be shortened.
+      # its last segments when it must be shortened. Comfort scales the same
+      # way a shell's does: the host is its first name, and a deep path
+      # narrows to where you are standing rather than reciting the road.
+      HOST_MAX = 8
+      PATH_SOFT_MAX = 24
+
       def shell_prompt(path: Master.repo_root, host: Socket.gethostname, root: Master::ROOT)
-        name = host.to_s.split(".").first.to_s
+        name = host.to_s.split(".").first.to_s.split("-").first.to_s[0, HOST_MAX]
         name = "openbsd" if name.empty?
         home = Dir.home
         dir = path.to_s == home ? "~" : path.to_s.sub(%r{\A#{Regexp.escape(home)}/}, "~/")
         budget = [prompt_max(root:) - name.length - 3, 1].max
-        dir = "~/.../#{dir.split('/').last(2).join('/')}" if dir.length > budget && dir.count("/") > 2
+        if dir.length > PATH_SOFT_MAX && dir.count("/") > 2
+          dir = "~/.../#{dir.split('/').last(2).join('/')}"
+        end
         dir = dir[-budget, budget] if dir.length > budget
         "#{name}:#{dir}$"
       end

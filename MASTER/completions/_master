@@ -21,6 +21,7 @@ _master() {
     'ios:start iOS/PWA onboarding'
     'laws:the declared laws, one line each'
     'model:show or switch the active model, inspect laboratory outcomes, and connect its subscriptions'
+    'mov:find and download films and series from the free, legal collections, into ~/Downloads'
     'narrate:story narration of what MASTER is doing, on by default'
     'bard:lyrical telling of what MASTER is doing, on by default'
     'reload:restart the current session in place'

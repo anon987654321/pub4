@@ -127,14 +127,30 @@ module Master
       private
 
       # All operator-facing writes share Dmesg's mutex. If an async turn writes
-      # while Reline is editing the next prompt, repaint the editable line after
-      # the output rather than leaving tokens inside the draft.
+      # while Reline is editing the next prompt, the message lands on a row of
+      # its own and the editable line is rebuilt beneath it — zsh's own rule.
+      # A write that used to append at the cursor printed its text after the
+      # prompt glyphs, so "master$ Welcome back." read as a reply typed into
+      # the shell.
       def terminal_write(io: $stdout, &block)
         Master::Trace::Dmesg.terminal_write(io:) do |target|
           clear_reserved_activity_row(target) if io.equal?($stdout)
+          clear_prompt_row(target) if io.equal?($stdout)
           block.call(target)
           redraw_active_input if io.equal?($stdout) && @reading_input
         end
+      end
+
+      # One clear, not a repaint: Reline owns the draft's pixels and rebuilds
+      # them through redisplay. Only a terminal row may be cleared; pipes and
+      # logs pass untouched.
+      def clear_prompt_row(target)
+        return unless @reading_input && target.respond_to?(:tty?) && target.tty?
+
+        target.print("\r\e[K")
+        target.flush if target.respond_to?(:flush)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.prompt_row.clear", event_bus: @refs.bus)
       end
 
       def redraw_active_input

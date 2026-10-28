@@ -69,7 +69,7 @@ module Master
 
         return text if text.bytesize <= MAX_DIFF_BYTES
 
-        "#{text.byteslice(0, MAX_DIFF_BYTES).scrub}\n... [truncated]"
+        "#{text.byteslice(0, MAX_DIFF_BYTES).scrub}\n… [truncated]"
       end
 
       def tribunal_summary(feedback)

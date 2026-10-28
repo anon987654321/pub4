@@ -14,6 +14,7 @@ module Master
       # location, Git state, phase and textual input state without decoration.
       module PromptComponents
         TOKEN_KILO_THRESHOLD = 1000
+        TOKEN_MEGA_THRESHOLD = 1_000_000
         PROMPT_PATH_MAX = 44
         PROMPT_GIT_CACHE_S = 0.25
         PROMPT_MAX_CHARS = Master::Face::Contract.prompt_max
@@ -117,7 +118,13 @@ module Master
           return "0" unless tokens&.positive?
 
           value = tokens.to_i
-          value >= TOKEN_KILO_THRESHOLD ? format("%.1fk", value / 1000.0) : value.to_s
+          if value >= TOKEN_MEGA_THRESHOLD
+            format("%.1fM", value / TOKEN_MEGA_THRESHOLD.to_f)
+          elsif value >= TOKEN_KILO_THRESHOLD
+            format("%.1fk", value / TOKEN_KILO_THRESHOLD.to_f)
+          else
+            value.to_s
+          end
         end
 
         def context_label(tokens, model = @config["model"])

@@ -21,6 +21,8 @@ module Master
             "--trace expands the redacted event payload; --normal and --quiet reduce output;",
             "MASTER_CLI_QUIET=1 silences the unit lines in the interactive CLI.",
             "--dry-run stops after the reading and says what it would take on.",
+            "--only style (cosmetic, typography) runs the typographic audit alone: the",
+            "marks the operator-facing strings wear, against laws.yml#typography.",
             "On a target inside one RAILS app, /fix then runs the layout loop on that app:",
             "bin/operator design, whose kept edits are local commits for you to review.",
             "There is no /scan: observation is where a fix starts, not a command.",
@@ -60,6 +62,16 @@ module Master
             "/play <progression> [drum pattern] — name either, or both; `ruby STUDIO/dilla/dilla.rb --list` prints the names.",
             "Bare /play renders the same arrangement as `ruby STUDIO/dilla/dilla.rb`; named progression requests use the Dilla pocket at 92 BPM unless an explicit or reference tempo applies.",
             "Each audition writes a distinct dated WAV and leaves reference dilla.wav and dilla_norsk.wav untouched.",
+          ],
+        },
+        "mov" => {
+          summary: "find and download films and series from the free, legal collections, into ~/Downloads",
+          detail: [
+            "/mov — discover recent additions to the free film and classic television collections.",
+            "/mov <words> — search titles; \"new\" sorts by what the archive added lately, \"a bunch\" means five.",
+            "Sources are the Internet Archive's public-domain and free-culture collections; a YouTube or Vimeo link",
+            "handed over with the request goes to yt-dlp when the machine has it. Commercial titles are said so, honestly.",
+            "Plain speech routes here too: \"grab us a few new movies\" and \"find and download a movie\" need no slash.",
           ],
         },
         "support" => {
@@ -392,7 +404,7 @@ module Master
         "face" => "interface", "voice" => "interface", "narrate" => "interface", "bard" => "interface",
         "reload" => "session", "incident" => "session",
         "size" => "interface",
-        "play" => "media", "android" => "media", "ios" => "media",
+        "play" => "media", "mov" => "media", "android" => "media", "ios" => "media",
         "support" => "review",
         "soul" => "constitution", "help" => "help", "exit" => "session", "quit" => "session"
       }.freeze

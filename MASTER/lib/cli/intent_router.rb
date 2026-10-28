@@ -13,6 +13,10 @@ module Master
         run_sound_review: %w[sound review audio critique listen],
         design_frontend: %w[frontend stylesheet stylesheets css scss landing homepage hero typography palette markup],
         run_ui_review: %w[ui critique design visual look review],
+        # A film or series request belongs to the media lane (Io::Mov), never
+        # to the coding Fold. The words are specific enough to score without
+        # swallowing a sentence about anything else.
+        fetch_media: %w[movie movies film films flick flicks series episodes episode],
         generate_rails_pwa: %w[generate create new rails pwa app scaffold blank],
         refactor_rails_app: %w[refactor upgrade migrate modernize rails hotwire turbo stimulus],
         redesign_mobile_pwa: %w[redesign mobile touch layout responsive accessibility],
@@ -74,7 +78,7 @@ module Master
         low: %i[
           codify_policy refactor_to_ruby create_facade apply_user_style_rules
           run_sound_review run_ui_review audit_rails_pwa generate_rails_pwa redesign_mobile_pwa
-          inspect_repo diagnose_behaviour run_relevant_tests
+          inspect_repo diagnose_behaviour run_relevant_tests fetch_media
         ],
         medium: %i[
           design_frontend wire_existing_module verify_patch_landed continue_prior_plan prefer_ruby refactor_rails_app

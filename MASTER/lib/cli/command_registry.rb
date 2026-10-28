@@ -43,6 +43,7 @@ module Master
           "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
           "plugin" => command(:dispatch_plugin),
           "play" => command(:dispatch_play, d[:root]),
+          "mov" => command(:dispatch_mov, d[:root]),
           "support" => command(:dispatch_support, d[:agent], d[:root]),
           "screen" => command(:dispatch_screen, root),
           "android" => command(:dispatch_android, root),
@@ -218,6 +219,17 @@ module Master
         arg = arg_for(ctx).to_s.strip
         result = Master::Io::MediaIntent.play_live_music(arg, root:)
         result.ok? ? result.value![:rendered].to_s : result.message.to_s
+      end
+
+      # /mov — find and download films and series from the free, legal
+      # collections. Bare /mov discovers recent additions; /mov <words> searches
+      # titles; "new" and "a bunch" are read the way a person says them. The
+      # downloads land in ~/Downloads, so the repo root is not a parameter the
+      # tool needs.
+      def dispatch_mov(_root, ctx: nil)
+        arg = arg_for(ctx).to_s.strip
+        result = Master::Io::Mov.dispatch(arg)
+        result.ok? ? result.value![:output].to_s : result.message.to_s
       end
 
       def dispatch_auth(ctx: nil)

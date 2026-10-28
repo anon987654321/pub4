@@ -61,7 +61,7 @@ module Master
         def render_clean
           lines = []
           lines << phase_line if phase_line
-          lines << "#{prefix}#{header}clean -- no violations#{suffix}"
+          lines << "#{prefix}#{header}clean — no violations#{suffix}"
           lines << delta_line if delta_line
           lines << autofix_line if autofix_line
           lines.join("\n")
