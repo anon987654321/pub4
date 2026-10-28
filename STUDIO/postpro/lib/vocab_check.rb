@@ -164,7 +164,7 @@ def vocab_check
   # Generated files pass through because they have no EXIF body; a real camera
   # source must not get a different negative because it arrived via one-shot,
   # watch, uplift, or a stock comparison.
-  camera_paths = %w[process_file run_uplift run_one_shot grade_watched run_stock_sheet].reject do |name|
+  camera_paths = %w[process_file run_uplift run_one_shot run_watch grade_watched run_stock_sheet].reject do |name|
     postpro_method_reaches?(source_methods, name, "camera_corrected", calls: calls_by_method)
   end
   unless camera_paths.empty?
