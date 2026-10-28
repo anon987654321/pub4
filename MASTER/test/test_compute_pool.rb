@@ -53,7 +53,47 @@ class TestComputePool < Minitest::Test
     assert_equal 1.0, @pool.send(:task_factor, candidate, :unknown_task)
   end
 
+  def test_ollama_remains_local_fallback_only
+    policy = Master.load_yaml(File.join(Master::ROOT, "data", "models.yml"))
+    local_ids = policy.fetch("models").fetch("local").map { |row| row.fetch("id") }
+
+    assert_includes local_ids, "ollama:gemma3:4b"
+    %w[default primary strong].each do |tier|
+      ids = policy.fetch("models").fetch(tier).map { |row| row.fetch("id") }
+      refute_includes ids, "ollama:gemma3:4b", "#{tier} must not promote the constrained Ollama lane"
+    end
+  end
+
   def test_models_configuration_declares_task_specific_strengths
+    policy = Master.load_yaml(File.join(Master::ROOT, "data", "models.yml"))
+    strengths = policy.fetch("task_strengths")
+
+    assert_includes strengths.fetch("code_generation"), "coding"
+    assert_includes strengths.fetch("architecture"), "reasoning"
+    assert_includes strengths.fetch("chitchat"), "fast"
+  end
+
+  def test_snapshot_is_independent
+    @pool.record(model: "ollama:qwen3.5:27b", status: :success, latency_ms: 100)
+    copy = @pool.snapshot
+    copy.fetch("ollama:qwen3.5:27b")[:calls] = 99
+
+    assert_equal 1, @pool.snapshot.fetch("ollama:qwen3.5:27b")[:calls]
+  end
+
+  def test_inventory_reports_live_models_and_telemetry
+    @pool.record(model: "ollama:qwen3.5:27b", status: :success, latency_ms: 100)
+
+    row = @pool.inventory(task_type: :code_generation).first
+
+    assert_equal "ollama:qwen3.5:27b", row[:id]
+    assert_equal 1, row[:rank]
+    assert_equal "local", row[:lane]
+    assert_equal 1.0, row[:success_rate]
+    assert_equal 100.0, row[:latency_ms]
+    assert_equal :available, row[:quota_state]
+  end
+end
     policy = Master.load_yaml(File.join(Master::ROOT, "data", "models.yml"))
     strengths = policy.fetch("task_strengths")
 
