@@ -329,6 +329,18 @@ class TraceLogAppendJsonlTest < Minitest::Test
     end
   end
 
+  def test_event_recent_returns_the_requested_tail_in_order
+    Dir.mktmpdir("trace-event-reader-tail-") do |root|
+      event_log = Master::Trace::Log::Event.new(root:)
+      5.times { |index| event_log.append("fixture_#{index}", index:) }
+
+      rows = event_log.recent(3)
+
+      assert_equal %w[fixture_2 fixture_3 fixture_4], rows.map { |row| row.fetch("event") }
+      assert_equal [2, 3, 4], rows.map { |row| row.dig("payload", "index") }
+    end
+  end
+
   def test_event_recent_refuses_a_symlinked_log
     Dir.mktmpdir("trace-event-reader-symlink-") do |root|
       Dir.mktmpdir("trace-event-reader-target-") do |outside|
