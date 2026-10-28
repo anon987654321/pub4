@@ -26,10 +26,7 @@ fi
 
 if [ -d "$dir/.git" ]; then
   actual_origin="$(git -C "$dir" remote get-url origin 2>/dev/null || true)"
-  case "$actual_origin" in
-    "$expected_repo"|"https://github.com/anon987654321/pub4"|"git@github.com:anon987654321/pub4.git"|"ssh://git@github.com/anon987654321/pub4.git") ;;
-    *) fail "Existing checkout origin does not match pub4 (found ${actual_origin:-<none>})." ;;
-  esac
+  [ "$actual_origin" = "$expected_repo" ] || fail "Existing checkout origin must be the canonical HTTPS URL (found ${actual_origin:-<none>})."
 fi
 
 printf 'mobile0: preflight PASS; updating Termux packages\n'

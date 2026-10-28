@@ -62,11 +62,14 @@ module Master
       end
 
       def state_dir_secure?
-        dir = File.join(@root, ".master", "mobile")
+        parent = File.join(@root, ".master")
+        dir = File.join(parent, "mobile")
+        return false if File.symlink?(parent) || File.symlink?(dir)
+
         FileUtils.mkdir_p(dir, mode: 0o700)
         File.chmod(0o700, dir)
-        stat = File.stat(dir)
-        stat.directory? && (stat.mode & 0o077).zero? && File.writable?(dir)
+        stat = File.lstat(dir)
+        stat.directory? && !stat.symlink? && (stat.mode & 0o077).zero? && File.writable?(dir)
       rescue SystemCallError
         false
       end
