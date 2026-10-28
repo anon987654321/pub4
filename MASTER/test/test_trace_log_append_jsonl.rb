@@ -123,7 +123,7 @@ class TraceLogAppendJsonlTest < Minitest::Test
     end
   end
 
-  def test_refuses_a_hard_linked_lock_without_chmodifying_its_target
+  def test_refuses_a_hard_linked_lock_without_changing_target_permissions
     Dir.mktmpdir("trace-jsonl-lock-hardlink-") do |dir|
       path = File.join(dir, "events.ndjson")
       target = File.join(dir, "lock-target")
