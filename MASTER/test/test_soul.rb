@@ -138,12 +138,12 @@ class TestSoul < Minitest::Test
       soul = Master::Voice::Soul.new(root: @root, agent: Agent.new(draft))
       soul.propose("clarify")
 
-      reply = soul.approve
+      reply = with_terminal_yes { soul.approve }
       head = git("rev-parse", "--short", "HEAD").strip
 
       assert_equal "soul updated in #{head}", reply
       assert_equal draft.strip, File.read(File.join(@root, "data", "SOUL.md"))
-      assert_match(/\A#{head} \S+ soul: evolution protocol update/, soul.changelog)
+      assert_match(/\A#{head} \S+ Soul: evolution protocol update/, soul.changelog)
     end
   end
 
@@ -162,10 +162,33 @@ class TestSoul < Minitest::Test
       soul = Master::Voice::Soul.new(root: @root, agent: Agent.new("#{DOCUMENT}\nA small clarification.\n"))
       soul.propose("clarify")
 
-      assert_match(/\Asoul updated in /, soul.approve)
+      assert_match(/\Asoul updated in /, with_terminal_yes { soul.approve })
       assert_equal "data/SOUL.md\n", git("show", "--name-only", "--format=", "HEAD")
       assert_equal "theirs.rb\n", git("diff", "--cached", "--name-only")
     end
+  end
+
+  # SOUL.md is sacred: with no person at a terminal to say yes (a web request, a
+  # script), approval writes the file and commits nothing.
+  def test_approve_without_a_terminal_yes_commits_nothing
+    with_git_identity do
+      git("init", "-q")
+      git("add", "data/SOUL.md")
+      git("commit", "-q", "-m", "seed")
+      soul = Master::Voice::Soul.new(root: @root, agent: Agent.new("#{DOCUMENT}\nA small clarification.\n"))
+      soul.propose("clarify")
+
+      reply = Master::Io::GitOperations.stub(:confirm_at_terminal, nil) { soul.approve }
+
+      assert_match(/not committed/, reply)
+      assert_equal "seed", git("log", "-1", "--format=%s").strip
+    end
+  end
+
+  # The operator's yes at the terminal, as confirm_at_terminal returns it.
+  def with_terminal_yes(&)
+    yes = ->(paths, **) { Master::Io::GitOperations::OperatorConfirmation.new(paths:) }
+    Master::Io::GitOperations.stub(:confirm_at_terminal, yes, &)
   end
 
   GIT_IDENTITY = %w[GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL].freeze

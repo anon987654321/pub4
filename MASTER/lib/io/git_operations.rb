@@ -8,6 +8,19 @@ module Master
   module Io
     # GitOperations — git wrappers scoped to a repository root.
     class GitOperations
+      # A person's yes, typed at a terminal, to committing these sacred paths once. It is the
+      # guard's one exception, so `soul approve` commits through the same door as every other
+      # writer instead of beside it. Only `confirm_at_terminal` should make one; nothing
+      # automated has a terminal to answer.
+      OperatorConfirmation = Data.define(:paths)
+
+      def self.confirm_at_terminal(paths, input: $stdin, output: $stdout)
+        return unless input.tty?
+
+        output.print "commit #{paths.join(", ")}, which automation may not write? [y/N] "
+        input.gets.to_s.strip.casecmp?("y") ? OperatorConfirmation.new(paths: paths.map(&:to_s).freeze) : nil
+      end
+
       # State-changing git commands (add, commit, push, the rebase a rejected push
       # needs), kept apart from the read-only status and inspection queries.
       module Mutations
@@ -16,18 +29,18 @@ module Master
         # every session in this checkout, so committing it signs their staged
         # work with this message. A refused add or commit raises: a pre-commit
         # hook that said no used to read as a commit.
-        def commit(message, paths:)
+        def commit(message, paths:, confirmed: nil)
           Master::Ground::LawHandshake::Admission.require!
           scoped = scoped_paths(paths)
           raise ArgumentError, "git commit needs paths: an unscoped commit takes the shared index" if scoped.empty?
 
           commit_message = normalize_commit_message(message)
           # Refused before the add, so a refusal leaves nothing staged in the shared index.
-          refuse_sacred!(["commit", "--", *scoped])
+          refuse_sacred!(["commit", "--", *scoped], confirmed:)
           with_pathspec_file(scoped) do |pathspec_file|
             git!("add", "--pathspec-from-file=#{pathspec_file}", "--pathspec-file-nul")
             git!("commit", "-m", commit_message, "-m", Master::Core::World::COMMIT_TRAILER,
-                 "--pathspec-from-file=#{pathspec_file}", "--pathspec-file-nul")
+                 "--pathspec-from-file=#{pathspec_file}", "--pathspec-file-nul", confirmed:)
           end
         end
 
@@ -106,9 +119,9 @@ module Master
         # Every write passes here, under the receipt the Fold's tool calls carry: a
         # durable before-event or no git, then an after-event with the outcome. The
         # receipt holds a digest of the arguments, never the message or the paths.
-        def git!(*args)
+        def git!(*args, confirmed: nil)
           Master::Ground::LawHandshake::Admission.require!
-          refuse_sacred!(args) if args.first == "commit"
+          refuse_sacred!(args, confirmed:) if args.first == "commit"
           receipt = receipts.before(tool: "git_#{args.first}", tier: "dangerous", args:)
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
           output, status = run_receipted(receipt, args, started)
@@ -138,11 +151,13 @@ module Master
         # one place a sacred path is refused, whichever writer left it changed; on 2026-10-12
         # an autofix edited laws.yml, and the guards in front of each writer were all the
         # protection there was. A person's own `git commit` never passes here.
-        def refuse_sacred!(args)
+        def refuse_sacred!(args, confirmed: nil)
           root = File.realpath(@root_path)
           paths = Master::Core::Constitution::Paths
+          allowed = Array(confirmed&.paths).map { |path| File.expand_path(path, root) }
 
-          refusal = committed_paths(args).lazy.filter_map { |path| paths.write_refusal(path, root:) }.first
+          refusal = committed_paths(args).reject { |path| allowed.include?(path) }
+                                         .lazy.filter_map { |path| paths.write_refusal(path, root:) }.first
           raise "git commit refused: #{refusal}" if refusal
         end
 

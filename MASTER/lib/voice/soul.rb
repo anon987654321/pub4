@@ -44,7 +44,7 @@ module Master
           File.unlink(@proposal_path)
           @soul = updated
           commit = commit_approval
-          commit ? "soul updated in #{commit}" : "soul updated (git commit failed)"
+          commit ? "soul updated in #{commit}" : "soul updated; not committed (needs your yes at the terminal)"
         rescue StandardError => e
           "approve error: #{e.message}"
         end
@@ -152,25 +152,22 @@ module Master
         changed.any? ? " [PROTECTED sections affected: #{changed.join(", ")}]" : ""
       end
 
-      # The short hash of the approval commit, or nil when git refused it.
+      # The short hash of the approval commit, or nil when it was not made.
       #
-      # SOUL.md is sacred, and GitOperations#git! refuses every runtime commit of a sacred
-      # path. This one does not pass there: `soul approve` is the operator's own act at the
-      # prompt, the amendment path soul.yml names, and it can only ever commit SOUL.md. The
-      # pathspec keeps whatever other sessions staged in the shared index out of it.
+      # SOUL.md is sacred, so the commit goes through GitOperations#commit like every other
+      # writer's, carrying the operator's yes from the terminal as the guard's one exception.
+      # With no terminal to ask (a web request), there is no yes and nothing is committed.
       def commit_approval
         relative = Pathname.new(@soul_path).relative_path_from(Pathname.new(@root)).to_s
-        _, add_status = Master::Io::Exec.capture2e("git", "-C", @root, "add", "--", relative)
-        return unless add_status.success?
+        confirmed = Master::Io::GitOperations.confirm_at_terminal([relative])
+        return unless confirmed
 
-        _, commit_status = Master::Io::Exec.capture2e(
-          "git", "-C", @root, "commit", "-m", "soul: evolution protocol update",
-          "-m", Master::Core::World::COMMIT_TRAILER, "--", relative
-        )
-        return unless commit_status.success?
-
-        head, head_status = Master::Io::Exec.capture2e("git", "-C", @root, "rev-parse", "--short", "HEAD")
-        head_status.success? ? head.strip : nil
+        git = Master::Io::GitOperations.new(@root)
+        git.commit("soul: evolution protocol update", paths: [relative], confirmed:)
+        git.head
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Soul.commit_approval")
+        nil
       end
 
       def previous_revision
