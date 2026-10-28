@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../kernel"
 require "digest"
 require "fileutils"
 require "open3"
@@ -40,13 +41,14 @@ module Master
                        laws:, agent:, scanner:, learnings:, preamble:,
                        clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil,
                        visual_pass: nil, opportunity_pass: nil, preflight: nil, discipline:, wishlist:,
-                       reference_graph: nil)
+                       reference_graph: nil, kernel: nil)
           @bus = bus
           @committer = committer
           @conflict_resolver = conflict_resolver
           @llm_router = llm_router
           @root = root
           @reference_graph = reference_graph
+          @kernel = kernel
           @resource_budget = ResourceBudget.new(root:)
           @agent = agent
           @scanner = scanner
@@ -168,6 +170,16 @@ module Master
 
         def cleanup_visual_runtime
           @visual_pass&.stop_runtime!
+        end
+
+        # Canonical repair policy has one implementation under Kernel. Standalone
+        # adapter tests keep their existing entry point but resolve to that same
+        # class identity rather than loading a parallel RepairLoop.
+        def build_repair_loop(**options)
+          return @kernel.build_repair_loop(**options) if @kernel
+
+          require_relative "../kernel/repair_adapter" unless defined?(Kernel::RepairAdapter)
+          Kernel::RepairAdapter.new(**options)
         end
 
         def violations(files)
