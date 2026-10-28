@@ -85,8 +85,8 @@ module Master
               "transfer_bytes" => @html.bytesize + @css.bytesize + @asset_bytes,
               "source_analyzed" => true,
               "static_layout_complete" => structural,
-              "layout_stability" => stability
-            }
+              "layout_stability" => stability,
+            },
           }
           {
             rendered: evidence,
@@ -100,8 +100,8 @@ module Master
               "collisions" => collisions,
               "diagnostics" => @diagnostics.uniq,
               "unsupported_features" => @unsupported.uniq,
-              "confidence" => structural ? "high" : "estimated"
-            }
+              "confidence" => structural ? "high" : "estimated",
+            },
           }
         end
 
@@ -208,7 +208,7 @@ module Master
           matches = condition.scan(/\(\s*(min|max)-(width|height)\s*:\s*([\d.]+)px\s*\)/i)
           residue = condition.gsub(/\(\s*(?:min|max)-(?:width|height)\s*:\s*[\d.]+px\s*\)/i, "")
                            .gsub(/\b(?:and|screen|all|only)\b/i, "").strip
-          return nil if matches.empty? || !residue.gsub(/[()]/, "").strip.empty?
+          return if matches.empty? || !residue.gsub(/[()]/, "").strip.empty?
 
           matches.all? do |bound, axis, value|
             actual = @viewport.fetch(axis.downcase)
@@ -507,7 +507,7 @@ module Master
         end
 
         def px(value, basis, font_size)
-          return nil if value.nil? || value.to_s.empty?
+          return if value.nil? || value.to_s.empty?
           raw = value.to_s.strip.downcase
           return 0.0 if raw == "0" || raw.match?(/\A0(?:px|rem|em|%)\z/)
           return raw.to_f if raw.match?(/\A-?\d+(?:\.\d+)?px\z/)
@@ -537,7 +537,7 @@ module Master
               "headline" => /(?:^|[-_\s])(?:ad-organ-)?(?:headline|heading|title)(?:$|[-_\s])/i,
               "logo" => /(?:^|[-_\s])(?:ad-organ-)?logo(?:$|[-_\s])/i,
               "cta" => /(?:^|[-_\s])(?:ad-organ-)?(?:cta|call-to-action|action-button)(?:$|[-_\s])/i,
-              "disclosure" => /(?:^|[-_\s])(?:ad-organ-)?disclosure(?:$|[-_\s])/i
+              "disclosure" => /(?:^|[-_\s])(?:ad-organ-)?disclosure(?:$|[-_\s])/i,
             }
             patterns.each { |role, regex| result[role] ||= node if data == role || classes.any? { |klass| klass.match?(regex) } }
           end
@@ -552,7 +552,7 @@ module Master
           {
             "rect" => { "x" => left, "y" => top, "width" => @viewport["width"] - left - right, "height" => @viewport["height"] - top - bottom },
             "bounds" => bounds.slice("headline", "logo", "cta"),
-            "geometry_confidence" => confidence
+            "geometry_confidence" => confidence,
           }
         end
 
@@ -584,7 +584,7 @@ module Master
             "contrast_ratio" => (contrast_ratio(fg, bg) if fg && bg),
             "font_size_px" => font_px(style).round(3),
             "measurement_mode" => "browserless_static",
-            "confidence" => node.geometry_confidence
+            "confidence" => node.geometry_confidence,
           }
         end
 
@@ -611,13 +611,13 @@ module Master
         end
 
         def resolve_color(value, mode)
-          return nil if value.to_s.empty?
+          return if value.to_s.empty?
           text = value.to_s.strip
           match = text.match(/\Avar\(\s*--([\w-]+)\s*\)\z/i)
           if match
             prefix = "#{@contract.fetch('token_prefix', 'ad-organ')}-"
             name = match[1].downcase
-            return nil unless name.start_with?(prefix)
+            return unless name.start_with?(prefix)
             colour = @contract.fetch("colors", {})[name.delete_prefix(prefix).tr("-", "_")]
             return colour && colour[mode]
           end
@@ -676,7 +676,7 @@ module Master
               "horizontal_overflow" => horizontal,
               "vertical_overflow" => vertical,
               "confidence" => "heuristic_glyph_metrics",
-              "pass" => !horizontal && !guarded_vertical && !text.empty?
+              "pass" => !horizontal && !guarded_vertical && !text.empty?,
             }
           end
         end
@@ -714,7 +714,7 @@ module Master
             "unsupported_features" => @unsupported.uniq,
             "pass" => !!reserved && !async_fonts && !layout_motion && @unsupported.empty? &&
               text_fit.all? { |item| item["pass"] } && collisions.empty? &&
-              %w[headline logo cta].all? { |role| roles[role]&.geometry_confidence == "high" }
+              %w[headline logo cta].all? { |role| roles[role]&.geometry_confidence == "high" },
           }
         end
 
@@ -766,7 +766,7 @@ module Master
         end
 
         def image_dimensions(bytes, hint = nil)
-          return nil if bytes.nil? || bytes.empty?
+          return if bytes.nil? || bytes.empty?
           if bytes.start_with?("\x89PNG\r\n\x1A\n".b) && bytes.bytesize >= 24
             return [bytes.byteslice(16, 4).unpack1("N"), bytes.byteslice(20, 4).unpack1("N")]
           end

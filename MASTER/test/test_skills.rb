@@ -72,15 +72,15 @@ class TestSkills < Minitest::Test
   DESIGN_SKILLS = {
     "algorithmic-art" => [
       "make a flow field from the git log", "generative art for the cover",
-      "create a procedural sketch", "show me a particle system",
+      "create a procedural sketch", "show me a particle system"
     ],
     "brand" => [
       "is this on-brand", "update the visual identity", "apply our branding",
-      "follow the brand guidelines",
+      "follow the brand guidelines"
     ],
     "canvas" => [
       "design a poster for the release", "an og image for the post",
-      "make album cover art", "prepare a print design",
+      "make album cover art", "prepare a print design"
     ],
   }.freeze
 
@@ -343,7 +343,6 @@ class TestSkills < Minitest::Test
     end
   end
 
-
   def test_declared_skill_requires_exact_external_revision_approval
     Dir.mktmpdir do |root|
       data_dir = File.join(root, "data")
@@ -442,7 +441,6 @@ class TestSkills < Minitest::Test
     end
   end
 
-
   def test_symlinked_operator_approval_manifest_fails_closed
     Dir.mktmpdir do |root|
       data_dir = File.join(root, "data")
@@ -480,6 +478,5 @@ class TestSkills < Minitest::Test
       end)
     end
   end
-
 
 end

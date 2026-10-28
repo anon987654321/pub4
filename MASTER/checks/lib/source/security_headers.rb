@@ -52,7 +52,7 @@ module Deploy
       "https://brgen.no",
       "https://www.brgen.no",
       "https://amberapp.art",
-      'config.content_security_policy_report_only = !enforce',
+      "config.content_security_policy_report_only = !enforce",
     ].freeze
 
     def self.run(root: ROOT) = new(root:).run
@@ -85,13 +85,13 @@ module Deploy
       root_stat = File.lstat(@root)
       unless root_stat.directory? && !root_stat.symlink?
         result.fail("security_headers: root is not a real directory")
-        return nil
+        return
       end
 
       root_prefix = "#{@root}#{File::SEPARATOR}"
       unless path.start_with?(root_prefix)
         result.fail("security_headers: source escapes root: #{relative}")
-        return nil
+        return
       end
 
       cursor = @root
@@ -107,12 +107,12 @@ module Deploy
 
       unless File.exist?(path) || File.symlink?(path)
         result.fail("security_headers: missing #{relative}")
-        return nil
+        return
       end
       stat = File.lstat(path)
       unless stat.file? && !stat.symlink?
         result.fail("security_headers: refuses non-regular or symlinked source #{relative}")
-        return nil
+        return
       end
 
       flags = File::RDONLY
@@ -171,7 +171,7 @@ module Deploy
            directive.match?(/["']\*["']|(?:^|[\s,])\*(?:[\s,]|$)|(?:^|[\s,])\*\.[a-z0-9.-]+|https?:\/\/(?:\*|\*\.)/i) ||
            directive.match?(/\bhttp:\/\/|["'](?:data|blob):|["']https?:["']/i)
           result.fail(
-            "security_headers: #{label} has an overly broad #{entry.fetch(:name).tr("_", "-")}: #{directive.strip}"
+            "security_headers: #{label} has an overly broad #{entry.fetch(:name).tr("_", "-")}: #{directive.strip}",
           )
         end
       end
@@ -218,7 +218,7 @@ module Deploy
 
       result.fail(
         "security_headers: #{RELAYD} must not alter app-owned CSP; " \
-        "nonce-bearing policy belongs to Rails: #{setters.map(&:strip).join("; ")}"
+        "nonce-bearing policy belongs to Rails: #{setters.map(&:strip).join("; ")}",
       )
     end
   end

@@ -112,7 +112,7 @@ class TraceLogAppendJsonlTest < Minitest::Test
         "fixture",
         query: "https://internal.invalid/?token=secret",
         metadata: { authorization: "Bearer private" },
-        worker: 7
+        worker: 7,
       )
 
       path = File.join(root, "runtime", "events", "activity.jsonl")
@@ -309,8 +309,8 @@ class TraceLogAppendJsonlTest < Minitest::Test
         "event" => "custom:legacy",
         "payload" => {
           "query" => "https://internal.invalid/?token=legacy-secret",
-          "metadata" => { "authorization" => "Bearer legacy-private" }
-        }
+          "metadata" => { "authorization" => "Bearer legacy-private" },
+        },
       }
       File.write(path, JSON.generate(raw) + "\n")
       File.chmod(0o600, path)

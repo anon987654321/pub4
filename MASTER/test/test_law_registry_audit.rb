@@ -108,11 +108,11 @@ class TestLawRegistryAudit < Minitest::Test
           "intentional_gap" => { "status" => "gap", "law_ids" => [] },
           "intentional_unmapped" => { "status" => "unmapped", "law_ids" => [] },
           "scanner_law" => { "status" => "covered", "law_ids" => ["SCANNER_LAW"] },
-          "dangling_law" => { "status" => "covered", "law_ids" => ["MISSING_LAW"] }
-        }
+          "dangling_law" => { "status" => "covered", "law_ids" => ["MISSING_LAW"] },
+        },
       },
       executable_ids: Set["EXECUTABLE_LAW"],
-      registry_ids: Set["SCANNER_LAW", "UNMAPPED_DETECTOR"]
+      registry_ids: Set["SCANNER_LAW", "UNMAPPED_DETECTOR"],
     )
 
     assert_equal ["intentional_gap"], snapshot.fetch(:declared_gaps)

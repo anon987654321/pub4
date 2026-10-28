@@ -101,9 +101,9 @@ module Deploy
         result.fail("exemption_freshness: #{label} names law #{law_id}, which no executable law file declares — the row documents an excuse that no longer exists")
       end
 
-      unless catalogue_keys.include?(law_id)
+      return if catalogue_keys.include?(law_id)
         result.warn("exemption_freshness: #{label} law #{law_id} is not a catalogue key in #{display(@catalogue_path)} — a known reconciliation gap (LawRegistryAudit), the marker in law/ is what enforces")
-      end
+
     end
 
     def catalogue_ids

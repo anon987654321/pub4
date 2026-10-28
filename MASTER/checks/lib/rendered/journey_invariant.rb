@@ -162,7 +162,7 @@ module Deploy
       unless GeometryProbe.ok?(second)
         @result.incomplete!(
           "journey_invariant idempotence: #{surface.id} second render was not measurable — " \
-          "#{second["error"] || "HTTP #{second["status"]}"}"
+          "#{second["error"] || "HTTP #{second["status"]}"}",
         )
         return
       end
@@ -187,7 +187,7 @@ module Deploy
         unless GeometryProbe.ok?(before_back)
           @result.incomplete!(
             "journey_invariant back_button: could not load #{other.id} before history.back — " \
-            "#{before_back["error"] || "HTTP #{before_back["status"]}"}"
+            "#{before_back["error"] || "HTTP #{before_back["status"]}"}",
           )
 
           return

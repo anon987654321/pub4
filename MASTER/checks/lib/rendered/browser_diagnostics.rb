@@ -200,12 +200,12 @@ module Deploy
       payload = {
         schema: 1,
         generated_at: Time.now.utc.iso8601,
-        run_id: run_id,
+        run_id:,
         browser: Deploy::CdpSession.chrome_path.to_s,
         source_inventory: "MASTER/checks/data/geometry_surfaces.yml",
         screenshots: "viewport PNG per measured route/viewport",
         results: rows,
-        summary: rows.group_by { |row| row.fetch("status") }.transform_values(&:length)
+        summary: rows.group_by { |row| row.fetch("status") }.transform_values(&:length),
       }
 
       begin
@@ -262,7 +262,7 @@ module Deploy
         "viewport" => surface.viewport,
         "url" => surface.url,
         "status" => "SKIPPED",
-        "reason" => "app port is closed"
+        "reason" => "app port is closed",
       }.tap do |row|
         puts "browser0: #{surface.id} SKIPPED — app port is closed"
       end
@@ -300,7 +300,7 @@ module Deploy
         console_messages: messages,
         http_failures: http_errors,
         request_failures: request_errors,
-        browser_error:
+        browser_error:,
       )
 
       verdict[:hard] << "navigation failed: #{navigation_error}" if navigation_error
@@ -349,7 +349,7 @@ module Deploy
         "pixel_diff_count" => pixel["pixel_diff_count"],
         "pixel_diff_ratio" => pixel["pixel_diff_ratio"],
         "pixel_diff_image" => pixel["pixel_diff_image"],
-        "pixel_diff_max_ratio" => pixel["max_ratio"]
+        "pixel_diff_max_ratio" => pixel["max_ratio"],
       }
 
       print_row(surface, row)
@@ -363,7 +363,7 @@ module Deploy
         "viewport" => surface.viewport,
         "url" => surface.url,
         "status" => "INCONCLUSIVE",
-        "reason" => "#{e.class}: #{e.message}"
+        "reason" => "#{e.class}: #{e.message}",
       }
 
       puts "browser0: #{surface.id} INCONCLUSIVE — #{row.fetch('reason')}"
@@ -390,7 +390,7 @@ module Deploy
         "pixel_diff_count" => compared[:pixel_diff_count],
         "pixel_diff_ratio" => compared[:pixel_diff_ratio],
         "pixel_diff_image" => compared[:pixel_diff_image],
-        "max_ratio" => max_ratio
+        "max_ratio" => max_ratio,
       }
 
       if compared[:status] == :dimension_mismatch
@@ -425,7 +425,7 @@ module Deploy
         "http=#{row['http_status'] || 'unknown'}",
         "console_errors=#{row['console_messages'].count { |item| item[:level].to_s == 'error' }}",
         "http_failures=#{row['http_failures'].size}",
-        "request_failures=#{row['request_failures'].size}"
+        "request_failures=#{row['request_failures'].size}",
       ]
 
       detail = row["failure_reasons"].empty? ? counts.join(" ") : row["failure_reasons"].join("; ")

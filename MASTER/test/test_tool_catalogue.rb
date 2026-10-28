@@ -12,7 +12,7 @@ class TestToolCatalogue < Minitest::Test
       "elevated" => false,
       "visitor" => false,
       "default" => true,
-      "description" => "A registered tool"
+      "description" => "A registered tool",
     }.merge(overrides)
   end
 
@@ -36,7 +36,7 @@ class TestToolCatalogue < Minitest::Test
       BUILDER.validate_tool_catalogue!(
         [row("GhostTool", "default" => false)],
         registry: {},
-        special_names: []
+        special_names: [],
       )
     end
 
@@ -48,7 +48,7 @@ class TestToolCatalogue < Minitest::Test
       BUILDER.validate_tool_catalogue!(
         [row("ReadFile"), row("ReadFile")],
         registry: { "ReadFile" => ->(*) {} },
-        special_names: []
+        special_names: [],
       )
     end
 
@@ -60,7 +60,7 @@ class TestToolCatalogue < Minitest::Test
       BUILDER.validate_tool_catalogue!(
         [row("ReadFile", "tier" => "safe")],
         registry: { "ReadFile" => ->(*) {} },
-        special_names: []
+        special_names: [],
       )
     end
 
@@ -72,7 +72,7 @@ class TestToolCatalogue < Minitest::Test
       BUILDER.validate_tool_catalogue!(
         [row(123)],
         registry: {},
-        special_names: []
+        special_names: [],
       )
     end
 
@@ -84,7 +84,7 @@ class TestToolCatalogue < Minitest::Test
       BUILDER.validate_tool_catalogue!(
         [row("ReadFile", "visitor" => "false")],
         registry: { "ReadFile" => ->(*) {} },
-        special_names: []
+        special_names: [],
       )
     end
 
@@ -97,9 +97,9 @@ class TestToolCatalogue < Minitest::Test
         [row("ReadFile")],
         registry: {
           "ReadFile" => ->(*) {},
-          "WriteFile" => ->(*) {}
+          "WriteFile" => ->(*) {},
         },
-        special_names: []
+        special_names: [],
       )
     end
 

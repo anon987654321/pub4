@@ -150,7 +150,6 @@ class TestThroughInference < Minitest::Test
     saved.nil? ? ENV.delete("MASTER_FIX_DEEP_TRACE") : ENV["MASTER_FIX_DEEP_TRACE"] = saved
   end
 
-
   def test_fix_dry_run_keeps_whole_tree_reads_in_memory
     old = {
       deep_trace: ENV["MASTER_FIX_DEEP_TRACE"],
@@ -162,13 +161,13 @@ class TestThroughInference < Minitest::Test
     ENV.delete("MASTER_FIX_STRUCTURAL_REVIEW")
     calls = []
     proposal = Master::Fix::TreeProposals::Proposal.new(
-      kind: "merge", paths: ["lib/a.rb", "lib/b.rb"], law: "SINGULARITY", reason: "one concept"
+      kind: "merge", paths: ["lib/a.rb", "lib/b.rb"], law: "SINGULARITY", reason: "one concept",
     )
     tree_result = Master::Fix::TreeReasoning::Result.new(
-      state: :answered, summary: "1 proposal", proposals: [proposal], dropped: 0
+      state: :answered, summary: "1 proposal", proposals: [proposal], dropped: 0,
     )
     structural_result = Master::Fix::StructuralReview::Result.new(
-      state: :answered, summary: "0 findings", findings: [], dropped: 0
+      state: :answered, summary: "0 findings", findings: [], dropped: 0,
     )
     tree_reader = Object.new
     tree_reader.define_singleton_method(:call) do |target:, persist:|
@@ -204,7 +203,6 @@ class TestThroughInference < Minitest::Test
     end
   end
 
-
   def test_a_disabled_first_read_does_not_reuse_stale_tree_hints
     old_tree = ENV["MASTER_FIX_TREE"]
     old_review = ENV["MASTER_FIX_STRUCTURAL_REVIEW"]
@@ -216,7 +214,7 @@ class TestThroughInference < Minitest::Test
     fake_review.define_singleton_method(:call) do |target:, persist:, first_read_proposals:|
       captured = [target, persist, first_read_proposals]
       Master::Fix::StructuralReview::Result.new(
-        state: :answered, summary: "0 findings", findings: [], dropped: 0
+        state: :answered, summary: "0 findings", findings: [], dropped: 0,
       )
     end
     registry = Master::CLI::CommandRegistry
