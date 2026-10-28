@@ -88,7 +88,7 @@ module Studio
       raise InvalidStyle, "change rationale required" if rationale.to_s.strip.empty?
       old_version = previous.fetch("version").to_s.split(".").map(&:to_i)
       new_version = candidate.fetch("version").to_s.split(".").map(&:to_i)
-      raise InvalidStyle, "new version must increase" unless new_version > old_version
+      raise InvalidStyle, "new version must increase" unless (new_version <=> old_version) == 1
       raise InvalidStyle, "style_id cannot change across versions" unless previous.fetch("style_id") == candidate.fetch("style_id")
       true
     end
