@@ -112,6 +112,7 @@ class TestPostproMotion < Minitest::Test
       assert_equal 4, probe.frames
       sidecar = JSON.parse(File.read("#{target}.json"))
       assert_equal 42, sidecar.dig("grade", "seed")
+      assert_equal GRADE_VERSION, sidecar.fetch("grade_version")
       assert_equal "moving", sidecar.dig("grade", "grain")
       assert_equal 4, sidecar.dig("video", "frame_count")
       assert_equal Digest::SHA256.file(target).hexdigest, sidecar.dig("output", "sha256")
