@@ -6,13 +6,14 @@ require "json"
 module Master
   module Trace
     # Converts event payloads into safe durable records without changing the
-    # in-process payload delivered to trusted subscribers. Tool arguments are
-    # never stored verbatim; other event families redact sensitive named fields.
+    # in-process payload delivered to trusted subscribers. Tool arguments and
+    # unknown structured values are digest-only; named sensitive fields are redacted.
     module EventPrivacy
       TOOL_ARGUMENT_EVENTS = %w[tool:before tool:after tool:execution:before tool:execution:after tool:execution:reconciled].freeze
       SAFE_CATEGORIES = %w[
         event tool op operation tier profile mode risk status outcome capability verb
-        stage state kind method reason_code invocation_id run_id mission_id attempt_id
+        stage state kind method reason_code model provider lane route channel backend engine adapter
+        component service subsystem severity phase invocation_id run_id mission_id attempt_id
         effect_id parent_effect_id checkpoint_id idempotency_key reconciliation evidence_ref
       ].freeze
       SAFE_NUMBERS = %w[
@@ -23,7 +24,7 @@ module Master
       FIELD_NAME = /\A[a-zA-Z][a-zA-Z0-9_]{0,63}\z/
       CATEGORY_VALUE = /\A[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,79}\z/
       SHA256 = /\A[0-9a-f]{64}\z/i
-      SENSITIVE_FIELD = /(?:\A|_)(?:arg|args|argv|body|branch|command|content|cookie|credential|credentials|cwd|data|description|detail|dir|directory|error|exception|file|filename|goal|input|message|new|old|output|path|paths|payload|prompt|query|reason|ref|response|result|root|scope|secret|summary|target|text|token|transcript|uri|url|working_dir|working_directory|authorization|password|scan_ip|ip_address)(?:\z|_)/i
+      SENSITIVE_FIELD = /(?:\A|_)(?:account|account_id|address|arg|args|argv|birth|body|branch|command|content|coordinates|cookie|credential|credentials|cwd|data|description|detail|device_id|dir|directory|email|error|exception|file|filename|full_name|goal|identity|input|ip|ip_address|latitude|location|longitude|message|mobile|name|new|old|output|password|path|paths|payload|person|phone|prompt|query|reason|ref|response|result|root|scope|secret|session|summary|target|text|token|transcript|uri|url|user|user_id|username|visitor_id|working_dir|working_directory|authorization|scan_ip)(?:\z|_)/i
 
       module_function
 
@@ -39,7 +40,14 @@ module Master
 
           if safe_metadata?(field, value)
             safe[field.to_sym] = normalize_metadata(field, value)
-          elsif tool_event || field.match?(SENSITIVE_FIELD)
+          elsif tool_event || field.match?(SENSITIVE_FIELD) || value.is_a?(Hash) || value.is_a?(Array) ||
+                SAFE_CATEGORIES.include?(field) || SAFE_NUMBERS.include?(field) || SAFE_BOOLEANS.include?(field) ||
+                field.end_with?("_digest", "_bytes") || value.is_a?(String) || value.is_a?(Symbol) ||
+                !safe_scalar?(value)
+            # A seemingly harmless container can hold a sensitive nested key,
+            # and malformed reserved metadata is not safe just because its key
+            # is normally low risk. Keep evidence of size without preserving
+            # values outside the explicit metadata contract.
             raw = canonical_value(value)
             safe["#{field}_digest".to_sym] = Digest::SHA256.hexdigest(raw)
             safe["#{field}_bytes".to_sym] = raw.bytesize
@@ -47,6 +55,11 @@ module Master
             safe[field.to_sym] = value
           end
         end
+      end
+
+      def safe_scalar?(value)
+        value.nil? || value == true || value == false ||
+          value.is_a?(Integer) || (value.is_a?(Float) && value.finite?)
       end
 
       def safe_metadata?(field, value)

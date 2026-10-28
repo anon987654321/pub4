@@ -4,6 +4,7 @@ require "json"
 require "fileutils"
 require "digest"
 require_relative "event_privacy"
+require_relative "../boot/paths"
 
 module Master
   module Trace
@@ -22,7 +23,7 @@ module Master
         @mutex = Mutex.new
         @current = nil
         @last = nil
-        FileUtils.mkdir_p(@dir, mode: 0o700)
+        prepare_storage_directory!
         subscribe
       end
 
@@ -84,11 +85,91 @@ module Master
       # /why keeps the full turn in memory for the process that recorded it.
       def finalize(turn)
         path = File.join(@dir, "#{Time.now.strftime("%Y-%m-%d")}.jsonl")
-        File.open(path, "a", 0o600) { |f| f.puts JSON.generate(persisted(turn)) }
-        File.chmod(0o600, path)
+        append_private_line(path, JSON.generate(persisted(turn)) + "\n")
         prune
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "recorder.finalize", path:)
+      end
+
+      def prepare_storage_directory!
+        state_directory = File.dirname(@dir)
+        ensure_private_directory!(state_directory, shared_state: true)
+        ensure_private_directory!(@dir)
+      end
+
+      def ensure_private_directory!(path, shared_state: false)
+        raise IOError, "refusing symlinked trace directory" if File.symlink?(path)
+
+        FileUtils.mkdir_p(path, mode: 0o700)
+        stat = File.lstat(path)
+        unless stat.directory? && !stat.symlink?
+          raise IOError, "trace storage path is not a real directory"
+        end
+
+        # The checkout's .master directory is deliberately shared with the
+        # service group on vm23. Apply its existing canonical permission policy
+        # instead of breaking the Rails service by forcing 0700; the per-trace
+        # directory and files remain owner-private.
+        expected_mode = shared_state ? MasterPaths.private_dir_mode(path, 0o700) : 0o700
+        File.chmod(expected_mode, path) if (stat.mode & 0o7777) != expected_mode
+        current = File.lstat(path)
+        unsafe_mask = shared_state ? 0o0007 : 0o0077
+        raise IOError, "trace storage directory permissions must be private" unless
+          (current.mode & unsafe_mask).zero?
+      end
+
+      def append_private_line(path, line)
+        prepare_storage_directory!
+        raise IOError, "refusing symlinked trace file" if File.symlink?(path)
+
+        flags = File::RDWR | File::APPEND | File::CREAT
+        flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+        File.open(path, flags, 0o600) do |file|
+          validate_trace_file!(file, path)
+          raise IOError, "could not acquire trace file lock" unless file.flock(File::LOCK_EX)
+
+          begin
+            validate_trace_file!(file, path)
+            # Existing files keep their old mode when opened with CREAT. Repair it
+            # before writing any new trace bytes, never after the sensitive append.
+            file.chmod(0o600)
+            validate_trace_file!(file, path)
+            raise IOError, "trace file permissions are not private" unless
+              (file.stat.mode & 0o077).zero?
+
+            if file.stat.size.positive?
+              file.seek(-1, IO::SEEK_END)
+              unless file.read(1) == "\n"
+                raise IOError, "refusing to append after an incomplete trace record"
+              end
+            end
+
+            offset = 0
+            while offset < line.bytesize
+              written = file.write(line.byteslice(offset..))
+              raise IOError, "trace append wrote no bytes" unless written&.positive?
+
+              offset += written
+            end
+            file.flush
+            file.fsync
+          ensure
+            file.flock(File::LOCK_UN)
+          end
+        end
+      end
+
+      def validate_trace_file!(file, path)
+        prepare_storage_directory!
+        opened = file.stat
+        unless opened.file? && opened.nlink == 1
+          raise IOError, "trace file must be a singly linked regular file"
+        end
+        current = File.lstat(path)
+        unless current.file? && !current.symlink? &&
+               current.dev == opened.dev && current.ino == opened.ino
+          raise IOError, "trace file path changed while opening"
+        end
       end
 
       def persisted(turn)
@@ -100,20 +181,71 @@ module Master
       end
 
       def prune
+        prepare_storage_directory!
         cutoff = Time.now - (KEEP_DAYS * 86_400)
-        Dir.glob(File.join(@dir, "*.jsonl")).each { |file| File.delete(file) if File.mtime(file) < cutoff }
+        Dir.children(@dir).each do |name|
+          next unless /\A\d{4}-\d{2}-\d{2}\.jsonl\z/.match?(name)
+
+          path = File.join(@dir, name)
+          stat = File.lstat(path)
+          next unless stat.file? && !stat.symlink? && stat.nlink == 1
+          next unless stat.mtime < cutoff
+
+          File.unlink(path)
+        end
       end
 
       def load_last_from_disk
-        files = Dir.glob(File.join(@dir, "*.jsonl")).sort
+        prepare_storage_directory!
+        files = Dir.children(@dir).filter_map do |name|
+          next unless /\A\d{4}-\d{2}-\d{2}\.jsonl\z/.match?(name)
+
+          path = File.join(@dir, name)
+          stat = File.lstat(path)
+          path if stat.file? && !stat.symlink? && stat.nlink == 1
+        end.sort
         return if files.empty?
 
         # Streamed rather than read whole: a day of turns can be a large file.
-        last_line = File.foreach(files.last).inject(nil) { |_, line| line }
-        last_line ? JSON.parse(last_line, symbolize_names: true) : nil
+        path = files.last
+        flags = File::RDONLY
+        flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+        File.open(path, flags) do |file|
+          validate_trace_file!(file, path)
+          file.chmod(0o600)
+          last_line = file.each_line.inject(nil) { |_, line| line }
+          validate_trace_file!(file, path)
+          last_line ? sanitize_loaded_turn(JSON.parse(last_line, symbolize_names: true)) : nil
+        end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "recorder.load_last_from_disk")
         nil
+      end
+
+      def sanitize_loaded_turn(turn)
+        return turn unless turn.is_a?(Hash)
+
+        message = turn[:message]
+        if message.is_a?(Hash) && message[:sha256].to_s.match?(/\A[0-9a-f]{64}\z/) &&
+           message[:bytes].is_a?(Integer) && message[:bytes] >= 0 &&
+           message.keys.all? { |key| %i[sha256 bytes].include?(key) }
+          turn[:message] = { sha256: message[:sha256], bytes: message[:bytes] }
+        else
+          raw_message = message.is_a?(String) ? message : JSON.generate(message)
+          turn[:message] = { sha256: Digest::SHA256.hexdigest(raw_message), bytes: raw_message.bytesize }
+        end
+
+        if turn[:events].is_a?(Array)
+          turn[:events] = turn[:events].filter_map do |event|
+            next unless event.is_a?(Hash)
+
+            name = event[:event].to_s
+            timestamp = event[:ts_ms]
+            details = EventPrivacy.persisted(name, event.except(:event, :ts_ms))
+            details.merge(event: name, ts_ms: timestamp)
+          end
+        end
+        turn
       end
     end
   end

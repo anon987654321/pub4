@@ -55,18 +55,21 @@ module Master
 
         def export(spans, timeout: nil)
           spans.each do |span|
+            safe_name = Master::Trace::EventPrivacy.persisted("tool:after", name: span.name)
+            safe_attributes = Master::Trace::EventPrivacy.persisted("tool:after", span.attributes)
+            record = {
+              kind: span.kind.to_s,
+              start: span.start_timestamp,
+              end: span.end_timestamp,
+              dur_us: ((span.end_timestamp - span.start_timestamp) / 1000),
+              attrs: safe_attributes,
+              trace: span.hex_trace_id,
+              span: span.hex_span_id,
+            }.merge(safe_name)
+
             Master::Trace::Log.append_jsonl(
               @path,
-              {
-                name: span.name,
-                kind: span.kind.to_s,
-                start: span.start_timestamp,
-                end: span.end_timestamp,
-                dur_us: ((span.end_timestamp - span.start_timestamp) / 1000),
-                attrs: span.attributes,
-                trace: span.hex_trace_id,
-                span: span.hex_span_id,
-              },
+              record,
               max_bytes: @max_bytes,
               mode: 0o600,
               sync: false,

@@ -38,7 +38,45 @@ class TraceTelemetryExporterTest < Minitest::Test
     end
   end
 
+  def test_exporter_digests_span_names_and_attributes
+    Dir.mktmpdir("trace-exporter-private-") do |dir|
+      path = File.join(dir, "traces.log")
+      exporter = Master::Trace::Telemetry::JsonlExporter.new(path, max_bytes: 2_000)
+      secret_name = "person@example.invalid private span"
+      secret_attribute = "https://internal.invalid/?token=span-secret"
+      private_span = Span.new(
+        name: secret_name,
+        kind: :internal,
+        start_timestamp: 1_000_000,
+        end_timestamp: 1_250_000,
+        attributes: { "url" => secret_attribute, "detail" => "private detail" },
+        hex_trace_id: "1" * 32,
+        hex_span_id: "2" * 16,
+      )
+
+      assert_equal Master::Trace::Telemetry::JsonlExporter::SUCCESS, exporter.export([private_span])
+      line = File.readlines(path).last
+      record = JSON.parse(line)
+
+      refute_includes line, secret_name
+      refute_includes line, secret_attribute
+      refute_includes line, "private detail"
+      assert_equal 64, record.fetch("name_digest").length
+      assert_equal 64, record.dig("attrs", "url_digest").length
+      assert_equal 64, record.dig("attrs", "detail_digest").length
+    end
+  end
+
   def test_exporter_reports_failure_for_a_record_over_its_cap
+    Dir.mktmpdir("trace-exporter-oversize-") do |dir|
+      path = File.join(dir, "traces.log")
+      exporter = Master::Trace::Telemetry::JsonlExporter.new(path, max_bytes: 40)
+
+      assert_equal Master::Trace::Telemetry::JsonlExporter::FAILURE, exporter.export([span(1)])
+      refute File.exist?(path)
+    end
+  end
+end
     Dir.mktmpdir("trace-exporter-oversize-") do |dir|
       path = File.join(dir, "traces.log")
       exporter = Master::Trace::Telemetry::JsonlExporter.new(path, max_bytes: 40)
