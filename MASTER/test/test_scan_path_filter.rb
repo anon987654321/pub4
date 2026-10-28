@@ -78,6 +78,15 @@ class TestScanPathFilter < Minitest::Test
     end
   end
 
+  def test_an_extensioned_data_file_with_a_ruby_magic_comment_is_not_ruby
+    Dir.mktmpdir do |dir|
+      conf = File.join(dir, "unscoped_protocol_pass.conf")
+      File.write(conf, "# frozen_string_literal: true\nblock log all\npass in quick on $ext_if proto tcp\n")
+
+      assert_nil Master.language_for(conf)
+    end
+  end
+
   # Every tracked file with a language is linted unless a rule says why not, and the rules are all about files
   # nobody authored: vendored code, deliberately bad fixtures, generated bundles and schemas.
   UNAUTHORED = %r{/vendor/|/fixtures/|/public/|db/schema\.rb|service-worker\.js|\.min\.|/db/structure\.sql}

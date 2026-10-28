@@ -100,13 +100,15 @@ module Master
   end
 
   # Only the first line: a shebang, or the Ruby magic comment an extensionless script opens with
-  # (OPENBSD/bin/reach has neither a shebang nor an extension and went unlinted). Anything else has
-  # nothing to say about its language here.
+  # (OPENBSD/bin/reach has neither a shebang nor an extension and went unlinted). A file with an
+  # extension the map does not name stays unclassified: a pf .conf fixture that opens with the
+  # magic comment is firewall data, and compiling it as Ruby fails every execution trace.
+  # Anything else has nothing to say about its language here.
   def self.shebang_language(path)
     return unless File.file?(path)
 
     first = File.open(path) { |io| io.gets.to_s }
-    return "ruby" if first.scrub.match?(RUBY_MAGIC_COMMENT)
+    return "ruby" if File.extname(path).empty? && first.scrub.match?(RUBY_MAGIC_COMMENT)
     return unless first.start_with?("#!")
 
     match = SHEBANG_LANGUAGES.find { |pattern, _lang| pattern.match?(first) }
