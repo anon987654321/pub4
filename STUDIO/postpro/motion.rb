@@ -50,14 +50,9 @@ module Postpro
 
       nominal_rate = video["r_frame_rate"].to_s
       average_rate = video["avg_frame_rate"].to_s
-      nominal_fps = parse_fps(nominal_rate)
-      average_fps = parse_fps(average_rate)
-      if nominal_fps.positive? && average_fps.positive? && (nominal_fps - average_fps).abs > 0.5
-        raise Unavailable,
-              "variable or ambiguous frame rate (#{average_rate} average, #{nominal_rate} nominal); refusing to alter timestamps"
-      end
-
-      rate = average_fps.positive? ? average_rate : nominal_rate
+      # Nominal and average rates can differ for legitimate constant-rate streams.
+      # Actual presentation timestamps below are the authority for variable timing.
+      rate = parse_fps(average_rate).positive? ? average_rate : nominal_rate
       fps = parse_fps(rate)
       duration = document.dig("format", "duration").to_f
       frames = video["nb_frames"].to_s.to_i
@@ -262,7 +257,9 @@ def postpro_video_mode
   Postpro::Constitution.verify_distinct_source!(input_path: source, output_path: output)
   grain = ARGV.include?("--grain-hold") ? :hold : :moving
   seed = Integer(ENV.fetch("POSTPRO_SEED", "0"), exception: false) || 0
-  Postpro::Motion.grade(source, output, preset: preset_name, seed:, grain:) do |bytes, width, height, target, frame_seed|
+  Postpro::Motion.grade(
+    source, output, preset: preset_name, seed:, grain:
+  ) do |bytes, width, height, target, frame_seed|
     postpro_video_grade_frame(bytes, width, height, target, preset_name, frame_seed)
   end
   0
