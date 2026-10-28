@@ -67,8 +67,10 @@ source and tests they could not run; this pass is what measures them.
   the repository-wide, process-shared execution lock at `.master/fix-execution.lock`,
   coordinator receipts, shared journal accessor, repair factory and unknown-outcome
   reconciliation. Regression sources cover separate Kernel instances in one process,
-  independent processes, and refusal of symlinked or group/world-writable lock paths;
-  their runtime results are still unmeasured here. The process-kill tests cover transaction
+  independent processes, and refusal of symlinked or group/world-writable lock paths.
+  The hash-chained ledger also refuses symlinked paths, non-regular files, and non-private
+  permissions, with regression sources for those cases. Runtime results remain unmeasured
+  here. The process-kill tests cover transaction
   rollback, deletion of the run journal with Mission/checkpoint survival, resumption when
   the journal remains, and orphan-receipt recovery, but are also unexecuted. Run them on
   pinned Ruby 4.0.5, then prove
