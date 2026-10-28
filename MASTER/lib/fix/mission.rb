@@ -494,9 +494,11 @@ module Master
 
         return true unless record["state"].to_s == "running"
         return true if record["lease_owner"].to_s == self.class.instance_id
-        return false unless lease_expired?(record)
 
-        true
+        # A same-host process that no longer exists cannot renew or finish this
+        # lease. Waiting for the five-minute expiry needlessly strands /fix after
+        # SIGKILL; a live local or remote owner still holds the boundary.
+        !mission_live?(record)
       end
 
       def active_for_other_target?(record, goal:, scope:)
@@ -559,7 +561,7 @@ module Master
       def claim_unlocked!
         if @record["state"] == "running" &&
            @record["lease_owner"].to_s != self.class.instance_id &&
-           !lease_expired?(@record)
+           !lease_expired?(@record) && mission_live?(@record)
           raise "mission already leased by pid=#{@record["lease_owner"]}"
         end
 
