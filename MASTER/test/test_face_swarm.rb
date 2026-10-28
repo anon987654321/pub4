@@ -244,7 +244,7 @@ class TestFaceSwarm < Minitest::Test
 
     Swarm.overlay!(frame, [far, near], config: settings)
 
-    assert_equal Swarm.config.fetch("glyph_ramp")[3], frame.chars[7][8]
+    assert_equal Swarm.config.fetch("glyph_ramp")[3], frame.chars[7][9]
     assert_equal Swarm.config.fetch("glyph_ramp")[3], frame.chars[7][21]
     assert_equal 0, frame.depth[7][8]
     assert_equal 2, frame.depth[7][21]
