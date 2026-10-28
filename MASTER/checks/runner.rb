@@ -42,14 +42,69 @@ unless CHECKS.is_a?(Hash)
   abort "checks: invalid registry root (expected a mapping)"
 end
 
-# A row that cannot identify an executable was historically recorded as
-# :errored during a run and could still leave exit status zero by default.
+# Every declaration resolves inside the tree that owns it. A registry row is
+# executable configuration, but it is not a path-traversal escape hatch into
+# arbitrary Ruby files on the host. Require exactly one execution mechanism.
+def declared_path_problem(name, kind, value)
+  unless value.is_a?(String) && !value.strip.empty?
+    return "#{name} #{kind}: must be a non-empty relative path"
+  end
+  if value.start_with?(File::SEPARATOR) || value.include?("\\") ||
+     value.split(File::SEPARATOR).include?("..")
+    return "#{name} #{kind}: parent or absolute paths are not allowed"
+  end
+
+  base = if kind == "require" && value.start_with?("MASTER/", "OPENBSD/")
+           ROOT
+         else
+           CHECKS_DIR
+         end
+  base = File.expand_path(base)
+  expanded = File.expand_path(value, base)
+  prefix = "#{base}#{File::SEPARATOR}"
+  return "#{name} #{kind}: path escapes its declared tree" unless expanded.start_with?(prefix)
+
+  candidates = if kind == "script"
+                 [expanded]
+               else
+                 [expanded, "#{expanded}.rb", File.join(expanded, "init.rb")]
+               end
+  existing = candidates.find { |candidate| File.file?(candidate) || File.symlink?(candidate) }
+  return "#{name} #{kind}: path does not identify an existing file" unless existing
+
+  resolved = File.realpath(existing)
+  real_base = File.realpath(base)
+  real_prefix = "#{real_base}#{File::SEPARATOR}"
+  return "#{name} #{kind}: symlink resolves outside its declared tree" unless resolved.start_with?(real_prefix)
+
+  nil
+rescue SystemCallError => e
+  "#{name} #{kind}: cannot safely resolve path: #{e.class}: #{e.message}"
+end
+
+# A row that cannot identify exactly one executable was historically recorded
+# as :errored during a run and could still leave exit status zero by default.
 # This is a declaration error, so refuse the registry before running any checks.
 invalid_registry_rows = CHECKS.filter_map do |name, row|
   if !row.is_a?(Hash)
     "#{name} must declare a mapping"
-  elsif row["class"].to_s.strip.empty? && row["script"].to_s.strip.empty?
-    "#{name} must declare class: or script:"
+  else
+    class_value = row["class"]
+    script_value = row["script"]
+
+    if !class_value.nil? && !class_value.is_a?(String)
+      "#{name} class: must be a string"
+    elsif !script_value.nil? && !script_value.is_a?(String)
+      "#{name} script: must be a string"
+    elsif !row["require"].nil? && !row["require"].is_a?(String)
+      "#{name} require: must be a string"
+    elsif [class_value, script_value].count { |value| value.is_a?(String) && !value.strip.empty? } != 1
+      "#{name} must declare exactly one of class: or script:"
+    elsif !script_value.to_s.strip.empty? && (problem = declared_path_problem(name, "script", script_value))
+      problem
+    elsif !row["require"].to_s.strip.empty? && (problem = declared_path_problem(name, "require", row["require"]))
+      problem
+    end
   end
 end
 
