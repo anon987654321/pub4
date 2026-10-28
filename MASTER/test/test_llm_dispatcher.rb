@@ -92,6 +92,24 @@ class TestLLMDispatcher < Minitest::Test
     assert_equal "claude-cli: exited 124 with nothing on either stream", result.message
   end
 
+  def test_preflight_error_event_redacts_raw_exception_text
+    dispatcher, _session, bus = build_dispatcher
+    private_error = "preflight failed at https://private.example/?token=preflight-secret"
+    router = Object.new
+    router.define_singleton_method(:unreachable_reason) { |_model, wait: false| raise IOError, private_error }
+    dispatcher.instance_variable_set(:@model_router, router)
+
+    result = dispatcher.send(:forced_lane_unavailable, "ollama:qwen3:8b")
+
+    assert_nil result, "the preflight fallback policy remains unchanged"
+    _name, payload = bus.events.find { |name, _| name == "llm:preflight_error" }
+    assert_equal "ollama:qwen3:8b", payload[:model]
+    assert_equal Digest::SHA256.hexdigest(private_error), payload[:error_digest]
+    assert_equal private_error.bytesize, payload[:error_bytes]
+    refute payload.key?(:error)
+    refute_includes bus.events.inspect, private_error
+  end
+
   def test_provider_outcome_event_redacts_raw_error_text
     dispatcher, _session, bus = build_dispatcher
     private_error = "auth failed at https://private.example/?token=not-for-logs"
