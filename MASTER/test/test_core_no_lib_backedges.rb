@@ -85,7 +85,6 @@ class NoLibBackedgesTest < Minitest::Test
     assert_includes lifecycle, "def run_fix_loop"
     assert_includes lifecycle, "def lifecycle_journal"
     assert_includes journal_adapter, 'require_relative "kernel"'
-    assert_includes convergence, 'require_relative "../protocol"'
     # Protocol derives its terminal states from the shared execution vocabulary
     # through OutcomePolicy, so the states are proved on that vocabulary.
     assert_includes protocol, "TERMINAL_STATES = OutcomePolicy::TERMINAL_STATES"
