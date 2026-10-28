@@ -176,7 +176,7 @@ module Master
         end
 
         def check_limits_yaml(root)
-          check_yaml_file(root, "data/limits.yml", "limits_yaml")
+          check_catalogue_yaml(root, "data/limits.yml", "limits_yaml")
         end
 
         def check_yaml_file(root, rel_path, name, required: true)
