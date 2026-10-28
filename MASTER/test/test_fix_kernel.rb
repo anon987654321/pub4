@@ -4,6 +4,7 @@ require_relative "test_helper"
 require "tmpdir"
 require "fileutils"
 require "json"
+require "socket"
 require_relative "../lib/fix/kernel"
 require_relative "../lib/fix/kernel/repair_adapter"
 
@@ -36,8 +37,9 @@ class TestFixKernel < Minitest::Test
   def test_restart_terminalizes_a_kernel_run_whose_recorded_process_is_gone
     with_workspace do |root|
       kernel = K.new(root:)
-      pid = Process.spawn("true")
-      Process.wait(pid)
+      # This PID is outside the normal user-space range on supported hosts,
+      # so the test never depends on process-id reuse timing.
+      pid = 2_147_483_647
 
       kernel.send(
         :append_event,
@@ -186,6 +188,29 @@ class TestFixKernel < Minitest::Test
       assert_equal 3, start.dig("payload", "max_passes")
       assert_equal "done", terminal.dig("payload", "state")
       assert_equal "ok", terminal.dig("payload", "result")
+    end
+  end
+
+  def test_repair_scan_failure_is_preserved_as_an_error_outcome
+    with_workspace do |root|
+      kernel = K.new(root:)
+      scanner = Object.new
+      scanner.define_singleton_method(:scan) { |*_args, **_options| raise "synthetic scanner failure" }
+      law = Struct.new(:id, :severity).new("TEST_SCAN_FAILURE", :warning)
+      repair = kernel.build_repair_loop(law:, agent: nil, scanner:, root:)
+      path = File.join(root, "sample.rb")
+      File.write(path, "fixture\n")
+
+      result = repair.run_once([path])
+      assert_equal :error, result.fetch(:status)
+      assert_match(/synthetic scanner failure/, result.fetch(:error))
+
+      event = kernel.verify_log!.find do |row|
+        row["kind"] == "repair_pass" && row.dig("payload", "law") == "TEST_SCAN_FAILURE"
+      end
+      assert_equal "error", event.dig("payload", "status")
+      assert_equal 0, event.dig("payload", "fixed")
+      assert_equal 1, event.dig("payload", "breakdown", "error")
     end
   end
 
