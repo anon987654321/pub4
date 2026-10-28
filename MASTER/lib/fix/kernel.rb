@@ -8,6 +8,7 @@ require "securerandom"
 require "tempfile"
 require "time"
 require "yaml"
+require_relative "run_journal"
 
 module Master
   module Fix
@@ -62,16 +63,82 @@ module Master
 
       class LedgerCorruption < StandardError; end
 
-      def initialize(root:, actor: "master", laws: nil, log_path: nil)
+      def initialize(root:, actor: "master", laws: nil, log_path: nil, bus: nil, lifecycle_journal: nil)
         @root = File.expand_path(root)
         @workspace_root = locate_workspace(@root)
         @actor = actor.to_s
         @laws = laws
+        @bus = bus
         @log_path = File.expand_path(log_path || File.join(@workspace_root, LOG_RELATIVE_PATH))
         @log_head = nil
+        @lifecycle_journal = lifecycle_journal
+        @lifecycle_mutex = Mutex.new
       end
 
       attr_reader :root, :workspace_root, :actor, :log_path
+
+      # The Kernel owns /fix lifecycle coordination. RunJournal is currently its
+      # durable metadata adapter; no caller should construct a second journal for
+      # the same coordinator. Keeping it behind this accessor makes the migration
+      # incremental without changing the persisted format or recovery contract.
+      def lifecycle_journal
+        @lifecycle_mutex.synchronize do
+          @lifecycle_journal ||= RunJournal.new(root: @root, bus: @bus)
+        end
+      end
+
+      alias run_journal lifecycle_journal
+
+      # Production factories make Kernel the shared owner while the old loop
+      # classes remain behavior-preserving adapters until their parity gates pass.
+      def build_fix_loop(**options)
+        require_relative "fix_loop" unless defined?(FixLoop)
+        FixLoop.new(**options, kernel: self)
+      end
+
+      def build_repair_loop(**options)
+        require_relative "repair_loop" unless defined?(RepairLoop)
+        RepairLoop.new(**options, kernel: self)
+      end
+
+      # Hash-chained operational evidence around the legacy convergence adapter.
+      # Detailed pass and recovery state still lives in lifecycle_journal.
+      def begin_coordinated_run(target:, max_passes:, budget_seconds:, requested:)
+        run_id = SecureRandom.hex(12)
+        expanded = File.expand_path(target.to_s, @root)
+        target_label = if expanded == @workspace_root
+                         "."
+                       elsif expanded.start_with?(@workspace_root + File::SEPARATOR)
+                         expanded.delete_prefix(@workspace_root + File::SEPARATOR)
+                       else
+                         "(external target)"
+                       end
+        append_event("coordinator_started", {
+          actor: @actor, target: target_label, max_passes: Integer(max_passes),
+          budget_seconds: Integer(budget_seconds), requested: requested == true
+        }, run_id:)
+        run_id
+      end
+
+      def finish_coordinated_run(run_id:, state:, outcome: nil, error: nil)
+        payload = { state: state.to_s }
+        if outcome
+          payload[:result] = outcome.respond_to?(:err?) && outcome.err? ? "error" : "ok"
+          payload[:category] = outcome.category.to_s if outcome.respond_to?(:category) && outcome.err?
+        end
+        payload[:error_class] = error.class.name if error
+        append_event("coordinator_terminal", payload, run_id:)
+      end
+
+      # Bounded repair summary; no prompt, source text, or model output enters the
+      # coordinator ledger. A failed write remains an error rather than a false
+      # successful receipt.
+      def record_repair_outcome(law:, status:, fixed:, breakdown:)
+        counts = (breakdown || {}).to_h.to_h { |key, value| [key.to_s, Integer(value)] }
+        append_event("repair_pass", {
+          law: law.to_s, status: status.to_s, fixed: Integer(fixed), breakdown: counts
+        })
+      end
 
       def observe(path = @root, run_id: nil)
         observation = build_observation(path)
