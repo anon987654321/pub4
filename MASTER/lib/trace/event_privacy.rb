@@ -23,7 +23,7 @@ module Master
       FIELD_NAME = /\A[a-zA-Z][a-zA-Z0-9_]{0,63}\z/
       CATEGORY_VALUE = /\A[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,79}\z/
       SHA256 = /\A[0-9a-f]{64}\z/i
-      SENSITIVE_FIELD = /(?:\A|_)(?:arg|args|argv|body|branch|command|content|cookie|credential|credentials|cwd|data|description|detail|dir|directory|error|exception|file|filename|goal|input|message|new|old|output|path|paths|payload|prompt|query|reason|ref|response|result|root|scope|secret|summary|target|text|token|transcript|uri|url|working_dir|working_directory|authorization|password|scan_ip|ip_address)(?:\z|_)/i
+      SENSITIVE_FIELD = /(?:\A|_)(?:arg|args|argv|address|addresses|authorization|birth_date|body|branch|caption|comment|comments|command|content|cookie|credential|credentials|cwd|data|date_of_birth|description|descriptions|detail|details|dir|directory|display_name|dob|e_mail|email|emails|error|errors|exception|file|filename|first_name|full_name|goal|input|label|labels|last_name|latitude|location|longitude|message|messages|name|new|note|notes|old|output|password|path|paths|payload|phone|phones|prompt|query|reason|ref|response|result|root|scan_ip|scope|secret|summary|target|telephone|text|title|token|transcript|uri|url|user|user_name|username|value|values|working_dir|working_directory|ip_address)(?:\z|_)/i
 
       module_function
 
