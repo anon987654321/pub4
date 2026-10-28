@@ -115,8 +115,9 @@ module Master
         @halted = false
         @halt_reason = nil
         @git = git || Io::GitOperations.new(root)
-        # Reuse the Kernel injected at construction. Replacing it here would
-        # split the outer lock, run receipts, repair outcomes, and journal owner.
+        # Production boot injects the shared Kernel. Standalone callers keep
+        # working by creating one owner for this loop, never one per stage.
+        @kernel = kernel || Kernel.new(root: path_root, actor: "fix-loop", bus:)
         @run_mutex = @kernel.execution_mutex
         @run_journal = @kernel.lifecycle_journal
         @reachability = Reachability.new(root: @root, bus:)
