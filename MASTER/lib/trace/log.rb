@@ -342,11 +342,17 @@ module Master
               (file.stat.mode & 0o077).zero?
 
             recent_lines = []
+            next_index = 0
             file.each_line do |line|
-              recent_lines << line
-              recent_lines.shift if recent_lines.length > count
+              if recent_lines.length < count
+                recent_lines << line
+              else
+                recent_lines[next_index] = line
+                next_index = (next_index + 1) % count
+              end
             end
             Master::Trace::Log.verify_file_identity!(file, @path, "event log")
+            recent_lines.rotate(next_index) if recent_lines.length == count && next_index.positive?
             recent_lines
           end
 
