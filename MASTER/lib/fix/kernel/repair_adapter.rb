@@ -48,7 +48,7 @@ module Master
   module Fix
     class Kernel
       # Single-pass fixer for one law across a set of files.
-      # FixLoop owns the outer convergence loop; RepairLoop fixes one batch per call.
+      # Kernel::ConvergenceAdapter owns convergence; this adapter repairs one batch per call.
       #
       # Fix routing (per violation severity + file size):
       #   error tier  → council_fix   (3-reviewer veto before apply)
