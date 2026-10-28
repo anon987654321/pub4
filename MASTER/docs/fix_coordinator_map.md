@@ -42,7 +42,7 @@ them.
 ## Integration landed 2026-10-28 (source changes; runtime proof pending)
 
 - Production boot creates `Fix::Kernel`; `Kernel::Lifecycle#build_fix_loop` loads
-  the legacy source adapter as `Kernel::ConvergenceAdapter`, with `FixLoop` retained
+  the canonical `kernel/convergence_adapter.rb` implementation as `Kernel::ConvergenceAdapter`, with `fix_loop.rb` and `FixLoop` retained
   as a compatibility constant for existing call sites.
 - `FixLoop#run` delegates the outer execution lock and coordinator start/terminal
   receipts to Kernel. Repair summaries correlate to the coordinator run id; a
