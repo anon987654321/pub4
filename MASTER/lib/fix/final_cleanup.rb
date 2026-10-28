@@ -48,13 +48,13 @@ module Master
         end
 
         receipt = {
-          run_id: run_id,
+          run_id:,
           target: target_label(target),
           terminal_state: terminal_state&.to_s || "not_terminalized",
           status: warnings.empty? ? "clean" : "warning",
-          completed: completed,
-          skipped: skipped,
-          warnings: warnings,
+          completed:,
+          skipped:,
+          warnings:,
           finished_at: Time.now.utc.iso8601(6),
         }
 
@@ -62,7 +62,7 @@ module Master
           @kernel&.append_event(
             receipt[:status] == "clean" ? "cleanup_completed" : "cleanup_warning",
             receipt,
-            run_id: run_id,
+            run_id:,
           )
         rescue StandardError => error
           warnings << warning("cleanup_receipt", error)
@@ -82,7 +82,7 @@ module Master
       rescue StandardError => error
         # This last-resort guard must never mask the repair outcome or its exception.
         fallback = {
-          run_id: run_id,
+          run_id:,
           target: target_label(target),
           terminal_state: terminal_state&.to_s || "not_terminalized",
           status: "warning",
@@ -117,7 +117,7 @@ module Master
 
       def warning(step, error)
         {
-          step: step,
+          step:,
           error_class: error.class.name,
           message: error.message.to_s.gsub(/\s+/, " ").strip[0, 160],
         }

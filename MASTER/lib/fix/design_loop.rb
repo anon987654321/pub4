@@ -217,7 +217,7 @@ module Master
       # Applies the edit, re-renders, judges, and always puts the file back.
       def trial(edit)
         original = edit.apply!
-        return nil unless rebuild(edit)
+        return unless rebuild(edit)
 
         after = measured(@fresh.map { |row| row[:surface] })
         verdict = judge(@fresh, after)

@@ -48,7 +48,7 @@ module Master
 
             decision = if @convergence_discipline.respond_to?(:adaptive_decision)
               @convergence_discipline.adaptive_decision(
-                deadline_expired: deadline.expired?, pass_limit:, absolute_limit: ABSOLUTE_MAX_PASSES
+                deadline_expired: deadline.expired?, pass_limit:, absolute_limit: ABSOLUTE_MAX_PASSES,
               )
             else
               action = if deadline.expired? || pass_limit >= ABSOLUTE_MAX_PASSES

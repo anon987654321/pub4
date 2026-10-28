@@ -99,7 +99,7 @@ module Master
       def markup_note(sources)
         return "" unless sources.any? { |path| path.end_with?(".erb") }
 
-        'A view (.erb) may be edited only to ADD class names, defined in the stylesheets below, to an element\'s ' \
+        "A view (.erb) may be edited only to ADD class names, defined in the stylesheets below, to an element's " \
           'static class="..." attribute: never its text, ERB tags, tags or existing class names.'
       end
 

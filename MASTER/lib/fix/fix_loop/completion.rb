@@ -99,7 +99,7 @@ module Master
               "four-stream assessment receipt is not complete, verified and plan-bound " \
                 "(artifact=#{assessment_receipt["status"]}, matrix=#{assessment_receipt["matrix_status"]}, " \
                 "verification=#{assessment_receipt["verification"] || "unavailable"}, " \
-                "provenance=#{provenance_matches ? "matched" : "mismatch"}); DONE withheld"
+                "provenance=#{provenance_matches ? "matched" : "mismatch"}); DONE withheld",
             )
           end
           result = blocked_by_gaps(result)
@@ -152,7 +152,7 @@ module Master
           end
           outcome[:assessment_matrix] = matrix_evidence
           outcome[:outcome_receipt] = write_outcome_receipt(
-            run_id:, target: target_label, state:, result:, convergence: convergence_evidence
+            run_id:, target: target_label, state:, result:, convergence: convergence_evidence,
           )
           outcome[:ok] = MEASURED_REPAIR_OUTCOMES.fetch(state) if MEASURED_REPAIR_OUTCOMES.key?(state)
           @bus&.publish("fix_loop:terminal", **outcome)
@@ -174,7 +174,7 @@ module Master
         rescue StandardError => e
           @bus&.publish(
             "fix_loop:assessment_receipt_failed",
-            run_id:, error_class: e.class.name, message: e.message.to_s[0, 180]
+            run_id:, error_class: e.class.name, message: e.message.to_s[0, 180],
           )
           {
             "status" => "persistence_failed",

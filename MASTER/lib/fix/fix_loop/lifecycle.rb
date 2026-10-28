@@ -20,7 +20,7 @@ module Master
           journal.delete("pass_state") if journal.is_a?(Hash)
           @bus&.publish(
             "fix_loop:convergence_evidence_invalidated",
-            run_id:, generation: binding[:generation], dimensions: binding[:dimensions]
+            run_id:, generation: binding[:generation], dimensions: binding[:dimensions],
           )
           Master::Trace::Dmesg.status(
             "fix0", "prior convergence evidence invalidated by #{binding[:dimensions].join(", ")}"
@@ -80,18 +80,18 @@ module Master
             "fix_loop:plan_generation",
             run_id:, generation: binding[:generation], changed_dimensions: changed,
             source_digest: replacement.source_digest, scope_digest: replacement.scope_digest,
-            plan_digest: replacement.digest,
+            plan_digest: replacement.digest
           )
           Master::Trace::Dmesg.status(
             "fix0",
-            "new plan generation #{binding[:generation]}, changed=#{changed.join(", ")}; clean streak reset"
+            "new plan generation #{binding[:generation]}, changed=#{changed.join(", ")}; clean streak reset",
           )
           true
         rescue StandardError => e
           @pass_runner.plan_refresh_failed!(e) if @pass_runner.respond_to?(:plan_refresh_failed!)
           @bus&.publish(
             "fix_loop:plan_refresh_failed",
-            run_id:, error_class: e.class.name, message: e.message
+            run_id:, error_class: e.class.name, message: e.message,
           )
           Master::Trace::Dmesg.status("fix0", "plan refresh INCONCLUSIVE: #{e.class}: #{e.message.to_s[0, 150]}")
           false
@@ -188,7 +188,7 @@ module Master
           proof_limit = [[max_passes.to_i, start_pass + CLEAN_RUNS - 1].max, ABSOLUTE_MAX_PASSES].min
           @bus&.publish(
             "fix_loop:full_scope_proof",
-            run_id:, target:, files: full_files.size, start_pass:, pass_limit: proof_limit
+            run_id:, target:, files: full_files.size, start_pass:, pass_limit: proof_limit,
           )
           Master::Trace::Dmesg.status("fix0", "incremental repair clean; verifying full target files=#{full_files.size}")
           run_passes(

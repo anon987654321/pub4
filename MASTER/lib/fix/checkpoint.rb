@@ -49,7 +49,7 @@ module Master
 
           manifest = {
             id:, label:, format_version: MANIFEST_VERSION,
-            files: normalized, sha256:, created_at: Time.now.utc.iso8601,
+            files: normalized, sha256:, created_at: Time.now.utc.iso8601
           }
           write_atomic(File.join(staging, "manifest.json"), JSON.pretty_generate(manifest) + "\n", mode: 0o600)
           File.rename(staging, target)

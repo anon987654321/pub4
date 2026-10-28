@@ -34,7 +34,7 @@ module Master
         extra_text.each { |text| text.scan(/@extend\s+([^;}]+)/).flatten.each { |s| s.scan(WORD_RE).each { |w| @words[w] = true } } }
       end
 
-      def used?(kind, name)
+      def used?(_kind, name)
         return true if VENDOR_PREFIXES.any? { |p| name.start_with?(p) }
         return true if @words.key?(name)
         return true if @prefixes.each_key.any? { |p| name.start_with?(p) }
