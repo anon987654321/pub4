@@ -225,6 +225,7 @@
         attribute float aThreshold;
         attribute float aZone;
         attribute float aBias;
+        attribute float aDepthRank;
         uniform float uTime;
         uniform float uDensity;
         uniform float uRipple;
@@ -245,6 +246,7 @@
         varying float vAlpha;
         varying float vZone;
         varying float vThreshold;
+        varying float vDepthRank;
         void main() {
           vec3 p = position;
           float zoneWeight = 0.72 + aZone * 0.035;
@@ -267,6 +269,7 @@
             uPointSizeDistanceMin, uPointSizeDistanceMax);
           gl_PointSize = 1.0;
           vThreshold = aThreshold;
+          vDepthRank = aDepthRank;
           vAlpha = clamp((0.34 + zoneWeight * 0.56) * aBias * uLuminosity * breath * (1.0 - uEntropy * 0.08) * distanceScale, 0.0, 1.0);
           vZone = aZone;
         }
@@ -278,11 +281,14 @@
         varying float vAlpha;
         varying float vZone;
         varying float vThreshold;
+        varying float vDepthRank;
         void main() {
           vec2 p = gl_PointCoord - vec2(0.5);
           if (vThreshold > uDensity || length(p) > 0.5) discard;
-          float tone = vZone < 2.0 ? 1.0 : (vZone > 5.0 ? 0.84 : 0.93);
-          gl_FragColor = vec4(uColor * tone, vAlpha * uOpacity);
+          float zoneTone = vZone < 2.0 ? 1.0 : (vZone > 5.0 ? 0.84 : 0.93);
+          // One-pixel law: the shared depth rank affects brightness, never size.
+          float depthTone = mix(0.68, 1.0, clamp(vDepthRank, 0.0, 1.0));
+          gl_FragColor = vec4(uColor * zoneTone * depthTone, vAlpha * uOpacity);
         }
       `,
       transparent: true, depthWrite: false, depthTest: true
@@ -291,7 +297,10 @@
     points.name = "MASTER_FACE_STIPPLE";
     points.renderOrder = 8;
     points.frustumCulled = false;
-    return { points, geometry, material, count: samples.length, root: null };
+    return {
+      points, geometry, material, count: samples.length, root: null,
+      swarm: { velocities, homePositions: positions.slice(), homeDepths, lastTime: null }
+    };
   }
 
   function createDefault(THREE, count) {
