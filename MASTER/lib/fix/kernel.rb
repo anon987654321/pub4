@@ -96,8 +96,39 @@ module Master
 
       def append_event(kind, payload, run_id: nil)
         @append_mutex.synchronize do
-          FileUtils.mkdir_p(File.dirname(@log_path), mode: 0o700)
-          File.open(@log_path, File::RDWR | File::CREAT, 0o600) do |file|
+          directory = File.dirname(@log_path)
+          raise LedgerCorruption, "ledger directory is a symlink" if File.symlink?(directory)
+
+          FileUtils.mkdir_p(directory, mode: 0o700)
+          directory_stat = File.lstat(directory)
+          unless directory_stat.directory? && !directory_stat.symlink?
+            raise LedgerCorruption, "ledger directory is not a real directory"
+          end
+          raise LedgerCorruption, "ledger directory is group/world writable" if
+            (directory_stat.mode & 0o022).positive?
+          raise LedgerCorruption, "ledger path is a symlink" if File.symlink?(@log_path)
+
+          if File.exist?(@log_path)
+            path_stat = File.lstat(@log_path)
+            raise LedgerCorruption, "ledger path is not a regular file" unless
+              path_stat.file? && !path_stat.symlink?
+            raise LedgerCorruption, "ledger permissions are not private" unless
+              (path_stat.mode & 0o077).zero?
+          end
+
+          flags = File::RDWR | File::CREAT
+          flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+          File.open(@log_path, flags, 0o600) do |file|
+            opened_stat = file.stat
+            raise LedgerCorruption, "ledger handle is not a regular file" unless opened_stat.file?
+            raise LedgerCorruption, "ledger permissions are not private" unless
+              (opened_stat.mode & 0o077).zero?
+            current_stat = File.lstat(@log_path)
+            unless current_stat.file? && !current_stat.symlink? &&
+                   current_stat.dev == opened_stat.dev && current_stat.ino == opened_stat.ino
+              raise LedgerCorruption, "ledger path changed while opening"
+            end
+
             file.flock(File::LOCK_EX)
             head = append_head(file)
             body = {
@@ -211,9 +242,23 @@ module Master
       end
 
       def self.read_log(path)
-        return [] unless File.file?(path)
+        directory = File.dirname(File.expand_path(path))
+        raise LedgerCorruption, "ledger directory is a symlink" if File.symlink?(directory)
+        return [] unless File.exist?(path) || File.symlink?(path)
 
-        File.open(path, "rb") { |file| read_log_io(file) }
+        path_stat = File.lstat(path)
+        raise LedgerCorruption, "ledger path is not a regular file" unless
+          path_stat.file? && !path_stat.symlink?
+        raise LedgerCorruption, "ledger permissions are not private" unless
+          (path_stat.mode & 0o077).zero?
+
+        File.open(path, "rb") do |file|
+          opened_stat = file.stat
+          unless opened_stat.file? && opened_stat.dev == path_stat.dev && opened_stat.ino == path_stat.ino
+            raise LedgerCorruption, "ledger path changed while opening"
+          end
+          read_log_io(file)
+        end
       end
 
       # Every record must carry the next sequence number, the previous
