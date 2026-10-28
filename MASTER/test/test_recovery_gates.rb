@@ -3,9 +3,9 @@
 # Required proof gates before folding FixLoop / RepairLoop / RunJournal into
 # Fix::Kernel. See MASTER/docs/fix_coordinator_map.md.
 #
-# These are intentionally explicit pending tests, not proof that recovery works.
-# A merge is blocked until each skip is wired to the production path, made red
-# by a planted defect, then green after the repair.
+# Each gate must exercise production code with planted failure conditions. A
+# gate is not closed merely because its test is authored: run it on pinned Ruby,
+# observe the regression, and retain the passing evidence before any fold.
 
 require "test_helper"
 require "tmpdir"
@@ -16,6 +16,7 @@ require_relative "../lib/fix/transaction"
 require_relative "../lib/fix/mission"
 require_relative "../lib/fix/checkpoint"
 require_relative "../lib/fix/run_journal"
+require_relative "../lib/fix/repair_loop"
 
 module Master
   module Fix
@@ -184,8 +185,54 @@ module Master
         end
       end
 
-      def test_4_file_budget_exhaustion_trips_collapse_guard
-        skip "wire RepairLoop / RunLedger file budget to the collapse_guard terminal state"
+      def test_4_budget_exhaustion_is_recorded_and_collapse_guard_refuses_mutation
+        previous_path = ENV["MASTER_FIX_REFUSALS_PATH"]
+        Dir.mktmpdir("fix-recovery-gate-budget-collapse") do |root|
+          refusal_path = File.join(root, "fix_refusals.jsonl")
+          ENV["MASTER_FIX_REFUSALS_PATH"] = refusal_path
+          Refusals.begin_run!
+          RunLedger.reset!
+
+          path = File.join(root, "sample.rb")
+          original = (1..18).map { |line| "def example_#{line}; value = #{line}; end\\n" }.join
+          File.binwrite(path, original)
+          adapter = Master::Fix::RepairLoop.allocate
+          law = Struct.new(:id).new("RECOVERY_GATE")
+          adapter.instance_variable_set(:@law, law)
+          adapter.instance_variable_set(:@root, root)
+          adapter.instance_variable_set(:@bus, nil)
+          adapter.instance_variable_set(:@visual_custody, nil)
+
+          timed_out = RunLedger.stub(:file_budget_s, 0.005) do
+            adapter.send(:start_file_budget)
+            adapter.send(:within_file_budget, { file: path }) do
+              sleep 0.03
+              "would have been a proposal"
+            end
+          end
+
+          assert_nil timed_out
+          assert adapter.instance_variable_get(:@file_timed_out)
+          assert_equal path, RunLedger.timeouts.fetch(0).fetch(0)
+          assert_in_delta 0.005, RunLedger.timeouts.fetch(0).fetch(1), 0.0001
+          assert_includes RunLedger.summary_lines.join("\\n"), "file budget spent on 1 file(s): sample.rb"
+
+          violation = { file: path, law: law.id, line: 8, severity: :warning }
+          capture_io do
+            refute adapter.send(:apply, path, "UNCHANGED", violation)
+          end
+
+          assert_equal original, File.binread(path), "the collapse guard must refuse before a source rewrite"
+          assert_equal 1, RunLedger.reasons.fetch("collapsed_content")
+          refusal = JSON.parse(File.readlines(refusal_path).last)
+          assert_equal "collapse", refusal.fetch("gate")
+          assert_equal "RECOVERY_GATE", refusal.fetch("law")
+          assert_match(/proposal is the refusal word/, refusal.fetch("reason"))
+        ensure
+          ENV["MASTER_FIX_REFUSALS_PATH"] = previous_path
+          Refusals.begin_run!
+          RunLedger.reset!
+        end
       end
 
       def test_5_ledger_records_per_file_reason_when_nothing_is_fixed
