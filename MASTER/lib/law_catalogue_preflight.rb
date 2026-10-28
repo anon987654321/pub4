@@ -127,6 +127,18 @@ module Master
     end
 
     def validate_manifest!(catalogue, entries, errors)
+      allowed_manifest_fields = %w[schema identity_source universal_by_default modalities surfaces missing_assessor defaults entries]
+      unknown_manifest_fields = catalogue.keys.map(&:to_s) - allowed_manifest_fields
+      errors << "law_catalogue has unknown field(s): #{unknown_manifest_fields.sort.join(', ')}" unless unknown_manifest_fields.empty?
+      errors << "law_catalogue.schema must be 1" unless catalogue["schema"] == 1
+      errors << "law_catalogue.identity_source must be this_section" unless catalogue["identity_source"] == "this_section"
+      errors << "law_catalogue.universal_by_default must be true" unless catalogue["universal_by_default"] == true
+      errors << "law_catalogue.missing_assessor must be inconclusive" unless catalogue["missing_assessor"] == "inconclusive"
+
+      allowed_entry_fields = %w[
+        universal modalities definition_sources detector_sources severity mode lifecycle autofix
+        languages surfaces path path_pattern path_exclude
+      ]
       expected_modalities = Master::LawVocabulary::MODALITIES.map(&:to_s).sort
       declared_modalities = Array(catalogue["modalities"]).map(&:to_s).uniq.sort
       errors << "law_catalogue.modalities must be #{expected_modalities.join(', ')}" unless declared_modalities == expected_modalities
@@ -181,6 +193,8 @@ module Master
           next
         end
 
+        unknown_entry_fields = entry.keys.map(&:to_s) - allowed_entry_fields
+        errors << "Law #{id} has unknown catalogue field(s): #{unknown_entry_fields.sort.join(', ')}" unless unknown_entry_fields.empty?
         errors << "Law #{id} must be marked universal" unless entry["universal"] == true
         modalities = Array(entry["modalities"]).map(&:to_s).uniq.sort
         errors << "Law #{id} modalities must be #{expected_modalities.join(', ')}" unless modalities == expected_modalities
