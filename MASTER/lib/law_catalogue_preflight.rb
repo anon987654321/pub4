@@ -137,6 +137,23 @@ module Master
         defaults = {}
       end
 
+      allowed_severities = %w[info warn warning error critical veto]
+      default_severity = defaults["severity"]
+      if !default_severity.nil? && !allowed_severities.include?(default_severity.to_s)
+        errors << "law_catalogue.defaults has invalid severity #{default_severity.inspect}"
+      end
+      default_mode = defaults["mode"].to_s
+      errors << "law_catalogue.defaults has invalid mode #{default_mode.inspect}" unless %w[violation opportunity].include?(default_mode)
+      default_lifecycle = defaults["lifecycle"].to_s
+      errors << "law_catalogue.defaults has invalid lifecycle #{default_lifecycle.inspect}" unless %w[proposed proven active observed trusted advisory retired].include?(default_lifecycle)
+      default_autofix = defaults["autofix"].to_s
+      errors << "law_catalogue.defaults has invalid autofix policy #{default_autofix.inspect}" unless %w[never review automatic].include?(default_autofix)
+      default_languages = defaults["languages"]
+      unless default_languages.nil? || (default_languages.is_a?(Array) &&
+        default_languages.all? { |language| Master::FILE_LANGUAGE_MAP.values.include?(language.to_s) })
+        errors << "law_catalogue.defaults has invalid languages"
+      end
+
       duplicate_keys = entries.keys.group_by { |id| id.to_s.downcase }.select { |_key, ids| ids.size > 1 }
       duplicate_keys.each_key { |key| errors << "duplicate case-insensitive catalogue identity: #{key}" }
 
@@ -160,12 +177,14 @@ module Master
         errors << "Law #{name} modalities must be #{expected_modalities.join(', ')}" unless row_modalities == expected_modalities
 
         severity = row["severity"] || defaults["severity"]
-        errors << "Law #{name} has no severity in laws.yml law_catalogue" if severity.to_s.strip.empty?
+        if severity.to_s.strip.empty?
+          errors << "Law #{name} has no severity in laws.yml law_catalogue"
+        elsif !allowed_severities.include?(severity.to_s)
+          errors << "Law #{name} has invalid severity #{severity.inspect}"
+        end
 
         mode = (row["mode"] || defaults["mode"]).to_s
-        if !mode.empty? && !allowed_modes.include?(mode)
-          errors << "Law #{name} has invalid mode #{mode.inspect}"
-        end
+        errors << "Law #{name} has invalid mode #{mode.inspect}" unless allowed_modes.include?(mode)
 
         lifecycle = (row["lifecycle"] || defaults["lifecycle"]).to_s
         errors << "Law #{name} has invalid lifecycle #{lifecycle.inspect}" unless allowed_lifecycles.include?(lifecycle)
