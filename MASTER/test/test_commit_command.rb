@@ -52,6 +52,19 @@ class TestCommitCommand < Minitest::Test
     assert_includes git("status", "--porcelain"), " M theirs.rb", "an unnamed change must stay uncommitted"
   end
 
+  # The message is a model's, so /commit is an automated commit: a sacred path is refused.
+  def test_a_sacred_path_is_refused
+    FileUtils.mkdir_p(File.join(@root, "MASTER", "data"))
+    File.write(File.join(@root, "MASTER", "data", "soul.yml"), "absolute:\n  sacred_paths:\n    - data/laws.yml\n")
+    File.write(File.join(@root, "MASTER", "data", "laws.yml"), "law_catalogue: {}\n")
+
+    out = Registry.dispatch_commit(@agent, @root, ctx: { args: "MASTER/data/laws.yml mine.rb" })
+
+    assert_includes out, "data/laws.yml is sacred: no automated writer may change it"
+    assert_equal "base", git("log", "-1", "--format=%s").strip
+    assert_empty git("diff", "--cached", "--name-only"), "a refusal leaves nothing staged"
+  end
+
   def test_no_paths_is_refused_before_the_model_is_asked
     out = Registry.dispatch_commit(@agent, @root, ctx: { args: "" })
 

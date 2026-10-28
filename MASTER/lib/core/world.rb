@@ -219,6 +219,11 @@ module Master::Core
       scoped = paths.map(&:to_s).reject(&:empty?)
       return Observation.no("git commit needs paths: an unscoped commit takes the shared index") if scoped.empty?
 
+      # The Constitution's immutable_paths rule blocks this effect before it gets here; the
+      # same refusal GitOperations#git! makes holds for a World driven without one.
+      refusal = scoped.lazy.filter_map { |path| Constitution::Paths.write_refusal(path, root: @root) }.first
+      return Observation.no("git commit refused: #{refusal}") if refusal
+
       Observation.ok(git_capture("commit", "-m", message.to_s, "-m", COMMIT_TRAILER, "--", *scoped))
     end
 

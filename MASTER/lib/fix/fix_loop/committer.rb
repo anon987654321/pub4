@@ -334,7 +334,7 @@ def stage_commit_mode?
           return :noop if prepared.empty?
 
           head_before = @git.head
-          transaction.delivery.begin!(head_before:)
+          transaction.delivery.begin!(head_before:, paths: prepared)
           begin
             result = commit_paths(message, findings, prepared, transaction:)
             checkpoint = transaction.checkpoint!(paths)
@@ -415,7 +415,7 @@ def stage_commit_mode?
 
         def deliver_and_commit(transaction:, message:, findings:, prepared:)
           head_before = @git.head
-          transaction.delivery.begin!(head_before:)
+          transaction.delivery.begin!(head_before:, paths: prepared)
           @transaction = nil
           begin
             result = commit_paths(message, findings, prepared, transaction:)
@@ -459,7 +459,7 @@ def stage_commit_mode?
 
         def validate_paths(message, paths)
           @refusing_paths = paths
-          return false unless boundary_scope_ok?(paths)
+          return false unless scope_ok?(paths)
           return false unless ratchet_sponsorship_ok?(paths)
 
           broken = ruby_files(paths).reject { |path| ruby_parses?(path) }
@@ -592,6 +592,21 @@ def stage_commit_mode?
           raise ArgumentError, "unknown phoenix boundary scope: #{unknown.join(", ")}" unless unknown.empty?
 
           values.freeze
+        end
+
+        # A pass that left a sacred path changed (laws.yml, soul.yml, ...) delivers nothing:
+        # no automated writer may change one, and git! would refuse the commit anyway.
+        def scope_ok?(paths) = sacred_paths_untouched?(paths) && boundary_scope_ok?(paths)
+
+        def sacred_paths_untouched?(paths)
+          refused = Array(paths).filter_map do |path|
+            reason = Master::Core::Constitution::Paths.write_refusal(path, root: @root)
+            [path, reason] if reason
+          end
+          return true if refused.empty?
+
+          refuse_commit(reason: "sacred_path", paths: refused.map(&:first), why: refused.first.last)
+          false
         end
 
         def boundary_scope_ok?(paths)

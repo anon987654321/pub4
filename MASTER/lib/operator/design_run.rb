@@ -144,9 +144,12 @@ module Operator
 
     def commit(file, message, root:)
       relative = file.to_s.delete_prefix("#{root}/")
-      args = ["git", "-C", root, "commit", "-q", "-m", message, "--", relative]
-      _out, status = Master::Io::Exec.capture2e(*args, timeout: 60)
-      status.success?
+      # Through git!, where every runtime commit refuses a sacred path.
+      Master::Io::GitOperations.new(root).git!("commit", "-q", "-m", message, "--", relative)
+      true
+    rescue RuntimeError => e
+      say("not committed: #{e.message[0, 200]}")
+      false
     end
 
     # A kept edit moves pixels on the surfaces it touched. Baseline approval is the operator's

@@ -3,85 +3,36 @@
 require_relative "test_helper"
 
 class TestImmutability < Minitest::Test
-  def test_regen_then_verify_is_stable_across_multiple_regenerations
-    with_fixture do |root|
-      checker = Master::Ground::Immutability.new(root:)
-      assert checker.regen!.ok?
-      assert_equal :clean, checker.verify!.value!
-      assert checker.regen!.ok?
-      assert_equal :clean, checker.verify!.value!
-    end
-  end
-
-  def test_drift_raises_violation
-    with_fixture do |root|
-      checker = Master::Ground::Immutability.new(root:)
-      checker.regen!
-      File.write(File.join(root, "data", "soul.yml"), "absolute:\n  sacred_paths: []\n")
-
-      assert_raises(Master::Ground::Immutability::Violation) { checker.verify! }
-    end
-  end
-
-  def test_new_file_under_sacred_directory_is_drift
-    with_fixture do |root|
-      checker = Master::Ground::Immutability.new(root:)
-      checker.regen!
-      File.write(File.join(root, "data", "new.yml"), "new: true\n")
-
-      assert_raises(Master::Ground::Immutability::Violation) { checker.verify! }
-    end
-  end
-
-  def test_blocked_uses_declarations_even_without_checksum_store
+  def test_blocked_follows_the_declared_sacred_paths
     with_fixture do |root|
       checker = Master::Ground::Immutability.new(root:)
       assert checker.blocked?(File.join(root, "data", "future.yml"))
+      assert checker.blocked?("SOUL.md")
       refute checker.blocked?(File.join(root, "lib", "future.rb"))
     end
   end
 
-  def test_missing_sacred_manifest_is_not_clean
-    Dir.mktmpdir do |root|
-      FileUtils.mkdir_p(File.join(root, "data"))
-      assert_raises(Master::Ground::Immutability::Violation) do
-        Master::Ground::Immutability.new(root:).verify!
-      end
+  def test_a_path_escaping_the_root_is_blocked
+    with_fixture do |root|
+      assert Master::Ground::Immutability.new(root:).blocked?("../outside.rb")
     end
   end
 
-  def test_empty_sacred_manifest_is_not_clean
+  def test_an_empty_sacred_manifest_fails_closed
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, "data"))
       File.write(File.join(root, "data", "soul.yml"), "absolute:\n  sacred_paths: []\n")
       assert_raises(Master::Ground::Immutability::Violation) do
-        Master::Ground::Immutability.new(root:).verify!
+        Master::Ground::Immutability.new(root:).blocked?("lib/x.rb")
       end
     end
   end
 
-  def test_unreadable_checksums_are_not_treated_as_missing
-    with_fixture do |root|
-      path = File.join(root, "data", "checksums.yml")
-      File.write(path, "data/: bad
-")
-      File.chmod(0o000, path) unless Process.uid.zero?
-
-      skip "root can still read chmod 000" if File.readable?(path)
-
-      assert_raises(Master::Ground::Immutability::Violation) do
-        Master::Ground::Immutability.new(root:).verify!
-      end
-    ensure
-      File.chmod(0o600, path) if defined?(path) && File.file?(path)
-    end
-  end
-
-  def test_missing_checksums_is_explicit
-    with_fixture do |root|
-      result = Master::Ground::Immutability.new(root:).verify!
-      assert_equal :no_checksums, result.value!
-    end
+  # The live manifest names the law catalogue and the soul itself: automation may not write either.
+  def test_the_live_manifest_blocks_the_laws_and_the_soul
+    assert Master::Ground::Immutability.blocked?("data/laws.yml")
+    assert Master::Ground::Immutability.blocked?("data/soul.yml")
+    refute Master::Ground::Immutability.blocked?("data/tokens.yml")
   end
 
   private

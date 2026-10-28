@@ -27,4 +27,39 @@ class TestDesignRun < Minitest::Test
     assert_empty said([], [Surface.new("amber/home/desktop", true)])
     assert_empty said([Round.new(:kept)], [Surface.new("amber/feed/desktop", false)])
   end
+
+  def git(root, *args) = system("git", "-C", root, *args, out: File::NULL, err: File::NULL)
+
+  def write_all(root, files) = files.each { |rel, text| File.write(File.join(root, rel), text) }
+
+  # A checkout whose MASTER declares data/laws.yml sacred, with laws.yml and app.css edited since its base commit.
+  def edited_checkout(root)
+    git(root, "init", "-q")
+    git(root, "config", "user.email", "test@example.invalid")
+    git(root, "config", "user.name", "test")
+
+    FileUtils.mkdir_p(File.join(root, "MASTER", "data"))
+    File.write(File.join(root, "MASTER", "data", "soul.yml"), "absolute:\n  sacred_paths:\n    - data/laws.yml\n")
+    write_all(root, "MASTER/data/laws.yml" => "a: 1\n", "app.css" => "a {}\n")
+    git(root, "add", ".")
+    git(root, "commit", "-q", "-m", "base")
+
+    write_all(root, "MASTER/data/laws.yml" => "a: 2\n", "app.css" => "b {}\n")
+  end
+
+  # A design run commits unattended, so it goes through git! and a sacred path is refused there.
+  def test_commit_refuses_a_sacred_path_and_commits_an_ordinary_one
+    Dir.mktmpdir do |root|
+      edited_checkout(root)
+      lines = []
+
+      RUN.stub(:say, ->(text) { lines << text }) do
+        refute RUN.commit(File.join(root, "MASTER", "data", "laws.yml"), "design: laws", root:)
+        assert RUN.commit(File.join(root, "app.css"), "design: css", root:)
+      end
+
+      assert_match(/data\/laws\.yml is sacred/, lines.first)
+      assert_equal "design: css\nbase\n", IO.popen(["git", "-C", root, "log", "--format=%s"], &:read)
+    end
+  end
 end

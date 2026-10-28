@@ -198,23 +198,35 @@ module Master
           out, _, status = Master::Io::Exec.capture3("git", "-C", repo, "status", "--porcelain", "--", *relative)
           return Result.ok(skipped: true) unless status.success? && !out.strip.empty?
 
-          commit_message = "auto: standing-order commit (#{out.lines.size} file(s))"
-          _, st = Master::Io::Exec.capture2e("git", "-C", repo, "commit", "-m", commit_message, "--", *relative)
-          return Result.err("commit failed") unless st.success?
-
-          push_out, push_st = Master::Io::Exec.capture2e("git", "-C", repo, "push")
-          if push_st.success?
-            bus&.publish("autocommit:pushed", files: out.lines.size, paths: relative)
-            Result.ok(committed: true, pushed: true, paths: relative)
-          else
-            bus&.publish("autocommit:push_failed", error: push_out.strip[0, 200], paths: relative)
-            Result.ok(committed: true, pushed: false, paths: relative, push_error: push_out.strip)
-          end
+          message = "auto: standing-order commit (#{out.lines.size} file(s))"
+          commit(repo, message:, paths: relative) || push(repo, files: out.lines.size, paths: relative)
         rescue StandardError => e
           Result.err(e.message)
         end
 
         private
+
+        # Through git!, where every runtime commit refuses a sacred path; path-scoped, so the
+        # shared index stays out of it. nil when it landed, else the Result that says why not.
+        def commit(repo, message:, paths:)
+          Master::Io::GitOperations.new(repo).git!("commit", "-m", message, "--", *paths)
+          nil
+        rescue RuntimeError => e
+          bus&.publish("autocommit:refused", error: e.message[0, 200], paths:)
+          Result.err("commit failed: #{e.message}")
+        end
+
+        def push(repo, files:, paths:)
+          push_out, push_st = Master::Io::Exec.capture2e("git", "-C", repo, "push")
+
+          if push_st.success?
+            bus&.publish("autocommit:pushed", files:, paths:)
+            Result.ok(committed: true, pushed: true, paths:)
+          else
+            bus&.publish("autocommit:push_failed", error: push_out.strip[0, 200], paths:)
+            Result.ok(committed: true, pushed: false, paths:, push_error: push_out.strip)
+          end
+        end
 
         def mutation_paths(repo)
           tracker = Master::Trace::WriteTracker.current

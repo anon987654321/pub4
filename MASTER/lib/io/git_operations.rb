@@ -22,6 +22,8 @@ module Master
           raise ArgumentError, "git commit needs paths: an unscoped commit takes the shared index" if scoped.empty?
 
           commit_message = normalize_commit_message(message)
+          # Refused before the add, so a refusal leaves nothing staged in the shared index.
+          refuse_sacred!(["commit", "--", *scoped])
           with_pathspec_file(scoped) do |pathspec_file|
             git!("add", "--pathspec-from-file=#{pathspec_file}", "--pathspec-file-nul")
             git!("commit", "-m", commit_message, "-m", Master::Core::World::COMMIT_TRAILER,
@@ -131,13 +133,16 @@ module Master
 
         def receipts = @receipts ||= Master::Trace::ToolObserver.new(bus: Master::Trace::EventBus.new)
 
-        # Every runtime commit passes here: the fix loop's, a restructure's, a rename's and the
-        # proof's delivery. So this is the one place a sacred path is refused, whichever writer
-        # left it changed; on 2026-10-12 an autofix edited laws.yml, and the guards in front of
-        # each writer were all the protection there was.
+        # Every runtime commit passes here: the fix loop's, a restructure's, a rename's, the
+        # proof's delivery, a standing order's, /commit's and a design run's. So this is the
+        # one place a sacred path is refused, whichever writer left it changed; on 2026-10-12
+        # an autofix edited laws.yml, and the guards in front of each writer were all the
+        # protection there was. A person's own `git commit` never passes here.
         def refuse_sacred!(args)
-          sacred = Master::Core::Constitution::Paths.new(root: toplevel)
-          refusal = committed_paths(args).filter_map { |path| sacred.commit_refusal(path) }.first
+          root = File.realpath(@root_path)
+          paths = Master::Core::Constitution::Paths
+
+          refusal = committed_paths(args).lazy.filter_map { |path| paths.write_refusal(path, root:) }.first
           raise "git commit refused: #{refusal}" if refusal
         end
 

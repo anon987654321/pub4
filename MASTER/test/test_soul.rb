@@ -147,6 +147,27 @@ class TestSoul < Minitest::Test
     end
   end
 
+  # The index is shared with every session in the checkout: approval commits SOUL.md
+  # and leaves what someone else staged staged and uncommitted.
+  def test_approve_commits_only_soul_md
+    with_git_identity do
+      git("init", "-q")
+      File.write(File.join(@root, "theirs.rb"), "A = 1\n")
+      git("add", "data/SOUL.md", "theirs.rb")
+      git("commit", "-q", "-m", "seed")
+
+      File.write(File.join(@root, "theirs.rb"), "A = 2\n")
+      git("add", "theirs.rb")
+
+      soul = Master::Voice::Soul.new(root: @root, agent: Agent.new("#{DOCUMENT}\nA small clarification.\n"))
+      soul.propose("clarify")
+
+      assert_match(/\Asoul updated in /, soul.approve)
+      assert_equal "data/SOUL.md\n", git("show", "--name-only", "--format=", "HEAD")
+      assert_equal "theirs.rb\n", git("diff", "--cached", "--name-only")
+    end
+  end
+
   GIT_IDENTITY = %w[GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL].freeze
 
   def with_git_identity

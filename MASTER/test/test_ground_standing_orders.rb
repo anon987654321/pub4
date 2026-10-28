@@ -357,6 +357,48 @@ class StandingOrdersTest < Minitest::Test
     FileUtils.remove_entry(root) if root && Dir.exist?(root)
   end
 
+  # A standing order commits with nobody watching, so it is held to git!'s refusal of a sacred path.
+  RecordingBus = Struct.new(:events) do
+    def publish(name, **payload)
+      events << [name, payload]
+    end
+  end
+
+  def sacred_laws_tree(repo)
+    root = File.join(repo, "MASTER")
+    FileUtils.mkdir_p(File.join(root, "data"))
+    File.write(File.join(root, "data", "soul.yml"), "absolute:\n  sacred_paths:\n    - data/laws.yml\n")
+    File.write(File.join(root, "data", "laws.yml"), "law_catalogue: {}\n")
+    root
+  end
+
+  # Runs Autocommit over a changed sacred laws.yml with git stubbed; answers [result, the git calls that ran].
+  def autocommit_sacred_laws(root, bus)
+    ran = []
+    status = FakeStatus.new(true)
+    event = { path: File.join(root, "data", "laws.yml") }
+
+    result = Master::Io::Exec.stub(:capture3, ->(*) { [" M MASTER/data/laws.yml\n", nil, status] }) do
+      Master::Io::Exec.stub(:capture2e, ->(*args, **) { ran << args; ["", status] }) do
+        Master::Ground::Orders::Autocommit.new(container: { root:, bus:, event: }).call
+      end
+    end
+    [result, ran]
+  end
+
+  def test_autocommit_refuses_a_sacred_path_before_git_runs
+    repo = Dir.mktmpdir("master-autocommit-sacred-")
+    bus = RecordingBus.new([])
+
+    result, ran = autocommit_sacred_laws(sacred_laws_tree(repo), bus)
+
+    assert_includes result.message, "data/laws.yml is sacred: no automated writer may change it"
+    assert_empty ran, "neither the commit nor the push may run"
+    assert_equal "autocommit:refused", bus.events.first&.first
+  ensure
+    FileUtils.remove_entry(repo) if repo && Dir.exist?(repo)
+  end
+
   def test_run_due_refuses_destructive_commands_before_routing
     routed = []
     pipeline = ->(input) { routed << input.value![:user_message]; Master::Result.ok("ran") }

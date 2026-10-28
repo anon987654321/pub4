@@ -73,6 +73,10 @@ class GitOperationsTest < Minitest::Test
     sh("git", "push", "-u", "origin", "main", chdir: path)
   end
 
+  def remote_head(branch)
+    sh("git", "--git-dir", @remote, "rev-parse", "--short", "refs/heads/#{branch}", chdir: @repo).strip
+  end
+
   def write(relative, content)
     path = File.join(@repo, relative)
     FileUtils.mkdir_p(File.dirname(path))
@@ -240,7 +244,7 @@ class GitOperationsTest < Minitest::Test
   end
 
   def declare_sacred
-    write("MASTER/data/soul.yml", "absolute:\n  sacred_paths:\n    - data/\n")
+    write("MASTER/data/soul.yml", "absolute:\n  sacred_paths:\n    - data/laws.yml\n    - data/soul.yml\n")
     write("MASTER/data/laws.yml", "a: 1\n")
     write("MASTER/data/spine.yml", "spine: 1\n")
   end
@@ -250,14 +254,17 @@ class GitOperationsTest < Minitest::Test
   def test_a_commit_naming_a_sacred_path_is_refused
     declare_sacred
 
-    assert_raises(RuntimeError) { @git.commit("laws", paths: ["MASTER/data/laws.yml"]) }
+    error = assert_raises(RuntimeError) { @git.commit("laws", paths: ["MASTER/data/laws.yml"]) }
+    assert_includes error.message, "data/laws.yml is sacred: no automated writer may change it"
+    assert_empty sh("git", "diff", "--cached", "--name-only", chdir: @repo), "a refusal stages nothing"
+    assert_raises(RuntimeError) { @git.commit("soul", paths: ["MASTER/data/soul.yml"]) }
     assert_raises(RuntimeError) { @git.git!("commit", "-m", "laws", "--", "MASTER/data/laws.yml") }
     sh("git", "add", "MASTER/data/laws.yml", chdir: @repo)
     assert_raises(RuntimeError) { @git.git!("commit", "-m", "staged laws") }
     assert_equal "first", sh("git", "log", "-1", "--format=%s", chdir: @repo).strip
   end
 
-  # RatchetSponsor requires the spine ceiling beside a change that grows a tree.
+  # The ratchet ceiling is runtime-written data, not sacred, so it commits beside the change it sponsors.
   def test_the_ratchet_ceiling_and_ordinary_paths_still_commit
     declare_sacred
     write("MASTER/lib/grown.rb", "# grown\n")
@@ -265,6 +272,15 @@ class GitOperationsTest < Minitest::Test
     @git.commit("grow", paths: ["MASTER/data/spine.yml", "MASTER/lib/grown.rb"])
 
     assert_equal "Grow", sh("git", "log", "-1", "--format=%s", chdir: @repo).strip
+  end
+
+  # Only runtime commits pass through git!; a person's own commit of the laws is untouched.
+  def test_a_person_still_commits_a_sacred_path_with_plain_git
+    declare_sacred
+    sh("git", "add", "MASTER/data/laws.yml", chdir: @repo)
+    sh("git", "commit", "-m", "Amend the laws", "--", "MASTER/data/laws.yml", chdir: @repo)
+
+    assert_equal "Amend the laws", sh("git", "log", "-1", "--format=%s", chdir: @repo).strip
   end
 
   def test_push_updates_the_remote
@@ -279,15 +295,15 @@ class GitOperationsTest < Minitest::Test
   def test_push_target_uses_current_topic_branch_even_when_it_tracks_main
     sh("git", "checkout", "-b", "work/fix-topic", chdir: @repo)
     sh("git", "branch", "--set-upstream-to", "origin/main", "work/fix-topic", chdir: @repo)
-    main_before = sh("git", "--git-dir", @remote, "rev-parse", "refs/heads/main").strip
+    main_before = sh("git", "--git-dir", @remote, "rev-parse", "refs/heads/main", chdir: @repo).strip
     write("topic.rb", "# topic\\n")
     @git.commit("topic repair", paths: ["topic.rb"])
 
     assert_equal ["origin", "HEAD:work/fix-topic"], @git.push_target
     @git.push
 
-    assert_equal main_before, sh("git", "--git-dir", @remote, "rev-parse", "refs/heads/main").strip
-    assert_equal @git.head, sh("git", "--git-dir", @remote, "rev-parse", "refs/heads/work/fix-topic").strip
+    assert_equal main_before, sh("git", "--git-dir", @remote, "rev-parse", "refs/heads/main", chdir: @repo).strip
+    assert_equal @git.head, remote_head("work/fix-topic")
   end
 
   def test_first_push_of_a_topic_branch_does_not_require_an_upstream
@@ -298,7 +314,7 @@ class GitOperationsTest < Minitest::Test
     assert_equal ["origin", "HEAD:work/fresh-topic"], @git.push_target
     @git.push
 
-    assert_equal @git.head, sh("git", "--git-dir", @remote, "rev-parse", "refs/heads/work/fresh-topic").strip
+    assert_equal @git.head, remote_head("work/fresh-topic")
   end
 
   def push_from_another_clone(file, content)

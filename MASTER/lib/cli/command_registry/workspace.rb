@@ -35,10 +35,15 @@ module Master
         message = agent.ask_once(prompt).to_s.strip.lines.first.to_s.strip
         return "commit: no message came back, so nothing was committed" if message.empty?
 
-        Master::Io::Exec.capture2e("git", "-C", root, "add", "--", *paths)
-        out, = Master::Io::Exec.capture2e("git", "-C", root, "commit", "-m", message,
-                                          "-m", Master::Core::World::COMMIT_TRAILER, "--", *paths)
-        [evolution, out.strip].reject(&:empty?).join("\n")
+        [evolution, commit_named(root, message:, paths:)].reject(&:empty?).join("\n")
+      end
+
+      # GitOperations#commit stages and commits the named paths and nothing else, through
+      # git!, where a sacred path is refused: the message is a model's.
+      def commit_named(root, message:, paths:)
+        Master::Io::GitOperations.new(root).commit(message, paths:).to_s.strip
+      rescue RuntimeError, ArgumentError => e
+        "commit: #{e.message}"
       end
 
       # The tree the session prints on first boot.

@@ -40,7 +40,16 @@ class TestAutofixGuard < Minitest::Test
     assert_nil Guard.protected_reason("/r/RAILS/brgen/app/models/post.rb")
   end
 
-  def test_law_catalogue_is_not_refused_by_path_alone
+  # Operator decision 2026-10-28: the live soul declares the laws and itself sacred, so no autofix opens them.
+  def test_the_live_laws_and_soul_are_refused_with_a_reason
+    %w[laws.yml soul.yml].each do |name|
+      reason = Guard.protected_reason(File.join(Master::ROOT, "data", name), root: Master::ROOT)
+      assert_match(/data\/#{name} is sacred: no automated writer may change it/, reason)
+    end
+  end
+
+  # Sacred is what the tree's own soul declares, not a path pattern.
+  def test_a_path_the_soul_does_not_declare_is_admitted
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, "MASTER", "data"))
       File.write(File.join(root, "MASTER", "data", "soul.yml"),

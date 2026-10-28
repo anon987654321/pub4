@@ -447,6 +447,33 @@ class TestFixTransaction < Minitest::Test
     end
   end
 
+  def sacred_laws_transaction(dir)
+    FileUtils.mkdir_p(File.join(dir, "data"))
+    File.write(File.join(dir, "data", "soul.yml"), "absolute:\n  sacred_paths:\n    - data/laws.yml\n")
+    laws = File.join(dir, "data", "laws.yml")
+    File.write(laws, "before")
+
+    tx = Master::Fix::Transaction.new(root: dir, paths: ["data/laws.yml"], id: "delivery-sacred").begin!
+    File.write(laws, "after")
+    tx.observe!
+    tx
+  end
+
+  # Operator decision 2026-10-28: a delivery that would commit the laws or the soul ends before it is marked.
+  def test_delivery_refuses_a_sacred_path_with_a_named_reason
+    Dir.mktmpdir do |dir|
+      tx = sacred_laws_transaction(dir)
+      begin_delivery = -> { tx.delivery.begin!(head_before: "parent", paths: ["data/laws.yml"]) }
+      error = nil
+      out, = capture_io { error = assert_raises(RuntimeError, &begin_delivery) }
+
+      assert_includes error.message, "data/laws.yml is sacred: no automated writer may change it"
+      assert_includes out, "data/laws.yml refused by commit: sacred_path"
+      assert_equal "open", tx.state
+      tx.rollback!
+    end
+  end
+
   def test_failed_delivery_finalization_releases_lock_for_a_safe_retry
     Dir.mktmpdir do |dir|
       path = File.join(dir, "note.txt")

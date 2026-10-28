@@ -3,9 +3,10 @@
 require "yaml"
 
 module Master
-  # Validates the governing YAML by its invariants, not by refusing its path.
-  # The same check guards edits, automatic writes and Fold effects, so changing
-  # the constitution does not require an operator-only side door.
+  # Validates the governing YAML by its invariants. Who may write it is a
+  # separate question soul.yml's sacred_paths answer: no automated writer may,
+  # and a person commits it with ordinary git. These invariants judge every
+  # candidate either way, so a write that is let through is still a valid one.
   module ConfigurationGuard
     module_function
 
@@ -15,13 +16,14 @@ module Master
       PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES INTER_MODEL_CONTRACT
       veto_patterns law_map transformation_policy law_catalogue
     ].freeze
-    REQUIRED_SACRED_PATHS = %w[
-      data/SOUL.md data/project_context.yml lib/ground/pledge.rb bin/master
+    # Sacred means no automated writer may change the path. The whole data/
+    # directory cannot be: tokens, state and ratchet ceilings there are written
+    # by the runtime every day. Nor can the retired scanner directories, which
+    # would freeze scanner code that must evolve.
+    TOO_BROAD_SACRED_PATHS = %w[
+      data/ data lib/review/scan/ lib/review/scan/laws lib/review/scan/laws/
     ].freeze
-    FORBIDDEN_SACRED_PATHS = %w[
-      data/ data data/soul.yml data/laws.yml lib/review/scan/
-      lib/review/scan/laws lib/review/scan/laws/
-    ].freeze
+    LIVE_SOUL = File.expand_path("../data/soul.yml", __dir__)
 
     def validate(path:, content:, root: nil)
       absolute = File.expand_path(path.to_s, root || Dir.pwd)
@@ -31,7 +33,7 @@ module Master
       data = YAML.safe_load(content, aliases: true)
       raise ArgumentError, "top-level YAML value must be a mapping" unless data.is_a?(Hash)
 
-      kind == :laws ? validate_laws(data, path: absolute, text: content) : validate_soul(data)
+      kind == :laws ? validate_laws(data, path: absolute, text: content) : validate_soul(data, path: absolute)
       nil
     rescue Psych::Exception, ArgumentError, KeyError, TypeError => e
       "configuration invariant failed: #{e.class}: #{e.message}"
@@ -45,22 +47,37 @@ module Master
       nil
     end
 
-    def validate_soul(data)
+    def validate_soul(data, path: LIVE_SOUL)
       absolute = data.fetch("absolute") { raise KeyError, "absolute section is required" }
       raise ArgumentError, "absolute section must be a mapping" unless absolute.is_a?(Hash)
       unless absolute["golden_law"] == "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
         raise ArgumentError, "golden_law must remain PRESERVE_THEN_IMPROVE_NEVER_BREAK"
       end
 
-      paths = Array(absolute["sacred_paths"]).map { |entry| normalize_path(entry) }
+      validate_sacred_paths(Array(absolute["sacred_paths"]).map { |entry| normalize_path(entry) }, path)
+    end
+
+    def validate_sacred_paths(paths, path)
       raise ArgumentError, "sacred_paths must not be empty" if paths.empty?
-      forbidden = paths.select { |entry| FORBIDDEN_SACRED_PATHS.include?(entry) }
-      unless forbidden.empty?
-        raise ArgumentError, "configuration files and retired scanner paths must remain editable: #{forbidden.join(', ')}"
+
+      broad = paths.select { |entry| TOO_BROAD_SACRED_PATHS.include?(entry) }
+      unless broad.empty?
+        raise ArgumentError, "runtime-written data and retired scanner paths cannot be sacred: #{broad.join(', ')}"
       end
 
-      missing = REQUIRED_SACRED_PATHS - paths
+      missing = live_sacred_paths(path) - paths
       raise ArgumentError, "critical path protections missing: #{missing.join(', ')}" unless missing.empty?
+    end
+
+    # soul.yml is the one list. A candidate keeps every path the soul it replaces
+    # declares, so no validated write can drop a protection; a person removes one
+    # with an ordinary commit. A candidate for a file not yet written is held to
+    # this MASTER's soul.
+    def live_sacred_paths(path)
+      soul = YAML.safe_load_file(File.file?(path) ? path : LIVE_SOUL, aliases: true)
+      declared = soul.is_a?(Hash) && soul["absolute"].is_a?(Hash) ? soul["absolute"]["sacred_paths"] : nil
+
+      Array(declared).map { |entry| normalize_path(entry) }
     end
 
     def validate_laws(data, path:, text:)

@@ -153,6 +153,11 @@ module Master
       end
 
       # The short hash of the approval commit, or nil when git refused it.
+      #
+      # SOUL.md is sacred, and GitOperations#git! refuses every runtime commit of a sacred
+      # path. This one does not pass there: `soul approve` is the operator's own act at the
+      # prompt, the amendment path soul.yml names, and it can only ever commit SOUL.md. The
+      # pathspec keeps whatever other sessions staged in the shared index out of it.
       def commit_approval
         relative = Pathname.new(@soul_path).relative_path_from(Pathname.new(@root)).to_s
         _, add_status = Master::Io::Exec.capture2e("git", "-C", @root, "add", "--", relative)
@@ -160,7 +165,7 @@ module Master
 
         _, commit_status = Master::Io::Exec.capture2e(
           "git", "-C", @root, "commit", "-m", "soul: evolution protocol update",
-          "-m", Master::Core::World::COMMIT_TRAILER
+          "-m", Master::Core::World::COMMIT_TRAILER, "--", relative
         )
         return unless commit_status.success?
 

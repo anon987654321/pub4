@@ -1,10 +1,12 @@
 # soul.yml — machine-enforced constitutional schema
 # Human-readable narrative lives in SOUL.md.
-# All configuration is versioned source. Edit constitutional data through normal validated changes;
-# syntax, invariants, catalogue reconciliation and tests—not path immutability—guard correctness.
+# All configuration is versioned source. Syntax, invariants, catalogue reconciliation and tests
+# guard its correctness. absolute.sacred_paths guards its authorship: no automated writer (the Fold,
+# /fix and its autofix, a tool write, a runtime commit) may change a sacred path, and every runtime
+# commit refuses one. A person changes them with an ordinary git commit.
 
 schema: 1
-version: "2.9.1"
+version: "2.10.0"
 persona: anchor
 voice: en-US-ChristopherNeural
 language:
@@ -16,7 +18,10 @@ language:
 absolute:
   golden_law: PRESERVE_THEN_IMPROVE_NEVER_BREAK
   severity_rank: { info: 0, warning: 1, error: 2, critical: 3 }
+  # Operator decision 2026-10-28: the Law catalogue and this file are off-limits to autonomous edits.
   sacred_paths:
+    - data/laws.yml
+    - data/soul.yml
     - data/SOUL.md
     - data/project_context.yml
     - lib/ground/pledge.rb

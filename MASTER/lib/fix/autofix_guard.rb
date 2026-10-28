@@ -26,8 +26,8 @@ module Master
       DATA_EXTENSIONS = %w[.yml .yaml .json .tsv .csv .toml .conf].freeze
 
       # Rendered or irreplaceable output, matched against the absolute path.
-      # data/ (laws.yml, soul.yml, tokens.yml) is covered by the sacred paths
-      # soul.yml declares; tokens.yml is named as well so the list stands alone.
+      # laws.yml and soul.yml are sacred paths soul.yml declares and are refused
+      # by protected_reason; tokens.yml is not sacred, so it is named here.
       PROTECTED = [
         %r{/MASTER/data/tokens\.yml\z},
         %r{/MASTER/lib/cli/face/},
@@ -96,7 +96,9 @@ module Master
           absolute = File.expand_path(path.to_s)
           hit = PROTECTED.find { |pattern| absolute.match?(pattern) }
           return "protected path (#{pattern_name(hit)})" if hit
-          return "protected path (soul.yml sacred_paths)" if sacred?(absolute, root)
+          if (sacred = Master::Core::Constitution::Paths.write_refusal(absolute, root:))
+            return "protected path (#{sacred})"
+          end
 
           nil
         end
@@ -247,18 +249,6 @@ module Master
             @written_digests.delete(path)
             @originals.delete(path)
           end
-        end
-
-        def sacred?(absolute, root)
-          master = [root, File.join(root.to_s, "MASTER")].compact.find { |dir| File.file?(File.join(dir, "data", "soul.yml")) }
-          return false unless master
-
-          # Measured from the repo root: from MASTER/ a path in RAILS/ or STUDIO/ "escapes the
-          # root", and Paths#sacred? answers an escape with true, so every sibling tree read as sacred.
-          base = File.basename(master) == "MASTER" ? File.dirname(master) : master
-          Master::Core::Constitution::Paths.sacred?(absolute, root: base)
-        rescue StandardError
-          false
         end
 
         def pattern_name(pattern) = pattern.source[0, 40]

@@ -114,6 +114,21 @@ class TestFixLoopCommitter < Minitest::Test
     assert_includes out, "fix0: lib/bad2.rb refused by commit: syntax, files lib/bad2.rb"
   end
 
+  # Operator decision 2026-10-28: /fix may not deliver a change to the laws or the soul.
+  def test_a_sacred_path_is_refused_with_a_named_reason
+    write_file("data/soul.yml", "absolute:\n  sacred_paths:\n    - data/laws.yml\n    - data/soul.yml\n")
+    write_file("data/laws.yml", "law_catalogue: {}\n")
+    write_file("lib/ok.rb", "OK = 1\n")
+    git = FakeGit.new([], ["data/laws.yml", "lib/ok.rb"])
+    bus = FakeBus.new
+
+    out, = capture_io { run_committer(git, bus, "fix: laws") }
+
+    assert_empty git.commits
+    assert blocked?(bus)
+    assert_includes out, "refused by commit: sacred_path, paths data/laws.yml, why data/laws.yml is sacred"
+  end
+
   def test_ignores_non_ruby_changes
     write_file("README.md", "# hi\n")
     git = FakeGit.new([], ["README.md"])

@@ -99,23 +99,41 @@ class ImmutablePathsTest < Minitest::Test
     assert_blocked effect, by: :immutable_paths
   end
 
-  def test_real_manifest_does_not_make_configuration_or_scanner_paths_immutable
-    sacred = Master::Core::Constitution::Paths.sacred_paths(root: Master::ROOT)
-    refute sacred.any? { |entry| entry == "data/" || entry == "data" || entry == "data/soul.yml" }
-    refute sacred.any? { |entry| entry.start_with?("lib/review/scan/") }
+  # Operator decision 2026-10-28: the Fold may not write the laws or the soul.
+  def test_real_manifest_blocks_the_laws_and_the_soul
+    law = real_manifest_law
 
-    law = Master::Core::Constitution.immutable_paths_rule(
-      sacred, master_root: Master::ROOT, workspace_root: Master::ROOT
-    )
     [
       Master::Core::Effect.write("data/laws.yml", "law_catalogue: {}\n"),
       Master::Core::Effect.write("data/soul.yml", "absolute:\n  sacred_paths: []\n"),
+      Master::Core::Effect.git(:commit, paths: ["data/laws.yml"], message: "laws"),
+    ].each do |effect|
+      verdict = Master::Core::Constitution.new(laws: [law]).admit(effect, nil)
+      assert_instance_of Master::Core::Verdict::Block, verdict, effect.args.inspect
+      assert_equal :immutable_paths, verdict.by
+    end
+  end
+
+  def test_real_manifest_does_not_make_runtime_data_or_scanner_paths_immutable
+    sacred = Master::Core::Constitution::Paths.sacred_paths(root: Master::ROOT)
+    refute sacred.any? { |entry| entry == "data/" || entry == "data" }
+    refute sacred.any? { |entry| entry.start_with?("lib/review/scan/") }
+
+    law = real_manifest_law
+
+    [
+      Master::Core::Effect.write("data/tokens.yml", "tokens: {}\n"),
       Master::Core::Effect.write("lib/review/scan/law.rb", "# scanner code may evolve\n"),
     ].each do |effect|
       # The rule abstains (nil) on a path it does not guard; admit turns that into Allow.
       verdict = Master::Core::Constitution.new(laws: [law]).admit(effect, nil)
       assert_instance_of Master::Core::Verdict::Allow, verdict, effect.args[:path]
     end
+  end
+
+  def real_manifest_law
+    sacred = Master::Core::Constitution::Paths.sacred_paths(root: Master::ROOT)
+    Master::Core::Constitution.immutable_paths_rule(sacred, master_root: Master::ROOT, workspace_root: Master::ROOT)
   end
 
   def test_ordinary_write_passes

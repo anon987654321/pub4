@@ -74,13 +74,27 @@ class WriteGuardTest < Minitest::Test
     refute_predicate @guard.verdict(path:, content: "# frozen_string_literal: true\n\ndef work = 1\n"), :blocked?
   end
 
+  # Operator decision 2026-10-28: an automated write to the laws or the soul is refused with a reason,
+  # whatever its content.
+  def test_an_automated_write_to_the_laws_or_the_soul_is_refused
+    %w[laws.yml soul.yml].each do |name|
+      file = File.join(Master::ROOT, "data", name)
+      verdict = @guard.verdict(path: file, content: File.read(file, encoding: "UTF-8"))
+
+      assert_predicate verdict, :blocked?
+      assert_match(/\Asacred_path:0 data\/#{Regexp.escape(name)} is sacred: no automated writer/, verdict.reason)
+    end
+  end
+
+  # The operator's hand edit (tools/law_check_edit.rb) may change a sacred file; its content is still judged.
   def test_malformed_law_catalogue_is_blocked_by_configuration_invariants
     laws_path = File.join(Master::ROOT, "data", "laws.yml")
-    verdict = @guard.verdict(path: laws_path, content: "law_catalogue: {}\n")
+    verdict = @guard.verdict(path: laws_path, content: "law_catalogue: {}\n", automated: false)
 
     assert_predicate verdict, :blocked?
     assert_match(/configuration_invariant/, verdict.reason)
     assert_match(/required Law sections missing/, verdict.reason)
+    refute_match(/sacred_path/, verdict.reason)
   end
 
   def test_sidecar_markdown_is_blocked_even_when_clean

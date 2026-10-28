@@ -9,13 +9,10 @@ class TestCorePaths < Minitest::Test
   end
 
   def test_soul_owns_the_sacred_paths
-    refute_includes paths.sacred_paths, "data/"
-    refute_includes paths.sacred_paths, "data/soul.yml"
-    refute_includes paths.sacred_paths, "lib/review/scan/"
-    assert_includes paths.sacred_paths, "data/SOUL.md"
-    assert_includes paths.sacred_paths, "data/project_context.yml"
-    assert_includes paths.sacred_paths, "lib/ground/pledge.rb"
-    assert_includes paths.sacred_paths, "bin/master"
+    sacred = paths.sacred_paths
+    assert_empty sacred & %w[data/ lib/review/scan/]
+    expected = %w[data/laws.yml data/soul.yml data/SOUL.md data/project_context.yml lib/ground/pledge.rb bin/master]
+    assert_empty expected - sacred
   end
 
   def test_authored_fix_code_is_not_sacred
@@ -37,6 +34,24 @@ class TestCorePaths < Minitest::Test
       assert repo_paths.sacred?(File.join(root, "MASTER/bin/master"))
       refute repo_paths.sacred?(File.join(root, "RAILS/app/models/post.rb"))
     end
+  end
+
+  # write_refusal judges a path by the MASTER that governs it, from whichever tree the caller works in.
+  def test_write_refusal_names_the_reason_from_master_or_the_checkout
+    reason = "data/laws.yml is sacred: no automated writer may change it (soul.yml absolute.sacred_paths)"
+    assert_equal reason, Master::Core::Constitution::Paths.write_refusal("data/laws.yml", root: Master::ROOT)
+    assert_equal reason,
+                 Master::Core::Constitution::Paths.write_refusal("MASTER/data/laws.yml", root: Master::REPO_ROOT)
+    assert_nil Master::Core::Constitution::Paths.write_refusal("lib/fix/fix_loop.rb", root: Master::ROOT)
+    assert_nil Master::Core::Constitution::Paths.write_refusal("../RAILS/brgen/app/models/post.rb", root: Master::ROOT)
+  end
+
+  # A tree with no manifest of its own is held to this MASTER's, and its own files are not MASTER's to guard.
+  def test_write_refusal_in_a_tree_without_a_manifest
+    Dir.mktmpdir("core-paths-bare") do |root|
+      assert_nil Master::Core::Constitution::Paths.write_refusal("data/laws.yml", root:)
+    end
+    assert Master::Core::Constitution::Paths.write_refusal(File.join(Master::ROOT, "data", "soul.yml"))
   end
 
   def test_path_escape_is_treated_as_protected

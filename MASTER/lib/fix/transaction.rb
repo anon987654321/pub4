@@ -301,6 +301,7 @@ module Master
       def tracked(paths) = Array(paths).filter_map { |path| normalize(path) } & @paths
 
       def id = @id
+      def root = @root
       def state = @state
       def active? = @active
 

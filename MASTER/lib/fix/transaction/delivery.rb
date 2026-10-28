@@ -14,9 +14,13 @@ module Master
           @tx = tx
         end
 
-        def begin!(head_before:)
+        # paths are the ones this delivery will commit. A sacred one ends it before
+        # anything is marked: no automated writer may change one.
+        def begin!(head_before:, paths: [])
           raise "transaction not active" unless @tx.send(:active?)
           raise "transaction is not open: #{@tx.state}" unless @tx.state == "open"
+
+          refuse_sacred!(paths)
 
           @tx.send(:lifecycle_mutation, :delivery_begin, item_count: @tx.instance_variable_get(:@paths).size) do
             @tx.instance_variable_set(:@state, "delivering")
@@ -84,6 +88,18 @@ module Master
         end
 
         private
+
+        def refuse_sacred!(paths)
+          root = @tx.root
+          Array(paths).each do |path|
+            reason = Master::Core::Constitution::Paths.write_refusal(path, root:)
+            next unless reason
+
+            Master::Fix::Refusals.record(gate: :commit, file: File.expand_path(path, root),
+                                         reason: "sacred_path: #{reason}", root:)
+            raise "transaction delivery refused: #{reason}"
+          end
+        end
 
         # The line the Committer writes into each delivery commit's body, so a
         # recovery can find the commit a crash kept the manifest from naming.

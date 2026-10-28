@@ -177,8 +177,9 @@ module Master::Core
       ]
     end
 
-    # Configuration files stay editable. Their schema and constitutional
-    # invariants are checked on the candidate content for every Fold write.
+    # Configuration content is judged by its schema and constitutional invariants
+    # on every Fold write; whether the Fold may write a path at all is
+    # immutable_paths_rule's question, and laws.yml and soul.yml are sacred.
     # The guard is shared with lib/fix/write_guard.rb and sits outside the
     # fold's seven-file concept budget (data/spine.yml core_files), so it is
     # resolved through the shared loader rather than required from lib/.
@@ -198,7 +199,7 @@ module Master::Core
     # Sacred paths are declared by soul.yml, the constitutional source. The rule
     # catalogue remains descriptive and must not become a second write-protection list.
     # The agent may not rewrite the constitution it is judged by or the spine
-    # that folds its effects. A write, or a git stage of such a path, is blocked.
+    # that folds its effects. A write, or a git stage or commit of such a path, is blocked.
     def self.immutable_paths_rule(immutable, master_root: nil, workspace_root: nil)
       Law.new(id: :immutable_paths, verbs: %i[write git], judge: lambda { |effect, _memory|
         targets = effect.verb == :write ? [effect.args[:path]] : Array(effect.args[:paths])
@@ -548,12 +549,13 @@ module Master::Core
 
     # One source for paths that are constitutionally protected.
     #
-    # soul.yml owns identity and sacred paths. This class is deliberately small:
-    # readers can ask for the declarations or whether one path is protected
+    # soul.yml owns identity and sacred paths: the files no automated writer —
+    # the Fold, /fix and its autofix, a tool write, a runtime commit — may change.
+    # A person changes them with an ordinary git commit. This class is deliberately
+    # small: readers can ask for the declarations or whether one path is protected
     # without knowing how soul.yml is laid out.
     class Paths
       MANIFEST = "data/soul.yml"
-      RATCHET_CEILING = "data/spine.yml"
 
       def self.sacred_paths(root:)
         new(root:).sacred_paths
@@ -562,6 +564,30 @@ module Master::Core
       def self.sacred?(path, root:)
         new(root:).sacred?(path)
       end
+
+      # Why no automated writer may write or commit this path, or nil. root is the
+      # tree the caller works in: MASTER, the checkout above it, or a scratch tree.
+      # The constitution judged is the one that tree holds, else this MASTER's own,
+      # so a tree without a manifest never makes a sacred file writable. A path
+      # outside the MASTER that constitution governs is not its to guard: every
+      # sacred path is MASTER-relative, so RAILS/ or a test's tmpdir stays writable.
+      def self.write_refusal(path, root: nil)
+        master = governing_root(root)
+
+        full = File.expand_path(path.to_s, root ? File.expand_path(root.to_s) : master)
+        return unless full == master || full.start_with?("#{master}/")
+
+        new(root: master).commit_refusal(full)
+      end
+
+      def self.governing_root(root)
+        dir = root && File.expand_path(root.to_s)
+        found = [dir, dir && File.join(dir, "MASTER")].compact.find do |candidate|
+          File.file?(File.join(candidate, MANIFEST))
+        end
+        found || File.expand_path("../..", __dir__)
+      end
+      private_class_method :governing_root
 
       def initialize(root:)
         @root = File.expand_path(root)
@@ -603,19 +629,14 @@ module Master::Core
         true
       end
 
-      # nil when a runtime commit may carry this path, else why not. The one sacred file
-      # it may carry is the ceiling RatchetSponsor requires beside any change that grows
-      # or shrinks a tree.
+      # nil when a runtime commit may carry this path, else why not. A broken
+      # manifest refuses every path.
       def commit_refusal(path)
         relative = normalize(path)
-        # Validate the constitution before honoring the ratchet-ceiling exception below.
-        # A broken manifest must refuse every commit, including data/spine.yml.
         sacred_paths
         return unless sacred?(path)
 
-        return if relative.delete_prefix(manifest_prefix) == RATCHET_CEILING
-
-        "#{relative} is sacred (soul.yml absolute.sacred_paths)"
+        "#{relative} is sacred: no automated writer may change it (soul.yml absolute.sacred_paths)"
       rescue ArgumentError
         "#{path} is outside #{@root}"
       rescue StandardError => e

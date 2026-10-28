@@ -18,6 +18,7 @@ class TestEffectBoundaryInventory < Minitest::Test
     "lib/builder/ai_boot.rb" => "GitOperations",
     "lib/cli/command_registry.rb" => "GitOperations",
     "lib/cli/command_registry/status.rb" => "GitOperations",
+    "lib/cli/command_registry/workspace.rb" => "GitOperations",
     "lib/cli/pipeline/pass.rb" => "GitOperations",
     "lib/cli/pipeline/proof.rb" => "GitOperations",
     "lib/fix/file_rename.rb" => "GitOperations",
@@ -25,6 +26,8 @@ class TestEffectBoundaryInventory < Minitest::Test
     "lib/fix/fix_loop/repo_scope.rb" => "GitOperations",
     "lib/fix/restructure.rb" => "GitOperations",
     "lib/fix/wishlist.rb" => "GitOperations",
+    "lib/ground/orders.rb" => "GitOperations",
+    "lib/operator/design_run.rb" => "GitOperations",
     # The Fold's fetch: CoreBridge runs it inside an effect the EffectObserver brackets.
     "lib/cli/core_bridge.rb" => "WebFetch",
     # `!command` in the REPL: the operator typing a shell line; Shell asks its governor.

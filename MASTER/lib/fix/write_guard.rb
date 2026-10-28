@@ -49,14 +49,12 @@ module Master
           @laws = laws.reject { |rule| rule.respond_to?(:set_agent) }
         end
 
-        def verdict(path:, content:)
-          if (reason = Master::Core::Constitution.forbidden_file_reason(path))
-            return Verdict.new(introduced: [{ law: :forbidden_file, line: 0, message: reason, severity: :error }])
-          end
-
-          if (reason = Master::ConfigurationGuard.validate(path:, content:))
-            return Verdict.new(introduced: [{ law: :configuration_invariant, line: 0, message: reason, severity: :error }])
-          end
+        # A sacred path is refused to an automated writer before its content is
+        # judged. automated: false is the hand edit an agent makes for the operator
+        # (tools/law_check_edit.rb), which, like a person's commit, may change one.
+        def verdict(path:, content:, automated: true)
+          law, reason = refusal(path:, content:, automated:)
+          return Verdict.new(introduced: [{ law:, line: 0, message: reason, severity: :error }]) if reason
 
           before = tally(findings(path:, content: (File.read(path) if File.exist?(path))))
           Verdict.new(introduced: findings(path:, content:).select { |f| (before[key(f)] -= 1).negative? })
@@ -66,6 +64,19 @@ module Master
         end
 
         private
+
+        # [law, reason] for a write refused before its findings are counted, or nil.
+        def refusal(path:, content:, automated:)
+          if automated && (reason = Master::Core::Constitution::Paths.write_refusal(path))
+            return [:sacred_path, reason]
+          end
+          if (reason = Master::Core::Constitution.forbidden_file_reason(path))
+            return [:forbidden_file, reason]
+          end
+
+          reason = Master::ConfigurationGuard.validate(path:, content:)
+          [:configuration_invariant, reason] if reason
+        end
 
         def findings(path:, content:)
           return [] if content.nil?

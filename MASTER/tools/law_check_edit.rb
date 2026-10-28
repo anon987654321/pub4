@@ -67,7 +67,8 @@ begin
   $LOAD_PATH.unshift(File.join(root, "MASTER", "lib"))
   require "master"
   require "fix/write_guard"
-  verdict = Master::Fix::WriteGuard.default.verdict(path:, content:)
+  # A hand edit is the operator's, so sacred paths stay open to it; only automation is refused them.
+  verdict = Master::Fix::WriteGuard.default.verdict(path:, content:, automated: false)
   exit 0 unless verdict.blocked?
 
   warn "law-check: this #{tool.downcase} introduces a finding the laws refuse in #{path.delete_prefix("#{root}/")}:"

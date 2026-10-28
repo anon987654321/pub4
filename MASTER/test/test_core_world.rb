@@ -408,4 +408,19 @@ class WorldTest < Minitest::Test
       assert_equal ["seed.txt"], committed_paths(root), "HEAD moved despite the refusal"
     end
   end
+
+  # A World driven without a Constitution still refuses a sacred path, as GitOperations#git! does.
+  def test_commit_of_a_sacred_path_is_refused
+    with_git_world do |world, root|
+      FileUtils.mkdir_p(File.join(root, "data"))
+      File.write(File.join(root, "data", "soul.yml"), "absolute:\n  sacred_paths:\n    - data/laws.yml\n")
+      File.write(File.join(root, "data", "laws.yml"), "a: 1\n")
+      world.perform(E.git(:stage, paths: ["data/laws.yml"]))
+
+      obs = world.perform(E.git(:commit, paths: ["data/laws.yml"], message: "laws"))
+      refute obs.ok?
+      assert_match(/data\/laws\.yml is sacred: no automated writer may change it/, obs.message)
+      assert_equal ["seed.txt"], committed_paths(root)
+    end
+  end
 end

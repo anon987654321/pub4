@@ -35,11 +35,36 @@ class TestConfigurationGuard < Minitest::Test
     assert_match(/modalities must be lexical, semantic, visual/, reason)
   end
 
-  def test_soul_cannot_restore_self_protection_or_broad_data_guards
+  def test_soul_cannot_freeze_the_whole_data_directory
     data = YAML.safe_load_file(soul_path, aliases: true)
-    data.fetch("absolute").fetch("sacred_paths").concat(%w[data/ data/soul.yml data/laws.yml])
+    data.fetch("absolute").fetch("sacred_paths").push("data/")
     reason = Guard.validate(path: soul_path, content: YAML.dump(data))
-    assert_match(/configuration files and retired scanner paths must remain editable/, reason)
+    assert_match(/runtime-written data and retired scanner paths cannot be sacred: data\//, reason)
+  end
+
+  # Operator decision 2026-10-28: the laws and the soul are off-limits to automation.
+  def test_the_live_soul_protects_the_laws_and_itself
+    sacred = YAML.safe_load_file(soul_path, aliases: true).dig("absolute", "sacred_paths")
+    assert_includes sacred, "data/laws.yml"
+    assert_includes sacred, "data/soul.yml"
+  end
+
+  # The required list is the live soul's own, not a copy: dropping any path it declares is refused.
+  def test_soul_cannot_drop_a_path_the_live_soul_declares
+    data = YAML.safe_load_file(soul_path, aliases: true)
+    data.fetch("absolute")["sacred_paths"].delete("data/laws.yml")
+    reason = Guard.validate(path: soul_path, content: YAML.dump(data))
+    assert_match(/critical path protections missing: data\/laws\.yml/, reason)
+  end
+
+  def test_a_new_soul_is_held_to_this_masters_list
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "MASTER", "data", "soul.yml")
+      data = YAML.safe_load_file(soul_path, aliases: true)
+      data.fetch("absolute")["sacred_paths"] = %w[bin/master]
+      reason = Guard.validate(path:, content: YAML.dump(data))
+      assert_match(/critical path protections missing/, reason)
+    end
   end
 
   def test_soul_must_keep_the_critical_spine_guarded
