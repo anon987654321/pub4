@@ -113,7 +113,7 @@ module Master
             note_refused(path, why)
             return why
           end
-          return nil unless capped?(path)
+          return unless capped?(path)
 
           note_capped(path)
           "per-run cap of #{max_files} files reached"

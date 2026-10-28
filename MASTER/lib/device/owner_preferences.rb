@@ -30,58 +30,58 @@ module Master
         {
           id: "concise",
           pattern: /\b(?:too\s+(?:long|verbose|wordy)|stop\s+(?:rambling|being\s+so\s+verbose)|be\s+more\s+concise|shorter\s+please|keep\s+it\s+brief|less\s+detail)\b/i,
-          key: "communication.detail", value: "brief",
+          key: "communication.detail", value: "brief"
         }.freeze,
         {
           id: "detailed",
           pattern: /\b(?:too\s+(?:brief|short)|need\s+more\s+detail|explain\s+(?:that|it|this)\s+in\s+more\s+detail|expand\s+on\s+that)\b/i,
-          key: "communication.detail", value: "detailed",
+          key: "communication.detail", value: "detailed"
         }.freeze,
         {
           id: "direct",
           pattern: /\b(?:stop\s+sugarcoating|be\s+more\s+direct|don't\s+(?:sugarcoat|soften|dodge)|tell\s+me\s+straight|cut\s+the\s+fluff)\b/i,
-          key: "communication.tone", value: "direct",
+          key: "communication.tone", value: "direct"
         }.freeze,
         {
           id: "warm",
           pattern: /\b(?:be\s+more\s+empathetic|need\s+more\s+empathy|less\s+cold|too\s+cold|more\s+compassionate)\b/i,
-          key: "communication.tone", value: "warm",
+          key: "communication.tone", value: "warm"
         }.freeze,
         {
           id: "implement_verify",
           pattern: /\b(?:stop\s+just\s+(?:suggesting|explaining)|don't\s+just\s+(?:suggest|explain)|actually\s+(?:implement|fix|write)\s+(?:it|this|the\s+fix)|i\s+asked\s+you\s+to\s+(?:implement|fix|write)|not\s+just\s+(?:advice|suggestions|an\s+explanation))\b/i,
-          key: "work.flow", value: "implement_verify",
+          key: "work.flow", value: "implement_verify"
         }.freeze,
         {
           id: "plan_first",
           pattern: /\b(?:plan\s+before\s+(?:you\s+)?(?:change|edit|implement)|show\s+me\s+the\s+plan\s+first|you\s+(?:changed|edited|implemented)\s+before\s+planning)\b/i,
-          key: "work.flow", value: "plan_first",
+          key: "work.flow", value: "plan_first"
         }.freeze,
         {
           id: "deep_research",
           pattern: /\b(?:not\s+enough\s+research|go\s+deeper\s+on\s+the\s+sources|didn't\s+check\s+enough\s+sources|cite\s+more\s+sources)\b/i,
-          key: "research.depth", value: "deep",
+          key: "research.depth", value: "deep"
         }.freeze,
       ].freeze
       FEEDBACK_RULES_BY_ID = FEEDBACK_RULES.to_h { |rule| [rule.fetch(:id), rule] }.freeze
       DEFINITIONS = {
         "communication.tone" => {
-          label: "Tone", values: %w[direct warm neutral].freeze,
+          label: "Tone", values: %w[direct warm neutral].freeze
         }.freeze,
         "communication.detail" => {
-          label: "Detail", values: %w[brief balanced detailed].freeze,
+          label: "Detail", values: %w[brief balanced detailed].freeze
         }.freeze,
         "reasoning.approach" => {
-          label: "Reasoning", values: %w[pragmatic first_principles compare_options].freeze,
+          label: "Reasoning", values: %w[pragmatic first_principles compare_options].freeze
         }.freeze,
         "work.flow" => {
-          label: "Work flow", values: %w[recommend plan_first implement_verify].freeze,
+          label: "Work flow", values: %w[recommend plan_first implement_verify].freeze
         }.freeze,
         "research.depth" => {
-          label: "Research depth", values: %w[quick standard deep].freeze,
+          label: "Research depth", values: %w[quick standard deep].freeze
         }.freeze,
         "learning.format" => {
-          label: "Learning format", values: %w[step_by_step worked_examples socratic].freeze,
+          label: "Learning format", values: %w[step_by_step worked_examples socratic].freeze
         }.freeze,
       }.freeze
 
@@ -542,7 +542,7 @@ module Master
           end
           {
             "id" => id, "scope" => selected_scope, "key" => key, "value" => value,
-            "count" => count, "last_seen" => stamp, "suggestion_id" => suggestion_id,
+            "count" => count, "last_seen" => stamp, "suggestion_id" => suggestion_id
           }
         end
         {

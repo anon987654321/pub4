@@ -57,7 +57,7 @@ module Master
 "AX39|Versioned data contracts|Version data and rollback contracts.",
 "AX40|Composition-root wiring|Centralize wiring without hidden globals."].map do |entry|
         id, name, intent = entry.split("|", 3)
-        { id: id, name: name, intent: intent }.freeze
+        { id:, name:, intent: }.freeze
       end.freeze
 
       def self.candidate_count(env = ENV)
@@ -118,7 +118,7 @@ module Master
       end
 
       def run(target:, files:)
-        trees = self.class.eligible_targets(root: @root, target: target)
+        trees = self.class.eligible_targets(root: @root, target:)
         return { "status" => "SKIPPED", "targets" => [], "brief" => "" } if trees.empty?
 
         current_provenance = provenance
@@ -187,10 +187,10 @@ module Master
       end
 
       def saved_report
-        return nil unless @run_journal && @run_id.match?(/\A[a-f0-9]{20}\z/)
+        return unless @run_journal && @run_id.match?(/\A[a-f0-9]{20}\z/)
 
         receipt = @run_journal.verify_architecture_report(@run_id)
-        return nil if receipt["status"] == "receipt_missing"
+        return if receipt["status"] == "receipt_missing"
         unless receipt["status"] == "verified"
           @persistence_blocked = true
           raise "saved architecture report is not trustworthy: #{receipt["status"]}"
@@ -365,7 +365,7 @@ module Master
             { "path" => entry.fetch("path"), "sha256" => entry.fetch("sha256"),
               "excerpt_bytes" => entry.fetch("excerpt").bytesize }
           end }
-        publish("fix_loop:architecture_exploration_complete", tree: name, status: status,
+        publish("fix_loop:architecture_exploration_complete", tree: name, status:,
           requested: @count, accepted: candidates.size, qualified: qualified.size, winner: report.dig("winner", "id"))
         report
       rescue StandardError => error
@@ -466,13 +466,13 @@ module Master
             rejected << "#{id}: #{reasons.join("; ")}"
             next
           end
-          candidate = { id: id, lens: expected[id], title: row["title"].to_s[0, 160],
+          candidate = { id:, lens: expected[id], title: row["title"].to_s[0, 160],
             thesis: row["thesis"].to_s[0, 900], core_boundary: row["core_boundary"].to_s[0, 600],
             change_paths: changes, evidence_paths: evidence, test_paths: tests,
             verification_plan: row["verification_plan"].to_s[0, 900],
             rollback_plan: row["rollback_plan"].to_s[0, 600],
             law_alignment: row["law_alignment"].to_s[0, 500],
-            benefits: benefits, tradeoffs: tradeoffs, risks: risks }
+            benefits:, tradeoffs:, risks: }
           duplicate = accepted.find { |other| near_duplicate?(other, candidate) }
           if duplicate
             rejected << "#{id}: near-duplicate of #{duplicate[:id]}"
@@ -523,8 +523,8 @@ module Master
         tradeoff_detail = row[:tradeoffs].count { |text| text.length >= 24 }
         consequence_terms = signature((row[:benefits] + row[:tradeoffs]).join(" ")).size
         tradeoff = [benefit_detail * 2 + tradeoff_detail * 2 + (consequence_terms >= 12 ? 2 : 0), SCORES.fetch(:tradeoff_analysis)].min
-        parts = { source_evidence: source, test_anchors: tests, verification: verification,
-          rollback: rollback, scope: scope, law_alignment: law, tradeoff_analysis: tradeoff }
+        parts = { source_evidence: source, test_anchors: tests, verification:,
+          rollback:, scope:, law_alignment: law, tradeoff_analysis: tradeoff }
         parts.merge(total: parts.values.sum)
       end
 
@@ -604,7 +604,7 @@ module Master
           "runner_up_score" => runner_up_score,
           "winner_margin" => winner_score && runner_up_score ? winner_score - runner_up_score : nil,
           "winner_selection_rule" => selected ? "highest local evidence score among candidates passing every quality floor; deterministic tie-break by test anchors, evidence paths, smaller scope, then id" : nil,
-          "execution_proof" => "NOT_RUN"
+          "execution_proof" => "NOT_RUN",
         }
       end
 
@@ -662,7 +662,7 @@ module Master
             begin
               return File.join(File.realpath(current), *suffix)
             rescue SystemCallError, ArgumentError
-              return nil
+              return
             end
           end
           parent = File.dirname(current)

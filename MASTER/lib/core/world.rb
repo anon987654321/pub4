@@ -178,7 +178,7 @@ module Master::Core
         RbConfig.ruby, "--disable-gems", worker, "--exec-worker", "--", *argv,
         env: child_env,
         chdir: @root,
-        timeout: seconds,
+        timeout: seconds
       )
       status.success? ? Observation.ok(out.to_s.strip) : Observation.no(out.to_s.strip)
     end

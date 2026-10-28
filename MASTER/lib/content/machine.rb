@@ -14,7 +14,7 @@ module Master
       MAX_CYCLES_PER_CARD = 3
 
       def initialize(root:, judge: Judge.new, writer: nil, editor: nil)
-        @board = Board.new(root: root)
+        @board = Board.new(root:)
         @judge = judge
         @writer = writer
         @editor = editor

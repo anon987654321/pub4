@@ -128,7 +128,7 @@ module Master
             "affiliateSiteId" => site_id, "programId" => program_id,
             "timeStampEvent" => date, "eventId" => event_id,
             "orderNumber" => required_text(input["orderNumber"], "orderNumber", MAX_ORDER_NUMBER),
-            "orderValue" => decimal_string(input["orderValue"], "orderValue", minimum: BigDecimal("0.01")),
+            "orderValue" => decimal_string(input["orderValue"], "orderValue", minimum: BigDecimal("0.01"))
           }
         end
 
@@ -199,7 +199,7 @@ module Master
           {
             "schema" => 1, "source" => source, "created_at" => @clock.call.utc.iso8601(6),
             "payload_sha256" => payload_hash, "claim_key_sha256" => Digest::SHA256.hexdigest(JSON.generate(key)),
-            "payload" => payload,
+            "payload" => payload
           }
         end
 

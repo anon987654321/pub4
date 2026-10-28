@@ -222,7 +222,7 @@ module Master::Core
     # contain another compensation, and its human-readable reason is mandatory.
     def compensation_action
       raw = args.key?(:compensation) ? args[:compensation] : args["compensation"]
-      return nil if raw.nil?
+      return if raw.nil?
       raise ArgumentError, "compensation is valid only for exec effects" unless verb == :exec
       raise ArgumentError, "compensation must be an object with argv and reason" unless raw.is_a?(Hash)
 

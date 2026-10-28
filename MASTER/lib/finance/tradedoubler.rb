@@ -130,7 +130,7 @@ module Master
         expiry = now + ttl
         @permissions.grant(
           scope: row.fetch("scope"), confirmed_by: "local operator via bin/operator affiliate grant",
-          purpose: row.fetch("purpose"), expires_at: expiry,
+          purpose: row.fetch("purpose"), expires_at: expiry
         )
         { "status" => "granted", "scope" => row.fetch("scope"), "expires_at" => expiry.iso8601(6) }
       end
@@ -140,7 +140,7 @@ module Master
         verify_phrase!(confirmation, row.fetch("revoke_confirmation"))
         revoked = @permissions.revoke(
           scope: row.fetch("scope"), confirmed_by: "local operator via bin/operator affiliate revoke",
-          reason: "Tradedoubler grant revoked by operator",
+          reason: "Tradedoubler grant revoked by operator"
         )
         { "status" => revoked ? "revoked" : "no_active_grant", "scope" => row.fetch("scope") }
       end
@@ -159,7 +159,7 @@ module Master
           "status" => report.fetch("complete") ? "complete" : "incomplete_page_limit",
           "source" => source || "all", "count" => rows.size,
           "pages_read" => report.fetch("pages"),
-          "claims" => rows.map { |row| row.slice(*ClaimsApi::DISPLAY_FIELDS) },
+          "claims" => rows.map { |row| row.slice(*ClaimsApi::DISPLAY_FIELDS) }
         }
       rescue StandardError => e
         append_event(action: "claims_list_failed", source: source || "all", error_class: e.class.name)
@@ -234,7 +234,7 @@ module Master
           "prepared_file" => @records.relative(record),
           "summary" => payload.slice(
             "affiliateSiteId", "programId", "timeStampEvent", "eventId",
-            "orderNumber", "orderValue", "expectedCommission",
+            "orderNumber", "orderValue", "expectedCommission"
           ).compact,
         }
       end
@@ -320,7 +320,7 @@ module Master
           "claim_key_sha256" => claim_key_sha256, "program_id" => program_id,
           "event_id" => event_id, "rows" => rows, "pages" => pages,
           "http_status" => http_status, "provider_codes" => provider_codes,
-          "error_class" => error_class,
+          "error_class" => error_class
         ).reject! { |_key, value| value.nil? }
         File.open(path, File::WRONLY | File::APPEND | File::CREAT, 0o600) do |file|
           file.flock(File::LOCK_EX)
