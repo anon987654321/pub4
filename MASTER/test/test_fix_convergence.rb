@@ -129,6 +129,8 @@ end
     kernel = loop.kernel
 
     assert_instance_of Master::Fix::Kernel, kernel
+    assert_same Master::Fix::Kernel::ConvergenceAdapter, Master::Fix::FixLoop
+    assert_same Master::Fix::Kernel::ConvergenceAdapter::Lifecycle, Master::Fix::FixLoop::Lifecycle
     assert_same kernel.lifecycle_journal, loop.instance_variable_get(:@run_journal)
     assert_same kernel, loop.instance_variable_get(:@pass_runner).instance_variable_get(:@kernel)
   end
