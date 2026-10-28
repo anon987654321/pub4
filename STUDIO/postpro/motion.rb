@@ -291,7 +291,7 @@ def postpro_video_mode
     )
   end
   0
-rescue Postpro::Motion::Unavailable, ArgumentError, IOError => e
+rescue Postpro::Motion::Unavailable, ArgumentError, IOError, SystemCallError => e
   PostproBootstrap.dmesg("ERROR video: #{e.message}")
   1
 end
