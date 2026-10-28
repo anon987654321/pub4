@@ -16,7 +16,7 @@ module Studio
     ].freeze
     REQUIRED = %w[
       style_id version origin_class reference_hashes modality identity_locks
-      controlled_variables scope_attributes negative_list temporal_variation
+      controlled_variables scope_attributes negative_list temporal_variation deprecation_target
     ].freeze
 
     class InvalidStyle < ArgumentError; end
@@ -137,6 +137,15 @@ module Studio
           strength = declaration["strength"]
           errors << "scope #{name} source must be SHA-256 or null" unless source.nil? || source.to_s.match?(/\A[0-9a-f]{64}\z/i)
           errors << "scope #{name} strength must be between 0 and 1" unless strength.is_a?(Numeric) && strength.between?(0.0, 1.0)
+        end
+      end
+
+      deprecation = entry["deprecation_target"]
+      unless deprecation.nil?
+        begin
+          Date.iso8601(deprecation.to_s)
+        rescue Date::Error
+          errors << "deprecation_target must be an ISO-8601 date or null"
         end
       end
 
