@@ -235,8 +235,74 @@ module Master
         end
       end
 
-      def test_5_ledger_records_per_file_reason_when_nothing_is_fixed
-        skip "wire Fix::RunLedger and assert one authoritative per-file refusal/budget/verification reason"
+      def test_5_zero_repair_result_carries_one_authoritative_per_file_refusal
+        previous_path = ENV["MASTER_FIX_REFUSALS_PATH"]
+        previous_retry = ENV["MASTER_FIX_RETRY"]
+        Dir.mktmpdir("fix-recovery-gate-zero-repair") do |root|
+          refusal_path = File.join(root, "fix_refusals.jsonl")
+          ENV["MASTER_FIX_REFUSALS_PATH"] = refusal_path
+          ENV["MASTER_FIX_RETRY"] = "0"
+          Refusals.begin_run!
+          RunLedger.reset!
+
+          path = File.join(root, "sample.rb")
+          original = (1..18).map { |line| "def example_#{line}; value = #{line}; end\\n" }.join
+          File.binwrite(path, original)
+          adapter = Master::Fix::RepairLoop.allocate
+          law = Struct.new(:id).new("RECOVERY_GATE")
+          adapter.instance_variable_set(:@law, law)
+          adapter.instance_variable_set(:@agent, Object.new)
+          adapter.instance_variable_set(:@scanner, Object.new)
+          adapter.instance_variable_set(:@root, root)
+          adapter.instance_variable_set(:@bus, nil)
+          adapter.instance_variable_set(:@learnings, nil)
+          adapter.instance_variable_set(:@committer, nil)
+          adapter.instance_variable_set(:@visual_custody, nil)
+
+          adapter.define_singleton_method(:needs_a_person?) { |_violation| false }
+          adapter.define_singleton_method(:autofix_allowed?) { |_violation| true }
+          adapter.define_singleton_method(:fingerprint_matches?) { |_violation| true }
+          adapter.define_singleton_method(:note_unverified_fix) { |_violation| nil }
+          adapter.define_singleton_method(:request_fix) { |_violation| "UNCHANGED" }
+          adapter.define_singleton_method(:reflexion_verify) { |_violation, source| source }
+          adapter.define_singleton_method(:consensus_approves?) { |_violation, _source| true }
+
+          violation = { file: path, law: law.id, line: 8, severity: :warning }
+          result = RunBudget.stub(:law_limit_exceeded?, false) do
+            RunBudget.stub(:run_spend, [0.0, 0]) do
+              RunBudget.stub(:note_law_cost, nil) do
+                ToolBreaker.stub(:state_of, {}) do
+                  ToolBreaker.stub(:refuse?, false) do
+                    ToolBreaker.stub(:record, nil) do
+                      BestOfN.stub(:active?, false) do
+                        capture_io do
+                          adapter.run_once([path], external_violations: [violation])
+                        end
+                      end
+                    end
+                  end
+                end
+              end
+            end
+          end
+
+          assert_equal 0, result.fetch(:fixed)
+          assert_equal :stuck, result.fetch(:status), "no accepted repair must not be reported as fixed or clean"
+          assert_equal({ rejected: 1 }, result.fetch(:breakdown))
+          assert_equal 1, RunLedger.reasons.fetch("collapsed_content")
+          assert_equal 1, RunLedger.rejects_for(path)
+          assert_equal original, File.binread(path)
+          refusal = JSON.parse(File.readlines(refusal_path).last)
+          assert_equal "collapse", refusal.fetch("gate")
+          assert_equal "sample.rb", refusal.fetch("file")
+          assert_equal "RECOVERY_GATE", refusal.fetch("law")
+          assert_match(/proposal is the refusal word/, refusal.fetch("reason"))
+        ensure
+          ENV["MASTER_FIX_REFUSALS_PATH"] = previous_path
+          ENV["MASTER_FIX_RETRY"] = previous_retry
+          Refusals.begin_run!
+          RunLedger.reset!
+        end
       end
 
       def test_6_cli_paths_emit_identical_receipts_before_and_after_fold
