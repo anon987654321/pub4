@@ -96,6 +96,13 @@ class TestRuntimeCatalogueValidation < Minitest::Test
     assert_match(/model_defs\.agy_auto\.score\.quality must be between 0 and 1/, error)
   end
 
+  def test_canonical_boot_validates_token_catalogue
+    result = BootChecks.send(:check_tokens_yaml, Master::ROOT)
+
+    assert result.ok, result.message
+    assert_match(/schema and references valid/, result.message)
+  end
+
   def test_canonical_boot_validates_provider_catalogue
     result = BootChecks.send(:check_providers_yaml, Master::ROOT)
 
