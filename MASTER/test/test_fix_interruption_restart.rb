@@ -1,0 +1,128 @@
+# frozen_string_literal: true
+
+require_relative "test_helper"
+require "tmpdir"
+require "fileutils"
+require "json"
+require "open3"
+require "rbconfig"
+require_relative "../lib/fix/transaction"
+require_relative "../lib/fix/run_journal"
+require_relative "../lib/fix/fix_loop"
+
+# This is deliberately a process-boundary test, not a mocked "resume" call:
+# the writer process is killed after a persisted transaction records a partial
+# tree mutation; a second Ruby process runs FixLoop's actual startup recovery.
+class TestFixInterruptionRestart < Minitest::Test
+  def test_killed_fix_pass_rolls_back_and_resumes_from_durable_state
+    Dir.mktmpdir("fix-interruption-restart") do |root|
+      FileUtils.mkdir_p(File.join(root, "MASTER"))
+      sample = File.join(root, "sample.rb")
+      marker = File.join(root, "crash-ready.json")
+      File.write(sample, "before\n")
+
+      child = <<~'RUBY'
+        require "json"
+        require "master"
+        require "fix/transaction"
+        require "fix/run_journal"
+
+        root, marker = ARGV
+        sample = File.join(root, "sample.rb")
+        journal = Master::Fix::RunJournal.new(root:)
+        run = journal.start_or_resume(
+          target: File.join(root, "MASTER"),
+          files: [sample],
+          max_passes: 2,
+          budget_seconds: 60
+        )
+        transaction = Master::Fix::Transaction.new(
+          root:, paths: ["sample.rb"], id: "restart-probe"
+        )
+        transaction.begin!
+        File.write(sample, "partial mutation\n")
+        transaction.observe!
+        journal.pass_start(run.fetch("id"), 1, transaction_id: "restart-probe")
+        File.write(marker, JSON.generate("run_id" => run.fetch("id"), "pid" => Process.pid))
+        sleep 60
+      RUBY
+
+      pid = Process.spawn(
+        RbConfig.ruby, "-I", File.join(Master::ROOT, "lib"), "-e", child, root, marker,
+        out: File::NULL, err: File::NULL, chdir: Master::ROOT
+      )
+      begin
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 8
+        sleep 0.02 until File.file?(marker) || Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+        assert File.file?(marker), "child did not reach the durable in-pass checkpoint"
+        marker_record = JSON.parse(File.read(marker))
+        Process.kill("KILL", pid)
+        _waited_pid, child_status = Process.wait2(pid)
+        refute child_status.success?, "the writer must be interrupted, not allowed to finalize"
+      ensure
+        begin
+          Process.kill("KILL", pid)
+          Process.wait(pid)
+        rescue Errno::ESRCH, Errno::ECHILD
+          nil
+        end
+      end
+
+      restart = <<~'RUBY'
+        require "json"
+        require "master"
+        require "fix/transaction"
+        require "fix/run_journal"
+        require "fix/fix_loop"
+
+        root = ARGV.fetch(0)
+        loop = Master::Fix::FixLoop.allocate
+        loop.instance_variable_set(:@root, root)
+        loop.instance_variable_set(:@transaction_root, root)
+        loop.instance_variable_set(:@bus, nil)
+
+        # This is the same recovery sweep run_unlocked invokes before it opens
+        # or resumes a journaled /fix pass.
+        loop.send(:recover_stranded_transactions!)
+        journal = Master::Fix::RunJournal.new(root:)
+        loop.instance_variable_set(:@run_journal, journal)
+        sample = File.join(root, "sample.rb")
+        run = journal.start_or_resume(
+          target: File.join(root, "MASTER"),
+          files: [sample],
+          max_passes: 2,
+          budget_seconds: 60
+        )
+        start_pass = journal.next_pass(run)
+        recovered = loop.send(
+          :resume_active_transaction, journal:, run_id: run.fetch("id"), start_pass:
+        )
+        raise recovered.message if recovered.err?
+
+        puts JSON.generate(
+          "run_id" => run.fetch("id"),
+          "resumed" => run.fetch("resumed"),
+          "start_pass" => start_pass,
+          "recovery_start" => recovered.value!,
+          "content" => File.read(sample),
+          "transaction_persisted" => Master::Fix::Transaction::Recovery.persisted?(
+            root:, id: "restart-probe"
+          )
+        )
+      RUBY
+      output, restart_status = Open3.capture2e(
+        RbConfig.ruby, "-I", File.join(Master::ROOT, "lib"), "-e", restart, root,
+        chdir: Master::ROOT
+      )
+      assert restart_status.success?, "restart process failed: #{output}"
+      receipt = JSON.parse(output.lines.last)
+
+      assert_equal marker_record.fetch("run_id"), receipt.fetch("run_id")
+      assert receipt.fetch("resumed"), "the prior durable /fix run should resume"
+      assert_equal 1, receipt.fetch("start_pass")
+      assert_equal 1, receipt.fetch("recovery_start")
+      assert_equal "before\n", receipt.fetch("content"), "partial writes must roll back after process death"
+      refute receipt.fetch("transaction_persisted"), "recovery must settle and remove the stranded transaction"
+    end
+  end
+end
