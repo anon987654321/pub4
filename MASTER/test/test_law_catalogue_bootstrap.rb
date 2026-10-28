@@ -93,6 +93,55 @@ class TestLawCatalogueBootstrap < Minitest::Test
     end
   end
 
+  def test_malformed_orphan_catalogue_entry_is_reported_before_any_definition_load
+    Dir.mktmpdir("law-catalogue-malformed-entry") do |root|
+      law_dir = File.join(root, "MASTER", "law")
+      FileUtils.mkdir_p(law_dir)
+      File.write(File.join(law_dir, "live.rb"), "Law.define(:LIVE_ID) do\\nend\\n")
+      catalogue = {
+        "schema" => 1,
+        "modalities" => %w[lexical semantic visual],
+        "surfaces" => %w[whole_file],
+        "defaults" => { "mode" => "violation", "lifecycle" => "active", "autofix" => "review", "languages" => [] },
+        "entries" => {
+          "LIVE_ID" => { "universal" => true, "modalities" => %w[lexical semantic visual],
+                         "definition_sources" => ["MASTER/law/live.rb"], "severity" => "warning" },
+          "ORPHAN_ROW" => "not-a-mapping"
+        }
+      }
+
+      error = assert_raises(ArgumentError) do
+        Master::LawCataloguePreflight.validate!(law_dir:, catalogue:, repo_root: root)
+      end
+
+      assert_match(/catalogue entry ORPHAN_ROW must be a mapping/, error.message)
+    end
+  end
+
+  def test_missing_severity_and_unsafe_source_path_are_reported_as_catalogue_errors
+    Dir.mktmpdir("law-catalogue-policy-shape") do |root|
+      law_dir = File.join(root, "MASTER", "law")
+      FileUtils.mkdir_p(law_dir)
+      File.write(File.join(law_dir, "live.rb"), "Law.define(:LIVE_ID) do\\nend\\n")
+      catalogue = {
+        "modalities" => %w[lexical semantic visual],
+        "surfaces" => %w[whole_file],
+        "defaults" => { "mode" => "violation", "lifecycle" => "active", "autofix" => "review", "languages" => [] },
+        "entries" => {
+          "LIVE_ID" => { "universal" => true, "modalities" => %w[lexical semantic visual],
+                         "definition_sources" => ["MASTER/law/../outside.rb"] }
+        }
+      }
+
+      error = assert_raises(ArgumentError) do
+        Master::LawCataloguePreflight.validate!(law_dir:, catalogue:, repo_root: root)
+      end
+
+      assert_match(/Law LIVE_ID has no severity/, error.message)
+      assert_match(/definition_sources must be a list of safe in-tree Ruby paths/, error.message)
+    end
+  end
+
   def test_duplicate_static_definitions_are_reported_as_one_preflight_error
     Dir.mktmpdir("law-catalogue-duplicate") do |root|
       law_dir = File.join(root, "MASTER", "law")
