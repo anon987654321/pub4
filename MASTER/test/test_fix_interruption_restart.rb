@@ -113,7 +113,10 @@ class TestFixInterruptionRestart < Minitest::Test
           target: File.join(root, "MASTER"),
           files: [File.join(root, "sample.rb")], max_passes: 2, budget_seconds: 60
         )
-        mission = JSON.parse(File.read(File.join(root, ".master", "mission.json")))
+        mission_handle = Master::Fix::Mission.new(root:).start_or_resume!(
+          goal: "fix MASTER after restart", scope: File.join(root, "MASTER"), origin: "manual"
+        )
+        mission = mission_handle.record
         checkpoint = mission.fetch("checkpoint")
         checkpoint_file = File.join(
           root, ".master", "checkpoints", checkpoint.fetch("id"), "sample.rb"
