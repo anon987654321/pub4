@@ -149,30 +149,3 @@ class TestEventPrivacy < Minitest::Test
     refute_includes JSON.generate(persisted), "token=secret"
   end
 end
-    private_fields = {
-      username: "private-user",
-      email: "person@example.invalid",
-      address: "1 Private Road",
-      display_name: "Private Person",
-      details: "confidential details",
-      value: "one-time-token-value"
-    }
-    persisted = Master::Trace::EventPrivacy.persisted("profile:updated", private_fields)
-    json = JSON.generate(persisted)
-
-    private_fields.each do |field, value|
-      assert_equal 64, persisted.fetch("#{field}_digest".to_sym).length
-      refute_includes json, value
-    end
-  end
-
-  def test_sensitive_scalars_remain_digest_only
-    persisted = Master::Trace::EventPrivacy.persisted(
-      "route:chosen", query: "https://internal.invalid/?token=secret", outcome: "ok"
-    )
-
-    assert_equal "ok", persisted.fetch(:outcome)
-    assert_equal 64, persisted.fetch(:query_digest).length
-    refute_includes JSON.generate(persisted), "token=secret"
-  end
-end
