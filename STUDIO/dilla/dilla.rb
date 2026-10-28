@@ -7805,22 +7805,71 @@ module Dilla
         path = File.join(directory, "#{event}.wav")
         playback = frame.map { |channel| channel.map { |sample| sample * (options.fetch(:volume) / 100.0) } }
         WAV.write(path, playback)
-        command = player_argv(path, options)
-        pid = Process.spawn(*command, out: File::NULL, err: File::NULL, pgroup: true)
-        begin
-          _waited_pid, status = Timeout.timeout(4) { Process.wait2(pid) }
-        rescue Timeout::Error
-          terminate_player(pid)
-          raise ArgumentError, "audio player exceeded the 4-second cue budget"
-        end
-        raise ArgumentError, "audio player exited with status #{status.exitstatus || status.termsig}" unless status.success?
+        playback_exit = if termux_player?(options)
+                          play_termux(path, duration_s: frame.first.size.fdiv(SAMPLE_RATE))
+                        else
+                          play_local(path, options)
+                        end
 
         puts JSON.generate(result_payload(event, frame, options[:seed]).merge("path" => nil, "played" => true,
-                                                                               "playback_exit" => status.exitstatus,
+                                                                               "playback_exit" => playback_exit,
                                                                                "playback_volume_percent" => options.fetch(:volume)))
       end
     end
     private_class_method :play_temporary
+
+    # Termux:API starts media in an Android service and its command may exit before the
+    # file is consumed. Keep the temporary file alive for the cue duration, then stop
+    # the service so an API/player failure cannot leave a looping or stale sound behind.
+    def termux_player?(options)
+      options[:player].nil? && RUBY_PLATFORM.downcase.include?("android") && executable("termux-media-player")
+    end
+    private_class_method :termux_player?
+
+    def play_termux(path, duration_s:)
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      pid = Process.spawn("termux-media-player", "play", path, out: File::NULL, err: File::NULL, pgroup: true)
+      begin
+        _waited_pid, status = Timeout.timeout([duration_s + 1.0, 4.0].min) { Process.wait2(pid) }
+      rescue Timeout::Error
+        terminate_player(pid)
+        raise ArgumentError, "Termux:API player command exceeded its time budget"
+      end
+      raise ArgumentError, "Termux:API player exited with status #{status.exitstatus || status.termsig}" unless status.success?
+
+      remaining = duration_s + 0.18 - (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started)
+      sleep(remaining) if remaining.positive?
+      stop_termux
+      0
+    end
+    private_class_method :play_termux
+
+    def stop_termux
+      pid = Process.spawn("termux-media-player", "stop", out: File::NULL, err: File::NULL, pgroup: true)
+      _waited_pid, status = Timeout.timeout(1) { Process.wait2(pid) }
+      raise ArgumentError, "Termux:API could not stop the cue player" unless status.success?
+    rescue Timeout::Error
+      terminate_player(pid) if pid
+      raise ArgumentError, "Termux:API stop command exceeded its time budget"
+    rescue Errno::ENOENT, Errno::ECHILD => error
+      raise ArgumentError, "Termux:API stop command unavailable: #{error.message}"
+    end
+    private_class_method :stop_termux
+
+    def play_local(path, options)
+      command = player_argv(path, options)
+      pid = Process.spawn(*command, out: File::NULL, err: File::NULL, pgroup: true)
+      begin
+        _waited_pid, status = Timeout.timeout(4) { Process.wait2(pid) }
+      rescue Timeout::Error
+        terminate_player(pid)
+        raise ArgumentError, "audio player exceeded the 4-second cue budget"
+      end
+      raise ArgumentError, "audio player exited with status #{status.exitstatus || status.termsig}" unless status.success?
+
+      status.exitstatus || 0
+    end
+    private_class_method :play_local
 
     def player_argv(path, options)
       if options[:player]

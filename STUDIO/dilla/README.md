@@ -280,6 +280,8 @@ audio excerpts; it does not invent BPM or microtiming data for audio the analyze
 
 ## Lifecycle sound cues (Claude Code / OpenCode compatible)
 
+The lifecycle vocabulary and manifest concept are inspired by [claude-sound-fx](https://github.com/6m1w/claude-sound-fx); Dilla does not bundle that project's source code, character-voice assets, or HTTP relay.
+
 Dilla can generate its own short synthetic lifecycle cues without importing third-party voice clips or requiring another sound-effects engine:
 
 ```sh
