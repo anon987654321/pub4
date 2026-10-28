@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../../kernel"
 require "pathname"
 require "set"
 require_relative "../../four_stream_assessment"
