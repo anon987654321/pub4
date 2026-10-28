@@ -55,7 +55,17 @@ module Master
       def self.append_jsonl(path, value, max_bytes: Event::MAX_BYTES, mode: 0o600, directory_mode: nil, sync: true)
         limit = Integer(max_bytes)
         raise ArgumentError, "JSONL byte limit must be positive" unless limit.positive?
-        raise ArgumentError, "JSONL mode must not grant group or world access" unless (Integer(mode) & 0o077).zero?
+        requested_mode = Integer(mode)
+        raise ArgumentError, "JSONL file mode must be owner-readable/writable and private (0600)" unless
+          requested_mode == 0o600
+        if directory_mode
+          requested_directory_mode = Integer(directory_mode)
+          unless (requested_directory_mode & 0o700) == 0o700 &&
+                 (requested_directory_mode & 0o007).zero? &&
+                 (requested_directory_mode & 0o7000).zero?
+            raise ArgumentError, "JSONL directory mode must preserve owner access and deny world access"
+          end
+        end
 
         line = JSON.generate(value) + "\n"
         raise ArgumentError, "JSONL record exceeds #{limit}-byte cap" if line.bytesize > limit
