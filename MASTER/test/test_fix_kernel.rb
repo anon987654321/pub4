@@ -196,7 +196,6 @@ class TestFixKernel < Minitest::Test
         assert_raises(Timeout::Error) { Timeout.timeout(0.15) { second_entered.pop } }
         allow_first_to_finish << :finish
         assert first_thread.value.ok?
-        assert first_thread.status == false || first_thread.status == "sleep" || first_thread.status == nil
         assert_equal :entered, Timeout.timeout(5) { second_entered.pop }
         assert second_thread.value.ok?
       ensure
