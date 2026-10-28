@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../face/swarm"
+
 module Master
   module CLI
     # The face drawn in plain ASCII, for a window too small or too plain for
@@ -21,6 +23,7 @@ module Master
       MIN_ROWS = Glyphs::CONFIG.fetch("min_rows")
       MIN_COLS = Glyphs::CONFIG.fetch("min_cols")
       RENDERERS = {}
+      SWARMS = {}
 
       module_function
 
@@ -49,7 +52,14 @@ module Master
         shaped = source.nil? && look.mix.positive? ? Masks.source(head, look.mask, look.mix) : head
         # A morphed head is new every frame, so it is not worth keeping.
         ascii = shaped.equal?(head) ? renderer(head, rows, cols, chars, mode) : Ascii.new(shaped, rows, cols, chars:, mode:)
-        ascii.render(look, state:, laws:).to_s(color:)
+        frame = ascii.render(look, state:, laws:)
+        if Master::Face::Swarm.enabled? && ENV.fetch("MASTER_FACE_SWARM", "1") != "0"
+          SWARMS.clear if SWARMS.size >= 4
+          swarm = (SWARMS[[rows, cols]] ||= Master::Face::Swarm::Simulation.new)
+          swarm.step(mode: state, time: t, reduced_motion: ENV["MASTER_REDUCED_MOTION"] == "1")
+          swarm.overlay!(frame)
+        end
+        frame.to_s(color:)
       end
 
       def renderer(source, rows, cols, chars, mode)
