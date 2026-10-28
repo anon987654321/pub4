@@ -50,7 +50,7 @@ The documented core had Portra, Vision3, Velvia and Tri-X; camera-profile correc
 
 ### `pub4`: measured house grade and restoration
 
-The present implementation lives under `STUDIO/postpro/`, with `lib/` holding the effect dispatch, presets, stocks, grain, random chains, recipe handling, pipeline, sidecars, audits and CLI; `MASTER/tools/postpro` is a compatibility symlink.
+The present implementation lives under `STUDIO/postpro/`, with `lib/` holding the effect dispatch, presets, stocks, grain, random chains, recipe handling, pipeline, sidecars, audits and CLI. `motion.rb` owns the video grading contract and CLI, while `motion_process.rb` owns bounded frame IO, timestamp checks and subprocess lifecycles; `MASTER/tools/postpro` is a compatibility symlink.
 
 Current recovery anchors:
 - [LEGACY_RESTORE.md](./LEGACY_RESTORE.md)
@@ -88,7 +88,7 @@ obscure:
 | Retry/error recovery, logs and statistics | Current per-variation failures and structured startup/output diagnostics avoid hiding a partial batch failure. Do not revive automatic dependency installation as part of retries. |
 | Camera profiles and stock-specific grain | Evolved to camera-profile data, measured stock tables, calibrated grain and `--fit-grain`; use those as the authority. |
 | Repligen handoff and post-generation film look | Current Replicate calls grade by default (portrait by default); `--no-postpro` is the intentional escape hatch. See [Replicate archaeology](../replicate/ARCHAEOLOGY.md). |
-| Video/frame-sequence grading | Recovered as `motion.rb` and `--video`: one Ruby process, ffmpeg raw-frame streaming, in-process Postpro, atomic final MP4, deterministic moving/held grain, and frame/pixel/time/temp-byte budgets. Constant-rate MP4 only; variable-rate inputs and mismatched frame counts are refused. The old per-frame subprocess path remains retired. |
+| Video/frame-sequence grading | Recovered as `motion.rb` / `motion_process.rb` and `--video`: one Ruby process, ffmpeg raw-frame streaming, in-process Postpro, atomic final MP4, deterministic moving/held grain, and frame/pixel/time/temp-byte budgets. Constant-rate MP4 only; variable-rate inputs and mismatched frame counts are refused. The old per-frame subprocess path remains retired. |
 | The old `apply_effects` / `apply_effects_from_recipe` internals | Not restored: the shared recipe and grade dispatchers replace them. Keeping both would create two sources of truth. |
 
 ## The video experiment, its removal, and the recovered in-process path
