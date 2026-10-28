@@ -14,10 +14,14 @@ module Postpro
       proposals[:exposure_bias_stops] = bias.clamp(-max_stops, max_stops) if bias.abs > 0.15
 
       curve = {}
-      shadow = Float(tonal.fetch(:shadow_detail_ratio))
-      highlight = Float(tonal.fetch(:highlight_detail_ratio))
-      curve[:shadow_lift] = (0.35 - shadow).clamp(0.0, 0.25) if shadow < 0.35
-      curve[:highlight_rolloff] = (0.35 - highlight).clamp(0.0, 0.25) if highlight < 0.35
+      shadow = tonal.fetch(:shadow_detail_ratio)
+      highlight = tonal.fetch(:highlight_detail_ratio)
+      if !shadow.nil? && Float(shadow) < 0.35
+        curve[:shadow_lift] = (0.35 - Float(shadow)).clamp(0.0, 0.25)
+      end
+      if !highlight.nil? && Float(highlight) < 0.35
+        curve[:highlight_rolloff] = (0.35 - Float(highlight)).clamp(0.0, 0.25)
+      end
       proposals[:tone_curve] = curve unless curve.empty?
 
       if Float(contrast.fetch(:rms_contrast)) < 0.18 &&
