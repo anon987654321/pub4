@@ -17,6 +17,7 @@ module Master
 
       Gap = Data.define(:id, :priority, :tier, :reason)
       COVERAGE_MODES = %w[deterministic semantic tagged deferred].freeze
+      OVERLAY_FIELDS = %w[severity enforcement coverage_mode detector_ids coverage expires_on].freeze
 
       def initialize(root: Master::ROOT, laws_path: nil)
         @root = File.expand_path(Master.master_root(root:))
@@ -69,10 +70,21 @@ module Master
         overlay_path = File.join(File.dirname(@laws_file), "law_enforcement.yml")
         if File.file?(overlay_path)
           overlay = Master.load_yaml(overlay_path) || {}
-          overlay.each do |id, extra|
-            next unless extra.is_a?(Hash) && data[id].is_a?(Hash)
+          raise "law_enforcement.yml root must be a mapping" unless overlay.is_a?(Hash)
 
-            data[id] = data[id].merge(extra)
+          overlay.each do |id, extra|
+            name = id.to_s
+            raise "law_enforcement.yml entry #{name} must be a mapping" unless extra.is_a?(Hash)
+
+            original = data[name]
+            unless original.is_a?(Hash) && original["tier"].to_s == "constitutional" && original.key?("priority")
+              raise "law_enforcement.yml entry #{name} does not resolve to a priority-ranked constitutional Law in laws.yml"
+            end
+
+            unknown = extra.keys.map(&:to_s) - OVERLAY_FIELDS
+            raise "law_enforcement.yml entry #{name} has unknown field(s): #{unknown.join(', ')}" unless unknown.empty?
+
+            data[name] = original.merge(extra)
           end
         end
 

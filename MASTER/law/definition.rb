@@ -18,6 +18,7 @@ module Law
   # laws.yml owns the catalogue, each Law's policy and the surface contract; Ruby
   # implements detectors and creates no second identity, policy or surface list.
   require_relative "../lib/master" unless defined?(Master::ROOT)
+  require_relative "../lib/law_catalogue_preflight"
   LAW_CATALOGUE = Master.load_laws.fetch("law_catalogue").freeze
   ASSESSMENT_SURFACES = Array(LAW_CATALOGUE.fetch("surfaces")).map(&:to_sym).freeze
 
@@ -641,6 +642,21 @@ module Law
     end
 
     def reload(dir)
+      if File.expand_path(dir) == File.expand_path(__dir__)
+        data = Master.load_laws(root: Master::ROOT)
+        generated = data.fetch("prose").values.flat_map do |language|
+          language.fetch("ids", {}).values.map do |id|
+            { id: id.to_s, source: "MASTER/law/prose.rb", line: 1 }
+          end
+        end.uniq { |row| row[:id] }
+        Master::LawCataloguePreflight.validate!(
+          law_dir: dir,
+          catalogue: LAW_CATALOGUE,
+          repo_root: File.dirname(Master::ROOT),
+          generated_declarations: generated
+        )
+      end
+
       files = Dir.glob(File.join(dir, "*.rb")).sort.map { |file| File.expand_path(file) }
       files.reject! { |file| file == File.expand_path(__FILE__) }
 

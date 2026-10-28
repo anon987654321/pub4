@@ -3,35 +3,112 @@
 require_relative "test_helper"
 require_relative "../law/definition"
 
-# Catch catalogue omissions before Law.load_all evaluates a definition. Without
-# this preflight, the first omitted entry raises during boot and prevents the
-# registry audit from explaining the complete source drift.
+# Run the same preflight Law.load_all invokes, before any law file is evaluated.
 class TestLawCatalogueBootstrap < Minitest::Test
-  def catalogue_entries
-    Law::LAW_CATALOGUE.fetch("entries")
-  end
-
-  def test_literal_law_declarations_are_catalogued_before_runtime_load
-    declarations = Dir.glob(File.join(Master::ROOT, "law", "*.rb")).sort.flat_map do |path|
-      File.readlines(path, encoding: "UTF-8").filter_map do |line|
-        match = line.match(/^[ \t]*Law\.define\(\s*:([A-Z][A-Z0-9_]*)\s*\)/)
-        [match[1], path] if match
+  def generated_declarations(data)
+    data.fetch("prose").values.flat_map do |language|
+      language.fetch("ids", {}).values.map do |id|
+        { id: id.to_s, source: "MASTER/law/prose.rb", line: 1 }
       end
-    end
-
-    missing = declarations.reject { |id, _path| catalogue_entries.key?(id) }
-    report = missing.map do |id, path|
-      "#{id} (#{path.delete_prefix(Master::ROOT + File::SEPARATOR)})"
-    end
-
-    assert_empty report, "executable Laws missing from law_catalogue.entries: #{report.join(', ')}"
+    end.uniq { |row| row[:id] }
   end
 
-  def test_generated_prose_law_ids_are_catalogued_before_runtime_load
-    prose = Master.load_laws(root: Master::ROOT).fetch("prose")
-    ids = prose.values.flat_map { |language| language.fetch("ids", {}).values }.map(&:to_s).uniq
-    missing = ids.reject { |id| catalogue_entries.key?(id) }
+  def test_live_catalogue_matches_all_executable_definitions_and_source_paths
+    data = Master.load_laws(root: Master::ROOT)
 
-    assert_empty missing, "generated prose Laws missing from law_catalogue.entries: #{missing.join(', ')}"
+    result = Master::LawCataloguePreflight.validate!(
+      law_dir: File.join(Master::ROOT, "law"),
+      catalogue: Law::LAW_CATALOGUE,
+      repo_root: File.dirname(Master::ROOT),
+      generated_declarations: generated_declarations(data)
+    )
+
+    assert result
+  end
+
+  def test_missing_identity_and_wrong_source_are_reported_before_evaluation
+    Dir.mktmpdir("law-catalogue-preflight") do |root|
+      law_dir = File.join(root, "MASTER", "law")
+      FileUtils.mkdir_p(law_dir)
+      File.write(File.join(law_dir, "missing.rb"), "Law.define(:MISSING_ID) do\nend\n")
+      File.write(File.join(law_dir, "misplaced.rb"), "Law.define(:OTHER_ID) do\nend\n")
+      File.write(File.join(law_dir, "actual.rb"), "Law.define(:ACTUAL_ID) do\nend\n")
+
+      catalogue = {
+        "entries" => {
+          "OTHER_ID" => { "definition_sources" => ["MASTER/law/actual.rb"] },
+          "ACTUAL_ID" => { "definition_sources" => ["MASTER/law/actual.rb"] }
+        }
+      }
+      error = assert_raises(ArgumentError) do
+        Master::LawCataloguePreflight.validate!(law_dir:, catalogue:, repo_root: root)
+      end
+
+      assert_match(/missing catalogue entry for MISSING_ID/, error.message)
+      assert_match(/OTHER_ID declares at MASTER\/law\/misplaced\.rb/, error.message)
+      assert_match(/OTHER_ID names MASTER\/law\/actual\.rb, but that source does not define OTHER_ID/, error.message)
+    end
+  end
+
+  def test_detector_catalogue_rejects_a_source_that_does_not_declare_its_id
+    Dir.mktmpdir("law-catalogue-detector-source") do |root|
+      law_dir = File.join(root, "MASTER", "law")
+      detector_dir = File.join(law_dir, "detectors")
+      FileUtils.mkdir_p(detector_dir)
+      File.write(File.join(law_dir, "actual.rb"), "Law.define(:ACTUAL_ID) do\nend\n")
+      File.write(File.join(detector_dir, "detector.rb"), "LawDSL.law :actual_detector do\nend\n")
+
+      catalogue = {
+        "entries" => {
+          "ACTUAL_ID" => { "definition_sources" => ["MASTER/law/actual.rb"] },
+          "actual_detector" => { "detector_sources" => ["MASTER/law/detectors/detector.rb"] },
+          "orphan_detector" => { "detector_sources" => ["MASTER/law/detectors/detector.rb"] }
+        }
+      }
+      error = assert_raises(ArgumentError) do
+        Master::LawCataloguePreflight.validate!(law_dir:, catalogue:, repo_root: root)
+      end
+
+      assert_match(/orphan_detector names MASTER\/law\/detectors\/detector\.rb, but that source does not declare detector orphan_detector/, error.message)
+    end
+  end
+
+  def test_new_detector_declaration_without_catalogue_membership_is_reported
+    Dir.mktmpdir("law-catalogue-unlisted-detector") do |root|
+      law_dir = File.join(root, "MASTER", "law")
+      detector_dir = File.join(law_dir, "detectors")
+      FileUtils.mkdir_p(detector_dir)
+      File.write(File.join(law_dir, "actual.rb"), "Law.define(:ACTUAL_ID) do\nend\n")
+      File.write(File.join(detector_dir, "detector.rb"), "LawDSL.law :unlisted_detector do\nend\n")
+
+      error = assert_raises(ArgumentError) do
+        Master::LawCataloguePreflight.validate!(
+          law_dir:,
+          catalogue: { "entries" => { "ACTUAL_ID" => { "definition_sources" => ["MASTER/law/actual.rb"] } } },
+          repo_root: root
+        )
+      end
+
+      assert_match(/detector unlisted_detector in MASTER\/law\/detectors\/detector\.rb has no catalogue entry/, error.message)
+    end
+  end
+
+  def test_duplicate_static_definitions_are_reported_as_one_preflight_error
+    Dir.mktmpdir("law-catalogue-duplicate") do |root|
+      law_dir = File.join(root, "MASTER", "law")
+      FileUtils.mkdir_p(law_dir)
+      File.write(File.join(law_dir, "one.rb"), "Law.define(:DUPLICATE_ID) do\nend\n")
+      File.write(File.join(law_dir, "two.rb"), "Law.define(:DUPLICATE_ID) do\nend\n")
+
+      error = assert_raises(ArgumentError) do
+        Master::LawCataloguePreflight.validate!(
+          law_dir:,
+          catalogue: { "entries" => { "DUPLICATE_ID" => { "definition_sources" => ["MASTER/law/one.rb"] } } },
+          repo_root: root
+        )
+      end
+
+      assert_match(/duplicate definition: DUPLICATE_ID/, error.message)
+    end
   end
 end

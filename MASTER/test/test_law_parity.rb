@@ -62,6 +62,55 @@ class TestLawParity < Minitest::Test
     end
   end
 
+  def test_orphaned_enforcement_overlay_entry_fails_instead_of_being_ignored
+    Dir.mktmpdir("law-parity-orphan") do |dir|
+      laws_path = File.join(dir, "laws.yml")
+      File.write(laws_path, <<~YAML)
+        VALID_CONSTITUTION:
+          tier: constitutional
+          priority: 1
+          severity: error
+          statement: a valid constitutional Law
+      YAML
+      File.write(File.join(dir, "law_enforcement.yml"), <<~YAML)
+        ORPHAN_CONSTITUTION:
+          enforcement: active
+          coverage_mode: semantic
+      YAML
+
+      error = assert_raises(RuntimeError) do
+        Master::Fix::LawParity.new(root: dir, laws_path: laws_path).send(:priority_constitutional_entries)
+      end
+
+      assert_match(/law_enforcement\.yml entry ORPHAN_CONSTITUTION does not resolve/, error.message)
+    end
+  end
+
+  def test_unknown_enforcement_overlay_field_is_rejected
+    Dir.mktmpdir("law-parity-unknown-field") do |dir|
+      laws_path = File.join(dir, "laws.yml")
+      File.write(laws_path, <<~YAML)
+        VALID_CONSTITUTION:
+          tier: constitutional
+          priority: 1
+          severity: error
+          statement: a valid constitutional Law
+      YAML
+      File.write(File.join(dir, "law_enforcement.yml"), <<~YAML)
+        VALID_CONSTITUTION:
+          enforcement: active
+          coverage_mode: semantic
+          typo_coverage: semantic
+      YAML
+
+      error = assert_raises(RuntimeError) do
+        Master::Fix::LawParity.new(root: dir, laws_path: laws_path).send(:priority_constitutional_entries)
+      end
+
+      assert_match(/unknown field\(s\): typo_coverage/, error.message)
+    end
+  end
+
   def test_report_ok_string_when_clean
     parity = Master::Fix::LawParity.new
 

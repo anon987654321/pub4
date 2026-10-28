@@ -60,7 +60,23 @@ module Operator
     # Every DESIGN_RULES law is deterministic. A model law here has no agent and could only
     # raise INCONCLUSIVE on every file, which no design count reads.
     def deterministic_laws
-      build_scanner.laws.reject { |rule| Master::Fix::Scan::UnmodelledTier.unmodelled?(rule) }
+      laws = build_scanner.laws.reject { |rule| Master::Fix::Scan::UnmodelledTier.unmodelled?(rule) }
+      validate_rule_ceilings!(laws)
+      laws
+    end
+
+    # A stale ID in rule_ceilings must not make a design Law disappear and
+    # lower the measured count. Membership is validated before the baseline
+    # can report a total or ratchet a new one.
+    def validate_rule_ceilings!(laws, expected: DESIGN_RULES)
+      available = laws.map { |law| law.id.to_s.upcase }.to_set
+      missing = expected.map { |id| id.to_s.upcase }.to_set - available
+      unless missing.empty?
+        raise ArgumentError,
+              "design_baseline: rule_ceilings references missing or non-deterministic Laws: #{missing.to_a.sort.join(', ')}"
+      end
+
+      true
     end
 
     def files
