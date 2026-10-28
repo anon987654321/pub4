@@ -36,15 +36,15 @@ module Master
         SURFACE_EVIDENCE_STATES = %w[assessed_clean not_applicable violation_found inconclusive].freeze
         RESUMABLE_STATES = %w[active crashed delivery_failed].freeze
 
-            class ArtifactReadError < StandardError
-              attr_reader :status, :details
+        class ArtifactReadError < StandardError
+          attr_reader :status, :details
 
-              def initialize(status, message, details = {})
-                @status = status
-                @details = details
-                super(message)
-              end
-            end
+          def initialize(status, message, details = {})
+            @status = status
+            @details = details
+            super(message)
+          end
+        end
 
         def self.instance_id
           return @instance_id if @instance_pid == Process.pid
