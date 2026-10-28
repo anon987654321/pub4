@@ -1,26 +1,23 @@
 # Alfa Bergen — alfa.brgen.no
 
-**Én side, null byggetrinn — flyttebyrået som har flyttet Bergen siden 2006,
-nå med eget hus for forvaltning.**
-
 Statisk HTML. Ingen byggetrinn, ingen pakkeadministrator, ingen
 node_modules — treet er det som serveres. Favoroppgave for familien
 bak flyttebyrået (siden 2006), ikke et produkt i stakkmatrisen.
 
-Siden er ett dokument: fire nummererte seksjoner pluss kontakt.
-Stilarket bærer reset, bevegelses-CSS og merkevaren (kaldt papir og
-messing); bevegelseslaget er vanilje-JS med innganger, ordmasker,
-parallaks, marquee, magnetiske knapper og markør. Fontene er
-Bricolage Grotesque (variabel 200–800), Geist 400 og Geist Mono 400 —
-selvhostet latin-subsett med æ, ø og å. Totalt under 600 kB.
+## Treet
 
-## Merkene
+```
+index.html              hele siden — fire nummererte seksjoner + kontakt
+assets/site.css         reset + bevegelses-CSS + merkevaren (kaldt papir/messing)
+assets/motion.js        vanilje-bevegelse: innganger, ordmasker, parallaks,
+                        marquee, magnetiske knapper, markør
+assets/fonts/           Source Sans 3 (variabel), Source Code Pro (variabel)
+                        — samme OFL-1.1-sett som RAILS-nettverket, latin-subsett (æ ø å)
+images/                 fotografiene
+```
 
-Merkene er regnet ut av konstruksjonsgrammatikken
-i `MASTER/data/tokens.yml#tokens.brand_systems` (skråtak stigning 25
-over halv bredde 16, dør `r=5.2` — 0,8 × Sommerseths sol). Faviconen
-ligger i `alfa-mark.svg` (Bergen-snittet v1: A-scråtak + halvsirkeldør);
-fotografiene ligger under `images/`.
+Totalt under 1 MB. Ingen logo-doodle: ordmerket er satt i
+Source Sans 3, og sidehodet/foten bærer bare tekst.
 
 ## Bevegelseskontrakten
 
@@ -41,16 +38,3 @@ Deploy: `zsh OPENBSD/bin/vps-deploy-static alfa` kopierer treet
 Porter og status registreres i `RAILS/apps.yml#static_exports`;
 status der er `planned` inntil første verifiserte deploy — ikke
 oppgrader den uten en kjørt sjekk.
-
-## Treet
-
-```
-index.html              hele siden — fire nummererte seksjoner + kontakt
-assets/site.css         reset + bevegelses-CSS + merkevaren (kaldt papir/messing)
-assets/motion.js        vanilje-bevegelse: innganger, ordmasker, parallaks,
-                        marquee, magnetiske knapper, markør
-assets/fonts/           Bricolage Grotesque (variabel 200–800), Geist 400,
-                        Geist Mono 400 — selvhostet latin-subsett (æ ø å)
-images/                 fotografiene
-alfa-mark.svg           favicon (Bergen-snittet v1: A-scråtak + halvsirkeldør)
-```

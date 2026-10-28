@@ -51,16 +51,14 @@ esac
 # the vhosts go live.
 # One assignment per line: zsh accepts several name=value words on a line, but
 # with array subscripts that reading is fragile, and the whole point of these
-# four maps is that nothing about them is clever.
-typeset -A PORT WWWROOT TITLE MARK
+# three maps is that nothing about them is clever.
+typeset -A PORT WWWROOT TITLE
 PORT[sommerseth]=38191
 WWWROOT[sommerseth]=/var/www/sommerseth
 TITLE[sommerseth]="Sommerseth Eiendom"
-MARK[sommerseth]=sommerseth-mark.svg
 PORT[alfa]=38192
 WWWROOT[alfa]=/var/www/alfa
 TITLE[alfa]="Alfa Bergen"
-MARK[alfa]=alfa-mark.svg
 
 fail=0
 for s in $sites; do
@@ -84,7 +82,7 @@ for s in $sites; do
   print -r -- "  installing ${src} into ${WWWROOT[$s]}..."
   doas rm -rf "${WWWROOT[$s]}"
   doas mkdir -p "${WWWROOT[$s]}"
-  doas cp -R "${src}/index.html" "${src}/assets" "${src}/images" "${src}/${MARK[$s]}" "${WWWROOT[$s]}/" \
+  doas cp -R "${src}/index.html" "${src}/assets" "${src}/images" "${WWWROOT[$s]}/" \
     || { print -u2 "  FAIL: copy into chroot failed"; fail=1; continue }
   doas chown -R root:daemon "${WWWROOT[$s]}" 2>/dev/null || true
 

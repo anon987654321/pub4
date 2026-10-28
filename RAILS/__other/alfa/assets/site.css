@@ -8,27 +8,21 @@
  * ellers vises alt flatt, fullt og umiddelbart.
  */
 
-/* ——— Fonter (selvhostet, latin-subsett — dekker æ ø å) ——— */
+/* ——— Fonter (selvhostet, variabel, latin-subsett — dekker æ ø å;
+   samme Source-familie som RAILS-nettverket) ——— */
 @font-face {
-  font-family: "Bricolage Grotesque";
+  font-family: "Source Sans 3";
   font-style: normal;
-  font-weight: 200 800;
+  font-weight: 200 900;
   font-display: swap;
-  src: url("fonts/bricolage-grotesque-var.woff2") format("woff2");
+  src: url("fonts/source-sans-3-var.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Geist";
+  font-family: "Source Code Pro";
   font-style: normal;
-  font-weight: 400;
+  font-weight: 200 900;
   font-display: swap;
-  src: url("fonts/geist-400.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Geist Mono";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("fonts/geist-mono-400.woff2") format("woff2");
+  src: url("fonts/source-code-pro-var.woff2") format("woff2");
 }
 
 /* ——— Reset ——— */
@@ -66,9 +60,9 @@ img {
   --signal: #a4762f;
   --line: rgba(20, 33, 46, 0.16);
   --cur: #14212e;
-  --font-display: "Bricolage Grotesque", Arial, sans-serif;
-  --font-body: "Geist", system-ui, sans-serif;
-  --font-mono: "Geist Mono", monospace;
+  --font-display: "Source Sans 3", Arial, sans-serif;
+  --font-body: "Source Sans 3", system-ui, sans-serif;
+  --font-mono: "Source Code Pro", monospace;
 
   background: var(--paper);
   color: var(--ink);

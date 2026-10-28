@@ -3,38 +3,39 @@
  * papir #F7F2E9 · blekk #1E322D · signal (rav) #C97E1E · hårsbredder
  *
  * Én fil: reset + bevegelses-CSS + merkevaren. Ingen byggetrinn.
+ * Typografien er nettverkets Source-familie (OFL-1.1, selvhostet, variabel).
  * Bevegelsen krever html.js og (prefers-reduced-motion: no-preference);
  * ellers vises alt flatt, fullt og umiddelbart.
  */
 
-/* ——— Fonter (selvhostet, latin-subsett — dekker æ ø å) ——— */
+/* ——— Fonter (selvhostet, variabel, latin-subsett — dekker æ ø å) ——— */
 @font-face {
-  font-family: "Instrument Serif";
+  font-family: "Source Serif 4";
   font-style: normal;
-  font-weight: 400;
+  font-weight: 200 900;
   font-display: swap;
-  src: url("fonts/instrument-serif-400.woff2") format("woff2");
+  src: url("fonts/source-serif-4-var.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Instrument Serif";
+  font-family: "Source Serif 4";
   font-style: italic;
-  font-weight: 400;
+  font-weight: 200 900;
   font-display: swap;
-  src: url("fonts/instrument-serif-400i.woff2") format("woff2");
+  src: url("fonts/source-serif-4-var-italic.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Geist";
+  font-family: "Source Sans 3";
   font-style: normal;
-  font-weight: 400;
+  font-weight: 200 900;
   font-display: swap;
-  src: url("fonts/geist-400.woff2") format("woff2");
+  src: url("fonts/source-sans-3-var.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Geist Mono";
+  font-family: "Source Code Pro";
   font-style: normal;
-  font-weight: 400;
+  font-weight: 200 900;
   font-display: swap;
-  src: url("fonts/geist-mono-400.woff2") format("woff2");
+  src: url("fonts/source-code-pro-var.woff2") format("woff2");
 }
 
 /* ——— Reset ——— */
@@ -72,9 +73,9 @@ img {
   --signal: #c97e1e;
   --line: rgba(30, 50, 45, 0.16);
   --cur: #1e322d;
-  --font-display: "Instrument Serif", Georgia, serif;
-  --font-body: "Geist", system-ui, sans-serif;
-  --font-mono: "Geist Mono", monospace;
+  --font-display: "Source Serif 4", Georgia, serif;
+  --font-body: "Source Sans 3", system-ui, sans-serif;
+  --font-mono: "Source Code Pro", monospace;
 
   background: var(--paper);
   color: var(--ink);
@@ -89,7 +90,7 @@ img {
   .page,
   .page a,
   .page button {
-    cursor: none; /* scan: intentional — replacement rendered in assets/motion.js, gated by pointer:fine and reduced-motion */
+    cursor: none;
   }
 }
 
@@ -123,19 +124,17 @@ img {
   gap: 1.5rem;
   padding: 1.1rem clamp(1.25rem, 5vw, 4rem);
   background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
 }
 
 .page .brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7rem;
   color: inherit;
   text-decoration: none;
   font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 400;
-  letter-spacing: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   white-space: nowrap;
 }
 
@@ -187,22 +186,23 @@ img {
   max-width: 78rem;
 }
 
-.page .meta {
+.page .kicker {
   font-family: var(--font-mono);
   font-size: 0.75rem;
   letter-spacing: 0.16em;
-    color: var(--muted);
+  text-transform: uppercase;
+  color: var(--muted);
   margin: 0 0 1.6rem;
 }
 
-.page .meta::before {
+.page .kicker::before {
   content: "";
   display: inline-block;
   width: 0.55rem;
   height: 0.55rem;
   border-radius: 50%;
   background: var(--signal);
-  margin-inline-end: 0.65rem;
+  margin-right: 0.65rem;
   vertical-align: 1px;
 }
 
@@ -210,7 +210,7 @@ img {
   font-family: var(--font-display);
   font-weight: 400;
   font-size: clamp(2.9rem, 7.2vw, 6.6rem);
-  line-height: 1;
+  line-height: 1.02;
   letter-spacing: -0.025em;
   margin: 0 0 1.6rem;
   max-width: 12em;
@@ -229,37 +229,85 @@ img {
   margin: 0 0 2.2rem;
 }
 
-.page .heroCtas {
+/* ——— Søkefeltet (ekte fakta, ærlige brikker — ingen falske skjemafelt) ——— */
+.page .searchbar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1.1rem;
-  align-items: center;
+  align-items: stretch;
+  gap: 0;
+  max-width: 44rem;
+  background: #fffdf8;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  padding: 0.55rem;
+  box-shadow: 0 1px 0 rgba(30, 50, 45, 0.05);
 }
 
-.page .primary {
+.page .chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  flex: 1 1 auto;
+}
+
+.page .chip {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.1rem;
+  padding: 0.45rem 1.1rem;
+  border-right: 1px solid var(--line);
+  font-size: 0.875rem;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.page .chip small {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.page .find {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  background: var(--ink);
-  color: var(--paper);
-  text-decoration: none;
-  padding: 0.8rem 1.5rem;
-  border-radius: 999px;
+  gap: 0.55rem;
+  align-self: center;
+  background: var(--signal);
+  color: var(--ink);
+  font-weight: 600;
   font-size: 0.975rem;
+  text-decoration: none;
+  border-radius: 0.7rem;
+  padding: 0.75rem 1.35rem;
+  margin-left: 0.55rem;
+  white-space: nowrap;
   transition: background 0.25s ease, transform 0.25s ease;
 }
 
-.page .primary:hover {
-  background: var(--signal);
+.page .find:hover {
+  background: var(--ink);
+  color: var(--paper);
   transform: translateY(-1px);
 }
 
-.page .quiet {
+.page .heroAlt {
+  margin: 1.1rem 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.page .heroAlt a {
   color: inherit;
-  text-decoration: none;
-  font-size: 0.975rem;
   border-bottom: 1.5px solid var(--signal);
-  padding-bottom: 2px;
+  text-decoration: none;
+  padding-bottom: 1px;
+}
+
+.page .heroAlt a:hover {
+  color: var(--ink);
 }
 
 /* ——— Bilder (parallaksrammer) ——— */
@@ -275,7 +323,8 @@ img {
   font-family: var(--font-mono);
   font-size: 0.72rem;
   letter-spacing: 0.1em;
-    color: var(--muted);
+  text-transform: uppercase;
+  color: var(--muted);
   padding: 0.8rem clamp(1.25rem, 5vw, 4rem) 0;
 }
 
@@ -298,7 +347,7 @@ img {
 
 .page .facts li + li {
   border-left: 1px solid var(--line);
-  padding-inline-start: 1.4rem;
+  padding-left: 1.4rem;
 }
 
 .page .facts strong {
@@ -318,7 +367,8 @@ img {
 .page .label {
   font-size: 0.8rem;
   letter-spacing: 0.16em;
-    color: var(--signal);
+  text-transform: uppercase;
+  color: var(--signal);
   margin: 0 0 1.1rem;
 }
 
@@ -326,7 +376,7 @@ img {
   font-family: var(--font-display);
   font-weight: 400;
   font-size: clamp(2rem, 4.2vw, 3.6rem);
-  line-height: 1;
+  line-height: 1.06;
   letter-spacing: -0.02em;
   margin: 0 0 1.5rem;
 }
@@ -350,7 +400,7 @@ img {
   max-height: 34rem;
 }
 
-/* ——— Eiendommene ——— */
+/* ——— Eiendommene: kortrutenett ——— */
 .page .props {
   padding: clamp(1rem, 2vw, 2rem) 0 clamp(4rem, 9vw, 8rem);
 }
@@ -360,43 +410,100 @@ img {
   padding-inline: clamp(1.25rem, 5vw, 4rem);
 }
 
-.page .wideFig {
-  height: min(52vh, 34rem);
-  margin-block: 2.4rem;
-  padding-inline: 0;
-}
-
-.page .rows {
-  padding-inline: clamp(1.25rem, 5vw, 4rem);
-  border-top: 1px solid var(--line);
-}
-
-.page .row {
+.page .cards {
   display: grid;
-  grid-template-columns: 1.1fr 1.6fr;
-  align-items: baseline;
-  gap: 1rem;
-  padding: 1.6rem 0;
-  border-bottom: 1px solid var(--line);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.4rem;
+  padding: 2.4rem clamp(1.25rem, 5vw, 4rem) 0;
+}
+
+.page .card {
+  display: flex;
+  flex-direction: column;
+  background: #fffdf8;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  overflow: hidden;
   text-decoration: none;
   color: inherit;
-  transition: background 0.25s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
-.page .row:hover {
-  background: color-mix(in srgb, var(--signal) 6%, transparent);
+.page .card:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--signal) 55%, var(--line));
+  box-shadow: 0 14px 34px -18px rgba(30, 50, 45, 0.35);
 }
 
-.page .rowT {
+.page .cardFig {
+  margin: 0;
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+.page .cardFig img {
+  transition: transform 0.6s ease;
+}
+
+.page .card:hover .cardFig img {
+  transform: scale(1.035);
+}
+
+.page .chip2 {
+  position: absolute;
+  top: 0.8rem;
+  left: 0.8rem;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.32rem 0.75rem;
+  backdrop-filter: blur(6px);
+}
+
+.page .cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 1.25rem 1.3rem 1.4rem;
+  flex: 1 1 auto;
+}
+
+.page .cardN {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  color: var(--signal);
+}
+
+.page .cardBody h3 {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(1.35rem, 2.1vw, 1.8rem);
+  font-size: 1.45rem;
   letter-spacing: -0.01em;
+  margin: 0;
 }
 
-.page .rowD {
+.page .cardBody p {
   color: var(--muted);
-  font-size: 0.975rem;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.page .spec {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+  padding-top: 0.85rem;
+  margin-top: auto;
 }
 
 /* ——— Verdier ——— */
@@ -475,26 +582,67 @@ img {
   font-size: 0.925rem;
 }
 
-/* ——— Footer ——— */
-.page footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.6rem clamp(1.25rem, 5vw, 4rem);
+/* ——— Footer (kart over stedet) ——— */
+.page .footer {
   border-top: 1px solid var(--line);
-  font-size: 0.85rem;
-  color: var(--muted);
 }
 
-.page .sister {
+.page .footGrid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1.2fr;
+  gap: 2.4rem;
+  padding: clamp(2.4rem, 5vw, 3.6rem) clamp(1.25rem, 5vw, 4rem);
+}
+
+.page .footLogo {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.page .footBrand p {
+  color: var(--muted);
+  font-size: 0.925rem;
+  max-width: 24em;
+  margin: 0.7rem 0 0;
+}
+
+.page .footGrid h4 {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0.2rem 0 0.9rem;
+}
+
+.page .footGrid nav a,
+.page .footGrid > div:not(.footBrand) a,
+.page .footGrid > div:not(.footBrand) span {
+  display: block;
   color: inherit;
   text-decoration: none;
+  font-size: 0.925rem;
+  line-height: 2.05;
 }
 
-.page .sister:hover {
+.page .footGrid a:hover {
   color: var(--signal);
+}
+
+.page .footBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+  padding: 1.2rem clamp(1.25rem, 5vw, 4rem);
 }
 
 /* ——— Bevegelse: ordmasker ——— */
@@ -540,6 +688,7 @@ img {
   html.js [data-reveal] {
     opacity: 0;
     transform: translateY(26px);
+    filter: blur(8px);
     transition:
       opacity 0.85s cubic-bezier(0.2, 0.6, 0.2, 1),
       transform 0.85s cubic-bezier(0.2, 0.6, 0.2, 1),
@@ -594,7 +743,7 @@ img {
 .cur-ring {
   width: 36px;
   height: 36px;
-  margin: -16px 0 0 -16px;
+  margin: -18px 0 0 -18px;
   border: 1px solid var(--cur, #1e322d);
   opacity: 0.4;
   transition: opacity 0.25s ease, scale 0.25s ease;
@@ -610,6 +759,15 @@ img {
 }
 
 /* ——— Responsivt ——— */
+@media (max-width: 1020px) {
+  .page .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .page .footGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 900px) {
   .page .split {
     grid-template-columns: 1fr;
@@ -631,7 +789,20 @@ img {
   .page .facts li + li {
     border-left: none;
     border-top: 1px solid var(--line);
-      padding-inline-start: 0;
+    padding-left: 0;
+  }
+  .page .searchbar {
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+  .page .chip {
+    border-right: none;
+    padding-inline: 0.9rem;
+  }
+  .page .find {
+    align-self: stretch;
+    justify-content: center;
+    margin-left: 0;
   }
 }
 
@@ -639,14 +810,14 @@ img {
   .page .links a:not(.cta) {
     display: none;
   }
-  .page .row {
+  .page .cards {
     grid-template-columns: 1fr;
   }
-  .page .rowD {
-    display: none;
+  .page .footGrid {
+    grid-template-columns: 1fr;
+    gap: 1.8rem;
   }
-  .page footer {
+  .page .footBar {
     flex-direction: column;
-    align-items: flex-start;
   }
 }
