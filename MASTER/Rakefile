@@ -480,6 +480,11 @@ namespace :docs do
     end
   end
 
+  desc "Write docs/map.md: per lib file, constants declared and local requires"
+  task :map do
+    ruby File.join(__dir__, "tools", "tree_map.rb")
+  end
+
   desc "Regenerate docs/laws_digest.md from data/laws.yml and law/*.rb"
   task :laws_digest do
     require_relative "tools/laws_digest"
@@ -894,10 +899,15 @@ end
 # nine of twelve subsystems while `rake audit` reported passed, because nothing
 # called it. A check defined and uncalled is a check that has stopped measuring
 # without anyone deciding it should.
+desc "docs/map.md is current against lib/"
+task "lint:map" do
+  sh RbConfig.ruby, File.join(__dir__, "tools", "tree_map.rb"), "--check"
+end
+
 AUDIT_CHECKS = %w[
   dogfood constitution selftest selfcheck tools core_smoke architecture boot_smoke kernel_autoload_smoke security_sweep
   lint:frozen lint:data_singularity lint:spine lint:autoload
-  lint:law_trace lint:law_parity lint:agent_contracts lint:laws_digest lint:scan_coverage lint:agent_map lint:reader_singularity lint:doc_citations
+  lint:law_trace lint:law_parity lint:agent_contracts lint:laws_digest lint:scan_coverage lint:agent_map lint:reader_singularity lint:doc_citations lint:map
   lint:do_not_touch lint:instruments lint:swallowed lint:law_audit lint:autofix_reach
   lint:rule_hygiene lint:constant_collisions lint:capability lint:cohesion lint:law_reach
   lint:models lint:dedup lint:word_boundary lint:test_naming ad_organ:test_browserless
