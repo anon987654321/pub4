@@ -94,6 +94,7 @@ The present README describes the supported `generate`, `vocab-check`, `capabilit
 | Token discovery and config file | Preserved through `REPLICATE_API_TOKEN`, `REPLICATE_API_KEY` and user-scoped `~/.config/replicate/config.json`; no credentials in repo. |
 | Retry, progress, timeout and cost controls | Preserved/evolved in the provider client and ledger. Do not blindly replay an ambiguous paid POST; retry policy must be status-aware. |
 | Output naming and operation audit | Evolved into content-addressed blobs, checksums, per-output provenance, sidecars and gallery rows, with atomic writes and no partial artifact after failed download. |
+| Actual provider model version | Now captured from the prediction response alongside its prediction ID, status and metrics in each saved output's sidecar. A changing `latest` pointer is not a reproducibility record. |
 | Prompt batches and variation diversity | Preserved through batch vocabularies and deterministic coprime strides; regression checks prove 20 consecutive combinations are distinct. |
 | Browser-based scraping as a fallback | Not restored as the primary implementation: it depends on undocumented page markup, can drift, and must not be a credential or model-schema authority. The provider API is the intended catalogue source. |
 | Runtime gem installation / shell download snippets | Intentionally not restored. Execution is observational unless an explicit setup command is invoked; shell arguments are not composed from prompts, filenames or model IDs. |
