@@ -44,9 +44,11 @@ class TestConsensus < Minitest::Test
     assert_equal ["only/one"], consensus.instance_variable_get(:@models)
   end
 
-  def test_quorum_is_two_of_three
-    assert_equal 2, Master::Review::Consensus::QUORUM
-    assert_operator pool.size, :>=, Master::Review::Consensus::QUORUM,
-                    "a quorum larger than the pool can never be met"
+  def test_quorum_comes_from_models_yml_and_fits_the_pool
+    declared = Master.load_yaml(Master.data_path("models.yml")).fetch("three_mirror_redundancy").fetch("quorum")
+    consensus = Master::Review::Consensus.new(agent: nil)
+
+    assert_equal declared, consensus.instance_variable_get(:@quorum)
+    assert_operator pool.size, :>=, declared, "a quorum larger than the pool can never be met"
   end
 end

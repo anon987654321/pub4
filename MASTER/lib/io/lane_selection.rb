@@ -29,10 +29,6 @@ module Master
       MODELS = File.expand_path("../../data/models.yml", __dir__)
       CLI_BINARIES = { "claude-cli" => "claude", "grok-cli" => "grok" }.freeze
       KIND_RANK = { remote: 0, paid_tail: 1, local: 2, free: 3 }.freeze
-      # The signed-in subscription CLIs lead the remote class, in this order: a
-      # flat-rate lane is spent before a metered API key is, and before any free
-      # or local model is asked to edit code.
-      SUBSCRIPTION_LANES = %w[claude-cli grok-cli codex-cli agy].freeze
       FREE_CLASS_KINDS = %i[free local].freeze
       NOT_SUBSCRIPTION = 10_000
       NEUTRAL_LATENCY_S = 45
@@ -83,7 +79,9 @@ module Master
         sighted + blind
       end
 
-      def subscription?(model) = SUBSCRIPTION_LANES.include?(LaneQuota.lane_of(model))
+      def subscription_lanes = Array(config.fetch("subscription_lanes"))
+
+      def subscription?(model) = subscription_lanes.include?(LaneQuota.lane_of(model))
 
       # Low for a subscription lane (its lane position, then its place in the
       # catalogue so opus precedes sonnet as data/models.yml lists them), high
@@ -91,7 +89,7 @@ module Master
       def subscription_rank(id, listed)
         return NOT_SUBSCRIPTION unless kind(id) == :remote && subscription?(id)
 
-        SUBSCRIPTION_LANES.index(LaneQuota.lane_of(id)) * 100 + (listed.index(id) || 99)
+        subscription_lanes.index(LaneQuota.lane_of(id)) * 100 + (listed.index(id) || 99)
       end
 
       # The same ids with the live subscription lanes first, in their fixed order;
@@ -128,15 +126,16 @@ module Master
       end
 
       # Whether a lane reads images: the catalog row's input modalities when it
-      # has one, else the dispatcher's own list of vision families.
+      # has one, else models.yml vision_families.
       def vision?(model)
         id = model.to_s
         row = catalog_modalities(id)
         return row.include?("image") if row
 
-        d = Master::Review::LLMDispatcher
-        !d::NON_VISION_RE.match?(id) && d::VISION_RE.match?(id)
+        !vision_family("blind").match?(id) && vision_family("reads_images").match?(id)
       end
+
+      def vision_family(key) = Regexp.new(config.fetch("vision_families").fetch(key).join("|"), Regexp::IGNORECASE)
 
       def catalog_modalities(id)
         @modalities ||= begin
@@ -242,16 +241,12 @@ module Master
         key_present_for?(id)
       end
 
-      # The key the model's own provider takes: an owner/name id goes through
-      # OpenRouter, a bare id through its vendor. Any key at all is the answer
-      # only for a vendor this table does not name.
-      API_KEYS = [
-        [%r{/}, %w[OPENROUTER_API_KEY]], [/\Adeepseek/, %w[DEEPSEEK_API_KEY]], [/\Agrok-\d/, %w[XAI_API_KEY]],
-        [/\Agemini/, %w[GOOGLE_API_KEY GEMINI_API_KEY]], [/\Aclaude-/, %w[ANTHROPIC_API_KEY]]
-      ].freeze
+      # providers.yml model_pattern and env; any key answers for an unnamed vendor.
+      def api_keys = Master.provider_config(root: Master::ROOT).values.grep(Hash).select { |row| row["model_pattern"] }
+                           .map { |row| [Regexp.new(row["model_pattern"]), Array(row["env"])] }
 
       def key_present_for?(id)
-        _pattern, envs = API_KEYS.find { |pattern, _envs| pattern.match?(id) }
+        _pattern, envs = api_keys.find { |pattern, _envs| pattern.match?(id) }
         envs ? envs.any? { |env| Master.api_key_present?(env) } : Master.any_api_key_present?
       end
 
@@ -342,7 +337,8 @@ module Master
         why = {
           "MASTER_MODEL" => pin_label(env),
           "saved preference" => "saved preference, live",
-          "availability" => "first live lane by availability (#{SUBSCRIPTION_LANES.join(" > ")}, then APIs, paid tail, local, free)"
+          "availability" => "first live lane by availability " \
+                            "(#{subscription_lanes.join(" > ")}, then APIs, paid tail, local, free)",
         }.fetch(source)
         dead = catalogue(cfg:).select { |id| LaneQuota.dead?(id) }.map { |id| LaneQuota.lane_of(id) }.uniq
         "primary: #{lane} (#{why}#{dead.empty? ? "" : "; dead: #{dead.join(", ")}"})"

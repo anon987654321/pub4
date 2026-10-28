@@ -5,8 +5,6 @@ require "json"
 module Master
   module Review
     class Consensus
-      QUORUM = 2
-
       Vote = Struct.new(:model, :approved, :reason, keyword_init: true)
 
       # models.yml three_mirror_redundancy.pool is the one source. This held a
@@ -22,12 +20,17 @@ module Master
           .freeze
       end
 
-      def initialize(agent:, event_bus: nil, models: nil, quorum: QUORUM)
+      # models.yml three_mirror_redundancy.quorum, beside the pool it counts.
+      def self.default_quorum
+        Integer(Master.models_config(root: Master::ROOT).dig("three_mirror_redundancy", "quorum"))
+      end
+
+      def initialize(agent:, event_bus: nil, models: nil, quorum: nil)
         models ||= self.class.default_models
         @agent = agent
         @bus = event_bus
         @models = Array(models).reject(&:empty?)
-        @quorum = quorum.to_i.positive? ? quorum.to_i : QUORUM
+        @quorum = quorum.to_i.positive? ? quorum.to_i : self.class.default_quorum
       end
 
       def approve_fix?(prompt:, candidate:, violation:)

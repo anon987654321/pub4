@@ -53,10 +53,8 @@ module Master
       # Capability by id pattern, not ruby_llm's Model::Info#supports_vision? or
       # #function_calling?. The gem's registry carries none of the :free ids
       # MASTER routes to most, and ruby_llm_patch.rb answers an unknown id with a
-      # capability-less stand-in, so every free model reads as unable. The same
-      # holds for TOOL_CAPABLE_RE below.
-      VISION_RE = /gemini-[12]|claude|gpt-4o|gpt-4\.1|llama-4|qwen.*vl|pixtral|gemma-[34]|vision/i.freeze
-      NON_VISION_RE = /glm|nemotron|deepseek(?!.*vl)|qwen3-next|gpt-oss|phi-4/i.freeze
+      # capability-less stand-in, so every free model reads as unable. Vision is
+      # Io::LaneSelection.vision?'s answer; tools are TOOL_CAPABLE_RE below.
       LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
       TOOL_CALL_RE = /<tool_call>(.*?)<\/tool_call>/m.freeze
       TOOL_RESULT_ROLE = "user"
@@ -239,11 +237,7 @@ module Master
         value
       end
 
-      def vision_capable?(model_id)
-        id = model_id.to_s
-        return false if NON_VISION_RE.match?(id)
-        VISION_RE.match?(id)
-      end
+      def vision_capable?(model_id) = Io::LaneSelection.vision?(model_id)
 
       # The dispatcher's deadline is tightened inside a council and for every
       # free-tier completion. A small probe cannot predict the cost of a large prompt.

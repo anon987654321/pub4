@@ -308,6 +308,14 @@ routes:
   fallback_default: default
   vision: vision
 
+# Which model families read images, by id pattern (case-insensitive), for an
+# id the OpenRouter catalog has no input_modalities row for. `blind` wins over
+# `reads_images`. Io::LaneSelection.vision? is the one reader; the dispatcher
+# asks it. `gemini-\d` covers every Gemini generation, 3.x included.
+vision_families:
+  reads_images: ['gemini-\d', claude, 'gpt-4o', 'gpt-4\.1', 'llama-4', 'qwen.*vl', pixtral, 'gemma-[34]', vision]
+  blind: [glm, nemotron, 'deepseek(?!.*vl)', 'qwen3-next', gpt-oss, 'phi-4']
+
 tool_capable_prefixes:
   - "agy"
   - "agy:"
@@ -411,12 +419,13 @@ ferrum_web_chat:
       timeout: 120
 
 three_mirror_redundancy:
-  # Three models vote; ship only on >= 2 agreement for critical fixes.
-  # Source: cross-cutting reunification (#95).
-  enabled_for:   [tier1_critical, security_relevant, irreversible]
+  # Three models vote on a candidate fix; it ships on `quorum` approvals.
+  # Review::Consensus reads both keys. Which fixes are put to the vote is
+  # Fix::RepairLoop#consensus_required? (error and critical findings, or
+  # MASTER_CONSENSUS_FIXES=1), and a fix short of quorum is refused with the
+  # dissent published on consensus:result.
   pool:          ["claude-sonnet-5-5", "grok-cli:auto", "moonshotai/kimi-k2"]
   quorum:        2
-  on_disagreement: "fall back to council vote with all dissent recorded"
 
 # Subscription CLIs, signed in once through the browser. The pool offers a
 # lane when its binary is installed and `signed_in` says so: the args are run
@@ -425,6 +434,11 @@ three_mirror_redundancy:
 # names a file the CLI writes its answer to, and a prompt with no %{prompt}
 # goes in on stdin. A model named auto passes no model flag, so the CLI uses
 # its own default. `login` is the command the pool names when signed out.
+# The signed-in subscription CLIs lead the remote class, in this order: a
+# flat-rate lane is spent before a metered API key is, and before any free or
+# local model is asked to edit code. Io::LaneSelection reads it.
+subscription_lanes: [claude-cli, grok-cli, codex-cli, agy]
+
 cli_lanes:
   codex-cli:
     binary: codex

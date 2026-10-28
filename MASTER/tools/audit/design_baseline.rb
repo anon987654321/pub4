@@ -24,20 +24,11 @@ module Operator
     RAILS_ROOT = File.expand_path("../../../RAILS", __dir__)
     CEILING = File.join(MASTER_ROOT, "data", "design_baseline.yml")
 
-    # The rules that judge layout, markup shape, and typography — the set the
-    # campaign measured. Info-tier markup-idiom rules (PREFER_TAG_HELPERS,
-    # TAG_HELPER_OVER_MARKUP) are excluded: their thousand-finding backlog is
-    # a campaign of its own and would drown movement in the rules that matter.
-    DESIGN_RULES = %w[
-      SEMANTIC_ELEMENTS MOBILE_FIRST NO_IMPORTANT MAGIC_COLOR MEASURE_OPTIMUM
-      CLAMP_TYPOGRAPHY LOGICAL_PROPERTIES TYPOGRAPHY_DISCIPLINE
-      TYPOGRAPHIC_EXCELLENCE ARIA_LABELS ARIA_INTERACTIVE IMG_ALT LAZY_IMAGES
-      SKIP_TO_MAIN NO_LONG_TRANSITION REDUCED_MOTION ANTI_DIVITIS BEM_IN_VIEWS
-      UTILITY_CLASS_SOUP NO_INLINE_STYLES HTML_LANG META_CHARSET
-      BUTTON_OVER_ANCHOR CLASS_RESTATES_TAG BARE_DIV_WRAPPER
-      PRESENTATIONAL_CLASS_NAME FORM_LABEL SINGLE_H1 TABINDEX_ABOVE_ZERO
-      ASYNC_STATUS
-    ].to_set
+    # The Laws that judge layout, markup shape and typography: the baseline's
+    # rule_ceilings, the one list of them. Info-tier markup-idiom Laws
+    # (PREFER_TAG_HELPERS, TAG_HELPER_OVER_MARKUP) stay out: their thousand-finding
+    # backlog would drown movement in the Laws that matter.
+    DESIGN_RULES = YAML.safe_load_file(CEILING).fetch("rule_ceilings").to_set.freeze
 
     module_function
 
@@ -113,22 +104,6 @@ module Operator
       total = current.values.sum
       recorded = ceilings
       recorded_total = recorded.fetch("total", nil)
-
-      # The recorded rule set is read back, not just written. A baseline counted
-      # against a different set of rules than the one running is a number about
-      # nothing — and until this read existed, `rule_ceilings` was a key with a
-      # writer and no reader, which is the defect this repo has most of.
-      recorded_rules = Array(recorded["rule_ceilings"])
-      # Compared as sets, not as arrays: data/design_baseline.yml stores the
-      # list unsorted, so a plain == reported a changed rule set with an empty
-      # added/removed diff — a verdict about ordering, not about the rules.
-      unless recorded_rules.empty? || recorded_rules.sort == DESIGN_RULES.sort
-        added = DESIGN_RULES.sort - recorded_rules
-        gone = recorded_rules - DESIGN_RULES.sort
-        puts "design_baseline: rule set has changed since the baseline was recorded — " \
-             "#{"added #{added.join(', ')}" unless added.empty?}" \
-             "#{" removed #{gone.join(', ')}" unless gone.empty?}; re-record with --ratchet"
-      end
 
       Master::Trace::Dmesg.attach("design0", "master0", "#{total} violation(s), ceiling #{recorded_total || "unrecorded"}")
       current.sort.each { |app, count| Master::Trace::Dmesg.status("design0", "#{app}, #{count}, ceiling #{recorded.dig("apps", app) || "unrecorded"}") }

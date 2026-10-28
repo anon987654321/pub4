@@ -1,5 +1,8 @@
 ---
 schema: 1
+# `model_pattern` names the model ids a provider's key serves, read by
+# Io::LaneSelection.key_present_for?: an owner/name id goes through OpenRouter,
+# a bare id through its vendor. A provider with none is reached another way.
 # agy is the Antigravity CLI, not a RubyLLM provider: `command` is how it is
 # reached and AGY_BIN/ANTIGRAVITY_BIN name a binary, not an API key. It carries
 # no `ruby_llm_key` for that reason. It used to carry `agy_api_key`, which is
@@ -21,6 +24,7 @@ openai:
 
 anthropic:
   env: [ANTHROPIC_API_KEY]
+  model_pattern: '\Aclaude-'
   ruby_llm_key: anthropic_api_key
   min_key_length: 80
   strengths: [coding, long_context, instruction_following]
@@ -28,6 +32,7 @@ anthropic:
 
 gemini:
   env: [GOOGLE_API_KEY, GEMINI_API_KEY]
+  model_pattern: '\Agemini'
   ruby_llm_key: gemini_api_key
   min_key_length: 20
   strengths: [long_context, multimodal]
@@ -35,6 +40,7 @@ gemini:
 
 openrouter:
   env: [OPENROUTER_API_KEY]
+  model_pattern: '/'
   ruby_llm_key: openrouter_api_key
   min_key_length: 40
   strengths: [cheap, routing, free_tier]
@@ -42,6 +48,7 @@ openrouter:
 
 deepseek:
   env: [DEEPSEEK_API_KEY]
+  model_pattern: '\Adeepseek'
   ruby_llm_key: deepseek_api_key
   min_key_length: 20
   strengths: [coding, cheap]
@@ -49,6 +56,7 @@ deepseek:
 
 xai:
   env: [XAI_API_KEY]
+  model_pattern: '\Agrok-\d'
   ruby_llm_key: xai_api_key
   min_key_length: 20
   strengths: [reasoning, coding, fast]
