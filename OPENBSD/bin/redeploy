@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
-# On-box one-shot redeploy (run as dev on vm23, never under doas).
-# Prefer ./bin/redeploy from a workstation; this is for a console already open.
+# On-box one-shot redeploy. Runs as root via vps-deploy's doas re-exec.
+# Prefer ./bin/redeploy from a workstation.
 set -euo pipefail
 cd "${PUB4_ROOT:-/home/dev/pub4}"
 app=${1:-all}

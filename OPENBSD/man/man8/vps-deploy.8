@@ -11,11 +11,19 @@
 .Nm
 is the serialized production deploy entry point at
 .Pa OPENBSD/bin/vps-deploy .
-Run it as the unprivileged deploy account
-.Cm dev ,
-not as root and not through
-.Xr doas 1 .
-The script escalates only for the individual steps that require it.
+Run it as
+.Cm root
+(or as
+.Cm dev
+with passwordless
+.Xr doas 1 ,
+which re-executes the script as root).
+Git fetch and checkout always run as
+.Cm dev
+so the production tree and GitHub credentials stay correctly owned.
+Service control calls
+.Nm pub4-admin
+directly.
 .Pp
 The command validates its target, checks required local broker availability,
 validates bounded timing and capacity settings, obtains the deploy lock, and

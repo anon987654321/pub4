@@ -34,9 +34,9 @@ own renderer.
 ./bin/redeploy --detach        # start and return immediately
 ```
 
-Hands-off path: local preflight, pin SHA, tmux on vm23 as `dev` (broker via
-passwordless doas), stream progress until finished, then `vps-state` + public
-canary. Log: `~/vps-deploy.log`. Session: `pub4-deploy`.
+Hands-off path: local preflight, pin SHA, tmux on vm23, `vps-deploy` as root
+(git as `dev`), stream progress until finished, then `vps-state` + public canary.
+Log: `/home/dev/vps-deploy.log`. Session: `pub4-deploy`.
 
 The commands live in one place. `data/operator.yml` is the source of the command
 recipes, so do not write another catalogue. From the repository root, the operator

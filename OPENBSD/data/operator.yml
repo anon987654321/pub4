@@ -42,9 +42,9 @@ recipes:
     run: ./bin/redeploy
     expect: >-
       Hands-off: local preflight, pin origin/main SHA, deploy under tmux on vm23
-      as dev (doas nopass for broker steps), wait until finished streaming the log,
-      then vps-state + public canary. Survives SSH drop. --follow attaches;
-      --detach starts and returns.
+      as root (git still as dev), wait until finished streaming the log, then
+      vps-state + public canary. Survives SSH drop. --follow attaches; --detach
+      starts and returns.
   - want: Redeploy one app
     run: ./bin/redeploy brgen
     expect: same path, single app

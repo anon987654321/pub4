@@ -12,10 +12,10 @@ From a clean workstation checkout on `origin/main`:
 ./bin/redeploy
 ```
 
-Hands-off: local preflight → pin SHA → `tmux` session `pub4-deploy` on vm23 as
-`dev` (broker steps escalate with passwordless doas; you do not run the whole
-deploy as root) → streams the log until finished → `vps-state` + public canary.
-Survives SSH disconnect. Log: `~/vps-deploy.log`. Attach: `tmux attach -t pub4-deploy`.
+Hands-off: local preflight → pin SHA → `tmux` session `pub4-deploy` on vm23 →
+`vps-deploy` as **root** (git still as `dev`) → streams the log until finished →
+`vps-state` + public canary. Survives SSH disconnect. Log: `/home/dev/vps-deploy.log`.
+Attach: `tmux attach -t pub4-deploy`.
 
 Already on the box: `zsh OPENBSD/bin/redeploy`.
 
@@ -248,13 +248,12 @@ When SSH to vm23 is required, use normal paths — but note which of them takes
 | | |
 |---|---|
 | `doas zsh OPERATOR.sh` | root, it installs `/etc` |
-| `zsh OPENBSD/bin/vps-deploy <app>` | **dev**; it escalates per step |
+| `zsh OPENBSD/bin/vps-deploy <app>` | **root** (or `dev` via passwordless doas re-exec) |
 | `zsh OPENBSD/bin/vps_ci.sh <app>` | **dev** |
 
-Under `doas`, `vps-deploy` fails at its first step with `Host key verification
-failed` — root has no github host key, and giving it one would hand root a way
-to fetch and run code from the network. It now refuses that invocation and says
-so; this line used to name all three after the word `doas`.
+`vps-deploy` runs as root. Git fetch/checkout still run as `dev` so the
+`/home/dev/pub4` tree and GitHub deploy key are never used by root. Typing the
+command as `dev` is fine: passwordless doas re-executes it as root.
 
 **Laws:**
 
@@ -354,13 +353,17 @@ remaining gap and it needs an account.
 
 ## OpenBSD deploy
 
-Always use tmux. `OPERATOR.sh` runs under `doas` because it installs `/etc`;
-`bin/vps-deploy` must not, because it runs as dev and escalates per step (see
-the table under *Agent contract*).
+Always use tmux. `OPERATOR.sh` runs under `doas` because it installs `/etc`.
+`vps-deploy` runs as root (or re-execs via passwordless doas from `dev`); git
+still runs as `dev` (see *Agent contract*). Prefer `./bin/redeploy` from a
+workstation.
 
 ```zsh
 cd ~/pub4
-tmux new-session -d -s deploy "doas zsh OPENBSD/OPERATOR.sh 2>&1 | tee /tmp/deploy.log"
+# config sync (installs /etc) — explicit doas:
+tmux new-session -d -s opsync "doas zsh OPENBSD/OPERATOR.sh 2>&1 | tee /tmp/opsync.log"
+# routine app deploy — script becomes root itself:
+tmux new-session -d -s deploy "zsh OPENBSD/bin/vps-deploy all 2>&1 | tee /home/dev/vps-deploy.log"
 tmux attach -t deploy
 ```
 
@@ -405,7 +408,7 @@ migrate, precompile, restart, health, checks), an exit trap stamps
 whether the app was stopped for the deploy and so is down (the next command is
 `doas /usr/local/sbin/pub4-admin service start <app>` or a rerun), lists amber or bsdports if they are down,
 releases the lock and the deploy flag, and appends `finished ... exit=N
-stage=...` to `~/vps-deploy.log` directly, so a dropped ssh session still leaves
+stage=...` to `/home/dev/vps-deploy.log` directly, so a dropped ssh session still leaves
 the verdict. A kill or hangup counts as a failure with the stage it interrupted.
 
 ### The deploy sequence and its recovery
@@ -467,7 +470,7 @@ still held, so a start never races a survivor. The ports above are the ones in `
 
 To deploy an exact commit, not the tip: `VPS_DEPLOY_SHA=<sha> zsh OPENBSD/bin/vps-deploy all`
 on the box, or push it and use `bin/operator vps deploy all --remote` from a clean
-worktree at that commit. A stale `~/.pub4-vps-deploy.lock` is reaped by the next run
+worktree at that commit. A stale `/home/dev/.pub4-vps-deploy.lock` is reaped by the next run
 when its pid is gone; every exit, including a halted `all`, releases it.
 
 ## Deploy-all disambiguation
@@ -610,7 +613,7 @@ zsh OPENBSD/bin/vps-deploy amber       # or: all
 ruby OPENBSD/checks/health_check.rb --public --all-ready-apps
 ```
 
-Use only `zsh OPENBSD/bin/vps-deploy <app|all>` for production deploys, as `dev`.
+Use only `zsh OPENBSD/bin/vps-deploy <app|all>` for production deploys (runs as root; re-exec via doas from dev).
 The compatibility `zsh RAILS/deploy.sh` delegates to it and refuses UID 0.
 The individual `RAILS/<app>/<app>.sh` entrypoints also refuse root because they
 source code from the dev-writable checkout. Do not run them with `doas`.

@@ -7,7 +7,7 @@ set -euo pipefail
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 
 usage() {
-  print -r -- "usage: zsh OPENBSD/bin/vps-deploy all|APP|master   (run as dev, never under doas)
+  print -r -- "usage: zsh OPENBSD/bin/vps-deploy all|APP|master   (runs as root; re-execs via doas)
 
   all          master, then every app, amber and bsdports last (master last when the box is short of memory)
   VPS_DEPLOY_SHA=<sha>   deploy exactly this commit (default: origin/main, fetched once)
@@ -15,34 +15,52 @@ usage() {
   VPS_DEPLOY_SKIP_PREFLIGHT=1      break-glass, needs I_UNDERSTAND_FAST_DEPLOY=1
   SKIP_CI=1    skip vps_ci.sh; \${app}.sh and its runtime check still run
   VPS_DEPLOY_DRIFT=fail   refuse to deploy when the box's configs differ from the repo
-  PUB4_DEPLOY_BROWSER_CHECKS=1   add the browser checks after restart"
+  PUB4_DEPLOY_BROWSER_CHECKS=1   add the browser checks after restart
+
+  Git fetch/checkout always runs as user dev so the /home/dev/pub4 tree and the
+  GitHub deploy key stay owned and reachable. Service control uses pub4-admin
+  directly when already root."
 }
 case ${1:-} in
   -h|--help) usage; exit 0 ;;
 esac
 
-# Run as dev, not under doas. This script escalates for the individual steps
-# that need root and pulls as dev for the one that must not: root has no
-# github.com host key, so `doas vps-deploy master` dies at step one with
-#
-#   ==> git pull
-#   Host key verification failed.
-#   fatal: Could not read from remote repository.
-#   Please make sure you have the correct access rights and the repository exists.
-#
-# which reads as a revoked deploy key rather than a wrong user. Adding the host
-# key to root's known_hosts would "fix" it by giving root a path to fetch and
-# execute code from the network, which is the thing the split avoids.
-#
-# The habit is easy to acquire because everything else on this box is doas'd;
-# RUNBOOK.md's agent contract says which of OPERATOR.sh, vps-deploy and vps_ci.sh
-# takes doas.
-if [[ $(id -u) -eq 0 ]]; then
-  print -u2 "vps-deploy: run this as dev, not root — it escalates per step, and"
-  print -u2 "            root cannot reach github (no host key). Try:"
-  print -u2 "            cd /home/dev/pub4 && zsh OPENBSD/bin/vps-deploy ${1:-all}"
+# Prefer root. Passwordless doas (dev in wheel / permit nopass) re-execs so the
+# operator can still type the command as dev. Git never runs as root: root has
+# no GitHub host key by design, and a root checkout would leave root-owned files
+# in the dev tree. Service control calls the broker directly when uid 0.
+if [[ $(id -u) -ne 0 ]]; then
+  if command -v doas >/dev/null 2>&1; then
+    self=$0
+    if [[ $self != /* ]]; then
+      self="$(cd -- "$(dirname -- "$self")" && pwd)/$(basename -- "$self")"
+    fi
+    exec doas -n zsh "$self" "$@"
+  fi
+  print -u2 "vps-deploy: must run as root (or with passwordless doas)"
+  print -u2 "            try: doas zsh OPENBSD/bin/vps-deploy ${1:-all}"
   exit 2
 fi
+
+# Unprivileged owner of the checkout and GitHub credentials on this box.
+DEPLOY_USER=${VPS_DEPLOY_USER:-dev}
+DEPLOY_HOME=${VPS_DEPLOY_HOME:-/home/$DEPLOY_USER}
+
+# Run a shell snippet as DEPLOY_USER without pulling root's environment into
+# the checkout. Always su: root may change to DEPLOY_USER without a doas rule.
+run_as_deploy_user() {
+  # Root may su to DEPLOY_USER without a doas rule. Avoid doas -u: the box
+  # only permits dev→root and root→root by default.
+  local snippet=$1
+  su -s /bin/sh "$DEPLOY_USER" -c "$snippet"
+}
+
+git_as_deploy_user() {
+  # All git mutations against the production checkout run as DEPLOY_USER.
+  local args_q
+  args_q=$(printf '%q ' "$@")
+  run_as_deploy_user "cd $(printf '%q' "$repo") && git $args_q"
+}
 
 app=${1:-}
 [[ -n $app ]] || { usage >&2; exit 2 }
@@ -86,7 +104,7 @@ validate_deploy_setting VPS_DEPLOY_MIN_FREE_KB "${VPS_DEPLOY_MIN_FREE_KB:-104857
 # One host, one deploy. The parent all process keeps this lock while its
 # re-entrant child processes deploy each app in order; a second top-level deploy
 # is refused rather than running two pulls, precompiles and restarts together.
-lock_dir=${VPS_DEPLOY_LOCK_DIR:-$HOME/.pub4-vps-deploy.lock}
+lock_dir=${VPS_DEPLOY_LOCK_DIR:-$DEPLOY_HOME/.pub4-vps-deploy.lock}
 lock_ttl=${VPS_DEPLOY_LOCK_TTL:-7200}
 lock_owner=0
 
@@ -225,7 +243,7 @@ acquire_deploy_lock() {
 # Once per run, not once per app. `vps-deploy all` re-invokes itself for each
 # app, and without this guard every child added its own tee to the same file:
 # the child output then passed through both and every line landed twice.
-deploy_log=${VPS_DEPLOY_LOG:-$HOME/vps-deploy.log}
+deploy_log=${VPS_DEPLOY_LOG:-$DEPLOY_HOME/vps-deploy.log}
 if [[ -z ${VPS_DEPLOY_LOGGING:-} ]]; then
   export VPS_DEPLOY_LOGGING=1
   print "vps-deploy: $app, logging to $deploy_log"
@@ -241,9 +259,9 @@ admin_service() {
   local action=${1:-}
   shift || true
   if [[ $action == list-started ]]; then
-    doas /usr/local/sbin/pub4-admin service list-started
+    /usr/local/sbin/pub4-admin service list-started
   else
-    doas /usr/local/sbin/pub4-admin service "$action" "$@"
+    /usr/local/sbin/pub4-admin service "$action" "$@"
   fi
 }
 
@@ -252,7 +270,7 @@ admin_request() {
     print -u2 "vps-deploy: pub4-admin is not installed; run the reviewed OPERATOR sync first"
     return 127
   }
-  doas /usr/local/sbin/pub4-admin "$@"
+  /usr/local/sbin/pub4-admin "$@"
 }
 
 # The guard's deploy flag, held for the whole deploy and not only the restart.
@@ -387,7 +405,7 @@ restore_started() {
     restored+=($svc)
   done
   (( $#restored )) && print "vps-deploy: restored ${restored}"
-  (( $#failed )) && print -u2 "vps-deploy: STILL DOWN after restore: ${failed}  (doas /usr/local/sbin/pub4-admin service restart <app>, one at a time)"
+  (( $#failed )) && print -u2 "vps-deploy: STILL DOWN after restore: ${failed}  (/usr/local/sbin/pub4-admin service restart <app>, one at a time)"
   (( $#failed == 0 ))
 }
 
@@ -406,17 +424,17 @@ finish() {
     print -u2 "vps-deploy: $app FAILED at stage \"$deploy_stage\" (exit $rc)"
     if (( app_stopped )); then
       print -u2 "vps-deploy: $app was stopped for this deploy and is DOWN — read /var/log/daemon, then"
-      print -u2 "            doas /usr/local/sbin/pub4-admin service start $app   (or rerun: zsh OPENBSD/bin/vps-deploy $app)"
+      print -u2 "            /usr/local/sbin/pub4-admin service start $app   (or rerun: doas zsh OPENBSD/bin/vps-deploy $app)"
     else
       print -u2 "vps-deploy: $app was not stopped; the previous release is still serving. Fix the cause and rerun:"
-      print -u2 "            zsh OPENBSD/bin/vps-deploy $app"
+      print -u2 "            doas zsh OPENBSD/bin/vps-deploy $app"
     fi
     local other
     for other in amber bsdports; do
       [[ $other == "$app" ]] && continue
       admin_service get "$other" >/dev/null 2>&1 || continue
       admin_service check "$other" >/dev/null 2>&1 \
-        || print -u2 "vps-deploy: $other is DOWN (shed or stopped) — doas /usr/local/sbin/pub4-admin service restart $other"
+        || print -u2 "vps-deploy: $other is DOWN (shed or stopped) — /usr/local/sbin/pub4-admin service restart $other"
     done
   fi
   # Only the process that owns the lock restores: the children of `all` fail into
@@ -457,14 +475,14 @@ deploy_refuse() { print -u2 "vps-deploy: refused - $1"; print -u2 "            N
 if (( lock_owner )); then
   deploy_stage=pin
   source "$repo/OPENBSD/lib/ruby_select.sh"
-  git -C "$repo" fetch -q origin main || deploy_refuse "git fetch origin main failed"
-  pin=$(git -C "$repo" rev-parse --verify -q "${VPS_DEPLOY_SHA:-FETCH_HEAD}^{commit}") \
+  git_as_deploy_user fetch -q origin main || deploy_refuse "git fetch origin main failed (as $DEPLOY_USER)"
+  pin=$(git_as_deploy_user rev-parse --verify -q "${VPS_DEPLOY_SHA:-FETCH_HEAD}^{commit}") \
     || deploy_refuse "${VPS_DEPLOY_SHA:-origin/main} is not a commit this checkout can see"
-  head_before=$(git -C "$repo" rev-parse HEAD)
-  git -C "$repo" merge-base --is-ancestor "$head_before" "$pin" \
+  head_before=$(git_as_deploy_user rev-parse HEAD)
+  git_as_deploy_user merge-base --is-ancestor "$head_before" "$pin" \
     || deploy_refuse "$pin is not a fast-forward of the box's HEAD $head_before"
   export VPS_DEPLOY_SHA=$pin
-  print "vps-deploy: pinned $pin (box HEAD was $head_before)"
+  print "vps-deploy: pinned $pin (box HEAD was $head_before; git as $DEPLOY_USER)"
   if [[ -n ${VPS_DEPLOY_PREFLIGHT_SHA:-} ]]; then
     [[ $VPS_DEPLOY_PREFLIGHT_SHA == $pin ]] \
       || deploy_refuse "preflight ran on $VPS_DEPLOY_PREFLIGHT_SHA but this run would deploy $pin"
@@ -476,17 +494,18 @@ if (( lock_owner )); then
   else
     deploy_stage=preflight-boot
     print "vps-deploy: preflight on $pin (syntax, law files, boot smoke)"
-    back_to=$(git -C "$repo" symbolic-ref -q --short HEAD || print -r -- "$head_before")
+    back_to=$(git_as_deploy_user symbolic-ref -q --short HEAD || print -r -- "$head_before")
     # A box left detached (a killed deploy does that) comes back to its commit, not to a branch.
-    back_flag=(); git -C "$repo" symbolic-ref -q HEAD >/dev/null || back_flag=(--detach)
-    git -C "$repo" switch -q --detach "$pin" || deploy_refuse "cannot check out $pin in $repo (local changes?)"
+    back_flag=()
+    git_as_deploy_user symbolic-ref -q HEAD >/dev/null || back_flag=(--detach)
+    git_as_deploy_user switch -q --detach "$pin" || deploy_refuse "cannot check out $pin in $repo (local changes?)"
     if ! "$RUBY" "$repo/MASTER/lib/operator/canary.rb" --no-rehearse; then
-      git -C "$repo" switch -q "${back_flag[@]}" "$back_to" || true
+      git_as_deploy_user switch -q "${back_flag[@]}" "$back_to" || true
       deploy_refuse "preflight failed on $pin; the checkout is back on $back_to and the previous release is still serving"
     fi
-    git -C "$repo" switch -q "${back_flag[@]}" "$back_to" || deploy_refuse "cannot return to $back_to"
+    git_as_deploy_user switch -q "${back_flag[@]}" "$back_to" || deploy_refuse "cannot return to $back_to"
   fi
-  git -C "$repo" merge -q --ff-only "$pin" || deploy_refuse "cannot fast-forward $repo to $pin"
+  git_as_deploy_user merge -q --ff-only "$pin" || deploy_refuse "cannot fast-forward $repo to $pin"
   deploy_stage=snapshot
   VPS_DEPLOY_STARTED="$(admin_service list-started 2>/dev/null)"
   VPS_DEPLOY_STARTED=${VPS_DEPLOY_STARTED//$'\n'/ }
@@ -581,7 +600,7 @@ write_stamp() {
   local name=$1 stamp_status=$2
   local sha
   stamp_written=1
-  sha=$(git -C "$repo" rev-parse --short HEAD)
+  sha=$(git_as_deploy_user rev-parse --short HEAD)
   admin_request stamp "$name" "$sha" "$stamp_status"
 }
 
@@ -625,8 +644,8 @@ deploy_stage=pull
 # No pull here: the top-level process pinned one SHA and moved the checkout to it.
 # A checkout that has moved off it since means another hand touched the box.
 print "vps-deploy: $app (checkout must be ${VPS_DEPLOY_SHA:?no pinned SHA, run through the top-level vps-deploy})"
-[[ $(git -C "$repo" rev-parse HEAD) == "$VPS_DEPLOY_SHA" ]] \
-  || { print -u2 "vps-deploy: $app refused - HEAD is $(git -C "$repo" rev-parse HEAD), not the pinned $VPS_DEPLOY_SHA"; exit 1 }
+[[ $(git_as_deploy_user rev-parse HEAD) == "$VPS_DEPLOY_SHA" ]] \
+  || { print -u2 "vps-deploy: $app refused - HEAD is $(git_as_deploy_user rev-parse HEAD), not the pinned $VPS_DEPLOY_SHA"; exit 1 }
 
 # Free space, before anything is stopped. A bundle install, an asset precompile or
 # a CI mirror that runs out of disk dies halfway, after the app was stopped for the
@@ -641,13 +660,13 @@ for mount_point in /home /var; do
   if [[ $free_kb != <-> ]]; then
     print -u2 "vps-deploy: $app refused - free-space measurement for $mount_point is unavailable."
     print -u2 "            Nothing was stopped. Check the filesystem and measurement command, then rerun:"
-    print -u2 "            zsh OPENBSD/bin/vps-deploy $app"
+    print -u2 "            doas zsh OPENBSD/bin/vps-deploy $app"
     exit 1
   fi
   if (( free_kb < min_free_kb )); then
     print -u2 "vps-deploy: $app refused - $mount_point has $(( free_kb / 1024 )) MB free, the floor is $(( min_free_kb / 1024 )) MB."
     print -u2 "            Nothing was stopped. Inspect usage with: doas /usr/local/sbin/pub4-admin disk-usage $mount_point ; clear old"
-    print -u2 "            logs or bundles, then rerun: zsh OPENBSD/bin/vps-deploy $app"
+    print -u2 "            logs or bundles, then rerun: doas zsh OPENBSD/bin/vps-deploy $app"
     exit 1
   fi
 done
@@ -891,7 +910,7 @@ deploy_stage=final-check
 # is the one outcome the stamp must never call ok.
 if ! admin_service check "$app" >/dev/null 2>&1; then
   write_stamp "$app" failed
-  print -u2 "vps-deploy: $app is down at the end of its own deploy — doas /usr/local/sbin/pub4-admin service restart $app, then read /var/log/daemon"
+  print -u2 "vps-deploy: $app is down at the end of its own deploy — /usr/local/sbin/pub4-admin service restart $app, then read /var/log/daemon"
   exit 1
 fi
 
