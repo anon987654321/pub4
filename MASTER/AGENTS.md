@@ -75,6 +75,14 @@ Operational constraints:
   `git commit -a` or `git add -A`, and never stage another session's files.
   `bin/operator land -m <msg> <paths...>` checks, commits path-scoped changes
   and pushes. Never force-push.
+- `origin/main` is the only canon. Before rebasing, list the local-only
+  commits (`git log --oneline @{u}..`) and check each subject against
+  upstream: work that was never pushed or was rewritten upstream (a753291,
+  the 2026-10-28 messenger-inbox change) makes a diverged pull skip or
+  orphan it, and leaves the rebase on a base without fixes the tree assumes.
+  Local-only work is not pushed work; verify with
+  `git merge-base --is-ancestor <sha> origin/main` before counting it
+  landed.
 - Rails uses strict loading in every environment. Assert localized output through I18n keys, not English literals.
 - On deploy, relayd can answer while amber and bsdports are down; inspect health, not just TLS.
 - Dilla and postpro renders are replaceable; a new run may delete the old take. Never change a rendered sound/look default by taste alone.

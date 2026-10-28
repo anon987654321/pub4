@@ -122,9 +122,6 @@ compatibility alias ahead of the execution-contract gates.
   canonical pin, align the .ruby-version files or the AGENTS.md sentence,
   and state which lane MASTER/bin/ruby serves; do not guess by editing one
   side silently.
-- [ ] Write down the main-history rewrite policy (allowed or not) and the
-  pre-rebase check agents must run; the a753291 rewrite turned a pull into
-  a surprise rebase on a stale base.
 
 ## Verification run, after the fixes below land
 

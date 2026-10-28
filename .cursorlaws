@@ -16,7 +16,7 @@ Authority is `soul.yml` > `laws.yml` > Ruby enforcement > checks and tree contra
 
 The four owners are `MASTER/` (runtime, `MASTER/bin/master`), `RAILS/` (apps, `MASTER/bin/operator triangle up`), `OPENBSD/` (deployment and vm23), and `STUDIO/` (Dilla, postpro, Replicate and LoRA). `MASTER/tools/` keeps compatibility entrypoints for STUDIO tools.
 
-Use `MASTER/bin/operator check` for the full check ladder and `MASTER/bin/operator measure` for ratchets. Prefer the smallest check that proves the change, and report its real output. For unfamiliar or broad work, start with `ruby MASTER/tools/agent_context.rb --tree`.
+Use `MASTER/bin/operator check` for the full check ladder and `MASTER/bin/operator measure` for ratchets. Prefer the smallest check that proves the change, and report its real output. The validated focused-check → one-tree `/fix` → read-only proof sequence, including the distinction between registry `--only` names and CheckChain stage names, is documented in `MASTER/docs/efficient_repair_workflow.md`. For unfamiliar or broad work, start with `ruby MASTER/tools/agent_context.rb --tree`.
 
 `Core::Fold` is the general model-effect loop; `/fix` is the repository repair and convergence workflow. They share the Law authority and evidence principles, but they are not yet one implemented coordinator. The current `FixLoop`, `RepairLoop`, `Kernel`, `Mission`, `RunJournal`, `RunLedger` and `Transaction` responsibilities must be mapped against real call sites and recovery tests before any are merged or removed. The target is one canonical `/fix` coordinator, one scanner/finding contract, one transaction path and one operational check runner—not a rewrite that discards existing recovery guarantees.
 
@@ -54,6 +54,14 @@ Operational constraints:
   `git commit -a` or `git add -A`, and never stage another session's files.
   `bin/operator land -m <msg> <paths...>` checks, commits path-scoped changes
   and pushes. Never force-push.
+- `origin/main` is the only canon. Before rebasing, list the local-only
+  commits (`git log --oneline @{u}..`) and check each subject against
+  upstream: work that was never pushed or was rewritten upstream (a753291,
+  the 2026-10-28 messenger-inbox change) makes a diverged pull skip or
+  orphan it, and leaves the rebase on a base without fixes the tree assumes.
+  Local-only work is not pushed work; verify with
+  `git merge-base --is-ancestor <sha> origin/main` before counting it
+  landed.
 - Rails uses strict loading in every environment. Assert localized output through I18n keys, not English literals.
 - On deploy, relayd can answer while amber and bsdports are down; inspect health, not just TLS.
 - Dilla and postpro renders are replaceable; a new run may delete the old take. Never change a rendered sound/look default by taste alone.
