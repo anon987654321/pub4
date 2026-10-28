@@ -22,6 +22,53 @@ module Master
 
       class LedgerCorruption < StandardError; end
 
+      # Serializes /fix across independent Kernel instances and OS processes.
+      # The per-instance mutex prevents local re-entry; flock is the authority
+      # shared by every process operating on the same repository checkout.
+      class ExecutionLock
+        RELATIVE_PATH = ".master/fix-execution.lock"
+
+        attr_reader :path
+
+        def initialize(root:)
+          workspace = File.expand_path(root)
+          @directory = File.join(workspace, ".master")
+          @path = File.join(workspace, RELATIVE_PATH)
+          @mutex = Mutex.new
+        end
+
+        def synchronize
+          @mutex.synchronize do
+            raise IOError, "refusing symlinked .master directory" if File.symlink?(@directory)
+
+            FileUtils.mkdir_p(@directory, mode: 0o700)
+            directory_stat = File.lstat(@directory)
+            unless directory_stat.directory? && !directory_stat.symlink?
+              raise IOError, "refusing non-directory or symlinked .master path"
+            end
+
+            flags = File::RDWR | File::CREAT
+            flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+            File.open(@path, flags, 0o600) do |file|
+              raise IOError, "execution lock is not a regular file" unless file.stat.file?
+              raise IOError, "refusing symlinked execution lock" if File.symlink?(@path)
+
+              mode = file.stat.mode & 0o777
+              unless (mode & 0o077).zero?
+                raise IOError, "execution lock permissions must be private (0600 or stricter)"
+              end
+              raise IOError, "could not acquire /fix execution lock" unless file.flock(File::LOCK_EX)
+
+              begin
+                yield
+              ensure
+                file.flock(File::LOCK_UN)
+              end
+            end
+          end
+        end
+      end
+
       # The Kernel owns coordinator receipts only. FixLoop/RepairLoop and
       # Transaction remain the sole repository-mutation path.
       def initialize(root:, actor: "fix", bus: nil, log_path: nil, lifecycle_journal: nil)
@@ -33,7 +80,7 @@ module Master
         @log_head = nil
         @lifecycle_journal = lifecycle_journal
         @lifecycle_mutex = Mutex.new
-        @execution_mutex = Mutex.new
+        @execution_mutex = ExecutionLock.new(root: @workspace_root)
         @append_mutex = Mutex.new
       end
 
