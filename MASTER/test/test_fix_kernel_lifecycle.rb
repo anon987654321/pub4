@@ -370,6 +370,59 @@ class TestFixKernelLifecycle < Minitest::Test
     end
   end
 
+  def test_execution_lock_refuses_a_replaced_lock_inode
+    with_workspace do |root|
+      kernel = K.new(root:)
+      directory = File.join(root, ".master")
+      Dir.mkdir(directory, 0o700)
+      path = File.join(directory, "fix-execution.lock")
+      File.write(path, "")
+      File.chmod(0o600, path)
+      lock = kernel.execution_mutex
+
+      File.open(path, File::RDWR) do |opened|
+        original_directory_stat = File.lstat(directory)
+        replaced = "#{path}.replaced"
+        File.rename(path, replaced)
+        File.write(path, "")
+        File.chmod(0o600, path)
+
+        error = assert_raises(IOError) do
+          lock.send(:validate_lock_identity!, opened, original_directory_stat)
+        end
+        assert_match(/execution lock path changed/, error.message)
+        assert File.file?(replaced)
+      end
+    end
+  end
+
+  def test_execution_lock_refuses_a_replaced_state_directory
+    with_workspace do |root|
+      kernel = K.new(root:)
+      directory = File.join(root, ".master")
+      Dir.mkdir(directory, 0o700)
+      path = File.join(directory, "fix-execution.lock")
+      File.write(path, "")
+      File.chmod(0o600, path)
+      lock = kernel.execution_mutex
+
+      File.open(path, File::RDWR) do |opened|
+        original_directory_stat = File.lstat(directory)
+        moved = File.join(root, ".master.old")
+        File.rename(directory, moved)
+        Dir.mkdir(directory, 0o700)
+        File.write(path, "")
+        File.chmod(0o600, path)
+
+        error = assert_raises(IOError) do
+          lock.send(:validate_lock_identity!, opened, original_directory_stat)
+        end
+        assert_match(/changed .master directory/, error.message)
+        assert File.file?(File.join(moved, "fix-execution.lock"))
+      end
+    end
+  end
+
   def test_execution_lock_refuses_a_group_or_world_writable_state_directory
     with_workspace do |root|
       kernel = K.new(root:)
