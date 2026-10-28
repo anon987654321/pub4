@@ -6,6 +6,34 @@ vm23 is a seam in `MASTER/data/operator_seams.yml`. Refusals live under
 "Refused, and why" in `MASTER/AGENTS.md`. An item closes by being deleted in
 the commit that carries its evidence; nothing here records finished work.
 
+## Session note 2026-10-28 (Grok triage + light proof)
+
+- Branch inventory: ~40 agent/fix/session/codex/claude/work branches remain on
+  the remote. Every inspected tip is **1 commit ahead and 1 behind** `main`
+  (concurrent divergence). Priority tips checked:
+  `fix/kernel-lifecycle-consolidation-20261028-final`,
+  `fix/recovery-gate-mission-child-restart-20261028`,
+  `polish/master-command-surface-2026-10-28`,
+  `fix/master-state-group-write-boundary-20261028`. Main already carries longer
+  `test_recovery_gates.rb` (440 lines) than the recovery-gate branch tip (313);
+  unique branch content appears superseded or partially folded. No open PRs.
+  Safe next step for the operator: after one verification pass on main, delete
+  the stale agent branches (or leave them as archaeology).
+- Executor constraint: this host is Ruby 3.2.3 / 1.2 GiB RAM. `bundle install`
+  fails closed because `opentelemetry-sdk ~> 1.11` requires Ruby >= 3.3. Full
+  MASTER suite and `rake test` remain **BLOCKED** here; they need the pinned
+  3.3.8 (or compatible) checkout.
+- Re-ran the dependency-light FinalCleanup harness against current
+  `lib/fix/final_cleanup.rb` and the three tests in `test_final_cleanup.rb`:
+  **3 runs, 17 assertions, 0 failures, 0 errors, 0 skips** (Ruby 3.2.3). This
+  reconfirms the focused cleanup contract only; it is not repository-dependency
+  integration and not the full MASTER suite.
+- Recovery / restore ledger still open for owner decision: `bplans` (no
+  generator ever existed; content may be sensitive; pub4 is public) — see
+  `MASTER/data/recovery/pub_restore.yml`.
+- Operator seams unchanged; CSP live enforcement on vm23 remains the production
+  gate that source alone cannot close.
+
 ## Session note 2026-10-28
 
 - Root and MASTER Ruby pins now use the available Ruby 3.3.8; MASTER/Gemfile accepts
