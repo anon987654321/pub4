@@ -67,6 +67,20 @@ class TestCognitionIntelligence < Minitest::Test
     assert_operator Master::Cognition::Intelligence.leverage_score(rows.first), :>, 30
   end
 
+  def test_leverage_and_severity_scores_tolerate_numeric_severity
+    rows = Master::Cognition::Intelligence.rank_by_leverage([
+      { rule: "NUMERIC", severity: 2, blast_radius: { files_touched: 1 } },
+      { rule: "STRING", severity: "error", blast_radius: { files_touched: 1, consumers: 8 } },
+      { rule: "SYMBOL", severity: :critical, blast_radius: { files_touched: 1 } },
+    ])
+
+    assert_equal "STRING", rows.first[:rule]
+    assert_equal 2, Master::Cognition::Intelligence.severity_score({ severity: 2 })
+    assert_equal 1, Master::Cognition::Intelligence.severity_score({ severity: 9 })
+    assert_equal 1, Master::Cognition::Intelligence.severity_score({})
+    assert_kind_of Integer, Master::Cognition::Intelligence.leverage_score({ rule: "X", severity: 2 })
+  end
+
   def test_conceptual_equivalence_ignores_names_and_order
     left = {
       purpose: "Preserve the current contract",

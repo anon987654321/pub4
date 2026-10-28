@@ -82,6 +82,20 @@ module Master
         end.sort_by { |row| [-row[:count], row[:label]] }.first(max.to_i).freeze
       end
 
+      # Severity reaches scoring as a symbol, a string name, or an already-numeric
+      # rank (scanner and ratchet rows carry both shapes). Name each shape instead
+      # of assuming one: a numeric severity used to raise NoMethodError on to_sym
+      # and crash the ranking pass. An in-range integer is already a SEVERITY_RANK
+      # value; any other integer falls back to the unknown-severity default, the
+      # same default SEVERITY_RANK.fetch uses for an unmapped name.
+      def severity_rank(value, default: 1)
+        return default if value.nil?
+        return value if value.is_a?(Integer) && value.between?(0, 3)
+        return default if value.is_a?(Integer)
+
+        SEVERITY_RANK.fetch(value.to_sym, default)
+      end
+
       # Rank opportunities by consequence, not by how loud or numerous they are.
       # The signals are intentionally generic so scanners, councils and future model
       # judges can share one vocabulary without growing another scoring subsystem.
@@ -94,7 +108,7 @@ module Master
         boundaries = signal(blast, :boundaries, :trees, fallback: signal(row, :boundaries, :trees))
         rules = signal(blast, :rules, :contracts, fallback: signal(row, :rules, :contracts))
         deletions = signal(blast, :deletions, :removed, fallback: signal(row, :deletions, :removed))
-        severity = SEVERITY_RANK.fetch((row[:severity] || row["severity"] || :warning).to_sym, 1)
+        severity = severity_rank(row[:severity] || row["severity"])
         (files * 2) + (consumers * 3) + (boundaries * 4) + (rules * 2) + (deletions * 2) + severity
       end
 
@@ -363,7 +377,7 @@ module Master
 
       def severity_score(item)
         row = item.respond_to?(:to_h) ? item.to_h : item
-        SEVERITY_RANK.fetch((row[:severity] || row["severity"] || :warning).to_sym, 1)
+        severity_rank(row[:severity] || row["severity"])
       end
 
       def reversible?(row)
