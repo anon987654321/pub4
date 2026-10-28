@@ -58,9 +58,11 @@ file maps implementations; it is not a second policy surface.
 ## What Kernel owns after this migration
 
 The old Kernel mutation prototype is still gone: it has not been restored and
-does not compete with `Transaction`. The retained Kernel now owns the outer
-`/fix` execution lock, hash-chained coordinator start/terminal receipts, repair
-outcome summaries, journal access and adapter factories. Production boot enters
+does not compete with `Transaction`. The retained Kernel now owns the repository-wide, process-shared
+`/fix` execution lock at `.master/fix-execution.lock`, hash-chained coordinator
+start/terminal receipts, repair outcome summaries, journal access and adapter
+factories. Independent Kernel instances and OS processes must acquire the same
+advisory file lock before a production run can enter its mutation path. Production boot enters
 via `Kernel#build_fix_loop`; the convergence implementation is
 `Kernel::ConvergenceAdapter`, the per-Law repair implementation is
 `Kernel::RepairAdapter`, and the durable run-state implementation is
