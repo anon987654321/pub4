@@ -96,6 +96,9 @@ module Deploy
 
       announce_plan
       started = now
+      if @targets.empty? && @result.unchecked.empty?
+        @result.inconclusive!("constitutional_scan: no changed targets; no Law scan was measured")
+      end
       @targets.each_with_index { |target, index| scan_target(target, index) }
       progress "constitutional scan: #{@targets.size} target(s) in #{(now - started).round}s"
       maybe_ratchet
@@ -182,13 +185,21 @@ module Deploy
     def changed_only? = ENV["CHECK_SCAN_CHANGED"].to_s == "1"
 
     def changed_paths
-      out, status = BoundedCommand.capture2e("git", "diff", "--name-only", "HEAD", chdir: ROOT)
-      unless BoundedCommand.success?(status)
+      tracked, tracked_status = BoundedCommand.capture2e("git", "diff", "--name-only", "-z", "HEAD", chdir: ROOT)
+      unless BoundedCommand.success?(tracked_status)
         @result.inconclusive!("constitutional_scan: git diff output unavailable — changed-file scope was not measured")
         return []
       end
 
-      out.lines.map(&:strip).reject(&:empty?)
+      untracked, untracked_status = BoundedCommand.capture2e(
+        "git", "ls-files", "--others", "--exclude-standard", "-z", chdir: ROOT
+      )
+      unless BoundedCommand.success?(untracked_status)
+        @result.inconclusive!("constitutional_scan: untracked-file inventory unavailable — changed-file scope was not measured")
+        return []
+      end
+
+      (tracked.split("\0") + untracked.split("\0")).reject(&:empty?).uniq
     rescue StandardError => e
       @result.inconclusive!("constitutional_scan: scan output unreadable (#{e.class}: #{e.message})")
       []
