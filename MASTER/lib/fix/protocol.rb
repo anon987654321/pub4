@@ -296,7 +296,7 @@ module Master
         missing_cells = streams.values.sum { |entry| entry[:missing_count] }
         {
           law_population: rows.size,
-          streams: streams,
+          streams:,
           declaration_status: missing_cells.zero? ? "declared_reach_complete" : "incomplete",
           missing_law_stream_pairs: missing_cells,
           runtime_status: "not_measured",

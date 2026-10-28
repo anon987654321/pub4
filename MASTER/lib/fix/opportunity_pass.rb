@@ -66,7 +66,7 @@ module Master
         findings = collect_findings(target:, files: scope_paths)
         after = capture_assessment_snapshot(target:, scope_paths:)
         assessment_evidence = build_assessment_evidence(
-          target:, scope_paths:, plan:, before:, after:
+          target:, scope_paths:, plan:, before:, after:,
         )
         publish_opportunities(target, findings)
         Result.ok(findings: findings.map(&:to_h), assessment_evidence:)
@@ -157,7 +157,7 @@ module Master
           SOURCE_ROOTS.each do |root|
             paths.concat(
               Dir.glob(File.join(repo_root, root, "**", "*"))
-                 .select { |path| File.file?(path) && TEXT_FILES.include?(File.extname(path).downcase) }
+                 .select { |path| File.file?(path) && TEXT_FILES.include?(File.extname(path).downcase) },
             )
           end
         end
@@ -216,7 +216,7 @@ module Master
           source_digest: plan&.source_digest,
           scope_digest: plan&.scope_digest,
           eligible_files: scope_paths.size,
-          source_hashes_verified: source_hashes_verified,
+          source_hashes_verified:,
           snapshot_sha256: before[:digest],
           snapshot_after_sha256: after[:digest],
           inventory_sha256: before[:inventory_sha256],

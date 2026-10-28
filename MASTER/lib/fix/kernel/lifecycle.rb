@@ -97,7 +97,7 @@ module Master
               current_attempt_id = @current_attempt_id || attempt_id
               state = adapter.last_terminal_state || OutcomePolicy.terminal_state(result) || :unknown_outcome
               finish_coordinated_run(
-                run_id: coordinator_run_id, attempt_id: current_attempt_id, state:, outcome: result
+                run_id: coordinator_run_id, attempt_id: current_attempt_id, state:, outcome: result,
               )
               result
             rescue StandardError => error
