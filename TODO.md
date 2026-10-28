@@ -14,6 +14,12 @@ source and tests they could not run; this pass is what measures them.
 
 - [ ] MASTER focused regressions on the pinned Ruby: from `MASTER/`, run
   `bundle exec ruby -Ilib:test test/test_law_parity.rb`,
+  `bundle exec ruby -Ilib:test test/test_fix_kernel.rb`,
+  `bundle exec ruby -Ilib:test test/test_fix_convergence.rb`,
+  `bundle exec ruby -Ilib:test test/test_fix_convergence_wiring.rb`,
+  `bundle exec ruby -Ilib:test test/test_fix_mission.rb`,
+  `bundle exec ruby -Ilib:test test/test_core_no_lib_backedges.rb`,
+  `bundle exec ruby -Ilib:test test/test_fix_interruption_restart.rb`,
   `bundle exec ruby -Ilib:test test/test_ingress_jobs.rb`,
   `bundle exec ruby -Ilib:test test/test_security_audit.rb`,
   `bundle exec ruby -Ilib:test test/test_turn_router.rb`,
@@ -44,15 +50,25 @@ source and tests they could not run; this pass is what measures them.
 - [ ] Then `/fix` on the repository root: four independent reports, 30–40 grounded tournament
   candidates per tree, and each terminal state (DONE, PLATEAU, HUMAN_DECISION, BLOCKED,
   VALIDATION_FAILED, DELIVERY_FAILED, TIMEOUT) reached truthfully. The checksum-verified
-  `.master/fix_architecture` sidecar and provenance-gated reuse are implemented; still run a real
-  process-interruption/restart probe and preserve its receipt. No trial has yet reached a repair,
-  so repair quality is unmeasured.
+  `.master/fix_architecture` sidecar and provenance-gated reuse are implemented. The process-kill
+  regressions at `MASTER/test/test_fix_interruption_restart.rb` now call the public `FixLoop#run`
+  entry point with a controlled pass-interruption seam and cover transaction rollback, durable-run
+  resumption, orphaned Kernel-receipt recovery, and journal deletion while the Mission checkpoint
+  survives; run them on pinned Ruby and preserve receipts, then run a real repository-wide `/fix`.
+  The crash/restart test is authored but unexecuted here; no live repository-wide trial has been
+  measured, so repair quality remains unmeasured.
 
 ## Execution contract
 
-- [ ] Fold FixLoop, RepairLoop and RunJournal into `Fix::Kernel` in the gated order
-  `MASTER/docs/fix_coordinator_map.md` sets, recovery tests first; the one gap left in
-  `MASTER/docs/lifecycle_ownership.md`.
+- [ ] Complete and verify the Kernel consolidation in `MASTER/docs/fix_coordinator_map.md`:
+  production `/fix` now enters Kernel; the convergence, lifecycle-journal and repair-policy
+  implementations live under `Fix::Kernel`, with compatibility constants retained. Kernel owns
+  the execution lock, coordinator receipts, shared journal accessor, repair factory and
+  unknown-outcome reconciliation. The subprocess tests cover transaction rollback, deletion of
+  the run journal with Mission/checkpoint survival, resumption when the journal remains, and
+  orphan-receipt recovery, but are unexecuted. Run them on pinned Ruby 4.0.5, then prove
+  budget/collapse and zero-repair ledger honesty, the full adapter receipt-parity matrix, and one
+  real repository-wide `/fix` trial. Do not remove compatibility aliases until those gates pass.
 
 ## MASTER behaviour
 
