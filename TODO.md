@@ -19,6 +19,48 @@ the commit that carries its evidence; nothing here records finished work.
   **NOT_RUN** through the GitHub editing surface. The full verification list below
   remains open; no suite or visual test is claimed as passing.
 
+## Carried-forward requests from earlier sessions
+
+These requests were visible in prior conversations or handoffs but lacked an explicit,
+actionable root-backlog item. Keep them open until the relevant evidence exists.
+
+- [ ] **`STUDIO/postpro` / `STUDIO/replicate` archaeology:** trace commits, branches,
+  unreachable/history-recoverable objects and historical wording across pub4, pub3,
+  pub2 and pub. Restore only grounded, unique logic, ideas, contracts and tests into
+  current owners; preserve provenance and do not reintroduce a deleted tree wholesale.
+- [ ] **Oct. 26 hardening review:** reconcile every P01–P11 follow-up and the outstanding
+  findings in `MASTER/docs/handoffs/2026-10-26-master-hardening-review.md`. Explicitly
+  verify SILENT_RESCUE freshness, INTER_MODEL_CONTRACT heredoc/keyword sites, the
+  declarative/runtime self-test parity, headless registry failures and strict-error
+  policy; resource bounds/log append cache; DesignRun transaction and recovery semantics,
+  abort/stall outcomes, undo pruning and silent rescues; provider-health recovery windows,
+  Replicate auth/SSRF/timeouts, retry jitter, process-group termination, redaction and
+  Gemini key transport; boot/loop claims, device/pairing/wake-word edges and CDP budgets;
+  tool-hook fail-open, MCP SSRF/package pinning, environment-file permissions, scoped
+  kills, and RAILS token timing/CSRF/ingress rate limiting. Classify each finding with a
+  test or evidence reference; don't infer closure from a source edit.
+- [ ] **Law parity and visual enforcement:** run `rake lint:law_parity` and keep the
+  `RENDERED_VALUES` gap visible until an authorized deferral or tagged detector closes
+  it. Verify `AD_VISUAL_QUALITY_MUST_BE_GORGEOUS` from declaration through executable
+  law/gates to renderer acceptance. When a live browser is unavailable, add deterministic
+  source/geometry/layout simulations as partial evidence only; keep true browser/runtime
+  results INCONCLUSIVE until measured.
+- [ ] **Tooling proposal, cherry-pick not replace:** reconcile
+  `MASTER/TOOLING_COMPARISON_PROPOSAL_2026-10-26.md` with the remaining code gaps. Adopt
+  only small, testable patterns (effect identities and before/after receipts, truthful
+  checkpoint/recovery states, scoped execution, typed provider failures and bounded
+  fallback); retain MASTER's Ruby/law authority and avoid importing a parallel agent
+  framework. Link each accepted pattern to a production caller and regression test.
+- [ ] **Model routing carry-forward:** prove signed-in `claude-cli:`, `codex-cli:` and
+  `grok-cli:` lanes are selected according to the route policy, no cloud Ollama route is
+  admitted, and the sole permitted local Ollama fallback is the explicitly allowlisted
+  `ollama:gemma3:4b`. Verify the actual served model/provider and the failure/retry
+  boundary, not just a routing log.
+- [ ] **Personalized MASTER behavior:** test that stable operator preferences and
+  corrections influence greeting, language, response style and workflow selection through
+  bounded, provenance-bearing memory. Memory must be retractable and must never override
+  `soul.yml`, `laws.yml`, executable laws or explicit current instructions.
+
 ## Session note 2026-10-28 (A/B/C/D execution)
 
 - **B — branch hygiene:** deleted 40 stale agent/fix/session/codex/claude/work
@@ -194,7 +236,7 @@ source and tests they could not run; this pass is what measures them.
 - [ ] Generated outputs match their sources: `RAILS/__shared/design_tokens.yml`,
   `RAILS/master/public/face.runtime.js`, `face.css`, and `rake docs:agent_contracts` followed by
   `rake lint:agent_contracts`.
-- [ ] The route suites on MASTER's pinned Ruby with Ollama absent: `test_route_policy.rb`,
+- [ ] The route suites on MASTER's pinned Ruby with Ollama cloud absent and only local `ollama:gemma3:4b` allowlisted: `test_route_policy.rb`,
   `test_lane_selection.rb`, `test_fix_fresh_checkout_models.rb`, `test_compute_pool.rb`,
   `test_fallback_chain.rb`, `test_lane_pool.rb`, `test_ecosystem_features.rb`.
 - [ ] Refresh `MASTER/data/self_findings.yml` through `ruby MASTER/lib/operator/self_findings.rb --ratchet` after source changes settle. Review the law and registry member deltas and both counts; the ratchet must refuse to raise either existing ceiling.

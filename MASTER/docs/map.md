@@ -404,11 +404,6 @@ Requires: `cli/routing/provider_health`, `execution/contract`
 Declares: `Master`, `Master::CLI`, `Master::CLI::Routing`, `Master::CLI::Routing::ProviderHealth`
 Requires: `execution/contract`, `trace/log`
 
-## `lib/cli/routing/provider_quarantine.rb`
-
-Declares: `Master`, `Master::CLI`, `Master::CLI::Routing`, `Master::CLI::Routing::ProviderQuarantine`
-Requires: `cli/routing/provider_health`
-
 ## `lib/cli/runtime_mode.rb`
 
 Declares: `Master`, `Master::CLI`, `Master::CLI::RuntimeMode`
