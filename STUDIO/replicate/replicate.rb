@@ -23,6 +23,7 @@ require_relative "craft"
 require_relative "chain"
 require_relative "scene_compiler"
 require_relative "../style_registry"
+require_relative "replay_manifest"
 
 # What each Replicate model actually accepts, checked against the live schemas
 # rather than remembered.
@@ -465,6 +466,26 @@ def write_provenance(output, prompt, compiled_prompt, negative_prompt, options, 
     }
   end
   sidecar[:scene] = options[:scene_manifest] if options[:scene_manifest]
+
+  # If this output path already has provenance, retain its digest as the parent
+  # when the same target is deliberately regenerated.
+  prior_sidecar = "#{output}.json"
+  parent_digest = Digest::SHA256.file(prior_sidecar).hexdigest if File.file?(prior_sidecar)
+  style = options[:style_contract_entry]
+  replay = Studio::ReplayManifest.build(
+    output_path: output,
+    prompt: compiled_prompt,
+    model: { id: options[:model], version: extra.dig(:prediction, :version) },
+    style: style,
+    params: {
+      seed: seed, aspect_ratio: options[:aspect_ratio], guidance: options[:guidance],
+      steps: options[:steps], raw: raw_mode?(options)
+    },
+    parent_digest: parent_digest,
+    postpro_chain: (options[:postpro] == false ? [] : Array(options[:postpro]).compact)
+  )
+  sidecar[:replay_manifest] = replay
+  sidecar[:replay_manifest_sha256] = Studio::ReplayManifest.digest(replay)
   writer = Object.new.extend(Studio::AtomicWrite)
   writer.write_atomic("#{output}.json", JSON.pretty_generate(sidecar))
   sidecar
@@ -735,6 +756,9 @@ if command == "help"
   puts parser
   exit 0
 end
+
+abort "replicate: --scene-json is available only for generate" if options[:scene_json] && command != "generate"
+abort "replicate: --style-contract is available only for generate" if options[:style_contract] && command != "generate"
 
 case command
 when "capabilities"
