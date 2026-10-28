@@ -6,11 +6,30 @@ require "yaml"
 require_relative "../lib/fix/law_parity"
 
 class TestLawParity < Minitest::Test
-  # RENDERED_VALUES was the one uncovered priority Law; it has a definition under law/ now.
-  def test_all_priority_constitutional_laws_are_audited
+  def test_all_priority_constitutional_laws_have_explicit_evidence_modes
     parity = Master::Fix::LawParity.new
+    laws = YAML.safe_load_file(Master::Fix::LawParity::LAWS_PATH, aliases: true)
+    overlay = YAML.safe_load_file(File.join(File.dirname(Master::Fix::LawParity::LAWS_PATH), "law_enforcement.yml"), aliases: true)
+    priority_ids = laws.filter_map do |id, spec|
+      next unless spec.is_a?(Hash) && spec["tier"].to_s == "constitutional"
+      next unless spec.key?("priority") && Integer(spec["priority"]) <= Master::Fix::LawParity::MAX_PRIORITY
+      id
+    end
 
+    assert_equal 9, priority_ids.length
+    assert priority_ids.all? { |id| Master::Fix::LawParity::COVERAGE_MODES.include?(overlay.dig(id, "coverage_mode")) }, parity.report
     assert_empty parity.call, parity.report
+    assert_match(/RENDERED_VALUES=semantic/, parity.report)
+  end
+
+  def test_semantic_law_definition_is_not_counted_as_a_deterministic_detector
+    parity = Master::Fix::LawParity.new
+    assert_equal "semantic", YAML.safe_load_file(
+      File.join(File.dirname(Master::Fix::LawParity::LAWS_PATH), "law_enforcement.yml"),
+      aliases: true,
+    ).dig("RENDERED_VALUES", "coverage_mode")
+    refute_includes parity.send(:registered_detector_ids), "RENDERED_VALUES"
+    assert_includes parity.send(:semantic_law_ids), "RENDERED_VALUES"
   end
 
   def test_priority_ceiling_covers_the_highest_current_constitutional_priority
@@ -69,6 +88,7 @@ class TestLawParity < Minitest::Test
         tier: constitutional
         severity: error
         enforcement: deferred
+        coverage_mode: deferred
         statement: missing expiry
     YAML
     gaps = Master::Fix::LawParity.new(root: dir, laws_path: path).call
@@ -101,6 +121,7 @@ class TestLawParity < Minitest::Test
         severity: error
         enforcement: active
         coverage: tagged_detectors
+        coverage_mode: tagged
         statement: no detector tags this
     YAML
     gaps = Master::Fix::LawParity.new(root: dir, laws_path: path).call
