@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "fileutils"
+require "json"
 
 class TestEcosystemFeatures < Minitest::Test
   def test_model_quota_tracks_free_models
