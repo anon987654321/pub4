@@ -215,11 +215,37 @@ module Master
           file.chmod(0o600)
           last_line = file.each_line.inject(nil) { |_, line| line }
           validate_trace_file!(file, path)
-          last_line ? JSON.parse(last_line, symbolize_names: true) : nil
+          last_line ? sanitize_loaded_turn(JSON.parse(last_line, symbolize_names: true)) : nil
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "recorder.load_last_from_disk")
         nil
+      end
+
+      def sanitize_loaded_turn(turn)
+        return turn unless turn.is_a?(Hash)
+
+        message = turn[:message]
+        if message.is_a?(Hash) && message[:sha256].to_s.match?(/\A[0-9a-f]{64}\z/) &&
+           message[:bytes].is_a?(Integer) && message[:bytes] >= 0 &&
+           message.keys.all? { |key| %i[sha256 bytes].include?(key) }
+          turn[:message] = { sha256: message[:sha256], bytes: message[:bytes] }
+        else
+          raw_message = message.is_a?(String) ? message : JSON.generate(message)
+          turn[:message] = { sha256: Digest::SHA256.hexdigest(raw_message), bytes: raw_message.bytesize }
+        end
+
+        if turn[:events].is_a?(Array)
+          turn[:events] = turn[:events].filter_map do |event|
+            next unless event.is_a?(Hash)
+
+            name = event[:event].to_s
+            timestamp = event[:ts_ms]
+            details = EventPrivacy.persisted(name, event.except(:event, :ts_ms))
+            details.merge(event: name, ts_ms: timestamp)
+          end
+        end
+        turn
       end
     end
   end
