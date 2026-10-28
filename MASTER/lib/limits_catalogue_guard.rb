@@ -280,13 +280,13 @@ module Master
           next
         end
         mapping.each do |name, thresholds|
-          if section == "resources" && thresholds.is_a?(Hash) && thresholds.keys.any? { |key| key == "darwin" }
-            thresholds = thresholds.reject { |key, _entry| key == "darwin" }.merge("darwin" => thresholds["darwin"])
-            thresholds.each do |platform, row|
-              validate_threshold_row(row, "limits.yml process.resources.#{name}.#{platform}", errors)
-            end
+          label = "limits.yml process.#{section}.#{name}"
+          if section == "resources" && thresholds.is_a?(Hash) && thresholds.key?("darwin")
+            baseline = thresholds.reject { |key, _entry| key == "darwin" }
+            validate_threshold_row(baseline, label, errors)
+            validate_threshold_row(thresholds["darwin"], "#{label}.darwin", errors)
           else
-            validate_threshold_row(thresholds, "limits.yml process.#{section}.#{name}", errors)
+            validate_threshold_row(thresholds, label, errors)
           end
         end
       end
