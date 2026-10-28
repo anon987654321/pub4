@@ -124,6 +124,19 @@ class AtomicWriteTest < Minitest::Test
     assert_empty Dir.glob(File.join(@dir, ".master_atomic_*"))
   end
 
+  def test_refuses_a_symlinked_ancestor_before_creating_nested_directories
+    outside = File.join(@dir, "outside")
+    Dir.mkdir(outside, 0o700)
+    File.symlink(outside, File.join(@dir, "redirect"))
+    destination = File.join(@dir, "redirect", "new", "deep", "escaped.txt")
+
+    error = assert_raises(IOError) { @writer.write_atomic(destination, "private") }
+
+    assert_match(/symlinked atomic-write directory component/, error.message)
+    refute File.exist?(File.join(outside, "new")), "mkdir_p must not create through an ancestor symlink"
+    assert_empty Dir.glob(File.join(@dir, ".master_atomic_*"))
+  end
+
   def test_refuses_a_symlinked_destination_without_changing_its_target
     target = path("outside-target.txt")
     File.write(target, "original target\n")
