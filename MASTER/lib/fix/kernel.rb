@@ -54,9 +54,7 @@ module Master
             flags = File::RDWR | File::CREAT
             flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
             File.open(@path, flags, 0o600) do |file|
-              raise IOError, "execution lock is not a regular file" unless file.stat.file?
-              raise IOError, "refusing symlinked execution lock" if File.symlink?(@path)
-
+              validate_lock_identity!(file, directory_stat)
               mode = file.stat.mode & 0o777
               unless (mode & 0o077).zero?
                 raise IOError, "execution lock permissions must be private (0600 or stricter)"
@@ -64,6 +62,14 @@ module Master
               raise IOError, "could not acquire /fix execution lock" unless file.flock(File::LOCK_EX)
 
               begin
+                # A path or parent directory can be swapped while this process
+                # waits for flock. Never enter /fix on an orphaned inode that no
+                # longer serializes callers using the canonical lock pathname.
+                validate_lock_identity!(file, directory_stat)
+                current_directory = File.lstat(@directory)
+                if (current_directory.mode & 0o022).positive?
+                  raise IOError, "refusing group/world-writable .master directory"
+                end
                 yield
               ensure
                 file.flock(File::LOCK_UN)
@@ -71,6 +77,29 @@ module Master
             end
           end
         end
+        private
+
+        def validate_lock_identity!(file, original_directory_stat)
+          current_directory = File.lstat(@directory)
+          unless current_directory.directory? && !current_directory.symlink? &&
+                 current_directory.dev == original_directory_stat.dev &&
+                 current_directory.ino == original_directory_stat.ino
+            raise IOError, "refusing changed .master directory during execution-lock acquisition"
+          end
+
+          opened = file.stat
+          unless opened.file? && opened.nlink == 1
+            raise IOError, "execution lock must be a singly linked regular file"
+          end
+          current = File.lstat(@path)
+          unless current.file? && !current.symlink? &&
+                 current.dev == opened.dev && current.ino == opened.ino
+            raise IOError, "execution lock path changed while opening or waiting"
+          end
+        rescue Errno::ENOENT => e
+          raise IOError, "execution lock path changed while opening or waiting: #{e.message}"
+        end
+
       end
 
       # The Kernel owns coordinator receipts only. FixLoop/RepairLoop and
