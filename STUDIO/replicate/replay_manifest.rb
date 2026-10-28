@@ -60,8 +60,12 @@ module Studio
       style_id = manifest[:style_id] || manifest["style_id"]
       version = manifest[:style_version] || manifest["style_version"]
       modality = manifest[:modality] || manifest["modality"]
+      return false if style_id.to_s.empty? || version.to_s.empty?
+      return false unless registry.is_a?(Hash)
+
       styles = registry["styles"] || registry[:styles] || registry
-      style = styles[style_id.to_s] || styles[style_id.to_sym]
+      return false unless styles.is_a?(Hash)
+      style = styles[style_id.to_s] || styles[style_id.to_s.to_sym]
       return false unless style.is_a?(Hash)
 
       if style["versions"].is_a?(Hash) || style[:versions].is_a?(Hash)
