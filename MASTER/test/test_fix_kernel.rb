@@ -24,8 +24,9 @@ class TestFixKernel < Minitest::Test
     end
 
     path = File.join(root, K::LOG_RELATIVE_PATH)
-    FileUtils.mkdir_p(File.dirname(path))
+    FileUtils.mkdir_p(File.dirname(path), mode: 0o700)
     File.write(path, lines.join)
+    File.chmod(0o600, path)
     File.chmod(0o600, path)
     path
   end
@@ -110,6 +111,70 @@ class TestFixKernel < Minitest::Test
       File.write(path, File.readlines(path).last)
 
       assert_raises(K::LedgerCorruption) { K.read_log(path) }
+    end
+  end
+
+  def test_read_log_refuses_a_symlink_without_reading_its_target
+    with_workspace do |root|
+      directory = File.join(root, ".master")
+      FileUtils.mkdir_p(directory, mode: 0o700)
+      target = File.join(root, "outside-ledger.jsonl")
+      original = "private external bytes\n"
+      File.write(target, original)
+      File.chmod(0o600, target)
+      path = File.join(directory, "log.jsonl")
+      File.symlink(target, path)
+
+      error = assert_raises(K::LedgerCorruption) { K.read_log(path) }
+
+      assert_match(/symlinked, hard-linked or non-regular/, error.message)
+      assert_equal original, File.read(target)
+    end
+  end
+
+  def test_read_log_refuses_a_hard_linked_ledger
+    with_workspace do |root|
+      directory = File.join(root, ".master")
+      FileUtils.mkdir_p(directory, mode: 0o700)
+      target = File.join(root, "outside-ledger.jsonl")
+      write_log(root, [%w[terminal run]])
+      original_path = File.join(root, K::LOG_RELATIVE_PATH)
+      File.rename(original_path, target)
+      path = File.join(directory, "log.jsonl")
+      File.link(target, path)
+
+      error = assert_raises(K::LedgerCorruption) { K.read_log(path) }
+
+      assert_match(/symlinked, hard-linked or non-regular/, error.message)
+      assert_operator File.stat(target).nlink, :>, 1
+    end
+  end
+
+  def test_read_log_refuses_group_or_world_readable_ledger
+    with_workspace do |root|
+      path = write_log(root, [%w[terminal run]])
+      File.chmod(0o644, path)
+
+      error = assert_raises(K::LedgerCorruption) { K.read_log(path) }
+
+      assert_match(/permissions must be private/, error.message)
+      assert File.file?(path)
+    end
+  end
+
+  def test_read_log_refuses_a_symlinked_parent_directory
+    with_workspace do |root|
+      outside = File.join(root, "outside")
+      Dir.mkdir(outside, 0o700)
+      File.write(File.join(outside, "log.jsonl"), "{}\n")
+      File.chmod(0o600, File.join(outside, "log.jsonl"))
+      File.symlink(outside, File.join(root, ".master"))
+
+      error = assert_raises(K::LedgerCorruption) do
+        K.read_log(File.join(root, K::LOG_RELATIVE_PATH))
+      end
+
+      assert_match(/symlinked audit log directory/, error.message)
     end
   end
 
