@@ -92,5 +92,7 @@ rollback on the box is the operator's (operator_seams.yml).
 
 1. Fix::Kernel is only the replay reader for .master/log.jsonl, and nothing
    in the runtime appends to that log, so `master replay` has no production
-   history to read. FixLoop is the coordinator every /fix path enters;
+   history to read. Its reader rejects symlinked/hard-linked/non-regular or
+   non-private ledger files and verifies path identity before and after reading.
+   FixLoop is the coordinator every /fix path enters;
    docs/fix_coordinator_map.md names the owner of each responsibility.
