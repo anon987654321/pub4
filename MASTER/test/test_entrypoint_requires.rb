@@ -105,7 +105,7 @@ class TestEntrypointRequires < Minitest::Test
       "#{relative(script)}: #{status.exitstatus}" unless status.success?
     end
 
-    assert_empty broken, "A Ruby entry point does not parse:\\n#{broken.join("\\n")}"
+    assert_empty broken, "A Ruby entry point does not parse:\n#{broken.join("\n")}"
   end
 
   def test_internal_requires_resolve

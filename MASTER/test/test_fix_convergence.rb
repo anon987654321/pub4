@@ -2347,6 +2347,13 @@ end
     assert_equal %w[MASTER RAILS OPENBSD STUDIO].map { |tree| File.join(root, tree) }, targets
   end
 
+  def test_named_trees_resolve_against_the_checkout_from_a_session_started_inside_a_tree
+    inside = File.join(Master::REPO_ROOT, "RAILS", "brgen")
+    targets = Master::CLI::CommandRegistry.send(:fix_targets, "MASTER RAILS OPENBSD STUDIO", root: inside)
+
+    assert_equal %w[MASTER RAILS OPENBSD STUDIO].map { |tree| File.join(Master::REPO_ROOT, tree) }, targets
+  end
+
   def test_single_target_and_mixed_arguments_are_not_reinterpreted
     root = "/tmp/pub4"
     assert_equal ["MASTER"], Master::CLI::CommandRegistry.send(:fix_targets, "MASTER", root:)

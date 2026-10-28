@@ -181,7 +181,7 @@ class TestDesignLoop < Minitest::Test
   # world: what world_for takes, and surfaces (the surfaces the run measures).
   def loop_for(path, committed:, **world)
     surfaces = world.delete(:surfaces) || HOME_AND_FEED
-    plan =LOOP::Plan.new(surfaces:, root: Dir.pwd, rounds: 3, candidates: 1)
+    plan = LOOP::Plan.new(surfaces:, root: Dir.pwd, rounds: 3, candidates: 1)
     LOOP.new(plan:, world: world_for(path, committed:, **world))
   end
 

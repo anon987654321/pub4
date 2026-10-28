@@ -75,8 +75,6 @@ class TestFixModelPhaseGuards < Minitest::Test
     assert_includes lines, "fix0: swallowed 2x at RepairLoop.reflexion: Encoding::CompatibilityError: incompatible"
   end
 
-  Loop = Struct.new(:law) # stands in for the loop's @law
-
   def budget_loop
     loop = Master::Fix::RepairLoop.allocate
     loop.instance_variable_set(:@law, Struct.new(:id).new("FEW_ARGUMENTS"))

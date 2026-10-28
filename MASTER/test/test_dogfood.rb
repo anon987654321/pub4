@@ -2,11 +2,11 @@
 
 require "minitest/autorun"
 
-ROOT = File.expand_path("..", __dir__)
-require File.join(ROOT, "law", "definition")
+DOGFOOD_ROOT = File.expand_path("..", __dir__)
+require File.join(DOGFOOD_ROOT, "law", "definition")
 # The one loader for constitutional YAML — see the read below and
 # test_yaml_registries, which asserts nothing reads those files any other way.
-$LOAD_PATH.unshift(File.join(ROOT, "lib"))
+$LOAD_PATH.unshift(File.join(DOGFOOD_ROOT, "lib"))
 require "master"
 
 Law.load_all
@@ -39,7 +39,7 @@ class DogfoodSpec < Minitest::Test
   # Self-application. Law files are Ruby; every ruby-scoped law runs over
   # law/ and must find nothing (declarations and fixtures excepted — Law.conduct).
   def test_law_applies_to_itself
-    findings = Dir[File.join(ROOT, "law", "*.rb")].flat_map { |f| Law.scan(f, language: :ruby) }
+    findings = Dir[File.join(DOGFOOD_ROOT, "law", "*.rb")].flat_map { |f| Law.scan(f, language: :ruby) }
     assert_empty findings.map { |f| "#{f.id} #{File.basename(f.file)}:#{f.line}" }.join("\n")
   end
 

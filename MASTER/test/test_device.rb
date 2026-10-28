@@ -5,6 +5,19 @@ require_relative "test_helper"
 class TestDevice < Minitest::Test
   Device = Master::Device
 
+  # Every case here rewrites the host and Termux environment; each one gets the
+  # process's own values back, so a later test does not run on a phantom phone.
+  def setup
+    @saved_env = ENV.to_h.slice("TERMUX_VERSION", "PREFIX", "PATH")
+    @saved_host = RbConfig::CONFIG["host_os"]
+  end
+
+  def teardown
+    %w[TERMUX_VERSION PREFIX].each { |key| ENV.delete(key) }
+    @saved_env.each { |key, value| ENV[key] = value }
+    RbConfig::CONFIG["host_os"] = @saved_host
+  end
+
   def test_non_android_reports_unavailable_without_touching_hardware
     stub_const = RbConfig::CONFIG["host_os"]
     RbConfig::CONFIG["host_os"] = "darwin"

@@ -28,13 +28,14 @@ class TestFaceAwareness < Minitest::Test
       reach = 0.0
       600.times do |i|
         look = motion.step(state:, t: i * 0.05)
-        reach = [reach, look.gaze_lon.abs].max if look.respond_to?(:gaze_lon)
+        reach = [reach, look.gaze.first.abs].max
       end
       [motion, reach]
     end
     _m, idle = spread.call(:idle)
     _m, listening = spread.call(:listening)
-    assert_operator listening, :<=, idle if idle.positive?
+    assert_operator idle, :>, 0.0, "the idle face never glanced, so the comparison measures nothing"
+    assert_operator listening, :<, idle
   end
 
   def test_the_browser_feeds_awareness_only_through_the_echo_check

@@ -15,7 +15,7 @@ class TestFanOpsDigest < Minitest::Test
       "you are now|act as|pretend to be",
     ],
     "minor_cues" => [
-      '\b(jeg er|im|i am|i''m) (bare )?(1[0-7]|15|16|17)\b',
+      %q(\b(jeg er|im|i am|i'm) (bare )?(1[0-7]|15|16|17)\b),
       '\bhigh school|middle school\b',
     ],
   }.freeze
