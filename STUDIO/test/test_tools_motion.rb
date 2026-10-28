@@ -15,6 +15,16 @@ class TestPostproMotion < Minitest::Test
     assert_in_delta 30.0, Postpro::Motion.parse_fps("30"), 0.001
   end
 
+  def test_rotated_display_metadata_is_refused_before_decoding
+    assert Postpro::Motion.rotated_stream?("tags" => { "rotate" => "90" })
+    assert Postpro::Motion.rotated_stream?(
+      "side_data_list" => [{ "side_data_type" => "Display Matrix", "rotation" => -90.0 }]
+    )
+    refute Postpro::Motion.rotated_stream?("tags" => { "rotate" => "360" })
+    refute Postpro::Motion.rotated_stream?("tags" => { "rotate" => "0" })
+    refute Postpro::Motion.rotated_stream?({})
+  end
+
   def test_grain_modes_are_deterministic_and_distinct
     assert_equal [100, 101, 102, 103], (0..3).map { |i| Postpro::Motion.seed_for(i, 100) }
     assert_equal [100, 100, 100, 100], (0..3).map { |i| Postpro::Motion.seed_for(i, 100, grain: :hold) }
