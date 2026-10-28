@@ -168,7 +168,7 @@ module Deploy
         directive = entry.fetch(:source)
         if directive.match?(/(?:^|[\s,]):https?\b|(?:^|[\s,]):(?:data|blob)\b/i) ||
            directive.match?(/unsafe[-_]eval|unsafe[-_]inline/i) ||
-           directive.match?(/["']\*["']|(?:^|[\s,])\*(?:[\s,]|$)|https?:\/\/\*/i) ||
+           directive.match?(/["']\*["']|(?:^|[\s,])\*(?:[\s,]|$)|(?:^|[\s,])\*\.[a-z0-9.-]+|https?:\/\/(?:\*|\*\.)/i) ||
            directive.match?(/\bhttp:\/\/|["'](?:data|blob):|["']https?:["']/i)
           result.fail(
             "security_headers: #{label} has an overly broad #{entry.fetch(:name).tr("_", "-")}: #{directive.strip}"
