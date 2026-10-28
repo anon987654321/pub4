@@ -16,7 +16,7 @@ module Master
     module ModelQuota
       extend self
       include ::Master::Io::AtomicWrite
-      FREE_RE = /:free\z|\Aopenrouter\//.freeze
+      FREE_RE = /:free\z/.freeze
       DEFAULT_DAILY = 50
 
       @mutex = Mutex.new
