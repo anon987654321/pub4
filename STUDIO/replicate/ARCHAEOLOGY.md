@@ -19,7 +19,7 @@ The older repository has Replicate references in the assistant code and older me
 ### `pub2`: Repligen v7.3.0 — creative pipeline and durable local index
 
 Sources:
-- [repligen.rb](https://github.com/anon987654321/pub2/blob/ad05242c97fff1b01450434974aad628d7de8628/repligen/repligen.rb)
+- [repligen.rb](https://github.com/anon987654321/pub2/blob/main/repligen/repligen.rb)
 - [README](https://github.com/anon987654321/pub2/blob/ad05242c97fff1b01450434974aad628d7de8628/repligen/repligen_README.md)
 - [model scraper](https://github.com/anon987654321/pub2/blob/ad05242c97fff1b01450434974aad628d7de8628/repligen/scrape_models.rb)
 - [Explore-page scraper](https://github.com/anon987654321/pub2/blob/ad05242c97fff1b01450434974aad628d7de8628/repligen/scrape_replicate_explore.rb)
@@ -34,7 +34,7 @@ The old model/scrape cost figures and model chain examples (Imagen3, Wan, MusicG
 ### `pub3`: the interactive orchestrator and split tools
 
 Sources:
-- [Repligen README](https://github.com/anon987654321/pub3/blob/835f9199d605b6a6ae1f32cd207919c115a06b47/multimedia/repligen/README.md)
+- [Repligen README](https://github.com/anon987654321/pub3/blob/main/multimedia/repligen/README.md)
 - [interactive usage and menu](https://github.com/anon987654321/pub3/blob/835f9199d605b6a6ae1f32cd207919c115a06b47/multimedia/repligen/USAGE.md)
 - [interactive implementation](https://github.com/anon987654321/pub3/blob/835f9199d605b6a6ae1f32cd207919c115a06b47/multimedia/repligen/repligen.rb)
 - [CLI wrapper](https://github.com/anon987654321/pub3/blob/835f9199d605b6a6ae1f32cd207919c115a06b47/multimedia/repligen/bin/repligen)
