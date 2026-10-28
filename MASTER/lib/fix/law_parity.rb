@@ -16,6 +16,7 @@ module Master
       LAWS_PATH = File.join(Master::ROOT, "data", "laws.yml").freeze
 
       Gap = Data.define(:id, :priority, :tier, :reason)
+      COVERAGE_MODES = %w[deterministic semantic tagged deferred].freeze
 
       def initialize(root: Master::ROOT, laws_path: nil)
         @root = File.expand_path(Master.master_root(root:))
@@ -49,7 +50,11 @@ module Master
 
       def report
         gaps = call
-        return "law_parity: ok (priority<=#{MAX_PRIORITY} constitutional covered)" if gaps.empty?
+        summary = priority_constitutional_entries.map do |id, spec|
+          mode = spec["coverage_mode"].to_s
+          "#{id}=#{mode.empty? ? "undeclared" : mode}"
+        end.join(", ")
+        return "law_parity: ok (priority<=#{MAX_PRIORITY} constitutional; coverage=#{summary})" if gaps.empty?
 
         lines = gaps.map { |g| "  #{g.id} (priority #{g.priority}): #{g.reason}" }
         "law_parity: #{gaps.size} gap(s)\n#{lines.join("\n")}"
@@ -80,18 +85,20 @@ module Master
       end
 
       def covered?(id, spec, detectors, tags)
-        return true if deferred_valid?(spec)
-        return true if detectors.include?(id.to_s)
-        return true if detectors.include?(id.to_s.downcase)
+        mode = spec["coverage_mode"].to_s
+        return false unless COVERAGE_MODES.include?(mode)
+        return deferred_valid?(spec) if mode == "deferred"
+        return semantic_law_ids.include?(id.to_s) if mode == "semantic"
 
-        explicit = Array(spec["detector_ids"]).map(&:to_s)
-        return true if explicit.any? { |d| detectors.include?(d) }
-
-        if spec["coverage"].to_s == "tagged_detectors"
-          tag = id.to_s.upcase
-          return true if tags.include?(tag) || tags.include?(id.to_s)
+        if mode == "deterministic"
+          explicit = Array(spec["detector_ids"]).map(&:to_s)
+          candidates = explicit.empty? ? [id.to_s] : explicit
+          return candidates.any? { |candidate| detectors.any? { |detector| detector.casecmp?(candidate) } }
         end
 
+        if mode == "tagged" && spec["coverage"].to_s == "tagged_detectors"
+          return tags.include?(id.to_s.upcase) || tags.include?(id.to_s)
+        end
         false
       end
 
@@ -107,22 +114,40 @@ module Master
       end
 
       def gap_reason(id, spec)
-        if spec["enforcement"].to_s == "deferred"
+        mode = spec["coverage_mode"].to_s
+        return "missing explicit coverage_mode" if mode.empty?
+        return "unknown coverage_mode #{mode}" unless COVERAGE_MODES.include?(mode)
+        if mode == "deferred"
           exp = spec["expires_on"].to_s
           return "deferred without expires_on" if exp.empty?
-
-          return "deferred expired on #{exp}"
+          return "deferred expired on #{exp}" unless deferred_valid?(spec)
         end
-
-        "no detector, detector_ids, tagged coverage, or valid deferred enforcement"
+        "declared #{mode} coverage has no matching evidence"
       end
 
       def registered_detector_ids
         ids = Set.new
-        ids.merge(law_pack_ids)
+        require_relative "../../law/definition" unless defined?(::Law)
+        ::Law.load_all if ::Law.respond_to?(:load_all)
+        ::Law.definitions.each do |id, definition|
+          ids << id.to_s if definition.respond_to?(:detect) && definition.detect
+        end
         ids.merge(scan_registry_ids)
-        ids.merge(law_define_ids_from_source)
         ids
+      rescue StandardError, ScriptError => e
+        Master::Ground::Swallow.log(e, context: "Fix::LawParity.registered_detector_ids", severity: :load_bearing)
+        raise
+      end
+
+      def semantic_law_ids
+        require_relative "../../law/definition" unless defined?(::Law)
+        ::Law.load_all if ::Law.respond_to?(:load_all)
+        ::Law.definitions.filter_map do |id, definition|
+          id.to_s if definition.respond_to?(:semantic?) && definition.semantic?
+        end
+      rescue StandardError, ScriptError => e
+        Master::Ground::Swallow.log(e, context: "Fix::LawParity.semantic_law_ids", severity: :load_bearing)
+        raise
       end
 
       def registered_tag_names
