@@ -151,6 +151,7 @@ class TestLawCatalogueBootstrap < Minitest::Test
         "modalities" => %w[lexical semantic visual],
         "surfaces" => ["whole_file"],
         "defaults" => { "mode" => "violation", "lifecycle" => "active", "autofix" => "review" },
+        "unknown_registry" => true,
         "entries" => {
           "ACTUAL_ID" => {
             "universal" => true,
@@ -158,7 +159,8 @@ class TestLawCatalogueBootstrap < Minitest::Test
             "definition_sources" => ["MASTER/law/actual.rb"],
             "severity" => "warning",
             "mode" => "silent_pass",
-            "path_pattern" => "["
+            "path_pattern" => "[",
+            "severity_typo" => "warn"
           }
         }
       }
@@ -169,6 +171,8 @@ class TestLawCatalogueBootstrap < Minitest::Test
 
       assert_match(/Law ACTUAL_ID has invalid mode "silent_pass"/, error.message)
       assert_match(/Law ACTUAL_ID has invalid path_pattern/, error.message)
+      assert_match(/law_catalogue has unknown field\(s\): unknown_registry/, error.message)
+      assert_match(/Law ACTUAL_ID has unknown catalogue field\(s\): severity_typo/, error.message)
     end
   end
 
