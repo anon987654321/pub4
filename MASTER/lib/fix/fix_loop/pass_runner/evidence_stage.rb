@@ -55,7 +55,7 @@ module Master
           def run_opportunity_stage(findings, files, pass, deadline, council: nil)
             return 0 if Time.now >= deadline || findings.empty?
 
-            loop = RepairLoop.new(
+            loop = build_repair_loop(
               law: OpportunityPass::Law.new(OpportunityPass::LAW_ID),
               agent: @agent, scanner: @scanner, root: @root, bus: @bus,
               learnings: @learnings, committer: @committer,
@@ -76,7 +76,7 @@ module Master
             return 0 if findings.empty? || Time.now >= deadline
 
             law = CouncilRound::IMPROVEMENT_LAW.new(CouncilRound::IMPROVEMENT_LAW_ID)
-            loop = RepairLoop.new(
+            loop = build_repair_loop(
               law:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
               learnings: @learnings, committer: @committer
             )
@@ -102,7 +102,7 @@ module Master
           def run_visual_stage(findings, pass:, image:, files:, deadline:)
             return 0 if Time.now >= deadline || findings.empty? || image.nil?
 
-            loop = RepairLoop.new(
+            loop = build_repair_loop(
               law: VisualPass::Law.new(VisualPass::LAW_ID),
               agent: @agent, scanner: @scanner, root: @root, bus: @bus,
               learnings: @learnings, committer: @committer

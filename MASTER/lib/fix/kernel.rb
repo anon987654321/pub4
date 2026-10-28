@@ -1,19 +1,127 @@
 # frozen_string_literal: true
 
 require "digest"
+require "fileutils"
 require "json"
+require "securerandom"
+require "time"
+require_relative "kernel/lifecycle_journal"
+require_relative "kernel/lifecycle"
 
 module Master
   module Fix
-    # Reads the hash-chained audit log at `<workspace>/.master/log.jsonl` for
-    # `bin/master replay <seq>`. Nothing in the runtime appends to the log; the
-    # reader stays so an existing log can still be verified and replayed, and it
-    # refuses a broken chain rather than returning a partial history.
+    # Owns the hash-chained /fix coordinator lifecycle and keeps the replay
+    # reader public for `bin/master replay <seq>`. It does not apply repairs;
+    # FixLoop, RepairAdapter and Transaction retain the mutation responsibilities.
+    # A broken chain is refused rather than returned as partial history.
     class Kernel
+      include Lifecycle
+
       GENESIS = "0" * 64
       LOG_RELATIVE_PATH = ".master/log.jsonl"
 
       class LedgerCorruption < StandardError; end
+
+      # The Kernel owns coordinator receipts only. FixLoop/RepairLoop and
+      # Transaction remain the sole repository-mutation path.
+      def initialize(root:, actor: "fix", bus: nil, log_path: nil, lifecycle_journal: nil)
+        @root = File.expand_path(root)
+        @workspace_root = self.class.send(:locate_workspace, @root)
+        @actor = actor.to_s
+        @bus = bus
+        @log_path = File.expand_path(log_path || File.join(@workspace_root, LOG_RELATIVE_PATH))
+        @log_head = nil
+        @lifecycle_journal = lifecycle_journal
+        @lifecycle_mutex = Mutex.new
+        @execution_mutex = Mutex.new
+        @append_mutex = Mutex.new
+      end
+
+      attr_reader :root, :workspace_root, :actor, :log_path, :execution_mutex
+
+      def verify_log!
+        self.class.read_log(@log_path)
+      end
+
+      def append_event(kind, payload, run_id: nil)
+        @append_mutex.synchronize do
+          FileUtils.mkdir_p(File.dirname(@log_path), mode: 0o700)
+          File.open(@log_path, File::RDWR | File::CREAT, 0o600) do |file|
+            file.flock(File::LOCK_EX)
+            head = append_head(file)
+            body = {
+              "seq" => head.fetch(:seq) + 1, "at" => Time.now.utc.iso8601(6),
+              "run_id" => run_id, "kind" => kind.to_s, "payload" => payload,
+              "prev" => head.fetch(:hash)
+            }
+            row = body.merge("hash" => Digest::SHA256.hexdigest(JSON.generate(body)))
+            line = JSON.generate(row) + "\n"
+            file.seek(0, IO::SEEK_END)
+            written = file.write(line)
+            raise IOError, "ledger append wrote #{written || 0} of #{line.bytesize} bytes" unless written == line.bytesize
+
+            file.flush
+            file.fsync
+            cache_log_head(file, row.fetch("seq"), row.fetch("hash"))
+            row
+          ensure
+            file.flock(File::LOCK_UN) rescue nil
+          end
+        end
+      end
+
+      def append_head(file)
+        stat = file.stat
+        cached = @log_head
+        if cached
+          unless stat.dev == cached.fetch(:dev) && stat.ino == cached.fetch(:ino) &&
+                 stat.size >= cached.fetch(:size)
+            raise LedgerCorruption, "ledger identity changed or ledger was truncated"
+          end
+          if stat.size > cached.fetch(:size)
+            suffix = self.class.read_log_suffix(file, cached)
+            return cache_log_head(file, suffix.fetch(:seq), suffix.fetch(:hash))
+          end
+          return cached if stat.mtime == cached.fetch(:mtime) && stat.ctime == cached.fetch(:ctime)
+        end
+
+        events = self.class.read_log_io(file)
+        last = events.last
+        cache_log_head(file, last ? last.fetch("seq") : 0, last ? last.fetch("hash") : GENESIS)
+      end
+
+      def cache_log_head(file, seq, hash)
+        stat = file.stat
+        @log_head = {
+          dev: stat.dev, ino: stat.ino, size: stat.size,
+          mtime: stat.mtime, ctime: stat.ctime, seq:, hash:
+        }
+      end
+
+      def self.read_log_suffix(file, head)
+        previous = head.fetch(:hash)
+        expected_seq = head.fetch(:seq) + 1
+        file.seek(head.fetch(:size), IO::SEEK_SET)
+        file.each_line do |line|
+          begin
+            raise LedgerCorruption, "sequence #{expected_seq}: incomplete final record" unless line.end_with?("\n")
+            next if line.strip.empty?
+
+            row = JSON.parse(line)
+            body = row.reject { |key, _| key == "hash" }
+            raise LedgerCorruption, "sequence #{expected_seq}: sequence gap" unless row.fetch("seq") == expected_seq
+            raise LedgerCorruption, "sequence #{expected_seq}: previous hash mismatch" unless row.fetch("prev") == previous
+            actual = Digest::SHA256.hexdigest(JSON.generate(body))
+            raise LedgerCorruption, "sequence #{expected_seq}: event hash mismatch" unless actual == row.fetch("hash")
+
+            previous = row.fetch("hash")
+            expected_seq += 1
+          rescue JSON::ParserError, KeyError, TypeError, NoMethodError => error
+            raise LedgerCorruption, "sequence #{expected_seq}: #{error.message}"
+          end
+        end
+        { seq: expected_seq - 1, hash: previous }
+      end
 
       def self.replay_events(root:, seq:)
         number = Integer(seq)

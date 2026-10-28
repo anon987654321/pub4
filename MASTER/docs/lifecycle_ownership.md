@@ -24,23 +24,35 @@ file collector. World dispatches each verb to a do_ method and checks
 capabilities. Its checkpoints live in memory, so a crash loses them; the Fold's
 compensations cover one path at a time.
 
-### FixLoop, RunJournal and RunLedger
+### Kernel, FixLoop, RunJournal and RunLedger
 
-ai_boot builds the FixLoop (in the background when MASTER_AUTOFIX=1) and the
-/fix command builds one per run. FixLoop works on the repository root but keeps
-@transaction_root, the root it was given, for transactions (2de776cde).
-RunJournal persists runs in MASTER/.master/fix_runs.json with plan
-generations and assessment receipts. RunLedger is process memory reset at each
-run start. Delivery is the Committer: a commit per kept fix and a push, or one
-push at the end.
+`ai_boot` builds one `Fix::Kernel` and obtains the production convergence
+adapter through `Kernel#build_fix_loop`. The former `FixLoop` implementation
+is now `Kernel::ConvergenceAdapter`; its public constant and entry-point shim
+remain for existing callers. Kernel owns the run execution lock, hash-chained
+coordinator receipts, repair factory and the single lifecycle-journal accessor.
+A failed or interrupted run is recorded as `unknown_outcome`, never inferred
+to be complete.
+
+The durable journal implementation is `Kernel::LifecycleJournal`, with the
+same `MASTER/.master/fix_runs.json` schema and `RunJournal` compatibility
+constant. The per-Law policy is `Kernel::RepairAdapter`, with the old
+`RepairLoop` constant retained. Kernel does not edit files directly:
+FixLoop/RepairLoop and the existing `Transaction` continue to own source
+mutations, rollback and Git delivery. FixLoop keeps `@transaction_root`, the
+root it was given, for transaction recovery (2de776cde). `RunLedger` remains
+in-memory accounting reset at each run start. Delivery is still the Committer.
 
 ### The inner repair loop
 
-Pass stages build RepairLoop; it writes source with write_atomic inside the
-pass transaction and relies on the reflexion verifier, the consensus panel, the
-collapse guard and the Committer's path validation. WatchLoop builds none: a
-changed file wakes the background runner or starts an incremental FixLoop run,
-so its repairs get a transaction and a run ledger like any other.
+Pass stages use `Kernel#build_repair_loop` to obtain the canonical
+`Kernel::RepairAdapter`. Its nested policy modules retain the reflexion
+verifier, consensus panel, collapse guard, per-file budget and verified writes;
+the active pass transaction and Committer continue to enforce rollback and
+delivery. The Kernel ledger records redacted repair status/count summaries linked
+to the run ID, not prompts or source text. WatchLoop builds no separate repair
+engine: a changed file wakes the background runner or starts an incremental
+FixLoop run, so its repairs use the same transaction boundary.
 
 ### Fix::Mission
 
@@ -50,8 +62,8 @@ claimed a mission may write only that mission while it holds the lease; any
 other write raises Mission::Fenced (c296719e1). The Supervisor, Heartbeat and
 TaskSteward read it and wake work whose lease expired. Two missions coexist: the
 Fold's under MASTER's root and /fix's under the repository root
-(FixLoop#mission_root); FixLoop's run mutex and the transaction lock already
-serialise their writes. Heartbeat wakes /fix's, the TaskSteward tends the
+(FixLoop#mission_root); Kernel's shared execution mutex and the transaction lock serialise
+the production /fix lifecycle and its file writes. Heartbeat wakes /fix's, the TaskSteward tends the
 Fold's, and /status mission, fix_status and the service check name each.
 
 ### Fix::Transaction and Delivery
@@ -84,7 +96,9 @@ rollback on the box is the operator's (operator_seams.yml).
 
 ### Open gaps, by risk
 
-1. Fix::Kernel is only the replay reader for .master/log.jsonl, and nothing
-   in the runtime appends to that log, so `master replay` has no production
-   history to read. FixLoop is the coordinator every /fix path enters;
-   docs/fix_coordinator_map.md names the owner of each responsibility.
+1. Kernel now appends coordinator and repair-outcome receipts in production,
+   but validation is not complete. `test_fix_kernel_lifecycle.rb` and
+   `test_fix_interruption_restart.rb` are authored but unexecuted on pinned Ruby
+   4.0.5. Mission survival, journal-loss recovery, budget/collapse behavior,
+   delivery-failure recovery, adapter receipt parity and a real repository-wide
+   `/fix` run remain open gates; see `docs/fix_coordinator_map.md`.

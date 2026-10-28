@@ -15,14 +15,20 @@ proofs rather than grep runs.
 
 ## Findings
 
-**F1 — `lib/fix` is the mass.** 125 top-level `.rb` files, 29,926 lines, three
-coordinator generations (`Kernel` 686, `FixLoop` 976 + 13 sub-files,
-`RepairLoop` 569 + 6 sub-files, plus `Mission`, `RunJournal`, `RunLedger`,
-`Transaction`). RAILS — three shipping apps and five engine verticals — is
-1,749 Ruby files total. The repair machinery approaches the size of the thing
-it repairs. Resolution is not a rename: it is the merge this repo already
-mandated, now mapped in `docs/fix_coordinator_map.md`. Until that map's
-Phase 2 recovery tests exist, **no file in `lib/fix` moves or goes**.
+**F1 — `lib/fix` is the mass.** The original static census recorded 125
+top-level `.rb` files and 29,926 lines, with overlapping `Kernel`, `FixLoop`,
+`RepairLoop`, `Mission`, `RunJournal`, `RunLedger` and `Transaction`
+responsibilities. RAILS — three shipping apps and five engine verticals — was
+1,749 Ruby files in that census. The repair machinery approaches the size of
+the thing it repairs. Resolution is a responsibility migration, not a rename.
+The feature branch now places convergence, repair and lifecycle-journal
+implementations under `Fix::Kernel` while keeping the former public constants
+as compatibility aliases. It adds restart regressions for an open transaction,
+an absent run journal, durable Mission/checkpoint state and orphaned Kernel
+receipts. Those tests are **authored, not executed**; the Phase 2 gate is still
+open, so this branch is not approved for main. Do not remove an alias or claim
+equivalence until the pinned Ruby 4.0.5 focused/full-suite checks and a real
+convergence run produce recorded receipts.
 
 **F2 — the `visual_*` family wants a directory.** Twenty-plus flat
 `lib/fix/visual_*.rb` files (ghost pages, ghost stack, cross-page drift,
