@@ -33,6 +33,32 @@ class TestFixKernel < Minitest::Test
     )
   end
 
+  def test_restart_terminalizes_a_kernel_run_whose_recorded_process_is_gone
+    with_workspace do |root|
+      kernel = K.new(root:)
+      pid = Process.spawn("true")
+      Process.wait(pid)
+
+      kernel.send(
+        :append_event,
+        "coordinator_started",
+        { actor: "test", host: Socket.gethostname, pid:, target: ".", max_passes: 2,
+          budget_seconds: 60, requested: false },
+        run_id: "orphaned-kernel-run"
+      )
+      kernel.begin_coordinated_run(
+        target: root, max_passes: 2, budget_seconds: 60, requested: false
+      )
+
+      terminal = kernel.verify_log!.find do |row|
+        row["kind"] == "coordinator_terminal" && row["run_id"] == "orphaned-kernel-run"
+      end
+      assert_equal "unknown_outcome", terminal.dig("payload", "state")
+      assert_equal true, terminal.dig("payload", "recovered")
+      assert_match(/ended without a terminal receipt/, terminal.dig("payload", "reason"))
+    end
+  end
+
   def test_kernel_serializes_and_terminalizes_the_fix_loop_adapter
     with_workspace do |root|
       kernel = K.new(root:)
