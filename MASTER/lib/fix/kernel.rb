@@ -66,6 +66,10 @@ module Master
                 # waits for flock. Never enter /fix on an orphaned inode that no
                 # longer serializes callers using the canonical lock pathname.
                 validate_lock_identity!(file, directory_stat)
+                mode = file.stat.mode & 0o777
+                unless (mode & 0o077).zero?
+                  raise IOError, "execution lock permissions changed while waiting"
+                end
                 current_directory = File.lstat(@directory)
                 if (current_directory.mode & 0o022).positive?
                   raise IOError, "refusing group/world-writable .master directory"
@@ -96,7 +100,7 @@ module Master
                  current.dev == opened.dev && current.ino == opened.ino
             raise IOError, "execution lock path changed while opening or waiting"
           end
-        rescue Errno::ENOENT => e
+        rescue SystemCallError => e
           raise IOError, "execution lock path changed while opening or waiting: #{e.message}"
         end
 
