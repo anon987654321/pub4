@@ -93,6 +93,54 @@ class TestLawCatalogueBootstrap < Minitest::Test
     end
   end
 
+  def test_manifest_metadata_and_identity_shape_fail_before_law_evaluation
+    Dir.mktmpdir("law-catalogue-metadata") do |root|
+      law_dir = File.join(root, "MASTER", "law")
+      FileUtils.mkdir_p(law_dir)
+      File.write(File.join(law_dir, "actual.rb"), "Law.define(:ACTUAL_ID) do\nend\n")
+
+      catalogue = {
+        "modalities" => %w[lexical semantic visual],
+        "surfaces" => ["whole_file"],
+        "defaults" => {},
+        "entries" => {
+          "ACTUAL_ID" => { "universal" => false, "modalities" => [], "definition_sources" => [] },
+          "bad-id" => { "universal" => true, "modalities" => %w[lexical semantic visual] }
+        }
+      }
+      error = assert_raises(ArgumentError) do
+        Master::LawCataloguePreflight.validate!(law_dir:, catalogue:, repo_root: root)
+      end
+
+      assert_match(/Law ACTUAL_ID must be marked universal/, error.message)
+      assert_match(/Law ACTUAL_ID modalities must/, error.message)
+      assert_match(/Law ACTUAL_ID has no effective severity/, error.message)
+      assert_match(/Law ACTUAL_ID has no definition_sources or detector_sources/, error.message)
+      assert_match(/invalid Law catalogue identity.*bad-id/, error.message)
+      assert_match(/Law bad-id has no definition_sources or detector_sources/, error.message)
+    end
+  end
+
+  def test_dynamic_detector_templates_expand_to_literal_catalogue_ids
+    Dir.mktmpdir("law-catalogue-dynamic-detector") do |root|
+      detector_dir = File.join(root, "MASTER", "law", "detectors")
+      FileUtils.mkdir_p(detector_dir)
+      path = File.join(detector_dir, "detector.rb")
+      File.write(path, <<~RUBY)
+        %w[USEFUL HONEST].each do |trait|
+          LawDSL.law :"RAMS_\#{trait}" do
+          end
+        end
+      RUBY
+
+      declarations = Master::LawCataloguePreflight.source_detector_declarations(
+        detector_dir, root
+      )
+
+      assert_equal %w[RAMS_HONEST RAMS_USEFUL], declarations.map { |row| row.fetch(:id) }.sort
+    end
+  end
+
   def test_duplicate_static_definitions_are_reported_as_one_preflight_error
     Dir.mktmpdir("law-catalogue-duplicate") do |root|
       law_dir = File.join(root, "MASTER", "law")

@@ -138,9 +138,11 @@ module Master
       end
 
       defaults = catalogue.fetch("defaults", {})
-      errors << "law_catalogue.defaults must be a mapping" unless defaults.is_a?(Hash)
+      defaults_valid = defaults.is_a?(Hash)
+      errors << "law_catalogue.defaults must be a mapping" unless defaults_valid
+      defaults = {} unless defaults_valid
       normalized_ids = entries.keys.map(&:to_s)
-      invalid_ids = normalized_ids.reject { |id| id.match?(/\\A[A-Za-z][A-Za-z0-9_]*\\z/) }
+      invalid_ids = normalized_ids.reject { |id| id.match?(/\A[A-Za-z][A-Za-z0-9_]*\z/) }
       errors << "invalid Law catalogue identity(ies): #{invalid_ids.uniq.join(', ')}" unless invalid_ids.empty?
       duplicate_ids = normalized_ids.group_by(&:downcase).select { |_id, keys| keys.uniq.size > 1 }.keys
       errors << "case-insensitive duplicate Law identities: #{duplicate_ids.join(', ')}" unless duplicate_ids.empty?
