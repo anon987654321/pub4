@@ -28,7 +28,7 @@ class SecurityHeadersSourceCheckTest < Minitest::Test
       end
 
       result = Deploy::SecurityHeadersSourceCheck.run(root:)
-      assert_includes result.failures.join("\n"), "must not replace app-owned CSP"
+      assert_includes result.failures.join("\n"), "must not alter app-owned CSP"
     end
   end
 
