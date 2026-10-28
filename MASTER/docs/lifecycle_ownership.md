@@ -113,7 +113,7 @@ rollback on the box is the operator's (operator_seams.yml).
 
 1. Kernel now appends coordinator and repair-outcome receipts in production.
    Its hash-chained `.master/log.jsonl` reader refuses symlinked, hard-linked,
-   non-regular or non-private ledger files and verifies path identity before
+   non-regular or non-private ledger files, blank records and torn tails, and verifies path identity before
    and after reading. Runtime results remain unmeasured here: run the focused
    replay, lifecycle and process-kill regressions on pinned Ruby 4.0.5, then
    prove transaction rollback, durable resumption, orphan-receipt recovery,
