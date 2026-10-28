@@ -290,7 +290,7 @@ module Master
           tree = File.basename(@tree)
           out, status = Master::Io::Exec.capture2e(
             "git", "-C", @root, "log", "--all", "--format=COMMIT:%H", "--name-only",
-            "-n", @co_change_window.to_s, "--", "#{tree}/",
+            "-n", @co_change_window.to_s, "--", "#{tree}/"
           )
           return "Co-change evidence: INCONCLUSIVE; git history was unavailable." unless status.success?
 

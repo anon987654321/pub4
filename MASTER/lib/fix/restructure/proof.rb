@@ -36,7 +36,7 @@ module Master
             tests:, failing: failing_before, passing: tests - failing_before,
             tree: tree_baseline(plan), delete_needles:, deleted_constants:,
             scorecard: scorecard(extra_paths: plan.paths),
-            contracts: contract_snapshot(extra_paths: plan.paths), ratchet: ratchet_snapshot,
+            contracts: contract_snapshot(extra_paths: plan.paths), ratchet: ratchet_snapshot
           }
         end
 
@@ -110,7 +110,7 @@ module Master
 
         def ratchet_snapshot
           path = File.join(@repo_root, "MASTER", "data", "spine.yml")
-          return nil unless File.file?(path)
+          return unless File.file?(path)
 
           body = File.read(path, encoding: "UTF-8")
           body[/^\s*core_recursive_files:\s*(\d+)\s*$/, 1]&.to_i

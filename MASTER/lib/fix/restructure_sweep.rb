@@ -29,7 +29,7 @@ module Master
         "remove" => 5, "rename" => 4, "relocate" => 4, "merge" => 4,
         "split" => 3, "defragment" => 3, "decouple" => 3, "hoist" => 2,
         "flatten" => 2, "reorder" => 2, "simplify" => 2, "reflow" => 1,
-        "recommend" => 1,
+        "recommend" => 1
       }.freeze
 
       PROPOSE = <<~TEXT
@@ -255,7 +255,7 @@ module Master
             "  %s payoff=%d/%d risk=%d/%d ratio=%.2f operation=%s paths=%s evidence=%s",
             problem.id, row.fetch(:payoff), score_max, row.fetch(:risk), score_max, row.fetch(:ratio),
             problem.candidate_operations.join(","), problem.files.map { |path| relative(path) }.join(","),
-            findings.join(" | "),
+            findings.join(" | ")
           )
         end
         shortfall = [wanted - rows.size, 0].max
@@ -372,7 +372,7 @@ module Master
           candidate_map:,
           context: Context.new(
             @root, problem.files.first, related: problem.files.drop(1), scorecard:,
-            co_change_window: @transformation_plan.scorecard_policy.fetch("history_window_commits"),
+            co_change_window: @transformation_plan.scorecard_policy.fetch("history_window_commits")
           ).to_s,
         )
       end
