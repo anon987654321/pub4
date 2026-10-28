@@ -345,9 +345,14 @@
     u.uEntropy.value = entropy;
     u.uMotionScale.value = motion;
     u.uOpacity.value = clamp(overrides.opacity, 0.74, 0.1, 1);
-    const cs = getComputedStyle(document.body);
-    const rgb = ["--mood-r", "--mood-g", "--mood-b"].map((key) => Number.parseFloat(cs.getPropertyValue(key)));
-    if (rgb.every(Number.isFinite)) u.uColor.value.setRGB(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255);
+    if (swarmConfiguration().enabled === true) {
+      // The particle material is pure white; visual identity does not inherit mood palettes.
+      u.uColor.value.setRGB(1, 1, 1);
+    } else {
+      const cs = getComputedStyle(document.body);
+      const rgb = ["--mood-r", "--mood-g", "--mood-b"].map((key) => Number.parseFloat(cs.getPropertyValue(key)));
+      if (rgb.every(Number.isFinite)) u.uColor.value.setRGB(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255);
+    }
   }
 
   function swarmConfiguration() {
@@ -612,6 +617,8 @@
     };
     return {
       enabled,
+      swarmEnabled: swarmConfiguration().enabled === true,
+      swarmMode: canonicalSwarmMode(state),
       installing,
       installed: Boolean(wrappedRenderer && renderWrapper && wrappedRenderer.render === renderWrapper),
       visible: Boolean(active?.points?.visible && !document.hidden && contextState !== "lost"),
@@ -662,7 +669,8 @@
   }
 
   window.MASTER_FACE_STIPPLE = Object.freeze({
-    createDefault, buildFromSamples, mount, configure, syncFromFaceState, tick, applyPalette,
+    createDefault, buildFromSamples, mount, configure, syncFromFaceState, tick, updateSwarm,
+    glyphForDepth, pointBudget, canonicalSwarmMode, modeMultipliersFor, applyPalette,
     get profiles() { return profiles(); },
     get system() { return active; },
     get enabled() { return enabled; },
