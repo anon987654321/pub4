@@ -27,7 +27,6 @@ end
 # them together.
 ENV_SWITCHES = {
   "CHECK_STRICT_INCONCLUSIVE" => "a check that measured nothing fails instead of reading inconclusive",
-  "CHECK_STRICT_ERRORS" => "a check that raised fails instead of blocking nothing",
   "CHECK_STRICT_SOFT" => "soft findings (contrast pairs, surface schema) fail instead of warning",
   "CHECK_AUDITOR_STRICT" => "frontend_auditor fails on warnings; without it only auditor errors block " \
                            "and warnings are reported, so the warning half is advisory",
