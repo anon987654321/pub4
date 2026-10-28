@@ -124,7 +124,7 @@ end
   # spelling only long enough to rewrite it to /fix, so no separate scan
   # dispatcher, help topic, or pipeline stage can survive.
 
-  def test_kernel_owns_the_fix_loop_journal_and_pass_runner_repair_factory
+  def test_kernel_owns_the_fix_loop_journal_and_run_receipts
     loop = build_loop([])
     kernel = loop.kernel
 
@@ -133,6 +133,25 @@ end
     assert_same Master::Fix::Kernel::ConvergenceAdapter::Lifecycle, Master::Fix::FixLoop::Lifecycle
     assert_same kernel.lifecycle_journal, loop.instance_variable_get(:@run_journal)
     assert_same kernel, loop.instance_variable_get(:@pass_runner).instance_variable_get(:@kernel)
+
+    # Stub only the pass implementation; exercise the public entry point and
+    # Kernel's real lock/receipt/journal boundary.
+    loop.define_singleton_method(:run_unlocked) do |_target, **_options|
+      @last_terminal_state = :done
+      Master::Result.ok("DONE: controlled adapter receipt")
+    end
+    result = loop.run(@root, max_passes: 1, budget_seconds: 30, incremental: false, requested: true)
+
+    assert result.ok?, result.message.to_s
+    assert_same kernel, loop.kernel, "a run must not replace its lifecycle owner"
+    assert_same kernel.lifecycle_journal, loop.instance_variable_get(:@run_journal)
+    events = kernel.verify_log!
+    started = events.find { |row| row["kind"] == "coordinator_started" }
+    terminal = events.find do |row|
+      row["kind"] == "coordinator_terminal" && row["run_id"] == started.fetch("run_id")
+    end
+    assert_equal "done", terminal.dig("payload", "state")
+    assert_equal "ok", terminal.dig("payload", "result")
   end
 
   def test_convergence_accepts_non_finite_baseline_without_coercion_crash
