@@ -1,0 +1,94 @@
+/* Felles bevegelses-CSS: ordmasker, parallaks, marquee, markør (brukes av motion.tsx) */
+
+/* Ordmasker */
+.wr-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+.wr-word {
+  display: inline-block;
+  will-change: transform;
+}
+
+/* Parallaks-ramme: bildet er 112 % høyt og puster i rammen */
+.pl-frame {
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  margin: 0;
+}
+.pl-inner {
+  height: 114%;
+  margin-top: -7%;
+}
+.pl-inner img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Marquee */
+.mq {
+  overflow: hidden;
+  white-space: nowrap;
+}
+.mq-row {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  will-change: transform;
+}
+.mq-anim {
+  animation-name: mq-scroll;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes mq-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Markør (kun pekerenheter; respekterer reduced motion via komponenten) */
+.cur-dot,
+.cur-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  border-radius: 50%;
+  display: none;
+}
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .cur-dot,
+  .cur-ring {
+    display: block;
+  }
+}
+.cur-dot {
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  background: var(--cur, #1e322d);
+}
+.cur-ring {
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border: 1px solid var(--cur, #1e322d);
+  opacity: 0.4;
+  transition: opacity 0.25s ease, scale 0.25s ease;
+}
+.cur-ring.cur-hot {
+  opacity: 0.9;
+  scale: 1.35;
+}
+

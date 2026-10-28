@@ -478,3 +478,41 @@ archived_subsystems:
   multimedia_tts:
     recovery_source: MASTER/lib/voice/
     notes: Absorbed — MASTER voice/TTS is canonical; legacy operator scripts retired.
+
+# Statiske merkevareeksporter (ikke-Rails) — RAILS/__other.
+# Statuse reglene gjelder som for appene: status leses av landet kode, ikke
+# av minne. `planned` inntil domene er kjøpt, zonen delegert og første
+# deploy er verifisert med OPENBSD-checks (domain_alignment, deploy_smoke).
+static_exports:
+  sommerseth:
+    title: Sommerseth Eiendom
+    domain: sommerseth.no            # planlagt — Domeneshop, ikke kjøpt
+    brand:
+      category: family_rental
+      promise: "Utleie med omsorg."
+      position: "Familieeid utleievirksomhet i Fyllingsdalen — hjem folk trives i."
+      voice: [warm, local, honest, unrushed]
+      visual_character: [warm_paper, fjord_green_ink, amber_signal, serif_display, instrument_serif]
+    port: 38191
+    stack_now: Next.js 16, statisk eksport (out/), Lenis + framer-motion
+    deploy_root: RAILS/__other/sommerseth
+    deploy_script: null              # statisk: cp -r out/* /var/www/sommerseth/
+    served_by: httpd (loopback 38191) bak relayd-TLS
+    public: true
+    status: planned
+  alfa:
+    title: Alfa Bergen
+    domain: alfabergen.no            # planlagt — Domeneshop, ikke kjøpt
+    brand:
+      category: property_operations
+      promise: "Fra flytting til forvaltning."
+      position: "Familieeid eiendomsdrift i Bergen siden 2006 — flytting, forvaltning, drift, vedlikehold."
+      voice: [precise, authoritative, understated, experienced]
+      visual_character: [cool_paper, ink_blue, brass_signal, grotesk_caps, blueprint_hairlines]
+    port: 38192
+    stack_now: Next.js 16, statisk eksport (out/), Lenis + framer-motion
+    deploy_root: RAILS/__other/alfa
+    deploy_script: null              # statisk: cp -r out/* /var/www/alfa/
+    served_by: httpd (loopback 38192) bak relayd-TLS
+    public: true
+    status: planned

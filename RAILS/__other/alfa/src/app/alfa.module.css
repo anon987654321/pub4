@@ -1,0 +1,475 @@
+/* Alfa Bergen — arkitektonisk minimalisme
+   kaldt papir #F2F4F6 · blekk #14212E · signal (messing) #A4762F
+   skarpe hjørner · hårsbredder · mono-etiketter */
+
+.page {
+  --paper: #f2f4f6;
+  --ink: #14212e;
+  --muted: #55636f;
+  --signal: #a4762f;
+  --line: rgba(20, 33, 46, 0.16);
+  --cur: #14212e;
+
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 16px;
+  line-height: 1.6;
+  position: relative;
+}
+
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .page,
+  .page a,
+  .page button {
+    cursor: none;
+  }
+}
+
+.page ::selection {
+  background: var(--signal);
+  color: var(--paper);
+}
+
+.page img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.82) contrast(1.04);
+}
+
+/* Blåkoppenes sidehårsbredder */
+.edgeL,
+.edgeR {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(20, 33, 46, 0.09);
+  z-index: 15;
+}
+
+.edgeL {
+  left: clamp(0.5rem, 1.2vw, 1.25rem);
+}
+
+.edgeR {
+  right: clamp(0.5rem, 1.2vw, 1.25rem);
+}
+
+/* ——— Nav (mono, offisiell) ——— */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1rem clamp(1.5rem, 5vw, 4.5rem);
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: inherit;
+  text-decoration: none;
+  font-family: var(--font-display), Arial, sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 2.5vw, 2.2rem);
+}
+
+.links a {
+  color: inherit;
+  text-decoration: none;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  position: relative;
+}
+
+.links a:not(.cta)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: -4px;
+  height: 2px;
+  background: var(--signal);
+  transition: right 0.25s ease;
+}
+
+.links a:not(.cta):hover::after {
+  right: 0;
+}
+
+.cta {
+  border: 1.5px solid var(--ink);
+  padding: 0.5rem 1.15rem;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+.cta:hover {
+  background: var(--signal);
+  border-color: var(--signal);
+  color: var(--paper);
+}
+
+.page a:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 3px;
+}
+
+/* ——— Hero ——— */
+.hero {
+  padding: clamp(4rem, 10vw, 8.5rem) clamp(1.5rem, 5vw, 4.5rem)
+    clamp(2.5rem, 5vw, 4rem);
+  max-width: 80rem;
+}
+
+.kicker {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 1.6rem;
+}
+
+.kicker::before {
+  content: "";
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--signal);
+  margin-right: 0.7rem;
+  vertical-align: 1px;
+}
+
+.display {
+  font-family: var(--font-display), Arial, sans-serif;
+  font-weight: 700;
+  font-size: clamp(2.8rem, 7.4vw, 6.8rem);
+  line-height: 1;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+  margin: 0 0 1.8rem;
+}
+
+.display em,
+.h2 em,
+.display2 em {
+  font-style: normal;
+  color: var(--signal);
+}
+
+.lead {
+  font-size: clamp(1rem, 1.4vw, 1.2rem);
+  color: var(--muted);
+  max-width: 36em;
+  margin: 0 0 2.2rem;
+}
+
+.heroCtas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.1rem;
+  align-items: center;
+}
+
+.primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--ink);
+  color: var(--paper);
+  text-decoration: none;
+  padding: 0.85rem 1.6rem;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.primary:hover {
+  background: var(--signal);
+  transform: translateY(-1px);
+}
+
+.quiet {
+  color: inherit;
+  text-decoration: none;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--signal);
+  padding-bottom: 3px;
+}
+
+/* ——— Bilder ——— */
+.heroFig {
+  height: min(64vh, 42rem);
+  border-block: 1px solid var(--line);
+}
+
+.metaRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem clamp(1.5rem, 5vw, 4.5rem);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+
+/* ——— Arbeidsfelt (marquee) ——— */
+.strip {
+  padding: 1.1rem 0;
+  font-family: var(--font-mono), monospace;
+  font-size: clamp(0.8rem, 1.4vw, 1rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--line);
+}
+
+.stripItem {
+  display: inline-flex;
+  align-items: center;
+}
+
+.stripItem i {
+  font-style: normal;
+  color: var(--signal);
+  padding-inline: 2.2rem;
+}
+
+/* ——— Sekjoner ——— */
+.section {
+  padding: clamp(4rem, 9vw, 8rem) clamp(1.5rem, 5vw, 4.5rem);
+  border-bottom: 1px solid var(--line);
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  gap: 1.4rem;
+  margin-bottom: clamp(2rem, 4vw, 3.4rem);
+}
+
+.no {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.85rem;
+  color: var(--signal);
+  letter-spacing: 0.1em;
+}
+
+.h2 {
+  font-family: var(--font-display), Arial, sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.9rem, 4vw, 3.4rem);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.twoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+}
+
+.twoCol p {
+  color: var(--muted);
+  max-width: 34em;
+  margin: 0 0 1.1rem;
+}
+
+.colFig {
+  margin: 0;
+}
+
+.colFig img {
+  aspect-ratio: 16 / 11;
+}
+
+.colFig figcaption {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: 0.65rem;
+}
+
+/* ——— Tjenesterader ——— */
+.rows {
+  border-top: 1px solid var(--line);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 4rem 1.2fr 1.6fr 2.4rem;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 1.7rem 0;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: inherit;
+  transition: padding-left 0.25s ease;
+}
+
+.row:hover {
+  padding-left: 0.8rem;
+}
+
+.rowN {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.78rem;
+  color: var(--signal);
+  letter-spacing: 0.1em;
+}
+
+.rowT {
+  font-family: var(--font-display), Arial, sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.15rem, 1.9vw, 1.55rem);
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.rowD {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.rowA {
+  justify-self: end;
+  transition: transform 0.25s ease;
+}
+
+.row:hover .rowA {
+  transform: translateX(8px);
+  color: var(--signal);
+}
+
+/* ——— Kontakt ——— */
+.contact {
+  padding: clamp(4.5rem, 10vw, 9rem) clamp(1.5rem, 5vw, 4.5rem);
+}
+
+.display2 {
+  font-family: var(--font-display), Arial, sans-serif;
+  font-weight: 700;
+  font-size: clamp(2.6rem, 7vw, 6.2rem);
+  line-height: 1;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+  margin: 0 0 2.2rem;
+}
+
+.contactRows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-family: var(--font-mono), monospace;
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
+}
+
+.contactRows a {
+  color: inherit;
+  text-decoration: none;
+  width: fit-content;
+  border-bottom: 2px solid var(--signal);
+  padding-bottom: 3px;
+}
+
+.contactRows a:hover {
+  color: var(--signal);
+}
+
+.contactNote {
+  color: var(--muted);
+  margin-top: 1.8rem;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+}
+
+/* ——— Footer ——— */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem clamp(1.5rem, 5vw, 4.5rem);
+  border-top: 1px solid var(--line);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sister {
+  color: inherit;
+  text-decoration: none;
+}
+
+.sister:hover {
+  color: var(--signal);
+}
+
+/* ——— Responsivt ——— */
+@media (max-width: 900px) {
+  .twoCol {
+    grid-template-columns: 1fr;
+  }
+  .colFig {
+    order: -1;
+  }
+}
+
+@media (max-width: 680px) {
+  .links a:not(.cta) {
+    display: none;
+  }
+  .row {
+    grid-template-columns: 3rem 1fr 2rem;
+  }
+  .rowD {
+    display: none;
+  }
+  .metaRow span:nth-child(2) {
+    display: none;
+  }
+  .footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .stripItem i {
+    padding-inline: 1.2rem;
+  }
+}
