@@ -807,15 +807,24 @@ when "chain"
 
     puts "replicate: stage #{index + 1}/#{total} #{stage.name} — #{stage.model}"
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    urls = Array(client.predict(stage.model, input, timeout: stage.timeout || Replicate::Chain::DEFAULT_TIMEOUT)).flatten.compact
+    prediction = client.run(
+      stage.model, input, timeout: stage.timeout || Replicate::Chain::DEFAULT_TIMEOUT
+    )
     duration = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).round(2)
+    urls = Array(prediction["output"]).flatten.compact
     raise Replicate::Chain::StageFailed, "stage #{stage.name} returned no output" if urls.empty?
 
     FileUtils.mkdir_p(File.dirname(target))
     client.download_url(urls.first, target)
     digest, = cache_blob(target, blob_cache_dir)
-    trace = { chain: { name: chain[:name], sha256: chain[:sha256], stage: stage.name, index: index + 1 },
-              duration_s: duration }
+    trace = {
+      chain: { name: chain[:name], sha256: chain[:sha256], stage: stage.name, index: index + 1 },
+      duration_s: duration,
+      prediction: {
+        id: prediction["id"], version: prediction["version"],
+        status: prediction["status"], metrics: prediction["metrics"]
+      }.compact
+    }
     sidecar = write_provenance(target, prompt, compiled, negative, stage_options, stage_seed, digest, trace)
     append_gallery_manifest(sidecar, alt_text_for(prompt, stage_options))
     puts "replicate: stage #{index + 1} wrote #{target}"
@@ -896,7 +905,8 @@ when "generate"
       next nil
     end
 
-    urls = Array(client.predict(options[:model], input)).flatten.compact
+    prediction = client.run(options[:model], input)
+    urls = Array(prediction["output"]).flatten.compact
     abort "warn: replicate returned no output" if urls.empty?
 
     target = if options[:output]
@@ -911,7 +921,14 @@ when "generate"
     FileUtils.mkdir_p(File.dirname(target))
     client.download_url(urls.first, target)
     digest, = cache_blob(target, blob_cache_dir)
-    sidecar = write_provenance(target, options[:prompt], varied, negative_prompt, options, seed, digest)
+    provider_run = {
+      id: prediction["id"], version: prediction["version"],
+      status: prediction["status"], metrics: prediction["metrics"]
+    }.compact
+    sidecar = write_provenance(
+      target, options[:prompt], varied, negative_prompt, options, seed, digest,
+      prediction: provider_run
+    )
     append_gallery_manifest(sidecar, alt_text_for(options[:prompt], options, batch_background(index, options[:batch])))
     maybe_handoff_postpro(target, options[:postpro])
     puts "ok: replicate generated #{target}"
