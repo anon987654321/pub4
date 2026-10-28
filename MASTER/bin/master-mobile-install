@@ -1,19 +1,38 @@
 #!/usr/bin/env sh
 # Installs MASTER on a phone running Termux, from nothing.
-#
-# This is POSIX sh, the one script here that is not Ruby, because it runs
-# before Ruby exists: a fresh Termux has sh and pkg and nothing else.
-# Everything after the first pkg install is bin/master-mobile's job.
-#
-#   curl -fsSL https://raw.githubusercontent.com/anon987654321/pub4/main/MASTER/bin/master-mobile-install | sh
+# This is POSIX sh because it runs before Ruby exists.
 set -eu
 
 repo="${MASTER_REPO_URL:-https://github.com/anon987654321/pub4.git}"
 dir="${MASTER_INSTALL_DIR:-$HOME/pub4}"
 branch="${MASTER_BRANCH:-main}"
+expected_repo="https://github.com/anon987654321/pub4.git"
 
-command -v pkg >/dev/null 2>&1 || { echo "mobile0: no pkg here; install Termux from F-Droid first" >&2; exit 1; }
+fail() { printf 'mobile0: BLOCKED: %s\n' "$*" >&2; exit 1; }
 
+command -v pkg >/dev/null 2>&1 || fail "Run this inside Termux, installed from a maintained source."
+[ "${PREFIX:-}" = "/data/data/com.termux/files/usr" ] || [ "${PREFIX:-}" = "/data/user/0/com.termux/files/usr" ] ||
+  fail "Unexpected Termux PREFIX; refusing to install into an unverified environment."
+[ "$(id -u)" != "0" ] || fail "Refusing to install as root."
+[ "$repo" = "$expected_repo" ] || fail "Only the canonical HTTPS repository is allowed: $expected_repo"
+[ -n "$branch" ] || fail "MASTER_BRANCH must not be empty."
+case "$dir" in "$HOME"/*) ;; *) fail "Install directory must be below Termux HOME." ;; esac
+[ "$dir" != "$HOME" ] || fail "Install directory cannot be HOME itself."
+[ ! -L "$dir" ] || fail "Install directory must not be a symbolic link."
+
+if [ -e "$dir" ] && [ ! -d "$dir/.git" ]; then
+  fail "$dir exists but is not a Git checkout; move it aside and retry."
+fi
+
+if [ -d "$dir/.git" ]; then
+  actual_origin="$(git -C "$dir" remote get-url origin 2>/dev/null || true)"
+  case "$actual_origin" in
+    "$expected_repo"|"https://github.com/anon987654321/pub4"|"git@github.com:anon987654321/pub4.git"|"ssh://git@github.com/anon987654321/pub4.git") ;;
+    *) fail "Existing checkout origin does not match pub4 (found ${actual_origin:-<none>})." ;;
+  esac
+fi
+
+printf 'mobile0: preflight PASS; updating Termux packages\n'
 pkg update -y
 pkg install -y ruby git clang make libyaml openssl
 
@@ -23,10 +42,13 @@ else
   git clone --depth 1 --branch "$branch" "$repo" "$dir"
 fi
 
-# Falcon serves the phone face. It is a gem of the phone's, not of MASTER's
-# desktop bundle, so it installs into the phone's own Ruby.
-gem install --no-document falcon
+# Recheck the checkout after network operations before executing project code.
+actual_origin="$(git -C "$dir" remote get-url origin 2>/dev/null || true)"
+[ "$actual_origin" = "$expected_repo" ] || fail "Checkout origin changed or is not canonical after clone/update."
+git -C "$dir" rev-parse --verify HEAD >/dev/null 2>&1 || fail "Checkout has no verifiable commit."
+git -C "$dir" diff --quiet && git -C "$dir" diff --cached --quiet || fail "Checkout has local modifications; refusing to execute it."
 
+gem install --no-document falcon
 cd "$dir/MASTER"
-bin/master-mobile doctor || true
-echo "mobile0: installed. Run $dir/MASTER/bin/master-mobile bridge, then open http://127.0.0.1:8765/face"
+ruby bin/master-mobile doctor
+printf 'mobile0: security and readiness checks PASS. Run %s/MASTER/bin/master-mobile bridge, then open http://127.0.0.1:8765/face\n' "$dir"
