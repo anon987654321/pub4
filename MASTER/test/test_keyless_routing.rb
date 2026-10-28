@@ -140,13 +140,29 @@ class TestKeylessRouting < Minitest::Test
     end
     router.define_singleton_method(:ollama_size) { |_name| 0 }
 
+    cloud = "ollama:glm-5.3-flash:cloud"
     assert_equal ["ollama:gemma3:4b"], router.local_models
-    assert_equal "ollama cloud models are unsupported", router.unreachable_reason("ollama:glm-5.3-flash:cloud")
-    refute router.reachable?("ollama:glm-5.3-flash:cloud")
+    assert_cloud_rejected(router, cloud)
     refute_includes router.fallback_chain(task_type: :exploration), "ollama:qwen2.5-coder:3b"
     refute_includes router.fallback_chain(task_type: :exploration), "ollama:granite4.2:3b"
     ollama_fallbacks = router.fallback_chain(task_type: :exploration).grep(/\Aollama[:\/]/).uniq
     assert_equal ["ollama:gemma3:4b"], ollama_fallbacks
+  end
+
+  CLOUD_UNSUPPORTED = "ollama cloud models are unsupported"
+
+  # The code rule on its own, then whatever data/lanes.yml hand-kills ahead of
+  # it: a dead entry names itself, so the reason follows the list, not a name here.
+  def assert_cloud_rejected(router, cloud)
+    Master::Io::LaneQuota.stub(:manual_dead, []) do
+      assert_equal CLOUD_UNSUPPORTED, router.unreachable_reason(cloud)
+    end
+
+    dead = Master::Io::LaneQuota.manual_dead(Master.load_yaml(Master::Io::LaneQuota::DATA))
+    hand_killed = dead.find { |lane| cloud.start_with?(lane) }
+    expected = hand_killed ? "#{hand_killed}: dead by hand (data/lanes.yml dead:)" : CLOUD_UNSUPPORTED
+    assert_equal expected, router.unreachable_reason(cloud)
+    refute router.reachable?(cloud)
   end
 
   def test_ollama_switched_off_offers_no_ollama_lane_while_the_daemon_answers

@@ -6,4 +6,3 @@ schema: 1
 dead:
   - codex-cli
   - gemini
-  - ollama:glm
