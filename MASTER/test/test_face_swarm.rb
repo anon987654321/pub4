@@ -234,6 +234,22 @@ class TestFaceSwarm < Minitest::Test
     ENV["MASTER_FACE_SWARM_BUDGET"] = original_budget
   end
 
+  def test_depth_rank_toggle_flattens_glyph_density_but_keeps_depth_tones
+    settings = deep_config
+    settings["size_from_depth"] = false
+    frame_class = Struct.new(:chars, :depth)
+    frame = frame_class.new(Array.new(15) { Array.new(31, " ") }, Array.new(15) { Array.new(31, 1) })
+    far = still_particle(x: -0.5, y: 0.05, z: -0.8, depth_rank: 0.1)
+    near = still_particle(x: 0.5, y: 0.05, z: 0.8, depth_rank: 0.9)
+
+    Swarm.overlay!(frame, [far, near], config: settings)
+
+    assert_equal Swarm.config.fetch("glyph_ramp")[3], frame.chars[7][8]
+    assert_equal Swarm.config.fetch("glyph_ramp")[3], frame.chars[7][21]
+    assert_equal 0, frame.depth[7][8]
+    assert_equal 2, frame.depth[7][21]
+  end
+
   def test_cli_projection_is_bounded_and_near_particles_win_collisions
     frame_class = Struct.new(:chars, :depth)
     frame = frame_class.new(Array.new(15) { Array.new(31, " ") }, Array.new(15) { Array.new(31, 1) })
