@@ -42,12 +42,12 @@ module Master
           @execution_mutex.synchronize do
             coordinator_run_id = nil
             previous_cancellation = adapter.instance_variable_get(:@cancellation)
-            previous_run_id = Fiber[:master_fix_kernel_run_id]
+            previous_run_id = @current_run_id
             begin
               adapter.instance_variable_set(:@cancellation, cancellation)
               cancellation.activate! if cancellation&.respond_to?(:activate!)
               coordinator_run_id = begin_coordinated_run(target:, max_passes:, budget_seconds:, requested:)
-              Fiber[:master_fix_kernel_run_id] = coordinator_run_id
+              @current_run_id = coordinator_run_id
               result = adapter.run_unlocked(
                 target, max_passes:, budget_seconds:, incremental:, requested:
               )
@@ -66,7 +66,7 @@ module Master
               end
               raise
             ensure
-              Fiber[:master_fix_kernel_run_id] = previous_run_id
+              @current_run_id = previous_run_id
               adapter.instance_variable_set(:@cancellation, previous_cancellation)
             end
           end
@@ -108,7 +108,7 @@ module Master
           counts = (breakdown || {}).to_h.to_h { |key, value| [key.to_s, Integer(value)] }
           append_event("repair_pass", {
             law: law.to_s, status: status.to_s, fixed: Integer(fixed), breakdown: counts
-          }, run_id: Fiber[:master_fix_kernel_run_id])
+          }, run_id: @current_run_id)
         end
       end
     end
