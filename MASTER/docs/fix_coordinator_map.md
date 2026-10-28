@@ -45,7 +45,9 @@ them.
   the legacy source adapter as `Kernel::ConvergenceAdapter`, with `FixLoop` retained
   as a compatibility constant for existing call sites.
 - `FixLoop#run` delegates the outer execution lock and coordinator start/terminal
-  receipts to Kernel. Repair summaries correlate to the coordinator run id.
+  receipts to Kernel. Repair summaries correlate to the coordinator run id; a
+  restart marks same-host coordinator starts with a demonstrably dead writer as
+  `unknown_outcome`, while leaving possibly-live peer processes untouched.
 - The durable run journal implementation is `Kernel::LifecycleJournal`; the old
   `RunJournal` constant points to the same class. Kernel and `Operator::FixStatus`
   use the shared accessor, preserving the existing on-disk format.
@@ -55,8 +57,9 @@ them.
 - `test/test_fix_kernel.rb` and `test/test_fix_convergence.rb` exercise source
   ownership and receipts. `test/test_fix_interruption_restart.rb` starts a separate
   Ruby process, persists a partial transaction, kills the writer, then exercises
-  FixLoop's real startup-recovery sweep in a second process and asserts byte-exact
-  rollback plus durable-run resumption. These tests are authored but unexecuted here.
+  FixLoop's real startup-recovery sweep in a second process, checks byte-exact
+  rollback and durable-run resumption, and verifies the abandoned Kernel receipt
+  becomes `unknown_outcome`. These tests are authored but unexecuted here.
 
 The structural move is landed with compatibility aliases retained. The remaining
 gates are runtime proof on pinned Ruby 4.0.5, Mission survival, journal-loss
