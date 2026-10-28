@@ -66,6 +66,29 @@ class TraceLogAppendJsonlTest < Minitest::Test
     end
   end
 
+  def test_event_stream_persists_private_fields_as_digests
+    Dir.mktmpdir("trace-event-private-payload-") do |root|
+      event_log = Master::Trace::Log::Event.new(root:)
+      event_log.append(
+        "fixture",
+        query: "https://internal.invalid/?token=secret",
+        metadata: { authorization: "Bearer private" },
+        worker: 7
+      )
+
+      path = File.join(root, "runtime", "events", "activity.jsonl")
+      line = File.readlines(path).last
+      persisted = JSON.parse(line)
+      payload = persisted.fetch("payload")
+
+      refute_includes line, "token=secret"
+      refute_includes line, "Bearer private"
+      assert_equal 7, payload.fetch("worker")
+      assert_equal 64, payload.fetch("query_digest").length
+      assert_equal 64, payload.fetch("metadata_digest").length
+    end
+  end
+
   def test_failed_rotation_uses_one_bounded_reclaim_before_append
     Dir.mktmpdir("trace-jsonl-reclaim-") do |dir|
       path = File.join(dir, "events.ndjson")
