@@ -7,7 +7,7 @@ Scope: source and history in `anon987654321/pub`, `pub2`, `pub3`, and `pub4`, se
 - Preserve historic creative language and workflows as design provenance.
 - Keep the current measured film model, recipe dispatcher, seeded random-chain engine, provenance sidecars, and vocabulary checks as the runtime source of truth.
 - Restore the legacy effect vocabulary through the compatibility layer, not through a second effect engine.
-- Do not re-add the old video implementation. It was removed for measured performance and test failures; its functional intent remains a concrete future requirement below.
+- Do not re-add the old video implementation verbatim. Its functional intent is now recovered in `motion.rb` using in-process frame grading, raw-frame streaming, atomic output, deterministic grain and explicit budgets.
 - Keep external dependency installation opt-in. Older startup bootstraps attempted to install gems and system packages from ordinary execution; the current entrypoint must remain observational when loaded or checked.
 
 ## Archaeological trail
@@ -15,7 +15,7 @@ Scope: source and history in `anon987654321/pub`, `pub2`, `pub3`, and `pub4`, se
 ### `pub`: v12.9 / v13.3.14 — analog and cinematic post-processing
 
 Sources:
-- [postpro.rb](https://github.com/anon987654321/pub/blob/a3185f4ec6e6a27e35eeee6718ae3afa11bf49da/postpro/postpro.rb)
+- [postpro.rb](https://github.com/anon987654321/pub/blob/main/postpro/postpro.rb)
 - [README.md](https://github.com/anon987654321/pub/blob/a3185f4ec6e6a27e35eeee6718ae3afa11bf49da/postpro/README.md)
 - [README2.md](https://github.com/anon987654321/pub/blob/a3185f4ec6e6a27e35eeee6718ae3afa11bf49da/postpro/README2.md)
 - [IMPLEMENTATION_COMPLETE.md](https://github.com/anon987654321/pub/blob/a3185f4ec6e6a27e35eeee6718ae3afa11bf49da/postpro/IMPLEMENTATION_COMPLETE.md)
@@ -32,7 +32,7 @@ Historical wording worth retaining as provenance:
 ### `pub2`: v14.2.0 and duplicate roots
 
 Sources:
-- [postpro/postpro.rb](https://github.com/anon987654321/pub2/blob/ad05242c97fff1b01450434974aad628d7de8628/postpro/postpro.rb)
+- [postpro/postpro.rb](https://github.com/anon987654321/pub2/blob/main/postpro/postpro.rb)
 - [postpro/postpro_README.md](https://github.com/anon987654321/pub2/blob/ad05242c97fff1b01450434974aad628d7de8628/postpro/postpro_README.md)
 - [multimedia/postpro.rb](https://github.com/anon987654321/pub2/blob/ad05242c97fff1b01450434974aad628d7de8628/multimedia/postpro.rb)
 - [bootstrap commit](https://github.com/anon987654321/pub2/commit/08ce8802f9374ed62e9d1be61c664d2bf6b53bb8)
@@ -42,7 +42,7 @@ The code and README existed under both `postpro/` and `multimedia/`. The v14 lin
 ### `pub3`: multimedia consolidation
 
 Sources:
-- [multimedia/postpro.rb](https://github.com/anon987654321/pub3/blob/835f9199d605b6a6ae1f32cd207919c115a06b47/multimedia/postpro.rb)
+- [multimedia/postpro.rb](https://github.com/anon987654321/pub3/blob/main/multimedia/postpro.rb)
 - [multimedia/postpro/README.md](https://github.com/anon987654321/pub3/blob/835f9199d605b6a6ae1f32cd207919c115a06b47/multimedia/postpro/README.md)
 - [move-to-root commit](https://github.com/anon987654321/pub3/commit/b0f76f553de9a6056b07ed4b987acf49407fc11f)
 
@@ -73,10 +73,10 @@ The new engine preserves the original user intent but intentionally changes the 
 | Retry/error recovery, logs and statistics | Current per-variation failures and structured startup/output diagnostics avoid hiding a partial batch failure. Do not revive automatic dependency installation as part of retries. |
 | Camera profiles and stock-specific grain | Evolved to camera-profile data, measured stock tables, calibrated grain and `--fit-grain`; use those as the authority. |
 | Repligen handoff and post-generation film look | Current Replicate calls grade by default (portrait by default); `--no-postpro` is the intentional escape hatch. See [Replicate archaeology](../replicate/ARCHAEOLOGY.md). |
-| Video/frame-sequence grading | Not present on main. The previous implementation was removed after measurement showed it launched a new Ruby interpreter for every frame (about 0.46 seconds of boot per frame), making one minute of 1080p roughly an hour despite its six-minute estimate; two of eight tests timed out. Do not re-add that path. |
+| Video/frame-sequence grading | Recovered as `motion.rb` and `--video`: one Ruby process, ffmpeg raw-frame streaming, in-process Postpro, atomic final MP4, deterministic moving/held grain, and frame/pixel/time/temp-byte budgets. Constant-rate MP4 only; variable-rate inputs and mismatched frame counts are refused. The old per-frame subprocess path remains retired. |
 | The old `apply_effects` / `apply_effects_from_recipe` internals | Not restored: the shared recipe and grade dispatchers replace them. Keeping both would create two sources of truth. |
 
-## The video experiment and why it remains a requirement, not resurrected code
+## The video experiment, its removal, and the recovered in-process path
 
 The implementation commit [9ac4b113](https://github.com/anon987654321/pub4/commit/9ac4b11332762333da58f8ec4358eec7cbbcb1d4) introduced `Postpro::Motion`, CLI `--video`, and eight tests. It captured the right product rules:
 
@@ -88,7 +88,7 @@ The implementation commit [9ac4b113](https://github.com/anon987654321/pub4/commi
 
 The removal commit [ec2cdf45](https://github.com/anon987654321/pub4/commit/ec2cdf458f6f571692fea1ea97e8335881b56135) explains why that implementation is not to be restored verbatim: it launched a fresh Ruby process per frame; measured render time was about an hour per minute of 1080p rather than the promised six minutes, and two tests timed out. Its own estimate was therefore not trustworthy.
 
-A replacement is eligible only when it grades frames in-process (or amortises one interpreter across the frame sequence), enforces a measured per-minute/frame budget, bounds temporary storage, preserves/validates audio and frame timing, uses deterministic temporal state, writes atomically without clobbering the input, and has end-to-end tests that do real work and visibly skip when ffmpeg/ffprobe are unavailable. Until those conditions are met, the honest supported contract is stills only.
+The replacement on this branch implements the central correction: ffmpeg streams packed RGB frames through one process, each frame is graded by the live Postpro methods in memory, and only compressed graded frames are spooled under a cumulative byte cap. It estimates work before decoding, enforces maximum frames/pixels/runtime/storage, refuses frame-rate ambiguity and metadata/decoded-frame count mismatches, copies audio without re-encoding, writes to a same-directory temporary MP4, and renames only after successful assembly. Tests cover fractional rates, seed modes, dimensions, audio, repeatability, held-vs-moving output and preservation of a pre-existing output on failure. The GitHub-only edit environment did not execute those tests; `cd STUDIO && rake test:motion` and the full `cd STUDIO && rake check test` remain required evidence before describing this path as verified on a real host.
 
 ## Verification boundary
 
