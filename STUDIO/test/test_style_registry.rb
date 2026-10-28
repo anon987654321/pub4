@@ -7,7 +7,7 @@ class StudioStyleRegistryTest < Minitest::Test
   def entry
     {
       "style_id" => "blue-hour", "version" => "1.0.0",
-      "origin_class" => "hand_authored", "modality" => "audio",
+      "origin_class" => "hand_authored", "reference_hashes" => [], "modality" => "audio",
       "identity_locks" => ["soft_late_groove"], "controlled_variables" => ["tempo"],
       "scope_attributes" => { "groove_rhythm" => { "source" => nil, "strength" => 0.8 } },
       "negative_list" => ["alarm-like percussion"], "temporal_variation" => "none"
