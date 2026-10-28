@@ -30,8 +30,10 @@ Production boot in `lib/builder/ai_boot.rb` creates one `Fix::Kernel`.
 The canonical class `Kernel::ConvergenceAdapter` is exposed to legacy callers as
 `FixLoop`; its `run` delegates the outer execution lock and coordinator
 lifecycle to Kernel. Kernel emits hash-chained start/terminal receipts with repair
-outcomes correlated by run id. This is now a production writer, not merely a
-replay reader.
+outcomes correlated by run id. If a process dies before terminalization, the
+next same-host run records `unknown_outcome` only after confirming the writer
+is gone; a possibly-live peer is not declared finished. This is now a production
+writer, not merely a replay reader.
 
 The durable journal implementation is `Kernel::LifecycleJournal`, with the old
 `RunJournal` constant retained as an alias. Kernel owns the single
