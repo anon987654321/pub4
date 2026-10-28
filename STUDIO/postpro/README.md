@@ -9,8 +9,9 @@ result.** A filter is a lookup table with an opinion. This is an emulsion: cryst
 size and a statistics, a base that reflects light back into the layer it came through, a
 curve that spends contrast instead of adding it, and a print stock after that. It is the house grade for stills and bounded, constant-rate MP4 clips. Its entry point is
 `STUDIO/postpro/postpro.rb`; the video path uses the same grade in-process under explicit frame,
-pixel, temporary-storage and runtime budgets. Variable-rate inputs are refused rather than
-silently retimed. See [the video archaeology record](./ARCHAEOLOGY.md).
+pixel, temporary-storage and runtime budgets. Variable-frame-rate and display-rotated inputs are
+refused rather than silently retimed; odd dimensions are rejected rather than cropped or resized.
+See [the video archaeology record](./ARCHAEOLOGY.md).
 
 Give it `--input`, `--output` and `--preset` and it grades one image headless. Give it bare
 paths and each is a subject: an image goes through ten random takes, a directory gives a
@@ -25,11 +26,11 @@ corresponding effect is implemented or enabled on this machine.
 The code spans several files. The file `postpro.rb` is the entry point: it boots, runs the
 early modes and loads `lib/`, whose files hold the grade, the presets, the film tables and the
 command line, one subject per file in the load order `POSTPRO_LIB` names. Video is split across
-`motion.rb` (the grade contract and CLI) and `motion_process.rb` (bounded frame IO and child processes),
-so neither file becomes another entrypoint monolith. `--vocab-check` reads
-`postpro.rb`, `uncanny.rb`, `motion.rb`, `motion_process.rb` and every `lib/` file as one source. The file `legacy_effects.rb` holds the
-creative effects recovered from the older `pub/postpro` line, and `LEGACY_RESTORE.md` records
-which of them already had current equivalents. The file `dilla_analog.rb` translates mechanisms
+`motion.rb` (the grade contract and CLI) and `motion_process.rb` (bounded frame IO and child
+processes), so neither file becomes another entrypoint monolith. `--vocab-check` reads
+`postpro.rb`, `uncanny.rb`, `motion.rb`, `motion_process.rb` and every `lib/` file as one source.
+`legacy_effects.rb` holds creative effects recovered from the older `pub/postpro` line, and
+`LEGACY_RESTORE.md` records which of them already had current equivalents. The file `dilla_analog.rb` translates mechanisms
 from dilla's analog chains into still images, so that temporal wow and flutter become spatial
 registration error. The file `uncanny.rb` measures whether a picture looks rendered,
 `rescue.rb` diagnoses a bad photograph, `frame_set.rb` reads a folder as a set, and `depth.rb`
