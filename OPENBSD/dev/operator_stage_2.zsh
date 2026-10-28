@@ -312,7 +312,6 @@ stage_2() {
   cp "${CONFIG_ROOT}/etc/rc.d/master" /etc/rc.d/master
   chmod 555 /etc/rc.d/master
   [[ -f $m3dir/data/soul.yml ]] && chmod 0444 "$m3dir/data/soul.yml"
-  [[ -f $m3dir/data/checksums.yml ]] && chmod 0444 "$m3dir/data/checksums.yml"
   rcctl enable master
   rcctl start master
   log INFO "MASTER web UI running on :53187"
