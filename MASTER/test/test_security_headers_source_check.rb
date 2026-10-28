@@ -58,6 +58,71 @@ class SecurityHeadersSourceCheckTest < Minitest::Test
     end
   end
 
+  def test_unsafe_inline_script_source_is_rejected
+    with_source_tree do |root|
+      path = File.join(root, Deploy::SecurityHeadersSourceCheck::SHARED_CSP)
+      source = File.read(path)
+      source = replace_once(
+        source,
+        'policy.script_src :self, "https://link.tradedoubler.com"',
+        "policy.script_src :self, :unsafe_inline"
+      )
+      File.write(path, source)
+
+      result = Deploy::SecurityHeadersSourceCheck.run(root:)
+      assert_includes result.failures.join("\n"), "overly broad script-src"
+    end
+  end
+
+  def test_multiline_script_source_cannot_hide_unsafe_inline
+    with_source_tree do |root|
+      path = File.join(root, Deploy::SecurityHeadersSourceCheck::SHARED_CSP)
+      source = File.read(path)
+      source = replace_once(
+        source,
+        'policy.script_src :self, "https://link.tradedoubler.com"',
+        "policy.script_src(\n      :self,\n      :unsafe_inline\n    )"
+      )
+      File.write(path, source)
+
+      result = Deploy::SecurityHeadersSourceCheck.run(root:)
+      assert_includes result.failures.join("\n"), "overly broad script-src"
+    end
+  end
+
+  def test_script_src_elem_is_checked
+    with_source_tree do |root|
+      path = File.join(root, Deploy::SecurityHeadersSourceCheck::SHARED_CSP)
+      File.open(path, "a") { |file| file.puts "    policy.script_src_elem :unsafe_inline" }
+
+      result = Deploy::SecurityHeadersSourceCheck.run(root:)
+      assert_includes result.failures.join("\n"), "overly broad script-src-elem"
+    end
+  end
+
+  def test_source_reader_refuses_a_symlinked_policy
+    with_source_tree do |root|
+      path = File.join(root, Deploy::SecurityHeadersSourceCheck::SHARED_CSP)
+      target = File.join(root, "external-csp.rb")
+      File.write(target, File.read(path))
+      File.unlink(path)
+      File.symlink(target, path)
+
+      result = Deploy::SecurityHeadersSourceCheck.run(root:)
+      assert_includes result.failures.join("\n"), "refuses non-regular or symlinked source"
+    end
+  end
+
+  def test_source_reader_rejects_invalid_utf8
+    with_source_tree do |root|
+      path = File.join(root, Deploy::SecurityHeadersSourceCheck::SHARED_CSP)
+      File.binwrite(path, [0xFF].pack("C"))
+
+      result = Deploy::SecurityHeadersSourceCheck.run(root:)
+      assert_includes result.failures.join("\n"), "invalid UTF-8"
+    end
+  end
+
   def test_missing_edge_hsts_is_rejected
     with_source_tree do |root|
       path = File.join(root, Deploy::SecurityHeadersSourceCheck::RELAYD)
