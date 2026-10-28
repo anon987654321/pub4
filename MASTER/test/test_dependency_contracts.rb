@@ -44,6 +44,10 @@ class TestDependencyContracts < Minitest::Test
 
     refute_empty pins, "no .ruby-version found — this test would pass having measured nothing"
     assert_equal 1, pins.values.uniq.size, "the pin disagrees with itself: #{pins.inspect}"
+    assert_equal ["4.0.5"], pins.values.uniq, "the repository runtime is pinned to Ruby 4.0.5"
+
+    lock = File.read(File.join(ROOT, "Gemfile.lock"))
+    assert_match(/^  ruby 4\\.0\\.5$/, lock)
   end
 
 end

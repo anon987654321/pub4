@@ -6,6 +6,18 @@ vm23 is a seam in `MASTER/data/operator_seams.yml`. Refusals live under
 "Refused, and why" in `MASTER/AGENTS.md`. An item closes by being deleted in
 the commit that carries its evidence; nothing here records finished work.
 
+## Session note 2026-10-28 (fail-closed hooks and canonical Ruby pin)
+
+- Configured PreToolUse hooks now deny by default on hook failures, and an
+  absent, malformed, symlinked, untrusted or broadly writable hook config refuses
+  effects instead of silently disabling the gate. Explicit `on_fault: allow` is
+  the only fail-open switch. Regression cases cover faults and config errors.
+- Root and MASTER `.ruby-version` are reconciled to Ruby 4.0.5, matching every
+  Rails app pin and MASTER's lockfile declaration. The dependency contract now
+  asserts the exact canonical pin. Runtime tests remain NOT_RUN from GitHub.
+- This commit establishes the implementation and tests; it does not claim their
+  execution or full-suite completion.
+
 ## Session note 2026-10-28 (face-first boot and Dilla bed removal)
 
 - Bare interactive `bin/master` now opens the existing terminal face by default;
@@ -74,8 +86,8 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
   `ai.brgen.no` — enforcement not live. Evidence in
   `docs/evidence/csp_probe_2026-10-28.md`. Seam `csp_enforced_on_vm23` stays
   open until operator sets `PUB4_CSP_ENFORCE=1` on vm23 and re-probes.
-- **A — verification:** full focused suite still needs pinned Ruby ≥ 3.3.8 and
-  `bundle install`. Added `MASTER/bin/verify-focused` to run the TODO list and
+- **A — verification:** full focused suite still needs pinned Ruby 4.0.5 and
+  a successful `bundle install`. Added `MASTER/bin/verify-focused` to run the TODO list and
   report per-file exit codes. Dependency-light FinalCleanup remains
   3/17/0 on Ruby 3.2.3 in this executor.
 
@@ -95,7 +107,7 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
 - Executor constraint: this host is Ruby 3.2.3 / 1.2 GiB RAM. `bundle install`
   fails closed because `opentelemetry-sdk ~> 1.11` requires Ruby >= 3.3. Full
   MASTER suite and `rake test` remain **BLOCKED** here; they need the pinned
-  3.3.8 (or compatible) checkout.
+  4.0.5 checkout (or the explicitly supported OpenBSD runtime lane).
 - Re-ran the dependency-light FinalCleanup harness against current
   `lib/fix/final_cleanup.rb` and the three tests in `test_final_cleanup.rb`:
   **3 runs, 17 assertions, 0 failures, 0 errors, 0 skips** (Ruby 3.2.3). This
@@ -109,9 +121,10 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
 
 ## Session note 2026-10-28
 
-- Root and MASTER Ruby pins now use the available Ruby 3.3.8; MASTER/Gemfile accepts
-  >= 3.2 for constrained environments. Individual deployed app runtimes remain
-  governed by their own stack/lock contracts. This does not claim test results.
+- Historical checkpoint: root and MASTER temporarily used the available Ruby
+  3.3.8 in the constrained executor. The canonical pin is now 4.0.5 as the
+  execution contract requires; see the newer session note above. This does not
+  claim test results.
 - Added the token-owned face swarm under face_interface.swarm, the shared
   Master::Face::Swarm module, CLI frame overlay, and web stipple integration.
   Coverage was added for token reading, deterministic seeding, force direction,
@@ -166,13 +179,8 @@ compatibility alias ahead of the execution-contract gates.
 - [ ] Run the authored recovery gates on the pinned Ruby, preserve receipts,
   then retarget callers to the Kernel-owned names and delete the
   compatibility aliases per the existing execution-contract gate.
-- [ ] One Ruby pin stated once, and it is the owner's call: AGENTS.md and the
-  execution contract name 4.0.5 (the operator's machine), while the
-  .ruby-version files at root and MASTER hold 3.3.8 from the constrained
-  2026-10-28 executors, and MASTER/Gemfile accepts 3.2–4.1. Pick the
-  canonical pin, align the .ruby-version files or the AGENTS.md sentence,
-  and state which lane MASTER/bin/ruby serves; do not guess by editing one
-  side silently.
+- Ruby-pin conflict resolved: root, MASTER and the Rails apps use `4.0.5`; MASTER's
+  Gemfile.lock records the same runtime. The focused runtime tests are still open.
 
 ## Verification run, after the fixes below land
 

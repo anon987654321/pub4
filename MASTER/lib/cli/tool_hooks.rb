@@ -16,8 +16,8 @@ module Master
     #
     # The program reads one JSON object on stdin (hook_event_name, tool_name,
     # tool_input) and answers with its exit status: 0 allows, 2 refuses with
-    # stderr as the reason, anything else is a hook fault. A fault allows and is
-    # logged unless the entry says on_fault: deny, which refuses instead. The
+    # stderr as the reason, anything else is a hook fault. Faults deny by default;
+    # an explicit on_fault: allow is the only opt-in to fail-open behavior. The
     # Fold's verbs map to the names a hook author already knows: exec is Bash,
     # write is Write.
     #
@@ -31,6 +31,7 @@ module Master
 
       TIMEOUT_S = 10
       EVENT = "PreToolUse"
+      CONFIG_REFUSAL = [[nil, [].freeze, true].freeze].freeze
 
       def path
         ENV.fetch("MASTER_HOOKS") { File.join(Dir.home, ".master", "hooks.yml") }
@@ -39,35 +40,50 @@ module Master
       # A hook is a command run with the person's authority, so its file is
       # trusted only when no one else can have written it.
       def trusted?(file)
-        stat = File.stat(file)
-        owned = [Process.euid, 0].include?(stat.uid)
-        owned && (stat.mode & 0o022).zero? && (File.stat(File.dirname(file)).mode & 0o002).zero?
+        stat = File.lstat(file)
+        parent = File.lstat(File.dirname(file))
+        trusted_owner = [Process.euid, 0]
+        stat.file? && !stat.symlink? && stat.nlink == 1 && trusted_owner.include?(stat.uid) &&
+          (stat.mode & 0o022).zero? && parent.directory? && !parent.symlink? &&
+          trusted_owner.include?(parent.uid) && (parent.mode & 0o022).zero?
+      rescue SystemCallError
+        false
       end
 
-      # Entries are [Regexp|nil, argv, closed]. A file that is absent holds none;
-      # one that is untrusted or does not parse is reported and holds none, since
-      # refusing every effect over a typo would stop the Fold for a reason it
-      # cannot act on.
+      # Entries are [Regexp|nil, argv, closed]. An absent file means no hooks.
+      # A present but untrusted or malformed file installs a deny-all sentinel;
+      # misconfiguration can never silently disable a configured security gate.
       def entries(file = path)
-        return [] unless File.file?(file)
+        return [] unless File.exist?(file) || File.symlink?(file)
 
         unless trusted?(file)
-          Master::Trace::Dmesg.status("hook0", "hooks ignored, #{file} is writable by another user or not yours", io: $stderr)
-          return []
+          Master::Trace::Dmesg.status("hook0", "hooks invalid, untrusted path or permissions; effects will be refused", io: $stderr)
+          return CONFIG_REFUSAL
         end
 
-        rows = Array(YAML.safe_load_file(file, aliases: false)&.fetch(EVENT, nil))
-        rows.filter_map do |row|
-          argv = Array(row["command"]).map(&:to_s)
-          next if argv.empty?
+        config = YAML.safe_load_file(file, aliases: false)
+        raise TypeError, "hooks.yml root must be a mapping" unless config.is_a?(Hash)
+        source_rows = config[EVENT]
+        return [] if source_rows.nil?
+        raise TypeError, "#{EVENT} must be a sequence" unless source_rows.is_a?(Array)
+
+        source_rows.map do |row|
+          raise TypeError, "each hook must be a mapping" unless row.is_a?(Hash)
+          command = row["command"]
+          unless command.is_a?(Array) && !command.empty? && command.all? { |arg| arg.is_a?(String) && !arg.empty? }
+            raise TypeError, "hook command must be a non-empty argv array of strings"
+          end
 
           matcher = row["matcher"].to_s
           pattern = matcher.empty? || matcher == "*" ? nil : Regexp.new("\\A(?:#{matcher})\\z")
-          [pattern, argv, row["on_fault"].to_s == "deny"]
+          # Deny on crash/timeout/missing executable by default. Only an explicit
+          # on_fault: allow may preserve the older fail-open behavior.
+          closed = row["on_fault"].to_s != "allow"
+          [pattern, command, closed]
         end
       rescue Psych::Exception, SystemCallError, TypeError, RegexpError => e
-        Master::Trace::Dmesg.status("hook0", "hooks ignored, #{e.class}: #{e.message}", io: $stderr)
-        []
+        Master::Trace::Dmesg.status("hook0", "hooks invalid, #{e.class}: #{e.message}; effects will be refused", io: $stderr)
+        CONFIG_REFUSAL
       end
 
       # The first refusal, as a reason string, or nil. Every matching hook runs
@@ -76,6 +92,7 @@ module Master
         payload = JSON.generate(hook_event_name: EVENT, tool_name:, tool_input:)
         hooks.each do |matcher, argv, closed|
           next if matcher && !matcher.match?(tool_name)
+          return "hook configuration invalid or untrusted; refusing #{tool_name}" if argv.empty? && closed
 
           reason = ask(argv, payload, root:, closed:)
           return reason if reason
@@ -89,12 +106,13 @@ module Master
         return "hook refused #{argv.first}: #{err.to_s.strip}".strip.chomp(":") if status.exitstatus == 2
 
         fault(argv, "exit #{status.exitstatus.inspect}", closed)
-      rescue SystemCallError => e
-        fault(argv, e.message, closed)
+      rescue StandardError => e
+        fault(argv, "#{e.class}: #{e.message}", closed)
       end
 
       def fault(argv, detail, closed)
-        Master::Trace::Dmesg.status("hook0", "#{argv.first} faulted, #{detail}; #{closed ? "refusing" : "allowing"}", io: $stderr)
+        action = closed ? "refusing" : "allowing by explicit on_fault: allow"
+        Master::Trace::Dmesg.status("hook0", "#{argv.first} faulted, #{detail}; #{action}", io: $stderr)
         closed ? "hook faulted #{argv.first}: #{detail} (on_fault: deny)" : nil
       end
 

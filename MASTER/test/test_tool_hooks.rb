@@ -4,8 +4,8 @@ require "test_helper"
 require "cli/tool_hooks"
 require "tmpdir"
 
-# A PreToolUse hook can only add a refusal: exit 2 refuses with stderr as the
-# reason, exit 0 allows, any other status is a fault that allows.
+# Configured PreToolUse hooks add refusals. Faults fail closed by default;
+# an explicit on_fault: allow is the only route to fail-open behavior.
 class ToolHooksTest < Minitest::Test
   def hook_file(dir, script, matcher: nil, on_fault: nil)
     guard = File.join(dir, "guard.rb")
@@ -44,13 +44,25 @@ class ToolHooksTest < Minitest::Test
     end
   end
 
-  def test_a_faulting_hook_allows
+  def test_a_faulting_hook_denies_by_default
     Dir.mktmpdir do |dir|
       hooks = Master::CLI::ToolHooks.entries(hook_file(dir, "exit 1"))
+      reason = nil
+      _, err = capture_io do
+        reason = Master::CLI::ToolHooks.refusal("Bash", { command: "ls" }, root: dir, hooks:)
+      end
+      assert_includes err, "refusing"
+      assert_includes reason, "on_fault: deny"
+    end
+  end
+
+  def test_explicit_on_fault_allow_is_the_only_fail_open_mode
+    Dir.mktmpdir do |dir|
+      hooks = Master::CLI::ToolHooks.entries(hook_file(dir, "exit 1", on_fault: "allow"))
       _, err = capture_io do
         assert_nil Master::CLI::ToolHooks.refusal("Bash", { command: "ls" }, root: dir, hooks:)
       end
-      assert_includes err, "faulted"
+      assert_includes err, "allowing by explicit on_fault: allow"
     end
   end
 
@@ -96,14 +108,28 @@ class ToolHooksTest < Minitest::Test
     assert_includes reason, "on_fault: deny"
   end
 
-  def test_a_hooks_file_others_can_write_loads_nothing
+  def test_a_hooks_file_others_can_write_fails_closed
     Dir.mktmpdir do |dir|
       file = hook_file(dir, "exit 2")
       File.chmod(0o666, file)
-      entries = nil
-      _, err = capture_io { entries = Master::CLI::ToolHooks.entries(file) }
-      assert_empty entries
-      assert_includes err, "writable by another user"
+      hooks = nil
+      _, err = capture_io { hooks = Master::CLI::ToolHooks.entries(file) }
+      assert_includes err, "effects will be refused"
+      reason = Master::CLI::ToolHooks.refusal("Bash", { command: "ls" }, root: dir, hooks:)
+      assert_includes reason, "untrusted"
+    end
+  end
+
+  def test_a_malformed_hooks_file_fails_closed
+    Dir.mktmpdir do |dir|
+      file = File.join(dir, "hooks.yml")
+      File.write(file, "PreToolUse: [")
+      File.chmod(0o600, file)
+      hooks = nil
+      _, err = capture_io { hooks = Master::CLI::ToolHooks.entries(file) }
+      assert_includes err, "effects will be refused"
+      reason = Master::CLI::ToolHooks.refusal("Bash", { command: "ls" }, root: dir, hooks:)
+      assert_includes reason, "untrusted"
     end
   end
 end

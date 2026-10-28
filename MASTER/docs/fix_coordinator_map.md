@@ -109,10 +109,9 @@ checking that the independent Mission checkpoint and transaction snapshot
 survive. Owner and outcome regressions live in `test_fix_kernel_lifecycle.rb`.
 
 These tests are source changes, **not passing results**. The merge remains
-blocked until the tests run on the available Ruby 3.3.8, then the relevant
-release-runtime verification is also recorded. Root and MASTER use the local
-3.3.8 pin for this constrained verification pass; deployed app runtime contracts
-remain owned by their app Gemfiles and lockfiles. Still required after the
+blocked until the tests run on the pinned Ruby 4.0.5, then the relevant
+release-runtime verification is also recorded. The canonical repository pin is Ruby 4.0.5, shared by root, MASTER and Rails apps.
+These tests remain unexecuted in this GitHub editing environment. Still required after the
 process-boundary test: a real budget/collapse regression, truthful per-file
 ledger behavior for zero repairs, the complete adapter receipt-parity matrix,
 delivery-failure recovery, and one real repository-wide `/fix` run whose
