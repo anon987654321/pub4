@@ -111,8 +111,9 @@ source and tests they could not run; this pass is what measures them.
   recovery, but are unexecuted. Run them on pinned Ruby 4.0.5, then prove budget/collapse and
   zero-repair ledger honesty, the full adapter receipt-parity matrix and a real repository-wide
   `/fix` trial. Do not remove compatibility aliases until those gates pass.
-  Six named recovery-gate skips remain in `MASTER/test/test_recovery_gates.rb`; none closes this
-  gate until wired to real fixtures and verified red then green.
+  Three recovery-gate skips remain in `MASTER/test/test_recovery_gates.rb` (budget/collapse,
+  per-file refusal evidence, and adapter receipt parity). Gates 1–3 now have concrete fixtures;
+  they still need a red/green run on pinned Ruby before any consolidation gate can close.
 - [ ] Define a retention/segmentation policy for hash-chained `.master/log.jsonl` before
   long-running production use. Any compaction must preserve verifiable chain continuity with
   explicit segment checkpoints; never truncate arbitrary prefixes.
