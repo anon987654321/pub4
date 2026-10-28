@@ -429,9 +429,9 @@ module Master
           return [] unless @root == Master::ROOT
 
           findings = []
-          infra = File.join(@root, "lib", "review", "scan", "infra_helpers.rb")
-          unless File.file?(infra)
-            findings << finding(path: infra, line: 1, message: "missing infra_helpers.rb wiring layer")
+          scanner = File.join(@root, "lib", "fix", "scanner.rb")
+          unless File.file?(scanner)
+            findings << finding(path: scanner, line: 1, message: "missing scanner.rb wiring layer")
           end
           audit = LawRegistryAudit.new(root: @root).call
           if audit.adherence_pct < 35.0

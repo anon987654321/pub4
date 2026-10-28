@@ -43,6 +43,7 @@ module Operator
 
     def best_available_ruby(root: Environment.repo_root)
       candidates = []
+      candidates << RbConfig.ruby if File.executable?(RbConfig.ruby)
       candidates.concat(Dir.glob(File.join(rbenv_root_for(root), "versions", "*", "bin", "ruby")))
       if Environment.on_openbsd?
         candidates.concat(%w[ruby34 ruby33].filter_map { |name| path = command_path(name); path.empty? ? nil : path })
@@ -51,7 +52,6 @@ module Operator
         path = command_path(name)
         candidates << path unless path.empty?
       end
-      candidates << RbConfig.ruby if File.executable?(RbConfig.ruby)
 
       candidates.filter_map do |path|
         version = version_for(path)
