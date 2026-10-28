@@ -30,6 +30,24 @@ class TestEventPrivacy < Minitest::Test
     refute_includes json, "another secret"
   end
 
+  def test_undeclared_scalar_strings_are_digest_only_but_model_metadata_is_kept
+    persisted = Master::Trace::EventPrivacy.persisted(
+      "route:chosen",
+      label: "private user-provided label",
+      custom_value: "token=private",
+      model: "grok-cli:auto",
+      provider: "anthropic"
+    )
+    json = JSON.generate(persisted)
+
+    assert_equal "grok-cli:auto", persisted.fetch(:model)
+    assert_equal "anthropic", persisted.fetch(:provider)
+    assert_equal 64, persisted.fetch(:label_digest).length
+    assert_equal 64, persisted.fetch(:custom_value_digest).length
+    refute_includes json, "private user-provided label"
+    refute_includes json, "token=private"
+  end
+
   def test_malformed_reserved_metadata_is_digest_only
     persisted = Master::Trace::EventPrivacy.persisted(
       "route:chosen",
