@@ -146,13 +146,18 @@ module Master
         # through a registry rule that knows nothing about that evidence.
         def run_once(files, external_violations: nil, image: nil)
           @visual_image = image
+          receipt_attempted = false
           violations = external_violations || scan_files(files)
-          return record_kernel_outcome(fixed: 0, status: :clean, breakdown: {}) if violations.empty?
+          if violations.empty?
+            receipt_attempted = true
+            return record_kernel_outcome(fixed: 0, status: :clean, breakdown: {})
+          end
 
           fixed = fix_batch(violations)
           status = pass_outcome(fixed)
           record_outcomes(files, status)
           @bus&.publish("repair_loop:pass", law: @law.id, violations: violations.size, fixed:, status:)
+          receipt_attempted = true
           record_kernel_outcome(fixed:, status:, breakdown: @batch_breakdown)
         rescue StandardError => e
           @bus&.publish("repair_loop:error", law: @law.id, error: e.message)
@@ -161,7 +166,22 @@ module Master
           Master::Trace::Dmesg.status("fix0", "#{@law.id}: #{e.class}: #{e.message[0, 90]}")
           applied = fixed.is_a?(Numeric) ? fixed.to_i : 0
           breakdown = @batch_breakdown.is_a?(Hash) ? @batch_breakdown.dup : { error: 1 }
-          breakdown[:kernel_receipt_failed] = 1 if @kernel
+
+          # Record ordinary pass failures as outcomes. If this exception came
+          # from the ledger append itself, do not retry the same ambiguous write:
+          # the returned status stays error and explicitly names missing evidence.
+          if @kernel && !receipt_attempted
+            begin
+              @kernel.record_repair_outcome(
+                law: @law.id, status: :error, fixed: applied, breakdown:
+              )
+            rescue StandardError => receipt_error
+              breakdown[:kernel_receipt_failed] = 1
+              breakdown[:kernel_receipt_error_class] = receipt_error.class.name
+            end
+          elsif @kernel && receipt_attempted
+            breakdown[:kernel_receipt_failed] = 1
+          end
           { fixed: applied, status: :error, breakdown:, error: "#{e.class}: #{e.message}" }
         ensure
           @visual_image = nil
