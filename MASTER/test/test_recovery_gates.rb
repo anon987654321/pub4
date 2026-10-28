@@ -17,6 +17,8 @@ require_relative "../lib/fix/mission"
 require_relative "../lib/fix/checkpoint"
 require_relative "../lib/fix/run_journal"
 require_relative "../lib/fix/repair_loop"
+require_relative "../lib/fix/fix_loop"
+require_relative "../lib/cli/command_registry"
 
 module Master
   module Fix
@@ -305,8 +307,130 @@ module Master
         end
       end
 
-      def test_6_cli_paths_emit_identical_receipts_before_and_after_fold
-        skip "compare durable receipts for bin/master and every production /fix CLI adapter before any fold"
+      def build_receipt_fixture(root)
+        FileUtils.mkdir_p(File.join(root, "MASTER"))
+        Dir.mkdir(File.join(root, ".git"))
+        kernel = Master::Fix::Kernel.new(root: File.join(root, "MASTER"), actor: "receipt-parity")
+        loop = Master::Fix::FixLoop.allocate
+        loop.instance_variable_set(:@kernel, kernel)
+        loop.instance_variable_set(:@run_journal, kernel.lifecycle_journal)
+        loop.instance_variable_set(:@bus, nil)
+        loop.define_singleton_method(:run_unlocked) do |target, max_passes:, budget_seconds:, incremental:, requested:|
+          journal = @run_journal.start_or_resume(
+            target:, files: [], max_passes:, budget_seconds:
+          )
+          @kernel.bind_fix_run(
+            adapter: self, run_id: journal.fetch("id"), target:,
+            max_passes:, budget_seconds:, requested:
+          )
+          @kernel.record_repair_outcome(
+            law: "RECOVERY_GATE", status: :fixed, fixed: 1, breakdown: { applied: 1 }
+          )
+          @last_terminal_state = :done
+          Master::Result.ok("DONE: receipt parity fixture")
+        end
+        loop.define_singleton_method(:publish_pending!) { true }
+        [kernel, loop]
+      end
+
+      def receipt_signature(kernel)
+        events = kernel.verify_log!
+        start = events.find { |row| row.fetch("kind") == "coordinator_started" }
+        refute_nil start, "no durable coordinator start receipt"
+        run_id = start.fetch("run_id")
+        repair = events.find { |row| row.fetch("kind") == "repair_pass" && row.fetch("run_id") == run_id }
+        terminal = events.find do |row|
+          row.fetch("kind") == "coordinator_terminal" && row.fetch("run_id") == run_id
+        end
+        refute_nil repair, "no durable repair receipt linked to the coordinator run"
+        refute_nil terminal, "no durable coordinator terminal receipt"
+        assert_equal run_id, repair.fetch("run_id")
+        assert_equal run_id, terminal.fetch("run_id")
+        [
+          [
+            start.fetch("kind"), start.dig("payload", "target"),
+            start.dig("payload", "requested"), start.dig("payload", "max_passes"),
+            start.dig("payload", "budget_seconds")
+          ],
+          [
+            repair.fetch("kind"), repair.dig("payload", "law"),
+            repair.dig("payload", "status"), repair.dig("payload", "fixed"),
+            repair.dig("payload", "breakdown")
+          ],
+          [
+            terminal.fetch("kind"), terminal.dig("payload", "state"),
+            terminal.dig("payload", "result")
+          ]
+        ]
+      end
+
+      def test_6_public_fix_and_command_registry_adapter_emit_the_same_receipt_contract
+        Dir.mktmpdir("fix-recovery-gate-receipt-direct") do |direct_root|
+          direct_kernel, direct_loop = build_receipt_fixture(direct_root)
+          direct_result = direct_loop.run(
+            File.join(direct_root, "MASTER"), max_passes: 2, budget_seconds: 60,
+            incremental: false, requested: true
+          )
+          assert direct_result.ok?, direct_result.message
+          direct_signature = receipt_signature(direct_kernel)
+
+          Dir.mktmpdir("fix-recovery-gate-receipt-cli") do |cli_root|
+            cli_kernel, cli_loop = build_receipt_fixture(cli_root)
+            trace = Struct.new(:failures, :summary) do
+              def clean? = true
+            end.new([], "controlled trace clean")
+            run_pass = lambda do |dependencies, **options|
+              result = dependencies.fetch(:fix_loop).run(
+                options.fetch(:target), max_passes: 2, budget_seconds: 60,
+                incremental: false, requested: true
+              )
+              raise "controlled Kernel run failed: #{result.message}" unless result.ok?
+
+              "review0: complete, controlled receipt fixture"
+            end
+
+            output = nil
+            Master::Fix::RunBudget.stub(
+              :with_shared_run, ->(**_options, &operation) { operation.call }
+            ) do
+              Master::Fix::WorkLane.stub(:refusal, ->(_target) { nil }) do
+                Master::Fix::WorkLane.stub(:summary, "controlled work lane") do
+                  Master::CLI::CommandRegistry.stub(:first_read, ->(**_options) { {} }) do
+                    Master::CLI::CommandRegistry.stub(:execution_trace_scopes, ->(_target) { ["MASTER"] }) do
+                      Master::CLI::CommandRegistry.stub(:steady_trace, ->(**_options) { trace }) do
+                        Master::CLI::CommandRegistry.stub(:structural_review, ->(**_options) { nil }) do
+                          Master::CLI::CommandRegistry.stub(:resume_from_residual, ->(_target) { nil }) do
+                            Master::CLI::CommandRegistry.stub(:run_pass, run_pass) do
+                              Operator::CheckChain.stub(:clear_verified_fix_snapshots!, -> {}) do
+                                Operator::CheckChain.stub(:baseline_scope_key, ->(_target) { "MASTER" }) do
+                                  Operator::CheckChain.stub(:baseline, ->(**_options) { { "lexical" => [], "source" => [] } }) do
+                                    Operator::CheckChain.stub(:verify_fix, ->(**_options) { [0, []] }) do
+                                      Operator::CheckChain.stub(:persist_verified_baselines!, ->(_targets) {}) do
+                                        output = Master::CLI::CommandRegistry.dispatch_fix(
+                                          scanner: Object.new, fix_loop: cli_loop, deliberation: nil,
+                                          root: cli_root, bus: nil, ctx: { args: "--apply MASTER" }, swarm: nil
+                                        )
+                                      end
+                                    end
+                                  end
+                                end
+                              end
+                            end
+                          end
+                        end
+                      end
+                    end
+                  end
+                end
+              end
+            end
+
+            assert_match(/review0: complete/, output.to_s)
+            cli_signature = receipt_signature(cli_kernel)
+            assert_equal direct_signature, cli_signature,
+                         "the public /fix command adapter must preserve the Kernel receipt contract"
+          end
+        end
       end
     end
   end
