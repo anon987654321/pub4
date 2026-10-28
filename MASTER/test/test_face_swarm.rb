@@ -174,18 +174,23 @@ class TestFaceSwarm < Minitest::Test
 
   def test_current_cli_face_renderer_uses_the_swarm_and_can_disable_it
     original = ENV["MASTER_FACE_SWARM"]
+    original_budget = ENV["MASTER_FACE_SWARM_BUDGET"]
     ENV["MASTER_FACE_SWARM"] = "1"
+    ENV["MASTER_FACE_SWARM_BUDGET"] = "20"
     face = Master::CLI::Face
     options = { state: :idle, rows: 12, cols: 24, t: 0.0, motion: Master::CLI::Face::Motion.new, show_laws: false }
     particle_frame = face.frame(**options)
 
     assert_match(/[·˙∘•○●]/, particle_frame)
+    swarm_key = [12, 24, 20]
+    assert_equal 20, face::SWARMS.fetch(swarm_key).particles.length
 
     ENV["MASTER_FACE_SWARM"] = "0"
     plain_frame = face.frame(**options)
     refute_match(/[·˙∘•○●]/, plain_frame)
   ensure
     ENV["MASTER_FACE_SWARM"] = original
+    ENV["MASTER_FACE_SWARM_BUDGET"] = original_budget
   end
 
   def test_cli_projection_is_bounded_and_near_particles_win_collisions
