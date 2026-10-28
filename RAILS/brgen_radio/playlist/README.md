@@ -51,8 +51,9 @@ plays same-origin Active Storage audio and analyses the actual audio signal.
 The exact 35-track selection and ordering live in
 `RAILS/brgen/config/radio_bergen/tracks.yml`; filenames map to the archive-root
 files in `pub2`, not the stale `mp3/akmd-…` URLs. Audio is deliberately not
-committed into Git. After confirming that all recordings may be distributed, run
-from `RAILS/brgen`:
+committed into Git. The command below is for reference only. Do not execute it
+until the tenant-scope blocker is closed and tested locally. Distribution rights
+for every recording must also be confirmed.
 
 ```sh
 RADIO_BERGEN_ARCHIVE_ROOT=/absolute/path/to/pub2 \
@@ -61,7 +62,7 @@ RADIO_BERGEN_RIGHTS_CONFIRMED=1 \
 bin/rails radio_bergen:import_curated
 ```
 
-**Do not run the import task yet.** A follow-up review found that the import code must explicitly establish and enforce the `brgen.no` tenant context before creating the public playlist. The current request-less rake path does not yet prove that invariant; running it now could create a nil-city/global playlist. This is a hard blocker until the tenant guard is implemented and tested locally.
+**Blocker:** the request-less rake path does not yet explicitly establish and enforce the `brgen.no` tenant context before creating the public playlist. Running it now could create a nil-city/global playlist. This is a hard blocker, not a test result.
 
 The task is intended to preflight all source files, attach them through Active Storage, and
 create the playlist in the original order. It is idempotent for matching audio
