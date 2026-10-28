@@ -130,7 +130,7 @@ end
 VALUE_FLAGS = %w[
   --input --output --preset --reference --count -n --watch --describe-preset
   --css-filter --export-lut --size --stock-sheet --random --rescue --measure
-  --against --set --fit-grain
+  --against --set --fit-grain --quality --style-contract
 ].freeze
 
 # Every bare path on the line is a subject, so `postpro.rb a.jpg b.jpg c.jpg`

@@ -1,0 +1,49 @@
+# frozen_string_literal: true
+# Initial versioned entries. These are authored declarations, not learned or
+# reference-derived claims; modality-specific detail stays explicit.
+styles:
+  blue_hour:
+    image:
+      style_id: blue_hour
+      version: 1.0.0
+      origin_class: hand_authored
+      reference_hashes: []
+      modality: image
+      identity_locks: [natural_subject_colour, restrained_contrast]
+      controlled_variables: [colour, tone_curve, texture_grain]
+      scope_attributes:
+        colour: { source: null, strength: 0.35 }
+        tone_curve: { source: null, strength: 0.35 }
+        texture_grain: { source: null, strength: 0.2 }
+      negative_list: [false_skin_recolour, clipped_highlights, decorative_glow]
+      temporal_variation: none
+      deprecation_target: null
+    prompt:
+      style_id: blue_hour
+      version: 1.0.0
+      origin_class: hand_authored
+      reference_hashes: []
+      modality: prompt
+      identity_locks: [truthful_subject, explicit_composition]
+      controlled_variables: [lighting, composition, palette, medium]
+      scope_attributes:
+        structure_composition: { source: null, strength: 0.4 }
+        colour: { source: null, strength: 0.3 }
+      negative_list: [unresolved_character_reference, undeclared_adapter]
+      temporal_variation: none
+      deprecation_target: null
+    audio:
+      style_id: blue_hour
+      version: 1.0.0
+      origin_class: hand_authored
+      reference_hashes: []
+      modality: audio
+      identity_locks: [soft_late_groove, restrained_analogue_colour]
+      controlled_variables: [groove_rhythm, timbre_instrumentation, harmonic_vocabulary]
+      scope_attributes:
+        groove_rhythm: { source: null, strength: 0.7 }
+        timbre_instrumentation: { source: null, strength: 0.5 }
+        harmonic_vocabulary: { source: null, strength: 0.4 }
+      negative_list: [alarm_like_percussion, gong_lead]
+      temporal_variation: none
+      deprecation_target: null

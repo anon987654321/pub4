@@ -86,7 +86,43 @@ def grade_watched(path, out, preset_name)
   write_grade_sidecar(path, out, preset_name, image, processed)
 end
 
+def run_quality_analysis
+  input_path = argv_flag("--quality")
+  unless input_path && File.file?(input_path) && File.readable?(input_path)
+    $cli_logger.error "quality: --quality needs a readable image file"
+    exit 2
+  end
+
+  image = load_image(input_path)
+  unless image
+    $cli_logger.error "quality: could not decode #{input_path}"
+    exit 2
+  end
+
+  report = Postpro::QualityAnalyzer.report_image(image)
+  report[:style_contract] = $postpro_style_contract if $postpro_style_contract
+  puts JSON.pretty_generate(report)
+end
+
+def validate_postpro_style_contract
+  name = argv_flag("--style-contract")
+  return unless name
+
+  entry = Studio::StyleRegistry.resolve(style_id: name, modality: "image")
+  $postpro_style_contract = {
+    id: entry["style_id"], version: entry["version"], modality: entry["modality"],
+    registry_sha256: Digest::SHA256.file(Studio::StyleRegistry::REGISTRY_PATH).hexdigest,
+    mapping_applied: false,
+    note: "contract validated and recorded; renderer parameters are not yet compiled from this entry"
+  }
+rescue Studio::StyleRegistry::InvalidStyle => e
+  $cli_logger.error "style contract rejected: #{e.message}"
+  exit 2
+end
+
 def auto_launch
+  validate_postpro_style_contract
+  return run_quality_analysis if ARGV.include?("--quality")
   return run_introspect if introspect_mode?
   return run_stock_sheet if ARGV.include?("--stock-sheet")
   return run_watch       if watch_mode?
