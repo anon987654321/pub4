@@ -23,11 +23,22 @@ export default class extends Controller {
     unreadOther: { type: String, default: "%{count} new messages ↓" },
     todayLabel: { type: String, default: "Today" },
     yesterdayLabel: { type: String, default: "Yesterday" },
-    locale: { type: String, default: "en" }
+    locale: { type: String, default: "en" },
+    historyUrl: { type: String, default: "" },
+    olderLabel: { type: String, default: "Load earlier messages" }
   }
 
   connect() {
     this.unread = 0
+    // History loading owns two flags, and both exist to keep this controller's
+    // own machinery from misreading its own work: a page of older lines must
+    // not count toward the unread pill (the reader asked for them, so they are
+    // the oldest lines in the room, not new ones), and the scroll pin below
+    // must not yank the reader to the tail in the instant they have scrolled
+    // to the top to walk backward.
+    this.loadingHistory = false
+    this.appendingHistory = false
+    this.#installHistorySentinel()
     this.#stampAll()
     this.#dayBreaks()
     this.#group()
@@ -45,7 +56,7 @@ export default class extends Controller {
       this.#group()
       const wasAtTail = this.#atTail()
       this.#pinToNewest()
-      if (!wasAtTail) {
+      if (!wasAtTail && !this.appendingHistory) {
         this.unread += added.filter((n) => n.nodeType === Node.ELEMENT_NODE).length
         this.#renderPill()
       }
@@ -56,6 +67,18 @@ export default class extends Controller {
       if (this.#atTail()) { this.unread = 0; this.#renderPill() }
     }
     this.element.addEventListener("scroll", this.onScroll, { passive: true })
+
+    if (this.sentinel) {
+      // The window shows the newest page, so the sentinel sits above the
+      // first line, out of view. It enters the viewport exactly when the
+      // reader has walked back to the ceiling of what is loaded, which is
+      // the whole trigger. root is the scrolling element itself — the log
+      // scrolls under a fixed composer, not under the document.
+      this.historyObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => { if (entry.isIntersecting) this.loadOlder() })
+      }, { root: this.element, rootMargin: "120px 0px 0px 0px" })
+      this.historyObserver.observe(this.sentinel)
+    }
 
     // Tap-to-reveal for the reaction picker. On a touch viewport the picker was
     // permanently visible (`@media (hover: none) { opacity: 1 }`), which put a
@@ -88,6 +111,8 @@ export default class extends Controller {
   disconnect() {
     this.observer?.disconnect()
     this.observer = null
+    this.historyObserver?.disconnect()
+    this.historyObserver = null
     this.element.removeEventListener("scroll", this.onScroll)
     this.element.removeEventListener("click", this.onLineTap)
     this.element.removeEventListener("keydown", this.onKeydown)
@@ -109,6 +134,70 @@ export default class extends Controller {
     this.element.scrollTop = this.element.scrollHeight
     this.unread = 0
     this.#renderPill()
+  }
+
+  // One page of history above the cursor. The server renders message partials
+  // alone and names the next cursor in X-History-Next, so the walker here
+  // stays dumb: fetch, insert at the top, re-anchor the scroll to the line the
+  // reader was on, and only re-arm the sentinel when the server said there is
+  // more. The button stays a real control — the observer auto-fires it for
+  // pointer scrolling, and it stays pressable for keyboard and no-observer
+  // paths — and a failed fetch leaves everything in place to press again,
+  // because a control that vanishes on error is lying about what happened.
+  async loadOlder() {
+    if (!this.historyUrlValue || this.loadingHistory) return
+
+    this.loadingHistory = true
+    const button = this.#historyButton
+    if (button) button.disabled = true
+    this.sentinel?.setAttribute("aria-busy", "true")
+    try {
+      const response = await fetch(this.historyUrlValue, {
+        headers: { Accept: "text/html" },
+        credentials: "same-origin"
+      })
+      if (!response.ok) throw new Error(String(response.status))
+
+      const html = await response.text()
+      this.historyUrlValue = response.headers.get("X-History-Next") || ""
+      const heightBefore = this.element.scrollHeight
+      this.appendingHistory = true
+      this.sentinel?.remove()
+      this.sentinel = null
+      this.element.insertAdjacentHTML("afterbegin", html)
+      // The lines the reader was reading just moved down by the height of the
+      // page inserted above them; move the scroll with them, so walking back
+      // through a thread does not teleport anyone.
+      this.element.scrollTop += this.element.scrollHeight - heightBefore
+      this.#installHistorySentinel()
+    } catch {
+      // The URL and the button survive unchanged: nothing was loaded, so the
+      // affordance keeps telling the truth.
+    } finally {
+      this.loadingHistory = false
+      this.appendingHistory = false
+      this.historyObserver?.disconnect()
+      if (this.sentinel) this.historyObserver?.observe(this.sentinel)
+    }
+  }
+
+  #installHistorySentinel() {
+    if (!this.historyUrlValue) return
+
+    this.sentinel = document.createElement("li")
+    this.sentinel.className = "history-sentinel"
+    this.sentinel.setAttribute("role", "listitem")
+    const button = document.createElement("button")
+    button.type = "button"
+    button.className = "history-load"
+    button.textContent = this.olderLabelValue
+    button.addEventListener("click", () => this.loadOlder())
+    this.sentinel.append(button)
+    this.element.prepend(this.sentinel)
+  }
+
+  get #historyButton() {
+    return this.sentinel?.querySelector(".history-load")
   }
 
   // Consecutive lines from one speaker lose their repeated name/time header, so

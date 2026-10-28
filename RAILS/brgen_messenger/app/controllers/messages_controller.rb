@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
 class MessagesController < ApplicationController
+  # One screen of history per request, and the same size as the thread window
+  # ConversationsController#show renders, so "load earlier" and first paint
+  # agree on what a page of this conversation is. The reply/edit windows are
+  # minutes; a history page is 50 lines — a thread that outgrew its window is
+  # a transcript to walk, not a wall to load.
+  HISTORY_PAGE = 50
+
   # Burst and sustained, and they only work as two limits because of `name:`.
   # The cache key is ["rate-limit", controller_path, name, by], so unnamed these
   # two shared one counter whenever `by` resolved the same way — which is every
@@ -18,6 +25,26 @@ class MessagesController < ApplicationController
 
   rate_limit to: 40, within: 3.minutes, only: :create, name: "sustained",
     with: -> { redirect_back fallback_location: root_path, alert: t("flash.messages_rate_limited") }
+
+  # The page of history above the cursor. `before` is the oldest message the
+  # log already holds; the reply carries the next cursor in X-History-Next, or
+  # no header when the thread has given up everything above. The body is the
+  # message partials alone — the conversation_log controller inserts them at
+  # the top of its own list and re-derives grouping and day breaks there, so
+  # this action renders no frame, no layout and no chrome. set_conversation
+  # scopes through for_user, so a reader reaches only threads they take part in.
+  def index
+    scope = @conversation.messages.visible.unexpired
+    before = params[:before].to_i
+    scope = scope.where(Message.arel_table[:id].lt(before)) if before.positive?
+
+    page = scope.recent.limit(HISTORY_PAGE + 1).to_a
+    more = page.size > HISTORY_PAGE
+    page = page.first(HISTORY_PAGE).reverse
+
+    response.set_header("X-History-Next", conversation_messages_path(@conversation, before: page.first.id)) if more && page.any?
+    render partial: "messages/message", collection: page, locals: { forward_targets: forward_targets }
+  end
 
   def create
     # A block holds inside an existing thread, not only at the door: the thread
@@ -105,6 +132,15 @@ class MessagesController < ApplicationController
   private
 
   def from_widget? = params[:origin] == "widget"
+
+  # Where a forward from this page can go: the reader's other DM threads. The
+  # same computation ConversationsController#show runs, so a message that
+  # arrived through history forwards like one that arrived in the window.
+  def forward_targets
+    Conversation.for_user(Current.user).where(slug: nil).where.not(id: @conversation.id)
+                .includes(:participants)
+                .map { |other| [ other.display_name_for(Current.user), other.id ] }
+  end
 
   def render_created
     # The sender's own copy, reloaded with what the line reads so the partial

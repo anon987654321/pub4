@@ -23,3 +23,12 @@ test("the degraded stream drops the trace frame like the face runtime does", () 
 test("a tap on the prompt strip beside the one-line textarea focuses it", () => {
   assert.match(source, /form\.addEventListener\("click", \(event\) => \{\s*if \(event\.target\.closest\("button, a, input, textarea, select"\)\) return;\s*input\.focus\(\)/);
 });
+
+// The stop control is the degraded path's one abort handle: it must abort the
+// fetch (the server notices the closed socket at its next write) and pause
+// only a queue that holds messages, so a stop on an empty queue never wedges
+// the next send behind a resume button.
+test("the degraded stop control aborts the stream and pauses only a queued send", () => {
+  assert.match(source, /activeStreamAbort\.abort\(\)/);
+  assert.match(source, /if \(fallbackSendQueue\.length > 0\) fallbackSendQueuePaused = true;/);
+});

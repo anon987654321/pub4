@@ -419,6 +419,7 @@ nb:
     typing_many_truncated: "%{names} og %{count} andre skriver"
     unread_one: "%{count} ny melding ↓"
     unread_other: "%{count} nye meldinger ↓"
+    older: Last tidligere meldinger
     pin: Fest
     unpin: Løsne
     search_title: Søk i meldinger

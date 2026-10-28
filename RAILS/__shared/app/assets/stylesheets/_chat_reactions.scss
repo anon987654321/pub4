@@ -249,3 +249,38 @@ li[data-optimistic="true"] article[data-failed="true"] .send-status {
   color: var(--text-secondary);
 }
 
+
+/* The history sentinel.
+
+   Sits at the head of the log and carries the one control that walks a thread
+   back past the window it opened with. The IntersectionObserver in
+   conversation_log_controller presses it when scrolling reaches the top; the
+   button stays a real, focusable control, because a control that only a scroll
+   gesture can reach is not reachable. Flat like the day break beside it: the
+   affordance is text and position, not ornament. */
+.history-sentinel {
+  display: flex;
+  justify-content: center;
+  margin-block-end: var(--space-1);
+}
+
+.history-load {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-elevated);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.history-load:hover,
+.history-load:focus-visible {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.history-load:disabled {
+  cursor: default;
+  opacity: 0.62;
+}

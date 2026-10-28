@@ -446,7 +446,11 @@ document.getElementById("turn-control")?.addEventListener("click", () => {
     return;
   }
   if (!fallbackSendQueueRunning) return;
-  fallbackSendQueuePaused = true;
+  // Stop ends the running turn: the abort lands server-side, where
+  // ChatService's writers cancel the turn token at the failed write. A pause
+  // is only for a queue that holds messages; latching one on an empty queue
+  // wedged the next send behind a resume button that named nothing to resume.
+  if (fallbackSendQueue.length > 0) fallbackSendQueuePaused = true;
   closeChatStream();
   updateFallbackSendQueueUi();
 });

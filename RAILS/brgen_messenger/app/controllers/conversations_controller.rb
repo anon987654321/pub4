@@ -89,9 +89,14 @@ class ConversationsController < ApplicationController
     @blocked_by_me = @blocked && @conversation.other_participants(Current.user).any? { |other| Current.user.blocking?(other) }
     # parent: :sender for the reply line, message_receipts for the read chip —
     # both are read once per message, so both are preloaded once per page.
+    # The thread window and a history page are the same size, and one row more
+    # than the window answers "is there more behind this?" — so show learns the
+    # answer without paying a COUNT, and the log gets its first history cursor.
     @messages = @conversation.messages.visible.unexpired
                              .includes(:sender, :message_receipts, :link_preview, parent: :sender)
-                             .recent.limit(50).reverse
+                             .recent.limit(MessagesController::HISTORY_PAGE + 1)
+    @older_available = @messages.size > MessagesController::HISTORY_PAGE
+    @messages = @messages.first(MessagesController::HISTORY_PAGE).reverse
     @message = Message.new
     # Where a forward can go: the reader's other threads. Built once for the
     # page rather than per message.

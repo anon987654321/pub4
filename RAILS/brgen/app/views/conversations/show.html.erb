@@ -168,18 +168,27 @@
           navigation was harmless when a room was a page, and wrong now that
           switching rooms swaps a frame — the old room's messages would be kept
           under the new room's name. %>
-      <ul id="messages" role="log" class="conversation-log"
-          data-controller="conversation-log"
-          data-conversation-log-viewer-id-value="<%= Current.user&.id %>"
-          data-conversation-log-unread-one-value="<%= t("messages.unread_one") %>"
-          data-conversation-log-unread-other-value="<%= t("messages.unread_other") %>"
-          data-conversation-log-today-label-value="<%= t("messages.today") %>"
-          data-conversation-log-yesterday-label-value="<%= t("messages.yesterday") %>"
-          data-conversation-log-locale-value="<%= I18n.locale %>">
+      <%# history-url-value carries the first cursor only when the window hit
+          its ceiling: the extra row show fetched said there is more behind
+          the log. The conversation-log controller owns the "load earlier"
+          control that URL feeds, so the markup carries no button of its own. %>
+      <%= tag.ul id: "messages", role: "log", class: "conversation-log",
+            data: {
+              controller: "conversation-log",
+              conversation_log_viewer_id_value: Current.user&.id,
+              conversation_log_unread_one_value: t("messages.unread_one"),
+              conversation_log_unread_other_value: t("messages.unread_other"),
+              conversation_log_today_label_value: t("messages.today"),
+              conversation_log_yesterday_label_value: t("messages.yesterday"),
+              conversation_log_locale_value: I18n.locale,
+              conversation_log_older_label_value: t("messages.older")
+            }.merge(@older_available && @messages.any? ? {
+              conversation_log_history_url_value: conversation_messages_path(@conversation, before: @messages.first.id)
+            } : {}) do %>
         <% @messages.each do |m| %>
           <%= render "messages/message", message: m, forward_targets: @forward_targets %>
         <% end %>
-      </ul>
+      <% end %>
     <% end %>
 
     <%# The composer and everything that speaks for it sit in one region at the

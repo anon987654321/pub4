@@ -14,13 +14,22 @@
   <%= link_to listing_path(listing),
         class: "deal-card-hit",
         aria: { label: t("marketplace.card_label", title: listing.title, price: listing.price_display) } do %>
-    <%# Sold outranks casual outranks condition, and only sold is loud. %>
-    <% badge, badge_soft =
-         if listing.sold? then [t("marketplace.sold"), false]
-         elsif listing.condition.present?
-           [listing.condition_label, true]
-         end %>
-    <%= render "marketplace/card_media", photo:, fallback_char: listing.title.to_s.first&.upcase || "?", badge:, badge_soft: badge_soft == true %>
+    <%# The media block caches on the listing alone: badge, photo variant and
+        blurhash are model state, and update_rating! touches updated_at, so a
+        new review re-renders it. What each viewer owns stays outside the
+        fragment — the heart in its slot above, the distance line and the
+        search-rank reasons in the body below, the buy box after the link.
+        The ranking sweep writes only rows whose score moved, so a recalc pass
+        stops flushing every card on the shelf. %>
+    <%= cache [listing, "media"] do %>
+      <%# Sold outranks casual outranks condition, and only sold is loud. %>
+      <% badge, badge_soft =
+           if listing.sold? then [t("marketplace.sold"), false]
+           elsif listing.condition.present?
+             [listing.condition_label, true]
+           end %>
+      <%= render "marketplace/card_media", photo:, fallback_char: listing.title.to_s.first&.upcase || "?", badge:, badge_soft: badge_soft == true %>
+    <% end %>
 
     <div class="deal-card-body">
       <%# A job shows its salary and a room its rent; only goods have a
@@ -29,7 +38,12 @@
       <div class="deal-price"><%= listing.headline_amount %></div>
       <h2 class="deal-card-title"><%= listing.title %></h2>
       <% if listing.reviews_count.to_i.positive? %>
-        <%= render "shared/store_stars", rating: listing.rating, count: listing.reviews_count %>
+        <%# Same reasoning as the media fragment: the stars read listing.rating
+            and listing.reviews_count, both model state, so they cache with the
+            listing rather than re-rendering per shelf view. %>
+        <%= cache [listing, "stars"] do %>
+          <%= render "shared/store_stars", rating: listing.rating, count: listing.reviews_count %>
+        <% end %>
       <% end %>
       <div class="deal-meta">
         <%= [ listing.location,

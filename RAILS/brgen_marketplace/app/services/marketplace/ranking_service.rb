@@ -29,6 +29,13 @@ module Marketplace
 
     def recalculate!
       value = score
+      # Only a moved score is written. The scheduled sweep runs over every live
+      # listing every two hours; writing every row bumped updated_at each pass,
+      # which dirtied SQLite pages and invalidated the listing-card fragment
+      # caches for shelves whose scores had not changed. The two hours and the
+      # sweep's read cost stay; the cache flush and the dead writes go.
+      return value if @listing.ranking_score == value
+
       @listing.update_columns(ranking_score: value, updated_at: Time.current)
       value
     end

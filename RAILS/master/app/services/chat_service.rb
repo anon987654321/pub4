@@ -24,6 +24,16 @@ class ChatService
   # hears is "An internal error occurred. Retry or check server logs."
   ERROR_PREFIX = "ERROR: "
 
+  # Raised by the stream writers when a write fails because the client's side
+  # of the SSE connection is gone: Falcon raises IOError when the response body
+  # closed under it, and ActionController::Live::ClientDisconnected is an
+  # IOError subclass. The writer cancels the turn's CancellationToken first, so
+  # the fold stops at its next boundary, and the raise unwinds the provider
+  # call the on_chunk block is running inside — RubyLLM's chunk callback runs
+  # on Faraday's streaming read, so the exception stops the read and closes the
+  # provider connection at that chunk boundary.
+  class ClientGone < IOError; end
+
   def initialize(container:, params:, stream:, logger:, tier:, unlocked:, author:, paired: false, pair_token: nil,
 conversation: nil)
     @container = container
@@ -42,10 +52,11 @@ conversation: nil)
   end
 
   def call
+    @cancellation = Master::Core::CancellationToken.new
     stream_open!
     if smoke_reply?
       write_chunk(smoke_response)
-      @stream.write("data: [DONE]\n\n")
+      write_done
       return
     end
 
@@ -59,15 +70,19 @@ conversation: nil)
       on_turn: method(:stream_fold_turn),
       on_chunk: method(:write_chunk),
       image: image_payload,
+      cancellation: @cancellation,
     )
     write_fallback(result)
     write_turn_ctx_footer
-    @stream.write("data: [DONE]\n\n")
+    write_done
     trigger_post_mutation_work
+  rescue ClientGone
+    # The write that surfaced the closed socket cancelled the turn token and
+    # unwound the provider call through on_chunk. The ensure closes the stream.
   rescue StandardError => e
     Master::Ground::Swallow.log(e, context: "ChatService.call", event_bus: @container&.dig(:bus))
-    @stream.write("data: #{escape_sse(ERROR_PREFIX + Master::Ground::Redactor.public_error_message)}\n\n")
-    @stream.write("data: [DONE]\n\n")
+    write_error_frame
+    write_done
   ensure
     clear_fiber_flags
     unsubscribe_all
@@ -81,6 +96,9 @@ conversation: nil)
     @stream.write(": connected\n\n")
     @stream.write("event: trace\ndata: #{JSON.generate(trace_id: @trace_id)}\n\n")
     @stream.write("data: #{JSON.generate(type: "trace", trace_id: @trace_id)}\n\n")
+  rescue IOError
+    cancel_turn
+    raise ClientGone, "chat stream closed"
   end
 
   def smoke_reply?
@@ -214,6 +232,12 @@ conversation: nil)
       rendered = val.respond_to?(:[]) ? val[:rendered].to_s : ""
       rendered.empty? ? val.to_s : rendered
     when Master::Result::Err
+      # A stopped turn is not a failure: the client closed the stream, so there
+      # is nobody to render to and nothing to log as broken. The cancelled
+      # category is the fold's own report; the cancelled token covers a stop
+      # that surfaced as an ordinary error result.
+      return "" if result.category == :cancelled || @cancellation&.cancelled?
+
       if result.category == :no_api_key
         result.message
       else
@@ -245,6 +269,11 @@ conversation: nil)
     emit_content_kind_if_needed(text)
     @streamed = true
     @stream.write("data: #{escape_sse(text)}\n\n")
+  rescue IOError
+    # The raise travels out through on_chunk, so a streaming provider call
+    # stops reading at this chunk instead of running on to nobody.
+    cancel_turn
+    raise ClientGone, "chat stream closed"
   rescue StandardError => e
     @stream_broken = true
     Master::Ground::Swallow.log(e, context: "ChatService.write_chunk")
@@ -278,6 +307,10 @@ conversation: nil)
     return if @stream_broken
 
     @stream.write("event: #{event}\ndata: #{data}\n\n")
+  rescue IOError
+    # The event bus rescues into its handlers, so the raise would die there;
+    # the cancelled token is what stops the turn at its next boundary.
+    cancel_turn
   rescue StandardError => e
     @stream_broken = true
     Master::Ground::Swallow.log(e, context: "ChatService.write_event")
@@ -287,6 +320,8 @@ conversation: nil)
     return if data.nil? || @stream_broken
 
     @stream.write("event: #{event}\ndata: #{data.to_json}\n\n")
+  rescue IOError
+    cancel_turn
   rescue StandardError => e
     @stream_broken = true
     Master::Ground::Swallow.log(e, context: "ChatService.write_json_event")
@@ -456,6 +491,30 @@ conversation: nil)
 
   def escape_sse(text)
     text.gsub("\\", "\\\\").gsub("\n", "\\n")
+  end
+
+  # One stop record per turn, however many writers saw the closed socket.
+  # The reason is the CancellationToken's first one, so racing writers cannot
+  # rename a stop into something else.
+  def cancel_turn
+    @stream_broken = true
+    @cancellation&.cancel!(reason: "client disconnected")
+  end
+
+  def write_error_frame
+    @stream.write("data: #{escape_sse(ERROR_PREFIX + Master::Ground::Redactor.public_error_message)}\n\n")
+  rescue IOError
+    cancel_turn
+    raise ClientGone, "chat stream closed"
+  end
+
+  def write_done
+    return if @stream_broken
+
+    @stream.write("data: [DONE]\n\n")
+  rescue IOError
+    cancel_turn
+    raise ClientGone, "chat stream closed"
   end
 
   # Only reachable through the "**" catch-all below, gated by BUS_THOUGHT_RE —

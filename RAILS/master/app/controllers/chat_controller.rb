@@ -201,10 +201,11 @@ class ChatController < ApplicationController
       pair_token: cookies[:master_paired].to_s,
       conversation: conversation_id,
     ).call
-  # A disconnect ends the stream, not the turn: ChatService's writers rescue a dead
-  # socket and the turn runs on. A phone that locks or changes network drops the
-  # stream without meaning stop, and a turn that is writing is safer finished than
-  # cut at an arbitrary frame. A stop control on the face is the operator's.
+  # A dead stream stops the turn: ChatService's writers fail on the next write,
+  # cancel the turn's CancellationToken, and unwind the provider call at that
+  # chunk boundary, so a stopped or departed client burns no further tokens.
+  # Falcon surfaces the closed response body as IOError; ClientDisconnected is
+  # ActionController::Live's spelling of the same condition.
   rescue IOError, ActionController::Live::ClientDisconnected
     nil
   ensure

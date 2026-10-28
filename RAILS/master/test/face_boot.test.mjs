@@ -65,6 +65,17 @@ test("web face queues follow-up turns and exposes stop/resume state", () => {
   const onErrorAt = runtime.indexOf("const onError = () =>");
   const onErrorBlock = runtime.slice(onErrorAt, runtime.indexOf("// chat_actions.js owns", onErrorAt));
   assert.match(onErrorBlock, /finishTurn\(false\);[\s\S]*closeChatStream/);
+  // The stop control aborts the live stream, resets the face state, and latches
+  // a pause only for a queue that holds messages — a stop on an empty queue
+  // must leave the next send free to flow.
+  const stopAt = runtime.indexOf("document.getElementById('turn-control')?.addEventListener('click'");
+  assert.ok(stopAt > 0, "the face wires the stop control");
+  const stopBlock = runtime.slice(stopAt, runtime.indexOf("setInterval(", stopAt));
+  assert.match(stopBlock, /closeChatStream\?\.\(\)/);
+  assert.match(stopBlock, /ttsSkip\?\.\(\)/);
+  assert.match(stopBlock, /_activeTurnFinish\?\.\(false\)/);
+  assert.match(stopBlock, /State\.mode = 'idle'/);
+  assert.match(stopBlock, /if \(_pendingTurns\.length > 0\) _turnQueuePaused = true;/);
 });
 
 test("thinking star animates in calm mode but respects reduced motion and battery mode", () => {

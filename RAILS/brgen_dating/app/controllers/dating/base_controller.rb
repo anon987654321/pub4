@@ -10,19 +10,29 @@ class Dating::BaseController < ApplicationController
   # number, and it is the cheap half of the pair — Vipps MobilePay owns BankID,
   # but a BankID verification is billed per use and a Vipps Login is not.
   #
-  # Nothing here fails closed on a misconfigured server: if VIPPS_CLIENT_ID is
-  # absent the provider never registers, and gating on it would lock every
-  # person out of a vertical for an operator's missing env var. When Vipps is
-  # not configured this is not a check anyone can pass, so it is not a check.
+  # The gate fails closed. With Vipps configured, only a vipps_verified
+  # account passes. With Vipps absent, the old behaviour treated the missing
+  # provider as an open door — the README itself names that as the wrong
+  # default for a dating product — so an unconfigured server now locks the
+  # writing surfaces until the operator sets DATING_IDENTITY_BYPASS=demo in
+  # env. The bypass is a named, visible decision; absence of keys is not.
   def require_vipps_identity
-    return unless vipps_login_available?
     return if Current.user&.vipps_verified?
+    return if identity_gate_open?
 
     redirect_to sign_in_path, alert: t("dating.vipps_required")
   end
 
   def vipps_login_available?
     Rails.application.config.x.oauth_provider_slugs.to_a.include?("vipps")
+  end
+
+  # Exactly one of two true statements opens the gate: Vipps is configured and
+  # the verification ran, or the operator explicitly named the demo bypass.
+  def identity_gate_open?
+    return true if vipps_login_available?
+
+    ENV["DATING_IDENTITY_BYPASS"].to_s.strip == "demo"
   end
 
   def current_dating_profile

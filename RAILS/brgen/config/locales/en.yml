@@ -415,6 +415,7 @@ en:
     typing_many_truncated: "%{names} and %{count} others are typing"
     unread_one: "%{count} new message ↓"
     unread_other: "%{count} new messages ↓"
+    older: Load earlier messages
     pin: Pin
     unpin: Unpin
     search_title: Search messages

@@ -17,6 +17,11 @@ The engine owns routes, controllers and views only. `Place` and `PlaceCheckIn` s
 models, because restaurants and stores point at a place too, so it has more than one consumer
 and is shared the way `User` is. Check-ins therefore live in brgen's database, in
 `place_check_ins`, with no `maps_` tables. Routes are drawn on `Maps::Engine`, and brgen mounts
-the engine at the root under `constraints(subdomain: MAPS_SUBDOMAINS)`. The map is built in the
-browser, and no stream or toggle ever refreshes the maps home page, so it carries no guard
-against Turbo's page morph yet. Add one before anything starts to refresh that page.
+the engine at the root under `constraints(subdomain: MAPS_SUBDOMAINS)`.
+
+The map is built in the browser, so the home section carries a `map-morph-guard` Stimulus
+controller that keeps it out of a Turbo page morph, the same `turbo:before-morph-element` guard
+the shared tiptap editor runs over a mounted editor. The controller lives in the engine's
+`app/javascript/controllers`, which brgen pins through the vertical list in its
+`config/importmap.rb`; nothing refreshes the page yet, and the guard is in place before one
+does. Its first controller tests run inside brgen's suite, under `test/controllers`.

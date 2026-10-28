@@ -49,6 +49,19 @@ test("every named event the chat stream writes has exactly one owner", () => {
   assert.deepEqual(doubled, [], "the face shadows these contract handlers, so the contract copy never runs");
 });
 
+// The stop path travels as a cancelled turn, not as a frame: a client that
+// aborts the stream must not also invent a named event the pinned set has to
+// grow for. The token cancel and the ClientGone unwind stay off the wire.
+test("the stop path cancels the turn without inventing a named event", () => {
+  const service = readFileSync(join(root, "app", "services", "chat_service.rb"), "utf8");
+  assert.match(service, /class ClientGone < IOError/);
+  assert.match(service, /cancellation: @cancellation/);
+  assert.match(service, /cancel!\(reason: "client disconnected"\)/);
+  assert.match(service, /rescue ClientGone/);
+  assert.doesNotMatch(service, /write_(?:json_)?event\("(?:stop|cancel|abort|stopped|cancelled)"/);
+  assert.deepEqual([...emittedEvents()].filter((name) => /stop|cancel|abort/i.test(name)), []);
+});
+
 test("dispatchNamed runs the contract handler, prefers an extension, and logs a throwing one", () => {
   const { sse, window, logged } = loadContract();
   const lines = [];

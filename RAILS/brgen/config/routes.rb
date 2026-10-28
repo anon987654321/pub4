@@ -180,9 +180,11 @@ get "i/:token" => "invites#show", as: :invite
     member { post :invite_master }
     # Search over the reader's own threads; ?conversation_id= narrows it to one.
     collection { get :search }
+    # index is the page of history above the cursor — the thread window renders
+    # the newest fifty and hands the log the URL for the fifty behind them.
     # update is a bounded edit; destroy is an unsend, which keeps the row so a
     # threaded reply is not orphaned. forward writes a copy into another thread.
-    resources :messages, only: %i[create update destroy] do
+    resources :messages, only: %i[index create update destroy] do
       member { post :forward }
     end
     resources :typing_indicators, only: [ :create ]
@@ -242,7 +244,7 @@ get "i/:token" => "invites#show", as: :invite
   constraints(subdomain: MESSENGER_SUBDOMAINS) do
     root "conversations#index", as: :messenger_root
     resources :conversations, only: %i[show update create] do
-      resources :messages, only: %i[create]
+      resources :messages, only: %i[index create]
       resources :typing_indicators, only: %i[create]
       resource :presence, only: %i[create destroy]
       resource :pin, only: %i[create destroy], controller: "conversation_pins"

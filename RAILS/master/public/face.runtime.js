@@ -6,7 +6,7 @@ const FACE_RUNTIME_SOURCES = [
   "face.part3.txt?v=653bc53e90",
   "face_speech_runtime.js?v=8c2ea602ae",
   "face_speech_playback.js?v=52a9561149",
-  "face.part5.txt?v=9b37c12929"
+  "face.part5.txt?v=8093d0fd15"
 ];
 const FACE_RUNTIME_URL = (name) => new URL(name, document.baseURI).href;
 const FACE_RUNTIME_FETCH = (name) => fetch(FACE_RUNTIME_URL(name), { cache: "force-cache" }).then((response) => {

@@ -17,8 +17,10 @@ horizon:
 
       - { name: recent searches in the search palette, status: planned }
       - { name: messenger notification suppressed while its conversation is open, status: planned }
+      - { name: "messenger complete enough to take over from Facebook Messenger for the operator's circle: E2EE, delivered-versus-read receipts, multi-device sessions, voice and video calls", status: planned, notes: "operator call 2026-10-29: friends and family should be able to switch over without losing anything they use daily; history pagination is done (apps.yml), the remaining gaps are the structural ones named here" }
     subapp_takeaway:
       - { name: delivery-area validation and cart expiry, status: planned }
+      - { name: "merge takeaway into marketplace: food becomes a marketplace vertical on the commerce rail", status: planned, notes: "operator is considering the merge (2026-10-29); if taken it settles takeaway's money story: orders ride the marketplace checkout and its PSP integrations instead of a second payment stack, and the offline pay-at-restaurant copy retires with the rail" }
     subapp_tv:
       - { name: live stream infrastructure, status: planned }
     subapp_dating:
@@ -31,8 +33,11 @@ horizon:
       - { name: anonymised buyer-seller contact relay, status: planned, notes: "needs inbound mail routing and per-listing addresses on vm23; brgen.no mail is outbound-verified only" }
 
       - { name: duplicate-listing detection, status: planned }
+      - { name: "Amazon / Kaufland.de / bol.com-class infrastructure: shipping-rate and label integrations, multi-currency, dispute and chargeback mediation, catalogue-scale search and independent scaling for the heavy surfaces", status: planned, notes: "operator call 2026-10-29: marketplace is the heaviest surface in the tree and competes at that class, so infrastructure decisions are sized for it, not for a classifieds board" }
+      - { name: "design pass at catalogue scale: shelf, product page, buy box, checkout, tuned to the Amazon/bol class", status: planned, notes: "operator call 2026-10-29; the Bol-style card exists, the rest of the funnel deserves the same rigour" }
     subapp_playlist:
       - { name: creator donations / ad-free tier, status: planned }
+      - { name: "SoundCloud + whyp.it-class creator surface: creator uploads, reposts, waveform comments, profiles that read as discographies", status: planned, notes: "operator call 2026-10-29: playlist positions as SoundCloud plus whyp.it; the import pipeline and the whyp.it seeding rake already exist, the creator-facing half of that positioning is the build" }
     # Fences on every row below: no mandatory commission, no dark patterns, no
     # hidden fees, and payment never buys a moderation or trust outcome. One
     # Commerce/Billing/Entitlements domain in shared, consumed by the verticals —

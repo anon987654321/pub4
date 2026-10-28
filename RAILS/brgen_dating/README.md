@@ -23,10 +23,12 @@ reviewed by a human. Face matching is not automatic, since it fails on the peopl
 serve, and a wrong rejection on a dating profile is worse than a slow approval. Only a
 reviewer, the same admin who works the moderation queue, may approve or reject one.
 
-The Vipps check fails open. When `VIPPS_CLIENT_ID` and its secret are absent, the Vipps provider
-never registers, the check is skipped, and anyone signed in can put a profile in the deck. A
-missing variable should not lock a whole city out of the vertical. Production must therefore
-carry both Vipps keys in `/etc/brgen.env`, or dating runs with no identity check at all.
+The Vipps check fails closed. With `VIPPS_CLIENT_ID` and its secret in `/etc/brgen.env`, only a
+Vipps-verified account can put a profile in the deck. Without the keys the writing surfaces lock:
+the old behaviour treated a missing variable as an open door, which is the wrong default for a
+dating product. A server that deliberately runs without Vipps keys (a demo, a fixture city) opens
+the gate only when the operator sets `DATING_IDENTITY_BYPASS=demo` in the same env file — a named
+decision, visible next to the variables it stands in for.
 
 The models are `Profile`, `Prompt`, `Like`, `Dislike`, `Match`, `DailyPick` and `Verification`.
 `isolate_namespace Dating` gives their tables the `dating_` prefix. The engine lives in
