@@ -35,6 +35,16 @@ module Master
       SURFACE_EVIDENCE_STATES = %w[assessed_clean not_applicable violation_found inconclusive].freeze
       RESUMABLE_STATES = %w[active crashed delivery_failed].freeze
 
+      class ArtifactReadError < StandardError
+        attr_reader :status, :details
+
+        def initialize(status, message, details = {})
+          @status = status
+          @details = details
+          super(message)
+        end
+      end
+
       def self.instance_id
         return @instance_id if @instance_pid == Process.pid
 
@@ -139,12 +149,10 @@ module Master
         raise ArgumentError, "invalid fix run id" unless id.match?(/\A[a-f0-9]{20}\z/)
         raise ArgumentError, "assessment report must be a hash" unless report.is_a?(Hash)
 
-        master_dir = File.join(@root, ".master")
         assessment_dir = File.join(@root, ASSESSMENT_DIR)
-        raise "refusing symlinked .master directory" if File.symlink?(master_dir)
-        raise "refusing symlinked assessment directory" if File.symlink?(assessment_dir)
-
+        prepare_artifact_directory!(assessment_dir)
         path = File.join(assessment_dir, "#{id}.json")
+        refuse_unsafe_artifact_slot!(path, label: "assessment report")
         envelope = {
           "schema_version" => 1,
           "run_id" => id,
@@ -154,7 +162,7 @@ module Master
         }
         payload = JSON.pretty_generate(envelope) + "\n"
         write_atomic(path, payload, mode: 0o600)
-        stored_payload = File.binread(path)
+        stored_payload = read_private_artifact(path, label: "assessment report")
         digest = Digest::SHA256.hexdigest(payload)
         raise "assessment artifact read-back mismatch" unless stored_payload == payload
         raise "assessment artifact checksum mismatch after write" unless Digest::SHA256.hexdigest(stored_payload) == digest
@@ -202,20 +210,15 @@ module Master
         raise ArgumentError, "architecture report must be a hash" unless report.is_a?(Hash)
         raise ArgumentError, "architecture provenance must be a hash" unless provenance.is_a?(Hash)
 
-        master_dir = File.join(@root, ".master")
         directory = File.join(@root, ARCHITECTURE_DIR)
-        raise "refusing symlinked .master directory" if File.symlink?(master_dir)
-        raise "refusing symlinked architecture directory" if File.symlink?(directory)
-        FileUtils.mkdir_p(directory, mode: 0o700)
-        mode = File.stat(directory).mode & 0o777
-        raise "architecture report directory permissions are not private" unless (mode & 0o077).zero?
+        prepare_artifact_directory!(directory)
 
         safe_provenance = json_safe_value(provenance)
         provenance_digest = Digest::SHA256.hexdigest(JSON.generate(safe_provenance.sort.to_h))
         revision = SecureRandom.hex(6)
         name = "#{id}-#{provenance_digest[0, 12]}-#{revision}.json"
         path = File.join(directory, name)
-        raise "refusing symlinked architecture report" if File.symlink?(path)
+        refuse_unsafe_artifact_slot!(path, label: "architecture report")
 
         envelope = {
           "schema_version" => 1,
@@ -230,12 +233,10 @@ module Master
                                    item_count: Array(envelope.dig("report", "targets")).size) do
           write_atomic(path, payload, mode: 0o600)
         end
-        stored_payload = File.binread(path)
+        stored_payload = read_private_artifact(path, label: "architecture report")
         digest = Digest::SHA256.hexdigest(payload)
         raise "architecture report read-back mismatch" unless stored_payload == payload
         raise "architecture report checksum mismatch after write" unless Digest::SHA256.hexdigest(stored_payload) == digest
-        file_mode = File.stat(path).mode & 0o777
-        raise "architecture report permissions are not private" unless (file_mode & 0o077).zero?
 
         targets = Array(envelope.dig("report", "targets"))
         receipt = {
@@ -287,12 +288,11 @@ module Master
         return { "status" => "receipt_path_mismatch" } unless match
         expected_path = File.join(directory, name)
         return { "status" => "receipt_path_mismatch" } unless relative(expected_path) == relative_path
-        return { "status" => "artifact_unavailable" } unless File.file?(expected_path) && !File.symlink?(expected_path)
-
-        file_mode = File.stat(expected_path).mode & 0o777
-        return { "status" => "artifact_permissions_insecure", "mode" => format("%04o", file_mode) } unless (file_mode & 0o077).zero?
-
-        payload = File.binread(expected_path)
+        begin
+          payload = read_private_artifact(expected_path, label: "architecture report")
+        rescue ArtifactReadError => error
+          return { "status" => error.status }.merge(error.details)
+        end
         actual_digest = Digest::SHA256.hexdigest(payload)
         return { "status" => "checksum_mismatch" } unless actual_digest == receipt["sha256"]
 
@@ -395,12 +395,11 @@ module Master
         expected_path = File.join(assessment_dir, "#{id}.json")
         relative_path = relative(expected_path)
         return { "status" => "receipt_path_mismatch" } unless receipt["path"] == relative_path
-        return { "status" => "artifact_unavailable" } unless File.file?(expected_path) && !File.symlink?(expected_path)
-
-        file_mode = File.stat(expected_path).mode & 0o777
-        return { "status" => "artifact_permissions_insecure", "mode" => format("%04o", file_mode) } unless (file_mode & 0o077).zero?
-
-        payload = File.binread(expected_path)
+        begin
+          payload = read_private_artifact(expected_path, label: "assessment report")
+        rescue ArtifactReadError => error
+          return { "status" => error.status }.merge(error.details)
+        end
         actual_digest = Digest::SHA256.hexdigest(payload)
         return {
           "status" => "checksum_mismatch",
@@ -1074,6 +1073,132 @@ module Master
           yield run
           persist(data, run_id:)
         end
+      end
+
+      def prepare_artifact_directory!(directory)
+        root = File.expand_path(@root)
+        root_stat = File.lstat(root)
+        unless root_stat.directory? && !root_stat.symlink?
+          raise IOError, "refusing non-directory or symlinked artifact workspace"
+        end
+
+        expected_prefix = "#{root}#{File::SEPARATOR}"
+        full_directory = File.expand_path(directory)
+        unless full_directory.start_with?(expected_prefix)
+          raise IOError, "artifact directory escapes journal workspace"
+        end
+
+        master_dir = File.join(root, ".master")
+        raise IOError, "refusing symlinked .master directory" if File.symlink?(master_dir)
+        FileUtils.mkdir_p(master_dir, mode: 0o700)
+        master_stat = File.lstat(master_dir)
+        unless master_stat.directory? && !master_stat.symlink? && (master_stat.mode & 0o022).zero?
+          raise IOError, "journal state directory is unsafe"
+        end
+
+        FileUtils.mkdir_p(full_directory, mode: 0o700)
+        directory_stat = File.lstat(full_directory)
+        unless directory_stat.directory? && !directory_stat.symlink?
+          raise IOError, "artifact path is not a real directory"
+        end
+        File.chmod(0o700, full_directory) unless (directory_stat.mode & 0o7777) == 0o700
+        final_stat = File.lstat(full_directory)
+        raise IOError, "artifact directory permissions are not private" unless
+          final_stat.directory? && !final_stat.symlink? && (final_stat.mode & 0o077).zero?
+        full_directory
+      rescue SystemCallError => error
+        raise IOError, "cannot prepare artifact directory safely: #{error.class}: #{error.message}"
+      end
+
+      def refuse_unsafe_artifact_slot!(path, label:)
+        parent = File.dirname(File.expand_path(path))
+        unless parent == File.expand_path(File.join(@root, ASSESSMENT_DIR)) ||
+               parent == File.expand_path(File.join(@root, ARCHITECTURE_DIR))
+          raise IOError, "#{label} path is outside its dedicated artifact directory"
+        end
+
+        return unless File.exist?(path) || File.symlink?(path)
+
+        stat = File.lstat(path)
+        unless stat.file? && !stat.symlink? && stat.nlink == 1
+          raise IOError, "refusing symlinked, hard-linked or non-regular #{label}"
+        end
+      rescue SystemCallError => error
+        raise IOError, "cannot inspect #{label} path safely: #{error.class}: #{error.message}"
+      end
+
+      def read_private_artifact(path, label:)
+        root = File.expand_path(@root)
+        expanded = File.expand_path(path)
+        root_prefix = "#{root}#{File::SEPARATOR}"
+        unless expanded.start_with?(root_prefix)
+          raise ArtifactReadError.new("artifact_path_unsafe", "#{label} escapes workspace")
+        end
+
+        root_stat = File.lstat(root)
+        unless root_stat.directory? && !root_stat.symlink?
+          raise ArtifactReadError.new("artifact_directory_unsafe", "#{label} workspace is not a real directory")
+        end
+
+        relative_parent = File.dirname(expanded).delete_prefix(root + File::SEPARATOR)
+        cursor = root
+        relative_parent.split(File::SEPARATOR).each do |component|
+          cursor = File.join(cursor, component)
+          stat = File.lstat(cursor)
+          unless stat.directory? && !stat.symlink?
+            raise ArtifactReadError.new("artifact_directory_unsafe", "#{label} parent is not a real directory")
+          end
+          if component == ".master" && (stat.mode & 0o022).positive?
+            raise ArtifactReadError.new("artifact_directory_unsafe", "#{label} state directory is group/world writable")
+          end
+          if cursor == File.dirname(expanded) && (stat.mode & 0o077).positive?
+            raise ArtifactReadError.new("artifact_directory_permissions_insecure",
+                                         "#{label} directory permissions are not private",
+                                         "mode" => format("%04o", stat.mode & 0o777))
+          end
+        end
+
+        unless File.exist?(expanded) || File.symlink?(expanded)
+          raise ArtifactReadError.new("artifact_unavailable", "#{label} is missing")
+        end
+
+        before = File.lstat(expanded)
+        unless before.file? && !before.symlink? && before.nlink == 1
+          raise ArtifactReadError.new("artifact_path_unsafe", "#{label} must be a singly linked regular file")
+        end
+        if (before.mode & 0o077).positive?
+          raise ArtifactReadError.new("artifact_permissions_insecure", "#{label} permissions are not private",
+                                      "mode" => format("%04o", before.mode & 0o777))
+        end
+
+        flags = File::RDONLY
+        flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+        File.open(expanded, flags) do |file|
+          opened = file.stat
+          current = File.lstat(expanded)
+          unless current.file? && !current.symlink? && current.nlink == 1 &&
+                 current.dev == opened.dev && current.ino == opened.ino
+            raise ArtifactReadError.new("artifact_path_changed", "#{label} path changed while opening")
+          end
+
+          payload = file.read
+          after = File.lstat(expanded)
+          unless after.file? && !after.symlink? && after.nlink == 1 &&
+                 after.dev == opened.dev && after.ino == opened.ino &&
+                 after.size == opened.size && after.mtime == opened.mtime && after.ctime == opened.ctime
+            raise ArtifactReadError.new("artifact_changed_during_read", "#{label} changed while reading")
+          end
+          payload.force_encoding(Encoding::UTF_8)
+          unless payload.valid_encoding?
+            raise ArtifactReadError.new("artifact_invalid_encoding", "#{label} contains invalid UTF-8")
+          end
+          payload
+        end
+      rescue ArtifactReadError
+        raise
+      rescue SystemCallError => error
+        raise ArtifactReadError.new("artifact_read_failed",
+                                    "#{label} cannot be read safely: #{error.class}: #{error.message}")
       end
 
       def load
