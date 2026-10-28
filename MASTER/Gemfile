@@ -7,7 +7,7 @@ ruby ">= 3.2", "< 4.1"
 gem "fiddle"
 gem "psych"
 gem "yaml"
-# Ruby 4.0 ships json 2.18.0 in the supported runtime line; keep boot on that pre-activated version.
+# Keep the locked JSON API stable across the declared Ruby 3.2+ range; the dependency manager activates this bundle before application boot.
 gem "json", "= 2.18.0"
 
 gem "ruby_llm", "~> 2.1.0"
