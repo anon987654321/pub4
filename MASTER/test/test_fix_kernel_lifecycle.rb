@@ -64,6 +64,7 @@ class TestFixKernelLifecycle < Minitest::Test
       assert_equal "done", terminal.dig("payload", "state")
       assert_equal "ok", terminal.dig("payload", "result")
       assert_equal 1, repair.dig("payload", "fixed")
+      assert_equal 1, repair.dig("payload", "breakdown", "applied")
       assert_nil adapter.instance_variable_get(:@cancellation)
       assert_nil kernel.instance_variable_get(:@current_run_id)
     end
