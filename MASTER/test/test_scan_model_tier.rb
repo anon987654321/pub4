@@ -39,9 +39,11 @@ class ScanModelTierTest < Minitest::Test
     Master::Fix::Scanner.new(laws: [CheapLaw.new(findings), model])
   end
 
+  # With the daily sample off. The sample picks files by a hash of their path, and this file sits in a
+  # random temp directory, so leaving the posture's rate in place made the test fail about one run in ten.
   def test_a_model_law_never_runs_in_the_lexical_pass_of_a_clean_file
     model = ModelLaw.new
-    assert scanner(model).scan(@path).ok?
+    Master::Ground::ModePosture.stub(:semantic_sample, 0.0) { assert scanner(model).scan(@path).ok? }
     assert_equal 0, model.calls
   end
 
