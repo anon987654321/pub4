@@ -29,10 +29,9 @@ module Master
       class RepairAdapter; end unless const_defined?(:RepairAdapter, false)
 
       module Lifecycle
-        # The Kernel owns /fix lifecycle coordination. RunJournal is currently its
-        # durable metadata adapter; no caller should construct a second journal for
-        # the same coordinator. Keeping it behind this accessor makes the migration
-        # incremental without changing the persisted format or recovery contract.
+        # Kernel owns the durable lifecycle-journal implementation. The historical
+        # RunJournal constant remains an alias, and every production writer enters
+        # through this accessor so a run has one journal owner and one on-disk format.
         def lifecycle_journal
           @lifecycle_mutex.synchronize do
             @lifecycle_journal ||= LifecycleJournal.new(root: @root, bus: @bus)
