@@ -100,8 +100,8 @@ class StudioQualityAndReplayTest < Minitest::Test
         "blue_hour" => {
           "versions" => {
             "1.0.0" => { "modalities" => {
-              "image" => { "version" => "1.0.0" },
-              "prompt" => { "version" => "1.0.0" }
+              "image" => { "version" => "1.0.0", "temporal_variation" => "none" },
+              "prompt" => { "version" => "1.0.0", "temporal_variation" => "none" }
             } }
           }
         }
@@ -111,6 +111,49 @@ class StudioQualityAndReplayTest < Minitest::Test
 
     registry["styles"]["blue_hour"]["versions"]["1.0.0"]["modalities"]["image"]["version"] = "2.0.0"
     refute Studio::ReplayManifest.replayable?(manifest, registry)
+  end
+
+  def test_temporal_replay_requires_the_registry_schedule_hash_in_the_manifest
+    schedule_hash = "a" * 64
+    registry = {
+      "styles" => {
+        "blue_hour" => {
+          "versions" => {
+            "1.0.0" => { "modalities" => {
+              "image" => {
+                "version" => "1.0.0",
+                "temporal_variation" => { "schedule_hash" => schedule_hash }
+              }
+            } }
+          }
+        }
+      }
+    }
+    manifest = {
+      "style_id" => "blue_hour", "style_version" => "1.0.0", "modality" => "image",
+      "temporal_schedule_hash" => schedule_hash
+    }
+    assert Studio::ReplayManifest.replayable?(manifest, registry)
+
+    manifest["temporal_schedule_hash"] = "b" * 64
+    refute Studio::ReplayManifest.replayable?(manifest, registry)
+    manifest.delete("temporal_schedule_hash")
+    refute Studio::ReplayManifest.replayable?(manifest, registry)
+  end
+
+  def test_manifest_carries_a_declared_temporal_schedule_hash
+    Tempfile.create("studio-temporal-output") do |file|
+      file.write("frame")
+      file.flush
+      schedule_hash = "c" * 64
+      manifest = Studio::ReplayManifest.build(
+        output_path: file.path, prompt: "repeated style", model: { id: "model-x" },
+        style: { style_id: "blue_hour", version: "1.0.0", modality: "image",
+                 temporal_variation: { schedule_hash: schedule_hash } },
+        params: {}
+      )
+      assert_equal schedule_hash, manifest.fetch(:temporal_schedule_hash)
+    end
   end
 
   def test_replay_manifest_detects_changed_output
