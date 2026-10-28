@@ -874,6 +874,18 @@ end
         "coincident strings for two different facts: the soul anchor voice and the trader persona voice are separate settings that name the same voice today",
       "strategy: highest_priority_wins" =>
         "coincident strings for two different facts: limits.yml rule-conflict strategy, soul.yml conflict resolution",
+      # bard.yml and narration.yml each hold one register prompt as a single
+      # blob; Script.merge replaces the `system` and `prompt` keys wholesale,
+      # so deleting a coincident line from one register would change the text
+      # that register's model receives. A line-level collapse needs a
+      # composed-prompt loader, which is a rendered-speech change and stays
+      # with the operator.
+      "- Output only the sentences to speak, nothing else." =>
+        "coincident contract line inside two whole-blob register prompts: the loader replaces the system key wholesale, so removing one copy changes that register's rendered prompt",
+      "Write at most %{sentences} sentences, each under %{words} words." =>
+        "coincident shape line inside two whole-blob register prompts: the loader replaces the prompt key wholesale, so removing one copy changes that register's rendered prompt",
+      "authorization: operator request 2026-10-27 (chat e2c7ceca) — ideate over the planned rows; every pick stays law-gated" =>
+        "one operator request authorized the whole per-app ideation batch; each ideations record is standalone and names the authorization it ran under",
       # The three "open:" entries that were here are gone rather than expired:
       # each named a cross-file duplicate that has since been collapsed to one
       # source. anti_simulation's forbidden list is soul.yml only now (the

@@ -39,7 +39,6 @@ beats:
   finding: "Something went wrong or turned up. Name it in one clear image, then return to the line."
   closing: "The work is finished. Close the song in one or two sentences that land on the final fact."
   gap: "Nothing new has happened. In one short line hold the silence and remember the last confirmed fact."
-  incomplete: "The run stopped without a complete result. State the blocker plainly; do not imply success."
 
 prompt: |
   Song so far:
