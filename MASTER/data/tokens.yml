@@ -17,22 +17,6 @@ tokens:
   #   face_root    → MASTER web face.css :root only (CRT-flat, all radii 0)
   # Intent: social = soft radii; face/bsdports = CRT-flat zeros; luxury = calm product.
   # Light social = indigo on cool paper (not Twitter
-  # The viewport scale. Every other axis in this system is single-sourced; this one
-  # was not, so responsive breakpoints were written by hand and drifted: 13 distinct
-  # widths across 58 media queries in the three apps plus the engine.
-  #
-  # NOT a CSS custom property, and cannot be one: `@media (min-width: var(--x))` is
-  # invalid CSS, so a media query has to carry a literal. That is why this section is
-  # a declared set rather than a generated variable — the numbers stay in the
-  # stylesheets and Operator::BreakpointLint asserts they are these numbers.
-  #
-  # Every edge below is `min-width`. A max-width bound is the edge MINUS 1px, never
-  # the edge itself: `(max-width: 768px)` and `(min-width: 768px)` both match at
-  # exactly 768px, so both blocks apply and the later one silently wins.
-  #
-  # Each edge is here because something already uses it, with the count as of
-  # 2026-08-11. New work picks one of these; a new edge is a design decision that
-  # goes in this list first.
   visual_identity:
     name: "signal_and_stillness"
     # The primary material under the identity: greyscale particle stipple. The meaning of
@@ -100,6 +84,22 @@ tokens:
       bsdports: "retain OpenBSD terminal green and flat monochrome surfaces"
       openbsd: "plain operational text; signal never substitutes for a truthful written state"
       studio: "retain media fidelity, operator-owned grades and original subject identity"
+  # The viewport scale. Every other axis in this system is single-sourced; this one
+  # was not, so responsive breakpoints were written by hand and drifted: 13 distinct
+  # widths across 58 media queries in the three apps plus the engine.
+  #
+  # NOT a CSS custom property, and cannot be one: `@media (min-width: var(--x))` is
+  # invalid CSS, so a media query has to carry a literal. That is why this section is
+  # a declared set rather than a generated variable — the numbers stay in the
+  # stylesheets and Operator::BreakpointLint asserts they are these numbers.
+  #
+  # Every edge below is `min-width`. A max-width bound is the edge MINUS 1px, never
+  # the edge itself: `(max-width: 768px)` and `(min-width: 768px)` both match at
+  # exactly 768px, so both blocks apply and the later one silently wins.
+  #
+  # Each edge is here because something already uses it, with the count as of
+  # 2026-08-11. New work picks one of these; a new edge is a design decision that
+  # goes in this list first.
   viewport:
     xs: 480
     sm: 576

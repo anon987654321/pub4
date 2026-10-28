@@ -496,7 +496,6 @@ repo_topics:
     local_evidence:
     - MASTER/knowledge/research/token_reduction.md
     - MASTER/data/runtime.yml#provider_economy
-    - MASTER/data/budget.yml
     - MASTER/data/models.yml
     external_evidence:
     - arxiv:2604.09613 Token-Budget-Aware Pool Routing for Cost-Efficient LLM Inference
@@ -518,7 +517,6 @@ repo_topics:
     local_evidence:
     - MASTER/data/models.yml
     - MASTER/data/runtime.yml#provider_economy
-    - MASTER/data/budget.yml
     - MASTER/lib/cli/routing/model_router.rb
     - MASTER/lib/io/circuit_breaker.rb
     pattern: 'Treat providers as competing infrastructure. Use free/local/cheap models
@@ -767,7 +765,7 @@ repo_topics:
     - Paper-to-cluster summarizer.
     - Implementation-readiness scoring.
 
-# Merged from former sweep_prompts.yml — structural sweep techniques.
+# Session sign-off lines; Voice::Renderer#closing picks one at random.
 closings:
   - "Signing off."
   - "Link down."
@@ -793,7 +791,7 @@ motd:
     - "council: multi-persona deliberation"
     - "engine: pub4-shared across active Rails apps"
     - "deploy: relayd health + OPERATOR.sh checks"
-    - "core: 5-file spine smoke in core/"
+    - "core: 7-file fold spine in lib/core/"
     - "synth: say \"improvise\" and it plays, live, until you say \"stop\""
 
 # Merged from former webhooks.yml — webhook ingress: POST /ingress/webhook/:name with
@@ -841,7 +839,7 @@ auth_profiles:
       status_args: [auth, status]
       priority: 1
       models:
-        - claude-cli:claude-opus-4-8
+        - claude-cli:claude-opus-5-5
     - id: codex_subscription
       name: chatgpt
       auth: subscription

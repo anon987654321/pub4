@@ -91,9 +91,9 @@ legacy_roots:
   - path: misc/vulcheck/
     state: ported
     priority: low
-    target_path: DEPLOY/sh/tools/vulcheck.rb
+    target_path: MASTER/lib/io/vul_check.rb
     reason: >
-      vulcheck exists in pub4 deploy tools. Keep source mapping for provenance.
+      vulcheck exists in pub4 as the read-only Io::VulCheck tool. Keep source mapping for provenance.
 
   - path: brgen_app/
     state: ported
@@ -1109,7 +1109,7 @@ recovered_regression_reviews:
   - commit: "ca92b7d2be36c5877d570fc5abbb60f5572d261a"
     area: council_principles
     finding: "A prior merge dropped 137 visual/design/clean-code/architecture principles and the council had no principled briefing for those domains."
-    current_mapping: "data/principle_map.yml retains the restored clusters; council critique context samples bounded principle briefs from that map."
+    current_mapping: "data/laws.yml#law_map retains the restored clusters; council critique context samples bounded principle briefs from that map."
     disposition: "preserved-recovery"
   - commit: "2c8b7ab11e6882636065ec8399d383ad7a12dad7"
     area: trace_session

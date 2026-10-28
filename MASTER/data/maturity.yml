@@ -2,8 +2,8 @@ schema: 1
 # Maturity scorecard, matching OpenClaw's taxonomy.yaml -- what's actually
 # PROVEN to work, and how, distinguishing smoke-tested (mocks/unit tests
 # only) from verified (exercised live, end to end, with a real record of
-# when and how). A concrete embodiment of soul.yml's own SURFACE_ERRORS_FIRST
-# / anti_simulation rules: don't claim completion, prove it.
+# when and how). A concrete embodiment of law/practice.rb's SURFACE_ERRORS_FIRST
+# and soul.yml's anti_simulation: don't claim completion, prove it.
 #
 # status: smoke | verified | broken
 # evidence: the specific test/commit/session that backs the status
