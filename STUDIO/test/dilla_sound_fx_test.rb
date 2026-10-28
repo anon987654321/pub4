@@ -108,7 +108,7 @@ class DillaSoundFxTest < Minitest::Test
         "fi",
         'printf "%s\\n" "$@" > "$DILLA_CAPTURED_ARGS"',
         ""
-      ].join("\\n")
+      ].join("\n")
       File.write(fake_ruby, fake)
       File.chmod(0o755, fake_ruby)
       env = { "PATH" => [bin, "/usr/bin", "/bin"].join(File::PATH_SEPARATOR),
