@@ -95,20 +95,38 @@ class TestTraceRecorderStorage < Minitest::Test
 
   def test_multiple_processes_keep_complete_trace_lines
     Dir.mktmpdir("trace-storage-parallel-lines") do |root|
-      instance = recorder(root)
+      worker_script = <<~'RUBY'
+        require "master"
+        require "trace/recorder"
+
+        root, worker = ARGV
+        bus = Object.new
+        bus.define_singleton_method(:subscribe) { |*| }
+        recorder = Master::Trace::Recorder.new(root:, event_bus: bus)
+        10.times do |index|
+          recorder.send(:finalize, {
+            id: "#{worker}-#{index}", start_ts: Time.now.to_i,
+            channel: "test", message: "private payload", events: []
+          })
+        end
+      RUBY
+
       workers = 4.times.map do |worker|
         Process.spawn(
-          RbConfig.ruby, "-e",
-          'require "json"; pth, value = ARGV; 10.times { |i| line = JSON.generate(worker: value, index: i) + "\n"; File.open(pth, File::RDWR | File::APPEND) { |f| f.flock(File::LOCK_EX); f.write(line); f.flush; f.flock(File::LOCK_UN) } }',
-          daily_trace_path(root), worker.to_s
+          RbConfig.ruby, "-I", File.join(Master::ROOT, "lib"), "-e", worker_script,
+          root, worker.to_s, out: File::NULL, err: File::NULL
         )
       end
-      workers.each { |pid| Process.wait(pid) }
+      statuses = workers.map { |pid| Process.wait2(pid).last }
+      assert statuses.all?(&:success?), statuses.map(&:exitstatus).inspect
 
-      assert_equal 40, File.readlines(daily_trace_path(root)).length
-      File.foreach(daily_trace_path(root)) { |line| JSON.parse(line) }
-      assert_equal 0o600, File.stat(daily_trace_path(root)).mode & 0o777
-      instance
+      path = daily_trace_path(root)
+      lines = File.readlines(path)
+      assert_equal 40, lines.length
+      rows = lines.map { |line| JSON.parse(line) }
+      assert_equal 40, rows.map { |row| row.fetch("id") }.uniq.length
+      refute_includes lines.join, "private payload"
+      assert_equal 0o600, File.stat(path).mode & 0o777
     end
   end
 
