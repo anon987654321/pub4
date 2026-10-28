@@ -69,7 +69,7 @@ def declared_path_problem(name, kind, value)
                else
                  [expanded, "#{expanded}.rb", File.join(expanded, "init.rb")]
                end
-  existing = candidates.find { |candidate| File.file?(candidate) || File.directory?(candidate) }
+  existing = candidates.find { |candidate| File.file?(candidate) }
   if existing
     resolved = File.realpath(existing)
     real_base = File.realpath(base)
@@ -91,7 +91,6 @@ invalid_registry_rows = CHECKS.filter_map do |name, row|
   else
     class_value = row["class"]
     script_value = row["script"]
-    next if class_value.nil? && script_value.nil? && row["require"].nil?
 
     if !class_value.nil? && !class_value.is_a?(String)
       "#{name} class: must be a string"
