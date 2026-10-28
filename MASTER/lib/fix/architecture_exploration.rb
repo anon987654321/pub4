@@ -571,7 +571,7 @@ module Master
         scorecard = row.fetch(:scorecard)
         { "id" => row[:id], "lens" => row[:lens], "title" => row[:title],
           "thesis" => row[:thesis], "core_boundary" => row[:core_boundary],
-          "score" => scorecard[:total], "scorecard" => scorecard,
+          "score" => scorecard[:total] || scorecard["total"], "scorecard" => scorecard.transform_keys(&:to_s),
           "change_paths" => row[:change_paths], "evidence_paths" => row[:evidence_paths],
           "test_paths" => row[:test_paths], "verification_plan" => row[:verification_plan],
           "rollback_plan" => row[:rollback_plan], "law_alignment" => row[:law_alignment],

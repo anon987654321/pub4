@@ -19,7 +19,8 @@ source and tests they could not run; this pass is what measures them.
   `bundle exec ruby -Ilib:test test/test_turn_router.rb`,
   `bundle exec ruby -Ilib:test test/test_command_registry_dispatch.rb`,
   `bundle exec ruby -Ilib:test test/test_architecture_exploration.rb`,
-  `bundle exec ruby -Ilib:test test/test_run_journal_lifecycle.rb`, and
+  `bundle exec ruby -Ilib:test test/test_run_journal_lifecycle.rb`,
+  `bundle exec ruby -Ilib:test test/test_dom_surface_seo_metadata.rb`, and
   `bundle exec ruby -Ilib:test test/test_cli_boot_e2e.rb` (the last exercises the real
   PTY prompt/face lifecycle; its live-model case remains opt-in).
 - [ ] MASTER full suite: `MASTER_TEST_START_MARKERS=1 MASTER_TEST_JOBS=1 MASTER_TEST_PROGRESS_EVERY=25 rake test`,
@@ -30,8 +31,10 @@ source and tests they could not run; this pass is what measures them.
   `bin/ci` in each app in `RAILS/apps.yml`, including the 26 playlist, tv and takeaway tests
   that no command ran until `Pub4TestScope`, brgen's share-target, share-draft and job
   concurrency tests and a fresh test database for amber's `account_merges` and identity migrations.
-- [ ] OPENBSD: `ruby OPENBSD/test/run_all.rb` and `ruby OPENBSD/test/test_evidence_tool.rb`, smoke-testing
-  PASS, FAIL, BLOCKED, INCONCLUSIVE and TIMEOUT with process-group termination.
+- [ ] OPENBSD: `ruby OPENBSD/test/test_pf_policy_check.rb`, `ruby OPENBSD/test/run_all.rb` and
+  `ruby OPENBSD/test/test_evidence_tool.rb`, smoke-testing PASS, FAIL, BLOCKED, INCONCLUSIVE and TIMEOUT
+  with process-group termination. The PF policy test includes a negative case for protocol-specific
+  unscoped pass rules; validate native syntax separately on OpenBSD with `pfctl -nf /etc/pf.conf`.
 - [ ] STUDIO: `cd STUDIO && rake check test`, including the full `test/dilla_test.rb` (25 minutes;
   seven failures on 2026-10-23, reconciled in source on 2026-10-24 and never rerun).
 - [ ] Generated outputs match their sources: `RAILS/__shared/design_tokens.yml`,
@@ -79,6 +82,24 @@ source and tests they could not run; this pass is what measures them.
   dating, messenger, radio and takeaway, with authorisation boundaries and empty and error states.
 - [ ] Guest-to-account conversion and guest-transfer retry tests through every sign-in path.
 - [ ] Re-measure CSS, JS and PWA budgets from a fresh build against the ratchets.
+- [ ] Run an evidence-backed public SEO/indexability audit across the hostnames and
+  surfaces recorded in `RAILS/apps.yml` and the deployment inventory. Start with the
+  canonical app hosts (`brgen.no`, `ai.brgen.no`, `amberapp.art`, `bsdports.org`) and
+  verify redirects/canonicals for owned aliases (`amberapp.no`, `amberapp.online`,
+  `bsdports.net`) before treating them as indexable equivalents. Include representative
+  Brgen vertical hosts and city apexes; explicitly decide whether the MASTER face should
+  be indexed. The rendered surface schemas now require exactly one non-empty title, meta
+  description, absolute canonical URL, Open Graph title/description/URL for the five
+  current Brgen surface contracts, with good fixtures and focused negative tests. Attribute
+  quote handling now permits valid apostrophes in metadata text without accepting empty
+  values or relative canonical URLs. The full
+  hostname crawl remains open: record timestamped HTTP/redirect results, robots and sitemap
+  coverage, JSON-LD validity, indexability and measured performance where available.
+  Claude SEO may be used as a reviewed advisory crawler, with optional paid/API extensions
+  disabled unless approved; preserve raw evidence and falsifiable recommendations. Reuse
+  `content_honesty`, `surface_schema`, the SEO kit and existing structured-data tests; do
+  not add duplicate checks or new Law IDs until the audit proves a distinct, repeatable
+  invariant that the current checks miss.
 
 ## Cross-tree
 

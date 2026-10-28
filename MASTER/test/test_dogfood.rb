@@ -44,7 +44,13 @@ class DogfoodSpec < Minitest::Test
   end
 
   def test_no_law_without_all_three_parts
-    err = assert_raises(ArgumentError) { Law.define(:INCOMPLETE) { detect { true } } }
+    policy = { severity: :error, mode: :blocking, lifecycle: :active, autofix: :review,
+               languages: ["ruby"], surfaces: Law::ASSESSMENT_SURFACES }
+    err = assert_raises(ArgumentError) do
+      Law.stub(:catalogue_policy, policy) do
+        Law.define(:INCOMPLETE) { detect { true } }
+      end
+    end
     assert_match(/missing bad, good/, err.message)
   end
 
