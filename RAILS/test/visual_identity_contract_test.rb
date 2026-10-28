@@ -7,15 +7,16 @@ class VisualIdentityContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   FACE_SOURCE = File.join(ROOT, "master", "styles", "face", "10_foundation.css")
   FACE_COMPILED = File.join(ROOT, "master", "public", "face.css")
-  BRGEN_NAV = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_shared_typography.scss")
-  BRGEN_STEPS = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_shared_media_feed.scss")
+  BRGEN_NAV = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss")
+  BRGEN_STEPS = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss")
   SHARED_CHROME = File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_layout_chrome.scss")
   BRGEN_POSTS = File.join(ROOT, "brgen", "app", "views", "posts", "index.html.erb")
   BRGEN_SHELL = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss")
   AMBER_LAYOUT = File.join(ROOT, "amber", "app", "views", "layouts", "application.html.erb")
   AMBER_SIDEBAR = File.join(ROOT, "amber", "app", "views", "shared", "_sidebar_nav.html.erb")
-  AMBER_STYLES = File.join(ROOT, "amber", "app", "assets", "stylesheets", "_amber_late_product_finish.scss")
-  BSDPORTS_STYLES = File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_shared_chrome.scss")
+  AMBER_STYLES = File.join(ROOT, "amber", "app", "assets", "stylesheets", "application.scss")
+  BSDPORTS_STYLES = File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "application.scss")
+  BSDPORTS_LAYOUT = File.join(ROOT, "bsdports", "app", "views", "layouts", "application.html.erb")
   FACE_MOTION = File.join(ROOT, "master", "styles", "face", "40_accessibility_motion.css")
   SHARED_MOTION = File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_interaction_craft.scss")
   LAWS_SOURCE = File.read(File.expand_path("../../MASTER/data/laws.yml", __dir__), encoding: "UTF-8")
@@ -70,13 +71,20 @@ class VisualIdentityContractTest < Minitest::Test
                  "the aesthetic must not tint garment/product photography")
   end
 
-  def test_bsdports_keeps_terminal_palette_and_marks_current_navigation_in_text
+  def test_bsdports_keeps_classic_google_white_frontpage_palette
     styles = File.read(BSDPORTS_STYLES, encoding: "UTF-8")
+    layout = File.read(BSDPORTS_LAYOUT, encoding: "UTF-8")
 
     assert_includes styles, 'nav[data-pwa-primary-nav] a[aria-current="page"]'
     assert_includes styles, "color: var(--accent);"
     assert_includes styles, "text-decoration-thickness: 2px;"
-    assert_includes Operator::MasterDesign.tokens.dig("visual_identity", "adaptations", "bsdports"), "terminal green"
+    assert_includes styles, "--text: #202124;"
+    assert_includes styles, "--text-secondary: #4d5156;"
+    assert_includes styles, "--accent: #1a0dab;"
+    assert_includes styles, '--font: Arial, "Helvetica Neue", Helvetica, sans-serif;'
+    assert_includes styles, "color-scheme: light;"
+    assert_includes layout, %(<meta name="color-scheme" content="light">)
+    assert_includes layout, %(<meta name="theme-color" content="#ffffff" data-light-color="#ffffff" data-dark-color="#000000">)
   end
 
   def test_display_scale_is_opt_in_and_used_for_one_primary_editorial_heading
@@ -137,7 +145,10 @@ class VisualIdentityContractTest < Minitest::Test
 
     assert_includes adapters.fetch("brgen"), "deep-blue"
     assert_includes adapters.fetch("amber"), "garment colour"
-    assert_includes adapters.fetch("bsdports"), "terminal green"
+    # BSDPorts' active app stylesheet preserves the classic Google frontpage
+    # dialect. The historical MASTER adaptation prose still says "terminal green";
+    # this RAILS test checks the rendered product source without blessing that drift.
+    assert_includes File.read(BSDPORTS_STYLES, encoding: "UTF-8"), "--accent: #1a0dab;"
     assert_includes adapters.fetch("openbsd"), "plain operational text"
     assert_includes adapters.fetch("studio"), "operator-owned"
 
