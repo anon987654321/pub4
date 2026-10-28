@@ -54,11 +54,11 @@ class LogoContractTest < ActionView::TestCase
 
     assert_includes layout, 'class: "amber-logo-home"'
     assert_includes layout, "amber-masthead--home"
-    assert_match(/\\.amber-masthead--home\\s*\\{[^}]*min-height:\\s*72svh/m, styles,
+    assert_match(/\.amber-masthead--home\s*\{[^}]*min-height:\s*72svh/m, styles,
                  "the homepage masthead keeps the logo-led first-screen composition")
-    assert_match(/\\.amber-masthead--home\\s+\\.amber-logo-home\\s*\\{[^}]*width:\\s*min\\(100%,\\s*880px\\)/m, styles,
+    assert_match(/\.amber-masthead--home\s+\.amber-logo-home\s*\{[^}]*width:\s*min\(100%,\s*880px\)/m, styles,
                  "the original wordmark stays large rather than shrinking to a header-sized mark")
-    refute_match(/\\.amber-masthead--home\\s+\\.amber-logo-home\\s*\\{[^}]*380px/m, styles,
+    refute_match(/\.amber-masthead--home\s+\.amber-logo-home\s*\{[^}]*380px/m, styles,
                  "the former small-home-logo cap must not return")
   end
 
