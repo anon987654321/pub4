@@ -57,7 +57,7 @@ module Master
         on_total&.call(report.total_count)
         report_file_counts({ pairs:, filters: }, on_counts, dry_run:)
         pairs.empty? ? clean_scan_line(dry_run:) : report.render
-end
+      end
 
       # Findings per file, the files with none left out, from the pairs scan_pass left in the holder.
       def report_file_counts(holder, on_counts, dry_run:)
