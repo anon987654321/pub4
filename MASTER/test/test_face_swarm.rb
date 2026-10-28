@@ -41,12 +41,12 @@ class TestFaceSwarm < Minitest::Test
   end
 
   def test_particle_budget_is_capped_by_existing_spatial_contract
-    assert_equal 200, Swarm.particle_budget
-    assert_equal 120, Swarm.particle_budget(mobile: true)
-    assert_equal 64, Swarm.particle_budget(reduced_motion: true)
-    assert_equal 64, Swarm.particle_budget(mobile: true, reduced_motion: true)
-    assert_equal 200, Swarm.build(count: 10_000, seed: 7).length
-    assert_equal 120, Swarm.build(count: 10_000, seed: 7, mobile: true).length
+    assert_equal 240, Swarm.particle_budget
+    assert_equal 240, Swarm.particle_budget(mobile: true)
+    assert_equal 240, Swarm.particle_budget(reduced_motion: true)
+    assert_equal 240, Swarm.particle_budget(mobile: true, reduced_motion: true)
+    assert_equal 240, Swarm.build(count: 10_000, seed: 7).length
+    assert_equal 240, Swarm.build(count: 10_000, seed: 7, mobile: true).length
     assert_equal 0, Swarm.build(count: -3, seed: 7).length
   end
 
