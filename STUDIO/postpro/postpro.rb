@@ -40,6 +40,7 @@ POSTPRO_LIB = %w[
   relight effects_optical effects_process effects_video effects_print take_check
   effects_finish tonemap grade_step random_chain random_takes recipe
   pipeline sidecars fit_grain introspection audits vocab_check
+  quality_analyzer correction_proposer
   cli contact_sheet launch
 ].freeze
 
