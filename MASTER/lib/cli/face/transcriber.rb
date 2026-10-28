@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "open3"
+require_relative "../../io/exec"
 require "tempfile"
 
 module Master
@@ -32,8 +32,8 @@ module Master
         # whisper names silence and noise in brackets rather than leaving it empty.
         NON_SPEECH = /\[[^\]]*\]|\([^)]*\)/
 
-        def initialize(env: ENV, which: ->(cmd) { Master::Voice::Playback.which(cmd) }, run: Open3.method(:capture3),
-                       gemini_key: -> { Talk.gemini_key })
+        def initialize(env: ENV, which: ->(cmd) { Master::Voice::Playback.which(cmd) },
+                       run: Master::Io::Exec.method(:capture3), gemini_key: -> { Talk.gemini_key })
           @env = env
           @which = which
           @run = run

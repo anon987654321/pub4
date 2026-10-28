@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
-require "open3"
+require_relative "../io/exec"
 require "time"
 
 module Master
@@ -51,7 +51,9 @@ module Master
       end
 
       def commits_since(root, time)
-        out, status = Open3.capture2("git", "-C", root, "rev-list", "--count", "--since=#{time.iso8601}", "HEAD")
+        since = "--since=#{time.iso8601}"
+
+        out, status = Master::Io::Exec.capture2("git", "-C", root, "rev-list", "--count", since, "HEAD")
         status.success? ? out.to_i : nil
       rescue SystemCallError # scan: intentional — no git means no count, and the line leaves it out
         nil

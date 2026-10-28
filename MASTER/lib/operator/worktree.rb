@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require "open3"
+require_relative "../io/exec"
 require "optparse"
 
 module Operator
@@ -176,7 +176,7 @@ module Operator
     end
 
     def run(*args)
-      output, status = Open3.capture2e("git", "-C", root, *args)
+      output, status = Master::Io::Exec.capture2e("git", "-C", root, *args)
       [output, status.success?]
     rescue Errno::ENOENT => e
       raise Error, "git executable unavailable: #{e.message}"

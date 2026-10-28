@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
-require "open3"
+require_relative "../io/exec"
 require_relative "run_pulse"
 require_relative "autofix_guard"
 require_relative "run_ledger"
@@ -465,9 +465,9 @@ module Master
       # Spelled from @root, as the autofix recorded its writes: --show-toplevel answers with symlinks
       # resolved (/private/var for /var), and no path would match.
       def uncommitted_paths
-        up, = Open3.capture2("git", "-C", @root, "rev-parse", "--show-cdup")
+        up, = Master::Io::Exec.capture2("git", "-C", @root, "rev-parse", "--show-cdup")
         top = File.expand_path(up.strip, @root)
-        listing, = Open3.capture2("git", "-C", top, "diff", "--name-only", "HEAD")
+        listing, = Master::Io::Exec.capture2("git", "-C", top, "diff", "--name-only", "HEAD")
         listing.lines.map { |path| File.join(top, path.strip) }
       end
 

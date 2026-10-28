@@ -2,7 +2,7 @@
 
 require "json"
 require "fileutils"
-require "open3"
+require_relative "../io/exec"
 require "tempfile"
 require_relative "../trace/dmesg"
 
@@ -18,7 +18,7 @@ module Master
       RATE_HZ = 16_000
       STATE_PATH = ".master/wake_word.json"
 
-      def initialize(root:, transcriber: nil, which: ->(cmd) { command?(cmd) }, run: Open3.method(:capture3),
+      def initialize(root:, transcriber: nil, which: ->(cmd) { command?(cmd) }, run: Master::Io::Exec.method(:capture3),
                      sleeper: ->(seconds) { sleep seconds }, clock: -> { Time.now.to_i }, out: $stderr)
         @root = root
         @transcriber = transcriber

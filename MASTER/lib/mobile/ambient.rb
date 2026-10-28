@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "open3"
+require_relative "../io/exec"
 require "timeout"
 require_relative "env"
 
@@ -14,7 +14,7 @@ module Master
         def ok? = ok == true
       end
 
-      def initialize(config: Mobile.config, capture: Open3.method(:capture3),
+      def initialize(config: Mobile.config, capture: Master::Io::Exec.method(:capture3),
                      speaker: ->(cmd, text) { system(cmd, text) })
         @ambient = config.fetch("ambient", {})
         @capture = capture
