@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "uri"
+require "yaml"
+
 module Master
   module Io
     # Runtime HTTP tool registry (OpenCrabs tools.toml parity) — data-driven endpoints
@@ -16,8 +19,10 @@ module Master
       METHODS = %w[GET POST PUT PATCH].freeze
       NAME_PATTERN = /\A[a-z][a-z0-9_-]*\z/
 
+      def paths = PATHS
+
       def load_definitions
-        rows = PATHS.flat_map { |path| load_path(path) }
+        rows = paths.flat_map { |path| load_path(path) }
         duplicates = rows.group_by { |row| row.fetch("name") }.select { |_name, entries| entries.size > 1 }.keys
         raise ArgumentError, "dynamic tool catalogue has duplicate name(s): #{duplicates.sort.join(', ')}" unless duplicates.empty?
 
