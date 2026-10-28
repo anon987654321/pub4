@@ -214,6 +214,7 @@ module Master
           validate_trace_file!(file, path)
           file.chmod(0o600)
           last_line = file.each_line.inject(nil) { |_, line| line }
+          validate_trace_file!(file, path)
           last_line ? JSON.parse(last_line, symbolize_names: true) : nil
         end
       rescue StandardError => e
