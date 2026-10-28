@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../../execution/contract"
 module Master
   module Review
     class Agent
@@ -37,7 +38,7 @@ module Master
           return true unless @model_router.respond_to?(:unreachable_reason)
           @model_router.unreachable_reason(@pinned_model, wait: false).nil?
         rescue StandardError => e
-          @bus&.publish("llm:pinned_model_unavailable", model: @pinned_model, error: e.message)
+          @bus&.publish("llm:pinned_model_unavailable", model: @pinned_model, error_class: e.class.name, **Master::Execution::Contract.diagnostic_fields(e.message))
           false
         end
 
@@ -54,7 +55,7 @@ module Master
           # move browser chat or local compute ahead of the declared fallback ladder.
           @model_router.priority_fallback_order(chain)
         rescue StandardError => e
-          @bus&.publish("llm:route_error", error: e.message)
+          @bus&.publish("llm:route_error", error_class: e.class.name, **Master::Execution::Contract.diagnostic_fields(e.message))
           [@config.model]
         end
 
