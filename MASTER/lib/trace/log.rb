@@ -115,7 +115,7 @@ module Master
                 end
                 break
               rescue Errno::ENOSPC
-                raise unless attempts.zero? && reclaim(path)
+                raise unless attempts.zero? && reclaim(path, mode:)
 
                 attempts += 1
               end
@@ -182,10 +182,10 @@ module Master
             file.seek(start - 1, IO::SEEK_SET)
             unless file.read(1) == "\n"
               first_newline = bytes.index("\n")
-              bytes = first_newline ? bytes.byteslice(first_newline + 1..) : +"" .b
+              bytes = first_newline ? bytes.byteslice(first_newline + 1..) : +"".b
             end
           end
-          bytes || +"" .b
+          bytes || +"".b
         end
         with_private_file(path, File::RDWR, mode:, label: "rotated JSONL log") do |file|
           file.truncate(0)
