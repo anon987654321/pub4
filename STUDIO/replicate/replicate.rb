@@ -21,6 +21,8 @@ require_relative "../postpro/analog_capabilities"
 require "shellwords"
 require_relative "craft"
 require_relative "chain"
+require_relative "scene_compiler"
+require_relative "../style_registry"
 
 # What each Replicate model actually accepts, checked against the live schemas
 # rather than remembered.
@@ -440,6 +442,8 @@ def write_provenance(output, prompt, compiled_prompt, negative_prompt, options, 
   sidecar = { output: }.merge(
     prompt:,
     compiled_prompt:,
+    prompt_sha256: Digest::SHA256.hexdigest(prompt.to_s),
+    compiled_prompt_sha256: Digest::SHA256.hexdigest(compiled_prompt.to_s),
     negative_prompt:,
     # Whether the model was actually given it. A sidecar that records a
     # constraint the request never carried is worse than one that records
@@ -453,6 +457,14 @@ def write_provenance(output, prompt, compiled_prompt, negative_prompt, options, 
     sha256: digest,
     generated_at: Time.now.utc.iso8601,
   ).merge(extra)
+  if options[:style_contract_entry]
+    entry = options[:style_contract_entry]
+    sidecar[:style_contract] = {
+      id: entry["style_id"], version: entry["version"], modality: entry["modality"],
+      registry_sha256: options[:style_registry_sha256]
+    }
+  end
+  sidecar[:scene] = options[:scene_manifest] if options[:scene_manifest]
   writer = Object.new.extend(Studio::AtomicWrite)
   writer.write_atomic("#{output}.json", JSON.pretty_generate(sidecar))
   sidecar
@@ -668,6 +680,8 @@ parser = OptionParser.new do |p|
     Live schemas: cd MASTER/tools && rake replicate:schema_audit (skipped without a token).
   TXT
   p.on("--prompt TEXT") { |v| options[:prompt] = v }
+  p.on("--scene-json FILE") { |v| options[:scene_json] = File.expand_path(v) }
+  p.on("--style-contract NAME") { |v| options[:style_contract] = v }
   p.on("--model MODEL") { |v| options[:model] = v; options[:model_explicit] = true }
   p.on("--aspect-ratio RATIO") { |v| options[:aspect_ratio] = v }
   p.on("--output FILE") { |v| options[:output] = File.expand_path(v) }
@@ -853,7 +867,45 @@ when "chain"
 when "vocab-check"
   vocab_check
 when "generate"
+  if options[:scene_json]
+    abort "replicate: --scene-json cannot be combined with --prompt" unless options[:prompt].to_s.strip.empty?
+    abort "replicate: scene JSON not found: #{options[:scene_json]}" unless File.file?(options[:scene_json]) && File.readable?(options[:scene_json])
+    begin
+      scene_document = JSON.parse(File.read(options[:scene_json]))
+    rescue JSON::ParserError => e
+      abort "replicate: invalid scene JSON: #{e.message}"
+    end
+    scene_result = STUDIO::Replicate::SceneCompiler.compile_fields(
+      scene_document,
+      options: options,
+      vocabularies: VOCABULARIES,
+      compiler: ->(brief, fields) { compile_prompt(brief, fields) }
+    )
+    unless scene_result[:status] == :ready
+      abort "replicate: scene rejected: #{scene_result[:warnings].join('; ')}"
+    end
+    options = scene_result[:options].merge(
+      prompt: scene_result[:prompt],
+      compiled_scene_prompt: scene_result[:compiled_prompt],
+      scene_manifest: {
+        document_sha256: Digest::SHA256.file(options[:scene_json]).hexdigest,
+        prompt_sha256: scene_result[:prompt_sha256],
+        compiled_prompt_sha256: scene_result[:compiled_prompt_sha256],
+        fields: scene_result[:fields]
+      }
+    )
+  end
   abort parser.to_s if options[:prompt].to_s.strip.empty?
+  if options[:style_contract]
+    begin
+      options[:style_contract_entry] = Studio::StyleRegistry.resolve(
+        style_id: options[:style_contract], modality: "prompt"
+      )
+      options[:style_registry_sha256] = Digest::SHA256.file(Studio::StyleRegistry::REGISTRY_PATH).hexdigest
+    rescue Studio::StyleRegistry::InvalidStyle => e
+      abort "replicate: style contract rejected: #{e.message}"
+    end
+  end
   if !options[:dry_run] && Studio::ReplicateClient.load_token.to_s.strip.empty?
     abort "replicate: generate needs a token (REPLICATE_API_TOKEN, REPLICATE_API_KEY, or api_token in " \
           "~/.config/replicate/config.json); --dry-run compiles the prompt without one"
@@ -891,7 +943,7 @@ when "generate"
 
   # Invariant across the batch — every field it reads is the same for all
   # twenty images. Only diversify() varies per index.
-  compiled = compile_prompt(options[:prompt], options)
+  compiled = options[:compiled_scene_prompt] || compile_prompt(options[:prompt], options)
   compiled = "#{compiled}, #{POSITIVE_SKIN_GUIDANCE}" if negative_prompt && !negative_prompt_supported?(options[:model])
   warn_prompt_length(compiled, options[:model])
 
