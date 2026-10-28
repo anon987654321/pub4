@@ -122,23 +122,40 @@ module Master
         prepare_storage_directory!
         raise IOError, "refusing symlinked trace file" if File.symlink?(path)
 
-        flags = File::WRONLY | File::APPEND | File::CREAT
+        flags = File::RDWR | File::APPEND | File::CREAT
         flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
         File.open(path, flags, 0o600) do |file|
           validate_trace_file!(file, path)
-          # Existing files keep their old mode when opened with CREAT. Repair it
-          # before writing any new trace bytes, never after the sensitive append.
-          file.chmod(0o600)
-          validate_trace_file!(file, path)
-          raise IOError, "trace file permissions are not private" unless
-            (file.stat.mode & 0o077).zero?
+          raise IOError, "could not acquire trace file lock" unless file.flock(File::LOCK_EX)
 
-          written = file.write(line)
-          raise IOError, "trace append wrote #{written || 0} of #{line.bytesize} bytes" unless
-            written == line.bytesize
+          begin
+            validate_trace_file!(file, path)
+            # Existing files keep their old mode when opened with CREAT. Repair it
+            # before writing any new trace bytes, never after the sensitive append.
+            file.chmod(0o600)
+            validate_trace_file!(file, path)
+            raise IOError, "trace file permissions are not private" unless
+              (file.stat.mode & 0o077).zero?
 
-          file.flush
-          file.fsync
+            if file.stat.size.positive?
+              file.seek(-1, IO::SEEK_END)
+              unless file.read(1) == "\n"
+                raise IOError, "refusing to append after an incomplete trace record"
+              end
+            end
+
+            offset = 0
+            while offset < line.bytesize
+              written = file.write(line.byteslice(offset..))
+              raise IOError, "trace append wrote no bytes" unless written&.positive?
+
+              offset += written
+            end
+            file.flush
+            file.fsync
+          ensure
+            file.flock(File::LOCK_UN)
+          end
         end
       end
 
