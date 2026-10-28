@@ -368,12 +368,12 @@
 
   function modeMultipliersFor(state = {}) {
     const modes = swarmConfiguration().mode_multipliers || {};
-    return modes[canonicalSwarmMode(state)] || modes.idle || { eyes: 1, core: 1, noise: 0.14 };
+    return modes[canonicalSwarmMode(state)] || modes.idle || { eyes: 1, core: 1, noise: 0 };
   }
 
   function glyphForDepth(rank) {
-    const ramp = swarmConfiguration().glyph_ramp || ["·", "˙", "∘", "•", "○", "●"];
-    if (!ramp.length) return "•";
+    const ramp = swarmConfiguration().glyph_ramp;
+    if (!Array.isArray(ramp) || !ramp.length) return "•";
     const value = clamp(rank, 0.5, 0, 1);
     return ramp[Math.floor(value * (ramp.length - 1) + 0.5)];
   }
