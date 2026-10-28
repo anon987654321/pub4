@@ -157,7 +157,7 @@ module Master
         prepare_storage_directory!
         cutoff = Time.now - (KEEP_DAYS * 86_400)
         Dir.children(@dir).each do |name|
-          next unless /\\A\\d{4}-\\d{2}-\\d{2}\\.jsonl\\z/.match?(name)
+          next unless /\A\d{4}-\d{2}-\d{2}\.jsonl\z/.match?(name)
 
           path = File.join(@dir, name)
           stat = File.lstat(path)
@@ -171,7 +171,7 @@ module Master
       def load_last_from_disk
         prepare_storage_directory!
         files = Dir.children(@dir).filter_map do |name|
-          next unless /\\A\\d{4}-\\d{2}-\\d{2}\\.jsonl\\z/.match?(name)
+          next unless /\A\d{4}-\d{2}-\d{2}\.jsonl\z/.match?(name)
 
           path = File.join(@dir, name)
           stat = File.lstat(path)
