@@ -124,6 +124,15 @@ end
   # spelling only long enough to rewrite it to /fix, so no separate scan
   # dispatcher, help topic, or pipeline stage can survive.
 
+  def test_kernel_owns_the_fix_loop_journal_and_pass_runner_repair_factory
+    loop = build_loop([])
+    kernel = loop.kernel
+
+    assert_instance_of Master::Fix::Kernel, kernel
+    assert_same kernel.lifecycle_journal, loop.instance_variable_get(:@run_journal)
+    assert_same kernel, loop.instance_variable_get(:@pass_runner).instance_variable_get(:@kernel)
+  end
+
   def test_convergence_accepts_non_finite_baseline_without_coercion_crash
     discipline = Master::Fix::ConvergenceDiscipline.new(root: @root, bus: @bus)
     discipline.begin_run([File.join(@root, "dummy.yml")])
