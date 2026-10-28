@@ -292,6 +292,26 @@ class DesignContractTest < Minitest::Test
     assert_empty uses, "general UI surfaces must not opt into decorative glow controllers:\n  #{uses.join("\n  ")}"
   end
 
+  def test_product_roots_preserve_shared_keyboard_focus_indicators
+    roots = %w[amber brgen bsdports].to_h do |app|
+      path = File.join(ROOT, app, "app", "assets", "stylesheets", "application.scss")
+      [app, File.read(path, encoding: "UTF-8")]
+    end
+    roots.each do |app, source|
+      assert_includes source, '@include meta.load-css("focus_ring");',
+                      "#{app} must load the shared focus indicator after local styles"
+    end
+
+    brgen = roots.fetch("brgen")
+    assert_includes brgen, ".post-progressive-step > h2:focus:not(:focus-visible)"
+    refute_match(/\.post-progressive-step > h2:focus\s*\{\s*outline:\s*none;/m, brgen,
+                 "a general focus reset must not erase the keyboard-visible state")
+
+    ring = File.read(File.join(SHARED, "app", "assets", "stylesheets", "_focus_ring.scss"), encoding: "UTF-8")
+    assert_includes ring, "outline: var(--focus-ring, 2px solid Highlight) !important;"
+    assert_includes ring, "outline-offset: 2px;"
+  end
+
   def test_theme_toggle_sets_document_element_dataset
     js = File.read(THEME_TOGGLE_JS)
     assert_includes js, "document.documentElement.dataset.theme"
