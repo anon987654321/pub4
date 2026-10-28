@@ -181,7 +181,7 @@ class TestFixInterruptionRestart < Minitest::Test
       assert git_status, "the process fixture must be a real Git checkout"
       File.write(File.join(root, ".pub4"), <<~YAML)
         schema: 1
-        tree: restart
+        tree: #{File.basename(root).downcase}
         allows:
           master: read_write
         adapters: []
@@ -265,7 +265,10 @@ class TestFixInterruptionRestart < Minitest::Test
             "run_id" => run_id,
             "coordinator_run_id" => kernel.instance_variable_get(:@current_run_id),
             "mission_id" => mission.id,
-            "pid" => Process.pid
+            "pid" => Process.pid,
+            "transaction_persisted" => Master::Fix::Transaction::Recovery.persisted?(
+              root:, id: "restart-probe"
+            )
           ))
           sleep 60
         end
@@ -285,6 +288,8 @@ class TestFixInterruptionRestart < Minitest::Test
         sleep 0.03 until File.file?(marker) || Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
         assert File.file?(marker), "public FixLoop#run did not reach its controlled pass boundary"
         marker_record = JSON.parse(File.read(marker))
+        assert_equal true, marker_record.fetch("transaction_persisted"),
+                     "the writer must die after its transaction manifest is durable"
         Process.kill("KILL", pid)
         _waited_pid, child_status = Process.wait2(pid)
         refute child_status.success?, "the writer must die before FixLoop terminalization"
