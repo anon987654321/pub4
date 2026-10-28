@@ -64,8 +64,10 @@ source and tests they could not run; this pass is what measures them.
 - [ ] Complete and verify the Kernel consolidation in `MASTER/docs/fix_coordinator_map.md`:
   production `/fix` now enters Kernel; the convergence, lifecycle-journal and repair-policy
   implementations live under `Fix::Kernel`, with compatibility constants retained. Kernel owns
-  the execution lock, coordinator receipts, shared journal accessor, repair factory and
-  unknown-outcome reconciliation. The subprocess tests cover transaction rollback, deletion of
+  the repository-wide, process-shared execution lock at `.master/fix-execution.lock`,
+  coordinator receipts, shared journal accessor, repair factory and unknown-outcome
+  reconciliation. A subprocess regression now verifies independent processes cannot
+  enter /fix concurrently; all runtime regressions remain unexecuted here. The subprocess tests cover transaction rollback, deletion of
   the run journal with Mission/checkpoint survival, resumption when the journal remains, and
   orphan-receipt recovery, but are unexecuted. Run them on pinned Ruby 4.0.5, then prove
   budget/collapse and zero-repair ledger honesty, the full adapter receipt-parity matrix, and one
