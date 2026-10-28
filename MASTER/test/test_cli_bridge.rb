@@ -61,7 +61,6 @@ class CLIBridgeTest < Minitest::Test
 
   def test_run_agent_turn_skips_workflow_fanout
     cli = build_cli
-    fold = { reason: :complete, turns: 1, summary: "fixed", transcript: [] }
     routed = nil
     cli.define_singleton_method(:run_input) { |line| routed = line }
 

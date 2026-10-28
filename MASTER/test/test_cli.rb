@@ -37,7 +37,6 @@ class TestCLI < Minitest::Test
     Fiber[:master_pair_subject] = nil
   end
 
-  # container accessor
   # Reading a pass report aloud from the top takes longer than the pass did.
   # Its milestones are spoken as they happen, so the report has only its
   # closing line left to say.
@@ -76,12 +75,6 @@ class TestCLI < Minitest::Test
 
   def test_container_accessor
     assert_same @container, @cli.container
-  end
-
-  # TTS flag
-  def test_tts_off_when_unavailable
-    refute @cli.instance_variable_get(:@tts_on),
-      "tts_on should be false when Speech.available? is false"
   end
 
   def test_scan_report_uses_inverted_pyramid_order
@@ -548,11 +541,12 @@ assert_empty topics - rows, "documented commands missing from the summary"
     thread.kill
 
     assert_nil thread.value, "a killed thread answers nil, which is the shape of the crash"
+    @cli.instance_variable_set(:@pipeline_thread, thread)
 
-    result = thread.value || Master::Result.err("interrupted", category: :abort)
+    result = @cli.send(:fetch_pipeline_result)
 
+    assert_kind_of Master::Result, result
     refute_predicate result, :ok?
-    assert_equal "interrupted", result.message
   end
 
   # user:interrupt had a publisher and no subscriber, so a cancelled turn's
@@ -753,23 +747,10 @@ def test_ctrl_c_at_the_prompt_raises_interrupt_for_repl_loop_to_close
     scan.verify
   end
 
-  # Dispatch, ported off `handle_command`.
-  #
-  # These ten tests spent an unknown number of months skipped with the note
-  # "drifted: API moved; port to new dispatcher/CLI shape", which meant the CLI's
-  # own test file ran and asserted nothing about dispatch. The API they were
-  # written against is genuinely gone; the behaviour mostly is not:
-  #
-  # - `handle_command` → `handle_repl_line` (lib/cli/session/repl_flow.rb), which
-  #   dispatches slash commands in three tables and sends everything else to
-  #   `run_agent_turn`.
-  # - `process`/`pipe` no longer call `container[:pipeline]` at all; a turn goes
-  #   through `TurnRouter.call`, so the old `@pipeline.expect(:call, …)` mocks
-  #   were asserting against a collaborator that had stopped being used.
-  # - `/tts` has no dispatch entry anywhere in lib/ and nothing assigns
-  #   `@tts_on` — TTS moved to the web face (`/chat/tts`). The two `/tts` tests
-  #   and the `@tts_on` test were deleted rather than ported: `refute` on an
-  #   instance variable no code sets passes for the wrong reason.
+  # Dispatch. `handle_repl_line` (lib/cli/session/repl_flow.rb) dispatches slash
+  # commands and sends everything else to `run_agent_turn`; `process`/`pipe`
+  # reach a turn through `TurnRouter.call`, not `container[:pipeline]`. `/tts`
+  # lives on the web face (`/chat/tts`), so nothing here asserts a CLI TTS flag.
 
   def test_plain_text_line_is_sent_as_a_turn_not_treated_as_a_command
     seen = :unset

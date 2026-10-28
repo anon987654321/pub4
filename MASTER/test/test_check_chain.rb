@@ -588,8 +588,6 @@ class TestCheckChain < Minitest::Test
     assert_equal "failed", G.classify(false, 1)
   end
 
-  # design_baseline prints its summary above its detail, which is how
-  # tools/sweep.rb once reported a detail row as the verdict.
   # A stage captures its output and can run for minutes. The first subtree /fix sat
   # silent through a whole MASTER suite run, so every stage runs under the heartbeat,
   # in its own unit.
@@ -608,6 +606,8 @@ class TestCheckChain < Minitest::Test
     assert_equal [%w[suites suite0]], spoken
   end
 
+  # design_baseline prints its summary above its detail, which is how
+  # tools/sweep.rb once reported a detail row as the verdict.
   def test_the_verdict_is_the_summary_line_not_the_last_line
     body = ["sprawl_census: lone_dirs 53 (ceiling 53)", "  MASTER/foo.rb"]
 

@@ -75,8 +75,6 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert_includes Registry.help_summary, "fix0 at master0: /fix [path] writes; /review and /critique read; /help <command> shows syntax."
   end
 
-  # A `*_commands` method is a table of verbs. Only control_commands exists,
-  # and build merges it; slash_commands is the help list, not a table.
   def test_task_and_capability_commands_are_registered_and_documented
     assert_equal :dispatch_task, built.fetch("task").method_name
     assert_equal :dispatch_capabilities, built.fetch("capabilities").method_name
@@ -448,6 +446,8 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert_includes called, :ctx
   end
 
+  # A `*_commands` method is a table of verbs. Only control_commands exists,
+  # and build merges it; slash_commands is the help list, not a table.
   def test_no_command_table_is_left_unmerged
     tables = Registry.singleton_methods.map(&:to_s).grep(/_commands\z/) - %w[slash_commands]
 

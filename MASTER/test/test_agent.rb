@@ -2,8 +2,7 @@
 
 require_relative "test_helper"
 
-# Minimal unit tests for Master::Review::Agent — specifically targeting the Tier-1
-# bugs the patch corrects. Does not hit any real LLM.
+# Unit tests for Master::Review::Agent with fake collaborators; no real LLM.
 class TestAgent < Minitest::Test
   include Master
 
@@ -29,10 +28,6 @@ class TestAgent < Minitest::Test
     ))
   end
 
-  # tool_capable? — previously a substring-include check. After patch,
-  # anchored regex rejects garbage-tailed model ids but accepts real ones.
-  # cache_key_for — must produce bounded, deterministic SHA256 keys.
-  # escalation flag — must be per-thread, not per-instance.
   def test_chat_turn_stages_a_preference_candidate_only_after_repeated_opted_in_corrections
     require "tmpdir"
     root = Dir.mktmpdir("agent-preference-feedback")
@@ -249,16 +244,6 @@ end
     Fiber[:master_evidence_note] = nil
   end
 
-  def test_escalation_flag_is_thread_local
-    Thread.current[:master_escalation_done] = nil
-    other_thread_saw = nil
-    t = Thread.new do
-      other_thread_saw = Thread.current[:master_escalation_done]
-    end
-    t.join
-    assert_nil other_thread_saw, "flag must not leak across threads"
-  end
-
   def test_public_method_count_stays_below_god_class_threshold
     assert_operator Master::Review::Agent.public_instance_methods(false).size, :<=, 12
   end
@@ -345,8 +330,6 @@ end
     assert_equal %w[first-model second-model final-model], calls
   end
 
-  # The scan's model rules each ask model_for; a pinned model that just failed
-  # must not be asked by every one of them in turn.
   def test_master_model_respects_local_only_boundary
     agent = agent_routed_by(LocalRouter.new(%w[ollama:phi4:mini]))
     with_env = lambda do |key, value, &block|
@@ -366,6 +349,8 @@ end
     end
   end
 
+  # The scan's model rules each ask model_for; a pinned model that just failed
+  # must not be asked by every one of them in turn.
   def test_a_pinned_model_that_just_failed_is_routed_around
     agent = agent_routed_by(LocalRouter.new(%w[ollama:gemma3:4b]))
     agent.model = "ollama:llama3.2:3b"

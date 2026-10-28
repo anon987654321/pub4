@@ -6,7 +6,7 @@ require_relative "../lib/master"
 
 # One Session object, one transcript, every visitor at once.
 #
-# The web container is a process singleton (web/config/initializers/
+# The web container is a process singleton (RAILS/master/config/initializers/
 # master_container.rb) and nothing scoped the session under it, so
 # Agent#conversation_context — which feeds the model `messages.last(41)` —
 # handed over whatever the last person to type had said. /chat/history is

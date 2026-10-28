@@ -21,9 +21,11 @@ class CritiqueFoldTest < Minitest::Test
     runner = lambda do |**_|
       Master::Result.ok("critique: council pass")
     end
-    world = Master::Core::World.new(root: Dir.mktmpdir, critique_runner: runner)
-    observation = world.perform(Master::Core::Effect.critique)
-    memory.record(Master::Core::Effect.critique, observation)
+    Dir.mktmpdir do |root|
+      world = Master::Core::World.new(root:, critique_runner: runner)
+      observation = world.perform(Master::Core::Effect.critique)
+      memory.record(Master::Core::Effect.critique, observation)
+    end
 
     assert memory.proof.council_cleared?
   end

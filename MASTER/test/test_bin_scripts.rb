@@ -67,7 +67,7 @@ class TestBinScripts < Minitest::Test
 
     assert_includes source, "Master::Io::Exec.capture2e(env, exe, stdin_data:"
     assert_includes source, "rescue Master::Io::Exec::TimeoutError"
-    refute_match(/Timeout\\.timeout\\(PIPE_TIMEOUT_SECONDS\\).*Open3\\.capture2e/, source)
+    refute_match(/Timeout\.timeout\(PIPE_TIMEOUT_SECONDS\).*Open3\.capture2e/m, source)
   end
 
   def test_crawl_browser_probe_uses_the_bounded_executor

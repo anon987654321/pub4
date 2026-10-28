@@ -45,18 +45,6 @@ class TestConstitution < Minitest::Test
     assert_includes constitution.system_prompt, "second"
   end
 
-  private
-
-  def write_principle(body)
-    File.write(File.join(@dir, "principle.md"), <<~MD)
-      ---
-      name: Test
-      description: Cache test
-      type: axiom
-      ---
-      #{body}
-    MD
-  end
   def test_secret_veto_blocks_exec_argv_and_git_commit_messages
     pattern = /sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}/
     rule = Master::Core::Constitution.send(:no_secret_rule, { "secrets" => pattern })
@@ -83,4 +71,16 @@ class TestConstitution < Minitest::Test
     assert_match(/missing or invalid/, verdict.reason)
   end
 
+  private
+
+  def write_principle(body)
+    File.write(File.join(@dir, "principle.md"), <<~MD)
+      ---
+      name: Test
+      description: Cache test
+      type: axiom
+      ---
+      #{body}
+    MD
+  end
 end

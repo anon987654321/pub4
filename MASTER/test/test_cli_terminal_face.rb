@@ -401,11 +401,13 @@ class TestCliTerminalFace < Minitest::Test
 
   def test_face_falls_back_to_native_speech_when_audio_player_fails
     spoken = []
+    dir = Dir.mktmpdir("master-face-tts")
+    audio = File.join(dir, "fake-face-tts.mp3")
     mouth = Master::CLI::Face::Mouth.new(
       device: Object.new.tap { |d| d.define_singleton_method(:android?) { false } },
-      synthesize: ->(_) { "/tmp/fake-face-tts.mp3" },
+      synthesize: ->(_) { audio },
     )
-    File.write("/tmp/fake-face-tts.mp3", "audio")
+    File.write(audio, "audio")
     mouth.stub(:direct_speech?, true) do
       mouth.stub(:direct_speak, ->(text) { spoken << text; true }) do
         mouth.stub(:play, false) do
@@ -423,7 +425,7 @@ class TestCliTerminalFace < Minitest::Test
     end
     assert_equal ["hello"], spoken
   ensure
-    File.delete("/tmp/fake-face-tts.mp3") if File.exist?("/tmp/fake-face-tts.mp3")
+    FileUtils.rm_rf(dir) if dir
   end
 
   def test_later_chunk_uses_direct_speech_when_its_synthesis_fails

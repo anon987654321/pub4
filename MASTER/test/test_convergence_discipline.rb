@@ -125,10 +125,10 @@ class TestConvergenceDiscipline < Minitest::Test
 
   def test_clean_proof_rejects_governing_authority_drift
     authority = File.join(@root, "authority.yml")
-    File.write(authority, "authority: original\\n")
+    File.write(authority, "authority: original\n")
     @discipline.define_singleton_method(:authority_paths) { [authority] }
     @discipline.begin_run([@path])
-    File.write(authority, "authority: changed\\n")
+    File.write(authority, "authority: changed\n")
 
     proof = @discipline.clean_proof(files: [@path], pass: 2, clean_runs: 2)
 
