@@ -56,12 +56,10 @@ module Master
       private
 
       def load
-        return [] unless File.file?(@path)
+        data = Master::Io::Ledger.read(@path, schema: VERSION)
+        return [] unless data
 
-        data = JSON.parse(File.read(@path, encoding: "UTF-8"))
         Array(data["cards"]).filter_map { |hash| Card.from_h(hash) }
-      rescue StandardError
-        []
       end
     end
   end
