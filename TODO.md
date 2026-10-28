@@ -111,8 +111,6 @@ compatibility alias ahead of the execution-contract gates.
 - [ ] Run the authored recovery gates on the pinned Ruby, preserve receipts,
   then retarget callers to the Kernel-owned names and delete the
   compatibility aliases per the existing execution-contract gate.
-- [ ] `rake docs:map` + `rake lint:map`: a committed per-file map of
-  constants, require graph and the boot chain; a stale map fails lint.
 - [ ] One Ruby pin stated once, and it is the owner's call: AGENTS.md and the
   execution contract name 4.0.5 (the operator's machine), while the
   .ruby-version files at root and MASTER hold 3.3.8 from the constrained
