@@ -278,6 +278,26 @@ test("stipple shares face state and obeys point and motion budgets", () => {
   assert.match(system, /vThreshold > uDensity/);
 });
 
+test("the swarm geometry, force constants, modes and glyph ramp live in face tokens", () => {
+  const tokens = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
+  assert.match(tokens, /^    swarm:\s*$/m);
+  assert.match(tokens, /particle_budget:\s*240/);
+  assert.match(tokens, /damping:\s*0\.86/);
+  assert.match(tokens, /cohesion_radius:\s*0\.11/);
+  assert.match(tokens, /cohesion_strength:\s*0\.045/);
+  assert.match(tokens, /separation_radius:\s*0\.035/);
+  assert.match(tokens, /separation_strength:\s*0\.08/);
+  assert.match(tokens, /noise_scale:\s*0\.014/);
+  assert.match(tokens, /glyph_ramp:\s*\["·", "˙", "∘", "•", "○", "●"\]/);
+  assert.match(tokens, /left:\s*\{ pos: \[-0\.29, 0\.21, 0\.58\], radius: 0\.17, weight: 1\.40 \}/);
+  assert.match(tokens, /right:\s*\{ pos: \[0\.29, 0\.21, 0\.58\], radius: 0\.17, weight: 1\.40 \}/);
+  assert.match(system, /function swarmConfiguration\(\)/);
+  assert.match(system, /Number\(config\.noise_scale\)/);
+  assert.match(system, /Number\(config\.cohesion_strength\)/);
+  assert.match(system, /Number\(config\.separation_strength\)/);
+  assert.doesNotMatch(system, /const SWARM_(?:DAMPING|RAMP|TARGET_FIELD)/);
+});
+
 test("stipple moods come from the face contract, not a second table", () => {
   const tokens = readFileSync(join(root, "..", "..", "MASTER", "data", "tokens.yml"), "utf8");
   assert.match(system, /MASTER_FACE_CONTRACT\?\.stipple\?\.profiles/);
