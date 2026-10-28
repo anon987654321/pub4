@@ -2,15 +2,6 @@
 
 require_relative "../kernel"
 
-# Publish the historical constant before child modules reopen FixLoop, so all
-# pass stages share Kernel::ConvergenceAdapter rather than a second class.
-module Master
-  module Fix
-    remove_const(:FixLoop) if autoload?(:FixLoop, false)
-    const_set(:FixLoop, Kernel::ConvergenceAdapter) unless const_defined?(:FixLoop, false)
-  end
-end
-
 require "set"
 require "time"
 require_relative "../scanner"
