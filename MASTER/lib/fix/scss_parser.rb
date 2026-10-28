@@ -136,7 +136,7 @@ module Master
         end
       end
 
-      def close_block(source, text, stack, rules, file, at)
+      def close_block(source, _text, stack, rules, file, at)
         frame = stack.pop or return
         return unless frame.kind == :rule
 

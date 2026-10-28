@@ -627,7 +627,7 @@ module Master
             "active pass=%s law=%s file=%s checks=%s law=%s/%s workers=%s for %ds",
             row.fetch("pass"), row.fetch("law"), row.fetch("file"), row.fetch("checks"),
             row.fetch("n"), row.fetch("total"), row.fetch("active", 1),
-            [Time.now.to_f - row.fetch("at").to_f, 0].max.round,
+            [Time.now.to_f - row.fetch("at").to_f, 0].max.round
           )
         end
 
