@@ -310,7 +310,7 @@ class DeployChecksContractTest < Minitest::Test
     view_paths = Dir.glob(File.join(ROOT, "**", "app", "views", "**", "*.erb"))
     raw_json_ld = view_paths.filter_map do |path|
       source = File.read(path)
-      next unless source.match?(/<script\\b(?=[^>]*\\btype\\s*=\\s*["']application\\/ld\\+json["'])/im)
+      next unless source.match?(/<script\b(?=[^>]*\btype\s*=\s*["']application\/ld\+json["'])/im)
 
       path.delete_prefix(REPO_ROOT + File::SEPARATOR)
     end
@@ -320,7 +320,7 @@ class DeployChecksContractTest < Minitest::Test
 
     helper_path = File.join(REPO_ROOT, "RAILS", "__shared", "app", "helpers", "shared", "seo_kit.rb")
     helper = File.read(helper_path)
-    assert_match(/def json_ld_script\\b/, helper)
+    assert_match(/def json_ld_script\b/, helper)
     assert_includes helper, "json_escape(data.to_json)"
     assert_includes helper, 'type: "application/ld+json"'
   end
