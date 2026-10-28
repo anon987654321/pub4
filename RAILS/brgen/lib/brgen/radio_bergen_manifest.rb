@@ -74,6 +74,30 @@ module Brgen
         YAML.safe_load(File.read(path), permitted_classes: [], aliases: true) || {}
       end
 
+      # Exact selection from pub2/mp3/playlist.json. These are metadata and
+      # archive filenames, not public media URLs; cleared files enter Active
+      # Storage only through Playlist::RadioBergenArchiveImport.
+      def curated_playlist
+        load.fetch("curated_playlist", {})
+      end
+
+      def curated_tracks
+        rows = curated_playlist["tracks"]
+        rows.is_a?(Array) ? rows.select { |row| row.is_a?(Hash) } : []
+      end
+
+      def curated_playlist_name
+        curated_playlist["name"].to_s
+      end
+
+      def curated_album
+        curated_playlist["album"].to_s
+      end
+
+      def curated_description
+        curated_playlist["description"].to_s
+      end
+
       def youtube_tracks
         Array(load.dig("external_reference", "youtube")).filter_map do |row|
           id = row["id"].presence
