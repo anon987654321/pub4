@@ -20,7 +20,7 @@ class TestLawCatalogueBootstrap < Minitest::Test
       law_dir: File.join(Master::ROOT, "law"),
       catalogue: Law::LAW_CATALOGUE,
       repo_root: File.dirname(Master::ROOT),
-      generated_declarations: generated_declarations(data)
+      generated_declarations: generated_declarations(data),
     )
 
     assert result
@@ -37,8 +37,8 @@ class TestLawCatalogueBootstrap < Minitest::Test
       catalogue = {
         "entries" => {
           "OTHER_ID" => { "definition_sources" => ["MASTER/law/actual.rb"] },
-          "ACTUAL_ID" => { "definition_sources" => ["MASTER/law/actual.rb"] }
-        }
+          "ACTUAL_ID" => { "definition_sources" => ["MASTER/law/actual.rb"] },
+        },
       }
       error = assert_raises(ArgumentError) do
         Master::LawCataloguePreflight.validate!(law_dir:, catalogue:, repo_root: root)
@@ -62,8 +62,8 @@ class TestLawCatalogueBootstrap < Minitest::Test
         "entries" => {
           "ACTUAL_ID" => { "definition_sources" => ["MASTER/law/actual.rb"] },
           "actual_detector" => { "detector_sources" => ["MASTER/law/detectors/detector.rb"] },
-          "orphan_detector" => { "detector_sources" => ["MASTER/law/detectors/detector.rb"] }
-        }
+          "orphan_detector" => { "detector_sources" => ["MASTER/law/detectors/detector.rb"] },
+        },
       }
       error = assert_raises(ArgumentError) do
         Master::LawCataloguePreflight.validate!(law_dir:, catalogue:, repo_root: root)
@@ -85,7 +85,7 @@ class TestLawCatalogueBootstrap < Minitest::Test
         Master::LawCataloguePreflight.validate!(
           law_dir:,
           catalogue: { "entries" => { "ACTUAL_ID" => { "definition_sources" => ["MASTER/law/actual.rb"] } } },
-          repo_root: root
+          repo_root: root,
         )
       end
 
@@ -105,8 +105,8 @@ class TestLawCatalogueBootstrap < Minitest::Test
         "defaults" => {},
         "entries" => {
           "ACTUAL_ID" => { "universal" => false, "modalities" => [], "definition_sources" => [] },
-          "bad-id" => { "universal" => true, "modalities" => %w[lexical semantic visual] }
-        }
+          "bad-id" => { "universal" => true, "modalities" => %w[lexical semantic visual] },
+        },
       }
       error = assert_raises(ArgumentError) do
         Master::LawCataloguePreflight.validate!(law_dir:, catalogue:, repo_root: root)
@@ -160,9 +160,9 @@ class TestLawCatalogueBootstrap < Minitest::Test
             "severity" => "warning",
             "mode" => "silent_pass",
             "path_pattern" => "[",
-            "severity_typo" => "warn"
-          }
-        }
+            "severity_typo" => "warn",
+          },
+        },
       }
 
       error = assert_raises(ArgumentError) do
@@ -187,7 +187,7 @@ class TestLawCatalogueBootstrap < Minitest::Test
         Master::LawCataloguePreflight.validate!(
           law_dir:,
           catalogue: { "entries" => { "DUPLICATE_ID" => { "definition_sources" => ["MASTER/law/one.rb"] } } },
-          repo_root: root
+          repo_root: root,
         )
       end
 

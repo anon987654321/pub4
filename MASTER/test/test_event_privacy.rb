@@ -8,12 +8,12 @@ class TestEventPrivacy < Minitest::Test
   def test_unknown_nested_objects_and_arrays_are_digest_only
     nested = {
       authorization: "Bearer nested-secret",
-      metadata: { query: "private search", session: "session-secret" }
+      metadata: { query: "private search", session: "session-secret" },
     }
     labels = ["private label", "another secret"]
     persisted = Master::Trace::EventPrivacy.persisted(
       "route:chosen",
-      status: "ok", metadata: nested, labels:, elapsed_ms: 120
+      status: "ok", metadata: nested, labels:, elapsed_ms: 120,
     )
     json = JSON.generate(persisted)
 
@@ -45,10 +45,10 @@ class TestEventPrivacy < Minitest::Test
   def test_personal_identifiers_are_digest_only_even_when_numeric
     persisted = Master::Trace::EventPrivacy.persisted(
       "identity:observed",
-      user_id: 123456789,
-      phone: 4799911122,
+      user_id: 123_456_789,
+      phone: 4_799_911_122,
       email: "person@example.invalid",
-      session: "session-bearer"
+      session: "session-bearer",
     )
     json = JSON.generate(persisted)
 
@@ -68,7 +68,7 @@ class TestEventPrivacy < Minitest::Test
       label: "private user-provided label",
       custom_value: "token=private",
       model: "grok-cli:auto",
-      provider: "anthropic"
+      provider: "anthropic",
     )
     json = JSON.generate(persisted)
 
@@ -85,7 +85,7 @@ class TestEventPrivacy < Minitest::Test
       "route:chosen",
       status: "private status token=secret",
       elapsed_ms: "duration token=secret",
-      success: "secret-not-a-boolean"
+      success: "secret-not-a-boolean",
     )
     json = JSON.generate(persisted)
 
@@ -128,7 +128,7 @@ class TestEventPrivacy < Minitest::Test
       address: "1 Private Road",
       display_name: "Private Person",
       details: "confidential details",
-      value: "one-time-token-value"
+      value: "one-time-token-value",
     }
     persisted = Master::Trace::EventPrivacy.persisted("profile:updated", private_fields)
     json = JSON.generate(persisted)

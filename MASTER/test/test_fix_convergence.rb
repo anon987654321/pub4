@@ -240,7 +240,7 @@ end
     loop.instance_variable_set(:@run_journal, journal)
 
     pass_result = Master::Fix::FixLoop::PassRunner::PassResult.new(
-      status: :human_decision, consecutive_clean: 0, message: "operator review required"
+      status: :human_decision, consecutive_clean: 0, message: "operator review required",
     )
     runner = Object.new
     runner.define_singleton_method(:run_pass) { |**| pass_result }
@@ -835,7 +835,7 @@ end
       ) do
         result = Master::CLI::CommandRegistry.dispatch_fix(
           scanner:, fix_loop:, deliberation: nil, root: @root, bus: nil,
-          ctx: { args: ". --dry-run --no-aesthetic" },
+          ctx: { args: ". --dry-run --no-aesthetic" }
         )
 
         assert_includes result, "preview:"
@@ -867,7 +867,7 @@ end
         error = assert_raises(RuntimeError) do
           Master::CLI::CommandRegistry.dispatch_fix_parsed(
             scanner: nil, fix_loop: nil, deliberation: nil, root: @root, bus: nil, swarm: nil,
-            raw: ". --dry-run", apply: false, critique: true, aesthetic: false, only: nil, target: ".",
+            raw: ". --dry-run", apply: false, critique: true, aesthetic: false, only: nil, target: "."
           )
         end
         assert_equal "preflight sentinel", error.message
@@ -917,7 +917,7 @@ end
 
   def test_fix_status_target_is_single_line_and_bounded
     label = Master::CLI::CommandRegistry.display_fix_target(
-      "RAILS\nfix0: mode=write\t\e[31m"
+      "RAILS\nfix0: mode=write\t\e[31m",
     )
 
     refute_match(/[\x00-\x1f\x7f]/, label)
@@ -1079,7 +1079,7 @@ end
         result = Master::CLI::CommandRegistry.run_fix_target(
           scanner: Object.new, fix_loop:, root: Master::ROOT, deliberation: nil, bus: nil, swarm: nil,
           target: "RAILS", writes_requested: true, effective_critique: false, critique: false,
-          aesthetic: false, only: "fix",
+          aesthetic: false, only: "fix"
         )
       end
     end
@@ -1628,7 +1628,7 @@ end
         loop.stub(:outcome_guidance, { incremental: false, prediction: nil }) do
           loop.stub(:mission_for, mission) do
             result = loop.run_unlocked(
-              @root, max_passes: 1, budget_seconds: 60, incremental: false, requested: false,
+              @root, max_passes: 1, budget_seconds: 60, incremental: false, requested: false
             )
 
             assert result.err?
@@ -1687,7 +1687,7 @@ end
               loop.stub(:mission_for, mission) do
                 result = loop.run_unlocked(
                   @root, max_passes: 1, budget_seconds: 60,
-                  incremental: false, requested: false,
+                  incremental: false, requested: false
                 )
                 assert result.err?
                 assert_equal :timeout, result.category
@@ -1701,7 +1701,6 @@ end
     assert_equal [["run-stranded", 2]], recovered_calls
     assert_equal :timeout, terminal_rows.first[:state]
   end
-
 
   # The journaled half of a run, callable from a test.
   class JournaledLoop < Master::Fix::FixLoop
@@ -1802,7 +1801,7 @@ end
               :run_journaled,
               { "id" => "run-recovery", "remaining_seconds" => 60.0, "resumed" => false },
               files: [], target: @root, max_passes: 1, budget_seconds: 60,
-              mission:, requested: false, incremental: false,
+              mission:, requested: false, incremental: false
             )
 
             assert result.err?
@@ -1835,7 +1834,7 @@ end
       loop.send(
         :recover_pending_delivery,
         active_pass: { "transaction_id" => "tx-1", "pass" => 1 },
-        run_id: "run-delivery", commit: "deadbeef",
+        run_id: "run-delivery", commit: "deadbeef"
       )
     end
 
@@ -2248,7 +2247,7 @@ end
   def test_cherry_pick_keeps_three_distinct_candidates_per_issue
     feedback = [
       { feedback: "the flag name hides what it checks" },
-      { feedback: "the retry has no ceiling" }
+      { feedback: "the retry has no ceiling" },
     ]
     ideas = [
       "Solutions:",
@@ -2260,7 +2259,7 @@ end
       "issue 2 cap retry attempts and use bounded backoff",
       "issue 2 stop retrying immediately when the error is permanent",
       "issue 2 read the retry cap from the existing policy with a safe default",
-      "issue 2 cap retry attempts and use bounded backoff again"
+      "issue 2 cap retry attempts and use bounded backoff again",
     ].join("\n")
 
     picks = Master::Review::Council::Critique::CherryPick.rank(feedback, ideas)
@@ -2279,7 +2278,7 @@ end
       "issue 2 cap retries with backoff",
       "MASTER/lib/flags.rb line 12 simplify the parser",
       "MASTER/lib/flags.rb line 12 reuse the existing parser",
-      "RAILS/brgen/app/models/post.rb line 40 remove repeated coercion"
+      "RAILS/brgen/app/models/post.rb line 40 remove repeated coercion",
     ]
 
     winners = cherry.one_per_issue(picks)

@@ -16,13 +16,13 @@ class TestAdVisualAudit < Minitest::Test
         bounds: {
           "headline" => { "x" => 10, "y" => 10, "width" => 180, "height" => 30 },
           "logo" => { "x" => 250, "y" => 10, "width" => 40, "height" => 20 },
-          "cta" => { "x" => 200, "y" => 200, "width" => 100, "height" => 30 }
-        }
+          "cta" => { "x" => 200, "y" => 200, "width" => 100, "height" => 30 },
+        },
       },
-      integrity: { assets_loaded: true, transfer_bytes: 100_000, cumulative_layout_shift: 0.01, rendered: true }
+      integrity: { assets_loaded: true, transfer_bytes: 100_000, cumulative_layout_shift: 0.01, rendered: true },
     }
     @html = '<aside class="ad-organ"><span class="ad-organ-disclosure">Sponsored</span><img src="x.png" alt="Blue jacket"></aside>'
-    @css = '.ad-organ { color: var(--ad-organ-on-surface); padding: var(--ad-organ-spacing-md); }'
+    @css = ".ad-organ { color: var(--ad-organ-on-surface); padding: var(--ad-organ-spacing-md); }"
   end
 
   def test_complete_audit_passes_only_with_measured_render_evidence
@@ -57,7 +57,7 @@ class TestAdVisualAudit < Minitest::Test
   end
 
   def test_hardcoded_ad_colour_is_rejected
-    check = Audit.identity_tokens(html: @html, css: '.ad-organ { color: #fff; }', token_contract: @contract)
+    check = Audit.identity_tokens(html: @html, css: ".ad-organ { color: #fff; }", token_contract: @contract)
     refute check[:pass]
     assert_match(/hardcoded colour/, check[:reasons].join)
   end

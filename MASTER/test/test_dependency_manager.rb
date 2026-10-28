@@ -197,12 +197,12 @@ class TestDependencyManager < Minitest::Test
   end
 
   def store_key_for(root, home)
-    MANAGER.new(root: root, env: { "PATH" => ENV.fetch("PATH") }, out: StringIO.new, home: home)
+    MANAGER.new(root:, env: { "PATH" => ENV.fetch("PATH") }, out: StringIO.new, home:)
            .send(:bundle_config_root)
   end
 
   def git!(*args, chdir:)
-    out, status = Open3.capture2e("git", "-c", "user.email=t@t", "-c", "user.name=t", *args, chdir: chdir)
+    out, status = Open3.capture2e("git", "-c", "user.email=t@t", "-c", "user.name=t", *args, chdir:)
     assert status.success?, "git #{args.join(" ")} failed: #{out}"
   end
 
@@ -360,7 +360,7 @@ class TestDependencyManager < Minitest::Test
     manager = MANAGER.new(root: @root, env: { "PATH" => ENV.fetch("PATH", "") }, out: StringIO.new, home: @root)
     ok, _stdout, stderr = manager.send(
       :capture, [RbConfig.ruby, "-e", "sleep 30"],
-      chdir: @root, env: {}, deadline_seconds: 0.35,
+      chdir: @root, env: {}, deadline_seconds: 0.35
     )
 
     refute ok
@@ -379,7 +379,6 @@ class TestDependencyManager < Minitest::Test
       assert_match(/dependency lock held elsewhere/, error.message)
     end
   end
-
 
   def test_bundler_path_rejects_stale_spec_without_executable
     manager = MANAGER.new(root: @root, env: { "PATH" => "/bin" }, out: StringIO.new, home: @root)

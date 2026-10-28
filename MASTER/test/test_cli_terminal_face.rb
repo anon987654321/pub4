@@ -230,7 +230,6 @@ class TestCliTerminalFace < Minitest::Test
     assert_includes transcript, "synthesiser returned no audio"
   end
 
-
   def test_motion_has_a_camera_dolly
     motion = Master::CLI::Face::Motion.new(seed: 7)
     motion.step(state: :idle, t: 1.0)
@@ -304,7 +303,7 @@ class TestCliTerminalFace < Minitest::Test
       ear: Quiet.new(nil),
       mouth: Quiet.new(nil),
       input: stream,
-      output: output,
+      output:,
       size: -> { [24, 80] },
     )
 

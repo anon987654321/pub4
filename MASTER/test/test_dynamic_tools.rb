@@ -12,7 +12,7 @@ class TestDynamicTools < Minitest::Test
       "method" => "GET",
       "url" => "https://example.com/health",
       "elevated" => false,
-      "description" => "Check an external service health endpoint"
+      "description" => "Check an external service health endpoint",
     }.merge(overrides)
   end
 
@@ -84,7 +84,7 @@ class TestDynamicTools < Minitest::Test
     [
       valid_row("url" => "file:///etc/passwd"),
       valid_row("url" => "https://user:secret@example.com/"),
-      valid_row("url" => "https://example.com/{broken")
+      valid_row("url" => "https://example.com/{broken"),
     ].each do |row|
       with_catalogues(YAML.dump([row])) do
         assert_raises(ArgumentError) { DYNAMIC_TOOLS.load_definitions }
@@ -93,7 +93,7 @@ class TestDynamicTools < Minitest::Test
   end
 
   def test_enabled_and_elevated_must_be_booleans
-    [["enabled", "false"], ["elevated", "false"]].each do |field, value|
+    [%w[enabled false], %w[elevated false]].each do |field, value|
       with_catalogues(YAML.dump([valid_row(field => value)])) do
         error = assert_raises(ArgumentError) { DYNAMIC_TOOLS.load_definitions }
 

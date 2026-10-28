@@ -129,7 +129,6 @@ class TestEventBus < Minitest::Test
     assert Time.iso8601(audit_cli["ts"]), "the audit line keeps its wall clock"
   end
 
-
   def test_persisted_tool_arguments_are_hashed_in_activity_and_private_audit
     Master::Trace::Log::Audit.new(root: @dir, event_bus: @bus)
     path = "/private/users/alex/source.rb"
@@ -166,7 +165,6 @@ class TestEventBus < Minitest::Test
     end
   end
 
-
   def test_named_sensitive_fields_are_redacted_outside_tool_events
     command = "env API_TOKEN=secret curl https://private.invalid"
     @bus.publish("zsh:banned_tool_warning", command:, tools: ["curl"])
@@ -176,12 +174,11 @@ class TestEventBus < Minitest::Test
     assert_includes activity, Digest::SHA256.hexdigest(command)
   end
 
-
   def test_effect_lifecycle_events_are_written_to_the_operational_evidence_stream
     evidence = Master::Trace::Log::Evidence.new(root: @dir)
     bus = Master::Trace::EventBus.new(
       event_log: Master::Trace::Log::Event.new(root: @dir),
-      evidence_log: evidence
+      evidence_log: evidence,
     )
 
     bus.publish_required("core:effect:before", effect_id: "effect-evidence-1", verb: "write")

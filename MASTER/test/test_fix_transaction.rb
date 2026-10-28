@@ -813,7 +813,7 @@ class TestFixTransaction < Minitest::Test
       evidence_log = Master::Trace::Log::Evidence.new(root: dir)
       bus = Master::Trace::EventBus.new(event_log:, evidence_log:)
       tx = Master::Fix::Transaction.new(
-        root: dir, paths: [private_path], id: "evidence-audit", bus:
+        root: dir, paths: [private_path], id: "evidence-audit", bus:,
       ).begin!
       assert tx.rollback!.ok?
 
@@ -848,7 +848,7 @@ class TestFixTransaction < Minitest::Test
       bus = Object.new
       bus.define_singleton_method(:publish) { |event, **payload| events << [event, payload] }
       tx = Master::Fix::Transaction.new(
-        root: dir, paths: [private_path], id: "privacy-audit", bus:
+        root: dir, paths: [private_path], id: "privacy-audit", bus:,
       ).begin!
 
       tx.send(
@@ -874,6 +874,5 @@ class TestFixTransaction < Minitest::Test
       assert tx.rollback!.ok?
     end
   end
-
 
 end

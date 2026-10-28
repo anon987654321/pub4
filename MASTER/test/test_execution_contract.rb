@@ -68,7 +68,7 @@ class TestExecutionContract < Minitest::Test
   def test_reversibility_is_explicit_and_irreversible_replay_requires_reconciliation
     effect = Master::Core::Effect.write("release.txt", "release")
     reversible = Contract::EffectEnvelope.build(
-      effect:, turn: 1, effect_id: "effect-reversible", reversibility: :reversible
+      effect:, turn: 1, effect_id: "effect-reversible", reversibility: :reversible,
     )
     irreversible = Contract::EffectEnvelope.build(
       effect:, turn: 1, effect_id: "effect-irreversible", reversibility: :irreversible,
@@ -84,7 +84,7 @@ class TestExecutionContract < Minitest::Test
 
     assert_raises(ArgumentError) do
       Contract::EffectEnvelope.build(
-        effect:, turn: 1, effect_id: "effect-invalid", reversibility: :probably_reversible
+        effect:, turn: 1, effect_id: "effect-invalid", reversibility: :probably_reversible,
       )
     end
   end
@@ -113,12 +113,12 @@ class TestExecutionContract < Minitest::Test
     refute reference.to_h.key?(:content)
     assert_raises(ArgumentError) do
       Contract::EvidenceReference.new(
-        id: "private/path", kind: "test_output", status: :verified, verifier: "focused-test"
+        id: "private/path", kind: "test_output", status: :verified, verifier: "focused-test",
       )
     end
     assert_raises(ArgumentError) do
       Contract::EvidenceReference.new(
-        id: "proof-2", kind: "test_output", status: :pass, verifier: "focused-test"
+        id: "proof-2", kind: "test_output", status: :pass, verifier: "focused-test",
       )
     end
   end
@@ -126,11 +126,11 @@ class TestExecutionContract < Minitest::Test
   def test_effect_observer_adds_run_identity_and_only_typed_evidence_references
     bus = RecordingBus.new
     observer = Master::Trace::EffectObserver.new(
-      bus:, run_id: "run-77", attempt_id: "attempt-77", mission_id: "mission-77"
+      bus:, run_id: "run-77", attempt_id: "attempt-77", mission_id: "mission-77",
     )
     effect = Master::Core::Effect.write("hidden.txt", "sensitive data")
     proof = Contract::EvidenceReference.new(
-      id: "proof-77", kind: "test_output", status: :verified, verifier: "focused-test"
+      id: "proof-77", kind: "test_output", status: :verified, verifier: "focused-test",
     )
 
     observer.call(
@@ -194,15 +194,15 @@ class TestExecutionContract < Minitest::Test
     )
     inconclusive = Contract::VerificationResult.from_check_result(
       FakeCheckResult.new(outcome: :inconclusive, checks_ran: 0, unchecked: ["app not listening"]),
-      id: "check-inconclusive", subject: "live-layout", verifier: "check-runner"
+      id: "check-inconclusive", subject: "live-layout", verifier: "check-runner",
     )
     failed = Contract::VerificationResult.from_check_result(
       FakeCheckResult.new(outcome: :failed, checks_ran: 4, failures: ["fixture failure"]),
-      id: "check-failed", subject: "unit-tests", verifier: "minitest"
+      id: "check-failed", subject: "unit-tests", verifier: "minitest",
     )
     errored = Contract::VerificationResult.from_check_result(
       FakeCheckResult.new(outcome: :errored, checks_ran: 0),
-      id: "check-errored", subject: "unit-tests", verifier: "minitest"
+      id: "check-errored", subject: "unit-tests", verifier: "minitest",
     )
 
     assert_equal :partial, partial.status
@@ -247,11 +247,11 @@ class TestExecutionContract < Minitest::Test
       timeout: :timeout,
       timed_out: :timeout,
       unavailable: :unavailable,
-      skipped: :not_applicable
+      skipped: :not_applicable,
     }.each do |source, expected|
       result = Contract::VerificationResult.from_check_result(
         FakeCheckResult.new(outcome: source, checks_ran: 0),
-        id: "check-#{source}", subject: "integration-check", verifier: "adapter"
+        id: "check-#{source}", subject: "integration-check", verifier: "adapter",
       )
       assert_equal expected, result.status
       refute_predicate result, :conclusive?
@@ -285,14 +285,14 @@ class TestExecutionContract < Minitest::Test
         "version" => "1.2.0",
         "status" => "candidate",
         "risk" => "medium",
-        "required_capabilities" => ["read", "network"],
-        "laws" => ["ROBUSTNESS", "CAPABILITY_STATUS_MUST_BE_TRUTHFUL"],
+        "required_capabilities" => %w[read network],
+        "laws" => %w[ROBUSTNESS CAPABILITY_STATUS_MUST_BE_TRUTHFUL],
         "fixtures" => ["MASTER/test/test_skills.rb"],
-        "provenance" => "reviewed-in-source"
+        "provenance" => "reviewed-in-source",
       }
     )
     legacy = Contract::SkillContract.from_declaration(
-      name: "legacy", revision: "c" * 64, source: :registry
+      name: "legacy", revision: "c" * 64, source: :registry,
     )
     incomplete = Contract::SkillContract.from_declaration(
       name: "incomplete", revision: "d" * 64, source: :registry,
@@ -316,7 +316,7 @@ class TestExecutionContract < Minitest::Test
         "version" => "not-semver",
         "status" => "self-approved",
         "required_capabilities" => ["../admin"],
-        "mystery" => true
+        "mystery" => true,
       }
     )
 

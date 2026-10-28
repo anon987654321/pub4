@@ -23,7 +23,7 @@ class TestInterModelContract < Minitest::Test
       "position" => "independent",
       "position_reason" => "The supplied artifact was reviewed independently against the named Laws.",
       "position_evidence" => [
-        { "location" => "MASTER/lib/example.rb:4", "evidence" => "The supplied source contains the observed call." }
+        { "location" => "MASTER/lib/example.rb:4", "evidence" => "The supplied source contains the observed call." },
       ],
       "findings" => [
         {
@@ -31,9 +31,9 @@ class TestInterModelContract < Minitest::Test
           "location" => "MASTER/lib/example.rb:4",
           "evidence" => "The call site sends an unbounded input into the parser.",
           "claim" => "The parser input has no declared size bound.",
-          "proposed_repair" => "Reject inputs over the documented maximum before parsing."
-        }
-      ]
+          "proposed_repair" => "Reject inputs over the documented maximum before parsing.",
+        },
+      ],
     }.merge(overrides).to_json
   end
 
@@ -79,7 +79,7 @@ class TestInterModelContract < Minitest::Test
   def test_concurrence_requires_prior_findings_and_evidence
     data = JSON.parse(valid_response).merge(
       "position" => "concur",
-      "position_evidence" => []
+      "position_evidence" => [],
     ).to_json
     result = Contract.validate_response(data, prior_findings: [{ "claim" => "a prior claim" }])
     refute result.fetch("ok")

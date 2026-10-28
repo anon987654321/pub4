@@ -149,7 +149,6 @@ class GroundRedactorTest < Minitest::Test
     assert_equal "[REDACTED]", scrubbed[:text]
   end
 
-
   def test_payload_preserves_sha256_digest_metadata_without_relaxing_secret_redaction
     digest = Digest::SHA256.hexdigest("private source location")
     secret = "G" * 64
@@ -157,7 +156,7 @@ class GroundRedactorTest < Minitest::Test
     scrubbed = Master::Ground::Redactor.payload(
       path_digest: digest,
       scope_digest: digest,
-      text: secret
+      text: secret,
     )
 
     assert_equal digest, scrubbed[:path_digest]

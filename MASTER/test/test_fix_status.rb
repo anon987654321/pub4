@@ -81,7 +81,6 @@ class TestFixStatus < Minitest::Test
     assert_equal "#{beat}\nbudget0: spent\n", out.string
   end
 
-
   def test_status_exposes_terminal_reason_and_bounded_convergence_receipt
     run = run_record("RAILS", state: "validation_failed", pid: 0).merge(
       "message" => "validation failed:\nrendered output differs",
@@ -90,7 +89,7 @@ class TestFixStatus < Minitest::Test
         "observations" => 3, "files_observed" => 42, "findings" => 7,
         "quality_delta" => 0.125, "finding_digest" => "a" * 64,
         "snapshot_digest" => "b" * 64, "authority_digest" => "c" * 64
-      }
+      },
     )
     write("fix_runs.json", JSON.generate("version" => 1, "runs" => [run]))
 

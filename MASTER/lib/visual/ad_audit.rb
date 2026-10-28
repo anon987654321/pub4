@@ -36,13 +36,13 @@ module Master
           disclosure(html:, rendered:, token_contract:),
           alt_text(html:),
           safe_zone(placement:, rendered:),
-          render_integrity(rendered:, token_contract:)
+          render_integrity(rendered:, token_contract:),
         ]
         {
           passed: checks.all? { |check| check.fetch(:pass) },
           token_version: token_version(token_contract),
           placement: placement.to_s,
-          checks: checks
+          checks:,
         }
       end
 

@@ -25,7 +25,7 @@ class FixMissionTest < Minitest::Test
   def test_dead_same_host_lease_is_reclaimed_without_replacing_mission
     Dir.mktmpdir("mission-dead-owner") do |root|
       mission = Master::Fix::Mission.new(root:, checkpoint: checkpoint_factory(root)).start!(
-        goal: "resume interrupted /fix", scope: "MASTER", origin: "manual"
+        goal: "resume interrupted /fix", scope: "MASTER", origin: "manual",
       )
       mission.checkpoint!(files: [])
       record_path = File.join(root, ".master", "mission.json")
@@ -35,7 +35,7 @@ class FixMissionTest < Minitest::Test
       File.write(record_path, JSON.generate(record))
 
       resumed = Master::Fix::Mission.new(root:, checkpoint: checkpoint_factory(root)).start!(
-        goal: "resume interrupted /fix", scope: "MASTER", origin: "manual"
+        goal: "resume interrupted /fix", scope: "MASTER", origin: "manual",
       )
       assert_equal mission.id, resumed.id
       assert_equal "running", resumed.status
@@ -43,7 +43,6 @@ class FixMissionTest < Minitest::Test
       assert JSON.parse(File.read(record_path)).fetch("checkpoint")
     end
   end
-
 
   def test_manual_fix_can_supersede_an_unclaimed_waiting_mission
     Dir.mktmpdir do |root|
@@ -90,13 +89,13 @@ class FixMissionTest < Minitest::Test
       File.write(File.join(root, "sample.rb"), "checkpoint bytes\n")
       checkpoint_writer = lambda do |id:, root:, files:|
         Master::Fix::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints")).create(
-          label: "mission-#{id}", files:
+          label: "mission-#{id}", files:,
         )
       end
       goal = "fix MASTER after an interrupted pass"
       scope = File.join(root, "MASTER")
       original = Master::Fix::Mission.new(root:, checkpoint: checkpoint_writer).start!(
-        goal:, scope:, origin: "manual"
+        goal:, scope:, origin: "manual",
       )
       original.checkpoint!(files: ["sample.rb"])
       checkpoint_id = original.record.fetch("checkpoint").fetch("id")
@@ -109,7 +108,7 @@ class FixMissionTest < Minitest::Test
       File.write(File.join(root, ".master", "mission.json"), JSON.pretty_generate(record) + "\n")
 
       resumed = Master::Fix::Mission.new(root:, checkpoint: checkpoint_writer).start_or_resume!(
-        goal:, scope:, origin: "manual"
+        goal:, scope:, origin: "manual",
       )
 
       assert_equal original.id, resumed.id, "restart must advance the existing objective, not replace it"
@@ -226,10 +225,10 @@ end
       summary = "customer-specific repair details"
       bus = Master::Trace::EventBus.new(
         event_log: Master::Trace::Log::Event.new(root:),
-        evidence_log: Master::Trace::Log::Evidence.new(root:)
+        evidence_log: Master::Trace::Log::Evidence.new(root:),
       )
       mission = Master::Fix::Mission.new(root:, bus:).start!(
-        goal:, scope:, model: "grok-cli:auto", effort: "medium"
+        goal:, scope:, model: "grok-cli:auto", effort: "medium",
       )
       mission.finish!(summary:)
 
@@ -258,7 +257,7 @@ end
     %w[cancelled unknown_outcome recovery_failed].each do |state|
       Dir.mktmpdir do |root|
         mission = Master::Fix::Mission.new(root:).start!(
-          goal: "repair safely", scope: root, origin: "fold", auto_continue: true
+          goal: "repair safely", scope: root, origin: "fold", auto_continue: true,
         )
         mission.transition!(:execute)
         mission.finish!(state:, summary: "operator stopped")
