@@ -8,12 +8,44 @@
 # by a planted defect, then green after the repair.
 
 require "test_helper"
+require "tmpdir"
+require_relative "../lib/fix/transaction"
 
 module Master
   module Fix
     class RecoveryGatesTest < Minitest::Test
       def test_1_staging_and_rollback_restores_byte_identical_state
-        skip "wire an aborted Fix::Transaction to a scratch-tree byte snapshot"
+        Dir.mktmpdir("fix-recovery-gate-bytes") do |root|
+          binary_path = File.join(root, "binary.dat")
+          created_path = File.join(root, "created-during-pass.txt")
+          original_bytes = [0x00, 0xFF, 0x80, 0x41, 0x0A].pack("C*")
+          original_mode = 0o750
+          File.binwrite(binary_path, original_bytes)
+          File.chmod(original_mode, binary_path)
+          original_stat = File.stat(binary_path)
+
+          transaction = Master::Fix::Transaction.new(
+            root:,
+            paths: [binary_path, created_path],
+            id: "recovery-gate-byte-restore"
+          )
+          transaction.begin!
+
+          File.binwrite(binary_path, "overwritten text that is not valid binary parity")
+          File.chmod(0o600, binary_path)
+          File.write(created_path, "created by the aborted pass\n")
+          transaction.observe!
+
+          result = transaction.rollback!
+
+          assert result.ok?, -> { result.message.to_s }
+          assert_equal original_bytes, File.binread(binary_path)
+          assert_equal original_mode, File.stat(binary_path).mode & 0o777
+          assert_equal original_stat.uid, File.stat(binary_path).uid
+          assert_equal original_stat.gid, File.stat(binary_path).gid
+          refute File.exist?(created_path), "rollback must delete a file created by the aborted pass"
+          refute transaction.active?
+        end
       end
 
       def test_2_mission_survives_process_kill_and_reports_remaining_work
