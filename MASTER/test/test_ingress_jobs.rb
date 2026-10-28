@@ -10,7 +10,7 @@ class TestIngressJobs < Minitest::Test
   end
 
   def test_untrusted_ingress_cannot_dispatch_privileged_slash_commands
-    gateway = Master::Io::Gateway.new(pipeline: nil, session: nil, container: {})
+    gateway = Master::Io::Gateway.new(pipeline: nil, session: nil, container: { commands: {} })
     ["/fix", "/commit", "/deploy master --confirm", "/pair revoke subject"].each do |message|
       dispatched = false
       result = nil
@@ -30,7 +30,7 @@ class TestIngressJobs < Minitest::Test
   end
 
   def test_elevated_ingress_still_reaches_command_dispatch
-    gateway = Master::Io::Gateway.new(pipeline: nil, session: nil, container: {})
+    gateway = Master::Io::Gateway.new(pipeline: nil, session: nil, container: { commands: {} })
     dispatched = false
     Master::CLI::TurnRouter.stub(:dispatch_slash, ->(*) {
       dispatched = true
