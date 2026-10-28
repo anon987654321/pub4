@@ -116,7 +116,8 @@ module Postpro
       timestamps = output.lines.filter_map { |line| Float(line.strip, exception: false) }
       unless timestamps.length == probe.frames
         raise Unavailable,
-              "frame timestamp count #{timestamps.length} differs from metadata count #{probe.frames}; refusing ambiguous timing"
+              "frame timestamp count #{timestamps.length} differs from metadata count " +
+              "#{probe.frames}; refusing ambiguous timing"
       end
 
       expected = 1.0 / probe.fps
