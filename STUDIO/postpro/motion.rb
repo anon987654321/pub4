@@ -426,7 +426,7 @@ def postpro_video_mode
 
   Postpro::Constitution.verify_distinct_source!(input_path: source, output_path: output)
   grain = ARGV.include?("--grain-hold") ? :hold : :moving
-  seed = Integer(ENV.fetch("POSTPRO_SEED", "1"), exception: false) || 1
+  seed = Integer(ENV.fetch("POSTPRO_SEED", "0"), exception: false) || 0
   Postpro::Motion.grade(source, output, preset: preset_name, seed:, grain:) do |bytes, width, height, target, frame_seed|
     postpro_video_grade_frame(bytes, width, height, target, preset_name, frame_seed)
   end
