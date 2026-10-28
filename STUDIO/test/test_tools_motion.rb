@@ -22,11 +22,8 @@ class TestPostproMotion < Minitest::Test
     assert_raises(ArgumentError) { Postpro::Motion.seed_for(0, 100, grain: :guess) }
   end
 
-  def setup
-    skip "ffmpeg/ffprobe not on PATH — nothing was measured" unless Postpro::Motion.available?
-  end
-
   def clip(directory, name: "clip.mp4", audio: true)
+    skip "ffmpeg/ffprobe not on PATH — nothing was measured" unless Postpro::Motion.available?
     path = File.join(directory, name)
     command = [
       "ffmpeg", "-nostdin", "-v", "error", "-y",
@@ -100,7 +97,7 @@ class TestPostproMotion < Minitest::Test
           raise "synthetic failure"
         end
       end
-      assert_match(/video/, error.message)
+      assert_match(/grading frame/, error.message)
       assert_equal "earlier output", File.read(target)
     end
   end
