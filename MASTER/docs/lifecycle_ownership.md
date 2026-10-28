@@ -84,7 +84,7 @@ rollback on the box is the operator's (operator_seams.yml).
 
 ### Open gaps, by risk
 
-1. Fix::Kernel is built only by replay_cli, so its hash-chained log has no
-   production writer. It is the coordinator the others fold into, in the
-   gated order docs/fix_coordinator_map.md sets; until a phase moves a
-   responsibility, deleting it would undo that plan.
+1. Fix::Kernel is only the replay reader for .master/log.jsonl, and nothing
+   in the runtime appends to that log, so `master replay` has no production
+   history to read. FixLoop is the coordinator every /fix path enters;
+   docs/fix_coordinator_map.md names the owner of each responsibility.

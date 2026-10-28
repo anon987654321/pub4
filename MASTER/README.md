@@ -108,9 +108,9 @@ but it is a preflight stage, not a silent downgrade to dry-run. Explicit
 The architectural boundary matters: `Core::Fold` governs the general model-effect
 loop, while `/fix` owns repository repair and convergence. They share constitutional
 principles but are not the same workflow. `FixLoop` remains the public repair
-coordinator and still uses the existing `RepairLoop`, primitive `Kernel`, durable
-`Mission`/`RunJournal`, and disk-backed `Transaction`; their recovery and rollback
-contracts are not being replaced by another runner or ledger.
+coordinator and still uses the existing `RepairLoop`, durable `Mission`/`RunJournal`,
+and disk-backed `Transaction`; their recovery and rollback contracts are not
+being replaced by another runner or ledger.
 
 The coordinator is split by responsibility without changing its public entry
 point: `FixLoop::Lifecycle` owns journal resume, incremental-scope proof and
@@ -121,8 +121,9 @@ terminalization, mission updates and outcome receipts. The pure
 mapping and measured repair outcomes used by the loop, protocol and review
 scorecard. These modules preserve one coordinator and the existing journal and
 transaction paths; they are not competing workflows. Further consolidation of
-`RepairLoop`, `Kernel`, `Mission`, `RunJournal` and `Transaction` still requires
-caller tracing and explicit rollback/restart/delivery proof.
+`RepairLoop`, `Mission`, `RunJournal` and `Transaction` still requires the recovery
+tests `docs/fix_coordinator_map.md` lists. `Fix::Kernel` is only the reader behind
+`master replay`.
 
 CoreBridge attaches a lifecycle observer to the Fold even when the host does not
 supply a bus; that case uses the event log at the task runtime root, or MASTER's
