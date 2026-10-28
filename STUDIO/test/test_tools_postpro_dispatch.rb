@@ -186,8 +186,10 @@ class TestPostproDispatch < Minitest::Test
       assert status.success?, "quality report failed:\n#{out}"
       report = JSON.parse(out)
       assert_operator report.fetch("sample_count"), :>, 0
-      assert_equal [160, 160], report.fetch("dimensions")
-      assert_match(/does not score/, report.fetch("not_assessed").inspect)
+      source_image = Vips::Image.new_from_file(subject)
+      assert_equal [source_image.width, source_image.height], report.fetch("dimensions")
+      assert_includes report.fetch("not_assessed"), "composition"
+      assert_match(/luminance approximation/, report.fetch("sampling"))
       assert_empty graded_outputs(dir, "source.jpg"), "diagnosis must not write a render"
     end
   end
