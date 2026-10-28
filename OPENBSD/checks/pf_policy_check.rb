@@ -26,13 +26,10 @@ module Deploy
     def run
       result = CheckResult.new
       path = File.join(@root, CONFIG)
-      unless File.file?(path)
-        result.fail("pf_policy: tracked OPENBSD/etc/pf.conf is missing")
-        return result
-      end
+      source = read_config(path, result)
+      return result unless source
 
-      source = File.read(path, encoding: "UTF-8")
-      rules = parse_rules(source)
+      rules = parse_rules(source, result)
       result.checked!
 
       block_index = rules.index { |rule| default_deny?(rule) }
@@ -67,10 +64,74 @@ module Deploy
 
     private
 
+    def read_config(path, result)
+      unless File.exist?(path) || File.symlink?(path)
+        result.fail("pf_policy: tracked OPENBSD/etc/pf.conf is missing")
+        return nil
+      end
+
+      root_stat = File.lstat(@root)
+      unless root_stat.directory? && !root_stat.symlink?
+        result.fail("pf_policy: source root is not a real directory")
+        return nil
+      end
+      root_prefix = "#{@root}#{File::SEPARATOR}"
+      unless path.start_with?(root_prefix)
+        result.fail("pf_policy: source path escapes root")
+        return nil
+      end
+
+      cursor = @root
+      components = CONFIG.split(File::SEPARATOR)
+      components[0...-1].each do |component|
+        cursor = File.join(cursor, component)
+        stat = File.lstat(cursor)
+        unless stat.directory? && !stat.symlink?
+          result.fail("pf_policy: parent path is not a real directory")
+          return nil
+        end
+      end
+
+      stat = File.lstat(path)
+      unless stat.file? && !stat.symlink? && stat.nlink == 1
+        result.fail("pf_policy: refuses symlinked, non-regular or hard-linked pf.conf")
+        return nil
+      end
+
+      flags = File::RDONLY
+      flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+      File.open(path, flags) do |file|
+        opened = file.stat
+        current = File.lstat(path)
+        unless current.file? && !current.symlink? && current.dev == opened.dev && current.ino == opened.ino
+          result.fail("pf_policy: pf.conf path changed while opening")
+          return nil
+        end
+
+        source = file.read.force_encoding(Encoding::UTF_8)
+        unless source.valid_encoding?
+          result.fail("pf_policy: invalid UTF-8 in pf.conf")
+          return nil
+        end
+
+        after = File.lstat(path)
+        unless after.file? && !after.symlink? &&
+               after.dev == opened.dev && after.ino == opened.ino &&
+               after.size == opened.size && after.mtime == opened.mtime && after.ctime == opened.ctime
+          result.fail("pf_policy: pf.conf changed while reading")
+          return nil
+        end
+        source
+      end
+    rescue SystemCallError, EncodingError => e
+      result.fail("pf_policy: cannot inspect tracked ruleset: #{e.class}: #{e.message}")
+      nil
+    end
+
     # Preserve source line numbers while joining PF's backslash-continued rules.
     # Only pass/block/match statements are analyzed; other PF grammar is left to
     # pfctl's native parser rather than approximated here.
-    def parse_rules(source)
+    def parse_rules(source, result)
       rules = []
       pending = nil
       pending_line = nil
@@ -95,6 +156,9 @@ module Deploy
         rules << Rule.new(line: start_line, action: logical.split(/\s+/, 2).first, text: logical)
       end
 
+      if pending
+        result.fail("pf_policy: line #{pending_line} ends with an unfinished PF continuation")
+      end
       rules
     end
 
