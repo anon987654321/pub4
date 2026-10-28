@@ -23,8 +23,10 @@ module Postpro
         },
         tonal: {
           histogram_spread: p90 - p10, black_point: p01, median: p50, white_point: p99,
-          shadow_detail_ratio: variance(values.select { |v| v < 0.25 }),
-          highlight_detail_ratio: variance(values.select { |v| v > 0.75 })
+          # Each ratio is variance normalized to the maximum possible variance
+          # within the 0.25-wide shadow/highlight band. Missing samples stay nil.
+          shadow_detail_ratio: detail_ratio(values.select { |v| v < 0.25 }),
+          highlight_detail_ratio: detail_ratio(values.select { |v| v > 0.75 })
         },
         contrast: { rms_contrast: Math.sqrt(variance(values)) },
         colour: colour_report(rgb_samples),
@@ -79,6 +81,15 @@ module Postpro
       values.sum { |v| (v - mean)**2 } / values.length
     end
     private_class_method :variance
+
+    DETAIL_MAX_VARIANCE = (0.25**2) / 4.0
+
+    def self.detail_ratio(values)
+      return nil if values.empty?
+
+      (variance(values) / DETAIL_MAX_VARIANCE).clamp(0.0, 1.0)
+    end
+    private_class_method :detail_ratio
 
     def self.percentage(count, total)
       count.to_f * 100.0 / total
