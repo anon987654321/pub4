@@ -204,7 +204,7 @@ module Master
         errors << "row #{index + 1} has unknown field(s): #{unknown.join(', ')}" unless unknown.empty?
 
         name = definition["name"].to_s
-        if name.empty? || !name.match?(/\\A[A-Za-z][A-Za-z0-9]*\\z/)
+        if name.empty? || !name.match?(/\A[A-Za-z][A-Za-z0-9]*\z/)
           errors << "row #{index + 1} has invalid name #{name.inspect}"
           next
         end
@@ -216,7 +216,7 @@ module Master
 
         if definition.key?("file_types")
           file_types = definition["file_types"]
-          unless file_types.is_a?(Array) && file_types.all? { |value| value.is_a?(String) && value.match?(/\\A\\.[A-Za-z0-9]+\\z/) }
+          unless file_types.is_a?(Array) && file_types.all? { |value| value.is_a?(String) && value.match?(/\A\.[A-Za-z0-9]+\z/) }
             errors << "#{name}.file_types must be a list of dotted extensions"
           end
         end
@@ -242,7 +242,7 @@ module Master
       missing_names = available - names
       errors << "builder tools missing from data/tools.yml: #{missing_names.sort.join(', ')}" unless missing_names.empty?
 
-      raise ArgumentError, "tool catalogue invalid:\\n- #{errors.uniq.join("\\n- ")}" unless errors.empty?
+      raise ArgumentError, "tool catalogue invalid:\n- #{errors.uniq.join("\n- ")}" unless errors.empty?
 
       true
     end
