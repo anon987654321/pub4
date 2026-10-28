@@ -70,10 +70,18 @@ class NoLibBackedgesTest < Minitest::Test
 
   def test_repository_repair_loop_remains_distinct_from_the_effect_fold
     fix_loop = ROOT.join("lib/fix/fix_loop.rb").read
+    kernel = ROOT.join("lib/fix/kernel.rb").read
+    lifecycle = ROOT.join("lib/fix/kernel/lifecycle.rb").read
+    journal_adapter = ROOT.join("lib/fix/run_journal.rb").read
     protocol = ROOT.join("lib/fix/protocol.rb").read
 
     assert_includes fix_loop, "class FixLoop"
-    assert_includes fix_loop, 'require_relative "run_journal"'
+    assert_includes fix_loop, 'require_relative "kernel"'
+    refute_includes fix_loop, 'require_relative "run_journal"'
+    assert_includes kernel, 'require_relative "kernel/lifecycle_journal"'
+    assert_includes lifecycle, "def run_fix_loop"
+    assert_includes lifecycle, "def lifecycle_journal"
+    assert_includes journal_adapter, 'require_relative "kernel"'
     assert_includes fix_loop, 'require_relative "protocol"'
     # Protocol derives its terminal states from the shared execution vocabulary
     # through OutcomePolicy, so the states are proved on that vocabulary.
