@@ -8,7 +8,7 @@ require "securerandom"
 require "tempfile"
 require "time"
 require "yaml"
-require_relative "run_journal"
+require_relative "kernel/lifecycle_journal"
 require_relative "kernel/lifecycle"
 
 module Master
