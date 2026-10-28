@@ -128,7 +128,8 @@ module Master
         @file_collector = FileCollector.new(root:, bus:)
         @pass_runner = build_pass_runner(laws:, agent:, scanner:, root:, bus:, learnings:,
           ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat,
-          discipline: @convergence_discipline, wishlist: @wishlist, reference_graph: @reference_graph)
+          discipline: @convergence_discipline, wishlist: @wishlist, reference_graph: @reference_graph,
+          kernel: @kernel)
         @sweeps = build_sweeps(agent:, root:, bus:, ground_truth:, preserve_user_intent:)
       end
 
