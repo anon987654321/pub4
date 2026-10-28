@@ -294,10 +294,33 @@ module Master
         end
 
         def recent(limit, pattern: nil)
-          return [] unless File.exist?(@path)
+          count = Integer(limit)
+          raise ArgumentError, "event log limit must not be negative" if count.negative?
+          return [] if count.zero?
+          return [] unless File.exist?(@path) || File.symlink?(@path)
+
+          stat = File.lstat(@path)
+          unless stat.file? && !stat.symlink? && stat.nlink == 1
+            raise ArgumentError, "event log must be a singly linked regular file"
+          end
+
+          flags = File::RDONLY
+          flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+          lines = File.open(@path, flags) do |file|
+            Master::Trace::Log.verify_file_identity!(file, @path, "event log")
+            raise ArgumentError, "event log permissions are not private" unless
+              (file.stat.mode & 0o077).zero?
+
+            recent_lines = []
+            file.each_line do |line|
+              recent_lines << line
+              recent_lines.shift if recent_lines.length > count
+            end
+            recent_lines
+          end
 
           matcher = pattern && !pattern.empty? ? Regexp.new(pattern) : nil
-          File.foreach(@path).to_a.last(limit).filter_map do |line|
+          lines.filter_map do |line|
             record = parse_line(line)
             next unless record
             next if matcher && !record["event"].to_s.match?(matcher)
