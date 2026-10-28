@@ -19,7 +19,7 @@ law:
 critical_items:
   - id: mega_all_apps
     source: __OLD_BACKUPS/MEGA_ALL_APPS.md
-    expected_target: MASTER/docs/handoffs/legacy/MEGA_ALL_APPS.md
+    expected_target: MASTER/docs/handoffs/MEGA_ALL_APPS.md
     current_state: restored
     check: file_exists
 

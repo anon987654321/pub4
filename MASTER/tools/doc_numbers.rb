@@ -24,7 +24,7 @@ module Operator
     RULES = File.join(ROOT, "MASTER/data/tokens.yml")
     TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
     # An archived handoff quotes retired app code; it prescribes nothing.
-    SKIP = %r{/(node_modules|vendor|knowledge|output|tmp|\.master|handoffs/legacy)/}
+    SKIP = %r{/(?:node_modules|vendor|knowledge|output|tmp|\.master)/|/handoffs/MEGA_ALL_APPS\.md\z}
 
     # Naming any of these makes the number traceable.
     SOURCES = %w[MASTER/data/tokens.yml _dialect_tokens.scss tokens.css design_system].freeze

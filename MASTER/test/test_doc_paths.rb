@@ -95,7 +95,7 @@ class TestDocPaths < Minitest::Test
     MASTER/docs/free_compute.md
     MASTER/docs/handoffs/2026-10-22-laws-checks-rails-fix.md
     MASTER/docs/handoffs/2026-10-26-master-hardening-review.md
-    MASTER/docs/handoffs/legacy/MEGA_ALL_APPS.md
+    MASTER/docs/handoffs/MEGA_ALL_APPS.md
     MASTER/docs/laws_digest.md
     MASTER/docs/lifecycle_ownership.md
     MASTER/docs/mobile.md
