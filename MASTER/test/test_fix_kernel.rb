@@ -32,6 +32,35 @@ class TestFixKernel < Minitest::Test
     )
   end
 
+  def test_kernel_serializes_and_terminalizes_the_fix_loop_adapter
+    with_workspace do |root|
+      kernel = K.new(root:)
+      adapter = Object.new
+      adapter.define_singleton_method(:last_terminal_state) { :done }
+      adapter.define_singleton_method(:run_unlocked) do |target, **options|
+        @target = target
+        @options = options
+        Master::Result.ok("DONE: fixture")
+      end
+
+      result = kernel.run_fix_loop(
+        adapter, target: root, max_passes: 2, budget_seconds: 60,
+        incremental: false, requested: true,
+      )
+
+      assert result.ok?
+      assert_equal root, adapter.instance_variable_get(:@target)
+      assert_equal false, adapter.instance_variable_get(:@options).fetch(:incremental)
+      events = kernel.verify_log!
+      start = events.find { |row| row["kind"] == "coordinator_started" }
+      terminal = events.find { |row| row["kind"] == "coordinator_terminal" }
+      assert_equal start.fetch("run_id"), terminal.fetch("run_id")
+      assert_equal "done", terminal.dig("payload", "state")
+      assert_equal "ok", terminal.dig("payload", "result")
+      assert_nil adapter.instance_variable_get(:@cancellation), "Kernel must restore the prior cancellation state"
+    end
+  end
+
   def test_kernel_owns_one_durable_run_journal
     with_workspace do |root|
       kernel = K.new(root:)
