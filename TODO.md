@@ -33,8 +33,11 @@ the commit that carries its evidence; nothing here records finished work.
 - Follow-up STUDIO review normalized shadow/highlight detail ratios before using
   them in correction thresholds, made missing pixel bands produce no tone-curve
   proposal, and tightened JSON-round-trip replay-manifest verification plus exact
-  modality-version checks. Regression cases were added; the STUDIO and MASTER
-  project suites remain NOT_RUN in this environment.
+  modality-version checks. Replay manifests now carry declared temporal schedule
+  hashes and refuse mismatches. The seven cross-modal style contracts remain in
+  laws.yml as STUDIO policy entries; they are not silently counted as MASTER's
+  nine priority constitutional laws without MASTER detector coverage. Regression
+  cases were added; the STUDIO and MASTER project suites remain NOT_RUN here.
 
 ## Verification run, after the fixes below land
 
