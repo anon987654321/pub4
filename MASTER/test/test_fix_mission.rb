@@ -7,6 +7,7 @@ require "tmpdir"
 require "fileutils"
 require "json"
 require "digest"
+require "socket"
 
 class FixMissionTest < Minitest::Test
   class Bus
@@ -20,6 +21,29 @@ class FixMissionTest < Minitest::Test
       @events << [event, payload]
     end
   end
+
+  def test_dead_same_host_lease_is_reclaimed_without_replacing_mission
+    Dir.mktmpdir("mission-dead-owner") do |root|
+      mission = Master::Fix::Mission.new(root:, checkpoint: checkpoint_factory(root)).start!(
+        goal: "resume interrupted /fix", scope: "MASTER", origin: "manual"
+      )
+      mission.checkpoint!(files: [])
+      record_path = File.join(root, ".master", "mission.json")
+      record = JSON.parse(File.read(record_path))
+      record["lease_owner"] = "99999999"
+      record["lease_until"] = (Time.now.utc + 300).iso8601
+      File.write(record_path, JSON.generate(record))
+
+      resumed = Master::Fix::Mission.new(root:, checkpoint: checkpoint_factory(root)).start!(
+        goal: "resume interrupted /fix", scope: "MASTER", origin: "manual"
+      )
+      assert_equal mission.id, resumed.id
+      assert_equal "running", resumed.status
+      assert_equal "MASTER", JSON.parse(File.read(record_path)).fetch("scope")
+      assert JSON.parse(File.read(record_path)).fetch("checkpoint")
+    end
+  end
+
 
   def test_manual_fix_can_supersede_an_unclaimed_waiting_mission
     Dir.mktmpdir do |root|
@@ -57,6 +81,44 @@ class FixMissionTest < Minitest::Test
       refute_equal mission.id, replacement.id
       assert_equal "MASTER", saved["scope"]
       assert_equal "running", saved["state"]
+    end
+  end
+
+  def test_dead_same_host_owner_resumes_the_same_mission_before_lease_expiry
+    Dir.mktmpdir do |root|
+      FileUtils.mkdir_p(File.join(root, "MASTER"))
+      File.write(File.join(root, "sample.rb"), "checkpoint bytes\n")
+      checkpoint_writer = lambda do |id:, root:, files:|
+        Master::Fix::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints")).create(
+          label: "mission-#{id}", files:
+        )
+      end
+      goal = "fix MASTER after an interrupted pass"
+      scope = File.join(root, "MASTER")
+      original = Master::Fix::Mission.new(root:, checkpoint: checkpoint_writer).start!(
+        goal:, scope:, origin: "manual"
+      )
+      original.checkpoint!(files: ["sample.rb"])
+      checkpoint_id = original.record.fetch("checkpoint").fetch("id")
+
+      dead_pid = Process.spawn("true")
+      Process.wait(dead_pid)
+      record = Master::Fix::Mission.current(root:)
+      record["lease_owner"] = "#{Socket.gethostname}:#{dead_pid}:deadbeefdeadbeef"
+      record["lease_until"] = (Time.now.utc + 300).iso8601
+      File.write(File.join(root, ".master", "mission.json"), JSON.pretty_generate(record) + "\n")
+
+      resumed = Master::Fix::Mission.new(root:, checkpoint: checkpoint_writer).start_or_resume!(
+        goal:, scope:, origin: "manual"
+      )
+
+      assert_equal original.id, resumed.id, "restart must advance the existing objective, not replace it"
+      assert_equal goal, resumed.record.fetch("goal")
+      assert_equal "running", resumed.record.fetch("state")
+      assert_equal Master::Fix::Mission.instance_id, resumed.record.fetch("lease_owner")
+      assert_equal checkpoint_id, resumed.record.dig("checkpoint", "id")
+      assert_equal "checkpoint bytes\n",
+                   File.read(File.join(root, ".master", "checkpoints", checkpoint_id, "sample.rb"))
     end
   end
 

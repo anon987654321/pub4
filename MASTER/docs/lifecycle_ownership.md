@@ -24,22 +24,43 @@ file collector. World dispatches each verb to a do_ method and checks
 capabilities. Its checkpoints live in memory, so a crash loses them; the Fold's
 compensations cover one path at a time.
 
-### FixLoop, RunJournal and RunLedger
+### Fix::Kernel, FixLoop, RunJournal and RunLedger
 
-ai_boot builds the FixLoop (in the background when MASTER_AUTOFIX=1) and the
-/fix command builds one per run. FixLoop works on the repository root but keeps
-@transaction_root, the root it was given, for transactions (2de776cde).
-RunJournal persists runs in MASTER/.master/fix_runs.json with plan
-generations and assessment receipts. Its `.master/fix_runs.lock` rejects symlinked
-state/lock paths, group/world-writable state directories, non-regular lock files,
-non-private lock permissions and lock path/inode replacement before or after
-acquiring `flock`. The journal reader uses the same fail-closed boundary: it
-refuses symlinked/hard-linked/non-regular or group/world-readable journal files,
-checks the path against the opened inode, validates UTF-8, and detects changes
-during the read. A malformed or unsafe journal stops history/resume rather than
-being treated as an empty run list. Assessment and architecture artifacts live in owner-private directories and are reopened with no-follow, path/inode and change-during-read checks before their checksums or provenance are trusted. Symlinked, hard-linked, non-regular, public-mode, invalid-encoding and changing artifacts are refused; a checksum alone is not treated as safe-path evidence. RunLedger is process memory reset at each run start. Delivery
-is the Committer: a commit per kept fix and a push, or one push at the end.
+`ai_boot` builds one `Fix::Kernel` and obtains the production convergence
+adapter through `Kernel#build_fix_loop`. The former `FixLoop` implementation
+is now `Kernel::ConvergenceAdapter`; its public constant and entry-point shim
+remain for existing callers. Kernel owns the run execution lock, hash-chained
+coordinator receipts, repair factory and the single lifecycle-journal accessor.
+A failed or interrupted run is recorded as `unknown_outcome`, never inferred
+to be complete.
 
+The durable journal implementation is `Kernel::LifecycleJournal`, with the
+same `MASTER/.master/fix_runs.json` schema and `RunJournal` compatibility
+constant. Its `.master/fix_runs.lock` rejects symlinked state/lock paths,
+group/world-writable state directories, non-regular lock files, non-private
+lock permissions and lock path/inode replacement before or after acquiring
+`flock`. The journal reader refuses symlinked, hard-linked, non-regular or
+group/world-readable journal files, checks the path against the opened inode,
+validates UTF-8 and detects changes during the read. Malformed or unsafe
+journal state stops history/resume rather than masquerading as an empty run
+list. Assessment and architecture artifacts live in owner-private directories
+and are reopened with no-follow, path/inode and change-during-read checks
+before their checksums or provenance are trusted. Symlinked, hard-linked,
+non-regular, public-mode, invalid-encoding and changing artifacts are refused;
+a checksum alone is not safe-path evidence.
+
+The per-Law policy is `Kernel::RepairAdapter`, with the old `RepairLoop`
+constant retained. Kernel does not edit files directly: the adapters and
+existing `Transaction` continue to own source mutations, rollback and Git
+delivery. FixLoop keeps `@transaction_root`, the root it was given, for
+transaction recovery (2de776cde). `RunLedger` remains in-memory accounting
+reset at each run start. Delivery is still the Committer.
+
+Validation remains outstanding: the focused lifecycle and process-interruption
+tests were authored but have not run on pinned Ruby 4.0.5. Mission survival,
+journal-loss recovery, budget/collapse behavior, delivery-failure recovery,
+adapter receipt parity, and a real repository-wide `/fix` run remain open
+gates; see `docs/fix_coordinator_map.md`.
 ### The inner repair loop
 
 Pass stages build RepairLoop; it writes source with write_atomic inside the
@@ -90,9 +111,13 @@ rollback on the box is the operator's (operator_seams.yml).
 
 ### Open gaps, by risk
 
-1. Fix::Kernel is only the replay reader for .master/log.jsonl, and nothing
-   in the runtime appends to that log, so `master replay` has no production
-   history to read. Its reader rejects symlinked/hard-linked/non-regular or
-   non-private ledger files and verifies path identity before and after reading.
-   FixLoop is the coordinator every /fix path enters;
-   docs/fix_coordinator_map.md names the owner of each responsibility.
+1. Kernel now appends coordinator and repair-outcome receipts in production.
+   Its hash-chained `.master/log.jsonl` reader refuses symlinked, hard-linked,
+   non-regular or non-private ledger files and verifies path identity before
+   and after reading. Runtime results remain unmeasured here: run the focused
+   replay, lifecycle and process-kill regressions on pinned Ruby 4.0.5, then
+   prove transaction rollback, durable resumption, orphan-receipt recovery,
+   budget/collapse and zero-repair ledger honesty, and the adapter receipt-parity
+   matrix. A real repository-wide `/fix` trial still has not run.
+   Define hash-chain-preserving retention/segmentation with explicit checkpoints
+   before long-running production use; never truncate arbitrary log prefixes.

@@ -10,7 +10,7 @@ module Master
       module PassRunnerBuilder
         def build_pass_runner(laws:, agent:, scanner:, root:, bus:, learnings:,
           ground_truth:, preserve_user_intent:, law_resolver:, homeostat: nil, discipline: nil, wishlist: nil,
-          reference_graph: nil)
+          reference_graph: nil, kernel: nil)
           committer = @committer = Committer.new(git: @git, bus:, root:,
                                                  ground_truth:, preserve_user_intent:)
           conflict_resolver = ConflictResolver.new(root:, bus:, law_resolver:)
@@ -27,7 +27,7 @@ module Master
             clean_runs_required:,
             plateau_window:,
             ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:, discipline:, wishlist:,
-            reference_graph:
+            reference_graph:, kernel:
           )
         end
       end

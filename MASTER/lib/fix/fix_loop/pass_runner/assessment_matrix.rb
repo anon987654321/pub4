@@ -1,5 +1,16 @@
 # frozen_string_literal: true
 
+require_relative "../../kernel"
+
+# This file is also imported directly by assessment tests. Reuse the canonical
+# class object without recursively loading the full convergence graph.
+module Master
+  module Fix
+    remove_const(:FixLoop) if autoload?(:FixLoop, false)
+    const_set(:FixLoop, Kernel::ConvergenceAdapter) unless const_defined?(:FixLoop, false)
+  end
+end
+
 require "pathname"
 require "set"
 require_relative "../../four_stream_assessment"
