@@ -197,21 +197,30 @@ class TestFixInterruptionRestart < Minitest::Test
         require "fix/mission"
         require "fix/checkpoint"
         require "fix/fix_loop"
+        require "fix/repair_loop"
 
         Operator::CheckChain.define_singleton_method(:baseline) { |**| {} }
 
         class RestartProbeScanner
-          def scan(_path, laws: nil) = Master::Result.ok([])
+          def scan(path, laws: nil)
+            findings = if ENV["MASTER_FIX_CRASH_PROBE"] == "1" && File.basename(path) == "sample.rb"
+              [{ law: "LONG_LINE", line: 1, message: "controlled interrupted repair", severity: :warning }]
+            else
+              []
+            end
+            Master::Result.ok(findings)
+          end
         end
 
         class RestartProbeAgent
           Breaker = Struct.new(:ignored) do
-            def open_models = ["stub-model"]
-            def open?(model_id) = model_id.to_s == "stub-model"
+            def open_models = []
+            def open?(_model_id) = false
           end
 
           def circuit_breaker = Breaker.new(nil)
           def model = "stub-model"
+          def ask(_prompt) = "unused by the controlled transaction barrier"
         end
 
         class RestartProbeGit
@@ -220,7 +229,7 @@ class TestFixInterruptionRestart < Minitest::Test
         end
 
         def build_restart_probe_loop(root)
-          law = Struct.new(:id, :severity).new("RESTART_PROBE", :warning)
+          law = Struct.new(:id, :severity).new("LONG_LINE", :warning)
           Master::Fix::FixLoop.new(
             laws: [law], agent: RestartProbeAgent.new, scanner: RestartProbeScanner.new,
             root:, bus: nil, git: RestartProbeGit.new
@@ -237,37 +246,41 @@ class TestFixInterruptionRestart < Minitest::Test
 
       writer = support + <<~'RUBY'
         root, marker = ARGV
+        ENV["MASTER_FIX_CRASH_PROBE"] = "1"
         loop = quiet_outcome_guidance(build_restart_probe_loop(root))
-        loop.define_singleton_method(:run_passes) do |**options|
-          run_id = options.fetch(:run_id)
-          start_pass = options.fetch(:start_pass)
-          checkpoint = lambda do |id:, root:, files:|
-            Master::Fix::Checkpoint.new(
-              root:, dir: File.join(root, ".master", "checkpoints")
-            ).create(label: "mission-#{id}", files:)
-          end
-          mission = Master::Fix::Mission.new(root:, checkpoint:).start_or_resume!(
-            goal: "fix #{root}", scope: root, origin: "supervisor"
-          )
-          mission.checkpoint!(files: ["sample.rb"])
 
-          transaction = Master::Fix::Transaction.new(
-            root:, paths: ["sample.rb"], id: "restart-probe"
-          )
-          transaction.begin!
-          File.write(File.join(root, "sample.rb"), "partial mutation\n")
-          transaction.observe!
-          loop.instance_variable_get(:@run_journal).pass_start(
-            run_id, start_pass, transaction_id: "restart-probe"
-          )
+        checkpoint = lambda do |id:, root:, files:|
+          Master::Fix::Checkpoint.new(
+            root:, dir: File.join(root, ".master", "checkpoints")
+          ).create(label: "mission-#{id}", files:)
+        end
+        mission = Master::Fix::Mission.new(root:, checkpoint:).start!(
+          goal: "fix #{root}", scope: root, origin: "supervisor"
+        )
+        mission.checkpoint!(files: ["sample.rb"])
+
+        # Keep the production pass runner, real transaction, repair factory and
+        # public FixLoop#run. Only the deterministic repair's final write is a
+        # barrier, so SIGKILL lands after the active transaction and changed bytes
+        # are both durable but before pass delivery/terminalization.
+        Master::Fix::Kernel::RepairAdapter.define_method(:fix_batch) do |violations, *args, **options|
+          violation = Array(violations).first or raise "crash probe reached repair without a finding"
+          path = File.expand_path(violation[:file].to_s, root)
+          File.write(path, "partial mutation\n")
+
+          journal = loop.instance_variable_get(:@run_journal)
+          run_record = journal.history.last
+          active_pass = journal.active_pass(run_record)
+          transaction_id = active_pass.fetch("transaction_id")
           kernel = loop.instance_variable_get(:@kernel)
           File.write(marker, JSON.generate(
-            "run_id" => run_id,
+            "run_id" => run_record.fetch("id"),
             "coordinator_run_id" => kernel.instance_variable_get(:@current_run_id),
             "mission_id" => mission.id,
+            "transaction_id" => transaction_id,
             "pid" => Process.pid,
             "transaction_persisted" => Master::Fix::Transaction::Recovery.persisted?(
-              root:, id: "restart-probe"
+              root:, id: transaction_id
             )
           ))
           sleep 60
@@ -303,7 +316,7 @@ class TestFixInterruptionRestart < Minitest::Test
       end
 
       restart = support + <<~'RUBY'
-        root, old_run_id, old_coordinator_id = ARGV
+        root, old_run_id, old_coordinator_id, old_transaction_id = ARGV
         loop = quiet_outcome_guidance(build_restart_probe_loop(root))
         result = loop.run(
           root, max_passes: 2, budget_seconds: 60,
@@ -333,7 +346,7 @@ class TestFixInterruptionRestart < Minitest::Test
             File.join(root, ".master", "checkpoints", mission.dig("checkpoint", "id"), "sample.rb")
           ),
           "transaction_persisted" => Master::Fix::Transaction::Recovery.persisted?(
-            root:, id: "restart-probe"
+            root:, id: old_transaction_id
           ),
           "coordinator_state" => coordinator && coordinator.dig("payload", "state"),
           "coordinator_recovered" => coordinator && coordinator.dig("payload", "recovered"),
@@ -342,7 +355,8 @@ class TestFixInterruptionRestart < Minitest::Test
       RUBY
       output, restart_status = Open3.capture2e(
         RbConfig.ruby, "-I", File.join(Master::ROOT, "lib"), "-e", restart, root,
-        marker_record.fetch("run_id"), marker_record.fetch("coordinator_run_id"), chdir: Master::ROOT
+        marker_record.fetch("run_id"), marker_record.fetch("coordinator_run_id"),
+        marker_record.fetch("transaction_id"), chdir: Master::ROOT
       )
       assert restart_status.success?, "public FixLoop restart failed: #{output}"
       receipt = JSON.parse(output.lines.last)
