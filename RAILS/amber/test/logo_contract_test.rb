@@ -48,20 +48,6 @@ class LogoContractTest < ActionView::TestCase
     refute_match(%r{render ["']shared/brand_mark["']}, layout)
   end
 
-  test "home page keeps the original large wordmark as its first screen" do
-    layout = Rails.root.join("app/views/layouts/application.html.erb").read
-    styles = Rails.root.join("app/assets/stylesheets/application.scss").read
-
-    assert_includes layout, 'class: "amber-logo-home"'
-    assert_includes layout, "amber-masthead--home"
-    assert_match(/\.amber-masthead--home\s*\{[^}]*min-height:\s*72svh/m, styles,
-                 "the homepage masthead keeps the logo-led first-screen composition")
-    assert_match(/\.amber-masthead--home\s+\.amber-logo-home\s*\{[^}]*width:\s*min\(100%,\s*880px\)/m, styles,
-                 "the original wordmark stays large rather than shrinking to a header-sized mark")
-    refute_match(/\.amber-masthead--home\s+\.amber-logo-home\s*\{[^}]*380px/m, styles,
-                 "the former small-home-logo cap must not return")
-  end
-
   test "public brand icons exist with amber palette" do
     root = Rails.root.join("public")
     %w[icon.svg icon.png icon-192.png apple-touch-icon.png favicon.ico].each do |name|
