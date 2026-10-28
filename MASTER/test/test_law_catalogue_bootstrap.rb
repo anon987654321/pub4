@@ -97,7 +97,7 @@ class TestLawCatalogueBootstrap < Minitest::Test
     Dir.mktmpdir("law-catalogue-malformed-entry") do |root|
       law_dir = File.join(root, "MASTER", "law")
       FileUtils.mkdir_p(law_dir)
-      File.write(File.join(law_dir, "live.rb"), "Law.define(:LIVE_ID) do\\nend\\n")
+      File.write(File.join(law_dir, "live.rb"), "Law.define(:LIVE_ID) do\nend\n")
       catalogue = {
         "schema" => 1,
         "modalities" => %w[lexical semantic visual],
@@ -122,7 +122,7 @@ class TestLawCatalogueBootstrap < Minitest::Test
     Dir.mktmpdir("law-catalogue-policy-shape") do |root|
       law_dir = File.join(root, "MASTER", "law")
       FileUtils.mkdir_p(law_dir)
-      File.write(File.join(law_dir, "live.rb"), "Law.define(:LIVE_ID) do\\nend\\n")
+      File.write(File.join(law_dir, "live.rb"), "Law.define(:LIVE_ID) do\nend\n")
       catalogue = {
         "modalities" => %w[lexical semantic visual],
         "surfaces" => %w[whole_file],
