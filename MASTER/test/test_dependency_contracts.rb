@@ -47,7 +47,7 @@ class TestDependencyContracts < Minitest::Test
     assert_equal ["4.0.5"], pins.values.uniq, "the repository runtime is pinned to Ruby 4.0.5"
 
     lock = File.read(File.join(ROOT, "Gemfile.lock"))
-    assert_match(/^  ruby 4\\.0\\.5$/, lock)
+    assert_match(/^  ruby 4\.0\.5$/, lock)
   end
 
 end
