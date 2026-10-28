@@ -126,6 +126,11 @@ def write_grade_sidecar(input_path, output_path, presets, original, processed)
     input_sha256: (Digest::SHA256.file(input_path).hexdigest if File.file?(input_path)),
     output_sha256: Digest::SHA256.file(output_path).hexdigest,
     quality: report,
+    quality_analysis: {
+      before: Postpro::QualityAnalyzer.report_image(original),
+      after: Postpro::QualityAnalyzer.report_image(processed),
+      interpretation: "sampled pixel diagnostics only; does not score composition, focus or intent"
+    },
     uncanny: uncanny_readings(original, processed),
     capabilities: Studio::AnalogCapabilities.for(:postpro).map { |entry| entry[:id] },
   }
