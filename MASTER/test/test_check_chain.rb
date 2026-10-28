@@ -496,7 +496,7 @@ class TestCheckChain < Minitest::Test
     flags = G.send(:strict_env)
 
     assert_equal "0", flags.fetch("CHECK_REQUIRE_LIVE")
-    assert_equal "0", flags.fetch("CHECK_STRICT_ERRORS")
+    refute flags.key?("CHECK_STRICT_ERRORS"), "check crashes must not be configurable as success"
   end
 
   def test_every_runtime_stage_uses_the_shared_ruby_selection
