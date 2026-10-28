@@ -179,6 +179,13 @@ class TestFixInterruptionRestart < Minitest::Test
         out: File::NULL, err: File::NULL
       )
       assert git_status, "the process fixture must be a real Git checkout"
+      File.write(File.join(root, ".pub4"), <<~YAML)
+        schema: 1
+        tree: restart
+        allows:
+          master: read_write
+        adapters: []
+      YAML
       File.write(File.join(root, ".git", "info", "exclude"), ".master/\nruntime/\n")
 
       support = <<~'RUBY'
