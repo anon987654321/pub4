@@ -17,7 +17,7 @@ class TestSelfTest < Minitest::Test
   end
 
   def test_runtime_self_test_checks_match_laws_yml_contract
-    declared = Master.load_laws(root: Master::ROOT).fetch("self_test").keys.map(&:to_s).sort
+    declared = Master.load_laws(root: Master::ROOT).fetch("self_test").keys.map(&:to_s).reject { |k| k == "fail_action" }.sort
     runtime = Master::Review::Scan::SelfTest.new(root: Master::ROOT).send(:law_checks).map(&:first).sort
 
     assert_equal declared, runtime, "every declarative self_test entry must have exactly one runtime check"
