@@ -53,7 +53,8 @@ module Postpro
       nominal_fps = parse_fps(nominal_rate)
       average_fps = parse_fps(average_rate)
       if nominal_fps.positive? && average_fps.positive? && (nominal_fps - average_fps).abs > 0.5
-        raise Unavailable, "variable or ambiguous frame rate (#{average_rate} average, #{nominal_rate} nominal); refusing to alter timestamps"
+        raise Unavailable,
+              "variable or ambiguous frame rate (#{average_rate} average, #{nominal_rate} nominal); refusing to alter timestamps"
       end
 
       rate = average_fps.positive? ? average_rate : nominal_rate
@@ -61,13 +62,16 @@ module Postpro
       duration = document.dig("format", "duration").to_f
       frames = video["nb_frames"].to_s.to_i
       frames = (duration * fps).ceil if frames <= 0 && duration.positive? && fps.positive?
-      raise Unavailable, "ffprobe did not report a usable frame count and frame rate" unless frames.positive? && fps.positive?
+      unless frames.positive? && fps.positive?
+        raise Unavailable, "ffprobe did not report a usable frame count and frame rate"
+      end
       width = video["width"].to_i
       height = video["height"].to_i
       raise Unavailable, "video has invalid dimensions #{width}x#{height}" unless width.positive? && height.positive?
       raise Unavailable, "frame is too large (#{width}x#{height})" if width * height > MAX_FRAME_PIXELS
       if width.odd? || height.odd?
-        raise Unavailable, "MP4 yuv420p output requires even dimensions (#{width}x#{height}); resize explicitly before grading"
+        raise Unavailable,
+              "MP4 yuv420p output requires even dimensions (#{width}x#{height}); resize explicitly before grading"
       end
 
       Probe.new(
@@ -116,7 +120,9 @@ module Postpro
       input = File.realpath(input.to_s)
       target = File.expand_path(output.to_s)
       grain = grain.to_sym
-      raise Unavailable, "video output must use .mp4 so its codec/container contract is explicit" unless File.extname(target).downcase == ".mp4"
+      unless File.extname(target).downcase == ".mp4"
+        raise Unavailable, "video output must use .mp4 so its codec/container contract is explicit"
+      end
       raise Unavailable, "refusing to replace the input video" if input == target
       raise Unavailable, "refusing to replace an output symlink" if File.symlink?(target)
       sidecar = "#{target}.json"
@@ -129,15 +135,22 @@ module Postpro
       deadline = started + limits[:max_seconds]
       probe = probe(input, deadline:)
       estimate = estimate(probe, seconds_per_frame: limits[:seconds_per_frame])
-      raise Unavailable, "estimate #{estimate[:frames]} frames exceeds the #{limits[:max_frames]}-frame budget" if estimate[:frames] > limits[:max_frames]
+      if estimate[:frames] > limits[:max_frames]
+        raise Unavailable, "estimate #{estimate[:frames]} frames exceeds the #{limits[:max_frames]}-frame budget"
+      end
       total_pixels = probe.width * probe.height * estimate[:frames]
-      raise Unavailable, "estimate exceeds the #{limits[:max_pixels]}-pixel processing budget" if total_pixels > limits[:max_pixels]
-      raise Unavailable, "estimate #{estimate[:seconds]}s exceeds the #{limits[:max_seconds]}s runtime budget" if estimate[:seconds] > limits[:max_seconds]
+      if total_pixels > limits[:max_pixels]
+        raise Unavailable, "estimate exceeds the #{limits[:max_pixels]}-pixel processing budget"
+      end
+      if estimate[:seconds] > limits[:max_seconds]
+        raise Unavailable, "estimate #{estimate[:seconds]}s exceeds the #{limits[:max_seconds]}s runtime budget"
+      end
 
       verify_constant_rate!(input, probe, deadline:)
       FileUtils.mkdir_p(File.dirname(target))
       io.puts "motion: #{probe.width}x#{probe.height} #{probe.rate}fps #{estimate[:frames]} frames" \
-              "#{probe.has_audio ? ' + audio' : ''}; estimated #{estimate[:seconds]}s, runtime cap #{limits[:max_seconds]}s"
+              "#{probe.has_audio ? ' + audio' : ''}; estimated #{estimate[:seconds]}s, " \
+              "runtime cap #{limits[:max_seconds]}s"
       io.puts "motion: seed=#{seed} grain=#{grain}"
 
       Dir.mktmpdir(".postpro-motion-", File.dirname(target)) do |work|
@@ -154,12 +167,15 @@ module Postpro
         end
         raise Unavailable, "ffmpeg produced no video frames" if frames_written.zero?
         if frames_written != estimate[:frames]
-          raise Unavailable, "metadata estimated #{estimate[:frames]} frames but ffmpeg decoded #{frames_written}; refusing to alter timing"
+          raise Unavailable,
+                "metadata estimated #{estimate[:frames]} frames but ffmpeg decoded #{frames_written}; refusing to alter timing"
         end
 
         temporary_output = File.join(work, "result.mp4")
         assemble(graded, input, temporary_output, probe, deadline)
-        raise Unavailable, "ffmpeg produced no output video" unless File.file?(temporary_output) && File.size(temporary_output).positive?
+        unless File.file?(temporary_output) && File.size(temporary_output).positive?
+          raise Unavailable, "ffmpeg produced no output video"
+        end
 
         temporary_sidecar = File.join(work, "result.mp4.json")
         metadata = {
@@ -227,8 +243,12 @@ module Postpro
                 break unless bytes
 
                 count += 1
-                raise Unavailable, "decoded frames exceed the #{limits[:max_frames]}-frame budget" if count > limits[:max_frames]
-                raise Unavailable, "decoded frames exceed the #{limits[:max_pixels]}-pixel processing budget" if count * probe.width * probe.height > limits[:max_pixels]
+                if count > limits[:max_frames]
+                  raise Unavailable, "decoded frames exceed the #{limits[:max_frames]}-frame budget"
+                end
+                if count * probe.width * probe.height > limits[:max_pixels]
+                  raise Unavailable, "decoded frames exceed the #{limits[:max_pixels]}-pixel processing budget"
+                end
 
                 target = File.join(graded, format("%06d.png", count))
                 frame_seed = seed_for(count - 1, seed, grain:)
@@ -242,7 +262,9 @@ module Postpro
                 end
                 yield target
                 io.puts "motion: frame #{count}" if (count % 25).zero?
-                raise Unavailable, "video grading exceeded the #{limits[:max_seconds]}s runtime budget" if monotonic > deadline
+                if monotonic > deadline
+                  raise Unavailable, "video grading exceeded the #{limits[:max_seconds]}s runtime budget"
+                end
               end
             rescue StandardError
               terminate_child(pid, group: true)
@@ -294,7 +316,11 @@ module Postpro
       else
         args.concat(["-map", "0:v:0"])
       end
-      args.concat(["-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "16", "-metadata", "creation_time=1970-01-01T00:00:00Z", "-movflags", "+faststart", output])
+      args.concat([
+        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "16",
+        "-metadata", "creation_time=1970-01-01T00:00:00Z",
+        "-movflags", "+faststart", output
+      ])
       run_command(args, deadline:)
     end
 
@@ -308,7 +334,8 @@ module Postpro
 
       timestamps = output.lines.filter_map { |line| Float(line.strip, exception: false) }
       unless timestamps.length == probe.frames
-        raise Unavailable, "frame timestamp count #{timestamps.length} differs from metadata count #{probe.frames}; refusing ambiguous timing"
+        raise Unavailable,
+              "frame timestamp count #{timestamps.length} differs from metadata count #{probe.frames}; refusing ambiguous timing"
       end
 
       expected = 1.0 / probe.fps
@@ -345,7 +372,9 @@ module Postpro
             terminate_child(pid, group: true)
             Process.waitpid(pid) rescue nil
             log.rewind
-            raise Unavailable, "#{File.basename(args.first)} exceeded the video runtime budget: #{log.read.lines.last(3).join(' ').strip}"
+            raise Unavailable,
+                  "#{File.basename(args.first)} exceeded the video runtime budget: " \
+                  "#{log.read.lines.last(3).join(' ').strip}"
           end
           sleep 0.05
         end
@@ -361,7 +390,9 @@ module Postpro
         max_frames: integer_setting("POSTPRO_VIDEO_MAX_FRAMES", DEFAULT_MAX_FRAMES, 1, 10_000),
         max_pixels: integer_setting("POSTPRO_VIDEO_MAX_PIXELS", DEFAULT_MAX_PIXELS, 1_000_000, 2_000_000_000),
         max_seconds: integer_setting("POSTPRO_VIDEO_MAX_SECONDS", DEFAULT_MAX_SECONDS, 5, 3_600),
-        max_temp_bytes: integer_setting("POSTPRO_VIDEO_MAX_TEMP_BYTES", DEFAULT_MAX_TEMP_BYTES, 16_000_000, 10_000_000_000),
+        max_temp_bytes: integer_setting(
+          "POSTPRO_VIDEO_MAX_TEMP_BYTES", DEFAULT_MAX_TEMP_BYTES, 16_000_000, 10_000_000_000
+        ),
         seconds_per_frame: float_setting("POSTPRO_VIDEO_SECONDS_PER_FRAME", DEFAULT_SECONDS_PER_FRAME, 0.01, 60.0)
       }
     end
