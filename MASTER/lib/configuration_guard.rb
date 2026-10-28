@@ -2,6 +2,8 @@
 
 require "yaml"
 require_relative "law_vocabulary"
+require_relative "provider_catalogue_guard"
+require_relative "model_catalogue_guard"
 
 module Master
   # Validates the governing YAML by its invariants. Who may write it is a
@@ -26,7 +28,6 @@ module Master
       data/ data lib/review/scan/ lib/review/scan/laws lib/review/scan/laws/
     ].freeze
     LIVE_SOUL = File.expand_path("../data/soul.yml", __dir__)
-
     def validate(path:, content:, root: nil)
       absolute = File.expand_path(path.to_s, root || Dir.pwd)
       kind = kind_for(absolute)
@@ -35,9 +36,16 @@ module Master
       data = YAML.safe_load(content, aliases: true)
       raise ArgumentError, "top-level YAML value must be a mapping" unless data.is_a?(Hash)
 
-      kind == :laws ? validate_laws(data, path: absolute, text: content) : validate_soul(data, path: absolute)
+      case kind
+      when :laws then validate_laws(data, path: absolute, text: content)
+      when :soul then validate_soul(data, path: absolute)
+      when :providers then ProviderCatalogueGuard.validate(data)
+      when :models then ModelCatalogueGuard.validate(data, path: absolute)
+      end
       nil
     rescue Psych::Exception, ArgumentError, KeyError, TypeError => e
+      "configuration invariant failed: #{e.class}: #{e.message}"
+    rescue StandardError => e
       "configuration invariant failed: #{e.class}: #{e.message}"
     end
 
@@ -45,9 +53,12 @@ module Master
       normalized = File.expand_path(path.to_s).tr("\\", "/")
       return :laws if normalized.match?(%r{/MASTER/data/laws\.yml\z})
       return :soul if normalized.match?(%r{/MASTER/data/soul\.yml\z})
+      return :providers if normalized.match?(%r{/MASTER/data/providers\.yml\z})
+      return :models if normalized.match?(%r{/MASTER/data/models\.yml\z})
 
       nil
     end
+
 
     def validate_soul(data, path: LIVE_SOUL)
       absolute = data.fetch("absolute") { raise KeyError, "absolute section is required" }
