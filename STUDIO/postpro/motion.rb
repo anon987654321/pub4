@@ -11,6 +11,12 @@ require "time"
 # Video is the same grade as a still, with one Ruby process for the whole
 # sequence. Frames cross ffmpeg as raw RGB bytes; libvips grades each frame
 # in-process. Only the finished frames are spooled to disk, under a byte cap.
+#
+# This is for the short clips returned by the image tools, not a feature-film
+# transcode. Do not substitute an ffmpeg filter look: the film curves, halation
+# and stock-specific grain would become a second source of truth and drift from
+# stills. Temporal grain is explicit: moving derives a seed from base + frame
+# index; held grain uses the base seed. Both modes are deterministic.
 module Postpro
   module Motion
     class Unavailable < StandardError; end
@@ -233,7 +239,8 @@ def postpro_video_grade_frame(bytes, width, height, target, preset_name, frame_s
   image = Vips::Image.new_from_memory(bytes, width, height, 3, :uchar)
                       .copy(interpretation: :srgb).copy_memory
   processed = preset(image, preset_name)
-  processed = apply_finishing_grain(anchor_tones(processed), preset_name)
+  processed = anchor_tones(processed)
+  processed = apply_finishing_grain(processed, preset_name, grained: nil)
   rgb_bands(processed).write_to_file(target, compression: 6)
 end
 
@@ -260,7 +267,9 @@ def postpro_video_mode
   Postpro::Motion.grade(
     source, output, preset: preset_name, seed:, grain:
   ) do |bytes, width, height, target, frame_seed|
-    postpro_video_grade_frame(bytes, width, height, target, preset_name, frame_seed)
+    postpro_video_grade_frame(
+      bytes, width, height, target, preset_name, frame_seed
+    )
   end
   0
 rescue Postpro::Motion::Unavailable, ArgumentError, IOError => e
