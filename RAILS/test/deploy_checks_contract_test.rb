@@ -306,6 +306,25 @@ class DeployChecksContractTest < Minitest::Test
     assert Dir.glob(File.join(dir, "bad_*.html")).size >= 4
   end
 
+  def test_json_ld_views_use_the_shared_safe_serializer
+    view_paths = Dir.glob(File.join(ROOT, "**", "app", "views", "**", "*.erb"))
+    raw_json_ld = view_paths.filter_map do |path|
+      source = File.read(path)
+      next unless source.match?(/<script\\b(?=[^>]*\\btype\\s*=\\s*["']application\\/ld\\+json["'])/im)
+
+      path.delete_prefix(REPO_ROOT + File::SEPARATOR)
+    end
+
+    assert_empty raw_json_ld,
+                 "JSON-LD view tags must go through the shared safe serializer: #{raw_json_ld.join(', ')}"
+
+    helper_path = File.join(REPO_ROOT, "RAILS", "__shared", "app", "helpers", "shared", "seo_kit.rb")
+    helper = File.read(helper_path)
+    assert_match(/def json_ld_script\\b/, helper)
+    assert_includes helper, "json_escape(data.to_json)"
+    assert_includes helper, 'type: "application/ld+json"'
+  end
+
   def test_check_result_supports_severity
     source = File.read(File.join(MASTER_CHECKS, "support", "check_result.rb"))
     assert_includes source, "severity:"
