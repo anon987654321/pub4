@@ -80,6 +80,7 @@ POSTPRO_USAGE = <<~TXT
     --rescue FILE [--output FILE]     diagnose a photograph, then apply the fix
     --measure FILE [--against AFTER]  read texture numbers and palette, or how a grade moved them
     --quality FILE                   report sampled exposure, clipping, tone and colour diagnostics
+    --stabilize                      opt in to bounded source balancing before the style grade
     --stock-sheet FILE [--preset NAME] [--output FILE]  one frame through every stock, tiled
     --gallery [DIR]                   an index.html contact page of every render in DIR
     --map                             the table of contents of this file, with line numbers
