@@ -10,8 +10,15 @@ module Master
         trap("INT")  { on_int }
       end
 
+      # Master::LOADER is the loader that owns lib/; reloading is on only under
+      # MASTER_DEV=1, and Zeitwerk raises on reload otherwise.
       def on_usr1
-        Zeitwerk::Loader.for_gem.reload
+        unless Master::LOADER.reloading_enabled?
+          Master::Trace::Dmesg.status("reload0", "skipped, reloading is off without MASTER_DEV=1")
+          return
+        end
+
+        Master::LOADER.reload
         Master::Trace::Dmesg.status("reload0", "complete")
       rescue StandardError => e
         Master::Trace::Dmesg.status("reload0", "failed, #{e.class}: #{e.message}")
