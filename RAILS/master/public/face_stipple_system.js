@@ -350,9 +350,137 @@
     if (rgb.every(Number.isFinite)) u.uColor.value.setRGB(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255);
   }
 
+  function swarmConfiguration() {
+    return window.MASTER_FACE_CONTRACT?.swarm || {};
+  }
+
+  function canonicalSwarmMode(state = {}) {
+    const mode = String(state.mode || state.mood || "idle").toLowerCase();
+    if (mode === "thinking") return "thinking";
+    if (["attentive", "listening", "working", "speaking", "ready"].includes(mode)) return "attentive";
+    return "idle";
+  }
+
+  function modeMultipliersFor(state = {}) {
+    const modes = swarmConfiguration().mode_multipliers || {};
+    return modes[canonicalSwarmMode(state)] || modes.idle || { eyes: 1, core: 1, noise: 0.14 };
+  }
+
+  function glyphForDepth(rank) {
+    const ramp = swarmConfiguration().glyph_ramp || ["·", "˙", "∘", "•", "○", "●"];
+    if (!ramp.length) return "•";
+    const value = clamp(rank, 0.5, 0, 1);
+    return ramp[Math.floor(value * (ramp.length - 1) + 0.5)];
+  }
+
+  // CPU integration mirrors Master::Face::Swarm. Snapshot positions before
+  // neighbor forces so a particle's result never depends on iteration order.
+  function updateSwarm(system, state = {}, dt = 1 / 60, timeSeconds = 0) {
+    const config = swarmConfiguration();
+    if (config.enabled !== true || reducedMotionEnabled(state) || !system?.swarm) return false;
+    const field = config.target_field;
+    const attribute = system.geometry?.attributes?.position;
+    const depthAttribute = system.geometry?.attributes?.aDepthRank;
+    if (!field?.head || !field?.eyes || !field?.mouth || !attribute?.array || !depthAttribute?.array) return false;
+    const delta = clamp(dt, 0, 0, 0.05);
+    if (!(delta > 0)) return false;
+
+    const positions = attribute.array;
+    const source = positions.slice();
+    const velocities = system.swarm.velocities;
+    const forces = new Float32Array(source.length);
+    const head = field.head;
+    const center = head.center.map(Number);
+    const scale = head.scale.map((value) => Math.max(0.001, Math.abs(Number(value))));
+    const softness = Math.max(0.001, Number(field.softness) || 0.72);
+    const multipliers = modeMultipliersFor(state);
+    const noise = Math.max(0, Number(config.noise_scale) || 0) * (Number(multipliers.noise) || 0);
+    const cohesionRadius = Math.max(0, Number(config.cohesion_radius) || 0);
+    const separationRadius = Math.max(0, Number(config.separation_radius) || 0);
+    const cohesionSquared = cohesionRadius * cohesionRadius;
+    const separationSquared = separationRadius * separationRadius;
+    const eyes = Object.values(field.eyes);
+    const count = Math.floor(source.length / 3);
+    const push = (offset, x, y, z) => {
+      forces[offset] += x;
+      forces[offset + 1] += y;
+      forces[offset + 2] += z;
+    };
+
+    for (let i = 0; i < count; i += 1) {
+      const offset = i * 3;
+      const x = source[offset], y = source[offset + 1], z = source[offset + 2];
+      const dx = (center[0] - x) / scale[0];
+      const dy = (center[1] - y) / scale[1];
+      const dz = (center[2] - z) / scale[2];
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) + 1e-5;
+      const falloff = Math.exp(-(dist * dist) / softness);
+      const coreWeight = Number(head.weight ?? 1) * Number(multipliers.core ?? 1);
+      push(offset, coreWeight * falloff * (center[0] - x), coreWeight * falloff * (center[1] - y), coreWeight * falloff * (center[2] - z));
+
+      for (const eye of eyes) {
+        const point = eye.pos;
+        const ex = Number(point[0]) - x, ey = Number(point[1]) - y, ez = Number(point[2]) - z;
+        const d = Math.sqrt(ex * ex + ey * ey + ez * ez) + 1e-5;
+        const radius = Math.max(0.001, Number(eye.radius) || 0.17);
+        const factor = Number(eye.weight ?? 1) * Number(multipliers.eyes ?? 1) * Math.exp(-Math.pow(d / radius, 2));
+        push(offset, factor * ex, factor * ey, factor * ez);
+      }
+
+      const mouth = field.mouth;
+      const mx = Number(mouth.pos[0]) - x, my = Number(mouth.pos[1]) - y, mz = Number(mouth.pos[2]) - z;
+      const mouthDistance = Math.sqrt(mx * mx + my * my + mz * mz) + 1e-5;
+      const mouthRadius = Math.max(0.001, Number(mouth.radius) || 0.34);
+      const mouthFactor = Number(mouth.weight ?? 1) * Math.exp(-Math.pow(mouthDistance / mouthRadius, 2));
+      push(offset, mouthFactor * mx, mouthFactor * my, mouthFactor * mz);
+
+      let cohesionX = 0, cohesionY = 0, cohesionZ = 0, neighbors = 0;
+      for (let j = 0; j < count; j += 1) {
+        if (i === j) continue;
+        const jOffset = j * 3;
+        const ox = source[jOffset] - x, oy = source[jOffset + 1] - y, oz = source[jOffset + 2] - z;
+        const distanceSquared = ox * ox + oy * oy + oz * oz;
+        if (cohesionSquared > 0 && distanceSquared < cohesionSquared) {
+          cohesionX += ox; cohesionY += oy; cohesionZ += oz; neighbors += 1;
+        }
+        if (separationSquared > 0 && distanceSquared > 1e-8 && distanceSquared < separationSquared) {
+          const distance = Math.sqrt(distanceSquared);
+          const factor = (Number(config.separation_strength) || 0) * (1 - distance / separationRadius) / distance;
+          push(offset, -ox * factor, -oy * factor, -oz * factor);
+        }
+      }
+      if (neighbors > 0) {
+        const factor = (Number(config.cohesion_strength) || 0) / neighbors;
+        push(offset, cohesionX * factor, cohesionY * factor, cohesionZ * factor);
+      }
+      const phase = (i + 1) * 12.9898 + (Number(timeSeconds) || 0) * 1.71;
+      push(offset, Math.sin(phase) * noise * 0.5, Math.sin(phase * 1.31) * noise * 0.5, Math.cos(phase * 0.73) * noise * 0.5);
+    }
+
+    const damping = clamp(config.damping, 0.86, 0, 1);
+    const low = center.map((value, index) => value - scale[index] * 1.25);
+    const high = center.map((value, index) => value + scale[index] * 1.25);
+    for (let i = 0; i < count; i += 1) {
+      const offset = i * 3;
+      for (let axis = 0; axis < 3; axis += 1) {
+        velocities[offset + axis] = (velocities[offset + axis] + forces[offset + axis] * delta) * damping;
+        positions[offset + axis] = Math.max(low[axis], Math.min(high[axis], source[offset + axis] + velocities[offset + axis]));
+      }
+      depthAttribute.array[i] = clamp(0.5 + positions[offset + 2] * 0.5, 0.5, 0, 1);
+    }
+    attribute.needsUpdate = true;
+    depthAttribute.needsUpdate = true;
+    return true;
+  }
+
   function tick(system, state, timeSeconds) {
     if (!system?.material) return;
-    system.material.uniforms.uTime.value = reducedMotionEnabled(state) ? 0 : Number(timeSeconds) || 0;
+    const time = Number(timeSeconds) || 0;
+    const previous = system.swarm?.lastTime;
+    const delta = previous == null ? 1 / 60 : clamp(time - previous, 0, 0, 0.05);
+    if (system.swarm) system.swarm.lastTime = time;
+    system.material.uniforms.uTime.value = reducedMotionEnabled(state) ? 0 : time;
+    updateSwarm(system, state, delta, time);
     syncFromFaceState(system, state);
   }
 
