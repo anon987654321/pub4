@@ -48,6 +48,7 @@ POSTPRO_SOURCE_FILES = [
   POSTPRO_ENTRY,
   *(%w[early_modes] + POSTPRO_LIB).map { |name| File.join(POSTPRO_DIR, "lib", "#{name}.rb") },
   File.join(POSTPRO_DIR, "motion.rb"),
+  File.join(POSTPRO_DIR, "motion_process.rb"),
 ].freeze
 
 BOOTSTRAP = PostproBootstrap.run
