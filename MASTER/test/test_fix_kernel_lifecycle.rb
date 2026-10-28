@@ -4,6 +4,8 @@ require_relative "test_helper"
 require "tmpdir"
 require "json"
 require "socket"
+require "rbconfig"
+require "timeout"
 require_relative "../lib/fix/kernel"
 require_relative "../lib/fix/run_journal"
 require_relative "../lib/fix/kernel/repair_adapter"
@@ -160,6 +162,54 @@ class TestFixKernelLifecycle < Minitest::Test
       )
       assert File.file?(File.join(root, ".master", "fix_runs.json"))
       assert_equal run.fetch("id"), kernel.lifecycle_journal.history.last.fetch("id")
+    end
+  end
+
+  def test_execution_lock_serializes_independent_processes
+    child_pid = nil
+
+    with_workspace do |root|
+      kernel = K.new(root:)
+      ready = File.join(root, "child-ready")
+      entered = File.join(root, "child-entered")
+      child = <<~'RUBY'
+        require "master"
+        require "fix/kernel"
+
+        root, ready, entered = ARGV
+        File.write(ready, "ready\\n")
+        kernel = Master::Fix::Kernel.new(root:)
+        kernel.execution_mutex.synchronize { File.write(entered, "entered\\n") }
+      RUBY
+
+      begin
+        kernel.execution_mutex.synchronize do
+          child_pid = Process.spawn(
+            RbConfig.ruby, "-I", File.join(Master::ROOT, "lib"), "-e", child,
+            root, ready, entered, chdir: Master::ROOT, out: File::NULL, err: File::NULL
+          )
+
+          deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 5
+          sleep 0.01 until File.file?(ready) || Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+          assert File.file?(ready), "child did not reach the lock boundary"
+          sleep 0.1
+          refute File.exist?(entered), "a second process entered /fix while the workspace lock was held"
+        end
+
+        _waited_pid, status = Timeout.timeout(5) { Process.wait2(child_pid) }
+        child_pid = nil
+        assert status.success?, "child failed to acquire the released execution lock"
+        assert_equal "entered\\n", File.read(entered)
+      ensure
+        if child_pid
+          begin
+            Process.kill("KILL", child_pid)
+            Process.wait(child_pid)
+          rescue Errno::ESRCH, Errno::ECHILD
+            nil
+          end
+        end
+      end
     end
   end
 
