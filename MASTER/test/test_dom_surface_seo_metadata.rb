@@ -35,6 +35,14 @@ class DomSurfaceSeoMetadataTest < Minitest::Test
     assert_empty @schema.check(COMPLETE_PAGE, SCHEMA_ID)
   end
 
+  def test_valid_metadata_values_may_contain_apostrophes
+    html = COMPLETE_PAGE
+      .gsub("content=\"Bergen, right now: people, places and local life.\"", "content=\"Here's what is happening in Bergen.\"")
+      .sub("content=\"Brgen — Bergen\"", "content=\"Brgen's Bergen\"")
+
+    assert_empty @schema.check(html, SCHEMA_ID)
+  end
+
   def test_missing_meta_description_is_named
     html = COMPLETE_PAGE.sub(/\s*<meta name="description"[^>]*>\n/, "\n")
     messages = @schema.check(html, SCHEMA_ID).map(&:message)

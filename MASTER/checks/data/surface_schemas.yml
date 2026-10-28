@@ -20,27 +20,27 @@ schemas:
         max: 1
         principle: search_indexability
       meta_description:
-        pattern: '<meta\b(?=[^>]*\bname=["'']description["''])(?=[^>]*\bcontent=["''][^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bname=(?:"description"|''description''))(?=[^>]*\bcontent=(?:"[^"]+"|''[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       canonical_url:
-        pattern: '<link\b(?=[^>]*\brel=["'']canonical["''])(?=[^>]*\bhref=["'']https?://[^"'']+["''])[^>]*>'
+        pattern: '<link\b(?=[^>]*\brel=(?:"canonical"|''canonical''))(?=[^>]*\bhref=(?:"https?://[^"]+"|''https?://[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       open_graph_title:
-        pattern: '<meta\b(?=[^>]*\bproperty=["'']og:title["''])(?=[^>]*\bcontent=["''][^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bproperty=(?:"og:title"|''og:title''))(?=[^>]*\bcontent=(?:"[^"]+"|''[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       open_graph_description:
-        pattern: '<meta\b(?=[^>]*\bproperty=["'']og:description["''])(?=[^>]*\bcontent=["''][^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bproperty=(?:"og:description"|''og:description''))(?=[^>]*\bcontent=(?:"[^"]+"|''[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       open_graph_url:
-        pattern: '<meta\b(?=[^>]*\bproperty=["'']og:url["''])(?=[^>]*\bcontent=["'']https?://[^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bproperty=(?:"og:url"|''og:url''))(?=[^>]*\bcontent=(?:"https?://[^"]+"|''https?://[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
@@ -104,27 +104,27 @@ schemas:
         max: 1
         principle: search_indexability
       meta_description:
-        pattern: '<meta\b(?=[^>]*\bname=["'']description["''])(?=[^>]*\bcontent=["''][^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bname=(?:"description"|''description''))(?=[^>]*\bcontent=(?:"[^"]+"|''[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       canonical_url:
-        pattern: '<link\b(?=[^>]*\brel=["'']canonical["''])(?=[^>]*\bhref=["'']https?://[^"'']+["''])[^>]*>'
+        pattern: '<link\b(?=[^>]*\brel=(?:"canonical"|''canonical''))(?=[^>]*\bhref=(?:"https?://[^"]+"|''https?://[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       open_graph_title:
-        pattern: '<meta\b(?=[^>]*\bproperty=["'']og:title["''])(?=[^>]*\bcontent=["''][^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bproperty=(?:"og:title"|''og:title''))(?=[^>]*\bcontent=(?:"[^"]+"|''[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       open_graph_description:
-        pattern: '<meta\b(?=[^>]*\bproperty=["'']og:description["''])(?=[^>]*\bcontent=["''][^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bproperty=(?:"og:description"|''og:description''))(?=[^>]*\bcontent=(?:"[^"]+"|''[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       open_graph_url:
-        pattern: '<meta\b(?=[^>]*\bproperty=["'']og:url["''])(?=[^>]*\bcontent=["'']https?://[^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bproperty=(?:"og:url"|''og:url''))(?=[^>]*\bcontent=(?:"https?://[^"]+"|''https?://[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
@@ -168,27 +168,27 @@ schemas:
         max: 1
         principle: search_indexability
       meta_description:
-        pattern: '<meta\b(?=[^>]*\bname=["'']description["''])(?=[^>]*\bcontent=["''][^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bname=(?:"description"|''description''))(?=[^>]*\bcontent=(?:"[^"]+"|''[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       canonical_url:
-        pattern: '<link\b(?=[^>]*\brel=["'']canonical["''])(?=[^>]*\bhref=["'']https?://[^"'']+["''])[^>]*>'
+        pattern: '<link\b(?=[^>]*\brel=(?:"canonical"|''canonical''))(?=[^>]*\bhref=(?:"https?://[^"]+"|''https?://[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       open_graph_title:
-        pattern: '<meta\b(?=[^>]*\bproperty=["'']og:title["''])(?=[^>]*\bcontent=["''][^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bproperty=(?:"og:title"|''og:title''))(?=[^>]*\bcontent=(?:"[^"]+"|''[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       open_graph_description:
-        pattern: '<meta\b(?=[^>]*\bproperty=["'']og:description["''])(?=[^>]*\bcontent=["''][^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bproperty=(?:"og:description"|''og:description''))(?=[^>]*\bcontent=(?:"[^"]+"|''[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       open_graph_url:
-        pattern: '<meta\b(?=[^>]*\bproperty=["'']og:url["''])(?=[^>]*\bcontent=["'']https?://[^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bproperty=(?:"og:url"|''og:url''))(?=[^>]*\bcontent=(?:"https?://[^"]+"|''https?://[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
@@ -232,27 +232,27 @@ schemas:
         max: 1
         principle: search_indexability
       meta_description:
-        pattern: '<meta\b(?=[^>]*\bname=["'']description["''])(?=[^>]*\bcontent=["''][^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bname=(?:"description"|''description''))(?=[^>]*\bcontent=(?:"[^"]+"|''[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       canonical_url:
-        pattern: '<link\b(?=[^>]*\brel=["'']canonical["''])(?=[^>]*\bhref=["'']https?://[^"'']+["''])[^>]*>'
+        pattern: '<link\b(?=[^>]*\brel=(?:"canonical"|''canonical''))(?=[^>]*\bhref=(?:"https?://[^"]+"|''https?://[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       open_graph_title:
-        pattern: '<meta\b(?=[^>]*\bproperty=["'']og:title["''])(?=[^>]*\bcontent=["''][^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bproperty=(?:"og:title"|''og:title''))(?=[^>]*\bcontent=(?:"[^"]+"|''[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       open_graph_description:
-        pattern: '<meta\b(?=[^>]*\bproperty=["'']og:description["''])(?=[^>]*\bcontent=["''][^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bproperty=(?:"og:description"|''og:description''))(?=[^>]*\bcontent=(?:"[^"]+"|''[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       open_graph_url:
-        pattern: '<meta\b(?=[^>]*\bproperty=["'']og:url["''])(?=[^>]*\bcontent=["'']https?://[^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bproperty=(?:"og:url"|''og:url''))(?=[^>]*\bcontent=(?:"https?://[^"]+"|''https?://[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
@@ -294,27 +294,27 @@ schemas:
         max: 1
         principle: search_indexability
       meta_description:
-        pattern: '<meta\b(?=[^>]*\bname=["'']description["''])(?=[^>]*\bcontent=["''][^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bname=(?:"description"|''description''))(?=[^>]*\bcontent=(?:"[^"]+"|''[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       canonical_url:
-        pattern: '<link\b(?=[^>]*\brel=["'']canonical["''])(?=[^>]*\bhref=["'']https?://[^"'']+["''])[^>]*>'
+        pattern: '<link\b(?=[^>]*\brel=(?:"canonical"|''canonical''))(?=[^>]*\bhref=(?:"https?://[^"]+"|''https?://[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       open_graph_title:
-        pattern: '<meta\b(?=[^>]*\bproperty=["'']og:title["''])(?=[^>]*\bcontent=["''][^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bproperty=(?:"og:title"|''og:title''))(?=[^>]*\bcontent=(?:"[^"]+"|''[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       open_graph_description:
-        pattern: '<meta\b(?=[^>]*\bproperty=["'']og:description["''])(?=[^>]*\bcontent=["''][^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bproperty=(?:"og:description"|''og:description''))(?=[^>]*\bcontent=(?:"[^"]+"|''[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
       open_graph_url:
-        pattern: '<meta\b(?=[^>]*\bproperty=["'']og:url["''])(?=[^>]*\bcontent=["'']https?://[^"'']+["''])[^>]*>'
+        pattern: '<meta\b(?=[^>]*\bproperty=(?:"og:url"|''og:url''))(?=[^>]*\bcontent=(?:"https?://[^"]+"|''https?://[^'']+''))[^>]*>'
         min: 1
         max: 1
         principle: search_indexability
