@@ -50,6 +50,13 @@ class TestCheckRunnerRegistry < Minitest::Test
     end
   end
 
+  def test_registry_rejects_rows_without_an_execution_mechanism
+    run_registry("missing_executor" => { "require" => "fixtures/failopen/checks_fixture" }) do |output, status|
+      refute status.success?
+      assert_includes output, "must declare exactly one of class: or script:"
+    end
+  end
+
   def test_registry_rejects_absolute_script_paths
     run_registry("bad_script" => { "script" => File.join(Dir.tmpdir, "arbitrary.rb") }) do |output, status|
       refute status.success?
