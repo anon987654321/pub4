@@ -24,7 +24,7 @@ module Master
       FIELD_NAME = /\A[a-zA-Z][a-zA-Z0-9_]{0,63}\z/
       CATEGORY_VALUE = /\A[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,79}\z/
       SHA256 = /\A[0-9a-f]{64}\z/i
-      SENSITIVE_FIELD = /(?:\A|_)(?:arg|args|argv|address|addresses|authorization|birth_date|body|branch|caption|comment|comments|command|content|cookie|credential|credentials|cwd|data|date_of_birth|description|descriptions|detail|details|dir|directory|display_name|dob|e_mail|email|emails|error|errors|exception|file|filename|first_name|full_name|goal|input|label|labels|last_name|latitude|location|longitude|message|messages|name|new|note|notes|old|output|password|path|paths|payload|phone|phones|prompt|query|reason|ref|response|result|root|scan_ip|scope|secret|summary|target|telephone|text|title|token|transcript|uri|url|user|user_name|username|value|values|working_dir|working_directory|ip_address)(?:\z|_)/i
+      SENSITIVE_FIELD = /(?:\A|_)(?:account|account_id|address|arg|args|argv|birth|body|branch|command|content|coordinates|cookie|credential|credentials|cwd|data|description|detail|device_id|dir|directory|email|error|exception|file|filename|full_name|goal|identity|input|ip|ip_address|latitude|location|longitude|message|mobile|name|new|old|output|password|path|paths|payload|person|phone|prompt|query|reason|ref|response|result|root|scope|secret|session|summary|target|text|token|transcript|uri|url|user|user_id|username|visitor_id|working_dir|working_directory|authorization|scan_ip)(?:\z|_)/i
 
       module_function
 
