@@ -45,6 +45,7 @@ module Master
         temp.flush
         temp.fsync if fsync
         temp.chmod(mode)
+        temp.close
 
         # Detect replacement of the parent or destination before rename. The
         # rename never follows a destination symlink, but a replaced parent
@@ -68,7 +69,6 @@ module Master
         end
 
         File.rename(temp.path, destination)
-        temp.close
         fsync_directory(dir) if fsync_dir && RUBY_PLATFORM !~ /win32|mingw/
         path
       rescue StandardError
