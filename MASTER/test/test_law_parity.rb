@@ -4,6 +4,7 @@ require_relative "test_helper"
 require "master"
 require "yaml"
 require_relative "../lib/fix/law_parity"
+require_relative "../law/definition"
 
 class TestLawParity < Minitest::Test
   # A Law.define with no detect is not a detector. Six priority Laws only ask a
