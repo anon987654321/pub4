@@ -47,23 +47,22 @@ POSTPRO_LIB = %w[
 POSTPRO_SOURCE_FILES = [
   POSTPRO_ENTRY,
   *(%w[early_modes] + POSTPRO_LIB).map { |name| File.join(POSTPRO_DIR, "lib", "#{name}.rb") },
+  File.join(POSTPRO_DIR, "motion.rb"),
 ].freeze
 
 BOOTSTRAP = PostproBootstrap.run
 
-# Stills only. Every input glob is jpg/jpeg/png/webp and nothing here reads a
-# video.
-#
-# A frame-by-frame video path existed and was removed. It shelled out to a fresh
-# interpreter per frame, so a minute of 1080p cost about an hour while its own
-# estimate promised six minutes, and two of its eight tests timed out rather
-# than passed. Whatever replaces it grades in-process, holds the grain seed
-# steady across frames so the grain does not boil, and declares a per-minute
-# budget it is held to; a path that cannot do those is not worth having back.
+# Still-image batches accept jpg/jpeg/png/webp. The optional --video path below
+# is a separate, bounded MP4 workflow: one Ruby process grades raw frames in
+# process, and refuses variable-rate inputs, unbounded work or failed muxing.
+# The original per-frame subprocess experiment was removed after an hour per
+# minute of 1080p and timed-out tests; see ARCHAEOLOGY.md for the evidence.
 POSTPRO_USAGE = <<~TXT
   usage: postpro.rb [flags]           with no flags, asks what to grade
   usage: postpro.rb IMAGE... | DIR... ten light analog takes per image and a contact
                                       sheet, all written beside the image
+    --video FILE --output FILE.mp4 [--preset NAME] [--grain-hold]
+                                    grade a constant-rate video in one Ruby process
 
     --input FILE --output FILE --preset NAME   grade one image
     --reference FILE                  add a quality report against a reference
@@ -109,7 +108,7 @@ complete_one_shot = one_shot_flags.all? do |flag|
   value = argv_flag(flag)
   value && !value.start_with?("--")
 end
-dedicated_mode = (%w[--watch --stock-sheet --rescue --export-lut] & ARGV).any?
+dedicated_mode = (%w[--watch --stock-sheet --rescue --export-lut --video] & ARGV).any?
 if one_shot_requested && !complete_one_shot && !dedicated_mode
   message = [
     "ERROR one-shot mode requires --input FILE, --output FILE and --preset NAME",
@@ -195,8 +194,13 @@ POSTPRO_LIB.each { |name| require_relative "lib/#{name}" }
 
 if __FILE__ == $0
   status = begin
-    auto_launch
-    0
+    if ARGV.include?("--video")
+      require_relative "motion"
+      postpro_video_mode
+    else
+      auto_launch
+      0
+    end
   rescue SystemExit => e
     e.status
   end
