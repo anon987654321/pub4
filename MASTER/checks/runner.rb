@@ -69,13 +69,13 @@ def declared_path_problem(name, kind, value)
                else
                  [expanded, "#{expanded}.rb", File.join(expanded, "init.rb")]
                end
-  existing = candidates.find { |candidate| File.file?(candidate) }
-  if existing
-    resolved = File.realpath(existing)
-    real_base = File.realpath(base)
-    real_prefix = "#{real_base}#{File::SEPARATOR}"
-    return "#{name} #{kind}: symlink resolves outside its declared tree" unless resolved.start_with?(real_prefix)
-  end
+  existing = candidates.find { |candidate| File.file?(candidate) || File.symlink?(candidate) }
+  return "#{name} #{kind}: path does not identify an existing file" unless existing
+
+  resolved = File.realpath(existing)
+  real_base = File.realpath(base)
+  real_prefix = "#{real_base}#{File::SEPARATOR}"
+  return "#{name} #{kind}: symlink resolves outside its declared tree" unless resolved.start_with?(real_prefix)
 
   nil
 rescue SystemCallError => e
