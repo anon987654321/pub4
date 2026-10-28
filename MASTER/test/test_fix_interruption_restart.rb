@@ -163,8 +163,6 @@ class TestFixInterruptionRestart < Minitest::Test
       assert_equal true, receipt.fetch("coordinator_recovered")
       assert_equal true, receipt.fetch("mission_linked"),
                    "the Mission ID must be linked to the same durable RunJournal ID"
-      assert_equal true, receipt.fetch("mission_linked"),
-                   "the Mission ID must be linked to the same durable RunJournal ID"
     end
   end
 
