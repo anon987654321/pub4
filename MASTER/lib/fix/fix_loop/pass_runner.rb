@@ -40,13 +40,14 @@ module Master
                        laws:, agent:, scanner:, learnings:, preamble:,
                        clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil,
                        visual_pass: nil, opportunity_pass: nil, preflight: nil, discipline:, wishlist:,
-                       reference_graph: nil)
+                       reference_graph: nil, kernel: nil)
           @bus = bus
           @committer = committer
           @conflict_resolver = conflict_resolver
           @llm_router = llm_router
           @root = root
           @reference_graph = reference_graph
+          @kernel = kernel
           @resource_budget = ResourceBudget.new(root:)
           @agent = agent
           @scanner = scanner
@@ -154,6 +155,15 @@ module Master
 
         def cleanup_visual_runtime
           @visual_pass&.stop_runtime!
+        end
+
+        # The pass runner no longer constructs a second repair coordinator. When
+        # attached to a Kernel, repair stages use its factory and receipt boundary;
+        # standalone tests/legacy adapters retain the original constructor path.
+        def build_repair_loop(**options)
+          return RepairLoop.new(**options) unless @kernel
+
+          @kernel.build_repair_loop(**options)
         end
 
         def violations(files)
