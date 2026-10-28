@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require "shellwords"
 
 module Master
   module Ground

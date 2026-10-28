@@ -286,14 +286,14 @@ module Master::Io
     end
 
     def normalize_xai(model)
-      normalize_openai(model).merge(
+      normalize_openai(model)&.merge(
         input_modalities: Array(model["input_modalities"]).join(","),
         output_modalities: Array(model["output_modalities"]).join(","),
       )
     end
 
     def normalize_mistral(model)
-      normalize_openai(model).merge(
+      normalize_openai(model)&.merge(
         context_length: model["max_context_length"],
         tags: [model["owned_by"], model.dig("capabilities", "completion_chat") ? "chat" : nil,
                model.dig("capabilities", "function_calling") ? "tools" : nil,
@@ -302,6 +302,8 @@ module Master::Io
     end
 
     def normalize_openrouter(model)
+      return if model["id"].to_s.empty?
+
       pricing = model["pricing"] || {}
       architecture = model["architecture"] || {}
       {

@@ -45,7 +45,7 @@ module Master
         failures = result.value![:checks].reject { |row| row[:ok] }
         return Result.ok(result.value!) if failures.empty?
 
-        Result.err("relayd: #{failures.size} backend check(s) failed", category: :validation, details: failures)
+        Result.err("relayd: #{failures.size} backend check(s) failed", category: :validation, context: { failures: })
       end
 
       def reload

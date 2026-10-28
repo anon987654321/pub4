@@ -320,8 +320,7 @@ module Master
         out.strip
       end
 
-      # What a range of commits did, for a report that would otherwise say a
-      # repair happened and show nothing of it.
+      # The short SHA of HEAD, or nil outside a repository.
       def head
         out, _, st = Master::Io::Exec.capture3("git", "-C", @root_path, "rev-parse", "--short", "HEAD")
         st.success? ? out.strip : nil

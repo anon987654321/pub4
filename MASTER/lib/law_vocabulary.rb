@@ -84,7 +84,9 @@ module Master
 
     def prompt
       synonymous = aliases.sort.join(", ")
-      "#{CANONICAL} is MASTER's canonical term for normative guidance; "         "synonyms include #{synonymous}. Policy, constraint, invariant, criterion "         "and practice are related concepts and may need their native technical meaning."
+      "#{CANONICAL} is MASTER's canonical term for normative guidance; " \
+        "synonyms include #{synonymous}. Policy, constraint, invariant, criterion " \
+        "and practice are related concepts and may need their native technical meaning."
     end
   end
 end

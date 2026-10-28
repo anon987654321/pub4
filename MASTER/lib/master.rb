@@ -25,21 +25,19 @@ module Master
   COUNCIL_PATH = File.join(DATA, "council.yml").freeze
   LAWS_PATH = File.join(DATA, "laws.yml").freeze
 
-# The bundler of the Ruby that is running (ruby34 -> bundle34, ruby -> bundle).
-# OpenBSD installs Ruby by version, so no version is named here.
-BUNDLE_BIN = begin
-  versioned = "bundle#{RbConfig::CONFIG["ruby_install_name"].delete_prefix("ruby")}"
-  on_path = ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |dir| File.executable?(File.join(dir, versioned)) }
-  on_path ? versioned : "bundle"
-end
+  # The bundler of the Ruby that is running (ruby34 -> bundle34, ruby -> bundle).
+  # OpenBSD installs Ruby by version, so no version is named here.
+  BUNDLE_BIN = begin
+    versioned = "bundle#{RbConfig::CONFIG["ruby_install_name"].delete_prefix("ruby")}"
+    on_path = ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |dir| File.executable?(File.join(dir, versioned)) }
+    on_path ? versioned : "bundle"
+  end
   MIN_API_KEY_LENGTH_HEURISTIC = 20
   MAX_CONSTITUTION_BYTES = 10 * 1024 * 1024
   YAML_LOAD_TIMEOUT_S = 20
   # The OpenRouter default and :free-pool head are Master.openrouter_default
-  # and Master.free_primary_model (boot/runtime.rb) — readers of providers.yml
-  # and models.yml through the sanctioned loaders. They were constants here,
-  # hand-copied from the yml, until the 2026-08-18 registry fix had to edit
-  # three copies of one slug in step.
+  # and Master.free_primary_model (boot/runtime.rb), read from providers.yml
+  # and models.yml through the sanctioned loaders, so no slug is copied here.
   SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
   DEFAULT_CONTEXT_WINDOW = 128_000
   VIOLATION_TRUNCATE = 90
@@ -252,7 +250,7 @@ end
     "mcp_server" => "MCPServer", "mcp_coordinator" => "McpCoordinator", "github_repo_miner" => "GitHubRepoMiner",
     "github_operations" => "GitHubOperations",
     "diff_stager" => "DiffStager", "code_index" => "CodeIndex", "git_context" => "GitContext",
-    "ast_edit" => "AstEdit", "law_dsl" => "LawDSL", "constraint_dsl" => "ConstraintDSL", "tts" => "TTS", "md" => "MD", "pdf" => "PDF"
+    "ast_edit" => "AstEdit", "law_dsl" => "LawDSL", "tts" => "TTS", "md" => "MD", "pdf" => "PDF"
   )
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
 

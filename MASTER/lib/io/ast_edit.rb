@@ -58,15 +58,17 @@ module Master
           category: :validation) unless to.match?(/\A[a-z_][a-zA-Z0-9_]*[?!]?\z/)
 
         Master::Ground::LawHandshake::Admission.require!
-        Master::Ground::LawHandshake::Admission.require!
         perm = @governor&.permit?(NAME, TIER, fp)
         return perm if perm&.err?
 
         @undo.snapshot(fp)
+        # A name may end in ? or !, and a trailing \b after either needs a word
+        # character next to it, so the end of the name is a lookahead instead.
+        name = /\b#{Regexp.escape(from)}(?![\w?!])/
         updated = src
-          .gsub(/\bdef\s+#{Regexp.escape(from)}\b/, "def #{to}")
-          .gsub(/\b#{Regexp.escape(from)}\s*\(/, "#{to}(")
-          .gsub(/\b#{Regexp.escape(from)}\b(?!\s*[:=])/) { |m| to }
+          .gsub(/\bdef\s+#{name}/, "def #{to}")
+          .gsub(/#{name}\s*\(/, "#{to}(")
+          .gsub(/#{name}(?!\s*[:=])/) { to }
 
         write_atomic(fp, updated)
         Master::Trace::WriteTracker.current&.record(fp)
@@ -82,6 +84,7 @@ module Master
         entry = ranges.find { |r| r[:name] == after_name }
         return Result.err("ast_edit: method not found: #{after_name}", category: :validation) unless entry
 
+        Master::Ground::LawHandshake::Admission.require!
         perm = @governor&.permit?(NAME, TIER, fp)
         return perm if perm&.err?
 

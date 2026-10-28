@@ -224,10 +224,9 @@ module Operator
   end
 
   # The checks the code about to be deployed must pass before anything on vm23
-  # is stopped. On 2026-10-12 a pull took a SyntaxError and then a law that raised
-  # at boot onto the box; master's container died there and the pass halted with
-  # production already shed. Each check below reproduces one of those failures
-  # where it is cheap, which is before the deploy and not after the stop.
+  # is stopped. A SyntaxError or a law that raises at boot kills master's
+  # container after production is already shed, so each check below reproduces
+  # such a failure where it is cheap: before the deploy, not after the stop.
   #
   #   syntax       every Ruby file under MASTER/lib, MASTER/law and RAILS/*/app
   #                compiles (one process, no per-file ruby -c)

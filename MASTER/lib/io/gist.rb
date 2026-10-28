@@ -55,8 +55,7 @@ module Master
         address = SsrfGuard.pinned_address(uri)
         raise "refused internal/reserved address" unless address
 
-        response = http(uri, address)
-        response
+        http(uri, address)
       end
 
       def http(uri, address)

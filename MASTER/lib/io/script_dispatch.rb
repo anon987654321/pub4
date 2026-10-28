@@ -25,15 +25,7 @@ module Master
 
         argv = Shellwords.split(arg.to_s)
         cmd = env.empty? ? [RbConfig.ruby] : [env.transform_keys(&:to_s).transform_values(&:to_s), RbConfig.ruby]
-        runner = lambda do
-          Master::Io::Exec.capture2e(
-            *cmd,
-            script,
-            *argv,
-            chdir: working_directory(requested_root, script),
-          )
-        end
-        out, status = runner.call
+        out, status = Master::Io::Exec.capture2e(*cmd, script, *argv, chdir: working_directory(requested_root, script))
         status.success? ? Result.ok(out.strip) : Result.err("#{tool}: exit=#{status.exitstatus}\n#{out.strip}")
       rescue ArgumentError => e
         Result.err("#{tool}: bad arguments: #{e.message}", category: :validation)
@@ -79,7 +71,6 @@ module Master
 
         MasterPaths.repo
       end
-
     end
   end
 end

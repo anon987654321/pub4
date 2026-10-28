@@ -350,7 +350,7 @@ module Master
         live = order(catalogue(cfg:))
         Master::Trace::Dmesg.status("lane0", "selection order: #{live.empty? ? "none live" : live.first(6).join(" > ")}")
         live
-      rescue StandardError, NameError
+      rescue StandardError
         nil
       end
     end

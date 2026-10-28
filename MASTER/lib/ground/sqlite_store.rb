@@ -78,11 +78,12 @@ module Master
 
       def set_journal_mode(database, path, mode)
         statement = JOURNAL_MODES.fetch(mode)
-        database.execute(statement)
-        true
-      rescue SQLite3::IOException
-        clear_wal_sidecars(path)
-        database.execute(statement)
+        begin
+          database.execute(statement)
+        rescue SQLite3::IOException
+          clear_wal_sidecars(path)
+          database.execute(statement)
+        end
         true
       rescue KeyError, SQLite3::Exception => e
         Master::Ground::Swallow.log(e, context: "SqliteStore.set_journal_mode")

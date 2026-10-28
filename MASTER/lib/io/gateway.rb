@@ -43,8 +43,10 @@ module Master
                  else
                    Result.err("gateway: no router", category: :infrastructure)
                  end
-        unsub&.call
         client_actions.any? ? attach_client_actions(result, client_actions) : result
+      ensure
+        # A turn that raises must not leave its listener collecting later turns' actions.
+        unsub&.call
       end
 
       # The caller renders the returned Result; the gateway pushes nothing

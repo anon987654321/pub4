@@ -261,7 +261,8 @@ module Master
               "confidence" => confidence,
             },
           }
-          entry["vec"] = vec if embed && (vec = Review::Embeddings.embed("#{key} #{value}"))
+          vec = Review::Embeddings.embed("#{key} #{value}") if embed
+          entry["vec"] = vec if vec
           entry
         end
 
@@ -372,15 +373,7 @@ module Master
             next if @store.key?(key)
 
             body = File.read(path, encoding: "UTF-8").strip
-            remember(key, body, type: brain_type(name), source: "data/#{name}") unless body.empty?
-          end
-        end
-
-        def brain_type(name)
-          case name
-          when "MEMORY.md" then "user"
-          when "TOOLS.md" then "reference"
-          else "general"
+            remember(key, body, type: "general", source: "data/#{name}") unless body.empty?
           end
         end
 

@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "json"
+require "time"
 # MasterPaths::ROOT rather than Master::ROOT, which is defined in lib/master.rb
 # and therefore only exists after a full runtime boot. lib/io/replicate_client.rb
 # is deliberately standalone-loadable -- MASTER/tools/preprompt and MASTER/tools/lora both

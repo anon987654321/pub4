@@ -18,6 +18,18 @@ module Master
     # is a different subject that shares the name — that one is an LLM reached
     # by executing a binary.
     module Antigravity
+      # Compiled filter regexes, or nil when any source is invalid: a filter that
+      # cannot be read must exclude the whole entry rather than match everything.
+      def self.compile_filters(patterns, context)
+        compiled = Array(patterns).map do |source|
+          Regexp.new(source.to_s)
+        rescue RegexpError => e
+          Master::Ground::Swallow.log(e, context: "antigravity.#{context}_filter", pattern: source.to_s)
+          nil
+        end
+        compiled.any?(&:nil?) ? nil : compiled
+      end
+
       # JsonConfig parses the Antigravity skills.json schema, resolving inherits,
       # entries, path resolution, and regex filtering.
       class JsonConfig
@@ -98,20 +110,7 @@ module Master
           end
         end
 
-        def compile_filter_patterns(patterns, kind)
-          Array(patterns).map do |source|
-            Regexp.new(source.to_s)
-          rescue RegexpError => e
-            Master::Ground::Swallow.log(
-              e,
-              context: "antigravity.json_config.#{kind}_filter",
-              pattern: source.to_s,
-            )
-            nil
-          end.tap do |compiled|
-            return if compiled.any?(&:nil?)
-          end
-        end
+        def compile_filter_patterns(patterns, kind) = Antigravity.compile_filters(patterns, "json_config.#{kind}")
       end
 
       # Discovery traverses directory trees and discovers Antigravity customization roots
@@ -288,20 +287,7 @@ module Master
           end
         end
 
-        def compile_filter_patterns(patterns, kind)
-          Array(patterns).map do |source|
-            Regexp.new(source.to_s)
-          rescue RegexpError => e
-            Master::Ground::Swallow.log(
-              e,
-              context: "antigravity.skills.#{kind}_filter",
-              pattern: source.to_s,
-            )
-            nil
-          end.tap do |compiled|
-            return if compiled.any?(&:nil?)
-          end
-        end
+        def compile_filter_patterns(patterns, kind) = Antigravity.compile_filters(patterns, "skills.#{kind}")
 
         def parse_skill_file(skill_file, skill_dir, source:)
           content = File.read(skill_file, encoding: "UTF-8")

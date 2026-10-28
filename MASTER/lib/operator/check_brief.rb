@@ -36,7 +36,7 @@ module Operator
       "web ui static" => {
         category: "true_violation",
         debt_tag: nil,
-        suggested_action: "fix web UI static check; see web/CLAUDE.md for face boot",
+        suggested_action: "fix web UI static check; see data/agent_map.yml topics.face_boot",
       },
       "test:web" => {
         category: "true_violation",
@@ -71,7 +71,10 @@ module Operator
       key = step_name.to_s.strip
       return HINTS[key] if HINTS.key?(key)
 
-      HINTS.each { |pattern, hint| return hint if key.start_with?(pattern) }
+      # The longest matching prefix wins, so test:web_ui takes test:web and not test.
+      pattern = HINTS.keys.select { |prefix| key.start_with?(prefix) }.max_by(&:length)
+      return HINTS[pattern] if pattern
+
       {
         category: "unknown",
         debt_tag: nil,

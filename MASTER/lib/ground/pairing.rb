@@ -38,11 +38,12 @@ module Master
       def code_ttl_seconds = Integer(config["code_ttl_seconds"] || DEFAULT_TTL)
       def redeem_per_minute = Integer(config["redeem_per_minute"] || 8)
       def redeem_window_seconds = Integer(config["redeem_window_seconds"] || 60)
-      def face_profile(visitor:, paired:) = if visitor
-paired ? "messaging" : "public"
-else
-"operator"
-end
+      def face_profile(visitor:, paired:)
+        return "operator" unless visitor
+
+        paired ? "messaging" : "public"
+      end
+
       def redeem_notice(result) = "#{REDEEM_NOTICE} subject=#{result[:subject]}"
       # The store holds bearer tokens, so a configured path that leaves
       # .master/pairing/ falls back to the default rather than following it.

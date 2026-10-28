@@ -7,7 +7,6 @@ require "time"
 require_relative "../boot/paths"
 require_relative "../../contracts/studio"
 require_relative "script_dispatch"
-require_relative "constraint_dsl"
 require_relative "natural_intent"
 require_relative "lora_intent"
 
@@ -34,7 +33,7 @@ module Master
       REFERENCE_ALBUM_MAX_DURATION = 7_200
       AUDIO_FILE_RE = /(?:~\/|\/|\.{1,2}\/)?[^\s"'<>()]+\.(?:wav|mp3|flac|m4a|aac|ogg|opus|mp4|webm)\b/i.freeze
       REFERENCE_GENERATION_RE = /\b(?:make|create|generate|compose|render|produce)\b.*\b(?:like (?:that|this|it)|in (?:that|this) style|same (?:sound|style)|from (?:that|this) reference)\b/i.freeze
-      REFERENCE_FOLLOWUP_RE = /\b(?:make|create|generate|compose|render|produce)\b.*\b(?:like (?:that|this|it)|in (?:that|this) style|same (?:sound|style)|from (?:that|this) reference)\b/i.freeze
+      REFERENCE_FOLLOWUP_RE = REFERENCE_GENERATION_RE
       INDUSTRIAL_TECHNO_RE = /\b(?:make|create|generate|compose|render|produce)\b.*\bindustrial[ -]techno\b|\bindustrial[ -]techno\b.*\b(?:track|music|beat|loop|instrumental)\b/i.freeze
       TECHNO_TRACK_RE = /\b(?:make|create|generate|compose|render|produce)\b.*\btechno\b|\btechno\b.*\b(?:track|music|beat|loop|instrumental)\b/i.freeze
       SYNTH_RE = /\b(?:play|generate|create|make|render)\b.*\b(?:sine|square|triangle|saw|white|brown)\b.*\b(?:wave|noise|tone)\b/i.freeze
@@ -439,17 +438,18 @@ module Master
       end
 
       def active_reference_style
-        value = JSON.parse(File.read(active_reference_style_path))
-        style = value["style_key"] if value.is_a?(Hash)
+        style = stored_active_style
         return style if %w[j_dilla industrial_techno].include?(style)
 
-        latest = latest_reference_profile
-        remembered = latest&.fetch("style_key", nil)
+        remembered = latest_reference_profile&.fetch("style_key", nil)
         %w[j_dilla industrial_techno].include?(remembered) ? remembered : "general"
-      rescue Errno::ENOENT, JSON::ParserError, TypeError, NoMethodError
-        latest = latest_reference_profile
-        remembered = latest&.fetch("style_key", nil)
-        %w[j_dilla industrial_techno].include?(remembered) ? remembered : "general"
+      end
+
+      def stored_active_style
+        value = JSON.parse(File.read(active_reference_style_path))
+        value["style_key"] if value.is_a?(Hash)
+      rescue Errno::ENOENT, JSON::ParserError, TypeError
+        nil
       end
 
       def latest_reference_profile(style: nil)

@@ -10,9 +10,9 @@ module Master
     # request and the result contract; STUDIO owns provider calls, grading and
     # media creation.
     class IdeaPicture
-      ROOT = File.expand_path("../../../STUDIO/photograph.rb", __dir__)
+      SCRIPT = File.expand_path("../../../STUDIO/photograph.rb", __dir__)
 
-      def initialize(script: ROOT)
+      def initialize(script: SCRIPT)
         @script = script
       end
 

@@ -10,8 +10,8 @@ module Master
     #   HTTP         "429 ... Retry-After: 30", or a bare 429
     #   ollama       "ollama unreachable at http://localhost:11434: Connection refused"
     #   expired auth "401 Unauthorized", "Please run /login"
-#   billing      OpenRouter "402 Insufficient credits", OpenAI "You exceeded your current quota"
-#   refused key  "HTTP 403", Gemini "PERMISSION_DENIED"
+    #   billing      OpenRouter "402 Insufficient credits", OpenAI "You exceeded your current quota"
+    #   refused key  "HTTP 403", Gemini "PERMISSION_DENIED"
     #
     # `read` answers a Verdict (kind, wait in seconds) or nil when the reply is
     # an ordinary failure. `unknown` marks a wait the reply did not state, which

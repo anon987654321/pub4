@@ -152,13 +152,7 @@ module Master
         client = SsrfGuard.http_for(uri, address)
         client.read_timeout = TIMEOUT
         client.open_timeout = TIMEOUT
-        client.start do |http|
-          if uri.host == "www.youtube.com" && uri.path == "/watch"
-            http.get(uri.request_uri, "User-Agent" => "MASTER/1 (youtube_transcript)")
-          else
-            http.get(uri.request_uri, "User-Agent" => "MASTER/1 (youtube_transcript)")
-          end
-        end
+        client.start { |http| http.get(uri.request_uri, "User-Agent" => "MASTER/1 (youtube_transcript)") }
       end
 
       def http_json(uri, address, payload)

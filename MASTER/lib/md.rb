@@ -25,12 +25,13 @@ module Master
 
         if fence
           output << line
-          fence = nil if match && match[1][0] == fence && match[1].length >= 3
+          # A closing fence repeats the opening character at least as many times.
+          fence = nil if match && match[1][0] == fence[0] && match[1].length >= fence.length
           next
         end
 
         if match
-          fence = match[1][0]
+          fence = match[1]
           output << line
           next
         end

@@ -5,42 +5,21 @@
 # `autofix:` in data/laws.yml carries three kinds of value and only one of them
 # says anything a machine can act on: `false` is honest, a transform name is the
 # useful form because it names the edit, and bare `true` claims a fix without
-# saying how. Read the live split from `--json` rather than from a count here;
-# the three numbers this header used to quote were stale within a fortnight.
+# saying how. Read the live split from `--json`, not from a count in prose.
 #
-# Two failures follow, and neither is visible from the field itself.
-#
-# dangling_transform: a Law naming a transform no code implements. It was seven
-# of eight; efc96832f deleted those seven, all learned_smells entries whose
-# `autofix:` nothing reads. A Law asking to be fixed by code that does not
-# exist is a promise to a reader, and to any agent reading the Law to decide
-# whether it may edit.
+# dangling_transform: a Law naming a transform no code implements, a promise to
+# any agent reading the Law to decide whether it may edit.
 #
 # bare_true: `true` claims a fix without naming it, so nothing can apply it and
-# nothing can check it.
+# nothing can check it. A bare-true Law nothing reports is listed separately:
+# whether a Law can be found is LawReach.mechanical's question (law/, the
+# LawDSL registry and `folded_into:`), and a semantic detector at info severity
+# is dropped by SemanticLaw's info filter, so its autofix claim is unreachable.
+# Raise the severity, give it a detector, or say `autofix: false`.
 #
-# Whether a Law can be FOUND is a separate question from whether its fix can be
-# applied, and this tool got it wrong for as long as it asked it. It counted the
-# three detect_* columns in laws.yml and reported twelve autofix claims as
-# undetectable — every one of the twelve wrong. Ten have a live detector in law/
-# or the LawDSL registry, and the other two (WHITESPACE_PUNCTUATION,
-# MESSAGE_CHAIN) carry `folded_into:` naming the Law that reports for them. It
-# is the same instrument error tools/law_reach.rb's own header records against
-# itself, so the question is asked there now, once: `LawReach.mechanical`
-# already knows all three populations and loads the laws rather than grepping
-# for them.
-#
-# Corrected, it reports six and none of them was on the old list:
-# PRECOMPUTE_MATH, ANALOG_WARMTH, PURE_FUNCTIONS, SPECULATIVE_GENERALITY,
-# SYSTEM_STATUS and CACHE_LLM each declare a semantic detector at info severity,
-# which SemanticLaw's info filter drops — so nothing ever reports them and the
-# autofix claim can never be reached. Raise the severity, give one a detector,
-# or say `autofix: false`.
-#
-# The target shape is `autofix: <transform>` or `autofix: false`. Bare true is
-# the unfinished middle. Both counters are ceilings rather than errors because
-# emptying them means either writing the transforms or demoting the Laws — per
-# Law, with a reason, not as a sweep.
+# The target shape is `autofix: <transform>` or `autofix: false`. Both counters
+# are ceilings rather than errors because emptying them means writing the
+# transforms or demoting the Laws, per Law with a reason, not as a sweep.
 #
 #   ruby MASTER/tools/autofix_reach.rb
 #   ruby MASTER/tools/autofix_reach.rb --json
@@ -83,10 +62,8 @@ module Operator
       found
     end
 
-    # This file is excluded from its own corpus. The header above names all seven
-    # missing transforms in order to explain them, which satisfied the search and
-    # made the check report every transform implemented — a tool whose
-    # documentation is the evidence it looks for.
+    # This file is excluded from its own corpus: a transform it names while
+    # explaining one would otherwise count as that transform's implementation.
     def implemented?(name)
       @sources ||= IMPLEMENTATION_GLOBS.flat_map { |g| Dir.glob(File.join(MASTER, g)) }
                                        .reject { |f| f.include?("/vendor/") || f == File.expand_path(__FILE__) }

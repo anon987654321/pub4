@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "digest"
+
 module Master
   module Ground
     # Fresh reads before claims/commits. laws.yml carries no ground_truth_check
@@ -78,5 +80,3 @@ module Master
     end
   end
 end
-
-require "digest"

@@ -221,11 +221,7 @@ module Master
             message: @message,
             skipped_tiers: @skipped.dup,
             substitutions: @substitutions.dup,
-            seconds_until_probe: if @state == :refused
-nil
-else
-(blocked_now? ? (@resume_at - now).ceil : 0)
-end,
+            seconds_until_probe: @state == :refused ? nil : (blocked_now? ? (@resume_at - now).ceil : 0),
           }
         end
       end

@@ -76,9 +76,14 @@ module Master
         "(no files matched #{glob} under #{File.basename(@root)}; globs are relative to #{File.basename(@root)})"
       end
 
+      # A directory names its whole tree: the model-facing tool passes `path` (default ".") here,
+      # and a glob of a directory alone matches no file.
       def relative_glob(glob)
         prefix = "#{File.basename(@root)}/"
-        glob.to_s.start_with?(prefix) ? glob.to_s.delete_prefix(prefix) : glob.to_s
+        relative = glob.to_s.start_with?(prefix) ? glob.to_s.delete_prefix(prefix) : glob.to_s
+        return relative unless File.directory?(File.join(@root, relative))
+
+        [".", ""].include?(relative.chomp("/")) ? "**/*" : File.join(relative.chomp("/"), "**", "*")
       end
 
       def current_paths(glob)

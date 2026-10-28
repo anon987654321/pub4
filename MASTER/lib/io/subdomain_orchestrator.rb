@@ -65,7 +65,7 @@ module Master
           fetch_maps_viewport
         when "amber"
           probe_app(domain, app_url(domain))
-        when "messages", "messenger"
+        when "messages"
           { broker: "active", cluster: "brgen", subdomain: "messenger", latency_ms: probe_latency("brgen"), queue_depth: 0 }
         when "marketplace", "takeaway", "playlist", "tv", "dating", "ai", "brgen"
           multi_tenant_status(domain, context)
@@ -89,7 +89,7 @@ module Master
         url = "https://maps.brgen.no/"
         if @web_fetch
           fetched = @web_fetch.call(url:)
-          return { cluster: "maps", url:, fetch: fetched.ok? ? fetched.value![0, 800] : fetched.message } if fetched.ok?
+          return { cluster: "maps", url:, fetch: fetched.value!.to_s[0, 800] } if fetched.ok?
         end
         probe = probe_http(url)
         { cluster: "maps", url:, status: probe[:status], synchronized: probe[:ok] }

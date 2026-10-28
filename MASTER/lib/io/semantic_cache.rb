@@ -154,13 +154,6 @@ module Master
 
       def stale?(entry) = Time.now.to_i - entry.fetch(:ts, 0).to_i > @ttl
 
-      def expire_entry!(path)
-        @lru.delete(path)
-        File.delete(path) rescue nil
-        delete_manifest_entry(File.basename(path, ".json"))
-        nil
-      end
-
       def drop_entry!(path)
         File.delete(path) rescue nil
         @lru.delete(path)
@@ -175,7 +168,7 @@ module Master
                 else
                   manifest_entry(File.basename(path, ".json"))
                 end
-        return expire_entry!(path) if stale?(entry)
+        return drop_entry!(path) if stale?(entry)
         promote_lru(path)
         entry[:value]
       rescue JSON::ParserError => e
@@ -273,10 +266,11 @@ module Master
         @lru.push(path)
       end
 
+      # The manifest copy goes with the file: read_entry falls back to it, so an
+      # evicted entry left there was still served.
       def evict_lru
-        oldest = @lru.shift
-        return unless oldest && File.exist?(oldest)
-        File.delete(oldest) rescue nil
+        oldest = @lru.first
+        drop_entry!(oldest) if oldest
       end
     end
   end

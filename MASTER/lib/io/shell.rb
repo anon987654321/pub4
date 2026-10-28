@@ -18,7 +18,7 @@ module Master
       TIMEOUT = 30
       FAILURE_WINDOW = 5
       FAILURE_WARN_AT = 3
-      FORCE_REQUIRED_RE = /\b(?:rm\s+-rf|dd\s+if=|mkfs(?:\.\w+)?)\b/.freeze
+      FORCE_REQUIRED_RE = /\b(?:rm\s+-rf\b|dd\s+if=|mkfs(?:\.\w+)?\b)/.freeze
       FORCE_FLAG_RE = /(?:\A|\s)--force(?:\s|\z)/.freeze
       REDIRECT_RE = /(?:^|\s)(?:>|>>)\s*([^\s;&|]+)/.freeze
       # A doas warning used to sit here, published on the bus and then followed

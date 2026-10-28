@@ -190,26 +190,6 @@ module Master
         scrub_container(hash || {}, seen:, depth:)
       end
 
-      def self.scrub_value(key, value, seen: {}, depth: 0)
-        return "[REDACTED]" if key.to_s.match?(SENSITIVE_KEYS)
-        return "[DEPTH]" if depth >= MAX_DEPTH && (value.is_a?(Hash) || value.is_a?(Array))
-
-        case value
-        when Hash, Array
-          scrub_container(value, seen:, depth:)
-        when String
-          return value if digest_metadata?(key, value)
-
-          truncate(text(value))
-        else
-          value
-        end
-      end
-
-      def self.scrub_array(_key, array, seen:, depth: 0)
-        scrub_container(array, seen:, depth:)
-      end
-
       # SHA-256 receipts are intentionally opaque hexadecimal identifiers.
       # The generic bearer detector otherwise mistakes any 64-character digest
       # for a credential and destroys the value needed to correlate evidence.
