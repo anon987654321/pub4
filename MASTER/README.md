@@ -18,6 +18,8 @@ persists its bounded decision frames through the existing `.master/memory.yml` s
 the model receives a compact recent reasoning history on the next turn. This is deliberately
 small: better judgment should reduce machinery, not create another orchestration layer.
 
+See [Efficient checks → repair → proof](docs/efficient-repair-pass.md) for the bounded default workflow: measure first, run the relevant composite, repair only the owning tree, and repeat the same checks.
+
 ## The idea
 
 Most AI is written in Python, chosen for its libraries more than its clarity.
