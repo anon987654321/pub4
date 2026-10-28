@@ -101,6 +101,38 @@ the commit that carries its evidence; nothing here records finished work.
   NOT_RUN in this executor: it has no Bundler executable and outbound DNS cannot
   resolve GitHub; Vercel was not used as test evidence.
 
+## Agent ergonomics (2026-10-28 wishlist)
+
+From the 2026-10-28 boot-crash session (346da8e). Rationale, existing
+coverage and acceptance criteria per item: `docs/wishlist_2026-10-28.md`.
+Half the items finish disciplines the tree already started; none removes a
+compatibility alias ahead of the execution-contract gates.
+
+- [ ] Dependency-light boot check under zeitwerk: eager-load every managed
+  constant, assert FixLoop/RepairLoop/RunJournal object identity with their
+  Kernel-owned classes, runnable without the private bundle, wired into
+  `rake audit`. Prove it catches the crash by reverting 346da8e.
+- [ ] Run the authored recovery gates on the pinned Ruby, preserve receipts,
+  then retarget callers to the Kernel-owned names and delete the
+  compatibility aliases per the existing execution-contract gate.
+- [ ] `bin/test <file>`: a helper that reports `SKIP <file>: needs <gem>`
+  instead of crashing at require on a bundle-less checkout; private gems
+  move to an optional Gemfile group.
+- [ ] Lint CLAUDE.md as the fifth agent door: fail when it reproduces
+  canonical config or contradicts the generated agent-contract block.
+- [ ] `rake docs:map` + `rake lint:map`: a committed per-file map of
+  constants, require graph and the boot chain; a stale map fails lint.
+- [ ] laws.yml entry with a lexical detector: no module-open-time
+  `const_set`/`remove_const` outside the single guarded alias file.
+- [ ] One Ruby pin stated once: reconcile the 3.3.8 session note with the
+  4.0.5 execution-contract mentions; check doc mentions against the pin.
+- [ ] Fail-closed schema check on read for the `.master/*.json` ledgers
+  (fix_ideas.json, content_board.json, state files): refuse with file path,
+  found schema, expected schema.
+- [ ] Write down the main-history rewrite policy (allowed or not) and the
+  pre-rebase check agents must run; the a753291 rewrite turned a pull into
+  a surprise rebase on a stale base.
+
 ## Verification run, after the fixes below land
 
 One pass on one commit, recorded as PASS, FAIL, INCONCLUSIVE, BLOCKED or
