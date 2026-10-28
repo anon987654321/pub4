@@ -9,6 +9,13 @@ module Master
       # The public FixLoop constant is an adapter name for this canonical
       # Kernel-owned convergence coordinator. The implementation is loaded only
       # after this identity exists, so every nested pass module opens the same class.
+      #
+      # Zeitwerk also maps fix/kernel/convergence_adapter.rb to this constant and
+      # holds a pending autoload for it. Declaring the class would fire that
+      # autoload, and the implementation head would then alias a constant that is
+      # still pending, so the pending entry is cleared first. The same applies to
+      # the RepairAdapter stub below.
+      remove_const(:ConvergenceAdapter) if autoload?(:ConvergenceAdapter, false)
       class ConvergenceAdapter
         # Keep the public FixLoop constant lazy: read-only Kernel users must not
         # boot the full pass graph, but any real constructor or nested constant
@@ -26,6 +33,7 @@ module Master
         end
       end
 
+      remove_const(:RepairAdapter) if autoload?(:RepairAdapter, false)
       class RepairAdapter; end unless const_defined?(:RepairAdapter, false)
 
       module Lifecycle
