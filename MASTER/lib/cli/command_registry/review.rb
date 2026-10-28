@@ -404,6 +404,16 @@ module Master
         tokens.uniq.map { |tree| File.join(repo_root, tree) }
       end
 
+      # `bin/master /fix MASTER RAILS OPENBSD STUDIO` names every tree of the
+      # checkout: a whole-checkout run is an improvement run, so it takes the
+      # elevate lane unless an explicit --lane= was given. Single-tree runs keep
+      # the default lane; convergence first, elevation alongside.
+      def multi_tree_run?(raw)
+        tokens = raw.to_s.split(/\s+/).reject { |token| token.match?(/\A--lane=/i) }
+        trees = tokens.uniq.select { |token| MasterPaths::TREES.include?(token) }
+        trees.size > 1
+      end
+
       def run_pass(deps, **call_args)
         Master::CLI::Pipeline::Pass.new(**deps).call(**call_args).render
       end
@@ -477,7 +487,8 @@ module Master
 
       def execution_overrides(raw)
         tokens = raw.to_s.split(/\s+/).map(&:downcase)
-        lane = tokens.filter_map { |token| token[LANE_FLAG, 1] }.last || Master::Fix::WorkLane::DEFAULT.to_s
+        lane = tokens.filter_map { |token| token[LANE_FLAG, 1] }.last ||
+               (multi_tree_run?(raw) ? "elevate" : Master::Fix::WorkLane::DEFAULT.to_s)
         overrides = { autofix_mode: nil, max_files: nil, blockers: false, lane:, plan: tokens.include?("--plan"),
                       until_checks: tokens.include?("--until-checks") }
         raw.to_s.split(/\s+/).each do |token|

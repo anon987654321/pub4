@@ -31,6 +31,7 @@ require_relative "../resource_budget"
 require_relative "../wishlist"
 require_relative "../constitutional_check"
 require_relative "../../review/scan/law_health"
+require_relative "../improve"
 
 module Master
   module Fix
@@ -395,19 +396,70 @@ module Master
         end
 
         def supplement_with_improvements(found, pass:, files:, deadline:, consecutive_clean:)
-          return [found, nil] unless found.empty? && consecutive_clean.zero?
+          elevation = Array(elevation_findings(files:, pass:))
+          if found.empty? && consecutive_clean.zero?
+            resources = @resource_budget.measure
+            if @resource_budget.critical?(resources)
+              @committer.abort_transaction!
+              @bus&.publish("fix_loop:model_work_shed", pass:, reasons: resources[:reasons], values: resources[:values])
+              Master::Trace::Dmesg.status("fix0", "pass #{pass}, improvement review shed: #{resources[:reasons].join("; ")}")
+              shed = PassResult.new(status: :plateau, consecutive_clean: 0, message: "model work shed: #{resources[:reasons].join("; ")}")
+              return [found + elevation, shed]
+            end
 
-          resources = @resource_budget.measure
-          if @resource_budget.critical?(resources)
-            @committer.abort_transaction!
-            @bus&.publish("fix_loop:model_work_shed", pass:, reasons: resources[:reasons], values: resources[:values])
-            Master::Trace::Dmesg.status("fix0", "pass #{pass}, improvement review shed: #{resources[:reasons].join("; ")}")
-            shed = PassResult.new(status: :plateau, consecutive_clean: 0, message: "model work shed: #{resources[:reasons].join("; ")}")
-            return [found, shed]
+            enter_phase(:council_improve, pass)
+            council = Array(@council&.improve(files:, pass:, deadline:))
+            return [found + elevation + council, nil]
           end
+          [found + elevation, nil]
+        end
 
-          enter_phase(:council_improve, pass)
-          [found + Array(@council&.improve(files:, pass:, deadline:)), nil]
+        # The Elevation Engine: even a pass with repairs outstanding owes the
+        # tree its strongest improvement step, because /fix improves, it does
+        # not only repair. The engine's findings carry their own law id and
+        # route to the improvement stage; on the elevate lane they are the
+        # primary output, on the other lanes they ride alongside the repairs.
+        def elevation_findings(files:, pass:)
+          lane = WorkLane.current
+          return [] unless WorkLane.elevate? || WorkLane.runs?(:improve_code)
+          return [] if lane != :elevate && @elevation_used_for_pass == pass
+
+          @elevation_used_for_pass = pass
+          engine = Improve::Engine.new(root: @root, lane: lane)
+          found = engine.elevate(files: files)
+          found += ideas_to_findings(engine.ideate(files: files), pass:) if WorkLane.runs?(:ideate)
+          found += restructure_to_findings(engine.restructure_proposals(files:), pass:) if WorkLane.runs?(:restructure_drive)
+          unless found.empty?
+            Master::Trace::Dmesg.status(
+              "fix0", "pass #{pass}, elevation #{found.size} step(s) toward the ideal (lane=#{lane})"
+            )
+            @bus&.publish("fix_loop:elevation", pass:, steps: found.size, lane: lane.to_s)
+          end
+          found
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "fix_loop.elevation", event_bus: @bus)
+          []
+        end
+
+        def ideas_to_findings(ideas, pass:)
+          Array(ideas).first(3).map.with_index do |idea, index|
+            { law: Improve::LAW_ID, kind: :improvement, file: "docs/IDEATION.md", line: index + 1,
+              severity: Improve::SEVERITY, confidence: Improve::CONFIDENCE,
+              message: "elevation[ideate] #{idea.kind}: #{idea.title}",
+              fix: "Record this idea where it belongs (doc, issue or implementation); an idea only counts when written down." }
+          end
+        end
+
+        def restructure_to_findings(proposals, pass:)
+          Array(proposals).first(3).filter_map do |proposal|
+            next unless File.file?(proposal.from)
+
+            relative = proposal.from.delete_prefix("#{@root}/")
+            { law: Improve::LAW_ID, kind: :improvement, file: relative, line: 1,
+              severity: Improve::SEVERITY, confidence: Improve::CONFIDENCE,
+              message: "elevation[restructure] #{proposal.kind}: #{proposal.reason}",
+              fix: "#{proposal.kind == :merge ? 'Merge' : 'Flatten'} #{File.basename(proposal.from)} into #{proposal.to} through restructure_sweep's proof machinery (syntax, references, manifests) so every contract test still passes." }
+          end
         end
 
         def dispatch_llm_stages(found, files, pass, deadline, visual, run_id: nil)
@@ -433,10 +485,11 @@ module Master
 
         def route_findings(found)
           by_law = ->(law_id) { found.select { |violation| violation[:law].to_s == law_id } }
-          special = [VisualPass::LAW_ID, OpportunityPass::LAW_ID, CouncilRound::IMPROVEMENT_LAW_ID, Wishlist::LAW_ID]
+          special = [VisualPass::LAW_ID, OpportunityPass::LAW_ID, CouncilRound::IMPROVEMENT_LAW_ID, Wishlist::LAW_ID,
+                     Improve::LAW_ID]
           {
             source: unremembered(found.reject { |violation| special.include?(violation[:law].to_s) }),
-            improvement: by_law.(CouncilRound::IMPROVEMENT_LAW_ID),
+            improvement: by_law.(CouncilRound::IMPROVEMENT_LAW_ID) + by_law.(Improve::LAW_ID),
             opportunity: by_law.(OpportunityPass::LAW_ID),
             visual: by_law.(VisualPass::LAW_ID),
             wishlist: by_law.(Wishlist::LAW_ID),
