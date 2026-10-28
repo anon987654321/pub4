@@ -41,19 +41,15 @@ module Master
       # budget. A renderer can request fewer particles, never more.
       def particle_budget(root: Master::ROOT, config: self.config, mobile: false, reduced_motion: false)
         spatial = Contract.budget(root:)
-        contract_key = if reduced_motion
-                         "reduced_motion_particles"
-                       elsif mobile
-                         "mobile_particles"
-                       else
-                         "desktop_particles"
-                       end
-        limits = [Integer(config.fetch("particle_budget", spatial[contract_key] || 1))]
-        spatial_limit = spatial[contract_key]
-        limits << Integer(spatial_limit) if spatial_limit && Integer(spatial_limit).positive?
-        limits.min
+        total_key = mobile ? "mobile_points" : "desktop_points"
+        allocation = spatial.fetch("point_allocation", {})
+        fraction = Float(allocation.fetch("stipple_fraction", 1.0)).clamp(0.0, 1.0)
+        total = Integer(spatial.fetch(total_key, config.fetch("particle_budget", 1)))
+        allocated = [(total * fraction).floor, 1].max
+        # reduced_motion freezes the existing particles; it does not respawn a
+        # smaller cloud. The reduced_motion_particles dial belongs to sparse_field.
+        [Integer(config.fetch("particle_budget", allocated)), allocated].min
       end
-
       def build(count: nil, seed: 0, root: Master::ROOT, config: self.config, mobile: false, reduced_motion: false)
         limit = particle_budget(root:, config:, mobile:, reduced_motion:)
         amount = [[Integer(count || limit), 0].max, limit].min
