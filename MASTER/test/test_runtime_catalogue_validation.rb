@@ -45,6 +45,37 @@ class TestRuntimeCatalogueValidation < Minitest::Test
     assert_match(/models\.yml route code_generation must reference a declared model tier/, error)
   end
 
+  def test_unknown_nested_model_policy_fields_are_rejected
+    path = catalogue_path("models.yml")
+    data = YAML.safe_load_file(path, aliases: true)
+    data.fetch("routing")["provder"] = "agy"
+
+    error = Guard.validate(path:, content: YAML.dump(data))
+
+    assert_match(/models\.yml routing has unknown field\(s\): provder/, error)
+  end
+
+  def test_boot_checks_apply_model_reference_validation_before_startup
+    Dir.mktmpdir("master-model-catalogue-boot") do |tmp|
+      root = File.join(tmp, "MASTER")
+      data_dir = File.join(root, "data")
+      FileUtils.mkdir_p(data_dir)
+
+      providers_path = File.join(data_dir, "providers.yml")
+      models_path = File.join(data_dir, "models.yml")
+      FileUtils.cp(catalogue_path("providers.yml"), providers_path)
+      data = YAML.safe_load_file(catalogue_path("models.yml"), aliases: true)
+      data.fetch("routes")["code_generation"] = "not_a_tier"
+      File.write(models_path, YAML.dump(data))
+
+      result = BootChecks.send(:check_models_yaml, root)
+
+      refute result.ok
+      assert_equal :fatal, result.severity
+      assert_match(/models\.yml route code_generation must reference a declared model tier/, result.message)
+    end
+  end
+
   def test_model_scores_must_stay_in_the_closed_interval
     path = catalogue_path("models.yml")
     data = YAML.safe_load_file(path, aliases: true)
