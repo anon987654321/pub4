@@ -79,6 +79,7 @@ POSTPRO_USAGE = <<~TXT
     --from-replicate                   grade what replicate just wrote
     --rescue FILE [--output FILE]     diagnose a photograph, then apply the fix
     --measure FILE [--against AFTER]  read texture numbers and palette, or how a grade moved them
+    --quality FILE                   report sampled exposure, clipping, tone and colour diagnostics
     --stock-sheet FILE [--preset NAME] [--output FILE]  one frame through every stock, tiled
     --gallery [DIR]                   an index.html contact page of every render in DIR
     --map                             the table of contents of this file, with line numbers
@@ -111,7 +112,7 @@ complete_one_shot = one_shot_flags.all? do |flag|
   value = argv_flag(flag)
   value && !value.start_with?("--")
 end
-dedicated_mode = (%w[--watch --stock-sheet --rescue --export-lut --video] & ARGV).any?
+dedicated_mode = (%w[--watch --stock-sheet --rescue --export-lut --video --quality] & ARGV).any?
 if one_shot_requested && !complete_one_shot && !dedicated_mode
   message = [
     "ERROR one-shot mode requires --input FILE, --output FILE and --preset NAME",
