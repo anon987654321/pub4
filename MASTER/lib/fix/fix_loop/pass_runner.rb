@@ -5,6 +5,18 @@ require "fileutils"
 require "open3"
 require "set"
 require "time"
+require_relative "../kernel"
+
+# Some callers load PassRunner directly. Establish the canonical class identity
+# before child files reopen FixLoop, without recursively loading a half-evaluated
+# convergence adapter.
+module Master
+  module Fix
+    remove_const(:FixLoop) if autoload?(:FixLoop, false)
+    const_set(:FixLoop, Kernel::ConvergenceAdapter) unless const_defined?(:FixLoop, false)
+  end
+end
+
 require_relative "pass_runner/fast_stage"
 require_relative "pass_runner/llm_stage"
 require_relative "pass_runner/stagnation_detection"
@@ -40,13 +52,14 @@ module Master
                        laws:, agent:, scanner:, learnings:, preamble:,
                        clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil,
                        visual_pass: nil, opportunity_pass: nil, preflight: nil, discipline:, wishlist:,
-                       reference_graph: nil)
+                       reference_graph: nil, kernel: nil)
           @bus = bus
           @committer = committer
           @conflict_resolver = conflict_resolver
           @llm_router = llm_router
           @root = root
           @reference_graph = reference_graph
+          @kernel = kernel
           @resource_budget = ResourceBudget.new(root:)
           @agent = agent
           @scanner = scanner
@@ -168,6 +181,15 @@ module Master
 
         def cleanup_visual_runtime
           @visual_pass&.stop_runtime!
+        end
+
+        # All production pass repairs go through the Kernel-owned repair policy.
+        # Standalone runners load the same implementation rather than a second class.
+        def build_repair_loop(**options)
+          return @kernel.build_repair_loop(**options) if @kernel
+
+          require_relative "../kernel/repair_adapter"
+          Kernel::RepairAdapter.new(**options)
         end
 
         def violations(files)

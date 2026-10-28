@@ -12,57 +12,82 @@ file maps implementations; it is not a second policy surface.
 
 ## Owners
 
-- **`Fix::FixLoop`** (569 + 21 files under `fix_loop/` (6,176 lines)): the
-  `/fix` lifecycle: passes, lanes, council rounds, background run, terminal
-  state. Called from `cli/command_registry.rb`,
-  `cli/command_registry/review.rb`, `cli/pipeline/pass.rb`,
-  `operator/canary.rb`, `operator/fix_status.rb`, `operator/snapshot_pack.rb`,
-  `builder/ai_boot.rb`, `tools/boot_smoke.rb`, `bin/check`, `Rakefile`, and 15
-  `lib/fix/` collaborators.
-- **`Fix::RepairLoop`** (595 + 6 files under `repair_loop/` (1,656 lines)):
-  one repair batch for one Law: routing by severity and size, autofix policy,
-  collapse guard, per-file budget, verification. Called from `fix_loop.rb` and
-  its `council_round`, `evidence_stage`, `llm_stage`; `ground/laws.rb`,
-  `review/scan/law.rb`, `review/scan/semantic_fingerprint.rb`,
-  `cli/pipeline/proof/rails_apps.rb`, and 11 `lib/fix/` collaborators.
+- **`Fix::FixLoop`** (compatibility entry point): the canonical implementation
+  is `Fix::Kernel::ConvergenceAdapter` plus the modules under `fix_loop/`.
+  It owns passes, lanes, council rounds, incremental scope, background-run
+  hooks and terminal policy. Existing CLI, operator, builder and check callers
+  retain the `FixLoop` constant while runtime proof gates remain open.
+- **`Fix::RepairLoop`** (compatibility constant): the implementation is
+  `Fix::Kernel::RepairAdapter` plus the existing `repair_loop/` policy modules.
+  It remains one bounded batch per Law, including severity/size routing, autofix,
+  collapse guard, file budget and verification. Legacy callers remain valid
+  through `RepairLoop`; production PassRunner stages use the Kernel factory.
 - **`Fix::Mission`** (729): the durable objective that survives process death.
   Called from `cli/command_registry.rb`, `cli/core_bridge.rb`,
   `operator/services.rb`, `fix_loop/{background_runner,committer,lifecycle}.rb`,
   `heartbeat.rb`, `supervisor.rb`, `task_steward.rb`.
-- **`Fix::RunJournal`** (1,189): per-run lifecycle metadata and resume point
-  (never file content). Called from `fix_loop.rb`,
-  `fix_loop/{completion,lifecycle,pass_execution}.rb`,
-  `fix_loop/pass_runner/assessment_matrix.rb`, `fix_plan.rb`, `fix_trace.rb`,
-  `operator/fix_status.rb`.
+- **`Fix::RunJournal`** (compatibility constant): canonical persistence lives in
+  `Fix::Kernel::LifecycleJournal`. It maintains the existing metadata-only
+  `.master/fix_runs.json` format, pass checkpoints and resume decisions. Kernel
+  and `Operator::FixStatus` share one journal accessor; `Mission` remains the
+  durable cross-run objective.
 - **`Fix::RunLedger`** (231): in-memory accounting of one run's model phase:
   rejects per file, spent budgets, failing lanes. Called from
   `cli/command_registry/review.rb`, `file_repair.rb`,
-  `fix_loop/pass_runner/stream_stage.rb`, `repair_loop.rb`,
+  `fix_loop/pass_runner/stream_stage.rb`, `kernel/repair_adapter.rb`,
   `repair_loop/file_budget.rb`, `run_budget.rb`, `run_pulse.rb`.
 - **`Fix::Transaction`** (728 + `transaction/{delivery,recovery}.rb` (930
   lines)): staged writes, rollback, crash recovery and Git delivery of a pass.
   Called from `fix_loop.rb`, `fix_loop/{committer,lifecycle,pass_runner}.rb`,
   `fix_plan.rb`, `patch.rb`, `dead_css_sweep.rb`, `scale_snap.rb`,
   `tap_target_pad.rb`, `tools/dead_css_sweep.rb`.
-- **`Fix::Kernel`** (107): read and verify the hash-chained
-  `.master/log.jsonl` for `bin/master replay`. Called from `bin/master replay`
-  (`Kernel.replay_cli`).
+- **`Fix::Kernel`**: production coordinator boundary and hash-chained receipt
+  writer, while retaining `bin/master replay` and the existing log verification API.
+  It owns the process-shared execution lock, run start/terminal receipts, the
+  shared lifecycle journal accessor and the repair factory. It does not apply source
+  edits. The hash-chained ledger is private and rejects symlinked paths, non-regular
+  files, and non-private ledger permissions; retention/segmentation remains open.
+- **`Fix::Kernel::ConvergenceAdapter`**: canonical class for the former `FixLoop`
+  implementation and its pass modules. `FixLoop` remains a compatibility constant
+  and entry-point file; existing command and operator callers keep their API.
+- **`Fix::Kernel::RepairAdapter`**: canonical class for the former `RepairLoop`
+  implementation and its policy modules. `RepairLoop` remains a compatibility
+  constant, and bounded repair outcomes are emitted to the Kernel ledger.
+- **`Fix::Kernel::LifecycleJournal`**: canonical implementation of the durable
+  run journal and unchanged `.master/fix_runs.json` schema. `RunJournal` remains
+  a compatibility constant; `Mission` continues to own the cross-run objective.
 
-## What Kernel is now
+## What Kernel owns after this migration
 
-`Kernel` was described as the canonical survivor, but `Kernel.new` and
-`Kernel#fix` had no production caller: only `test/test_fix_kernel.rb` built one,
-and the hash-chained log it appended to existed in no checkout. Its private Law
-type and the two-Law list in `MASTER/laws.rb` restated a sacred-path guard that
-`Ground::Immutability` and the commit hooks already enforce. The repair core,
-`laws.rb` and their tests are gone; the replay reader stays, with tests that
-build a valid chain and prove gaps, edits and torn records are refused. The
-`.pub4` boundary manifests at each tree root were read only by the removed
-`Kernel#manifest_for` and now have no reader.
+The old Kernel mutation prototype is still gone: it has not been restored and
+does not compete with `Transaction`. The retained Kernel now owns the repository-wide, process-shared
+`/fix` execution lock at `.master/fix-execution.lock`, hash-chained coordinator
+start/terminal receipts, repair outcome summaries, journal access and adapter
+factories. Independent Kernel instances and OS processes must acquire the same
+advisory file lock before a production run can enter its mutation path. Production boot enters
+via `Kernel#build_fix_loop`; the convergence implementation is
+`Kernel::ConvergenceAdapter`, the per-Law repair implementation is
+`Kernel::RepairAdapter`, and the durable run-state implementation is
+`Kernel::LifecycleJournal`. `FixLoop`, `RepairLoop` and `RunJournal` remain
+compatibility constants for callers that have not been re-pointed.
 
-`FixLoop` is the coordinator in fact: every production path to `/fix` enters
-through it. Folding the others into it, or it into them, is still gated on the
-recovery tests below.
+The existing `FixLoop` / `Transaction` mutation and rollback path remains the
+only source-editing path. Kernel appends a start receipt before execution and a
+truthful terminal receipt after it. If a writer dies before terminalization,
+a later process marks the orphan `unknown_outcome` only after same-host process
+identity proves the writer is gone. It does not infer success. Pass outcomes
+record law, status, bounded counts and run identity without source text or model
+prompts.
+
+The new `test_fix_kernel_lifecycle.rb` and `test_fix_interruption_restart.rb`
+cover owner identity, outcome receipts, repair counts and breakdowns, independent
+Kernel-instance and process serialization, symlink and writable-directory refusal for
+both the execution lock and hash-chained audit ledger, open-transaction rollback,
+durable-run resume, journal deletion and Mission checkpoint survival, and orphan
+receipt reconciliation. They are authored but **not run**: this
+environment cannot provide the repository-pinned Ruby 4.0.5 checkout. The Phase 2
+runtime gate is therefore still blocked; source consolidation is not proof of
+behavioral parity.
 
 ## Overlap that remains
 
@@ -72,25 +97,23 @@ recovery tests below.
 - `Transaction` owns delivery (commit and push) as well as staging; `FixLoop`'s
   `committer.rb` also decides what to commit.
 
-## Recovery tests a merge must pass first
+## Recovery tests and gate status
 
-One per responsibility, each planting a defect, asserting red, then green:
+The authored process-boundary regression in `test_fix_interruption_restart.rb`
+starts a real Ruby subprocess using public `FixLoop#run`, opens a pass
+`Transaction`, persists a controlled partial write, kills the writer, and then
+restarts through the normal run entry point. It checks byte-exact rollback,
+journal resume, the durable Mission/checkpoint, transaction cleanup, and the
+orphaned Kernel receipt. A separate fixture deletes the run journal while
+checking that the independent Mission checkpoint and transaction snapshot
+survive. Owner and outcome regressions live in `test_fix_kernel_lifecycle.rb`.
 
-1. Staging and rollback: an aborted `Transaction` restores byte-identical state.
-2. Durable objective: kill the process mid-run; `Mission` reports the remaining
-   work after restart.
-3. Journal: delete the journal mid-run; Git and `Checkpoint` reconstruct, and the
-   journal is never the only copy of anything.
-4. Budget and collapse: a run over its file budget trips `collapse_guard`
-   instead of looping.
-5. Ledger honesty: a run that fixes nothing names why, per file, in one place.
-6. Adapter parity: every CLI path above reaches the same receipt before and
-   after the move.
-
-The named, currently skipped test entrypoints live in
-MASTER/test/test_recovery_gates.rb. They preserve the six obligations in the
-test suite, but do not satisfy the merge gate until each skip is replaced by a
-real fixture/process test that demonstrates red before repair and green after it.
+These tests are source changes, **not passing results**. The merge remains
+blocked until the tests run on pinned Ruby 4.0.5. Still required after the
+process-boundary test: a real budget/collapse regression, truthful per-file
+ledger behavior for zero repairs, the complete adapter receipt-parity matrix,
+delivery-failure recovery, and one real repository-wide `/fix` run whose
+terminal state and repair counts are recorded.
 
 `Supervisor`, `Governor`, `Homeostat`, `Watcher` and `WatchLoop` share names with
 unrelated classes elsewhere in `lib/` and are outside this map.

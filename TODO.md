@@ -32,10 +32,17 @@ source and tests they could not run; this pass is what measures them.
 
 - [ ] MASTER focused regressions on the pinned Ruby: from `MASTER/`, run
   `bundle exec ruby -Ilib:test test/test_law_parity.rb`,
+  `bundle exec ruby -Ilib:test test/test_fix_kernel_lifecycle.rb`,
+  `bundle exec ruby -Ilib:test test/test_fix_convergence.rb`,
+  `bundle exec ruby -Ilib:test test/test_fix_convergence_wiring.rb`,
+  `bundle exec ruby -Ilib:test test/test_fix_mission.rb`,
+  `bundle exec ruby -Ilib:test test/test_core_no_lib_backedges.rb`,
+  `bundle exec ruby -Ilib:test test/test_fix_interruption_restart.rb`,
   `bundle exec ruby -Ilib:test test/test_ingress_jobs.rb`,
   `bundle exec ruby -Ilib:test test/test_security_audit.rb`,
   `bundle exec ruby -Ilib:test test/test_io_atomic_write.rb`,
   `bundle exec ruby -Ilib:test test/test_security_headers_source_check.rb`,
+  `bundle exec ruby -Ilib:test test/test_io_atomic_write.rb`,
   `bundle exec ruby -Ilib:test test/test_check_runner_registry.rb`,
   `bundle exec ruby -Ilib:test test/test_turn_router.rb`,
   `bundle exec ruby -Ilib:test test/test_command_registry_dispatch.rb`,
@@ -81,24 +88,34 @@ source and tests they could not run; this pass is what measures them.
 - [ ] Then `/fix` on the repository root: four independent reports, 30–40 grounded tournament
   candidates per tree, and each terminal state (DONE, PLATEAU, HUMAN_DECISION, BLOCKED,
   VALIDATION_FAILED, DELIVERY_FAILED, TIMEOUT) reached truthfully. The checksum-verified
-  `.master/fix_architecture` sidecar and provenance-gated reuse are implemented; still run a real
-  process-interruption/restart probe and preserve its receipt. No trial has yet reached a repair,
-  so repair quality is unmeasured.
+  `.master/fix_architecture` sidecar and provenance-gated reuse are implemented. The process-kill
+  regressions at `MASTER/test/test_fix_interruption_restart.rb` use the public `FixLoop#run`
+  entry point with a controlled pass-interruption seam and cover transaction rollback, durable-run
+  resumption, orphaned Kernel-receipt recovery, and journal deletion while the Mission checkpoint
+  survives. Run them on pinned Ruby and preserve receipts, then run a real repository-wide `/fix`.
+  The crash/restart tests are authored but unexecuted here; no live repository-wide trial has been
+  measured, so repair quality remains unmeasured.
 
 ## Execution contract
 
-- [ ] Fold FixLoop, RepairLoop and RunJournal into `Fix::Kernel` in the gated order
-  `MASTER/docs/fix_coordinator_map.md` sets, recovery tests first; the one gap left in
-  `MASTER/docs/lifecycle_ownership.md`.
-  Six named recovery-gate skips are in `MASTER/test/test_recovery_gates.rb`; none closes
-  this gate until wired to real fixtures and verified red then green.
-
-- [ ] Run the MASTER swarm tests on the available Ruby:
-  from MASTER/, run `bundle exec ruby -Ilib:test test/test_face_swarm.rb` plus the focused
-  face contract/CLI tests; in RAILS/master/, run
-  `node --test test/face_stipple.test.mjs`. Capture actual output and rendered
-  narrow/wide browser frames before marking the swarm integration verified.
-
+- [ ] Complete and verify the Kernel consolidation in `MASTER/docs/fix_coordinator_map.md`:
+  production `/fix` now enters Kernel; the convergence, lifecycle-journal and repair-policy
+  implementations live under `Fix::Kernel`, with compatibility constants retained. Kernel owns
+  the repository-wide, process-shared execution lock at `.master/fix-execution.lock`,
+  coordinator receipts, shared journal accessor, repair factory and unknown-outcome
+  reconciliation. Regression sources cover separate Kernel instances in one process,
+  independent processes, and refusal of symlinked or group/world-writable lock paths.
+  The hash-chained ledger also refuses symlinked paths, hard links, non-regular files and
+  non-private permissions. Runtime results remain unmeasured here. The process-kill tests cover
+  transaction rollback, Mission/checkpoint survival, durable journal resumption and orphan-receipt
+  recovery, but are unexecuted. Run them on pinned Ruby 4.0.5, then prove budget/collapse and
+  zero-repair ledger honesty, the full adapter receipt-parity matrix and a real repository-wide
+  `/fix` trial. Do not remove compatibility aliases until those gates pass.
+  Six named recovery-gate skips remain in `MASTER/test/test_recovery_gates.rb`; none closes this
+  gate until wired to real fixtures and verified red then green.
+- [ ] Define a retention/segmentation policy for hash-chained `.master/log.jsonl` before
+  long-running production use. Any compaction must preserve verifiable chain continuity with
+  explicit segment checkpoints; never truncate arbitrary prefixes.
 ## MASTER behaviour
 
 - [ ] Latency: a monotonic timeline for boot, first token, completed reply and greeting, CLI and

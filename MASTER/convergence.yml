@@ -107,7 +107,7 @@ workstreams:
   - id: measured_repair_outcomes
     state: partial
     title: Feed terminal /fix outcomes into the evidence-based self-model
-    implementation: MASTER/lib/fix/fix_loop.rb
+    implementation: MASTER/lib/fix/kernel/convergence_adapter.rb
     proof: MASTER/test/test_fix_convergence.rb
   - id: self_model_calibration
     state: partial

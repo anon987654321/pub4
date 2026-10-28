@@ -7,7 +7,7 @@ require_relative "../io/lane_health"
 require_relative "../io/lane_state"
 require_relative "../io/lane_selection"
 require_relative "../boot/paths"
-require_relative "../fix/run_journal"
+require_relative "../fix/kernel"
 
 module Operator
   # One screen about /fix, read from what /fix already writes: the run journal
@@ -34,7 +34,8 @@ module Operator
       @trees = trees.map(&:to_s)
       @now = now
       @read_errors = {}
-      @run_journal = Master::Fix::RunJournal.new(root: File.join(@root, "MASTER"))
+      @kernel = Master::Fix::Kernel.new(root: File.join(@root, "MASTER"), actor: "fix-status")
+      @run_journal = @kernel.lifecycle_journal
     end
 
     def payload
