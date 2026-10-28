@@ -32,7 +32,9 @@ is now `Kernel::ConvergenceAdapter`; its public constant and entry-point shim
 remain for existing callers. Kernel owns the run execution lock, hash-chained
 coordinator receipts, repair factory and the single lifecycle-journal accessor.
 A failed or interrupted run is recorded as `unknown_outcome`, never inferred
-to be complete.
+to be complete. The lifecycle journal's separate `fix_runs.lock` refuses symlinked
+state/lock paths, group/world-writable state directories and non-private lock files;
+its journal writes remain under the journal's own lock and atomic-write boundary.
 
 The durable journal implementation is `Kernel::LifecycleJournal`, with the
 same `MASTER/.master/fix_runs.json` schema and `RunJournal` compatibility
