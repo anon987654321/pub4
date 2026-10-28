@@ -158,7 +158,9 @@ every frame:
 
 The output contract is MP4. The reader probes the streams, preserves rational frame rates, and
 refuses ambiguous/variable-rate inputs because silently normalising their timestamps would
-change the edit. Audio is copied instead of re-encoded. Grain moves deterministically by frame
+change the edit. Per-frame presentation timestamps are read from ffprobe JSON rather than CSV:
+H.264 side-data can be appended to the first CSV timestamp line and otherwise make a valid frame
+look missing. The focused motion tests include that side-data shape. Audio is copied instead of re-encoded. Grain moves deterministically by frame
 by default; `--grain-hold` pins it for a scanned-print texture. Work is bounded before decoding
 (600 frames, 500 million pixel-frames, a 300-second budget and a 1 GB graded-frame spool by
 default); `POSTPRO_VIDEO_MAX_FRAMES`, `POSTPRO_VIDEO_MAX_PIXELS`,
