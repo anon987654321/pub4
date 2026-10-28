@@ -22,7 +22,7 @@ module Master
         @mutex = Mutex.new
         @current = nil
         @last = nil
-        FileUtils.mkdir_p(@dir, mode: 0o700)
+        prepare_storage_directory!
         subscribe
       end
 
@@ -84,11 +84,65 @@ module Master
       # /why keeps the full turn in memory for the process that recorded it.
       def finalize(turn)
         path = File.join(@dir, "#{Time.now.strftime("%Y-%m-%d")}.jsonl")
-        File.open(path, "a", 0o600) { |f| f.puts JSON.generate(persisted(turn)) }
-        File.chmod(0o600, path)
+        append_private_line(path, JSON.generate(persisted(turn)) + "\n")
         prune
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "recorder.finalize", path:)
+      end
+
+      def prepare_storage_directory!
+        state_directory = File.dirname(@dir)
+        ensure_private_directory!(state_directory)
+        ensure_private_directory!(@dir)
+      end
+
+      def ensure_private_directory!(path)
+        raise IOError, "refusing symlinked trace directory" if File.symlink?(path)
+
+        FileUtils.mkdir_p(path, mode: 0o700)
+        stat = File.lstat(path)
+        unless stat.directory? && !stat.symlink?
+          raise IOError, "trace storage path is not a real directory"
+        end
+        raise IOError, "trace storage directory permissions must be private" unless
+          (stat.mode & 0o077).zero?
+      end
+
+      def append_private_line(path, line)
+        prepare_storage_directory!
+        raise IOError, "refusing symlinked trace file" if File.symlink?(path)
+
+        flags = File::WRONLY | File::APPEND | File::CREAT
+        flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+        File.open(path, flags, 0o600) do |file|
+          validate_trace_file!(file, path)
+          # Existing files keep their old mode when opened with CREAT. Repair it
+          # before writing any new trace bytes, never after the sensitive append.
+          file.chmod(0o600)
+          validate_trace_file!(file, path)
+          raise IOError, "trace file permissions are not private" unless
+            (file.stat.mode & 0o077).zero?
+
+          written = file.write(line)
+          raise IOError, "trace append wrote #{written || 0} of #{line.bytesize} bytes" unless
+            written == line.bytesize
+
+          file.flush
+          file.fsync
+        end
+      end
+
+      def validate_trace_file!(file, path)
+        prepare_storage_directory!
+        opened = file.stat
+        unless opened.file? && opened.nlink == 1
+          raise IOError, "trace file must be a singly linked regular file"
+        end
+        current = File.lstat(path)
+        unless current.file? && !current.symlink? &&
+               current.dev == opened.dev && current.ino == opened.ino
+          raise IOError, "trace file path changed while opening"
+        end
       end
 
       def persisted(turn)
@@ -100,17 +154,41 @@ module Master
       end
 
       def prune
+        prepare_storage_directory!
         cutoff = Time.now - (KEEP_DAYS * 86_400)
-        Dir.glob(File.join(@dir, "*.jsonl")).each { |file| File.delete(file) if File.mtime(file) < cutoff }
+        Dir.children(@dir).each do |name|
+          next unless /\\A\\d{4}-\\d{2}-\\d{2}\\.jsonl\\z/.match?(name)
+
+          path = File.join(@dir, name)
+          stat = File.lstat(path)
+          next unless stat.file? && !stat.symlink? && stat.nlink == 1
+          next unless stat.mtime < cutoff
+
+          File.unlink(path)
+        end
       end
 
       def load_last_from_disk
-        files = Dir.glob(File.join(@dir, "*.jsonl")).sort
+        prepare_storage_directory!
+        files = Dir.children(@dir).filter_map do |name|
+          next unless /\\A\\d{4}-\\d{2}-\\d{2}\\.jsonl\\z/.match?(name)
+
+          path = File.join(@dir, name)
+          stat = File.lstat(path)
+          path if stat.file? && !stat.symlink? && stat.nlink == 1
+        end.sort
         return if files.empty?
 
         # Streamed rather than read whole: a day of turns can be a large file.
-        last_line = File.foreach(files.last).inject(nil) { |_, line| line }
-        last_line ? JSON.parse(last_line, symbolize_names: true) : nil
+        path = files.last
+        flags = File::RDONLY
+        flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+        File.open(path, flags) do |file|
+          validate_trace_file!(file, path)
+          file.chmod(0o600)
+          last_line = file.each_line.inject(nil) { |_, line| line }
+          last_line ? JSON.parse(last_line, symbolize_names: true) : nil
+        end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "recorder.load_last_from_disk")
         nil
