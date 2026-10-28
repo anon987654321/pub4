@@ -158,6 +158,18 @@ class TestFaceSwarm < Minitest::Test
     assert_equal left.map(&:to_h), right.map(&:to_h)
   end
 
+  def test_simulations_with_the_same_seed_repeat_the_same_motion_sequence
+    left = Swarm::Simulation.new(seed: 120, count: 40)
+    right = Swarm::Simulation.new(seed: 120, count: 40)
+
+    [0.0, 0.016, 0.032, 0.048].each do |time|
+      left.step(mode: :thinking, time:)
+      right.step(mode: :thinking, time:)
+    end
+
+    assert_equal left.particles.map(&:to_h), right.particles.map(&:to_h)
+  end
+
   def test_integration_clamps_dt_and_keeps_positions_inside_the_bounded_field
     settings = deep_config
     particles = Swarm.build(count: 50, seed: 40)
