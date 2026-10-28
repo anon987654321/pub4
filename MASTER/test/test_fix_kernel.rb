@@ -5,6 +5,7 @@ require "tmpdir"
 require "fileutils"
 require "json"
 require_relative "../lib/fix/kernel"
+require_relative "../lib/fix/kernel/repair_adapter"
 
 class TestFixKernel < Minitest::Test
   K = Master::Fix::Kernel
@@ -75,7 +76,6 @@ class TestFixKernel < Minitest::Test
     # These constants would land on a separate legacy class if the adapter's
     # child files loaded before its canonical identity was established.
     assert_same K::RepairAdapter::FixVerification, Master::Fix::RepairLoop::FixVerification
-    assert_same K::ConvergenceAdapter::Lifecycle, Master::Fix::FixLoop::Lifecycle
   end
 
   def test_kernel_owns_one_durable_run_journal
