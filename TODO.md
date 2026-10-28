@@ -66,10 +66,12 @@ source and tests they could not run; this pass is what measures them.
   implementations live under `Fix::Kernel`, with compatibility constants retained. Kernel owns
   the repository-wide, process-shared execution lock at `.master/fix-execution.lock`,
   coordinator receipts, shared journal accessor, repair factory and unknown-outcome
-  reconciliation. A subprocess regression now verifies independent processes cannot
-  enter /fix concurrently; all runtime regressions remain unexecuted here. The subprocess tests cover transaction rollback, deletion of
-  the run journal with Mission/checkpoint survival, resumption when the journal remains, and
-  orphan-receipt recovery, but are unexecuted. Run them on pinned Ruby 4.0.5, then prove
+  reconciliation. Regression sources cover separate Kernel instances in one process,
+  independent processes, and refusal of symlinked or group/world-writable lock paths;
+  their runtime results are still unmeasured here. The process-kill tests cover transaction
+  rollback, deletion of the run journal with Mission/checkpoint survival, resumption when
+  the journal remains, and orphan-receipt recovery, but are also unexecuted. Run them on
+  pinned Ruby 4.0.5, then prove
   budget/collapse and zero-repair ledger honesty, the full adapter receipt-parity matrix, and one
   real repository-wide `/fix` trial. Do not remove compatibility aliases until those gates pass.
 
