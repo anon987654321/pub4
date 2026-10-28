@@ -19,7 +19,7 @@ module Master
       declarations = source_declarations(law_root, repository_root)
       declarations.concat(normalize_generated(generated_declarations))
       detector_declarations = source_detector_declarations(File.join(law_root, "detectors"), repository_root)
-      errors = []
+      errors = catalogue_shape_errors(catalogue, entries, law_root:, repository_root:)
 
       declarations.group_by { |row| row[:id] }.each do |id, rows|
         next if rows.size < 2
@@ -45,6 +45,10 @@ module Master
           else
             errors << "missing catalogue entry for #{id} (#{declaration[:source]}:#{declaration[:line]})"
           end
+          next
+        end
+        unless entry.is_a?(Hash)
+          errors << "catalogue entry #{id} must be a mapping"
           next
         end
 
@@ -109,6 +113,108 @@ module Master
       raise ArgumentError, "Law catalogue preflight failed:\n- #{errors.uniq.join("\n- ")}" unless errors.empty?
 
       true
+    end
+
+    # Validate every row before Law::Builder can fail on the first bad one.
+    # ConfigurationGuard protects writes; this runtime preflight also protects
+    # startup from an already-broken file and reports all catalogue-shape errors.
+    def catalogue_shape_errors(catalogue, entries, law_root:, repository_root:)
+      errors = []
+      expected_modalities = Master::LawVocabulary::MODALITIES
+      modalities = Array(catalogue["modalities"]).map(&:to_s).sort
+      errors << "law_catalogue.modalities must be #{expected_modalities.join(', ')}" unless modalities == expected_modalities
+
+      surfaces = catalogue["surfaces"]
+      unless surfaces.is_a?(Array) && surfaces.any? && surfaces.all? { |surface| surface.is_a?(String) && !surface.empty? }
+        errors << "law_catalogue.surfaces must be a non-empty list of names"
+        surfaces = []
+      end
+      errors << "law_catalogue.surfaces contains duplicate names" unless surfaces.uniq == surfaces
+
+      defaults = catalogue["defaults"]
+      unless defaults.is_a?(Hash)
+        errors << "law_catalogue.defaults must be a mapping"
+        defaults = {}
+      end
+
+      duplicate_keys = entries.keys.group_by { |id| id.to_s.downcase }.select { |_key, ids| ids.size > 1 }
+      duplicate_keys.each_key { |key| errors << "duplicate case-insensitive catalogue identity: #{key}" }
+
+      allowed_lifecycles = %w[proposed proven active observed trusted advisory retired]
+      allowed_autofix = %w[never review automatic]
+      allowed_modes = %w[violation opportunity]
+      allowed_languages = Master::FILE_LANGUAGE_MAP.values.uniq
+
+      entries.each do |id, row|
+        name = id.to_s
+        unless name.match?(/\\A[A-Za-z][A-Za-z0-9_]*\\z/)
+          errors << "invalid Law catalogue identity #{name.inspect}"
+        end
+        unless row.is_a?(Hash)
+          errors << "catalogue entry #{name} must be a mapping"
+          next
+        end
+
+        errors << "Law #{name} must be universal" unless row["universal"] == true
+        row_modalities = Array(row["modalities"]).map(&:to_s).sort
+        errors << "Law #{name} modalities must be #{expected_modalities.join(', ')}" unless row_modalities == expected_modalities
+
+        severity = row["severity"] || defaults["severity"]
+        errors << "Law #{name} has no severity in laws.yml law_catalogue" if severity.to_s.strip.empty?
+
+        mode = (row["mode"] || defaults["mode"]).to_s
+        errors << "Law #{name} has invalid mode #{mode.inspect}" unless allowed_modes.include?(mode) unless mode.empty?
+
+        lifecycle = (row["lifecycle"] || defaults["lifecycle"]).to_s
+        errors << "Law #{name} has invalid lifecycle #{lifecycle.inspect}" unless allowed_lifecycles.include?(lifecycle)
+
+        autofix = (row["autofix"] || defaults["autofix"]).to_s
+        errors << "Law #{name} has invalid autofix policy #{autofix.inspect}" unless allowed_autofix.include?(autofix)
+
+        if row.key?("languages")
+          languages = row["languages"]
+          unless languages.is_a?(Array) && languages.all? { |language| allowed_languages.include?(language.to_s) }
+            errors << "Law #{name} has invalid languages"
+          end
+        end
+
+        if row.key?("surfaces")
+          scoped_surfaces = row["surfaces"]
+          unless scoped_surfaces.is_a?(Array) && (scoped_surfaces.map(&:to_s) - surfaces).empty?
+            errors << "Law #{name} has unknown assessment surfaces"
+          end
+        end
+
+        { "path_pattern" => row["path_pattern"], "path" => row["path"] }.each do |field, pattern|
+          next if pattern.nil? || pattern.to_s.empty?
+
+          Regexp.new(pattern.to_s)
+        rescue RegexpError => error
+          errors << "Law #{name} has invalid #{field}: #{error.message}"
+        end
+        Array(row["path_exclude"]).each do |pattern|
+          Regexp.new(pattern.to_s)
+        rescue RegexpError => error
+          errors << "Law #{name} has invalid path_exclude: #{error.message}"
+        end
+
+        definition_sources = row["definition_sources"]
+        detector_sources = row["detector_sources"]
+        [ ["definition_sources", definition_sources, %r{\\AMASTER/law/[^/]+\\.rb\\z}],
+          ["detector_sources", detector_sources, %r{\\AMASTER/law/detectors/[^/]+\\.rb\\z}] ].each do |field, value, pattern|
+          next if value.nil? && field == "definition_sources" && !detector_sources.nil?
+          next if value.nil? && field == "detector_sources" && !definition_sources.nil?
+
+          unless value.is_a?(Array) && value.all? { |source| source.is_a?(String) && source.match?(pattern) && !source.split("/").include?("..") }
+            errors << "Law #{name} #{field} must be a list of safe in-tree Ruby paths"
+          end
+        end
+
+        sources = Array(definition_sources) + Array(detector_sources)
+        errors << "Law #{name} must name a definition_sources or detector_sources entry" if sources.empty?
+      end
+
+      errors
     end
 
     def source_declarations(law_root, repository_root)
