@@ -2,6 +2,7 @@
 
 require_relative "lane_quota"
 require_relative "lane_health"
+require_relative "lane_silence"
 require_relative "model_skip_cache"
 require_relative "model_quota"
 require_relative "quota_check"
@@ -52,10 +53,7 @@ module Master
         nil
       end
 
-      def dead_reason(id)
-        silence = Master::Review::LLMDispatcher::LaneSilence if defined?(Master::Review::LLMDispatcher::LaneSilence)
-        silence ? silence.refusal(id) : LaneQuota.report_for(id) || "#{LaneQuota.lane_of(id)}: dead"
-      end
+      def dead_reason(id) = LaneSilence.refusal(id)
     end
   end
 end

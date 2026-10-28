@@ -14,7 +14,7 @@ class TestMediaLanes < Minitest::Test
   Lanes = Master::Io::MediaLanes
   Wire = Master::Io::MediaTransport
   Quota = Master::Io::LaneQuota
-  Silence = Master::Review::LLMDispatcher::LaneSilence
+  Silence = Master::Io::LaneSilence
 
   PNG = "\x89PNG\r\n\x1a\n#{"pixels" * 8}".b
   MP4 = "\x00\x00\x00\x18ftypmp42#{"frames" * 8}".b

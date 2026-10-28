@@ -5,6 +5,7 @@ require "uri"
 require "yaml"
 require_relative "../gap"
 require_relative "lane_quota"
+require_relative "lane_silence"
 require_relative "process_spawn"
 
 module Master
@@ -95,7 +96,7 @@ module Master
       end
 
       def dead?(model)
-        Master::Review::LLMDispatcher::LaneSilence.refuses?(model)
+        LaneSilence.refuses?(model)
       rescue NameError
         Master::Io::LaneQuota.dead?(model)
       end

@@ -145,7 +145,7 @@ module Master
       def fail_over(lane, error)
         said = error.message
         if error.is_a?(MediaTransport::TimedOut)
-          Master::Review::LLMDispatcher::LaneSilence.silence(lane.lane, reason: said)
+          LaneSilence.silence(lane.lane, reason: said)
           say("#{lane.id} silent: #{said}")
         elsif (deadline = LaneQuota.note(lane.id, said))
           say("#{lane.id} parked until #{Time.at(deadline).utc.strftime("%F %H:%M")}Z: #{said[0, 120]}")
@@ -171,7 +171,7 @@ module Master
         return "paid lanes off (MASTER_MEDIA_PAID=0)" if !paid? && !free?(lane)
         return LaneQuota.report.find { |row| row.start_with?("#{lane.lane}: ") } || "parked" if LaneQuota.dead?(lane.id)
 
-        "silent (cool-off)" if Master::Review::LLMDispatcher::LaneSilence.silent?(lane.lane)
+        "silent (cool-off)" if LaneSilence.silent?(lane.lane)
       end
 
       def over(kind, cost)

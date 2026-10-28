@@ -46,7 +46,7 @@ class TestLLMDispatcher < Minitest::Test
   # local model timing out at 250s — and every rule still walked all four lanes.
   def test_the_door_stops_asking_once_a_lane_stops_answering
     dispatcher, = build_dispatcher
-    door = Master::Review::LLMDispatcher::LaneSilence
+    door = Master::Io::LaneSilence
     door.record(true, "any-model")
 
     refute door.silent?("any-model"), "silent before anything failed"
@@ -63,13 +63,13 @@ class TestLLMDispatcher < Minitest::Test
     door.record(true, "any-model")
     refute door.silent?("any-model"), "one answer must clear it without a restart"
   ensure
-    Master::Review::LLMDispatcher::LaneSilence.record(true, "any-model")
+    Master::Io::LaneSilence.record(true, "any-model")
   end
 
   # 2026-10-11: agy's spent quota failed twelve council calls and the shared
   # door refused claude-cli, which answers in four seconds, before it was asked.
   def test_a_spent_lane_does_not_silence_the_others
-    door = Master::Review::LLMDispatcher::LaneSilence
+    door = Master::Io::LaneSilence
     door::SILENT_AFTER.times { door.record(false, "agy", reason: "Individual quota reached") }
 
     assert door.silent?("agy")
