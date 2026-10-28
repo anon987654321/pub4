@@ -101,8 +101,14 @@ module Master
               end
 
               begin
-                with_private_file(path, File::WRONLY | File::CREAT | File::APPEND, mode:, label: "JSONL destination") do |io|
+                with_private_file(path, File::RDWR | File::CREAT | File::APPEND, mode:, label: "JSONL destination") do |io|
                   verify_file_identity!(lock, lock_path, "JSONL lock")
+                  if io.stat.size.positive?
+                    io.seek(-1, IO::SEEK_END)
+                    unless io.read(1) == "\n"
+                      raise IOError, "refusing to append after an incomplete JSONL record"
+                    end
+                  end
                   offset = 0
                   while offset < line_bytes
                     written = io.write(line.byteslice(offset..))
@@ -185,7 +191,12 @@ module Master
               bytes = first_newline ? bytes.byteslice(first_newline + 1..) : +"".b
             end
           end
-          bytes || +"".b
+          bytes ||= +"".b
+          unless bytes.empty? || bytes.end_with?("\n")
+            final_newline = bytes.rindex("\n")
+            bytes = final_newline ? bytes.byteslice(0, final_newline + 1) : +"".b
+          end
+          bytes
         end
         with_private_file(path, File::RDWR, mode:, label: "rotated JSONL log") do |file|
           file.truncate(0)
