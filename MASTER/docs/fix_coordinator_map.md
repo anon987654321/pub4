@@ -65,6 +65,7 @@ The structural move is landed with compatibility aliases retained. The remaining
 gates are runtime proof on pinned Ruby 4.0.5, Mission survival, journal-loss
 reconstruction, pass/delivery adapter parity, and a real repository-wide `/fix`
 trial. Do not delete the compatibility aliases until those gates pass.
+
 ## Merge order
 
 Each phase is gated, and a gate that cannot run is a stop, not a formality.
