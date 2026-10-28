@@ -86,7 +86,24 @@ def grade_watched(path, out, preset_name)
   write_grade_sidecar(path, out, preset_name, image, processed)
 end
 
+def run_quality_analysis
+  input_path = argv_flag("--quality")
+  unless input_path && File.file?(input_path) && File.readable?(input_path)
+    $cli_logger.error "quality: --quality needs a readable image file"
+    exit 2
+  end
+
+  image = load_image(input_path)
+  unless image
+    $cli_logger.error "quality: could not decode #{input_path}"
+    exit 2
+  end
+
+  puts JSON.pretty_generate(Postpro::QualityAnalyzer.report_image(image))
+end
+
 def auto_launch
+  return run_quality_analysis if ARGV.include?("--quality")
   return run_introspect if introspect_mode?
   return run_stock_sheet if ARGV.include?("--stock-sheet")
   return run_watch       if watch_mode?
