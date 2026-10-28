@@ -100,6 +100,47 @@ class SecurityHeadersSourceCheckTest < Minitest::Test
     end
   end
 
+  def test_script_src_attr_is_checked
+    with_source_tree do |root|
+      path = File.join(root, Deploy::SecurityHeadersSourceCheck::SHARED_CSP)
+      File.open(path, "a") { |file| file.puts "    policy.script_src_attr :unsafe_inline" }
+
+      result = Deploy::SecurityHeadersSourceCheck.run(root:)
+      assert_includes result.failures.join("\n"), "overly broad script-src-attr"
+    end
+  end
+
+  def test_data_and_blob_script_sources_are_rejected
+    ['data:text/javascript,alert(1)', 'blob:https://attacker.example/id'].each do |url|
+      with_source_tree do |root|
+        path = File.join(root, Deploy::SecurityHeadersSourceCheck::SHARED_CSP)
+        source = File.read(path)
+        source = replace_once(
+          source,
+          'policy.script_src :self, "https://link.tradedoubler.com"',
+          "policy.script_src :self, #{url.inspect}"
+        )
+        File.write(path, source)
+
+        result = Deploy::SecurityHeadersSourceCheck.run(root:)
+        assert_includes result.failures.join("\n"), "overly broad script-src", url
+      end
+    end
+  end
+
+  def test_symlinked_parent_directory_is_rejected
+    with_source_tree do |root|
+      shared = File.join(root, "RAILS", "__shared")
+      outside = File.join(root, "external-shared")
+      FileUtils.cp_r(shared, outside)
+      FileUtils.rm_rf(shared)
+      File.symlink(outside, shared)
+
+      result = Deploy::SecurityHeadersSourceCheck.run(root:)
+      assert_includes result.failures.join("\n"), "parent path is not a real directory"
+    end
+  end
+
   def test_source_reader_refuses_a_symlinked_policy
     with_source_tree do |root|
       path = File.join(root, Deploy::SecurityHeadersSourceCheck::SHARED_CSP)
