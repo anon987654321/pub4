@@ -28,15 +28,17 @@ class DesignContractTest < Minitest::Test
   HOTWIRE_JS = File.join(SHARED, "frontend", "hotwire.js")
   FLEET_ROUTES = File.join(SHARED, "config", "routes", "fleet.rb")
   APPS = %w[amber brgen bsdports].freeze
-  # Match real elevation, not "box-shadow: none" flat overrides.
-  # Lookahead must include optional whitespace so `\s*` cannot backtrack past
-  # "none" (Ruby would otherwise match "box-shadow:" + " none ..." as a hit).
+  # Match real decorative depth, not "none" resets. Whitespace belongs inside
+  # the lookahead so Ruby cannot backtrack past it and treat "none" as a value.
+  # Flat UI also forbids blur/drop-shadow filters; semantic borders and outlines
+  # carry separation and focus without a second visual language.
   FLAT_DESIGN_PATTERN = /
     box-shadow\s*:\s*(?!\s*none\b)
     | text-shadow\s*:\s*(?!\s*none\b)
     | backdrop-filter\s*:\s*(?!\s*none\b)
+    | filter\s*:\s*[^;]*(?:\bblur\s*\(|\bdrop-shadow\s*\()
   /ix
-  DIALECT_PARTIALS = %w[_dialect_tokens.scss _shell.scss _shell_widgets.scss _responsive.scss _modal.scss].freeze
+  UI_STYLESHEET_EXCLUSIONS = %r{/(?:__other|vendor|builds|public/assets|node_modules)/}.freeze
 
   SCSS_PARAM_MAP = {
     "bg" => "bg",
@@ -245,12 +247,34 @@ class DesignContractTest < Minitest::Test
                     "brgen renders brgen-old-*-tokens; saying `social` here sends CSS work at the wrong palette"
   end
 
-  def test_no_shadow_blur_in_x_partials
-    DIALECT_PARTIALS.each do |name|
-      path = File.join(SHARED, "app", "assets", "stylesheets", name)
-      body = File.read(path)
-      refute_match(FLAT_DESIGN_PATTERN, body, "#{path} must stay flat (no shadow/blur)")
+  def test_first_party_ui_stylesheets_use_flat_visual_surfaces
+    globs = [
+      File.join(ROOT, "**/app/assets/stylesheets/**/*.{scss,css}"),
+      File.join(SHARED, "frontend/**/*.css"),
+      File.join(ROOT, "master/styles/face/**/*.css"),
+      File.join(ROOT, "master/public/face.css"),
+    ]
+    paths = globs.flat_map { |glob| Dir.glob(glob) }.uniq.sort.reject do |path|
+      path.match?(UI_STYLESHEET_EXCLUSIONS) || !File.file?(path)
     end
+    assert paths.any?, "the visual contract must inspect first-party UI stylesheets"
+
+    violations = paths.flat_map do |path|
+      source = File.read(path, encoding: "UTF-8")
+      # Blank block comments without changing line numbers; ignore standalone
+      # Sass line comments so examples and explanations are not treated as UI.
+      source = source.gsub(%r{/\*.*?\*/}m) { |comment| "\n" * comment.count("\n") }
+      source.lines.each_with_index.filter_map do |line, index|
+        next if line.lstrip.start_with?("//")
+        next unless line.match?(FLAT_DESIGN_PATTERN)
+
+        "#{path.sub("#{ROOT}/", "")}:#{index + 1}: #{line.strip}"
+      end
+    end
+
+    assert_empty violations,
+                 "first-party UI must stay flat: use solid surfaces, semantic borders and outlines; " \
+                 "remove ornamental shadow/blur effects:\n  #{violations.join("\n  ")}"
   end
 
   def test_theme_toggle_sets_document_element_dataset
