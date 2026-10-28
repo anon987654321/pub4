@@ -149,10 +149,20 @@ module Postpro
       document = JSON.parse(output)
       raise Unavailable, "ffprobe frame timestamp output is not an object" unless document.is_a?(Hash)
 
-      Array(document["frames"]).filter_map do |frame|
-        next unless frame.is_a?(Hash)
+      frames = document["frames"]
+      raise Unavailable, "ffprobe returned no frame timestamps" unless frames.is_a?(Array) && !frames.empty?
 
-        Float(frame["best_effort_timestamp_time"], exception: false)
+      frames.each_with_index.map do |frame, index|
+        unless frame.is_a?(Hash)
+          raise Unavailable, "ffprobe frame #{index} timestamp record is not an object"
+        end
+
+        timestamp = Float(frame["best_effort_timestamp_time"], exception: false)
+        unless timestamp&.finite?
+          raise Unavailable, "ffprobe frame #{index} has a missing or non-finite timestamp"
+        end
+
+        timestamp
       end
     rescue JSON::ParserError => e
       raise Unavailable, "ffprobe returned invalid frame timestamp JSON: #{e.message}"
