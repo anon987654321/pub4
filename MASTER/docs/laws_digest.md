@@ -17,6 +17,7 @@ digest is regenerated. `rake lint:laws_digest` fails when the file has drifted.
 - **RENDERED_VALUES** — Rendered values are operator-owned.
 - **INTER_MODEL_CONTRACT** — Every council turn uses a validated structured request envelope and returns evidence-backed findings. Invalid responses receive one structured rejection and retry; repeated invalidity is reported as a failed peer turn, never concurrence.
 
+
 ## Executable laws (law/*.rb)
 
 One line per `Law.define`: id, severity, and the law's own fix sentence.
@@ -229,7 +230,7 @@ One line per `Law.define`: id, severity, and the law's own fix sentence.
 - ZSH_SHEBANG (warn) — Use #!/usr/bin/env zsh, or #!/bin/sh when vm23 must run it.
 - STRICT_MODE_ZSH (error) — Add 'set -euo pipefail' after shebang.
 
-### law/universal.rb (151 laws)
+### law/universal.rb (156 laws)
 
 - BASELINE_COMPATIBILITY (warning)
 - CORE_WEB_VITALS (warning)
@@ -382,7 +383,12 @@ One line per `Law.define`: id, severity, and the law's own fix sentence.
 - AUTOFIX_REQUIRES_CONFIDENCE (error) — Downgrade to review-only or add deterministic evidence and preservation tests before automatic repair.
 - SINGULARITY (error) — Find the existing owner and read from it. If none exists, create one and move every copy onto it in the same change.
 - LINEARITY (error) — Flatten with guard clauses, extract the branch that breaks the sequence, and order steps as they run.
+- ROBUSTNESS (error) — Close the concrete unsafe path, preserve useful failure context, and prove both the bad and safe paths.
+- PROXIMITY (error) — Move or group the related elements at the boundary that best reflects their shared responsibility without adding another abstraction layer.
+- ABSTRACTION (error) — Expose the needed contract, encapsulate the unstable detail, or delete the abstraction if direct expression is clearer.
+- DENSITY (error) — Remove repetition and ornament, then restore any evidence or context needed to make the result complete.
+- RENDERED_VALUES (error) — Use the owning token, configuration, source asset or explicit operator decision and verify the actual rendered result.
 
 ---
 
-329 entries. Regenerate with `cd MASTER && rake docs:laws_digest`.
+334 entries. Regenerate with `cd MASTER && rake docs:laws_digest`.
