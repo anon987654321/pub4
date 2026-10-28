@@ -11383,7 +11383,9 @@ html[data-theme="light"] .post-progressive-indicator.is-active {
   line-height: 1.2;
 }
 
-.post-progressive-step > h2:focus {
+/* Pointer/programmatic focus stays quiet, but keyboard focus keeps the
+   shared high-contrast outline. The reset must not erase :focus-visible. */
+.post-progressive-step > h2:focus:not(:focus-visible) {
   outline: none;
 }
 
