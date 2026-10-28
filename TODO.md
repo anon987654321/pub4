@@ -115,11 +115,13 @@ source and tests they could not run; this pass is what measures them.
   recovery, but are unexecuted. Run them on pinned Ruby 4.0.5, then prove budget/collapse and
   zero-repair ledger honesty, the full adapter receipt-parity matrix and a real repository-wide
   `/fix` trial. Do not remove compatibility aliases until those gates pass.
-  One recovery-gate skip remains in `MASTER/test/test_recovery_gates.rb`: CLI-adapter receipt parity.
-  Gates 1–5 now exercise production paths for rollback, Mission restart, Git/Checkpoint source
-  recovery after journal deletion, budget/collapse refusal, and per-file zero-repair evidence.
-  All are authored but unexecuted; run the focused file on pinned Ruby 4.0.5 and preserve its
-  actual output before treating any consolidation gate as closed.
+  No recovery gate remains as a placeholder skip. Gates 1–6 now have concrete tests for rollback,
+  Mission restart, Git/Checkpoint source recovery after journal deletion, budget/collapse refusal,
+  per-file zero-repair evidence, and the public CommandRegistry-to-Kernel receipt contract. Gate 6
+  controls Pipeline::Pass so it does not invoke a model or mutate a real tree; the wider adapter
+  matrix and end-to-end process-interruption trial remain separate gates. All are authored but
+  unexecuted; run the focused file on pinned Ruby 4.0.5 and preserve its actual output before
+  treating any consolidation gate as closed.
 - [ ] Define a retention/segmentation policy for hash-chained `.master/log.jsonl` before
   long-running production use. Any compaction must preserve verifiable chain continuity with
   explicit segment checkpoints; never truncate arbitrary prefixes.
