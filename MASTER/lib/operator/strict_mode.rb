@@ -1,25 +1,23 @@
 # frozen_string_literal: true
 
 module Operator
-  # One switch for check behaviour. Individual CHECK_* flags remain supported by
-  # lower-level tools, but callers that mean "ship this" use one mode.
+  # One switch for the remaining configurable check behaviour. Errored checks
+  # always block independently of mode; no environment setting can turn a crash
+  # into a successful verification run.
   module StrictMode
     MODES = {
       contribute: {
         "CHECK_STRICT_INCONCLUSIVE" => "0",
-        "CHECK_STRICT_ERRORS" => "0",
         "CHECK_STRICT_SOFT" => "0",
         "CHECK_REQUIRE_LIVE" => "0",
       },
       deploy: {
         "CHECK_STRICT_INCONCLUSIVE" => "1",
-        "CHECK_STRICT_ERRORS" => "1",
         "CHECK_STRICT_SOFT" => "1",
         "CHECK_REQUIRE_LIVE" => "1",
       },
       strict: {
         "CHECK_STRICT_INCONCLUSIVE" => "1",
-        "CHECK_STRICT_ERRORS" => "1",
         "CHECK_STRICT_SOFT" => "1",
         "CHECK_REQUIRE_LIVE" => "1",
       },
