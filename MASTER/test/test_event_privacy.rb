@@ -30,6 +30,26 @@ class TestEventPrivacy < Minitest::Test
     refute_includes json, "another secret"
   end
 
+  def test_personal_identifiers_are_digest_only_even_when_numeric
+    persisted = Master::Trace::EventPrivacy.persisted(
+      "identity:observed",
+      user_id: 123456789,
+      phone: 4799911122,
+      email: "person@example.invalid",
+      session: "session-bearer"
+    )
+    json = JSON.generate(persisted)
+
+    assert_equal 64, persisted.fetch(:user_id_digest).length
+    assert_equal 64, persisted.fetch(:phone_digest).length
+    assert_equal 64, persisted.fetch(:email_digest).length
+    assert_equal 64, persisted.fetch(:session_digest).length
+    refute_includes json, "123456789"
+    refute_includes json, "4799911122"
+    refute_includes json, "person@example.invalid"
+    refute_includes json, "session-bearer"
+  end
+
   def test_undeclared_scalar_strings_are_digest_only_but_model_metadata_is_kept
     persisted = Master::Trace::EventPrivacy.persisted(
       "route:chosen",
