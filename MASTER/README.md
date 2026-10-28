@@ -128,11 +128,12 @@ owns journal resume, incremental-scope proof and checkpoint restoration;
 follow-ups; `FixLoop::Completion` owns gap-aware terminalization, mission updates
 and outcome receipts. The pure `Fix::OutcomePolicy` is still the shared source for
 terminal states, result-category mapping and measured repair outcomes. A
-process-kill/restart regression now exercises transaction rollback, journal
-resumption and orphaned Kernel-receipt recovery, but it has not yet run on the
-pinned Ruby 4.0.5 host. Mission survival, journal-loss reconstruction,
-pass/delivery adapter parity and a real repository-wide `/fix` trial remain
-unproven; these are hard merge gates, not implied by source movement.
+process-kill/restart regressions now exercise transaction rollback, resumed
+run state, orphaned Kernel-receipt recovery, and deletion of the run journal while
+the Mission and checkpoint survive. The tests are authored, not run on the pinned
+Ruby 4.0.5 host. Mission recovery, journal-loss reconstruction, pass/delivery
+adapter parity and a real repository-wide `/fix` trial remain unproven; these are
+hard merge gates, not implied by source movement.
 
 CoreBridge attaches a lifecycle observer to the Fold even when the host does not
 supply a bus; that case uses the event log at the task runtime root, or MASTER's
