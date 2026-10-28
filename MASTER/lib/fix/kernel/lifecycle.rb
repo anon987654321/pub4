@@ -26,7 +26,7 @@ module Master
 
         def build_repair_loop(**options)
           require_relative "repair_loop" unless defined?(RepairLoop)
-          RepairLoop.new(**options, kernel: self)
+          Kernel::RepairAdapter.new(**options, kernel: self)
         end
 
         # Execute the convergence adapter under the single Kernel-owned lock and
