@@ -16,6 +16,7 @@ source and tests they could not run; this pass is what measures them.
   `bundle exec ruby -Ilib:test test/test_law_parity.rb`,
   `bundle exec ruby -Ilib:test test/test_ingress_jobs.rb`,
   `bundle exec ruby -Ilib:test test/test_security_audit.rb`,
+  `bundle exec ruby -Ilib:test test/test_security_headers_source_check.rb`,
   `bundle exec ruby -Ilib:test test/test_turn_router.rb`,
   `bundle exec ruby -Ilib:test test/test_command_registry_dispatch.rb`,
   `bundle exec ruby -Ilib:test test/test_architecture_exploration.rb`,
