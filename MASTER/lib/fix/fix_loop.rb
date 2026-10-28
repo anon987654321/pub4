@@ -115,7 +115,8 @@ module Master
         @halted = false
         @halt_reason = nil
         @git = git || Io::GitOperations.new(root)
-        @kernel = kernel || Kernel.new(root: path_root, actor: "fix-loop", bus:)
+        # Reuse the Kernel injected at construction. Replacing it here would
+        # split the outer lock, run receipts, repair outcomes, and journal owner.
         @run_mutex = @kernel.execution_mutex
         @run_journal = @kernel.lifecycle_journal
         @reachability = Reachability.new(root: @root, bus:)
