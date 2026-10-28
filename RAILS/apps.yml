@@ -500,7 +500,7 @@ static_exports:
     deploy_script: OPENBSD/bin/vps-deploy-static
     served_by: httpd (loopback 38191) bak relayd-TLS
     public: true
-    status: planned                  # → done etter første verifiserte deploy
+    status: done                     # aktivert 2026-10-28: DNS, SAN-cert, relayd, deploy — https://thor.brgen.no verifisert 200
   alfa:
     title: Alfa Bergen
     domain: alfa.brgen.no            # SAN på brgen.no-sertifikatet
@@ -516,4 +516,4 @@ static_exports:
     deploy_script: OPENBSD/bin/vps-deploy-static
     served_by: httpd (loopback 38192) bak relayd-TLS
     public: true
-    status: planned                  # → done etter første verifiserte deploy
+    status: done                     # aktivert 2026-10-28: DNS, SAN-cert, relayd, deploy — https://alfa.brgen.no verifisert 200
