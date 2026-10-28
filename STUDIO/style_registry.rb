@@ -15,18 +15,58 @@ module Studio
       groove_rhythm harmonic_vocabulary tone_curve
     ].freeze
     REQUIRED = %w[
-      style_id version origin_class modality identity_locks controlled_variables
-      scope_attributes negative_list temporal_variation
+      style_id version origin_class reference_hashes modality identity_locks
+      controlled_variables scope_attributes negative_list temporal_variation
     ].freeze
 
     class InvalidStyle < ArgumentError; end
 
     REGISTRY_PATH = File.expand_path("styles/registry.yml", __dir__).freeze
 
+    def self.validate_registry!(document)
+      styles = document.fetch("styles")
+      raise InvalidStyle, "styles map must not be empty" if styles.empty?
+
+      styles.each do |style_id, definition|
+        raise InvalidStyle, "style #{style_id.inspect} must be a map" unless definition.is_a?(Hash)
+        if definition["versions"].is_a?(Hash)
+          definition["versions"].each do |version, version_body|
+            modalities = version_body.is_a?(Hash) ? (version_body["modalities"] || version_body) : nil
+            validate_modality_set!(style_id, version, modalities)
+          end
+        else
+          validate_modality_set!(style_id, nil, definition)
+        end
+      end
+      true
+    end
+
+    def self.validate_modality_set!(style_id, version, modalities)
+      raise InvalidStyle, "style #{style_id} modality set must be a map" unless modalities.is_a?(Hash)
+      missing = MODALITIES - modalities.keys.map(&:to_s)
+      extra = modalities.keys.map(&:to_s) - MODALITIES
+      raise InvalidStyle, "style #{style_id} missing modalities: #{missing.join(', ')}" unless missing.empty?
+      raise InvalidStyle, "style #{style_id} has unknown modalities: #{extra.join(', ')}" unless extra.empty?
+
+      MODALITIES.each do |modality|
+        entry = modalities[modality] || modalities[modality.to_sym]
+        validate!(entry)
+        raise InvalidStyle, "style key #{style_id} does not match entry id #{entry['style_id']}" unless entry["style_id"].to_s == style_id.to_s
+        raise InvalidStyle, "style #{style_id} modality mismatch for #{modality}" unless entry["modality"].to_s == modality
+        if version && entry["version"].to_s != version.to_s
+          raise InvalidStyle, "style #{style_id} version key #{version} does not match its entry"
+        end
+      end
+      versions = MODALITIES.map { |modality| (modalities[modality] || modalities[modality.to_sym])["version"].to_s }.uniq
+      raise InvalidStyle, "style #{style_id} modalities disagree on version" unless versions.one?
+      true
+    end
+
     def self.load_registry(path: REGISTRY_PATH)
       document = YAML.safe_load_file(path, permitted_classes: [], aliases: false)
       raise InvalidStyle, "registry root must be a map" unless document.is_a?(Hash)
       raise InvalidStyle, "registry has no styles map" unless document["styles"].is_a?(Hash)
+      validate_registry!(document)
 
       document
     rescue Psych::Exception => e
@@ -68,6 +108,14 @@ module Studio
       errors.concat(REQUIRED.reject { |key| entry.key?(key) }.map { |key| "missing #{key}" })
       errors << "invalid modality" unless MODALITIES.include?(entry["modality"])
       errors << "invalid origin_class" unless ORIGINS.include?(entry["origin_class"])
+      references = entry["reference_hashes"]
+      errors << "reference_hashes must be an array" unless references.is_a?(Array)
+      if references.is_a?(Array)
+        errors << "reference_hashes entries must be SHA-256" unless references.all? { |hash| hash.to_s.match?(/\A[0-9a-f]{64}\z/i) }
+        if %w[reference_derived datasheet_derived].include?(entry["origin_class"]) && references.empty?
+          errors << "#{entry["origin_class"]} style requires a reference or datasheet hash"
+        end
+      end
       errors << "invalid semver version" unless entry["version"].to_s.match?(/\A\d+\.\d+\.\d+\z/)
       errors << "style_id must be non-empty" if entry["style_id"].to_s.strip.empty?
       errors << "identity_locks must be an array" unless entry["identity_locks"].is_a?(Array)
