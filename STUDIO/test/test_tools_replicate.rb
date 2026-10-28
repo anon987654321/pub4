@@ -3,6 +3,8 @@
 require_relative "tools_helper"
 require "tmpdir"
 require "digest"
+require "open3"
+require "rbconfig"
 ToolTest::Tools.load_tool("replicate/replicate.rb")
 
 # replicate builds an API request out of seven controlled vocabularies and a
@@ -726,6 +728,50 @@ class TestReplicate < Minitest::Test
 
   def test_a_selfie_table_naming_nothing_real_is_a_problem
     assert_empty send(:selfie_problems)
+  end
+
+  def test_scene_json_cli_compiles_a_dry_run
+    Dir.mktmpdir do |dir|
+      scene = File.join(dir, "scene.json")
+      File.write(scene, JSON.generate(
+        prompt: "a candid portrait beside a window",
+        fields: { stock: "portra", lighting: "window", distance: "portrait" }
+      ))
+      script = File.join(ToolTest::ROOT, "replicate", "replicate.rb")
+      output, status = Open3.capture2e(
+        { "REPLICATE_CATALOG" => File.join(dir, "catalog.json"),
+          "REPLICATE_BLOB_CACHE" => File.join(dir, "blobs") },
+        RbConfig.ruby, script, "generate", "--scene-json", scene,
+        "--style-contract", "blue_hour", "--dry-run"
+      )
+
+      assert status.success?, output
+      assert_match(/replicate dry-run/, output)
+      assert_match(/Portra 400/, output)
+      assert_match(/window light/i, output)
+      refute File.exist?(File.join(dir, "catalog.json"))
+    end
+  end
+
+  def test_scene_json_cli_rejects_unknown_vocabulary
+    Dir.mktmpdir do |dir|
+      scene = File.join(dir, "scene.json")
+      File.write(scene, JSON.generate(
+        prompt: "a candid portrait",
+        fields: { stock: "imaginary-film-stock" }
+      ))
+      script = File.join(ToolTest::ROOT, "replicate", "replicate.rb")
+      output, status = Open3.capture2e(
+        { "REPLICATE_CATALOG" => File.join(dir, "catalog.json"),
+          "REPLICATE_BLOB_CACHE" => File.join(dir, "blobs") },
+        RbConfig.ruby, script, "generate", "--scene-json", scene, "--dry-run"
+      )
+
+      refute status.success?
+      assert_match(/scene rejected/, output)
+      assert_match(/unknown stock/, output)
+      refute File.exist?(File.join(dir, "catalog.json"))
+    end
   end
 
   def test_a_drawn_sitting_asks_for_sharp_eyes_and_a_written_one_is_unchanged
