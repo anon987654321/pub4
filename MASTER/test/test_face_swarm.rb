@@ -22,6 +22,7 @@ class TestFaceSwarm < Minitest::Test
     settings = Swarm.config
 
     assert_equal true, settings.fetch("enabled")
+    assert_equal true, Swarm.enabled?
     assert_equal 240, settings.fetch("particle_budget")
     assert_equal ["·", "˙", "∘", "•", "○", "●"], settings.fetch("glyph_ramp")
     assert_equal [1.18, 1.02, 0.82], settings.dig("target_field", "head", "scale")
@@ -48,6 +49,23 @@ class TestFaceSwarm < Minitest::Test
     assert_equal 240, Swarm.build(count: 10_000, seed: 7).length
     assert_equal 240, Swarm.build(count: 10_000, seed: 7, mobile: true).length
     assert_equal 0, Swarm.build(count: -3, seed: 7).length
+  end
+
+  def test_particle_ceiling_never_exceeds_the_shared_stipple_allocation
+    settings = deep_config
+    settings["particle_budget"] = 500
+
+    assert_equal 500, Swarm.particle_budget(config: settings)
+    assert_equal 315, Swarm.particle_budget(config: settings, mobile: true)
+  end
+
+  def test_zero_delta_does_not_advance_the_particle_state
+    particle = still_particle(x: 0.4, y: 0.2, z: 0.4)
+    before = particle.to_h
+
+    Swarm.update!([particle], mode: :idle, dt: 0.0, rng: Random.new(1))
+
+    assert_equal before, particle.to_h
   end
 
   def test_initial_cloud_is_seeded_and_every_particle_has_finite_state
