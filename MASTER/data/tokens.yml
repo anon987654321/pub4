@@ -554,6 +554,37 @@ tokens:
       - solid_mesh_as_primary_face_material
       - motion_without_semantic_state
       - erasing_all_residual_individuality_in_idle
+    # Soft-organic white particle field shared by the CLI and web projections.
+    # These values are operator-owned (RENDERED_VALUES); renderers consume them
+    # and must not grow private copies of the shape, ramp, or force parameters.
+    swarm:
+      enabled: true
+      particle_budget: 240
+      damping: 0.86
+      cohesion_radius: 0.11
+      cohesion_strength: 0.045
+      separation_radius: 0.035
+      separation_strength: 0.08
+      noise_scale: 0.014
+      size_from_depth: true
+      glyph_ramp: ["·", "˙", "∘", "•", "○", "●"]
+      target_field:
+        head:
+          center: [0.0, 0.05, 0.0]
+          scale: [1.18, 1.02, 0.82]
+          weight: 1.0
+        eyes:
+          left: { pos: [-0.29, 0.21, 0.58], radius: 0.17, weight: 1.40 }
+          right: { pos: [0.29, 0.21, 0.58], radius: 0.17, weight: 1.40 }
+        mouth:
+          pos: [0.0, -0.31, 0.50]
+          radius: 0.34
+          weight: 1.12
+        softness: 0.72
+      mode_multipliers:
+        idle: { eyes: 1.00, core: 1.00, noise: 0.14 }
+        attentive: { eyes: 1.35, core: 1.05, noise: 0.07 }
+        thinking: { eyes: 1.15, core: 1.30, noise: 0.22 }
     interaction:
       states: [idle, waking, listening, holding, yielded, processing, speaking, sleeping, error]
       turn_states: [draft, listening, committed, interrupted, discarded, failed]
