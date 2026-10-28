@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../kernel"
 require "set"
 require "time"
 require_relative "../scanner"
