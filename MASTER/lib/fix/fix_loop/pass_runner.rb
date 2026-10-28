@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../kernel"
 require "digest"
 require "fileutils"
 require "open3"
