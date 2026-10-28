@@ -71,8 +71,9 @@ class TraceLogAppendJsonlTest < Minitest::Test
       path = File.join(dir, "events.ndjson")
       File.write(path, "x" * 500)
       reclaim_calls = 0
-      reclaim = lambda do |target|
+      reclaim = lambda do |target, mode: 0o600|
         reclaim_calls += 1
+        File.chmod(mode, target)
         File.truncate(target, 0)
         true
       end
@@ -86,6 +87,21 @@ class TraceLogAppendJsonlTest < Minitest::Test
       assert_equal 1, reclaim_calls
       assert_equal "recovered", JSON.parse(File.readlines(path).last).fetch("event")
       assert_operator File.size(path), :<=, 200
+    end
+  end
+
+  def test_rotation_makes_an_existing_public_log_private_before_preserving_it
+    Dir.mktmpdir("trace-jsonl-rotation-permissions-") do |dir|
+      path = File.join(dir, "events.ndjson")
+      File.write(path, "x" * 190)
+      File.chmod(0o644, path)
+
+      LOG.append_jsonl(path, { "event" => "new" }, max_bytes: 200)
+
+      rotated = "#{path}.1"
+      assert File.file?(rotated)
+      assert_equal 0o600, File.stat(rotated).mode & 0o777
+      assert_equal 0o600, File.stat(path).mode & 0o777
     end
   end
 
