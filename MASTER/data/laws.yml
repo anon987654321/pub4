@@ -4846,56 +4846,49 @@ law_catalogue:
 # Style contracts shared by postpro, replicate and dilla. These laws govern
 # provenance and validation; aesthetic choices remain operator-owned.
 STYLE_REGISTRY:
-  priority: 2
-  tier: constitutional
+  tier: policy
   severity: error
   statement: "Each named style resolves to one immutable versioned entry per modality; tools consume the registry instead of maintaining parallel house looks."
   applies_to: [style, registry, cross_modal]
   see_also: [SINGULARITY, RENDERED_VALUES]
 
 STYLE_SCOPE:
-  priority: 2
-  tier: constitutional
+  tier: policy
   severity: error
   statement: "Reference-derived styles transfer only explicitly declared attribute classes, each with its own source fingerprint and strength."
   applies_to: [style, references, attributes]
   see_also: [DENSITY]
 
 STYLE_LINEAGE:
-  priority: 1
-  tier: constitutional
+  tier: policy
   severity: error
   statement: "Style manifests separate inputs used (lineage) from measured output influence; lineage alone never proves influence, and null influence requires a reason."
   applies_to: [style, provenance, attribution]
   see_also: [CAPABILITY_STATUS_MUST_BE_TRUTHFUL]
 
 STYLE_VERSIONING:
-  priority: 2
-  tier: constitutional
+  tier: policy
   severity: error
   statement: "Released style versions are write-once; changes mint a higher version with owner, rationale and predecessor while prior versions remain resolvable."
   applies_to: [style, versioning, reproducibility]
   see_also: [SINGULARITY, RENDERED_VALUES]
 
 STYLE_TEMPORAL_CONSTANCY:
-  priority: 2
-  tier: constitutional
+  tier: policy
   severity: error
   statement: "A render uses one style instance throughout unless a schedule hash is declared in both the registry and render manifest."
   applies_to: [style, video, audio, temporal]
   see_also: [LINEARITY]
 
 STYLE_REFUSAL:
-  priority: 2
-  tier: constitutional
+  tier: policy
   severity: error
   statement: "Negative-list constraints are evaluated before rendering; refusal reports the matched constraint and never masquerades as a generation failure."
   applies_to: [style, refusal, brand_safety]
   see_also: [ROBUSTNESS]
 
 STYLE_ARBITRATION:
-  priority: 2
-  tier: constitutional
+  tier: policy
   severity: error
   statement: "Reviewers adjudicate declared contracts and evidence, not taste; aesthetic decisions remain with the operator under RENDERED_VALUES."
   applies_to: [style, review, arbitration]
