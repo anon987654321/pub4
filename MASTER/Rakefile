@@ -1072,3 +1072,15 @@ task :mutate, [:source, :test] do |_t, args|
 
   ruby File.join(__dir__, "tools", "mutate.rb"), args.source, args.test
 end
+
+
+namespace :ad_organ do
+  desc "Lint an ad visual manifest and fail unless all six visual laws have measured evidence"
+  task :lint_visual do
+    manifest = ENV["AD_VISUAL_MANIFEST"].to_s
+    abort "ad_organ: set AD_VISUAL_MANIFEST to a JSON creative manifest" if manifest.empty?
+    abort "ad_organ: manifest does not exist: #{manifest}" unless File.file?(manifest)
+
+    run_tool("tools/visual/audit_ad.rb", manifest)
+  end
+end
