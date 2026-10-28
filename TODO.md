@@ -47,10 +47,11 @@ the commit that carries its evidence; nothing here records finished work.
   run's temporary visual captures, prunes only unretained exact-named assessment
   and architecture artifacts, and writes a cleanup receipt; source files,
   checkpoints, transaction/recovery evidence, audit logs and test logs are not
-  cleanup candidates. The standalone harness against the exact committed cleanup
-  implementation ran locally on Ruby 3.3.8: 3 runs, 17 assertions, 0 failures,
-  0 errors, 0 skips. This is focused implementation evidence, not proof that the
-  checked-in test file or full MASTER suite ran. The full project suite remains
+  cleanup candidates. The exact committed cleanup implementation and test file were run in a
+  dependency-light local harness with only `test_helper` replaced by a Minitest-only
+  stub: Ruby 3.3.8 reported 3 runs, 17 assertions, 0 failures, 0 errors, 0 skips.
+  This proves the focused cleanup behavior, not repository dependency integration
+  or the full MASTER suite. The full project suite remains
   NOT_RUN in this executor: it has no Bundler executable and outbound DNS cannot
   resolve GitHub; Vercel was not used as test evidence.
 
