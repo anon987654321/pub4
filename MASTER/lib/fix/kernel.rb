@@ -145,7 +145,8 @@ module Master
             line = JSON.generate(row) + "\n"
             file.seek(0, IO::SEEK_END)
             written = file.write(line)
-            raise IOError, "ledger append wrote #{written || 0} of #{line.bytesize} bytes" unless written == line.bytesize
+            raise IOError, "ledger append wrote #{written || 0} of #{line.bytesize} bytes" unless
+              written == line.bytesize
 
             file.flush
             file.fsync
@@ -197,7 +198,8 @@ module Master
             row = JSON.parse(line)
             body = row.reject { |key, _| key == "hash" }
             raise LedgerCorruption, "sequence #{expected_seq}: sequence gap" unless row.fetch("seq") == expected_seq
-            raise LedgerCorruption, "sequence #{expected_seq}: previous hash mismatch" unless row.fetch("prev") == previous
+            raise LedgerCorruption, "sequence #{expected_seq}: previous hash mismatch" unless
+              row.fetch("prev") == previous
             actual = Digest::SHA256.hexdigest(JSON.generate(body))
             raise LedgerCorruption, "sequence #{expected_seq}: event hash mismatch" unless actual == row.fetch("hash")
 
