@@ -17,6 +17,8 @@ source and tests they could not run; this pass is what measures them.
   `bundle exec ruby -Ilib:test test/test_ingress_jobs.rb`,
   `bundle exec ruby -Ilib:test test/test_security_audit.rb`,
   `bundle exec ruby -Ilib:test test/test_security_headers_source_check.rb`,
+  `bundle exec ruby -Ilib:test test/test_check_chain.rb`,
+  `bundle exec ruby -Ilib:test test/test_strict_mode.rb`,
   `bundle exec ruby -Ilib:test test/test_turn_router.rb`,
   `bundle exec ruby -Ilib:test test/test_command_registry_dispatch.rb`,
   `bundle exec ruby -Ilib:test test/test_architecture_exploration.rb`,
@@ -28,7 +30,7 @@ source and tests they could not run; this pass is what measures them.
   then `MASTER_TEST_JOBS=3 rake test`; check `.master/check/suite-report.json` for incomplete
   workers and mismatched start/result counts. Then run `rake audit` (the complete declared lint
   inventory), followed by `bin/check --profile=agent`.
-- [ ] RAILS: `ruby RAILS/test/contract_runner_contract_test.rb`, `ruby RAILS/test/deploy_checks_contract_test.rb`, `ruby RAILS/test/run_all.rb`, and
+- [ ] RAILS: `ruby RAILS/test/contract_runner_contract_test.rb`, `ruby RAILS/test/deploy_checks_contract_test.rb`, `ruby RAILS/test/check_failopen_test.rb`, `ruby RAILS/test/checks/runner_explain_test.rb`, `ruby RAILS/test/run_all.rb`, and
   `bin/ci` in each app in `RAILS/apps.yml`, including the 26 playlist, tv and takeaway tests
   that no command ran until `Pub4TestScope`, brgen's share-target, share-draft and job
   concurrency tests and a fresh test database for amber's `account_merges` and identity migrations.
