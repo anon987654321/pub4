@@ -422,8 +422,9 @@ test("stipple module boots and builds from the canonical idle profile", () => {
     setAttribute(name, attribute) { this.attributes[name] = attribute; }
   }
   class Color {
-    setRGB() { return this; }
-    set() { return this; }
+    constructor(...rgb) { this.rgb = rgb.length ? rgb : null; this.hex = null; }
+    setRGB(...rgb) { this.rgb = rgb; this.hex = null; return this; }
+    set(color) { this.hex = color; return this; }
   }
   class ShaderMaterial {
     constructor(options) { Object.assign(this, options); }
@@ -474,6 +475,9 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   // An absent pressure event must preserve the mode's canonical density.
   api.tick(stipple, { mode: "idle", reducedMotion: false }, 0);
   assert.equal(stipple.material.uniforms.uDensity.value, 0.44);
+  assert.deepEqual(stipple.material.uniforms.uColor.value.rgb, [1, 1, 1]);
+  assert.equal(api.applyPalette(stipple, { accent: "#C8F55F" }), false);
+  assert.deepEqual(stipple.material.uniforms.uColor.value.rgb, [1, 1, 1]);
 
   // State changes reuse the one contract; pressure can modulate density without
   // replacing the named profile, and reduced motion removes animation only.
