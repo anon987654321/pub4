@@ -147,7 +147,7 @@ module Master
 
       entries.each do |id, row|
         name = id.to_s
-        unless name.match?(/\\A[A-Za-z][A-Za-z0-9_]*\\z/)
+        unless name.match?(/\A[A-Za-z][A-Za-z0-9_]*\z/)
           errors << "invalid Law catalogue identity #{name.inspect}"
         end
         unless row.is_a?(Hash)
@@ -163,7 +163,9 @@ module Master
         errors << "Law #{name} has no severity in laws.yml law_catalogue" if severity.to_s.strip.empty?
 
         mode = (row["mode"] || defaults["mode"]).to_s
-        errors << "Law #{name} has invalid mode #{mode.inspect}" unless allowed_modes.include?(mode) unless mode.empty?
+        if !mode.empty? && !allowed_modes.include?(mode)
+          errors << "Law #{name} has invalid mode #{mode.inspect}"
+        end
 
         lifecycle = (row["lifecycle"] || defaults["lifecycle"]).to_s
         errors << "Law #{name} has invalid lifecycle #{lifecycle.inspect}" unless allowed_lifecycles.include?(lifecycle)
@@ -200,8 +202,8 @@ module Master
 
         definition_sources = row["definition_sources"]
         detector_sources = row["detector_sources"]
-        [ ["definition_sources", definition_sources, %r{\\AMASTER/law/[^/]+\\.rb\\z}],
-          ["detector_sources", detector_sources, %r{\\AMASTER/law/detectors/[^/]+\\.rb\\z}] ].each do |field, value, pattern|
+        [ ["definition_sources", definition_sources, %r{\AMASTER/law/[^/]+\.rb\z}],
+          ["detector_sources", detector_sources, %r{\AMASTER/law/detectors/[^/]+\.rb\z}] ].each do |field, value, pattern|
           next if value.nil? && field == "definition_sources" && !detector_sources.nil?
           next if value.nil? && field == "detector_sources" && !definition_sources.nil?
 
