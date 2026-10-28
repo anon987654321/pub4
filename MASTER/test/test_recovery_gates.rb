@@ -194,7 +194,7 @@ module Master
           RunLedger.reset!
 
           path = File.join(root, "sample.rb")
-          original = (1..18).map { |line| "def example_#{line}; value = #{line}; end\\n" }.join
+          original = (1..18).map { |line| "def example_#{line}; value = #{line}; end\n" }.join
           File.binwrite(path, original)
           adapter = Master::Fix::RepairLoop.allocate
           law = Struct.new(:id).new("RECOVERY_GATE")
@@ -215,7 +215,7 @@ module Master
           assert adapter.instance_variable_get(:@file_timed_out)
           assert_equal path, RunLedger.timeouts.fetch(0).fetch(0)
           assert_in_delta 0.005, RunLedger.timeouts.fetch(0).fetch(1), 0.0001
-          assert_includes RunLedger.summary_lines.join("\\n"), "file budget spent on 1 file(s): sample.rb"
+          assert_includes RunLedger.summary_lines.join("\n"), "file budget spent on 1 file(s): sample.rb"
 
           violation = { file: path, law: law.id, line: 8, severity: :warning }
           capture_io do
