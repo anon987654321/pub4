@@ -97,10 +97,13 @@ class TestCommentDriftRule < Minitest::Test
     refute_includes agent.prompts.first, "about the file in general"
   end
 
-  # No model, no question — and no findings either. Silence here is correct
-  # because nothing was asked, which is different from an answer of "clean".
-  def test_without_an_agent_it_asks_nothing
-    assert_empty Master::Review::Scan::Laws::CommentDriftLaw.new(agent: nil).check(SOURCE, path: "lib/thing.rb")
+  # No model, no question, and no answer either: [] here read as "no drift",
+  # which an unasked question is not.
+  def test_without_an_agent_it_reports_inconclusive
+    error = assert_raises(RuntimeError) do
+      Master::Review::Scan::Laws::CommentDriftLaw.new(agent: nil).check(SOURCE, path: "lib/thing.rb")
+    end
+    assert_match(/INCONCLUSIVE.*no model agent configured/, error.message)
   end
 
   def test_it_reads_only_ruby

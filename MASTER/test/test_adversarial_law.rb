@@ -19,8 +19,15 @@ class TestAdversarialRule < Minitest::Test
   end
 
   def test_returns_array
-    result = @rule.check("def foo; end", path: "foo.rb")
+    agent = Object.new
+    agent.define_singleton_method(:ask) { |_prompt, operation:| "CLEAN" }
+    result = Master::Review::Scan::Laws::AdversarialLaw.new(agent:).check("def foo; end", path: "foo.rb")
     assert_kind_of Array, result
+  end
+
+  def test_without_an_agent_it_is_inconclusive_not_clean
+    error = assert_raises(RuntimeError) { @rule.check("def foo; end", path: "foo.rb") }
+    assert_match(/INCONCLUSIVE.*no model agent configured/, error.message)
   end
 
   # The file is in the prompt, so the call is made with tools withheld, and

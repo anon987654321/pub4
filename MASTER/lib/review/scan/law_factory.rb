@@ -26,6 +26,20 @@ module Master
 
           id
         end
+
+        # Prepended to every Laws::NeedsModel law, so it runs in front of the law's own
+        # rescue. A missing agent is how the scanner was built, not a model fault: raised
+        # inside that rescue it wrote a load_bearing swallow row per file (3,627 a run),
+        # and returned as [] it read as an answer of clean.
+        module AgentGuard
+          def agent? = !@agent.nil?
+
+          def check(code, path:)
+            return super if agent?
+
+            raise "semantic assessment INCONCLUSIVE: no model agent configured for #{path}"
+          end
+        end
       end
 
     end

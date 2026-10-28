@@ -42,12 +42,12 @@ module Operator
     module_function
 
     def counts
-      scanner = build_scanner
+      laws = deterministic_laws
       tally = Hash.new(0)
       files.each do |file|
         src = File.read(file, encoding: "UTF-8")
         app = app_for(file)
-        scanner.laws.each do |rule|
+        laws.each do |rule|
           hits = begin
             rule.check(src, path: file) || []
           rescue StandardError => e
@@ -64,6 +64,12 @@ module Operator
         end
       end
       tally
+    end
+
+    # Every DESIGN_RULES law is deterministic. A model law here has no agent and could only
+    # raise INCONCLUSIVE on every file, which no design count reads.
+    def deterministic_laws
+      build_scanner.laws.reject { |rule| Master::Fix::Scan::UnmodelledTier.unmodelled?(rule) }
     end
 
     def files

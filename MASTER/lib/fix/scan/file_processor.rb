@@ -9,6 +9,7 @@ require "timeout"
 
 require_relative "law_timing"
 require_relative "file_lock"
+require_relative "unmodelled_tier"
 require_relative "finding_cache"
 require_relative "source_override"
 require_relative "../check_focus"
@@ -22,6 +23,7 @@ module Master
       class FileProcessor
         RUBY_EXT = %w[.rb .rake .gemspec].freeze
         include FileLock
+        include UnmodelledTier
 
         LOCK_DIR = ".constitutional_locks"
         LOCK_TIMEOUT = 30
@@ -110,6 +112,7 @@ module Master
           @semantic_gap_mutex.synchronize do
             @semantic_gaps.clear
             @semantic_gap_notice_emitted = false
+            @unmodelled_notice_emitted = false
           end
           self
         end
@@ -281,6 +284,7 @@ module Master
         # refused once the pass's budget is spent.
         def semantic_findings(found, reading)
           return skipped(reading, OUTSIDE_SAMPLE) unless semantic_due?(found, reading.path)
+          return [] if (reading = modelled(reading)).laws.empty?
 
           replayed = @semantic_reads.replay(reading.subject(relative_progress_path(reading.path)))
           return skipped(reading, UNCHANGED) + replayed unless replayed.nil?
@@ -657,15 +661,6 @@ module Master
           return finding.to_h.merge(meta) if finding.respond_to?(:to_h)
 
           finding
-        end
-
-        def lexical_error?(findings)
-          findings.any? do |finding|
-            severity = finding.respond_to?(:severity) ? finding.severity : finding[:severity]
-            next false if severity.nil?
-
-            %i[error critical].include?(severity.to_sym)
-          end
         end
 
         def run_law(law:, code:, ast:, path:)

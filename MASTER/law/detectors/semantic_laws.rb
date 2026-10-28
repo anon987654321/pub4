@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../lib/review/scan/law_factory"
+
 module Master
   module Review
     module Scan
@@ -13,7 +15,7 @@ module Master
             self
           end
 
-          def agent? = !@agent.nil?
+          def self.included(base) = base.prepend(LawFactory::AgentGuard)
 
           # The semantic tier is the only rule tier that spends money, so it is
           # the only one a provider spend limit can silently delete. Returning
@@ -126,7 +128,6 @@ module Master
           include NeedsModel
 
           def check(code, path:)
-            return [] unless @agent
             return [] if quota_paused?
             return [] unless (lang = language(path))
 
@@ -193,7 +194,6 @@ module Master
             # Do not skip unknown-language text: semantic interpretation is
             # language-agnostic, while lexical and AST adapters keep their dispatch.
             lang = language(path)
-            raise "semantic assessment INCONCLUSIVE: no model agent configured for #{path}" unless @agent
             if quota_paused?
               raise "semantic assessment INCONCLUSIVE: quota check paused model assessment for #{path}"
             end
@@ -488,7 +488,7 @@ module Master
           include NeedsModel
 
           def check(code, path:)
-            return [] unless path.end_with?(".rb") && @agent
+            return [] unless path.end_with?(".rb")
             return [] if quota_paused?
             pairs = extract_pairs(code)
             return [] if pairs.empty?

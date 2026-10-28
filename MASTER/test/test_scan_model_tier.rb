@@ -2,6 +2,7 @@
 
 require "test_helper"
 require "tmpdir"
+require_relative "../law/detectors/semantic_laws"
 
 # A tree-wide scan walks thousands of files. The model tier was reached from the
 # lexical pass (AdversarialLaw, CommentDriftLaw) and from every file with a
@@ -89,6 +90,49 @@ class ScanModelTierTest < Minitest::Test
     yield
   ensure
     saved.each { |key, value| ENV[key] = value }
+  end
+
+  # Scan-only callers build the scanner with no agent. The model laws are then
+  # not asked at all: no swallow row per file, one tier-level note per run, and
+  # each file keeps a gap so the reading is inconclusive rather than clean.
+
+  def agentless_scanner
+    laws = Master::Review::Scan::Laws
+    model_laws = [laws::SemanticLaw, laws::AdversarialLaw, laws::CommentDriftLaw].map { |klass| klass.new(agent: nil) }
+    Master::Fix::Scanner.new(laws: [CheapLaw.new([FINDING]), *model_laws])
+  end
+
+  # Every Swallow row and every dmesg line the block writes.
+  def recording(swallowed, notes, &)
+    Master::Ground::Swallow.stub(:log, ->(*args, **kwargs) { swallowed << [args, kwargs] }) do
+      Master::Trace::Dmesg.stub(:status, ->(unit, msg, **) { notes << "#{unit} #{msg}" }, &)
+    end
+  end
+
+  def test_a_scan_with_no_agent_is_inconclusive_once_and_logs_nothing
+    other = File.join(@dir, "other.rb")
+    File.write(other, "x = 1\n")
+    sc = agentless_scanner
+    swallowed = []
+    notes = []
+
+    recording(swallowed, notes) { [@path, other].each { |path| assert sc.scan(path).ok? } }
+
+    assert_empty swallowed, "an agentless scan wrote swallow rows"
+    assert_equal 1, notes.grep(/semantic tier inconclusive/).size, notes.inspect
+    assert_equal 2, sc.semantic_gaps.values.grep(/INCONCLUSIVE/).size, "each unasked file must stay inconclusive"
+  end
+
+  def test_a_model_law_with_an_agent_still_runs
+    asked = []
+    agent = Object.new
+    agent.define_singleton_method(:ask) { |_prompt, operation:| (asked << operation; "CLEAN") }
+    sc = Master::Fix::Scanner.new(laws: [CheapLaw.new([FINDING]),
+                                         Master::Review::Scan::Laws::AdversarialLaw.new(agent:)])
+
+    assert sc.scan(@path).ok?
+    assert_equal [:scan_adversarial], asked
+    assert_empty sc.semantic_gaps
   end
 
   # The budget: the real law set over a real prose file, behind an agent that

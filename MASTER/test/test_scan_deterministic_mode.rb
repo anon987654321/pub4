@@ -74,11 +74,12 @@ class TestScanDeterministicMode < Minitest::Test
 
   # The rules switch themselves off through the guard they already carry, rather
   # than through a second mechanism. If that guard goes, this switch is inert
-  # and nothing else would say so.
-  def test_an_agentless_adversarial_rule_finds_nothing
+  # and nothing else would say so. Off is inconclusive, never clean.
+  def test_an_agentless_adversarial_rule_asks_nothing_and_says_so
     rule = Master::Review::Scan::Laws::AdversarialLaw.new(agent: nil)
 
-    assert_empty rule.check("def a(x)\n  x\nend\n", path: "lib/thing.rb")
+    error = assert_raises(RuntimeError) { rule.check("def a(x)\n  x\nend\n", path: "lib/thing.rb") }
+    assert_match(/INCONCLUSIVE/, error.message)
   end
 
   # --- the council half ----------------------------------------------------
