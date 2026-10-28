@@ -24,6 +24,10 @@ def run_one_shot
     $cli_logger.error "Failed to load: #{input_path}"
     exit 1
   end
+  # Every render path starts from the camera-corrected negative. Generated
+  # images without EXIF pass through unchanged; photographed sources do not
+  # depend on which entry point happened to grade them.
+  image = camera_corrected(image, input_path)
 
   processed = preset(image, preset_name)
   # Operator, 2026-08-12: the four entry points now grain identically. This one
@@ -107,7 +111,10 @@ def run_stock_sheet
   else
     Postpro::Constitution.verify_distinct_source!(input_path:, output_path: output)
   end
-  sheet, stocks = stock_sheet(load_image(input_path), preset_name)
+  image = load_image(input_path)
+  abort "postpro: could not load #{input_path}" unless image
+
+  sheet, stocks = stock_sheet(camera_corrected(image, input_path), preset_name)
   sheet.write_to_file(output, Q: CONFIG["jpeg_quality"] || 95)
   $cli_logger.info "ok stock sheet preset=#{preset_name} stocks=#{stocks.length} out=#{output}"
 end
