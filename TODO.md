@@ -14,6 +14,9 @@ source and tests they could not run; this pass is what measures them.
 
 - [ ] MASTER focused regressions on the pinned Ruby: from `MASTER/`, run
   `bundle exec ruby -Ilib:test test/test_law_parity.rb`,
+  `bundle exec ruby -Ilib:test test/test_fix_kernel.rb`,
+  `bundle exec ruby -Ilib:test test/test_fix_convergence.rb`,
+  `bundle exec ruby -Ilib:test test/test_fix_interruption_restart.rb`,
   `bundle exec ruby -Ilib:test test/test_ingress_jobs.rb`,
   `bundle exec ruby -Ilib:test test/test_security_audit.rb`,
   `bundle exec ruby -Ilib:test test/test_turn_router.rb`,
@@ -44,15 +47,21 @@ source and tests they could not run; this pass is what measures them.
 - [ ] Then `/fix` on the repository root: four independent reports, 30–40 grounded tournament
   candidates per tree, and each terminal state (DONE, PLATEAU, HUMAN_DECISION, BLOCKED,
   VALIDATION_FAILED, DELIVERY_FAILED, TIMEOUT) reached truthfully. The checksum-verified
-  `.master/fix_architecture` sidecar and provenance-gated reuse are implemented; still run a real
-  process-interruption/restart probe and preserve its receipt. No trial has yet reached a repair,
-  so repair quality is unmeasured.
+  `.master/fix_architecture` sidecar and provenance-gated reuse are implemented. A process-kill
+  recovery regression now exists at `MASTER/test/test_fix_interruption_restart.rb`; run it on pinned
+  Ruby, preserve its receipt, then run a real repository-wide `/fix` and measure repair outcomes.
+  The crash/restart test is authored but unexecuted here; no live repository-wide trial has been
+  measured, so repair quality remains unmeasured.
 
 ## Execution contract
 
-- [ ] Fold FixLoop, RepairLoop and RunJournal into `Fix::Kernel` in the gated order
-  `MASTER/docs/fix_coordinator_map.md` sets, recovery tests first; the one gap left in
-  `MASTER/docs/lifecycle_ownership.md`.
+- [ ] Complete the Kernel consolidation in `MASTER/docs/fix_coordinator_map.md`: production
+  `/fix` now enters Kernel; Kernel owns the outer execution lock, lifecycle receipts, journal
+  accessor and RepairLoop factory. Remaining: move RunJournal's state machine and RepairLoop's
+  budget/collapse/autofix policy behind Kernel contracts; test Mission survival, journal-loss
+  reconstruction and every existing CLI adapter for byte-equivalent receipts. The subprocess
+  transaction-recovery test is unexecuted until a host with the pinned Ruby 4.0.5 is available.
+  Do not delete adapter files before those gates pass.
 
 ## MASTER behaviour
 
