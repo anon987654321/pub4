@@ -82,10 +82,15 @@ class StudioStyleRegistryTest < Minitest::Test
     assert_raises(Studio::StyleRegistry::InvalidStyle) { Studio::StyleRegistry.validate!(entry, manifest: manifest) }
   end
 
-  def test_mint_requires_newer_version_and_rationale
+  def test_mint_requires_newer_version_predecessor_and_rationale
     previous = entry
-    candidate = entry.merge("version" => "1.1.0")
+    candidate = entry.merge("version" => "1.1.0", "predecessor" => "1.0.0")
     assert Studio::StyleRegistry.validate_mint!(previous: previous, candidate: candidate, owner: "operator", rationale: "tone curve changed")
+
+    missing_predecessor = entry.merge("version" => "1.2.0")
+    assert_raises(Studio::StyleRegistry::InvalidStyle) do
+      Studio::StyleRegistry.validate_mint!(previous: previous, candidate: missing_predecessor, owner: "operator", rationale: "missing lineage")
+    end
     assert_raises(Studio::StyleRegistry::InvalidStyle) do
       Studio::StyleRegistry.validate_mint!(previous: previous, candidate: entry, owner: "operator", rationale: "same version")
     end
