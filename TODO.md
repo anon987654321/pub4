@@ -35,12 +35,13 @@ the commit that carries its evidence; nothing here records finished work.
   proposal, and tightened JSON-round-trip replay-manifest verification plus exact
   modality-version checks. Replay manifests now carry declared temporal schedule
   hashes and refuse mismatches. Reference-derived styles now require a source
-  fingerprint for each transferred attribute. The seven cross-modal style
-  contracts remain in laws.yml as STUDIO policy entries; they are not silently
-  counted as MASTER's nine priority constitutional laws without MASTER detector
-  coverage. Negative-list matching still needs a real modality-specific matcher;
-  no lexical substitute is claimed as complete. Regression cases were added; the
-  STUDIO and MASTER project suites remain NOT_RUN here.
+  fingerprint per transferred attribute, and minted versions must name their
+  predecessor. The seven cross-modal style contracts remain in laws.yml as STUDIO
+  policy entries; they are not silently counted as MASTER's nine priority
+  constitutional laws without MASTER detector coverage. Negative-list matching
+  still needs a real modality-specific matcher; no lexical substitute is claimed
+  as complete. Regression cases were added; the STUDIO and MASTER project suites
+  remain NOT_RUN here.
 
 ## Verification run, after the fixes below land
 
