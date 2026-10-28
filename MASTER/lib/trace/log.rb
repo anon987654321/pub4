@@ -49,6 +49,20 @@ module Master
         Master::Ground::Swallow.log(e, context: "Trace::Log.rotate", path:)
       end
 
+      # Validate the parent before callers subscribe work that may later
+      # write runtime state through that path.
+      def self.prepare_directory(path, directory_mode: nil)
+        directory = File.dirname(path)
+        raise ArgumentError, "JSONL directory is a symlink" if File.symlink?(directory)
+
+        FileUtils.mkdir_p(directory, mode: directory_mode || 0o700)
+        directory_stat = File.lstat(directory)
+        raise ArgumentError, "JSONL directory is not a real directory" unless
+          directory_stat.directory? && !directory_stat.symlink?
+        tighten_directory(directory, directory_mode || 0o700)
+        directory_stat
+      end
+
       # One bounded, private, process-safe JSONL append path for local telemetry.
       # The sidecar lock covers both rotate and append because locking the data
       # inode is not enough once rotation renames it.
@@ -70,13 +84,7 @@ module Master
         line = JSON.generate(value) + "\n"
         raise ArgumentError, "JSONL record exceeds #{limit}-byte cap" if line.bytesize > limit
 
-        directory = File.dirname(path)
-        raise ArgumentError, "JSONL directory is a symlink" if File.symlink?(directory)
-        FileUtils.mkdir_p(directory, mode: directory_mode || 0o700)
-        directory_stat = File.lstat(directory)
-        raise ArgumentError, "JSONL directory is not a real directory" unless
-          directory_stat.directory? && !directory_stat.symlink?
-        tighten_directory(directory, directory_mode || 0o700)
+        prepare_directory(path, directory_mode:)
 
         lock_path = "#{path}.lock"
         raise ArgumentError, "JSONL lock is a symlink" if File.symlink?(lock_path)
@@ -264,7 +272,7 @@ module Master
         def initialize(root:, event_bus:)
           @path = File.join(root, LOG_PATH)
           @mutex = Mutex.new
-          FileUtils.mkdir_p(File.dirname(@path))
+          Log.prepare_directory(@path, directory_mode: 0o700)
           event_bus.subscribe("tool:before") { |event_data| append(event_data) }
         end
 
