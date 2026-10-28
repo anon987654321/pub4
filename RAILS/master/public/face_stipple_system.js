@@ -71,9 +71,8 @@
     const contract = window.MASTER_FACE_CONTRACT || {};
     const budget = contract.spatial?.budget || {};
     const swarm = contract.swarm || {};
-    const state = currentFaceState();
-    const reduced = reducedMotionEnabled(state);
-    // FaceState owns the additive point split; swarm remains under spatial limits.
+    // FaceState owns the additive point split; the swarm's token ceiling is
+    // subordinate to that allocation. sparse_field has a separate budget.
     const sharedBudget = window.MASTER_FACE_STATE?.renderBudget?.() || {};
     const mobile = constrainedDevice();
     const fallback = mobile ? MOBILE_FALLBACK : DESKTOP_FALLBACK;
@@ -91,8 +90,6 @@
     if (swarm.enabled === true) {
       const tokenLimit = Number(swarm.particle_budget);
       if (Number.isFinite(tokenLimit) && tokenLimit > 0) ceiling = Math.min(ceiling, Math.floor(tokenLimit));
-      const spatialLimit = Number(budget[reduced ? "reduced_motion_particles" : mobile ? "mobile_particles" : "desktop_particles"]);
-      if (Number.isFinite(spatialLimit) && spatialLimit > 0) ceiling = Math.min(ceiling, Math.floor(spatialLimit));
     }
     const desired = Number.isFinite(Number(requested)) && Number(requested) > 0
       ? Math.floor(Number(requested)) : ceiling;
