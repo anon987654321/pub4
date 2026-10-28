@@ -28,7 +28,7 @@ Law.define(:PARAMETRIC_MARK_ONLY) do
   source "Bergen-snittet v1 — marks derive from a parametric source, never hand-drawn"
   detect { |line| line.match?(/d="M[\d\s.,A-Za-z-]{80,}"/) }
   fix "Compose marks from the parametric constants (src/lib/marks.ts + scripts/gen-marks.mjs); short paths, named parts."
-  bad  '<path d="M4 35.5 L22.5 13.5 L41 35.5 M7 43.5 H41 M34.5 9.5 m-5.5 0 a5.5 ..." />'
+  bad  '<path d="M4 35.5 L22.5 13.5 L41 35.5 M7 43.5 H41 M34.5 9.5 m-5.5 0 a5.5 5.5 0 1 0 11 0 a5.5 5.5 0 0 0 -11 0" />'
   good "d={SOMMERSETH.roof}"
 end
 
@@ -47,14 +47,14 @@ end
 Law.define(:CURSOR_NONE_REQUIRES_CURSOR) do
   source "Bergen brand systems — hiding the cursor is a promise to replace it"
   detect { |line| line.match?(/cursor:\s*none/) }
-  fix "Pair cursor:none with a rendered custom cursor, gated by pointer:fine and prefers-reduced-motion."
+  fix "Avoid hiding the native cursor unless a replacement is rendered and gated by pointer:fine and prefers-reduced-motion; review the full component."
   bad  ".page { cursor: none; }"
-  good ".page { cursor: none; } /* + <Cursor/> rendered, @media (pointer: fine) and (prefers-reduced-motion: no-preference) */"
+  good ".page { cursor: auto; }"
 end
 
 Law.define(:NORWEGIAN_COPY_BOKMAL) do
   source "Bergen brand systems — user-facing copy in Norwegian bokmål (snl.no orthography)"
-  detect { |line| line.match?(/(placeholder|title|description|alt)="[A-Za-z]*(?: the |and |with |your )[A-Za-z ]*"/) }
+  detect { |line| line.match?(/(?:placeholder|title|description|alt)="[^"]*\b(?:the|and|with|your)\b[^"]*"/i) }
   fix "Write user-facing strings in Norwegian bokmål; å/ø/æ, snl.no orthography."
   bad  'alt="Red cabin by the fjord at dusk"'
   good 'alt="Rødt trehus ved fjorden i kveldslys"'
