@@ -129,7 +129,7 @@ module Master
               raise LedgerCorruption, "ledger path changed while opening"
             end
 
-            file.flock(File::LOCK_EX)
+            raise IOError, "could not acquire ledger append lock" unless file.flock(File::LOCK_EX)
             current_stat = File.lstat(@log_path)
             unless current_stat.file? && !current_stat.symlink? &&
                    current_stat.dev == opened_stat.dev && current_stat.ino == opened_stat.ino
