@@ -80,11 +80,11 @@ The shared contract is `MASTER/data/laws.yml#visual_identity_contract`, and its
 values are generated from `MASTER/data/tokens.yml`. Shared hierarchy and the
 semantic signal may travel across apps; product dialects do not collapse into one
 palette. Brgen retains its local editorial identity, Amber protects garment colour
-and neutral presentation, bsdports remains terminal-green, and MASTER's face uses
-the signal on ink. master shares Brgen's brand character by the operator's
-decision, recorded in `apps.yml`; its pages still render only the face's own
-stylesheet. Review generated assets and rendered screenshots, not source
-tokens alone.
+and neutral presentation, and BSDPorts keeps its ultra-minimal white, classic-Google-style
+search surface with Arial and blue result links. MASTER's face uses the signal on ink.
+master shares Brgen's brand character by the operator's decision, recorded in `apps.yml`;
+its pages still render only the face's own stylesheet. Review generated assets and
+rendered screenshots, not source tokens alone.
 
 ## Monetisation and the ad visual contract
 
