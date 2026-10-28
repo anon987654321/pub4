@@ -7818,9 +7818,6 @@ module Dilla
     end
     private_class_method :play_temporary
 
-    # Termux:API starts media in an Android service and its command may exit before the
-    # file is consumed. Keep the temporary file alive for the cue duration, then stop
-    # the service so an API/player failure cannot leave a looping or stale sound behind.
     def termux_player?(options)
       options[:player].nil? && termux_host? && !executable_path("termux-media-player").nil?
     end
