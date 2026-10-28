@@ -29,10 +29,18 @@ raw (the same rule brgen's X mirror followed), the wordmark stays Caprasimo
 ("the wordmark is the only thing set in" it), and page scopes do not paint
 pure white.
 
-Render caveats, both needing a booted DOM (see rails_media_fixpass doc):
-the 1440px capture shows the "Bymorgen" look title breaking mid-word, and the
-tile headings read as the bold sans rather than the serif display — the token
-wiring says serif, so the computed styles must be read before the mirror can
+Screenshot freshness: the saved media captures are from commit 591a67d
+(2026-10-28 14:16Z). Commit 1aeae125 (2026-10-28 22:54Z) later restored the
+homepage masthead from a 380px wordmark and automatic height to an 880px
+wordmark in a 72svh stage. Therefore the checked-in Amber desktop/mobile
+screenshots are stale for the current homepage geometry. Do not use them as
+evidence against the restored source; recapture with real Chrome/CDP before
+judging that revision.
+
+Other render caveats, both needing a booted DOM (see rails_media_fixpass doc):
+the older 1440px capture shows the "Bymorgen" look title breaking mid-word, and
+the tile headings read as the bold sans rather than the serif display — the
+token wiring says serif, so computed styles must be read before the mirror can
 be called fully verified *as rendered*. Code side: verified.
 
 ## bsdports → classic google.com — HOLDS, tokens and rendered capture agree
