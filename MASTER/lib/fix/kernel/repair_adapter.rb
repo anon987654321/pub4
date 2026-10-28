@@ -540,7 +540,7 @@ module Master
         "text"
       end
 
-      def genetic_autofix_candidates = RepairLoop::GENETIC_AUTOFIX_CANDIDATES
+      def genetic_autofix_candidates = GENETIC_AUTOFIX_CANDIDATES
 
       # A file repaired several times in a row is scanned after each fix and again before the
       # next one, on the same bytes. The scan of given content is kept, so identical bytes are
