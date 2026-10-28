@@ -24,8 +24,9 @@ generation service:
 - saved as RGB JPEG q86; one hero per site plus two context shots
 
 Style: editorial local photography, muted, flat surfaces, no readable text,
-no faces — per the house visual character (deep_blue/ivory/terminal_green
-palettes per site).
+no faces — per each product's actual visual character: Brgen's deep blue, Amber's
+soft ivory/pastel wardrobe palette, BSDPorts' ultra-minimal white search surface,
+and MASTER's black face.
 
 ## Screenshot capture
 
