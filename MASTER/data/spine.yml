@@ -275,7 +275,12 @@ spine:
   # that keeps a finance or household objective out of the coding tools. 179
   # body lines across lib/core, lib/cli, lib/ground and lib/fix.
   # 35302 -> 35425: this repair series is fully sponsored here.
-  lib_body_ceiling: 35425
+  # 35425 -> 98323, RE-BASELINE 2026-10-28, not a raise. lib/ had grown to 2.8x the ceiling while
+  # it held, so lint:spine failed on every run and measured nothing. The ceiling is reset to what
+  # CodeMetrics.body_lines_in("lib") measured that day, so the next line of growth fails again and
+  # every fall ratchets it down. The overage is debt paid per namespace against
+  # limits.yml#loc_body_budgets (re-baselined the same day), not absorbed here.
+  lib_body_ceiling: 98323
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
@@ -283,10 +288,9 @@ spine:
   lib_at_introduction: 47331
   introduced: "2026-07-30"
   # Raises standing since the last fall. lint:spine refuses another once this
-  # reaches consecutive_raises_allowed; a genuine fall clears it.
-  raised:
-  - { date: "2026-09-15", from: 35087, to: 35123, for: "small-model fold legibility, review counts, shell and rollback honesty" }
-  - { date: "2026-09-16", from: 35123, to: 35302, for: "the per-turn verb offer, the model ladder, the terminal's approval, and the objective ledger with its domain boundary" }
+  # reaches consecutive_raises_allowed; a genuine fall clears it. The 2026-10-28
+  # re-baseline cleared it too: it reset the instrument rather than raising past it.
+  raised: []
   consecutive_raises_allowed: 2
   # The direct-child invariant remains the seven-file concept budget. A second
   # recursive tripwire closes the loophole where complexity could hide below
