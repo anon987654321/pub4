@@ -106,7 +106,7 @@ class TestFixKernel < Minitest::Test
   end
 
   def test_blank_and_whitespace_only_records_are_refused
-    ["\n", " \\t\n"].each do |interstitial|
+    ["\n", " \t\n"].each do |interstitial|
       with_workspace do |root|
         path = write_log(root, [%w[observation a], %w[terminal a]])
         File.write(path, File.read(path).sub("\n", "\n#{interstitial}"))
