@@ -6,8 +6,8 @@ require "json"
 module Master
   module Trace
     # Converts event payloads into safe durable records without changing the
-    # in-process payload delivered to trusted subscribers. Tool arguments are
-    # never stored verbatim; other event families redact sensitive named fields.
+    # in-process payload delivered to trusted subscribers. Tool arguments and
+    # unknown structured values are digest-only; named sensitive fields are redacted.
     module EventPrivacy
       TOOL_ARGUMENT_EVENTS = %w[tool:before tool:after tool:execution:before tool:execution:after tool:execution:reconciled].freeze
       SAFE_CATEGORIES = %w[
@@ -39,7 +39,11 @@ module Master
 
           if safe_metadata?(field, value)
             safe[field.to_sym] = normalize_metadata(field, value)
-          elsif tool_event || field.match?(SENSITIVE_FIELD)
+          elsif tool_event || field.match?(SENSITIVE_FIELD) || value.is_a?(Hash) || value.is_a?(Array)
+            # A seemingly harmless container can hold a sensitive nested key
+            # (or an arbitrary free-form string). Keep the evidence of its size
+            # without recursively persisting a structure whose privacy contract
+            # was never declared.
             raw = canonical_value(value)
             safe["#{field}_digest".to_sym] = Digest::SHA256.hexdigest(raw)
             safe["#{field}_bytes".to_sym] = raw.bytesize
