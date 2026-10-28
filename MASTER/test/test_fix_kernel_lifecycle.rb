@@ -370,6 +370,22 @@ class TestFixKernelLifecycle < Minitest::Test
     end
   end
 
+  def test_execution_lock_refuses_a_hard_linked_lock
+    with_workspace do |root|
+      kernel = K.new(root:)
+      directory = File.join(root, ".master")
+      Dir.mkdir(directory, 0o700)
+      external = File.join(root, "external-lock")
+      File.write(external, "untouched")
+      File.chmod(0o600, external)
+      File.link(external, File.join(directory, "fix-execution.lock"))
+
+      assert_raises(IOError) { kernel.execution_mutex.synchronize {} }
+      assert_equal "untouched", File.read(external)
+      assert_equal 2, File.stat(external).nlink
+    end
+  end
+
   def test_execution_lock_refuses_a_replaced_lock_inode
     with_workspace do |root|
       kernel = K.new(root:)
