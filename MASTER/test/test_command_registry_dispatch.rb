@@ -220,7 +220,7 @@ class TestCommandRegistryDispatch < Minitest::Test
       Fiber[:master_visitor] = nil
 
       grant = Registry.dispatch_privacy(
-        root, ctx: Master::CLI::PipelineContext.new(user_message: "/privacy grant personal_memory", args: "grant personal_memory"),
+        root, ctx: Master::CLI::PipelineContext.new(user_message: "/privacy grant personal_memory", args: "grant personal_memory")
       )
       assert_match(/enabled/, grant)
 
@@ -230,14 +230,14 @@ class TestCommandRegistryDispatch < Minitest::Test
       refute permissions.allowed?(scope: "personal_memory", subject: "subject-b", purpose:)
 
       revoke = Registry.dispatch_privacy(
-        root, ctx: Master::CLI::PipelineContext.new(user_message: "/privacy revoke personal_memory", args: "revoke personal_memory"),
+        root, ctx: Master::CLI::PipelineContext.new(user_message: "/privacy revoke personal_memory", args: "revoke personal_memory")
       )
       assert_match(/disabled immediately/, revoke)
       refute permissions.allowed?(scope: "personal_memory", subject: "subject-a", purpose:)
 
       Fiber[:master_visitor] = true
       denied = Registry.dispatch_privacy(
-        root, ctx: Master::CLI::PipelineContext.new(user_message: "/privacy grant personal_memory", args: "grant personal_memory"),
+        root, ctx: Master::CLI::PipelineContext.new(user_message: "/privacy grant personal_memory", args: "grant personal_memory")
       )
       assert_match(/local-only/, denied)
       refute permissions.allowed?(scope: "personal_memory", subject: "subject-a", purpose:)
@@ -261,12 +261,12 @@ class TestCommandRegistryDispatch < Minitest::Test
       Fiber[:master_paired] = true
       Fiber[:master_visitor] = nil
       denied = Registry.dispatch_agenda(
-        root, ctx: Master::CLI::PipelineContext.new(user_message: "/agenda today", args: "today"),
+        root, ctx: Master::CLI::PipelineContext.new(user_message: "/agenda today", args: "today")
       )
       assert_match(/calendar access is disabled/, denied)
 
       grant = Registry.dispatch_privacy(
-        root, ctx: Master::CLI::PipelineContext.new(user_message: "/privacy grant calendar_read", args: "grant calendar_read"),
+        root, ctx: Master::CLI::PipelineContext.new(user_message: "/privacy grant calendar_read", args: "grant calendar_read")
       )
       assert_match(/calendar reading enabled/, grant)
 
@@ -275,11 +275,11 @@ class TestCommandRegistryDispatch < Minitest::Test
       imported = Registry.dispatch_agenda(
         root, ctx: Master::CLI::PipelineContext.new(
           user_message: "/agenda import #{source}", args: "import #{source}",
-        ),
+        )
       )
       assert_match(/imported 1 events/, imported)
       listed = Registry.dispatch_agenda(
-        root, ctx: Master::CLI::PipelineContext.new(user_message: "/agenda 2026-10-21", args: "2026-10-21"),
+        root, ctx: Master::CLI::PipelineContext.new(user_message: "/agenda 2026-10-21", args: "2026-10-21")
       )
       assert_match(/Test appointment/, listed)
     end
@@ -302,18 +302,18 @@ class TestCommandRegistryDispatch < Minitest::Test
       grant = Registry.dispatch_privacy(
         root, ctx: Master::CLI::PipelineContext.new(
           user_message: "/privacy grant personal_memory", args: "grant personal_memory",
-        ),
+        )
       )
       assert_match(/enabled/, grant)
 
-      dir = Master::Ground::PersonalWorkspace.ensure!(root: root, subject: "subject-memory")
+      dir = Master::Ground::PersonalWorkspace.ensure!(root:, subject: "subject-memory")
       File.write(File.join(dir, "USER.md"), "# USER\n- Name: Jules\n")
       File.write(File.join(dir, "MEMORY.md"), "# MEMORY\n\nPrefers tea\n")
 
       exported = Registry.dispatch_privacy(
         root, ctx: Master::CLI::PipelineContext.new(
           user_message: "/privacy memory export", args: "memory export",
-        ),
+        )
       )
       assert_includes exported, "Jules"
       assert_includes exported, "Prefers tea"
@@ -321,7 +321,7 @@ class TestCommandRegistryDispatch < Minitest::Test
       refused = Registry.dispatch_privacy(
         root, ctx: Master::CLI::PipelineContext.new(
           user_message: "/privacy memory forget", args: "memory forget",
-        ),
+        )
       )
       assert_match(/requires the exact command/, refused)
       assert_includes File.read(File.join(dir, "MEMORY.md")), "Prefers tea"
@@ -329,7 +329,7 @@ class TestCommandRegistryDispatch < Minitest::Test
       cleared = Registry.dispatch_privacy(
         root, ctx: Master::CLI::PipelineContext.new(
           user_message: "/privacy memory forget --confirm", args: "memory forget --confirm",
-        ),
+        )
       )
       assert_match(/durable memory cleared/, cleared)
       assert_includes File.read(File.join(dir, "USER.md")), "Jules"
@@ -596,7 +596,7 @@ class TestCommandRegistryDispatch < Minitest::Test
 
     Registry.stub(:dispatch_fix_parsed, parsed) do
       result = Registry.dispatch_fix(
-        scanner: nil, fix_loop: nil, deliberation: nil, root: Master::ROOT, bus: nil, ctx:
+        scanner: nil, fix_loop: nil, deliberation: nil, root: Master::ROOT, bus: nil, ctx:,
       )
       assert_equal "preflight stubbed", result
     end

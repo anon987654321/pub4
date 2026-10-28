@@ -60,7 +60,7 @@ class TestReflexionLedger < Minitest::Test
     refute_includes events.inspect, private_file
 
     persisted = File.read(File.join(@dir, "runtime", "reflexions.ndjson"))
-    refute_includes persisted, 'Bearer ' + ('S' * 40)
+    refute_includes persisted, "Bearer " + ("S" * 40)
     assert_includes persisted, "[REDACTED]"
   end
 

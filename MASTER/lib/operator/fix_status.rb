@@ -41,7 +41,7 @@ module Operator
     def payload
       runs = journal_runs
       {
-        processes: processes,
+        processes:,
         runs: runs.map { |run| run_row(run) },
         mission: mission_row,
         read_errors: @read_errors.dup,
@@ -164,7 +164,7 @@ module Operator
         message: run["message"].to_s.gsub(/\s+/, " ").strip[0, 180],
         receipt: receipt_summary(run["evidence"]),
         assessment_proof: assessment_proof_summary(assessment_details),
-        assessment_details: assessment_details,
+        assessment_details:,
       }
     end
 
@@ -259,7 +259,7 @@ module Operator
     def commit_row
       branch = git("branch", "--show-current").to_s
       ahead = git("rev-list", "--count", "origin/main..HEAD").to_i
-      { branch: branch, ahead: ahead, pushed: ahead.zero? }
+      { branch:, ahead:, pushed: ahead.zero? }
     end
 
     # Temp worktrees /fix keeps when a run fails, and the master/fix-* branches
@@ -280,8 +280,8 @@ module Operator
         head = git("rev-parse", branch)
         remote = git("rev-parse", "--verify", "--quiet", "origin/#{branch}")
         {
-          branch: branch,
-          path: path,
+          branch:,
+          path:,
           ahead: git("rev-list", "--count", "origin/main..#{branch}").to_i,
           pushed: !remote.nil? && remote == head,
           dirty: path && File.directory?(path) ? git("-C", path, "status", "--porcelain").to_s.lines.size : nil,
@@ -301,7 +301,7 @@ module Operator
         queue = self.class.queue_from(command)
         next unless @trees.empty? || queue.empty? || (queue & @trees).any?
 
-        { pid: pid.to_i, elapsed: elapsed, queue: queue }
+        { pid: pid.to_i, elapsed:, queue: }
       end
     end
 

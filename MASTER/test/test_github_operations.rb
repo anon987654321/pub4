@@ -45,7 +45,7 @@ class TestGitHubOperations < Minitest::Test
     capture_io do
       result = operations.publish_and_merge!(
         branch: "master/fix-test", base: "main", expected_head: head,
-        title: "test delivery", body: "body", timeout: 0,
+        title: "test delivery", body: "body", timeout: 0
       )
     end
 
@@ -76,7 +76,7 @@ class TestGitHubOperations < Minitest::Test
     capture_io do
       result = operations.publish_and_merge!(
         branch: "master/fix-test", base: "main", expected_head: head,
-        title: "test delivery", body: "body", timeout: 0,
+        title: "test delivery", body: "body", timeout: 0
       )
     end
 
@@ -104,7 +104,7 @@ class TestGitHubOperations < Minitest::Test
     capture_io do
       result = operations.publish_and_merge!(
         branch: "master/fix-test", base: "main", expected_head: head,
-        title: "test delivery", body: "body", timeout: 0,
+        title: "test delivery", body: "body", timeout: 0
       )
     end
 

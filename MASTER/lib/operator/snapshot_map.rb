@@ -25,7 +25,7 @@ module Operator
       ".rb" => RUBY_DECLARATIONS, ".rake" => RUBY_DECLARATIONS,
       ".yml" => [/\A([A-Za-z_][\w.-]*):/], ".yaml" => [/\A([A-Za-z_][\w.-]*):/],
       ".js" => JS_DECLARATIONS, ".mjs" => JS_DECLARATIONS, ".ts" => JS_DECLARATIONS,
-      ".tsx" => JS_DECLARATIONS, ".jsx" => JS_DECLARATIONS,
+      ".tsx" => JS_DECLARATIONS, ".jsx" => JS_DECLARATIONS
     }.freeze
 
     module_function
@@ -183,7 +183,7 @@ module Operator
       methods = original.scan(/^\s{2,}(?:async\s+)?([A-Za-z_$][\w$]*)\s*\([^\n;]*?\)\s*\{/)
                        .flatten.uniq - %w[if for while switch catch function constructor]
 
-      return nil if targets.empty? && values.empty?
+      return if targets.empty? && values.empty?
 
       parts = []
       parts << "targets: #{listed_names(targets)}" unless targets.empty?

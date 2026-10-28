@@ -39,7 +39,7 @@ class VisualGhostStackContractTest < Minitest::Test
     def evaluate(script, **)
       return "ltr" if script.include?("getComputedStyle(document.documentElement).direction")
       return "nb" if script.include?("getAttribute('lang')")
-      return nil if script.include?("el.__gpKey")
+      return if script.include?("el.__gpKey")
 
       nil
     end

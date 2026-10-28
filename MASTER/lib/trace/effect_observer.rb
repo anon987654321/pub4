@@ -87,7 +87,7 @@ module Master
 
           @bus.publish_required(
             AFTER_EVENT,
-            payload.merge(status: observation.ok? ? "ok" : "error", elapsed_ms:)
+            payload.merge(status: observation.ok? ? "ok" : "error", elapsed_ms:),
           )
           @pending_effects.delete(key)
           @completed_effects[key] = true
@@ -100,7 +100,7 @@ module Master
       end
 
       def checked_elapsed_ms(value)
-        return nil if value.nil?
+        return if value.nil?
 
         elapsed = Integer(value)
         raise ArgumentError, "elapsed_ms must be non-negative" if elapsed.negative?

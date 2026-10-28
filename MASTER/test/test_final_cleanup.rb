@@ -81,7 +81,7 @@ class TestFinalCleanup < Minitest::Test
 
   def test_failure_is_reported_but_later_cleanup_steps_still_run
     receipt = build_stage(fail_runtime: true).run(
-      target: Dir.pwd, run_id: "run-current", terminal_state: :done
+      target: Dir.pwd, run_id: "run-current", terminal_state: :done,
     )
 
     assert_equal "warning", receipt.fetch(:status)
@@ -93,7 +93,7 @@ class TestFinalCleanup < Minitest::Test
 
   def test_durable_receipt_failure_is_not_reported_as_clean
     receipt = build_stage(fail_receipt: true).run(
-      target: Dir.pwd, run_id: "run-current", terminal_state: :blocked
+      target: Dir.pwd, run_id: "run-current", terminal_state: :blocked,
     )
 
     assert_equal "warning", receipt.fetch(:status)

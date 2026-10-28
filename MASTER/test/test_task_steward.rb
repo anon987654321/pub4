@@ -129,7 +129,7 @@ class TaskStewardTest < Minitest::Test
       claimant.start_or_resume!(goal: snapshot["goal"], scope: root, origin: "fold")
 
       blocked = Master::Fix::Mission.new(root:).block_if_unleased!(
-        id: snapshot["id"], reason: "contextless continuation"
+        id: snapshot["id"], reason: "contextless continuation",
       )
 
       refute blocked

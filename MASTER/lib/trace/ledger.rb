@@ -224,7 +224,7 @@ module Master
               "files_count" => files.size,
               "files_digest" => file_evidence[:files_digest],
               "reflection" => sentence(kind, reason, files)
-            }
+            },
           )
           @bus&.publish(
             "reflexion:recorded", kind:,

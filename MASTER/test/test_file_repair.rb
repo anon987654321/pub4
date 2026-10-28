@@ -162,7 +162,7 @@ class TestFileRepair < Minitest::Test
           path: "lib/shared_contract.rb",
           source: dependency,
           sha256: Digest::SHA256.hexdigest(dependency),
-        }],
+        }]
       )
 
       subject.run(path)
@@ -194,7 +194,7 @@ class TestFileRepair < Minitest::Test
           path: "lib/shared_contract.rb",
           source: dependency,
           sha256: Digest::SHA256.hexdigest(dependency),
-        }],
+        }]
       )
       File.write(dependency_path, dependency.sub(":old", ":new"))
 

@@ -95,7 +95,7 @@ module Master
           catalogue = catalogue_report(
             map: Master.law("law_map", root: @root),
             executable_ids: law_ids,
-            registry_ids: registry
+            registry_ids: registry,
           )
           manifest = law_catalogue_report(yaml_entries, registry:)
           catalogue_drift = catalogue.fetch(:drift).merge(manifest.fetch(:drift))

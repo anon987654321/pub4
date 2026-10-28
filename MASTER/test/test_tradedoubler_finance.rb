@@ -20,7 +20,7 @@ class TestTradedoublerFinance < Minitest::Test
     @requests = []
     @response = Response.new("200", "[]")
     @transport = lambda do |method:, uri:, request:, body:, headers:|
-      @requests << { method: method, uri: uri, body: body, headers: headers }
+      @requests << { method:, uri:, body:, headers: }
       @response
     end
     write_sources
@@ -77,7 +77,7 @@ class TestTradedoublerFinance < Minitest::Test
       "source" => "brgen", "program_key" => "demo_program",
       "timeStampEvent" => "2026-10-20", "eventId" => 17,
       "orderNumber" => "ORDER-123", "orderValue" => "32.00",
-      "expectedCommission" => "2.50",
+      "expectedCommission" => "2.50"
     }.merge(overrides)
   end
 
@@ -90,7 +90,7 @@ class TestTradedoublerFinance < Minitest::Test
   def test_status_does_not_read_credentials_or_open_network
     env = Object.new
     env.define_singleton_method(:[]) { |_key| raise "credentials must not be inspected for status" }
-    service = Service.new(root: @root, master_root: @master_root, env: env,
+    service = Service.new(root: @root, master_root: @master_root, env:,
                           clock: -> { @now }, transport: ->(**) { raise "network must not run" })
 
     state = service.status
@@ -102,7 +102,7 @@ class TestTradedoublerFinance < Minitest::Test
   def test_claims_read_requires_a_grant_before_credentials_or_network
     env = Object.new
     env.define_singleton_method(:[]) { |_key| raise "credential read before grant" }
-    service = Service.new(root: @root, master_root: @master_root, env: env,
+    service = Service.new(root: @root, master_root: @master_root, env:,
                           clock: -> { @now }, transport: ->(**) { raise "network before grant" })
 
     error = assert_raises(Service::ConsentRequired) { service.list_claims }
@@ -224,7 +224,7 @@ class TestTradedoublerFinance < Minitest::Test
   def test_unconfigured_site_fails_before_credentials_are_read
     env = Object.new
     env.define_singleton_method(:[]) { |_key| raise "token must not be read" }
-    @service = Service.new(root: @root, master_root: @master_root, env: env,
+    @service = Service.new(root: @root, master_root: @master_root, env:,
                            clock: -> { @now }, transport: @transport)
     grant("claims.read")
 

@@ -369,8 +369,8 @@ module Master
           return if @malformed_yaml_findings.any? { |row| row[:path] == path }
 
           @malformed_yaml_findings << finding(
-            path: path, line: 1,
-            message: "malformed YAML in data register (#{error.class}) — SINGULARITY unmeasured, not clean",
+            path:, line: 1,
+            message: "malformed YAML in data register (#{error.class}) — SINGULARITY unmeasured, not clean"
           )
         end
 

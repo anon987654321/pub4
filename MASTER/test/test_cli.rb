@@ -384,13 +384,13 @@ end
         release << true
         deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 2
         while Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
-          break if seen == ["first", "second"] && @cli.instance_variable_get(:@turn_worker).nil?
+          break if seen == %w[first second] && @cli.instance_variable_get(:@turn_worker).nil?
           sleep 0.01
         end
       end
     end
 
-    assert_equal ["first", "second"], seen
+    assert_equal %w[first second], seen
     assert_nil @cli.instance_variable_get(:@turn_worker)
   end
 
@@ -884,7 +884,7 @@ def test_ctrl_c_at_the_prompt_raises_interrupt_for_repl_loop_to_close
     end
     request_stop = lambda do |turn, children, reason:|
       requested = [turn, children, reason]
-      @cli.instance_variable_get(:@turn_cancellation).cancel!(reason: reason)
+      @cli.instance_variable_get(:@turn_cancellation).cancel!(reason:)
     end
 
     @cli.stub(:spawn_pipeline_thread, spawn) do

@@ -124,8 +124,8 @@ module Master
       strict_keys(value, ["inflections"], "limits.yml zeitwerk", errors)
       inflections = value["inflections"]
       unless inflections.is_a?(Hash) && !inflections.empty? &&
-             inflections.all? { |key, constant| key.to_s.match?(/\A[a-z][a-z0-9_]*\z/) &&
-               constant.is_a?(String) && constant.match?(/\A[A-Z][A-Za-z0-9]*\z/) }
+             inflections.all? do |key, constant| key.to_s.match?(/\A[a-z][a-z0-9_]*\z/) &&
+               constant.is_a?(String) && constant.match?(/\A[A-Z][A-Za-z0-9]*\z/) end
         errors << "limits.yml zeitwerk.inflections must map snake_case names to constant names"
       end
     end

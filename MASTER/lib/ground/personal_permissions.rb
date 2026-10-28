@@ -121,7 +121,7 @@ module Master
       end
 
       def subject_for_scope(scope, subject)
-        return nil unless SUBJECT_SCOPES.include?(scope)
+        return unless SUBJECT_SCOPES.include?(scope)
 
         required_text(subject, "subject", MAX_ACTOR_BYTES)
       end
@@ -146,7 +146,7 @@ module Master
       end
 
       def parse_expiry(value)
-        return nil if value.nil?
+        return if value.nil?
         time = value.is_a?(Time) ? value : Time.iso8601(value.to_s)
         time.utc
       rescue ArgumentError

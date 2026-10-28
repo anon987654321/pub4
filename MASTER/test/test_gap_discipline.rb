@@ -79,7 +79,7 @@ class TestGapDiscipline < Minitest::Test
 
   def run_check
     io = StringIO.new
-    ok = Deploy::GapDiscipline.run(root: @dir, io: io)
+    ok = Deploy::GapDiscipline.run(root: @dir, io:)
     [ ok, io.string ]
   end
 

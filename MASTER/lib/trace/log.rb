@@ -286,7 +286,7 @@ module Master
           safe = EventPrivacy.persisted("tool:before", event_data)
           fields = safe.except(:tool, :ts, :conversation)
           tool = safe[:tool] || "unknown"
-          record = { ts: Time.now.utc.iso8601, session: Log.session, tool: tool }.merge(fields)
+          record = { ts: Time.now.utc.iso8601, session: Log.session, tool: }.merge(fields)
           Master::Trace::Telemetry.span("audit.append", tool: event_data[:tool].to_s) do
             @mutex.synchronize do
               Log.append_jsonl(@path, record, max_bytes: MAX_BYTES, mode: 0o600, directory_mode: 0o700)

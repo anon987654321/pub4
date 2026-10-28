@@ -18,7 +18,7 @@ module Master
       # Returns the parsed object, or nil when no file exists yet — a fresh
       # ledger is empty, not corrupt.
       def read(path, schema:)
-        return nil unless File.file?(path)
+        return unless File.file?(path)
 
         data = JSON.parse(File.read(path, encoding: "UTF-8"))
         unless data.is_a?(Hash)

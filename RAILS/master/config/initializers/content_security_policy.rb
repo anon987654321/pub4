@@ -15,7 +15,7 @@ Rails.application.configure do
     policy.font_src :self, :data
     policy.img_src :self, :data
     policy.object_src :none
-    policy.script_src :self, :blob
+    policy.script_src :self
     # unsafe_inline stays: the FOUC guard is an inline style by design, and a nonce there moves
     # colours the operator owns.
     policy.style_src :self, :unsafe_inline

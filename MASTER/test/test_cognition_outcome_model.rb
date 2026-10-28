@@ -120,7 +120,7 @@ class TestCognitionOutcomeModel < Minitest::Test
   def test_benchmark_rejects_unverifiable_reference_only_evidence
     rows = [{
       context: "task", action: "verify", outcome: "success",
-      evidence: { source: "outcome.log", sha256: "a" * 64 },
+      evidence: { source: "outcome.log", sha256: "a" * 64 }
     }]
     assert_raises(ArgumentError) { Master::Cognition::Benchmark.evaluate(rows) }
   end

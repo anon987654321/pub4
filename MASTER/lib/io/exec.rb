@@ -81,7 +81,7 @@ module Master
       # that already have an extension are never expanded a second time.
       def which(name, path: ENV.fetch("PATH", ""), prefer: [], extensions: ENV["PATHEXT"])
         name = name.to_s
-        return nil if name.empty?
+        return if name.empty?
 
         suffixes = extensions.to_s.split(";").reject(&:empty?)
         names = File.extname(File.basename(name)).empty? ? [name, *suffixes.map { |suffix| "#{name}#{suffix}" }] : [name]
@@ -89,7 +89,7 @@ module Master
           names.each do |candidate|
             return File.expand_path(candidate) if File.file?(candidate) && File.executable?(candidate)
           end
-          return nil
+          return
         end
 
         [*prefer, *path.to_s.split(File::PATH_SEPARATOR)].uniq.each do |dir|

@@ -349,7 +349,7 @@ class TurnRouterTest < Minitest::Test
         Master::CLI::TurnRouter.stub(:infer_operator_command, ->(*) { raise "media intent fell through to command inference" }) do
           result = Master::CLI::TurnRouter.call(
             message: "make a video with the lora of me from #{still}",
-            container: build_container(root:)
+            container: build_container(root:),
           )
           assert result.ok?, -> { result.message.to_s }
         end
@@ -364,19 +364,19 @@ class TurnRouterTest < Minitest::Test
 
   def test_fold_result_preserves_cancellation_and_ambiguous_outcome_categories
     cancelled = Master::CLI::TurnRouter.fold_to_result(
-      reason: :cancelled, turns: 1, summary: "cancelled", transcript: []
+      reason: :cancelled, turns: 1, summary: "cancelled", transcript: [],
     )
     audit_failed = Master::CLI::TurnRouter.fold_to_result(
-      reason: :trace_failed, turns: 1, summary: "after-event failed", transcript: []
+      reason: :trace_failed, turns: 1, summary: "after-event failed", transcript: [],
     )
     unknown = Master::CLI::TurnRouter.fold_to_result(
-      reason: :unknown_outcome, turns: 1, summary: "receipt missing", transcript: []
+      reason: :unknown_outcome, turns: 1, summary: "receipt missing", transcript: [],
     )
     recovery_failed = Master::CLI::TurnRouter.fold_to_result(
-      reason: :recovery_failed, turns: 1, summary: "rollback unproven", transcript: []
+      reason: :recovery_failed, turns: 1, summary: "rollback unproven", transcript: [],
     )
     approval = Master::CLI::TurnRouter.fold_to_result(
-      reason: :needs_user, turns: 1, summary: "approval unavailable", transcript: []
+      reason: :needs_user, turns: 1, summary: "approval unavailable", transcript: [],
     )
 
     assert_equal :cancelled, cancelled.category
@@ -399,7 +399,7 @@ class TurnRouterTest < Minitest::Test
     Master::CLI::TurnRouter.stub(:dispatch_slash, dispatcher) do
       result = Master::CLI::TurnRouter.dispatch_inferred(
         { command: "run", args: "read README.md", confidence: 0.9 },
-        container:, cancellation: token
+        container:, cancellation: token,
       )
       assert result.ok?
     end

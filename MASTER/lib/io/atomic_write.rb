@@ -127,7 +127,7 @@ module Master
       end
 
       def cleanup_atomic_temp(temp)
-        return nil unless temp
+        return unless temp
 
         temp.close unless temp.closed?
         File.delete(temp.path) if File.exist?(temp.path) || File.symlink?(temp.path)

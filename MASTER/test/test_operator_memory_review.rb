@@ -43,7 +43,7 @@ class TestOperatorMemoryReview < Minitest::Test
       "--evidence", @relative_evidence,
       "--sha256", @sha256,
       "--reviewer", "operator",
-      *extra,
+      *extra
     ]
   end
 
@@ -73,7 +73,7 @@ class TestOperatorMemoryReview < Minitest::Test
       "--evidence", @relative_evidence,
       "--sha256", "0" * 64,
       "--reviewer", "operator",
-      "--confirm",
+      "--confirm"
     )
 
     assert_equal 2, status
@@ -89,7 +89,7 @@ class TestOperatorMemoryReview < Minitest::Test
       "--evidence", "../outside-memory-evidence.txt",
       "--sha256", Digest::SHA256.file(outside).hexdigest,
       "--reviewer", "operator",
-      "--confirm",
+      "--confirm"
     )
 
     assert_equal 2, status
@@ -109,7 +109,7 @@ class TestOperatorMemoryReview < Minitest::Test
       "--evidence", "MASTER/test/fixtures/outside.txt",
       "--sha256", Digest::SHA256.file(outside).hexdigest,
       "--reviewer", "operator",
-      "--confirm",
+      "--confirm"
     )
 
     assert_equal 2, status
@@ -126,7 +126,7 @@ class TestOperatorMemoryReview < Minitest::Test
       "--evidence", @relative_evidence,
       "--sha256", @sha256,
       "--reviewer", "operator",
-      "--confirm",
+      "--confirm"
     )
 
     assert_equal 2, status

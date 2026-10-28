@@ -29,8 +29,8 @@ unless rendered
     css: manifest.fetch("css"),
     placement: manifest.fetch("placement"),
     token_contract: Master::Visual::AdAudit.contract,
-    asset_root: asset_root,
-    viewport: manifest["viewport"]
+    asset_root:,
+    viewport: manifest["viewport"],
   )
   rendered = measurement.fetch(:rendered)
 end
@@ -39,7 +39,7 @@ report = Master::Visual::AdAudit.audit(
   html: manifest.fetch("html"),
   css: manifest.fetch("css"),
   placement: manifest.fetch("placement"),
-  rendered: rendered
+  rendered:,
 )
 report[:measurements] = measurement.fetch(:measurements) if measurement
 report[:measurement_mode] = rendered["measurement_mode"] || rendered[:measurement_mode] ||

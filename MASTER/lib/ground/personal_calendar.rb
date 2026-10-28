@@ -53,10 +53,10 @@ module Master
       def status(subject:)
         authorize!(subject)
         path = calendar_path(subject)
-        return { imported: false, path: path, event_count: 0, recurring_series: 0 } unless File.file?(path) && !File.symlink?(path)
+        return { imported: false, path:, event_count: 0, recurring_series: 0 } unless File.file?(path) && !File.symlink?(path)
 
         parsed = parse_calendar(read_calendar(path))
-        { imported: true, path: path, event_count: parsed.fetch(:events).size,
+        { imported: true, path:, event_count: parsed.fetch(:events).size,
           recurring_series: parsed.fetch(:recurring_series) }
       end
 
@@ -68,7 +68,7 @@ module Master
         raise PersonalWorkspace::PermissionDenied, "calendar path must not be a symlink" if File.symlink?(path)
 
         parsed = parse_calendar(read_calendar(path))
-        { date: date, events: parsed.fetch(:events).select { |event| event.date == date }
+        { date:, events: parsed.fetch(:events).select { |event| event.date == date }
             .sort_by { |event| [event.clock.to_s, event.summary] },
           recurring_series: parsed.fetch(:recurring_series), total_events: parsed.fetch(:events).size }
       end

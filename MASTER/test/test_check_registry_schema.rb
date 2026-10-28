@@ -17,7 +17,7 @@ class CheckRegistrySchemaTest < Minitest::Test
       output, status = Open3.capture2e(
         { "CHECKS_FILE" => registry },
         RbConfig.ruby, RUNNER, "--all",
-        chdir: REPO_ROOT,
+        chdir: REPO_ROOT
       )
 
       refute status.success?, output
@@ -36,7 +36,7 @@ class CheckRegistrySchemaTest < Minitest::Test
       output, status = Open3.capture2e(
         { "CHECKS_FILE" => registry },
         RbConfig.ruby, RUNNER, "--all",
-        chdir: REPO_ROOT,
+        chdir: REPO_ROOT
       )
 
       refute status.success?, output

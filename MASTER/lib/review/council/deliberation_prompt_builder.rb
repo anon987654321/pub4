@@ -24,7 +24,7 @@ module Master
             success_criteria: "Return a schema-valid JSON response with an explicit position and zero or more evidence-backed findings.",
             constraints: %w[INTER_MODEL_CONTRACT ROBUSTNESS SINGULARITY],
             artifact: rounds, prior_findings: findings,
-            forbidden: ["invent evidence", "claim tests passed", "expand review scope"],
+            forbidden: ["invent evidence", "claim tests passed", "expand review scope"]
           )
         end
 
@@ -37,7 +37,7 @@ module Master
             success_criteria: "Return a schema-valid JSON response with explicit position evidence and structured findings.",
             constraints: (Array(persona.respond_to?(:emphasizes) ? persona.emphasizes : []) +
                           %w[INTER_MODEL_CONTRACT ROBUSTNESS SINGULARITY]).map(&:to_s).uniq,
-            artifact: values.fetch(:safe_code), forbidden: ["edit files", "invent findings", "claim completion", "expand scope"],
+            artifact: values.fetch(:safe_code), forbidden: ["edit files", "invent findings", "claim completion", "expand scope"]
           )
         end
 

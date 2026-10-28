@@ -220,13 +220,13 @@ module Operator
             "assertions" => match[2].to_i,
             "failures" => match[3].to_i,
             "errors" => match[4].to_i,
-            "skips" => match[5].to_i
+            "skips" => match[5].to_i,
           }
         end
       end
 
-      return nil unless summary && summary["runs"] == result_count
-      return nil if worker[:start_markers] && start_count != result_count
+      return unless summary && summary["runs"] == result_count
+      return if worker[:start_markers] && start_count != result_count
 
       summary.merge("result_lines" => result_count, "start_markers" => start_count)
     rescue Errno::ENOENT
@@ -281,9 +281,9 @@ module Operator
             "summary" => worker[:summary],
             "last_started_test" => last_started_test(worker),
             "failure_result_lines" => worker[:failure_result_lines],
-            "known_red" => known_red?(worker)
+            "known_red" => known_red?(worker),
           }
-        end
+        end,
       }
       path = File.join(LOG_DIR, "suite-report.json")
       File.write(path, JSON.pretty_generate(payload) + "\n")

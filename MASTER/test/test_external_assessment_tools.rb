@@ -31,7 +31,7 @@ class TestExternalAssessmentTools < Minitest::Test
       "content-type" => "text/html; charset=utf-8",
       "strict-transport-security" => "max-age=31536000",
       "content-security-policy" => "default-src 'self'; frame-ancestors 'none'",
-      "x-content-type-options" => "nosniff"
+      "x-content-type-options" => "nosniff",
     })
     tool.define_singleton_method(:fetch_page) { |uri| [response, uri, 0] }
 

@@ -29,7 +29,7 @@ class TestModelHealth < Minitest::Test
       "local:small" => { calls: 4, successes: 4, failures: 0, latency_ms: 850.0 },
       "gateway:unstable" => {
         calls: 5, successes: 2, failures: 3, latency_ms: 1_200.0,
-        last_error: "Authorization: Bearer must-never-be-rendered",
+        last_error: "Authorization: Bearer must-never-be-rendered"
       },
     )
 

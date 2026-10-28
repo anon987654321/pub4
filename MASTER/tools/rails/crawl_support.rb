@@ -17,7 +17,7 @@ module CrawlSupport
   def crawler_port_open?(host, port, timeout: 0.4)
     port_open?(
       host, port, timeout:,
-      on_error: ->(error) { Master::Ground::Swallow.log(error, context: __FILE__) },
+      on_error: ->(error) { Master::Ground::Swallow.log(error, context: __FILE__) }
     )
   end
 

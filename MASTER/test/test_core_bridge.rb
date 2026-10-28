@@ -82,7 +82,7 @@ class CoreBridgeTest < Minitest::Test
     mission.define_singleton_method(:block!) { |**| flunk("trace failure is not a policy block") }
 
     done = Master::Core::Fold::Done.new(
-      reason: :trace_failed, turns: 1, summary: "after-event persistence failed"
+      reason: :trace_failed, turns: 1, summary: "after-event persistence failed",
     )
     Master::CLI::CoreBridge.settle_mission(mission, done)
 
@@ -115,11 +115,11 @@ class CoreBridgeTest < Minitest::Test
     %i[unknown_outcome recovery_failed].each do |reason|
       Dir.mktmpdir do |root|
         mission = Master::Fix::Mission.new(root:).start_or_resume!(
-          goal: "reconcile external effect", scope: root, origin: "fold", auto_continue: true
+          goal: "reconcile external effect", scope: root, origin: "fold", auto_continue: true,
         )
         mission.transition!(:execute)
         done = Master::Core::Fold::Done.new(
-          reason:, turns: 1, summary: "#{reason}: receipt unavailable"
+          reason:, turns: 1, summary: "#{reason}: receipt unavailable",
         )
 
         Master::CLI::CoreBridge.settle_mission(mission, done)

@@ -356,7 +356,7 @@ class TestRestructure < Minitest::Test
       problem_class.new(
         id: "p#{index}", size: 1, laws: ["GOD_CLASS"], files: [path],
         candidate_operations: %w[split], findings: [[path, "GOD_CLASS", "line 1: job", []]],
-        reason: "one finding", confidence: :single,
+        reason: "one finding", confidence: :single
       )
     end
     events = []
@@ -378,7 +378,7 @@ class TestRestructure < Minitest::Test
     problem = problem_class.new(
       id: "p-review", findings: [[path, "GOD_CLASS", "line 1: test finding", []]],
       files: [path], laws: %w[GOD_CLASS], reason: "one finding",
-      confidence: :single, candidate_operations: %w[split],
+      confidence: :single, candidate_operations: %w[split]
     )
     agent = Object.new
     agent.define_singleton_method(:ask) { |_prompt, operation:| "APPROVE" }
@@ -396,7 +396,7 @@ class TestRestructure < Minitest::Test
     problem = problem_class.new(
       id: "p-review", findings: [[path, "GOD_CLASS", "line 1: test finding", []]],
       files: [path], laws: %w[GOD_CLASS], reason: "one finding",
-      confidence: :single, candidate_operations: %w[split],
+      confidence: :single, candidate_operations: %w[split]
     )
     agent = Object.new
     agent.define_singleton_method(:ask) do |_prompt, operation:|

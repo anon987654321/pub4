@@ -40,7 +40,7 @@ class TestAgent < Minitest::Test
     permissions = Master::Ground::PersonalPermissions.new(root:)
     permissions.grant(
       scope: "personal_memory", subject:, confirmed_by: "local owner",
-      purpose: Master::Ground::PersonalWorkspace::MEMORY_PERMISSION_PURPOSE,
+      purpose: Master::Ground::PersonalWorkspace::MEMORY_PERMISSION_PURPOSE
     )
     preferences = Master::Device::OwnerPreferences
     preferences.set_learning(root:, subject:, enabled: true)

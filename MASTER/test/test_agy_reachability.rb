@@ -159,7 +159,7 @@ class TestAgyReachability < Minitest::Test
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
     output = router_instance.send(
-      :run_probe, RbConfig.ruby, "-e", "fork { sleep 5 }; exit 0", timeout: 0.2,
+      :run_probe, RbConfig.ruby, "-e", "fork { sleep 5 }; exit 0", timeout: 0.2
     )
 
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started

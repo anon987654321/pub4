@@ -67,7 +67,7 @@ class ToolObserverTest < Minitest::Test
     @dir = Dir.mktmpdir("master-tool-observer-")
     @bus = Master::Trace::EventBus.new(
       event_log: Master::Trace::Log::Event.new(root: @dir),
-      evidence_log: Master::Trace::Log::Evidence.new(root: @dir)
+      evidence_log: Master::Trace::Log::Evidence.new(root: @dir),
     )
     @observer = Master::Trace::ToolObserver.new(bus: @bus)
   end
@@ -253,7 +253,7 @@ class ToolObserverTest < Minitest::Test
     @bus.publish_required(
       Master::Trace::ToolObserver::BEFORE_EVENT,
       { schema_version: 1, invocation_id: id, tool: "write_file", tier: "guarded",
-        arguments_digest: Digest::SHA256.hexdigest(document), arguments_bytes: document.bytesize, pid: }
+        arguments_digest: Digest::SHA256.hexdigest(document), arguments_bytes: document.bytesize, pid: },
     )
   end
 

@@ -85,7 +85,7 @@ class TestFixStructuralReview < Minitest::Test
     agent = FakeAgent.new("FINDING: odd | lonely/only.rb | NONE | unusual shape\n")
 
     result = Review.new(agent:, root: @root).call(
-      target: @root, persist: false, first_read_proposals: hints
+      target: @root, persist: false, first_read_proposals: hints,
     )
 
     assert_predicate result, :answered?

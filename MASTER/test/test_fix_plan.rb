@@ -49,7 +49,7 @@ class TestFixPlan < Minitest::Test
   def test_the_preview_does_not_hide_semantic_reads_left_pending_by_its_budget
     lines = Previewing.new.show({
       total: 5, files: {},
-      gaps: { semantic_pending: { "a.rb" => "budget", "b.rb" => "budget" } },
+      gaps: { semantic_pending: { "a.rb" => "budget", "b.rb" => "budget" } }
     })
 
     assert_includes lines, "preview semantic: PENDING 2 file(s); model-backed coverage incomplete"

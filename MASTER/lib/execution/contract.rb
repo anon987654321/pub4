@@ -46,7 +46,7 @@ module Master
         raw = value.to_s
         {
           "#{key}_digest".to_sym => Digest::SHA256.hexdigest(raw),
-          "#{key}_bytes".to_sym => raw.bytesize
+          "#{key}_bytes".to_sym => raw.bytesize,
         }
       end
 

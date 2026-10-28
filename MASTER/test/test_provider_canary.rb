@@ -126,7 +126,7 @@ class ProviderCanaryTest < Minitest::Test
     Dir.mktmpdir do |dir|
       health = Master::CLI::Routing::ProviderHealth.new(path: File.join(dir, "health.ndjson"))
       canary = Master::CLI::Routing::ProviderCanary.new(
-        agent:, router: Router.new, event_bus: bus, health:, max_providers: 1
+        agent:, router: Router.new, event_bus: bus, health:, max_providers: 1,
       )
 
       assert_equal "0/1 canaries passed", canary.run

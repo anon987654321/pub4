@@ -219,7 +219,7 @@ module Master
               bus&.publish(
                 :inter_model_turn, role: role.to_s, model: model.to_s,
                 first_response_valid: first_valid, accepted:, repair_attempted: repaired,
-                response_hashes: response_hashes
+                response_hashes:
               )
             end
           end
@@ -258,7 +258,7 @@ module Master
             "outbound_schema_valid" => !!outbound_schema_valid,
             "first_response_valid" => !!first_response_valid,
             "accepted" => !!accepted, "repair_attempted" => !!repair_attempted,
-            "response_sha256" => Array(response_hashes).last(2),
+            "response_sha256" => Array(response_hashes).last(2)
           }
           path = File.join(root, LEDGER_RELATIVE_PATH)
           FileUtils.mkdir_p(File.dirname(path), mode: 0o700)
@@ -303,7 +303,7 @@ module Master
             "handoff_cleanliness_rate" => cleanliness,
             "schema_compliance_rate" => outbound,
             "first_response_schema_compliance_rate" => first_response,
-            "ratchet_ceiling" => ceiling, "ratchet" => ratchet,
+            "ratchet_ceiling" => ceiling, "ratchet" => ratchet
           }
         rescue StandardError => e
           { "status" => "unreadable", "error_class" => e.class.name, "ratchet" => "inconclusive" }
@@ -350,7 +350,7 @@ module Master
         def nonblank?(value) = value.is_a?(String) && !value.strip.empty?
 
         def rate(numerator, denominator)
-          return nil if denominator.zero?
+          return if denominator.zero?
 
           (numerator.to_f / denominator).round(4)
         end

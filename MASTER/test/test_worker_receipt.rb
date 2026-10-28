@@ -15,7 +15,7 @@ class TestWorkerReceipt < Minitest::Test
     @dir = Dir.mktmpdir("worker-receipt-")
     @bus = Master::Trace::EventBus.new(
       event_log: Master::Trace::Log::Event.new(root: @dir),
-      evidence_log: Master::Trace::Log::Evidence.new(root: @dir)
+      evidence_log: Master::Trace::Log::Evidence.new(root: @dir),
     )
   end
 

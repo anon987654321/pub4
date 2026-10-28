@@ -210,7 +210,7 @@ FLOW_OUTPUT = <<~OUT
     output, ok = Operator::DeployPreflight.capture(
       [RbConfig.ruby, "-e", "Process.spawn('sleep','10', out: STDOUT, err: STDERR); exit 0"],
       @root,
-      timeout: 0.1
+      timeout: 0.1,
     )
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
 

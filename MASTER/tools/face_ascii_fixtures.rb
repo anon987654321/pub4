@@ -70,7 +70,7 @@ CASES = [
   ["cube", :cube, 16, 40, :idle, 2.0, 0],
   ["head mid", :head, 44, 110, :idle, 0.7, 1],
   ["head large", :head, 60, 160, :speaking, 1.35, 1],
-  ["head extra large", :head, 100, 240, :idle, 2.6, 2]
+  ["head extra large", :head, 100, 240, :idle, 2.6, 2],
 ].freeze
 
 # Each mask at mix 0, 0.5 and 1.0 on the front, and at 1.0 turned three-quarters.
@@ -104,7 +104,7 @@ end
 trigger = {
   picks: SESSIONS.to_h { |s| [s, Face::Masks.pick(s)] },
   mixes: MIXES.map { |state, t, since, from| { state: state.to_s, t:, since:, from:, mix: Face::Masks.mix(state, t, since:, from:) } },
-  morphs: Face::Masks::ORDER.to_h { |mask| [mask, Face::Masks.morph(Face::Masks.params(nil), Face::Masks.params(mask), 0.5)] }
+  morphs: Face::Masks::ORDER.to_h { |mask| [mask, Face::Masks.morph(Face::Masks.params(nil), Face::Masks.params(mask), 0.5)] },
 }
 
 path = File.join(__dir__, "..", "test", "fixtures", "face_ascii_frames.json")

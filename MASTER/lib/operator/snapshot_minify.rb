@@ -24,7 +24,7 @@ module Operator
       ".yml" => :yaml, ".yaml" => :yaml, ".json" => :json,
       ".erb" => :markup, ".html" => :markup, ".md" => :markdown,
       ".sh" => :hash_commented, ".zsh" => :hash_commented, ".ksh" => :hash_commented,
-      ".conf" => :hash_commented, ".zone" => :hash_commented,
+      ".conf" => :hash_commented, ".zone" => :hash_commented
     }.freeze
 
     RubyScan = Struct.new(:comments, :strings, :first_code)
@@ -89,7 +89,7 @@ module Operator
       end
 
       inside = scan.strings.include?(number)
-      return nil if raw.strip.empty? && !inside
+      return if raw.strip.empty? && !inside
 
       inside ? raw.chomp : raw.rstrip
     end
@@ -109,7 +109,7 @@ module Operator
 
     def comment_purpose(comment)
       body = comment.strip.sub(/\A#+\s?/, "").strip
-      return nil if body.empty? || body.match?(DECORATION) || body.start_with?("---")
+      return if body.empty? || body.match?(DECORATION) || body.start_with?("---")
 
       "# #{body[0, PURPOSE_WIDTH]}"
     end

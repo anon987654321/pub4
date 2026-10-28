@@ -63,7 +63,7 @@ module Master
         body = {
           stamp:, root: @root, tree_hash: self.class.tree_hash(signatures), signatures:, files:,
           symbols: symbols.map { |s| [s.fqn, s.type, index.fetch(s.file), s.line, s.parent, s.includes] },
-          references: references.map { |r| [index.fetch(r.from_file), r.from_line, r.to_fqn, r.ref_type] },
+          references: references.map { |r| [index.fetch(r.from_file), r.from_line, r.to_fqn, r.ref_type] }
         }
         tmp = "#{@path}.#{Process.pid}.tmp"
         File.write(tmp, JSON.generate(body))

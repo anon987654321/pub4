@@ -111,7 +111,7 @@ module Deploy
         @result.incomplete!(
           "coverage_reconciliation: map declares itself partial — #{instruments.size} instruments, " \
           "#{covered.size} files covered, #{inventory.size} in inventory, #{@uncovered.size} uncovered listed as information. " \
-          "Fill the map, prove each row against its instrument on a Ruby host, then set complete: true."
+          "Fill the map, prove each row against its instrument on a Ruby host, then set complete: true.",
         )
       end
     end

@@ -171,7 +171,7 @@ module Master
         # The reply of a stream-json run: the final `result` event's text.
         def claude_stream_reply(out)
           event = out.lines.filter_map { |line| JSON.parse(line) rescue nil }.reverse.find { |e| e["type"] == "result" }
-          return nil unless event
+          return unless event
 
           event["is_error"] ? nil : event["result"].to_s
         end

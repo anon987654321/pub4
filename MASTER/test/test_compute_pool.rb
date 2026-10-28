@@ -43,7 +43,7 @@ class TestComputePool < Minitest::Test
     @pool.instance_variable_set(:@rules, {
       "task_strengths" => {
         "code_generation" => ["coding"],
-        "architecture" => ["reasoning", "long_context", "coding"],
+        "architecture" => %w[reasoning long_context coding],
       },
     })
     candidate = Master::CLI::Routing::ComputePool::Candidate.new(id: "deepseek-coder")

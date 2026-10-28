@@ -167,7 +167,7 @@ class WorldTest < Minitest::Test
     source = File.read(File.expand_path("../lib/core/world.rb", __dir__))
 
     assert_includes source, 'RbConfig.ruby, "--disable-gems", worker, "--exec-worker", "--", *argv'
-    assert_includes source, '%w[RUBYOPT RUBYLIB RUBYPATH RUBYGEMS_GEMDEPS].each'
+    assert_includes source, "%w[RUBYOPT RUBYLIB RUBYPATH RUBYGEMS_GEMDEPS].each"
   end
 
   def test_exec_drops_ruby_startup_hooks_before_the_model_command

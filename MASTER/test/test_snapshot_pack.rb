@@ -126,7 +126,7 @@ end
       { path: "T/lib/hub.rb", minified: "class Hub\nend\n" },
       { path: "T/lib/leaf.rb", minified: "class Leaf\n  Hub.call\nend\n" },
       { path: "T/lib/other.rb", minified: "Hub.call\nLeaf.call\n" },
-      { path: "T/data/x.yml", minified: "a: 1\n" }
+      { path: "T/data/x.yml", minified: "a: 1\n" },
     ]
 
     ranked = Pack.rank_centrality(files).to_h { |f| [f[:path], f[:centrality]] }

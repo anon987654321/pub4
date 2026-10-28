@@ -309,7 +309,7 @@ module Operator
       tree_path = host::TREE_PATHS.fetch(tree)
       raw, err, status = Master::Io::Exec.capture3(
         "git", "diff", "--no-ext-diff", "--no-textconv", "--name-status", "-z", "--find-renames", base, "--", tree_path,
-        chdir: host::REPO,
+        chdir: host::REPO
       )
       raise ArgumentError, "snapshot: git diff failed for --since #{ref.inspect}: #{err.strip}" unless status.success?
 

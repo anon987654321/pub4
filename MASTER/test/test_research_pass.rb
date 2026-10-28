@@ -133,7 +133,7 @@ class TestResearchPass < Minitest::Test
 
   def test_full_repository_brief_preserves_evidence_from_late_domains
     pass = Master::Fix::ResearchPass.new(
-      agent: WideResearchAgent.new, bus: nil, plan: @plan, root: Master::REPO_ROOT
+      agent: WideResearchAgent.new, bus: nil, plan: @plan, root: Master::REPO_ROOT,
     )
 
     result = pass.run(target: ".", files: %w[MASTER RAILS OPENBSD STUDIO])

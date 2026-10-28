@@ -199,7 +199,7 @@ class TestFeedbackLedger < Minitest::Test
     db.results_as_hash = true
     rows = db.execute(
       "SELECT event_type, metadata FROM feedback_events WHERE dimension = ? ORDER BY id",
-      ["web_fetch"]
+      ["web_fetch"],
     )
     success = JSON.parse(rows.find { |row| row["event_type"] == "tool_success" }["metadata"])
     failure = JSON.parse(rows.find { |row| row["event_type"] == "tool_failure" }["metadata"])

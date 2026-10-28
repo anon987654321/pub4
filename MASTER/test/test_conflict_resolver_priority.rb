@@ -9,7 +9,7 @@ class TestConflictResolverPriority < Minitest::Test
       FileUtils.mkdir_p(File.join(dir, "data"))
       File.write(File.join(dir, "data", "laws.yml"), {
         "HIGH_RULE" => { "priority" => 1, "statement" => "high", "violates_law" => "ROBUSTNESS" },
-        "LOW_RULE" => { "priority" => 3, "statement" => "low", "violates_law" => "DENSITY" }
+        "LOW_RULE" => { "priority" => 3, "statement" => "low", "violates_law" => "DENSITY" },
       }.to_yaml)
 
       resolver = Master::Fix::ConflictResolver.new(root: dir, config: {})
@@ -18,7 +18,7 @@ class TestConflictResolverPriority < Minitest::Test
         original_violation: { law: "LOW_RULE", severity: "warning" },
         before: [],
         after: [{ "law" => "HIGH_RULE", "severity" => "warning", "line" => 5 }],
-        path: "f.rb"
+        path: "f.rb",
       )
     end
   end

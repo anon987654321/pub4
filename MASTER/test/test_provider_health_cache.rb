@@ -94,7 +94,7 @@ class ProviderHealthCacheTest < Minitest::Test
       private_error = "authorization failed at https://private.example/path?token=secret"
 
       returned = health.record(
-        model: "provider-a", status: :provider_error, error: private_error
+        model: "provider-a", status: :provider_error, error: private_error,
       )
       serialized = File.read(path)
       persisted = JSON.parse(serialized.lines.last)
@@ -111,7 +111,7 @@ class ProviderHealthCacheTest < Minitest::Test
     Dir.mktmpdir("provider-health-outcomes-") do |dir|
       now = Time.utc(2026, 10, 26, 12, 0, 0)
       health = Master::CLI::Routing::ProviderHealth.new(
-        path: File.join(dir, "health.ndjson"), now: -> { now }
+        path: File.join(dir, "health.ndjson"), now: -> { now },
       )
 
       %i[model_missing llm_call_failure].each do |status|

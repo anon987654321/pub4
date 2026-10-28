@@ -49,7 +49,7 @@ class PledgeProfileTest < Minitest::Test
 
     assert_match(
       /def lock_unveil!\s+checked_syscall!\("unveil", LibC\.unveil\(Fiddle::NULL, Fiddle::NULL\), Fiddle\.last_error\)/,
-      source
+      source,
     )
   end
 

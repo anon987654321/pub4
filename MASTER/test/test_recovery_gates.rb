@@ -36,7 +36,7 @@ module Master
           transaction = Master::Fix::Transaction.new(
             root:,
             paths: [binary_path, created_path],
-            id: "recovery-gate-byte-restore"
+            id: "recovery-gate-byte-restore",
           )
           transaction.begin!
 
@@ -108,7 +108,7 @@ module Master
           writer = nil
 
           resumed = Master::Fix::Mission.new(root:, checkpoint: checkpoint_writer).start_or_resume!(
-            goal:, scope:, origin: "manual"
+            goal:, scope:, origin: "manual",
           )
           saved = Master::Fix::Mission.current(root:)
 
@@ -154,7 +154,7 @@ module Master
             target: File.join(root, "MASTER"),
             files: [tracked_path, untracked_path],
             max_passes: 2,
-            budget_seconds: 60
+            budget_seconds: 60,
           )
 
           File.binwrite(tracked_path, "modified tracked source\n")
@@ -179,7 +179,7 @@ module Master
             target: File.join(root, "MASTER"),
             files: [tracked_path, untracked_path],
             max_passes: 2,
-            budget_seconds: 60
+            budget_seconds: 60,
           )
           refute_equal original_run.fetch("id"), replacement.fetch("id")
           refute replacement.fetch("resumed")
@@ -317,14 +317,14 @@ module Master
         loop.instance_variable_set(:@bus, nil)
         loop.define_singleton_method(:run_unlocked) do |target, max_passes:, budget_seconds:, incremental:, requested:|
           journal = @run_journal.start_or_resume(
-            target:, files: [], max_passes:, budget_seconds:
+            target:, files: [], max_passes:, budget_seconds:,
           )
           @kernel.bind_fix_run(
             adapter: self, run_id: journal.fetch("id"), target:,
             max_passes:, budget_seconds:, requested:
           )
           @kernel.record_repair_outcome(
-            law: "RECOVERY_GATE", status: :fixed, fixed: 1, breakdown: { applied: 1 }
+            law: "RECOVERY_GATE", status: :fixed, fixed: 1, breakdown: { applied: 1 },
           )
           @last_terminal_state = :done
           Master::Result.ok("DONE: receipt parity fixture")
@@ -360,7 +360,7 @@ module Master
           [
             terminal.fetch("kind"), terminal.dig("payload", "state"),
             terminal.dig("payload", "result")
-          ]
+          ],
         ]
       end
 

@@ -23,7 +23,7 @@ module Operator
         screenshot: relative(capture[:screenshot], dir),
         metrics: measured["metrics"],
         problems: problems(measured, surface, state, root:) + drift(surface, payload, root:),
-        extras: extras(capture, dir),
+        extras: extras(capture, dir)
       }
     end
 

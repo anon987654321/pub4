@@ -21,7 +21,7 @@ class TestPersonalPermissions < Minitest::Test
        personal_memory calendar_read financial_data financial_actions tradedoubler.claims.read
        tradedoubler.claims.prepare tradedoubler.claims.submit external_messages purchases
        deployment destructive_actions].each do |scope|
-      refute @permissions.allowed?(scope: scope), "#{scope} must default to deny"
+      refute @permissions.allowed?(scope:), "#{scope} must default to deny"
     end
   end
 
@@ -63,7 +63,7 @@ class TestPersonalPermissions < Minitest::Test
   def test_personal_memory_grants_do_not_cross_subjects
     @permissions.grant(
       scope: "personal_memory", subject: "subject-a", confirmed_by: "owner",
-      purpose: "read and write personal profile and memory",
+      purpose: "read and write personal profile and memory"
     )
 
     assert @permissions.allowed?(scope: "personal_memory", subject: "subject-a",
@@ -82,7 +82,7 @@ class TestPersonalPermissions < Minitest::Test
     purpose = Master::Ground::PersonalCalendar::READ_PERMISSION_PURPOSE
     @permissions.grant(
       scope: "calendar_read", subject: "subject-a", confirmed_by: "owner",
-      purpose: purpose,
+      purpose:
     )
 
     assert @permissions.allowed?(scope: "calendar_read", subject: "subject-a", purpose:)

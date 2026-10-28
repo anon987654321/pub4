@@ -147,7 +147,7 @@ module Master
           server_tool_use = usage.server_tool_use if usage&.respond_to?(:server_tool_use)
           record_measured_usage(
             model, input:, output:, cached:, cache_write:, tokens: total_tokens,
-            cost_override: reported_cost, cache_write_cost:, cache_write_details:, server_tool_use:,
+            cost_override: reported_cost, cache_write_cost:, cache_write_details:, server_tool_use:
           )
         rescue StandardError => e
           @bus&.publish("cost:record_error", error_class: e.class.name, **Master::Execution::Contract.diagnostic_fields(e.message))

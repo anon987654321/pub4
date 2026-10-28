@@ -42,10 +42,10 @@ module Master
         end
 
         def focus_slice(text)
-          return nil if text.empty?
+          return if text.empty?
 
           hits = named_symbols(text) | file_symbols(text)
-          return nil if hits.empty?
+          return if hits.empty?
 
           lines = hits.first(SLICE_MAX_HITS).map { |sym| format_summary_entry(sym) }
           lines << "  (+#{hits.size - SLICE_MAX_HITS} more)" if hits.size > SLICE_MAX_HITS

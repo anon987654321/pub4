@@ -5,7 +5,10 @@ require "yaml"
 
 module Deploy
   class Inventory
-    App = Struct.new(:name, :title, :domain, :port, :deploy_script, :deploy_root, :public, keyword_init: true)
+    # Both copies can load into one process (a check chain that reads OPENBSD
+    # through MASTER's support tree), so the constants guard against
+    # redefinition warnings instead of assuming a fresh namespace.
+    App = Struct.new(:name, :title, :domain, :port, :deploy_script, :deploy_root, :public, keyword_init: true) unless defined?(App)
 
     attr_reader :root
 
@@ -28,7 +31,7 @@ module Deploy
 
     private
 
-    REQUIRED_APP_KEYS = %w[domain port deploy_script deploy_root].freeze
+    REQUIRED_APP_KEYS = %w[domain port deploy_script deploy_root].freeze unless defined?(REQUIRED_APP_KEYS)
 
     # apps.yml is the fleet's source of truth and is edited by hand, so a missing
     # key has to say which app and which key. It used to raise a bare

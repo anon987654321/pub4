@@ -110,14 +110,14 @@ class ScaleSnapTest < Minitest::Test
 
   def test_apply_keeps_the_rewrite_when_the_score_holds
     findings = Snap.propose(root: @root, files: [@sheet], tokens: @tokens)
-    out = Snap.apply(findings, root: @root, rescore: ->(_) { true }, guard: guard)
+    out = Snap.apply(findings, root: @root, rescore: ->(_) { true }, guard:)
     assert_equal 1, out[:applied]
     assert_includes File.read(@sheet), "padding: var(--space-2, 8px) 16px;"
   end
 
   def test_apply_rolls_back_when_the_score_drops
     findings = Snap.propose(root: @root, files: [@sheet], tokens: @tokens)
-    out = Snap.apply(findings, root: @root, rescore: ->(_) { false }, guard: guard)
+    out = Snap.apply(findings, root: @root, rescore: ->(_) { false }, guard:)
     assert_equal 1, out[:score_dropped]
     assert_equal SHEET, File.read(@sheet)
   end
@@ -126,6 +126,6 @@ class ScaleSnapTest < Minitest::Test
     findings = Snap.propose(root: @root, files: [@sheet], tokens: @tokens)
     assert_equal 1, Snap.apply(findings, root: @root, rescore: ->(_) { true }, guard: guard(blocked: true))[:guard_refused]
     File.write(@sheet, ".other { margin: 1px; }\n")
-    assert Snap.apply(findings, root: @root, rescore: ->(_) { true }, guard: guard)[:stale].positive?
+    assert Snap.apply(findings, root: @root, rescore: ->(_) { true }, guard:)[:stale].positive?
   end
 end

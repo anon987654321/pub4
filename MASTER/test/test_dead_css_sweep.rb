@@ -142,7 +142,7 @@ class DeadCssSweepTest < Minitest::Test
 
     def initialize = @calls = []
 
-    def command(method, **params)
+    def command(method, **_params)
       @calls << method
       case method
       when "CSS.stopRuleUsageTracking" then { "ruleUsage" => [{ "styleSheetId" => "s", "startOffset" => 0, "endOffset" => 12, "used" => true }] }

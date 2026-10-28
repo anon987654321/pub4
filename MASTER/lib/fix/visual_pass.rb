@@ -104,7 +104,7 @@ module Master
         return inconclusive("no surface was measured") if captures.empty?
 
         @custody = VisualCustody.new(
-          root: repo_root, surfaces:, bus: @bus, layout_completion: @layout_completion_enabled
+          root: repo_root, surfaces:, bus: @bus, layout_completion: @layout_completion_enabled,
         )
         custody = @custody.preflight!(captures)
         return inconclusive(custody.message) unless custody.ok?
@@ -438,7 +438,7 @@ module Master
           severity: :warning,
           confidence: 1.0, anchor: selector,
           message: "Rendered visual refinement: #{pick} — #{surface} / #{viewport} — laws: #{laws.join(", ")}",
-          fix: "Use the attached rendered evidence as ground truth. Make the smallest source change that materially improves the cited visual issue while preserving accessibility, semantics and responsive behavior.",
+          fix: "Use the attached rendered evidence as ground truth. Make the smallest source change that materially improves the cited visual issue while preserving accessibility, semantics and responsive behavior."
         }
       rescue StandardError
         nil

@@ -41,10 +41,10 @@ class MediaIntentSpec < Minitest::Test
   TEXT
   DILLA_LISTING = LISTING.sub(
     "Drum patterns: boom_bap, offbeat_inversion, sparse",
-    "Drum patterns: dilla_shadow_full, dilla_broken_full, dilla_shadow, dilla_broken, dusty_laid_back, boom_bap, offbeat_inversion, sparse"
+    "Drum patterns: dilla_shadow_full, dilla_broken_full, dilla_shadow, dilla_broken, dusty_laid_back, boom_bap, offbeat_inversion, sparse",
   ).sub(
     "Groove profiles: late_snare, behind_the_beat, dry",
-    "Groove profiles: dilla_shadow, late_snare, behind_the_beat, dry"
+    "Groove profiles: dilla_shadow, late_snare, behind_the_beat, dry",
   )
 
   # Answers --list with the menu and records every other call; a render "writes" its --out.
@@ -401,7 +401,7 @@ class MediaIntentSpec < Minitest::Test
       ENV["XDG_DATA_HOME"] = dir
       urls = [
         "https://youtu.be/mx9NU4LmDwM?si=first",
-        "https://youtu.be/abcdefghijk?si=second"
+        "https://youtu.be/abcdefghijk?si=second",
       ]
       calls = []
       begin
@@ -452,7 +452,7 @@ class MediaIntentSpec < Minitest::Test
         "https://m.youtube.com/shorts/mx9NU4LmDwM",
         "https://music.youtube.com/watch?v=mx9NU4LmDwM",
         "https://www.youtube.com/watch?feature=shared&v=mx9NU4LmDwM",
-        "https://www.youtube.com/embed/mx9NU4LmDwM"
+        "https://www.youtube.com/embed/mx9NU4LmDwM",
       ]
       begin
         with_dispatch_stub(lambda do |**kwargs|
@@ -711,7 +711,7 @@ class MediaIntentSpec < Minitest::Test
       File.write(File.join(root, "active_style.json"), JSON.generate("style_key" => "industrial_techno"))
       File.write(File.join(root, "latest_profile.json"), JSON.generate("style_key" => "industrial_techno"))
       File.write(File.join(root, "profiles", "j_dilla", "latest_profile.json"), JSON.generate(
-        "style_key" => "j_dilla", "target_bpm" => 92, "groove_profile" => "dilla_shadow"
+        "style_key" => "j_dilla", "target_bpm" => 92, "groove_profile" => "dilla_shadow",
       ))
       calls = []
       begin

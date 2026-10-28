@@ -34,7 +34,7 @@ class TestToolsHierarchy < Minitest::Test
     master_rake = File.read(File.join(MASTER_ROOT, "Rakefile"))
     tools_rake = File.read(File.join(TOOLS_ROOT, "Rakefile"))
 
-    assert_includes master_rake, 'tools/voice/voice_benchmark.rb'
+    assert_includes master_rake, "tools/voice/voice_benchmark.rb"
     assert_includes tools_rake, 'File.expand_path("voice/voice_quality.rb", __dir__)'
   end
 
@@ -85,7 +85,7 @@ class TestToolsHierarchy < Minitest::Test
     assert_includes cognition, 'require_relative "../../lib/cognition/benchmark"'
     # ROOT is MASTER/, where the challenge balance finds lib/ and test/.
     assert_includes challenges, 'ROOT = File.expand_path("../..", __dir__)'
-    assert_includes trajectory, 'MASTER/tools/research/llm_trajectory.rb contract'
+    assert_includes trajectory, "MASTER/tools/research/llm_trajectory.rb contract"
   end
 
   def test_repository_maintenance_implementations_live_in_their_canonical_family
@@ -188,7 +188,7 @@ class TestToolsHierarchy < Minitest::Test
   def test_css_ratchet_runs_the_canonical_design_baseline
     source = File.read(File.join(MASTER_ROOT, "lib", "operator", "ratchets.rb"))
 
-    assert_includes source, 'bundle exec ruby tools/audit/design_baseline.rb'
+    assert_includes source, "bundle exec ruby tools/audit/design_baseline.rb"
   end
 
   def test_design_baseline_is_owned_by_the_audit_family

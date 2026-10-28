@@ -106,13 +106,13 @@ class TestVisualProbes < Minitest::Test
   def locales(nb, en) = { "locales" => { "nb" => { "lang" => "nb", "texts" => nb }, "en" => { "lang" => "en", "texts" => en } } }
 
   def test_keys_as_text_and_missing_marker_are_found_in_the_second_locale
-    payload = locales(texts(a: ["Hjem", "a"]), texts(a: ["home.index.title", "a"], b: ["translation missing: en.x", "p"]))
+    payload = locales(texts(a: %w[Hjem a]), texts(a: ["home.index.title", "a"], b: ["translation missing: en.x", "p"]))
     assert_equal ["a [en]", "b [en]"], I18N.rows(payload).map { |r| r["key"] }
   end
 
   def test_identical_ui_label_is_flagged_but_names_and_content_are_not
     nb = texts("header.top>a": ["Log in to continue", "a"], "main>h1": ["Welcome back friends", "h1"], "form>button": ["Save changes", "button"],
-               "footer>p": ["Ragnhild Hansen", "p"], "nav>a": ["www.brgen.no", "a"], "form>label": ["Chat", "label"])
+               "footer>p": ["Ragnhild Hansen", "p"], "nav>a": ["www.brgen.no", "a"], "form>label": %w[Chat label])
     found = I18N.rows(locales(nb, nb)).map { |r| r["key"] }
     assert_equal 2, found.size
     assert(found.all? { |k| k.include?("nb=en") })
@@ -123,13 +123,13 @@ class TestVisualProbes < Minitest::Test
   def test_translated_labels_pass_and_unavailable_locale_is_skipped
     ok = locales(texts("form>button": ["Lagre endringer", "button"]), texts("form>button": ["Save changes", "button"]))
     assert_empty I18N.rows(ok)
-    pinned = { "locales" => { "nb" => { "texts" => texts(a: ["Hjem", "a"]) }, "en" => { "status" => "unavailable", "lang" => "nb" } } }
+    pinned = { "locales" => { "nb" => { "texts" => texts(a: %w[Hjem a]) }, "en" => { "status" => "unavailable", "lang" => "nb" } } }
     assert_empty I18N.rows(pinned)
   end
 
   def test_the_check_counts_second_locale_defects_in_the_i18n_metric
     payload = { "vw" => 390, "vh" => 800, "scroll_width" => 390, "client_width" => 390, "elements" => [] }
-    bad = locales(texts(a: ["Hjem", "a"]), texts(a: ["home.index.title", "a"]))
+    bad = locales(texts(a: %w[Hjem a]), texts(a: ["home.index.title", "a"]))
     assert_equal 1, Q.measure(surface, payload.merge(bad))["metrics"]["i18n"]
   end
 

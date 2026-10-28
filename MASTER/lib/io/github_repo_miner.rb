@@ -91,8 +91,8 @@ module Master
         return if name.empty? || !trusted_repository_url?(url)
 
         {
-          name: name,
-          url: url,
+          name:,
+          url:,
           description: item["description"].to_s.gsub(/\s+/, " ").strip[0, 500],
           stars: Integer(item["stargazers_count"] || 0),
           forks: Integer(item["forks_count"] || 0),

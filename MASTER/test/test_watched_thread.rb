@@ -35,6 +35,6 @@ class WatchedThreadTest < Minitest::Test
     source = File.read(File.join(Master::ROOT, "lib", "builder", "ai_boot.rb"))
 
     assert_includes source, 'strict_boot_requested? ? run.call : watched_thread(bus, "builder_self_test", &run)'
-    refute_includes source, 'Thread.new(&run).tap { |thread| thread.report_on_exception = false }'
+    refute_includes source, "Thread.new(&run).tap { |thread| thread.report_on_exception = false }"
   end
 end

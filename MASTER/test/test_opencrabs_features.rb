@@ -219,7 +219,7 @@ class TestOpenCrabsFeatures < Minitest::Test
     governor.define_singleton_method(:permit?) { |*| raise IOError, "permission source unavailable" }
     pool = Master::Review::AgentPool.new(
       governor:, event_bus: bus,
-      taxonomy: { "spawn_policy" => { "max_concurrent_children" => 1 } },
+      taxonomy: { "spawn_policy" => { "max_concurrent_children" => 1 } }
     )
     ran = false
 

@@ -33,7 +33,7 @@ class TestCheckChainStreaming < Minitest::Test
 
     assert ok
     assert_equal 0, status
-    assert_equal ["scan-start", "scan-finish"], output
+    assert_equal %w[scan-start scan-finish], output
     first = sink.events.find { |_at, text| text.include?("scan-start") }
     refute_nil first
     assert_operator first.first - started, :<, 0.8, "capture waited for the child before forwarding its first line"

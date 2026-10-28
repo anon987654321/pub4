@@ -125,11 +125,11 @@ module Master
           authors = REXML::XPath.match(entry, "atom:author/atom:name", namespace)
             .map { |node| node.text.to_s.strip }.reject(&:empty?).first(5)
           {
-            id: id,
+            id:,
             title: xpath_text(entry, "atom:title", namespace).gsub(/\s+/, " ").strip,
             summary: xpath_text(entry, "atom:summary", namespace).gsub(/\s+/, " ").strip[0, MAX_ABSTRACT_CHARS],
             published: xpath_text(entry, "atom:published", namespace),
-            authors: authors,
+            authors:,
           }
         end
       end

@@ -64,7 +64,7 @@ class TestCoreReversibility < Minitest::Test
     assert_equal(
       {
         read: :read, write: :write, exec: :execute, git: :read, http: :network,
-        ask: :stdio, note: :stdio, critique: :stdio, done: :stdio,
+        ask: :stdio, note: :stdio, critique: :stdio, done: :stdio
       },
       by_verb.transform_values(&:capability),
     )
@@ -72,7 +72,7 @@ class TestCoreReversibility < Minitest::Test
       {
         read: :non_mutating, write: :reversible, exec: :policy_gated, git: :non_mutating,
         http: :policy_gated, ask: :non_mutating, note: :session_state,
-        critique: :non_mutating, done: :non_mutating,
+        critique: :non_mutating, done: :non_mutating
       },
       by_verb.transform_values { |effect| effect.reversibility.kind },
     )
@@ -315,7 +315,7 @@ class TestCoreReversibility < Minitest::Test
     assert_equal [
       [:before, :perform], [:after, :perform],
       [:before, :compensation_approval], [:after, :compensation_approval],
-      [:before, :compensation], [:after, :compensation],
+      [:before, :compensation], [:after, :compensation]
     ], lifecycle.map { |event| [event[:stage], event[:operation]] }
     original_id = lifecycle.first.fetch(:effect_id)
     assert_equal original_id, lifecycle[2].fetch(:parent_effect_id)

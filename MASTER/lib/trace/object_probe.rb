@@ -19,7 +19,7 @@ module Master
       Event = Struct.new(
         :event, :receiver_id, :receiver_class, :owner, :method_id,
         :path, :line, :exception_class,
-        keyword_init: true,
+        keyword_init: true
       )
 
       def initialize(receivers:, methods: nil, max_events: MAX_EVENTS, root: Master::REPO_ROOT)

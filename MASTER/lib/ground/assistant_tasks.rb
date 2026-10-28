@@ -112,7 +112,7 @@ module Master
           "count" => rows.size,
           "tasks" => rows.first(50).map { |task| public_task(task).merge("overdue" => overdue?(task, current_time)) },
           "truncated" => rows.size > 50,
-          "note" => "Overdue tasks are labeled when listed. #{DELIVERY}"
+          "note" => "Overdue tasks are labeled when listed. #{DELIVERY}",
         }
       end
 
@@ -132,7 +132,7 @@ module Master
           "verification_note" => nil,
           "created_at" => now,
           "updated_at" => now,
-          "completed_at" => nil
+          "completed_at" => nil,
         }
         state["tasks"] << task
         delivered(public_task(task))
@@ -221,7 +221,7 @@ module Master
         {
           "task_id" => task["id"],
           "step" => step.dup,
-          "verification_semantics" => "evidence recorded as supplied; not independently authenticated"
+          "verification_semantics" => "evidence recorded as supplied; not independently authenticated",
         }
       end
 
@@ -279,7 +279,7 @@ module Master
       end
 
       def normalize_due(value)
-        return nil if value.nil? || value.to_s.strip.empty? || value.to_s.strip.downcase == "none"
+        return if value.nil? || value.to_s.strip.empty? || value.to_s.strip.downcase == "none"
 
         due = ReminderTime.resolve(value, zone: owner_zone, now: Time.iso8601(now))
         return due.iso8601 if due
@@ -322,7 +322,7 @@ module Master
           "at" => now,
           "action" => action,
           "task_id" => id.to_s.empty? ? nil : id.to_s,
-          "actor" => @subject.start_with?("local-uid-") ? "local-owner" : "paired-owner"
+          "actor" => @subject.start_with?("local-uid-") ? "local-owner" : "paired-owner",
         }
         state["events"] = state.fetch("events").last(MAX_EVENTS)
       end

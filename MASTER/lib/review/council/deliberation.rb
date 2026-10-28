@@ -407,7 +407,7 @@ module Master
           false
         end
 
-        def candidate_models_for(persona)
+        def candidate_models_for(_persona)
           if ENV["MASTER_LOCAL_ONLY"] == "1"
             router = @agent.respond_to?(:model_router) ? @agent.model_router : nil
             return Array(router.local_models) + Array(router.local_server_models) if router

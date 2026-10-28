@@ -297,7 +297,7 @@ module Master
           unless File.file?(path) && File.read(path, encoding: "UTF-8") == original
             @bus&.publish(
               "repair_loop:candidate_simulation_blocked",
-              law: @law.id, file: path, reason: "target changed since candidate generation"
+              law: @law.id, file: path, reason: "target changed since candidate generation",
             )
             return
           end
@@ -338,7 +338,7 @@ module Master
             [
               [row.fetch(:findings), UserSimulation.rank(status), row.fetch(:diff_bytes)],
               row.fetch(:source),
-              proof
+              proof,
             ]
           end
           selected = ranked.min_by(&:first)
@@ -396,7 +396,7 @@ module Master
             "Independent candidate #{index + 1}/#{UserSimulation.candidate_count}: #{approach.fetch(:name)}. Return only this candidate, not a comparison or a combined patch.",
             approach.fetch(:instruction),
             user_simulation.scenario_context(path:),
-            suffix
+            suffix,
           ].compact.reject { |part| part.to_s.strip.empty? }.join("\n\n")
         end
 

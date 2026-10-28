@@ -64,7 +64,7 @@ class TestInstrumentCheck < Minitest::Test
     healthy = scripted(disk: nil, git: nil).verification_result
     blocked = scripted(disk: "private disk diagnostic", git: nil).verification_result
     disabled = scripted(disk: "should not execute").verification_result(
-      env: { "MASTER_FIX_INSTRUMENT_CHECK" => "0" }
+      env: { "MASTER_FIX_INSTRUMENT_CHECK" => "0" },
     )
 
     assert_equal :pass, healthy.status

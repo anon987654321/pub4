@@ -19,7 +19,7 @@ class TestPersonalCalendar < Minitest::Test
   def grant_calendar
     @permissions.grant(
       scope: "calendar_read", subject: @subject, confirmed_by: "local owner",
-      purpose: Master::Ground::PersonalCalendar::READ_PERMISSION_PURPOSE,
+      purpose: Master::Ground::PersonalCalendar::READ_PERMISSION_PURPOSE
     )
   end
 

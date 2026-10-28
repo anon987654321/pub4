@@ -17,7 +17,7 @@ class TestPersonalWorkspace < Minitest::Test
   def grant_personal_memory(subject)
     Master::Ground::PersonalPermissions.new(root: @root).grant(
       scope: "personal_memory", subject:, confirmed_by: "local owner",
-      purpose: Master::Ground::PersonalWorkspace::MEMORY_PERMISSION_PURPOSE,
+      purpose: Master::Ground::PersonalWorkspace::MEMORY_PERMISSION_PURPOSE
     )
   end
 

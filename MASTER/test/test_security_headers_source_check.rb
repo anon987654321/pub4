@@ -65,7 +65,7 @@ class SecurityHeadersSourceCheckTest < Minitest::Test
       source = replace_once(
         source,
         'policy.script_src :self, "https://link.tradedoubler.com"',
-        "policy.script_src :self, :unsafe_inline"
+        "policy.script_src :self, :unsafe_inline",
       )
       File.write(path, source)
 
@@ -81,7 +81,7 @@ class SecurityHeadersSourceCheckTest < Minitest::Test
       source = replace_once(
         source,
         'policy.script_src :self, "https://link.tradedoubler.com"',
-        "policy.script_src(\n      :self,\n      :unsafe_inline\n    )"
+        "policy.script_src(\n      :self,\n      :unsafe_inline\n    )",
       )
       File.write(path, source)
 
@@ -117,7 +117,7 @@ class SecurityHeadersSourceCheckTest < Minitest::Test
       source = replace_once(
         source,
         'policy.script_src :self, "https://link.tradedoubler.com"',
-        'policy.script_src :self, "https://*.example.com"'
+        'policy.script_src :self, "https://*.example.com"',
       )
       File.write(path, source)
 
@@ -127,14 +127,14 @@ class SecurityHeadersSourceCheckTest < Minitest::Test
   end
 
   def test_data_and_blob_script_sources_are_rejected
-    ['data:text/javascript,alert(1)', 'blob:https://attacker.example/id'].each do |url|
+    ["data:text/javascript,alert(1)", "blob:https://attacker.example/id"].each do |url|
       with_source_tree do |root|
         path = File.join(root, Deploy::SecurityHeadersSourceCheck::SHARED_CSP)
         source = File.read(path)
         source = replace_once(
           source,
           'policy.script_src :self, "https://link.tradedoubler.com"',
-          "policy.script_src :self, #{url.inspect}"
+          "policy.script_src :self, #{url.inspect}",
         )
         File.write(path, source)
 
@@ -187,7 +187,7 @@ class SecurityHeadersSourceCheckTest < Minitest::Test
       source = replace_once(
         source,
         'match response header set "Strict-Transport-Security" value "max-age=31536000; includeSubDomains; preload"',
-        ""
+        "",
       )
       File.write(path, source)
 

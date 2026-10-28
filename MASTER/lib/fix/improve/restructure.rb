@@ -35,7 +35,7 @@ module Master
 
             list << Proposal.new(
               kind: :merge, from: path, to: target,
-              reason: "#{path.sub("#{@root}/", "")} carries fewer than #{TINY_LINES} lines; its content belongs inside #{target.sub("#{@root}/", "")}",
+              reason: "#{path.sub("#{@root}/", "")} carries fewer than #{TINY_LINES} lines; its content belongs inside #{target.sub("#{@root}/", "")}"
             )
           end
           singles.first(2).each do |dir|
@@ -44,7 +44,7 @@ module Master
 
             list << Proposal.new(
               kind: :flatten, from: member, to: File.join(File.dirname(dir), File.basename(member)),
-              reason: "#{dir.sub("#{@root}/", "")} holds one file; a folder is structure a single file cannot justify",
+              reason: "#{dir.sub("#{@root}/", "")} holds one file; a folder is structure a single file cannot justify"
             )
           end
           list
@@ -56,12 +56,12 @@ module Master
 
         def merge_target_for(path)
           lines = File.readlines(path, encoding: "UTF-8", invalid: :replace).size
-          return nil unless lines < TINY_LINES
+          return unless lines < TINY_LINES
 
           parent = File.dirname(File.dirname(path))
           stem = File.basename(File.dirname(path))
           candidate = File.join(parent, "#{stem}.rb")
-          return nil unless File.file?(candidate)
+          return unless File.file?(candidate)
 
           candidate
         end

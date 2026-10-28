@@ -12,7 +12,7 @@ class TestMissionLease < Minitest::Test
 
   def claimed
     Master::Fix::Mission.new(root: @root).start_or_resume!(
-      goal: "fix MASTER", scope: @root, model: "stub", effort: "high", plan: "observe", origin: "manual"
+      goal: "fix MASTER", scope: @root, model: "stub", effort: "high", plan: "observe", origin: "manual",
     )
   end
 

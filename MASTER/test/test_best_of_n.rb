@@ -92,7 +92,7 @@ class BestOfNTest < Minitest::Test
   class FakeLoop
     def initialize(replies) = (@replies = replies; @visual_image = nil)
     def build_prompt_for(violation:, src:, path:) = "fix #{path}"
-    def ask_agent(prompt, image: nil) = @replies.shift
+    def ask_agent(_prompt, image: nil) = @replies.shift
     def extract_code(text, _ext) = text
     def write_atomic(path, src) = File.write(path, src)
   end
@@ -195,7 +195,7 @@ class TestUserSimulation < Minitest::Test
       writer = ->(target, source) { File.write(target, source) }
 
       result = simulation.evaluate_candidates(
-        path:, original: "broken\n", candidates: ["fixed\n"], writer:
+        path:, original: "broken\n", candidates: ["fixed\n"], writer:,
       ).fetch(0)
 
       assert_equal :pass, result.fetch(:status)
@@ -219,7 +219,7 @@ class TestUserSimulation < Minitest::Test
       writer = ->(target, text) { File.write(target, text) }
 
       results = simulation.evaluate_candidates(
-        path:, original: "broken\n", candidates: ["fixed\n"], writer:
+        path:, original: "broken\n", candidates: ["fixed\n"], writer:,
       )
 
       assert_equal :pass, results.fetch(0).fetch(:status)
@@ -242,7 +242,7 @@ class TestUserSimulation < Minitest::Test
       writer = ->(target, text) { File.write(target, text) }
 
       result = simulation.evaluate_candidates(
-        path:, original: "safe\n", candidates: ["broken\n"], writer:
+        path:, original: "safe\n", candidates: ["broken\n"], writer:,
       ).fetch(0)
 
       assert_equal :regression, result.fetch(:status)
@@ -259,7 +259,7 @@ class TestUserSimulation < Minitest::Test
       writer = ->(target, text) { File.write(target, text) }
 
       result = simulation.evaluate_candidates(
-        path:, original: "safe\n", candidates: ["fixed\n"], writer:
+        path:, original: "safe\n", candidates: ["fixed\n"], writer:,
       ).fetch(0)
 
       assert_equal :blocked, result.fetch(:status)
@@ -280,7 +280,7 @@ class TestUserSimulation < Minitest::Test
 
       error = assert_raises(UserSimulation::RestoreFailure) do
         simulation.evaluate_candidates(
-          path:, original: "safe\n", candidates: ["candidate\n"], writer:
+          path:, original: "safe\n", candidates: ["candidate\n"], writer:,
         )
       end
 
@@ -304,7 +304,7 @@ class TestUserSimulation < Minitest::Test
       end
 
       result = simulation.evaluate_candidates(
-        path:, original: "outside original\n", candidates: ["candidate\n"], writer:
+        path:, original: "outside original\n", candidates: ["candidate\n"], writer:,
       ).fetch(0)
 
       assert_equal :blocked, result.fetch(:status)
@@ -328,7 +328,7 @@ class TestUserSimulation < Minitest::Test
       end
 
       result = simulation.evaluate_candidates(
-        path:, original: "safe\n", candidates: ["candidate\n"], writer:
+        path:, original: "safe\n", candidates: ["candidate\n"], writer:,
       ).fetch(0)
 
       assert_equal :blocked, result.fetch(:status)
@@ -351,7 +351,7 @@ class TestUserSimulation < Minitest::Test
       end
 
       result = simulation.evaluate_candidates(
-        path:, original: "original\n", candidates: ["candidate\n"], writer:
+        path:, original: "original\n", candidates: ["candidate\n"], writer:,
       ).fetch(0)
 
       assert_equal :unavailable, result.fetch(:status)

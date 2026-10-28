@@ -40,7 +40,7 @@ module Master
             next if allowed && !allowed.include?(name)
             next if allowed.nil? && !Fiber[:master_elevated] && elevated
             next if tier == "cheap" && elevated
-            wrapper.new(tool, bus: @bus, tool_observer: tool_observer)
+            wrapper.new(tool, bus: @bus, tool_observer:)
           end
         rescue StandardError => err
           @bus&.publish("agent:llm_tools_error", error_class: err.class.name, **Master::Execution::Contract.diagnostic_fields(err.message))

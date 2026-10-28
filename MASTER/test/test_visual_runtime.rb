@@ -58,7 +58,7 @@ class TestVisualRuntime < Minitest::Test
       root:, triangle:, database_url: options.delete(:database_url),
       host_os: "Darwin", tcp_checker: checker,
       killer: ->(pid) { killed << pid },
-      **options,
+      **options
     )
     [instance, killed]
   end

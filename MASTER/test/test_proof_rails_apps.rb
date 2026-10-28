@@ -55,7 +55,7 @@ class TestProofRailsApps < Minitest::Test
 
       seen = Apps.at_revision(%w[a.rb], "HEAD", repo_root: repo) { File.read(file) }
 
-      assert_equal ["old\n", "new\n"], [seen, File.read(file)]
+      assert_equal %W[old\n new\n], [seen, File.read(file)]
     end
   end
 

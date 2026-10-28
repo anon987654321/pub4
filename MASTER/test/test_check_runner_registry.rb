@@ -27,7 +27,7 @@ class TestCheckRunnerRegistry < Minitest::Test
 
   def test_registry_rejects_rows_that_declare_both_class_and_script
     run_registry(
-      "ambiguous" => { "class" => "Deploy::CheckResult", "script" => "architecture.rb" }
+      "ambiguous" => { "class" => "Deploy::CheckResult", "script" => "architecture.rb" },
     ) do |output, status|
       refute status.success?
       assert_includes output, "must declare exactly one of class: or script:"
@@ -57,7 +57,7 @@ class TestCheckRunnerRegistry < Minitest::Test
 
   def test_registry_rejects_require_paths_that_escape_declared_tree
     run_registry(
-      "bad_require" => { "require" => "../../README.md", "class" => "Deploy::CheckResult" }
+      "bad_require" => { "require" => "../../README.md", "class" => "Deploy::CheckResult" },
     ) do |output, status|
       refute status.success?
       assert_includes output, "require: parent or absolute paths are not allowed"
@@ -80,7 +80,7 @@ class TestCheckRunnerRegistry < Minitest::Test
 
   def test_registry_rejects_missing_require_files
     run_registry(
-      "missing_require" => { "require" => "lib/no_such_check", "class" => "Deploy::NoSuchCheck" }
+      "missing_require" => { "require" => "lib/no_such_check", "class" => "Deploy::NoSuchCheck" },
     ) do |output, status|
       refute status.success?
       assert_includes output, "require: path does not identify an existing file"

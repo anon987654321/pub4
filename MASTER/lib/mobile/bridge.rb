@@ -17,7 +17,7 @@ module Master
 
       CHILD_ENV = {
         "MASTER_PROFILE" => "mobile", "MASTER_INTERNAL_CHILD" => "1", "MASTER_BACKGROUND_SCAN" => "0",
-        "MASTER_WEB" => "0", "MASTER_CLI_QUIET" => "1", "MASTER_SKIP_BOOT_SCAN" => "1",
+        "MASTER_WEB" => "0", "MASTER_CLI_QUIET" => "1", "MASTER_SKIP_BOOT_SCAN" => "1"
       }.freeze
 
       def initialize(root:, timeout_s: 120, capture: nil)

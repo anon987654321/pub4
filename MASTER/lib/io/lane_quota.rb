@@ -229,8 +229,8 @@ module Master
 
       def raw
         rows = YAML.safe_load_file(path) || {}
-        live = rows.select { |key, deadline| !key.start_with?(MANUAL_PROBE_PREFIX, MANUAL_REVIVED_PREFIX) &&
-                                                   deadline.is_a?(Numeric) && deadline > @clock.call }
+        live = rows.select do |key, deadline| !key.start_with?(MANUAL_PROBE_PREFIX, MANUAL_REVIVED_PREFIX) &&
+                                                   deadline.is_a?(Numeric) && deadline > @clock.call end
         why = rows.select { |key, reason| key.start_with?(REASON_PREFIX) && reason.is_a?(String) && live.key?(key.delete_prefix(REASON_PREFIX)) }
         metadata = rows.select do |key, value|
           (key.start_with?(MANUAL_PROBE_PREFIX) && value.is_a?(Numeric)) ||

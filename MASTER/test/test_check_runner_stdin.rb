@@ -10,14 +10,14 @@ class TestCheckRunnerStdin < Minitest::Test
       prefix: "check-runner-timeout",
       root: File.expand_path("../..", __dir__),
       timeout: 0.1,
-      quiet: true
+      quiet: true,
     )
 
     refute runner.run(
       "bounded timeout",
       RbConfig.ruby,
       "-e",
-      "STDOUT.sync = true; puts 'started'; sleep 30"
+      "STDOUT.sync = true; puts 'started'; sleep 30",
     )
 
     output = runner.results.fetch(0).output
@@ -30,14 +30,14 @@ class TestCheckRunnerStdin < Minitest::Test
       prefix: "check-runner-test",
       root: File.expand_path("../..", __dir__),
       timeout: 2,
-      quiet: true
+      quiet: true,
     )
 
     assert runner.run(
       "stdin eof",
       RbConfig.ruby,
       "-e",
-      "exit(STDIN.read.empty? ? 0 : 1)"
+      "exit(STDIN.read.empty? ? 0 : 1)",
     )
   end
 end

@@ -29,7 +29,7 @@ module Master
                              Array(@agent.research_sources(
                                queries:, sources: urls,
                                max_queries: protocol.fetch("max_search_queries"),
-                               max_sources: protocol.fetch("max_fetched_sources"),
+                               max_sources: protocol.fetch("max_fetched_sources")
                              ) do |event|
                                label = event.fetch(:label).to_s
                                state = event.fetch(:event).to_s
@@ -41,7 +41,7 @@ module Master
                                  "fix_loop:research_source",
                                  target: target.to_s, domain:, kind: event.fetch(:kind),
                                  index: event.fetch(:index), total: event.fetch(:total),
-                                 state:, status: event[:status], label: label[0, 180],
+                                 state:, status: event[:status], label: label[0, 180]
                                )
                              end)
                            else
@@ -79,14 +79,14 @@ module Master
         report = {
           status:, domain: domain_label, domains:, target: target.to_s, brief:, eligible_files:,
           source_count: successful.size, fetched_count: fetched.size,
-          query_count:, independent_hosts: independent_hosts.size, coverage:,
+          query_count:, independent_hosts: independent_hosts.size, coverage:
         }
         @bus&.publish(
           "fix_loop:research",
           target: target.to_s, domain: domain_label, domains:,
           status: status.downcase.to_sym, fetched: fetched.size, sources: successful.size,
           queries: query_count, hosts: independent_hosts.size,
-          coverage: coverage.transform_values { |row| row.reject { |key, _| key == :pass } },
+          coverage: coverage.transform_values { |row| row.reject { |key, _| key == :pass } }
         )
         report
       rescue StandardError => e
@@ -98,7 +98,7 @@ module Master
         @bus&.publish("fix_loop:research", target: target.to_s, status: :inconclusive, error: e.class.name)
         {
           status: "INCONCLUSIVE", domain: "unknown", target: target.to_s, brief:,
-          source_count: 0, fetched_count: 0, query_count: 0,
+          source_count: 0, fetched_count: 0, query_count: 0
         }
       end
 

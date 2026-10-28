@@ -107,7 +107,7 @@ class TestCognitionFeedback < Minitest::Test
       "context" => "task", "action" => "/fix",
       "successes" => 1, "failures" => 0, "inconclusive" => 0,
       "brier_sum" => 0.0, "brier_count" => 0,
-      "observations" => [], "seen_receipts" => receipts,
+      "observations" => [], "seen_receipts" => receipts
     }
     File.write(path, {
       "ticks" => 3,

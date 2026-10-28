@@ -72,7 +72,7 @@ module Master
             "description" => row["description"].to_s[0, 360],
             "elevated_required" => row.fetch("elevated", true) != false,
             "boot_enabled" => row.fetch("default", false) == true,
-            "allowed_by_current_profile" => allowed.nil? || allowed.include?(name)
+            "allowed_by_current_profile" => allowed.nil? || allowed.include?(name),
           }
         end
       end
@@ -95,7 +95,7 @@ module Master
             "description" => manifest.description[0, 360],
             "policy_present" => policy_present,
             "observation_actions" => actions,
-            "status" => !policy_present ? "policy_missing" : actions.empty? ? "no_observation_actions" : "declared"
+            "status" => !policy_present ? "policy_missing" : actions.empty? ? "no_observation_actions" : "declared",
           }
         end
       end

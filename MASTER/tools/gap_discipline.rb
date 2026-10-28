@@ -95,7 +95,7 @@ module Deploy
       [ winners, pass_total ]
     end
 
-    def read_one_record(record, rel, candidates_by_id, crits, winners, errors)
+    def read_one_record(record, rel, candidates_by_id, _crits, winners, errors)
       candidates = Array(record["candidates"])
       verdicts = {}
       counted = Hash.new(0)

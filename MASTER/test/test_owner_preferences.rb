@@ -21,7 +21,7 @@ class TestOwnerPreferences < Minitest::Test
   def grant(subject = SUBJECT)
     Master::Ground::PersonalPermissions.new(root: @root).grant(
       scope: "personal_memory", subject:, confirmed_by: "local owner",
-      purpose: Master::Ground::PersonalWorkspace::MEMORY_PERMISSION_PURPOSE,
+      purpose: Master::Ground::PersonalWorkspace::MEMORY_PERMISSION_PURPOSE
     )
   end
 
@@ -58,7 +58,7 @@ class TestOwnerPreferences < Minitest::Test
     grant
     suggestion = Preferences.suggest(
       root: @root, subject: SUBJECT, key: "work.flow", value: "implement_verify",
-      scope: "coding", reason: "Repeated request for tested implementations", confidence: 0.82,
+      scope: "coding", reason: "Repeated request for tested implementations", confidence: 0.82
     )
     assert_empty Preferences.effective(root: @root, subject: SUBJECT, scope: "coding")
     assert_equal 1, Preferences.status(root: @root, subject: SUBJECT).fetch("suggestions").size

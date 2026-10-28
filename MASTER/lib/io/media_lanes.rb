@@ -226,7 +226,7 @@ module Master
         handle&.close
       end
 
-      def deliver(lane, artifact, cost, prompt, digest, dir)
+      def deliver(lane, artifact, cost, _prompt, digest, dir)
         LOCK.synchronize { @spent[lane.kind] += cost }
         base = "#{lane.kind}-#{Time.now.utc.strftime("%Y%m%dT%H%M%SZ")}-#{digest[0, 8]}"
         provenance = { "kind" => lane.kind.to_s, "lane" => lane.id, "provider" => lane.provider, "model" => lane.model, "prompt_sha256" => digest,

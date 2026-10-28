@@ -32,7 +32,7 @@ class TestConvergenceDiscipline < Minitest::Test
           "code_repair" => {
             "attempts" => attempts, "successes" => successes, "failures" => failures,
             "confidence_observations" => 0, "confidence_sum" => 0.0, "brier_sum" => 0.0,
-            "last_at" => Time.now.to_i,
+            "last_at" => Time.now.to_i
           },
         },
       },

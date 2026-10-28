@@ -760,7 +760,6 @@ module Master
             return nil
           end
 
-
           return { "status" => "matrix_ledger_schema_unsupported" } unless ledger["schema_version"].to_i == 2
 
           summary = ledger["summary"]

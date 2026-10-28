@@ -160,7 +160,7 @@ module Master
           "UX REFINEMENT ACCEPTANCE CONTRACT",
           "Canonical inventory: MASTER/data/ux_refinements.yml (#{rows.size} applicable rows; the full catalogue contains #{EXPECTED_COUNT}).",
           "Rows marked acceptance_required remain open. A verified row must carry PASS receipts for every declared proof type, each bound to a repository-relative evidence artifact, SHA-256 and exact commit. Never infer completion from inventory membership alone.",
-          "Keep one canonical Ruby REPL prompt. The face is a presentation adapter, never a second authority. Preserve source and operator-owned values; do not apply unrelated visual items blindly."
+          "Keep one canonical Ruby REPL prompt. The face is a presentation adapter, never a second authority. Preserve source and operator-owned values; do not apply unrelated visual items blindly.",
         ]
         rows.each do |row|
           receipt_count = Array(row["evidence"]).size

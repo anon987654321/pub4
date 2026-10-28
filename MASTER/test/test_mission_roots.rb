@@ -28,7 +28,7 @@ class TestMissionRoots < Minitest::Test
 
   def start_mission(root, goal)
     Master::Fix::Mission.new(root:).start_or_resume!(
-      goal:, scope: root, model: "stub", effort: "high", plan: "observe", origin: "manual"
+      goal:, scope: root, model: "stub", effort: "high", plan: "observe", origin: "manual",
     )
   end
 

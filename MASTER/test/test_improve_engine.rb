@@ -49,9 +49,9 @@ class TestImproveEngine < Minitest::Test
   end
 
   def test_elevate_returns_at_most_two_steps_per_domain
-    files = 5.times.map { |i| write("lib/wide#{i}.rb", "# frozen_string_literal: true\nclass W#{i}\n" +
-      "  def run\n" + (1..60).map { |j| "    x#{j} = #{j}" }.join("\n") + "\n  end\nend\n") }
-    findings = @engine.elevate(files: files)
+    files = 5.times.map do |i| write("lib/wide#{i}.rb", "# frozen_string_literal: true\nclass W#{i}\n" +
+      "  def run\n" + (1..60).map { |j| "    x#{j} = #{j}" }.join("\n") + "\n  end\nend\n") end
+    findings = @engine.elevate(files:)
     code_findings = findings.count { |f| f[:message].include?("elevation[code]") }
     assert_operator code_findings, :<=, 2
   end

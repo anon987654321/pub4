@@ -79,7 +79,7 @@ class TestLawParity < Minitest::Test
       YAML
 
       error = assert_raises(RuntimeError) do
-        Master::Fix::LawParity.new(root: dir, laws_path: laws_path).send(:priority_constitutional_entries)
+        Master::Fix::LawParity.new(root: dir, laws_path:).send(:priority_constitutional_entries)
       end
 
       assert_match(/law_enforcement\.yml entry ORPHAN_CONSTITUTION does not resolve/, error.message)
@@ -104,7 +104,7 @@ class TestLawParity < Minitest::Test
       YAML
 
       error = assert_raises(RuntimeError) do
-        Master::Fix::LawParity.new(root: dir, laws_path: laws_path).send(:priority_constitutional_entries)
+        Master::Fix::LawParity.new(root: dir, laws_path:).send(:priority_constitutional_entries)
       end
 
       assert_match(/unknown field\(s\): typo_coverage/, error.message)

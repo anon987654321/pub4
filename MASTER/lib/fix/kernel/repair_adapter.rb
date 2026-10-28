@@ -178,7 +178,7 @@ module Master
           if @kernel && !receipt_attempted
             begin
               @kernel.record_repair_outcome(
-                law: @law.id, status: :error, fixed: applied, breakdown:
+                law: @law.id, status: :error, fixed: applied, breakdown:,
               )
             rescue StandardError => receipt_error
               breakdown[:kernel_receipt_failed] = 1
@@ -197,7 +197,7 @@ module Master
         def record_kernel_outcome(fixed:, status:, breakdown:)
           result = { fixed: fixed.to_i, status:, breakdown: (breakdown || {}).dup }
           @kernel&.record_repair_outcome(
-            law: @law.id, status:, fixed: result[:fixed], breakdown: result[:breakdown]
+            law: @law.id, status:, fixed: result[:fixed], breakdown: result[:breakdown],
           )
           result
         end

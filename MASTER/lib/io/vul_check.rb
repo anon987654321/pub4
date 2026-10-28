@@ -85,7 +85,7 @@ module Master
                        ["System Integrity Protection", ["/usr/bin/csrutil", "status"]],
                        ["Gatekeeper", ["/usr/sbin/spctl", "--status"]],
                        ["FileVault status", ["/usr/bin/fdesetup", "status"]],
-                       ["Packet filter status", ["/sbin/pfctl", "-s", "info"]]
+                       ["Packet filter status", ["/sbin/pfctl", "-s", "info"]],
                      ]
                    when :openbsd
                      [["Secure level", ["sysctl", "kern.securelevel"]],
@@ -123,7 +123,7 @@ module Master
         [
           "Android root indicators (heuristics only):",
           present.empty? ? "  No listed path indicators observed." : "  REVIEW: #{present.join(', ')}",
-          su ? "  REVIEW: su executable found at #{su}; presence alone is not proof of root access." : "  No su executable found on PATH."
+          su ? "  REVIEW: su executable found at #{su}; presence alone is not proof of root access." : "  No su executable found on PATH.",
         ]
       end
 

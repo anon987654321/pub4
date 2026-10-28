@@ -116,8 +116,8 @@ module Master
 
           @mutex.synchronize do
             stored = @store[key.to_s]
-            return nil if stored.nil?
-            return nil if stored.is_a?(Hash) && !stored.key?("value")
+            return if stored.nil?
+            return if stored.is_a?(Hash) && !stored.key?("value")
 
             # Older stores may still contain a plain scalar. Promote it without
             # changing the recalled text so a review can govern it safely too.

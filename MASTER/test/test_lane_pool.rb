@@ -50,7 +50,7 @@ class TestLanePool < Minitest::Test
     db.execute("CREATE TABLE provider_models (source TEXT NOT NULL, id TEXT NOT NULL, name TEXT, description TEXT, context_length INTEGER, input_modalities TEXT, output_modalities TEXT, price_prompt REAL, price_completion REAL, tags TEXT, raw_json TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY (source, id))")
     rows = [
       [HAIKU, "text,image", 8e-7, 2.4e-6], [LUNA, "text", 5e-7, 2e-6], [PRO, "text", 5e-6, 2e-5],
-      [FLASH, "text,image", 3e-7, 2.5e-6], [GEMMA, "text,image", 0.0, 0.0], [SUPER, "text", 0.0, 0.0],
+      [FLASH, "text,image", 3e-7, 2.5e-6], [GEMMA, "text,image", 0.0, 0.0], [SUPER, "text", 0.0, 0.0]
     ]
     rows.each do |id, input, prompt, completion|
       db.execute("INSERT INTO provider_models VALUES ('openrouter', ?, ?, '', 1000, ?, 'text', ?, ?, '', '{}', '2026-10-11')", [id, id, input, prompt, completion])
@@ -159,7 +159,7 @@ class TestLanePool < Minitest::Test
   end
 
   def test_catalog_modalities_decide_vision_when_the_catalog_has_the_row
-    Selection.stub(:catalog_modalities, ->(id) { id == LUNA ? ["text", "image"] : (id == HAIKU ? ["text"] : nil) }) do
+    Selection.stub(:catalog_modalities, ->(id) { id == LUNA ? %w[text image] : (id == HAIKU ? ["text"] : nil) }) do
       assert Selection.vision?(LUNA)
       refute Selection.vision?(HAIKU), "a claude name does not outvote the catalog"
     end

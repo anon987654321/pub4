@@ -264,7 +264,7 @@ class TestCognition < Minitest::Test
       mind = Cognition::Mind.new(root:, bus: Bus.new)
       mind.observe(event: "repair:start", payload: { task_id: "repair-7" })
       mind.observe(event: "tool:after", payload: {
-        task_id: "repair-7", capability: "code_repair", ok: true, predicted_confidence: 0.9,
+        task_id: "repair-7", capability: "code_repair", ok: true, predicted_confidence: 0.9
       })
       mind.tick!
 

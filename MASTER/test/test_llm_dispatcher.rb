@@ -36,7 +36,7 @@ class TestLLMDispatcher < Minitest::Test
   # RubyLLM 2.1 separates regular input from cache reads and writes.
   Usage = Struct.new(:input, :output, :cache_read, :cache_write)
   UsageWithDetails = Struct.new(
-    :input, :output, :cache_read, :cache_write, :cache_write_by_ttl, :server_tool_use, :reported_cost,
+    :input, :output, :cache_read, :cache_write, :cache_write_by_ttl, :server_tool_use, :reported_cost
   )
   CacheWriteCost = Struct.new(:cache_write)
   ReplyWithUsage = Struct.new(:tokens)
@@ -316,7 +316,7 @@ class TestLLMDispatcher < Minitest::Test
 
     assert_equal :provider_error, dispatcher.send(:reclassify_provider_error, error).category
     assert_equal :offline, dispatcher.send(
-      :reclassify_provider_error, error, model: "ollama:gemma3:4b",
+      :reclassify_provider_error, error, model: "ollama:gemma3:4b"
     ).category
   end
 

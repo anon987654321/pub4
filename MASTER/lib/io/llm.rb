@@ -88,7 +88,7 @@ module Master
           succeeded = result.ok?
           outcome = succeeded ? "success" : tool_failure_status(result)
           return unknown_outcome_reply(invocation_id) unless persist_tool_result(
-            identity:, args:, invocation_id:, result:, outcome:, succeeded:, ms:
+            identity:, args:, invocation_id:, result:, outcome:, succeeded:, ms:,
           )
           return finish_tool_failure(result:, args:, invocation_id:, outcome:, ms:, identity:) unless succeeded
 
@@ -147,12 +147,12 @@ module Master
         def publish_tool_failure(invocation_id, category, error, ms: 0)
           @bus&.publish(
             "tool:failed",
-            { tool: tool_name, invocation_id:, category: }.merge(public_error_fields(error))
+            { tool: tool_name, invocation_id:, category: }.merge(public_error_fields(error)),
           )
           @bus&.publish(
             "tool:return",
             { tool: tool_name, invocation_id:, ok: false, ms:, unknown_outcome: category == :unknown_outcome }
-              .merge(public_error_fields(error))
+              .merge(public_error_fields(error)),
           )
         rescue StandardError
           nil

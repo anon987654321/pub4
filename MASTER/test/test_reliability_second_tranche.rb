@@ -537,7 +537,7 @@ class TestReliabilitySecondTranche < Minitest::Test
 
   def test_resource_budget_disk_abort_uses_the_configured_floor_and_fails_closed
     budget = Master::Fix::ResourceBudget.new(
-      root: Dir.pwd, config: { "resources" => { "disk_free_gb" => { "crit" => 3.0 } } }
+      root: Dir.pwd, config: { "resources" => { "disk_free_gb" => { "crit" => 3.0 } } },
     )
     safe = { values: { disk_free_gb: 4.0 } }
     low = { values: { disk_free_gb: 2.5 } }

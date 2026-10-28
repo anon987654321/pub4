@@ -157,7 +157,7 @@ class TestExternalLinterLaws < Minitest::Test
     rule = Master::Review::Scan::Laws::ReekLaw.new(root: Master::ROOT)
     rule.stub(:linter_available?, true) do
       Operator::RubyRunner.stub(:bundle_cmd, "bundle") do
-        Master::Io::Exec.stub(:capture3, ->(*_args, **_options) { ['[{}]', "", status] }) do
+        Master::Io::Exec.stub(:capture3, ->(*_args, **_options) { ["[{}]", "", status] }) do
           findings = rule.check("def sample; end\n", path: "sample.rb")
 
           assert_equal 1, findings.size
@@ -228,8 +228,8 @@ class TestExternalLinterLaws < Minitest::Test
           "location" => { "line" => 2 },
           "cop_name" => "Style/Example",
           "message" => "example offense",
-        }]
-      }]
+        }],
+      }],
     )
 
     with_rubocop_report(stdout: report, exitstatus: 1) do |rule|

@@ -42,7 +42,7 @@ module Master
       def self.capture(root:, target:, plan:, files:, visual_result: nil, reference_graph: nil,
                        cache: {}, run_expensive: false)
         new(
-          root:, target:, plan:, files:, visual_result:, reference_graph:, cache:, run_expensive:
+          root:, target:, plan:, files:, visual_result:, reference_graph:, cache:, run_expensive:,
         ).capture
       end
 
@@ -95,7 +95,7 @@ module Master
               "observed_after" => {
                 "source_digest" => source_after["digest"],
                 "inventory_digest" => inventory_after["digest"],
-              }
+              },
             )
           end
         end
@@ -220,7 +220,7 @@ module Master
         text_paths = @plan.sources.filter_map do |item|
           path = File.expand_path(item.path, @root)
           path if File.file?(path) && !File.symlink?(path) && File.extname(path).downcase.match?(
-            /\A\.(?:rb|rake|gemspec|js|mjs|cjs|ts|tsx|jsx|css|scss|sass|html|erb)\z/
+            /\A\.(?:rb|rake|gemspec|js|mjs|cjs|ts|tsx|jsx|css|scss|sass|html|erb)\z/,
           )
         end.sort
         text_paths.each do |path|
@@ -456,7 +456,7 @@ module Master
             definition.fetch(:argv),
             chdir: definition.fetch(:chdir),
             env: definition.fetch(:env, {}),
-            deadline:
+            deadline:,
           )
           command.merge("label" => definition.fetch(:label))
         end
@@ -498,7 +498,7 @@ module Master
           command = [
             RbConfig.ruby, "-e",
             'ARGV.each { |path| begin; if defined?(RubyVM::InstructionSequence); RubyVM::InstructionSequence.compile_file(path); elsif !require("ripper") || !Ripper.sexp(File.read(path)); raise SyntaxError, "parse failed"; end; rescue Exception => error; warn "#{path}: #{error.class}: #{error.message}"; exit 1; end }',
-            *ruby_paths.map { |path| File.expand_path(path, @root) },
+            *ruby_paths.map { |path| File.expand_path(path, @root) }
           ]
           outcome = execute_command(command, chdir: @root, deadline:)
           checked["ruby"] = ruby_paths.size
@@ -748,7 +748,7 @@ module Master
                 "files" => records.count { |row| row[1] == "file" },
                 "directories" => records.count { |row| row[1] == "directory" },
                 "symlinks" => symlinks, "ignored_directories" => ignored.first(100),
-                "digest" => digest_json(records.first(INVENTORY_CAP)),
+                "digest" => digest_json(records.first(INVENTORY_CAP))
               }
             end
           end
@@ -930,7 +930,7 @@ module Master
           end
           row = execute_command(
             [RbConfig.ruby, "bin/rails", "runner", "puts Rails.application.routes.routes.size"],
-            chdir: app_dir, env: { "RAILS_ENV" => "test" }, deadline:
+            chdir: app_dir, env: { "RAILS_ENV" => "test" }, deadline:,
           )
           checked << name
           if row["status"] == "failed"
@@ -1014,9 +1014,9 @@ module Master
 
       def validate_repo_path(value, name, problems)
         text = value.to_s
-        if text.empty? || text.start_with?("/") || text.split("/").include?("..")
+        return unless text.empty? || text.start_with?("/") || text.split("/").include?("..")
           problems << "#{name} path is not repository-relative: #{text.inspect}"
-        end
+
       end
 
       def ignored_directory?(relative_path)

@@ -273,7 +273,7 @@ module Master
       # card is MASTER's, so MASTER holds the pid and is the one that stops it.
       def player_pid
         pid = @player_pid
-        return nil unless pid
+        return unless pid
 
         Process.kill(0, pid)
         pid
@@ -637,7 +637,7 @@ module Master
 
       def reference_feature(profile, feature)
         features = profile&.fetch("features", nil)
-        return nil unless features.is_a?(Hash)
+        return unless features.is_a?(Hash)
 
         value = Float(features.fetch(feature))
         value if value.finite?
@@ -649,7 +649,7 @@ module Master
       # musical profile. Keep the learned move close to unity and strictly bounded.
       def reference_groove_scale(profile)
         spread = reference_feature(profile, "timing_spread_ms")
-        return nil unless spread
+        return unless spread
 
         (1.0 + (spread - 8.0) * 0.012).clamp(0.85, 1.25).round(2)
       end
@@ -658,10 +658,10 @@ module Master
       # Dilla's own mix defaults. Missing or invalid stem data means no override.
       def reference_balance_adjustment(profile, feature)
         features = profile&.fetch("features", nil)
-        return nil unless features.is_a?(Hash)
+        return unless features.is_a?(Hash)
 
         share = Float(features.fetch(feature))
-        return nil unless share.finite?
+        return unless share.finite?
 
         ((share.clamp(0.0, 1.0) - 0.25) * 8.0).clamp(-2.0, 2.0).round(1)
       rescue ArgumentError, TypeError, KeyError
@@ -682,7 +682,7 @@ module Master
         line = [
           "progressions #{choices[:progressions].first}..#{choices[:progressions].last} (#{choices[:progressions].size})",
           "drum patterns #{choices[:drums].join(", ")}",
-          "groove profiles #{choices[:profiles].join(", ")}"
+          "groove profiles #{choices[:profiles].join(", ")}",
         ].join("\n")
         Result.ok(output: line, rendered: line, media: :dilla_list)
       end

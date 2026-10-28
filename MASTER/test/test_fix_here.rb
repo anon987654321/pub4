@@ -54,7 +54,7 @@ class TestFixHere < Minitest::Test
 
       output, status = run_fix_here(
         worker, tools_bin, "MASTER", "--model", "none", "--no-probe",
-        env: { "MASTER_MODEL" => "inherited-model" },
+        env: { "MASTER_MODEL" => "inherited-model" }
       )
 
       assert status.success?, output
@@ -89,7 +89,7 @@ class TestFixHere < Minitest::Test
     with_worktree do |_main, worker, tools_bin|
       output, status = run_fix_here(
         worker, tools_bin, "MASTER", "--model", "none", "--no-probe",
-        env: { "FAKE_FIRST_LINE" => "cli0: option error, invalid option: --max-files=25" },
+        env: { "FAKE_FIRST_LINE" => "cli0: option error, invalid option: --max-files=25" }
       )
 
       assert_equal 70, status.exitstatus, output
@@ -112,7 +112,7 @@ class TestFixHere < Minitest::Test
     with_worktree do |_main, worker, tools_bin|
       output, status = run_fix_here(
         worker, tools_bin, "MASTER", "--model", "none", "--no-probe",
-        env: { "FAKE_FIRST_LINE" => "master0: booted" },
+        env: { "FAKE_FIRST_LINE" => "master0: booted" }
       )
 
       assert_equal 70, status.exitstatus, output
@@ -170,7 +170,7 @@ class TestFixHere < Minitest::Test
       write_main_model(main)
       output, status = run_fix_here(
         worker, tools_bin, "MASTER",
-        env: { "FAKE_FIRST_LINE" => "rbenv: version 4.0.7 is not installed", "FAKE_EXIT" => "3" },
+        env: { "FAKE_FIRST_LINE" => "rbenv: version 4.0.7 is not installed", "FAKE_EXIT" => "3" }
       )
 
       refute status.success?, output

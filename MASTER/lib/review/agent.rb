@@ -82,18 +82,18 @@ module Master
               records << {
                 "kind" => "search", "label" => label,
                 "status" => text.empty? || text == "(no results)" ? "empty" : "ok",
-                "text" => text[0, 1_300],
+                "text" => text[0, 1_300]
               }
             else
               records << {
                 "kind" => "search", "label" => label, "status" => "unavailable",
-                "text" => result.respond_to?(:message) ? result.message.to_s[0, 220] : "WebSearch unavailable",
+                "text" => result.respond_to?(:message) ? result.message.to_s[0, 220] : "WebSearch unavailable"
               }
             end
           rescue StandardError => e
             records << {
               "kind" => "search", "label" => label, "status" => "unavailable",
-              "text" => "#{e.class}: #{e.message.to_s[0, 200]}",
+              "text" => "#{e.class}: #{e.message.to_s[0, 200]}"
             }
           ensure
             progress&.call(event: "completed", kind: "search", index: index + 1, total: query_list.size,
@@ -113,18 +113,18 @@ module Master
               records << {
                 "kind" => "fetch", "label" => source_url,
                 "status" => text.empty? ? "empty" : "ok",
-                "text" => text[0, 1_500],
+                "text" => text[0, 1_500]
               }
             else
               records << {
                 "kind" => "fetch", "label" => source_url, "status" => "unavailable",
-                "text" => result.respond_to?(:message) ? result.message.to_s[0, 220] : "WebFetch unavailable",
+                "text" => result.respond_to?(:message) ? result.message.to_s[0, 220] : "WebFetch unavailable"
               }
             end
           rescue StandardError => e
             records << {
               "kind" => "fetch", "label" => source_url, "status" => "unavailable",
-              "text" => "#{e.class}: #{e.message.to_s[0, 200]}",
+              "text" => "#{e.class}: #{e.message.to_s[0, 200]}"
             }
           ensure
             progress&.call(event: "completed", kind: "fetch", index: index + 1, total: source_list.size,

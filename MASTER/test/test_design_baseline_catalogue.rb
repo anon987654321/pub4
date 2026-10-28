@@ -11,7 +11,7 @@ class TestDesignBaselineCatalogue < Minitest::Test
     error = assert_raises(ArgumentError) do
       Operator::DesignBaseline.validate_rule_ceilings!(
         [Rule.new("KNOWN_RULE")],
-        expected: Set["KNOWN_RULE", "REMOVED_RULE"]
+        expected: Set["KNOWN_RULE", "REMOVED_RULE"],
       )
     end
 
@@ -22,7 +22,7 @@ class TestDesignBaselineCatalogue < Minitest::Test
   def test_known_deterministic_rule_ceilings_are_accepted
     assert Operator::DesignBaseline.validate_rule_ceilings!(
       [Rule.new("KNOWN_RULE")],
-      expected: Set["KNOWN_RULE"]
+      expected: Set["KNOWN_RULE"],
     )
   end
 end

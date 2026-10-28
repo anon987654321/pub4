@@ -172,7 +172,7 @@ module Master
           "Semantic landmarks: main=#{html.match?(/<main\b/i)}, nav=#{html.match?(/<nav\b/i)}",
           "Images: #{images.size} observed, #{missing_alt} without alt attribute (decorative images may use alt=\"\")",
           "Links with href: #{html.scan(/<a\b[^>]*href\s*=/i).size}",
-          "Forms: #{html.scan(/<form\b/i).size}; password input fields: #{html.scan(/<input\b[^>]*type\s*=\s*['"]?password/i).size} (not an auth-security test)"
+          "Forms: #{html.scan(/<form\b/i).size}; password input fields: #{html.scan(/<input\b[^>]*type\s*=\s*['"]?password/i).size} (not an auth-security test)",
         ]
       end
     end

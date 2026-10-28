@@ -7,7 +7,7 @@ require "tmpdir"
 class TraceTelemetryExporterTest < Minitest::Test
   Span = Struct.new(
     :name, :kind, :start_timestamp, :end_timestamp, :attributes, :hex_trace_id, :hex_span_id,
-    keyword_init: true,
+    keyword_init: true
   )
 
   def span(index)

@@ -147,7 +147,7 @@ def run_command(*argv, chdir: ROOT)
   puts "$ #{argv.join(" ")}"
   configured_timeout = Integer(ENV.fetch("MASTER_CHECK_COMMAND_TIMEOUT_S", "1800"), exception: false)
   timeout_s = configured_timeout&.positive? ? [configured_timeout, 86_400].min : 1_800
-  stdout, status = Master::Io::Exec.capture2e(*argv, chdir: chdir, timeout: timeout_s)
+  stdout, status = Master::Io::Exec.capture2e(*argv, chdir:, timeout: timeout_s)
   puts stdout
   abort "err: command failed: #{argv.join(" ")}" unless status.success?
 end

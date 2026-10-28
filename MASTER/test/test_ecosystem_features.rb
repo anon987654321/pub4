@@ -82,7 +82,7 @@ class TestEcosystemFeatures < Minitest::Test
     outside = Dir.mktmpdir("master-quota-reader-outside")
     File.write(
       File.join(outside, "model_quota.json"),
-      JSON.generate("2026-10-28" => { "qwen/qwen3-coder:free" => 2 })
+      JSON.generate("2026-10-28" => { "qwen/qwen3-coder:free" => 2 }),
     )
     File.chmod(0o600, File.join(outside, "model_quota.json"))
     File.symlink(outside, File.join(root, "redirect"))

@@ -443,7 +443,6 @@ class TestCheckChain < Minitest::Test
     assert_includes out, "another writer changed 1 path(s) outside MASTER during the baseline: STUDIO/postpro/lib/stocks.rb"
   end
 
-
   def test_rails_fix_verification_uses_the_rails_source_proof_without_generic_suite_duplication
     source = G::Stage.new(name: "source", purpose: "source", mutates: false, run: -> {})
     suites = G::Stage.new(name: "suites", purpose: "suites", mutates: false, run: -> {})

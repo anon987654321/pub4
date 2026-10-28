@@ -537,7 +537,7 @@ module Master
         @bus&.publish(
           "provider_health:record_error",
           model:,
-          **Master::Execution::Contract.diagnostic_fields(e.message)
+          **Master::Execution::Contract.diagnostic_fields(e.message),
         )
       end
 

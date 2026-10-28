@@ -32,7 +32,7 @@ class TestRunJournalLifecycle < Minitest::Test
       target: File.join(root, "MASTER"),
       files: [File.join(root, "private.rb")],
       max_passes: 2,
-      budget_seconds: 60
+      budget_seconds: 60,
     )
   end
 

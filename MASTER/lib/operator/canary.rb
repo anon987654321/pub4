@@ -269,7 +269,7 @@ module Operator
       list = {
         "syntax" => -> { syntax(root) },
         "law files" => -> { shell(runner, [ruby, "-Itest", "test/test_law_files_load.rb"], File.join(root, "MASTER")) },
-        "boot smoke" => -> { shell(runner, [ruby, "tools/boot_smoke.rb"], File.join(root, "MASTER")) }
+        "boot smoke" => -> { shell(runner, [ruby, "tools/boot_smoke.rb"], File.join(root, "MASTER")) },
       }
       list["rehearse"] = -> { shell(runner, [ruby, "OPENBSD/bin/rehearse"], root) } if rehearse
       list

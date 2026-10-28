@@ -445,7 +445,7 @@ module Operator
       return run(trees, mirror: true) if flags["--mirror"]
       return verify(trees, only:) if flags["--verify"]
 
-      options = { tests: !flags["--tests"].nil?, full: budget.nil?, only:, part_bytes:, since: since,
+      options = { tests: !flags["--tests"].nil?, full: budget.nil?, only:, part_bytes:, since:,
                   variants: flags["--code-only"] ? [:code] : (flags["--code"] ? %i[exact code] : [:exact]) }
       options[:budget] = budget if budget
       run(trees, **options.compact)

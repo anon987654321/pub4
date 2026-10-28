@@ -465,7 +465,7 @@ module Master
                       %i[stylesheet_import markup_import].include?(source_kind)
                   File.expand_path(clean.delete_prefix("./"), File.dirname(File.join(@root, from)))
                 else
-                  return nil
+                  return
                 end
         candidates = [base]
         suffix = File.extname(base)

@@ -70,7 +70,7 @@ module Deploy
     def self.listener(port)
       out, status = Master::Io::Exec.capture2e("lsof", "-nP", "-iTCP:#{port}", "-sTCP:LISTEN", "-Fp", timeout: 10)
       pid = status.success? ? out[/^p(\d+)/, 1] : nil
-      return nil unless pid
+      return unless pid
 
       cwd_out, = Master::Io::Exec.capture2e("lsof", "-a", "-p", pid, "-d", "cwd", "-Fn", timeout: 10)
       { pid: pid.to_i, cwd: cwd_out[/^n(.+)$/, 1].to_s }
@@ -87,7 +87,7 @@ module Deploy
 
     def self.foreign_listener(app)
       found = listener(app[:port])
-      return nil if found.nil? || found[:cwd].start_with?(app[:dir])
+      return if found.nil? || found[:cwd].start_with?(app[:dir])
 
       found
     end

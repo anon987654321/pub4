@@ -74,7 +74,7 @@ class TestIoLedger < Minitest::Test
     assert_empty board.cards
     board.add(Master::Content::Card.new(
                 title: "Verify the ledger contract", brief: "Reads refuse closed",
-                audience: "maintainer",
+                audience: "maintainer"
               ))
     reloaded = Master::Content::Board.new(root: @root)
     assert_equal 1, reloaded.cards.size

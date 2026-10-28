@@ -42,7 +42,7 @@ class TestFixKernelLifecycle < Minitest::Test
           requested: options.fetch(:requested)
         )
         kernel.record_repair_outcome(
-          law: "TEST_REPAIR", status: :fixed, fixed: 1, breakdown: { applied: 1 }
+          law: "TEST_REPAIR", status: :fixed, fixed: 1, breakdown: { applied: 1 },
         )
         Master::Result.ok("DONE: fixture")
       end
@@ -105,11 +105,11 @@ class TestFixKernelLifecycle < Minitest::Test
         "coordinator_started",
         { actor: "test", host: Socket.gethostname, pid: dead_pid, target: ".",
           max_passes: 2, budget_seconds: 60, requested: false },
-        run_id: "orphaned-kernel-run"
+        run_id: "orphaned-kernel-run",
       )
 
       kernel.begin_coordinated_run(
-        target: root, max_passes: 2, budget_seconds: 60, requested: false
+        target: root, max_passes: 2, budget_seconds: 60, requested: false,
       )
 
       terminal = kernel.verify_log!.find do |row|
@@ -128,11 +128,11 @@ class TestFixKernelLifecycle < Minitest::Test
         "coordinator_started",
         { actor: "test", host: Socket.gethostname, pid: Process.pid, target: ".",
           max_passes: 2, budget_seconds: 60, requested: false },
-        run_id: "same-process-run"
+        run_id: "same-process-run",
       )
 
       kernel.begin_coordinated_run(
-        target: root, max_passes: 2, budget_seconds: 60, requested: false
+        target: root, max_passes: 2, budget_seconds: 60, requested: false,
       )
 
       terminalized = kernel.verify_log!.any? do |row|
@@ -159,7 +159,7 @@ class TestFixKernelLifecycle < Minitest::Test
       assert_instance_of K::LifecycleJournal, kernel.lifecycle_journal
       assert_same kernel.lifecycle_journal, kernel.run_journal
       run = kernel.lifecycle_journal.start_or_resume(
-        target: root, files: [], max_passes: 2, budget_seconds: 60
+        target: root, files: [], max_passes: 2, budget_seconds: 60,
       )
       assert File.file?(File.join(root, ".master", "fix_runs.json"))
       assert_equal run.fetch("id"), kernel.lifecycle_journal.history.last.fetch("id")

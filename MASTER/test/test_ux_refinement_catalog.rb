@@ -72,7 +72,7 @@ class TestUXRefinementCatalog < Minitest::Test
           "result" => "PASS",
           "location" => "evidence.txt",
           "sha256" => Digest::SHA256.hexdigest(evidence_text),
-          "commit" => commit.strip
+          "commit" => commit.strip,
         }
       end
 
@@ -108,10 +108,10 @@ class TestUXRefinementCatalog < Minitest::Test
 
   def test_prompt_context_is_scoped_to_target_and_never_claims_passing
     root = "/work/pub4"
-    master = Master::Fix::UXRefinementCatalog.prompt_context(target: "#{root}/MASTER", root: root)
-    rails = Master::Fix::UXRefinementCatalog.prompt_context(target: "#{root}/RAILS", root: root)
-    openbsd = Master::Fix::UXRefinementCatalog.prompt_context(target: "#{root}/OPENBSD", root: root)
-    all = Master::Fix::UXRefinementCatalog.prompt_context(target: root, root: root)
+    master = Master::Fix::UXRefinementCatalog.prompt_context(target: "#{root}/MASTER", root:)
+    rails = Master::Fix::UXRefinementCatalog.prompt_context(target: "#{root}/RAILS", root:)
+    openbsd = Master::Fix::UXRefinementCatalog.prompt_context(target: "#{root}/OPENBSD", root:)
+    all = Master::Fix::UXRefinementCatalog.prompt_context(target: root, root:)
     assert_includes master, "UX001"
     assert_includes rails, "UX063"
     assert_includes openbsd, "UX031"

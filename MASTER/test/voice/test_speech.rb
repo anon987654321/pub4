@@ -483,7 +483,7 @@ class TestSpeech < Minitest::Test
     Master::Voice::TtsSupervisor.stub(:pool_size, 1) do
       speech.stub(:synthesize_streaming_to_file_unlocked, unlocked) do
         assert_equal "outer-result", speech.synthesize_streaming_to_file(
-          "outer", output_path: File.join(Dir.tmpdir, "unused-recursive-test.mp3"),
+          "outer", output_path: File.join(Dir.tmpdir, "unused-recursive-test.mp3")
         )
       end
     end

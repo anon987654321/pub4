@@ -87,19 +87,19 @@ module Operator
         flag = args.shift
         case flag
         when "--confirm"
-          return nil if options[:confirm]
+          return if options[:confirm]
 
           options[:confirm] = true
         when "--evidence", "--sha256", "--reviewer"
           key = { "--evidence" => :evidence, "--sha256" => :sha256, "--reviewer" => :reviewer }.fetch(flag)
-          return nil if options.key?(key) || args.empty? || args.first.start_with?("--")
+          return if options.key?(key) || args.empty? || args.first.start_with?("--")
 
           options[key] = args.shift
         else
-          return nil
+          return
         end
       end
-      return nil unless %i[evidence sha256 reviewer].all? { |key| options.key?(key) }
+      return unless %i[evidence sha256 reviewer].all? { |key| options.key?(key) }
 
       options
     end

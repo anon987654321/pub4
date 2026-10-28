@@ -182,7 +182,7 @@ class TestFixInterruptionRestart < Minitest::Test
       FileUtils.mkdir_p(File.join(root, "data"))
       File.write(
         File.join(root, "data", "soul.yml"),
-        "absolute:\n  sacred_paths:\n    - data/soul.yml\n"
+        "absolute:\n  sacred_paths:\n    - data/soul.yml\n",
       )
       git_status = system(
         "git", "-C", root, "init", "-q", "--initial-branch=main",
