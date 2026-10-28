@@ -19,7 +19,7 @@ module Master
 
       module_function
 
-      def dir(root) = File.join(root, "MASTER", ".master", "visual_quality", "drift")
+      def dir(root) = File.join(Master.master_root(root:), ".master", "visual_quality", "drift")
 
       def file(root, id, kind) = File.join(dir(root), "#{id.to_s.gsub(/[^a-zA-Z0-9._-]+/, "_")}.#{kind}.json")
 

@@ -30,7 +30,7 @@ module Master
 
       module_function
 
-      def dir(root) = File.join(root, "MASTER", ".master", "visual_quality")
+      def dir(root) = File.join(Master.master_root(root:), ".master", "visual_quality")
 
       def slug(surface) = surface.id.to_s.gsub(/[^a-zA-Z0-9._-]+/, "_")
 

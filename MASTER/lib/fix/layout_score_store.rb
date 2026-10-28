@@ -17,7 +17,7 @@ module Master
 
       module_function
 
-      def dir(root) = File.join(root, "MASTER", ".master", "layout_score")
+      def dir(root) = File.join(Master.master_root(root:), ".master", "layout_score")
 
       def path(root, surface) = File.join(dir(root), "#{surface.id.to_s.gsub(/[^a-zA-Z0-9._-]+/, "_")}.json")
 
