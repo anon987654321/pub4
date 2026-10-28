@@ -78,11 +78,13 @@ record law, status, bounded counts and run identity without source text or model
 prompts.
 
 The new `test_fix_kernel_lifecycle.rb` and `test_fix_interruption_restart.rb`
-cover owner identity, outcome receipts, open-transaction rollback, durable-run
-resume, journal deletion and Mission checkpoint survival, and orphan receipt
-reconciliation. They are authored but **not run**: this environment cannot
-provide the repository-pinned Ruby 4.0.5 checkout. The Phase 2 runtime gate is
-therefore still blocked; source consolidation is not proof of behavioral parity.
+cover owner identity, outcome receipts, repair counts and breakdowns, independent
+Kernel-instance and process serialization, symlink and writable-directory refusal,
+open-transaction rollback, durable-run resume, journal deletion and Mission checkpoint
+survival, and orphan receipt reconciliation. They are authored but **not run**: this
+environment cannot provide the repository-pinned Ruby 4.0.5 checkout. The Phase 2
+runtime gate is therefore still blocked; source consolidation is not proof of
+behavioral parity.
 
 ## Overlap that remains
 
