@@ -84,7 +84,7 @@ img {
   .page,
   .page a,
   .page button {
-    cursor: none;
+    cursor: none; /* scan: intentional — replacement rendered in assets/motion.js, gated by pointer:fine and reduced-motion */
   }
 }
 
@@ -113,7 +113,7 @@ img {
   top: 0;
   bottom: 0;
   width: 1px;
-  background: rgba(20, 33, 46, 0.09);
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
   z-index: 15;
 }
 
@@ -136,7 +136,6 @@ img {
   gap: 1.5rem;
   padding: 1rem clamp(1.5rem, 5vw, 4.5rem);
   background: color-mix(in srgb, var(--paper) 90%, transparent);
-  backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
 }
 
@@ -166,8 +165,7 @@ img {
   font-family: var(--font-mono);
   font-size: 0.78rem;
   letter-spacing: 0.1em;
-  text-transform: uppercase;
-  position: relative;
+    position: relative;
 }
 
 .page .links a:not(.cta)::after {
@@ -204,22 +202,24 @@ img {
   max-width: 80rem;
 }
 
-.page .kicker {
+.page .meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.1rem;
   font-family: var(--font-mono);
   font-size: 0.75rem;
   letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--muted);
+    color: var(--muted);
   margin: 0 0 1.6rem;
 }
 
-.page .kicker::before {
+.page .meta::before {
   content: "";
   display: inline-block;
   width: 0.5rem;
   height: 0.5rem;
   background: var(--signal);
-  margin-right: 0.7rem;
+  margin-inline-end: 0.7rem;
   vertical-align: 1px;
 }
 
@@ -265,8 +265,7 @@ img {
   font-family: var(--font-mono);
   font-size: 0.82rem;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
-  transition: background 0.25s ease, transform 0.25s ease;
+    transition: background 0.25s ease, transform 0.25s ease;
 }
 
 .page .primary:hover {
@@ -280,8 +279,7 @@ img {
   font-family: var(--font-mono);
   font-size: 0.82rem;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border-bottom: 2px solid var(--signal);
+    border-bottom: 2px solid var(--signal);
   padding-bottom: 3px;
 }
 
@@ -299,8 +297,7 @@ img {
   font-family: var(--font-mono);
   font-size: 0.72rem;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
+    color: var(--muted);
   border-bottom: 1px solid var(--line);
 }
 
@@ -326,7 +323,7 @@ img {
 }
 
 /* ——— Sekjoner ——— */
-.page .section {
+.page section {
   padding: clamp(4rem, 9vw, 8rem) clamp(1.5rem, 5vw, 4.5rem);
   border-bottom: 1px solid var(--line);
 }
@@ -338,18 +335,11 @@ img {
   margin-bottom: clamp(2rem, 4vw, 3.4rem);
 }
 
-.page .no {
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  color: var(--signal);
-  letter-spacing: 0.1em;
-}
-
 .page .h2 {
   font-family: var(--font-display);
   font-weight: 700;
   font-size: clamp(1.9rem, 4vw, 3.4rem);
-  line-height: 1.05;
+  line-height: 1;
   letter-spacing: -0.01em;
   text-transform: uppercase;
   margin: 0;
@@ -380,8 +370,7 @@ img {
   font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
+    color: var(--muted);
   padding-top: 0.65rem;
 }
 
@@ -392,25 +381,18 @@ img {
 
 .page .row {
   display: grid;
-  grid-template-columns: 4rem 1.2fr 1.6fr 2.4rem;
+  grid-template-columns: 1.2fr 1.6fr;
   align-items: baseline;
   gap: 1rem;
   padding: 1.7rem 0;
   border-bottom: 1px solid var(--line);
   text-decoration: none;
   color: inherit;
-  transition: padding-left 0.25s ease;
+  transition: padding-inline-start 0.25s ease;
 }
 
 .page .row:hover {
-  padding-left: 0.8rem;
-}
-
-.page .rowN {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  color: var(--signal);
-  letter-spacing: 0.1em;
+  padding-inline-start: 0.8rem;
 }
 
 .page .rowT {
@@ -424,16 +406,6 @@ img {
 .page .rowD {
   color: var(--muted);
   font-size: 0.95rem;
-}
-
-.page .rowA {
-  justify-self: end;
-  transition: transform 0.25s ease;
-}
-
-.page .row:hover .rowA {
-  transform: translateX(8px);
-  color: var(--signal);
 }
 
 /* ——— Kontakt ——— */
@@ -480,7 +452,7 @@ img {
 }
 
 /* ——— Footer ——— */
-.page .footer {
+.page footer {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -491,8 +463,7 @@ img {
   font-family: var(--font-mono);
   font-size: 0.75rem;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
+    color: var(--muted);
 }
 
 .page .sister {
@@ -557,6 +528,7 @@ img {
 
 .mq-anim {
   animation-name: mq-scroll;
+  animation-duration: var(--mq-duration, 30s);
   animation-timing-function: linear;
   animation-iteration-count: infinite;
 }
@@ -581,7 +553,6 @@ img {
   html.js [data-reveal] {
     opacity: 0;
     transform: translateY(26px);
-    filter: blur(8px);
     transition:
       opacity 0.85s cubic-bezier(0.2, 0.6, 0.2, 1),
       transform 0.85s cubic-bezier(0.2, 0.6, 0.2, 1),
@@ -636,7 +607,7 @@ img {
 .cur-ring {
   width: 36px;
   height: 36px;
-  margin: -18px 0 0 -18px;
+  margin: -16px 0 0 -16px;
   border: 1px solid var(--cur, #14212e);
   opacity: 0.4;
   transition: opacity 0.25s ease, scale 0.25s ease;
@@ -666,7 +637,7 @@ img {
     display: none;
   }
   .page .row {
-    grid-template-columns: 3rem 1fr 2rem;
+    grid-template-columns: 1fr;
   }
   .page .rowD {
     display: none;
@@ -674,7 +645,7 @@ img {
   .page .metaRow span:nth-child(2) {
     display: none;
   }
-  .page .footer {
+  .page footer {
     flex-direction: column;
     align-items: flex-start;
   }
