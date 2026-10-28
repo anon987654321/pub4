@@ -107,6 +107,17 @@ add a constraint, add a rule. The spine does not grow.
 but it is a preflight stage, not a silent downgrade to dry-run. Explicit
 `--dry-run` plans and measures without writing.
 
+Since the elevation engine, `/fix` does not only repair: it improves, ideates
+and restructures toward each domain's ideal. `lib/fix/improve` measures code,
+prose, visuals and music against law-grounded ideals, emits one anchored
+improvement step per domain per pass through the existing improvement stage,
+writes build ideas to `.master/fix_ideas.json` for the next run, and proposes
+contract-safe merges through `restructure_sweep`'s proof machinery. A run that
+names every tree — `bin/master /fix MASTER RAILS OPENBSD STUDIO` — takes the
+`elevate` lane automatically; single-tree runs keep the convergence-first
+`code` lane unless `--lane=elevate` is explicit. Elevation never blocks a run:
+plateau and convergence guards apply to it as to any other finding.
+
 The architectural boundary matters: `Core::Fold` governs the general model-effect
 loop, while `/fix` owns repository repair and convergence. They share constitutional
 principles but are not the same workflow. Production boot creates one

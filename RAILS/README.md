@@ -86,6 +86,22 @@ decision, recorded in `apps.yml`; its pages still render only the face's own
 stylesheet. Review generated assets and rendered screenshots, not source
 tokens alone.
 
+## Monetisation and the ad visual contract
+
+Advertising is governed, not sprinkled. MASTER audits rendered ads against
+`tokens.yml#ad_visual_contract` through `MASTER/tools/visual/audit_ad.rb`
+(rake task `ad_visual_audit`); this tree binds the source partials to the same
+contract in `test/ad_visual_contract_test.rb`. The two surfaces carry their
+disclosure differently and both ways are contractual: `_ad_slot` (AdSense)
+renders nothing without an advertising-consent signal and labels itself
+through `t("shared.advertisement")`; `_affiliate_feed_unit`
+(Tradedoubler/Amazon) renders the `affiliate_disclosure` partial, marks every
+outbound link `rel="noopener sponsored"`, and carries a per-link paid-link
+mark. No ad partial may hard-code a hex color — every value resolves through
+the token contract. The affiliate stack it binds to lives in the shared
+engine: `Shared::Tradedoubler`, `AffiliateProduct`, `AffiliateVoucher` and
+`AffiliateConversion`.
+
 ## Running it
 
 ```zsh
