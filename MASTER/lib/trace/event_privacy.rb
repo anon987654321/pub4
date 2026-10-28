@@ -42,7 +42,8 @@ module Master
             safe[field.to_sym] = normalize_metadata(field, value)
           elsif tool_event || field.match?(SENSITIVE_FIELD) || value.is_a?(Hash) || value.is_a?(Array) ||
                 SAFE_CATEGORIES.include?(field) || SAFE_NUMBERS.include?(field) || SAFE_BOOLEANS.include?(field) ||
-                field.end_with?("_digest", "_bytes") || value.is_a?(String) || value.is_a?(Symbol)
+                field.end_with?("_digest", "_bytes") || value.is_a?(String) || value.is_a?(Symbol) ||
+                !safe_scalar?(value)
             # A seemingly harmless container can hold a sensitive nested key,
             # and malformed reserved metadata is not safe just because its key
             # is normally low risk. Keep evidence of size without preserving
@@ -54,6 +55,11 @@ module Master
             safe[field.to_sym] = value
           end
         end
+      end
+
+      def safe_scalar?(value)
+        value.nil? || value == true || value == false ||
+          value.is_a?(Integer) || (value.is_a?(Float) && value.finite?)
       end
 
       def safe_metadata?(field, value)
