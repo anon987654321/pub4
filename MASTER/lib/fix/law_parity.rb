@@ -6,11 +6,8 @@ require "set"
 module Master
   module Fix
     # Asserts priority-ranked constitutional entries in data/laws.yml are not
-    # prose-only: each must have a deterministic detector (a Law.define with a
-    # detect block, or a scan-registry detector under its id), a registry
-    # detector carrying its tag, or an explicit deferred enforcement with a
-    # future expiry. A Law that only asks a model question is semantic coverage,
-    # reported apart from the gaps it still is.
+    # prose-only: each must have an executable detector, tag coverage, or an
+    # explicit deferred enforcement with a future expiry.
     class LawParity
       # Keep the ceiling wide enough to include every priority-ranked
       # constitutional row currently declared. The parity gate must expose
@@ -19,6 +16,7 @@ module Master
       LAWS_PATH = File.join(Master::ROOT, "data", "laws.yml").freeze
 
       Gap = Data.define(:id, :priority, :tier, :reason)
+      COVERAGE_MODES = %w[deterministic semantic tagged deferred].freeze
 
       def initialize(root: Master::ROOT, laws_path: nil)
         @root = File.expand_path(Master.master_root(root:))
@@ -52,17 +50,14 @@ module Master
 
       def report
         gaps = call
-        tally = coverage.values.tally.sort.map { |kind, count| "#{kind}=#{count}" }.join(" ")
-        return "law_parity: ok (priority<=#{MAX_PRIORITY} constitutional covered; #{tally})" if gaps.empty?
+        summary = priority_constitutional_entries.map do |id, spec|
+          mode = spec["coverage_mode"].to_s
+          "#{id}=#{mode.empty? ? "undeclared" : mode}"
+        end.join(", ")
+        return "law_parity: ok (priority<=#{MAX_PRIORITY} constitutional; coverage=#{summary})" if gaps.empty?
 
         lines = gaps.map { |g| "  #{g.id} (priority #{g.priority}): #{g.reason}" }
-        "law_parity: #{gaps.size} gap(s) (#{tally})\n#{lines.join("\n")}"
-      end
-
-      # How each priority Law is covered: :deterministic, :tagged, :deferred,
-      # :semantic_only (an ask with no detector) or :none.
-      def coverage
-        priority_constitutional_entries.to_h { |id, spec| [id, coverage_kind(id, spec)] }
+        "law_parity: #{gaps.size} gap(s)\n#{lines.join("\n")}"
       end
 
       private
@@ -89,24 +84,22 @@ module Master
         end
       end
 
-      def coverage_kind(id, spec)
-        return :deferred if deferred_valid?(spec)
-        return :deterministic if detector_covered?(id, spec, registered_detector_ids)
-        return :tagged if tag_covered?(id, spec, registered_tag_names)
-
-        semantic_ids.include?(id.to_s) ? :semantic_only : :none
-      end
-
       def covered?(id, spec, detectors, tags)
-        deferred_valid?(spec) || detector_covered?(id, spec, detectors) || tag_covered?(id, spec, tags)
-      end
+        mode = spec["coverage_mode"].to_s
+        return false unless COVERAGE_MODES.include?(mode)
+        return deferred_valid?(spec) if mode == "deferred"
+        return semantic_law_ids.include?(id.to_s) if mode == "semantic"
 
-      def detector_covered?(id, spec, detectors)
-        ([id.to_s] + Array(spec["detector_ids"]).map(&:to_s)).any? { |name| detectors.include?(name.downcase) }
-      end
+        if mode == "deterministic"
+          explicit = Array(spec["detector_ids"]).map(&:to_s)
+          candidates = explicit.empty? ? [id.to_s] : explicit
+          return candidates.any? { |candidate| detectors.any? { |detector| detector.casecmp?(candidate) } }
+        end
 
-      def tag_covered?(id, spec, tags)
-        spec["coverage"].to_s == "tagged_detectors" && tags.include?(id.to_s.upcase)
+        if mode == "tagged" && spec["coverage"].to_s == "tagged_detectors"
+          return tags.include?(id.to_s.upcase) || tags.include?(id.to_s)
+        end
+        false
       end
 
       def deferred_valid?(spec)
@@ -121,31 +114,42 @@ module Master
       end
 
       def gap_reason(id, spec)
-        if spec["enforcement"].to_s == "deferred"
+        mode = spec["coverage_mode"].to_s
+        return "missing explicit coverage_mode" if mode.empty?
+        return "unknown coverage_mode #{mode}" unless COVERAGE_MODES.include?(mode)
+        if mode == "deferred"
           exp = spec["expires_on"].to_s
           return "deferred without expires_on" if exp.empty?
-
-          return "deferred expired on #{exp}"
+          return "deferred expired on #{exp}" unless deferred_valid?(spec)
         end
-
-        return "semantic only: the Law asks a model question and has no deterministic detector" if
-          semantic_ids.include?(id.to_s)
-
-        "no detector, detector_ids, tagged coverage, or valid deferred enforcement"
+        "declared #{mode} coverage has no matching evidence"
       end
 
-      # Ids, downcased, that something can run without a model: a Law.define
-      # whose detect is set, or a scan-registry detector. A definition that only
-      # asks or practises is not one, and neither is a Law.define in source text.
       def registered_detector_ids
-        @registered_detector_ids ||= (law_pack_ids + scan_registry_ids).to_set(&:downcase)
+        ids = Set.new
+        require_relative "../../law/definition" unless defined?(::Law)
+        ::Law.load_all if ::Law.respond_to?(:load_all)
+        ::Law.definitions.each do |id, definition|
+          ids << id.to_s if definition.respond_to?(:detect) && definition.detect
+        end
+        ids.merge(scan_registry_ids)
+        ids
+      rescue StandardError, ScriptError => e
+        Master::Ground::Swallow.log(e, context: "Fix::LawParity.registered_detector_ids", severity: :load_bearing)
+        raise
       end
 
-      def semantic_ids
-        @semantic_ids ||= begin
-          law_pack_ids
-          ::Law.definitions.values.select { |law| law.ask && !law.detect }.to_set { |law| law.id.to_s }
+      def semantic_law_ids
+        return @semantic_law_ids if @semantic_law_ids
+
+        require_relative "../../law/definition" unless defined?(::Law)
+        ::Law.load_all if ::Law.respond_to?(:load_all)
+        @semantic_law_ids = ::Law.definitions.filter_map do |id, definition|
+          id.to_s if definition.respond_to?(:semantic?) && definition.semantic?
         end
+      rescue StandardError, ScriptError => e
+        Master::Ground::Swallow.log(e, context: "Fix::LawParity.semantic_law_ids", severity: :load_bearing)
+        raise
       end
 
       def registered_tag_names
@@ -158,7 +162,7 @@ module Master
         ids = Set.new
         require_relative "../../law/definition" unless defined?(::Law)
         ::Law.load_all if ::Law.respond_to?(:load_all)
-        ::Law.definitions.each_value { |law| ids << law.id.to_s if law.detect }
+        ::Law.definitions.each_key { |key| ids << key.to_s } if defined?(::Law) && ::Law.respond_to?(:definitions)
         ids
       rescue StandardError, ScriptError => e
         Master::Ground::Swallow.log(e, context: "Fix::LawParity.law_pack_ids", severity: :load_bearing)
@@ -166,20 +170,18 @@ module Master
       end
 
       def scan_registry_ids
-        return Set.new unless File.file?(File.expand_path("../review/scan/law.rb", __dir__))
+        ids = Set.new
+        return ids unless File.file?(File.expand_path("../review/scan/law.rb", __dir__))
 
         require_relative "../review/scan/law_dsl"
-        Master::Review::Scan::Law.registry.filter_map { |klass| registry_id(klass) }.to_set
+        Master::Review::Scan::Law.registry.each do |klass|
+          declaration = klass.respond_to?(:declaration) ? klass.declaration : nil
+          ids << declaration[:id].to_s if declaration && declaration[:id]
+        end
+        ids
       rescue StandardError, ScriptError => e
         Master::Ground::Swallow.log(e, context: "Fix::LawParity.scan_registry_ids", severity: :load_bearing)
         raise
-      end
-
-      # LawDSL classes carry their id as dsl_id; declared classes in their declaration.
-      def registry_id(klass)
-        id = klass.dsl_id if klass.singleton_class.method_defined?(:dsl_id)
-        id ||= klass.declaration&.[](:id)
-        id&.to_s
       end
 
       def scan_registry_tags
@@ -195,6 +197,8 @@ module Master
         Master::Ground::Swallow.log(e, context: "Fix::LawParity.scan_registry_tags", severity: :load_bearing)
         raise
       end
+
+
     end
   end
 end

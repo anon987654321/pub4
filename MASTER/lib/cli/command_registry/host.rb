@@ -17,7 +17,14 @@ module Master
 
       # /pair — issue, list, revoke or redeem a pairing code.
       def dispatch_pair(root, ctx: nil)
-        arg = arg_for(ctx)
+        arg = arg_for(ctx).to_s.strip
+        if Fiber[:master_visitor] == true
+          alphabet = Master::Ground::Pairing::ALPHABET
+          code_attempt = arg.length == Master::Ground::Pairing::CODE_BYTES &&
+                         arg.upcase.each_char.all? { |character| alphabet.include?(character) }
+          return "pair: local-only; visitors may only redeem a pairing code" unless code_attempt
+        end
+
         case arg
         when "", "status"
           status = Master::Ground::Pairing.status

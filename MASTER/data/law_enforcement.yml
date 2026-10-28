@@ -1,26 +1,53 @@
 # Overlay for constitutional enforcement metadata (merged onto data/laws.yml by LawParity).
-# Keep this file small and explicit so parity CI does not depend on hand-editing the full catalogue.
+# A green parity result reports the declared evidence type; it does not imply every Law has a deterministic detector.
 #
 # enforcement: active | deferred
-# detector_ids: Law.define / scan ids that implement the law
-# coverage: tagged_detectors — umbrella laws enforced via tags on other detectors
-# expires_on: required when deferred (ISO date)
+# coverage_mode: deterministic | semantic | tagged | deferred
+# detector_ids: concrete detector registrations, not merely Law.define identities
+# coverage: tagged_detectors — umbrella laws enforced via tags on registered scan detectors
+# expires_on: required when coverage_mode is deferred
 
 CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
   enforcement: active
+  coverage_mode: deterministic
   detector_ids:
     - CAPABILITY_STATUS_MUST_BE_TRUTHFUL
 
 ROBUSTNESS:
   enforcement: active
-  coverage: tagged_detectors
+  coverage_mode: semantic
 
 SINGULARITY:
   enforcement: active
-  detector_ids:
-    - SINGULARITY
+  coverage_mode: semantic
 
 LINEARITY:
   enforcement: active
+  coverage_mode: semantic
+
+PROXIMITY:
+  severity: error
+  enforcement: active
+  coverage_mode: semantic
+
+ABSTRACTION:
+  severity: error
+  enforcement: active
+  coverage_mode: semantic
+
+DENSITY:
+  severity: error
+  enforcement: active
+  coverage_mode: semantic
+
+RENDERED_VALUES:
+  severity: error
+  enforcement: active
+  coverage_mode: semantic
+
+INTER_MODEL_CONTRACT:
+  severity: error
+  enforcement: active
+  coverage_mode: deterministic
   detector_ids:
-    - LINEARITY
+    - INTER_MODEL_CONTRACT

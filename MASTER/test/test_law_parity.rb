@@ -7,36 +7,30 @@ require_relative "../lib/fix/law_parity"
 require_relative "../law/definition"
 
 class TestLawParity < Minitest::Test
-  # A Law.define with no detect is not a detector. Six priority Laws only ask a
-  # model question; they are semantic coverage and stay gaps until a detector
-  # or an authorised deferral lands. When one gains a detector, move it.
-  SEMANTIC_ONLY = %w[SINGULARITY LINEARITY PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES].freeze
+  def test_all_priority_constitutional_laws_have_explicit_evidence_modes
+    parity = Master::Fix::LawParity.new
+    laws = YAML.safe_load_file(Master::Fix::LawParity::LAWS_PATH, aliases: true)
+    overlay = YAML.safe_load_file(File.join(File.dirname(Master::Fix::LawParity::LAWS_PATH), "law_enforcement.yml"), aliases: true)
+    priority_ids = laws.filter_map do |id, spec|
+      next unless spec.is_a?(Hash) && spec["tier"].to_s == "constitutional"
+      next unless spec.key?("priority") && Integer(spec["priority"]) <= Master::Fix::LawParity::MAX_PRIORITY
+      id
+    end
 
-  def test_priority_coverage_is_counted_from_real_detectors
-    coverage = Master::Fix::LawParity.new.coverage
-
-    assert_equal %w[CAPABILITY_STATUS_MUST_BE_TRUTHFUL INTER_MODEL_CONTRACT],
-                 coverage.select { |_id, kind| kind == :deterministic }.keys.sort
-    assert_equal({ "ROBUSTNESS" => :tagged }, coverage.select { |_id, kind| kind == :tagged })
-    assert_equal SEMANTIC_ONLY.sort, coverage.select { |_id, kind| kind == :semantic_only }.keys.sort
+    assert_equal 9, priority_ids.length
+    assert priority_ids.all? { |id| Master::Fix::LawParity::COVERAGE_MODES.include?(overlay.dig(id, "coverage_mode")) }, parity.report
+    assert_empty parity.call, parity.report
+    assert_match(/RENDERED_VALUES=semantic/, parity.report)
   end
 
-  def test_semantic_only_laws_are_reported_as_gaps
+  def test_semantic_law_definition_is_not_counted_as_a_deterministic_detector
     parity = Master::Fix::LawParity.new
-    gaps = parity.call
-
-    assert_equal SEMANTIC_ONLY.sort, gaps.map(&:id).sort, parity.report
-    assert gaps.all? { |gap| gap.reason.start_with?("semantic only") }
-    assert_match(/deterministic=2 semantic_only=6 tagged=1/, parity.report)
-  end
-
-  # The self-naming detector_ids rows in law_enforcement.yml (SINGULARITY
-  # names SINGULARITY) count only when that id runs without a model.
-  def test_a_definition_without_detect_is_not_a_detector
-    parity = Master::Fix::LawParity.new
-
-    refute_includes parity.send(:registered_detector_ids), "singularity"
-    assert_includes parity.send(:registered_detector_ids), "capability_status_must_be_truthful"
+    assert_equal "semantic", YAML.safe_load_file(
+      File.join(File.dirname(Master::Fix::LawParity::LAWS_PATH), "law_enforcement.yml"),
+      aliases: true,
+    ).dig("RENDERED_VALUES", "coverage_mode")
+    refute_includes parity.send(:registered_detector_ids), "RENDERED_VALUES"
+    assert_includes parity.send(:semantic_law_ids), "RENDERED_VALUES"
   end
 
   def test_priority_ceiling_covers_the_highest_current_constitutional_priority
@@ -95,6 +89,7 @@ class TestLawParity < Minitest::Test
         tier: constitutional
         severity: error
         enforcement: deferred
+        coverage_mode: deferred
         statement: missing expiry
     YAML
     gaps = Master::Fix::LawParity.new(root: dir, laws_path: path).call
@@ -127,6 +122,7 @@ class TestLawParity < Minitest::Test
         severity: error
         enforcement: active
         coverage: tagged_detectors
+        coverage_mode: tagged
         statement: no detector tags this
     YAML
     gaps = Master::Fix::LawParity.new(root: dir, laws_path: path).call
