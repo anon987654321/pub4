@@ -101,8 +101,9 @@ class FixMissionTest < Minitest::Test
       original.checkpoint!(files: ["sample.rb"])
       checkpoint_id = original.record.fetch("checkpoint").fetch("id")
 
-      dead_pid = Process.spawn("true")
-      Process.wait(dead_pid)
+      # This PID is outside ordinary user-space allocations, avoiding a race
+      # with process-id reuse while testing a lease that has not expired yet.
+      dead_pid = 2_147_483_647
       record = Master::Fix::Mission.current(root:)
       record["lease_owner"] = "#{Socket.gethostname}:#{dead_pid}:deadbeefdeadbeef"
       record["lease_until"] = (Time.now.utc + 300).iso8601
