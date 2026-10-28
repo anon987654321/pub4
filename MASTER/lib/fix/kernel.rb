@@ -73,6 +73,7 @@ module Master
         @log_head = nil
         @lifecycle_journal = lifecycle_journal
         @lifecycle_mutex = Mutex.new
+        @execution_mutex = Mutex.new
       end
 
       attr_reader :root, :workspace_root, :actor, :log_path
@@ -99,6 +100,43 @@ module Master
       def build_repair_loop(**options)
         require_relative "repair_loop" unless defined?(RepairLoop)
         RepairLoop.new(**options, kernel: self)
+      end
+
+      # Execute the convergence adapter under the single Kernel-owned lock and
+      # lifecycle boundary. The adapter still owns the per-pass implementation,
+      # but only Kernel starts, terminalizes, and correlates the overall run.
+      def run_fix_loop(adapter, target:, max_passes:, budget_seconds:, incremental:, requested:, cancellation: nil)
+        @execution_mutex.synchronize do
+          coordinator_run_id = nil
+          previous_cancellation = adapter.instance_variable_get(:@cancellation)
+          previous_run_id = Fiber[:master_fix_kernel_run_id]
+          begin
+            adapter.instance_variable_set(:@cancellation, cancellation)
+            cancellation.activate! if cancellation&.respond_to?(:activate!)
+            coordinator_run_id = begin_coordinated_run(target:, max_passes:, budget_seconds:, requested:)
+            Fiber[:master_fix_kernel_run_id] = coordinator_run_id
+            result = adapter.run_unlocked(
+              target, max_passes:, budget_seconds:, incremental:, requested:
+            )
+            state = adapter.last_terminal_state || OutcomePolicy.terminal_state(result) || :unknown_outcome
+            finish_coordinated_run(run_id: coordinator_run_id, state:, outcome: result)
+            result
+          rescue StandardError => error
+            if coordinator_run_id
+              begin
+                finish_coordinated_run(run_id: coordinator_run_id, state: :unknown_outcome, error:)
+              rescue StandardError => journal_error
+                Master::Ground::Swallow.log(
+                  journal_error, context: "fix_kernel.coordinator_terminal", event_bus: @bus
+                )
+              end
+            end
+            raise
+          ensure
+            Fiber[:master_fix_kernel_run_id] = previous_run_id
+            adapter.instance_variable_set(:@cancellation, previous_cancellation)
+          end
+        end
       end
 
       # Hash-chained operational evidence around the legacy convergence adapter.
@@ -137,7 +175,7 @@ module Master
         counts = (breakdown || {}).to_h.to_h { |key, value| [key.to_s, Integer(value)] }
         append_event("repair_pass", {
           law: law.to_s, status: status.to_s, fixed: Integer(fixed), breakdown: counts
-        })
+        }, run_id: Fiber[:master_fix_kernel_run_id])
       end
 
       def observe(path = @root, run_id: nil)
