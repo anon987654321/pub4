@@ -80,17 +80,22 @@ below runs commands. Without the host, the merge is BLOCKED, not pending.
 `FixLoop` or `RepairLoop`. New behaviour lands in `Kernel` only. This costs
 nothing and makes the fold finite.
 
-**Phase 2 — recovery tests first, per responsibility.** The tests AGENTS.md
-demands, written before anything moves. Minimum set, one test per
-responsibility, each planting a defect, asserting red, asserting green, and
-running once against a gutted implementation:
+**Phase 2 — recovery tests first, per responsibility.** The feature branch
+contains process-boundary regressions for transaction rollback, surviving
+Mission/checkpoint state after journal deletion, fresh-run identity when the
+journal is gone, and orphaned Kernel-receipt reconciliation. They are authored
+but unexecuted; therefore Phase 2 is **not passed**. The full required set is
+one test per responsibility, each planting a defect, asserting red, asserting
+green, and running once against a gutted implementation:
 
 1. Staging and rollback: a write that must land as one `Transaction`, and the
    abort path that restores byte-identical state (Kernel ↔ Transaction).
 2. Durable objective: kill the process mid-run; Mission must still report the
    remaining work after restart.
-3. Journal: delete the journal mid-run; Git + Checkpoint reconstruct; the
-   journal must never be the only copy of anything.
+3. Journal: the new subprocess test deletes `.master/fix_runs.json` mid-run.
+   The independent Mission checkpoint survives and the transaction manifest
+   restores file bytes. This does not yet prove Git-based reconstruction of the
+   whole run plan or all missing-journal combinations.
 4. Budget/collapse: a run that exceeds its file budget trips `collapse_guard`
    instead of looping (RepairLoop → Kernel).
 5. Ledger honesty: a run that fixes nothing reports why, per file, in one
@@ -101,16 +106,20 @@ running once against a gutted implementation:
    `scan/semantic_fingerprint`), the same input through the Kernel path must
    produce the same receipt bytes.
 
-**Phase 3 — move one responsibility at a time.** Kernel gains the
-responsibility behind its existing receipt contract; the old call site stays
-working through the adapter. Both paths run in the same session for at least
-one real convergence run before the old one is switched off. Commits are
-path-scoped, one responsibility per batch.
+**Phase 3 — migrate one responsibility at a time.** The feature branch
+now places convergence, durable journal, and repair-policy implementations
+under `Fix::Kernel` and retains the old constants as aliases. This is a
+source-level migration only: it is not approved for main until every applicable
+Phase 2 test, focused regression, full suite, and one real convergence run pass.
+Any behavioral mismatch returns to the old implementation before the alias is
+changed. Record the before/after receipts and exact commit for each gate.
 
-**Phase 4 — delete the adapters.** Only after Phase 3 has covered every row of
-the table above. `RunJournal` merges first (no external callers), then
-`RepairLoop` (fewest external call sites), then `FixLoop`. `Mission` and
-`RunLedger` are re-judged at the end, not assumed.
+**Phase 4 — remove compatibility aliases, not recovery state.** Only after
+Phase 3 covers every call site with runtime proof. Re-point any remaining direct
+callers, prove dynamic dispatch and generated entry points, then remove an alias
+in a separate commit. `Mission`, `RunLedger`, and `Transaction` keep their
+distinct ownership until their persistence and rollback contracts are proved
+redundant—not merely because their classes are now namespaced under Kernel.
 
 **Phase 5 — regenerate the generated surfaces.** `rake docs:agent_contracts`,
 then `rake lint:agent_contracts`, because AGENTS.md's marked block describes
@@ -120,9 +129,12 @@ this landscape and must not drift from it.
 
 - It does not claim `RunJournal` has no dynamic dispatch callers; text search
   cannot see `send`, `const_get` or string-built requires.
-- It does not claim the adapters are safe to delete now. Phase 2's tests do
-  not exist yet, and the merge order is written so that a missing test stops
-  the phase instead of skipping it.
+- It does not claim the migration is runtime-verified. Some restart and
+  recovery regressions now exist in `test_fix_kernel.rb` and
+  `test_fix_interruption_restart.rb`, but none has run in this environment;
+  Mission-independent run reconstruction, budget/collapse parity, and the full
+  adapter receipt-parity matrix remain unproven. A missing or unrun test stops
+  the merge rather than being inferred from source movement.
 - It does not rank `lib/fix/visual_*` (the 20+ flat visual instruments). They
   are FixLoop's dependency surface, so they move with Phase 3, not before it;
   consolidating them into one instrument with modes is proposed separately in
