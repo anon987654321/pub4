@@ -196,6 +196,24 @@ class TraceLogAppendJsonlTest < Minitest::Test
     end
   end
 
+  def test_audit_refuses_a_symlinked_state_directory_before_subscribing
+    Dir.mktmpdir("trace-audit-state-link-") do |root|
+      Dir.mktmpdir("trace-audit-outside-") do |outside|
+        File.symlink(outside, File.join(root, ".master"))
+        subscriptions = []
+
+        bus = Object.new
+        bus.define_singleton_method(:subscribe) { |name, &block| subscriptions << [name, block] }
+
+        assert_raises(ArgumentError) do
+          LOG::Audit.new(root:, event_bus: bus)
+        end
+        assert_empty subscriptions
+        assert_empty Dir.children(outside)
+      end
+    end
+  end
+
   def test_refuses_a_symlink_lock
     Dir.mktmpdir("trace-jsonl-lock-symlink-") do |dir|
       path = File.join(dir, "events.ndjson")
