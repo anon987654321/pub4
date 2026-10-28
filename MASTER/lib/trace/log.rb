@@ -356,6 +356,12 @@ module Master
             next unless record
             next if matcher && !record["event"].to_s.match?(matcher)
 
+            # Older log generations may predate the privacy transform. Reapply
+            # it before returning history so stored raw payloads aren't leaked
+            # just because the record was written by an older build.
+            if record["payload"].is_a?(Hash)
+              record["payload"] = EventPrivacy.persisted(record["event"].to_s, record["payload"])
+            end
             record
           end
         rescue StandardError => e
