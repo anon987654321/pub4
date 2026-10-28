@@ -23,6 +23,10 @@ class TraceMetricsLogTest < Minitest::Test
       assert File.file?(path)
       record = JSON.parse(File.readlines(path).last)
       assert_equal "provider-a", record.fetch("model_benchmark").fetch("model")
+      benchmark = record.fetch("model_benchmark")
+      assert_equal 1, benchmark.fetch("errors_count")
+      assert_equal 64, benchmark.fetch("errors_digest").length
+      refute_includes File.read(path), "one timeout"
       assert_equal 0o600, File.stat(path).mode & 0o777
       assert_equal 0o700, File.stat(File.dirname(path)).mode & 0o777
       assert File.file?("#{path}.lock")
