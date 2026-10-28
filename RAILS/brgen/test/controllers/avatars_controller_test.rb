@@ -3,6 +3,9 @@
 require "test_helper"
 
 class AvatarsControllerTest < ActionDispatch::IntegrationTest
+  # brgen answers only its own domains; a bare request is a 404 before routing.
+  setup { host! "brgen.no" }
+
   test "numeric IDs render deterministic identicons without exposing account existence" do
     identifier = (User.unscoped.maximum(:id).to_i + 1_000).to_s
 

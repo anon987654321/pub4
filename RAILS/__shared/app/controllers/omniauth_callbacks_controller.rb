@@ -50,6 +50,14 @@ class OmniauthCallbacksController < ::ApplicationController
 
   private
 
+  # The non-deliverable placeholder for a provider that sent no email. The
+  # provider is hyphenated because a domain label cannot hold "_": as
+  # "google_oauth2.oauth" it failed User's email format, so an email-less
+  # Google callback could never be saved. bankid's address is unchanged.
+  def synthetic_oauth_address(auth)
+    "#{auth.uid}@#{auth.provider.to_s.tr('_', '-')}.oauth"
+  end
+
   def find_or_create_user(auth)
     # Never create a user while durable provider-subject storage is unavailable.
     # Otherwise each OAuth return creates a new account and the next login has
@@ -88,7 +96,7 @@ class OmniauthCallbacksController < ::ApplicationController
     # On a concurrent insert, re-query only this exact placeholder after either
     # the model's uniqueness validation or the database index rejects the write.
     if user.nil? && email.blank? && auth.provider.to_s != "bankid"
-      placeholder = "#{auth.uid}@#{auth.provider}.oauth"
+      placeholder = synthetic_oauth_address(auth)
       user = User.find_by(email_address: placeholder)
       unless user
         candidate = User.new(email_address: placeholder, password: SecureRandom.hex(24))
@@ -140,7 +148,7 @@ class OmniauthCallbacksController < ::ApplicationController
 
     unless user
       user = User.new(
-        email_address: email.presence || "#{auth.uid}@#{auth.provider}.oauth",
+        email_address: email.presence || synthetic_oauth_address(auth),
         password: SecureRandom.hex(24),
       )
       # A missing provider email still needs a unique placeholder, but that

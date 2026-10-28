@@ -51,7 +51,7 @@ class OmniauthCallbacksControllerTest < ActionDispatch::IntegrationTest
     controller.define_singleton_method(:external_identity_for) { |_auth| nil }
     auth = auth_for("google_oauth2", email_verified: false, email: nil)
     legacy = User.new(
-      email_address: "#{auth.uid}@#{auth.provider}.oauth",
+      email_address: controller.send(:synthetic_oauth_address, auth),
       password: SecureRandom.hex(24)
     )
     legacy.require_email_verification = true
@@ -73,10 +73,14 @@ class OmniauthCallbacksControllerTest < ActionDispatch::IntegrationTest
     controller = OmniauthCallbacksController.new
     controller.define_singleton_method(:external_identity_for) { |_auth| nil }
     auth = auth_for("google_oauth2", email_verified: false, email: nil)
-    legacy = User.create!(
-      email_address: "#{auth.uid}@#{auth.provider}.oauth",
+    # Saved the way the controller's own candidate is, as the concurrent
+    # callback that won the insert would have saved it.
+    legacy = User.new(
+      email_address: controller.send(:synthetic_oauth_address, auth),
       password: SecureRandom.hex(24)
     )
+    legacy.require_email_verification = true
+    legacy.save!
     lookup_count = 0
     finder = ->(*) { lookup_count += 1; lookup_count == 1 ? nil : legacy }
 
@@ -110,7 +114,7 @@ class OmniauthCallbacksControllerTest < ActionDispatch::IntegrationTest
     controller.define_singleton_method(:external_identity_for) { |_auth| nil }
     auth = auth_for("google_oauth2", email_verified: false, email: nil)
     guest = User.create!(
-      email_address: "#{auth.uid}@#{auth.provider}.oauth",
+      email_address: controller.send(:synthetic_oauth_address, auth),
       password: SecureRandom.hex(24),
       guest: true
     )

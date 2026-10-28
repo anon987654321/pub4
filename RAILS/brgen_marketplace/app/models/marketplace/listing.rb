@@ -275,7 +275,9 @@ class Marketplace::Listing < ApplicationRecord
     return nil if key.blank?
     return nil if user_id.blank?
 
-    siblings = Marketplace::Listing.active.where(user_id: user_id).where.not(id: id)
+    # Only earlier siblings: the copy points at the original, never the reverse.
+    siblings = Marketplace::Listing.active.where(user_id:)
+    siblings = siblings.where(id: ...id) if id
     siblings.select(:id, :title).find { |sibling| self.class.normalize_title(sibling.title) == key }
   end
 
