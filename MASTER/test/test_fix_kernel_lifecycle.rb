@@ -177,9 +177,9 @@ class TestFixKernelLifecycle < Minitest::Test
         require "fix/kernel"
 
         root, ready, entered = ARGV
-        File.write(ready, "ready\\n")
+        File.write(ready, "ready\n")
         kernel = Master::Fix::Kernel.new(root:)
-        kernel.execution_mutex.synchronize { File.write(entered, "entered\\n") }
+        kernel.execution_mutex.synchronize { File.write(entered, "entered\n") }
       RUBY
 
       begin
@@ -199,7 +199,7 @@ class TestFixKernelLifecycle < Minitest::Test
         _waited_pid, status = Timeout.timeout(5) { Process.wait2(child_pid) }
         child_pid = nil
         assert status.success?, "child failed to acquire the released execution lock"
-        assert_equal "entered\\n", File.read(entered)
+        assert_equal "entered\n", File.read(entered)
       ensure
         if child_pid
           begin
