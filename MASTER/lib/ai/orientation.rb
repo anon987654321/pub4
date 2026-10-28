@@ -253,7 +253,7 @@ module Master
       end
 
       def key_docs(repo_root)
-        %w[README.md CLAUDE.md].select { |name| File.file?(File.join(repo_root, name)) }
+        %w[AGENTS.md CLAUDE.md].select { |name| File.file?(File.join(repo_root, name)) }
       end
 
       def git_head(repo_root)
