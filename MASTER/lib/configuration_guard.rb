@@ -44,7 +44,7 @@ module Master
 
       if kind == :dynamic_tools
         Master::Io::DynamicTools.validate_source(content, path: absolute)
-        return nil
+        return
       end
 
       data = YAML.safe_load(content, aliases: true)
@@ -77,7 +77,6 @@ module Master
 
       nil
     end
-
 
     def validate_tokens(document)
       unknown = document.keys.map(&:to_s) - TOKEN_ROOT_FIELDS
@@ -237,7 +236,7 @@ module Master
       raise ArgumentError, "duplicate Law identities: #{duplicates.join(', ')}" unless duplicates.empty?
     end
 
-    def validate_catalogue_entries(entries, repo_root)
+    def validate_catalogue_entries(entries, _repo_root)
       entries.each do |id, row|
         raise ArgumentError, "Law #{id} must be a mapping" unless row.is_a?(Hash)
         raise ArgumentError, "Law #{id} must be universal" unless row["universal"] == true

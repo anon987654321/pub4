@@ -35,7 +35,7 @@ module Master
           next if covered?(id, spec, detectors, tags)
 
           gaps << Gap.new(
-            id: id,
+            id:,
             priority: spec["priority"],
             tier: spec["tier"],
             reason: gap_reason(id, spec),
@@ -125,7 +125,7 @@ module Master
         false
       end
 
-      def gap_reason(id, spec)
+      def gap_reason(_id, spec)
         mode = spec["coverage_mode"].to_s
         return "missing explicit coverage_mode" if mode.empty?
         return "unknown coverage_mode #{mode}" unless COVERAGE_MODES.include?(mode)
@@ -209,7 +209,6 @@ module Master
         Master::Ground::Swallow.log(e, context: "Fix::LawParity.scan_registry_tags", severity: :load_bearing)
         raise
       end
-
 
     end
   end
