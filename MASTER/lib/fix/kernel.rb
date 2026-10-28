@@ -167,8 +167,13 @@ module Master
             raise LedgerCorruption, "ledger identity changed or ledger was truncated"
           end
           if stat.size > cached.fetch(:size)
-            suffix = self.class.read_log_suffix(file, cached)
-            return cache_log_head(file, suffix.fetch(:seq), suffix.fetch(:hash))
+            # A different writer may have appended, but suffix-only validation
+            # trusts the cached prefix without proving that its bytes survived.
+            # Re-validate the complete chain before adopting the new head.
+            events = self.class.read_log_io(file)
+            last = events.last
+            return cache_log_head(file, last ? last.fetch("seq") : 0,
+                                  last ? last.fetch("hash") : GENESIS)
           end
           return cached if stat.mtime == cached.fetch(:mtime) && stat.ctime == cached.fetch(:ctime)
         end
@@ -184,32 +189,6 @@ module Master
           dev: stat.dev, ino: stat.ino, size: stat.size,
           mtime: stat.mtime, ctime: stat.ctime, seq:, hash:
         }
-      end
-
-      def self.read_log_suffix(file, head)
-        previous = head.fetch(:hash)
-        expected_seq = head.fetch(:seq) + 1
-        file.seek(head.fetch(:size), IO::SEEK_SET)
-        file.each_line do |line|
-          begin
-            raise LedgerCorruption, "sequence #{expected_seq}: incomplete final record" unless line.end_with?("\n")
-            next if line.strip.empty?
-
-            row = JSON.parse(line)
-            body = row.reject { |key, _| key == "hash" }
-            raise LedgerCorruption, "sequence #{expected_seq}: sequence gap" unless row.fetch("seq") == expected_seq
-            raise LedgerCorruption, "sequence #{expected_seq}: previous hash mismatch" unless
-              row.fetch("prev") == previous
-            actual = Digest::SHA256.hexdigest(JSON.generate(body))
-            raise LedgerCorruption, "sequence #{expected_seq}: event hash mismatch" unless actual == row.fetch("hash")
-
-            previous = row.fetch("hash")
-            expected_seq += 1
-          rescue JSON::ParserError, KeyError, TypeError, NoMethodError => error
-            raise LedgerCorruption, "sequence #{expected_seq}: #{error.message}"
-          end
-        end
-        { seq: expected_seq - 1, hash: previous }
       end
 
       def self.replay_events(root:, seq:)
