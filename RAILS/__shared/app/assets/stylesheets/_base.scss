@@ -69,6 +69,16 @@ select {
   outline-offset: 2px;
 }
 
+/* Text selection, one owner for the whole design system, carried 2026-10-28
+   from the retired Bergen brand sites (MASTER/docs/visual/
+   bergen_brand_systems.md). The browser default selection reads as noise on a
+   monochrome scheme; the inverse accent pair says "this is marked" with the
+   two tokens that already exist for painting on --accent. No new colours. */
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
 // Only the steps a view asks for: marketplace's cart and listing pages carry
 // .mt-8 and tv's video page .mt-12. Every other step, and every .px- twin, was
 // a class no template named.

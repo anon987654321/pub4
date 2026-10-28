@@ -17,8 +17,10 @@ class TestDomainSignals < Minitest::Test
 
   def test_scan_finds_known_residuals_in_this_repo
     s = DomainSignals.scan(@root)
-    assert_includes s[:relay_residual], "alfa.brgen.no"
-    assert_includes s[:relay_residual], "thor.brgen.no"
+    # thor.brgen.no / alfa.brgen.no (the retired static exports) were removed
+    # from relayd.conf on 2026-10-28 together with RAILS/__other, so the relay
+    # carries no ghosts: every Host match is a known name.
+    assert_empty s[:relay_residual]
     assert_includes s[:registered_not_owned], "amstrdam.nl"
     assert_empty s[:owned_missing_from_inventory]
   end

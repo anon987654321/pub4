@@ -7,6 +7,15 @@
 # calibrated against bob.no's production design system. The doctrine lives in
 # docs/visual/bergen_brand_systems.md; these laws are the line-level teeth
 # /fix walks when it repairs that tree.
+#
+# 2026-10-28: both source sites were retired and RAILS/__other deleted. The
+# laws stay — they are design decisions, and decisions outlive their first
+# tree. SIGNAL_COLOR_NAMING, PAPER_NOT_PURE_WHITE and PARAMETRIC_MARK_ONLY are
+# scoped (laws.yml path_pattern) to brand-export trees, because the four
+# RAILS apps declare --accent, #ffffff and long icon paths as their own
+# measured, operator-owned identity (see RAILS/__shared dialect tokens) and
+# these three laws must not read that scheme as drift. The remaining three
+# walk RAILS/** universally: measured there, zero findings.
 
 Law.define(:SIGNAL_COLOR_NAMING) do
   source "Bergen brand systems — one signal colour per identity (bob.no calibration)"

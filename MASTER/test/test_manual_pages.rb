@@ -10,7 +10,6 @@ class TestManualPages < Minitest::Test
     MASTER/man/man1/operator.1
     MASTER/man/man1/master-fix.1
     OPENBSD/man/man8/vps-deploy.8
-    OPENBSD/man/man8/vps-deploy-static.8
     OPENBSD/man/man8/pub4-admin.8
   ].freeze
 

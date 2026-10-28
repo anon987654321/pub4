@@ -34,7 +34,7 @@ module Master
       face_root face_interface brgen_old_dark brgen_old_light openbsd_wscons social light
       vertical_accents scale layout_rules kinetic_depth visual_design motion_and_sound
       data_visualization automated_css_analysis ux_laws typography worn_type pixel_perfection
-      rams_checklist ui_polish pwa ultraminimalism ad_visual_contract brand_systems
+      rams_checklist ui_polish pwa ultraminimalism ad_visual_contract
     ].freeze
     TOKEN_ROOT_FIELDS = %w[tokens].freeze
     def validate(path:, content:, root: nil)

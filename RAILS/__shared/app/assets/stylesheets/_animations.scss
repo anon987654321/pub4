@@ -41,3 +41,31 @@
     scroll-behavior: auto !important;
   }
 }
+
+// The print guarantee, beside the reduced-motion one for the same reason both
+// are global: they are promises about motion the page honours no matter what a
+// component asked for. Carried 2026-10-28 from the retired Bergen brand sites
+// (MASTER/docs/visual/bergen_brand_systems.md), where it was a measured
+// failure: print/PDF never fires IntersectionObserver, and a print can land
+// inside an entrance animation or its --delay stagger window, so below-fold
+// sections and mid-stagger cards came out blank or half-transitioned.
+//
+// `animation: none` alone is not enough — an element whose from-keyframe
+// starts at opacity 0 would print at its unanimated declared state, and
+// scroll-reveal's controller hides its targets inline before revealing them.
+// Forcing the visible trio beats both the keyframes and the inline styles.
+@media print {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  [data-scroll-reveal-target],
+  [style*="--delay:"] {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}

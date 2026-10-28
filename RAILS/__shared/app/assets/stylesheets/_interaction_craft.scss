@@ -49,6 +49,15 @@
   }
 }
 
+// Print resolves the check like reduce does: `animation: none` (the global
+// print guarantee in _animations.scss) would freeze the dash at its undrawn
+// offset and a receipt would print an empty tick.
+@media print {
+  .interaction-success[data-state="success"] .interaction-check {
+    stroke-dashoffset: 0;
+  }
+}
+
 @supports (view-transition-name: none) {
   ::view-transition-old(root) {
     animation: interaction-view-out var(--transition-fast) var(--ease-out) both;

@@ -2293,31 +2293,3 @@ tokens:
     render:
       max_transfer_bytes: 200000
       max_cumulative_layout_shift: 0.1
-  # Bergen brand systems (RAILS/__other) — the two standalone brand sites.
-  # Source of truth mirrors src/lib/marks.ts in each bundle; doctrine:
-  # MASTER/docs/visual/bergen_brand_systems.md; laws: MASTER/law/brand.rb.
-  brand_systems:
-    sommerseth:
-      name: "varm_minimalisme"
-      paper: "#F7F2E9"
-      ink: "#1E322D"
-      muted: "#5F6D66"
-      signal: "#C97E1E"
-      line: "rgba(30,50,45,0.16)"
-      fonts: { display: "Instrument Serif 400", body: "Geist", meta: "Geist Mono" }
-      mark:
-        system: "bergen_snittet_v1"
-        params: { grid: 48, stroke: 3.2, horizon_y: 38, rise: 25, sun_r: 6.5 }
-        reading: "midnattssol over setertak; solens senter = takets venstre fot"
-    alfa:
-      name: "arkitektonisk_minimalisme"
-      paper: "#F2F4F6"
-      ink: "#14212E"
-      muted: "#55636F"
-      signal: "#A4762F"
-      line: "rgba(20,33,46,0.16)"
-      fonts: { display: "Bricolage Grotesque 700", body: "Geist", meta: "Geist Mono" }
-      mark:
-        system: "bergen_snittet_v1"
-        params: { grid: 48, stroke: 3.2, horizon_y: 38, rise: 25, door_r: 5.2 }
-        reading: "A-scråtak med hvelvdør; døren = solen i søstermerket (samme sirkel)"
