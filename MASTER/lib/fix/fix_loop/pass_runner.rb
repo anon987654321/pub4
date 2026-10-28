@@ -183,6 +183,11 @@ module Master
           @visual_pass&.stop_runtime!
         end
 
+        # Scratch captures are run-owned; the durable visual evidence lives in the journal.
+        def cleanup_visual_artifacts
+          @visual_pass&.cleanup
+        end
+
         # All production pass repairs go through the Kernel-owned repair policy.
         # Standalone runners load the same implementation rather than a second class.
         def build_repair_loop(**options)
