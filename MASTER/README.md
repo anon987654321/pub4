@@ -117,7 +117,8 @@ remain while call sites are migrated and recovery parity is proved.
 
 Kernel now owns the outer execution lock, hash-chained coordinator start/terminal
 receipts, a shared journal accessor, a repair factory and bounded repair-outcome
-receipts. A process restart reconciles an orphaned coordinator receipt to
+receipts. The durable journal's separate lock rejects symlinked state and lock paths,
+insecure state-directory permissions and non-private lock files. A process restart reconciles an orphaned coordinator receipt to
 `unknown_outcome` only after a same-host process identity proves the writer is
 gone. Kernel does not apply source edits: the existing FixLoop/repair policy and
 disk-backed `Transaction` remain the mutation, rollback and Git-delivery path.
