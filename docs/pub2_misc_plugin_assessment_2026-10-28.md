@@ -1,6 +1,6 @@
 # pub2 misc plugin archaeology — 2026-10-28
 
-Scope: focused review of every current file under `anon987654321/pub2/misc/**`, compared to the *shape* of the existing `MASTER/plugins` tree and `MASTER/data/recovery/plugin_schema_v1.json`. This is a disposition report, not permission to edit MASTER; the repository owner's full-read precondition for MASTER remains mandatory.
+Scope: inventory of every current file under `anon987654321/pub2/misc/**` and focused review of the utility implementations and paired README files, compared to the *shape* of the existing `MASTER/plugins` tree and `MASTER/data/recovery/plugin_schema_v1.json`. This is a disposition report, not permission to edit MASTER; the repository owner's full-read precondition for MASTER remains mandatory.
 
 ## Inventory and disposition
 
@@ -21,5 +21,5 @@ An approved MASTER plugin would need to be built against the current plugin cont
 ## Evidence and limits
 
 - `pub2/main` inventory revision: `ad05242c97fff1b01450434974aad628d7de8628`.
-- Reviewed: all seven leaf files listed by the `misc/**` tree, including the actual Ruby/shell implementation for the four directories and the theme file.
-- Not claimed: execution against a live host, a security audit of the upstream APK, or runtime test results.
+- Inventory: nine leaf files are present under `misc/**` (including duplicate HTML/Markdown Nmap documentation). The focused pass examined the theme, Nmap shell implementation and docs, PounceKeys installer and docs, r-vx draft, and VulCheck implementation/docs.
+- Not claimed: byte-by-byte review of every legacy document's full contents, execution against a live host, a security audit of the upstream APK, or runtime test results.
