@@ -419,9 +419,9 @@ apps:
       category: open_source_package_intelligence
       promise: "The ports tree, understood."
       position: "A calm, exact interface to BSD software, dependencies, security and package knowledge."
-      distinctive_mechanic: "OpenBSD terminal discipline translated into a browsable public knowledge surface."
+      distinctive_mechanic: "Exact OpenBSD port knowledge presented as a calm, browsable search surface rather than terminal emulation."
       voice: [exact, calm, technical, trustworthy]
-      visual_character: [terminal_green, flat_black, monospaced_type, dense_information]
+      visual_character: [ultraminimal_white, classic_google_frontpage, arial_type, blue_links, square_corners]
       experience_principles: [truth_before_gloss, provenance_visible, dependency_context, security_first, no_friction]
     port: 47312
     stack_now: SQLite3, Rails 8.2.0.alpha, Hotwire, Falcon, Active Storage, OpenBSD, relayd
