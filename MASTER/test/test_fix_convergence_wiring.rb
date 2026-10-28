@@ -4,7 +4,8 @@ require_relative "test_helper"
 
 class FixConvergenceWiringTest < Minitest::Test
   def test_fix_loop_wires_rendered_and_opportunity_evidence
-    loop_source = File.read(File.expand_path("../lib/fix/fix_loop.rb", __dir__))
+    loop_source = File.read(File.expand_path("../lib/fix/kernel/convergence_adapter.rb", __dir__))
+    compatibility_entrypoint = File.read(File.expand_path("../lib/fix/fix_loop.rb", __dir__))
     pass_source = File.read(File.expand_path("../lib/fix/fix_loop/pass_execution.rb", __dir__))
     lifecycle_source = File.read(File.expand_path("../lib/fix/fix_loop/lifecycle.rb", __dir__))
     completion_source = File.read(File.expand_path("../lib/fix/fix_loop/completion.rb", __dir__))
@@ -16,8 +17,10 @@ class FixConvergenceWiringTest < Minitest::Test
     journal_source = File.read(File.expand_path("../lib/fix/kernel/lifecycle_journal.rb", __dir__))
     repair_source = File.read(File.expand_path("../lib/fix/kernel/repair_adapter.rb", __dir__))
 
-    assert_includes loop_source, 'require_relative "visual_pass"'
-    assert_includes loop_source, 'require_relative "opportunity_pass"'
+    assert_includes loop_source, 'require_relative "../visual_pass"'
+    assert_includes compatibility_entrypoint, 'require_relative "kernel/convergence_adapter"'
+    assert_includes loop_source, "class ConvergenceAdapter"
+    assert_includes loop_source, 'require_relative "../opportunity_pass"'
     assert_includes builder_source, "visual_pass:"
     assert_includes builder_source, "opportunity_pass:"
     assert_includes builder_source, "wishlist:"
@@ -29,9 +32,9 @@ class FixConvergenceWiringTest < Minitest::Test
     assert_includes runner_source, "Wishlist.findings"
     assert_includes llm_source, "run_wishlist_stage"
     assert_includes llm_source, "Wishlist::LAW_ID"
-    assert_includes loop_source, 'require_relative "fix_loop/pass_execution"'
-    assert_includes loop_source, 'require_relative "fix_loop/lifecycle"'
-    assert_includes loop_source, 'require_relative "fix_loop/completion"'
+    assert_includes loop_source, 'require_relative "../fix_loop/pass_execution"'
+    assert_includes loop_source, 'require_relative "../fix_loop/lifecycle"'
+    assert_includes loop_source, 'require_relative "../fix_loop/completion"'
     assert_includes pass_source, "continue_with_wishlist"
     assert_includes pass_source, "WISHLIST_MAX_ROUNDS"
     assert_includes lifecycle_source, "verify_incremental_scope"
