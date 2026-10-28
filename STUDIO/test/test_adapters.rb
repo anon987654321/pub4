@@ -54,12 +54,17 @@ class StudioAdaptersTest < Minitest::Test
   def test_abc_requires_engine_validator_and_headers
     abc = "X:1\nT:Test\nM:4/4\nL:1/8\nK:C\nCDEF|"
     assert_raises(ArgumentError) { Dilla::StyleAdapter.validate_abc!(abc) }
-    result = Dilla::StyleAdapter.validate_abc!(abc, validator: ->(_score) { [] })
+    result = Dilla::StyleAdapter.validate_abc!(abc, validator: ->(_score) { [] }, style_id: "blue_hour")
     assert_equal :ready, result[:status]
+    assert_equal "blue_hour", result.dig(:style_contract, :id)
+    assert_equal "1.0.0", result.dig(:style_contract, :version)
   end
 
   def test_mix_parameters_are_bounded
     assert_equal :ready, Dilla::StyleAdapter.validate_mix_parameters!({ "vocal" => { gain_db: 2.0, pan: 0.1 } })[:status]
     assert_raises(ArgumentError) { Dilla::StyleAdapter.validate_mix_parameters!({ "vocal" => { pan: 2.0 } }) }
+    assert_equal "blue_hour", Dilla::StyleAdapter
+      .validate_mix_parameters!({ "vocal" => { gain_db: 1.0 } }, style_id: "blue_hour")
+      .dig(:style_contract, :id)
   end
 end
