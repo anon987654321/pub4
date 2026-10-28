@@ -62,6 +62,40 @@ Current recovery anchors:
 
 The new engine preserves the original user intent but intentionally changes the mechanics: effects go through one dispatcher; source headroom and look-specific intensity are respected; calculations remain floating-point until a single final cast; random recipes must survive measured source-preservation checks; every output can carry the seed, chain and provenance; and AST-based vocabulary checks establish that recipe/preset options reach executable effect calls. Historical claims of “true randomization” do not substitute for those current proofs.
 
+## The deleted 2026 photographic proposal notes
+
+The two documents that were folded into implementation—not lost to an accidental delete—are
+still recoverable at their exact historical snapshot:
+- [`STUDIO/AMBITION.md` — all 168 proposals](https://github.com/anon987654321/pub4/blob/5c15297107d131eef8881241f6e84190670a2225/STUDIO/AMBITION.md)
+- [`STUDIO/PHOTOGRAPHY.md` — the four-layer photography model and refitted visual laws](https://github.com/anon987654321/pub4/blob/5c15297107d131eef8881241f6e84190670a2225/STUDIO/PHOTOGRAPHY.md)
+- [The later folding/deletion commit](https://github.com/anon987654321/pub4/commit/80709c0712559031fef10fe486f530ac35b185fc), whose message says those ideas now stand beside the code that uses them.
+
+This record preserves the trail without reintroducing two competing top-level specifications.
+The four independent failure layers remain the most important rule: **geometry** is decided
+before grading; **light** can be reshaped tonally but its direction cannot be moved; **expression**
+is a capture/generation decision; and **optical signature** (skin texture, specular response,
+grain, halation and highlight shoulder) is the grade's proper scope.
+
+| Historical visual law or proposal | Current owner / status |
+| --- | --- |
+| Strong centres, levels of scale, squint test, least astonishment | Prompt/selection principles; `STUDIO/replicate/craft.rb` and current generation prompts. They are not all objectively measurable gates. |
+| Define errors out / poka-yoke | `rescue.rb` states geometry, focus, motion blur, expression and clipped source highlights honestly instead of claiming a grade can repair them. |
+| Parse, don't validate; refuse unsupported settings | Replicate's model-specific input vocabularies, `Chain.problems`, and Postpro's checked recipe/preset vocabularies. |
+| DRY for near-identical frames | `frame_set.rb` fingerprints and near-duplicate detection. |
+| One strategy per set | `frame_set.rb` normalises exposure to the set before applying a coherent grade. |
+| Magic color / optical emulsion tokens | Postpro's stock tokens bind curve, dye response, speed and calibrated grain instead of independent arbitrary sliders. |
+| Reversibility / chesterton's fence | Original source is retained; output guards refuse source overwrite; grades write separate outputs and provenance. |
+| Full by default / analog warmth | The house grade defaults to its complete physical chain; camera-profile correction is on by default; blur that would invent new defocus remains intentionally excluded. |
+| Uncanny score before and after grade | Preset sidecars already record before/after readings. Chain sidecars now do too, together with input/output hashes and quality warnings. |
+| All rendered pathways use the same camera correction | This branch closes the old one-shot/watch/uplift/stock-sheet drift and adds a vocabulary audit that fails if one of those paths stops reaching `camera_corrected`. |
+| Golden references with perceptual ΔE and explicit skin/highlight bounds | Still a real gap: current quality warnings and smoke-pixel tests are not a substitute for calibrated reference-image tests. No claim is made that this item is complete. |
+| A measured specular-uniformity score and monotonically improving uncanny score | Still open: texture/clipping readings are proxies, not a facial-region/specular-scattering measurement. |
+| Video shutter angle, coherent bloom/halation, flicker, weave, gate-hair, telecine and still/video parity | The bounded CFR video pipeline restores the basic grade/audio/timing path. These video-specific optical effects and parity fixtures remain future work, not silently implemented features. |
+
+The 168 numbered ideas were a menu, not a mandate to ship every model name, price, or experimental stage
+as a runtime default. The maps above make the old intent findable while distinguishing measured
+behavior from proposals.
+
 ## Later `pub4` change trail
 
 These commits explain important implementation decisions that a code-only snapshot can
