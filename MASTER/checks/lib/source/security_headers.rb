@@ -39,6 +39,7 @@ module Deploy
       "config.content_security_policy_nonce_generator",
       "config.content_security_policy_nonce_directives = %w[script-src]",
       "policy.object_src :none",
+      "policy.frame_ancestors :self",
       "policy.script_src :self",
       'policy.report_uri "/csp-reports"',
       'config.content_security_policy_report_only = ENV["PUB4_CSP_ENFORCE"] != "1"',
@@ -112,8 +113,8 @@ module Deploy
       end
 
       directives.each do |directive|
-        if directive.match?(/(?:^|[\s,]):https\b|unsafe[-_]eval/i) ||
-           directive.match?(/(?:^|[\s,])\*(?:[\s,]|$)/)
+        if directive.match?(/(?:^|[\\s,]):https\\b|unsafe[-_]eval/i) ||
+           directive.match?(/["']\\*["']|(?:^|[\\s,])\\*(?:[\\s,]|$)/)
           result.fail("security_headers: #{label} has an overly broad script-src: #{directive.strip}")
         end
       end
@@ -123,12 +124,12 @@ module Deploy
       return unless source
 
       setters = source.lines.select do |line|
-        line.match?(/^\s*match\s+response\s+header\s+set\s+["']Content-Security-Policy(?:-Report-Only)?["']/i)
+        line.match?(/^\\s*match\\s+response\\s+header\\s+(?:set|append|remove)\\s+["']Content-Security-Policy(?:-Report-Only)?["']/i)
       end
       return if setters.empty?
 
       result.fail(
-        "security_headers: #{RELAYD} must not replace app-owned CSP; " \
+        "security_headers: #{RELAYD} must not alter app-owned CSP; " \
         "nonce-bearing policy belongs to Rails: #{setters.map(&:strip).join("; ")}"
       )
     end
