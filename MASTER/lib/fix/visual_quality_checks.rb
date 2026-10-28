@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "json"
+require_relative "../master"
 require_relative "../result"
 require_relative "visual_conformance"
 require_relative "visual_drift_budget"

@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "json"
+require_relative "../master"
 require "time"
 require_relative "layout_score"
 

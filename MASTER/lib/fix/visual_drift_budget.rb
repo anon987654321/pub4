@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "json"
+require_relative "../master"
 require_relative "taste_memory"
 
 module Master
