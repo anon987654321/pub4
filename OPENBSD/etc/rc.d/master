@@ -134,9 +134,14 @@ rc_stop() {
 
 # Runs after every stop and after a failed start. A port still held after the
 # grace period gets a group KILL; if it is held after that, the stop failed.
+# The group is found through falcon, which is gone by now when its TERM worked,
+# so the fstat holders are KILLed too: on 2026-10-28 a node MCP child the worker
+# spawned kept the inherited :53187 listener, rc_post failed, and rcctl restart
+# never ran start.
 rc_post() {
   master_wait_port_free 10 && return 0
   master_group_signal KILL
+  signal_holders KILL
   master_wait_port_free 10
 }
 # --- end stop path ---

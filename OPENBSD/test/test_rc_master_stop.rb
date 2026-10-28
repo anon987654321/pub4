@@ -4,13 +4,15 @@ require "minitest/autorun"
 require "tmpdir"
 
 # etc/rc.d/master needs OpenBSD's rc.subr, so the stop path cannot run whole here.
-# Its helpers sit between two marker lines and are plain sh; this runs exactly that
+# Its helpers sit between two marker lines and are plain ksh; this runs exactly that
 # text against stubbed pgrep, pkill, ps, nc and sleep. What it proves: stopping a
 # service whose process is already gone exits 0 and says nothing, a daemon that
 # survives TERM gets a group KILL, and a port that never frees fails the stop.
 class RcMasterStopTest < Minitest::Test
   RC = File.read(File.expand_path("../etc/rc.d/master", __dir__), encoding: "UTF-8")
   HELPERS = RC[/^# --- stop path.*?^# --- end stop path ---$/m]
+  # rc_post KILLs the fstat holders too, so their helpers come along.
+  HOLDERS = RC[/^# port holders: begin$.*?^# port holders: end$/m]
 
   def stub(dir, name, body)
     File.write(File.join(dir, name), "#!/bin/sh\n#{body}\n")
@@ -24,6 +26,8 @@ class RcMasterStopTest < Minitest::Test
     stub(dir, "ps", pgid.empty? ? "exit 1" : "if echo \"$*\" | grep -q -e '-p #{pids}'; then echo ' #{pgid}'; else echo ' 1'; fi")
     stub(dir, "pkill", %(echo "pkill $*" >> #{dir}/calls))
     stub(dir, "sleep", "exit 0")
+    # A test that wants a holder writes fstat.out before calling; none by default.
+    stub(dir, "fstat", "cat #{dir}/fstat.out 2>/dev/null")
     File.write(File.join(dir, "held"), held.to_s)
     stub(dir, "nc", <<~SH)
       n=$(cat #{dir}/held)
@@ -35,9 +39,10 @@ class RcMasterStopTest < Minitest::Test
       PATH=#{dir}:$PATH; PORT=53187; rc_stop_signal=TERM
       _rc_sendsig() { pkill -${1:-TERM} -xf pexp; }
       #{HELPERS}
+      #{HOLDERS}
       #{call}; echo "exit=$?"
     SH
-    out = IO.popen(["sh", "-c", script, { err: %i[child out] }], &:read)
+    out = IO.popen(["ksh", "-c", script, { err: %i[child out] }], &:read)
     [out, File.exist?(File.join(dir, "calls")) ? File.read(File.join(dir, "calls")) : ""]
   end
 
@@ -58,7 +63,7 @@ class RcMasterStopTest < Minitest::Test
       out, = run_stop(dir, call: "kill -ALRM 999999; echo alrm=$?; kill -0 999999; echo plain=$?")
       assert_includes out, "alrm=0"
       assert_includes out, "plain=1"
-      assert_includes out, "No such process", "a real kill failure must still speak"
+      assert_match(/no such process/i, out, "a real kill failure must still speak")
     end
   end
 
@@ -89,6 +94,21 @@ class RcMasterStopTest < Minitest::Test
       out, calls = run_stop(dir, pids: "4242", pgid: "4242", held: -1, call: "rc_post")
       assert_equal "exit=1\n", out
       assert_includes calls, "pkill -KILL -g 4242"
+    end
+  end
+
+  # 2026-10-28 on vm23: falcon had exited on TERM, so pgrep found no group, and a
+  # node child of the worker still held the inherited listener. The fstat holder
+  # is KILLed and the stop succeeds once the port frees.
+  def test_an_orphaned_port_holder_is_killed_when_falcon_is_gone
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "fstat.out"),
+                 "master   node        6067    7* internet stream tcp 0x0 127.0.0.1:53187\n")
+      record_kill = %(kill() { echo "kill $*" >> #{dir}/calls; })
+
+      out, calls = run_stop(dir, held: 12, call: "#{record_kill}; rc_post")
+      assert_equal "exit=0\n", out
+      assert_includes calls, "kill -KILL 6067"
     end
   end
 
