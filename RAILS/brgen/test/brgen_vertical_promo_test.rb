@@ -34,7 +34,8 @@ class BrgenVerticalPromoTest < ActiveSupport::TestCase
     css = File.read(Rails.root.join("app/assets/stylesheets/_vertical_promo.scss"))
 
     assert_includes css, "rotate(3000deg)"
-    assert_includes css, "100s linear infinite"
+    # The easing is the declared token since 633edfa41; its value is still linear.
+    assert_match(/100s (?:linear|var\(--ease-linear\)) infinite/, css)
     assert_includes css, "@media (prefers-reduced-motion: reduce)"
     refute_includes css, "anime"
     refute_includes css, "canvas"

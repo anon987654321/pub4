@@ -92,15 +92,20 @@ class AuthorizationBoundariesTest < ActionDispatch::IntegrationTest
     end
   end
 
-  # A deterministic identicon is publicly cacheable, so a departing account
-  # must not leave a stable visual identifier reachable by raw user id.
-  test "a departing user's avatar is no longer public" do
+  # The identicon is drawn from the numeric id alone, never from account state
+  # (0dd0fc2be): a 404 for a departing account would itself reveal the
+  # departure, so its answer must look exactly like any other id's.
+  test "a departing user's avatar is indistinguishable from any other id" do
     target = user("avatar-target")
     target.update_columns(deleted_at: Time.current, deletion_scheduled_at: 7.days.from_now)
 
     get avatar_user_path(target)
+    departed = [ response.status, response.media_type, response.headers["Cache-Control"] ]
 
-    assert_response :not_found
+    get avatar_user_path(User.maximum(:id).to_i + 1000)
+
+    assert_equal [ response.status, response.media_type, response.headers["Cache-Control"] ], departed
+    assert_response :ok
   end
 
   # --- blocks ---------------------------------------------------------------
