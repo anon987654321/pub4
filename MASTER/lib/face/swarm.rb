@@ -248,8 +248,9 @@ module Master
           row = (((center[1] + scale[1] - particle.y) / (2.0 * scale[1])) * (rows - 1)).round
           next unless row.between?(0, rows - 1) && col.between?(0, cols - 1)
 
-          frame.chars[row][col] = glyph_for(particle.depth_rank || 0.5, config:)
           rank = Float(particle.depth_rank || 0.5).clamp(0.0, 1.0)
+          glyph_rank = config.fetch("size_from_depth", true) ? rank : 0.5
+          frame.chars[row][col] = glyph_for(glyph_rank, config:)
           frame.depth[row][col] = rank >= 0.72 ? 2 : (rank <= 0.35 ? 0 : 1)
         end
         frame
