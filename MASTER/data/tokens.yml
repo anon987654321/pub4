@@ -2263,3 +2263,33 @@ tokens:
       - resources
       - prompts
       action: Prefer standard tool bridges over bespoke glue when integrating design automation.
+
+
+  # Machine-readable ad visual contract. The general visual_identity above remains
+  # authoritative for brand meaning; these values specify the measurable ad subset.
+  ad_visual_contract:
+    version: 1
+    token_prefix: ad-organ
+    colors:
+      surface: { light: "#FFFFFF", dark: "#171717" }
+      on_surface: { light: "#171717", dark: "#F5F5F5" }
+      accent: { light: "#50630A", dark: "#C8F55F" }
+      disclosure_background: { light: "#171717", dark: "#F5F5F5" }
+      disclosure_foreground: { light: "#FFFFFF", dark: "#171717" }
+    contrast_pairs:
+      - { foreground: disclosure_foreground, background: disclosure_background, minimum: 4.5 }
+      - { foreground: on_surface, background: surface, minimum: 4.5 }
+    typography:
+      headline: { size: "1.25rem", weight: 700, line_height: 1.2 }
+      body: { size: "1rem", weight: 400, line_height: 1.5 }
+      price: { size: "1.125rem", weight: 700, line_height: 1.2 }
+      disclosure: { size: "0.875rem", weight: 600, line_height: 1.4 }
+    spacing: { xs: "0.25rem", sm: "0.5rem", md: "1rem", lg: "1.5rem" }
+    radius: { none: "0", small: "0.25rem", medium: "0.5rem" }
+    placement:
+      minimum_width: 280
+      safe_insets: { top: 8, right: 8, bottom: 8, left: 8 }
+      disclosure_max_distance: 24
+    render:
+      max_transfer_bytes: 200000
+      max_cumulative_layout_shift: 0.1

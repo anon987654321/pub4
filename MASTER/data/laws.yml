@@ -4895,3 +4895,49 @@ STYLE_ARBITRATION:
   statement: "Reviewers adjudicate declared contracts and evidence, not taste; aesthetic decisions remain with the operator under RENDERED_VALUES."
   applies_to: [style, review, arbitration]
   see_also: [INTER_MODEL_CONTRACT, RENDERED_VALUES]
+
+
+# Ad visuals are governed by the same declaration → detector → gate chain as copy.
+# The token contract is a child of the canonical token source; no parallel palette.
+VISUAL_IDENTITY_TOKENS_ONLY:
+  tier: policy
+  severity: error
+  statement: "Ad-organ CSS resolves colour, typography and spacing through the canonical visual token contract; hardcoded presentation values fail the audit."
+  applies_to: [ads, visual_identity, css]
+  contract: "MASTER/data/tokens.yml#tokens.ad_visual_contract"
+  detector: "Master::Visual::AdAudit.identity_tokens"
+
+VISUAL_CONTRAST_WCAG_AA:
+  tier: policy
+  severity: error
+  statement: "Every audited ad text/background pair meets WCAG AA contrast thresholds in the token contract and in rendered evidence."
+  applies_to: [ads, accessibility, contrast]
+  detector: "Master::Visual::AdAudit.contrast"
+
+VISUAL_DISCLOSURE_PROMINENCE:
+  tier: policy
+  severity: error
+  statement: "Native and affiliate creatives identify their commercial nature near the content with readable, contrasting disclosure."
+  applies_to: [ads, disclosure, compliance]
+  detector: "Master::Visual::AdAudit.disclosure"
+
+VISUAL_ALT_TEXT_PRESENT:
+  tier: policy
+  severity: error
+  statement: "Every image in an ad creative has non-empty alternative text unless it is explicitly decorative."
+  applies_to: [ads, accessibility, images]
+  detector: "Master::Visual::AdAudit.alt_text"
+
+VISUAL_SAFE_ZONE_RESPECTED:
+  tier: policy
+  severity: error
+  statement: "Rendered headline, logo and call-to-action bounds remain inside the placement safe zone."
+  applies_to: [ads, placement, composition]
+  detector: "Master::Visual::AdAudit.safe_zone"
+
+VISUAL_RENDER_INTEGRITY:
+  tier: policy
+  severity: error
+  statement: "A creative passes only with rendered evidence proving assets loaded, transfer size within budget and layout shift within budget."
+  applies_to: [ads, rendering, performance]
+  detector: "Master::Visual::AdAudit.render_integrity"
