@@ -54,9 +54,9 @@ class TestCompletions < Minitest::Test
     source = File.read(File.join(COMPLETIONS, "_operator"))
 
     assert_includes source, "'land:commit path-scoped, re-check, push current branch'"
-    assert_includes source, "'worktree:create, list or remove managed isolated worktrees'"
+    # Work goes straight to main in one checkout; bin/operator has no worktree command.
+    refute_includes source, "worktree:"
     assert_includes source, "report merge/delete candidates"
-    refute_includes source, "worktree:refused"
     refute_includes source, "push main'"
   end
 

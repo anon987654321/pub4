@@ -15,7 +15,6 @@ _operator() {
     'push:replay unpublished main commits onto a moved origin/main and push'
     'snapshot:regenerate the snapshot packs'
     'post-pull:the checklist after a pull'
-    'worktree:create, list or remove managed isolated worktrees'
     'laws:one law, its exemption, and what it finds'
     'branches:classify branches against main and report merge/delete candidates'
     'brief:the authority chain, the mechanical guards and the top-ranked Laws, before the first edit'

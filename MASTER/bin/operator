@@ -61,8 +61,6 @@ def usage
       bin/operator branches               every branch against main: merged, active, conflicts, deletes_heavily or ready
       bin/operator design [--app A] [--surface S] [--rounds N]  screenshot, edit one layout rule, keep it if the score rises, commit each
       bin/operator land -m <msg> <path>...  commit path-scoped, re-check, push current branch
-      bin/operator worktree <name> [--base REF] [--allow-dirty-source]  create managed isolated worktree
-      bin/operator worktree list | remove <name>  inspect or remove a clean worktree; preserve its branch
       bin/operator push                   replay unpublished main commits onto a moved origin/main and push, no stash
       bin/operator triangle <up|status|down> [app...]  boot brgen, amber, bsdports and the master face on the ports the live checks probe
       bin/operator visual review [--app A,B] [--surface ID] [--no-critique] [--no-open] [--out DIR]  read-only rendered review, no fixing
@@ -548,9 +546,6 @@ when "triangle", "premerge", "ci", "coverage"
   # premerge proof, every app's bin/ci, the coverage run. They sit with the other
   # RAILS tools in MASTER/tools/rails and are reached only through here.
   exec(RbConfig.ruby, File.join(ROOT, "MASTER", "tools", "rails", "#{command}.rb"), *ARGV)
-when "worktree"
-  require "operator/worktree"
-  exit Operator::Worktree.command(ARGV, root: ROOT)
 when "law:silent"
   output = Operator::LawInventory.render_collection(:silent, json: ARGV.include?("--json"))
   if output
