@@ -42,8 +42,26 @@ module Studio
     def replayable?(manifest, registry)
       style_id = manifest[:style_id] || manifest["style_id"]
       version = manifest[:style_version] || manifest["style_version"]
-      versions = registry[style_id] || registry[style_id.to_sym]
-      !versions.nil? && (versions.key?(version) || versions.key?(version.to_sym))
+      modality = manifest[:modality] || manifest["modality"]
+      styles = registry["styles"] || registry[:styles] || registry
+      style = styles[style_id.to_s] || styles[style_id.to_sym]
+      return false unless style.is_a?(Hash)
+
+      if style["versions"].is_a?(Hash) || style[:versions].is_a?(Hash)
+        versions = style["versions"] || style[:versions]
+        selected = versions[version.to_s] || versions[version.to_sym]
+        return false unless selected.is_a?(Hash)
+        modalities = selected["modalities"] || selected[:modalities] || selected
+        return modalities.key?(modality.to_s) || modalities.key?(modality.to_sym) if modality
+        return modalities.values.any? { |entry| entry.is_a?(Hash) && entry["version"].to_s == version.to_s }
+      end
+
+      if modality
+        entry = style[modality.to_s] || style[modality.to_sym]
+        entry.is_a?(Hash) && entry["version"].to_s == version.to_s
+      else
+        style.values.any? { |entry| entry.is_a?(Hash) && entry["version"].to_s == version.to_s }
+      end
     end
 
     def canonicalize(value)
