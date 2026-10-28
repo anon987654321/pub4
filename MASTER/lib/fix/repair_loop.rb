@@ -142,7 +142,10 @@ module Master
         # Bus-only meant a crashed rule pass was indistinguishable from a
         # quiet one in the dmesg stream the operator actually reads.
         Master::Trace::Dmesg.status("fix0", "#{@law.id}: #{e.class}: #{e.message[0, 90]}")
-        { fixed: 0, status: :error, breakdown: { error: 1 }, error: "#{e.class}: #{e.message}" }
+        applied = fixed.is_a?(Numeric) ? fixed.to_i : 0
+        breakdown = @batch_breakdown.is_a?(Hash) ? @batch_breakdown.dup : { error: 1 }
+        breakdown[:kernel_receipt_failed] = 1 if @kernel
+        { fixed: applied, status: :error, breakdown:, error: "#{e.class}: #{e.message}" }
       ensure
         @visual_image = nil
       end
