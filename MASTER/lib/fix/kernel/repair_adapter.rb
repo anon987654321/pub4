@@ -146,6 +146,7 @@ module Master
         # through a registry rule that knows nothing about that evidence.
         def run_once(files, external_violations: nil, image: nil)
           @visual_image = image
+          @batch_breakdown = {}
           receipt_attempted = false
           violations = external_violations || scan_files(files)
           if violations.empty?
