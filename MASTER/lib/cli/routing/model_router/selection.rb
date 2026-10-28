@@ -95,8 +95,6 @@ module Master
             @compute_pool.select(ids, task_type: operation) || preferred(task_type: operation)
           end
 
-          private
-
           # The pool ranks the whole chain by measured utility, and on a machine
           # with a subscription CLI that put the strongest lane ahead of the free
           # tier for "hello", which chain_for exists to prevent. For chitchat the
@@ -104,6 +102,7 @@ module Master
           # The terminal fallback order is independent of preference/ranking:
           # premium and paid API lanes first, free API lanes next, browser chat next,
           # and local compute last. A preferred local model must never jump the queue.
+          # Public: Review::Agent::ModelSelector reorders a biased chain with it.
           def priority_fallback_order(models)
             Array(models).map(&:to_s).reject(&:empty?).uniq.each_with_index.sort_by do |model, index|
               rank = if web_chat_model?(model)
@@ -120,6 +119,8 @@ module Master
               [rank, index]
             end.map(&:first)
           end
+
+          private
 
           def free_api_model?(model)
             return true if model.to_s.end_with?(":free", ":cloud", "-cloud")

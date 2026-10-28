@@ -34,6 +34,14 @@ module Master
           Result.new(pairs: collect_pairs, profile: @profile, law_filter: @law_filter, severity_filter: @severity_filter)
         end
 
+        # [profile, law_filter, severity_filter] when the first word of arg names a
+        # scan profile, [nil, nil, nil] otherwise; the walk is not run.
+        def leading_profile
+          return [nil, nil, nil] unless canonical_profile(arg_parts.first, load_workflow_profiles.last)
+
+          resolve_profile
+        end
+
         private
 
         attr_reader :scanner, :root, :arg, :depth, :autofix, :law_filter
@@ -156,18 +164,7 @@ module Master
           self.class.workflow_profiles(path)
         end
 
-        def self.resolve_scan_profile(arg, root)
-          req = allocate
-          req.instance_variable_set(:@scanner, nil)
-          req.instance_variable_set(:@root, root)
-          req.instance_variable_set(:@arg, arg.to_s.strip)
-          req.instance_variable_set(:@depth, :deep)
-          _, profiles = req.send(:load_workflow_profiles)
-          first_word = arg.to_s.strip.split(/\s+/).first
-          return [nil, nil, nil] unless req.send(:canonical_profile, first_word, profiles)
-
-          req.send(:resolve_profile)
-        end
+        def self.resolve_scan_profile(arg, root) = new(scanner: nil, root:, arg:).leading_profile
 
         def self.workflow_profiles(path)
           @workflow_profiles_cache ||= {}
