@@ -6,6 +6,16 @@ The terminal face is a presentation adapter for the same MASTER runtime used by 
 
 `MASTER/data/tokens.yml#face_interface` owns shared state names, the stipple profile of each state, interaction/turn/task/tool states, events, prompt tokens, the ASCII ramp and measured ink values, mesh and camera parameters, sampling and fit rules, and declared performance budgets. Change those definitions first; do not copy the values into Ruby constants or browser code. The face contract in the runtime owns the semantic state shape. The terminal renderer implements that contract rather than redefining it.
 
+The optional white swarm is another projection of that same contract. Its geometry,
+attractors, force constants, mode multipliers, particle ceiling and glyph ramp live
+under face_interface.swarm in tokens.yml and are read by Master::Face::Swarm.
+The terminal overlays depth-ranked glyphs onto the current frame from far to near;
+MASTER_FACE_SWARM=0 disables this CLI layer. The browser uses the same target field
+and depth mapping in face_stipple_system.js, while respecting the existing
+one-pixel sprite rule: depth affects brightness there, never point size. Reduced
+motion freezes positions and velocities rather than respawning or shrinking the
+field. The token ceiling is subordinate to the existing shared point allocation.
+
 ## Surface responsibilities
 
 `window.rb` owns terminal lifecycle, input, viewport handling and exit/interruption behavior. `head.rb` builds the reusable deterministic mesh. `ascii.rb` projects and shades that mesh into terminal cells; the web face ports the same rendering rules using its own surface primitives. Terminal-specific sizing may adapt to the available rows and columns, but shared geometry, glyph choices, rounding and state meaning stay governed by the canonical token document.
