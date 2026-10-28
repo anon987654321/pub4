@@ -170,17 +170,17 @@ module Master
         evidence = rendered.is_a?(Hash) ? (rendered[:integrity] || rendered["integrity"]) : nil
         reasons << "render integrity evidence is missing" unless evidence.is_a?(Hash)
         if evidence.is_a?(Hash)
-          loaded = evidence[:assets_loaded] || evidence["assets_loaded"]
-          reasons << "one or more rendered assets failed to load" unless loaded == true
+          reasons << "one or more rendered assets failed to load" unless (evidence[:assets_loaded] || evidence["assets_loaded"]) == true
           bytes = evidence[:transfer_bytes] || evidence["transfer_bytes"]
           max_bytes = token_contract.dig("render", "max_transfer_bytes").to_i
           reasons << "transfer size is not measured" unless bytes.is_a?(Numeric)
           reasons << "transfer size exceeds #{max_bytes} bytes" if bytes.is_a?(Numeric) && bytes > max_bytes
           cls = evidence[:cumulative_layout_shift] || evidence["cumulative_layout_shift"]
           max_cls = token_contract.dig("render", "max_cumulative_layout_shift").to_f
-          reasons << "cumulative layout shift is not measured" unless cls.is_a?(Numeric)
-          reasons << "cumulative layout shift exceeds #{max_cls}" if cls.is_a?(Numeric) && cls > max_cls
-          reasons << "render completion is not confirmed" unless (evidence[:rendered] || evidence["rendered"]) == true
+          static_status = (rendered[:measurement_mode] || rendered["measurement_mode"]) == "browserless_static" ? (defined?(Master::Visual::BrowserlessMeasurements) ? Master::Visual::BrowserlessMeasurements.static_render_integrity_status(rendered) : :invalid) : :not_static
+          reasons << (static_status == :invalid ? "browserless mode cannot claim measured CLS or incomplete proof" : "cumulative layout shift is not measured") unless (cls.is_a?(Numeric) && static_status != :invalid) || static_status == :valid
+          reasons << "cumulative layout shift exceeds #{max_cls}" if static_status != :invalid && cls.is_a?(Numeric) && cls > max_cls
+          reasons << "render completion is not confirmed" unless (evidence[:rendered] || evidence["rendered"]) == true || static_status == :valid
         end
         result("VISUAL_RENDER_INTEGRITY", reasons)
       end

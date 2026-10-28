@@ -874,7 +874,7 @@ AUDIT_CHECKS = %w[
   lint:law_trace lint:law_parity lint:agent_contracts lint:laws_digest lint:scan_coverage lint:reader_singularity lint:doc_citations
   lint:do_not_touch lint:instruments lint:swallowed lint:law_audit lint:autofix_reach
   lint:rule_hygiene lint:constant_collisions lint:capability lint:cohesion lint:law_reach
-  lint:models lint:dedup lint:word_boundary lint:test_naming
+  lint:models lint:dedup lint:word_boundary lint:test_naming ad_organ:test_browserless
   loc_budget
 ].freeze
 
@@ -1075,12 +1075,17 @@ end
 
 
 namespace :ad_organ do
-  desc "Lint an ad visual manifest and fail unless all six visual laws have measured evidence"
+  desc "Lint an ad visual manifest and fail unless all six visual laws have evidence"
   task :lint_visual do
     manifest = ENV["AD_VISUAL_MANIFEST"].to_s
     abort "ad_organ: set AD_VISUAL_MANIFEST to a JSON creative manifest" if manifest.empty?
     abort "ad_organ: manifest does not exist: #{manifest}" unless File.file?(manifest)
 
     run_tool("tools/visual/audit_ad.rb", manifest)
+  end
+
+  desc "Test browserless visual measurements without starting a browser"
+  task :test_browserless do
+    ruby File.join(__dir__, "test", "test_browserless_visual_measurements.rb")
   end
 end
