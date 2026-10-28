@@ -76,7 +76,7 @@ module Master
         @execution_mutex = Mutex.new
       end
 
-      attr_reader :root, :workspace_root, :actor, :log_path
+      attr_reader :root, :workspace_root, :actor, :log_path, :execution_mutex
 
       # The Kernel owns /fix lifecycle coordination. RunJournal is currently its
       # durable metadata adapter; no caller should construct a second journal for
