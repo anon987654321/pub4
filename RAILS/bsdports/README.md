@@ -6,10 +6,12 @@ any of them in the time it takes to press a key.
 
 It is a Rails 8.2.0.alpha app on Ruby 4.0.5, with SQLite, Falcon and Hotwire. Search runs
 through an FTS5 index over port names and comments, kept beside the data in the same database.
-The pages wear the terminal-green look of OpenBSD itself, flat and dense, with one line to a
-port, because the index is the product. The app follows the shared engine's layout and
-accessibility contracts and takes its design values from MASTER, so it differs from brgen and
-amber in dialect and not in grammar. Its interface is Norwegian by default, like the other two
+The pages use an ultra-minimal white search-page language, inspired by the classic Google
+front page: Arial, white paper, #202124 ink, #4d5156 secondary text and #1a0dab links, with
+square corners and compact, exact port results. OpenBSD supplies the subject matter and technical
+seriousness, not a dark terminal theme. The app follows the shared engine's layout and
+accessibility contracts, so it differs from brgen and amber in visual dialect, not in grammar.
+Its interface is Norwegian by default, like the other two
 apps. The promise, the stack and the status of every feature are in `apps.yml`, under
 `bsdports`.
 
