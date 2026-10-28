@@ -43,7 +43,7 @@ module Master
             model: model.to_s,
             status: status.to_s,
             latency_ms:,
-            **Master::Execution::Contract.diagnostic_fields(error)
+            **Master::Execution::Contract.diagnostic_fields(error),
           }.compact
           self.class.append_json_line(path, event)
           event

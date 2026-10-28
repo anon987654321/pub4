@@ -649,7 +649,6 @@ evidence includes prompt contracts, input recovery, browser reconnection, visibl
 keyboard accessibility and terminal modes. A catalogue row is not proof that the behavior
 is implemented or passing; close it only with the declared test or live/rendered evidence.
 
-
 ## Rendered surface and public metadata checks
 
 The `surface_schema` check validates the five declared Brgen surfaces for exactly one non-empty document title, meta description, absolute canonical URL, Open Graph title/description/URL, as well as their existing layout and interaction markers. Positive fixtures exercise complete metadata; `MASTER/test/test_dom_surface_seo_metadata.rb` proves missing descriptions, duplicate canonicals and relative canonical URLs are detected. This is source/fixture coverage, not proof of a full public-host crawl; the broader hostname, redirect, robots, sitemap and JSON-LD audit remains in the root TODO.
@@ -657,7 +656,6 @@ The `surface_schema` check validates the five declared Brgen surfaces for exactl
 The metadata attribute checks respect the active quote delimiter, so valid apostrophes inside titles and descriptions remain accepted; relative canonicals and duplicate/empty metadata remain invalid. A dedicated negative/positive regression covers this distinction.
 
 The OpenBSD tracked PF ruleset guard is registered in the single check runner as `openbsd_pf_policy`. It checks the repository-specific default-deny, explicit interface scope on pass rules, and SSH/bruteforce ordering invariants; the current ICMP type allowlist is a named exception; `pfctl -nf` remains the authority for native PF syntax on OpenBSD.
-
 
 ## Response security header contract
 

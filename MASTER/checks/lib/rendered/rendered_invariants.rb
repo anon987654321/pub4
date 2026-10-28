@@ -63,7 +63,7 @@ module Deploy
       # click.
       "radio.brgen.no" => :raised,
       # The storefronts are not here: a closed or undrawn tab bar publishes no
-      # height, so their tab sits in the corner like every other surface.
+      # height, so their tab sits in the corner like every other surface.,
     }.freeze
 
     # A background this light cannot be a dark theme, whatever the tokens say.

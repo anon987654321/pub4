@@ -112,5 +112,4 @@ class EnhanceStageTest < Minitest::Test
     end
   end
 
-
 end

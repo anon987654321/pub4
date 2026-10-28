@@ -82,7 +82,6 @@ class TestWatcher < Minitest::Test
     previous.nil? ? ENV.delete("MASTER_WATCHER") : ENV["MASTER_WATCHER"] = previous
   end
 
-
   def test_watcher_survives_failure_to_publish_its_error_event
     previous = ENV["MASTER_WATCHER"]
     ENV["MASTER_WATCHER"] = "1"
@@ -112,6 +111,5 @@ class TestWatcher < Minitest::Test
   ensure
     previous.nil? ? ENV.delete("MASTER_WATCHER") : ENV["MASTER_WATCHER"] = previous
   end
-
 
 end

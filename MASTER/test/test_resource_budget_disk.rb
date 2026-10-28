@@ -53,7 +53,7 @@ class TestResourceBudgetDisk < Minitest::Test
     [
       "df: measurement unavailable\n",
       "Filesystem 1024-blocks Used Available Capacity Mounted on\n",
-      "Filesystem 1024-blocks Used Available Capacity Mounted on\n/dev/mock 1000 900 unknown 90% /\n"
+      "Filesystem 1024-blocks Used Available Capacity Mounted on\n/dev/mock 1000 900 unknown 90% /\n",
     ].each do |output|
       with_df(path, output) do
         assert_nil @budget.disk_free_gb_for(path), "expected malformed df output to remain unavailable"

@@ -280,7 +280,6 @@ private
       end
     end
 
-
     def emit(turn, effect, observation)
       @observer&.call(turn:, effect:, observation:)
     end

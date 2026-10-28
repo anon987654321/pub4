@@ -163,7 +163,6 @@ class PatchApplierTest < Minitest::Test
       +row TEN
        row 11
 
-
     DIFF
 
     result = Applier.apply(source, two_hunks)

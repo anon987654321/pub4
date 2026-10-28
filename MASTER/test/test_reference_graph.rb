@@ -104,7 +104,6 @@ class TestReferenceGraph < Minitest::Test
     end
   end
 
-
   def test_indexes_extensionless_text_sources_and_is_idempotent_until_refreshed
     Dir.mktmpdir("reference-graph") do |root|
       FileUtils.mkdir_p(File.join(root, "lib"))

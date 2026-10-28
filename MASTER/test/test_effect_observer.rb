@@ -78,7 +78,6 @@ class TestEffectObserver < Minitest::Test
     assert_equal "cp-1", payload[:checkpoint_id]
   end
 
-
   def test_after_event_requires_a_matching_before_event
     bus = RecordingBus.new
     observer = Master::Trace::EffectObserver.new(bus:)

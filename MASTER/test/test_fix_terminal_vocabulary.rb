@@ -75,7 +75,6 @@ class TestFixTerminalVocabulary < Minitest::Test
     assert_equal :done, loop.send(:terminal_state_for, Master::Result.ok(:done))
   end
 
-
   def test_every_declared_terminal_state_round_trips_through_the_policy
     Master::Fix::OutcomePolicy::TERMINAL_STATES.each do |state|
       result = Master::Result.ok("#{state.to_s.upcase}: fixture")

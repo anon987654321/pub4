@@ -80,7 +80,6 @@ class TestEventBusReach < Minitest::Test
     refute_includes refs, "comment:fake"
   end
 
-
   def test_current_tree_exposes_real_face_topics_without_stale_aliases
     result = Operator::EventBusReach.report
 

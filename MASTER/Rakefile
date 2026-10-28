@@ -1126,7 +1126,6 @@ task :mutate, [:source, :test] do |_t, args|
   ruby File.join(__dir__, "tools", "mutate.rb"), args.source, args.test
 end
 
-
 namespace :ad_organ do
   desc "Lint an ad visual manifest and fail unless all six visual laws have evidence"
   task :lint_visual do

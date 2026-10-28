@@ -208,7 +208,6 @@ class TestFixFreshCheckoutModels < Minitest::Test
     Master::Io::ModelSkipCache.clear!
   end
 
-
   def test_a_saved_model_in_the_default_config_does_not_pin_the_boot
     ENV["MASTER_MODEL"] = nil
     assert_equal [OPUS, "availability"], Selection.boot_choice(env: ENV, saved: nil)

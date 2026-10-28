@@ -16,7 +16,7 @@ module Master
         "https://github.com/anon987654321/pub4.git",
         "https://github.com/anon987654321/pub4",
         "git@github.com:anon987654321/pub4.git",
-        "ssh://git@github.com/anon987654321/pub4.git"
+        "ssh://git@github.com/anon987654321/pub4.git",
       ].freeze
 
       def initialize(root:, config: Mobile.config)

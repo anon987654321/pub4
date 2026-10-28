@@ -214,6 +214,5 @@ module Master
       end
     end
 
-
   end
 end

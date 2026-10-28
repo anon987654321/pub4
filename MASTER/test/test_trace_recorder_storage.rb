@@ -91,8 +91,8 @@ class TestTraceRecorderStorage < Minitest::Test
         "events" => [{
           "event" => "tool:after",
           "ts_ms" => 3,
-          "query" => "https://internal.invalid/?token=legacy-turn-secret"
-        }]
+          "query" => "https://internal.invalid/?token=legacy-turn-secret",
+        }],
       }
       File.write(path, JSON.generate(old_turn) + "\n")
       File.chmod(0o600, path)

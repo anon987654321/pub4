@@ -32,7 +32,7 @@ class TestSurfaceEvidenceContract < Minitest::Test
         ["public/logo.svg", "file", 120],
         ["public/private-logo.png", "symlink", 0],
         ["README.md", "file", 50],
-      ]
+      ],
     }
 
     rows = evidence.send(:recognized_asset_records, inventory)

@@ -202,7 +202,6 @@ module Master
         }.compact
       end
 
-
       # Durable, bounded convergence evidence. Older observations retain their
       # measurements; only the latest needs finding identities for the next diff.
       def checkpoint_state

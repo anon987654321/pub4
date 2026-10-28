@@ -10,7 +10,6 @@ class TestPlugins < Minitest::Test
     manifests.each { |manifest| assert Master::Plugin.policy(manifest.id).is_a?(Hash) }
   end
 
-
   def test_session_browser_policy_is_closed_by_default
     policy = Master::Plugin.policy("session_browser")
     assert_equal [], policy.fetch("allowed_hosts")

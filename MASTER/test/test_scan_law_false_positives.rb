@@ -949,7 +949,6 @@ class TestScanRuleFalsePositives < Minitest::Test
     assert_equal 1, findings.size
   end
 
-
   # --- CONTRAST_TOKENS ----------------------------------------------------
   # Light text on a dark background is excused, and "dark" was judged on
   # gamma-encoded luma. Pure red reads 0.21 that way and so passed as dark,

@@ -37,7 +37,7 @@ module Master
         cancelled: :cancelled,
         unknown_outcome: :unknown_outcome,
         recovery_failed: :recovery_failed,
-        failed: :failed
+        failed: :failed,
       }.freeze
 
       module_function

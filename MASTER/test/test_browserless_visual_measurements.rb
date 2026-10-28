@@ -65,7 +65,6 @@ class TestBrowserlessVisualMeasurements < Minitest::Test
     assert Audit.require_pass!(report, current_contract: @contract, placement: "display-320x250")
   end
 
-
   def test_overlapping_key_elements_fail_the_structural_proof
     css = @css.sub("left: 200px; top: 200px", "left: 16px; top: 16px")
     result = measure(css:)
@@ -113,7 +112,6 @@ class TestBrowserlessVisualMeasurements < Minitest::Test
     refute headline.fetch("pass")
     refute result.dig(:rendered, "integrity", "layout_stability", "pass")
   end
-
 
   def test_browserless_mode_cannot_smuggle_a_numeric_cls_score
     [0.0, false].each do |value|

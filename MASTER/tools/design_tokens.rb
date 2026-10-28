@@ -152,7 +152,6 @@ module DesignTokens
     CSS
   end
 
-
   def face_root_css
     root = load
     data = root.fetch("face_root")

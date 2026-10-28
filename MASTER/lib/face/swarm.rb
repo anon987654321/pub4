@@ -101,7 +101,7 @@ module Master
         [
           point[0] + (Math.cos(angle) * radial),
           point[1] + (Math.sin(angle) * radial),
-          point[2] + ((rng.rand - 0.5) * radius * 0.22)
+          point[2] + ((rng.rand - 0.5) * radius * 0.22),
         ]
       end
 

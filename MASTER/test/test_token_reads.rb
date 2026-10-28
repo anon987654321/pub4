@@ -73,7 +73,6 @@ class TestTokenReads < Minitest::Test
     assert_equal ["typography.rag.inspect_from_lines"], TR.missed
   end
 
-
   def test_a_declared_miss_warns_with_its_reason_and_does_not_fail
     key = TR::UNSET.keys.first
     assert_nil @map.dig(*key.split("."))

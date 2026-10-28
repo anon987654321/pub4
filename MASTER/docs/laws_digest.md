@@ -17,7 +17,6 @@ digest is regenerated. `rake lint:laws_digest` fails when the file has drifted.
 - **RENDERED_VALUES** — Rendered values are operator-owned.
 - **INTER_MODEL_CONTRACT** — Every council turn uses a validated structured request envelope and returns evidence-backed findings. Invalid responses receive one structured rejection and retry; repeated invalidity is reported as a failed peer turn, never concurrence.
 
-
 ## Executable laws (law/*.rb)
 
 One line per `Law.define`: id, severity, and the law's own fix sentence.

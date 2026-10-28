@@ -25,7 +25,7 @@
 
   function setMode(mode) {
     face.dataset.mode = mode;
-    face.setAttribute("aria-label", "MASTER face, " + mode);
+    face.setAttribute("aria-label", `MASTER face, ${mode}`);
     statusText.textContent = mode;
   }
 
