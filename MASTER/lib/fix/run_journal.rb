@@ -1143,13 +1143,45 @@ module Master
       end
 
       def with_lock
-        lock_path = File.join(@root, LOCK)
-        FileUtils.mkdir_p(File.dirname(lock_path))
-        File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |io|
-          io.flock(File::LOCK_EX)
-          yield
-        ensure
-          io&.flock(File::LOCK_UN)
+        workspace = File.expand_path(@root)
+        directory = File.join(workspace, ".master")
+        lock_path = File.join(workspace, LOCK)
+        raise IOError, "refusing symlinked journal state directory" if File.symlink?(directory)
+
+        FileUtils.mkdir_p(directory, mode: 0o700)
+        directory_stat = File.lstat(directory)
+        unless directory_stat.directory? && !directory_stat.symlink?
+          raise IOError, "refusing non-directory or symlinked journal state path"
+        end
+        raise IOError, "refusing group/world-writable journal state directory" if
+          (directory_stat.mode & 0o022).positive?
+        raise IOError, "refusing symlinked journal lock" if File.symlink?(lock_path)
+
+        flags = File::RDWR | File::CREAT
+        flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+        File.open(lock_path, flags, 0o600) do |io|
+          opened_stat = io.stat
+          raise IOError, "journal lock is not a regular file" unless opened_stat.file?
+          raise IOError, "journal lock permissions must be private (0600 or stricter)" unless
+            (opened_stat.mode & 0o077).zero?
+
+          current_stat = File.lstat(lock_path)
+          unless current_stat.file? && !current_stat.symlink? &&
+                 current_stat.dev == opened_stat.dev && current_stat.ino == opened_stat.ino
+            raise IOError, "journal lock path changed while opening"
+          end
+          raise IOError, "could not acquire journal lock" unless io.flock(File::LOCK_EX)
+
+          begin
+            current_stat = File.lstat(lock_path)
+            unless current_stat.file? && !current_stat.symlink? &&
+                   current_stat.dev == opened_stat.dev && current_stat.ino == opened_stat.ino
+              raise IOError, "journal lock path changed while waiting for its lock"
+            end
+            yield
+          ensure
+            io.flock(File::LOCK_UN)
+          end
         end
       end
 
