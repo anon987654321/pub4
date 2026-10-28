@@ -81,6 +81,7 @@ class TestFixLoopObservability < Minitest::Test
     assert_match(/crash FloatDomainError @ begin_run/, output)
     refute_match(/corpus .*FloatDomainError/i, output)
   end
+
   def test_unlocked_run_always_attempts_final_cleanup_on_cancellation
     loop = Master::Fix::FixLoop.allocate
     cleanup_calls = []
