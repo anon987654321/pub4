@@ -40,6 +40,9 @@ class TestFixKernel < Minitest::Test
       adapter.define_singleton_method(:run_unlocked) do |target, **options|
         @target = target
         @options = options
+        kernel.record_repair_outcome(
+          law: "TEST_REPAIR", status: :fixed, fixed: 1, breakdown: { applied: 1 }
+        )
         Master::Result.ok("DONE: fixture")
       end
 
@@ -57,6 +60,9 @@ class TestFixKernel < Minitest::Test
       assert_equal start.fetch("run_id"), terminal.fetch("run_id")
       assert_equal "done", terminal.dig("payload", "state")
       assert_equal "ok", terminal.dig("payload", "result")
+      repair = events.find { |row| row["kind"] == "repair_pass" }
+      assert_equal start.fetch("run_id"), repair.fetch("run_id")
+      assert_equal 1, repair.dig("payload", "fixed")
       assert_nil adapter.instance_variable_get(:@cancellation), "Kernel must restore the prior cancellation state"
     end
   end
