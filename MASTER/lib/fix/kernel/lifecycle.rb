@@ -4,6 +4,11 @@
 module Master
   module Fix
     class Kernel
+      # The public FixLoop constant is an adapter name for this canonical
+      # Kernel-owned convergence coordinator. The implementation is loaded only
+      # after this identity exists, so every nested pass module opens the same class.
+      class ConvergenceAdapter; end unless const_defined?(:ConvergenceAdapter, false)
+
       module Lifecycle
         # The Kernel owns /fix lifecycle coordination. RunJournal is currently its
         # durable metadata adapter; no caller should construct a second journal for
@@ -20,8 +25,8 @@ module Master
         # Production factories make Kernel the shared owner while the old loop
         # classes remain behavior-preserving adapters until their parity gates pass.
         def build_fix_loop(**options)
-          require_relative "fix_loop" unless defined?(FixLoop)
-          FixLoop.new(**options, kernel: self)
+          require_relative "../fix_loop"
+          Kernel::ConvergenceAdapter.new(**options, kernel: self)
         end
 
         def build_repair_loop(**options)
@@ -106,5 +111,6 @@ module Master
         end
       end
     end
+    FixLoop = Kernel::ConvergenceAdapter unless const_defined?(:FixLoop, false)
   end
 end
