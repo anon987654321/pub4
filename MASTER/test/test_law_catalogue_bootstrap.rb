@@ -141,6 +141,37 @@ class TestLawCatalogueBootstrap < Minitest::Test
     end
   end
 
+  def test_invalid_policy_values_and_scope_patterns_fail_before_law_loading
+    Dir.mktmpdir("law-catalogue-invalid-policy") do |root|
+      law_dir = File.join(root, "MASTER", "law")
+      FileUtils.mkdir_p(law_dir)
+      File.write(File.join(law_dir, "actual.rb"), "Law.define(:ACTUAL_ID) do\nend\n")
+
+      catalogue = {
+        "modalities" => %w[lexical semantic visual],
+        "surfaces" => ["whole_file"],
+        "defaults" => { "mode" => "violation", "lifecycle" => "active", "autofix" => "review" },
+        "entries" => {
+          "ACTUAL_ID" => {
+            "universal" => true,
+            "modalities" => %w[lexical semantic visual],
+            "definition_sources" => ["MASTER/law/actual.rb"],
+            "severity" => "warning",
+            "mode" => "silent_pass",
+            "path_pattern" => "["
+          }
+        }
+      }
+
+      error = assert_raises(ArgumentError) do
+        Master::LawCataloguePreflight.validate!(law_dir:, catalogue:, repo_root: root)
+      end
+
+      assert_match(/Law ACTUAL_ID has invalid mode "silent_pass"/, error.message)
+      assert_match(/Law ACTUAL_ID has invalid path_pattern/, error.message)
+    end
+  end
+
   def test_duplicate_static_definitions_are_reported_as_one_preflight_error
     Dir.mktmpdir("law-catalogue-duplicate") do |root|
       law_dir = File.join(root, "MASTER", "law")
