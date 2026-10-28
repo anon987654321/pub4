@@ -42,8 +42,8 @@ the commit that carries its evidence; nothing here records finished work.
 
 ## Carried-forward requests from earlier sessions
 
-- [ ] **Complete AI3 archive archaeology:** the bounded findings and no-port decision are recorded in [`docs/ai3_legacy_audit_2026-10-28.md`](docs/ai3_legacy_audit_2026-10-28.md). The visible AI3 tree and extracted reports were inspected, but the historical archive blobs were not all extracted; preserve this item as open until that source recovery is actually completed. No AI3 feature claim counts as working behavior without implementation and runtime evidence.
-- [ ] **pub2 restoration follow-through:** repo-wide findings and the no-bulk-import decision are recorded in [`docs/pub2_archaeology_2026-10-28.md`](docs/pub2_archaeology_2026-10-28.md). Confirm Radio's old seven-mode/six-theme visualizer parity against the current Brgen Radio controller and rendered page; inspect any missing mode before porting. Record an explicit owner disposition for BAIBL, Blognet, Hjerterom and Privcam. Do not copy stale generators, audio binaries, local settings, old governance or OpenBSD state. Keep runtime claims open until targeted tests/evidence exist.
+- [ ] **Complete AI3 archive archaeology:** the bounded findings and no-port decision are recorded in [`STUDIO/docs/ai3_legacy_audit_2026-10-28.md`](STUDIO/docs/ai3_legacy_audit_2026-10-28.md). The visible AI3 tree and extracted reports were inspected, but the historical archive blobs were not all extracted; preserve this item as open until that source recovery is actually completed. No AI3 feature claim counts as working behavior without implementation and runtime evidence.
+- [ ] **pub2 restoration follow-through:** repo-wide findings and the no-bulk-import decision are recorded in [`STUDIO/docs/pub2_archaeology_2026-10-28.md`](STUDIO/docs/pub2_archaeology_2026-10-28.md). Confirm Radio's old seven-mode/six-theme visualizer parity against the current Brgen Radio controller and rendered page; inspect any missing mode before porting. Record an explicit owner disposition for BAIBL, Blognet, Hjerterom and Privcam. Do not copy stale generators, audio binaries, local settings, old governance or OpenBSD state. Keep runtime claims open until targeted tests/evidence exist.
 
 These requests were visible in prior conversations or handoffs but lacked an explicit,
 actionable root-backlog item. Keep them open until the relevant evidence exists.
@@ -96,7 +96,7 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
 - **D — CSP probe (external):** 2026-10-28 HTTPS probes show
   `Content-Security-Policy-Report-Only` on `brgen.no`, `amberapp.art`, and
   `ai.brgen.no` — enforcement not live. Evidence in
-  `docs/evidence/csp_probe_2026-10-28.md`. Seam `csp_enforced_on_vm23` stays
+  `STUDIO/docs/evidence/csp_probe_2026-10-28.md`. Seam `csp_enforced_on_vm23` stays
   open until operator sets `PUB4_CSP_ENFORCE=1` on vm23 and re-probes.
 - **A — verification:** full focused suite still needs pinned Ruby 4.0.5 and
   a successful `bundle install`. Added `MASTER/bin/verify-focused` to run the TODO list and
@@ -149,7 +149,7 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
   has not yet been run here. Gates 2–6 remain explicit skips; wire each to the
   production recovery path and prove red then green before folding coordinator
   owners.
-- Added docs/seo_audit_2026-10-28.md from session-provided observations. Raw HTTP
+- Added STUDIO/docs/seo_audit_2026-10-28.md from session-provided observations. Raw HTTP
   captures were not attached to this commit, so those observations are advisory;
   re-probe and preserve timestamped headers/bodies before closing the SEO audit.
 - Post-merge static review removed duplicate appended test definitions from the
@@ -184,7 +184,7 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
 ## Agent ergonomics (2026-10-28 wishlist)
 
 From the 2026-10-28 boot-crash session (346da8e). Rationale, existing
-coverage and acceptance criteria per item: `docs/wishlist_2026-10-28.md`.
+coverage and acceptance criteria per item: `STUDIO/docs/wishlist_2026-10-28.md`.
 Half the items finish disciplines the tree already started; none removes a
 compatibility alias ahead of the execution-contract gates.
 
@@ -367,9 +367,16 @@ source and tests they could not run; this pass is what measures them.
 
 - [ ] BLOCKER: Do not run the Radio Bergen archive-import task until it explicitly selects the Brgen city tenant and local tests prove it cannot create a tenantless/global playlist.
 
-- [ ] Read `docs/pub3_archaeology_2026-10-28.md` and `docs/pub2_misc_plugin_assessment_2026-10-28.md`; use their explicit dispositions before any further restoration.
+- [ ] Read `STUDIO/docs/pub3_archaeology_2026-10-28.md` and `STUDIO/docs/pub2_misc_plugin_assessment_2026-10-28.md`; use their explicit dispositions before any further restoration.
 - [ ] Radio Bergen: confirm distribution rights individually for the 35 selected recordings, then run `radio_bergen:import_curated` from `RAILS/brgen` against the local `pub2` checkout and verify the public Playlist/Active Storage streaming path in a local Rails test environment. The importer is committed; the audio itself is not yet imported.
 - [ ] Adjust the RadioBrgen tunnel's opening-track fallback so a curated local queue starts at its first ordered item (the current engine randomizes when its legacy YouTube opener ID is absent); cover it with a focused JS test.
 - [ ] Run focused local tests for the curated manifest/import guard and the Playlist tunnel view/controller; add full importer idempotency, ordering, checksum and failure-atomicity coverage, then execute them. This GitHub-only pass did not run Rails tests.
 - [ ] Keep the existing Rails Radio Bergen tunnel as the canonical visualizer. Do not revive the older standalone multi-mode visualizer without a separate product decision.
 - [ ] MASTER plugin candidates from pub2 misc remain reference-only; no MASTER edits or plugin implementation until the required complete MASTER read and contract review are satisfied.
+
+
+## Root directory contract
+
+- [ ] Enforce mechanically that the only tracked directories directly under the repository root are `MASTER/`, `RAILS/`, `OPENBSD/`, and `STUDIO/`. Keep root metadata and instruction files as files; don't add root-level tooling or documentation directories.
+- [ ] After the required complete read of MASTER, reconcile `rake docs:agent_contracts` with the four-directory root contract so it does not recreate `.github/`. The Copilot instructions and Claude hooks are preserved under `STUDIO/agent-guidance/`, but that relocated configuration is no longer auto-loaded by those tools.
+- [ ] Following the same complete-MASTER-read prerequisite, decide how the root `.claude/settings.json` hook behavior can be provided through supported user-level or in-tree configuration without violating the root directory contract. Do not edit MASTER until every file under MASTER has been read in full.

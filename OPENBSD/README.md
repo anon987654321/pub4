@@ -28,10 +28,10 @@ own renderer.
 **Redeploy production (one command, from a clean `origin/main` checkout):**
 
 ```zsh
-./bin/redeploy                 # wait until done, then state + canary
-./bin/redeploy brgen           # one app
-./bin/redeploy --follow        # attach to the box tmux session
-./bin/redeploy --detach        # start and return immediately
+./redeploy                 # wait until done, then state + canary
+./redeploy brgen           # one app
+./redeploy --follow        # attach to the box tmux session
+./redeploy --detach        # start and return immediately
 ```
 
 Hands-off path: local preflight, pin SHA, tmux on vm23, `vps-deploy` as root
