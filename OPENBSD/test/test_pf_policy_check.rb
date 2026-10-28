@@ -58,9 +58,10 @@ class PfPolicyCheckTest < Minitest::Test
       shared = File.join(root, "OPENBSD")
       outside = File.join(root, "external-openbsd")
       FileUtils.mkdir_p(File.join(shared, "etc"))
-      FileUtils.cp_r(File.join(ROOT, "OPENBSD", "etc"), outside)
+      FileUtils.mkdir_p(File.join(outside, "etc"))
+      FileUtils.cp(File.join(ROOT, "OPENBSD", "etc", "pf.conf"),
+                   File.join(outside, "etc", "pf.conf"))
       FileUtils.rm_rf(shared)
-      FileUtils.mkdir_p(root)
       File.symlink(outside, shared)
 
       result = Deploy::PfPolicyCheck.run(root:)
