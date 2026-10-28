@@ -2616,6 +2616,11 @@ law_catalogue:
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/structural_laws.rb]
       severity: warning
+    CURSOR_NONE_REQUIRES_CURSOR:
+      universal: true
+      modalities: [lexical, semantic, visual]
+      definition_sources: [MASTER/law/brand.rb]
+      severity: warn
     CYCLOMATIC_COMPLEXITY:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3860,6 +3865,11 @@ law_catalogue:
       severity: info
       languages: [ruby]
       path_exclude: '/test/|/fixtures/'
+    NORWEGIAN_COPY_BOKMAL:
+      universal: true
+      modalities: [lexical, semantic, visual]
+      definition_sources: [MASTER/law/brand.rb]
+      severity: warn
     NULL_BLINDNESS:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3944,6 +3954,11 @@ law_catalogue:
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       severity: warning
+    PAPER_NOT_PURE_WHITE:
+      universal: true
+      modalities: [lexical, semantic, visual]
+      definition_sources: [MASTER/law/brand.rb]
+      severity: warn
     PARALLEL_INHERITANCE:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3954,6 +3969,11 @@ law_catalogue:
       modalities: [lexical, semantic, visual]
       detector_sources: [MASTER/law/detectors/naming_laws.rb]
       severity: warning
+    PARAMETRIC_MARK_ONLY:
+      universal: true
+      modalities: [lexical, semantic, visual]
+      definition_sources: [MASTER/law/brand.rb]
+      severity: warn
     PARSE_DONT_VALIDATE:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4418,6 +4438,11 @@ law_catalogue:
       definition_sources: [MASTER/law/css.rb]
       severity: warn
       languages: [css, scss]
+    SIGNAL_COLOR_NAMING:
+      universal: true
+      modalities: [lexical, semantic, visual]
+      definition_sources: [MASTER/law/brand.rb]
+      severity: warn
     SIGNAL_NOISE:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4836,6 +4861,11 @@ law_catalogue:
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/universal.rb]
       severity: info
+    WORDMASK_OBSERVES_UNCLIPPED:
+      universal: true
+      modalities: [lexical, semantic, visual]
+      definition_sources: [MASTER/law/brand.rb]
+      severity: warn
     ZSH_SHEBANG:
       universal: true
       modalities: [lexical, semantic, visual]
