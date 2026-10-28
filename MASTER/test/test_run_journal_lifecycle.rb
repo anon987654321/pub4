@@ -185,7 +185,7 @@ class TestRunJournalLifecycle < Minitest::Test
       File.chmod(0o600, target)
       File.symlink(target, File.join(state, "fix_runs.json"))
 
-      error = assert_raises(IOError) { journal.send(:load) }
+      error = assert_raises(IOError) { journal.history }
 
       assert_match(/symlinked, hard-linked or non-regular/, error.message)
       assert_equal original, File.read(target)
