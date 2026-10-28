@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../fix/kernel"
+
 module Master
   module Builder
     module_function
@@ -164,7 +166,8 @@ module Master
 
     # MASTER_AUTOFIX=1 enables in-process convergence; off by default to avoid autocommits racing deploys.
     def build_fix_loop(root:, infra:, agent:, scanner:, axioms:, laws:, learnings:, bus:, git:)
-      fix_loop = Fix::FixLoop.new(
+      kernel = Fix::Kernel.new(root:, actor: "fix", bus:)
+      fix_loop = kernel.build_fix_loop(
         laws:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:,
         incremental: ENV["MASTER_INCREMENTAL"] == "1",
         ground_truth: infra[:ground_truth], preserve_user_intent: infra[:preserve_user_intent],
