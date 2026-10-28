@@ -50,7 +50,12 @@ module Studio
     end
 
     def verify_output!(manifest, output_path:)
-      expected = manifest.fetch(:output_sha256)
+      raise ArgumentError, "replay manifest must be a map" unless manifest.is_a?(Hash)
+
+      expected = value(manifest, :output_sha256)
+      raise ArgumentError, "replay manifest output hash is missing or malformed" unless
+        expected.is_a?(String) && expected.match?(/\A[a-f0-9]{64}\z/)
+
       actual = Digest::SHA256.file(output_path).hexdigest
       raise ArgumentError, "output hash mismatch" unless actual == expected
       true
@@ -73,15 +78,20 @@ module Studio
         selected = versions[version.to_s] || versions[version.to_sym]
         return false unless selected.is_a?(Hash)
         modalities = selected["modalities"] || selected[:modalities] || selected
-        return modalities.key?(modality.to_s) || modalities.key?(modality.to_sym) if modality
-        return modalities.values.any? { |entry| entry.is_a?(Hash) && entry["version"].to_s == version.to_s }
+        if modality
+          entry = modalities[modality.to_s] || modalities[modality.to_sym]
+          return entry.is_a?(Hash) && (entry["version"] || entry[:version]).to_s == version.to_s
+        end
+        return modalities.values.any? do |entry|
+          entry.is_a?(Hash) && (entry["version"] || entry[:version]).to_s == version.to_s
+        end
       end
 
       if modality
         entry = style[modality.to_s] || style[modality.to_sym]
-        entry.is_a?(Hash) && entry["version"].to_s == version.to_s
+        entry.is_a?(Hash) && (entry["version"] || entry[:version]).to_s == version.to_s
       else
-        style.values.any? { |entry| entry.is_a?(Hash) && entry["version"].to_s == version.to_s }
+        style.values.any? { |entry| entry.is_a?(Hash) && (entry["version"] || entry[:version]).to_s == version.to_s }
       end
     end
 
