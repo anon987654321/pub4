@@ -425,4 +425,33 @@ class LayoutContractTest < Minitest::Test
     assert app_rules("brgen", composer).any? { |rule| rule.declares?(/var\(--keyboard-inset/) },
            "the messenger composer must sit above the on-screen keyboard"
   end
+
+  def test_amber_home_preserves_its_large_wordmark_and_editorial_masthead
+    styles = File.read(File.join(ROOT, "amber", "app/assets/stylesheets/application.scss"), encoding: "UTF-8")
+    masthead_rules = styles.scan(/\.amber-masthead--home\\s*\\{([^}]*)\\}/m).flatten
+    logo_rules = styles.scan(/\.amber-masthead--home\\s+\.amber-logo-home\\s*\\{([^}]*)\\}/m).flatten
+
+    refute_empty masthead_rules, "Amber home masthead rule is missing"
+    refute_empty logo_rules, "Amber home wordmark sizing rule is missing"
+    assert_match(/min-height:\\s*72svh/, masthead_rules.last,
+                 "the home mark must retain its spacious first-screen stage")
+    assert_match(/align-items:\\s*center/, masthead_rules.last)
+    assert_match(/width:\\s*min\\(100%,\\s*880px\\)/, logo_rules.last,
+                 "the home wordmark must not collapse to the 200px interior logo or a 380px cap")
+  end
+
+  def test_bsdports_keeps_its_white_google_frontpage_dialect
+    layout = File.read(LAYOUTS.fetch("bsdports"), encoding: "UTF-8")
+    styles = File.read(File.join(ROOT, "bsdports", "app/assets/stylesheets/application.scss"), encoding: "UTF-8")
+
+    assert_includes layout, %(<meta name="color-scheme" content="light">)
+    assert_includes layout, %(<meta name="theme-color" content="#ffffff" data-light-color="#ffffff" data-dark-color="#000000">)
+    assert_includes styles, "--text: #202124;"
+    assert_includes styles, "--text-secondary: #4d5156;"
+    assert_includes styles, "--accent: #1a0dab;"
+    assert_match(/--font:\\s*Arial,\\s*"Helvetica Neue",\\s*Helvetica,\\s*sans-serif;/, styles)
+    assert_includes styles, "color-scheme: light;"
+    refute_includes layout, %(<meta name="color-scheme" content="dark">)
+  end
+
 end
