@@ -23,7 +23,12 @@ module Master
         lib/fix/visual_pass.rb
         lib/fix/four_stream_assessment.rb
         lib/fix/fix_plan.rb
+        lib/fix/kernel.rb
+        lib/fix/kernel/lifecycle.rb
+        lib/fix/kernel/lifecycle_journal.rb
+        lib/fix/kernel/repair_adapter.rb
         lib/fix/run_journal.rb
+        lib/fix/repair_loop.rb
         lib/fix/fix_loop.rb
         lib/fix/outcome_policy.rb
         lib/execution/contract.rb
