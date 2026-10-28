@@ -48,7 +48,7 @@ module Master
         # A turn no model answered ends on one line naming each model tried and
         # its reason, rather than the last failure alone.
         def exhausted_result(last_response, stage_warnings)
-          return Result.err("no live model available — /model list or /doctor", category: :offline) unless last_response
+          return unanswered(stage_warnings) unless last_response
 
           tried = stage_warnings.filter_map { |line| line[/\Allm failed in \S+ on (.*)\z/m, 1] }
                                 .uniq { |line| line.split(": ", 2).first }
@@ -80,10 +80,12 @@ module Master
 
         def skip_fallback_attempt?(selected_model, timed_out_models:, stage_warnings:)
           return true if timed_out_models.include?(selected_model)
-          return false unless Io::ModelSkipCache.skipped?(selected_model)
+          # The chain was built before this turn's failures; a lane they parked,
+          # silenced or killed since is skipped here rather than asked and refused.
+          state = Io::LaneState.verdict(selected_model)
+          return false if state.usable?
 
-          reason = Io::ModelSkipCache.skip_reason(selected_model)
-          stage_warnings << "skipped #{selected_model} (recent failure: #{reason})"
+          stage_warnings << "skipped #{selected_model} (#{state.source}: #{state.reason})"
           true
         end
 
@@ -136,6 +138,12 @@ module Master
 
         def offline?(response)
           response.is_a?(Master::Result::Err) && response.category == :offline
+        end
+
+        # Every model was skipped before it was asked: say which and why.
+        def unanswered(stage_warnings)
+          skipped = stage_warnings.grep(/\Askipped /).first(3)
+          Result.err("#{["no live model available", *skipped].join("; ")} — /model list or /doctor", category: :offline)
         end
 
         # Re-read the live route after a failed provider. A model may disappear

@@ -211,12 +211,16 @@ module Master
 
         # The paid tier is closed for the panel only when every lane it could
         # speak through is closed. One provider out of credit leaves the rest.
+        # Spend only: the panel shrinks for money, while a down lane is already
+        # out of the candidates the agent hands it.
+        SPEND = %i[spent].freeze
+
         def panel_blocked?
-          return false unless Io::QuotaCheck.blocked?
+          return false if Io::LaneState.usable?(nil, sources: SPEND)
 
           lanes = Array(@agent.candidate_models(task_type: :review)) if @agent.class.method_defined?(:candidate_models)
           lanes ||= []
-          lanes.empty? || lanes.all? { |model| Io::QuotaCheck.blocked?(model) }
+          lanes.empty? || lanes.none? { |model| Io::LaneState.usable?(model, sources: SPEND) }
         end
 
         def local_floor_available?
@@ -419,7 +423,8 @@ module Master
           # queue behind the dispatcher's CLI slots, so the ones still waiting
           # when the first comes back refused can be spared their own refusal.
           model = lane_for(persona, image:)
-          return quota_skipped(persona) if Io::QuotaCheck.blocked?(model)
+          refused = lane_verdict(model)
+          return lane_skipped(persona, refused) unless refused.usable?
 
           temperature = persona.respond_to?(:temperature) ? persona.temperature : nil
           request_prompt = build_prompt(persona:, code:, context:)
@@ -433,19 +438,27 @@ module Master
               @agent.ask(outbound, temperature: chosen_temperature, image:)
             end
           end
+          record_answer(persona:, response:, model:)
+        rescue StandardError => e
+          note_persona_failure(persona, e)
+          nil
+        end
+
+        def record_answer(persona:, response:, model:)
           entry = persona_entry(persona, response.fetch("feedback"), model)
           entry[:position] = response.dig("data", "position")
           entry[:position_reason] = response.dig("data", "position_reason")
           entry[:structured_findings] = response.dig("data", "findings")
           entry[:inter_model_repaired] = response.fetch("repair_attempted")
+
           @bus&.publish(:council_feedback, entry)
           answered = @persona_failures_lock.synchronize { @answered = @answered.to_i + 1 }
           @bus&.publish("council:progress", answered:, total: @panel_size || @personas.size)
           entry
-        rescue StandardError => e
-          note_persona_failure(persona, e)
-          nil
         end
+
+        # Without a lane the agent routes the call, so only the account's spend limit is known here.
+        def lane_verdict(model) = Io::LaneState.verdict(model, sources: model ? Io::LaneState::SOURCES : SPEND)
 
         # The lane this persona speaks through, resolved when it is asked: the
         # panel is spread over the live providers (Io::LaneSelection.spread),
@@ -461,10 +474,14 @@ module Master
 
         # A persona that never got asked. Tallied apart from the ones that did,
         # so "quorum not reached" distinguishes calls that failed from calls
-        # that were deliberately not spent.
-        def quota_skipped(persona)
-          @bus&.publish("council:persona_skipped", persona: persona.name, reason: :quota)
-          @persona_failures_lock.synchronize { @persona_failures << "skipped_spend_limit" }
+        # that were deliberately not spent. A spend limit keeps its old tally word.
+        def lane_skipped(persona, verdict)
+          source = verdict.source
+          spent = source == :spent
+          @bus&.publish("council:persona_skipped", persona: persona.name, reason: spent ? :quota : source,
+                                                   detail: verdict.reason)
+          tally = spent ? "skipped_spend_limit" : "skipped_#{source}"
+          @persona_failures_lock.synchronize { @persona_failures << tally }
           nil
         end
 

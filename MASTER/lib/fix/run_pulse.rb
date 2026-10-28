@@ -437,7 +437,8 @@ module Master
 
         def lane_states
           health = Master::Io::LaneHealth
-          health.states(Master::Io::LaneSelection.order(Master::Io::LaneSelection.catalogue))
+          refuses = ->(model) { !Master::Io::LaneState.usable?(model, sources: Master::Io::LaneState::DOWN) }
+          health.states(Master::Io::LaneSelection.order(Master::Io::LaneSelection.catalogue), refuses:)
         rescue StandardError
           []
         end

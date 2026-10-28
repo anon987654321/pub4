@@ -69,6 +69,57 @@ class TestLaneStateSites < Minitest::Test
     restore&.call
   end
 
+  def test_the_fallback_walk_skips_every_refused_model_and_names_its_store
+    agent = Master::Review::Agent.allocate
+    warnings = []
+    skip = ->(model) { agent.send(:skip_fallback_attempt?, model, timed_out_models: Set.new, stage_warnings: warnings) }
+
+    assert skip.call(PARKED)
+    assert skip.call(SILENT)
+    Quota.stub(:manual_dead, ["gemini"]) { assert skip.call(HAND) }
+    refute skip.call(LIVE)
+    assert_equal ["skipped #{PARKED} (parked: parked: HTTP 429)", "skipped #{SILENT} (silent: ",
+                  "skipped #{HAND} (dead: gemini: dead by hand (data/lanes.yml dead:))"],
+                 [warnings[0], warnings[1][0, "skipped #{SILENT} (silent: ".size], warnings[2]]
+  end
+
+  # The agent's offline line and /fix status's online line both count down lanes only.
+  def test_offline_is_said_for_down_lanes_but_not_for_a_parked_model
+    agent = Master::Review::Agent.allocate
+    last = Master::Result.err("HTTP 429", category: :rate_limit)
+
+    agent.define_singleton_method(:single_call_fallback_models) { [] }
+    assert_same last, agent.send(:offline_when_exhausted, last, PARKED), "a parked model says its own failure"
+
+    result = agent.send(:offline_when_exhausted, last, SILENT)
+    assert_equal :offline, result.category
+    assert_match(/\Aoffline: no lane answers; deepseek: silent/, result.message)
+
+    Master::Io::LaneSelection.stub(:catalogue, [SILENT, PARKED]) do
+      assert_equal "online: yes via #{PARKED}", ::Operator::FixStatus.new(root: @dir).send(:online_line)
+    end
+  end
+
+  def test_a_persona_on_a_refused_lane_is_not_asked
+    council = Master::Review::Council::Deliberation.allocate
+    council.instance_variable_set(:@persona_failures_lock, Mutex.new)
+    council.instance_variable_set(:@persona_failures, [])
+    persona = Struct.new(:name).new("Skeptic")
+    lane = nil
+    council.define_singleton_method(:lane_for) { |_persona, image: nil| lane }
+
+    lane = PARKED
+    assert_nil council.send(:ask_persona, persona:, code: "x", context: nil)
+    lane = SILENT
+    assert_nil council.send(:ask_persona, persona:, code: "x", context: nil)
+    lane = nil
+    Check.trip!(source: "test", message: "Insufficient credits")
+    assert_nil council.send(:ask_persona, persona:, code: "x", context: nil)
+
+    tally = council.instance_variable_get(:@persona_failures)
+    assert_equal %w[skipped_parked skipped_silent skipped_spend_limit], tally
+  end
+
   def test_the_model_list_names_the_store_that_refuses
     router = Object.new
     router.define_singleton_method(:hosted_endpoint_for) { |_id| nil }
