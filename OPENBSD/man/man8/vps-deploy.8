@@ -30,9 +30,11 @@ passwordless
 .Xr doas 1
 re-executes the script as root through
 .Pa /usr/bin/env
-with an explicit allowlist of
+with a prefix allowlist of
 .Ev VPS_DEPLOY_*
-and related variables so the pinned SHA and preflight proof survive.
+and
+.Ev PUB4_DEPLOY_*
+so the pinned SHA, preflight proof, canary and logging knobs survive.
 .Pp
 The command validates its target, checks required local broker availability,
 validates bounded timing and capacity settings, obtains the deploy lock, and
