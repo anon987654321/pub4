@@ -116,6 +116,33 @@ class TestFixKernel < Minitest::Test
     end
   end
 
+  def test_uncertain_adapter_failure_gets_an_unknown_outcome_receipt
+    with_workspace do |root|
+      kernel = K.new(root:)
+      adapter = Object.new
+      adapter.define_singleton_method(:last_terminal_state) { nil }
+      adapter.define_singleton_method(:run_unlocked) do |*_args, **_options|
+        raise IOError, "simulated loss after an unobserved effect"
+      end
+
+      error = assert_raises(IOError) do
+        kernel.run_fix_loop(
+          adapter, target: root, max_passes: 2, budget_seconds: 60,
+          incremental: false, requested: true
+        )
+      end
+      assert_match(/simulated loss/, error.message)
+      events = kernel.verify_log!
+      start = events.find { |row| row["kind"] == "coordinator_started" }
+      terminal = events.find do |row|
+        row["kind"] == "coordinator_terminal" && row["run_id"] == start.fetch("run_id")
+      end
+      assert_equal "unknown_outcome", terminal.dig("payload", "state")
+      assert_equal "IOError", terminal.dig("payload", "error_class")
+      assert_nil kernel.instance_variable_get(:@current_run_id)
+    end
+  end
+
   def test_legacy_fix_constants_are_the_canonical_kernel_classes
     assert_same K::ConvergenceAdapter, Master::Fix::FixLoop
     assert_same K::LifecycleJournal, Master::Fix::RunJournal
