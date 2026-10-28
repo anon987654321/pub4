@@ -118,12 +118,12 @@ module Postpro
       output, status = capture_command(
         ["ffprobe", "-v", "error", "-select_streams", "v:0",
          "-read_intervals", "%+##{max_frames + 1}", "-show_frames",
-         "-show_entries", "frame=best_effort_timestamp_time", "-of", "csv=p=0", input],
+         "-show_entries", "frame=best_effort_timestamp_time", "-of", "json", input],
         deadline:
       )
       raise Unavailable, "ffprobe could not read video frame timestamps" unless status.success?
 
-      timestamps = output.lines.filter_map { |line| Float(line.strip, exception: false) }
+      timestamps = parse_frame_timestamps(output)
       if timestamps.length > max_frames
         raise Unavailable, "frame timestamp count exceeds the #{max_frames}-frame budget"
       end
@@ -140,6 +140,22 @@ module Postpro
         raise Unavailable, "variable frame timing detected; normalise it explicitly before grading"
       end
       true
+    end
+
+    # JSON keeps frame timestamps separate from side-data diagnostics.
+    # ffprobe's CSV writer can append H.264 SEI text to the first timestamp
+    # line, making Float(line) silently drop a legitimate frame.
+    def self.parse_frame_timestamps(output)
+      document = JSON.parse(output)
+      raise Unavailable, "ffprobe frame timestamp output is not an object" unless document.is_a?(Hash)
+
+      Array(document["frames"]).filter_map do |frame|
+        next unless frame.is_a?(Hash)
+
+        Float(frame["best_effort_timestamp_time"], exception: false)
+      end
+    rescue JSON::ParserError => e
+      raise Unavailable, "ffprobe returned invalid frame timestamp JSON: #{e.message}"
     end
 
     def self.run_command(args, deadline:)
