@@ -145,6 +145,20 @@ module Master
         # receipt. Reconcile only same-host processes that are known gone; never
         # turn a possibly live peer into an apparent completed or failed run.
         def reconcile_coordinated_runs!
+          directory = File.dirname(@log_path)
+          FileUtils.mkdir_p(directory, mode: 0o700)
+          # Multiple foreground/background Kernel instances may restart at once.
+          # Serialize the inspect-and-terminalize cycle separately from appends,
+          # so they cannot both issue receipts for the same abandoned run.
+          File.open(File.join(directory, "coordinator-recovery.lock"), File::RDWR | File::CREAT, 0o600) do |lock|
+            lock.flock(File::LOCK_EX)
+            reconcile_coordinated_runs_under_lock!
+          ensure
+            lock.flock(File::LOCK_UN) rescue nil
+          end
+        end
+
+        def reconcile_coordinated_runs_under_lock!
           events = verify_log!
           terminal_ids = events.each_with_object({}) do |row, seen|
             seen[row["run_id"]] = true if row["kind"] == "coordinator_terminal" && row["run_id"]
