@@ -35,6 +35,16 @@ class TestRuntimeCatalogueValidation < Minitest::Test
     assert_match(/provider openrouter\.env must be a unique list/, error)
   end
 
+  def test_unknown_provider_fields_are_rejected
+    path = catalogue_path("providers.yml")
+    data = YAML.safe_load_file(path, aliases: true)
+    data.fetch("openrouter")["api_key_environemnt"] = "OPENROUTER_API_KEY"
+
+    error = Guard.validate(path:, content: YAML.dump(data))
+
+    assert_match(/provider openrouter has unknown field\(s\): api_key_environemnt/, error)
+  end
+
   def test_model_routes_must_reference_declared_tiers
     path = catalogue_path("models.yml")
     data = YAML.safe_load_file(path, aliases: true)
