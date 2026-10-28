@@ -30,6 +30,18 @@ class TestEventPrivacy < Minitest::Test
     refute_includes json, "another secret"
   end
 
+  def test_unrecognized_scalar_objects_are_digest_only
+    secret_object = Object.new
+    secret_object.define_singleton_method(:to_json) { |*_args| '"object-secret"' }
+    persisted = Master::Trace::EventPrivacy.persisted(
+      "custom:event", extension: secret_object
+    )
+    json = JSON.generate(persisted)
+
+    assert_equal 64, persisted.fetch(:extension_digest).length
+    refute_includes json, "object-secret"
+  end
+
   def test_personal_identifiers_are_digest_only_even_when_numeric
     persisted = Master::Trace::EventPrivacy.persisted(
       "identity:observed",
