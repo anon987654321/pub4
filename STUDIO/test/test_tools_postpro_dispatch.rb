@@ -198,15 +198,30 @@ class TestPostproDispatch < Minitest::Test
     Dir.mktmpdir do |dir|
       subject = frame(dir, "source.jpg")
       output = File.join(dir, "graded.jpg")
-      out, status = run_postpro(dir, "--input", subject, "--output", output, "--preset", "house", "--stabilize")
+      out, status = run_postpro(dir, "--input", subject, "--output", output, "--preset", "house", "--stabilize", "--style-contract", "blue_hour")
 
       assert status.success?, "stabilized one-shot grade failed:\n#{out}"
       sidecar = JSON.parse(File.read("#{output}.json"))
       stabilization = sidecar.fetch("stabilization")
       assert_equal "balance_source", stabilization.fetch("method")
       assert_equal false, stabilization.fetch("proposals_applied_verbatim")
+      assert_equal "blue_hour", sidecar.dig("style_contract", "id")
+      assert_equal false, sidecar.dig("style_contract", "mapping_applied")
       assert stabilization.dig("before", "exposure", "mean_luminance")
       assert stabilization.dig("after", "exposure", "mean_luminance")
+    end
+  end
+
+  def test_unknown_image_style_contract_is_refused_before_render
+    Dir.mktmpdir do |dir|
+      subject = frame(dir, "source.jpg")
+      output = File.join(dir, "graded.jpg")
+      out, status = run_postpro(dir, "--input", subject, "--output", output,
+                                "--preset", "house", "--style-contract", "missing")
+
+      assert_equal 2, status.exitstatus
+      assert_match(/style contract rejected/, out)
+      refute File.exist?(output), "a rejected contract must not render"
     end
   end
 end
