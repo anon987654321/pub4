@@ -596,7 +596,7 @@ end
   # The model-backed laws raise when no model is configured, which a unit test has none of; the mechanical
   # laws are the ones whose overlap this asks about.
   def discard_reporters(source)
-    mechanical = scanner.laws.reject { |rule| rule.is_a?(Master::Review::Scan::Laws::SemanticLaw) }
+    mechanical = scanner.laws.reject { |rule| rule.is_a?(Master::Review::Scan::Laws::NeedsModel) }
     mechanical.select do |rule|
       Array(rule.check(source, path: File.join(Master::ROOT, "lib/example.rb")))
         .any? { |f| f[:message].to_s.match?(/discard|swallow/i) }
