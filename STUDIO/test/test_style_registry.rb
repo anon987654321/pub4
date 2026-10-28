@@ -10,7 +10,7 @@ class StudioStyleRegistryTest < Minitest::Test
       "origin_class" => "hand_authored", "reference_hashes" => [], "modality" => "audio",
       "identity_locks" => ["soft_late_groove"], "controlled_variables" => ["tempo"],
       "scope_attributes" => { "groove_rhythm" => { "source" => nil, "strength" => 0.8 } },
-      "negative_list" => ["alarm-like percussion"], "temporal_variation" => "none"
+      "negative_list" => ["alarm-like percussion"], "temporal_variation" => "none", "deprecation_target" => nil
     }
   end
 
@@ -46,6 +46,11 @@ class StudioStyleRegistryTest < Minitest::Test
     bad["scope_attributes"]["groove_rhythm"] = { "source" => nil }
     error = assert_raises(Studio::StyleRegistry::InvalidStyle) { Studio::StyleRegistry.validate!(bad) }
     assert_includes error.message, "strength"
+  end
+
+  def test_invalid_deprecation_date_is_rejected
+    bad = entry.merge("deprecation_target" => "not-a-date")
+    assert_raises(Studio::StyleRegistry::InvalidStyle) { Studio::StyleRegistry.validate!(bad) }
   end
 
   def test_rejects_unhashed_temporal_schedule
