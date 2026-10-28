@@ -95,6 +95,20 @@ def ssh_key
   File.expand_path(ENV.fetch("PUB4_SSH_KEY", "~/.ssh/id_ed25519_brgen"))
 end
 
+def ssh_log_path
+  File.expand_path(ENV.fetch("PUB4_SSH_LOG", "~/.pub4/ssh-connections.log"))
+end
+
+def ssh_log(event, detail = nil)
+  path = ssh_log_path
+  FileUtils.mkdir_p(File.dirname(path))
+  line = "#{Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ")} host=#{ssh_host} event=#{event}"
+  line += " #{detail}" if detail && !detail.empty?
+  File.open(path, "a") { |f| f.puts(line) }
+rescue StandardError => e
+  warn "ssh-log: #{e.message}"
+end
+
 # A command for the box that runs a Ruby script with whatever Ruby the box has.
 # The resolution happens there, through OPENBSD/lib/ruby_select.sh, never here.
 def remote_ruby(*argv)
@@ -102,10 +116,53 @@ def remote_ruby(*argv)
   "cd /home/dev/pub4 && #{Shellwords.join(["sh", "-c", resolver, "sh", *argv])}"
 end
 
+def ssh_base_argv
+  log = ssh_log_path
+  FileUtils.mkdir_p(File.dirname(log))
+  [
+    "ssh",
+    "-o", "BatchMode=yes",
+    "-o", "ConnectTimeout=#{ENV.fetch("PUB4_SSH_CONNECT_TIMEOUT", "15")}",
+    "-o", "ConnectionAttempts=#{ENV.fetch("PUB4_SSH_CONNECTION_ATTEMPTS", "3")}",
+    "-o", "ServerAliveInterval=15",
+    "-o", "ServerAliveCountMax=8",
+    "-o", "LogLevel=#{ENV.fetch("PUB4_SSH_LOG_LEVEL", "INFO")}",
+    "-E", log, # OpenSSH appends protocol diagnostics here
+    "-i", ssh_key,
+    ssh_host,
+  ]
+end
+
+# Replace the process with ssh (no local retry — ConnectionAttempts covers
+# handshake retries). Log intent before exec; the -E file records the session.
 def ssh_run(remote_cmd)
-  cmd = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=15",
-         "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=8", "-i", ssh_key, ssh_host, remote_cmd]
+  require "fileutils"
+  summary = remote_cmd.to_s.gsub(/\s+/, " ")[0, 120]
+  ssh_log("connect", "cmd=#{summary.inspect}")
+  cmd = ssh_base_argv + [remote_cmd]
   exec(*cmd)
+end
+
+# Capture mode with explicit retries for read-only probes (state, canary).
+def ssh_capture(remote_cmd, attempts: Integer(ENV.fetch("PUB4_SSH_RETRIES", "3")))
+  require "fileutils"
+  require "open3"
+  summary = remote_cmd.to_s.gsub(/\s+/, " ")[0, 120]
+  delay = 2
+  last_err = nil
+  attempts.times do |i|
+    ssh_log("attempt", "n=#{i + 1}/#{attempts} cmd=#{summary.inspect}")
+    out, status = Open3.capture2e(*ssh_base_argv, remote_cmd)
+    if status.success?
+      ssh_log("ok", "n=#{i + 1} bytes=#{out.bytesize}")
+      return [out, true]
+    end
+    last_err = out.to_s.lines.last(5).join.strip
+    ssh_log("fail", "n=#{i + 1} exit=#{status.exitstatus} err=#{last_err[0, 160].inspect}")
+    sleep delay
+    delay = [delay * 2, 30].min
+  end
+  [last_err.to_s, false]
 end
 
 command = ARGV.shift

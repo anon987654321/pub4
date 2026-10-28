@@ -267,14 +267,59 @@ set_stage() {
   log "enter"
 }
 
+# Retry a command with exponential backoff. Use only for transient failures
+# (network, service boot races). Do not wrap git merge conflicts or policy
+# refusals. Logs each attempt. Returns the last exit status.
+#
+#   retry 3 2 curl -fsS http://127.0.0.1:port/up
+#   attempts=3 initial_delay=2s, doubles each time, capped at 30s
+retry() {
+  local max=${1:?} delay=${2:?}
+  shift 2
+  local attempt=1 rc=0
+  while (( attempt <= max )); do
+    if "$@"; then
+      (( attempt > 1 )) && log "retry ok attempt=$attempt cmd=$*"
+      return 0
+    fi
+    rc=$?
+    if (( attempt == max )); then
+      log "retry exhausted attempts=$max rc=$rc cmd=$*"
+      return $rc
+    fi
+    log "retry fail attempt=$attempt/$max rc=$rc sleep=${delay}s cmd=$*"
+    sleep $delay
+    delay=$(( delay * 2 ))
+    (( delay > 30 )) && delay=30
+    attempt=$(( attempt + 1 ))
+  done
+  return $rc
+}
+
+# admin_service with retry for start/restart only (not check/list).
+admin_service_retry() {
+  local action=$1
+  shift || true
+  case $action in
+    start|restart)
+      retry "${VPS_DEPLOY_SERVICE_RETRIES:-3}" "${VPS_DEPLOY_SERVICE_RETRY_DELAY:-2}" \
+        admin_service "$action" "$@"
+      ;;
+    *)
+      admin_service "$action" "$@"
+      ;;
+  esac
+}
+
 rotate_deploy_log() {
-  # Cap the aggregate log so a year of deploys does not fill /var. Keep one
-  # rotated sibling; nothing fancier — newsyslog can take over later.
+  # Safety net only. Canonical rotation is newsyslog (OPENBSD/etc/newsyslog.conf).
+  # This fires if the log grew past the size limit between newsyslog runs.
   local max_bytes=${VPS_DEPLOY_LOG_MAX_BYTES:-10485760}
   [[ -f $deploy_log ]] || return 0
   local size
   size=$(stat -f %z "$deploy_log" 2>/dev/null) || return 0
   (( size >= max_bytes )) || return 0
+  log "rotate aggregate log size=$size max=$max_bytes"
   mv -f -- "$deploy_log" "$deploy_log.1" 2>/dev/null || true
 }
 
@@ -395,10 +440,14 @@ load_deploy_ports() {
 wait_up() {
   local port=$1 limit=${2:-${VPS_DEPLOY_RESTORE_WAIT:-240}} step=${VPS_DEPLOY_POLL:-3} waited=0
   while (( waited < limit )); do
-    curl -fsS --max-time 5 "http://127.0.0.1:${port}/up" >/dev/null 2>&1 && return 0
+    if curl -fsS --max-time 5 "http://127.0.0.1:${port}/up" >/dev/null 2>&1; then
+      (( waited > 0 )) && log "wait_up ok port=$port after=${waited}s"
+      return 0
+    fi
     sleep $step
     waited=$(( waited + step ))
   done
+  log "wait_up timeout port=$port limit=${limit}s"
   return 1
 }
 
@@ -447,9 +496,9 @@ restore_started() {
     port=${deploy_ports[$svc]:-}
     # restart, not start: rc.d/master runs its relayd restart, TTS warmup and flag
     # removal only on restart, and restart on a stopped service is a start.
-    admin_service restart "$svc" >/dev/null 2>&1 || true
+    admin_service_retry restart "$svc" >/dev/null 2>&1 || true
     if [[ -n $port ]]; then
-      wait_up "$port" || { admin_service restart "$svc" >/dev/null 2>&1 || true; wait_up "$port"; } || {
+      wait_up "$port" || { admin_service_retry restart "$svc" >/dev/null 2>&1 || true; wait_up "$port"; } || {
         print -u2 "vps-deploy: restore $svc FAILED - :${port}/up not ready, read /var/log/daemon"
         failed+=($svc); continue
       }
@@ -539,7 +588,8 @@ deploy_refuse() { log "refused: $1"; print -u2 "vps-deploy: refused - $1"; print
 if (( lock_owner )); then
   set_stage pin
   source "$repo/OPENBSD/lib/ruby_select.sh"
-  git_as_deploy_user fetch -q origin main || deploy_refuse "git fetch origin main failed (as $DEPLOY_USER)"
+  retry "${VPS_DEPLOY_GIT_RETRIES:-3}" 2 git_as_deploy_user fetch -q origin main \
+    || deploy_refuse "git fetch origin main failed (as $DEPLOY_USER) after retries"
   pin=$(git_as_deploy_user rev-parse --verify -q "${VPS_DEPLOY_SHA:-FETCH_HEAD}^{commit}") \
     || deploy_refuse "${VPS_DEPLOY_SHA:-origin/main} is not a commit this checkout can see"
   head_before=$(git_as_deploy_user rev-parse HEAD)
@@ -853,7 +903,13 @@ rails_assets_precompile_as_app "$app" "/home/${app}/app" || exit 1
 set_stage restart
 print "vps-deploy: $app (restart)"
 hold_deploy_flag
-if ! admin_service restart "$app" || ! admin_service check "$app"; then
+if ! admin_service_retry restart "$app"; then
+  log "restart failed after retries"
+  write_stamp "$app" failed
+  exit 1
+fi
+if ! retry 5 2 admin_service check "$app"; then
+  log "service check failed after restart"
   write_stamp "$app" failed
   exit 1
 fi
