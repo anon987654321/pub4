@@ -18,18 +18,6 @@ ownership:
     purpose: the constitution as code — one domain file per body of law
     risk: critical
     check: bin/check --profile=agent
-  AEGIS.md:
-    purpose: maritime safety concept and sensing boundary
-    risk: low
-    check: bin/check
-  COGNITION.md:
-    purpose: cognitive layer model, loop and engineering limits
-    risk: medium
-    check: bin/check --profile=agent
-  EXAMPLES.md:
-    purpose: worked patch and closeout examples
-    risk: low
-    check: bin/check
   lib/:
     purpose: runtime source; every subdirectory declares its own purpose below
     risk: high
@@ -140,7 +128,7 @@ ownership:
     risk: critical
     check: bin/check --profile=agent
   data/laws.yml:
-    purpose: constitutional rule registry and all scanner law (folded 2026-08-12)
+    purpose: constitutional rule registry and all scanner law
     risk: critical
     check: bin/check --profile=agent
   data/providers.yml:
@@ -181,8 +169,7 @@ ownership:
     check: none
   tools/:
     purpose: repo-hygiene and verification one-offs (security sweep, inventory,
-      convergence evidence check) — distinct from script/'s style/canon checks
-      and bin/'s runtime entry points
+      convergence evidence check) — distinct from bin/'s runtime entry points
     risk: medium
     check: ruby -Ilib:test test/test_lifecycle_tools.rb
   tools/voice/:
@@ -201,10 +188,6 @@ ownership:
     purpose: repository audits for capability inventory, data reachability, duplication, Law metadata and design baseline measurements
     risk: medium
     check: cd MASTER && ruby -Ilib:test test/test_capability_inventory.rb
-  script/:
-    purpose: style guide sync and canon generation checks run from Rakefile
-    risk: medium
-    check: bin/check
   loop*.gif:
     purpose: the README films' posters, made by bin/loops
     risk: low

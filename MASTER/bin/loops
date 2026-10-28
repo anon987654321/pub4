@@ -30,6 +30,7 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 # not, so the face take is never regenerated here.
 
 require "fileutils"
+require "rbconfig"
 require "tmpdir"
 require_relative "../lib/trace/dmesg"
 
@@ -84,7 +85,7 @@ def wordmark_png
 
   script = File.join(Dir.tmpdir, "ai_wordmark.rb")
   File.write(script, <<~RUBY)
-    $LOAD_PATH.unshift #{File.join(ROOT, 'RAILS', 'checks', 'support').inspect}
+    $LOAD_PATH.unshift #{File.join(MASTER, 'checks', 'support').inspect}
     require "cdp_session"
     require "json"
     Deploy::CdpSession.open do |s|
@@ -94,8 +95,8 @@ def wordmark_png
       s.screenshot(#{out.inspect}, clip: { "x" => 0, "y" => 0, "width" => box["w"], "height" => box["h"] })
     end
   RUBY
-  sh("ruby", script)
-  out
+  sh(RbConfig.ruby, script)
+  File.file?(out) ? out : nil
 end
 
 def build_face
@@ -106,6 +107,10 @@ def build_face
   end
 
   mark = wordmark_png
+  unless mark
+    Master::Trace::Dmesg.status("loop1", "wordmark not rendered (Chrome unavailable?), nothing built")
+    return
+  end
   out = File.join(MASTER, "loop1.mp4")
 
   overlay = "[1:v]format=rgba,colorchannelmixer=aa=0.86[mk];" \
@@ -129,13 +134,11 @@ end
 
 def build_shell
   Master::Trace::Dmesg.attach("loop2", "loops0", "shell")
-  sh("ruby", File.join(ROOT, "MASTER", "checks", "shell_loop_record.rb"),
+  sh(RbConfig.ruby, File.join(MASTER, "checks", "shell_loop_record.rb"),
      "--out", File.join(MASTER, "loop2.mp4"), "--audio", DEMO, "--fps", "20")
   report(File.join(MASTER, "loop2.mp4"))
   gif_for(File.join(MASTER, "loop2.mp4"), seconds: 9)
 end
-
-require "tmpdir"
 
 case ARGV.first
 when "face" then build_face

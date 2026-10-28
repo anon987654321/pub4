@@ -37,8 +37,6 @@ Check = Struct.new(:name, :state, :detail, keyword_init: true) do
   def label = { pass: "OK", fail: "FAIL", unmeasured: "SKIP" }.fetch(state, "FAIL")
 end
 
-# Kept so the twenty existing call sites read the same.
-def pass(name, detail) = Check.new(name:, state: :pass, detail:)
 def fail_check(name, detail) = Check.new(name:, state: :fail, detail:)
 def unmeasured(name, detail) = Check.new(name:, state: :unmeasured, detail:)
 
@@ -75,15 +73,6 @@ rescue StandardError => e
   Check.new(name: "dependencies", state: :fail, detail: "#{e.class}: #{e.message}")
 end
 
-def check_bundle
-  ok, out, err = run("bundle", "check", chdir: ROOT)
-  Check.new(name: "bundle", state: (ok) ? :pass : :fail, detail: if ok
-"dependencies satisfied"
-else
-(err.empty? ? out : err)
-end)
-end
-
 def check_yaml
   errors = Dir.glob(File.join(ROOT, "data", "**", "*.yml")).filter_map do |path|
     YAML.safe_load_file(path, aliases: true, permitted_classes: [Date, Time])
@@ -114,9 +103,8 @@ def check_api_keys
   if present.any?
     return Check.new(name: "api-keys", state: :pass, detail: present.join(", "))
   end
-  keyless = ENV["MASTER_KEYLESS"].to_s != "" || ENV["MASTER_WEB_CHAT"].to_s != "" || present.empty?
-  detail = keyless ? "keyless browser mode (web-chat:grok → chatgpt → kimi)" : "none configured"
-  Check.new(name: "api-keys", state: (keyless) ? :pass : :fail, detail: detail)
+  # No key is not a sick host: routing falls back to the keyless browser lanes.
+  Check.new(name: "api-keys", state: :pass, detail: "keyless browser mode (web-chat:grok → chatgpt → kimi)")
 end
 
 def check_tts_socket
@@ -197,7 +185,6 @@ def check_provider_catalog
   Check.new(name: "provider-catalog", state: (File.exist?(path)) ? :pass : :fail, detail: File.exist?(path) ? path : "missing")
 end
 
-$LOAD_PATH.unshift File.join(ROOT, "lib")
 require "master"
 
 if ARGV.include?("--fix")
@@ -231,9 +218,9 @@ checks = [
 ]
 
 Master::Trace::Dmesg.attach("doctor0", "master0", "MASTER doctor, #{checks.size} checks")
-checks.each do |check|
-  Master::Trace::Dmesg.attach("doctor#{checks.index(check) || 0}", "doctor0", "#{check.name}, #{check.label.downcase}")
-  Master::Trace::Dmesg.status("doctor#{checks.index(check) || 0}", check.detail)
+checks.each_with_index do |check, index|
+  Master::Trace::Dmesg.attach("doctor#{index}", "doctor0", "#{check.name}, #{check.label.downcase}")
+  Master::Trace::Dmesg.status("doctor#{index}", check.detail)
 end
 
 # The receipt, under the probes rather than instead of them. doctor answers

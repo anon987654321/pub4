@@ -182,6 +182,8 @@ NO_AUDIO = 2
 # for good: the worker is single-threaded, so one stuck child was a dead worker that still
 # held its socket and answered pings.
 CHILD_DEADLINE_S = Integer(ENV.fetch("MASTER_TTS_CHILD_TIMEOUT", "45"))
+# How long an accepted daemon connection may take to send its request line.
+REQUEST_READ_S = 10
 
 # The child's status, or nil when it was killed for running past the deadline.
 def wait_with_deadline(pid, seconds = CHILD_DEADLINE_S)
@@ -428,10 +430,7 @@ if ARGV[0] == "--daemon"
 
   # Idle daemons exit. Nothing reaps them otherwise, and nothing ever did: every
   # boot of bin/master spawns a pool of two, none of them stops when the session
-  # ends, and they outlive the checkout they were spawned from. Twenty-one were
-  # found alive on 2026-09-11 across nine trees, six of which had been deleted
-  # hours earlier — a laptop that had run the suite a few times was carrying a
-  # worker pool for every worktree it had ever opened.
+  # ends, and they outlive the checkout they were spawned from.
   #
   # Thirty minutes, because the socket is the contract: a caller that finds no
   # daemon spawns one, and the cost of that is a boot rather than a failure.
@@ -448,6 +447,10 @@ if ARGV[0] == "--daemon"
     end
     client = server.accept
     begin
+      # The daemon is single-threaded: a client that connects and never writes
+      # would hold every later request behind its blocking gets.
+      next unless IO.select([client], nil, nil, REQUEST_READ_S)
+
       line = client.gets&.chomp
       next unless line && !line.empty?
       req = JSON.parse(line)

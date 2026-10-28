@@ -121,7 +121,9 @@ end
 if probe && model
   before = File.file?(File.join(MASTER, ".master", "metrics.jsonl")) ? File.readlines(File.join(MASTER, ".master", "metrics.jsonl"), encoding: "UTF-8", invalid: :replace).size : 0
   question = "In one sentence: what bug does def total(items) items.sum { |i| i.price * i.qty } / items.size end have when items is empty?"
-  probe_out, probe_ok = Open3.capture2e(env, File.join(MASTER, "bin", "master"), question)
+  probe_out, probe_status = Open3.capture2e(env, File.join(MASTER, "bin", "master"), question)
+  # capture2e returns a Process::Status, which is always truthy; the exit code is the verdict.
+  probe_ok = probe_status.success?
   probe_tail = probe_out.to_s.lines.map(&:strip).reject(&:empty?).last(8).join("\n  ")
   metrics = File.join(MASTER, ".master", "metrics.jsonl")
   abort "fix-here: the lane check wrote no metrics (call ok=#{probe_ok}); the call never reached a model. Fix the lane or run with --no-probe.\nlast output of the call:\n  #{probe_tail}" unless File.file?(metrics)

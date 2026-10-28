@@ -156,7 +156,7 @@ represented by a SHA-256 digest, not a raw path, URL or command argument. Failur
 prevents the effect from running; failure to persist the after-event returns `trace_failed`
 rather than claiming the task completed. This path uses `EventBus#publish_required` and the
 event log's strict append method, while ordinary best-effort telemetry retains its existing
-failure-swallowing behavior. The legacy `core:turn` stream is also privacy-safe now: action
+failure-swallowing behavior. The legacy `core:turn` stream is privacy-safe as well: action
 subjects are categorical, the detail is reduced to completed/failed, and read/exec output is
 represented by byte and line counts. Full observations remain only in the local operator
 transcript. This is the first slice of the external-action event contract, not yet a shared
@@ -372,7 +372,7 @@ been executed in the pinned runtime for this change.
 
 ## Model pool
 
-The router discovers reachable models from configured tiers, local Ollama installations, hosted OpenAI-compatible endpoints and provider catalogs. `ModelRouter` delegates candidate selection to `model_router/selection.rb`; deterministic `RoutePolicy` decides from a supplied snapshot of reachable, parked, usable, recently failed and operation-floor candidates without performing I/O. Provider availability, health, quota, compute ranking and existing lane ordering remain explicit collaborators, so one failed or parked lane cannot silently become the whole policy. The focused policy fixtures live in `test/test_route_policy.rb`; runtime routing still needs verification against the configured providers and MASTER's pinned Ruby. All requests retain the existing budget, provider-health and fallback controls.
+The router discovers reachable models from configured tiers, local Ollama installations, hosted OpenAI-compatible endpoints and provider catalogs. `ModelRouter` delegates candidate selection to `lib/cli/routing/model_router/selection.rb`; deterministic `RoutePolicy` decides from a supplied snapshot of reachable, parked, usable, recently failed and operation-floor candidates without performing I/O. Provider availability, health, quota, compute ranking and existing lane ordering remain explicit collaborators, so one failed or parked lane cannot silently become the whole policy. The focused policy fixtures live in `test/test_route_policy.rb`; runtime routing still needs verification against the configured providers and MASTER's pinned Ruby. All requests retain the existing budget, provider-health and fallback controls.
 
 An OpenAI-compatible gateway such as a local freellmpool instance is opt-in:
 
@@ -489,8 +489,9 @@ that overruns its limit prints the line it is stuck on.
 
 The `checks` directory holds the Rails and web checks, and `tools` holds the
 scanners, audits and censuses behind the operator. Plugins in `plugins` extend
-MASTER without joining its core: a Wi-Fi and Bluetooth observer, and two
-governed browsers for social accounts and travel bookings. Each plugin runs
+MASTER without joining its core: a Wi-Fi and Bluetooth observer, and three
+governed browsers for allowlisted public sessions, social accounts and travel
+bookings. Each plugin runs
 under a policy declared in `data/laws.yml`.
 
 Documentation is checked as source: the test suite verifies local Markdown link targets and cited repository paths in maintained entry documents. External link availability is not treated as proven by an offline test. Writing guidance stays with `data/laws.yml`; tree READMEs remain the human entry points, with the OpenBSD runbook and manual pages serving operational work. Use [Google's technical-writing guidance](https://developers.google.com/tech-writing) and [Diátaxis](https://diataxis.fr/) as editorial references; [Awesome Markdown](https://github.com/mundimark/awesome-markdown) is a tool catalogue, not the project's style authority.
@@ -601,7 +602,7 @@ A submit attempt consumes the grant. MASTER never automatically retries a create
 
 ## Personal preferences
 
-MASTER now has a consent-gated, per-subject preference store at `.master/workspace/<subject>/PREFERENCES.yml`, separate from the profile and episodic memory. It is loaded into the existing prompt builder for the general conversation and the best-matching task scope.
+MASTER has a consent-gated, per-subject preference store at `.master/workspace/<subject>/PREFERENCES.yml`, separate from the profile and episodic memory. It is loaded into the existing prompt builder for the general conversation and the best-matching task scope.
 
 After pairing locally and granting the existing personal-memory scope with `/privacy grant personal_memory`, use `/preferences show` and `/preferences set communication.detail=brief` (or choose another validated key/value from `/help preferences`). Supported scopes are `all`, `coding`, `research`, `support`, `creative` and `planning`; a task-specific value overrides the general value only for that scope. Values are a closed vocabulary, not free-form prompt instructions.
 
@@ -614,7 +615,7 @@ Read `personal_privacy` in `data/laws.yml` before enabling personal-device, comp
 ## /fix architecture tournament and interaction acceptance
 
 A requested /fix targeting the repository root or an exact top-level MASTER, RAILS,
-OPENBSD or STUDIO tree now performs a read-only architecture tournament before repair.
+OPENBSD or STUDIO tree performs a read-only architecture tournament before repair.
 It asks for 36 candidates per tree by default (configurable through
 MASTER_FIX_ARCHITECTURE_CANDIDATES, clamped to 30–40) in one structured generation per
 tree. Candidates must reference existing source evidence and test anchors, state a
@@ -639,7 +640,7 @@ is implemented or passing; close it only with the declared test or live/rendered
 
 ## Rendered surface and public metadata checks
 
-The existing `surface_schema` check now validates the five declared Brgen surfaces for exactly one non-empty document title, meta description, absolute canonical URL, Open Graph title/description/URL, as well as their existing layout and interaction markers. Positive fixtures exercise complete metadata; `MASTER/test/test_dom_surface_seo_metadata.rb` proves missing descriptions, duplicate canonicals and relative canonical URLs are detected. This is source/fixture coverage, not proof of a full public-host crawl; the broader hostname, redirect, robots, sitemap and JSON-LD audit remains in the root TODO.
+The `surface_schema` check validates the five declared Brgen surfaces for exactly one non-empty document title, meta description, absolute canonical URL, Open Graph title/description/URL, as well as their existing layout and interaction markers. Positive fixtures exercise complete metadata; `MASTER/test/test_dom_surface_seo_metadata.rb` proves missing descriptions, duplicate canonicals and relative canonical URLs are detected. This is source/fixture coverage, not proof of a full public-host crawl; the broader hostname, redirect, robots, sitemap and JSON-LD audit remains in the root TODO.
 
 The metadata attribute checks respect the active quote delimiter, so valid apostrophes inside titles and descriptions remain accepted; relative canonicals and duplicate/empty metadata remain invalid. A dedicated negative/positive regression covers this distinction.
 

@@ -146,7 +146,7 @@ rescue StandardError => e
 end
 
 failures << "pipe" unless step("pipe command") do
-  exe = File.expand_path("cli", __dir__)
+  exe = File.expand_path("master", __dir__)
   Master::Ground::EnvLoader.load!
   env = ENV.to_h.merge("MASTER_QUIET" => "1")
   out, _st = Master::Io::Exec.capture2e(env, exe, stdin_data: "/help\n", timeout: PIPE_TIMEOUT_SECONDS, raise_on_timeout: true)

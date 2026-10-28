@@ -2,7 +2,6 @@
 # Select the best installed Ruby supported by the project's Gemfile.
 set -eu
 
-ROOT=${0:A:h:h}
 MIN_MAJOR=3
 MIN_MINOR=3
 MAX_MAJOR=4

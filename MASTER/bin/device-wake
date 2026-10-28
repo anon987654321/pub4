@@ -32,7 +32,7 @@ def speak(text)
   Master::Device::Audio.speak(text)
 end
 
-wake.run_forever do |_phrase, _heard|
+wake.run_forever do |phrase, _heard|
   subject = Master::Device::Agent.owner_subject(root: ROOT)
   greeting = if subject.empty?
                "Hello. I'm MASTER. Pair me first if this is your phone."
@@ -41,8 +41,8 @@ wake.run_forever do |_phrase, _heard|
              end
 
   speak(greeting)
-  Master::Device::WakeSignal.publish(root: ROOT, phrase: _phrase)
-  container[:bus]&.publish("device:wake", subject:, phrase: _phrase)
+  Master::Device::WakeSignal.publish(root: ROOT, phrase:)
+  container[:bus]&.publish("device:wake", subject:, phrase:)
   conversation_deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 20
   loop do
     break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= conversation_deadline

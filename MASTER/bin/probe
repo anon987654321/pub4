@@ -20,13 +20,14 @@ MASTER_ROOT = File.expand_path("..", __dir__)
 REPO_ROOT = File.expand_path("..", MASTER_ROOT)
 RUBY = RbConfig.ruby
 
-# Inlined from bin/probe_selfscan (2026-08-19 sprawl collapse): deep-scan
-# lib/master.rb and fail on error/critical findings.
-SELFSCAN_SRC = <<~SCRIPT.freeze
-  $LOAD_PATH.unshift File.join(%q{#{MASTER_ROOT}}, "lib")
+# Deep-scan lib/master.rb and fail on error/critical findings. A literal heredoc:
+# its interpolations belong to the child process, and the root arrives as ARGV.
+SELFSCAN_SRC = <<~'SCRIPT'.freeze
+  root = ARGV.fetch(0)
+  $LOAD_PATH.unshift File.join(root, "lib")
   require "master"
-  container = Master.bootstrap_container(root: %q{#{MASTER_ROOT}})
-  result = container[:scanner].scan(File.join(%q{#{MASTER_ROOT}}, "lib", "master.rb"), depth: :deep)
+  container = Master.bootstrap_container(root:)
+  result = container[:scanner].scan(File.join(root, "lib", "master.rb"), depth: :deep)
   findings = result.ok? ? result.value! : []
   bad = findings.select { |f| %i[error critical].include?(f[:severity].to_sym) }
   Master::Trace::Dmesg.status("scan0", "#{findings.size} finding(s), #{bad.size} critical")
@@ -47,7 +48,7 @@ CHECKS = {
   },
   # nsaudit and dogfood each have one caller in the repo — this table — and the
   # entry-point count keeps proposing that they fold into `check` as steps. They
-  # stay separate processes. `bin/nsaudit:16` defines a bare top-level `ROOT`,
+  # stay separate processes. `bin/nsaudit` defines a bare top-level `ROOT`,
   # one of the 43 the tree carries, and every one of them is harmless only while
   # it owns its process: loading two together lets the second assignment win and
   # sends the loser reading the wrong tree in silence. A subprocess is what makes
@@ -72,17 +73,10 @@ CHECKS = {
     cmd: [RUBY, "-S", "rake", "lint:models"],
     cwd: MASTER_ROOT,
   },
-  # bin/preflight used to sit here, and `all` ran it. It checked ruby, bundler
-  # and `bundle check`, warned about three API keys, syntax-checked
-  # lib/master.rb and a kernel/ directory the tree has not had for some time,
-  # and then ran bin/ci — which is the entry two rows down. Its only caller
-  # anywhere in the repo was this table.
-  #
-  # Folded into "ci" rather than into "doctor", though doctor is the strict
-  # superset of its host checks. doctor fails on a laptop with no TTS socket and
-  # no web token, which are true statements about the machine and not about the
-  # tree, and a probe that is red on every developer's box is a line people
-  # learn to skip. bin/ci is what preflight actually contributed to `all`.
+  # No "doctor" row: doctor fails on a laptop with no TTS socket and no web
+  # token, which are true statements about the machine and not about the tree,
+  # and a probe that is red on every developer's box is a line people learn to
+  # skip. "ci" below carries the tree-level preflight.
   "audit" => {
     desc: "Staged lines judged by the law (bin/operator lint)",
     cmd: [RUBY, File.join(MASTER_ROOT, "bin", "operator"), "lint", "--staged", "--changed-lines"],
@@ -133,13 +127,12 @@ CHECKS = {
   },
   "crawl" => {
     desc: "HTTP crawl manifest + inventory sync (apps.yml ↔ deploy_inventory.json)",
-    cmd: [RUBY, File.join(REPO_ROOT, "RAILS", "tools", "crawl_probe.rb")],
+    cmd: [RUBY, File.join(MASTER_ROOT, "tools", "rails", "crawl_probe.rb")],
     cwd: REPO_ROOT,
   },
   "crawl-browser" => {
     desc: "Ferrum element crawl (MASTER face session + Rails landmarks)",
-    cmd: ["sh", "-c",
-          "BUNDLE_WITH=test bundle exec ruby #{File.join(REPO_ROOT, 'RAILS', 'crawl_browser.rb')}"],
+    cmd: [{ "BUNDLE_WITH" => "test" }, "bundle", "exec", RUBY, File.join(MASTER_ROOT, "tools", "rails", "crawl_browser.rb")],
     cwd: MASTER_ROOT,
     skip: lambda {
       return true if ENV["MASTER_CRAWL_BROWSER"] == "0"
@@ -155,7 +148,7 @@ CHECKS = {
   },
   "selfscan" => {
     desc: "Deep-scan lib/master.rb (set MASTER_PROBE_SELF=1)",
-    cmd: [RUBY, "-e", SELFSCAN_SRC],
+    cmd: [RUBY, "-e", SELFSCAN_SRC, MASTER_ROOT],
     cwd: MASTER_ROOT,
     skip: -> { ENV["MASTER_PROBE_SELF"] != "1" },
     skip_reason: "set MASTER_PROBE_SELF=1",
@@ -191,7 +184,7 @@ unless unknown.empty?
 end
 
 failures = []
-checks.each do |name|
+checks.each_with_index do |name, index|
   meta = CHECKS.fetch(name)
 
   if meta[:skip]&.call
@@ -199,10 +192,9 @@ checks.each do |name|
     next
   end
 
-  unit = "probe#{checks.index(name) || 0}"
+  unit = "probe#{index}"
   Master::Trace::Dmesg.attach(unit, "probe0", "#{name}, #{meta[:desc]}")
   out, status = Open3.capture2e(*meta[:cmd], chdir: meta[:cwd])
-  unit = "probe#{checks.index(name) || 0}"
   Master::Trace::Dmesg::Report.print(unit, out, parent: "probe0") unless out.empty?
   Master::Trace::Dmesg.status(unit, status.success? ? "clean" : "failed, exit #{status.exitstatus}")
   failures << name unless status.success?

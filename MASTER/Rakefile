@@ -330,10 +330,7 @@ namespace :test do
     # Each file runs in its own process: `ruby a.rb b.rb c.rb` runs only a.rb and
     # passes the rest as ARGV, so the old single-invocation form silently skipped
     # every file after the first.
-    #
-    # -Ilib since the 2026-08-12 merge: these used to require_relative
-    # ../../core/master and load the fold spine on its own path. There is one
-    # spine and one loader now, so they require "master" like everything else.
+    # -Ilib: the spine has one loader, so these require "master" like everything else.
     FileList["test/test_core_*.rb"].each { |f| ruby "-Ilib", "-Itest", f }
   end
 
@@ -354,23 +351,15 @@ namespace :test do
   # "can't find executable rails for gem railties ... perhaps you meant to add it
   # to your Gemfile", which reads as a broken web app and is a broken invocation.
   # web/ has its own Gemfile and its own suite; run it from there and it is green.
-  #
-  # The same fix was applied to tools and this task was not revisited,
-  # which is how one bug survives in a file that already documents it.
   desc "Rails web integration tests (RAILS/master)"
   task :web do
     # Bundler.with_unbundled_env, not a hash of nils. `sh` sets a nil value to the
     # empty string rather than unsetting it, and an empty BUNDLE_GEMFILE still
     # searches upward — from web/ that finds MASTER/Gemfile, whose lock names seven
     # gems web/ does not vendor. An empty BUNDLE_PATH separately overrides
-    # web/.bundle/config, which says vendor/bundle.
-    #
-    # The tool tasks used the hash-of-nils idiom under the same exemption — no
-    # .bundle/config, no parent Gemfile — and it was wrong for a third reason the
-    # exemption did not cover. Bundler 4 sets BUNDLER_SETUP, and a child ruby
-    # loads bundler/setup off it with RUBYOPT already cleared, so `require "vips"`
-    # failed in a grandchild the list had supposedly freed. Both call `unbundled`
-    # now, which is this method by another name.
+    # web/.bundle/config, which says vendor/bundle. Bundler 4 also sets
+    # BUNDLER_SETUP, which a child ruby loads bundler/setup from even with RUBYOPT
+    # cleared; with_unbundled_env clears that as well.
     Bundler.with_unbundled_env do
       # The running ruby, named: the binstubs say `env ruby`, which finds macOS's 2.6 when PATH has no rbenv.
       rails_test = [RbConfig.ruby, "-S", "bundle", "exec", RbConfig.ruby, "bin/rails", "test"]
@@ -380,7 +369,7 @@ namespace :test do
 
   desc "Static web UI checks (asset manifest, boot contract)"
   task :web_ui do
-    sh "ruby -Ilib:test test/test_web_ui.rb"
+    ruby "-Ilib:test", "test/test_web_ui.rb"
   end
 
   desc "Subprocess CLI boot tests (MASTER_CLI_E2E=1)"
@@ -680,7 +669,8 @@ end
     end
 
     if core_recursive_files > config.fetch("core_recursive_files")
-      abort "lint:spine: the fold spine has #{core_recursive_files} recursive files, ceiling is #{config['core_recursive_files']} — "             "nested core structure cannot grow behind the direct-file invariant"
+      abort "lint:spine: the fold spine has #{core_recursive_files} recursive files, ceiling is #{config['core_recursive_files']} — " \
+            "nested core structure cannot grow behind the direct-file invariant"
     end
 
     if lines > ceiling
@@ -702,7 +692,7 @@ end
     if raises > allowed
       abort "lint:spine: the ceiling has been raised #{raises} times without lib/ ever falling " \
             "(allowance #{allowed}). Absorb something and run `rake lint:spine RATCHET=1`, or " \
-            "delete lib_ceiling and say in the commit that the spine is not an invariant anyone holds."
+            "delete lib_body_ceiling and say in the commit that the spine is not an invariant anyone holds."
     end
 
     # The ratchet only tightens. Nothing here can raise the ceiling.
@@ -905,11 +895,11 @@ def audit_outcome(name)
   :passed
 rescue SystemExit => e
   e.success? ? :passed : :failed
-rescue RuntimeError => e
-  raise unless e.message.include?("Command failed with status")
-
-  :failed
 rescue StandardError, ScriptError => e
+  # Only `sh`'s own failure is a verdict. Re-raising anything else from a
+  # sibling rescue would escape this method and end the audit unfinished.
+  return :failed if e.instance_of?(RuntimeError) && e.message.include?("Command failed with status")
+
   warn "audit: #{name} errored — #{e.class}: #{e.message.lines.first.to_s.strip}"
   :errored
 end

@@ -14,11 +14,8 @@
 # The runner stays single: three runners would be three ideas of what a check
 # result is, which is the shape OPENBSD/lib/check_result.rb exists to prevent.
 #
-# It replaces four hand-maintained tables that had to agree with each other:
-# runner.rb's CHECK_MAP (name -> file), IN_PROCESS (name -> class),
-# SUBPROCESS_ONLY (the set difference of those two, stored by hand) and
-# CHECK_COVERED_BY (leaf -> composite). Adding a check meant editing up to four
-# places, and CHECK_MAP's file paths outlived the shims they pointed at.
+# One row is the whole declaration: file, class, pass line and composite live
+# together, so no second table has to agree with this one.
 #
 # Fields
 #   require     path under MASTER/checks/, loaded before the class is named
@@ -301,12 +298,9 @@ locale_shadowing:
   pass: "locale_shadowing: ok"
   covered_by: production
 
-# MASTER's 164 executable rules reach this tree through exactly one door, and
-# until now it was a door nobody opened: no covered_by meant this ran only when
-# named by hand, so a RAILS deploy was gated by RuboCop, Brakeman and the app
-# suite and by none of the constitution. Two trailing commas blocked brgen for
-# ten hours on 2026-08-25 while NO_COLUMN_ALIGN, which exists for exactly that,
-# never ran.
+# MASTER's executable laws reach this tree through exactly one door; covered_by
+# release makes a RAILS release gated by the constitution as well as by RuboCop,
+# Brakeman and the app suite.
 #
 # release rather than production: this is scan-only and takes about eleven
 # minutes, which is right for the check that fronts a release and wrong for every
@@ -449,17 +443,16 @@ occlusion:
   pass: "ok: every control answers a press at its own centre"
   covered_by: rendered_suite
 
-# PERF-100. The vitals sampler in hotwire.js has beaconed LCP/CLS/INP at one
-# percent for some time and nothing ever failed on the numbers; CHECK_ADEQUACY
-# item 8 records the hole. Source half asserts the field collection still runs,
-# live half measures the two paint metrics against a budget.
+# The vitals sampler in hotwire.js beacons LCP/CLS/INP at one percent. The source
+# half asserts the field collection still runs; the live half measures the two
+# paint metrics against a budget.
 web_vitals_budget:
   require: lib/rendered/web_vitals_budget
   class: Deploy::WebVitalsBudget
   pass: "ok: LCP and CLS within budget, field collection intact"
 
-# PWA-100 and BRGEN-115. Three manifests, and nothing checked that the icons
-# they declare exist or that brgen's name follows the host's city. An icon
+# Three manifests: the icons they declare must exist and brgen's name must
+# follow the host's city. An icon
 # resolves from two public roots — the app's and the shared engine's, which
 # mounts its own ActionDispatch::Static — so a check that reads one of them
 # reports two apps as broken when they are not.

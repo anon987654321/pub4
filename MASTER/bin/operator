@@ -64,7 +64,7 @@ def usage
       bin/operator worktree <name> [--base REF] [--allow-dirty-source]  create managed isolated worktree
       bin/operator worktree list | remove <name>  inspect or remove a clean worktree; preserve its branch
       bin/operator push                   replay unpublished main commits onto a moved origin/main and push, no stash
-            bin/operator triangle <up|status|down> [app...]  boot brgen, amber, bsdports and the master face on the ports the live checks probe
+      bin/operator triangle <up|status|down> [app...]  boot brgen, amber, bsdports and the master face on the ports the live checks probe
       bin/operator visual review [--app A,B] [--surface ID] [--no-critique] [--no-open] [--out DIR]  read-only rendered review, no fixing
       bin/operator visual <seed [app...] [--yes]|unseed|status|approve <surface>>  believable local content for the visual pass, development database only
       bin/operator premerge [--apps|--pwa|--contracts|--coverage|--checks|--list]  the Rails premerge proof
@@ -748,12 +748,12 @@ when "test"
   jobs = []
   rails_parts = trees.select { |t| t.first == "RAILS" }.map(&:last).uniq
   if trees.any? { |t| t.first == "MASTER" }
-    jobs << ["MASTER suite", %w[bundle exec rake test], File.join(ROOT, "MASTER"), {}]
+    jobs << ["MASTER suite", [BUNDLE, "exec", "rake", "test"], File.join(ROOT, "MASTER"), {}]
     if tool_paths.any?
       jobs << ["MASTER tools suite", [BUNDLE, "exec", RUBY, "-S", "rake"], File.join(ROOT, "MASTER", "tools"), {}]
     end
     if paths.any? { |p| p.start_with?("MASTER/law/") }
-      jobs << ["MASTER dogfood", %w[bundle exec rake dogfood], File.join(ROOT, "MASTER"), {}]
+      jobs << ["MASTER dogfood", [BUNDLE, "exec", "rake", "dogfood"], File.join(ROOT, "MASTER"), {}]
     end
   end
   app_suites = rails_parts.include?("shared") ? %w[brgen amber bsdports] : (rails_parts & %w[brgen amber bsdports])
@@ -766,7 +766,7 @@ when "test"
   end
   if trees.any? { |t| t.first == "OPENBSD" }
     runner = 'Dir["test/test_*.rb"].sort.each { |f| system(RbConfig.ruby, f) || abort(f) }'
-    jobs << ["OPENBSD minitests", ["ruby", "-e", runner], File.join(ROOT, "OPENBSD"), {}]
+    jobs << ["OPENBSD minitests", [RUBY, "-e", runner], File.join(ROOT, "OPENBSD"), {}]
   end
   if jobs.empty?
     die("test", "no suite maps to #{paths.first(3).join(", ")}", 64)
@@ -775,10 +775,10 @@ when "test"
   # Say what was chosen before running it, so a surprising suite is visible
   # up front rather than after a long run.
   Master::Trace::Dmesg.attach("test0", "master0", "#{paths.size} paths, #{jobs.map(&:first).uniq.join(", ")}")
-  failed = jobs.reject do |name, cmd, dir, env|
-    Master::Trace::Dmesg.attach("test#{jobs.index([name, cmd, dir, env]) || 0}", "test0", name)
+  failed = jobs.each_with_index.reject do |(name, cmd, dir, env), index|
+    Master::Trace::Dmesg.attach("test#{index}", "test0", name)
     system(env, *cmd, chdir: dir)
-  end
+  end.map(&:first)
   failed.each { |name, *| Master::Trace::Dmesg.status("test0", "failed, #{name}") }
   exit(failed.empty? ? 0 : 1)
 when "vps"
@@ -788,10 +788,11 @@ when "vps"
     action = ARGV.shift.to_s
     remote = !ARGV.delete("--remote").nil?
     die("vps", "usage, bin/operator vps master <status|start|stop|restart> [--remote]", 64) unless %w[status start stop restart].include?(action) && ARGV.empty?
-    script = <<~ZSH
+    # Literal heredoc: the probe below carries Ruby interpolation meant for the box, not for this process.
+    script = <<~'ZSH'.sub("__ACTION__", Shellwords.escape(action))
       set -e
       cd /home/dev/pub4
-      case #{Shellwords.escape(action)} in
+      case __ACTION__ in
       status)
         sessions="$(screen -ls 2>/dev/null || true)"
         if [[ "$sessions" == *".master"* ]]; then
@@ -800,7 +801,7 @@ when "vps"
         else
           print "master0: screen master stopped"
         fi
-        MASTER/bin/ruby -I MASTER/lib -e 'require "master"; p=Master::Ops::ProcessLock.owner(File.join(Master::ROOT, ".master", "process.lock")); puts(p.empty? ? "master0: process lock free" : "master0: process #{p["pid"]} on #{p["host"]}, mode #{p["mode"]}")'
+        MASTER/bin/ruby -I MASTER/lib -e 'require "master"; p=Master::Ops::ProcessLock.owner; puts(p.empty? ? "master0: process lock free" : "master0: process #{p["pid"]} on #{p["host"]}, mode #{p["mode"]}")'
         ;;
       stop)
         screen -S master -X quit 2>/dev/null || true
@@ -836,7 +837,7 @@ when "vps"
     end
   when "deploy"
     app = ARGV.shift
-    die("vps", usage.lines.first.to_s.strip, 64) if app.to_s.empty?
+    die("vps", "usage, bin/operator vps deploy <app|all|master> [--remote]", 64) if app.to_s.empty?
     if ARGV.delete("--remote")
       # Prove the commit boots here, then send the box that exact SHA; the box
       # refuses a different one. See Operator::DeployPreflight.
@@ -874,7 +875,7 @@ when "vps"
     exit 2
   when "logs"
     app = ARGV.shift
-    abort(usage) if app.to_s.empty?
+    die("vps", "usage, bin/operator vps logs <app> [--lines N] [--remote]", 64) if app.to_s.empty?
     if ARGV.delete("--remote")
       ssh_run(remote_ruby("OPENBSD/bin/vps-logs", app, *ARGV))
     else

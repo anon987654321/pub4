@@ -170,11 +170,13 @@ end
 
 checks << step("GET /chat/metrics (authed)") do
   tok = web_token
-  return [false, "no web_token in #{CONFIG_PATH} or PROBE_TOKEN"] if tok.empty?
+  # `next`, not `return`: a top-level return here ends the script with exit 0
+  # and every later check unrun.
+  next [false, "no web_token in #{CONFIG_PATH} or PROBE_TOKEN"] if tok.empty?
 
   res = fetch("/chat/metrics", headers: JSON_ACCEPT.merge(auth_headers), read_timeout: 12)
   code = res.code.to_i
-  return [false, "HTTP #{code}"] unless code == 200
+  next [false, "HTTP #{code}"] unless code == 200
 
   data = JSON.parse(res.body.to_s)
   required = %w[model tokens uptime open_breakers cache_efficiency model_quota]
