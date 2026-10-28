@@ -125,9 +125,19 @@ module Operator
       end.sort
     end
 
+    # The executable bit is read from git's recorded mode, not the working tree:
+    # a checkout, an unzip or a umask can drop or add +x locally, and that made
+    # the same commit count a different stutter on different machines.
+    def git_executables
+      @git_executables ||= begin
+        entries = IO.popen(["git", "-C", ROOT, "ls-files", "-s", "-z"], &:read).to_s.split("\0")
+        entries.filter_map { |entry| entry.split("\t", 2).last if entry.start_with?("100755 ") }.to_set
+      end
+    end
+
     def entry_point?(path)
       full = File.join(ROOT, path)
-      return true if File.executable?(full)
+      return true if git_executables.include?(path)
       return true if path.end_with?(".sh", ".yml", ".toml")
 
       # The repeated word is only a stutter when the file says it twice: once
