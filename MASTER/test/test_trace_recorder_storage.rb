@@ -79,7 +79,113 @@ class TestTraceRecorderStorage < Minitest::Test
     end
   end
 
+  def test_last_turn_reader_redacts_legacy_raw_messages_and_events
+    Dir.mktmpdir("trace-storage-legacy-privacy") do |root|
+      instance = recorder(root)
+      path = daily_trace_path(root)
+      old_turn = {
+        "id" => "legacy-turn",
+        "start_ts" => Time.now.to_i,
+        "channel" => "cli",
+        "message" => "legacy private prompt text",
+        "events" => [{
+          "event" => "tool:after",
+          "ts_ms" => 3,
+          "query" => "https://internal.invalid/?token=legacy-turn-secret"
+        }]
+      }
+      File.write(path, JSON.generate(old_turn) + "\n")
+      File.chmod(0o600, path)
+
+      loaded = instance.send(:load_last_from_disk)
+      rendered = instance.pretty_last
+
+      assert_equal 64, loaded.fetch(:message).fetch(:sha256).length
+      assert_equal "legacy private prompt text".bytesize, loaded.fetch(:message).fetch(:bytes)
+      assert_equal 3, loaded.fetch(:events).first.fetch(:ts_ms)
+      assert_equal 64, loaded.fetch(:events).first.fetch(:query_digest).length
+      refute_includes rendered, "legacy private prompt text"
+      refute_includes rendered, "legacy-turn-secret"
+    end
+  end
+
   def test_incomplete_existing_trace_line_is_not_extended
+    Dir.mktmpdir("trace-storage-incomplete-tail") do |root|
+      FileUtils.mkdir_p(trace_directory(root), mode: 0o700)
+      path = daily_trace_path(root)
+      original = %({"message":"partial-secret"})
+      File.write(path, original)
+      File.chmod(0o600, path)
+
+      recorder(root).send(:finalize, sample_turn)
+
+      assert_equal original, File.read(path)
+    end
+  end
+
+  def test_multiple_processes_keep_complete_trace_lines
+    Dir.mktmpdir("trace-storage-parallel-lines") do |root|
+      worker_script = <<~'RUBY'
+        require "master"
+        require "trace/recorder"
+
+        root, worker = ARGV
+        bus = Object.new
+        bus.define_singleton_method(:subscribe) { |*| }
+        recorder = Master::Trace::Recorder.new(root:, event_bus: bus)
+        10.times do |index|
+          recorder.send(:finalize, {
+            id: "#{worker}-#{index}", start_ts: Time.now.to_i,
+            channel: "test", message: "private payload", events: []
+          })
+        end
+      RUBY
+
+      workers = 4.times.map do |worker|
+        Process.spawn(
+          RbConfig.ruby, "-I", File.join(Master::ROOT, "lib"), "-e", worker_script,
+          root, worker.to_s, out: File::NULL, err: File::NULL
+        )
+      end
+      statuses = workers.map { |pid| Process.wait2(pid).last }
+      assert statuses.all?(&:success?), statuses.map(&:exitstatus).inspect
+
+      path = daily_trace_path(root)
+      lines = File.readlines(path)
+      assert_equal 40, lines.length
+      rows = lines.map { |line| JSON.parse(line) }
+      assert_equal 40, rows.map { |row| row.fetch("id") }.uniq.length
+      refute_includes lines.join, "private payload"
+      assert_equal 0o600, File.stat(path).mode & 0o777
+    end
+  end
+
+  def test_shared_master_state_directory_keeps_its_canonical_group_access
+    Dir.mktmpdir("trace-storage-shared-group") do |root|
+      state = File.join(root, ".master")
+      Dir.mkdir(state)
+      groups = Process.groups - [Process.egid]
+      skip "this account belongs to no second group" if groups.empty?
+
+      File.chown(nil, groups.first, state)
+      File.chmod(0o770, state)
+
+      recorder(root)
+
+      assert_equal MasterPaths.private_dir_mode(state, 0o700), File.stat(state).mode & 0o7777
+      assert_equal 0o700, File.stat(trace_directory(root)).mode & 0o777
+    end
+  end
+
+  def test_non_private_trace_directory_is_refused
+    Dir.mktmpdir("trace-storage-directory-mode") do |root|
+      FileUtils.mkdir_p(trace_directory(root), mode: 0o700)
+      File.chmod(0o755, trace_directory(root))
+
+      assert_raises(IOError) { recorder(root) }
+    end
+  end
+end
     Dir.mktmpdir("trace-storage-incomplete-tail") do |root|
       FileUtils.mkdir_p(trace_directory(root), mode: 0o700)
       path = daily_trace_path(root)
