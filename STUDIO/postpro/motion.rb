@@ -147,7 +147,7 @@ module Postpro
         raise Unavailable, "estimate #{estimate[:seconds]}s exceeds the #{limits[:max_seconds]}s runtime budget"
       end
 
-      verify_constant_rate!(input, probe, deadline:)
+      verify_constant_rate!(input, probe, deadline:, max_frames: limits[:max_frames])
       FileUtils.mkdir_p(File.dirname(target))
       io.puts "motion: #{probe.width}x#{probe.height} #{probe.rate}fps #{estimate[:frames]} frames" \
               "#{probe.has_audio ? ' + audio' : ''}; estimated #{estimate[:seconds]}s, " \
