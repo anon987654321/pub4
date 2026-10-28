@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "socket"
+
 # Run-level orchestration and adapter factories for the canonical repair Kernel.
 module Master
   module Fix
@@ -91,6 +93,7 @@ module Master
         # Hash-chained operational evidence around the legacy convergence adapter.
         # Detailed pass and recovery state still lives in lifecycle_journal.
         def begin_coordinated_run(target:, max_passes:, budget_seconds:, requested:)
+          reconcile_coordinated_runs!
           run_id = SecureRandom.hex(12)
           expanded = File.expand_path(target.to_s, @root)
           target_label = if expanded == @workspace_root
@@ -102,7 +105,8 @@ module Master
                          end
           append_event("coordinator_started", {
             actor: @actor, target: target_label, max_passes: Integer(max_passes),
-            budget_seconds: Integer(budget_seconds), requested: requested == true
+            budget_seconds: Integer(budget_seconds), requested: requested == true,
+            host: Socket.gethostname, pid: Process.pid
           }, run_id:)
           run_id
         end
@@ -125,6 +129,48 @@ module Master
           append_event("repair_pass", {
             law: law.to_s, status: status.to_s, fixed: Integer(fixed), breakdown: counts
           }, run_id: @current_run_id)
+        end
+
+        private
+
+        # A writer that died between start and terminal left an open lifecycle
+        # receipt. Reconcile only same-host processes that are known gone; never
+        # turn a possibly live peer into an apparent completed or failed run.
+        def reconcile_coordinated_runs!
+          events = verify_log!
+          terminal_ids = events.each_with_object({}) do |row, seen|
+            seen[row["run_id"]] = true if row["kind"] == "coordinator_terminal" && row["run_id"]
+          end
+          events.each do |row|
+            next unless row["kind"] == "coordinator_started"
+
+            run_id = row["run_id"]
+            next if run_id.nil? || terminal_ids[run_id]
+
+            payload = row["payload"].is_a?(Hash) ? row["payload"] : {}
+            next unless payload["host"].to_s == Socket.gethostname
+
+            pid = Integer(payload["pid"]) rescue nil
+            next if pid && pid.positive? && pid != Process.pid && coordinator_process_alive?(pid)
+
+            append_event("coordinator_terminal", {
+              state: "unknown_outcome",
+              recovered: true,
+              reason: "coordinator process ended without a terminal receipt",
+              previous_process_id: pid,
+            }, run_id:)
+            terminal_ids[run_id] = true
+          end
+          true
+        end
+
+        def coordinator_process_alive?(pid)
+          Process.kill(0, pid)
+          true
+        rescue Errno::ESRCH, RangeError, TypeError, ArgumentError
+          false
+        rescue Errno::EPERM
+          true
         end
       end
     end
