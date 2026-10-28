@@ -24,7 +24,7 @@ file collector. World dispatches each verb to a do_ method and checks
 capabilities. Its checkpoints live in memory, so a crash loses them; the Fold's
 compensations cover one path at a time.
 
-### Kernel, FixLoop, RunJournal and RunLedger
+### Fix::Kernel, FixLoop, RunJournal and RunLedger
 
 `ai_boot` builds one `Fix::Kernel` and obtains the production convergence
 adapter through `Kernel#build_fix_loop`. The former `FixLoop` implementation
@@ -32,29 +32,42 @@ is now `Kernel::ConvergenceAdapter`; its public constant and entry-point shim
 remain for existing callers. Kernel owns the run execution lock, hash-chained
 coordinator receipts, repair factory and the single lifecycle-journal accessor.
 A failed or interrupted run is recorded as `unknown_outcome`, never inferred
-to be complete. The lifecycle journal's separate `fix_runs.lock` refuses symlinked
-state/lock paths, group/world-writable state directories and non-private lock files;
-its journal writes remain under the journal's own lock and atomic-write boundary.
+to be complete.
 
 The durable journal implementation is `Kernel::LifecycleJournal`, with the
 same `MASTER/.master/fix_runs.json` schema and `RunJournal` compatibility
-constant. The per-Law policy is `Kernel::RepairAdapter`, with the old
-`RepairLoop` constant retained. Kernel does not edit files directly:
-FixLoop/RepairLoop and the existing `Transaction` continue to own source
-mutations, rollback and Git delivery. FixLoop keeps `@transaction_root`, the
-root it was given, for transaction recovery (2de776cde). `RunLedger` remains
-in-memory accounting reset at each run start. Delivery is still the Committer.
+constant. Its `.master/fix_runs.lock` rejects symlinked state/lock paths,
+group/world-writable state directories, non-regular lock files, non-private
+lock permissions and lock path/inode replacement before or after acquiring
+`flock`. The journal reader refuses symlinked, hard-linked, non-regular or
+group/world-readable journal files, checks the path against the opened inode,
+validates UTF-8 and detects changes during the read. Malformed or unsafe
+journal state stops history/resume rather than masquerading as an empty run
+list. Assessment and architecture artifacts live in owner-private directories
+and are reopened with no-follow, path/inode and change-during-read checks
+before their checksums or provenance are trusted. Symlinked, hard-linked,
+non-regular, public-mode, invalid-encoding and changing artifacts are refused;
+a checksum alone is not safe-path evidence.
 
+The per-Law policy is `Kernel::RepairAdapter`, with the old `RepairLoop`
+constant retained. Kernel does not edit files directly: the adapters and
+existing `Transaction` continue to own source mutations, rollback and Git
+delivery. FixLoop keeps `@transaction_root`, the root it was given, for
+transaction recovery (2de776cde). `RunLedger` remains in-memory accounting
+reset at each run start. Delivery is still the Committer.
+
+Validation remains outstanding: the focused lifecycle and process-interruption
+tests were authored but have not run on pinned Ruby 4.0.5. Mission survival,
+journal-loss recovery, budget/collapse behavior, delivery-failure recovery,
+adapter receipt parity, and a real repository-wide `/fix` run remain open
+gates; see `docs/fix_coordinator_map.md`.
 ### The inner repair loop
 
-Pass stages use `Kernel#build_repair_loop` to obtain the canonical
-`Kernel::RepairAdapter`. Its nested policy modules retain the reflexion
-verifier, consensus panel, collapse guard, per-file budget and verified writes;
-the active pass transaction and Committer continue to enforce rollback and
-delivery. The Kernel ledger records redacted repair status/count summaries linked
-to the run ID, not prompts or source text. WatchLoop builds no separate repair
-engine: a changed file wakes the background runner or starts an incremental
-FixLoop run, so its repairs use the same transaction boundary.
+Pass stages build RepairLoop; it writes source with write_atomic inside the
+pass transaction and relies on the reflexion verifier, the consensus panel, the
+collapse guard and the Committer's path validation. WatchLoop builds none: a
+changed file wakes the background runner or starts an incremental FixLoop run,
+so its repairs get a transaction and a run ledger like any other.
 
 ### Fix::Mission
 
@@ -64,9 +77,8 @@ claimed a mission may write only that mission while it holds the lease; any
 other write raises Mission::Fenced (c296719e1). The Supervisor, Heartbeat and
 TaskSteward read it and wake work whose lease expired. Two missions coexist: the
 Fold's under MASTER's root and /fix's under the repository root
-(FixLoop#mission_root); Kernel's process-shared `.master/fix-execution.lock`
-serialises independent /fix processes, while the transaction lock protects
-each pass's file writes. Heartbeat wakes /fix's, the TaskSteward tends the
+(FixLoop#mission_root); FixLoop's run mutex and the transaction lock already
+serialise their writes. Heartbeat wakes /fix's, the TaskSteward tends the
 Fold's, and /status mission, fix_status and the service check name each.
 
 ### Fix::Transaction and Delivery
@@ -99,9 +111,13 @@ rollback on the box is the operator's (operator_seams.yml).
 
 ### Open gaps, by risk
 
-1. Kernel now appends coordinator and repair-outcome receipts in production,
-   but validation is not complete. `test_fix_kernel_lifecycle.rb` and
-   `test_fix_interruption_restart.rb` are authored but unexecuted on pinned Ruby
-   4.0.5. Mission survival, journal-loss recovery, budget/collapse behavior,
-   delivery-failure recovery, adapter receipt parity and a real repository-wide
-   `/fix` run remain open gates; see `docs/fix_coordinator_map.md`.
+1. Kernel now appends coordinator and repair-outcome receipts in production.
+   Its hash-chained `.master/log.jsonl` reader refuses symlinked, hard-linked,
+   non-regular or non-private ledger files and verifies path identity before
+   and after reading. Runtime results remain unmeasured here: run the focused
+   replay, lifecycle and process-kill regressions on pinned Ruby 4.0.5, then
+   prove transaction rollback, durable resumption, orphan-receipt recovery,
+   budget/collapse and zero-repair ledger honesty, and the adapter receipt-parity
+   matrix. A real repository-wide `/fix` trial still has not run.
+   Define hash-chain-preserving retention/segmentation with explicit checkpoints
+   before long-running production use; never truncate arbitrary log prefixes.
