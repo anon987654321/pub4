@@ -102,8 +102,18 @@ module Deploy
       rule.action == "block" && rule.text.match?(/\Ablock(?:\s+log)?\s+all(?:\s|\z)/)
     end
 
+    # A pass rule must identify the managed external interface. The one
+    # intentional exception is the current ICMP-type allowlist, retained from
+    # the tracked policy; broad protocol passes must not slip past the check
+    # merely because they do not end with the words "pass all".
+    GLOBAL_ICMP_ALLOW = /\Apass\s+inet\s+proto\s+icmp\s+all\s+icmp-type\s+\{\s*echoreq,\s*unreach,\s*timex\s*\}\z/.freeze
+
     def unscoped_pass?(rule)
-      rule.text.match?(/\Apass(?:\s+(?:in|out))?\s+all(?:\s|\z)/)
+      return false unless rule.action == "pass"
+      return false if rule.text.match?(/\bon\s+\$ext_if\b/)
+      return false if rule.text.match?(GLOBAL_ICMP_ALLOW)
+
+      true
     end
 
     def check_bruteforce_order(rules, result)
