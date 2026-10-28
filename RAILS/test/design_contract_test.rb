@@ -247,6 +247,31 @@ class DesignContractTest < Minitest::Test
                     "brgen renders brgen-old-*-tokens; saying `social` here sends CSS work at the wrong palette"
   end
 
+  def test_flat_design_pattern_rejects_effects_but_allows_resets_and_functional_filters
+    prohibited = [
+      "box-shadow: 0 2px 8px rgb(0 0 0 / 20%);",
+      "text-shadow: 0 1px #000;",
+      "backdrop-filter: blur(8px);",
+      "filter: blur(2px);",
+      "filter: drop-shadow(0 2px 3px #000);"
+    ]
+    prohibited.each do |declaration|
+      assert_match FLAT_DESIGN_PATTERN, declaration, "must reject #{declaration}"
+    end
+
+    permitted = [
+      "box-shadow: none;",
+      "text-shadow: none;",
+      "backdrop-filter: none;",
+      "filter: none;",
+      "filter: grayscale(1);",
+      "mask-image: linear-gradient(to right, var(--surface), transparent);"
+    ]
+    permitted.each do |declaration|
+      refute_match FLAT_DESIGN_PATTERN, declaration, "must allow #{declaration}"
+    end
+  end
+
   def test_first_party_ui_stylesheets_use_flat_visual_surfaces
     globs = [
       File.join(ROOT, "**/app/assets/stylesheets/**/*.{scss,css}"),
