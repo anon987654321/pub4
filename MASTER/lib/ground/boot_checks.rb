@@ -22,6 +22,7 @@ module Master
             check_data_dir(root),
             check_soul_yaml(root),
             check_laws_yaml(root),
+            check_tokens_yaml(root),
             check_providers_yaml(root),
             check_models_yaml(root),
             check_voice_yaml(root),
@@ -121,6 +122,10 @@ module Master
 
         def check_laws_yaml(root)
           check_yaml_file(root, "data/laws.yml", "laws_yaml")
+        end
+
+        def check_tokens_yaml(root)
+          check_catalogue_yaml(root, "data/tokens.yml", "tokens_yaml")
         end
 
         def check_providers_yaml(root)

@@ -8,6 +8,7 @@ class TestConfigurationGuard < Minitest::Test
 
   def laws_path = File.join(Master::ROOT, "data", "laws.yml")
   def soul_path = File.join(Master::ROOT, "data", "soul.yml")
+  def tokens_path = File.join(Master::ROOT, "data", "tokens.yml")
 
   def test_current_law_catalogue_satisfies_shared_invariants
     assert_nil Guard.validate(path: laws_path, content: File.read(laws_path, encoding: "UTF-8"))
@@ -15,6 +16,37 @@ class TestConfigurationGuard < Minitest::Test
 
   def test_current_soul_allows_its_own_safe_edit_path
     assert_nil Guard.validate(path: soul_path, content: File.read(soul_path, encoding: "UTF-8"))
+  end
+
+  def test_current_token_catalogue_satisfies_shared_invariants
+    assert_nil Guard.validate(path: tokens_path, content: File.read(tokens_path, encoding: "UTF-8"))
+  end
+
+  def test_token_catalogue_cannot_drop_a_required_section
+    data = YAML.safe_load_file(tokens_path, aliases: true)
+    data.fetch("tokens").delete("face_interface")
+
+    reason = Guard.validate(path: tokens_path, content: YAML.dump(data))
+
+    assert_match(/tokens\.yml is missing required token section\(s\): face_interface/, reason)
+  end
+
+  def test_token_catalogue_cannot_drift_a_shared_spacing_contract
+    data = YAML.safe_load_file(tokens_path, aliases: true)
+    data.fetch("tokens").fetch("pixel_perfection")["eight_px_rhythm"] = [0, 4, 8]
+
+    reason = Guard.validate(path: tokens_path, content: YAML.dump(data))
+
+    assert_match(/tokens\.scale\.space_px must match pixel_perfection\.eight_px_rhythm/, reason)
+  end
+
+  def test_face_default_mode_must_exist_in_face_mode_catalogue
+    data = YAML.safe_load_file(tokens_path, aliases: true)
+    data.fetch("tokens").fetch("face_interface").fetch("state")["default_mode"] = "missing_mode"
+
+    reason = Guard.validate(path: tokens_path, content: YAML.dump(data))
+
+    assert_match(/tokens\.face_interface\.state\.default_mode must be listed in modes/, reason)
   end
 
   def test_malformed_law_yaml_is_refused

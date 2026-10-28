@@ -28,6 +28,14 @@ module Master
       data/ data lib/review/scan/ lib/review/scan/laws lib/review/scan/laws/
     ].freeze
     LIVE_SOUL = File.expand_path("../data/soul.yml", __dir__)
+    REQUIRED_TOKEN_MAPS = %w[
+      visual_identity viewport shared_chrome system storefront_art radio luxury promotional_art
+      face_root face_interface brgen_old_dark brgen_old_light openbsd_wscons social light
+      vertical_accents scale layout_rules kinetic_depth visual_design motion_and_sound
+      data_visualization automated_css_analysis ux_laws typography worn_type pixel_perfection
+      rams_checklist ui_polish pwa ultraminimalism ad_visual_contract brand_systems
+    ].freeze
+    TOKEN_ROOT_FIELDS = %w[tokens].freeze
     def validate(path:, content:, root: nil)
       absolute = File.expand_path(path.to_s, root || Dir.pwd)
       kind = kind_for(absolute)
@@ -41,6 +49,7 @@ module Master
       when :soul then validate_soul(data, path: absolute)
       when :providers then ProviderCatalogueGuard.validate(data)
       when :models then ModelCatalogueGuard.validate(data, path: absolute)
+      when :tokens then validate_tokens(data)
       end
       nil
     rescue Psych::Exception, ArgumentError, KeyError, TypeError => e
@@ -55,10 +64,109 @@ module Master
       return :soul if normalized.match?(%r{/MASTER/data/soul\.yml\z})
       return :providers if normalized.match?(%r{/MASTER/data/providers\.yml\z})
       return :models if normalized.match?(%r{/MASTER/data/models\.yml\z})
+      return :tokens if normalized.match?(%r{/MASTER/data/tokens\.yml\z})
 
       nil
     end
 
+
+    def validate_tokens(document)
+      unknown = document.keys.map(&:to_s) - TOKEN_ROOT_FIELDS
+      errors = []
+      errors << "tokens.yml has unknown top-level field(s): #{unknown.sort.join(', ')}" unless unknown.empty?
+
+      tokens = document["tokens"]
+      unless tokens.is_a?(Hash) && !tokens.empty?
+        raise ArgumentError, "tokens.yml must contain a non-empty tokens mapping"
+      end
+
+      missing = REQUIRED_TOKEN_MAPS - tokens.keys.map(&:to_s)
+      errors << "tokens.yml is missing required token section(s): #{missing.join(', ')}" unless missing.empty?
+
+      tokens.each do |name, value|
+        if name.to_s == "vertical_accent_ink"
+          errors << "tokens.vertical_accent_ink must be non-empty text" unless value.is_a?(String) && !value.strip.empty?
+        elsif !value.is_a?(Hash)
+          errors << "tokens.#{name} must be a mapping"
+        end
+      end
+
+      identity = tokens["visual_identity"].is_a?(Hash) ? tokens["visual_identity"] : {}
+      %w[name signal signal_ink signal_on_light display_size].each do |field|
+        errors << "tokens.visual_identity.#{field} must be non-empty text" unless
+          identity[field].is_a?(String) && !identity[field].strip.empty?
+      end
+
+      chrome = tokens["shared_chrome"].is_a?(Hash) ? tokens["shared_chrome"] : {}
+      %w[font font_code transition_fast transition_normal chrome_inset].each do |field|
+        errors << "tokens.shared_chrome.#{field} must be non-empty text" unless
+          chrome[field].is_a?(String) && !chrome[field].strip.empty?
+      end
+
+      social = tokens["social"].is_a?(Hash) ? tokens["social"] : {}
+      %w[bg surface surface_elevated search_bg text text_secondary border accent danger
+         radius_xs radius_sm radius_md radius_card radius_lg radius_pill].each do |field|
+        errors << "tokens.social.#{field} must be non-empty text" unless
+          social[field].is_a?(String) && !social[field].strip.empty?
+      end
+
+      face_root = tokens["face_root"].is_a?(Hash) ? tokens["face_root"] : {}
+      %w[anchors derived layout palette].each do |field|
+        errors << "tokens.face_root.#{field} must be a mapping" unless face_root[field].is_a?(Hash)
+      end
+      %w[font_mono font_label face_bg].each do |field|
+        errors << "tokens.face_root.#{field} must be non-empty text" unless
+          face_root[field].is_a?(String) && !face_root[field].strip.empty?
+      end
+
+      interface = tokens["face_interface"].is_a?(Hash) ? tokens["face_interface"] : {}
+      errors << "tokens.face_interface.schema must be 1" unless interface["schema"] == 1
+      prompt = interface["prompt"].is_a?(Hash) ? interface["prompt"] : {}
+      state = interface["state"].is_a?(Hash) ? interface["state"] : {}
+      stipple = interface["stipple"].is_a?(Hash) ? interface["stipple"] : {}
+      %w[font measure_ch max_ch line_height user_token master_token].each do |field|
+        errors << "tokens.face_interface.prompt.#{field} is required" unless prompt.key?(field)
+      end
+      modes = state["modes"]
+      unless modes.is_a?(Array) && !modes.empty? &&
+             modes.all? { |mode| mode.is_a?(String) && !mode.strip.empty? } && modes.uniq == modes
+        errors << "tokens.face_interface.state.modes must be a unique non-empty list of names"
+        modes = []
+      end
+      errors << "tokens.face_interface.state.default_mode must be listed in modes" unless modes.include?(state["default_mode"])
+      profiles = stipple["profiles"]
+      unless profiles.is_a?(Hash) && (modes - profiles.keys.map(&:to_s)).empty?
+        errors << "tokens.face_interface.stipple.profiles must define every face mode"
+      end
+
+      scale = tokens["scale"].is_a?(Hash) ? tokens["scale"] : {}
+      spacing = scale["space_px"]
+      unless spacing.is_a?(Array) && !spacing.empty? &&
+             spacing.all? { |value| value.is_a?(Numeric) && value >= 0 } && spacing.uniq == spacing
+        errors << "tokens.scale.space_px must be a unique list of non-negative numbers"
+      end
+      grid_spacing = tokens.dig("layout_rules", "grid", "allowed_spacing_px") if tokens["layout_rules"].is_a?(Hash)
+      rhythm = tokens.dig("pixel_perfection", "eight_px_rhythm") if tokens["pixel_perfection"].is_a?(Hash)
+      errors << "tokens.scale.space_px must match layout_rules.grid.allowed_spacing_px" unless spacing == grid_spacing
+      errors << "tokens.scale.space_px must match pixel_perfection.eight_px_rhythm" unless spacing == rhythm
+
+      touch = tokens.dig("layout_rules", "touch", "target_min_px")
+      fitts = tokens.dig("ux_laws", "fitts", "target_min_px")
+      errors << "tokens.layout_rules.touch.target_min_px must match ux_laws.fitts.target_min_px" unless
+        touch.is_a?(Numeric) && touch == fitts
+
+      ad = tokens["ad_visual_contract"].is_a?(Hash) ? tokens["ad_visual_contract"] : {}
+      errors << "tokens.ad_visual_contract.version must be 1" unless ad["version"] == 1
+      %w[colors typography spacing radius placement render].each do |field|
+        value = ad[field]
+        errors << "tokens.ad_visual_contract.#{field} must be a mapping" unless value.is_a?(Hash)
+      end
+      pairs = ad["contrast_pairs"]
+      errors << "tokens.ad_visual_contract.contrast_pairs must be a non-empty list" unless pairs.is_a?(Array) && !pairs.empty?
+
+      raise ArgumentError, errors.uniq.join("; ") unless errors.empty?
+      true
+    end
 
     def validate_soul(data, path: LIVE_SOUL)
       absolute = data.fetch("absolute") { raise KeyError, "absolute section is required" }
