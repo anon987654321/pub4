@@ -182,7 +182,7 @@ class TestPostproSidecarsAndContactSheet < Minitest::Test
 
       assert_equal Digest::SHA256.file(input).hexdigest, data["input_sha256"]
       assert_equal Digest::SHA256.file(output).hexdigest, data["output_sha256"]
-      assert_equal %w[before after], data.fetch("uncanny").keys.sort
+      assert_equal %w[after before], data.fetch("uncanny").keys.sort
       assert data.fetch("quality").key?("warnings") || data.fetch("quality").key?(:warnings)
     end
   end
