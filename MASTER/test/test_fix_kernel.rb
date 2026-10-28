@@ -59,6 +59,27 @@ class TestFixKernel < Minitest::Test
     end
   end
 
+  def test_restart_reconciliation_leaves_same_process_runs_unresolved
+    with_workspace do |root|
+      kernel = K.new(root:)
+      kernel.send(
+        :append_event,
+        "coordinator_started",
+        { actor: "test", host: Socket.gethostname, pid: Process.pid, target: ".",
+          max_passes: 2, budget_seconds: 60, requested: false },
+        run_id: "same-process-run"
+      )
+
+      kernel.begin_coordinated_run(
+        target: root, max_passes: 2, budget_seconds: 60, requested: false
+      )
+
+      refute kernel.verify_log!.any? do |row|
+        row["kind"] == "coordinator_terminal" && row["run_id"] == "same-process-run"
+      end, "another Kernel instance in this process must not terminalize a live peer"
+    end
+  end
+
   def test_kernel_serializes_and_terminalizes_the_fix_loop_adapter
     with_workspace do |root|
       kernel = K.new(root:)
