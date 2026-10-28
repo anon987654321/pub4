@@ -40,7 +40,7 @@ module Deploy
       "config.content_security_policy_nonce_directives = %w[script-src]",
       "policy.object_src :none",
       "policy.frame_ancestors :self",
-      "policy.script_src :self",
+      "policy.script_src",
       'policy.report_uri "/csp-reports"',
       'config.content_security_policy_report_only = ENV["PUB4_CSP_ENFORCE"] != "1"',
     ].freeze
@@ -81,14 +81,68 @@ module Deploy
     private
 
     def read_source(relative, result)
-      path = File.join(@root, relative)
-      unless File.file?(path)
-        result.fail("security_headers: missing #{relative}")
+      path = File.expand_path(relative, @root)
+      root_stat = File.lstat(@root)
+      unless root_stat.directory? && !root_stat.symlink?
+        result.fail("security_headers: root is not a real directory")
         return nil
       end
 
-      result.checked!
-      File.read(path, encoding: "UTF-8")
+      root_prefix = "#{@root}#{File::SEPARATOR}"
+      unless path.start_with?(root_prefix)
+        result.fail("security_headers: source escapes root: #{relative}")
+        return nil
+      end
+
+      cursor = @root
+      components = relative.split(File::SEPARATOR)
+      components[0...-1].each do |component|
+        cursor = File.join(cursor, component)
+        stat = File.lstat(cursor)
+        unless stat.directory? && !stat.symlink?
+          result.fail("security_headers: parent path is not a real directory for #{relative}")
+          return nil
+        end
+      end
+
+      unless File.exist?(path) || File.symlink?(path)
+        result.fail("security_headers: missing #{relative}")
+        return nil
+      end
+      stat = File.lstat(path)
+      unless stat.file? && !stat.symlink?
+        result.fail("security_headers: refuses non-regular or symlinked source #{relative}")
+        return nil
+      end
+
+      flags = File::RDONLY
+      flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+      File.open(path, flags) do |file|
+        opened = file.stat
+        current = File.lstat(path)
+        unless current.file? && !current.symlink? &&
+               current.dev == opened.dev && current.ino == opened.ino
+          result.fail("security_headers: source path changed while opening #{relative}")
+          return nil
+        end
+
+        content = file.read.force_encoding(Encoding::UTF_8)
+        unless content.valid_encoding?
+          result.fail("security_headers: invalid UTF-8 in #{relative}")
+          return nil
+        end
+
+        after = File.lstat(path)
+        unless after.file? && !after.symlink? &&
+               after.dev == opened.dev && after.ino == opened.ino &&
+               after.size == opened.size && after.mtime == opened.mtime && after.ctime == opened.ctime
+          result.fail("security_headers: source changed while reading #{relative}")
+          return nil
+        end
+
+        result.checked!
+        content
+      end
     rescue SystemCallError, EncodingError => e
       result.fail("security_headers: cannot read #{relative}: #{e.class}: #{e.message}")
       nil
@@ -105,19 +159,53 @@ module Deploy
     def check_script_sources(result, label, source)
       return unless source
 
-      directives = source.lines.reject { |line| line.lstrip.start_with?("#") }
-                        .filter_map { |line| line.split("#", 2).first if line.match?(/^\s*policy\.script_src\b/) }
-      if directives.empty?
+      directives = script_source_directives(source)
+      unless directives.any? { |directive| directive[:name] == "script_src" }
         result.fail("security_headers: #{label} has no explicit script-src directive")
-        return
       end
 
-      directives.each do |directive|
-        if directive.match?(/(?:^|[\s,]):https\b|unsafe[-_]eval/i) ||
-           directive.match?(/["']\*["']|(?:^|[\s,])\*(?:[\s,]|$)/)
-          result.fail("security_headers: #{label} has an overly broad script-src: #{directive.strip}")
+      directives.each do |entry|
+        directive = entry.fetch(:source)
+        if directive.match?(/(?:^|[\s,]):https?\b|(?:^|[\s,]):(?:data|blob)\b/i) ||
+           directive.match?(/unsafe[-_]eval|unsafe[-_]inline/i) ||
+           directive.match?(/["']\*["']|(?:^|[\s,])\*(?:[\s,]|$)|(?:^|[\s,])\*\.[a-z0-9.-]+|https?:\/\/(?:\*|\*\.)/i) ||
+           directive.match?(/\bhttp:\/\/|["'](?:data|blob):|["']https?:["']/i)
+          result.fail(
+            "security_headers: #{label} has an overly broad #{entry.fetch(:name).tr("_", "-")}: #{directive.strip}"
+          )
         end
       end
+    end
+
+    # A Ruby DSL call may continue onto following lines. Inspect the complete
+    # statement rather than only the first line, and include script-src-elem and
+    # script-src-attr because either can override the base script-src policy.
+    def script_source_directives(source)
+      lines = source.lines
+      directives = []
+      index = 0
+
+      while index < lines.length
+        code = lines[index].split("#", 2).first.to_s
+        match = code.match(/^\s*policy\.(script_src(?:_elem|_attr)?)\b/)
+        unless match
+          index += 1
+          next
+        end
+
+        statement = [code]
+        index += 1
+        while index < lines.length
+          continuation = lines[index].split("#", 2).first.to_s
+          break if continuation.match?(/^\s*(?:policy\.|config\.|end\b)/)
+
+          statement << continuation
+          index += 1
+        end
+        directives << { name: match[1], source: statement.join }
+      end
+
+      directives
     end
 
     def check_relayd_does_not_set_csp(result, source)
