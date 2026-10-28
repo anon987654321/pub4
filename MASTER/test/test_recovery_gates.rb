@@ -3,9 +3,9 @@
 # Required proof gates before folding FixLoop / RepairLoop / RunJournal into
 # Fix::Kernel. See MASTER/docs/fix_coordinator_map.md.
 #
-# These are intentionally explicit pending tests, not proof that recovery works.
-# A merge is blocked until each skip is wired to the production path, made red
-# by a planted defect, then green after the repair.
+# These are merge gates, not proof that recovery works. Each real test must
+# execute against the production recovery path and be run before a coordinator
+# fold. Any remaining skip must be wired, made red by a planted defect, then green.
 
 require "test_helper"
 require "tmpdir"
