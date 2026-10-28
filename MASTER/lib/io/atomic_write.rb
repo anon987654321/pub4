@@ -15,18 +15,60 @@ module Master
       # text-mode temp file transcoded on write, and restoring a binread
       # snapshot of any file holding a non-ASCII byte raised mid-rollback.
       def write_atomic(path, content, fsync: true, fsync_dir: true, mode: nil)
-        mode ||= File.exist?(path) ? File.stat(path).mode & 0o7777 : 0o644
-        dir = File.dirname(path)
+        destination = File.expand_path(path)
+        dir = File.dirname(destination)
+        raise IOError, "refusing symlinked atomic-write directory" if File.symlink?(dir)
+
         FileUtils.mkdir_p(dir)
+        directory_stat = File.lstat(dir)
+        unless directory_stat.directory? && !directory_stat.symlink?
+          raise IOError, "atomic-write parent is not a real directory"
+        end
+
+        original_stat = if File.exist?(destination) || File.symlink?(destination)
+                          stat = File.lstat(destination)
+                          unless stat.file? && !stat.symlink? && stat.nlink == 1
+                            raise IOError, "atomic-write destination must be a singly linked regular file"
+                          end
+                          stat
+                        end
+        mode ||= original_stat ? original_stat.mode & 0o7777 : 0o644
 
         temp = Tempfile.new(".master_atomic_", dir, binmode: true)
+        current_directory = File.lstat(dir)
+        unless current_directory.directory? && !current_directory.symlink? &&
+               current_directory.dev == directory_stat.dev && current_directory.ino == directory_stat.ino
+          raise IOError, "atomic-write directory changed while opening temp file"
+        end
+
         temp.write(content)
         temp.flush
         temp.fsync if fsync
-        temp.close
+        temp.chmod(mode)
 
-        File.chmod(mode, temp.path)
-        File.rename(temp.path, path)
+        # Detect replacement of the parent or destination before rename. The
+        # rename never follows a destination symlink, but a replaced parent
+        # could redirect the temp-file move outside the directory we opened.
+        current_directory = File.lstat(dir)
+        unless current_directory.directory? && !current_directory.symlink? &&
+               current_directory.dev == directory_stat.dev && current_directory.ino == directory_stat.ino
+          raise IOError, "atomic-write directory changed before rename"
+        end
+        current_destination = if File.exist?(destination) || File.symlink?(destination)
+                                File.lstat(destination)
+                              end
+        if original_stat
+          unless current_destination&.file? && !current_destination.symlink? &&
+                 current_destination.nlink == 1 &&
+                 current_destination.dev == original_stat.dev && current_destination.ino == original_stat.ino
+            raise IOError, "atomic-write destination changed before rename"
+          end
+        elsif current_destination
+          raise IOError, "atomic-write destination appeared before rename"
+        end
+
+        File.rename(temp.path, destination)
+        temp.close
         fsync_directory(dir) if fsync_dir && RUBY_PLATFORM !~ /win32|mingw/
         path
       rescue StandardError
