@@ -140,9 +140,11 @@ module Master
       end
 
       def semantic_law_ids
+        return @semantic_law_ids if @semantic_law_ids
+
         require_relative "../../law/definition" unless defined?(::Law)
         ::Law.load_all if ::Law.respond_to?(:load_all)
-        ::Law.definitions.filter_map do |id, definition|
+        @semantic_law_ids = ::Law.definitions.filter_map do |id, definition|
           id.to_s if definition.respond_to?(:semantic?) && definition.semantic?
         end
       rescue StandardError, ScriptError => e
@@ -196,23 +198,7 @@ module Master
         raise
       end
 
-      def law_define_ids_from_source
-        ids = Set.new
-        dir = File.expand_path("../../law", __dir__)
-        return ids unless File.directory?(dir)
 
-        Dir.glob(File.join(dir, "*.rb")).each do |file|
-          content = File.read(file, mode: "r:bom|utf-8", invalid: :replace, undef: :replace)
-          content.each_line do |line|
-            match = line.match(/Law\.define\(:(\w+)/)
-            ids << match[1] if match
-          end
-        end
-        ids
-      rescue StandardError, ScriptError => e
-        Master::Ground::Swallow.log(e, context: "Fix::LawParity.law_define_ids_from_source", severity: :load_bearing)
-        raise
-      end
     end
   end
 end
