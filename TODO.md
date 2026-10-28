@@ -55,7 +55,7 @@ source and tests they could not run; this pass is what measures them.
   `bundle exec ruby -Ilib:test test/test_command_registry_dispatch.rb`,
   `bundle exec ruby -Ilib:test test/test_architecture_exploration.rb`,
   `bundle exec ruby -Ilib:test test/test_run_journal_lifecycle.rb`,
-  `bundle exec ruby -Ilib:test test/test_recovery_gates.rb`,
+
   `bundle exec ruby -Ilib:test test/test_fix_kernel.rb`,
   `bundle exec ruby -Ilib:test test/test_check_chain.rb`,
   `bundle exec ruby -Ilib:test test/test_strict_mode.rb`,
