@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 source "https://rubygems.org"
-# Development stays pinned by .ruby-version; OpenBSD 7.8 packages provide Ruby 3.3.9 and 3.4.9p0, both accepted by MASTER.
-ruby ">= 3.3", "< 4.1"
+# .ruby-version records the preferred development line; focused checks must also run on the Ruby available in constrained environments.
+ruby ">= 3.2", "< 4.1"
 
 gem "fiddle"
 gem "psych"
