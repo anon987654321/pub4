@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require_relative "law_vocabulary"
 
 module Master
   # Validates the governing YAML by its invariants. Who may write it is a
@@ -10,7 +11,8 @@ module Master
   module ConfigurationGuard
     module_function
 
-    LAW_MODALITIES = %w[lexical semantic visual].freeze
+    LAW_MODALITIES = LawVocabulary::MODALITIES
+
     REQUIRED_LAW_SECTIONS = %w[
       CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS SINGULARITY LINEARITY
       PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES INTER_MODEL_CONTRACT
