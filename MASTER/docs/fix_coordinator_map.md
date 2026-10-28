@@ -55,11 +55,13 @@ them.
   compatibility constant to the same class. Pass stages and visual repairs use
   the Kernel factory and write bounded outcome summaries to the Kernel ledger.
 - `test/test_fix_kernel.rb` and `test/test_fix_convergence.rb` exercise source
-  ownership and receipts. `test/test_fix_interruption_restart.rb` starts separate
-  Ruby processes, kills a writer during an open transaction, and checks byte-exact
-  rollback, durable-run resumption, orphaned Kernel receipt reconciliation, and
-  deletion of the run journal while the independent Mission checkpoint survives.
-  These tests are authored but unexecuted here.
+  ownership and receipts. `test/test_fix_interruption_restart.rb` calls the public
+  `FixLoop#run` entry point with a controlled pass-interruption seam, kills a
+  separate Ruby writer after its transaction is persisted, then exercises the
+  actual startup-recovery sweep in a new process. It also deletes the run journal
+  in a second process-boundary case and checks that byte-exact transaction rollback,
+  Mission identity and its checkpoint survive, while the Kernel receipt becomes
+  `unknown_outcome`. The tests are authored but unexecuted here.
 
 The structural move is landed with compatibility aliases retained. The remaining
 gates are runtime proof on pinned Ruby 4.0.5, Mission survival, journal-loss
