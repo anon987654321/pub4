@@ -243,7 +243,7 @@ module Master
         head = config.fetch("target_field").fetch("head")
         center = head.fetch("center").map(&:to_f)
         scale = head.fetch("scale").map { |value| [Float(value).abs, 0.001].max }
-        particles.sort_by { |particle| particle.depth_rank || 0.5 }.each do |particle|
+        particles.each_with_index.sort_by { |particle, index| [particle.depth_rank || 0.5, index] }.each do |particle, _index|
           col = (((particle.x - (center[0] - scale[0])) / (2.0 * scale[0])) * (cols - 1)).round
           row = (((center[1] + scale[1] - particle.y) / (2.0 * scale[1])) * (rows - 1)).round
           next unless row.between?(0, rows - 1) && col.between?(0, cols - 1)
