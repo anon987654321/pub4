@@ -8,9 +8,9 @@ the commit that carries its evidence; nothing here records finished work.
 
 ## Session note 2026-10-28
 
-- MASTER/.ruby-version now uses the available Ruby 3.3.8; MASTER/Gemfile accepts
-  >= 3.2 for constrained environments. The root pin remains 4.0.5 for the broader
-  app stack. This compatibility change does not claim test results.
+- Root and MASTER Ruby pins now use the available Ruby 3.3.8; MASTER/Gemfile accepts
+  >= 3.2 for constrained environments. Individual deployed app runtimes remain
+  governed by their own stack/lock contracts. This does not claim test results.
 - Added the token-owned face swarm under face_interface.swarm, the shared
   Master::Face::Swarm module, CLI frame overlay, and web stipple integration.
   Coverage was added for token reading, deterministic seeding, force direction,
