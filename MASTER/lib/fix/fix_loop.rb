@@ -2,6 +2,7 @@
 
 require "set"
 require "time"
+require_relative "kernel"
 require_relative "scanner"
 require_relative "run_journal"
 require_relative "kernel"
