@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "yaml"
+require_relative "../configuration_guard"
 
 module Master
   module Ground
@@ -122,11 +124,29 @@ module Master
         end
 
         def check_providers_yaml(root)
-          check_yaml_file(root, "data/providers.yml", "providers_yaml", required: false)
+          check_catalogue_yaml(root, "data/providers.yml", "providers_yaml", :providers)
         end
 
         def check_models_yaml(root)
-          check_yaml_file(root, "data/models.yml", "models_yaml", required: false)
+          check_catalogue_yaml(root, "data/models.yml", "models_yaml", :models)
+        end
+
+        # Real MASTER needs both routing catalogues. Isolated test/workspace roots
+        # may omit them, but a missing catalogue in the canonical installation must
+        # never become an empty routing table.
+        def check_catalogue_yaml(root, relative_path, name, kind)
+          required = File.expand_path(root) == File.expand_path(Master::ROOT)
+          basic = check_yaml_file(root, relative_path, name, required:)
+          return basic unless basic.ok
+          path = File.join(root, relative_path)
+          return basic unless File.file?(path)
+
+          reason = Master::ConfigurationGuard.validate(path:, content: File.read(path, encoding: "UTF-8"), root:)
+          return fail(name, reason) if reason
+
+          ok(name, "#{relative_path} schema and references valid")
+        rescue StandardError => error
+          fail(name, "#{relative_path} validation error: #{error.class}: #{error.message}")
         end
 
         def check_voice_yaml(root)
