@@ -246,7 +246,7 @@ module Master
           RunLedger.reset!
 
           path = File.join(root, "sample.rb")
-          original = (1..18).map { |line| "def example_#{line}; value = #{line}; end\\n" }.join
+          original = (1..18).map { |line| "def example_#{line}; value = #{line}; end\n" }.join
           File.binwrite(path, original)
           adapter = Master::Fix::RepairLoop.allocate
           law = Struct.new(:id).new("RECOVERY_GATE")
