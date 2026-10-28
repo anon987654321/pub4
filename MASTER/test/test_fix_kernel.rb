@@ -26,6 +26,7 @@ class TestFixKernel < Minitest::Test
     path = File.join(root, K::LOG_RELATIVE_PATH)
     FileUtils.mkdir_p(File.dirname(path))
     File.write(path, lines.join)
+    File.chmod(0o600, path)
     path
   end
 
