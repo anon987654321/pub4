@@ -218,7 +218,10 @@ end
 # grade's version and what it did to the picture go out too.
 def write_variation_sidecar(request, output, processed)
   if request.recipe
-    write_chain_sidecar(request.file, output, request.recipe, take: request.take)
+    write_chain_sidecar(
+      request.file, output, request.recipe, take: request.take,
+      original: request.image, processed:
+    )
   else
     write_grade_sidecar(request.file, output, request.preset_name, request.image, processed)
   end

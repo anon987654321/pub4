@@ -14,6 +14,7 @@ def run_uplift(dir, files)
       layer = (presets - [base]).sample
       image = load_image(file)
       next unless image
+      image = camera_corrected(image, file)
 
       processed = rgb_bands(apply_finishing_grain(preset_chain(image, [base, layer]), base))
       ext = File.extname(file)
@@ -77,6 +78,9 @@ end
 # so a single arrival can be graded without a loop that never returns.
 def grade_watched(path, out, preset_name)
   image = load_image(path)
+  return unless image
+
+  image = camera_corrected(image, path)
   processed = rgb_bands(apply_finishing_grain(anchor_tones(preset(image, preset_name)), preset_name))
   processed.write_to_file(out, Q: CONFIG["jpeg_quality"] || 95)
   write_grade_sidecar(path, out, preset_name, image, processed)

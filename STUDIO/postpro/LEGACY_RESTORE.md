@@ -1,5 +1,7 @@
 # Legacy Postpro restore
 
+For the repository-by-repository lineage and the disposition of other historical behaviors, see [ARCHAEOLOGY.md](./ARCHAEOLOGY.md).
+
 The archived `anon987654321/pub/postpro` v13.3.14 line exposed 29 user-facing creative
 effects.
 
@@ -53,9 +55,7 @@ The old internal `apply_effects`, `apply_effects_from_recipe` and random driver
 functions are not restored because current postpro already has a safer recipe engine,
 measured random-chain generator, provenance, and validation.
 
-This restore does not resurrect the old frame-by-frame video path. Current postpro still
-needs an in-process ffmpeg video pipeline with a frame-stable grain seed, stable
-halation, shutter-angle treatment, bounded work, and still/video parity checks.
+This restore does not resurrect the old frame-by-frame video implementation verbatim. The experiment introduced in [9ac4b113](https://github.com/anon987654321/pub4/commit/9ac4b11332762333da58f8ec4358eec7cbbcb1d4) was removed in [ec2cdf45](https://github.com/anon987654321/pub4/commit/ec2cdf458f6f571692fea1ea97e8335881b56135): it launched a fresh Ruby interpreter for every frame (about 0.46 seconds of boot each), measured roughly an hour per minute of 1080p against its six-minute estimate, and had two of eight tests time out. `motion.rb` now recovers the product intent with one process, in-memory frame grading, deterministic moving/held grain, exact rational frame rates for constant-rate sources, audio-copy muxing, atomic final output plus checksum-bearing provenance sidecar, and bounded frames/pixels/runtime/temp bytes (runtime is checked between frames and during subprocess work; a single native frame operation cannot be forcibly interrupted). It refuses variable-rate or frame-count-ambiguous input instead of silently changing timing. Shutter-angle treatment remains a future video-specific effect; the current live grade is reused unchanged rather than inventing a second implementation. The new tests are authored but not executed in this GitHub-only session. See [ARCHAEOLOGY.md](./ARCHAEOLOGY.md) for the contract.
 
 ## Dilla analog bridge
 

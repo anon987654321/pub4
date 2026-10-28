@@ -123,6 +123,7 @@ def write_grade_sidecar(input_path, output_path, presets, original, processed)
     recipe: names.map { |name| PRESETS.fetch(name) },
     grade_version: GRADE_VERSION,
     seed: $postpro_seed,
+    input_sha256: (Digest::SHA256.file(input_path).hexdigest if File.file?(input_path)),
     output_sha256: Digest::SHA256.file(output_path).hexdigest,
     quality: report,
     uncanny: uncanny_readings(original, processed),
@@ -131,19 +132,26 @@ def write_grade_sidecar(input_path, output_path, presets, original, processed)
   write_sidecar(output_path, data)
 end
 
-def write_chain_sidecar(input_path, output_path, chain, take: nil)
-  write_sidecar(output_path, {
+def write_chain_sidecar(input_path, output_path, chain, take: nil, original: nil, processed: nil)
+  data = {
     schema: "postpro.chain.v1",
     generated_at: Time.now.utc.iso8601,
     input: File.expand_path(input_path),
     output: File.expand_path(output_path),
+    input_sha256: (Digest::SHA256.file(input_path).hexdigest if File.file?(input_path)),
+    output_sha256: (Digest::SHA256.file(output_path).hexdigest if File.file?(output_path)),
     grade_version: GRADE_VERSION,
     seed: $postpro_seed,
     take: take&.number,
     look: take&.look&.to_s,
     lane: (take&.lane || random_chain_lane(chain)).to_s,
     chain: chain.map { |fx, params| { fx => params } },
-  })
+  }
+  if original && processed
+    data[:quality] = postpro_quality_report(original, processed, argv_flag("--reference"))
+    data[:uncanny] = uncanny_readings(original, processed)
+  end
+  write_sidecar(output_path, data)
 rescue StandardError => e
   $logger.error "chain sidecar: #{e.message}"
 end

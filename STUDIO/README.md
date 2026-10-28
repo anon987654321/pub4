@@ -13,7 +13,7 @@ catalogue in `dilla/data/music_theory.json`, and curated/recovered arrangements 
 JSON data files. It builds its own oscillators, voicings, arpeggios, drums and effects without
 samples, and can render WAV/MIDI/MP4 or play continuously.
 
-The tool `postpro/postpro.rb` grades and transforms still images through film emulation; startup/dependency policy is isolated in `postpro/bootstrap.rb`.
+The tool `postpro/postpro.rb` grades still images and bounded, constant-rate MP4 clips through the same film-emulation pipeline. Video mode grades frames in-process under frame, pixel, temporary-storage and runtime budgets, validates finite per-frame timestamps from structured ffprobe JSON (including streams with H.264 side-data), refuses missing/overflowed timestamps, and refuses variable-rate inputs. Startup/dependency policy is isolated in `postpro/bootstrap.rb`.
 
 The tool `replicate/replicate.rb` generates images through the Replicate service from a named
 photographic vocabulary. The tool `replicate/lora/lora.rb` trains and renders a LoRA of one

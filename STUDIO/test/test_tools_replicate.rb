@@ -2,6 +2,7 @@
 
 require_relative "tools_helper"
 require "tmpdir"
+require "digest"
 ToolTest::Tools.load_tool("replicate/replicate.rb")
 
 # replicate builds an API request out of seven controlled vocabularies and a
@@ -29,6 +30,29 @@ class TestReplicate < Minitest::Test
 
     assert_empty quiet
     assert_match(/#{PROMPT_WORD_CEILING + 1} words/, loud)
+  end
+
+  def test_saved_provenance_keeps_the_provider_version_and_prediction_id
+    Dir.mktmpdir do |directory|
+      output = File.join(directory, "frame.jpg")
+      File.write(output, "image-bytes")
+      digest = Digest::SHA256.file(output).hexdigest
+
+      sidecar = send(
+        :write_provenance, output, "subject", "compiled prompt", nil,
+        { model: DEV }, 21, digest,
+        prediction: {
+          id: "prediction-123", version: "provider-version-456",
+          status: "succeeded", metrics: { predict_time: 2.5 }
+        }
+      )
+
+      data = JSON.parse(File.read("#{output}.json"))
+      assert_equal "provider-version-456", data.dig("prediction", "version")
+      assert_equal "prediction-123", data.dig("prediction", "id")
+      assert_equal "succeeded", data.dig("prediction", "status")
+      assert_equal "provider-version-456", sidecar.dig(:prediction, :version)
+    end
   end
 
   # --- capabilities -------------------------------------------------------

@@ -709,6 +709,17 @@ class TestPostproFilm < Minitest::Test
   # effect, monotonicity of every H&D curve, and four presets run over an 8x8
   # probe. It returns a problem count and its only caller is a CLI flag, so
   # nothing ran it on a schedule. This does.
+  def test_every_rendering_path_runs_camera_profile_correction
+    source = send(:postpro_source)
+    methods = send(:postpro_source_methods, source)
+    calls = methods.transform_values { |body| send(:postpro_method_calls, body) }
+
+    %w[process_file run_uplift run_one_shot run_watch grade_watched run_stock_sheet].each do |name|
+      assert send(:postpro_method_reaches?, methods, name, "camera_corrected", calls: calls),
+             "#{name} must apply camera-profile correction before grading the image"
+    end
+  end
+
   def test_the_tools_own_self_check_passes
     skip "libvips absent on this host" unless defined?(Vips)
 

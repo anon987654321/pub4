@@ -169,6 +169,24 @@ class TestPostproSidecarsAndContactSheet < Minitest::Test
     end
   end
 
+  def test_a_rendered_chain_sidecar_records_checksums_quality_and_uncanny_delta
+    Dir.mktmpdir do |dir|
+      input = tiny_frame(File.join(dir, "source.jpg"))
+      original = Vips::Image.new_from_file(input, access: :random)
+      processed = rgb_bands(apply_finishing_grain(anchor_tones(preset(original, :portrait)), :portrait))
+      output = File.join(dir, "graded.jpg")
+      processed.write_to_file(output, Q: 95)
+
+      send(:write_chain_sidecar, input, output, CHAIN, original:, processed:)
+      data = JSON.parse(File.read("#{output}.json"))
+
+      assert_equal Digest::SHA256.file(input).hexdigest, data["input_sha256"]
+      assert_equal Digest::SHA256.file(output).hexdigest, data["output_sha256"]
+      assert_equal %w[after before], data.fetch("uncanny").keys.sort
+      assert data.fetch("quality").key?("warnings") || data.fetch("quality").key?(:warnings)
+    end
+  end
+
   def test_a_chain_sidecar_without_a_take_infers_the_lane
     Dir.mktmpdir do |dir|
       output = File.join(dir, "postpro_frame_v1.jpg")
