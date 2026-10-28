@@ -129,8 +129,8 @@ module Master
           FileUtils.mkdir_p(File.join(root, "MASTER"))
           tracked_path = File.join(root, "tracked.rb")
           untracked_path = File.join(root, "untracked.rb")
-          tracked_bytes = "tracked baseline from Git\\n".b
-          checkpoint_bytes = "untracked baseline from Checkpoint\\n".b
+          tracked_bytes = "tracked baseline from Git\n".b
+          checkpoint_bytes = "untracked baseline from Checkpoint\n".b
 
           git = lambda do |*args|
             output, status = Open3.capture2e("git", *args, chdir: root)
@@ -154,8 +154,8 @@ module Master
             budget_seconds: 60
           )
 
-          File.binwrite(tracked_path, "modified tracked source\\n")
-          File.binwrite(untracked_path, "modified untracked source\\n")
+          File.binwrite(tracked_path, "modified tracked source\n")
+          File.binwrite(untracked_path, "modified untracked source\n")
           journal_path = File.join(root, ".master", "fix_runs.json")
           lock_path = File.join(root, ".master", "fix_runs.lock")
           File.delete(journal_path)
