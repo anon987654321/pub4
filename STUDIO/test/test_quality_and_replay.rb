@@ -2,6 +2,7 @@
 
 require "minitest/autorun"
 require "tempfile"
+require "json"
 require_relative "../postpro/lib/quality_analyzer"
 require_relative "../postpro/lib/correction_proposer"
 require_relative "../replicate/replay_manifest"
@@ -86,8 +87,30 @@ class StudioQualityAndReplayTest < Minitest::Test
       )
       refute manifest.key?(:prompt)
       assert Studio::ReplayManifest.verify_output!(manifest, output_path: file.path)
+      persisted = JSON.parse(JSON.generate(manifest))
+      assert Studio::ReplayManifest.verify_output!(persisted, output_path: file.path)
       assert_equal 64, Studio::ReplayManifest.digest(manifest).length
     end
+  end
+
+  def test_replayability_requires_the_selected_modality_to_match_the_declared_version
+    manifest = { "style_id" => "blue_hour", "style_version" => "1.0.0", "modality" => "image" }
+    registry = {
+      "styles" => {
+        "blue_hour" => {
+          "versions" => {
+            "1.0.0" => { "modalities" => {
+              "image" => { "version" => "1.0.0" },
+              "prompt" => { "version" => "1.0.0" }
+            } }
+          }
+        }
+      }
+    }
+    assert Studio::ReplayManifest.replayable?(manifest, registry)
+
+    registry["styles"]["blue_hour"]["versions"]["1.0.0"]["modalities"]["image"]["version"] = "2.0.0"
+    refute Studio::ReplayManifest.replayable?(manifest, registry)
   end
 
   def test_replay_manifest_detects_changed_output
