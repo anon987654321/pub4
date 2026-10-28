@@ -289,6 +289,10 @@ module Brgen
         track.privacy = "public"
         track.duration_seconds = rand(150..320)
         track.genre = row[:source_type] == "direct" ? "bergen" : "beats"
+        # "Utvalgt spor" renders the artwork square above the title; a track
+        # without one shows a bare grey box where the media station's focal
+        # field should be. Catalogue cover, deterministic per title.
+        Brgen::DemoMedia.attach_catalog!(track, :artwork, seed: "radio-track-#{row[:title].parameterize[0, 32]}")
       end
     end
 

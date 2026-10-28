@@ -5655,11 +5655,16 @@ body.vertical-dating .swipe-card {
   border-radius: var(--radius-card);
 }
 
-body.vertical-dating .btn,
+/* One strong CTA per view; ghosts stay ghosts. The old rule painted every .btn
+   with the bright teal fill under the #00705c ink — teal on teal, 1.6:1, which
+   read as disabled buttons in the deck header. The fill is now the AA ink teal
+   (6.05:1 under the light ground) and dark mode's bright teal (the ink there is
+   the dark ground itself, ≈4.6:1 against #16181c), so the one filled button
+   clears AA both ways. */
 body.vertical-dating .btn-primary,
 body.vertical-dating .swipe-signin {
-  background: var(--dating-accent);
-  color: var(--dating-accent-ink);
+  background: var(--dating-accent-ink);
+  color: var(--dating-bg);
   border: none;
   border-radius: var(--radius-pill);
   font-weight: var(--weight-bold);

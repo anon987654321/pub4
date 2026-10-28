@@ -178,7 +178,7 @@ module Brgen
       },
       {
         user: "henrik_vestland", name: "Potetkjelleren", cuisine_type: "Pizza",
-        address: "Kong Oscars check 1A", neighborhood: "sentrum",
+        address: "Kong Oscars gate 1A", neighborhood: "sentrum",
         latitude: 60.3936, longitude: 5.3258,
         delivery_fee_cents: 3_900, min_order_cents: 12_000, rating: 4.4,
         menu: [

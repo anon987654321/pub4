@@ -12,7 +12,11 @@
                     data: { turbo_frame: "messenger-pane" },
                     aria: { current: current_room&.slug == slug ? "page" : nil, label: spec[:name] },
                     title: spec[:name] do %>
-          <span aria-hidden="true"><%= spec[:name].to_s.first&.upcase || "#" %></span>
+          <%# Channel names are IRC-style ("#brgen"), so first&.upcase made every
+              chip "#" and the rail read as seven identical empty rooms. The
+              letter behind the hash is the chip; the hash stays only as the
+              fallback for a nameless room. %>
+          <span aria-hidden="true"><%= spec[:name].to_s.delete_prefix("#").first&.upcase || "#" %></span>
           <span class="visually-hidden"><%= spec[:name] %></span>
         <% end %>
       </li>

@@ -242,13 +242,26 @@ end
 puts "Live: #{Post.live.count} geo-stamped notes"
 
 # Some orders
+# Buyer notes the seller actually reads in the order thread — Latin was glaring
+# there for the same reason the DM openers went Norwegian.
+ORDER_MESSAGES = [
+  'Hei! Er denne fortsatt tilgjengelig?',
+  'Kan jeg hente i dag, eller passer det bedre i morgen?',
+  'Bor på Nordnes — kan jeg hente hos deg?',
+  'Betaler nå via Vipps. Takk for handelen!',
+  'Er prisen forhandlingsbar hvis jeg tar begge to?',
+  'Fine saker! Kan du legge inn i en pose før henting?',
+  'Beklager sent svar — er den fortsatt til salgs?',
+  'Passer det på lørdag formiddag?'
+].freeze
+
 listings.sample(20).each do |listing|
   buyer = users.sample
   order = Marketplace::Order.create!(
     buyer: buyer,
     listing: listing,
     status: %w[pending accepted completed].sample,
-    message: Faker::Lorem.sentence,
+    message: ORDER_MESSAGES.sample,
     created_at: rand(1..30).days.ago
   )
   order.record_activity!('MarketplaceOrder') if order.respond_to?(:record_activity!)
@@ -266,10 +279,25 @@ DATING_POOL = { "woman" => 8, "man" => 8, "nonbinary" => 2, "other" => 2 }.freez
 # Shared::DemoMedia.skip_attach? is true in the test environment, which is the
 # environment CI seeds in. Asking for visible: true there produced a profile
 # the validation had to refuse, and one refusal aborts the whole seed run.
+# Deck bios are read aloud on a first date — Latin lorem read as a scam sign.
+# Short, specific, bokmål; the deck shows one paragraph per card.
+DATING_BIOS = [
+  'Bergenseren med kaffekopp i den ene hånden og sykkelhjelm i den andre. Fjellet på søndager, byliv på tirsdager.',
+  'Lager mitt eget havrebrød, misforstår fotball, og kjenner hver kafé fra Nordnes til Årstad. Vis meg din favoritt.',
+  'Ny i byen etter tre år i Trondheim. Samler på konsertbilletter og dårlige vitser om været.',
+  'Spiser middag klokken seks, går tur på Ulriken når oppgaven blir for vanskelig, og elsker en god bokhandel.',
+  'Billedkunstner med studio på Marken. Jeg maler saktere enn jeg snakker, så vær tålmodig.',
+  'Padler om sommeren, står på ski om vinteren, og forsøker å lære meg å bake skolebrød uten oppskrift.',
+  'Jobber med musikk, bor på Nygårdshøyden. Har sterke meninger om kaffe og svake om vin.',
+  'Forelsket i denne byen i regnvær. Tar med deg til favorittkafeen min hvis du gjetter hvilken den er.',
+  'Trener på Danmarksplass, leser på Litteraturhuset, og danser for dårlig til å gjøre det offentlig.',
+  'Jeg sa ja til en blind date en gang — det endte med en katt og en ny bydel. Åpen for kapittel to.'
+].freeze
+
 dating_profiles = users.sample(num_dating).map do |user|
   profile = Dating::Profile.new(
     user: user,
-    bio: Faker::Lorem.paragraph(sentence_count: 3),
+    bio: DATING_BIOS.sample,
     age: rand(22..45),
     gender: Dating::Profile::GENDERS.sample,
     looking_for: Dating::Profile::LOOKING_FOR.sample,
@@ -298,12 +326,23 @@ end
 puts "Dating: #{dating_profiles.size} profiles, #{Dating::Like.count} likes, #{Dating::Match.count} matches"
 
 # Playlist subapp
+# The description renders beside the tracklist; a Latin sentence read as bot
+# filler. Bergen-list names, Norwegian one-liners.
+PLAYLIST_DESCRIPTIONS = [
+  'Sanger for turen ned fra Ulriken når byen lysner.',
+  'Lat-ettermiddag på kafé med regn mot vinduet.',
+  'Det som spilles fra kjøkkenet på Nordnes en tirsdag.',
+  'Til buss 12 gjennom Møllendal, tidlig og kald.',
+  'Byfjells-takeaways og en gitar som holder raden.',
+  'Nattbuss hjem fra Garage — høyt og uønsket for naboene.'
+].freeze
+
 num_play = (15 * SEED_SCALE).clamp(5, 200)
 playlists = users.sample(num_play).map do |user|
   Playlist::Playlist.create!(
     user: user,
     name: "#{Faker::Music.genre} #{Faker::Music.album}",
-    description: Faker::Lorem.sentence,
+    description: PLAYLIST_DESCRIPTIONS.sample,
     collaborative: [ true, false ].sample
   )
 end

@@ -181,11 +181,14 @@ export default class extends Controller {
     const canvas = this._rootCanvas()
     if (!canvas) return
     canvas.classList.add("map-fallback")
+    /* The subtitle is the human label ("Kafé, Sentrum", a date) the popup shows;
+       the raw type leaked as visible copy when the map library was unavailable
+       and every card opened with a literal "place". Subtitle leads, type stays
+       a last-resort for a point with no subtitle at all. */
     canvas.innerHTML = this.points.map(point => `
       <a href="${this._escape(point.url || "#")}">
-        <span>${this._escape(point.type || "point")}</span>
+        <span>${this._escape(point.subtitle || point.type || "point")}</span>
         <strong>${this._escape(point.title || "Map point")}</strong>
-        <small>${this._escape(point.subtitle || "")}</small>
       </a>
     `).join("") || "<p>No map points yet.</p>"
   }

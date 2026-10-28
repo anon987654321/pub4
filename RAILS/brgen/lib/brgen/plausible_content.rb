@@ -26,11 +26,11 @@ module Brgen
     # ("Damroa"); a delivery address in a takeaway demo reads better real.
     BERGEN_STREETS = [
       "Torgallmenningen", "Strandgaten", "Vaskerelven", "Nygårdsgaten",
-      "Kong Oscars check", "Marken", "Håkonsgaten", "Nordnesveien",
+      "Kong Oscars gate", "Marken", "Håkonsgaten", "Nordnesveien",
       "Øvre Korskirkeallmenningen", "Fjøsangerveien", "Møllendalsveien",
-      "Sandviksveien", "Fantoftvegen", "Ibsens check", "Lars Hilles check",
-      "Christies check", "Olav Kyrres check", "Vestre Torggaten",
-      "Neumanns check", "Danmarksplass"
+      "Sandviksveien", "Fantoftvegen", "Ibsens gate", "Lars Hilles gate",
+      "Christies gate", "Olav Kyrres gate", "Vestre Torggaten",
+      "Neumanns gate", "Danmarksplass"
     ].freeze
 
     BERGEN_BYDELER = %w[
