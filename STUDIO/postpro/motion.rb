@@ -5,6 +5,8 @@ require "json"
 require "fileutils"
 require "tmpdir"
 require "tempfile"
+require "digest"
+require "time"
 
 # Video is the same grade as a still, with one Ruby process for the whole
 # sequence. Frames cross ffmpeg as raw RGB bytes; libvips grades each frame
@@ -112,6 +114,10 @@ module Postpro
       raise Unavailable, "video output must use .mp4 so its codec/container contract is explicit" unless File.extname(target).downcase == ".mp4"
       raise Unavailable, "refusing to replace the input video" if input == target
       raise Unavailable, "refusing to replace an output symlink" if File.symlink?(target)
+      sidecar = "#{target}.json"
+      if [target, sidecar].any? { |path| File.exist?(path) || File.symlink?(path) }
+        raise Unavailable, "refusing to replace an existing video or sidecar; choose a new output path"
+      end
 
       probe = probe(input)
       limits = limits_from_env
@@ -126,6 +132,7 @@ module Postpro
       deadline = started + limits[:max_seconds]
       io.puts "motion: #{probe.width}x#{probe.height} #{probe.rate}fps #{estimate[:frames]} frames" \
               "#{probe.has_audio ? ' + audio' : ''}; estimated #{estimate[:seconds]}s, hard budget #{limits[:max_seconds]}s"
+      io.puts "motion: seed=#{seed} grain=#{grain}"
 
       Dir.mktmpdir(".postpro-motion-", File.dirname(target)) do |work|
         graded = File.join(work, "graded")
@@ -148,7 +155,42 @@ module Postpro
         assemble(graded, input, temporary_output, probe, deadline)
         raise Unavailable, "ffmpeg produced no output video" unless File.file?(temporary_output) && File.size(temporary_output).positive?
 
-        File.rename(temporary_output, target)
+        temporary_sidecar = File.join(work, "result.mp4.json")
+        metadata = {
+          format: 1,
+          tool: "postpro",
+          source: { basename: File.basename(input), sha256: Digest::SHA256.file(input).hexdigest },
+          output: { basename: File.basename(target), sha256: Digest::SHA256.file(temporary_output).hexdigest },
+          grade: { preset: preset.to_s, seed: seed, grain: grain.to_s },
+          video: {
+            width: probe.width, height: probe.height, frame_rate: probe.rate,
+            frame_count: frames_written, duration_seconds: probe.duration,
+            audio_copied: probe.has_audio, codec: "libx264", pixel_format: "yuv420p"
+          },
+          runtime: {
+            estimate_seconds: estimate[:seconds], elapsed_seconds: (monotonic - started).round(3),
+            limit_seconds: limits[:max_seconds], graded_frame_bytes: temporary_bytes,
+            temp_byte_limit: limits[:max_temp_bytes]
+          },
+          created_at: Time.now.utc.iso8601
+        }
+        File.open(temporary_sidecar, "wb") do |file|
+          file.write(JSON.pretty_generate(metadata))
+          file.write("\n")
+          file.flush
+          file.fsync
+        end
+        raise Unavailable, "video grading exceeded its runtime budget before publication" if monotonic > deadline
+
+        # The work directory is a sibling of the destination, so links are
+        # atomic and cannot silently replace a path that appeared during grading.
+        File.link(temporary_output, target)
+        begin
+          File.link(temporary_sidecar, sidecar)
+        rescue StandardError
+          FileUtils.rm_f(target)
+          raise
+        end
       end
       io.puts "motion: wrote #{target} frames=#{frames_written} elapsed=#{(monotonic - started).round(2)}s"
       target
