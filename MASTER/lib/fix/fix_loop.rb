@@ -152,31 +152,9 @@ module Master
       # while a single violation stood, so "fix and commit" scanned and stopped.
       def run(target = @root, max_passes: max_passes_default, budget_seconds: FixTime.run_s,
               incremental: @incremental, requested: false, cancellation: nil)
-        coordinator_run_id = @kernel.begin_coordinated_run(
-          target:, max_passes:, budget_seconds:, requested:
+        @kernel.run_fix_loop(
+          self, target:, max_passes:, budget_seconds:, incremental:, requested:, cancellation:
         )
-        result = @run_mutex.synchronize do
-          previous_cancellation = @cancellation
-          @cancellation = cancellation
-          cancellation.activate! if cancellation&.respond_to?(:activate!)
-          begin
-            run_unlocked(target, max_passes:, budget_seconds:, incremental:, requested:)
-          ensure
-            @cancellation = previous_cancellation
-          end
-        end
-        state = @last_terminal_state || terminal_state_for(result) || :unknown_outcome
-        @kernel.finish_coordinated_run(run_id: coordinator_run_id, state:, outcome: result)
-        result
-      rescue StandardError => error
-        if coordinator_run_id
-          begin
-            @kernel.finish_coordinated_run(run_id: coordinator_run_id, state: :unknown_outcome, error:)
-          rescue StandardError => journal_error
-            Master::Ground::Swallow.log(journal_error, context: "fix_kernel.coordinator_terminal", event_bus: @bus)
-          end
-        end
-        raise
       end
 
       def cancellation_requested? = @cancellation&.cancelled? == true
