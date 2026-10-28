@@ -98,7 +98,9 @@ invalid_registry_rows = CHECKS.filter_map do |name, row|
       "#{name} script: must be a string"
     elsif !row["require"].nil? && !row["require"].is_a?(String)
       "#{name} require: must be a string"
-    elsif [class_value, script_value].count { |value| value.is_a?(String) && !value.strip.empty? } != 1
+    elsif [class_value, script_value].any? { |value| !value.nil? && (!value.is_a?(String) || value.strip.empty?) }
+      "#{name} class:/script: must be a non-empty string when declared"
+    elsif [class_value, script_value].count { |value| !value.nil? } != 1
       "#{name} must declare exactly one of class: or script:"
     elsif !script_value.to_s.strip.empty? && (problem = declared_path_problem(name, "script", script_value))
       problem
