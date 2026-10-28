@@ -193,6 +193,15 @@ class TestCommandRegistryDispatch < Minitest::Test
     Fiber[:master_visitor] = old_visitor
   end
 
+  def test_guest_pair_management_is_denied
+    old_visitor = Fiber[:master_visitor]
+    Fiber[:master_visitor] = true
+    assert_match(/local-only/, Registry.dispatch_pair(Master::ROOT, ctx: { args: "issue" }))
+    assert_match(/local-only/, Registry.dispatch_pair(Master::ROOT, ctx: { args: "list" }))
+  ensure
+    Fiber[:master_visitor] = old_visitor
+  end
+
   def test_mobile_platform_commands_replace_the_public_device_surface
     assert_equal :dispatch_android, built.fetch("android").method_name
     assert_equal :dispatch_ios, built.fetch("ios").method_name
