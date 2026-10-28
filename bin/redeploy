@@ -1,0 +1,31 @@
+#!/usr/bin/env zsh
+# Redeploy production (vm23) in one command from a clean origin/main checkout.
+#
+#   ./bin/redeploy                 # all apps
+#   ./bin/redeploy brgen           # one app
+#   ./bin/redeploy --follow        # all apps, attach to tmux on the box
+#   ./bin/redeploy amber --follow  # one app, attach
+#
+# Always remote. HEAD must equal origin/main with clean MASTER/RAILS/OPENBSD.
+# Survives SSH disconnect via tmux session pub4-deploy on vm23.
+# Log: ~/vps-deploy.log on the box.
+set -euo pipefail
+root=$(cd -- "$(dirname "$0")/.." && pwd)
+app=all
+follow=()
+for arg in "$@"; do
+  case $arg in
+    --follow) follow=(--follow) ;;
+    -h|--help)
+      print -r -- "usage: ./bin/redeploy [all|master|brgen|amber|bsdports] [--follow]"
+      exit 0
+      ;;
+    all|master|brgen|amber|bsdports) app=$arg ;;
+    *)
+      print -u2 "redeploy: unknown argument: $arg"
+      print -u2 "usage: ./bin/redeploy [all|master|brgen|amber|bsdports] [--follow]"
+      exit 2
+      ;;
+  esac
+done
+exec "$root/MASTER/bin/operator" vps deploy "$app" --remote "${follow[@]}"

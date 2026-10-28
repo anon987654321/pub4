@@ -4,6 +4,20 @@ Production runbook for pub4. Read this file before live work. Read `MASTER/READM
 VPS and deploy surface, the agent contract, and live-operation safety in one
 place.
 
+## Redeploy (one command)
+
+From a clean workstation checkout on `origin/main`:
+
+```zsh
+./bin/redeploy
+```
+
+That preflights locally, deploys under `tmux` session `pub4-deploy` on vm23 as
+`dev` (never `doas`), and runs the post-deploy canary. Survives SSH disconnect.
+Log: `~/vps-deploy.log` on the box. Attach: `ssh brgen -- tmux attach -t pub4-deploy`.
+
+Already on the box: `zsh OPENBSD/bin/redeploy` (or `zsh OPENBSD/bin/vps-deploy all`).
+
 ## Repo layout
 
 `MASTER/`, `RAILS/`, `OPENBSD/`, `STUDIO/` at the repo root, plus dotfolders. `MASTER/tools/` is inside MASTER and keeps compatibility entrypoints.

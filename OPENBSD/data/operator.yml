@@ -38,6 +38,15 @@ domain_ownership:
   snapshot: OPENBSD/data/domain_inventory.yml
 
 recipes:
+  - want: Redeploy production (the one command)
+    run: ./bin/redeploy
+    expect: >-
+      Preflight on this machine, pin origin/main SHA, deploy under tmux on vm23
+      (master → brgen → amber → bsdports), canary after each app. Survives SSH
+      drop. Follow with --follow or: ssh brgen -- tmux attach -t pub4-deploy
+  - want: Redeploy one app
+    run: ./bin/redeploy brgen
+    expect: same path, single app
   - want: See where I am
     run: MASTER/bin/operator status
     expect: mode, ruby, ports, next command

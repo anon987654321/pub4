@@ -1,0 +1,8 @@
+#!/usr/bin/env zsh
+# On-box one-shot redeploy (run as dev on vm23, never under doas).
+# Prefer ./bin/redeploy from a workstation; this is for a console already open.
+set -euo pipefail
+cd "${PUB4_ROOT:-/home/dev/pub4}"
+app=${1:-all}
+shift || true
+exec zsh OPENBSD/bin/vps-deploy "$app" "$@"

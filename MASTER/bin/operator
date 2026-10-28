@@ -41,7 +41,7 @@ def usage
       bin/operator fix status [--trees=A,B] [--json]  /fix runs, queue, pass, logs, commits and retained worktrees; read-only
       bin/operator vps state [--json] [--remote]
       bin/operator vps master <status|start|stop|restart> [--remote]
-      bin/operator vps deploy <app|all|master> [--remote]  --remote runs the preflight here, pins the SHA, then deploys on the box
+      bin/operator vps deploy <app|all|master> [--remote] [--follow]  --remote preflights here, pins SHA, deploys under tmux on the box (./bin/redeploy is the one-liner)
       bin/operator vps logs <app> [--lines N] [--remote]
       bin/operator vps canary [--remote] [--app a,b] [--budget-ms N]  post-deploy probe: ports, rcctl, every public GET route (--remote runs on the box, otherwise the public domains)
       bin/operator vps rollback <sha>     prints the manual rollback; vps-deploy takes no SHA, so nothing is run
@@ -837,14 +837,50 @@ when "vps"
     end
   when "deploy"
     app = ARGV.shift
-    die("vps", "usage, bin/operator vps deploy <app|all|master> [--remote]", 64) if app.to_s.empty?
-    if ARGV.delete("--remote")
+    remote = !ARGV.delete("--remote").nil?
+    follow = !ARGV.delete("--follow").nil?
+    die("vps", "usage, bin/operator vps deploy <app|all|master> [--remote] [--follow]", 64) if app.to_s.empty?
+    die("vps", "--follow requires --remote", 64) if follow && !remote
+    if remote
       # Prove the commit boots here, then send the box that exact SHA; the box
       # refuses a different one. See Operator::DeployPreflight.
+      # Remote deploys run under tmux so an SSH drop cannot kill the work, enable
+      # the post-deploy canary by default, and print how to attach or read the log.
       require "operator/canary"
       ok, command = Operator::DeployPreflight.remote_command(root: ROOT, app: Shellwords.escape(app))
       die("vps", "deploy refused, #{command}", 1) unless ok
-      ssh_run(command)
+      canary_env = ENV.fetch("PUB4_DEPLOY_CANARY", "1") == "0" ? "" : "PUB4_DEPLOY_CANARY=1 "
+      command = "#{canary_env}#{command}"
+      session = "pub4-deploy"
+      inner = Shellwords.escape("#{command}; ec=$?; print \"vps-deploy: finished exit=$ec\"; sleep 3; exit $ec")
+      follow_ruby = follow ? "true" : "false"
+      remote_script = <<~ZSH
+        set -euo pipefail
+        cd /home/dev/pub4
+        if command -v tmux >/dev/null 2>&1; then
+          if tmux has-session -t #{session} 2>/dev/null; then
+            print -u2 "vps-deploy: session #{session} already running"
+            print -u2 "  attach: tmux attach -t #{session}"
+            print -u2 "  log:    ~/vps-deploy.log"
+            exit 75
+          fi
+          tmux new-session -d -s #{session} "zsh -lc #{inner}"
+          print "vps-deploy: started in tmux session #{session}"
+          print "  attach:  ssh -i ~/.ssh/id_ed25519_brgen dev@brgen.no -- tmux attach -t #{session}"
+          print "  log:     ~/vps-deploy.log on vm23"
+          if #{follow_ruby}; then
+            exec tmux attach -t #{session}
+          fi
+          sleep 2
+          if [[ -f $HOME/vps-deploy.log ]]; then
+            print "--- last lines of ~/vps-deploy.log ---"
+            tail -n 15 "$HOME/vps-deploy.log" || true
+          fi
+          exit 0
+        fi
+        #{command}
+      ZSH
+      ssh_run(Shellwords.join(["zsh", "-fc", remote_script]))
     else
       exec(File.join(OPENBSD_OPS, "bin", "vps-deploy"), app, *ARGV)
     end
