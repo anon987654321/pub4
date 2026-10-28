@@ -29,6 +29,11 @@ class PfPolicyCheckTest < Minitest::Test
     assert_includes result.failures.join("\n"), "contains unscoped"
   end
 
+  def test_unscoped_protocol_pass_is_rejected
+    result = check_fixture("unscoped_protocol_pass.conf")
+    assert_includes result.failures.join("\\n"), "contains unscoped"
+  end
+
   def test_bruteforce_block_must_precede_other_inbound_passes
     result = check_fixture("late_bruteforce_block.conf")
     assert_includes result.failures.join("\n"), "precedes the <bruteforce> quick block"
