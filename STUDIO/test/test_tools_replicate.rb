@@ -485,8 +485,8 @@ class TestReplicate < Minitest::Test
   # A shipped chain may be refused for one reason only: a model nobody has yet
   # confirmed against the provider. Anything else is a fault in the recipe.
   def test_every_shipped_chain_is_refused_for_nothing_but_an_unverified_model
-    Preprompt::Chain.available.each do |name|
-      problems = Preprompt::Chain.problems(Preprompt::Chain.load(name), capability_for: method(:capability_for))
+    Replicate::Chain.available.each do |name|
+      problems = Replicate::Chain.problems(Replicate::Chain.load(name), capability_for: method(:capability_for))
 
       assert_empty problems.reject { |p| p.include?("never been confirmed against the provider") },
                    "#{name}: #{problems.inspect}"
@@ -509,12 +509,12 @@ class TestReplicate < Minitest::Test
     Dir.mktmpdir do |dir|
       manifest = File.join(dir, "failed_chains.jsonl")
       chain = { name: "probe", sha256: "abc" }
-      send(:record_failed_chain, chain, Preprompt::Chain::StageFailed.new("stage b returned no output"),
+      send(:record_failed_chain, chain, Replicate::Chain::StageFailed.new("stage b returned no output"),
            ["out-01-a.jpg"], manifest: manifest)
 
       row = JSON.parse(File.read(manifest).lines.last)
       assert_equal "probe", row["chain"]
-      assert_equal "Preprompt::Chain::StageFailed", row["error"]
+      assert_equal "Replicate::Chain::StageFailed", row["error"]
       assert_equal ["out-01-a.jpg"], row["kept"]
     end
   end
@@ -600,7 +600,7 @@ class TestReplicate < Minitest::Test
     Dir.mktmpdir do |dir|
       manifest = File.join(dir, "failed_chains.jsonl")
       send(:record_failed_chain, { name: "probe", sha256: "abc" },
-           Preprompt::Chain::StageFailed.new("stage b returned no output"),
+           Replicate::Chain::StageFailed.new("stage b returned no output"),
            ["out-01.webp"], manifest:)
 
       row = JSON.parse(File.read(manifest))

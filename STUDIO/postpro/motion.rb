@@ -172,6 +172,8 @@ module Postpro
               "runtime cap #{limits[:max_seconds]}s"
       io.puts "motion: seed=#{seed} grain=#{grain}"
 
+      frames_written = 0
+
       Dir.mktmpdir(".postpro-motion-", File.dirname(target)) do |work|
         graded = File.join(work, "graded")
         FileUtils.mkdir_p(graded)

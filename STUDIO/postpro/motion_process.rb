@@ -234,11 +234,15 @@ module Postpro
 
     def self.terminate_child(pid, group: false)
       target = group ? -pid : pid
+
       Process.kill("TERM", target)
       sleep 0.1
       Process.kill("KILL", target)
-    rescue Errno::ESRCH
-      nil
+      true
+    rescue Errno::ESRCH, Errno::EPERM
+      # macOS answers EPERM, not ESRCH, when the group holds only an exited,
+      # unreaped child. Either way there is nothing left to stop.
+      false
     end
 
     def self.monotonic
