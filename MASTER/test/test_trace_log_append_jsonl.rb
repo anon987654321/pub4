@@ -89,6 +89,71 @@ class TraceLogAppendJsonlTest < Minitest::Test
     end
   end
 
+  def test_refuses_a_symlink_lock
+    Dir.mktmpdir("trace-jsonl-lock-symlink-") do |dir|
+      path = File.join(dir, "events.ndjson")
+      lock = "#{path}.lock"
+      target = File.join(dir, "external-lock")
+      File.write(target, "keep\n")
+      File.chmod(0o600, target)
+      File.symlink(target, lock)
+
+      assert_raises(ArgumentError) do
+        LOG.append_jsonl(path, { "event" => "should-not-write" })
+      end
+      assert_equal "keep\n", File.read(target)
+      assert File.symlink?(lock)
+      refute File.exist?(path)
+    end
+  end
+
+  def test_refuses_a_hard_linked_lock_without_chmodifying_its_target
+    Dir.mktmpdir("trace-jsonl-lock-hardlink-") do |dir|
+      path = File.join(dir, "events.ndjson")
+      target = File.join(dir, "lock-target")
+      lock = "#{path}.lock"
+      File.write(target, "keep\n")
+      File.chmod(0o644, target)
+      File.link(target, lock)
+
+      assert_raises(ArgumentError) do
+        LOG.append_jsonl(path, { "event" => "should-not-write" })
+      end
+      assert_equal 0o644, File.stat(target).mode & 0o777
+      assert_equal "keep\n", File.read(target)
+      refute File.exist?(path)
+    end
+  end
+
+  def test_refuses_a_hard_linked_destination_without_appending
+    Dir.mktmpdir("trace-jsonl-destination-hardlink-") do |dir|
+      path = File.join(dir, "events.ndjson")
+      target = File.join(dir, "external-target")
+      File.write(target, "keep\n")
+      File.chmod(0o600, target)
+      File.link(target, path)
+
+      assert_raises(ArgumentError) do
+        LOG.append_jsonl(path, { "event" => "should-not-write" })
+      end
+      assert_equal "keep\n", File.read(target)
+      assert_equal "keep\n", File.read(path)
+    end
+  end
+
+  def test_rotator_refuses_a_symlinked_active_log
+    Dir.mktmpdir("trace-jsonl-rotate-symlink-") do |dir|
+      path = File.join(dir, "events.ndjson")
+      target = File.join(dir, "external-target")
+      File.write(target, "x" * 500)
+      File.symlink(target, path)
+
+      assert_raises(ArgumentError) { LOG.rotate(path, 100) }
+      assert_equal "x" * 500, File.read(target)
+      assert File.symlink?(path)
+    end
+  end
+
   def test_refuses_a_symlink_destination
     Dir.mktmpdir("trace-jsonl-symlink-") do |dir|
       path = File.join(dir, "events.ndjson")
