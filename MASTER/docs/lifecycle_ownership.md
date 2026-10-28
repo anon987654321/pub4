@@ -24,23 +24,37 @@ file collector. World dispatches each verb to a do_ method and checks
 capabilities. Its checkpoints live in memory, so a crash loses them; the Fold's
 compensations cover one path at a time.
 
-### FixLoop, RunJournal and RunLedger
+### Fix::Kernel, FixLoop, RunJournal and RunLedger
 
-ai_boot builds the FixLoop (in the background when MASTER_AUTOFIX=1) and the
-/fix command builds one per run. FixLoop works on the repository root but keeps
-@transaction_root, the root it was given, for transactions (2de776cde).
-RunJournal persists runs in MASTER/.master/fix_runs.json with plan
-generations and assessment receipts. RunLedger is process memory reset at each
-run start. Delivery is the Committer: a commit per kept fix and a push, or one
-push at the end.
+Production boot creates one `Fix::Kernel` and obtains the convergence adapter
+through `Kernel#build_fix_loop`. The public `FixLoop` constant aliases
+`Kernel::ConvergenceAdapter`; its `run` delegates the outer lock and coordinator
+start/terminal receipts to Kernel. Repair outcomes carry the active coordinator
+run ID, and startup reconciles orphaned receipts to `unknown_outcome` only after
+proving the same-host writer is gone.
+
+The durable journal implementation is `Kernel::LifecycleJournal`, with
+`RunJournal` retained as a compatibility alias and its disk schema unchanged.
+Kernel owns the shared `lifecycle_journal` accessor; `Operator::FixStatus` uses
+the same accessor. `Kernel::RepairAdapter` is the implementation behind the
+`RepairLoop` compatibility constant. FixLoop's opportunity, visual, wishlist,
+improvement and per-Law stages use Kernel's repair factory and record bounded
+status/count outcomes; budget, collapse guard and write policy remain in the
+adapter. RunLedger remains process memory reset at each run start. Delivery is
+still the Committer: a commit per kept fix and a push, or one push at the end.
+
+FixLoop keeps `@transaction_root`, the root it was given, for transaction
+recovery (2de776cde). Mission remains the durable objective and lease boundary;
+Transaction remains the write/rollback/delivery boundary.
 
 ### The inner repair loop
 
-Pass stages build RepairLoop; it writes source with write_atomic inside the
-pass transaction and relies on the reflexion verifier, the consensus panel, the
-collapse guard and the Committer's path validation. WatchLoop builds none: a
-changed file wakes the background runner or starts an incremental FixLoop run,
-so its repairs get a transaction and a run ledger like any other.
+FixLoop's repair stages build the canonical `Kernel::RepairAdapter` through
+Kernel. The subprocess regressions for transaction rollback, run resumption,
+orphaned coordinator receipt recovery, and Mission/checkpoint retention after
+run-journal deletion are authored but unexecuted. The pinned Ruby 4.0.5 tests,
+full suite, adapter parity and real repository-wide `/fix` trial remain
+evidence gates, not claims of completion.
 
 ### Fix::Mission
 
@@ -84,7 +98,8 @@ rollback on the box is the operator's (operator_seams.yml).
 
 ### Open gaps, by risk
 
-1. Fix::Kernel is only the replay reader for .master/log.jsonl, and nothing
-   in the runtime appends to that log, so `master replay` has no production
-   history to read. FixLoop is the coordinator every /fix path enters;
-   docs/fix_coordinator_map.md names the owner of each responsibility.
+1. Kernel now writes production coordinator receipts and owns the outer lock,
+   journal accessor and repair factory. The underlying subprocess regressions
+   have been authored but not executed. Mission survival, journal-loss
+   reconstruction, complete adapter parity and a real repository-wide `/fix`
+   run remain unproven until the pinned Ruby 4.0.5 gates run.
