@@ -261,23 +261,52 @@ module Master
       end
 
       def self.read_log(path)
-        directory = File.dirname(File.expand_path(path))
-        raise LedgerCorruption, "ledger directory is a symlink" if File.symlink?(directory)
-        return [] unless File.exist?(path) || File.symlink?(path)
+        expanded = File.expand_path(path)
+        directory = File.dirname(expanded)
 
-        path_stat = File.lstat(path)
-        raise LedgerCorruption, "ledger path is not a regular file" unless
-          path_stat.file? && !path_stat.symlink?
-        raise LedgerCorruption, "ledger permissions are not private" unless
-          (path_stat.mode & 0o077).zero?
+        unless File.exist?(directory) || File.symlink?(directory)
+          return [] unless File.exist?(expanded) || File.symlink?(expanded)
 
-        File.open(path, "rb") do |file|
-          opened_stat = file.stat
-          unless opened_stat.file? && opened_stat.dev == path_stat.dev && opened_stat.ino == path_stat.ino
-            raise LedgerCorruption, "ledger path changed while opening"
-          end
-          read_log_io(file)
+          raise LedgerCorruption, "audit log exists without its parent directory"
         end
+        directory_stat = File.lstat(directory)
+        unless directory_stat.directory? && !directory_stat.symlink?
+          raise LedgerCorruption, "refusing non-directory or symlinked audit log directory"
+        end
+        if (directory_stat.mode & 0o022).positive?
+          raise LedgerCorruption, "audit log directory is group/world writable"
+        end
+        return [] unless File.exist?(expanded) || File.symlink?(expanded)
+
+        path_stat = File.lstat(expanded)
+        unless path_stat.file? && !path_stat.symlink? && path_stat.nlink == 1
+          raise LedgerCorruption, "refusing symlinked, hard-linked or non-regular audit log"
+        end
+        if (path_stat.mode & 0o077).positive?
+          raise LedgerCorruption, "audit log permissions must be private (0600 or stricter)"
+        end
+
+        flags = File::RDONLY
+        flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+        File.open(expanded, flags) do |file|
+          opened = file.stat
+          current = File.lstat(expanded)
+          unless current.file? && !current.symlink? && current.nlink == 1 &&
+                 current.dev == opened.dev && current.ino == opened.ino
+            raise LedgerCorruption, "audit log path changed while opening"
+          end
+
+          events = read_log_io(file)
+          after = File.lstat(expanded)
+          unless after.file? && !after.symlink? && after.nlink == 1 &&
+                 after.dev == opened.dev && after.ino == opened.ino &&
+                 after.size == opened.size && after.mtime == opened.mtime && after.ctime == opened.ctime
+            raise LedgerCorruption, "audit log changed while reading"
+          end
+          events
+        end
+      rescue SystemCallError => error
+        raise LedgerCorruption, "audit log cannot be opened safely: #{error.class}: #{error.message}"
       end
 
       # Every record must carry the next sequence number, the previous
