@@ -160,6 +160,17 @@ def vocab_check
                 "#{ungrained.one? ? "does" : "do"} not run apply_finishing_grain, the rest do"
   end
 
+  # Camera correction is the first operation on every photographed input.
+  # Generated files pass through because they have no EXIF body; a real camera
+  # source must not get a different negative because it arrived via one-shot,
+  # watch, uplift, or a stock comparison.
+  camera_paths = %w[process_file run_uplift run_one_shot grade_watched run_stock_sheet].reject do |name|
+    postpro_method_reaches?(source_methods, name, "camera_corrected", calls: calls_by_method)
+  end
+  unless camera_paths.empty?
+    problems << "camera-profile correction is absent from rendering paths: #{camera_paths.join(', ')}"
+  end
+
   # apply_finishing_grain now stands down for a chain that grains itself, so the
   # standing note about every output being grained twice became a thing to check
   # rather than a thing to report.
