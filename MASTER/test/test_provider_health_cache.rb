@@ -138,4 +138,38 @@ class ProviderHealthCacheTest < Minitest::Test
                       "appended bytes must invalidate cached telemetry when mtime is unchanged"
     end
   end
+  def test_history_read_is_bounded_and_drops_the_partial_leading_record
+    Dir.mktmpdir("provider-health-bounded-tail-") do |dir|
+      path = File.join(dir, "health.ndjson")
+      now = Time.utc(2026, 10, 28, 12, 0, 0)
+      buried = JSON.generate("ts" => now.iso8601, "model" => "buried-provider", "status" => "provider_error") + "\n"
+      filler = JSON.generate("ts" => now.iso8601, "model" => "filler-provider", "status" => "success", "detail" => "x" * 1_000) + "\n"
+      latest = JSON.generate("ts" => now.iso8601, "model" => "latest-provider", "status" => "success") + "\n"
+      File.write(path, buried + filler * 7_000 + latest)
+      assert_operator File.size(path), :>, Master::CLI::Routing::ProviderHealth::HISTORY_READ_BYTES
+
+      health = Master::CLI::Routing::ProviderHealth.new(path:, now: -> { now })
+
+      refute health.observed?("buried-provider"), "records outside the bounded tail must not be loaded"
+      assert health.observed?("latest-provider"), "the final complete record remains visible"
+      assert_in_delta 1.03, health.score("latest-provider"), 0.001
+    end
+  end
+
+  def test_history_parse_is_bounded_by_event_count
+    Dir.mktmpdir("provider-health-event-cap-") do |dir|
+      path = File.join(dir, "health.ndjson")
+      now = Time.utc(2026, 10, 28, 12, 0, 0)
+      buried = JSON.generate("ts" => now.iso8601, "model" => "buried-provider", "status" => "provider_error") + "\n"
+      event = JSON.generate("ts" => now.iso8601, "model" => "filler-provider", "status" => "success") + "\n"
+      File.write(path, buried + event * Master::CLI::Routing::ProviderHealth::MAX_EVENTS_PER_FILE)
+      assert_operator File.size(path), :<, Master::CLI::Routing::ProviderHealth::HISTORY_READ_BYTES
+
+      health = Master::CLI::Routing::ProviderHealth.new(path:, now: -> { now })
+
+      refute health.observed?("buried-provider"), "the oldest row exceeds the parsed-event ceiling"
+      assert health.observed?("filler-provider")
+    end
+  end
+
 end

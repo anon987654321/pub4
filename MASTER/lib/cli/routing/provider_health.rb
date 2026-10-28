@@ -17,6 +17,8 @@ module Master
         MAX_SCORE = 1.25
         WINDOW_S = 900
         MAX_BYTES = Master::Trace::Log::Event::MAX_BYTES
+        HISTORY_READ_BYTES = 5 * 1024 * 1024
+        MAX_EVENTS_PER_FILE = 20_000
         FAILURES = %w[
           failure timeout rate_limit provider_error quota_exceeded model_missing llm_call_failure
           canary_validation_failure canary_failure
@@ -145,16 +147,43 @@ module Master
           @events || []
         end
 
+        # The shared writer bounds normal files, but old or hand-edited telemetry
+        # must not force a full unbounded read on every route. Read a fixed tail,
+        # discard its possibly partial first record, and cap parsed event count.
         def load_events(candidate)
-          return [] unless File.file?(candidate) && !File.symlink?(candidate)
+          flags = File::RDONLY
+          flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+          File.open(candidate, flags) do |io|
+            opened = io.stat
+            return [] unless opened.file? && opened.nlink == 1
 
-          File.readlines(candidate, chomp: true).filter_map do |line|
-            next if line.strip.empty?
-            JSON.parse(line)
-          rescue JSON::ParserError => e
-            Master::Ground::Swallow.log(e, context: "ProviderHealth.events_for", path: candidate)
-            nil
+            current = File.lstat(candidate)
+            return [] unless current.file? && !current.symlink? &&
+                             current.dev == opened.dev && current.ino == opened.ino
+
+            offset = [opened.size - HISTORY_READ_BYTES, 0].max
+            io.seek(offset)
+            bytes = io.read(HISTORY_READ_BYTES).to_s.b
+            if offset.positive?
+              newline = bytes.index("\n".b)
+              return [] unless newline
+
+              bytes = bytes.byteslice(newline + 1..).to_s.b
+            end
+
+            bytes.force_encoding(Encoding::UTF_8).lines.last(MAX_EVENTS_PER_FILE).filter_map do |line|
+              next if line.strip.empty?
+
+              event = JSON.parse(line)
+              event if event.is_a?(Hash)
+            rescue JSON::ParserError, EncodingError => e
+              Master::Ground::Swallow.log(e, context: "ProviderHealth.events_for", path: candidate)
+              nil
+            end
           end
+        rescue SystemCallError => e
+          Master::Ground::Swallow.log(e, context: "ProviderHealth.events_for", path: candidate)
+          []
         end
       end
     end

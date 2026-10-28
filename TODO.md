@@ -6,6 +6,15 @@ vm23 is a seam in `MASTER/data/operator_seams.yml`. Refusals live under
 "Refused, and why" in `MASTER/AGENTS.md`. An item closes by being deleted in
 the commit that carries its evidence; nothing here records finished work.
 
+## Session note 2026-10-28 (bounded provider-health history)
+
+- Provider-health scoring already uses a 15-minute event window and recovery bonus.
+  This batch bounds defensive reads independently of the shared 25 MiB writer cap:
+  at most 5 MiB and 20,000 complete records per file generation are parsed, with
+  partial leading records discarded. Regression tests cover byte and event caps.
+- Runtime tests remain NOT_RUN; the hardening-review item stays open until the focused
+  provider-health and routing regressions execute successfully on Ruby 4.0.5.
+
 ## Session note 2026-10-28 (fail-closed hooks and canonical Ruby pin)
 
 - Configured PreToolUse hooks now deny by default on hook failures, and an

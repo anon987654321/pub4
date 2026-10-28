@@ -23,8 +23,9 @@ module Master
     #
     # The file is read from the person's home, never from the workspace: the
     # Fold writes into the workspace, and a hook it could author would run
-    # outside the Constitution on the next turn. The file must belong to the
-    # current user (or root) and be writable by no one else, or no hook loads.
+    # outside the Constitution on the next turn. The file and parent directory
+    # must be owned by the current user or root and not writable by group/others;
+    # an invalid configured file refuses effects rather than disabling hooks.
     # A hook can only add refusals; it never widens what the Constitution allows.
     module ToolHooks
       module_function
