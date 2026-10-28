@@ -59,15 +59,30 @@ class ScanFileLockTest < Minitest::Test
     assert ran
   end
 
-  def test_a_waiter_that_times_out_leaves_the_holder_its_lock
-    lock_path = @processor.send(:lock_path_for, @target)
-    stub_const_timeout(0.1) do
+  def test_two_scans_of_one_file_run_concurrently
+    other = Master::Fix::Scan::FileProcessor.new
+    stub_const_timeout(0.5) do
       lock do
-        waiter = Thread.new do
-          other = Master::Fix::Scan::FileProcessor.new
-          assert_raises(RuntimeError) { other.send(:with_file_lock, @target) { flunk "entered a held lock" } }
-        end
-        waiter.join
+        result = Thread.new { other.call(path: @target, depth: :deep, laws: []) }.value
+
+        assert result.ok?, "a second scan waited out the first one's hold: #{result.inspect}"
+        assert_empty other.semantic_gaps
+      end
+    end
+  end
+
+  # The sweep's exclusive probe is the one holder a scan still waits for.
+  def test_a_scan_that_times_out_is_inconclusive_and_leaves_the_holder_its_lock
+    lock_path = @processor.send(:lock_path_for, @target)
+    FileUtils.mkdir_p(File.dirname(lock_path))
+    stub_const_timeout(0.1) do
+      File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |holder|
+        holder.flock(File::LOCK_EX)
+        result = Thread.new { @processor.call(path: @target, depth: :deep, laws: []) }.value
+
+        assert result.ok?, "a lock timeout must not fail the walk: #{result.inspect}"
+        gap = @processor.semantic_gaps.values.join
+        assert_includes gap, "INCONCLUSIVE", "a file not measured must not read as clean"
         assert File.exist?(lock_path), "the waiter deleted the holder's lock"
       end
     end

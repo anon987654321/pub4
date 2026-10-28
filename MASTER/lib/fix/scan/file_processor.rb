@@ -8,12 +8,12 @@ require "prism"
 require "timeout"
 
 require_relative "law_timing"
+require_relative "file_lock"
 require_relative "finding_cache"
 require_relative "source_override"
 require_relative "../check_focus"
 require_relative "../../review/scan/semantic_fingerprint"
 require_relative "../../review/scan/law_health"
-require_relative "../../operator/lock_sweep"
 require_relative "../../trace/dmesg"
 
 module Master
@@ -21,6 +21,8 @@ module Master
     module Scan
       class FileProcessor
         RUBY_EXT = %w[.rb .rake .gemspec].freeze
+        include FileLock
+
         LOCK_DIR = ".constitutional_locks"
         LOCK_TIMEOUT = 30
         MAX_FILE_BYTES = 10 * 1024 * 1024
@@ -158,24 +160,28 @@ module Master
         end
 
         def call(path:, depth:, laws:)
-          with_file_lock(path) do
-            code = read_file(path)
-            return code if code.err?
-
-            ast = parse_ruby(code.value!, path)
-            record_ast_assessment(path:, code: code.value!, ast:) if Master.language_for(path) == "ruby"
-            fingerprint = Master::Review::Scan::SemanticFingerprint.for(code.value!)
-            findings = apply_laws(code: code.value!, ast:, path:, law_set: laws)
-            findings = annotate_findings(findings, fingerprint:)
-            publish_scan_result(path:, depth:, findings:)
-            Result.ok(findings)
-          end
+          with_file_lock(path) { measure(path:, depth:, laws:) }
+        rescue LockTimeout => e
+          unmeasured(path, e)
         rescue StandardError => e
           @bus&.publish("scan:error", path:, error: e.message)
           Result.err("scan failed: #{e.class}: #{e.message} at #{e.backtrace&.first}", category: :infrastructure)
         end
 
         private
+
+        def measure(path:, depth:, laws:)
+          read = read_file(path)
+          return read if read.err?
+
+          code = read.value!
+          ast = parse_ruby(code, path)
+          record_ast_assessment(path:, code:, ast:) if Master.language_for(path) == "ruby"
+          fingerprint = Master::Review::Scan::SemanticFingerprint.for(code)
+          findings = annotate_findings(apply_laws(code:, ast:, path:, law_set: laws), fingerprint:)
+          publish_scan_result(path:, depth:, findings:)
+          Result.ok(findings)
+        end
 
         # A path with a SourceOverride is judged by that text, not by the disk.
         def read_file(path)
@@ -220,27 +226,14 @@ module Master
           Result.err("file validation failed: #{e.message}", category: :validation)
         end
 
-        # flock on a lockfile that is not deleted after use. The kernel drops the lock
-        # when its holder exits, so a crashed scan frees the file at once; the files
-        # themselves are swept when a day old and not held (::Operator::LockSweep).
-        def with_file_lock(path)
-          lock_path = lock_path_for(path)
-          FileUtils.mkdir_p(File.dirname(lock_path))
-          ::Operator::LockSweep.sweep_once(File.dirname(lock_path))
-          deadline = Time.now + LOCK_TIMEOUT
-          File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |file|
-            until file.flock(File::LOCK_EX | File::LOCK_NB)
-              raise "lock timeout for #{path}" if Time.now >= deadline
-
-              sleep 0.05
-            end
-            yield
-          end
-        end
-
-        def lock_path_for(path)
-          digest = Digest::SHA256.hexdigest(File.expand_path(path))
-          File.join(Master::ROOT, LOCK_DIR, "#{digest}.lock")
+        # Recorded where an unanswered semantic read is, so the file blocks DONE as
+        # inconclusive while the rest of the walk goes on.
+        def unmeasured(path, error)
+          relative = relative_progress_path(path)
+          @semantic_gap_mutex.synchronize { @semantic_gaps[relative] ||= "INCONCLUSIVE: #{error.message}"[0, 240] }
+          @bus&.publish("scan:inconclusive", path: relative, reason: error.message)
+          Master::Trace::Dmesg.status("scan0", "inconclusive, #{error.message}"[0, 200])
+          Result.ok([])
         end
 
         def parse_ruby(code, path)
