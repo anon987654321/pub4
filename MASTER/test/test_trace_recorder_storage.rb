@@ -79,6 +79,39 @@ class TestTraceRecorderStorage < Minitest::Test
     end
   end
 
+  def test_incomplete_existing_trace_line_is_not_extended
+    Dir.mktmpdir("trace-storage-incomplete-tail") do |root|
+      FileUtils.mkdir_p(trace_directory(root), mode: 0o700)
+      path = daily_trace_path(root)
+      original = %({"message":"partial-secret"})
+      File.write(path, original)
+      File.chmod(0o600, path)
+
+      recorder(root).send(:finalize, sample_turn)
+
+      assert_equal original, File.read(path)
+    end
+  end
+
+  def test_multiple_processes_keep_complete_trace_lines
+    Dir.mktmpdir("trace-storage-parallel-lines") do |root|
+      instance = recorder(root)
+      workers = 4.times.map do |worker|
+        Process.spawn(
+          RbConfig.ruby, "-e",
+          'require "json"; pth, value = ARGV; 10.times { |i| line = JSON.generate(worker: value, index: i) + "\n"; File.open(pth, File::RDWR | File::APPEND) { |f| f.flock(File::LOCK_EX); f.write(line); f.flush; f.flock(File::LOCK_UN) } }',
+          daily_trace_path(root), worker.to_s
+        )
+      end
+      workers.each { |pid| Process.wait(pid) }
+
+      assert_equal 40, File.readlines(daily_trace_path(root)).length
+      File.foreach(daily_trace_path(root)) { |line| JSON.parse(line) }
+      assert_equal 0o600, File.stat(daily_trace_path(root)).mode & 0o777
+      instance
+    end
+  end
+
   def test_shared_master_state_directory_keeps_its_canonical_group_access
     Dir.mktmpdir("trace-storage-shared-group") do |root|
       state = File.join(root, ".master")
