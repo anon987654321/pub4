@@ -36,6 +36,7 @@ source and tests they could not run; this pass is what measures them.
 - [ ] MASTER focused regressions on the pinned Ruby: from `MASTER/`, run
   `bundle exec ruby -Ilib:test test/test_law_parity.rb`,
   `bundle exec ruby -Ilib:test test/test_fix_kernel_lifecycle.rb`,
+  `bundle exec ruby -Ilib:test test/test_recovery_gates.rb`,
   `bundle exec ruby -Ilib:test test/test_fix_convergence.rb`,
   `bundle exec ruby -Ilib:test test/test_fix_convergence_wiring.rb`,
   `bundle exec ruby -Ilib:test test/test_fix_mission.rb`,
@@ -45,7 +46,6 @@ source and tests they could not run; this pass is what measures them.
   `bundle exec ruby -Ilib:test test/test_security_audit.rb`,
   `bundle exec ruby -Ilib:test test/test_io_atomic_write.rb`,
   `bundle exec ruby -Ilib:test test/test_security_headers_source_check.rb`,
-  `bundle exec ruby -Ilib:test test/test_io_atomic_write.rb`,
   `bundle exec ruby -Ilib:test test/test_check_runner_registry.rb`,
   `bundle exec ruby -Ilib:test test/test_turn_router.rb`,
   `bundle exec ruby -Ilib:test test/test_command_registry_dispatch.rb`,
