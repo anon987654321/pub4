@@ -152,10 +152,8 @@ module Deploy
       @result
     end
 
-    private
-
-    def rel(path) = path.sub(ROOT + "/", "")
-
+    # baseline_path, distill, compare and write are public: Fix::VisualCustody
+    # judges a /fix pass against the same baselines with the same rules.
     def baseline_path(surface)
       id = surface.id
       canonical = GeometryProbe.config.dig("snapshot_aliases", id) || id
@@ -241,6 +239,14 @@ module Deploy
     # holds the classes and why they run in that order.
     def compare(baseline, current) = Drift.new(baseline, current).differences
 
+    def write(path, data)
+      File.write(path, JSON.pretty_generate(data) + "\n")
+    end
+
+    private
+
+    def rel(path) = path.sub(ROOT + "/", "")
+
     # The tally leads, so a hierarchy change is named in the first words of the
     # line even when the eight entries shown are not enough to reach all of it.
     def report(surface, diffs, path)
@@ -252,9 +258,5 @@ module Deploy
     end
 
     def tally(diffs) = diffs.map { |diff| diff[/\A\w+/] }.tally.map { |name, count| "#{name} #{count}" }.join(", ")
-
-    def write(path, data)
-      File.write(path, JSON.pretty_generate(data) + "\n")
-    end
   end
 end

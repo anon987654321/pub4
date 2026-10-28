@@ -72,8 +72,8 @@ class TestVisualCustody < Minitest::Test
       refute_nil aliased, "missing independently measured alias surface #{alias_id}"
       refute_nil canonical, "missing canonical surface #{canonical_id}"
       assert_includes surfaces, aliased
-      assert_equal check.send(:baseline_path, canonical), check.send(:baseline_path, aliased)
-      assert File.file?(check.send(:baseline_path, canonical)), "canonical baseline missing: #{canonical_id}"
+      assert_equal check.baseline_path(canonical), check.baseline_path(aliased)
+      assert File.file?(check.baseline_path(canonical)), "canonical baseline missing: #{canonical_id}"
     end
 
     %w[

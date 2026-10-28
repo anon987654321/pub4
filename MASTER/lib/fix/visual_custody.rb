@@ -90,7 +90,7 @@ module Master
 
         original_bytes = updates.keys.to_h { |path| [path, File.binread(path)] }
         begin
-          updates.each { |path, data| @snapshot_check.send(:write, path, data) }
+          updates.each { |path, data| @snapshot_check.write(path, data) }
           observed = committer.observe_related_visual_baseline_writes!(updates.keys)
           raise observed.message unless observed.ok?
         rescue StandardError => e
@@ -152,7 +152,7 @@ module Master
           raise LayoutCompletionEvidenceMissing, "#{surface.id}: baseline missing" unless File.file?(path)
 
           baseline = JSON.parse(File.read(path))
-          current = @snapshot_check.send(:distill, payload)
+          current = @snapshot_check.distill(payload)
           if require_stable_elements && current.fetch("elements", []).size < Deploy::LayoutSnapshotCheck::MIN_ELEMENTS
             raise LayoutCompletionEvidenceMissing, "#{surface.id}: fewer than #{Deploy::LayoutSnapshotCheck::MIN_ELEMENTS} stable elements"
           end
@@ -164,7 +164,7 @@ module Master
         end
 
         grouped.filter_map do |path, row|
-          changed = @snapshot_check.send(:compare, row.fetch(:baseline), row.fetch(:current))
+          changed = @snapshot_check.compare(row.fetch(:baseline), row.fetch(:current))
           [path, row.fetch(:current)] unless changed.empty?
         end.to_h
       rescue JSON::ParserError => e
@@ -195,8 +195,8 @@ module Master
           end
 
           baseline = JSON.parse(File.read(path))
-          current = @snapshot_check.send(:distill, payload)
-          diffs = @snapshot_check.send(:compare, baseline, current)
+          current = @snapshot_check.distill(payload)
+          diffs = @snapshot_check.compare(baseline, current)
           checked += 1
           next if diffs.empty?
 
@@ -222,7 +222,7 @@ module Master
       end
 
       def baseline_path(surface)
-        @snapshot_check.send(:baseline_path, surface)
+        @snapshot_check.baseline_path(surface)
       end
 
       def relative(path)
