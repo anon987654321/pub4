@@ -169,7 +169,7 @@ module Deploy
         if directive.match?(/(?:^|[\s,]):https?\b|(?:^|[\s,]):(?:data|blob)\b/i) ||
            directive.match?(/unsafe[-_]eval|unsafe[-_]inline/i) ||
            directive.match?(/["']\*["']|(?:^|[\s,])\*(?:[\s,]|$)|https?:\/\/\*/i) ||
-           directive.match?(/\bhttp:\/\/|["'](?:https?|data|blob):["']/i)
+           directive.match?(/\bhttp:\/\/|["'](?:data|blob):|["']https?:["']/i)
           result.fail(
             "security_headers: #{label} has an overly broad #{entry.fetch(:name).tr("_", "-")}: #{directive.strip}"
           )
