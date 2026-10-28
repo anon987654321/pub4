@@ -111,15 +111,22 @@ module Postpro
       run_command(args, deadline:)
     end
 
-    def self.verify_constant_rate!(input, probe, deadline:)
+    def self.verify_constant_rate!(input, probe, deadline:, max_frames:)
+      # Ask ffprobe for frames explicitly and stop after one frame beyond the
+      # budget; a dishonest or missing nb_frames field must not trigger an
+      # unbounded timestamp dump before the decoder gets its own frame cap.
       output, status = capture_command(
         ["ffprobe", "-v", "error", "-select_streams", "v:0",
+         "-read_intervals", "%+##{max_frames + 1}", "-show_frames",
          "-show_entries", "frame=best_effort_timestamp_time", "-of", "csv=p=0", input],
         deadline:
       )
       raise Unavailable, "ffprobe could not read video frame timestamps" unless status.success?
 
       timestamps = output.lines.filter_map { |line| Float(line.strip, exception: false) }
+      if timestamps.length > max_frames
+        raise Unavailable, "frame timestamp count exceeds the #{max_frames}-frame budget"
+      end
       unless timestamps.length == probe.frames
         raise Unavailable,
               "frame timestamp count #{timestamps.length} differs from metadata count " +
