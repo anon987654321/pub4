@@ -46,6 +46,10 @@ module Master
             unless directory_stat.directory? && !directory_stat.symlink?
               raise IOError, "refusing non-directory or symlinked .master path"
             end
+            if (directory_stat.mode & 0o022).positive?
+              raise IOError, "refusing group/world-writable .master directory"
+            end
+            raise IOError, "refusing symlinked execution lock" if File.symlink?(@path)
 
             flags = File::RDWR | File::CREAT
             flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
