@@ -53,9 +53,13 @@ module Master
         # A morphed head is new every frame, so it is not worth keeping.
         ascii = shaped.equal?(head) ? renderer(head, rows, cols, chars, mode) : Ascii.new(shaped, rows, cols, chars:, mode:)
         frame = ascii.render(look, state:, laws:)
-        if Master::Face::Swarm.enabled? && ENV.fetch("MASTER_FACE_SWARM", "1") != "0"
+        if source.nil? && Master::Face::Swarm.enabled? && ENV.fetch("MASTER_FACE_SWARM", "1") != "0"
           SWARMS.clear if SWARMS.size >= 4
-          swarm = (SWARMS[[rows, cols]] ||= Master::Face::Swarm::Simulation.new)
+          requested = ENV["MASTER_FACE_SWARM_BUDGET"]
+          configured_budget = Integer(Master::Face::Swarm.config.fetch("particle_budget"))
+          count = requested&.match?(/\\A-?\\d+\\z/) ? Integer(requested).clamp(0, configured_budget) : nil
+          swarm_key = [rows, cols, count]
+          swarm = (SWARMS[swarm_key] ||= Master::Face::Swarm::Simulation.new(count:))
           swarm.step(mode: state, time: t, reduced_motion: ENV["MASTER_REDUCED_MOTION"] == "1")
           swarm.overlay!(frame)
         end
