@@ -14,6 +14,26 @@ class StudioStyleRegistryTest < Minitest::Test
     }
   end
 
+  def test_checked_in_registry_resolves_all_modalities_to_same_version
+    registry = Studio::StyleRegistry.load_registry
+    %w[image prompt audio].each do |modality|
+      resolved = Studio::StyleRegistry.resolve(style_id: "blue_hour", modality: modality, registry: registry)
+      assert_equal "blue_hour", resolved["style_id"]
+      assert_equal "1.0.0", resolved["version"]
+      assert_equal modality, resolved["modality"]
+    end
+  end
+
+  def test_registry_rejects_unknown_style_and_modality
+    registry = Studio::StyleRegistry.load_registry
+    assert_raises(Studio::StyleRegistry::InvalidStyle) do
+      Studio::StyleRegistry.resolve(style_id: "missing", modality: "image", registry: registry)
+    end
+    assert_raises(Studio::StyleRegistry::InvalidStyle) do
+      Studio::StyleRegistry.resolve(style_id: "blue_hour", modality: "video", registry: registry)
+    end
+  end
+
   def test_valid_entry_and_provenance
     manifest = { "lineage" => { "owner" => "operator" },
                  "influence" => { "value" => nil, "reason" => "hand authored" },
