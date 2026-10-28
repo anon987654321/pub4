@@ -109,7 +109,9 @@ module Master
       def protected_visual_signatures(source)
         color_rows = []
         font_rows = []
-        source.to_s.split(/[;{}]/).each do |declaration|
+        declarations = source.to_s.split(/[;{}]/)
+        source.to_s.scan(/style\s*=\s*["']([^"']*)["']/i).flatten.each { |inline| declarations.concat(inline.split(";")) }
+        declarations.each do |declaration|
           name, value = declaration.split(":", 2)
           next unless name && value
 
@@ -118,25 +120,10 @@ module Master
           next if value.empty?
 
           if COLOR_PROPERTIES.include?(property)
-            tokens = value.scan(COLOR_TOKEN).map { |token| token.downcase }
+            tokens = value.scan(COLOR_TOKEN).map(&:downcase)
             color_rows << [property, tokens.empty? ? value.gsub(/\s+/, " ").downcase : tokens]
           elsif property == "font-family"
             font_rows << value.gsub(/\s+/, " ").strip
-          end
-        end
-        source.to_s.scan(/style\s*=\s*["']([^"']*)["']/i).flatten.each do |inline|
-          inline.split(";").each do |declaration|
-            property, value = declaration.split(":", 2)
-            next unless property && value
-
-            name = property.strip.downcase
-            value = value.strip
-            if COLOR_PROPERTIES.include?(name)
-              tokens = value.scan(COLOR_TOKEN).map { |token| token.downcase }
-              color_rows << [name, tokens.empty? ? value.gsub(/\s+/, " ").downcase : tokens]
-            elsif name == "font-family"
-              font_rows << value.gsub(/\s+/, " ").strip
-            end
           end
         end
         [color_rows.sort_by(&:inspect), font_rows.sort]

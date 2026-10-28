@@ -41,8 +41,15 @@ module Master
           next unless key && val
 
           key = key.delete_prefix("export ").strip
-          ENV[key] ||= val
+          ENV[key] ||= unquote(val.strip)
         end
+      end
+
+      # The same files are sourced by sh (rc.d/master), where KEY="value" is the
+      # usual spelling; the quotes are shell syntax, not part of the value.
+      def unquote(value)
+        quoted = value.length >= 2 && %w[" '].include?(value[0]) && value[-1] == value[0]
+        quoted ? value[1...-1] : value
       end
     end
   end

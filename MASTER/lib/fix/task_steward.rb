@@ -180,7 +180,8 @@ module Master
           POLL_SECONDS
         end
       rescue ArgumentError
-        0
+        # An unreadable wake time reads as due; waiting zero re-ran the mission without pause.
+        POLL_SECONDS
       end
 
       def defer_failed_mission(error)

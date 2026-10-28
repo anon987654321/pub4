@@ -49,10 +49,6 @@ module Master
 
           private
 
-          # Ruby only honors the magic comment on line 1, or line 2 when line 1 is
-          # a shebang -- start_with?(FROZEN_HEADER) alone misses that second case
-          # and re-inserted a duplicate on every fix cycle for every shebang'd
-          # script (confirmed: several tools/*.rb accreted 2, then 3 copies).
           # Repair accidental UI/source wrappers only when they enclose the entire
           # Ruby file and the unwrapped result parses. Partial wrappers are left
           # untouched because their intent cannot be inferred safely.
@@ -81,6 +77,9 @@ module Master
             candidate
           end
 
+          # Ruby honours the magic comment on line 1, or line 2 when line 1 is a
+          # shebang, so both lines are checked before inserting: checking line 1
+          # alone adds a duplicate to every shebang'd script on every cycle.
           def add_frozen_header(src)
             lines = src.lines
             return src if lines.first(2).any? { |l| l.strip == FROZEN_HEADER.strip }

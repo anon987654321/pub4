@@ -44,7 +44,7 @@ module Master
       end
 
       include Master::Fix::Scan::ProgressReporter
-        include Master::Fix::Scan::Transport
+      include Master::Fix::Scan::Transport
 
         # The Scanner is the coordinator of the review process. What it walks
         # is PathFilter's decision, how it walks is Transport's, and what it
@@ -53,8 +53,6 @@ module Master
         SCAN_GLOB = "**/*".freeze
         REQUIRED_DEPTH = :deep
         MAX_VIOLATION_OBJECTS = 100_000
-
-        attr_reader :laws
 
         def self.skip_path?(path, root: nil)
           Master::Fix::Scan::PathFilter.skip_path?(path, root:)

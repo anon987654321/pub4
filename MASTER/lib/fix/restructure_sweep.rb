@@ -304,7 +304,9 @@ module Master
 
         Master::Trace::Dmesg.status(
           "restructure0",
-          "#{found.size} finding(s) -> #{rotated.size} problem(s), "           "#{multifinding} multi-finding, #{multisignal} multi-signal, "           "#{candidate_count} candidate transformation(s)",
+          "#{found.size} finding(s) -> #{rotated.size} problem(s), " \
+          "#{multifinding} multi-finding, #{multisignal} multi-signal, " \
+          "#{candidate_count} candidate transformation(s)",
         )
         @bus&.publish(
           "fix_loop:restructure_problems",

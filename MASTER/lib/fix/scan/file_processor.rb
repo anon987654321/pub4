@@ -43,9 +43,7 @@ module Master
         PROGRESS_IDLE_GRACE_SECONDS = 3.0
         PROGRESS_HEARTBEAT_SECONDS = 5.0
 
-        # Fraction of otherwise-clean files that still get the semantic pass, from
-        # Ground::ModePosture. Keyed on the path digest rather than rand, so two scans
-        # of the same tree ask the same questions and their reports can be compared.
+        # The longest file each kind of source may be before a scan refuses it.
         def self.max_lines_for(path)
           extension = File.extname(path.to_s).downcase
           return STYLE_MAX_LINES if STYLE_EXTENSIONS.include?(extension)
@@ -368,6 +366,9 @@ module Master
         # Julian day is monotonic across New Year; yday would repeat sampling buckets at the year boundary.
         def rotation_day = Date.today.jd
 
+        # Fraction of otherwise-clean files that still get the semantic pass, from
+        # Ground::ModePosture. Keyed on the path digest rather than rand, so two scans
+        # of the same tree ask the same questions and their reports can be compared.
         def semantic_sample
           return @semantic_sample_override if @semantic_sample_override
 

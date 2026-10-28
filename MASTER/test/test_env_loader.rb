@@ -30,6 +30,17 @@ class TestEnvLoader < Minitest::Test
     ENV.delete("FOO_EXPORT_KEY")
   end
 
+  def test_load_strips_shell_quotes_around_a_value
+    with_env_file("FOO_QUOTED_KEY=\"quoted value\"\nFOO_SINGLE_KEY='single'\n") do |path|
+      Master::Ground::EnvLoader.load!(paths: [path])
+      assert_equal "quoted value", ENV["FOO_QUOTED_KEY"]
+      assert_equal "single", ENV["FOO_SINGLE_KEY"]
+    end
+  ensure
+    ENV.delete("FOO_QUOTED_KEY")
+    ENV.delete("FOO_SINGLE_KEY")
+  end
+
   def test_load_skips_comments_and_blank_lines
     with_env_file("# a comment\n\nFOO_COMMENT_KEY=real_value\n") do |path|
       Master::Ground::EnvLoader.load!(paths: [path])

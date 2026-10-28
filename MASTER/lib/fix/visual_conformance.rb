@@ -15,23 +15,23 @@ module Master
         def to_s = "#{rule} #{surface}@#{viewport} #{selector}: #{detail}"
       end
 
-GENERIC = %w[serif sans-serif monospace cursive fantasy system-ui ui-serif ui-sans-serif ui-monospace ui-rounded -apple-system].freeze
+      GENERIC = %w[serif sans-serif monospace cursive fantasy system-ui ui-serif ui-sans-serif ui-monospace ui-rounded -apple-system].freeze
 
-# Font stacks arrive as computed `font-family` text; tokens are lowercased
-# and unquoted so a rule compares names, not spelling.
-PROBES = {
-  "font_family" => lambda { |element|
-    computed = element["font_family"].to_s.split(",").map { |t| t.strip.delete("\"'").downcase }.reject(&:empty?)
-    painted = Array(element["painted"]).map { |f| f["name"].to_s.downcase }.reject(&:empty?)
-    next computed if painted.empty?
+      # Font stacks arrive as computed `font-family` text; tokens are lowercased
+      # and unquoted so a rule compares names, not spelling.
+      PROBES = {
+        "font_family" => lambda { |element|
+          computed = element["font_family"].to_s.split(",").map { |t| t.strip.delete("\"'").downcase }.reject(&:empty?)
+          painted = Array(element["painted"]).map { |f| f["name"].to_s.downcase }.reject(&:empty?)
+          next computed if painted.empty?
 
-    # A named head is a request the browser may have declined, so the
-    # face it painted stands in; a generic head is the OS picking, and
-    # its pick is not the page's to answer for.
-    head = GENERIC.include?(computed.first) ? computed.first : painted.first
-    ([head] + painted.drop(1) + computed.drop(1)).uniq
-  },
-}.freeze
+          # A named head is a request the browser may have declined, so the
+          # face it painted stands in; a generic head is the OS picking, and
+          # its pick is not the page's to answer for.
+          head = GENERIC.include?(computed.first) ? computed.first : painted.first
+          ([head] + painted.drop(1) + computed.drop(1)).uniq
+        },
+      }.freeze
 
       MONO = %w[monospace ui-monospace sf\ mono menlo monaco consolas courier\ new courier].freeze
 
@@ -79,15 +79,15 @@ PROBES = {
         end.uniq { |f| [f.rule, f.selector, f.detail] }
       end
 
-# The painted faces for one element, and the note a finding carries when
-# the probe could not ask Chrome and the computed stack stands in.
-def with_painted(element, payload)
-  status = payload["painted_fonts_status"].to_s
-  note = status.start_with?("unverified") ? " [#{status}; computed stack only]" : ""
-  element.merge("painted" => payload["painted_fonts"].to_h[element["key"]], "painted_note" => note)
-end
+      # The painted faces for one element, and the note a finding carries when
+      # the probe could not ask Chrome and the computed stack stands in.
+      def with_painted(element, payload)
+        status = payload["painted_fonts_status"].to_s
+        note = status.start_with?("unverified") ? " [#{status}; computed stack only]" : ""
+        element.merge("painted" => payload["painted_fonts"].to_h[element["key"]], "painted_note" => note)
+      end
 
-def violations(rule, surface, element)
+      def violations(rule, surface, element)
         return [] unless element["visible"] != false && (element["text"].to_s != "" || element["interactive"])
 
         tokens = PROBES.fetch(rule.fetch("probe")).call(element)

@@ -159,9 +159,16 @@ module Master
         return :guard_refused if guard.verdict(path:, content: updated).blocked?
 
         transaction = Transaction.new(root:, paths: [path]).begin!
-        File.write(path, updated)
-        transaction.observe!
-        return transaction.finalize! && :applied if rescore.call(path)
+        begin
+          File.write(path, updated)
+          transaction.observe!
+          kept = rescore.call(path)
+        rescue StandardError
+          transaction.rollback!
+          raise
+        end
+        # finalize! answers a Result either way; an err one is not a kept rewrite.
+        return(transaction.finalize!.ok? ? :applied : :finalize_failed) if kept
 
         transaction.rollback!
         :score_dropped

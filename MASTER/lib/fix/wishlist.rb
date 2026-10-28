@@ -158,6 +158,8 @@ module Master
         Master::Ground::Swallow.log(e, context: "Fix::Wishlist.claim!", event_bus: @bus)
         []
       end
+      # FixLoop::PassExecution asks for `claim`; without it every wishlist round raised NoMethodError.
+      alias claim claim!
 
       def mark_attempt(proposal_id:, fixed:, status:, message:, run_id:)
         ledger = load_ledger

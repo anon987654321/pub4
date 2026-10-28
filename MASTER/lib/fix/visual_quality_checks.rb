@@ -56,7 +56,7 @@ module Master
 
       def label(row) = row.is_a?(Hash) ? (row["key"] || row["sel"]).to_s : row.selector.to_s
 
-      def rects(els) = els.to_h { |e| [e["key"], (e["frect"] || e["rect"]).values_at("x", "y", "w", "h")] }.compact
+      def rects(els) = els.filter_map { |e| (box = e["frect"] || e["rect"]).is_a?(Hash) && [e["key"], box.values_at("x", "y", "w", "h")] }.to_h
 
       def luminance(hex)
         r, g, b = hex.delete("#").scan(/../).map { |c| c.to_i(16) / 255.0 }

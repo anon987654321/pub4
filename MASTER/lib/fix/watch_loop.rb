@@ -4,15 +4,15 @@ require "set"
 
 module Master
   module Fix
-  # Architecture #7: file-watcher reactive trigger — no polling.
-  # Linux: inotify via rb-inotify. OpenBSD: kqueue via rb-kqueue.
-  # A changed file wakes the background runner, or else starts an incremental
-  # FixLoop run on that file. Repairs go through FixLoop alone, so each one has
-  # a pass transaction, a journal entry and a run ledger of its own, and
-  # FixLoop#run's mutex keeps it from overlapping an operator's /fix.
-  #
-  # Usage (VPS, after `gem install rb-kqueue` or `rb-inotify`):
-  #   WatchLoop.new(root:, fix_loop:, bus:).run
+    # Architecture #7: file-watcher reactive trigger — no polling.
+    # Linux: inotify via rb-inotify. OpenBSD: kqueue via rb-kqueue.
+    # A changed file wakes the background runner, or else starts an incremental
+    # FixLoop run on that file. Repairs go through FixLoop alone, so each one has
+    # a pass transaction, a journal entry and a run ledger of its own, and
+    # FixLoop#run's mutex keeps it from overlapping an operator's /fix.
+    #
+    # Usage (VPS, after `gem install rb-kqueue` or `rb-inotify`):
+    #   WatchLoop.new(root:, fix_loop:, bus:).run
     class WatchLoop
       DEBOUNCE_SECONDS = 5.0
       MAX_EVENTS_PER_MIN = 20
@@ -80,7 +80,10 @@ module Master
       end
 
       def watchable?(path)
-        return false if SKIP_DIRS.any? { |d| path.include?(d) }
+        # By whole segment: a substring match skipped catalog/ for log/ and blog/ for log/.
+        segments = path.split("/")
+        return false if SKIP_DIRS.any? { |dir| segments.include?(dir.chomp("/")) }
+
         WATCH_EXTENSIONS.include?(File.extname(path))
       end
 

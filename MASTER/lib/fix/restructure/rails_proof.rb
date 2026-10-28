@@ -3,8 +3,6 @@
 require_relative "../../operator/readers"
 require_relative "../rails_app"
 
-# frozen_string_literal: true
-
 module Master
   module Fix
     class Restructure

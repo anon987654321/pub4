@@ -136,7 +136,7 @@ module Master
           return [] unless status&.success?
 
           out.dup.force_encoding(Encoding::UTF_8).scrub.lines.map(&:strip)
-             .reject { |line| line.match?(/:\s*def\s+(?:self\.)?#{Regexp.escape(name)}\b/) }
+             .reject { |line| line.match?(/:\s*def\s+(?:self\.)?#{Regexp.escape(name)}(?!\w)/) }
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "RepairLoop.call_sites")
           []

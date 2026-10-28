@@ -425,7 +425,7 @@ module Master
         viewport = pick[VIEWPORT_RE, 1]&.strip
         selector = pick[SELECTOR_RE]
         text_anchor = pick[TEXT_ANCHOR_RE, 1]&.strip
-        laws = pick[LAW_RE, 1]&.split(/[,\s]+/).map(&:strip).reject(&:empty?).select { |id| Master::Fix::VisualUsability.ids.include?(id) }
+        laws = pick[LAW_RE, 1].to_s.split(/[,\s]+/).map(&:strip).reject(&:empty?).select { |id| Master::Fix::VisualUsability.ids.include?(id) }
         return unless surface && viewport && (selector || text_anchor) && laws.any?
 
         file, line = file_and_line_for(selector, text_anchor, sources, anchors)

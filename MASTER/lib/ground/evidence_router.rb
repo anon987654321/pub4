@@ -44,11 +44,14 @@ module Master
       # story that made the question matter. Keep technical requests about evaluating
       # an AI/repository intact; this changes only personally framed sensitive queries.
       PERSONAL_REPORT = /\b(?:i|me|my|mine|we|us|our|ours|jeg|meg|min|mitt|vi|oss|vår|vårt|våre)\b/i
-      SENSITIVE_PERSONAL_TOPIC = /\b(?:mental\s+health|therap(?:y|ist)|psychiatr|depress(?:ed|ion)|anxiety|panic|suicid|self[- ]harm|trauma|ptsd|ocd|bipolar|mania|psychosis|medication|antidepressant|dose|diagnos|abuse|abusive|coercive|gaslight|manipulat|controlling|violence|threat|relationship|partner|boyfriend|girlfriend|spouse|couples?|family|family\s+conflict|sibling|sister|brother|mother|father|parent|child|harass(?:ment|ed)|humiliat(?:e|ed|ing)|workplace\s+bully|boss|manager|coworker|colleague|career|workplace|job\s+security|credit\s+for\s+my\s+work|unfair\s+treatment|disrespect|addict|alcohol|substance|overwhelmed|coping|grief|debt|financial\s+control|money\s+problems|legal\s+trouble|lonely|loneliness|fear|afraid|unsafe|kjæreste|vold|overgrep|psykisk\s+helse|depresjon|angst|selvmord|selvskading|traume|medisin|antidepressiva|manipulasjon|kontrollerer|trakassering|økonomisk\s+kontroll|ensom)\b/i
+      SENSITIVE_PERSONAL_TOPIC = /\b(?:mental\s+health|therap(?:y|ist|ists|ies)|psychiatr\w*|depress(?:ed|ion)|anxiety|panic|suicid\w*|self[- ]harm|trauma|ptsd|ocd|bipolar|mania|psychosis|medication|antidepressant|dose|diagnos\w*|abuse|abusive|coercive|gaslight|manipulat\w*|controlling|violence|threat|relationship|partner|boyfriend|girlfriend|spouse|couples?|family|family\s+conflict|sibling|sister|brother|mother|father|parent|child|harass(?:ment|ed)|humiliat(?:e|ed|ing)|workplace\s+bully|boss|manager|coworker|colleague|career|workplace|job\s+security|credit\s+for\s+my\s+work|unfair\s+treatment|disrespect|addict\w*|alcohol|substance|overwhelmed|coping|grief|debt|financial\s+control|money\s+problems|legal\s+trouble|lonely|loneliness|fear|afraid|unsafe|kjæreste|vold|overgrep|psykisk\s+helse|depresjon|angst|selvmord|selvskading|traume|medisin|antidepressiva|manipulasjon|kontrollerer|trakassering|økonomisk\s+kontroll|ensom)\b/i
       TECHNICAL_SUPPORT_RESEARCH = /\b(?:github|repository|repo|codebase|system\s+prompt|prompt\s+engineering|benchmark|red[- ]?team|evaluation\s+(?:framework|dataset|benchmark)|model\s+evaluation|llms?|ai\s+(?:system|therapist|safety)|artificial\s+intelligence)\b/i
       TECHNICAL_ACTION = /\b(?:build|improve|evaluate|benchmark|implement|test|research|review|design|audit|red[- ]?team)\b/i
 
-      RESEARCH_PROMPT = "Evidence rule: when a question is current, niche, uncertain, "                        "or externally verifiable, do not answer from memory. Use the "                        "available knowledge or web tools first, then separate observed "                        "evidence from inference."
+      RESEARCH_PROMPT = "Evidence rule: when a question is current, niche, uncertain, " \
+                        "or externally verifiable, do not answer from memory. Use the " \
+                        "available knowledge or web tools first, then separate observed " \
+                        "evidence from inference."
 
       module_function
 
@@ -96,7 +99,7 @@ module Master
         topics << "evidence-based coping with financial stress and official debt guidance" if value.match?(/debt|financial control|money problems|salary|bank|økonomisk kontroll|gjeld|økonomi|penger/i)
         topics << "confidential legal rights and support guidance" if value.match?(/legal trouble|lawyer|legal rights|court|juridisk|rettigheter|advokat/i)
         topics << "evidence-based coping with grief and loneliness" if value.match?(/grief|lonely|loneliness|bereavement|sorg|ensom|ensomhet/i)
-        topics << "evidence-based mental health coping and professional support" if topics.empty? || value.match?(/mental health|therap|psychiatr|overwhelmed|coping|psychisk helse|mestring/i)
+        topics << "evidence-based mental health coping and professional support" if topics.empty? || value.match?(/mental health|therap|psychiatr|overwhelmed|coping|psykisk helse|mestring/i)
         topics << "Norwegian-language clinical guidance" if value.match?(/[æøå]/i)
         topics << "Norwegian official health guidance" if value.match?(/\b(?:Norway|Norwegian|Norge|Noreg|Helsenorge)\b/i)
 
@@ -110,9 +113,11 @@ module Master
       def prompt_for(mode)
         case mode.to_sym
         when :web_current
-          "#{RESEARCH_PROMPT} Freshness is required for this turn. Start with WebSearch; "           "fetch primary sources when the snippets are insufficient."
+          "#{RESEARCH_PROMPT} Freshness is required for this turn. Start with WebSearch; " \
+            "fetch primary sources when the snippets are insufficient."
         when :deep_research
-          "#{RESEARCH_PROMPT} This turn asks for research. Start with SearchKnowledge "           "when relevant, then WebSearch and WebFetch; compare independent sources before concluding."
+          "#{RESEARCH_PROMPT} This turn asks for research. Start with SearchKnowledge " \
+            "when relevant, then WebSearch and WebFetch; compare independent sources before concluding."
         when :repository
           "Evidence rule: this turn concerns the repository. Read/search the actual files before making claims about its current state."
         when :browser

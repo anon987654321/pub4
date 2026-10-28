@@ -384,11 +384,8 @@ module Master
         outcome == :not_committed ? recover_open_state : outcome
       end
 
-      # cleanup! is called for its side effect (remove the transaction
-      # directory); its own return value is not the Result -- the original
-      # code called it and returned Result separately on the next line, and
-      # `cleanup! && Result...` would have made the Result conditional on
-      # cleanup!'s return, which is nil whenever its own `if` guard is false.
+      # cleanup! runs for its side effect (removing the transaction directory)
+      # and answers nil when its symlink guard skips, so the Result stands alone.
       def recover_terminal_state
         cleanup!
         Result.ok(@state.to_sym)
@@ -502,40 +499,6 @@ module Master
         File.delete(path) if File.exist?(path)
         @pending_marker_owned = false
         true
-      end
-
-      SAFE_EVENT_KEYS = %w[
-        id state category result commit head_before head_after operation result_state
-        tracked_paths path_count finding_count argument_count item_count elapsed_ms
-        turn attempt tries resume_count remaining_seconds
-      ].freeze
-
-      def safe_event_payload(payload)
-        safe = {}
-        payload.each do |key, value|
-          name = key.to_s
-          case name
-          when "paths"
-            safe[:path_count] = Array(value).size
-          when "path", "target"
-            safe["#{name}_present".to_sym] = !value.to_s.empty?
-          when "error"
-            safe[:error_present] = !value.to_s.empty?
-          when "message", "reason"
-            safe["#{name}_present".to_sym] = !value.to_s.empty?
-          when "findings"
-            safe[:finding_count] = Array(value).size
-          else
-            next unless SAFE_EVENT_KEYS.include?(name)
-            if value.is_a?(Numeric) || value == true || value == false
-              safe[name.to_sym] = value
-            elsif value.is_a?(String) || value.is_a?(Symbol)
-              text = value.to_s
-              safe[name.to_sym] = text if text.match?(/\A[a-zA-Z0-9_.:-]{1,128}\z/)
-            end
-          end
-        end
-        safe
       end
 
       def persisted? = File.file?(File.join(@dir, MANIFEST))

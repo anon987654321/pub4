@@ -51,7 +51,7 @@ module Master
               content = Regexp.last_match(2)
               next Regexp.last_match(0) if content.match?(/viewport-fit\s*=\s*cover/i)
 
-              separator = content.include?(",") ? ", " : ", "
+              separator = content.strip.empty? ? "" : ", "
               "#{Regexp.last_match(1)}#{content}#{separator}viewport-fit=cover#{Regexp.last_match(3)}"
             end
             @transforms << :viewport_fit if out != src
@@ -266,7 +266,6 @@ module Master
               val = Regexp.last_match(1).to_i
               abs_val = val.abs
               next match if abs_val % 4 == 0 && abs_val <= 96
-              next match if abs_val.zero?
               snapped = (abs_val / 8.0).round * 8
               final_val = val < 0 ? -snapped : snapped
               changed = true

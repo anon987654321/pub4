@@ -42,18 +42,10 @@ module Master
           Strategy.new(predicate: :style?, transforms: %i[snap_to_eight_px_rhythm remove_decorative_fx enforce_flat_pixels snap_touch_targets]),
         ].freeze
 
-        # remove_immediate_dead_code/add_trailing_commas are Ruby-AST heuristics
-        # (Prism-based literal-line protection, Ruby hash/array trailing-comma
-        # convention) -- they used to sit here and run against every file type.
-        # On non-Ruby source, Prism.parse fails, literal_lines comes back empty,
-        # the heuristics run fully unguarded, AND apply_transforms's own
-        # parses?-before/after safety net only fires `if ruby?` -- so a broken
-        # transform on a .js/.css file had zero backstop. Confirmed in production:
-        # add_trailing_commas turned every CSS rule's closing `}` into a trailing
-        # `,` (e.g. `--z-skip: 2000;` + `}` -> `--z-skip: 2000;,`), and
-        # remove_immediate_dead_code deleted live sibling if-branches in chat.js
-        # that only *looked* unreachable without real block-scope analysis.
-        # Now Ruby-only, via the ruby? strategy above.
+        # remove_immediate_dead_code and add_trailing_commas are Ruby-AST
+        # heuristics and sit in the ruby? strategy above, not here: on other
+        # source Prism.parse fails, literal_lines comes back empty and they run
+        # unguarded (a CSS `}` gains a comma; a live JS branch reads as dead).
         UNIVERSAL_TRANSFORMS = %i[strip_accidental_sub_wrapper expand_tabs collapse_blank_lines strip_trailing_whitespace ensure_final_newline].freeze
 
         include SyntaxTransforms
@@ -170,24 +162,11 @@ module Master
         end
 
         # An explicit accumulator loop, deliberately — not reduce, not
-        # each_with_object.
-        #
-        # The accumulator is the rewritten source, so each step must produce the
-        # next value. each_with_object returns the object and throws the block
-        # result away, which turns every transform into a no-op; all thirteen
-        # transform tests fail at once and nothing else does.
-        #
-        # It has been written as `reduce(src)` and rewritten to
-        # `each_with_object(src)` twice, by the LLM fix sweep applying rule
-        # EACH_WITH_OBJECT (data/laws.yml line). That rule's lexical detector
-        # requires `reduce({})` — a fresh empty hash — and never matched this
-        # line; the sweep applied it from the rule's *name* instead. Fixed once
-        # in 5d8d49401, reintroduced by 8962ce5f7, and again after 4e964ce12.
-        #
-        # So this is written as a plain loop with a named accumulator: there is
-        # no `reduce` for that rule to recognise, and the data-flow is on the
-        # page rather than in a method's return-value contract. The rule has
-        # also been narrowed, but the code should not depend on that.
+        # each_with_object. The accumulator is the rewritten source, so each
+        # step must produce the next value; each_with_object throws the block
+        # result away and turns every transform into a no-op. A plain loop
+        # gives the EACH_WITH_OBJECT sweep no `reduce` to rewrite and keeps the
+        # data-flow on the page.
         def apply_transforms(src, transforms)
           current = src
 

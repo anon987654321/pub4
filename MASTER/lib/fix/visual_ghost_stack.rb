@@ -248,10 +248,6 @@ module Master
       def safe_slug(value)
         value.to_s.gsub(/[^a-zA-Z0-9._-]+/, "_")
       end
-
-      def repo_root
-        File.expand_path("../..", @root)
-      end
     end
   end
 end

@@ -85,7 +85,8 @@ module Master
       end
 
       def session_line(session)
-        "receipt: session commit=#{session[:commit]} constitution=#{session[:constitution]} "         "memory=#{session[:memory_version] || "none"} model=#{session[:model]}"
+        "receipt: session commit=#{session[:commit]} constitution=#{session[:constitution]} " \
+          "memory=#{session[:memory_version] || "none"} model=#{session[:model]}"
       end
 
       def digest(root: MasterPaths::ROOT)
@@ -149,9 +150,6 @@ module Master
         raise "boot receipt: executable law population unavailable: #{e.class}: #{e.message}"
       end
 
-      # `schema:` is a version pin, not a provider, and it has no `env` — so it
-      # printed as a permanently unavailable provider and put the receipt one
-      # short of honest.
       def executable_law_root(root)
         candidates = [
           root,
@@ -161,6 +159,8 @@ module Master
         candidates.find { |candidate| File.file?(File.join(candidate, "law", "definition.rb")) } || MasterPaths::ROOT
       end
 
+      # `schema:` is a version pin, not a provider, and has no `env`; a non-Hash
+      # row is skipped so it does not print as a permanently unavailable provider.
       def providers(root: MasterPaths::ROOT)
         rows = Master.provider_config(root:)
         keyed = rows.filter_map do |name, row|

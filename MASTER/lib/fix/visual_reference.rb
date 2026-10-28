@@ -79,8 +79,7 @@ module Master
           REFERENCE LENSES
           These reference profiles describe qualities commonly useful when reviewing mature product surfaces. They are not a scorecard, ranking, pixel target, or instruction to copy another product. MASTER laws remain authoritative. Use a reference lens only when the rendered evidence makes the corresponding quality relevant.
 
-          #{PROFILES.map { |id, profile| "#{id}: #{profile[:name]} — #{profile[:signals].join(", ")}" }.join("
-")}
+          #{PROFILES.map { |id, profile| "#{id}: #{profile[:name]} — #{profile[:signals].join(", ")}" }.join("\n")}
 
           Report concrete rendered evidence and the applicable MASTER laws. Prefer
           the smallest repair that improves the product's own identity, content,

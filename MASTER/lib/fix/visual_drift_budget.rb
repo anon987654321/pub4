@@ -29,7 +29,8 @@ module Master
       end
 
       def chrome_rects(payload)
-        Array(payload["elements"]).select { |e| e["visible"] != false && chrome?(e) }
+        # An element the probe could not box has no geometry to compare; .values_at on nil raised.
+        Array(payload["elements"]).select { |e| e["visible"] != false && chrome?(e) && (e["frect"] || e["rect"]).is_a?(Hash) }
           .to_h { |e| [e["key"], (e["frect"] || e["rect"]).values_at("x", "y", "w", "h")] }
       end
 
@@ -62,7 +63,7 @@ module Master
 
       def log(message)
         Master::Trace::Dmesg.status("visual0", message)
-      rescue StandardError, NameError
+      rescue StandardError
         nil
       end
 

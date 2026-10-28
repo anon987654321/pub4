@@ -332,8 +332,7 @@ module Master
 
           rows = paths.map do |path|
             lines = File.foreach(path).first(RELATED_LINES)
-            suffix = File.foreach(path).count > RELATED_LINES ? "
-... truncated at #{RELATED_LINES} lines" : ""
+            suffix = File.foreach(path).count > RELATED_LINES ? "\n... truncated at #{RELATED_LINES} lines" : ""
             "Related file, #{relative(path)}:\n#{numbered_lines(lines)}#{suffix}"
           rescue StandardError
             "Related file, #{relative(path)}"

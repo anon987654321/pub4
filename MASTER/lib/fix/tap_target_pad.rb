@@ -37,7 +37,7 @@ module Master
         Array(stylesheets).select { |path| File.file?(path) && File.read(path, encoding: "UTF-8").match?(pattern) }
       end
 
-      # :applied, :already_padded, :guard_refused, :score_dropped or :no_rescore. Without a
+      # :applied, :already_padded, :guard_refused, :score_dropped, :finalize_failed or :no_rescore. Without a
       # re-render hook nothing is written: an unmeasured layout edit is a guess.
       def apply(path, selector, root:, rescore:)
         return :no_rescore unless rescore
@@ -49,9 +49,16 @@ module Master
         return :guard_refused if WriteGuard.default.verdict(path:, content: updated).blocked?
 
         transaction = Transaction.new(root:, paths: [path]).begin!
-        File.write(path, updated)
-        transaction.observe!
-        return transaction.finalize! && :applied if rescore.call(path)
+        begin
+          File.write(path, updated)
+          transaction.observe!
+          kept = rescore.call(path)
+        rescue StandardError
+          transaction.rollback!
+          raise
+        end
+        # finalize! answers a Result either way; an err one is not a kept pad.
+        return(transaction.finalize!.ok? ? :applied : :finalize_failed) if kept
 
         transaction.rollback!
         :score_dropped

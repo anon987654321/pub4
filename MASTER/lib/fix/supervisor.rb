@@ -62,8 +62,7 @@ module Master
 
         @bus&.publish("fix_supervisor:run", mission: record["id"], target: record["scope"],
                       attempt: record["attempt_count"].to_i + 1)
-        result = with_lease_guard { @fix_loop.run(@target) }
-        result
+        with_lease_guard { @fix_loop.run(@target) }
       rescue StandardError => e
         @bus&.publish("fix_supervisor:attempt_failed", error: "#{e.class}: #{e.message}")
         mission = Mission.new(root: @root)
@@ -137,7 +136,8 @@ module Master
         delay = Time.iso8601(wake.to_s) - Time.now.utc
         [[delay, 0.0].max, poll_interval].min
       rescue ArgumentError
-        0.0
+        # An unreadable wake time is due (due?), so waiting zero here re-ran the loop without pause.
+        poll_interval
       end
 
       def poll_interval

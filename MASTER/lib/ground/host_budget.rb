@@ -97,7 +97,11 @@ module Master
         pids = suspended_ruby_pids(user:)
         return 0 if pids.empty?
 
-        pids.each { |pid| Process.kill("KILL", pid) rescue Errno::ESRCH }
+        pids.each do |pid|
+          Process.kill("KILL", pid)
+        rescue Errno::ESRCH
+          nil
+        end
         Master::Trace::Dmesg.status("host0", "reaped #{pids.size} suspended ruby (#{pids.join(", ")})", io:)
         pids.size
       end

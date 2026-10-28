@@ -332,9 +332,9 @@ module Master
       def files_part
         return if @file_total.zero?
 
-        share = @file_total.positive? ? (100.0 * @file_done / @file_total).round : 0
+        share = (100.0 * @file_done / @file_total).round
         base = @file && File.basename(@file)
-                name = base ? " #{base.length > FILE_CHARS ? "…#{base[-(FILE_CHARS - 1)..]}" : base}" : ""
+        name = base ? " #{base.length > FILE_CHARS ? "…#{base[-(FILE_CHARS - 1)..]}" : base}" : ""
         "files #{@file_done}/#{@file_total} (#{share}%)#{name}"
       end
 

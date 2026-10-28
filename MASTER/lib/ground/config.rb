@@ -34,12 +34,9 @@ module Master
       DEFAULT_WEB_PORT = 53_187
 
       DEFAULTS = {
-        # xAI deprecated grok-4-fast (confirmed 2026-07-11: 404 "xAI
-        # recommends switching to Grok 4.3"). This is the ultimate fallback
-        # model for disabled routing, or as the last resort in
-        # ModelRouter#fallback_chain — must work
-        # without requiring paid credits, since this repo should work for
-        # anyone with or without an OpenRouter balance.
+        # The fallback model when routing is disabled and the last resort in
+        # ModelRouter#fallback_chain. It is a free model, so the repo works
+        # with or without an OpenRouter balance.
         "model" => "nvidia/nemotron-3-super-120b-a12b:free",
         "web_host" => "127.0.0.1",
         "web_public_url" => "https://ai.brgen.no",
@@ -80,8 +77,8 @@ module Master
         directory = File.dirname(@path)
         FileUtils.mkdir_p(directory, mode: 0o700)
         File.chmod(MasterPaths.private_dir_mode(directory), directory)
-        errs = validate if respond_to?(:validate)
-        warn "config: validation issues before save: #{errs.join('; ')}" if errs && !errs.empty?
+        errs = validate
+        warn "config: validation issues before save: #{errs.join('; ')}" unless errs.empty?
         # config.yml may include web_token and web_secret_key_base.
         write_atomic(@path, @settings.to_yaml, fsync: true, mode: 0o600)
       end

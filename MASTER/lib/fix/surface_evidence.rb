@@ -638,7 +638,7 @@ module Master
             rescue StandardError => e
               problems << "RAILS/apps.yml: #{error_text(e)}"
             end
-          elsif deployment_surface?
+          else
             problems << "RAILS/apps.yml is missing or symlinked"
           end
         end
@@ -889,20 +889,12 @@ module Master
         end || rails_target? && @plan.sources.any? { |source| %w[.erb .html .htm .css .scss].include?(File.extname(source.path).downcase) }
       end
 
-      def target_has_runtime?
-        @plan.sources.any? { |source| RUNTIME_EXTENSIONS.include?(File.extname(source.path).downcase) }
-      end
-
       def target_has_deployment?
         rails_target? || @target_label == "OPENBSD" || @target_label.start_with?("OPENBSD/") ||
           @plan.sources.any? do |source|
             File.basename(source.path).match?(/\A(?:Procfile|Dockerfile|compose\.ya?ml|.*deploy.*|.*\.service)\z/i) ||
               source.path.match?(%r{(?:deploy|deployment|helm|terraform|k8s)/})
           end
-      end
-
-      def rails_target?
-        @target_label == "RAILS" || @target_label.start_with?("RAILS/")
       end
 
       def deployment_surface?
@@ -1029,8 +1021,9 @@ module Master
 
       def ignored_directory?(relative_path)
         parts = relative_path.split("/")
-        parts.any? { |part| %w[.git .master .bundle node_modules tmp log storage coverage .cache .sass-cache].include?(part) } ||
-          parts.each_cons(2).any? { |pair| pair == %w[vendor bundle] }
+        nested, single = IGNORED_DIRECTORIES.partition { |entry| entry.include?("/") }
+        parts.any? { |part| single.include?(part) } ||
+          nested.any? { |entry| parts.each_cons(entry.count("/") + 1).include?(entry.split("/")) }
       end
 
       def executable_path(name)
@@ -1227,7 +1220,6 @@ module Master
       def failed_report(error)
         reason = "surface evidence failed: #{error_text(error)}"
         rows = SURFACES.to_h { |name| [name, receipt("inconclusive", reason:)] }
-        rows["media_assets"] = receipt("inconclusive", reason:)
         compact = rows.sort.to_h { |name, row| [name, row.slice("status", "reason", "evidence_sha256", "counts").compact] }
         {
           "schema_version" => SCHEMA_VERSION,
