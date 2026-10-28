@@ -70,8 +70,10 @@
   function pointBudget(requested) {
     const contract = window.MASTER_FACE_CONTRACT || {};
     const budget = contract.spatial?.budget || {};
-    // FaceState owns the split. An older shell with only a total budget still
-    // honors the canonical allocation instead of granting each overlay the total.
+    const swarm = contract.swarm || {};
+    const state = currentFaceState();
+    const reduced = reducedMotionEnabled(state);
+    // FaceState owns the additive point split; swarm remains under spatial limits.
     const sharedBudget = window.MASTER_FACE_STATE?.renderBudget?.() || {};
     const mobile = constrainedDevice();
     const fallback = mobile ? MOBILE_FALLBACK : DESKTOP_FALLBACK;
@@ -83,9 +85,15 @@
     const fallbackShare = Math.max(1, Math.floor(total * stippleWeight / (stippleWeight + worldWeight)));
     const shared = Number(sharedBudget.stipple_points);
     const configured = Number.isFinite(shared) && shared > 0 ? shared : fallbackShare;
-    const ceiling = Number.isFinite(configured) && configured > 0
+    let ceiling = Number.isFinite(configured) && configured > 0
       ? Math.min(MAX_POINTS, Math.floor(configured))
       : fallback;
+    if (swarm.enabled === true) {
+      const tokenLimit = Number(swarm.particle_budget);
+      if (Number.isFinite(tokenLimit) && tokenLimit > 0) ceiling = Math.min(ceiling, Math.floor(tokenLimit));
+      const spatialLimit = Number(budget[reduced ? "reduced_motion_particles" : mobile ? "mobile_particles" : "desktop_particles"]);
+      if (Number.isFinite(spatialLimit) && spatialLimit > 0) ceiling = Math.min(ceiling, Math.floor(spatialLimit));
+    }
     const desired = Number.isFinite(Number(requested)) && Number(requested) > 0
       ? Math.floor(Number(requested)) : ceiling;
     return Math.max(1, Math.min(desired, ceiling, MAX_POINTS));
@@ -168,12 +176,17 @@
     const thresholds = new Float32Array(samples.length);
     const zones = new Float32Array(samples.length);
     const biases = new Float32Array(samples.length);
+    const depthRanks = new Float32Array(samples.length);
+    const homeDepths = new Float32Array(samples.length);
+    const velocities = new Float32Array(samples.length * 3);
 
     samples.forEach((sample, index) => {
       const x = Number(sample.x), y = Number(sample.y), z = Number(sample.z);
       if (![x, y, z].every(Number.isFinite)) throw new Error("sample coordinates must be finite");
       const j = index * 3;
       positions[j] = x; positions[j + 1] = y; positions[j + 2] = z;
+      depthRanks[index] = clamp(0.5 + z * 0.5, 0.5, 0, 1);
+      homeDepths[index] = z;
       phases[index] = rand(index, 17) * Math.PI * 2;
       thresholds[index] = rand(index, 19);
       zones[index] = clamp(sample.zone, 0, 0, 8);
@@ -186,6 +199,7 @@
     geometry.setAttribute("aThreshold", new THREE.BufferAttribute(thresholds, 1));
     geometry.setAttribute("aZone", new THREE.BufferAttribute(zones, 1));
     geometry.setAttribute("aBias", new THREE.BufferAttribute(biases, 1));
+    geometry.setAttribute("aDepthRank", new THREE.BufferAttribute(depthRanks, 1));
     const idle = profiles().idle || IDLE_PROFILE;
     const pointSize = pointSizing();
     const material = new THREE.ShaderMaterial({
