@@ -292,6 +292,45 @@ class TestFixKernelLifecycle < Minitest::Test
     end
   end
 
+  def test_execution_lock_refuses_a_symlinked_master_directory
+    with_workspace do |root|
+      kernel = K.new(root:)
+      outside = File.join(root, "outside")
+      Dir.mkdir(outside)
+      File.symlink(outside, File.join(root, ".master"))
+
+      assert_raises(IOError) { kernel.execution_mutex.synchronize {} }
+      refute File.exist?(File.join(outside, "fix-execution.lock"))
+    end
+  end
+
+  def test_execution_lock_refuses_a_symlinked_lock_file
+    with_workspace do |root|
+      kernel = K.new(root:)
+      directory = File.join(root, ".master")
+      Dir.mkdir(directory, 0o700)
+      outside = File.join(root, "outside-lock")
+      File.write(outside, "")
+      File.chmod(0o600, outside)
+      File.symlink(outside, File.join(directory, "fix-execution.lock"))
+
+      assert_raises(IOError) { kernel.execution_mutex.synchronize {} }
+      assert_equal "", File.read(outside)
+    end
+  end
+
+  def test_execution_lock_refuses_a_group_or_world_writable_state_directory
+    with_workspace do |root|
+      kernel = K.new(root:)
+      directory = File.join(root, ".master")
+      Dir.mkdir(directory, 0o700)
+      File.chmod(0o770, directory)
+
+      assert_raises(IOError) { kernel.execution_mutex.synchronize {} }
+      refute File.exist?(File.join(directory, "fix-execution.lock"))
+    end
+  end
+
   def test_repair_scan_failure_is_recorded_as_an_error_outcome
     with_workspace do |root|
       kernel = K.new(root:)
