@@ -25,7 +25,7 @@ module Master
         end
 
         def build_repair_loop(**options)
-          require_relative "repair_loop" unless defined?(RepairLoop)
+          require_relative "repair_adapter" unless defined?(Kernel::RepairAdapter)
           Kernel::RepairAdapter.new(**options, kernel: self)
         end
 
