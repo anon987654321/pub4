@@ -38,13 +38,15 @@ module Master
         return unless trackable?(model)
 
         @mutex.synchronize do
-          data = load_data
-          day = today_key
-          data[day] ||= {}
-          key = model.to_s
-          data[day][key] = data[day].fetch(key, 0) + 1
-          prune_old_days!(data, day)
-          save_data(data)
+          with_state_lock do
+            data = load_data
+            day = today_key
+            data[day] ||= {}
+            key = model.to_s
+            data[day][key] = data[day].fetch(key, 0) + 1
+            prune_old_days!(data, day)
+            save_data(data)
+          end
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "model_quota.record", model: model.to_s)
@@ -129,6 +131,51 @@ module Master
           exhausted: tracked.select { |_, used| used.to_i >= daily_limit }.keys,
           forecasts: tracked.keys.to_h { |model| [model, forecast(model, day:)] },
         }
+      end
+
+      # Process-local Mutex protects threads; the sidecar flock protects the
+      # read-modify-write transaction across independent MASTER processes.
+      def with_state_lock
+        destination = File.expand_path(path)
+        directory = File.dirname(destination)
+        raise IOError, "refusing symlinked model quota directory" if File.symlink?(directory)
+
+        FileUtils.mkdir_p(directory, mode: 0o700)
+        directory_stat = File.lstat(directory)
+        unless directory_stat.directory? && !directory_stat.symlink? && (directory_stat.mode & 0o002).zero?
+          raise IOError, "model quota directory must be a real, non-world-writable directory"
+        end
+
+        lock_path = "#{destination}.lock"
+        raise IOError, "refusing symlinked model quota lock" if File.symlink?(lock_path)
+        flags = File::RDWR | File::CREAT
+        flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+        File.open(lock_path, flags, 0o600) do |file|
+          opened = file.stat
+          unless opened.file? && opened.nlink == 1 && (opened.mode & 0o077).zero?
+            raise IOError, "model quota lock must be a private singly linked regular file"
+          end
+
+          current = File.lstat(lock_path)
+          unless current.file? && !current.symlink? && current.nlink == 1 &&
+                 current.dev == opened.dev && current.ino == opened.ino
+            raise IOError, "model quota lock path changed while opening"
+          end
+          raise IOError, "could not acquire model quota lock" unless file.flock(File::LOCK_EX)
+
+          begin
+            current = File.lstat(lock_path)
+            unless current.file? && !current.symlink? && current.nlink == 1 &&
+                   current.dev == opened.dev && current.ino == opened.ino
+              raise IOError, "model quota lock path changed while waiting for its lock"
+            end
+            yield
+          ensure
+            file.flock(File::LOCK_UN)
+          end
+        end
+      rescue SystemCallError => e
+        raise IOError, "cannot safely lock model quota state: #{e.class}: #{e.message}"
       end
 
       def path
