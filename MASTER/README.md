@@ -111,6 +111,10 @@ principles but are not the same workflow. `FixLoop` remains the public repair
 coordinator and still uses the existing `RepairLoop`, durable `Mission`/`RunJournal`,
 and disk-backed `Transaction`; their recovery and rollback contracts are not
 being replaced by another runner or ledger.
+The current `RunJournal` serializes access through `.master/fix_runs.lock` and
+refuses symlinked state/lock paths, group/world-writable state directories,
+non-regular or non-private lock files, and lock-path/inode replacement around
+`flock`.
 
 The coordinator is split by responsibility without changing its public entry
 point: `FixLoop::Lifecycle` owns journal resume, incremental-scope proof and
