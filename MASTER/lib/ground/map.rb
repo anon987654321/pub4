@@ -114,10 +114,10 @@ module Master
             path = value.to_s.strip.tr("\\", "/")
             return "agent_map #{context} has an empty path" if path.empty?
             return "agent_map #{context} has an unsafe path #{path.inspect}" if
-              path.start_with?("/") || path.match?(/\\A[A-Za-z]:/) || path.split("/").include?("..")
+              path.start_with?("/") || path.match?(/\A[A-Za-z]:/) || path.split("/").include?("..")
 
-            relative = path.sub(%r{/+\\z}, "")
-            base = relative.match?(%r{\\A(?:MASTER|RAILS|OPENBSD|STUDIO)/}) ? repository_root : master_root
+            relative = path.sub(%r{/+\z}, "")
+            base = relative.match?(%r{\A(?:MASTER|RAILS|OPENBSD|STUDIO)/}) ? repository_root : master_root
             resolved = File.expand_path(relative, base)
             unless resolved.start_with?(repository_root + File::SEPARATOR)
               return "agent_map #{context} path escapes the repository: #{path}"
