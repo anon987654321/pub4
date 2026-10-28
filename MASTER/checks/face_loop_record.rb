@@ -12,7 +12,7 @@
 # Three things make the sync exact, and none of them is a sleep.
 #
 #   1. The mouth is driven by the wav, not by playback. The face reads
-#      tts.analyser every frame (face.part3.txt:262) for an RMS and three band
+#      tts.analyser every frame (face.part3.txt, hasAnalyserBuffers) for an RMS and three band
 #      energies, so this precomputes both buffers per video frame from the wav
 #      itself and installs an analyser that answers from that table. Headless
 #      Chrome has no audio device; nothing here needs one.
@@ -72,7 +72,7 @@ end.parse!
 abort "usage: --audio WAV --out MP4" unless options[:audio] && options[:out]
 abort "no such wav: #{options[:audio]}" unless File.file?(options[:audio])
 
-FFT_SIZE = 256          # analyser.fftSize in face_speech_runtime.js:590
+FFT_SIZE = 256          # analyser.fftSize in RAILS/master/public/face_speech_runtime.js
 BINS = FFT_SIZE / 2     # analyser.frequencyBinCount
 FRAME_BYTES = FFT_SIZE + BINS
 MIN_DB = -100.0         # AnalyserNode defaults, which is what the face reads
@@ -240,7 +240,7 @@ begin
     cdp.viewport(width, height, scale: options[:scale])
     cdp.navigate(url, settle: 0.8)
 
-    # The primer check: index.html.erb returns null for a WebGL context until
+    # The primer check: chat/index.html.erb returns null for a WebGL context until
     # window._primerFired, and the page exposes its own opener. face_capture_probe
     # records why this is the honest way in rather than a synthetic tap.
     cdp.evaluate(<<~JS) # scan: intentional — a CDP recorder evaluates JavaScript by definition
@@ -363,7 +363,7 @@ begin
           F.tts.playing = true;
           // A conversation IS interaction, and so is a four-minute utterance.
           // sendMessage resets lastTouch for exactly this reason
-          // (face.part5.txt:790): past sixty seconds without it, frame() drifts
+          // (face.part5.txt, runMessageTurn): past sixty seconds without it, frame() drifts
           // morphTarget down to 0.55 and the face gathers into a dim oval
           // halfway through the take.
           F.State.lastTouch = #{base.round(3)};

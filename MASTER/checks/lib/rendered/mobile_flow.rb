@@ -21,12 +21,11 @@ module Deploy
     TOUCH_MIN = 44
 
     # Interactive selectors that must meet the touch floor when laid out.
-    # Chrome only — not every link in the feed.
+    # Chrome only — not every link in the feed. MEASURE reads this list.
     CHROME_SEL = [
       ".tab-bar a",
       ".tab-bar button",
       "nav.tab-bar a",
-      ".skip-link",
       ".edge-grip",
       ".nearby-chat-widget-tab",
       ".chat-tab",
@@ -52,12 +51,7 @@ module Deploy
         const skip = document.querySelector('a.skip-link, .skip-link, a[href="#main-content"], a[href="#zin"]');
         const tabBar = document.querySelector('.tab-bar, nav.tab-bar, [data-scroll-chrome-target="bar"]');
         const overflow = de.scrollWidth > vw + 1;
-        const chromeSel = [
-          '.tab-bar a', '.tab-bar button', 'nav.tab-bar a',
-          '.edge-grip', '.nearby-chat-widget-tab', '.chat-tab',
-          'header .btn', '.page-header .btn',
-          '.btn-primary', 'a.btn--primary', 'button.btn-primary'
-        ].join(',');
+        const chromeSel = '#{CHROME_SEL}';
 
         const chrome = [];
         document.querySelectorAll(chromeSel).forEach((el) => {
@@ -196,7 +190,7 @@ module Deploy
       unless GeometryProbe.ok?(payload)
         err = payload["error"] || "HTTP #{payload["status"]}"
         # CDP timeout under load is environment flake, not a design defect.
-        if err.to_s.match?(/timeout|Timeout/i)
+        if GeometryProbe.timeout?(payload)
           @result.warn("mobile_flow: #{label} skipped (#{err})")
 
           report_surface(label, :inconclusive, err)
@@ -248,8 +242,7 @@ module Deploy
       # MASTER face is a full-document special case (id=face / primer).
       if app == "master"
         unless m["has_main"] || face_in_payload
-          # re-check via raw evaluate not available; trust measure
-          @result.fail("mobile_flow: #{label} missing main/face landmark", severity: :soft) unless m["has_main"]
+          @result.fail("mobile_flow: #{label} missing main/face landmark", severity: :soft)
         end
       else
         @result.fail("mobile_flow: #{label} missing main landmark") unless m["has_main"]

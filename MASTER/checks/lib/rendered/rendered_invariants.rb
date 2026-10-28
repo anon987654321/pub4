@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "json"
 require_relative "../../support/cdp_session"
 require_relative "../../../lib/gap"
 require_relative "../../support/check_result"
@@ -62,7 +63,7 @@ module Deploy
       # click.
       "radio.brgen.no" => :raised,
       # The storefronts are not here: a closed or undrawn tab bar publishes no
-      # height, so their tab sits in the corner like every other surface.,
+      # height, so their tab sits in the corner like every other surface.
     }.freeze
 
     # A background this light cannot be a dark theme, whatever the tokens say.
@@ -279,7 +280,8 @@ module Deploy
       return if offenders.empty?
 
       @result.fail(
-        "#{host} top chrome has #{offenders.size} optically off-centre text run(s) — "         "#{offenders.first(4).join('; ')}. Correct the rendered ink position, not merely the box.",
+        "#{host} top chrome has #{offenders.size} optically off-centre text run(s) — " \
+        "#{offenders.first(4).join('; ')}. Correct the rendered ink position, not merely the box.",
         severity: :soft,
       )
     end

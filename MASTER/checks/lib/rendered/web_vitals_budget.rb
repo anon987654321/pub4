@@ -12,8 +12,7 @@ module Deploy
   # PerformanceObserver at one percent and beaconed them to /web_vitals for some
   # time, and design_contract_test.rb proves that wiring is present. What none of
   # it does is fail: a one-percent sample lands in a log line nobody reads, so a
-  # regression that doubles LCP ships. CHECK_ADEQUACY.md records the hole as its
-  # own item 8, "no LCP/INP or request waterfall check".
+  # regression that doubles LCP ships.
   #
   # This is that check. It measures the two paint metrics on a real load rather
   # than trusting the beacon, because a budget checked against production
@@ -115,19 +114,14 @@ module Deploy
       # Honor focused runs such as CHECK_SURFACES=amber/wardrobe. Otherwise use
       # the canonical pixel_snapshot declarations and pick one mobile first
       # screen per app, so the same inventory governs visuals and performance.
-      selected = if ENV["CHECK_SURFACES"].to_s.strip.empty?
-                   rows.select(&:pixel_snapshot).select { |surface| surface.viewport == "mobile" }
-                       .group_by(&:app).keys.sort.filter_map do |app|
-                     rows.find { |surface| surface.app == app && surface.pixel_snapshot && surface.viewport == "mobile" }
-                   end
-                 else
-                   rows.group_by(&:app).keys.sort.filter_map do |app|
-                     app_rows = rows.select { |surface| surface.app == app }
-
-                     app_rows.find { |surface| surface.viewport == "mobile" } || app_rows.first
-                   end
-                 end
-      selected
+      if ENV["CHECK_SURFACES"].to_s.strip.empty?
+        rows.select { |surface| surface.pixel_snapshot && surface.viewport == "mobile" }
+            .group_by(&:app).sort.map { |_app, app_rows| app_rows.first }
+      else
+        rows.group_by(&:app).sort.map do |_app, app_rows|
+          app_rows.find { |surface| surface.viewport == "mobile" } || app_rows.first
+        end
+      end
     end
 
     def judge(cdp, surface)

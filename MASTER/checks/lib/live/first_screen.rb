@@ -52,11 +52,9 @@ module Deploy
 
     # Map surface labels (from SURFACES / verticals) → schema ids.
     # live_first_screen builds label as "app/label" (e.g. brgen/vertical_marketplace).
-# /live had a live_feed schema until 76612fd0b folded it into /nearby/room —
-# two hyperlocal surfaces where one already contained the other. The schema
-# went with the surface and these two mappings did not, so this check probed
-# /live, got the redirect, and raised "unknown surface schema: live_feed".
-SCHEMA_FOR_LABEL = {
+    # No /live mapping: /live redirects to /nearby/room and has no schema of its
+    # own, so a mapping to one raises "unknown surface schema".
+    SCHEMA_FOR_LABEL = {
       "vertical_marketplace" => "marketplace_listings",
       "vertical_marketplace_cart" => "marketplace_cart",
       "vertical_dating" => "dating_home",
@@ -207,10 +205,10 @@ SCHEMA_FOR_LABEL = {
 
       body = utf8_body(res.body)
       ["Exception", "Routing Error"].each do |bad|
-        @result.fail("first_screen: #{label} saw #{bad}") if body.include?(bad.tr("\\", ""))
+        @result.fail("first_screen: #{label} saw #{bad}") if body.include?(bad)
       end
       Array(surface[:first_screen]).each do |pat|
-        @result.fail("first_screen first_screen: #{label} missing #{pat.inspect}") unless body.match?(pat)
+        @result.fail("first_screen: #{label} missing #{pat.inspect}") unless body.match?(pat)
       end
 
       # Hierarchy: at most one h1 in document source (skip auth-only shells / JSON APIs)

@@ -205,7 +205,7 @@ module Deploy
       body = response.body.to_s.dup.force_encoding(Encoding::UTF_8)
       body = body.encode(Encoding::UTF_8, invalid: :replace, undef: :replace) unless body.valid_encoding?
       ["Exception", "Routing Error"].each do |bad|
-        @result.fail("#{app.name}/#{label}: saw #{bad}") if body.include?(bad.tr("\\", ""))
+        @result.fail("#{app.name}/#{label}: saw #{bad}") if body.include?(bad)
       end
       Array(step[:expect_body]).each do |pat|
         @result.fail("#{app.name}/#{label}: body missing #{pat.inspect}") unless body.match?(pat)

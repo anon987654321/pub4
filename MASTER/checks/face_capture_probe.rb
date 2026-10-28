@@ -18,20 +18,19 @@
 # not black at all: frames 40 seconds apart were byte-identical at 1.15% lit,
 # a single drawn frame held for the length of the video.
 #
-# index.html.erb line 34 is the whole story:
+# One guard in RAILS/master/app/views/chat/index.html.erb is the whole story:
 #
 #     if (!window._primerFired && /webgl/i.test(String(type))) return null;
 #
 # getContext returns NULL for any WebGL request before the primer tap. THREE
 # never initialises, the canvas stays empty, and a capture records the primer
-# screen — which is near-black. The guard's own comment names it the deferred-boot contract, and it is
-# in START_HERE's "do not optimize away" list, so the recorder is what has to
-# change.
+# screen — which is near-black. The view's own comment names it the deferred-boot
+# contract and says to preserve it, so the recorder is what has to change.
 #
 # Two things make the tap work here where a naive attempt does not.
 #
-#   1. The check is a JS FLAG, not a browser policy. index.html.erb:34 tests
-#      window._primerFired, and the page exposes its own opener at line 289 --
+#   1. The check is a JS FLAG, not a browser policy. The guard tests
+#      window._primerFired, and the page exposes its own opener as
 #      window.__MASTER_PRIMER_TAP__. So no trusted event is needed and calling
 #      that function is the honest way in. (A keypress is kept as a fallback,
 #      and Input.dispatchKeyEvent IS trusted, which matters for anything
@@ -41,8 +40,8 @@
 #      fails without SwiftShader and the page sets __MASTER_RENDERER_FAILED__.
 #      CdpSession takes webgl: true for exactly this.
 #
-# Readiness is dbgFrames, not a sleep. The page's own boot watchdog uses it
-# (index.html.erb:285) and its comment says why: dbgFrames only increments from
+# Readiness is dbgFrames, not a sleep. The page's own boot watchdog (the 35 s
+# fallback timer in the same view) uses it and says why: dbgFrames only increments from
 # inside a real render loop, so it distinguishes "drew something" from "loaded
 # and sat there". A timer cannot tell those apart, and a black frame is exactly
 # what a timer would have captured.
@@ -107,13 +106,13 @@ Deploy::CdpSession.open(webgl: true, timeout: options[:timeout]) do |cdp|
 
   # The tap.
   #
-  # The WebGL check is a plain JS flag -- index.html.erb:34 tests
+  # The WebGL check is a plain JS flag -- the view's guard tests
   # window._primerFired -- not a browser user-activation policy. It therefore
-  # needs no trusted event, and the page exposes its own entry point at line
-  # 289: window.__MASTER_PRIMER_TAP__. Calling that is the honest way in.
+  # needs no trusted event, and the page exposes its own entry point,
+  # window.__MASTER_PRIMER_TAP__. Calling that is the honest way in.
   #
   # The keypress stays as a fallback: a build without that global still listens
-  # for keydown (index.html.erb:305, :309), and Input.dispatchKeyEvent IS
+  # for Enter/Space keydown on #primer and on the window, and Input.dispatchKeyEvent IS
   # trusted, which matters for anything genuinely gated on user activation --
   # audio, for one -- even though WebGL here is not.
   tapped = cdp.evaluate(<<~JS).to_s # scan: intentional — a CDP probe evaluates JavaScript by definition

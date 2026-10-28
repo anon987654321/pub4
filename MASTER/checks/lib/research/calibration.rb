@@ -27,14 +27,15 @@ module Deploy
         "(#{report[:agreed]}/#{report[:total]}) floor=#{(report[:floor] * 100).round(0)}%",
       )
 
-      # A calibration set with no cases agrees with nothing; agreement over an
-      # empty set is 100% and means the labels went missing, not that the check
-      # matches a human.
+      # A calibration set with no cases agrees with nothing. CheckCalibration
+      # scores it 0%, which is a missing label set rather than a check that
+      # disagrees with a human, so it is inconclusive and not also a floor failure.
       if report[:total].to_i.zero?
         @result.inconclusive!("calibration: the labelled set is empty — agreement was computed over no cases")
-      else
-        @result.checked!(report[:total].to_i)
+        return @result
       end
+
+      @result.checked!(report[:total].to_i)
 
       report[:cases].each do |c|
         mark = c.agree ? "ok" : "DISAGREE"
@@ -65,7 +66,7 @@ module Deploy
 
       if apply?
         path = cal.apply_weights!(report)
-        @result.warn("calibration: wrote weight overrides → #{path.sub(%r{.*/RAILS/}, 'RAILS/')}")
+        @result.warn("calibration: wrote weight overrides → #{path.sub(%r{\A.*/MASTER/}, 'MASTER/')}")
       end
 
       @result

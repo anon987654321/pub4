@@ -181,7 +181,7 @@ module Deploy
 
         # A navigation timeout is the probe having a bad minute, not the page
         # having a defect; the other checks draw the same line.
-        if error.to_s.match?(/timeout/i)
+        if GeometryProbe.timeout?(payload)
           @result.warn("occlusion: #{label} skipped (#{error})")
         else
           @result.fail("occlusion: #{label} unreachable (#{error})")

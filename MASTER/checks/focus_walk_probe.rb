@@ -44,6 +44,7 @@ JS
 pages = ARGV.empty? ? PAGES : { "arg" => ARGV.first }
 steps = (ARGV[1] || 25).to_i
 total_bad = 0
+walked = 0
 
 Deploy::CdpSession.open do |cdp|
   cdp.viewport(390, 844, mobile: true)
@@ -63,6 +64,7 @@ Deploy::CdpSession.open do |cdp|
       bad << "#{key} #{state['text'].inspect}" unless state["ring"]
     end
     bad.uniq!
+    walked += 1
     total_bad += bad.size
     puts bad.empty? ? "#{name}: #{seen.uniq.size} stops, every one shows a ring" :
                       "#{name}: #{bad.size} ringless stop(s) of #{seen.uniq.size}"
@@ -72,5 +74,8 @@ Deploy::CdpSession.open do |cdp|
     puts "#{name}: probe failed (#{e.class}) — measured nothing"
   end
 end
-puts "focus_walk_probe: #{total_bad} ringless stop(s)"
-exit(total_bad.zero? ? 0 : 1)
+puts "focus_walk_probe: #{total_bad} ringless stop(s) across #{walked}/#{pages.size} page(s)"
+exit 1 unless total_bad.zero?
+# Every page failing to load walked nothing; exit 3 is the runner's
+# inconclusive, so that run is not reported as every stop showing a ring.
+exit(walked.zero? ? 3 : 0)

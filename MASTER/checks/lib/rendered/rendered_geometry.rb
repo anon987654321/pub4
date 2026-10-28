@@ -113,14 +113,12 @@ module Deploy
       @min_touch = (@rules.dig("layout_rules", "touch", "target_min_px") || 44).to_f
       @aaa = (@rules.dig("typography", "accessibility", "normal_text_contrast") || 7.0).to_f
 
-      # design_rules states the spacing grid twice and the two disagree:
-      # pixel_perfection.eight_px_rhythm allows 12 and 20, layout_rules.grid.
-      # allowed_spacing_px does not. css_constitution, rhythm_lint and
-      # design_metrics all read the first; only this check read the second, so a
-      # 12px gap was simultaneously compliant and a violation depending on which
-      # check you asked. It is also the value --space-3 declares, which settles
-      # which list is real. Same precedence as design_metrics: rhythm first,
-      # grid as the fallback.
+      # tokens.yml states the spacing grid twice, as pixel_perfection.
+      # eight_px_rhythm and layout_rules.grid.allowed_spacing_px.
+      # css_constitution, rhythm_lint and design_metrics read the first, so this
+      # check does too, with the grid as the fallback — the same precedence as
+      # design_metrics, so one gap cannot be compliant to one check and a
+      # violation to another.
       @allowed_spacing = Array(@rules.dig("pixel_perfection", "eight_px_rhythm")).map(&:to_i)
 
       if @allowed_spacing.empty?
@@ -367,7 +365,7 @@ module Deploy
           font_size: element["font_size"],
           font_weight: element["font_weight"],
           color: element["color"],
-          bg_color: element["bg_color"],
+          bg_color: element["bg"],
           is_text: !element["text"].to_s.strip.empty?,
           is_control: element["interactive"] || element["role"] == "button",
           is_image: element["tag"] == "img",
@@ -385,11 +383,14 @@ module Deploy
       )
 
       @result.fail(
-        "geometry design_quality: #{surface.id} fails rendered hard floor "         "(tap=#{vector.tap_ok} contrast=#{vector.contrast_ok})",
+        "geometry design_quality: #{surface.id} fails rendered hard floor " \
+        "(tap=#{vector.tap_ok} contrast=#{vector.contrast_ok})",
         severity: :hard,
       ) unless vector.hard_ok?
       @result.warn(
-        "geometry design_quality: #{surface.id} rhythm=#{vector.rhythm.round(2)} "         "hierarchy=#{vector.hierarchy.round(2)} density=#{vector.density.round(2)} "         "alignment=#{vector.alignment.round(2)} balance=#{vector.balance.round(2)}",
+        "geometry design_quality: #{surface.id} rhythm=#{vector.rhythm.round(2)} " \
+        "hierarchy=#{vector.hierarchy.round(2)} density=#{vector.density.round(2)} " \
+        "alignment=#{vector.alignment.round(2)} balance=#{vector.balance.round(2)}",
       )
     end
 
@@ -563,6 +564,5 @@ module Deploy
         %w[button].include?(el["tag"]) ||
         el["role"] == "button"
     end
-
   end
 end
