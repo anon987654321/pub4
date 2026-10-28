@@ -22,7 +22,9 @@ class PwaServingTest < ActionDispatch::IntegrationTest
     manifest = JSON.parse(response.body)
     assert_equal "Amber", manifest["name"], "the app name comes from pwa_app_name"
     refute_empty manifest["icons"], "an installable manifest needs an icon"
-    assert_equal I18n.t("pwa.description", locale: :nb), manifest["description"]
+    # The description lives in manifest.json itself; pwa.description had no
+    # other reader and went with the dead locale keys in 3c0ef5e5d.
+    assert_match(/\ASosial mote\./, manifest["description"].to_s)
     assert_includes %w[standalone fullscreen minimal-ui], manifest["display"]
   end
 
