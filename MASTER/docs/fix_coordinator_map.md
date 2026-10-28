@@ -87,5 +87,10 @@ One per responsibility, each planting a defect, asserting red, then green:
 6. Adapter parity: every CLI path above reaches the same receipt before and
    after the move.
 
+The named, currently skipped test entrypoints live in
+MASTER/test/test_recovery_gates.rb. They preserve the six obligations in the
+test suite, but do not satisfy the merge gate until each skip is replaced by a
+real fixture/process test that demonstrates red before repair and green after it.
+
 `Supervisor`, `Governor`, `Homeostat`, `Watcher` and `WatchLoop` share names with
 unrelated classes elsewhere in `lib/` and are outside this map.
