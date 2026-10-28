@@ -64,35 +64,52 @@ module Master
         # but only Kernel starts, terminalizes, and correlates the overall run.
         def run_fix_loop(adapter, target:, max_passes:, budget_seconds:, incremental:, requested:, cancellation: nil)
           @execution_mutex.synchronize do
-            coordinator_run_id = nil
-            previous_cancellation = adapter.instance_variable_get(:@cancellation)
-            previous_run_id = @current_run_id
-            begin
-              adapter.instance_variable_set(:@cancellation, cancellation)
-              cancellation.activate! if cancellation&.respond_to?(:activate!)
-              coordinator_run_id = begin_coordinated_run(target:, max_passes:, budget_seconds:, requested:)
-              @current_run_id = coordinator_run_id
-              result = adapter.run_unlocked(
-                target, max_passes:, budget_seconds:, incremental:, requested:
+            directory = File.dirname(@log_path)
+            FileUtils.mkdir_p(directory, mode: 0o700)
+            # Kernel instances can exist in the foreground command, background
+            # watcher, and status services concurrently. A process-local Mutex is
+            # not enough to prevent two independent instances from starting /fix.
+            File.open(File.join(directory, "fix-execution.lock"), File::RDWR | File::CREAT, 0o600) do |lease|
+              lease.flock(File::LOCK_EX)
+              run_fix_loop_under_lease(
+                adapter, target:, max_passes:, budget_seconds:, incremental:, requested:, cancellation:
               )
-              state = adapter.last_terminal_state || OutcomePolicy.terminal_state(result) || :unknown_outcome
-              finish_coordinated_run(run_id: coordinator_run_id, state:, outcome: result)
-              result
-            rescue StandardError => error
-              if coordinator_run_id
-                begin
-                  finish_coordinated_run(run_id: coordinator_run_id, state: :unknown_outcome, error:)
-                rescue StandardError => journal_error
-                  Master::Ground::Swallow.log(
-                    journal_error, context: "fix_kernel.coordinator_terminal", event_bus: @bus
-                  )
-                end
-              end
-              raise
             ensure
-              @current_run_id = previous_run_id
-              adapter.instance_variable_set(:@cancellation, previous_cancellation)
+              lease.flock(File::LOCK_UN) rescue nil
             end
+          end
+        end
+
+        private def run_fix_loop_under_lease(adapter, target:, max_passes:, budget_seconds:, incremental:,
+                                             requested:, cancellation: nil)
+          coordinator_run_id = nil
+          previous_cancellation = adapter.instance_variable_get(:@cancellation)
+          previous_run_id = @current_run_id
+          begin
+            adapter.instance_variable_set(:@cancellation, cancellation)
+            cancellation.activate! if cancellation&.respond_to?(:activate!)
+            coordinator_run_id = begin_coordinated_run(target:, max_passes:, budget_seconds:, requested:)
+            @current_run_id = coordinator_run_id
+            result = adapter.run_unlocked(
+              target, max_passes:, budget_seconds:, incremental:, requested:
+            )
+            state = adapter.last_terminal_state || OutcomePolicy.terminal_state(result) || :unknown_outcome
+            finish_coordinated_run(run_id: coordinator_run_id, state:, outcome: result)
+            result
+          rescue StandardError => error
+            if coordinator_run_id
+              begin
+                finish_coordinated_run(run_id: coordinator_run_id, state: :unknown_outcome, error:)
+              rescue StandardError => journal_error
+                Master::Ground::Swallow.log(
+                  journal_error, context: "fix_kernel.coordinator_terminal", event_bus: @bus
+                )
+              end
+            end
+            raise
+          ensure
+            @current_run_id = previous_run_id
+            adapter.instance_variable_set(:@cancellation, previous_cancellation)
           end
         end
 
