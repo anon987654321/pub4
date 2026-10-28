@@ -26,21 +26,27 @@ compensations cover one path at a time.
 
 ### Fix::Kernel, FixLoop, RunJournal and RunLedger
 
-Production boot in `lib/builder/ai_boot.rb` creates one `Fix::Kernel` and
-obtains the `FixLoop` compatibility adapter through `Kernel#build_fix_loop`.
-`FixLoop#run` delegates the outer execution lock and coordinator lifecycle to
-Kernel: hash-chained start/terminal receipts are written there, with repair
-outcomes correlated by run id. Kernel is now a production writer, not merely a
+Production boot in `lib/builder/ai_boot.rb` creates one `Fix::Kernel`.
+The canonical class `Kernel::ConvergenceAdapter` is exposed to legacy callers as
+`FixLoop`; its `run` delegates the outer execution lock and coordinator
+lifecycle to Kernel. Kernel emits hash-chained start/terminal receipts with repair
+outcomes correlated by run id. This is now a production writer, not merely a
 replay reader.
 
-Kernel exposes one `lifecycle_journal` handle, and FixLoop plus the read-only
-`Operator::FixStatus` use that same accessor. The persisted schema and recovery
-state machine still live in the `RunJournal` compatibility implementation under
-`MASTER/.master/fix_runs.json`; this phase has not deleted or duplicated its
-lifecycle methods. FixLoop keeps `@transaction_root`, the root it was given,
-for transaction recovery (2de776cde). RunLedger remains process memory reset at
-each run start. Delivery is still the Committer: a commit per kept fix and a
-push, or one push at the end.
+The durable journal implementation is `Kernel::LifecycleJournal`, with the old
+`RunJournal` constant retained as an alias. Kernel owns the single
+`lifecycle_journal` accessor, and FixLoop plus the read-only
+`Operator::FixStatus` use it. Its persisted schema and transaction/restart
+semantics remain unchanged under `MASTER/.master/fix_runs.json`. Likewise,
+`Kernel::RepairAdapter` is exposed as `RepairLoop` for compatibility. FixLoop
+pass stages build repairs through Kernel and record bounded status/count outcomes;
+the budget, collapse guard, and write-policy implementation remains grouped in
+that nested adapter rather than copied into the Kernel's core methods.
+
+FixLoop keeps `@transaction_root`, the root it was given, for transaction
+recovery (2de776cde). RunLedger remains process memory reset at each run start.
+Delivery is still the Committer: a commit per kept fix and a push, or one push at
+the end.
 
 ### The inner repair loop
 
@@ -96,11 +102,12 @@ rollback on the box is the operator's (operator_seams.yml).
 
 ### Open gaps, by risk
 
-1. Kernel now owns production run receipts, the outer execution lock, journal
-   access, and the repair-stage factory. It does not yet own the journal's full
-   state machine or RepairLoop's budget/collapse/autofix policy. The subprocess
-   regression `test/test_fix_interruption_restart.rb` exercises death during an
-   open transaction and restart recovery, but it has not run on pinned Ruby
-   4.0.5 in this environment. The remaining Mission persistence, journal-loss
-   reconstruction, and full adapter-parity matrix are still gates; see
-   `docs/fix_coordinator_map.md`.
+1. Kernel owns the production coordinator, lock, receipts and factories. The
+   implementation classes for loop convergence, journal lifecycle and repair
+   policy are now nested as `Kernel::ConvergenceAdapter`,
+   `Kernel::LifecycleJournal`, and `Kernel::RepairAdapter`; compatibility
+   constants preserve existing callers. The subprocess regression
+   `test/test_fix_interruption_restart.rb` is authored, but has not run on pinned
+   Ruby 4.0.5 in this environment. Mission survival, journal-loss reconstruction,
+   full adapter parity and the repository-wide `/fix` run remain evidence gates;
+   see `docs/fix_coordinator_map.md`.
