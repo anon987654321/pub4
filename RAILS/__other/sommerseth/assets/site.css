@@ -817,7 +817,45 @@ img {
     grid-template-columns: 1fr;
     gap: 1.8rem;
   }
+  /* Touch: fotlenkene er hele bredden men lave — gi dem luft under tommelen. */
+  .page .footGrid nav a,
+  .page .footGrid > div:not(.footBrand) a {
+    padding-block: 0.55rem;
+    line-height: 1.5;
+  }
   .page .footBar {
     flex-direction: column;
+  }
+}
+
+/* ——— Print: alt flatt, alt synlig — inngangene må aldri skjule papir ———
+   Utskrift/PDF treffer ikke IntersectionObserver: seksjoner under folden
+   ville kommet ut blanke. Denne blokken overstyrer hele bevegelseslaget. */
+@media print {
+  html.js [data-reveal],
+  html.js .wr-word {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    transition: none !important;
+  }
+
+  .cur-dot,
+  .cur-ring {
+    display: none !important; /* fixed elementer gjentas på hver utskriftsside */
+  }
+
+  /* Papir: skjermens fullhøyde og tospalte grener gir tomme halvsider. */
+  .page .hero {
+    min-height: auto;
+  }
+
+  .page .split {
+    display: block;
+  }
+
+  .page .splitFig {
+    max-width: 60%;
+    margin: 2rem 0 0;
   }
 }

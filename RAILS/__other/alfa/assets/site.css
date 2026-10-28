@@ -643,7 +643,38 @@ img {
     flex-direction: column;
     align-items: flex-start;
   }
+  /* Touch: kontaktlenker og søsterlenke er lave — gi dem luft under tommelen. */
+  .page .contactRows a {
+    padding-block: 0.6rem;
+  }
+  .page footer .sister {
+    display: inline-block;
+    padding-block: 0.7rem;
+  }
   .page .stripItem i {
     padding-inline: 1.2rem;
+  }
+}
+
+/* ——— Print: alt flatt, alt synlig — inngangene må aldri skjule papir ———
+   Utskrift/PDF treffer ikke IntersectionObserver: seksjoner under folden
+   ville kommet ut blanke. Denne blokken overstyrer hele bevegelseslaget. */
+@media print {
+  html.js [data-reveal],
+  html.js .wr-word {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    transition: none !important;
+  }
+
+  .cur-dot,
+  .cur-ring {
+    display: none !important; /* fixed elementer gjentas på hver utskriftsside */
+  }
+
+  /* Papir: skjermens fullhøyde gir tom halvside — la innholdet flyte. */
+  .page .hero {
+    min-height: auto;
   }
 }

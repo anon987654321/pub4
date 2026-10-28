@@ -44,7 +44,9 @@ case $site in
   *) print -u2 "vps-deploy-static: unknown site \"$site\" — allowed: all, sommerseth, alfa"; exit 2 ;;
 esac
 
-# Port, chroot root, page title and favicon file per site. Two places name
+# Port, chroot root and page title per site. Favicons are inline SVG data
+# URIs in each index.html — no file to install, nothing to map here. Two
+# places name
 # these numbers (here and the vhosts in OPENBSD/etc/httpd.conf);
 # apps.yml#static_exports is the registry both answer to, and
 # config_drift_check compares the live httpd.conf against the repo copy once
