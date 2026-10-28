@@ -92,7 +92,7 @@ module Master
             generated_at: Time.now.utc.iso8601,
             ideas: ideas.map(&:to_h).map { |hash| hash.transform_keys(&:to_s) },
           }
-          atomic_write(path, JSON.pretty_generate(payload) + "\n")
+          write_atomic(path, JSON.pretty_generate(payload) + "\n")
           path
         rescue StandardError
           nil
