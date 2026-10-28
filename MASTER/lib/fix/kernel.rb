@@ -231,7 +231,7 @@ module Master
         path = File.join(locate_workspace(File.expand_path(root)), LOG_RELATIVE_PATH)
         events = read_log(path)
         selected = events.find { |row| row.fetch("seq") == number }
-        return nil unless selected
+        return unless selected
 
         run_id = selected["run_id"]
         run_events = run_id ? events.select { |row| row["run_id"] == run_id } : [selected]

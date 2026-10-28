@@ -293,12 +293,12 @@ module Master
             @bus&.publish(
               "fix_loop:plan_stale_before_pass",
               pass:, files: stale_plan_paths.first(20),
-              plan_digest: @assessment_plan&.digest,
+              plan_digest: @assessment_plan&.digest
             )
             return PassResult.new(
               status: :continue,
               consecutive_clean: 0,
-              message: "source signature changed after plan capture; refreshed plan required before repair"
+              message: "source signature changed after plan capture; refreshed plan required before repair",
             )
           end
           found, streamed = observe_pass(files, target, pass, deadline)
@@ -425,9 +425,9 @@ module Master
           return [] if lane != :elevate && @elevation_used_for_pass == pass
 
           @elevation_used_for_pass = pass
-          engine = Improve::Engine.new(root: @root, lane: lane)
-          found = engine.elevate(files: files)
-          found += ideas_to_findings(engine.ideate(files: files), pass:) if WorkLane.runs?(:ideate)
+          engine = Improve::Engine.new(root: @root, lane:)
+          found = engine.elevate(files:)
+          found += ideas_to_findings(engine.ideate(files:), pass:) if WorkLane.runs?(:ideate)
           found += restructure_to_findings(engine.restructure_proposals(files:), pass:) if WorkLane.runs?(:restructure_drive)
           unless found.empty?
             Master::Trace::Dmesg.status(
@@ -594,7 +594,7 @@ module Master
           @bus&.publish("fix_loop:clean", pass:, consecutive_clean: clean_count)
           @homeostat&.observe(:llm_success)
           proof = @discipline.clean_proof(
-            files:, pass:, clean_runs: clean_count, required_runs: @clean_runs_required, findings: ground_truth
+            files:, pass:, clean_runs: clean_count, required_runs: @clean_runs_required, findings: ground_truth,
           )
           unless proof[:eligible]
             return PassResult.new(

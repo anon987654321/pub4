@@ -235,7 +235,7 @@ module Master
         journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
         run_id = journal["id"]
         @kernel.bind_fix_run(
-          adapter: self, run_id:, target:, max_passes:, budget_seconds:, requested:
+          adapter: self, run_id:, target:, max_passes:, budget_seconds:, requested:,
         )
         mission = mission_for(target:, requested:)
         @kernel.link_fix_mission(mission_id: mission.id, run_id:)
@@ -261,7 +261,7 @@ module Master
           journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
           run_id = journal["id"]
           @kernel.bind_fix_run(
-            adapter: self, run_id:, target:, max_passes:, budget_seconds:, requested:
+            adapter: self, run_id:, target:, max_passes:, budget_seconds:, requested:,
           )
           mission = mission_for(target:, requested:)
           @kernel.link_fix_mission(mission_id: mission.id, run_id:)
@@ -376,7 +376,7 @@ module Master
         @bus&.publish(
           "fix_loop:cleanup",
           run_id:, target: "(cleanup stage error)", terminal_state: @last_terminal_state.to_s,
-          status: "warning", warnings: [{ step: "cleanup_stage", error_class: error.class.name }],
+          status: "warning", warnings: [{ step: "cleanup_stage", error_class: error.class.name }]
         )
         Master::Trace::Dmesg.status("cleanup0", "warning, #{error.class}: #{error.message.to_s[0, 160]}") rescue nil
         nil

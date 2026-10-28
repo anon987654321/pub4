@@ -73,7 +73,7 @@ module Master
           "fix_loop:instruments_unavailable",
           verification: verification.to_h,
           failure_count: broken.size,
-          failure_digest: Digest::SHA256.hexdigest(broken.join("\n"))
+          failure_digest: Digest::SHA256.hexdigest(broken.join("\n")),
         )
         raise Unavailable, "fix instruments unavailable: #{broken.join("; ")}"
       end

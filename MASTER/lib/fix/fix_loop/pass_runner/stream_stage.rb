@@ -139,7 +139,7 @@ module Master
               paths.flat_map { |path| violations_for(path) }
             end
             resolve_violations(
-              read_put_off(raw, put_off:, deadline: nil, advance_cursor: false)
+              read_put_off(raw, put_off:, deadline: nil, advance_cursor: false),
             )
           end
           public :preview_violations
@@ -372,7 +372,7 @@ module Master
               findings:, rules: runnable, agent: @agent, scanner: @scanner, root: @root,
               bus: @bus, learnings: @learnings, committer: @committer,
               context_files: context[:files], context_root: context[:context_root],
-              expected_target_sha256: context[:target_sha256],
+              expected_target_sha256: context[:target_sha256]
             )
             repair.lock_interface! if context[:interface_locked]
             result = repair.run(path)
