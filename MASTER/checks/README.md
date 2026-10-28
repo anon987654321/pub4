@@ -99,7 +99,7 @@ requires the other checks to catch them. The calibration check keeps the design
 metrics honest against fixed good and bad exemplars, which sit under
 `fixtures`.
 
-## Three outcomes
+## Four outcomes
 
 A check passes, fails or is inconclusive, and a check that raises is recorded as
 errored. The difference matters. A check that could not measure anything, because
