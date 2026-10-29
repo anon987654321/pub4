@@ -39,7 +39,7 @@ module Replicate
     end
 
     def read(path: DEFAULT_PATH)
-      return nil unless File.file?(path)
+      return unless File.file?(path)
 
       data = YAML.safe_load_file(path, aliases: false) || {}
       raise "replicate: schema snapshot version is unsupported" unless data["schema"].to_i == VERSION

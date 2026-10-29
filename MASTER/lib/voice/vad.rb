@@ -44,7 +44,7 @@ module Master
       def self.build(config: {})
         cfg = DEFAULTS.merge(config.transform_keys(&:to_sym))
         backend = resolve_backend(cfg)
-        new(backend: backend, config: cfg)
+        new(backend:, config: cfg)
       end
 
       def self.resolve_backend(cfg)
@@ -118,7 +118,7 @@ module Master
         now = at_ms || @clock_ms.call
         floats = normalize_samples(samples)
         rms = rms_of(floats)
-        probability = @backend.score(floats, rms: rms)
+        probability = @backend.score(floats, rms:)
 
         @lock.synchronize do
           @last_rms = rms

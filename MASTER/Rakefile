@@ -235,7 +235,7 @@ task "test:all_trees" do
       tests: test_files.size,
       shell: Dir.glob(File.join(path, "**", "*.{sh,zsh,ksh}")).count { |file| !ignored_path.call(file) },
       javascript: javascript_files.size,
-      javascript_tests: javascript_tests.size
+      javascript_tests: javascript_tests.size,
     }
 
     ruby_files.each do |file|
@@ -895,7 +895,7 @@ end
       # the task fails on one rather than ignoring it.
     }
     files = Dir.chdir(__dir__) { Dir.glob("data/**/*.yml").reject { |f| f.include?("baseline") } }
-    dups = Master::Fix::ContentDedupScan.scan(root: __dir__, files: files)
+    dups = Master::Fix::ContentDedupScan.scan(root: __dir__, files:)
     cross = dups.select { |d| d.locations.map { |l| l.split(":").first }.uniq.size > 1 }
     new_dups = cross.reject { |d| known.key?(d.text.strip) }
     stale = known.keys - cross.map { |d| d.text.strip }

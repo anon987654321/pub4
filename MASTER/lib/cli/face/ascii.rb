@@ -343,7 +343,7 @@ module Master
             gy += weight * (coverage(c + d, r + 1) - coverage(c + d, r - 1))
           end
           gy /= 2.0
-          return nil if Math.hypot(gx, gy) < EDGE
+          return if Math.hypot(gx, gy) < EDGE
 
           glyph = Glyphs.line(gy, gx)
           return glyph unless glyph == "-"
@@ -376,11 +376,11 @@ module Master
           jump = [jump, (depth_at(here + 1) - fraction).abs].max if c < @cols - 1 && @count[here + 1].positive?
           jump = [jump, (depth_at(here - @cols) - fraction).abs].max if r > 0 && @count[here - @cols].positive?
           jump = [jump, (depth_at(here + @cols) - fraction).abs].max if r < @rows - 1 && @count[here + @cols].positive?
-          return nil if jump < DEPTH_EDGE
+          return if jump < DEPTH_EDGE
 
           gx = depth_gradient(c - 1, r, c + 1, r, fraction)
           gy = depth_gradient(c, r - 1, c, r + 1, fraction) / 2.0
-          return nil if gx.zero? && gy.zero?
+          return if gx.zero? && gy.zero?
 
           Glyphs.line(gy, gx)
         end
@@ -439,7 +439,7 @@ module Master
               end
             end
           end
-          return nil if seen.zero?
+          return if seen.zero?
 
           # Ties go to the glyph later in character order, as a port's sort would.
           votes, glyph = [[horizontal, "-"], [diagonal_up, "/"], [diagonal_down, "\\"], [vertical, "|"]].max

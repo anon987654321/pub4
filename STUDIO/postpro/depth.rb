@@ -40,7 +40,7 @@ module Postpro
       plane = read_cache(key)
       unless plane
         model = self.model
-        return nil unless model
+        return unless model
 
         feed = Numo::SFloat.cast(tensor(image)).reshape(1, 3, MODEL_EDGE, MODEL_EDGE)
         outputs = model.predict({ "pixel_values" => feed }, output_names: ["predicted_depth"])
@@ -128,7 +128,7 @@ module Postpro
     # that is where the cache and a fresh read meet.
     def self.read_cache(key)
       bytes = File.binread(cache_path(key))
-      return nil unless bytes && bytes.bytesize == MODEL_EDGE * MODEL_EDGE * 4
+      return unless bytes && bytes.bytesize == MODEL_EDGE * MODEL_EDGE * 4
 
       Vips::Image.new_from_memory(bytes, MODEL_EDGE, MODEL_EDGE, 1, :float)
     rescue StandardError

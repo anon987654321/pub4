@@ -88,7 +88,7 @@ module Master
 
           [
             state_line(model, **options.merge(operator:)),
-            shell_prompt(phase, last_ok, destination:, focused:)
+            shell_prompt(phase, last_ok, destination:, focused:),
           ]
         end
 
@@ -136,7 +136,7 @@ module Master
           prompt = Master::Face::Contract.shell_prompt(
             path: Dir.pwd,
             host: safe_hostname.to_s,
-            root: @config["root"] || Master::ROOT
+            root: @config["root"] || Master::ROOT,
           )
           "#{prompt} "
         end

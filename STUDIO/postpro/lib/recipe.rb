@@ -78,7 +78,7 @@ def recipe_preset(params)
     age: (opts["age"] || intensity).to_f,
     lens: LENSES.key?((opts["lens"] || opts["type"]).to_s.to_sym) ? (opts["lens"] || opts["type"]).to_s : nil,
     tonemap: opts["tonemap"]&.to_sym, iso: opts["iso"],
-    second_image: opts["second_image_path"] || opts["image"], blend_mode: opts["blend_mode"],
+    second_image: opts["second_image_path"] || opts["image"], blend_mode: opts["blend_mode"]
   }.compact
 end
 

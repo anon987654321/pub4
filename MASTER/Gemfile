@@ -59,4 +59,3 @@ end
 install_if -> { RUBY_PLATFORM =~ /linux/ && !RUBY_PLATFORM.include?("android") } do
   gem "rb-inotify", "~> 0.10", require: false
 end
-

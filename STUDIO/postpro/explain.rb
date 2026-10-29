@@ -23,7 +23,7 @@ module PostproExplain
   # uncanny.rb's own header says the number to watch is the texture delta. The
   # per-step report could not see it.
   def self.snapshot(image)
-    return nil unless on?
+    return unless on?
 
     { avg: image.avg, deviate: image.deviate, texture: texture(image) }
   rescue StandardError

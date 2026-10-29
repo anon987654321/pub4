@@ -35,22 +35,22 @@ module WAV
   def self.write(path, samples, bits: 16, replace: false)
     channels = samples.first.is_a?(Array) ? samples.size : 1
     flat = samples.first.is_a?(Array) ? Stereo.interleave(samples) : samples
-    data = bits == 24 ? pack24(flat) : flat.map { |s| (s * 32767).round.clamp(-32_768, 32_767) }.pack('s<*')
+    data = bits == 24 ? pack24(flat) : flat.map { |s| (s * 32_767).round.clamp(-32_768, 32_767) }.pack("s<*")
     width = bits / 8
 
     header  = +"RIFF"
-    header << [36 + data.bytesize].pack('V')
+    header << [36 + data.bytesize].pack("V")
     header << "WAVE"
     header << "fmt "
-    header << [16].pack('V')
-    header << [1].pack('v')                    # PCM
-    header << [channels].pack('v')
-    header << [SAMPLE_RATE].pack('V')
-    header << [SAMPLE_RATE * width * channels].pack('V') # byte rate
-    header << [width * channels].pack('v')     # block align
-    header << [bits].pack('v')                 # bits per sample
+    header << [16].pack("V")
+    header << [1].pack("v")                    # PCM
+    header << [channels].pack("v")
+    header << [SAMPLE_RATE].pack("V")
+    header << [SAMPLE_RATE * width * channels].pack("V") # byte rate
+    header << [width * channels].pack("v")     # block align
+    header << [bits].pack("v")                 # bits per sample
     header << "data"
-    header << [data.bytesize].pack('V')
+    header << [data.bytesize].pack("V")
 
     write_bytes(path, header + data, replace:)
   end
@@ -138,7 +138,7 @@ module WAV
   def self.pack24(flat)
     flat.map do |s|
       v = (s * 8_388_607).round.clamp(-8_388_608, 8_388_607)
-      [v & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff].pack('C3')
+      [v & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff].pack("C3")
     end.join
   end
 
@@ -378,29 +378,29 @@ module Stream
     def initialize(preset, seed)
       @p = preset
       @rng = seed.is_a?(Random) ? seed : Random.new(seed)
-      @pre = Lowpass.new(preset.fetch('dist_pre_lp'))
-      @bump_low = Lowpass.new(preset.fetch('head_bump_hz'))
-      @bump = Stream.db(preset.fetch('head_bump_db')) - 1.0
-      @crush = Crush.new(preset.fetch('crush_bits'), preset.fetch('crush_sr'))
-      @post = Lowpass.new(preset.fetch('crush_post_lp'))
-      @hf = [Lowpass.new(preset.fetch('hf_rolloff')), Lowpass.new(preset.fetch('hf_rolloff'))]
-      @lf = Highpass.new(preset.fetch('lf_rolloff'))
-      @comp = Compressor.new(preset.fetch('out_comp_threshold'), preset.fetch('out_comp_ratio'), 12.0, 120.0, preset.fetch('out_comp_makeup') - 1.0)
+      @pre = Lowpass.new(preset.fetch("dist_pre_lp"))
+      @bump_low = Lowpass.new(preset.fetch("head_bump_hz"))
+      @bump = Stream.db(preset.fetch("head_bump_db")) - 1.0
+      @crush = Crush.new(preset.fetch("crush_bits"), preset.fetch("crush_sr"))
+      @post = Lowpass.new(preset.fetch("crush_post_lp"))
+      @hf = [Lowpass.new(preset.fetch("hf_rolloff")), Lowpass.new(preset.fetch("hf_rolloff"))]
+      @lf = Highpass.new(preset.fetch("lf_rolloff"))
+      @comp = Compressor.new(preset.fetch("out_comp_threshold"), preset.fetch("out_comp_ratio"), 12.0, 120.0, preset.fetch("out_comp_makeup") - 1.0)
       @pop = 0.0
     end
 
     def process(buf)
       p = @p
-      drive = p.fetch('dist_drive')
-      mix = p.fetch('dist_mix')
-      dc = p.fetch('dist_dc')
+      drive = p.fetch("dist_drive")
+      mix = p.fetch("dist_mix")
+      dc = p.fetch("dist_dc")
       tail = Math.tanh(dc)
-      crush_mix = p.fetch('crush_mix')
-      hiss = p.fetch('hiss_amp')
-      pops = p.fetch('pop_rate')
-      pop_amp = p.fetch('pop_amp')
-      limit = p.fetch('limit')
-      level = p.fetch('level_out')
+      crush_mix = p.fetch("crush_mix")
+      hiss = p.fetch("hiss_amp")
+      pops = p.fetch("pop_rate")
+      pop_amp = p.fetch("pop_amp")
+      limit = p.fetch("limit")
+      level = p.fetch("level_out")
       buf.map do |x|
         wet = Math.tanh((@pre.step(x) * drive) + dc) - tail
         out = (x * (1.0 - mix)) + (wet * mix / [drive, 1.0].max * 1.2)
@@ -759,10 +759,10 @@ module Stages
 
   # A plate or a room, after the Freeverb.
   class Plate
-    def initialize(spec, seed, side)
-      @room = Room.new(decay: spec.fetch('decay', 0.84), damp: spec.fetch('damp', 0.35), side:)
-      @mix = spec.fetch('mix', 0.25)
-      @gain = spec.fetch('gain', 30.0)
+    def initialize(spec, _seed, side)
+      @room = Room.new(decay: spec.fetch("decay", 0.84), damp: spec.fetch("damp", 0.35), side:)
+      @mix = spec.fetch("mix", 0.25)
+      @gain = spec.fetch("gain", 30.0)
     end
 
     def process(block, _from = 0) = block.map { |x| x + (@mix * @room.step(x) * @gain) }
@@ -772,11 +772,11 @@ module Stages
   # into the room again, so each round of the tail is higher and quieter.
   class Shimmer
     def initialize(spec, _seed, side)
-      @room = Room.new(decay: spec.fetch('decay', 0.88), damp: spec.fetch('damp', 0.45), side:)
-      @pitch = Pitch.new(spec.fetch('ratio', 2.0))
-      @feedback = spec.fetch('feedback', 0.45)
-      @mix = spec.fetch('mix', 0.3)
-      @gain = spec.fetch('gain', 30.0)
+      @room = Room.new(decay: spec.fetch("decay", 0.88), damp: spec.fetch("damp", 0.45), side:)
+      @pitch = Pitch.new(spec.fetch("ratio", 2.0))
+      @feedback = spec.fetch("feedback", 0.45)
+      @mix = spec.fetch("mix", 0.3)
+      @gain = spec.fetch("gain", 30.0)
       @shifted = 0.0
     end
 
@@ -801,14 +801,14 @@ module Stages
       @rng = Random.new(seed)
       @line = Array.new(HISTORY, 0.0)
       @n = 0
-      @density = spec.fetch('density', 9.0)
-      @min = (spec.fetch('min_ms', 60) * SAMPLE_RATE / 1000.0).round
-      @max = (spec.fetch('max_ms', 200) * SAMPLE_RATE / 1000.0).round
-      @spray = spec.fetch('spray', 1.4)
-      @up = spec.fetch('up', 0.18)
-      @down = spec.fetch('down', 0.10)
-      @reverse = spec.fetch('reverse', 0.25)
-      @mix = spec.fetch('mix', 0.35)
+      @density = spec.fetch("density", 9.0)
+      @min = (spec.fetch("min_ms", 60) * SAMPLE_RATE / 1000.0).round
+      @max = (spec.fetch("max_ms", 200) * SAMPLE_RATE / 1000.0).round
+      @spray = spec.fetch("spray", 1.4)
+      @up = spec.fetch("up", 0.18)
+      @down = spec.fetch("down", 0.10)
+      @reverse = spec.fetch("reverse", 0.25)
+      @mix = spec.fetch("mix", 0.35)
       @grains = []
       @next_grain = 0
     end
@@ -858,8 +858,8 @@ module Stages
   # ------------------------------------------------------------ the simple ones
   class Crush
     def initialize(spec, _seed, _side)
-      @crush = Stream::Crush.new(spec.fetch('bits', 10), spec.fetch('factor', 2.0))
-      @mix = spec.fetch('mix', 0.5)
+      @crush = Stream::Crush.new(spec.fetch("bits", 10), spec.fetch("factor", 2.0))
+      @mix = spec.fetch("mix", 0.5)
     end
 
     def process(block, _from = 0) = Stages.blend(block, @crush.process(block), @mix)
@@ -868,8 +868,8 @@ module Stages
   # A triangle fold: past one the signal turns back, and again, so a larger input grows more harmonics.
   class Folder
     def initialize(spec, _seed, _side)
-      @gain = spec.fetch('gain', 2.4)
-      @mix = spec.fetch('mix', 0.3)
+      @gain = spec.fetch("gain", 2.4)
+      @mix = spec.fetch("mix", 0.3)
     end
 
     def process(block, _from = 0)
@@ -884,8 +884,8 @@ module Stages
   # A ring modulator at one fixed frequency.
   class RingMod
     def initialize(spec, _seed, _side)
-      @step = TAU * spec.fetch('hz', 140.0) / SAMPLE_RATE
-      @mix = spec.fetch('mix', 0.2)
+      @step = TAU * spec.fetch("hz", 140.0) / SAMPLE_RATE
+      @mix = spec.fetch("mix", 0.2)
     end
 
     def process(block, from = 0)
@@ -901,8 +901,8 @@ module Stages
     TWO = [0.4021921162426, 0.8561710882420, 0.9722909545651, 0.9952884791278].freeze
 
     def initialize(spec, _seed, _side)
-      @step = TAU * spec.fetch('hz', 7.0) / SAMPLE_RATE
-      @mix = spec.fetch('mix', 0.5)
+      @step = TAU * spec.fetch("hz", 7.0) / SAMPLE_RATE
+      @mix = spec.fetch("mix", 0.5)
       @a = ONE.map { |c| c * c }
       @b = TWO.map { |c| c * c }
       @sa = Array.new(@a.size) { [0.0, 0.0, 0.0, 0.0] }
@@ -945,8 +945,8 @@ module Stages
   # one segment is kept, and played back backwards through the next, rising from nothing.
   class ReverseEcho
     def initialize(spec, _seed, _side)
-      @length = (spec.fetch('seconds', 1.0) * SAMPLE_RATE).round
-      @mix = spec.fetch('mix', 0.4)
+      @length = (spec.fetch("seconds", 1.0) * SAMPLE_RATE).round
+      @mix = spec.fetch("mix", 0.4)
       @kept = Array.new(@length, 0.0)
       @played = Array.new(@length, 0.0)
       @n = 0
@@ -971,7 +971,7 @@ module Stages
   # the pitch falling with it, and the sound is gone.
   class TapeStop
     def initialize(spec, _seed, _side, end_sample: 0)
-      @length = (spec.fetch('seconds', 0.8) * SAMPLE_RATE).round
+      @length = (spec.fetch("seconds", 0.8) * SAMPLE_RATE).round
       @end = end_sample
       @line = Array.new(@length + 8192, 0.0)
       @n = 0
@@ -1013,10 +1013,10 @@ module Stages
 
     def initialize(spec, _seed, _side, bar_samples: 1)
       @bar = bar_samples
-      @every = spec.fetch('every_bars', 8)
-      @bars = spec.fetch('bars', 2)
-      @low = spec.fetch('low_hz', 500.0)
-      @top = spec.fetch('top_hz', 16_000.0)
+      @every = spec.fetch("every_bars", 8)
+      @bars = spec.fetch("bars", 2)
+      @low = spec.fetch("low_hz", 500.0)
+      @top = spec.fetch("top_hz", 16_000.0)
       @y = 0.0
       @a = 1.0
     end
@@ -1044,8 +1044,8 @@ module Stages
   # a note or lowers what is left after it.
   class Transient
     def initialize(spec, _seed, _side)
-      @attack = 10.0**(spec.fetch('attack_db', 4.0) / 20.0)
-      @sustain = 10.0**(spec.fetch('sustain_db', -2.0) / 20.0)
+      @attack = 10.0**(spec.fetch("attack_db", 4.0) / 20.0)
+      @sustain = 10.0**(spec.fetch("sustain_db", -2.0) / 20.0)
       @fast = 0.0
       @slow = 0.0
       @up_fast = 1.0 - Math.exp(-1.0 / (0.001 * SAMPLE_RATE))
@@ -1069,9 +1069,9 @@ module Stages
   # are air that was never in the recording.
   class Exciter
     def initialize(spec, _seed, _side)
-      @high = Stream::Highpass.new(spec.fetch('hz', 6000.0))
-      @drive = spec.fetch('drive', 3.0)
-      @mix = spec.fetch('mix', 0.25)
+      @high = Stream::Highpass.new(spec.fetch("hz", 6000.0))
+      @drive = spec.fetch("drive", 3.0)
+      @mix = spec.fetch("mix", 0.25)
     end
 
     def process(block, _from = 0)
@@ -1085,10 +1085,10 @@ module Stages
     RATIOS = [1.0, 2.76, 5.40, 8.93, 13.34].freeze
 
     def initialize(spec, _seed, _side)
-      base = spec.fetch('hz', 220.0)
-      q = spec.fetch('q', 18.0)
+      base = spec.fetch("hz", 220.0)
+      q = spec.fetch("q", 18.0)
       @bands = RATIOS.map { |r| Tape::Biquad.bandpass([base * r, SAMPLE_RATE * 0.45].min, q) }
-      @mix = spec.fetch('mix', 0.35)
+      @mix = spec.fetch("mix", 0.35)
     end
 
     def process(block, _from = 0)
@@ -1098,23 +1098,23 @@ module Stages
   end
 
   KINDS = {
-    'plate' => Plate, 'shimmer' => Shimmer, 'granular' => Granular, 'crush' => Crush, 'folder' => Folder, 'ringmod' => RingMod,
-    'freqshift' => FreqShift, 'reverse_echo' => ReverseEcho, 'tapestop' => TapeStop, 'sweep' => Sweep, 'transient' => Transient,
-    'exciter' => Exciter, 'comb_bank' => CombBank
+    "plate" => Plate, "shimmer" => Shimmer, "granular" => Granular, "crush" => Crush, "folder" => Folder, "ringmod" => RingMod,
+    "freqshift" => FreqShift, "reverse_echo" => ReverseEcho, "tapestop" => TapeStop, "sweep" => Sweep, "transient" => Transient,
+    "exciter" => Exciter, "comb_bank" => CombBank
   }.freeze
 
   # One stage of a profile's chain, as a Pair of processors for `channels` channels. A row of the
   # chain is a name, or { 'stage' => name, ...overrides } laid over the stage's defaults.
   def self.build(row, defaults, channels:, seed:, end_sample: 0, bar_samples: 1)
-    row = { 'stage' => row } if row.is_a?(String)
-    name = row.fetch('stage')
-    spec = defaults.fetch(name) { raise ArgumentError, "no stage #{name.inspect}" }.merge(row.reject { |k, _| k == 'stage' })
+    row = { "stage" => row } if row.is_a?(String)
+    name = row.fetch("stage")
+    spec = defaults.fetch(name) { raise ArgumentError, "no stage #{name.inspect}" }.merge(row.reject { |k, _| k == "stage" })
     klass = KINDS.fetch(name)
     parts = Array.new(channels) do |c|
       channel_seed = Zlib.crc32("#{seed}:#{name}:#{c}")
       case name
-      when 'tapestop' then klass.new(spec, channel_seed, c, end_sample:)
-      when 'sweep' then klass.new(spec, channel_seed, c, bar_samples:)
+      when "tapestop" then klass.new(spec, channel_seed, c, end_sample:)
+      when "sweep" then klass.new(spec, channel_seed, c, bar_samples:)
       else klass.new(spec, channel_seed, c)
       end
     end
@@ -1169,8 +1169,8 @@ module Noise
   class Air
     def initialize(spec, seed)
       @pink = Pink.new(Random.new(seed))
-      @high = Stream::Highpass.new(spec.fetch('hz', 8000.0))
-      @gain = Noise.gain(spec.fetch('db', -54.0)) * 4.0
+      @high = Stream::Highpass.new(spec.fetch("hz", 8000.0))
+      @gain = Noise.gain(spec.fetch("db", -54.0)) * 4.0
     end
 
     def block(count) = Array.new(count) { @high.step(@pink.step) * @gain }
@@ -1180,9 +1180,9 @@ module Noise
   class Bed
     def initialize(spec, seed)
       @rng = Random.new(seed)
-      @low = Stream::Lowpass.new(spec.fetch('hz', 200.0))
+      @low = Stream::Lowpass.new(spec.fetch("hz", 200.0))
       @y = 0.0
-      @gain = Noise.gain(spec.fetch('db', -48.0)) * 3.0
+      @gain = Noise.gain(spec.fetch("db", -48.0)) * 3.0
     end
 
     def block(count)
@@ -1231,8 +1231,8 @@ module Noise
   # Bank entries for the dust of a pass, each pop at a place of its own.
   def self.dust(spec, seed, seconds)
     rng = Random.new(seed)
-    poisson(rng, spec.fetch('rate', 3.0), seconds).map do |t|
-      samples = pop(rng, spec.fetch('db', -42.0))
+    poisson(rng, spec.fetch("rate", 3.0), seconds).map do |t|
+      samples = pop(rng, spec.fetch("db", -42.0))
       Stream::Bank::Entry.new((t * SAMPLE_RATE).to_i, -> { Voices::Reader.of(samples) }, 1.0, nil, (rng.rand * 2) - 1)
     end
   end
@@ -1241,15 +1241,15 @@ module Noise
   # to the octave that lies between 4 and 8 kilohertz, at a place of its own.
   def self.sparkle(spec, seed, seconds, chord_at)
     rng = Random.new(seed)
-    low, high = spec.fetch('midi', [108, 119])
-    poisson(rng, spec.fetch('rate', 1.6), seconds).map do |t|
+    low, high = spec.fetch("midi", [108, 119])
+    poisson(rng, spec.fetch("rate", 1.6), seconds).map do |t|
       pcs = chord_at.call(t)
       pc = pcs[rng.rand(pcs.size)]
       midi = (low..high).select { |n| n % 12 == pc }.sample(random: rng) || low
       decay = 0.08 + (rng.rand * 0.25)
       freq = Chords.hz(midi)
-      db = spec.fetch('db', -30.0) - (rng.rand * 6)
-      pan = ((rng.rand * 2) - 1) * spec.fetch('width', 0.8)
+      db = spec.fetch("db", -30.0) - (rng.rand * 6)
+      pan = ((rng.rand * 2) - 1) * spec.fetch("width", 0.8)
       Stream::Bank::Entry.new((t * SAMPLE_RATE).to_i, -> { glint(freq, decay, db) }, 1.0, nil, pan)
     end
   end
@@ -1263,68 +1263,68 @@ end
 # smooth and leaves no neighbours closer than a whole tone. No chord tone is ever dropped
 # for spacing; only the fifth, then the root when the bass plays it, give way to the voice cap.
 module Chords
-  NOTE_PC = { 'C' => 0, 'D' => 2, 'E' => 4, 'F' => 5, 'G' => 7, 'A' => 9, 'B' => 11 }.freeze
-  ACCIDENTAL = { 'b' => -1, '#' => 1, '' => 0 }.freeze
+  NOTE_PC = { "C" => 0, "D" => 2, "E" => 4, "F" => 5, "G" => 7, "A" => 9, "B" => 11 }.freeze
+  ACCIDENTAL = { "b" => -1, "#" => 1, "" => 0 }.freeze
 
   # "Dbmaj7#11" => root pitch class, tones in semitones above the root, slash bass or nil.
   def self.parse(name)
-    m = name.to_s.sub('6/9', '69').match(%r{\A([A-G])([b#]?)([^/]*)(?:/([A-G])([b#]?))?\z}) or
+    m = name.to_s.sub("6/9", "69").match(%r{\A([A-G])([b#]?)([^/]*)(?:/([A-G])([b#]?))?\z}) or
       raise ArgumentError, "chord #{name.inspect}: no root"
     bass = m[4] && (NOTE_PC.fetch(m[4]) + ACCIDENTAL.fetch(m[5])) % 12
-    { pc: (NOTE_PC.fetch(m[1]) + ACCIDENTAL.fetch(m[2])) % 12, tones: tones(m[3], name), bass: bass }
+    { pc: (NOTE_PC.fetch(m[1]) + ACCIDENTAL.fetch(m[2])) % 12, tones: tones(m[3], name), bass: }
   end
 
   # Triads, sixths, sevenths, ninths, elevenths, thirteenths, add9/11/13, sus2/sus4 and
   # the alterations b5 #5 b9 #9 #11 b13. Anything left over is an error, named.
   def self.tones(quality, name)
-    s = quality.delete('(),')
+    s = quality.delete("(),")
     third = 4
     fifth = 7
     seventh = sixth = nil
     extensions = []
-    third = 3 if s.sub!(/\A(?:min|mi|-|m(?!aj))/, '')
-    if s.sub!(/\Adim/, '')
+    third = 3 if s.sub!(/\A(?:min|mi|-|m(?!aj))/, "")
+    if s.sub!(/\Adim/, "")
       third = 3
       fifth = 6
-      seventh = 9 if s.start_with?('7')
+      seventh = 9 if s.start_with?("7")
     end
-    fifth = 8 if s.sub!(/\A(?:aug|\+)/, '')
-    third = 2 if s.sub!(/sus2/, '')
-    third = 5 if s.sub!(/sus4|sus/, '')
+    fifth = 8 if s.sub!(/\A(?:aug|\+)/, "")
+    third = 2 if s.sub!(/sus2/, "")
+    third = 5 if s.sub!(/sus4|sus/, "")
     level = 0
-    if s.sub!(/\A(?:maj|M)(7|9|11|13)?/, '')
+    if s.sub!(/\A(?:maj|M)(7|9|11|13)?/, "")
       level = Regexp.last_match(1).to_i
       seventh = 11 if level.positive?
     elsif (digits = s[/\A(?:7|9|11|13)/])
       level = digits.to_i
       seventh ||= 10
-      s.sub!(/\A(?:7|9|11|13)/, '')
-    elsif s.sub!(/\A69/, '')
+      s.sub!(/\A(?:7|9|11|13)/, "")
+    elsif s.sub!(/\A69/, "")
       sixth = 9
       extensions << 14
-    elsif s.sub!(/\A6/, '')
+    elsif s.sub!(/\A6/, "")
       sixth = 9
     end
     extensions << 14 if level >= 9
     extensions << 17 if level == 11
     extensions << 21 if level >= 13
-    extensions << 14 if s.sub!(/add9/, '')
-    extensions << 17 if s.sub!(/add11/, '')
-    extensions << 21 if s.sub!(/add13/, '')
-    sixth = 9 if s.sub!(/add6/, '')
-    if s.sub!(/alt/, '')
+    extensions << 14 if s.sub!(/add9/, "")
+    extensions << 17 if s.sub!(/add11/, "")
+    extensions << 21 if s.sub!(/add13/, "")
+    sixth = 9 if s.sub!(/add6/, "")
+    if s.sub!(/alt/, "")
       seventh ||= 10
       fifth = nil
       extensions = [13, 20]
     end
     while (alteration = s.slice!(/[b#](?:5|9|11|13)/))
       case alteration
-      when 'b5' then fifth = 6
-      when '#5' then fifth = 8
-      when 'b9' then extensions = extensions.reject { |e| e == 14 } + [13]
-      when '#9' then extensions = extensions.reject { |e| e == 14 } + [15]
-      when '#11' then extensions = extensions.reject { |e| e == 17 } + [18]
-      when 'b13' then extensions = extensions.reject { |e| e == 21 } + [20]
+      when "b5" then fifth = 6
+      when "#5" then fifth = 8
+      when "b9" then extensions = extensions.reject { |e| e == 14 } + [13]
+      when "#9" then extensions = extensions.reject { |e| e == 14 } + [15]
+      when "#11" then extensions = extensions.reject { |e| e == 17 } + [18]
+      when "b13" then extensions = extensions.reject { |e| e == 21 } + [20]
       end
     end
     raise ArgumentError, "chord #{name.inspect}: cannot read #{s.inspect}" unless s.empty?
@@ -1431,12 +1431,12 @@ module Chords
   end
 
   LAYOUTS = {
-    'drop2' => ->(upper) { drop(upper, 2) },
-    'drop3' => ->(upper) { drop(upper, 3) },
-    'spread' => ->(upper) { upper.each_with_index.map { |n, i| i.odd? && n + 12 <= HIGH ? n + 12 : n } },
-    'cluster' => ->(upper) { close_position(upper) },
-    'quartal' => ->(upper) { stack(upper, [0, 5, 10, 15, 20]) },
-    'so_what' => ->(upper) { stack(upper, [0, 5, 10, 15, 20].first(upper.size).tap { |s| s[-1] = s[-2].to_i + 4 if s.size > 1 }) }
+    "drop2" => ->(upper) { drop(upper, 2) },
+    "drop3" => ->(upper) { drop(upper, 3) },
+    "spread" => ->(upper) { upper.each_with_index.map { |n, i| i.odd? && n + 12 <= HIGH ? n + 12 : n } },
+    "cluster" => ->(upper) { close_position(upper) },
+    "quartal" => ->(upper) { stack(upper, [0, 5, 10, 15, 20]) },
+    "so_what" => ->(upper) { stack(upper, [0, 5, 10, 15, 20].first(upper.size).tap { |s| s[-1] = s[-2].to_i + 4 if s.size > 1 }) },
   }.freeze
 
   def self.restyle(upper, style)
@@ -1519,28 +1519,28 @@ module Languages
   # Quality => chord-name suffix the Chords parser reads. q4 and q4b have no name of their own:
   # the eleventh and thirteenth chords carry the same stacked-fourth colour.
   SUFFIX = {
-    'maj' => '', 'min' => 'm', 'dim' => 'dim', 'maj7' => 'maj7', 'maj9' => 'maj9', 'm7' => 'm7',
-    'm9' => 'm9', 'm11' => 'm11', '7' => '7', 'sus2' => 'sus2', 'sus4' => 'sus4', 'sus9' => '9sus4',
-    'add9' => 'add9', 'q4' => 'm11', 'q4b' => 'm13', 'maj7#11' => 'maj7#11', '13' => '13',
-    '7alt' => '7alt', 'm6/9' => 'm69', '13sus' => '13sus4'
+    "maj" => "", "min" => "m", "dim" => "dim", "maj7" => "maj7", "maj9" => "maj9", "m7" => "m7",
+    "m9" => "m9", "m11" => "m11", "7" => "7", "sus2" => "sus2", "sus4" => "sus4", "sus9" => "9sus4",
+    "add9" => "add9", "q4" => "m11", "q4b" => "m13", "maj7#11" => "maj7#11", "13" => "13",
+    "7alt" => "7alt", "m6/9" => "m69", "13sus" => "13sus4"
   }.freeze
 
   ROOTS = %w[C Db D Eb E F Gb G Ab A Bb B].freeze
   TONIC = 10 # Bb
 
   SPECS = {
-    'falling_fifths' => [[0, 'min'], [5, 'min'], [10, 'maj'], [3, 'maj7'], [8, 'maj'], [1, 'dim'], [7, 'sus4'], [0, 'min']],
-    'suspension_chain' => [[0, 'min'], [7, 'sus4'], [7, 'maj'], [5, 'min'], [0, 'sus4'], [0, 'min'], [10, 'maj7'], [0, 'min']],
-    'pedal_mixture' => [[0, 'm9'], [10, 'add9'], [8, 'maj7'], [0, 'm9'], [0, 'm9'], [11, 'maj'], [7, 'min'], [0, 'm9']],
-    'motif_fall' => [[0, 'min'], [10, 'maj'], [5, 'min'], [0, 'min'], [0, 'min'], [11, 'min'], [7, 'maj7'], [0, 'm9']],
-    'planing_m9' => [[0, 'm9'], [-2, 'm9'], [-3, 'm9'], [-5, 'm9'], [0, 'm9'], [-2, 'm9'], [-4, 'm9'], [-5, 'm9']],
-    'maj9_walk' => [[0, 'maj9'], [-1, 'maj9'], [-3, 'maj9'], [-4, 'maj9'], [0, 'maj9'], [-1, 'maj9'], [2, 'maj9'], [0, 'maj9']],
-    'slash_pedal' => [[0, 'm11'], [5, 'm9'], [3, 'maj9'], [10, 'm9'], [0, 'm11'], [5, 'm9'], [8, 'maj9'], [0, 'm11']],
-    'chromatic_drop' => [[0, 'm9'], [-1, 'm9'], [-2, 'm9'], [-3, 'm9'], [-4, 'm9'], [-3, 'm9'], [-1, 'm9'], [0, 'm9']],
-    'quartal_mediants' => [[0, 'q4'], [4, 'q4'], [8, 'q4b'], [4, 'q4'], [-4, 'q4'], [-8, 'q4b'], [3, 'q4'], [8, 'q4']],
-    'unresolved_stack' => [[0, 'q4b'], [6, 'q4'], [1, 'q4'], [8, 'q4b'], [3, 'q4'], [-2, 'q4'], [7, 'q4b'], [6, 'q4']],
-    'static_suspensions' => [[0, 'sus2'], [0, 'sus4'], [0, 'm9'], [0, 'sus2'], [5, 'sus2'], [0, 'sus4'], [10, 'sus2'], [0, 'm9']],
-    'dorian_lift' => [[0, 'm9'], [5, 'maj'], [10, 'sus2'], [0, 'm9'], [2, 'min'], [5, 'maj'], [10, 'add9'], [0, 'm9']]
+    "falling_fifths" => [[0, "min"], [5, "min"], [10, "maj"], [3, "maj7"], [8, "maj"], [1, "dim"], [7, "sus4"], [0, "min"]],
+    "suspension_chain" => [[0, "min"], [7, "sus4"], [7, "maj"], [5, "min"], [0, "sus4"], [0, "min"], [10, "maj7"], [0, "min"]],
+    "pedal_mixture" => [[0, "m9"], [10, "add9"], [8, "maj7"], [0, "m9"], [0, "m9"], [11, "maj"], [7, "min"], [0, "m9"]],
+    "motif_fall" => [[0, "min"], [10, "maj"], [5, "min"], [0, "min"], [0, "min"], [11, "min"], [7, "maj7"], [0, "m9"]],
+    "planing_m9" => [[0, "m9"], [-2, "m9"], [-3, "m9"], [-5, "m9"], [0, "m9"], [-2, "m9"], [-4, "m9"], [-5, "m9"]],
+    "maj9_walk" => [[0, "maj9"], [-1, "maj9"], [-3, "maj9"], [-4, "maj9"], [0, "maj9"], [-1, "maj9"], [2, "maj9"], [0, "maj9"]],
+    "slash_pedal" => [[0, "m11"], [5, "m9"], [3, "maj9"], [10, "m9"], [0, "m11"], [5, "m9"], [8, "maj9"], [0, "m11"]],
+    "chromatic_drop" => [[0, "m9"], [-1, "m9"], [-2, "m9"], [-3, "m9"], [-4, "m9"], [-3, "m9"], [-1, "m9"], [0, "m9"]],
+    "quartal_mediants" => [[0, "q4"], [4, "q4"], [8, "q4b"], [4, "q4"], [-4, "q4"], [-8, "q4b"], [3, "q4"], [8, "q4"]],
+    "unresolved_stack" => [[0, "q4b"], [6, "q4"], [1, "q4"], [8, "q4b"], [3, "q4"], [-2, "q4"], [7, "q4b"], [6, "q4"]],
+    "static_suspensions" => [[0, "sus2"], [0, "sus4"], [0, "m9"], [0, "sus2"], [5, "sus2"], [0, "sus4"], [10, "sus2"], [0, "m9"]],
+    "dorian_lift" => [[0, "m9"], [5, "maj"], [10, "sus2"], [0, "m9"], [2, "min"], [5, "maj"], [10, "add9"], [0, "m9"]],
   }.freeze
 
   def self.names = SPECS.keys
@@ -1560,14 +1560,14 @@ end
 # chosen tonic: chord quality, extensions and voicing intent are untouched, so this is
 # transposition and not reharmonisation.
 module KeyLock
-  PITCH = { 'C' => 0, 'D' => 2, 'E' => 4, 'F' => 5, 'G' => 7, 'A' => 9, 'B' => 11 }.freeze
+  PITCH = { "C" => 0, "D" => 2, "E" => 4, "F" => 5, "G" => 7, "A" => 9, "B" => 11 }.freeze
   NAMES = %w[C Db D Eb E F Gb G Ab A Bb B].freeze
   SYMBOL = %r{\A([A-G][b#]?)([^/]*)(?:/([A-G][b#]?))?\z}
   # When this share of chords stand over one bass note, that bass is the tonic: a chromatic
   # descent over a standing pedal rests on the pedal, not on its last chord.
   PEDAL_SHARE = 0.6
   # Bb: half the catalogue's curated progressions already rest there.
-  DEFAULT = 'Bb'
+  DEFAULT = "Bb"
 
   def self.pitch_class(name)
     match = name.to_s.match(/\A([A-G])([b#]?)\z/) or raise ArgumentError, "note #{name.inspect}"
@@ -1576,7 +1576,7 @@ module KeyLock
   end
 
   def self.parts(chord)
-    SYMBOL.match(chord.to_s.sub('6/9', '69')) or raise ArgumentError, "chord #{chord.inspect}: no root"
+    SYMBOL.match(chord.to_s.sub("6/9", "69")) or raise ArgumentError, "chord #{chord.inspect}: no root"
   end
 
   def self.tonic(names)
@@ -1638,7 +1638,7 @@ module Lines
     [[3, 10], [0, 2, 3, 5, 7, 9, 10]],
     [[4, 10], [0, 2, 4, 5, 7, 9, 10]],
     [[3, 7], [0, 2, 3, 5, 7, 8, 10]],
-    [[4, 7], [0, 2, 4, 5, 7, 9, 11]]
+    [[4, 7], [0, 2, 4, 5, 7, 9, 11]],
   ].freeze
   PENTATONIC = [0, 3, 5, 7, 10].freeze
   LEAD_BASE = 60 # the lowest root the line sits on: guide tones then top out near Bb5, over the pad and under the ceiling
@@ -1819,21 +1819,21 @@ module Voices
   # can be begun, left, and taken up again where it stopped, as a streamed note must.
   class Reader
     attr_reader :size
-  
+
     def self.empty = new(0) { 0.0 }
-  
+
     def self.of(samples) = new(samples.size) { |i| samples[i] }
-  
+
     def initialize(size, &sample)
       @size = size
       @sample = sample
       @at = 0
     end
-  
+
     def done? = @at >= @size
-  
+
     def remaining = @size - @at
-  
+
     # Up to `count` of the next samples; fewer at the end, none after it.
     def read(count)
       take = [count, remaining].min
@@ -1846,16 +1846,15 @@ module Voices
       @at = i
       out
     end
-  
+
     def drain = read(@size)
   end
-  
 
   WAVES = {
-    'saw' => ->(p) { (2.0 * p) - 1.0 },
-    'pulse' => ->(p) { p < 0.5 ? 1.0 : -1.0 },
-    'triangle' => ->(p) { p < 0.5 ? (4.0 * p) - 1.0 : 3.0 - (4.0 * p) },
-    'sine' => ->(p) { Math.sin(TAU * p) }
+    "saw" => ->(p) { (2.0 * p) - 1.0 },
+    "pulse" => ->(p) { p < 0.5 ? 1.0 : -1.0 },
+    "triangle" => ->(p) { p < 0.5 ? (4.0 * p) - 1.0 : 3.0 - (4.0 * p) },
+    "sine" => ->(p) { Math.sin(TAU * p) },
   }.freeze
 
   # The polynomial band-limited step: the correction that rounds each jump of a saw or a pulse
@@ -1899,20 +1898,20 @@ module Voices
   def self.moog_reader(patch, freq, dur, amp)
     return Reader.empty unless audible?(freq)
 
-    amp_env = patch.fetch('amp')
-    filter_env = patch.fetch('filter_env')
-    base = patch.fetch('cutoff')
-    sweep = patch.fetch('env_amount')
-    resonance = patch.fetch('resonance')
+    amp_env = patch.fetch("amp")
+    filter_env = patch.fetch("filter_env")
+    base = patch.fetch("cutoff")
+    sweep = patch.fetch("env_amount")
+    resonance = patch.fetch("resonance")
     n = ((dur + amp_env[3]) * SAMPLE_RATE).to_i
-    waves = patch.fetch('waves').map { |w| WAVES.keys.index(w) or raise KeyError, "no wave #{w}" } # an index into WAVES, whose shapes the loop below writes out
-    incs = patch.fetch('waves').each_index.map do |k|
-      freq * (2.0**(patch.fetch('octaves')[k] + (patch.fetch('detune')[k] / 1200.0))) / SAMPLE_RATE
+    waves = patch.fetch("waves").map { |w| WAVES.keys.index(w) or raise KeyError, "no wave #{w}" } # an index into WAVES, whose shapes the loop below writes out
+    incs = patch.fetch("waves").each_index.map do |k|
+      freq * (2.0**(patch.fetch("octaves")[k] + (patch.fetch("detune")[k] / 1200.0))) / SAMPLE_RATE
     end
     phases = Array.new(waves.size) { |k| k * 0.13 }
     wave_count = waves.size
     ladder = Ladder.new
-    drive = patch.fetch('drive', 1.0)
+    drive = patch.fetch("drive", 1.0)
     scale = amp * 2.0 / waves.size
     Reader.new(n) do |i|
       t = i.to_f / SAMPLE_RATE
@@ -1940,15 +1939,15 @@ module Voices
   def self.rhodes_reader(patch, freq, dur, amp, velocity)
     return Reader.empty unless audible?(freq)
 
-    release = patch.fetch('release')
+    release = patch.fetch("release")
     n = ((dur + release) * SAMPLE_RATE).to_i
-    bright = 0.5 + (patch.fetch('velocity_bright') * velocity)
-    body = patch.fetch('body_index') * bright
-    bell = patch.fetch('bell_index') * bright
-    bell_ratio = patch.fetch('bell_ratio')
-    bell_k = Math.exp(-1.0 / (patch.fetch('bell_decay') * SAMPLE_RATE))
-    body_k = Math.exp(-1.0 / (patch.fetch('body_decay') * SAMPLE_RATE))
-    amp_k = Math.exp(-1.0 / (patch.fetch('decay') * SAMPLE_RATE))
+    bright = 0.5 + (patch.fetch("velocity_bright") * velocity)
+    body = patch.fetch("body_index") * bright
+    bell = patch.fetch("bell_index") * bright
+    bell_ratio = patch.fetch("bell_ratio")
+    bell_k = Math.exp(-1.0 / (patch.fetch("bell_decay") * SAMPLE_RATE))
+    body_k = Math.exp(-1.0 / (patch.fetch("body_decay") * SAMPLE_RATE))
+    amp_k = Math.exp(-1.0 / (patch.fetch("decay") * SAMPLE_RATE))
     click_k = Math.exp(-1.0 / (0.003 * SAMPLE_RATE))
     rng = Random.new(freq.to_i)
     out_k = Math.exp(-1.0 / (release * SAMPLE_RATE / 4.0))
@@ -1961,7 +1960,7 @@ module Voices
       b = Math.sin(TAU * bell_m)
       s = Math.sin(TAU * (carrier + (body * body_env * m / TAU))) * 0.8
       s += Math.sin(TAU * (bell_c + (bell * bell_env * b / TAU))) * 0.12 * bell_env
-      s += ((rng.rand * 2) - 1) * click_env * patch.fetch('click')
+      s += ((rng.rand * 2) - 1) * click_env * patch.fetch("click")
       carrier = (carrier + cinc) % 1.0
       modulator = (modulator + cinc) % 1.0
       bell_c = (bell_c + cinc) % 1.0
@@ -1982,25 +1981,25 @@ module Voices
     return [] unless audible?(freq)
 
     n = [(decay * 4 * SAMPLE_RATE).to_i, (dur * SAMPLE_RATE).to_i].max
-    env = patch.fetch('pitch_env')
-    pe_k = Math.exp(-1.0 / (env.fetch('seconds') * SAMPLE_RATE))
+    env = patch.fetch("pitch_env")
+    pe_k = Math.exp(-1.0 / (env.fetch("seconds") * SAMPLE_RATE))
     ve_k = Math.exp(-1.0 / (decay * SAMPLE_RATE))
-    fe_k = Math.exp(-1.0 / (patch.fetch('vcf_decay') * SAMPLE_RATE))
-    mix = patch.fetch('mix')
+    fe_k = Math.exp(-1.0 / (patch.fetch("vcf_decay") * SAMPLE_RATE))
+    mix = patch.fetch("mix")
     rng = Random.new(freq.to_i)
     ladder = Ladder.new
     p1 = p2 = 0.0
     pe = ve = fe = 1.0
     Array.new(n) do
-      f1 = freq * (1.0 + (env.fetch('depth') * pe))
-      tri = WAVES['triangle'].call(p1)
-      f2 = f1 * patch.fetch('vco2_ratio') * (1.0 + (patch.fetch('fm') * tri))
+      f1 = freq * (1.0 + (env.fetch("depth") * pe))
+      tri = WAVES["triangle"].call(p1)
+      f2 = f1 * patch.fetch("vco2_ratio") * (1.0 + (patch.fetch("fm") * tri))
       sq = p2 < 0.5 ? 1.0 : -1.0
       p1 = (p1 + (f1 / SAMPLE_RATE)) % 1.0
       p2 = (p2 + (f2 / SAMPLE_RATE)) % 1.0
-      src = (tri * mix.fetch('triangle')) + (sq * mix.fetch('square')) + (((rng.rand * 2) - 1) * mix.fetch('noise'))
-      cutoff = patch.fetch('cutoff_floor') + (patch.fetch('cutoff') * fe)
-      out = ladder.process(src, cutoff, patch.fetch('resonance')) * ve * amp * 2.0
+      src = (tri * mix.fetch("triangle")) + (sq * mix.fetch("square")) + (((rng.rand * 2) - 1) * mix.fetch("noise"))
+      cutoff = patch.fetch("cutoff_floor") + (patch.fetch("cutoff") * fe)
+      out = ladder.process(src, cutoff, patch.fetch("resonance")) * ve * amp * 2.0
       pe *= pe_k
       ve *= ve_k
       fe *= fe_k
@@ -2015,18 +2014,18 @@ module Voices
   def self.gated_reader(patch, freq, dur, amp, step)
     return Reader.empty unless audible?(freq)
 
-    envelope = patch.fetch('amp')
-    pattern = patch.fetch('pattern')
-    cell = (step || 0.125) * patch.fetch('cell_steps', 1)
-    slew = 1.0 - Math.exp(-1.0 / (patch.fetch('slew', 0.004) * SAMPLE_RATE))
-    parts = patch.fetch('partials').filter_map { |ratio, weight| [freq * ratio / SAMPLE_RATE, weight] if audible?(freq * ratio) }
+    envelope = patch.fetch("amp")
+    pattern = patch.fetch("pattern")
+    cell = (step || 0.125) * patch.fetch("cell_steps", 1)
+    slew = 1.0 - Math.exp(-1.0 / (patch.fetch("slew", 0.004) * SAMPLE_RATE))
+    parts = patch.fetch("partials").filter_map { |ratio, weight| [freq * ratio / SAMPLE_RATE, weight] if audible?(freq * ratio) }
     phases = Array.new(parts.size, 0.0)
     total = parts.sum { |_, weight| weight }
     n = ((dur + envelope[3]) * SAMPLE_RATE).to_i
     open = 0.0
     Reader.new(n) do |i|
       t = i.to_f / SAMPLE_RATE
-      open += slew * ((pattern[(t / cell).floor % pattern.size] == 'x' ? 1.0 : 0.0) - open)
+      open += slew * ((pattern[(t / cell).floor % pattern.size] == "x" ? 1.0 : 0.0) - open)
       sum = 0.0
       parts.each_index do |k|
         sum += parts[k][1] * Math.sin(TAU * phases[k])
@@ -2044,16 +2043,16 @@ module Voices
   def self.organ_reader(patch, freq, dur, amp, registration)
     return Reader.empty unless audible?(freq)
 
-    ratios = patch.fetch('ratios')
-    weights = registration || patch.fetch('registrations').values.first
+    ratios = patch.fetch("ratios")
+    weights = registration || patch.fetch("registrations").values.first
     ranks = ratios.each_index.filter_map { |k| [freq * ratios[k] / SAMPLE_RATE, weights[k]] if weights[k].to_f.positive? && audible?(freq * ratios[k]) }
-    envelope = patch.fetch('amp')
+    envelope = patch.fetch("amp")
     total = ranks.sum { |_, weight| weight }
     phases = Array.new(ranks.size, 0.0)
     n = ((dur + envelope[3]) * SAMPLE_RATE).to_i
-    chiff = patch.fetch('chiff')
-    chiff_k = Math.exp(-1.0 / (chiff.fetch('seconds') * SAMPLE_RATE / 3.0))
-    chiff_env = chiff.fetch('level')
+    chiff = patch.fetch("chiff")
+    chiff_k = Math.exp(-1.0 / (chiff.fetch("seconds") * SAMPLE_RATE / 3.0))
+    chiff_env = chiff.fetch("level")
     rng = Random.new(freq.to_i)
     soft = 0.0
     Reader.new(n) do |i|
@@ -2080,7 +2079,7 @@ module Voices
   def self.string(patch, freq, dur, amp)
     return [] unless audible?(freq)
 
-    release = patch.fetch('release', 0.12)
+    release = patch.fetch("release", 0.12)
     n = ((dur + release) * SAMPLE_RATE).to_i
     # The two-point average reads the newest sample too, so it delays by half a sample less than the line is long.
     delay = (SAMPLE_RATE / freq) + 0.5
@@ -2089,9 +2088,9 @@ module Voices
 
     frac = delay - whole
     coef = (1.0 - frac) / (1.0 + frac)
-    loop_gain = 10.0**(-3.0 / (freq * patch.fetch('sustain', 2.0)))
+    loop_gain = 10.0**(-3.0 / (freq * patch.fetch("sustain", 2.0)))
     rng = Random.new(freq.round)
-    pick = patch.fetch('pick', 0.7).clamp(0.05, 1.0)
+    pick = patch.fetch("pick", 0.7).clamp(0.05, 1.0)
     previous = 0.0
     line = Array.new(whole) { previous += pick * (((rng.rand * 2.0) - 1.0) - previous) }
     mean = line.sum / line.size
@@ -2099,7 +2098,7 @@ module Voices
     pos = 0
     ap_in = ap_out = 0.0
     low = 0.0
-    k = 1.0 - Math.exp(-TAU * patch.fetch('tone', 5000.0) / SAMPLE_RATE)
+    k = 1.0 - Math.exp(-TAU * patch.fetch("tone", 5000.0) / SAMPLE_RATE)
     tail = (release * SAMPLE_RATE).to_i
     Array.new(n) do |i|
       head = line[pos]
@@ -2121,17 +2120,17 @@ module Voices
   # are made whole and handed out in blocks.
   def self.reader(spec, midi, dur, amp, velocity: 1.0, detune: 0.0, decay: nil, step: nil, registration: nil)
     freq = Chords.hz(midi)
-    amp *= 10.0**(spec.fetch('gain', 0.0) / 20.0)
-    case spec.fetch('family')
-    when 'pure' then Reader.of(Synth.pure_note(freq, dur, amp:, release: spec.fetch('release', 0.12), attack: spec.fetch('attack', 0.008)))
-    when 'sine' then Reader.of(audible?(freq) ? Synth.note(freq, dur, detune:, amp:, release: dur * 0.5) : [])
-    when 'moog' then moog_reader(spec, freq, dur, amp)
-    when 'rhodes' then rhodes_reader(spec, freq, dur, amp, velocity)
-    when 'dfam' then Reader.of(dfam(spec, freq, dur, amp, decay || spec.fetch('decay', 0.12)))
-    when 'string' then Reader.of(string(spec, freq, dur, amp))
-    when 'gated' then gated_reader(spec, freq, dur, amp, step)
-    when 'organ' then organ_reader(spec, freq, dur, amp, registration)
-    when 'fluid' then raise ArgumentError, "voice #{spec['name'].inspect} is a soundfont voice: the sequencer mixes it, a single note cannot"
+    amp *= 10.0**(spec.fetch("gain", 0.0) / 20.0)
+    case spec.fetch("family")
+    when "pure" then Reader.of(Synth.pure_note(freq, dur, amp:, release: spec.fetch("release", 0.12), attack: spec.fetch("attack", 0.008)))
+    when "sine" then Reader.of(audible?(freq) ? Synth.note(freq, dur, detune:, amp:, release: dur * 0.5) : [])
+    when "moog" then moog_reader(spec, freq, dur, amp)
+    when "rhodes" then rhodes_reader(spec, freq, dur, amp, velocity)
+    when "dfam" then Reader.of(dfam(spec, freq, dur, amp, decay || spec.fetch("decay", 0.12)))
+    when "string" then Reader.of(string(spec, freq, dur, amp))
+    when "gated" then gated_reader(spec, freq, dur, amp, step)
+    when "organ" then organ_reader(spec, freq, dur, amp, registration)
+    when "fluid" then raise ArgumentError, "voice #{spec['name'].inspect} is a soundfont voice: the sequencer mixes it, a single note cannot"
     else raise ArgumentError, "no voice family #{spec['family'].inspect}"
     end
   end
@@ -2318,15 +2317,15 @@ module Tape
   # shape of the anhysteretic curve, alpha the coupling between domains, k the width of the
   # loop and c the share that bends back without loss. Solved with Runge-Kutta over each sample.
   class Hysteresis
-    DEFAULTS = { 'ms' => 1.0, 'a' => 0.22, 'alpha' => 1.6e-3, 'k' => 0.47, 'c' => 0.17 }.freeze
+    DEFAULTS = { "ms" => 1.0, "a" => 0.22, "alpha" => 1.6e-3, "k" => 0.47, "c" => 0.17 }.freeze
 
     def initialize(params = {})
       p = DEFAULTS.merge(params)
-      @ms = p['ms'].to_f
-      @a = p['a'].to_f
-      @alpha = p['alpha'].to_f
-      @k = p['k'].to_f
-      @c = p['c'].to_f
+      @ms = p["ms"].to_f
+      @a = p["a"].to_f
+      @alpha = p["alpha"].to_f
+      @k = p["k"].to_f
+      @c = p["c"].to_f
       @m = 0.0
       @h = 0.0
     end
@@ -2378,13 +2377,13 @@ end
       @scale = 1.0
       @curve = curve
       jitter = ->(share) { 1.0 + (share * ((rng.rand * 2) - 1)) } # each instance is a slightly different machine
-      loop_params = (config['hysteresis'] || {}).dup
-      loop_params['k'] = loop_params.fetch('k', Hysteresis::DEFAULTS['k']) * jitter.call(0.04)
+      loop_params = (config["hysteresis"] || {}).dup
+      loop_params["k"] = loop_params.fetch("k", Hysteresis::DEFAULTS["k"]) * jitter.call(0.04)
       @params = loop_params
-      @field = curve == :loop ? config.fetch('field_scale', 0.4) : config.fetch('cheap_field', 1.2)
-      @bump = Biquad.peaking(config.fetch('bump_hz', 50.0) * jitter.call(0.06), config.fetch('bump_q', 1.1), config.fetch('bump_db', 1.5))
-      @top = Biquad.lowpass(config.fetch('hf_hz', 16_500.0) * jitter.call(0.03))
-      @block = Biquad.highpass(config.fetch('block_hz', 18.0))
+      @field = curve == :loop ? config.fetch("field_scale", 0.4) : config.fetch("cheap_field", 1.2)
+      @bump = Biquad.peaking(config.fetch("bump_hz", 50.0) * jitter.call(0.06), config.fetch("bump_q", 1.1), config.fetch("bump_db", 1.5))
+      @top = Biquad.lowpass(config.fetch("hf_hz", 16_500.0) * jitter.call(0.03))
+      @block = Biquad.highpass(config.fetch("block_hz", 18.0))
       @loop = Hysteresis.new(@params) if curve == :loop
       @makeup = 1.0
       @makeup = sample ? calibrate_on(sample) : calibrate(reference)
@@ -2440,9 +2439,9 @@ end
     def initialize(instances:, drive: 1.0, seed: 0, config: {}, sample: nil, cheap: false)
       heard = sample
       @machines = Array.new(instances) do |i|
-        step = 1.0 + (config.fetch('drive_step', 0.15) * i)
+        step = 1.0 + (config.fetch("drive_step", 0.15) * i)
         machine = Machine.new(drive: drive * step, curve: i.zero? && !cheap ? :loop : :atan, config:, sample: heard,
-                              rng: Random.new(Zlib.crc32("#{seed}:tape:#{i}")), reference: config.fetch('reference', 0.12))
+                              rng: Random.new(Zlib.crc32("#{seed}:tape:#{i}")), reference: config.fetch("reference", 0.12))
         heard = machine.process(heard) if heard
         machine.reset
         machine
@@ -2480,7 +2479,7 @@ end
     return buf if instances.to_i <= 0 || buf.empty?
 
     ceiling(Stack.new(instances: instances.to_i, drive:, seed:, config:, sample: excerpt(buf)).process(buf),
-            top: config.fetch('ceiling', 0.97))
+            top: config.fetch("ceiling", 0.97))
   end
 end
 
@@ -2758,11 +2757,11 @@ module Mastering
   # way. The three add back to the input exactly. Each band is compressed on its own.
   class Multiband
     def initialize(spec, channels)
-      low_hz, high_hz = spec.fetch('crossovers')
+      low_hz, high_hz = spec.fetch("crossovers")
       @cuts = Array.new(channels) { [Cascade.new(:lowpass, low_hz), Cascade.new(:lowpass, high_hz)] }
-      @bands = spec.fetch('bands').map do |band|
-        Compressor.new(threshold_db: band.fetch('threshold_db'), ratio: band.fetch('ratio'), attack_ms: band.fetch('attack_ms'),
-                       release_ms: band.fetch('release_ms'), makeup_db: band.fetch('makeup_db', 0.0))
+      @bands = spec.fetch("bands").map do |band|
+        Compressor.new(threshold_db: band.fetch("threshold_db"), ratio: band.fetch("ratio"), attack_ms: band.fetch("attack_ms"),
+                       release_ms: band.fetch("release_ms"), makeup_db: band.fetch("makeup_db", 0.0))
       end
     end
 
@@ -2782,9 +2781,9 @@ module Mastering
   # low mids are doing: the more there is, the more of that band is taken out.
   class Equalizer
     def initialize(spec, channels)
-      lm = spec.fetch('low_mid')
-      air = spec.fetch('air')
-      dyn = spec.fetch('dynamic')
+      lm = spec.fetch("low_mid")
+      air = spec.fetch("air")
+      dyn = spec.fetch("dynamic")
       @lowcut = spec["lowcut_hz"]
       @weight_db = spec.dig("low_shelf", "db")
       @weight_hz = spec.dig("low_shelf", "hz")
@@ -2794,8 +2793,8 @@ module Mastering
           air: Tape::Biquad.highshelf(air.fetch("hz"), air.fetch("db")),
           band: Tape::Biquad.bandpass(lm.fetch("hz"), lm.fetch("q")), **bottom_end }
       end
-      @threshold = Mastering.db(dyn.fetch('threshold_db'))
-      @range = dyn.fetch('range')
+      @threshold = Mastering.db(dyn.fetch("threshold_db"))
+      @range = dyn.fetch("range")
       @level = 0.0
       @up = 1.0 - Math.exp(-1.0 / (0.01 * SAMPLE_RATE))
       @down = 1.0 - Math.exp(-1.0 / (0.15 * SAMPLE_RATE))
@@ -2847,22 +2846,22 @@ module Mastering
       @spec = spec
       @channels = channels
       @whole = whole
-      @eq = Equalizer.new(spec.fetch('eq'), channels)
-      @multiband = Multiband.new(spec.fetch('multiband'), channels)
-      par = spec.fetch('parallel')
-      @parallel = Compressor.new(threshold_db: par.fetch('threshold_db'), ratio: par.fetch('ratio'), attack_ms: par.fetch('attack_ms'),
-                                 release_ms: par.fetch('release_ms'), makeup_db: par.fetch('makeup_db'))
-      @parallel_mix = par.fetch('mix')
-      glue = spec.fetch('glue')
-      @glue = Compressor.new(threshold_db: glue.fetch('threshold_db'), ratio: glue.fetch('ratio'), attack_ms: glue.fetch('attack_ms'),
-                             release_ms: 60_000.0 / bpm * glue.fetch('release_beats'), makeup_db: glue.fetch('makeup_db'))
-      @glue_beats = glue.fetch('release_beats')
-      @target = spec.fetch('target_lufs')
+      @eq = Equalizer.new(spec.fetch("eq"), channels)
+      @multiband = Multiband.new(spec.fetch("multiband"), channels)
+      par = spec.fetch("parallel")
+      @parallel = Compressor.new(threshold_db: par.fetch("threshold_db"), ratio: par.fetch("ratio"), attack_ms: par.fetch("attack_ms"),
+                                 release_ms: par.fetch("release_ms"), makeup_db: par.fetch("makeup_db"))
+      @parallel_mix = par.fetch("mix")
+      glue = spec.fetch("glue")
+      @glue = Compressor.new(threshold_db: glue.fetch("threshold_db"), ratio: glue.fetch("ratio"), attack_ms: glue.fetch("attack_ms"),
+                             release_ms: 60_000.0 / bpm * glue.fetch("release_beats"), makeup_db: glue.fetch("makeup_db"))
+      @glue_beats = glue.fetch("release_beats")
+      @target = spec.fetch("target_lufs")
       @meter = Loudness::Meter.new(channels)
       @gain_db = 0.0
-      @limiter = Limiter.new(ceiling_db: spec.fetch('ceiling_dbtp'), lookahead: spec.dig('limiter', 'lookahead') || 64,
-                             release_ms: spec.dig('limiter', 'release_ms') || 120.0, channels:)
-      @knee = spec.dig('clip', 'knee') || 0.7
+      @limiter = Limiter.new(ceiling_db: spec.fetch("ceiling_dbtp"), lookahead: spec.dig("limiter", "lookahead") || 64,
+                             release_ms: spec.dig("limiter", "release_ms") || 120.0, channels:)
+      @knee = spec.dig("clip", "knee") || 0.7
     end
 
     def target=(lufs)
@@ -2954,7 +2953,7 @@ module Mastering
   end
 
   def self.report_line(report)
-    format('  loudness: %<lufs>.1f LUFS-I, true peak %<tp>.2f dBTP, crest %<crest>.1f dB, correlation %<corr>.2f',
+    format("  loudness: %<lufs>.1f LUFS-I, true peak %<tp>.2f dBTP, crest %<crest>.1f dB, correlation %<corr>.2f",
            lufs: report[:lufs], tp: report[:true_peak_db], crest: report[:crest_db], corr: report[:correlation])
   end
 end
@@ -3014,14 +3013,14 @@ module Critic
       edge: [edge, 0.0].max,
       crest: [CREST_DB.begin - report[:crest_db], report[:crest_db] - CREST_DB.end, 0.0].max,
       peak: [report[:true_peak_db] - TRUE_PEAK_CEILING_DB, 0.0].max,
-      slope:
+      slope:,
     }
   end
 
   def self.score(measures) = measures.except(:slope).values.sum
 
   def self.line(measures)
-    format('  critic: %<score>.1f dB off (tilt %<slope>.1f dB/oct, bumpy %<bump>.1f, mud %<mud>.1f, edge %<edge>.1f, crest %<crest>.1f, peak %<peak>.1f)',
+    format("  critic: %<score>.1f dB off (tilt %<slope>.1f dB/oct, bumpy %<bump>.1f, mud %<mud>.1f, edge %<edge>.1f, crest %<crest>.1f, peak %<peak>.1f)",
            score: score(measures), slope: measures[:slope], bump: measures[:bumpiness], mud: measures[:mud],
            edge: measures[:edge], crest: measures[:crest], peak: measures[:peak])
   end
@@ -3094,9 +3093,9 @@ class Drums
   # roles from this fallback rather than a KeyError that ends the render.
   def sounds
     {
-      'kick' => kick(0.24 + (@rng.rand * 0.05)),
-      'snare' => snare(0.18 + (@rng.rand * 0.08)),
-      'hat' => hat(0.045 + (@rng.rand * 0.04))
+      "kick" => kick(0.24 + (@rng.rand * 0.05)),
+      "snare" => snare(0.18 + (@rng.rand * 0.08)),
+      "hat" => hat(0.045 + (@rng.rand * 0.04)),
     }
   end
 
@@ -3115,7 +3114,7 @@ end
 # and is scaled to a peak, so the mix levels in the data are the only loudness knob.
 module Percussion
   TAU = 2 * Math::PI
-  PEAKS = { 'kick' => 0.9, 'snare' => 0.7, 'clap' => 0.7, 'hat' => 0.3, 'open' => 0.3, 'rim' => 0.5, 'tom' => 0.7, 'perc' => 0.5 }.freeze
+  PEAKS = { "kick" => 0.9, "snare" => 0.7, "clap" => 0.7, "hat" => 0.3, "open" => 0.3, "rim" => 0.5, "tom" => 0.7, "perc" => 0.5 }.freeze
 
   def self.n(seconds) = (seconds * SAMPLE_RATE).to_i
 
@@ -3167,11 +3166,11 @@ module Percussion
     phase = 0.0
     body = Array.new(length) do |i|
       t = i.to_f / SAMPLE_RATE
-      phase += TAU * (spec['body'] + (spec['sweep'] * Math.exp(-t * spec['sweep_decay']))) / SAMPLE_RATE
-      Math.sin(phase) * Math.exp(-t * spec['amp_decay'] / scale)
+      phase += TAU * (spec["body"] + (spec["sweep"] * Math.exp(-t * spec["sweep_decay"]))) / SAMPLE_RATE
+      Math.sin(phase) * Math.exp(-t * spec["amp_decay"] / scale)
     end
-    body = dirt(body, spec['drive'])
-    click = click(rng, spec['click_ms']).map { |x| x * 0.5 }
+    body = dirt(body, spec["drive"])
+    click = click(rng, spec["click_ms"]).map { |x| x * 0.5 }
     mix(click, body)
   end
 
@@ -3198,7 +3197,7 @@ module Percussion
   end
 
   def self.fm_hat(spec, _rng)
-    highpass(fm_pair(spec.fetch('carrier', 900), spec.fetch('modulator', 3150), 5, spec.fetch('decay', 90), 0.12, 20.0), 4000.0)
+    highpass(fm_pair(spec.fetch("carrier", 900), spec.fetch("modulator", 3150), 5, spec.fetch("decay", 90), 0.12, 20.0), 4000.0)
   end
 
   def self.kick_808(_spec, rng)
@@ -3226,15 +3225,15 @@ module Percussion
   # Six detuned square oscillators at metallic ratios, crushed to 12 bits, highpassed.
   def self.hat_909(spec, rng)
     freqs = [205.3, 304.4, 369.6, 522.7, 540.0, 800.0]
-    length = n(spec['open'] ? 0.4 : 0.07)
-    decay = spec['open'] ? 7.0 : 45.0
+    length = n(spec["open"] ? 0.4 : 0.07)
+    decay = spec["open"] ? 7.0 : 45.0
     raw = Array.new(length) do |i|
       t = i.to_f / SAMPLE_RATE
       freqs.each_with_index.sum { |f, k| (((t * f * (1.0 + (0.01 * (k - 2)))) % 1.0) < 0.5 ? 1.0 : -1.0) } / 6.0 * Math.exp(-t * decay)
     end
     levels = 2.0**11
     crushed = raw.map { |x| (x * levels).round / levels }
-    highpass(crushed, spec.fetch('highpass', 7000.0)).map { |x| x + ((rng.rand * 2 - 1) * 0.0) }
+    highpass(crushed, spec.fetch("highpass", 7000.0)).map { |x| x + ((rng.rand * 2 - 1) * 0.0) }
   end
 
   # Four short noise bursts a few milliseconds apart, bandpassed, then a longer room tail.
@@ -3254,7 +3253,7 @@ module Percussion
   def self.snare_909(spec, rng)
     tone = Array.new(n(0.2)) do |i|
       t = i.to_f / SAMPLE_RATE
-      ((Math.sin(TAU * spec.fetch('body', 185) * t) + (0.8 * Math.sin(TAU * spec.fetch('body', 185) * 1.78 * t))) * Math.exp(-t * 22))
+      ((Math.sin(TAU * spec.fetch("body", 185) * t) + (0.8 * Math.sin(TAU * spec.fetch("body", 185) * 1.78 * t))) * Math.exp(-t * 22))
     end
     snap = highpass(noise(rng, n(0.2)), 1800.0).each_with_index.map { |x, i| x * Math.exp(-i * 18.0 / SAMPLE_RATE) }
     mix(tone.map { |x| x * 0.5 }, snap)
@@ -3273,26 +3272,26 @@ module Percussion
     phase = 0.0
     Array.new(n(0.35)) do |i|
       t = i.to_f / SAMPLE_RATE
-      phase += TAU * (spec.fetch('to', 90) + ((spec.fetch('from', 160) - spec.fetch('to', 90)) * Math.exp(-t * 14))) / SAMPLE_RATE
+      phase += TAU * (spec.fetch("to", 90) + ((spec.fetch("from", 160) - spec.fetch("to", 90)) * Math.exp(-t * 14))) / SAMPLE_RATE
       Math.sin(phase) * Math.exp(-t * 9)
     end
   end
 
   # Decaying inharmonic partials plus a bandpassed noise strike. modes are [ratio, decay].
   def self.modal(spec, rng)
-    hz = spec.fetch('hz')
-    length = n(spec.fetch('length', 0.4))
-    bend = spec.fetch('bend', 0.0)
+    hz = spec.fetch("hz")
+    length = n(spec.fetch("length", 0.4))
+    bend = spec.fetch("bend", 0.0)
     ring = Array.new(length) do |i|
       t = i.to_f / SAMPLE_RATE
-      spec.fetch('modes').sum { |ratio, decay| Math.sin(TAU * hz * ratio * (1.0 + (bend * Math.exp(-t * 30))) * t) * Math.exp(-t * decay) }
+      spec.fetch("modes").sum { |ratio, decay| Math.sin(TAU * hz * ratio * (1.0 + (bend * Math.exp(-t * 30))) * t) * Math.exp(-t * decay) }
     end
     strike = bandpass(noise(rng, n(0.01)), hz * 0.5, hz * 3.0).map { |x| x * 0.4 }
     mix(ring, strike)
   end
 
   def self.shaker(spec, rng)
-    highpass(noise(rng, n(spec.fetch('length', 0.07))), 6000.0).each_with_index.map { |x, i| x * Math.exp(-i * 50.0 / SAMPLE_RATE) }
+    highpass(noise(rng, n(spec.fetch("length", 0.07))), 6000.0).each_with_index.map { |x, i| x * Math.exp(-i * 50.0 / SAMPLE_RATE) }
   end
 
   # Struck sheet metal: five decaying modes, rung hard and driven.
@@ -3309,33 +3308,33 @@ module Percussion
   # The samples for one kit voice.
   def self.voice(spec, data, rng)
     raw =
-      case spec.fetch('voice')
-      when 'techno_kick' then techno_kick(data.fetch('kick_styles').fetch(spec.fetch('style')), rng, spec.fetch('tail', 1.0))
-      when 'fm_kick' then fm_kick(spec, rng)
-      when 'fm_snare' then fm_snare(spec, rng)
-      when 'fm_hat' then fm_hat(spec, rng)
-      when 'kick_808' then kick_808(spec, rng)
-      when 'boom_808' then boom_808(spec, rng)
-      when 'hat_909' then hat_909(spec, rng)
-      when 'clap_909' then clap_909(spec, rng)
-      when 'snare_909' then snare_909(spec, rng)
-      when 'rim' then rim(spec, rng)
-      when 'tom' then tom(spec, rng)
-      when 'modal' then modal(data.fetch('modal_patches').fetch(spec.fetch('patch')).merge(spec), rng)
-      when 'shaker' then shaker(spec, rng)
-      when 'metal' then metal(spec, rng)
+      case spec.fetch("voice")
+      when "techno_kick" then techno_kick(data.fetch("kick_styles").fetch(spec.fetch("style")), rng, spec.fetch("tail", 1.0))
+      when "fm_kick" then fm_kick(spec, rng)
+      when "fm_snare" then fm_snare(spec, rng)
+      when "fm_hat" then fm_hat(spec, rng)
+      when "kick_808" then kick_808(spec, rng)
+      when "boom_808" then boom_808(spec, rng)
+      when "hat_909" then hat_909(spec, rng)
+      when "clap_909" then clap_909(spec, rng)
+      when "snare_909" then snare_909(spec, rng)
+      when "rim" then rim(spec, rng)
+      when "tom" then tom(spec, rng)
+      when "modal" then modal(data.fetch("modal_patches").fetch(spec.fetch("patch")).merge(spec), rng)
+      when "shaker" then shaker(spec, rng)
+      when "metal" then metal(spec, rng)
       else raise ArgumentError, "no kit voice #{spec['voice'].inspect}"
       end
-    raw = lowpass(raw, spec['lowpass']) if spec['lowpass']
-    scale_to(raw, spec.fetch('peak', PEAKS.fetch(spec.fetch('role', 'perc'), 0.5)))
+    raw = lowpass(raw, spec["lowpass"]) if spec["lowpass"]
+    scale_to(raw, spec.fetch("peak", PEAKS.fetch(spec.fetch("role", "perc"), 0.5)))
   end
 
   # A kit's voices by role. The seed gives each role its own noise.
   def self.kit(name, data, seed)
-    data.fetch('kits').fetch(name) { abort "No kit: #{name}" }.each_with_object({}) do |(role, spec), out|
-      next unless spec.is_a?(Hash) && spec.key?('voice')
+    data.fetch("kits").fetch(name) { abort "No kit: #{name}" }.each_with_object({}) do |(role, spec), out|
+      next unless spec.is_a?(Hash) && spec.key?("voice")
 
-      out[role] = voice(spec.merge('role' => role), data, Random.new(Zlib.crc32("#{seed}:#{role}")))
+      out[role] = voice(spec.merge("role" => role), data, Random.new(Zlib.crc32("#{seed}:#{role}")))
     end
   end
 
@@ -3370,15 +3369,15 @@ module FX
 
     Echo.process(
       buf,
-      delay: settings.fetch('delay_ms').to_f / 1000.0,
-      heads: settings.fetch('heads', [1, 2, 3]),
-      intensity: settings.fetch('intensity', 0.6),
-      volume: settings.fetch('volume', 0.6),
-      lowpass: settings.fetch('lowpass', 4800),
-      saturation: settings.fetch('saturation', 0.8),
-      reverb: settings.fetch('reverb', 0.0),
-      tail: settings.fetch('tail', 1.0),
-      resets: []
+      delay: settings.fetch("delay_ms").to_f / 1000.0,
+      heads: settings.fetch("heads", [1, 2, 3]),
+      intensity: settings.fetch("intensity", 0.6),
+      volume: settings.fetch("volume", 0.6),
+      lowpass: settings.fetch("lowpass", 4800),
+      saturation: settings.fetch("saturation", 0.8),
+      reverb: settings.fetch("reverb", 0.0),
+      tail: settings.fetch("tail", 1.0),
+      resets: [],
     )
   end
 
@@ -3389,13 +3388,13 @@ module FX
     return buf unless settings
     return buf if buf.empty?
 
-    delay = settings.fetch('delay_ms', 350).to_f.clamp(20.0, 2000.0) / 1000.0
-    semitones = settings.fetch('semitones', 12).to_f.clamp(-24.0, 24.0)
-    feedback = settings.fetch('feedback', 0.35).to_f.clamp(0.0, 0.85)
-    mix = settings.fetch('mix', 0.35).to_f.clamp(0.0, 1.0)
-    repeats = settings.fetch('repeats', 3).to_i.clamp(1, 8)
-    tail = settings.fetch('tail', 1.0).to_f.clamp(0.0, 5.0)
-    grain = [(settings.fetch('grain_ms', 80).to_f.clamp(20.0, 200.0) * SAMPLE_RATE / 1000.0).round, 32].max
+    delay = settings.fetch("delay_ms", 350).to_f.clamp(20.0, 2000.0) / 1000.0
+    semitones = settings.fetch("semitones", 12).to_f.clamp(-24.0, 24.0)
+    feedback = settings.fetch("feedback", 0.35).to_f.clamp(0.0, 0.85)
+    mix = settings.fetch("mix", 0.35).to_f.clamp(0.0, 1.0)
+    repeats = settings.fetch("repeats", 3).to_i.clamp(1, 8)
+    tail = settings.fetch("tail", 1.0).to_f.clamp(0.0, 5.0)
+    grain = [(settings.fetch("grain_ms", 80).to_f.clamp(20.0, 200.0) * SAMPLE_RATE / 1000.0).round, 32].max
     delay_samples = [(delay * SAMPLE_RATE).round, 1].max
     extra = [(tail * SAMPLE_RATE).round, delay_samples * repeats].max
     out = Array.new(buf.size + extra, 0.0)
@@ -3446,8 +3445,8 @@ module FX
 
   # The profile's texture: lowpass, then reverb.
   def self.apply(buf, profile)
-    t = profile['texture'] || {}
-    spring(reverb(lowpass(buf, t['lowpass']), t['reverb']), t['spring'])
+    t = profile["texture"] || {}
+    spring(reverb(lowpass(buf, t["lowpass"]), t["reverb"]), t["spring"])
   end
 end
 
@@ -3486,21 +3485,21 @@ module Arp
   def self.sequence(pattern, pool, count, seed)
     n = pool.size
     case pattern
-    when 'up' then Array.new(count) { |k| pool[k % n] }
-    when 'down' then Array.new(count) { |k| pool.reverse[k % n] }
-    when 'updown' then cycle(pool + pool[1...-1].to_a.reverse, count)
-    when 'converge' then cycle((0...n).map { |i| i.even? ? pool[i / 2] : pool[-1 - (i / 2)] }, count)
-    when 'broken_pairs' then Array.new(count) { |k| pool[((k / 2) + (k.odd? ? 2 : 0)) % n] }
-    when 'thumb_pattern' then Array.new(count) { |k| k.even? ? pool[0] : pool[1 + ((k / 2) % [n - 1, 1].max)] }
-    when 'pedal_arp' then Array.new(count) { |k| (k % 4).zero? ? pool[0] : pool[1 + ((k - (k / 4) - 1) % [n - 1, 1].max)] }
-    when 'spread_roll' then Array.new(count) { |k| k < n ? pool[k] : nil }
-    when 'spiral' then cycle(spiral(n).map { |i| pool[i] }, count)
-    when 'pendulum' then cycle(pendulum(n).map { |i| pool[i] }, count)
-    when 'fibonacci' then cycle(fibonacci(n, 64).map { |i| pool[i] }, count)
-    when 'prime_walk' then cycle(prime_walk(n).map { |i| pool[i] }, count)
-    when 'call_response' then Array.new(count) { |k| call_response(pool, k) }
-    when 'pedal_point' then Array.new(count) { |k| k.even? ? pool[0] : pool[1 + (((k / 2)) % [n - 1, 1].max)] }
-    when 'random_seeded'
+    when "up" then Array.new(count) { |k| pool[k % n] }
+    when "down" then Array.new(count) { |k| pool.reverse[k % n] }
+    when "updown" then cycle(pool + pool[1...-1].to_a.reverse, count)
+    when "converge" then cycle((0...n).map { |i| i.even? ? pool[i / 2] : pool[-1 - (i / 2)] }, count)
+    when "broken_pairs" then Array.new(count) { |k| pool[((k / 2) + (k.odd? ? 2 : 0)) % n] }
+    when "thumb_pattern" then Array.new(count) { |k| k.even? ? pool[0] : pool[1 + ((k / 2) % [n - 1, 1].max)] }
+    when "pedal_arp" then Array.new(count) { |k| (k % 4).zero? ? pool[0] : pool[1 + ((k - (k / 4) - 1) % [n - 1, 1].max)] }
+    when "spread_roll" then Array.new(count) { |k| k < n ? pool[k] : nil }
+    when "spiral" then cycle(spiral(n).map { |i| pool[i] }, count)
+    when "pendulum" then cycle(pendulum(n).map { |i| pool[i] }, count)
+    when "fibonacci" then cycle(fibonacci(n, 64).map { |i| pool[i] }, count)
+    when "prime_walk" then cycle(prime_walk(n).map { |i| pool[i] }, count)
+    when "call_response" then Array.new(count) { |k| call_response(pool, k) }
+    when "pedal_point" then Array.new(count) { |k| k.even? ? pool[0] : pool[1 + (((k / 2)) % [n - 1, 1].max)] }
+    when "random_seeded"
       rng = Random.new(seed)
       Array.new(count) { pool[rng.rand(n)] }
     else raise ArgumentError, "no arp pattern #{pattern.inspect}"
@@ -3560,33 +3559,33 @@ module Arp
   # `slot` is the length of one arp step in seconds; `peak` the strongest accent gain.
   def self.modify(plucks, name, params, rng, slot:, peak:)
     case name
-    when 'euclidean'
-      steps = params.fetch('steps', 8)
-      pulses = params.fetch('pulses', 5).clamp(1, steps)
+    when "euclidean"
+      steps = params.fetch("steps", 8)
+      pulses = params.fetch("pulses", 5).clamp(1, steps)
       plucks.each_with_index.select { |_, i| ((i * pulses) % steps) < pulses }.map(&:first)
-    when 'probability'
-      plucks.select { |_| rng.rand <= params.fetch('probability', 1.0) }
-    when 'note_repeat'
-      count = params.fetch('count', 1).clamp(1, 6)
+    when "probability"
+      plucks.select { |_| rng.rand <= params.fetch("probability", 1.0) }
+    when "note_repeat"
+      count = params.fetch("count", 1).clamp(1, 6)
       plucks.flat_map { |p| split(p, count, slot, 0.72, 0.06) }
-    when 'ratchet'
-      max = params.fetch('max', 3).clamp(1, 4)
+    when "ratchet"
+      max = params.fetch("max", 3).clamp(1, 4)
       plucks.flat_map do |p|
-        accented = p.gain >= peak * 0.99 && rng.rand < params.fetch('chance', 0.5)
+        accented = p.gain >= peak * 0.99 && rng.rand < params.fetch("chance", 0.5)
         accented && max > 1 ? split(p, rng.rand(2..max), slot, 0.86, 0.11) : [p]
       end
-    when 'humanize'
-      ms = params.fetch('ms', 4.0) / 1000.0
-      g = params.fetch('gain', 0.06)
+    when "humanize"
+      ms = params.fetch("ms", 4.0) / 1000.0
+      g = params.fetch("gain", 0.06)
       plucks.each do |p|
         p.off += rng.rand(-ms..ms)
         p.gain = (p.gain + rng.rand(-g..g)).clamp(0.0, 1.0)
       end
-    when 'grace'
-      tones = params.fetch('tones', []).sort # a grace note is the next chord tone below, never a chromatic neighbour
+    when "grace"
+      tones = params.fetch("tones", []).sort # a grace note is the next chord tone below, never a chromatic neighbour
       plucks.flat_map do |p|
         below = Array(p.midi).map { |m| tones.reverse.find { |t| t < m } || m }
-        grace = Pluck.new(p.base - [p.dur * 0.18, 0.035].max, p.off, p.midi.is_a?(Array) ? below : below.first, [p.dur * 0.12, 0.018].max, p.gain * params.fetch('gain', 0.3))
+        grace = Pluck.new(p.base - [p.dur * 0.18, 0.035].max, p.off, p.midi.is_a?(Array) ? below : below.first, [p.dur * 0.12, 0.018].max, p.gain * params.fetch("gain", 0.3))
         [grace, p]
       end
     else raise ArgumentError, "no arp modifier #{name.inspect}"
@@ -3686,7 +3685,7 @@ module Flow
   # Plucks from the picks: velocity from the energy and the height in the pool, the notes between a
   # lower and a higher neighbour ghosted, and the lean of the phrase.
   def self.pluck_stream(picks, index, chord_steps, step, gate, settings)
-    accent = settings.fetch('flow_ghost', 0.45)
+    accent = settings.fetch("flow_ghost", 0.45)
     picks.each_with_index.map do |(pos, midi, energy, i, size), k|
       before = k.positive? ? picks[k - 1][3] : nil
       after = picks[k + 1]&.fetch(3)
@@ -3725,14 +3724,14 @@ end
 module Organ
   BAR = 16
   FLATS = %w[C Db D Eb E F Gb G Ab A Bb B].freeze
-  TRIAD = { [3, 7] => 'm', [4, 7] => '', [3, 6] => 'dim', [4, 8] => 'aug' }.freeze
-  CADENCE = { 'authentic' => [4, 0], 'half' => [3, 4], 'deceptive' => [4, 5], 'plagal' => [3, 0] }.freeze
+  TRIAD = { [3, 7] => "m", [4, 7] => "", [3, 6] => "dim", [4, 8] => "aug" }.freeze
+  CADENCE = { "authentic" => [4, 0], "half" => [3, 4], "deceptive" => [4, 5], "plagal" => [3, 0] }.freeze
   MOVES = { 0 => [3, 5, 1], 1 => [4, 3], 2 => [5, 3], 3 => [1, 4, 0], 4 => [0, 5], 5 => [1, 3, 4], 6 => [0] }.freeze
   # A suspension holds a note of the chord before into the next, where it is a dissonance over the
   # bass, and lets it fall a step on the third beat. 4-3 and 9-8 sit over the root, 7-6 over the
   # chord's third. The numbers are scale steps above the chord's root.
-  SUSPENSION = { '4-3' => { held: 3, resolved: 2, bass: 0 }, '9-8' => { held: 8, resolved: 7, bass: 0 },
-                 '7-6' => { held: 8, resolved: 7, bass: 2 } }.freeze
+  SUSPENSION = { "4-3" => { held: 3, resolved: 2, bass: 0 }, "9-8" => { held: 8, resolved: 7, bass: 0 },
+                 "7-6" => { held: 8, resolved: 7, bass: 2 } }.freeze
 
   Note = Struct.new(:step, :length, :midi, :gain, :phrase)
   Phrase = Struct.new(:first_bar, :bars, :cadence, :registration) do
@@ -3787,15 +3786,15 @@ module Organ
 
   # ------------------------------------------------------------ the whole piece
   def self.compose(seed:, config:, bars: nil, key: nil, scale: nil)
-    bars = (bars || config.fetch('bars')).clamp(4, 96)
+    bars = (bars || config.fetch("bars")).clamp(4, 96)
     ladder, key_name, scale_name = tonality(seed, config, key, scale)
     phrases = plan_phrases(seed, config, bars)
     degrees = harmony(seed, phrases)
-    ranges = config.fetch('ranges').transform_values { |lo, hi| (lo..hi) }
-    suspensions = plan_suspensions(seed, config, ladder, degrees, phrases, ranges.fetch('left'))
-    lines = { 'pedal' => pedal(seed, config, ladder, degrees, phrases, suspensions, ranges.fetch('pedal')),
-              'left' => left(seed, ladder, degrees, phrases, suspensions, ranges.fetch('left')),
-              'right' => right(seed, config, ladder, degrees, phrases, ranges.fetch('right')) }
+    ranges = config.fetch("ranges").transform_values { |lo, hi| (lo..hi) }
+    suspensions = plan_suspensions(seed, config, ladder, degrees, phrases, ranges.fetch("left"))
+    lines = { "pedal" => pedal(seed, config, ladder, degrees, phrases, suspensions, ranges.fetch("pedal")),
+              "left" => left(seed, ladder, degrees, phrases, suspensions, ranges.fetch("left")),
+              "right" => right(seed, config, ladder, degrees, phrases, ranges.fetch("right")) }
     piece = Piece.new(key: key_name, scale: scale_name, pcs: ladder.pcs, names: degrees.map { |d| ladder.chord_name(d) },
                       phrases:, lines:, suspensions: suspensions.compact.size)
     check(piece, ranges)
@@ -3803,11 +3802,11 @@ module Organ
   end
 
   def self.tonality(seed, config, key, scale)
-    rng = rng(seed, 'key')
-    scale ||= pick(config.fetch('scale_weights'), rng)
+    rng = rng(seed, "key")
+    scale ||= pick(config.fetch("scale_weights"), rng)
     drawn = rng.rand(12)
     tonic = key ? key_pc(key) : drawn
-    [Ladder.new(tonic, config.fetch('scales').fetch(scale) { raise ArgumentError, "no scale #{scale.inspect}" }), FLATS[tonic], scale]
+    [Ladder.new(tonic, config.fetch("scales").fetch(scale) { raise ArgumentError, "no scale #{scale.inspect}" }), FLATS[tonic], scale]
   end
 
   def self.key_pc(key)
@@ -3818,18 +3817,18 @@ module Organ
   # Phrase lengths from two to four bars that add up to the piece; the last ends on an
   # authentic cadence, the others on a half, authentic, deceptive or plagal one.
   def self.plan_phrases(seed, config, bars)
-    rng = rng(seed, 'phrases')
+    rng = rng(seed, "phrases")
     out = []
     first = 0
     while first < bars
       left = bars - first
-      options = config.fetch('phrase_bars').select { |n| n <= left && left - n != 1 }
+      options = config.fetch("phrase_bars").select { |n| n <= left && left - n != 1 }
       out << Phrase.new(first, options.sample(random: rng) || left, nil, nil)
       first += out.last.bars
     end
-    rotation = config.fetch('rotation')
+    rotation = config.fetch("rotation")
     out.each_with_index do |phrase, i|
-      phrase.cadence = i == out.size - 1 ? 'authentic' : pick(config.fetch('cadences'), rng)
+      phrase.cadence = i == out.size - 1 ? "authentic" : pick(config.fetch("cadences"), rng)
       phrase.registration = rotation[i % rotation.size]
     end
     out
@@ -3837,10 +3836,10 @@ module Organ
 
   # One degree for each bar: lead chords that move by the usual roots, then the cadence.
   def self.harmony(seed, phrases)
-    rng = rng(seed, 'harmony')
+    rng = rng(seed, "harmony")
     phrases.each_with_index.flat_map do |phrase, i|
       cadence = CADENCE.fetch(phrase.cadence).dup
-      cadence[0] = [1, 3].sample(random: rng) if phrase.cadence == 'half'
+      cadence[0] = [1, 3].sample(random: rng) if phrase.cadence == "half"
       current = i.zero? || rng.rand < 0.7 ? 0 : [5, 3].sample(random: rng)
       lead = Array.new(phrase.bars - cadence.size) do
         chord = current
@@ -3855,14 +3854,14 @@ module Organ
   # A Suspension or nil for each bar. The held note must belong to the chord before it and, when
   # that bar also resolves a suspension, be the very note it resolved to.
   def self.plan_suspensions(seed, config, ladder, degrees, phrases, range)
-    rng = rng(seed, 'suspensions')
-    spec = config.fetch('suspensions')
+    rng = rng(seed, "suspensions")
+    spec = config.fetch("suspensions")
     penultimate = phrases.map { |ph| ph.last_bar - 1 }
     plan = Array.new(degrees.size)
     (1...(degrees.size - 1)).each do |bar| # the last bar is the piece's rest and keeps its root
-      next unless rng.rand < (penultimate.include?(bar) ? spec.fetch('cadence_chance') : spec.fetch('chance'))
+      next unless rng.rand < (penultimate.include?(bar) ? spec.fetch("cadence_chance") : spec.fetch("chance"))
 
-      type = spec.fetch('types').shuffle(random: rng).find do |t|
+      type = spec.fetch("types").shuffle(random: rng).find do |t|
         held = degrees[bar] + SUSPENSION.fetch(t)[:held]
         ladder.chord_tone?(held, degrees[bar - 1]) && (plan[bar - 1].nil? || plan[bar - 1].resolved % 7 == held % 7)
       end
@@ -3881,7 +3880,7 @@ module Organ
   # neighbour on the second and an approach to the next root on the fourth; a tonic held through the
   # lead bars of some phrases; the last bar of a phrase a long root.
   def self.pedal(seed, config, ladder, degrees, phrases, suspensions, range)
-    rng = rng(seed, 'pedal')
+    rng = rng(seed, "pedal")
     notes = []
     last = 42
     lows = ladder.within(range)
@@ -3894,7 +3893,7 @@ module Organ
     end
     phrases.each_with_index do |phrase, p|
       lead = phrase.bars - 2
-      point = lead >= 1 && rng.rand < config.fetch('pedal_point_chance')
+      point = lead >= 1 && rng.rand < config.fetch("pedal_point_chance")
       put.call(phrase.first_bar, 0, lead * BAR, root_near.call(0), p) if point
       (phrase.first_bar..phrase.last_bar).each do |bar|
         next if point && bar < phrase.first_bar + lead
@@ -3903,7 +3902,7 @@ module Organ
         root = root_near.call(sus && sus.bass % 7 != degrees[bar] ? sus.bass : degrees[bar])
         if bar == phrase.last_bar
           put.call(bar, 0, bar == degrees.size - 1 ? BAR : 12, root, p)
-        elsif sus || pick(config.fetch('pedal_styles'), rng) == 'half'
+        elsif sus || pick(config.fetch("pedal_styles"), rng) == "half"
           put.call(bar, 0, 8, root, p)
           put.call(bar, 8, 8, root, p)
         else
@@ -3925,7 +3924,7 @@ module Organ
   # where a suspension is planned it holds the note tied from the bar before and falls a step on the
   # third beat. The tenor sounds another tone of the chord, clear of the suspended note.
   def self.left(seed, ladder, degrees, phrases, suspensions, range)
-    rng = rng(seed, 'left')
+    rng = rng(seed, "left")
     upper = ((range.first + 9)..range.last)
     lower = (range.first..(range.first + 8))
     alto = []
@@ -3975,9 +3974,9 @@ module Organ
   # Every style ends on `second`, which is what a tied suspension takes up.
   def self.style_notes(style, base, first, second, phrase, ladder)
     case style
-    when 'quarters'
+    when "quarters"
       [first, second, first, second].each_with_index.map { |idx, k| Note.new(base + (k * 4), 4, ladder.midi(idx), 0.7, phrase) }
-    when 'continuo'
+    when "continuo"
       [Note.new(base, 2, ladder.midi(first), 0.7, phrase)] +
         [[2, first], [6, first], [10, second], [14, second]].map { |off, idx| Note.new(base + off, 2, ladder.midi(idx), 0.55, phrase) }
     else
@@ -3992,8 +3991,8 @@ module Organ
   # motif or the motif a step along, or a trill on the way into the cadence. The last bar of a
   # phrase is its landing note and a breath.
   def self.right(seed, config, ladder, degrees, phrases, range)
-    rng = rng(seed, 'right')
-    motifs = Array.new(2) { motif(rng, config.fetch('motifs')) }
+    rng = rng(seed, "right")
+    motifs = Array.new(2) { motif(rng, config.fetch("motifs")) }
     lows = ladder.within(range)
     notes = []
     cursor = ladder.nearest(0, ladder.closest_to_midi(72, range), range)
@@ -4029,7 +4028,7 @@ module Organ
   def self.arrivals(ladder, degrees, phrase, cursor, lows, range, rng)
     slots = (phrase.bars - 1) * 2
     peak = lows.min + 6 + rng.rand([lows.size - 7, 1].max)
-    landing = phrase.cadence == 'half' ? ladder.nearest_tone(degrees[phrase.last_bar], cursor, range) : ladder.nearest(0, cursor, range)
+    landing = phrase.cadence == "half" ? ladder.nearest_tone(degrees[phrase.last_bar], cursor, range) : ladder.nearest(0, cursor, range)
     turn = (slots * 0.65).round
     out = {}
     slots.times do |s|
@@ -4042,18 +4041,18 @@ module Organ
   end
 
   def self.choose(config, rng, here, upcoming, ladder, degree, previous)
-    table = config.fetch('figures').dup
+    table = config.fetch("figures").dup
     distance = (upcoming - here).abs
-    table.delete('run8') if distance > 3
-    table.delete('run16') if distance > 7
-    table.delete('appoggiatura') if ladder.chord_tone?(here + 1, degree)
-    table.delete('sequence') unless previous && previous.first == :motif
+    table.delete("run8") if distance > 3
+    table.delete("run16") if distance > 7
+    table.delete("appoggiatura") if ladder.chord_tone?(here + 1, degree)
+    table.delete("sequence") unless previous && previous.first == :motif
     table.delete(previous.first.to_s) if previous && previous.first != :motif && rng.rand < 0.6
     table.empty? ? :run8 : pick(table, rng).to_sym
   end
 
   # [index, length] pairs for one half bar, eight sixteenths in all.
-  def self.figure_notes(figure, here, upcoming, ladder, degree, rng, motifs, previous, lows)
+  def self.figure_notes(figure, here, upcoming, _ladder, degree, rng, motifs, previous, lows)
     side = (upcoming <=> here).nonzero? || 1
     case figure
     when :run16 then lens_path([1] * 8, here, upcoming, rng, lows)
@@ -4097,8 +4096,8 @@ module Organ
   end
 
   def self.motif(rng, spec)
-    lens = spec.fetch('rhythms').sample(random: rng)
-    offsets = lens.each_index.inject([0]) { |acc, _| acc + [acc.last + spec.fetch('steps').sample(random: rng)] }.first(lens.size)
+    lens = spec.fetch("rhythms").sample(random: rng)
+    offsets = lens.each_index.inject([0]) { |acc, _| acc + [acc.last + spec.fetch("steps").sample(random: rng)] }.first(lens.size)
     offsets.zip(lens)
   end
 
@@ -4113,11 +4112,11 @@ module Organ
         raise "organ #{name}: #{n.midi} is outside #{range}" unless range.cover?(n.midi)
         raise "organ #{name}: a note of length #{n.length}" unless n.length.to_i.positive?
       end
-      next if name == 'left'
+      next if name == "left"
 
       notes.sort_by(&:step).each_cons(2) { |a, b| raise "organ #{name}: a note at step #{a.step} runs into the next" if a.step + a.length > b.step }
     end
-    raise 'organ: a phrase outside two to four bars' unless piece.phrases.all? { |ph| ph.bars.between?(2, 4) }
+    raise "organ: a phrase outside two to four bars" unless piece.phrases.all? { |ph| ph.bars.between?(2, 4) }
   end
 end
 
@@ -4161,34 +4160,34 @@ class Sequencer
     @data = data
     @transpose = transpose
     @wrap = wrap
-    @profile = data['groove_profiles'].fetch(profile_name) { abort "No groove profile: #{profile_name}" }
+    @profile = data["groove_profiles"].fetch(profile_name) { abort "No groove profile: #{profile_name}" }
     @seed = seed || Random.new_seed % 1_000_000
-    @pd_amount = (pd_amount || @profile.fetch('pd_amount', 1.0)).to_f.clamp(0.0, 1.5)
+    @pd_amount = (pd_amount || @profile.fetch("pd_amount", 1.0)).to_f.clamp(0.0, 1.5)
   end
 
   # Unison detune, kept to six cents (a frequency ratio of 0.0035) so the layers stay in tune.
-  def detune = [(@profile['texture'] || {}).fetch('detune', 0.0), MAX_DETUNE].min
+  def detune = [(@profile["texture"] || {}).fetch("detune", 0.0), MAX_DETUNE].min
 
   # The tempo the profile plays at unless --bpm says otherwise.
-  def bpm = @profile.fetch('bpm', 88.0)
+  def bpm = @profile.fetch("bpm", 88.0)
 
   # Beats each chord holds unless --beats says otherwise: two bars of four.
-  def beats = @profile.fetch('beats', 8.0)
+  def beats = @profile.fetch("beats", 8.0)
 
   # Chords, each the same length, the odd ones swung late. A voice other than the plain sine, or
   # a list of voices (one for each chord, round and round), plays them through Voices instead.
   def render_chords(names, bpm, beats, search: true, strum: 0.0, voice: nil, voices: nil)
-    voices ||= [voice] if voice && (voice['family'] != 'sine' || @capture)
+    voices ||= [voice] if voice && (voice["family"] != "sine" || @capture)
     return render_voiced_chords(names, bpm, beats, search:, strum:, voices:) if voices
 
     beat = 60.0 / bpm
-    swing = @profile.fetch('swing', 0.5)
+    swing = @profile.fetch("swing", 0.5)
     buf = []
     Chords.freqs(names, search:, transpose: @transpose, wrap: @wrap).each_with_index do |freqs, idx|
       delay = [(idx.even? ? 0.0 : (swing - 0.5) * beat * @pd_amount) + chord_lean(idx, beat), 0.0].max
       pad = (delay * SAMPLE_RATE).to_i
       buf.concat(Array.new(pad, 0.0)) if pad > 0
-      buf.concat(Synth.chord(freqs, beats * beat, detune: detune, strum:))
+      buf.concat(Synth.chord(freqs, beats * beat, detune:, strum:))
     end
     buf
   end
@@ -4197,7 +4196,7 @@ class Sequencer
   # swing, and rings its full length with the voice's own release after it.
   def render_voiced_chords(names, bpm, beats, search:, strum:, voices:)
     beat = 60.0 / bpm
-    swing = @profile.fetch('swing', 0.5)
+    swing = @profile.fetch("swing", 0.5)
     buf = Array.new((((names.size * beats * beat) + 1.5) * SAMPLE_RATE).to_i, 0.0)
     Chords.midi_notes(names, search:, transpose: @transpose, wrap: @wrap).each_with_index do |notes, idx|
       swung = idx.even? ? 0.0 : (swing - 0.5) * beat * @pd_amount
@@ -4213,18 +4212,18 @@ class Sequencer
   # phrase's rubato, which pushes ahead through a phrase and relaxes into its cadence, never
   # past the clamp.
   def render_organ(piece, bpm, voice)
-    config = @data.fetch('organ')
+    config = @data.fetch("organ")
     step = 60.0 / bpm / 4.0
     buf = Array.new((((piece.steps * step) + 3.0) * SAMPLE_RATE).to_i, 0.0)
     piece.lines.each do |line, notes|
       notes.group_by(&:phrase).each do |index, group|
         phrase = piece.phrases.fetch(index)
-        registration = voice.fetch('registrations').fetch(line == 'right' ? phrase.registration : config.fetch('lines').fetch(line))
+        registration = voice.fetch("registrations").fetch(line == "right" ? phrase.registration : config.fetch("lines").fetch(line))
         plucks = group.map do |n|
-          held = n.length * step * (n.length == 1 ? 0.8 : config.fetch('gates').fetch(line))
-          Pluck.new(n.step * step, rubato(n.step, phrase, config), n.midi, held, n.gain * config.fetch('levels').fetch(line))
+          held = n.length * step * (n.length == 1 ? 0.8 : config.fetch("gates").fetch(line))
+          Pluck.new(n.step * step, rubato(n.step, phrase, config), n.midi, held, n.gain * config.fetch("levels").fetch(line))
         end
-        sound(buf, plucks, voice.merge('registration' => registration))
+        sound(buf, plucks, voice.merge("registration" => registration))
       end
     end
     buf
@@ -4233,7 +4232,7 @@ class Sequencer
   # How far a note at a step leans from the grid in seconds: early through the body of the
   # phrase, late as it closes.
   def rubato(step, phrase, config)
-    limit = config.fetch('rubato_ms') / 1000.0
+    limit = config.fetch("rubato_ms") / 1000.0
     u = ((step.to_f / Organ::BAR) - phrase.first_bar) / phrase.bars
     ((-0.4 * limit * Math.sin(Math::PI * u.clamp(0.0, 1.0))) + (u > 0.75 ? limit * (((u - 0.75) / 0.25)**2) : 0.0)).clamp(-MAX_OFFSET, MAX_OFFSET)
   end
@@ -4245,73 +4244,73 @@ class Sequencer
   # row of arp.styles (a pattern, a rate in sixteenths, a gate, an octave span); the profile's
   # own keys and then the flags are laid over it.
   def arp_settings(flag, style: nil, rate: nil)
-    spec = @profile['arp']
-    return nil unless flag || spec || style
+    spec = @profile["arp"]
+    return unless flag || spec || style
 
-    base = (@data['arp'] || {}).reject { |k, _| k == 'styles' }
-    name = style || spec&.fetch('style', nil)
-    row = name ? (@data.dig('arp', 'styles') || {}).fetch(name) { abort "No arp style: #{name}" } : {}
-    settings = base.merge(row).merge((spec || {}).reject { |k, _| k == 'style' })
-    settings['style'] = name
-    settings['pattern'] = flag if flag.is_a?(String)
-    settings['pattern'] ||= settings.fetch('default_pattern')
-    settings['rate'] = rate if rate
-    abort "No arp pattern: #{settings['pattern']}" unless settings.fetch('patterns').include?(settings['pattern'])
+    base = (@data["arp"] || {}).reject { |k, _| k == "styles" }
+    name = style || spec&.fetch("style", nil)
+    row = name ? (@data.dig("arp", "styles") || {}).fetch(name) { abort "No arp style: #{name}" } : {}
+    settings = base.merge(row).merge((spec || {}).reject { |k, _| k == "style" })
+    settings["style"] = name
+    settings["pattern"] = flag if flag.is_a?(String)
+    settings["pattern"] ||= settings.fetch("default_pattern")
+    settings["rate"] = rate if rate
+    abort "No arp pattern: #{settings['pattern']}" unless settings.fetch("patterns").include?(settings["pattern"])
     settings
   end
 
   # The chord-repeat settings: the whole voicing struck again on the steps of a style from
   # comp.styles. nil unless a flag or the profile asks.
   def comp_settings(flag)
-    spec = @profile['repeat']
-    return nil unless flag || spec
+    spec = @profile["repeat"]
+    return unless flag || spec
 
-    base = (@data['comp'] || {}).reject { |k, _| k == 'styles' }
-    name = flag.is_a?(String) ? flag : (spec&.fetch('style', nil) || base.fetch('default_style'))
-    row = (@data.dig('comp', 'styles') || {}).fetch(name) { abort "No repeat style: #{name}" }
-    base.merge(row).merge((spec || {}).reject { |k, _| k == 'style' }).merge('style' => name)
+    base = (@data["comp"] || {}).reject { |k, _| k == "styles" }
+    name = flag.is_a?(String) ? flag : (spec&.fetch("style", nil) || base.fetch("default_style"))
+    row = (@data.dig("comp", "styles") || {}).fetch(name) { abort "No repeat style: #{name}" }
+    base.merge(row).merge((spec || {}).reject { |k, _| k == "style" }).merge("style" => name)
   end
 
   # The layers the profile plays beneath the part: nil when it names none.
   # A named [] keeps a deliberately sparse/specialist patch untouched; otherwise
   # profiles inherit the one shared accompaniment, so bare passes don't feel skeletal.
-  def profile_layers = @profile.fetch('layers', @data.fetch('default_layers', nil))
+  def profile_layers = @profile.fetch("layers", @data.fetch("default_layers", nil))
 
   # The voice that plays the notes: the flag's, else the profile's, else the plain sine stack.
   def voice_spec(flag)
-    name = flag || @profile['voice'] || 'sine'
-    row = @data.fetch('voices').fetch(name) { abort "No voice: #{name}" }
-    return row.merge('name' => name) unless row['family'] == 'fluid' && !Fluid.available?(row)
+    name = flag || @profile["voice"] || "sine"
+    row = @data.fetch("voices").fetch(name) { abort "No voice: #{name}" }
+    return row.merge("name" => name) unless row["family"] == "fluid" && !Fluid.available?(row)
 
-    fallback = row.fetch('fallback')
+    fallback = row.fetch("fallback")
     @warned ||= {}
     warn "#{name}: #{Fluid.missing(row)}; playing #{fallback} instead" unless @warned[name]
     @warned[name] = true
-    @data.fetch('voices').fetch(fallback).merge('name' => fallback)
+    @data.fetch("voices").fetch(fallback).merge("name" => fallback)
   end
 
   # The Sonitex preset and instance count, or nil when neither a flag nor the profile asks.
   def sonitex_settings(flag, instances: nil)
-    spec = @profile['sonitex']
-    return nil unless flag || spec
+    spec = @profile["sonitex"]
+    return unless flag || spec
 
-    table = @data.fetch('sonitex')
-    name = flag.is_a?(String) ? flag : (spec&.fetch('preset', nil) || table.fetch('default'))
-    { 'name' => name, 'preset' => table.fetch('presets').fetch(name) { abort "No sonitex preset: #{name}" },
-      'instances' => instances || spec&.fetch('instances', nil) || table.fetch('instances', 1) }
+    table = @data.fetch("sonitex")
+    name = flag.is_a?(String) ? flag : (spec&.fetch("preset", nil) || table.fetch("default"))
+    { "name" => name, "preset" => table.fetch("presets").fetch(name) { abort "No sonitex preset: #{name}" },
+      "instances" => instances || spec&.fetch("instances", nil) || table.fetch("instances", 1) }
   end
 
   # The nasty_vcs summing amount, or 0 when off.
   def vcs_amount(flag)
     return flag.to_f if flag.is_a?(Float)
 
-    on = flag || @profile.key?('vcs')
-    on ? (@profile['vcs'] || @data.fetch('nasty_vcs').fetch('amount')).to_f : 0.0
+    on = flag || @profile.key?("vcs")
+    on ? (@profile["vcs"] || @data.fetch("nasty_vcs").fetch("amount")).to_f : 0.0
   end
 
   # The colour on the voice bus: Sonitex, then the summing colour.
   def colour(buf, sonitex, vcs)
-    buf = Colour.sonitex(buf, sonitex.fetch('preset'), sonitex.fetch('instances'), @seed) if sonitex
+    buf = Colour.sonitex(buf, sonitex.fetch("preset"), sonitex.fetch("instances"), @seed) if sonitex
     Colour.vcs(buf, vcs)
   end
 
@@ -4319,20 +4318,20 @@ class Sequencer
   def strum(flag)
     return 0.0 unless flag
 
-    (flag == true ? @data.fetch('strum').fetch('ms') : flag) / 1000.0
+    (flag == true ? @data.fetch("strum").fetch("ms") : flag) / 1000.0
   end
 
   # The echo settings with the flags laid over them, or nil when nothing asks for one.
   def echo_settings(flag: nil, mix: nil, feedback: nil, time_ms: nil)
-    spec = @profile['echo']
-    return nil unless flag || spec
+    spec = @profile["echo"]
+    return unless flag || spec
 
-    settings = (@data['echo'] || {}).merge(spec || {})
-    settings['heads'] = flag.split(',').map(&:to_i) if flag.is_a?(String)
-    abort "No echo heads: #{settings['heads']}" unless settings.fetch('modes').include?(settings['heads'])
-    settings['echo_volume'] = mix if mix
-    settings['intensity'] = feedback if feedback
-    settings['time_ms'] = time_ms if time_ms
+    settings = (@data["echo"] || {}).merge(spec || {})
+    settings["heads"] = flag.split(",").map(&:to_i) if flag.is_a?(String)
+    abort "No echo heads: #{settings['heads']}" unless settings.fetch("modes").include?(settings["heads"])
+    settings["echo_volume"] = mix if mix
+    settings["intensity"] = feedback if feedback
+    settings["time_ms"] = time_ms if time_ms
     settings
   end
 
@@ -4342,35 +4341,35 @@ class Sequencer
   # whole voicing struck on each 'x' of a 16-step pattern. Returns one pluck list per chord.
   def note_events(names, bpm, beats, settings, mode, search: true)
     step = 60.0 / bpm / 4.0
-    accent = settings.fetch('accent', [1.0])
+    accent = settings.fetch("accent", [1.0])
     chord_steps = (beats * 4).round
     Chords.midi_notes(names, search:, transpose: @transpose, wrap: @wrap).each_with_index.map do |voices, idx|
-if mode == 'arp' && settings['pattern'] == 'flow'
+if mode == "arp" && settings["pattern"] == "flow"
   @walk = Flow::Walk.new(Zlib.crc32("#{@seed}:walk")) if idx.zero?
   @energies = [] if idx.zero?
   plucks, energies = Flow.chord_events(voices, index: idx, chord_steps:, step:, seed: @seed, walk: @walk, settings:,
-                                               gate: settings.fetch('gate', 0.8))
+                                               gate: settings.fetch("gate", 0.8))
   @energies.concat(energies)
   next modify(plucks, settings, idx, step * 2, 1.0, voices)
 end
-if mode == 'arp'
-  rate = settings.fetch('rate', 2).to_f
-        pool = Arp.pool(voices, settings.fetch('octaves', 1))
-        notes = Arp.sequence(settings.fetch('pattern'), pool, (chord_steps / rate).floor, Zlib.crc32("#{@seed}:#{idx}"))
+if mode == "arp"
+  rate = settings.fetch("rate", 2).to_f
+        pool = Arp.pool(voices, settings.fetch("octaves", 1))
+        notes = Arp.sequence(settings.fetch("pattern"), pool, (chord_steps / rate).floor, Zlib.crc32("#{@seed}:#{idx}"))
         plucks = notes.each_with_index.filter_map do |midi, k|
-          place((idx * chord_steps) + (k * rate), step, midi, rate * step * settings.fetch('gate', 0.8), accent[k % accent.size]) if midi
+          place((idx * chord_steps) + (k * rate), step, midi, rate * step * settings.fetch("gate", 0.8), accent[k % accent.size]) if midi
         end
         modify(plucks, settings, idx, rate * step, accent.max, pool)
       else
-        pattern = settings.fetch('pattern')
-        marks = (0...pattern.size).select { |i| pattern[i] == 'x' }
+        pattern = settings.fetch("pattern")
+        marks = (0...pattern.size).select { |i| pattern[i] == "x" }
         plucks = []
         (0...chord_steps).step(pattern.size) do |bar|
           marks.each_with_index do |m, j|
             next if bar + m >= chord_steps
 
             gap = (marks[j + 1] || (pattern.size + marks[0])) - m
-            plucks << place((idx * chord_steps) + bar + m, step, voices, gap * step * settings.fetch('gate', 0.5), accent[plucks.size % accent.size])
+            plucks << place((idx * chord_steps) + bar + m, step, voices, gap * step * settings.fetch("gate", 0.5), accent[plucks.size % accent.size])
           end
         end
         modify(plucks, settings, idx, step * 2, accent.max, voices)
@@ -4380,14 +4379,14 @@ if mode == 'arp'
 
   def render_arp(names, bpm, beats, arp, search: true, pad: false, voice: nil)
     buf = Array.new(((((names.size * (beats * 4).round * 60.0 / bpm / 4.0)) + 1.0) * SAMPLE_RATE).to_i, 0.0)
-    sound(buf, note_events(names, bpm, beats, arp, 'arp', search:).flatten(1), voice || voice_spec(nil))
-    if (pad || arp['pad_swell']) && @capture
-      swell = arp['pattern'] == 'flow' ? [@energies, 60.0 / bpm * SAMPLE_RATE] : nil
-      with_part(gain: arp.fetch('pad', 0.3), swell:) { render_chords(names, bpm, beats, search:, voice: voice_spec('sine')) }
-    elsif pad || arp['pad_swell']
+    sound(buf, note_events(names, bpm, beats, arp, "arp", search:).flatten(1), voice || voice_spec(nil))
+    if (pad || arp["pad_swell"]) && @capture
+      swell = arp["pattern"] == "flow" ? [@energies, 60.0 / bpm * SAMPLE_RATE] : nil
+      with_part(gain: arp.fetch("pad", 0.3), swell:) { render_chords(names, bpm, beats, search:, voice: voice_spec("sine")) }
+    elsif pad || arp["pad_swell"]
       under = render_chords(names, bpm, beats, search:)
-      under = Flow.swell(under, @energies, 60.0 / bpm * SAMPLE_RATE) if arp['pattern'] == 'flow'
-      under.each_with_index { |v, i| buf[i] += v * arp.fetch('pad', 0.3) if i < buf.size }
+      under = Flow.swell(under, @energies, 60.0 / bpm * SAMPLE_RATE) if arp["pattern"] == "flow"
+      under.each_with_index { |v, i| buf[i] += v * arp.fetch("pad", 0.3) if i < buf.size }
     end
     buf
   end
@@ -4396,20 +4395,20 @@ if mode == 'arp'
   # distance to the next one.
   def render_repeat(names, bpm, beats, comp, search: true, voice: nil)
     buf = Array.new(((((names.size * (beats * 4).round * 60.0 / bpm / 4.0)) + 1.0) * SAMPLE_RATE).to_i, 0.0)
-    sound(buf, note_events(names, bpm, beats, comp, 'repeat', search:).flatten(1), voice || voice_spec(nil))
+    sound(buf, note_events(names, bpm, beats, comp, "repeat", search:).flatten(1), voice || voice_spec(nil))
     buf
   end
 
   # A note on its step: the profile's swing leans the off-beat steps late.
   def place(s, step, midi, dur, gain)
     pair = s.round % 4 == 2 ? 2 * step : (s.round.odd? ? step : 0.0)
-    Pluck.new(s * step, (@profile.fetch('swing', 0.5) - 0.5) * 2 * pair * @pd_amount, midi, dur, gain)
+    Pluck.new(s * step, (@profile.fetch("swing", 0.5) - 0.5) * 2 * pair * @pd_amount, midi, dur, gain)
   end
 
   def modify(plucks, settings, idx, slot, peak, tones)
     rng = Random.new(Zlib.crc32("#{@seed}:modifiers:#{idx}"))
-    settings.fetch('modifiers', []).each do |name|
-      plucks = Arp.modify(plucks, name, settings.fetch(name, {}).merge('tones' => tones), rng, slot:, peak:)
+    settings.fetch("modifiers", []).each do |name|
+      plucks = Arp.modify(plucks, name, settings.fetch(name, {}).merge("tones" => tones), rng, slot:, peak:)
     end
     plucks
   end
@@ -4417,14 +4416,14 @@ if mode == 'arp'
   # Mix each pluck into the buffer through the voice; a chord's level is shared among its notes.
   def sound(buf, plucks, voice)
     return @capture << Part.new(plucks, voice, @part_gain || 1.0, @part_swell) if @capture
-    return sound_soundfont(buf, plucks, voice) if voice['family'] == 'fluid'
+    return sound_soundfont(buf, plucks, voice) if voice["family"] == "fluid"
 
     step = @tempo && 15.0 / @tempo
     plucks.each do |p|
       notes = Array(p.midi)
       notes.each do |midi|
-        samples = Voices.note(voice, midi, p.dur, 0.22 * p.gain / Math.sqrt(notes.size), velocity: p.gain, detune: detune,
-                                                                                         step:, registration: voice['registration'])
+        samples = Voices.note(voice, midi, p.dur, 0.22 * p.gain / Math.sqrt(notes.size), velocity: p.gain, detune:,
+                                                                                         step:, registration: voice["registration"])
         start = [((p.base + p.off.clamp(-MAX_OFFSET, MAX_OFFSET)) * SAMPLE_RATE).to_i, 0].max
         samples.each_with_index { |v, j| buf[start + j] += v if start + j < buf.size }
       end
@@ -4433,17 +4432,17 @@ if mode == 'arp'
 
   # The plucks played by a soundfont in one pass, its level set by the voice's gain.
   def sound_soundfont(buf, plucks, voice)
-    level = 10.0**(voice.fetch('gain', 0.0) / 20.0)
+    level = 10.0**(voice.fetch("gain", 0.0) / 20.0)
     Fluid.render(plucks, voice).each_with_index { |v, i| buf[i] += v * level if i < buf.size }
   end
 
   # Echo on a buffer, the delay from the settings: milliseconds if given, else a number of beats.
   def echo(buf, settings, bpm, resets: [])
-    delay = settings['time_ms'] ? settings['time_ms'] / 1000.0 : settings.fetch('time_beats') * 60.0 / bpm
-    out = Echo.process(buf, delay:, heads: settings.fetch('heads'), intensity: settings.fetch('intensity'),
-                            volume: settings.fetch('echo_volume'), lowpass: settings['lowpass'],
-                            saturation: settings.fetch('saturation', 0.0), reverb: settings.fetch('reverb', 0.0),
-                            tail: settings.fetch('tail', 4.0), resets:, send: throws(settings['throws'], bpm))
+    delay = settings["time_ms"] ? settings["time_ms"] / 1000.0 : settings.fetch("time_beats") * 60.0 / bpm
+    out = Echo.process(buf, delay:, heads: settings.fetch("heads"), intensity: settings.fetch("intensity"),
+                            volume: settings.fetch("echo_volume"), lowpass: settings["lowpass"],
+                            saturation: settings.fetch("saturation", 0.0), reverb: settings.fetch("reverb", 0.0),
+                            tail: settings.fetch("tail", 4.0), resets:, send: throws(settings["throws"], bpm))
     peak = out.map(&:abs).max
     peak > 1.0 ? out.map { |v| v / peak } : out
   end
@@ -4452,14 +4451,14 @@ if mode == 'arp'
   # bar (never the first, which the seed picks) turned up to `gain`, so a few stabs are thrown into
   # the tape and ring on over the quiet that follows. nil when the profile throws nothing.
   def throws(spec, bpm)
-    return nil unless spec
+    return unless spec
 
     bar = (4 * 60.0 / bpm * SAMPLE_RATE).round
-    every = spec.fetch('every_bars', 4)
+    every = spec.fetch("every_bars", 4)
     picked = Hash.new do |hash, phrase|
       hash[phrase] = (phrase * every) + 1 + Random.new(Zlib.crc32("#{@seed}:throw:#{phrase}")).rand([every - 1, 1].max)
     end
-    ->(n) { picked[(n / bar) / every] == n / bar ? spec.fetch('gain', 2.0) : spec.fetch('base', 0.4) }
+    ->(n) { picked[(n / bar) / every] == n / bar ? spec.fetch("gain", 2.0) : spec.fetch("base", 0.4) }
   end
 
   # Pattern names for each 4-bar phrase: one name, or a rotation that never plays the same
@@ -4478,19 +4477,19 @@ if mode == 'arp'
   # of every fourth and eighth bar, then the seeded mutations and the snare density.
   def bar_rows(pattern, phrase, bar)
     rows = pattern.select { |k, v| v.is_a?(Array) && !%w[variants layers].include?(k) }.transform_values(&:dup)
-    variants = pattern['variants']
+    variants = pattern["variants"]
     if variants && !variants.empty?
       pick = Zlib.crc32("#{@seed}:variant:#{phrase}") % (variants.size + 1)
       rows.merge!(variants[pick - 1].transform_values(&:dup)) if pick.positive?
     end
-    rows.merge!(pattern['fill'].transform_values(&:dup)) if pattern['fill'] && bar % 4 == 3
-    rows.merge!(pattern['fill8'].transform_values(&:dup)) if pattern['fill8'] && bar % 8 == 7
+    rows.merge!(pattern["fill"].transform_values(&:dup)) if pattern["fill"] && bar % 4 == 3
+    rows.merge!(pattern["fill8"].transform_values(&:dup)) if pattern["fill8"] && bar % 8 == 7
     rng = Random.new(Zlib.crc32("#{@seed}:bar:#{bar}"))
-    mutate(rows, rng) if bar.positive? && rng.rand < @profile.fetch('mutate', pattern.fetch('mutate', 0.0))
-    thin(rows, pattern['odds'], rng) if pattern['odds']
-    kick_one = pattern['kick_on_one']
-    rows['kick'][0] = (rng.rand < kick_one ? 1.0 : 0.0) if kick_one && rows['kick']
-    add_snares(rows, @profile.fetch('snare_density', pattern.fetch('snare_density', 1.0)), rng)
+    mutate(rows, rng) if bar.positive? && rng.rand < @profile.fetch("mutate", pattern.fetch("mutate", 0.0))
+    thin(rows, pattern["odds"], rng) if pattern["odds"]
+    kick_one = pattern["kick_on_one"]
+    rows["kick"][0] = (rng.rand < kick_one ? 1.0 : 0.0) if kick_one && rows["kick"]
+    add_snares(rows, @profile.fetch("snare_density", pattern.fetch("snare_density", 1.0)), rng)
     rows
   end
 
@@ -4499,29 +4498,29 @@ if mode == 'arp'
   def mutate(rows, rng)
     role = rows.keys.sample(random: rng)
     row = rows[role]
-    hits = row.each_index.select { |i| hit?(row[i]) && !(role == 'kick' && i.zero?) }
+    hits = row.each_index.select { |i| hit?(row[i]) && !(role == "kick" && i.zero?) }
     case rng.rand(6)
     when 0
       a, b = hits.sample(2, random: rng)
-      row[a], row[b] = row[b], row[a] if a && b && !(role == 'kick' && (a.zero? || b.zero?))
+      row[a], row[b] = row[b], row[a] if a && b && !(role == "kick" && (a.zero? || b.zero?))
     when 1
       i = hits.sample(random: rng)
       j = (i + (rng.rand < 0.5 ? 1 : -1)) % row.size if i
-      (row[j] = row[i]; row[i] = 0) if i && !hit?(row[j]) && !(role == 'kick' && j.zero?)
+      (row[j] = row[i]; row[i] = 0) if i && !hit?(row[j]) && !(role == "kick" && j.zero?)
     when 2
-      snare = rows['snare'] or return
+      snare = rows["snare"] or return
       i = (0...snare.size).select { |k| !hit?(snare[k]) && k.odd? }.sample(random: rng)
       snare[i] = 0.4 if i
     when 3
-      snare = rows['snare'] or return
+      snare = rows["snare"] or return
       i = (0...snare.size).select { |k| hit?(snare[k]) && vel(snare[k]) < 0.7 }.sample(random: rng)
       snare[i] = 0 if i
     when 4
-      kick = rows['kick'] or return
+      kick = rows["kick"] or return
       i = (0...kick.size).select { |k| hit?(kick[k]) && !hit?(kick[(k + 1) % kick.size]) }.sample(random: rng)
       kick[(i + 1) % kick.size] = 0.6 if i
     else
-      hat = rows['hat'] or return
+      hat = rows["hat"] or return
       hat.rotate!(rng.rand < 0.5 ? 1 : 2)
     end
   end
@@ -4540,11 +4539,11 @@ if mode == 'arp'
 
   # More back-beat snare: a density above one adds ghosts on steps nothing else uses.
   def add_snares(rows, density, rng)
-    return unless density > 1.0 && rows['snare']
+    return unless density > 1.0 && rows["snare"]
 
-    snare = rows['snare']
+    snare = rows["snare"]
     size = snare.size
-    taken = rows.slice('kick', 'snare', 'clap').values.flat_map { |row| row.each_index.select { |i| hit?(row[i]) } }.uniq
+    taken = rows.slice("kick", "snare", "clap").values.flat_map { |row| row.each_index.select { |i| hit?(row[i]) } }.uniq
     free = [3, 7, 10, 11, 14, 15, 2, 6].map { |i| i * size / 16 }.reject { |i| taken.include?(i) }.shuffle(random: rng)
     free.first(((density - 1.0) * 4).round).each { |i| snare[i] = 0.6 }
   end
@@ -4555,19 +4554,19 @@ if mode == 'arp'
   # row of its own length that runs across the bars, so its alignment drifts against the grid.
   def drum_hits(pattern_name, bpm, seconds)
     names = Array(pattern_name)
-    patterns = names.to_h { |n| [n, @data['drum_patterns'].fetch(n) { abort "No drum pattern: #{n}" }] }
+    patterns = names.to_h { |n| [n, @data["drum_patterns"].fetch(n) { abort "No drum pattern: #{n}" }] }
     rng = Random.new(@seed)
     step = 60.0 / bpm / 4.0
-    offsets = @profile['offsets'] || {}
-    pocket = @profile['pocket']
-    swings = @profile['drum_swing'] || {}
+    offsets = @profile["offsets"] || {}
+    pocket = @profile["pocket"]
+    swings = @profile["drum_swing"] || {}
     hits = []
     first_kick = true
     chosen = phrase_patterns(names, (seconds / (step * 64)).ceil)
     chosen.each_with_index do |name, phrase|
       pattern = patterns.fetch(name)
-      size = pattern.fetch('steps', 16)
-      drunk = pattern.fetch('drunk', @profile.fetch('drunk_amount', 0.0))
+      size = pattern.fetch("steps", 16)
+      drunk = pattern.fetch("drunk", @profile.fetch("drunk_amount", 0.0))
       cache = {}
       64.times do |g|
         abs = (phrase * 64) + g
@@ -4575,16 +4574,16 @@ if mode == 'arp'
         i = g % 16
         rows = (cache[bar] ||= bar_rows(pattern, phrase, bar))
         cells = rows.filter_map { |role, row| [role, row[g % size]] if hit?(row[g % size]) }
-        (pattern['layers'] || []).each do |layer|
-          cell = layer['hits'][abs % layer['length']]
-          cells << [layer['role'], cell] if hit?(cell)
+        (pattern["layers"] || []).each do |layer|
+          cell = layer["hits"][abs % layer["length"]]
+          cells << [layer["role"], cell] if hit?(cell)
         end
         cells.each do |role, cell|
           vel, count = cell.is_a?(Array) ? cell : [cell.to_f, 1]
           nudge = offsets.fetch(role, 0.0)
           nudge = pocket_lean(pocket, role:, step_in_bar: i, bar:) * step if pocket&.key?(role)
-          if role == 'kick' && first_kick
-            nudge = offsets.fetch('kick_first', nudge) unless pocket&.key?(role)
+          if role == "kick" && first_kick
+            nudge = offsets.fetch("kick_first", nudge) unless pocket&.key?(role)
             first_kick = false
           end
           amount = drunk.is_a?(Hash) ? drunk.fetch(role, 0.0) : drunk.to_f
@@ -4608,9 +4607,9 @@ if mode == 'arp'
   # the render seed, the voice and the step in the bar, never the bar, so bars repeat.
   def pocket_lean(pocket, role:, step_in_bar:, bar: 0)
     spec = pocket.fetch(role)
-    ghost = pocket['ghost']
-    spec = ghost if ghost && role == 'snare' && !pocket.fetch('backbeat', []).include?(step_in_bar)
-    return 0.0 if spec.fetch('anchor', []).include?(step_in_bar)
+    ghost = pocket["ghost"]
+    spec = ghost if ghost && role == "snare" && !pocket.fetch("backbeat", []).include?(step_in_bar)
+    return 0.0 if spec.fetch("anchor", []).include?(step_in_bar)
 
     draw = Random.new(Zlib.crc32("#{@seed}:#{role}:#{step_in_bar}")).rand * 2 - 1
     lean = spec.fetch("shift_steps", 0.0) + (spec.fetch("drift_steps", 0.0) * draw)
@@ -4639,7 +4638,7 @@ if mode == 'arp'
 
   # The mix levels in dB: the data's, the profile's over them, the flags over those.
   def mix(flags)
-    (@data['mix'] || {}).merge(@profile['mix'] || {}).merge(flags || {}).tap do |levels|
+    (@data["mix"] || {}).merge(@profile["mix"] || {}).merge(flags || {}).tap do |levels|
       %w[kick snare clap hat perc chords echo].each { |k| levels[k] ||= 0.0 }
     end
   end
@@ -4655,7 +4654,7 @@ if mode == 'arp'
   # The voices of the kit in use: the --kit flag's, else the profile's, else nil, which keeps
   # the three plain seeded voices.
   def kit_sounds
-    name = @kit || @profile['kit']
+    name = @kit || @profile["kit"]
     name ? Percussion.kit(name, @data, @seed) : nil
   end
 
@@ -4663,11 +4662,11 @@ if mode == 'arp'
                     dub_echo: nil, crystallizer: nil, drum_vcs: nil)
     drum_vcs_amount = drum_vcs.nil? ? vcs : drum_vcs.to_f.clamp(0.0, 1.0)
     effects_on = sonitex || tape || dub_echo || crystallizer || drum_vcs_amount.positive? || vcs.positive? ||
-                 @profile['drum_crush'] || @profile.dig('rumble', 'amount')
+                 @profile["drum_crush"] || @profile.dig("rumble", "amount")
     drum_bus = effects_on ? Array.new(chord_buf.size, 0.0) : nil
     out = drum_bus || chord_buf.dup
     kit = kit_sounds
-    closers = hits.select { |r, *| r == 'hat' }.map { |_, t, *| t }
+    closers = hits.select { |r, *| r == "hat" }.map { |_, t, *| t }
     hits.each_with_index do |(role, time, strength), hit_index|
       # A fresh seeded voice per strike gives ghost notes and hats their own transient/noise;
       # a kit builds each role once.
@@ -4675,7 +4674,7 @@ if mode == 'arp'
       next unless sample
 
       # An open hat is choked by the next closed one.
-      if kit && role == 'open' && (nxt = closers.find { |t| t > time })
+      if kit && role == "open" && (nxt = closers.find { |t| t > time })
         sample = sample.first(((nxt - time) * SAMPLE_RATE).to_i)
         fade = [130, sample.size].min
         fade.times { |k| sample[sample.size - 1 - k] *= k / fade.to_f }
@@ -4683,8 +4682,8 @@ if mode == 'arp'
       accent = strength.nil? ? 1.0 : strength.to_f.clamp(0.0, 1.0)
       gain = 0.8 * (10.0**(levels.fetch(role, 0.0) / 20.0)) * accent
       variation = case role
-                  when 'hat' then [0.68, 0.92, 0.76, 0.84][hit_index % 4]
-                  when 'snare' then hit_index.odd? ? 0.92 : 1.0
+                  when "hat" then [0.68, 0.92, 0.76, 0.84][hit_index % 4]
+                  when "snare" then hit_index.odd? ? 0.92 : 1.0
                   else hit_index.odd? ? 0.94 : 1.0
                   end
       sample.each_with_index do |value, j|
@@ -4693,32 +4692,32 @@ if mode == 'arp'
         out[idx] += value * gain * variation
       end
     end
-    if drum_bus && kit && @profile.dig('rumble', 'amount')
+    if drum_bus && kit && @profile.dig("rumble", "amount")
       kicks = Array.new(out.size, 0.0)
       hits.each do |r, t, v|
-        next unless r == 'kick'
+        next unless r == "kick"
 
-        kit['kick'].each_with_index do |x, j|
+        kit["kick"].each_with_index do |x, j|
           i = (t * SAMPLE_RATE).to_i + j
           kicks[i] += x * (v || 1.0) if i < kicks.size
         end
       end
-      Percussion.rumble(kicks).each_with_index { |x, i| out[i] += x * @profile.dig('rumble', 'amount') }
+      Percussion.rumble(kicks).each_with_index { |x, i| out[i] += x * @profile.dig("rumble", "amount") }
     end
-    if drum_bus && (crush = @profile['drum_crush'])
-      out = Colour.crush(out, crush.fetch('bits'), 1.0 / crush.fetch('rate'))
+    if drum_bus && (crush = @profile["drum_crush"])
+      out = Colour.crush(out, crush.fetch("bits"), 1.0 / crush.fetch("rate"))
       drum_bus = out
     end
     if drum_bus
       drums = if sonitex
-                Colour.sonitex(drum_bus, sonitex.fetch('preset'), sonitex.fetch('instances'), @seed + 1)
+                Colour.sonitex(drum_bus, sonitex.fetch("preset"), sonitex.fetch("instances"), @seed + 1)
               else
                 drum_bus
               end
       tape_amount = case tape
-                    when 'heavy' then 1.0
-                    when 'medium' then 0.65
-                    when 'light' then 0.35
+                    when "heavy" then 1.0
+                    when "medium" then 0.65
+                    when "light" then 0.35
                     else tape.nil? ? 0.0 : tape.to_f
                     end
       drums = Colour.tape(drums, amount: tape_amount) if tape_amount.positive?
@@ -4739,14 +4738,14 @@ if mode == 'arp'
 
   # The chords duck on every kick: a gain envelope keyed to the hits, not an oscillator.
   def duck(chord_buf, hits)
-    sc = @profile['sidechain'] or return chord_buf
-    amount = sc.fetch('amount', 0.0) * @pd_amount
-    release = sc.fetch('release', 0.15) * SAMPLE_RATE
+    sc = @profile["sidechain"] or return chord_buf
+    amount = sc.fetch("amount", 0.0) * @pd_amount
+    release = sc.fetch("release", 0.15) * SAMPLE_RATE
     return chord_buf if amount.zero?
 
     gain = Array.new(chord_buf.size, 1.0)
     hits.each do |role, time|
-      next unless role == 'kick'
+      next unless role == "kick"
 
       start = (time * SAMPLE_RATE).to_i
       (0...(release * 4).to_i).each do |n|
@@ -4766,14 +4765,14 @@ end
 # (kick 36, snare 38, hat 42). Times are the same ones the WAV uses.
 module MIDI
   PPQN = 480
-  DRUM_NOTES = { 'kick' => 36, 'snare' => 38, 'hat' => 42 }.freeze
+  DRUM_NOTES = { "kick" => 36, "snare" => 38, "hat" => 42 }.freeze
 
   def self.vlq(number)
     bytes = [number & 0x7f]
     while (number >>= 7).positive?
       bytes.unshift((number & 0x7f) | 0x80)
     end
-    bytes.pack('C*')
+    bytes.pack("C*")
   end
 
   # A Standard MIDI File of notes on one channel, for a soundfont to play: each note is
@@ -4786,15 +4785,15 @@ module MIDI
       [[ticks.call(start), 0x90, midi, velocity.clamp(1, 127)], [ticks.call(start + length), 0x80, midi, 0]]
     end
     ending = events.map(&:first).max.to_i + ticks.call(tail)
-    track = "\x00\xFF\x51\x03".b + [500_000].pack('N')[1, 3]
-    track << "\x00\xB0\x00".b << [bank].pack('C') << "\x00\xC0".b << [program].pack('C')
+    track = "\x00\xFF\x51\x03".b + [500_000].pack("N")[1, 3]
+    track << "\x00\xB0\x00".b << [bank].pack("C") << "\x00\xC0".b << [program].pack("C")
     last = 0
     events.sort_by { |tick, status, *| [tick, status & 0xf0 == 0x80 ? 0 : 1] }.each do |tick, status, note, vel|
-      track << vlq(tick - last) << [status, note, vel].pack('C3')
+      track << vlq(tick - last) << [status, note, vel].pack("C3")
       last = tick
     end
     track << vlq(ending - last) << "\xFF\x2F\x00".b
-    WAV.write_bytes(path, 'MThd'.b + [6, 0, 1, PPQN].pack('Nnnn') + 'MTrk'.b + [track.bytesize].pack('N') + track, replace:)
+    WAV.write_bytes(path, "MThd".b + [6, 0, 1, PPQN].pack("Nnnn") + "MTrk".b + [track.bytesize].pack("N") + track, replace:)
   end
 
   def self.write(path, names, bpm, beats, hits, search: true, replace: false)
@@ -4812,15 +4811,15 @@ module MIDI
       events << [on, 0x99, DRUM_NOTES.fetch(role), 100]
       events << [on + 30, 0x89, DRUM_NOTES.fetch(role), 0]
     end
-    track = "\x00\xFF\x51\x03".b + [(60_000_000 / bpm).round].pack('N')[1, 3]
+    track = "\x00\xFF\x51\x03".b + [(60_000_000 / bpm).round].pack("N")[1, 3]
     last = 0
     events.sort_by { |tick, status, *| [tick, status & 0xf0 == 0x80 ? 0 : 1] }.each do |tick, status, note, vel|
-      track << vlq(tick - last) << [status, note, vel].pack('C3')
+      track << vlq(tick - last) << [status, note, vel].pack("C3")
       last = tick
     end
     track << "\x00\xFF\x2F\x00".b
-    header = 'MThd'.b + [6, 0, 1, PPQN].pack('Nnnn')
-    WAV.write_bytes(path, header + 'MTrk'.b + [track.bytesize].pack('N') + track, replace:)
+    header = "MThd".b + [6, 0, 1, PPQN].pack("Nnnn")
+    WAV.write_bytes(path, header + "MTrk".b + [track.bytesize].pack("N") + track, replace:)
   end
 end
 
@@ -4832,17 +4831,17 @@ end
 # be mixed in before the effects. Where the binary or the soundfont is missing the voice says so
 # and the voice named as its fallback plays instead, and the rotation leaves it out.
 module Fluid
-  BINARIES = ['/opt/homebrew/bin/fluidsynth', '/usr/local/bin/fluidsynth', '/usr/bin/fluidsynth'].freeze
-  FONT_GLOB = 'Downloads/pub3-main*/multimedia/dilla/tools/instruments/soundfonts'
-  CACHE_DIR = '.cache/dilla-soundfonts'
+  BINARIES = ["/opt/homebrew/bin/fluidsynth", "/usr/local/bin/fluidsynth", "/usr/bin/fluidsynth"].freeze
+  FONT_GLOB = "Downloads/pub3-main*/multimedia/dilla/tools/instruments/soundfonts"
+  CACHE_DIR = ".cache/dilla-soundfonts"
   DEFAULT_FONTS = %w[FluidR3_GM.sf2 GeneralUser-GS.sf2].freeze # the first is the one the folder was meant to hold
   GAIN = 0.6
   TIMEOUT = 180
 
   def self.binary
-    ENV.fetch('DILLA_FLUIDSYNTH', nil)&.then { |path| return path if File.executable?(path) }
+    ENV.fetch("DILLA_FLUIDSYNTH", nil)&.then { |path| return path if File.executable?(path) }
     BINARIES.find { |path| File.executable?(path) } ||
-      ENV.fetch('PATH', '').split(File::PATH_SEPARATOR).map { |dir| File.join(dir, 'fluidsynth') }.find { |path| File.executable?(path) }
+      ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).map { |dir| File.join(dir, "fluidsynth") }.find { |path| File.executable?(path) }
   end
 
   # A soundfont is a RIFF file that says how long it is; a download cut short says so too, and
@@ -4851,86 +4850,86 @@ module Fluid
     return false unless File.file?(path)
 
     head = File.binread(path, 12).to_s
-    head.byteslice(8, 4) == 'sfbk' && head.byteslice(4, 4).unpack1('V') + 8 == File.size(path)
+    head.byteslice(8, 4) == "sfbk" && head.byteslice(4, 4).unpack1("V") + 8 == File.size(path)
   end
 
   # DILLA_SOUNDFONT names one file for the default voices; otherwise the first whole file of the
   # names, looked for in the soundfont folder of the download, then in the cache folder.
   def self.soundfont(names = DEFAULT_FONTS)
     names = Array(names)
-    given = ENV.fetch('DILLA_SOUNDFONT', nil)
+    given = ENV.fetch("DILLA_SOUNDFONT", nil)
     return (whole?(given) ? given : nil) if given && names == DEFAULT_FONTS
 
     folders = Dir.glob(File.join(Dir.home, FONT_GLOB)).sort + [File.join(Dir.home, CACHE_DIR)]
     folders.product(names).map { |folder, name| File.join(folder, name) }.find { |path| whole?(path) }
   end
 
-  def self.available?(spec = {}) = !binary.nil? && !soundfont(spec.fetch('soundfont', DEFAULT_FONTS)).nil?
+  def self.available?(spec = {}) = !binary.nil? && !soundfont(spec.fetch("soundfont", DEFAULT_FONTS)).nil?
 
   # Why a fluid voice cannot play, in words, or nil when it can.
   def self.missing(spec = {})
-    return 'the fluidsynth binary was not found' unless binary
+    return "the fluidsynth binary was not found" unless binary
 
-    names = Array(spec.fetch('soundfont', DEFAULT_FONTS))
+    names = Array(spec.fetch("soundfont", DEFAULT_FONTS))
     soundfont(names) ? nil : "no whole soundfont among #{names.join(', ')} (DILLA_SOUNDFONT names one)"
   end
 
   # The argv for one render: no shell sees it.
-  def self.command(wav, font, midi) = [binary, '-ni', '-F', wav, '-r', SAMPLE_RATE.to_s, '-g', GAIN.to_s, '-R', '0', '-C', '0', font, midi]
+  def self.command(wav, font, midi) = [binary, "-ni", "-F", wav, "-r", SAMPLE_RATE.to_s, "-g", GAIN.to_s, "-R", "0", "-C", "0", font, midi]
 
   # Mono samples of the plucks played by the voice's program, from time zero, with the
   # soundfont's releases after the last note. A chord pluck sounds every note it holds.
   def self.render(plucks, spec)
-    font = soundfont(spec.fetch('soundfont', DEFAULT_FONTS)) or raise ArgumentError, missing(spec)
+    font = soundfont(spec.fetch("soundfont", DEFAULT_FONTS)) or raise ArgumentError, missing(spec)
     notes = plucks.flat_map do |p|
       start = [p.base + p.off.clamp(-MAX_OFFSET, MAX_OFFSET), 0.0].max
       Array(p.midi).map { |midi| [start, p.dur, midi, (30 + (97 * p.gain.clamp(0.0, 1.0))).round] }
     end
     return [] if notes.empty?
 
-    Dir.mktmpdir('dilla-fluid') do |dir|
-      midi = File.join(dir, 'part.mid')
-      wav = File.join(dir, 'part.wav')
-      MIDI.write_notes(midi, notes, program: spec.fetch('program'), bank: spec.fetch('bank', 0))
+    Dir.mktmpdir("dilla-fluid") do |dir|
+      midi = File.join(dir, "part.mid")
+      wav = File.join(dir, "part.wav")
+      MIDI.write_notes(midi, notes, program: spec.fetch("program"), bank: spec.fetch("bank", 0))
       run(command(wav, font, midi), dir)
       read(wav)
     end
   end
 
   def self.run(argv, dir)
-    log = File.join(dir, 'fluidsynth.log')
+    log = File.join(dir, "fluidsynth.log")
     pid = Process.spawn(*argv, in: File::NULL, out: log, err: [:child, :out])
     status = Timeout.timeout(TIMEOUT) { Process.wait2(pid).last }
     raise "fluidsynth failed: #{File.read(log).lines.last(3).join.strip}" unless status.success?
   rescue Timeout::Error
-    Process.kill('KILL', pid)
+    Process.kill("KILL", pid)
     Process.wait(pid)
-    raise 'fluidsynth timed out'
+    raise "fluidsynth timed out"
   end
 
   # A 16-bit PCM wav of one or two channels, mixed down to mono.
   def self.read(path)
     bytes = File.binread(path)
-    raise 'fluidsynth wrote no wav' unless bytes.byteslice(0, 4) == 'RIFF' && bytes.byteslice(8, 4) == 'WAVE'
+    raise "fluidsynth wrote no wav" unless bytes.byteslice(0, 4) == "RIFF" && bytes.byteslice(8, 4) == "WAVE"
 
     channels = bits = rate = nil
     pos = 12
     while pos + 8 <= bytes.bytesize
       id = bytes.byteslice(pos, 4)
-      size = bytes.byteslice(pos + 4, 4).unpack1('V')
+      size = bytes.byteslice(pos + 4, 4).unpack1("V")
       body = pos + 8
-      if id == 'fmt '
-        _format, channels, rate, _byte_rate, _align, bits = bytes.byteslice(body, 16).unpack('vvVVvv')
-      elsif id == 'data'
+      if id == "fmt "
+        _format, channels, rate, _byte_rate, _align, bits = bytes.byteslice(body, 16).unpack("vvVVvv")
+      elsif id == "data"
         raise "fluidsynth wrote #{bits}-bit audio" unless bits == 16
         raise "fluidsynth wrote #{rate} Hz, not #{SAMPLE_RATE}" unless rate == SAMPLE_RATE
 
-        frames = bytes.byteslice(body, [size, bytes.bytesize - body].min).unpack('s<*')
+        frames = bytes.byteslice(body, [size, bytes.bytesize - body].min).unpack("s<*")
         return frames.each_slice(channels).map { |frame| frame.sum / (32_768.0 * channels) }
       end
       pos = body + size + (size.odd? ? 1 : 0)
     end
-    raise 'fluidsynth wrote no audio'
+    raise "fluidsynth wrote no audio"
   end
 end
 
@@ -4939,8 +4938,8 @@ class Bag
   def initialize(items, rng, state = nil)
     @items = items
     @rng = rng
-    @remaining = (state&.fetch('remaining', nil) || []).select { |i| items.include?(i) }
-    @last = state&.fetch('last', nil)
+    @remaining = (state&.fetch("remaining", nil) || []).select { |i| items.include?(i) }
+    @last = state&.fetch("last", nil)
   end
 
   def draw
@@ -4953,7 +4952,7 @@ class Bag
 
   def position = "#{@items.size - @remaining.size}/#{@items.size}"
 
-  def to_h = { 'remaining' => @remaining, 'last' => @last }
+  def to_h = { "remaining" => @remaining, "last" => @last }
 end
 
 # A bag whose neighbours never share a key: the order of each cycle is a shuffle in which no two
@@ -5005,7 +5004,7 @@ end
 class Playlist
   MODES = %w[arp repeat pad organ].freeze
 
-  def initialize(data, rng, state = {}, pool: 'essential')
+  def initialize(data, rng, state = {}, pool: "essential")
     @data = data
     @pool = pool
     @rng = rng
@@ -5019,40 +5018,40 @@ class Playlist
 
   # The progressions --play draws from: the essential staples, or the whole array.
   def progression_pool
-    @pool == 'all' ? (0...@data.fetch('progressions').size).to_a : @data.fetch('essential')
+    @pool == "all" ? (0...@data.fetch("progressions").size).to_a : @data.fetch("essential")
   end
 
   # The voices the rotation may play: every row, except a soundfont voice on a machine that
   # has no soundfont, which would only be its fallback sounding under another name.
-  def voice_names = @data.fetch('voices').reject { |_, row| row['family'] == 'fluid' && !Fluid.available?(row) }.keys.sort
+  def voice_names = @data.fetch("voices").reject { |_, row| row["family"] == "fluid" && !Fluid.available?(row) }.keys.sort
 
   def voices_by_group = voice_names.group_by { |name| group_of(name) }
 
   # The group of a patch is what the ear calls its kind: the moogs, the polysynth pads, the strings.
-  def group_of(voice) = @data.fetch('voices').fetch(voice).fetch('group')
+  def group_of(voice) = @data.fetch("voices").fetch(voice).fetch("group")
 
   # The next voice from the one bag that holds every patch: a patch comes back only after all the
   # others have played, and a group never follows itself.
-  def next_voice = bag('voices', voice_names, spaced_by: method(:group_of)).draw
+  def next_voice = bag("voices", voice_names, spaced_by: method(:group_of)).draw
 
   # `count` voices in a row, one for each chord of a pad, from the same bag.
   def voices_for(count) = Array.new(count) { next_voice }
 
   def draw(fixed = {})
-    index = bag('progressions', progression_pool).draw
-    position = @bags['progressions'].position
-    mode = fixed[:mode] || bag('modes', MODES).draw
+    index = bag("progressions", progression_pool).draw
+    position = @bags["progressions"].position
+    mode = fixed[:mode] || bag("modes", MODES).draw
     style = case mode
-            when 'arp' then bag('styles:arp', @data.dig('arp', 'play_styles')).draw
-            when 'repeat' then bag('styles:repeat', @data.fetch('comp').fetch('styles').keys).draw
+            when "arp" then bag("styles:arp", @data.dig("arp", "play_styles")).draw
+            when "repeat" then bag("styles:repeat", @data.fetch("comp").fetch("styles").keys).draw
             end
-    voices = fixed[:patch_per_chord] && mode == 'pad' && !fixed[:voice] ? voices_for(@data.fetch('progressions').fetch(index).size) : nil
-    organ = mode == 'organ' && !fixed[:voice]
-    voice = fixed[:voice] || voices&.first || (organ ? 'organ' : next_voice)
-    profile = fixed[:profile] || bag('profiles', @data.fetch('play_profiles')).draw
-    kit = bag('kits', @data.fetch('kits').keys).draw
-    drums = bag('drums', @data.fetch('drum_patterns').keys).draw
-    { prog: index, position:, mode:, style:, voice:, voices:, bag: (organ || fixed[:voice] ? nil : bag_position('voices')), profile:, kit:, drums: }
+    voices = fixed[:patch_per_chord] && mode == "pad" && !fixed[:voice] ? voices_for(@data.fetch("progressions").fetch(index).size) : nil
+    organ = mode == "organ" && !fixed[:voice]
+    voice = fixed[:voice] || voices&.first || (organ ? "organ" : next_voice)
+    profile = fixed[:profile] || bag("profiles", @data.fetch("play_profiles")).draw
+    kit = bag("kits", @data.fetch("kits").keys).draw
+    drums = bag("drums", @data.fetch("drum_patterns").keys).draw
+    { prog: index, position:, mode:, style:, voice:, voices:, bag: (organ || fixed[:voice] ? nil : bag_position("voices")), profile:, kit:, drums: }
   end
 
   def bag_position(key) = @bags[key]&.position
@@ -5171,12 +5170,12 @@ class Streamer
   def build_source
     entries = []
     stems = []
-    pans = @data.fetch('stereo')
+    pans = @data.fetch("stereo")
     @plan.parts.each do |part|
-      group = part.voice['group'] || 'sine'
-      centre = pans.fetch('groups').fetch(group, 0.0)
-      if part.voice['family'] == 'fluid'
-        level = 10.0**(part.voice.fetch('gain', 0.0) / 20.0)
+      group = part.voice["group"] || "sine"
+      centre = pans.fetch("groups").fetch(group, 0.0)
+      if part.voice["family"] == "fluid"
+        level = 10.0**(part.voice.fetch("gain", 0.0) / 20.0)
         stems << [Fluid.render(part.plucks, part.voice), level * part.gain, centre]
         next
       end
@@ -5188,7 +5187,7 @@ class Streamer
           start = [((p.base + p.off.clamp(-MAX_OFFSET, MAX_OFFSET)) * SAMPLE_RATE).to_i, 0].max
           make = lambda do
             Voices.cached_reader(part.voice, midi, p.dur, 0.22 * p.gain / Math.sqrt(notes.size), velocity: p.gain, detune: @seq.detune,
-                                                                                           step:, registration: part.voice['registration'])
+                                                                                           step:, registration: part.voice["registration"])
           end
           entries << Stream::Bank::Entry.new(start, make, part.gain, swell, note_pan(centre, midi, pans))
         end
@@ -5202,8 +5201,8 @@ class Streamer
   # the middle, the high ones go out. Static, so a note keeps its place for its whole life.
   def note_pan(centre, midi, pans)
     reach = ((midi - 60) / 24.0).clamp(-1.0, 1.0)
-    reach *= pans.fetch('low_reach') if midi < pans.fetch('low_below')
-    (centre + (pans.fetch('spread') * reach)).clamp(-1.0, 1.0)
+    reach *= pans.fetch("low_reach") if midi < pans.fetch("low_below")
+    (centre + (pans.fetch("spread") * reach)).clamp(-1.0, 1.0)
   end
 
   # The pad that swells with the energy: linear between the beats' levels, from a quarter to full.
@@ -5242,29 +5241,29 @@ class Streamer
     seed = @plan.seed
     @vcs = seq.vcs_amount(options[:vcs])
     sonitex = seq.sonitex_settings(options[:sonitex], instances: options[:sonitex_instances])
-    @sonitex = sonitex && pair { |c| Stream::SonitexStack.new(sonitex.fetch('preset'), sonitex.fetch('instances'), seed + (c * 104_729)) }
+    @sonitex = sonitex && pair { |c| Stream::SonitexStack.new(sonitex.fetch("preset"), sonitex.fetch("instances"), seed + (c * 104_729)) }
     @drum_sonitex_settings = seq.sonitex_settings(options[:drum_sonitex], instances: options[:drum_sonitex_instances]) || sonitex
     @colour_vcs = pair { Stream::Vcs.new(@vcs) }
     echo = seq.echo_settings(flag: options[:echo], mix: options[:echo_mix], feedback: options[:echo_feedback], time_ms: options[:echo_time])
-    echo['tail'] = options[:echo_tail] if echo && options[:echo_tail]
-    echo['reverb'] = options[:echo_reverb] unless !echo || options[:echo_reverb].nil?
+    echo["tail"] = options[:echo_tail] if echo && options[:echo_tail]
+    echo["reverb"] = options[:echo_reverb] unless !echo || options[:echo_reverb].nil?
     @echo = echo && echo_line(echo)
-    @tail = echo ? (echo.fetch('tail', 4.0) * SAMPLE_RATE).to_i : 0
-    texture = @plan.profile_row['texture'] || {}
-    @texture = [pair { Stream::Lowpass.new(texture['lowpass']) },
-                pair { |c| Stream::Reverb.new(texture['reverb'], side: c.zero? ? :left : :right) },
-                pair { |c| Stream::Spring.new(texture['spring'], side: c.zero? ? :left : :right) }]
-    @stages = Array(@plan.profile_row['chain']).map do |row|
-      Stages.build(row, @data.fetch('stages'), channels: @channels, seed:, end_sample: @source_end, bar_samples: @beat * 4)
+    @tail = echo ? (echo.fetch("tail", 4.0) * SAMPLE_RATE).to_i : 0
+    texture = @plan.profile_row["texture"] || {}
+    @texture = [pair { Stream::Lowpass.new(texture["lowpass"]) },
+                pair { |c| Stream::Reverb.new(texture["reverb"], side: c.zero? ? :left : :right) },
+                pair { |c| Stream::Spring.new(texture["spring"], side: c.zero? ? :left : :right) }]
+    @stages = Array(@plan.profile_row["chain"]).map do |row|
+      Stages.build(row, @data.fetch("stages"), channels: @channels, seed:, end_sample: @source_end, bar_samples: @beat * 4)
     end
   end
 
   def echo_line(settings)
-    delay = settings['time_ms'] ? settings['time_ms'] / 1000.0 : settings.fetch('time_beats') * 60.0 / @bpm
+    delay = settings["time_ms"] ? settings["time_ms"] / 1000.0 : settings.fetch("time_beats") * 60.0 / @bpm
     resets = (1...@plan.names.size).map { |i| (i * @plan.beats * 60.0 / @bpm * SAMPLE_RATE).round }
-    args = { delay:, heads: settings.fetch('heads'), intensity: settings.fetch('intensity'), volume: settings.fetch('echo_volume'),
-             lowpass: settings['lowpass'], saturation: settings.fetch('saturation', 0.0), reverb: settings.fetch('reverb', 0.0),
-             resets:, send: @seq.throws(settings['throws'], @bpm) }
+    args = { delay:, heads: settings.fetch("heads"), intensity: settings.fetch("intensity"), volume: settings.fetch("echo_volume"),
+             lowpass: settings["lowpass"], saturation: settings.fetch("saturation", 0.0), reverb: settings.fetch("reverb", 0.0),
+             resets:, send: @seq.throws(settings["throws"], @bpm) }
     @channels == 1 ? Stream::EchoLine.new(**args) : Stream::PingPongEcho.new(**args)
   end
 
@@ -5285,34 +5284,34 @@ class Streamer
   # The layers a profile names under `noise`, over the defaults in the data: air, the bed, dust,
   # and the sparkle with its own echo, ducked by the kick.
   def build_noise
-    rows = @plan.profile_row['noise'] || {}
-    defaults = @data.fetch('noise')
+    rows = @plan.profile_row["noise"] || {}
+    defaults = @data.fetch("noise")
     seed = @plan.seed
     wanted = lambda do |name|
       row = rows[name]
       row ? defaults.fetch(name).merge(row.is_a?(Hash) ? row : {}) : nil
     end
     seconds = (@source_end + @tail) / SAMPLE_RATE.to_f
-    air = wanted.call('air')
-    bed = wanted.call('bed')
+    air = wanted.call("air")
+    bed = wanted.call("bed")
     @air = air && Array.new(@channels) { |c| Noise::Air.new(air, Zlib.crc32("#{seed}:air:#{c}")) }
     @bed = bed && Array.new(@channels) { |c| Noise::Bed.new(bed, Zlib.crc32("#{seed}:bed:#{c}")) }
-    dust = wanted.call('dust')
+    dust = wanted.call("dust")
     @dust_bank = dust && Stream::Bank.new(Noise.dust(dust, Zlib.crc32("#{seed}:dust"), seconds))
-    sparkle = wanted.call('sparkle')
+    sparkle = wanted.call("sparkle")
     return unless sparkle
 
     pcs = Chords.midi_notes(@plan.names, search: @plan.search).map { |notes| notes.map { |n| n % 12 }.uniq }
     chord_seconds = @plan.beats * 60.0 / @bpm
     chord_at = ->(t) { pcs[[(t / chord_seconds).floor, pcs.size - 1].min] }
     @sparkle_bank = Stream::Bank.new(Noise.sparkle(sparkle, Zlib.crc32("#{seed}:sparkle"), seconds, chord_at))
-    kicks = @hits.select { |r, _| r == 'kick' }.map { |_, t| t }
-    @sparkle_duck = kicks.empty? ? nil : Stream::Duck.new(kicks, sparkle.fetch('duck', 0.85), 0.12)
-    echo = sparkle['echo']
+    kicks = @hits.select { |r, _| r == "kick" }.map { |_, t| t }
+    @sparkle_duck = kicks.empty? ? nil : Stream::Duck.new(kicks, sparkle.fetch("duck", 0.85), 0.12)
+    echo = sparkle["echo"]
     return unless echo
 
-    args = { delay: echo.fetch('beats', 0.75) * 60.0 / @bpm, heads: echo.fetch('heads', [1, 2]), intensity: echo.fetch('intensity', 0.55), volume: echo.fetch('volume', 0.7),
-             lowpass: echo.fetch('lowpass', 5000), saturation: 0.1 }
+    args = { delay: echo.fetch("beats", 0.75) * 60.0 / @bpm, heads: echo.fetch("heads", [1, 2]), intensity: echo.fetch("intensity", 0.55), volume: echo.fetch("volume", 0.7),
+             lowpass: echo.fetch("lowpass", 5000), saturation: 0.1 }
     @sparkle_echo = @channels == 1 ? Stream::EchoLine.new(**args) : Stream::PingPongEcho.new(**args)
   end
 
@@ -5339,24 +5338,24 @@ class Streamer
     seq = @seq
     options = @options
     drums = @plan.drums
-    rotation = drums == 'rotate' ? @data.fetch('drum_patterns').keys : drums
+    rotation = drums == "rotate" ? @data.fetch("drum_patterns").keys : drums
     @hits = drums ? seq.drum_hits(rotation, @bpm, @source_end / SAMPLE_RATE.to_f) : []
     @levels = seq.mix(options[:mix])
-    @chords_gain = @hits.empty? ? nil : 10.0**(@levels.fetch('chords') / 20.0)
+    @chords_gain = @hits.empty? ? nil : 10.0**(@levels.fetch("chords") / 20.0)
     # a profile's own pump, else the master's light duck: the instruments give way to the kick
-    sidechain = @plan.profile_row['sidechain'] || (options[:master] == false ? nil : @data.dig('master', 'duck'))
-    amount = sidechain ? sidechain.fetch('amount', 0.0) * seq.pd_amount : 0.0
-    @duck = sidechain && !amount.zero? ? Stream::Duck.new(@hits.select { |r, _| r == 'kick' }.map { |_, t| t }, amount, sidechain.fetch('release', 0.15)) : nil
+    sidechain = @plan.profile_row["sidechain"] || (options[:master] == false ? nil : @data.dig("master", "duck"))
+    amount = sidechain ? sidechain.fetch("amount", 0.0) * seq.pd_amount : 0.0
+    @duck = sidechain && !amount.zero? ? Stream::Duck.new(@hits.select { |r, _| r == "kick" }.map { |_, t| t }, amount, sidechain.fetch("release", 0.15)) : nil
     return if @hits.empty?
 
     kit = seq.kit_sounds
     @drum_bank = Stream::Bank.new(drum_entries(kit))
-    crush = @plan.profile_row['drum_crush']
-    @drum_crush = crush && pair { Stream::Crush.new(crush.fetch('bits'), 1.0 / crush.fetch('rate')) }
-    @rumble_amount = kit && @plan.profile_row.dig('rumble', 'amount')
+    crush = @plan.profile_row["drum_crush"]
+    @drum_crush = crush && pair { Stream::Crush.new(crush.fetch("bits"), 1.0 / crush.fetch("rate")) }
+    @rumble_amount = kit && @plan.profile_row.dig("rumble", "amount")
     @rumble = rumble_chain(kit) if @rumble_amount
     drum_sonitex = @drum_sonitex_settings
-    @drum_sonitex = drum_sonitex && pair { |c| Stream::SonitexStack.new(drum_sonitex.fetch('preset'), drum_sonitex.fetch('instances'), @plan.seed + 1 + (c * 104_729)) }
+    @drum_sonitex = drum_sonitex && pair { |c| Stream::SonitexStack.new(drum_sonitex.fetch("preset"), drum_sonitex.fetch("instances"), @plan.seed + 1 + (c * 104_729)) }
     drum_vcs = options[:drum_vcs].nil? ? @vcs : options[:drum_vcs].to_f.clamp(0.0, 1.0)
     @drum_vcs = pair { Stream::Vcs.new(drum_vcs) }
     @master_vcs = pair { Stream::Vcs.new(@vcs * 0.5) }
@@ -5364,12 +5363,12 @@ class Streamer
   end
 
   def drum_entries(kit)
-    closers = @hits.select { |r, *| r == 'hat' }.map { |_, t, *| t }
-    drum_pans = @data.fetch('stereo').fetch('drums')
+    closers = @hits.select { |r, *| r == "hat" }.map { |_, t, *| t }
+    drum_pans = @data.fetch("stereo").fetch("drums")
     @hits.each_with_index.filter_map do |(role, time, strength), hit_index|
       make = lambda do
         sample = kit ? kit[role] : Drums.new(@plan.seed + ((hit_index + 1) * 104_729)).sounds[role]
-        if sample && kit && role == 'open' && (nxt = closers.find { |t| t > time })
+        if sample && kit && role == "open" && (nxt = closers.find { |t| t > time })
           sample = sample.first(((nxt - time) * SAMPLE_RATE).to_i)
           fade = [130, sample.size].min
           fade.times { |k| sample[sample.size - 1 - k] *= k / fade.to_f }
@@ -5380,8 +5379,8 @@ class Streamer
 
       accent = strength.nil? ? 1.0 : strength.to_f.clamp(0.0, 1.0)
       variation = case role
-                  when 'hat' then [0.68, 0.92, 0.76, 0.84][hit_index % 4]
-                  when 'snare' then hit_index.odd? ? 0.92 : 1.0
+                  when "hat" then [0.68, 0.92, 0.76, 0.84][hit_index % 4]
+                  when "snare" then hit_index.odd? ? 0.92 : 1.0
                   else hit_index.odd? ? 0.94 : 1.0
                   end
       gain = 0.8 * (10.0**(@levels.fetch(role, 0.0) / 20.0)) * accent * variation
@@ -5418,12 +5417,12 @@ class Streamer
       room, first, second, third = stages
       third.process(second.process(Percussion.dirt(first.process(room.process(block)), 0.55)))
     end
-    one = kit['kick'] + Array.new(SAMPLE_RATE * 2, 0.0)
+    one = kit["kick"] + Array.new(SAMPLE_RATE * 2, 0.0)
     peak = run.call(build.call, one).map(&:abs).max.to_f
     @rumble_scale = peak.zero? ? 1.0 : 0.6 / peak
     @rumble_run = run
     @rumble_stages = build.call
-    kicks = @hits.each_with_object([]) { |(role, t, v), list| list << [(t * SAMPLE_RATE).to_i, kit['kick'], v || 1.0] if role == 'kick' }
+    kicks = @hits.each_with_object([]) { |(role, t, v), list| list << [(t * SAMPLE_RATE).to_i, kit["kick"], v || 1.0] if role == "kick" }
     @kick_bank = Stream::Bank.new(kicks.map { |start, sample, v| Stream::Bank::Entry.new(start, -> { Voices::Reader.of(sample) }, v, nil, nil) })
   end
 
@@ -5453,38 +5452,38 @@ end
 # string; a pipe that closes under us (the listener quit the player) ends the show quietly and
 # does not raise.
 class Player
-  FFPLAY = ['/opt/homebrew/bin/ffplay', '/usr/local/bin/ffplay', '/usr/bin/ffplay'].freeze
-  SOX = ['/opt/homebrew/bin/play', '/usr/local/bin/play', '/usr/bin/play'].freeze
+  FFPLAY = ["/opt/homebrew/bin/ffplay", "/usr/local/bin/ffplay", "/usr/bin/ffplay"].freeze
+  SOX = ["/opt/homebrew/bin/play", "/usr/local/bin/play", "/usr/bin/play"].freeze
 
   # The player: --player's command split into words, else ffplay, else sox's play.
   def self.command(options, rate = SAMPLE_RATE)
     channels = options[:mono] ? 1 : 2
     return Shellwords.split(options[:player]) if options[:player]
 
-    ffplay = FFPLAY.find { |path| File.executable?(path) } || which('ffplay')
+    ffplay = FFPLAY.find { |path| File.executable?(path) } || which("ffplay")
     # -ch_layout, not -ac: ffplay 8 refuses -ac on raw input ("Option not found"), the
     # player exits at launch, and -loglevel quiet leaves the show ending with no reason.
-    layout = channels == 1 ? 'mono' : 'stereo'
-    return [ffplay, '-nodisp', '-autoexit', '-loglevel', 'quiet', '-f', 's16le', '-ar', rate.to_s, '-ch_layout', layout, '-i', '-'] if ffplay
+    layout = channels == 1 ? "mono" : "stereo"
+    return [ffplay, "-nodisp", "-autoexit", "-loglevel", "quiet", "-f", "s16le", "-ar", rate.to_s, "-ch_layout", layout, "-i", "-"] if ffplay
 
-    play = SOX.find { |path| File.executable?(path) } || which('play')
-    return [play, '-q', '-t', 'raw', '-r', rate.to_s, '-e', 'signed', '-b', '16', '-c', channels.to_s, '-'] if play
+    play = SOX.find { |path| File.executable?(path) } || which("play")
+    return [play, "-q", "-t", "raw", "-r", rate.to_s, "-e", "signed", "-b", "16", "-c", channels.to_s, "-"] if play
 
-    abort 'No player: install ffplay or sox, or name one with --player (it reads raw 16-bit mono PCM on stdin)'
+    abort "No player: install ffplay or sox, or name one with --player (it reads raw 16-bit mono PCM on stdin)"
   end
 
-  def self.which(name) = ENV.fetch('PATH', '').split(File::PATH_SEPARATOR).map { |dir| File.join(dir, name) }.find { |path| File.executable?(path) }
+  def self.which(name) = ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).map { |dir| File.join(dir, name) }.find { |path| File.executable?(path) }
 
   # 16-bit little-endian samples, clipped; a stereo frame ([left, right]) is interleaved.
   def self.pcm(samples)
     samples = Stereo.interleave(samples) if samples.first.is_a?(Array)
-    samples.map { |s| (s * 32_767).round.clamp(-32_768, 32_767) }.pack('s<*')
+    samples.map { |s| (s * 32_767).round.clamp(-32_768, 32_767) }.pack("s<*")
   end
 
   attr_reader :bytes
 
   def initialize(argv)
-    @io = IO.popen(argv, 'wb')
+    @io = IO.popen(argv, "wb")
     @pid = @io.pid
     @open = true
     @bytes = 0
@@ -5518,7 +5517,7 @@ class Player
   # Tell the player to stop, from a signal handler: nothing is waited for, and a write that is
   # blocked on a full pipe fails with EPIPE and so comes back.
   def interrupt
-    Process.kill('TERM', @pid)
+    Process.kill("TERM", @pid)
   rescue Errno::ESRCH
     nil
   end
@@ -5526,7 +5525,7 @@ class Player
   # Stop now.
   def kill
     @open = false
-    Process.kill('TERM', @pid)
+    Process.kill("TERM", @pid)
   rescue Errno::ESRCH
     nil
   ensure
@@ -5544,7 +5543,7 @@ class Player
     Timeout.timeout(grace) { Process.wait(@pid) }
   rescue Timeout::Error
     begin
-      Process.kill('KILL', @pid)
+      Process.kill("KILL", @pid)
       Process.wait(@pid)
     rescue Errno::ESRCH, Errno::ECHILD
       nil
@@ -5564,7 +5563,7 @@ end
 # parameter it moved is put back exactly.
 module Moves
   NAMES = %w[echo_throw filter_sweep tape_ramp sonitex_climb reverb_swell drum_dropout].freeze
-  BARS = { 'echo_throw' => 1, 'filter_sweep' => 3, 'tape_ramp' => 3, 'sonitex_climb' => 5, 'reverb_swell' => 3, 'drum_dropout' => 1 }.freeze
+  BARS = { "echo_throw" => 1, "filter_sweep" => 3, "tape_ramp" => 3, "sonitex_climb" => 5, "reverb_swell" => 3, "drum_dropout" => 1 }.freeze
   GAP_SECONDS = 6 # at least this long between the end of one move and the start of the next
   THROW = 3.5
   TOP_HZ = 16_000.0
@@ -5620,7 +5619,7 @@ module Moves
 
     # What the limiter is still holding when the signal ends.
     def flush
-      return nil unless @chain && @built
+      return unless @chain && @built
 
       @chain.limit(Stereo.zeros(@built, @chain.latency + 2))
     end
@@ -5700,9 +5699,9 @@ module Moves
       @log << [name, global, bars]
       @out&.puts("move: #{name} for #{bars} bar#{'s' unless bars == 1} at #{(global.to_f / SAMPLE_RATE).round(1)}s")
       case name
-      when 'echo_throw'
+      when "echo_throw"
         decks.each { |d| (@saved[d.object_id] ||= {})[:boost] = d.echo_boost; d.echo_boost = THROW }
-      when 'drum_dropout'
+      when "drum_dropout"
         decks.each { |d| (@saved[d.object_id] ||= {})[:drums] = d.drums_gain; d.drums_gain = 0.0 }
       end
     end
@@ -5723,12 +5722,12 @@ module Moves
 
     def params(p0, p1, _decks)
       case @current[:name]
-      when 'filter_sweep'
+      when "filter_sweep"
         cutoff = ->(p) { TOP_HZ * ((LOW_HZ / TOP_HZ)**tent(p)) }
         { cutoff: [cutoff.call(p0), cutoff.call(p1)] }
-      when 'tape_ramp' then { tape: 1.0 + (TAPE_PUSH * tent((p0 + p1) / 2)) }
-      when 'sonitex_climb' then { sonitex: [1, 2, 3, 2, 1][([(p0 + p1) / 2 * 5, 4.999].min).floor] }
-      when 'reverb_swell' then { room: [ROOM_LEVEL * tent(p0), ROOM_LEVEL * tent(p1)] }
+      when "tape_ramp" then { tape: 1.0 + (TAPE_PUSH * tent((p0 + p1) / 2)) }
+      when "sonitex_climb" then { sonitex: [1, 2, 3, 2, 1][([(p0 + p1) / 2 * 5, 4.999].min).floor] }
+      when "reverb_swell" then { room: [ROOM_LEVEL * tent(p0), ROOM_LEVEL * tent(p1)] }
       else {}
       end
     end
@@ -5766,11 +5765,11 @@ class Show
     @decks = options.fetch(:decks, 2)
     @rng = Random.new(options[:seed] || Random.new_seed)
     @mix_rng = Random.new(Zlib.crc32("#{options[:seed]}:mix"))
-    @dir = options[:out] ? File.dirname(options[:out]) : 'out/play'
+    @dir = options[:out] ? File.dirname(options[:out]) : "out/play"
     FileUtils.mkdir_p(@dir)
-    @state_path = File.join(@dir, 'play_state.json')
+    @state_path = File.join(@dir, "play_state.json")
     state = (JSON.parse(File.read(@state_path)) rescue {})
-    @playlist = Playlist.new(data, @rng, state, pool: options[:pool] || 'essential')
+    @playlist = Playlist.new(data, @rng, state, pool: options[:pool] || "essential")
     @passes = options[:passes] || Float::INFINITY
     @made = 0
     @stop = false
@@ -5779,16 +5778,16 @@ class Show
     @streamers = []
     @last_bpm = nil
     @stats = { blocks: 0, audio: 0.0, render: 0.0, underruns: 0 }
-    tape = data.fetch('tape')
-    instances = options.fetch(:tape, tape.fetch('instances'))
-    stack = instances.positive? ? Tape::Stack.new(instances:, drive: options[:tape_drive] || tape.fetch('drive'), seed: options[:seed] || 0, config: tape) : nil
-    preset = data.dig('sonitex', 'presets').fetch(data.dig('sonitex', 'default'))
+    tape = data.fetch("tape")
+    instances = options.fetch(:tape, tape.fetch("instances"))
+    stack = instances.positive? ? Tape::Stack.new(instances:, drive: options[:tape_drive] || tape.fetch("drive"), seed: options[:seed] || 0, config: tape) : nil
+    preset = data.dig("sonitex", "presets").fetch(data.dig("sonitex", "default"))
     channels = options[:mono] ? 1 : 2
-    chain = options[:master] == false ? nil : Mastering::Chain.new(data.fetch('master'), channels:)
+    chain = options[:master] == false ? nil : Mastering::Chain.new(data.fetch("master"), channels:)
     chain&.target = options[:lufs] if options[:lufs]
-    @master = Moves::Master.new(tape: stack, ceiling: tape.fetch('ceiling', 0.97), preset:, seed: options[:seed] || 0, instances:,
-                                tape_args: { drive: options[:tape_drive] || tape.fetch('drive'), config: tape },
-                                imager: options[:mono] ? nil : data.dig('stereo', 'imager'), chain:)
+    @master = Moves::Master.new(tape: stack, ceiling: tape.fetch("ceiling", 0.97), preset:, seed: options[:seed] || 0, instances:,
+                                tape_args: { drive: options[:tape_drive] || tape.fetch("drive"), config: tape },
+                                imager: options[:mono] ? nil : data.dig("stereo", "imager"), chain:)
     @dither = Mastering::Dither.new(options[:seed] || 0)
     per_minute = options.fetch(:moves, @decks > 1 ? MOVES_PER_MINUTE : 0.0)
     @hand = Moves::Hand.new(options[:seed] || 0, per_minute:, out:)
@@ -5855,11 +5854,11 @@ class Show
     pass = options.merge(prog: pick[:prog], seed: @rng.rand(1_000_000), profile: pick[:profile], voice: pick[:voice],
                          mode: pick[:mode], random: false, quick: false, play: false)
     pass[:chord_voices] = pick[:voices] if pick[:voices]
-    pass[:arp_style] = options[:arp_style] || pick[:style] if pick[:mode] == 'arp'
-    pass[:repeat] = options[:repeat] || pick[:style] if pick[:mode] == 'repeat'
-    profile_row = data['groove_profiles'].fetch(pick[:profile])
-    pass[:drums] = options[:drums] == 'rotate' ? pick[:drums] : (options[:drums] || profile_row['drums'])
-    pass[:kit] = options[:kit] || (options[:drums] == 'rotate' ? pick[:kit] : profile_row['kit'])
+    pass[:arp_style] = options[:arp_style] || pick[:style] if pick[:mode] == "arp"
+    pass[:repeat] = options[:repeat] || pick[:style] if pick[:mode] == "repeat"
+    profile_row = data["groove_profiles"].fetch(pick[:profile])
+    pass[:drums] = options[:drums] == "rotate" ? pick[:drums] : (options[:drums] || profile_row["drums"])
+    pass[:kit] = options[:kit] || (options[:drums] == "rotate" ? pick[:kit] : profile_row["kit"])
     pass[:pass] = number
     fit_to_deck(pass, pick) if @decks > 1
     pass
@@ -5868,14 +5867,14 @@ class Show
   # A deck's pass lasts eight to sixteen bars, whatever the progression's length, and keeps its
   # tempo within the window of the deck before it.
   def fit_to_deck(pass, pick)
-    profile = @data['groove_profiles'].fetch(pick[:profile])
+    profile = @data["groove_profiles"].fetch(pick[:profile])
     bars = @mix_rng.rand(PASS_BARS)
-    beats = pass[:beats] || profile.fetch('beats', 8.0)
+    beats = pass[:beats] || profile.fetch("beats", 8.0)
     pass[:bars] = bars
     chords = (bars * 4.0 / beats).round.clamp(2, 16)
-    progression = @data.fetch('progressions').fetch(pick[:prog])
+    progression = @data.fetch("progressions").fetch(pick[:prog])
     pass[:names] = Array.new(chords) { |i| progression[i % progression.size] }
-    bpm = pass[:bpm] || profile.fetch('bpm', 88.0)
+    bpm = pass[:bpm] || profile.fetch("bpm", 88.0)
     pass[:bpm] = bpm.clamp(@last_bpm - TEMPO_WINDOW, @last_bpm + TEMPO_WINDOW) if @last_bpm
   end
 
@@ -5940,13 +5939,13 @@ class Show
     return unless chain && !chain.light? && @pace > @options.fetch(:pace, 0.9) && @stats[:blocks] > 4
 
     chain.lighten!
-    @out.puts format('master: lightened, the show was rendering at %.2fx real time', @pace)
+    @out.puts format("master: lightened, the show was rendering at %.2fx real time", @pace)
   end
 
   # Build the next pass on a thread while this one plays, its first bars rendered ahead so that a
   # crossfade costs no more than a pass alone.
   def prepare(slot, fade_beats)
-    return nil if @made >= @passes
+    return if @made >= @passes
 
     fade_in = fade_beats * slot.streamer.beat
     next_fade = crossfade_beats
@@ -6041,7 +6040,7 @@ module Dilla
         "-c:v", "libx264", "-preset", "medium", "-crf", "19",
         "-pix_fmt", "yuv420p", "-r", FPS.to_s,
         "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart",
-        "-shortest", temporary,
+        "-shortest", temporary
       ]
       _stdout, stderr, status = Studio::Subprocess.capture3(*command, timeout: command_timeout)
       unless status.success? && File.file?(temporary) && File.size(temporary).positive?
@@ -6177,7 +6176,7 @@ module Dilla
              parts == ["watch"] ? URI.decode_www_form(uri.query.to_s).to_h["v"] : (parts[1] if %w[shorts embed live v].include?(parts.first))
            end
       raise Error, "expected a single YouTube video URL" unless VIDEO_ID.match?(id.to_s)
-      { id: id, url: "https://www.youtube.com/watch?v=#{id}" }
+      { id:, url: "https://www.youtube.com/watch?v=#{id}" }
     rescue URI::InvalidURIError, ArgumentError => error
       raise Error, "invalid YouTube URL: #{error.message}"
     end
@@ -6271,7 +6270,7 @@ module Dilla
       apply_stem_balance(profile, stem_features)
       profile.merge!(
         "source_duration_seconds" => mix["duration_seconds"],
-        "reference_fingerprint" => Digest::SHA256.file(audio).hexdigest[0, 16]
+        "reference_fingerprint" => Digest::SHA256.file(audio).hexdigest[0, 16],
       )
       profile.compact!
       File.write(File.join(directory, "profile.json"), JSON.pretty_generate(profile) + "\n")
@@ -6375,7 +6374,7 @@ module Dilla
                         "-f", "f32le", "pipe:1", timeout: analysis_timeout(max_duration))
       samples = bytes.force_encoding(Encoding::BINARY).unpack("e*")
       overall = estimate_tempo_samples(samples, sample_rate:)
-      return nil unless overall
+      return unless overall
 
       segment_size = sample_rate * segment_seconds
       minimum_size = sample_rate * min_segment_seconds
@@ -6395,17 +6394,17 @@ module Dilla
     end
 
     def estimate_tempo_samples(samples, sample_rate: 40)
-      return nil if samples.size < sample_rate * 12
+      return if samples.size < sample_rate * 12
 
       mean = samples.sum / samples.size
       centred = samples.map { |sample| sample - mean }
       energy = centred.sum { |sample| sample * sample }
-      return nil if energy < 1e-12
+      return if energy < 1e-12
 
       minimum_lag = [(sample_rate * 60.0 / 200).floor, 1].max
       maximum_lag = (sample_rate * 60.0 / 50).ceil
       final_lag = [maximum_lag, samples.size / 4].min
-      return nil if final_lag < minimum_lag
+      return if final_lag < minimum_lag
 
       score, lag = (minimum_lag..final_lag).map do |candidate|
         total = 0.0
@@ -6602,7 +6601,7 @@ module Dilla
         "key" => %w[tonal key_key],
         "scale" => %w[tonal key_scale],
         "spectral_centroid_mean_hz" => %w[lowlevel spectral_centroid mean],
-        "spectral_entropy_mean" => %w[lowlevel spectral_entropy mean]
+        "spectral_entropy_mean" => %w[lowlevel spectral_entropy mean],
       }
       paths.each_with_object({}) do |(name, path), summary|
         value = path.reduce(document) { |node, part| node.is_a?(Hash) ? node[part] : nil }
@@ -6684,7 +6683,7 @@ module Dilla
           "rms_p95_db" => p95,
           "rms_range_p95_p05_db" => (p95 - p05).round(2),
           "rms_median_db" => sorted[(sorted.size - 1) / 2],
-          "rms_stddev_db" => Math.sqrt(variance).round(2)
+          "rms_stddev_db" => Math.sqrt(variance).round(2),
         }
       end
       { "window_seconds" => window_seconds, "window_count" => windows.size,
@@ -6843,7 +6842,7 @@ module Dilla
           slice = samples[start_index, end_index - start_index] || []
           segment_bpm = numeric_value(segment["bpm"])
           zoom_windows.concat(
-            rhythm_zoom_summaries(slice, bpm: segment_bpm, sample_rate:, time_offset: start_seconds)
+            rhythm_zoom_summaries(slice, bpm: segment_bpm, sample_rate:, time_offset: start_seconds),
           )
           local = summarize_rhythm_envelope(slice, bpm: segment_bpm, sample_rate:)
           local unless local.empty?
@@ -6871,7 +6870,7 @@ module Dilla
         "timing_spread_ms" => 1,
         "onset_density_per_bar" => 2,
         "offbeat_onset_share" => 3,
-        "sixteenth_cell_ms" => 2
+        "sixteenth_cell_ms" => 2,
       }.each do |field, precision|
         values = segments.filter_map { |features| numeric_value(features[field]) }.sort
         next if values.empty?
@@ -6968,7 +6967,7 @@ module Dilla
         "sixteenth_cell_ms" => (60_000.0 / bpm.to_f / 4.0).round(2),
         "sixteenth_grid_hits_per_bar" => sixteenth_grid_hits_per_bar,
         "sixteenth_grid_strength_share" => sixteenth_grid_strength_share,
-        "grid_measurement" => "mix_level_onset_proxy_not_drum_transcription"
+        "grid_measurement" => "mix_level_onset_proxy_not_drum_transcription",
       }
       features["offbeat_onset_share"] = (offbeat_strength / total_strength).round(3) if total_strength.positive?
       features
@@ -7603,7 +7602,6 @@ module Dilla
   end
 end
 
-
 # ---------------------------------------------------------------- sound events
 # Short, manifest-driven lifecycle cues. They use the same sample rate, WAV writer,
 # Sonitex colour, dub echo, plate, tape and master chain as Dilla's music. No speech
@@ -7941,7 +7939,6 @@ module Dilla
   end
 end
 
-
 # --- engine.rb ---
 # Reference analysis and industrial-techno generation stay in their own modules.
 
@@ -7980,85 +7977,85 @@ def run(argv)
   return Dilla::Ambient.run(rest) if subcommand == "ambient"
   return Dilla::SoundFx.run(rest) if subcommand == "sound-fx"
   return dilla_output_path(rest) if subcommand == "output-path"
-  RubyVM::YJIT.enable if defined?(RubyVM::YJIT) && !RubyVM::YJIT.enabled? && !ENV.key?('DILLA_NO_YJIT') # about a third off every render
-  live_argument = argv.first == 'live'
+  RubyVM::YJIT.enable if defined?(RubyVM::YJIT) && !RubyVM::YJIT.enabled? && !ENV.key?("DILLA_NO_YJIT") # about a third off every render
+  live_argument = argv.first == "live"
   argv = argv.drop(1) if live_argument
   options = {}
   OptionParser.new do |o|
-    o.banner = 'Usage: ruby dilla.rb [options] | reference URL_OR_AUDIO | industrial-techno [options]'
-    o.on('--showcase', 'Render the default showcase: the Blue Hour suite and the rest of the room') { options[:showcase] = true }
+    o.banner = "Usage: ruby dilla.rb [options] | reference URL_OR_AUDIO | industrial-techno [options]"
+    o.on("--showcase", "Render the default showcase: the Blue Hour suite and the rest of the room") { options[:showcase] = true }
     o.on("--arrangement PATH", "With --showcase: play the sections of this JSON file, not data/showcase.json") do |v|
       options[:arrangement] = v
       options[:showcase] = true
     end
-    o.on('--video PATH', 'Write the matching MP4 visualizer at PATH') { |v| options[:video] = v }
-    o.on('--no-video', 'Render only the WAV; do not encode an MP4') { options[:video] = false }
-    o.on('--video-preset NAME', 'Postpro video preset (default dilla_heavy)') { |v| options[:video_preset] = v }
-    o.on('--effect-rig NAME', 'Apply a named bus-effects rig from data/dilla.json') { |v| options[:effect_rig] = v }
-    o.on('--live', 'Loop the showcase through the system audio player') { options[:live] = true }
-    o.on('--render', 'Write one random take to a new file under the renders folder instead of playing live') { options[:render] = true }
-    o.on('--map', 'Print the table of contents of this file: every module and class with its line number') { options[:map] = true }
-    o.on('--list', 'List progressions, drum patterns, groove profiles, voicings and harmonic languages') { options[:list] = true }
-    o.on('--voicing STYLE', Chords::STYLES, "Lay every chord out as #{Chords::STYLES.join(', ')} (default: voice-led)") { |v| Chords.use(v) }
-    o.on('--progression N', Integer, 'Progression index (see --list)') { |v| options[:prog] = v }
-    o.on('--random', 'Random progression and drum pattern (the default groove profile)') { options[:random] = true }
-    o.on('--drums NAME', 'Drum pattern name, or rotate to change the pattern every phrase') { |v| options[:drums] = v }
-    o.on('--kit NAME', 'The drum kit (see kits in dilla.json)') { |v| options[:kit] = v }
-    o.on('--profile NAME', 'Groove profile name') { |v| options[:profile] = v }
-    o.on('--groove N', Float, 'pd_amount, 0 to 1.5: how far the profile pulls from the grid') { |v| options[:groove] = v }
-    o.on('--bpm N', Float, 'Tempo (default 88)') { |v| options[:bpm] = v }
-    o.on('--beats N', Float, 'Beats per chord (default 8, two bars)') { |v| options[:beats] = v }
-    o.on('--gate N', Float, 'Note gate as a share of its step, 0.05 to 1.5') { |v| options[:gate] = v.clamp(0.05, 1.5) }
-    o.on('--seed N', Integer, 'Seed: the same seed plays the same render') { |v| options[:seed] = v }
-    o.on('--out PATH', 'Output WAV path') { |v| options[:out] = v }
-    o.on('--replace', 'Explicitly replace an existing WAV or MIDI take') { options[:replace] = true }
-    o.on('--midi PATH', 'Also write a Standard MIDI File') { |v| options[:midi] = v }
-    o.on('--no-voice-search', 'Voice each chord by nearest tones only, without the octave search') { options[:plain] = true }
-    o.on('--arp [PATTERN]', 'Play each chord one note at a time: up, down, updown, converge, spiral, pendulum, flow and more; --arp list names them') { |v| options[:arp] = v || true }
-    o.on('--strum [MS]', Float, 'Stagger the notes of each chord, lowest first, by MS milliseconds (default from the data)') { |v| options[:strum] = v || true }
-    o.on('--pad', 'A soft sustained pad under the arpeggio') { options[:pad] = true }
-    o.on('--echo [HEADS]', 'Tape space echo; heads such as 1 or 1,2 or 1,2,3') { |v| options[:echo] = v || true }
-    o.on('--echo-mix N', Float, 'Echo volume against the dry sound') { |v| options[:echo_mix] = v }
-    o.on('--echo-feedback N', Float, 'Echo intensity, 0 to 0.9: how much of each repeat comes round again') { |v| options[:echo_feedback] = v }
-    o.on('--echo-time MS', Float, 'Echo base delay in milliseconds (default a dotted eighth)') { |v| options[:echo_time] = v }
-    o.on('--play', '--endless', 'Never stop: stream pass after pass into the player, each beginning under the last beat of the one before') { options[:play] = true }
-    o.on('--player CMD', 'The player: for live it is given the wav path (default afplay, else ffplay); for --play it reads raw 16-bit mono PCM on stdin (default ffplay, else sox play)') { |v| options[:player] = v }
-    o.on('--decks N', Integer, 'With --play: 2 decks cross over eight to sixteen bars (the default), 1 plays pass after pass under a one-beat crossfade') { |v| options[:decks] = v.clamp(1, 2) }
-    o.on('--moves N', Float, 'With --play: live moves a minute on average, 0 for none (default 3 with two decks)') { |v| options[:moves] = v }
-    o.on('--passes N', Integer, 'With --play, stop after N progressions') { |v| options[:passes] = v }
-    o.on('--voice NAME', 'The voice that plays the notes (see data/dilla.json): pure_tone, sine, moog_*, rhodes_*, dfam') { |v| options[:voice] = v }
-    o.on('--repeat [STYLE]', '--comp [STYLE]', 'Strike the whole chord again on the steps of a style instead of arpeggiating') { |v| options[:repeat] = v || true }
-    o.on('--patch-per-chord', 'In pad mode, give every chord its own patch, drawn from the one bag of all patches') { options[:patch_per_chord] = true }
-    o.on('--mode MODE', 'arp, repeat, pad or organ: force how the chords are played') { |v| options[:mode] = v }
-    o.on('--key NAME', 'With --mode organ: the tonic, such as D or Bb (else drawn from the seed)') { |v| options[:key] = v }
-    o.on('--scale NAME', 'With --mode organ: harmonic_minor, natural_minor, major or dorian (else drawn from the seed)') { |v| options[:scale] = v }
-    o.on('--bars N', Integer, 'With --mode organ: bars of improvisation, one chord a bar (default from the data)') { |v| options[:bars] = v }
-    o.on('--arp-rate N', 'Sixteenths per arp note: 2 eighth, 3 dotted eighth, 4 quarter, 6, 8; 3T for triplets') { |v| options[:arp_rate] = v }
-    o.on('--arp-style NAME', 'A row of arp.styles in data/dilla.json') { |v| options[:arp_style] = v }
-    o.on('--lufs N', Float, 'Integrated loudness the master brings the sound to (default -14)') { |v| options[:lufs] = v.clamp(-40.0, -3.0) }
-    o.on('--no-master', 'Leave out the mixing and mastering chain: no EQ, multiband, glue, loudness or true-peak limiter') { options[:master] = false }
-    o.on('--bits N', Integer, 'Bit depth of a written wav, 16 (dithered) or 24') { |v| options[:bits] = v == 24 ? 24 : 16 }
-    o.on('--mono', 'One channel, with no panning, no ping-pong echo and no stereo imager (the default is stereo)') { options[:mono] = true }
-    o.on('--tape N', Integer, 'Tape machines in series as the last stage, 0 to 8; 0 leaves the sound untouched (default from the data)') { |v| options[:tape] = v.clamp(0, 8) }
-    o.on('--tape-drive X', Float, 'How hard the first tape machine is driven, 0.1 to 4; later machines step up from it') { |v| options[:tape_drive] = v.clamp(0.1, 4.0) }
-    o.on('--sonitex [PRESET]', 'The 12-bit sampler colour chain on the voice bus') { |v| options[:sonitex] = v || true }
-    o.on('--sonitex-instances N', Integer, 'Run it 1 to 3 times: one is a colour, three are a sound') { |v| options[:sonitex_instances] = v }
-    o.on('--drum-tape LEVEL', %w[light medium heavy], 'Analogue tape saturation on the drum bus') { |v| options[:drum_tape] = v }
-    o.on('--vcs [AMOUNT]', Float, 'The summing colour, 0 to 1, on each bus and the master') { |v| options[:vcs] = v || true }
-    o.on('--key-lock NOTE', "Bring every progression to rest on NOTE (e.g. Bb), keeping its chord qualities") { |v| options[:key_lock] = v }
-    o.on('--improvise', 'Add a lead and a bass worked out from the chords (curated sections)') { options[:improvise] = true }
-    o.on('--takes N', Integer, 'With --showcase: render each section N times from different seeds and keep the one the critic scores nearest the target') { |v| options[:takes] = v.clamp(1, 9) }
-    o.on('--transpose N', Integer, 'Move every note N semitones before synthesis; tempo and echo timing stay') { |v| options[:transpose] = v }
-    o.on('--octaves N', Integer, 'Sugar for --transpose 12*N') { |v| options[:transpose] = 12 * v }
-    o.on('--transpose-wrap', 'Fold any note still above 14 kHz down by octaves') { options[:wrap] = true }
-    o.on('--kick-db N', Float, 'Kick level in dB (default from the data)') { |v| (options[:mix] ||= {})['kick'] = v }
-    o.on('--snare-db N', Float, 'Snare and clap level in dB') { |v| (options[:mix] ||= {}).merge!('snare' => v, 'clap' => v) }
-    o.on('--hat-db N', Float, 'Hat level in dB') { |v| (options[:mix] ||= {})['hat'] = v }
-    o.on('--chords-db N', Float, 'Chord and arp level in dB when drums play') { |v| (options[:mix] ||= {})['chords'] = v }
-    o.on('--drum-balance DB', Float, 'Reference-derived dB shift to all drum roles, bounded to +/-2 dB') { |v| options[:drum_balance] = v.clamp(-2.0, 2.0) }
-    o.on('--chord-balance DB', Float, 'Reference-derived dB shift to chords, bounded to +/-2 dB') { |v| options[:chord_balance] = v.clamp(-2.0, 2.0) }
-    o.on('--pool POOL', %w[essential all], 'With --play: essential progressions (default) or all') { |v| options[:pool] = v }
-    o.on('--quick', 'Render the first progression as a smoke test') { options[:quick] = true }
+    o.on("--video PATH", "Write the matching MP4 visualizer at PATH") { |v| options[:video] = v }
+    o.on("--no-video", "Render only the WAV; do not encode an MP4") { options[:video] = false }
+    o.on("--video-preset NAME", "Postpro video preset (default dilla_heavy)") { |v| options[:video_preset] = v }
+    o.on("--effect-rig NAME", "Apply a named bus-effects rig from data/dilla.json") { |v| options[:effect_rig] = v }
+    o.on("--live", "Loop the showcase through the system audio player") { options[:live] = true }
+    o.on("--render", "Write one random take to a new file under the renders folder instead of playing live") { options[:render] = true }
+    o.on("--map", "Print the table of contents of this file: every module and class with its line number") { options[:map] = true }
+    o.on("--list", "List progressions, drum patterns, groove profiles, voicings and harmonic languages") { options[:list] = true }
+    o.on("--voicing STYLE", Chords::STYLES, "Lay every chord out as #{Chords::STYLES.join(', ')} (default: voice-led)") { |v| Chords.use(v) }
+    o.on("--progression N", Integer, "Progression index (see --list)") { |v| options[:prog] = v }
+    o.on("--random", "Random progression and drum pattern (the default groove profile)") { options[:random] = true }
+    o.on("--drums NAME", "Drum pattern name, or rotate to change the pattern every phrase") { |v| options[:drums] = v }
+    o.on("--kit NAME", "The drum kit (see kits in dilla.json)") { |v| options[:kit] = v }
+    o.on("--profile NAME", "Groove profile name") { |v| options[:profile] = v }
+    o.on("--groove N", Float, "pd_amount, 0 to 1.5: how far the profile pulls from the grid") { |v| options[:groove] = v }
+    o.on("--bpm N", Float, "Tempo (default 88)") { |v| options[:bpm] = v }
+    o.on("--beats N", Float, "Beats per chord (default 8, two bars)") { |v| options[:beats] = v }
+    o.on("--gate N", Float, "Note gate as a share of its step, 0.05 to 1.5") { |v| options[:gate] = v.clamp(0.05, 1.5) }
+    o.on("--seed N", Integer, "Seed: the same seed plays the same render") { |v| options[:seed] = v }
+    o.on("--out PATH", "Output WAV path") { |v| options[:out] = v }
+    o.on("--replace", "Explicitly replace an existing WAV or MIDI take") { options[:replace] = true }
+    o.on("--midi PATH", "Also write a Standard MIDI File") { |v| options[:midi] = v }
+    o.on("--no-voice-search", "Voice each chord by nearest tones only, without the octave search") { options[:plain] = true }
+    o.on("--arp [PATTERN]", "Play each chord one note at a time: up, down, updown, converge, spiral, pendulum, flow and more; --arp list names them") { |v| options[:arp] = v || true }
+    o.on("--strum [MS]", Float, "Stagger the notes of each chord, lowest first, by MS milliseconds (default from the data)") { |v| options[:strum] = v || true }
+    o.on("--pad", "A soft sustained pad under the arpeggio") { options[:pad] = true }
+    o.on("--echo [HEADS]", "Tape space echo; heads such as 1 or 1,2 or 1,2,3") { |v| options[:echo] = v || true }
+    o.on("--echo-mix N", Float, "Echo volume against the dry sound") { |v| options[:echo_mix] = v }
+    o.on("--echo-feedback N", Float, "Echo intensity, 0 to 0.9: how much of each repeat comes round again") { |v| options[:echo_feedback] = v }
+    o.on("--echo-time MS", Float, "Echo base delay in milliseconds (default a dotted eighth)") { |v| options[:echo_time] = v }
+    o.on("--play", "--endless", "Never stop: stream pass after pass into the player, each beginning under the last beat of the one before") { options[:play] = true }
+    o.on("--player CMD", "The player: for live it is given the wav path (default afplay, else ffplay); for --play it reads raw 16-bit mono PCM on stdin (default ffplay, else sox play)") { |v| options[:player] = v }
+    o.on("--decks N", Integer, "With --play: 2 decks cross over eight to sixteen bars (the default), 1 plays pass after pass under a one-beat crossfade") { |v| options[:decks] = v.clamp(1, 2) }
+    o.on("--moves N", Float, "With --play: live moves a minute on average, 0 for none (default 3 with two decks)") { |v| options[:moves] = v }
+    o.on("--passes N", Integer, "With --play, stop after N progressions") { |v| options[:passes] = v }
+    o.on("--voice NAME", "The voice that plays the notes (see data/dilla.json): pure_tone, sine, moog_*, rhodes_*, dfam") { |v| options[:voice] = v }
+    o.on("--repeat [STYLE]", "--comp [STYLE]", "Strike the whole chord again on the steps of a style instead of arpeggiating") { |v| options[:repeat] = v || true }
+    o.on("--patch-per-chord", "In pad mode, give every chord its own patch, drawn from the one bag of all patches") { options[:patch_per_chord] = true }
+    o.on("--mode MODE", "arp, repeat, pad or organ: force how the chords are played") { |v| options[:mode] = v }
+    o.on("--key NAME", "With --mode organ: the tonic, such as D or Bb (else drawn from the seed)") { |v| options[:key] = v }
+    o.on("--scale NAME", "With --mode organ: harmonic_minor, natural_minor, major or dorian (else drawn from the seed)") { |v| options[:scale] = v }
+    o.on("--bars N", Integer, "With --mode organ: bars of improvisation, one chord a bar (default from the data)") { |v| options[:bars] = v }
+    o.on("--arp-rate N", "Sixteenths per arp note: 2 eighth, 3 dotted eighth, 4 quarter, 6, 8; 3T for triplets") { |v| options[:arp_rate] = v }
+    o.on("--arp-style NAME", "A row of arp.styles in data/dilla.json") { |v| options[:arp_style] = v }
+    o.on("--lufs N", Float, "Integrated loudness the master brings the sound to (default -14)") { |v| options[:lufs] = v.clamp(-40.0, -3.0) }
+    o.on("--no-master", "Leave out the mixing and mastering chain: no EQ, multiband, glue, loudness or true-peak limiter") { options[:master] = false }
+    o.on("--bits N", Integer, "Bit depth of a written wav, 16 (dithered) or 24") { |v| options[:bits] = v == 24 ? 24 : 16 }
+    o.on("--mono", "One channel, with no panning, no ping-pong echo and no stereo imager (the default is stereo)") { options[:mono] = true }
+    o.on("--tape N", Integer, "Tape machines in series as the last stage, 0 to 8; 0 leaves the sound untouched (default from the data)") { |v| options[:tape] = v.clamp(0, 8) }
+    o.on("--tape-drive X", Float, "How hard the first tape machine is driven, 0.1 to 4; later machines step up from it") { |v| options[:tape_drive] = v.clamp(0.1, 4.0) }
+    o.on("--sonitex [PRESET]", "The 12-bit sampler colour chain on the voice bus") { |v| options[:sonitex] = v || true }
+    o.on("--sonitex-instances N", Integer, "Run it 1 to 3 times: one is a colour, three are a sound") { |v| options[:sonitex_instances] = v }
+    o.on("--drum-tape LEVEL", %w[light medium heavy], "Analogue tape saturation on the drum bus") { |v| options[:drum_tape] = v }
+    o.on("--vcs [AMOUNT]", Float, "The summing colour, 0 to 1, on each bus and the master") { |v| options[:vcs] = v || true }
+    o.on("--key-lock NOTE", "Bring every progression to rest on NOTE (e.g. Bb), keeping its chord qualities") { |v| options[:key_lock] = v }
+    o.on("--improvise", "Add a lead and a bass worked out from the chords (curated sections)") { options[:improvise] = true }
+    o.on("--takes N", Integer, "With --showcase: render each section N times from different seeds and keep the one the critic scores nearest the target") { |v| options[:takes] = v.clamp(1, 9) }
+    o.on("--transpose N", Integer, "Move every note N semitones before synthesis; tempo and echo timing stay") { |v| options[:transpose] = v }
+    o.on("--octaves N", Integer, "Sugar for --transpose 12*N") { |v| options[:transpose] = 12 * v }
+    o.on("--transpose-wrap", "Fold any note still above 14 kHz down by octaves") { options[:wrap] = true }
+    o.on("--kick-db N", Float, "Kick level in dB (default from the data)") { |v| (options[:mix] ||= {})["kick"] = v }
+    o.on("--snare-db N", Float, "Snare and clap level in dB") { |v| (options[:mix] ||= {}).merge!("snare" => v, "clap" => v) }
+    o.on("--hat-db N", Float, "Hat level in dB") { |v| (options[:mix] ||= {})["hat"] = v }
+    o.on("--chords-db N", Float, "Chord and arp level in dB when drums play") { |v| (options[:mix] ||= {})["chords"] = v }
+    o.on("--drum-balance DB", Float, "Reference-derived dB shift to all drum roles, bounded to +/-2 dB") { |v| options[:drum_balance] = v.clamp(-2.0, 2.0) }
+    o.on("--chord-balance DB", Float, "Reference-derived dB shift to chords, bounded to +/-2 dB") { |v| options[:chord_balance] = v.clamp(-2.0, 2.0) }
+    o.on("--pool POOL", %w[essential all], "With --play: essential progressions (default) or all") { |v| options[:pool] = v }
+    o.on("--quick", "Render the first progression as a smoke test") { options[:quick] = true }
   end.parse!(argv)
   options[:live] = true if live_argument
 
@@ -8085,13 +8082,13 @@ def run(argv)
 
   return puts(Studio::SourceMap.render(__FILE__)) if options[:map]
 
-  unless options[:replace] || options[:play] || options[:live] || options[:list] || options[:arp] == 'list'
+  unless options[:replace] || options[:play] || options[:live] || options[:list] || options[:arp] == "list"
     outputs = []
     if options[:out]
       outputs << options[:out]
     elsif options[:quick]
-      outputs << 'out/quick.wav'
-    elsif options[:showcase] || (options[:prog].nil? && !options[:random] && !options[:quick] && options[:mode] != 'organ')
+      outputs << "out/quick.wav"
+    elsif options[:showcase] || (options[:prog].nil? && !options[:random] && !options[:quick] && options[:mode] != "organ")
       outputs << File.join(__dir__, "dilla.wav")
     end
     outputs << options[:midi] if options[:midi]
@@ -8100,9 +8097,9 @@ def run(argv)
     abort "studio0: refusing to overwrite existing take #{existing.inspect}; choose a new path or pass --replace" if existing
   end
 
-progressions = data.fetch('progressions')
+progressions = data.fetch("progressions")
 
-if options[:arp] == 'list'
+if options[:arp] == "list"
   puts "Arp patterns: #{data.dig('arp', 'patterns').join(', ')}"
   puts "Arp styles: #{data.dig('arp', 'styles').keys.join(', ')}"
   puts "Arp modifiers: #{(data.fetch('arp').keys & %w[euclidean probability note_repeat ratchet humanize grace]).join(', ')}"
@@ -8111,18 +8108,18 @@ elsif options[:play]
   elsif options[:live]
     play_showcase(data, options)
   elsif options[:list]
-    puts 'Progressions:'
+    puts "Progressions:"
     progressions.each_with_index do |chords, i|
-      puts format('%4d  %s%s', i, chords.join(' '), options[:key_lock] ? format('  [fit %.2f]', ModalFamily.fit(chords, options[:key_lock])) : '')
+      puts format("%4d  %s%s", i, chords.join(" "), options[:key_lock] ? format("  [fit %.2f]", ModalFamily.fit(chords, options[:key_lock])) : "")
     end
     puts
     puts "Drum patterns: #{data['drum_patterns'].keys.join(', ')}"
     puts "Groove profiles: #{data['groove_profiles'].keys.join(', ')}"
     puts "Voicings (--voicing): #{Chords::STYLES.join(', ')}"
     puts
-    puts 'Harmonic languages (a progression written from rules, in Bb):'
-    Languages.all.each { |language, chords| puts format('  %-24s %s', language, chords.join(' ')) }
-  elsif options[:showcase] || (options[:prog].nil? && !options[:random] && !options[:quick] && options[:mode] != 'organ')
+    puts "Harmonic languages (a progression written from rules, in Bb):"
+    Languages.all.each { |language, chords| puts format("  %-24s %s", language, chords.join(" ")) }
+  elsif options[:showcase] || (options[:prog].nil? && !options[:random] && !options[:quick] && options[:mode] != "organ")
     render_showcase(data, options)
   elsif options[:effect_rig]
     render_effect_rig_take(data, options)
@@ -8137,16 +8134,16 @@ def apply_effect_rig!(options, data)
   name = options[:effect_rig]
   return options unless name
 
-  rig = data.fetch('bus_effects').fetch(name) { abort "studio0: unknown effect rig #{name.inspect}" }
+  rig = data.fetch("bus_effects").fetch(name) { abort "studio0: unknown effect rig #{name.inspect}" }
   {
-    drum_sonitex: 'drum_sonitex',
-    drum_sonitex_instances: 'drum_sonitex_instances',
-    drum_tape: 'drum_tape',
-    drum_vcs: 'drum_vcs',
-    drum_dub_echo: 'drum_dub_echo',
-    drum_crystallizer: 'drum_crystallizer',
-    instrument_dub_echo: 'instrument_dub_echo',
-    instrument_crystallizer: 'instrument_crystallizer'
+    drum_sonitex: "drum_sonitex",
+    drum_sonitex_instances: "drum_sonitex_instances",
+    drum_tape: "drum_tape",
+    drum_vcs: "drum_vcs",
+    drum_dub_echo: "drum_dub_echo",
+    drum_crystallizer: "drum_crystallizer",
+    instrument_dub_echo: "instrument_dub_echo",
+    instrument_crystallizer: "instrument_crystallizer",
   }.each do |option, key|
     options[option] = rig.fetch(key) unless options.key?(option)
   end
@@ -8167,14 +8164,14 @@ def bare_run?(options) = (options.keys & CONTENT_FLAGS).empty?
 # repo, and never over an earlier take.
 def randomize_take!(data, options)
   seed = options[:seed] || Random.new_seed % 1_000_000
-  playlist = Playlist.new(data, Random.new(seed), pool: 'all')
-  profile = data.fetch('groove_profiles').keys.sort.sample(random: Random.new(seed))
+  playlist = Playlist.new(data, Random.new(seed), pool: "all")
+  profile = data.fetch("groove_profiles").keys.sort.sample(random: Random.new(seed))
   pick = playlist.draw(profile:, mode: nil)
   options.merge!(prog: pick[:prog], seed:, profile:, voice: pick[:voice], mode: pick[:mode], random: true,
                  kit: pick[:kit], chord_voices: pick[:voices])
-  options[:arp_style] = pick[:style] if pick[:mode] == 'arp'
-  options[:repeat] = pick[:style] if pick[:mode] == 'repeat'
-  options[:drums] = data.fetch('groove_profiles').fetch(profile)['drums'] || pick[:drums]
+  options[:arp_style] = pick[:style] if pick[:mode] == "arp"
+  options[:repeat] = pick[:style] if pick[:mode] == "repeat"
+  options[:drums] = data.fetch("groove_profiles").fetch(profile)["drums"] || pick[:drums]
   now = Time.now.utc
   options[:out] ||= File.join(Studio::OutputPaths.dilla_render_directory(at: now),
                               "dilla-#{now.strftime('%H%M%S')}-#{seed}.wav")
@@ -8195,7 +8192,7 @@ def apply_reference_mix_balance(levels, drum_balance: nil, chord_balance: nil)
   end
   unless chord_balance.nil?
     offset = Float(chord_balance).clamp(-2.0, 2.0)
-    adjusted['chords'] = adjusted.fetch('chords', 0.0).to_f + offset
+    adjusted["chords"] = adjusted.fetch("chords", 0.0).to_f + offset
   end
   adjusted
 end
@@ -8203,14 +8200,14 @@ end
 # How the chords are played: the flags, else what the profile carries, else a held pad.
 def play_mode(options, seq)
   return options[:mode] if options[:mode]
-  return 'repeat' if options[:repeat] || (!options[:arp] && seq.comp_settings(nil))
-  return 'arp' if options[:arp] || options[:arp_style] || seq.arp_settings(nil)
+  return "repeat" if options[:repeat] || (!options[:arp] && seq.comp_settings(nil))
+  return "arp" if options[:arp] || options[:arp_style] || seq.arp_settings(nil)
 
-  'pad'
+  "pad"
 end
 
 def parse_rate(text)
-  return nil unless text
+  return unless text
 
   text.to_s.match(/\A(\d+(?:\.\d+)?)(T?)\z/) or abort "Bad --arp-rate: #{text}"
   Regexp.last_match(2).empty? ? Regexp.last_match(1).to_f : Regexp.last_match(1).to_f * 2 / 3
@@ -8232,17 +8229,17 @@ def play_line(seq, buf, events, bpm, voice_name)
 end
 
 def plan_pass(data, options, capture: false)
-  progressions = data.fetch('progressions')
+  progressions = data.fetch("progressions")
   seed = options[:seed] || Random.new_seed % 1_000_000
   pick = Random.new(seed)
   index = options[:section_index] || (options[:quick] ? 0 : (options[:prog] || pick.rand(progressions.size)))
   names = options[:names] || progressions.fetch(index) { abort "No progression: #{index}" }
   names = KeyLock.lock(names, options[:key_lock]) if options[:key_lock]
-  profile = options[:profile] || data.fetch('default_profile')
-  profile_row = data['groove_profiles'].fetch(profile) { abort "No groove profile: #{profile}" }
-  drums = options[:drums] || profile_row['drums'] || (options[:random] ? data['drum_patterns'].keys.sample(random: pick) : nil)
+  profile = options[:profile] || data.fetch("default_profile")
+  profile_row = data["groove_profiles"].fetch(profile) { abort "No groove profile: #{profile}" }
+  drums = options[:drums] || profile_row["drums"] || (options[:random] ? data["drum_patterns"].keys.sample(random: pick) : nil)
 
-  seq = Sequencer.new(data, profile_name: profile, pd_amount: options[:groove], seed: seed,
+  seq = Sequencer.new(data, profile_name: profile, pd_amount: options[:groove], seed:,
                             transpose: options[:transpose] || 0, wrap: options[:wrap], kit: options[:kit])
   seq.capture = [] if capture
   bpm = options[:bpm] || seq.bpm
@@ -8256,18 +8253,18 @@ def plan_pass(data, options, capture: false)
   chord_voices = piece = nil
   buf =
     case mode
-    when 'arp'
+    when "arp"
       arp = seq.arp_settings(options[:arp] || true, style: options[:arp_style], rate: parse_rate(options[:arp_rate]))
-      arp['gate'] = options[:gate] if options[:gate]
+      arp["gate"] = options[:gate] if options[:gate]
       seq.render_arp(names, bpm, beats, arp, search:, pad: options[:pad], voice:)
-    when 'organ'
-      piece = Organ.compose(seed:, config: data.fetch('organ'), bars: options[:bars], key: options[:key], scale: options[:scale])
+    when "organ"
+      piece = Organ.compose(seed:, config: data.fetch("organ"), bars: options[:bars], key: options[:key], scale: options[:scale])
       names = piece.names
       beats = 4.0
-      seq.render_organ(piece, bpm, seq.voice_spec('organ'))
-    when 'repeat'
+      seq.render_organ(piece, bpm, seq.voice_spec("organ"))
+    when "repeat"
       comp = seq.comp_settings(options[:repeat] || true)
-      comp['gate'] = options[:gate] if options[:gate]
+      comp["gate"] = options[:gate] if options[:gate]
       seq.render_repeat(names, bpm, beats, comp, search:, voice:)
     else
       chord_voices = options[:chord_voices] || (options[:patch_per_chord] ? Playlist.new(data, Random.new(seed)).voices_for(names.size) : nil)
@@ -8275,8 +8272,8 @@ def plan_pass(data, options, capture: false)
                         voices: chord_voices && seq.voice_specs(chord_voices))
     end
 melody = options[:melody] || (options[:improvise] ? Lines.lead(names, beats:, seed:) : nil)
-play_line(seq, buf, melody, bpm, options[:melody_voice] || 'rhodes_mark1') if melody
-play_line(seq, buf, Lines.bass(names, beats:, seed:), bpm, 'moog_bass') if options[:improvise]
+play_line(seq, buf, melody, bpm, options[:melody_voice] || "rhodes_mark1") if melody
+play_line(seq, buf, Lines.bass(names, beats:, seed:), bpm, "moog_bass") if options[:improvise]
   render_layers(buf, seq, names, bpm, beats, options, search:)
   Plan.new(index:, names:, profile:, profile_row:, drums:, seq:, bpm:, beats:, voice:, mode:, search:, piece:, chord_voices:, seed:, buf:,
            parts: seq.capture, pick:)
@@ -8296,19 +8293,19 @@ def render_section(data, options, plan: nil)
   drum_sonitex = seq.sonitex_settings(options[:drum_sonitex], instances: options[:drum_sonitex_instances]) || sonitex
   buf = seq.colour(buf, sonitex, vcs)
   echo = seq.echo_settings(flag: options[:echo], mix: options[:echo_mix], feedback: options[:echo_feedback], time_ms: options[:echo_time])
-  echo['tail'] = options[:echo_tail] if echo && options[:echo_tail]
-  echo['reverb'] = options[:echo_reverb] unless !echo || options[:echo_reverb].nil?
+  echo["tail"] = options[:echo_tail] if echo && options[:echo_tail]
+  echo["reverb"] = options[:echo_reverb] unless !echo || options[:echo_reverb].nil?
   buf = seq.echo(buf, echo, bpm, resets: (1...names.size).map { |i| (i * beats * 60.0 / bpm * SAMPLE_RATE).round }) if echo
   buf = FX.dub_echo(buf, options[:instrument_dub_echo]) if options[:instrument_dub_echo]
   buf = FX.crystallizer(buf, options[:instrument_crystallizer]) if options[:instrument_crystallizer]
   drum_seconds = names.size * beats * 60.0 / bpm
-  rotation = drums == 'rotate' ? data.fetch('drum_patterns').keys : drums
+  rotation = drums == "rotate" ? data.fetch("drum_patterns").keys : drums
   hits = drums ? seq.drum_hits(rotation, bpm, drum_seconds) : []
   levels = seq.mix(options[:mix])
   levels = apply_reference_mix_balance(levels, drum_balance: options[:drum_balance], chord_balance: options[:chord_balance])
-  buf = seq.scale(buf, levels.fetch('chords')) unless hits.empty?
+  buf = seq.scale(buf, levels.fetch("chords")) unless hits.empty?
   buf = seq.duck(buf, hits)
-  buf = FX.apply(buf, data['groove_profiles'].fetch(profile))
+  buf = FX.apply(buf, data["groove_profiles"].fetch(profile))
   buf = seq.overlay_drums(
     buf, hits, levels, vcs,
     sonitex: drum_sonitex,
@@ -8337,15 +8334,15 @@ end
 # loudness, true-peak), the stereo imager and the dither. Returns the frame, the loudness report
 # (nil with --no-master) and the tape instance count.
 def master_frame(frame, data, options, seed:, bpm:, channels:)
-  tape = data.fetch('tape')
-  instances = options.fetch(:tape, tape.fetch('instances'))
-  args = { drive: options[:tape_drive] || tape.fetch('drive'), config: tape }
+  tape = data.fetch("tape")
+  instances = options.fetch(:tape, tape.fetch("instances"))
+  args = { drive: options[:tape_drive] || tape.fetch("drive"), config: tape }
   # the stack is level matched against the programme itself, which a whole render has to hand
   stack = instances.positive? ? ->(sample) { Tape::Stack.new(instances:, seed:, sample:, **args) } : nil
-  chain = options[:master] == false ? nil : Mastering::Chain.new(data.fetch('master'), channels:, bpm:, whole: true)
+  chain = options[:master] == false ? nil : Mastering::Chain.new(data.fetch("master"), channels:, bpm:, whole: true)
   chain&.target = options[:lufs] if options[:lufs]
-  master = Moves::Master.new(tape: stack, ceiling: tape.fetch('ceiling', 0.97), preset: nil, seed:, instances:, tape_args: args,
-                             imager: options[:mono] ? nil : data.dig('stereo', 'imager'), chain:)
+  master = Moves::Master.new(tape: stack, ceiling: tape.fetch("ceiling", 0.97), preset: nil, seed:, instances:, tape_args: args,
+                             imager: options[:mono] ? nil : data.dig("stereo", "imager"), chain:)
   frame = master.process(frame)
   if (tail = master.flush)
     frame = frame.each_with_index.map { |channel, c| channel.drop(chain.latency) + tail[c].first(chain.latency) } # the limiter's delay taken out
@@ -8361,7 +8358,7 @@ def render_stream(data, options)
   plan = streamer.plan
   frame, report, instances = master_frame(frame, data, options, seed: plan.seed, bpm: plan.bpm, channels: streamer.channels)
   bits = options.fetch(:bits, 16)
-  out = options[:out] || (options[:quick] ? 'out/quick.wav' : "out/progression_#{plan.index}#{plan.drums ? "_#{Array(plan.drums).join('+')}" : ''}.wav")
+  out = options[:out] || (options[:quick] ? "out/quick.wav" : "out/progression_#{plan.index}#{plan.drums ? "_#{Array(plan.drums).join('+')}" : ''}.wav")
   FileUtils.mkdir_p(File.dirname(out))
   WAV.write_stream(out, frames: frame.first.size, channels: streamer.channels, bits:, replace: options[:replace]) do |offset, count|
     frame.map { |channel| channel.slice(offset, count) }
@@ -8400,7 +8397,7 @@ def render_effect_rig_take(data, options)
   WAV.write(out, buf, bits: options[:bits] || 16, replace: options[:replace])
   if options[:midi]
     drum_seconds = plan.names.size * plan.beats * 60.0 / plan.bpm
-    rotation = plan.drums == 'rotate' ? data.fetch('drum_patterns').keys : plan.drums
+    rotation = plan.drums == "rotate" ? data.fetch("drum_patterns").keys : plan.drums
     hits = plan.drums ? plan.seq.drum_hits(rotation, plan.bpm, drum_seconds) : []
     MIDI.write(options[:midi], plan.names, plan.bpm, plan.beats, hits, search: plan.search, replace: options[:replace])
   end
@@ -8411,8 +8408,8 @@ end
 
 # The last colour before the file: the tape stack, and the ceiling that follows it.
 def tape_stage(buf, data, options, seed)
-  config = data.fetch('tape')
-  Tape.apply(buf, instances: options.fetch(:tape, config.fetch('instances')), drive: options[:tape_drive] || config.fetch('drive'), seed:, config:)
+  config = data.fetch("tape")
+  Tape.apply(buf, instances: options.fetch(:tape, config.fetch("instances")), drive: options[:tape_drive] || config.fetch("drive"), seed:, config:)
 end
 
 # Reject a line whose notes drift out of the arrangement's named scale.
@@ -8445,43 +8442,43 @@ end
 # Held layers use the very same chord voicings; patterned layers share the same tempo and groove.
 def render_layers(buf, seq, names, bpm, beats, options, search:)
   # An explicit organ mode is a composed solo unless the caller names layers itself.
-  return buf if options[:mode] == 'organ' && !options.key?(:layers)
+  return buf if options[:mode] == "organ" && !options.key?(:layers)
 
   Array(options.fetch(:layers) { seq.profile_layers }).each do |layer|
-    voice = seq.voice_spec(layer.fetch('voice'))
-    gate = layer.fetch('gate', 0.9).to_f.clamp(0.05, 1.5)
-    mode = layer.fetch('mode', 'held')
+    voice = seq.voice_spec(layer.fetch("voice"))
+    gate = layer.fetch("gate", 0.9).to_f.clamp(0.05, 1.5)
+    mode = layer.fetch("mode", "held")
     layer_buf = nil
-    seq.with_part(gain: 10.0**(layer.fetch('gain_db', -12.0).to_f / 20.0)) do
+    seq.with_part(gain: 10.0**(layer.fetch("gain_db", -12.0).to_f / 20.0)) do
     layer_buf =
       case mode
-      when 'held'
+      when "held"
         layer_buffer = Array.new(buf.size, 0.0)
         beat_seconds = 60.0 / bpm
-        chords = Chords.midi_notes(names, search:, transpose: (options[:transpose] || 0) + layer.fetch('transpose', 0).to_i, wrap: options[:wrap])
-        chords = chords.map { |notes| notes.first(1) } if layer['notes'] == 'bass'
-        chords = chords.map { |notes| spread(notes, layer['count']) } if layer['count']
+        chords = Chords.midi_notes(names, search:, transpose: (options[:transpose] || 0) + layer.fetch("transpose", 0).to_i, wrap: options[:wrap])
+        chords = chords.map { |notes| notes.first(1) } if layer["notes"] == "bass"
+        chords = chords.map { |notes| spread(notes, layer["count"]) } if layer["count"]
         plucks = chords.each_with_index.map do |notes, index|
           Pluck.new(index * beats * beat_seconds, 0.0, notes, beats * beat_seconds * gate,
-                    layer.fetch('velocity', 0.55).to_f.clamp(0.0, 1.0))
+                    layer.fetch("velocity", 0.55).to_f.clamp(0.0, 1.0))
         end
         seq.sound(layer_buffer, plucks, voice)
         layer_buffer
-      when 'repeat'
-        style = layer.fetch('pattern', 'half_note_pulse')
-        comp = seq.comp_settings(style).merge('gate' => gate, 'modifiers' => [])
+      when "repeat"
+        style = layer.fetch("pattern", "half_note_pulse")
+        comp = seq.comp_settings(style).merge("gate" => gate, "modifiers" => [])
         seq.render_repeat(names, bpm, beats, comp, search:, voice:)
-      when 'arp'
-        pattern = layer.fetch('pattern', 'updown')
-        arp = seq.arp_settings(pattern, rate: layer.fetch('rate', 4).to_f)
-        arp['gate'] = gate
-        arp['octaves'] = layer.fetch('octaves', 1).to_i.clamp(1, 2)
-        arp['modifiers'] = []
-        shift = layer.fetch('transpose', 0).to_i
+      when "arp"
+        pattern = layer.fetch("pattern", "updown")
+        arp = seq.arp_settings(pattern, rate: layer.fetch("rate", 4).to_f)
+        arp["gate"] = gate
+        arp["octaves"] = layer.fetch("octaves", 1).to_i.clamp(1, 2)
+        arp["modifiers"] = []
+        shift = layer.fetch("transpose", 0).to_i
         if shift.zero?
           seq.render_arp(names, bpm, beats, arp, search:, voice:)
         else
-          chord_events = seq.note_events(names, bpm, beats, arp, 'arp', search:)
+          chord_events = seq.note_events(names, bpm, beats, arp, "arp", search:)
           chord_events.each do |plucks|
             plucks.each do |pluck|
               pluck.midi = Array(pluck.midi).map { |midi| midi + shift }.then { |notes| pluck.midi.is_a?(Array) ? notes : notes.first }
@@ -8498,7 +8495,7 @@ def render_layers(buf, seq, names, bpm, beats, options, search:)
 
     next if seq.capture
 
-    gain = 10.0**(layer.fetch('gain_db', -12.0).to_f / 20.0)
+    gain = 10.0**(layer.fetch("gain_db", -12.0).to_f / 20.0)
     layer_buf.each_with_index do |sample, index|
       buf[index] += sample * gain if index < buf.size
     end
@@ -8520,76 +8517,76 @@ end
 # the streamer, so its profile's own voices, stages, noise, drums and echo all play; any other
 # section is the curated mono pass rendered whole by render_section, as it always was.
 def showcase_section(data, options, section, index:, seed:, bpm:)
-  stream = section['engine'] == 'stream'
-  mode = options[:mode] || ((options[:arp] || options[:arp_style] || options[:arp_rate]) ? 'arp' : (options[:repeat] ? 'repeat' : section['mode']))
-  mode ||= 'repeat' unless stream
+  stream = section["engine"] == "stream"
+  mode = options[:mode] || ((options[:arp] || options[:arp_style] || options[:arp_rate]) ? "arp" : (options[:repeat] ? "repeat" : section["mode"]))
+  mode ||= "repeat" unless stream
   section_options = {
-    names: section.fetch('progression'),
+    names: section.fetch("progression"),
     section_index: index,
     bpm:,
-    beats: options[:beats] || section.fetch('beats_per_chord', 2.0),
-    gate: options[:gate] || section['gate'],
-    voice: options[:voice] || section['voice'],
+    beats: options[:beats] || section.fetch("beats_per_chord", 2.0),
+    gate: options[:gate] || section["gate"],
+    voice: options[:voice] || section["voice"],
     mode:,
-    repeat: options[:repeat].is_a?(String) ? options[:repeat] : section['repeat'],
-    arp: options[:arp] || (mode == 'arp' ? true : nil),
-    arp_style: options[:arp_style] || section['arp_style'],
-    arp_rate: options[:arp_rate] || section['arp_rate'],
-    pad: options[:pad] || section['pad'],
-    strum: options[:strum] || section['strum'],
-    profile: options[:profile] || section['profile'],
-    drums: options[:drums] || section['drums'],
-    kit: options[:kit] || section['kit'],
-    key: section['organ_key'],
-    scale: section['scale'],
-    bars: section['bars'],
-    chord_voices: section['chord_voices'],
-    patch_per_chord: section['patch_per_chord'],
-    echo: options[:echo] || section['echo'],
-    echo_mix: options[:echo_mix] || section['echo_mix'],
-    echo_feedback: options[:echo_feedback] || section['echo_feedback'],
-    echo_time: options[:echo_time] || section['echo_time_ms'],
-    echo_tail: section['echo_tail_seconds'],
-    echo_reverb: section['echo_reverb'],
-    mix: section.fetch('mix', {}).merge(options[:mix] || {}),
-    scale_pcs: section['scale_pcs'],
-    melody: section['melody'],
-    melody_voice: section['melody_voice'],
-    improvise: options[:improvise] || section['improvise'],
-    layers: section['layers'],
+    repeat: options[:repeat].is_a?(String) ? options[:repeat] : section["repeat"],
+    arp: options[:arp] || (mode == "arp" ? true : nil),
+    arp_style: options[:arp_style] || section["arp_style"],
+    arp_rate: options[:arp_rate] || section["arp_rate"],
+    pad: options[:pad] || section["pad"],
+    strum: options[:strum] || section["strum"],
+    profile: options[:profile] || section["profile"],
+    drums: options[:drums] || section["drums"],
+    kit: options[:kit] || section["kit"],
+    key: section["organ_key"],
+    scale: section["scale"],
+    bars: section["bars"],
+    chord_voices: section["chord_voices"],
+    patch_per_chord: section["patch_per_chord"],
+    echo: options[:echo] || section["echo"],
+    echo_mix: options[:echo_mix] || section["echo_mix"],
+    echo_feedback: options[:echo_feedback] || section["echo_feedback"],
+    echo_time: options[:echo_time] || section["echo_time_ms"],
+    echo_tail: section["echo_tail_seconds"],
+    echo_reverb: section["echo_reverb"],
+    mix: section.fetch("mix", {}).merge(options[:mix] || {}),
+    scale_pcs: section["scale_pcs"],
+    melody: section["melody"],
+    melody_voice: section["melody_voice"],
+    improvise: options[:improvise] || section["improvise"],
+    layers: section["layers"],
     seed: seed + (index * 97),
-    groove: options[:groove] || section['groove'],
-    transpose: options[:transpose] || section['transpose'],
+    groove: options[:groove] || section["groove"],
+    transpose: options[:transpose] || section["transpose"],
     wrap: options[:wrap],
     plain: options[:plain],
-    sonitex: options[:sonitex] || section['sonitex'],
-    sonitex_instances: options[:sonitex_instances] || section['sonitex_instances'],
-    vcs: options[:vcs].nil? ? section['vcs'] : options[:vcs]
+    sonitex: options[:sonitex] || section["sonitex"],
+    sonitex_instances: options[:sonitex_instances] || section["sonitex_instances"],
+    vcs: options[:vcs].nil? ? section["vcs"] : options[:vcs],
   }
   if stream
     frame, = stream_frame(data, section_options.reject { |_key, value| value.nil? })
     return frame
   end
 
-  effect_rig = data.fetch('bus_effects').fetch(options[:effect_rig] || section.fetch('effect_rig'))
+  effect_rig = data.fetch("bus_effects").fetch(options[:effect_rig] || section.fetch("effect_rig"))
   section_options = {
     **section_options,
     gate: section_options[:gate] || 0.88,
-    voice: section_options[:voice] || section.fetch('voice'),
-    repeat: section_options[:repeat] || 'half_note_pulse',
-    profile: section_options[:profile] || 'soft_swing',
-    drums: section_options[:drums] || section.fetch('drums'),
-    kit: section_options[:kit] || 'kit_dust',
+    voice: section_options[:voice] || section.fetch("voice"),
+    repeat: section_options[:repeat] || "half_note_pulse",
+    profile: section_options[:profile] || "soft_swing",
+    drums: section_options[:drums] || section.fetch("drums"),
+    kit: section_options[:kit] || "kit_dust",
     echo: section_options[:echo] || false,
-    drum_sonitex: options[:drum_sonitex] || effect_rig.fetch('drum_sonitex'),
-    drum_sonitex_instances: options[:drum_sonitex_instances] || effect_rig.fetch('drum_sonitex_instances'),
-    drum_tape: options[:drum_tape] || effect_rig.fetch('drum_tape'),
-    drum_vcs: effect_rig.fetch('drum_vcs'),
-    drum_dub_echo: effect_rig.fetch('drum_dub_echo'),
-    drum_crystallizer: effect_rig.fetch('drum_crystallizer'),
-    instrument_dub_echo: effect_rig.fetch('instrument_dub_echo'),
-    instrument_crystallizer: effect_rig.fetch('instrument_crystallizer'),
-    buffer_only: true
+    drum_sonitex: options[:drum_sonitex] || effect_rig.fetch("drum_sonitex"),
+    drum_sonitex_instances: options[:drum_sonitex_instances] || effect_rig.fetch("drum_sonitex_instances"),
+    drum_tape: options[:drum_tape] || effect_rig.fetch("drum_tape"),
+    drum_vcs: effect_rig.fetch("drum_vcs"),
+    drum_dub_echo: effect_rig.fetch("drum_dub_echo"),
+    drum_crystallizer: effect_rig.fetch("drum_crystallizer"),
+    instrument_dub_echo: effect_rig.fetch("instrument_dub_echo"),
+    instrument_crystallizer: effect_rig.fetch("instrument_crystallizer"),
+    buffer_only: true,
   }.reject { |_key, value| value.nil? }
   buffer = render(data, section_options)
   [buffer, buffer.dup]
@@ -8611,23 +8608,23 @@ end
 def render_showcase(data, options)
   arrangement_path = options.fetch(:arrangement) { File.join(__dir__, "data", "showcase.json") }
   arrangement = JSON.parse(File.read(arrangement_path))
-  sections = arrangement.fetch('sections')
+  sections = arrangement.fetch("sections")
   seed = options[:seed] || 261_013
   tempos = showcase_tempos(seed:, count: sections.size)
-  default_crossfade = arrangement.fetch('crossfade_seconds', 0.18)
+  default_crossfade = arrangement.fetch("crossfade_seconds", 0.18)
   combined = nil
   bpms = []
 
   sections.each_with_index do |section, index|
-    section_bpm = options[:bpm] || section['bpm'] || tempos.fetch(index)
+    section_bpm = options[:bpm] || section["bpm"] || tempos.fetch(index)
     bpms << section_bpm
 frame = best_take(options[:takes] || 1, seed:) do |take_seed|
-  Chords.styled(options[:voicing] || section['voicing']) { showcase_section(data, options, section, index:, seed: take_seed, bpm: section_bpm) }
+  Chords.styled(options[:voicing] || section["voicing"]) { showcase_section(data, options, section, index:, seed: take_seed, bpm: section_bpm) }
 end
     if combined.nil?
       combined = frame
     else
-      overlap = [((section['crossfade_seconds'] || default_crossfade) * SAMPLE_RATE).round, combined.first.size, frame.first.size].min
+      overlap = [((section["crossfade_seconds"] || default_crossfade) * SAMPLE_RATE).round, combined.first.size, frame.first.size].min
       combined.each_index do |c|
         left = combined[c].pop(overlap)
         overlap.times do |i|
@@ -8637,8 +8634,8 @@ end
         combined[c].concat(frame[c].drop(overlap))
       end
     end
-    puts format('section %d/%d: %s — %d BPM, %s', index + 1, sections.size,
-                section.fetch('name'), section_bpm, section['voice'] || section['profile'])
+    puts format("section %d/%d: %s — %d BPM, %s", index + 1, sections.size,
+                section.fetch("name"), section_bpm, section["voice"] || section["profile"])
   end
 
   fade = [SAMPLE_RATE / 25, combined.first.size / 2].min
@@ -8653,8 +8650,8 @@ end
   out = options[:out] || Dilla::Video.default_paths(root: __dir__).fetch(:audio)
   FileUtils.mkdir_p(File.dirname(out))
   WAV.write(out, combined, bits: options.fetch(:bits, 16), replace: options[:replace])
-  puts format('Wrote %s (%.2fs, 44.1 kHz stereo) — %s', out, combined.first.size / SAMPLE_RATE.to_f,
-              arrangement.fetch('title'))
+  puts format("Wrote %s (%.2fs, 44.1 kHz stereo) — %s", out, combined.first.size / SAMPLE_RATE.to_f,
+              arrangement.fetch("title"))
   puts "  seed=#{seed}; sections=#{sections.size}; tempos=#{bpms.join(',')}"
   puts Mastering.report_line(report) if report
   puts Critic.line(Critic.measure(combined))
@@ -8701,7 +8698,7 @@ def warn_past_nyquist(names, search, options)
   over = notes.count { |n| !Voices.audible?(Chords.hz(n)) }
   return if over.zero?
 
-  warn format('warning: %<over>d of %<all>d notes are above %<limit>d Hz and are dropped (silence); --transpose-wrap folds them down',
+  warn format("warning: %<over>d of %<all>d notes are above %<limit>d Hz and are dropped (silence); --transpose-wrap folds them down",
               over:, all: notes.size, limit: SAMPLE_RATE * NYQUIST_SHARE)
 end
 
@@ -8709,7 +8706,7 @@ end
 def player_command(options)
   return Shellwords.split(options[:player]) if options[:player]
 
-  RUBY_PLATFORM.include?('darwin') ? ['afplay'] : %w[ffplay -nodisp -autoexit -loglevel quiet]
+  RUBY_PLATFORM.include?("darwin") ? ["afplay"] : %w[ffplay -nodisp -autoexit -loglevel quiet]
 end
 
 # Never stops: each pass is drawn from the bags and streamed into the player, one beginning under
@@ -8721,7 +8718,7 @@ def play_forever(data, options)
   %w[INT TERM].each { |signal| trap(signal) { show.stop! } }
   show.run
   stats = show.stats
-  puts format('played %<audio>.1fs of audio, rendered in %<render>.1fs (%<ratio>.2fx real time), %<under>d late blocks',
+  puts format("played %<audio>.1fs of audio, rendered in %<render>.1fs (%<ratio>.2fx real time), %<under>d late blocks",
               audio: stats[:audio], render: stats[:render], ratio: stats[:render] / [stats[:audio], 1e-9].max, under: stats[:underruns])
 end
 

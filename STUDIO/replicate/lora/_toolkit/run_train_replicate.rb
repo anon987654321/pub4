@@ -173,7 +173,7 @@ def finish_training(client, training, context)
     base_model: "black-forest-labs/FLUX.1-dev",
     trainer: Studio::ReplicateClient::LORA_TRAINER,
     training_id: training["id"],
-    version: version,
+    version:,
     billed_seconds: seconds,
   )
   File.write(WEIGHTS_DIR.join("replicate_training.json"), JSON.pretty_generate(sidecar))
@@ -310,7 +310,7 @@ training = client.train_lora(
   wait: !options[:async],
   timeout: options[:timeout],
   extra_input: trainer_input,
-  version: trainer_version
+  version: trainer_version,
 )
 
 training_id = training["id"]

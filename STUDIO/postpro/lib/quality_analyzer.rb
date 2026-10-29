@@ -16,7 +16,7 @@ module Postpro
       {
         sample_count: values.length,
         exposure: {
-          mean_luminance: mean, p01: p01, p99: p99,
+          mean_luminance: mean, p01:, p99:,
           clipped_highlights_pct: percentage(values.count { |v| v >= 0.99 }, values.length),
           clipped_shadows_pct: percentage(values.count { |v| v <= 0.01 }, values.length),
           exposure_bias_stops: exposure_bias(mean)
@@ -30,7 +30,7 @@ module Postpro
         },
         contrast: { rms_contrast: Math.sqrt(variance(values)) },
         colour: colour_report(rgb_samples),
-        not_assessed: %i[composition focus_quality subject_expression simplicity]
+        not_assessed: %i[composition focus_quality subject_expression simplicity],
       }
     end
 
@@ -59,10 +59,10 @@ module Postpro
 
       rgb = bytes.each_slice(3).map { |r, g, b| [r / 255.0, g / 255.0, b / 255.0] }
       luminance = rgb.map { |r, g, b| 0.2126 * r + 0.7152 * g + 0.0722 * b }
-      report(luminance: luminance, rgb_samples: rgb).merge(
+      report(luminance:, rgb_samples: rgb).merge(
         dimensions: [image.width, image.height],
         sample_dimensions: [sample.width, sample.height],
-        sampling: "uniform thumbnail; encoded-sRGB luminance approximation"
+        sampling: "uniform thumbnail; encoded-sRGB luminance approximation",
       )
     end
 
@@ -85,7 +85,7 @@ module Postpro
     DETAIL_MAX_VARIANCE = (0.25**2) / 4.0
 
     def self.detail_ratio(values)
-      return nil if values.empty?
+      return if values.empty?
 
       (variance(values) / DETAIL_MAX_VARIANCE).clamp(0.0, 1.0)
     end

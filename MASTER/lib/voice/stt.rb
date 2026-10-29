@@ -39,7 +39,7 @@ module Master
       def self.build(config: {})
         cfg = DEFAULTS.merge(config.transform_keys(&:to_sym))
         backend = resolve_backend(cfg)
-        new(backend: backend, config: cfg)
+        new(backend:, config: cfg)
       end
 
       def self.resolve_backend(cfg)
@@ -95,12 +95,12 @@ module Master
       # Returns a partial Result when the backend streams; otherwise nil.
       def feed(samples)
         @lock.synchronize do
-          return nil unless @open
+          return unless @open
 
           floats = normalize(samples)
           @buffer.concat(floats)
           partial = @backend.feed(floats)
-          return nil if partial.nil? || partial.to_s.strip.empty?
+          return if partial.nil? || partial.to_s.strip.empty?
 
           @last_partial = partial.to_s.strip
           Result.new(
@@ -127,10 +127,10 @@ module Master
           Result.new(
             text: text.to_s.strip,
             partial?: false,
-            confidence: confidence,
+            confidence:,
             backend: @backend_name,
-            ms: ms,
-            raw: raw,
+            ms:,
+            raw:,
           )
         end
       end

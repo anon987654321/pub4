@@ -13,7 +13,7 @@ module Studio
       lineage = value(style, :lineage) || (style && {
         origin_class: origin,
         reference_hashes: value(style, :reference_hashes) || [],
-        registry_entry: value(style, :style_id)
+        registry_entry: value(style, :style_id),
       })
       influence = value(style, :influence) || (style && {
         metric: nil, value: nil,
@@ -34,21 +34,21 @@ module Studio
         adapter_id: value(adapter, :id),
         adapter_hash: value(adapter, :hash),
         parameters: params,
-        postpro_chain: postpro_chain,
-        lineage: lineage,
-        influence: influence
+        postpro_chain:,
+        lineage:,
+        influence:,
       }
     end
 
     def value(hash, key)
-      return nil unless hash.is_a?(Hash)
+      return unless hash.is_a?(Hash)
       hash.key?(key) ? hash[key] : hash[key.to_s]
     end
     private_class_method :value
 
     def temporal_schedule_hash(style)
       variation = value(style, :temporal_variation)
-      return nil unless variation.is_a?(Hash)
+      return unless variation.is_a?(Hash)
 
       value(variation, :schedule_hash)
     end

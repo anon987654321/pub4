@@ -49,11 +49,11 @@ def camera_corrected(image, file)
       after = Postpro::QualityAnalyzer.report_image(stabilized)
       $postpro_stabilization_report = {
         method: "balance_source",
-        before: before,
-        after: after,
-        proposals: proposals,
+        before:,
+        after:,
+        proposals:,
         proposals_applied_verbatim: false,
-        note: "bounded source balancing ran before styling; proposal values are advisory"
+        note: "bounded source balancing ran before styling; proposal values are advisory",
       }
       PostproBootstrap.dmesg format(
         "stabilize mean_luma=%.3f->%.3f clipped_high=%.2f%%->%.2f%%",

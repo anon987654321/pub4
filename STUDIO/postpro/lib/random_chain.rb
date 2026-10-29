@@ -41,14 +41,14 @@ RANDOM_LANES = {
       film_base_density orange_mask print_film shadow_lift highlight_roll micro_contrast
       warmth
     ].freeze,
-    strength: (0.16..0.42)
+    strength: (0.16..0.42),
   },
   cinematic_color: {
     effects: %w[
       spectral_temp color_temp film_curve stock_matrix halation orange_mask print_film
       tonemap split_toning teal_orange warmth shadow_lift highlight_roll micro_contrast
     ].freeze,
-    strength: (0.24..0.58)
+    strength: (0.24..0.58),
   },
   artistic_analog: {
     effects: %w[
@@ -57,7 +57,7 @@ RANDOM_LANES = {
       soft_focus golden_hour_glow cross_process lens_flare film_scratches
       dilla_head_bump dilla_tape_saturation dilla_vinyl_bandlimit dilla_phasy
     ].freeze,
-    strength: (0.34..0.72)
+    strength: (0.34..0.72),
   },
   bleeding_edge_analog: {
     effects: %w[
@@ -67,8 +67,8 @@ RANDOM_LANES = {
       crt_phosphor_bloom crt_scanlines minidv_block_dropout hi8_chroma_noise
       scan_noise newton_rings reticulation gate_weave lens_ghosting anamorphic_flare
     ].freeze,
-    strength: (0.48..0.88)
-  }
+    strength: (0.48..0.88),
+  },
 }.freeze
 
 RANDOM_LANE_NAMES = RANDOM_LANES.keys.freeze

@@ -49,7 +49,7 @@ module Master
         # beats does not repeat itself. Nil when the file offers none.
         def template(kind, number, gist)
           lines = Array(@data.dig("templates", kind.to_s))
-          return nil if lines.empty? || gist.to_s.empty?
+          return if lines.empty? || gist.to_s.empty?
 
           line = lines[number % lines.size]
           at = line.index("%{gist}")

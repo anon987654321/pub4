@@ -64,7 +64,7 @@ def vocab_check
     k1: %w[lens_distortion], f_number: %w[diffraction_blur], tonemap_ev: %w[tonemap],
     temp: %w[spectral_temp color_temp], tonemap: %w[tonemap],
     lens: %w[vintage_lens], azimuth: %w[relight], shape: %w[relight],
-    aspect_ratio: %w[cinemascope_bars], border_style: %w[polaroid_frame],
+    aspect_ratio: %w[cinemascope_bars], border_style: %w[polaroid_frame]
   }
 
   # Validate the effect implementation as well as the preset's list. Otherwise

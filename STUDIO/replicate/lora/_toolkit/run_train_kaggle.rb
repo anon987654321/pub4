@@ -197,7 +197,7 @@ end
 
 def run(*command, chdir: nil)
   puts "run: #{command.join(' ')}"
-  output, status = chdir ? Open3.capture2e(*command, chdir: chdir) : Open3.capture2e(*command)
+  output, status = chdir ? Open3.capture2e(*command, chdir:) : Open3.capture2e(*command)
   [output.to_s, status.success?]
 end
 
@@ -332,7 +332,7 @@ def notebook_json(source)
       "language_info" => { "name" => "python" },
     },
     "nbformat" => 4,
-    "nbformat_minor" => 5
+    "nbformat_minor" => 5,
   }
 end
 
@@ -367,7 +367,7 @@ data_dir = stage_dataset(images, checkpoints, toolkit_files, subject_files, CACH
 File.write(data_dir.join("dataset-metadata.json"), JSON.pretty_generate({
   "title" => "#{SUBJECT} LoRA training set",
   "id" => dataset_id,
-  "licenses" => [{ "name" => "other" }]
+  "licenses" => [{ "name" => "other" }],
 }))
 
 # What kaggle_session.rb needs to know, decided here rather than guessed there.
@@ -379,7 +379,7 @@ File.write(data_dir.join("kaggle_session.json"), JSON.pretty_generate({
   "steps" => options[:steps],
   "sample_every" => options[:sample_every],
   "toolkit" => toolkit_files.map { |path| path.basename.to_s }.sort,
-  "subject_config" => subject_files.map { |path| path.basename.to_s }.sort
+  "subject_config" => subject_files.map { |path| path.basename.to_s }.sort,
 }))
 
 push_dir = CACHE_DIR.join("kernel")
@@ -402,7 +402,7 @@ File.write(push_dir.join("kernel-metadata.json"), JSON.pretty_generate({
   "dataset_sources" => [dataset_id],
   "competition_sources" => [],
   "kernel_sources" => [],
-  "model_sources" => []
+  "model_sources" => [],
 }))
 puts "ok: staged #{push_dir}"
 
@@ -457,7 +457,7 @@ sidecar = {
   accelerator: options[:accelerator],
   timeout: options[:timeout],
   dataset_images: images.length,
-  resumed_from: checkpoints.map { |path| path.basename.to_s }
+  resumed_from: checkpoints.map { |path| path.basename.to_s },
 }
 File.write(WEIGHTS_DIR.join("kaggle_training.json"), JSON.pretty_generate(sidecar))
 
@@ -525,7 +525,7 @@ append_log([
   "dataset: #{dataset_id}",
   "steps: #{options[:steps]} accelerator: #{options[:accelerator]}",
   "resumed_from: #{checkpoints.map { |p| p.basename.to_s }.join(', ')}",
-  "pulled: #{pulled.join(', ')}"
+  "pulled: #{pulled.join(', ')}",
 ])
 
 puts "ok: done weights_dir=#{WEIGHTS_DIR}"

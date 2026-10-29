@@ -93,7 +93,7 @@ def drawn_sittings(set, side: nil, only: nil)
 end
 
 def shoots(side: nil, only: nil, set: nil)
-  return drawn_sittings(set, side: side, only: only) if DRAWN_SETS.key?(set)
+  return drawn_sittings(set, side:, only:) if DRAWN_SETS.key?(set)
 
   set ||= "shoots"
   abort "warn: no set #{set.inspect} — have: #{available_sets.join(', ')}" unless written_sets.include?(set)
@@ -134,7 +134,7 @@ def prompts_for(subject, side: nil, only: nil, set: nil)
   descriptor = env.fetch("DESCRIPTOR") do
     raise "#{subject}/subject.env has no DESCRIPTOR — a set needs one to anchor age and appearance"
   end
-  shoots(side: side, only: only, set: set).map { |s| [s, sitting_prompt(s, trigger: trigger, descriptor: descriptor)] }
+  shoots(side:, only:, set:).map { |s| [s, sitting_prompt(s, trigger:, descriptor:)] }
 end
 
 if $PROGRAM_NAME == __FILE__
@@ -146,7 +146,7 @@ if $PROGRAM_NAME == __FILE__
   only = ARGV.grep(/\A--only=/).first&.split("=", 2)&.last&.split(",")&.map(&:to_i)
 
   over = []
-  prompts_for(subject, side: side, only: only, set: set).each do |shoot, prompt|
+  prompts_for(subject, side:, only:, set:).each do |shoot, prompt|
     tokens = approximate_tokens(prompt)
     over << shoot["title"] if tokens > TOKEN_LIMIT
     puts format("%02d  %-22s %3d tok  %s", shoot["n"], shoot["title"], tokens, prompt)

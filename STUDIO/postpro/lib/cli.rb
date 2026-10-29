@@ -82,7 +82,7 @@ def stock_sheet(image, preset_name, cell: STOCK_SHEET_CELL)
   small = rgb_bands(image.thumbnail_image(cell, height: cell, size: :down))
   stocks = STOCKS.keys
   tiles = stocks.map do |stock|
-    graded = rgb_bands(apply_finishing_grain(preset(small, preset_name, stock: stock), preset_name))
+    graded = rgb_bands(apply_finishing_grain(preset(small, preset_name, stock:), preset_name))
     tag = stock_sheet_label(stock, cell:)
     tile = (Vips::Image.black(cell, cell + STOCK_SHEET_LABEL) + 18).cast(:uchar).bandjoin([18, 18])
     label_x = (cell - tag.width) / 2
@@ -107,7 +107,7 @@ def run_stock_sheet
     safe_stem = File.basename(input_path, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
     output = File.join(Postpro::Constitution.output_dir_for(input_path), "postpro_#{safe_stem}_stocks_#{preset_name}.jpg")
     output = Postpro::Constitution.available_output_path(output)
-    Postpro::Constitution.verify_output!(input_path: input_path, output_path: output)
+    Postpro::Constitution.verify_output!(input_path:, output_path: output)
   else
     Postpro::Constitution.verify_distinct_source!(input_path:, output_path: output)
   end
@@ -247,7 +247,7 @@ def run_random(subject = nil)
       begin
         look = heavy_mode? ? next_heavy_look(rng, looks + refused) : nil
         chain = look ? look_led_chain(rng, look:, avoid: drawn, lane:) : random_chain(rng, avoid: drawn, lane:)
-        Postpro::Constitution.verify_chain!(chain: chain, stage_rank: random_stage_rank)
+        Postpro::Constitution.verify_chain!(chain:, stage_rank: random_stage_rank)
         drew = "#{File.basename(file)} — #{look} #{random_chain_name(chain)}"
         $cli_logger.info "#{file_index + 1}/#{files.count} #{number}/#{count}: #{drew}"
 

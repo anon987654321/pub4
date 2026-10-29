@@ -10,11 +10,11 @@ module Master
       class VoskBackend
         def self.try_load(config = {})
           path = model_path(config)
-          return nil unless path && File.directory?(path)
+          return unless path && File.directory?(path)
 
           require "vosk"
           model = Vosk::Model.new(model_path: path)
-          new(model: model, config: config)
+          new(model:, config:)
         rescue LoadError, StandardError
           nil
         end
@@ -48,7 +48,7 @@ module Master
         end
 
         def feed(floats)
-          return nil unless @recognizer
+          return unless @recognizer
 
           pcm = floats_to_pcm16(floats)
           if @recognizer.accept_waveform(pcm).nonzero?

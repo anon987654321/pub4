@@ -207,7 +207,7 @@ workers = Array.new(options[:threads]) do
             "version" => pred["version"], "seed" => pred.dig("input", "seed"),
             "aspect_ratio" => pred.dig("input", "aspect_ratio"), "postpro" => ok ? row[:preset] : nil,
             "prediction" => pred["id"], "predict_time" => pred.dig("metrics", "predict_time"),
-            "price_usd" => PRICE[pred["model"]], "created_at" => pred["created_at"],
+            "price_usd" => PRICE[pred["model"]], "created_at" => pred["created_at"]
           }
           File.write(manifest_path, manifest.to_yaml)
           puts format("ok %-36s %-30s %s", row[:key], pred["model"], ok ? row[:preset] : "UNGRADED")

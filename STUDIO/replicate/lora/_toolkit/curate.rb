@@ -67,8 +67,8 @@ module Lora
         image = Vips::Image.new_from_file(path, access: :random).autorot
 
         reading = Postpro::Uncanny.read(path)
-        Candidate.new(path: path, width: image.width, height: image.height,
-                      texture: reading.texture, clipping: reading.clipping, index: index)
+        Candidate.new(path:, width: image.width, height: image.height,
+                      texture: reading.texture, clipping: reading.clipping, index:)
       rescue Vips::Error
         # A file vips cannot open is not a candidate, and is worth saying so
         # rather than dropping silently — a HEIC in a set of JPEGs is the usual
@@ -95,7 +95,7 @@ module Lora
           format("%.1f%% blown — no information where the highlight was", candidate.clipping)
         end
 
-      Verdict.new(candidate: candidate, rejected_for: reason)
+      Verdict.new(candidate:, rejected_for: reason)
     end
 
     # The best `count`, spread rather than clustered.
@@ -278,7 +278,7 @@ module Lora
       # are corrected independently instead of one soaking up the other.
       grey = means.sum / 3.0
       ratios = means.map { |m| [m / grey, 0.01].max }
-      { luma: [luma, 1.0].max, ratios: ratios, spread: ratios.max - ratios.min }
+      { luma: [luma, 1.0].max, ratios:, spread: ratios.max - ratios.min }
     end
 
     def self.median(values)
@@ -433,7 +433,7 @@ module Lora
       out_image.write_to_file("#{out}[Q=95]")
       File.write(File.join(into, "#{name}.txt"), caption_stub(token))
 
-      { name: name, from: File.basename(candidate.path),
+      { name:, from: File.basename(candidate.path),
         was: "#{image.width}x#{image.height}",
         now: "#{out_image.width}x#{out_image.height}",
         upscaled: current < short_edge }

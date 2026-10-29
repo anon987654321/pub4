@@ -340,7 +340,7 @@ end
 # Inlining the includes solves both: one flat file, every pin visible, no
 # relative reference left to break. Written into the toolkit directory anyway,
 # so anything else in there resolving by relative path still does.
-def relax_pins(requirements, depth = 0)
+def relax_pins(requirements, _depth = 0)
   out = AI_TOOLKIT.join("requirements_relaxed.txt")
 
   out.write(flatten_requirements(requirements).map { |line| relax_line(line) }.join)
@@ -618,7 +618,7 @@ def checkpoint_step(path)
     length = file.read(8).unpack1("Q<")
     JSON.parse(file.read(length))
   end
-  meta = header["__metadata__"] or return nil
+  meta = header["__metadata__"] or return
 
   value = meta["training_step"] || meta["step"] || meta["steps"]
   value && Integer(value, exception: false)

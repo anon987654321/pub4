@@ -45,12 +45,12 @@ module STUDIO
         compiled = compiler.call(prompt, compiled_options)
         {
           status: :ready,
-          prompt: prompt,
-          fields: fields,
+          prompt:,
+          fields:,
           options: compiled_options,
           compiled_prompt: compiled,
           prompt_sha256: Digest::SHA256.hexdigest(prompt),
-          compiled_prompt_sha256: Digest::SHA256.hexdigest(compiled)
+          compiled_prompt_sha256: Digest::SHA256.hexdigest(compiled),
         }
       rescue StandardError => e
         { status: :rejected, warnings: [e.message] }
@@ -77,7 +77,7 @@ module STUDIO
           warnings << "unresolved vocabulary for #{key}: #{unknown_terms.join(', ')}" unless unknown_terms.empty?
           result[key] = terms.map(&:to_s).select { |term| vocabulary.include?(term) }
         end
-        return { status: :rejected, warnings: warnings, scene: values } unless warnings.empty?
+        return { status: :rejected, warnings:, scene: values } unless warnings.empty?
 
         prompt = case format.to_sym
                  when :natural then values.map { |key, items| "#{key}: #{items.join(', ')}" }.join(". ") + "."
@@ -86,7 +86,7 @@ module STUDIO
                  else
                    return { status: :rejected, warnings: ["unsupported format: #{format}"], scene: values }
                  end
-        { status: :ready, scene: values, prompt: prompt, prompt_sha256: Digest::SHA256.hexdigest(prompt) }
+        { status: :ready, scene: values, prompt:, prompt_sha256: Digest::SHA256.hexdigest(prompt) }
       end
     end
   end

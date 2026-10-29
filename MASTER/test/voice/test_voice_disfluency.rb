@@ -29,7 +29,7 @@ class TestVoiceDisfluency < Minitest::Test
       "enabled" => true,
       "probability" => 1.0,
       "stutter_probability" => 0.0,
-      "fillers" => ["um"]
+      "fillers" => ["um"],
     )
     spoken = Master::Voice::Policy.stub(:data, { "disfluencies" => config }) do
       D.apply(text, source: text)

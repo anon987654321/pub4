@@ -80,7 +80,7 @@ module Replicate
 
       # The file's hash travels with the chain, so a frame's sidecar names the
       # exact recipe that made it and a later edit to the YAML is visible.
-      parse(YAML.safe_load_file(path), name: name).merge(sha256: Digest::SHA256.file(path).hexdigest)
+      parse(YAML.safe_load_file(path), name:).merge(sha256: Digest::SHA256.file(path).hexdigest)
     end
 
     def self.available(dir: DEFAULT_DIR)
@@ -100,11 +100,11 @@ module Replicate
           prompt: row["prompt"],
           inherits: Array(row["inherits"]),
           options: (row["options"] || {}).transform_keys(&:to_sym),
-          timeout: row["timeout"]
+          timeout: row["timeout"],
         )
       end
 
-      { name: name, description: doc["description"], stages: stages }
+      { name:, description: doc["description"], stages: }
     end
 
     # Everything wrong with the chain, as a list, before a single request is
@@ -248,8 +248,8 @@ module Replicate
           if from_stage && index < names.index(from_stage)
             resumed(resume, stage, index)
           else
-            perform.call(stage: stage, index: index, total: names.length,
-                         image: inherited_image, seed: inherited_seed, references: references)
+            perform.call(stage:, index:, total: names.length,
+                         image: inherited_image, seed: inherited_seed, references:)
           end
         break if result.nil?
 
@@ -263,7 +263,7 @@ module Replicate
     end
 
     def self.resumed(resume, stage, index)
-      found = resume&.call(stage: stage, index: index)
+      found = resume&.call(stage:, index:)
       raise NothingToResume, "stage #{stage.name} has no output to resume from" unless found && File.file?(found[:path].to_s)
 
       found
@@ -279,7 +279,7 @@ module Replicate
       return requested unless requested.nil?
 
       stages = chain.fetch(:stages)
-      return nil unless produced.length == stages.length
+      return unless produced.length == stages.length
 
       stages.last.options[:postpro]
     end

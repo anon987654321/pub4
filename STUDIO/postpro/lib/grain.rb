@@ -115,7 +115,7 @@ end
 # back, so crystal size and grain strength stop fighting each other and a stock
 # can be quoted in levels rather than in an amplitude that survives by luck.
 def grain_field(width, height, radius, sublayers, seed)
-  cluster = Vips::Image.gaussnoise(width, height, sigma: GRAIN_LOGNORM_SIGMA, mean: 0.0, seed: seed)
+  cluster = Vips::Image.gaussnoise(width, height, sigma: GRAIN_LOGNORM_SIGMA, mean: 0.0, seed:)
                        .gaussblur([radius * 2.5, 0.4].max).exp
                        .linear([1.0 / GRAIN_LOGNORM_MEAN], [0])
   layers = sublayers.each_with_index.map do |sublayer, index|

@@ -341,22 +341,22 @@ ANTI_BEAUTIFICATION_NEGATIVE = "generic influencer face, overly young face, teen
 EXPRESSION_POOL = [
   "a calm neutral expression", "a slight natural smile", "a direct steady gaze",
   "mid-laugh candid expression", "a thoughtful downward glance",
-  "eyes closed, head slightly tilted", "an unguarded expression caught between two others",
+  "eyes closed, head slightly tilted", "an unguarded expression caught between two others"
 ].freeze
 
 POSE_POOL = [
   "facing camera directly", "three-quarter turn", "profile turn",
-  "looking over one shoulder", "leaning slightly forward", "turning away from the camera",
+  "looking over one shoulder", "leaning slightly forward", "turning away from the camera"
 ].freeze
 WARDROBE_POOL = [
   "wool coat", "simple knit sweater", "plain white shirt", "denim jacket",
-  "dark turtleneck", "oversized raincoat", "linen shirt, sleeves rolled", "heavy fisherman's jumper",
+  "dark turtleneck", "oversized raincoat", "linen shirt, sleeves rolled", "heavy fisherman's jumper"
 ].freeze
 
 BACKGROUND_POOL = [
   "plain studio backdrop", "fjord shoreline", "Bergen street corner", "cafe window",
   "mountain road", "empty car park at night", "wooden dock in rain",
-  "stairwell with a single window", "birch woodland",
+  "stairwell with a single window", "birch woodland"
 ].freeze
 # Coprime with each pool's length, so index * stride visits every entry before
 # repeating any. 1 for the first pool: the strides only need to differ from each
@@ -373,7 +373,7 @@ POOL_STRIDES = { expression: 1, pose: 5, wardrobe: 3, background: 4 }.freeze
 # line of output and an exit rather than an image that quietly lacks the thing
 # it was asked for.
 def resolve_vocab(field, value)
-  return nil if value.nil?
+  return if value.nil?
 
   table = VOCABULARIES.fetch(field)
   key = value.to_s.strip.downcase.tr("- ", "__")
@@ -393,7 +393,7 @@ end
 # The one diversity field a viewer who cannot see the image needs told: where
 # the subject is. Expression, pose and wardrobe are describable only by looking.
 def batch_background(index, batch_size)
-  return nil if batch_size <= 1
+  return if batch_size <= 1
 
   BACKGROUND_POOL[(index * POOL_STRIDES[:background]) % BACKGROUND_POOL.length]
 end
@@ -631,14 +631,14 @@ SELFIE_GAZES = ["eyes on the lens", "eyes just past the lens", "chin lowered, ey
 # "holding a breath", "tired and unguarded" and their kin, one smiled.
 SELFIE_MOMENTS = [
   "just after a laugh", "a wide real grin", "laughing at something off frame",
-  "a warm half-smile", "amused, about to laugh", "cheeks lifted, eyes bright", "biting back a grin",
+  "a warm half-smile", "amused, about to laugh", "cheeks lifted, eyes bright", "biting back a grin"
 ].freeze
 
 SELFIE_ARMS = ["arm in frame", "no arm in frame", "hand at the jaw"].freeze
 
 SELFIE_PLACES = [
   "parked car", "ferry deck", "unmade bed", "kitchen counter", "bus window seat",
-  "front hallway", "rooftop", "under an umbrella", "crowded bar",
+  "front hallway", "rooftop", "under an umbrella", "crowded bar"
 ].freeze
 # Ten lights against nine places. Two pools of one length read at any strides
 # pair the same entries forever, and a light paired only with places that refuse
@@ -654,7 +654,7 @@ SELFIE_CATCHLIGHTS = {
   "overcast" => "soft sky catchlights", "golden_hour" => "warm sun catchlights",
   "practical" => "lamp catchlights", "neon" => "neon catchlights",
   "direct_flash" => "hard flash catchlights", "mixed" => "warm and cool catchlights",
-  "backlit" => "faint catchlights", "hard" => "hard sun catchlights",
+  "backlit" => "faint catchlights", "hard" => "hard sun catchlights"
 }.freeze
 
 SELFIE_FIELDS = {
@@ -745,11 +745,11 @@ DISTANCE_LADDER_SCENE = "a calm neutral expression, facing camera directly, plai
   "plain studio backdrop, head and shoulders"
 
 def distance_sitting(number)
-  distance, lens = DISTANCE_LADDER.fetch(number - 1) { return nil }
+  distance, lens = DISTANCE_LADDER.fetch(number - 1) { return }
   {
     "n" => number, "side" => "Distance", "title" => "Distance #{distance}",
     "scene" => DISTANCE_LADDER_SCENE, "key" => "soft", "distance" => distance,
-    "lens" => lens, "focus" => SCENARIO_FOCUS, "stock" => "Kodak Portra 400",
+    "lens" => lens, "focus" => SCENARIO_FOCUS, "stock" => "Kodak Portra 400"
   }
 end
 

@@ -12,7 +12,7 @@ module Dilla
     def self.validate_abc!(abc, validator: nil, negative_list: [], matcher: nil, style_id: nil, registry: nil)
       text = abc.to_s
       raise ArgumentError, "ABC score is empty" if text.strip.empty?
-      style_entry = Studio::StyleRegistry.resolve(style_id: style_id, modality: "audio", registry: registry) if style_id
+      style_entry = Studio::StyleRegistry.resolve(style_id:, modality: "audio", registry:) if style_id
       missing = REQUIRED_ABC_HEADERS.reject { |header| text.lines.any? { |line| line.start_with?(header) } }
       raise ArgumentError, "invalid ABC score; missing #{missing.join(', ')}" unless missing.empty?
       raise ArgumentError, "ABC validator must be supplied by the engine" unless validator.respond_to?(:call)
@@ -42,9 +42,9 @@ module Dilla
           raise ArgumentError, "track #{track} pan out of range"
         end
       end
-      result = { status: :ready, tracks: tracks }
+      result = { status: :ready, tracks: }
       if style_id
-        entry = Studio::StyleRegistry.resolve(style_id: style_id, modality: "audio", registry: registry)
+        entry = Studio::StyleRegistry.resolve(style_id:, modality: "audio", registry:)
         result[:style_contract] = { id: entry["style_id"], version: entry["version"], modality: entry["modality"] }
       end
       result

@@ -187,7 +187,6 @@ module Master
         log_timing("live_stream_total", started_at, text_length: text.to_s.length) if started_at
       end
 
-
       # Wire v2 ("stream":true) is the default; MASTER_TTS_WIRE=raw restores
       # the v1 contract save_sync-and-copy against a daemon that predates it.
       def stream_wire_enabled?

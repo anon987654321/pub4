@@ -77,7 +77,7 @@ module Postpro
         IO.select([pipe], nil, nil, [remaining, 0.25].min)
         chunk = pipe.read_nonblock([frame_bytes - buffer.bytesize, 1_048_576].min, exception: false)
         next if chunk == :wait_readable
-        return nil if chunk.nil? && buffer.empty?
+        return if chunk.nil? && buffer.empty?
         raise Unavailable, "ffmpeg ended in the middle of a frame" if chunk.nil?
 
         buffer << chunk
@@ -119,7 +119,7 @@ module Postpro
         ["ffprobe", "-v", "error", "-select_streams", "v:0",
          "-read_intervals", "%+##{max_frames + 1}", "-show_frames",
          "-show_entries", "frame=best_effort_timestamp_time", "-of", "json", input],
-        deadline:
+        deadline:,
       )
       raise Unavailable, "ffprobe could not read video frame timestamps" unless status.success?
 
@@ -214,7 +214,7 @@ module Postpro
         max_temp_bytes: integer_setting(
           "POSTPRO_VIDEO_MAX_TEMP_BYTES", DEFAULT_MAX_TEMP_BYTES, 16_000_000, 10_000_000_000
         ),
-        seconds_per_frame: float_setting("POSTPRO_VIDEO_SECONDS_PER_FRAME", DEFAULT_SECONDS_PER_FRAME, 0.01, 60.0)
+        seconds_per_frame: float_setting("POSTPRO_VIDEO_SECONDS_PER_FRAME", DEFAULT_SECONDS_PER_FRAME, 0.01, 60.0),
       }
     end
 

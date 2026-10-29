@@ -197,7 +197,7 @@ def postpro_presets
 end
 
 def preset_for(grade, number)
-  return nil if grade == "none"
+  return if grade == "none"
   return grade unless grade == "random"
 
   presets = postpro_presets
@@ -352,7 +352,7 @@ sittings.each do |shoot, prompt|
     prediction = {
       "id" => receipt["id"],
       "output" => [receipt["output_url"]],
-      "metrics" => { "predict_time" => receipt["seconds"].to_f }
+      "metrics" => { "predict_time" => receipt["seconds"].to_f },
     }
     output_url = receipt["output_url"]
     seconds = receipt["seconds"].to_f

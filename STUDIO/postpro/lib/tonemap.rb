@@ -211,7 +211,7 @@ def source_headroom(image)
     # corners; neither is a tone curve, and neither has contrast to spend.
     fringe: taper(reading.texture, TEXTURE_FLOOR, TEXTURE_NATIVE, 0.30),
     vignette: taper(reading.texture, TEXTURE_FLOOR, TEXTURE_NATIVE, 0.35),
-    reading: reading }
+    reading: }
 rescue StandardError => e
   # A measurement failure must not cost the grade. Full strength is what every
   # preset did before this existed.

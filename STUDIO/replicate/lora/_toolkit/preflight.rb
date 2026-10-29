@@ -78,19 +78,19 @@ module Preflight
     file.seek(2)
     loop do
       prefix = file.read(1)
-      return nil unless prefix&.getbyte(0) == 0xFF
+      return unless prefix&.getbyte(0) == 0xFF
 
       marker = file.read(1)
       marker = file.read(1) while marker&.getbyte(0) == 0xFF
-      return nil unless marker
+      return unless marker
 
       code = marker.getbyte(0)
-      return nil if code == 0xD8 || code == 0xD9
+      return if code == 0xD8 || code == 0xD9
       next if code == 0x01 || (0xD0..0xD7).cover?(code)
 
-      length = file.read(2)&.unpack1("n") or return nil
+      length = file.read(2)&.unpack1("n") or return
       if (0xC0..0xCF).cover?(code) && ![0xC4, 0xC8, 0xCC].include?(code)
-        data = file.read(5) or return nil
+        data = file.read(5) or return
         _precision, height, width = data.unpack("Cnn")
         return [width, height]
       end
@@ -175,7 +175,7 @@ module Preflight
   def average_hash(path)
     out, _err, status = Open3.capture3("ffmpeg", "-v", "quiet", "-i", path, "-vf", "scale=8:8,format=gray",
                                        "-frames:v", "1", "-f", "rawvideo", "-", binmode: true)
-    return nil unless status.success? && out.bytesize == 64
+    return unless status.success? && out.bytesize == 64
 
     mean = out.bytes.sum / 64.0
     out.bytes.each_with_index.sum { |byte, bit| byte > mean ? 1 << bit : 0 }

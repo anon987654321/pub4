@@ -79,7 +79,7 @@ class TestTtsSupervisor < Minitest::Test
     reader, writer = IO.pipe
     pid = Process.spawn(
       RbConfig.ruby, "-e", 'Signal.trap("TERM", "IGNORE"); puts "ready"; STDOUT.flush; sleep 60',
-      out: writer, err: File::NULL,
+      out: writer, err: File::NULL
     )
     writer.close
     assert_equal "ready\n", reader.gets, "worker must install its TERM handler before retirement"

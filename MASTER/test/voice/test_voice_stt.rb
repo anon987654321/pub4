@@ -100,7 +100,7 @@ class TestVoiceStt < Minitest::Test
 
   def whisper_backend(binary, timeout:)
     Master::Voice::Stt::WhisperCppBackend.new(
-      binary:, model: "unused-model.bin", config: { whisper_timeout_s: timeout }
+      binary:, model: "unused-model.bin", config: { whisper_timeout_s: timeout },
     )
   end
 

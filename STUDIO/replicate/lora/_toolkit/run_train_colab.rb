@@ -372,7 +372,7 @@ notebook = {
     "language_info" => { "name" => "python" },
   },
   "nbformat" => 4,
-  "nbformat_minor" => 0
+  "nbformat_minor" => 0,
 }
 
 target = options[:render] ? RENDER_NOTEBOOK : NOTEBOOK

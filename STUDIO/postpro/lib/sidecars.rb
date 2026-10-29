@@ -129,7 +129,7 @@ def write_grade_sidecar(input_path, output_path, presets, original, processed)
     quality_analysis: {
       before: Postpro::QualityAnalyzer.report_image(original),
       after: Postpro::QualityAnalyzer.report_image(processed),
-      interpretation: "sampled pixel diagnostics only; does not score composition, focus or intent"
+      interpretation: "sampled pixel diagnostics only; does not score composition, focus or intent",
     },
     uncanny: uncanny_readings(original, processed),
     capabilities: Studio::AnalogCapabilities.for(:postpro).map { |entry| entry[:id] },
@@ -159,7 +159,7 @@ def write_chain_sidecar(input_path, output_path, chain, take: nil, original: nil
     data[:quality_analysis] = {
       before: Postpro::QualityAnalyzer.report_image(original),
       after: Postpro::QualityAnalyzer.report_image(processed),
-      interpretation: "sampled pixel diagnostics only; does not score composition, focus or intent"
+      interpretation: "sampled pixel diagnostics only; does not score composition, focus or intent",
     }
     data[:stabilization] = $postpro_stabilization_report if $postpro_stabilization_report
     data[:style_contract] = $postpro_style_contract if $postpro_style_contract

@@ -341,7 +341,7 @@ def apply_prompt_set!(process)
   side = filter if filter && filter !~ /\A[\d,\s]+\z/
   only = filter.split(",").map(&:to_i) if filter && filter =~ /\A[\d,\s]+\z/
 
-  built = prompts_for(File.basename(ROOT), side: side, only: only, set: name)
+  built = prompts_for(File.basename(ROOT), side:, only:, set: name)
   abort "warn: prompt set #{request} matched no sittings" if built.empty?
 
   process["sample"]["prompts"] = built.map(&:last)

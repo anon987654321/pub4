@@ -45,7 +45,7 @@ module Postpro
       output, status = capture_command(
         ["ffprobe", "-v", "error", "-print_format", "json",
          "-show_streams", "-show_format", path.to_s],
-        deadline:
+        deadline:,
       )
       raise Unavailable, "ffprobe could not read #{path}: #{output.lines.last.to_s.strip}" unless status.success?
 
@@ -94,7 +94,7 @@ module Postpro
       values = [stream.dig("tags", "rotate")]
       values.concat(
         Array(stream["side_data_list"]).select { |item| item["side_data_type"].to_s.match?(/display matrix/i) }
-                                       .map { |item| item["rotation"] }
+                                       .map { |item| item["rotation"] },
       )
       values.compact.filter_map { |value| Float(value, exception: false) }.any? do |degrees|
         remainder = degrees.abs % 360
@@ -204,7 +204,7 @@ module Postpro
           tool: "postpro",
           source: { basename: File.basename(input), sha256: Digest::SHA256.file(input).hexdigest },
           output: { basename: File.basename(target), sha256: Digest::SHA256.file(temporary_output).hexdigest },
-          grade: { preset: preset.to_s, seed: seed, grain: grain.to_s },
+          grade: { preset: preset.to_s, seed:, grain: grain.to_s },
           grade_version: GRADE_VERSION,
           video: {
             width: probe.width, height: probe.height, frame_rate: probe.rate,
@@ -216,7 +216,7 @@ module Postpro
             limit_seconds: limits[:max_seconds], graded_frame_bytes: temporary_bytes,
             temp_byte_limit: limits[:max_temp_bytes]
           },
-          created_at: Time.now.utc.iso8601
+          created_at: Time.now.utc.iso8601,
         }
         File.open(temporary_sidecar, "wb") do |file|
           file.write(JSON.pretty_generate(metadata))
@@ -245,12 +245,10 @@ module Postpro
       target
     end
 
-
   end
 end
 
 require_relative "motion_process"
-
 
 # This wrapper deliberately uses the same in-process chain as a one-shot still.
 # Re-entering postpro.rb for every frame was the defect that made the previous

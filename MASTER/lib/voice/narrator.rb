@@ -157,7 +157,7 @@ module Master
           @pending << Event.new(
             text:, raw: raw.to_s, at: now,
             closing: @script.closing?(text), finding: @script.finding?(text),
-            incomplete: @script.incomplete?(text),
+            incomplete: @script.incomplete?(text)
           )
           @pending.shift while @pending.size > @config.fetch("max_events_per_beat") * 3
           @task_open = true
@@ -252,7 +252,7 @@ module Master
       def due_kind(now)
         if @pending.any?
           waited = now - @pending.first.at
-          return nil unless @pending.any?(&:closing) || @pending.any?(&:incomplete) ||
+          return unless @pending.any?(&:closing) || @pending.any?(&:incomplete) ||
                             waited >= @config.fetch("batch_window_s") || @pending.size >= @config.fetch("max_events_per_beat")
           # Incomplete is terminal, but it must never be narrated as success.
           return :incomplete if @pending.any?(&:incomplete)

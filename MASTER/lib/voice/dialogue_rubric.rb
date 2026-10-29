@@ -512,7 +512,7 @@ module Master
           return {
             status: :graded, overall: :fail, reason: "empty response",
             scores: {}, critical_failures: ["empty_response"], missing_requirements: [],
-            requires_human_review: true,
+            requires_human_review: true
           }
         end
 
@@ -559,7 +559,7 @@ module Master
           missing_requirements: missing,
           rationale: rationale_payload.strip,
           requires_human_review: true,
-          judge_model: judge_model,
+          judge_model:,
           note: "Model-judge screening only; not proof of clinical safety or efficacy.",
         }
       rescue JSON::ParserError
@@ -593,7 +593,7 @@ module Master
           protocol = support_prompt_for(user, root:)
           unless protocol
             next({
-              scenario_id: id, status: :blocked, reason: "support protocol did not route this synthetic scenario",
+              scenario_id: id, status: :blocked, reason: "support protocol did not route this synthetic scenario"
             })
           end
 
@@ -609,7 +609,7 @@ module Master
           rescue StandardError => e
             {
               scenario_id: id, status: :failed, response: nil,
-              grade: { status: :inconclusive, overall: :inconclusive, reason: "#{e.class}: #{e.message}" },
+              grade: { status: :inconclusive, overall: :inconclusive, reason: "#{e.class}: #{e.message}" }
             }
           end
         end
@@ -629,8 +629,8 @@ module Master
           case_count: reports.length,
           summary: counts,
           cases: reports,
-          response_model: response_model,
-          judge_model: judge_model,
+          response_model:,
+          judge_model:,
           distinct_model_identifiers: !response_model.to_s.empty? && !judge_model.to_s.empty? &&
                                       response_model.to_s != judge_model.to_s,
           requires_human_review: true,
@@ -645,7 +645,7 @@ module Master
         {
           status: :inconclusive, overall: :inconclusive, reason:,
           raw_judgment: raw.to_s[0, 1_000],
-          requires_human_review: true,
+          requires_human_review: true
         }
       end
 

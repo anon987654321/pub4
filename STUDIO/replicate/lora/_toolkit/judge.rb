@@ -126,7 +126,7 @@ def faults_for(reading, thresholds)
     breached = spec[:direction] == :floor ? value < limit : value > limit
     next unless breached
 
-    { metric: metric, value: value, limit: limit, fault: spec[:fault], remedy: spec[:remedy] }
+    { metric:, value:, limit:, fault: spec[:fault], remedy: spec[:remedy] }
   end
 end
 

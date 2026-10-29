@@ -65,14 +65,14 @@ MODEL_CAPABILITIES = {
     input_keys: %w[prompt aspect_ratio output_format seed guidance num_inference_steps],
     negative_prompt_key: nil,
     guidance_key: "guidance", guidance_range: (0.0..10.0), guidance_default: 3.0,
-    steps_key: "num_inference_steps", steps_range: (1..50), steps_default: 28,
+    steps_key: "num_inference_steps", steps_range: (1..50), steps_default: 28
   },
   "black-forest-labs/flux-schnell" => {
     input_keys: %w[prompt aspect_ratio output_format seed num_inference_steps],
     negative_prompt_key: nil,
     # schnell is a 1-4 step model. The same --steps 28 that is right for dev is
     # out of range here, which is why the ceiling is per-model and not global.
-    steps_key: "num_inference_steps", steps_range: (1..4), steps_default: 4,
+    steps_key: "num_inference_steps", steps_range: (1..4), steps_default: 4
   },
   # FLUX 2, the current generation and the default as of 2026-08-25.
   #
@@ -135,7 +135,7 @@ MODEL_CAPABILITIES = {
     input_keys: %w[prompt aspect_ratio output_format seed cfg steps],
     negative_prompt_key: nil,
     guidance_key: "cfg", guidance_range: (0.0..20.0), guidance_default: 3.5,
-    steps_key: "steps", steps_range: (1..50), steps_default: 35,
+    steps_key: "steps", steps_range: (1..50), steps_default: 35
   },
 }.freeze
 DEFAULT_CAPABILITY = { input_keys: %w[prompt aspect_ratio output_format seed], negative_prompt_key: nil }.freeze
@@ -172,7 +172,7 @@ end
 # The explicit --aspect-ratio still wins over both.
 DISTANCE_ASPECT = {
   "macro" => "1:1", "closeup" => "4:5", "portrait" => "4:5", "half" => "4:5",
-  "three_quarter" => "2:3", "full" => "2:3", "wide" => "16:9", "establishing" => "16:9",
+  "three_quarter" => "2:3", "full" => "2:3", "wide" => "16:9", "establishing" => "16:9"
 }.freeze
 
 def infer_aspect_ratio(prompt, explicit, distance = nil)
@@ -217,7 +217,7 @@ end
 # generation, and got something you did not ask for with nothing in the output
 # saying so.
 def model_number(cap, kind, value)
-  return nil if value.nil?
+  return if value.nil?
 
   key = cap[:"#{kind}_key"]
   abort "warn: --#{kind == :guidance ? 'guidance' : 'steps'} is not a knob on this model" unless key
@@ -476,13 +476,13 @@ def write_provenance(output, prompt, compiled_prompt, negative_prompt, options, 
     output_path: output,
     prompt: compiled_prompt,
     model: { id: options[:model], version: extra.dig(:prediction, :version) },
-    style: style,
+    style:,
     params: {
-      seed: seed, aspect_ratio: options[:aspect_ratio], guidance: options[:guidance],
+      seed:, aspect_ratio: options[:aspect_ratio], guidance: options[:guidance],
       steps: options[:steps], raw: raw_mode?(options)
     },
-    parent_digest: parent_digest,
-    postpro_chain: (options[:postpro] == false ? [] : Array(options[:postpro]).compact)
+    parent_digest:,
+    postpro_chain: (options[:postpro] == false ? [] : Array(options[:postpro]).compact),
   )
   sidecar[:replay_manifest] = replay
   sidecar[:replay_manifest_sha256] = Studio::ReplayManifest.digest(replay)
@@ -495,24 +495,24 @@ end
 # Require the exact chain/stage provenance and bytes before carrying its seed on.
 def verified_chain_resume(path, chain:, stage:, index:)
   target = File.expand_path(path)
-  return nil unless File.file?(target) && !File.symlink?(target) && File.size?(target)
+  return unless File.file?(target) && !File.symlink?(target) && File.size?(target)
 
   sidecar_path = "#{target}.json"
-  return nil unless File.file?(sidecar_path) && !File.symlink?(sidecar_path)
+  return unless File.file?(sidecar_path) && !File.symlink?(sidecar_path)
 
   sidecar = JSON.parse(File.read(sidecar_path))
   trace = sidecar["chain"]
-  return nil unless File.expand_path(sidecar["output"].to_s) == target
-  return nil unless trace.is_a?(Hash) &&
+  return unless File.expand_path(sidecar["output"].to_s) == target
+  return unless trace.is_a?(Hash) &&
                     trace["name"] == chain[:name] &&
                     trace["sha256"] == chain[:sha256] &&
                     trace["stage"] == stage.name &&
                     trace["index"] == index + 1
-  return nil unless sidecar["seed"].is_a?(Integer)
+  return unless sidecar["seed"].is_a?(Integer)
 
   digest = sidecar["sha256"].to_s
-  return nil unless digest.match?(/\A[0-9a-f]{64}\z/)
-  return nil unless Studio::ReplicateClient.checksum(target) == digest
+  return unless digest.match?(/\A[0-9a-f]{64}\z/)
+  return unless Studio::ReplicateClient.checksum(target) == digest
 
   { path: target, seed: sidecar["seed"] }
 rescue JSON::ParserError, SystemCallError, IOError, ArgumentError
@@ -861,7 +861,7 @@ when "chain"
       prediction: {
         id: prediction["id"], version: prediction["version"],
         status: prediction["status"], metrics: prediction["metrics"]
-      }.compact
+      }.compact,
     }
     sidecar = write_provenance(target, prompt, compiled, negative, stage_options, stage_seed, digest, trace)
     append_gallery_manifest(sidecar, alt_text_for(prompt, stage_options))
@@ -872,8 +872,8 @@ when "chain"
 
   kept = []
   produced = begin
-    Replicate::Chain.run(chain, perform: perform, until_stage: options[:until], image: options[:image],
-                                seed: options[:seed], from_stage: options[:from], resume: resume)
+    Replicate::Chain.run(chain, perform:, until_stage: options[:until], image: options[:image],
+                                seed: options[:seed], from_stage: options[:from], resume:)
   rescue Replicate::Chain::Invalid, Replicate::Chain::NothingToResume => e
     abort "replicate: #{e.message}"
   rescue StandardError => e
@@ -884,7 +884,7 @@ when "chain"
   # postpro last, on the final frame only — grading an intermediate would be
   # graded again by every stage after it. Last means after any upscale too: grain
   # laid down and then resampled turns to mush.
-  preset = Replicate::Chain.grade_for(chain, produced: produced, requested: options[:postpro])
+  preset = Replicate::Chain.grade_for(chain, produced:, requested: options[:postpro])
   maybe_handoff_postpro(produced.last, preset) if produced.any?
   puts "replicate: chain #{name} produced #{produced.length} frame(s)"
   puts produced
@@ -901,9 +901,9 @@ when "generate"
     end
     scene_result = STUDIO::Replicate::SceneCompiler.compile_fields(
       scene_document,
-      options: options,
+      options:,
       vocabularies: VOCABULARIES,
-      compiler: ->(brief, fields) { compile_prompt(brief, fields) }
+      compiler: ->(brief, fields) { compile_prompt(brief, fields) },
     )
     unless scene_result[:status] == :ready
       abort "replicate: scene rejected: #{scene_result[:warnings].join('; ')}"
@@ -915,15 +915,15 @@ when "generate"
         document_sha256: Digest::SHA256.file(options[:scene_json]).hexdigest,
         prompt_sha256: scene_result[:prompt_sha256],
         compiled_prompt_sha256: scene_result[:compiled_prompt_sha256],
-        fields: scene_result[:fields]
-      }
+        fields: scene_result[:fields],
+      },
     )
   end
   abort parser.to_s if options[:prompt].to_s.strip.empty?
   if options[:style_contract]
     begin
       options[:style_contract_entry] = Studio::StyleRegistry.resolve(
-        style_id: options[:style_contract], modality: "prompt"
+        style_id: options[:style_contract], modality: "prompt",
       )
       options[:style_registry_sha256] = Digest::SHA256.file(Studio::StyleRegistry::REGISTRY_PATH).hexdigest
     rescue Studio::StyleRegistry::InvalidStyle => e

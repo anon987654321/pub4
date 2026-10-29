@@ -30,7 +30,7 @@ module Master
             dolly: m.fetch("dolly").fetch(state.to_s, 1.0),
             eye_open: shut ? 0.0 : 1.0,
             mouth: state.to_sym == :speaking ? Face.timed_level(k) : 0.0,
-            **Masks.worn(state, t, schedule)
+            **Masks.worn(state, t, schedule),
           )
         end
       end

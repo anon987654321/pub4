@@ -220,7 +220,7 @@ def preset(image, name, stock: nil)
   p = PRESETS[name.to_sym] or
     raise ArgumentError, "unknown preset #{name.inspect}; have #{PRESETS.keys.join(', ')}"
 
-  p = p.merge(stock: stock) if stock
+  p = p.merge(stock:) if stock
   processed = image
   t_start = Time.now
   n_steps = p[:fx].length

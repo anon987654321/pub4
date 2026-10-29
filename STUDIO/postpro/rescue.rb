@@ -125,18 +125,18 @@ module Postpro
       luma = (image.bands >= 3 ? image.colourspace("b-w") : image).cast(:uchar)
       median = luma.percent(50) / 255.0
       highlight = luma.percent(98) / 255.0
-      median < DARK_MEDIAN && highlight < DARK_HIGHLIGHT ? { median: median, highlight: highlight } : nil
+      median < DARK_MEDIAN && highlight < DARK_HIGHLIGHT ? { median:, highlight: } : nil
     end
 
     # Mixed lighting and wrong white balance both show as the channel means
     # pulling apart. A genuinely coloured subject does it too, which is why this
     # reports rather than corrects on its own.
     def self.colour_cast(image)
-      return nil if image.bands < 3
+      return if image.bands < 3
 
       means = image.bandsplit.first(3).map(&:avg)
       spread = means.max - means.min
-      spread > CAST_SPREAD ? { means: means, spread: spread } : nil
+      spread > CAST_SPREAD ? { means:, spread: } : nil
     end
 
     # The layers a grade cannot reach, said every time rather than only when
@@ -147,7 +147,7 @@ module Postpro
       "have fallen away. That is a projection, not a rendering: reshoot at 2-3 metres.",
       "focus and motion blur — no amount of sharpening invents detail the lens did not resolve.",
       "expression and the moment — the layer that decides whether anyone cares, and the " \
-      "one nothing downstream touches."
+      "one nothing downstream touches.",
     ].freeze
 
     # Which preset best answers what was found. Named rather than invented: the

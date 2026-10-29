@@ -23,11 +23,11 @@ module Master
 
         def self.try_load(config = {})
           path = model_path(config)
-          return nil unless path && File.file?(path) && File.size?(path)
+          return unless path && File.file?(path) && File.size?(path)
 
           require "onnxruntime"
           session = OnnxRuntime::Model.new(path)
-          new(session: session, path: path, config: config)
+          new(session:, path:, config:)
         rescue LoadError, StandardError
           nil
         end
@@ -85,7 +85,7 @@ module Master
           inputs = session.inputs
           audio = inputs.find { |i| i[:name].to_s =~ /input|audio/i } || inputs.first
           shape = audio && (audio[:shape] || audio["shape"])
-          return nil unless shape.is_a?(Array) && shape.length >= 2
+          return unless shape.is_a?(Array) && shape.length >= 2
 
           dim = shape.last
           dim.is_a?(Integer) && dim.positive? ? dim : nil

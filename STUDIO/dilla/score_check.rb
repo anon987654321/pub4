@@ -58,7 +58,7 @@ end
 
 begin
   result = Dilla::StyleAdapter.validate_abc!(
-    abc, validator: validator, style_id: options[:style_contract]
+    abc, validator:, style_id: options[:style_contract]
   )
   puts JSON.generate(result.merge(validator: "abc2midi", rendered: false))
 rescue StandardError => e

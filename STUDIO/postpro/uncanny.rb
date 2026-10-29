@@ -72,7 +72,7 @@ module Postpro
         texture: texture_energy(luma),
         specular_spread: specular_spread(luma),
         clipping: clipping_percent(luma),
-        tonal_range: luma.deviate
+        tonal_range: luma.deviate,
       )
     end
 
@@ -205,11 +205,11 @@ module Postpro
       before = read(before_path)
       after = read(after_path)
       {
-        before: before,
-        after: after,
+        before:,
+        after:,
         texture_delta: after.texture - before.texture,
         clipping_delta: after.clipping - before.clipping,
-        specular_delta: after.specular_spread - before.specular_spread
+        specular_delta: after.specular_spread - before.specular_spread,
       }
     end
 

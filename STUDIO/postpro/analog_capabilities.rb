@@ -154,7 +154,7 @@ module Studio
               description: key.to_s.tr("_", " ").freeze,
               catalogued: true, status:, enabled: enabled_for(status),
               implementation: record[:implementation], evidence: record[:evidence],
-              regression_test: record[:regression_test],
+              regression_test: record[:regression_test]
             }.freeze
           end
         end.freeze
