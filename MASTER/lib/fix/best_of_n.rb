@@ -112,24 +112,24 @@ module Master
       APPROACHES = [
         {
           name: "minimal",
-          instruction: "Solve the exact finding with the smallest local change. Preserve public behavior, surrounding structure and unrelated code. Do not add a new abstraction or file unless the existing owner cannot express the repair."
+          instruction: "Solve the exact finding with the smallest local change. Preserve public behavior, surrounding structure and unrelated code. Do not add a new abstraction or file unless the existing owner cannot express the repair.",
         },
         {
           name: "root_cause",
-          instruction: "Solve the underlying cause at its natural owner, not merely the visible symptom. Trace callers, state transitions and failure boundaries. Keep the interface stable unless a verified contract requires a change."
+          instruction: "Solve the underlying cause at its natural owner, not merely the visible symptom. Trace callers, state transitions and failure boundaries. Keep the interface stable unless a verified contract requires a change.",
         },
         {
           name: "reuse_and_simplify",
-          instruction: "Look for an existing abstraction, invariant, helper or token that can own the fix. Prefer removing duplicate decisions or simplifying the flow over adding a wrapper. Preserve all unrelated behavior."
+          instruction: "Look for an existing abstraction, invariant, helper or token that can own the fix. Prefer removing duplicate decisions or simplifying the flow over adding a wrapper. Preserve all unrelated behavior.",
         },
         {
           name: "failure_first",
-          instruction: "Start from the most consequential counterexample and make the failure explicit and recoverable. Cover invalid input, duplicate submissions, stale state and partial failure without widening the change."
+          instruction: "Start from the most consequential counterexample and make the failure explicit and recoverable. Cover invalid input, duplicate submissions, stale state and partial failure without widening the change.",
         },
         {
           name: "structural",
-          instruction: "Consider a materially different boundary or transformation from the other candidates. Keep the change reversible, retain compatibility, and reject a refactor that merely relocates complexity."
-        }
+          instruction: "Consider a materially different boundary or transformation from the other candidates. Keep the change reversible, retain compatibility, and reject a refactor that merely relocates complexity.",
+        },
       ].map(&:freeze).freeze
 
       RUNTIME_STATES = %w[NOT_RUN PASS FAIL BLOCKED SKIPPED].freeze
@@ -174,7 +174,7 @@ module Master
           "USER-SIMULATION ORACLES",
           "These action/fault pairs guide this candidate. A scenario row is not an executed test or a passing result.",
           "The inventory runtime_status remains authoritative; NOT_RUN must not be described as passed.",
-          "Relevant surfaces: #{ids.join(", ")}"
+          "Relevant surfaces: #{ids.join(", ")}",
         ]
 
         ids.each do |id|
@@ -193,7 +193,7 @@ module Master
             "action=#{action.fetch("action")}",
             "fault=#{fault.fetch("setup")}",
             "expected=#{surface.fetch("contract")} #{fault.fetch("expected")}",
-            "inventory_state=#{row.fetch("runtime_status")}"
+            "inventory_state=#{row.fetch("runtime_status")}",
           ].join(" | ")
         end
         lines.join("\n")
@@ -288,7 +288,7 @@ module Master
           publish(
             "repair_loop:user_simulation_blocked",
             path: path.to_s,
-            reason: "target must be a regular, non-symlink file inside the repository"
+            reason: "target must be a regular, non-symlink file inside the repository",
           )
           return result_rows(sources, :blocked, "target is outside the safe regular-file boundary")
         end
@@ -353,10 +353,10 @@ module Master
               surfaces: surfaces_for(path),
               scenario_oracles_consulted: data.fetch("cases").count { |item| surfaces_for(path).include?(item.fetch("surface_id")) },
               scenario_runtime_status: "NOT_RUN",
-              tests: tests,
+              tests:,
               status: row.fetch(:status),
               regressions: row.fetch(:regressions).length,
-              improvements: row.fetch(:improvements).length
+              improvements: row.fetch(:improvements).length,
             )
             row
           end
@@ -375,7 +375,7 @@ module Master
           no_regression: 2,
           unavailable: 3,
           blocked: 4,
-          regression: 5
+          regression: 5,
         }.fetch(status.to_sym, 4)
       end
 
@@ -489,7 +489,7 @@ module Master
           "**/#{base}_test.rb",
           "**/test_#{base}.rb",
           "**/#{base}.test.mjs",
-          "**/#{base}_test.mjs"
+          "**/#{base}_test.mjs",
         ]
         roots.flat_map do |test_root|
           patterns.flat_map do |pattern|
@@ -572,14 +572,14 @@ module Master
           row = raw.transform_keys(&:to_sym)
           state = row.fetch(:state).to_sym
           signature = row[:signature].to_s
-          return { path: test_path, state: state, signature: signature, detail: row[:detail].to_s[0, 160] }
+          return { path: test_path, state:, signature:, detail: row[:detail].to_s[0, 160] }
         end
 
         output, status = raw
         state = status && status.success? ? :pass : :fail
         summary = failure_summary(output)
         signature = state == :pass ? "PASS" : Digest::SHA256.hexdigest(summary)[0, 16]
-        { path: test_path, state: state, signature:, detail: state == :pass ? "" : summary[0, 160] }
+        { path: test_path, state:, signature:, detail: state == :pass ? "" : summary[0, 160] }
       end
 
       def failure_summary(output)
@@ -624,13 +624,13 @@ module Master
 
       def result(status, tests, baseline, candidate, regressions: [], improvements: [], reason: nil)
         {
-          status: status,
+          status:,
           test_paths: tests,
-          baseline: baseline,
-          candidate: candidate,
-          regressions: regressions,
-          improvements: improvements,
-          reason: reason
+          baseline:,
+          candidate:,
+          regressions:,
+          improvements:,
+          reason:,
         }
       end
 
@@ -647,8 +647,8 @@ module Master
         publish(
           "repair_loop:user_simulation_blocked",
           path: relative,
-          phase: phase,
-          reason: "source changed outside the candidate transaction; preserving current content"
+          phase:,
+          reason: "source changed outside the candidate transaction; preserving current content",
         )
         raise RestoreFailure, "source changed during #{phase}; refusing candidate selection for #{relative}"
       end

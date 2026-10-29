@@ -48,7 +48,7 @@ class DeclutterControllerTest < ActionDispatch::IntegrationTest
   def test_outcome_records_the_amount_recovered
     assert_difference -> { DeclutterOutcome.count }, 1 do
       post outcome_declutter_path(@item), params: {
-        declutter_outcome: { action: "sold", amount_recovered: 450, notes: "solgt på Tise" }
+        declutter_outcome: { action: "sold", amount_recovered: 450, notes: "solgt på Tise" },
       }
     end
     assert_equal 45_000, DeclutterOutcome.order(:id).last.amount_recovered_cents

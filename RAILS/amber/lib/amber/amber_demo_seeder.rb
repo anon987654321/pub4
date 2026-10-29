@@ -56,7 +56,7 @@ module Amber
         material: "leather" },
       { title: "Sage linen shorts", image: "amber-sage-shorts", category: "Bottoms", color: "sage", brand: "COS", size: "S",
         price_cents: 6_900, times_worn: 8, season: "Summer", occasion: "casual", spark_joy: true,
-        material: "linen" }
+        material: "linen" },
     ].freeze
 
     OUTFITS = [
@@ -65,7 +65,7 @@ module Amber
       { name: "Coffee date", occasion: "casual", season: "Autumn",
         items: [ "Oatmeal cashmere crew neck", "Indigo straight-leg jeans", "Tan structured crossbody" ] },
       { name: "Office chic", occasion: "work", season: "Winter",
-        items: [ "Navy oversized blazer", "Charcoal wide-leg trousers", "Black pointed-toe ankle boots", "Camel wool wrap coat" ] }
+        items: [ "Navy oversized blazer", "Charcoal wide-leg trousers", "Black pointed-toe ankle boots", "Camel wool wrap coat" ] },
     ].freeze
 
     def initialize(attach_media: !Shared::DemoMedia.skip_attach?)

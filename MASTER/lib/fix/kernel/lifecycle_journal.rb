@@ -128,7 +128,7 @@ module Master
             end
 
             run["plan"] = manifest
-            receipt = { invalidated: invalidated, dimensions: changed, generation:, plan: manifest }
+            receipt = { invalidated:, dimensions: changed, generation:, plan: manifest }
           end
           emit(
             "fix:plan_bound",
@@ -598,7 +598,7 @@ module Master
         def validate_surface_coverage_report(report, required:)
           surface = report["surface_coverage"]
           return { "status" => "surface_coverage_missing" } if required && !surface.is_a?(Hash)
-          return nil unless surface.is_a?(Hash)
+          return unless surface.is_a?(Hash)
           return { "status" => "surface_coverage_schema_unsupported" } unless surface["schema_version"].to_i == 1
           return { "status" => "surface_coverage_target_mismatch" } unless surface["target_absolute"].to_s == report["target"].to_s
           %w[plan_digest source_digest].each do |key|
@@ -757,7 +757,7 @@ module Master
           unless ledger.is_a?(Hash)
             return { "status" => "matrix_ledger_missing" } if status == "complete"
 
-            return nil
+            return
           end
 
           return { "status" => "matrix_ledger_schema_unsupported" } unless ledger["schema_version"].to_i == 2
@@ -843,7 +843,7 @@ module Master
                      reading_generation <= generation && allowed_readings.include?(reading_status)
                 return { "status" => "matrix_reading_order_invalid", "cell" => keys[index] }
               end
-              if keys[index] == ["CONVERGENCE_OPPORTUNITY", "lexical_opportunities", "whole_file"] &&
+              if keys[index] == %w[CONVERGENCE_OPPORTUNITY lexical_opportunities whole_file] &&
                  %w[assessed_clean opportunity_found].include?(reading_status)
                 receipt_failure = validate_opportunity_reading(report, reading)
                 return receipt_failure.merge("cell" => keys[index]) if receipt_failure

@@ -35,7 +35,7 @@ class WardrobeAnalytics
       tips: tips,
       tips_source: "rules",
       overdue_challenges: overdue_challenges,
-      active_challenges: DeclutterChallenge.where(user: user).active.count
+      active_challenges: DeclutterChallenge.where(user: user).active.count,
     }
   end
 

@@ -25,5 +25,4 @@ export function bootSocialStimulus(application) {
   application.register("outbound-click", OutboundClick)
   application.register("conversation-log", ConversationLog)
 
-
 }

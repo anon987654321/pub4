@@ -11,7 +11,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
       user: {
         email_address: "new-person@example.com",
         password: "long-enough-pass",
-        password_confirmation: "does-not-match"
+        password_confirmation: "does-not-match",
       }
     }
 
@@ -60,7 +60,6 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
       Rails.application.config.x.oauth_provider_slugs = previous
     end
   end
-
 
   test "email signup transfers anonymous posts and MASTER chat to the new account" do
     post_body = "Anonymous before signup #{SecureRandom.hex(4)}"

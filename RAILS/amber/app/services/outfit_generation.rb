@@ -12,7 +12,7 @@ class OutfitGeneration
       least_worn(grouped["Tops"]) || grouped["Dresses"]&.first,
       least_worn(grouped["Bottoms"]),
       grouped["Shoes"]&.first,
-      layer_for(weather, grouped)
+      layer_for(weather, grouped),
     ].compact.uniq.first(4)
     return nil if picks.empty?
 

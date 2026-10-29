@@ -23,7 +23,7 @@ class TasteRanker
     wear: 0.20,
     recency: 0.18,
     declared: 0.24,
-    phase: 0.14
+    phase: 0.14,
   }.freeze
 
   # A garment worn this often is "fully" established in the rotation. Above it
@@ -42,7 +42,7 @@ class TasteRanker
   PHASE_SCORES = {
     "current" => 1.0,
     "aspirational" => 0.6,
-    "past-self" => 0.15
+    "past-self" => 0.15,
   }.freeze
 
   def initialize(user)

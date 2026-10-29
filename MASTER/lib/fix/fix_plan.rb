@@ -89,7 +89,7 @@ module Master
           law_digest: @law_digest, authority_digest: @authority_digest,
           toolchain_digest: @toolchain_digest, adapter_digest: @adapter_digest,
           exclusion_digest: @exclusion_digest, max_passes: @max_passes,
-          budget_seconds: @budget_seconds,
+          budget_seconds: @budget_seconds
         ).freeze
         @digest = digest_json(to_h(include_digest: false)).freeze
         freeze
@@ -262,7 +262,7 @@ module Master
         end
         supplied_digest = source[:paths_digest] || source["paths_digest"]
         paths_digest = supplied_digest || digest_json(
-          path_reasons.respond_to?(:each_pair) ? path_reasons.sort.to_h : {}
+          path_reasons.respond_to?(:each_pair) ? path_reasons.sort.to_h : {},
         )
         { "counts" => normalized_counts, "sample" => sample, "paths_digest" => paths_digest.to_s }
       end

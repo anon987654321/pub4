@@ -24,7 +24,7 @@ module Master
       module_function
 
       def normalize_terminal_state(value)
-        return nil if value.nil?
+        return if value.nil?
 
         state = value.to_s.downcase.to_sym
         TERMINAL_STATES.include?(state) ? state : nil
@@ -117,8 +117,8 @@ module Master
           end
 
           counts = {
-            checked_count: checked_count, failure_count: failure_count,
-            warning_count: warning_count, unchecked_count: unchecked_count
+            checked_count:, failure_count:,
+            warning_count:, unchecked_count:
           }.transform_values { |value| Contract.optional_count(value) }
           evidence_refs = Array(evidence_refs)
           unless evidence_refs.all? { |ref| ref.is_a?(Contract::EvidenceReference) }
@@ -196,7 +196,7 @@ module Master
         private_class_method :read_count
 
         def self.read_collection_count(value, method)
-          return nil unless value.respond_to?(method)
+          return unless value.respond_to?(method)
 
           collection = value.public_send(method)
           collection.respond_to?(:size) ? Contract.optional_count(collection.size) : nil
@@ -207,7 +207,7 @@ module Master
       end
 
       def optional_count(value)
-        return nil if value.nil?
+        return if value.nil?
 
         count = Integer(value)
         count >= 0 ? count : nil
@@ -284,7 +284,7 @@ module Master
             law_ids: law_ids.freeze,
             fixture_refs: fixture_refs.freeze,
             provenance: provenance&.freeze,
-            errors: errors.uniq.freeze
+            errors: errors.uniq.freeze,
           )
         end
 

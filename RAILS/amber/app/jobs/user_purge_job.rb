@@ -47,7 +47,7 @@ class UserPurgeJob < ApplicationJob
     { model: "Outfit", key: :user_id },
     { model: "Item", key: :user_id },
     { model: "WardrobeItem", key: :user_id },
-    { model: "Session", key: :user_id }
+    { model: "Session", key: :user_id },
   ].freeze
 
   # Public posts and comments remain on the anonymised user so conversations

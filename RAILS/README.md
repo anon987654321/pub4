@@ -112,11 +112,9 @@ MASTER/bin/operator premerge --list
 cd RAILS/brgen && bin/ci
 ```
 
-
 ## Public-page metadata contract
 
 The central rendered `surface_schema` check measures the existing Brgen home, marketplace, cart, dating and messenger surfaces for unique title, description, absolute canonical URL, and Open Graph title/description/URL. The corresponding positive fixtures carry complete metadata, and focused MASTER tests prove missing/duplicate/relative metadata is rejected. These contracts do not yet replace the outstanding live audit of every owned hostname, alias redirect, robots.txt, sitemap and JSON-LD document in the repository TODO.
-
 
 ## Response security headers
 

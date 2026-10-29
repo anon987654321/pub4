@@ -54,7 +54,7 @@ module Master
           world = build_world(root: workspace_root, container:, capabilities:, network: network_client(container))
           mission.transition!(:execute)
           effect_observer = build_effect_observer(
-            bus: lifecycle_bus, mission_id: mission.id, attempt_id: mission_attempt_id(mission)
+            bus: lifecycle_bus, mission_id: mission.id, attempt_id: mission_attempt_id(mission),
           )
           done = build_fold(root: workspace_root, model:, memory:, world:, max_turns:, observer:, effect_observer:, capabilities:, cancellation:).run(goal)
           unless %i[cancelled trace_failed needs_user blocked unknown_outcome recovery_failed].include?(done.reason)

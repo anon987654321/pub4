@@ -79,7 +79,7 @@ module Master
           "Privilege helpers on PATH: #{commands.empty? ? "none detected" : commands.join(", ")}. Binary presence does not prove authorization; never escalate automatically.",
           boundary,
           "HostFiles is read-only and follows the process's actual filesystem visibility. Relative paths start at HOME; absolute paths are allowed when accessible. Known credential/key paths are refused.",
-          "Repository edit tools remain confined to the configured workspace. Mutations use separately governed paths and must be verified."
+          "Repository edit tools remain confined to the configured workspace. Mutations use separately governed paths and must be verified.",
         ].join("\n")
       rescue StandardError => e
         "Live host context unavailable: #{e.class}: #{e.message}"

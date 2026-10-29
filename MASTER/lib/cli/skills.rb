@@ -54,7 +54,7 @@ module Master
         skill[:contract].to_h.merge(
           operator_approved: !approval_for(skill).nil?,
           active_for_trigger: eligible_for_trigger?(skill),
-          approval: approval_for(skill)&.dup
+          approval: approval_for(skill)&.dup,
         ).compact
       end
 
@@ -75,7 +75,7 @@ module Master
             promotable: contract.promotable?,
             operator_approved: !approval_for(skill).nil?,
             active_for_trigger: eligible_for_trigger?(skill),
-            errors: contract.errors
+            errors: contract.errors,
           }
         end
       end
@@ -111,7 +111,7 @@ module Master
             "revision" => supplied_revision,
             "approved_by" => reviewer,
             "approved_at" => timestamp,
-            "fixtures" => fixtures
+            "fixtures" => fixtures,
           }
           write_skill_approval_rows!(rows)
         end
@@ -454,7 +454,7 @@ module Master
         }
         revision = Digest::SHA256.hexdigest(Marshal.dump(portable_revision(skill, portable)))
         contract = Master::Execution::Contract::SkillContract.from_declaration(
-          name: skill[:name], revision:, source: skill[:source], declaration: skill[:execution_contract]
+          name: skill[:name], revision:, source: skill[:source], declaration: skill[:execution_contract],
         )
         @bus&.publish("skills:contract_invalid", skill: skill[:name], revision:, errors: contract.errors) if contract.status == :invalid
         skill.merge(revision:, contract:)

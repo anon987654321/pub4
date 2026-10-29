@@ -7,7 +7,7 @@ class OutfitCompatibility
     "gym" => 0.18,
     "date" => 0.65,
     "travel" => 0.45,
-    "casual" => 0.35
+    "casual" => 0.35,
   }.freeze
 
   # GarmentTaxonomy describes what a material suits, not one exclusive forecast
@@ -17,7 +17,7 @@ class OutfitCompatibility
     "cold" => %w[cold mild dry all_weather],
     "warm" => %w[warm mild dry all_weather],
     "rain" => %w[rain all_weather],
-    "dry" => %w[dry cold mild warm all_weather]
+    "dry" => %w[dry cold mild warm all_weather],
   }.freeze
 
   def initialize(user)
@@ -46,7 +46,7 @@ class OutfitCompatibility
       occasion_fit: occasion_fit(items, occasion),
       weather_fit: weather_fit(items, weather),
       preference_fit: preference_fit(items),
-      overall: score(outfit, occasion:, weather:)
+      overall: score(outfit, occasion:, weather:),
     }
   end
 

@@ -73,7 +73,7 @@ class HotwireSurfacesTest < ActionDispatch::IntegrationTest
     outfit = @user.outfits.create!(name: "Office")
     assert_difference -> { @user.planned_outfits.count }, 1 do
       post planned_outfits_path, params: {
-        planned_outfit: { outfit_id: outfit.id, planned_date: Date.current, notes: "meet" }
+        planned_outfit: { outfit_id: outfit.id, planned_date: Date.current, notes: "meet" },
       }, as: :turbo_stream
     end
     assert_response :success

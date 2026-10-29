@@ -101,7 +101,7 @@ def brgen_nav_items
     [ "takeaway",    nav_label("takeaway"),    "//#{marketplace_host}/food/" ],
     [ "messenger",   nav_label("messenger"),   "//messenger.#{domain}/" ],
     [ "maps",        nav_label("maps"),        "//maps.#{domain}/" ],
-    [ "tv",          nav_label("tv"),          "//tv.#{domain}/" ]
+    [ "tv",          nav_label("tv"),          "//tv.#{domain}/" ],
   ]
 end
 

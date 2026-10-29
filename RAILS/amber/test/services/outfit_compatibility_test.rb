@@ -47,7 +47,7 @@ class OutfitCompatibilityTest < ActiveSupport::TestCase
     items = [
       Item.new(title: "Wool coat", category: "Outerwear", material: "wool"),
       Item.new(title: "Cotton tee", category: "Tops", material: "cotton"),
-      Item.new(title: "Leather boots", category: "Shoes", material: "leather")
+      Item.new(title: "Leather boots", category: "Shoes", material: "leather"),
     ]
 
     assert_equal 1.0, scorer.send(:weather_fit, items, "cold")

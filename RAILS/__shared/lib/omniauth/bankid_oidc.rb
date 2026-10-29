@@ -17,7 +17,7 @@ module Shared
       "production" => { issuer: "https://auth.bankid.no/auth/realms/prod", host: "auth.bankid.no",
         root_sha256: "7a58b1482120002ec8db8044205d0c7710b27c347d54313547a4eea79b48de9f" }.freeze,
       "current" => { issuer: "https://auth.current.bankid.no/auth/realms/current", host: "auth.current.bankid.no",
-        root_sha256: "4d261886f081aeaa6bad59008bf2e9bf93053077a6256aaafa0e855fc3a76468" }.freeze
+        root_sha256: "4d261886f081aeaa6bad59008bf2e9bf93053077a6256aaafa0e855fc3a76468" }.freeze,
     }.freeze
     CACHE_TTL = 3600
     JSON_LIMIT = 1_000_000

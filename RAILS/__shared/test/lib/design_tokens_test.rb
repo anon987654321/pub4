@@ -212,7 +212,6 @@ end
     assert_operator ratio.call(identity.fetch("signal_on_light"), "#EFEFEF"), :>=, 4.5
   end
 
-
   def test_face_signal_does_not_overwrite_shared_dialect_accent
     scss = File.read(DesignTokens::DIALECT_PATH, encoding: "UTF-8")
 
@@ -220,7 +219,6 @@ end
     assert_includes DesignTokens.face_root_css, "--c-accent: var(--pub4-signal);"
     assert_nil DesignTokens.scss_anchor_drift?
   end
-
 
   def test_display_size_is_generated_from_the_visual_identity_token
     identity = DesignTokens.load.fetch("visual_identity")
@@ -237,6 +235,5 @@ end
     assert_operator floors.fetch("signal_on_white_min"), :>=, 4.5
     assert_operator floors.fetch("signal_on_paper_min"), :>=, 4.5
   end
-
 
 end

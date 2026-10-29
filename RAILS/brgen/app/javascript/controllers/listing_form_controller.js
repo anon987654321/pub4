@@ -183,6 +183,6 @@ export default class extends Controller {
 
   text(key, fallback) {
     const name = "listingForm" + key.charAt(0).toUpperCase() + key.slice(1)
-    return this.element.dataset[name + "Value"] || fallback
+    return this.element.dataset[`${name}Value`] || fallback
   }
 }

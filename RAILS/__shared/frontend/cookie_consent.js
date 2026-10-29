@@ -6,7 +6,7 @@ export function readConsent() {
   const raw = document.cookie
     .split(";")
     .map((part) => part.trim())
-    .find((part) => part.startsWith(COOKIE_NAME + "="))
+    .find((part) => part.startsWith(`${COOKIE_NAME}=`))
     ?.slice(COOKIE_NAME.length + 1)
 
   if (!raw) return null
@@ -44,7 +44,7 @@ export function saveConsent(purposes) {
 
   document.cookie =
     COOKIE_NAME + "=" + encodeURIComponent(payload) +
-    "; Max-Age=31536000; Path=/; SameSite=Lax" + secure
+    `; Max-Age=31536000; Path=/; SameSite=Lax${secure}`
 
   const detail = { version: COOKIE_VERSION, recordedAt, purposes: selected }
   window.dispatchEvent(new CustomEvent("pub4:cookie-consent-resolved", { detail }))

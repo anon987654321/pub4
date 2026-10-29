@@ -125,7 +125,6 @@ reports the failure rather than marking erasure complete.
 
 ## Architecture
 
-
 Amber is a wardrobe intelligence graph. Layers 1–4 are restored verbatim from
 `DEPLOY/rails/amber/ARCHITECTURE.md`, deleted at `ee3a56e33` and never replaced;
 all 23 components it named are still present and still accurate. Layer 5 and the

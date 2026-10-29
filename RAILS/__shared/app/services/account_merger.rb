@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 require "bcrypt"
 require "securerandom"
 # Transfers the user-owned history of a persisted guest to a registered

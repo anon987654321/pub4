@@ -87,20 +87,20 @@ module Master
         when "grant personal_memory"
           permissions.grant(
             scope: "personal_memory", subject:, confirmed_by: "local operator",
-            purpose: Master::Ground::PersonalWorkspace::MEMORY_PERMISSION_PURPOSE,
+            purpose: Master::Ground::PersonalWorkspace::MEMORY_PERMISSION_PURPOSE
           )
           "privacy: personal profile and memory enabled for this paired subject"
         when "grant calendar_read"
           permissions.grant(
             scope: "calendar_read", subject:, confirmed_by: "local operator",
-            purpose: Master::Ground::PersonalCalendar::READ_PERMISSION_PURPOSE,
+            purpose: Master::Ground::PersonalCalendar::READ_PERMISSION_PURPOSE
           )
           "privacy: local calendar reading enabled for this paired subject"
         when /\Arevoke calendar_read(?:\s+(.+))?\z/
           reason = Regexp.last_match(1).to_s.strip
           revoked = permissions.revoke(
             scope: "calendar_read", subject:, confirmed_by: "local operator",
-            reason: reason.empty? ? "calendar reading revoked by owner" : reason,
+            reason: reason.empty? ? "calendar reading revoked by owner" : reason
           )
           revoked ? "privacy: local calendar reading disabled immediately" : "privacy: no active calendar-reading grant"
         when "memory show", "memory export"
@@ -115,7 +115,7 @@ module Master
           reason = Regexp.last_match(1).to_s.strip
           revoked = permissions.revoke(
             scope: "personal_memory", subject:, confirmed_by: "local operator",
-            reason: reason.empty? ? "personal memory revoked by owner" : reason,
+            reason: reason.empty? ? "personal memory revoked by owner" : reason
           )
           revoked ? "privacy: personal profile and memory disabled immediately" : "privacy: no active personal-memory grant"
         else
@@ -184,7 +184,7 @@ module Master
           candidate = preferences.suggest(
             root:, subject:, key:, value:, scope: options.fetch("scope", "all"),
             reason: options.fetch("reason", "Preference candidate"),
-            confidence:,
+            confidence:
           )
           "preferences: suggestion #{candidate.fetch("id")} staged but inactive; inspect with /preferences show and use /preferences accept #{candidate.fetch("id")} to activate"
         when "accept"
@@ -227,7 +227,7 @@ module Master
           return nil unless value && allowed.include?(key)
           [key, value]
         end
-        return nil unless pairs.map(&:first).uniq.size == pairs.size
+        return unless pairs.map(&:first).uniq.size == pairs.size
 
         pairs.to_h
       end
@@ -319,7 +319,7 @@ module Master
             "capabilities=#{Array(row[:required_capabilities]).join(",")}",
             "laws=#{Array(row[:law_ids]).join(",")}",
             "fixtures=#{Array(row[:fixture_refs]).join(",")}",
-            "errors=#{Array(row[:errors]).join(",")}"
+            "errors=#{Array(row[:errors]).join(",")}",
           ].join("\n")
         when "approve"
           unless args.length == 3 && args[2] == "--confirm"

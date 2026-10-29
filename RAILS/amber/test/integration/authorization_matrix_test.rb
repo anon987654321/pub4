@@ -32,7 +32,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
     # Writes. The checks exercise none of these, and a write is where an open
     # door actually costs something.
     [ "/items",            :post, :redirect, :any ],
-    [ "/outfits",          :post, :redirect, :any ]
+    [ "/outfits",          :post, :redirect, :any ],
   ].freeze
 
   # Surfaces that are deliberately open to anyone. Listed rather than skipped,
@@ -40,7 +40,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
   PUBLIC = [
     [ "/",              :get ],
     [ "/session/new",   :get ],
-    [ "/registration/new", :get ]
+    [ "/registration/new", :get ],
   ].freeze
 
   def sign_in!

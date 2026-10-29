@@ -33,7 +33,7 @@ class AccountMergerTest < ActiveSupport::TestCase
     now = Time.current
     Message.insert_all!([
       { sender_id: guest.id, recipient_id: member.id, body: outgoing_body, created_at: now, updated_at: now },
-      { sender_id: member.id, recipient_id: guest.id, body: incoming_body, created_at: now, updated_at: now }
+      { sender_id: member.id, recipient_id: guest.id, body: incoming_body, created_at: now, updated_at: now },
     ])
 
     result = AccountMerger.new(guest_user: guest, user: member).call

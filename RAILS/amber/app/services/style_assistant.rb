@@ -34,7 +34,7 @@ class StyleAssistant
     bottom: %w[Bottoms],
     dress: %w[Dresses],
     shoes: %w[Shoes],
-    accessory: %w[Accessories]
+    accessory: %w[Accessories],
   }.freeze
 
   # Rotate within the top of each zone. Wider than this and "your best" turns

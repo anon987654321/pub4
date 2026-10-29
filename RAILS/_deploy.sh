@@ -26,7 +26,6 @@ deploy_tracked_app() {
     *) log_err "deploy_tracked_app: refused unknown app: $app_name"; return 2 ;;
   esac
 
-
   need_cmd "$RUBY" "$BUNDLE" doas
 
   [[ -x /usr/local/sbin/pub4-admin ]] || {

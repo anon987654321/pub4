@@ -103,7 +103,7 @@ module Master
 
       def ask(argv, payload, root:, closed: false)
         _out, err, status = Master::Io::Exec.capture3(*argv, stdin_data: payload, chdir: root, timeout: TIMEOUT_S)
-        return nil if status.success?
+        return if status.success?
         return "hook refused #{argv.first}: #{err.to_s.strip}".strip.chomp(":") if status.exitstatus == 2
 
         fault(argv, "exit #{status.exitstatus.inspect}", closed)

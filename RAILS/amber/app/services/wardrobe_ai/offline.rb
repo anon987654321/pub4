@@ -38,7 +38,7 @@ class WardrobeAi
         "sparks_joy" => joy,
         "reason" => joy ? "Worn enough or tagged current-self — treat as a keeper until you feel otherwise." : "Low wear signal and no joy mark — try once more or release.",
         "suggestion" => joy ? "Keep in active wardrobe and log wears." : "Start a wear-this-week challenge or open declutter review.",
-        "source" => "heuristic"
+        "source" => "heuristic",
       }
     end
 

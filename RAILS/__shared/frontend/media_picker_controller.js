@@ -115,14 +115,14 @@ export default class extends Controller {
       move.type = "button"
       move.className = "media-thumb-move"
       move.textContent = index === 0 ? "→" : "←"
-      move.setAttribute("aria-label", this.moveLabelValue + ": " + file.name)
+      move.setAttribute("aria-label", `${this.moveLabelValue}: ${file.name}`)
       move.addEventListener("click", () => this.#moveFile(index, index === 0 ? Math.min(index + 1, files.length - 1) : index - 1))
 
       const remove = document.createElement("button")
       remove.type = "button"
       remove.className = "media-thumb-rm"
       remove.textContent = "✕"
-      remove.setAttribute("aria-label", this.removeLabelValue + " " + file.name)
+      remove.setAttribute("aria-label", `${this.removeLabelValue} ${file.name}`)
       remove.addEventListener("click", () => this.#removeFile(index))
 
       controls.append(move, remove)

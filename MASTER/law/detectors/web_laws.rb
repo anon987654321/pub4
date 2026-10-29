@@ -184,8 +184,8 @@ module Master
               unless sanitized_in_this_expression || intentional_for_this_expression
                 line = src[0...output_start].count("\n") + 1
                 findings << finding(
-                  line: line,
-                  message: "raw html_safe in view — prefer auto-escaped output or raw json_escape(valid_json) for script payloads"
+                  line:,
+                  message: "raw html_safe in view — prefer auto-escaped output or raw json_escape(valid_json) for script payloads",
                 )
               end
             end

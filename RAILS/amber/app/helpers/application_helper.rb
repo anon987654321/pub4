@@ -12,7 +12,7 @@ module ApplicationHelper
   IMAGE_PRESETS = {
     thumb: [ [ :thumb, 240 ] ],
     card: [ [ :thumb, 240 ], [ :card, 720 ] ],
-    detail: [ [ :thumb, 240 ], [ :card, 720 ] ]
+    detail: [ [ :thumb, 240 ], [ :card, 720 ] ],
   }.freeze
 
   def amber_ai_available?
@@ -146,7 +146,7 @@ end
     [ /rust|terracotta/, "#c96b4b", "#111111" ],
     [ /camel|tan|gold/, "#d4a574", "#111111" ],
     [ /nude/, "#e8d2c5", "#111111" ],
-    [ /tortoise/, "#8b5e3c", "#ffffff" ]
+    [ /tortoise/, "#8b5e3c", "#ffffff" ],
   ].freeze
 
   WARDROBE_SWATCH_DEFAULT = [ "#e8eaed", "#111111" ].freeze

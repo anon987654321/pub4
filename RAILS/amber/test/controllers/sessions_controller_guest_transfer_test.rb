@@ -25,7 +25,7 @@ class SessionsControllerGuestTransferTest < ActionDispatch::IntegrationTest
     AccountMerger.stub(:new, ->(**_kwargs) { merger }) do
       post session_path, params: {
         email_address: member.email_address,
-        password: "long-enough-password"
+        password: "long-enough-password",
       }
     end
 
