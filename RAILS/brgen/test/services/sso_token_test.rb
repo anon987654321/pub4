@@ -11,7 +11,6 @@ require "test_helper"
 # is wired in all three apps and the MASTER side is not in this repository, so this
 # is a dormant entry point being hardened, not a live login path.
 class Shared::SsoTokenTest < ActiveSupport::TestCase
-
   SECRET = "x" * 32
 
   def with_secret(value = SECRET)

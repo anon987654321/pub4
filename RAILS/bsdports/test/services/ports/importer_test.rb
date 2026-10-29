@@ -42,7 +42,7 @@ class Ports::ImporterTest < ActiveSupport::TestCase
       Ports::Importer.call(platform:, tree_path: dir, use_ftp_fallback: false)
       app = Port.find_by!(platform:, pkgpath: "devel/app")
       library = Port.find_by!(platform:, pkgpath: "devel/library")
-      assert_equal [["build", library.id]], app.dependencies.pluck(:dep_type, :depends_on_id)
+      assert_equal [ [ "build", library.id ] ], app.dependencies.pluck(:dep_type, :depends_on_id)
 
       File.write(app_makefile, <<~MAKE)
         COMMENT = example app
@@ -51,7 +51,7 @@ class Ports::ImporterTest < ActiveSupport::TestCase
         TEST_DEPENDS = devel/library
       MAKE
       Ports::Importer.call(platform:, tree_path: dir, use_ftp_fallback: false)
-      assert_equal [["run", library.id], ["test", library.id]].sort,
+      assert_equal [ [ "run", library.id ], [ "test", library.id ] ].sort,
                    app.dependencies.reload.pluck(:dep_type, :depends_on_id).sort
 
       File.write(app_makefile, <<~MAKE)

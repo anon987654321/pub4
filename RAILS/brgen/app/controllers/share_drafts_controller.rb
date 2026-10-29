@@ -43,7 +43,7 @@ class ShareDraftsController < ApplicationController
     content = attributes[:content].to_s
     if content.present?
       plain = ActionController::Base.helpers.strip_tags(content).squish
-      title = plain.truncate(300) if title.blank? || title.match?( /<[^>]+>/ )
+      title = plain.truncate(300) if title.blank? || title.match?(/<[^>]+>/)
     end
     @post = Post.new(
       title: title,

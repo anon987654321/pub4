@@ -6,7 +6,7 @@ require "minitest/mock"
 class PostproJobTest < ActiveSupport::TestCase
   test "postpro script resolves to STUDIO/postpro/postpro.rb" do
     script = Shared::PostproProcessor.script
-    assert script, "postpro script not found in #{["STUDIO/postpro/postpro.rb"]}"
+    assert script, "postpro script not found in #{[ "STUDIO/postpro/postpro.rb" ]}"
     # The media tools live under STUDIO after the four-tree reset.
     assert_includes script.to_s, "/STUDIO/postpro/postpro.rb"
     assert File.file?(script), "expected postpro at #{script}"

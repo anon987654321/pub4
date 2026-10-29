@@ -13,7 +13,7 @@ class PortsTarballTest < ActiveSupport::TestCase
       key = File.join(dir, "trusted.pub")
       signature = File.join(dir, "SHA256.sig")
       archive = File.join(dir, "ports.tar.gz")
-      [key, signature, archive].each { |path| File.write(path, "fixture") }
+      [ key, signature, archive ].each { |path| File.write(path, "fixture") }
       @tarball.define_singleton_method(:trusted_signify_key) { key }
       @tarball.define_singleton_method(:verification_ready?) { true }
       status = Object.new
@@ -21,8 +21,8 @@ class PortsTarballTest < ActiveSupport::TestCase
       invocation = nil
 
       Open3.stub(:capture2e, lambda { |*arguments, **options|
-        invocation = [arguments, options]
-        ["verified", status]
+        invocation = [ arguments, options ]
+        [ "verified", status ]
       }) do
         assert @tarball.send(:verify_tarball, archive, signature)
       end

@@ -39,7 +39,7 @@ class RadioWhypImportTest < ActiveSupport::TestCase
         audio_root: Pathname.new(dir).join("audio"),
         manifest_root: Pathname.new(dir).join("manifest"),
       )
-      importer.define_singleton_method(:require_commands!) {}
+      importer.define_singleton_method(:require_commands!) { }
       previous_path = ENV["PATH"]
       previous_timeout = ENV["YTDLP_TIMEOUT"]
       ENV["PATH"] = dir

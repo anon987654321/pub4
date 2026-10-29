@@ -157,7 +157,7 @@ class UserPurgeJobTest < ActiveJob::TestCase
     assert_not CreatorWardrobeItem.exists?(creator_entry.id), "creator reference to private item survived erasure"
     assert_not Recommendation.exists?(other_recommendation.id), "recommendation leaked a private item"
     assert_nil other_challenge.reload.outfit_id, "another account's challenge retained the deleted outfit id"
-    assert_empty Message.where(id: [sent.id, received.id]), "private inbox messages survived erasure"
+    assert_empty Message.where(id: [ sent.id, received.id ]), "private inbox messages survived erasure"
     refute Shared::Reaction.exists?(private_message_reaction.id), "reaction retained a private message target"
     refute Shared::Notification.exists?(private_message_notification.id), "notification retained a private message target"
     refute Vote.exists?(private_message_vote.id), "vote retained a private message target"
@@ -177,7 +177,7 @@ class UserPurgeJobTest < ActiveJob::TestCase
     assert_not Shared::OutboundClick.exists?(private_comment_click.id), "outbound click retained a private comment target"
     refute DeclutterChallenge.exists?(other_item_challenge.id), "another user's challenge retained a deleted item"
 
-    [*profile_blob_ids, *item_blob_ids, *outfit_blob_ids].each do |blob_id|
+    [ *profile_blob_ids, *item_blob_ids, *outfit_blob_ids ].each do |blob_id|
       assert_empty ActiveStorage::Attachment.where(blob_id: blob_id), "an erased user's attachment survived"
     end
 
@@ -218,7 +218,7 @@ class UserPurgeJobTest < ActiveJob::TestCase
   test "one failed erasure does not prevent other due accounts from being purged" do
     failed = @user
     completed = @other
-    [failed, completed].each do |user|
+    [ failed, completed ].each do |user|
       user.update_columns(deleted_at: Time.current, deletion_scheduled_at: 1.second.ago)
     end
     job = UserPurgeJob.new

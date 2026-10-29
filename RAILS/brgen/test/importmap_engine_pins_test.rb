@@ -33,7 +33,7 @@ class ImportmapEnginePinsTest < ActiveSupport::TestCase
       root = Rails.root.join("..", relative_root, "app/javascript/controllers").to_s
       Dir.glob(File.join(root, "**", "*_controller.js")).sort.map do |path|
         relative = path.delete_prefix("#{root}/").delete_suffix(".js")
-        [vertical, "controllers/#{relative}"]
+        [ vertical, "controllers/#{relative}" ]
       end
     end
 

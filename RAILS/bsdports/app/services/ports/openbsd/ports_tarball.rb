@@ -138,8 +138,8 @@ module Ports
         unless uri.is_a?(URI::HTTPS) && uri.port == 443 && uri.userinfo.nil?
           raise URI::InvalidURIError, "ports mirror must use HTTPS on port 443"
         end
-        origin ||= [uri.scheme, uri.host, uri.port]
-        unless [uri.scheme, uri.host, uri.port] == origin
+        origin ||= [ uri.scheme, uri.host, uri.port ]
+        unless [ uri.scheme, uri.host, uri.port ] == origin
           raise URI::InvalidURIError, "ports mirror redirect changed origin"
         end
 

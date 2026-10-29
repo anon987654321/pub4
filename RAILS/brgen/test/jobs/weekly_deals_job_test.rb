@@ -59,5 +59,4 @@ class WeeklyDealsJobTest < ActiveSupport::TestCase
     NewsletterMailer.define_singleton_method(:edition, original)
     assert_not delivered
   end
-
 end

@@ -42,7 +42,7 @@ module Brgen
       # The learnings lived in the dilla engine's own reference file, which left
       # the tree with the engine (tag dilla-engine-final); this app's file is the one.
       def sonic_learnings_candidates
-        [rails_root.join("config/radio_bergen/sonic.yml")]
+        [ rails_root.join("config/radio_bergen/sonic.yml") ]
       end
 
       def sonic_learnings_path

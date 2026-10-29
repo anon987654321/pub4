@@ -77,5 +77,4 @@ class Webhooks::VippsControllerTest < ActionDispatch::IntegrationTest
     post webhooks_vipps_path, params: payload, headers: headers_for(payload)
     assert_response :ok
   end
-
 end

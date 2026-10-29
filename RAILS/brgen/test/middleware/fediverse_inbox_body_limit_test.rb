@@ -29,7 +29,7 @@ class FediverseInboxBodyLimitTest < ActiveSupport::TestCase
     @calls = 0
     @app = lambda do |env|
       @calls += 1
-      [200, { "content-type" => "text/plain" }, [env.fetch("rack.input").read.to_s]]
+      [ 200, { "content-type" => "text/plain" }, [ env.fetch("rack.input").read.to_s ] ]
     end
     @middleware = Fediverse::InboxBodyLimit.new(@app)
   end

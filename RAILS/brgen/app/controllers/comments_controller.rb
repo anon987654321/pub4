@@ -61,13 +61,13 @@ class CommentsController < ApplicationController
 
   def authorize_summary_comment
     readable = case @comment.commentable_type
-               when "Post"
+    when "Post"
                  Post.includes(:community).find(@comment.commentable_id).readable_by?(Current.user)
-               when "Event"
+    when "Event"
                  Event.find(@comment.commentable_id).readable_by?(Current.user)
-               else
+    else
                  false
-               end
+    end
     raise ActiveRecord::RecordNotFound unless readable
   end
 

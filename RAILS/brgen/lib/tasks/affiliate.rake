@@ -101,4 +101,3 @@ namespace :affiliate do
     puts PartnerAttributionReport.new(window: days.days).render
   end
 end
-

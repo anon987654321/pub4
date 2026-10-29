@@ -57,7 +57,7 @@ class PackageIndexFetcherRedirectTest < ActiveSupport::TestCase
 
   test "configured HTTP and nonstandard ports are rejected before connecting" do
     requests = []
-    Shared::OutboundHttp.stub(:request, ->(uri, **options) { requests << [uri, options] }) do
+    Shared::OutboundHttp.stub(:request, ->(uri, **options) { requests << [ uri, options ] }) do
       assert_raises(URI::InvalidURIError) do
         fetcher.send(:get, "http://127.0.0.1/index.txt")
       end
