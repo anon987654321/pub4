@@ -10,7 +10,7 @@
 
 ## 0. Purpose and rules
 
-This file collapses the FETAT website proposal, related GitHub material, AI³ visualization idea, operational sketches, workforce and finance proposals, and relevant evidence/statistical/legal questions into one maintainable record. Repeated copies are deduplicated; distinct ideas remain represented. Original sources remain the provenance trail.
+This file collapses the FETAT website proposal, related GitHub material, MASTER evidence-visualization concept, operational sketches, workforce and finance proposals, and relevant evidence/statistical/legal questions into one maintainable record. Repeated copies are deduplicated; distinct ideas remain represented. Original sources remain the provenance trail.
 
 The website frames FETAT (“FETAT – FAMILIEETATEN”; also written “F-ETAT”) as a citizen proposal to replace Norway's current child-welfare service with a differently organized service for protecting children and families. It is not an existing public agency or enacted policy.
 
@@ -37,7 +37,7 @@ The consolidated model has three outcomes:
 
 FETAT’s aims should be developed into a costed legal and operational blueprint, rather than implemented verbatim from the source posts. The strongest parts are the call for traceable evidence, meaningful participation, independent scrutiny, early help and placement stability. The most consequential proposals—transferring all welfare cases to criminal courts, mandatory broad family examination, seven-day investigative ceilings, children’s homes as temporary holding arrangements, continuous video surveillance, mass retrospective reviews, ending an entire profession, and large cuts to foster-carer payments—need serious legal, clinical, child-rights, safety and financial analysis before they could responsibly be adopted.
 
-AI³ can help organize documents and show evidence relationships. It must not decide whether a child should be removed or returned, diagnose a person, determine credibility, or convert an allegation into a fact.
+MASTER can help organize documents and show evidence relationships. It must not decide whether a child should be removed or returned, diagnose a person, determine credibility, or convert an allegation into a fact.
 
 ## 2. Source register and provenance
 
@@ -411,7 +411,7 @@ Do not advise people to evade a lawful process, move simply to avoid a case, or 
 
 ---
 
-## 13. AI³ evidence-visualization specification
+## 13. MASTER evidence-visualization specification
 
 The GitHub political-platform section proposes a visual evidence map to expose gaps and contradictions and make complex records easier to review. The following constrained system preserves that goal.
 
@@ -520,7 +520,7 @@ Governance requirements:
 
 ### Phase 2 — Evidence infrastructure
 - build an immutable document registry, timeline, issue matrix and access log;
-- pilot AI³ visualization on synthetic or approved de-identified material;
+- pilot MASTER evidence visualization on synthetic or approved de-identified material;
 - test citations, counterevidence, uncertainty and security.
 
 **Exit:** reviewers can reproduce the analysis from source records.
@@ -729,7 +729,7 @@ Its guidance says children who can form their own views have a right to particip
 
 Before any real-case pilot, document the data controller, legal basis, purpose, minimum necessary information, storage location, access permissions, transfer routes, model-provider policy, retention period, deletion process, audit logging, breach response and risk of re-identification. A summary is a derived record, not a replacement for the source document. No identifiable case material should be used in a public demo.
 
-## 23. AI³ release tests
+## 23. MASTER release tests
 
 For each test fixture, retain the dataset/fixture version, test ID, expected result, actual result, pass/fail status, defect or incident ID, reviewer, execution date, and evidence artifact. A test suite without recorded expected outcomes and actual results is a test plan, not evidence of a passing implementation. Run tests on synthetic or appropriately de-identified material before any live-case pilot.
 
@@ -754,12 +754,17 @@ The brief should distinguish a personal account, a documented fact, an allegatio
 
 ## Appendix C — Change log
 
+**1.0.2 — 29 October 2026 — naming alignment**
+- Renamed the proposed evidence-visualization system and its release-test sections from AI³ to MASTER to align with the current project name.
+- Preserved AI³ in historical source descriptions where it is the original name used by the source material.
+
+
 **1.0.1 — 29 October 2026 — evidence-hardening pass**
 - Added a claim-level verification-ledger schema and clarified that linked sources are not automatically verified evidence.
 - Added a statistical metadata protocol and retained a narrow SSB spot-check record for the current published totals.
 - Added exact-section, amendment and commencement checks for legal claims, including the June 2026 amendment law's commencement caveat.
 - Expanded AI³ release evidence requirements with expected/actual outcomes, failure conditions and adversarial fixtures.
-- Scope: targeted documentation edits to this file on GitHub main; no local MASTER /fix process was run, and no Ruby scanners, application tests, or real-case AI³ tests were executed. Historical FETAT claims, legal interpretations and the broader source-history inventory remain only partially verified.
+- Scope: targeted documentation edits to this file on GitHub main; no local MASTER /fix process was run, and no Ruby scanners, application tests, or real-case MASTER tests were executed. Historical FETAT claims, legal interpretations and the broader source-history inventory remain only partially verified.
 
 
 **1.0.0 — 29 October 2026**
