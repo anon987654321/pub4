@@ -658,6 +658,76 @@ The historical proposal recommends collecting new records, seeking independent r
 - 2023 tribunal annual report supplied by FETAT: https://fetat.no/wp-content/uploads/2024/10/ArsrapportBVHN2023-Endelig.pdf
 - Helsetilsynet report on shortcomings in eight of nine inspected services: https://www.helsetilsynet.no/publikasjoner/tilsynsmeldingen/2022/svikt-i-8-av-9-barneverntjenester/
 
+
+
+## 19. Latest official statistics: update the proposal beyond 2023
+
+SSB's national child-welfare table was updated on 3 June 2026 and provides data through 2025:
+https://www.ssb.no/sosiale-forhold-og-kriminalitet/barne-og-familievern/statistikk/barnevern
+
+| SSB indicator | 2023 | 2024 | 2025 | Change 2023–2025 |
+|---|---:|---:|---:|---:|
+| Children with child-welfare measures during the year | 43,954 | 42,421 | 42,551 | −3.2% |
+| Children with care measures during the year | 7,772 | 7,339 | 7,242 | −6.8% |
+| Children with measures at 31 December | 30,824 | 29,157 | 29,298 | −5.0% |
+| Children with care measures at 31 December | 6,764 | 6,402 | 6,324 | −6.5% |
+| Children and young people with placement measures at 31 December | 12,407 | 11,869 | 11,364 | −8.4% |
+
+The counts of children with measures during a year and on 31 December measure different populations. Do not merge an annual count with a point-in-time count. The 2025 totals show a small rise in the annual count receiving any measures from 2024 (42,421 to 42,551, about 0.3%) and a fall in the annual count with care measures (7,339 to 7,242, about 1.3%). Year-end care measures fell from 6,402 to 6,324 (about 1.2%).
+
+These changes describe totals, not the quality or fairness of decisions. They do not by themselves establish whether the system is better or worse, whether a report is true, or how many staff FETAT would need. Any interpretation must account for definitions, reporting behaviour, policy changes, population, duration, case complexity, outcomes and the data's limitations.
+
+Every statistic used in a policy document should identify the unit, age range, time period, source table, denominator and whether multiple records may relate to one child. A concern report is not necessarily a unique child, grounds in one request may overlap, and a percentage about one subset of outcomes must not be described as the success rate for all cases.
+
+## 20. Compare institutional options before replacing the whole system
+
+The goals of better evidence, independence and accountability are separable from the question of whether every existing institution must be replaced at once.
+
+| Option | Description | Advantage to test | Main risk to resolve |
+|---|---|---|---|
+| Improve current arrangements | Strengthen records, review, support and audits within current legal structures | Lower transition disruption | May leave structural conflicts unresolved |
+| Independent regional investigation | Separate complex investigations from municipal operational interests | More independent fact-finding | Requires precise authority and handoff rules |
+| National standards with regional operations | National policy and data standards, regional teams, separate adjudication | Consistency plus local execution | Centralization can itself become opaque |
+| Full FETAT replacement | Replace the operational model and redesign oversight, intake and placement | Coherent redesign | Highest legal, staffing, transition and cost risk |
+| Targeted pilots | Pilot hotline/triage, evidence audits or independent review first | Tests claims before full-scale change | A pilot may not predict whole-system effects |
+
+Evaluate each against child safety and participation, risk of wrongful separation, speed, legal rights, independent review, privacy, rural access, language accessibility, staffing, cost and reversibility. A credible FETAT blueprint should explain why a full replacement outperforms targeted changes, not assume this simply from the proposal's diagnosis.
+
+## 21. Legal powers matrix required before implementation
+
+For every proposed action, document: purpose; who may request it; who may authorize it; exact legal basis; threshold; consent requirement; urgency exception; maximum duration; notice and disclosure; access to counsel; independent reviewer or court; appeal route and deadline; required record; data access and retention; and remedy for error.
+
+Create separate rows for interviewing a child, obtaining records, clinical examination, home entry, temporary placement, restriction of contact, call recording, room monitoring, extending an intervention, disclosing records to police and sharing data with an AI provider. A general power to “investigate” is not enough to authorize every intrusive action.
+
+Also map the responsible and reviewing institution at each stage. Police, health services, schools, child protection, prosecutors, courts and independent review bodies have different functions. No professional gains legal authority merely by participating in a multidisciplinary team.
+
+## 22. Child participation and privacy requirements
+
+Bufdir's current Barnevernsrundskrivet was professionally updated on 16 April 2026 and expanded from 1 January 2026 to cover state child welfare and children's institutions:
+https://www.bufdir.no/fagstotte/produkter/saksbehandlingsrundskrivet/
+
+Its guidance says children who can form their own views have a right to participate throughout the process. Participation is a right, not a duty; the child must not be pressured or manipulated. The service should record what information was given, what the child expressed, whether the child agreed with the record of their views and how much weight those views received. The child's language, cultural background and relevant rights must be respected.
+
+Before any real-case pilot, document the data controller, legal basis, purpose, minimum necessary information, storage location, access permissions, transfer routes, model-provider policy, retention period, deletion process, audit logging, breach response and risk of re-identification. A summary is a derived record, not a replacement for the source document. No identifiable case material should be used in a public demo.
+
+## 23. AI³ release tests
+
+A prototype must pass these gates before use with real case material:
+
+1. **Source fidelity:** every material factual claim has a source locator or a visible “source not located” label; duplicate documents are not counted as independent corroboration.
+2. **Fair representation:** supporting and contradicting material can both be shown; contested claims remain contested; the system makes no credibility or parental-fitness score.
+3. **Safety and privacy:** authorized access is logged; exports are controlled; no public demonstration uses identifiable case records; unapproved external providers cannot receive confidential material.
+4. **Human ownership:** reviewers can open original sources, correct and reject summaries, preserve previous versions and approve any final report.
+5. **Adversarial evaluation:** test duplicated documents, conflicting dates, missing pages, poor scans, contradictory statements and legal references not present in the source. Measure missed issues as well as false alerts.
+
+The correct outcome when records are insufficient is “insufficient evidence,” not a forced yes/no result. A visually clear map is not proof that its interpretation is correct.
+
+## 24. Public brief — recommended framing
+
+A defensible public brief can say that complex child-welfare decisions require reliable evidence, meaningful child participation, timely support, clear reasons and effective independent scrutiny. It can present FETAT as a proposal to evaluate, with accessible intake, multidisciplinary expertise, source-linked decisions, independent review, family support and published aggregate audits.
+
+The brief should distinguish a personal account, a documented fact, an allegation, a legal interpretation and a proposed reform. Verify numbers against original sources; state units and time periods; remove details that could identify a child; disclose uncertainty; publish corrections; and avoid unsupported claims about all workers or all decisions. The strongest argument is based on evidence and safeguards, not on proving that every person or institution is at fault.
+
 ## Appendix C — Change log
 
 **1.0.0 — 29 October 2026**
@@ -667,6 +737,7 @@ The historical proposal recommends collecting new records, seeking independent r
 - Added statistical denominator checks and current law references.
 - Added the AI³ source-linked visualization design and individual case-review protocol.
 - Added privacy, child-rights, due-process, operational and implementation safeguards.
+- Added 2025 official statistics, institutional design alternatives, a legal-powers matrix, privacy requirements and AI³ release tests.
 - Recorded unresolved questions and limits of the repository-history search.
 
 **Maintenance rule:** record date, source, change and rationale for material updates. Keep corrections auditable; do not erase a prior material correction.
