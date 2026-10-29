@@ -37,7 +37,7 @@ module Marketplace
         def list(limit: 100, starting_after: nil, include_deleted: false)
           query = {
             limit: limit.to_i.clamp(1, 100),
-            include_deleted: include_deleted
+            include_deleted: include_deleted,
           }
           query[:starting_after] = starting_after if starting_after.present?
 
@@ -53,9 +53,9 @@ module Marketplace
             config: {
               url: webhook_url,
               content_type: "application/json",
-              secret: ENV.fetch("DINTERO_HOOK_SECRET")
+              secret: ENV.fetch("DINTERO_HOOK_SECRET"),
             },
-            events: EVENTS
+            events: EVENTS,
           }
         end
 

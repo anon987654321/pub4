@@ -30,7 +30,7 @@ module Fediverse
         "Host" => uri.host,
         "Date" => date,
         "Digest" => digest,
-        "Content-Type" => "application/activity+json"
+        "Content-Type" => "application/activity+json",
       }.merge(extra_headers)
 
       covered = %w[(request-target) host date digest]

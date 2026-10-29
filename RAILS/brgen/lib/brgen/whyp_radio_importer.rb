@@ -107,7 +107,7 @@ module Brgen
           "privacy" => "public",
           "purpose" => "Radio seed media",
           "generated_at" => Time.current.iso8601,
-          "rights_note" => "Imported from the operator-provided Whyp collection; verify publication rights before production redistribution."
+          "rights_note" => "Imported from the operator-provided Whyp collection; verify publication rights before production redistribution.",
         },
         "tracks" => tracks
       }

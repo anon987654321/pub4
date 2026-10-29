@@ -34,7 +34,7 @@ class FediverseInboxTest < ActionDispatch::IntegrationTest
       "id" => id,
       "type" => "Follow",
       "actor" => @actor_uri,
-      "object" => "https://brgen.no/users/kari"
+      "object" => "https://brgen.no/users/kari",
     }
   end
 
@@ -138,7 +138,7 @@ class FediverseInboxTest < ActionDispatch::IntegrationTest
       "id" => "https://remote.example/activities/#{SecureRandom.uuid}",
       "type" => "Undo",
       "actor" => @actor_uri,
-      "object" => { "type" => "Follow", "actor" => @actor_uri, "object" => "https://brgen.no/users/kari" }
+      "object" => { "type" => "Follow", "actor" => @actor_uri, "object" => "https://brgen.no/users/kari" },
     }
 
     assert_difference -> { FediFollow.count }, -1 do
@@ -199,7 +199,7 @@ class FediverseInboxTest < ActionDispatch::IntegrationTest
       "id" => "https://remote.example/activities/#{SecureRandom.uuid}",
       "type" => "Delete",
       "actor" => @actor_uri,
-      "object" => { "id" => target_uri }
+      "object" => { "id" => target_uri },
     }
 
     assert_equal :not_ours, Fediverse::InboxProcessor.new(activity, @actor).call

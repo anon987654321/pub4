@@ -77,7 +77,7 @@ module Marketplace
             expires_in = 300 if expires_in <= 0
             @token = {
               value: response.fetch("access_token"),
-              expires_at: Time.current.to_i + expires_in
+              expires_at: Time.current.to_i + expires_in,
             }
           end
           @token[:value]

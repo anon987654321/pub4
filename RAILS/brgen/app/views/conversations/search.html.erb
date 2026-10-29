@@ -1,6 +1,6 @@
 <%= turbo_frame_tag "messenger-pane", class: "messenger-pane" do %>
     <% content_for :title, t("messages.search_title") %>
-  
+
   <div class="page-header">
     <hgroup>
       <p><%= t("messages.title") %></p>
@@ -8,7 +8,7 @@
     </hgroup>
     <%= link_to t("messages.back_all"), conversations_path, class: "btn btn-ghost" %>
   </div>
-  
+
   <%= form_with url: search_conversations_path, method: :get, class: "messenger-compose-form" do |f| %>
     <%= f.hidden_field :conversation_id, value: @conversation&.id %>
     <%= f.label :q, t("messages.search_label") %>
@@ -17,7 +17,7 @@
       <%= f.submit t("messages.search_submit"), class: "btn" %>
     </div>
   <% end %>
-  
+
   <% if @messages.any? %>
     <ul role="list" aria-label="<%= t("messages.search_results_aria") %>">
       <% @messages.each do |message| %>
@@ -37,5 +37,5 @@
           body: t("messages.search_empty_body"),
           action: { label: t("messages.title"), path: conversations_path } %>
   <% end %>
-  
+
 <% end %>

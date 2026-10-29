@@ -25,7 +25,7 @@ class BooleanDefaultsForNilableFlags < ActiveRecord::Migration[8.1]
     %w[takeaway_menu_items vegan],
     %w[takeaway_menu_items vegetarian],
     %w[takeaway_restaurants active],
-    %w[tv_subscriptions notify_on_upload]
+    %w[tv_subscriptions notify_on_upload],
   ].freeze
 
   def up

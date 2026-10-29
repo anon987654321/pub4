@@ -27,7 +27,7 @@ module Brgen
       "frankfrt.de" => %w[frankfurt germany],
       "mrseille.fr" => %w[marseille france],
       "mlan.it" => %w[milan italy],
-      "lisbon.pt" => %w[lisbon portugal]
+      "lisbon.pt" => %w[lisbon portugal],
     }.freeze
 
     COMMUNITY_SLUGS = {
@@ -46,7 +46,7 @@ module Brgen
       "PL" => %w[lokalne wiadomosci],
       "BE" => %w[local actualites],
       "CH" => %w[lokal news],
-      "LI" => %w[lokal news]
+      "LI" => %w[lokal news],
     }.freeze
 
     # Faker locale ids, keyed to the same country codes as COMMUNITY_SLUGS, so
@@ -85,7 +85,7 @@ module Brgen
       "LI" => "de-CH",
       "IT" => "it",
       "PT" => "pt",
-      "PL" => "pl"
+      "PL" => "pl",
     }.freeze
 
     # What a city actually sounds like.
@@ -162,7 +162,7 @@ module Brgen
         [ "Kjuagutt søker fotballag i Årstad", "35, treig, men møter opp hver gang. Spilte på Nymark for hundre år siden.",
           [ "Vi trenger folk på torsdager. Send melding.", "Møter opp hver gang er det eneste kravet som betyr noe." ] ],
         [ "Brann på Stadion i regn er den ekte varen", "Bataljonen sto som vanlig. Den er brun, uansett hvordan det gikk.",
-          [ "Sto på Store Stå i tre timer. Angrer ingenting.", "Regnet hører til. Sol på Stadion føles feil." ] ]
+          [ "Sto på Store Stå i tre timer. Angrer ingenting.", "Regnet hører til. Sol på Stadion føles feil." ] ],
       ],
       "oshlo.no" => [
         [ "Hvorfor er det alltid kø på Sognsvann når sola kommer?", "Dro dit klokka sju i går for å slippe unna. Klokka ni var det folk overalt. Hele byen har samme idé samtidig.",
@@ -180,7 +180,7 @@ module Brgen
         [ "Bislett om morgenen, hvem løper der?", "Prøver å komme i gang igjen. Er banen åpen for vanlige folk før jobb, eller er det klubbene som har den?",
           [ "Åpen mellom seks og åtte på hverdager. Sjekk skiltet ved inngangen.", "Vi er en gjeng der kvart over seks. Bare møt opp." ] ],
         [ "Operaen-taket er fortsatt gratis og fortsatt best", "Folk glemmer det. Gå opp en tirsdag kveld, ta med kaffe, se utover fjorden. Koster ingenting.",
-          [ "Glatt når det regner. Gå med ordentlige sko.", "Best i februar når sola står lavt og det er is på fjorden." ] ]
+          [ "Glatt når det regner. Gå med ordentlige sko.", "Best i februar når sola står lavt og det er is på fjorden." ] ],
       ],
       "stvanger.no" => [
         [ "Kor mange turistar tåler Preikestolen?", "Var der i går og det stod folk i kø på sjølve platået. Eg er glad folk kjem, men det byrjar å bli mykje.",
@@ -198,7 +198,7 @@ module Brgen
         [ "Gamle Stavanger er tomt om vinteren", "Gjekk gjennom kvitbyen i går kveld og møtte ingen. Litt trist, litt fint.",
           [ "Det er då han er finast. Om sommaren kjem du deg ikkje fram.", "Folk bur der framleis, dei held seg berre inne." ] ],
         [ "Breiavatnet-svanene har fått ungar igjen", "Sju stykk. Stod og såg på dei i tjue minutt før eg gjekk på jobb.",
-          [ "Sju er mange. I fjor var det fire.", "Ikkje mat dei med brød. Det er ikkje bra for dei." ] ]
+          [ "Sju er mange. I fjor var det fire.", "Ikkje mat dei med brød. Det er ikkje bra for dei." ] ],
       ],
       "trndheim.no" => [
         [ "Ka gjør dokker på Solsiden når det regn?", "Æ har prøvd alt. Til slutt blir det bare å sett sæ inne og vent, sjø.",
@@ -216,7 +216,7 @@ module Brgen
         [ "Samfundet på en tirsdag e undervurdert", "Ingen kø, folk prater faktisk sammen. Helgene e itj det samme.",
           [ "Klubben på tirsdag e den ekte varen.", "Enig. Æ slutta å gå i helgene for to år sia." ] ],
         [ "Tyholttårnet snurre fortsatt, eller?", "Sto og så på det i går og klarte itj å avgjøre om det gikk rundt.",
-          [ "Restauranten snurre, tårnet står stille. Det e derfor du itj ser det.", "En runde tar en time. Du må stå der lenge for å merke det." ] ]
+          [ "Restauranten snurre, tårnet står stille. Det e derfor du itj ser det.", "En runde tar en time. Du må stå der lenge for å merke det." ] ],
       ],
       # Plain American English. The one Southern California marker worth
       # keeping is the article on freeways — "the 405", "the 10" — which
@@ -237,8 +237,8 @@ module Brgen
         [ "Is the D Line out to Wilshire/La Brea worth it yet?", "Rode it for the first time last week. Clean, fast, weirdly empty. Anyone actually using it to commute?",
           [ "I take it from Koreatown every day. Beats parking on Wilshire by a mile.", "It'll matter once it reaches Westwood. Until then it's a nice ride to the Tar Pits." ] ],
         [ "Dodger Stadium: Top Deck or the bleachers?", "Going to my first game this season. I want the view but I also want the atmosphere.",
-          [ "Top Deck for the sunset over the hills. Bleachers for the noise.", "Get there early and walk the whole concourse. The view from behind home plate is free." ] ]
-      ]
+          [ "Top Deck for the sunset over the hills. Bleachers for the noise.", "Get there early and walk the whole concourse. The view from behind home plate is free." ] ],
+      ],
     }.freeze
 
     module_function

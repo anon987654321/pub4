@@ -22,7 +22,7 @@ module Marketplace
             "currency" => payout.currency.to_s.downcase,
             "destination" => destination,
             "metadata[payout_id]" => payout.id.to_s,
-            "transfer_group" => payout.order_id.present? ? "order_#{payout.order_id}" : "payout_#{payout.id}"
+            "transfer_group" => payout.order_id.present? ? "order_#{payout.order_id}" : "payout_#{payout.id}",
           },
           idempotency_key: "marketplace-payout-#{payout.id}"
         )

@@ -50,7 +50,7 @@ module Fediverse
       [
         status,
         { "content-type" => "text/plain; charset=utf-8", "content-length" => message.bytesize.to_s },
-        [message]
+        [message],
       ]
     end
 

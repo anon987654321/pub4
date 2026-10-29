@@ -49,7 +49,7 @@ module Brgen
       "mnnesota.com" => [ 44.9778, -93.2650 ],
       "newyrk.us" => [ 40.7128, -74.0060 ],
       "prtland.com" => [ 45.5152, -122.6784 ],
-      "wshingtondc.com" => [ 38.9072, -77.0369 ]
+      "wshingtondc.com" => [ 38.9072, -77.0369 ],
     }.freeze
 
     TIME_ZONES = {
@@ -95,7 +95,7 @@ module Brgen
       "mnnesota.com" => "America/Chicago",
       "newyrk.us" => "America/New_York",
       "prtland.com" => "America/Los_Angeles",
-      "wshingtondc.com" => "America/New_York"
+      "wshingtondc.com" => "America/New_York",
     }.freeze
 
     # City data is driven from the authoritative list in DomainRegistry so that
@@ -113,7 +113,7 @@ module Brgen
     ROWS = rows_from_registry.presence || [
       # Fallback minimal set if registry not loaded
       CityRow.new("brgen.no", "Bergen", "NO", "nb", "NOK", "Europe/Oslo", 60.3913, 5.3221),
-      CityRow.new("lsangeles.com", "Los Angeles", "US", "en-US", "USD", "America/Los_Angeles", 34.0522, -118.2437)
+      CityRow.new("lsangeles.com", "Los Angeles", "US", "en-US", "USD", "America/Los_Angeles", 34.0522, -118.2437),
     ].freeze
 
     def self.sync!

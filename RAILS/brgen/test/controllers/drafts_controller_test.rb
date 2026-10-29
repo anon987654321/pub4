@@ -42,7 +42,7 @@ end
     patch draft_path("post_new"), params: {
       title: "Half-written",
       "user[password]": "super-secret",
-      "oauth[token]": "bearer-secret"
+      "oauth[token]": "bearer-secret",
     }
 
     assert_response :no_content

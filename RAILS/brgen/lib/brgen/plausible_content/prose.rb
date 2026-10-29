@@ -147,7 +147,7 @@ module Brgen
       "Hvem andre her har bodd i samme leilighet i over ti år?",
       "Er det noen som fortsatt bruker torget?",
       "Hva savner dere mest i denne bydelen?",
-      "Noen som husker hva som lå der før?"
+      "Noen som husker hva som lå der før?",
       ].freeze
 
       # Bodies are composed, not picked whole: one opening sentence and one closing
@@ -189,7 +189,7 @@ module Brgen
       "Har prøvd å ringe, men kommer aldri gjennom.",
       "Dette burde vært lett å finne ut av, og likevel.",
       "Jobber litt rart for tiden og må planlegge deretter.",
-      "Har hørt begge deler, og nå vet jeg ærlig talt ikke."
+      "Har hørt begge deler, og nå vet jeg ærlig talt ikke.",
       ].freeze
 
       NORWEGIAN_POST_CLOSERS = [
@@ -216,7 +216,7 @@ module Brgen
       "Er det noe jeg har oversett her?",
       "Kan godt legge ut hva jeg lander på etterpå.",
       "Trenger ikke noe fancy, bare noe som fungerer.",
-      "Håper det er greit å spørre om sånt her."
+      "Håper det er greit å spørre om sånt her.",
       ].freeze
 
       ENGLISH_POST_TITLES = [
@@ -253,7 +253,7 @@ module Brgen
       "Who do you call about a streetlight that's out?",
       "Does anyone still use the square?",
       "What do you miss most in this part of town?",
-      "Anyone remember what used to be there?"
+      "Anyone remember what used to be there?",
       ].freeze
 
       ENGLISH_POST_OPENERS = [
@@ -275,7 +275,7 @@ module Brgen
       "Found an old thread about the same thing, but it's from 2019.",
       "Got people visiting at the weekend and would like it sorted.",
       "I've tried ringing but can never get through.",
-      "Thought I knew the answer until I actually needed it."
+      "Thought I knew the answer until I actually needed it.",
       ].freeze
 
       ENGLISH_POST_CLOSERS = [
@@ -296,7 +296,7 @@ module Brgen
       "Is it worth the bother, or should I let it go?",
       "What would you do?",
       "I'll report back if I work it out myself.",
-      "Thanks in advance to anyone who bothers."
+      "Thanks in advance to anyone who bothers.",
       ].freeze
     end
   end

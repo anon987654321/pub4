@@ -6,7 +6,7 @@ class StandardizeMarketplaceListingConditions < ActiveRecord::Migration[8.1]
       "new" => "new_with_tags",
       "like_new" => "very_good",
       "fair" => "good",
-      "poor" => "satisfactory"
+      "poor" => "satisfactory",
     }.each do |from, to|
       execute <<~SQL
         UPDATE marketplace_listings

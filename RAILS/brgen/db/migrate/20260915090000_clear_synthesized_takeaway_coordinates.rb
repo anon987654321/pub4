@@ -20,7 +20,7 @@ class ClearSynthesizedTakeawayCoordinates < ActiveRecord::Migration[8.1]
     seed = Zlib.crc32([ address, city, name ].join("|"))
     [
       anchor_lat.to_f + ((seed % 2_000) - 1_000) / 100_000.0,
-      anchor_lng.to_f + (((seed / 2_000) % 2_000) - 1_000) / 100_000.0
+      anchor_lng.to_f + (((seed / 2_000) % 2_000) - 1_000) / 100_000.0,
     ]
   end
 

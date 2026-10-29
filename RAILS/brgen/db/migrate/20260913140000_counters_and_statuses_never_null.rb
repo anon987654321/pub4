@@ -18,7 +18,7 @@ class CountersAndStatusesNeverNull < ActiveRecord::Migration[8.1]
   NULLABLE_ZERO = {
     marketplace_listings: %i[views_count],
     tv_videos: %i[views_count],
-    playlist_playlists: %i[plays_count]
+    playlist_playlists: %i[plays_count],
   }.freeze
 
   def up

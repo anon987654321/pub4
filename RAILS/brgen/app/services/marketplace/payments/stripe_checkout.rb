@@ -52,7 +52,7 @@ module Marketplace
             "line_items[0][price_data][unit_amount]" => order.total_cents.to_i,
             "line_items[0][quantity]" => 1,
             "client_reference_id" => "#{payable_kind}:#{order.id}",
-            "metadata[#{payable_kind}]" => order.id.to_s
+            "metadata[#{payable_kind}]" => order.id.to_s,
           },
           idempotency_key: "marketplace-checkout-#{payable_kind}-#{order.id}"
         )

@@ -76,7 +76,7 @@ module Brgen
       "tech" => [ "Teknologi", "Teknologi og oppstart i %{city}: meetups, jobber og prosjekter." ],
       "film" => [ "Film", "Film i %{city}: kinopremierer, filmfestivaler og filmklubber." ],
       "food" => [ "Mat", "Mat og drikke i %{city}: kafeer, restauranter, torgdager og oppskrifter." ],
-      "music" => [ "Musikk", "Musikk i %{city}: konserter, band, klubbkvelder og nye utgivelser." ]
+      "music" => [ "Musikk", "Musikk i %{city}: konserter, band, klubbkvelder og nye utgivelser." ],
     }.freeze
 
     module_function

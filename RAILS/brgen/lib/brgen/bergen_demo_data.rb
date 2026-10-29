@@ -34,7 +34,7 @@ module Brgen
       %w[Per per_laksevag],
       %w[Silje silje_korall],
       %w[Torbjørn tor_fana],
-      %w[Live live_bergenlive]
+      %w[Live live_bergenlive],
     ].freeze
 
     FEATURED_POSTS = BergenDemoFeaturedPosts::FEATURED_POSTS
@@ -45,7 +45,7 @@ module Brgen
       { user: "marte_kode24", title: "MacBook Air M1, pent brukt", price_cents: 6_500_00, image: "bergen-macbook" },
       { user: "tor_fana", title: "IKEA sofa, hentes Fana", price_cents: 2_000_00, image: "bergen-sofa" },
       { user: "hanne_sandviken", title: "Barnevogn, god stand", price_cents: 1_800_00, image: "bergen-stroller" },
-      { user: "per_laksevag", title: "Telemarkski + støvler", price_cents: 2_400_00, image: "bergen-skis" }
+      { user: "per_laksevag", title: "Telemarkski + støvler", price_cents: 2_400_00, image: "bergen-skis" },
     ].freeze
 
     DATING_BIOS = [
@@ -108,19 +108,19 @@ module Brgen
         user: "marte_kode24", gender: "woman", looking_for: "man", age: 25, bydel: "Fana",
         bio: "Utvikler på Mesh, nerd for kart og offentlig transport. Swipe høyre hvis du kan forklare Bybanen uten å bli sur.",
         image: "bergen-dating-marte"
-      }
+      },
     ].freeze
 
     DATING_MUTUAL_PAIRS = [
       %w[emilie_floyen magnus_student],
       %w[silje_korall jonas_7fjell],
       %w[henrik_vestland ingrid_ulriken],
-      %w[hanne_sandviken per_laksevag]
+      %w[hanne_sandviken per_laksevag],
     ].freeze
 
     DATING_ONE_WAY_LIKES = [
       %w[sofie_regnby anders_fisketorget],
-      %w[marte_kode24 live_bergenlive]
+      %w[marte_kode24 live_bergenlive],
     ].freeze
 
     NEIGHBORHOODS = [
@@ -131,7 +131,7 @@ module Brgen
       [ "Møhlenpris", "mohlenpris" ],
       [ "Laksevåg", "laksevag" ],
       [ "Fyllingsdalen", "fyllingsdalen" ],
-      [ "Fana", "fana" ]
+      [ "Fana", "fana" ],
     ].freeze
 
     PLACES = [
@@ -150,7 +150,7 @@ module Brgen
       { slug: "nordnesparken", name: "Nordnesparken", kind: "park", neighborhood: "nordnes",
         latitude: 60.3998, longitude: 5.3078, address: "Nordnes", image: "bergen-place-nordnesparken" },
       { slug: "vilvite", name: "VilVite", kind: "museum", neighborhood: "sentrum",
-        latitude: 60.3814, longitude: 5.3321, address: "Thormøhlens check 51", image: "bergen-place-vilvite" }
+        latitude: 60.3814, longitude: 5.3321, address: "Thormøhlens check 51", image: "bergen-place-vilvite" },
     ].freeze
 
     RESTAURANTS = [
@@ -162,7 +162,7 @@ module Brgen
         menu: [
           { name: "Eggerøre med spekeskinke", description: "Søndagsbrunch-klassiker fra Nordnes.", price_cents: 16_500, image: "bergen-brunch" },
           { name: "Kanelbolle", description: "Bakt samme morgen — best med kaffe.", price_cents: 4_500, image: "bergen-bakery" },
-          { name: "Fiskesuppe", description: "Dagens fangst, brød og smør.", price_cents: 18_900, image: "bergen-takeaway-fiskesuppe" }
+          { name: "Fiskesuppe", description: "Dagens fangst, brød og smør.", price_cents: 18_900, image: "bergen-takeaway-fiskesuppe" },
         ]
       },
       {
@@ -173,7 +173,7 @@ module Brgen
         menu: [
           { name: "Reker på briks", description: "Ferske reker med sitron og aioli.", price_cents: 22_900, image: "bergen-takeaway-fishme" },
           { name: "Blåskjell i hvitvin", description: "Løk, persille og brød.", price_cents: 19_500, image: "bergen-takeaway-blaskjell" },
-          { name: "Fisk og chips", description: "Torsk, remoulade og pommes.", price_cents: 17_500, image: "bergen-takeaway-fisk-og-chips" }
+          { name: "Fisk og chips", description: "Torsk, remoulade og pommes.", price_cents: 17_500, image: "bergen-takeaway-fisk-og-chips" },
         ]
       },
       {
@@ -184,7 +184,7 @@ module Brgen
         menu: [
           { name: "Margherita", description: "San Marzano, fior di latte, basilikum.", price_cents: 14_900, image: "bergen-takeaway-potetkjelleren" },
           { name: "Pepperoni", description: "Klassisk, litt chili.", price_cents: 16_500, image: "bergen-takeaway-pepperoni" },
-          { name: "Quattro formaggi", description: "Fire oster, hvitløkolje.", price_cents: 17_900, image: "bergen-takeaway-quattro-formaggi" }
+          { name: "Quattro formaggi", description: "Fire oster, hvitløkolje.", price_cents: 17_900, image: "bergen-takeaway-quattro-formaggi" },
         ]
       },
       {
@@ -195,9 +195,9 @@ module Brgen
         menu: [
           { name: "Bergensk fiskesuppe", description: "Kremet, med reker og pynt.", price_cents: 21_500, image: "bergen-takeaway-dyvekes" },
           { name: "Pinnekjøtt", description: "Sesong — bestill i god tid.", price_cents: 24_900, image: "bergen-takeaway-pinnekjott" },
-          { name: "Rømmegrøt", description: "Med sukker og kanel.", price_cents: 9_900, image: "bergen-takeaway-colonialen" }
+          { name: "Rømmegrøt", description: "Med sukker og kanel.", price_cents: 9_900, image: "bergen-takeaway-colonialen" },
         ]
-      }
+      },
     ].freeze
 
     TV_CHANNELS = [
@@ -207,7 +207,7 @@ module Brgen
         avatar: "bergen-tv-live-avatar", banner: "bergen-tv-live-banner",
         videos: [
           { title: "Open mic på Logen — høydepunkter", thumbnail: "bergen-logen", duration_seconds: 248, views_count: 1_240 },
-          { title: "Radio Bergen nattbuss mix", thumbnail: "bergen-radio-night", duration_seconds: 312, views_count: 890 }
+          { title: "Radio Bergen nattbuss mix", thumbnail: "bergen-radio-night", duration_seconds: 312, views_count: 890 },
         ]
       },
       {
@@ -216,7 +216,7 @@ module Brgen
         avatar: "bergen-tv-kultur-avatar", banner: "bergen-tv-kultur-banner",
         videos: [
           { title: "Bak scenen: Bergen Filharmoniske", thumbnail: "bergen-concert-hall", duration_seconds: 420, views_count: 2_100 },
-          { title: "Pepperkakebyen — familietips", thumbnail: "bergen-pepperkakebyen", duration_seconds: 185, views_count: 3_400 }
+          { title: "Pepperkakebyen — familietips", thumbnail: "bergen-pepperkakebyen", duration_seconds: 185, views_count: 3_400 },
         ]
       },
       {
@@ -225,9 +225,9 @@ module Brgen
         avatar: "bergen-tv-bybanen-avatar", banner: "bergen-lungegaardsvann",
         videos: [
           { title: "Florida → Byparken på 4 min", thumbnail: "bergen-lungegaardsvann", duration_seconds: 96, views_count: 5_600 },
-          { title: "Regnvær og bybane — vinterdrift", thumbnail: "bergen-bryggen-rain", duration_seconds: 210, views_count: 1_780 }
+          { title: "Regnvær og bybane — vinterdrift", thumbnail: "bergen-bryggen-rain", duration_seconds: 210, views_count: 1_780 },
         ]
-      }
+      },
     ].freeze
 
     # Jodel-shaped Live notes: short, anonymous, geo-stamped for /live demo density.
@@ -241,7 +241,7 @@ module Brgen
       { hours_ago: 8, body: "Stille på Fløyen i kveld — nesten ingen turister." },
       { hours_ago: 12, body: "Lydsjekk: er det konsert på Logen i kveld eller bare øving?" },
       { hours_ago: 18, body: "Fisketorget lukter skikkelig godt. Anbefaler reker." },
-      { hours_ago: 24, body: "Regnværsdag: beste bibliotekkroken er 2. etasje, vindu mot dammen." }
+      { hours_ago: 24, body: "Regnværsdag: beste bibliotekkroken er 2. etasje, vindu mot dammen." },
     ].freeze
   end
 end

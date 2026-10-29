@@ -33,7 +33,6 @@ same twice, and the deploy copies only tracked files to the box, where the seeds
 the app keeps the small copy, and the full renders and their ungraded originals stay out of git
 on the machine that made them.
 
-
 Unprocessed sources receive one Postpro pass during the curated seed run. `preset: "random"`
 chooses a valid preset deterministically from the seed key; repeating the seed does not change the
 grade simply because the random number generator changed. A row marked `graded: true` is already

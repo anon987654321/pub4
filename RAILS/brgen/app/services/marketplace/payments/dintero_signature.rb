@@ -47,7 +47,7 @@ module Marketplace
           method.to_s.upcase,
           parsed.hostname,
           parsed.path,
-          query_string
+          query_string,
         ].join("\n")
         signature = OpenSSL::HMAC.hexdigest("SHA256", ENV.fetch("DINTERO_CALLBACK_SECRET"), payload)
         "t=#{timestamp},v0-hmac-sha256=#{signature}"

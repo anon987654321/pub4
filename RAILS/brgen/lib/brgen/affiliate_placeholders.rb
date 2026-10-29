@@ -57,7 +57,7 @@ module Brgen
       { external_id: "ph-sport1-sykkel", title: "Sykkellås, hardened stål",
         merchant: "Sport 1", price_cents: 699_00, currency: "NOK",
         category: "vehicles", url: "https://www.sport1.no/",
-        description: "Bøylelås med monteringsbrakett." }
+        description: "Bøylelås med monteringsbrakett." },
     ].freeze
 
     module_function

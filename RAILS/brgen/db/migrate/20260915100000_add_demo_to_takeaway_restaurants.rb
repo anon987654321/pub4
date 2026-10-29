@@ -18,7 +18,7 @@ class AddDemoToTakeawayRestaurants < ActiveRecord::Migration[8.1]
     "Colonialen" => "ola_nordnes",
     "Fish Me" => "anders_fisketorget",
     "Potetkjelleren" => "henrik_vestland",
-    "Dyvekes" => "sofie_regnby"
+    "Dyvekes" => "sofie_regnby",
   }.freeze
 
   def up
