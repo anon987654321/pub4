@@ -130,8 +130,8 @@ class TestFaceSwarm < Minitest::Test
     assert_operator particle.z, :>, 0.1
     assert Swarm.residual_selected?(0, fraction: 1.0)
     refute Swarm.residual_selected?(0, fraction: 0.0)
-    assert_equal Swarm.residual_selected?(7, fraction: 0.18),
-                 Swarm.residual_selected?(7, fraction: 0.18)
+    assert Swarm.residual_selected?(20, fraction: 0.18)
+    refute Swarm.residual_selected?(7, fraction: 0.18)
   end
 
   def test_gather_states_do_not_apply_the_residual_home_tether
