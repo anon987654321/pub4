@@ -83,7 +83,7 @@ class TestLawCataloguePolicy < Minitest::Test
 
   def with_catalogue_entry(id, fields)
     original = Law.method(:catalogue_entry)
-    entry = { "universal" => true, "modalities" => %w[lexical semantic visual] }.merge(fields)
+    entry = fields.dup
     Law.define_singleton_method(:catalogue_entry) { |key| key.to_sym == id ? entry : original.call(key) }
     yield
   ensure

@@ -34,7 +34,7 @@ module Master
         # reach MechanicalAutofix whatever its policy said.
         def auto_fix = definition.autofix == :automatic
         def autofix = definition.autofix
-        def languages = Array(definition.languages).map(&:to_s)
+        def languages = definition.reach_languages
         def mode = definition.mode
         def prefetch(_paths) = nil
 

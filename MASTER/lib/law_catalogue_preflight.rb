@@ -101,7 +101,7 @@ module Master
       # detector_sources is retired: every Law is one Law.define, and its
       # definition source is the file that holds its detector.
       allowed_entry_fields = %w[
-        universal modalities definition_sources severity mode lifecycle autofix
+        universal definition_sources severity mode lifecycle autofix
         languages surfaces path path_pattern path_exclude
       ]
       expected_modalities = Master::LawVocabulary::MODALITIES.map(&:to_s).sort
@@ -160,9 +160,8 @@ module Master
 
         unknown_entry_fields = entry.keys.map(&:to_s) - allowed_entry_fields
         errors << "Law #{id} has unknown catalogue field(s): #{unknown_entry_fields.sort.join(', ')}" unless unknown_entry_fields.empty?
-        errors << "Law #{id} must be marked universal" unless entry["universal"] == true
-        modalities = Array(entry["modalities"]).map(&:to_s).uniq.sort
-        errors << "Law #{id} modalities must be #{expected_modalities.join(', ')}" unless modalities == expected_modalities
+        # universal_by_default holds unless an entry says false: a domain Law.
+        errors << "Law #{id} universal must be true or false" unless [nil, true, false].include?(entry["universal"])
         policy = defaults.merge(entry)
         severity = policy["severity"].to_s.strip
         if severity.empty?

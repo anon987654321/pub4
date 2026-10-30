@@ -282,8 +282,6 @@ module Master
           entry_without_source = []
           missing_source_files = []
           duplicate_definitions = []
-          non_universal = []
-          entry_missing_modalities = []
           without_deterministic_detector = []
 
           repo_root = File.dirname(File.expand_path(@root))
@@ -293,11 +291,6 @@ module Master
             sources = definitions
             entry_without_source << id if sources.empty?
             duplicate_definitions << id if definitions.uniq.size > 1
-            non_universal << id unless entry["universal"] == true
-            entry_modalities = Array(entry["modalities"]).map(&:to_s).to_set
-            absent_modalities = required_modalities.reject { |modality| entry_modalities.include?(modality) }
-            entry_missing_modalities << "#{id}:#{absent_modalities.join(',')}" unless absent_modalities.empty?
-
             without_deterministic_detector << id unless detector_present?(registry, id)
 
             sources.uniq.each do |source|
@@ -316,8 +309,6 @@ module Master
               manifest_entries_without_source: entry_without_source.sort.freeze,
               manifest_missing_source_files: missing_source_files.sort.freeze,
               manifest_duplicate_definitions: duplicate_definitions.sort.freeze,
-              manifest_non_universal: non_universal.sort.freeze,
-              manifest_entry_missing_modalities: entry_missing_modalities.sort.freeze,
               manifest_without_deterministic_detector: without_deterministic_detector.sort.freeze,
             }.freeze,
           }.freeze

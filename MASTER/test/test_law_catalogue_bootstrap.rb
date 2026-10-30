@@ -99,7 +99,7 @@ class TestLawCatalogueBootstrap < Minitest::Test
       FileUtils.mkdir_p(law_dir)
       File.write(File.join(law_dir, "actual.rb"), "Law.define(:ACTUAL_ID) do\nend\n")
 
-      entry = { "universal" => true, "modalities" => %w[lexical semantic visual], "severity" => "info",
+      entry = { "severity" => "info",
                 "definition_sources" => ["MASTER/law/actual.rb"], "detector_sources" => ["MASTER/law/actual.rb"] }
       error = assert_raises(ArgumentError) do
         Master::LawCataloguePreflight.validate!(law_dir:, catalogue: { "entries" => { "ACTUAL_ID" => entry } }, repo_root: root)
@@ -120,16 +120,16 @@ class TestLawCatalogueBootstrap < Minitest::Test
         "surfaces" => ["whole_file"],
         "defaults" => {},
         "entries" => {
-          "ACTUAL_ID" => { "universal" => false, "modalities" => [], "definition_sources" => [] },
-          "bad-id" => { "universal" => true, "modalities" => %w[lexical semantic visual] },
+          "ACTUAL_ID" => { "universal" => "yes", "modalities" => [], "definition_sources" => [] },
+          "bad-id" => {},
         },
       }
       error = assert_raises(ArgumentError) do
         Master::LawCataloguePreflight.validate!(law_dir:, catalogue:, repo_root: root)
       end
 
-      assert_match(/Law ACTUAL_ID must be marked universal/, error.message)
-      assert_match(/Law ACTUAL_ID modalities must/, error.message)
+      assert_match(/Law ACTUAL_ID universal must be true or false/, error.message)
+      assert_match(/Law ACTUAL_ID has unknown catalogue field\(s\): modalities/, error.message)
       assert_match(/Law ACTUAL_ID has no effective severity/, error.message)
       assert_match(/Law ACTUAL_ID has no definition_sources/, error.message)
       assert_match(/invalid Law catalogue identity.*bad-id/, error.message)
@@ -167,8 +167,6 @@ class TestLawCatalogueBootstrap < Minitest::Test
         "unknown_registry" => true,
         "entries" => {
           "ACTUAL_ID" => {
-            "universal" => true,
-            "modalities" => %w[lexical semantic visual],
             "definition_sources" => ["MASTER/law/actual.rb"],
             "severity" => "warning",
             "mode" => "silent_pass",

@@ -58,6 +58,10 @@ module Master
           bind(definition) if definition
         end
 
+        # The assessment surfaces this detector measures; nil leaves it to the
+        # Law's kind (whole_file).
+        def self.surfaces = nil
+
         def self.law_definition
           return unless defined?(::Law.definitions) && self != Detector
 

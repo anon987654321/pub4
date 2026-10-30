@@ -147,14 +147,15 @@ class TestLawRegistryAudit < Minitest::Test
     assert_includes ids, "no_god_class"
   end
 
-  def test_every_catalogue_entry_is_universal_and_has_all_three_modalities
+  # Universal by default and assessed in the catalogue's three modalities; an
+  # entry repeats neither, and may say `universal: false` for a domain Law.
+  def test_every_catalogue_entry_names_its_ruby_source_and_no_constant_flags
     manifest = Master.law("law_catalogue").fetch("entries")
-    expected = %w[lexical semantic visual]
 
     assert_operator manifest.size, :>, 400
     manifest.each do |id, entry|
-      assert_equal true, entry["universal"], "#{id} must be universal"
-      assert_equal expected, Array(entry["modalities"]).map(&:to_s).sort, "#{id} modality coverage"
+      refute entry.key?("modalities"), "#{id} repeats the catalogue's modalities"
+      refute_equal true, entry["universal"], "#{id} repeats universal_by_default"
       sources = Array(entry["definition_sources"])
       refute_empty sources, "#{id} must point to Ruby source"
     end
