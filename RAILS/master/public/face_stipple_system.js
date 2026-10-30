@@ -656,6 +656,24 @@
       const raw = uniforms[name]?.value;
       return Number.isFinite(Number(raw)) ? Number(raw) : null;
     };
+    const mode = String(state.mode || state.mood || "idle").toLowerCase();
+    const faceContract = window.MASTER_FACE_CONTRACT || {};
+    const force = faceContract.stipple_force?.[mode] || faceContract.stipple_force?.idle || "none";
+    const residual = swarmConfiguration().residual || {};
+    const residualFraction = clamp(residual.fraction, 0.18, 0, 1);
+    const residualStrength = Math.max(0, Number(residual.strength) || 0);
+    const carrierCount = Math.max(0, Math.floor(Number(active?.count) || 0));
+    let residualCarrierCount = 0;
+    if (force === "residual") {
+      for (let index = 0; index < carrierCount; index += 1) {
+        if (rand(index, 97.3) < residualFraction) residualCarrierCount += 1;
+      }
+    }
+    const dialNames = Object.keys(faceContract.stipple?.dial_modulation || {});
+    const dialInputs = Object.fromEntries(dialNames.map((name) => [
+      name,
+      Number.isFinite(Number(state[name])) ? Number(state[name]) : null
+    ]));
     return {
       enabled,
       swarmEnabled: swarmConfiguration().enabled === true,
@@ -666,8 +684,21 @@
       hidden: Boolean(document.hidden),
       context: contextState,
       reducedMotion: reducedMotionEnabled(state),
-      mode: String(state.mode || state.mood || "idle").toLowerCase(),
-      pointCount: Number(active?.count) || 0,
+      mode,
+      semantic: {
+        force,
+        dialInputs,
+        dialAdjustments: dialAdjustments(state),
+        residual: {
+          active: force === "residual" && residualStrength > 0,
+          configuredFraction: residualFraction,
+          strength: residualStrength,
+          carrierCount,
+          selectedCarriers: residualCarrierCount,
+          selectedFraction: carrierCount > 0 ? Number((residualCarrierCount / carrierCount).toFixed(4)) : null
+        }
+      },
+      pointCount: carrierCount,
       pointCeiling: pointBudget(),
       rendererCalls: renderedFrames,
       lastRenderIntervalMs,
