@@ -32,6 +32,7 @@ class TestFaceSwarm < Minitest::Test
     assert_equal 0.08, settings.fetch("separation_strength")
     assert_equal 0.014, settings.fetch("noise_scale")
     assert_equal({ "fraction" => 0.18, "strength" => 0.12 }, settings.fetch("residual"))
+    assert_equal "residual", settings.dig("stipple_force", "idle")
     assert_equal true, settings.fetch("size_from_depth")
     assert_equal ["·", "˙", "∘", "•", "○", "●"], settings.fetch("glyph_ramp")
     assert_equal({ "eyes" => 1.00, "core" => 1.00, "noise" => 0.14 },
