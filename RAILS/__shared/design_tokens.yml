@@ -418,16 +418,31 @@ face_interface:
     activity: 0.14
     risk: 0.0
   stipple:
-    point_size:
-      base: 0.9
-      bias_scale: 0.35
-      bias_min: 0.25
-      bias_max: 1.5
-      reference_depth: 5.0
-      distance_min: 0.75
-      distance_max: 1.25
-      output_min: 1.0
-      output_max: 1.5
+    depth_response:
+      reference_distance: 5.0
+      scale_min: 0.75
+      scale_max: 1.25
+    dial_modulation:
+      activity:
+        density: 0.05
+        ripple: 0.08
+        turbulence: 0.12
+        luminosity: 0.03
+        attract: 0.04
+      arousal:
+        ripple: 0.1
+        turbulence: 0.06
+        luminosity: 0.04
+      focus:
+        density: 0.02
+        attract: 0.12
+      confidence:
+        density: 0.02
+        luminosity: 0.04
+      risk:
+        ripple: 0.08
+        turbulence: 0.16
+        attract: -0.08
     profiles:
       idle:
         density: 0.44
@@ -535,6 +550,73 @@ face_interface:
   - solid_mesh_as_primary_face_material
   - motion_without_semantic_state
   - erasing_all_residual_individuality_in_idle
+  swarm:
+    enabled: true
+    particle_budget: 240
+    damping: 0.86
+    cohesion_radius: 0.11
+    cohesion_strength: 0.045
+    separation_radius: 0.035
+    separation_strength: 0.08
+    noise_scale: 0.014
+    residual:
+      fraction: 0.18
+      strength: 0.12
+    size_from_depth: true
+    glyph_ramp:
+    - "·"
+    - "˙"
+    - "∘"
+    - "•"
+    - "○"
+    - "●"
+    target_field:
+      head:
+        center:
+        - 0.0
+        - 0.05
+        - 0.0
+        scale:
+        - 1.18
+        - 1.02
+        - 0.82
+        weight: 1.0
+      eyes:
+        left:
+          pos:
+          - -0.29
+          - 0.21
+          - 0.58
+          radius: 0.17
+          weight: 1.4
+        right:
+          pos:
+          - 0.29
+          - 0.21
+          - 0.58
+          radius: 0.17
+          weight: 1.4
+      mouth:
+        pos:
+        - 0.0
+        - -0.31
+        - 0.5
+        radius: 0.34
+        weight: 1.12
+      softness: 0.72
+    mode_multipliers:
+      idle:
+        eyes: 1.0
+        core: 1.0
+        noise: 0.14
+      attentive:
+        eyes: 1.35
+        core: 1.05
+        noise: 0.07
+      thinking:
+        eyes: 1.15
+        core: 1.3
+        noise: 0.22
   interaction:
     states:
     - idle
