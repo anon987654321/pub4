@@ -15,6 +15,7 @@ function loadGovernor({ reducedMotion = false, profile = "auto", mode = "" } = {
   const sandbox = {
     window: {
       matchMedia: (q) => ({ matches: q.includes("reduced-motion") ? reducedMotion : false }),
+      addEventListener: () => {},
       MASTER_FACE_CONTRACT: {
         spatial: {
           budget: {
@@ -117,6 +118,7 @@ test("a hidden tab holds animation frames until it is visible again", () => {
   const sandbox = {
     window: {
       matchMedia: () => ({ matches: false }),
+      addEventListener: () => {},
       requestAnimationFrame: (callback) => nativeFrames.push(callback),
       cancelAnimationFrame: () => {},
     },
