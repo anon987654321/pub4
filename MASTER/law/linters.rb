@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative "../../lib/operator/ruby_runner"
-require_relative "../../lib/ground/library_verify"
-require_relative "../../lib/fix/scan/source_override"
+require_relative "../lib/operator/ruby_runner"
+require_relative "../lib/ground/library_verify"
+require_relative "../lib/fix/scan/source_override"
 
 require "digest"
 require "fileutils"

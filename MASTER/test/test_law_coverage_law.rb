@@ -38,9 +38,9 @@ class TestLawCoverageLaw < Minitest::Test
     end
   RUBY
 
-  # The rule keys off a path under /law/detectors/, so the fixture
+  # The rule keys off a Law file directly under /law/, so the fixture
   # supplies one; only the source directory has to exist on disk.
-  def messages(code, test_files: {}, dir: "test", path: "/x/law/detectors/widget_rules.rb")
+  def messages(code, test_files: {}, dir: "test", path: "/x/law/widget_rules.rb")
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, dir))
       test_files.each { |name, body| File.write(File.join(root, dir, name), body) }
@@ -120,7 +120,7 @@ class TestLawCoverageLaw < Minitest::Test
   end
 
   def test_a_non_ruby_file_is_skipped
-    assert_empty messages(ONE_CLASS, path: "/x/law/detectors/widget_rules.yml")
+    assert_empty messages(ONE_CLASS, path: "/x/law/widget_rules.yml")
   end
 
   # Only detector classes. A `check` Law is a block inside ::Law.define and the

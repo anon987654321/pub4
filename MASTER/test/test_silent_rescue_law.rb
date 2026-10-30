@@ -116,7 +116,7 @@ class TestSilentRescueRule < Minitest::Test
 
   def test_both_rules_apply_to_rule_source_files
     code = "def f\n  go\nrescue StandardError\n  nil\nend\n"
-    rule_source = "law/detectors/lexical_laws.rb"
+    rule_source = "law/lexical.rb"
 
     refute_empty @silent.check(code, path: rule_source)
     refute_empty @narrow.check(code.sub("StandardError", "JSON::ParserError"), path: rule_source)
@@ -128,7 +128,7 @@ class TestSilentRescueRule < Minitest::Test
   def test_prose_about_a_rescue_is_not_a_rescue
     code = "# rescue StandardError\n# nil\ndef f = go\n"
 
-    assert_empty @silent.check(code, path: "law/detectors/lexical_laws.rb")
+    assert_empty @silent.check(code, path: "law/lexical.rb")
   end
   # In a predicate, false IS the handling — the health-check idiom: the error
   # becomes the answer. Outside one, the same false is still a discard.

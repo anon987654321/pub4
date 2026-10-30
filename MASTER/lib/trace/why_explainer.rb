@@ -6,7 +6,7 @@ module Master
   module Trace
   # Local lookup for /why <id>; falls back to LLM when nothing matches.
     class WhyExplainer
-      SCAN_LAWS_DIR = "law/detectors"
+      SCAN_LAWS_DIR = "law"
 
       def initialize(root: Master::ROOT)
         @root = root

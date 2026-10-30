@@ -53,23 +53,22 @@ class TestLawCatalogueBootstrap < Minitest::Test
   def test_a_detector_file_source_must_define_its_id
     Dir.mktmpdir("law-catalogue-detector-source") do |root|
       law_dir = File.join(root, "MASTER", "law")
-      detector_dir = File.join(law_dir, "detectors")
-      FileUtils.mkdir_p(detector_dir)
+      FileUtils.mkdir_p(law_dir)
       File.write(File.join(law_dir, "actual.rb"), "Law.define(:ACTUAL_ID) do\nend\n")
-      File.write(File.join(detector_dir, "detector.rb"), "::Law.define(:actual_detector) do\nend\n")
+      File.write(File.join(law_dir, "detector.rb"), "::Law.define(:actual_detector) do\nend\n")
 
       catalogue = {
         "entries" => {
           "ACTUAL_ID" => { "definition_sources" => ["MASTER/law/actual.rb"] },
-          "actual_detector" => { "definition_sources" => ["MASTER/law/detectors/detector.rb"] },
-          "orphan_detector" => { "definition_sources" => ["MASTER/law/detectors/detector.rb"] },
+          "actual_detector" => { "definition_sources" => ["MASTER/law/detector.rb"] },
+          "orphan_detector" => { "definition_sources" => ["MASTER/law/detector.rb"] },
         },
       }
       error = assert_raises(ArgumentError) do
         Master::LawCataloguePreflight.validate!(law_dir:, catalogue:, repo_root: root)
       end
 
-      assert_match(/orphan_detector names MASTER\/law\/detectors\/detector\.rb, but that source does not define orphan_detector/, error.message)
+      assert_match(/orphan_detector names MASTER\/law\/detector\.rb, but that source does not define orphan_detector/, error.message)
       refute_match(/actual_detector names/, error.message)
     end
   end
@@ -77,10 +76,9 @@ class TestLawCatalogueBootstrap < Minitest::Test
   def test_a_detector_file_law_without_catalogue_membership_is_reported
     Dir.mktmpdir("law-catalogue-unlisted-detector") do |root|
       law_dir = File.join(root, "MASTER", "law")
-      detector_dir = File.join(law_dir, "detectors")
-      FileUtils.mkdir_p(detector_dir)
+      FileUtils.mkdir_p(law_dir)
       File.write(File.join(law_dir, "actual.rb"), "Law.define(:ACTUAL_ID) do\nend\n")
-      File.write(File.join(detector_dir, "detector.rb"), "::Law.define(:unlisted_detector) do\nend\n")
+      File.write(File.join(law_dir, "detector.rb"), "::Law.define(:unlisted_detector) do\nend\n")
 
       error = assert_raises(ArgumentError) do
         Master::LawCataloguePreflight.validate!(
@@ -90,7 +88,7 @@ class TestLawCatalogueBootstrap < Minitest::Test
         )
       end
 
-      assert_match(/missing catalogue entry for unlisted_detector \(MASTER\/law\/detectors\/detector\.rb/, error.message)
+      assert_match(/missing catalogue entry for unlisted_detector \(MASTER\/law\/detector\.rb/, error.message)
     end
   end
 
@@ -142,9 +140,8 @@ class TestLawCatalogueBootstrap < Minitest::Test
   def test_dynamic_detector_templates_expand_to_literal_catalogue_ids
     Dir.mktmpdir("law-catalogue-dynamic-detector") do |root|
       law_dir = File.join(root, "MASTER", "law")
-      detector_dir = File.join(law_dir, "detectors")
-      FileUtils.mkdir_p(detector_dir)
-      File.write(File.join(detector_dir, "detector.rb"), <<~'DETECTOR')
+      FileUtils.mkdir_p(law_dir)
+      File.write(File.join(law_dir, "detector.rb"), <<~'DETECTOR')
         %w[USEFUL HONEST].each do |trait|
           ::Law.define(:"RAMS_#{trait}") do
           end

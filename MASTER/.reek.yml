@@ -1,13 +1,13 @@
 # Reek configuration for MASTER
 #
-# Who reads this: ReekLaw in law/detectors/external_linter_laws.rb, which the
+# Who reads this: ReekLaw in law/linters.rb, which the
 # scanner always registers. It shells out to `reek --format json <path>`, which
 # picks this file up, whenever a reek binary is on PATH or in bin/, unless
 # MASTER_EXTERNAL_LINT=0. Where reek is installed these thresholds are live in
 # every /scan and /fix.
 #
 # max_methods matches GodClassLaw::METHOD_LIMIT (10) in
-# law/detectors/structural_laws.rb so reek and the scanner agree on
+# law/structural.rb so reek and the scanner agree on
 # TooManyMethods; change the two together.
 detectors:
   # Module/class comments not required — naming + structure is the doc.

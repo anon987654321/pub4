@@ -218,7 +218,7 @@ module Master
     end
 
     # The two directories Law.load_all reads, and so the only homes a definition source may name.
-    LOAD_DIRS = ["", "detectors"].freeze
+    LOAD_DIRS = [""].freeze
 
     def source_declarations(law_root, repository_root)
       LOAD_DIRS.flat_map { |dir| Dir.glob(File.join(law_root, dir, "*.rb")).sort }.flat_map do |path|
@@ -268,7 +268,7 @@ module Master
 
       receiver = call[1]
       method = call[3]
-      # `Law.define` in law/, `::Law.define` under law/detectors/, whose files sit
+      # `Law.define` in law/, `::Law.define` in a file whose Laws sit
       # inside Master::Review::Scan::Laws where a bare Law names another constant.
       return unless receiver.is_a?(Array) && %i[var_ref top_const_ref].include?(receiver[0]) &&
                     receiver[1].is_a?(Array) && receiver[1][0] == :@const && receiver[1][1] == "Law"

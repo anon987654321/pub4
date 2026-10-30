@@ -123,7 +123,6 @@ module Master
           bad "value = a ? (b ? 1 : 2) : 3\n"
           good "value = a ? 1 : 2\n"
           check do |src, path|
-            next [] if path.to_s.include?("/law/detectors/")
             result = Prism.parse(src)
             next [] if result.failure?
 
@@ -148,8 +147,6 @@ module Master
           bad "def call(tmp)\nend\n"
           good "def call(temporary_path)\nend\n"
           check do |src, path|
-            next [] if path.to_s.include?("/law/detectors/")
-
             src.each_line.with_index(1).filter_map do |line, number|
               next if line.strip.start_with?("#", "//")
               next unless line.match?(ABBREV_IDENT_RE)
@@ -180,8 +177,6 @@ module Master
           bad %(name = 'osman'\n)
           good %(name = "osman"\n)
           check do |src, path|
-            next [] if path.to_s.include?("/law/detectors/")
-
             parsed = Prism.parse(src)
             next [] if parsed.failure?
 
@@ -210,8 +205,6 @@ module Master
           bad "The band is 45-75 wide.\n"
           good "The band is 45–75 wide.\n"
           check do |src, path|
-            next [] if path.to_s.include?("/law/detectors/")
-
             next [] if path.end_with?(".rb", ".js", ".css", ".scss")
             data_file = path.end_with?(".yml", ".yaml")
             src.each_line.with_index(1).filter_map do |line, number|
@@ -308,8 +301,6 @@ module Master
           good "# a torn hem is still a wearing\nincrement_wear_count\n"
           check do |src, path|
             next [] unless %w[ruby].include?(language(path))
-            next [] if path.to_s.include?("/law/detectors/")
-
             lines = src.lines
             lines.each_with_index.filter_map do |line, index|
               next unless line.strip.start_with?("#")
@@ -337,8 +328,6 @@ module Master
           bad (1..10).map { |i| "line#{i} = 1\n" }.join
           good "a = 1\n\nb = 2\n"
           check do |src, path|
-            next [] if path.to_s.include?("/law/detectors/")
-
             findings = []
             lines = src.lines
             dense_count = 0
@@ -372,8 +361,6 @@ module Master
           bad "def foo\n        return true\nend\n"
           good "def foo\n  return true\nend\n"
           check do |src, path|
-            next [] if path.to_s.include?("/law/detectors/")
-
             findings = []
             lines = src.lines
             lines.each_with_index.each_slice(2) do |pair|
@@ -402,7 +389,6 @@ module Master
           bad "#{"x" * 105}\n"
           good "short line\n"
           check do |src, path|
-            next [] if path.to_s.include?("/law/detectors/")
             findings = []
             lines = src.lines
 

@@ -115,7 +115,7 @@ module Deploy
       []
     end
 
-    # The executable law home is law/, its detectors under law/detectors/ included,
+    # The executable law home is law/, one flat directory,
     # the tree synonyms.yml names as executable_laws. Substring membership is
     # deliberately coarse: the marker may sit in a Law.define symbol, a
     # path_exclude comment or a registry entry, and which of those it is does

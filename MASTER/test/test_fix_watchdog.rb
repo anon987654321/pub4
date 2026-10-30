@@ -150,7 +150,7 @@ class TestFixWatchdog < Minitest::Test
     p.observe("fix_loop:phase", stage: :stream)
     p.observe("repair_loop:proposal_rejected", reason: "reflexion_unsafe")
     @now = Master::Fix::FixTime.stall_s + 1
-    p.observe("scan:complete", path: "law/detectors/lexical_laws.rb", count: 3)
+    p.observe("scan:complete", path: "law/lexical.rb", count: 3)
     @now += 60
 
     assert_nil p.stall(@now)

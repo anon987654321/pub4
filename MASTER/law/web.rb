@@ -140,7 +140,7 @@ module Master
 
         SIMPLE_WRAPPER_TAG_RE = %r{
           <(p|div|span|li|h[1-6]|strong|em|small|label|td|th|dt|dd|caption)(?:\s[^>]*)?>
-          \s*<%=\s*[^%<]+?\s*%>\s*
+          \s*<%=\s*[^%<]+?\s*%>\s* # scan: intentional — matches an ERB tag, embeds none
           </\1>
         }ix.freeze
 

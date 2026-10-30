@@ -57,9 +57,9 @@ module Operator
       rows + Array(body["learned_smells"]).select { |r| r.is_a?(Hash) && r["id"] }
     end
 
-    # Both directories Law.load_all reads: law/ and law/detectors/.
+    # The one directory Law.load_all reads.
     def law_ids
-      Dir.glob(File.join(MASTER, "law", "{,detectors/}*.rb"))
+      Dir.glob(File.join(MASTER, "law", "*.rb"))
          .flat_map { |p| File.read(p, encoding: "UTF-8").scrub.scan(/Law\.define\(:(\w+)\)/).flatten }
     end
 

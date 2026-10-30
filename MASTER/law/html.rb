@@ -291,7 +291,7 @@ end
 
 # TAG_HELPER_OVER_MARKUP is retired, not moved. Its detector matched
 # `<p><%= ... %></p>` and its siblings; PREFER_TAG_HELPERS in the registry
-# (law/detectors/web_laws.rb, SIMPLE_WRAPPER_TAG_RE) is a strict
+# (law/web.rb, SIMPLE_WRAPPER_TAG_RE) is a strict
 # superset — the same shape plus div, span, li and label, and tolerant of
 # attributes. Measured over 536 RAILS views: every one of this rule's 292
 # findings was also one of the registry's, so it only ever double-reported.

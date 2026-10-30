@@ -120,9 +120,9 @@ module Master
         # "fixed" it — the fixture stopped flagging, prove! raised at load,
         # and a keyword-mismatch rescue turned that into half the law silently
         # missing (every id after squint_test). A file whose job is to hold the
-        # forbidden pattern must never be cleaned of it, and law/detectors/
+        # forbidden pattern must never be cleaned of it, and law/
         # holds fixtures as law/ does.
-        LAW_DIR_RE = %r{/law/(?:detectors/)?[^/]+\.rb\z}
+        LAW_DIR_RE = %r{/law/[^/]+\.rb\z}
 
         # A line no human wrote: minified Workbox bundles run 23k chars/line,
         # while the densest hand-written file in the repo peaks at ~2.7k.

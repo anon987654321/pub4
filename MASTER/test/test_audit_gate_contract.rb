@@ -29,7 +29,7 @@ class TestAuditGateContract < Minitest::Test
 
     refute_nil task, "Rakefile must define lint:law_trace"
     assert_includes task, 'require "review/scan/law_tree"',
-                  "the canonical DSL loader imports detector implementations from MASTER/law/detectors"
+                  "the canonical DSL loader imports detector implementations from MASTER/law"
     refute_match(%r{lib/review/scan/laws}, task,
                  "the deleted compatibility path must not be a loader input")
   end

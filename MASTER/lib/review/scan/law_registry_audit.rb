@@ -326,7 +326,7 @@ module Master
         # The Laws whose detector is a `check` or a class: the population the
         # scanner registry held before every Law became one ::Law.define (a
         # `detect` regex Law is reached through law_detector? instead). LawTree
-        # loads law/detectors/ with law/, so the cold-Zeitwerk undercount (81
+        # loads all of law/, so the cold-Zeitwerk undercount (81
         # where a loaded registry said 115) has no second population to come from.
         def build_registry_ids
           Review::Scan::LawTree.definitions

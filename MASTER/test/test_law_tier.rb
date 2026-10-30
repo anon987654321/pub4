@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-# Loads law/ and law/detectors/, every Law the scanner builds.
+# Loads law/, every Law the scanner builds.
 require_relative "../lib/review/scan/law_tree"
 
 # A law that takes a model must never run in the lexical pass: every file,

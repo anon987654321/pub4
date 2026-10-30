@@ -170,7 +170,7 @@ module Master
           proved_by "test/test_adversarial_law.rb"
         end
 
-        require_relative "../../lib/review/scan/finding"
+        require_relative "../lib/review/scan/finding"
         # LLM review for meaning that resists deterministic detection.
         # Each eligible file receives independent violation and opportunity
         # requests; the same law can therefore yield two distinct findings. A

@@ -79,7 +79,7 @@ module Master
           # directory read as uncovered — this rule reporting a gap it had made
           # itself.
           def check(code, path:)
-            return [] unless path.include?("/law/detectors/") && path.end_with?(".rb")
+            return [] unless path.match?(%r{/law/[^/]+\.rb\z})
 
             subclasses(code).reject { |name, id| covered?(name, id) }
               .map { |name, _id| finding(line: 1, message: "law_coverage: no test names #{name}") }

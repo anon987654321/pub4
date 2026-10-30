@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../lib/ground/parameterized_slug"
+require_relative "../lib/ground/parameterized_slug"
 
 module Master
   module Review

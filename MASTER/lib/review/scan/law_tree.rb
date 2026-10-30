@@ -8,7 +8,7 @@ module Master
   module Review
     module Scan
       # The Law population as the scanner runs it. Every Law is one ::Law.define
-      # under law/ or law/detectors/; this loads them and builds, for each
+      # under law/; this loads them and builds, for each
       # enforceable one, the object the scanner calls: its detector class bound to
       # it, or the adapter that runs its `detect` or `check`.
       #

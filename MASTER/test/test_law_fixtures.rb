@@ -50,7 +50,7 @@ class TestLawFixtures < Minitest::Test
   # A harness that silently stops finding Laws passes forever.
   def test_the_harness_still_sees_laws
     assert_operator Master::Review::Scan::LawTree.ids.size, :>, 400,
-                    "only #{Master::Review::Scan::LawTree.ids.size} Laws defined — law/detectors/ stopped loading"
+                    "only #{Master::Review::Scan::LawTree.ids.size} Laws defined — law/ stopped loading"
     assert_operator self.class.fixtured.size, :>=, 100,
                     "only #{self.class.fixtured.size} Laws carry examples — fixtures stopped being read"
   end

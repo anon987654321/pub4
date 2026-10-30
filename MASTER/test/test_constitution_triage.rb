@@ -9,7 +9,7 @@ class TestConstitutionTriage < Minitest::Test
     findings = [
       { law: "SILENT_RESCUE", file: File.join(Master::ROOT, "lib/ground/config.rb") },
       { law: "CQS", file: File.join(Master::ROOT, "lib/ground/config.rb") },
-      { law: "SQL_INJECTION", file: File.join(Master::ROOT, "law/detectors/veto_pattern_law.rb") },
+      { law: "SQL_INJECTION", file: File.join(Master::ROOT, "law/veto.rb") },
       { law: "SCAN_TIMEOUT", file: File.join(Master::ROOT, "lib/slow.rb") },
     ]
 

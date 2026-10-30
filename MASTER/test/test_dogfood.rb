@@ -50,8 +50,11 @@ class DogfoodSpec < Minitest::Test
   # style breaches in law/ on 2026-10-30; held out until /fix clears them, which
   # AstFixer's LAW_DIR_RE refuses to do unattended in a fixture-bearing file.
   def test_law_applies_to_itself
-    findings = Dir[File.join(DOGFOOD_ROOT, "law", "*.rb")].flat_map { |f| Law.scan(f, language: :ruby) }
-                                                          .select { |f| Law.definitions.fetch(f.id).detect }
+    detect_laws = Law.definitions.values.select(&:detect)
+    findings = Dir[File.join(DOGFOOD_ROOT, "law", "*.rb")].flat_map do |file|
+      text = Law.conduct(File.read(file, encoding: "UTF-8"))
+      detect_laws.select { |law| law.applies?(file, :ruby) }.flat_map { |law| law.scan(text, file:) }
+    end
     assert_empty findings.map { |f| "#{f.id} #{File.basename(f.file)}:#{f.line}" }.join("\n")
   end
 

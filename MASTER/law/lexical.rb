@@ -97,8 +97,6 @@ module Master
     bad "  binding.pry\n"
     good "debugger_enabled = false\n"
     check do |src, path|
-      next [] if path.to_s.include?("/law/detectors/")
-
       parsed = Prism.parse(src)
       next [] if parsed.failure?
 
@@ -205,8 +203,6 @@ module Master
     bad "  # FIXME: the retry has no cap\n"
     good "  # the reasoning is in TODO.md\n  MARKERS = /TODO|FIXME|XXX/\n"
     check do |src, path|
-      next [] if path.to_s.include?("/law/detectors/")
-
       # The lookahead keeps TODO.md, the repo-wide backlog, from reading as a
       # marker — see data/laws.yml `unfinished`, which learned this at :veto.
       #
@@ -472,7 +468,6 @@ module Master
     bad "ascii_art: true\n"
     good "prompt = \"~/repo main %\"\n"
     check do |src, path|
-      next [] if path.to_s.include?("/law/detectors/")
       next [] if path.to_s.match?(FACE_ASCII_EXCEPTIONS)
 
       lines = src.lines

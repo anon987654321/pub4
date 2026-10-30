@@ -3,16 +3,19 @@
 require_relative "test_helper"
 
 class TestLawSourceTree < Minitest::Test
-  def test_law_detectors_have_one_canonical_home_and_no_legacy_alias
-    canonical = File.join(Master::ROOT, "law", "detectors")
-    legacy = File.join(Master::ROOT, "lib", "review", "scan", "laws")
+  # One flat law/: every Law file sits directly in it. law/detectors/ (split by
+  # detector kind) and law/definition/ (split by line count) were technical
+  # layers, and lib/review/scan/laws/ an older home; none may come back.
+  def test_laws_have_one_flat_home_and_no_legacy_alias
+    home = File.join(Master::ROOT, "law")
+    retired = [File.join(home, "detectors"), File.join(home, "definition"),
+               File.join(Master::ROOT, "lib", "review", "scan", "laws")]
 
-    assert File.directory?(canonical), "canonical detector directory is missing"
-    refute File.exist?(legacy), "retired scanner-law path must not be restored"
-    refute File.symlink?(legacy), "law source consolidation must not use a compatibility symlink"
-
-    detectors = Dir.glob(File.join(canonical, "*.rb"))
-    refute_empty detectors
-    detectors.each { |detector| assert File.file?(detector), "missing detector source: #{detector}" }
+    refute_empty Dir.glob(File.join(home, "*.rb"))
+    assert_empty Dir.glob(File.join(home, "*", "**", "*.rb")), "Law files sit directly in law/"
+    retired.each do |path|
+      refute File.exist?(path), "retired Law path must not be restored: #{path}"
+      refute File.symlink?(path), "law source consolidation must not use a compatibility symlink: #{path}"
+    end
   end
 end

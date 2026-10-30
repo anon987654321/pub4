@@ -174,7 +174,7 @@ class TestRuleCatalogue < Minitest::Test
     assert_equal ["FAIL_VISIBLY"], ids([{ "id" => "FAIL_VISIBLY", "autofix" => true }])
   end
 
-  # TRAILING_WHITESPACE is a `check` Law under law/detectors/.
+  # TRAILING_WHITESPACE is a `check` Law under law/.
   def test_a_check_law_is_a_detector
     assert_equal ["TRAILING_WHITESPACE"], ids([{ "id" => "TRAILING_WHITESPACE", "autofix" => true }])
   end

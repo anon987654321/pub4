@@ -23,7 +23,7 @@ module Master
     # A Law spells its own forbidden shape in its `bad` and `good` fixtures,
     # which is the one place that shape is legitimately written. Law.conduct
     # makes the same argument and neutralizes them before a law judges law/;
-    # this is the same for a detector reading law/detectors/. `fires:` and
+    # this is the same for a detector reading law/. `fires:` and
     # `does_not_fire:` are the retired LawDSL spellings, kept for any file still
     # quoting one.
     #

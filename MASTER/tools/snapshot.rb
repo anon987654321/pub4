@@ -174,7 +174,7 @@ module Operator
         2. `MASTER/data/laws.yml` — the live policy catalogue; do not assume a remembered count is current.
         3. `MASTER/law/*.rb` — executable domain laws, each carrying the example it must flag and the one
            it must not. Those two examples **are** the law; a fix that breaks either is wrong.
-        4. `MASTER/law/detectors/*.rb` — the executable scan registry; inspect its live registry rather than a remembered count.
+        4. `MASTER/law/*.rb` — the executable Laws; inspect its live registry rather than a remembered count.
 
         The house rules that reject otherwise-correct patches:
 
