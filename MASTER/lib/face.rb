@@ -22,6 +22,9 @@ module Master
         Array(state(root:).fetch("still_modes", ["idle"])).map(&:to_s).freeze
       end
       def still_mode?(mode, root: Master::ROOT) = still_modes(root:).include?(mode.to_s.downcase)
+      def still_after_activity_ms(root: Master::ROOT)
+        Integer(state(root:).fetch("still_after_activity_ms", 700)).clamp(0, 10_000)
+      end
       def spatial(root: Master::ROOT) = data(root:).fetch("spatial", {})
 
       def prompt_measure(root: Master::ROOT)
