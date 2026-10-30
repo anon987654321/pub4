@@ -473,6 +473,7 @@ function frame(t) {
     // FaceWorld owns camera position, distance, field of view and parallax.
     // Reduced motion preserves the current pose; normal idle returns the head
     // to neutral and then stops all autonomous motion.
+    State.lean = (State.lean || 0) * 0.97;
     if (reducedMotion) {
       nodImpulse = 0;
       State.shake = 0;
