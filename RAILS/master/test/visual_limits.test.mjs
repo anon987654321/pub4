@@ -149,6 +149,45 @@ test("a hidden tab holds animation frames until it is visible again", () => {
 });
 
 
+test("a frame queued before tab hiding is parked until visibility returns", () => {
+  const listeners = {};
+  const nativeFrames = [];
+  const ran = [];
+  const sandbox = {
+    window: {
+      matchMedia: () => ({ matches: false }),
+      addEventListener: () => {},
+      requestAnimationFrame: (callback) => nativeFrames.push(callback),
+      cancelAnimationFrame: () => {},
+    },
+    document: {
+      hidden: false,
+      body: { dataset: {} },
+      documentElement: { dataset: {} },
+      addEventListener: (name, callback) => { (listeners[name] ||= []).push(callback); },
+      querySelector: () => null,
+    },
+    Array,
+    setTimeout,
+  };
+  sandbox.window.window = sandbox.window;
+  sandbox.window.document = sandbox.document;
+  runInContext(governorSource, createContext(sandbox));
+
+  sandbox.window.requestAnimationFrame(() => ran.push("visible"));
+  assert.equal(nativeFrames.length, 1);
+  sandbox.document.hidden = true;
+  nativeFrames.shift()(1000);
+  assert.deepEqual(ran, [], "an in-flight frame rendered after the page became hidden");
+  assert.equal(nativeFrames.length, 0);
+
+  sandbox.document.hidden = false;
+  listeners.visibilitychange.forEach((callback) => callback());
+  assert.equal(nativeFrames.length, 1, "the parked callback was not restored");
+  nativeFrames.shift()(2000);
+  assert.deepEqual(ran, ["visible"]);
+});
+
 test("the governor does not mutate Array.prototype to police particle pools", () => {
   const originalPush = Array.prototype.push;
   loadGovernor();
