@@ -297,9 +297,9 @@ module Master
           @last_time = nil
         end
 
-        def step(mode:, time:, reduced_motion: false, rng: nil)
+        def step(mode:, time:, reduced_motion: false, events: [], rng: nil)
           now = Float(time)
-          if reduced_motion
+          if reduced_motion || (Master::Face::Contract.still_mode?(mode) && Array(events).empty?)
             @last_time = now
             return particles
           end
