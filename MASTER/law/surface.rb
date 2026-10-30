@@ -756,23 +756,9 @@ module Master
           end
         end
 
-        ::Law.define(:RAILS_TAG_HELPER) do
-          tags %i[RAILS VIEWS]
-          fix "prefer tag helpers over raw HTML for dynamic content"
-          bad %(<p><%= @post.title %></p>\n)
-          good %(<%= tag.p @post.title %>\n)
-          check do |src, path|
-            next [] unless path.to_s.include?("/app/views/") && path.to_s.end_with?(".erb")
-            findings = []
-
-            src.each_line.with_index(1) do |line, num|
-              if line.match?(/<(?:p|div|span|h[1-6])[^>]*>\s*<%=\s*(?!tag\.|content_tag|link_to|button_to|image_tag|t\(|translate)/)
-                findings << finding(line: num, message: "raw HTML around <%= — prefer tag.p / content_tag per rails_conventions")
-              end
-            end
-            findings
-          end
-        end
+        # RAILS_TAG_HELPER lives once, as PREFER_TAG_HELPERS in law/web.rb: both fired on
+        # one <tag><%= %></tag>, 1,029 and 978 findings over RAILS (2026-10-30 twin
+        # retirement). Its exemption for t() was dropped: that is PREFER's own bad example.
 
         ::Law.define(:STIMULUS_CONTROLLER_SIZE) do
           tags %i[RAILS JAVASCRIPT]

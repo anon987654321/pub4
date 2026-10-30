@@ -1997,7 +1997,7 @@ law_map:
       "status": "covered", "root": "no_surplus", "tags": ["aesthetic", "ui"]}
     view_purity: {"meaning": "views present; helpers and models compute", "detects": "logic_in_view",
       "severity": "medium", "confidence": 0.8, "operation": "extract", "law_ids": ["NO_LOGIC_IN_VIEW",
-      "RAILS_TAG_HELPER"], "status": "covered", "tags": ["rails", "ui"]}
+      "PREFER_TAG_HELPERS"], "status": "covered", "tags": ["rails", "ui"]}
     visual_hierarchy_clarity: {"meaning": "Clear information prioritization  ", "detects": "visual_clutter",
       "severity": "medium", "confidence": 0.8, "operation": "clarify", "law_ids": ["TYPE_HIERARCHY", "NO_EYEBROW_LABEL"
       ], "status": "covered", "tags": ["visual_design"], "source": "master.yml@30dad7ead"}
@@ -3635,10 +3635,6 @@ law_catalogue:
       severity: error
       autofix: automatic
       languages: [zsh]
-    RAILS_TAG_HELPER:
-      definition_sources: [MASTER/law/surface.rb]
-      severity: info
-      languages: [html]
     RAILS_THIN_CONTROLLER_SEMANTIC:
       definition_sources: [MASTER/law/rails.rb]
       severity: warning
