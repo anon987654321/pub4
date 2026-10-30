@@ -333,7 +333,8 @@
     const adjustments = {};
     for (const [dial, weights] of Object.entries(dials)) {
       const fallback = Number(defaults[dial] ?? 0);
-      const value = clamp(state[dial], fallback, 0, 1);
+      const raw = state[dial];
+      const value = raw == null || raw === "" ? fallback : clamp(raw, fallback, 0, 1);
       const delta = value - fallback;
       for (const [target, weight] of Object.entries(weights || {})) {
         const coefficient = Number(weight);
@@ -670,10 +671,11 @@
       }
     }
     const dialNames = Object.keys(faceContract.stipple?.dial_modulation || {});
-    const dialInputs = Object.fromEntries(dialNames.map((name) => [
-      name,
-      Number.isFinite(Number(state[name])) ? Number(state[name]) : null
-    ]));
+    const dialInputs = Object.fromEntries(dialNames.map((name) => {
+      const raw = state[name];
+      const value = raw == null || raw === "" ? null : Number(raw);
+      return [name, Number.isFinite(value) ? value : null];
+    }));
     return {
       enabled,
       swarmEnabled: swarmConfiguration().enabled === true,
