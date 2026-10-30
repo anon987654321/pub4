@@ -298,6 +298,16 @@ module Master
         end
       end
 
+      class Tree < RubyLLM::Tool
+        include ToolForwarding
+        description "Summarise the project directory tree to the governed maximum depth. Use for a compact overview before reading files."
+        parameter :path, description: "Directory path (default: project root)", required: false
+
+        def execute(path: ".")
+          forward(path: path.to_s)
+        end
+      end
+
       class ListDir < RubyLLM::Tool
         include ToolForwarding
         description "FIRST STEP for an unfamiliar or broad task: list the project tree before sampling files. Depth-limited and root-relative."

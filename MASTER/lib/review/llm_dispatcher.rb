@@ -63,6 +63,7 @@ module Master
         Io::ReadFile => Io::LLM::ReadFile,
         Io::WriteFile => Io::LLM::WriteFile,
         Io::StrReplace => Io::LLM::StrReplace,
+        Io::Tree => Io::LLM::Tree,
         Io::ListDir => Io::LLM::ListDir,
         Io::SearchFiles => Io::LLM::SearchFiles,
         Io::Shell => Io::LLM::Shell,

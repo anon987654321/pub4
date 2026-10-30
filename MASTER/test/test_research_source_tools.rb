@@ -42,6 +42,33 @@ class TestResearchSourceTools < Minitest::Test
     assert_equal :validation, result.category
   end
 
+  def test_codepen_inspect_reads_each_public_panel_as_source_text
+    tool = Master::Io::CodePen.new(governor: allow)
+    requests = []
+    panels = {
+      "html" => "<h1 class='title'>Hello</h1>",
+      "css" => ".title { font: 700 4rem/1.0 sans-serif; color: rebeccapurple; }",
+      "js" => "/* JavaScript source panel fixture */",
+    }
+    tool.define_singleton_method(:get) do |url|
+      requests << url
+      panels.fetch(url.split(".").last)
+    end
+
+    result = tool.call(mode: "inspect", url: "https://codepen.io/uisato/pen/example")
+
+    assert result.ok?, result.to_s
+    assert_equal [
+      "https://codepen.io/uisato/pen/example.html",
+      "https://codepen.io/uisato/pen/example.css",
+      "https://codepen.io/uisato/pen/example.js",
+    ], requests
+    assert_equal %w[html css js], result.value!.map { |panel| panel.fetch("type") }
+    css = result.value!.find { |panel| panel["type"] == "css" }.fetch("source")
+    assert_includes css, "font: 700 4rem/1.0"
+    assert_includes css, "rebeccapurple"
+  end
+
   def test_gist_requires_a_public_gist_url_and_returns_source_text
     tool = Master::Io::Gist.new(governor: allow)
     body = JSON.generate({
@@ -216,6 +243,7 @@ class TestResearchSourceTools < Minitest::Test
 
   def test_research_sources_are_registered_once
     names = Master::Builder::DEFAULT_TOOL_MAP.keys
+    assert_equal 1, names.count("Tree")
     assert_equal 1, names.count("CodePen")
     assert_equal 1, names.count("Gist")
     assert_equal 1, names.count("YouTubeTranscript")
@@ -226,6 +254,7 @@ class TestResearchSourceTools < Minitest::Test
 
   def test_llm_dispatch_has_the_research_sources
     map = Master::Review::LLMDispatcher::LLM_TOOL_MAP
+    assert_equal Master::Io::LLM::Tree, map.fetch(Master::Io::Tree)
     assert_equal Master::Io::LLM::CodePen, map.fetch(Master::Io::CodePen)
     assert_equal Master::Io::LLM::Gist, map.fetch(Master::Io::Gist)
     assert_equal Master::Io::LLM::YoutubeTranscript, map.fetch(Master::Io::YoutubeTranscript)
