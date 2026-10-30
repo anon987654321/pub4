@@ -620,6 +620,7 @@ test("face runtime consumes the constitutional state contract", () => {
   const index = readFileSync(join(root, "app", "views", "chat", "index.html.erb"), "utf8");
   assert.match(contract, /face_interface:[\s\S]*schema: 1/);
   assert.match(contract, /still_modes: \[idle\]/);
+  assert.match(contract, /still_after_activity_ms: 700/);
   assert.match(contract, /mode_aliases:[\s\S]*phantom: error/);
   assert.match(state, /MASTER_FACE_CONTRACT/);
   assert.match(state, /CONTRACT_STATE\.modes/);
