@@ -31,6 +31,10 @@
       .map((mode) => String(mode).toLowerCase())
       .filter((mode) => MODES.includes(mode))
   )));
+  const STILL_AFTER_ACTIVITY_MS = Math.max(0, Math.min(10_000,
+    Number.isFinite(Number(CONTRACT_STATE.still_after_activity_ms))
+      ? Number(CONTRACT_STATE.still_after_activity_ms) : 700
+  ));
   const DEFAULTS = Object.freeze({
     mode: CONTRACT_STATE.default_mode || "idle",
     topology: CONTRACT_STATE.default_topology || "papua-mask",
@@ -257,12 +261,14 @@
   window.MASTER_FACE_STATE = Object.freeze({
     MODES,
     STILL_MODES,
+    STILL_AFTER_ACTIVITY_MS,
     DEFAULTS,
     snapshot,
     apply,
     setMode,
     setAttention,
     isStillMode,
+    stillAfterActivityMs: STILL_AFTER_ACTIVITY_MS,
     geometryProfile,
     reducedMotion: reducedMotionEnabled,
     renderBudget
