@@ -126,7 +126,7 @@ test("a hidden tab holds animation frames until it is visible again", () => {
       hidden: true,
       body: { dataset: {} },
       documentElement: { dataset: {} },
-      addEventListener: (name, callback) => { listeners[name] = callback; },
+      addEventListener: (name, callback) => { (listeners[name] ||= []).push(callback); },
       querySelector: () => null,
     },
     Array,
@@ -142,7 +142,7 @@ test("a hidden tab holds animation frames until it is visible again", () => {
   assert.equal(nativeFrames.length, 0, "a hidden tab asked the browser for a frame");
 
   sandbox.document.hidden = false;
-  listeners.visibilitychange();
+  listeners.visibilitychange.forEach((callback) => callback());
   assert.equal(nativeFrames.length, 1, "both parked callbacks share one native frame");
   nativeFrames.shift()(1000);
   assert.deepEqual(ran, ["a", "b"]);
