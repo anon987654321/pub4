@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class PushSubscriptionsController < ApplicationController
+  # The page re-posts its subscription on each load, and a refused repeat is
+  # harmless; this caps junk endpoints, not readers.
+  rate_limit to: 30, within: 1.hour, only: :create, by: -> { Current.user.id }
+
   def create
     data = JSON.parse(request.body.read)
     Current.user.push_subscriptions.find_or_create_by!(endpoint: data["endpoint"]) do |s|
