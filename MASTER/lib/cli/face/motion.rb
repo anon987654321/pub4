@@ -149,11 +149,12 @@ module Master
         # Turning is constant while at rest; attending eases the head back to
         # the nearest front so the features face the user.
         def spin(state, dt, still: false)
-          return if still
+          if still || !SPINNING.include?(state)
+            @turn += ((@turn / TAU).round * TAU - @turn) * (1 - Math.exp(-2.5 * dt))
+            return
+          end
 
-          return @turn += SPIN * dt if SPINNING.include?(state)
-
-          @turn += ((@turn / TAU).round * TAU - @turn) * (1 - Math.exp(-2.5 * dt))
+          @turn += SPIN * dt
         end
 
         # Leaning in is the listening settle, and a little more while the user is
