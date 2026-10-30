@@ -407,6 +407,8 @@ face_interface:
     - error
     - sleeping
     - ready
+    still_modes:
+    - idle
     default_mode: idle
     default_topology: papua-mask
     entropy: 0.18
