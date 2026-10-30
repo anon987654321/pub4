@@ -153,7 +153,7 @@ test("the governor does not mutate Array.prototype to police particle pools", ()
   const originalPush = Array.prototype.push;
   loadGovernor();
   assert.equal(Array.prototype.push, originalPush);
-  assert.doesNotMatch(governorSource, /Array\\.prototype\\.push\\s*=/);
+  assert.doesNotMatch(governorSource, /Array\.prototype\.push\s*=/);
 });
 
 test("the governor refreshes its limits from live FaceState transitions", () => {
