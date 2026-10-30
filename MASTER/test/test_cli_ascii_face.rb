@@ -227,6 +227,22 @@ class TestCliAsciiFace < Minitest::Test
     assert_equal Master::CLI::Face::Motion::LIGHT.fetch("start"), later.light
   end
 
+  def test_idle_face_wakes_for_an_event_then_returns_to_a_stable_rest_pose
+    motion = Face::Motion.new(seed: 7)
+    motion.step(state: :idle, t: 1.0, count: 24)
+    awake = motion.step(state: :idle, t: 1.01, events: [:key], count: 24)
+    moving = motion.step(state: :idle, t: 1.3, count: 24)
+    settled = motion.step(state: :idle, t: 1.8, count: 24)
+    stable = motion.step(state: :idle, t: 1.9, count: 24)
+
+    refute_equal Face::Motion.rest(particles: awake.particles), awake
+    refute_equal awake, moving
+    assert_equal settled, stable
+    assert_equal 1.0, stable.scale
+    assert_equal 0.0, stable.bob
+    assert_equal 0.0, stable.turn
+  end
+
   def test_motion_eases_in_while_thinking_and_back_out_after
     motion = Face::Motion.new(session: "abc")
     mixes = [[:idle, 0.0], [:idle, 0.5], [:thinking, 1.0], [:thinking, 1.6], [:thinking, 2.3], [:thinking, 3.0], [:idle, 3.4], [:idle, 3.8], [:idle, 4.2]].map do |state, t|
