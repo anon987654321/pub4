@@ -36,6 +36,9 @@ module Shared
             "INFOPLIST_FILE" => File.expand_path("../../../../MASTER/tools/rails/native/Info.plist", __dir__),
             "CODE_SIGN_ENTITLEMENTS" => File.expand_path("../../../../MASTER/tools/rails/native/Pub4Mobile.entitlements", __dir__),
             "CODE_SIGN_STYLE" => "Automatic",
+            # Run and archive share one configuration, so the APNs gateway is a
+            # setting, not #if DEBUG; set it to development for a device build.
+            "APS_ENVIRONMENT" => "production",
             "MARKETING_VERSION" => "1.0.3",
             "CURRENT_PROJECT_VERSION" => "1",
           },

@@ -272,11 +272,11 @@ get "i/:token" => "invites#show", as: :invite
   resources :email_subscriptions, only: %i[show create update destroy], param: :token
   get "confirm_email/:token" => "email_subscriptions#confirm", as: :confirm_email_subscription
 
-  constraints(jobs_constraint) do
-    mount SolidQueue::Engine, at: "/admin/jobs"
-  end
+  constraints(jobs_constraint) { mount SolidQueue::Engine, at: "/admin/jobs" }
+
   patch "location" => "locations#update", as: :location
   resources :push_subscriptions, only: %i[create destroy]
+  resources :native_push_tokens, only: %i[create destroy], param: :token
   get "nearby" => "nearby#index", as: :nearby
   get "nearby/room" => "nearby#room", as: :nearby_room
   get "nearby/widget" => "nearby#widget", as: :nearby_widget

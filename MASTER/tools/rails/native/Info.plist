@@ -19,5 +19,7 @@
   </dict>
   <key>MOBILE_APP_URL</key>
   <string>$(MOBILE_APP_URL)</string>
+  <key>APS_ENVIRONMENT</key>
+  <string>$(APS_ENVIRONMENT)</string>
 </dict>
 </plist>

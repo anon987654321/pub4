@@ -37,7 +37,10 @@ class Notification < ApplicationRecord
   # included. NotificationDeliveryJob still carries the old call and is enqueued
   # by nothing.
   after_create_commit do
-    Shared::WebPushJob.perform_later(notification_id: id) if PUSHABLE_KINDS.include?(kind)
+    if PUSHABLE_KINDS.include?(kind)
+      Shared::WebPushJob.perform_later(notification_id: id)
+      NativePushJob.perform_later(id) if Apns.configured?
+    end
     broadcast_refresh_to(user, :notifications)
   end
 

@@ -37,6 +37,7 @@ class User
       has_many :notifications, dependent: :destroy
       has_many :posts, dependent: :destroy
       has_many :push_subscriptions, dependent: :destroy
+      has_many :native_push_tokens, dependent: :destroy
       has_many :reputation_scores, dependent: :destroy
       has_many :sessions, dependent: :destroy
       has_many :trust_signals, dependent: :destroy

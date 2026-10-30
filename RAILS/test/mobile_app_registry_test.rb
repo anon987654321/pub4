@@ -65,6 +65,17 @@ class MobileAppRegistryTest < Minitest::Test
     end
   end
 
+  # The entitlement and Info.plist both read the APNs gateway from one setting.
+  def test_ios_push_environment_is_one_build_setting
+    base = Shared::MobileIosProject.spec.dig("targets", "Pub4Mobile", "settings", "base")
+    native = File.expand_path("../../MASTER/tools/rails/native", __dir__)
+
+    assert_equal "production", base.fetch("APS_ENVIRONMENT")
+    %w[Pub4Mobile.entitlements Info.plist].each do |file|
+      assert_includes File.read(File.join(native, file)), "$(APS_ENVIRONMENT)", file
+    end
+  end
+
   def test_each_product_has_a_web_origin_android_package_and_ios_bundle
     REGISTRY.all.each do |app|
       assert_match(%r{\Ahttps://}, app.url)

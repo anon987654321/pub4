@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_10_27_102000) do
+ActiveRecord::Schema[8.2].define(version: 2026_10_30_120000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1085,6 +1085,16 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_27_102000) do
     t.index ["user_id"], name: "index_moderation_reports_on_user_id"
   end
 
+  create_table "native_push_tokens", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "environment", default: "production", null: false
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["token"], name: "index_native_push_tokens_on_token", unique: true
+    t.index ["user_id"], name: "index_native_push_tokens_on_user_id"
+  end
+
   create_table "neighborhoods", force: :cascade do |t|
     t.integer "city_id", null: false
     t.datetime "created_at", null: false
@@ -2077,6 +2087,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_27_102000) do
   add_foreign_key "messages", "stories"
   add_foreign_key "moderation_flags", "users"
   add_foreign_key "moderation_reports", "users"
+  add_foreign_key "native_push_tokens", "users"
   add_foreign_key "neighborhoods", "cities"
   add_foreign_key "notifications", "users"
   add_foreign_key "notifications", "users", column: "actor_id"

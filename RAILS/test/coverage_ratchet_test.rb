@@ -73,7 +73,9 @@ class CoverageRatchetTest < Minitest::Test
 # controller with the test for the 503 it used to answer.
 # controllers 23 -> 26, models 57 -> 58: the ratchet found tested classes above
 # the floor.
-    "brgen" => { "controllers" => 26, "models" => 58 },
+# controllers 26 -> 32 on 2026-10-30: native push tokens arrived with their
+# test, and the ratchet found the rest already tested above the floor.
+    "brgen" => { "controllers" => 32, "models" => 58 },
     # models 1 -> 8 on 2026-08-16. bsdports had one model test (user) against
     # thirteen models, and it was the smallest tree in the repo — Port, the record
     # everything else hangs off, had nothing naming it. Writing them found two

@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import { mayPrompt, YIELD_EVENT } from "pub4/onboarding"
 
 export default class extends Controller {
-  static values = { vapidKey: String, subscribeUrl: String, unread: Number }
+  static values = { vapidKey: String, subscribeUrl: String, unread: Number, native: Boolean, nativeUrl: String }
 
   async connect() {
     // This element is data-turbo-permanent, so connect() runs once per full
@@ -17,6 +17,10 @@ export default class extends Controller {
     this.onNavigate = () => { if (document.body.dataset.pushSeen === "true") this.clearBadge() }
     document.addEventListener("turbo:load", this.onNavigate)
 
+    // The iOS shell is a WKWebView with no Push API; it registers for APNs through
+    // its pub4Push bridge instead, and only when the server can send through APNs.
+    if (this.nativeValue && window.webkit?.messageHandlers?.pub4Push) return this.#native()
+
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return
     this.#syncBadge()
     const reg = await navigator.serviceWorker.ready
@@ -28,6 +32,7 @@ export default class extends Controller {
 
   disconnect() {
     document.removeEventListener("turbo:load", this.onNavigate)
+    if (this.onNativeToken) window.removeEventListener("pub4:native-push-token", this.onNativeToken)
   }
 
   clearBadge() {
@@ -38,6 +43,41 @@ export default class extends Controller {
     const n = this.unreadValue
     if (n > 0) navigator.setAppBadge?.(n)
     else navigator.clearAppBadge?.()
+  }
+
+  // The shell answers pub4:native-push-status with the iOS permission state, and
+  // sends pub4:native-push-token whenever iOS hands it a token: at once on a
+  // launch where the reader already allowed it, after the sheet otherwise. The
+  // same button and onboarding gate as the web path.
+  #native() {
+    this.onNativeToken = (event) => this.#saveNative(event.detail)
+    window.addEventListener("pub4:native-push-token", this.onNativeToken)
+
+    const btn = document.getElementById("push-enable-btn")
+    if (btn && mayPrompt("push")) {
+      window.addEventListener(YIELD_EVENT, () => { btn.hidden = true }, { once: true })
+      window.addEventListener("pub4:native-push-status", (event) => {
+        if (event.detail?.status !== "notDetermined") return
+        btn.hidden = false
+        btn.addEventListener("click", () => {
+          window.webkit.messageHandlers.pub4Push.postMessage({ action: "request" })
+          btn.hidden = true
+        }, { once: true })
+      }, { once: true })
+    }
+    window.webkit.messageHandlers.pub4Push.postMessage({ action: "status" })
+  }
+
+  async #saveNative({ token, environment } = {}) {
+    if (!token) return
+    await fetch(this.nativeUrlValue, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": document.querySelector("meta[name=csrf-token]")?.content
+      },
+      body: JSON.stringify({ token, environment })
+    })
   }
 
   #prompt(reg) {

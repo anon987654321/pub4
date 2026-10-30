@@ -6,5 +6,7 @@
   <array>
     <string>applinks:$(MOBILE_APP_HOST)</string>
   </array>
+  <key>aps-environment</key>
+  <string>$(APS_ENVIRONMENT)</string>
 </dict>
 </plist>
