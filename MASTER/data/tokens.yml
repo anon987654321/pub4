@@ -463,6 +463,7 @@ tokens:
       master_token: "master"
     state:
       modes: [idle, listening, thinking, working, speaking, warning, error, sleeping, ready]
+      still_modes: [idle]
       default_mode: idle
       default_topology: papua-mask
       entropy: 0.18
