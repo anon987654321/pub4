@@ -476,18 +476,11 @@ tokens:
     # How the stipple layer looks in each state in `modes` above; the web face
     # reads this through MASTER_FACE_CONTRACT and Ruby through Face::Contract.
     stipple:
-      # Point-size parameters are consumed as shader uniforms; keep them here so
-      # the renderer does not quietly grow a second visual-tuning contract.
-      point_size:
-        base: 0.90
-        bias_scale: 0.35
-        bias_min: 0.25
-        bias_max: 1.50
-        reference_depth: 5.0
-        distance_min: 0.75
-        distance_max: 1.25
-        output_min: 1.0
-        output_max: 1.5
+      # Point sprites stay one pixel; camera depth changes brightness, never size.
+      depth_response:
+        reference_distance: 5.0
+        scale_min: 0.75
+        scale_max: 1.25
       # Continuous state dials make small, bounded adjustments around state defaults.
       dial_modulation:
         activity: { density: 0.05, ripple: 0.08, turbulence: 0.12, luminosity: 0.03, attract: 0.04 }
