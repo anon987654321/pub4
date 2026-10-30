@@ -145,3 +145,73 @@ test("a hidden tab holds animation frames until it is visible again", () => {
   nativeFrames.shift()(1000);
   assert.deepEqual(ran, ["a", "b"]);
 });
+
+
+test("the governor does not mutate Array.prototype to police particle pools", () => {
+  const originalPush = Array.prototype.push;
+  loadGovernor();
+  assert.equal(Array.prototype.push, originalPush);
+  assert.doesNotMatch(governorSource, /Array\\.prototype\\.push\\s*=/);
+});
+
+test("the governor refreshes its limits from live FaceState transitions", () => {
+  const listeners = {};
+  const nativeFrames = [];
+  let mode = "idle";
+  let reduced = false;
+  let particles = 200;
+  let fps = 12;
+  const faceState = {
+    snapshot: () => ({ mode }),
+    reducedMotion: () => reduced,
+    renderBudget: () => ({
+      particles: reduced ? 64 : particles,
+      fps: reduced ? 8 : fps,
+      constrained_device: false
+    })
+  };
+  const sandbox = {
+    window: {
+      matchMedia: () => ({ matches: false, addEventListener: () => {} }),
+      MASTER_FACE_STATE: faceState,
+      MASTER_FACE_CONTRACT: {
+        spatial: { budget: {
+          desktop_particles: 200, mobile_particles: 120,
+          reduced_motion_particles: 64, active_fps: 24, idle_fps: 12,
+          reduced_motion_fps: 8, battery_fps: 12
+        } }
+      },
+      requestAnimationFrame: (callback) => { nativeFrames.push(callback); return nativeFrames.length; },
+      cancelAnimationFrame: () => {},
+      addEventListener: (name, callback) => { listeners[name] = callback; }
+    },
+    document: {
+      hidden: false,
+      body: { dataset: { mode: "idle" } },
+      documentElement: { dataset: {} },
+      addEventListener: (name, callback) => { listeners[name] = callback; },
+      querySelector: () => null
+    },
+    navigator: { hardwareConcurrency: 8 },
+    Array,
+    setTimeout
+  };
+  sandbox.window.window = sandbox.window;
+  sandbox.window.document = sandbox.document;
+  runInContext(governorSource, createContext(sandbox));
+
+  assert.equal(sandbox.window.MASTER_VISUAL_LIMITS.maxFps, 12);
+  assert.equal(sandbox.window.MASTER_VISUAL_LIMITS.maxParticles, 200);
+
+  mode = "thinking";
+  particles = 180;
+  fps = 24;
+  listeners["master:visual"]();
+  assert.equal(sandbox.window.MASTER_VISUAL_LIMITS.maxFps, 24);
+  assert.equal(sandbox.window.MASTER_VISUAL_LIMITS.maxParticles, 180);
+
+  reduced = true;
+  listeners["master:visual"]();
+  assert.equal(sandbox.window.MASTER_VISUAL_LIMITS.maxFps, 8);
+  assert.equal(sandbox.window.MASTER_VISUAL_LIMITS.maxParticles, 64);
+});
