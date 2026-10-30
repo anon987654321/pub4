@@ -295,11 +295,15 @@ module Master
           @particles = Swarm.build(root:, config: @config, seed:, count:, mobile:)
           @rng = ::Random.new(Integer(seed) + 1)
           @last_time = nil
+          @last_event_at = nil
         end
 
         def step(mode:, time:, reduced_motion: false, events: [], rng: nil)
           now = Float(time)
-          if reduced_motion || (Master::Face::Contract.still_mode?(mode) && Array(events).empty?)
+          event_list = Array(events)
+          @last_event_at = now unless event_list.empty?
+          recent_event = @last_event_at && ((now - @last_event_at) * 1000 < Master::Face::Contract.still_after_activity_ms(root: @root))
+          if reduced_motion || (Master::Face::Contract.still_mode?(mode, root: @root) && event_list.empty? && !recent_event)
             @last_time = now
             return particles
           end
