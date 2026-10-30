@@ -277,6 +277,7 @@ test("stipple shares face state and obeys point and motion budgets", () => {
   assert.match(readFileSync(join(publicDir, "face_world.js"), "utf8"), /fallbackShare/);
   assert.match(sparseField, /sharedParticleBudget = Number\(sharedBudget\.particles\)/);
   assert.match(sparseField, /sharedBudget\.constrained_device/);
+  assert.match(sparseField, /stillAfter = Number\(window\.MASTER_FACE_STATE\?\.stillAfterActivityMs \?\? 700\)/);
   assert.match(system, /buildFromSamples/);
   assert.match(system, /uDepthReferenceDistance: \{ value: clamp\(depth\.reference_distance/);
   assert.match(system, /float depthScale = clamp\(uDepthReferenceDistance/);
