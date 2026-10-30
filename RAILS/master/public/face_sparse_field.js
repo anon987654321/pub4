@@ -438,16 +438,18 @@
     const confidence = clamp(state.confidence ?? 0.86);
     const risk = clamp(state.risk ?? 0);
     const reduced = reducedMotionEnabled(state);
-    const movementTime = reduced ? 0 : time;
+    const isPointer = pointerActive || (time - presence.at) < 700;
+    const stillMode = window.MASTER_FACE_STATE?.isStillMode?.(mode) ?? mode === "idle";
+    const still = reduced || (stillMode && !isPointer);
+    const movementTime = still ? 0 : time;
     const distanceReveal = clamp((6.6 - cameraDistance) / 2.8, 0.18, 1);
     const reveal = Math.max(distanceReveal, 0.35 + focus * 0.65);
     const semanticAge = Math.max(0, time - semantic.at);
-    const semanticLive = reduced ? 0 : semanticAge < 2400 ? 1 - semanticAge / 2400 : 0;
+    const semanticLive = still ? 0 : semanticAge < 2400 ? 1 - semanticAge / 2400 : 0;
     const gather = mode === "thinking" || mode === "working" ? (0.05 + profile.activity * 0.16) * focus : 0;
     const voiceFilament = mode === "speaking" ? (0.10 + (Number(state.arousal) || 0) * 0.22) : 0;
-    const breath = reduced ? 0 : Math.sin(time * 0.00035) * (0.012 + profile.activity * 0.018);
-    const tide = reduced ? 0 : Math.sin(time * 0.00042 + state.entropy * 4.0) * profile.drift;
-    const isPointer = pointerActive || (time - presence.at) < 700;
+    const breath = still ? 0 : Math.sin(time * 0.00035) * (0.012 + profile.activity * 0.018);
+    const tide = still ? 0 : Math.sin(time * 0.00042 + state.entropy * 4.0) * profile.drift;
     const presenceX = isPointer ? (pointerActive ? pointer.x : presence.x) : 0;
     const presenceY = isPointer ? (pointerActive ? pointer.y : presence.y) : 0;
 
@@ -540,8 +542,8 @@
         pointerActive = false;
       }
 
-      if (reduced) {
-        // Keep the selected semantic pose without springing, orbiting or drifting toward it.
+      if (still) {
+        // A still mode snaps to its semantic composition once and retains it without autonomous drift.
         velocities[j] = velocities[j + 1] = velocities[j + 2] = 0;
         positions[j] = tx;
         positions[j + 1] = ty;
@@ -570,8 +572,8 @@
     pointGeometry.attributes.aSize.needsUpdate = true;
     pointGeometry.attributes.aOpacity.needsUpdate = true;
 
-    if (reduced) {
-      // Suppress transient motion-dependent after-effects while retaining the semantic face.
+    if (still) {
+      // Suppress motion-dependent after-effects while retaining the semantic face.
       ghosts.length = 0;
       trails.length = 0;
       updateGhosts(time);
