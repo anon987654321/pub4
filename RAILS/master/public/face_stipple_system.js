@@ -650,12 +650,16 @@
     const mode = String(state.mode || state.mood || "idle").toLowerCase();
     const faceContract = window.MASTER_FACE_CONTRACT || {};
     const force = faceContract.stipple_force?.[mode] || faceContract.stipple_force?.idle || "none";
+    const stillMode = window.MASTER_FACE_STATE?.isStillMode?.(mode) ?? mode === "idle";
+    const motionSuppressed = reducedMotionEnabled(state) || stillMode;
     const residual = swarmConfiguration().residual || {};
     const residualFraction = clamp(residual.fraction, 0.18, 0, 1);
     const residualStrength = Math.max(0, Number(residual.strength) || 0);
+    const residualRetained = force === "residual" && residualStrength > 0;
+    const residualActive = residualRetained && !motionSuppressed;
     const carrierCount = Math.max(0, Math.floor(Number(active?.count) || 0));
     let residualCarrierCount = 0;
-    if (force === "residual") {
+    if (residualRetained) {
       for (let index = 0; index < carrierCount; index += 1) {
         if (rand(index, 97.3) < residualFraction) residualCarrierCount += 1;
       }
@@ -679,10 +683,12 @@
       mode,
       semantic: {
         force,
+        stillMode,
         dialInputs,
         dialAdjustments: dialAdjustments(state),
         residual: {
-          active: force === "residual" && residualStrength > 0,
+          active: residualActive,
+          retained: residualRetained,
           configuredFraction: residualFraction,
           strength: residualStrength,
           carrierCount,
