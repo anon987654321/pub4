@@ -248,6 +248,18 @@ class TestFaceSwarm < Minitest::Test
     end
   end
 
+  def test_idle_simulation_holds_its_carriers_until_an_explicit_event
+    simulation = Swarm::Simulation.new(seed: 77, count: 32)
+    simulation.step(mode: :idle, time: 0.0)
+    before = simulation.particles.map(&:to_h)
+
+    simulation.step(mode: :idle, time: 5.0)
+    assert_equal before, simulation.particles.map(&:to_h)
+
+    simulation.step(mode: :idle, time: 5.05, events: [:key])
+    refute_equal before, simulation.particles.map(&:to_h)
+  end
+
   def test_reduced_motion_freezes_positions_and_velocities
     simulation = Swarm::Simulation.new(seed: 77, count: 32)
     simulation.step(mode: :idle, time: 0.0)
