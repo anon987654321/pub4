@@ -60,7 +60,7 @@ module Master
           count = requested&.match?(/\A-?\d+\z/) ? Integer(requested).clamp(0, configured_budget) : nil
           swarm_key = [rows, cols, count]
           swarm = (SWARMS[swarm_key] ||= Master::Face::Swarm::Simulation.new(count:))
-          swarm.step(mode: state, time: t, reduced_motion: ENV["MASTER_REDUCED_MOTION"] == "1")
+          swarm.step(mode: state, time: t, reduced_motion: ENV["MASTER_REDUCED_MOTION"] == "1", events:)
           swarm.overlay!(frame)
         end
         frame.to_s(color:)
