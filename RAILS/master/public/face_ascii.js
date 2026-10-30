@@ -1372,6 +1372,7 @@
     // ---- Face::Pose ---------------------------------------------------------
     const MOTION = ascii.motion;
     const STATES = ["idle", "listening", "thinking", "working", "speaking", "warning", "error", "sleeping", "ready"];
+    const STILL_MODES = Array.isArray(contract?.state?.still_modes) ? contract.state.still_modes : ["idle"];
 
     // The mouth on a timer, for a player that gives no envelope back.
     function timedLevel(tick) {
@@ -1421,8 +1422,20 @@
           look.mouth_wide = clamp(num(shape.wide, 0.0), -1.0, 1.0);
         }
       }
+      if (STILL_MODES.includes(state)) {
+        look.turn = 0.0;
+        look.pitch = 0.0;
+        look.roll = 0.0;
+        look.scale = 1.0;
+        look.dolly = 1.0;
+        look.bob = 0.0;
+        look.light = LIGHT.start;
+        look.eye_open = 1.0;
+        look.gaze = [0.0, 0.0];
+      }
       if (input.reduced) {
-        look.turn = 0.0; look.pitch = 0.0; look.roll = 0.0; look.scale = 1.0; look.dolly = 1.0; look.bob = 0.0; look.mix = 0.0; look.light = LIGHT.start;
+        look.turn = 0.0; look.pitch = 0.0; look.roll = 0.0; look.scale = 1.0;
+        look.dolly = 1.0; look.bob = 0.0; look.mix = 0.0; look.light = LIGHT.start;
       }
       return look;
     }
