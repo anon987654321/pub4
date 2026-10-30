@@ -438,11 +438,10 @@
     const confidence = clamp(state.confidence ?? 0.86);
     const risk = clamp(state.risk ?? 0);
     const reduced = reducedMotionEnabled(state);
-    const isPointer = pointerActive || (time - presence.at) < 700;
     const stillMode = window.MASTER_FACE_STATE?.isStillMode?.(mode) ?? mode === "idle";
     const stillAfter = Number(window.MASTER_FACE_STATE?.stillAfterActivityMs ?? 700);
-    const recentPointer = pointerActive || (time - presence.at) < stillAfter;
-    const still = reduced || (stillMode && !recentPointer);
+    const isPointer = pointerActive || (time - presence.at) < stillAfter;
+    const still = reduced || (stillMode && !isPointer);
     const movementTime = still ? 0 : time;
     const distanceReveal = clamp((6.6 - cameraDistance) / 2.8, 0.18, 1);
     const reveal = Math.max(distanceReveal, 0.35 + focus * 0.65);
