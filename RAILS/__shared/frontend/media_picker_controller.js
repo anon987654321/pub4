@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { compressImage, MAX_EDGE, QUALITY } from "pub4/image_compression"
 
 export default class extends Controller {
   static targets = ["input", "preview", "filters", "presets", "guidance"]
@@ -6,12 +7,17 @@ export default class extends Controller {
     coverLabel: { type: String, default: "Cover" },
     removeLabel: { type: String, default: "Remove" },
     moveLabel: { type: String, default: "Move photo" },
-    guidanceKey: { type: String, default: "pub4-photo-guidance" }
+    guidanceKey: { type: String, default: "pub4-photo-guidance" },
+    maxEdge: { type: Number, default: MAX_EDGE },
+    quality: { type: Number, default: QUALITY }
   }
 
   connect() {
     this.objectUrls = []
     this.dragIndex = null
+    // Files this picker already re-encoded: removing or moving one dispatches
+    // change, and a second pass would only re-encode the re-encoding.
+    this.compressed = new WeakSet()
     this.#restoreGuidance()
   }
 
@@ -23,9 +29,10 @@ export default class extends Controller {
     this.inputTarget.click()
   }
 
-  pick(event) {
+  async pick(event) {
     const files = event?.target?.files || this.inputTarget.files
     this.#renderPreview(files)
+    await this.#compress(files)
   }
 
   dragover(event) {
@@ -45,6 +52,29 @@ export default class extends Controller {
     accepted.forEach((file) => transfer.items.add(file))
     this.inputTarget.files = transfer.files
     this.#renderPreview(transfer.files)
+    this.#compress(transfer.files)
+  }
+
+  // The preview shows at once from the picked files; the re-encoded ones replace
+  // them in the input before the direct upload reads it on submit. The form is
+  // marked busy meanwhile, and a submit that wins the race uploads the originals.
+  async #compress(files) {
+    const picked = Array.from(files || [])
+    if (!picked.some((file) => !this.compressed.has(file))) return
+
+    this.element.setAttribute("aria-busy", "true")
+    try {
+      const options = { maxEdge: this.maxEdgeValue, quality: this.qualityValue }
+      const results = await Promise.all(picked.map((file) => this.compressed.has(file) ? file : compressImage(file, options)))
+      results.forEach((file) => this.compressed.add(file))
+      if (results.every((file, index) => file === picked[index])) return
+
+      const transfer = new DataTransfer()
+      results.forEach((file) => transfer.items.add(file))
+      this.inputTarget.files = transfer.files
+    } finally {
+      this.element.removeAttribute("aria-busy")
+    }
   }
 
   // Photo-look presets belong to a photo. Shown once there is one, hidden again
