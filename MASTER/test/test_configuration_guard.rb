@@ -79,7 +79,7 @@ class TestConfigurationGuard < Minitest::Test
     entry = data.fetch("law_catalogue").fetch("entries").values.first
     entry["modalities"] = %w[lexical semantic]
     reason = Guard.validate(path: laws_path, content: YAML.dump(data))
-    assert_match(/modalities must be lexical, semantic, visual/, reason)
+    assert_match(/cannot narrow the catalogue's modalities/, reason)
   end
 
   def test_soul_cannot_freeze_the_whole_data_directory

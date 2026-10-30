@@ -239,9 +239,10 @@ module Master
     def validate_catalogue_entries(entries, _repo_root)
       entries.each do |id, row|
         raise ArgumentError, "Law #{id} must be a mapping" unless row.is_a?(Hash)
-        raise ArgumentError, "Law #{id} must be universal" unless row["universal"] == true
-        modalities = Array(row["modalities"]).map(&:to_s).uniq.sort
-        raise ArgumentError, "Law #{id} modalities must be #{LAW_MODALITIES.join(', ')}" unless modalities == LAW_MODALITIES
+        # Universal by default; `universal: false` is a domain Law. Modalities are
+        # the catalogue's, so an entry that names its own is narrowing them.
+        raise ArgumentError, "Law #{id} universal must be true or false" unless [nil, true, false].include?(row["universal"])
+        raise ArgumentError, "Law #{id} cannot narrow the catalogue's modalities" if row.key?("modalities")
 
         validate_catalogue_sources(id, row)
       end
