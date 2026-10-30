@@ -947,7 +947,7 @@
     if (reducedMotion || stillMode) {
       world.position.y = 0;
     } else {
-      const breath = Math.sin(now * 0.00072) * (state.mode === "idle" ? 0.008 : 0.004);
+      const breath = Math.sin(now * 0.00072) * 0.004;
       world.position.y += (breath - world.position.y) * 0.08;
     }
 
