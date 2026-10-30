@@ -15,7 +15,8 @@ module Master
       AUTHORITY_FILES = %w[data/soul.yml data/laws.yml].freeze
       RUNTIME_FILES = %w[
         law/definition.rb
-        lib/review/scan/law.rb
+        lib/review/scan/detector.rb
+        lib/review/scan/canonical_law_adapter.rb
         lib/review/scan/law_tree.rb
         lib/fix/scanner.rb
         lib/fix/scan/file_processor.rb

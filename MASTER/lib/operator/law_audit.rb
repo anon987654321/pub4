@@ -125,9 +125,14 @@ module Operator
 
     # The check that would have caught all three. Prove the fixtures the way a
     # real file is read, not the way a fixture is.
+    #
+    # A Law proved by a named test carries its examples there, not here; a check
+    # that judges where a file lives is re-proved at its own proof path.
     def fixture_blindness(law)
+      return if law.proved_by
+
       ext = realistic_extension(law)
-      as_file = "fixture#{ext}"
+      as_file = law.proof_file == "-" ? "fixture#{ext}" : law.proof_file
       bad_seen = !law.scan(law.bad, file: as_file).empty?
       good_seen = law.scan(law.good, file: as_file).empty?
       return if bad_seen && good_seen
