@@ -241,7 +241,7 @@ module Master
           ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
           # Callers hand in the downcased key every population compares on; Law ids are upper case.
           law = ::Law.definitions[id.to_s.upcase.to_sym] || ::Law.definitions[id.to_sym]
-          law&.detect
+          law&.scannable?
         end
 
         # Asked of the loaded registry, not of the source text: law/prose.rb

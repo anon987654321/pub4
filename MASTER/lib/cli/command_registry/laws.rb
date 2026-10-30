@@ -88,7 +88,7 @@ module Master
       def law_enforcement(law)
         return "detector" unless law
 
-        kind = [("detector" if law.detect), ("semantic" if law.ask), ("practice" if law.practice)].compact.join("+")
+        kind = [("detector" if law.scannable?), ("semantic" if law.ask), ("practice" if law.practice)].compact.join("+")
         kind.empty? ? "declared" : kind
       end
 

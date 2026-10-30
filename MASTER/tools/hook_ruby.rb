@@ -41,4 +41,8 @@ abort("hook_ruby: no hook named #{name.inspect}") unless name.match?(/\A[a-z_]+\
 ruby = modern_ruby
 abort("hook_ruby: no Ruby >= #{MINIMUM} found for #{name}; the hook did not run") unless ruby
 
-exec(ruby, script, *ARGV)
+# The repo is UTF-8, and a hook process started without a locale reads it as US-ASCII: law_check_edit
+# then raised "invalid byte sequence" on laws.yml and refused every edit to it. A locale the caller
+# set is kept; only its absence is filled.
+locale = ENV.fetch("LC_ALL", ENV.fetch("LANG", "")).to_s.match?(/UTF-?8/i) ? {} : { "LC_ALL" => "C.UTF-8" }
+exec(locale, ruby, script, *ARGV)

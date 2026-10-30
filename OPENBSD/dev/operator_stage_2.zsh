@@ -230,7 +230,7 @@ stage_2() {
   # Do not depend on a version-specific `vmstat -s` field for the free-memory
   # check. Read plain `vmstat`'s "fre" column instead, which reports the free
   # list directly.
-  typeset _fre_field; _fre_field=${${(z)$(vmstat | tail -1)}[4]}
+  typeset _fre_field; _fre_field=${${(z)${${(f)"$(vmstat)"}[-1]}}[4]}
   typeset _mem_free_kb
   case $_fre_field in
     *G) _mem_free_kb=$(( ${_fre_field%G} * 1024 * 1024 )) ;;

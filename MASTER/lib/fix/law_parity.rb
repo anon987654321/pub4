@@ -142,7 +142,7 @@ module Master
         require_relative "../../law/definition" unless defined?(::Law)
         ::Law.load_all if ::Law.respond_to?(:load_all)
         ::Law.definitions.each do |id, definition|
-          ids << id.to_s if definition.respond_to?(:detect) && definition.detect
+          ids << id.to_s if definition.respond_to?(:scannable?) && definition.scannable?
         end
         ids.merge(scan_registry_ids)
         ids

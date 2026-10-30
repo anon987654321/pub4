@@ -55,7 +55,29 @@ module Law
 
   def self.pattern(source) = source && Regexp.union(Array(source).map { |part| Regexp.new(part) })
 
-  Finding = Data.define(:id, :file, :line, :text)
+  # `message` is a `check` detector's own account of the line; a `detect` regex
+  # has none and reports the Law's fix text instead.
+  Finding = Data.define(:id, :file, :line, :text, :message) do
+    def initialize(id:, file:, line:, text:, message: nil) = super
+  end
+
+  # What a `check` block runs inside. A regex can say only that a line matches;
+  # a check reads the whole subject the way its language reads it (a lexer, an
+  # AST) and reports each finding at its own line with its own message, which is
+  # what every detector under law/detectors/ needed and why they lived there.
+  class Check
+    attr_reader :id, :file
+
+    def initialize(definition, file, lines)
+      @id = definition.id
+      @file = file
+      @lines = lines
+    end
+
+    def finding(line:, message:)
+      Finding.new(id:, file:, line:, text: @lines[line - 1].to_s.chomp, message:)
+    end
+  end
 
   # What every law asks of one subject, worked out once. The bridge hands the
   # same text to each of a hundred laws in turn, and each re-split it into
@@ -145,7 +167,7 @@ module Law
 
   MEMBERS = %i[
     id source severity mode languages scope surfaces law_scope lifecycle autofix
-    path path_exclude absent detect ask practice fix bad good reads_comments
+    path path_exclude absent detect check ask practice fix bad good reads_comments
   ].freeze
 
   Definition = Data.define(*MEMBERS) do
@@ -197,16 +219,17 @@ module Law
     end
 
     def proof_kind
-      return :deterministic if detect
+      return :deterministic if scannable?
       return :semantic if ask
       :practice
     end
 
     # Neither kind scans source: one is answered by a model, one binds behaviour.
-    def scannable? = detect ? true : false
+    def scannable? = detect || check ? true : false
 
     def scan(text, file: "-")
       return [] unless scannable?
+      return scan_check(text, file) if check
 
       scope == :file ? scan_file(text, file) : scan_lines(text, file)
     end
@@ -326,6 +349,19 @@ module Law
       [Finding.new(id, file, 1, text[/.*/])]
     end
 
+    # A check reads the considered text, so comments and `scan: intentional`
+    # lines are blanked for it as for every other detector, and line numbers
+    # still match the file. It answers Findings or nothing.
+    def scan_check(text, file)
+      return [] if absent && text.match?(absent)
+
+      subject = considered_text(text, file)
+      found = Check.new(self, file, text.lines).instance_exec(subject, file, &check)
+      Array(found).each do |hit|
+        raise ArgumentError, "#{id}: check must answer Law::Finding, got #{hit.class}" unless hit.is_a?(Finding)
+      end
+    end
+
     # Comments and intentional-marked lines blanked, newlines kept, so a
     # multi-line detector still sees the file's shape.
     def considered_text(text, file)
@@ -437,11 +473,14 @@ module Law
 
     def initialize(id)
       @h = {
-        id:, scope: :line, law_scope: nil, absent: nil, detect: nil, ask: nil, practice: nil, reads_comments: false,
-        **::Law.catalogue_policy(id)
+        id:, scope: :line, law_scope: nil, absent: nil, detect: nil, check: nil, ask: nil, practice: nil,
+        reads_comments: false, **::Law.catalogue_policy(id)
       }
     end
     def detect(&block) = @h[:detect] = block
+
+    # `check { |text, file| ... }` answers Findings, each built by `finding(line:, message:)`.
+    def check(&block) = @h[:check] = block
 
     # A law can carry more than one enforcement surface without becoming more
     # than one rule. detect is deterministic evidence, ask is semantic evidence,
@@ -449,8 +488,9 @@ module Law
     # be cheap to detect mechanically, expensive to understand semantically, and
     # still impose a working discipline on the operator.
     def build
-      kinds = %i[detect ask practice].select { |k| @h[k] }
-      raise ArgumentError, "#{@h[:id]}: needs detect, ask or practice" if kinds.empty?
+      kinds = %i[detect check ask practice].select { |k| @h[k] }
+      raise ArgumentError, "#{@h[:id]}: needs detect, check, ask or practice" if kinds.empty?
+      raise ArgumentError, "#{@h[:id]}: detect and check are two detectors; keep one" if @h[:detect] && @h[:check]
       unknown_surfaces = Array(@h[:surfaces]) - ASSESSMENT_SURFACES
       if unknown_surfaces.any?
         raise ArgumentError, "#{@h[:id]}: unknown assessment surfaces #{unknown_surfaces.join(", ")}"
@@ -723,13 +763,13 @@ module Law
           block_end = nil if line == block_end
           next "#\n"
         end
-        if (indent = line[/^(\s*)(?:detect|scan_lines)\s+do\b/, 1])
+        if (indent = line[/^(\s*)(?:detect|check|scan_lines)\s+do\b/, 1])
           block_end = "#{indent}end\n"
           next "#\n"
         end
 
         fence = line[/^\s*(?:bad|good|ask|practice)\s+<<~["']?(\w+)["']?/, 1]
-        line.match?(/^\s*(?:source|detect|ask|practice|fix|bad|good)\b/) ? "#\n" : line
+        line.match?(/^\s*(?:source|detect|check|ask|practice|fix|bad|good)\b/) ? "#\n" : line
       end.join
     end
   end

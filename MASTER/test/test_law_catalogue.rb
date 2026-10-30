@@ -14,7 +14,9 @@ require_relative "../lib/operator/law_reach"
 # Both directions are pinned throughout: no false positive, and every check
 # still fires on the thing it exists to find.
 class TestRuleCatalogue < Minitest::Test
-  Law = Struct.new(:id, :detect, :fix, :severity, keyword_init: true)
+  Law = Struct.new(:id, :detect, :fix, :severity, keyword_init: true) do
+    def scannable? = !detect.nil?
+  end
 
   # laws.yml's own shape: each law a top-level key carrying a priority and a statement. `catalogue` builds one
   # from rows with an id; the extra keys (learned_smells) sit beside them as they do in the file.

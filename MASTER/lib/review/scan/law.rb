@@ -285,7 +285,11 @@ module Master
         def description = definition.ask.to_s.empty? ? definition.practice.to_s : definition.ask.to_s
         def severity = Law.normalize_severity(definition.severity)
         def law_tags = [definition.id.to_s]
-        def auto_fix = false
+        # The catalogue's `autofix: automatic` is the operator's permission for
+        # /fix to repair this Law's findings unattended; anything else waits for
+        # review. It read `false` here for every Law, so no canonical Law could
+        # reach MechanicalAutofix whatever its policy said.
+        def auto_fix = definition.autofix == :automatic
         def autofix = definition.autofix
         def languages = Array(definition.languages).map(&:to_s)
         def mode = definition.mode
@@ -299,7 +303,7 @@ module Master
           definition.scan(code, file: path).map do |hit|
             Finding.build(
               law: id,
-              message: "#{id}: #{definition.fix}",
+              message: hit.message || "#{id}: #{definition.fix}",
               line: hit.line,
               severity:,
               fix: definition.fix,

@@ -254,24 +254,42 @@ prose:
 # Detector-health policy. Measurement-only findings stay visible to observation but
 # do not become automatic repair targets until their detectors have stronger evidence.
 zsh:
+  # The one list of commands a shell line may not run, and what to write instead.
+  # Read by Master::Io::GnuTextTools for MASTER's own shell (Io::Shell refuses),
+  # the coding-harness PreToolUse hook (tools/block_gnu_text_tools.rb) and the
+  # ZSH_NATIVE_PATTERNS Law over the repo's scripts. Every banned command has a row.
   banned_commands: [sed, awk, tr, cut, find, head, tail, wc, perl, python, bash]
   forbidden_commands:
     - command: sed
-      replacement: '${var//find/replace}'
+      replacement: >-
+        the Edit tool; zsh ${var//find/replace}; ruby -i -pe 'sub(/a/, "b")' FILE;
+        ruby -ne 'print if (10..20) === $.' FILE
     - command: awk
-      replacement: '${(s:,:)var} and zsh parameter expansion'
+      replacement: >-
+        zsh ${(s:,:)var}; ruby -ane 'puts $F[1]' FILE (-F: for a separator);
+        sums: ruby -ane 's = s.to_i + $F[2].to_i; END { p s }'
     - command: tr
-      replacement: '${(L)var} / ${(U)var}'
+      replacement: "zsh ${(L)var}, ${(U)var}, ${var//,/ }; ruby -pe '$_.tr!(\"a-z\", \"A-Z\")'"
     - command: cut
-      replacement: '${(s:,:)var}'
+      replacement: "zsh ${${(s.:.)line}[1]}; ruby -F: -ane 'puts $F[0]' FILE"
     - command: find
-      replacement: 'zsh globs such as **/*.rb, *(.) and *(/)'
+      replacement: 'zsh globs: **/*.rb(.mh-24), *(.om[1]), **/*(.Lm+10), *(/); git ls-files for tracked files'
     - command: head
-      replacement: '${array[1]} or a bounded slice'
+      replacement: >-
+        the Read tool with limit; zsh ${array[1,20]}, print -l ${${(f)"$(<FILE)"}[1,20]};
+        ruby -e 'puts File.foreach(ARGV[0]).first(20)' FILE
     - command: tail
-      replacement: '${array[-1]} or a bounded slice'
+      replacement: "the Read tool with offset; zsh ${array[-20,-1]}; ruby -e 'puts File.readlines(ARGV[0]).last(20)' FILE"
     - command: wc
-      replacement: 'Ruby File.size or a Ruby count'
+      replacement: >-
+        ruby -e 'p File.foreach(ARGV[0]).count' FILE; zsh ${#${(f)"$(<FILE)"}};
+        files: print ${#$(print -l *.rb)}
+    - command: perl
+      replacement: 'Ruby (ruby -e, ruby -ne)'
+    - command: python
+      replacement: 'Ruby (ruby -e, ruby -ne)'
+    - command: bash
+      replacement: 'zsh (zsh -c, or a .zsh script with set -euo pipefail)'
   native_patterns:
     replace_all: '${var//find/replace}'
     lowercase: '${(L)var}'
@@ -4895,6 +4913,12 @@ law_catalogue:
       modalities: [lexical, semantic, visual]
       definition_sources: [MASTER/law/brand.rb]
       severity: warn
+    ZSH_NATIVE_PATTERNS:
+      universal: true
+      modalities: [lexical, semantic, visual]
+      definition_sources: [MASTER/law/shell.rb]
+      severity: warning
+      languages: [zsh]
     ZSH_SHEBANG:
       universal: true
       modalities: [lexical, semantic, visual]

@@ -149,7 +149,7 @@ module Operator
     # surface_laws.rb detects `imageSmoothingEnabled = true`, which is the
     # principle and its one mechanical case, and law/practice.rb says so.
     def law_detectors
-      loaded_laws.values.select(&:detect).map { |l| l.id.to_s.upcase }
+      loaded_laws.values.select(&:scannable?).map { |l| l.id.to_s.upcase }
     end
 
     def loaded_laws
