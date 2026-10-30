@@ -257,7 +257,17 @@ class TestFaceSwarm < Minitest::Test
     assert_equal before, simulation.particles.map(&:to_h)
 
     simulation.step(mode: :idle, time: 5.05, events: [:key])
-    refute_equal before, simulation.particles.map(&:to_h)
+    after_event = simulation.particles.map(&:to_h)
+    refute_equal before, after_event
+
+    simulation.step(mode: :idle, time: 5.4)
+    after_settle = simulation.particles.map(&:to_h)
+    refute_equal after_event, after_settle, "the explicit event remains live through the settle interval"
+
+    simulation.step(mode: :idle, time: 5.8)
+    settled = simulation.particles.map(&:to_h)
+    simulation.step(mode: :idle, time: 6.0)
+    assert_equal settled, simulation.particles.map(&:to_h)
   end
 
   def test_reduced_motion_freezes_positions_and_velocities
