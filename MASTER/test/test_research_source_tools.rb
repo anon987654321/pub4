@@ -241,6 +241,12 @@ class TestResearchSourceTools < Minitest::Test
     assert transcript.fetch(:timestamps)
   end
 
+  def test_tree_has_safe_tool_identity_and_a_live_llm_adapter
+    assert_equal "tree", Master::Io::Tree::NAME
+    assert_equal :safe, Master::Io::Tree::TIER
+    assert_equal Master::Io::LLM::Tree, Master::Review::LLMDispatcher::LLM_TOOL_MAP.fetch(Master::Io::Tree)
+  end
+
   def test_research_sources_are_registered_once
     names = Master::Builder::DEFAULT_TOOL_MAP.keys
     assert_equal 1, names.count("Tree")

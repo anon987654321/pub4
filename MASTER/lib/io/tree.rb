@@ -8,6 +8,9 @@ module Master
     # keeping one implementation prevents the overview tool and the runtime tool
     # from disagreeing about what a directory contains.
     class Tree
+      NAME = "tree".freeze
+      TIER = ListDir::TIER
+      DESCRIPTION = "Summarise the project directory tree to the governed maximum depth.".freeze
       MAX_DEPTH = ListDir::MAX_DEPTH
 
       def initialize(root:, event_bus: nil)
