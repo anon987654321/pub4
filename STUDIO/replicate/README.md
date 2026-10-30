@@ -48,6 +48,36 @@ prompt key must exist among its own input keys, and every declared input must be
 something in the request builder. It prints a count of models and problems and fails on any
 problem.
 
+## Generative audiovisual direction
+
+The creative direction extends beyond still-image prompting. Generative typography,
+real-time audiovisual instruments, procedural motion and experimental filmmaking
+are first-class research directions. The reference is the creator profile and
+description supplied by the operator: TouchDesigner-based systems, audio-reactive
+typography, reusable project files, generative AI, computer vision and experimental
+film. This is inspiration for original work, not a request to copy paid project files
+or reproduce an individual artist's work.
+
+A generated sequence should be treated as a temporal composition rather than a
+stack of unrelated frames. A scene brief should name its subject, visual motif,
+typographic role, motion behaviour, camera movement, lighting evolution, sound
+relationship and transition intent. The compiler should preserve those decisions
+as structured fields and provenance, not bury them in an opaque prompt paragraph.
+
+Prefer reusable instruments over one-shot tricks: expose bounded controls for
+particle fields, feedback, displacement, typography, optical motion, depth and
+audio response. Audio analysis should drive intentional parameter curves and
+events, not merely add random pulsing. A system should remain coherent when its
+duration, tempo, aspect ratio or input reference changes.
+
+For image-to-video work, establish the visual anchor first, then plan the motion
+and temporal events, generate a preview, inspect temporal consistency, and only
+then spend on a final render. Grade the finished sequence through the existing
+Postpro motion path so the still and video looks share one photographic authority.
+Record model/version, seed, references, scene fields, motion controls, audio
+analysis and post-production settings with each artifact. A technically valid
+clip is not automatically a finished composition.
+
 ## Models and refusals
 
 `MODEL_CAPABILITIES` in `replicate.rb` records what each model accepts, checked against live

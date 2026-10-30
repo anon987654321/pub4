@@ -24,6 +24,8 @@ module Master
       module_function
 
       DOWNLOADS_DIR = File.expand_path("~/Downloads")
+
+      def downloads_dir = DOWNLOADS_DIR
       HOST = "archive.org"
       SEARCH_PATH = "/advancedsearch.php"
       METADATA_PATH = "/metadata/"
@@ -190,7 +192,7 @@ module Master
       # Every rejected candidate remains visible in the final report.
       def download_queue(entries, request)
         requested = request.fetch(:count, FEW).to_i.clamp(1, 20)
-        lines = ["mov0: #{entries.size} candidates found; target #{requested}; destination #{DOWNLOADS_DIR}"]
+        lines = ["mov0: #{entries.size} candidates found; target #{requested}; destination #{downloads_dir}"]
         saved_paths = []
         failures = []
 
@@ -213,7 +215,7 @@ module Master
         report = lines.join("\n")
         return Result.err(report, category: :provider_error) if saved_paths.size < requested
 
-        Result.ok({ output: report, rendered: report, media: :mov, path: DOWNLOADS_DIR, saved: saved_paths.size })
+        Result.ok({ output: report, rendered: report, media: :mov, path: downloads_dir, saved: saved_paths.size })
       end
 
       def download_identifier(identifier, title: nil)
@@ -227,7 +229,7 @@ module Master
 
         name = pick["name"].to_s
         label = title_from_item(meta, title)
-        target = unique_destination(File.join(DOWNLOADS_DIR, safe_filename("#{label}.#{extension_of(name)}")))
+        target = unique_destination(File.join(downloads_dir, safe_filename("#{label}.#{extension_of(name)}")))
         fetch_download(
           identifier, name, target, label,
           expected_size: positive_integer(pick["size"]),
@@ -382,10 +384,10 @@ module Master
       end
 
       def download_once(uri, target, label, expected_size:, expected_md5:)
-        FileUtils.mkdir_p(DOWNLOADS_DIR)
+        FileUtils.mkdir_p(downloads_dir)
         tempfile = nil
         begin
-          Tempfile.create([".mov-download-", ".part"], DOWNLOADS_DIR) do |file|
+          Tempfile.create([".mov-download-", ".part"], downloads_dir) do |file|
             tempfile = file
             # Video is arbitrary binary data, not text. Keep writes in ASCII-8BIT
             # so IO never attempts to transcode compressed bytes to UTF-8.
@@ -505,7 +507,7 @@ module Master
       def download_url(url, title: nil)
         if (id = url.match(ARCHIVE_DETAILS_RE)&.captures&.first)
           line = download_identifier(id, title:)
-          return Result.ok({ output: line, rendered: line, media: :mov, path: DOWNLOADS_DIR }) if line.start_with?("mov0: saved ")
+          return Result.ok({ output: line, rendered: line, media: :mov, path: downloads_dir }) if line.start_with?("mov0: saved ")
 
           return Result.err(line, category: :provider_error)
         end
@@ -519,12 +521,12 @@ module Master
           return Result.err("mov0: yt-dlp not installed; install it to pull video links", category: :validation)
         end
 
-        FileUtils.mkdir_p(DOWNLOADS_DIR)
-        target = title ? ["-o", File.join(DOWNLOADS_DIR, "#{safe_filename(title)}.%(ext)s")] : ["-P", DOWNLOADS_DIR]
+        FileUtils.mkdir_p(downloads_dir)
+        target = title ? ["-o", File.join(downloads_dir, "#{safe_filename(title)}.%(ext)s")] : ["-P", downloads_dir]
         out, err, status = Master::Io::Exec.capture3("yt-dlp", "--no-playlist", *target, url)
         if status&.success?
-          line = "mov0: saved from link, into #{DOWNLOADS_DIR}"
-          Result.ok({ output: line, rendered: line, media: :mov, path: DOWNLOADS_DIR })
+          line = "mov0: saved from link, into #{downloads_dir}"
+          Result.ok({ output: line, rendered: line, media: :mov, path: downloads_dir })
         else
           Result.err("mov0: yt-dlp failed: #{(err || out).to_s.lines.first.to_s.strip[0, 160]}", category: :infrastructure)
         end
