@@ -834,7 +834,7 @@ tokens:
         glance_horizontal: 0.065
         glance_vertical: 0.028
         dolly: { idle: 1.0, listening: 1.018, thinking: 1.045, speaking: 1.032 }
-        spin_states: [thinking, working, sleeping, ready]
+        spin_states: [idle, thinking, working, sleeping, ready]
       occlusion: 2.5
       facing: 0.1
       min_rows: 8
