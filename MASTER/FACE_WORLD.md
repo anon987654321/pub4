@@ -75,7 +75,9 @@ to locked.
 
 Motion defaults to still. Gather, ripple, fragment and settle run only when a state supplies the
 cause, and reduced motion keeps the turned and unturned contrast readable without animation.
-Idle keeps its residual, because a field with no individual variation is a fog. The swarm contract sets `face_interface.swarm.residual.fraction` and `.strength`; in residual states, a deterministic subset is gently tethered to its original sample positions. This reuses existing carriers, adds no pool, and lets the rest of the field cohere. The neutral highlight
+Idle keeps its residual, because a field with no individual variation is a fog. The swarm contract sets `face_interface.swarm.residual.fraction` and `.strength`; in residual states, a deterministic subset is gently tethered to its original sample positions. This reuses existing carriers, adds no pool, and lets the rest of the field cohere. The stipple profile's density, ripple, turbulence, luminosity and attraction are also modulated by canonical activity, arousal, focus, confidence and risk dials. Their weights live in `face_interface.stipple.dial_modulation`; each adjustment is measured from the canonical state defaults and clamped, so the named mode profile remains the baseline rather than being replaced.
+
+The neutral highlight
 marks admission and focus only. The point budget and the stipple layer's limits are in the
 section on the additive stipple layer below.
 
