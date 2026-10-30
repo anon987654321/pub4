@@ -345,7 +345,9 @@
         ? clamp(pressureRaw / 100, 0, 0, 1)
         : clamp(pressureRaw, 0, 0, 1);
     const entropy = clamp(state.pressureFields?.entropy ?? state.entropy ?? 0.18, 0.18, 0, 1);
-    const motion = reducedMotionEnabled(state) ? 0 : 1;
+    const mode = String(state.mode || state.mood || "idle").toLowerCase();
+    const stillMode = window.MASTER_FACE_STATE?.isStillMode?.(mode) ?? mode === "idle";
+    const motion = reducedMotionEnabled(state) || stillMode ? 0 : 1;
     const u = system.material.uniforms;
     u.uDensity.value = clamp(profile.density + (pressure - 0.5) * 0.24 + (modulation.density || 0), profile.density, 0.08, 0.98);
     u.uRipple.value = clamp(profile.ripple + (modulation.ripple || 0), 0, 0, 1) * motion;
@@ -392,7 +394,9 @@
   // neighbor forces so a particle's result never depends on iteration order.
   function updateSwarm(system, state = {}, dt = 1 / 60, timeSeconds = 0) {
     const config = swarmConfiguration();
-    if (config.enabled !== true || reducedMotionEnabled(state) || !system?.swarm) return false;
+    const mode = String(state.mode || state.mood || "idle").toLowerCase();
+    const stillMode = window.MASTER_FACE_STATE?.isStillMode?.(mode) ?? mode === "idle";
+    if (config.enabled !== true || reducedMotionEnabled(state) || stillMode || !system?.swarm) return false;
     const field = config.target_field;
     const attribute = system.geometry?.attributes?.position;
     const depthAttribute = system.geometry?.attributes?.aDepthRank;
