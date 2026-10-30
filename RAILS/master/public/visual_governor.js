@@ -54,9 +54,7 @@
     const reducedMotionFps = Number(BUDGET.reduced_motion_fps) || 8;
     const batteryFps = Number(BUDGET.battery_fps) || 12;
     let maxFps = Number(canonicalBudget.fps) || (idle ? idleFps : activeFps);
-    let maxParticles = Number(canonicalBudget.particles)
-      || Number(BUDGET[mobile ? "mobile_particles" : "desktop_particles"])
-      || (mobile ? 120 : 200);
+    let maxParticles = Number(canonicalBudget.particles) || Number(BUDGET[mobile ? "mobile_particles" : "desktop_particles"]) || (mobile ? 120 : 200);
     const reducedMotionParticles = Number(BUDGET.reduced_motion_particles) || 64;
 
     if (reducedMotion) {
