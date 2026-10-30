@@ -178,9 +178,9 @@ module Master
           def check(_code, path:)
             return [] unless path.end_with?(".rb") && linter_available?("rubocop")
 
-            # Only MASTER carries a .rubocop.yml, so a file in another tree would be judged by rubocop's
-            # defaults, which prefer single quotes where the house style is double.
-            # A root without one, the repository root /fix probes from, is judged by MASTER's as well.
+            # The root's .rubocop.yml judges its files (RAILS carries the omakase one); a root
+            # without one, the repository root /fix probes from, is judged by MASTER's, not by
+            # rubocop's defaults, which prefer single quotes where the house style is double.
             data = report_for_path(path)
             files = data.is_a?(Hash) ? data["files"] : nil
             unless files.is_a?(Array) && !files.empty? &&

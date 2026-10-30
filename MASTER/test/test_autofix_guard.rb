@@ -210,11 +210,12 @@ class TestAutofixGuard < Minitest::Test
   end
 
   # RuboCop's own correction of a nested ternary produced the unindented `if`
-  # that broke the golden frame, so the cop only detects now.
+  # that broke the golden frame. The cop is off now (RUBY_TERNARY_NOT_NESTED
+  # detects it); whether off or detect-only, RuboCop must never correct one.
   def test_rubocop_does_not_autocorrect_a_nested_ternary
     config = YAML.safe_load_file(File.join(Master::ROOT, ".rubocop.yml"))
+    cop = config.fetch("Style/NestedTernaryOperator")
 
-    assert_equal false, config.dig("Style/NestedTernaryOperator", "AutoCorrect")
-    assert_equal true, config.dig("Style/NestedTernaryOperator", "Enabled")
+    assert(cop["Enabled"] == false || cop["AutoCorrect"] == false, "RuboCop may correct a nested ternary")
   end
 end

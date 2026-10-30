@@ -9,11 +9,14 @@ AllCops:
     - "tmp/**"
     - "node_modules/**"
 
-# Cops aligned with rubocop/ruby-style-guide and data/laws.yml style:
-Metrics/MethodLength:
-  Enabled: true
-  Max: 20
-  CountAsOne: [heredoc, array, hash]
+# Cops aligned with rubocop/ruby-style-guide and data/laws.yml style. A cop that
+# measures what a MASTER Law measures, at the same or a looser threshold, is off
+# and names that Law: two sources of one number reported every breach twice.
+# Metrics/AbcSize (20, against ABC_SIZE's ratchet 40) and Metrics/ClassLength
+# (200, against the Laws' 300) stay on while they are stricter than the Law; which
+# number holds is the operator's call.
+Metrics/MethodLength: # one source: the SMALL_FUNCTIONS (max 20) Law
+  Enabled: false
 
 Metrics/ClassLength:
   Enabled: true
@@ -23,17 +26,15 @@ Metrics/AbcSize:
   Enabled: true
   Max: 20
 
-Metrics/CyclomaticComplexity:
-  Enabled: true
-  Max: 10
+Metrics/CyclomaticComplexity: # one source: the CYCLOMATIC_COMPLEXITY (under 10) Law
+  Enabled: false
 
 Metrics/PerceivedComplexity:
   Enabled: true
   Max: 11
 
-Metrics/ParameterLists:
-  Enabled: true
-  Max: 5
+Metrics/ParameterLists: # one source: the LONG_PARAMETER_LIST (at most 4, stricter than this cop's 5) Law
+  Enabled: false
 
 Lint/RescueException:
   Enabled: true
@@ -44,8 +45,8 @@ Lint/SuppressedException:
 Lint/DuplicateMethods:
   Enabled: true
 
-Style/GuardClause:
-  Enabled: true
+Style/GuardClause: # one source: the GUARD_CLAUSE Law
+  Enabled: false
 
 Style/ReturnNil:
   Enabled: true
@@ -59,14 +60,11 @@ Naming/MethodParameterName:
   AllowNamesEndingInNumbers: false
   AllowedNames: [io, id, to, by, ok, on]
 
-Layout/LineLength:
-  Enabled: true
-  Max: 120
-  AutoCorrect: false
+Layout/LineLength: # one source: the LONG_LINE (120) Law
+  Enabled: false
 
-Style/FrozenStringLiteralComment:
-  Enabled: true
-  EnforcedStyle: always
+Style/FrozenStringLiteralComment: # one source: the FROZEN_STRING_LITERAL Law
+  Enabled: false
 
 Style/SafeNavigation:
   Enabled: true
@@ -87,9 +85,8 @@ Style/BlockDelimiters:
 # Detect only. RuboCop's correction rewrites a nested ternary into an `if` whose
 # branches sit at column 0 and leaves the inner ternary standing; it broke the
 # ASCII face's golden frame on 2026-10-12.
-Style/NestedTernaryOperator:
-  Enabled: true
-  AutoCorrect: false
+Style/NestedTernaryOperator: # one source: the RUBY_TERNARY_NOT_NESTED Law
+  Enabled: false
 
 Naming/MethodName:
   Enabled: true
@@ -102,9 +99,8 @@ Style/NumericLiterals:
   Enabled: true
   MinDigits: 5
 
-Style/StringLiterals:
-  Enabled: true
-  EnforcedStyle: double_quotes
+Style/StringLiterals: # one source: the DOUBLE_QUOTES_RUBY Law
+  Enabled: false
 
 Style/HashSyntax:
   Enabled: true
@@ -121,26 +117,23 @@ Style/WordArray:
   Enabled: true
   MinSize: 2
 
-Style/TrailingCommaInArguments:
-  Enabled: true
-  EnforcedStyleForMultiline: comma
+Style/TrailingCommaInArguments: # one source: the TRAILING_COMMAS Law
+  Enabled: false
 
-Style/TrailingCommaInArrayLiteral:
-  Enabled: true
-  EnforcedStyleForMultiline: comma
+Style/TrailingCommaInArrayLiteral: # one source: the TRAILING_COMMAS Law
+  Enabled: false
 
-Style/TrailingCommaInHashLiteral:
-  Enabled: true
-  EnforcedStyleForMultiline: comma
+Style/TrailingCommaInHashLiteral: # one source: the TRAILING_COMMAS Law
+  Enabled: false
 
-Layout/TrailingWhitespace:
-  Enabled: true
+Layout/TrailingWhitespace: # one source: the TRAILING_WHITESPACE Law
+  Enabled: false
 
-Layout/TrailingEmptyLines:
-  Enabled: true
+Layout/TrailingEmptyLines: # one source: the FINAL_NEWLINE Law
+  Enabled: false
 
-Layout/EmptyLines:
-  Enabled: true
+Layout/EmptyLines: # one source: the CONSECUTIVE_BLANK_LINES Law
+  Enabled: false
 
 Lint/UnusedMethodArgument:
   Enabled: true

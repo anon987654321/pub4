@@ -8,14 +8,10 @@
 #
 # A key is a law id, or "<instrument>:<rule>" for rubocop and reek, whose rule
 # name opens the finding's message.
-LONG_LINE:
-  - rubocop:Layout/LineLength
-SMALL_FUNCTIONS:
-  - rubocop:Metrics/MethodLength
-CYCLOMATIC_COMPLEXITY:
-  - rubocop:Metrics/CyclomaticComplexity
+#
+# Where a linter rule and a Law measure one fact at one threshold, the linter's
+# copy is off in .rubocop.yml / .reek.yml and the Law is the one source, so no
+# row is needed. Metrics/AbcSize stays on while it is stricter (20) than the
+# ABC_SIZE ratchet (40); where both fire on a line they are one finding.
 ABC_SIZE:
   - rubocop:Metrics/AbcSize
-LONG_PARAMETER_LIST:
-  - rubocop:Metrics/ParameterLists
-  - reek:LongParameterList

@@ -6,9 +6,9 @@
 # MASTER_EXTERNAL_LINT=0. Where reek is installed these thresholds are live in
 # every /scan and /fix.
 #
-# max_methods matches GodClassLaw::METHOD_LIMIT (10) in
-# law/structural.rb so reek and the scanner agree on
-# TooManyMethods; change the two together.
+# TooManyMethods, TooManyStatements and LongParameterList are off: NO_GOD_CLASS,
+# SMALL_FUNCTIONS and LONG_PARAMETER_LIST measure them, and two sources of one
+# number reported every breach twice.
 detectors:
   # Module/class comments not required — naming + structure is the doc.
   IrresponsibleModule:
@@ -97,11 +97,11 @@ detectors:
   FeatureEnvy:
     enabled: false
 
-  TooManyStatements:
-    max_statements: 20
+  TooManyStatements: # one source: the SMALL_FUNCTIONS Law
+    enabled: false
 
-  TooManyMethods:
-    max_methods: 10
+  TooManyMethods: # one source: the NO_GOD_CLASS (METHOD_LIMIT 10) Law
+    enabled: false
 
   TooManyInstanceVariables:
     max_instance_variables: 10
@@ -109,8 +109,8 @@ detectors:
   TooManyConstants:
     max_constants: 12
 
-  LongParameterList:
-    max_params: 5
+  LongParameterList: # one source: the LONG_PARAMETER_LIST (at most 4) Law
+    enabled: false
 
   NestedIterators:
     max_allowed_nesting: 2
