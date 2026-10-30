@@ -78,6 +78,7 @@
 </nav>
 <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
 <main id="main-content" role="main">
+  <%= render "shared/offline_status" %>
   <%# A third link home lived here, class="logo", inside main. With the nav's
       .brand removed and shared/_brand_mark in the corner, bsdports was carrying
       the same link three times on every page. The mark is the one. %>

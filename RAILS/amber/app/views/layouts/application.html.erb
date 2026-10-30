@@ -115,6 +115,8 @@
     <% end %>
 
     <main id="main-content" role="main" aria-label="<%= t("nav.main") %>">
+
+      <%= render "shared/offline_status" %>
       <%= render "shared/flash" %>
       <%= yield %>
     </main>

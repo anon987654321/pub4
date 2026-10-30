@@ -8,10 +8,13 @@ import { Controller } from "@hotwired/stimulus"
 // Classes:
 //   .network-slow
 //   .network-save-data
+//   .network-offline
 //   .power-constrained
 //
+// An `offline` target (shared/_offline_status) is shown while the browser
+// reports no connection, and hidden again when it comes back.
 export default class extends Controller {
-  static targets = ["heavy"]
+  static targets = ["heavy", "offline"]
 
   #batteryLow = false
   #connection = null
@@ -20,6 +23,8 @@ export default class extends Controller {
     this.#connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection
 
     window.addEventListener("pub4:battery-change", this.#onBatteryChange)
+    window.addEventListener("online", this.#apply)
+    window.addEventListener("offline", this.#apply)
 
     if (this.#connection) {
       this.#connection.addEventListener("change", this.#apply)
@@ -30,6 +35,8 @@ export default class extends Controller {
 
   disconnect() {
     window.removeEventListener("pub4:battery-change", this.#onBatteryChange)
+    window.removeEventListener("online", this.#apply)
+    window.removeEventListener("offline", this.#apply)
     this.#connection?.removeEventListener("change", this.#apply)
   }
 
@@ -51,7 +58,10 @@ export default class extends Controller {
     // Combined low battery + slow network (the patch's || form collapsed to
     // battery-only; AND is what .power-constrained's comment describes).
     const powerConstrained = this.#batteryLow && slow
+    const offline = navigator.onLine === false
 
+    document.documentElement.classList.toggle("network-offline", offline)
+    this.offlineTargets.forEach(el => { el.hidden = !offline })
     document.documentElement.classList.toggle("network-slow", !!slow)
     document.documentElement.classList.toggle("network-save-data", saveData)
     document.documentElement.classList.toggle("power-constrained", powerConstrained)
@@ -70,6 +80,7 @@ export default class extends Controller {
 
     window.dispatchEvent(new CustomEvent("pub4:network-change", {
       detail: {
+        offline,
         slow: !!slow,
         saveData,
         batteryLow: this.#batteryLow,

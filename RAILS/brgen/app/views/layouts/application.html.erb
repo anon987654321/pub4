@@ -146,6 +146,8 @@
           Operator decision 2026-08-27. %>
 
       <main id="main-content" role="main" aria-label="<%= t("nav.main") %>" data-controller="pull-to-refresh">
+
+        <%= render "shared/offline_status" %>
         <% if !vertical_surface? && current_page?(main_app.root_path) %>
           <div class="feed-header">
             <%# Visual brand is the fixed top-left .brgen-logo-mark (all surfaces).

@@ -1,0 +1,4 @@
+<%# Shown by network-aware while the browser reports no connection. The flash
+    alert's own style, so being offline reads like any other notice; status
+    rather than alert because it is a state, not an error the person caused. %>
+<p class="flash-alert" role="status" data-network-aware-target="offline" hidden><%= t("offline.connection_lost") %></p>

@@ -290,6 +290,7 @@ nb:
     retry: "Prøv igjen"
     loading: "Laster mellomlagret innhold…"
     list_label: "Liste over frakoblet innhold"
+    connection_lost: "Du er frakoblet. Det som allerede vises, kan fortsatt leses."
   # Shared::AttachmentLimits, which every model inherits through ApplicationRecord.
   errors:
     messages:
