@@ -80,7 +80,7 @@ module Master
           still = Master::Face::Contract.still_mode?(state) && events.empty?
           events.each { |event| react(event) }
           turn(state, t, dt, still:)
-          spin(state, dt)
+          spin(state, dt, still:)
           ease_mask(state, t)
           features(state, t, dt, level, still:)
           drift(state, t, dt, count, still:)
@@ -148,7 +148,9 @@ module Master
 
         # Turning is constant while at rest; attending eases the head back to
         # the nearest front so the features face the user.
-        def spin(state, dt)
+        def spin(state, dt, still: false)
+          return if still
+
           return @turn += SPIN * dt if SPINNING.include?(state)
 
           @turn += ((@turn / TAU).round * TAU - @turn) * (1 - Math.exp(-2.5 * dt))
