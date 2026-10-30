@@ -104,9 +104,10 @@ module Master
       end
 
       def detector_digest(law)
-        klass = law.class
-        block = klass.respond_to?(:dsl_block) ? klass.dsl_block : nil
-        source = block&.source_location || klass.instance_method(:check).source_location
+        # A Law's detector is its `check` block, its `detect` block, or its class's #check.
+        definition = law.respond_to?(:definition) ? law.definition : nil
+        block = definition && (definition.check || definition.detect)
+        source = block&.source_location || law.class.instance_method(:check).source_location
         file = source&.first
         file && File.file?(file) ? Digest::SHA256.file(file).hexdigest[0, 16] : nil
       rescue NameError

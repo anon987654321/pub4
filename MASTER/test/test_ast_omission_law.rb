@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/law_dsl"
+require "review/scan/law_tree"
 
 # The rule asks CommitGuard which symbols a file has lost since recent commits
 # and turns each answer into a finding. Its own logic is the two guard clauses,

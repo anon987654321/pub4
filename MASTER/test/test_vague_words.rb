@@ -3,7 +3,7 @@
 require_relative "test_helper"
 require_relative "../lib/operator/sprawl_census"
 require_relative "../lib/fix/rename_sweep"
-require_relative "../lib/review/scan/law_dsl"
+require_relative "../lib/review/scan/law_tree"
 
 # data/vague_words.yml is the one vague-name list; four readers had a copy each
 # and no two agreed. Every reader takes every word, and none keeps a word of its own.
@@ -11,8 +11,7 @@ class TestVagueWords < Minitest::Test
   WORDS = Master::Ground::ParameterizedSlug::VAGUE_WORDS
 
   def vague_law
-    laws = Master::Review::Scan::Law.registry
-    laws.find { |klass| klass.instance_variable_get(:@dsl_id) == "FILE_VAGUE_NAME" }.new
+    Master::Review::Scan::LawTree.find("FILE_VAGUE_NAME")
   end
 
   def test_the_list_is_read_from_data

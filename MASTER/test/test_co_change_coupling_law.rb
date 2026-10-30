@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/law_dsl"
+require "review/scan/law_tree"
 
 # The rule reads a co-change graph and reports files that move with peers in
 # other modules. Its whole judgement is three filters — same module, weight

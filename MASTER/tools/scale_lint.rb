@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "master_design"
+require_relative "../lib/design/scale"
 
 module Operator
   # Ratchet: every spacing, line-height, radius and weight literal in the family's
@@ -47,17 +48,11 @@ module Operator
 
     SKIP = %r{/(node_modules|vendor|builds|public/assets|tmp)/}
 
-    SPACE_PROPS = %w[
-      padding padding-top padding-right padding-bottom padding-left
-      padding-inline padding-block padding-inline-start padding-inline-end
-      margin margin-top margin-right margin-bottom margin-left
-      margin-inline margin-block
-      gap row-gap column-gap
-    ].freeze
-
-    # Keywords and shapes that are not a step on any scale: they are either a
-    # computed value the lint cannot resolve, or an explicit escape.
-    UNMEASURABLE = /\A(auto|inherit|initial|unset|revert|normal|none|0|0px|0rem|0em|0%)\z/i
+    # The scale rules (which properties, how a value is read, the nearest step)
+    # are Master::Design::Scale's, shared with the EIGHT_PX_RHYTHM and
+    # LINE_HEIGHT_ON_SCALE Laws and the AstFixer transform that repairs them.
+    SPACE_PROPS = Master::Design::Scale::SPACE_PROPS
+    UNMEASURABLE = Master::Design::Scale::UNMEASURABLE
 
     Finding = Struct.new(:file, :line, :kind, :value, :property)
 
@@ -104,13 +99,14 @@ module Operator
       else return
       end
       m = finding.value.match(LENGTH) or return
-      px = to_px(m[1], m[2].to_s).abs
-      "#{allowed.min_by { |step| (step - px).abs }.to_i}px"
+      "#{rules.nearest(to_px(m[1], m[2].to_s), allowed).to_i}px"
     end
 
     def tokens = @tokens ||= MasterDesign.tokens
 
     def scale = @scale ||= tokens.fetch("scale")
+
+    def rules = @rules ||= Master::Design::Scale.new(scale)
 
     # rem is normalised at 16, not at brgen's 18. A scale step is a design
     # decision expressed in one unit or the other, and 0.75rem and 12px are the
@@ -118,12 +114,7 @@ module Operator
     # when it explains why chrome_inset is absolute. What brgen's root does to
     # the rendered pixel is a different question from whether the author picked
     # a step off the scale, and only the second one is answerable from source.
-    def to_px(value, unit)
-      case unit
-      when "rem", "em" then value.to_f * 16
-      when "px", "" then value.to_f
-      end
-    end
+    def to_px(value, unit) = Master::Design::Scale.to_px(value, unit)
 
     REPO_ROOT = File.expand_path("..", RAILS_ROOT)
 
@@ -183,36 +174,13 @@ module Operator
         .compact.any? { |line| line.include?(OPT_OUT) }
     end
 
-    # Everything a build computes rather than an author choosing: var(), calc(),
-    # clamp(), min(), max(), env() and SCSS interpolation. Blanked before
-    # tokenising, so `calc(var(--x) + 3px)` contributes nothing rather than
-    # contributing "3px" as if someone had typed it as a step.
-    def strip_computed(value)
-      out = value.dup
-      6.times { out = out.gsub(/\b(?:var|calc|clamp|min|max|env|minmax|repeat)\([^()]*\)/, " ") }
-      out.gsub(/\$[\w-]+/, " ").gsub(/#\{[^}]*\}/, " ").gsub(/!important/, " ")
-    end
+    LENGTH = Master::Design::Scale::LENGTH
 
-    LENGTH = /\A(-?[\d.]+)(px|rem|em)?\z/
+    def strip_computed(value) = Master::Design::Scale.strip_computed(value)
 
-    def steps(value)
-      strip_computed(value).split(/[\s,\/]+/).reject(&:empty?)
-    end
+    def steps(value) = Master::Design::Scale.steps(value)
 
-    # A declaration is on-scale when every length it names is a declared step.
-    # Negative values are checked by magnitude: -1px is a hairline pull, and
-    # whether it is on the scale is the same question as whether 1px is.
-    def off_scale_lengths(value, allowed_px)
-      steps(value).filter_map do |step|
-        next if step.match?(UNMEASURABLE)
-        next unless (m = step.match(LENGTH))
-
-        px = to_px(m[1], m[2].to_s)
-        next if px.nil?
-
-        step unless allowed_px.include?(px.abs.round(3))
-      end
-    end
+    def off_scale_lengths(value, allowed_px) = rules.off_scale_lengths(value, allowed_px)
 
     def space_px = @space_px ||= scale.fetch("space_px").map { |v| Float(v) }
 
@@ -235,7 +203,7 @@ module Operator
 
     def font_weights = @font_weights ||= scale.fetch("font_weight").map { |v| Integer(v) }
 
-    DECLARATION = /(?<prop>[-a-z]+)\s*:\s*(?<value>[^;{}]+)[;}]/
+    DECLARATION = Master::Design::Scale::DECLARATION
 
     def check(file, line, prop, value)
       check_alpha(file, line, prop, value) + case prop

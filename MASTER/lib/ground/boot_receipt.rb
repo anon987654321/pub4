@@ -132,7 +132,7 @@ module Master
       def law(root: MasterPaths::ROOT)
         {
           declared: Master.law("law_catalogue", root:).fetch("entries").size,
-          registry: Review::Scan::Law.registry.size,
+          registry: domain_law_count(root),
           domain: domain_law_count(root),
         }
       end

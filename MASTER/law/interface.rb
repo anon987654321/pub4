@@ -182,14 +182,3 @@ Law.define(:WAITING_STATE_MEANING) do
   good "<div aria-busy=\"true\"><span>Loading results…</span><div class=\"skeleton\" aria-hidden=\"true\"></div></div>"
 end
 
-Law.define(:NO_ASCII_ART_OUTSIDE_FACE) do
-  source "Rendered-values law — ASCII art is reserved for the face itself"
-  ask "Does this file add ASCII-art logos, boot banners, decorative prompt drawings, or other typographic pictures outside the face renderer? ASCII art is forbidden everywhere except the face itself and the fixtures that prove its rendering. Ordinary text, a real wordmark set in a font, shell prompt characters, and dmesg-like status lines are not ASCII art. Return CLEAN when no decorative ASCII picture exists outside the face."
-  fix "Delete ASCII-art banners, wordmarks, and prompt drawings. Keep ASCII geometry only inside the terminal/browser face renderer and its matching fixtures."
-  bad <<~'X'
-    ascii_art = ["|\\  /|", "| \\/ |"]
-  X
-  good <<~'X'
-    Master::CLI::Face.frame(state: :idle, rows: 24, cols: 60)
-  X
-end

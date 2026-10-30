@@ -1969,6 +1969,9 @@ law_map:
     ui_chrome_i18n: {"meaning": "Shell/empty/search chrome uses I18n; default locale nb for family apps",
       "detects": "hardcoded_en_chrome", "severity": "medium", "confidence": 0.85, "operation": "wire_i18n_for_literals",
       "law_ids": ["ERB_HARDCODED_CHROME"], "status": "covered", "tags": ["i18n", "ui"]}
+    zsh_native_text_tools: {"meaning": "zsh scripts use zsh expansions, globs and Ruby, not GNU text tools",
+      "detects": "banned_text_tool", "severity": "medium", "confidence": 0.9, "operation": "rewrite_as_zsh_native",
+      "law_ids": ["ZSH_NATIVE_PATTERNS"], "status": "covered", "tags": ["shell", "portability"]}
     unity_of_art_craft: {"meaning": "Merge fine and applied arts  ", "detects": "art_craft_division",
       "severity": "medium", "confidence": 0.75, "operation": "simplify", "law_ids": [], "status": "gap",
       "tags": ["architecture"], "source": "master.yml@30dad7ead"}
@@ -2226,8 +2229,9 @@ law_catalogue:
     ABC_SIZE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+      definition_sources: [MASTER/law/detectors/ruby_laws.rb]
       severity: warning
+      languages: [ruby]
     ABSTRACTION:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2238,7 +2242,7 @@ law_catalogue:
     adversarial:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/semantic_laws.rb]
+      definition_sources: [MASTER/law/detectors/semantic_laws.rb]
       severity: error
     AESTHETIC_DISCIPLINE:
       universal: true
@@ -2257,8 +2261,7 @@ law_catalogue:
     AESTHETIC_MINIMALISM:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
     AESTHETIC_RAMS_SEMANTIC:
       universal: true
@@ -2270,13 +2273,16 @@ law_catalogue:
     AFFORDANCE_CLARITY:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: warning
+      languages: [html]
     ALL_CAPS_NO_TRACKING:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      definition_sources: [MASTER/law/detectors/cosmetic_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [css, scss]
     ANALOG_WARMTH:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2291,8 +2297,10 @@ law_catalogue:
     ANTI_DIVITIS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [html]
     ARIA_INTERACTIVE:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2302,8 +2310,10 @@ law_catalogue:
     ARIA_LABELS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [html]
     ARTIFICIAL_COUPLING:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2312,7 +2322,7 @@ law_catalogue:
     ast_omission:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/meta_laws.rb]
+      definition_sources: [MASTER/law/detectors/meta_laws.rb]
       severity: warning
     ASYNC_AWAIT:
       universal: true
@@ -2323,8 +2333,10 @@ law_catalogue:
     ASYNC_STATUS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [html]
     AUDIO_SMOOTHING:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2333,8 +2345,9 @@ law_catalogue:
     AUDIT_APPEND_ONLY:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      definition_sources: [MASTER/law/detectors/universal_laws.rb]
       severity: error
+      languages: [ruby]
     AUTOFIX_REQUIRES_CONFIDENCE:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2392,7 +2405,7 @@ law_catalogue:
     BOOLEAN_TRAP:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_question_laws.rb]
       severity: info
     BOUNDARY_ISOLATION:
       universal: true
@@ -2439,8 +2452,9 @@ law_catalogue:
     CHOICE_OVERLOAD:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      languages: [html]
     CINEMA_PALETTE:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2490,18 +2504,21 @@ law_catalogue:
     co_change_coupling:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/graph_laws.rb]
+      definition_sources: [MASTER/law/detectors/graph_laws.rb]
       severity: info
+      autofix: automatic
     CODE_HIERARCHY:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_question_laws.rb]
       severity: warning
     CODE_SYMMETRY:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      definition_sources: [MASTER/law/detectors/cosmetic_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [ruby, javascript]
     COLLAPSE_BEFORE_ADDING:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2510,14 +2527,14 @@ law_catalogue:
     comment_drift:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/semantic_laws.rb]
+      definition_sources: [MASTER/law/detectors/semantic_laws.rb]
       severity: warning
     COMMENTS_AS_DEODORANT:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      definition_sources: [MASTER/law/detectors/cosmetic_laws.rb]
       severity: warning
+      autofix: automatic
     COMMERCE_AMBER_DOES_NOT_OWN_BRGEN:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2544,8 +2561,9 @@ law_catalogue:
     COMPLETION_THEATER:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      definition_sources: [MASTER/law/detectors/universal_laws.rb]
       severity: error
+      autofix: automatic
     COMPLEX_SYSTEMS_FAIL:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2564,7 +2582,7 @@ law_catalogue:
     CONFIG_HIERARCHY:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_question_laws.rb]
       severity: warning
     CONFIGURATION_AS_CODE:
       universal: true
@@ -2581,8 +2599,9 @@ law_catalogue:
     CONSECUTIVE_BLANK_LINES:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      definition_sources: [MASTER/law/detectors/lexical_laws.rb]
       severity: info
+      autofix: automatic
     CONSISTENCY:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2596,8 +2615,10 @@ law_catalogue:
     CONST_BY_DEFAULT:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/js_laws.rb]
+      definition_sources: [MASTER/law/detectors/js_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [javascript]
     CONTAINER_RESPONSIVENESS:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2613,13 +2634,15 @@ law_catalogue:
     CONTRAST_TOKENS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      languages: [css, scss]
     CONTROL_CHARS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      definition_sources: [MASTER/law/detectors/universal_laws.rb]
       severity: error
+      autofix: automatic
     CONVENTION_OVER_CONFIG:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2645,12 +2668,12 @@ law_catalogue:
     COUPLER_SMELLS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_question_laws.rb]
       severity: warning
     CQS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_laws.rb]
       severity: warning
     CURSOR_NONE_REQUIRES_CURSOR:
       universal: true
@@ -2660,34 +2683,39 @@ law_catalogue:
     CYCLOMATIC_COMPLEXITY:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_laws.rb]
       severity: warning
     DATA_CLASS:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_laws.rb]
       severity: info
     DATA_CLUMPS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_question_laws.rb]
       severity: info
     DATA_REMOTE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [html]
     DEAD_CODE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+      definition_sources: [MASTER/law/detectors/ruby_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [ruby]
     DEBUG_OUTPUT:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      definition_sources: [MASTER/law/detectors/lexical_laws.rb]
       severity: error
+      autofix: automatic
+      languages: [ruby]
     DECOUPLE:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2728,8 +2756,7 @@ law_catalogue:
     DEPENDENCY_INVERSION:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_laws.rb]
       severity: warning
     DESIGN_BY_CONTRACT:
       universal: true
@@ -2799,13 +2826,17 @@ law_catalogue:
     DOUBLE_BRACKET:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/js_laws.rb]
+      definition_sources: [MASTER/law/detectors/js_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [zsh]
     DOUBLE_QUOTES_RUBY:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      definition_sources: [MASTER/law/detectors/cosmetic_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [ruby]
     DRY:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2830,13 +2861,17 @@ law_catalogue:
     EIGHT_PX_RHYTHM:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [css, scss]
     EN_DASH_RANGE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      definition_sources: [MASTER/law/detectors/cosmetic_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [markdown, yaml, html]
     ENGINEERING_FIT:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2850,13 +2885,16 @@ law_catalogue:
     ERB_HARDCODED_CHROME:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: warning
+      languages: [html]
     ERB_HTML_SAFE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: error
+      autofix: automatic
+      languages: [html]
     ERROR_CONTEXT:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2890,7 +2928,7 @@ law_catalogue:
     EXPLICIT:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_laws.rb]
       severity: warning
     EXPLICIT_HTTP_TIMEOUT:
       universal: true
@@ -2933,13 +2971,13 @@ law_catalogue:
     FAT_MODEL_CALLBACK_SOUP:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      languages: [ruby]
     FEATURE_ENVY:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_question_laws.rb]
       severity: warning
     FEEDBACK_LOOPS:
       universal: true
@@ -2949,29 +2987,31 @@ law_catalogue:
     FEW_ARGUMENTS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      definition_sources: [MASTER/law/detectors/universal_laws.rb]
       severity: warning
+      autofix: automatic
     FILE_LAYOUT:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_laws.rb]
       severity: info
     FILE_SEQUENCE_NAME:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/naming_laws.rb]
+      definition_sources: [MASTER/law/detectors/naming_laws.rb]
       severity: warning
+      languages: [ruby]
     FILE_SPRAWL:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/meta_laws.rb]
+      definition_sources: [MASTER/law/detectors/meta_laws.rb]
       severity: warning
     FILE_VAGUE_NAME:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/naming_laws.rb]
+      definition_sources: [MASTER/law/detectors/naming_laws.rb]
       severity: info
+      languages: [ruby]
     FILTER_MAP:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -2981,13 +3021,16 @@ law_catalogue:
     FINAL_NEWLINE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      definition_sources: [MASTER/law/detectors/cosmetic_laws.rb]
       severity: info
+      autofix: automatic
     FIND_EACH:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+      definition_sources: [MASTER/law/detectors/ruby_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [ruby]
     FIXED_HEIGHT:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3002,9 +3045,9 @@ law_catalogue:
     FLAT_PIXELS:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/practice.rb]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: warn
+      autofix: automatic
     FLAT_UI:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3018,8 +3061,10 @@ law_catalogue:
     FOCUS_VISIBLE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [css, scss]
     FOR_OF:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3030,18 +3075,23 @@ law_catalogue:
     FORM_FOLLOWS_FUNCTION:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      languages: [html]
     FORM_LABEL:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [html]
     FROZEN_LITERAL:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      definition_sources: [MASTER/law/detectors/lexical_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [ruby]
     FROZEN_STRING_LITERAL:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3094,8 +3144,9 @@ law_catalogue:
     GRID_STRUCTURE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: warning
+      languages: [css, scss]
     GUARD_CLAUSE:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3125,8 +3176,10 @@ law_catalogue:
     HASH_FETCH:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+      definition_sources: [MASTER/law/detectors/ruby_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [ruby]
     HELP_AND_DOCUMENTATION:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3135,13 +3188,15 @@ law_catalogue:
     HELPER_VIEW_ONLY:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      languages: [ruby]
     HOST_CAPACITY:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: warning
+      languages: [ruby]
     HOSTILE_AUDIT:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3162,8 +3217,10 @@ law_catalogue:
     HTML_LANG:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: error
+      autofix: automatic
+      languages: [html]
     HUMBLE_OBJECT:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3189,8 +3246,10 @@ law_catalogue:
     IMG_ALT:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: error
+      autofix: automatic
+      languages: [html]
     IMMUTABLE:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3222,8 +3281,10 @@ law_catalogue:
     INPUT_TYPE_SPECIFIC:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [html]
     INSTRUMENT_MUST_PROVE_ITSELF:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3262,13 +3323,12 @@ law_catalogue:
     interconnect:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/graph_laws.rb]
+      definition_sources: [MASTER/law/detectors/graph_laws.rb]
       severity: warning
     INTERFACE_SEGREGATION:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_laws.rb]
       severity: warning
     INTRINSIC_LAYOUT:
       universal: true
@@ -3284,8 +3344,10 @@ law_catalogue:
     JS_MODULE_SIZE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/js_laws.rb]
+      definition_sources: [MASTER/law/detectors/js_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [javascript]
     KERNEL_COERCION:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3300,29 +3362,30 @@ law_catalogue:
     law_coverage:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/meta_laws.rb]
+      definition_sources: [MASTER/law/detectors/meta_laws.rb]
       severity: warning
     LAW_OF_DEMETER:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      definition_sources: [MASTER/law/detectors/universal_laws.rb]
       severity: warning
+      autofix: automatic
     LAZY_CLASS:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_question_laws.rb]
       severity: info
     LAZY_IMAGES:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [html]
     LEARNED_SMELLS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/meta_laws.rb]
+      definition_sources: [MASTER/law/detectors/meta_laws.rb]
       severity: warning
     LEAST_ASTONISHMENT:
       universal: true
@@ -3342,13 +3405,15 @@ law_catalogue:
     LIB_ROOT_DISCIPLINE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_laws.rb]
       severity: warning
     LINE_HEIGHT_ON_SCALE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [css, scss]
     LINEARITY:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3364,8 +3429,7 @@ law_catalogue:
     LISKOV:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_laws.rb]
       severity: warning
     LOAD_BEARING_NAMES:
       universal: true
@@ -3384,18 +3448,20 @@ law_catalogue:
     LONG_LINE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      definition_sources: [MASTER/law/detectors/lexical_laws.rb]
       severity: info
     LONG_PARAMETER_LIST:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_question_laws.rb]
       severity: warning
     MAGIC_COLOR:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/js_laws.rb]
+      definition_sources: [MASTER/law/detectors/js_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [css, scss, javascript, html]
     MAKE_ILLEGAL_STATES_UNREPRESENTABLE:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3456,8 +3522,7 @@ law_catalogue:
     MIDDLE_MAN:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_laws.rb]
       severity: info
     MIGRATION_ADD_REFERENCE_NO_FK:
       universal: true
@@ -3524,8 +3589,10 @@ law_catalogue:
     MODIFIER_SILENT_RESCUE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      definition_sources: [MASTER/law/detectors/lexical_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [ruby]
     MONKEY_PATCH_CORE:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3552,13 +3619,16 @@ law_catalogue:
     N_PLUS_ONE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      definition_sources: [MASTER/law/detectors/universal_laws.rb]
       severity: warning
+      autofix: automatic
     NARROW_SILENT_RESCUE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      definition_sources: [MASTER/law/detectors/lexical_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [ruby]
     NATIVE_DISCLOSURE:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3573,7 +3643,7 @@ law_catalogue:
     NESTING_DEPTH:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_laws.rb]
       severity: warning
     NEVER_BATCH_DELETE:
       universal: true
@@ -3589,13 +3659,14 @@ law_catalogue:
     NO_ABBREVIATED_IDENTIFIERS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      definition_sources: [MASTER/law/detectors/cosmetic_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [ruby, javascript]
     NO_ASCII_ART_OUTSIDE_FACE:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/interface.rb]
-      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      definition_sources: [MASTER/law/detectors/lexical_laws.rb]
       severity: error
       languages: [ruby, javascript, html, yaml, markdown, zsh, css]
       path_exclude:
@@ -3605,6 +3676,7 @@ law_catalogue:
         - 'MASTER/test/test_cli_ascii_face\.rb'
         - 'MASTER/test/fixtures/face_ascii_frames\.json'
         - 'MASTER/tools/face_ascii_fixtures\.rb'
+      autofix: automatic
     NO_ASCII_DECORATION:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3613,8 +3685,9 @@ law_catalogue:
     NO_ASCII_LINE_ART:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      definition_sources: [MASTER/law/detectors/lexical_laws.rb]
       severity: warning
+      autofix: automatic
     NO_CHANGELOG_COMMENT:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3638,13 +3711,17 @@ law_catalogue:
     NO_DEBUG:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      definition_sources: [MASTER/law/detectors/lexical_laws.rb]
       severity: error
+      autofix: automatic
+      languages: [ruby]
     NO_DECORATIVE_FX:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [css, scss]
     NO_DECORATIVE_GRADIENT:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3671,14 +3748,13 @@ law_catalogue:
     NO_FLAG_ARGUMENTS:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      definition_sources: [MASTER/law/detectors/universal_laws.rb]
       severity: warning
+      autofix: automatic
     NO_GOD_CLASS:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_laws.rb]
       severity: error
     NO_HIDDEN_GLOBAL_STATE:
       universal: true
@@ -3694,8 +3770,10 @@ law_catalogue:
     NO_IMPORTANT:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [css, scss]
     NO_INFINITY_TO_I:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3771,13 +3849,16 @@ law_catalogue:
     NO_JS_ERB:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [html]
     NO_LOGIC_IN_VIEW:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: warning
+      languages: [html]
     NO_LONG_TRANSITION:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3841,8 +3922,10 @@ law_catalogue:
     NO_PUTS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      definition_sources: [MASTER/law/detectors/lexical_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [ruby]
     NO_SELECTOR_ARGUMENTS:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3861,8 +3944,10 @@ law_catalogue:
     NO_TODO_IN_VIEWS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [html]
     NO_TRAILING_ARROW:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3879,8 +3964,10 @@ law_catalogue:
     NO_UPDATE_ATTRIBUTE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+      definition_sources: [MASTER/law/detectors/ruby_laws.rb]
       severity: error
+      autofix: automatic
+      languages: [ruby]
     NO_VAR:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3921,7 +4008,7 @@ law_catalogue:
     NUMBERED_NAME:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/naming_laws.rb]
+      definition_sources: [MASTER/law/detectors/naming_laws.rb]
       severity: info
     OMAKASE:
       universal: true
@@ -3933,8 +4020,9 @@ law_catalogue:
     OMIT_NEEDLESS_WORDS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      definition_sources: [MASTER/law/detectors/lexical_laws.rb]
       severity: info
+      autofix: automatic
     ONE_ABSTRACTION_LEVEL:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -3948,17 +4036,16 @@ law_catalogue:
     ONE_SOURCE:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      definition_sources: [MASTER/law/detectors/universal_laws.rb]
       # error: ONE_SOURCE is a kernel Law. Measured when it was raised, its detector
       # found nothing in any of the four trees, so the severity is a promise about the
       # next collision rather than a new check failure.
       severity: error
+      autofix: automatic
     OPEN_CLOSED:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_laws.rb]
       severity: warning
     OPENBSD_DMESG_CONSOLE_STYLE:
       universal: true
@@ -3983,8 +4070,10 @@ law_catalogue:
     OPTIONAL_CHAINING_JS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/js_laws.rb]
+      definition_sources: [MASTER/law/detectors/js_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [javascript]
     ORTHOGONALITY:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4007,8 +4096,9 @@ law_catalogue:
     PARAMETERIZED_SLUG:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/naming_laws.rb]
+      definition_sources: [MASTER/law/detectors/naming_laws.rb]
       severity: warning
+      languages: [ruby]
     PARAMETRIC_MARK_ONLY:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4025,7 +4115,7 @@ law_catalogue:
     PATH_PURPOSE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/meta_laws.rb]
+      definition_sources: [MASTER/law/detectors/meta_laws.rb]
       # error, not warning: WriteGuard blocks on veto/critical/error, and a
       # directory nobody has taken responsibility for is exactly what
       # should be refused at write time rather than reported afterwards.
@@ -4033,8 +4123,7 @@ law_catalogue:
     PATTERN_EXTRACTION:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_laws.rb]
       severity: info
     PERCENT_LITERAL:
       universal: true
@@ -4045,18 +4134,22 @@ law_catalogue:
     PIXEL_EXACT:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      languages: [css, scss]
     PLEDGE_STAGED:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      definition_sources: [MASTER/law/detectors/universal_laws.rb]
       severity: error
+      languages: [ruby]
     PLUCK_OVER_MAP:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+      definition_sources: [MASTER/law/detectors/ruby_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [ruby]
     POINTER_FEEDBACK_EARLY:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4089,8 +4182,10 @@ law_catalogue:
     PREFER_TAG_HELPERS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [html]
     PRESENTATIONAL_CLASS_NAME:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4105,8 +4200,7 @@ law_catalogue:
     PRIMITIVE_OBSESSION:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/structural_question_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_question_laws.rb]
       severity: info
     PROBE_BEFORE_SHIP:
       universal: true
@@ -4130,8 +4224,7 @@ law_catalogue:
     PROGRESSIVE_DISCLOSURE:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
     PROPERTY_BASED_TESTING:
       universal: true
@@ -4213,8 +4306,9 @@ law_catalogue:
     PWA_MANIFEST_HINT:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      languages: [json, html]
     PWA_RESILIENCE_DEFAULTS:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4224,13 +4318,16 @@ law_catalogue:
     QUOTE_VARIABLES:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/js_laws.rb]
+      definition_sources: [MASTER/law/detectors/js_laws.rb]
       severity: error
+      autofix: automatic
+      languages: [zsh]
     RAILS_TAG_HELPER:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      languages: [html]
     RAILS_THIN_CONTROLLER_SEMANTIC:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4246,28 +4343,33 @@ law_catalogue:
     RAMS_HONEST:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      languages: [html]
     RAMS_THOROUGH:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      languages: [html]
     RAMS_UNDERSTANDABLE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      languages: [html]
     RAMS_UNOBTRUSIVE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      languages: [html]
     RAMS_USEFUL:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      languages: [html]
     RATCHET_INTEGRITY:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4285,8 +4387,10 @@ law_catalogue:
     README_PROSE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      definition_sources: [MASTER/law/detectors/cosmetic_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [markdown]
     README_VISION:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4303,12 +4407,14 @@ law_catalogue:
     REDUCED_MOTION:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [css, scss]
     reek:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/external_linter_laws.rb]
+      definition_sources: [MASTER/law/detectors/external_linter_laws.rb]
       severity: warning
     REFUSED_BEQUEST:
       universal: true
@@ -4330,8 +4436,10 @@ law_catalogue:
     RESCUE_EXCEPTION:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      definition_sources: [MASTER/law/detectors/lexical_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [ruby]
     RESCUE_ON_DEF:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4363,7 +4471,7 @@ law_catalogue:
     rubocop:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/external_linter_laws.rb]
+      definition_sources: [MASTER/law/detectors/external_linter_laws.rb]
       severity: warning
     RUBY_BLOCK_DELIMITER:
       universal: true
@@ -4404,13 +4512,16 @@ law_catalogue:
     RUBY_TERNARY_NOT_NESTED:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      definition_sources: [MASTER/law/detectors/cosmetic_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [ruby]
     RUNTIME_DOCS_YAML:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/meta_laws.rb]
+      definition_sources: [MASTER/law/detectors/meta_laws.rb]
       severity: error
+      languages: [markdown]
     SAFE_NAVIGATION:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4437,8 +4548,9 @@ law_catalogue:
     SCSS_NESTING_DEPTH:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: warning
+      languages: [scss]
     SECRET_PROXIMITY:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4455,7 +4567,7 @@ law_catalogue:
     semantic:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/semantic_laws.rb]
+      definition_sources: [MASTER/law/detectors/semantic_laws.rb]
       severity: warning
     SEMANTIC_ELEMENTS:
       universal: true
@@ -4493,8 +4605,9 @@ law_catalogue:
     SIGNAL_NOISE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      languages: [html]
     SIGNATURE_MOMENT:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4511,8 +4624,10 @@ law_catalogue:
     SILENT_RESCUE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      definition_sources: [MASTER/law/detectors/lexical_laws.rb]
       severity: error
+      autofix: automatic
+      languages: [ruby]
     SIMPLEST_WORKS:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4521,13 +4636,16 @@ law_catalogue:
     SIMULATION:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      definition_sources: [MASTER/law/detectors/universal_laws.rb]
       severity: warning
+      autofix: automatic
     SINGLE_H1:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [html]
     SINGLE_PRIVATE_SECTION:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4552,12 +4670,12 @@ law_catalogue:
     SMALL_FILES:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_laws.rb]
       severity: warning
     SMALL_FUNCTIONS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/structural_laws.rb]
+      definition_sources: [MASTER/law/detectors/structural_laws.rb]
       severity: warning
     SPECULATIVE_GENERALITY:
       universal: true
@@ -4567,8 +4685,9 @@ law_catalogue:
     SQL_INJECTION:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      definition_sources: [MASTER/law/detectors/universal_laws.rb]
       severity: error
+      autofix: automatic
     SQUINT_TEST:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4595,13 +4714,15 @@ law_catalogue:
     STIMULUS_CONTROLLER_SIZE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: warning
+      languages: [javascript]
     STIMULUS_PROGRESSIVE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      languages: [html]
     STRICT_LOADING_MISSING:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4627,8 +4748,10 @@ law_catalogue:
     STRONG_PARAMETERS:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+      definition_sources: [MASTER/law/detectors/ruby_laws.rb]
       severity: error
+      autofix: automatic
+      languages: [ruby]
     STRUCTURAL_HONESTY:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4669,13 +4792,16 @@ law_catalogue:
     TAB_CHARACTER:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      definition_sources: [MASTER/law/detectors/cosmetic_laws.rb]
       severity: warning
+      autofix: automatic
     TABINDEX_ABOVE_ZERO:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/web_laws.rb]
+      definition_sources: [MASTER/law/detectors/web_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [html]
     TACTILE_FEEDBACK:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4699,23 +4825,28 @@ law_catalogue:
     THIN_CONTROLLER:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: warning
+      languages: [ruby]
     TIME_ZONE_UNSAFE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      definition_sources: [MASTER/law/detectors/lexical_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [ruby]
     TODO_FIXME:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      definition_sources: [MASTER/law/detectors/lexical_laws.rb]
       severity: info
     TOUCH_TARGET_MIN:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: warning
+      autofix: automatic
+      languages: [css, scss]
     TRACER_BULLETS:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4724,20 +4855,22 @@ law_catalogue:
     TRAILING_COMMAS:
       universal: true
       modalities: [lexical, semantic, visual]
-      definition_sources: [MASTER/law/universal.rb]
-      detector_sources: [MASTER/law/detectors/ruby_laws.rb]
+      definition_sources: [MASTER/law/detectors/ruby_laws.rb]
       severity: info
       languages: [ruby, javascript]
+      autofix: automatic
     TRAILING_COMMENT:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      definition_sources: [MASTER/law/detectors/lexical_laws.rb]
       severity: info
+      autofix: automatic
     TRAILING_WHITESPACE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/lexical_laws.rb]
+      definition_sources: [MASTER/law/detectors/lexical_laws.rb]
       severity: info
+      autofix: automatic
     TRANSFORM_KEYS:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4753,33 +4886,39 @@ law_catalogue:
     TYPE_HIERARCHY:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      languages: [css, scss]
     TYPE_IN_NAME:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/naming_laws.rb]
+      definition_sources: [MASTER/law/detectors/naming_laws.rb]
       severity: info
     TYPE_TITLE_TOKEN:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      languages: [css, scss]
     TYPOGRAPHIC_EXCELLENCE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      definition_sources: [MASTER/law/detectors/universal_laws.rb]
       severity: info
+      autofix: automatic
     TYPOGRAPHIC_GRID:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      definition_sources: [MASTER/law/detectors/cosmetic_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [markdown, html]
     TYPOGRAPHY_DISCIPLINE:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/universal_laws.rb]
+      definition_sources: [MASTER/law/detectors/universal_laws.rb]
       severity: info
+      autofix: automatic
     UNBOUNDED_RETRY:
       universal: true
       modalities: [lexical, semantic, visual]
@@ -4839,12 +4978,14 @@ law_catalogue:
     VERTICAL_BREATH:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/cosmetic_laws.rb]
+      definition_sources: [MASTER/law/detectors/cosmetic_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [ruby, javascript]
     veto_patterns:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/veto_pattern_law.rb]
+      definition_sources: [MASTER/law/detectors/veto_pattern_law.rb]
       severity: veto
     VISUAL_HIERARCHY:
       universal: true
@@ -4901,8 +5042,10 @@ law_catalogue:
     WHITESPACE_RHYTHM:
       universal: true
       modalities: [lexical, semantic, visual]
-      detector_sources: [MASTER/law/detectors/surface_laws.rb]
+      definition_sources: [MASTER/law/detectors/surface_laws.rb]
       severity: info
+      autofix: automatic
+      languages: [css, scss]
     WHY_NOT_WHAT:
       universal: true
       modalities: [lexical, semantic, visual]

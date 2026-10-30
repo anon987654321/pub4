@@ -57,25 +57,17 @@ module Operator
       rows + Array(body["learned_smells"]).select { |r| r.is_a?(Hash) && r["id"] }
     end
 
+    # Both directories Law.load_all reads: law/ and law/detectors/.
     def law_ids
-      Dir.glob(File.join(MASTER, "law", "*.rb"))
+      Dir.glob(File.join(MASTER, "law", "{,detectors/}*.rb"))
          .flat_map { |p| File.read(p, encoding: "UTF-8").scrub.scan(/Law\.define\(:(\w+)\)/).flatten }
-    end
-
-    def dsl_ids
-      Dir.glob(File.join(MASTER, "law", "detectors", "*.rb")).flat_map do |path|
-        source = File.read(path, encoding: "UTF-8").scrub
-        inline = source.scan(/LawDSL\.law\s*\(?\s*:([A-Za-z0-9_]+)/).flatten
-        declared = source.scan(/declare\s+id:\s*["']([^"']+)["']/).flatten
-        inline + declared
-      end
     end
 
     def catalogue_ids
       master_laws.fetch("law_catalogue").fetch("entries").keys.map(&:to_s)
     end
 
-    def all_ids = (catalogue_ids + yaml_laws.map { |r| r["id"] } + law_ids + dsl_ids).compact
+    def all_ids = (catalogue_ids + yaml_laws.map { |r| r["id"] } + law_ids).compact
 
     # Two ids differing only by case are two laws as far as every registry is
     # concerned and one law as far as a reader is concerned. Findings, priors
@@ -135,12 +127,12 @@ module Operator
     # regrowth. What the old count was hiding is in statement_conflicts below.
     #
     # YAML owns Law identity and policy; it never executes detector code.
-    # Ruby definitions and detector adapters are the only executable sources.
+    # Ruby definitions are the only executable source, and since the Law systems
+    # merged there is one population: a second home for an id is a duplicate
+    # ::Law.define, which LawCataloguePreflight refuses before anything loads.
+    # This stays as the measured guard that the count is zero.
     def detector_homes
-      homes = Hash.new { |h, k| h[k] = [] }
-      law_detectors.each { |id| homes[id] << "law/" }
-      dsl_ids.map(&:upcase).each { |id| homes[id] << "law/detectors/" }
-      homes
+      law_detectors.tally.transform_values { |count| ["law/"] * count }
     end
 
     # A law with a `practice` or an `ask` cannot fire on a line: the first is a
@@ -162,7 +154,7 @@ module Operator
     end
 
     def cross_population_duplicates
-      detector_homes.select { |_, where| where.uniq.size > 1 }
+      detector_homes.select { |_, where| where.size > 1 }
                     .map { |id, where| { law: id, homes: where.uniq } }
                     .sort_by { |h| h[:law] }
     end
@@ -181,16 +173,10 @@ module Operator
     # for every rule, so the implementation follows it there.
     def statement_conflicts
       laws = loaded_laws
-      registry_severity = dsl_severities
       yaml_laws.filter_map do |r|
         id = r["id"].to_s.upcase
-        law = laws[id.to_sym]
-        next conflict(id, "law/", law.fix, law.severity, r) if law
-
-        severity = registry_severity[id]
-        next unless severity
-
-        conflict(id, "LawDSL", r["fix"], severity, r)
+        law = laws[id.to_sym] || laws.values.find { |candidate| candidate.id.to_s.casecmp?(id) }
+        conflict(id, "law/", law.fix, law.severity, r) if law
       end
     end
 
@@ -213,19 +199,6 @@ module Operator
     # law/ writes :warn where the catalogue writes "warning", and they are the
     # same severity.
     def normalised(severity) = severity.to_s.downcase.sub(/\Awarn\z/, "warning")
-
-    def dsl_severities
-      lib = File.join(MASTER, "lib")
-      $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-      require "master"
-      require "review/scan/law_dsl"
-      Master::Review::Scan::Law.registry.filter_map do |klass|
-        rule = Master::Review::Scan::LawFactory.build(klass, root: MASTER)
-        [rule.id.to_s.upcase, rule.severity]
-      rescue StandardError # scan: intentional — a rule that will not build has no severity to compare
-        nil
-      end.to_h
-    end
 
     def ceilings
       master_laws # boots the runtime, so Master.law resolves

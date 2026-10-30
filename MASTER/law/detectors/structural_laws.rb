@@ -7,7 +7,7 @@ module Master
     module Scan
       module Laws
         # B05 FILE_LAYOUT — Ruby file order: frozen → require → module → class → public → private.
-        class FileLayoutLaw < Law
+        class FileLayoutLaw < Detector
           # The three scopes Ruby resets method visibility in, plus the file itself.
           SCOPE_NODES = [
             Prism::ProgramNode, Prism::ClassNode, Prism::ModuleNode, Prism::SingletonClassNode
@@ -15,8 +15,6 @@ module Master
 
           VISIBILITY_MARKERS = %w[public private protected].freeze
 
-          declare id: "FILE_LAYOUT", tags: %i[PROXIMITY CONVENTION],
-                  description: "frozen header → requires → module/class → public → private"
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
@@ -108,10 +106,15 @@ module Master
           end
         end
 
+        ::Law.define(:FILE_LAYOUT) do
+          detector FileLayoutLaw
+          tags %i[PROXIMITY CONVENTION]
+          fix "frozen header → requires → module/class → public → private"
+          proved_by "test/test_structural_shape_laws.rb"
+        end
+
         # B06 EXPLICIT — implicit requires, magic coupling, method_missing without respond_to_missing?.
-        class ExplicitLaw < Law
-          declare id: "EXPLICIT", tags: %i[EXPLICIT CONVENTION],
-                  description: "no implicit requires or magic coupling"
+        class ExplicitLaw < Detector
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
@@ -140,8 +143,17 @@ module Master
           end
         end
 
+        ::Law.define(:EXPLICIT) do
+          detector ExplicitLaw
+          tags %i[EXPLICIT CONVENTION]
+          fix "no implicit requires or magic coupling"
+          example_path "/repo/lib/example.rb"
+          bad %(autoload :Thing, "thing"\n)
+          good %(require_relative "thing"\n)
+        end
+
         # B08 CYCLOMATIC_COMPLEXITY — methods with cyclomatic complexity > 10.
-        class CyclomaticComplexityLaw < Law
+        class CyclomaticComplexityLaw < Detector
           MAX_CC = 10
           CC_NODES = [
             Prism::IfNode, Prism::UnlessNode, Prism::WhileNode, Prism::UntilNode,
@@ -149,8 +161,6 @@ module Master
             Prism::OrNode
           ].freeze
 
-          declare id: "CYCLOMATIC_COMPLEXITY", tags: %i[LINEARITY SMALL_PARTS],
-                  description: "cyclomatic complexity under 10 per method"
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -175,13 +185,18 @@ module Master
           end
         end
 
+        ::Law.define(:CYCLOMATIC_COMPLEXITY) do
+          detector CyclomaticComplexityLaw
+          tags %i[LINEARITY SMALL_PARTS]
+          fix "cyclomatic complexity under 10 per method"
+          proved_by "test/test_operator_lint.rb"
+        end
+
         # B09 PATTERN_EXTRACTION — code close to a named design pattern.
-        class PatternExtractionLaw < Law
+        class PatternExtractionLaw < Detector
           BRANCH_THRESHOLD = 3
           PIPELINE_STEP_THRESHOLD = 4
 
-          declare id: "PATTERN_EXTRACTION", tags: %i[DESIGN OPPORTUNITY],
-                  description: "file is close to a named design pattern"
 
           def check_ast(ast, code, path:)
             return [] unless ast
@@ -232,10 +247,23 @@ module Master
           end
         end
 
+        ::Law.define(:PATTERN_EXTRACTION) do
+          detector PatternExtractionLaw
+          tags %i[DESIGN OPPORTUNITY]
+          source "MASTER-native — extract recurring structure"
+          ask "Is the code close to a known reusable pattern whose extraction would genuinely reduce complexity rather than add ceremony?"
+          fix "Extract a pattern only when recurring structure earns the abstraction."
+          bad <<~'X'
+          if cache.hit?; cache.read; else; fetch; cache.write; end
+          X
+          good <<~'X'
+          result = Cache.fetch(key) { fetch }
+          X
+          proved_by "test/test_pattern_extraction_law.rb"
+        end
+
         # B10 DATA_CLASS — class with only attr_accessor and no real methods.
-        class DataClassLaw < Law
-          declare id: "DATA_CLASS", tags: %i[SRP SOLID],
-                  description: "data class with no behavior — use Struct or Data"
+        class DataClassLaw < Detector
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -259,13 +287,28 @@ module Master
 
         end
 
+        ::Law.define(:DATA_CLASS) do
+          detector DataClassLaw
+          tags %i[SRP SOLID]
+          source "Refactoring — Data Class (Fowler)"
+          ask "Does this class mainly hold data while behavior that belongs with that data is scattered across other modules?"
+          fix "Move cohesive behavior toward the data owner or replace the holder with a meaningful domain abstraction."
+          bad <<~'X'
+          class Money; attr_reader :cents; end; Tax.total(money)
+          X
+          good <<~'X'
+          class Money; attr_reader :cents; def taxed(rate); cents * rate; end; end
+          X
+          proved_by "test/test_structural_shape_laws.rb"
+        end
+
         # Enforces "core stays lean" as a live check, not just an aspiration --
         # matches OpenClaw's explicit policy (VISION.md: "we are generally
         # slimming down core... bar for adding optional plugins to core is
         # intentionally high"). MASTER's own lib/-vs-core/ split has been an
         # ongoing, unresolved tension; this at least stops lib/ root itself
         # from silently accumulating new files with no deliberate decision.
-        class LibRootDisciplineLaw < Law
+        class LibRootDisciplineLaw < Detector
           # autonomy.rb left the list with the subsystem it named. An allowance
           # for a file nobody can add back is the exemption-outlives-its-subject
           # shape this repo keeps writing down, and
@@ -285,10 +328,6 @@ module Master
             plugin.rb proof.rb result.rb security_error.rb snapshot.rb unwrap_error.rb
           ].freeze
 
-          def self.auto_build? = false
-
-          declare id: "LIB_ROOT_DISCIPLINE", tags: %i[ABSTRACTION ARCHITECTURE],
-                  description: "new files shouldn't land directly in lib/ root"
 
           def initialize(root: Master::ROOT)
             super()
@@ -313,6 +352,13 @@ module Master
           end
         end
 
+        ::Law.define(:LIB_ROOT_DISCIPLINE) do
+          detector LibRootDisciplineLaw
+          tags %i[ABSTRACTION ARCHITECTURE]
+          fix "new files shouldn't land directly in lib/ root"
+          proved_by "test/test_lib_root_discipline_law.rb"
+        end
+
       # Structural rules use Prism AST rather than line-by-line regex.
       # Each implements check_ast(ast, code, path:) for scanner integration.
       # All also implement check(code, path:) as fallback for non-Ruby files.
@@ -324,13 +370,12 @@ module Master
       # document has no such boundary, and its length is its content. JavaScript
       # is JS_MODULE_SIZE's, which asks the same question with the vendored
       # bundles set aside, so reading it here reported every long script twice.
-        class SmallFilesLaw < Law
+        class SmallFilesLaw < Detector
           LIMIT = 300
 
           NOT_MODULAR = %w[json yaml markdown javascript].freeze
           DATA_EXTENSIONS = %w[.lock .txt .conf .ipynb .csv].freeze
 
-          declare id: "SMALL_FILES", tags: %i[SMALL_PARTS], description: "files under 300 lines"
 
           def check(code, path:)
             return [] if NOT_MODULAR.include?(language(path.to_s).to_s)
@@ -343,13 +388,18 @@ module Master
           end
         end
 
+        ::Law.define(:SMALL_FILES) do
+          detector SmallFilesLaw
+          tags %i[SMALL_PARTS]
+          fix "files under 300 lines"
+          proved_by "test/test_scan_law_contracts.rb"
+        end
+
       # B02 SMALL_FUNCTIONS — methods over 20 lines via Prism (detect_structural: long_method).
-        class SmallFunctionsLaw < Law
+        class SmallFunctionsLaw < Detector
           IDEAL = 10
           MAX = 20
 
-          declare id: "SMALL_FUNCTIONS", tags: %i[SMALL_PARTS],
-                  description: "methods under 10 lines ideal, max 20"
 
           # Counts *code* lines, not the raw start..end span.
           #
@@ -395,12 +445,18 @@ module Master
 
         end
 
+        ::Law.define(:SMALL_FUNCTIONS) do
+          detector SmallFunctionsLaw
+          tags %i[SMALL_PARTS]
+          fix "methods under 10 lines ideal, max 20"
+          proved_by "test/test_scan_law_contracts.rb"
+        end
+
       # B03 NO_GOD_CLASS — class with >10 public methods (detect_structural: god_class).
-        class GodClassLaw < Law
+        class GodClassLaw < Detector
           METHOD_LIMIT = 10
           LINE_LIMIT = 300
 
-          declare id: "NO_GOD_CLASS", tags: %i[SOLID SRP], description: "no god classes"
 
           def check_ast(ast, code, path:)
             return [] unless ast
@@ -464,10 +520,25 @@ module Master
           end
         end
 
+        ::Law.define(:NO_GOD_CLASS) do
+          detector GodClassLaw
+          tags %i[SOLID SRP]
+          source "Refactoring code smell: Large Class / God Object (Fowler)"
+          ask "Does one class accumulate unrelated responsibilities that should have separate owners?"
+          fix "Decompose into focused objects with explicit responsibilities."
+          bad <<~'X'
+          class Application; def users; end; def billing; end; def render; end; def mail; end; end
+          X
+          good <<~'X'
+          class Users; end; class Billing; end
+          X
+          proved_by "test/test_scan_law_contracts.rb"
+        end
+
       # B07 NESTING_DEPTH — control-flow nesting deeper than 4 levels (detect_structural: nesting_depth).
       # Counts control flow only; module/class/def are namespacing and method scope, not the
       # LINEARITY concern — otherwise deep namespaces (Master::Review::Scan::Laws) flag every method.
-        class NestingDepthLaw < Law
+        class NestingDepthLaw < Detector
           MAX_DEPTH = 4
 
           NESTING_TYPES = [
@@ -476,7 +547,6 @@ module Master
             Prism::BlockNode
           ].freeze
 
-          declare id: "NESTING_DEPTH", tags: %i[LINEARITY], description: "nesting depth under 4"
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -498,10 +568,15 @@ module Master
           end
         end
 
+        ::Law.define(:NESTING_DEPTH) do
+          detector NestingDepthLaw
+          tags %i[LINEARITY]
+          fix "nesting depth under 4"
+          proved_by "test/test_structural_shape_laws.rb"
+        end
+
       # B04 CQS — method that both mutates state and returns a meaningful value.
-        class CqsLaw < Law
-          declare id: "CQS", tags: %i[CQS CLEAN_CODE],
-                  description: "command-query separation — mutate OR return, not both"
+        class CqsLaw < Detector
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -569,12 +644,19 @@ module Master
           end
         end
 
+        ::Law.define(:CQS) do
+          detector CqsLaw
+          tags %i[CQS CLEAN_CODE]
+          fix "command-query separation — mutate OR return, not both"
+          proved_by "test/test_scan_law_contracts.rb"
+        end
+
       # SOLID literal proxies — data/laws.yml unit OPEN_CLOSED/LISKOV/
       # INTERFACE_SEGREGATION/DEPENDENCY_INVERSION previously had detect_semantic
       # only. These give each a same-file AST proxy; the semantic prompt still
       # carries the cases these heuristics miss.
 
-        class OpenClosedLaw < Law
+        class OpenClosedLaw < Detector
           MIN_BRANCHES = 3
           TYPE_PREDICATE = /\.(class|type|kind)\b/
 
@@ -587,8 +669,6 @@ module Master
           # does work, keeping `foo_is_a?` out.
           TYPE_CHECK = /\b(is_a\?|instance_of\?)/
 
-          declare id: "OPEN_CLOSED", tags: %i[SOLID OCP],
-                  description: "case/when or is_a? chains that must grow on every new type"
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -617,9 +697,22 @@ module Master
 
         end
 
-        class LiskovLaw < Law
-          declare id: "LISKOV", tags: %i[SOLID LSP],
-                  description: "subclass breaks the parent's contract via refused bequest or narrowed signature"
+        ::Law.define(:OPEN_CLOSED) do
+          detector OpenClosedLaw
+          tags %i[SOLID OCP]
+          source "Open-Closed Principle (Bertrand Meyer; SOLID)"
+          ask "Must existing core code be modified whenever a new supported variant is added?"
+          fix "Extend through stable interfaces, registries, or composition where that reduces repeated core edits."
+          bad <<~'X'
+          case format; when :json; render_json; when :xml; render_xml; end
+          X
+          good <<~'X'
+          renderers.fetch(format).call(document)
+          X
+          proved_by "test/test_solid_laws.rb"
+        end
+
+        class LiskovLaw < Detector
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -681,11 +774,24 @@ module Master
 
         end
 
-        class DependencyInversionLaw < Law
+        ::Law.define(:LISKOV) do
+          detector LiskovLaw
+          tags %i[SOLID LSP]
+          source "Liskov Substitution Principle (Barbara Liskov, 1987)"
+          ask "Does a subtype violate assumptions or guarantees established by the type it replaces?"
+          fix "Make subtype behavior satisfy the established contract or use a different abstraction."
+          bad <<~'X'
+          class ReadOnlyStore < Store; def save(x); raise "no"; end; end
+          X
+          good <<~'X'
+          class ReadOnlyStore < ReadStore; end
+          X
+          proved_by "test/test_solid_laws.rb"
+        end
+
+        class DependencyInversionLaw < Detector
           COLLABORATOR_SUFFIX = /(Service|Client|Adapter|Gateway|Repository|Provider)\z/
 
-          declare id: "DEPENDENCY_INVERSION", tags: %i[SOLID DIP],
-                  description: "constructor hardcodes a concrete collaborator instead of accepting it as a dependency"
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -719,11 +825,24 @@ module Master
 
         end
 
-        class InterfaceSegregationLaw < Law
+        ::Law.define(:DEPENDENCY_INVERSION) do
+          detector DependencyInversionLaw
+          tags %i[SOLID DIP]
+          source "SOLID — Dependency Inversion Principle"
+          ask "Does high-level policy directly instantiate concrete dependencies that should be replaceable?"
+          fix "Depend on stable abstractions and inject concrete implementations at the boundary."
+          bad <<~'X'
+          class Checkout; def call; Stripe::Charge.create; end; end
+          X
+          good <<~'X'
+          class Checkout; def initialize(payments:); @payments = payments; end; end
+          X
+          proved_by "test/test_solid_laws.rb"
+        end
+
+        class InterfaceSegregationLaw < Detector
           METHOD_LIMIT = 8
 
-          declare id: "INTERFACE_SEGREGATION", tags: %i[SOLID ISP],
-                  description: "large module forces includers to stub methods they don't use"
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -770,16 +889,29 @@ module Master
 
         end
 
+        ::Law.define(:INTERFACE_SEGREGATION) do
+          detector InterfaceSegregationLaw
+          tags %i[SOLID ISP]
+          source "SOLID — Interface Segregation"
+          ask "Does an interface force implementations to stub or ignore methods they do not need?"
+          fix "Split broad interfaces into focused contracts."
+          bad <<~'X'
+          class Printer; def print; end; def scan; raise NotImplementedError; end; end
+          X
+          good <<~'X'
+          Printable = Data.define; Scannable = Data.define
+          X
+          proved_by "test/test_solid_laws.rb"
+        end
+
         # Over-engineering, the deterministic half of engineering_fit: a class
         # whose every method only forwards to one other object carries a name and
         # a file and nothing else. Callers could hold that object directly. :info,
         # because a facade that adds a boundary on purpose is the exception the
         # reviewer decides — the law surfaces the shape, not the verdict.
-        class MiddleManLaw < Law
+        class MiddleManLaw < Detector
           MIN_METHODS = 3
 
-          declare id: "MIDDLE_MAN", tags: %i[ENGINEERING_FIT ABSTRACTION],
-                  description: "a class that only forwards to one object adds a name, not behaviour"
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -824,6 +956,21 @@ module Master
 
             nil
           end
+        end
+
+        ::Law.define(:MIDDLE_MAN) do
+          detector MiddleManLaw
+          tags %i[ENGINEERING_FIT ABSTRACTION]
+          source "Refactoring — Middle Man (Fowler)"
+          ask "Does this class mostly delegate methods to another object without adding meaningful policy?"
+          fix "Remove the unnecessary middle layer or give it a real abstraction."
+          bad <<~'X'
+          def name; @user.name; end; def email; @user.email; end
+          X
+          good <<~'X'
+          attr_reader :user
+          X
+          proved_by "test/test_structural_shape_laws.rb"
         end
 
         StructuralRules = Module.new

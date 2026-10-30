@@ -6,30 +6,26 @@ module Master
   module Review
     module Scan
       module Laws
-        LawDSL.law :PARAMETERIZED_SLUG,
-          tags: %i[FLAT_HIERARCHY DRY],
-          applies_to: %i[ruby],
-          autofix: false,
-          # The subject is the path, not the source, and the harness gives a rule
-          # one path — so the positive example is all this rule can carry, and a
-          # does_not_fire here would be the same path answering differently.
-          # The clean form is the message's own suggestion, minus `_service`.
-          example_path: "/repo/app/services/user_profile_photo_uploader_service.rb",
-          fires: "# any source; this rule reads the path\n",
-          description: "path is dense Rails-parameterize slug — Strunk-clean snake_case" do |_src, path:|
-          rel = path.to_s
-          # A migration's filename is its schema_migrations key, and Rails finds
-          # application_* by name. Neither can be renamed on naming-density
-          # grounds, and 58 of brgen's 71 findings were migrations.
-          next [] if rel.match?(%r{/(test|spec|node_modules|db/migrate)/|/application_\w+\.rb\z})
+        ::Law.define(:PARAMETERIZED_SLUG) do
+          tags %i[FLAT_HIERARCHY DRY]
+          fix "path is dense Rails-parameterize slug — Strunk-clean snake_case"
+          # A path rule: one example path cannot hold a flagged bad and a clean good.
+          proved_by "test/test_parameterized_slug.rb"
+          check do |_src, path|
+            rel = path.to_s
+            # A migration's filename is its schema_migrations key, and Rails finds
+            # application_* by name. Neither can be renamed on naming-density
+            # grounds, and 58 of brgen's 71 findings were migrations.
+            next [] if rel.match?(%r{/(test|spec|node_modules|db/migrate)/|/application_\w+\.rb\z})
 
-          Master::Ground::ParameterizedSlug.path_issues(rel).map do |issue|
-            target = issue.to == issue.from ? issue.to : "#{File.dirname(rel)}/#{issue.to}.rb".gsub(%r{\./}, "")
-            message = case issue.action
-                      when "merge" then "Flat Hierarchy — #{issue.reason} (#{target})"
-                      else "Flat Hierarchy — #{issue.reason}#{" → #{target}" if issue.to != issue.from}"
-                      end
-            finding(line: 1, message:)
+            Master::Ground::ParameterizedSlug.path_issues(rel).map do |issue|
+              target = issue.to == issue.from ? issue.to : "#{File.dirname(rel)}/#{issue.to}.rb".gsub(%r{\./}, "")
+              message = case issue.action
+                        when "merge" then "Flat Hierarchy — #{issue.reason} (#{target})"
+                        else "Flat Hierarchy — #{issue.reason}#{" → #{target}" if issue.to != issue.from}"
+                        end
+              finding(line: 1, message:)
+            end
           end
         end
 
@@ -48,7 +44,7 @@ module Master
         # `_list` is a domain noun as often as a type: an allow_list is not an
         # Array pretending to be named, and old_string is the edit-tool schema
         # this runtime hands a model. 85 findings before those exclusions, 44 after.
-        class TypeInNameLaw < Law
+        class TypeInNameLaw < Detector
           SUFFIX = /_(?:string|str|array|hash|object|list)\z/
           CONVERSION = /\A(?:to|from|as|into)_/
           DIGEST = /(?:prev|last|stable|content|commit|file|source|body|digest|checksum|chain|enacted)_hash\z/
@@ -60,8 +56,6 @@ module Master
             play_list guest_list old_string new_string old_str new_str
           ].freeze
 
-          declare id: "TYPE_IN_NAME", tags: %i[DOMAIN_LANGUAGE LOAD_BEARING_NAMES],
-                  description: "a name that encodes its own type says nothing the code did not"
 
           def check_ast(ast, _code, path:)
             return [] if ast.nil? || path.to_s.match?(%r{/(?:test|spec|fixtures)/})
@@ -95,6 +89,13 @@ module Master
           end
         end
 
+        ::Law.define(:TYPE_IN_NAME) do
+          detector TypeInNameLaw
+          tags %i[DOMAIN_LANGUAGE LOAD_BEARING_NAMES]
+          fix "a name that encodes its own type says nothing the code did not"
+          proved_by "test/test_smell_detectors.rb"
+        end
+
         # A bare sequence number in a name, where a sibling in the same file
         # carries the same stem and a different one: mix_v7 beside mix_v11. The
         # number says there was another one and nothing about the difference.
@@ -107,7 +108,7 @@ module Master
         # about the world. Locals were measured and dropped for the same reason:
         # 114 findings, nearly all of them dilla and postpro, where t1 and d8 are
         # the notation the DSP is transcribed from.
-        class NumberedNameLaw < Law
+        class NumberedNameLaw < Detector
           NUMBERED = /\A(.*?)(?:_v)?(\d+)\z/
           KEEP = /
             (?:sha|md|crc|base|utf|latin|iso|rfc|x|ipv|http|oauth|ec|s3|p|h|mp|
@@ -115,8 +116,6 @@ module Master
                float|int|uint|bit|px|rem|em|ms|hz|db|k|fp|bf|q|load|capture)\d+\z
           /x
 
-          declare id: "NUMBERED_NAME", tags: %i[DOMAIN_LANGUAGE LOAD_BEARING_NAMES],
-                  description: "numbered siblings name no difference between themselves"
 
           def check_ast(ast, _code, path:)
             return [] if ast.nil? || path.to_s.match?(%r{/(?:test|spec|fixtures)/})
@@ -153,6 +152,13 @@ module Master
           end
         end
 
+        ::Law.define(:NUMBERED_NAME) do
+          detector NumberedNameLaw
+          tags %i[DOMAIN_LANGUAGE LOAD_BEARING_NAMES]
+          fix "numbered siblings name no difference between themselves"
+          proved_by "test/test_smell_detectors.rb"
+        end
+
 # FILE_SEQUENCE_NAME and FILE_VAGUE_NAME — the two filename detectors. Both are
 # about the file's own name rather than anything inside it, so neither needs an
 # AST; they read `path` and ignore `source`.
@@ -166,60 +172,60 @@ module Master
         # A sequence word is a timestamp wearing a name. If two files differ,
         # the name says how; if it cannot, they are one file or the difference
         # is not yet understood.
-        LawDSL.law :FILE_SEQUENCE_NAME,
-          reads_beyond_file: true,
-          does_not_fire: "class AddThing < ActiveRecord::Migration[8.0]; end\n",
-          example_path: "/repo/db/migrate/20260101000000_add_thing_v2.rb",
-          tags: %i[LOAD_BEARING_NAMES DOMAIN_LANGUAGE],
-          applies_to: %i[ruby],
-          autofix: false,
-          description: "a filename records what a thing is, never where it sat in a sequence" do |_src, path:|
-            stem = File.basename(path.to_s, ".*")
-            # db/migrate is timestamp-keyed by Rails and versioned API dirs are
-            # a public contract; neither is a name someone chose loosely.
-            next [] if path.to_s.match?(%r{/(?:db/migrate|node_modules|vendor)/|/v\d+/})
+        ::Law.define(:FILE_SEQUENCE_NAME) do
+          tags %i[LOAD_BEARING_NAMES DOMAIN_LANGUAGE]
+          fix "a filename records what a thing is, never where it sat in a sequence"
+          reads_beyond_file true
+          # A path rule that reads its siblings on disk; its test builds them.
+          proved_by "test/test_file_sequence_name.rb"
+          check do |_src, path|
+              stem = File.basename(path.to_s, ".*")
+              # db/migrate is timestamp-keyed by Rails and versioned API dirs are
+              # a public contract; neither is a name someone chose loosely.
+              next [] if path.to_s.match?(%r{/(?:db/migrate|node_modules|vendor)/|/v\d+/})
 
-            # The sibling requirement, borrowed from NUMBERED_NAME above, is what
-            # makes this measurable rather than noisy. Without it: 5 findings,
-            # all false — upgrade_to_v1_10_generator.rb and
-            # new_framework_defaults_8_0.rb are Rails names where the version IS
-            # the subject, and backup.rb is a plain noun. A sequence word only
-            # lies when a sibling shares the stem and carries a different one.
-            hit = stem[/_((?:final|latest|new|old|copy|bak|tmp|temp)\d*|v?\d+)\z/, 1]
-            next [] unless hit
+              # The sibling requirement, borrowed from NUMBERED_NAME above, is what
+              # makes this measurable rather than noisy. Without it: 5 findings,
+              # all false — upgrade_to_v1_10_generator.rb and
+              # new_framework_defaults_8_0.rb are Rails names where the version IS
+              # the subject, and backup.rb is a plain noun. A sequence word only
+              # lies when a sibling shares the stem and carries a different one.
+              hit = stem[/_((?:final|latest|new|old|copy|bak|tmp|temp)\d*|v?\d+)\z/, 1]
+              next [] unless hit
 
-            base = stem.sub(/_#{Regexp.escape(hit)}\z/, "")
-            siblings = Dir.glob(File.join(File.dirname(path.to_s), "#{base}*.rb")).map { |f| File.basename(f, ".*") }
-            next [] if siblings.size < 2
+              base = stem.sub(/_#{Regexp.escape(hit)}\z/, "")
+              siblings = Dir.glob(File.join(File.dirname(path.to_s), "#{base}*.rb")).map { |f| File.basename(f, ".*") }
+              next [] if siblings.size < 2
 
-            [finding(line: 1, message: "FILE_SEQUENCE_NAME: #{File.basename(path)} — " \
-                                       "'#{hit}' says when, not what; name the difference")]
+              [finding(line: 1, message: "FILE_SEQUENCE_NAME: #{File.basename(path)} — " \
+                                         "'#{hit}' says when, not what; name the difference")]
           end
+        end
 
         # A category is not a thing. util/manager/handler name the shape of a box
         # rather than what is in it, so the next reader must open it. The words are
         # data/vague_words.yml, shared with the sprawl census, the rename sweep and
         # the slug filler; why base, common and shared are not among them is there.
-        LawDSL.law :FILE_VAGUE_NAME,
-          does_not_fire: "module FormatHelper; end\n",
-          example_path: "/repo/app/helpers/format_helper.rb",
-          tags: %i[LOAD_BEARING_NAMES DOMAIN_LANGUAGE],
-          applies_to: %i[ruby],
-          autofix: false,
-          description: "a filename names its subject, not a category" do |_src, path:|
-            stem = File.basename(path.to_s, ".*")
-            # Rails resolves *_helper.rb, *_helpers and application_* by name, and
-            # their tests mirror them, so those are framework contracts rather than
-            # chosen names.
-            next [] if path.to_s.match?(%r{/(?:node_modules|vendor|db/migrate)/}) ||
-                       stem.match?(/_helpers?(?:_test)?\z/) || stem.start_with?("application_")
+        ::Law.define(:FILE_VAGUE_NAME) do
+          tags %i[LOAD_BEARING_NAMES DOMAIN_LANGUAGE]
+          fix "a filename names its subject, not a category"
+          # A path rule: one example path cannot hold a flagged bad and a clean good.
+          proved_by "test/test_vague_words.rb"
+          check do |_src, path|
+              stem = File.basename(path.to_s, ".*")
+              # Rails resolves *_helper.rb, *_helpers and application_* by name, and
+              # their tests mirror them, so those are framework contracts rather than
+              # chosen names.
+              next [] if path.to_s.match?(%r{/(?:node_modules|vendor|db/migrate)/}) ||
+                         stem.match?(/_helpers?(?:_test)?\z/) || stem.start_with?("application_")
 
-            hit = stem[/(?:\A|_)(#{Master::Ground::ParameterizedSlug::VAGUE_ALTERNATION})(?:_|\z)/, 1]
-            next [] unless hit
+              hit = stem[/(?:\A|_)(#{Master::Ground::ParameterizedSlug::VAGUE_ALTERNATION})(?:_|\z)/, 1]
+              next [] unless hit
 
-            [finding(line: 1, message: "FILE_VAGUE_NAME: #{File.basename(path)} — " \
-                                       "'#{hit}' is a category; name the subject")]
+              [finding(line: 1, message: "FILE_VAGUE_NAME: #{File.basename(path)} — " \
+                                         "'#{hit}' is a category; name the subject")]
           end
+        end
       end
     end
   end

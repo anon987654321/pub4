@@ -55,94 +55,11 @@ module Law
 
   def self.pattern(source) = source && Regexp.union(Array(source).map { |part| Regexp.new(part) })
 
-  # `message` is a `check` detector's own account of the line; a `detect` regex
-  # has none and reports the Law's fix text instead.
-  Finding = Data.define(:id, :file, :line, :text, :message) do
-    def initialize(id:, file:, line:, text:, message: nil) = super
-  end
+  require_relative "definition/subject"
+  require_relative "definition/proof"
+  require_relative "definition/reading"
 
-  # What a `check` block runs inside. A regex can say only that a line matches;
-  # a check reads the whole subject the way its language reads it (a lexer, an
-  # AST) and reports each finding at its own line with its own message, which is
-  # what every detector under law/detectors/ needed and why they lived there.
-  class Check
-    attr_reader :id, :file
-
-    def initialize(definition, file, lines)
-      @id = definition.id
-      @file = file
-      @lines = lines
-    end
-
-    def finding(line:, message:)
-      Finding.new(id:, file:, line:, text: @lines[line - 1].to_s.chomp, message:)
-    end
-  end
-
-  # What every law asks of one subject, worked out once. The bridge hands the
-  # same text to each of a hundred laws in turn, and each re-split it into
-  # lines, re-found its comment spans and tested every line for the intentional
-  # marker; on a large stylesheet that was most of a scan. The view is held per
-  # thread for the text it was built from, so a different text or file rebuilds
-  # it and no law sees another subject's lines.
-  class SubjectView
-    INTENTIONAL = /scan:\s*intentional\b/
-
-    attr_reader :lines, :skipped, :intentional
-
-    def initialize(text:, file:, leaders:, continued:)
-      @text = text
-      @file = file
-      @size = text.bytesize
-      @lines = text.each_line.to_a
-      @intentional = Set.new
-      @skipped = Set.new(continued)
-      @lines.each_with_index do |line, index|
-        @intentional << index if line.match?(INTENTIONAL)
-        @skipped << index if @intentional.include?(index) || leaders.any? { |leader| line.lstrip.start_with?(leader) }
-      end
-      @continued = continued
-      @considered = {}
-    end
-
-    def fresh?(text, file) = @text.equal?(text) && @file == file && @size == text.bytesize
-
-    def continued?(index) = @continued.include?(index)
-
-    def considered(reads_comments) = @considered.fetch(reads_comments) { @considered[reads_comments] = yield }
-  end
-
-  # A line-scoped detector reads code, and a comment naming a forbidden
-  # construct is prose about it, not an instance of it — "# a bare rescue"
-  # became an error-severity finding when FAIL_VISIBLY moved here from the
-  # yaml bridge, which had learned this once already. Comment-leading lines
-  # are skipped for the file's own comment syntax; a rule whose subject IS
-  # comments (WHY_NOT_WHAT, TYPOGRAPHY_DISCIPLINE) declares `reads_comments
-  # true`. Fixtures prove with file "-", which has no extension and so no
-  # comment syntax — a fixture is always read whole.
-  # Keyed by language rather than by extension, because an extension table here
-  # is a second copy of FILE_LANGUAGE_MAP that has to agree with it and does
-  # not. Adding .ksh, .ru and .mjs to that map made three more file types
-  # readable and left their comments unblanked, so DOLLAR_PAREN read the prose
-  # backticks in a ksh comment — `keepenv`, `sysctl | awk` — as command
-  # substitution. One table, and a new extension inherits its language's
-  # comment syntax for free.
-  LANGUAGE_COMMENT_LEADERS = {
-    "ruby" => ["#"], "yaml" => ["#"], "zsh" => ["#"],
-    "javascript" => ["//", "/*"],
-    "css" => ["/*"], "scss" => ["//", "/*"],
-    "html" => ["<!--"]
-  }.freeze
-
-  # ERB is html by language and carries Ruby's comment tag as well, which is the
-  # one case the language alone does not answer.
-  EXTENSION_COMMENT_LEADERS = { ".erb" => ["<%#"] }.freeze
-
-  def self.comment_leaders(file)
-    language = Master.language_for(file)
-    LANGUAGE_COMMENT_LEADERS.fetch(language, []) +
-      EXTENSION_COMMENT_LEADERS.fetch(File.extname(file).downcase, [])
-  end
+  AUTOFIX_POLICIES = %i[never review automatic].freeze
 
   # `ask` is the semantic half: a rule whose subject cannot be matched by a
   # regex states the question instead, and the model answers it. It sits beside
@@ -157,20 +74,16 @@ module Law
   # checkable offline by a task that has a model. A semantic rule with no
   # example of what it is looking for is the unfalsifiable shape this file
   # already refuses in the lexical case.
-  # One real extension per language a law can declare, for proving a fixture the
-  # way a subject is actually read. Ordered so the first match is the ordinary
-  # case for that language rather than an alias of it.
-  REALISTIC_EXTENSION = {
-    ".rb" => "ruby", ".js" => "javascript", ".scss" => "scss", ".css" => "css",
-    ".html" => "html", ".yml" => "yaml", ".sh" => "zsh", ".md" => "markdown", ".json" => "json"
-  }.freeze
-
   MEMBERS = %i[
     id source severity mode languages scope surfaces law_scope lifecycle autofix
-    path path_exclude absent detect check ask practice fix bad good reads_comments
+    path path_exclude absent detect check detector ask practice fix bad good reads_comments tags example_path
+    reads_beyond_file transform proved_by
   ].freeze
 
   Definition = Data.define(*MEMBERS) do
+    include Proof
+    include Reading
+
     # `path` is a substring (catalogue `path`) or a Regexp (catalogue
     # `path_pattern`); `path_exclude` is always a Regexp.
     # A law that names no language applies everywhere. A law that names one
@@ -220,16 +133,21 @@ module Law
 
     def proof_kind
       return :deterministic if scannable?
-      return :semantic if ask
+      return :semantic if ask || model_detector?
       :practice
     end
 
+    # A detector class that takes a model (it defines set_agent, as
+    # Laws::NeedsModel does) is a semantic evaluator, however it is wired.
+    def model_detector? = detector ? detector.method_defined?(:set_agent) : false
+
     # Neither kind scans source: one is answered by a model, one binds behaviour.
-    def scannable? = detect || check ? true : false
+    def scannable? = detect || check || (detector && !model_detector?) ? true : false
 
     def scan(text, file: "-")
       return [] unless scannable?
       return scan_check(text, file) if check
+      return scan_detector(text, file) if detector
 
       scope == :file ? scan_file(text, file) : scan_lines(text, file)
     end
@@ -256,201 +174,6 @@ module Law
       }.reject { |_, value| value.respond_to?(:empty?) && value.empty? }
     end
 
-    # A rule proves itself before it may judge anything else.
-    #
-    # The reach half is proved too, because it was the half that broke:
-    # NEVER_BATCH_DELETE declared `languages %i[ruby shell]` and no file can
-    # carry the language "shell" — FILE_LANGUAGE_MAP emits "zsh" — so a law
-    # written after a batch-delete incident could not read a single shell
-    # script, and passed prove! every boot because prove! called scan directly
-    # and never asked applies?. A declared language that nothing produces is a
-    # rule aimed at nothing.
-    def prove!
-      # The reach check below applies to both kinds; only the detector half is
-      # skipped for a semantic rule, because proving it needs a model and this
-      # runs at boot. The fixtures are still required — Builder#build refuses
-      # without them — they are simply proved by rake rather than by require.
-      if scannable?
-        raise ArgumentError, "#{id}: bad fixture not flagged" if scan(bad).empty?
-        raise ArgumentError, "#{id}: good fixture flagged" unless scan(good).empty?
-
-        prove_as_real_file!
-      end
-
-      unless ::Law::Definition::LIFECYCLE_TRANSITIONS.key?(lifecycle)
-        raise ArgumentError, "#{id}: unknown lifecycle #{lifecycle.inspect}"
-      end
-      unless %i[never review automatic].include?(autofix)
-        raise ArgumentError, "#{id}: unknown autofix policy #{autofix.inspect}"
-      end
-      if autofix == :automatic && !scannable?
-        raise ArgumentError, "#{id}: automatic autofix requires a deterministic detector"
-      end
-
-      unreachable = languages.map(&:to_s) - Master::FILE_LANGUAGE_MAP.values.uniq
-      unless unreachable.empty?
-        raise ArgumentError,
-              "#{id}: declares language(s) #{unreachable.join(', ')} that FILE_LANGUAGE_MAP never produces"
-      end
-      self
-    end
-
-    private
-
-    # The same two fixtures, read the way each declared language is read.
-    # Multi-language deterministic laws need one representative file per language;
-    # proving only the first extension left the other adapters unmeasured.
-    #
-    # Above, they prove through file "-": no extension, so no comment syntax, so
-    # the text is read whole. A real subject has an extension and its comment
-    # lines are blanked before the detector sees them. Those are different
-    # inputs, and a rule can be right about one and wrong about the other.
-    #
-    # FROZEN_STRING_LITERAL asks whether a file opens with the magic comment. It
-    # proved clean on "-" at every boot and fired on 423 of 423 files under
-    # MASTER/lib that carry the comment, because blanking line 1 leaves a file
-    # that starts with a newline. SQUINT_TEST counts four consecutive newlines,
-    # and four blanked comment lines are four newlines. Both were found by
-    # measuring rather than by any proof, which is why the proof now measures.
-    #
-    # Costs nothing at boot and makes the whole defect class unreachable: a rule
-    # that cannot see its own subject no longer loads.
-    def prove_as_real_file!
-      declared = languages.map(&:to_s)
-      extensions = if declared.empty?
-        [REALISTIC_EXTENSION.keys.first]
-      else
-        REALISTIC_EXTENSION.filter_map { |ext, lang| ext if declared.include?(lang) }
-      end
-      return self if extensions.empty?
-
-      extensions.each do |extension|
-        as_file = "fixture#{extension}"
-        if scan(bad, file: as_file).empty?
-          raise ArgumentError, "#{id}: bad fixture flagged on \"-\" but not on #{extension} — " \
-                               "considered_text blanks its subject first (set reads_comments?)"
-        end
-        raise ArgumentError, "#{id}: good fixture clean on \"-\" but flagged on #{extension}" unless scan(good, file: as_file).empty?
-      end
-
-      self
-    end
-
-    # File-scope laws get the same two exemptions the line-scope ones have. All
-    # eleven had neither, so they were blind to comment leaders and to the
-    # `scan: intentional` opt-out this framework advertises — which is how
-    # RATE_LIMITING_MISSING fired at :error on a sixteen-line controller with no
-    # actions, on the word "login" inside a comment. At :error that also checks
-    # the file out of the semantic pass entirely.
-    def scan_file(text, file)
-      return [] if absent && text.match?(absent)
-      return [] unless detect.call(considered_text(text, file))
-
-      [Finding.new(id, file, 1, text[/.*/])]
-    end
-
-    # A check reads the considered text, so comments and `scan: intentional`
-    # lines are blanked for it as for every other detector, and line numbers
-    # still match the file. It answers Findings or nothing.
-    def scan_check(text, file)
-      return [] if absent && text.match?(absent)
-
-      subject = considered_text(text, file)
-      found = Check.new(self, file, text.lines).instance_exec(subject, file, &check)
-      Array(found).each do |hit|
-        raise ArgumentError, "#{id}: check must answer Law::Finding, got #{hit.class}" unless hit.is_a?(Finding)
-      end
-    end
-
-    # Comments and intentional-marked lines blanked, newlines kept, so a
-    # multi-line detector still sees the file's shape.
-    def considered_text(text, file)
-      subject_view(text, file).considered(reads_comments) { compute_considered_text(text, file) }
-    end
-
-    # Held for the text it was built from; see SubjectView.
-    def subject_view(text, file)
-      view = Thread.current[:law_subject_view]
-      return view if view&.fresh?(text, file)
-
-      Thread.current[:law_subject_view] = SubjectView.new(
-        text:, file:, leaders: Law.comment_leaders(file), continued: continued_comment_lines(text, file),
-      )
-    end
-
-    def compute_considered_text(text, file)
-      leaders = reads_comments ? [] : Law.comment_leaders(file)
-      continued = reads_comments ? [] : continued_comment_lines(text, file)
-      return text if leaders.empty? && continued.empty? && !text.include?("scan:")
-
-      text.each_line.with_index.map do |line, index|
-        next "\n" if continued.include?(index)
-
-        # A shebang is not a comment here: STRICT_MODE_ZSH asks whether a script
-        # that declares an interpreter also sets strict mode, so blanking line 1
-        # made it unable to see the script at all.
-        next line if index.zero? && line.start_with?("#!")
-
-        skip = leaders.any? { |leader| line.lstrip.start_with?(leader) } ||
-               line.match?(/scan:\s*intentional\b/)
-        skip ? "\n" : line
-      end.join
-    end
-
-    # Line indices, zero-based, that sit inside a comment which opened on an
-    # earlier line.
-    #
-    # A leader test reads one line, so it sees where a comment starts and never
-    # where it continues. An ERB comment is routinely six lines of prose about
-    # the markup below it, and every line after the first was being read as
-    # markup: I18N_COVERAGE fired on a comment explaining that a page carried no
-    # <h1>, because "<h1> at all — two <h2>s" is a `>`, English, and a `<`. The
-    # rule already refused the opening line; there was no way for it to refuse
-    # the rest.
-    #
-    # ERB, and a stylesheet's /* */, whose prose names declarations as often as
-    # an ERB comment names tags: _composer.scss explains a fix "(measured at
-    # left: 0)" on a comment's second line, and _shell.scss quotes `left: 50%`
-    # on another. JavaScript and <!-- --> stay on the leader test, because a
-    # glob or a regex in a script can spell /* without opening anything, and a
-    # span reader that is wrong is worse than a leader test that is narrow.
-    COMMENT_SPANS = {
-      ".erb" => ["<%#", "%" + ">"],
-      ".css" => ["/*", "*/"],
-      ".scss" => ["/*", "*/"],
-    }.freeze
-
-    def continued_comment_lines(text, file)
-      opener, closer = COMMENT_SPANS[File.extname(file)]
-      return [] unless opener && text.include?(opener)
-
-      inside = false
-      text.each_line.with_index.filter_map do |line, index|
-        opened = inside
-        unless inside
-          open_at = line.rindex(opener)
-          inside = true if open_at && !line[open_at..].include?(closer)
-        end
-        if inside && line.include?(closer)
-          inside = false
-          next opened ? index : nil
-        end
-        index if inside && opened
-      end
-    end
-
-    def scan_lines(text, file)
-      view = subject_view(text, file)
-      # A rule that reads comments still honours the registry's one-line
-      # opt-out: a line that declares itself intentional carries a reviewer's
-      # reason beside it.
-      skip = reads_comments ? view.intentional : view.skipped
-      view.lines.each_with_index.filter_map do |line, index|
-        next if skip.include?(index)
-
-        Finding.new(id, file, index + 1, line.chomp) if detect.call(line)
-      end
-    end
   end
 
   # Data.define's block is lexical; publish this graph on the generated Law
@@ -465,196 +188,9 @@ module Law
     retired: %i[proposed],
   }.freeze)
 
-  # Ruby declares what a Law detects and how it reads; its policy comes from
-  # the catalogue entry, so the block has no method to declare severity,
-  # languages, paths, lifecycle or autofix a second time.
-  class Builder
-    %i[source scope absent ask practice fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
-
-    def initialize(id)
-      @h = {
-        id:, scope: :line, law_scope: nil, absent: nil, detect: nil, check: nil, ask: nil, practice: nil,
-        reads_comments: false, **::Law.catalogue_policy(id)
-      }
-    end
-    def detect(&block) = @h[:detect] = block
-
-    # `check { |text, file| ... }` answers Findings, each built by `finding(line:, message:)`.
-    def check(&block) = @h[:check] = block
-
-    # A law can carry more than one enforcement surface without becoming more
-    # than one rule. detect is deterministic evidence, ask is semantic evidence,
-    # and practice is conduct guidance. Their combination is useful: one law may
-    # be cheap to detect mechanically, expensive to understand semantically, and
-    # still impose a working discipline on the operator.
-    def build
-      kinds = %i[detect check ask practice].select { |k| @h[k] }
-      raise ArgumentError, "#{@h[:id]}: needs detect, check, ask or practice" if kinds.empty?
-      raise ArgumentError, "#{@h[:id]}: detect and check are two detectors; keep one" if @h[:detect] && @h[:check]
-      unknown_surfaces = Array(@h[:surfaces]) - ASSESSMENT_SURFACES
-      if unknown_surfaces.any?
-        raise ArgumentError, "#{@h[:id]}: unknown assessment surfaces #{unknown_surfaces.join(", ")}"
-      end
-      # Named here so a law missing one hears about the law, not Data#initialize.
-      missing = %i[bad good fix].reject { |k| @h.key?(k) }
-      raise ArgumentError, "#{@h[:id]}: missing #{missing.join(', ')}" unless missing.empty?
-
-      @h[:law_scope] = ::Law.catalogue_entry(@h.fetch(:id)).fetch("universal") ? :universal : :domain
-
-      Definition.new(**@h.slice(*MEMBERS)).prove!
-    end
-  end
-
-  # Generated projection of the executable constitution. The laws remain
-  # ONE_SOURCE; this contract gives external models the same procedure and a
-  # portable law identity without maintaining a second rule catalogue.
-  module Contract
-    module_function
-
-    VERSION = 2
-    PROTOCOL = [
-      "IDENTIFY: state the task and intended effects before acting.",
-      "READ: load the applicable constitution/laws before deciding.",
-      "EVIDENCE: distinguish observed facts, inference, and proposal.",
-      "CHECK: apply every applicable law; do not stop at the first convenient rule.",
-      "PREFER: resolve conflicts by declared priority and safety constraints.",
-      "SIMULATE: inspect edge cases, security, scope, reversibility, and side effects.",
-      "ADMIT: only execute effects that pass the constitutional check.",
-      "VERIFY: inspect the actual result; never claim completion without evidence.",
-      "REPAIR: if a law is violated, correct the artifact and re-check from the start.",
-      "REPORT: state what happened, what was verified, and what remains unresolved.",
-    ].freeze
-
-    POLICY = {
-      "lifecycle" => {
-        "states" => Definition::LIFECYCLE_TRANSITIONS.keys.map(&:to_s),
-        "transitions" => Definition::LIFECYCLE_TRANSITIONS
-          .transform_keys(&:to_s)
-          .transform_values { |states| states.map(&:to_s) },
-      },
-      "autofix" => {
-        "policies" => %w[never review automatic],
-        "automatic_requires_deterministic_detector" => true,
-      },
-      "universality" => {
-        "law_is_universal" => true,
-        "detectors_may_be_domain_specific" => true,
-      },
-      "vocabulary" => Master::LawVocabulary::TERMS,
-      "proof" => {
-        "deterministic" => "bad and good fixtures prove detector polarity.",
-        "semantic" => "bad and good examples accompany the question; model evaluation is required.",
-        "practice" => "the law is conduct guidance and has no source detector.",
-      },
-    }.freeze
-
-    def render(full: false)
-      entries = Law.definitions.values.sort_by { |law| law.id.to_s }.map(&:contract_entry)
-      transformation_policy = Master.law("transformation_policy")
-      laws = full ? entries : entries.map { |entry| entry.slice("id", "severity", "mode", "languages", "question") }
-      source = canonical_source
-      JSON.pretty_generate(
-        "contract_version" => VERSION,
-        "law_digest" => contract_digest(entries, transformation_policy, source),
-        "protocol" => PROTOCOL,
-        "law_policy" => POLICY,
-        "transformation_policy" => transformation_policy,
-        "law_source" => source.slice("governing_laws", "law_map_digest"),
-        "laws" => laws,
-      )
-    end
-
-    def digest
-      entries = Law.definitions.values.sort_by { |law| law.id.to_s }.map(&:contract_entry)
-      contract_digest(entries, Master.law("transformation_policy"), canonical_source)
-    end
-
-    def canonical_source
-      roots = Master.law_entries.sort_by { |entry| [entry["priority"].to_i, entry["id"].to_s] }.map do |entry|
-        {
-          "id" => entry["id"].to_s,
-          "priority" => entry["priority"].to_i,
-          "statement" => entry["statement"].to_s,
-          "applies_to" => Array(entry["applies_to"]).map(&:to_s),
-        }
-      end
-      law_map = Master.law("law_map")
-      {
-        "governing_laws" => roots,
-        "law_map_digest" => Digest::SHA256.hexdigest(JSON.generate(law_map)),
-      }
-    end
-
-    def contract_digest(entries, transformation_policy, source)
-      Digest::SHA256.hexdigest(
-        JSON.generate(
-          "contract_version" => VERSION,
-          "protocol" => PROTOCOL,
-          "law_policy" => POLICY,
-          "transformation_policy" => transformation_policy,
-          "law_source" => source,
-          "laws" => entries,
-        ),
-      )
-    end
-  end
-
-  # Derived law index. Identity, enforcement surface, lifecycle, proof and
-  # universality stay on Law::Definition; this index is generated and never authoritative.
-  module Index
-    module_function
-
-    VERSION = 1
-
-    def rows(definitions = Law.definitions.values)
-      definitions.sort_by { |law| law.id.to_s }.map do |law|
-        {
-          "id" => law.id.to_s,
-          "scope" => law.scope.to_s,
-          "surfaces" => law.assessment_surfaces.map(&:to_s),
-          "law_scope" => law.law_scope.to_s,
-          "languages" => law.languages.map(&:to_s),
-          "lifecycle" => law.lifecycle.to_s,
-          "autofix" => law.autofix.to_s,
-          "proof" => law.proof_kind.to_s,
-          "deterministic" => law.scannable?,
-          "semantic" => law.semantic?,
-          "practice" => !law.practice.nil?,
-        }
-      end
-    end
-
-    def validate!(definitions = Law.definitions.values)
-      raise ArgumentError, "law index is empty" if definitions.empty?
-
-      ids = definitions.map { |law| law.id.to_s }
-      duplicate = ids.tally.select { |_id, count| count > 1 }.keys
-      raise ArgumentError, "duplicate executable law ids: #{duplicate.join(', ')}" unless duplicate.empty?
-
-      invalid = definitions.reject { |law| Definition::LIFECYCLE_TRANSITIONS.key?(law.lifecycle) }
-      raise ArgumentError, "invalid law lifecycle: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
-
-      invalid = definitions.reject { |law| %i[never review automatic].include?(law.autofix) }
-      raise ArgumentError, "invalid law autofix policy: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
-
-      automatic = definitions.select { |law| law.autofix == :automatic && !law.scannable? }
-      unless automatic.empty?
-        raise ArgumentError, "automatic autofix without deterministic detector: #{automatic.map(&:id).join(', ')}"
-      end
-
-      rows(definitions)
-    end
-
-    def render(definitions = Law.definitions.values)
-      entries = validate!(definitions)
-      JSON.pretty_generate(
-        "index_version" => VERSION,
-        "law_count" => entries.length,
-        "universal_count" => entries.count { |entry| entry["law_scope"] == "universal" },
-        "laws" => entries,
-      )
-    end
-  end
+  require_relative "definition/builder"
+  require_relative "definition/contract"
+  require_relative "definition/index"
 
   LOAD_MUTEX = Mutex.new
 
@@ -682,23 +218,8 @@ module Law
     end
 
     def reload(dir)
-      if File.expand_path(dir) == File.expand_path(__dir__)
-        data = Master.load_laws(root: Master::ROOT)
-        generated = data.fetch("prose").values.flat_map do |language|
-          language.fetch("ids", {}).values.map do |id|
-            { id: id.to_s, source: "MASTER/law/prose.rb", line: 1 }
-          end
-        end.uniq { |row| row[:id] }
-        Master::LawCataloguePreflight.validate!(
-          law_dir: dir,
-          catalogue: LAW_CATALOGUE,
-          repo_root: File.dirname(Master::ROOT),
-          generated_declarations: generated,
-        )
-      end
-
-      files = Dir.glob(File.join(dir, "*.rb")).sort.map { |file| File.expand_path(file) }
-      files.reject! { |file| file == File.expand_path(__FILE__) }
+      preflight!(dir) if File.expand_path(dir) == File.expand_path(__dir__)
+      files = law_files(dir)
 
       staged = @definitions.dup
       sources = @law_sources.dup
@@ -735,6 +256,26 @@ module Law
       staged
     ensure
       Thread.current[:law_staging] = nil
+    end
+
+    # law/detectors/ holds the Laws whose detector is a lexer, an AST walk or a
+    # class, beside the helpers they share; they are Laws like any other and load here.
+    def law_files(dir)
+      files = (Dir.glob(File.join(dir, "*.rb")).sort + Dir.glob(File.join(dir, "detectors", "*.rb")).sort)
+      files.map { |file| File.expand_path(file) } - [File.expand_path(__FILE__)]
+    end
+
+    def preflight!(dir)
+      generated = Master.load_laws(root: Master::ROOT).fetch("prose").values.flat_map do |language|
+        language.fetch("ids", {}).values.map { |id| { id: id.to_s, source: "MASTER/law/prose.rb", line: 1 } }
+      end
+
+      Master::LawCataloguePreflight.validate!(
+        law_dir: dir,
+        catalogue: LAW_CATALOGUE,
+        repo_root: File.dirname(Master::ROOT),
+        generated_declarations: generated.uniq { |row| row[:id] },
+      )
     end
 
     def scan(file, language: nil)

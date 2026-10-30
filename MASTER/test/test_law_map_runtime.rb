@@ -71,14 +71,8 @@ class TestLawMapRuntime < Minitest::Test
   end
 
   def test_laws_register
-    require_relative "../lib/review/scan/law_dsl"
-    ids = Master::Review::Scan::Law.registry.filter_map do |klass|
-      begin
-        klass.auto_build? ? klass.new.id.to_s.upcase : nil
-      rescue StandardError # scan: intentional — non-buildable laws have no id; nil is the census answer
-        nil
-      end
-    end
+    require_relative "../lib/review/scan/law_tree"
+    ids = Master::Review::Scan::LawTree.ids.map(&:upcase)
     %w[NO_DECORATIVE_FX FLAT_PIXELS TOUCH_TARGET_MIN EIGHT_PX_RHYTHM RAMS_HONEST].each do |id|
       assert_includes ids, id, "missing aesthetic law #{id}"
     end
@@ -158,11 +152,9 @@ class TestLawMapRuntime < Minitest::Test
   end
 
   def test_law_map_integrity_checks_the_combined_executable_and_scanner_population
-    require_relative "../lib/review/scan/law_dsl"
+    require_relative "../lib/review/scan/law_tree"
     map = Master::Ground::Map::LawMap.load(root: @root)
-    registered = Master::Review::Scan::Law.registry.filter_map do |klass|
-      Master::Review::Scan::LawFactory.registry_id(klass, root: @root)&.upcase
-    end
+    registered = Master::Review::Scan::LawTree.ids.map(&:upcase)
     require_relative "../law/definition"
     ::Law.load_all(File.expand_path("../law", __dir__)) if ::Law.definitions.empty?
     executable = ::Law.definitions.keys.map { |id| id.to_s.upcase }

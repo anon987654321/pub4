@@ -2,7 +2,7 @@
 
 require "test_helper"
 require "tmpdir"
-require_relative "../law/detectors/semantic_laws"
+require_relative "../lib/review/scan/law_tree"
 
 # A tree-wide scan walks thousands of files. The model tier was reached from the
 # lexical pass (AdversarialLaw, CommentDriftLaw) and from every file with a

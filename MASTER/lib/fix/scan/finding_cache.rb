@@ -94,7 +94,13 @@ module Master
           @dir = File.join(root, dir)
         end
 
-        def cacheable?(law) = self.class.enabled? && !law.class.reads_beyond_file?
+        # Asked of the Law, not its class: every canonical Law shares one adapter
+        # class and only its definition knows. A bare detector class answers too.
+        def cacheable?(law)
+          return false unless self.class.enabled?
+
+          !(law.respond_to?(:reads_beyond_file?) ? law.reads_beyond_file? : law.class.reads_beyond_file?)
+        end
 
         # The block's findings, from disk when this content was asked these laws before.
         def fetch(subject)

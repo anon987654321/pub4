@@ -89,7 +89,14 @@ module Master
     language
   end
 
+  # The face runtime ships as JavaScript split into face.partN.txt fragments. The
+  # scanner and the detector base each said so on their own while this said nil,
+  # so a Law's reach depended on which of the three asked.
+  FACE_FRAGMENT = /\Aface\.part\d+\.txt\z/
+
   def self.resolve_language(path)
+    return "javascript" if File.basename(path).match?(FACE_FRAGMENT)
+
     by_ext = FILE_LANGUAGE_MAP[File.extname(path).downcase]
     return by_ext if by_ext
 
@@ -252,7 +259,7 @@ module Master
     "mcp_server" => "MCPServer", "mcp_coordinator" => "McpCoordinator", "github_repo_miner" => "GitHubRepoMiner",
     "github_operations" => "GitHubOperations",
     "diff_stager" => "DiffStager", "code_index" => "CodeIndex", "git_context" => "GitContext",
-    "ast_edit" => "AstEdit", "law_dsl" => "LawDSL", "tts" => "TTS", "md" => "MD", "pdf" => "PDF"
+    "ast_edit" => "AstEdit", "tts" => "TTS", "md" => "MD", "pdf" => "PDF"
   )
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
 

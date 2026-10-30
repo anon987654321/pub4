@@ -16,7 +16,7 @@ module Master
       RUNTIME_FILES = %w[
         law/definition.rb
         lib/review/scan/law.rb
-        lib/review/scan/law_dsl.rb
+        lib/review/scan/law_tree.rb
         lib/fix/scanner.rb
         lib/fix/scan/file_processor.rb
         lib/fix/opportunity_pass.rb

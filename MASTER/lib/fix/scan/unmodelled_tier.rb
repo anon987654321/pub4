@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../review/scan/law_factory"
+require_relative "../../review/scan/detector"
 
 module Master
   module Fix
@@ -8,7 +8,7 @@ module Master
       # FileProcessor's handling of model laws that hold no agent. It reads the processor's
       # semantic-gap state, so it is a mixin rather than a collaborator.
       module UnmodelledTier
-        def self.unmodelled?(law) = law.is_a?(Review::Scan::LawFactory::AgentGuard) && !law.agent?
+        def self.unmodelled?(law) = law.is_a?(Review::Scan::Detector::AgentGuard) && !law.agent?
 
         private
 

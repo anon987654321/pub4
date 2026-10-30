@@ -15,11 +15,8 @@ module Master
         # quoted fix beside it. Only the `fires:`/`does_not_fire:` lines are
         # blanked, not the directory, so a real secret or shell interpolation in
         # a rule file still vetoes.
-        class VetoPatternLaw < Law
-          def self.auto_build? = false
+        class VetoPatternLaw < Detector
 
-          declare id: "veto_patterns",
-                  description: "Unconditional merge blockers from laws.yml veto_patterns"
 
           def initialize(root: Master::ROOT)
             super()
@@ -55,6 +52,12 @@ module Master
             Master::Ground::Swallow.log(e, context: "VetoPatternLaw.load_patterns", severity: :load_bearing)
             raise
           end
+        end
+
+        ::Law.define(:veto_patterns) do
+          detector VetoPatternLaw
+          fix "Unconditional merge blockers from laws.yml veto_patterns"
+          proved_by "test/test_veto_pattern_law.rb"
         end
 
       end

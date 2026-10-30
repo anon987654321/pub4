@@ -7,12 +7,10 @@ module Master
   module Review
     module Scan
       module Laws
-        class ConfigHierarchyLaw < Law
+        class ConfigHierarchyLaw < Detector
           MAX_DEPTH = 4
           TOP_LEVEL_LIMIT = 12
 
-          declare id: "CONFIG_HIERARCHY", tags: %i[CONFIG HIERARCHY],
-                  description: "config keys are grouped, non-duplicated, and shallow"
 
           # A file whose shape another program's schema dictates: Rails looks a
           # translation up by a key path that mirrors the view it serves, GitHub
@@ -149,11 +147,16 @@ module Master
           end
         end
 
-        class CodeHierarchyLaw < Law
+        ::Law.define(:CONFIG_HIERARCHY) do
+          detector ConfigHierarchyLaw
+          tags %i[CONFIG HIERARCHY]
+          fix "config keys are grouped, non-duplicated, and shallow"
+          proved_by "test/test_scan_law_contracts.rb"
+        end
+
+        class CodeHierarchyLaw < Detector
           TOP_LEVEL_LIMIT = 5
 
-          declare id: "CODE_HIERARCHY", tags: %i[ARCHITECTURE HIERARCHY],
-                  description: "related classes are grouped under clear namespaces"
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
@@ -179,11 +182,16 @@ module Master
           end
         end
 
-        class LongParameterListLaw < Law
+        ::Law.define(:CODE_HIERARCHY) do
+          detector CodeHierarchyLaw
+          tags %i[ARCHITECTURE HIERARCHY]
+          fix "related classes are grouped under clear namespaces"
+          proved_by "test/test_scan_law_contracts.rb"
+        end
+
+        class LongParameterListLaw < Detector
           LIMIT = 4
 
-          declare id: "LONG_PARAMETER_LIST", tags: %i[BLOATERS API],
-                  description: "methods accept at most four parameters"
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
@@ -202,11 +210,16 @@ module Master
           end
         end
 
-        class PrimitiveObsessionLaw < Law
+        ::Law.define(:LONG_PARAMETER_LIST) do
+          detector LongParameterListLaw
+          tags %i[BLOATERS API]
+          fix "methods accept at most four parameters"
+          proved_by "test/test_scan_law_contracts.rb"
+        end
+
+        class PrimitiveObsessionLaw < Detector
           PRIMITIVE_HINTS = /\b(id|name|type|status|flag|count|price|amount|date|email|phone|url)\b|_id\z/i
 
-          declare id: "PRIMITIVE_OBSESSION", tags: %i[BLOATERS DOMAIN_MODELING],
-                  description: "clusters of primitives should become small domain objects"
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
@@ -223,6 +236,21 @@ module Master
           end
         end
 
+        ::Law.define(:PRIMITIVE_OBSESSION) do
+          detector PrimitiveObsessionLaw
+          tags %i[BLOATERS DOMAIN_MODELING]
+          source "Refactoring — Primitive Obsession (Fowler)"
+          ask "Are primitives carrying domain rules that would be clearer and safer as a value object?"
+          fix "Create a focused value object when the primitive has behavior or invariants."
+          bad <<~'X'
+          email = "a@b.com"; Email.send(email)
+          X
+          good <<~'X'
+          email = EmailAddress.parse(raw); Mailer.send(email)
+          X
+          proved_by "test/test_scan_law_contracts.rb"
+        end
+
         # A bare `true` at a call site names nothing. `shadow_lift(path, true)`
         # is a riddle whose answer is in another file; `shadow_lift(path,
         # preserve_blacks: true)` is not. The positional boolean default is the
@@ -230,9 +258,7 @@ module Master
         #
         # Keyword parameters are exempt: `def render(path, cache: true)` already
         # forces the call site to say what is true, which is the whole point.
-        class BooleanTrapLaw < Law
-          declare id: "BOOLEAN_TRAP", tags: %i[API DOMAIN_LANGUAGE],
-                  description: "a positional boolean parameter makes every call site a riddle"
+        class BooleanTrapLaw < Detector
 
           def check_ast(ast, _code, path:)
             return [] if ast.nil? || path.to_s.match?(%r{/(?:test|spec|fixtures)/})
@@ -252,6 +278,13 @@ module Master
           end
         end
 
+        ::Law.define(:BOOLEAN_TRAP) do
+          detector BooleanTrapLaw
+          tags %i[API DOMAIN_LANGUAGE]
+          fix "a positional boolean parameter makes every call site a riddle"
+          proved_by "test/test_smell_detectors.rb"
+        end
+
         # DATA_CLUMPS, plural, because that spelling is the live scanner id:
         # data/laws.yml rule_deps orders PRIMITIVE_OBSESSION
         # `after: [DATA_CLUMPS]`. LawOrder#topo_sort ignores an ordering edge
@@ -264,12 +297,10 @@ module Master
         # implementers reports the interface working. Overlapping windows over
         # the same set of signatures are one clump seen through three frames, so
         # the longest run wins. Without either, the count was 81; with them, 48.
-        class DataClumpsLaw < Law
+        class DataClumpsLaw < Detector
           MIN_CLUMP = 3
           MIN_SIGNATURES = 3
 
-          declare id: "DATA_CLUMPS", tags: %i[BLOATERS DOMAIN_MODELING],
-                  description: "the same parameters travelling together are a record struggling to be born"
 
           def check_ast(ast, _code, path:)
             return [] if ast.nil? || path.to_s.match?(%r{/(?:test|spec|fixtures)/})
@@ -306,6 +337,13 @@ module Master
           end
         end
 
+        ::Law.define(:DATA_CLUMPS) do
+          detector DataClumpsLaw
+          tags %i[BLOATERS DOMAIN_MODELING]
+          fix "the same parameters travelling together are a record struggling to be born"
+          proved_by "test/test_smell_detectors.rb"
+        end
+
         # Message chains are LAW_OF_DEMETER's (universal_laws.rb), which counts
         # navigation steps. The five-name regex this rule also ran read
         # transform pipelines as chains: all 72 of its MASTER findings were
@@ -313,11 +351,9 @@ module Master
         # finding. Reflection is `send` with a method name for its first
         # argument; `client.send(body, token)` is a method that happens to be
         # called send.
-        class CouplerLaw < Law
+        class CouplerLaw < Detector
           INTIMACY = /\.(?:instance_variable_get|instance_variable_set)\s*\(|\.(?:public_)?send\s*\(\s*[:"']/
 
-          declare id: "COUPLER_SMELLS", tags: %i[COUPLING DEMETER],
-                  description: "inappropriate intimacy through reflective access"
 
           def check(code, path:)
             # Tests reach private engine methods by `send` on purpose (STUDIO/test/tool_test_helper.rb).
@@ -331,14 +367,19 @@ module Master
           end
         end
 
+        ::Law.define(:COUPLER_SMELLS) do
+          detector CouplerLaw
+          tags %i[COUPLING DEMETER]
+          fix "inappropriate intimacy through reflective access"
+          proved_by "test/test_scan_law_contracts.rb"
+        end
+
         # Split from CouplerLaw 2026-07-12: laws.yml's rule_deps SRP entry already
         # referenced FEATURE_ENVY as its own id (SRP: after: [FEATURE_ENVY,
         # god_class]) — a dangling reference, since the check previously lived
         # under COUPLER_SMELLS. This gives it a real matching id and a single
         # responsibility of its own.
-        class FeatureEnvyLaw < Law
-          declare id: "FEATURE_ENVY", tags: %i[COUPLING DEMETER],
-                  description: "method talks to one collaborator's internals more than its own"
+        class FeatureEnvyLaw < Detector
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
@@ -383,9 +424,22 @@ module Master
           end
         end
 
-        class LazyClassLaw < Law
-          declare id: "LAZY_CLASS", tags: %i[DISPENSABLES SRP],
-                  description: "classes should own behavior, not only delegate"
+        ::Law.define(:FEATURE_ENVY) do
+          detector FeatureEnvyLaw
+          tags %i[COUPLING DEMETER]
+          source "Refactoring — Feature Envy (Fowler)"
+          ask "Is this method more interested in another object's data than its own?"
+          fix "Move the behavior toward the data it operates on or extract a suitable collaborator."
+          bad <<~'X'
+          def total(order); order.items.sum { |i| i.price * i.qty }; end
+          X
+          good <<~'X'
+          class Order; def total; items.sum { |i| i.price * i.qty }; end; end
+          X
+          proved_by "test/test_feature_envy_law.rb"
+        end
+
+        class LazyClassLaw < Detector
           # A delegate is `delegate`, or a method whose whole body is one call on another object.
           DELEGATE = /^[ \t]*(?:delegate\b|def[ \t]+(?!self\.)\w+[!?=]?(?:\([^)\n]*\))?[ \t]*(?:;|\n)
                       [ \t]*@?\w+\.\w+[^\n;]*(?:;|\n)[ \t]*end\b)/x
@@ -405,6 +459,21 @@ module Master
           private
 
           def classes(code) = keyword_blocks(code, "class")
+        end
+
+        ::Law.define(:LAZY_CLASS) do
+          detector LazyClassLaw
+          tags %i[DISPENSABLES SRP]
+          source "Refactoring — Lazy Class (Fowler)"
+          ask "Is this class too small or trivial to justify a separate abstraction boundary?"
+          fix "Inline or merge it unless the boundary provides independent value."
+          bad <<~'X'
+          class NameHelper; def call(x); x.name; end; end
+          X
+          good <<~'X'
+          user.name
+          X
+          proved_by "test/test_scan_law_contracts.rb"
         end
       end
     end

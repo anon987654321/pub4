@@ -202,11 +202,9 @@ module Master
             end
         end
         def self.structural_laws(target)
-          scan = Master::Review::Scan
-          scan::LawDSL
-          js = scan::Law.registry.find { |klass| klass.name.nil? && klass.new.id == "JS_MODULE_SIZE" }
-          [scan::Laws::GodClassLaw.new, scan::Laws::SmallFilesLaw.new,
-           scan::Laws::FileSprawlLaw.new(root: target), js&.new].compact
+          tree = Master::Review::Scan::LawTree
+          [tree.find(:NO_GOD_CLASS), tree.find(:SMALL_FILES), tree.find(:FILE_SPRAWL, root: target),
+           tree.find(:JS_MODULE_SIZE)].compact
         end
 
         def self.repository_files(root)

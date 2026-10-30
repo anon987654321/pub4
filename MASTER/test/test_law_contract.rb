@@ -234,12 +234,19 @@ class TestLawContract < Minitest::Test
       path_exclude: nil,
       absent: nil,
       detect: ->(text) { text.include?("FORBIDDEN") },
+      check: nil,
+      detector: nil,
       ask: nil,
       practice: nil,
       fix: "remove it",
       bad: "/* FORBIDDEN */\n",
       good: "clean\n",
       reads_comments: false,
+      tags: [],
+      example_path: nil,
+      reads_beyond_file: false,
+      transform: nil,
+      proved_by: nil,
     )
 
     error = assert_raises(ArgumentError) { rule.prove! }

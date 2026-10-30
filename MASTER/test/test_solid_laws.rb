@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/law_dsl"
+require "review/scan/law_tree"
 
 # The four SOLID proxies — OpenClosedLaw, LiskovLaw, DependencyInversionLaw,
 # InterfaceSegregationLaw. Until now nothing named any of them, and three of

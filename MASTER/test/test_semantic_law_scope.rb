@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/law_dsl"
+require "review/scan/law_tree"
 
 # Semantic interpretation is universal. Language declarations govern
 # deterministic/AST adapter reach, not whether an invariant may be considered

@@ -2,16 +2,15 @@
 
 require_relative "test_helper"
 
-Master::Review::Scan::LawDSL # trigger autoload → rule files registered
+require "review/scan/law_tree"
 
 # SILENT_RESCUE (:error) flags blanket rescues that discard the error.
 # NARROW_SILENT_RESCUE (:warning) flags narrow-class rescues that do the same.
-# Both are LawDSL rules — anonymous Law subclasses found via the registry by id.
+# Both are ::Law.define Laws with a `check`, reached through LawTree by id.
 class TestSilentRescueRule < Minitest::Test
   def setup
-    reg     = Master::Review::Scan::Law.registry
-    @silent = reg.find { |k| k.new.id == "SILENT_RESCUE" }&.new
-    @narrow = reg.find { |k| k.new.id == "NARROW_SILENT_RESCUE" }&.new
+    @silent = Master::Review::Scan::LawTree.find("SILENT_RESCUE")
+    @narrow = Master::Review::Scan::LawTree.find("NARROW_SILENT_RESCUE")
     refute_nil @silent, "SILENT_RESCUE must be registered"
     refute_nil @narrow, "NARROW_SILENT_RESCUE must be registered"
   end
@@ -160,7 +159,7 @@ class TestSilentRescueRule < Minitest::Test
   # check doctrine asks for: the shape it must flag and the shapes it must not.
 
   def modifier_rule
-    Master::Review::Scan::Law.registry.find { |k| k.new.id == "MODIFIER_SILENT_RESCUE" }&.new
+    Master::Review::Scan::LawTree.find("MODIFIER_SILENT_RESCUE")
   end
 
   def test_modifier_rescue_binding_nil_is_flagged

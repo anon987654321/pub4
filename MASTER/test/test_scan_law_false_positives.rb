@@ -675,9 +675,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   end
 
   # --- a law that raises must not read as a clean file ----------------------
-  class RaisingLaw < Master::Review::Scan::Law
-    def self.auto_build? = false
-
+  class RaisingLaw < Master::Review::Scan::Detector
     def initialize
       super()
       @id = "PROBE_RAISER"

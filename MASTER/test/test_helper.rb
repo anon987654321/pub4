@@ -153,40 +153,22 @@ Minitest::Test.class_eval do
   # reads it must load it itself: under some seeds no earlier test had, and
   # ::Law raised NameError.
   def law_definitions
-    require_relative "../law/definition"
-    ::Law.load_all(File.expand_path("../law", __dir__)) if ::Law.definitions.empty?
-    ::Law.definitions
+    require_relative "../lib/review/scan/law_tree"
+    Master::Review::Scan::LawTree.load!
   end
 
-  # Run the canonical Law definition or its single registered detector
-  # directly. Tests must not depend on a parallel bridge class to make a Law
-  # visible to the scanner.
+  # Run one Law the way the scanner runs it: its detector class bound to it, or
+  # the adapter over its `detect` or `check`. Every Law is one ::Law.define, so
+  # there is one way to reach it.
   def law_findings(id, code, path:)
-    require_relative "../lib/review/scan/law_dsl"
-    key = id.to_s.upcase
-    definition = law_definitions.values.find { |law| law.id.to_s.upcase == key }
-    if definition
-      return Master::Review::Scan::CanonicalLawAdapter.new(definition).check(code, path:)
-    end
-
-    klass = Master::Review::Scan::Law.registry.find do |candidate|
-      instance = Master::Review::Scan::LawFactory.build(candidate, root: Master::ROOT)
-      instance.id.to_s.upcase == key
-    end
-    raise KeyError, "no Ruby detector registered for Law #{key}" unless klass
-
-    Master::Review::Scan::LawFactory.build(klass, root: Master::ROOT).check(code, path:)
-      .select { |finding| finding[:law].to_s.upcase == key }
+    law_definitions
+    law = Master::Review::Scan::LawTree.find(id) or raise KeyError, "no Law #{id}"
+    law.check(code, path:)
   end
 
   def rule(id, path: nil)
-    candidates = Master::Review::Scan::Law.registry.filter_map do |klass|
-      instance = klass.new
-      instance if instance.id == id
-    rescue ArgumentError
-      nil
-    end
-    candidates.first || flunk("missing law #{id}")
+    law_definitions
+    Master::Review::Scan::LawTree.find(id) || flunk("missing law #{id}")
   end
 
   def assert_finding(law, code, path, message)

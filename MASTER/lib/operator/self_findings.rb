@@ -10,7 +10,7 @@ require_relative "../io/exec"
 #
 #   law       the 122 rules in law/ with a lexical detector, applied to every
 #             tracked source file in the four governed trees
-#   registry  the 145 rules the LawDSL registry builds, run through the
+#   registry  the Laws the scanner builds (LawTree.build), run through the
 #             scanner itself and kept at error severity
 #
 # The second row arrived 2026-09-06. The first had been labelled "what our own

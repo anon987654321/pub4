@@ -228,7 +228,7 @@ end
 # and the second question had no answer anywhere.
 begin
   require "master"
-  require "review/scan/law_dsl"
+  require "review/scan/law_tree"
   Master::Trace::Dmesg::Report.print("receipt0", Master::Ground::BootReceipt.lines.join("\n"), parent: "doctor0")
   Master::Trace::Dmesg.status("doctor0", Master::Ground::MaturityScorecard.load.summary_line)
 rescue StandardError => e

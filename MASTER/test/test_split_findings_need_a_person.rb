@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/review/scan/law_dsl"
+require_relative "../lib/review/scan/law_tree"
 
 # RepairLoop asks for one corrected file per answer. Splitting a 1,018-line
 # Rakefile needs new files, so Opus answered UNCHANGED twice after an

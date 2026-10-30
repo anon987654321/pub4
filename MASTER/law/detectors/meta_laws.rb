@@ -6,13 +6,9 @@ module Master
       module Laws
       # Detects methods/classes/modules present in recent git history but absent now.
       # Wraps CommitGuard as a standard scan Law so it runs in the scanner pipeline.
-        class AstOmissionLaw < Law
+        class AstOmissionLaw < Detector
           def self.reads_beyond_file? = true
 
-          def self.auto_build? = false
-
-          declare id: "ast_omission", tags: %i[COMPLETENESS],
-                  description: "symbol dropped vs recent commits"
 
           def initialize(root: Dir.pwd, depth: CommitGuard::DEFAULT_DEPTH)
             super()
@@ -42,14 +38,17 @@ module Master
           end
         end
 
+        ::Law.define(:ast_omission) do
+          detector AstOmissionLaw
+          tags %i[COMPLETENESS]
+          fix "symbol dropped vs recent commits"
+          proved_by "test/test_ast_omission_law.rb"
+        end
+
         # Every Law subclass must have a matching test file; gaps mean untested enforcement.
-        class LawCoverageLaw < Law
+        class LawCoverageLaw < Detector
           def self.reads_beyond_file? = true
 
-          def self.auto_build? = false
-
-          declare id: "law_coverage", tags: %i[TEST_COVERAGE],
-                  description: "Law subclass has no corresponding test file"
 
           def initialize(root:)
             super()
@@ -88,15 +87,14 @@ module Master
 
           private
 
-          # `declare id:` is how a Law subclass names itself, in all sixteen
-          # files. The needle read `@id = "..."` and matched nothing in the tree,
-          # so only the class-name needle ever did any work and the id half of
-          # this law was dead from the day it was written.
+          # A detector class is named by the Law that uses it (`detector Name`
+          # inside its ::Law.define), so the class and its Law id come from the
+          # same file. The needle once read `@id = "..."`, then `declare id:`.
           def subclasses(code)
-            code.enum_for(:scan, /^\s*class (\w+Law) < Law\b/).map do
+            code.enum_for(:scan, /^\s*class (\w+Law) < Detector\b/).map do
               name = Regexp.last_match(1)
 
-              [name, code[Regexp.last_match.end(0), 2000][/declare\s+id:\s*["']([\w.]+)["']/, 1]]
+              [name, code[/::Law\.define\(:(\w+)\) do\n(?:[^\n]*\n){0,40}?\s*detector #{name}\b/, 1]]
             end
           end
 
@@ -120,44 +118,47 @@ module Master
           end
         end
 
+        ::Law.define(:law_coverage) do
+          detector LawCoverageLaw
+          tags %i[TEST_COVERAGE]
+          fix "Law subclass has no corresponding test file"
+          proved_by "test/test_law_coverage_law.rb"
+        end
+
         # Runtime authority lives in YAML — not markdown under data/.
-        LawDSL.law :RUNTIME_DOCS_YAML,
-          tags: %i[CONSTITUTION DOCS],
-          applies_to: %i[markdown],
-          autofix: false,
-          # The subject is the path — a stray .md under data/ — so the positive
-          # example is all the harness can express with one path per rule. It is
-          # spelled from Master::ROOT because data_relative answers only for a
-          # path inside this tree, and it names no file that exists.
-          example_path: File.join(Master::ROOT, "data", "worked_example.md"),
-          fires: "# a runtime doc that should have been YAML\n",
-          description: "runtime-read docs must be YAML — forbid stray .md under data/" do |_src, path:|
-          rel = RuntimeDocsPaths.data_relative(path)
+        ::Law.define(:RUNTIME_DOCS_YAML) do
+          tags %i[CONSTITUTION DOCS]
+          fix "runtime-read docs must be YAML — forbid stray .md under data/"
+          # A path rule: one example path cannot hold a flagged bad and a clean good.
+          proved_by "test/test_scan_law_contracts.rb"
+          check do |_src, path|
+            rel = RuntimeDocsPaths.data_relative(path)
 
-          next [] unless rel&.start_with?("data/") && rel.end_with?(".md")
+            next [] unless rel&.start_with?("data/") && rel.end_with?(".md")
 
-          allowed = %w[
-            data/SOUL.md
-            data/IDENTITY.md
-          ].freeze
-          next [] if allowed.include?(rel)
+            allowed = %w[
+              data/SOUL.md
+              data/IDENTITY.md
+            ].freeze
+            next [] if allowed.include?(rel)
 
-          # data/principles/*.md is a runtime-read location by construction:
-          # Ground::Constitution globs exactly that pattern and parses each file
-          # into an operator-declared principle. This rule told the operator to
-          # delete it, at error severity, and to move it to
-          # laws.yml#operator_principles — a section that no longer exists, its
-          # 47 entries having gone to law/practice.rb. A rule forbidding what a
-          # live loader requires is armed and invisible for as long as the
-          # directory stays empty, which it is.
-          next [] if rel.match?(%r{\Adata/principles/[^/]+\.md\z})
+            # data/principles/*.md is a runtime-read location by construction:
+            # Ground::Constitution globs exactly that pattern and parses each file
+            # into an operator-declared principle. This rule told the operator to
+            # delete it, at error severity, and to move it to
+            # laws.yml#operator_principles — a section that no longer exists, its
+            # 47 entries having gone to law/practice.rb. A rule forbidding what a
+            # live loader requires is armed and invisible for as long as the
+            # directory stays empty, which it is.
+            next [] if rel.match?(%r{\Adata/principles/[^/]+\.md\z})
 
-          target = "the YAML runtime (project_context.yml, patterns.yml#skills_registry) or law/ for conduct"
+            target = "the YAML runtime (project_context.yml, patterns.yml#skills_registry) or law/ for conduct"
 
-          [finding(
-            line: 1,
-            message: "runtime docs belong in #{target} — delete #{rel}",
-          )]
+            [finding(
+              line: 1,
+              message: "runtime docs belong in #{target} — delete #{rel}",
+            )]
+          end
         end
 
         module RuntimeDocsPaths
@@ -172,11 +173,9 @@ module Master
           end
         end
 
-        class LearnedSmellsLaw < Law
+        class LearnedSmellsLaw < Detector
           def self.reads_beyond_file? = true
 
-          declare id: "LEARNED_SMELLS", tags: %i[LEARNED_SMELLS SESSION],
-                  description: "session-learned smell patterns from laws.yml"
 
           def initialize(root: Master::ROOT)
             super()
@@ -321,6 +320,13 @@ module Master
           end
         end
 
+        ::Law.define(:LEARNED_SMELLS) do
+          detector LearnedSmellsLaw
+          tags %i[LEARNED_SMELLS SESSION]
+          fix "session-learned smell patterns from laws.yml"
+          proved_by "test/test_learned_smells_law.rb"
+        end
+
         # FILE_SPRAWL — the tree's shape is conduct too. A directory holding
         # one file is a namespace bought for nothing, and a file under
         # TINY_CODE_LINES code lines is usually a concept that belongs inside
@@ -353,16 +359,13 @@ module Master
         # root is found by what makes it Rails — config/application.rb, or a
         # lib/*/engine.rb — rather than by a directory named app, so a plain
         # Ruby tree with its own app/ is still judged.
-        class FileSprawlLaw < Law
+        class FileSprawlLaw < Detector
           def self.reads_beyond_file? = true
 
           TINY_CODE_LINES = 25
           SKIP_RE = %r{/(?:law|core|test|spec|fixtures|templates|node_modules)/|/web/public/}
           RAILS_NAMED = %r{\A(?:app|config|db)/|\Alib/[^/]+/(?:engine|version)\.rb\z}
-          def self.auto_build? = false
 
-          declare id: "FILE_SPRAWL", tags: %i[FLAT_HIERARCHY COLLAPSE_BEFORE_ADDING],
-                  description: "one-file directories and tiny files merge into their owners"
 
           def initialize(root: Master::ROOT)
             super()
@@ -445,6 +448,22 @@ module Master
           def relative(path) = path.delete_prefix("#{@root}/").delete_prefix("#{File.dirname(@root)}/")
         end
 
+        ::Law.define(:FILE_SPRAWL) do
+          detector FileSprawlLaw
+          tags %i[FLAT_HIERARCHY COLLAPSE_BEFORE_ADDING]
+          source "MASTER-native — collapse before adding; flat hierarchy"
+          ask "Are tiny files or one-file directories adding structure without carrying " \
+              "meaningful independent responsibility?"
+          fix "Absorb tiny artifacts into their natural owner before creating another boundary."
+          bad <<~'X'
+          lib/foo/bar.rb
+          X
+          good <<~'X'
+          lib/foo.rb
+          X
+          proved_by "test/test_scan_law_contracts.rb"
+        end
+
         # PATH_PURPOSE — PATH_OWNERSHIP.yml states what every path in this tree
         # is for, its risk, and the check that governs it. Nothing read it, so a
         # new directory cost nothing and declared nothing: the 2026-08-31 session
@@ -455,14 +474,11 @@ module Master
         # Reported per directory rather than per file, because the fix is one
         # entry, not one per member. Scratch and generated trees are out of
         # scope: they are working residue, not structure.
-        class PathPurposeLaw < Law
+        class PathPurposeLaw < Detector
           def self.reads_beyond_file? = true
 
           SKIP_RE = %r{/(?:test|spec|fixtures|node_modules|vendor|tmp|log|scratch|frames?_|renders?)/|/\.}
-          def self.auto_build? = false
 
-          declare id: "PATH_PURPOSE", tags: %i[ONE_SOURCE COLLAPSE_BEFORE_ADDING],
-                  description: "every directory declares its purpose in PATH_OWNERSHIP.yml"
 
           def initialize(root: Master::ROOT)
             super()
@@ -540,6 +556,13 @@ module Master
               false
             end
           end
+        end
+
+        ::Law.define(:PATH_PURPOSE) do
+          detector PathPurposeLaw
+          tags %i[ONE_SOURCE COLLAPSE_BEFORE_ADDING]
+          fix "every directory declares its purpose in PATH_OWNERSHIP.yml"
+          proved_by "test/test_path_purpose_law.rb"
         end
       end
     end

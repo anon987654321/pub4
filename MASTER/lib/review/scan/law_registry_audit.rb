@@ -221,11 +221,7 @@ module Master
         end
 
         def ungraphed_law_ids(registry = nil)
-          Review::Scan::LawDSL
-          registry ||= Review::Scan::Law.registry
-            .select { |klass| shipped?(klass) }
-            .map { |klass| LawFactory.build(klass, root: @root).id.to_s }
-            .to_set
+          registry ||= build_registry_ids
           registry = registry.map { |id| id.to_s.downcase }.to_set
           deps = Master.law("law_deps", root: @root)
           graphed = deps.keys.map { |k| k.to_s.downcase }.to_set
@@ -294,8 +290,7 @@ module Master
           entries.each do |entry|
             id = entry.fetch("id").to_s
             definitions = Array(entry["definition_sources"]).map(&:to_s)
-            detectors = Array(entry["detector_sources"]).map(&:to_s)
-            sources = definitions + detectors
+            sources = definitions
             entry_without_source << id if sources.empty?
             duplicate_definitions << id if definitions.uniq.size > 1
             non_universal << id unless entry["universal"] == true
@@ -328,14 +323,16 @@ module Master
           }.freeze
         end
 
-        # The reference loads the rule files, and a class in a multi-class file is
-        # invisible to Zeitwerk until it does: asked cold, the registry answered
-        # 81 mechanical laws where a loaded one answers 115.
+        # The Laws whose detector is a `check` or a class: the population the
+        # scanner registry held before every Law became one ::Law.define (a
+        # `detect` regex Law is reached through law_detector? instead). LawTree
+        # loads law/detectors/ with law/, so the cold-Zeitwerk undercount (81
+        # where a loaded registry said 115) has no second population to come from.
         def build_registry_ids
-          Review::Scan::LawDSL
-          Review::Scan::Law.registry
-            .select { |klass| shipped?(klass) }
-            .map { |klass| LawFactory.build(klass, root: @root).id.to_s.downcase }
+          Review::Scan::LawTree.definitions
+            .select { |law| law.check || law.detector }
+            .reject { |law| law.detector && !shipped?(law.detector) }
+            .map { |law| law.id.to_s.downcase }
             .to_set
         end
 

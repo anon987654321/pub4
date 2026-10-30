@@ -636,18 +636,6 @@ end
 
 # Constitutional migration batch 3: kernel and foundational principles.
 
-Law.define(:ONE_SOURCE) do
-  source "DRY — The Pragmatic Programmer (Hunt & Thomas, 1999)"
-  ask "Is the same logic or data defined in multiple authoritative places?"
-  fix "Extract one authoritative representation and make all consumers reference it."
-  bad <<~'X'
-    MAX_RETRIES = 3; Config::MAX_RETRIES = 3
-  X
-  good <<~'X'
-    MAX_RETRIES = Config::MAX_RETRIES
-  X
-end
-
 Law.define(:DECOUPLE) do
   source "The Pragmatic Programmer — decoupling"
   ask "Are there implicit couplings between modules that should be explicit dependencies?"
@@ -745,30 +733,6 @@ Law.define(:LEAST_ASTONISHMENT) do
 end
 
 # Constitutional migration batch 4: architecture and security principles.
-
-Law.define(:NO_GOD_CLASS) do
-  source "Refactoring code smell: Large Class / God Object (Fowler)"
-  ask "Does one class accumulate unrelated responsibilities that should have separate owners?"
-  fix "Decompose into focused objects with explicit responsibilities."
-  bad <<~'X'
-    class Application; def users; end; def billing; end; def render; end; def mail; end; end
-  X
-  good <<~'X'
-    class Users; end; class Billing; end
-  X
-end
-
-Law.define(:FILE_SPRAWL) do
-  source "MASTER-native — collapse before adding; flat hierarchy"
-  ask "Are tiny files or one-file directories adding structure without carrying meaningful independent responsibility?"
-  fix "Absorb tiny artifacts into their natural owner before creating another boundary."
-  bad <<~'X'
-    lib/foo/bar.rb
-  X
-  good <<~'X'
-    lib/foo.rb
-  X
-end
 
 Law.define(:INFORMATION_HIDING) do
   source "Information hiding (David Parnas; Ousterhout)"
@@ -1096,18 +1060,6 @@ Law.define(:SELF_EXPLAINING) do
   X
 end
 
-Law.define(:TRAILING_COMMAS) do
-  source "Ruby/JS style — trailing commas in multiline literals"
-  ask "Does a multiline collection or argument list omit a trailing comma that stabilizes diffs?"
-  fix "Add the trailing comma to multiline collections and argument lists."
-  bad <<~'X'
-    options = {\n  timeout: 2\n}
-  X
-  good <<~'X'
-    options = {\n  timeout: 2,\n}
-  X
-end
-
 Law.define(:SILENCE_ON_SUCCESS) do
   source "Unix philosophy — Rule of Silence"
   ask "Does a successful operation emit output that the operator does not need?"
@@ -1204,18 +1156,6 @@ Law.define(:ERROR_CONTEXT) do
   X
 end
 
-Law.define(:COMMENTS_AS_DEODORANT) do
-  source "Refactoring — comments as deodorant (Fowler/Beck)"
-  ask "Is a comment compensating for code or prose that could instead be rewritten to make the intent obvious?"
-  fix "Refactor the underlying artifact first; keep comments for rationale that cannot be encoded directly."
-  bad <<~'X'
-    # increment i; i += 1
-  X
-  good <<~'X'
-    i += 1
-  X
-end
-
 Law.define(:POSTEL) do
   source "Postel's Law / Robustness Principle"
   ask "Does this boundary reject safely normalizable valid variation or emit unnecessarily strict structure that callers do not need?"
@@ -1264,18 +1204,6 @@ Law.define(:HUMBLE_OBJECT) do
   X
 end
 
-Law.define(:PATTERN_EXTRACTION) do
-  source "MASTER-native — extract recurring structure"
-  ask "Is the code close to a known reusable pattern whose extraction would genuinely reduce complexity rather than add ceremony?"
-  fix "Extract a pattern only when recurring structure earns the abstraction."
-  bad <<~'X'
-    if cache.hit?; cache.read; else; fetch; cache.write; end
-  X
-  good <<~'X'
-    result = Cache.fetch(key) { fetch }
-  X
-end
-
 # Constitutional migration batch 6a: SOLID and abstraction laws.
 
 Law.define(:SRP) do
@@ -1287,54 +1215,6 @@ Law.define(:SRP) do
   X
   good <<~'X'
     class Invoice; def calculate; end; end; class InvoiceRenderer; end; class InvoiceMailer; end
-  X
-end
-
-Law.define(:OPEN_CLOSED) do
-  source "Open-Closed Principle (Bertrand Meyer; SOLID)"
-  ask "Must existing core code be modified whenever a new supported variant is added?"
-  fix "Extend through stable interfaces, registries, or composition where that reduces repeated core edits."
-  bad <<~'X'
-    case format; when :json; render_json; when :xml; render_xml; end
-  X
-  good <<~'X'
-    renderers.fetch(format).call(document)
-  X
-end
-
-Law.define(:LISKOV) do
-  source "Liskov Substitution Principle (Barbara Liskov, 1987)"
-  ask "Does a subtype violate assumptions or guarantees established by the type it replaces?"
-  fix "Make subtype behavior satisfy the established contract or use a different abstraction."
-  bad <<~'X'
-    class ReadOnlyStore < Store; def save(x); raise "no"; end; end
-  X
-  good <<~'X'
-    class ReadOnlyStore < ReadStore; end
-  X
-end
-
-Law.define(:INTERFACE_SEGREGATION) do
-  source "SOLID — Interface Segregation"
-  ask "Does an interface force implementations to stub or ignore methods they do not need?"
-  fix "Split broad interfaces into focused contracts."
-  bad <<~'X'
-    class Printer; def print; end; def scan; raise NotImplementedError; end; end
-  X
-  good <<~'X'
-    Printable = Data.define; Scannable = Data.define
-  X
-end
-
-Law.define(:DEPENDENCY_INVERSION) do
-  source "SOLID — Dependency Inversion Principle"
-  ask "Does high-level policy directly instantiate concrete dependencies that should be replaceable?"
-  fix "Depend on stable abstractions and inject concrete implementations at the boundary."
-  bad <<~'X'
-    class Checkout; def call; Stripe::Charge.create; end; end
-  X
-  good <<~'X'
-    class Checkout; def initialize(payments:); @payments = payments; end; end
   X
 end
 
@@ -1359,18 +1239,6 @@ Law.define(:COMPOSABLE) do
   X
   good <<~'X'
     normalized = normalize(input); validated = validate(normalized)
-  X
-end
-
-Law.define(:LAW_OF_DEMETER) do
-  source "Law of Demeter (Ian Holland)"
-  ask "Does this code reach through several objects or expose knowledge of a collaborator's internals?"
-  fix "Talk only to immediate collaborators and encapsulate the traversal."
-  bad <<~'X'
-    order.customer.address.city
-  X
-  good <<~'X'
-    order.shipping_city
   X
 end
 
@@ -1496,54 +1364,6 @@ Law.define(:PURE_FUNCTIONS) do
   X
 end
 
-Law.define(:PRIMITIVE_OBSESSION) do
-  source "Refactoring — Primitive Obsession (Fowler)"
-  ask "Are primitives carrying domain rules that would be clearer and safer as a value object?"
-  fix "Create a focused value object when the primitive has behavior or invariants."
-  bad <<~'X'
-    email = "a@b.com"; Email.send(email)
-  X
-  good <<~'X'
-    email = EmailAddress.parse(raw); Mailer.send(email)
-  X
-end
-
-Law.define(:FEATURE_ENVY) do
-  source "Refactoring — Feature Envy (Fowler)"
-  ask "Is this method more interested in another object's data than its own?"
-  fix "Move the behavior toward the data it operates on or extract a suitable collaborator."
-  bad <<~'X'
-    def total(order); order.items.sum { |i| i.price * i.qty }; end
-  X
-  good <<~'X'
-    class Order; def total; items.sum { |i| i.price * i.qty }; end; end
-  X
-end
-
-Law.define(:MIDDLE_MAN) do
-  source "Refactoring — Middle Man (Fowler)"
-  ask "Does this class mostly delegate methods to another object without adding meaningful policy?"
-  fix "Remove the unnecessary middle layer or give it a real abstraction."
-  bad <<~'X'
-    def name; @user.name; end; def email; @user.email; end
-  X
-  good <<~'X'
-    attr_reader :user
-  X
-end
-
-Law.define(:LAZY_CLASS) do
-  source "Refactoring — Lazy Class (Fowler)"
-  ask "Is this class too small or trivial to justify a separate abstraction boundary?"
-  fix "Inline or merge it unless the boundary provides independent value."
-  bad <<~'X'
-    class NameHelper; def call(x); x.name; end; end
-  X
-  good <<~'X'
-    user.name
-  X
-end
-
 Law.define(:DIVERGENT_CHANGE) do
   source "Refactoring — Divergent Change (Fowler)"
   ask "Is one class repeatedly changed for several unrelated causes?"
@@ -1634,18 +1454,6 @@ Law.define(:ERROR_RECOVERY) do
   X
 end
 
-Law.define(:AESTHETIC_MINIMALISM) do
-  source "Nielsen Heuristic #8 — aesthetic and minimalist design"
-  ask "Does this output contain information that does not earn its place for the current task?"
-  fix "Remove redundant status, decoration, and secondary detail from the primary path."
-  bad <<~'X'
-    render title: title, debug: true, metadata: metadata, raw: raw
-  X
-  good <<~'X'
-    render title: title
-  X
-end
-
 Law.define(:MATCH_REAL_WORLD) do
   source "Nielsen Heuristic #2 — match between system and real world"
   ask "Does the interface expose implementation jargon where a familiar real-world term would be clearer?"
@@ -1732,18 +1540,6 @@ Law.define(:CACHE_LLM) do
   X
 end
 
-Law.define(:NO_FLAG_ARGUMENTS) do
-  source "Clean Code — no flag arguments"
-  ask "Does a boolean argument make one function perform two different jobs or select unrelated behavior?"
-  fix "Split the responsibilities into named operations or objects."
-  bad <<~'X'
-    render(document, true)
-  X
-  good <<~'X'
-    render_full(document)
-  X
-end
-
 Law.define(:NO_OUTPUT_ARGUMENTS) do
   source "Clean Code — no output arguments"
   ask "Does this function mutate an input argument to return a result indirectly?"
@@ -1806,18 +1602,6 @@ Law.define(:SURFACE_AREA) do
   X
 end
 
-Law.define(:PROGRESSIVE_DISCLOSURE) do
-  source "Progressive disclosure (Jakob Nielsen, NN/g)"
-  ask "Does this present all complexity at once instead of revealing detail as the user's task requires it?"
-  fix "Lead with the common path and reveal advanced controls when they become relevant."
-  bad <<~'X'
-    settings.show_all_advanced_controls
-  X
-  good <<~'X'
-    settings.show_basic; settings.reveal_advanced
-  X
-end
-
 Law.define(:FEEDBACK_LOOPS) do
   source "Nielsen feedback / checkpoint principle"
   ask "Does this perform substantial work without reporting progress, checkpoints, or a recoverable state?"
@@ -1827,18 +1611,6 @@ Law.define(:FEEDBACK_LOOPS) do
   X
   good <<~'X'
     backup.run { |checkpoint| emit(checkpoint) }
-  X
-end
-
-Law.define(:DATA_CLASS) do
-  source "Refactoring — Data Class (Fowler)"
-  ask "Does this class mainly hold data while behavior that belongs with that data is scattered across other modules?"
-  fix "Move cohesive behavior toward the data owner or replace the holder with a meaningful domain abstraction."
-  bad <<~'X'
-    class Money; attr_reader :cents; end; Tax.total(money)
-  X
-  good <<~'X'
-    class Money; attr_reader :cents; def taxed(rate); cents * rate; end; end
   X
 end
 

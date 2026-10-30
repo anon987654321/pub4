@@ -7,8 +7,8 @@ pub4 is governed by MASTER. Read the authority chain before editing:
 
 1. `MASTER/data/soul.yml` — constitutional absolutes and anti-simulation.
 2. `MASTER/data/laws.yml` — the canonical Law catalogue, identity manifest, universal scope, modality contract and global assessment surfaces.
-3. `MASTER/law/*.rb` and `MASTER/law/detectors/*.rb` — Ruby executable definitions and detector/evaluator implementations. Each Law identity must have one catalogue entry; implementation source paths are recorded in that entry.
-4. `MASTER/lib/review/scan/` — scanner runtime, finding model, registration and orchestration only. It is not a second Law source directory.
+3. `MASTER/law/*.rb` and `MASTER/law/detectors/*.rb` — one `Law.define` per Law, whose detector is a `detect` regex, a `check` block or a detector class (`Review::Scan::Detector`). Each Law identity has one catalogue entry, and that entry's `definition_sources` names the file holding its `Law.define`.
+4. `MASTER/lib/review/scan/` — scanner runtime, finding model and orchestration only; `LawTree` builds what the scanner runs from `Law.definitions`. It is not a second Law source directory.
 
 Authority is `soul.yml` > `laws.yml` > Ruby enforcement > checks and tree contracts > agent-harness prose. `law_catalogue.entries` is the single identity inventory. Each entry must declare `universal: true`, `modalities: [lexical, semantic, visual]`, and its Ruby source path(s); the global `surfaces` list also lives in `laws.yml`. `LawRegistryAudit.reconciled?` is a blocking identity/source-integrity gate: `source_drift`, missing source files, duplicate definitions and incomplete modality declarations must not be hidden. A Law without a deterministic Ruby detector is recorded as `manifest_without_deterministic_detector` coverage debt; its lexical assessment remains INCONCLUSIVE rather than being called clean. Semantic/visual review must receive the full catalogue independent of file language or source path. A declared source file is not proof that the corresponding detector or runtime assessment has executed.
 

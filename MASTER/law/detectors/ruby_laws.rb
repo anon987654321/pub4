@@ -86,19 +86,21 @@ module Master
         # and a raw params[] reaching a mass-assignment sink never had one.
         # Scoped to /app/ rather than /app/controllers/ because a service or
         # model object handed the params hash carries the same risk.
-        LawDSL.law :STRONG_PARAMETERS,
-          tags: %i[SECURITY], applies_to: %i[ruby],
-          fires: "Post.create(params[:post])\n",
-          does_not_fire: "Post.create(params.require(:post).permit(:title))\n",
-          description: "mass assignment goes through explicitly permitted attributes" do |src, path:|
-          next [] unless path.include?("/app/")
+        ::Law.define(:STRONG_PARAMETERS) do
+          tags %i[SECURITY]
+          fix "mass assignment goes through explicitly permitted attributes"
+          bad "Post.create(params[:post])\n"
+          good "Post.create(params.require(:post).permit(:title))\n"
+          check do |src, path|
+            next [] unless path.include?("/app/")
 
-          blanket = scan_lines(src, /\.permit!/,
-            message: "permit! whitelists every attribute — name the permitted attributes instead")
-          raw = scan_lines(src,
-            /\.(?:new|create!?|update!?|update_attributes!?|assign_attributes)\(\s*params\[/,
-            message: "raw params[] reaches mass assignment — route it through require(...).permit(...)")
-          blanket + raw
+            blanket = scan_lines(src, /\.permit!/,
+              message: "permit! whitelists every attribute — name the permitted attributes instead")
+            raw = scan_lines(src,
+              /\.(?:new|create!?|update!?|update_attributes!?|assign_attributes)\(\s*params\[/,
+              message: "raw params[] reaches mass assignment — route it through require(...).permit(...)")
+            blanket + raw
+          end
         end
 
         # EACH_WITH_OBJECT lives once, in law/ruby.rb — fixtures attached, any narrowing
@@ -107,102 +109,111 @@ module Master
         # KERNEL_COERCION lives once, in law/ruby.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        LawDSL.law :HASH_FETCH,
-          tags: %i[READABILITY], applies_to: %i[ruby],
-          fires: "value = options[:size] || 10\n",
-          does_not_fire: "value = options.fetch(:size, 10)\n",
-          description: "prefer Hash#fetch over [] with ||" do |src, path:|
-          next [] if path.to_s.include?("/law/detectors/")
-          src.each_line.with_index(1).filter_map do |line, n|
-            stripped = line.strip
-            next unless (m = stripped.match(/(@{0,2}\w+)\[:\w+\]\s*\|\|(?!=)/))
-            var = Regexp.escape(m[1])
-            # A genuine fetch-with-default candidate is `hash[:key] || <default>`
-            # where <default> is a plain value, not another lookup. Excluded here,
-            # none of which are fetch candidates: memoization (`||=`, handled by
-            # the negative lookahead above); the string-or-symbol dual-key
-            # fallback in either key order (`h[:k] || h["k"]` or
-            # `h["k"] || h[:k]`); and a comparison chain that coincidentally
-            # contains a bracket access (`a[:x] >= b[:x] ||`).
-            next if stripped.match?(/#{var}\[:\w+\]\s*\|\|\s*#{var}\[/)
-            next if stripped.match?(/#{var}\[["']\w+["']\]\s*\|\|\s*#{var}\[:\w+\]/)
-            next if stripped.match?(/(?:>=|<=|==|!=)\s*#{var}\[:\w+\]\s*\|\|/)
+        ::Law.define(:HASH_FETCH) do
+          tags %i[READABILITY]
+          fix "prefer Hash#fetch over [] with ||"
+          bad "value = options[:size] || 10\n"
+          good "value = options.fetch(:size, 10)\n"
+          check do |src, path|
+            next [] if path.to_s.include?("/law/detectors/")
+            src.each_line.with_index(1).filter_map do |line, n|
+              stripped = line.strip
+              next unless (m = stripped.match(/(@{0,2}\w+)\[:\w+\]\s*\|\|(?!=)/))
+              var = Regexp.escape(m[1])
+              # A genuine fetch-with-default candidate is `hash[:key] || <default>`
+              # where <default> is a plain value, not another lookup. Excluded here,
+              # none of which are fetch candidates: memoization (`||=`, handled by
+              # the negative lookahead above); the string-or-symbol dual-key
+              # fallback in either key order (`h[:k] || h["k"]` or
+              # `h["k"] || h[:k]`); and a comparison chain that coincidentally
+              # contains a bracket access (`a[:x] >= b[:x] ||`).
+              next if stripped.match?(/#{var}\[:\w+\]\s*\|\|\s*#{var}\[/)
+              next if stripped.match?(/#{var}\[["']\w+["']\]\s*\|\|\s*#{var}\[:\w+\]/)
+              next if stripped.match?(/(?:>=|<=|==|!=)\s*#{var}\[:\w+\]\s*\|\|/)
 
-            finding(line: n, message: "hash symbol lookup with fallback — prefer hash.fetch(:key, default)")
+              finding(line: n, message: "hash symbol lookup with fallback — prefer hash.fetch(:key, default)")
+            end
           end
         end
 
         # IMMUTABLE lives once, in law/ruby.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        LawDSL.law :FIND_EACH,
-          tags: %i[PERFORMANCE], applies_to: %i[ruby],
-          fires: "  User.all.each { |u| u.touch }\n",
-          does_not_fire: "  User.find_each(batch_size: 500) { |u| u.touch }\n",
-          description: "use find_each for batch processing" do |src, path:|
-          next [] unless path.match?(%r{/app/|/spec/|/test/})
-          scan_lines(src, /\.(all\.each|where\(.*\)\.each)\b/,
-            message: "unbounded .all.each — use find_each(batch_size: N)")
+        ::Law.define(:FIND_EACH) do
+          tags %i[PERFORMANCE]
+          fix "use find_each for batch processing"
+          bad "  User.all.each { |u| u.touch }\n"
+          good "  User.find_each(batch_size: 500) { |u| u.touch }\n"
+          check do |src, path|
+            next [] unless path.match?(%r{/app/|/spec/|/test/})
+            scan_lines(src, /\.(all\.each|where\(.*\)\.each)\b/,
+              message: "unbounded .all.each — use find_each(batch_size: N)")
+          end
         end
 
-        LawDSL.law :NO_UPDATE_ATTRIBUTE,
-          tags: %i[DATA_INTEGRITY], applies_to: %i[ruby],
-          fires: "  user.update_attribute(:name, name)\n",
-          does_not_fire: "  user.update!(name: name)\n",
-          description: "replace update_attribute with update!" do |src, path:|
-          next [] unless path.match?(%r{/app/|/spec/|/test/})
-          scan_lines(src, /\.update_attribute\(/, message: "update_attribute skips validations — use update!")
+        ::Law.define(:NO_UPDATE_ATTRIBUTE) do
+          tags %i[DATA_INTEGRITY]
+          fix "replace update_attribute with update!"
+          bad "  user.update_attribute(:name, name)\n"
+          good "  user.update!(name: name)\n"
+          check do |src, path|
+            next [] unless path.match?(%r{/app/|/spec/|/test/})
+            scan_lines(src, /\.update_attribute\(/, message: "update_attribute skips validations — use update!")
+          end
         end
 
-        LawDSL.law :PLUCK_OVER_MAP,
-          tags: %i[PERFORMANCE], applies_to: %i[ruby],
-          fires: "  ids = order.items.map(&:id)\n",
-          does_not_fire: "  ids = order.items.pluck(:id)\n",
-          example_path: "/repo/RAILS/brgen/app/models/example.rb",
-          description: "prefer pluck over map for single columns" do |src, path:|
-          # pluck is ActiveRecord's; a plain Ruby array has no columns. The
-          # guard was any /app/, /spec/ or /test/ path, so STUDIO's tool tests
-          # were told to pluck from arrays.
-          next [] unless path.match?(%r{(?:\A|/)RAILS/.*/(?:app|spec|test)/})
-          scan_lines(src, /\.\w+\.map\(&:\w+\)/, message: "use pluck(:column) to avoid loading full objects")
+        ::Law.define(:PLUCK_OVER_MAP) do
+          tags %i[PERFORMANCE]
+          fix "prefer pluck over map for single columns"
+          example_path "/repo/RAILS/brgen/app/models/example.rb"
+          bad "  ids = order.items.map(&:id)\n"
+          good "  ids = order.items.pluck(:id)\n"
+          check do |src, path|
+            # pluck is ActiveRecord's; a plain Ruby array has no columns. The
+            # guard was any /app/, /spec/ or /test/ path, so STUDIO's tool tests
+            # were told to pluck from arrays.
+            next [] unless path.match?(%r{(?:\A|/)RAILS/.*/(?:app|spec|test)/})
+            scan_lines(src, /\.\w+\.map\(&:\w+\)/, message: "use pluck(:column) to avoid loading full objects")
+          end
         end
 
         # KEYWORD_ARGS was deleted here on 2026-08-21 — folded into FEW_ARGUMENTS
         # (universal_laws.rb): two ids counted the same parameter list, one at
         # :warn and one at :info, and every 3+-positional def carried both.
 
-        LawDSL.law :DEAD_CODE,
-          autofix: "remove_immediate_dead_code", tags: %i[CLEAN_CODE], applies_to: %i[ruby],
-          fires: "  return value\n  log(value)\n",
-          # A guard clause keeps the next line reachable, which is the shape a bare
-          # \b(return|raise)\b read as unreachable across the whole tree.
-          does_not_fire: "  return value if done?\n  log(value)\n",
-          description: "eliminate unreachable code" do |src, path:|
-          lines = src.lines
-          lines.each_with_index.filter_map do |line, index|
-            # Terminator at the line start only, and unconditional: `x = return_val`,
-            # `return x if cond`, `raise unless y`, and a ternary all keep the next
-            # line reachable, and `return_index` is not the keyword at all. Matching
-            # a bare \b(return|raise)\b flagged every guard clause in the codebase.
-            match = line.match(/\A(\s*)(return|exit|raise|throw)\b(.*)$/)
-            next unless match
+        ::Law.define(:DEAD_CODE) do
+          tags %i[CLEAN_CODE]
+          fix "eliminate unreachable code"
+          transform "remove_immediate_dead_code"
+          bad "  return value\n  log(value)\n"
+          good "  return value if done?\n  log(value)\n"
+          check do |src, path|
+            lines = src.lines
+            lines.each_with_index.filter_map do |line, index|
+              # Terminator at the line start only, and unconditional: `x = return_val`,
+              # `return x if cond`, `raise unless y`, and a ternary all keep the next
+              # line reachable, and `return_index` is not the keyword at all. Matching
+              # a bare \b(return|raise)\b flagged every guard clause in the codebase.
+              match = line.match(/\A(\s*)(return|exit|raise|throw)\b(.*)$/)
+              next unless match
 
-            indent, rest = match[1], match[3]
-            next if rest.match?(/\b(if|unless)\b/) || rest.match?(/&&|\|\|/) || rest.include?("?")
-            # A statement that continues (`raise "…" \`, a trailing comma or operator, an
-            # open bracket) does not end on this line, so the next line is still part of it.
-            next if rest.rstrip.match?(/[\\,(\[{+*\/-]\z/) || rest.count("([{") > rest.count(")]}")
+              indent, rest = match[1], match[3]
+              next if rest.match?(/\b(if|unless)\b/) || rest.match?(/&&|\|\|/) || rest.include?("?")
+              # A statement that continues (`raise "…" \`, a trailing comma or operator, an
+              # open bracket) does not end on this line, so the next line is still part of it.
+              next if rest.rstrip.match?(/[\\,(\[{+*\/-]\z/) || rest.count("([{") > rest.count(")]}")
 
-            following = lines[index + 1]
-            next unless following
+              following = lines[index + 1]
+              next unless following
 
-            stripped = following.strip
-            next if stripped.empty? || stripped.match?(/\A(end|else|elsif|when|in |rescue|ensure|[)\]}])/)
-            # Only code at the same or deeper indent in the same block is unreachable;
-            # a dedent means the terminator ended its block and the next line is not.
-            next unless following[/\A */].length >= indent.length
+              stripped = following.strip
+              next if stripped.empty? || stripped.match?(/\A(end|else|elsif|when|in |rescue|ensure|[)\]}])/)
+              # Only code at the same or deeper indent in the same block is unreachable;
+              # a dedent means the terminator ended its block and the next line is not.
+              next unless following[/\A */].length >= indent.length
 
-            finding(line: index + 2, message: "unreachable code after #{line.strip}")
+              finding(line: index + 2, message: "unreachable code after #{line.strip}")
+            end
           end
         end
 
@@ -220,30 +231,32 @@ module Master
         # ceilings recorded at 1/21/1/1 the same day. 40 catches the 24
         # worst (top: 85.5 in brgen's application_helper); walk it down as
         # they fall: 40 -> 30 (81) -> 25 (169) -> 17 (560).
-        LawDSL.law :ABC_SIZE,
-          tags: %i[COMPLEXITY], applies_to: %i[ruby], autofix: false,
-          description: "method ABC size over the ratchet threshold — extract until the pieces name themselves",
-          example_path: "/repo/lib/example.rb",
-          fires: "def dense(x)\n" + Array.new(20) { |i| "  v#{i} = x.call(#{i}) if x.ok?(#{i})\n" }.join + "end\n",
-          does_not_fire: "def calm(x)\n  y = x.call\n  y ? y.to_s : nil\nend\n" do |src, path:|
-          result = Prism.parse(src)
-          next [] if result.failure?
+        ::Law.define(:ABC_SIZE) do
+          tags %i[COMPLEXITY]
+          fix "method ABC size over the ratchet threshold — extract until the pieces name themselves"
+          example_path "/repo/lib/example.rb"
+          bad "def dense(x)\n" + Array.new(20) { |i| "  v#{i} = x.call(#{i}) if x.ok?(#{i})\n" }.join + "end\n"
+          good "def calm(x)\n  y = x.call\n  y ? y.to_s : nil\nend\n"
+          check do |src, path|
+            result = Prism.parse(src)
+            next [] if result.failure?
 
-          findings = []
-          walk = lambda do |node|
-            next unless node.respond_to?(:child_nodes)
-            if node.is_a?(Prism::DefNode)
-              a, b, c = RubyRuleSupport.abc_counts(node)
-              abc = Math.sqrt(a**2 + b**2 + c**2)
-              if abc > 40
-                findings << finding(line: node.location.start_line,
-                  message: "ABC size #{abc.round(1)} for ##{node.name} (A=#{a} B=#{b} C=#{c}, ratchet 40) — extract until the pieces name themselves")
+            findings = []
+            walk = lambda do |node|
+              next unless node.respond_to?(:child_nodes)
+              if node.is_a?(Prism::DefNode)
+                a, b, c = RubyRuleSupport.abc_counts(node)
+                abc = Math.sqrt(a**2 + b**2 + c**2)
+                if abc > 40
+                  findings << finding(line: node.location.start_line,
+                    message: "ABC size #{abc.round(1)} for ##{node.name} (A=#{a} B=#{b} C=#{c}, ratchet 40) — extract until the pieces name themselves")
+                end
               end
+              node.child_nodes.compact.each { |child| walk.call(child) }
             end
-            node.child_nodes.compact.each { |child| walk.call(child) }
+            walk.call(result.value)
+            findings
           end
-          walk.call(result.value)
-          findings
         end
 
         # Only array and hash literals, because those are the two the autofix
@@ -252,21 +265,26 @@ module Master
         # nothing but a quoted string, so it reported 496 findings across MASTER
         # of which the great majority were a method's last expression or an
         # assertion message, and the fixer would have touched none of them.
-        LawDSL.law :TRAILING_COMMAS,
-          tags: %i[STYLE], applies_to: %i[ruby],
-          fires: %(LIST = [\n  "one"\n]\n),
-          does_not_fire: %(LIST = [\n  "one",\n]\n),
-          description: "trailing commas in multi-line collections" do |src, path:|
-          next [] if Master::Fix::Scan::AstFixer::DeadCodeAndCommas.rubocop_forbids_trailing_comma?(path)
+        ::Law.define(:TRAILING_COMMAS) do
+          source "Ruby/JS style — trailing commas in multiline literals"
+          ask "Does a multiline collection or argument list omit a trailing comma that stabilizes diffs?"
+          tags %i[STYLE]
+          fix "Add the trailing comma to multiline collections and argument lists."
+          bad %(LIST = [\n  "one"\n]\n)
+          good %(LIST = [\n  "one",\n]\n)
+          check do |src, path|
+            next [] unless %w[ruby].include?(language(path))
+            next [] if Master::Fix::Scan::AstFixer::DeadCodeAndCommas.rubocop_forbids_trailing_comma?(path)
 
-          parsed = Prism.parse(src)
-          next [] if parsed.failure?
+            parsed = Prism.parse(src)
+            next [] if parsed.failure?
 
-          collections = each_node(parsed.value, Prism::ArrayNode) + each_node(parsed.value, Prism::HashNode)
-          collections.filter_map do |node|
-            next unless RubyRuleSupport.unterminated_collection?(node, src)
+            collections = each_node(parsed.value, Prism::ArrayNode) + each_node(parsed.value, Prism::HashNode)
+            collections.filter_map do |node|
+              next unless RubyRuleSupport.unterminated_collection?(node, src)
 
-            finding(line: node.closing_loc.start_line, message: "missing trailing comma in multi-line collection")
+              finding(line: node.closing_loc.start_line, message: "missing trailing comma in multi-line collection")
+            end
           end
         end
       end

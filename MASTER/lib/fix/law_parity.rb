@@ -181,30 +181,17 @@ module Master
         raise
       end
 
+      # The Laws whose detector is a class: the population the self-registering
+      # registry once held under `declare id:`.
       def scan_registry_ids
-        ids = Set.new
-        return ids unless File.file?(File.expand_path("../review/scan/law.rb", __dir__))
-
-        require_relative "../review/scan/law_dsl"
-        Master::Review::Scan::Law.registry.each do |klass|
-          declaration = klass.respond_to?(:declaration) ? klass.declaration : nil
-          ids << declaration[:id].to_s if declaration && declaration[:id]
-        end
-        ids
+        Master::Review::Scan::LawTree.definitions.select(&:detector).to_set { |law| law.id.to_s }
       rescue StandardError, ScriptError => e
         Master::Ground::Swallow.log(e, context: "Fix::LawParity.scan_registry_ids", severity: :load_bearing)
         raise
       end
 
       def scan_registry_tags
-        tags = Set.new
-        require_relative "../review/scan/law_dsl"
-        Master::Review::Scan::Law.registry.each do |klass|
-          Array(klass.dsl_tags).each { |tag| tags << tag.to_s.upcase }
-          declaration = klass.respond_to?(:declaration) ? klass.declaration : nil
-          Array(declaration && declaration[:law_tags]).each { |tag| tags << tag.to_s.upcase }
-        end
-        tags
+        Master::Review::Scan::LawTree.definitions.flat_map(&:tags).to_set { |tag| tag.to_s.upcase }
       rescue StandardError, ScriptError => e
         Master::Ground::Swallow.log(e, context: "Fix::LawParity.scan_registry_tags", severity: :load_bearing)
         raise

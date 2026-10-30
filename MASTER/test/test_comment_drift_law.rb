@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/law_dsl"
+require "review/scan/law_tree"
 
 # The rule pairs each comment with the method it sits above, asks a model which
 # comments lie, and turns the answer back into findings on the comment's line.

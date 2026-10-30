@@ -248,7 +248,7 @@ module Master
     end
 
     def validate_catalogue_sources(id, row)
-      sources = (Array(row["definition_sources"]) + Array(row["detector_sources"])).map(&:to_s).uniq
+      sources = Array(row["definition_sources"]).map(&:to_s).uniq
       raise ArgumentError, "Law #{id} must name a Ruby source" if sources.empty?
       sources.each { |source| validate_catalogue_source(id, source) }
     end

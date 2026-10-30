@@ -10,7 +10,7 @@ module Master
         # Detects phantom reads — Ruby code digs keys that don't exist in the corresponding data/*.yml.
         # Also detects orphan keys — top-level YAML keys with zero references in lib/.
         # Only meaningful when scanning lib/ with root: access.
-        class InterconnectLaw < Law
+        class InterconnectLaw < Detector
           def self.reads_beyond_file? = true
 
           LOAD_CALL = /load_yaml(?:_data)?\s*\(\s*["']([^"']+\.yml)["']/.freeze
@@ -18,10 +18,6 @@ module Master
           FETCH_CALL = /\.fetch\(\s*["']([^"']+)["']/.freeze
           BRACKET_KEY = /\[["']([^"']+)["']\]/.freeze
 
-          def self.auto_build? = false
-
-          declare id: "interconnect", tags: %i[ONE_SOURCE],
-                  description: "Phantom YAML key reads and orphan data keys"
 
           def initialize(root:)
             super()
@@ -113,19 +109,22 @@ module Master
           end
         end
 
+        ::Law.define(:interconnect) do
+          detector InterconnectLaw
+          tags %i[ONE_SOURCE]
+          fix "Phantom YAML key reads and orphan data keys"
+          proved_by "test/test_interconnect_law.rb"
+        end
+
         # Files that change together in many commits are coupled regardless of imports.
         # Reads the co-change graph from RepoEcology (built once at boot) instead of
         # mining git per-scan. Flags cross-module pairs — likely DECOUPLE candidates
         # the lexical rules can't see.
-        class CoChangeCouplingLaw < Law
+        class CoChangeCouplingLaw < Detector
           def self.reads_beyond_file? = true
 
           WEIGHT_THRESHOLD = 5
 
-          def self.auto_build? = false
-
-          declare id: "co_change_coupling", tags: %i[DECOUPLE ONE_JOB], autofix: true,
-                  description: "Files co-change with N+ peers across module boundaries — hidden coupling"
 
           def initialize(root: nil, ecology: nil)
             super()
@@ -177,6 +176,13 @@ module Master
             parts = path.split("/")
             parts[0] == "MASTER" ? (parts[2] || parts[0]) : parts[0]
           end
+        end
+
+        ::Law.define(:co_change_coupling) do
+          detector CoChangeCouplingLaw
+          tags %i[DECOUPLE ONE_JOB]
+          fix "Files co-change with N+ peers across module boundaries — hidden coupling"
+          proved_by "test/test_co_change_coupling_law.rb"
         end
       end
     end

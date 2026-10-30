@@ -259,7 +259,7 @@ module Operator
     end
 
     def fixture_on_registry?(rule)
-      rule.respond_to?(:dsl_fires) && (rule.dsl_fires || rule.dsl_does_not_fire)
+      rule.respond_to?(:bad) && !(rule.bad.to_s.empty? && rule.good.to_s.empty?)
     end
 
     def reach(id)
