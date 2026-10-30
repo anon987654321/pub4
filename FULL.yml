@@ -59421,7 +59421,7 @@ historical_lineage_extension:
         +  vps:
         +    host: 185.52.176.18
         +    user: dev
-        +    password: hutte10tu6969
+        +    password: [REDACTED_HISTORICAL_CREDENTIAL]
         +    ssh_key: /cygdrive/g/priv/passwd/id_rsa
         +    location: server27.openbsd.amsterdam
         +  apps:
@@ -59442,7 +59442,7 @@ historical_lineage_extension:
     audit_receipt:
     source_snapshots_embedded: 16
     restoration_diffs_embedded: 10
-    credential_redactions: 1
+    credential_redactions: 2
     version_ordering: "Git ancestry and commit timestamps, never version labels"
     duplicate_yaml_occurrences_preserved_as_raw_text: true
     missing_gists_preserved_as_missing: true
