@@ -26,6 +26,11 @@
     Object.entries(CONTRACT.mode_aliases || CONTRACT_STATE.mode_aliases || {})
       .map(([key, value]) => [String(key).toLowerCase(), String(value).toLowerCase()])
   ));
+  const STILL_MODES = Object.freeze(Array.from(new Set(
+    (Array.isArray(CONTRACT_STATE.still_modes) ? CONTRACT_STATE.still_modes : ["idle"])
+      .map((mode) => String(mode).toLowerCase())
+      .filter((mode) => MODES.includes(mode))
+  )));
   const DEFAULTS = Object.freeze({
     mode: CONTRACT_STATE.default_mode || "idle",
     topology: CONTRACT_STATE.default_topology || "papua-mask",
@@ -67,6 +72,9 @@
       Boolean(window.MASTER_FACE?.State?.reducedMotion) ||
       document.documentElement?.dataset?.reducedMotion === "1" ||
       mediaMatches("(prefers-reduced-motion: reduce)");
+  }
+  function isStillMode(mode) {
+    return STILL_MODES.includes(String(mode || DEFAULTS.mode).toLowerCase());
   }
 
   function registryResult(text, detail = {}) {
@@ -248,11 +256,13 @@
 
   window.MASTER_FACE_STATE = Object.freeze({
     MODES,
+    STILL_MODES,
     DEFAULTS,
     snapshot,
     apply,
     setMode,
     setAttention,
+    isStillMode,
     geometryProfile,
     reducedMotion: reducedMotionEnabled,
     renderBudget
