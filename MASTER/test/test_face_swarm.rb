@@ -14,7 +14,8 @@ class TestFaceSwarm < Minitest::Test
   def still_particle(x:, y: 0.0, z: 0.0, depth_rank: nil)
     Particle.new(
       x:, y:, z:, vx: 0.0, vy: 0.0, vz: 0.0,
-      depth_rank: depth_rank || Swarm.depth_rank(z), home_depth: z
+      depth_rank: depth_rank || Swarm.depth_rank(z), home_depth: z,
+      home_x: x, home_y: y, home_z: z
     )
   end
 
@@ -30,6 +31,7 @@ class TestFaceSwarm < Minitest::Test
     assert_equal 0.035, settings.fetch("separation_radius")
     assert_equal 0.08, settings.fetch("separation_strength")
     assert_equal 0.014, settings.fetch("noise_scale")
+    assert_equal({ "fraction" => 0.18, "strength" => 0.12 }, settings.fetch("residual"))
     assert_equal true, settings.fetch("size_from_depth")
     assert_equal ["·", "˙", "∘", "•", "○", "●"], settings.fetch("glyph_ramp")
     assert_equal({ "eyes" => 1.00, "core" => 1.00, "noise" => 0.14 },
@@ -86,7 +88,7 @@ class TestFaceSwarm < Minitest::Test
     assert_equal first.map(&:to_h), second.map(&:to_h)
     assert_equal 80, first.length
     first.each do |particle|
-      %i[x y z vx vy vz depth_rank home_depth].each do |key|
+      %i[x y z vx vy vz depth_rank home_depth home_x home_y home_z].each do |key|
         assert particle.public_send(key).is_a?(Numeric)
         assert particle.public_send(key).finite?
       end
@@ -105,6 +107,48 @@ class TestFaceSwarm < Minitest::Test
     assert_equal ramp.first, Swarm.glyph_for(0.0, config: settings)
     assert_equal ramp.last, Swarm.glyph_for(1.0, config: settings)
     assert_equal ramp[3], Swarm.glyph_for(0.6, config: settings)
+  end
+
+  def test_residual_force_tethers_the_same_deterministic_subset_to_home_positions
+    settings = deep_config
+    settings["noise_scale"] = 0.0
+    settings["cohesion_radius"] = 0.0
+    settings["separation_radius"] = 0.0
+    settings["target_field"]["head"]["weight"] = 0.0
+    settings["target_field"]["eyes"].each_value { |eye| eye["weight"] = 0.0 }
+    settings["target_field"]["mouth"]["weight"] = 0.0
+    settings["residual"] = { "fraction" => 1.0, "strength" => 0.12 }
+    particle = still_particle(x: 0.8, y: 0.2, z: 0.3)
+    particle.x = 0.4
+    particle.y = 0.1
+    particle.z = 0.1
+
+    Swarm.update!([particle], mode: :idle, dt: 0.05, config: settings, rng: Random.new(1))
+
+    assert_operator particle.x, :>, 0.4
+    assert_operator particle.y, :>, 0.1
+    assert_operator particle.z, :>, 0.1
+    assert Swarm.residual_selected?(0, fraction: 1.0)
+    refute Swarm.residual_selected?(0, fraction: 0.0)
+    assert_equal Swarm.residual_selected?(7, fraction: 0.18),
+                 Swarm.residual_selected?(7, fraction: 0.18)
+  end
+
+  def test_gather_states_do_not_apply_the_residual_home_tether
+    settings = deep_config
+    settings["noise_scale"] = 0.0
+    settings["cohesion_radius"] = 0.0
+    settings["separation_radius"] = 0.0
+    settings["target_field"]["head"]["weight"] = 0.0
+    settings["target_field"]["eyes"].each_value { |eye| eye["weight"] = 0.0 }
+    settings["target_field"]["mouth"]["weight"] = 0.0
+    settings["residual"] = { "fraction" => 1.0, "strength" => 0.12 }
+    particle = still_particle(x: 0.8)
+    particle.x = 0.4
+
+    Swarm.update!([particle], mode: :thinking, dt: 0.05, config: settings, rng: Random.new(1))
+
+    assert_in_delta 0.4, particle.x, 1.0e-12
   end
 
   def test_head_attractor_pulls_particles_back_toward_the_field
