@@ -149,7 +149,7 @@ test("a hidden tab holds animation frames until it is visible again", () => {
 });
 
 
-test("a frame queued before tab hiding is parked until visibility returns", () => {
+test("a frame queued before tab hiding is cancelled and parked until visibility returns", () => {
   const listeners = {};
   const nativeFrames = [];
   const ran = [];
@@ -158,7 +158,7 @@ test("a frame queued before tab hiding is parked until visibility returns", () =
       matchMedia: () => ({ matches: false }),
       addEventListener: () => {},
       requestAnimationFrame: (callback) => nativeFrames.push(callback),
-      cancelAnimationFrame: () => {},
+      cancelAnimationFrame: (handle) => { nativeFrames.splice(handle - 1, 1); },
     },
     document: {
       hidden: false,
@@ -176,10 +176,12 @@ test("a frame queued before tab hiding is parked until visibility returns", () =
 
   sandbox.window.requestAnimationFrame(() => ran.push("visible"));
   assert.equal(nativeFrames.length, 1);
+  const lateFrame = nativeFrames[0];
   sandbox.document.hidden = true;
-  nativeFrames.shift()(1000);
-  assert.deepEqual(ran, [], "an in-flight frame rendered after the page became hidden");
-  assert.equal(nativeFrames.length, 0);
+  listeners.visibilitychange.forEach((callback) => callback());
+  assert.equal(nativeFrames.length, 0, "the native frame was not cancelled on hide");
+  lateFrame(1000);
+  assert.deepEqual(ran, [], "a late native frame rendered after the page became hidden");
 
   sandbox.document.hidden = false;
   listeners.visibilitychange.forEach((callback) => callback());
