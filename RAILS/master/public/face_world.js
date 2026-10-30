@@ -410,6 +410,7 @@
     }
 
     const records = [...activityRecords.values()].sort((a, b) => a.order - b.order);
+    const stillMode = window.MASTER_FACE_STATE?.isStillMode?.(state.mode) ?? state.mode === "idle";
     const radiusX = finite(TASK_RING.radius_x, 2.02);
     const radiusY = finite(TASK_RING.radius_y, 1.72);
     const depth = finite(TASK_RING.depth, -0.12);
@@ -419,7 +420,6 @@
       const mesh = activityMeshes.get(record.key);
       if (!mesh) return;
       const radiusScale = record.kind === "evidence" ? 1.12 : record.kind === "tool" ? 1.04 : 1;
-      const stillMode = window.MASTER_FACE_STATE?.isStillMode?.(state.mode) ?? state.mode === "idle";
       const angle = (Math.PI * 2 * index / Math.max(1, records.length)) +
         (reducedMotion || stillMode ? 0 : now * orbitSpeed);
       mesh.position.set(
