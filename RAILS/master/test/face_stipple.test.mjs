@@ -12,6 +12,7 @@ const system = readFileSync(join(publicDir, "face_stipple_system.js"), "utf8");
 const playground = readFileSync(join(publicDir, "face_playground.js"), "utf8");
 const css = readFileSync(join(publicDir, "face.css"), "utf8");
 const faceStateSource = readFileSync(join(publicDir, "face_state.js"), "utf8");
+const primaryFaceFrame = readFileSync(join(publicDir, "face.part3.txt"), "utf8");
 const faceWorld = readFileSync(join(publicDir, "face_world.js"), "utf8");
 const sparseField = readFileSync(join(publicDir, "face_sparse_field.js"), "utf8");
 const microInteractions = readFileSync(join(publicDir, "face_micro_interactions.js"), "utf8");
@@ -30,6 +31,16 @@ test("shared face budgets classify coarse pointers and declared reduced motion",
   assert.match(sparseField, /window\.MASTER_FACE\?\.State\?\.reducedMotion/);
   assert.match(sparseField, /window\.matchMedia\?\.\("\(pointer: coarse\)"\)/);
   assert.match(sparseField, /const reduced = reducedMotionEnabled\(state\)/);
+});
+
+test("the primary face settles to neutral idle and wakes on pointer activity", () => {
+  assert.match(primaryFaceFrame, /const motionFrozen = reducedMotion \|\| idleStill/);
+  assert.match(primaryFaceFrame, /stillAfterActivityMs \?\? 700/);
+  assert.match(primaryFaceFrame, /State\.lastTouch = performance\.now\(\)/);
+  assert.match(primaryFaceFrame, /else if \(idleStill\) \{\s+head\.rotation\.set\(0, 0, -0\.021\)/);
+  assert.match(primaryFaceFrame, /head\.scale\.setScalar\(1\)/);
+  assert.match(primaryFaceFrame, /if \(reducedMotion\) \{\s+nodImpulse = 0/);
+  assert.match(primaryFaceFrame, /if \(motionFrozen\) State\.pulse = 0/);
 });
 
 test("stipple discovery accepts Group containers with point children", () => {
