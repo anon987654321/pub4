@@ -722,6 +722,17 @@ class TestAstFixerTransforms < Minitest::Test
     end
   end
 
+  # A Law's `transform` is read by Scanner#deleting_law? and by a reader of the
+  # Law; a name AstFixer does not define is a repair nobody performs.
+  # VERTICAL_BREATH named add_vertical_breath, which never existed.
+  def test_every_transform_a_law_names_is_an_ast_fixer_method
+    transforms = ::Law.definitions.values.filter_map { |law| [law.id, law.transform] if law.transform }
+    defined = Master::Fix::Scan::AstFixer.private_instance_methods.map(&:to_s)
+
+    refute_empty transforms
+    assert_empty transforms.reject { |_, name| defined.include?(name) }.map { |id, name| "#{id} -> #{name}" }
+  end
+
   private
 
   def fix(filename, content, allow_deletions: false)

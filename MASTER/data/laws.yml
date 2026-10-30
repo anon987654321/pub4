@@ -3030,6 +3030,7 @@ law_catalogue:
     LONG_LINE:
       definition_sources: [MASTER/law/lexical.rb]
       severity: info
+      languages: [ruby, javascript, zsh, css, scss, html, yaml]
     LONG_PARAMETER_LIST:
       definition_sources: [MASTER/law/structural_questions.rb]
       severity: warning

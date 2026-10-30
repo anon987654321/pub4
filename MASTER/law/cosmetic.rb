@@ -321,26 +321,46 @@ module Master
           end
         end
 
+        # A paragraph of code is a run of statements. A comment line is prose
+        # about the statement below it, and idiomatic Ruby and JavaScript put no
+        # blank line between a doc comment and its def; a bare closer (`end`,
+        # `}`, `});`) ends a block rather than adding to one. Counting both, this
+        # read every documented method and every nested module header as dense:
+        # 11,612 findings across the repository on 2026-10-30. Both are skipped
+        # here, neither counting nor breaking a run; only statements count. So is
+        # a line inside an open ( or [: one call's keyword arguments, one per
+        # line, are one statement (6,052 after the first fix, most of them
+        # this). `{` is left out because in JavaScript it opens a block body.
+        STATEMENT_SKIP = %r{\A\s*(?:#|//|/\*|\*|end\b|[\}\])][\}\]);,.\s]*\z)}
+
+        def self.bracket_delta(line)
+          code = line.gsub(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/, "")
+          code.count("([") - code.count(")]")
+        end
+
         ::Law.define(:VERTICAL_BREATH) do
           tags %i[BEAUTY]
-          fix "vertical breath — avoid dense blocks of 10+ lines without a blank line"
-          transform "add_vertical_breath"
+          fix "vertical breath — avoid 10+ statements without a blank line"
           bad (1..10).map { |i| "line#{i} = 1\n" }.join
-          good "a = 1\n\nb = 2\n"
+          good "a = 1\n\nb = 2\n# a doc comment\n# runs on\n# for several\n# lines\n# above\n# the\n# def\n# it\n# names\n" \
+               "def c\n  d\nend\n"
           check do |src, path|
             findings = []
             lines = src.lines
             dense_count = 0
             start_line = 1
+            depth = 0
 
             lines.each_with_index do |line, n|
+              continuing = depth.positive?
+              depth = [depth + ::Master::Review::Scan::Laws.bracket_delta(line), 0].max
               if line.strip.empty?
                 if dense_count >= 10
                   findings << finding(line: start_line, message: "suffocated block — add a blank line for breath")
                 end
                 dense_count = 0
                 start_line = n + 2
-              else
+              elsif !continuing && !line.match?(STATEMENT_SKIP)
                 dense_count += 1
               end
             end
