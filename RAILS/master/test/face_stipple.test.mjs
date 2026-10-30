@@ -410,6 +410,7 @@ test("stipple module boots and builds from the canonical idle profile", () => {
     MASTER_FACE_STATE: {
       snapshot: () => faceState,
       isStillMode: (mode) => ["idle"].includes(String(mode).toLowerCase()),
+      stillAfterActivityMs: 700,
       renderBudget: () => {
         const points = (coarsePointer || narrowViewport || hardwareCores <= 4) ? 420 : 1200;
         const stipple_points = Math.floor(points * 0.75);
