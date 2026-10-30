@@ -28,6 +28,9 @@ class FaceStateSpec < Minitest::Test
     assert_includes source, "dataset.masterState"
     assert_includes source, "MODE_BUSY"
     assert_includes source, "MODE_FAIL"
+    assert_includes source, "STILL_MODES"
+    assert_includes source, "function isStillMode(mode)"
+    assert_includes source, "isStillMode,"
   end
 
   # The governor reads its limits from the face contract's spatial budget and keeps
