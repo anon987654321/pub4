@@ -4023,10 +4023,14 @@ law_catalogue:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
       autofix: automatic
+    # Retired 2026-10-30: it measured source lines (100 chars) in Markdown and HTML,
+    # where a paragraph is one line by convention and source width is not what a
+    # reader sees; measure lives in CSS, which MEASURE_OPTIMUM judges. 2,600+
+    # findings, and its automatic fix would have hard-wrapped prose.
     TYPOGRAPHIC_GRID:
       definition_sources: [MASTER/law/cosmetic.rb]
       severity: info
-      autofix: automatic
+      lifecycle: retired
       languages: [markdown, html]
     TYPOGRAPHY_DISCIPLINE:
       definition_sources: [MASTER/law/universal.rb]
