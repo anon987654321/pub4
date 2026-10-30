@@ -37,9 +37,11 @@ class FaceStateSpec < Minitest::Test
 
     assert_includes source, "window.MASTER_FACE_CONTRACT"
     assert_includes source, "Number(BUDGET.active_fps) || 24"
-    # let, not const: the reduced-motion and battery clamps below reassign them.
-    assert_includes source, "let maxFps = idle ? idleFps : activeFps"
+    # The governor resolves live state and budgets rather than snapshotting at boot.
+    assert_includes source, "faceState?.renderBudget?.()"
+    assert_includes source, "let maxFps = Number(canonicalBudget.fps)"
     assert_match(/let maxParticles = .*\(mobile \? 120 : 200\)/, source)
+    refute_match(/Array\.prototype\.push\s*=/, source)
     assert_includes source, "freezeOnFail: false"
     assert_includes source, "dataset.visualRuntime === \"frozen\""
   end
