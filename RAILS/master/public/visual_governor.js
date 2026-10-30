@@ -8,6 +8,9 @@
   const BUDGET = CONTRACT.spatial?.budget || {};
   const reducedMotionQuery = window.matchMedia?.("(prefers-reduced-motion: reduce)");
   const nativeRaf = window.requestAnimationFrame.bind(window);
+  const nativeCancelRaf = typeof window.cancelAnimationFrame === "function"
+    ? window.cancelAnimationFrame.bind(window)
+    : () => {};
   let last = 0;
   let hiddenWaiters = [];
   // Every caller shares one native frame, and a passing frame releases all of
@@ -84,7 +87,14 @@
   publishLimits();
 
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) return;
+    if (document.hidden) {
+      if (nativeHandle) nativeCancelRaf(nativeHandle);
+      nativeHandle = 0;
+      const parked = pending;
+      pending = new Map();
+      parked.forEach((callback, id) => hiddenWaiters.push({ id, callback }));
+      return;
+    }
     const waiters = hiddenWaiters;
     hiddenWaiters = [];
     waiters.forEach(({ id, callback }) => pending.set(id, callback));
