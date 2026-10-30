@@ -29,10 +29,18 @@ class DogfoodSpec < Minitest::Test
       define_method("test_law_#{id}_names_the_test_that_proves_it") do
         assert File.file?(File.join(DOGFOOD_ROOT, law.proved_by)), "#{id}: proved_by #{law.proved_by} is missing"
       end
-    elsif law.scannable?
+    elsif law.main_detector?
       define_method("test_law_#{id}_proves_itself") do
-        refute_empty law.scan(law.bad, file: law.proof_file),  "#{id}: bad fixture not flagged"
-        assert_empty law.scan(law.good, file: law.proof_file), "#{id}: good fixture flagged (false positive)"
+        refute_empty law.send(:scan_main, law.bad, law.proof_file),  "#{id}: bad fixture not flagged"
+        assert_empty law.send(:scan_main, law.good, law.proof_file), "#{id}: good fixture flagged (false positive)"
+      end
+    elsif law.adapters.any?
+      # A Law measured only by adapters proves each one on its own examples.
+      define_method("test_law_#{id}_adapters_prove_themselves") do
+        law.adapters.each do |adapter|
+          refute_empty law.send(:run_adapter, adapter, adapter.bad), "#{id}: adapter bad example not flagged"
+          assert_empty law.send(:run_adapter, adapter, adapter.good), "#{id}: adapter good example flagged"
+        end
       end
     else
       define_method("test_rule_#{id}_carries_both_examples") do
