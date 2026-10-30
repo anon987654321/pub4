@@ -1374,8 +1374,7 @@ tokens:
       depth effect and it is the house way of drawing dimension.
     depth_cues:
       - parallax_under_rotation
-      - point_size_attenuation_with_distance
-      - brightness_and_alpha_falloff
+      - brightness_and_alpha_falloff_with_distance
       - density
     forbidden:
       - lit_meshes
