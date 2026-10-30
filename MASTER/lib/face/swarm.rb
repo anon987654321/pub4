@@ -147,7 +147,7 @@ module Master
         mode_name = mode.to_s.downcase
         residual_active = forces_by_mode.fetch(mode_name, forces_by_mode.fetch("idle", "none")) == "residual"
         residual = config.fetch("residual", {})
-        residual_fraction = Float(residual.fetch("fraction", 0.0)).clamp(0.0, 1.0)
+        residual_fraction = Float(residual.fetch("fraction", 0.18)).clamp(0.0, 1.0)
         residual_strength = [Float(residual.fetch("strength", 0.0)), 0.0].max
         damping = Float(config.fetch("damping"))
         noise_scale = Float(config.fetch("noise_scale")) * Float(multipliers.fetch("noise"))
