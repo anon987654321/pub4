@@ -90,11 +90,12 @@ module Master
       # passed, a heartbeat order on every heartbeat tick past its interval.
       WAKES = %w[scheduled heartbeat].freeze
 
+      # nightly_dreams sent "dreams consolidate", a word no command answers, so
+      # each night it went to the model as chat; the heartbeat's prune_memory
+      # job already runs Memory#consolidate! hourly. One consolidation, not two.
       BUILTIN_ORDERS = [
-        { name: "nightly_dreams", description: "Consolidate memories during low-activity periods",
-          trigger: "scheduled", interval_s: 86_400, command: "dreams consolidate", enabled: true },
         { name: "weekly_reading", description: "Weekly codebase reading for regressions, writing nothing",
-          trigger: "scheduled", interval_s: 604_800, command: "fix --dry-run", enabled: false },
+          trigger: "scheduled", interval_s: WEEKLY_INTERVAL, command: "fix --dry-run", enabled: false },
       ].freeze
 
       def initialize(pipeline: nil, event_bus: nil, container: {})
