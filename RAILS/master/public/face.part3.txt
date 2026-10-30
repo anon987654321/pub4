@@ -456,7 +456,7 @@ function frame(t) {
       mode: State.mode,
       speaking: State.mode === 'speaking',
       ttsPlaying: !!tts.playing,
-      motionFrozen: motionFrozen,
+      reducedMotion: motionFrozen,
       calmStareUntil: State.calmStareUntil,
       nervousUntil: State.nervousUntil,
       blinkMs: State.idleSignature?.blink_ms,
@@ -466,48 +466,41 @@ function frame(t) {
     const saccadeX = motionFrozen ? 0 : (attn.saccadeX || 0);
     const microJitter = motionFrozen ? 0 : (attn.microJitter || 0);
     _attnEyeClose = motionFrozen ? 0 : (attn.eyeCloseTarget || 0);
-    const yaw = motionFrozen ? head.rotation.y : idleStill ? 0 :
-      State.mouseX * 0.9 * openness + State.tiltX * 0.62 + Math.sin(sec * 0.2) * 0.055 * composureFactor + saccadeX + microJitter;
-    const pitch = motionFrozen ? head.rotation.x : idleStill ? 0 :
-      State.mouseY * 0.52 * openness + State.tiltY * 0.5 + Math.sin(sec * 0.27) * 0.035 * composureFactor + (attn.fixationPitch || 0) + aware.lean;
+    const yaw = State.mouseX * 0.9 * openness + State.tiltX * 0.62 +
+      Math.sin(sec * 0.2) * 0.055 * composureFactor + saccadeX + microJitter;
+    const pitch = State.mouseY * 0.52 * openness + State.tiltY * 0.5 +
+      Math.sin(sec * 0.27) * 0.035 * composureFactor + (attn.fixationPitch || 0) + aware.lean;
     // FaceWorld owns camera position, distance, field of view and parallax.
-    // Reduced motion freezes head pose rather than continuing orbit, saccades,
-    // pointer tilt or nod decay; the semantic face state continues to update.
-    if (!motionFrozen) {
-      head.rotation.y += (yaw - head.rotation.y) * 0.06;
-      head.rotation.x += (pitch - head.rotation.x) * 0.06;
-      nodImpulse = idleStill ? 0 : nodImpulse * 0.87;
-      head.rotation.x += nodImpulse;
-      const microOrbit = idleStill ? 0 : Math.sin(sec * 0.157) * 0.022 * composureFactor;
-      head.rotation.z = -0.021 + microOrbit * 0.3;
-    } else {
+    // Reduced motion preserves the current pose; normal idle returns the head
+    // to neutral and then stops all autonomous motion.
+    if (reducedMotion) {
       nodImpulse = 0;
       State.shake = 0;
-    }
-    const silenceScale = (State.mode === 'idle' && !tts.playing) ? 0.982 : 1.0;
-    const hiddenTab = State.hidden || document.hidden;
-    const breathHz = hiddenTab ? 0.55 : 1.1;
-    const breathAmp = hiddenTab ? 0.018 : (0.014 + (1 - State.confidence) * 0.008 + (State.entropy || 0) * 0.005);
-    const councilBreath = !motionFrozen && document.documentElement.dataset.councilBreath === '1' ? Math.sin(sec * 0.85) * 0.018 : 0;
-    if (gestureStart) State.pressureTension = Math.min(1, (t - pressStart) / 1200);
-    else State.pressureTension = Math.max(0, (State.pressureTension || 0) * 0.92);
-    const tensionScale = 1 - (State.pressureTension || 0) * 0.05;
-    const speakingEnergy = State.mode === 'speaking' || tts.playing ? Math.max(0, Math.min(1, State.visemeAmp || 0)) : 0;
-    const speechBreath = motionFrozen ? 0 : speakingEnergy * (0.035 + Math.sin(sec * 8.0) * 0.008);
-    const breath = silenceScale * idleSig.breath * tensionScale *
-      (motionFrozen ? 1 : 1 + Math.sin(sec * breathHz) * breathAmp + State.pulse * 0.08 + councilBreath + speechBreath);
-    if (!motionFrozen) head.scale.setScalar(breath);
-    State.lean = (State.lean || 0) * 0.97;
-    if (!motionFrozen && State.shake > 0.01 && isRichMotionProfile()) {
-      // Seeded per 60 Hz frame so the shake is deterministic like the orbital field.
-      const shakeFrame = Math.floor(sec * 60);
-      head.position.x = (faceFieldSample(shakeFrame, 11) - 0.5) * State.shake * 0.18;
-      head.position.y = (faceFieldSample(shakeFrame, 12) - 0.5) * State.shake * 0.18;
-      head.position.z = State.lean;
-      State.shake *= 0.86;
-    } else if (!motionFrozen) {
-      if (idleStill) State.shake = 0;
-      head.position.set(0, 0, State.lean);
+    } else if (idleStill) {
+      head.rotation.set(0, 0, -0.021);
+      head.scale.setScalar(1);
+      head.position.set(0, 0, 0);
+      nodImpulse = 0;
+      State.shake = 0;
+      State.lean = 0;
+    } else {
+      head.rotation.y += (yaw - head.rotation.y) * 0.06;
+      head.rotation.x += (pitch - head.rotation.x) * 0.06;
+      nodImpulse *= 0.87;
+      head.rotation.x += nodImpulse;
+      const microOrbit = Math.sin(sec * 0.157) * 0.022 * composureFactor;
+      head.rotation.z = -0.021 + microOrbit * 0.3;
+      head.scale.setScalar(breath);
+      if (State.shake > 0.01 && isRichMotionProfile()) {
+        // Seeded per 60 Hz frame so the shake is deterministic like the orbital field.
+        const shakeFrame = Math.floor(sec * 60);
+        head.position.x = (faceFieldSample(shakeFrame, 11) - 0.5) * State.shake * 0.18;
+        head.position.y = (faceFieldSample(shakeFrame, 12) - 0.5) * State.shake * 0.18;
+        head.position.z = State.lean;
+        State.shake *= 0.86;
+      } else {
+        head.position.set(0, 0, State.lean);
+      }
     }
   }
   if (motionFrozen) State.personaPulse = 0;
