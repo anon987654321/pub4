@@ -221,11 +221,7 @@ module Master
         end
 
         def ungraphed_law_ids(registry = nil)
-          Review::Scan::LawDSL
-          registry ||= Review::Scan::Law.registry
-            .select { |klass| shipped?(klass) }
-            .map { |klass| LawFactory.build(klass, root: @root).id.to_s }
-            .to_set
+          registry ||= build_registry_ids
           registry = registry.map { |id| id.to_s.downcase }.to_set
           deps = Master.law("law_deps", root: @root)
           graphed = deps.keys.map { |k| k.to_s.downcase }.to_set
@@ -241,7 +237,7 @@ module Master
           ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
           # Callers hand in the downcased key every population compares on; Law ids are upper case.
           law = ::Law.definitions[id.to_s.upcase.to_sym] || ::Law.definitions[id.to_sym]
-          law&.detect
+          law&.scannable?
         end
 
         # Asked of the loaded registry, not of the source text: law/prose.rb
@@ -286,23 +282,15 @@ module Master
           entry_without_source = []
           missing_source_files = []
           duplicate_definitions = []
-          non_universal = []
-          entry_missing_modalities = []
           without_deterministic_detector = []
 
           repo_root = File.dirname(File.expand_path(@root))
           entries.each do |entry|
             id = entry.fetch("id").to_s
             definitions = Array(entry["definition_sources"]).map(&:to_s)
-            detectors = Array(entry["detector_sources"]).map(&:to_s)
-            sources = definitions + detectors
+            sources = definitions
             entry_without_source << id if sources.empty?
             duplicate_definitions << id if definitions.uniq.size > 1
-            non_universal << id unless entry["universal"] == true
-            entry_modalities = Array(entry["modalities"]).map(&:to_s).to_set
-            absent_modalities = required_modalities.reject { |modality| entry_modalities.include?(modality) }
-            entry_missing_modalities << "#{id}:#{absent_modalities.join(',')}" unless absent_modalities.empty?
-
             without_deterministic_detector << id unless detector_present?(registry, id)
 
             sources.uniq.each do |source|
@@ -321,21 +309,21 @@ module Master
               manifest_entries_without_source: entry_without_source.sort.freeze,
               manifest_missing_source_files: missing_source_files.sort.freeze,
               manifest_duplicate_definitions: duplicate_definitions.sort.freeze,
-              manifest_non_universal: non_universal.sort.freeze,
-              manifest_entry_missing_modalities: entry_missing_modalities.sort.freeze,
               manifest_without_deterministic_detector: without_deterministic_detector.sort.freeze,
             }.freeze,
           }.freeze
         end
 
-        # The reference loads the rule files, and a class in a multi-class file is
-        # invisible to Zeitwerk until it does: asked cold, the registry answered
-        # 81 mechanical laws where a loaded one answers 115.
+        # The Laws whose detector is a `check` or a class: the population the
+        # scanner registry held before every Law became one ::Law.define (a
+        # `detect` regex Law is reached through law_detector? instead). LawTree
+        # loads all of law/, so the cold-Zeitwerk undercount (81
+        # where a loaded registry said 115) has no second population to come from.
         def build_registry_ids
-          Review::Scan::LawDSL
-          Review::Scan::Law.registry
-            .select { |klass| shipped?(klass) }
-            .map { |klass| LawFactory.build(klass, root: @root).id.to_s.downcase }
+          Review::Scan::LawTree.definitions
+            .select { |law| law.check || law.detector }
+            .reject { |law| law.detector && !shipped?(law.detector) }
+            .map { |law| law.id.to_s.downcase }
             .to_set
         end
 

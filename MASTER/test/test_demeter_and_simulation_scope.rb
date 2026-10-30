@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/review/scan/law_dsl"
+require_relative "../lib/review/scan/law_tree"
 
 # Both rules were near-total noise under /fix: every sampled SIMULATION
 # finding was a conditional ("this test would pass having measured nothing"),
@@ -11,7 +11,7 @@ require_relative "../lib/review/scan/law_dsl"
 class TestDemeterAndSimulationScope < Minitest::Test
   RB = "/repo/lib/example.rb"
 
-  def rule(id) = Master::Review::Scan::Law.registry.find { |klass| klass.name.nil? && klass.new.id == id }.new
+  def rule(id) = Master::Review::Scan::LawTree.find(id)
   def fires?(id, src, path: RB) = rule(id).check("#{src}\n", path:).any?
 
   def test_demeter_fires_on_navigation

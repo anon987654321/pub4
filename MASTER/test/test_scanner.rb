@@ -341,7 +341,7 @@ class TestScanner < Minitest::Test
 
   def language_law(lang, asked)
     law = Class.new do
-      define_singleton_method(:dsl_langs) { Array(lang) }
+      define_method(:languages) { Array(lang).map(&:to_s) }
       define_method(:id) { lang ? lang.to_s.upcase : "ANY" }
       define_method(:check) { |_code, path:| (asked << [path, id]) && [] }
     end

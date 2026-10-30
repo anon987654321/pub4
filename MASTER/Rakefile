@@ -782,12 +782,13 @@ end
     require "yaml"
     $LOAD_PATH.unshift(File.join(__dir__, "lib"))
     require "master"
-    require "review/scan/law_dsl"
+    require "review/scan/law_tree"
 
     map = Master::Ground::Map::LawMap.load(root: __dir__)
-    registered = Master::Review::Scan::Law.registry.filter_map do |klass|
-      Master::Review::Scan::LawFactory.registry_id(klass, root: __dir__)
-    end
+    # The Laws whose detector is a `check` or a class: the population the scanner
+    # registry held before every Law became one ::Law.define.
+    registered = Master::Review::Scan::LawTree.definitions.select { |law| law.check || law.detector }
+                                                       .map { |law| law.id.to_s.downcase }
     untraced = map.untraced_laws(registered_law_ids: registered)
     ceiling = map.law_trace_ceiling
 

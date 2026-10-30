@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative "../../lib/operator/ruby_runner"
-require_relative "../../lib/ground/library_verify"
-require_relative "../../lib/fix/scan/source_override"
+require_relative "../lib/operator/ruby_runner"
+require_relative "../lib/ground/library_verify"
+require_relative "../lib/fix/scan/source_override"
 
 require "digest"
 require "fileutils"
@@ -166,12 +166,9 @@ module Master
           end
         end
 
-        class RubocopLaw < Law
+        class RubocopLaw < Detector
           include ExternalLinter
 
-          def self.auto_build? = false
-
-          declare id: "rubocop", tags: %i[STYLE LINT], description: "RuboCop style/lint violation"
 
           def initialize(root:)
             super()
@@ -220,12 +217,16 @@ module Master
           end
         end
 
-        class ReekLaw < Law
+        ::Law.define(:rubocop) do
+          detector RubocopLaw
+          tags %i[STYLE LINT]
+          fix "RuboCop style/lint violation"
+          proved_by "test/test_external_linter_laws.rb"
+        end
+
+        class ReekLaw < Detector
           include ExternalLinter
 
-          def self.auto_build? = false
-
-          declare id: "reek", tags: %i[SMELL ONE_JOB], description: "Reek code smell detected"
 
           def initialize(root:)
             super()
@@ -267,6 +268,13 @@ module Master
 
           # The smells the batch found in this file; a file with none answers an empty list.
           def report_for(report, path) = Array(report).select { |smell| same_file?(smell["source"], path) }
+        end
+
+        ::Law.define(:reek) do
+          detector ReekLaw
+          tags %i[SMELL ONE_JOB]
+          fix "Reek code smell detected"
+          proved_by "test/test_external_linter_laws.rb"
         end
       end
     end

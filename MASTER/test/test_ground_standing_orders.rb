@@ -411,8 +411,17 @@ class StandingOrdersTest < Minitest::Test
     assert_equal 604_800, Orders::WEEKLY_INTERVAL
     intervals = Orders::BUILTIN_ORDERS.map { |o| o[:interval_s] }
 
-    assert_includes intervals, Orders::DAILY_INTERVAL
     assert_includes intervals, Orders::WEEKLY_INTERVAL
+    assert_equal Orders::DAILY_INTERVAL, @orders.send(:order_definition, "x", "help")["interval_s"]
+  end
+
+  # Every builtin order's command must be a word the registry answers; one that
+  # is not reaches the model as chat on every wake. HELP_TOPICS is held to the
+  # registry by test_command_registry_dispatch.
+  def test_no_builtin_order_sends_a_word_no_command_answers
+    words = Orders::BUILTIN_ORDERS.map { |o| o[:command].split.first }
+
+    assert_empty words - Master::CLI::CommandRegistry::HELP_TOPICS.keys
   end
 
   # An objective is an order with an owner, a domain, a wake and a verify, and

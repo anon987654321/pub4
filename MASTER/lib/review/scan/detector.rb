@@ -4,101 +4,93 @@ require "prism"
 
 module Master
   module Review
-  module Scan
-    require_relative "finding"
-    require_relative "source_masking"
-    require_relative "../../master"
+    module Scan
+      require_relative "finding"
+      require_relative "source_masking"
+      require_relative "../../master"
 
-      class Law
+      # What a deterministic detector runs inside: the helpers every detector
+      # shares (findings, AST walks, source masking) and nothing about which Law
+      # it serves. A Law's identity, severity and tags come from its
+      # Law::Definition; a `check` block runs on one of these, and a detector
+      # class a Law names with `detector` is one of these.
+      class Detector
         include SourceMasking
 
         EXT_LANG = Master::FILE_LANGUAGE_MAP
 
-        attr_reader :id, :description, :severity, :law_tags, :auto_fix
-
-        @registry = []
-        @registry_mutex = Mutex.new
-
-        def self.inherited(subclass)
-          @registry_mutex.synchronize { @registry << subclass }
-        end
-
-        def self.registry
-          @registry_mutex.synchronize { @registry.dup }
-        end
-
-        # Laws that need constructor args (root:, agent:) override this to false.
-        # Builder uses it to auto-discover zero-arg laws from the registry.
-        def self.auto_build?
-          true
-        end
+        attr_reader :id, :description, :severity, :law_tags, :auto_fix, :definition
 
         # Whether a finding depends on more than the file's text and path: git history,
-        # sibling files, another tree. Scan::FindingCache replays a pure law's findings
-        # for unchanged content, so a law that reads further must say so here.
+        # sibling files, another tree. Scan::FindingCache replays a pure detector's findings
+        # for unchanged content, so one that reads further must say so here.
         def self.reads_beyond_file? = false
 
-        # What a law *is*, declared once at the class level, as LawDSL's
-        # generated classes declare it. autofix defaults to false: a law that
-        # names no transform cannot apply one. Severity is not declared: a
-        # detector reports at its Law's laws.yml severity.
-        def self.declare(id:, description: "", tags: [], autofix: false)
-          @declaration = { id: id.to_s, description: description.to_s, law_tags: Array(tags), auto_fix: autofix }
-        end
+        def reads_beyond_file? = self.class.reads_beyond_file? || definition&.reads_beyond_file ? true : false
 
         # law/ writes :warn where the scanner reports :warning.
         def self.normalize_severity(value) = value.to_sym == :warn ? :warning : value.to_sym
 
-        # An id the catalogue does not hold is no shipped Law (LawRegistryAudit
-        # names a shipped one as registry_only drift) and reports :warning.
-        def self.catalogue_severity(id)
-          require_relative "../../../law/definition" unless defined?(::Law::LAW_CATALOGUE)
-          normalize_severity(::Law.catalogue_policy(id).fetch(:severity))
-        rescue KeyError
-          :warning
+        # What the scanner hands a detector class it builds: each class takes the
+        # keywords its constructor names (root:, agent:, ecology:) and no others.
+        # This read each class's name against a regex in LawFactory, which is how
+        # a new detector with an unlisted constructor raised ArgumentError at boot.
+        CONTEXT = %i[root agent ecology].freeze
+
+        def self.build(definition, root: Master::ROOT, agent: nil, ecology: nil)
+          context = { root:, agent:, ecology: }
+          accepted = instance_method(:initialize).parameters.filter_map do |kind, name|
+            name if %i[key keyreq].include?(kind) && CONTEXT.include?(name)
+          end
+          new(**context.slice(*accepted)).bind(definition)
         end
 
-        # Inherited, so a subclass of a declared rule keeps its parent's identity
-        # until it declares its own.
-        # LawDSL classes override this with the tags they declare.
-        def self.dsl_tags = []
-
-        def self.declaration
-          return @declaration if defined?(@declaration) && @declaration
-
-          superclass.respond_to?(:declaration) ? superclass.declaration : nil
-        end
-
+        # A detector class built directly (`GodClassLaw.new`) still judges for the
+        # one Law that names it, so it binds to that definition here; build binds
+        # again with the same answer. A `check` block's runner has no Law until bound.
         def initialize
-          declared = self.class.declaration
-          @id = declared&.fetch(:id, nil) || self.class.name&.split("::")&.last&.downcase || "unknown"
-          @description = declared ? declared[:description] : ""
-          @severity = self.class.catalogue_severity(@id)
-          @law_tags = declared ? declared[:law_tags] : []
-          @auto_fix = declared ? declared[:auto_fix] : false
+          @id = ""
+          @description = ""
+          @severity = :warning
+          @law_tags = []
+          @auto_fix = false
+          definition = self.class.law_definition
+          bind(definition) if definition
         end
 
-        # Work a law can do for a whole walk before it reads each file; the linter laws batch their runs.
+        # The assessment surfaces this detector measures; nil leaves it to the
+        # Law's kind (whole_file).
+        def self.surfaces = nil
+
+        def self.law_definition
+          return unless defined?(::Law.definitions) && self != Detector
+
+          ::Law.definitions.each_value.find { |definition| definition.detector == self }
+        end
+
+        # A detector judges for exactly one Law, and takes everything it reports
+        # under (id, severity, tags, autofix permission) from that Law's definition.
+        def bind(definition)
+          @definition = definition
+          @id = definition.id.to_s
+          @description = (definition.ask || definition.fix).to_s
+          @severity = self.class.normalize_severity(definition.severity)
+          @law_tags = definition.tags.empty? ? [@id] : definition.tags
+          @auto_fix = definition.autofix == :automatic
+          self
+        end
+
+        def mode = definition ? definition.mode : :violation
+
+        def languages = definition ? Array(definition.languages).map(&:to_s) : []
+
+        # Work a detector can do for a whole walk before it reads each file; the linter laws batch their runs.
         def prefetch(_paths) = nil
-
-        # Project the DSL declaration into the Law-facing metadata contract.
-        # Generated scanner laws keep language/mode/autofix on their class because
-        # they are executable wrappers rather than YAML-backed Definitions.
-        def mode
-          return :semantic if self.class.respond_to?(:dsl_detect_semantic) && self.class.dsl_detect_semantic
-          return :structural if self.class.respond_to?(:dsl_detect_structural) && self.class.dsl_detect_structural
-          :mechanical
-        end
-
-        def languages
-          return [] unless self.class.respond_to?(:dsl_langs)
-          Array(self.class.dsl_langs)
-        end
 
         def autofix = auto_fix
 
-        # Default for AST-based laws: a subclass implements check_ast and gets
-        # this for free. Rules with non-AST logic override #check instead.
+        # Default for AST-based detectors: a subclass implements check_ast and gets
+        # this for free. Detectors with non-AST logic override #check instead.
         def check(code, path:)
           raise NotImplementedError, "#{self.class}#check not implemented" unless respond_to?(:check_ast)
 
@@ -110,10 +102,20 @@ module Master
           raise "law #{@id} AST check failed: #{e.class}: #{e.message}"
         end
 
-        def language(path)
-          return "javascript" if File.basename(path).match?(/\Aface\.part\d+\.txt\z/)
+        def language(path) = Master.language_for(path)
 
-          Master.language_for(path)
+        # Prepended to every Laws::NeedsModel detector, so it runs in front of the
+        # detector's own rescue. A missing agent is how the scanner was built, not a
+        # model fault: raised inside that rescue it wrote a load_bearing swallow row
+        # per file (3,627 a run), and returned as [] it read as an answer of clean.
+        module AgentGuard
+          def agent? = !@agent.nil?
+
+          def check(code, path:)
+            return super if agent?
+
+            raise "semantic assessment INCONCLUSIVE: no model agent configured for #{path}"
+          end
         end
 
         def applies_to?(path, languages)
@@ -157,7 +159,7 @@ module Master
           )
         end
 
-        # Every node under this law, in source order. Ten rules in
+        # Every node under this detector, in source order. Ten rules in
         # structural_rules.rb each carried a byte-identical private `visit` doing
         # exactly this — the copy-paste the old backlog names as "one shared AST-walk
         # helper". They call this now, and a fix to the traversal lands once.
@@ -260,55 +262,6 @@ module Master
 
         def default_dedupe_key(message)
           "#{@id}:#{message.to_s.downcase.gsub(/\b\d+\b/, "#")}"
-        end
-      end
-
-      # Adapts the canonical Law::Definition contract to the scanner's
-      # finding interface. This is an adapter, not a second Law declaration or
-      # registry: identity, severity, scope, fixtures, and repair guidance live
-      # with the canonical definition and are audited against laws.yml.
-      class CanonicalLawAdapter
-        attr_reader :definition
-
-        # A canonical definition scans the text it is handed and nothing else, so
-        # Fix::Scan::FindingCache may replay its findings for unchanged content.
-        def self.reads_beyond_file? = false
-
-        def initialize(definition)
-          raise ArgumentError, "canonical law definition required" unless definition.respond_to?(:id)
-
-          @definition = definition
-          @id = definition.id.to_s
-        end
-
-        def id = @id
-        def description = definition.ask.to_s.empty? ? definition.practice.to_s : definition.ask.to_s
-        def severity = Law.normalize_severity(definition.severity)
-        def law_tags = [definition.id.to_s]
-        def auto_fix = false
-        def autofix = definition.autofix
-        def languages = Array(definition.languages).map(&:to_s)
-        def mode = definition.mode
-        def prefetch(_paths) = nil
-
-        def check(code, path:)
-          return [] unless definition.enforceable? && definition.scannable?
-          return [] unless definition.applies?(path.to_s, Master.language_for(path))
-
-          stream = definition.mode.to_sym == :opportunity ? :lexical_opportunities : :lexical_violations
-          definition.scan(code, file: path).map do |hit|
-            Finding.build(
-              law: id,
-              message: "#{id}: #{definition.fix}",
-              line: hit.line,
-              severity:,
-              fix: definition.fix,
-              tags: [id, stream, definition.mode],
-            )
-          end
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "CanonicalLawAdapter#check", severity: :load_bearing, path:)
-          raise "canonical Law #{id} detector failed for #{path}: #{e.class}: #{e.message}"
         end
       end
     end

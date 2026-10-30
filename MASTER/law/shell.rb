@@ -102,6 +102,41 @@ Law.define(:ZSH_SHEBANG) do
   X
 end
 
+# New (2026-10-30, operator ask). data/laws.yml `zsh.banned_commands` was a list
+# with readers but no Law: MASTER's own shell warned and ran the command, the
+# coding-harness hook kept a second copy of the list, and no scan read the repo's
+# scripts at all. This is the scan, through the same Io::GnuTextTools lexer the
+# hook and Io::Shell judge with, so the three cannot disagree about what a line runs.
+#
+# zsh scripts only. A #!/bin/sh or ksh script is what ZSH_SHEBANG keeps legal for
+# vm23's rc.d and maintenance work, which must run on OpenBSD base, where neither
+# zsh nor the replacements this law names are guaranteed.
+Law.define(:ZSH_NATIVE_PATTERNS) do
+  source "data/laws.yml zsh.banned_commands — Ruby and zsh, not GNU text tools"
+  check do |text, file|
+    zsh = text.match?(%r{\A#![^\n]*\bzsh\b}) || (file.end_with?(".zsh") && !text.start_with?("#!"))
+    next [] unless zsh
+
+    tools = Master::Io::GnuTextTools.new(Master.law("zsh"))
+    lines = Master::Io::ShellLexer.blank_heredoc_bodies(text).lines
+    lines.each_with_index.flat_map do |line, index|
+      tools.banned_in(line).map do |name|
+        finding(line: index + 1, message: "ZSH_NATIVE_PATTERNS: #{name} — use #{tools.replacement(name)}")
+      end
+    end
+  end
+  fix "Write the zsh expansion, glob or Ruby expression data/laws.yml names for the banned command."
+  bad <<~X
+    #!/usr/bin/env zsh
+    count=$(wc -l < log)
+  X
+  good <<~X
+    #!/usr/bin/env zsh
+    lines=( ${(f)"$(<log)"} )
+    print ${#lines}
+  X
+end
+
 Law.define(:STRICT_MODE_ZSH) do
   source "Shell strict mode set -euo pipefail (Google Shell Style Guide)"
   scope :file

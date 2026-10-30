@@ -67,7 +67,7 @@ class TestLawMapRepair < Minitest::Test
 
   def test_refuses_to_touch_anything_if_registry_looks_unpopulated
     with_fixture do |root|
-      Master::Review::Scan::Law.stub(:registry, []) do
+      Master::Review::Scan::LawTree.stub(:ids, []) do
         assert_equal [], Master::Fix::LawMapRepair.fix!(root:)
       end
 

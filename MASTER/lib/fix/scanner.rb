@@ -15,31 +15,16 @@ module Master
     class Scanner
       def self.build(root:, agent: nil, bus: nil, ecology: nil)
         agent = nil if ENV["MASTER_SCAN_DETERMINISTIC"] == "1"
-        Review::Scan::LawDSL
-        require File.join(Master::ROOT, "law", "definition") unless defined?(::Law::Definition)
-        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
         wf = Master.load_yaml(Master.limits_path) rescue {}
         sleep_s = ENV["MASTER_AUTOFIX"] == "1" ? wf.dig("autoloop", "scan_file_sleep_s").to_f : 0
         scanner = new(event_bus: bus, file_sleep_s: sleep_s)
 
-        # Canonical Laws enter the scanner directly through a detector adapter.
-        # The adapter retains the original ID; policy and metadata are catalogue-owned.
-        ::Law.definitions.values.select { |law| law.enforceable? && law.scannable? }.each do |definition|
-          scanner.add_law(Review::Scan::CanonicalLawAdapter.new(definition))
-        end
-
-        Review::Scan::Law.registry.select(&:auto_build?).each do |klass|
-          scanner.add_law(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
-        end
-        %w[
-          CoChangeCouplingLaw LawCoverageLaw RubocopLaw ReekLaw InterconnectLaw
-          VetoPatternLaw SemanticLaw AdversarialLaw CommentDriftLaw AstOmissionLaw
-          LibRootDisciplineLaw FileSprawlLaw PathPurposeLaw
-        ].each do |name|
-          klass = Review::Scan::Laws.const_get(name)
-          scanner.add_law(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
-        end
+        # Every Law is one ::Law.define, and LawTree builds what the scanner runs
+        # for it. This walked a self-registering class registry, then a hand list
+        # of thirteen class names whose constructors took arguments, beside the
+        # canonical adapters: three populations to agree on one set of Laws.
+        Review::Scan::LawTree.build(root:, agent:, ecology:).each { |law| scanner.add_law(law) }
         scanner
       end
 
@@ -63,7 +48,7 @@ module Master
           return false if File.symlink?(path)
           return false if skip_path?(path, root:)
 
-          Master.language_for(path) || File.basename(path).match?(/\Aface\.part\d+\.txt\z/)
+          Master.language_for(path)
         end
 
         def initialize(laws: [], event_bus: nil, file_sleep_s: 0)
@@ -145,7 +130,7 @@ module Master
         # The external linters read every file of a walk in a few batched processes before the walk,
         # instead of one process per file during it.
         def prefetch_linters(paths, laws)
-          laws.grep(Master::Review::Scan::Law).each { |law| law.prefetch(paths) }
+          laws.grep(Master::Review::Scan::Detector).each { |law| law.prefetch(paths) }
         end
 
         def set_agent(agent)
@@ -337,9 +322,7 @@ module Master
           languages = Master::FILE_LANGUAGE_MAP.values.compact.map(&:to_s).uniq
           languages << "javascript"
           Array(laws).each do |law|
-            declared = if law.class.respond_to?(:dsl_langs)
-              Array(law.class.dsl_langs).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
-            elsif law.respond_to?(:languages)
+            declared = if law.respond_to?(:languages)
               Array(law.languages).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
             else
               []
@@ -372,13 +355,11 @@ module Master
           Master::Fix::Scan::AstFixer::DELETING_TRANSFORMS.include?(transform.to_s)
         end
 
-        # The transform a law names is declared on its class (`autofix: "name"`),
-        # so the registry is the one place that says which laws edit and how.
+        # The transform a Law names is declared on its definition (`transform "name"`),
+        # so Law.definitions is the one place that says which Laws edit and how.
         def law_transforms
-          Review::Scan::LawDSL
-          @law_transforms ||= Review::Scan::Law.registry.each_with_object({}) do |klass, index|
-            transform = klass.dsl_autofix if klass.respond_to?(:dsl_autofix)
-            index[klass.dsl_id.to_s] = transform if transform.is_a?(String)
+          @law_transforms ||= ::Law.definitions.each_with_object({}) do |(id, definition), index|
+            index[id.to_s] = definition.transform if definition.transform
           end.freeze
         end
 

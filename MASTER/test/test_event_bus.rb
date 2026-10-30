@@ -167,7 +167,7 @@ class TestEventBus < Minitest::Test
 
   def test_named_sensitive_fields_are_redacted_outside_tool_events
     command = "env API_TOKEN=secret curl https://private.invalid"
-    @bus.publish("zsh:banned_tool_warning", command:, tools: ["curl"])
+    @bus.publish("zsh:banned_tool_refused", command:, tools: ["sed"])
 
     activity = File.read(File.join(@dir, "runtime/events/activity.jsonl"))
     refute_includes activity, command

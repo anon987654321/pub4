@@ -3,7 +3,7 @@
 require_relative "test_helper"
 require "fileutils"
 require "fix/scanner"
-require "review/scan/law_dsl"
+require "review/scan/law_tree"
 require "operator/lint"
 
 # The pre-commit lint, `bin/operator lint --staged --changed-lines`, on a scratch

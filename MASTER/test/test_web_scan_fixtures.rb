@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/law_dsl"
+require "review/scan/law_tree"
 
 class TestWebScanFixtures < Minitest::Test
   # law_findings hoisted to test_helper 2026-08-21: the twin retirement moved

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/law_dsl"
+require "review/scan/law_tree"
 
 # MASTER-101. Nothing emitted one deterministic answer to "what is in force
 # right now": boot_checks.rb proves the files parse, bin/doctor probes the host,
@@ -30,7 +30,7 @@ class TestBootReceipt < Minitest::Test
     law = Receipt.law
 
     assert_operator law[:declared], :>, 200
-    assert_equal Master::Review::Scan::Law.registry.size, law[:registry]
+    assert_equal Master::Review::Scan::LawTree.ids.size, law[:registry]
     assert_includes Receipt.lines.join("\n"), "#{law[:declared]} declared"
   end
 

@@ -2,7 +2,7 @@
 
 require "date"
 require "yaml"
-require_relative "law_dsl"
+require_relative "law_tree"
 require_relative "../../fix/transformation_plan"
 
 module Master
@@ -448,11 +448,9 @@ module Master
           return [] unless File.file?(path)
 
           map = Master::Ground::Map::LawMap.load(root: @root)
-          registered = Master::Review::Scan::Law.registry.filter_map do |klass|
-            Master::Review::Scan::LawFactory.registry_id(klass, root: @root)&.upcase
-          end
-          # A mapped id can be implemented by the scanner registry, an executable
-          # Law.define definition, or the eight constitutional entries in laws.yml.
+          registered = Master::Review::Scan::LawTree.ids.map(&:upcase)
+          # A mapped id can be implemented by an executable Law.define definition
+          # or the eight constitutional entries in laws.yml.
           # Checking only one population turns valid cross-layer mappings into
           # false unknown-reference findings.
           declared = Master.law_entries(root: @root)

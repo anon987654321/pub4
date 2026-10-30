@@ -9,11 +9,11 @@ require "fix/scanner"
 # spellings; a law that reaches further through a helper elsewhere must still declare itself.
 class TestLawReadsBeyondFile < Minitest::Test
   BEYOND_FILE = /Dir\.(?:glob|children|entries|\[)|Open3\.|IO\.popen|CommitGuard|Exec\.capture|\bsystem\(/
-  OPENER = /LawDSL\.law|^\s*class \w+ < Law\b/
+  OPENER = /::Law\.define|^\s*class \w+ < Detector\b/
 
   def test_every_law_that_reads_beyond_its_file_says_so
     scanner = Master::Fix::Scanner.build(root: Master::ROOT)
-    undeclared = scanner.laws.reject { |law| law.class.reads_beyond_file? || test_defined?(law) }
+    undeclared = scanner.laws.reject { |law| law.reads_beyond_file? || test_defined?(law) }
                         .select { |law| law_source(law).match?(BEYOND_FILE) }
 
     assert_empty undeclared.map(&:id), "these read more than their file; declare reads_beyond_file?"
@@ -31,10 +31,10 @@ class TestLawReadsBeyondFile < Minitest::Test
     location&.match?(%r{(?:\A|/)(?:test|spec)/})
   end
 
-  # The DSL block for a LawDSL law, whose class is anonymous; the class body otherwise.
+  # A Law's `check` block, or its detector class's #check.
   def law_source(law)
-    klass = law.class
-    block = klass.name.nil? && klass.dsl_block
+    definition = law.respond_to?(:definition) ? law.definition : nil
+    block = definition&.check || definition&.detect
     file, line = block ? block.source_location : law.method(:check).source_location
     return "" unless file && File.file?(file)
 

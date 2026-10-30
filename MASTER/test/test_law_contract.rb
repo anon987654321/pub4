@@ -9,7 +9,7 @@ class TestLawContract < Minitest::Test
   # Laws, so they are catalogued for the length of the test and nowhere else.
   def with_catalogued(*ids)
     original = Law.method(:catalogue_entry)
-    probe = { "universal" => true, "modalities" => %w[lexical semantic visual], "severity" => "info" }
+    probe = { "severity" => "info" }
     Law.define_singleton_method(:catalogue_entry) do |id|
       ids.include?(id.to_sym) ? probe : original.call(id)
     end
@@ -234,12 +234,19 @@ class TestLawContract < Minitest::Test
       path_exclude: nil,
       absent: nil,
       detect: ->(text) { text.include?("FORBIDDEN") },
+      check: nil,
+      detector: nil,
       ask: nil,
       practice: nil,
       fix: "remove it",
       bad: "/* FORBIDDEN */\n",
       good: "clean\n",
       reads_comments: false,
+      tags: [],
+      example_path: nil,
+      reads_beyond_file: false,
+      transform: nil,
+      proved_by: nil, measures: nil, adapters: [],
     )
 
     error = assert_raises(ArgumentError) { rule.prove! }

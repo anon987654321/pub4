@@ -289,15 +289,15 @@ finding_members:
   - RUBY_SNAKE_METHODS RAILS/brgen/test/controllers/session_boundaries_test.rb:97
   - RUBY_SNAKE_METHODS RAILS/brgen/test/controllers/users_controller_test.rb:121
   - RUBY_SNAKE_METHODS RAILS/brgen/test/integration/authorization_matrix_test.rb:117
-  - RUBY_SYMBOL_TO_PROC MASTER/law/detectors/ruby_laws.rb:140
-  - RUBY_SYMBOL_TO_PROC MASTER/law/detectors/ruby_laws.rb:141
-  - RUBY_SYMBOL_TO_PROC MASTER/law/detectors/universal_laws.rb:41
+  - RUBY_SYMBOL_TO_PROC MASTER/law/ruby.rb:140
+  - RUBY_SYMBOL_TO_PROC MASTER/law/ruby.rb:141
+  - RUBY_SYMBOL_TO_PROC MASTER/law/universal.rb:41
   - RUBY_SYMBOL_TO_PROC MASTER/lib/fix/scss_parser.rb:126
   - RUBY_SYMBOL_TO_PROC MASTER/lib/fix/visual_completion.rb:121
   - RUBY_SYMBOL_TO_PROC MASTER/lib/fix/visual_completion.rb:135
   - RUBY_SYMBOL_TO_PROC MASTER/lib/trace/mutation_observer.rb:161
   - RUBY_SYMBOL_TO_PROC OPENBSD/test/test_githooks.rb:68
-  - SAFE_NAVIGATION MASTER/law/detectors/js_laws.rb:237
+  - SAFE_NAVIGATION MASTER/law/javascript.rb:237
   - SAFE_NAVIGATION MASTER/lib/cli/routing/model_router/selection.rb:129
   - SAFE_NAVIGATION MASTER/lib/fix/best_of_n.rb:579
   - SAFE_NAVIGATION MASTER/lib/fix/kernel.rb:259

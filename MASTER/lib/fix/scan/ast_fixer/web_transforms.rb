@@ -260,21 +260,6 @@ module Master
             end
           end
 
-          def snap_to_eight_px_rhythm(src)
-            changed = false
-            out = src.gsub(/(?<![\w-])(?:margin|padding|gap|top|left|right|bottom|inset)(?:-\w+)?\s*:\s*(-?\d+)px/i) do |match|
-              val = Regexp.last_match(1).to_i
-              abs_val = val.abs
-              next match if abs_val % 4 == 0 && abs_val <= 96
-              snapped = (abs_val / 8.0).round * 8
-              final_val = val < 0 ? -snapped : snapped
-              changed = true
-              match.sub(/\d+px/, "#{final_val}px")
-            end
-            @transforms << :eight_px_rhythm if changed
-            out
-          end
-
           def remove_decorative_fx(src)
             changed = false
             out = src.gsub(/(box-shadow|text-shadow)\s*:\s*(?!none|0(?:\s+0)*)\s*[^;]+;(?!\s*\/\*)/i) do |match|

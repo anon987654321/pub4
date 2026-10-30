@@ -16,7 +16,7 @@ module Master
         # carries the pattern it forbids.
         SCANNER_SELF_PATHS = %r{
           \Alaw/|
-          \Alib/review/scan/(?:rules/|rule|law_dsl|law_factory|scanner|file_processor|self_scan|self_test|
+          \Alib/review/scan/(?:rules/|rule|law_tree|detector|canonical_law_adapter|scanner|file_processor|self_scan|self_test|
             infra_helpers|law_registry_audit)
         }x
 

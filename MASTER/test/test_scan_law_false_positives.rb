@@ -291,7 +291,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   # `does_not_fire:` lines are blanked, which is Law.conduct's argument for law/
   # applied to the registry's spelling of a declaration.
 
-  RULE_SOURCE = "law/detectors/example.rb"
+  RULE_SOURCE = "law/example.rb"
 
   def test_veto_ignores_a_rules_own_worked_examples
     [
@@ -660,7 +660,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   def test_the_scan_rules_directory_is_not_exempt
     source = rescue_source("rescue StandardError\n")
 
-    refute_empty findings(:SILENT_RESCUE, source, path: "law/detectors/example_rules.rb"),
+    refute_empty findings(:SILENT_RESCUE, source, path: "law/example_rules.rb"),
                  "the scanner's own rules are subject to the rescue rules"
   end
 
@@ -675,9 +675,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   end
 
   # --- a law that raises must not read as a clean file ----------------------
-  class RaisingLaw < Master::Review::Scan::Law
-    def self.auto_build? = false
-
+  class RaisingLaw < Master::Review::Scan::Detector
     def initialize
       super()
       @id = "PROBE_RAISER"

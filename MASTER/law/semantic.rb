@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "../../lib/review/scan/law_factory"
 
 module Master
   module Review
@@ -15,7 +14,7 @@ module Master
             self
           end
 
-          def self.included(base) = base.prepend(LawFactory::AgentGuard)
+          def self.included(base) = base.prepend(Detector::AgentGuard)
 
           # The semantic tier is the only rule tier that spends money, so it is
           # the only one a provider spend limit can silently delete. Returning
@@ -84,7 +83,7 @@ module Master
         # Steelman-first red-team: the model must defend the code before it can attack it.
         # This suppresses false positives by forcing consideration of legitimate reasons
         # before a violation can survive. Deep depth only; one LLM call per file.
-        class AdversarialLaw < Law
+        class AdversarialLaw < Detector
           def self.reads_beyond_file? = true
 
           PROMPT_TEMPLATE = <<~PROMPT.freeze
@@ -115,15 +114,11 @@ module Master
           %<code>s
         PROMPT
 
-          declare id: "adversarial", tags: %i[ONE_JOB CQS GUARD_EXPENSIVE FAIL_VISIBLY COMPOSABLE],
-                  autofix: true, description: "Red-team scan: steelman then challenge — suppresses false positives"
 
           def initialize(agent: nil)
             super()
             @agent = agent
           end
-
-          def self.auto_build? = false
 
           include NeedsModel
 
@@ -168,16 +163,21 @@ module Master
           end
         end
 
-        require_relative "../../lib/review/scan/finding"
+        ::Law.define(:adversarial) do
+          detector AdversarialLaw
+          tags %i[ONE_JOB CQS GUARD_EXPENSIVE FAIL_VISIBLY COMPOSABLE]
+          fix "Red-team scan: steelman then challenge — suppresses false positives"
+          proved_by "test/test_adversarial_law.rb"
+        end
+
+        require_relative "../lib/review/scan/finding"
         # LLM review for meaning that resists deterministic detection.
         # Each eligible file receives independent violation and opportunity
         # requests; the same law can therefore yield two distinct findings. A
         # deterministic detector remains layered evidence for that one law.
-        class SemanticLaw < Law
+        class SemanticLaw < Detector
           def self.reads_beyond_file? = true
 
-          declare id: "semantic", autofix: true,
-                  description: "LLM-based rule review (violations + opportunities)"
 
           def initialize(agent: nil)
             super()
@@ -185,8 +185,6 @@ module Master
             @cache = {}
             reload_semantic_laws!
           end
-
-          def self.auto_build? = false
 
           include NeedsModel
 
@@ -294,10 +292,6 @@ module Master
           def from_law
             require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
             ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
-            require File.join(Master::ROOT, "lib", "review", "scan", "law_dsl") unless
-              defined?(Master::Review::Scan::LawDSL)
-            require File.join(Master::ROOT, "lib", "review", "scan", "law_factory") unless
-              defined?(Master::Review::Scan::LawFactory)
 
             # The YAML catalogue owns Law identity and membership. Ruby files
             # provide detectors and explanatory text; they cannot add, remove,
@@ -306,26 +300,16 @@ module Master
             entries = catalogue.fetch("entries")
             raise "canonical Law catalogue is empty" unless entries.is_a?(Hash) && !entries.empty?
 
+            # Every Law is a definition now, a detector class's included: its
+            # question, fix and examples are on the definition, so no detector is
+            # built here to read them back (building this one's own class here once
+            # ended boot in SystemStackError).
             definitions = ::Law.definitions.values.to_h { |law| [law.id.to_s.upcase, law] }
-            detector_definitions = Master::Review::Scan::Law.registry.each_with_object({}) do |klass, result|
-              # This law reads the catalogue; it is no detector in it. Building it here built
-              # it again from its own constructor, and boot ended in SystemStackError.
-              next if klass <= self.class
-
-              location = klass.name && Object.const_source_location(klass.name)&.first
-              next if location&.match?(%r{(?:\A|/)(?:test|spec)/})
-
-              instance = Master::Review::Scan::LawFactory.build(klass, root: Master::ROOT)
-              id = instance.id.to_s.upcase
-              result[id] ||= instance unless id.empty?
-            end
 
             entries.each_with_object({}) do |(raw_id, manifest), laws|
               id = raw_id.to_s.upcase
               definition = definitions[id]
-              detector = detector_definitions[id]
               question = definition&.ask.to_s.strip
-              question = detector.description.to_s.strip if question.empty? && detector&.respond_to?(:description)
               question = definition.practice.to_s.strip if question.empty? && definition&.respond_to?(:practice)
               question = definition.fix.to_s.strip if question.empty? && definition&.respond_to?(:fix)
               question = id.tr("_", " ").downcase if question.empty?
@@ -335,13 +319,13 @@ module Master
                 ("Repair contract: #{definition.fix}" if definition&.respond_to?(:fix) && !definition.fix.to_s.empty?),
                 ("Forbidden example: #{definition.bad.strip}" if definition&.respond_to?(:bad) && !definition.bad.to_s.empty?),
                 ("Compliant example: #{definition.good.strip}" if definition&.respond_to?(:good) && !definition.good.to_s.empty?),
-                ("Canonical source: #{(Array(manifest["definition_sources"]) + Array(manifest["detector_sources"])).join(", ")}"),
+                ("Canonical source: #{Array(manifest["definition_sources"]).join(", ")}"),
                 "Evaluate this same invariant for a clear breach and a concrete improvement.",
               ].compact.join("\n")
 
               laws[id] = {
                 prompt:,
-                severity: definition&.severity || detector&.severity || :warning,
+                severity: definition&.severity || :warning,
                 mode: :both,
                 reversibility: nil,
                 blast_radius: nil,
@@ -464,26 +448,28 @@ module Master
           end
         end
 
+        ::Law.define(:semantic) do
+          detector SemanticLaw
+          fix "LLM-based rule review (violations + opportunities)"
+          proved_by "test/test_semantic_law_scope.rb"
+        end
+
         # Comments above method defs that no longer describe what the code does.
         # Lexical pass extracts (comment, method_body) pairs; LLM judges drift in one
         # batched call per file. Pairs with the "reassess on touch" directive: lying
         # comments are factual bugs, not style noise.
-        class CommentDriftLaw < Law
+        class CommentDriftLaw < Detector
           def self.reads_beyond_file? = true
 
           MAX_PAIRS_PER_FILE = 8
           # Lines of method body sent to LLM for drift comparison.
           BODY_SNIPPET = 20
 
-          declare id: "comment_drift", tags: %i[SELF_EXPLAINING EXPLICIT], autofix: true,
-                  description: "Comment claim doesn't match method body — comment is lying"
 
           def initialize(agent: nil)
             super()
             @agent = agent
           end
-
-          def self.auto_build? = false
 
           include NeedsModel
 
@@ -582,6 +568,13 @@ module Master
               finding(line: pair[:line], message: "comment drift — #{match[2].strip}")
             end
           end
+        end
+
+        ::Law.define(:comment_drift) do
+          detector CommentDriftLaw
+          tags %i[SELF_EXPLAINING EXPLICIT]
+          fix "Comment claim doesn't match method body — comment is lying"
+          proved_by "test/test_comment_drift_law.rb"
         end
       end
     end

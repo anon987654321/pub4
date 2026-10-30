@@ -1,22 +1,15 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-# Loads the detector tree so Law.registry holds every class the scanner builds.
-require_relative "../lib/review/scan/law_dsl"
+# Loads law/, every Law the scanner builds.
+require_relative "../lib/review/scan/law_tree"
 
 # A law that takes a model must never run in the lexical pass: every file,
 # clean ones included, would pay a model call.
 class TestLawTier < Minitest::Test
-  SCANNER_EXTRAS = %w[
-    CoChangeCouplingLaw LawCoverageLaw RubocopLaw ReekLaw InterconnectLaw
-    VetoPatternLaw SemanticLaw AdversarialLaw CommentDriftLaw AstOmissionLaw
-    LibRootDisciplineLaw FileSprawlLaw PathPurposeLaw
-  ].freeze
-
+  # Every detector class a Law names, constructor arguments or not.
   def law_classes
-    registry = Master::Review::Scan::Law.registry.select(&:auto_build?)
-    extras = SCANNER_EXTRAS.map { |name| Master::Review::Scan::Laws.const_get(name) }
-    (registry + extras).uniq
+    Master::Review::Scan::LawTree.definitions.filter_map(&:detector).uniq
   end
 
   def partition(law)

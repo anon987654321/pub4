@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/law_dsl"
+require "review/scan/law_tree"
 require "tmpdir"
 require "fileutils"
 
-# The check asks whether each scanner Law subclass is referenced by a test,
+# The check asks whether each detector class is referenced by a test,
 # whatever the detector file or the test file is called.
 #
 # Both halves are pinned below, because either one regressing restores a check
@@ -14,23 +14,33 @@ class TestLawCoverageLaw < Minitest::Test
   Laws = Master::Review::Scan::Laws
 
   ONE_CLASS = <<~RUBY
-    class WidgetLaw < Law
-      declare id: "WIDGET"
+    class WidgetLaw < Detector
+    end
+
+    ::Law.define(:WIDGET) do
+      detector WidgetLaw
     end
   RUBY
 
   TWO_CLASSES = <<~RUBY
-    class WidgetLaw < Law
-      declare id: "WIDGET"
+    class WidgetLaw < Detector
     end
-    class SprocketLaw < Law
-      declare id: "SPROCKET"
+
+    ::Law.define(:WIDGET) do
+      detector WidgetLaw
+    end
+
+    class SprocketLaw < Detector
+    end
+
+    ::Law.define(:SPROCKET) do
+      detector SprocketLaw
     end
   RUBY
 
-  # The rule keys off a path under /law/detectors/, so the fixture
+  # The rule keys off a Law file directly under /law/, so the fixture
   # supplies one; only the source directory has to exist on disk.
-  def messages(code, test_files: {}, dir: "test", path: "/x/law/detectors/widget_rules.rb")
+  def messages(code, test_files: {}, dir: "test", path: "/x/law/widget_rules.rb")
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, dir))
       test_files.each { |name, body| File.write(File.join(root, dir, name), body) }
@@ -67,13 +77,13 @@ class TestLawCoverageLaw < Minitest::Test
     refute_empty messages(ONE_CLASS, test_files: { "test_bulk.rb" => "# widget behaviour" })
   end
 
-  # Every Law subclass declares itself with `declare id:`, so that is where the
-  # id is read. Both directions: the shape the tree writes must be found, and
-  # an `@id = "..."` assignment, which the tree does not use, must not.
+  # A detector class gets its id from the ::Law.define that names it, so that is
+  # where the id is read. Both directions: the shape the tree writes must be found,
+  # and an `@id = "..."` assignment, which the tree does not use, must not.
   def test_the_id_is_read_from_the_declaration_the_tree_writes
     assert_empty messages(ONE_CLASS, test_files: { "test_bulk.rb" => 'rule("WIDGET")' })
     refute_empty messages(<<~RUBY, test_files: { "test_bulk.rb" => 'rule("WIDGET")' })
-      class WidgetLaw < Law
+      class WidgetLaw < Detector
         def initialize = @id = "WIDGET"
       end
     RUBY
@@ -110,11 +120,11 @@ class TestLawCoverageLaw < Minitest::Test
   end
 
   def test_a_non_ruby_file_is_skipped
-    assert_empty messages(ONE_CLASS, path: "/x/law/detectors/widget_rules.yml")
+    assert_empty messages(ONE_CLASS, path: "/x/law/widget_rules.yml")
   end
 
-  # Only Rule subclasses. LawDSL declares dozens of rules inline and the
-  # description is about subclasses; counting both would demand a test per
+  # Only detector classes. A `check` Law is a block inside ::Law.define and the
+  # description is about classes; counting both would demand a test per
   # declaration and bury the real gap.
   def test_a_plain_class_is_not_a_rule_subclass
     assert_empty messages("class WidgetLaw < Something\nend\n")

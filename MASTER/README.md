@@ -29,7 +29,7 @@ like intention. The constitution therefore stays legible. `data/soul.yml` holds
 the constitutional absolutes; `data/laws.yml` is the canonical declared Law
 catalogue and execution policy. Executable definitions and detector-adapter
 sources share one physical home under `law/`; detector adapters live in
-`law/detectors/`. `lib/review/scan/` holds scanner machinery, registration,
+`law/`. `lib/review/scan/` holds scanner machinery, registration,
 auditing, and orchestration—not a second Law source tree. These are enforcement
 mechanisms, not alternate sources of normative authority. `LawRegistryAudit`
 checks Law identity and source integrity and reports declared coverage debt

@@ -92,7 +92,7 @@ module Master
         # that /fix may snap such a value to the nearest scale token: the small visible change
         # brings the element into line with the rest of the page. Every snap was refused as
         # "alters rendering" before, so none of these findings could ever be repaired.
-        SCALE_LAWS = %w[EIGHT_PX_RHYTHM LINE_HEIGHT_ON_SCALE TYPOGRAPHIC_GRID WHITESPACE_RHYTHM].freeze
+        SCALE_LAWS = %w[EIGHT_PX_RHYTHM LINE_HEIGHT_ON_SCALE WHITESPACE_RHYTHM].freeze
 
         def scale_snap_rule(violation, for_verifier: false)
           return "" unless violation[:law].to_s.split("+").intersect?(SCALE_LAWS)

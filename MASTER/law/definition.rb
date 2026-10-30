@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require "set"
 require_relative "../lib/law_vocabulary"
 
 # law/ — the constitution as code.
@@ -28,11 +29,6 @@ module Law
     entry = entries[key] || entries.find { |name, _value| name.to_s.casecmp?(key) }&.last
     raise KeyError, "Law #{key} is absent from MASTER/data/laws.yml law_catalogue.entries" unless entry
 
-    raise ArgumentError, "Law #{key} is not marked universal in laws.yml" unless entry["universal"] == true
-    modalities = Array(entry["modalities"]).map(&:to_s).sort
-    expected = Master::LawVocabulary::MODALITIES
-    raise ArgumentError, "Law #{key} modalities must be #{expected.join(', ')}" unless modalities == expected
-
     entry
   end
 
@@ -55,7 +51,19 @@ module Law
 
   def self.pattern(source) = source && Regexp.union(Array(source).map { |part| Regexp.new(part) })
 
-  Finding = Data.define(:id, :file, :line, :text)
+  # A `detect` regex reports a line and the Law's fix text; it has no account of
+  # its own, so `message` and `detail` are nil.
+  Finding = Data.define(:id, :file, :line, :text) do
+    def message = nil
+    def detail = nil
+  end
+
+  # A `check` or detector class reports the scanner finding it built (`detail`),
+  # whose line and message are its own account of what it saw.
+  CheckFinding = Data.define(:id, :file, :text, :detail) do
+    def line = Master::Review::Scan::Finding.read(detail, :line).to_i
+    def message = Master::Review::Scan::Finding.read(detail, :message)
+  end
 
   # What every law asks of one subject, worked out once. The bridge hands the
   # same text to each of a hundred laws in turn, and each re-split it into
@@ -122,19 +130,6 @@ module Law
       EXTENSION_COMMENT_LEADERS.fetch(File.extname(file).downcase, [])
   end
 
-  # `ask` is the semantic half: a rule whose subject cannot be matched by a
-  # regex states the question instead, and the model answers it. It sits beside
-  # `detect` rather than in a second file because a rule is one thing and its
-  # detector kind is a property of it — the split between executable law and the policy catalogue in data/laws.yml
-  # put 52 laws' detector in one file and their severity and fix text in
-  # another, which is a shape no rename can make legible.
-  #
-  # bad/good stay required for both kinds. For `detect` they are proved by
-  # running the regex at load. For `ask` they cannot be — no model call at boot —
-  # so they are the prompt's own worked examples, carried into the question and
-  # checkable offline by a task that has a model. A semantic rule with no
-  # example of what it is looking for is the unfalsifiable shape this file
-  # already refuses in the lexical case.
   # One real extension per language a law can declare, for proving a fixture the
   # way a subject is actually read. Ordered so the first match is the ordinary
   # case for that language rather than an alias of it.
@@ -143,96 +138,17 @@ module Law
     ".html" => "html", ".yml" => "yaml", ".sh" => "zsh", ".md" => "markdown", ".json" => "json"
   }.freeze
 
-  MEMBERS = %i[
-    id source severity mode languages scope surfaces law_scope lifecycle autofix
-    path path_exclude absent detect ask practice fix bad good reads_comments
-  ].freeze
+  # One realistic path per language, for a check that reads where a file lives.
+  # These were test/test_law_fixtures.rb's, which proved the LawDSL detectors.
+  PROOF_PATHS = {
+    "ruby" => "/repo/app/models/example.rb", "zsh" => "/repo/bin/example.sh",
+    "scss" => "/repo/app/assets/stylesheets/_example.scss", "css" => "/repo/app/assets/stylesheets/example.css",
+    "html" => "/repo/app/views/example.html.erb",
+    "javascript" => "/repo/app/javascript/controllers/example_controller.js"
+  }.freeze
 
-  Definition = Data.define(*MEMBERS) do
-    # `path` is a substring (catalogue `path`) or a Regexp (catalogue
-    # `path_pattern`); `path_exclude` is always a Regexp.
-    # A law that names no language applies everywhere. A law that names one
-    # applies to a file resolved to that language, and to nothing else.
-    #
-    # This read `language.nil? || languages.empty? || ...`, so an unresolved
-    # file satisfied every language-scoped law — the opposite of what the
-    # registry's Law#applies_to? has always answered for the same question.
-    # 396 tracked files resolve to nil, and 302 of them are not source in any
-    # language: .gitignore, .svg, .toml, .env, Gemfile.lock. Each was measured
-    # against all 65 language-scoped laws, which is how FROZEN_STRING_LITERAL
-    # came to ask 172 non-Ruby files for a Ruby magic comment against 4 real
-    # ones.
-    #
-    # The clause was protecting the other 94 — Gemfile, Rakefile, and the
-    # executables under bin/ whose language is in their shebang. Those are
-    # resolved now rather than excused, by Master.language_for.
-    def applies?(file, language)
-      return false if path && !(path.is_a?(Regexp) ? file.match?(path) : file.include?(path))
-      return false if path_exclude && file.match?(path_exclude)
-
-      languages.empty? || (language && languages.include?(language.to_s))
-    end
-
-    # A semantic rule has no detector to run here. It is carried to the model by
-    # the semantic pass instead, so scanning it lexically must find nothing
-    # rather than raise on a nil detect.
-    def semantic? = !ask.nil?
-
-    # A Law is assessed on every canonical surface unless its catalogue entry
-    # declares `surfaces:`, which narrows it to the ones named. A surface the
-    # Law reaches but no adapter measures stays INCONCLUSIVE, never exempt.
-    def assessment_surfaces = surfaces || ::Law::ASSESSMENT_SURFACES
-
-    # Universal describes the invariant, not the detector syntax. A universal
-    # principle may have Ruby, zsh, Rails or another domain adapter.
-    def universal? = ::Law.catalogue_entry(id).fetch("universal")
-
-    # Lifecycle controls whether a law may affect enforcement. Existing laws
-    # default to active for compatibility; candidates can enter proposed/proven
-    # without silently becoming merge blockers.
-    def enforceable? = %i[active trusted].include?(lifecycle)
-
-    def can_transition_to?(state)
-      ::Law::Definition::LIFECYCLE_TRANSITIONS.fetch(lifecycle).include?(state.to_sym)
-    end
-
-    def proof_kind
-      return :deterministic if detect
-      return :semantic if ask
-      :practice
-    end
-
-    # Neither kind scans source: one is answered by a model, one binds behaviour.
-    def scannable? = detect ? true : false
-
-    def scan(text, file: "-")
-      return [] unless scannable?
-
-      scope == :file ? scan_file(text, file) : scan_lines(text, file)
-    end
-
-    # The rule's published shape for Contract. Key order and the empty filter
-    # feed law_digest, so any change here changes the digest every external
-    # model hands back at the handshake.
-    def contract_entry
-      {
-        "id" => id.to_s,
-        "severity" => severity.to_s,
-        "mode" => mode.to_s,
-        "languages" => languages.map(&:to_s),
-        "surfaces" => assessment_surfaces.map(&:to_s),
-        "law_scope" => law_scope.to_s,
-        "lifecycle" => lifecycle.to_s,
-        "autofix" => autofix.to_s,
-        "proof" => proof_kind.to_s,
-        "question" => ask.to_s,
-        "practice" => practice.to_s,
-        "fix" => fix.to_s,
-        "bad" => bad.to_s,
-        "good" => good.to_s,
-      }.reject { |_, value| value.respond_to?(:empty?) && value.empty? }
-    end
-
+  # How a Definition proves itself at load: its fixtures, its policy and its reach.
+  module Proof
     # A rule proves itself before it may judge anything else.
     #
     # The reach half is proved too, because it was the half that broke:
@@ -247,32 +163,69 @@ module Law
       # skipped for a semantic rule, because proving it needs a model and this
       # runs at boot. The fixtures are still required — Builder#build refuses
       # without them — they are simply proved by rake rather than by require.
-      if scannable?
-        raise ArgumentError, "#{id}: bad fixture not flagged" if scan(bad).empty?
-        raise ArgumentError, "#{id}: good fixture flagged" unless scan(good).empty?
-
-        prove_as_real_file!
+      if proved_by then prove_named_test!
+      elsif main_detector? then prove_fixtures!
       end
-
-      unless ::Law::Definition::LIFECYCLE_TRANSITIONS.key?(lifecycle)
-        raise ArgumentError, "#{id}: unknown lifecycle #{lifecycle.inspect}"
-      end
-      unless %i[never review automatic].include?(autofix)
-        raise ArgumentError, "#{id}: unknown autofix policy #{autofix.inspect}"
-      end
-      if autofix == :automatic && !scannable?
-        raise ArgumentError, "#{id}: automatic autofix requires a deterministic detector"
-      end
-
-      unreachable = languages.map(&:to_s) - Master::FILE_LANGUAGE_MAP.values.uniq
-      unless unreachable.empty?
-        raise ArgumentError,
-              "#{id}: declares language(s) #{unreachable.join(', ')} that FILE_LANGUAGE_MAP never produces"
-      end
+      adapters.each { |adapter| prove_adapter!(adapter) }
+      prove_policy!
+      prove_reach!
       self
     end
 
+    # Where a check's fixtures are proved: its example_path, else a realistic
+    # path for its first language. A check reads the path as well as the text
+    # (`path.include?("/app/views/")`), so "-" proved nothing for most of them.
+    def proof_path
+      example_path || PROOF_PATHS.fetch(languages.first.to_s, PROOF_PATHS.fetch("ruby"))
+    end
+
+    # The file a Law's own fixtures are proved as: "-" (the text whole, no
+    # comment syntax) for a `detect` regex, a realistic path for anything that
+    # reads where the file lives. prove! and the dogfood suite both ask here.
+    def proof_file = example_path || check || detector ? proof_path : "-"
+
     private
+
+    # A detector that reads a repository, a linter or git cannot prove itself
+    # at boot; it names the test that does, and that test must exist.
+    def prove_named_test!
+      return if File.file?(File.join(Master::ROOT, proved_by))
+
+      raise ArgumentError, "#{id}: proved_by #{proved_by} does not exist"
+    end
+
+    def prove_fixtures!
+      at = proof_file == "-" ? "" : " at #{proof_file}"
+      raise ArgumentError, "#{id}: bad fixture not flagged#{at}" if scan_main(bad, proof_file).empty?
+      raise ArgumentError, "#{id}: good fixture flagged#{at}" unless scan_main(good, proof_file).empty?
+
+      prove_as_real_file! if proof_file == "-"
+    end
+
+    # Every adapter carries its own two examples and proves them on its own
+    # surface: a path list for a tree adapter, a file at its example path for
+    # the rest. An adapter that cannot tell them apart does not load.
+    def prove_adapter!(adapter)
+      where = "#{adapter.surfaces.join('+')} adapter"
+      raise ArgumentError, "#{id}: #{where} bad example not flagged" if run_adapter(adapter, adapter.bad).empty?
+      raise ArgumentError, "#{id}: #{where} good example flagged" unless run_adapter(adapter, adapter.good).empty?
+    end
+
+    def prove_policy!
+      known = ::Law::Definition::LIFECYCLE_TRANSITIONS.key?(lifecycle)
+      raise ArgumentError, "#{id}: unknown lifecycle #{lifecycle.inspect}" unless known
+      raise ArgumentError, "#{id}: unknown autofix policy #{autofix.inspect}" unless AUTOFIX_POLICIES.include?(autofix)
+      return unless autofix == :automatic && !scannable?
+
+      raise ArgumentError, "#{id}: automatic autofix requires a deterministic detector"
+    end
+
+    def prove_reach!
+      unreachable = languages.map(&:to_s) - Master::FILE_LANGUAGE_MAP.values.uniq
+      return if unreachable.empty?
+
+      raise ArgumentError, "#{id}: declares language(s) #{unreachable.join(', ')} that FILE_LANGUAGE_MAP never produces"
+    end
 
     # The same two fixtures, read the way each declared language is read.
     # Multi-language deterministic laws need one representative file per language;
@@ -307,11 +260,19 @@ module Law
           raise ArgumentError, "#{id}: bad fixture flagged on \"-\" but not on #{extension} — " \
                                "considered_text blanks its subject first (set reads_comments?)"
         end
-        raise ArgumentError, "#{id}: good fixture clean on \"-\" but flagged on #{extension}" unless scan(good, file: as_file).empty?
+        next if scan(good, file: as_file).empty?
+
+        raise ArgumentError, "#{id}: good fixture clean on \"-\" but flagged on #{extension}"
       end
 
       self
     end
+  end
+
+  # How a Definition reads a subject: the text it considers, by line or whole,
+  # and what a check or detector class reports.
+  module Reading
+    private
 
     # File-scope laws get the same two exemptions the line-scope ones have. All
     # eleven had neither, so they were blind to comment leaders and to the
@@ -324,6 +285,50 @@ module Law
       return [] unless detect.call(considered_text(text, file))
 
       [Finding.new(id, file, 1, text[/.*/])]
+    end
+
+    # A check reads the raw text and runs on a Scan::Detector, whose helpers it
+    # shares with every detector class: `finding`, the AST walks, source
+    # masking. Raw, because a check decides what a comment or a `scan:
+    # intentional` marker means for it — LONG_LINE measures a marked line with
+    # the marker removed — so blanking either first would change what it judges.
+    def scan_check(text, file)
+      return [] if absent && text.match?(absent)
+
+      runner = Master::Review::Scan::Detector.new.bind(self)
+      law_findings(runner.instance_exec(text, file, &check), lines: text.lines, file:)
+    end
+
+    # A detector class runs as the scanner runs it, built for this Law.
+    def scan_detector(text, file)
+      law_findings(detector.build(self).check(text, path: file), lines: text.lines, file:)
+    end
+
+    # The Law's own detector, without its adapters: what its bad and good prove.
+    def scan_main(text, file)
+      return scan_check(text, file) if check
+      return scan_detector(text, file) if detector
+
+      scope == :file ? scan_file(text, file) : scan_lines(text, file)
+    end
+
+    # An adapter runs on the same runner as a check. A tree adapter is handed
+    # the repository's paths and names each finding's file; a file adapter is
+    # handed the text and path, like a check. Its example is that same input:
+    # an Array of paths, or a String proved at the adapter's example path.
+    def run_adapter(adapter, input, file: nil)
+      runner = Master::Review::Scan::Detector.new.bind(self)
+      return Array(adapter.call(runner, input, nil)) if adapter.tree?
+
+      file ||= adapter.proof_file
+      law_findings(adapter.call(runner, input, file), lines: input.lines, file:)
+    end
+
+    def law_findings(hits, lines:, file:)
+      Array(hits).map do |hit|
+        line = Master::Review::Scan::Finding.read(hit, :line).to_i
+        CheckFinding.new(id:, file:, text: lines[line - 1].to_s.chomp, detail: hit)
+      end
     end
 
     # Comments and intentional-marked lines blanked, newlines kept, so a
@@ -417,6 +422,186 @@ module Law
     end
   end
 
+  AUTOFIX_POLICIES = %i[never review automatic].freeze
+
+  # `ask` is the semantic half: a rule whose subject cannot be matched by a
+  # regex states the question instead, and the model answers it. It sits beside
+  # `detect` rather than in a second file because a rule is one thing and its
+  # detector kind is a property of it — the split between executable law and the policy catalogue in data/laws.yml
+  # put 52 laws' detector in one file and their severity and fix text in
+  # another, which is a shape no rename can make legible.
+  #
+  # bad/good stay required for both kinds. For `detect` they are proved by
+  # running the regex at load. For `ask` they cannot be — no model call at boot —
+  # so they are the prompt's own worked examples, carried into the question and
+  # checkable offline by a task that has a model. A semantic rule with no
+  # example of what it is looking for is the unfalsifiable shape this file
+  # already refuses in the lexical case.
+  MEMBERS = %i[
+    id source severity mode languages scope surfaces law_scope lifecycle autofix
+    path path_exclude absent detect check detector ask practice fix bad good reads_comments tags example_path
+    reads_beyond_file transform proved_by measures adapters
+  ].freeze
+
+  # The surfaces a whole-repository read measures: what files exist and where,
+  # not what any one of them says. A tree adapter judges these; the per-file
+  # scanner never can, because no single file carries them.
+  TREE_SURFACES = %i[repository_tree directories file_names paths].freeze
+
+  # One more detector for the same Law, on its own surfaces and languages: DRY
+  # over code and DRY over config are one Law with two adapters, not two Laws.
+  # `check` takes (text, file) for a file adapter and (paths) for a tree one.
+  Adapter = Data.define(:surfaces, :languages, :check, :bad, :good, :example_path) do
+    def self.declare(surfaces, check, bad:, good:, languages: [], example_path: nil)
+      new(surfaces: surfaces.flatten.map(&:to_sym), languages: languages.map(&:to_s), check:, bad:, good:, example_path:)
+    end
+
+    def tree? = (surfaces - TREE_SURFACES).empty?
+    def reads?(language) = languages.empty? || languages.include?(language.to_s)
+    def proof_file = example_path || PROOF_PATHS.fetch(languages.first.to_s, PROOF_PATHS.fetch("ruby"))
+
+    # A tree adapter is handed the paths; a file adapter the text and its path.
+    def call(runner, input, file) = runner.instance_exec(*(tree? ? [input] : [input, file]), &check)
+  end
+
+  Definition = Data.define(*MEMBERS) do
+    include Proof
+    include Reading
+
+    # `path` is a substring (catalogue `path`) or a Regexp (catalogue
+    # `path_pattern`); `path_exclude` is always a Regexp.
+    # A law that names no language applies everywhere. A law that names one
+    # applies to a file resolved to that language, and to nothing else.
+    #
+    # This read `language.nil? || languages.empty? || ...`, so an unresolved
+    # file satisfied every language-scoped law — the opposite of what the
+    # registry's Law#applies_to? has always answered for the same question.
+    # 396 tracked files resolve to nil, and 302 of them are not source in any
+    # language: .gitignore, .svg, .toml, .env, Gemfile.lock. Each was measured
+    # against all 65 language-scoped laws, which is how FROZEN_STRING_LITERAL
+    # came to ask 172 non-Ruby files for a Ruby magic comment against 4 real
+    # ones.
+    #
+    # The clause was protecting the other 94 — Gemfile, Rakefile, and the
+    # executables under bin/ whose language is in their shebang. Those are
+    # resolved now rather than excused, by Master.language_for.
+    def applies?(file, language)
+      return false if path && !(path.is_a?(Regexp) ? file.match?(path) : file.include?(path))
+      return false if path_exclude && file.match?(path_exclude)
+
+      main_reads?(language) || file_adapters.any? { |adapter| language && adapter.reads?(language) }
+    end
+
+    def main_reads?(language)
+      languages.empty? || (language && languages.map(&:to_s).include?(language.to_s)) ? true : false
+    end
+
+    def file_adapters = adapters.reject(&:tree?)
+    def tree_adapters = adapters.select(&:tree?)
+
+    # The languages the scanner must hand this Law: every language when the
+    # Law or any of its file adapters names none.
+    def reach_languages
+      parts = [languages] + file_adapters.map(&:languages)
+      parts.any?(&:empty?) ? [] : parts.flatten.map(&:to_s).uniq
+    end
+
+    # What the Law's own detector measures, by its kind unless it says so with
+    # `measures`: a line regex reads lines, a file regex or a check the whole
+    # file, a detector class what it declares.
+    def main_surfaces
+      return [] unless main_detector?
+      return measures if measures
+      return detector.surfaces if detector&.surfaces
+
+      detect && scope != :file ? %i[lines] : %i[whole_file]
+    end
+
+    # The surfaces some deterministic adapter of this Law actually reads. The
+    # rest of assessment_surfaces stay INCONCLUSIVE until one does.
+    def measured_surfaces = (main_surfaces + adapters.flat_map(&:surfaces)).uniq
+
+    # A semantic rule has no detector to run here. It is carried to the model by
+    # the semantic pass instead, so scanning it lexically must find nothing
+    # rather than raise on a nil detect.
+    def semantic? = !ask.nil?
+
+    # A Law is assessed on every canonical surface unless its catalogue entry
+    # declares `surfaces:`, which narrows it to the ones named. A surface the
+    # Law reaches but no adapter measures stays INCONCLUSIVE, never exempt.
+    def assessment_surfaces = surfaces || ::Law::ASSESSMENT_SURFACES
+
+    # Universal describes the invariant, not the detector syntax. A universal
+    # principle may have Ruby, zsh, Rails or another domain adapter.
+    def universal? = ::Law.catalogue_entry(id).fetch("universal", LAW_CATALOGUE.fetch("universal_by_default"))
+
+    # Lifecycle controls whether a law may affect enforcement. Existing laws
+    # default to active for compatibility; candidates can enter proposed/proven
+    # without silently becoming merge blockers.
+    def enforceable? = %i[active trusted].include?(lifecycle)
+
+    def can_transition_to?(state)
+      ::Law::Definition::LIFECYCLE_TRANSITIONS.fetch(lifecycle).include?(state.to_sym)
+    end
+
+    def proof_kind
+      return :deterministic if deterministic?
+      return :semantic if ask || model_detector?
+      :practice
+    end
+
+    # A detector class that takes a model (it defines set_agent, as
+    # Laws::NeedsModel does) is a semantic evaluator, however it is wired.
+    def model_detector? = detector ? detector.method_defined?(:set_agent) : false
+
+    # Neither kind scans source: one is answered by a model, one binds behaviour.
+    def main_detector? = detect || check || (detector && !model_detector?) ? true : false
+
+    # Something reads file text: the Law's own detector or a file adapter.
+    def scannable? = main_detector? || file_adapters.any?
+
+    # Something measures a surface without a model, tree adapters included.
+    def deterministic? = main_detector? || adapters.any?
+
+    # The Law's own detector where its languages reach the file, then each file
+    # adapter that reads the file's language. A file of no known language ("-",
+    # a fixture) is read by the Law's own detector, as it always was.
+    def scan(text, file: "-")
+      language = file == "-" ? nil : Master.language_for(file)
+      hits = main_detector? && (language.nil? || main_reads?(language)) ? scan_main(text, file) : []
+      file_adapters.each { |adapter| hits += run_adapter(adapter, text, file:) if language && adapter.reads?(language) }
+      hits
+    end
+
+    # Each tree adapter over the repository's paths, relative to its root.
+    def scan_tree(paths)
+      tree_adapters.flat_map { |adapter| run_adapter(adapter, paths) }
+    end
+
+    # The rule's published shape for Contract. Key order and the empty filter
+    # feed law_digest, so any change here changes the digest every external
+    # model hands back at the handshake.
+    def contract_entry
+      {
+        "id" => id.to_s,
+        "severity" => severity.to_s,
+        "mode" => mode.to_s,
+        "languages" => languages.map(&:to_s),
+        "surfaces" => assessment_surfaces.map(&:to_s),
+        "law_scope" => law_scope.to_s,
+        "lifecycle" => lifecycle.to_s,
+        "autofix" => autofix.to_s,
+        "proof" => proof_kind.to_s,
+        "question" => ask.to_s,
+        "practice" => practice.to_s,
+        "fix" => fix.to_s,
+        "bad" => bad.to_s,
+        "good" => good.to_s,
+      }.reject { |_, value| value.respond_to?(:empty?) && value.empty? }
+    end
+
+  end
+
   # Data.define's block is lexical; publish this graph on the generated Law
   # definition explicitly because Contract, Index and callers use it as Law API.
   Definition.const_set(:LIFECYCLE_TRANSITIONS, {
@@ -437,11 +622,48 @@ module Law
 
     def initialize(id)
       @h = {
-        id:, scope: :line, law_scope: nil, absent: nil, detect: nil, ask: nil, practice: nil, reads_comments: false,
-        **::Law.catalogue_policy(id)
+        id:, scope: :line, law_scope: nil, absent: nil, detect: nil, check: nil, ask: nil, practice: nil,
+        reads_comments: false, tags: [], example_path: nil, reads_beyond_file: false, transform: nil,
+        detector: nil, proved_by: nil, source: nil, measures: nil, adapters: [], **::Law.catalogue_policy(id)
       }
     end
+
+    # The surfaces this Law's own detector measures, when its kind does not say
+    # (a check that reads paths measures :paths, not :whole_file).
+    def measures(*surfaces) = @h[:measures] = surfaces.flatten.map(&:to_sym)
+
+    # One more detector for this Law on other surfaces, with its own two
+    # examples: `adapter(:file_names, bad: [...], good: [...]) { |paths| ... }`
+    # for the tree, `adapter(:structured_data, languages: %i[yaml], bad:, good:)
+    # { |text, file| ... }` for a file.
+    def adapter(*surfaces, **examples, &check) = @h[:adapters] += [Adapter.declare(surfaces, check, **examples)]
+
+    # A detector class (a Review::Scan::Detector) for a Law whose detection needs
+    # state, a whole walk or a model: the AST and graph laws, the linters, the
+    # semantic evaluators. It is this Law's detector and nothing else's.
+    def detector(klass) = @h[:detector] = klass
+
+    # The test that proves this Law's detector, for one that cannot prove itself
+    # on two fixtures at boot (it reads a repository, runs a linter or asks a model).
+    def proved_by(path) = @h[:proved_by] = path
+
+    # The AstFixer transform that repairs this Law's findings, when one does. A
+    # transform in AstFixer::DELETING_TRANSFORMS waits for a person (Scanner#deleting_law?).
+    def transform(name) = @h[:transform] = name.to_s
+
+    # A check whose findings depend on more than the file's text and path (git
+    # history, sibling files) says so, and Scan::FindingCache never replays it.
+    def reads_beyond_file(value) = @h[:reads_beyond_file] = value
     def detect(&block) = @h[:detect] = block
+
+    # `check { |text, file| ... }` answers findings, each built by `finding(line:, message:)`.
+    def check(&block) = @h[:check] = block
+
+    # The concern a Law belongs to (DESIGN, TYPOGRAPHY, ...): carried on its findings.
+    def tags(*names) = @h[:tags] = names.flatten.map(&:to_sym)
+
+    # The path its fixtures are proved at, for a detector that judges only some paths.
+    def example_path(path) = @h[:example_path] = path
 
     # A law can carry more than one enforcement surface without becoming more
     # than one rule. detect is deterministic evidence, ask is semantic evidence,
@@ -449,19 +671,41 @@ module Law
     # be cheap to detect mechanically, expensive to understand semantically, and
     # still impose a working discipline on the operator.
     def build
-      kinds = %i[detect ask practice].select { |k| @h[k] }
-      raise ArgumentError, "#{@h[:id]}: needs detect, ask or practice" if kinds.empty?
-      unknown_surfaces = Array(@h[:surfaces]) - ASSESSMENT_SURFACES
-      if unknown_surfaces.any?
-        raise ArgumentError, "#{@h[:id]}: unknown assessment surfaces #{unknown_surfaces.join(", ")}"
-      end
-      # Named here so a law missing one hears about the law, not Data#initialize.
-      missing = %i[bad good fix].reject { |k| @h.key?(k) }
-      raise ArgumentError, "#{@h[:id]}: missing #{missing.join(', ')}" unless missing.empty?
-
-      @h[:law_scope] = ::Law.catalogue_entry(@h.fetch(:id)).fetch("universal") ? :universal : :domain
+      refuse_shape!
+      refuse_missing!
+      @h[:bad] = nil unless @h.key?(:bad)
+      @h[:good] = nil unless @h.key?(:good)
+      universal = ::Law.catalogue_entry(@h.fetch(:id)).fetch("universal", LAW_CATALOGUE.fetch("universal_by_default"))
+      @h[:law_scope] = universal ? :universal : :domain
 
       Definition.new(**@h.slice(*MEMBERS)).prove!
+    end
+
+    private
+
+    def refuse(reason) = raise(ArgumentError, "#{@h[:id]}: #{reason}")
+
+    def refuse_shape!
+      detectors = %i[detect check detector].count { |k| @h[k] }
+      evidence = detectors + @h[:adapters].size
+      refuse "needs detect, check, detector, adapter, ask or practice" if evidence.zero? && !@h[:ask] && !@h[:practice]
+      refuse "detect, check and detector are three detectors; keep one" if detectors > 1
+      refuse_surfaces!
+    end
+
+    def refuse_surfaces!
+      declared = Array(@h[:surfaces]) + Array(@h[:measures]) + @h[:adapters].flat_map(&:surfaces)
+      unknown_surfaces = declared - ASSESSMENT_SURFACES
+      refuse "unknown assessment surfaces #{unknown_surfaces.join(', ')}" if unknown_surfaces.any?
+      mixed = @h[:adapters].find { |a| !a.tree? && a.surfaces.intersect?(TREE_SURFACES) }
+      refuse "an adapter reads the tree or a file, not both: #{mixed.surfaces.join(', ')}" if mixed
+    end
+
+    # Named here so a law missing one hears about the law, not Data#initialize.
+    # A Law proved by a named test may carry its fixtures there instead.
+    def refuse_missing!
+      missing = (@h[:proved_by] ? %i[fix] : %i[bad good fix]).reject { |k| @h.key?(k) }
+      refuse "missing #{missing.join(', ')}" unless missing.empty?
     end
   end
 
@@ -493,7 +737,7 @@ module Law
           .transform_values { |states| states.map(&:to_s) },
       },
       "autofix" => {
-        "policies" => %w[never review automatic],
+        "policies" => AUTOFIX_POLICIES.map(&:to_s),
         "automatic_requires_deterministic_detector" => true,
       },
       "universality" => {
@@ -572,16 +816,19 @@ module Law
           "id" => law.id.to_s,
           "scope" => law.scope.to_s,
           "surfaces" => law.assessment_surfaces.map(&:to_s),
+          "measured_surfaces" => law.measured_surfaces.map(&:to_s),
           "law_scope" => law.law_scope.to_s,
           "languages" => law.languages.map(&:to_s),
           "lifecycle" => law.lifecycle.to_s,
           "autofix" => law.autofix.to_s,
-          "proof" => law.proof_kind.to_s,
-          "deterministic" => law.scannable?,
-          "semantic" => law.semantic?,
-          "practice" => !law.practice.nil?,
-        }
+        }.merge(evidence(law))
       end
+    end
+
+    # What a Law is proved by: a detector, a model question, a practice.
+    def evidence(law)
+      { "proof" => law.proof_kind.to_s, "deterministic" => law.deterministic?, "semantic" => law.semantic?,
+        "practice" => !law.practice.nil? }
     end
 
     def validate!(definitions = Law.definitions.values)
@@ -594,7 +841,7 @@ module Law
       invalid = definitions.reject { |law| Definition::LIFECYCLE_TRANSITIONS.key?(law.lifecycle) }
       raise ArgumentError, "invalid law lifecycle: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
 
-      invalid = definitions.reject { |law| %i[never review automatic].include?(law.autofix) }
+      invalid = definitions.reject { |law| AUTOFIX_POLICIES.include?(law.autofix) }
       raise ArgumentError, "invalid law autofix policy: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
 
       automatic = definitions.select { |law| law.autofix == :automatic && !law.scannable? }
@@ -642,23 +889,8 @@ module Law
     end
 
     def reload(dir)
-      if File.expand_path(dir) == File.expand_path(__dir__)
-        data = Master.load_laws(root: Master::ROOT)
-        generated = data.fetch("prose").values.flat_map do |language|
-          language.fetch("ids", {}).values.map do |id|
-            { id: id.to_s, source: "MASTER/law/prose.rb", line: 1 }
-          end
-        end.uniq { |row| row[:id] }
-        Master::LawCataloguePreflight.validate!(
-          law_dir: dir,
-          catalogue: LAW_CATALOGUE,
-          repo_root: File.dirname(Master::ROOT),
-          generated_declarations: generated,
-        )
-      end
-
-      files = Dir.glob(File.join(dir, "*.rb")).sort.map { |file| File.expand_path(file) }
-      files.reject! { |file| file == File.expand_path(__FILE__) }
+      preflight!(dir) if File.expand_path(dir) == File.expand_path(__dir__)
+      files = law_files(dir)
 
       staged = @definitions.dup
       sources = @law_sources.dup
@@ -697,6 +929,27 @@ module Law
       Thread.current[:law_staging] = nil
     end
 
+    # One flat law/: every file but this one holds Laws.
+    def law_files(dir)
+      Dir.glob(File.join(dir, "*.rb")).sort.map { |file| File.expand_path(file) } - [File.expand_path(__FILE__)]
+    end
+
+    def preflight!(dir)
+      generated = Master.load_laws(root: Master::ROOT).fetch("prose").values.flat_map do |language|
+        language.fetch("ids", {}).values.map { |id| { id: id.to_s, source: "MASTER/law/prose.rb", line: 1 } }
+      end
+
+      Master::LawCataloguePreflight.validate!(
+        law_dir: dir,
+        catalogue: LAW_CATALOGUE,
+        repo_root: File.dirname(Master::ROOT),
+        generated_declarations: generated.uniq { |row| row[:id] },
+      )
+    end
+
+    # Every tree adapter over one list of repository-relative paths.
+    def scan_tree(paths) = @definitions.values.flat_map { |law| law.scan_tree(paths) }
+
     def scan(file, language: nil)
       text = File.read(file, encoding: "UTF-8")
       text = conduct(text) if file.start_with?(__dir__)
@@ -723,13 +976,13 @@ module Law
           block_end = nil if line == block_end
           next "#\n"
         end
-        if (indent = line[/^(\s*)(?:detect|scan_lines)\s+do\b/, 1])
+        if (indent = line[/^(\s*)(?:detect|check|scan_lines)\s+do\b/, 1])
           block_end = "#{indent}end\n"
           next "#\n"
         end
 
         fence = line[/^\s*(?:bad|good|ask|practice)\s+<<~["']?(\w+)["']?/, 1]
-        line.match?(/^\s*(?:source|detect|ask|practice|fix|bad|good)\b/) ? "#\n" : line
+        line.match?(/^\s*(?:source|detect|check|ask|practice|fix|bad|good)\b/) ? "#\n" : line
       end.join
     end
   end

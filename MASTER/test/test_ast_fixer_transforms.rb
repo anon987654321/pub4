@@ -2,7 +2,7 @@
 
 require "fileutils"
 require_relative "test_helper"
-require "review/scan/law_dsl"
+require "review/scan/law_tree"
 require_relative "../lib/fix/scan/ast_fixer"
 
 class TestAstFixerTransforms < Minitest::Test
@@ -735,13 +735,6 @@ class TestAstFixerTransforms < Minitest::Test
   end
 
   def rule(id)
-    Master::Review::Scan::Law.registry.each do |klass|
-      instance = klass.new
-      return instance if instance.id == id
-    rescue ArgumentError
-      next
-    end
-
-    flunk("missing rule #{id}")
+    Master::Review::Scan::LawTree.find(id) || flunk("missing rule #{id}")
   end
 end

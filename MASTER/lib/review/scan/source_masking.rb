@@ -20,14 +20,16 @@ module Master
     # deliberately untouched — several laws mean to read comments.
     def without_comment_lines(code) = code.gsub(COMMENT_LINE) { |line| " " * line.length }
 
-    # A LawDSL registration spells its own forbidden shape in `fires:` and
-    # `does_not_fire:`, which is the one place that shape is legitimately
-    # written. Law.conduct makes the same argument for law/'s bad/good and
-    # neutralizes them before a law judges law/; this is the registry's half.
+    # A Law spells its own forbidden shape in its `bad` and `good` fixtures,
+    # which is the one place that shape is legitimately written. Law.conduct
+    # makes the same argument and neutralizes them before a law judges law/;
+    # this is the same for a detector reading law/. `fires:` and
+    # `does_not_fire:` are the retired LawDSL spellings, kept for any file still
+    # quoting one.
     #
     # One physical line, because that is what a declaration is here and being
     # loose about it would blank a continuation carrying real code.
-    RULE_FIXTURE_LINE = /^[ \t]*(?:fires|does_not_fire):[^\n]*/
+    RULE_FIXTURE_LINE = /^[ \t]*(?:(?:fires|does_not_fire):|(?:bad|good)[ \t]+(?:"|%\(|'))[^\n]*/
     def without_law_fixtures(code) = code.gsub(RULE_FIXTURE_LINE) { |line| " " * line.length }
 
     # A word inside a regex literal is a token in a pattern, not an instance of

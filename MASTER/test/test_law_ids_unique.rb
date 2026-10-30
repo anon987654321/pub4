@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-# Loads the detector tree so Law.registry holds every class the scanner builds.
-require_relative "../lib/review/scan/law_dsl"
+# Loads law/, every Law the scanner builds.
+require_relative "../lib/review/scan/law_tree"
 
 # SINGULARITY, applied to the scanner itself. One id registered by two classes
 # counts every matching line twice, and LawRegistryAudit#build_registry_ids folds
@@ -14,7 +14,7 @@ require_relative "../lib/review/scan/law_dsl"
 # walks on every file.
 class TestLawIdsUnique < Minitest::Test
   def test_scanner_registry_uses_law_as_the_canonical_concept
-    %i[Law LawDSL LawFactory LawRegistryAudit].each do |name|
+    %i[LawTree Detector CanonicalLawAdapter LawRegistryAudit].each do |name|
       assert Master::Review::Scan.const_get(name, false), "Master::Review::Scan::#{name} is the scanner's Law vocabulary"
     end
   end
@@ -37,9 +37,9 @@ class TestLawIdsUnique < Minitest::Test
   # post-fold count, so the audit cannot mask a collision.
   def test_the_registry_audit_does_not_mask_a_collision
     audit = Master::Review::Scan::LawRegistryAudit.new(root: Master::ROOT)
-    built = Master::Review::Scan::Law.registry
-      .select { |klass| audit.shipped?(klass) }
-      .map { |klass| Master::Review::Scan::LawFactory.build(klass, root: Master::ROOT).id.to_s.downcase }
+    built = Master::Review::Scan::LawTree.build
+      .select { |law| audit.shipped?(law.class) }
+      .map { |law| law.id.to_s.downcase }
 
     assert_equal built.size, built.uniq.size,
                  "the scanner registry has a duplicate id that LawRegistryAudit's " \

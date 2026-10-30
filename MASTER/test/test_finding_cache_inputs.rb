@@ -32,13 +32,12 @@ class TestFindingCacheInputs < Minitest::Test
     Dir.singleton_class.prepend(watch.call(%i[glob children entries each_child]))
     require "master"
     require "fix/scan/finding_cache"
-    Master::Review::Scan::LawDSL
+    require "review/scan/law_tree"
     samples = { "lib/example.rb" => "class Example\n  def run(a, b)\n    puts a\n  end\nend\n",
                 "app/views/example.html.erb" => "<div><p>hi</p></div>\n",
                 "app/javascript/example.js" => "const a = 1;\n" }
-    reads = Master::Review::Scan::Law.registry.reject(&:reads_beyond_file?).to_h do |klass|
+    reads = Master::Review::Scan::LawTree.build.reject(&:reads_beyond_file?).to_h do |law|
       $observed = []
-      law = Master::Review::Scan::LawFactory.build(klass, root: Master::ROOT)
       samples.each do |relative, code|
         law.check(code, path: File.join(Master::ROOT, relative))
       rescue StandardError

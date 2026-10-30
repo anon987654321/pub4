@@ -223,8 +223,9 @@ class TestScanSpeedPaths < Minitest::Test
   def probe_definition(reads, pattern)
     Law::Definition.new(id: :probe, source: nil, severity: :warn, mode: :violation, languages: [], scope: :line,
 surfaces: nil, law_scope: nil, lifecycle: :active, autofix: :review, path: nil, path_exclude: nil,
-                        absent: nil, detect: ->(line) { line.match?(pattern) }, ask: nil, practice: nil,
-                        reads_comments: reads, fix: "f", bad: "b", good: "g")
+                        absent: nil, detect: ->(line) { line.match?(pattern) }, check: nil, detector: nil, ask: nil, practice: nil,
+                        reads_comments: reads, fix: "f", bad: "b", good: "g", tags: [], example_path: nil,
+                        reads_beyond_file: false, transform: nil, proved_by: nil, measures: nil, adapters: [])
   end
 
   # The line-by-line reading scan_lines did before the subject view.

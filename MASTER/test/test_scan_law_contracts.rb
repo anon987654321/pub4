@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/law_dsl"
-require_relative "../law/detectors/structural_laws"
+require "review/scan/law_tree"
 require_relative "../lib/fix/scan/ast_fixer"
 
 class TestScanLawContracts < Minitest::Test
@@ -414,13 +413,12 @@ class TestScanLawContracts < Minitest::Test
   # Comparing every law id caught that pair and would have kept the principle
   # out of the system prompt to protect against a disagreement neither half can
   # have.
+  # There is one Law population now, so a second detector for an id can only be
+  # a second ::Law.define, which the catalogue preflight refuses. Held anyway.
   def test_canonical_law_ids_do_not_have_duplicate_detector_registrations
-    law_ids = law_definitions.values.select(&:scannable?).map { |law| law.id.to_s.upcase }.to_set
-    registry_ids = Master::Review::Scan::Law.registry.filter_map do |klass|
-      Master::Review::Scan::LawFactory.registry_id(klass, root: Master::ROOT)&.upcase
-    end
-    duplicate_ids = law_ids & registry_ids
-    assert_empty duplicate_ids, "canonical detector identities also registered in scanner DSL: #{duplicate_ids.to_a.sort.join(", ")}"
+    ids = law_definitions.values.map { |law| law.id.to_s.upcase }
+    duplicate_ids = ids.tally.select { |_id, count| count > 1 }.keys
+    assert_empty duplicate_ids, "Law identities defined twice: #{duplicate_ids.sort.join(", ")}"
   end
 
   # Every registered rule over one planted source carrying what fools a line

@@ -32,12 +32,7 @@ module Master
       end
 
       def load_laws!
-        require File.expand_path("../../law/definition", __dir__)
-        ::Law.load_all(File.expand_path("../../law", __dir__)) if ::Law.definitions.empty?
-        require File.join(Master::ROOT, "lib", "review", "scan", "law_dsl") unless
-          defined?(Master::Review::Scan::LawDSL)
-        require File.join(Master::ROOT, "lib", "review", "scan", "law_factory") unless
-          defined?(Master::Review::Scan::LawFactory)
+        Master::Review::Scan::LawTree.load!
 
         report = Master::Review::Scan::LawRegistryAudit.new(root: Master::ROOT).call
         report.assert_reconciled!
@@ -50,18 +45,11 @@ module Master
       end
 
       def summary_for(id, entry)
-        law = executable_definitions[id.to_s.upcase] || detector_definitions[id.to_s.upcase]
-        details = if law
-                    [law.respond_to?(:ask) ? law.ask : nil,
-                     law.respond_to?(:practice) ? law.practice : nil,
-                     law.respond_to?(:fix) ? law.fix : nil,
-                     law.respond_to?(:description) ? law.description : nil]
-                  else
-                    []
-                  end
+        law = executable_definitions[id.to_s.upcase]
+        details = law ? [law.ask, law.practice, law.fix] : []
         summary = details.find { |value| !value.to_s.strip.empty? }.to_s
         if summary.empty?
-          sources = Array(entry["definition_sources"]) + Array(entry["detector_sources"])
+          sources = Array(entry["definition_sources"])
           summary = sources.map { |source| File.basename(source.to_s, ".rb") }.join(" / ")
         end
         summary = "Universal requirement; use the canonical Law definition and evidence." if summary.empty?
@@ -82,17 +70,6 @@ module Master
 
       def executable_definitions
         @executable_definitions ||= ::Law.definitions.values.to_h { |law| [law.id.to_s.upcase, law] }
-      end
-
-      def detector_definitions
-        @detector_definitions ||= Master::Review::Scan::Law.registry.each_with_object({}) do |klass, result|
-          location = klass.name && Object.const_source_location(klass.name)&.first
-          next if location&.match?(%r{(?:\A|/)(?:test|spec)/})
-
-          law = Master::Review::Scan::LawFactory.build(klass, root: Master::ROOT)
-          id = law.id.to_s.upcase
-          result[id] ||= law unless id.empty?
-        end
       end
     end
   end

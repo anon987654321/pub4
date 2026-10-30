@@ -18,7 +18,6 @@ module Master
 
       declarations = source_declarations(law_root, repository_root)
       declarations.concat(normalize_generated(generated_declarations))
-      detector_declarations = source_detector_declarations(File.join(law_root, "detectors"), repository_root)
       errors = []
       validate_manifest!(catalogue, entries, errors)
 
@@ -27,13 +26,6 @@ module Master
 
         locations = rows.map { |row| "#{row[:source]}:#{row[:line]}" }
         errors << "duplicate definition: #{id} at #{locations.join(', ')}"
-      end
-
-      detector_declarations.group_by { |row| row[:id] }.each do |id, rows|
-        next if rows.size < 2
-
-        locations = rows.map { |row| row[:source] }
-        errors << "duplicate detector identity: #{id} in #{locations.join(', ')}"
       end
 
       declarations.each do |declaration|
@@ -82,7 +74,7 @@ module Master
             next
           end
 
-          unless File.dirname(resolved) == law_root
+          unless LOAD_DIRS.map { |dir| File.join(law_root, dir).chomp("/") }.include?(File.dirname(resolved))
             errors << "#{id} definition source is outside Law.load_all's direct-file scope: #{source}"
             next
           end
@@ -90,35 +82,6 @@ module Master
           declared_ids = Array(by_source[source]).map { |row| row.fetch(:id) }
           errors << "#{id} names #{source}, but that source does not define #{id}" unless declared_ids.include?(id.to_s)
         end
-
-        Array(entry["detector_sources"]).map(&:to_s).each do |source|
-          unless source.start_with?("MASTER/law/detectors/") && !source.split("/").include?("..")
-            errors << "#{id} has invalid detector source path: #{source}"
-            next
-          end
-
-          resolved = File.expand_path(source, repository_root)
-          expected_root = File.expand_path(File.join(law_root, "detectors"))
-          unless resolved.start_with?(expected_root + File::SEPARATOR) && File.dirname(resolved) == expected_root && File.file?(resolved)
-            errors << "#{id} detector source does not exist directly inside the detector directory: #{source}"
-            next
-          end
-
-          declared_ids = detector_declarations.select { |row| row.fetch(:source) == source }.map { |row| row.fetch(:id) }
-          errors << "#{id} names #{source}, but that source does not declare detector #{id}" unless declared_ids.include?(id.to_s)
-        end
-      end
-
-      detector_declarations.each do |declaration|
-        id = declaration.fetch(:id)
-        entry = entries[id]
-        unless entry.is_a?(Hash)
-          errors << "detector #{id} in #{declaration[:source]} has no catalogue entry"
-          next
-        end
-
-        sources = Array(entry["detector_sources"]).map(&:to_s)
-        errors << "detector #{id} in #{declaration[:source]} is not listed in detector_sources" unless sources.include?(declaration.fetch(:source))
       end
 
       raise ArgumentError, "Law catalogue preflight failed:\n- #{errors.uniq.join("\n- ")}" unless errors.empty?
@@ -135,8 +98,10 @@ module Master
       errors << "law_catalogue.universal_by_default must be true" unless catalogue["universal_by_default"] == true
       errors << "law_catalogue.missing_assessor must be inconclusive" unless catalogue["missing_assessor"] == "inconclusive"
 
+      # detector_sources is retired: every Law is one Law.define, and its
+      # definition source is the file that holds its detector.
       allowed_entry_fields = %w[
-        universal modalities definition_sources detector_sources severity mode lifecycle autofix
+        universal definition_sources severity mode lifecycle autofix
         languages surfaces path path_pattern path_exclude
       ]
       expected_modalities = Master::LawVocabulary::MODALITIES.map(&:to_s).sort
@@ -195,9 +160,8 @@ module Master
 
         unknown_entry_fields = entry.keys.map(&:to_s) - allowed_entry_fields
         errors << "Law #{id} has unknown catalogue field(s): #{unknown_entry_fields.sort.join(', ')}" unless unknown_entry_fields.empty?
-        errors << "Law #{id} must be marked universal" unless entry["universal"] == true
-        modalities = Array(entry["modalities"]).map(&:to_s).uniq.sort
-        errors << "Law #{id} modalities must be #{expected_modalities.join(', ')}" unless modalities == expected_modalities
+        # universal_by_default holds unless an entry says false: a domain Law.
+        errors << "Law #{id} universal must be true or false" unless [nil, true, false].include?(entry["universal"])
         policy = defaults.merge(entry)
         severity = policy["severity"].to_s.strip
         if severity.empty?
@@ -242,23 +206,21 @@ module Master
           end
         end
 
-        %w[definition_sources detector_sources].each do |field|
-          next unless entry.key?(field)
-          unless entry[field].is_a?(Array) && entry[field].all? { |source| source.is_a?(String) && !source.strip.empty? }
-            errors << "Law #{id} #{field} must be a list of non-empty paths"
-          end
+        if entry.key?("definition_sources") &&
+           !(entry["definition_sources"].is_a?(Array) &&
+             entry["definition_sources"].all? { |source| source.is_a?(String) && !source.strip.empty? })
+          errors << "Law #{id} definition_sources must be a list of non-empty paths"
         end
 
-        definition_sources = Array(entry["definition_sources"]).map(&:to_s)
-        detector_sources = Array(entry["detector_sources"]).map(&:to_s)
-        if (definition_sources + detector_sources).empty?
-          errors << "Law #{id} has no definition_sources or detector_sources"
-        end
+        errors << "Law #{id} has no definition_sources" if Array(entry["definition_sources"]).empty?
       end
     end
 
+    # The two directories Law.load_all reads, and so the only homes a definition source may name.
+    LOAD_DIRS = [""].freeze
+
     def source_declarations(law_root, repository_root)
-      Dir.glob(File.join(law_root, "*.rb")).sort.flat_map do |path|
+      LOAD_DIRS.flat_map { |dir| Dir.glob(File.join(law_root, dir, "*.rb")).sort }.flat_map do |path|
         source = Pathname.new(path).relative_path_from(Pathname.new(repository_root)).to_s.tr("\\", "/")
         body = File.read(path, encoding: "UTF-8")
         syntax = Ripper.sexp(body)
@@ -269,28 +231,18 @@ module Master
           declaration = declaration_from(node, source)
           declarations << declaration if declaration
         end
-        declarations
+        declarations.concat(templated_declarations(body, source))
       end
     end
 
-    def source_detector_declarations(detector_dir, repository_root)
-      Dir.glob(File.join(detector_dir, "*.rb")).sort.flat_map do |path|
-        source = Pathname.new(path).relative_path_from(Pathname.new(repository_root)).to_s.tr("\\", "/")
-        body = File.read(path, encoding: "UTF-8")
-        ids = body.scan(/LawDSL\.law\s*\(?\s*:([A-Za-z0-9_]+)/).flatten
-        ids.concat(body.scan(/declare\s+id:\s*["']([^"']+)["']/).flatten)
-
-        # One detector family derives five catalogue identities from the traits
-        # declared in its %w list. Expand that finite list; do not treat the
-        # shared template name as an identity or leave those IDs unmeasured.
-        body.scan(/LawDSL\.law\s+:"([^"]*#\{([A-Za-z_]\w*)\}[^"]*)"/).each do |template, variable|
-          enum = body.scan(/%w\[([^\]]+)\]\.each\s+do\s+\|#{Regexp.escape(variable)}\|/).flatten
-          ids.concat(enum.flat_map do |values|
-            values.split.map { |value| template.gsub("\#{#{variable}}", value) }
-          end)
-        end
-
-        ids.map { |id| { id: id.to_s, source: } }
+    # One detector family derives five catalogue identities from the traits
+    # declared in its %w list. Expand that finite list; do not treat the shared
+    # template name as an identity or leave those IDs unmeasured.
+    def templated_declarations(body, source)
+      body.scan(/Law\.define\(:"([^"]*#\{([A-Za-z_]\w*)\}[^"]*)"\)/).flat_map do |template, variable|
+        enum = body.scan(/%w\[([^\]]+)\]\.each\s+do\s+\|#{Regexp.escape(variable)}\|/).flatten
+        enum.flat_map { |values| values.split.map { |value| template.gsub("\#{#{variable}}", value) } }
+            .map { |id| { id:, source:, line: 1 } }
       end
     end
 
@@ -315,7 +267,9 @@ module Master
 
       receiver = call[1]
       method = call[3]
-      return unless receiver.is_a?(Array) && receiver[0] == :var_ref &&
+      # `Law.define` in law/, `::Law.define` in a file whose Laws sit
+      # inside Master::Review::Scan::Laws where a bare Law names another constant.
+      return unless receiver.is_a?(Array) && %i[var_ref top_const_ref].include?(receiver[0]) &&
                     receiver[1].is_a?(Array) && receiver[1][0] == :@const && receiver[1][1] == "Law"
       return unless method.is_a?(Array) && method[0] == :@ident && method[1] == "define"
 
@@ -323,8 +277,9 @@ module Master
       token = symbol && symbol.dig(1, 1)
       return unless token.is_a?(Array) && %i[@const @ident].include?(token[0])
 
+      # Catalogue identities are case-sensitive and a few detector Laws are lower case (rubocop, reek).
       id = token[1]
-      return unless id.match?(/\A[A-Z][A-Z0-9_]*\z/)
+      return unless id.match?(/\A[A-Za-z][A-Za-z0-9_]*\z/)
 
       { id:, source:, line: method.dig(2, 0) }
     end

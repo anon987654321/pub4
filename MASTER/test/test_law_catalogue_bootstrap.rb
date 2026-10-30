@@ -50,36 +50,35 @@ class TestLawCatalogueBootstrap < Minitest::Test
     end
   end
 
-  def test_detector_catalogue_rejects_a_source_that_does_not_declare_its_id
+  def test_a_detector_file_source_must_define_its_id
     Dir.mktmpdir("law-catalogue-detector-source") do |root|
       law_dir = File.join(root, "MASTER", "law")
-      detector_dir = File.join(law_dir, "detectors")
-      FileUtils.mkdir_p(detector_dir)
+      FileUtils.mkdir_p(law_dir)
       File.write(File.join(law_dir, "actual.rb"), "Law.define(:ACTUAL_ID) do\nend\n")
-      File.write(File.join(detector_dir, "detector.rb"), "LawDSL.law :actual_detector do\nend\n")
+      File.write(File.join(law_dir, "detector.rb"), "::Law.define(:actual_detector) do\nend\n")
 
       catalogue = {
         "entries" => {
           "ACTUAL_ID" => { "definition_sources" => ["MASTER/law/actual.rb"] },
-          "actual_detector" => { "detector_sources" => ["MASTER/law/detectors/detector.rb"] },
-          "orphan_detector" => { "detector_sources" => ["MASTER/law/detectors/detector.rb"] },
+          "actual_detector" => { "definition_sources" => ["MASTER/law/detector.rb"] },
+          "orphan_detector" => { "definition_sources" => ["MASTER/law/detector.rb"] },
         },
       }
       error = assert_raises(ArgumentError) do
         Master::LawCataloguePreflight.validate!(law_dir:, catalogue:, repo_root: root)
       end
 
-      assert_match(/orphan_detector names MASTER\/law\/detectors\/detector\.rb, but that source does not declare detector orphan_detector/, error.message)
+      assert_match(/orphan_detector names MASTER\/law\/detector\.rb, but that source does not define orphan_detector/, error.message)
+      refute_match(/actual_detector names/, error.message)
     end
   end
 
-  def test_new_detector_declaration_without_catalogue_membership_is_reported
+  def test_a_detector_file_law_without_catalogue_membership_is_reported
     Dir.mktmpdir("law-catalogue-unlisted-detector") do |root|
       law_dir = File.join(root, "MASTER", "law")
-      detector_dir = File.join(law_dir, "detectors")
-      FileUtils.mkdir_p(detector_dir)
+      FileUtils.mkdir_p(law_dir)
       File.write(File.join(law_dir, "actual.rb"), "Law.define(:ACTUAL_ID) do\nend\n")
-      File.write(File.join(detector_dir, "detector.rb"), "LawDSL.law :unlisted_detector do\nend\n")
+      File.write(File.join(law_dir, "detector.rb"), "::Law.define(:unlisted_detector) do\nend\n")
 
       error = assert_raises(ArgumentError) do
         Master::LawCataloguePreflight.validate!(
@@ -89,7 +88,24 @@ class TestLawCatalogueBootstrap < Minitest::Test
         )
       end
 
-      assert_match(/detector unlisted_detector in MASTER\/law\/detectors\/detector\.rb has no catalogue entry/, error.message)
+      assert_match(/missing catalogue entry for unlisted_detector \(MASTER\/law\/detector\.rb/, error.message)
+    end
+  end
+
+  # One Law system: a second kind of source field is a second system.
+  def test_detector_sources_is_no_longer_a_catalogue_field
+    Dir.mktmpdir("law-catalogue-retired-field") do |root|
+      law_dir = File.join(root, "MASTER", "law")
+      FileUtils.mkdir_p(law_dir)
+      File.write(File.join(law_dir, "actual.rb"), "Law.define(:ACTUAL_ID) do\nend\n")
+
+      entry = { "severity" => "info",
+                "definition_sources" => ["MASTER/law/actual.rb"], "detector_sources" => ["MASTER/law/actual.rb"] }
+      error = assert_raises(ArgumentError) do
+        Master::LawCataloguePreflight.validate!(law_dir:, catalogue: { "entries" => { "ACTUAL_ID" => entry } }, repo_root: root)
+      end
+
+      assert_match(/Law ACTUAL_ID has unknown catalogue field\(s\): detector_sources/, error.message)
     end
   end
 
@@ -104,38 +120,35 @@ class TestLawCatalogueBootstrap < Minitest::Test
         "surfaces" => ["whole_file"],
         "defaults" => {},
         "entries" => {
-          "ACTUAL_ID" => { "universal" => false, "modalities" => [], "definition_sources" => [] },
-          "bad-id" => { "universal" => true, "modalities" => %w[lexical semantic visual] },
+          "ACTUAL_ID" => { "universal" => "yes", "modalities" => [], "definition_sources" => [] },
+          "bad-id" => {},
         },
       }
       error = assert_raises(ArgumentError) do
         Master::LawCataloguePreflight.validate!(law_dir:, catalogue:, repo_root: root)
       end
 
-      assert_match(/Law ACTUAL_ID must be marked universal/, error.message)
-      assert_match(/Law ACTUAL_ID modalities must/, error.message)
+      assert_match(/Law ACTUAL_ID universal must be true or false/, error.message)
+      assert_match(/Law ACTUAL_ID has unknown catalogue field\(s\): modalities/, error.message)
       assert_match(/Law ACTUAL_ID has no effective severity/, error.message)
-      assert_match(/Law ACTUAL_ID has no definition_sources or detector_sources/, error.message)
+      assert_match(/Law ACTUAL_ID has no definition_sources/, error.message)
       assert_match(/invalid Law catalogue identity.*bad-id/, error.message)
-      assert_match(/Law bad-id has no definition_sources or detector_sources/, error.message)
+      assert_match(/Law bad-id has no definition_sources/, error.message)
     end
   end
 
   def test_dynamic_detector_templates_expand_to_literal_catalogue_ids
     Dir.mktmpdir("law-catalogue-dynamic-detector") do |root|
-      detector_dir = File.join(root, "MASTER", "law", "detectors")
-      FileUtils.mkdir_p(detector_dir)
-      path = File.join(detector_dir, "detector.rb")
-      File.write(path, <<~RUBY)
+      law_dir = File.join(root, "MASTER", "law")
+      FileUtils.mkdir_p(law_dir)
+      File.write(File.join(law_dir, "detector.rb"), <<~'DETECTOR')
         %w[USEFUL HONEST].each do |trait|
-          LawDSL.law :"RAMS_\#{trait}" do
+          ::Law.define(:"RAMS_#{trait}") do
           end
         end
-      RUBY
+      DETECTOR
 
-      declarations = Master::LawCataloguePreflight.source_detector_declarations(
-        detector_dir, root
-      )
+      declarations = Master::LawCataloguePreflight.source_declarations(law_dir, root)
 
       assert_equal %w[RAMS_HONEST RAMS_USEFUL], declarations.map { |row| row.fetch(:id) }.sort
     end
@@ -154,8 +167,6 @@ class TestLawCatalogueBootstrap < Minitest::Test
         "unknown_registry" => true,
         "entries" => {
           "ACTUAL_ID" => {
-            "universal" => true,
-            "modalities" => %w[lexical semantic visual],
             "definition_sources" => ["MASTER/law/actual.rb"],
             "severity" => "warning",
             "mode" => "silent_pass",

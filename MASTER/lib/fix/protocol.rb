@@ -334,13 +334,8 @@ end
         ::Law.definitions.values
       end
 
-      def registry_count
-        return unless defined?(Master::Review::Scan::Law) && Master::Review::Scan::Law.respond_to?(:registry)
-
-        Array(Master::Review::Scan::Law.registry).size
-      rescue StandardError
-        nil
-      end
+      # Laws that carry a detector class: what the self-registering registry once counted.
+      def registry_count = laws.count(&:detector)
 
       def inventory(target:, root:)
         target = File.realpath(target)

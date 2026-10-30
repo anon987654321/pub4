@@ -107,7 +107,7 @@ module Operator
     def build_scanner
       $LOAD_PATH.unshift(File.join(MASTER_ROOT, "lib")) unless $LOAD_PATH.include?(File.join(MASTER_ROOT, "lib"))
       require "master"
-      require "review/scan/law_dsl"
+      require "review/scan/law_tree"
       Master::Fix::Scanner.build(root: Master::ROOT)
     end
 

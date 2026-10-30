@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/law_dsl"
+require "review/scan/law_tree"
 
 class TestWebRules < Minitest::Test
   def test_prefer_tag_helpers_flags_simple_wrapper

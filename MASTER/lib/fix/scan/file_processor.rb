@@ -633,7 +633,7 @@ module Master
 
         # `defined?` rather than a bare constant: this file is reachable from
         # `require "master"` alone, and Laws::SemanticLaw only exists once
-        # review/scan/law_dsl has loaded the registry. Naming it unguarded
+        # review/scan/law_tree has loaded law/. Naming it unguarded
         # turned every scan on that path into "scan failed: uninitialized
         # constant", which reads as a broken file rather than a missing require.
         #

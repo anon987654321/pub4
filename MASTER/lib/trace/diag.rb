@@ -8,7 +8,7 @@ module Master
       RING_LINES = 8
       CACHE_EVENT_LIMIT = 12
 
-      def initialize(homeostat:, breaker:, logging:, scan_registry: Master::Review::Scan::Law, event_bus: nil)
+      def initialize(homeostat:, breaker:, logging:, scan_registry: Master::Review::Scan::LawTree, event_bus: nil)
         @homeostat = homeostat
         @breaker = breaker
         @logging = logging
@@ -63,8 +63,8 @@ module Master
 
       def section_laws
         return ["laws: — (no registry)"] unless @registry
-        count = @registry.respond_to?(:registry) ? @registry.registry.size : 0
-        ["laws: #{count} registered"]
+        count = @registry.respond_to?(:ids) ? @registry.ids.size : 0
+        ["laws: #{count} defined"]
       end
 
       def section_ring

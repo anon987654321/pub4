@@ -9,8 +9,10 @@ Before planning or taking action, load MASTER's canonical context in this order:
 1. Read `MASTER/data/soul.yml`.
 2. Read `MASTER/data/laws.yml`.
 3. For unfamiliar or broad work, run `ruby MASTER/tools/agent_context.rb --tree` and use its output to establish the repository's structure and relevant context.
-4. Read the applicable Law entries in `MASTER/data/laws.yml`; inspect Ruby detector/evaluator implementations under `MASTER/law/` only to understand how those entries are enforced. Policy belongs in YAML; Ruby implementations must not create a parallel policy definition.
+4. Read the applicable Law entries in `MASTER/data/laws.yml`, and each Law's one `Law.define`, the Ruby under `MASTER/law/`. The catalogue entry holds the operator's decisions about a Law (severity, lifecycle, autofix permission, scope and exemptions); the `Law.define` holds what makes its detector correct (the detector, its fixtures or the test that proves it, its tags and repair transform). Neither restates the other.
 5. Read `MASTER/AGENTS.md` for the repository workflow and task guidance before editing.
+
+Shell commands obey `MASTER/data/laws.yml` `zsh.banned_commands`; the PreToolUse hook in `.claude/settings.json` refuses a command that breaks it and names the replacement.
 
 Follow MASTER's current instructions for any additional context required by the task. Do not substitute remembered instructions, summaries, or assumptions for the live configuration and source.
 
@@ -22,7 +24,7 @@ Do not copy MASTER settings, defaults, limits, Laws, exemptions, workflow defini
 
 When a canonical setting changes, change its owning source and follow MASTER's documented process for maintaining generated contracts. Do not create a second source that must be kept in sync manually.
 
-`MASTER/data/laws.yml` is the canonical Law catalogue. Ruby under `MASTER/law/detectors/` implements detectors, not a competing policy catalogue. There is no compatibility directory or alias for retired Law paths. Each Law must have one canonical catalogue entry, a traceable Ruby detector or explicit semantic/visual evaluator, and coverage across lexical, semantic, and visual review.
+`MASTER/data/laws.yml` is the canonical Law catalogue. MASTER has one Law system: every Law is one catalogue entry and one `Law.define`, whose detector is a `detect` regex, a `check` block or a detector class, in one flat `MASTER/law/`. There is no compatibility directory or alias for retired Law paths. Each Law must have one canonical catalogue entry, a traceable Ruby detector or explicit semantic/visual evaluator, and coverage across lexical, semantic, and visual review.
 
 ## Task-specific context
 

@@ -3,15 +3,14 @@
 require_relative "test_helper"
 require "open3"
 require "rbconfig"
-require "review/scan/law_dsl"
+require "review/scan/law_tree"
 require_relative "../lib/operator/law_reach"
 
 class TestLawRegistryAudit < Minitest::Test
-  # Defined here on purpose: Law.inherited registers every subclass in the
-  # process, so this class is in the registry the moment this file loads, and a
-  # census that counted it would answer a different number depending on what
-  # else the process had run.
-  class LawDefinedByATest < Master::Review::Scan::Law
+  # Defined here on purpose: a detector class a test defines lives in the same
+  # process as the shipped ones, and a census that counted it would answer a
+  # different number depending on what else the process had run.
+  class LawDefinedByATest < Master::Review::Scan::Detector
     def initialize
       super
       @id = "rule_defined_by_a_test"
@@ -132,8 +131,7 @@ class TestLawRegistryAudit < Minitest::Test
   end
 
   def test_a_law_a_test_defined_is_not_in_the_corpus
-    assert_includes Master::Review::Scan::Law.registry, LawDefinedByATest,
-                    "the premise: defining the class registers it"
+    refute audit.shipped?(LawDefinedByATest), "the premise: a class a test defines is not shipped"
 
     refute_includes audit.ungraphed_law_ids, "rule_defined_by_a_test"
     refute_includes audit.call.registry_ids, "rule_defined_by_a_test"
@@ -149,15 +147,16 @@ class TestLawRegistryAudit < Minitest::Test
     assert_includes ids, "no_god_class"
   end
 
-  def test_every_catalogue_entry_is_universal_and_has_all_three_modalities
+  # Universal by default and assessed in the catalogue's three modalities; an
+  # entry repeats neither, and may say `universal: false` for a domain Law.
+  def test_every_catalogue_entry_names_its_ruby_source_and_no_constant_flags
     manifest = Master.law("law_catalogue").fetch("entries")
-    expected = %w[lexical semantic visual]
 
     assert_operator manifest.size, :>, 400
     manifest.each do |id, entry|
-      assert_equal true, entry["universal"], "#{id} must be universal"
-      assert_equal expected, Array(entry["modalities"]).map(&:to_s).sort, "#{id} modality coverage"
-      sources = Array(entry["definition_sources"]) + Array(entry["detector_sources"])
+      refute entry.key?("modalities"), "#{id} repeats the catalogue's modalities"
+      refute_equal true, entry["universal"], "#{id} repeats universal_by_default"
+      sources = Array(entry["definition_sources"])
       refute_empty sources, "#{id} must point to Ruby source"
     end
   end

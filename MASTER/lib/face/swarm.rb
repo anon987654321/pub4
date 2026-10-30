@@ -53,7 +53,7 @@ module Master
       def build(count: nil, seed: 0, root: Master::ROOT, config: self.config, mobile: false)
         limit = particle_budget(root:, config:, mobile:)
         amount = [[Integer(count || limit), 0].max, limit].min
-        rng = Random.new(Integer(seed))
+        rng = ::Random.new(Integer(seed))
         field = config.fetch("target_field")
         Array.new(amount) do
           x, y, z = sample_position(rng, field)
@@ -122,7 +122,7 @@ module Master
       # One semi-implicit Euler step. Positions are snapshotted first so the
       # neighbor pass cannot depend on iteration order. Supplying an RNG makes
       # the force step reproducible in tests and recorded renders.
-      def update!(particles, mode:, dt:, config: self.config, rng: Random.new)
+      def update!(particles, mode:, dt:, config: self.config, rng: ::Random.new)
         delta = Float(dt)
         return particles unless delta.positive?
 
@@ -263,7 +263,7 @@ module Master
           @root = root
           @config = Swarm.config(root:)
           @particles = Swarm.build(root:, config: @config, seed:, count:, mobile:)
-          @rng = Random.new(Integer(seed) + 1)
+          @rng = ::Random.new(Integer(seed) + 1)
           @last_time = nil
         end
 

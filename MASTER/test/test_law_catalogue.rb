@@ -14,7 +14,9 @@ require_relative "../lib/operator/law_reach"
 # Both directions are pinned throughout: no false positive, and every check
 # still fires on the thing it exists to find.
 class TestRuleCatalogue < Minitest::Test
-  Law = Struct.new(:id, :detect, :fix, :severity, keyword_init: true)
+  Law = Struct.new(:id, :detect, :fix, :severity, keyword_init: true) do
+    def scannable? = !detect.nil?
+  end
 
   # laws.yml's own shape: each law a top-level key carrying a priority and a statement. `catalogue` builds one
   # from rows with an id; the extra keys (learned_smells) sit beside them as they do in the file.
@@ -77,14 +79,11 @@ class TestRuleCatalogue < Minitest::Test
     with_body(body) { assert_equal ["C"], Operator::LawHygiene.missing_metadata }
   end
 
-  # Replaces the three populations the hygiene checks below read.
-  def with_populations(laws: {}, registry: {})
+  # Replaces the one Law population the hygiene checks below read.
+  def with_populations(laws: {})
     hygiene = Operator::LawHygiene
-    originals = { loaded_laws: hygiene.method(:loaded_laws), dsl_ids: hygiene.method(:dsl_ids),
-                  dsl_severities: hygiene.method(:dsl_severities) }
+    originals = { loaded_laws: hygiene.method(:loaded_laws) }
     hygiene.define_singleton_method(:loaded_laws) { laws }
-    hygiene.define_singleton_method(:dsl_ids) { registry.keys.map(&:to_s) }
-    hygiene.define_singleton_method(:dsl_severities) { registry.transform_keys(&:to_s) }
     yield
   ensure
     originals.each { |name, method| hygiene.define_singleton_method(name, method) }
@@ -175,8 +174,8 @@ class TestRuleCatalogue < Minitest::Test
     assert_equal ["FAIL_VISIBLY"], ids([{ "id" => "FAIL_VISIBLY", "autofix" => true }])
   end
 
-  # TRAILING_WHITESPACE exists only as a LawDSL class, the third population.
-  def test_a_detector_in_the_registry_is_a_detector
+  # TRAILING_WHITESPACE is a `check` Law under law/.
+  def test_a_check_law_is_a_detector
     assert_equal ["TRAILING_WHITESPACE"], ids([{ "id" => "TRAILING_WHITESPACE", "autofix" => true }])
   end
 

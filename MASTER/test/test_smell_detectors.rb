@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/law_dsl"
+require "review/scan/law_tree"
 
 # The four detectors from the old backlog's "Rule and AST-detector backlog". Each is
 # tested the way law/ tests its own: one source it must flag, and one it must

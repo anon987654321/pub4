@@ -11,13 +11,9 @@ module Master
       module_function
 
       def dangling_law_ids(root:)
-        Master::Review::Scan::LawDSL
-        registry = Master::Review::Scan::Law.registry
-        return [] if registry.size < MIN_REGISTRY_SIZE
+        registered = Master::Review::Scan::LawTree.ids.map(&:upcase).to_set
+        return [] if registered.size < MIN_REGISTRY_SIZE
 
-        registered = registry.filter_map do |klass|
-          Master::Review::Scan::LawFactory.registry_id(klass, root:)&.upcase
-        end.to_set
         registered |= executable_law_ids
 
         map = Master::Ground::Map::LawMap.load(root:)

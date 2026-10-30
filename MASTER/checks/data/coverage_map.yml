@@ -68,7 +68,7 @@ instruments:
   - name: web_laws (html/javascript detectors)
     sees: ERB views and frontend javascript under the four surfaces
     verified: false
-    verify: MASTER/law/html.rb, MASTER/law/javascript.rb, MASTER/law/detectors/web_laws.rb — copy their actual path lists
+    verify: MASTER/law/html.rb, MASTER/law/javascript.rb, MASTER/law/web.rb — copy their actual path lists
     globs:
       - RAILS/amber/app/views/**/*.html.erb
       - RAILS/bsdports/app/views/**/*.html.erb

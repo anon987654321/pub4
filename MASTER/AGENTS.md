@@ -28,10 +28,10 @@ pub4 is governed by MASTER. Read the authority chain before editing:
 
 1. `MASTER/data/soul.yml` — constitutional absolutes and anti-simulation.
 2. `MASTER/data/laws.yml` — the canonical Law catalogue, identity manifest, universal scope, modality contract and global assessment surfaces.
-3. `MASTER/law/*.rb` and `MASTER/law/detectors/*.rb` — Ruby executable definitions and detector/evaluator implementations. Each Law identity must have one catalogue entry; implementation source paths are recorded in that entry.
-4. `MASTER/lib/review/scan/` — scanner runtime, finding model, registration and orchestration only. It is not a second Law source directory.
+3. `MASTER/law/*.rb` — one `Law.define` per Law, whose detector is a `detect` regex, a `check` block or a detector class (`Review::Scan::Detector`). Each Law identity has one catalogue entry, and that entry's `definition_sources` names the file holding its `Law.define`.
+4. `MASTER/lib/review/scan/` — scanner runtime, finding model and orchestration only; `LawTree` builds what the scanner runs from `Law.definitions`. It is not a second Law source directory.
 
-Authority is `soul.yml` > `laws.yml` > Ruby enforcement > checks and tree contracts > agent-harness prose. `law_catalogue.entries` is the single identity inventory. Each entry must declare `universal: true`, `modalities: [lexical, semantic, visual]`, and its Ruby source path(s); the global `surfaces` list also lives in `laws.yml`. `LawRegistryAudit.reconciled?` is a blocking identity/source-integrity gate: `source_drift`, missing source files, duplicate definitions and incomplete modality declarations must not be hidden. A Law without a deterministic Ruby detector is recorded as `manifest_without_deterministic_detector` coverage debt; its lexical assessment remains INCONCLUSIVE rather than being called clean. Semantic/visual review must receive the full catalogue independent of file language or source path. A declared source file is not proof that the corresponding detector or runtime assessment has executed.
+Authority is `soul.yml` > `laws.yml` > Ruby enforcement > checks and tree contracts > agent-harness prose. `law_catalogue.entries` is the single identity inventory. Each entry names its Ruby source path(s); every Law is universal (`universal_by_default`) and assessed in the catalogue's three `modalities` unless its entry says `universal: false` (a domain Law), so neither is repeated per entry. The global `surfaces` list also lives in `laws.yml`. `LawRegistryAudit.reconciled?` is a blocking identity/source-integrity gate: `source_drift`, missing source files, and duplicate definitions must not be hidden. A Law without a deterministic Ruby detector is recorded as `manifest_without_deterministic_detector` coverage debt; its lexical assessment remains INCONCLUSIVE rather than being called clean. Semantic/visual review must receive the full catalogue independent of file language or source path. A declared source file is not proof that the corresponding detector or runtime assessment has executed.
 
 `MASTER/docs/synonyms.yml` is glossary-only: a Law names the requirement, a check names the instrument, and proof is evidence. `MASTER/checks/checks.yml` routes operational checks; it does not create Law identities or normative policy. The glossary and check registry cannot override the authority chain. Edit this marked source block and regenerate the root agent files with `cd MASTER && rake docs:agent_contracts`; never create another policy catalogue.
 
@@ -549,11 +549,12 @@ in `OPENBSD/CLAUDE.md`.
   also owns its enforcement policy — severity, mode, languages, `path`/`path_pattern`,
   `path_exclude`, lifecycle, autofix and assessment surfaces, over the catalogue's
   `defaults` — and `Law::Builder` and the scanner read it from there; a `Law.define`
-  block has no method to declare it again. The migration is NOT complete: statements/
-  questions, fixes, examples, line/file scope and the registry adapters' `applies_to`
-  and transform names still live in `Law.define` and `LawDSL` calls. Do not describe
-  ID/source reconciliation as full policy reconciliation. Missing evidence stays
-  INCONCLUSIVE.
+  block has no method to declare it again. The two registries are gone (2026-10-30):
+  `LawDSL`, `LawFactory` and the self-registering `Scan::Law` class were folded into
+  `Law.define`, so a Law's detector, fixtures (or `proved_by` test), tags, example
+  path and repair `transform` live in its one `Law.define` and nowhere else. Statements,
+  questions and fixes are written there too. Do not describe ID/source reconciliation
+  as full policy reconciliation. Missing evidence stays INCONCLUSIVE.
 - **No second record beside memory.** A belief store of verified, inferred and
   contradicted facts, an execution-context object and a durable notification
   queue each copy what memory, fiber locals and `StandingOrders` already hold.

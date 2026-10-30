@@ -171,11 +171,7 @@ module Master
         def law_scope_summary(laws)
           counts = Hash.new(0)
           Array(laws).each do |law|
-            languages = if law.class.respond_to?(:dsl_langs)
-              Array(law.class.dsl_langs).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
-            else
-              []
-            end
+            languages = law.respond_to?(:languages) ? Array(law.languages).map(&:to_s).reject(&:empty?) : []
             scope = languages.empty? ? "all" : languages.join("/")
             counts[scope] += 1
           end

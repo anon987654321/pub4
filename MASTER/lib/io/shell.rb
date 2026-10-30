@@ -28,7 +28,10 @@ module Master
 
       # What zsh commands may not call, derived directly from data/laws.yml.
       # The law is the only vocabulary; absence is a load failure, never a fallback.
-      BANNED_IN_ZSH = Array(Master.load_laws.fetch("zsh").fetch("banned_commands")).map(&:to_s).freeze
+      # The same reader judges the coding-harness hook, so a line refused there is
+      # refused here.
+      GNU_TEXT_TOOLS = GnuTextTools.new(Master.load_laws.fetch("zsh"))
+      BANNED_IN_ZSH = GNU_TEXT_TOOLS.banned
 
       INTERACTIVE_RE = /\b(
         vim?|nano|less|more|pager|git\s+add\s+-[ip]|
@@ -67,8 +70,18 @@ module Master
 
       def preflight_error(command)
         verify_binaries(command) || blocked_error(command) || sandbox_error(command) ||
-          force_error(command) || batch_delete_error(command) || writable_error(command) ||
-          interactive_error(command)
+          banned_tool_error(command) || force_error(command) || batch_delete_error(command) ||
+          writable_error(command) || interactive_error(command)
+      end
+
+      # This only warned once: it published zsh:banned_tool_warning and ran the
+      # command, so the law MASTER holds every other agent to bound nothing here.
+      def banned_tool_error(command)
+        names = GNU_TEXT_TOOLS.banned_in(command)
+        return if names.empty?
+
+        @bus&.publish("zsh:banned_tool_refused", tools: names, command:)
+        Result.err(GNU_TEXT_TOOLS.refusal(names), category: :validation)
       end
 
       # Ground::Policy::Sandbox was written from an adversarial corpus — `rm -fr ~`
@@ -154,8 +167,6 @@ module Master
 
       def publish_before(command)
         @bus&.publish("tool:before", tool: NAME, command:)
-        banned = BANNED_IN_ZSH.select { |binary| command.match?(/\b#{Regexp.escape(binary)}\b/) }
-        @bus&.publish("zsh:banned_tool_warning", tools: banned, command:) if banned.any?
       end
 
       def successful_result(command, raw)

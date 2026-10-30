@@ -7,7 +7,7 @@ require "yaml"
 class LayoutCheckEnforcementContractTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   LAWS = File.join(ROOT, "MASTER/data/laws.yml")
-  SURFACE_LAWS = File.join(ROOT, "MASTER/law/detectors/surface_laws.rb")
+  SURFACE_LAWS = File.join(ROOT, "MASTER/law/surface.rb")
   LAYOUT_SUITE = File.join(ROOT, "MASTER/checks/lib/layout_suite.rb")
   CHECKS = File.join(ROOT, "MASTER/checks/checks.yml")
   MINIMAL_ENDGAME = File.join(ROOT, "RAILS/__shared/app/assets/stylesheets/_surface_chrome_endgame.scss")
@@ -38,7 +38,7 @@ class LayoutCheckEnforcementContractTest < Minitest::Test
 
     source = File.read(SURFACE_LAWS, encoding: "UTF-8")
     assert Ripper.sexp(source), "surface laws must remain valid Ruby"
-    assert_includes source, "LawDSL.law :GRID_STRUCTURE"
+    assert_includes source, "::Law.define(:GRID_STRUCTURE)"
     assert_includes source, "grid-like direct children use absolute offsets and a fixed wide width"
   end
 

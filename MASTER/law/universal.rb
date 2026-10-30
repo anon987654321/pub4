@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # law/universal.rb — every universal law, one Law.define per law.
-# DEAD_CODE lives once, in the scanner registry (MASTER/law/detectors/ruby_laws.rb): it anchors the
+# DEAD_CODE lives once, in the scanner registry (MASTER/law/ruby.rb): it anchors the
 # terminator to the line start, walks indentation to tell a dedent (block
 # over, next line reachable) from a continuation, and knows else/elsif/when/
 # rescue/ensure open new reachability. This file regex called `x = return_val`
@@ -636,18 +636,6 @@ end
 
 # Constitutional migration batch 3: kernel and foundational principles.
 
-Law.define(:ONE_SOURCE) do
-  source "DRY — The Pragmatic Programmer (Hunt & Thomas, 1999)"
-  ask "Is the same logic or data defined in multiple authoritative places?"
-  fix "Extract one authoritative representation and make all consumers reference it."
-  bad <<~'X'
-    MAX_RETRIES = 3; Config::MAX_RETRIES = 3
-  X
-  good <<~'X'
-    MAX_RETRIES = Config::MAX_RETRIES
-  X
-end
-
 Law.define(:DECOUPLE) do
   source "The Pragmatic Programmer — decoupling"
   ask "Are there implicit couplings between modules that should be explicit dependencies?"
@@ -745,30 +733,6 @@ Law.define(:LEAST_ASTONISHMENT) do
 end
 
 # Constitutional migration batch 4: architecture and security principles.
-
-Law.define(:NO_GOD_CLASS) do
-  source "Refactoring code smell: Large Class / God Object (Fowler)"
-  ask "Does one class accumulate unrelated responsibilities that should have separate owners?"
-  fix "Decompose into focused objects with explicit responsibilities."
-  bad <<~'X'
-    class Application; def users; end; def billing; end; def render; end; def mail; end; end
-  X
-  good <<~'X'
-    class Users; end; class Billing; end
-  X
-end
-
-Law.define(:FILE_SPRAWL) do
-  source "MASTER-native — collapse before adding; flat hierarchy"
-  ask "Are tiny files or one-file directories adding structure without carrying meaningful independent responsibility?"
-  fix "Absorb tiny artifacts into their natural owner before creating another boundary."
-  bad <<~'X'
-    lib/foo/bar.rb
-  X
-  good <<~'X'
-    lib/foo.rb
-  X
-end
 
 Law.define(:INFORMATION_HIDING) do
   source "Information hiding (David Parnas; Ousterhout)"
@@ -1096,18 +1060,6 @@ Law.define(:SELF_EXPLAINING) do
   X
 end
 
-Law.define(:TRAILING_COMMAS) do
-  source "Ruby/JS style — trailing commas in multiline literals"
-  ask "Does a multiline collection or argument list omit a trailing comma that stabilizes diffs?"
-  fix "Add the trailing comma to multiline collections and argument lists."
-  bad <<~'X'
-    options = {\n  timeout: 2\n}
-  X
-  good <<~'X'
-    options = {\n  timeout: 2,\n}
-  X
-end
-
 Law.define(:SILENCE_ON_SUCCESS) do
   source "Unix philosophy — Rule of Silence"
   ask "Does a successful operation emit output that the operator does not need?"
@@ -1204,18 +1156,6 @@ Law.define(:ERROR_CONTEXT) do
   X
 end
 
-Law.define(:COMMENTS_AS_DEODORANT) do
-  source "Refactoring — comments as deodorant (Fowler/Beck)"
-  ask "Is a comment compensating for code or prose that could instead be rewritten to make the intent obvious?"
-  fix "Refactor the underlying artifact first; keep comments for rationale that cannot be encoded directly."
-  bad <<~'X'
-    # increment i; i += 1
-  X
-  good <<~'X'
-    i += 1
-  X
-end
-
 Law.define(:POSTEL) do
   source "Postel's Law / Robustness Principle"
   ask "Does this boundary reject safely normalizable valid variation or emit unnecessarily strict structure that callers do not need?"
@@ -1264,18 +1204,6 @@ Law.define(:HUMBLE_OBJECT) do
   X
 end
 
-Law.define(:PATTERN_EXTRACTION) do
-  source "MASTER-native — extract recurring structure"
-  ask "Is the code close to a known reusable pattern whose extraction would genuinely reduce complexity rather than add ceremony?"
-  fix "Extract a pattern only when recurring structure earns the abstraction."
-  bad <<~'X'
-    if cache.hit?; cache.read; else; fetch; cache.write; end
-  X
-  good <<~'X'
-    result = Cache.fetch(key) { fetch }
-  X
-end
-
 # Constitutional migration batch 6a: SOLID and abstraction laws.
 
 Law.define(:SRP) do
@@ -1287,54 +1215,6 @@ Law.define(:SRP) do
   X
   good <<~'X'
     class Invoice; def calculate; end; end; class InvoiceRenderer; end; class InvoiceMailer; end
-  X
-end
-
-Law.define(:OPEN_CLOSED) do
-  source "Open-Closed Principle (Bertrand Meyer; SOLID)"
-  ask "Must existing core code be modified whenever a new supported variant is added?"
-  fix "Extend through stable interfaces, registries, or composition where that reduces repeated core edits."
-  bad <<~'X'
-    case format; when :json; render_json; when :xml; render_xml; end
-  X
-  good <<~'X'
-    renderers.fetch(format).call(document)
-  X
-end
-
-Law.define(:LISKOV) do
-  source "Liskov Substitution Principle (Barbara Liskov, 1987)"
-  ask "Does a subtype violate assumptions or guarantees established by the type it replaces?"
-  fix "Make subtype behavior satisfy the established contract or use a different abstraction."
-  bad <<~'X'
-    class ReadOnlyStore < Store; def save(x); raise "no"; end; end
-  X
-  good <<~'X'
-    class ReadOnlyStore < ReadStore; end
-  X
-end
-
-Law.define(:INTERFACE_SEGREGATION) do
-  source "SOLID — Interface Segregation"
-  ask "Does an interface force implementations to stub or ignore methods they do not need?"
-  fix "Split broad interfaces into focused contracts."
-  bad <<~'X'
-    class Printer; def print; end; def scan; raise NotImplementedError; end; end
-  X
-  good <<~'X'
-    Printable = Data.define; Scannable = Data.define
-  X
-end
-
-Law.define(:DEPENDENCY_INVERSION) do
-  source "SOLID — Dependency Inversion Principle"
-  ask "Does high-level policy directly instantiate concrete dependencies that should be replaceable?"
-  fix "Depend on stable abstractions and inject concrete implementations at the boundary."
-  bad <<~'X'
-    class Checkout; def call; Stripe::Charge.create; end; end
-  X
-  good <<~'X'
-    class Checkout; def initialize(payments:); @payments = payments; end; end
   X
 end
 
@@ -1359,18 +1239,6 @@ Law.define(:COMPOSABLE) do
   X
   good <<~'X'
     normalized = normalize(input); validated = validate(normalized)
-  X
-end
-
-Law.define(:LAW_OF_DEMETER) do
-  source "Law of Demeter (Ian Holland)"
-  ask "Does this code reach through several objects or expose knowledge of a collaborator's internals?"
-  fix "Talk only to immediate collaborators and encapsulate the traversal."
-  bad <<~'X'
-    order.customer.address.city
-  X
-  good <<~'X'
-    order.shipping_city
   X
 end
 
@@ -1496,54 +1364,6 @@ Law.define(:PURE_FUNCTIONS) do
   X
 end
 
-Law.define(:PRIMITIVE_OBSESSION) do
-  source "Refactoring — Primitive Obsession (Fowler)"
-  ask "Are primitives carrying domain rules that would be clearer and safer as a value object?"
-  fix "Create a focused value object when the primitive has behavior or invariants."
-  bad <<~'X'
-    email = "a@b.com"; Email.send(email)
-  X
-  good <<~'X'
-    email = EmailAddress.parse(raw); Mailer.send(email)
-  X
-end
-
-Law.define(:FEATURE_ENVY) do
-  source "Refactoring — Feature Envy (Fowler)"
-  ask "Is this method more interested in another object's data than its own?"
-  fix "Move the behavior toward the data it operates on or extract a suitable collaborator."
-  bad <<~'X'
-    def total(order); order.items.sum { |i| i.price * i.qty }; end
-  X
-  good <<~'X'
-    class Order; def total; items.sum { |i| i.price * i.qty }; end; end
-  X
-end
-
-Law.define(:MIDDLE_MAN) do
-  source "Refactoring — Middle Man (Fowler)"
-  ask "Does this class mostly delegate methods to another object without adding meaningful policy?"
-  fix "Remove the unnecessary middle layer or give it a real abstraction."
-  bad <<~'X'
-    def name; @user.name; end; def email; @user.email; end
-  X
-  good <<~'X'
-    attr_reader :user
-  X
-end
-
-Law.define(:LAZY_CLASS) do
-  source "Refactoring — Lazy Class (Fowler)"
-  ask "Is this class too small or trivial to justify a separate abstraction boundary?"
-  fix "Inline or merge it unless the boundary provides independent value."
-  bad <<~'X'
-    class NameHelper; def call(x); x.name; end; end
-  X
-  good <<~'X'
-    user.name
-  X
-end
-
 Law.define(:DIVERGENT_CHANGE) do
   source "Refactoring — Divergent Change (Fowler)"
   ask "Is one class repeatedly changed for several unrelated causes?"
@@ -1634,18 +1454,6 @@ Law.define(:ERROR_RECOVERY) do
   X
 end
 
-Law.define(:AESTHETIC_MINIMALISM) do
-  source "Nielsen Heuristic #8 — aesthetic and minimalist design"
-  ask "Does this output contain information that does not earn its place for the current task?"
-  fix "Remove redundant status, decoration, and secondary detail from the primary path."
-  bad <<~'X'
-    render title: title, debug: true, metadata: metadata, raw: raw
-  X
-  good <<~'X'
-    render title: title
-  X
-end
-
 Law.define(:MATCH_REAL_WORLD) do
   source "Nielsen Heuristic #2 — match between system and real world"
   ask "Does the interface expose implementation jargon where a familiar real-world term would be clearer?"
@@ -1732,18 +1540,6 @@ Law.define(:CACHE_LLM) do
   X
 end
 
-Law.define(:NO_FLAG_ARGUMENTS) do
-  source "Clean Code — no flag arguments"
-  ask "Does a boolean argument make one function perform two different jobs or select unrelated behavior?"
-  fix "Split the responsibilities into named operations or objects."
-  bad <<~'X'
-    render(document, true)
-  X
-  good <<~'X'
-    render_full(document)
-  X
-end
-
 Law.define(:NO_OUTPUT_ARGUMENTS) do
   source "Clean Code — no output arguments"
   ask "Does this function mutate an input argument to return a result indirectly?"
@@ -1806,18 +1602,6 @@ Law.define(:SURFACE_AREA) do
   X
 end
 
-Law.define(:PROGRESSIVE_DISCLOSURE) do
-  source "Progressive disclosure (Jakob Nielsen, NN/g)"
-  ask "Does this present all complexity at once instead of revealing detail as the user's task requires it?"
-  fix "Lead with the common path and reveal advanced controls when they become relevant."
-  bad <<~'X'
-    settings.show_all_advanced_controls
-  X
-  good <<~'X'
-    settings.show_basic; settings.reveal_advanced
-  X
-end
-
 Law.define(:FEEDBACK_LOOPS) do
   source "Nielsen feedback / checkpoint principle"
   ask "Does this perform substantial work without reporting progress, checkpoints, or a recoverable state?"
@@ -1827,18 +1611,6 @@ Law.define(:FEEDBACK_LOOPS) do
   X
   good <<~'X'
     backup.run { |checkpoint| emit(checkpoint) }
-  X
-end
-
-Law.define(:DATA_CLASS) do
-  source "Refactoring — Data Class (Fowler)"
-  ask "Does this class mainly hold data while behavior that belongs with that data is scattered across other modules?"
-  fix "Move cohesive behavior toward the data owner or replace the holder with a meaningful domain abstraction."
-  bad <<~'X'
-    class Money; attr_reader :cents; end; Tax.total(money)
-  X
-  good <<~'X'
-    class Money; attr_reader :cents; def taxed(rate); cents * rate; end; end
   X
 end
 
@@ -2038,4 +1810,484 @@ Law.define(:RENDERED_VALUES) do
   fix "Use the owning token, configuration, source asset or explicit operator decision and verify the actual rendered result."
   bad "A second color/font/spacing table drifts from the canonical tokens, or a visual claim is made without inspecting the render."
   good "Values flow from their owning source, original media stays truthful, and rendered evidence confirms the outcome."
+end
+
+module Master
+  module Review
+    module Scan
+      module Laws
+
+      # SQL strings embedded in Ruby DB adapter files are expected — only flag
+      # actual mixed-medium template files.
+        # Retired registry twins — each lives once, in law/:
+        #   MEANINGFUL_NAMES, WHY_NOT_WHAT
+        # (test_scan_rule_contracts proves each reaches findings through the bridge).
+
+        # NO_MULTIPLE_LANGUAGES lives once, in law/css.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
+
+        # SAFE_NAVIGATION lives once, in law/ruby.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
+
+        ::Law.define(:FEW_ARGUMENTS) do
+          tags %i[SMALL_PARTS]
+          fix "ideal is zero to two positional arguments"
+          bad "def place(north, east, depth)\nend\n"
+          good "def place(north:, east:, depth:)\nend\n"
+          check do |src, path|
+            lines = src.lines
+
+            lines.each_with_index.filter_map do |line, index|
+              next unless line.match?(/\bdef\s+\w+\(/)
+              args = line[/\(([^)]*)\)/, 1].to_s.split(",").map(&:strip)
+              positional = args.reject { |arg| arg.empty? || arg.start_with?("*", "&") || arg.include?(":") || arg.include?("=") }
+              next unless positional.size >= 3
+
+              finding(line: index + 1, message: "3+ positional args — use keyword arguments or a value object",
+                      blast_radius: signature_radius(lines, index))
+            end
+          end
+        end
+
+        ::Law.define(:N_PLUS_ONE) do
+          tags %i[PERFORMANCE]
+          fix "loading records one-by-one inside a loop"
+          example_path "/repo/RAILS/x/app/models/y.rb"
+          bad "posts.each { |post| post.author.name }\n"
+          good "posts.each { |post| post.title }\n"
+          check do |src, path|
+            # Only meaningful in Rails trees; non-AR enumerable chains are fine.
+            next [] unless path.match?(%r{(?:\A|/)RAILS/.*/(?:app|spec|test)/})
+
+            scan_lines(src, /\.(each|map|collect)\s*(do|\{).*\.\w+\.\w+/,
+              message: "N+1 query candidate — use includes/eager_load")
+          end
+        end
+
+      # Only positional boolean defaults are flag arguments. Keyword defaults
+      # (stream: false, enabled: true) are not — they're fine API design.
+        ::Law.define(:NO_FLAG_ARGUMENTS) do
+          source "Clean Code — no flag arguments"
+          ask "Does a boolean argument make one function perform two different jobs or select unrelated behavior?"
+          tags %i[SMALL_PARTS]
+          fix "Split the responsibilities into named operations or objects."
+          bad "def render(body, cache = true)\nend\n"
+          good "def render(body, cache: true)\nend\n"
+          check do |src, path|
+            src.each_line.with_index(1).filter_map do |line, n|
+              next unless line.match?(/def \w+\(/)
+
+              args_str = line[/\(([^)]*)\)/, 1].to_s
+              args = args_str.split(",").map(&:strip)
+              positional_bool = args.any? do |a|
+                a.match?(/\A\w+\s*=\s*(true|false)\z/) && !a.include?(":")
+              end
+              finding(line: n, message: "boolean flag arg — split into two methods") if positional_bool
+            end
+          end
+        end
+
+      # A chain reaches a stranger when it navigates: order.buyer.profile.address
+      # asks four objects in turn. A step that transforms what the last one
+      # returned is not a new friend, so `files.uniq.sort.reject` and
+      # `text.each_line.with_index.map` talk to one object throughout. Data and
+      # prose have no calls at all: in YAML and Markdown the old line match read
+      # hostnames and file names (pubmed.ncbi.nlm.nih.gov, three.face.module.js)
+      # as chains, and its `.any?` exclusion never matched, because `\b` after
+      # `?` needs a word character to follow. A chain is read from its head
+      # only; one rooted in a constant (Rails.application.config.x) starts at
+      # a global the caller already knows, and is not matched halfway along.
+        DEMETER_TRANSFORMS = %w[
+          map select reject filter filter_map flat_map each each_with_index each_with_object with_index
+          each_line each_char lines chars bytes split uniq sort sort_by min_by max_by group_by partition
+          tally sum count flatten compact reverse first last take drop zip keys values to_a to_h to_s
+          to_i to_f to_sym join strip chomp downcase upcase include? any? all? none? empty? size length
+          find detect slice match? freeze dup tap then gsub sub tr squeeze delete delete_prefix delete_suffix
+          casecmp round abs zero? positive? negative? push merge fetch dig value!
+          forEach filter reduce some every trim toString padStart padEnd toFixed toLowerCase toUpperCase
+          replace startsWith endsWith
+        ].to_set.freeze
+
+        DEMETER_CHAIN = /(?<![\w.@$])(?:@{1,2}|\$)?\b[a-z_]\w*[?!]?(?:\(\))?(?:\.[a-z_]\w*[?!]?(?:\(\))?){3,}/
+        # Platform globals every caller already knows, as a constant receiver is.
+        DEMETER_GLOBALS = %w[document window globalThis].freeze
+
+        DEMETER_NOISE = [
+          %r{\w+://\S+},
+          /%[wi]\[[^\]]*\]/,
+          /["'`][^"'`]*["'`]/,
+          /\b[\w-]+(?:\.[\w-]+)*\.(?:rb|js|mjs|ts|css|scss|erb|html|yml|yaml|json|md|txt|png|svg|jpg)\b/,
+          /\d+(?:\.\d+){2,}/,
+        ].freeze
+
+        ::Law.define(:LAW_OF_DEMETER) do
+          source "Law of Demeter (Ian Holland)"
+          ask "Does this code reach through several objects or expose knowledge of a collaborator's internals?"
+          tags %i[COUPLING]
+          fix "Talk only to immediate collaborators and encapsulate the traversal."
+          bad "city = order.buyer.profile.address\n"
+          good "names = files.uniq.sort.reject(&:empty?)\n"
+          check do |src, path|
+            next [] unless %w[ruby javascript html].include?(language(path))
+            src.each_line.with_index(1).filter_map do |line, n|
+              next if line.lstrip.start_with?("#", "//", "*")
+
+              code = DEMETER_NOISE.reduce(line) { |text, noise| text.gsub(noise, '""') }.gsub(/\([^()]*\)/, "()")
+              reach = code.scan(DEMETER_CHAIN).map do |chain|
+                head, *steps = chain.gsub("()", "").split(".")
+                next 0 if DEMETER_GLOBALS.include?(head)
+
+                [head, *steps.reject { |step| DEMETER_TRANSFORMS.include?(step) }].size
+              end
+              next unless reach.any? { |size| size >= 4 }
+
+              finding(line: n, message: "4-level chain — introduce a local variable or delegation")
+            end
+          end
+        end
+
+      # Generic names: only short or clearly placeholder names. `data` and
+      # `result` are contextually meaningful in most Ruby code.
+
+        ::Law.define(:TYPOGRAPHIC_EXCELLENCE) do
+          tags %i[TYPOGRAPHY]
+          fix "typographic excellence in user-facing text"
+          bad %(warn "..."\n)
+          good %(warn "…"\n)
+          check do |src, path|
+            src.each_line.with_index(1).filter_map do |line, n|
+              next if line.match?(/Open3|capture2|capture3|gsub\(|Shellwords/)
+
+              next if line.match?(/,\s*"--"\s*,|,\s*"--"\s*\)|<<\s*["']--/)
+              # A leading-# line in an .erb file is a doc comment inside an ERB
+              # block — its "..." is an example placeholder, not UI copy.
+              next if path.to_s.end_with?(".erb") && line.lstrip.start_with?("#")
+              next unless line.match?(/["']\.\.\.[\"']|["']--["']/)
+              finding(line: n, message: "ASCII typography — use Unicode ellipsis … and em dash —")
+            end
+          end
+        end
+
+      # Box-drawing glyphs, and only those. A run of dashes or equals signs is
+      # NO_ASCII_LINE_ART's question, and reading it here reported one divider
+      # under two ids while also calling a Markdown table's delimiter row
+      # decoration, when that row is the syntax that makes the table.
+        BOX_DRAWING = /[─-╿]/
+
+        ::Law.define(:TYPOGRAPHY_DISCIPLINE) do
+          tags %i[TYPOGRAPHY]
+          fix "hierarchy via weight and brightness, not decoration"
+          bad "# ╭──── section ────╮\n"
+          good "| name | purpose |\n|------|---------|\n"
+          check do |src, path|
+            scan_lines(src, BOX_DRAWING, message: "box drawing — use whitespace and typographic weight instead")
+          end
+        end
+
+      # NULL_BLINDNESS lives once, in law/ (domain files) — the second
+      # retired twin (see the old backlog). This block's regex matched IS NULL, the
+      # correct form its own message prescribed, and needed a path exemption
+      # to stop reporting the fixer that emits that string as a repair. The
+      # law version detects `= NULL`, proves itself on fixtures the inverted
+      # detector would have failed, and needs no exemption.
+
+      # SECRET_PROXIMITY lives once, in law/ — the third retired twin. The two
+      # regexes were byte-identical; the registry block was a pure duplicate.
+
+# MAGIC_COLOR lives once, in js_laws.rb (applies_to css/scss/html/js — where colors
+# live). A second copy here with no applies_to double-counted every css/scss color
+# under the same id (a SINGULARITY violation) and added no coverage worth keeping.
+
+      # UNBOUNDED_RETRY lives once, in law/ (domain files) — the first of the
+      # 72 law/registry twins retired (see the old backlog). The narrowing this block
+      # learned — keyword not symbol, not predicate, not identifier, not regex
+      # alternation, not a line continuation — moved into the law's detector
+      # with each shape pinned as a good fixture, which is what the registry
+      # version never had. Its law/ self-exemption dies with it:
+      # canonical law/ sources arrive conducted, and rule sources that
+      # spell the pattern in strings are counted and triaged rather than excused by path.
+
+        ::Law.define(:ONE_SOURCE) do
+          source "DRY — The Pragmatic Programmer (Hunt & Thomas, 1999)"
+          ask "Is the same logic or data defined in multiple authoritative places?"
+          tags %i[COUPLING]
+          fix "Extract one authoritative representation and make all consumers reference it."
+          bad %(COUNCIL_PATH = "data/council.yml"\n)
+          good "path = Master::COUNCIL_PATH\n"
+          check do |src, path|
+            next [] if path.to_s.include?("master.rb")
+            patterns = [
+              [/COUNCIL_PATH\s*=/, "define COUNCIL_PATH once in master.rb; reference Master::COUNCIL_PATH"],
+              [/LAWS_PATH\s*=/, "define LAWS_PATH once in master.rb; reference Master::LAWS_PATH"],
+              [/DATA_DIR\s*=\s*File\.join.*\bdata\b/, "use Master::DATA constant"],
+            ]
+
+            src.each_line.with_index(1).flat_map do |line, n|
+              patterns.filter_map { |re, msg| finding(line: n, message: msg) if re.match?(line) }
+            end
+          end
+        end
+
+      # Bias: SIMULATION. soul.yml's anti_simulation forbids will, would, could
+      # and might beside its demand for evidence — a diff for a change, output
+      # for a completion — so the words are forbidden where the program reports
+      # on work: a promise in any file ("I will", "let's"), and a future or
+      # conditional inside a message it prints. A conditional anywhere else
+      # names a hypothetical. "This test would pass having measured nothing"
+      # and "what evidence would falsify your criticism" are both correct, and
+      # every finding sampled over MASTER before this narrowing was that shape.
+        SIMULATION_PROMISE = /\b(?:I|we)\s+(?:will|would)\s+\w+|\blet(?:'s|\s+us)\s+\w+/i
+        SIMULATION_REPORT = /
+          \b(?:puts|print|warn|say|status|info|notice)\b.*["'][^"']*
+          \b(?:will|would|could|might)\s+(?!not\b|have\b)\w+
+        /x
+
+        ::Law.define(:SIMULATION) do
+          tags %i[ANTI_SIMULATION DENSITY]
+          fix "future tense implies without evidence — use indicative past"
+          bad %(warn "the deploy will restart relayd"\n)
+          good %(assert ok, "this test would pass having measured nothing"\n)
+          check do |src, path|
+            next [] unless path.to_s.end_with?(".rb", ".md", ".txt", ".erb")
+
+            src.each_line.with_index(1).filter_map do |line, n|
+              next if line.strip.start_with?("#")
+              next unless line.match?(SIMULATION_PROMISE) || line.match?(SIMULATION_REPORT)
+
+              finding(line: n, message: "simulation language — rewrite in indicative past or present tense")
+            end
+          end
+        end
+
+      # Bias: COMPLETION_THEATER — ellipsis/etc as placeholder outputs.
+      #
+      # A placeholder "etc" is lowercase, bare, and not part of a path. Being loose
+      # about that (/\betc\.?\b/i) matched `require "etc"`, `Etc.nprocessors` and
+      # every /etc/… deploy path — 12 of selfcheck's 71 findings, none real. See
+      # the old backlog, Scanner noise.
+      #
+      # `|`, `:` and `[` join the path characters because a word that sits inside
+      # a regex alternation is a token in a pattern, not prose. Two lines in the
+      # tree were reported for years on that shape and both are lists of real
+      # names: ast_fixer's `%r{/OPENBSD/(?:etc|usr|var)/}` — the OPENBSD mirror
+      # guard, at error severity, so `rake selfcheck` was red on the rule that
+      # protects /etc — and a stdlib allowlist naming `etc` among a dozen others.
+      # Measured over all four trees: exactly those two go, 57 findings stay.
+      # `(` and `)` are deliberately NOT in the sets: "(etc.)" in prose is the
+      # placeholder this rule exists to find.
+        # `-` joins them for the same reason: `"etc-pre-sync"` is a label naming
+        # the directory, and no abbreviation is ever hyphenated onward.
+        PLACEHOLDER_ETC = %r{(?<![\w/|:\[-])etc\.?(?![\w/|\]-])}
+
+        STDLIB_ETC_REQUIRE = /\brequire\s+["']etc["']/
+
+        # /etc is a directory, and the exclusions above only knew it when a
+        # slash was adjacent. Every other way this tree spells that path counted
+        # as theater: File.join(ROOT, "etc", "rc.d"), `OPENBSD/{etc,usr,var}`,
+        # the %w list of directory names in tools/doc_paths.rb — 25 of this
+        # rule's 40 findings on 2026-09-06, none of them a placeholder.
+        # `require "etc"` is the same lesson, learned once for one line.
+        PATH_ETC = /["']etc["']|\{[\w,]*\betc\b[\w,]*\}|\betc(?=\s+(?:usr|var)\b)/
+
+        # A comment is a comment wherever it starts, and in whatever language.
+        # The rule skipped a line that opens with `#` and read the same words as
+        # theater when they followed code, so `|| continue   # skip CAM, TS,
+        # screener, etc.` was a finding and the same sentence on its own line was
+        # not. Ruby's `#{` and a shell `$#` are not comment openers.
+        #
+        # `//` and `/* … */` for the same reason, found when RAILS/master joined
+        # the corpus: a CSS comment reading "(mood changes etc)" and a JS one
+        # listing "style bleed, mood arc, vertical timbre, etc." were the only
+        # two findings in 164 files, and both were prose.
+        #
+        # Per language, because a comment opener in one is data in another. The
+        # first version applied all three everywhere and `CONFIG_GLOBS =
+        # ["etc/crontab*", "etc/*.local", …]` in OPENBSD lost everything from
+        # its `/*` onward — leaving `"etc` at the end of the line, which then
+        # read as the abbreviation. The ratchet caught it at 0 -> 1.
+        HASH_COMMENT = /(?<![$\\])\#(?!\{).*\z/
+
+        SLASH_COMMENT = %r{//.*\z|/\*.*?(?:\*/|\z)}
+        SLASH_COMMENT_EXTENSIONS = %w[.js .mjs .ts .jsx .tsx .css .scss].freeze
+
+        ::Law.define(:COMPLETION_THEATER) do
+          tags %i[ROBUSTNESS COMPLETENESS]
+          fix "ellipsis or etcetera as placeholder violates completeness"
+          bad "handle(first, second, etc.)\n"
+          good %(require "etc"\n)
+          check do |src, path|
+            # In prose "etc." is a word; in code it stands where the work should
+            # be. Markdown is prose, and reading a documented list of examples as
+            # an unfinished implementation is how a rule teaches its readers to
+            # ignore it. An ellipsis still counts in both.
+            prose = path.to_s.end_with?(".md", ".markdown")
+            comment = SLASH_COMMENT_EXTENSIONS.include?(File.extname(path.to_s).downcase) ? SLASH_COMMENT : HASH_COMMENT
+            src.each_line.with_index(1).filter_map do |line, n|
+              stripped = line.strip
+
+              next if stripped.start_with?("#")
+              next if stripped.match?(STDLIB_ETC_REQUIRE)
+              # The marker the framework advertises. scan_lines honours it and
+              # this rule wrote its own loop, so the one line in the tree that
+              # needs it had no way to say so.
+              next if stripped.match?(/scan:\s*intentional\b/)
+
+              code = stripped.gsub(comment, "").rstrip
+              etcetera = !prose && (code.gsub(PATH_ETC, "").match?(PLACEHOLDER_ETC) || code.match?(/\betcetera\b/i))
+              next unless etcetera || code.match?(/\.\.\.\s*$/)
+
+              finding(line: n, message: "completion theater — implement or delete, never placeholder")
+            end
+          end
+        end
+
+        # Interpolation is not injection when the adapter did the quoting. A
+        # bind parameter cannot be an identifier, so
+        # `conn.execute("DELETE FROM #{conn.quote_table_name(table)}")` is the
+        # documented way to name a table — and flagging it tells the reader the
+        # rule does not know the fix it demands. Only an interpolation that is
+        # nothing but one quoting call is spared; a second term inside the
+        # braces still fires.
+        QUOTED_INTERPOLATION = /
+          \A[\w.:@]*\b
+          (?:quote_table_name|quote_column_name|sanitize_sql_array|sanitize_sql|quote)
+          \([^()]*\)\z
+        /x
+        INTERPOLATION = /\#\{([^{}]*)\}/
+
+        ::Law.define(:SQL_INJECTION) do
+          tags %i[SECURITY]
+          fix "parameterize all SQL — never interpolate user input"
+          bad %q(conn.execute("DELETE FROM #{table}")) + "\n"
+          good %q(conn.execute("DELETE FROM #{conn.quote_table_name(table)}")) + "\n"
+          check do |src, path|
+            # The two fixtures above are SQL injection and its fix, spelled out in
+            # this file, so this rule reads its own source as two findings unless
+            # it skips the directory it lives in. COMPLETION_THEATER carries the
+            # same skip for the same reason.
+            src.each_line.with_index(1).filter_map do |line, n|
+              stripped = line.strip
+              next if stripped.start_with?("#")
+
+              # The concatenation branch wanted a closed string before the `+` and
+              # never asked for one, so it read `execute("SELECT a + b FROM t")` —
+              # SQL arithmetic — as concatenation, and missed
+              # `execute("SELECT * FROM " + name)`, which is the shape it is for.
+              match = stripped.match(/\.(?:execute|query)\s*\(.*#\{/) ||
+                      stripped.match(/\.(?:execute|query)\s*\(\s*["'][^"']*["']\s*\+/)
+              next unless match
+
+              interpolated = stripped.scan(INTERPOLATION).flatten
+              next if interpolated.any? && interpolated.all? { |expr| expr.strip.match?(QUOTED_INTERPOLATION) }
+              # A real `.execute(`/`.query(` call is never itself quoted string content —
+              # skip when it sits inside a string literal (e.g. a human-readable label
+              # like "Foo.execute(#{bar})" passed to a logger), which reads as an odd
+              # number of open quote characters before the match on this line.
+              prefix = stripped[0...match.begin(0)]
+              next if prefix.count('"').odd? || prefix.count("'").odd?
+
+              finding(line: n, message: "SQL injection risk — use parameterized queries or ActiveRecord helpers")
+            end
+          end
+        end
+
+        # NO_COLUMN_ALIGN lives once, in law/universal.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
+
+        # STRICT_MODE_ZSH lives once, in law/shell.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
+
+        ::Law.define(:CONTROL_CHARS) do
+          tags %i[ROBUSTNESS]
+          fix "no non-printable control characters in source"
+          bad "value = 1\u0001\n"
+          good "value = 1\t\n"
+          check do |src, path|
+            # Only tab (9), newline (10), and carriage return (13) are legal in
+            # source. A stray SOH/NUL reads fine in most viewers but breaks parsing
+            # or a byte-compare silently — corruption from a concurrent write or a
+            # tool that left a sentinel byte behind. Checked by ordinal so this rule
+            # carries no control character of its own.
+            src.each_line.with_index(1).filter_map do |line, number|
+              next unless line.each_char.any? { |char| ord = char.ord; ord < 9 || (ord > 13 && ord < 32) || ord == 127 }
+
+              finding(line: number, message: "control character in source — corruption, remove it")
+            end
+          end
+        end
+
+        # pledge(2) and unveil(2) restrict a process once, at boot, in a fixed
+        # order: promise the syscalls, deny the filesystem root, open the paths
+        # back, then lock. Ground::Pledge holds that order in stage1_boot! and
+        # stage2_lock!, and a caller that assembles its own
+        # promise string somewhere else restricts a different process than the one
+        # data/laws.yml#law_map pledge_unveil describes.
+        #
+        # Two shapes, and the second is why the wrapper is not simply exempt:
+        # unveiling "/" with anything but the empty permission leaves the whole
+        # filesystem reachable, and that line lives inside lib/ground/pledge.rb.
+        # The choke-point half is what the wrapper is allowed to break.
+        #
+        # A bare `pledge(` is deliberately unmatched. pledge(2) in prose and the
+        # Fiddle extern both read that way, so the namespace is what separates a
+        # call from a mention — and an `include Pledge` caller writing bare
+        # `pledge("stdio")` is outside this rule's reach.
+        ::Law.define(:PLEDGE_STAGED) do
+          tags %i[SECURITY]
+          fix "restrict the process through Ground::Pledge's stages, never a hand-written promise"
+          bad %q(Master::Ground::Pledge.unveil("/", "r")) + "\n"
+          good "Master::Ground::Pledge.stage1_boot!(root)\n"
+          check do |src, path|
+            wrapper = path.to_s.end_with?("lib/ground/pledge.rb")
+            src.each_line.with_index(1).flat_map do |line, number|
+              next [] if line.strip.start_with?("#")
+
+              hits = []
+              permissions = line[%r{\bunveil\(\s*["']/["']\s*,\s*["']([^"']*)["']}, 1]
+              if permissions && !permissions.empty?
+                hits << finding(line: number, message: %(unveil("/", "#{permissions}") leaves the filesystem open — deny the root first))
+              end
+
+              if !wrapper && line.match?(/\bPledge\.(?:pledge|unveil)\s*\(/)
+                hits << finding(line: number, message: "raw pledge/unveil promise — call a Ground::Pledge stage helper")
+              end
+              hits
+            end
+          end
+        end
+
+        # The audit log is the only record of which tools ran, and it is worth
+        # exactly as much as its oldest surviving line. Trace::Log::Audit
+        # subscribes to tool:before and appends; opening that file for writing, or
+        # File.write-ing it without mode "a", discards every earlier entry and
+        # leaves a log that reads full and remembers one turn.
+        #
+        # Scoped to the sinks: a file that subscribes to tool:before is an audit
+        # sink, and this asks how it writes. It does not ask whether every action
+        # publishes tool:before — a subscription that never happens leaves no line
+        # to read — so a tool that mutates without publishing is outside its reach
+        # and stays the gap data/laws.yml#law_map audit_logging records.
+        ::Law.define(:AUDIT_APPEND_ONLY) do
+          tags %i[SECURITY]
+          fix "an audit sink appends to its log and never truncates it"
+          bad %Q(bus.subscribe("tool:before") { |e| record(e) }\nFile.open(@path, "w") { |f| f.puts(line) }\n)
+          good %Q(bus.subscribe("tool:before") { |e| record(e) }\nFile.open(@path, "a") { |f| f.puts(line) }\n)
+          check do |src, path|
+            next [] unless src.match?(/subscribe\(\s*["']tool:before["']/)
+
+            src.each_line.with_index(1).filter_map do |line, number|
+              next if line.strip.start_with?("#")
+              # Rotation renames; only an in-place truncation is the defect.
+              next unless line.match?(/File\.open\s*\([^)]*,\s*["']w\+?["']/) ||
+                          line.match?(/File\.write\s*\((?![^)]*mode:\s*["']a)/) ||
+                          line.match?(/\.truncate\s*\(/)
+
+              finding(line: number, message: %(audit log truncated — append with mode "a", or rotate by rename))
+            end
+          end
+        end
+
+      end
+    end
+  end
 end

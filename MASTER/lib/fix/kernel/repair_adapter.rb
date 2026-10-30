@@ -526,7 +526,7 @@ module Master
         def prompt_context_for(violation:, path:, style:)
           # bin/doctor has no extension; its shebang says ruby, and so does
           # language_for. Labelled "text", the model answered in ruby anyway.
-          lang = Master::Review::Scan::Law::EXT_LANG.fetch(File.extname(path).downcase, nil) ||
+          lang = Master::Review::Scan::Detector::EXT_LANG.fetch(File.extname(path).downcase, nil) ||
                  Master.language_for(path) || "text"
           fix_hint = violation[:fix].to_s.strip
           fix_line = fix_hint.empty? ? "" : "How to fix: #{fix_hint}"
@@ -590,7 +590,7 @@ module Master
         end
 
         def ext_language(ext)
-          Master::Review::Scan::Law::EXT_LANG.fetch(ext.downcase, "text")
+          Master::Review::Scan::Detector::EXT_LANG.fetch(ext.downcase, "text")
         rescue StandardError
           "text"
         end

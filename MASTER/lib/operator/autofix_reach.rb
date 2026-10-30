@@ -12,8 +12,8 @@
 #
 # bare_true: `true` claims a fix without naming it, so nothing can apply it and
 # nothing can check it. A bare-true Law nothing reports is listed separately:
-# whether a Law can be found is LawReach.mechanical's question (law/, the
-# LawDSL registry and `folded_into:`), and a semantic detector at info severity
+# whether a Law can be found is LawReach.mechanical's question (the one
+# ::Law.define population and `folded_into:`), and a semantic detector at info severity
 # is dropped by SemanticLaw's info filter, so its autofix claim is unreachable.
 # Raise the severity, give it a detector, or say `autofix: false`.
 #
@@ -85,8 +85,8 @@ module Operator
 
     def dangling = named_transforms.reject { |n| implemented?(n[:transform]) }
 
-    # Detection is LawReach's question, not this tool's: it knows law/, the
-    # LawDSL registry and `folded_into` as well as the yml columns, and it
+    # Detection is LawReach's question, not this tool's: it knows the
+    # ::Law.define population and `folded_into` as well as the yml columns, and it
     # loads the laws instead of grepping for a literal `Law.define(:ID)`.
     def detectable_ids
       @detectable_ids ||= begin

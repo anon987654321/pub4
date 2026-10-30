@@ -318,14 +318,8 @@ class TestThroughInference < Minitest::Test
   end
 
   def test_rails_rules_registered
-    require_relative "../lib/review/scan/law_dsl"
-    ids = Master::Review::Scan::Law.registry.filter_map do |k|
-      begin
-        k.auto_build? ? k.new.id.to_s.upcase : nil
-      rescue StandardError # scan: intentional — non-buildable rules have no id; nil is the census answer
-        nil
-      end
-    end
+    require_relative "../lib/review/scan/law_tree"
+    ids = Master::Review::Scan::LawTree.ids.map(&:upcase)
     %w[THIN_CONTROLLER NO_LOGIC_IN_VIEW STIMULUS_CONTROLLER_SIZE SCSS_NESTING_DEPTH].each do |id|
       assert_includes ids, id
     end

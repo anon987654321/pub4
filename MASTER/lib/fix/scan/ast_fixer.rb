@@ -6,6 +6,7 @@ require_relative "../../io/exec"
 require "strscan"
 require_relative "ast_fixer/syntax_transforms"
 require_relative "ast_fixer/web_transforms"
+require_relative "ast_fixer/scale_transforms"
 require_relative "ast_fixer/dead_code_and_commas"
 
 module Master
@@ -39,7 +40,12 @@ module Master
           Strategy.new(predicate: :shell?, transforms: %i[add_strict_mode]),
           Strategy.new(predicate: :html?, transforms: %i[add_html_lang add_meta_charset add_viewport_fit add_skip_to_main add_lazy_loading]),
           Strategy.new(predicate: :javascript?, transforms: %i[replace_unreassigned_var convert_for_in_arrays convert_string_concat convert_optional_chaining]),
-          Strategy.new(predicate: :style?, transforms: %i[snap_to_eight_px_rhythm remove_decorative_fx enforce_flat_pixels snap_touch_targets]),
+          Strategy.new(predicate: :style?, transforms: %i[
+            snap_to_design_scale
+            remove_decorative_fx
+            enforce_flat_pixels
+            snap_touch_targets
+          ]),
         ].freeze
 
         # remove_immediate_dead_code and add_trailing_commas are Ruby-AST
@@ -50,6 +56,7 @@ module Master
 
         include SyntaxTransforms
         include WebTransforms
+        include ScaleTransforms
         include DeadCodeAndCommas
 
         # A transform that takes code out is a different risk from one that puts
@@ -111,9 +118,10 @@ module Master
         # law/*.rb fixtures are load-bearing bad inputs: SQUINT_TEST's bad
         # fixture IS four consecutive blank lines, and collapse_blank_lines
         # "fixed" it — the fixture stopped flagging, prove! raised at load,
-        # and LawFactory's keyword-mismatch rescue turned that into half the
-        # law silently missing (every id after squint_test). A file whose job
-        # is to hold the forbidden pattern must never be cleaned of it.
+        # and a keyword-mismatch rescue turned that into half the law silently
+        # missing (every id after squint_test). A file whose job is to hold the
+        # forbidden pattern must never be cleaned of it, and law/
+        # holds fixtures as law/ does.
         LAW_DIR_RE = %r{/law/[^/]+\.rb\z}
 
         # A line no human wrote: minified Workbox bundles run 23k chars/line,

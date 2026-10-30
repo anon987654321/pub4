@@ -196,16 +196,14 @@ module Operator
     # never carried the row; LawRegistryAudit reported dep_graph_gaps and no
     # ceiling anywhere read it.
     def fixture_and_dep_rows
-      [master_row("law_fixture_debt", "data/laws.yml", "registry rules with no worked example") do
+      [master_row("law_fixture_debt", "data/laws.yml", "check Laws with no worked example") do
          $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
          require "master"
-         require "review/scan/law_dsl"
-         unfixtured = Master::Review::Scan::Law.registry.reject do |klass|
-           (klass.respond_to?(:dsl_fires) && (klass.dsl_fires || klass.dsl_does_not_fire)) ||
-             !klass.respond_to?(:dsl_block)
-         end
+         require "review/scan/law_tree"
+         # A detector class is proved by its named test; a `check` carries its own two fixtures or names one.
+         unfixtured = Master::Review::Scan::LawTree.definitions.select { |law| law.check && law.bad.nil? && !law.proved_by }
          [unfixtured.size, Master.law("law_ratchets", root: MASTER).dig("fixture_debt", "without_fixtures"),
-          unfixtured.map(&:name)]
+          unfixtured.map { |law| law.id.to_s }]
        end,
        master_row("law_deps.ungraphed", "data/laws.yml", "registry rules absent from law_deps") do
          $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
