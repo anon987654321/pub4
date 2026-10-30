@@ -18,6 +18,10 @@ module Master
 
       def prompt(root: Master::ROOT) = data(root:).fetch("prompt", {})
       def state(root: Master::ROOT) = data(root:).fetch("state", {})
+      def still_modes(root: Master::ROOT)
+        Array(state(root:).fetch("still_modes", ["idle"])).map(&:to_s).freeze
+      end
+      def still_mode?(mode, root: Master::ROOT) = still_modes(root:).include?(mode.to_s.downcase)
       def spatial(root: Master::ROOT) = data(root:).fetch("spatial", {})
 
       def prompt_measure(root: Master::ROOT)
