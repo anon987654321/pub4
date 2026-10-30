@@ -449,9 +449,9 @@ References:
 The interface layer remains subordinate to the human morphology so the face reads as a
 future person first and a computational being second.
 
-### Stipple point-size hierarchy
+### Stipple raster contract
 
-The stipple shader now combines the existing canonical sample-bias attribute with camera-space depth attenuation, then bounds the requested point size to 1–1.5 pixels. All sizing values live at `MASTER/data/tokens.yml#tokens.face_interface.stipple.point_size` and arrive in the browser through `MASTER_FACE_CONTRACT`; the shader consumes them as uniforms rather than owning a duplicate tuning table. The five-unit reference depth corresponds approximately to the canonical face camera distance; the GPU may clamp point sizes further. The face identity remains carried by sparse contours and voids, not by simply enlarging every point.
+Each stipple carrier is a fixed one-pixel point. Camera-space depth, sample bias, zone weight and luminosity change its brightness; they never enlarge the mark. The only camera-depth brightness controls live at `MASTER/data/tokens.yml#tokens.face_interface.stipple.depth_response` and arrive through `MASTER_FACE_CONTRACT`. The five-unit reference distance tracks the canonical face camera distance; the scale is clamped to the configured 0.75–1.25 range before it is applied to alpha. There are no dormant point-size controls or requested 1–1.5 px sizes. This preserves the face's sparse, high-resolution contours and makes the raster rule predictable across devices.
 
 Stipple motion now honors all three existing reduced-motion signals: the semantic face-state bit, the document accessibility projection (`data-reduced-motion="1"`), and the operating-system `prefers-reduced-motion` preference. When any is active, its shader clock is held at zero and ripple/turbulence are disabled while the still-state profile remains. `FaceState.reducedMotion()` is the canonical resolver for the semantic bit, document projection and OS preference; the sparse field, stipple adapter and FaceWorld delegate to it when available and retain a compatibility fallback for older shells.
 
