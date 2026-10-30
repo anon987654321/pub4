@@ -292,7 +292,7 @@ test("the swarm geometry, force constants, modes and glyph ramp live in face tok
   assert.match(system, /function dialAdjustments\(state = \{\}\)/);
   assert.match(system, /modulation\.turbulence/);
   assert.match(tokens, /residual:\s*\n\s+fraction:\s*0\.18\s+\n\s+strength:\s*0\.12/);
-  assert.match(system, /contract\.stipple_force\?\.\[mode\] === "residual"/);
+  assert.match(system, /const force = contract\.stipple_force\?\.\[mode\] \|\| contract\.stipple_force\?\.idle \|\| "none"/);
   assert.match(system, /homePositions\?\.length >= offset \+ 3/);
   assert.match(tokens, /glyph_ramp:\s*\["·", "˙", "∘", "•", "○", "●"\]/);
   assert.match(tokens, /left:\s*\{ pos: \[-0\.29, 0\.21, 0\.58\], radius: 0\.17, weight: 1\.40 \}/);
