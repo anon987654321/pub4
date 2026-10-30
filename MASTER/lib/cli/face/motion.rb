@@ -77,13 +77,14 @@ module Master
           @t = t
           @heard = heard && state == :listening
           @viseme = viseme
+          still = Master::Face::Contract.still_mode?(state) && events.empty?
           events.each { |event| react(event) }
-          turn(state, t, dt)
+          turn(state, t, dt, still:)
           spin(state, dt)
           ease_mask(state, t)
-          features(state, t, dt, level)
-          drift(state, t, dt, count)
-          look(t)
+          features(state, t, dt, level, still:)
+          drift(state, t, dt, count, still:)
+          look(t, still:)
         end
 
         def particles = @particles
@@ -125,7 +126,17 @@ module Master
 
         # The face stays readable in front view. State changes alter the
         # amount and speed of the turn, but never enough to hide the features.
-        def turn(state, t, dt)
+        def turn(state, t, dt, still: false)
+          if still
+            @yaw.toward(0.0, 2.5, dt)
+            @pitch.toward(0.0, 6.0, dt)
+            @roll.toward(0.0, 4.0, dt)
+            @lean.toward(0.0, 4.0, dt)
+            @dip.toward(0.0, 7.0, dt)
+            @dolly.toward(1.0, 3.8, dt)
+            return
+          end
+
           sway = state == :speaking ? 0.2 * noise(t * 0.4, 1) : 0.05 * noise(t * 0.3, 2)
           @yaw.toward(sway, 2.5, dt)
           @pitch.toward(pitch_for(state, t), 6.0, dt)
@@ -164,7 +175,17 @@ module Master
           nod
         end
 
-        def features(state, t, dt, level)
+        def features(state, t, dt, level, still: false)
+          if still
+            @eye.toward(1.0, 32.0, dt)
+            @gaze_lon.toward(0.0, 26.0, dt)
+            @gaze_lat.toward(0.0, 26.0, dt)
+            @mouth.toward(0.0, 24.0, dt)
+            @mouth_open.toward(1.0, 30.0, dt)
+            @mouth_wide.toward(0.0, 30.0, dt)
+            return
+          end
+
           blink(t)
           @eye.toward(eye_target(state, t), 32.0, dt)
           glance(state, t)
@@ -202,9 +223,11 @@ module Master
           @glance = [@glance[0] + 0.05, @glance[1] + 0.05] if state == :thinking
         end
 
-        def drift(state, t, dt, count)
+        def drift(state, t, dt, count, still: false)
           @particles << spawn(@rng.rand(-1.1..1.1)) while @particles.size < count
           @particles.pop while @particles.size > count
+          return if still
+
           @particles.each { |p| move(p, state, t, dt) }
         end
 
@@ -238,22 +261,22 @@ module Master
           @mix = Masks.mix(state, t, since: @mix_since, from: @mix_from)
         end
 
-        def look(t)
-          breath = 1.0 + (BREATH * Math.sin(t * 1.6))
+        def look(t, still: false)
+          breath = still ? 1.0 : 1.0 + (BREATH * Math.sin(t * 1.6))
           Look.new(
             yaw: @yaw.x, turn: @turn, pitch: @pitch.x, roll: @roll.x, scale: breath * (1.0 + @lean.x),
             dolly: @dolly.x.clamp(0.96, 1.09),
-            bob: (0.02 * Math.sin(t * 1.1)) + (0.01 * noise(t * 0.5, 6)) + @dip.x,
+            bob: still ? 0.0 : (0.02 * Math.sin(t * 1.1)) + (0.01 * noise(t * 0.5, 6)) + @dip.x,
             eye_open: @eye.x.clamp(0.0, 1.5), gaze: [@gaze_lon.x, @gaze_lat.x], mouth: @mouth.x.clamp(0.0, 1.0),
             mouth_open: @mouth_open.x.clamp(0.0, 1.0), mouth_wide: @mouth_wide.x.clamp(-1.0, 1.0),
-            light: LIGHT.fetch("start") + (LIGHT.fetch("orbit") * t),
-            particles: @particles.map { |p| place(p, t) }, mask: @mask, mix: @mix
+            light: still ? LIGHT.fetch("start") : LIGHT.fetch("start") + (LIGHT.fetch("orbit") * t),
+            particles: @particles.map { |p| place(p, t, still:) }, mask: @mask, mix: @mix
           )
         end
 
         # Where a particle sits in the world, with the mouth's ripple on it.
-        def place(particle, t)
-          ripple = 1.0 + (0.08 * @mouth.x * Math.sin((3 * particle.angle) + (9 * t)))
+        def place(particle, t, still: false)
+          ripple = still ? 1.0 : 1.0 + (0.08 * @mouth.x * Math.sin((3 * particle.angle) + (9 * t)))
           r = particle.radius * ripple
           [r * 0.75 * Math.sin(particle.angle), particle.height, r * 0.65 * Math.cos(particle.angle)]
         end
