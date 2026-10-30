@@ -135,14 +135,14 @@ module Master
       # One semi-implicit Euler step. Positions are snapshotted first so the
       # neighbor pass cannot depend on iteration order. Supplying an RNG makes
       # the force step reproducible in tests and recorded renders.
-      def update!(particles, mode:, dt:, config: self.config, rng: ::Random.new)
+      def update!(particles, mode:, dt:, config: self.config, rng: ::Random.new, root: Master::ROOT)
         delta = Float(dt)
         return particles unless delta.positive?
 
         delta = delta.clamp(0.0, 0.05)
         field = config.fetch("target_field")
         multipliers = mode_multipliers(mode, config:)
-        residual_active = Contract.stipple_meaning(mode).fetch("force") == "residual"
+        residual_active = Contract.stipple_meaning(mode, root:).fetch("force") == "residual"
         residual = config.fetch("residual", {})
         residual_fraction = Float(residual.fetch("fraction", 0.0)).clamp(0.0, 1.0)
         residual_strength = [Float(residual.fetch("strength", 0.0)), 0.0].max
@@ -303,7 +303,7 @@ module Master
 
           delta = @last_time ? now - @last_time : 1.0 / 20.0
           @last_time = now
-          Swarm.update!(particles, mode:, dt: delta, config: @config, rng: rng || @rng)
+          Swarm.update!(particles, mode:, dt: delta, config: @config, rng: rng || @rng, root: @root)
         end
 
         def overlay!(frame)
