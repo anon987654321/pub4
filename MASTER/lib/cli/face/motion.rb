@@ -128,12 +128,9 @@ module Master
         # amount and speed of the turn, but never enough to hide the features.
         def turn(state, t, dt, still: false)
           if still
-            @yaw.toward(0.0, 2.5, dt)
-            @pitch.toward(0.0, 6.0, dt)
-            @roll.toward(0.0, 4.0, dt)
-            @lean.toward(0.0, 4.0, dt)
-            @dip.toward(0.0, 7.0, dt)
-            @dolly.toward(1.0, 3.8, dt)
+            [@yaw, @pitch, @roll, @lean, @dip].each { |spring| spring.x = spring.v = 0.0 }
+            @dolly.x = 1.0
+            @dolly.v = 0.0
             return
           end
 
@@ -149,7 +146,11 @@ module Master
         # Turning is constant while at rest; attending eases the head back to
         # the nearest front so the features face the user.
         def spin(state, dt, still: false)
-          if still || !SPINNING.include?(state)
+          if still
+            @turn = (@turn / TAU).round * TAU
+            return
+          end
+          unless SPINNING.include?(state)
             @turn += ((@turn / TAU).round * TAU - @turn) * (1 - Math.exp(-2.5 * dt))
             return
           end
