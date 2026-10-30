@@ -18,6 +18,18 @@ module Shared
       end
     end
 
+    # Dismissing deletes the row: a notification is a message to its reader, and
+    # one they have put away has nothing left to say.
+    def destroy
+      @notification = notification_scope.find(params[:id])
+      @notification.destroy!
+      respond_to do |format|
+        format.html { redirect_back fallback_location: main_app.root_path }
+        format.turbo_stream
+        format.json { head :no_content }
+      end
+    end
+
     def read_all
       notification_scope.unread.update_all(read_at: Time.current, updated_at: Time.current)
       @notifications = notification_scope.recent.limit(50)

@@ -1,4 +1,6 @@
 <% content_for :title, t("notifications.title") %>
+<%# Notification#after_create_commit refreshes this page when a new one arrives. %>
+<%= turbo_stream_from Current.user, :notifications %>
 
 <%= turbo_frame_tag "notifications" do %>
   <div id="notification_header">

@@ -2,7 +2,7 @@
 schema: 1
 apps:
   amber:
-    digest: 37ea2cccd8a96cd5
+    digest: 0f50a9aa8b0cda37
     routes:
       shared/changelog#show:
       - "/changelog"
@@ -187,7 +187,7 @@ apps:
       active_storage/disk#show:
       - "/rails/active_storage/disk/:encoded_key/*filename"
   brgen:
-    digest: 6e09f3282f162d57
+    digest: 7c014d6b87d8016a
     routes:
       shared/changelog#show:
       - "/changelog"
@@ -550,7 +550,7 @@ apps:
       maps/places#show:
       - "/places/:id"
   bsdports:
-    digest: b225ea6fbc1af8a4
+    digest: 23b6ed8c6ad774e6
     routes:
       shared/changelog#show:
       - "/changelog"

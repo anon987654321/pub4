@@ -52,6 +52,32 @@ class NotificationsInboxTest < ActionDispatch::IntegrationTest
     assert_equal 0, Notification.where(user: @user, read_at: nil).count
   end
 
+  # The swipe presses this button, so the button is the contract: it deletes the
+  # reader's own notification and re-renders the grouped list, and it cannot
+  # reach anyone else's.
+  test "dismissing deletes the notification and re-renders the inbox" do
+    mine = Notification.create!(user: @user, actor: @actor, kind: "follow")
+    theirs = Notification.create!(user: @actor, kind: "alert", title: "Not yours", body: "x")
+
+    get notifications_path
+    assert_includes response.body, "swipe-dismiss"
+
+    delete notification_path(mine), as: :turbo_stream
+    assert_response :success
+    assert_includes response.body, "notification_list"
+    assert_not Notification.exists?(mine.id)
+
+    delete notification_path(theirs), as: :turbo_stream
+    assert_response :not_found
+    assert Notification.exists?(theirs.id)
+  end
+
+  test "a new notification refreshes the reader's open inbox" do
+    assert_turbo_stream_broadcasts([@user, :notifications]) do
+      Notification.create!(user: @user, actor: @actor, kind: "follow")
+    end
+  end
+
   test "a guest is sent to sign in" do
     delete session_path
     get notifications_path

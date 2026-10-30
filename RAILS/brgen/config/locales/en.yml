@@ -179,6 +179,8 @@ en:
     open: Open
     mark_as_read: Mark notification as read
     read_state: read
+    dismiss: Dismiss
+    dismiss_label: Dismiss notification
     aria: Notification
     unread_count:
       one: "%{count} unread"

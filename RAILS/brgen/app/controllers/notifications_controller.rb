@@ -22,6 +22,17 @@ class NotificationsController < Shared::NotificationsController
     end
   end
 
+  # The grouped inbox re-renders rather than dropping one row, so a group whose
+  # last notification was dismissed loses its heading and the count follows.
+  def destroy
+    notification_scope.find(params[:id]).destroy!
+    load_notification_index_state
+    respond_to do |format|
+      format.html { redirect_to notifications_path }
+      format.turbo_stream { render :read_all }
+    end
+  end
+
   private
 
   def load_notification_index_state

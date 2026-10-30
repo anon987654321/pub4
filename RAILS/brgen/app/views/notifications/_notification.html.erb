@@ -1,5 +1,9 @@
 <% href = notification_href(notification) %>
-<article id="<%= dom_id(notification) %>" class="<%= notification.read? ? "read" : "unread" %> notification-card">
+<%# Swipe left to dismiss (swipe_dismiss_controller presses the Dismiss button,
+    which works on its own without JavaScript). %>
+<article id="<%= dom_id(notification) %>" class="<%= notification.read? ? "read" : "unread" %> notification-card"
+         data-controller="swipe-dismiss"
+         data-action="pointerdown->swipe-dismiss#start pointermove->swipe-dismiss#move pointerup->swipe-dismiss#end pointercancel->swipe-dismiss#reset">
   <% if href.present? %>
     <h3><%= link_to notification.title, href, class: "notification-title-link" %></h3>
   <% else %>
@@ -17,5 +21,8 @@
     <% unless notification.read? %>
       <%= button_to t("actions.mark_read"), notification_path(notification), method: :patch, data: { turbo_stream: true }, class: "btn btn-ghost btn-sm" %>
     <% end %>
+    <%= button_to t("notifications.dismiss"), notification_path(notification), method: :delete,
+          data: { turbo_stream: true, swipe_dismiss_target: "button" }, class: "btn btn-ghost btn-sm",
+          aria: { label: t("notifications.dismiss_label") } %>
   </div>
 </article>

@@ -182,6 +182,8 @@ nb:
     open: Åpne
     mark_as_read: Merk varsel som lest
     read_state: lest
+    dismiss: Fjern
+    dismiss_label: Fjern varselet
     aria: Varsel
     unread_count:
       one: "%{count} ulest"

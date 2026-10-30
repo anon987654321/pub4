@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-resources :notifications, only: %i[index update] do
+resources :notifications, only: %i[index update destroy] do
   collection do
     patch :read_all
     get :badge
