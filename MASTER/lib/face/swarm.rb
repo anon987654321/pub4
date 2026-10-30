@@ -9,6 +9,7 @@ module Master
     module Swarm
       Particle = Struct.new(
         :x, :y, :z, :vx, :vy, :vz, :depth_rank, :home_depth,
+        :home_x, :home_y, :home_z,
         keyword_init: true
       )
 
@@ -59,7 +60,8 @@ module Master
           x, y, z = sample_position(rng, field)
           Particle.new(
             x:, y:, z:, vx: 0.0, vy: 0.0, vz: 0.0,
-            depth_rank: depth_rank(z), home_depth: z
+            depth_rank: depth_rank(z), home_depth: z,
+            home_x: x, home_y: y, home_z: z
           )
         end
       end
@@ -105,6 +107,17 @@ module Master
         ]
       end
 
+      # Match the browser's seeded(index, 97.3) selection exactly: the same
+      # stable subset retains its original position in both projections.
+      def residual_selected?(index, fraction:)
+        threshold = Float(fraction).clamp(0.0, 1.0)
+        return false unless threshold.positive?
+        return true if threshold >= 1.0
+
+        value = Math.sin((Integer(index) * 12.9898) + (97.3 * 78.233)) * 43_758.5453
+        (value - value.floor) < threshold
+      end
+
       def depth_rank(z)
         (0.5 + (Float(z) * 0.5)).clamp(0.0, 1.0)
       end
@@ -129,6 +142,10 @@ module Master
         delta = delta.clamp(0.0, 0.05)
         field = config.fetch("target_field")
         multipliers = mode_multipliers(mode, config:)
+        residual_active = Contract.stipple_meaning(mode).fetch("force") == "residual"
+        residual = config.fetch("residual", {})
+        residual_fraction = Float(residual.fetch("fraction", 0.0)).clamp(0.0, 1.0)
+        residual_strength = [Float(residual.fetch("strength", 0.0)), 0.0].max
         damping = Float(config.fetch("damping"))
         noise_scale = Float(config.fetch("noise_scale")) * Float(multipliers.fetch("noise"))
         head = field.fetch("head")
@@ -206,6 +223,16 @@ module Master
               force[0] += cohort[0] * strength
               force[1] += cohort[1] * strength
               force[2] += cohort[2] * strength
+            end
+          end
+
+          if residual_active && residual_strength.positive? &&
+             residual_selected?(index, fraction: residual_fraction)
+            particle = particles[index]
+            if [particle.home_x, particle.home_y, particle.home_z].all? { |value| value.is_a?(Numeric) }
+              force[0] += (particle.home_x - x) * residual_strength
+              force[1] += (particle.home_y - y) * residual_strength
+              force[2] += (particle.home_z - z) * residual_strength
             end
           end
 
