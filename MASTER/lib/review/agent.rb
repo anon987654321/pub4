@@ -449,6 +449,10 @@ module Master
       end
 
       def specialized_web_source(message)
+        return evidence_tool("Lovdata") if message.match?(/\b(?:lovdata|LOV-\d{4}-\d{2}-\d+|FOR-\d{4}-\d{2}-\d+)\b/i) ||
+          (message.match?(/§\s*\d/) && message.match?(/\b[\p{L}]+(?:loven|forskriften)\b/i))
+        return evidence_tool("Linguist") if message.match?(/\b(?:etymology|etymological|word origin|linguistic(?:s)?|idiom|pragmatics|register|grammar of|meaning of the word|word usage)\b/i) &&
+          message.match?(/["'“][^"'”]{1,120}["'”]|\b(?:word|phrase)\s+[\p{L}\p{N}'-]{2,80}/i)
         return evidence_tool("CodePen") if message.match?(/codepen\.io|\bcodepen\b/i)
         return evidence_tool("Gist") if message.match?(/gist\.github\.com/i)
         return evidence_tool("YoutubeTranscript") if message.match?(%r{https?://(?:www\.)?youtube\.com/|https?://youtu\.be/})
@@ -462,6 +466,24 @@ module Master
 
       def specialized_web_args(message)
         case
+        when message.match?(/\b(?:lovdata|LOV-\d{4}-\d{2}-\d+|FOR-\d{4}-\d{2}-\d+)\b/i)
+          reference = message[%r{https://(?:www\.)?lovdata\.no/dokument/NL/(?:lov|forskrift)/[^\s)]+}] ||
+                      message[/\b(?:LOV|FOR)-\d{4}-\d{2}-\d+\b/i] || message
+          { reference:, action: message.match?(/\b(?:search|find|which|hvilken|søk|finn)\b/i) ? "search" : "lookup",
+            section: message[/§\s*([0-9]+[a-z]?(?:-[0-9]+[a-z]?)?)/i, 1] }
+        when message.match?(/\b(?:etymology|etymological|word origin|linguistic(?:s)?|idiom|pragmatics|register|grammar of|meaning of the word|word usage)\b/i)
+          language = message.match?(/\b(?:nynorsk|nn)\b/i) ? "nn" : (message.match?(/\b(?:bokmål|norwegian|norsk|nb)\b/i) ? "nb" : (message.match?(/\benglish|en\b/i) ? "en" : "auto"))
+          focus = if message.match?(/\b(?:etymology|etymological|word origin)\b/i) then "etymology"
+                  elsif message.match?(/\bidiom\b/i) then "idiom"
+                  elsif message.match?(/\bgrammar\b/i) then "grammar"
+                  elsif message.match?(/\bregister\b|\bformal|informal|colloquial\b/i) then "register"
+                  elsif message.match?(/\bpragmatics\b|\bwhat (?:does|did) .* mean\b/i) then "pragmatics"
+                  elsif message.match?(/\busage\b/i) then "usage"
+                  else "meaning"
+                  end
+          quoted = message.match(/["'“]([^"'”]{1,120})["'”]/)&.captures&.first
+          unquoted = message.match(/\b(?:word|phrase)\s+([\p{L}\p{N}'-]{2,80})/i)&.captures&.first
+          { term: quoted || unquoted.to_s, language:, focus:, limit: 4 }
         when message.match?(%r{https://codepen\.io/})
           { mode: "inspect", url: message[%r{https://codepen\.io/[^\s)]+}], limit: 8 }
         when message.match?(%r{https://gist\.github\.com/})

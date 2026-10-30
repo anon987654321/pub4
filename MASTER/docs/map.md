@@ -2131,13 +2131,21 @@ Requires: `io/lane_quota`, `io/lane_health`, `io/lane_silence`, `io/model_skip_c
 
 Declares: `Master`, `Master::Io`, `Master::Io::Ledger`, `Master::Io::Ledger::Error`, `Master::Io::Ledger::Malformed`, `Master::Io::Ledger::SchemaMismatch`
 
+## `lib/io/linguist.rb`
+
+Declares: `Master`, `Master::Io`, `Master::Io::Linguist`
+
 ## `lib/io/list_dir.rb`
 
 Declares: `Master`, `Master::Io`, `Master::Io::ListDir`
 
+## `lib/io/lovdata.rb`
+
+Declares: `Master`, `Master::Io`, `Master::Io::Lovdata`
+
 ## `lib/io/llm.rb`
 
-Declares: `Master`, `Master::Io`, `Master::Io::LLM`, `Master::Io::LLM::ToolForwarding`, `Master::Io::LLM::ReadFile`, `Master::Io::LLM::WriteFile`, `Master::Io::LLM::StrReplace`, `Master::Io::LLM::Tree`, `Master::Io::LLM::ListDir`, `Master::Io::LLM::SearchFiles`, `Master::Io::LLM::Shell`, `Master::Io::LLM::WebSearch`, `Master::Io::LLM::HostFiles`, `Master::Io::LLM::WebFetch`, `Master::Io::LLM::WebBrowse`, `Master::Io::LLM::ExternalAudit`, `Master::Io::LLM::VulCheck`, `Master::Io::LLM::Nmap`, `Master::Io::LLM::Browser`, `Master::Io::LLM::CodePen`, `Master::Io::LLM::Gist`, `Master::Io::LLM::YoutubeTranscript`, `Master::Io::LLM::GitHubRepoMiner`, `Master::Io::LLM::ArxivResearch`, `Master::Io::LLM::AskLlm`, `Master::Io::LLM::GitContext`, `Master::Io::LLM::AstEdit`, `Master::Io::LLM::SearchKnowledge`, `Master::Io::LLM::FeedbackRecord`, `Master::Io::LLM::MemoryRecord`, `Master::Io::LLM::SubdomainOrchestrator`, `Master::Io::LLM::PluginObserve`, `Master::Io::LLM::AssistantTasks`, `Master::Io::LLM::CapabilityCatalog`, `Master::Io::LLM::DynamicHttp`
+Declares: `Master`, `Master::Io`, `Master::Io::LLM`, `Master::Io::LLM::ToolForwarding`, `Master::Io::LLM::ReadFile`, `Master::Io::LLM::WriteFile`, `Master::Io::LLM::StrReplace`, `Master::Io::LLM::Tree`, `Master::Io::LLM::ListDir`, `Master::Io::LLM::Lovdata`, `Master::Io::LLM::Linguist`, `Master::Io::LLM::SearchFiles`, `Master::Io::LLM::Shell`, `Master::Io::LLM::WebSearch`, `Master::Io::LLM::HostFiles`, `Master::Io::LLM::WebFetch`, `Master::Io::LLM::WebBrowse`, `Master::Io::LLM::ExternalAudit`, `Master::Io::LLM::VulCheck`, `Master::Io::LLM::Nmap`, `Master::Io::LLM::Browser`, `Master::Io::LLM::CodePen`, `Master::Io::LLM::Gist`, `Master::Io::LLM::YoutubeTranscript`, `Master::Io::LLM::GitHubRepoMiner`, `Master::Io::LLM::ArxivResearch`, `Master::Io::LLM::AskLlm`, `Master::Io::LLM::GitContext`, `Master::Io::LLM::AstEdit`, `Master::Io::LLM::SearchKnowledge`, `Master::Io::LLM::FeedbackRecord`, `Master::Io::LLM::MemoryRecord`, `Master::Io::LLM::SubdomainOrchestrator`, `Master::Io::LLM::PluginObserve`, `Master::Io::LLM::AssistantTasks`, `Master::Io::LLM::CapabilityCatalog`, `Master::Io::LLM::DynamicHttp`
 Requires: `result`, `execution/contract`, `trace/tool_observer`
 
 ## `lib/io/lora_intent.rb`

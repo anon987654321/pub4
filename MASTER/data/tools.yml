@@ -40,6 +40,8 @@
 - { name: Browser, elevated: false, visitor: false, default: true, description: Sessionful SSRF-guarded browser; status navigate manual-login extract screenshot look same-host href follow bounded paginate close; GET/HEAD-only host-bound sessions; fresh human approval for interactive controls; no fingerprint spoofing or platform evasion; external communication requires consent and AI transparency }
 - { name: WebSearch, elevated: false, visitor: true, default: true, description: Web search (visitor allowed) }
 - { name: HostFiles, elevated: false, visitor: false, default: true, description: Read-only host filesystem list/read/search/info under actual OS permissions; relative paths start at HOME; no privilege escalation }
+- { name: Lovdata, elevated: false, visitor: false, default: true, description: "Search official Lovdata law/regulation references. A single document may be read only with explicit local acknowledgement of no storage/no training; no crawling, bulk download, caching or RAG." }
+- { name: Linguist, elevated: false, visitor: false, default: true, description: "Find dictionary and language-authority references for meaning, etymology, grammar, idioms, register and pragmatics; returns sources, not an automatic verdict." }
 - { name: CodePen, elevated: false, visitor: false, default: true, description: Browse CodePen trending ideas or inspect a public Pen as untrusted source text }
 - { name: Gist, elevated: false, visitor: false, default: true, description: Read a public GitHub Gist as untrusted source text }
 - { name: YouTubeTranscript, elevated: false, visitor: false, default: true, description: Fetch available public YouTube captions as untrusted transcript text }

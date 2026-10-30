@@ -13,7 +13,7 @@ module Master
     # Each class holds a reference to the underlying tool via initialize,
     # so governor, undo, and event_bus plumbing stay intact.
     module LLM
-      # The sixteen tools below differ only in the params they declare, the
+      # The tool wrappers below differ only in the params they declare, the
       # coercion each applies, and how a success renders. The call itself and
       # the error line are the same everywhere, so they live here: `execute`
       # coerces its declared params and hands them to #forward.
@@ -429,6 +429,31 @@ module Master
           forward(action: action.to_s, session: session.to_s, url: url&.to_s,
                   operation: operation&.to_s, selector: selector&.to_s, value: value&.to_s,
                   wait: wait.to_f, links: links == true, max_pages: max_pages.to_i)
+        end
+      end
+
+      class Lovdata < RubyLLM::Tool
+        include ToolForwarding
+        description "Find individual Norwegian laws and regulations on official Lovdata. Search returns links. Reading one document requires MASTER_LOVDATA_AI_USE=single-document-no-storage-no-training after the operator verifies the runtime meets Lovdata's current terms. No crawling or bulk extraction."
+        parameter :reference, description: "Law title, LOV-/FOR-code, or official Lovdata document URL", required: true
+        parameter :action, description: "search (links only) or lookup (one document; requires local AI-use acknowledgement)", required: false
+        parameter :section, description: "Optional paragraph number such as 15-7", required: false
+
+        def execute(reference:, action: "lookup", section: nil)
+          forward(reference: reference.to_s, action: action.to_s, section: section&.to_s)
+        end
+      end
+
+      class Linguist < RubyLLM::Tool
+        include ToolForwarding
+        description "Find trusted dictionary and language-authority references for meaning, etymology, grammar, idioms, register and pragmatics. Returns sources for contextual analysis; it does not claim to infer intent from a phrase alone."
+        parameter :term, description: "Word or phrase to study", required: true
+        parameter :language, description: "auto, nb (Bokmål), nn (Nynorsk), or en", required: false
+        parameter :focus, description: "meaning, etymology, usage, grammar, idiom, register, pragmatics", required: false
+        parameter :limit, description: "Maximum trusted sources (1-5)", type: "integer", required: false
+
+        def execute(term:, language: "auto", focus: "meaning", limit: 4)
+          forward(term: term.to_s, language: language.to_s, focus: focus.to_s, limit: limit.to_i)
         end
       end
 

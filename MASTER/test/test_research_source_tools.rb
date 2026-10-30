@@ -15,6 +15,169 @@ class TestResearchSourceTools < Minitest::Test
 
   def allow = Governor.new(Master::Result.ok(true))
 
+  def with_env(key, value)
+    previous = ENV[key]
+    value.nil? ? ENV.delete(key) : ENV[key] = value
+    yield
+  ensure
+    previous.nil? ? ENV.delete(key) : ENV[key] = previous
+  end
+
+  def with_stubbed_search(tool, value)
+    fake = Object.new
+    fake.define_singleton_method(:call) { |query:| value }
+    tool.instance_variable_set(:@search, fake)
+  end
+
+  def test_lovdata_and_linguist_are_registered_in_the_shared_tool_map
+    names = Master::Builder::DEFAULT_TOOL_MAP.keys
+    assert_equal 1, names.count("Lovdata")
+    assert_equal 1, names.count("Linguist")
+    map = Master::Review::LLMDispatcher::LLM_TOOL_MAP
+    assert_equal Master::Io::LLM::Lovdata, map.fetch(Master::Io::Lovdata)
+    assert_equal Master::Io::LLM::Linguist, map.fetch(Master::Io::Linguist)
+  end
+
+  def test_lovdata_code_only_search_has_a_title_and_url_without_a_snippet
+    tool = Master::Io::Lovdata.new(governor: allow)
+    result = tool.call(reference: "LOV-2021-06-18-97", action: "search")
+
+    assert result.ok?, result.to_s
+    assert_includes result.value!, "LOV-2021-06-18-97"
+    assert_includes result.value!, "https://lovdata.no/dokument/NL/lov/2021-06-18-97"
+  end
+
+  def test_lovdata_maps_official_law_codes_to_canonical_documents
+    tool = Master::Io::Lovdata.new(governor: allow)
+    result = tool.call(reference: "LOV-2021-06-18-97", action: "search", section: "4-1")
+
+    assert result.ok?, result.to_s
+    assert_includes result.value!, "https://lovdata.no/dokument/NL/lov/2021-06-18-97/%C2%A74-1"
+    refute_includes result.value!, "barnevernsloven"
+  end
+
+  def test_lovdata_accepts_only_official_single_document_urls
+    tool = Master::Io::Lovdata.new(governor: allow)
+    accepted = tool.call(reference: "https://lovdata.no/dokument/NL/lov/2021-06-18-97", action: "search")
+    rejected = tool.call(reference: "https://lovdata.no.evil.example/dokument/NL/lov/2021-06-18-97", action: "search")
+
+    assert accepted.ok?
+    assert_includes accepted.value!, "lovdata.no/dokument/NL/lov"
+    refute rejected.ok?
+  end
+
+  def test_lovdata_rejects_arbitrary_urls_without_searching
+    tool = Master::Io::Lovdata.new(governor: allow)
+    fake = Object.new
+    fake.define_singleton_method(:call) { |**_args| raise "search must not run for a URL input" }
+    tool.instance_variable_set(:@search, fake)
+
+    result = tool.call(reference: "https://lovdata.no.evil.example/dokument/NL/lov/2021-06-18-97", action: "search")
+
+    refute result.ok?
+    assert_equal :validation, result.category
+  end
+
+  def test_lovdata_search_filters_unofficial_search_results
+    tool = Master::Io::Lovdata.new(governor: allow)
+    search = Master::Result.ok(<<~TEXT)
+      1. Official law
+      https://lovdata.no/dokument/NL/lov/2021-06-18-97
+      Official result
+
+      2. Lookalike
+      https://lovdata.no.evil.example/dokument/NL/lov/2021-06-18-97
+      Fake result
+    TEXT
+    with_stubbed_search(tool, search) do
+      result = tool.call(reference: "barnevernsloven", action: "search")
+      assert result.ok?, result.to_s
+      assert_includes result.value!, "Official law"
+      refute_includes result.value!, "evil.example"
+    end
+  end
+
+  def test_lovdata_text_lookup_requires_operator_ai_use_acknowledgement
+    tool = Master::Io::Lovdata.new(governor: allow)
+    with_env("MASTER_LOVDATA_AI_USE", nil) do
+      result = tool.call(reference: "LOV-2021-06-18-97", action: "lookup")
+      refute result.ok?
+      assert_equal :policy, result.category
+      assert_match(/no storage or model training/, result.message)
+    end
+  end
+
+  def test_lovdata_lookup_fetches_one_document_only_after_acknowledgement
+    tool = Master::Io::Lovdata.new(governor: allow)
+    fetcher = Object.new
+    fetcher.define_singleton_method(:call) do |url:, full:|
+      raise "unexpected bulk/full fetch" if full
+      raise "unexpected URL" unless url == "https://lovdata.no/dokument/NL/lov/2021-06-18-97/%C2%A74-1"
+      Master::Result.ok("§ 4-1. Barnets beste\\nBarnets beste skal være et grunnleggende hensyn.")
+    end
+    tool.instance_variable_set(:@fetch, fetcher)
+    with_env("MASTER_LOVDATA_AI_USE", Master::Io::Lovdata::AI_USE_ACK) do
+      result = tool.call(reference: "LOV-2021-06-18-97", section: "4-1")
+      assert result.ok?, result.to_s
+      assert_includes result.value!, "Barnets beste"
+      assert_includes result.value!, "Source: https://lovdata.no/"
+    end
+  end
+
+  def test_linguist_returns_only_allowlisted_dictionary_and_authority_sources
+    tool = Master::Io::Linguist.new(governor: allow)
+    search = Master::Result.ok(<<~TEXT)
+      1. Bokmålsordboka
+      https://ordbokene.no/bm/123
+      Meaning and inflection
+
+      2. Untrusted lookalike
+      https://ordbokene.no.attacker.invalid/bm/123
+      Fake result
+    TEXT
+    with_stubbed_search(tool, search) do
+      result = tool.call(term: "arbeidsom", language: "nb", focus: "meaning")
+      assert result.ok?, result.to_s
+      assert_includes result.value!, "ordbokene.no/bm/123"
+      refute_includes result.value!, "attacker.invalid"
+    end
+  end
+
+  def test_linguist_bounds_focus_language_and_results
+    tool = Master::Io::Linguist.new(governor: allow)
+    queries = []
+    fake = Object.new
+    fake.define_singleton_method(:call) do |query:|
+      queries << query
+      Master::Result.ok("1. Cambridge\nhttps://dictionary.cambridge.org/dictionary/english/nuance\nA subtle difference in meaning.")
+    end
+    tool.instance_variable_set(:@search, fake)
+
+    result = tool.call(term: "nuance", language: "en", focus: "etymology", limit: 99)
+
+    assert result.ok?, result.to_s
+    assert_equal 1, result.value!.scan(/Cambridge/).length
+    assert_includes queries.first, "etymology"
+    assert_includes queries.first, "site:dictionary.cambridge.org"
+  end
+
+  def test_research_router_selects_lovdata_and_linguist_for_explicit_requests
+    agent = Master::Review::Agent.allocate
+    agent.define_singleton_method(:evidence_tool) { |name| name }
+
+    assert_equal "Lovdata", agent.send(:specialized_web_source, "What does Lovdata say about arbeidsmiljøloven § 15-7?")
+    assert_equal "Linguist", agent.send(:specialized_web_source, 'Explain the pragmatics of "you are a character"')
+    assert_nil agent.send(:specialized_web_source, "Explain the pragmatics and register of this phrase")
+    assert_equal "Lovdata", agent.send(:specialized_web_source, "Look up LOV-2021-06-18-97")
+    law = agent.send(:specialized_web_args, "Look up LOV-2021-06-18-97 § 4-1")
+    assert_equal "LOV-2021-06-18-97", law.fetch(:reference)
+    assert_equal "4-1", law.fetch(:section)
+    linguistic = agent.send(:specialized_web_args, 'Study the etymology of "sonderweg" in English')
+    assert_equal "sonderweg", linguistic.fetch(:term)
+    assert_equal "en", linguistic.fetch(:language)
+    assert_equal "etymology", linguistic.fetch(:focus)
+  end
+
   def test_codepen_trending_extracts_public_pen_links_without_executing_them
     tool = Master::Io::CodePen.new(governor: allow)
     html = <<~HTML

@@ -75,6 +75,8 @@ module Master
         Io::Nmap => Io::LLM::Nmap,
         Io::WebBrowse => Io::LLM::WebBrowse,
         Io::BrowserAgent => Io::LLM::Browser,
+        Io::Lovdata => Io::LLM::Lovdata,
+        Io::Linguist => Io::LLM::Linguist,
         Io::CodePen => Io::LLM::CodePen,
         Io::Gist => Io::LLM::Gist,
         Io::YoutubeTranscript => Io::LLM::YoutubeTranscript,
