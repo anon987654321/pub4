@@ -409,6 +409,7 @@ face_interface:
     - ready
     still_modes:
     - idle
+    still_after_activity_ms: 700
     default_mode: idle
     default_topology: papua-mask
     entropy: 0.18
