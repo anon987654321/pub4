@@ -100,6 +100,9 @@ class TestRenderer < Minitest::Test
   end
 
   def test_face_contract_exposes_one_state_and_spatial_budget
+    assert_equal ["idle"], Master::Face::Contract.still_modes
+    assert Master::Face::Contract.still_mode?(:idle)
+    refute Master::Face::Contract.still_mode?(:thinking)
     budget = Master::Face::Contract.budget
     aliases = Master::Face::Contract.mode_aliases
 
