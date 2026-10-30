@@ -144,7 +144,8 @@ module Master
         field = config.fetch("target_field")
         multipliers = mode_multipliers(mode, config:)
         forces_by_mode = config.fetch("stipple_force", {})
-        residual_active = forces_by_mode.fetch(mode.to_s, forces_by_mode.fetch("idle", "none")) == "residual"
+        mode_name = mode.to_s.downcase
+        residual_active = forces_by_mode.fetch(mode_name, forces_by_mode.fetch("idle", "none")) == "residual"
         residual = config.fetch("residual", {})
         residual_fraction = Float(residual.fetch("fraction", 0.0)).clamp(0.0, 1.0)
         residual_strength = [Float(residual.fetch("strength", 0.0)), 0.0].max
