@@ -5,21 +5,18 @@ require_relative "../../voice/policy"
 module Master
   module CLI
     module Face
-      # Everything about the face that moves, and never stops moving: a slow
-      # breath, a weightless bob, a restrained turn or a settle by state,
-      # glances and blinks at irregular times, and a sparse field of particles
-      # that orbit the head, drift upward and keep clear of it. Events push it:
-      # a key twitches the head toward the input line and scatters the particles
-      # near it, listening draws them in and leans the head forward, a finished
-      # reply nods.
+      # The live terminal face is quiet in idle. A semantic state or an explicit
+      # event wakes its springs: listening leans in, thinking turns, speech shapes
+      # the mouth, and keys can nudge the head and carriers. When the cause ends,
+      # the pose returns to the canonical still face.
       #
-      # All of it is springs and noise over real time, so no two seconds look
-      # alike and nothing snaps. This is the one mutable part of the face: the
-      # window keeps one Motion and hands it to Face.frame with each tick.
+      # Motion is the one mutable part of this projection. The window keeps one
+      # instance and hands it to Face.frame with each tick; Pose remains the pure,
+      # deterministic counterpart for snapshots and cross-renderer fixtures.
       class Motion
         TAU = 2 * Math::PI
-        # The ASCII face's tunables, shared with the web face: a constant slow
-        # spin in the resting states, a settle to the front in the attending ones.
+        # The pure pose retains canonical turn parameters. Live idle motion is
+        # gated by Face::Contract.still_mode? and settles back to the front.
         ASCII = Master::Face::Contract.ascii.fetch("motion").freeze
         SPIN = ASCII.fetch("spin").to_f
         SPINNING = ASCII.fetch("spin_states").map(&:to_sym).freeze
