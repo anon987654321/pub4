@@ -74,8 +74,11 @@ module Master
           @t = t
           @heard = heard && state == :listening
           @viseme = viseme
-          still = Master::Face::Contract.still_mode?(state) && events.empty?
-          events.each { |event| react(event) }
+          event_list = Array(events)
+          @last_event_at = t unless event_list.empty?
+          recent_event = @last_event_at && ((t - @last_event_at) * 1000 < Master::Face::Contract.still_after_activity_ms)
+          still = Master::Face::Contract.still_mode?(state) && event_list.empty? && !recent_event
+          event_list.each { |event| react(event) }
           turn(state, t, dt, still:)
           spin(state, dt, still:)
           ease_mask(state, t)
