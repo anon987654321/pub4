@@ -181,12 +181,11 @@ module Master
 
         def features(state, t, dt, level, still: false)
           if still
-            @eye.toward(1.0, 32.0, dt)
-            @gaze_lon.toward(0.0, 26.0, dt)
-            @gaze_lat.toward(0.0, 26.0, dt)
-            @mouth.toward(0.0, 24.0, dt)
-            @mouth_open.toward(1.0, 30.0, dt)
-            @mouth_wide.toward(0.0, 30.0, dt)
+            @eye.x = 1.0
+            @eye.v = 0.0
+            [@gaze_lon, @gaze_lat, @mouth, @mouth_wide].each { |spring| spring.x = spring.v = 0.0 }
+            @mouth_open.x = 1.0
+            @mouth_open.v = 0.0
             return
           end
 
