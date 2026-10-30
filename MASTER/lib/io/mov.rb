@@ -387,6 +387,9 @@ module Master
         begin
           Tempfile.create([".mov-download-", ".part"], DOWNLOADS_DIR) do |file|
             tempfile = file
+            # Video is arbitrary binary data, not text. Keep writes in ASCII-8BIT
+            # so IO never attempts to transcode compressed bytes to UTF-8.
+            file.binmode
             result = with_http_response(
               uri, timeout: DOWNLOAD_TIMEOUT,
               headers: { "User-Agent" => USER_AGENT, "Accept-Encoding" => "identity" }

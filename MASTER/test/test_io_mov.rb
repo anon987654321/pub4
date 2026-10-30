@@ -203,4 +203,50 @@ class TestIoMov < Minitest::Test
     assert_equal "1.0MB", Mov.megabytes(1_048_576)
     assert_equal "0.0MB", Mov.megabytes(0)
   end
+
+  def test_download_stream_writes_arbitrary_binary_bytes_without_transcoding
+    payload = [0x00, 0xA0, 0xE8, 0xFF, 0x98, 0x89, 0x0D, 0x0A].pack("C*")
+    response_class = Class.new(Net::HTTPOK) do
+      define_method(:initialize) do |body|
+        super("1.1", "200", "OK")
+        @payload = body
+        @header = {
+          "content-length" => [body.bytesize.to_s],
+          "content-type" => ["video/mp4"],
+        }
+      end
+
+      define_method(:content_length) { @payload.bytesize }
+      define_method(:read_body) { |&block| block.call(@payload) }
+    end
+    response = response_class.new(payload)
+
+    Dir.mktmpdir do |dir|
+      original_dir = Mov.const_get(:DOWNLOADS_DIR)
+      Mov.send(:remove_const, :DOWNLOADS_DIR)
+      Mov.const_set(:DOWNLOADS_DIR, dir)
+      target = File.join(dir, "Binary sample.mp4")
+      responder = lambda do |uri, timeout:, headers:, max_redirects: Mov::MAX_REDIRECTS, &block|
+        block.call(response, uri)
+      end
+
+      begin
+        result = Mov.stub(:with_http_response, responder) do
+          Mov.download_once(
+            URI("https://archive.org/download/item/Binary%20sample.mp4"),
+            target,
+            "Binary sample",
+            expected_size: payload.bytesize,
+            expected_md5: Digest::MD5.hexdigest(payload),
+          )
+        end
+
+        assert_match(/\Amov0: saved /, result)
+        assert_equal payload, File.binread(target)
+      ensure
+        Mov.send(:remove_const, :DOWNLOADS_DIR)
+        Mov.const_set(:DOWNLOADS_DIR, original_dir)
+      end
+    end
+  end
 end
