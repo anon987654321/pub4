@@ -160,7 +160,10 @@ test("the page's state is mapped onto the pose the way the terminal maps it", ()
   assert.ok(timed.mouth > 0, "no envelope: the timed level stands in");
   assert.equal(engine.lookFor({ state: "idle", t: 1.35, level: 0.9 }).mouth, 0, "only speaking opens the mouth");
   assert.equal(engine.lookFor({ state: "nonsense", t: 0 }).dolly, 1.0);
-  assert.ok(engine.lookFor({ state: "idle", t: 2 }).turn > 0, "a resting head turns");
+  const idle = engine.lookFor({ state: "idle", t: 2 });
+  assert.deepEqual([idle.turn, idle.pitch, idle.roll, idle.scale, idle.dolly, idle.bob, idle.light, idle.eye_open],
+    [0, 0, 0, 1, 1, 0, contract.ascii.light.start, 1]);
+  assert.ok(engine.lookFor({ state: "thinking", t: 2 }).turn > 0, "thinking retains its canonical rotation");
   assert.equal(engine.lookFor({ state: "listening", t: 2 }).turn, 0, "an attending head faces the user");
   const calm = engine.lookFor({ state: "idle", t: 2, reduced: true });
   assert.deepEqual([calm.turn, calm.pitch, calm.roll, calm.bob, calm.scale], [0, 0, 0, 0, 1]);
