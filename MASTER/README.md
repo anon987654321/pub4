@@ -452,11 +452,11 @@ when the process was started with `RUBY_BOX=1`, and the adapter in
 `MASTER_JIT=zjit` selects ZJIT as an experiment. The parallel compute path uses
 `Ractor::Port`.
 
-Speech is data. `data/voice.yml` names the voices, the processing chain applied
-after synthesis, and the bed under the speech, and the web face reads the same
-file so that it sounds like the server. The terminal bed uses Dilla minor chords
-and Rhodes through the existing dilla_night effects rig at low playback level.
-Its ~/.master/bed/dilla-chords cache replaces the former hum and space-tone tracks.
+Speech is data. `data/voice.yml` names the voices and the post-synthesis
+processing chain read by the CLI and browser face. MASTER does not start a
+persistent music bed under speech or attach one to boot. Music plays only after
+an explicit operator request through `/play` or an explicit play-music request;
+Dilla remains available for deliberate composition and rendering in STUDIO.
 The design tokens live in
 `data/tokens.yml`, read through `Master.tokens`.
 

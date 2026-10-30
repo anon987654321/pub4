@@ -21,4 +21,11 @@ class TestVoiceBedRemoved < Minitest::Test
       refute_match(/(?:Master::Voice::)?Bed\.(?:start|boot|stop|release|foreground\?)/, source, relative)
     end
   end
+
+  def test_master_readme_does_not_claim_a_dilla_startup_bed
+    readme = File.read(File.join(Master::ROOT, "README.md"))
+
+    refute_match(/bed under the speech|terminal bed uses Dilla|dilla-chords/i, readme)
+    assert_match(/Music plays only after an explicit operator request/i, readme)
+  end
 end
