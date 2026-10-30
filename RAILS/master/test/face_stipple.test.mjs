@@ -452,6 +452,19 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   assert.equal(window.MASTER_FACE_STIPPLE.profiles.idle.density, 0.44);
   assert.equal(window.MASTER_FACE_STIPPLE.snapshot().pointCeiling, 240);
   assert.equal(window.MASTER_FACE_STIPPLE.snapshot().context, "ready");
+  const initialDiagnostics = window.MASTER_FACE_STIPPLE.snapshot();
+  assert.equal(initialDiagnostics.semantic.force, "residual");
+  assert.equal(initialDiagnostics.semantic.residual.active, true);
+  assert.equal(initialDiagnostics.semantic.residual.carrierCount, 0);
+  assert.equal(initialDiagnostics.semantic.residual.selectedCarriers, 0);
+  assert.equal(initialDiagnostics.semantic.dialInputs.activity, null);
+  assert.equal(initialDiagnostics.semantic.dialAdjustments.density, 0);
+  faceState = { mode: "idle", activity: 1, arousal: 1, focus: 1, confidence: 1, risk: 1 };
+  const dialDiagnostics = window.MASTER_FACE_STIPPLE.snapshot().semantic;
+  assert.equal(dialDiagnostics.dialInputs.activity, 1);
+  assert.ok(Math.abs(dialDiagnostics.dialAdjustments.density - 0.0486) < 0.000001);
+  assert.ok(Math.abs(dialDiagnostics.dialAdjustments.turbulence - 0.31) < 0.000001);
+  faceState = {};
 
   class BufferAttribute {
     constructor(array, itemSize) { this.array = array; this.itemSize = itemSize; }
