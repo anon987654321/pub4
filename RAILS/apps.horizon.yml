@@ -15,7 +15,6 @@ horizon:
 
       - { name: city population in seeds, status: planned, notes: "no column or reader in any schema; CitySeed covers all 43 registry cities otherwise" }
 
-      - { name: recent searches in the search palette, status: planned }
       - { name: messenger notification suppressed while its conversation is open, status: planned }
       - { name: "messenger complete enough to take over from Facebook Messenger for the operator's circle: E2EE, delivered-versus-read receipts, multi-device sessions, voice and video calls", status: planned, notes: "operator call 2026-10-29: friends and family should be able to switch over without losing anything they use daily; history pagination is done (apps.yml), the remaining gaps are the structural ones named here" }
     subapp_takeaway:

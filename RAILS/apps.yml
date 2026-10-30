@@ -196,6 +196,7 @@ apps:
         - { name: "Notification (like/follow/custom, mark_as_read)",        status: done }
         - { name: "DirectMessage (conversation_between, mark_as_read)",     status: done }
         - { name: full-text search (SQLite FTS5),                           status: done, notes: "posts_fts + marketplace live search + /search global endpoint" }
+        - { name: recent searches in the search palette,                status: done, notes: "SearchRecent rows written on html search visits and listed in shared/_search_palette" }
         - { name: reading_time_minutes on posts,                            status: done, notes: "Post#reading_time_minutes on post card + show" }
         - { name: city-scoped subdomain routing,                           status: done, notes: "DomainRegistry + city switcher UI" }
         - { name: proximity / geolocation filtering,                       status: done, notes: "nearby#index, locations#update, geolocation Stimulus, dating radius filter" }
