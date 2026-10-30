@@ -440,7 +440,9 @@
     const reduced = reducedMotionEnabled(state);
     const isPointer = pointerActive || (time - presence.at) < 700;
     const stillMode = window.MASTER_FACE_STATE?.isStillMode?.(mode) ?? mode === "idle";
-    const still = reduced || (stillMode && !isPointer);
+    const stillAfter = Number(window.MASTER_FACE_STATE?.stillAfterActivityMs ?? 700);
+    const recentPointer = pointerActive || (time - presence.at) < stillAfter;
+    const still = reduced || (stillMode && !recentPointer);
     const movementTime = still ? 0 : time;
     const distanceReveal = clamp((6.6 - cameraDistance) / 2.8, 0.18, 1);
     const reveal = Math.max(distanceReveal, 0.35 + focus * 0.65);
