@@ -216,6 +216,17 @@ class TestCliAsciiFace < Minitest::Test
     assert_equal 0.0, Face::Pose.at(:idle, 2.0, 1, schedule: { session: "abc", since: 0.0 }).mix
   end
 
+  def test_idle_motion_holds_a_stable_face_and_particle_cloud
+    motion = Face::Motion.new(seed: 7)
+    first = motion.step(state: :idle, t: 1.0, count: 24)
+    later = motion.step(state: :idle, t: 8.0, count: 24)
+
+    assert_equal first, later
+    assert_equal 1.0, later.scale
+    assert_equal 0.0, later.bob
+    assert_equal Master::CLI::Face::Motion::LIGHT.fetch("start"), later.light
+  end
+
   def test_motion_eases_in_while_thinking_and_back_out_after
     motion = Face::Motion.new(session: "abc")
     mixes = [[:idle, 0.0], [:idle, 0.5], [:thinking, 1.0], [:thinking, 1.6], [:thinking, 2.3], [:thinking, 3.0], [:idle, 3.4], [:idle, 3.8], [:idle, 4.2]].map do |state, t|
