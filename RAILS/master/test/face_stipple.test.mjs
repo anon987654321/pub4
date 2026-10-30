@@ -288,6 +288,9 @@ test("the swarm geometry, force constants, modes and glyph ramp live in face tok
   assert.match(tokens, /separation_radius:\s*0\.035/);
   assert.match(tokens, /separation_strength:\s*0\.08/);
   assert.match(tokens, /noise_scale:\s*0\.014/);
+  assert.match(tokens, /residual:\s*\n\s+fraction:\s*0\.18\s+\n\s+strength:\s*0\.12/);
+  assert.match(system, /contract\.stipple_force\?\.\[mode\] === "residual"/);
+  assert.match(system, /homePositions\?\.length >= offset \+ 3/);
   assert.match(tokens, /glyph_ramp:\s*\["·", "˙", "∘", "•", "○", "●"\]/);
   assert.match(tokens, /left:\s*\{ pos: \[-0\.29, 0\.21, 0\.58\], radius: 0\.17, weight: 1\.40 \}/);
   assert.match(tokens, /right:\s*\{ pos: \[0\.29, 0\.21, 0\.58\], radius: 0\.17, weight: 1\.40 \}/);
@@ -360,8 +363,10 @@ test("stipple module boots and builds from the canonical idle profile", () => {
         desktop_points: 1200, mobile_points: 420, desktop_particles: 200, mobile_particles: 120,
         reduced_motion_particles: 64, point_allocation: { stipple_fraction: 0.75, world_fraction: 0.25 }
       } },
+      stipple_force: { idle: "residual" },
       swarm: {
         enabled: true, particle_budget: 240, damping: 0.86, cohesion_radius: 0.11, cohesion_strength: 0.045,
+        residual: { fraction: 1, strength: 0.12 },
         separation_radius: 0.035, separation_strength: 0.08, noise_scale: 0.014,
         glyph_ramp: ["·", "˙", "∘", "•", "○", "●"],
         target_field: {
@@ -492,6 +497,25 @@ test("stipple module boots and builds from the canonical idle profile", () => {
     { x: 0.8, y: 0, z: 0, zone: 0, bias: 1 },
     { x: 0.7, y: 0.03, z: 0.1, zone: 0, bias: 1 }
   ]);
+  const residualSystem = api.buildFromSamples(THREE, [
+    { x: 0.8, y: 0, z: 0, zone: 0, bias: 1 },
+    { x: 0.7, y: 0.03, z: 0.1, zone: 0, bias: 1 }
+  ]);
+  window.MASTER_FACE_CONTRACT.stipple_force.idle = "none";
+  const collectiveSystem = api.buildFromSamples(THREE, [
+    { x: 0.8, y: 0, z: 0, zone: 0, bias: 1 },
+    { x: 0.7, y: 0.03, z: 0.1, zone: 0, bias: 1 }
+  ]);
+  window.MASTER_FACE_CONTRACT.stipple_force.idle = "residual";
+  api.updateSwarm(residualSystem, { mode: "idle", reducedMotion: false }, 0.05, 1);
+  window.MASTER_FACE_CONTRACT.stipple_force.idle = "none";
+  api.updateSwarm(collectiveSystem, { mode: "idle", reducedMotion: false }, 0.05, 1);
+  assert.notDeepEqual(
+    Array.from(residualSystem.geometry.attributes.position.array),
+    Array.from(collectiveSystem.geometry.attributes.position.array),
+    "residual carriers retain a deterministic pull toward their original positions"
+  );
+  window.MASTER_FACE_CONTRACT.stipple_force.idle = "residual";
   const beforeMove = Array.from(moving.geometry.attributes.position.array);
   assert.equal(api.updateSwarm(moving, { mode: "idle", reducedMotion: false }, 0.05, 1), true);
   assert.notDeepEqual(Array.from(moving.geometry.attributes.position.array), beforeMove);
