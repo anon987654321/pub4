@@ -9,8 +9,8 @@ module Master
     # the same morphology and painted depth map) turned in 3D and inked with
     # | - / \ contours, a dithered ramp for the surface and glyph features
     # (Face::Ascii); any mesh (Face::Mesh) shows the same way. Braille is
-    # retired. Face::Motion keeps it moving: a constant slow turn, a breath, a
-    # pitch sway, blinks and glances.
+    # retired. Idle is still; semantic modes and explicit events provide the
+    # motion, and the face settles back to neutral when their cause ends.
     #
     # A frame is a function of state, size, time and events, with one small
     # mutable Motion carried from frame to frame. Nothing here touches the
