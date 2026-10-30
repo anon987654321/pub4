@@ -424,7 +424,8 @@
     const multipliers = modeMultipliersFor(state);
     const contract = window.MASTER_FACE_CONTRACT || {};
     const mode = String(state.mode || state.mood || "idle").toLowerCase();
-    const residualActive = contract.stipple_force?.[mode] === "residual";
+    const force = contract.stipple_force?.[mode] || contract.stipple_force?.idle || "none";
+    const residualActive = force === "residual";
     const residual = config.residual || {};
     const residualFraction = clamp(residual.fraction, 0.18, 0, 1);
     const residualStrength = Math.max(0, Number(residual.strength) || 0);
