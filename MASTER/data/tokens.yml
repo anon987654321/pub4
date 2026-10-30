@@ -566,6 +566,10 @@ tokens:
       separation_radius: 0.035
       separation_strength: 0.08
       noise_scale: 0.014
+      # A deterministic subset keeps its original carrier identity in residual states.
+      residual:
+        fraction: 0.18
+        strength: 0.12
       size_from_depth: true
       glyph_ramp: ["·", "˙", "∘", "•", "○", "●"]
       target_field:
