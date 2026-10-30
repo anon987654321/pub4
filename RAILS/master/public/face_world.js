@@ -419,7 +419,9 @@
       const mesh = activityMeshes.get(record.key);
       if (!mesh) return;
       const radiusScale = record.kind === "evidence" ? 1.12 : record.kind === "tool" ? 1.04 : 1;
-      const angle = (Math.PI * 2 * index / Math.max(1, records.length)) + (reducedMotion ? 0 : now * orbitSpeed);
+      const stillMode = window.MASTER_FACE_STATE?.isStillMode?.(state.mode) ?? state.mode === "idle";
+      const angle = (Math.PI * 2 * index / Math.max(1, records.length)) +
+        (reducedMotion || stillMode ? 0 : now * orbitSpeed);
       mesh.position.set(
         Math.cos(angle) * radiusX * radiusScale,
         Math.sin(angle) * radiusY * radiusScale,
@@ -432,7 +434,8 @@
         : waiting ? 0.48
         : record.kind === "evidence" ? 0.34
         : active ? 0.64 : 0.40;
-      const pulse = !reducedMotion && active ? 0.12 * (0.5 + 0.5 * Math.sin(now * 0.004 + index)) : 0;
+      const pulse = !reducedMotion && !stillMode && active
+        ? 0.12 * (0.5 + 0.5 * Math.sin(now * 0.004 + index)) : 0;
       const terminalFade = !reducedMotion && record.terminalAt && ttl > 0
         ? Math.max(0, 1 - (Date.now() - record.terminalAt) / ttl) : 1;
       mesh.material.opacity = Math.min(0.9, (baseOpacity + pulse) * terminalFade
@@ -809,6 +812,7 @@
 
     const budget = window.MASTER_FACE_STATE?.renderBudget?.() || {};
     const reducedMotion = reducedMotionEnabled(state);
+    const stillMode = window.MASTER_FACE_STATE?.isStillMode?.(state.mode) ?? state.mode === "idle";
     const topology = String(state.topology || "papua-mask");
     const portrait = topology === "face" || topology === "papua-mask";
     const topologyProfile = TOPOLOGY_PROFILES[topology] || TOPOLOGY_PROFILES["papua-mask"] || {};
@@ -843,7 +847,7 @@
     const facialProjection = finite(morphology.facial_projection, 0.88);
 
     const audioEnergy = Math.max(0, Math.min(1, (audio.rms * 0.45) + (audio.mid * 0.35) + (audio.high * 0.20)));
-    const audioPulse = reducedMotion ? 0 : Math.max(audio.onset, audio.bass * 0.65);
+    const audioPulse = reducedMotion || stillMode ? 0 : Math.max(audio.onset, audio.bass * 0.65);
     const fracture = finite(topologyProfile.fracture, 0);
     const tiltX = finite(topologyProfile.tilt_x, 0);
     const tiltY = finite(topologyProfile.tilt_y, 0);
@@ -865,7 +869,7 @@
       geometry.shell_scale * cranialScale * facialVerticalization * (1 + audioPulse * 0.010),
       geometry.shell_scale * facialProjection * (1 + audioPulse * 0.012)
     );
-    shellMaterial.uniforms.uTime.value = reducedMotion ? 0 : now;
+    shellMaterial.uniforms.uTime.value = reducedMotion || stillMode ? 0 : now;
     shellMaterial.uniforms.uTension.value = geometry.shell_tension;
     shellMaterial.uniforms.uPulse.value = geometry.shell_pulse;
     shellMaterial.uniforms.uFracture.value = geometry.shell_fracture;
@@ -879,9 +883,9 @@
     nodes.forEach((node) => {
       node.visible = !portrait;
       const phase = node.userData.phase;
-      const pulse = reducedMotion ? 1 : 1 + Math.sin(now * 0.0012 + phase) * 0.14 * geometry.neural_density + audioEnergy * 0.08;
+      const pulse = reducedMotion || stillMode ? 1 : 1 + Math.sin(now * 0.0012 + phase) * 0.14 * geometry.neural_density + audioEnergy * 0.08;
       node.scale.setScalar(pulse);
-      node.position.z = NODE_LAYOUT[node.userData.index][3] + (reducedMotion ? 0 : Math.sin(now * 0.00065 + phase) * 0.05 * geometry.depth);
+      node.position.z = NODE_LAYOUT[node.userData.index][3] + (reducedMotion || stillMode ? 0 : Math.sin(now * 0.00065 + phase) * 0.05 * geometry.depth);
       node.material.opacity = Math.min(0.85, 0.20 + geometry.neural_density * 0.55 * density);
       node.material.color.copy(shellMaterial.uniforms.uColor.value);
     });
@@ -940,7 +944,7 @@
     updatePulses(now, reducedMotion);
 
     // Reduced motion keeps the semantic composition but removes idle breathing.
-    if (reducedMotion) {
+    if (reducedMotion || stillMode) {
       world.position.y = 0;
     } else {
       const breath = Math.sin(now * 0.00072) * (state.mode === "idle" ? 0.008 : 0.004);
@@ -981,7 +985,7 @@
           (geometry.fracture + fracture) * 0.04 + semanticBlend * 0.16
       );
       splatProxy.material.color.copy(shellMaterial.uniforms.uColor.value);
-      splatProxy.rotation.z = reducedMotion ? 0 :
+      splatProxy.rotation.z = reducedMotion || stillMode ? 0 :
         (now * 0.000018 * (0.5 + geometry.depth)) % (Math.PI * 2);
     }
     const faceCanvas = document.getElementById("face");
