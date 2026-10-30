@@ -366,12 +366,12 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   const window = {
     location: { search: "" },
     MASTER_FACE_CONTRACT: {
-      state: { activity: 0.14, arousal: 0.22, focus: 0.86, confidence: 0.86, risk: 0 },
+      state: { activity: 0.14, arousal: 0.22, focus: 0.86, confidence: 0.86, risk: 0, still_modes: ["idle"] },
       spatial: { budget: {
         desktop_points: 1200, mobile_points: 420, desktop_particles: 200, mobile_particles: 120,
         reduced_motion_particles: 64, point_allocation: { stipple_fraction: 0.75, world_fraction: 0.25 }
       } },
-      stipple_force: { idle: "residual" },
+      stipple_force: { idle: "residual", warning: "residual" },
       swarm: {
         enabled: true, particle_budget: 240, damping: 0.86, cohesion_radius: 0.11, cohesion_strength: 0.045,
         residual: { fraction: 1, strength: 0.12 },
@@ -409,6 +409,7 @@ test("stipple module boots and builds from the canonical idle profile", () => {
     navigator: { get hardwareConcurrency() { return hardwareCores; } },
     MASTER_FACE_STATE: {
       snapshot: () => faceState,
+      isStillMode: (mode) => ["idle"].includes(String(mode).toLowerCase()),
       renderBudget: () => {
         const points = (coarsePointer || narrowViewport || hardwareCores <= 4) ? 420 : 1200;
         const stipple_points = Math.floor(points * 0.75);
@@ -504,8 +505,9 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   const flatDepth = api.buildFromSamples(THREE, [{ x: 0, y: 0, z: 0, zone: 0, bias: 1 }]);
   assert.equal(flatDepth.material.uniforms.uDepthFromRank.value, 0);
   window.MASTER_FACE_CONTRACT.swarm.size_from_depth = true;
-  assert.equal(stipple.material.uniforms.uRipple.value, 0.03);
-  assert.equal(stipple.material.uniforms.uTurbulence.value, 0.04);
+  assert.equal(stipple.material.uniforms.uRipple.value, 0);
+  assert.equal(stipple.material.uniforms.uTurbulence.value, 0);
+  assert.equal(stipple.material.uniforms.uMotionScale.value, 0);
   assert.equal(stipple.material.uniforms.uLuminosity.value, 0.76);
   assert.equal(stipple.material.uniforms.uAttract.value, 0.14);
   assert.equal(stipple.material.uniforms.uDepthReferenceDistance.value, 5.0);
@@ -529,25 +531,32 @@ test("stipple module boots and builds from the canonical idle profile", () => {
     { x: 0.8, y: 0, z: 0, zone: 0, bias: 1 },
     { x: 0.7, y: 0.03, z: 0.1, zone: 0, bias: 1 }
   ]);
-  window.MASTER_FACE_CONTRACT.stipple_force.idle = "none";
+  window.MASTER_FACE_CONTRACT.stipple_force.warning = "none";
   const collectiveSystem = api.buildFromSamples(THREE, [
     { x: 0.8, y: 0, z: 0, zone: 0, bias: 1 },
     { x: 0.7, y: 0.03, z: 0.1, zone: 0, bias: 1 }
   ]);
-  window.MASTER_FACE_CONTRACT.stipple_force.idle = "residual";
-  api.updateSwarm(residualSystem, { mode: "idle", reducedMotion: false }, 0.05, 1);
-  window.MASTER_FACE_CONTRACT.stipple_force.idle = "none";
-  api.updateSwarm(collectiveSystem, { mode: "idle", reducedMotion: false }, 0.05, 1);
+  window.MASTER_FACE_CONTRACT.stipple_force.warning = "residual";
+  api.updateSwarm(residualSystem, { mode: "warning", reducedMotion: false }, 0.05, 1);
+  window.MASTER_FACE_CONTRACT.stipple_force.warning = "none";
+  api.updateSwarm(collectiveSystem, { mode: "warning", reducedMotion: false }, 0.05, 1);
   assert.notDeepEqual(
     Array.from(residualSystem.geometry.attributes.position.array),
     Array.from(collectiveSystem.geometry.attributes.position.array),
     "residual carriers retain a deterministic pull toward their original positions"
   );
-  window.MASTER_FACE_CONTRACT.stipple_force.idle = "residual";
+  window.MASTER_FACE_CONTRACT.stipple_force.warning = "residual";
   const beforeMove = Array.from(moving.geometry.attributes.position.array);
-  assert.equal(api.updateSwarm(moving, { mode: "idle", reducedMotion: false }, 0.05, 1), true);
+  assert.equal(api.updateSwarm(moving, { mode: "warning", reducedMotion: false }, 0.05, 1), true);
   assert.notDeepEqual(Array.from(moving.geometry.attributes.position.array), beforeMove);
   assert.equal(moving.geometry.attributes.aDepthRank.needsUpdate, true);
+  const idleSystem = api.buildFromSamples(THREE, [
+    { x: 0.8, y: 0, z: 0, zone: 0, bias: 1 },
+    { x: 0.7, y: 0.03, z: 0.1, zone: 0, bias: 1 }
+  ]);
+  const stillIdle = Array.from(idleSystem.geometry.attributes.position.array);
+  assert.equal(api.updateSwarm(idleSystem, { mode: "idle", reducedMotion: false }, 0.05, 1), false);
+  assert.deepEqual(Array.from(idleSystem.geometry.attributes.position.array), stillIdle);
   const frozen = Array.from(moving.geometry.attributes.position.array);
   assert.equal(api.updateSwarm(moving, { mode: "idle", reducedMotion: true }, 0.05, 2), false);
   assert.deepEqual(Array.from(moving.geometry.attributes.position.array), frozen);
