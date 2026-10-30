@@ -288,6 +288,9 @@ test("the swarm geometry, force constants, modes and glyph ramp live in face tok
   assert.match(tokens, /separation_radius:\s*0\.035/);
   assert.match(tokens, /separation_strength:\s*0\.08/);
   assert.match(tokens, /noise_scale:\s*0\.014/);
+  assert.match(tokens, /dial_modulation:\s*\n\s+activity:/);
+  assert.match(system, /function dialAdjustments\(state = \{\}\)/);
+  assert.match(system, /modulation\.risk/);
   assert.match(tokens, /residual:\s*\n\s+fraction:\s*0\.18\s+\n\s+strength:\s*0\.12/);
   assert.match(system, /contract\.stipple_force\?\.\[mode\] === "residual"/);
   assert.match(system, /homePositions\?\.length >= offset \+ 3/);
@@ -359,6 +362,7 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   const window = {
     location: { search: "" },
     MASTER_FACE_CONTRACT: {
+      state: { activity: 0.14, arousal: 0.22, focus: 0.86, confidence: 0.86, risk: 0 },
       spatial: { budget: {
         desktop_points: 1200, mobile_points: 420, desktop_particles: 200, mobile_particles: 120,
         reduced_motion_particles: 64, point_allocation: { stipple_fraction: 0.75, world_fraction: 0.25 }
@@ -528,6 +532,23 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   api.tick(stipple, { mode: "idle", reducedMotion: false }, 0);
   assert.equal(stipple.material.uniforms.uDensity.value, 0.44);
   assert.deepEqual(stipple.material.uniforms.uColor.value.rgb, [1, 1, 1]);
+
+  // Continuous state dials make bounded changes without replacing the named mode profile.
+  api.tick(stipple, {
+    mode: "idle", activity: 1, arousal: 1, focus: 1, confidence: 1, risk: 1,
+    reducedMotion: false
+  }, 0.5);
+  assert.ok(stipple.material.uniforms.uDensity.value > 0.44);
+  assert.ok(stipple.material.uniforms.uRipple.value > 0.03);
+  assert.ok(stipple.material.uniforms.uTurbulence.value > 0.0724);
+  assert.ok(stipple.material.uniforms.uLuminosity.value > 0.76);
+  assert.ok(stipple.material.uniforms.uAttract.value < 0.14);
+  api.tick(stipple, {
+    mode: "idle", activity: 0.14, arousal: 0.22, focus: 0.86, confidence: 0.86, risk: 0,
+    reducedMotion: false
+  }, 0.75);
+  assert.equal(stipple.material.uniforms.uDensity.value, 0.44);
+  assert.equal(stipple.material.uniforms.uRipple.value, 0.03);
   assert.equal(api.applyPalette(stipple, { accent: "#C8F55F" }), false);
   assert.deepEqual(stipple.material.uniforms.uColor.value.rgb, [1, 1, 1]);
 
