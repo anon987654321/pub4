@@ -189,17 +189,14 @@ class TestRenderer < Minitest::Test
     assert_equal contract.stipple_meaning("idle"), contract.stipple_meaning("no-such-mode")
   end
 
-  def test_stipple_point_size_is_canonical_and_bounded
-    sizing = Master::Face::Contract.stipple_point_size
+  def test_stipple_is_one_pixel_and_depth_response_is_canonical
+    response = Master::Face::Contract.stipple_depth_response
 
-    assert_equal %w[base bias_max bias_min bias_scale distance_max distance_min output_max output_min reference_depth],
-                 sizing.keys.sort
-    assert_equal 5.0, sizing.fetch("reference_depth")
-    assert_operator sizing.fetch("bias_min"), :<=, sizing.fetch("bias_max")
-    assert_operator sizing.fetch("distance_min"), :<=, sizing.fetch("distance_max")
-    assert_operator sizing.fetch("output_min"), :<=, sizing.fetch("output_max")
-    assert_includes 1.0..1.5, sizing.fetch("output_min")
-    assert_includes 1.0..1.5, sizing.fetch("output_max")
+    assert_equal %w[reference_distance scale_max scale_min], response.keys.sort
+    assert_equal 5.0, response.fetch("reference_distance")
+    assert_operator response.fetch("scale_min"), :<=, response.fetch("scale_max")
+    assert_equal 0.75, response.fetch("scale_min")
+    assert_equal 1.25, response.fetch("scale_max")
   end
 
   def test_shell_prompt_measures_visible_cells_not_ansi_bytes
