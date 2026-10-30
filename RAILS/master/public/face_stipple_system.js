@@ -327,9 +327,26 @@
     return { ...overrides };
   }
 
+  function dialAdjustments(state = {}) {
+    const dials = window.MASTER_FACE_CONTRACT?.stipple?.dial_modulation || {};
+    const defaults = window.MASTER_FACE_CONTRACT?.state || {};
+    const adjustments = {};
+    for (const [dial, weights] of Object.entries(dials)) {
+      const fallback = Number(defaults[dial] ?? 0);
+      const value = clamp(state[dial], fallback, 0, 1);
+      const delta = value - fallback;
+      for (const [target, weight] of Object.entries(weights || {})) {
+        const coefficient = Number(weight);
+        if (Number.isFinite(coefficient)) adjustments[target] = (adjustments[target] || 0) + delta * coefficient;
+      }
+    }
+    return adjustments;
+  }
+
   function syncFromFaceState(system, state) {
     if (!system?.material || !state) return;
     const profile = { ...profileFor(state), ...overrides };
+    const modulation = dialAdjustments(state);
     // Missing telemetry is not zero pressure. Keep the canonical profile unchanged
     // until a pressure reading exists; face events report pct on a 0..100 scale,
     // while normalized 0..1 values remain accepted for compatibility.
@@ -343,11 +360,11 @@
     const entropy = clamp(state.pressureFields?.entropy ?? state.entropy ?? 0.18, 0.18, 0, 1);
     const motion = reducedMotionEnabled(state) ? 0 : 1;
     const u = system.material.uniforms;
-    u.uDensity.value = clamp(profile.density + (pressure - 0.5) * 0.24, profile.density, 0.08, 0.98);
-    u.uRipple.value = clamp(profile.ripple, 0, 0, 1) * motion;
-    u.uTurbulence.value = clamp(profile.turbulence + entropy * 0.18, 0, 0, 1) * motion;
-    u.uLuminosity.value = clamp(profile.luminosity, 0.76, 0.2, 1.2);
-    u.uAttract.value = clamp(profile.attract, 0, 0, 1);
+    u.uDensity.value = clamp(profile.density + (pressure - 0.5) * 0.24 + (modulation.density || 0), profile.density, 0.08, 0.98);
+    u.uRipple.value = clamp(profile.ripple + (modulation.ripple || 0), 0, 0, 1) * motion;
+    u.uTurbulence.value = clamp(profile.turbulence + entropy * 0.18 + (modulation.turbulence || 0), 0, 0, 1) * motion;
+    u.uLuminosity.value = clamp(profile.luminosity + (modulation.luminosity || 0), 0.76, 0.2, 1.2);
+    u.uAttract.value = clamp(profile.attract + (modulation.attract || 0), 0, 0, 1);
     u.uEntropy.value = entropy;
     u.uMotionScale.value = motion;
     u.uOpacity.value = clamp(overrides.opacity, 0.74, 0.1, 1);
