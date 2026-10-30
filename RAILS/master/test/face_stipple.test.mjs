@@ -393,6 +393,13 @@ test("stipple module boots and builds from the canonical idle profile", () => {
           reference_depth: 5.0, distance_min: 0.75, distance_max: 1.25,
           output_min: 1.0, output_max: 1.5
         },
+        dial_modulation: {
+          activity: { density: 0.05, ripple: 0.08, turbulence: 0.12, luminosity: 0.03, attract: 0.04 },
+          arousal: { ripple: 0.10, turbulence: 0.06, luminosity: 0.04 },
+          focus: { density: 0.02, attract: 0.12 },
+          confidence: { density: 0.02, luminosity: 0.04 },
+          risk: { ripple: 0.08, turbulence: 0.16, attract: -0.08 }
+        },
         profiles: {
           idle: { density: 0.44, ripple: 0.03, turbulence: 0.04, luminosity: 0.76, attract: 0.14 },
           thinking: { density: 0.72, ripple: 0.16, turbulence: 0.28, luminosity: 0.91, attract: 0.74 }
