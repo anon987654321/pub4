@@ -405,6 +405,13 @@
     const scale = head.scale.map((value) => Math.max(0.001, Math.abs(Number(value))));
     const softness = Math.max(0.001, Number(field.softness) || 0.72);
     const multipliers = modeMultipliersFor(state);
+    const contract = window.MASTER_FACE_CONTRACT || {};
+    const mode = String(state.mode || state.mood || "idle").toLowerCase();
+    const residualActive = contract.stipple_force?.[mode] === "residual";
+    const residual = config.residual || {};
+    const residualFraction = clamp(residual.fraction, 0.18, 0, 1);
+    const residualStrength = Math.max(0, Number(residual.strength) || 0);
+    const homePositions = system.swarm.homePositions;
     const noise = Math.max(0, Number(config.noise_scale) || 0) * (Number(multipliers.noise) || 0);
     const cohesionRadius = Math.max(0, Number(config.cohesion_radius) || 0);
     const separationRadius = Math.max(0, Number(config.separation_radius) || 0);
@@ -463,6 +470,16 @@
       if (neighbors > 0) {
         const factor = (Number(config.cohesion_strength) || 0) / neighbors;
         push(offset, cohesionX * factor, cohesionY * factor, cohesionZ * factor);
+      }
+      // Residual is a stable identity tether, not another particle pool: a
+      // deterministic subset resists complete absorption into the collective.
+      if (residualActive && homePositions?.length >= offset + 3 && rand(i, 97.3) < residualFraction) {
+        push(
+          offset,
+          (homePositions[offset] - x) * residualStrength,
+          (homePositions[offset + 1] - y) * residualStrength,
+          (homePositions[offset + 2] - z) * residualStrength
+        );
       }
       const phase = (i + 1) * 12.9898 + (Number(timeSeconds) || 0) * 1.71;
       push(offset, Math.sin(phase) * noise * 0.5, Math.sin(phase * 1.31) * noise * 0.5, Math.cos(phase * 0.73) * noise * 0.5);
