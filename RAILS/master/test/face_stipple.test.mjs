@@ -179,6 +179,7 @@ function loadFaceStateBudget({ coarsePointer = false, narrowViewport = false, co
     MASTER_FACE_CONTRACT: {
       state: {
         modes: ["idle", "listening", "thinking", "working", "speaking", "warning", "error", "sleeping", "ready"],
+        still_modes: ["idle"], still_after_activity_ms: 700,
         default_mode: "idle", default_topology: "face", entropy: 0.18, confidence: 0.86,
         attention: 1, arousal: 0.22, valence: 0.18, focus: 0.86, activity: 0.14, risk: 0
       },
@@ -210,6 +211,11 @@ function loadFaceStateBudget({ coarsePointer = false, narrowViewport = false, co
 }
 
 test("shared render budget gives coarse-pointer devices the mobile ceiling", () => {
+  const bridge = loadFaceStateBudget();
+  assert.deepEqual(bridge.STILL_MODES, ["idle"]);
+  assert.equal(bridge.stillAfterActivityMs, 700);
+  assert.equal(bridge.isStillMode("idle"), true);
+  assert.equal(bridge.isStillMode("thinking"), false);
   const coarse = loadFaceStateBudget({ coarsePointer: true, narrowViewport: false, cores: 8 }).renderBudget();
   assert.equal(coarse.points, 420);
   assert.equal(coarse.stipple_points, 315);
