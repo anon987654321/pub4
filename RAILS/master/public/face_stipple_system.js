@@ -14,15 +14,13 @@
   // The nine moods live in MASTER/data/tokens.yml (face_interface.stipple.profiles) and arrive
   // as MASTER_FACE_CONTRACT; only idle is kept here so a page without the contract still draws.
   const IDLE_PROFILE = Object.freeze({ density: 0.44, ripple: 0.03, turbulence: 0.04, luminosity: 0.76, attract: 0.14 });
-  const DEFAULT_POINT_SIZE = Object.freeze({
-    base: 0.90, bias_scale: 0.35, bias_min: 0.25, bias_max: 1.50,
-    reference_depth: 5.0, distance_min: 0.75, distance_max: 1.25,
-    output_min: 1.0, output_max: 1.5
+  const DEFAULT_DEPTH_RESPONSE = Object.freeze({
+    reference_distance: 5.0, scale_min: 0.75, scale_max: 1.25
   });
   const profiles = () => window.MASTER_FACE_CONTRACT?.stipple?.profiles || {};
-  const pointSizing = () => ({
-    ...DEFAULT_POINT_SIZE,
-    ...(window.MASTER_FACE_CONTRACT?.stipple?.point_size || {})
+  const depthResponse = () => ({
+    ...DEFAULT_DEPTH_RESPONSE,
+    ...(window.MASTER_FACE_CONTRACT?.stipple?.depth_response || {})
   });
 
   const overrides = {};
@@ -198,18 +196,12 @@
     geometry.setAttribute("aBias", new THREE.BufferAttribute(biases, 1));
     geometry.setAttribute("aDepthRank", new THREE.BufferAttribute(depthRanks, 1));
     const idle = profiles().idle || IDLE_PROFILE;
-    const pointSize = pointSizing();
+    const depth = depthResponse();
     const material = new THREE.ShaderMaterial({
       uniforms: {
-        uPointSizeBase: { value: clamp(pointSize.base, DEFAULT_POINT_SIZE.base, 0.1, 2.0) },
-        uPointSizeBiasScale: { value: clamp(pointSize.bias_scale, DEFAULT_POINT_SIZE.bias_scale, 0.0, 1.0) },
-        uPointSizeBiasMin: { value: clamp(pointSize.bias_min, DEFAULT_POINT_SIZE.bias_min, 0.0, 1.5) },
-        uPointSizeBiasMax: { value: clamp(pointSize.bias_max, DEFAULT_POINT_SIZE.bias_max, 0.25, 1.5) },
-        uPointSizeReferenceDepth: { value: clamp(pointSize.reference_depth, DEFAULT_POINT_SIZE.reference_depth, 1.0, 20.0) },
-        uPointSizeDistanceMin: { value: clamp(pointSize.distance_min, DEFAULT_POINT_SIZE.distance_min, 0.1, 2.0) },
-        uPointSizeDistanceMax: { value: clamp(pointSize.distance_max, DEFAULT_POINT_SIZE.distance_max, 0.1, 2.0) },
-        uPointSizeOutputMin: { value: clamp(pointSize.output_min, DEFAULT_POINT_SIZE.output_min, 1.0, 1.5) },
-        uPointSizeOutputMax: { value: clamp(pointSize.output_max, DEFAULT_POINT_SIZE.output_max, 1.0, 1.5) },
+        uDepthReferenceDistance: { value: clamp(depth.reference_distance, DEFAULT_DEPTH_RESPONSE.reference_distance, 1.0, 20.0) },
+        uDepthScaleMin: { value: clamp(depth.scale_min, DEFAULT_DEPTH_RESPONSE.scale_min, 0.1, 2.0) },
+        uDepthScaleMax: { value: clamp(depth.scale_max, DEFAULT_DEPTH_RESPONSE.scale_max, 0.1, 2.0) },
         uTime: { value: 0 },
         uDepthFromRank: { value: swarmConfiguration().size_from_depth === true ? 1.0 : 0.0 },
         uDepthSteps: { value: Math.max(2, Array.isArray(swarmConfiguration().glyph_ramp) ? swarmConfiguration().glyph_ramp.length : 2) },
@@ -233,15 +225,9 @@
         uniform float uAttract;
         uniform float uEntropy;
         uniform float uMotionScale;
-        uniform float uPointSizeBase;
-        uniform float uPointSizeBiasScale;
-        uniform float uPointSizeBiasMin;
-        uniform float uPointSizeBiasMax;
-        uniform float uPointSizeReferenceDepth;
-        uniform float uPointSizeDistanceMin;
-        uniform float uPointSizeDistanceMax;
-        uniform float uPointSizeOutputMin;
-        uniform float uPointSizeOutputMax;
+        uniform float uDepthReferenceDistance;
+        uniform float uDepthScaleMin;
+        uniform float uDepthScaleMax;
         uniform float uLuminosity;
         varying float vAlpha;
         varying float vZone;
@@ -265,12 +251,12 @@
           // seam the one-pixel law owns — and freezes twice over under reduced
           // motion: uTime stops and uMotionScale goes to 0.
           float breath = 1.0 + uMotionScale * 0.05 * sin(uTime * 0.5712);
-          float distanceScale = clamp(uPointSizeReferenceDepth / max(1.0, -mv.z),
-            uPointSizeDistanceMin, uPointSizeDistanceMax);
+          float depthScale = clamp(uDepthReferenceDistance / max(1.0, -mv.z),
+            uDepthScaleMin, uDepthScaleMax);
           gl_PointSize = 1.0;
           vThreshold = aThreshold;
           vDepthRank = aDepthRank;
-          vAlpha = clamp((0.34 + zoneWeight * 0.56) * aBias * uLuminosity * breath * (1.0 - uEntropy * 0.08) * distanceScale, 0.0, 1.0);
+          vAlpha = clamp((0.34 + zoneWeight * 0.56) * aBias * uLuminosity * breath * (1.0 - uEntropy * 0.08) * depthScale, 0.0, 1.0);
           vZone = aZone;
         }
       `,
@@ -716,13 +702,9 @@
         density: value("uDensity"), ripple: value("uRipple"), turbulence: value("uTurbulence"),
         luminosity: value("uLuminosity"), attract: value("uAttract"), opacity: value("uOpacity"),
         time: value("uTime"),
-        pointSizeBase: value("uPointSizeBase"),
-        pointSizeBiasScale: value("uPointSizeBiasScale"),
-        pointSizeReferenceDepth: value("uPointSizeReferenceDepth"),
-        pointSizeDistanceMin: value("uPointSizeDistanceMin"),
-        pointSizeDistanceMax: value("uPointSizeDistanceMax"),
-        pointSizeOutputMin: value("uPointSizeOutputMin"),
-        pointSizeOutputMax: value("uPointSizeOutputMax")
+        depthReferenceDistance: value("uDepthReferenceDistance"),
+        depthScaleMin: value("uDepthScaleMin"),
+        depthScaleMax: value("uDepthScaleMax")
       }
     };
   }
