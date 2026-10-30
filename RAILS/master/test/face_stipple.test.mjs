@@ -572,8 +572,9 @@ test("stipple module boots and builds from the canonical idle profile", () => {
     reducedMotion: false
   }, 0.5);
   assert.ok(stipple.material.uniforms.uDensity.value > 0.44);
-  assert.ok(stipple.material.uniforms.uRipple.value > 0.03);
-  assert.ok(stipple.material.uniforms.uTurbulence.value > 0.0724);
+  assert.equal(stipple.material.uniforms.uRipple.value, 0, "idle cannot ripple autonomously");
+  assert.equal(stipple.material.uniforms.uTurbulence.value, 0, "idle cannot tremble autonomously");
+  assert.equal(stipple.material.uniforms.uMotionScale.value, 0);
   assert.ok(stipple.material.uniforms.uLuminosity.value > 0.76);
   assert.ok(stipple.material.uniforms.uAttract.value < 0.14);
   api.tick(stipple, {
@@ -581,12 +582,12 @@ test("stipple module boots and builds from the canonical idle profile", () => {
     reducedMotion: false
   }, 0.75);
   assert.equal(stipple.material.uniforms.uDensity.value, 0.44);
-  assert.equal(stipple.material.uniforms.uRipple.value, 0.03);
+  assert.equal(stipple.material.uniforms.uRipple.value, 0);
+  assert.equal(stipple.material.uniforms.uTurbulence.value, 0);
   assert.equal(api.applyPalette(stipple, { accent: "#C8F55F" }), false);
   assert.deepEqual(stipple.material.uniforms.uColor.value.rgb, [1, 1, 1]);
 
-  // State changes reuse the one contract; pressure can modulate density without
-  // replacing the named profile, and reduced motion removes animation only.
+  // Active modes keep their semantic movement; reduced motion removes it.
   api.tick(stipple, {
     mode: "thinking",
     pressureFields: { pct: 50, entropy: 0.28 },
@@ -597,6 +598,7 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   assert.ok(Math.abs(stipple.material.uniforms.uTurbulence.value - 0.3304) < 0.00001);
   assert.equal(stipple.material.uniforms.uLuminosity.value, 0.91);
   assert.equal(stipple.material.uniforms.uAttract.value, 0.74);
+  assert.equal(stipple.material.uniforms.uMotionScale.value, 1);
   assert.equal(stipple.material.uniforms.uTime.value, 1);
 
   api.tick(stipple, {
