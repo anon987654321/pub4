@@ -60,7 +60,7 @@ module Master
         url = candidates.first.fetch(:url)
         unless ai_use_acknowledged?
           return Result.err(
-            "lovdata: document text retrieval is disabled. Lovdata's current terms restrict AI use to eligible individual public documents and require no storage or model training. After verifying that your chosen runtime meets those conditions, set #{AI_USE_ENV}=#{AI_USE_ACK}. Search results and official links remain available.",
+            "lovdata: document text retrieval is disabled for #{url}. Lovdata's current terms restrict AI use to eligible individual public documents and require no storage or model training. After verifying that your chosen runtime meets those conditions, set #{AI_USE_ENV}=#{AI_USE_ACK}. The official link remains available for human reading.",
             category: :policy,
           )
         end

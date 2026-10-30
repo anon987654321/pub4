@@ -17,10 +17,18 @@ class TestResearchSourceTools < Minitest::Test
 
   def with_env(key, value)
     previous = ENV[key]
-    value.nil? ? ENV.delete(key) : ENV[key] = value
+    if value.nil?
+      ENV.delete(key)
+    else
+      ENV[key] = value
+    end
     yield
   ensure
-    previous.nil? ? ENV.delete(key) : ENV[key] = previous
+    if previous.nil?
+      ENV.delete(key)
+    else
+      ENV[key] = previous
+    end
   end
 
   def with_stubbed_search(tool, value)
