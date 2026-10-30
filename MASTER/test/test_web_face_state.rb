@@ -31,6 +31,8 @@ class FaceStateSpec < Minitest::Test
     assert_includes source, "STILL_MODES"
     assert_includes source, "function isStillMode(mode)"
     assert_includes source, "isStillMode,"
+    assert_includes source, "STILL_AFTER_ACTIVITY_MS"
+    assert_includes source, "stillAfterActivityMs: STILL_AFTER_ACTIVITY_MS"
   end
 
   # The governor reads its limits from the face contract's spatial budget and keeps
