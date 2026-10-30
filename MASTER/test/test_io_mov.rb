@@ -222,16 +222,13 @@ class TestIoMov < Minitest::Test
     response = response_class.new(payload)
 
     Dir.mktmpdir do |dir|
-      original_dir = Mov.const_get(:DOWNLOADS_DIR)
-      Mov.send(:remove_const, :DOWNLOADS_DIR)
-      Mov.const_set(:DOWNLOADS_DIR, dir)
       target = File.join(dir, "Binary sample.mp4")
       responder = lambda do |uri, timeout:, headers:, max_redirects: Mov::MAX_REDIRECTS, &block|
         block.call(response, uri)
       end
 
-      begin
-        result = Mov.stub(:with_http_response, responder) do
+      result = Mov.stub(:downloads_dir, dir) do
+        Mov.stub(:with_http_response, responder) do
           Mov.download_once(
             URI("https://archive.org/download/item/Binary%20sample.mp4"),
             target,
@@ -240,13 +237,10 @@ class TestIoMov < Minitest::Test
             expected_md5: Digest::MD5.hexdigest(payload),
           )
         end
-
-        assert_match(/\Amov0: saved /, result)
-        assert_equal payload, File.binread(target)
-      ensure
-        Mov.send(:remove_const, :DOWNLOADS_DIR)
-        Mov.const_set(:DOWNLOADS_DIR, original_dir)
       end
+
+      assert_match(/\Amov0: saved /, result)
+      assert_equal payload, File.binread(target)
     end
   end
 
