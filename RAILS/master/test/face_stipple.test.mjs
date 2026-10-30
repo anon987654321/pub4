@@ -459,6 +459,12 @@ test("stipple module boots and builds from the canonical idle profile", () => {
   assert.equal(initialDiagnostics.semantic.residual.selectedCarriers, 0);
   assert.equal(initialDiagnostics.semantic.dialInputs.activity, null);
   assert.equal(initialDiagnostics.semantic.dialAdjustments.density, 0);
+  faceState = { mode: "idle", activity: null, arousal: "", focus: null, confidence: null, risk: null };
+  const absentDialDiagnostics = window.MASTER_FACE_STIPPLE.snapshot().semantic;
+  assert.equal(absentDialDiagnostics.dialInputs.activity, null);
+  assert.equal(absentDialDiagnostics.dialInputs.arousal, null);
+  assert.equal(absentDialDiagnostics.dialAdjustments.density, 0);
+  assert.equal(absentDialDiagnostics.dialAdjustments.ripple, 0);
   faceState = { mode: "idle", activity: 1, arousal: 1, focus: 1, confidence: 1, risk: 1 };
   const dialDiagnostics = window.MASTER_FACE_STIPPLE.snapshot().semantic;
   assert.equal(dialDiagnostics.dialInputs.activity, 1);
