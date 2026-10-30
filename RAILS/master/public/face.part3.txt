@@ -341,7 +341,8 @@ function frame(t) {
   const reducedMotion = faceReducedMotionActive();
   const stillMode = window.MASTER_FACE_STATE?.isStillMode?.(State.mode) ?? State.mode === 'idle';
   const idleStill = stillMode && !tts.playing && !gestureStart &&
-    (t - Number(State.lastTouch || 0)) > 700 && (State.pulse || 0) <= 0.01;
+    (t - Number(State.lastTouch || 0)) >=
+      Number(window.MASTER_FACE_STATE?.stillAfterActivityMs ?? 700) && (State.pulse || 0) <= 0.01;
   const motionFrozen = reducedMotion || idleStill;
   syncSemanticPools(dt * 0.001, motionFrozen);
 
