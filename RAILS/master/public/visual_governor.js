@@ -93,6 +93,12 @@
 
   function runFrame(now) {
     nativeHandle = 0;
+    if (document.hidden || frozen()) {
+      const parked = pending;
+      pending = new Map();
+      parked.forEach((callback, id) => hiddenWaiters.push({ id, callback }));
+      return;
+    }
     const current = resolveLimits();
     const minFrameMs = 1000 / Math.max(1, current.maxFps);
     if (now - last < minFrameMs) { pump(); return; }
