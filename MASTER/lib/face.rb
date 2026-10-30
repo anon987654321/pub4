@@ -85,10 +85,10 @@ module Master
           "note" => face.fetch("stipple_note", {}).fetch(name) }.freeze
       end
 
-      # Point-sprite sizing is shared with the browser shader through the same
-      # canonical face_interface block; callers must not copy these dials.
-      def stipple_point_size(root: Master::ROOT)
-        data(root:).fetch("stipple", {}).fetch("point_size", {}).transform_keys(&:to_s).freeze
+      # The one-pixel sprite's camera-depth brightness response is shared with
+      # the browser shader through this canonical contract.
+      def stipple_depth_response(root: Master::ROOT)
+        data(root:).fetch("stipple", {}).fetch("depth_response", {}).transform_keys(&:to_s).freeze
       end
 
       def modes(root: Master::ROOT)
