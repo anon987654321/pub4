@@ -117,6 +117,12 @@ class DillaTest < Minitest::Test
     assert_equal(-4, studies.fetch("get_dis_money").fetch("sample_pitch_shift_semitones"))
     assert_equal 50, studies.fetch("get_dis_money").fetch("bass_tuning_cents")
     assert_equal %w[B7b9 F7#11 E9sus4], studies.fetch("burton_flip").fetch("chords")
+    %w[burton_flip dont_cry_ii_add11].each do |name|
+      study = studies.fetch(name)
+      assert study.fetch("renderable_as_progression")
+      study.fetch("chords").each { |chord| assert Chords.parse(chord), "#{name}: #{chord}" }
+    end
+    refute studies.fetch("get_dis_money").fetch("renderable_as_progression")
     assert_equal "low_confidence_harmonic_research_lead", studies.fetch("dont_cry_ii_add11").fetch("status")
     assert_equal "proposed_deterministic_timing_model_not_audio_measurement", studies.fetch("theseus_microtiming").fetch("status")
   end
