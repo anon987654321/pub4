@@ -41,6 +41,20 @@ floating widgets clear it. Its stylesheet rules live in brgen's single `applicat
 scoped under `body.vertical-playlist`.
 
 
+## Original creator-platform promise
+
+The archived Whyp.it-inspired brief called for easy local audio publishing, high-quality playback,
+embeds, listening insight, privacy/expiry controls and support for independent creators. The
+current engine has hosted tracks, external URL imports, playlists and sets, owner/editor/viewer
+collaboration, embeddable players, timestamped comments, listening parties, likes/listen records
+and per-track expiry. The Radio Bergen archive is a separate curated import and remains gated by
+its tenant and recording-rights preconditions.
+
+Listen and Like records provide the foundation for engagement counts; do not describe a complete
+creator analytics dashboard, donations, paid creator tier or sponsored-content marketplace as
+shipped without a matching surface and tests. The public host is `radio.<city>`; `playlist.<city>`
+is not a supported host.
+
 ## Radio Bergen tunnel and curated archive
 
 The Playlist home now renders the existing Radio Bergen tunnel through the Rails
