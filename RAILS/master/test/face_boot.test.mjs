@@ -1127,3 +1127,31 @@ test("face preserves browser zoom and gives each shortcut one owner", () => {
   assert.match(runtime, /active\?\.closest\?\.\('\[role="dialog"\]'\)/);
   assert.match(runtime, /const editing = tag === 'INPUT'[\s\S]{0,200}active\?\.closest\?\.\('\[role="dialog"\]'\)/);
 });
+
+
+test("thinking face keeps the single composer ready beneath an ASCII spinner", () => {
+  const part1 = readFileSync(join(publicDir, "face.part1.txt"), "utf8");
+  const part5 = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
+  const css = readFileSync(join(railsRoot, "master", "styles", "face", "30_conversation.css"), "utf8");
+  const cliSpinner = readFileSync(join(root, "..", "..", "MASTER", "lib", "cli", "session", "thinking_indicator.rb"), "utf8");
+
+  assert.ok(part1.includes("const STAR_FRAMES = ['|', '/', '-', '\\\\'];"));
+  assert.match(part1, /const STAR_INTERVAL_MS = 100/);
+  assert.doesNotMatch(part1, /STAR_COLORS/);
+  assert.match(css, /body\\[data-mode="thinking"\\] #ascii-star:not\\(:empty\\)/);
+  assert.match(css, /bottom: calc\\(84px \\+ var\\(--safe-bottom\\) \\+ var\\(--keyboard-inset, 0px\\)\\)/);
+  assert.match(css, /body\\[data-mode="thinking"\\] #zin,[\\s\\S]{0,130}opacity: 1/);
+  assert.match(part5, /\\$\\{_pendingTurns.length\\} queued \\/ paused/);
+  assert.match(cliSpinner, /TICK_SECONDS = 0\\.10/);
+  assert.ok(cliSpinner.includes('SPINNER_FRAMES = ["|", "/", "-", "\\\\"] .freeze') === false);
+  assert.ok(cliSpinner.includes('SPINNER_FRAMES = ["|", "/", "-", "\\\\"].freeze'));
+});
+
+test("web chat records monotonic first-token, first-audio and reply-completion latency", () => {
+  const part5 = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
+  const speech = readFileSync(join(publicDir, "face_speech_runtime.js"), "utf8");
+  assert.match(part5, /startedAt: performance\\.now\\(\\)/);
+  assert.match(part5, /chatTiming\\.firstTokenMs = Math\\.round\\(performance\\.now\\(\\) - chatTiming\\.startedAt\\)/);
+  assert.match(part5, /chatTiming\\.completedMs = Math\\.round\\(performance\\.now\\(\\) - chatTiming\\.startedAt\\)/);
+  assert.match(speech, /chatTiming\\.firstAudioMs = Math\\.round\\(performance\\.now\\(\\) - chatTiming\\.startedAt\\)/);
+});
