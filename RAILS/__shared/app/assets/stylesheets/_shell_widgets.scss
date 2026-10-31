@@ -27,40 +27,6 @@
   padding: 0.75rem 0; /* 12px — eight_px_rhythm */
 }
 
-.widget-search {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: var(--search-bg);
-  border-radius: 0;
-  padding: 0.75rem 1rem; /* 12/16 */
-  margin-bottom: 1rem;
-  transition: background var(--transition-fast) var(--ease-out);
-}
-
-.widget-search:focus-within {
-  background: var(--hover);
-}
-
-.widget-search input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--text);
-  font-size: var(--text-base);
-  font-family: inherit;
-  width: 100%;
-  /* The pill around this is padded to 44px, but the input inside it is what
-     takes the tap, and rendered_geometry measured that at 202x38 against
-     design_rules.ux_laws.fitts.target_min_px of 44. Padding on a parent does
-     not enlarge a child's hit area. */
-  min-height: var(--tap-min);
-}
-
-.widget-search input::placeholder {
-  color: var(--text-secondary);
-}
-
 /* Page-header geometry belongs to _layout_chrome.scss.
    Keeping one authority prevents the old sticky widget header from leaking
    into document pages, where the same class is a normal title/action row. */

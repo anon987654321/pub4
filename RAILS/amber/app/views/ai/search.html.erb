@@ -1,11 +1,13 @@
 <% content_for :title, t("pages.search_wardrobe_title") %>
 <%= tag.h1 t("pages.search_wardrobe") %>
-<%= form_with url: ai_search_path, method: :get do |f| %>
-  <div class="field-row">
-    <%= f.search_field :q, value: @query, placeholder: t("ai_forms.search_placeholder"), aria: { label: t("ai_forms.search_placeholder") }, autofocus: true, class: "input input--wide" %>
+<%# The shared search shell (pen vYroQxg); Enter submits, the button is hidden by the shell. %>
+<div class="search" data-controller="search-focus">
+  <%= form_with url: ai_search_path, method: :get, class: "search-form" do |f| %>
+    <%= f.search_field :q, value: @query, placeholder: t("ai_forms.search_placeholder"),
+                       aria: { label: t("ai_forms.search_placeholder") }, autofocus: true %>
     <%= f.submit t("search.submit"), class: "btn" %>
-  </div>
-<% end %>
+  <% end %>
+</div>
 <% if @explanation.present? %>
   <p><%= @explanation %></p>
 <% end %>

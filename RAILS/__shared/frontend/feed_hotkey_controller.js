@@ -125,7 +125,7 @@ export default class extends Controller {
 
   #focusSearch() {
     const field = document.querySelector(
-      'input[type=search], input[name=q], .widget-search input, .nav-search-input, [data-hotkey-search]'
+      'input[type=search], input[name=q], .nav-search-input, [data-hotkey-search]'
     )
     if (field) {
       field.focus()

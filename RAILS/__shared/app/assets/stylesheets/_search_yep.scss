@@ -40,6 +40,9 @@
   color: #aaa;
 }
 
+/* The pen lifts the focused field with a shadow; the interface is flat
+   (__shared/README.md, design_contract_test), so grey turning white is the cue,
+   which is the larger half of the pen's own. */
 .search.focus,
 .search.active {
   background-color: white;

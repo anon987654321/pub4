@@ -12,9 +12,12 @@
   <%= form_with url: search_conversations_path, method: :get, class: "messenger-compose-form" do |f| %>
     <%= f.hidden_field :conversation_id, value: @conversation&.id %>
     <%= f.label :q, t("messages.search_label") %>
-    <div class="messenger-compose-row">
-      <%= f.search_field :q, value: @query, placeholder: t("messages.search_placeholder"), autocomplete: "off" %>
-      <%= f.submit t("messages.search_submit"), class: "btn" %>
+    <%# The shared search shell (pen vYroQxg); Enter submits. %>
+    <div class="search" data-controller="search-focus">
+      <div class="search-form">
+        <%= f.search_field :q, value: @query, placeholder: t("messages.search_placeholder"), autocomplete: "off" %>
+        <%= f.submit t("messages.search_submit"), class: "btn" %>
+      </div>
     </div>
   <% end %>
 

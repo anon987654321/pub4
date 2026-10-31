@@ -15,7 +15,11 @@
 
   <div class="map-hud" role="region" aria-label="<%= t("maps.hud_aria") %>">
     <div class="cluster">
-      <input id="map-search" type="search" placeholder="<%= t("search.places") %>" data-map-target="search" role="searchbox" aria-label="<%= t("search.places_label") %>" class="map-search-input">
+      <%# The shared search shell (pen vYroQxg) over the map. %>
+      <div class="search" data-controller="search-focus">
+        <input id="map-search" type="search" placeholder="<%= t("search.places") %>" data-map-target="search"
+               role="searchbox" aria-label="<%= t("search.places_label") %>">
+      </div>
       <%= link_to t("maps.browse_list"), places_path, class: "btn btn-ghost btn-sm map-browse-link" %>
     </div>
     <div id="place-popup" class="map-place-popup" data-map-target="popup" hidden role="status" aria-live="polite"></div>

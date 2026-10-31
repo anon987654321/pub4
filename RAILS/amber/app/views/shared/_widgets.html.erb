@@ -1,5 +1,6 @@
-<%= form_with url: ai_search_path, method: :get, class: "widget-search", role: "search", local: true do |form| %>
-  <%= icon :search, size: 19 %>
+<%# The shared search shell (pen vYroQxg), as every app's search wears it. %>
+<div class="search" data-controller="search-focus">
+<%= form_with url: ai_search_path, method: :get, class: "search-form", role: "search", local: true do |form| %>
   <%= form.search_field :q, value: params[:q], placeholder: t("search.wardrobe_short"), aria: { label: t("search.wardrobe_short") } %>
 <%# tabindex -1: this submit exists only so the form posts on Enter, which
     implicit submission already does. Being focusable AND visually hidden made it
@@ -8,6 +9,7 @@
     stops on /wardrobe. Out of the tab order, Enter still submits. %>
   <%= form.submit t("search.submit"), class: "visually-hidden", tabindex: -1 %>
 <% end %>
+</div>
 
 <% if authenticated? && defined?(@items_count) %>
   <div class="sidebar-card">

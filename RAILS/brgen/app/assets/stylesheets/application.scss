@@ -5149,7 +5149,6 @@ label.field--check-label > input { min-height: var(--tap-min); min-width: var(--
 .map-hud { position: fixed; top: var(--space-4); left: var(--brand-mark-inline); z-index: var(--z-app); display: flex; flex-direction: column; gap: var(--space-2); max-width: 280px; }
 /* min-height: the newsletter email field carries this class, and it holds the
    44px design_rules.ux_laws.fitts minimum. */
-.map-search-input { flex: 1; min-height: var(--tap-min); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: inherit; font-size: var(--text-base); }
 .map-place-popup { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-3); font-size: var(--text-sm); }
 
 /* In-feed affiliate unit. Grid packs the images and one Stimulus controller does the tilt, so the unit costs no dependency and no extra license. */
@@ -8067,20 +8066,6 @@ inset-inline-start: calc(var(--brand-mark-inline) + var(--safe-left));
 
 body.vertical-maps .map-hud > * {
   pointer-events: auto;
-}
-
-body.vertical-maps .map-search-input {
-  width: 100%;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-card);
-  border: 1px solid var(--maps-border);
-  background: var(--maps-surface);
-  color: var(--maps-ink);
-  font-size: var(--text-base);
-}
-
-body.vertical-maps .map-search-input::placeholder {
-  color: var(--maps-muted);
 }
 
 body.vertical-maps .map-place-popup {
