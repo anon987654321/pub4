@@ -1,5 +1,16 @@
 # Dilla
 
+## RG-69 alias
+
+RG-69 (also styled “RG-69 Beat Machine”) is the historical alternate name and entry point for this same Dilla instrument, not a separate synthesizer or parallel engine. Dilla remains the single canonical implementation. The compatibility entry point `STUDIO/dilla/rg69.rb` forwards its arguments directly to `dilla.rb`, so old RG-69 naming can be retained without forking musical behaviour:
+
+```sh
+ruby STUDIO/dilla/rg69.rb --list
+ruby STUDIO/dilla/rg69.rb --showcase --no-video --out /tmp/rg69-take.wav
+```
+
+The historical web-page target is not recreated as a second application; its musical identity belongs to Dilla.
+
 The default Blue Hour showcase uses a restrained `dilla_bed` bus rig and a leaner arrangement; `dilla_night` remains available for deliberately exaggerated effect experiments.
 
 **A small room that plays a chord progression soft and a little late, with drums that
