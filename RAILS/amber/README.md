@@ -20,6 +20,59 @@ switcher in the footer sets it. Chrome, empty states and flash messages all go t
 the sentences the shared engine owns, such as not_authorized and rate_limited, come from
 shared.flash. Tests assert through keys and never through English literals.
 
+## The original fashion-network promise, restored honestly
+
+The first Amber brief was broader than a wardrobe tracker: a fashion companion where people could
+photograph what they own, understand their taste, compose new looks, care for garments, discover
+ideas and share style with others. That ambition still guides the product. The old list is not,
+however, a declaration that every proposed surface shipped.
+
+The promise resolves against the current application as follows:
+
+- **Wardrobe photography and visualisation — shipped, with a narrower image pipeline.** Members
+  upload garment photographs, see their wardrobe and use the dressing room. Processing makes
+  Active Storage variants, applies one portrait polish pass and extracts a dominant colour.
+  Automated garment cut-out, background removal, relighting, AI-model try-on and true image
+  segmentation are not present.
+- **Daily styling and mix-and-match — shipped.** The daily Style Assistant builds a weather-aware
+  look from the member's own garments. The dressing room has four taste-ranked, counter-rotating
+  zone carousels; explanations draw on stated preferences, joy, wear, recency and life phase.
+- **Fashion feed and community — partly shipped.** Amber has posts, comments, reactions, follows,
+  mutual connections and direct messages. It can display supported media-link players. This is
+  a member-created social feed, not a continuously curated runway or global-trend feed, and it is
+  not a public live-chat room.
+- **Shop smarter — shipped as a restraint-first assistant.** It surfaces wardrobe gaps, duplicate
+  candidates and affiliate links the member has chosen to save. It does not import a global
+  fashion catalogue or push purchases as the default answer.
+- **Wardrobe analytics and closet care — shipped.** Usage, cost per wear, idle garments, category
+  mix, wear distribution, care, storage, zoning and restraint advice are available. These scores
+  and tips are heuristics, not independent sustainability or lifecycle certifications.
+- **Travel packing — shipped in a basic form.** A member can generate and save a packing list from
+  wardrobe items for a selected trip duration and climate. It is not a full itinerary planner.
+- **Community feedback and challenges — partly shipped.** Members can discuss and react to posts;
+  declutter challenges help decide whether to keep or release a garment. They are not public
+  fashion competitions with rankings or prizes.
+- **Mood, occasion and style discovery — partly shipped.** Mood-board matching, occasion coverage,
+  style preferences and occasion-aware outfit suggestions exist. A dedicated emotional mood
+  coach and a calendar-linked event outfit planner remain distinct product work.
+- **Weather suggestions — shipped with a defined boundary.** The daily look can use cached
+  Bergen weather. Do not imply global weather coverage or a live weather agent.
+- **Care, repair and sustainability — partly shipped.** Care and storage guidance and a
+  heuristic sustainability score exist. Repair estimates, recycling workflows, resale and
+  lifecycle assessment are not yet a complete product.
+- **Inclusive styling — a design constraint, not a finished fit engine.** Amber must remain useful
+  without judging bodies or assuming one ideal shape. Body-aware fit advice and virtual fitting
+  are not shipped.
+- **Not yet delivered:** virtual fitting, live webcam/video streaming, a dedicated inspiration
+  library, DIY/fabric-design tools, celebrity-look matching, runway reviews, fashion-history
+  publishing, global trend intelligence and local-designer discovery.
+
+The old phrase “AI-enhanced” also needs precision. OpenRouter can power selected analyses when
+configured; otherwise explicit deterministic rules and heuristics are used. A photo fingerprint
+is an exact local checksum, not semantic visual search. A scheduled style session is a calendar
+record, not a webcam broadcast. These boundaries are part of Amber's trust contract, not caveats
+to hide.
+
 ## The wardrobe
 
 An Item is a garment, with its colour, size, material, brand, price, category and photographs,
