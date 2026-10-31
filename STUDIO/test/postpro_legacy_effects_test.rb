@@ -7,7 +7,6 @@ class PostproLegacyEffectsTest < Minitest::Test
   LEGACY = File.read(File.join(ROOT, "postpro", "legacy_effects.rb"))
   RECIPE = File.read(File.join(ROOT, "postpro", "lib", "recipe.rb"))
   DISPATCH = File.read(File.join(ROOT, "postpro", "lib", "grade_step.rb"))
-  DISPATCH = File.read(File.join(ROOT, "postpro", "lib", "grade_step.rb"))
 
   RESTORED = %w[
     film_grain film_halation bloom_effect cross_process golden_hour_glow lomo
