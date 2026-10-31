@@ -10,8 +10,8 @@ const OPENING_TRACK_ID = "9EGHwkDix78"
 
 async function loadRadioModes() {
   const source = await readFile(resolve(ROOT, "brgen/app/javascript/radio_brgen_modes.js"), "utf8")
-  const executable = source.replace(/^export\\s+/gm, "")
-  const api = vm.runInNewContext(`${executable}\\n({ MODES, INK_FAR, INK_MID, INK_NEAR, RING_SHAPE_GLSL, modeAfterStep })`)
+  const executable = source.replace(/^export\s+/gm, "")
+  const api = vm.runInNewContext(`${executable}\n({ MODES, INK_FAR, INK_MID, INK_NEAR, RING_SHAPE_GLSL, modeAfterStep })`)
   return api
 }
 
@@ -46,21 +46,21 @@ test("radio mode stepping wraps in both directions and validates its inputs", as
 
 test("all 22 mode indices have an ordered GLSL branch and the classic mode is neutral", async () => {
   const { RING_SHAPE_GLSL, MODES } = await loadRadioModes()
-  const thresholds = Array.from(RING_SHAPE_GLSL.matchAll(/if \\(m < ([0-9.]+)\\)/g), (match) => Number(match[1]))
+  const thresholds = Array.from(RING_SHAPE_GLSL.matchAll(/if \(m < ([0-9.]+)\)/g), (match) => Number(match[1]))
   assert.equal(thresholds.length, MODES.length - 1)
   assert.deepEqual(thresholds, Array.from({ length: MODES.length - 1 }, (_, index) => index + 0.5))
-  assert.match(RING_SHAPE_GLSL, /if \\(m < 0\\.5\\) return 0\\.0;/)
-  assert.match(RING_SHAPE_GLSL, /float ringShape\\(float th, float i, float t\\)/)
+  assert.match(RING_SHAPE_GLSL, /if \(m < 0\.5\) return 0\.0;/)
+  assert.match(RING_SHAPE_GLSL, /float ringShape\(float th, float i, float t\)/)
 })
 
 test("Radio tunnel wires the mode shader and left/right keyboard controls", async () => {
   const source = await readFile(resolve(ROOT, "brgen/app/javascript/radio_brgen_tunnel.js"), "utf8")
   assert.match(source, /MODES, RING_SHAPE_GLSL, modeAfterStep/)
-  assert.match(source, /this\\.mode = modeAfterStep\\(this\\.mode, step\\)/)
-  assert.match(source, /gl\\.uniform1f\\(u\\.uMode, this\\.mode\\)/)
-  assert.match(source, /gl\\.uniform1f\\(u\\.uModeTwist, MODES\\[this\\.mode\\]\\.twist\\)/)
-  assert.match(source, /e\\.code === "ArrowRight" \\|\\| e\\.code === "ArrowLeft"/)
-  assert.match(source, /this\\.visualEngine\\.shiftMode\\(e\\.code === "ArrowRight" \\? 1 : -1\\)/)
+  assert.match(source, /this\.mode = modeAfterStep\(this\.mode, step\)/)
+  assert.match(source, /gl\.uniform1f\(u\.uMode, this\.mode\)/)
+  assert.match(source, /gl\.uniform1f\(u\.uModeTwist, MODES\[this\.mode\]\.twist\)/)
+  assert.match(source, /e\.code === "ArrowRight" \|\| e\.code === "ArrowLeft"/)
+  assert.match(source, /this\.visualEngine\.shiftMode\(e\.code === "ArrowRight" \? 1 : -1\)/)
 })
 
 async function loadInitialTrackIndex() {
