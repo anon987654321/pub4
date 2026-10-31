@@ -24,3 +24,9 @@ en:
       amber_premium_yearly:
         name: "Amber Premium, yearly"
         summary: "Everything in Premium, paid once a year."
+      master_api_team:
+        name: "MASTER law API, Team"
+        summary: "10,000 file checks a month against MASTER's laws, over HTTPS."
+      master_api_business:
+        name: "MASTER law API, Business"
+        summary: "100,000 file checks a month, for CI across many repositories."

@@ -1,0 +1,37 @@
+<%= render layout: "api/page", locals: { title: t("api.title") } do %>
+  <%= tag.h1 t("api.heading") %>
+  <%= tag.p t("api.lede") %>
+
+  <%= tag.h2 t("api.plans_heading") %>
+  <% @plans.each do |plan| %>
+    <section aria-labelledby="plan-<%= plan.key %>">
+      <%= tag.h3 t("billing.plans.#{plan.key}.name"), id: "plan-#{plan.key}" %>
+      <%= tag.p t("billing.plans.#{plan.key}.summary") %>
+      <%= tag.p safe_join([tag.strong(number_to_currency(plan.amount / 100, unit: "$", precision: 0)),
+                           t("api.per_month")], " ") %>
+      <% if plan.available? %>
+        <%= button_to t("api.subscribe"), api_checkout_path, params: { plan: plan.key } %>
+      <% else %>
+        <%= tag.p t("api.not_yet") %>
+      <% end %>
+    </section>
+  <% end %>
+
+  <%= tag.h2 t("api.usage_heading") %>
+  <%= tag.p t("api.usage_lede") %>
+  <pre><code>curl https://ai.brgen.no/api/v1/lint \
+  -H "Authorization: Bearer $MASTER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"files":[{"path":"app/models/user.rb","source":"class User\nend\n"}]}'</code></pre>
+  <%= tag.p t("api.response_lede") %>
+  <pre><code>{"findings":[{"path":"app/models/user.rb","line":1,"law":"FROZEN_STRING_LITERAL",
+  "severity":"warning","message":"…"}],"usage":{"period":"2026-10","used":1,"quota":10000}}</code></pre>
+
+  <%= tag.h2 t("api.limits_heading") %>
+  <ul>
+    <%= tag.li t("api.limit_files", files: LawCheck::MAX_FILES, kilobytes: LawCheck::MAX_BYTES / 1000) %>
+    <% %w[limit_quota limit_errors limit_account limit_privacy].each do |limit| %>
+      <%= tag.li t("api.#{limit}") %>
+    <% end %>
+  </ul>
+<% end %>

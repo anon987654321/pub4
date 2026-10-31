@@ -10,5 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_14_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_31_130000) do
+  create_table "api_keys", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "current_period_end"
+    t.string "email"
+    t.string "plan_key", null: false
+    t.string "status", null: false
+    t.string "stripe_customer_id"
+    t.string "stripe_subscription_id", null: false
+    t.string "token_digest"
+    t.string "token_hint"
+    t.datetime "updated_at", null: false
+    t.integer "usage_count", default: 0, null: false
+    t.string "usage_period"
+    t.index ["stripe_subscription_id"], name: "index_api_keys_on_stripe_subscription_id", unique: true
+    t.index ["token_digest"], name: "index_api_keys_on_token_digest", unique: true
+  end
 end

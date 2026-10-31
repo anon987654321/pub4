@@ -144,3 +144,37 @@ nb:
       retry_face_boot: "prøv å starte ansiktet igjen"
       needs_js: "MASTER-partikkelansiktet krever JavaScript."
       tighter_question: "prøv et strammere spørsmål"
+  api:
+    brand: "MASTER lov-API"
+    title: "MASTER lov-API: kodegjennomgang etter regler, over HTTPS"
+    heading: "MASTER lov-API"
+    lede: >-
+      Send kildefiler og få tilbake hver MASTER-lov de bryter, med linje og begrunnelse. Faste regler, ingen modell:
+      samme svar hver gang, på sekunder.
+    plans_heading: "Abonnement"
+    per_month: "i måneden"
+    subscribe: "Abonner"
+    not_yet: "Ikke tilgjengelig ennå."
+    unavailable: "Det abonnementet kan ikke startes akkurat nå. Ingenting ble trukket."
+    not_confirmed: "Stripe har ikke bekreftet den betalingen. Har du betalt, last siden på nytt om et minutt."
+    usage_heading: "Bruk"
+    usage_lede: "Send opptil 20 filer som JSON med nøkkelen din som bearer-token."
+    response_lede: "Hvert funn oppgir fil, linje, lov og alvorlighet, og svaret viser månedens forbruk."
+    limits_heading: "Grenser"
+    limit_files: "Opptil %{files} filer per forespørsel, %{kilobytes} kB hver. Én fil er én sjekk."
+    limit_quota: >-
+      Kvoten nullstilles den første hver måned (UTC). En forespørsel som ikke får plass, avvises i sin helhet og
+      koster ingenting.
+    limit_errors: >-
+      401 ugyldig nøkkel, 402 abonnementet er ikke aktivt, 422 ugyldig forespørsel, 429 kvote eller
+      hastighetsgrense.
+    limit_account: >-
+      GET /api/v1/key viser forbruk; POST /api/v1/key/rotate bytter nøkkel; POST /api/v1/key/portal åpner betaling.
+    limit_privacy: "Kildekoden vurderes i minnet og lagres aldri eller skrives til disk."
+    key_title: "API-nøkkelen din"
+    key_once: "Kopier den nå: den vises én gang, og bare fingeravtrykket lagres."
+    key_shown: >-
+      Denne nøkkelen (slutter på %{hint}) er allerede vist. Er den borte, bytt den med den gamle nøkkelen, eller
+      skriv til operatøren.
+    key_plan: "%{plan}: %{quota} sjekker i måneden."
+    key_docs: "Slik bruker du den"

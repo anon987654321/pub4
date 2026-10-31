@@ -7,9 +7,8 @@ module Shared
   class BillingSubscription < ApplicationRecord
     self.table_name = "billing_subscriptions"
 
-    # Stripe's statuses. Only these two give access; past_due, unpaid,
-    # incomplete and canceled do not.
-    ENTITLING = %w[active trialing].freeze
+    # Stripe's statuses; only active and trialing give access.
+    ENTITLING = Shared::StripeBilling::ENTITLING_STATUSES
     STATUSES = %w[incomplete incomplete_expired trialing active past_due canceled unpaid paused].freeze
 
     belongs_to :user, class_name: "::User"

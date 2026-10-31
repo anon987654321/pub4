@@ -43,4 +43,19 @@ Rails.application.routes.draw do
   post "ingress/webhook/:name", to: "ingress#webhook"
   get  "metrics" => "chat#metrics_prometheus"
   get  "radio_bergen" => "pages#radio_bergen"
+
+  # The MASTER law API (app/services/law_check.rb), sold as API keys.
+  get  "api" => "api#show", as: :api
+  post "api/checkout" => "api#checkout", as: :api_checkout
+  get  "api/key" => "api#key", as: :api_key
+  post "api/webhooks/stripe" => "api/stripe_webhooks#create", as: :api_webhooks_stripe
+
+  namespace :api do
+    namespace :v1 do
+      post "lint" => "lint#create"
+      get  "key" => "keys#show"
+      post "key/rotate" => "keys#rotate"
+      post "key/portal" => "keys#portal"
+    end
+  end
 end

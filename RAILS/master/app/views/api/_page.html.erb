@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="<%= Master.tokens.fetch("face_root").fetch("face_bg") %>">
+  <meta name="color-scheme" content="dark">
+  <meta name="robots" content="<%= local_assigns.fetch(:robots, "index") %>">
+  <%= tag.title title %>
+  <link rel="stylesheet" href="/face.css">
+</head>
+<body class="mission-control" data-layout="document" data-surface="face" data-theme="dark">
+  <%= link_to t("skip_to_content"), "#main-content", class: "skip-link" %>
+  <header class="page-header master-titlebar" role="banner">
+    <%= link_to tag.span(t("api.brand"), class: "brand-text"), api_path, class: "brand-mark" %>
+  </header>
+  <main id="main-content" role="main">
+    <%= tag.p(flash[:alert], role: "alert") if flash[:alert] %>
+    <%= yield %>
+  </main>
+</body>
+</html>

@@ -3,7 +3,7 @@
 module Shared
   # One paid plan from config/plans.yml. The page, checkout and the entitlement
   # check read plans here and nowhere else.
-  BillingPlan = Data.define(:key, :app, :amount, :currency, :interval, :price_env, :entitlements) do
+  BillingPlan = Data.define(:key, :app, :amount, :currency, :interval, :price_env, :entitlements, :quota) do
     def self.all
       @all ||= YAML.safe_load_file(File.expand_path("../../../config/plans.yml", __dir__))
                    .fetch("plans").map { |key, row| from_row(key, row) }.freeze
@@ -11,7 +11,7 @@ module Shared
 
     def self.from_row(key, row)
       new(key:, app: row.fetch("app"), amount: Integer(row.fetch("amount")), currency: row.fetch("currency"),
-          interval: row.fetch("interval"), price_env: row.fetch("price_env"),
+          interval: row.fetch("interval"), price_env: row.fetch("price_env"), quota: row["quota"]&.then { Integer(_1) },
           entitlements: Array(row.fetch("entitlements")).map(&:to_s).freeze)
     end
 

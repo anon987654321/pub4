@@ -11,6 +11,9 @@ class BillingPlansContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   PLANS = YAML.safe_load_file(File.join(ROOT, "__shared/config/plans.yml")).fetch("plans")
   CURRENCIES = %w[NOK EUR GBP USD SEK DKK].freeze
+  # A plan with a quota is an API plan, sold as a key rather than to a user.
+  USER_APPS = PLANS.values.reject { |plan| plan.key?("quota") }.map { |plan| plan.fetch("app") }.uniq
+  API_APPS = PLANS.values.select { |plan| plan.key?("quota") }.map { |plan| plan.fetch("app") }.uniq
 
   def read(relative) = File.read(File.join(ROOT, relative), encoding: "UTF-8")
 
@@ -38,7 +41,7 @@ class BillingPlansContractTest < Minitest::Test
   end
 
   def test_every_selling_app_has_the_table_the_user_the_routes_and_the_controller
-    PLANS.values.map { |plan| plan.fetch("app") }.uniq.each do |app|
+    USER_APPS.each do |app|
       assert(Dir.glob(File.join(ROOT, app, "db/migrate/*_create_billing_subscriptions.rb")).any?, "#{app} migration")
       assert_includes read("#{app}/db/schema.rb"), %(create_table "billing_subscriptions"), app
       assert_includes read("#{app}/app/models/user.rb"), "include Shared::Billable", app
@@ -49,10 +52,24 @@ class BillingPlansContractTest < Minitest::Test
 
   # Subscription events reach billing from each selling app's Stripe endpoint.
   def test_each_selling_apps_stripe_webhook_hands_events_to_billing
-    PLANS.values.map { |plan| plan.fetch("app") }.uniq.each do |app|
+    USER_APPS.each do |app|
       controller = read("#{app}/app/controllers/webhooks/stripe_controller.rb")
       assert_includes controller, "Shared::StripeSignature.verify!", app
       assert_includes controller, "Shared::StripeBilling.handle(event)", app
+    end
+  end
+
+  # An API plan has a positive monthly quota, and its app holds the keys
+  # table, the ApiKey model, the routes, and a webhook that keeps keys in step.
+  def test_every_api_plan_has_a_quota_and_its_app_sells_keys
+    PLANS.each { |key, plan| assert_operator Integer(plan["quota"]), :>, 0, key if plan.key?("quota") }
+    API_APPS.each do |app|
+      assert_includes read("#{app}/db/schema.rb"), %(create_table "api_keys"), app
+      assert_includes read("#{app}/app/models/api_key.rb"), "Shared::BillingPlan.for_app(\"#{app}\")", app
+      assert_includes read("#{app}/config/routes.rb"), %(post "lint" => "lint#create"), app
+      webhook = read("#{app}/app/controllers/api/stripe_webhooks_controller.rb")
+      assert_includes webhook, "Shared::StripeSignature.verify!", app
+      assert_includes webhook, "ApiKey.sync!", app
     end
   end
 

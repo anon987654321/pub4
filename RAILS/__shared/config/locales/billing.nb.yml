@@ -26,3 +26,9 @@ nb:
       amber_premium_yearly:
         name: "Amber Premium, årlig"
         summary: "Alt i Premium, betalt én gang i året."
+      master_api_team:
+        name: "MASTER lov-API, Team"
+        summary: "10 000 filsjekker i måneden mot MASTERs lover, over HTTPS."
+      master_api_business:
+        name: "MASTER lov-API, Business"
+        summary: "100 000 filsjekker i måneden, for CI på tvers av mange repoer."

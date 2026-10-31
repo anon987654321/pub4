@@ -1,0 +1,12 @@
+<%= render layout: "api/page", locals: { title: t("api.key_title"), robots: "noindex" } do %>
+  <%= tag.h1 t("api.key_title") %>
+  <% if @token %>
+    <%= tag.p t("api.key_once") %>
+    <%= tag.pre tag.code(@token) %>
+  <% else %>
+    <%= tag.p t("api.key_shown", hint: @api_key.token_hint) %>
+  <% end %>
+  <%= tag.p t("api.key_plan", plan: t("billing.plans.#{@api_key.plan_key}.name"),
+                              quota: number_with_delimiter(@api_key.quota)) %>
+  <%= tag.p link_to(t("api.key_docs"), api_path) %>
+<% end %>

@@ -16,6 +16,9 @@ module Shared
   # money while leaving the subscriber locked out.
   module StripeBilling
     API = "https://api.stripe.com/v1"
+    # The subscription statuses that give access; past_due, unpaid, incomplete
+    # and canceled do not.
+    ENTITLING_STATUSES = %w[active trialing].freeze
     SUBSCRIPTION_EVENTS = %w[customer.subscription.created customer.subscription.updated
                              customer.subscription.deleted].freeze
 
@@ -30,17 +33,34 @@ module Shared
 
     # Where to send the reader to subscribe to +plan+.
     def checkout_url(user:, plan:, success_url:, cancel_url:)
+      customer = user.stripe_customer_id
+      payer = customer ? { "customer" => customer } : { "customer_email" => user.email_address }
+      subscription_checkout_url(plan:, returns: { success_url:, cancel_url: }, metadata: { user_id: user.id }, payer:)
+    end
+
+    # A Checkout Session in subscription mode for +plan+, carrying the plan key
+    # and +metadata+ on the subscription, so every later webhook names both.
+    # +returns+ holds success_url and cancel_url; +payer+ is the customer or
+    # customer_email field, and left empty, Stripe asks.
+    def subscription_checkout_url(plan:, returns:, metadata: {}, payer: {})
       raise Error, "#{plan.key} is not available" unless plan.available?
 
+      tags = { plan: plan.key, **metadata }.to_h { |name, value| ["subscription_data[metadata][#{name}]", value.to_s] }
       form = {
-        "mode" => "subscription", "success_url" => success_url, "cancel_url" => cancel_url,
-        "line_items[0][price]" => plan.price_id, "line_items[0][quantity]" => 1,
-        "client_reference_id" => "user:#{user.id}", "allow_promotion_codes" => "true",
-        "subscription_data[metadata][plan]" => plan.key, "subscription_data[metadata][user_id]" => user.id.to_s,
+        "mode" => "subscription",
+        "success_url" => returns.fetch(:success_url), "cancel_url" => returns.fetch(:cancel_url),
+        "line_items[0][price]" => plan.price_id, "line_items[0][quantity]" => 1, "allow_promotion_codes" => "true",
       }
-      customer = user.stripe_customer_id
-      customer ? form["customer"] = customer : form["customer_email"] = user.email_address
-      post("/checkout/sessions", form).fetch("url")
+      post("/checkout/sessions", form.merge(tags, payer)).fetch("url")
+    end
+
+    # A finished Checkout Session with its subscription expanded, read back on
+    # the success page to learn what was bought. Raises unless it completed.
+    def completed_checkout(session_id)
+      session = get("/checkout/sessions/#{session_id}", "expand[]" => "subscription")
+      raise Error, "checkout #{session_id} is not complete" unless session["status"] == "complete"
+
+      session
     end
 
     # Stripe's own page for changing card, plan or cancelling.
@@ -79,11 +99,21 @@ module Shared
     end
 
     def post(path, form)
-      uri = URI("#{API}#{path}")
-      request = Net::HTTP::Post.new(uri)
-      request.basic_auth(ENV.fetch("STRIPE_SECRET_KEY"), "")
+      request = Net::HTTP::Post.new(URI("#{API}#{path}"))
       request["Content-Type"] = "application/x-www-form-urlencoded"
       request.body = URI.encode_www_form(form)
+      send!(request)
+    end
+
+    def get(path, query = {})
+      uri = URI("#{API}#{path}")
+      uri.query = URI.encode_www_form(query) unless query.empty?
+      send!(Net::HTTP::Get.new(uri))
+    end
+
+    def send!(request)
+      uri = request.uri
+      request.basic_auth(ENV.fetch("STRIPE_SECRET_KEY"), "")
       response = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 8, read_timeout: 20) do |http|
         http.request(request)
       end

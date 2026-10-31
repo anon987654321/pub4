@@ -338,6 +338,8 @@ apps:
     features:
       core:
         - { name: stop control that aborts the active generation, status: done, notes: "face turn-control aborts the chat fetch; ChatService writers cancel the turn CancellationToken at the failed write and unwind the provider stream at that chunk boundary (app/services/chat_service.rb, app/controllers/chat_controller.rb, public/chat_actions.js, public/face.part5.txt)" }
+      law_api:
+        - { name: MASTER law API sold as API keys, status: done, notes: "2026-10-31: POST /api/v1/lint judges up to 20 files by the lexical, AST and law/ rules with no model (app/services/law_check.rb); Team $49 for 10,000 checks a month and Business $299 for 100,000 (__shared/config/plans.yml); /api checkout reveals the key once on return; keys rotate and open the Stripe portal. Offered once STRIPE_SECRET_KEY and the plan STRIPE_PRICE_* are set" }
 
   amber:
     title: Amber

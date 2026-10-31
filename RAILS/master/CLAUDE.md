@@ -17,6 +17,12 @@ endpoints include `POST /chat/message` (the face's assistant stream),
 page script calls it), `GET /chat/metrics` (session metrics), and
 `GET /events/stream` (event bus).
 
+The MASTER law API is the one paid surface: `/api` sells keys through Stripe
+Checkout (plans in `RAILS/__shared/config/plans.yml`, loaded by
+`config/initializers/shared_billing.rb`), and `POST /api/v1/lint` judges source
+text in memory with `bin/operator lint`'s rules (`app/services/law_check.rb`).
+Its controllers skip `ApplicationController`, so it needs no container.
+
 The single HTML entrypoint is `app/views/chat/index.html.erb` via
 `ChatController#index`. Runtime assets live under `public/`: `face.js` for
 the THREE.js wireframe mesh, `cognition_ecology.js` for the ecology particle

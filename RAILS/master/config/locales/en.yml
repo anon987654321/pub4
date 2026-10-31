@@ -130,3 +130,35 @@ en:
       retry_face_boot: "retry face boot"
       needs_js: "MASTER particle face requires JavaScript."
       tighter_question: "try a tighter question"
+  api:
+    brand: "MASTER law API"
+    title: "MASTER law API: code review by rule, over HTTPS"
+    heading: "MASTER law API"
+    lede: >-
+      Send source files, get back every MASTER law they break, with the line and the reason. Deterministic rules, no
+      model: the same answer every time, in seconds.
+    plans_heading: "Plans"
+    per_month: "a month"
+    subscribe: "Subscribe"
+    not_yet: "Not available yet."
+    unavailable: "That plan cannot be started right now. Nothing was charged."
+    not_confirmed: "Stripe has not confirmed that checkout. If you paid, reload this page in a minute."
+    usage_heading: "Use"
+    usage_lede: "POST up to 20 files as JSON with your key as a bearer token."
+    response_lede: "Each finding names its file, line, law and severity, and the reply carries this month's usage."
+    limits_heading: "Limits"
+    limit_files: "Up to %{files} files a request, %{kilobytes} kB each. One file is one check."
+    limit_quota: >-
+      The quota resets on the first of each month (UTC). A request that does not fit is refused whole and costs
+      nothing.
+    limit_errors: "401 bad key, 402 subscription not active, 422 bad request, 429 quota or rate limit."
+    limit_account: >-
+      GET /api/v1/key shows usage; POST /api/v1/key/rotate replaces the key; POST /api/v1/key/portal opens billing.
+    limit_privacy: "Source is judged in memory and never stored or written to disk."
+    key_title: "Your API key"
+    key_once: "Copy it now: it is shown once and only its fingerprint is kept."
+    key_shown: >-
+      This key (ending %{hint}) has already been shown. If it is lost, rotate it with the old key, or write to the
+      operator.
+    key_plan: "%{plan}: %{quota} checks a month."
+    key_docs: "How to use it"

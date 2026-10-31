@@ -8,6 +8,10 @@
 # yet available rather than offered, so nobody is sent to a checkout that
 # cannot complete.
 #
+# quota, on an API plan, is the law checks a key may run in one calendar month
+# (UTC); one file checked is one check. The master app sells these as API keys
+# (RAILS/master app/models/api_key.rb) rather than to a signed-in user.
+#
 # entitlements are what an active subscription unlocks; the app asks
 # user.entitled?(:name) and never a plan key, so a plan can be repriced or
 # split without touching the code that gates on it.
@@ -33,3 +37,19 @@ plans:
     interval: year
     price_env: STRIPE_PRICE_AMBER_PREMIUM_YEARLY
     entitlements: [amber_premium]
+  master_api_team:
+    app: master
+    amount: 4900
+    currency: USD
+    interval: month
+    price_env: STRIPE_PRICE_MASTER_API_TEAM
+    quota: 10000
+    entitlements: [law_api]
+  master_api_business:
+    app: master
+    amount: 29900
+    currency: USD
+    interval: month
+    price_env: STRIPE_PRICE_MASTER_API_BUSINESS
+    quota: 100000
+    entitlements: [law_api]
