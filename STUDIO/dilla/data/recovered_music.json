@@ -5558,7 +5558,8 @@
         "Ethan Hein analysis cited in prior research",
         "published seven-bar sample analysis cited in prior research; exact URL not retained"
       ],
-      "note": "Keep the C# minor transcription and E-pedal alternate reading side by side; do not collapse them into one supposedly certain chord chart."
+      "note": "Keep the C# minor transcription and E-pedal alternate reading side by side; do not collapse them into one supposedly certain chord chart.",
+      "renderable_as_progression": false
     },
     "burton_flip": {
       "chords": [
@@ -5575,7 +5576,8 @@
       "status": "research_lead_not_verified_transcription",
       "provenance": [
         "Gary Burton source identified in prior harmonic research"
-      ]
+      ],
+      "renderable_as_progression": true
     },
     "dont_cry_ii_add11": {
       "key": "C major",
@@ -5621,7 +5623,8 @@
       "legacy_fx": "dry",
       "source": "Hooktheory",
       "status": "low_confidence_harmonic_research_lead",
-      "note": "The ii(add11) colour is the central idea; source verification remains incomplete."
+      "note": "The ii(add11) colour is the central idea; source verification remains incomplete.",
+      "renderable_as_progression": true
     },
     "dilla_inversion": {
       "steps": 16,
@@ -5681,7 +5684,8 @@
         1
       ],
       "status": "historical_pattern_proposal",
-      "note": "Original one-bar 16-step binary pattern; no tempo or measured source timing was specified."
+      "note": "Original one-bar 16-step binary pattern; no tempo or measured source timing was specified.",
+      "renderable_as_progression": false
     },
     "theseus_microtiming": {
       "offsets_ms": {
@@ -5692,7 +5696,8 @@
       },
       "repeat_each_bar": true,
       "status": "proposed_deterministic_timing_model_not_audio_measurement",
-      "note": "A repeatable lane relationship: first kick anchored, later kicks behind, snares ahead, offbeat hats behind."
+      "note": "A repeatable lane relationship: first kick anchored, later kicks behind, snares ahead, offbeat hats behind.",
+      "renderable_as_progression": false
     }
   },
   "named_studies_note": "Recovered from prior user conversations dated 2026-10-12 through 2026-10-19. Preserve each study's evidence status. Do not describe proposals as measurements or sample-analysis leads as verified transcriptions."
