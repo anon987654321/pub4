@@ -19,6 +19,26 @@ namespace :radio do
     puts "radio: manifest=#{imported.manifest_path}"
   end
 
+# The operator's own whyp.it uploads, listed with their share tokens under
+# external_reference.whyp in config/radio_bergen/tracks.yml: downloaded with
+# yt-dlp (2026.08.19 or later; older builds cannot read whyp.it's pages),
+# credited as that file names them, and seeded into each city's Radio.
+desc "Download the operator's whyp.it tracks (tracks.yml) with yt-dlp and seed Radio"
+task import_whyp_tracks: :environment do
+  rows = Brgen::RadioBergenManifest.whyp_tracks
+  abort "radio: tracks.yml lists no whyp tracks" if rows.empty?
+
+  urls = rows.map { |row| "https://whyp.it/tracks/#{row[:whyp_id]}?token=#{row[:whyp_token]}" }
+  credits = rows.to_h { |row| [row[:whyp_id], row.slice(:title, :artist)] }
+  imported = Brgen::WhypRadioImporter.new(track_urls: urls, name: "radio-bergen-whyp", credits:).call
+  cities = ENV.fetch("CITIES", Brgen::RadioWhypSeeder::DEFAULT_CITIES.join(",")).split(",")
+  seeded = Brgen::RadioWhypSeeder.new(manifest_path: imported.manifest_path, cities:).call
+
+  puts "radio: imported tracks=#{imported.track_count} playlists=#{seeded.playlists} cities=#{seeded.cities.join(",")}"
+  puts "radio: missing on whyp.it (deleted or token changed): #{imported.missing.join(", ")}" if imported.missing.any?
+  puts "radio: manifest=#{imported.manifest_path}"
+end
+
   desc "Seed an existing generated Whyp manifest into Radio"
   task seed_whyp: :environment do
     manifest = ENV["MANIFEST"].to_s.strip

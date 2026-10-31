@@ -85,6 +85,10 @@ MASTER/checks/data/calibration_weights.yml
 # The .keep files stay tracked so the directory survives a clean checkout.
 RAILS/*/storage/*
 !RAILS/*/storage/.keep
+# yt-dlp downloads for the radio importer (rake radio:import_whyp*): the
+# audio is attached to Active Storage by the seeder and re-fetchable; the
+# generated manifest beside it in config/radio_whyp/ is the record.
+RAILS/brgen/public/audio/whyp/
 
 # --- OPENBSD ----------------------------------------------------------------
 
