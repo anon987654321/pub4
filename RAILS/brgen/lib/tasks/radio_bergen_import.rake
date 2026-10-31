@@ -9,13 +9,16 @@ namespace :radio_bergen do
     owner_email = ENV.fetch("RADIO_BERGEN_OWNER_EMAIL") do
       abort "Set RADIO_BERGEN_OWNER_EMAIL to an existing Brgen account that will own the playlist."
     end
-    owner = User.find_by!(email_address: owner_email)
-
-    result = Playlist::RadioBergenArchiveImport.new(
-      owner: owner,
-      archive_root: archive_root,
-      rights_confirmed: ENV["RADIO_BERGEN_RIGHTS_CONFIRMED"] == "1"
-    ).call
+    city = City.find_by(domain: "brgen.no") or abort "brgen.no city missing; sync the city registry before importing"
+    result = ActsAsTenant.with_tenant(city) do
+      owner = User.find_by!(email_address: owner_email)
+      Playlist::RadioBergenArchiveImport.new(
+        owner: owner,
+        city: city,
+        archive_root: archive_root,
+        rights_confirmed: ENV["RADIO_BERGEN_RIGHTS_CONFIRMED"] == "1"
+      ).call
+    end
 
     puts "playlist0: #{result.playlist.name}"
     puts "tracks0: #{result.tracks.size}"

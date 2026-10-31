@@ -84,7 +84,7 @@ RADIO_BERGEN_RIGHTS_CONFIRMED=1 \
 bin/rails radio_bergen:import_curated
 ```
 
-**Blocker:** the request-less rake path does not yet explicitly establish and enforce the `brgen.no` tenant context before creating the public playlist. Running it now could create a nil-city/global playlist. This is a hard blocker, not a test result.
+**Tenant guard:** the rake task now resolves the persisted `brgen.no` City and finds the owner inside that tenant. The importer requires that same city and a same-city saved owner, then wraps preflight and writes in `ActsAsTenant.with_tenant(city)`. Missing or cross-city scope is rejected before archive reads or playlist writes. The guard regressions are authored but have not been run in a full Rails checkout; do not import until they pass. Distribution rights for every recording remain a separate operator decision.
 
 The task is intended to preflight all source files, attach them through Active Storage, and
 create the playlist in the original order. It is idempotent for matching audio
