@@ -569,11 +569,10 @@ window.addEventListener('unhandledrejection', event => {
   } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:apply_css_vars", err); }
 })();
 
-const STAR_FRAMES = ['\u2736', '\u2738', '\u2737', '\u273B', '\u2722', '\u2724', '\u2733', '\u2735'];
-const STAR_COLORS = ['#ffffff', '#f5f0e8', '#e8dcc8', '#d4c4a8', '#c9b896', '#bdb0a0', '#a89888'];
+const STAR_FRAMES = ['|', '/', '-', '\\'];
+const STAR_INTERVAL_MS = 100;
 let _starTimer = null;
 let _starIdx = 0;
-let _starColorIdx = 0;
 const spinBtn = document.getElementById('spin-btn');
 const themeBtn = document.getElementById('theme-btn');
 const focusBtn = document.getElementById('focus-btn');
@@ -582,19 +581,16 @@ const voicePicker = document.getElementById('voice-picker');
 const voicePreviewBtn = document.getElementById('voice-preview-btn');
 const asciiStarEl = document.getElementById('ascii-star');
 function _scheduleStar() {
-  const speed = 40 + Math.random() * 220;
   _starTimer = setTimeout(() => {
     _starIdx = (_starIdx + 1) % STAR_FRAMES.length;
-    if (Math.random() < 0.25) _starColorIdx = (_starColorIdx + 1) % STAR_COLORS.length;
-    const ch = STAR_FRAMES[_starIdx];
-    const co = STAR_COLORS[_starColorIdx];
-    if (asciiStarEl) { asciiStarEl.textContent = ch; asciiStarEl.style.color = co; }
+    if (asciiStarEl) asciiStarEl.textContent = STAR_FRAMES[_starIdx];
     _scheduleStar();
-  }, speed);
+  }, STAR_INTERVAL_MS);
 }
 function startStar() {
   if (_starTimer) return;
-  _starIdx = 0; _starColorIdx = 0;
+  _starIdx = 0;
+  if (asciiStarEl) asciiStarEl.textContent = STAR_FRAMES[_starIdx];
   _scheduleStar();
 }
 function stopStar() {
