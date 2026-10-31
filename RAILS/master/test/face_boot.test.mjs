@@ -1136,22 +1136,24 @@ test("thinking face keeps the single composer ready beneath an ASCII spinner", (
   const cliSpinner = readFileSync(join(root, "..", "..", "MASTER", "lib", "cli", "session", "thinking_indicator.rb"), "utf8");
 
   assert.ok(part1.includes("const STAR_FRAMES = ['|', '/', '-', '\\\\'];"));
-  assert.match(part1, /const STAR_INTERVAL_MS = 100/);
-  assert.doesNotMatch(part1, /STAR_COLORS/);
-  assert.match(css, /body\\[data-mode="thinking"\\] #ascii-star:not\\(:empty\\)/);
-  assert.match(css, /bottom: calc\\(84px \\+ var\\(--safe-bottom\\) \\+ var\\(--keyboard-inset, 0px\\)\\)/);
-  assert.match(css, /body\\[data-mode="thinking"\\] #zin,[\\s\\S]{0,130}opacity: 1/);
-  assert.match(part5, /\\$\\{_pendingTurns.length\\} queued \\/ paused/);
-  assert.match(cliSpinner, /TICK_SECONDS = 0\\.10/);
-  assert.ok(cliSpinner.includes('SPINNER_FRAMES = ["|", "/", "-", "\\\\"] .freeze') === false);
+  assert.ok(part1.includes("const STAR_INTERVAL_MS = 100;"));
+  assert.ok(!part1.includes("STAR_COLORS"));
+  assert.ok(css.includes('body[data-mode="thinking"] #ascii-star:not(:empty)'));
+  assert.ok(css.includes("bottom: calc(84px + var(--safe-bottom) + var(--keyboard-inset, 0px));"));
+  assert.ok(css.includes('body[data-mode="thinking"] #zin,'));
+  assert.ok(css.includes('body[data-queue-active="1"] #zin { opacity: 1; }'));
+  assert.ok(part5.includes("queued / paused"));
+  assert.ok(part5.includes("_turnQueueRunning ? 'thinking' : ''"));
+  assert.ok(cliSpinner.includes("TICK_SECONDS = 0.10"));
   assert.ok(cliSpinner.includes('SPINNER_FRAMES = ["|", "/", "-", "\\\\"].freeze'));
 });
 
 test("web chat records monotonic first-token, first-audio and reply-completion latency", () => {
   const part5 = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
   const speech = readFileSync(join(publicDir, "face_speech_runtime.js"), "utf8");
-  assert.match(part5, /startedAt: performance\\.now\\(\\)/);
-  assert.match(part5, /chatTiming\\.firstTokenMs = Math\\.round\\(performance\\.now\\(\\) - chatTiming\\.startedAt\\)/);
-  assert.match(part5, /chatTiming\\.completedMs = Math\\.round\\(performance\\.now\\(\\) - chatTiming\\.startedAt\\)/);
-  assert.match(speech, /chatTiming\\.firstAudioMs = Math\\.round\\(performance\\.now\\(\\) - chatTiming\\.startedAt\\)/);
+  assert.ok(part5.includes("startedAt: performance.now()"));
+  assert.ok(part5.includes("chatTiming.firstTokenMs = Math.round(performance.now() - chatTiming.startedAt)"));
+  assert.ok(part5.includes("chatTiming.completedMs = Math.round(performance.now() - chatTiming.startedAt)"));
+  assert.ok(speech.includes("chatTiming.firstAudioMs = Math.round(performance.now() - chatTiming.startedAt)"));
+  assert.ok(speech.includes("meta.lane === 'response'"));
 });
