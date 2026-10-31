@@ -8009,6 +8009,7 @@ def run(argv)
     o.on("--kit NAME", "The drum kit (see kits in dilla.json)") { |v| options[:kit] = v }
     o.on("--profile NAME", "Groove profile name") { |v| options[:profile] = v }
     o.on("--language NAME", Languages.names, "Generate one rule-made harmonic language (see --list)") { |v| options[:language] = v }
+    o.on("--heritage NAME", "Render a named recovered historical progression (see --list)") { |v| options[:heritage] = v }
     o.on("--groove N", Float, "pd_amount, 0 to 1.5: how far the profile pulls from the grid") { |v| options[:groove] = v }
     o.on("--bpm N", Float, "Tempo (default 88)") { |v| options[:bpm] = v }
     o.on("--beats N", Float, "Beats per chord (default 8, two bars)") { |v| options[:beats] = v }
@@ -8067,10 +8068,23 @@ def run(argv)
   options[:live] = true if live_argument
 
   data = JSON.parse(File.read(File.join(__dir__, "data", "dilla.json")))
+  if options[:language] && options[:heritage]
+    raise ArgumentError, "--language and --heritage are mutually exclusive"
+  end
   if options[:language]
     # Append only in memory: the 506-record catalogue stays canonical and untouched.
     data["progressions"] = data.fetch("progressions") + [Languages.progression(options[:language])]
     options[:prog] = data.fetch("progressions").length - 1
+    options[:random] = false
+  elsif options[:heritage]
+    raise ArgumentError, "--heritage cannot be combined with --progression" if options[:prog]
+    archive = JSON.parse(File.read(File.join(__dir__, "data", "recovered_music.json")))
+    preset = archive.fetch("legacy_presets").fetch(options[:heritage]) do
+      raise ArgumentError, "unknown heritage preset #{options[:heritage].inspect}; use --list"
+    end
+    data["progressions"] = data.fetch("progressions") + [preset.fetch("chords")]
+    options[:prog] = data.fetch("progressions").length - 1
+    options[:bpm] ||= preset.fetch("tempo")
     options[:random] = false
   end
   apply_effect_rig!(options, data) if options[:effect_rig]
@@ -8132,6 +8146,9 @@ elsif options[:play]
     puts
     puts "Harmonic languages (a progression written from rules, in Bb; use --language NAME to render):"
     Languages.all.each { |language, chords| puts format("  %-24s %s", language, chords.join(" ")) }
+    heritage = JSON.parse(File.read(File.join(__dir__, "data", "recovered_music.json"))).fetch("legacy_presets")
+    puts "Recovered historical progressions (use --heritage NAME to render through the current engine):"
+    heritage.each { |name, preset| puts format("  %-24s %s", name, preset.fetch("chords").join(" ")) }
   elsif options[:showcase] || (options[:prog].nil? && !options[:random] && !options[:quick] && options[:mode] != "organ")
     render_showcase(data, options)
   elsif options[:effect_rig]
