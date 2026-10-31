@@ -15,14 +15,12 @@ checks:
   # legal row did, so the layout no longer renders that row as well.
   - {id: chrome.legal, in: amber/app/views/shared/_footer.html.erb, has: [privacy_path, terms_path, cookies_path, shared/affiliate_disclosure]}
   # --- design ---
-  - {id: design.stack_entry, in: amber/app/assets/stylesheets/application.scss, has: ['@use "stack"']}
+  - {id: design.stack_entry, in: amber/app/assets/stylesheets/application.scss, has: ['@include meta.load-css("stack")']}
   # The luxury item card, the guest compose box and the dressing room, by the
   # selectors that style them: amber has one stylesheet, so a partial name no
   # longer marks them.
   - {id: design.luxury_items,
-     in: [amber/app/assets/stylesheets/_amber_wardrobe.scss,
-          amber/app/assets/stylesheets/_amber_guest_compose.scss,
-          amber/app/assets/stylesheets/_amber_dressing_room.scss],
+     in: amber/app/assets/stylesheets/application.scss,
      has: [.item-card--luxury, .amber-compose-box, .zone-carousels]}
   - {id: design.tap_min, in: __shared/app/assets/stylesheets/_layout_chrome.scss, has: ["--tap-min: 44px"]}
   - {id: design.focus_ring, in: __shared/app/assets/stylesheets/_focus_ring.scss, has: [":focus-visible"]}

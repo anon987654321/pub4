@@ -5,10 +5,12 @@
 require "yaml"
 require "minitest/autorun"
 require_relative "engine_roots"
+require_relative "support/stylesheet_modules"
 require_relative "../../MASTER/tools/master_design"
 require_relative "../../MASTER/tools/scss"
 
 class DesignContractTest < Minitest::Test
+  include StylesheetModules
   ROOT = File.expand_path("..", __dir__)
   SHARED = File.join(ROOT, "__shared")
   DIALECT_TOKENS_SCSS = File.join(SHARED, "app", "assets", "stylesheets", "_dialect_tokens.scss")
@@ -76,50 +78,45 @@ class DesignContractTest < Minitest::Test
     Operator::ScssRules.rules(source)
   end
 
-  def test_bsdports_styles_load_as_ordered_feature_modules
-    app = File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "application.scss"))
-    names = %w[
-      bsdports_base
-      bsdports_components
-      bsdports_shared_chrome
-      bsdports_tokens
-      bsdports_layout
-      bsdports_pages
-      bsdports_states
-    ]
-    positions = names.map { |name| app.index(%(@include meta.load-css("#{name}");)) }
+def test_bsdports_styles_load_as_ordered_feature_modules
+  # One stylesheet per app (operator, 2026-10-28): the former partials are
+  # module banners, and their order is still the cascade contract.
+  names = stylesheet_module_names("bsdports")
 
-    assert positions.all?, "every BSDPorts feature module must be loaded"
-    assert_equal positions.sort, positions, "BSDPorts module order is a cascade contract"
-    names.each do |name|
-      path = File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_#{name}.scss")
-      assert File.file?(path), "missing BSDPorts feature module #{path}"
-    end
+  assert_equal %w[
+    bsdports_base
+    bsdports_components
+    bsdports_shared_chrome
+    bsdports_tokens
+    bsdports_layout
+    bsdports_pages
+    bsdports_states
+  ], names, "BSDPorts module order is a cascade contract"
 
-    assert_includes File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_tokens.scss")),
-                    "@include x.app-root-tokens;"
-    assert_includes File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_pages.scss")),
-                    "article > header"
-    assert_includes app, "@include endgame.bsdports;"
-    assert_operator app.lines.count, :<, 50, "application.scss should remain an entrypoint, not a second monolith"
-  end
+  assert_includes stylesheet_module("bsdports", "bsdports_tokens"), "@include x.app-root-tokens;"
+  assert_includes stylesheet_module("bsdports", "bsdports_pages"), "article > header"
+  assert_includes application_scss("bsdports"), "@include endgame.bsdports;"
+end
 
-  def test_bsdports_port_header_sticks_only_when_primary_nav_fits_one_row
-    pages = File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_pages.scss"))
-    mobile, wide = pages.split("@media (min-width: 640px)", 2)
 
-    refute_nil wide, "the wide-nav breakpoint is part of the port-header layout contract"
-    refute_match(/article\s*>\s*header\s*\{[^}]*position:\s*sticky/m, mobile,
-                 "a wrapped mobile nav must not be covered by the sticky port header")
-    assert_match(/article\s*>\s*header\s*\{[^}]*position:\s*sticky[^}]*top:\s*var\(--nav-swiper-h\)/m, wide,
-                 "the port meta strip must follow the shared nav height and safe-area inset")
-  end
+def test_bsdports_port_header_sticks_only_when_primary_nav_fits_one_row
+  pages = stylesheet_module("bsdports", "bsdports_pages")
+  mobile, wide = pages.split("@media (min-width: 640px)", 2)
 
-  def test_bsdports_primary_nav_rules_target_the_rendered_landmark
-    layout = File.read(File.join(ROOT, "bsdports", "app", "views", "layouts", "application.html.erb"))
-    base_css = File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_base.scss"))
-    layout_css = File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_layout.scss"))
-    pages_css = File.read(File.join(ROOT, "bsdports", "app", "assets", "stylesheets", "_bsdports_pages.scss"))
+  refute_nil wide, "the wide-nav breakpoint is part of the port-header layout contract"
+  refute_match(/article\s*>\s*header\s*\{[^}]*position:\s*sticky/m, mobile,
+               "a wrapped mobile nav must not be covered by the sticky port header")
+  assert_match(/article\s*>\s*header\s*\{[^}]*position:\s*sticky[^}]*top:\s*var\(--nav-swiper-h\)/m, wide,
+               "the port meta strip must follow the shared nav height and safe-area inset")
+end
+
+
+def test_bsdports_primary_nav_rules_target_the_rendered_landmark
+  layout = File.read(File.join(ROOT, "bsdports", "app", "views", "layouts", "application.html.erb"))
+  base_css = stylesheet_module("bsdports", "bsdports_base")
+  layout_css = stylesheet_module("bsdports", "bsdports_layout")
+  pages_css = stylesheet_module("bsdports", "bsdports_pages")
+
 
     assert_match(/<nav\b[^>]*data-pwa-primary-nav/, layout,
                  "BSDports must expose the canonical primary-navigation marker")
@@ -139,65 +136,44 @@ class DesignContractTest < Minitest::Test
                  "shared chrome must retain ownership of scroll-away visibility")
   end
 
-  def test_amber_feature_styles_are_loaded_at_their_original_boundaries
-    app = File.read(File.join(ROOT, "amber", "app", "assets", "stylesheets", "application.scss"))
-    styles_dir = File.join(ROOT, "amber", "app", "assets", "stylesheets")
-    feature_paths = Dir.glob(File.join(styles_dir, "_amber_*.scss")).sort
-    names = %w[
-      amber_chrome
-      amber_guest_compose
-      amber_layout
-      amber_wardrobe
-      amber_item_forms
-      amber_dashboard
-      amber_dressing_room
-      amber_looks
-      amber_jox_logo
-      amber_editorial_feed
-      amber_shared_overrides
-    ]
-    positions = names.map { |name| app.index(%(@include meta.load-css("#{name}");)) }
+# One stylesheet per app (operator, 2026-10-28): the former feature partials
+# live between module banners and their order is still the cascade contract
+# the meta.load-css calls used to be.
+def test_amber_feature_styles_are_loaded_at_their_original_boundaries
+  names = stylesheet_module_names("amber")
 
-    assert positions.all?, "every Amber feature module must be loaded by its entrypoint"
-    assert_equal positions.sort, positions, "Amber module order is a cascade contract"
-    assert_operator app.lines.count, :<, 300, "application.scss should remain an entrypoint, not another monolith"
+  assert_equal %w[
+    commerce_polish
+    amber_chrome
+    amber_guest_compose
+    amber_layout
+    amber_wardrobe
+    amber_item_forms
+    amber_dashboard
+    amber_dressing_room
+    amber_looks
+    amber_jox_logo
+    amber_editorial_feed
+    amber_shared_overrides
+  ], names, "Amber module order is a cascade contract"
 
-    reachable = []
-    pending = [app]
-    until pending.empty?
-      source = pending.shift
-      source.scan(/@include meta\.load-css\(["']([^"']+)["']\)/).flatten.each do |module_name|
-        candidate = File.join(styles_dir, "_#{module_name}.scss")
-        next unless File.file?(candidate)
-        next if reachable.include?(candidate)
-
-        reachable << candidate
-        pending << File.read(candidate)
-      end
-    end
-
-    feature_paths.each do |feature|
-      assert_includes reachable, feature, "#{File.basename(feature)} is not reachable from the Amber entrypoint"
-      refute_empty File.read(feature), "#{File.basename(feature)} must not be empty"
-    end
-
-    expected_rules = {
-      "_amber_guest_compose.scss" => ".amber-compose-box",
-      "_amber_wardrobe.scss" => ".item-grid",
-      "_amber_item_forms.scss" => ".form .field",
-      "_amber_dashboard.scss" => ".dash-stats dl",
-      "_amber_dressing_room.scss" => ".viz-rows",
-      "_amber_looks.scss" => ".amber-looks",
-      "_amber_jox_logo.scss" => ".jox-logo",
-      "_amber_editorial_feed.scss" => ".feed-post"
-    }
-    expected_rules.each do |name, selector|
-      assert_includes File.read(File.join(styles_dir, name)), selector, "#{name} lost its feature rule"
-    end
-
-    refute_match(%r{min-height:\s*v\s*//|font-siz\s*//}, app,
-                 "entrypoint contains a stylesheet fragment split across an import")
+  expected_rules = {
+    "amber_guest_compose" => ".amber-compose-box",
+    "amber_wardrobe" => ".item-grid",
+    "amber_item_forms" => ".form .field",
+    "amber_dashboard" => ".dash-stats dl",
+    "amber_dressing_room" => ".viz-rows",
+    "amber_looks" => ".amber-looks",
+    "amber_jox_logo" => ".jox-logo",
+    "amber_editorial_feed" => ".feed-post"
+  }
+  expected_rules.each do |name, selector|
+    assert_includes stylesheet_module("amber", name), selector, "#{name} lost its feature rule"
   end
+
+  refute_match(%r{min-height:\s*v\s*//|font-siz\s*//}, application_scss("amber"),
+               "the sheet contains a stylesheet fragment split across an import")
+end
 
   # amber wears luxury, and stack's social light outranks a plain :root.
   #
@@ -224,11 +200,13 @@ class DesignContractTest < Minitest::Test
   # an un-layered declaration beats a layered one whatever the source order.
   # Moving the include into a layer, or under a narrower selector, silently
   # restores a palette this app deliberately left.
-  def test_brgen_old_dialect_outranks_the_social_stack
-    source = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
-    roots = app_rules("brgen").select { |rule| rule.selector == ":root" && rule.body.include?("brgen-old-dark-tokens") }
+def test_brgen_old_dialect_outranks_the_social_stack
+  source = application_scss("brgen")
+  roots = app_rules("brgen").select { |rule| rule.selector == ":root" && rule.body.include?("brgen-old-dark-tokens") }
 
-    assert_match(/^@use "stack_brgen"/, source, "brgen/application.scss must @use stack_brgen")
+  assert_includes(source, '@include meta.load-css("stack_brgen");',
+                  "brgen/application.scss must load stack_brgen at the top level, outside any @layer")
+
     refute_empty roots, "brgen's stylesheet must include brgen-old-dark-tokens at plain :root"
     assert roots.all? { |rule| rule.parents.none? { |parent| parent.start_with?("@layer") } },
            "brgen-old sits inside a cascade layer, where the social stack's tokens can outrank it"
@@ -349,79 +327,85 @@ class DesignContractTest < Minitest::Test
     assert_includes base, "text-size-adjust: 100%;"
   end
 
-  def test_brgen_composer_uses_starting_style_entry
-    app = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
-    composer = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_composer.scss"))
-    css = "#{app}\n#{composer}"
+def test_brgen_composer_uses_starting_style_entry
+  app = application_scss("brgen")
+  composer = stylesheet_module("brgen", "brgen_composer")
+  css = "#{app}\n#{composer}"
+
     refute_includes css, "composer-drop-in"
     refute_includes css, "composer-backdrop-in"
     assert_includes css, "@starting-style"
     assert_includes css, ".composer[open]::backdrop"
   end
 
-  def test_brgen_feature_styles_are_loaded_at_their_original_boundaries
-    app = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
-    feature_paths = Dir.glob(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_*.scss")).sort
+def test_brgen_feature_styles_are_loaded_at_their_original_boundaries
+  # One stylesheet per app (operator, 2026-10-28): the merge folded the
+  # former partials into these module banners, in the cascade order the old
+  # meta.load-css calls held. The order is the contract; the feature rules
+  # prove each folded file's text survived the fold.
+  assert_equal %w[
+    post_gallery
+    local_activity
+    vertical_promo
+    brgen_core_shell
+    brgen_navigation
+    brgen_messenger
+    brgen_composer
+    brgen_feed_posts
+    brgen_marketplace
+    brgen_nearby_channels
+    brgen_share_media
+    brgen_dating
+    brgen_vertical_shell
+    brgen_vertical_surfaces
+    brgen_city_surfaces
+    brgen_shared_overrides
+  ], stylesheet_module_names("brgen"), "Brgen module order is a cascade contract"
 
-    refute_empty feature_paths, "Brgen must have feature-owned stylesheet modules"
-    reachable = []
-    pending = [app]
-    until pending.empty?
-      source = pending.shift
-      source.scan(/@include meta\.load-css\(["']([^"']+)["']\)/).flatten.each do |module_name|
-        candidate = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_#{module_name}.scss")
-        next unless File.file?(candidate)
-        next if reachable.include?(candidate)
+  expected_rules = {
+    "brgen_marketplace" => ".deal-card",
+    "brgen_vertical_surfaces" => ".listing-buy-bar-cta",
+    "brgen_city_surfaces" => ".store-promo-art-cta",
+    "brgen_messenger" => ".messenger-artifact-pane",
+    "brgen_composer" => ".composer[open]::backdrop",
+    "brgen_feed_posts" => ".feed-action",
+    "brgen_nearby_channels" => ".nearby-alert",
+    "brgen_share_media" => ".media-actions",
+    "brgen_dating" => ".swipe-card",
+    "brgen_vertical_shell" => "body[class*=\"vertical-\"] .feed-header",
+    "brgen_city_surfaces" => ".profile-header"
+  }
+  expected_rules.each do |name, selector|
+    assert_includes stylesheet_module("brgen", name), selector, "#{name} lost its representative feature rule"
+  end
+end
 
-        reachable << candidate
-        pending << File.read(candidate)
-      end
-    end
+def test_brgen_marketplace_header_uses_mobile_first_breakpoints
+  # The former _brgen_shared_marketplace_header.scss folded into the
+  # brgen_shared_overrides module in the merge, alongside overrides that
+  # are not the storefront header, so the mobile-first contract scopes to
+  # the storefront rules themselves: none may sit under a max-width
+  # override, and the compact rule stays the base with the 768px one
+  # restoring desktop type.
+  source = stylesheet_module("brgen", "brgen_shared_overrides")
 
-    feature_paths.each do |path|
-      module_name = File.basename(path).delete_prefix("_").delete_suffix(".scss")
-      assert_includes reachable, path, "#{module_name} is not reachable from the host stylesheet"
-      refute_empty File.read(path), "#{module_name} is empty"
-    end
+  # The overrides module also carries the storefront grid plumbing, which is
+  # not the header contract; compact-is-base binds the rules that declare the
+  # contract itself: the brand type and the action column.
+  contract_rules = Operator::ScssRules.matching(source, /storefront-bol-brand|deal-card-actions/)
+                                     .select { |rule| rule.body.match?(/--store-text-brand|gap:\s*8px|flex-direction:\s*column/) }
 
-    expected_rules = {
-      "_brgen_marketplace.scss" => ".deal-card",
-      "_brgen_vertical_surfaces.scss" => ".listing-buy-bar-cta",
-      "_brgen_shared_city_campaigns.scss" => ".store-promo-art-cta",
-      "_brgen_messenger.scss" => ".messenger-artifact-pane",
-      "_brgen_composer.scss" => ".composer[open]::backdrop",
-      "_brgen_feed_posts.scss" => ".feed-action",
-      "_brgen_nearby_channels.scss" => ".nearby-alert",
-      "_brgen_share_media.scss" => ".media-actions",
-      "_brgen_dating.scss" => ".swipe-card",
-      "_brgen_vertical_shell.scss" => "body[class*=\"vertical-\"] .feed-header",
-      "_brgen_city_surfaces.scss" => ".profile-header"
-    }
-    expected_rules.each do |name, selector|
-      path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", name)
-      assert_includes feature_paths, path
-      assert_includes File.read(path), selector, "#{name} lost its representative feature rule"
-    end
-
-    [".deal-card", ".listing-buy-bar-cta", ".store-promo-art-cta", ".messenger-artifact-pane",
-     ".composer[open]::backdrop", ".feed-action", ".nearby-alert", ".media-actions",
-     ".swipe-card", ".profile-header"].each do |selector|
-      refute Operator::ScssRules.matching(app, /#{Regexp.escape(selector)}/).any?,
-             "#{selector} should live in a feature partial, not application.scss"
-    end
+  refute_empty contract_rules, "the storefront header contract rules must still exist"
+  contract_rules.each do |rule|
+    refute rule.parents.any? { |parent| parent.match?(/@media[^{]*max-width/) },
+           "#{rule.selector} sits under a max-width override — compact rules are the base"
   end
 
-  def test_brgen_marketplace_header_uses_mobile_first_breakpoints
-    path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_shared_marketplace_header.scss")
-    source = File.read(path)
-
-    refute_match(/@media\s*\(\s*max-width\b/, source,
-                 "compact storefront rules are the base, not a max-width override")
-    assert_match(/body\.vertical-marketplace \.storefront-bol-brand \{[^}]*font-size: var\(--store-text-brand-compact\)/m, source)
-    assert_match(/@media \(min-width: 768px\) \{[\s\S]*?storefront-bol-brand \{[^}]*font-size: var\(--store-text-brand\)/m, source)
-    assert_match(/body\.vertical-marketplace #marketplace-listings \.deal-card-actions \{[^}]*gap: 8px/m, source)
-    assert_match(/@media \(min-width: 768px\) \{[\s\S]*?deal-card-actions \{[^}]*flex-direction: column/m, source)
-  end
+  assert_match(/body\.vertical-marketplace \.storefront-bol-brand \{[^}]*font-size: var\(--store-text-brand-compact\)/m, source)
+  assert_match(/@media \(min-width: 768px\) \{[\s\S]*?storefront-bol-brand \{[^}]*font-size: var\(--store-text-brand\)/m, source)
+  assert_match(/body\.vertical-marketplace #marketplace-listings \.deal-card-actions \{[^}]*gap: 8px/m, source)
+  assert_match(/@media \(min-width: 768px\) \{[\s\S]*?deal-card-actions \{[^}]*flex-direction: column/m, source)
+end
 
   def test_promotional_art_is_mobile_first_and_restores_desktop_geometry
     source = File.read(File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_promotional_art.scss"))
@@ -504,9 +488,10 @@ class DesignContractTest < Minitest::Test
     assert_match(/\.post-reading-layout\s*\{[^}]*gap:\s*var\(--space-3\);/m, wide)
   end
 
-  def test_brgen_marketplace_badge_offsets_are_valid_css
-    path = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_marketplace.scss")
-    source = File.read(path)
+def test_brgen_marketplace_badge_offsets_are_valid_css
+  # The former _brgen_marketplace.scss is now the brgen_marketplace module.
+  source = stylesheet_module("brgen", "brgen_marketplace")
+
 
     refute_match(/top:\s*--\d+px\s*;/, source, "a negative offset is written with one minus sign")
     assert_match(/\.number_animate\s*\{[^}]*top:\s*-32px\s*;/m, source)

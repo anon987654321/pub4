@@ -11,7 +11,7 @@ checks:
   - {id: chrome.json_ld, in: bsdports/app/views/layouts/application.html.erb, has: [website_json_ld]}
   - {id: chrome.brand, in: bsdports/app/views/layouts/application.html.erb, has: [brand]}
   # --- design ---
-  - {id: design.stack, in: bsdports/app/assets/stylesheets/application.scss, has: ['@use "stack"']}
+  - {id: design.stack, in: bsdports/app/assets/stylesheets/application.scss, has: ['@include meta.load-css("stack")']}
   - {id: design.tap_min, in: __shared/app/assets/stylesheets/_layout_chrome.scss, has: ["--tap-min: 44px"]}
   - {id: design.focus_ring, in: __shared/app/assets/stylesheets/_focus_ring.scss, has: [":focus-visible"]}
   - {id: design.no_social_by_default, in: bsdports/config/routes.rb, has: [BSDPORTS_SOCIAL]}

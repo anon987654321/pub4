@@ -31,7 +31,7 @@ checks:
      in: __shared/app/assets/stylesheets/_layout_chrome.scss,
      has: ["--tap-min: 44px", "--bar-height: 44px"]}
   - {id: design.feed_max, in: __shared/app/assets/stylesheets/_layout_chrome.scss, has: ["--feed-max: 600px"]}
-  - {id: design.stack_entry, in: brgen/app/assets/stylesheets/application.scss, has: ['@use "stack_brgen"']}
+  - {id: design.stack_entry, in: brgen/app/assets/stylesheets/application.scss, has: ['@include meta.load-css("stack_brgen")']}
   - {id: design.focus_ring, in: __shared/app/assets/stylesheets/_focus_ring.scss, has: [":focus-visible"]}
   - {id: design.skip_clip, in: __shared/app/assets/stylesheets/_shell.scss, has: [skip-link]}
   - {id: design.compose_no_requestsubmit,

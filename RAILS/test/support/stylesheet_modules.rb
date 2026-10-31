@@ -13,6 +13,8 @@
 # partial's text matches the same text in its new home.
 
 module StylesheetModules
+  ROOT = File.expand_path("../..", __dir__)
+
   MODULE_OPEN = /\A\/\/ ={5,} module: ([a-z0-9_]+)\s*\z/.freeze
   MODULE_CLOSE = /\A\/\/ ={5,} \/module: /.freeze
 
@@ -40,8 +42,9 @@ module StylesheetModules
   end
 
   # Former partial names, in cascade order, for tests that asserted module
-  # sequence via load-css call positions.
+  # sequence via load-css call positions. The banner regex anchors at the start
+  # of its line, so the scan runs per line rather than over the whole sheet.
   def stylesheet_module_names(app)
-    application_scss(app).scan(MODULE_OPEN).flatten
+    application_scss(app).lines.filter_map { |line| line[MODULE_OPEN, 1] }
   end
 end
