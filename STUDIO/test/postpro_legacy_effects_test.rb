@@ -31,7 +31,6 @@ class PostproLegacyEffectsTest < Minitest::Test
     missing_dispatch_names = EXISTING_EQUIVALENTS.reject { |name| DISPATCH.include?(name) }
     assert_empty missing_recipe_names, "missing recipe vocabulary: #{missing_recipe_names.join(', ')}"
     assert_empty missing_dispatch_names, "missing current dispatch equivalents: #{missing_dispatch_names.join(', ')}"
-    assert_empty missing_dispatch_names, "missing current dispatch equivalents: #{missing_dispatch_names.join(', ')}"
   end
 
   def test_historical_effect_inventory_has_no_duplicate_names
