@@ -1337,7 +1337,8 @@ law_map:
       "status": "gap", "tags": ["aesthetic"]}
     divitis_prevention: {"meaning": "use semantic HTML, avoid wrapper proliferation",
       "detects": "wrapper_proliferation", "severity": "medium", "confidence": 0.8, "operation": "simplify",
-      "law_ids": ["ANTI_DIVITIS", "BARE_DIV_WRAPPER"], "status": "covered", "root": "proportion", "tags": ["engineering"], "source": "master.yml@30dad7ead"}
+      "law_ids": ["ANTI_DIVITIS", "BARE_DIV_WRAPPER"], "status": "covered", "root": "proportion",
+      "tags": ["engineering"], "source": "master.yml@30dad7ead"}
     dont_repeat_yourself: {"meaning": "avoid duplication, extract commonality", "detects": "duplication",
       "severity": "high", "confidence": 0.9, "operation": "extract", "law_ids": ["DRY", "PATTERN_EXTRACTION"],
       "status": "covered",
