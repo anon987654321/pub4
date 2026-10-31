@@ -11,6 +11,22 @@ to this engine. It is not a separate app: it runs in brgen's process, with brgen
 recipe for a vertical is in `RAILS/brgen/README.md`, and the topology is in
 `RAILS/brgen/AGENTS.md`.
 
+## Restored marketplace intent
+
+The original brief aimed at both local person-to-person exchange and professional shops:
+discoverable listings, trustworthy sellers, useful search, direct buyer/seller contact and
+location-aware inventory. The current data model deliberately supports both: a listing may have
+a store or belong to an individual seller. The current storefront and seeded catalogue are
+shop-first, so the presence of an individual-listing model must not be mistaken for a finished
+classifieds experience.
+
+Category and full-text search, locality filters, facets, saved searches, wishlist, reviews,
+public listing questions, variants, order state, returns and the native seller surface are
+implemented. AI recommendations, coupon/referral-credit campaigns, anonymous contact relay,
+full shipping-label/rate integrations, catalogue-scale multi-currency operations and the
+Solidus storefront remain separate work. Solidus is optional and staging-only; it is not the
+public production storefront.
+
 Store owners open a shop and post product listings across categories. Buyers add listings to a
 cart, give an address, and check out through Dintero, Vipps or Stripe, whichever is configured.
 Sellers take payouts, answer public questions on a listing, offer sizes and colours as variants,
