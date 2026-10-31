@@ -5521,5 +5521,179 @@
     }
   },
   "legacy_presets_note": "Recovered verbatim chord-name/tempo/duration/legacy-FX metadata from pub3 multimedia/dilla.rb. These are historical style presets, not verified transcriptions. legacy_fx is provenance only; rendering uses the current Dilla voice, groove and mastering chain.",
-  "legacy_progression_groups_note": "The legacy_progression_groups preserve the original pub3 chord-theory groups, including jazz, neo-soul, funk/soul, iconic pad synthesis recipes and vintage FX chains. They are archival reference data; current rendering uses dilla.rb's native voice/effect implementations."
+  "legacy_progression_groups_note": "The legacy_progression_groups preserve the original pub3 chord-theory groups, including jazz, neo-soul, funk/soul, iconic pad synthesis recipes and vintage FX chains. They are archival reference data; current rendering uses dilla.rb's native voice/effect implementations.",
+  "named_studies": {
+    "get_dis_money": {
+      "key": "C# minor",
+      "tempo_bpm": 90,
+      "primary_chords": [
+        "C#m",
+        "G#m",
+        "A#7",
+        "C#"
+      ],
+      "alternate_e_pedal_voicings": [
+        "D/E",
+        "Db/E",
+        "C/E",
+        "Bm/E",
+        "Bbm/E",
+        "Am/E"
+      ],
+      "interpretation_notes": {
+        "D/E": "E9sus4",
+        "Db/E": "unresolved in the recovered analysis",
+        "C/E": "preserve slash-bass voicing",
+        "Bm/E": "preserve slash-bass voicing",
+        "Bbm/E": "unresolved in the recovered analysis",
+        "Am/E": "preserve slash-bass voicing"
+      },
+      "sample_source": "Herbie Hancock — Come Running to Me (1978)",
+      "sample_pitch_shift_semitones": -4,
+      "bass_tuning_cents": 50,
+      "phrase_bars": 7,
+      "drum_loop_bars": 1,
+      "status": "published_analysis_supported_transcription_details_partly_open",
+      "provenance": [
+        "Ethan Hein analysis cited in prior research",
+        "published seven-bar sample analysis cited in prior research; exact URL not retained"
+      ],
+      "note": "Keep the C# minor transcription and E-pedal alternate reading side by side; do not collapse them into one supposedly certain chord chart."
+    },
+    "burton_flip": {
+      "chords": [
+        "B7b9",
+        "F7#11",
+        "E9sus4"
+      ],
+      "tempo_bpm": 88,
+      "duration_seconds": 3,
+      "legacy_fx": "analog_lush",
+      "source": "Gary Burton — Sing Me Softly of the Blues",
+      "instrument": "vibraphone",
+      "articulation": "soft attack; preserve bar-length chord holds and the first-bar half-note-triplet figure",
+      "status": "research_lead_not_verified_transcription",
+      "provenance": [
+        "Gary Burton source identified in prior harmonic research"
+      ]
+    },
+    "dont_cry_ii_add11": {
+      "key": "C major",
+      "tempo_bpm": 175,
+      "primary_chord": "Dm11",
+      "chords": [
+        "Dm11",
+        "G7",
+        "Cmaj9",
+        "Am11"
+      ],
+      "frequencies_hz": [
+        [
+          146.83,
+          174.61,
+          220,
+          261.63,
+          329.63,
+          392
+        ],
+        [
+          196,
+          246.94,
+          293.66,
+          349.23
+        ],
+        [
+          261.63,
+          329.63,
+          392,
+          493.88,
+          587.33
+        ],
+        [
+          220,
+          261.63,
+          329.63,
+          392,
+          493.88
+        ]
+      ],
+      "duration_seconds": 1.5,
+      "legacy_fx": "dry",
+      "source": "Hooktheory",
+      "status": "low_confidence_harmonic_research_lead",
+      "note": "The ii(add11) colour is the central idea; source verification remains incomplete."
+    },
+    "dilla_inversion": {
+      "steps": 16,
+      "bars": 1,
+      "kick": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1
+      ],
+      "status": "historical_pattern_proposal",
+      "note": "Original one-bar 16-step binary pattern; no tempo or measured source timing was specified."
+    },
+    "theseus_microtiming": {
+      "offsets_ms": {
+        "kick": 12,
+        "kick_first": 0,
+        "snare": -10,
+        "hat": 15
+      },
+      "repeat_each_bar": true,
+      "status": "proposed_deterministic_timing_model_not_audio_measurement",
+      "note": "A repeatable lane relationship: first kick anchored, later kicks behind, snares ahead, offbeat hats behind."
+    }
+  },
+  "named_studies_note": "Recovered from prior user conversations dated 2026-10-12 through 2026-10-19. Preserve each study's evidence status. Do not describe proposals as measurements or sample-analysis leads as verified transcriptions."
 }
