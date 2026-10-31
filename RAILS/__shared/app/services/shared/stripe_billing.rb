@@ -10,8 +10,10 @@ module Shared
   # events that keep Shared::BillingSubscription in step. Stripe holds the card
   # and the invoices; nothing here stores either.
   #
-  # Without STRIPE_SECRET_KEY nothing is offered (BillingPlan#available? is
-  # false) and nothing pretends to succeed.
+  # A plan is not sellable until both API credentials are present: the secret key
+  # starts checkout, while the webhook signing secret is what makes successful
+  # payments grant entitlements. Enabling checkout without the latter would take
+  # money while leaving the subscriber locked out.
   module StripeBilling
     API = "https://api.stripe.com/v1"
     SUBSCRIPTION_EVENTS = %w[customer.subscription.created customer.subscription.updated
@@ -21,7 +23,10 @@ module Shared
 
     module_function
 
-    def configured? = ENV["STRIPE_SECRET_KEY"].to_s.strip.present?
+    def configured?
+      ENV["STRIPE_SECRET_KEY"].to_s.strip.present? &&
+        ENV["STRIPE_WEBHOOK_SECRET"].to_s.strip.present?
+    end
 
     # Where to send the reader to subscribe to +plan+.
     def checkout_url(user:, plan:, success_url:, cancel_url:)

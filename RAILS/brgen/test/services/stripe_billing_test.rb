@@ -56,11 +56,20 @@ class StripeBillingTest < ActiveSupport::TestCase
     refute Shared::StripeBilling.handle({ "type" => "checkout.session.completed", "data" => { "object" => {} } })
   end
 
-  test "a plan is not offered while its price or the Stripe key is unset" do
+  test "a plan is not offered until its price and both Stripe secrets are configured" do
     plan = Shared::BillingPlan.find("brgen_business_presence")
-    with_env("STRIPE_SECRET_KEY" => nil, plan.price_env => "price_1") { refute plan.available? }
-    with_env("STRIPE_SECRET_KEY" => "sk_live_x", plan.price_env => nil) { refute plan.available? }
-    with_env("STRIPE_SECRET_KEY" => "sk_live_x", plan.price_env => "price_1") { assert plan.available? }
+    with_env("STRIPE_SECRET_KEY" => nil, "STRIPE_WEBHOOK_SECRET" => "whsec_test", plan.price_env => "price_1") do
+      refute plan.available?
+    end
+    with_env("STRIPE_SECRET_KEY" => "sk_live_x", "STRIPE_WEBHOOK_SECRET" => nil, plan.price_env => "price_1") do
+      refute plan.available?
+    end
+    with_env("STRIPE_SECRET_KEY" => "sk_live_x", "STRIPE_WEBHOOK_SECRET" => "whsec_test", plan.price_env => nil) do
+      refute plan.available?
+    end
+    with_env("STRIPE_SECRET_KEY" => "sk_live_x", "STRIPE_WEBHOOK_SECRET" => "whsec_test", plan.price_env => "price_1") do
+      assert plan.available?
+    end
   end
 
   def with_env(values)
