@@ -1159,4 +1159,6 @@ test("web chat records monotonic first-token, first-audio and reply-completion l
   assert.ok(speech.includes("const chatTiming = meta.chatTiming"));
   assert.ok(speech.includes("status: 'audio_started'"));
   assert.ok(speech.includes("meta.lane === 'response'"));
+  assert.ok(speech.includes("audio.preload = 'auto';"));
+  assert.ok(!speech.includes("const dur = await new Promise(resolve =>"));
 });
