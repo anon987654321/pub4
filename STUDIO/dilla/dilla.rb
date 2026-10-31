@@ -8081,14 +8081,16 @@ def run(argv)
     options[:prog] = data.fetch("progressions").length - 1
     options[:random] = false
   elsif options[:heritage]
-    raise ArgumentError, "--heritage cannot be combined with --progression" if options[:prog]
     archive = JSON.parse(File.read(File.join(__dir__, "data", "recovered_music.json")))
-    preset = archive.fetch("legacy_presets").fetch(options[:heritage]) do
-      raise ArgumentError, "unknown heritage preset #{options[:heritage].inspect}; use --list"
+    preset = archive.fetch("legacy_presets", {})[options[:heritage]]
+    study = archive.fetch("named_studies", {})[options[:heritage]]
+    preset ||= study if study && study["renderable_as_progression"]
+    unless preset && preset["chords"].is_a?(Array)
+      raise ArgumentError, "unknown or archive-only heritage study #{options[:heritage].inspect}; use --list"
     end
     data["progressions"] = data.fetch("progressions") + [preset.fetch("chords")]
     options[:prog] = data.fetch("progressions").length - 1
-    options[:bpm] ||= preset.fetch("tempo")
+    options[:bpm] ||= preset.fetch("tempo") { preset.fetch("tempo_bpm") }
     options[:random] = false
   end
   apply_effect_rig!(options, data) if options[:effect_rig]
@@ -8150,9 +8152,15 @@ elsif options[:play]
     puts
     puts "Harmonic languages (a progression written from rules, in Bb; use --language NAME to render):"
     Languages.all.each { |language, chords| puts format("  %-24s %s", language, chords.join(" ")) }
-    heritage = JSON.parse(File.read(File.join(__dir__, "data", "recovered_music.json"))).fetch("legacy_presets")
+    archive = JSON.parse(File.read(File.join(__dir__, "data", "recovered_music.json")))
+    heritage = archive.fetch("legacy_presets")
     puts "Recovered historical progressions (use --heritage NAME to render through the current engine):"
     heritage.each { |name, preset| puts format("  %-24s %s", name, preset.fetch("chords").join(" ")) }
+    puts "Recovered named studies (renderable studies accept --heritage NAME; archive-only studies retain their research contract):"
+    archive.fetch("named_studies").each do |name, study|
+      detail = study["renderable_as_progression"] ? study.fetch("chords").join(" ") : "archive-only — #{study.fetch('status')}"
+      puts format("  %-24s %s", name, detail)
+    end
   elsif options[:showcase] || (options[:prog].nil? && !options[:random] && !options[:quick] && options[:mode] != "organ")
     render_showcase(data, options)
   elsif options[:effect_rig]
