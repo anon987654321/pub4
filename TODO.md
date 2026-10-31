@@ -55,6 +55,10 @@ the commit that carries its evidence; nothing here records finished work.
   that not every ChatGPT conversation from account inception was available. The
   unresolved source/export boundary is listed below; no claim that every old chat
   was read is made.
+- The requested Brgen responsive screenshot set is already present in Git: mobile and
+  desktop pairs for Brgen, Dating, Maps, Marketplace, Messenger, Radio, TV and MASTER,
+  plus Amber and BSDPorts. This is a current-tree asset inventory, not a fresh runtime
+  capture from this recovery pass.
 - Full Ruby 4.0.5/Rails/MASTER/STUDIO suites, live GPU/browser captures, local TTS
   renders and vm23 checks were not run through the GitHub editing surface. No
   production deployment or media import is claimed.
@@ -83,14 +87,34 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
   single FaceWorld/FaceState renderer, retaining its fallback, point budgets and
   reduced-motion contract; add source regressions and browser/GPU evidence at narrow
   and wide sizes. Do not add a second renderer.
-- [ ] **MASTER README narrated face preview:** the older request for an inline
-  face-speaking preview is not present in the current `MASTER/README.md`. The
-  `MASTER/tools/readme_take.rb` generator exists and can produce `README.wav`,
-  `loop.mp4` and `loop.gif`; it requires the pinned local Ruby, a running face
-  server, the TTS worker and FFmpeg, and defaults to highlights unless `--full`
-  is passed. Run and inspect a fresh `--full` take on the supported host, then
-  publish the GIF/MP4 reference in a way consistent with the generated-media
-  policy. Do not re-track the ignored MP4/WAV without a separate storage decision.
+- [ ] **Radio-to-Face inward warp:** the old request explicitly says to reimplement the
+  Radio tunnel's inward pull in the existing face particle shader, audio-modulated and
+  stronger on the beat, rather than placing a second canvas over the face. The current
+  `chat_actions.js` emits `music:radio` with `topology: "warp-tunnel"`, but
+  `MASTER/data/tokens.yml` has no `warp-tunnel` profile; `face_world.js` falls back
+  to `papua-mask` and has no radio-mode inward-force path. Preserve one renderer and
+  its reduced-motion/performance limits. Add deterministic shader/geometry regressions
+  and confirm live motion in a real browser with audio before calling it complete.
+- [ ] **Radio visualizer transitions and floating navigation:** the old direct request
+  was to rotate between the existing waveform and tunnel visualizers on track change,
+  with a fade/mixed-flow transition, and move the bottom navigation into a floating,
+  rounded rectangle above the footer. Do not revive the deprecated standalone
+  seven-mode visualizer or add placeholder modes. Identify the actual shared bottom
+  navigation (not the now-playing or transport row), implement against the two current
+  visualizers, and verify track transitions, reduced motion, safe-area insets and
+  rendered mobile/desktop geometry before closing.
+- [ ] **MASTER README narrated face preview:** older requests include an inline
+  face-speaking preview, mobile `README_ss.webp` and Norwegian counterpart,
+  a full-README TTS narration, and a real SSH/`bin/master` dmesg transcript.
+  None of those image assets or a captured terminal-session transcript is present
+  in the current README/tree. The `MASTER/tools/readme_take.rb` generator exists
+  and can produce `README.wav`, `loop.mp4` and `loop.gif`; it requires the
+  pinned local Ruby, a running face server, the TTS worker and FFmpeg, and defaults
+  to highlights unless `--full` is passed. Run and inspect a fresh `--full` take
+  on the supported host, produce the desktop/mobile and Norwegian previews, and
+  capture only actual command output (no invented dmesg). Publish the GIF/MP4 and
+  screenshots according to the generated-media policy. Do not re-track the ignored
+  MP4/WAV without a separate storage decision.
 - [ ] **Dilla local sample-flip interface:** `1_BACKUP.LOG` records a working
   `SAMPLE_LOOP` / `SAMPLE_LOOP_VOL` path and an explicit request to save it in
   `STUDIO/dilla`; the current `dilla.rb` and README have no sample-loop ingestion
