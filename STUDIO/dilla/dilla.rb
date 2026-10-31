@@ -8091,6 +8091,9 @@ def run(argv)
     data["progressions"] = data.fetch("progressions") + [preset.fetch("chords")]
     options[:prog] = data.fetch("progressions").length - 1
     options[:bpm] ||= preset.fetch("tempo") { preset.fetch("tempo_bpm") }
+    if preset["duration_seconds"] && !options[:beats]
+      options[:beats] = preset.fetch("duration_seconds").to_f * options[:bpm].to_f / 60.0
+    end
     options[:random] = false
   end
   apply_effect_rig!(options, data) if options[:effect_rig]
