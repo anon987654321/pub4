@@ -216,6 +216,29 @@ module Master
     end
   end
 
+  # A skipped test is a passing test to the check ladder. With a reason the
+  # skip is a decision someone can revisit; without one it is how an agent
+  # turns a red test green. FULL.yml asked for this in three of its rule sets.
+  # Minitest takes the reason as skip's argument; a JavaScript .skip or xit
+  # has no slot for one, so it takes the comment on the line above.
+  ::Law.define(:NO_SILENT_TEST_SKIP) do
+    tags %i[COMPLETENESS]
+    fix "a test skipped without saying why"
+    bad "  def test_parse\n    skip\n  end\n"
+    good "  def test_parse\n    skip \"needs /proc\" unless File.readable?(\"/proc/meminfo\")\n  end\n"
+    check do |src, path|
+      lines = src.lines
+      lines.each_with_index.filter_map do |line, index|
+        bare_ruby = line.match?(/\A\s*skip\s*(?:\(\s*\)|""|'')?\s*(?:(?:if|unless)\b.*)?\z/)
+        bare_js = line.match?(/\b(?:xit|xdescribe|xtest|(?:it|test|describe)\.skip)\s*\(/) &&
+                  !lines[index - 1].to_s.match?(%r{\A\s*(?://|/\*|\*)}) && index.positive?
+        next unless bare_ruby || bare_js
+
+        finding(line: index + 1, message: "skipped without a reason — say why, or fix the test")
+      end
+    end
+  end
+
   ::Law.define(:RESCUE_EXCEPTION) do
     tags %i[ERROR_HANDLING]
     fix "rescue StandardError not Exception"
