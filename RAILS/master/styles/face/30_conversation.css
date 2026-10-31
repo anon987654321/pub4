@@ -456,7 +456,8 @@ body[data-tts-loading="true"] canvas { filter: none; }
 
 #ascii-star { position: fixed; top: calc(48px + var(--safe-top)); left: 16px; font: 600 var(--text-title)/1 var(--font-mono); color: var(--face-fg); mix-blend-mode: difference; pointer-events: none; z-index: calc(var(--z-chrome) - 1); }
 #ascii-star:empty { display: none; }
-body[data-mode="thinking"] #ascii-star:not(:empty) {
+body[data-mode="thinking"] #ascii-star:not(:empty),
+body[data-mode="speaking"][data-queue-active="1"] #ascii-star:not(:empty) {
   display: block;
   top: auto;
   left: 50%;
