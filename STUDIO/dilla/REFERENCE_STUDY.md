@@ -113,6 +113,12 @@ Start with short, confirmed excerpts from “Fall In Love,” “Stakes Is High,
 
 For the two supplied mixes specifically, the next executable step is to obtain bounded excerpts through a permitted source, record precise start/end offsets and attribution confidence, then run the local-audio command documented in the Dilla README. Until that happens, treat all audio-specific fields as pending rather than fill them with invented numbers.
 
+## RG-69 archive finding
+
+The recursive repository search across `pub`, `pub2`, `pub3` and `pub4` found the same RG-69 entry point in the root `index.html` files of `pub`, `pub2` and `pub3`: a link labelled “RG-69 BEAT MACHINE” targeting `rg69.html`. The target HTML file itself was not present at the searched revisions and could not be fetched from those repositories; `pub4` has no RG-69 reference. The available evidence therefore establishes that the web experience was linked, but not its implementation, controls, synthesis model or musical behavior.
+
+No replacement has been invented and no guessed RG-69 feature has been folded into Dilla. The link target remains an explicit archival gap. If the original `rg69.html` or a local export is recovered later, its musical behavior can be compared against the current sequencer and ported selectively without creating a second audio engine.
+
 ## Sources
 
 - [J Dilla - Rare Unreleased / Beat Mix (YouTube)](https://www.youtube.com/watch?v=22OnSvf-SDc)
