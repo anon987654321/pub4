@@ -352,9 +352,10 @@ body[data-mode="speaking"] #spin-btn { display: block; }
 body[data-edge-hover="1"] #zsh,
 body[data-edge-swipe="1"] #zsh { opacity: .96; pointer-events: auto; transform: none; }
 
-/* #44 Thinking-mode input dim */
-body[data-mode="thinking"] #zin { opacity:.38; }
-body[data-mode="speaking"] #zin { opacity:.75; }
+/* The composer remains the one input surface while a turn runs; the face queue accepts follow-up messages. */
+body[data-mode="thinking"] #zin,
+body[data-mode="speaking"] #zin,
+body[data-queue-active="1"] #zin { opacity: 1; }
 
 /* #45 Char count warn threshold */
 #char-count:not(:empty) { opacity: .5; }
@@ -453,7 +454,19 @@ body[data-tts-loading="true"] canvas { filter: none; }
 .tool:hover, .tool:focus { opacity:1; color:var(--face-fg); }
 .tool.active { color:var(--c-accent); opacity:1; }
 
-#ascii-star { position: fixed; top: calc(48px + var(--safe-top)); left: 16px; font: 600 var(--text-title)/1 var(--font-mono); color: var(--face-fg); mix-blend-mode: difference; pointer-events: none; z-index: calc(var(--z-chrome) - 1); transition: color 220ms var(--ease-linear); }
+#ascii-star { position: fixed; top: calc(48px + var(--safe-top)); left: 16px; font: 600 var(--text-title)/1 var(--font-mono); color: var(--face-fg); mix-blend-mode: difference; pointer-events: none; z-index: calc(var(--z-chrome) - 1); }
+#ascii-star:empty { display: none; }
+body[data-mode="thinking"] #ascii-star:not(:empty) {
+  display: block;
+  top: auto;
+  left: 50%;
+  bottom: calc(84px + var(--safe-bottom) + var(--keyboard-inset, 0px));
+  width: 1ch;
+  transform: translateX(-50%);
+  text-align: center;
+  color: var(--face-fg);
+  mix-blend-mode: normal;
+}
 
 .compaction-note,
 .message.system {
