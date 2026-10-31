@@ -95,6 +95,9 @@ class DillaTest < Minitest::Test
     %w[dilla_life neo_soul dreamscape floating soulquarian donut_shop slum_village ethiojazz ahmad_jamal isley_brothers].each do |name|
       assert_includes stdout, name
     end
+    %w[get_dis_money burton_flip dont_cry_ii_add11 dilla_inversion theseus_microtiming].each do |name|
+      assert_includes stdout, name
+    end
   end
 
   def test_recovered_inversion_pattern_and_theseus_lane_offsets_are_live_data
