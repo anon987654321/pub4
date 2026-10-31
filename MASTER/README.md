@@ -89,6 +89,14 @@ live in `MASTER/data/tokens.yml`. The browser and terminal face are presentation
 adapters, not separate visual authorities. The signal must never obscure a truthful
 runtime state, reduce accessibility, or force another product's palette.
 
+Ad-creative audit output carries a SHA-256 receipt over the complete normalized
+report, bound to the current Law catalogue, detector source and measurement source
+when the repository's browserless analyser is used. This detects a changed report
+and rejects stale policy or code; it is not a digital signature, and externally
+supplied render evidence remains explicitly caller-supplied. The copywriting
+architecture and its consent/evidence boundaries are documented in
+[ad creative governance](docs/ad_creative_governance.md).
+
 ## The loop
 
 The whole control flow is a fold that fits on one screen. The model proposes an

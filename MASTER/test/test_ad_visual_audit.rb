@@ -32,6 +32,44 @@ class TestAdVisualAudit < Minitest::Test
     assert Audit.require_pass!(report, current_contract: @contract, placement: "display-320x250")
   end
 
+  def test_audit_receipt_binds_policy_detector_and_survives_json_round_trip
+    report = Audit.audit(html: @html, css: @css, placement: "display-320x250", rendered: @rendered, token_contract: @contract)
+    provenance = report.fetch(:provenance)
+
+    assert_equal Audit::REPORT_SCHEMA_VERSION, provenance.fetch(:schema_version)
+    assert_match(/\\A[0-9a-f]{64}\\z/, provenance.fetch(:policy_sha256))
+    assert_match(/\\A[0-9a-f]{64}\\z/, provenance.fetch(:detector_sha256))
+    assert_equal "caller_supplied", provenance.dig(:measurement, :mode)
+    assert_match(/\\A[0-9a-f]{64}\\z/, report.fetch(:evidence_sha256))
+    assert Audit.verify_evidence!(JSON.parse(JSON.generate(report)))
+  end
+
+  def test_receipt_rejects_post_audit_mutation
+    report = Audit.audit(html: @html, css: @css, placement: "display-320x250", rendered: @rendered, token_contract: @contract)
+    report.fetch(:checks).first.fetch(:reasons) << "changed after assessment"
+
+    assert_raises(Audit::VisualAuditRejected) { Audit.verify_evidence!(report) }
+  end
+
+  def test_missing_receipt_cannot_pass_the_renderer_gate
+    report = Audit.audit(html: @html, css: @css, placement: "display-320x250", rendered: @rendered, token_contract: @contract)
+    report.delete(:evidence_sha256)
+
+    assert_raises(Audit::VisualAuditRejected) do
+      Audit.require_pass!(report, current_contract: @contract, placement: "display-320x250")
+    end
+  end
+
+  def test_receipt_covers_measurements_added_after_the_audit
+    report = Audit.audit(html: @html, css: @css, placement: "display-320x250", rendered: @rendered, token_contract: @contract)
+    report[:measurements] = { "asset_count" => 1 }
+    Audit.seal!(report, rendered: @rendered)
+    assert Audit.verify_evidence!(report)
+
+    report[:measurements]["asset_count"] = 2
+    assert_raises(Audit::VisualAuditRejected) { Audit.verify_evidence!(report) }
+  end
+
   def test_missing_render_evidence_fails_closed
     report = Audit.audit(html: @html, css: @css, placement: "display-320x250", token_contract: @contract)
     refute report[:passed]

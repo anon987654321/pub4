@@ -58,6 +58,18 @@ class TestBrowserlessVisualMeasurements < Minitest::Test
            report.fetch(:checks).inspect
   end
 
+  def test_browserless_receipt_records_the_measurement_source
+    rendered = measure.fetch(:rendered)
+    report = Audit.audit(html: @html, css: @css, placement: "display-320x250", rendered:, token_contract: @contract)
+    measurement = report.dig(:provenance, :measurement)
+
+    assert_equal "browserless_static", measurement.fetch(:mode)
+    assert_equal Measure::VERSION, measurement.fetch(:version)
+    assert_match(/\\A[0-9a-f]{64}\\z/, measurement.fetch(:source_sha256))
+    assert_equal "repository_source_digest", measurement.fetch(:verification)
+    assert Audit.verify_evidence!(report)
+  end
+
   def test_full_static_audit_can_pass_for_supported_explicit_layout
     rendered = measure.fetch(:rendered)
     report = Audit.audit(html: @html, css: @css, placement: "display-320x250", rendered:, token_contract: @contract)

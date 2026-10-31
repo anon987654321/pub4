@@ -16,6 +16,10 @@ module Master
         VISUAL_SAFE_ZONE_RESPECTED VISUAL_RENDER_INTEGRITY
       ].freeze
       REQUIRED_BOUNDS = %w[headline logo cta].freeze
+      REPORT_SCHEMA_VERSION = 1
+      POLICY_SOURCE_PATH = File.expand_path("../../data/laws.yml", __dir__).freeze
+      DETECTOR_SOURCE_PATH = File.expand_path(__FILE__).freeze
+      MEASUREMENT_SOURCE_PATH = File.expand_path("../../tools/visual/browserless_measurements.rb", __dir__).freeze
       module_function
 
       def contract(path: File.expand_path("../../data/tokens.yml", __dir__))
@@ -29,6 +33,41 @@ module Master
         Digest::SHA256.hexdigest(JSON.generate(deep_sort(contract)))
       end
 
+      # Bind each result to the exact policy, detector and measurement source.
+      # The receipt is a checksum, not a signature or proof that caller-supplied
+      # renderer evidence is truthful.
+      def seal!(report, rendered: nil)
+        raise ArgumentError, "audit report must be a Hash" unless report.is_a?(Hash)
+
+        report.delete(:provenance)
+        report.delete("provenance")
+        report.delete(:evidence_sha256)
+        report.delete("evidence_sha256")
+        report[:provenance] = {
+          schema_version: REPORT_SCHEMA_VERSION,
+          policy_sha256: file_sha256(POLICY_SOURCE_PATH),
+          detector_sha256: file_sha256(DETECTOR_SOURCE_PATH),
+          measurement: measurement_provenance(rendered),
+        }
+        report[:evidence_sha256] = evidence_digest(report)
+        report
+      end
+
+      def verify_evidence!(report)
+        status = receipt_status(report)
+        return true if status == :valid
+
+        message = {
+          missing: "visual audit evidence receipt is missing",
+          tampered: "visual audit report changed after it was sealed",
+          policy_stale: "visual audit Law catalogue has changed",
+          detector_stale: "visual audit detector source has changed",
+          measurement_stale: "browserless measurement source has changed",
+          invalid: "visual audit evidence receipt is invalid",
+        }.fetch(status, "visual audit evidence receipt is invalid")
+        raise VisualAuditRejected, message
+      end
+
       def audit(html:, css:, placement:, rendered: nil, token_contract: self.contract)
         checks = [
           identity_tokens(html:, css:, token_contract:),
@@ -38,16 +77,22 @@ module Master
           safe_zone(placement:, rendered:),
           render_integrity(rendered:, token_contract:),
         ]
-        {
-          passed: checks.all? { |check| check.fetch(:pass) },
-          token_version: token_version(token_contract),
-          placement: placement.to_s,
-          checks:,
-        }
+        seal!(
+          {
+            passed: checks.all? { |check| check.fetch(:pass) },
+            token_version: token_version(token_contract),
+            placement: placement.to_s,
+            checks:,
+          },
+          rendered:,
+        )
       end
 
       def require_pass!(report, current_contract: self.contract, placement:)
-        checks = report.is_a?(Hash) ? (report[:checks] || report["checks"] || []) : []
+        raise VisualAuditRejected, "visual audit report missing" unless report.is_a?(Hash)
+
+        verify_evidence!(report)
+        checks = report[:checks] || report["checks"] || []
         passed = report.is_a?(Hash) ? (report[:passed] || report["passed"]) : false
         version = report.is_a?(Hash) ? (report[:token_version] || report["token_version"]) : nil
         report_placement = report.is_a?(Hash) ? (report[:placement] || report["placement"]) : nil
@@ -224,6 +269,86 @@ module Master
         when Array then value.map { |item| deep_sort(item) }
         else value
         end
+      end
+
+      def receipt_status(report)
+        return :missing unless report.is_a?(Hash)
+
+        supplied = read_value(report, :evidence_sha256)
+        provenance = read_value(report, :provenance)
+        return :missing unless supplied.is_a?(String) && provenance.is_a?(Hash)
+        return :tampered unless evidence_digest(report) == supplied
+        return :invalid unless read_value(provenance, :schema_version) == REPORT_SCHEMA_VERSION
+        return :policy_stale unless read_value(provenance, :policy_sha256) == file_sha256(POLICY_SOURCE_PATH)
+        return :detector_stale unless read_value(provenance, :detector_sha256) == file_sha256(DETECTOR_SOURCE_PATH)
+
+        measurement = read_value(provenance, :measurement)
+        return :invalid unless measurement.is_a?(Hash)
+        if read_value(measurement, :mode) == "browserless_static"
+          return :measurement_stale unless read_value(measurement, :source_sha256) == file_sha256(MEASUREMENT_SOURCE_PATH)
+          return :invalid unless read_value(measurement, :version).is_a?(Integer)
+        end
+        :valid
+      rescue StandardError
+        :invalid
+      end
+
+      def measurement_provenance(rendered)
+        return { mode: "missing", verification: "no_rendered_evidence" } unless rendered.is_a?(Hash)
+
+        mode = read_value(rendered, :measurement_mode).to_s
+        mode = "caller_supplied" if mode.empty?
+        details = {
+          mode: mode,
+          version: read_value(rendered, :measurement_version),
+          verification: "caller_supplied_unverified",
+        }
+        if mode == "browserless_static"
+          details[:source_sha256] = file_sha256(MEASUREMENT_SOURCE_PATH)
+          details[:verification] = "repository_source_digest"
+        end
+        details
+      end
+
+      def evidence_digest(report)
+        unsigned = report.reject { |key, _value| key.to_s == "evidence_sha256" }
+        canonical = canonical_value(unsigned)
+        Digest::SHA256.hexdigest(JSON.generate(canonical))
+      end
+
+      # JSON object keys are normalized and sorted so symbol-keyed Ruby reports
+      # and string-keyed JSON round-trips produce the same digest.
+      def canonical_value(value)
+        case value
+        when Hash
+          normalized = {}
+          value.each do |key, item|
+            name = key.to_s
+            raise ArgumentError, "duplicate normalized evidence key: #{name}" if normalized.key?(name)
+
+            normalized[name] = canonical_value(item)
+          end
+          normalized.sort.to_h
+        when Array
+          value.map { |item| canonical_value(item) }
+        when Symbol
+          value.to_s
+        else
+          value
+        end
+      end
+
+      def read_value(hash, key)
+        return unless hash.is_a?(Hash)
+        return hash[key] if hash.key?(key)
+
+        hash[key.to_s]
+      end
+
+      def file_sha256(path)
+        raise IOError, "evidence source missing: #{path}" unless File.file?(path)
+
+        Digest::SHA256.file(path).hexdigest
       end
 
       class VisualAuditRejected < StandardError; end

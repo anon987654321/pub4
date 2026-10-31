@@ -44,5 +44,6 @@ report = Master::Visual::AdAudit.audit(
 report[:measurements] = measurement.fetch(:measurements) if measurement
 report[:measurement_mode] = rendered["measurement_mode"] || rendered[:measurement_mode] ||
                             (manifest["rendered"] ? "supplied_render_evidence" : "browserless_static")
+Master::Visual::AdAudit.seal!(report, rendered:)
 puts JSON.pretty_generate(report)
 exit(report.fetch(:passed) ? 0 : 1)
