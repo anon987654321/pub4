@@ -1522,19 +1522,16 @@ function ttsTick() {
 
   let settled = false;
 
-  async function playEdge(blob) {
+  function playEdge(blob) {
     if (settled || token !== tts.cancelToken) return;
     settled = true;
     const src = URL.createObjectURL(blob);
     const audio = new Audio(src);
     const baseRate = getTtsRate() * 0.97;
-    // Measure duration for beat quantization — 1.5s timeout guards against silent hang
-    const dur = await new Promise(resolve => {
-      const t = setTimeout(() => resolve(null), 280);
-      audio.onloadedmetadata = () => { clearTimeout(t); resolve(audio.duration); };
-      audio.onerror = () => { clearTimeout(t); resolve(null); };
-      audio.load();
-    });
+    // Start loading and playback immediately; duration metadata arrives with
+    // the media and is sampled at onplay rather than delaying the first sound.
+    audio.preload = 'auto';
+    audio.load();
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
     audio.playbackRate = LOW_POWER ? 1.0 : baseRate;
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
@@ -1550,7 +1547,7 @@ function ttsTick() {
           detail: { status: 'audio_started', firstTokenMs: chatTiming.firstTokenMs, firstAudioMs: chatTiming.firstAudioMs, completedMs: chatTiming.completedMs, failedMs: chatTiming.failedMs }
         }));
       }
-      emitTtsEvent('tts:playback:start', { text, voice, style, duration: dur || audio.duration || null, backend: 'edge' });
+      emitTtsEvent('tts:playback:start', { text, voice, style, duration: Number.isFinite(audio.duration) ? audio.duration : null, backend: 'edge' });
       startVisemeAnim(text);
       if (navigator.vibrate) navigator.vibrate([35, 55, 35]);
       rootBody.dataset.ttsWave = 'true';
