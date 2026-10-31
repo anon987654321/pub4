@@ -95,6 +95,27 @@ class DillaTest < Minitest::Test
     end
   end
 
+  def test_recovered_inversion_pattern_and_theseus_lane_offsets_are_live_data
+    pattern = DATA.fetch("drum_patterns").fetch("dilla_inversion")
+    assert_equal [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0], pattern.fetch("kick")
+    assert_equal [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], pattern.fetch("snare")
+    assert_equal [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1], pattern.fetch("hat")
+    profile = DATA.fetch("groove_profiles").fetch("theseus_microtiming")
+    assert_equal({ "kick" => 0.012, "kick_first" => 0.0, "snare" => -0.010, "hat" => 0.015 }, profile.fetch("offsets"))
+    assert_equal "dilla_inversion", profile.fetch("drums")
+  end
+
+  def test_named_harmonic_studies_keep_their_source_and_confidence_labels
+    studies = RECOVERED.fetch("named_studies")
+    assert_equal %w[burton_flip dilla_inversion dont_cry_ii_add11 get_dis_money theseus_microtiming], studies.keys.sort
+    assert_equal 7, studies.fetch("get_dis_money").fetch("phrase_bars")
+    assert_equal(-4, studies.fetch("get_dis_money").fetch("sample_pitch_shift_semitones"))
+    assert_equal 50, studies.fetch("get_dis_money").fetch("bass_tuning_cents")
+    assert_equal %w[B7b9 F7#11 E9sus4], studies.fetch("burton_flip").fetch("chords")
+    assert_equal "low_confidence_harmonic_research_lead", studies.fetch("dont_cry_ii_add11").fetch("status")
+    assert_equal "proposed_deterministic_timing_model_not_audio_measurement", studies.fetch("theseus_microtiming").fetch("status")
+  end
+
   def test_pub3_analog_pad_and_vintage_effect_research_is_preserved
     groups = RECOVERED.fetch("legacy_progression_groups")
     assert_equal 15, groups.fetch("iconic_pad_synthesis").size
