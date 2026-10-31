@@ -6296,6 +6296,24 @@
         "reverb": 0.05,
         "lowpass": 14000
       }
+    },
+    "theseus_microtiming": {
+      "swing": 0.5,
+      "offsets": {
+        "kick": 0.012,
+        "kick_first": 0,
+        "snare": -0.01,
+        "hat": 0.015
+      },
+      "texture": {
+        "detune": 0,
+        "reverb": 0,
+        "lowpass": 14500
+      },
+      "voice": "rhodes_mark1",
+      "drums": "dilla_inversion",
+      "kit": "kit_dust",
+      "pd_amount": 1
     }
   },
   "drum_patterns": {
@@ -11290,6 +11308,62 @@
         0,
         0,
         0.15
+      ]
+    },
+    "dilla_inversion": {
+      "kick": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "snare": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "hat": [
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1
       ]
     }
   },
