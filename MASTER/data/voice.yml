@@ -640,9 +640,9 @@ tts:
 
   # Latency. Keep the first spoken packet short enough to start promptly,
   # while retaining a clause-boundary split and leaving the remaining text queued.
-  # This is a text-size target, not a wall-clock guarantee; 0 turns it off.
+  # 48 is a text-size target, not a wall-clock guarantee; 0 turns it off.
   streaming:
-    first_chunk_chars: 64
+    first_chunk_chars: 48
 
   # No default_volume. The daemon protocol is {voice,rate,pitch,text} and
   # RbEdgeTTS::Communicate takes rate: and pitch: only, so a volume here was
