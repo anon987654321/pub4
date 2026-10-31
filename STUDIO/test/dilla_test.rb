@@ -83,6 +83,19 @@ class DillaTest < Minitest::Test
     end
   end
 
+  def test_recovered_harmonic_languages_are_playable_and_transposable
+    expected = %w[j5_donut_loop relative_answer dorian_four flexible_sixth mediant_lift]
+    assert_empty expected - Languages.names
+    expected.each do |name|
+      progression = Languages.progression(name)
+      assert_operator progression.length, :>=, 2
+      assert progression.all? { |chord| Chords.parse(chord) }
+      assert_equal progression, Languages.progression(name, tonic: Languages::TONIC)
+      assert_equal progression.length, KeyLock.lock(progression, "Bb").length
+    end
+    assert_equal "Bb", Languages.progression("j5_donut_loop").first[0, 2]
+  end
+
   def test_random_take_uses_the_dilla_output_override
     Dir.mktmpdir do |dir|
       previous = ENV["DILLA_OUTPUT_DIR"]
