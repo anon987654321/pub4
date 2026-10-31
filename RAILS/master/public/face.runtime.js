@@ -3,10 +3,10 @@
 const FACE_RUNTIME_SOURCES = [
   "face.part1.txt?v=98063798fa",
   "face.part2.txt?v=c801eff38c",
-  "face.part3.txt?v=653bc53e90",
-  "face_speech_runtime.js?v=81f61fd22b",
+  "face.part3.txt?v=00a499e822",
+  "face_speech_runtime.js?v=6857da79eb",
   "face_speech_playback.js?v=52a9561149",
-  "face.part5.txt?v=fb01be2901"
+  "face.part5.txt?v=935725e097"
 ];
 const FACE_RUNTIME_URL = (name) => new URL(name, document.baseURI).href;
 const FACE_RUNTIME_FETCH = (name) => fetch(FACE_RUNTIME_URL(name), { cache: "force-cache" }).then((response) => {
