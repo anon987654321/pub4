@@ -50,6 +50,8 @@ POSTPRO_LIB = %w[
 # Everything --vocab-check reads as this tool's source.
 POSTPRO_SOURCE_FILES = [
   POSTPRO_ENTRY,
+  File.join(POSTPRO_DIR, "legacy_effects.rb"),
+  File.join(POSTPRO_DIR, "dilla_analog.rb"),
   *(%w[early_modes] + POSTPRO_LIB).map { |name| File.join(POSTPRO_DIR, "lib", "#{name}.rb") },
   File.join(POSTPRO_DIR, "uncanny.rb"),
   File.join(POSTPRO_DIR, "motion.rb"),
