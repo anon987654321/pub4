@@ -73,14 +73,16 @@ embeds, creator analytics, privacy, expiry, donations, premium tiers and sponsor
 
 - **Recovered and implemented:** hosted audio, URL imports, playlists/sets, collaboration roles,
   embeddable players, timestamped comments, listening parties, likes/listens, per-track expiry
-  and the Dilla render-to-track bridge.
-- **Partly delivered:** Listen and Like records support engagement counts, but a complete creator
-  analytics surface, donations, paid creator tier and sponsored-content workflow are not
-  implemented.
-- **Next work:** creator-owned analytics (plays/listens over time, track and playlist breakdown,
-  export, privacy-safe aggregation) is the lowest-risk next step because the event records already
-  exist. After that, add voluntary creator support only with a real payment/refund and payout
-  contract. Confirm recording rights before importing the Radio Bergen archive.
+  and the Dilla render-to-track bridge. An owner-only aggregate analytics page now reports total
+  listens, seven-day listens and per-track counts without exposing listener identities; its
+  integration test has been added but still needs execution in the repository runtime.
+- **Partly delivered:** the first analytics surface exists, but unique listeners, retention
+  cohorts, exports and creator revenue reporting do not. Donations, paid creator tiers and
+  sponsored-content workflows remain unimplemented.
+- **Next work:** run the Brgen integration suite and fix any failures; then add privacy-safe unique
+  listener and time-series aggregation before exports or creator payouts. Voluntary support
+  requires a real payment/refund and payout contract. Confirm recording rights before importing
+  the Radio Bergen archive.
 
 ## TV
 
