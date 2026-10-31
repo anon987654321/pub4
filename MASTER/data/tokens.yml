@@ -13,7 +13,8 @@ tokens:
   #   social       → brgen + shared shell (IRIX flat dark/light)
   #   light        → light-mode overlay for social apps (theme toggle)
   #   luxury       → amber wardrobe (Aesop/Toteme warm neutrals)
-  #   openbsd_wscons → bsdports terminal green (opt-in via body class)
+  #   openbsd_wscons → terminal green, opt-in via body class; bsdports itself is
+  #                    ultraminimal white (RAILS/apps.yml visual_character)
   #   face_root    → MASTER web face.css :root only (CRT-flat, all radii 0)
   # Intent: social = soft radii; face/bsdports = CRT-flat zeros; luxury = calm product.
   # Light social = indigo on cool paper (not Twitter
@@ -81,7 +82,7 @@ tokens:
         particle face stays greyscale and the sole expressive centerpiece
       brgen: "retain deep-blue city identity and local editorial photography; signal is a sparse semantic accent only"
       amber: "retain neutral fashion surfaces and truthful garment colour; signal never recolours product photography"
-      bsdports: "retain OpenBSD terminal green and flat monochrome surfaces"
+      bsdports: "retain ultraminimal white: a classic search front page, Arial, blue links, square corners"
       openbsd: "plain operational text; signal never substitutes for a truthful written state"
       studio: "retain media fidelity, operator-owned grades and original subject identity"
   # The viewport scale. Every other axis in this system is single-sourced; this one
@@ -1486,7 +1487,6 @@ tokens:
     - off-scale unitless line-height not in typography.line_height.allowed
     - absolute px line-height on prose (prefer unitless; ScaleLint absolute_line_height)
     - continuous prose without max-width measure (66ch / var(--measure))
-    - all caps without letter spacing
     - body text below 16px
     - contrast below WCAG AAA thresholds (7:1 body, 4.5:1 large)
     - more than two font families
@@ -1553,6 +1553,8 @@ tokens:
       h2_body_max_ratio: 3.5
       h3_body_min_ratio: 1.25
       h3_body_max_ratio: 2.5
+    # The range for tracked caps in logos and large display type. Small
+    # uppercase text needs none, and tracking is never required of it.
     letter_spacing:
       all_caps_min_em: 0.05
       all_caps_max_em: 0.15

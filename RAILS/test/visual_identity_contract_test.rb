@@ -145,9 +145,7 @@ class VisualIdentityContractTest < Minitest::Test
 
     assert_includes adapters.fetch("brgen"), "deep-blue"
     assert_includes adapters.fetch("amber"), "garment colour"
-    # BSDPorts' active app stylesheet preserves the classic Google frontpage
-    # dialect. The historical MASTER adaptation prose still says "terminal green";
-    # this RAILS test checks the rendered product source without blessing that drift.
+    # BSDPorts is the classic search front page; see the test below.
     assert_includes File.read(BSDPORTS_STYLES, encoding: "UTF-8"), "--accent: #1a0dab;"
     assert_includes adapters.fetch("openbsd"), "plain operational text"
     assert_includes adapters.fetch("studio"), "operator-owned"
@@ -163,5 +161,15 @@ class VisualIdentityContractTest < Minitest::Test
     assert_equal "text-base", type_roles.fetch("body")
     assert_equal "font-mono", type_roles.fetch("technical")
     assert_includes type_roles.fetch("wordmark"), "original"
+  end
+
+  # BSDPorts is ultraminimal white, the classic search front page (operator,
+  # 2026-10-31); MASTER's adaptation said "terminal green" until then, which
+  # RAILS/apps.yml and the rendered stylesheet never did.
+  def test_bsdports_adaptation_matches_its_product
+    adapters = Operator::MasterDesign.tokens.fetch("visual_identity").fetch("adaptations")
+
+    assert_includes adapters.fetch("bsdports"), "ultraminimal white"
+    refute_includes adapters.fetch("bsdports"), "terminal green"
   end
 end

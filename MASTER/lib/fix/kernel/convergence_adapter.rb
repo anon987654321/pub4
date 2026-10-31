@@ -99,7 +99,10 @@ module Master
       # Two evidence-backed clean passes are the minimum; operators may raise,
       # but never lower, the completion bar.
       CLEAN_RUNS = [Integer(ENV.fetch("MASTER_FIX_CLEAN_RUNS", 2)), 2].max
-      PLATEAU_WINDOW = 3
+      # Five passes without improvement before a plateau stops the run, as
+      # laws.yml transformation_policy.exit.plateau says; three stopped work
+      # that a slow pass was still about to land (operator, 2026-10-31).
+      PLATEAU_WINDOW = 5
       # Rounds of improvement proposals after a run finishes: asked for, never by default, because
       # each round is up to three more passes once the work requested is done.
       WISHLIST_MAX_ROUNDS = Integer(ENV.fetch("MASTER_FIX_WISHLIST_ROUNDS", 0))

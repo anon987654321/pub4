@@ -21,7 +21,7 @@ class TestDependencyContracts < Minitest::Test
     rules = Master.load_yaml(File.join(ROOT, "data", "laws.yml"))
     ruby_version = rules.dig("languages", "ruby", "version")
 
-    assert_equal "3.3+", ruby_version
+    assert_includes ruby_version, "4.0.5", "laws.yml names the recommended Ruby"
     assert_operator Gem::Version.new(Prism::VERSION), :>=, Gem::Version.new("1.7.0")
   end
 

@@ -139,7 +139,9 @@ INTER_MODEL_CONTRACT:
 
 languages:
   ruby:
-    version: "3.3+"
+    # Whatever Ruby the host has runs MASTER; 4.0.5 is what .ruby-version pins
+    # and what the RAILS apps need.
+    version: "any available; 4.0.5 recommended"
 
 markdown_style:
   aesthetic: tadao_ando
@@ -2285,10 +2287,13 @@ law_catalogue:
       definition_sources: [MASTER/law/surface.rb]
       severity: warning
       languages: [html]
+    # Retired 2026-10-31 by the operator: tracking is for logos and big display
+    # type, not for every uppercase rule in a stylesheet. It also fought
+    # NO_EYEBROW_LABEL, which flags the small tracked caps this one demanded.
     ALL_CAPS_NO_TRACKING:
       definition_sources: [MASTER/law/cosmetic.rb]
       severity: info
-      autofix: automatic
+      lifecycle: retired
       languages: [css, scss]
     ANALOG_WARMTH:
       definition_sources: [MASTER/law/universal.rb]
