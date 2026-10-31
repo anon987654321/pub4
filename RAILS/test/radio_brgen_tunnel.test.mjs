@@ -8,6 +8,61 @@ import test from "node:test"
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const OPENING_TRACK_ID = "9EGHwkDix78"
 
+async function loadRadioModes() {
+  const source = await readFile(resolve(ROOT, "brgen/app/javascript/radio_brgen_modes.js"), "utf8")
+  const executable = source.replace(/^export\\s+/gm, "")
+  const api = vm.runInNewContext(`${executable}\\n({ MODES, INK_FAR, INK_MID, INK_NEAR, RING_SHAPE_GLSL, modeAfterStep })`)
+  return api
+}
+
+test("radio mode catalogue has 22 unique, finite, bounded modes", async () => {
+  const { MODES, INK_FAR, INK_MID, INK_NEAR } = await loadRadioModes()
+  assert.equal(MODES.length, 22)
+  assert.equal(new Set(Array.from(MODES, (mode) => mode.name)).size, 22)
+  for (const mode of MODES) {
+    assert.equal(typeof mode.name, "string")
+    assert.ok(mode.name.length > 0)
+    assert.ok(Number.isFinite(mode.twist))
+    assert.ok(mode.twist >= 0.9 && mode.twist <= 1.1)
+  }
+  for (const colour of [INK_FAR, INK_MID, INK_NEAR]) {
+    for (const channel of ["r", "g", "b"]) {
+      assert.ok(Number.isFinite(colour[channel]))
+      assert.ok(colour[channel] >= 0 && colour[channel] <= 1)
+    }
+  }
+})
+
+test("radio mode stepping wraps in both directions and validates its inputs", async () => {
+  const { modeAfterStep, MODES } = await loadRadioModes()
+  assert.equal(modeAfterStep(0, -1), MODES.length - 1)
+  assert.equal(modeAfterStep(MODES.length - 1, 1), 0)
+  assert.equal(modeAfterStep(7, MODES.length), 7)
+  assert.equal(modeAfterStep(7, -MODES.length), 7)
+  assert.equal(modeAfterStep(0, -23), MODES.length - 1)
+  assert.throws(() => modeAfterStep(0.5, 1), RangeError)
+  assert.throws(() => modeAfterStep(0, 1, 0), RangeError)
+})
+
+test("all 22 mode indices have an ordered GLSL branch and the classic mode is neutral", async () => {
+  const { RING_SHAPE_GLSL, MODES } = await loadRadioModes()
+  const thresholds = Array.from(RING_SHAPE_GLSL.matchAll(/if \\(m < ([0-9.]+)\\)/g), (match) => Number(match[1]))
+  assert.equal(thresholds.length, MODES.length - 1)
+  assert.deepEqual(thresholds, Array.from({ length: MODES.length - 1 }, (_, index) => index + 0.5))
+  assert.match(RING_SHAPE_GLSL, /if \\(m < 0\\.5\\) return 0\\.0;/)
+  assert.match(RING_SHAPE_GLSL, /float ringShape\\(float th, float i, float t\\)/)
+})
+
+test("Radio tunnel wires the mode shader and left/right keyboard controls", async () => {
+  const source = await readFile(resolve(ROOT, "brgen/app/javascript/radio_brgen_tunnel.js"), "utf8")
+  assert.match(source, /MODES, RING_SHAPE_GLSL, modeAfterStep/)
+  assert.match(source, /this\\.mode = modeAfterStep\\(this\\.mode, step\\)/)
+  assert.match(source, /gl\\.uniform1f\\(u\\.uMode, this\\.mode\\)/)
+  assert.match(source, /gl\\.uniform1f\\(u\\.uModeTwist, MODES\\[this\\.mode\\]\\.twist\\)/)
+  assert.match(source, /e\\.code === "ArrowRight" \\|\\| e\\.code === "ArrowLeft"/)
+  assert.match(source, /this\\.visualEngine\\.shiftMode\\(e\\.code === "ArrowRight" \\? 1 : -1\\)/)
+})
+
 async function loadInitialTrackIndex() {
   const source = await readFile(resolve(ROOT, "brgen/app/javascript/radio_brgen_tunnel.js"), "utf8")
   const match = source.match(/export function initialTrackIndex\(tracks, openingTrackId\) \{[\s\S]*?\n\}/)
