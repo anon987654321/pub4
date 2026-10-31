@@ -17,9 +17,11 @@ class LayoutContractTest < Minitest::Test
   SHELL_WIDGETS = File.join(SHARED, "app", "assets", "stylesheets", "_shell_widgets.scss")
   SHELL = File.join(SHARED, "app", "assets", "stylesheets", "_shell.scss")
   DIALECT = File.join(SHARED, "app", "assets", "stylesheets", "_dialect_tokens.scss")
-  RADIO_HOME_CSS = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_vertical_radio_home.scss")
-  MAPS_CSS = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_vertical_maps.scss")
-  BRGEN_CORE_SHELL = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_brgen_core_shell.scss")
+  # One stylesheet per app: the former vertical partials are modules of
+  # brgen/application.scss.
+  RADIO_HOME_CSS = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss")
+  MAPS_CSS = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss")
+  BRGEN_CORE_SHELL = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss")
 
   LAYOUTS = {
     "brgen" => File.join(ROOT, "brgen", "app", "views", "layouts", "application.html.erb"),
@@ -156,7 +158,9 @@ class LayoutContractTest < Minitest::Test
 
     stacks.each do |app, stack_name|
       source = File.read(File.join(ROOT, app, "app/assets/stylesheets/application.scss"))
-      assert_includes source, %(@use "#{stack_name}" as *;),
+      # One stylesheet per app (operator, 2026-10-28): the shared stack mounts
+      # through an unlayered meta.load-css at the top of the merged sheet.
+      assert_includes source, %(@include meta.load-css("#{stack_name}");),
                       "#{app} must load its declared shared stack before dialect overrides"
     end
 
@@ -428,8 +432,11 @@ class LayoutContractTest < Minitest::Test
 
   def test_amber_home_preserves_its_large_wordmark_and_editorial_masthead
     styles = File.read(File.join(ROOT, "amber", "app/assets/stylesheets/application.scss"), encoding: "UTF-8")
-    masthead_rules = styles.scan(/\.amber-masthead--home\s*\{([^}]*)\}/m).flatten
-    logo_rules = styles.scan(/\.amber-masthead--home\s+\.amber-logo-home\s*\{([^}]*)\}/m).flatten
+    # Anchor to the base rules: the sheet also carries a luxury override whose
+    # selector ends in .amber-masthead--home, and a minified restore row, and
+    # the spacious stage is the base rule's contract.
+    masthead_rules = styles.scan(/^\.amber-masthead--home\s*\{([^}]*)\}/m).flatten
+    logo_rules = styles.scan(/^\.amber-masthead--home\s+\.amber-logo-home\s*\{([^}]*)\}/m).flatten
 
     refute_empty masthead_rules, "Amber home masthead rule is missing"
     refute_empty logo_rules, "Amber home wordmark sizing rule is missing"

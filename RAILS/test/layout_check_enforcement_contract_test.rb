@@ -81,8 +81,10 @@ class LayoutCheckEnforcementContractTest < Minitest::Test
     assert_includes source, ":focus-visible { border: 0; outline: var(--focus-ring); outline-offset: 2px; }"
     assert_includes source, "body.wscons :is(input, select, textarea, button, .btn):focus-visible"
 
-    assert_includes File.read(BRGEN_OVERRIDES, encoding: "UTF-8"), "@include endgame.brgen;"
-    assert_includes File.read(AMBER_OVERRIDES, encoding: "UTF-8"), "@include endgame.amber;"
+    require_relative "support/stylesheet_modules"
+    modules = Class.new { include StylesheetModules }.new
+    assert_includes modules.stylesheet_module("brgen", "brgen_shared_overrides"), "@include endgame.brgen;"
+    assert_includes modules.stylesheet_module("amber", "amber_shared_overrides"), "@include endgame.amber;"
     assert_includes File.read(BSDPORTS_APP, encoding: "UTF-8"), "@include endgame.bsdports;"
   end
 

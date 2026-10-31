@@ -1,16 +1,35 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "support/stylesheet_modules"
+require_relative "../../MASTER/tools/scss"
 
 class MarketplaceBolVisualContractTest < Minitest::Test
+  include StylesheetModules
   ROOT = File.expand_path("..", __dir__)
   BRGEN = File.join(ROOT, "brgen")
   NAV = File.join(BRGEN, "app/views/shared/_storefront_nav_bar.html.erb")
   INDEX = File.join(ROOT, "brgen_marketplace/app/views/marketplace/listings/index.html.erb")
   SHOW = File.join(ROOT, "brgen_marketplace/app/views/marketplace/listings/show.html.erb")
   CSS = File.join(BRGEN, "app/assets/stylesheets/application.scss")
-  HEADER_CSS = File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_marketplace_header.scss")
-  CITY_CAMPAIGNS_CSS = File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_city_campaigns.scss")
+  # One stylesheet per app (operator, 2026-10-28): the former marketplace
+  # header and city-campaigns partials folded into the brgen_shared_overrides
+  # module; the catalog folded into brgen_marketplace. The slices restore the
+  # file boundaries these contracts were written against.
+  HEADER_MODULE = ["brgen", "brgen_shared_overrides"].freeze
+  CATALOG_MODULE = ["brgen", "brgen_marketplace"].freeze
+
+  def header_css
+    stylesheet_module(*HEADER_MODULE)
+  end
+
+  def campaigns_css
+    stylesheet_module(*HEADER_MODULE)
+  end
+
+  def catalog_css
+    stylesheet_module(*CATALOG_MODULE)
+  end
   LOGO_CONTROLLER = File.join(ROOT, "brgen_marketplace", "app/javascript/controllers/marketplace_logo_controller.js")
 
   def test_marketplace_uses_the_dedicated_bol_header
@@ -25,7 +44,7 @@ class MarketplaceBolVisualContractTest < Minitest::Test
   end
 
   def test_storefront_tokens_are_scoped_to_marketplace_and_takeaway
-    shell = File.read(File.join(BRGEN, "app/assets/stylesheets/_brgen_vertical_shell.scss"))
+    shell = stylesheet_module("brgen", "brgen_vertical_shell")
     shared = shell.split(":is(body.vertical-marketplace, body.vertical-takeaway) {", 2).last
     refute_nil shared, "the storefront token block must apply to both verticals"
     declarations = shared.split("\n}", 2).first
@@ -66,17 +85,16 @@ class MarketplaceBolVisualContractTest < Minitest::Test
   end
 
   def test_compact_category_menu_starts_below_the_full_header_stack
-    header = File.read(HEADER_CSS)
+    header = header_css
 
     assert_match(/--bol-utility-block:\s*calc\(36px\s*\+\s*var\(--safe-top\)\);/, header,
                  "the utility block must include the notch inset before downstream menu geometry is derived")
-    catalog = File.read(File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_marketplace_catalog.scss"))
-    utility = catalog.match(/body\.vertical-marketplace \.storefront-utility--bol\s*\{([^}]*)\}/m)&.[](1)
+    utility = header_css.match(/body\.vertical-marketplace \.storefront-utility--bol\s*\{([^}]*)\}/m)&.[](1)
     assert utility, "the utility strip must have one base geometry rule"
     assert_match(/padding-block-start:\s*var\(--safe-top\)/, utility)
     assert_match(/padding-inline-start:\s*calc\(var\(--bol-gutter\)\s*\+\s*var\(--safe-left\)\)/, utility)
     assert_match(/padding-inline-end:\s*calc\(var\(--bol-gutter\)\s*\+\s*var\(--safe-right\)\)/, utility)
-    campaigns = File.read(CITY_CAMPAIGNS_CSS)
+    campaigns = campaigns_css
     assert_includes campaigns, "min-height: var(--bol-utility-block);",
                     "the later campaign module must not override the header's utility-height token"
     assert_match(/--bol-mainnav-block:\s*48px;/, header)
@@ -93,16 +111,17 @@ class MarketplaceBolVisualContractTest < Minitest::Test
       header
     )
 
-    compact = header.split("@media (min-width: 768px)", 2).first
-    menu = compact&.match(/body\.vertical-marketplace \.storefront-bol-mega\s*\{([^}]*)\}/m)&.[](1)
+    # The overrides module is a union of former files, so the module-local
+    # 768px split is not the menu's own; read the mega rule's media context.
+    menu = Operator::ScssRules.rules(header)
+                             .find { |rule| rule.selector == "body.vertical-marketplace .storefront-bol-mega" &&
+                                            rule.parents.none? { |parent| parent.match?(/min-width/) } }
     assert menu, "compact menu geometry must exist before viewport-specific refinements"
-    assert_match(/position:\s*fixed;/, menu)
-    assert_match(/inset-block-start:\s*var\(--bol-compact-mega-top\);/, menu)
-    assert_match(/max-height:\s*min\(65vh,\s*calc\(100dvh\s*-\s*var\(--bol-compact-mega-top\)\s*-\s*var\(--space-4\)\)\);/, menu,
+    assert_match(/position:\s*fixed;/, menu.body)
+    assert_match(/inset-block-start:\s*var\(--bol-compact-mega-top\);/, menu.body)
+    assert_match(/max-height:\s*min\(65vh,\s*calc\(100dvh\s*-\s*var\(--bol-compact-mega-top\)\s*-\s*var\(--space-4\)\)\);/, menu.body,
                  "the category menu must fit the viewport remaining below the header")
-
-    mobile = compact
-    assert_match(/storefront-bol-mega\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/m, mobile)
+    assert_match(/grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/, menu.body)
 
     # Each term must remain attached to the physical box it sizes, so a taller
     # search row cannot silently desynchronise the fixed panel's start position.
@@ -115,17 +134,21 @@ class MarketplaceBolVisualContractTest < Minitest::Test
   end
 
   def test_marketplace_hero_has_one_responsive_geometry_owner
-    campaigns = File.read(CITY_CAMPAIGNS_CSS)
-    commerce = File.read(File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_marketplace_commerce.scss"))
+    campaigns = campaigns_css
+    commerce = header_css
 
-    refute_includes campaigns, "min-height: 240px;",
-                    "the late campaign layer must not replace the fluid hero media height"
-    refute_includes campaigns, "padding: 24px;",
-                    "the late campaign layer must not override the commerce hero copy padding"
-    refute_includes campaigns, "clamp(2rem, 10vw, 3rem)",
-                    "the campaign layer must not redefine the hero headline scale"
-    refute_includes campaigns, "clamp(2rem, 9vw, 3rem)",
-                    "the campaign layer must not redefine the product headline scale"
+    campaign_rules = Operator::ScssRules.matching(campaigns, /store-promo-art/)
+    refute_empty campaign_rules, "the campaign layer must still be present"
+    campaign_rules.each do |rule|
+      refute_includes rule.body, "min-height: 240px;",
+                      "the late campaign layer must not replace the fluid hero media height"
+      refute_includes rule.body, "padding: 24px;",
+                      "the late campaign layer must not override the commerce hero copy padding"
+      refute_includes rule.body, "clamp(2rem, 10vw, 3rem)",
+                      "the campaign layer must not redefine the hero headline scale"
+      refute_includes rule.body, "clamp(2rem, 9vw, 3rem)",
+                      "the campaign layer must not redefine the product headline scale"
+    end
 
     assert_includes commerce, "order: -1;"
     assert_includes commerce, "min-height: min(78vw, 420px);"
@@ -135,19 +158,38 @@ class MarketplaceBolVisualContractTest < Minitest::Test
   end
 
   def test_tablet_storefront_header_stacks_until_the_canonical_desktop_edge
-    header = File.read(HEADER_CSS)
-    compact = header.split("@media (min-width: 1024px)", 2).first
-    assert compact, "mobile-first compact header styles must exist"
-    assert_match(/grid-template-columns:\s*minmax\(0, 1fr\) auto;/, compact)
-    assert_match(/storefront-bol-deliver\s*\{[^}]*display:\s*none;/m, compact)
-    assert_match(/storefront-bol-search\s*\{[^}]*grid-column:\s*1\s*\/\s*-1;[^}]*grid-row:\s*2;/m, compact)
-    assert_match(/storefront-bol-mainnav\s*\{[^}]*overflow-x:\s*auto;/m, compact)
-    assert_match(/storefront-bol-mega\s*\{[^}]*position:\s*fixed;[^}]*inset-block-start:\s*var\(--bol-compact-mega-top\);/m, compact)
+    # The overrides module carries several former files, so the file-local
+    # media split is gone; the contract reads each rule's own media context.
+    header = header_css
+    rules = Operator::ScssRules.rules(header)
 
-    desktop = header.split("@media (min-width: 1024px)", 2).last
-    assert_match(/grid-template-columns:\s*176px 168px minmax\(320px, 1fr\) auto;/, desktop)
-    assert_match(/storefront-bol-deliver\s*\{[^}]*display:\s*inline-flex;/m, desktop)
-    assert_match(/storefront-bol-mega\s*\{[^}]*position:\s*absolute;/m, desktop)
+    compact = rules.select { |rule| rule.parents.none? { |parent| parent.match?(/min-width:\s*1024px/) } }
+    top_half = compact.find { |rule| rule.selector.match?(/#navBar\.storefront-nav--bol #topHalf\z/) }
+    assert top_half, "the compact header row must exist outside the desktop block"
+    assert_match(/grid-template-columns:\s*minmax\(0, 1fr\) auto;/, top_half.body)
+
+    {
+      "storefront-bol-deliver" => /display:\s*none;/,
+      "storefront-bol-search" => /grid-column:\s*1\s*\/\s*-1;/,
+      "storefront-bol-mainnav" => /overflow-x:\s*auto;/,
+      "storefront-bol-mega" => /position:\s*fixed;/
+    }.each do |surface, shape|
+      rule = compact.find { |candidate| candidate.selector.match?(/#{surface}\z/) }
+      assert rule, "#{surface} must have one compact rule"
+      assert_match(shape, rule.body, "#{surface} compact geometry drifted")
+    end
+
+    mega = compact.find { |candidate| candidate.selector == "body.vertical-marketplace .storefront-bol-mega" }
+    assert_match(/inset-block-start:\s*var\(--bol-compact-mega-top\);/, mega.body,
+                 "the compact menu must hang off the compact header's own measured block")
+
+    desktop = rules.select { |rule| rule.parents.any? { |parent| parent.match?(/min-width:\s*1024px/) } }
+    desktop_top = desktop.find { |rule| rule.body.match?(/grid-template-columns:\s*176px 168px minmax\(320px, 1fr\) auto;/) }
+    assert desktop_top, "the desktop header row must restore the four-column band"
+    deliver = desktop.find { |rule| rule.selector.match?(/storefront-bol-deliver\z/) }
+    assert_match(/display:\s*inline-flex;/, deliver.body, "the desktop deliver row must return")
+    desktop_mega = desktop.find { |rule| rule.selector == "body.vertical-marketplace .storefront-bol-mega" }
+    assert_match(/position:\s*absolute;/, desktop_mega.body, "the desktop menu must anchor to the nav, not the viewport")
   end
 
 
@@ -166,7 +208,7 @@ class MarketplaceBolVisualContractTest < Minitest::Test
 
   def test_logo_burst_spans_keep_their_shared_positioning_rule
     controller = File.read(LOGO_CONTROLLER)
-    styles = File.read(File.join(BRGEN, "app/assets/stylesheets/_brgen_marketplace.scss"))
+    styles = catalog_css
 
     assert_includes controller, 'this.bannerTarget.querySelectorAll(":scope > span")',
                     "the burst animates every direct child span, including the starter plus"
@@ -175,15 +217,15 @@ class MarketplaceBolVisualContractTest < Minitest::Test
   end
 
   def test_bol_geometry_tokens_are_explicit
-    catalog = File.read(File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_marketplace_catalog.scss"))
-    header = File.read(HEADER_CSS)
-    commerce = File.read(File.join(BRGEN, "app/assets/stylesheets/_brgen_shared_marketplace_commerce.scss"))
+    catalog = catalog_css
+    header = header_css
+    commerce = catalog_css
 
     # The accent is the canonical source of the marketplace blue; a fixed
     # second navy would drift from the operator's declared vertical palette.
-    assert_includes catalog, "--bol-blue: var(--accent);"
-    assert_includes catalog, "--bol-max: 1248px;"
-    assert_includes header, "grid-template-columns: 176px 168px minmax(320px, 1fr) auto;"
-    assert_includes catalog, "grid-template-columns: 232px minmax(0, 1fr);"
+    assert_includes header, "--bol-blue: var(--accent);"
+    assert_includes header, "--bol-max: 1248px;"
+    assert_match(/grid-template-columns:\s*176px 168px minmax\(320px, 1fr\) auto;/, header)
+    assert_includes header, "grid-template-columns: 232px minmax(0, 1fr);"
   end
 end
