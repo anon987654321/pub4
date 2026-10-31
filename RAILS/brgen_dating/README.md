@@ -37,6 +37,22 @@ Routes are drawn on `Dating::Engine`, and brgen mounts the engine at the root un
 `constraints(subdomain: DATING_SUBDOMAINS)`. From the host, reach its helpers namespaced, as
 in `dating.matches_url(…, subdomain: "dating")`.
 
+## Original product promise and present boundary
+
+The archived brief described a safe, local way to meet people: profiles, preference-aware
+discovery, geographic controls, mutual matches, conversation and member-controlled privacy.
+The current engine delivers city/radius discovery, profile photos and prompts, like/dislike and
+rewind flows, mutual matches, a held daily pick, a message hand-off, and a human-reviewed
+verification request. Vipps identity gating fails closed when configured; an unconfigured
+production server does not silently admit unverified profile publishing.
+
+Brgen's shared events surface remains the place for city events. A dedicated dating-event planner,
+paid boosts, premium membership and super-likes are not presented as live Dating features. The
+old brief's claims of ML-powered compatibility, anonymous browsing modes, online-presence
+indicators and automatic facial verification are not current implementation facts. Matching must
+remain two-sided and respectful: location is a discovery filter, not a public exact-location
+disclosure, and a verification badge means a human-reviewed request was approved.
+
 The engine depends on `pub4-shared` for `User`, authentication, tenancy and the design system,
 and its boot shape comes from `Shared::VerticalEngine`. Its strings live in the engine's own
 Norwegian and English locale files, and Norwegian is the default.
