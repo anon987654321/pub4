@@ -116,13 +116,53 @@ contracts rather than guessing a click URL grammar.
 
 ### Review and measurement sequence
 
-A future `CopyReview` should return structured findings through the existing
-MASTER review/finding contracts, not introduce a second detector registry. Each
-finding should identify the claim, evidence reference, reason, suggested
-revision, confidence and the surface/locale assessed. Missing evidence is
-`INCONCLUSIVE`, not a pass. Hard factual errors and missing commercial
-disclosure block publication; stylistic preferences remain review advice until
-the operator deliberately makes them Laws.
+`Master::Review::CopyReview` is implemented as a read-only Ruby API at
+`MASTER/lib/review/copy_review.rb`. It accepts a creative Hash and a persisted
+product object or Hash. The result carries `pass`, `fail` or `inconclusive`
+status, coded findings, source references, suggestions, confidence and a digest
+of the product snapshot. It makes no network request, database write or model call.
+
+The deterministic claim kinds are exact product title, merchant, category,
+feed price (integer minor units plus currency) and a small English/Bokmål
+availability phrase set. Unknown claim kinds remain INCONCLUSIVE because the
+product row does not establish them. A missing claim ledger is INCONCLUSIVE.
+An explicit empty array records that the publisher supplied no claims, but the
+review cannot independently prove that every factual statement was declared.
+A reference string alone never upgrades an external claim to verified.
+
+Example:
+
+```ruby
+report = Master::Review::CopyReview.review(
+  creative: {
+    headline: "Kjole – NOK 149.90",
+    body: "Kjole fra Fjord Studio. På lager.",
+    cta: "Se produktet",
+    locale: "nb-NO",
+    disclosure: "Annonse – annonselenke",
+    claims: [
+      { kind: "product_title", text: "Kjole" },
+      { kind: "merchant", text: "Fjord Studio" },
+      { kind: "price", text: "NOK 149.90" },
+      { kind: "availability", text: "På lager" }
+    ]
+  },
+  product: affiliate_product,
+  market: "NO"
+)
+
+report.status # :pass, :fail or :inconclusive
+```
+
+Affiliate disclosure wording is checked separately from rendered prominence.
+The existing visual audit still owns placement/contrast evidence, and the
+existing consent boundary still owns advertising permission. A passing
+CopyReview is not a publication approval and is not yet called by a live RAILS
+publishing path or integrated into `/fix`.
+
+Stylistic preferences remain review advice until the operator deliberately
+makes them Laws. Normative policy still belongs only in the protected canonical
+Law catalogue and its Ruby definitions.
 
 Before a creative experiment, define the primary metric, conversion event,
 comparison, audience/placement, sample-size rule and observation window. Report
@@ -131,12 +171,12 @@ the basis of taste, a single anecdote or click-through rate alone.
 
 A safe implementation sequence is:
 
-1. Agree a claim-record contract and source/freshness policy for existing
-   `Shared::AffiliateProduct` data.
-2. Add a read-only `CopyReview` that checks the claim ledger, locale, format,
-   disclosure and CTA; start with positive and negative fixtures.
-3. Add deterministic checks only where the repository can prove both a known
-   bad case and a known good case.
+1. The initial claim-record shape and freshness policy now use the fields
+   already present on `Shared::AffiliateProduct`; external source documents
+   still require a separately reviewed evidence adapter.
+2. Implemented: read-only `CopyReview` API and positive/negative fixtures.
+3. Extend deterministic checks only where the repository can prove both a known
+   bad case and a known good case; leave unsupported claims INCONCLUSIVE.
 4. Have the operator add any normative Law IDs and their catalogue/source
    mappings in the protected Law files; run `LawRegistryAudit` and the
    existing three-modality assessment.

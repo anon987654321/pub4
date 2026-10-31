@@ -97,6 +97,13 @@ supplied render evidence remains explicitly caller-supplied. The copywriting
 architecture and its consent/evidence boundaries are documented in
 [ad creative governance](docs/ad_creative_governance.md).
 
+The read-only `Master::Review::CopyReview` API assesses supplied creative copy
+against a persisted affiliate-product snapshot. It covers product identity,
+placeholder/stock/freshness/market state, explicit disclosure wording and a
+small set of exact feed-backed claim types. External claims remain INCONCLUSIVE;
+the API neither fetches evidence nor writes to the product record. Its limits and
+Ruby usage are documented in [ad creative governance](docs/ad_creative_governance.md).
+
 ## The loop
 
 The whole control flow is a fold that fits on one screen. The model proposes an
