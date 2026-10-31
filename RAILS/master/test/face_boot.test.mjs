@@ -1155,5 +1155,8 @@ test("web chat records monotonic first-token, first-audio and reply-completion l
   assert.ok(part5.includes("chatTiming.firstTokenMs = Math.round(performance.now() - chatTiming.startedAt)"));
   assert.ok(part5.includes("chatTiming.completedMs = Math.round(performance.now() - chatTiming.startedAt)"));
   assert.ok(speech.includes("chatTiming.firstAudioMs = Math.round(performance.now() - chatTiming.startedAt)"));
+  assert.ok(speech.includes("chatTiming: lane === 'response' ? window.MASTER_CHAT_TIMING || null : null"));
+  assert.ok(speech.includes("const chatTiming = meta.chatTiming"));
+  assert.ok(speech.includes("status: 'audio_started'"));
   assert.ok(speech.includes("meta.lane === 'response'"));
 });
