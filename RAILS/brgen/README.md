@@ -51,6 +51,17 @@ host. The old takeaway.<apex> host still resolves, as a compatibility mount of t
 Messenger is an engine whose routes are drawn in the host, under messenger.<apex>. ai.brgen.no
 is MASTER, a separate application with its own service, and is not a vertical.
 
+**Vertical product briefs:** [Dating](../brgen_dating/README.md) ·
+[Marketplace](../brgen_marketplace/README.md) ·
+[Takeaway / food](../brgen_marketplace/engines/takeaway/README.md) ·
+[Radio](../brgen_radio/playlist/README.md) ·
+[TV](../brgen_radio/tv/README.md) ·
+[Maps](../brgen_maps/README.md) ·
+[Messenger](../brgen_messenger/README.md).
+
+These briefs preserve the distinct product promises while treating the active engine,
+routes and tests as the authority for what is actually available.
+
 Each engine includes Shared::VerticalEngine, which gives it autoload paths, its own migrations,
 views and JavaScript, and names its initializers after its namespace. Two details cost a boot
 each to find. The Gemfile line for an engine needs require: with the engine's own entry file,
