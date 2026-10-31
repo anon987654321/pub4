@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require "digest"
-require "json"
-
 class Master::Review::CopyReview
   VERSION = 1
   DEFAULT_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
@@ -47,96 +44,122 @@ class Master::Review::CopyReview
 
   def review
     findings = assess_copy_structure
-    inventory = InventoryReview.new(product: @product, market: @market, now: @now,
-                                    max_age_seconds: @max_age_seconds).review
+    inventory = inventory_report
     findings.concat(inventory.findings)
     findings.concat(assess_disclosure(inventory.product))
     findings.concat(ClaimReview.new(creative: @creative, product: @product).review.findings)
+    build_report(findings, inventory)
+  end
 
+  private
+
+  def inventory_report
+    InventoryReview.new(product: @product, market: @market, now: @now,
+                        max_age_seconds: @max_age_seconds).review
+  end
+
+  def build_report(findings, inventory)
     counts = findings.group_by(&:status).transform_values(&:size)
-    status = if counts.fetch(:fail, 0).positive?
-               :fail
-             elsif counts.fetch(:inconclusive, 0).positive?
-               :inconclusive
-             else
-               :pass
-             end
-    report_evidence = {
+    Report.new(
+      status: report_status(counts),
+      findings: findings.freeze,
+      evidence: report_evidence(inventory).freeze,
+      summary: report_summary(counts),
+      version: VERSION,
+    )
+  end
+
+  def report_status(counts)
+    return :fail if counts.fetch(:fail, 0).positive?
+    return :inconclusive if counts.fetch(:inconclusive, 0).positive?
+
+    :pass
+  end
+
+  def report_summary(counts)
+    {
+      pass: counts.fetch(:pass, 0),
+      fail: counts.fetch(:fail, 0),
+      inconclusive: counts.fetch(:inconclusive, 0),
+    }.freeze
+  end
+
+  def report_evidence(inventory)
+    {
       read_only: true,
       product: inventory.product,
       product_snapshot_sha256: inventory.sha256,
       locale: read(@creative, :locale)&.to_s,
       claim_count: Array(read(@creative, :claims)).size,
       scope: "declared_copy_and_supported_feed_fields",
-      limitations: [
-        "Natural-language meaning and claim-ledger completeness are not independently proven.",
-        "External references are not fetched; unsupported claim kinds remain INCONCLUSIVE.",
-        "Disclosure wording is checked here; rendered prominence and consent use separate controls."
-      ],
+      limitations: report_limitations,
     }
-    Report.new(
-      status:, findings: findings.freeze, evidence: report_evidence.freeze,
-      summary: {
-        pass: counts.fetch(:pass, 0),
-        fail: counts.fetch(:fail, 0),
-        inconclusive: counts.fetch(:inconclusive, 0),
-      }.freeze,
-      version: VERSION,
-    )
   end
 
-  private
+  def report_limitations
+    [
+      "Natural-language meaning and claim-ledger completeness are not independently proven.",
+      "External references are not fetched; unsupported claim kinds remain INCONCLUSIVE.",
+      "Disclosure wording is checked here; rendered prominence and consent use separate controls."
+    ]
+  end
 
   def assess_copy_structure
-    findings = []
-    if blank?(read(@creative, :headline))
-      findings << finding(:headline_missing, :fail, "A creative headline is required.",
-                          suggestion: "Add a specific headline.")
-    else
-      findings << finding(:headline_present, :pass, "A headline is present.", confidence: 1.0)
-    end
+    [headline_finding, cta_finding, locale_finding]
+  end
 
-    if blank?(read(@creative, :cta))
-      findings << finding(:cta_missing, :fail, "A call to action is missing.",
-                          suggestion: "Add a clear action that matches the destination.")
-    else
-      findings << finding(:cta_present, :pass, "A call to action is present.", confidence: 1.0)
-    end
+  def headline_finding
+    return finding(:headline_missing, :fail, "A creative headline is required.",
+                   suggestion: "Add a specific headline.") if blank?(read(@creative, :headline))
 
+    finding(:headline_present, :pass, "A headline is present.", confidence: 1.0)
+  end
+
+  def cta_finding
+    return finding(:cta_missing, :fail, "A call to action is missing.",
+                   suggestion: "Add a clear action that matches the destination.") if blank?(read(@creative, :cta))
+
+    finding(:cta_present, :pass, "A call to action is present.", confidence: 1.0)
+  end
+
+  def locale_finding
     locale = read(@creative, :locale)
-    family = locale_family(locale)
-    if family.nil?
-      findings << finding(:locale_unresolved, :inconclusive,
-                          "The locale is missing or is outside the reviewed English/Bokmål set.",
-                          evidence: { locale: })
-    else
-      findings << finding(:locale_declared, :pass, "A supported copy locale is declared.",
-                          evidence: { locale: locale.to_s }, confidence: 1.0)
-    end
-    findings
+    return finding(:locale_unresolved, :inconclusive,
+                   "The locale is missing or is outside the reviewed English/Bokmål set.",
+                   evidence: { locale: }) unless locale_family(locale)
+
+    finding(:locale_declared, :pass, "A supported copy locale is declared.",
+            evidence: { locale: locale.to_s }, confidence: 1.0)
   end
 
   def assess_disclosure(product_state)
     return [] unless product_state && SOURCES.include?(product_state[:source])
 
     disclosure = read(@creative, :disclosure)
-    if blank?(disclosure)
-      return [finding(:affiliate_disclosure_missing, :fail,
-                      "Affiliate copy is missing its explicit commercial disclosure.",
-                      suggestion: "Add a translated affiliate/sponsored disclosure. Visual prominence is assessed separately.")]
-    end
-
-    family = locale_family(read(@creative, :locale))
-    terms = family ? DISCLOSURE_TERMS[family] : Regexp.union(DISCLOSURE_TERMS.values)
-    unless terms.match?(disclosure.to_s)
-      return [finding(:affiliate_disclosure_unrecognised, :fail,
-                      "The disclosure has no recognised commercial label for the declared locale.",
-                      evidence: { locale: read(@creative, :locale).to_s })]
-    end
+    return [missing_disclosure] if blank?(disclosure)
+    return [unrecognised_disclosure] unless disclosure_label?(disclosure)
 
     [finding(:affiliate_disclosure_present, :pass,
              "An explicit affiliate/sponsored disclosure is present in the supplied copy.",
              evidence: { disclosure: disclosure.to_s }, confidence: 1.0)]
+  end
+
+  def missing_disclosure
+    finding(:affiliate_disclosure_missing, :fail,
+            "Affiliate copy is missing its explicit commercial disclosure.",
+            suggestion: "Add a translated affiliate/sponsored disclosure. Visual prominence is assessed separately.")
+  end
+
+  def unrecognised_disclosure
+    finding(:affiliate_disclosure_unrecognised, :fail,
+            "The disclosure has no recognised commercial label for the declared locale.",
+            evidence: { locale: read(@creative, :locale).to_s })
+  end
+
+  def disclosure_label?(disclosure)
+    family = locale_family(read(@creative, :locale))
+    terms = family ? DISCLOSURE_TERMS[family] : Regexp.union(DISCLOSURE_TERMS.values)
+    terms.match?(disclosure.to_s)
   end
 
   def finding(code, status, message, **details)

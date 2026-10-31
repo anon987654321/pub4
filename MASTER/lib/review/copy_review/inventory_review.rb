@@ -16,33 +16,10 @@ class Master::Review::CopyReview::InventoryReview
   end
 
   def review
-    unless @product
-      add(:product_snapshot_missing, :inconclusive,
-          "No persisted product snapshot was supplied; product claims cannot be checked.")
-      return Result.new(product: nil, sha256: nil, findings: @findings.freeze)
-    end
+    return missing_product_result unless @product
 
-    assess_identity
-    assess_placeholder
-    assess_stock
-    assess_freshness
-    assess_market
-    state = {
-      source: read(:source).to_s.downcase,
-      external_id: read(:external_id)&.to_s,
-      price_cents: read(:price_cents),
-      currency: read(:currency)&.to_s&.upcase,
-      in_stock: read(:in_stock),
-      market: read(:market)&.to_s&.upcase,
-      last_seen_at: iso8601(read(:last_seen_at)),
-    }
-    snapshot = Master::Review::CopyReview::PRODUCT_FIELDS.to_h do |field|
-      value = read(field)
-      value = iso8601(value) if value.respond_to?(:iso8601)
-      [field, value]
-    end
-    digest = Digest::SHA256.hexdigest(JSON.generate(snapshot.sort_by { |key, _value| key.to_s }.to_h))
-    Result.new(product: state.freeze, sha256: digest, findings: @findings.freeze)
+    assess_inventory
+    Result.new(product: product_state, sha256: product_digest, findings: @findings.freeze)
   end
 
   def self.coerce_time(value)
@@ -56,6 +33,46 @@ class Master::Review::CopyReview::InventoryReview
   end
 
   private
+
+  def missing_product_result
+    add(:product_snapshot_missing, :inconclusive,
+        "No persisted product snapshot was supplied; product claims cannot be checked.")
+    Result.new(product: nil, sha256: nil, findings: @findings.freeze)
+  end
+
+  def assess_inventory
+    assess_identity
+    assess_placeholder
+    assess_stock
+    assess_freshness
+    assess_market
+  end
+
+  def product_state
+    {
+      source: read(:source).to_s.downcase,
+      external_id: read(:external_id)&.to_s,
+      price_cents: read(:price_cents),
+      currency: read(:currency)&.to_s&.upcase,
+      in_stock: read(:in_stock),
+      market: read(:market)&.to_s&.upcase,
+      last_seen_at: iso8601(read(:last_seen_at)),
+    }.freeze
+  end
+
+  def product_digest
+    snapshot = product_snapshot
+    ordered = snapshot.sort_by { |key, _value| key.to_s }.to_h
+    Digest::SHA256.hexdigest(JSON.generate(ordered))
+  end
+
+  def product_snapshot
+    Master::Review::CopyReview::PRODUCT_FIELDS.to_h do |field|
+      value = read(field)
+      value = iso8601(value) if value.respond_to?(:iso8601)
+      [field, value]
+    end
+  end
 
   def assess_identity
     source = read(:source).to_s.downcase
@@ -101,45 +118,64 @@ class Master::Review::CopyReview::InventoryReview
 
   def assess_freshness
     seen_at = self.class.coerce_time(read(:last_seen_at))
-    if seen_at.nil?
-      add(:inventory_freshness_missing, :fail,
-          "The product has no usable last_seen_at timestamp.",
-          suggestion: "Refresh the feed; a missing timestamp is stale in the inventory contract.")
-      return
-    end
+    return freshness_missing unless seen_at
 
     age = @now - seen_at
-    if age.negative? && age.abs > 300
-      add(:inventory_timestamp_future, :inconclusive,
-          "The product timestamp is more than five minutes in the future.",
-          evidence: { last_seen_at: seen_at.iso8601 })
-    elsif age > @max_age_seconds
-      add(:inventory_stale, :fail,
-          "The product is older than the #{@max_age_seconds}-second freshness window.",
-          evidence: { last_seen_at: seen_at.iso8601, age_seconds: age.to_i },
-          suggestion: "Refresh the feed or omit the product.")
-    else
-      add(:inventory_fresh, :pass, "The product is within the freshness window.",
-          evidence: { last_seen_at: seen_at.iso8601, age_seconds: age.to_i }, confidence: 1.0)
-    end
+    return freshness_future(seen_at) if age.negative? && age.abs > 300
+    return freshness_stale(seen_at, age) if age > @max_age_seconds
+
+    freshness_current(seen_at, age)
+  end
+
+  def freshness_missing
+    add(:inventory_freshness_missing, :fail,
+        "The product has no usable last_seen_at timestamp.",
+        suggestion: "Refresh the feed; a missing timestamp is stale in the inventory contract.")
+  end
+
+  def freshness_future(seen_at)
+    add(:inventory_timestamp_future, :inconclusive,
+        "The product timestamp is more than five minutes in the future.",
+        evidence: { last_seen_at: seen_at.iso8601 })
+  end
+
+  def freshness_stale(seen_at, age)
+    add(:inventory_stale, :fail,
+        "The product is older than the #{@max_age_seconds}-second freshness window.",
+        evidence: { last_seen_at: seen_at.iso8601, age_seconds: age.to_i },
+        suggestion: "Refresh the feed or omit the product.")
+  end
+
+  def freshness_current(seen_at, age)
+    add(:inventory_fresh, :pass, "The product is within the freshness window.",
+        evidence: { last_seen_at: seen_at.iso8601, age_seconds: age.to_i }, confidence: 1.0)
   end
 
   def assess_market
     return unless @market
 
     product_market = read(:market).to_s.upcase
-    if product_market.empty?
-      add(:market_global, :pass, "The product has no market restriction.",
-          evidence: { requested_market: @market }, confidence: 1.0)
-    elsif product_market == @market
-      add(:market_match, :pass, "The product market matches the requested market.",
-          evidence: { market: @market }, confidence: 1.0)
-    else
-      add(:market_mismatch, :fail,
-          "The product market does not match the requested publishing market.",
-          evidence: { product_market:, requested_market: @market },
-          suggestion: "Use inventory licensed for the publishing market.")
-    end
+    return market_global if product_market.empty?
+    return market_match if product_market == @market
+
+    market_mismatch(product_market)
+  end
+
+  def market_global
+    add(:market_global, :pass, "The product has no market restriction.",
+        evidence: { requested_market: @market }, confidence: 1.0)
+  end
+
+  def market_match
+    add(:market_match, :pass, "The product market matches the requested market.",
+        evidence: { market: @market }, confidence: 1.0)
+  end
+
+  def market_mismatch(product_market)
+    add(:market_mismatch, :fail,
+        "The product market does not match the requested publishing market.",
+        evidence: { product_market:, requested_market: @market },
+        suggestion: "Use inventory licensed for the publishing market.")
   end
 
   def add(code, status, message, evidence: nil, suggestion: nil, confidence: nil)

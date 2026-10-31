@@ -106,6 +106,16 @@ class TestCopyReview < Minitest::Test
     assert_includes report.findings.map(&:code), :price_claim_mismatch
   end
 
+  def test_negative_bokmal_availability_overrides_positive_subphrase
+    creative = @creative.merge(body: "Kjole. Ikke på lager.", claims: @creative[:claims].map(&:dup))
+    creative[:claims][3][:text] = "Ikke på lager"
+
+    report = review(creative:)
+
+    assert report.fail?
+    assert_includes report.findings.map(&:code), :availability_claim_mismatch
+  end
+
   def test_missing_product_snapshot_is_inconclusive
     report = review(product: nil)
     assert report.inconclusive?
