@@ -1346,6 +1346,9 @@ law_map:
     no_machine_paths: {"meaning": "code runs on any checkout, not one home directory", "detects": "hardcoded_path",
       "severity": "medium", "confidence": 0.9, "operation": "derive_path", "law_ids": ["HARDCODED_ABSOLUTE_PATH"],
       "status": "covered", "tags": ["code"], "source": "FULL.yml"}
+    paid_links_marked: {"meaning": "a link someone is paid for says so", "detects": "unmarked_affiliate_link",
+      "severity": "medium", "confidence": 0.85, "operation": "add_rel", "law_ids": ["SPONSORED_LINK_REL"],
+      "status": "covered", "tags": ["compliance"]}
     direct_manipulation: {"meaning": "Touch directly affects objects  ", "detects": "indirect_interaction",
       "severity": "medium", "confidence": 0.75, "operation": "simplify", "law_ids": ["DIRECT_MANIPULATION_FEEDBACK"],
       "status": "covered", "root": "reach", "tags": ["ux_laws"], "source": "master.yml@30dad7ead"}
@@ -3350,6 +3353,10 @@ law_catalogue:
       definition_sources: [MASTER/law/html.rb]
       severity: warn
       languages: [javascript, html]
+    SPONSORED_LINK_REL:
+      definition_sources: [MASTER/law/html.rb]
+      severity: warning
+      languages: [html]
     NO_JS_ERB:
       definition_sources: [MASTER/law/web.rb]
       severity: warning

@@ -19,7 +19,9 @@ require_relative "../lib/review/scan/law_tree"
 class TestLawFixtures < Minitest::Test
   def self.fixtured
     @fixtured ||= Master::Review::Scan::LawTree.definitions.select do |law|
-      law.scannable? && !law.proved_by && law.bad && (law.check || law.detector || law.example_path)
+      # A retired Law keeps its fixtures but is not scanned, so it has nothing to prove here.
+      law.scannable? && law.lifecycle != :retired && !law.proved_by && law.bad &&
+        (law.check || law.detector || law.example_path)
     end
   end
 

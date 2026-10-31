@@ -229,6 +229,33 @@ Law.define(:NO_JQUERY) do
   good "document.querySelector('#menu').hidden = false"
 end
 
+# A link someone is paid for says so to the machine as well as to the reader:
+# rel="sponsored" is how Google asks paid and affiliate links to be marked, and
+# a commission link without it reads as an editorial recommendation. The
+# commercial ones are the links that carry an affiliate URL or the
+# outbound-click controller, which is how the apps attribute a click to a
+# merchant. The visible label beside the link is VISUAL_DISCLOSURE_PROMINENCE's.
+Law.define(:SPONSORED_LINK_REL) do
+  source "Google Search Central, qualifying outbound links (rel=sponsored); markedsføringsloven § 3"
+  tags %i[COMPLIANCE]
+  fix "add rel=\"sponsored\" (with noopener) to the affiliate link"
+  bad "<a href=\"<%= deal.affiliate_url %>\" target=\"_blank\">Buy</a>\n"
+  good "<a href=\"<%= deal.affiliate_url %>\" target=\"_blank\" rel=\"sponsored noopener\">Buy</a>\n"
+  check do |src, _path|
+    # An <a> tag, stepping over ERB inside its attributes, or one link_to call.
+    links = /<a\b(?:<%.*?%>|[^>])*>|<%=\s*link_to\b.*?%>/m
+    findings = []
+    src.scan(links) do
+      link = Regexp.last_match(0)
+      next unless link.match?(/outbound[_-]click|affiliate/i) && !link.match?(/\bsponsored\b/)
+
+      line = src[0...Regexp.last_match.begin(0)].count("\n") + 1
+      findings << finding(line:, message: "affiliate link without rel=\"sponsored\" — mark it as paid")
+    end
+    findings
+  end
+end
+
 # A class should name what a thing is, not what it currently looks like. Words
 # like dim, bold, small and red describe one rendering decision, so changing
 # that decision means editing every view carrying the word, and the markup ends

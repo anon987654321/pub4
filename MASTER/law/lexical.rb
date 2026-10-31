@@ -226,6 +226,8 @@ module Master
     fix "a test skipped without saying why"
     bad "  def test_parse\n    skip\n  end\n"
     good "  def test_parse\n    skip \"needs /proc\" unless File.readable?(\"/proc/meminfo\")\n  end\n"
+    # Proved as a test file: the catalogue scopes it to test/ and spec/.
+    example_path "/repo/test/test_parse.rb"
     check do |src, path|
       lines = src.lines
       lines.each_with_index.filter_map do |line, index|
