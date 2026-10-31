@@ -36,5 +36,10 @@ pin "pub4/stimulus_boot_social", to: "stimulus_boot_social.js"
 pin "pub4/stimulus_boot_brgen", to: "stimulus_boot_brgen.js"
 
 pin "radio_brgen_tunnel", to: "radio_brgen_tunnel.js"
+
+# css-doodle 0.60.0 (MIT, css-doodle.com), vendored from npm: the animated
+# heart on dating's first screen. Not preloaded: dating_splash_controller
+# imports it on that one screen, and only when motion is welcome.
+pin "css-doodle", to: "css-doodle.js", preload: false
 # No tiptap pin here. It is pinned once in shared/config/importmap_baseline.rb,
 # vendored to shared/vendor/javascript/tiptap.js rather than fetched from a CDN.

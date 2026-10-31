@@ -2,6 +2,9 @@
 
 class Dating::HomeController < Dating::BaseController
   before_action :require_user_session, only: :next
+  before_action :open_with_splash, only: :index
+
+  STARTED_COOKIE = :dating_started
 
   def index
     # Guests browse + swipe immediately. Real users with a paused/missing
@@ -24,5 +27,19 @@ class Dating::HomeController < Dating::BaseController
   def next
     @profile = candidate_scope.ranked_for(Current.user).first
     head :no_content unless @profile
+  end
+
+  private
+
+  # The first screen, once: "sveip for å begynne" leads here with ?start=1,
+  # which remembers the reader has begun and drops the parameter, so a reload
+  # or a shared link lands on the deck rather than on the intro again.
+  def open_with_splash
+    if params[:start].present?
+      cookies.permanent[STARTED_COOKIE] = { value: "1", httponly: true, same_site: :lax }
+      redirect_to root_path
+    elsif cookies[STARTED_COOKIE].blank?
+      render :splash
+    end
   end
 end

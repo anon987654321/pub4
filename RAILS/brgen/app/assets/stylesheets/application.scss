@@ -5472,6 +5472,84 @@ body.vertical-dating {
   font-family: var(--font);
 }
 
+/* Dating's first screen, the operator's mockup: dark whatever the theme,
+   "sveip for å begynne" at the top, the animated heart over a red bloom, the
+   word dating, and the identity line. The whole screen is the way in. */
+.dating-splash {
+  --dating-splash-bg: #1f2124;
+  --dating-splash-ink: #ffffff;
+  --dating-splash-quiet: #9a9a9a;
+  --dating-splash-bloom: rgb(170 40 14 / 45%);
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  justify-items: center;
+  min-height: 100dvh;
+  padding: max(var(--space-8), env(safe-area-inset-top)) var(--space-4) max(var(--space-6), env(safe-area-inset-bottom));
+  background: radial-gradient(closest-side at 50% 48%, var(--dating-splash-bloom), transparent 75%), var(--dating-splash-bg);
+  color: var(--dating-splash-ink);
+  touch-action: pan-x pan-y;
+  user-select: none;
+}
+
+.dating-splash-start {
+  color: inherit;
+  font-size: var(--text-2xl);
+  text-decoration: none;
+}
+
+.dating-splash-heart {
+  position: relative;
+  align-self: center;
+  width: min(80vw, 420px);
+  aspect-ratio: 1;
+}
+
+.dating-splash-doodle,
+.dating-splash-still {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The still heart until the doodle is defined: no script, reduced motion, or
+   the library still on its way. Its program text is never shown. */
+.dating-splash-doodle:not(:defined) {
+  visibility: hidden;
+}
+
+.dating-splash-heart:has(.dating-splash-doodle:defined) .dating-splash-still {
+  display: none;
+}
+
+.dating-splash-still use {
+  fill: none;
+  stroke: var(--dating-accent);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+.dating-splash-still use + use {
+  stroke: var(--danger);
+}
+
+.dating-splash-title {
+  margin: 0 0 var(--space-8);
+  font-size: var(--text-display);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+}
+
+.dating-splash-trust {
+  margin: 0;
+  color: var(--dating-splash-quiet);
+  font-size: var(--text-lg);
+}
+
+.dating-splash-trust strong {
+  color: var(--dating-splash-ink);
+}
+
 /* The dataset lane, like takeaway's twin: the checkbox is nested inside the
    toggle's wrapper and is not rendered on a vertical at all, so
    `#dark-toggle:checked ~ .theme-root` could never match. The base block names

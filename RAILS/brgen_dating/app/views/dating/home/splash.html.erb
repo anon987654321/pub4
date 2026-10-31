@@ -1,0 +1,76 @@
+<% content_for :title, t("dating.splash.title") %>
+
+<%# The operator's first screen for dating (mockup, mobile): "sveip for å
+    begynne", the heart, the word dating, and the identity check that guards
+    the deck. The whole screen is the way in: a swipe anywhere, or the link,
+    which is all there is without script. %>
+<section class="dating-splash"
+         data-controller="dating-splash"
+         data-dating-splash-url-value="<%= root_path(start: 1) %>"
+         data-action="pointerdown->dating-splash#pointerDown pointerup->dating-splash#pointerUp">
+  <%= link_to t("dating.splash.start"), root_path(start: 1), class: "dating-splash-start" %>
+
+  <div class="dating-splash-heart" aria-hidden="true">
+    <%# The operator's own heart (CodePen qBmGKWo): five nested css-doodle
+        hearts, each a ring cut from a rotating conic gradient in the
+        operator's palette. Kept as written, with two changes: the grid fills
+        this box instead of 50vmin, and the cut-out paints with the splash
+        background, inherited through the shadow root, instead of the pen's
+        purple. The palette is the operator's and lives in the program, because
+        css-doodle picks from it per cell. scan: intentional %>
+    <css-doodle class="dating-splash-doodle">
+      :doodle {
+        @grid: 5x1 / 100%;
+      }
+
+      @size: calc(100% - @i() * 3%);
+      @place-cell: center;
+      @shape: heart;
+      overflow: hidden;
+
+      :after {
+        content: '';
+        @size: calc(100% - 20px);
+        @shape: heart;
+        background: var(--dating-splash-bg);
+        z-index: 1;
+      }
+
+      :before {
+        content: '';
+        position: absolute;
+        @size: 200%;
+        background: conic-gradient(
+          @pd(#e94e77, #d68189, #c6a49a, #c6e5d9, #f4ead5) @p(10%, 40%),
+          transparent 0
+        );
+        animation: cycle @r(3s, 5s, .1) linear infinite;
+        animation-delay: -@r(8s);
+        z-index: 0;
+      }
+
+      @keyframes cycle {
+        to { transform: rotate(1turn); }
+      }
+    </css-doodle>
+    <%# The same heart standing still: what shows before the library arrives,
+        without script, and for a reader who asked for reduced motion. %>
+    <svg class="dating-splash-still" viewBox="0 0 100 104" focusable="false">
+      <defs>
+        <path id="dating-splash-heart-path" pathLength="100"
+              d="M50 100 C 30 76, 6 54, 6 28 C 6 8, 34 2, 50 24 C 66 2, 94 8, 94 28 C 94 54, 70 76, 50 100 Z"/>
+      </defs>
+      <use href="#dating-splash-heart-path" stroke-dasharray="38 62"/>
+      <use href="#dating-splash-heart-path" stroke-dasharray="30 70" stroke-dashoffset="-45"/>
+    </svg>
+  </div>
+
+  <%= tag.h1 t("dating.splash.title"), class: "dating-splash-title" %>
+
+  <%# Named only when it is true: the provider the identity gate actually
+      requires before a profile can be shown (Dating::BaseController). %>
+  <% if identity_provider_name %>
+    <%= tag.p safe_join([t("dating.splash.protected_by"), tag.strong(identity_provider_name)], " "),
+              class: "dating-splash-trust" %>
+  <% end %>
+</section>

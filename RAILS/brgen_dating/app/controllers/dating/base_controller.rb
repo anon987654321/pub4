@@ -6,33 +6,34 @@ class Dating::BaseController < ApplicationController
   private
 
   # A profile is shown to strangers, so the account behind it has to be a
-  # person. Vipps Login establishes that with a verified Norwegian phone
-  # number, and it is the cheap half of the pair — Vipps MobilePay owns BankID,
-  # but a BankID verification is billed per use and a Vipps Login is not.
+  # person. A verified identity proves it: Vipps Login (a verified Norwegian
+  # phone number) or BankID at LOA 4, both of which OmniauthCallbacksController
+  # records as assurance "verified". Vipps MobilePay owns BankID; BankID is billed
+  # per use and a Vipps Login is not, so either is accepted where configured.
   #
-  # The gate fails closed. With Vipps configured, only a vipps_verified
-  # account passes. With Vipps absent, the old behaviour treated the missing
-  # provider as an open door — the README itself names that as the wrong
-  # default for a dating product — so an unconfigured server now locks the
-  # writing surfaces until the operator sets DATING_IDENTITY_BYPASS=demo in
-  # env. The bypass is a named, visible decision; absence of keys is not.
-  def require_vipps_identity
-    return if Current.user&.vipps_verified?
-    return if identity_gate_open?
+  # The gate fails closed. With a verifier configured, only a verified account
+  # passes. Without one the writing surfaces lock until the operator sets
+  # DATING_IDENTITY_BYPASS=demo in env: a named, visible decision, never the
+  # absence of keys. It used to open for everyone once Vipps was configured,
+  # because "Vipps is available" was read as "the verification ran".
+  def require_verified_identity
+    return if Current.user&.identity_verified?
+    return if identity_bypassed?
 
     redirect_to sign_in_path, alert: t("dating.vipps_required")
   end
 
-  def vipps_login_available?
-    Rails.application.config.x.oauth_provider_slugs.to_a.include?("vipps")
+  IDENTITY_PROVIDERS = { "bankid" => "BankID", "vipps" => "Vipps" }.freeze
+
+  # The provider the gate asks for, BankID first: the one the first screen names.
+  def identity_provider_name
+    slugs = Rails.application.config.x.oauth_provider_slugs.to_a
+    IDENTITY_PROVIDERS.find { |slug, _name| slugs.include?(slug) }&.last
   end
+  helper_method :identity_provider_name
 
-  # Exactly one of two true statements opens the gate: Vipps is configured and
-  # the verification ran, or the operator explicitly named the demo bypass.
-  def identity_gate_open?
-    return true if vipps_login_available?
-
-    ENV["DATING_IDENTITY_BYPASS"].to_s.strip == "demo"
+  def identity_bypassed?
+    identity_provider_name.nil? && ENV["DATING_IDENTITY_BYPASS"].to_s.strip == "demo"
   end
 
   def current_dating_profile

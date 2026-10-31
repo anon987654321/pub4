@@ -7,7 +7,7 @@ class Dating::ProfilesController < Dating::BaseController
   # front of strangers, which is the exact thing a throwaway account is used
   # for. The comment that stood here said "soft guest profiles allowed — no
   # signup to start dating", which this deliberately reverses.
-  before_action :require_vipps_identity, only: %i[new create edit update]
+  before_action :require_verified_identity, only: %i[new create edit update]
   before_action :set_profile, only: %i[show edit update]
 
   def show; end

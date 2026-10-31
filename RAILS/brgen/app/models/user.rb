@@ -15,6 +15,14 @@ class User < ApplicationRecord
     signed_id(purpose: InvitesController::PURPOSE, expires_in: InvitesController::TTL)
   end
 
+  # A Vipps Login or a BankID LOA 4 login has proved a real person: the
+  # callback records either as assurance "verified" on its external identity.
+  def identity_verified?
+    return false unless defined?(::ExternalIdentity)
+
+    external_identities.where(assurance_level: "verified").exists?
+  end
+
   def vipps_verified?
     return false unless defined?(::ExternalIdentity) && defined?(::IdentityProvider)
 

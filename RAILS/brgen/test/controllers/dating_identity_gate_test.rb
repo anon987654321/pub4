@@ -4,8 +4,8 @@ require "test_helper"
 
 # The identity gate on Dating::BaseController is the one thing standing between
 # a signed-in account and the right to appear in front of strangers. These
-# tests pin its two axioms: a configured Vipps admits only vipps_verified
-# accounts, and an unconfigured Vipps closes the gate unless the operator has
+# tests pin its two axioms: a configured verifier (Vipps or BankID) admits only
+# accounts with a verified identity, and an unconfigured Vipps closes the gate unless the operator has
 # named the demo bypass — never an open door by accident of missing env.
 class DatingIdentityGateTest < ActionDispatch::IntegrationTest
   setup do
@@ -79,5 +79,61 @@ class DatingIdentityGateTest < ActionDispatch::IntegrationTest
     get dating.new_profile_path
 
     assert_redirected_to sign_in_path
+  end
+  def verify(user, slug:, assurance: "verified")
+    provider = IdentityProvider.find_or_create_by!(slug:) { |row| row.name = slug.capitalize }
+    ExternalIdentity.create!(user:, identity_provider: provider, subject: "sub-#{slug}", assurance_level: assurance)
+  end
+
+  test "a BankID identity at LOA 4 opens the gate where BankID is the verifier" do
+    Rails.application.config.x.oauth_provider_slugs = %w[bankid]
+    verify(@user, slug: "bankid")
+    sign_in_as(@user)
+
+    get dating.new_profile_path
+
+    assert_response :success
+  end
+
+  test "a BankID login below LOA 4 does not" do
+    Rails.application.config.x.oauth_provider_slugs = %w[bankid]
+    verify(@user, slug: "bankid", assurance: "account")
+    sign_in_as(@user)
+
+    get dating.new_profile_path
+
+    assert_redirected_to sign_in_path
+  end
+
+  # The first screen names the check the gate really makes, and none when
+  # there is none, so it never claims a protection the server does not run.
+  test "the first visit opens on the splash, naming the configured verifier" do
+    Rails.application.config.x.oauth_provider_slugs = %w[vipps bankid]
+    host! "dating.brgen.no"
+
+    get dating.root_path
+
+    assert_response :success
+    assert_select ".dating-splash-trust strong", "BankID"
+    assert_select "a.dating-splash-start[href=?]", dating.root_path(start: 1)
+  end
+
+  test "without a verifier the splash claims no protection" do
+    with_vipps(available: false)
+    host! "dating.brgen.no"
+
+    get dating.root_path
+
+    assert_select ".dating-splash-trust", count: 0
+  end
+
+  test "starting remembers it, so the next visit is the deck" do
+    host! "dating.brgen.no"
+
+    get dating.root_path(start: 1)
+    assert_redirected_to dating.root_path
+
+    get dating.root_path
+    assert_select ".dating-splash", count: 0
   end
 end
