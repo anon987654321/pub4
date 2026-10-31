@@ -162,13 +162,9 @@ module Deploy
 
         "body_first"
       when "hit_model"
-        if card.include?("deal-card-hit") || card.match?(/link_to.*deal-card/)
-          "whole_card"
-        elsif card.scan(/button_to|deal-cta/).size > 2
-          "multi_cta"
-        else
-          "multi_cta"
-        end
+        # hit_model has two variants, so a card that is not one whole hit target
+        # is multi_cta. A CTA-count elsif answered multi_cta on both of its arms.
+        card.include?("deal-card-hit") || card.match?(/link_to.*deal-card/) ? "whole_card" : "multi_cta"
       when "nav_model"
         nav.include?("navBar") || nav.include?('id="navBar"') ? "amazon_nav" : "plain_nav"
       when "search_model"

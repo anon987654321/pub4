@@ -2900,6 +2900,10 @@ law_catalogue:
     IDEMPOTENT:
       definition_sources: [MASTER/law/universal.rb]
       severity: info
+    IDENTICAL_BRANCHES:
+      definition_sources: [MASTER/law/lexical.rb]
+      severity: warning
+      languages: [ruby]
     IMG_ALT:
       definition_sources: [MASTER/law/web.rb]
       severity: error

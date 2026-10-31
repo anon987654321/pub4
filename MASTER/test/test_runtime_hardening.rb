@@ -228,7 +228,7 @@ class RuntimeHardeningTest < Minitest::Test
     router.define_singleton_method(:unreachable_reason) do |model_id, wait:|
       model_id == "missing-primary" ? "primary unavailable" : nil
     end
-    router.define_singleton_method(:pool) { |wait:| wait ? ["ollama:qwen3"] : ["ollama:qwen3"] }
+    router.define_singleton_method(:pool) { |wait:| ["ollama:qwen3"] }
     agent.define_singleton_method(:model_router) { router }
 
     assert Master::Review::Council::Deliberation.reachable_for?(agent)

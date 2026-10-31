@@ -244,6 +244,37 @@ module Master
     end
   end
 
+  # A conditional whose branches are the same code decides nothing: either the
+  # condition is dead or one branch is a typo. FULL.yml asked for a redundant
+  # boolean rule; `x ? true : false` is Ruby's coercion idiom and stays, but its
+  # `? false : false` cousin hid in checks/support/page_inventory.rb.
+  ::Law.define(:IDENTICAL_BRANCHES) do
+    tags %i[COMPLETENESS]
+    fix "a conditional whose branches are identical"
+    bad "def auth?(path) = PATHS.include?(path) ? false : false\n"
+    good "def auth?(path) = PATHS.include?(path) ? false : true\n"
+    check do |src, path|
+      parsed = Prism.parse(src)
+
+      next [] if parsed.failure?
+
+      findings = []
+      walk(parsed.value) do |node|
+        taken, other = case node
+                       when Prism::IfNode then [node.statements, node.subsequent]
+                       when Prism::UnlessNode then [node.statements, node.else_clause]
+                       end
+        # An elsif chain is an IfNode here, not an ElseNode, and is left alone.
+        body = other.statements if other.is_a?(Prism::ElseNode)
+        same = body && taken&.slice&.strip == body&.slice&.strip
+        next unless same
+
+        findings << finding(line: node.location.start_line, message: "both branches are `#{body.slice.strip[0, 40]}`")
+      end
+      findings
+    end
+  end
+
   ::Law.define(:SILENT_RESCUE) do
     tags %i[ERROR_HANDLING FAIL_VISIBLY]
     fix "blanket rescue discards error without logging or re-raising"

@@ -373,8 +373,9 @@ module Deploy
       return true if open_exact.include?(path)
       return true if path.start_with?("/demo") || path.start_with?("/ai/")
       return false if path.end_with?("/edit") || path.include?("/new")
-      # Default browse indexes that still need session are auth
-      %w[/connections /declutter /live_streams /messages /planned_outfits /wardrobe_items /items/shopping_list].include?(path) ? false : false
+      # Every other amber page needs a session. This line was a list of browse
+      # indexes answered `? false : false`, so the list never decided anything.
+      false
     end
 
     def write_snapshot!(path = File.join(ROOT, "MASTER", "checks", "data", "page_sim_inventory.yml"))
