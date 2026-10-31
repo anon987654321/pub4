@@ -4,9 +4,10 @@ class Playlist::PlaylistsController < Playlist::BaseController
   include Shared::FindableBySlug
   include Playlist::OwnerVisibility
   allow_unauthenticated_access only: %i[index show embed]
-  before_action :require_user_session, only: %i[new create]
-  before_action :set_playlist, only: %i[show embed edit update destroy]
+  before_action :require_user_session, only: %i[new create analytics]
+  before_action :set_playlist, only: %i[show embed analytics edit update destroy]
   before_action :authorize_owner_or_editor, only: %i[edit update destroy]
+  before_action :authorize_analytics_owner, only: :analytics
 
   def index
     tracks = local_discovery_tracks
@@ -27,6 +28,21 @@ class Playlist::PlaylistsController < Playlist::BaseController
     end
     active = @tracks.first&.track
     @comments = active ? (@track_comments[active.id] || []) : []
+  end
+
+  # Creator analytics are intentionally aggregate-only. They show counts for
+  # tracks in this playlist, never listener identities or private listening
+  # histories. Listen rows already exist as the source of truth.
+  def analytics
+    return if redirect_id_to_slug(@playlist)
+
+    @analytics_entries = playlist_tracks.to_a
+    track_ids = @analytics_entries.map(&:playlist_track_id)
+    listens = Playlist::Listen.where(playlist_track_id: track_ids)
+    @listen_total = listens.count
+    @listen_recent = listens.where(created_at: 7.days.ago..).count
+    @listen_counts = listens.group(:playlist_track_id).count
+    @analytics_entries.sort_by! { |entry| -@listen_counts.fetch(entry.playlist_track_id, 0) }
   end
 
   def embed
@@ -102,6 +118,12 @@ class Playlist::PlaylistsController < Playlist::BaseController
     return if Current.user == @playlist.user
     collab = @playlist.collaborations.find_by(user: Current.user)
     return if collab && %w[owner editor].include?(collab.role)
+    redirect_to(playlist_path(@playlist), alert: t("shared.flash.not_authorized"))
+  end
+
+  def authorize_analytics_owner
+    return if Current.user == @playlist.user
+
     redirect_to(playlist_path(@playlist), alert: t("shared.flash.not_authorized"))
   end
 end
