@@ -3,6 +3,13 @@
 # Every external MCP capability is governed before execution.
 # Disabled by default on resource-constrained VPS.
 # Enable individual servers with enabled: true when needed.
+#
+# Package versions are pinned exactly (`@x.y.z`): `npx -y` executes third-party
+# code at runtime under a governed tier, and a name-only pin executes whatever
+# the registry serves that day. Bumps are a deliberate edit of this file, not a
+# side effect of a cache expiry. Verify a pin still exists on the registry
+# before upgrading it: server-git was unpublished upstream, which is why its
+# entry below carries no pin and stays disabled.
 
 defaults: &defaults
   transport: stdio
@@ -18,7 +25,7 @@ servers:
     tier: guarded
     args:
       - -y
-      - "@modelcontextprotocol/server-filesystem"
+      - "@modelcontextprotocol/server-filesystem@2.1.0"
       - "${MASTER_REPO_ROOT}"
     description: Expose bounded read/write/list/move/search access over the pub4 repository root
 
@@ -28,15 +35,18 @@ servers:
       - -y
       - "@modelcontextprotocol/server-git"
       - "--repository"
-      - "/home/dev/pub4/MASTER"
-    description: Expose git operations as tools
+      - "${MASTER_REPO_ROOT}/MASTER"
+    description: Expose git operations as tools. Upstream @modelcontextprotocol/server-git has no
+      published version to pin (unpublished from the registry), so this entry stays disabled until
+      an alternative server is chosen and pinned here. The repository argument follows the repo
+      root instead of the old hard-coded /home/dev path, which was stale on every other host.
 
   brave_search:
     <<: *defaults
     tier: guarded
     args:
       - -y
-      - "@modelcontextprotocol/server-brave-search"
+      - "@modelcontextprotocol/server-brave-search@0.6.2"
     description: Web search via Brave
 
   sequential_thinking:
@@ -44,5 +54,5 @@ servers:
     tier: safe
     args:
       - -y
-      - "@modelcontextprotocol/server-sequential-thinking"
+      - "@modelcontextprotocol/server-sequential-thinking@2.0.0"
     description: Structured reasoning assistant

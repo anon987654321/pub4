@@ -47,4 +47,34 @@ class TestBlockGitStash < Minitest::Test
       assert_equal 0, Open3.capture3(RbConfig.ruby, HOOK, stdin_data: "not json")[2].exitstatus
     end
   end
+
+  # The fail-closed narrow subset: an unreadable payload that still carries a
+  # writing stash call is refused, because there is no legitimate command left
+  # to protect once the payload is unreadable.
+  def test_an_unreadable_payload_carrying_a_writing_stash_call_is_refused
+    broken = '{"tool_name":"Bash","cwd":"/x","tool_input":{"command":"git stash push -m wip"'
+    _out, err, status = Open3.capture3(RbConfig.ruby, HOOK, stdin_data: broken)
+
+    assert_equal 2, status.exitstatus
+    assert_match(/unreadable/, err)
+  end
+
+  def test_an_unreadable_payload_broken_past_command_extraction_is_still_refused
+    broken = '{"tool_name":"Bash" "git stash drop" true'
+    _out, _err, status = Open3.capture3(RbConfig.ruby, HOOK, stdin_data: broken)
+
+    assert_equal 2, status.exitstatus
+  end
+
+  def test_an_unreadable_payload_without_a_writing_stash_call_passes
+    assert_equal 0, Open3.capture3(RbConfig.ruby, HOOK, stdin_data: "not json")[2].exitstatus
+    assert_equal 0, Open3.capture3(
+      RbConfig.ruby, HOOK,
+      stdin_data: '{"tool_name":"Bash","tool_input":{"command":"git stash list"'
+    )[2].exitstatus, "a read-only stash call rides the fail-open path"
+    assert_equal 0, Open3.capture3(
+      RbConfig.ruby, HOOK,
+      stdin_data: '{"tool_name":"Bash","tool_input":{"command":"echo git stash push"'
+    )[2].exitstatus, "an echo is data, on the unreadable path as on the readable one"
+  end
 end

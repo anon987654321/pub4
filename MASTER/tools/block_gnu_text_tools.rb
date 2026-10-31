@@ -10,8 +10,16 @@
 
 # Contract (https://code.claude.com/docs/en/hooks): hook JSON on stdin carries tool_name and
 # tool_input.command; exit 2 blocks the call and stderr is the reason Claude reads. An unreadable
-# payload passes, because this guard must never be the reason a shell stops working. It is wired under
-# hooks.PreToolUse in .claude/settings.json through tools/hook_ruby.rb; --test runs the built-in cases.
+# payload passes, because this guard must never be the reason a shell stops working — with one
+# narrow exception, added with the @auto gate after the security review: when the payload the
+# JSON parser refuses (or a command the lexer refuses) carries a banned-command invocation at
+# command position in its raw text, it is refused anyway. The lexer paths answer for everything
+# readable; this answers for the two shapes that would otherwise ride the fail-open hole past a
+# guard whose whole subject is those commands. The scan is deliberately conservative — it names
+# the core text-tool commands, not every law row — and only ever fires on input some parser
+# already refused, so a false one costs a re-issued call, not a working shell. It is wired under
+# hooks.PreToolUse in .claude/settings.json through tools/hook_ruby.rb; --test runs the built-in
+# cases.
 
 require "json"
 require_relative "../lib/io/gnu_text_tools"
@@ -36,18 +44,60 @@ SELF_TEST_CASES = {
   "ruby -e 'puts `sed 1p x`'" => [], "env -i PATH=/bin awk 1" => %w[awk]
 }.freeze
 
+# The fail-closed scan: a banned command at command position, with an argument or
+# flag behind it, in text whose own quotes have been flattened to spaces so it
+# reads the same whether it came from a raw hook payload or a shell line. The
+# quote flattening is also why prose like "we should find things" matches —
+# the scan runs only on input a parser already refused, where there is no
+# legitimate command left to protect. The law's list lives in laws.yml and this
+# scan names the core text tools by hand: a raw-payload scan that read the law
+# would also read everything else the law drags in, and the narrow subset is
+# the point.
+FAIL_CLOSED_INVOCATION = /
+  (?:\A|[;&|(`]|\$\(|\{|\s|["'=]|\/)
+  (?:[A-Za-z_]\w*=\S+\s+)*
+  (?:sudo\s+|doas\s+|command\s+|exec\s+|env\s+|xargs\s+|timeout\s+\S+\s+|nice\s+(?:-\S+\s+)?)?
+  (?:[\w@.%+-]+\/)?
+  (?:g?(?:sed|awk|head|tail|cut|find|wc|tr)|(?:perl|python)[\d.]*)\b
+  \s+\S
+/x.freeze
+
+FAIL_CLOSED_CASES = {
+  '{"tool_name":"Bash","tool_input":{"command":"sed -i s/a/b/ f"' => true,
+  '{"tool_name":"Bash","tool_input":{"command":"find . -name x"}' => true,
+  '{"tool_name":"Bash","tool_input":{"command":"x=$(wc -l < f)"}' => true,
+  "not json at all" => false,
+  '{"tool_name":"Bash","tool_input":{"command":"ls -la"}' => false,
+  '{"tool_name":"Bash"}' => false,
+}.freeze
+
+def fail_closed_invocation?(text)
+  FAIL_CLOSED_INVOCATION.match?(text.to_s.tr('"', "\s"))
+end
+
 def self_test
   failures = SELF_TEST_CASES.reject { |cmd, want| TOOLS.banned_in(cmd).sort == want.sort }
   failures.each { |cmd, want| puts "FAIL #{cmd.inspect}: want #{want}, got #{TOOLS.banned_in(cmd)}" }
-  puts "#{SELF_TEST_CASES.size - failures.size}/#{SELF_TEST_CASES.size} pass"
-  exit(failures.empty? ? 0 : 1)
+  closed = FAIL_CLOSED_CASES.reject { |text, want| fail_closed_invocation?(text) == want }
+  closed.each { |text, want| puts "FAIL fail-closed #{text.inspect}: want #{want}, got #{fail_closed_invocation?(text)}" }
+  total = SELF_TEST_CASES.size + FAIL_CLOSED_CASES.size
+  misses = failures.size + closed.size
+  puts "#{total - misses}/#{total} pass"
+  exit(misses.zero? ? 0 : 1)
 end
 
 self_test if ARGV.first == "--test"
 
+raw = $stdin.read
 payload = begin
-  JSON.parse($stdin.read)
+  JSON.parse(raw)
 rescue JSON::ParserError => e
+  if fail_closed_invocation?(raw)
+    warn "zsh law: unreadable hook payload (#{e.class}), and its text carries a banned-command " \
+         "invocation (sed, awk, head, tail, wc, tr, cut, find, perl, python); refusing what it " \
+         "cannot read rather than passing it. Reissue the command as readable JSON."
+    exit 2
+  end
   warn "zsh law: unreadable hook payload (#{e.class}); letting it through"
   exit 0
 end
@@ -58,6 +108,12 @@ exit 0 unless payload["tool_name"] == "Bash" && !command.empty?
 names = begin
   TOOLS.banned_in(command)
 rescue StandardError => e
+  if fail_closed_invocation?(command)
+    warn "zsh law: could not lex the command (#{e.class}), and it names a banned command at " \
+         "command position; refusing it unread. Fix the quoting and reissue, or write the Ruby " \
+         "or zsh form."
+    exit 2
+  end
   warn "zsh law: could not lex the command (#{e.class}); letting it through"
   exit 0
 end

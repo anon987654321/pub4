@@ -201,6 +201,44 @@ task :kernel_autoload_smoke do
   sh RbConfig.ruby, File.join(__dir__, "tools", "kernel_autoload_smoke.rb")
 end
 
+# The gemspec's own comment says no task builds or installs it, and Dir[] on a
+# missing path silently ships fewer files than the gem claims to. This task is
+# the proof that stopped being true: every path the file list resolves to must
+# exist, the load-bearing anchors must be in the list, and a package must come
+# out the other end. It runs in the ci profile.
+desc "Build master.gemspec into a package and prove the file list resolves"
+task "gem:build_proof" do
+  require "rubygems/package"
+  require "fileutils"
+
+  gem_path = nil
+  files = 0
+  begin
+    Dir.chdir(__dir__) do
+      spec = Gem::Specification.load("master.gemspec")
+      raise "master.gemspec did not load" unless spec
+
+      raise "gemspec resolved to zero files" if spec.files.empty?
+
+      missing = spec.files.reject { |file| File.exist?(file) }
+      unless missing.empty?
+        raise "gemspec lists #{missing.size} paths that do not exist: #{missing.first(8).join(', ')}"
+      end
+
+      %w[lib/master.rb bin/master data/mcp_servers.yml].each do |anchor|
+        raise "gemspec file list is missing #{anchor}" unless spec.files.include?(anchor)
+      end
+
+      files = spec.files.size
+      gem_path = Gem::Package.build(spec)
+    end
+    size = File.size(gem_path)
+    puts "gem:build_proof: package built (#{size} bytes) from #{files} files; the list resolves, the anchors are in it"
+  ensure
+    FileUtils.rm_f(gem_path) if gem_path
+  end
+end
+
 desc "Run test/test_core_smoke.rb — Effect → Constitution → World loop"
 task :core_smoke do
   sh RbConfig.ruby, "-I#{File.join(__dir__, "lib")}", File.join(__dir__, "test", "test_core_smoke.rb")

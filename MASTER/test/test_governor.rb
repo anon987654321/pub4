@@ -53,4 +53,95 @@ class GovernorTest < Minitest::Test
       assert_equal %i[ok ok rate_limit], results.map { |result| result.ok? ? :ok : result.category }
     end
   end
+
+  # The @auto hole this closes: an unattended run used to get ok for the whole
+  # dangerous tier, including a description that asks for root.
+  def test_an_escalation_description_never_rides_the_auto_gate
+    governor = Master::Fix::Governor.new(config: Config.new(true))
+
+    Master::Fix::Governor.stub(:auto_allowlist, ["shell"]) do
+      Master::Fix::Governor.stub(:auto_dangerous_budget, 5) do
+        result = governor.check_permit("shell", :dangerous, "doas reboot")
+
+        refute result.ok?
+        assert_equal :validation, result.category
+      end
+    end
+  end
+
+  def test_an_exhausted_budget_fails_closed_in_an_unattended_run
+    governor = Master::Fix::Governor.new(config: Config.new(true))
+
+    Master::Fix::Governor.stub(:auto_allowlist, []) do
+      Master::Fix::Governor.stub(:auto_dangerous_budget, 1) do
+        assert governor.check_permit("zsh", :dangerous, "ls").ok?
+        refute governor.check_permit("zsh", :dangerous, "ls -la").ok?
+        refute governor.check_permit("zsh", :dangerous, "ls -R").ok?
+      end
+    end
+  end
+
+  def test_a_persistent_allowlist_entry_spends_no_budget
+    governor = Master::Fix::Governor.new(config: Config.new(true))
+
+    Master::Fix::Governor.stub(:auto_allowlist, ["zsh"]) do
+      Master::Fix::Governor.stub(:auto_dangerous_budget, 1) do
+        assert governor.check_permit("zsh", :dangerous, "ls").ok?
+        assert governor.check_permit("zsh", :dangerous, "ls").ok?, "allowlisted tools are not budget-limited"
+        assert governor.check_permit("shell", :dangerous, "ls").ok?, "one budgeted approval remains"
+        refute governor.check_permit("shell", :dangerous, "ls -la").ok?
+      end
+    end
+  end
+
+  def test_each_budget_spend_is_published_for_the_trace
+    bus = FakeBus.new
+    governor = Master::Fix::Governor.new(config: Config.new(true), event_bus: bus)
+
+    Master::Fix::Governor.stub(:auto_allowlist, []) do
+      Master::Fix::Governor.stub(:auto_dangerous_budget, 2) do
+        governor.check_permit("zsh", :dangerous, "ls")
+        governor.check_permit("zsh", :dangerous, "ls")
+      end
+    end
+
+    spends = bus.events.select { |event| event.first == "tool:auto_dangerous" }
+    assert_equal [1, 0], spends.map { |_name, payload| payload[:budget_left] }
+  end
+
+  # A remembered "always allow" was given by a human for one exact request, so it
+  # outranks the budget; a denial is still honored first.
+  def test_a_remembered_decision_outranks_the_budget
+    governor = Master::Fix::Governor.new(config: Config.new(true))
+
+    Master::Fix::Governor.stub(:auto_allowlist, []) do
+      Master::Fix::Governor.stub(:auto_dangerous_budget, 0) do
+        governor.allow!("zsh", "ls")
+        assert governor.check_permit("zsh", :dangerous, "ls").ok?
+
+        governor.deny!("shell", "ls")
+        refute governor.check_permit("shell", :dangerous, "ls").ok?
+      end
+    end
+  end
+
+  # Interactive mode is unchanged: an ordinary dangerous description auto-approves
+  # inside the rate ceiling, and an escalation-shaped one asks.
+  def test_interactive_mode_keeps_its_old_dangerous_tier_shape
+    governor = Master::Fix::Governor.new(config: Config.new(false))
+
+    Master::Fix::Governor.stub(:auto_allowlist, []) do
+      Master::Fix::Governor.stub(:auto_dangerous_budget, 0) do
+        assert governor.check_permit("zsh", :dangerous, "ls").ok?
+        refute governor.check_permit("zsh", :dangerous, "sudo ls").ok?
+      end
+    end
+  end
+
+  class FakeBus
+    attr_reader :events
+
+    def initialize = @events = []
+    def publish(name, payload = nil, **kwargs) = @events << [name, payload || kwargs]
+  end
 end

@@ -433,6 +433,17 @@ module Master
       def send_llm_request(selected_model, messages, system: nil, stream: false, image: nil, temperature: nil, format: nil,
                            &blk)
         sys = system || system_prompt
+        # The Redactor used to stand only on the log and persistence paths; the
+        # outbound provider call was the one path it never covered, so content
+        # that legitimately entered prompt context went to providers verbatim.
+        # Prompt context routinely quotes the repository the agent runs in, and
+        # a secret that reached a prompt would reach the provider verbatim.
+        # Every lane branches below this point, so redacting here covers all of
+        # them. The 32+ character alphanumeric run is redacted too — a bare git
+        # SHA is the accepted collateral, the same trade the persistence path
+        # already makes.
+        messages = redact_outbound_messages(messages)
+        sys = sys.nil? ? nil : Ground::Redactor.text(sys.to_s)
         # Claude CLI is deliberately text-only (--tools "" and strict MCP config),
         # even when its underlying model supports native tools. Give it MASTER's
         # guarded ReAct loop before the provider-specific early return.
@@ -454,6 +465,21 @@ module Master
         # A schema-bound call wants one object back, not a tool conversation.
         # The ReAct completion sets master_no_tools while it asks for each step.
         send_ruby_llm(selected_model, messages, sys:, stream:, image:, temperature:, format:, &blk)
+      end
+
+      # Message rows are {role:, content:} hashes. Only String content is
+      # redacted: a structured content payload (content blocks a lane builds
+      # for itself) passes through untouched rather than being flattened by
+      # #to_s, and a row a lane adds for its own bookkeeping rides along
+      # unchanged. Redaction never mutates the caller's array: a frozen entry
+      # or a frozen array stays readable by whoever handed it over, and what
+      # leaves is a fresh copy.
+      def redact_outbound_messages(messages)
+        messages.map do |entry|
+          next entry unless entry.is_a?(Hash) && entry[:content].is_a?(String)
+
+          entry.merge(content: Ground::Redactor.text(entry[:content]))
+        end
       end
 
       def send_web_chat(provider, messages, sys:)

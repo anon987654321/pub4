@@ -8,10 +8,28 @@ module Master
       RATE_WINDOW = 60.0
       TIERS = { safe: 0, guarded: 1, dangerous: 2 }.freeze
 
+      # Settings under limits.yml's `governor:` key, beside rate_limits. The split rule for that file is
+      # "add a top-level key only together with its reader" — these methods are the readers for the @auto
+      # gates below, added when the unattended dangerous-tier hole was closed.
+      def self.governor_settings
+        Master.load_yaml(Master.limits_path, default: {}).dig("governor") || {}
+      end
+
       # Sliding-window rate limits per tier (calls per minute), from limits.yml governor.rate_limits. They guard
       # against a runaway loop, not against work: three shell calls a minute made an analysis impossible.
       def self.rate_limits
-        Master.load_yaml(Master.limits_path, default: {}).dig("governor", "rate_limits") || {}
+        governor_settings["rate_limits"] || {}
+      end
+
+      # Exact tool names an unattended run may use on the dangerous tier without spending the per-run budget.
+      # Persistent, operator-owned, and never widened by anything that runs inside a session.
+      def self.auto_allowlist
+        Array(governor_settings["auto_allowlist"]).map(&:to_s)
+      end
+
+      # How many dangerous-tier approvals one unattended run may spend on tools outside the allowlist.
+      def self.auto_dangerous_budget
+        Integer(governor_settings["auto_dangerous_budget"] || 0)
       end
 
       def initialize(config:, event_bus: nil)
@@ -19,6 +37,7 @@ module Master
         @bus = event_bus
         @prompt = $stdout.isatty ? TTY::Prompt.new : nil
         @auto = config.auto?
+        @auto_dangerous_budget = self.class.auto_dangerous_budget
         @decisions = {}
         @rate_windows = Hash.new { |h, k| h[k] = [] }
         @rate_mutex = Mutex.new
@@ -41,8 +60,12 @@ module Master
         when :safe then return Result.ok(true)
         when :guarded then return granted if @auto || Fiber[:master_protocol_read]
         when :dangerous
-          return Result.ok(true) if @auto && !consent_required
-          return Result.ok(true) unless needs_human?(description) || consent_required
+          if @auto
+            return Result.ok(true) if !consent_required && !needs_human?(description) &&
+                                     auto_dangerous_approved?(tool_name)
+          else
+            return Result.ok(true) unless needs_human?(description) || consent_required
+          end
         end
 
         ask_user(tool_name:, tier:, description:, one_time: consent_required)
@@ -51,6 +74,26 @@ module Master
       end
 
       alias permit? check_permit
+
+      # @auto used to return ok for the whole dangerous tier before needs_human? was
+      # consulted — lib/ground/policy/sandbox.rb:24-33 names that hole, and unattended
+      # is exactly when it matters. Two gates now stand between an unattended run and
+      # a dangerous tool, and neither widens with use: the persistent allowlist of
+      # exact tool names, and a per-run budget for everything else that is spent once
+      # and never refilled. When the budget is gone the call falls to ask_user, which
+      # fails closed on a non-TTY, so an exhausted budget is a visible refusal the
+      # fold observes, not a silent widening. An escalation-shaped description
+      # (doas/sudo/su) rides neither gate, and a remembered "always allow" decision
+      # still outranks both: it was given by a human, for one exact request.
+      def auto_dangerous_approved?(tool_name)
+        return true if self.class.auto_allowlist.include?(tool_name.to_s)
+
+        return false unless @auto_dangerous_budget.positive?
+
+        @auto_dangerous_budget -= 1
+        @bus&.publish("tool:auto_dangerous", tool: tool_name, budget_left: @auto_dangerous_budget)
+        true
+      end
 
       # Decisions are exact to the tool and request description. "Always" never
       # becomes a blanket approval for the whole tier, which keeps an interactive

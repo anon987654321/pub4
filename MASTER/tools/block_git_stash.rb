@@ -12,7 +12,13 @@
 #
 # Reads the hook JSON on stdin. Exit 2 with the reason on stderr blocks the
 # call; any other exit lets it through. A payload it cannot parse is let
-# through: this guard must never be the reason a shell stops working.
+# through — this guard must never be the reason a shell stops working — with
+# one narrow exception, added with the @auto gate after the security review:
+# when the unreadable payload's raw text carries a writing `git stash` call at
+# command position, it is refused anyway. The cwd is unreadable too, so the
+# shared-list check cannot run; a wrong `stash pop` costs the same whichever
+# checkout it lands on, and there is no legitimate command left to protect
+# once the payload is unreadable.
 
 require "json"
 require "open3"
@@ -29,6 +35,16 @@ STASH = /
 
 def stash_calls(command)
   command.to_s.scan(STASH).map { |_opts, sub| sub.to_s }
+end
+
+# For a payload broken past command extraction: `git`, a short gap free of
+# shell separators, then `stash` and its optional subcommand, anywhere in the
+# raw text. Loose by design — it runs only on input the JSON parser already
+# refused, where there is no legitimate command left to protect.
+RAW_STASH = /\bgit\b[^;|&()]{0,80}?\s+stash(?:\s+([\w-]+))?/.freeze
+
+def raw_stash_calls(text)
+  text.to_s.scan(RAW_STASH).map { |(sub)| sub.to_s }
 end
 
 def writing?(sub)
@@ -53,9 +69,27 @@ def shared_stash?(dir)
   git(dir, "worktree", "list", "--porcelain").to_s.lines.count { |line| line.start_with?("worktree ") } > 1
 end
 
+raw = $stdin.read
 payload = begin
-  JSON.parse($stdin.read)
+  JSON.parse(raw)
 rescue JSON::ParserError
+  # The command value is pulled out of the raw text even though the JSON is
+  # broken, and held to the same STASH standard as a readable payload — so
+  # `echo git stash push` still passes on the unreadable path too. Only a
+  # payload broken past that point falls to the looser raw scan, which runs
+  # on input the parser already refused, where no legitimate command is left
+  # to protect.
+  candidate = raw[/"command"\s*:\s*"(.*?)"/m, 1]
+  calls = candidate ? stash_calls(candidate) : raw_stash_calls(raw)
+  if calls.any? { |sub| writing?(sub) }
+    warn <<~MSG
+      git stash blocked: the hook payload was unreadable, but its text carries a writing
+      `git stash` call. This repository shares ONE stash list across worktrees and an unreadable
+      payload cannot prove the call is safe to run. Reissue the command so the hook can read it;
+      `git stash list` and `git stash show` stay allowed.
+    MSG
+    exit 2
+  end
   exit 0
 end
 exit 0 unless payload.is_a?(Hash) && payload["tool_name"].to_s == "Bash"

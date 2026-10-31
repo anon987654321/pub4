@@ -49,4 +49,35 @@ class TestBlockGnuTextTools < Minitest::Test
     assert_equal 0, call("sed -n 1p f", tool: "Read").first
     assert_equal 0, Open3.capture2e(RbConfig.ruby, HOOK, stdin_data: "not json").last.exitstatus
   end
+
+  # The fail-closed narrow subset: an unreadable payload or an unlexable
+  # command that still carries a banned-tool invocation at command position is
+  # refused, because there is no legitimate command left to protect once a
+  # parser has refused the input.
+  def test_an_unreadable_payload_carrying_a_banned_invocation_is_refused
+    broken = '{"tool_name":"Bash","tool_input":{"command":"sed -i s/a/b/ f"'
+    out, status = Open3.capture2e(RbConfig.ruby, HOOK, stdin_data: broken)
+
+    assert_equal 2, status.exitstatus
+    assert_match(/unreadable/, out)
+  end
+
+  def test_an_unlexable_command_carrying_a_banned_invocation_is_refused
+    # A real payload, a command whose quoting the lexer refuses but whose text
+    # still names sed with a flag behind it.
+    broken_command = "sed -n 'unterminated 1p f"
+    payload = JSON.generate("tool_name" => "Bash", "tool_input" => { "command" => broken_command })
+    out, status = Open3.capture2e(RbConfig.ruby, HOOK, stdin_data: payload)
+
+    assert_equal 2, status.exitstatus, out
+  end
+
+  def test_an_unreadable_payload_without_a_banned_invocation_passes
+    assert_equal 0, Open3.capture2e(
+      RbConfig.ruby, HOOK, stdin_data: '{"tool_name":"Bash","tool_input":{"command":"ls -la"}'
+    ).last.exitstatus
+    assert_equal 0, Open3.capture2e(
+      RbConfig.ruby, HOOK, stdin_data: '{"tool_name":"Bash"}'
+    ).last.exitstatus
+  end
 end

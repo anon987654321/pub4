@@ -102,9 +102,13 @@ law_syntax = ["law syntax", RUBY, "-e", <<~'RUBY', ROOT]
   end
 RUBY
 
+# gem:build_proof is here and nowhere else: the gemspec claims a file list that
+# nothing verified, and a package built from a silently-shortened list ships
+# fewer files than it claims. The proof is one package build, ~2s.
 ci_steps = [law_syntax, boot_smoke, rake["test"], rake["test:core"], rake["test:subsystems"],
             rake["test:web"], rake["test:web_ui"], rake["selftest"],
-            rake["lint:data_singularity"], rake["core_smoke"], rake["tools"]]
+            rake["lint:data_singularity"], rake["core_smoke"], rake["tools"],
+            rake["gem:build_proof"]]
 ci_steps += [run_bin["smoke"], rake["selfcheck"], rake["constitution"]] unless ENV["MASTER_CI_FULL"] == "0"
 ci_steps << web_node_step
 ci_steps << rake["test:integration_web"] unless ENV["MASTER_CI_WEB"] == "0"

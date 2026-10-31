@@ -1172,3 +1172,20 @@ governor:
   rate_limits:
     guarded: 240
     dangerous: 120
+  # Gates for an unattended (@auto) run's dangerous-tier approvals, read by
+  # Fix::Governor. The @auto path used to return ok for the whole dangerous tier
+  # before needs_human? was consulted — lib/ground/policy/sandbox.rb names the
+  # hole. Now an unattended dangerous approval must pass one of these two gates,
+  # and neither is widened by anything that runs inside a session:
+  #
+  # - auto_allowlist: exact tool names that never spend the budget. Persistent
+  #   and operator-owned; put the tools an unattended fold legitimately needs
+  #   here rather than raising the budget.
+  # - auto_dangerous_budget: how many approvals one run may spend on tools
+  #   outside the allowlist. Spent once, never refilled; when it is gone the
+  #   call falls to the approval prompt, which fails closed on a non-TTY, so
+  #   the fold sees the refusal instead of a silent widening. 240 gives a long
+  #   unattended session room at the dangerous tier's 120/min rate limit while
+  #   still bounding it; set it lower, or 0 to require the allowlist outright.
+  auto_allowlist: []
+  auto_dangerous_budget: 240

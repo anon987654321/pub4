@@ -26,10 +26,14 @@ module Master
         # it does. On vm23 `/etc/doas.conf` gives dev passwordless root, and dev is
         # the account a terminal `bin/master` runs as — so a shell effect calling
         # `doas` is root on the next line. Io::Shell warns on it and the Governor
-        # asks a human, but `check_permit` returns ok on `@auto` before it reaches
-        # `needs_human?`, and unattended is exactly when this matters. Denying here
-        # covers the fold's path as well as the tool's. MASTER's own restarts are
-        # unaffected: orders.rb and relayd.rb spawn doas through
+        # asks a human. The Governor's @auto path used to return ok for the whole
+        # dangerous tier before it reached `needs_human?` — unattended is exactly
+        # when that mattered — and now an unattended dangerous approval is gated
+        # behind the persistent allowlist and the per-run budget in limits.yml's
+        # `governor:` key, with `needs_human?` still consulted first (Fix::Governor
+        # #auto_dangerous_approved?). Denying here still covers the fold's path as
+        # well as the tool's, one layer before either gate is reached. MASTER's own
+        # restarts are unaffected: orders.rb and relayd.rb spawn doas through
         # Io::Exec and never come past this check.
         DENY_PATTERNS = [
           /\bdoas\b/, /\bsudo\b/, /(?:\A|[;&|]\s*)su\b/,
