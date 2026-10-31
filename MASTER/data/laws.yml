@@ -946,7 +946,7 @@ law_map:
   # it. Their law_ids stay empty. Filling them by matching names against
   # Law.define points a row at a neighbour that shares a word, which is false
   # coverage; a gap closes when a real detector for that law exists.
-  law_trace_ceiling: 80
+  law_trace_ceiling: 78
   version: v110.0-restored
   source: merged master.yml fossil → MASTER runtime law_map
   clusters:
@@ -1325,6 +1325,15 @@ law_map:
     deterministic_tests: {"meaning": "same input always produces same result", "detects": "flaky_tests",
       "severity": "high", "confidence": 0.9, "operation": "remove_randomness", "law_ids": [], "status": "gap",
       "tags": ["code"]}
+    no_silent_test_skip: {"meaning": "a skipped test says why", "detects": "silent_skip", "severity": "medium",
+      "confidence": 0.9, "operation": "add_reason", "law_ids": ["NO_SILENT_TEST_SKIP"], "status": "covered",
+      "tags": ["code"], "source": "FULL.yml"}
+    identical_branches: {"meaning": "a conditional decides between different code", "detects": "identical_branches",
+      "severity": "medium", "confidence": 0.95, "operation": "simplify", "law_ids": ["IDENTICAL_BRANCHES"],
+      "status": "covered", "tags": ["code"], "source": "FULL.yml"}
+    no_machine_paths: {"meaning": "code runs on any checkout, not one home directory", "detects": "hardcoded_path",
+      "severity": "medium", "confidence": 0.9, "operation": "derive_path", "law_ids": ["HARDCODED_ABSOLUTE_PATH"],
+      "status": "covered", "tags": ["code"], "source": "FULL.yml"}
     direct_manipulation: {"meaning": "Touch directly affects objects  ", "detects": "indirect_interaction",
       "severity": "medium", "confidence": 0.75, "operation": "simplify", "law_ids": ["DIRECT_MANIPULATION_FEEDBACK"],
       "status": "covered", "root": "reach", "tags": ["ux_laws"], "source": "master.yml@30dad7ead"}
@@ -2848,6 +2857,10 @@ law_catalogue:
       severity: error
       languages: [ruby, zsh]
       path_exclude: '/test/|/spec/|/db/seeds|/db/migrate/|seeder|demo_seed|_seed\b'
+    HARDCODED_ABSOLUTE_PATH:
+      definition_sources: [MASTER/law/lexical.rb]
+      severity: warning
+      languages: [ruby, javascript, zsh, yaml]
     HAPTIC_SINGLE_SOURCE:
       definition_sources: [MASTER/law/javascript.rb]
       severity: info

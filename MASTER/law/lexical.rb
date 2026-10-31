@@ -239,6 +239,27 @@ module Master
     end
   end
 
+  # A path to one person's machine works on that machine only. /home/<app>/
+  # is the OpenBSD deploy layout and stays legal; a macOS home or a Windows
+  # drive in code is someone's checkout leaking in. Tests and comments quote
+  # such paths on purpose, as fixtures and as history, and are left alone.
+  ::Law.define(:HARDCODED_ABSOLUTE_PATH) do
+    tags %i[PORTABILITY]
+    fix "a path to one machine's home directory in code"
+    bad "ROOT = \"/Users/mac/Documents/GitHub/pub4\"\n"
+    good "ROOT = File.expand_path(\"..\", __dir__)\n"
+    check do |src, path|
+      next [] if path.to_s.match?(%r{(?:\A|/)(?:test|spec)/})
+
+      src.each_line.with_index(1).filter_map do |line, number|
+        next if line.match?(%r{\A\s*(?:#|//|/?\*|<!--)})
+        next unless line.match?(%r{/Users/[a-z][\w.-]*/|\b[A-Z]:[/\\](?:Users|priv|home)\b}i)
+
+        finding(line: number, message: "machine-specific path — derive it from __dir__, ENV or config")
+      end
+    end
+  end
+
   ::Law.define(:RESCUE_EXCEPTION) do
     tags %i[ERROR_HANDLING]
     fix "rescue StandardError not Exception"
