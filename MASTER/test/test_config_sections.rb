@@ -22,7 +22,7 @@ class TestConfigSections < Minitest::Test
     "fix_budget" => ["lib/fix/run_budget.rb", 'config_section("fix_budget")'],
     "fix_time" => ["lib/fix/run_ledger.rb", 'config_section("fix_time")'],
     "governor" => ["lib/fix/governor.rb", 'config_section("governor")'],
-    "process" => ["lib/ops.rb", '"budgets.yml"'],
+    "process" => ["lib/ops.rb", 'config_path("process")'],
 
     "law_groups" => ["lib/cli/scan/request.rb", 'data["law_groups"]'],
     "orientation" => ["lib/ai/orientation.rb", 'config_section("orientation")'],

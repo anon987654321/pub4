@@ -91,11 +91,13 @@ class TraceDmesgTest < Minitest::Test
     dmesg = Master::Trace::Dmesg
     sgr = dmesg.cfg.fetch("boot_sgr")
 
-    dmesg.booting do
-      dmesg.emit("boot0 at mainbus0: safe 1", io: tty, force: true)
-      dmesg.emit("boot0 at mainbus0: safe 1", io: pipe, force: true)
+    with_colorterm("truecolor") do
+      dmesg.booting do
+        dmesg.emit("boot0 at mainbus0: safe 1", io: tty, force: true)
+        dmesg.emit("boot0 at mainbus0: safe 1", io: pipe, force: true)
+      end
+      dmesg.emit("master0: ready", io: tty, force: true)
     end
-    dmesg.emit("master0: ready", io: tty, force: true)
 
     assert_equal "\e[#{sgr}mboot0 at mainbus0: safe 1\e[0m\nmaster0: ready\n", tty.string
     assert_equal "boot0 at mainbus0: safe 1\n", pipe.string
@@ -106,10 +108,33 @@ class TraceDmesgTest < Minitest::Test
     def tty.tty? = true
     sgr = Master::Trace::Dmesg.cfg.fetch("boot_sgr")
 
-    painted = Master::Trace::Dmesg.console_paint("master0 at mainbus0: MASTER\n\nroot on master0", tty)
+    painted = with_colorterm("truecolor") do
+      Master::Trace::Dmesg.console_paint("master0 at mainbus0: MASTER\n\nroot on master0", tty)
+    end
 
     assert_equal "\e[#{sgr}mmaster0 at mainbus0: MASTER\e[0m\n\n\e[#{sgr}mroot on master0\e[0m", painted
     assert_equal "root on master0", Master::Trace::Dmesg.console_paint("root on master0", StringIO.new)
+  end
+
+  # A terminal that does not say it takes 24-bit colour reads 48;2;0;0;255 as faint
+  # and a reset, so it is given palette white on palette blue.
+  def test_a_terminal_without_truecolor_gets_the_palette_colours
+    tty = StringIO.new
+    def tty.tty? = true
+    basic = Master::Trace::Dmesg.cfg.fetch("boot_sgr_basic")
+
+    painted = with_colorterm(nil) { Master::Trace::Dmesg.console_paint("boot0 at mainbus0", tty) }
+
+    assert_equal "\e[#{basic}mboot0 at mainbus0\e[0m", painted
+    refute_includes painted, "48;2"
+  end
+
+  def with_colorterm(value)
+    previous = ENV.fetch("COLORTERM", nil)
+    value ? ENV["COLORTERM"] = value : ENV.delete("COLORTERM")
+    yield
+  ensure
+    previous ? ENV["COLORTERM"] = previous : ENV.delete("COLORTERM")
   end
 
   def test_no_color_keeps_the_boot_plain

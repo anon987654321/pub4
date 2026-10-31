@@ -9,9 +9,14 @@ module Master
       TIERS = { safe: 0, guarded: 1, dangerous: 2 }.freeze
 
       # Settings under budgets.yml's `governor:` key: rate_limits, and the @auto gates below, added when the
-      # unattended dangerous-tier hole was closed.
+      # unattended dangerous-tier hole was closed. check_permit runs on every tool call, so the section is
+      # read again only when the file changes.
       def self.governor_settings
-        Master.config_section("governor") || {}
+        path = Master.config_path("governor")
+        stamp = File.mtime(path).to_f if File.exist?(path)
+        @settings = nil unless @settings_stamp == stamp
+        @settings_stamp = stamp
+        @settings ||= (Master.config_section("governor") || {}).freeze
       end
 
       # Sliding-window rate limits per tier (calls per minute), from budgets.yml governor.rate_limits. They guard
@@ -38,8 +43,21 @@ module Master
         @auto = config.auto?
         @auto_dangerous_budget = self.class.auto_dangerous_budget
         @decisions = {}
+
         @rate_windows = Hash.new { |h, k| h[k] = [] }
         @rate_mutex = Mutex.new
+        refill_budget_per_run
+      end
+
+      # The budget is per /fix run, and one Governor lives as long as the process, so a long autoloop
+      # would otherwise spend it once and refuse every later run. A run's first pass refills it.
+      def begin_run!(run_id)
+        @rate_mutex.synchronize do
+          return if run_id.nil? || run_id == @budget_run
+
+          @budget_run = run_id
+          @auto_dangerous_budget = self.class.auto_dangerous_budget
+        end
       end
 
       def check_permit(tool_name, tier, description = nil)
@@ -87,10 +105,15 @@ module Master
       def auto_dangerous_approved?(tool_name)
         return true if self.class.auto_allowlist.include?(tool_name.to_s)
 
-        return false unless @auto_dangerous_budget.positive?
+        # Checked and spent under one lock: two worker threads at a budget of one must not both pass.
+        left = @rate_mutex.synchronize do
+          next unless @auto_dangerous_budget.positive?
 
-        @auto_dangerous_budget -= 1
-        @bus&.publish("tool:auto_dangerous", tool: tool_name, budget_left: @auto_dangerous_budget)
+          @auto_dangerous_budget -= 1
+        end
+        return false unless left
+
+        @bus&.publish("tool:auto_dangerous", tool: tool_name, budget_left: left)
         true
       end
 
@@ -105,6 +128,12 @@ module Master
 
       # A protocol read is one Agent#research_sources makes from data-declared sources.
       def granted = Result.ok(true)
+
+      def refill_budget_per_run
+        @bus&.subscribe("fix_loop:pass_start") { |event| begin_run!(event[:run_id]) }
+      rescue NoMethodError => e
+        Master::Ground::Swallow.log(e, context: "Governor.refill_budget_per_run")
+      end
 
       def decision_key(tool_name, description)
         [tool_name.to_s, description.to_s]

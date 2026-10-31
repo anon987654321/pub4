@@ -262,7 +262,7 @@ class ProjectTree
     @skip.any? { |s| rel.start_with?(s) || rel == s }
   end
 
-  LAW_YML = %w[soul.yml laws.yml budgets.yml voice.yml style.yml].freeze
+  LAW_YML = %w[soul.yml laws.yml budgets.yml console.yml scan.yml voice.yml style.yml].freeze
 
   def collapse_data_files(files)
     law = files.select { |f| LAW_YML.include?(f) }.sort

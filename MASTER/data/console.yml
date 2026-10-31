@@ -20,8 +20,11 @@ dmesg:
   # colours, white on blue. Terminals only; the prompt and session stay plain.
   # Empty turns it off, as does NO_COLOR. The blue is 24-bit #0000FF, because
   # palette blue (44) is whatever the terminal theme says, and most themes make
-  # it a light, washed-out blue.
+  # it a light, washed-out blue. A terminal that does not set COLORTERM to
+  # truecolor or 24bit reads the 24-bit form as faint and a reset, so it gets
+  # boot_sgr_basic: palette white on palette blue, as the OpenBSD console has.
   boot_sgr: "37;48;2;0;0;255"
+  boot_sgr_basic: "37;44"
 
 # What every model turn is oriented with (lib/ai/orientation.rb). `tree: fix` is the /fix Tree, with sizes
 # and the sprawl signals; read_in_full is the rule the turn is told, so an analysis reads a file whole

@@ -230,7 +230,9 @@ task "gem:build_proof" do
       end
 
       files = spec.files.size
-      gem_path = Gem::Package.build(spec)
+      # Built inside the chdir, so the returned name is relative to __dir__; made absolute here, the size
+      # and the cleanup below find it whatever directory rake was started from.
+      gem_path = File.expand_path(Gem::Package.build(spec), __dir__)
     end
     size = File.size(gem_path)
     puts "gem:build_proof: package built (#{size} bytes) from #{files} files; the list resolves, the anchors are in it"

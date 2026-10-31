@@ -298,8 +298,12 @@ module Master
 
       # The session's splash is the last of the boot; it paints through this.
       # Each line on its own, so a reset never spans a newline.
+      # 24-bit boot_sgr only where the terminal says it takes 24-bit colour; elsewhere
+      # (the OpenBSD wscons console, tmux without RGB) each parameter is read alone,
+      # 2 as faint and 0 as a reset, so boot_sgr_basic's palette colours are used.
       def console_paint(text, target)
-        sgr = cfg.fetch("boot_sgr", "").to_s
+        truecolor = ENV["COLORTERM"].to_s.match?(/\A(?:truecolor|24bit)\z/i)
+        sgr = cfg.fetch(truecolor ? "boot_sgr" : "boot_sgr_basic", "").to_s
         return text if sgr.empty? || !ENV["NO_COLOR"].to_s.empty?
         return text unless defined?(target.tty?) && target.tty?
 

@@ -71,7 +71,10 @@ class BootSafetySpec < Minitest::Test
     assert_includes source, "RuntimeLoopGuards.install!"
     assert_operator source.index("Master.boot"), :<, source.index("RuntimeLoopGuards.install!")
     boot = File.read(MASTER_BOOT)
-    assert_includes boot[boot.index("def boot(root"), 120], "prepare_runtime!", "Master.boot prepares the runtime before it boots"
+    # Master.boot runs boot_container inside Dmesg.booting; the runtime is prepared first thing there.
+    assert_includes boot[boot.index("def boot(root"), 120], "boot_container(root:)"
+    assert_includes boot[boot.index("def boot_container(root"), 80], "prepare_runtime!",
+                    "Master.boot prepares the runtime before it boots"
 
     runtime_source = File.read(MASTER_RUNTIME)
     assert_includes runtime_source, "install_process_guards!"

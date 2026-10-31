@@ -27,7 +27,7 @@ module Operator
       constitution: "lib/core/constitution.rb",
     }.freeze
 
-    LAW_FILES = %w[soul.yml laws.yml budgets.yml voice.yml].freeze
+    LAW_FILES = %w[soul.yml laws.yml budgets.yml console.yml scan.yml voice.yml].freeze
 
     def self.report
       new.report

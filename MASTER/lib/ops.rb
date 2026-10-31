@@ -234,7 +234,7 @@ module Master
     end
 
     module ProcessBudget
-      CONFIG_PATH = File.join(Master::ROOT, "data", "budgets.yml").freeze
+      CONFIG_PATH = Master.config_path("process").freeze
       NON_SLOT_LOOPS = %w[heartbeat].freeze
       @last_run = {}
 

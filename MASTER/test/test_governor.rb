@@ -137,10 +137,50 @@ class GovernorTest < Minitest::Test
     end
   end
 
+  # One Governor lives as long as the process, so the budget refills when a new /fix run starts.
+  def test_a_new_run_refills_the_budget
+    bus = FakeBus.new
+    Master::Fix::Governor.stub(:auto_allowlist, []) do
+      Master::Fix::Governor.stub(:auto_dangerous_budget, 1) do
+        governor = Master::Fix::Governor.new(config: Config.new(true), event_bus: bus)
+        permit = ->(command) { governor.check_permit("zsh", :dangerous, command).ok? }
+        bus.publish("fix_loop:pass_start", run_id: "run-1")
+        assert permit.("ls")
+        refute permit.("ls -la")
+
+        bus.publish("fix_loop:pass_start", run_id: "run-1")
+        refute permit.("ls -R"), "a later pass of the same run spends on"
+        bus.publish("fix_loop:pass_start", run_id: "run-2")
+        assert permit.("ls")
+      end
+    end
+  end
+
+  def test_concurrent_callers_cannot_overspend_the_budget
+    Master::Fix::Governor.stub(:auto_allowlist, []) do
+      Master::Fix::Governor.stub(:auto_dangerous_budget, 3) do
+        governor = Master::Fix::Governor.new(config: Config.new(true))
+        approved = 8.times.map { Thread.new { governor.auto_dangerous_approved?("zsh") } }.map(&:value)
+
+        assert_equal 3, approved.count(true)
+      end
+    end
+  end
+
   class FakeBus
     attr_reader :events
 
-    def initialize = @events = []
-    def publish(name, payload = nil, **kwargs) = @events << [name, payload || kwargs]
+    def initialize
+      @events = []
+      @handlers = Hash.new { |hash, key| hash[key] = [] }
+    end
+
+    def publish(name, payload = nil, **kwargs)
+      event = payload || kwargs
+      @events << [name, event]
+      @handlers[name].each { |handler| handler.call(event) }
+    end
+
+    def subscribe(name, &handler) = @handlers[name] << handler
   end
 end
