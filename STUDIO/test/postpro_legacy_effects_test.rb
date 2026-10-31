@@ -7,6 +7,7 @@ class PostproLegacyEffectsTest < Minitest::Test
   LEGACY = File.read(File.join(ROOT, "postpro", "legacy_effects.rb"))
   RECIPE = File.read(File.join(ROOT, "postpro", "lib", "recipe.rb"))
   DISPATCH = File.read(File.join(ROOT, "postpro", "lib", "grade_step.rb"))
+  DISPATCH = File.read(File.join(ROOT, "postpro", "lib", "grade_step.rb"))
 
   RESTORED = %w[
     film_grain film_halation bloom_effect cross_process golden_hour_glow lomo
@@ -22,12 +23,14 @@ class PostproLegacyEffectsTest < Minitest::Test
 
   def test_every_historical_effect_is_executable_or_has_a_current_equivalent
     missing_methods = RESTORED.reject { |name| LEGACY.match?(/\bdef\s+#{Regexp.escape(name)}\b/) }
-    missing_recipe_names = (RESTORED + EXISTING_EQUIVALENTS).reject do |name|
+    missing_recipe_names = RESTORED.reject do |name|
       RECIPE.match?(/\b#{Regexp.escape(name)}\b/)
     end
 
     assert_empty missing_methods, "missing restored implementations: #{missing_methods.join(', ')}"
+    missing_dispatch_names = EXISTING_EQUIVALENTS.reject { |name| DISPATCH.include?(name) }
     assert_empty missing_recipe_names, "missing recipe vocabulary: #{missing_recipe_names.join(', ')}"
+    assert_empty missing_dispatch_names, "missing current dispatch equivalents: #{missing_dispatch_names.join(', ')}"
     assert_empty missing_dispatch_names, "missing current dispatch equivalents: #{missing_dispatch_names.join(', ')}"
   end
 
