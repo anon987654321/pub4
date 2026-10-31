@@ -59,6 +59,13 @@ the commit that carries its evidence; nothing here records finished work.
   Playlist engine's `_transport_bar.html.erb` and `.playlist-transport-bar` CSS:
   play/pause/previous/stop/next/volume, floating rounded geometry, safe-area offset,
   nav autohide and reduced-motion handling. No duplicate implementation is needed.
+- The TTS lip-sync implementation is already present: `face_speech_playback.js`
+  schedules viseme plans against their audio clock, with `viseme_plan.test.mjs` and
+  `performance_timeline.test.mjs` coverage. Audible latency/quality on the target
+  device remains a separate runtime check.
+- The current language policy (English Christopher; Norwegian Pernille/Finn; Malay
+  Yasmin/Osman) supersedes the earlier request to rotate all voices indiscriminately.
+  Preserve the per-language routing; do not regress into cross-language voice rotation.
 - The requested Brgen responsive screenshot set is already present in Git: mobile and
   desktop pairs for Brgen, Dating, Maps, Marketplace, Messenger, Radio, TV and MASTER,
   plus Amber and BSDPorts. This is a current-tree asset inventory, not a fresh runtime
@@ -109,6 +116,12 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
   deprecated standalone seven-mode visualizer. Implement and test only the two current
   visualizers' track-driven transition and confirm the shared style, reduced motion,
   and rendered mobile/desktop behavior before closing.
+- [ ] **Norwegian MASTER README:** the earlier explicit request for a complete
+  `MASTER.norwegian.md` translation is not represented in the current tree (no
+  Norwegian counterpart exists). After the mandatory complete MASTER read, translate
+  the canonical README without changing technical meaning, keep links/commands/code
+  identical, and add a parity check so material English README sections cannot silently
+  disappear from the Norwegian edition.
 - [ ] **MASTER README narrated face preview:** older requests include an inline
   face-speaking preview, mobile `README_ss.webp` and Norwegian counterpart,
   a full-README TTS narration, and a real SSH/`bin/master` dmesg transcript.
