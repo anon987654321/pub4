@@ -129,4 +129,29 @@ class EmailSubscriptionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
     assert_not EmailSubscription.exists?(subscription.id)
   end
+
+  # The mail client posts this body with no session and no CSRF token.
+  test "one-click stops marketing mail and keeps the consent trail" do
+    subscription = EmailSubscription.create!(
+      email: "one-click@example.com", confirmed: true, agreed_to_marketing: true
+    )
+
+    post one_click_email_subscription_path(token: subscription.token),
+      params: "List-Unsubscribe=One-Click", headers: { "Content-Type" => "application/x-www-form-urlencoded" }
+
+    assert_response :ok
+    assert EmailSubscription.exists?(subscription.id)
+    refute subscription.reload.agreed_to_marketing?
+    revoke = Shared::AuditEvent.where(
+      target_type: "EmailSubscription", target_id: subscription.id,
+      action: "newsletter.marketing_consent.revoked"
+    ).last
+    assert_equal "one_click", revoke.metadata["source"]
+  end
+
+  test "one-click with an unknown token answers 404" do
+    post one_click_email_subscription_path(token: "not-a-token")
+
+    assert_response :not_found
+  end
 end

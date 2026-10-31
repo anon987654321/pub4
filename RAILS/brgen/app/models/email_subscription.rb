@@ -54,10 +54,16 @@ class EmailSubscription < ApplicationRecord
       return record_marketing_consent!(source: "preference_center")
     end
 
+    revoke_marketing_consent!(source: "preference_center")
+  end
+
+  # One-click comes from the mail client (RFC 8058), not the preference page;
+  # the audit says which.
+  def revoke_marketing_consent!(source:)
     return true unless agreed_to_marketing?
 
     update!(agreed_to_marketing: false)
-    audit_marketing_consent!("revoked", source: "preference_center")
+    audit_marketing_consent!("revoked", source:)
     true
   end
 

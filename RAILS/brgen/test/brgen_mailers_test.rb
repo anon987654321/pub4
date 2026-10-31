@@ -48,6 +48,9 @@ class BrgenMailersTest < ActionMailer::TestCase
       assert_includes part.body.to_s, preference_path
       assert_includes part.body.to_s, I18n.t("email_preferences.title")
     end
+    # RFC 8058: the mail client's one-click button POSTs to the token's URL.
+    assert_includes mail["List-Unsubscribe"].to_s, one_click_email_subscription_path(token: sub.token)
+    assert_equal "List-Unsubscribe=One-Click", mail["List-Unsubscribe-Post"].to_s
   end
 
   test "verification subject is a key and both parts carry the token" do

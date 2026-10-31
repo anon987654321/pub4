@@ -21,8 +21,12 @@ class EmailSubscriptionsController < ApplicationController
   # the property that makes it safe lives in a `before_create` in another file,
   # and "unguessable" is a claim about a token generator that nothing stops
   # someone shortening. A limit costs one line and does not depend on that.
-  rate_limit to: 30, within: 1.minute, only: %i[confirm show update destroy], name: "token_lookup",
+  rate_limit to: 30, within: 1.minute, only: %i[confirm show update destroy one_click], name: "token_lookup",
     with: -> { redirect_to root_path, alert: t("shared.flash.rate_limited") }
+  # RFC 8058 one-click: the mail client POSTs from no page and no session, so
+  # there is no CSRF token to check. The bearer is the unguessable token in the
+  # List-Unsubscribe URL, and all it can do is stop marketing mail.
+  skip_forgery_protection only: :one_click
 
   def create
     unless params.dig(:email_subscription, :agreed_to_marketing) == "1"
@@ -73,6 +77,14 @@ class EmailSubscriptionsController < ApplicationController
     sub = find_subscription
     sub.destroy!
     redirect_to root_path, notice: t("flash.unsubscribed")
+  end
+
+  def one_click
+    subscription = EmailSubscription.find_by(token: params[:token])
+    return head :not_found unless subscription
+
+    subscription.revoke_marketing_consent!(source: "one_click")
+    head :ok
   end
 
   private
