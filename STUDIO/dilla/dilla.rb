@@ -8068,6 +8068,10 @@ def run(argv)
   options[:live] = true if live_argument
 
   data = JSON.parse(File.read(File.join(__dir__, "data", "dilla.json")))
+  if options[:language] || options[:heritage]
+    raise ArgumentError, "--language/--heritage cannot be combined with --progression" if options[:prog]
+    raise ArgumentError, "--language/--heritage cannot be combined with --showcase, --play or live" if options[:showcase] || options[:play] || options[:live]
+  end
   if options[:language] && options[:heritage]
     raise ArgumentError, "--language and --heritage are mutually exclusive"
   end
