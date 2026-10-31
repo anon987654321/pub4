@@ -49,6 +49,9 @@
   <div class="radio-now-playing<%= " radio-now-playing--minimal" if local_assigns.fetch(:minimal, false) %>" aria-live="polite">
     <span class="radio-note-icon" aria-hidden="true">♪</span>
     <span class="radio-track-display" data-radio-tunnel-target="trackDisplay">…</span>
+    <%# Shown while a whyp.it track plays; the tunnel sets its href. %>
+    <%= link_to t("playlist.on_whyp"), "https://whyp.it", class: "radio-source-credit", hidden: true,
+                target: "_blank", rel: "noopener", data: { radio_tunnel_target: "sourceCredit" } %>
   </div>
 
   <div

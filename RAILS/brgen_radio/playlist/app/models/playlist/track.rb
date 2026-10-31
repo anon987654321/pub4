@@ -118,12 +118,16 @@ class Playlist::Track < ApplicationRecord
   end
 
   def whyp_embed_url
-    # Support https://whyp.it/tracks/123 or https://www.whyp.it/tracks/123
-    # Use /embed for clean customizable player iframe (affiliate partner)
+    # https://whyp.it/tracks/123 or www., with the share token a private track
+    # needs carried over. The embed is whyp.it's canonical /embeds/track/ path;
+    # /tracks/123/embed answered 200 only because the site serves its app shell
+    # for any path.
     uri = URI.parse(source_url)
-    if uri.path =~ %r{/tracks/(\d+)}
-      "https://whyp.it/tracks/#{$1}/embed"
-    end
+    id = uri.path[%r{/tracks/(\d+)}, 1]
+    return unless id
+
+    token = Rack::Utils.parse_query(uri.query)["token"].presence
+    "https://whyp.it/embeds/track/#{id}#{"?token=#{CGI.escape(token)}" if token}"
   rescue URI::InvalidURIError
     nil
   end

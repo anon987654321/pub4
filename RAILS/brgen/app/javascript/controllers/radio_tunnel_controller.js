@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import { RadioBrgen } from "radio_brgen_tunnel"
 
 export default class extends Controller {
-  static targets = ["canvas", "overlay", "trackDisplay", "youtubePlayer", "heading", "archaeology"]
+  static targets = ["canvas", "overlay", "trackDisplay", "sourceCredit", "youtubePlayer", "heading", "archaeology"]
   static values = { tracks: Array, heading: String, autoStart: { type: Boolean, default: true } }
 
   connect() {
@@ -10,6 +10,7 @@ export default class extends Controller {
       canvas: this.canvasTarget,
       overlay: this.hasOverlayTarget ? this.overlayTarget : null,
       trackDisplay: this.hasTrackDisplayTarget ? this.trackDisplayTarget : null,
+      sourceCredit: this.hasSourceCreditTarget ? this.sourceCreditTarget : null,
       youtubePlayer: this.hasYoutubePlayerTarget ? this.youtubePlayerTarget : null,
       heading: this.hasHeadingTarget ? this.headingTarget : null,
       headingText: this.headingValue || null,

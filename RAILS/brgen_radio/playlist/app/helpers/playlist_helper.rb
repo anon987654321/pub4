@@ -14,7 +14,7 @@ module PlaylistHelper
     return curated if curated.any?
 
     # Before that import, retain the existing external-reference radio.
-    manifest = Brgen::RadioBergenManifest.youtube_tracks + Brgen::RadioBergenManifest.whyp_tracks
+    manifest = radio_interleave(Brgen::RadioBergenManifest.youtube_tracks, Brgen::RadioBergenManifest.whyp_tracks)
     hosted = Playlist::Track
       .where(source_type: %w[youtube direct])
       .where.not(source_url: [ nil, "" ])
@@ -51,6 +51,13 @@ module PlaylistHelper
         artwork: (main_app.url_for(track.artwork) if track.artwork.attached?)
       }.compact
     end
+  end
+
+  # The operator's whyp.it uploads every other track after the opener, not
+  # queued behind every YouTube reference an hour and a half in.
+  def radio_interleave(references, whyp)
+    opener, *rest = references
+    [opener, *whyp.zip(rest).flatten, *rest.drop(whyp.size)].compact
   end
 
   def radio_tunnel_fallback_tracks

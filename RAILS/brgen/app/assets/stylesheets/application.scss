@@ -6636,6 +6636,13 @@ font-size: clamp(12px, 3vw, var(--text-sm));
   color: var(--color-accent);
 }
 
+.radio-source-credit {
+  flex: none;
+  pointer-events: auto;
+  color: inherit;
+  text-decoration: underline;
+}
+
 .radio-track-display {
   white-space: nowrap;
   overflow: hidden;

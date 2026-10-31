@@ -1005,6 +1005,7 @@ nb:
       point_up: Pek i taket
   playlist:
     home_title: Spilleliste
+    on_whyp: "på whyp.it"
     tap_to_start: trykk for å starte
     next: Neste spor
     play: Spill av

@@ -31,9 +31,10 @@ const BAND_BASS = 0.012
 const BAND_MID = 0.09
 
 class AudioEngine {
-  constructor({ iframe, trackDisplay, tracks = DEFAULT_TRACKS }) {
+  constructor({ iframe, trackDisplay, sourceCredit = null, tracks = DEFAULT_TRACKS }) {
     this.iframe = iframe
     this.trackDisplay = trackDisplay
+    this.sourceCredit = sourceCredit
     this.tracks = tracks.length ? tracks : DEFAULT_TRACKS
     this.isPlaying = false
     this.currentTrack = initialTrackIndex(this.tracks, OPENING_TRACK_ID)
@@ -86,7 +87,8 @@ class AudioEngine {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title,
       artist: track.artist || "Radio Bergen",
-      album: "Radio Bergen",
+      // A whyp.it track names where it lives, on the lock screen too.
+      album: track.whyp_id ? "Radio Bergen · whyp.it" : "Radio Bergen",
       artwork: artwork ? [{ src: artwork }] : []
     })
     navigator.mediaSession.playbackState = this.isPlaying ? "playing" : "paused"
@@ -195,7 +197,8 @@ class AudioEngine {
   #loadWhyp(track) {
     const id = encodeURIComponent(track.whyp_id)
     const token = encodeURIComponent(track.whyp_token ?? "")
-    this.#loadEmbed(`https://whyp.it/tracks/embed?id=${id}&token=${token}`)
+    // The canonical embed; whyp.it 301s its older tracks/embed?id= form here.
+    this.#loadEmbed(`https://whyp.it/embeds/track/${id}?token=${token}`)
   }
 
   #loadEmbed(embedUrl) {
@@ -325,6 +328,21 @@ class AudioEngine {
     const track = this.tracks[this.currentTrack]
     if (!track) return
     this.trackDisplay.textContent = [`${track.artist} - ${track.title}`, note].filter(Boolean).join(" · ")
+    this.#showSourceCredit(track)
+  }
+
+  // While a whyp.it track plays, a visible link to its page there: the music
+  // is the operator's, hosted on whyp.it, and the player frame is off-screen,
+  // so without this nothing on the page says where it can be followed.
+  #showSourceCredit(track) {
+    const credit = this.sourceCredit
+    if (!credit) return
+
+    credit.hidden = !track.whyp_id
+    if (!track.whyp_id) return
+
+    const token = track.whyp_token ? `?token=${encodeURIComponent(track.whyp_token)}` : ""
+    credit.href = `https://whyp.it/tracks/${encodeURIComponent(track.whyp_id)}${token}`
   }
 
   stop() {
@@ -1051,6 +1069,7 @@ export class RadioBrgen {
     this.audioEngine = new AudioEngine({
       iframe: options.youtubePlayer,
       trackDisplay: options.trackDisplay,
+      sourceCredit: options.sourceCredit,
       tracks: options.tracks
     })
     this.visualEngine = new VisualEngine(this.canvas)

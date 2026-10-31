@@ -18,7 +18,7 @@
 
   <div class="field">
     <%= form.label :source_type %>
-    <%= form.select :source_type, Playlist::Track::SOURCE_TYPES.reject { |t| t == "whyp" }.map { |t| [t.humanize, t] }, include_blank: true %>
+    <%= form.select :source_type, Playlist::Track::SOURCE_TYPES.map { |t| [t.humanize, t] }, include_blank: true %>
   </div>
 
   <div class="field">

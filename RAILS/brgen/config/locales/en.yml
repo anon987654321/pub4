@@ -1001,6 +1001,7 @@ en:
       point_up: Point at the ceiling
   playlist:
     home_title: Playlist
+    on_whyp: "on whyp.it"
     tap_to_start: tap to start
     next: Next track
     play: Play

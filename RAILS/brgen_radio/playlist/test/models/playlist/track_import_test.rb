@@ -45,7 +45,8 @@ class Playlist::TrackImportTest < ActiveSupport::TestCase
       "https://youtu.be/abc123" => "https://www.youtube.com/embed/abc123",
       "https://www.youtube.com/watch?v=abc123" => "https://www.youtube.com/embed/abc123",
       "https://open.spotify.com/track/xyz789" => "https://open.spotify.com/embed/track/xyz789",
-      "https://whyp.it/tracks/42" => "https://whyp.it/tracks/42/embed"
+      "https://whyp.it/tracks/42" => "https://whyp.it/embeds/track/42",
+      "https://whyp.it/tracks/42?token=aB3" => "https://whyp.it/embeds/track/42?token=aB3"
     }
 
     embeds.each do |source, embed|
