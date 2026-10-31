@@ -67,6 +67,16 @@ The five restored grammars are playable, transposable rule sets rather than fixe
 
 The ten named chord/tempo presets from the earlier consolidated generator are also preserved in `data/recovered_music.json`. `--list` exposes them and `--heritage NAME` renders one through today's synthesizer, voicer, groove, effect and mastering path. Their original SoX effect labels remain provenance only; they are not silently translated into different current effect rigs. These are historical style presets, not verified transcriptions of recordings. The same archive retains the full earlier chord-type table, all jazz/neo-soul/funk progression groups, the 15 analog pad recipes, the 11 vintage FX-chain descriptions and the complete earlier drum-pattern/swing/synthesis database. The drum data and chord vocabulary were checked against the current recovery; the two pad/FX groups that were not represented in the current archive have now been carried forward intact.
 
+### Recovered pocket and named production studies
+
+The recovered one-bar `dilla_inversion` pattern and the `theseus_microtiming` profile are live data, not archive-only notes. Audition their original relationship with:
+
+```sh
+ruby STUDIO/dilla/dilla.rb --profile theseus_microtiming --drums dilla_inversion --bpm 88 --seed 1206 --no-video --out /tmp/dilla-inversion.wav
+```
+
+The profile anchors its first kick, places later kicks 12 ms behind, snares 10 ms ahead and hats 15 ms behind. Theseus is explicitly a proposed repeatable timing model, not a claim about measured offsets in a particular recording. The archive also preserves `get_dis_money` (C-sharp minor at 90 BPM, seven-bar sample form and alternate E-pedal voicings), `burton_flip` (B7b9–F7#11–E9sus4), and `dont_cry_ii_add11` (a Dm11-centred C-major study). Their source and confidence labels remain in `data/recovered_music.json`; `get_dis_money` retains both its C-sharp-minor transcription and the alternate E-pedal interpretation rather than flattening the disagreement. The full notes also retain the proposed vibraphone articulation and the low-confidence Hooktheory lead. These named studies are not all one-click render presets: the seven-bar form and its exact chord-to-bar map remain separate from the four-chord heritage preset runner.
+
 ## Engine notes
 
 The detailed composition/groove, voice/instrument and effects/mastering rationale is kept in
