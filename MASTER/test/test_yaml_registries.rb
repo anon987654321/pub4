@@ -382,9 +382,12 @@ class TestLawsPhysicalOrder < Minitest::Test
   ORDER = %w[
     CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS SINGULARITY LINEARITY
     PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES INTER_MODEL_CONTRACT languages markdown_style visual_identity_contract
-    prose zsh detection_calibration phantom_recovery transformation_policy self_test veto_patterns anti_patterns
-    architecture runtime_policy law_deps plugins law_ratchets law_map browser_policy
+    typography prose zsh detection_calibration phantom_recovery transformation_policy self_test veto_patterns
+    anti_patterns architecture runtime_policy evidence_scoring law_deps plugins law_ratchets law_map browser_policy
     face_ascii personal_privacy law_catalogue
+    STYLE_REGISTRY STYLE_SCOPE STYLE_LINEAGE STYLE_VERSIONING STYLE_TEMPORAL_CONSTANCY STYLE_REFUSAL STYLE_ARBITRATION
+    VISUAL_IDENTITY_TOKENS_ONLY VISUAL_CONTRAST_WCAG_AA VISUAL_DISCLOSURE_PROMINENCE VISUAL_ALT_TEXT_PRESENT
+    VISUAL_SAFE_ZONE_RESPECTED VISUAL_RENDER_INTEGRITY
   ].freeze
   TRANSFORMATION_ORDER = %w[
     remove defragment flatten decouple split hoist merge relocate rename reorder

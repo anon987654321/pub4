@@ -16,12 +16,13 @@ class TestSessionLawContext < Minitest::Test
     [status.exitstatus, out]
   end
 
-  def test_it_states_the_authority_order_and_the_guards
+  def test_it_states_the_authority_order_and_the_lint_to_run
     code, out = run_hook({ "cwd" => File.join(REPO, "MASTER") })
 
     assert_equal 0, code
     assert_includes out, "soul.yml > MASTER/data/laws.yml"
-    assert_includes out, "a turn cannot finish"
+    assert_includes out, "No hook refuses a tool call or a finish"
+    assert_includes out, "lint --changed-lines"
     assert_match(/^  [A-Z_]+ \(\d+\): /, out, "the top-ranked laws are listed from laws.yml")
   end
 
@@ -34,18 +35,19 @@ class TestSessionLawContext < Minitest::Test
     end
   end
 
+  def settings = JSON.parse(File.read(File.join(REPO, ".claude", "settings.json"))).fetch("hooks")
+
   def registered_commands
-    settings = JSON.parse(File.read(File.join(REPO, ".claude", "settings.json"))).fetch("hooks")
     settings.values.flatten.flat_map { |entry| entry.fetch("hooks") }.map { |hook| hook.fetch("command") }
   end
 
-  def test_the_committed_settings_register_the_hooks_that_mirror_master
+  # The briefing runs through hook_ruby.rb, which finds a Ruby that can parse it when the hook's PATH
+  # holds only 2.6. No hook refuses a tool call or a finish (operator, 2026-10-31).
+  def test_the_committed_settings_brief_the_session_and_block_nothing
     commands = registered_commands
 
-    # Through hook_ruby.rb, which finds a Ruby that can parse them when the hook's PATH holds only 2.6:
-    # the briefing, the edit recorder and the Stop check.
-    endings = ["session_law_context", "finish_check record", "finish_check"].map { |hook| "hook_ruby.rb\" #{hook}" }
-    endings.each { |ending| assert_includes commands.map { |command| command[-ending.size..] }, ending }
+    assert(commands.any? { |command| command.end_with?("hook_ruby.rb\" session_law_context") }, commands.inspect)
     assert_empty commands.grep(%r{MASTER/tools/(?!hook_ruby)\w+\.rb}), "no hook bypasses the launcher"
+    refute_includes settings.keys, "PreToolUse", "no hook refuses a tool call"
   end
 end

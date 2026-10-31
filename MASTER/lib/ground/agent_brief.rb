@@ -22,18 +22,19 @@ module Master
         limit = CommitFormat.max_chars(root: File.join(root, "MASTER"))
 
         <<~TEXT
-          pub4 session context. You work under MASTER's constitution; the guards below are mechanical, not advice.
+          pub4 session context. You work under MASTER's constitution. No hook refuses a tool call or a finish;
+          the laws are yours to apply.
 
           Authority: MASTER/data/soul.yml > MASTER/data/laws.yml > MASTER/law/*.rb and scan/laws/*.rb
             > the agent contract (CLAUDE.md or AGENTS.md) > the tree contract.
           Never edit soul.yml or laws.yml. Write straight to main; commit path-scoped (git commit -- <paths>), never -a.
           Commits take MASTER's shape (MASTER/data/commit_format.yml): a capitalised subject of at most #{limit}
             characters with no type prefix and no full stop, a blank line, a body saying what changed and what it
-            cost, a blank line, and a Co-authored-by trailer. The commit-msg hook refuses the rest.
+            cost, a blank line, and a Co-authored-by trailer.
 
-          Guards: read the law before the first write (ruby MASTER/tools/agent_context.rb --tree, then each Law
-            with MASTER/bin/operator laws <ID>); every edit is judged by the laws; a turn cannot finish while a
-            line you changed breaks one (MASTER/bin/operator lint --changed-lines <files> shows what the guard sees).
+          Before the first write, read the law (ruby MASTER/tools/agent_context.rb --tree, then each Law with
+            MASTER/bin/operator laws <ID>); before you finish, MASTER/bin/operator lint --changed-lines <files>
+            shows what a line you changed breaks.
         TEXT
       end
 

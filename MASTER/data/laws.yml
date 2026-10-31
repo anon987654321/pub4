@@ -257,9 +257,8 @@ prose:
 # do not become automatic repair targets until their detectors have stronger evidence.
 zsh:
   # The one list of commands a shell line may not run, and what to write instead.
-  # Read by Master::Io::GnuTextTools for MASTER's own shell (Io::Shell refuses),
-  # the coding-harness PreToolUse hook (tools/block_gnu_text_tools.rb) and the
-  # ZSH_NATIVE_PATTERNS Law over the repo's scripts. Every banned command has a row.
+  # Read by Master::Io::GnuTextTools for MASTER's own shell (Io::Shell refuses) and
+  # the ZSH_NATIVE_PATTERNS Law over the repo's scripts. Every banned command has a row.
   banned_commands: [sed, awk, tr, cut, find, head, tail, wc, perl, python, bash]
   forbidden_commands:
     - command: sed

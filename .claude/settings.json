@@ -10,54 +10,12 @@
     "deny": [],
     "ask": []
   },
-  "comment": "Per MASTER2 LLM.md — bash permitted for git/ruby/bundle invocations only. All other shell ops use zsh. rbenv is allowed so Rails/MASTER commands can honor the repository's .ruby-version. vm23 ssh/curl deliberately NOT here: settings.local.json already grants Bash(ssh *) personally, and this file is committed — production access belongs in a per-operator file, not one that ships to whoever clones.",
+  "comment": "Per MASTER2 LLM.md — bash permitted for git/ruby/bundle invocations only. All other shell ops use zsh. rbenv is allowed so Rails/MASTER commands can honor the repository's .ruby-version. vm23 ssh/curl deliberately NOT here: settings.local.json already grants Bash(ssh *) personally, and this file is committed — production access belongs in a per-operator file, not one that ships to whoever clones. No hook refuses a tool call or a finish (operator, 2026-10-31): the remaining hooks rebuild generated assets, load the constitution as context, and speak the reply.",
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" block_git_stash",
-            "statusMessage": "Checking for a shared git stash",
-            "timeout": 15
-          },
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" block_gnu_text_tools",
-            "statusMessage": "Checking for GNU text tools",
-            "timeout": 15
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" require_law_first",
-            "statusMessage": "Checking the law was read",
-            "timeout": 15
-          },
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" law_check_edit",
-            "statusMessage": "Judging the edit by the laws",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
         "hooks": [
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" finish_check record",
-            "statusMessage": "Noting the edit",
-            "timeout": 10
-          },
           {
             "type": "command",
             "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in */RAILS/*.scss) ROOT=\"$(git rev-parse --show-toplevel)\" && ruby \"$ROOT/MASTER/tools/rails/build_all_css.rb\";; esac; } 2>/dev/null || true",
@@ -71,27 +29,11 @@
             "timeout": 600
           }
         ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" require_law_first",
-            "timeout": 15
-          }
-        ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/hook_ruby.rb\" finish_check",
-            "statusMessage": "Judging what you changed before you finish",
-            "timeout": 240
-          },
           {
             "type": "command",
             "command": "test -f \"$HOME/.claude/hooks/speak_reply.rb\" && ruby \"$HOME/.claude/hooks/speak_reply.rb\" || true",

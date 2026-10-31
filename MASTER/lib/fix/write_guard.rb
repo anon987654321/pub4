@@ -50,8 +50,8 @@ module Master
       end
 
       # A sacred path is refused to an automated writer before its content is
-      # judged. automated: false is the hand edit an agent makes for the operator
-      # (tools/law_check_edit.rb), which, like a person's commit, may change one.
+      # judged. automated: false is the hand edit an agent makes for the operator,
+      # which, like a person's commit, may change one.
       def verdict(path:, content:, automated: true)
         law, reason = refusal(path:, content:, automated:)
         return Verdict.new(introduced: [{ law:, line: 0, message: reason, severity: :error }]) if reason

@@ -373,7 +373,6 @@ registry_finding_members:
   - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/voice/renderer/text_formatting.rb:77
   - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/voice/shaping.rb:87
   - NO_ASCII_ART_OUTSIDE_FACE MASTER/lib/voice/strunk_pass.rb:12
-  - NO_ASCII_ART_OUTSIDE_FACE MASTER/tools/block_git_stash.rb:26
   - NO_ASCII_ART_OUTSIDE_FACE MASTER/tools/event_bus_reach.rb:18
   - NO_ASCII_ART_OUTSIDE_FACE MASTER/tools/event_bus_reach.rb:21
   - NO_ASCII_ART_OUTSIDE_FACE MASTER/tools/event_bus_reach.rb:28

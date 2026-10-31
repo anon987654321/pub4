@@ -7,9 +7,8 @@ module Master
   module Io
     # Which banned commands a shell line would run: data/laws.yml
     # `zsh.banned_commands`, judged one way for every reader. Io::Shell refuses a
-    # line MASTER's own agents send, tools/block_gnu_text_tools.rb refuses one a
-    # coding harness sends through its PreToolUse hook, and the ZSH_NATIVE_PATTERNS
-    # Law reports one written into a script.
+    # line MASTER's own agents send, and the ZSH_NATIVE_PATTERNS Law reports one
+    # written into a script.
     #
     # The hook used to carry its own BANNED hash beside the law's list, and the two
     # had drifted: the law bans bash, the hook did not. Io::Shell matched `\bsed\b`

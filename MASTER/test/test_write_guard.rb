@@ -86,7 +86,7 @@ class WriteGuardTest < Minitest::Test
     end
   end
 
-  # The operator's hand edit (tools/law_check_edit.rb) may change a sacred file; its content is still judged.
+  # The operator's hand edit may change a sacred file; its content is still judged.
   def test_malformed_law_catalogue_is_blocked_by_configuration_invariants
     laws_path = File.join(Master::ROOT, "data", "laws.yml")
     verdict = @guard.verdict(path: laws_path, content: "law_catalogue: {}\n", automated: false)

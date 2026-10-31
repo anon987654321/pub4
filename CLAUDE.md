@@ -12,7 +12,7 @@ Before planning or taking action, load MASTER's canonical context in this order:
 4. Read the applicable Law entries in `MASTER/data/laws.yml`, and each Law's one `Law.define`, the Ruby under `MASTER/law/`. The catalogue entry holds the operator's decisions about a Law (severity, lifecycle, autofix permission, scope and exemptions); the `Law.define` holds what makes its detector correct (the detector, its fixtures or the test that proves it, its tags and repair transform). Neither restates the other.
 5. Read `MASTER/AGENTS.md` for the repository workflow and task guidance before editing.
 
-Shell commands obey `MASTER/data/laws.yml` `zsh.banned_commands`; the PreToolUse hook in `.claude/settings.json` refuses a command that breaks it and names the replacement.
+Shell commands obey `MASTER/data/laws.yml` `zsh.banned_commands`, which names the replacement for each. No hook enforces it here; MASTER's own shell refuses them, and the ZSH_NATIVE_PATTERNS Law reports them in scripts.
 
 Follow MASTER's current instructions for any additional context required by the task. Do not substitute remembered instructions, summaries, or assumptions for the live configuration and source.
 
