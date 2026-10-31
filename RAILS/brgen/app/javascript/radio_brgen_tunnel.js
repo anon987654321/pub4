@@ -1,5 +1,5 @@
 import { publishVisual } from "pub4/visual_field"
-import { INK_FAR, INK_MID, INK_NEAR, MODES, RING_SHAPE_GLSL } from "radio_brgen_modes"
+import { INK_FAR, INK_MID, INK_NEAR, MODES, RING_SHAPE_GLSL, modeAfterStep } from "radio_brgen_modes"
 
 'use strict'
 
@@ -1046,7 +1046,7 @@ class VisualEngine {
 
   // Step through MODES; returns the new mode.
   shiftMode(step) {
-    this.mode = (this.mode + step + MODES.length) % MODES.length
+    this.mode = modeAfterStep(this.mode, step)
     return this.mode
   }
 
