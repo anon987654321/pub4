@@ -34,7 +34,7 @@ module Master
         [
           "boot0 at mainbus0: safe #{ENV.fetch("MASTER_SAFE_MODE", "1")}, web #{ENV.fetch("MASTER_WEB", "0")}",
           *security_lines,
-          "loop0 at master0: #{status.fetch(:selected, "none")}, owner #{status.fetch(:owner, "none")}",
+          loop_line(status),
           "budget0 at master0: valid #{budget[:valid]}, slot #{budget.fetch(:slot, "unknown")}",
           style,
           "motd0 at master0: #{motd_spotlight}",
@@ -52,11 +52,23 @@ module Master
         [
           "security0 at master0: secure defaults, law-bound admission",
           "cap0 at security0: profile #{profile.name}, #{profile.capabilities.join(" ")}",
-          "pledge0 at security0: openbsd=#{Master::Ground::Pledge.openbsd?}, staged reduction",
+          pledge_line,
           "memory0 at security0: unveil-style restricted views available",
           "patch0 at security0: transaction-backed self-change with rollback",
           "model0 at security0: proposal-only; effects need capability admission",
         ]
+      end
+
+      # Prose, as the kernel says it, and claimed only where pledge exists;
+      # elsewhere the kernel's own phrase for a unit with nothing behind it.
+      def pledge_line
+        "pledge0 at security0: #{Master::Ground::Pledge.openbsd? ? "staged reduction" : "not configured"}"
+      end
+
+      # No loop selected is "none", not an empty field before the comma.
+      def loop_line(status)
+        selected = status[:selected].to_s
+        "loop0 at master0: #{selected.empty? ? "none" : selected}, owner #{status.fetch(:owner, "none")}"
       end
 
       def motd_spotlight
