@@ -35,6 +35,25 @@ document element, and the stylesheets read it from there. Declared is not worn, 
 read the built bundle before you describe what an app paints. The typeface is the
 same family in every app, and a fifth face is a decision and not an accident.
 
+Three of those decisions have been taken, on the operator's word (2026-10-29 and,
+delegated, 2026-10-31), and are recorded so that no one reopens them as drift:
+
+- The commerce surfaces, markedsplass and takeaway, wear the store dialect measured
+  from bol.com and Kaufland.de, because the marketplace competes at that class. It
+  keeps their 1px field and tile rules, their corner radii and the commerce sans
+  (`--font-commerce-sans`, a Helvetica Neue stack). That is the named exception to
+  "flat, no hairline rules" and to the one family, scoped under
+  `body.vertical-marketplace`. It does not travel to any other surface.
+- That dialect is two layers in brgen's stylesheet, the Kaufland `--store-*` rules
+  and the later bol `--bol-*` rules. Where both set one property the later layer
+  wins, so a rule meant to hold in both is written in the bol layer. The category
+  grid showed five tiles beside a column sized for four for exactly that reason.
+- Motion that is the operator's own design ships as designed, with its library
+  vendored and a still state for reduced motion and for no script: dating's first
+  screen (a css-doodle heart over a red bloom, the one gradient on a dark ground),
+  the marketplace's animated logo (anime.js) and brgen's in-feed collage ad.
+  Amber's affiliate rail stays the calm catalogue.
+
 Each app compiles one stylesheet, `application.scss`, into one built
 `application.css`, and a layout links that file and nothing else. The brgen
 verticals style themselves inside brgen's, scoped under their vertical class. The
