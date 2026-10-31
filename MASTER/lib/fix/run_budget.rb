@@ -26,7 +26,7 @@ module Master
       RESOURCE_CHECK_SECONDS = 30
       WARN_SHARE = 0.8
       UNIT = "budget0"
-      DEFAULT_LAW_SHARE = 0.10 # data/limits.yml#fix_budget overrides both
+      DEFAULT_LAW_SHARE = 0.10
       DEFAULT_RUN_TOKENS = 10_000_000
       COSTS = File.join(".master", "costs.jsonl")
       # A stalled run is asked to stop and prove what it did; it is killed only if it has not
@@ -474,8 +474,8 @@ module Master
       private
 
       def fix_budget_limits
-        data = Master.load_yaml(Master.limits_path, default: {}) || {}
-        data["fix_budget"].is_a?(Hash) ? data["fix_budget"] : {}
+        section = Master.config_section("fix_budget")
+        section.is_a?(Hash) ? section : {}
       rescue StandardError
         {}
       end

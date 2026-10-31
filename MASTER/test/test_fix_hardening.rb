@@ -155,8 +155,7 @@ class FixHardeningTest < Minitest::Test
     assert_operator Master::Fix::FixLoop::CLEAN_RUNS, :>=, 2
     assert_equal 2, Master::Fix::ConvergenceDiscipline::DEFAULTS.fetch("clean_runs_required")
 
-    limits = Master.load_yaml(Master.limits_path)
-    assert_equal 2, limits.fetch("convergence_discipline").fetch("clean_runs_required")
+    assert_equal 2, Master.config_section("convergence_discipline").fetch("clean_runs_required")
   end
 
   def test_clean_proof_uses_the_configured_clean_run_threshold

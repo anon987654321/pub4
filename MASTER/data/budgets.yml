@@ -1,0 +1,129 @@
+# The caps that protect money and the machine: what one Law may spend of a /fix
+# run, how long a run may take, tool-call rate ceilings, process and load guards,
+# when a run counts as converged, and how often the autofix loop polls.
+#
+# Split out of data/limits.yml on 2026-10-31.
+
+# What one law may spend of a /fix run before it is skipped for the rest of it.
+# Reader: Master::Fix::RunBudget#law_limit_exceeded?. law_share is a fraction of
+# the run's dollars (MASTER_FIX_MAX_COST) and of run_tokens, whichever trips
+# first; law_shares overrides it for one law id. run_tokens exists only as the
+# base for that share: subscription lanes bill $0.00 and still spend tokens.
+fix_budget:
+  law_share: 0.10
+  run_tokens: 10000000
+  law_shares: {}
+
+# How long a /fix run, one file in it, and a pass with nothing attempted may take, in seconds.
+# Reader: Master::Fix::FixTime. A lane entry (keyed as LaneQuota.lane_of names it) replaces the
+# default for a run pinned to that lane; MASTER_FIX_FILE_BUDGET_S / _RUN_BUDGET_S / _STALL_S
+# override one run. claude-cli answers a repair, its retry and the verifier in two to four
+# minutes each, so the default 240 s file budget timed out every Opus repair on 2026-10-27.
+fix_time:
+  default:
+    file_s: 240
+    run_s: 1800
+    stall_s: 600
+  lanes:
+    claude-cli:
+      file_s: 900
+      run_s: 7200
+      stall_s: 900
+
+governor:
+  # Calls a minute per tool tier; a ceiling against a runaway loop. Absent means no limit.
+  rate_limits:
+    guarded: 240
+    dangerous: 120
+  # Gates for an unattended (@auto) run's dangerous-tier approvals, read by
+  # Fix::Governor. The @auto path used to return ok for the whole dangerous tier
+  # before needs_human? was consulted — lib/ground/policy/sandbox.rb names the
+  # hole. Now an unattended dangerous approval must pass one of these two gates,
+  # and neither is widened by anything that runs inside a session:
+  #
+  # - auto_allowlist: exact tool names that never spend the budget. Persistent
+  #   and operator-owned; put the tools an unattended fold legitimately needs
+  #   here rather than raising the budget.
+  # - auto_dangerous_budget: how many approvals one run may spend on tools
+  #   outside the allowlist. Spent once, never refilled; when it is gone the
+  #   call falls to the approval prompt, which fails closed on a non-TTY, so
+  #   the fold sees the refusal instead of a silent widening. 240 gives a long
+  #   unattended session room at the dangerous tier's 120/min rate limit while
+  #   still bounding it; set it lower, or 0 to require the allowlist outright.
+  auto_allowlist: []
+  auto_dangerous_budget: 240
+
+# Loop/process budgets — moved from data/ops/process.yml; reader is Ops::ProcessBudget.
+process:
+  defaults:
+    safe_mode: true
+    max_active_loops: 1
+    loop_cooldown_seconds: 30
+  loops:
+    autofix:
+      env: MASTER_AUTOFIX
+      max_run_seconds: 1800
+      min_sleep_seconds: 300
+    watch:
+      env: MASTER_WATCH
+      max_run_seconds: 900
+      min_sleep_seconds: 30
+    watcher:
+      env: MASTER_WATCHER
+      max_run_seconds: 0
+      min_sleep_seconds: 30
+    heartbeat:
+      env: MASTER_HEARTBEAT
+      max_run_seconds: 120
+      min_sleep_seconds: 60
+  load:
+    load_avg_1m:
+      warn: 1.5
+      crit: 2.5
+    # master_rss_mb is left out on purpose: ResourceBudget scales it to 10% and 20% of the machine's RAM,
+    # floored at 512 and 768 MB for vm23. A figure here wins outright, and 768 MB here shed every
+    # model fix on an 8 GB Mac, where a /fix process sits near 1 GB.
+  resources:
+    fd_count:
+      warn: 512
+      crit: 1024
+    thread_count:
+      warn: 32
+      crit: 64
+    process_count:
+      warn: 256
+      crit: 512
+      # The count is host-wide. A macOS desktop idles at 570-600 processes
+      # (launchd agents, XPC services), past the server limits above, so it
+      # read as critical before MASTER did anything. warn is twice that idle;
+      # crit is 80% of kern.maxproc (2000 on the operator's Mac).
+      darwin:
+        warn: 1200
+        crit: 1600
+    # Gigabytes free, not a percentage: a run writes a few hundred megabytes,
+    # and 5% of a 228 GB volume is 11 GB. crit 2 -> 1 on 2026-10-27, the
+    # operator's call: the volume sat at 1.4-2 GB free and a run writes far less.
+    disk_free_gb:
+      warn: 5
+      crit: 1
+
+# Historical convergence semantics recovered from pub -> pub2 -> pub3 -> pub4.
+# Reader: Master::Fix::ConvergenceDiscipline. Keep behavior here, not prose-only.
+convergence_discipline:
+  # Two consecutive evidence-backed clean readings are the minimum.
+  clean_runs_required: 2
+  diminishing_delta: 0.001
+  diminishing_cycles: 3
+  oscillation_window: 3
+  working_memory_items: 7
+  context_switches_per_round: 3
+  decision_choices: 7
+  alternatives_min: 5
+  alternatives_max: 20
+  observation_to_mutation_ratio: 10
+
+autoloop:
+  # Fix::Supervisor reads poll_interval; Fix::Scanner reads scan_file_sleep_s
+  # under MASTER_AUTOFIX=1. Nothing else here has a reader.
+  scan_file_sleep_s: 2
+  poll_interval: 30

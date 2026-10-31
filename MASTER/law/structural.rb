@@ -316,7 +316,7 @@ module Master
           # in both directions rather than leaving that to the comment.
           #
           # design.rb and ops.rb are each a whole subsystem that is one file with
-          # no directory beside it, and each has its own loc_body_budgets key.
+          # no directory beside it.
           # device.rb (Termux capabilities), plugin.rb (the plugin manifest
           # loader) and snapshot.rb (the tree snapshot generator) are the same
           # shape: one file, one top-level Master constant that autoloads from it.

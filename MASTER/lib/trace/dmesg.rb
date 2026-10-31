@@ -11,7 +11,7 @@ module Master
     # OpenBSD dmesg-style kernel lines for operator progress.
     # Shape: "unitN at parent: detail" / "unitN: status". Prose, not key=value:
     # "scan0: 3 violations in 2 files", as the kernel says "sd0: 244198MB".
-    # Config: data/limits.yml#dmesg (enabled: true). Normal is the configured default; verbose and trace are explicit.
+    # Config: data/console.yml#dmesg (enabled: true). Normal is the configured default; verbose and trace are explicit.
     # ENV MASTER_DMESG accepts 0, quiet, normal, verbose, or trace.
     #
     # This shape is the CLI's whole style guide: append-only, one line per fact,
@@ -88,8 +88,8 @@ module Master
 
       def cfg
         @cfg ||= begin
-          data = Master.load_yaml(Master.limits_path, default: {}) || {}
-          data["dmesg"].is_a?(Hash) ? data["dmesg"] : { "enabled" => true }
+          section = Master.config_section("dmesg")
+          section.is_a?(Hash) ? section : { "enabled" => true }
         rescue StandardError
           { "enabled" => true }
         end
@@ -282,7 +282,7 @@ module Master
 
       # OpenBSD's console prints the kernel white on blue and userland plain.
       # MASTER's boot is its kernel: a line emitted inside booting takes
-      # limits.yml#dmesg.boot_sgr on a terminal. Pipes, logs, the narrator and
+      # console.yml#dmesg.boot_sgr on a terminal. Pipes, logs, the narrator and
       # everything after the boot get the plain text.
       def booting
         previous = @booting

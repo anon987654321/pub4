@@ -8,14 +8,13 @@ module Master
       RATE_WINDOW = 60.0
       TIERS = { safe: 0, guarded: 1, dangerous: 2 }.freeze
 
-      # Settings under limits.yml's `governor:` key, beside rate_limits. The split rule for that file is
-      # "add a top-level key only together with its reader" — these methods are the readers for the @auto
-      # gates below, added when the unattended dangerous-tier hole was closed.
+      # Settings under budgets.yml's `governor:` key: rate_limits, and the @auto gates below, added when the
+      # unattended dangerous-tier hole was closed.
       def self.governor_settings
-        Master.load_yaml(Master.limits_path, default: {}).dig("governor") || {}
+        Master.config_section("governor") || {}
       end
 
-      # Sliding-window rate limits per tier (calls per minute), from limits.yml governor.rate_limits. They guard
+      # Sliding-window rate limits per tier (calls per minute), from budgets.yml governor.rate_limits. They guard
       # against a runaway loop, not against work: three shell calls a minute made an analysis impossible.
       def self.rate_limits
         governor_settings["rate_limits"] || {}

@@ -184,7 +184,7 @@ class TestMasterLoop < Minitest::Test
     saved.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
   end
 
-  # The early-boot mode map and data/limits.yml#process are the same fact in two
+  # The early-boot mode map and data/budgets.yml#process are the same fact in two
   # places; this pins them so heartbeat->env and the "fix"/"autofix" alias cannot
   # drift apart.
   def test_loop_flags_agree_with_process_yaml
@@ -258,9 +258,13 @@ class TestMasterLoop < Minitest::Test
     assert_equal config, Master.models_config(root: Master::ROOT)
   end
 
-  def test_limits_and_state_resolve_to_their_files
-    assert File.exist?(Master.limits_path)
-    assert Master.limits_path.end_with?("limits.yml")
+  def test_config_sections_resolve_to_their_files
+    assert Master.config_path("dmesg").end_with?("console.yml")
+    assert Master.config_path("fix_time").end_with?("budgets.yml")
+    Master::CONFIG_FILES.each_key { |section| assert File.exist?(Master.config_path(section)), section }
+  end
+
+  def test_state_resolves_and_retired_files_stay_gone
     assert File.exist?(Master.state_path)
     refute File.exist?(Master.data_path("style.yml"))
     refute File.exist?(Master.data_path("operator_principles.yml"))

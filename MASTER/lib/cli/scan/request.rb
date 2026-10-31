@@ -160,7 +160,7 @@ module Master
         end
 
         def load_workflow_profiles
-          path = Master.limits_path
+          path = Master.config_path("scan_profiles")
           self.class.workflow_profiles(path)
         end
 

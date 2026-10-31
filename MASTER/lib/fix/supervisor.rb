@@ -141,7 +141,7 @@ module Master
       end
 
       def poll_interval
-        value = Master.load_yaml(Master.limits_path).dig("autoloop", "poll_interval").to_f
+        value = Master.config_section("autoloop").to_h["poll_interval"].to_f
         value.positive? ? value : DEFAULT_POLL_INTERVAL
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix.supervisor.poll_interval")

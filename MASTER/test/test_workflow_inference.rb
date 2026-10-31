@@ -103,7 +103,7 @@ class WorkflowInferenceTest < Minitest::Test
       line = posture.line
 
       assert_includes line, "full mechanical scan"
-      # Strict reads a rotating tenth of clean files semantically (data/limits.yml).
+      # Strict reads a rotating tenth of clean files semantically (data/scan.yml).
       assert_includes line, "semantic sampled"
     end
 

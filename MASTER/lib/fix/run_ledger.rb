@@ -42,7 +42,7 @@ module Master
         end
 
         # Wall-clock seconds one file may spend in the model phase: a proposal, a retry when its patch
-        # does not apply, and a verifier call, at the pinned lane's pace (data/limits.yml#fix_time).
+        # does not apply, and a verifier call, at the pinned lane's pace (data/budgets.yml#fix_time).
         def file_budget_s = FixTime.file_s
 
         # --max-files N caps model repairs. Bounded runs retain early-stop
@@ -190,7 +190,7 @@ module Master
     end
 
     # How long a /fix run, one file in it, and a quiet pass may take, read from
-    # data/limits.yml#fix_time for the lane the run is pinned to. The numbers sat
+    # data/budgets.yml#fix_time for the lane the run is pinned to. The numbers sat
     # in three constants tuned for free lanes that answer in seconds; every Opus
     # repair ran out of its 240 s, and each run needed three environment variables
     # to get the times the lane actually takes. MASTER_FIX_FILE_BUDGET_S,
@@ -220,9 +220,8 @@ module Master
       # Read on every call: a run is long and one file read is cheap next to a model call, and a cached
       # copy would make a test that writes its own limits depend on the order the suite ran in.
       def config
-        data = Master.load_yaml(Master.limits_path, default: {}) || {}
-        section = data["fix_time"]
-        raise "data/limits.yml has no fix_time section" unless section.is_a?(Hash) && section["default"].is_a?(Hash)
+        section = Master.config_section("fix_time")
+        raise "data/budgets.yml has no fix_time section" unless section.is_a?(Hash) && section["default"].is_a?(Hash)
 
         section
       end

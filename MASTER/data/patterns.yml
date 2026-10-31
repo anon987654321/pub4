@@ -533,7 +533,7 @@ repo_topics:
     status: live
     confidence: high
     local_evidence:
-    - MASTER/data/limits.yml
+    - MASTER/data/budgets.yml
     - MASTER/data/runtime.yml#repo_ecology
     - MASTER/data/runtime.yml#cognitive_spine
     - RAILS/amber/README.md

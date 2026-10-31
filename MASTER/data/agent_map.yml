@@ -52,7 +52,7 @@ topics:
     files:
       - data/soul.yml
       - data/laws.yml
-      - data/limits.yml
+      - data/budgets.yml
       - lib/review/scan/
       - lib/ground/laws.rb
     tests:

@@ -69,11 +69,11 @@ class GovernorTest < Minitest::Test
     end
   end
 
+  # The budget is read when the governor is built, so each of these builds it inside the stub.
   def test_an_exhausted_budget_fails_closed_in_an_unattended_run
-    governor = Master::Fix::Governor.new(config: Config.new(true))
-
     Master::Fix::Governor.stub(:auto_allowlist, []) do
       Master::Fix::Governor.stub(:auto_dangerous_budget, 1) do
+        governor = Master::Fix::Governor.new(config: Config.new(true))
         assert governor.check_permit("zsh", :dangerous, "ls").ok?
         refute governor.check_permit("zsh", :dangerous, "ls -la").ok?
         refute governor.check_permit("zsh", :dangerous, "ls -R").ok?
@@ -82,10 +82,9 @@ class GovernorTest < Minitest::Test
   end
 
   def test_a_persistent_allowlist_entry_spends_no_budget
-    governor = Master::Fix::Governor.new(config: Config.new(true))
-
     Master::Fix::Governor.stub(:auto_allowlist, ["zsh"]) do
       Master::Fix::Governor.stub(:auto_dangerous_budget, 1) do
+        governor = Master::Fix::Governor.new(config: Config.new(true))
         assert governor.check_permit("zsh", :dangerous, "ls").ok?
         assert governor.check_permit("zsh", :dangerous, "ls").ok?, "allowlisted tools are not budget-limited"
         assert governor.check_permit("shell", :dangerous, "ls").ok?, "one budgeted approval remains"
@@ -96,10 +95,10 @@ class GovernorTest < Minitest::Test
 
   def test_each_budget_spend_is_published_for_the_trace
     bus = FakeBus.new
-    governor = Master::Fix::Governor.new(config: Config.new(true), event_bus: bus)
 
     Master::Fix::Governor.stub(:auto_allowlist, []) do
       Master::Fix::Governor.stub(:auto_dangerous_budget, 2) do
+        governor = Master::Fix::Governor.new(config: Config.new(true), event_bus: bus)
         governor.check_permit("zsh", :dangerous, "ls")
         governor.check_permit("zsh", :dangerous, "ls")
       end

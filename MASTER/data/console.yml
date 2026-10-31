@@ -1,0 +1,32 @@
+# What MASTER prints and what each model turn is shown: the console's dmesg
+# grammar and boot colours (lib/trace/dmesg.rb), and the orientation every
+# model turn starts from (lib/ai/orientation.rb).
+#
+# Split out of data/limits.yml on 2026-10-31. Its zeitwerk section did not move:
+# nothing read it, lib/master.rb holds the loader's inflections, and the copy
+# had drifted (seven missing, one for a file that does not exist).
+
+dmesg:
+  enabled: true
+  verbosity: normal
+  style: openbsd
+  format: "unitN at parent: detail | unitN: detail"
+  env: MASTER_DMESG
+  through: true
+  scan_progress: true
+  milestones: true
+  flush: true
+  # SGR for lines printed while MASTER boots: the OpenBSD console's kernel
+  # colours, white on blue. Terminals only; the prompt and session stay plain.
+  # Empty turns it off, as does NO_COLOR.
+  boot_sgr: "37;44"
+
+# What every model turn is oriented with (lib/ai/orientation.rb). `tree: fix` is the /fix Tree, with sizes
+# and the sprawl signals; read_in_full is the rule the turn is told, so an analysis reads a file whole
+# before it judges it.
+orientation:
+  tree: fix
+  tree_max_bytes: 6000
+  read_in_full: >-
+    read each important file whole with the file tool before judging it; a search for a string is not a
+    reading, and an empty result proves nothing until the search is shown to find a known line.

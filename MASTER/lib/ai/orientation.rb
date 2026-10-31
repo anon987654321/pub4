@@ -63,10 +63,10 @@ module Master
         "MASTER orientation unavailable: #{e.class}: #{e.message}"
       end
 
-      # What `limits.yml orientation:` says: the tree is the /fix Tree (every directory with its size and the
+      # What `console.yml orientation:` says: the tree is the /fix Tree (every directory with its size and the
       # sprawl signals), bounded, and the reading rule every turn is told.
       def settings
-        Master.load_yaml(Master.limits_path, default: {}).fetch("orientation", {})
+        Master.config_section("orientation") || {}
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "AI::Orientation.settings")
         {}

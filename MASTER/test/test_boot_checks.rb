@@ -37,7 +37,7 @@ class TestBootChecks < Minitest::Test
 
       refute result.ok
       assert_equal :fatal, result.severity
-      assert_includes result.message, "limits.yml"
+      assert_includes result.message, "budgets.yml"
     end
   end
 end

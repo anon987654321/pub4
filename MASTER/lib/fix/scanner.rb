@@ -16,8 +16,8 @@ module Master
       def self.build(root:, agent: nil, bus: nil, ecology: nil)
         agent = nil if ENV["MASTER_SCAN_DETERMINISTIC"] == "1"
 
-        wf = Master.load_yaml(Master.limits_path) rescue {}
-        sleep_s = ENV["MASTER_AUTOFIX"] == "1" ? wf.dig("autoloop", "scan_file_sleep_s").to_f : 0
+        autoloop = (Master.config_section("autoloop") rescue nil) || {}
+        sleep_s = ENV["MASTER_AUTOFIX"] == "1" ? autoloop["scan_file_sleep_s"].to_f : 0
         scanner = new(event_bus: bus, file_sleep_s: sleep_s)
 
         # Every Law is one ::Law.define, and LawTree builds what the scanner runs

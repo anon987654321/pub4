@@ -4,7 +4,7 @@
 
 # MASTER/lib map
 
-775 files under `lib/`, sorted. Per file: the constants it declares
+781 files under `lib/`, sorted. Per file: the constants it declares
 (nesting approximated from two-space indentation) and the files under
 `lib/` it require_relatives. The boot chain this map serves:
 `bin/master` → `lib/boot/master_boot.rb` → `bootstrap_container` →
@@ -464,7 +464,7 @@ Declares: `Master`, `Master::CLI`, `Master::CLI::Session`
 ## `lib/cli/session/result_display.rb`
 
 Declares: `Master`, `Master::CLI`, `Master::CLI::Session`
-Requires: `cli/capability_stamp`
+Requires: `cli/capability_stamp`, `voice/typography`
 
 ## `lib/cli/session/signals.rb`
 
@@ -473,7 +473,7 @@ Declares: `Master`, `Master::CLI`, `Master::CLI::Session`
 ## `lib/cli/session/thinking_indicator.rb`
 
 Declares: `Master`, `Master::CLI`, `Master::CLI::Session`
-Requires: `cli/stream_accumulator`
+Requires: `cli/stream_accumulator`, `voice/typography`
 
 ## `lib/cli/skill_fixtures.rb`
 
@@ -590,10 +590,14 @@ Requires: `cognition/state`
 
 Declares: `Master`, `Master::Cognition`, `Master::Cognition::State`
 
+## `lib/config_sections_guard.rb`
+
+Declares: `Master`, `Master::ConfigSectionsGuard`
+
 ## `lib/configuration_guard.rb`
 
 Declares: `Master`, `Master::ConfigurationGuard`
-Requires: `law_vocabulary`, `provider_catalogue_guard`, `model_catalogue_guard`, `limits_catalogue_guard`
+Requires: `law_vocabulary`, `provider_catalogue_guard`, `model_catalogue_guard`, `config_sections_guard`
 
 ## `lib/content.rb`
 
@@ -695,6 +699,10 @@ Declares: `Master`, `Master::Design`, `Master::Design::Composition`
 ## `lib/design/pairing.rb`
 
 Declares: `Master`, `Master::Design`, `Master::Design::Pairing`
+
+## `lib/design/scale.rb`
+
+Declares: `Master`, `Master::Design`, `Master::Design::Scale`
 
 ## `lib/design/typeface.rb`
 
@@ -1081,7 +1089,7 @@ Requires: `fix/tree`
 ## `lib/fix/instrument_check.rb`
 
 Declares: `Master`, `Master::Fix`, `Master::Fix::InstrumentCheck`, `Master::Fix::InstrumentCheck::Unavailable`
-Requires: `io/exec`, `fix/resource_budget`, `execution/contract`
+Requires: `io/exec`, `fix/resource_budget`, `execution/contract`, `review/scan/law_tree`
 
 ## `lib/fix/kernel.rb`
 
@@ -1124,7 +1132,6 @@ Declares: `Master`, `Master::Fix`, `Master::Fix::LawMapRepair`
 ## `lib/fix/law_parity.rb`
 
 Declares: `Master`, `Master::Fix`, `Master::Fix::LawParity`
-Requires: `review/scan/law_dsl`, `review/scan/law_dsl`
 
 ## `lib/fix/layout_score.rb`
 
@@ -1249,7 +1256,7 @@ Requires: `boot/paths`, `ground/swallow`
 ## `lib/fix/rename_sweep.rb`
 
 Declares: `Master`, `Master::Fix`, `Master::Fix::RenameSweep`
-Requires: `fix/name_review`, `fix/file_rename`, `boot/paths`
+Requires: `ground/parameterized_slug`, `fix/name_review`, `fix/file_rename`, `boot/paths`
 
 ## `lib/fix/repair_loop.rb`
 
@@ -1376,11 +1383,16 @@ Requires: `fix/layout_score_tokens`, `fix/transaction`, `fix/write_guard`
 ## `lib/fix/scan/ast_fixer.rb`
 
 Declares: `Master`, `Master::Fix`, `Master::Fix::Scan`, `Master::Fix::Scan::AstFixer`
-Requires: `io/exec`, `fix/scan/ast_fixer/syntax_transforms`, `fix/scan/ast_fixer/web_transforms`, `fix/scan/ast_fixer/dead_code_and_commas`
+Requires: `io/exec`, `fix/scan/ast_fixer/syntax_transforms`, `fix/scan/ast_fixer/web_transforms`, `fix/scan/ast_fixer/scale_transforms`, `fix/scan/ast_fixer/dead_code_and_commas`
 
 ## `lib/fix/scan/ast_fixer/dead_code_and_commas.rb`
 
 Declares: `Master`, `Master::Fix`, `Master::Fix::Scan`, `Master::Fix::Scan::AstFixer`, `Master::Fix::Scan::AstFixer::DeadCodeAndCommas`
+
+## `lib/fix/scan/ast_fixer/scale_transforms.rb`
+
+Declares: `Master`, `Master::Fix`, `Master::Fix::Scan`, `Master::Fix::Scan::AstFixer`, `Master::Fix::Scan::AstFixer::ScaleTransforms`
+Requires: `design/scale`
 
 ## `lib/fix/scan/ast_fixer/syntax_transforms.rb`
 
@@ -1437,7 +1449,7 @@ Declares: `Master`, `Master::Fix`, `Master::Fix::Scan`, `Master::Fix::Scan::Tran
 ## `lib/fix/scan/unmodelled_tier.rb`
 
 Declares: `Master`, `Master::Fix`, `Master::Fix::Scan`, `Master::Fix::Scan::UnmodelledTier`
-Requires: `review/scan/law_factory`
+Requires: `review/scan/detector`
 
 ## `lib/fix/scan_phase.rb`
 
@@ -1543,6 +1555,10 @@ Declares: `Master`, `Master::Fix`, `Master::Fix::TreeSprawl`
 ## `lib/fix/tree_view.rb`
 
 Declares: `Master`, `Master::Fix`, `Master::Fix::TreeView`
+
+## `lib/fix/typography_audit.rb`
+
+Declares: `Master`, `Master::Fix`, `Master::Fix::TypographyAudit`
 
 ## `lib/fix/unified_diff.rb`
 
@@ -2073,6 +2089,11 @@ Requires: `io/exec`
 
 Declares: `Master`, `Master::Io`, `Master::Io::GitHubRepoMiner`
 
+## `lib/io/gnu_text_tools.rb`
+
+Declares: `Master`, `Master::Io`, `Master::Io::GnuTextTools`
+Requires: `io/shell_lexer`
+
 ## `lib/io/hashline.rb`
 
 Declares: `Master`, `Master::Io`, `Master::Io::Hashline`
@@ -2139,19 +2160,19 @@ Declares: `Master`, `Master::Io`, `Master::Io::Linguist`
 
 Declares: `Master`, `Master::Io`, `Master::Io::ListDir`
 
-## `lib/io/lovdata.rb`
-
-Declares: `Master`, `Master::Io`, `Master::Io::Lovdata`
-
 ## `lib/io/llm.rb`
 
-Declares: `Master`, `Master::Io`, `Master::Io::LLM`, `Master::Io::LLM::ToolForwarding`, `Master::Io::LLM::ReadFile`, `Master::Io::LLM::WriteFile`, `Master::Io::LLM::StrReplace`, `Master::Io::LLM::Tree`, `Master::Io::LLM::ListDir`, `Master::Io::LLM::Lovdata`, `Master::Io::LLM::Linguist`, `Master::Io::LLM::SearchFiles`, `Master::Io::LLM::Shell`, `Master::Io::LLM::WebSearch`, `Master::Io::LLM::HostFiles`, `Master::Io::LLM::WebFetch`, `Master::Io::LLM::WebBrowse`, `Master::Io::LLM::ExternalAudit`, `Master::Io::LLM::VulCheck`, `Master::Io::LLM::Nmap`, `Master::Io::LLM::Browser`, `Master::Io::LLM::CodePen`, `Master::Io::LLM::Gist`, `Master::Io::LLM::YoutubeTranscript`, `Master::Io::LLM::GitHubRepoMiner`, `Master::Io::LLM::ArxivResearch`, `Master::Io::LLM::AskLlm`, `Master::Io::LLM::GitContext`, `Master::Io::LLM::AstEdit`, `Master::Io::LLM::SearchKnowledge`, `Master::Io::LLM::FeedbackRecord`, `Master::Io::LLM::MemoryRecord`, `Master::Io::LLM::SubdomainOrchestrator`, `Master::Io::LLM::PluginObserve`, `Master::Io::LLM::AssistantTasks`, `Master::Io::LLM::CapabilityCatalog`, `Master::Io::LLM::DynamicHttp`
+Declares: `Master`, `Master::Io`, `Master::Io::LLM`, `Master::Io::LLM::ToolForwarding`, `Master::Io::LLM::ReadFile`, `Master::Io::LLM::WriteFile`, `Master::Io::LLM::StrReplace`, `Master::Io::LLM::Tree`, `Master::Io::LLM::ListDir`, `Master::Io::LLM::SearchFiles`, `Master::Io::LLM::Shell`, `Master::Io::LLM::WebSearch`, `Master::Io::LLM::HostFiles`, `Master::Io::LLM::WebFetch`, `Master::Io::LLM::WebBrowse`, `Master::Io::LLM::ExternalAudit`, `Master::Io::LLM::VulCheck`, `Master::Io::LLM::Nmap`, `Master::Io::LLM::Browser`, `Master::Io::LLM::Lovdata`, `Master::Io::LLM::Linguist`, `Master::Io::LLM::CodePen`, `Master::Io::LLM::Gist`, `Master::Io::LLM::YoutubeTranscript`, `Master::Io::LLM::GitHubRepoMiner`, `Master::Io::LLM::ArxivResearch`, `Master::Io::LLM::AskLlm`, `Master::Io::LLM::GitContext`, `Master::Io::LLM::AstEdit`, `Master::Io::LLM::SearchKnowledge`, `Master::Io::LLM::FeedbackRecord`, `Master::Io::LLM::MemoryRecord`, `Master::Io::LLM::SubdomainOrchestrator`, `Master::Io::LLM::PluginObserve`, `Master::Io::LLM::AssistantTasks`, `Master::Io::LLM::CapabilityCatalog`, `Master::Io::LLM::DynamicHttp`
 Requires: `result`, `execution/contract`, `trace/tool_observer`
 
 ## `lib/io/lora_intent.rb`
 
 Declares: `Master`, `Master::Io`, `Master::Io::LoraIntent`
 Requires: `boot/paths`, `result`, `io/script_dispatch`
+
+## `lib/io/lovdata.rb`
+
+Declares: `Master`, `Master::Io`, `Master::Io::Lovdata`
 
 ## `lib/io/mcp_coordinator.rb`
 
@@ -2161,7 +2182,7 @@ Requires: `execution/contract`, `trace/tool_observer`
 ## `lib/io/media_intent.rb`
 
 Declares: `Master`, `Master::Io`, `Master::Io::MediaIntent`
-Requires: `boot/paths`, `io/script_dispatch`, `io/natural_intent`, `io/lora_intent`
+Requires: `boot/paths`, `io/script_dispatch`, `io/natural_intent`, `io/lora_intent`, `io/mov`
 
 ## `lib/io/media_lanes.rb`
 
@@ -2187,6 +2208,11 @@ Requires: `io/atomic_write`
 
 Declares: `Master`, `Master::Io`, `Master::Io::ModelSkipCache`
 Requires: `io/lane_reply`
+
+## `lib/io/mov.rb`
+
+Declares: `Master`, `Master::Io`, `Master::Io::Mov`, `Master::Io::Mov::RetryableDownloadError`, `Master::Io::Mov::URLIntentHost`
+Requires: `io/exec`
 
 ## `lib/io/natural_intent.rb`
 
@@ -2271,6 +2297,10 @@ Declares: `Master`, `Master::Io`, `Master::Io::SemanticIndex`
 
 Declares: `Master`, `Master::Io`, `Master::Io::Shell`
 
+## `lib/io/shell_lexer.rb`
+
+Declares: `Master`, `Master::Io`, `Master::Io::ShellLexer`, `Master::Io::ShellLexer::Substitutions`, `Master::Io::ShellLexer::Quoting`
+
 ## `lib/io/ssrf_guard.rb`
 
 Declares: `Master`, `Master::Io`, `Master::Io::SsrfGuard`
@@ -2333,10 +2363,6 @@ Declares: `Master`, `Master::LawCataloguePreflight`
 ## `lib/law_vocabulary.rb`
 
 Declares: `Master`, `Master::LawVocabulary`
-
-## `lib/limits_catalogue_guard.rb`
-
-Declares: `Master`, `Master::LimitsCatalogueGuard`
 
 ## `lib/master.rb`
 
@@ -2647,6 +2673,7 @@ Requires: `operator/snapshot_minify`
 ## `lib/operator/sprawl_census.rb`
 
 Declares: `Operator`, `Operator::SprawlCensus`
+Requires: `ground/parameterized_slug`
 
 ## `lib/operator/stall_watch.rb`
 
@@ -2682,11 +2709,6 @@ Declares: `Operator`, `Operator::VisualReviewTriangle`
 
 Declares: `Operator`, `Operator::WordRename`
 Requires: `io/exec`, `trace/dmesg`
-
-## `lib/operator/worktree.rb`
-
-Declares: `Operator`, `Operator::Worktree`, `Operator::Worktree::Error`
-Requires: `io/exec`
 
 ## `lib/ops.rb`
 
@@ -2965,6 +2987,11 @@ Declares: `Master`, `Master::Review`, `Master::Review::RepoEcology`, `Master::Re
 
 Declares: `Master`, `Master::Review`, `Master::Review::RepoEcology`, `Master::Review::RepoEcology::CoChangeGraph`
 
+## `lib/review/scan/canonical_law_adapter.rb`
+
+Declares: `Master`, `Master::Review`, `Master::Scan`, `Master::Scan::CanonicalLawAdapter`
+Requires: `review/scan/detector`
+
 ## `lib/review/scan/code_metrics.rb`
 
 Declares: `Master`, `Master::Review`, `Master::Review::Scan`, `Master::Review::Scan::CodeMetrics`, `Master::Review::Scan::CodeMetrics::VisibilityScope`
@@ -2977,23 +3004,14 @@ Declares: `Master`, `Master::Review`, `Master::Review::Scan`, `Master::Review::S
 
 Declares: `Master`, `Master::Review`, `Master::Review::Scan`, `Master::Review::Scan::DatalogEngine`
 
+## `lib/review/scan/detector.rb`
+
+Declares: `Master`, `Master::Review`, `Master::Review::Scan`, `Master::Review::Scan::Detector`, `Master::Review::Scan::Detector::AgentGuard`
+Requires: `review/scan/finding`, `review/scan/source_masking`, `master`
+
 ## `lib/review/scan/finding.rb`
 
 Declares: `Master`, `Master::Review`, `Master::Review::Scan`
-
-## `lib/review/scan/law.rb`
-
-Declares: `Master`, `Master::Review`, `Master::Scan`, `Master::Scan::Law`, `Master::Scan::CanonicalLawAdapter`
-Requires: `review/scan/finding`, `review/scan/source_masking`, `master`
-
-## `lib/review/scan/law_dsl.rb`
-
-Declares: `Master`, `Master::Review`, `Master::Review::Scan`, `Master::Review::Scan::LawDSL`
-Requires: `review/scan/law`, `review/scan/law_registry_audit`
-
-## `lib/review/scan/law_factory.rb`
-
-Declares: `Master`, `Master::Review`, `Master::Review::Scan`, `Master::Review::Scan::LawFactory`, `Master::Review::Scan::LawFactory::AgentGuard`
 
 ## `lib/review/scan/law_health.rb`
 
@@ -3003,6 +3021,11 @@ Declares: `Master`, `Master::Review`, `Master::Review::Scan`, `Master::Review::S
 
 Declares: `Master`, `Master::Review`, `Master::Review::Scan`, `Master::Review::Scan::LawRegistryAudit`
 
+## `lib/review/scan/law_tree.rb`
+
+Declares: `Master`, `Master::Review`, `Master::Review::Scan`, `Master::Review::Scan::LawTree`
+Requires: `master`, `review/scan/detector`, `review/scan/canonical_law_adapter`
+
 ## `lib/review/scan/self_scan.rb`
 
 Declares: `Master`, `Master::Review`, `Master::Review::Scan`, `Master::Review::Scan::SelfScan`
@@ -3011,7 +3034,7 @@ Requires: `fix/scan/mechanical_autofix`
 ## `lib/review/scan/self_test.rb`
 
 Declares: `Master`, `Master::Review`, `Master::Review::Scan`, `Master::Review::Scan::SelfTest`, `Master::Review::Scan::SelfTest::DeployChecks`
-Requires: `review/scan/law_dsl`, `fix/transformation_plan`
+Requires: `review/scan/law_tree`, `fix/transformation_plan`
 
 ## `lib/review/scan/semantic_fingerprint.rb`
 
@@ -3086,7 +3109,7 @@ Declares: `Master`, `Master::Trace`, `Master::Trace::Diag`
 ## `lib/trace/dmesg.rb`
 
 Declares: `Master`, `Master::Trace`, `Master::Trace::Dmesg`, `Master::Trace::Dmesg::Report`, `Master::Trace::Dmesg::Console`
-Requires: `trace/logging`, `voice/playback`
+Requires: `trace/logging`, `voice/typography`, `voice/playback`
 
 ## `lib/trace/effect_observer.rb`
 
@@ -3433,6 +3456,10 @@ Requires: `voice/performance`, `voice/quality`
 
 Declares: `Master`, `Master::Voice`, `Master::Voice::TtsSupervisor`
 Requires: `io/process_spawn`
+
+## `lib/voice/typography.rb`
+
+Declares: `Master`, `Master::Voice`, `Master::Voice::Typography`
 
 ## `lib/voice/vad.rb`
 

@@ -6,7 +6,7 @@ require_relative "../io/atomic_write"
 module Master
   module Ground
     # Session adherence posture restored from fossil master.yml modes.
-    # Source of truth: data/limits.yml#session_modes + ENV MASTER_MODE.
+    # Source of truth: data/scan.yml#session_modes + ENV MASTER_MODE.
     class ModePosture
       include ::Master::Io::AtomicWrite
       MODES = %w[loose balanced strict].freeze
@@ -104,7 +104,7 @@ module Master
       end
 
       def load_cfg
-        path = File.join(@root, "data", "limits.yml")
+        path = Master.config_path("session_modes", root: @root)
         unless File.file?(path)
           return { "default" => "balanced", "modes" => {} } unless File.expand_path(@root) == File.expand_path(Master::ROOT)
 

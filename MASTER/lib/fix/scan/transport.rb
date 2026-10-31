@@ -101,12 +101,12 @@ module Master
         # findings. The scan's deadline is its own, in seconds.
         SCAN_TIMEOUT_SECONDS = Integer(ENV.fetch("MASTER_SCAN_TIMEOUT_S", "3600"))
 
-        # MASTER_SCAN_WORKERS, else limits.yml scan_workers. The lexical Laws are pure Ruby, so threads share
+        # MASTER_SCAN_WORKERS, else scan.yml scan_workers. The lexical Laws are pure Ruby, so threads share
         # one GVL and contend on it (RAILS took 71s on one worker and 158s on four); the semantic Laws wait on
         # a model, and there threads overlap the waiting. Strict mode reads every file semantically, so the
         # data default favours the wait.
         def scan_workers
-          Integer(ENV.fetch("MASTER_SCAN_WORKERS") { Master.load_yaml(Master.limits_path)["scan_workers"] || 1 })
+          Integer(ENV.fetch("MASTER_SCAN_WORKERS") { Master.config_section("scan_workers") || 1 })
         end
 
         def parallel_map(items)

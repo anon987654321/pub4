@@ -197,7 +197,7 @@ module Master
 
     # At most one *slot* loop (autofix/watch/watcher) may run at a time. The loops
     # and their env flags are not defined here — they come from the single source,
-    # data/limits.yml#process, via ProcessBudget. LoopSlot is only the mutual-exclusion
+    # data/budgets.yml#process, via ProcessBudget. LoopSlot is only the mutual-exclusion
     # view over the slot loops; the background heartbeat is non-slot and excluded.
     module LoopSlot
       module_function
@@ -234,7 +234,7 @@ module Master
     end
 
     module ProcessBudget
-      CONFIG_PATH = File.join(Master::ROOT, "data", "limits.yml").freeze
+      CONFIG_PATH = File.join(Master::ROOT, "data", "budgets.yml").freeze
       NON_SLOT_LOOPS = %w[heartbeat].freeze
       @last_run = {}
 

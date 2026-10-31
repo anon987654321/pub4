@@ -524,8 +524,7 @@ module Master
 
       def limits
         @limits ||= begin
-          data = Master.load_yaml(Master.limits_path)
-          configured = data.is_a?(Hash) ? data["convergence_discipline"] : nil
+          configured = Master.config_section("convergence_discipline")
           DEFAULTS.merge(configured.is_a?(Hash) ? configured : {})
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "convergence_discipline.config", event_bus: @bus)

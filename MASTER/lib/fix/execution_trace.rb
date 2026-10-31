@@ -51,7 +51,7 @@ module Master
         "MASTER/data/soul.yml" => %w[absolute],
         "MASTER/data/providers.yml" => [],
         "MASTER/data/patterns.yml" => [],
-        "MASTER/data/limits.yml" => [],
+        "MASTER/data/console.yml" => [], "MASTER/data/scan.yml" => [], "MASTER/data/budgets.yml" => [],
         "MASTER/data/scan_coverage.yml" => [],
       }.freeze
 

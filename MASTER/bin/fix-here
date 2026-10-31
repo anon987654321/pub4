@@ -24,12 +24,12 @@ require "json"
 
 ROOT = File.expand_path("../..", __dir__)
 MASTER = File.join(ROOT, "MASTER")
-# The run's own floor, read where the run reads it (data/limits.yml disk_free_gb crit): a second
-# hard-coded 2.0 here refused to start a run the limits allowed.
+# The run's own floor, read where the run reads it (data/budgets.yml disk_free_gb crit): a second
+# hard-coded 2.0 here refused to start a run the budgets allowed.
 MIN_FREE_GIB = begin
   require "yaml"
-  limits = YAML.safe_load_file(File.join(MASTER, "data", "limits.yml"), aliases: true)
-  Float(limits.dig("process", "resources", "disk_free_gb", "crit"))
+  budgets = YAML.safe_load_file(File.join(MASTER, "data", "budgets.yml"), aliases: true)
+  Float(budgets.dig("process", "resources", "disk_free_gb", "crit"))
 rescue StandardError
   2.0
 end

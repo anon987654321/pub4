@@ -8,7 +8,7 @@ require "cli/command_registry"
 # collapse (7c23a5ee5) and caught live on 2026-08-18 when the RAILS pass of a
 # four-tree audit scanned MASTER twice and called it RAILS:
 #
-# - "rails" names both a limits.yml scan profile and pub4/RAILS, and the
+# - "rails" names both a scan.yml scan profile and pub4/RAILS, and the
 #   profile reading won, leaving an empty target.
 # - parse_pass_flags did not know --no-autofix (bin/check --ladder's scan-only
 #   spelling), so the flag polluted the target string.

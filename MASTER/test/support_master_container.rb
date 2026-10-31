@@ -56,7 +56,9 @@ module Master
           thresholds:
             class: { max_lines: 200, max_methods: 6 }
         YML
-        "limits.yml" => "{}\n",
+        "console.yml" => "{}\n",
+        "scan.yml" => "{}\n",
+        "budgets.yml" => "{}\n",
       }.freeze
 
       def with_master_container(extra_fixtures: {}, env: {})

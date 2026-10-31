@@ -9,9 +9,9 @@
 # ran. No rule in data/laws.yml names any of those, because they are not
 # properties of a file — they are properties of a claim and its reader.
 #
-# What already existed: eight instruments that each answer one such question for
+# What already existed: seven instruments that each answer one such question for
 # one population — dup_census, data_reach, reader_singularity, rule_reach,
-# namespace_ratchet, design_baseline, loc_budget, cohesion. Each with its own
+# namespace_ratchet, design_baseline, cohesion. Each with its own
 # invocation, its own ceiling file, and no shared vocabulary. `MASTER/bin/operator measure`
 # aggregates the ratchets; nothing aggregates the *questions*.
 #
@@ -50,7 +50,6 @@ module Operator
     def probes
       [
         Probe.new(unit: "spine", trees: %w[MASTER], run: -> { rake("lint:spine") }),
-        Probe.new(unit: "locbudget", trees: %w[MASTER], run: -> { rake("loc_budget") }),
         Probe.new(unit: "cohesion", trees: TREES, scoped: true,
                   run: ->(tree) { tool("cohesion.rb", "--census", "--tree=#{tree}") }),
         Probe.new(unit: "dupcensus", trees: %w[MASTER], run: -> { tool("audit/dup_census.rb") }),

@@ -1,0 +1,260 @@
+# What a scan reads: the Law groups, the scan profiles built from them, how many
+# workers scan at once, and the session modes that pick a profile.
+#
+# Split out of data/limits.yml on 2026-10-31.
+
+law_groups:
+  axioms:
+  - frozen_string
+  - explicit
+  - immutable
+  - self_explaining
+  solid:
+  - srp
+  - cqs
+  - pola
+  solid_focus:
+  - srp
+  - cqs
+  - pola
+  - frozen_string
+  - explicit
+  - immutable
+  - self_explaining
+  coding:
+  - explicit
+  - immutable
+  - cqs
+  - frozen_string
+  - bare_rescue
+  clean_code:
+  - long_method
+  - god_class
+  - duplicate_code
+  - bare_rescue
+  ui:
+  - nielsen
+  - prune
+  - ANTI_DIVITIS
+  - UTILITY_CLASS_SOUP
+  - BEM_IN_VIEWS
+  - MEASURE_OPTIMUM
+  - NO_LONG_TRANSITION
+  - REDUCED_MOTION
+  - CLAMP_TYPOGRAPHY
+  - NO_IMPORTANT
+  - NO_DECORATIVE_FX
+  - FLAT_PIXELS
+  - TOUCH_TARGET_MIN
+  - ARIA_INTERACTIVE
+  - ARIA_LABELS
+  - IMG_ALT
+  - FORM_LABEL
+  - HTML_LANG
+  - SKIP_TO_MAIN
+  llm:
+  - semantic
+  - adversarial
+  operations:
+  - bare_rescue
+  - explicit
+  - immutable
+  design:
+  - srp
+  - cqs
+  - pola
+  - prune
+  architecture:
+  - god_class
+  - duplicate_code
+  - srp
+  - cqs
+  interface:
+  - nielsen
+  - prune
+  heavy:
+  - rubocop
+  - reek
+  core:
+  - frozen_string
+  - bare_rescue
+  - explicit
+  - long_method
+  - god_class
+  critical:
+  - frozen_string
+  - bare_rescue
+  - explicit
+  - immutable
+  - srp
+  - cqs
+  cosmetic:
+  - TRAILING_WHITESPACE
+  - CONSECUTIVE_BLANK_LINES
+  - NO_COLUMN_ALIGN
+  - TRAILING_COMMENT
+  - TAB_CHARACTER
+  - FINAL_NEWLINE
+  - TYPOGRAPHIC_EXCELLENCE
+  - TYPOGRAPHY_DISCIPLINE
+  - NO_ASCII_LINE_ART
+  - NO_ASCII_ART_OUTSIDE_FACE
+  - RUBY_SNAKE_METHODS
+  - RUBY_CAMEL_CLASS
+  - RUBY_NUMERIC_UNDERSCORE
+  - RUBY_SYMBOL_TO_PROC
+  - RUBY_BLOCK_DELIMITER
+  - RUBY_TERNARY_NOT_NESTED
+  - NO_ABBREVIATED_IDENTIFIERS
+  - DOUBLE_QUOTES_RUBY
+  - EN_DASH_RANGE
+  - MEASURE_OPTIMUM
+  - TRAILING_COMMAS
+  - MEANINGFUL_NAMES
+  - USE_THEN
+  - RESCUE_ON_DEF
+  - MAGIC_COLOR
+  - NO_LONG_TRANSITION
+  - LONG_LINE
+  - ANTI_DIVITIS
+  - UTILITY_CLASS_SOUP
+  - BEM_IN_VIEWS
+  - REDUCED_MOTION
+  - CLAMP_TYPOGRAPHY
+  - NO_IMPORTANT
+  - NO_DECORATIVE_FX
+  - FLAT_PIXELS
+  - TOUCH_TARGET_MIN
+  - CHOICE_OVERLOAD
+  - EIGHT_PX_RHYTHM
+  - TYPE_HIERARCHY
+  - WHITESPACE_RHYTHM
+  - PIXEL_EXACT
+  - FORM_FOLLOWS_FUNCTION
+  - SIGNAL_NOISE
+  - AFFORDANCE_CLARITY
+  - PROGRESSIVE_DISCLOSURE
+  - RAMS_USEFUL
+  - RAMS_UNDERSTANDABLE
+  - RAMS_UNOBTRUSIVE
+  - RAMS_HONEST
+  - RAMS_THOROUGH
+  - AESTHETIC_MINIMALISM
+  - CONTRAST_TOKENS
+  aesthetic:
+  - ANTI_DIVITIS
+  - UTILITY_CLASS_SOUP
+  - BEM_IN_VIEWS
+  - MEASURE_OPTIMUM
+  - NO_LONG_TRANSITION
+  - REDUCED_MOTION
+  - CLAMP_TYPOGRAPHY
+  - NO_IMPORTANT
+  - NO_DECORATIVE_FX
+  - FLAT_PIXELS
+  - TOUCH_TARGET_MIN
+  - CHOICE_OVERLOAD
+  - EIGHT_PX_RHYTHM
+  - MAGIC_COLOR
+  - TYPE_HIERARCHY
+  - WHITESPACE_RHYTHM
+  - PIXEL_EXACT
+  - FORM_FOLLOWS_FUNCTION
+  - SIGNAL_NOISE
+  - AFFORDANCE_CLARITY
+  - PROGRESSIVE_DISCLOSURE
+  - RAMS_USEFUL
+  - RAMS_UNDERSTANDABLE
+  - RAMS_UNOBTRUSIVE
+  - RAMS_HONEST
+  - RAMS_THOROUGH
+  - AESTHETIC_MINIMALISM
+  - CONTRAST_TOKENS
+
+scan_profiles:
+  default: full
+  core:
+    laws: core
+    aliases:
+    - quick
+    description: Core axiom and small-function findings after a deep scan
+  full:
+    laws: '*'
+    aliases:
+    - all
+    description: All registered scan Laws
+  axioms_only:
+    laws: axioms
+    aliases:
+    - axioms
+    description: Constitutional Laws only
+  solid_focus:
+    laws: solid_focus
+    aliases:
+    - solid
+    description: SOLID Laws plus constitutional Laws
+  critical:
+    laws: '*'
+    severity:
+    - error
+    - veto
+    description: Only error and veto findings for urgent triage
+  solid:
+    laws: solid_focus
+    description: SOLID Law focus
+  axioms:
+    laws: axioms
+    description: Constitutional axioms only
+  cosmetic:
+    laws: cosmetic
+    aliases:
+    - style
+    - hygiene
+    - perfection
+    description: Hygiene, micro-typography, naming, and style-perfection lint
+  aesthetic:
+    laws: aesthetic
+    aliases:
+    - pixel
+    - ui
+    - ux
+    - design
+    description: Pixel-perfect UI/UX, typography, flat design, Fitts/Hick, Rams tags
+  rails:
+    laws: '*'
+    aliases: []
+    description: Full deep scan intended for RAILS app trees (use path RAILS/<app>)
+
+scan_workers: 6
+
+session_modes:
+  default: strict
+  env: MASTER_MODE
+  modes:
+    loose:
+      scan_profile: cosmetic
+      council: false
+      autofix_llm: false
+      autofix_mechanical: true
+      semantic_sample: 0
+      max_fix_passes: 3
+      description: Hygiene and style only; no LLM fix loop
+    balanced:
+      scan_profile: full
+      council: risky
+      autofix_llm: true
+      autofix_mechanical: true
+      semantic_sample: 0
+      max_fix_passes: 8
+      description: Sampled scan/fix; council on multi-file/security
+    strict:
+      scan_profile: full
+      council: true
+      autofix_llm: true
+      autofix_mechanical: true
+      semantic_sample: 0.1
+      max_fix_passes: 15
+      severity_floor: warning
+      description: >-
+        Default. Every Law, violations and opportunities; semantic read of every file with a
+        finding and a rotating tenth of the rest, the whole tree in ten days; council at the end

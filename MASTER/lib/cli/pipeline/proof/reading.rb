@@ -24,7 +24,6 @@ module Master
         ROWS = {
           /\A\s*\[([A-Z][A-Z_]*)\]\s+(\d+)\s*\z/ => "selftest %s",
           %r{\A\s*([a-z][\w.]*)\s+(\d+)\s*/\s*\d+\s+OVER\b} => "%s",
-          /loc_budget: OVER (\S+) (\d+) >/ => "loc_budget %s",
         }.freeze
 
         # One run of a proof: per unit (the RAILS runner, or one suite) whether

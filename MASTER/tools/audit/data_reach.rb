@@ -87,7 +87,9 @@ module Operator
       "laws.yml" => %w[LAWS_PATH load_laws Master.law flatten_rules],
       "soul.yml" => ["soul_data", 'data("soul")', "data(:soul)"],
       "runtime.yml" => %w[RuntimeCatalog],
-      "limits.yml" => ["limits_path", "data(:workflow)"],
+      "console.yml" => %w[config_section config_path],
+      "scan.yml" => %w[config_section config_path],
+      "budgets.yml" => %w[config_section config_path ProcessBudget],
       "state.yml" => %w[state_path standing_orders],
     }.freeze
 

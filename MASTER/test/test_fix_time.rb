@@ -3,7 +3,7 @@
 require_relative "test_helper"
 require_relative "../lib/fix/run_ledger"
 
-# The times a /fix run allows come from data/limits.yml#fix_time for the lane it is pinned to.
+# The times a /fix run allows come from data/budgets.yml#fix_time for the lane it is pinned to.
 class FixTimeTest < Minitest::Test
   Budget = Master::Fix::FixTime
   OPUS = "claude-cli:claude-opus-5-5"

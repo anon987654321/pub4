@@ -22,7 +22,7 @@ class TestCapabilityInventory < Minitest::Test
   end
 
   def test_law_files_are_the_four_budgeted_yamls
-    assert_equal %w[laws.yml limits.yml soul.yml voice.yml], @report[:current][:law_files].sort
+    assert_equal %w[budgets.yml laws.yml soul.yml voice.yml], @report[:current][:law_files].sort
   end
 
   def test_constitution_still_names_the_incident_rules

@@ -24,7 +24,7 @@ class TestLawMapRuntime < Minitest::Test
   def test_mode_posture_defaults_and_set
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "data"))
-      File.write(File.join(dir, "data", "limits.yml"), <<~YAML)
+      File.write(File.join(dir, "data", "scan.yml"), <<~YAML)
         session_modes:
           default: balanced
           modes:

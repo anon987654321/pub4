@@ -28,7 +28,7 @@ module Master
             check_dynamic_tools_yaml(root),
             check_models_yaml(root),
             check_voice_yaml(root),
-            check_limits_yaml(root),
+            *check_config_sections_yaml(root),
             check_web_dir(root),
           ]
 
@@ -111,7 +111,7 @@ module Master
           dir = File.join(root, "data")
           return fail("data_dir", "missing data/ directory") unless File.directory?(dir)
 
-          required = %w[soul.yml laws.yml limits.yml]
+          required = %w[soul.yml laws.yml console.yml scan.yml budgets.yml]
           missing = required.reject { |f| File.exist?(File.join(dir, f)) }
           return fail("data_dir", "missing required: #{missing.join(", ")}") unless missing.empty?
 
@@ -175,8 +175,9 @@ module Master
           check_yaml_file(root, "data/voice.yml", "voice_yaml", required: false)
         end
 
-        def check_limits_yaml(root)
-          check_catalogue_yaml(root, "data/limits.yml", "limits_yaml")
+        # console.yml, scan.yml and budgets.yml, which data/limits.yml held until 2026-10-31.
+        def check_config_sections_yaml(root)
+          %w[console scan budgets].map { |name| check_catalogue_yaml(root, "data/#{name}.yml", "#{name}_yaml") }
         end
 
         def check_yaml_file(root, rel_path, name, required: true)
