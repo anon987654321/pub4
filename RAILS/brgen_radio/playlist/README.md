@@ -31,15 +31,15 @@ the leading colons, because the plain name resolves to the module's own model fi
 
 Routes are drawn on `Playlist::Engine`, and brgen mounts the engine at the root under
 `constraints(subdomain: RADIO_SUBDOMAINS)`. Playlists and sets nest their tracks, collaborations
-and dilla sketches. A playlist also has an embeddable page. A set adds a like and a
-`listening_party` with its party messages, and `hosted_tracks` and `listens` round out upload
-and playback. From the host, reach the helpers as `playlist.playlist_url(…, subdomain: "radio")`.
+and dilla sketches. A playlist also has an embeddable page and an owner-only analytics page. A
+set adds a like and a `listening_party` with its party messages, and `hosted_tracks` and
+`listens` round out upload and playback. From the host, reach the helpers as
+`playlist.playlist_url(…, subdomain: "radio")`.
 
-The engine depends on `pub4-shared` for `User`, authentication, tenancy and the design system.
-On screen it uses an immersive stage with a transport bar, and it publishes the bar's height so
+The engine depends on `pub4-shared` for `User`, authentication, tenancy and the shared UI. On
+screen it uses an immersive stage with a transport bar, and it publishes the bar's height so
 floating widgets clear it. Its stylesheet rules live in brgen's single `application.scss`,
 scoped under `body.vertical-playlist`.
-
 
 ## Original creator-platform promise
 
@@ -50,10 +50,14 @@ collaboration, embeddable players, timestamped comments, listening parties, like
 and per-track expiry. The Radio Bergen archive is a separate curated import and remains gated by
 its tenant and recording-rights preconditions.
 
-Listen and Like records provide the foundation for engagement counts; do not describe a complete
-creator analytics dashboard, donations, paid creator tier or sponsored-content marketplace as
-shipped without a matching surface and tests. The public host is `radio.<city>`; `playlist.<city>`
-is not a supported host.
+The first restoration of creator analytics is now in the code: a playlist owner can open an
+aggregate dashboard with total listens, listens in the last seven days and per-track counts.
+It does not reveal listener identities. This is deliberately a small, privacy-preserving first
+step, not a complete creator business suite: unique listeners, retention cohorts, exports,
+revenue attribution, donations, paid creator tiers and sponsored-content workflows remain
+unimplemented.
+
+The public host is `radio.<city>`; `playlist.<city>` is not a supported host.
 
 ## Radio Bergen tunnel and curated archive
 
