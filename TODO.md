@@ -43,7 +43,6 @@ the commit that carries its evidence; nothing here records finished work.
 ## Carried-forward requests from earlier sessions
 
 - [ ] **Complete AI3 archive archaeology:** the bounded findings and no-port decision are recorded in [`STUDIO/docs/ai3_legacy_audit_2026-10-28.md`](STUDIO/docs/ai3_legacy_audit_2026-10-28.md). The visible AI3 tree and extracted reports were inspected, but the historical archive blobs were not all extracted; preserve this item as open until that source recovery is actually completed. No AI3 feature claim counts as working behavior without implementation and runtime evidence.
-- [ ] **pub2 restoration follow-through:** repo-wide findings and the no-bulk-import decision are recorded in [`STUDIO/docs/pub2_archaeology_2026-10-28.md`](STUDIO/docs/pub2_archaeology_2026-10-28.md). Confirm Radio's old seven-mode/six-theme visualizer parity against the current Brgen Radio controller and rendered page; inspect any missing mode before porting. Record an explicit owner disposition for BAIBL, Blognet, Hjerterom and Privcam. Do not copy stale generators, audio binaries, local settings, old governance or OpenBSD state. Keep runtime claims open until targeted tests/evidence exist.
 
 These requests were visible in prior conversations or handoffs but lacked an explicit,
 actionable root-backlog item. Keep them open until the relevant evidence exists.
@@ -52,6 +51,7 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
   unreachable/history-recoverable objects and historical wording across pub4, pub3,
   pub2 and pub. Restore only grounded, unique logic, ideas, contracts and tests into
   current owners; preserve provenance and do not reintroduce a deleted tree wholesale.
+- [ ] **Unlanded `MASTER/plugins/mov/` proposal:** an archived integration bundle exists, but it is not the current `MASTER/lib/io/mov.rb` adapter. The archived engine selects modern streaming-catalog titles but acquires releases through Torrentio, apibay/TPB, YTS and EZTV with `aria2c` magnet downloads; no licensing/provenance gate is demonstrated. Do not merge or run that acquisition path. After the complete MASTER read, decide whether a safe plugin limited to lawful public-domain downloads and/or provider availability links is still wanted. The bundle is based on an old commit and its engine defaults to US while its README claims Norway; any plugin policy registration remains a human-owned change to sacred `MASTER/data/laws.yml`.
 - [ ] **Oct. 26 hardening review:** reconcile every P01–P11 follow-up and the outstanding
   findings in `MASTER/docs/handoffs/2026-10-26-master-hardening-review.md`. Explicitly
   verify SILENT_RESCUE freshness, INTER_MODEL_CONTRACT heredoc/keyword sites, the
@@ -372,7 +372,6 @@ source and tests they could not run; this pass is what measures them.
 
 - [ ] Execute `RAILS/brgen/test/services/radio_bergen_import_guard_test.rb` on the pinned Ruby/Rails checkout. The rake task now selects persisted `brgen.no`; the importer requires a same-city saved owner and wraps reads/writes in `ActsAsTenant.with_tenant`. Regression cases cover missing scope, cross-city owners, city assignment and visibility from another tenant, but remain unexecuted here. Do not import until these tests pass and the separate recording-rights decision is complete.
 
-- [ ] Read `STUDIO/docs/pub3_archaeology_2026-10-28.md` and `STUDIO/docs/pub2_misc_plugin_assessment_2026-10-28.md`; use their explicit dispositions before any further restoration.
 - [ ] Radio Bergen: confirm distribution rights individually for the 35 selected recordings, then run `radio_bergen:import_curated` from `RAILS/brgen` against the local `pub2` checkout and verify the public Playlist/Active Storage streaming path in a local Rails test environment. The importer is committed; the audio itself is not yet imported.
 - [ ] Run `cd RAILS && npm run test:radio` in the full checkout and preserve its actual exit output. The selector fix and focused Node regression are committed; the isolated harness used during this pass is not a full Rails checkout or a browser playback proof.
 - [ ] Run focused local tests for the curated manifest/import guard and the Playlist tunnel view/controller; add full importer idempotency, ordering, checksum and failure-atomicity coverage, then execute them. This GitHub-only pass did not run Rails tests.
