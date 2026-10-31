@@ -8,9 +8,10 @@ Tv is a mountable Rails engine served at `tv.<city>`, for instance `tv.brgen.no`
 and the city comes from the apex. The recipe for a vertical is in `RAILS/brgen/README.md`, and
 the topology is in `RAILS/brgen/AGENTS.md`.
 
-Channels publish videos, live streams and shows with numbered episodes. Viewers comment, take
-notes pinned to a moment in a video, and chat in real time while a stream runs. Subscriptions
-follow channels. The home page is a grid of trending, live and recent videos, ranked by watch
+Channels publish uploaded videos and shows with numbered episodes. Viewers comment, take
+notes pinned to a moment in a video, and follow channels by subscribing. The data model also
+represents broadcasts and live-stream states, but production live-video ingest and delivery are
+not available yet: that requires a media server and an external delivery/transcoding tier. The home page is a grid of trending, live and recent videos, ranked by watch
 time. The feed at `/feed` is the other shape, one video to a screen, ranked by how much of each
 people actually watched, ten at a time. Both depend on `ViewEvent`, which records watch time
 because a view counted at page load ranks a bounce like a full watch. Each clip may be built on
