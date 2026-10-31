@@ -15,6 +15,7 @@ class DillaTest < Minitest::Test
   SCRIPT = File.join(DIR, "dilla.rb")
   DATA = JSON.parse(File.read(File.join(DIR, "data", "dilla.json")))
   SHOWCASE = JSON.parse(File.read(File.join(DIR, "data", "showcase.json")))
+  RECOVERED = JSON.parse(File.read(File.join(DIR, "data", "recovered_music.json")))
   PROGRESSIONS = DATA.fetch("progressions")
   CHORDS = PROGRESSIONS.flatten.uniq
   PLAYABLE = Playlist.new(DATA, Random.new(0)).voice_names # the rotation leaves out a soundfont voice with no soundfont
@@ -94,6 +95,20 @@ class DillaTest < Minitest::Test
       assert_equal progression.length, KeyLock.lock(progression, "Bb").length
     end
     assert_equal "Ebmaj7", Languages.progression("j5_donut_loop").first
+  end
+
+  def test_recovered_historical_presets_keep_their_names_tempo_and_playable_chords
+    presets = RECOVERED.fetch("legacy_presets")
+    assert_equal 10, presets.size
+    presets.each do |name, preset|
+      assert_match(/\\A[a-z_]+\\z/, name)
+      assert_operator preset.fetch("tempo"), :>=, 60
+      assert_operator preset.fetch("tempo"), :<=, 160
+      assert_equal 4, preset.fetch("chords").size
+      preset.fetch("chords").each { |chord| assert Chords.parse(chord), "#{name}: #{chord}" }
+      assert_equal "historical_style_preset_not_verified_transcription", preset.fetch("status")
+      assert preset.fetch("legacy_fx")
+    end
   end
 
   def test_random_take_uses_the_dilla_output_override
