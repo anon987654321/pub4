@@ -1093,6 +1093,8 @@ function updateTurnQueueUi() {
   if (_pendingTurns.length < TURN_QUEUE_LIMIT) delete rootBody.dataset.queueFull;
   const active = _turnQueueRunning || _pendingTurns.length > 0 || _turnQueuePaused;
   rootBody.dataset.queueActive = active ? '1' : '0';
+  rootBody.dataset.queuePaused = _turnQueuePaused ? '1' : '0';
+  syncThinkingStar();
   if (control) {
     control.hidden = !active;
     control.textContent = _turnQueuePaused ? 'resume' : 'stop';
