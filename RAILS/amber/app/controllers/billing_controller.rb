@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
 class BillingController < Shared::BillingController
-  private
-
-  def billing_app = "amber"
+  def self.billing_app = "amber"
 end

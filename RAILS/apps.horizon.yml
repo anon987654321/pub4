@@ -52,7 +52,7 @@ horizon:
       - { name: takeaway Pro (restaurant promotion, coupons, loyalty), status: planned }
       - { name: business inbox and CRM on messenger, status: planned }
       - { name: payments abstraction (refunds, invoices, VAT, reconciliation), status: planned }
-      - { name: revenue dashboard (MRR, churn, conversion funnel), status: planned }
+      - { name: revenue dashboard (MRR, churn, conversion funnel), status: planned, notes: "first slice 2026-10-31: rake billing:report prints each plan's subscribers, MRR, new and cancelled, the billing funnel from Shared::VisitCount, and each bet in __shared/config/portfolio.yml against its 90-day kill threshold" }
       - { name: marketplace liquidity signals (empty categories, unmet demand), status: planned, notes: "liquidity before ads" }
   amber:
     wardrobe:

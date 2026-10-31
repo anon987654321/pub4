@@ -46,7 +46,7 @@ class BillingPlansContractTest < Minitest::Test
       assert_includes read("#{app}/db/schema.rb"), %(create_table "billing_subscriptions"), app
       assert_includes read("#{app}/app/models/user.rb"), "include Shared::Billable", app
       assert_match(/billing/, read("#{app}/config/routes.rb"), "#{app} routes")
-      assert_includes read("#{app}/app/controllers/billing_controller.rb"), %(def billing_app = "#{app}"), app
+      assert_includes read("#{app}/app/controllers/billing_controller.rb"), %(def self.billing_app = "#{app}"), app
     end
   end
 

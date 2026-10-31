@@ -1,0 +1,41 @@
+# The bets the paid plans are, each with the number that decides it. Read by
+# Shared::PortfolioBet; `rake billing:report` (brgen, amber, master) prints
+# each bet of its app with where it stands.
+#
+# A bet runs for kill_after_days from started_on, then is kept or killed on
+# one number, decided in advance so the decision is not made by mood on the
+# day. started_on is the day the plan could first be bought (its Stripe price
+# set), not the day the code shipped; until it is set the bet reads as not
+# launched, because a clock running on a plan nobody can buy measures nothing.
+#
+# The thresholds are the operator's call. These are first guesses, sized so a
+# kept bet is worth the time it takes: change them before a bet starts, never
+# after it is judged.
+#
+# metric is one of:
+#   paying_subscribers  active or trialing subscriptions to the bet's plans
+#   mrr                 their monthly revenue, in the plans' minor units
+#                       (a yearly plan counts a twelfth of its price)
+kill_after_days: 90
+bets:
+  brgen_business_presence:
+    app: brgen
+    plans: [brgen_business_presence]
+    started_on:
+    metric: paying_subscribers
+    below: 5
+    hypothesis: "Bergen businesses pay NOK 399 a month to be first in Top offers."
+  amber_premium:
+    app: amber
+    plans: [amber_premium_monthly, amber_premium_yearly]
+    started_on:
+    metric: paying_subscribers
+    below: 20
+    hypothesis: "Amber readers pay EUR 7.99 a month for outfit suggestions, decluttering and packing lists."
+  master_law_api:
+    app: master
+    plans: [master_api_team, master_api_business]
+    started_on:
+    metric: mrr
+    below: 29900
+    hypothesis: "Teams pay for MASTER's laws as a CI check: USD 299 a month in total, one Business or six Team keys."

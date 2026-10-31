@@ -4,8 +4,10 @@ module Shared
   # /billing: the app's plans from config/plans.yml, the reader's subscription,
   # a checkout to start one and Stripe's portal to change or cancel it. Each app
   # mounts it as BillingController < Shared::BillingController and names itself
-  # with billing_app.
+  # with self.billing_app.
   class BillingController < ApplicationController
+    def self.billing_app = raise(NotImplementedError, "#{self} must define self.billing_app")
+
     before_action :require_authentication
 
     def show
@@ -17,7 +19,10 @@ module Shared
       plan = selected_plan
       return redirect_to(main_app.billing_path, alert: t("billing.unavailable")) unless plan&.available?
 
-      redirect_to checkout_url_for(plan), allow_other_host: true
+      url = checkout_url_for(plan)
+      # The funnel step between the page view and the payment (rake billing:report).
+      Shared::VisitCount.record(app: visit_counting_app, host: request.host, route: "billing#create")
+      redirect_to url, allow_other_host: true
     rescue Shared::StripeBilling::Error => e
       Rails.logger.warn("[billing] checkout: #{e.message}")
       redirect_to main_app.billing_path, alert: t("billing.unavailable")
@@ -43,6 +48,6 @@ module Shared
                                          cancel_url: main_app.billing_url)
     end
 
-    def billing_app = raise(NotImplementedError, "#{self.class} must define billing_app")
+    def billing_app = self.class.billing_app
   end
 end
