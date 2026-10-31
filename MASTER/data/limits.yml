@@ -267,6 +267,10 @@ dmesg:
   scan_progress: true
   milestones: true
   flush: true
+  # SGR for lines printed while MASTER boots: the OpenBSD console's kernel
+  # colours, white on blue. Terminals only; the prompt and session stay plain.
+  # Empty turns it off, as does NO_COLOR.
+  boot_sgr: "37;44"
 
 session_modes:
   default: strict

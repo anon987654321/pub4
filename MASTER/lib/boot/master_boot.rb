@@ -160,19 +160,28 @@ module Master
       Trace::Dmesg.status("ear0", "setup did not start, #{e.class}: #{e.message}")
     end
 
+    # Everything up to the banner prints as the kernel does (Trace::Dmesg.booting);
+    # the session and its prompt print plain.
     def boot(root: Dir.pwd)
+      container = Trace::Dmesg.booting { boot_container(root:) }
+      CLI::Session.new(container:)
+    end
+
+    def boot_container(root:)
       prepare_runtime!
       emit_device_status
       onboard
       set_up_device
+
       Ground::Pledge.stage1_boot!(root)
       service_ok = ensure_services!(root:)
       Trace::Dmesg.status("master0", "continuing in degraded presentation mode") unless service_ok
       container = bootstrap_container(root:)
       Ground::Pledge.stage2_lock!
+
       CLI::WebServer.start(container[:config]) unless ENV["MASTER_WEB"] == "0"
       CLI::BootBanner.print unless ENV["MASTER_FAST"] == "1" && ENV["MASTER_BOOT_STATUS"] != "1"
-      CLI::Session.new(container:)
+      container
     end
   end
 end

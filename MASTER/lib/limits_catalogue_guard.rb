@@ -133,16 +133,23 @@ module Master
     def validate_dmesg(value, errors)
       return unless value.is_a?(Hash)
 
-      strict_keys(value, %w[enabled verbosity style format env through scan_progress milestones flush],
+      strict_keys(value, %w[enabled verbosity style format env through scan_progress milestones flush boot_sgr],
                   "limits.yml dmesg", errors)
-      errors << "limits.yml dmesg.enabled must be boolean" unless [true, false].include?(value["enabled"])
+      validate_boot_sgr(value["boot_sgr"], errors)
       %w[verbosity style format env].each do |field|
         errors << "limits.yml dmesg.#{field} must be non-empty text" unless
           value[field].is_a?(String) && !value[field].strip.empty?
       end
-      %w[through scan_progress milestones flush].each do |field|
+      %w[enabled through scan_progress milestones flush].each do |field|
         errors << "limits.yml dmesg.#{field} must be boolean" unless [true, false].include?(value[field])
       end
+    end
+
+    # An SGR parameter list, or empty for plain: anything else reaches the terminal as an escape.
+    def validate_boot_sgr(sgr, errors)
+      return if sgr.nil? || sgr.to_s.match?(/\A(?:\d+(?:;\d+)*)?\z/)
+
+      errors << "limits.yml dmesg.boot_sgr must be digits and semicolons"
     end
 
     def validate_session_modes(value, profiles, errors)

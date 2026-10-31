@@ -254,15 +254,11 @@ module Master
       def emit(line, io: $stdout, force: false)
         return unless enabled? || force
 
-        # Normal mode keeps conversational turns quiet. Explicit command reports
-        # force their already-rendered lines through the same presenter.
-        if !force && verbosity == "normal" && Fiber[:master_unit] == "master0" && line.match?(/at \w+0|llm\d+:/)
-          return
-        end
+        return if !force && quiet_in_turn?(line)
 
         text = line.to_s.gsub(/\s+/, " ").strip
         terminal_write(io:) do |target|
-          target.puts(text)
+          target.puts(boot_paint(text, target))
           target.flush if target.respond_to?(:flush)
           # Interactive adapters redraw the prompt before another writer may
           # append a line. Pipes and ordinary log writers use no callback.
@@ -277,6 +273,38 @@ module Master
       end
 
       def emit_mutex = TERMINAL_WRITE_MUTEX
+
+      # Normal mode keeps conversational turns quiet. Explicit command reports
+      # force their already-rendered lines through the same presenter.
+      def quiet_in_turn?(line)
+        verbosity == "normal" && Fiber[:master_unit] == "master0" && line.match?(/at \w+0|llm\d+:/)
+      end
+
+      # OpenBSD's console prints the kernel white on blue and userland plain.
+      # MASTER's boot is its kernel: a line emitted inside booting takes
+      # limits.yml#dmesg.boot_sgr on a terminal. Pipes, logs, the narrator and
+      # everything after the boot get the plain text.
+      def booting
+        previous = @booting
+        @booting = true
+        yield
+      ensure
+        @booting = previous
+      end
+
+      def boot_paint(text, target)
+        @booting ? console_paint(text, target) : text
+      end
+
+      # The session's splash is the last of the boot; it paints through this.
+      # Each line on its own, so a reset never spans a newline.
+      def console_paint(text, target)
+        sgr = cfg.fetch("boot_sgr", "").to_s
+        return text if sgr.empty? || !ENV["NO_COLOR"].to_s.empty?
+        return text unless defined?(target.tty?) && target.tty?
+
+        text.to_s.split("\n", -1).map { |line| line.empty? ? line : "\e[#{sgr}m#{line}\e[0m" }.join("\n")
+      end
 
       # Child processes may inherit terminal redraws even though their output
       # is captured by a pipe. Forward them as completed lines, never as cursor

@@ -61,7 +61,7 @@ module Master
         start_background_loop if background_scan_enabled?
         # One vertical rhythm: the dmesg, a blank line, the ready block, then
         # a blank line before each block that follows and before the prompt.
-        terminal_puts(@refs.renderer.splash(@refs.agent.model))
+        print_splash
         start_boot_scan if background_scan_enabled?
         # One line for a resumed session. Replaying its last turns printed an old
         # reply above the prompt, which read as a canned answer to a message not
@@ -157,6 +157,11 @@ module Master
         Reline.redisplay if Reline.respond_to?(:redisplay)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.reline.redisplay", event_bus: @refs.bus)
+      end
+
+      # The splash is the last of the boot, so it keeps the boot's console colours.
+      def print_splash
+        terminal_puts(Master::Trace::Dmesg.console_paint(@refs.renderer.splash(@refs.agent.model), $stdout))
       end
 
       def terminal_puts(text = "", io: $stdout)
