@@ -1508,7 +1508,7 @@ others = upper.map { |n| n % 12 }.uniq.reject { |pc| pc == note % 12 }.sort_by {
   end
 end
 
-# Twelve progressions the engine writes from rules rather than from records. Each language is a
+# Seventeen progressions the engine writes from rules rather than from records. Each language is a
 # constraint on harmonic motion, a list of [root offset in semitones, quality] against a tonic:
 # Fifths moves by descending fifths and prepared suspensions, the pedal languages sit a pedal under
 # borrowed mixture, planing moves one quality as a shape (or holds a slash pedal), the quartal
