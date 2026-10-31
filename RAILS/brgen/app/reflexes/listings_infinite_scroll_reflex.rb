@@ -25,22 +25,45 @@ class ListingsInfiniteScrollReflex < Shared::InfiniteScrollReflex
     { listing: record, distance_km: @distances[record.id] }
   end
 
+  # The filters and the order page one applied, read back from the sentinel, so
+  # page two is the same list in the same order. It used to come back newest
+  # first and unfiltered by condition or price, under a page sorted by price.
   def scope
-    scope = Marketplace::Listing.publicly_visible.includes(:user, :category).recent
-    scope = scope.where(kind: Marketplace::Listing.kind_from(element.dataset["kind"]))
-    scope = scope.where(category_id: element.dataset["categoryId"]) if element.dataset["categoryId"].present?
-    scope = scope.casual if element.dataset["from"] == "person"
-    scope = scope.from_shops if element.dataset["from"] == "shop"
-    if (term = like_term)
-      scope = scope.where("title LIKE ? OR description LIKE ? OR location LIKE ?", term, term, term)
+    data = element.dataset
+    scope = Marketplace::Listing.publicly_visible.includes(:user, :category)
+                                .where(kind: Marketplace::Listing.kind_from(data["kind"]))
+    scope = by_source(scope, data)
+    scope = by_price(scope, data)
+    by_place(searched(scope), data).sorted_by(data["sort"].presence || "rank")
+  end
+
+  def by_source(scope, data)
+    scope = scope.where(category_id: data["categoryId"]) if data["categoryId"].present?
+    scope = scope.where(condition: data["condition"]) if data["condition"].present?
+    case data["from"]
+    when "person" then scope.casual
+    when "shop" then scope.from_shops
+    else scope
     end
-    lat = element.dataset["lat"].presence
-    lng = element.dataset["lng"].presence
-    if lat.present? && lng.present?
-      radius = Marketplace::Listing.radius_from(element.dataset["radiusKm"].presence)
-      scope = scope.near(lat, lng, radius)
-    end
+  end
+
+  def by_price(scope, data)
+    scope = scope.where("price_cents >= ?", (data["minPrice"].to_f * 100).to_i) if data["minPrice"].present?
+    scope = scope.where("price_cents <= ?", (data["maxPrice"].to_f * 100).to_i) if data["maxPrice"].present?
     scope
+  end
+
+  def searched(scope)
+    term = like_term
+    term ? scope.where("title LIKE ? OR description LIKE ? OR location LIKE ?", term, term, term) : scope
+  end
+
+  def by_place(scope, data)
+    lat = data["lat"].presence
+    lng = data["lng"].presence
+    return scope unless lat && lng
+
+    scope.near(lat, lng, Marketplace::Listing.radius_from(data["radiusKm"].presence))
   end
 
   def listing_distances(listings, lat, lng)

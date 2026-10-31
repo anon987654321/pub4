@@ -55,8 +55,7 @@
 </nav>
 
 <% active_filters = [ params[:from], params[:category_id], params[:condition],
-                      params[:min_price], params[:max_price], @search_lat ].count(&:present?) +
-                    ((params[:sort].present? && params[:sort] != "recent") ? 1 : 0) %>
+                      params[:min_price], params[:max_price], @search_lat ].count(&:present?) %>
 <%# The drawer is not a form of its own. Its fields join the header search
     through the form attribute, so one submission carries the query and every
     filter, and a change here streams the results the way typing does. The
@@ -75,11 +74,12 @@
               <span class="listing-filters-count"><%= active_filters %></span>
             <% end %>
           </summary>
-      
+
           <div class="listing-filters-panel">
-            <%# Six groups, none of them over the seven-item chunk. The source chips
-                were a second horizontal scroller of their own directly under the
-                kinds — the same movement offered twice, for a narrower question. %>
+            <%# Five groups, none of them over the seven-item chunk; the sort is the
+                pills over the results. The source chips were a second horizontal
+                scroller of their own directly under the kinds — the same movement
+                offered twice, for a narrower question. %>
             <fieldset class="listing-filter-group">
               <legend><%= t("marketplace.listing_kind") %></legend>
               <div class="listing-filter-controls">
@@ -91,7 +91,7 @@
                       class: "deal-cat#{" active" if params[:from] == "shop"}" %>
               </div>
             </fieldset>
-      
+
             <fieldset class="listing-filter-group">
               <legend><%= t("marketplace.filter_category") %></legend>
               <div class="listing-filter-controls">
@@ -100,7 +100,7 @@
                       { include_blank: t("actions.all_categories") }, form: StorefrontSearch::FORM, aria: { label: t("marketplace.filter_category") } %>
               </div>
             </fieldset>
-      
+
             <fieldset class="listing-filter-group">
               <%# filter_distance, not radius_label. The group holds "near me" and a
                   radius, and "Radius i kilometer" names only the second of them —
@@ -115,18 +115,7 @@
                 <%= f.number_field :radius_km, value: @radius_km, min: 1, max: Marketplace::Listing::MAX_RADIUS_KM, step: 1, placeholder: t("marketplace.radius_km"), form: StorefrontSearch::FORM, aria: { label: t("marketplace.radius_label") }, inputmode: "numeric" %>
               </div>
             </fieldset>
-      
-            <fieldset class="listing-filter-group">
-              <legend><%= t("marketplace.sort_label") %></legend>
-              <div class="listing-filter-controls">
-                <%= f.select :sort,
-                      options_for_select([[t("marketplace.sort_recent"), "recent"],
-                                          [t("marketplace.sort_price_low"), "price_low"],
-                                          [t("marketplace.sort_price_high"), "price_high"]], @sort),
-                      {}, form: StorefrontSearch::FORM, aria: { label: t("marketplace.sort_label") } %>
-              </div>
-            </fieldset>
-      
+
             <fieldset class="listing-filter-group">
               <legend><%= t("marketplace.filter_price") %></legend>
               <div class="listing-filter-controls">
@@ -134,7 +123,7 @@
                 <%= f.number_field :max_price, value: params[:max_price], min: 0, step: 1, placeholder: t("marketplace.max_price"), form: StorefrontSearch::FORM, aria: { label: t("marketplace.max_price") }, inputmode: "numeric" %>
               </div>
             </fieldset>
-      
+
             <%# The facets are links rather than fields, and they belong here rather
                 than in a second disclosure: a reader narrowing a search does not care
                 which of the two mechanisms a control happens to use. %>

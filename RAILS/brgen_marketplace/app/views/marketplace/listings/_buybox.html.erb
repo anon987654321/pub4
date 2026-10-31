@@ -19,11 +19,19 @@
   <% end %>
   <p class="listing-delivery"><%= buybox_listing.delivery_badge %></p>
   <p class="meta-facts"><%= tag.strong(t("marketplace.sold_by", name: (buybox_listing.store&.name || buybox_listing.user&.display_name || t("chat.anon")))) %><span><%= buybox_listing.store_id.present? ? t("marketplace.shop_seller") : t("marketplace.private_seller") %></span><% if buybox_listing.reviews_count.to_i.positive? %><span><%= t("marketplace.seller_rating", rating: number_with_precision(buybox_listing.rating, precision: 1)) %></span><% end %></p>
-  <p class="meta-facts"><span><%= t("marketplace.views", count: buybox_listing.views_count.to_i) %></span><span><%= t("marketplace.saves", count: buybox_listing.favorites.size) %></span></p>
+  <%# Views and saves are the seller's numbers; a buyer deciding reads price,
+      delivery and seller, as bol's and Kaufland's boxes hold. %>
+  <% if Current.user.present? && Current.user.id == buybox_listing.user_id %>
+    <p class="meta-facts"><span><%= t("marketplace.views", count: buybox_listing.views_count.to_i) %></span><span><%= t("marketplace.saves", count: buybox_listing.favorites.size) %></span></p>
+  <% end %>
   <% if @buy_box_result && @buy_box_result.offers.size > 1 %>
     <p class="listing-status"><%= t("marketplace.buy_box_heading") %></p>
     <details class="buy-box-offers">
-      <summary><%= t("marketplace.more_shop_offers", count: @buy_box_result.offers.size) %></summary>
+      <%# bol's "andere verkopers (n) vanaf €x": how many others and the lowest
+          price, before the reader opens the list. %>
+      <% others = @buy_box_result.offers.reject { |offer| offer.id == buybox_listing.id } %>
+      <summary><%= t("marketplace.other_sellers_from", count: others.size,
+                     price: others.min_by { |offer| offer.price_cents.to_i }&.price_display) %></summary>
       <ul>
         <% @buy_box_result.offers.each do |offer| %>
           <li>

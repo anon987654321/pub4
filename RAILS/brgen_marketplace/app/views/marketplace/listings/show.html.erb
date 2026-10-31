@@ -28,6 +28,7 @@
   <% if @listing.category %>
     <%= link_to @listing.category.name, listings_path(kind: @listing.kind, category_id: @listing.category_id) %>
   <% end %>
+  <%= tag.span @listing.title, aria: { current: "page" } %>
 </nav>
 
 <div class="store-pdp">
@@ -83,8 +84,10 @@
 
 <%= render "marketplace/listings/questions", listing: @listing, questions: @questions, question_form: @question %>
 
-<div class="section-divider">
-  <p class="section-heading--md"><%= t("marketplace.reviews") %></p>
+<%# Kaufland's review rows, the markup takeaway's restaurant page already uses:
+    the stars drawn from the rating, then who and when. %>
+<section class="section-divider store-reviews" aria-labelledby="listing-reviews-heading">
+  <%= tag.h2 t("marketplace.reviews"), id: "listing-reviews-heading", class: "section-heading--md" %>
   <% if @review %>
     <div class="form-wrap form-wrap--flush">
       <%= form_with(model: @review, url: listing_reviews_path(@listing)) do |f| %>
@@ -100,8 +103,8 @@
   <% if @reviews.any? %>
     <% @reviews.each do |review| %>
       <article>
-        <strong><%= number_with_precision(review.rating, precision: 0) %> ★</strong>
-         — <%= review.user&.display_name || t("chat.anon") %>
+        <%= render "shared/store_stars", rating: review.rating %>
+        <p class="deal-meta"><%= review.user&.display_name || t("chat.anon") %> · <%= time_ago(review.created_at) %></p>
         <%= simple_format(review.body) if review.body.present? %>
       </article>
     <% end %>
@@ -111,7 +114,7 @@
           body: t("marketplace.no_reviews_body"),
           action: { label: t("marketplace.browse_listings"), path: listings_path } %>
   <% end %>
-</div>
+</section>
 
 <% if Current.user.present? && Current.user != @listing.user && @listing.buyable? %>
   <div id="make-offer" class="section-divider">

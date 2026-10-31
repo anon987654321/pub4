@@ -100,7 +100,9 @@ en:
       on_its_way: "On its way"
       delivered: "Delivered"
     buy_box_heading: "Recommended shop offer"
-    more_shop_offers: "Compare %{count} shop offers"
+    other_sellers_from:
+      one: "One other seller from %{price}"
+      other: "%{count} other sellers from %{price}"
     buy_box_key: "Shared product key (shop offers)"
     buy_box_key_hint: "Use the same exact EAN, SKU, or model-and-variant key for identical shop offers. Leave blank to keep this offer separate. Private listings never compete."
     buy_box_seller_feedback: "How to improve your shop offer"

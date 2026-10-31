@@ -34,7 +34,20 @@
 <% end %>
 
 <% if @listings.any? %>
-  <%= tag.h2 t("marketplace.inspire_heading", city: Current.city_name), class: "store-heading" %>
+  <%# bol and Kaufland open the results on how many there are and the order
+      they are in, as pills beside the count; the sort used to sit inside the
+      filter drawer, a closed <details> on a phone. Each pill keeps the query
+      and every filter of the page it is on. %>
+  <header class="store-results-head">
+    <%= tag.h2 t("marketplace.inspire_heading", city: Current.city_name), class: "store-heading" %>
+    <%= tag.p t("marketplace.listing_count", count: @pagy.count), class: "store-results-count" %>
+    <nav class="store-pills" aria-label="<%= t("marketplace.sort_label") %>">
+      <% Marketplace::Listing::SORTS.each do |sort| %>
+        <%= link_to t("marketplace.sort_#{sort}"), listings_path(request.query_parameters.merge("sort" => sort)),
+              class: "deal-cat#{" active" if @sort == sort}", aria: { current: (@sort == sort ? "page" : nil) } %>
+      <% end %>
+    </nav>
+  </header>
   <%= turbo_frame_tag "marketplace-listings", target: "_top" do %>
     <div class="deal-grid" id="marketplace-listings" aria-label="<%= t("aria.listings") %>">
       <% @listings.each do |listing| %>
@@ -52,7 +65,10 @@
                lng: @search_lng,
                radius_km: @radius_km,
                kind: @kind,
-               from: params[:from] %>
+               from: params[:from],
+               sort: @sort,
+               data: { condition: params[:condition], min_price: params[:min_price],
+                       max_price: params[:max_price] }.compact_blank %>
   <% end %>
 <% elsif @narrowed %>
   <%= render "shared/empty_state",
