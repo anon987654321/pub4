@@ -922,7 +922,7 @@ async function runMessageTurn(text) {
         // "Pernille only" while data/voice.yml said ryan, which is how the two
         // halves of the stack came to disagree about what was being synthesized.
         const only = window.MASTER_VOICE_POLICY?.single_voice || TTS_DEFAULT_VOICE;
-        uiStatus.textContent = `tts: ${only} only${style ? ` · ${style}` : ''}`;
+        uiStatus.textContent = `tts: ${only} only${style ? ` / ${style}` : ''}`;
       }
       return;
     }
@@ -930,7 +930,7 @@ async function runMessageTurn(text) {
     if (voiceMatch[2]) setTtsStyle(voiceMatch[2]);
     if (uiStatus) {
       const style = _nextTtsStyle();
-      uiStatus.textContent = `voice ${State.voiceName || voiceMatch[1]}${style ? ` · ${style}` : ''}`;
+      uiStatus.textContent = `voice ${State.voiceName || voiceMatch[1]}${style ? ` / ${style}` : ''}`;
     }
     return;
   }
@@ -950,6 +950,9 @@ async function runMessageTurn(text) {
     completedMs: null,
     failedMs: null
   };
+  const publishChatTiming = (status) => window.dispatchEvent(new CustomEvent('master:chat:latency', {
+    detail: { status, firstTokenMs: chatTiming.firstTokenMs, firstAudioMs: chatTiming.firstAudioMs, completedMs: chatTiming.completedMs, failedMs: chatTiming.failedMs }
+  }));
   window.MASTER_CHAT_TIMING = chatTiming;
   window.MASTER_FACE?.ttsSkip?.();
   window._chatOnUser?.(text);
@@ -1001,6 +1004,7 @@ async function runMessageTurn(text) {
     }
     if (raw === '[DONE]') {
       chatTiming.completedMs = Math.round(performance.now() - chatTiming.startedAt);
+      publishChatTiming('complete');
       if (shouldSpeakStreamReply(pending, ttsSuppressed)) {
         tts.lastText = pending.trim();
         flushStreamTts(pending, {
@@ -1019,6 +1023,7 @@ async function runMessageTurn(text) {
     }
     if (raw.startsWith('ERROR:')) {
       chatTiming.failedMs = Math.round(performance.now() - chatTiming.startedAt);
+      publishChatTiming('failed');
       window._chatOnChunk?.(`\n${raw}\n`);
       State.mode = 'error'; State.flash = 1; applyShake(0.8);
       fadeColorTo(TINT.veto);
@@ -1045,6 +1050,7 @@ async function runMessageTurn(text) {
   };
   const onError = () => {
     if (chatTiming.failedMs === null) chatTiming.failedMs = Math.round(performance.now() - chatTiming.startedAt);
+    publishChatTiming('failed');
     clearTimeout(stallTimer);
     State.flash = 1; applyShake(0.8); State.mode = 'error';
     window.MASTERVisual?.event?.('chat:error', { topology: 'serpent', entropy: 0.72, confidence: 0.28, mode: 'error' });
