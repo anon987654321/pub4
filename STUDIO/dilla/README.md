@@ -52,7 +52,7 @@ dub echo and crystallizer, with a quieter instrument echo/crystallizer send. The
 `--effect-rig NAME` option applies this complete per-bus chain to standalone progression
 renders too. Explicit effect flags remain authoritative over the rig defaults.
 
-The harmony is written as well as quoted. Seventeen rule-made progressions, in five original languages plus five recovered grammars (falling fifths, pedal mixture, planing, quartal stacks, static suspensions, relative-major/minor answers, Dorian motion and chromatic mediant lift), sit beside the catalogue and are listed by `--list`. Render one directly with `--language j5_donut_loop` (or `relative_answer`, `dorian_four`, `flexible_sixth` or `mediant_lift`); these are generated from chord symbols at runtime and do not mutate the 506-record catalogue. `--voicing` lays any chord out as drop-2, drop-3, spread, cluster, quartal or so-what; `--key-lock Bb` brings a progression to rest on one tonic; and `--improvise` adds a lead and a bass worked out from the chords. `--takes N` renders each showcase section N times from different seeds and keeps the
+The harmony is written as well as quoted. Seventeen rule-made progressions sit beside the catalogue and are listed by `--list`: the original twelve plus five recovered grammars (`j5_donut_loop`, `relative_answer`, `dorian_four`, `flexible_sixth` and `mediant_lift`). Render one directly with `--language NAME`; they are generated from chord symbols at runtime and do not mutate the 506-record catalogue. `--voicing` lays any chord out as drop-2, drop-3, spread, cluster, quartal or so-what; `--key-lock Bb` brings a progression to rest on one tonic; and `--improvise` adds a lead and a bass worked out from the chords. `--takes N` renders each showcase section N times from different seeds and keeps the
 take whose spectrum, dynamics and peaks fall nearest the warm target the critic measures, and every
 showcase run ends with the critic's reading of the whole programme.
 
@@ -63,6 +63,9 @@ Four guitar voices (nylon, steel, muted and clean electric) are plucked strings:
 ### Recovered harmonic grammars
 
 The five restored grammars are playable, transposable rule sets rather than fixed recordings: `j5_donut_loop` (IVmaj7–iii7–vi7–ii7), `relative_answer` (Imaj7–vi7–IVmaj7–ii7), `dorian_four` (i9–IV9), `flexible_sixth` (i9–vm11–Vmaj9) and `mediant_lift` (Imaj7–iii7–IIImaj7). They are generated in the chosen tonic, passed through the same chord parser and voice-leading search as every other progression, and can be rendered with the normal voice, groove, drum, MIDI and mastering options. The research notes identify these as harmonic movement grammars; they are not claims that any named recording uses this exact generated sequence.
+
+
+The ten named chord/tempo presets from the earlier consolidated generator are also preserved in `data/recovered_music.json`. `--list` exposes them and `--heritage NAME` renders one through today's synthesizer, voicer, groove, effect and mastering path. Their original SoX effect labels remain provenance only; they are not silently translated into different current effect rigs. These are historical style presets, not verified transcriptions of recordings.
 
 ## Engine notes
 
