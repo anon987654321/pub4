@@ -1137,13 +1137,18 @@ test("thinking face keeps the single composer ready beneath an ASCII spinner", (
 
   assert.ok(part1.includes("const STAR_FRAMES = ['|', '/', '-', '\\\\'];"));
   assert.ok(part1.includes("const STAR_INTERVAL_MS = 100;"));
+  assert.ok(part1.includes("function syncThinkingStar()"));
+  assert.ok(part1.includes("syncThinkingStar();"));
   assert.ok(!part1.includes("STAR_COLORS"));
   assert.ok(css.includes('body[data-mode="thinking"] #ascii-star:not(:empty)'));
+  assert.ok(css.includes('body[data-mode="speaking"][data-queue-active="1"] #ascii-star:not(:empty)'));
   assert.ok(css.includes("bottom: calc(84px + var(--safe-bottom) + var(--keyboard-inset, 0px));"));
   assert.ok(css.includes('body[data-mode="thinking"] #zin,'));
   assert.ok(css.includes('body[data-queue-active="1"] #zin { opacity: 1; }'));
   assert.ok(part5.includes("queued / paused"));
   assert.ok(part5.includes("_turnQueueRunning ? 'thinking' : ''"));
+  assert.ok(part5.includes("rootBody.dataset.queuePaused = _turnQueuePaused ? '1' : '0';"));
+  assert.ok(part5.includes("syncThinkingStar();"));
   assert.ok(cliSpinner.includes("TICK_SECONDS = 0.10"));
   assert.ok(cliSpinner.includes('SPINNER_FRAMES = ["|", "/", "-", "\\\\"].freeze'));
 });
