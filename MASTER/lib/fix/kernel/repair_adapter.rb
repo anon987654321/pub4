@@ -391,7 +391,7 @@ module Master
             return reject_fix(path, old_src, "visual_operator_owned", evidence: reason)
           end
           scope = ChangeScope.between(old_src, new_src)
-          if (collapsed = collapsed_reason(scope, new_src))
+          if (collapsed = collapsed_reason(scope, proposal: new_src, original: old_src))
             return reject_fix(path, old_src, "collapsed_content", evidence: collapsed)
           end
           raw_before = scan_all(path)
@@ -463,7 +463,9 @@ module Master
           introduced_findings(before, after).select { |finding| scope.covers?(finding) }
         end
 
-        def collapsed_reason(scope, new_src) = CollapseGuard.collapse(scope, law: @law.id, proposal: new_src)
+        def collapsed_reason(scope, proposal:, original:)
+          CollapseGuard.collapse(scope, law: @law.id, proposal:, original:)
+        end
 
         def visual_source?(path)
           VISUAL_EXTENSIONS.include?(File.extname(path).downcase) &&

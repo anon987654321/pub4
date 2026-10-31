@@ -129,6 +129,22 @@ class TestRepairLoopPerFixCommit < Minitest::Test
     assert_match(/refusal word "UNCHANGED"/, collapse.call("DEAD_CODE", big, "UNCHANGED"))
   end
 
+  # A proposal that keeps most of the file but stubs a body with a marker
+  # passes the shrink floor; the elision half catches it. A marker the file
+  # already had is the file's own text, not the lane stopping.
+  def test_collapse_guard_refuses_new_elision_markers
+    guard = Master::Fix::RepairLoop::CollapseGuard
+    old_src = ["def a", "  1", "end", "", "def b", "  2", "end", ""].join("\n")
+    stubbed = ["def a", "  1", "end", "", "def b", "  ... rest of the method unchanged", "end", ""].join("\n")
+
+    assert_match(/elides instead of writing the file \(6: \.\.\. rest/, guard.collapse(
+      Master::Fix::ChangeScope.between(old_src, stubbed), law: "TRAILING_COMMAS", proposal: stubbed, original: old_src,
+    ))
+    ["[truncated]", "<!-- continued"].each { |marker| assert guard.elisions("a\n#{marker}\n", "a\n").any?, marker }
+    assert_empty guard.elisions(stubbed, stubbed)
+    assert_empty guard.elisions(["value = rest_of_items", "the rest of the logic is below", ""].join("\n"), "")
+  end
+
   # The 2026-09-17 RAILS run wrote the literal word UNCHANGED over a live view.
   # The re-scan approved it, because one word holds no violations — no
   # instrument downstream of the write can catch this one.

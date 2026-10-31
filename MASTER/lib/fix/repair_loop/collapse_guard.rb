@@ -24,17 +24,50 @@ module Master
         # fix can gut a file and be right; a trailing-comma fix cannot.
         DELETION_RULES = %w[DEAD_CODE FILE_SPRAWL].freeze
 
+        # The marker a lane leaves where it stopped writing: "# ... rest of the
+        # method unchanged", "[truncated]", "<!-- continued". The shrink floor
+        # cannot see it, because a proposal that stubs one method body keeps
+        # most of the file. FULL.yml's v71.8 restored a file cut from 74KB to
+        # 5KB, and three of its rule sets asked for this veto.
+        ELISION = Regexp.union(
+          /(?:\.\.\.|…)\s*(?:the\s+)?(?:rest|remaining|unchanged|continued|existing|same|omitted)\b/i,
+          /\[(?:truncated|omitted|snip(?:ped)?)\]/i,
+          /\b(?:rest|remainder) of (?:the |this )?(?:file|method|code|class|function|module|body)\b.{0,24}
+            \b(?:unchanged|the same|omitted|as (?:is|before)|remains|continues)\b/ix,
+          /\b(?:existing|previous|other) code (?:here|unchanged|omitted)\b/i,
+          /<!--\s*(?:continued|rest)\b/i,
+        ).freeze
+
         module_function
 
         def sentinel?(content)
           content.to_s.strip.match?(SENTINEL)
         end
 
+        # The proposal's elision lines the original did not already have, as
+        # "line: text"; a file that documents the pattern keeps its own lines.
+        def elisions(proposal, original)
+          had = original.to_s.each_line.grep(ELISION).map(&:strip).tally
+          proposal.to_s.each_line.with_index(1).filter_map do |line, number|
+            next unless line.match?(ELISION)
+
+            key = line.strip
+            if had[key].to_i.positive?
+              had[key] -= 1
+              next
+            end
+            "#{number}: #{key[0, 80]}"
+          end
+        end
+
         # Why the proposal must be rejected before it is written, or nil. The
         # sizes are the ChangeScope's, the one reading of a change every per-fix
         # check shares.
-        def collapse(scope, law:, proposal:)
+        def collapse(scope, law:, proposal:, original: nil)
           return "the proposal is the refusal word #{proposal.to_s.strip.inspect}, not a file" if sentinel?(proposal)
+
+          elided = elisions(proposal, original)
+          return "the proposal elides instead of writing the file (#{elided.first(3).join("; ")})" if elided.any?
           return if DELETION_RULES.include?(law.to_s)
 
           ratio = scope.size_ratio
