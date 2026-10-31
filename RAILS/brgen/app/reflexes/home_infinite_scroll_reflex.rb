@@ -34,7 +34,7 @@ class HomeInfiniteScrollReflex < Shared::InfiniteScrollReflex
     else
       render(
         partial: "shared/affiliate_feed_unit",
-        locals: { surface: "brgen" }
+        locals: { surface: "brgen", band: slot / Brgen::HomeFeed::AFFILIATE_EVERY }
       )
     end
   end

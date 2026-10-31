@@ -5158,6 +5158,8 @@ label.field--check-label > input { min-height: var(--tap-min); min-width: var(--
 // rules follow them in the cascade.
 
 @include meta.load-css("affiliate_feed_unit");
+// brgen's frontpage band only; amber keeps the catalogue rail.
+@include meta.load-css("affiliate_collage");
 // ============================================================ /module: brgen_share_media
 
 // ============================================================ pages: dating

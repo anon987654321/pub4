@@ -1,6 +1,10 @@
 ---
 nb:
   affiliate:
+    cta:
+      buy_now: "Kjøp nå!"
+      be_happy: "Bli glad!"
+      feel_good: "Kjenn deg bra!"
     deals_title: Tilbud
     deal_alt: Partnertilbud
     placeholder_notice: Eksempeloppføring — ikke en sporet partnerlenke

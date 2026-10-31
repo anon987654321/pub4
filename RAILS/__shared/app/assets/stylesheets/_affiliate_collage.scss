@@ -1,0 +1,95 @@
+// brgen's frontpage band: the operator's collage (pen YzLNyNV). Six deals
+// packed in columns inside a 250px window, as the pen's Packery did, three
+// call-to-action lines laid over them, and the tiles drifting in once. The
+// "Sponset" label and the disclosure below stay; each tile keeps its title and
+// paid-link note for a screen reader, its price on the picture for the eye.
+.affiliate_feed_unit--collage .affiliate_feed_grid {
+  position: relative;
+  display: block;
+  height: 250px; // scan: intentional — the pen's banner window, a drawn frame
+  overflow: hidden;
+  // Narrow columns, as the pen packed 180px images in a wide band: with a
+  // fixed height, fewer columns push the later tiles into hidden overflow ones.
+  columns: 3;
+  column-gap: var(--space-2);
+}
+
+.affiliate_feed_unit--collage .affiliate_feed_tile {
+  position: relative;
+  display: block;
+  max-width: none;
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  break-inside: avoid;
+}
+
+.affiliate_feed_unit--collage .affiliate_feed_media {
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+
+.affiliate_feed_unit--collage .affiliate_feed_media img {
+  height: auto;
+  object-fit: cover;
+}
+
+.affiliate_feed_unit--collage :is(.affiliate_feed_source, .affiliate_feed_title, .affiliate_feed_link_disclosure) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.affiliate_feed_unit--collage .affiliate_feed_price {
+  position: absolute;
+  inset-block-end: var(--space-1);
+  inset-inline-start: var(--space-1);
+  padding: 0 var(--space-1);
+  background: var(--surface);
+  font-size: var(--text-sm);
+}
+
+.affiliate_feed_cta {
+  position: absolute;
+  z-index: 2;
+  padding-inline: var(--space-2);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-heavy);
+  line-height: var(--leading-tight);
+  pointer-events: none;
+}
+
+.affiliate_feed_cta--1 { inset-block-start: 10%; inset-inline-start: 6%; }
+.affiliate_feed_cta--2 { inset-block-start: 44%; inset-inline-end: 6%; }
+.affiliate_feed_cta--3 { inset-block-end: 10%; inset-inline-start: 18%; }
+
+.affiliate_feed_unit--collage.is-drifting .affiliate_feed_tile {
+  animation: affiliate-drift 1200ms var(--ease-out) var(--drift-delay, 0ms) both;
+}
+
+@keyframes affiliate-drift {
+  from { translate: var(--drift-x, 0) var(--drift-y, 0); }
+  to { translate: 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .affiliate_feed_unit--collage.is-drifting .affiliate_feed_tile {
+    animation: none;
+  }
+}
+
+@media (min-width: 480px) {
+  .affiliate_feed_unit--collage .affiliate_feed_grid {
+    columns: 4;
+  }
+}
+
+@media (min-width: 768px) {
+  .affiliate_feed_unit--collage .affiliate_feed_grid {
+    columns: 5;
+  }
+}

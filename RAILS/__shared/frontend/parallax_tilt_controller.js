@@ -16,7 +16,7 @@ import { Controller } from "@hotwired/stimulus"
 //     is the test for whether motion is decoration.
 export default class extends Controller {
   static targets = ["tile"]
-  static values = { strength: { type: Number, default: 18 } }
+  static values = { strength: { type: Number, default: 18 }, drift: { type: Boolean, default: false } }
 
   connect() {
     this.motion = window.matchMedia("(prefers-reduced-motion: reduce)")
@@ -30,6 +30,7 @@ export default class extends Controller {
 
     this.frame = null
     this.measure()
+    if (this.driftValue) this.drift()
     this.onResize = () => this.measure()
     window.addEventListener("resize", this.onResize, { passive: true })
     // Phone: no hover, so the band sat still. Production Permissions-Policy
@@ -52,6 +53,21 @@ export default class extends Controller {
     if (this.onResize) window.removeEventListener("resize", this.onResize)
     if (this.onOrient) window.removeEventListener("deviceorientation", this.onOrient)
     if (this.motion && this.onMotion) this.motion.removeEventListener("change", this.onMotion)
+  }
+
+  // The collage's arrival, from the operator's pen (anime.js translate to a
+  // random point, easeInOutBack, staggered): each tile starts scattered and
+  // settles once. It rides the CSS translate property, so it never fights the
+  // transform the pointer parallax writes.
+  drift() {
+    const scatter = () => `${Math.round(Math.random() * 120 - 60)}px`
+    this.tileTargets.forEach((tile, index) => {
+      const style = tile.style
+      style.setProperty("--drift-x", scatter())
+      style.setProperty("--drift-y", scatter())
+      style.setProperty("--drift-delay", `${index * 50}ms`)
+    })
+    this.element.classList.add("is-drifting")
   }
 
   reset() {

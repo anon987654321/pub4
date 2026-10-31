@@ -1,6 +1,10 @@
 ---
 en:
   affiliate:
+    cta:
+      buy_now: "Buy now!"
+      be_happy: "Be happy!"
+      feel_good: "Feel good!"
     deals_title: Deals
     deal_alt: Affiliate deal
     placeholder_notice: Example listing — not a tracked affiliate link

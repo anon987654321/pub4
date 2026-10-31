@@ -1,10 +1,20 @@
 <% brgen_surface = local_assigns[:surface].to_s == "brgen" %>
-<% deals = affiliate_deals_for(category: local_assigns[:category], limit: brgen_surface ? 1 : 8) %>
+<%# brgen's frontpage band is the operator's collage (pen YzLNyNV): six deals
+    packed tight, three call-to-action lines over them, a drift on arrival and
+    the pointer parallax. Each band in the feed takes the next six of one
+    memoised read, so the bands down a page differ. Amber keeps the catalogue. %>
+<% band = local_assigns[:band].to_i %>
+<% deals = affiliate_deals_for(category: local_assigns[:category], limit: brgen_surface ? 24 : 8) %>
 <% visible_deals = deals.select { |deal| affiliate_product_content_allowed?(deal) || deal.respond_to?(:source) && deal.source.to_s == "amazon" } %>
+<% visible_deals = visible_deals.rotate(band * 6).first(6) if brgen_surface %>
 <% if visible_deals.any? %>
-  <aside class="affiliate_feed_unit<%= " affiliate_feed_unit--brgen" if brgen_surface %><%= " affiliate_feed_unit--in_grid" if local_assigns[:in_grid] %>"
+  <% unit_classes = ["affiliate_feed_unit",
+                     ("affiliate_feed_unit--brgen affiliate_feed_unit--collage" if brgen_surface),
+                     ("affiliate_feed_unit--in_grid" if local_assigns[:in_grid])].compact.join(" ") %>
+  <aside class="<%= unit_classes %>"
          aria-label="<%= t("affiliate.feed_unit_label") %>"
          data-controller="parallax-tilt"
+         data-parallax-tilt-drift-value="<%= brgen_surface %>"
          data-action="pointermove->parallax-tilt#move pointerleave->parallax-tilt#leave">
     <header class="affiliate_feed_header">
       <hgroup>
@@ -14,6 +24,14 @@
     </header>
 
     <div class="affiliate_feed_grid">
+      <% if brgen_surface %>
+        <%# The pen's three lines, laid over the collage; words, not links, so
+            each deal stays one plain paid link. %>
+        <% %w[buy_now be_happy feel_good].each_with_index do |line, slot| %>
+          <%= tag.span t("affiliate.cta.#{line}"), class: "affiliate_feed_cta affiliate_feed_cta--#{slot + 1}",
+                       aria: { hidden: true } %>
+        <% end %>
+      <% end %>
       <% visible_deals.each_with_index do |deal, index| %>
         <% affiliate_depths = [0.06, 0.10, 0.14, 0.04, 0.12, 0.08, 0.15, 0.05] %>
         <% amazon = deal.respond_to?(:source) && deal.source.to_s == "amazon" %>

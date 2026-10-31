@@ -98,7 +98,9 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes css, ".post-reading-preview"
     assert_includes css, ".feed-action-count:empty"
     assert_includes feed, "AFFILIATE_EVERY = 2"
-    assert_includes affiliate, 'brgen_surface ? 1 : 8'
+    # The operator's collage (2026-10-31): six deals a band, each band the next six.
+    assert_includes affiliate, "visible_deals.rotate(band * 6).first(6) if brgen_surface"
+    assert_includes home_feed, "band: position / Brgen::HomeFeed::AFFILIATE_EVERY"
     assert_includes affiliate, "affiliate_feed_unit--brgen"
     assert_includes home_feed, 'surface: "brgen"'
   end
