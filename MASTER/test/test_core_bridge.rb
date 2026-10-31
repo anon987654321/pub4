@@ -302,6 +302,18 @@ class CoreBridgeTest < Minitest::Test
     end
   end
 
+  # A blocked fold on the operator's Mac printed a read of AGENTS.md whole,
+  # forty err0 lines for one turn. A report shows each turn as one line.
+  def test_a_report_shows_a_long_observation_as_one_line
+    file = "1: read(path) -> ok: #{"x" * 300}\nsecond line\nthird line\n"
+    line = Master::CLI::CoreBridge.report_turn(file)
+
+    refute_includes line, "\n"
+    assert_includes line, "(+2 lines)"
+    assert_operator line.length, :<, Master::CLI::CoreBridge::REPORT_TURN_CHARS + 20
+    assert_equal "0: note(kind, text) -> ok", Master::CLI::CoreBridge.report_turn("0: note(kind, text) -> ok")
+  end
+
   def test_empty_goal_is_refused
     assert_equal "core: no goal", Master::CLI::CoreBridge.run_string("   ", root: Dir.pwd)
   end

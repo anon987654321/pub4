@@ -11,7 +11,19 @@ module Master
     # Turns stream to the event bus as they happen, so the terminal and the web
     # dashboard see the same live trace they get from the legacy path.
     module CoreBridge
+      # A report shows each turn as one line: the first line of what came back,
+      # cut here, and how much was left out. An observation can be a whole file;
+      # a blocked fold printed all of AGENTS.md as forty err0 lines.
+      REPORT_TURN_CHARS = 200
+
       module_function
+
+      def report_turn(entry)
+        lines = entry.to_s.lines
+        first = lines.first.to_s.chomp
+        first = "#{first[0, REPORT_TURN_CHARS]}…" if first.length > REPORT_TURN_CHARS
+        lines.size > 1 ? "#{first} (+#{lines.size - 1} lines)" : first
+      end
 
       def run(goal, root:, bus: nil, model: nil, model_id: nil, max_turns: 40, on_turn: nil, memory: nil,
               container: nil, risk: :low, mode: nil, allowed_tools: nil, cancellation: nil)
@@ -436,7 +448,7 @@ module Master
         # can answer without an API key; a blanket preflight here would hide it.
         result = run(goal, root:, bus:, model:, model_id:)
         header = "core: #{result[:reason]} turns=#{result[:turns]}"
-        [header, *result[:transcript], result[:summary]].compact.join("\n")
+        [header, *result[:transcript].map { |entry| report_turn(entry) }, result[:summary]].compact.join("\n")
       end
     end
   end

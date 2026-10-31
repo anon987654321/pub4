@@ -441,7 +441,8 @@ module Master
       def fold_output_text(fold)
         header = "fold0: #{fold[:reason]}, #{fold[:turns]} turns"
         header += ", risk #{fold[:risk]}" if fold[:risk]
-        [header, *fold[:transcript], fold[:summary]].compact.join("\n")
+        turns = Array(fold[:transcript]).map { |entry| Master::CLI::CoreBridge.report_turn(entry) }
+        [header, *turns, fold[:summary]].compact.join("\n")
       end
 
       def unwrap(result)
