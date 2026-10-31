@@ -1188,14 +1188,15 @@ law_map:
       "confidence": 0.85, "operation": "add_logging", "law_ids": ["AUDIT_APPEND_ONLY"], "status": "covered",
       "root": "least_authority", "tags": ["code"]}
     avoid_duplicate_code: {"confidence": 0.75, "detects": "duplication", "meaning": "Eliminate repeated logic  ",
-      "operation": "delete", "severity": "medium", "law_ids": [], "status": "gap", "root": "one_source",
+      "operation": "delete", "severity": "medium", "law_ids": ["DRY"], "status": "covered", "root": "one_source",
       "tags": ["clean_code"], "source": "master.yml@30dad7ead"}
     avoid_feature_envy: {"confidence": 0.75, "detects": "feature_envy",
       "meaning": "Methods should focus on their own data instead of reaching into other objects.",
       "operation": "simplify", "severity": "medium", "law_ids": ["FEATURE_ENVY"], "status": "covered",
       "root": "no_surplus", "tags": ["clean_code"], "source": "master.yml@30dad7ead"}
     avoid_long_methods: {"confidence": 0.9, "detects": "long_function", "meaning": "Break down lengthy functions  ",
-      "operation": "simplify", "severity": "medium", "law_ids": [], "status": "gap", "tags": ["clean_code"],
+      "operation": "simplify", "severity": "medium", "law_ids": ["SMALL_FUNCTIONS"], "status": "covered",
+      "tags": ["clean_code"],
       "source": "master.yml@30dad7ead"}
     avoid_mental_mapping: {"meaning": "code should be self-explanatory", "detects": "cryptic_code",
       "severity": "medium", "confidence": 0.7, "operation": "clarify", "law_ids": ["COMMENTS_AS_DEODORANT"],
@@ -1336,9 +1337,10 @@ law_map:
       "status": "gap", "tags": ["aesthetic"]}
     divitis_prevention: {"meaning": "use semantic HTML, avoid wrapper proliferation",
       "detects": "wrapper_proliferation", "severity": "medium", "confidence": 0.8, "operation": "simplify",
-      "law_ids": [], "status": "gap", "root": "proportion", "tags": ["engineering"], "source": "master.yml@30dad7ead"}
+      "law_ids": ["ANTI_DIVITIS", "BARE_DIV_WRAPPER"], "status": "covered", "root": "proportion", "tags": ["engineering"], "source": "master.yml@30dad7ead"}
     dont_repeat_yourself: {"meaning": "avoid duplication, extract commonality", "detects": "duplication",
-      "severity": "high", "confidence": 0.9, "operation": "extract", "law_ids": ["DEAD_CODE"], "status": "covered",
+      "severity": "high", "confidence": 0.9, "operation": "extract", "law_ids": ["DRY", "PATTERN_EXTRACTION"],
+      "status": "covered",
       "root": "one_source", "tags": ["code"]}
     durability: {"meaning": "tested, backed up, recoverable", "detects": "no_tests", "severity": "critical",
       "confidence": 0.95, "operation": "add_tests", "law_ids": ["PROPERTY_BASED_TESTING", "REVERSIBILITY"],
@@ -1371,7 +1373,8 @@ law_map:
       "NO_EYEBROW_LABEL"], "status": "covered", "root": "no_surplus", "tags": ["visual_design"],
       "source": "master.yml@30dad7ead"}
     evidence_over_opinion: {"meaning": "require proof, not assumptions", "detects": "unsubstantiated_claim",
-      "severity": "medium", "confidence": 0.8, "operation": "add_evidence", "law_ids": [], "status": "gap",
+      "severity": "medium", "confidence": 0.8, "operation": "add_evidence", "law_ids": ["EVIDENCE_BY_INTENT"],
+      "status": "covered",
       "root": "visible_state", "tags": ["engineering"], "source": "master.yml@30dad7ead"}
     experimental_innovation: {"meaning": "Constant material exploration  ", "detects": "unclear_intent",
       "severity": "medium", "confidence": 0.75, "operation": "simplify", "law_ids": [], "status": "gap",
@@ -1398,7 +1401,8 @@ law_map:
       "confidence": 0.95, "operation": "add_validation", "law_ids": ["SILENT_RESCUE"], "status": "covered",
       "root": "visible_state", "tags": ["code"]}
     feedback: {"meaning": "system communicates state and actions", "detects": "silent_operation", "severity": "high",
-      "confidence": 0.85, "operation": "add_feedback", "law_ids": [], "status": "gap", "root": "visible_state",
+      "confidence": 0.85, "operation": "add_feedback", "law_ids": ["SYSTEM_STATUS"], "status": "covered",
+      "root": "visible_state",
       "tags": ["code"]}
     file_sprawl_prevention: {"meaning": "consolidate related files, avoid proliferation", "detects": "file_sprawl",
       "severity": "medium", "confidence": 0.75, "operation": "consolidate", "law_ids": ["FILE_SPRAWL"],
@@ -1562,7 +1566,8 @@ law_map:
       "severity": "medium", "confidence": 0.75, "operation": "simplify", "law_ids": [], "status": "gap",
       "tags": ["japanese_aesthetics"], "source": "master.yml@30dad7ead"}
     job_idempotency: {"meaning": "background jobs safe to retry", "detects": "non_idempotent_job", "severity": "high",
-      "confidence": 0.85, "operation": "add_idempotency", "law_ids": [], "status": "gap", "tags": ["code"]}
+      "confidence": 0.85, "operation": "add_idempotency", "law_ids": ["IDEMPOTENT"], "status": "covered",
+      "tags": ["code"]}
     kaizen: {"meaning": "continuous improvement", "detects": "stagnation", "severity": "medium", "confidence": 0.85,
       "operation": "improve", "law_ids": ["DEAD_CODE"], "status": "covered", "root": "no_surplus", "tags": ["ui"]}
     kanso: {"meaning": "simplicity, elimination of clutter", "detects": "unnecessary_complexity", "severity": "high",
@@ -1712,8 +1717,8 @@ law_map:
       "confidence": 0.75, "operation": "simplify", "law_ids": [], "status": "gap", "root": "proportion",
       "tags": ["japanese_aesthetics"], "source": "master.yml@30dad7ead"}
     one_level_of_abstraction: {"meaning": "consistent abstraction within scope", "detects": "mixed_abstraction",
-      "severity": "medium", "confidence": 0.7, "operation": "normalize", "law_ids": [], "status": "gap",
-      "tags": ["clean_code"], "source": "master.yml@30dad7ead"}
+      "severity": "medium", "confidence": 0.7, "operation": "normalize", "law_ids": ["ONE_ABSTRACTION_LEVEL"],
+      "status": "covered", "tags": ["clean_code"], "source": "master.yml@30dad7ead"}
     open_closed_principle: {"meaning": "open for extension, closed for modification",
       "detects": "modification_required", "severity": "high", "confidence": 0.75, "operation": "introduce_seam",
       "law_ids": ["OPEN_CLOSED"], "status": "covered", "root": "stable_contract", "tags": ["code"]}
@@ -1808,7 +1813,7 @@ law_map:
       "meaning": "Give variable more meaningful name  ", "operation": "rename", "severity": "medium", "law_ids": [],
       "status": "gap", "root": "reach", "tags": ["refactoring"], "source": "master.yml@30dad7ead"}
     replace_magic_numbers: {"confidence": 0.9, "detects": "unclear_intent", "meaning": "Use named constants  ",
-      "operation": "rename", "severity": "medium", "law_ids": [], "status": "gap", "root": "proportion",
+      "operation": "rename", "severity": "medium", "law_ids": ["NO_MAGIC"], "status": "covered", "root": "proportion",
       "tags": ["refactoring"], "source": "master.yml@30dad7ead"}
     repose: {"meaning": "Calm, restful quality  ", "detects": "unclear_intent", "severity": "medium",
       "confidence": 0.75, "operation": "simplify", "law_ids": [], "status": "gap", "tags": ["japanese_aesthetics"],
@@ -1831,8 +1836,8 @@ law_map:
       "severity": "medium", "confidence": 0.75, "operation": "simplify", "law_ids": [], "status": "gap",
       "tags": ["architecture"], "source": "master.yml@30dad7ead"}
     robustness_principle: {"meaning": "Liberal in what you accept, conservative in what you send  ",
-      "detects": "strict_parsing", "severity": "medium", "confidence": 0.75, "operation": "simplify", "law_ids": [],
-      "status": "gap", "tags": ["engineering"], "source": "master.yml@30dad7ead"}
+      "detects": "strict_parsing", "severity": "medium", "confidence": 0.75, "operation": "simplify",
+      "law_ids": ["POSTEL"], "status": "covered", "tags": ["engineering"], "source": "master.yml@30dad7ead"}
     roof_garden: {"meaning": "Reclaimed green space atop buildings  ", "detects": "weak_structure",
       "severity": "medium", "confidence": 0.75, "operation": "add_whitespace", "law_ids": [], "status": "gap",
       "tags": ["aesthetic"]}
@@ -1846,8 +1851,8 @@ law_map:
       "severity": "critical", "confidence": 0.85, "operation": "add_rotation", "law_ids": [], "status": "gap",
       "root": "least_authority", "tags": ["code"]}
     sectionitis_prevention: {"meaning": "avoid excessive nesting in config files", "detects": "deep_nesting",
-      "severity": "medium", "confidence": 0.8, "operation": "flatten", "law_ids": [], "status": "gap",
-      "root": "bounded_load", "tags": ["engineering"], "source": "master.yml@30dad7ead"}
+      "severity": "medium", "confidence": 0.8, "operation": "flatten", "law_ids": ["CONFIGURATION_SHAPE"],
+      "status": "covered", "root": "bounded_load", "tags": ["engineering"], "source": "master.yml@30dad7ead"}
     secure_by_default: {"meaning": "safe configuration out of the box", "detects": "insecure_defaults",
       "severity": "critical", "confidence": 0.9, "operation": "harden", "law_ids": ["FAIL_SAFE_DEFAULTS"],
       "status": "covered", "tags": ["code", "linked-2026-08-07"]}
@@ -1938,7 +1943,8 @@ law_map:
       "status": "covered", "root": "one_source", "tags": ["ux_laws"]}
 
     tell_dont_ask: {"meaning": "command objects rather than querying them", "detects": "feature_envy",
-      "severity": "medium", "confidence": 0.75, "operation": "move_method", "law_ids": [], "status": "gap",
+      "severity": "medium", "confidence": 0.75, "operation": "move_method", "law_ids": ["FEATURE_ENVY"],
+      "status": "covered",
       "root": "no_surplus", "tags": ["clean_code"], "source": "master.yml@30dad7ead"}
     teslers_law: {"meaning": "Complexity can't be eliminated, only relocated  ", "detects": "hidden_complexity",
       "severity": "medium", "confidence": 0.75, "operation": "delete", "law_ids": [], "status": "gap",
