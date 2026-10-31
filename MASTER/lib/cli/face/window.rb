@@ -220,6 +220,9 @@ module Master
         # the same letter-to-viseme rule the browser applies (Policy.viseme_for).
         # Between onsets the last shape holds; a quiet frame returns it to neutral.
         def advance_viseme(level)
+          # Mouth reports nil until the reply's envelope is decoded; the last shape holds.
+          return unless level
+
           onset = level > 0.3 && (@prev_level || 0.0) <= 0.3
           @prev_level = level
           return @viseme = "neutral" if level < 0.05
@@ -342,13 +345,28 @@ module Master
         # and that letter is the start of a typed line instead.
         def interrupt_ear(key)
           @halt_ear = true
-          return if ENTER.include?(key)
-
-          @suppress_heard = true
-          if key.match?(/\A[[:print:]]\z/)
-            @retain_input_on_interrupt = true
-            change { @draft << key }
+          if ENTER.include?(key)
+            send_typed_after_take
+          else
+            @suppress_heard = true
+            retain_typed(key)
           end
+        end
+
+        def retain_typed(key)
+          return unless key.match?(/\A[[:print:]]\z/)
+
+          @retain_input_on_interrupt = true
+          change { @draft << key }
+        end
+
+        # Typing stopped the take, but it winds down for a moment and swallowed this Enter, so a typed line
+        # never went out while the mic was on. The take ends first, then the line is sent.
+        def send_typed_after_take
+          return unless @retain_input_on_interrupt
+
+          @hearing&.join(5)
+          submit
         end
 
         def submit

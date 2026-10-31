@@ -239,7 +239,9 @@ module Master
       end
 
       def run_face
-        was_running = @running
+        # The scanner's own thread, not the REPL's @running: the REPL is always running here, and
+        # reading it started the opt-in lib/ scan on every exit from the face.
+        was_running = @bg_thread&.alive?
         stop_background_loop
         result = CommandRegistry.dispatch_face
         terminal_puts(result) if result && result != "face0: closed"

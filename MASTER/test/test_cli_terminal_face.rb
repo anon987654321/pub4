@@ -136,6 +136,44 @@ class TestCliTerminalFace < Minitest::Test
     refute face.instance_variable_get(:@halt_ear), "display toggles should not stop a listening turn"
   end
 
+  def test_enter_sends_a_line_typed_while_the_microphone_was_listening
+    face = window
+    hearing = Object.new
+    hearing.define_singleton_method(:alive?) { true }
+    hearing.define_singleton_method(:join) { |_limit = nil| self }
+    face.instance_variable_set(:@hearing, hearing)
+    sent = []
+
+    face.stub(:answer, ->(text) { sent << text }) do
+      "hi there".each_char { |key| face.send(:react, key) }
+      face.send(:react, "\r")
+    end
+
+    assert_equal ["hi there"], sent
+    assert_equal "", face.instance_variable_get(:@draft)
+  end
+
+  def test_mouth_shape_holds_while_the_reply_envelope_is_still_decoding
+    face = window
+
+    face.send(:advance_viseme, nil)
+
+    assert_equal "neutral", face.send(:current_viseme)
+  end
+
+  def test_enter_alone_still_only_ends_a_spoken_take
+    face = window
+    hearing = Object.new
+    hearing.define_singleton_method(:alive?) { true }
+    face.instance_variable_set(:@hearing, hearing)
+
+    face.stub(:answer, ->(text) { flunk("Enter on a spoken take sent #{text.inspect}") }) do
+      face.send(:react, "\r")
+    end
+
+    assert face.instance_variable_get(:@halt_ear)
+  end
+
   def test_ctrl_c_interrupts_or_clears_without_leaving_the_face
     face = window
 
