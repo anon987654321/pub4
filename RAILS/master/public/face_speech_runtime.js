@@ -1541,6 +1541,10 @@ function ttsTick() {
     setTTSLoading(false);
     if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
     audio.onplay = () => {
+      const chatTiming = window.MASTER_CHAT_TIMING;
+      if (meta.lane === 'response' && chatTiming && chatTiming.firstAudioMs === null) {
+        chatTiming.firstAudioMs = Math.round(performance.now() - chatTiming.startedAt);
+      }
       emitTtsEvent('tts:playback:start', { text, voice, style, duration: dur || audio.duration || null, backend: 'edge' });
       startVisemeAnim(text);
       if (navigator.vibrate) navigator.vibrate([35, 55, 35]);
