@@ -58,7 +58,13 @@ showcase run ends with the critic's reading of the whole programme.
 
 Four guitar voices (nylon, steel, muted and clean electric) are plucked strings: a burst of noise circulates in a tuned delay line and loses its highs on each trip, as a real string does. They hold pitch to within a cent, take any of the repeat and strum styles, and sound in the showcase section called Nylon Room.
 
-\n\n### Recovered harmonic grammars\n\nThe five restored grammars are playable, transposable rule sets rather than fixed recordings: `j5_donut_loop` (IVmaj7–iii7–vi7–ii7), `relative_answer` (Imaj7–vi7–IVmaj7–ii7), `dorian_four` (i9–IV9), `flexible_sixth` (i9–vm11–Vmaj9) and `mediant_lift` (Imaj7–iii7–IIImaj7). They are generated in the chosen tonic, passed through the same chord parser and voice-leading search as every other progression, and can be rendered with the normal voice, groove, drum, MIDI and mastering options. The research notes identify these as harmonic movement grammars; they are not claims that any named recording uses this exact generated sequence.\n\n## Engine notes
+
+
+### Recovered harmonic grammars
+
+The five restored grammars are playable, transposable rule sets rather than fixed recordings: `j5_donut_loop` (IVmaj7–iii7–vi7–ii7), `relative_answer` (Imaj7–vi7–IVmaj7–ii7), `dorian_four` (i9–IV9), `flexible_sixth` (i9–vm11–Vmaj9) and `mediant_lift` (Imaj7–iii7–IIImaj7). They are generated in the chosen tonic, passed through the same chord parser and voice-leading search as every other progression, and can be rendered with the normal voice, groove, drum, MIDI and mastering options. The research notes identify these as harmonic movement grammars; they are not claims that any named recording uses this exact generated sequence.
+
+## Engine notes
 
 The detailed composition/groove, voice/instrument and effects/mastering rationale is kept in
 [ENGINE_NOTES.md](ENGINE_NOTES.md), leaving this file focused on operating the renderer and
