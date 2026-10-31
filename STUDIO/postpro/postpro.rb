@@ -17,6 +17,8 @@ require_relative "../style_registry"
 
 require "open3"
 require "rbconfig"
+# The pub v13/v14 creative names are compatibility methods on the same measured grade path,
+# not a parallel legacy renderer. Keep this loaded before the shared dispatcher.
 require_relative "legacy_effects"
 require_relative "dilla_analog"
 require_relative "constitution"
