@@ -81,7 +81,7 @@ class DillaTest < Minitest::Test
     %w[dilla.rb data/dilla.json data/showcase.json README.md].each do |file|
       text = File.read(File.join(DIR, file))
       # These two words occur only inside recovered study IDs, not artist references.
-      text = text.gsub(/\\b(?:burton_flip|theseus_microtiming)\\b/, "")
+      text = text.gsub(/\b(?:burton_flip|theseus_microtiming)\b/, "")
       assert_nil text[banned], "#{file} names #{text[banned].inspect}"
     end
   end
