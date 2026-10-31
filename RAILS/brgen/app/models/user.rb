@@ -2,6 +2,7 @@
 
 class User < ApplicationRecord
   include Shared::EmailVerification
+  include Shared::Billable
   # Who may appear in the people picker. Guests have no stable identity to hold a
   # conversation open, bots are addressed in their channel rather than privately,
   # and a scheduled-for-deletion account should not collect new threads.

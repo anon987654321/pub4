@@ -4,7 +4,10 @@ require "shared/contracts"
 Shared::Contracts.require_contract("studio")
 
 class AiController < ApplicationController
+  include PremiumGate
+
   before_action :require_real_user
+  premium_only :suggest_outfits, :generate_outfit, :declutter_guide, :packing_list
 
   # GET actions only suggest. The explicit generate_outfit POST owns persistence
   # and the optional single STUDIO photograph.

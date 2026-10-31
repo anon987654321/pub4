@@ -42,10 +42,10 @@ horizon:
     # Commerce/Billing/Entitlements domain in shared, consumed by the verticals —
     # never a billing, promotion or subscription stack per engine.
     monetization:
-      - { name: plans / subscriptions / entitlements as data (free, Pro, Business), status: planned }
+      - { name: plans / subscriptions / entitlements as data (free, Pro, Business), status: done, notes: "2026-10-31: __shared/config/plans.yml, Shared::BillingSubscription kept in step by Stripe subscription webhooks, user.entitled?, /billing with checkout and the Stripe portal; brgen and amber. Offered only once STRIPE_SECRET_KEY and the plan's STRIPE_PRICE_* are set" }
       - { name: shared Commerce, Ledger and Campaign domains, status: planned, notes: "before any affiliate or promotion code; marketplace, takeaway and amber consume it" }
       - { name: seller verification badge for a seller with no shop, status: planned, notes: "verified business for stores and restaurants is done (apps.yml); a private seller has no organisation number to check, so this needs its own proof" }
-      - { name: paid listing boosts and category/homepage placement, status: planned, notes: "organic discovery stays quality-weighted; paid never overwhelms it" }
+      - { name: paid listing boosts and category/homepage placement, status: planned, notes: "organic discovery stays quality-weighted; paid never overwhelms it. The first slice is done: the Local business presence plan (NOK 399/month) puts a seller's listings in the Top offers strip after featured deals, labelled Sponset, never in the main grid" }
       - { name: seller credits with a transparent ledger, status: planned, notes: "Finta-style 0% commission plus Flon-style credits" }
       - { name: seller, listing and promotion analytics, status: planned }
       - { name: self-service local advertising (CPC/CPM/fixed, geo and time targeting), status: planned }

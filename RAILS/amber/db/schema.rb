@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_10_21_230200) do
+ActiveRecord::Schema[8.2].define(version: 2026_10_31_120000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -156,6 +156,21 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_21_230200) do
     t.integer "post_count", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["fingerprint"], name: "index_anonymous_post_quotas_on_fingerprint", unique: true
+  end
+
+  create_table "billing_subscriptions", force: :cascade do |t|
+    t.boolean "cancel_at_period_end", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "current_period_end"
+    t.string "plan_key", null: false
+    t.string "status", null: false
+    t.string "stripe_customer_id"
+    t.string "stripe_subscription_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["stripe_subscription_id"], name: "index_billing_subscriptions_on_stripe_subscription_id", unique: true
+    t.index ["user_id", "status"], name: "index_billing_subscriptions_on_user_id_and_status"
+    t.index ["user_id"], name: "index_billing_subscriptions_on_user_id"
   end
 
   create_table "comments", force: :cascade do |t|
@@ -673,6 +688,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_21_230200) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "affiliate_links", "items"
+  add_foreign_key "billing_subscriptions", "users"
   add_foreign_key "comments", "users"
   add_foreign_key "connections", "users", column: "addressee_id"
   add_foreign_key "connections", "users", column: "requester_id"

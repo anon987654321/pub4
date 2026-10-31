@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "json"
-require "openssl"
 
 module Webhooks
   # Stripe Checkout webhooks.
@@ -9,7 +8,8 @@ module Webhooks
   # Dashboard → Developers → Webhooks:
   #   URL:  https://<host>/webhooks/stripe
   #   Events: checkout.session.completed,
-  #           checkout.session.async_payment_succeeded
+  #           checkout.session.async_payment_succeeded,
+  #           customer.subscription.created, .updated, .deleted
   #   Signing secret → STRIPE_WEBHOOK_SECRET (whsec_…)
   #
   # Important: verify against the raw request body bytes, not a re-serialized JSON object.
@@ -23,16 +23,12 @@ module Webhooks
     # A payment provider retries in bursts from a handful of addresses.
     self.write_throttle_limit = 300
 
-    TOLERANCE_SECONDS = 300
-
     def create
-      payload = request.raw_post
-      sig_header = request.headers["Stripe-Signature"].to_s
+      event = Shared::StripeSignature.verify!(request.raw_post, request.headers["Stripe-Signature"].to_s)
 
-      event = verify_and_parse!(payload, sig_header)
       handle_event(event)
       head :ok
-    rescue SignatureError => e
+    rescue Shared::StripeSignature::Error => e
       Rails.logger.warn("[webhooks/stripe] signature: #{e.message}")
       head :unauthorized
     rescue JSON::ParserError
@@ -44,42 +40,11 @@ module Webhooks
 
     private
 
-    class SignatureError < StandardError; end
-
-    def verify_and_parse!(payload, sig_header)
-      secret = ENV["STRIPE_WEBHOOK_SECRET"].to_s.strip
-      raise SignatureError, "STRIPE_WEBHOOK_SECRET missing" if secret.blank?
-      raise SignatureError, "Stripe-Signature missing" if sig_header.blank?
-
-      # Stripe-Signature: t=1492774577,v1=...,v1=... (multiple v1 possible during rotation)
-      parts = Hash.new { |h, k| h[k] = [] }
-      sig_header.split(",").each do |segment|
-        key, value = segment.split("=", 2)
-        next if key.blank? || value.blank?
-
-        parts[key.strip] << value.strip
-      end
-
-      timestamp = parts["t"].first
-      signatures = parts["v1"]
-      raise SignatureError, "malformed Stripe-Signature" if timestamp.blank? || signatures.blank?
-
-      age = (Time.now.to_i - timestamp.to_i).abs
-      raise SignatureError, "timestamp outside tolerance (#{age}s)" if age > TOLERANCE_SECONDS
-
-      signed_payload = "#{timestamp}.#{payload}"
-      expected = OpenSSL::HMAC.hexdigest("SHA256", secret, signed_payload)
-
-      matched = signatures.any? do |candidate|
-        candidate.bytesize == expected.bytesize &&
-          ActiveSupport::SecurityUtils.secure_compare(expected, candidate)
-      end
-      raise SignatureError, "signature mismatch" unless matched
-
-      JSON.parse(payload)
-    end
-
+    # Subscription events (plans in __shared/config/plans.yml) go to billing; the
+    # rest are marketplace payments.
     def handle_event(event)
+      return if Shared::StripeBilling.handle(event)
+
       type = event["type"].to_s
       data = event.dig("data", "object") || {}
 

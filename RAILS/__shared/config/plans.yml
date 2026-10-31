@@ -1,0 +1,35 @@
+# Every paid plan, as data. Shared::BillingPlan reads it; the /billing page,
+# checkout and the entitlement check all go through that one reader.
+#
+# amount is in minor units and is what the page shows: it must equal the
+# Stripe Price that price_env names, created once in the Stripe dashboard
+# (Products → Add product → recurring price) and its price_… id put in that
+# ENV variable on the app's box. A plan whose ENV is unset is shown as not
+# yet available rather than offered, so nobody is sent to a checkout that
+# cannot complete.
+#
+# entitlements are what an active subscription unlocks; the app asks
+# user.entitled?(:name) and never a plan key, so a plan can be repriced or
+# split without touching the code that gates on it.
+plans:
+  brgen_business_presence:
+    app: brgen
+    amount: 39900
+    currency: NOK
+    interval: month
+    price_env: STRIPE_PRICE_BRGEN_BUSINESS_PRESENCE
+    entitlements: [featured_listings]
+  amber_premium_monthly:
+    app: amber
+    amount: 799
+    currency: EUR
+    interval: month
+    price_env: STRIPE_PRICE_AMBER_PREMIUM_MONTHLY
+    entitlements: [amber_premium]
+  amber_premium_yearly:
+    app: amber
+    amount: 6900
+    currency: EUR
+    interval: year
+    price_env: STRIPE_PRICE_AMBER_PREMIUM_YEARLY
+    entitlements: [amber_premium]

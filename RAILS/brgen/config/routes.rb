@@ -58,9 +58,9 @@ Rails.application.routes.draw do
     post "magic", to: "sessions#request_magic", as: :request_magic
   end
   resources :passwords, param: :token, only: %i[new create edit update]
-  instance_eval(File.read(File.expand_path("../../__shared/config/routes/auth.rb", __dir__)))
-  instance_eval(File.read(File.expand_path("../../__shared/config/routes/email_verification.rb", __dir__)))
-  instance_eval(File.read(File.expand_path("../../__shared/config/routes/verification.rb", __dir__)))
+  %w[auth email_verification verification billing].each do |shared|
+    instance_eval(File.read(File.expand_path("../../__shared/config/routes/#{shared}.rb", __dir__)))
+  end
   post "fingerprint" => "fingerprints#create"
   instance_eval(File.read(File.expand_path("../../__shared/config/routes/fleet.rb", __dir__)))
   resources :activity_events, only: :index

@@ -4,6 +4,7 @@ require "securerandom"
 
 class User < ApplicationRecord
   include Shared::EmailVerification
+  include Shared::Billable
   has_secure_password
 
   has_one :profile, dependent: :destroy

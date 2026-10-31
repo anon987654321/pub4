@@ -1,0 +1,51 @@
+<% content_for :title, t("billing.title") %>
+
+<div class="page-header">
+  <hgroup>
+    <%= tag.h1 t("billing.title") %>
+    <%= tag.p t("billing.lede") %>
+  </hgroup>
+</div>
+
+<% if params[:started].present? %>
+  <p class="flash-notice" role="status"><%= t("billing.started") %></p>
+<% end %>
+
+<% current = @subscriptions.select(&:entitling?) %>
+<% if current.any? %>
+  <section aria-labelledby="billing-current">
+    <%= tag.h2 t("billing.current"), id: "billing-current" %>
+    <ul role="list">
+      <% current.each do |subscription| %>
+        <li>
+          <%= t("billing.plans.#{subscription.plan_key}.name") %>
+          <% if subscription.current_period_end %>
+            — <%= t(subscription.cancel_at_period_end ? "billing.ends_on" : "billing.renews_on",
+                    date: l(subscription.current_period_end.to_date)) %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+    <%= button_to t("billing.manage"), portal_billing_path, class: "btn" %>
+  </section>
+<% end %>
+
+<section aria-labelledby="billing-plans">
+  <%= tag.h2 t("billing.plans_heading"), id: "billing-plans" %>
+  <% @plans.each do |plan| %>
+    <article class="card">
+      <%= tag.h3 t("billing.plans.#{plan.key}.name") %>
+      <%= tag.p t("billing.plans.#{plan.key}.summary") %>
+      <p>
+        <strong><%= number_to_currency(plan.amount / 100.0, unit: plan.currency, format: "%n %u") %></strong>
+        <%= t("billing.per_#{plan.interval}") %>
+      </p>
+      <% if plan.available? %>
+        <%= button_to t("billing.subscribe"), billing_path, params: { plan: plan.key }, class: "btn btn-primary",
+                                                           data: { turbo: false } %>
+      <% else %>
+        <p class="muted"><%= t("billing.not_yet") %></p>
+      <% end %>
+    </article>
+  <% end %>
+</section>

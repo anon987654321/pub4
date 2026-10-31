@@ -77,6 +77,7 @@ en:
       returns: "Free returns"
     precise_coordinates: "Precise coordinates (optional)"
     top: "Top"
+    sponsored: "Sponsored"
     verified: "Verified"
     order_notification:
       new_order: "New order"

@@ -1,0 +1,26 @@
+en:
+  billing:
+    title: "Plans"
+    lede: "Pay monthly or yearly. Cancel any time from Manage billing; you keep access until the period ends."
+    current: "Your plan"
+    plans_heading: "Available plans"
+    renews_on: "renews %{date}"
+    ends_on: "ends %{date}"
+    manage: "Manage billing"
+    subscribe: "Subscribe"
+    not_yet: "Not available yet."
+    unavailable: "That plan cannot be started right now. Nothing was charged."
+    started: "Thanks. Your plan starts as soon as the payment is confirmed, usually within a minute."
+    premium_required: "That is part of Amber Premium."
+    per_month: "per month"
+    per_year: "per year"
+    plans:
+      brgen_business_presence:
+        name: "Local business presence"
+        summary: "Your marketplace listings shown first in Top offers, for buyers in your city."
+      amber_premium_monthly:
+        name: "Amber Premium, monthly"
+        summary: "AI outfit suggestions, the declutter guide and packing lists."
+      amber_premium_yearly:
+        name: "Amber Premium, yearly"
+        summary: "Everything in Premium, paid once a year."

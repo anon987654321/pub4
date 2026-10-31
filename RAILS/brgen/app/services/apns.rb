@@ -4,17 +4,19 @@
 #
 # Configured only when both halves exist: the apnotic gem (APNs speaks HTTP/2
 # only, and Ruby's standard library has no HTTP/2 client) and the provider key
-# in credentials as `apns: { key:, key_id:, team_id:, topic: }`, where topic is
-# the app's bundle id. Until then configured? is false, nothing is enqueued and
-# the page never offers native notifications, so no reader is asked to allow
-# something that cannot arrive.
+# in the box's environment: APNS_KEY (the .p8 contents), APNS_KEY_ID,
+# APNS_TEAM_ID and APNS_TOPIC (the app's bundle id). Not Rails credentials:
+# credentials.yml.enc was deleted because its master key was public (see
+# RAILS/test/tracked_secrets_test.rb). Until then configured? is false, nothing
+# is enqueued and the page never offers native notifications, so no reader is
+# asked to allow something that cannot arrive.
 module Apns
   # The token is gone for good: the app was deleted or the device reset.
   DEAD_TOKEN_REASONS = %w[BadDeviceToken Unregistered DeviceTokenNotForTopic].freeze
 
   module_function
 
-  def credentials = Rails.application.credentials.apns || {}
+  def credentials = %i[key key_id team_id topic].to_h { |name| [name, ENV["APNS_#{name.upcase}"].to_s.presence] }
 
   def configured?
     defined?(::Apnotic) && %i[key key_id team_id topic].all? { |name| credentials[name].present? } ? true : false

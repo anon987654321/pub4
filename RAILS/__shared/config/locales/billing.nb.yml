@@ -1,0 +1,28 @@
+nb:
+  billing:
+    title: "Abonnement"
+    lede: >-
+      Betal månedlig eller årlig. Si opp når som helst under Administrer betaling;
+      du beholder tilgangen ut perioden.
+    current: "Ditt abonnement"
+    plans_heading: "Tilgjengelige abonnement"
+    renews_on: "fornyes %{date}"
+    ends_on: "avsluttes %{date}"
+    manage: "Administrer betaling"
+    subscribe: "Abonner"
+    not_yet: "Ikke tilgjengelig ennå."
+    unavailable: "Det abonnementet kan ikke startes akkurat nå. Ingenting ble trukket."
+    started: "Takk. Abonnementet starter så snart betalingen er bekreftet, vanligvis innen ett minutt."
+    premium_required: "Det er en del av Amber Premium."
+    per_month: "per måned"
+    per_year: "per år"
+    plans:
+      brgen_business_presence:
+        name: "Lokal bedriftsprofil"
+        summary: "Annonsene dine vises først under Topptilbud, for kjøpere i din by."
+      amber_premium_monthly:
+        name: "Amber Premium, månedlig"
+        summary: "AI-forslag til antrekk, ryddeguide og pakkelister."
+      amber_premium_yearly:
+        name: "Amber Premium, årlig"
+        summary: "Alt i Premium, betalt én gang i året."

@@ -77,6 +77,7 @@ nb:
       returns: "Fri retur"
     precise_coordinates: "Nøyaktige koordinater (valgfritt)"
     top: "Topp"
+    sponsored: "Sponset"
     verified: "Verifisert"
     order_notification:
       new_order: "Nytt kjøp"

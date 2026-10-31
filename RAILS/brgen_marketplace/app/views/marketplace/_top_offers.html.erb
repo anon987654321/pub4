@@ -17,9 +17,15 @@
       <%# The badge falls back twice and both fallbacks were English literals on
           a surface that renders in Norwegian by default. deal.badge itself is
           seller copy and stays as written. %>
+      <%# A paid presence listing says so on its card, before the click
+          (markedsføringsloven § 3, DSA art. 26): "Sponset", not "Annonse",
+          which on this page also means a listing. %>
+      <% sponsored = deal.nil? && Array(local_assigns[:sponsored_ids] || @sponsored_listing_ids).include?(listing.id) %>
       <% badge = if deal
                    deal.badge.presence ||
                      (deal.discount_percent.present? ? t("marketplace.percent_off", percent: deal.discount_percent.to_i) : t("marketplace.deal"))
+                 elsif sponsored
+                   t("marketplace.sponsored")
                  else
                    t("marketplace.top")
                  end %>

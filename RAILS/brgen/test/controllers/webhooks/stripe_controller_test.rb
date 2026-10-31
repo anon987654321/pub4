@@ -57,7 +57,7 @@ class Webhooks::StripeControllerTest < ActionDispatch::IntegrationTest
 
   test "rejects a signature outside the timestamp tolerance" do
     payload = event
-    stale = Time.now.to_i - Webhooks::StripeController::TOLERANCE_SECONDS - 60
+    stale = Time.now.to_i - Shared::StripeSignature::TOLERANCE_SECONDS - 60
     post_event(payload, sign(payload, timestamp: stale))
     assert_response :unauthorized
   end

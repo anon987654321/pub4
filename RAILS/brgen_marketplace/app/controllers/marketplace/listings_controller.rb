@@ -47,6 +47,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
     @listing_distances = listing_distances(@listings, lat: @search_lat, lng: @search_lng)
     @categories = Marketplace::Category.roots.includes(:children)
     @top_offers = top_offers_for_index(@kind)
+    @sponsored_listing_ids = sponsored_listing_ids_in(@top_offers)
     @favorited_listing_ids = favorited_listing_ids_for(@listings, @top_offers)
     # An empty list with nothing narrowing it means the city has none of this
     # kind yet, which the results say differently from a search that found none.
@@ -230,23 +231,41 @@ class Marketplace::ListingsController < Marketplace::BaseController
     return [] if live_search_query.present? || params[:category_id].present?
 
     limit = 6
-    deals = Marketplace::Deal.live.featured
+    offers = Marketplace::Deal.live.featured
       .merge(Marketplace::Listing.where(kind: kind))
       .includes(listing: { photos_attachments: :blob })
       .limit(limit)
       .to_a
-    return deals if deals.size >= limit
+    offers += top_offer_listings(kind, excluding: offers, limit: limit - offers.size, sellers: presence_seller_ids)
+    offers + top_offer_listings(kind, excluding: offers, limit: limit - offers.size)
+  end
 
-    seen = deals.filter_map(&:listing_id)
-    fillers = policy_scope(Marketplace::Listing).active
-      .where(kind: kind)
-      .with_attached_photos
-      .includes(:category)
-      .where.not(id: seen)
-      .popular
-      .limit(limit - deals.size)
-      .to_a
-    deals + fillers
+  # Local business presence (__shared/config/plans.yml, featured_listings): a
+  # paying business's active listings come after the featured deals and before
+  # the popular fill. Paid placement, so the card carries the sponsored label.
+  def presence_seller_ids
+    @presence_seller_ids ||= Shared::BillingSubscription.granting(:featured_listings).distinct.pluck(:user_id)
+  end
+
+  # The strip's listings that are there because their seller pays. Every
+  # presence listing the strip has room for comes before the popular fill, so a
+  # paying seller's listing in the strip is always a paid one.
+  def sponsored_listing_ids_in(offers)
+    sellers = presence_seller_ids
+    offers.filter_map { |row| row.id if row.is_a?(Marketplace::Listing) && sellers.include?(row.user_id) }
+  end
+
+  # Popular active listings of +kind+ not already in +excluding+ (deals or
+  # listings), from +sellers+ when given.
+  def top_offer_listings(kind, excluding:, limit:, sellers: nil)
+    return [] unless limit.positive?
+
+    seen = excluding.map { |row| row.is_a?(Marketplace::Deal) ? row.listing_id : row.id }
+    listings = policy_scope(Marketplace::Listing).active.where(kind:)
+    scope = listings.where.not(id: seen)
+    scope = scope.where(user_id: sellers) if sellers
+    scope = scope.with_attached_photos.includes(:category)
+    scope.popular.limit(limit).to_a
   end
 
   def favorited_listing_ids_for(*collections)

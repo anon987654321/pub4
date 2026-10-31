@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_10_30_120000) do
+ActiveRecord::Schema[8.2].define(version: 2026_10_31_120000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -181,6 +181,21 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_30_120000) do
     t.index ["actor_id"], name: "index_audit_events_on_actor_id"
     t.index ["context_type", "context_id", "occurred_at"], name: "idx_on_context_type_context_id_occurred_at_75c71d77bc"
     t.index ["target_type", "target_id"], name: "index_audit_events_on_target_type_and_target_id"
+  end
+
+  create_table "billing_subscriptions", force: :cascade do |t|
+    t.boolean "cancel_at_period_end", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "current_period_end"
+    t.string "plan_key", null: false
+    t.string "status", null: false
+    t.string "stripe_customer_id"
+    t.string "stripe_subscription_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["stripe_subscription_id"], name: "index_billing_subscriptions_on_stripe_subscription_id", unique: true
+    t.index ["user_id", "status"], name: "index_billing_subscriptions_on_user_id_and_status"
+    t.index ["user_id"], name: "index_billing_subscriptions_on_user_id"
   end
 
   create_table "blocks", force: :cascade do |t|
@@ -1989,6 +2004,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_30_120000) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "activity_events", "users", column: "actor_id"
   add_foreign_key "audit_events", "users", column: "actor_id"
+  add_foreign_key "billing_subscriptions", "users"
   add_foreign_key "blocks", "users", column: "blocked_id"
   add_foreign_key "blocks", "users", column: "blocker_id"
   add_foreign_key "bookmarks", "posts"
