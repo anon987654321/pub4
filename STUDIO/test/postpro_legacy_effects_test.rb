@@ -6,6 +6,7 @@ class PostproLegacyEffectsTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   LEGACY = File.read(File.join(ROOT, "postpro", "legacy_effects.rb"))
   RECIPE = File.read(File.join(ROOT, "postpro", "lib", "recipe.rb"))
+  DISPATCH = File.read(File.join(ROOT, "postpro", "lib", "grade_step.rb"))
 
   RESTORED = %w[
     film_grain film_halation bloom_effect cross_process golden_hour_glow lomo
@@ -27,6 +28,7 @@ class PostproLegacyEffectsTest < Minitest::Test
 
     assert_empty missing_methods, "missing restored implementations: #{missing_methods.join(', ')}"
     assert_empty missing_recipe_names, "missing recipe vocabulary: #{missing_recipe_names.join(', ')}"
+    assert_empty missing_dispatch_names, "missing current dispatch equivalents: #{missing_dispatch_names.join(', ')}"
   end
 
   def test_historical_effect_inventory_has_no_duplicate_names
