@@ -7,8 +7,8 @@ require_relative "../../voice/typography"
 module Master
   module CLI
     class Session
-      TICK_SECONDS = 0.20
-      SPINNER_FRAMES = ["*", "+", "x", "+"].freeze
+      TICK_SECONDS = 0.10
+      SPINNER_FRAMES = ["|", "/", "-", "\\"].freeze
       STAGE_EVENTS = {
         "infer:resolved" => "infer",
         "infer:confidence" => "infer",
