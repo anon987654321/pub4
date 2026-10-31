@@ -73,7 +73,17 @@ class DillaTest < Minitest::Test
   def test_the_tracked_tree_is_the_engine_its_data_and_a_readme
     tracked, status = Open3.capture2("git", "ls-files", ".", chdir: DIR)
     skip "not a git checkout" unless status.success?
-    assert_equal %w[.gitignore ENGINE_NOTES.md README.md REFERENCE_STUDY.md data/dilla.json data/music_theory.json data/recovered_music.json data/showcase.json dilla.rb dilla.wav], tracked.lines.map(&:strip).sort
+    assert_equal %w[.gitignore ENGINE_NOTES.md README.md REFERENCE_STUDY.md data/dilla.json data/music_theory.json data/recovered_music.json data/showcase.json dilla.rb dilla.wav rg69.rb], tracked.lines.map(&:strip).sort
+  end
+
+  def test_rg69_is_a_forwarding_name_for_the_same_engine
+    dilla_stdout, dilla_stderr, dilla_status = run_dilla("--list", chdir: DIR)
+    rg69_stdout, rg69_stderr, rg69_status = Open3.capture3(
+      RbConfig.ruby, File.join(DIR, "rg69.rb"), "--mono", "--list", chdir: DIR
+    )
+    assert dilla_status.success?, dilla_stderr
+    assert rg69_status.success?, rg69_stderr
+    assert_equal dilla_stdout, rg69_stdout
   end
 
   def test_no_artist_band_song_or_book_is_named_anywhere
