@@ -55,6 +55,10 @@ the commit that carries its evidence; nothing here records finished work.
   that not every ChatGPT conversation from account inception was available. The
   unresolved source/export boundary is listed below; no claim that every old chat
   was read is made.
+- The older request for a floating footer transport is already implemented by the
+  Playlist engine's `_transport_bar.html.erb` and `.playlist-transport-bar` CSS:
+  play/pause/previous/stop/next/volume, floating rounded geometry, safe-area offset,
+  nav autohide and reduced-motion handling. No duplicate implementation is needed.
 - The requested Brgen responsive screenshot set is already present in Git: mobile and
   desktop pairs for Brgen, Dating, Maps, Marketplace, Messenger, Radio, TV and MASTER,
   plus Amber and BSDPorts. This is a current-tree asset inventory, not a fresh runtime
@@ -95,14 +99,16 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
   to `papua-mask` and has no radio-mode inward-force path. Preserve one renderer and
   its reduced-motion/performance limits. Add deterministic shader/geometry regressions
   and confirm live motion in a real browser with audio before calling it complete.
-- [ ] **Radio visualizer transitions and floating navigation:** the old direct request
+- [ ] **Radio visualizer transitions and shared aesthetic:** the old direct request
   was to rotate between the existing waveform and tunnel visualizers on track change,
-  with a fade/mixed-flow transition, and move the bottom navigation into a floating,
-  rounded rectangle above the footer. Do not revive the deprecated standalone
-  seven-mode visualizer or add placeholder modes. Identify the actual shared bottom
-  navigation (not the now-playing or transport row), implement against the two current
-  visualizers, and verify track transitions, reduced motion, safe-area insets and
-  rendered mobile/desktop geometry before closing.
+  with a fade/mixed-flow transition, and keep the face and playlist visuals in one
+  coherent design language. The footer transport request is already implemented:
+  `_transport_bar.html.erb` renders play/pause/skip, while
+  `.playlist-transport-bar` floats above the footer as a rounded rectangle and
+  respects safe-area insets and reduced motion. Do not redo that bar or revive the
+  deprecated standalone seven-mode visualizer. Implement and test only the two current
+  visualizers' track-driven transition and confirm the shared style, reduced motion,
+  and rendered mobile/desktop behavior before closing.
 - [ ] **MASTER README narrated face preview:** older requests include an inline
   face-speaking preview, mobile `README_ss.webp` and Norwegian counterpart,
   a full-README TTS narration, and a real SSH/`bin/master` dmesg transcript.
