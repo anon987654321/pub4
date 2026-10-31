@@ -937,7 +937,7 @@ async function runMessageTurn(text) {
   if (/^\/whoami$/i.test(trimmed)) {
     const summary = window.MASTER_SOUL_SUMMARY ||
       `persona anchor; voice ${TTS_DEFAULT_VOICE}; constitutional face`;
-    if (uiStatus) uiStatus.textContent = "whoami…";
+    if (uiStatus) uiStatus.textContent = "whoami...";
     enqueueSpeech(summary);
     window._chatOnChunk?.(summary);
     window._chatOnDone?.();
@@ -953,13 +953,13 @@ async function runMessageTurn(text) {
   window.MASTER_CHAT_TIMING = chatTiming;
   window.MASTER_FACE?.ttsSkip?.();
   window._chatOnUser?.(text);
-  showStage("routing…", 0);
+  showStage("routing...", 0);
 
   tts.lang = detectLang(text);
   const isTimeSensitive = /\b(today|now|current|latest|recent|this (week|month|year)|right now|at the moment|as of)\b/i.test(text);
   tts.prependTimestamp = isTimeSensitive;
   State.mode = 'thinking'; State.pulse = 0.4; window.MASTER_FACE?.setAmbientHum?.(true);
-  showStage("scanning…", 0);
+  showStage("scanning...", 0);
   scheduleThinkingAloud("scanning");
   syncShareStateUrl();
   if (input.length > 180) State.lean = 0.14;
@@ -1035,7 +1035,7 @@ async function runMessageTurn(text) {
       chatTiming.firstTokenMs = Math.round(performance.now() - chatTiming.startedAt);
     }
     clearThinkingAloud();
-    if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
+    if (uiStatus && uiStatus.textContent !== "speaking...") showStage("speaking...", 900);
     window._chatOnChunk?.(chunk);
     pending += chunk;
     State.pulse = Math.min(0.6, State.pulse + 0.05);
