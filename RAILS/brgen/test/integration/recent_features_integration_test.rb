@@ -162,4 +162,34 @@ class RecentFeaturesIntegrationTest < ActionDispatch::IntegrationTest
     assert_equal user, party.host
     assert party.join_code.present?
   end
+
+  test "playlist analytics are private to the owner and show aggregate counts" do
+    host! "radio.brgen.no"
+    owner = User.create!(
+      email_address: "radio-owner@brgen.no",
+      password: "password123",
+      password_confirmation: "password123",
+      username: "radio_owner"
+    )
+    playlist_record = Playlist::Playlist.create!(name: "My radio set", user: owner, public_access: true)
+    track = Playlist::Track.create!(title: "Bergen track", artist: "Local artist", user: owner)
+    playlist_record.add_track!(track, user: owner)
+    2.times { Playlist::Listen.create!(user: owner, track: track) }
+
+    sign_in_with_session_cookie!(owner)
+    get playlist.analytics_playlist_path(playlist_record)
+    assert_response :success
+    assert_includes response.body, "Bergen track"
+    assert_includes response.body, "2"
+
+    outsider = User.create!(
+      email_address: "radio-outsider@brgen.no",
+      password: "password123",
+      password_confirmation: "password123",
+      username: "radio_outsider"
+    )
+    sign_in_with_session_cookie!(outsider)
+    get playlist.analytics_playlist_path(playlist_record)
+    assert_redirected_to playlist.playlist_path(playlist_record)
+  end
 end
