@@ -4855,5 +4855,148 @@
       "claimed_flip": "Slum Village — Get Dis Money",
       "status": "research_lead"
     }
-  ]
+  ],
+  "legacy_presets": {
+    "dilla_life": {
+      "name": "J Dilla 'Life'",
+      "tempo": 90,
+      "duration_seconds": 2,
+      "legacy_fx": "dilla_butter",
+      "chords": [
+        "Bbm9",
+        "C7",
+        "Fm9",
+        "Bbm9"
+      ],
+      "status": "historical_style_preset_not_verified_transcription",
+      "source": "pub3:multimedia/dilla.rb v5.0.0"
+    },
+    "neo_soul": {
+      "name": "Neo-Soul Classic",
+      "tempo": 90,
+      "duration_seconds": 2,
+      "legacy_fx": "warm_tape",
+      "chords": [
+        "Cmaj9",
+        "Am11",
+        "Fmaj13",
+        "G13sus"
+      ],
+      "status": "historical_style_preset_not_verified_transcription",
+      "source": "pub3:multimedia/dilla.rb v5.0.0"
+    },
+    "dreamscape": {
+      "name": "Dilla Dreamscape",
+      "tempo": 85,
+      "duration_seconds": 2.5,
+      "legacy_fx": "lofi_dream",
+      "chords": [
+        "Ebmaj9",
+        "Cm9",
+        "Abmaj13",
+        "Bb13sus"
+      ],
+      "status": "historical_style_preset_not_verified_transcription",
+      "source": "pub3:multimedia/dilla.rb v5.0.0"
+    },
+    "floating": {
+      "name": "Floating Rhodes",
+      "tempo": 92,
+      "duration_seconds": 2,
+      "legacy_fx": "analog_lush",
+      "chords": [
+        "Dmaj9",
+        "Bm11",
+        "Gmaj9#11",
+        "A13sus"
+      ],
+      "status": "historical_style_preset_not_verified_transcription",
+      "source": "pub3:multimedia/dilla.rb v5.0.0"
+    },
+    "soulquarian": {
+      "name": "Soulquarian Butter",
+      "tempo": 96,
+      "duration_seconds": 2,
+      "legacy_fx": "dilla_butter",
+      "chords": [
+        "Fmaj9",
+        "Dm11",
+        "Bbmaj13",
+        "C13"
+      ],
+      "status": "historical_style_preset_not_verified_transcription",
+      "source": "pub3:multimedia/dilla.rb v5.0.0"
+    },
+    "donut_shop": {
+      "name": "Donut Shop Dreams",
+      "tempo": 82,
+      "duration_seconds": 2.5,
+      "legacy_fx": "lofi_dream",
+      "chords": [
+        "Amaj9",
+        "F#m11",
+        "Dmaj9",
+        "E13sus"
+      ],
+      "status": "historical_style_preset_not_verified_transcription",
+      "source": "pub3:multimedia/dilla.rb v5.0.0"
+    },
+    "slum_village": {
+      "name": "Slum Village Glow",
+      "tempo": 98,
+      "duration_seconds": 2,
+      "legacy_fx": "warm_tape",
+      "chords": [
+        "Gmaj9",
+        "Em11",
+        "Cmaj13",
+        "D13sus"
+      ],
+      "status": "historical_style_preset_not_verified_transcription",
+      "source": "pub3:multimedia/dilla.rb v5.0.0"
+    },
+    "ethiojazz": {
+      "name": "Ethiojazz Nights",
+      "tempo": 80,
+      "duration_seconds": 2.5,
+      "legacy_fx": "analog_lush",
+      "chords": [
+        "Dm9(b5)",
+        "Gm11",
+        "Ebmaj7#11",
+        "Am7b13"
+      ],
+      "status": "historical_style_preset_not_verified_transcription",
+      "source": "pub3:multimedia/dilla.rb v5.0.0"
+    },
+    "ahmad_jamal": {
+      "name": "Ahmad Jamal 'Awakening'",
+      "tempo": 88,
+      "duration_seconds": 2.2,
+      "legacy_fx": "dilla_butter",
+      "chords": [
+        "Emaj7",
+        "G#m7",
+        "C#m7",
+        "F#9"
+      ],
+      "status": "historical_style_preset_not_verified_transcription",
+      "source": "pub3:multimedia/dilla.rb v5.0.0"
+    },
+    "isley_brothers": {
+      "name": "Isley Brothers Style",
+      "tempo": 92,
+      "duration_seconds": 2,
+      "legacy_fx": "analog_lush",
+      "chords": [
+        "Gbmaj9",
+        "Ebm11",
+        "Abm9",
+        "Db13"
+      ],
+      "status": "historical_style_preset_not_verified_transcription",
+      "source": "pub3:multimedia/dilla.rb v5.0.0"
+    }
+  },
+  "legacy_presets_note": "Recovered verbatim chord-name/tempo/duration/legacy-FX metadata from pub3 multimedia/dilla.rb. These are historical style presets, not verified transcriptions. legacy_fx is provenance only; rendering uses the current Dilla voice, groove and mastering chain."
 }
