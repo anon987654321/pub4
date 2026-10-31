@@ -1470,6 +1470,9 @@ nb:
     driver_details: Sjåførdetaljer
     restaurant_info: Restaurantinfo
     min_order_delivery: 'Minstebeløp: %{min} · Levering: %{fee}'
+    delivery_fee_lead: "Levering %{fee}"
+    open_now: "Åpen nå"
+    closed_now: "Stengt nå"
     available_count:
       one: "%{count} tilgjengelig rett"
       other: "%{count} tilgjengelige retter"

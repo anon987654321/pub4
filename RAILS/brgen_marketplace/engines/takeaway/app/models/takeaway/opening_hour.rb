@@ -39,6 +39,28 @@ module Takeaway
       today.exists? || yesterday.exists?
     end
 
+    # { restaurant_id => :open or :closed } for the ids that have recorded
+    # hours, read in three queries for a whole page of cards; an id with no
+    # hours is left out, because nothing is known about it. Same windows as
+    # open_at?, the one-restaurant reader.
+    def self.status_for(restaurant_ids, moment = Time.current)
+      known = where(restaurant_id: restaurant_ids).distinct.pluck(:restaurant_id)
+      return {} if known.empty?
+
+      open = open_ids(known, moment)
+      known.to_h { |id| [id, open.include?(id) ? :open : :closed] }
+    end
+
+    # Of +ids+, the ones inside today's window or yesterday's past midnight.
+    def self.open_ids(ids, moment)
+      minute = moment.hour * 60 + moment.min
+      today = where(restaurant_id: ids, weekday: moment.wday)
+              .where(opens_minute: ..minute).where(closes_minute: (minute + 1)..)
+      yesterday = where(restaurant_id: ids, weekday: (moment.wday - 1) % 7)
+                  .where(closes_minute: (minute + DAY_MINUTES + 1)..)
+      (today.pluck(:restaurant_id) + yesterday.pluck(:restaurant_id)).to_set
+    end
+
     def to_s
       "#{format_minute(opens_minute)}–#{format_minute(closes_minute % DAY_MINUTES)}"
     end

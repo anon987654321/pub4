@@ -1464,6 +1464,9 @@ en:
     driver_details: Driver details
     restaurant_info: Restaurant info
     min_order_delivery: 'Min order: %{min} · Delivery: %{fee}'
+    delivery_fee_lead: "Delivery %{fee}"
+    open_now: "Open now"
+    closed_now: "Closed now"
     available_count:
       one: "%{count} available item"
       other: "%{count} available items"

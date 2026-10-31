@@ -67,6 +67,10 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
 
   private
 
+  # Open or closed for the page's restaurants, read once when the cards ask.
+  def open_status = (@open_status ||= Takeaway::OpeningHour.status_for(@restaurants.to_a.map(&:id)))
+  helper_method :open_status
+
   def set_restaurant = (@restaurant = find_by_slug_or_id(Takeaway::Restaurant.publicly_visible, params[:id]))
 
   def authorize_owner!

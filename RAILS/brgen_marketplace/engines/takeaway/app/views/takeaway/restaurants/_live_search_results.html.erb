@@ -20,7 +20,7 @@
   <% if @restaurants.any? %>
     <div class="deal-grid" role="list" id="takeaway-restaurants-grid">
       <% @restaurants.each do |r| %>
-        <%= render "takeaway/restaurants/card", restaurant: r %>
+        <%= render "takeaway/restaurants/card", restaurant: r, open_status: open_status[r.id] %>
       <% end %>
     </div>
   <% elsif authenticated? %>
