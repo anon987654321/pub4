@@ -943,6 +943,14 @@ async function runMessageTurn(text) {
     window._chatOnDone?.();
     return;
   }
+  const chatTiming = {
+    startedAt: performance.now(),
+    firstTokenMs: null,
+    firstAudioMs: null,
+    completedMs: null,
+    failedMs: null
+  };
+  window.MASTER_CHAT_TIMING = chatTiming;
   window.MASTER_FACE?.ttsSkip?.();
   window._chatOnUser?.(text);
   showStage("routing…", 0);
@@ -992,6 +1000,7 @@ async function runMessageTurn(text) {
       } catch (_) { /* not JSON, fall through to normal content handling */ }
     }
     if (raw === '[DONE]') {
+      chatTiming.completedMs = Math.round(performance.now() - chatTiming.startedAt);
       if (shouldSpeakStreamReply(pending, ttsSuppressed)) {
         tts.lastText = pending.trim();
         flushStreamTts(pending, {
@@ -1009,6 +1018,7 @@ async function runMessageTurn(text) {
       return;
     }
     if (raw.startsWith('ERROR:')) {
+      chatTiming.failedMs = Math.round(performance.now() - chatTiming.startedAt);
       window._chatOnChunk?.(`\n${raw}\n`);
       State.mode = 'error'; State.flash = 1; applyShake(0.8);
       fadeColorTo(TINT.veto);
@@ -1021,6 +1031,9 @@ async function runMessageTurn(text) {
       return;
     }
     const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+    if (chatTiming.firstTokenMs === null) {
+      chatTiming.firstTokenMs = Math.round(performance.now() - chatTiming.startedAt);
+    }
     clearThinkingAloud();
     if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
     window._chatOnChunk?.(chunk);
@@ -1031,6 +1044,7 @@ async function runMessageTurn(text) {
     if (!ttsSuppressed) ttsStreamSpokenLen = pushLiveStreamTts(pending, ttsStreamSpokenLen);
   };
   const onError = () => {
+    if (chatTiming.failedMs === null) chatTiming.failedMs = Math.round(performance.now() - chatTiming.startedAt);
     clearTimeout(stallTimer);
     State.flash = 1; applyShake(0.8); State.mode = 'error';
     window.MASTERVisual?.event?.('chat:error', { topology: 'serpent', entropy: 0.72, confidence: 0.28, mode: 'error' });
@@ -1083,10 +1097,10 @@ function updateTurnQueueUi() {
   }
   if (status) {
     status.textContent = _turnQueuePaused
-      ? `${_pendingTurns.length} queued · paused`
+      ? `${_pendingTurns.length} queued / paused`
       : _pendingTurns.length
         ? `queued ${_pendingTurns.length}`
-        : _turnQueueRunning ? 'working' : '';
+        : _turnQueueRunning ? 'thinking' : '';
   }
 }
 
