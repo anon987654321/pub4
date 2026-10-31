@@ -38,6 +38,15 @@ export const MODES = [
 { name: "PI3DETR Edges", twist: 1.02 }, { name: "Seek-CAD Generative", twist: 0.98 }
 ]
 
+// wrap a keyboard step around the available modes without exposing array mutation.
+export function modeAfterStep(current, step, count = MODES.length) {
+  if (!Number.isInteger(current) || !Number.isInteger(step) || !Number.isInteger(count) || count < 1) {
+    throw new RangeError("radio mode index, step and count must be integers; count must be positive")
+  }
+  return ((current + step) % count + count) % count
+}
+
+
 // ringShape for the vertex shader: the radial offset, in the pen's 75-unit
 // ring, for angle th on ring i (0 at the far end to 125 at the near) at time t.
 // GLSL ES 1.00 has no switch, so the modes are an if-ladder in MODES order.
