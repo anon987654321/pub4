@@ -62,6 +62,19 @@ Applied migrations stay where they ran, and an engine owns its db/migrate only f
 shared models, authentication and design system live in the pub4-shared engine, and no vertical
 redefines them.
 
+## Product brief preserved from the original Brgen markdowns
+
+The earlier product brief describes Brgen as a city-first social network rather than a collection of unrelated destination sites. The apex feed is the shared local meeting place; commerce, dating, audio and video are ways for the same community to participate. This remains the product direction, while the registry and mounted applications above define what the current code actually serves.
+
+The original vertical briefs add useful intent that is easy to lose in an implementation-only README:
+
+- **Dating** is local by default: help people meet within their own city, make local events part of discovery, and give members meaningful control over profile visibility and privacy. Match suggestions should assist discovery, not replace member choice. Premium filters, boosts and event revenue were proposed business models, not promises that those purchases are currently available.
+- **Audio and playlists** are for local musicians, podcasters and residents to publish recordings, music, podcasts and spoken stories, then discover and share work from their city. The original Whyp.it-inspired brief also called for embeddable players, creator analytics, flexible privacy and expiry controls, and ways to support creators. Treat these as product requirements to verify against the playlist engine before describing them as shipped features. The public vertical name is **radio**; playlist subdomain hosts are not supported.
+- **Marketplace** combines person-to-person listings with local shops. Discovery should support categories and useful filters, seller identity and reputation, buyer/seller communication, and nearby inventory. The original brief also proposed AI-assisted discovery and a mobile/PWA experience. The implementation details and live capabilities are defined by the Marketplace sections and engine, not by the old brief.
+- **Local media and culture** include community video/TV and support for local artists and creators. The earlier umbrella description mentioned a record-label concept; that is product inspiration, not a separately mounted application or a claim that a label workflow is implemented.
+
+The old markdowns also contain obsolete technology and capability claims (including PostgreSQL, generic live-chat/AI-chat integrations, and broad feature-completion language). Do not use those as architecture facts. This app currently uses the stack stated at the top of this README; feature status must be established from the relevant engine, routes, tests and RAILS/apps.yml.
+
 ## Marketplace
 
 Every listing in brgen is a Marketplace::Listing, which belongs to a store only optionally. A
