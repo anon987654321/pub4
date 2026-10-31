@@ -17,6 +17,12 @@ const DEFAULT_TRACKS = [
 // persistent warped tunnel through the whole eight-track set.
 const OPENING_TRACK_ID = "9EGHwkDix78"
 
+// Preserve the supplied queue order when the legacy opener is absent.
+export function initialTrackIndex(tracks, openingTrackId) {
+  const opener = tracks.findIndex((track) => track.id === openingTrackId)
+  return opener >= 0 ? opener : 0
+}
+
 // FFT band edges as a fraction of the spectrum. 2048 bins over ~44.1kHz puts
 // bass under ~250Hz, mids to ~2kHz, highs above — the split that makes a kick
 // move the ring and a hat shimmer it.
@@ -29,8 +35,7 @@ class AudioEngine {
     this.trackDisplay = trackDisplay
     this.tracks = tracks.length ? tracks : DEFAULT_TRACKS
     this.isPlaying = false
-    const opener = this.tracks.findIndex((track) => track.id === OPENING_TRACK_ID)
-    this.currentTrack = opener >= 0 ? opener : Math.floor(Math.random() * this.tracks.length)
+    this.currentTrack = initialTrackIndex(this.tracks, OPENING_TRACK_ID)
     this.userInteracted = false
     this.retryCount = 0
     this.maxRetries = 3

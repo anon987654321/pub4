@@ -369,7 +369,7 @@ source and tests they could not run; this pass is what measures them.
 
 - [ ] Read `STUDIO/docs/pub3_archaeology_2026-10-28.md` and `STUDIO/docs/pub2_misc_plugin_assessment_2026-10-28.md`; use their explicit dispositions before any further restoration.
 - [ ] Radio Bergen: confirm distribution rights individually for the 35 selected recordings, then run `radio_bergen:import_curated` from `RAILS/brgen` against the local `pub2` checkout and verify the public Playlist/Active Storage streaming path in a local Rails test environment. The importer is committed; the audio itself is not yet imported.
-- [ ] Adjust the RadioBrgen tunnel's opening-track fallback so a curated local queue starts at its first ordered item (the current engine randomizes when its legacy YouTube opener ID is absent); cover it with a focused JS test.
+- [ ] Run `cd RAILS && npm run test:radio` in the full checkout and preserve its actual exit output. The selector fix and focused Node regression are committed; the isolated harness used during this pass is not a full Rails checkout or a browser playback proof.
 - [ ] Run focused local tests for the curated manifest/import guard and the Playlist tunnel view/controller; add full importer idempotency, ordering, checksum and failure-atomicity coverage, then execute them. This GitHub-only pass did not run Rails tests.
 - [ ] Keep the existing Rails Radio Bergen tunnel as the canonical visualizer. Do not revive the older standalone multi-mode visualizer without a separate product decision.
 - [ ] MASTER plugin candidates from pub2 misc remain reference-only; no MASTER edits or plugin implementation until the required complete MASTER read and contract review are satisfied.

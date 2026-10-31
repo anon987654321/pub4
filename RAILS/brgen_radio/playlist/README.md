@@ -63,8 +63,12 @@ The public host is `radio.<city>`; `playlist.<city>` is not a supported host.
 
 The Playlist home now renders the existing Radio Bergen tunnel through the Rails
 engine view and Stimulus controller rather than a standalone HTML page. Playback
-starts after a user gesture. Once the selected crate is imported, the tunnel
-plays same-origin Active Storage audio and analyses the actual audio signal.
+starts after a user gesture. The legacy opening track is preferred when it exists in the
+selected queue; when it is absent, playback starts at the first selected item, preserving
+the curated order instead of choosing randomly. Once the selected crate is imported, the
+tunnel plays same-origin Active Storage audio and analyses the actual audio signal.
+
+The focused queue-selection regression is available as `cd RAILS && npm run test:radio`.
 
 The exact 35-track selection and ordering live in
 `RAILS/brgen/config/radio_bergen/tracks.yml`; filenames map to the archive-root
