@@ -21,7 +21,7 @@ class SitemapsController < ApplicationController
     when :tv then entries.concat(tv_entries)
     when :playlist then entries.concat(playlist_entries)
     when :takeaway then entries.concat(food_entries)
-    when :marketplace then entries.concat(marketplace_entries).concat(food_entries)
+    when :marketplace then entries.concat(marketplace_entries, category_entries, food_entries)
     when :maps then entries.concat(maps_entries)
     when :dating, :messenger, :ai
       # Personal profiles and private conversations are never indexed — root only.
@@ -97,6 +97,14 @@ class SitemapsController < ApplicationController
     entries_for(Marketplace::Store.publicly_visible.in_current_city, changefreq: "weekly", priority: "0.6") { |s| marketplace.shop_url(s) } +
       entries_for(Marketplace::Listing.publicly_visible.in_current_city, changefreq: "daily", priority: "0.7") { |l| marketplace.listing_url(l) } +
       entries_for(Marketplace::Deal.live.in_current_city, changefreq: "daily", priority: "0.6") { |d| marketplace.deal_url(d) }
+  end
+
+  # A city's category pages with enough listings to answer a search for them
+  # (Marketplace::Category::INDEXABLE_LISTINGS); the thin ones are noindex.
+  def category_entries
+    entries_for(Marketplace::Category.indexable_in_current_city, changefreq: "daily", priority: "0.7") do |category|
+      marketplace.category_url(category)
+    end
   end
 
   def maps_entries

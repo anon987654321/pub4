@@ -68,6 +68,9 @@ nb:
       good: "God"
       satisfactory: "Tilfredsstillende"
     inspire_heading: "Nytt i %{city}"
+    category_description:
+      one: "%{category} i %{city}: én annonse akkurat nå, fra folk og butikker i byen."
+      other: "%{category} i %{city}: %{count} annonser akkurat nå, fra folk og butikker i byen."
     browse_categories: "Utforsk kategorier"
     seller_badge: "Selger: %{name}"
     utility:

@@ -68,6 +68,9 @@ en:
       good: "Good"
       satisfactory: "Satisfactory"
     inspire_heading: "New in %{city}"
+    category_description:
+      one: "%{category} in %{city}: one listing right now, from people and shops in the city."
+      other: "%{category} in %{city}: %{count} listings right now, from people and shops in the city."
     browse_categories: "Browse categories"
     seller_badge: "Seller: %{name}"
     utility:

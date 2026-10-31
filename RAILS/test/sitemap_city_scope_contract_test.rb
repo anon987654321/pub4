@@ -56,6 +56,19 @@ class SitemapCityScopeContractTest < Minitest::Test
     end
   end
 
+  # Categories are global, but a city's category page is only offered to a
+  # crawler when that city has listings in it: the count that decides it is
+  # taken over the city's own listings, and the page itself says noindex below
+  # the same threshold, so the sitemap and the page cannot disagree.
+  def test_category_pages_are_offered_per_city_and_only_when_not_thin
+    assert_includes source, "Marketplace::Category.indexable_in_current_city"
+    category = File.read(File.join(ROOT, "brgen_marketplace/app/models/marketplace/category.rb"))
+    assert_includes category, "Marketplace::Listing.publicly_visible.in_current_city"
+    page = File.read(File.join(ROOT, "brgen_marketplace/app/views/marketplace/categories/show.html.erb"))
+    assert_includes page, "@category.indexable_with?(@pagy.count)"
+    assert_includes page, 't("marketplace.category_description"'
+  end
+
   def test_city_scoping_is_one_mechanism_not_a_controller_helper
     refute_includes source, "in_this_city",
                     "city scoping belongs on the models (CityScoped / TenantedThrough), not re-derived in the controller"

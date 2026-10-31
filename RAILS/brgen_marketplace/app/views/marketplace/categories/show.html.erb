@@ -1,4 +1,15 @@
 <% content_for :title, @category.name %>
+<%# The city-by-category page: its description names the city and the count,
+    and a page too thin to answer the search (Category::INDEXABLE_LISTINGS)
+    asks not to be indexed rather than ranking as an empty city. %>
+<% content_for :description, t("marketplace.category_description", count: @pagy.count, category: @category.name,
+                                                                   city: city_name) %>
+<% unless @category.indexable_with?(@pagy.count) %>
+  <% content_for :head, tag.meta(name: "robots", content: "noindex, follow") %>
+<% end %>
+<% if @listings.any? %>
+  <% content_for :json_ld, json_ld_script(item_list_schema(@listings, title: "#{@category.name} — #{city_name}")) %>
+<% end %>
 
 <%= render "marketplace/nav_bar",
       cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
