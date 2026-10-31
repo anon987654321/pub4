@@ -10269,6 +10269,14 @@ body.vertical-marketplace .store-buybox .price {
     --store-cols: 5;
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
+
+  /* The category page keeps four across beside its 256px column, as
+     .store-results--filtered sets at 1265px: the literal five above came later
+     and beat it, so the page showed five next to the column it was sized for. */
+  body.vertical-marketplace .store-results--filtered .deal-grid {
+    --store-cols: 4;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 767px) {
