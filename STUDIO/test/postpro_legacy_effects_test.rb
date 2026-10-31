@@ -20,9 +20,9 @@ class PostproLegacyEffectsTest < Minitest::Test
   ].freeze
 
   def test_every_historical_effect_is_executable_or_has_a_current_equivalent
-    missing_methods = RESTORED.reject { |name| LEGACY.match?(/\\bdef\\s+#{Regexp.escape(name)}\\b/) }
+    missing_methods = RESTORED.reject { |name| LEGACY.match?(/\bdef\s+#{Regexp.escape(name)}\b/) }
     missing_recipe_names = (RESTORED + EXISTING_EQUIVALENTS).reject do |name|
-      RECIPE.match?(/\\b#{Regexp.escape(name)}\\b/)
+      RECIPE.match?(/\b#{Regexp.escape(name)}\b/)
     end
 
     assert_empty missing_methods, "missing restored implementations: #{missing_methods.join(', ')}"
