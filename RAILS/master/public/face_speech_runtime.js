@@ -1312,7 +1312,7 @@ function finishTTSPlayback(src, continueQueue = true) {
   if (State.mode === 'speaking') { State.mode = 'idle'; window.MASTER_FACE?.setAmbientHum?.(false); }
   clearViseme();
   if (ttsLive) ttsLive.textContent = '';
-  if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
+  if (spinBtn) { spinBtn.textContent = '||'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
   tts.current = null;
   tts.performancePlan = null;
   if (continueQueue) ttsTick();
@@ -1539,7 +1539,7 @@ function ttsTick() {
     if (tts.audio && tts.audio !== audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:audio_pause", err); } }
     tts.audio = audio;
     setTTSLoading(false);
-    if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
+    if (spinBtn) { spinBtn.textContent = '||'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
     audio.onplay = () => {
       const chatTiming = window.MASTER_CHAT_TIMING;
       if (meta.lane === 'response' && chatTiming && chatTiming.firstAudioMs === null) {
@@ -1603,7 +1603,7 @@ function ttsTogglePause() {
     }
     tts.audio.play().catch(() => {});
     tts.paused = false;
-    if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause current response'); }
+    if (spinBtn) { spinBtn.textContent = '||'; spinBtn.setAttribute('aria-label', 'Pause current response'); }
     return;
   }
   if (typeof tts.audio.currentTime === 'number' && typeof tts.audio.duration === 'number' && tts.audio.duration > 0) {
