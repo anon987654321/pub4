@@ -10,6 +10,7 @@
   <section class="playlist-admin" aria-label="<%= t("playlist.management") %>">
     <nav class="cluster" aria-label="<%= t("playlist.actions") %>">
       <%= link_to t("actions.edit"), edit_playlist_path(@playlist), class: "btn btn-ghost btn-sm" %>
+      <%= link_to t("playlist.analytics"), analytics_playlist_path(@playlist), class: "btn btn-ghost btn-sm" if Current.user == @playlist.user %>
       <%= button_to t("actions.delete"), playlist_path(@playlist), method: :delete, data: { turbo_confirm: t("actions.confirm_delete") }, class: "btn btn-danger btn-sm" %>
     </nav>
 
