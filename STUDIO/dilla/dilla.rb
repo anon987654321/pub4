@@ -1520,7 +1520,7 @@ module Languages
   # the eleventh and thirteenth chords carry the same stacked-fourth colour.
   SUFFIX = {
     "maj" => "", "min" => "m", "dim" => "dim", "maj7" => "maj7", "maj9" => "maj9", "m7" => "m7",
-    "m9" => "m9", "m11" => "m11", "7" => "7", "sus2" => "sus2", "sus4" => "sus4", "sus9" => "9sus4",
+    "m9" => "m9", "m11" => "m11", "7" => "7", "9" => "9", "sus2" => "sus2", "sus4" => "sus4", "sus9" => "9sus4",
     "add9" => "add9", "q4" => "m11", "q4b" => "m13", "maj7#11" => "maj7#11", "13" => "13",
     "7alt" => "7alt", "m6/9" => "m69", "13sus" => "13sus4"
   }.freeze
@@ -1541,6 +1541,12 @@ module Languages
     "unresolved_stack" => [[0, "q4b"], [6, "q4"], [1, "q4"], [8, "q4b"], [3, "q4"], [-2, "q4"], [7, "q4b"], [6, "q4"]],
     "static_suspensions" => [[0, "sus2"], [0, "sus4"], [0, "m9"], [0, "sus2"], [5, "sus2"], [0, "sus4"], [10, "sus2"], [0, "m9"]],
     "dorian_lift" => [[0, "m9"], [5, "maj"], [10, "sus2"], [0, "m9"], [2, "min"], [5, "maj"], [10, "add9"], [0, "m9"]],
+    # Recovered harmonic grammars: each is a playable, transposable rule set, not a copied recording.
+    "j5_donut_loop" => [[5, "maj7"], [4, "m7"], [9, "m7"], [2, "m7"]],
+    "relative_answer" => [[0, "maj7"], [9, "m7"], [5, "maj7"], [2, "m7"]],
+    "dorian_four" => [[0, "m9"], [5, "9"]],
+    "flexible_sixth" => [[0, "m9"], [7, "m11"], [7, "maj9"]],
+    "mediant_lift" => [[0, "maj7"], [4, "m7"], [4, "maj7"]],
   }.freeze
 
   def self.names = SPECS.keys
@@ -8002,6 +8008,7 @@ def run(argv)
     o.on("--drums NAME", "Drum pattern name, or rotate to change the pattern every phrase") { |v| options[:drums] = v }
     o.on("--kit NAME", "The drum kit (see kits in dilla.json)") { |v| options[:kit] = v }
     o.on("--profile NAME", "Groove profile name") { |v| options[:profile] = v }
+    o.on("--language NAME", Languages.names, "Generate one rule-made harmonic language (see --list)") { |v| options[:language] = v }
     o.on("--groove N", Float, "pd_amount, 0 to 1.5: how far the profile pulls from the grid") { |v| options[:groove] = v }
     o.on("--bpm N", Float, "Tempo (default 88)") { |v| options[:bpm] = v }
     o.on("--beats N", Float, "Beats per chord (default 8, two bars)") { |v| options[:beats] = v }
@@ -8060,6 +8067,12 @@ def run(argv)
   options[:live] = true if live_argument
 
   data = JSON.parse(File.read(File.join(__dir__, "data", "dilla.json")))
+  if options[:language]
+    # Append only in memory: the 506-record catalogue stays canonical and untouched.
+    data["progressions"] = data.fetch("progressions") + [Languages.progression(options[:language])]
+    options[:prog] = data.fetch("progressions").length - 1
+    options[:random] = false
+  end
   apply_effect_rig!(options, data) if options[:effect_rig]
   if bare_run?(options)
     if options[:render]
@@ -8117,7 +8130,7 @@ elsif options[:play]
     puts "Groove profiles: #{data['groove_profiles'].keys.join(', ')}"
     puts "Voicings (--voicing): #{Chords::STYLES.join(', ')}"
     puts
-    puts "Harmonic languages (a progression written from rules, in Bb):"
+    puts "Harmonic languages (a progression written from rules, in Bb; use --language NAME to render):"
     Languages.all.each { |language, chords| puts format("  %-24s %s", language, chords.join(" ")) }
   elsif options[:showcase] || (options[:prog].nil? && !options[:random] && !options[:quick] && options[:mode] != "organ")
     render_showcase(data, options)
