@@ -84,6 +84,14 @@ class DillaTest < Minitest::Test
     end
   end
 
+  def test_pub3_analog_pad_and_vintage_effect_research_is_preserved
+    groups = RECOVERED.fetch("legacy_progression_groups")
+    assert_equal 15, groups.fetch("iconic_pad_synthesis").size
+    assert_equal 11, groups.fetch("vintage_fx_chains").size
+    assert groups.fetch("iconic_pad_synthesis").values.all? { |row| row.key?("synth") && row.key?("envelope") }
+    assert groups.fetch("vintage_fx_chains").values.all? { |row| row.key?("description") && (row.key?("sox_chain") || row.key?("ffmpeg_chain") || row.key?("sox_chain_template")) }
+  end
+
   def test_recovered_harmonic_languages_are_playable_and_transposable
     expected = %w[j5_donut_loop relative_answer dorian_four flexible_sixth mediant_lift]
     assert_empty expected - Languages.names
