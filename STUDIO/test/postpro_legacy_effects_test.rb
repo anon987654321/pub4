@@ -7,6 +7,7 @@ class PostproLegacyEffectsTest < Minitest::Test
   LEGACY = File.read(File.join(ROOT, "postpro", "legacy_effects.rb"))
   RECIPE = File.read(File.join(ROOT, "postpro", "lib", "recipe.rb"))
   DISPATCH = File.read(File.join(ROOT, "postpro", "lib", "grade_step.rb"))
+  ENTRYPOINT = File.read(File.join(ROOT, "postpro", "postpro.rb"))
 
   RESTORED = %w[
     film_grain film_halation bloom_effect cross_process golden_hour_glow lomo
@@ -30,6 +31,8 @@ class PostproLegacyEffectsTest < Minitest::Test
     missing_dispatch_names = (RESTORED + EXISTING_EQUIVALENTS).reject { |name| DISPATCH.include?(name) }
     assert_empty missing_recipe_names, "missing recipe vocabulary: #{missing_recipe_names.join(', ')}"
     assert_empty missing_dispatch_names, "missing current dispatch equivalents: #{missing_dispatch_names.join(', ')}"
+    assert_includes ENTRYPOINT, 'File.join(POSTPRO_DIR, "legacy_effects.rb")'
+    assert_includes ENTRYPOINT, 'File.join(POSTPRO_DIR, "dilla_analog.rb")'
   end
 
   def test_historical_effect_inventory_has_no_duplicate_names
