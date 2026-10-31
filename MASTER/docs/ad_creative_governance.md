@@ -21,9 +21,13 @@ The audit receipt adds:
 - `provenance.policy_sha256`: digest of the canonical `MASTER/data/laws.yml`
   source as read when the report was produced.
 - `provenance.detector_sha256`: digest of `MASTER/lib/visual/ad_audit.rb`.
-- `provenance.measurement`: mode and reported version; browserless reports also
-  carry the source digest of `MASTER/tools/visual/browserless_measurements.rb`.
-- `evidence_sha256`: SHA-256 over the complete report, including measurements,
+- `provenance.artifact`: SHA-256 digests of the exact HTML and CSS inputs plus
+  the declared placement.
+- `provenance.measurement`: mode, reported version and digest of the supplied
+  rendered-evidence object; browserless reports also carry the source digest of
+  `MASTER/tools/visual/browserless_measurements.rb`.
+- `evidence_sha256`: SHA-256 over the complete report, including artifact digests
+  and measurements,
   after normalizing object keys and excluding only this digest field.
 
 The CLI reseals after it attaches measurement diagnostics, so the receipt covers

@@ -36,9 +36,11 @@ module Master
       # Bind each result to the exact policy, detector and measurement source.
       # The receipt is a checksum, not a signature or proof that caller-supplied
       # renderer evidence is truthful.
-      def seal!(report, rendered: nil)
+      def seal!(report, rendered: nil, artifact: nil)
         raise ArgumentError, "audit report must be a Hash" unless report.is_a?(Hash)
 
+        previous_provenance = read_value(report, :provenance)
+        artifact ||= read_value(previous_provenance, :artifact)
         report.delete(:provenance)
         report.delete("provenance")
         report.delete(:evidence_sha256)
@@ -47,6 +49,7 @@ module Master
           schema_version: REPORT_SCHEMA_VERSION,
           policy_sha256: file_sha256(POLICY_SOURCE_PATH),
           detector_sha256: file_sha256(DETECTOR_SOURCE_PATH),
+          artifact:,
           measurement: measurement_provenance(rendered),
         }
         report[:evidence_sha256] = evidence_digest(report)
@@ -85,6 +88,11 @@ module Master
             checks:,
           },
           rendered:,
+          artifact: {
+            html_sha256: Digest::SHA256.hexdigest(html.to_s.b),
+            css_sha256: Digest::SHA256.hexdigest(css.to_s.b),
+            placement: placement.to_s,
+          },
         )
       end
 
@@ -282,9 +290,19 @@ module Master
         return :policy_stale unless read_value(provenance, :policy_sha256) == file_sha256(POLICY_SOURCE_PATH)
         return :detector_stale unless read_value(provenance, :detector_sha256) == file_sha256(DETECTOR_SOURCE_PATH)
 
+        artifact = read_value(provenance, :artifact)
+        return :invalid unless artifact.is_a?(Hash)
+        return :invalid unless sha256_string?(read_value(artifact, :html_sha256))
+        return :invalid unless sha256_string?(read_value(artifact, :css_sha256))
+        return :invalid unless read_value(artifact, :placement).to_s == read_value(report, :placement).to_s
+
         measurement = read_value(provenance, :measurement)
         return :invalid unless measurement.is_a?(Hash)
-        if read_value(measurement, :mode) == "browserless_static"
+        mode = read_value(measurement, :mode)
+        if mode != "missing"
+          return :invalid unless sha256_string?(read_value(measurement, :rendered_sha256))
+        end
+        if mode == "browserless_static"
           return :measurement_stale unless read_value(measurement, :source_sha256) == file_sha256(MEASUREMENT_SOURCE_PATH)
           return :invalid unless read_value(measurement, :version).is_a?(Integer)
         end
@@ -301,6 +319,7 @@ module Master
         details = {
           mode: mode,
           version: read_value(rendered, :measurement_version),
+          rendered_sha256: content_sha256(rendered),
           verification: "caller_supplied_unverified",
         }
         if mode == "browserless_static"
@@ -343,6 +362,15 @@ module Master
         return hash[key] if hash.key?(key)
 
         hash[key.to_s]
+      end
+
+      def content_sha256(value)
+        Digest::SHA256.hexdigest(JSON.generate(canonical_value(value)))
+      end
+
+      def sha256_string?(value)
+        value.is_a?(String) && value.bytesize == 64 &&
+          value.each_char.all? { |char| ("0".."9").cover?(char) || ("a".."f").cover?(char) }
       end
 
       def file_sha256(path)

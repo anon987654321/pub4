@@ -40,6 +40,11 @@ class TestAdVisualAudit < Minitest::Test
     assert_equal 64, provenance.fetch(:policy_sha256).length
     assert_equal 64, provenance.fetch(:detector_sha256).length
     assert_equal "caller_supplied", provenance.dig(:measurement, :mode)
+    artifact = provenance.fetch(:artifact)
+    assert_equal Digest::SHA256.hexdigest(@html.b), artifact.fetch(:html_sha256)
+    assert_equal Digest::SHA256.hexdigest(@css.b), artifact.fetch(:css_sha256)
+    assert_equal "display-320x250", artifact.fetch(:placement)
+    assert_equal 64, provenance.dig(:measurement, :rendered_sha256).length
     assert_equal 64, report.fetch(:evidence_sha256).length
     assert Audit.verify_evidence!(JSON.parse(JSON.generate(report)))
   end
