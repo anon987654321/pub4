@@ -101,7 +101,7 @@ class DillaTest < Minitest::Test
     presets = RECOVERED.fetch("legacy_presets")
     assert_equal 10, presets.size
     presets.each do |name, preset|
-      assert_match(/\\A[a-z_]+\\z/, name)
+      assert_match(/\A[a-z_]+\z/, name)
       assert_operator preset.fetch("tempo"), :>=, 60
       assert_operator preset.fetch("tempo"), :<=, 160
       assert_equal 4, preset.fetch("chords").size
