@@ -40,12 +40,73 @@ the commit that carries its evidence; nothing here records finished work.
   **NOT_RUN** through the GitHub editing surface. The full verification list below
   remains open; no suite or visual test is claimed as passing.
 
+## Session note 2026-10-31 (historical recovery)
+
+- Reconciled selected Library archives, the available `1_BACKUP.LOG` session log,
+  `master_FULL.yml`, older recovery notes and the current GitHub tree. Pushed
+  the Radio queue-order fix, importer tenant guard, corrected Law-parity wording,
+  and explicit legacy app/visualizer dispositions in the preceding commits.
+- Historical searches found already-absorbed work: shared RAILS cascade/auth test
+  examples, MASTER quota/model-skip routing, per-language voice policy, FaceState
+  stipple dial modulation, Dilla progression/patch rotation and the canonical
+  Radio tunnel. Do not recreate parallel renderers, ad engines, Law registries or
+  generators to satisfy stale snapshots.
+- This is not an account-wide ChatGPT audit. The available recovery bundle states
+  that not every ChatGPT conversation from account inception was available. The
+  unresolved source/export boundary is listed below; no claim that every old chat
+  was read is made.
+- Full Ruby 4.0.5/Rails/MASTER/STUDIO suites, live GPU/browser captures, local TTS
+  renders and vm23 checks were not run through the GitHub editing surface. No
+  production deployment or media import is claimed.
+
 ## Carried-forward requests from earlier sessions
 
 - [ ] **Complete AI3 archive archaeology:** the bounded findings and no-port decision are recorded in [`STUDIO/docs/ai3_legacy_audit_2026-10-28.md`](STUDIO/docs/ai3_legacy_audit_2026-10-28.md). The visible AI3 tree and extracted reports were inspected, but the historical archive blobs were not all extracted; preserve this item as open until that source recovery is actually completed. No AI3 feature claim counts as working behavior without implementation and runtime evidence.
 
 These requests were visible in prior conversations or handoffs but lacked an explicit,
 actionable root-backlog item. Keep them open until the relevant evidence exists.
+
+- [ ] **Account-wide ChatGPT transcript coverage:** the present pass used the available
+  Library materials, `1_BACKUP.LOG`, `master_FULL.yml` and selected handoffs, not a
+  complete account export. The recovery bundle itself says not every ChatGPT conversation
+  from account inception was available. Complete the semantic sweep against a supplied
+  official ChatGPT export, preserve timestamps/source IDs and deduplicate repeated
+  handoffs; do not claim "all chats audited" until that source is available and indexed.
+- [ ] **Avatar-derived FaceWorld geometry:** an older direct request says to base the
+  particle face on `new_avatar.png` and proceed. The high-resolution mask poster is
+  recoverable from Git history (`MASTER/loop_poster.png` at `0b0227a7e6f0`), but
+  current `RAILS/master/public/face_avatar.png` is only 96×96 and is merely named in
+  the asset manifest. Current `face_world.js` builds its head with procedural
+  `SphereGeometry` and shader deformation; `face_stipple_system.js` samples that
+  existing point geometry. No avatar-image-to-geometry path was found. Derive
+  deterministic point positions from the recovered reference inside the existing
+  single FaceWorld/FaceState renderer, retaining its fallback, point budgets and
+  reduced-motion contract; add source regressions and browser/GPU evidence at narrow
+  and wide sizes. Do not add a second renderer.
+- [ ] **MASTER README narrated face preview:** the older request for an inline
+  face-speaking preview is not present in the current `MASTER/README.md`. The
+  `MASTER/tools/readme_take.rb` generator exists and can produce `README.wav`,
+  `loop.mp4` and `loop.gif`; it requires the pinned local Ruby, a running face
+  server, the TTS worker and FFmpeg, and defaults to highlights unless `--full`
+  is passed. Run and inspect a fresh `--full` take on the supported host, then
+  publish the GIF/MP4 reference in a way consistent with the generated-media
+  policy. Do not re-track the ignored MP4/WAV without a separate storage decision.
+- [ ] **Dilla local sample-flip interface:** `1_BACKUP.LOG` records a working
+  `SAMPLE_LOOP` / `SAMPLE_LOOP_VOL` path and an explicit request to save it in
+  `STUDIO/dilla`; the current `dilla.rb` and README have no sample-loop ingestion
+  flags. Reconcile this as a bounded, deterministic local-file sample/chop feature
+  with attenuation and regression coverage, using only operator-supplied,
+  rights-cleared audio. Do not reintroduce remote YouTube acquisition or the
+  previous large sample render: a later instruction explicitly deleted
+  `demo.mp3` and related generated files. Progression and patch rotation already
+  exist in the current shuffle-bag/showcase implementation and should not be
+  duplicated.
+- [ ] **Dilla README visual hero:** an older direct request asks for inline
+  GIF/MP4 media. `STUDIO/dilla/README.md` currently documents offline MP4
+  generation but contains no inline hero or linked render. Generate a fresh
+  showcase on the audio/video-capable host, review the sound and picture, and
+  choose a stable GIF or hosted video reference without committing arbitrary
+  large generated renders.
 
 - [ ] **`STUDIO/postpro` / `STUDIO/replicate` archaeology:** trace commits, branches,
   unreachable/history-recoverable objects and historical wording across pub4, pub3,
@@ -368,14 +429,13 @@ source and tests they could not run; this pass is what measures them.
   labelled apart from human review (a seam).
 
 
-## 2026-10-28 — legacy archive follow-through
+## 2026-10-31 — legacy archive follow-through
 
 - [ ] Execute `RAILS/brgen/test/services/radio_bergen_import_guard_test.rb` on the pinned Ruby/Rails checkout. The rake task now selects persisted `brgen.no`; the importer requires a same-city saved owner and wraps reads/writes in `ActsAsTenant.with_tenant`. Regression cases cover missing scope, cross-city owners, city assignment and visibility from another tenant, but remain unexecuted here. Do not import until these tests pass and the separate recording-rights decision is complete.
 
 - [ ] Radio Bergen: confirm distribution rights individually for the 35 selected recordings, then run `radio_bergen:import_curated` from `RAILS/brgen` against the local `pub2` checkout and verify the public Playlist/Active Storage streaming path in a local Rails test environment. The importer is committed; the audio itself is not yet imported.
 - [ ] Run `cd RAILS && npm run test:radio` in the full checkout and preserve its actual exit output. The selector fix and focused Node regression are committed; the isolated harness used during this pass is not a full Rails checkout or a browser playback proof.
 - [ ] Run focused local tests for the curated manifest/import guard and the Playlist tunnel view/controller; add full importer idempotency, ordering, checksum and failure-atomicity coverage, then execute them. This GitHub-only pass did not run Rails tests.
-- [ ] Keep the existing Rails Radio Bergen tunnel as the canonical visualizer. Do not revive the older standalone multi-mode visualizer without a separate product decision.
 - [ ] MASTER plugin candidates from pub2 misc remain reference-only; no MASTER edits or plugin implementation until the required complete MASTER read and contract review are satisfied.
 
 
