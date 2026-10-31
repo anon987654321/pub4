@@ -84,6 +84,17 @@ class DillaTest < Minitest::Test
     end
   end
 
+  def test_list_exposes_the_recovered_harmonic_and_named_heritage_presets
+    stdout, stderr, status = run_dilla("--list", chdir: DIR)
+    assert status.success?, stderr
+    %w[j5_donut_loop relative_answer dorian_four flexible_sixth mediant_lift].each do |name|
+      assert_includes stdout, name
+    end
+    %w[dilla_life neo_soul dreamscape floating soulquarian donut_shop slum_village ethiojazz ahmad_jamal isley_brothers].each do |name|
+      assert_includes stdout, name
+    end
+  end
+
   def test_pub3_analog_pad_and_vintage_effect_research_is_preserved
     groups = RECOVERED.fetch("legacy_progression_groups")
     assert_equal 15, groups.fetch("iconic_pad_synthesis").size
