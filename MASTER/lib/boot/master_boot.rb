@@ -160,8 +160,9 @@ module Master
       Trace::Dmesg.status("ear0", "setup did not start, #{e.class}: #{e.message}")
     end
 
-    # Everything up to the banner prints as the kernel does (Trace::Dmesg.booting);
-    # the session and its prompt print plain.
+    # Everything up to the session prints as the kernel does (Trace::Dmesg.booting);
+    # the session's splash closes the boot, and its prompt prints plain. The
+    # boot-status units attach inside that splash, before "root on master0".
     def boot(root: Dir.pwd)
       container = Trace::Dmesg.booting { boot_container(root:) }
       CLI::Session.new(container:)
@@ -180,7 +181,6 @@ module Master
       Ground::Pledge.stage2_lock!
 
       CLI::WebServer.start(container[:config]) unless ENV["MASTER_WEB"] == "0"
-      CLI::BootBanner.print unless ENV["MASTER_FAST"] == "1" && ENV["MASTER_BOOT_STATUS"] != "1"
       container
     end
   end

@@ -50,18 +50,23 @@ module Master
 
       def dispatch_security
         data = Master::Operator.security
+        # Prose, as the boot banner says the same facts; key=value is the
+        # event log's form, not the console's.
         [
-          "security0: constitution=#{data[:constitution]}",
-          "cap0: profile=#{data[:capability_profile]} #{data[:capabilities].join(" ")}",
-          "pledge0: openbsd=#{data[:openbsd_pledge]}",
-          "patch0: transactional_fix=#{data[:transactional_fix]}",
-          "model0: authority=#{data[:model_authority]}",
-          "security0: monotonic_reduction=#{data[:monotonic_reduction]}",
-          "mode0: observe=#{Master::Operator::Mode.summary(:observe)}",
-          "mode0: plan=#{Master::Operator::Mode.summary(:plan)}",
-          "mode0: repair=#{Master::Operator::Mode.summary(:repair)}",
-          "mode0: deploy=#{Master::Operator::Mode.summary(:deploy)}",
-        ].join("\n")
+          "security0: constitution #{data[:constitution]}",
+          "cap0: profile #{data[:capability_profile]}, #{data[:capabilities].join(" ")}",
+          "pledge0: #{data[:openbsd_pledge] ? "staged reduction" : "not configured"}",
+          "patch0: #{data[:transactional_fix] ? "transaction-backed self-change with rollback" : "not configured"}",
+          "model0: #{data[:model_authority]}",
+          ("security0: capabilities only narrow" if data[:monotonic_reduction]),
+          *data[:operator_modes].map { |name, spec| security_mode_line(name, spec) },
+        ].compact.join("\n")
+      end
+
+      def security_mode_line(name, spec)
+        council = spec[:council] ? "council" : "no council"
+        evidence = spec[:evidence].to_s.tr("_", " ")
+        "mode0: #{name}, #{spec[:risk]} risk, #{spec[:model_tier]} model, #{council}, #{evidence} evidence"
       end
 
       def gather_status_data(root:, fix_loop:, git:)

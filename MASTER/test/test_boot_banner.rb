@@ -36,11 +36,36 @@ class TestBootBanner < Minitest::Test
   end
 
   # Regression: bin/cli's --boot-status flag set MASTER_BOOT_STATUS=1 but
-  # nothing ever called BootBanner.print, so the flag was completely inert.
-  def test_master_boot_calls_boot_banner
-    source = File.read(File.join(Master::ROOT, "lib", "boot", "master_boot.rb"))
-    assert_includes source, "CLI::BootBanner.print"
+  # nothing ever printed the banner, so the flag was completely inert. Its
+  # units now attach inside the splash, in the device tree before "root on",
+  # and the splash's "root on" is the only line that says the boot is done.
+  def test_boot_status_units_attach_before_root_on
+    lines = boot_status_splash
+    boot = lines.index { |line| line.start_with?("boot0 at mainbus0: safe ") }
+    root = lines.index { |line| line.start_with?("root on master0") }
+
+    assert boot && root && boot < root, lines.inspect
+    assert lines.first.start_with?("master0 at mainbus0: MASTER "), lines.first
+    refute_includes lines, "master0: ready"
   end
+
+  # As in the kernel, a unit attaches once and reports after as "unit: detail".
+  def test_boot_status_splash_attaches_each_unit_once
+    attached = boot_status_splash.filter_map { |line| line[/\A([a-z]+\d+) at /, 1] }
+
+    assert_equal attached.uniq, attached
+  end
+
+  private
+
+  def boot_status_splash
+    ENV["MASTER_BOOT_STATUS"] = "1"
+    Master::Voice::Renderer.new(config: {}).splash("claude-cli:claude-opus-5-5").lines(chomp: true)
+  ensure
+    ENV.delete("MASTER_BOOT_STATUS")
+  end
+
+  public
 
   def test_boot_has_no_ascii_wordmark_before_the_dmesg_lines
     source = File.read(File.join(Master::ROOT, "lib", "boot", "master_boot.rb"))

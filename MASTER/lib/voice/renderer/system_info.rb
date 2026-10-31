@@ -49,6 +49,9 @@ module Master
           []
         end
 
+        # OpenBSD's own boot log is shown as it is. Elsewhere the host is told in
+        # the same grammar, not pasted: a Linux dmesg brings timestamps no
+        # OpenBSD line has, and its command line names the host's sockets.
         def dmesg_lines
           boot_log = "/var/run/dmesg.boot"
           raw = if File.readable?(boot_log)
@@ -56,9 +59,9 @@ module Master
                 elsif RUBY_PLATFORM.include?("darwin")
                   macos_hw_lines
                 else
-                  stdout, = Master::Io::Exec.capture3("dmesg")
-                  stdout.lines(chomp: true)
+                  linux_hw_lines
                 end
+
           filtered = raw.reject { |l| l.match?(/\A(?:OpenBSD\s+\d|Copyright\s|The Regents)/) }
           lines = filtered.first(BOOT_DMESG_LINES)
           lines.empty? ? ["dmesg unavailable"] : lines
@@ -79,10 +82,44 @@ module Master
           real = sysctl_value("hw.memsize").to_i
           return [] unless real.positive?
 
-          lines = ["real memory = #{real} (#{real / MEGABYTE}MB)"]
-          available = available_memory_bytes
-          lines << "available memory = #{available} (#{available / MEGABYTE}MB)" if available.positive?
+          mem_lines(real, available_memory_bytes)
+        end
+
+        # The kernel's words: "real mem = 7944200192 (7576MB)".
+        def mem_lines(real, available)
+          lines = ["real mem = #{real} (#{real / MEGABYTE}MB)"]
+          lines << "avail mem = #{available} (#{available / MEGABYTE}MB)" if available.positive?
           lines
+        end
+
+        # /proc in dmesg order: memory, mainbus0 at root, one line per cpu, the kernel.
+        def linux_hw_lines
+          meminfo = File.read("/proc/meminfo")
+          kib = ->(key) { meminfo[/^#{key}:\s+(\d+) kB/, 1].to_i * 1024 }
+          real = kib.("MemTotal")
+          [*(mem_lines(real, kib.("MemAvailable")) if real.positive?), "mainbus0 at root", *linux_cpu_lines,
+           linux_kernel_line].compact
+        rescue SystemCallError => e
+          Master::Ground::Swallow.log(e, context: "SystemInfo.linux_hw_lines")
+          []
+        end
+
+        def linux_cpu_lines
+          File.read("/proc/cpuinfo").split(/\n\n+/).each_with_index.filter_map do |block, index|
+            model = block[/^model name\s*:\s*(.+)$/, 1]&.squeeze(" ")
+            next unless model
+
+            mhz = block[/^cpu MHz\s*:\s*([\d.]+)/, 1]
+            "cpu#{index} at mainbus0: #{model}#{", #{format("%.2f", mhz.to_f)} MHz" if mhz}"
+          end
+        end
+
+        def linux_kernel_line
+          release = File.read("/proc/sys/kernel/osrelease").strip
+          "kern0 at mainbus0: Linux #{release} #{RbConfig::CONFIG["host_cpu"]}"
+        rescue SystemCallError => e
+          Master::Ground::Swallow.log(e, context: "SystemInfo.linux_kernel_line")
+          nil
         end
 
         def device_lines

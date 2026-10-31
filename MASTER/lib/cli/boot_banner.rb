@@ -23,7 +23,11 @@ module Master
         end
       end
 
-      def banner_lines
+      def banner_lines = [*attach_lines, "master0: ready"]
+
+      # The banner's units without its closing line, for the splash, where
+      # "root on master0" is what says the boot is done.
+      def attach_lines
         status = Master::Ops::LoopSlot.status
         budget = Master::Ops::ProcessBudget.status
         brutalist = ENV["MASTER_BRUTALIST"] == "1"
@@ -31,6 +35,7 @@ module Master
         profile = "wscons" if aesthetic == "wscons"
         profile ||= "brutalist" if brutalist
         style = "style0 at master0: #{aesthetic}"
+
         [
           "boot0 at mainbus0: safe #{ENV.fetch("MASTER_SAFE_MODE", "1")}, web #{ENV.fetch("MASTER_WEB", "0")}",
           *security_lines,
@@ -38,10 +43,9 @@ module Master
           "budget0 at master0: valid #{budget[:valid]}, slot #{budget.fetch(:slot, "unknown")}",
           style,
           "motd0 at master0: #{motd_spotlight}",
-          "master0: ready",
         ].tap do |lines|
           if profile
-            lines << "style0 at master0: profile #{profile}, motion steps, typography mono"
+            lines << "style0: profile #{profile}, motion steps, typography mono"
             lines << "style0: entropy and confidence inspectable"
           end
         end
@@ -55,7 +59,9 @@ module Master
           pledge_line,
           "memory0 at security0: unveil-style restricted views available",
           "patch0 at security0: transaction-backed self-change with rollback",
-          "model0 at security0: proposal-only; effects need capability admission",
+          # authority0, not model0: the splash's model0 is the model itself, and
+          # a unit name, as in the kernel, names one device.
+          "authority0 at security0: proposal-only; effects need capability admission",
         ]
       end
 

@@ -24,7 +24,7 @@ module Master
           context = splash_context(model)
           text = if verbose_boot?
                    lines = [*identity_lines(context), *splash_dmesg_lines, *device_lines_for(context),
-                            root_on_line(context)]
+                            *boot_status_lines, root_on_line(context)]
                    host_status = Master::Ground::HostBudget.status_line
                    lines << d(host_status) if host_status
                    lines.join("\n")
@@ -335,7 +335,7 @@ module Master
             d("aesthetic0 at mode0: #{Aesthetic.mode}"),
             d("module0 at mainbus0: #{module_names.join(' ')}"),
             d("web0 at mainbus0: #{context[:web]}"),
-            d(pledge_line),
+            *splash_pledge_lines,
           ]
         end
 
@@ -349,6 +349,15 @@ module Master
 
         # dmesg ends where the system starts: the root device, then how long it
         # took to get there.
+        # MASTER_BOOT_STATUS=1 attaches the security and loop units too. They
+        # used to print before the identity line, ending in their own "ready";
+        # in the device tree, before "root on", they read in the kernel's order.
+        def boot_status_lines
+          return [] unless ENV["MASTER_BOOT_STATUS"] == "1"
+
+          Master::CLI::BootBanner.attach_lines.map { |line| d(line) }
+        end
+
         def root_on_line(context)
           d("root on master0 (#{context[:revision]}) boot #{monotonic_milliseconds - @boot_ms}ms")
         end
@@ -405,6 +414,12 @@ module Master
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "renderer.build_number")
           "1"
+        end
+
+        # With the boot-status units, pledge0 attaches at security0 instead,
+        # and a unit attaches once.
+        def splash_pledge_lines
+          ENV["MASTER_BOOT_STATUS"] == "1" ? [] : [d(pledge_line)]
         end
 
         # dmesg names a device it has no driver for as "not configured".
