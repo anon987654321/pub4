@@ -1391,18 +1391,20 @@ function enqueueSpeech(text, opts = {}) {
   if (!shouldEnqueueTtsChunk(clean, opts)) return;
   const decorated = _quirkifyTts(clean, opts);
   const _v = speechVoiceForText(decorated);
+  const lane = opts.priority === 'error' ? 'error' : (opts.quirky || opts.nudge ? 'nudge' : 'response');
+  const chatTiming = lane === 'response' ? window.MASTER_CHAT_TIMING || null : null;
   applyParalinguisticState(decorated);
   if (tts.meta.size > 32) tts.meta.clear();
   tts.meta.set(decorated, {
     voice: _v,
     style: _nextTtsStyle(_v),
-    lane: opts.priority === 'error' ? 'error' : (opts.quirky || opts.nudge ? 'nudge' : 'response'),
+    lane,
+    chatTiming,
   });
   announceTTS(decorated);
   tts.lastText = decorated;
   tts.resumeTime = null;
   tts.resumeWordIndex = null;
-  const lane = opts.priority === 'error' ? 'error' : (opts.quirky || opts.nudge ? 'nudge' : 'response');
   // A real reply makes every queued idle line stale — nobody wants yesterday's
   // filler read out after their answer. Reordering the lanes alone would only
   // defer them, not drop them, so the backlog would still be spoken eventually.
@@ -1541,9 +1543,12 @@ function ttsTick() {
     setTTSLoading(false);
     if (spinBtn) { spinBtn.textContent = '||'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
     audio.onplay = () => {
-      const chatTiming = window.MASTER_CHAT_TIMING;
+      const chatTiming = meta.chatTiming;
       if (meta.lane === 'response' && chatTiming && chatTiming.firstAudioMs === null) {
         chatTiming.firstAudioMs = Math.round(performance.now() - chatTiming.startedAt);
+        window.dispatchEvent(new CustomEvent('master:chat:latency', {
+          detail: { status: 'audio_started', firstTokenMs: chatTiming.firstTokenMs, firstAudioMs: chatTiming.firstAudioMs, completedMs: chatTiming.completedMs, failedMs: chatTiming.failedMs }
+        }));
       }
       emitTtsEvent('tts:playback:start', { text, voice, style, duration: dur || audio.duration || null, backend: 'edge' });
       startVisemeAnim(text);
@@ -1616,7 +1621,7 @@ function ttsTogglePause() {
   }
   tts.audio.pause();
   tts.paused = true;
-  if (spinBtn) { spinBtn.textContent = '▶'; spinBtn.setAttribute('aria-label', 'Resume current response'); }
+  if (spinBtn) { spinBtn.textContent = '>'; spinBtn.setAttribute('aria-label', 'Resume current response'); }
 }
 
 (function pollDeployHealth() {
