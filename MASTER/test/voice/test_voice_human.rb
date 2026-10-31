@@ -253,7 +253,7 @@ class TestVoiceHuman < Minitest::Test
   def test_the_first_packet_is_a_short_clause_and_the_order_is_kept
     chunks = Master::Voice::Speech.chunks(MESSAGE)
     limit = Policy.first_chunk_chars
-    assert_equal 64, limit, "keep the first live packet small to reduce time-to-first-audio"
+    assert_equal 48, limit, "keep the first live packet smaller to reduce time-to-first-audio"
     assert_operator MESSAGE.length, :>, 250
     assert_operator chunks.first.length, :<=, limit + 5
     assert_equal Master::Voice::Speech.clean_text(MESSAGE).gsub(/\s+/, " ").gsub(/\.+/, "."), chunks.join(" ").gsub(/\s+/, " "),
