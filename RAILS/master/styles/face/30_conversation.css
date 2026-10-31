@@ -497,8 +497,8 @@ body[data-phantom-glitch="1"] canvas {
 }
 
 .tool-stack summary { cursor: pointer; list-style: none; }
-.tool-stack summary::before { content: "▸ "; }
-.tool-stack[open] summary::before { content: "▾ "; }
+.tool-stack summary::before { content: "> "; }
+.tool-stack[open] summary::before { content: "v "; }
 
 .pipeline-stage {
   display: none;
