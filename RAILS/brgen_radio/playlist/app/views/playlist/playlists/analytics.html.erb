@@ -1,0 +1,34 @@
+<% content_for :title, t("playlist.analytics_title", name: @playlist.name) %>
+
+<p class="radio-back-link"><%= link_to t("playlist.back_to_playlist"), playlist_path(@playlist) %></p>
+
+<section class="playlist-analytics" aria-labelledby="playlist-analytics-title">
+  <h1 id="playlist-analytics-title"><%= t("playlist.analytics_title", name: @playlist.name) %></h1>
+  <p><%= t("playlist.analytics_blurb") %></p>
+
+  <dl class="cluster">
+    <div>
+      <dt><%= t("playlist.total_listens") %></dt>
+      <dd><strong><%= number_with_delimiter(@listen_total) %></strong></dd>
+    </div>
+    <div>
+      <dt><%= t("playlist.last_seven_days") %></dt>
+      <dd><strong><%= number_with_delimiter(@listen_recent) %></strong></dd>
+    </div>
+  </dl>
+
+  <h2><%= t("playlist.track_breakdown") %></h2>
+  <% if @analytics_entries.empty? %>
+    <p><%= t("playlist.no_tracks") %></p>
+  <% else %>
+    <ol>
+      <% @analytics_entries.each do |entry| %>
+        <li>
+          <span><%= entry.track.title %></span>
+          <strong><%= t("playlist.listen_count", count: @listen_counts.fetch(entry.playlist_track_id, 0)) %></strong>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+  <p><small><%= t("playlist.analytics_privacy") %></small></p>
+</section>
