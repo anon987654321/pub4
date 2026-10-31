@@ -63,12 +63,17 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
   tool-hook fail-open, MCP SSRF/package pinning, environment-file permissions, scoped
   kills, and RAILS token timing/CSRF/ingress rate limiting. Classify each finding with a
   test or evidence reference; don't infer closure from a source edit.
-- [ ] **Law parity and visual enforcement:** run `rake lint:law_parity` and keep the
-  `RENDERED_VALUES` gap visible until an authorized deferral or tagged detector closes
-  it. Verify `AD_VISUAL_QUALITY_MUST_BE_GORGEOUS` from declaration through executable
-  law/gates to renderer acceptance. When a live browser is unavailable, add deterministic
-  source/geometry/layout simulations as partial evidence only; keep true browser/runtime
-  results INCONCLUSIVE until measured.
+- [ ] **Law parity and visual enforcement:** run `rake lint:law_parity` on the pinned
+  Ruby toolchain and preserve its actual output. The `RENDERED_VALUES` Law now has an
+  executable semantic definition and active enforcement metadata; commit `455fa84`
+  also corrected the old visual-custody/campaign identifiers to real catalogue Law IDs
+  and updated their focused regressions. Do not describe that old mapping defect as an
+  outstanding parity gap. The proposed `AD_VISUAL_QUALITY_MUST_BE_GORGEOUS` ID is not
+  in the Law catalogue: the existing ad contract is `Master::Visual::AdAudit` (six
+  scoped checks), the token-owned `ad_visual_contract`, and the RAILS ad-partial
+  contract. Verify the current gate-to-renderer acceptance path and browser evidence
+  without inventing a duplicate constitutional Law or second ad engine; source/geometry
+  simulations remain partial evidence, not proof of rendered acceptance.
 - [ ] **Tooling proposal, cherry-pick not replace:** reconcile
   `MASTER/TOOLING_COMPARISON_PROPOSAL_2026-10-26.md` with the remaining code gaps. Adopt
   only small, testable patterns (effect identities and before/after receipts, truthful
