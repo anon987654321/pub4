@@ -10584,6 +10584,32 @@ body.vertical-marketplace .storefront-bol-header {
   padding: var(--bol-compact-header-padding) var(--bol-gutter);
 }
 
+/* The logo and the wordmark share the header grid's first cell, so the grid
+   still counts four children. The logo's drawn stage is 100px; the 64px header
+   row shows it at 56, scaled whole so the smiley, cart and count keep their
+   places. The stage keeps its own 100px box, or it centres in the smaller one
+   at a negative offset before the scale and draws clipped at the corner. */
+body.vertical-marketplace .storefront-bol-brand-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+body.vertical-marketplace .storefront-bol-brand-cell #logoWrapper {
+  flex: none;
+  width: 56px;
+  height: 56px; // scan: intentional — the logo stage's drawn size, not flowing content
+  overflow: hidden;
+}
+
+body.vertical-marketplace .storefront-bol-brand-cell #logoWrapper .banner_wrapper {
+  width: 100px;
+  height: 100px; // scan: intentional — the drawn stage the logo's geometry is set in
+  transform: scale(0.56);
+  transform-origin: 0 0;
+}
+
 body.vertical-marketplace .storefront-bol-brand {
   position: static;
   min-height: var(--bol-brand-row-block);

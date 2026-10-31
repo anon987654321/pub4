@@ -13,7 +13,14 @@
 
   <div id="navBar" class="storefront-nav--bol">
     <div class="storefront-bol-header">
-      <%= render "shared/brand_mark", **brand_mark_fragments, href: brand_mark_href, class_name: "storefront-bol-brand" %>
+      <%# The operator's animated logo (smiley, then the cart counting to 9+)
+          beside the wordmark, both in the header grid's first cell; its
+          geometry is the #logoWrapper rules. %>
+      <div class="storefront-bol-brand-cell">
+        <%= tag.div render("marketplace/animated_logo"), id: "logoWrapper", aria: { hidden: true } %>
+        <%= render "shared/brand_mark", **brand_mark_fragments, href: brand_mark_href,
+                                         class_name: "storefront-bol-brand" %>
+      </div>
 
       <%= link_to main_app.nearby_path, class: "storefront-bol-deliver nav-hover",
                   aria: { label: "#{t("storefront.deliver_to")} #{deliver_to}" } do %>

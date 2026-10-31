@@ -1,13 +1,14 @@
 import { Controller } from "@hotwired/stimulus"
 
-// zYaJege timelines (anime.js) — same targets/delays/easings as the pen.
-// Vanilla DOM instead of jQuery; anime loaded once from esm CDN.
+// The operator's logo timelines (pens zYaJege and ZExdxxL, anime.js), same
+// targets, delays and easings. Vanilla DOM instead of jQuery; anime.js is the
+// vendored ES build (importmap pin "animejs"), loaded once, on first connect.
 let animePromise = null
 
 function loadAnime() {
   if (globalThis.anime) return Promise.resolve(globalThis.anime)
   if (animePromise) return animePromise
-  animePromise = import("https://esm.sh/animejs@3.2.1")
+  animePromise = import("animejs")
     .then((mod) => {
       const anime = mod.default || mod.anime || mod
       globalThis.anime = anime

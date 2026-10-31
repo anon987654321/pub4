@@ -41,5 +41,10 @@ pin "radio_brgen_tunnel", to: "radio_brgen_tunnel.js"
 # heart on dating's first screen. Not preloaded: dating_splash_controller
 # imports it on that one screen, and only when motion is welcome.
 pin "css-doodle", to: "css-doodle.js", preload: false
+
+# anime.js 3.2.1 (MIT, animejs.com), its ES build vendored from npm: the
+# marketplace logo's timelines and the parallax ad. It was imported from
+# esm.sh at runtime, a third-party host on the page's critical path.
+pin "animejs", to: "animejs.js", preload: false
 # No tiptap pin here. It is pinned once in shared/config/importmap_baseline.rb,
 # vendored to shared/vendor/javascript/tiptap.js rather than fetched from a CDN.
