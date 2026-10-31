@@ -744,6 +744,17 @@ runtime_policy:
     artifact_store: sha256
     bundler_remains_authoritative: true
 
+# The deploy gate in lib/cli/pipeline.rb adds these for each kind of evidence a
+# deploy carries. It read this section before it existed, so every deploy
+# scored 0 and was refused with a number that measured nothing. A clean scan
+# alone is 25; a deploy needs passing tests and a review on top to reach 80.
+evidence_scoring:
+  weights:
+    test_pass: 35
+    scan_clean: 25
+    code_review: 20
+  pass_threshold: 80
+
 law_deps:
 
   # LawOrder consumes this dependency graph. Priors are optional during cold start,
