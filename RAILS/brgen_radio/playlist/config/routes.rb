@@ -5,7 +5,10 @@
 Playlist::Engine.routes.draw do
     root "playlists#index"
     resources :playlists do
-      member { get :embed }
+      member do
+        get :embed
+        get :analytics
+      end
       resources :imports, only: :create
       resources :tracks, only: %i[create update destroy]
       resources :collaborations, only: %i[create destroy]
