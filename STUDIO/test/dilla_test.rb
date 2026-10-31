@@ -93,7 +93,7 @@ class DillaTest < Minitest::Test
       assert_equal progression, Languages.progression(name, tonic: Languages::TONIC)
       assert_equal progression.length, KeyLock.lock(progression, "Bb").length
     end
-    assert_equal "Bb", Languages.progression("j5_donut_loop").first[0, 2]
+    assert_equal "Ebmaj7", Languages.progression("j5_donut_loop").first
   end
 
   def test_random_take_uses_the_dilla_output_override
