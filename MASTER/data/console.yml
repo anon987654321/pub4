@@ -18,8 +18,10 @@ dmesg:
   flush: true
   # SGR for lines printed while MASTER boots: the OpenBSD console's kernel
   # colours, white on blue. Terminals only; the prompt and session stay plain.
-  # Empty turns it off, as does NO_COLOR.
-  boot_sgr: "37;44"
+  # Empty turns it off, as does NO_COLOR. The blue is 24-bit #0000FF, because
+  # palette blue (44) is whatever the terminal theme says, and most themes make
+  # it a light, washed-out blue.
+  boot_sgr: "37;48;2;0;0;255"
 
 # What every model turn is oriented with (lib/ai/orientation.rb). `tree: fix` is the /fix Tree, with sizes
 # and the sprawl signals; read_in_full is the rule the turn is told, so an analysis reads a file whole
