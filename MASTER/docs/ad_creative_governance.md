@@ -27,13 +27,14 @@ The audit receipt adds:
   rendered-evidence object; browserless reports also carry the source digest of
   `MASTER/tools/visual/browserless_measurements.rb`.
 - `evidence_sha256`: SHA-256 over the complete report, including artifact digests
-  and measurements,
-  after normalizing object keys and excluding only this digest field.
+  and measurements, after normalizing object keys and excluding only this digest.
 
 The CLI reseals after it attaches measurement diagnostics, so the receipt covers
-the JSON payload actually printed. `AdAudit.require_pass!` verifies the receipt,
-current policy and detector sources, current token version, exact placement and all
-six required checks before allowing a creative through the audit gate.
+the JSON payload actually printed. The existing `AdAudit.require_pass!` API is a
+strict consumer-side gate: when called, it verifies the receipt, current policy
+and detector sources, current token version, exact placement and all six required
+checks. This change does not wire a new publication switch into RAILS or claim
+that a publishing path calls this API at runtime.
 
 This is a **tamper-evident checksum, not a signature**. It does not authenticate
 who supplied external renderer evidence, and a party able to rewrite a report and
