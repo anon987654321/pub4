@@ -3785,6 +3785,528 @@
         "instrument": "rhodes",
         "fx": "dilla_butter"
       }
+    },
+    "iconic_pad_synthesis": {
+      "vangelis_cs80_blade_runner": {
+        "track": "Blade Runner Main Titles (1982)",
+        "synth": "Yamaha CS-80",
+        "description": "Haunting, expansive pads with wailing tones and deep emotion",
+        "waveforms": [
+          "sawtooth_detuned"
+        ],
+        "envelope": {
+          "attack": 3,
+          "decay": 0.5,
+          "sustain": 0.8,
+          "release": 4
+        },
+        "filter": {
+          "type": "lowpass",
+          "cutoff": 600,
+          "resonance": 0.3
+        },
+        "modulation": {
+          "detune_cents": 8,
+          "chorus": true
+        },
+        "effects": [
+          "tape_delay",
+          "plate_reverb"
+        ],
+        "sox_approximation": "synth 8 sawtooth 440 sawtooth 444 fade h 3 8 4 lowpass 600 chorus 0.7 0.9 50 0.4 0.25 2 -t reverb 50 delay 300 norm -2",
+        "warmth_technique": "Detuned oscillators + slow envelopes + sub-bass layer"
+      },
+      "jarre_oxygene_vcs3": {
+        "track": "Oxygene IV (1976)",
+        "synth": "EMS VCS3, ARP 2600",
+        "description": "Ambient, psychedelic pads with mysterious yet optimistic layers",
+        "waveforms": [
+          "triangle",
+          "sawtooth"
+        ],
+        "envelope": {
+          "attack": 3,
+          "decay": 1,
+          "sustain": 0.9,
+          "release": 5
+        },
+        "filter": {
+          "type": "lowpass",
+          "cutoff": 800,
+          "resonance": 0.2
+        },
+        "modulation": {
+          "lfo_rate": 0.3,
+          "lfo_depth": 5,
+          "target": "pitch"
+        },
+        "effects": [
+          "granular_delay",
+          "hall_reverb"
+        ],
+        "sox_approximation": "synth 10 triangle 330 sawtooth 334 fade h 3 10 5 lowpass 800 chorus 0.6 0.8 60 0.5 0.3 2 reverb 60 norm -2",
+        "warmth_technique": "LFO pitch modulation for organic movement"
+      },
+      "pink_floyd_minimoog": {
+        "track": "Shine On You Crazy Diamond (1975)",
+        "synth": "Minimoog",
+        "description": "Yearning, brass-like pads with wistful tone",
+        "waveforms": [
+          "sawtooth",
+          "square_detuned"
+        ],
+        "envelope": {
+          "attack": 1,
+          "decay": 0.3,
+          "sustain": 0.7,
+          "release": 4
+        },
+        "filter": {
+          "type": "lowpass",
+          "cutoff": 1200,
+          "resonance": 0.4,
+          "envelope_amount": 0.6
+        },
+        "modulation": {
+          "detune_cents": 5
+        },
+        "effects": [
+          "chorus",
+          "spring_reverb",
+          "overdrive_light"
+        ],
+        "sox_approximation": "synth 8 sawtooth 220 square 223 fade h 1 8 4 lowpass 1200 overdrive 5 chorus 0.6 0.9 40 0.4 0.2 2 reverb 25 norm -2",
+        "warmth_technique": "Brass filter envelope (quick decay) + light overdrive"
+      },
+      "vangelis_chariots_cs80": {
+        "track": "Chariots of Fire (1981)",
+        "synth": "Yamaha CS-80",
+        "description": "Evocative, romantic pads with resonant fanfares",
+        "waveforms": [
+          "pulse_detuned"
+        ],
+        "envelope": {
+          "attack": 2,
+          "decay": 0.5,
+          "sustain": 0.8,
+          "release": 3
+        },
+        "filter": {
+          "type": "lowpass",
+          "cutoff": 900,
+          "resonance": 0.35,
+          "velocity_mod": 0.7
+        },
+        "modulation": {
+          "detune_cents": 10,
+          "aftertouch_filter": true
+        },
+        "effects": [
+          "reverb_deep",
+          "delay_moderate"
+        ],
+        "sox_approximation": "synth 10 square 262 square 267 fade h 2 10 3 lowpass 900 reverb 45 delay 200 norm -2",
+        "warmth_technique": "Polyphonic aftertouch on filter + detuned pulse waves"
+      },
+      "visage_polymoog_vox": {
+        "track": "Fade to Grey (1980)",
+        "synth": "Polymoog (Vox Humana preset)",
+        "description": "Iconic vocal-like pad, lush and ethereal",
+        "waveforms": [
+          "sawtooth_formant_filtered"
+        ],
+        "envelope": {
+          "attack": 2.5,
+          "decay": 0.2,
+          "sustain": 0.9,
+          "release": 4
+        },
+        "filter": {
+          "type": "formant",
+          "vowel": "ah_to_oh",
+          "cutoff": 1500
+        },
+        "modulation": {
+          "detune_cents": 15,
+          "random_lfo": 0.2
+        },
+        "effects": [
+          "phaser",
+          "reverb"
+        ],
+        "sox_approximation": "synth 12 sawtooth 330 sawtooth 335 sawtooth 340 fade h 2.5 12 4 bandpass 1500 3q phaser 0.8 0.7 3 0.6 0.5 reverb 40 norm -2",
+        "warmth_technique": "Heavy detuning (3 oscillators) + formant filtering for vocal quality"
+      },
+      "ultravox_solina_strings": {
+        "track": "Vienna (1980)",
+        "synth": "ARP Solina String Ensemble",
+        "description": "Syrupy, lush string pads with emotional depth",
+        "waveforms": [
+          "sawtooth_ensemble"
+        ],
+        "envelope": {
+          "attack": 0.5,
+          "decay": 0,
+          "sustain": 1,
+          "release": 2
+        },
+        "filter": {
+          "type": "lowpass",
+          "cutoff": 3000,
+          "resonance": 0.1
+        },
+        "modulation": {
+          "ensemble_chorus": true
+        },
+        "effects": [
+          "tape_saturation",
+          "chorus_deep"
+        ],
+        "sox_approximation": "synth 10 sawtooth 220 sawtooth 222 sawtooth 224 fade h 0.5 10 2 lowpass 3000 chorus 0.7 0.9 55 0.5 0.3 2 -t overdrive 3 norm -2",
+        "warmth_technique": "Built-in ensemble effect (3-voice chorus) + tape saturation"
+      },
+      "brian_eno_cs80_ambient": {
+        "track": "An Ending (Ascent) (1983)",
+        "synth": "Yamaha CS-80",
+        "description": "Celestial, ascending pads with minimalist warmth",
+        "waveforms": [
+          "sine",
+          "sawtooth_blend"
+        ],
+        "envelope": {
+          "attack": 5,
+          "decay": 0,
+          "sustain": 1,
+          "release": 6
+        },
+        "filter": {
+          "type": "highpass",
+          "cutoff": 80
+        },
+        "modulation": {
+          "lfo_rate": 0.1,
+          "lfo_depth": 3,
+          "target": "pitch"
+        },
+        "effects": [
+          "hall_reverb_huge"
+        ],
+        "sox_approximation": "synth 15 sine 165 sawtooth 166 fade h 5 15 6 highpass 80 reverb 70 norm -2",
+        "warmth_technique": "Ultra-slow envelopes (5s+ attack) + gentle LFO swell"
+      },
+      "tangerine_dream_moog_modular": {
+        "track": "Phaedra (1974)",
+        "synth": "Moog Modular",
+        "description": "Sequencer-driven cosmic atmosphere pads",
+        "waveforms": [
+          "sawtooth_sequenced"
+        ],
+        "envelope": {
+          "attack": 1.5,
+          "decay": 0.5,
+          "sustain": 0.6,
+          "release": 3
+        },
+        "filter": {
+          "type": "lowpass",
+          "cutoff": 700,
+          "resonance": 0.5,
+          "envelope_amount": 0.8
+        },
+        "modulation": {
+          "random_voltage": true,
+          "sequencer_modulation": true
+        },
+        "effects": [
+          "delay_cascade",
+          "reverb"
+        ],
+        "sox_approximation": "synth 12 sawtooth 110 fade h 1.5 12 3 lowpass 700 delay 400 0.6 delay 800 0.4 reverb 35 norm -2",
+        "warmth_technique": "Analog sequencing with random voltage for organic variation"
+      },
+      "michael_jackson_cs80_strings": {
+        "track": "Billie Jean (1982)",
+        "synth": "Yamaha CS-80",
+        "description": "String-like chord pads, warm and spacious",
+        "waveforms": [
+          "sawtooth_detuned_strings"
+        ],
+        "envelope": {
+          "attack": 0.3,
+          "decay": 0.2,
+          "sustain": 0.8,
+          "release": 2
+        },
+        "filter": {
+          "type": "lowpass",
+          "cutoff": 2500,
+          "resonance": 0.2
+        },
+        "modulation": {
+          "detune_cents": 6
+        },
+        "effects": [
+          "reverb_splash"
+        ],
+        "sox_approximation": "synth 4 sawtooth 330 sawtooth 334 fade h 0.3 4 2 lowpass 2500 reverb 30 norm -2",
+        "warmth_technique": "Short attack for punchy entry + mid-range EQ emphasis"
+      },
+      "underworld_waldorf_wavetable": {
+        "track": "Born Slippy (1995)",
+        "synth": "Waldorf Microwave (wavetable)",
+        "description": "Lush pads with techno edge",
+        "waveforms": [
+          "wavetable_pad"
+        ],
+        "envelope": {
+          "attack": 2,
+          "decay": 0.5,
+          "sustain": 0.85,
+          "release": 3.5
+        },
+        "filter": {
+          "type": "lowpass",
+          "cutoff": 1800,
+          "resonance": 0.3
+        },
+        "modulation": {
+          "unison_detune": 12,
+          "wavetable_position_mod": true
+        },
+        "effects": [
+          "reverb_huge",
+          "distortion_edge"
+        ],
+        "sox_approximation": "synth 10 sawtooth 440 sawtooth 446 triangle 442 fade h 2 10 3.5 lowpass 1800 overdrive 6 reverb 55 norm -2",
+        "warmth_technique": "Unison detune + digital-analog hybrid (wavetable movement)"
+      },
+      "enya_d50_new_age": {
+        "track": "Orinoco Flow (1988)",
+        "synth": "Roland D-50",
+        "description": "Spacious new-age pads with synthetic-yet-real tone",
+        "waveforms": [
+          "pcm_sample_pad"
+        ],
+        "envelope": {
+          "attack": 1,
+          "decay": 0.3,
+          "sustain": 0.9,
+          "release": 3
+        },
+        "filter": {
+          "type": "lowpass",
+          "cutoff": 4000,
+          "resonance": 0.15
+        },
+        "modulation": {
+          "layer_voices": true
+        },
+        "effects": [
+          "chorus_heavy",
+          "reverb_spacious"
+        ],
+        "sox_approximation": "synth 12 sine 440 triangle 441 sawtooth 442 fade h 1 12 3 lowpass 4000 chorus 0.8 0.9 70 0.6 0.35 2 -t reverb 60 norm -2",
+        "warmth_technique": "LA synthesis (attack samples + sustain loops) + heavy chorus"
+      },
+      "japan_system700_minimal": {
+        "track": "Ghosts (1981)",
+        "synth": "Roland System 700",
+        "description": "Haunting, minimalist pads with dystopian tone",
+        "waveforms": [
+          "sawtooth_thin"
+        ],
+        "envelope": {
+          "attack": 2.5,
+          "decay": 0,
+          "sustain": 1,
+          "release": 4
+        },
+        "filter": {
+          "type": "lowpass",
+          "cutoff": 500,
+          "resonance": 0.2
+        },
+        "modulation": {
+          "lfo_rate": 0.4,
+          "lfo_depth": 8,
+          "target": "filter"
+        },
+        "effects": [
+          "reverb_minimal"
+        ],
+        "sox_approximation": "synth 10 sawtooth 220 fade h 2.5 10 4 lowpass 500 reverb 20 norm -2",
+        "warmth_technique": "Minimalist approach - focus on space between notes"
+      },
+      "frank_ocean_ob8_dreamy": {
+        "track": "Pyramids (2012)",
+        "synth": "Oberheim OB-8",
+        "description": "Dreamy pads with analog polyphony warmth",
+        "waveforms": [
+          "sawtooth_unison"
+        ],
+        "envelope": {
+          "attack": 1.5,
+          "decay": 0.4,
+          "sustain": 0.85,
+          "release": 3.5
+        },
+        "filter": {
+          "type": "lowpass",
+          "cutoff": 1500,
+          "resonance": 0.25
+        },
+        "modulation": {
+          "unison_detune": 8
+        },
+        "effects": [
+          "shimmer_reverb"
+        ],
+        "sox_approximation": "synth 12 sawtooth 330 sawtooth 335 fade h 1.5 12 3.5 lowpass 1500 chorus 0.7 0.85 48 0.5 0.28 2 reverb 50 norm -2",
+        "warmth_technique": "Unison detune + shimmer reverb for lushness"
+      },
+      "van_halen_obx_brass": {
+        "track": "Jump (1984)",
+        "synth": "Oberheim OB-X",
+        "description": "Brass-like pads, warm through amp distortion",
+        "waveforms": [
+          "sawtooth_detuned_aggressive"
+        ],
+        "envelope": {
+          "attack": 0.2,
+          "decay": 0.4,
+          "sustain": 0.7,
+          "release": 1.5
+        },
+        "filter": {
+          "type": "lowpass",
+          "cutoff": 2000,
+          "resonance": 0.4,
+          "velocity_mod": 0.8
+        },
+        "modulation": {
+          "detune_cents": 7
+        },
+        "effects": [
+          "guitar_amp_overdrive",
+          "reverb"
+        ],
+        "sox_approximation": "synth 6 sawtooth 440 sawtooth 444 fade h 0.2 6 1.5 lowpass 2000 overdrive 12 reverb 25 norm -2",
+        "warmth_technique": "Guitar amp distortion for rock fusion + velocity sensitivity"
+      },
+      "general_warm_organic_recipe": {
+        "track": "Universal Template",
+        "synth": "Any polyphonic synthesizer",
+        "description": "Master recipe for lush, warm, organic pads",
+        "waveforms": [
+          "sawtooth_primary",
+          "triangle_or_sine_secondary"
+        ],
+        "envelope": {
+          "attack": 2,
+          "decay": 0.5,
+          "sustain": 0.8,
+          "release": 3.5
+        },
+        "filter": {
+          "type": "lowpass",
+          "cutoff": 800,
+          "resonance": 0.3
+        },
+        "modulation": {
+          "detune_cents": 8,
+          "unison_voices": 4,
+          "lfo_subtle": true
+        },
+        "effects": [
+          "chorus",
+          "tape_saturation",
+          "reverb_hall"
+        ],
+        "eq": {
+          "boost_low_mids": "200-500Hz +2dB"
+        },
+        "sox_approximation": "synth 10 sawtooth {{freq}} sawtooth {{freq+detune}} triangle {{freq+detune/2}} fade h 2 10 3.5 lowpass 800 overdrive 3 chorus 0.65 0.88 45 0.45 0.25 2 reverb 40 bass +2 200 0.7s norm -2",
+        "warmth_technique": "Layer 2-3 oscillators + boost low-mids (200-500Hz) + subtle LFO/random modulation + tape saturation"
+      }
+    },
+    "vintage_fx_chains": {
+      "dilla_butter": {
+        "description": "J Dilla signature warm Rhodes sound",
+        "sox_chain": "compand 0.1,0.3 -inf,-70,-55,-20 -6 -90 0.15 reverb 30 50 85 norm -2 dither -s",
+        "characteristics": "Medium attack, tight compression, vintage reverb"
+      },
+      "warm_tape": {
+        "description": "Analog tape saturation with room ambience",
+        "sox_chain": "compand 0.3,1 -inf,-70,-60,-20 -5 -90 0.2 reverb 35 50 80 norm -2 dither -s",
+        "characteristics": "Slow attack, gentle compression, warm character"
+      },
+      "lofi_dream": {
+        "description": "Lo-fi hip hop atmospheric processing",
+        "sox_chain": "compand 0.05,0.2 -inf,-70,-50,-20 -6 -90 0.1 reverb 40 60 90 norm -2 dither -s",
+        "characteristics": "Fast attack, heavy compression, dreamy reverb"
+      },
+      "analog_lush": {
+        "description": "Lush analog synth pad sound",
+        "sox_chain": "compand 0.2,0.4 -inf,-65,-50,-30 -5 -90 0.18 reverb 45 60 95 norm -2 dither -s",
+        "characteristics": "Moderate attack, soft compression, deep reverb"
+      },
+      "sp1200_crunch": {
+        "description": "Akai SP-1200 26kHz aliasing + 12-bit quantization",
+        "ffmpeg_chain": "asetrate=26000,aresample=44100,bass=g=8:f=80,treble=g=-5:f=10000,acompressor=threshold=-18dB:ratio=6:attack=10:release=80,vibrato=f=3:d=0.4,volume=0.6",
+        "characteristics": "Digital aliasing, bass boost, treble cut, heavy compression"
+      },
+      "vinyl_worn": {
+        "description": "Heavily worn vinyl with crackle, warps, and roll-off",
+        "sox_chain": "highpass 60 lowpass 10000 compand 0.1,0.2 -inf,-60,-50,-20 -5 -90 0.1 tremolo 0.3 0.15 gain -3 norm -2",
+        "crackle_layer": true,
+        "crackle_params": "synth brownnoise gain -35 highpass 2000 lowpass 8000",
+        "characteristics": "Frequency roll-off (60Hz-10kHz), light saturation, wow-flutter, vinyl crackle",
+        "evidence": "Research: SoX synth.c brownnoise algorithm - recursive low-pass filtering"
+      },
+      "vinyl_clean": {
+        "description": "Clean vinyl with subtle surface noise",
+        "sox_chain": "highpass 30 lowpass 18000 compand 0.15,0.25 -inf,-65,-55,-25 -4 -90 0.12 norm -2",
+        "crackle_layer": true,
+        "crackle_params": "synth brownnoise gain -45 highpass 3000 lowpass 12000",
+        "characteristics": "Wide bandwidth (30Hz-18kHz), subtle crackle, minimal compression",
+        "evidence": "Audiophile vinyl mastering standards"
+      },
+      "sp1200_authentic": {
+        "description": "Authentic 12-bit SP-1200 sampling degradation (SoX-only)",
+        "sox_chain": "rate 26040 compand 0.02,0.05 -inf,-50,-40,-30,-40,-30,-10 -5 -60 0.01 overdrive 10 treble -3 1200 0.5s gain -6 rate 44100",
+        "characteristics": "26.04kHz sample rate, aggressive companding, aliasing via overdrive, treble roll-off",
+        "evidence": "SP-1200 hardware specs: 26.04kHz, 12-bit, 2.5s max sample time"
+      },
+      "dilla_magic_organic": {
+        "description": "Dilla butter with organic parameter randomization",
+        "sox_chain_template": "compand 0.1,0.3 -inf,-70,-55,-20 -6 -90 0.15 overdrive {{overdrive}} reverb {{reverb_room}} 50 85 norm -2 dither -s",
+        "randomize": {
+          "overdrive": {
+            "min": 5,
+            "max": 15,
+            "type": "int"
+          },
+          "reverb_room": {
+            "min": 25,
+            "max": 35,
+            "type": "int"
+          }
+        },
+        "characteristics": "Variable saturation (5-15), variable room size (25-35), organic per-render variation",
+        "evidence": "Research (Grok4): 'Scripting probabilistic effects for organic magic'"
+      },
+      "flylo_cosmic": {
+        "description": "Flying Lotus layered textures with deep modulation",
+        "sox_chain": "compand 0.05,0.15 -inf,-70,-50,-15 -8 -90 0.08 chorus 0.7 0.9 55 0.4 0.25 2 -t chorus 0.6 0.8 40 0.5 0.3 2 -s reverb 50 70 100 phaser 0.8 0.7 3 0.6 0.5 -t norm -2",
+        "characteristics": "Fast attack, heavy compression, dual chorus (layered), deep reverb, phase shifting",
+        "evidence": "Flying Lotus production: Cosmogramma (2010), layered synthesis aesthetic"
+      },
+      "jneiro_texture": {
+        "description": "Jneiro Jarel eclectic textural processing",
+        "sox_chain": "compand 0.12,0.25 -inf,-65,-50,-25 -6 -90 0.15 overdrive 8 flanger 0.6 0.87 3.0 0.9 0.5 -t tremolo 4.5 70 reverb 35 55 85 norm -2",
+        "characteristics": "Gritty overdrive, flanger movement, tremolo modulation, mid reverb",
+        "evidence": "Jneiro Jarel: Shape of Broad Minds (2008), textured lo-fi aesthetic"
+      }
     }
   },
   "drums": {
@@ -4998,5 +5520,6 @@
       "source": "pub3:multimedia/dilla.rb v5.0.0"
     }
   },
-  "legacy_presets_note": "Recovered verbatim chord-name/tempo/duration/legacy-FX metadata from pub3 multimedia/dilla.rb. These are historical style presets, not verified transcriptions. legacy_fx is provenance only; rendering uses the current Dilla voice, groove and mastering chain."
+  "legacy_presets_note": "Recovered verbatim chord-name/tempo/duration/legacy-FX metadata from pub3 multimedia/dilla.rb. These are historical style presets, not verified transcriptions. legacy_fx is provenance only; rendering uses the current Dilla voice, groove and mastering chain.",
+  "legacy_progression_groups_note": "The legacy_progression_groups preserve the original pub3 chord-theory groups, including jazz, neo-soul, funk/soul, iconic pad synthesis recipes and vintage FX chains. They are archival reference data; current rendering uses dilla.rb's native voice/effect implementations."
 }
