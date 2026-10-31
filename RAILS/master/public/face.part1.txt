@@ -597,6 +597,12 @@ function stopStar() {
   if (_starTimer) { clearTimeout(_starTimer); _starTimer = null; }
   if (asciiStarEl) asciiStarEl.textContent = '';
 }
+function syncThinkingStar() {
+  const queueActive = rootBody.dataset.queueActive === '1' && rootBody.dataset.queuePaused !== '1';
+  const active = State.mode === 'thinking' || (State.mode === 'speaking' && queueActive);
+  if (active && !faceReducedMotionActive() && runtimeProfile() !== 'battery') startStar();
+  else stopStar();
+}
 
 voicePicker?.addEventListener('change', () => {
   const voice = voicePicker.value.trim();
@@ -620,7 +626,7 @@ Object.defineProperty(State, 'mode', {
     if (micText) micText.textContent = v === 'listening' ? 'Microphone on' : 'Microphone off';
     const s = document.getElementById('zsh-status');
     if (s) s.textContent = '';
-    if (v === 'thinking' && !faceReducedMotionActive() && runtimeProfile() !== 'battery') startStar(); else stopStar();
+    syncThinkingStar();
   },
   configurable: true
 });
