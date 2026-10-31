@@ -36,6 +36,7 @@ pin "pub4/stimulus_boot_social", to: "stimulus_boot_social.js"
 pin "pub4/stimulus_boot_brgen", to: "stimulus_boot_brgen.js"
 
 pin "radio_brgen_tunnel", to: "radio_brgen_tunnel.js"
+pin "radio_brgen_modes", to: "radio_brgen_modes.js"
 
 # css-doodle 0.60.0 (MIT, css-doodle.com), vendored from npm: the animated
 # heart on dating's first screen. Not preloaded: dating_splash_controller

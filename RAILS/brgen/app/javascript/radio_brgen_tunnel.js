@@ -1,4 +1,5 @@
 import { publishVisual } from "pub4/visual_field"
+import { INK_FAR, INK_MID, INK_NEAR, MODES, RING_SHAPE_GLSL } from "radio_brgen_modes"
 
 'use strict'
 
@@ -304,11 +305,11 @@ class AudioEngine {
     return { bass, mid, high, average, beat: this.beat, flux: pulse * 0.5, proxy: true }
   }
 
-  updateTrackDisplay() {
+  updateTrackDisplay(note = null) {
     if (!this.trackDisplay) return
     const track = this.tracks[this.currentTrack]
     if (!track) return
-    this.trackDisplay.textContent = `${track.artist} - ${track.title}`
+    this.trackDisplay.textContent = [`${track.artist} - ${track.title}`, note].filter(Boolean).join(" · ")
   }
 
   stop() {
@@ -337,9 +338,7 @@ class AudioEngine {
 // warm paper amber is built on. Full-saturation ember only ever appears at
 // INK_ALPHA_MIN over black, so the far end reads as a dark coal, not as a
 // warning colour.
-// The original Radio Bergen palette: cool blue/teal on black.
-const INK_FAR = { r: 4 / 255, g: 27 / 255, b: 37 / 255 }
-const INK_NEAR = { r: 78 / 255, g: 205 / 255, b: 196 / 255 }
+// The operator's palette and ring modes live in radio_brgen_modes.js.
 // Far rings barely present, near rings solid — the 8%-to-full range the face
 // works in, expressed 0..1.
 const INK_ALPHA_MIN = 0.08
@@ -400,8 +399,13 @@ uniform float uLean;
 uniform float uTwist;
 uniform float uSag;
 uniform float uSpread;
+// The ring mode (index into MODES) and its twist.
+uniform float uMode;
+uniform float uModeTwist;
 varying float vNear;
 varying float vSeed;
+
+${RING_SHAPE_GLSL}
 
 // The lean. Two incommensurable sine pairs, so the curve never repeats on any
 // interval a viewer can learn. The far rings displace most, which bends the
@@ -441,7 +445,11 @@ void main() {
   // so a sleeping tunnel goes slack rather than merely slow.
   radius *= uSpread * (1.0 + uSag * aSeed * 0.22);
 
-  float ang = aAngle + uTime + z * uTwist;
+  float ang = aAngle + uTime * uModeTwist + z * uTwist;
+
+  // The mode's ring, in the pen's 75-unit scale. Ring index counts from the far
+  // end, 0 to 125, as the pen's rows did.
+  radius *= 1.0 + ringShape(ang, near * 125.0, uTime) / 75.0;
 
   // Distortion is a real geometric warp: three slow, incommensurate waves pinch
   // each ring differently along depth, restoring the crooked hand-drawn tunnel.
@@ -487,7 +495,10 @@ void main() {
 const FRAG = `
 precision highp float;
 uniform vec3 uInkFar;
+uniform vec3 uInkMid;
 uniform vec3 uInkNear;
+// The gradient's drift (the pen's GRAD.phase), advanced on the CPU.
+uniform float uGradPhase;
 uniform float uAlphaMin;
 uniform float uAlphaMax;
 uniform float uExposure;
@@ -513,7 +524,9 @@ void main() {
   float near = vNear * vNear;
   float alpha = mix(uAlphaMin, uAlphaMax, near) * uExposure;
   if (uBlink >= 0.0) alpha *= 1.0 - 0.92 * (1.0 - smoothstep(0.0, 0.16, abs(near - uBlink)));
-  vec3 col = mix(uInkFar, uInkNear, near);
+  // Three stops, far to mid to near, nudged along the tube by the phase.
+  float f = clamp(vNear + 0.06 * sin(uGradPhase + (1.0 - vNear) * 1.2), 0.0, 1.0);
+  vec3 col = f < 0.5 ? mix(uInkFar, uInkMid, f * 2.0) : mix(uInkMid, uInkNear, (f - 0.5) * 2.0);
   if (uDither > 0.5) {
     // Depth stops being alpha and becomes ink density: the fragment is drawn
     // whole or discarded, and how often it wins its cell is how far away it
@@ -561,6 +574,8 @@ class VisualEngine {
     this.touch = { x: 0, y: 0, active: false }
     this.tilt = { x: 0, y: 0 }
     this.time = 0
+    this.mode = 0
+    this.gradPhase = 0
     this.zOffset = 0
     this.colorInvertValue = 0
     this.audioBoost = 0
@@ -610,7 +625,7 @@ class VisualEngine {
     }
     this.uni = {}
     for (const n of ["uTime", "uZ", "uFov", "uRadius", "uResolution", "uCenter",
-      "uBass", "uMid", "uHigh", "uBreath", "uInkFar", "uInkNear",
+      "uBass", "uMid", "uHigh", "uBreath", "uInkFar", "uInkMid", "uInkNear", "uMode", "uModeTwist", "uGradPhase",
       "uAlphaMin", "uAlphaMax", "uExposure",
       "uPeristalsis", "uLean", "uTwist", "uSag", "uSpread", "uBlink", "uDither"]) {
       this.uni[n] = gl.getUniformLocation(this.prog, n)
@@ -828,7 +843,10 @@ class VisualEngine {
   #renderGL() {
     const gl = this.gl
     // Clear like the original reference. This keeps the buffer disposable and
-    // lets the browser avoid a costly preserved-backbuffer path.\n\n    gl.useProgram(this.prog)
+    // lets the browser avoid a costly preserved-backbuffer path.
+    gl.clear(gl.COLOR_BUFFER_BIT)
+
+    gl.useProgram(this.prog)
     const bind = (buf, loc) => {
       if (loc < 0) return
       gl.bindBuffer(gl.ARRAY_BUFFER, buf)
@@ -879,7 +897,12 @@ class VisualEngine {
     // softInvert walked every byte of the image on the CPU each pressed frame.
     const inv = this.colorInvertValue / 255
     gl.uniform3f(u.uInkFar, INK_FAR.r + inv * 0.4, INK_FAR.g + inv * 0.5, INK_FAR.b + inv * 0.5)
+    gl.uniform3f(u.uInkMid, INK_MID.r, INK_MID.g, INK_MID.b)
     gl.uniform3f(u.uInkNear, INK_NEAR.r, INK_NEAR.g, INK_NEAR.b)
+    gl.uniform1f(u.uMode, this.mode)
+    gl.uniform1f(u.uModeTwist, MODES[this.mode].twist)
+    this.gradPhase += 0.016 * (0.08 + (this.audioBoost || 0) * 0.12)
+    gl.uniform1f(u.uGradPhase, this.gradPhase)
     gl.uniform1f(u.uAlphaMin, INK_ALPHA_MIN)
     gl.uniform1f(u.uAlphaMax, INK_ALPHA_MAX)
     gl.uniform1f(u.uExposure, (0.85 + (this.audioBoost || 0) * 0.3) * post.exposure)
@@ -988,6 +1011,12 @@ class VisualEngine {
     this.mouse.active = active
   }
 
+  // Step through MODES; returns the new mode.
+  shiftMode(step) {
+    this.mode = (this.mode + step + MODES.length) % MODES.length
+    return this.mode
+  }
+
   setPerformanceMode(value) {
     this.isMobile = value
     this.config.particleCountPerRow = value ? 32 : 48
@@ -1093,6 +1122,12 @@ export class RadioBrgen {
     const onKeyDown = (e) => {
       if (!this.isStarted) return
       if (e.code === "Space") { e.preventDefault(); this.audioEngine.nextTrack() }
+      // The pen's ← and →: step through the ring modes and say which one.
+      if (e.code === "ArrowRight" || e.code === "ArrowLeft") {
+        e.preventDefault()
+        const mode = this.visualEngine.shiftMode(e.code === "ArrowRight" ? 1 : -1)
+        this.audioEngine.updateTrackDisplay(`Mode ${mode + 1}/${MODES.length}: ${MODES[mode].name}`)
+      }
     }
     const onResize = () => {
       clearTimeout(this._resizeTimer)
@@ -1196,4 +1231,4 @@ export class RadioBrgen {
   }
 }
 
-export { VisualEngine }
+export { VisualEngine, MODES }
