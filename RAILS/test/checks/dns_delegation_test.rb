@@ -41,10 +41,10 @@ class DnsDelegationTest < Minitest::Test
                  "an app with no domain is skipped by the delegation check and cannot be found dark"
   end
 
-  def test_all_three_apps_are_covered
+  def test_every_owned_app_is_covered
     names = apps.map { |app| app["name"] }.sort
 
-    assert_equal %w[amber brgen bsdports], names,
+    assert_equal %w[amber brgen bsdports master], names,
                  "the app set changed; the delegation check covers whatever is here, so confirm that is intended"
   end
 

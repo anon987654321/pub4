@@ -9,6 +9,12 @@ module Deploy
   class DialectPurityCheck
     ROOT = File.expand_path("../../../..", __dir__)
 
+    # Twitter's brand blue. The X.com mirror the operator recorded on
+    # 2026-10-28 declares it as brgen's palette tokens; a declaration of the
+    # token is the palette, a use-site carrying the literal is drift.
+    TWITTER_BLUE = /#1d9bf0|#1DA1F2/i
+    TOKEN_DECLARATION_SPAN = /--[\w-]+\s*:[^;}]*/
+
     def self.run(root: ROOT)
       new(root:).run
     end
@@ -85,6 +91,10 @@ module Deploy
         Operator::ScssRules.rules(body).each do |rule|
           next unless rule.body.match?(/(?<![\w-])--accent\s*:/)
           next if rule.parents.any? { |parent| parent.match?(/\A@each\b.*\$vertical-accents\b/) }
+          # The root dialect's own :root declaration is the palette the mirror
+          # recorded on 2026-10-28 (--accent: #1d9bf0 with black ink); the map
+          # governs the verticals, not the host's root.
+          next if rule.selector == ":root" && rule.parents.empty?
 
           @result.fail("dialect_purity: #{path.sub(@rails + '/', '')}:#{rule.line} #{rule.selector} " \
                        "re-sets --accent (the accent map only)")
@@ -97,6 +107,11 @@ module Deploy
         Dir.glob(File.join(@rails, "brgen_*/{,*/,engines/*/}app/assets/stylesheets/**/*.scss"))
     end
 
+    # The dialect must not paint twitter blue. The one exemption is the token
+    # declaration itself: the X.com mirror the operator recorded on 2026-10-28
+    # defines --accent, --nav-rule and --nav-badge-fill as #1d9bf0 on :root, and
+    # a palette declaration is the line every use-site is supposed to cite. A
+    # use-site carrying the literal still fails.
     def check_no_twitter_blue
       sheets = Dir.glob(File.join(@rails, "{brgen,amber,bsdports,__shared}/app/assets/stylesheets/**/*.{scss,css}")) +
                Dir.glob(File.join(@rails, "brgen_*/{,*/,engines/*/}app/assets/stylesheets/**/*.{scss,css}"))
@@ -104,8 +119,8 @@ module Deploy
         next if path.include?("/builds/")
 
         @result.checked!
-        body = File.read(path)
-        if body.match?(/#1d9bf0|#1DA1F2/i)
+        body = Operator::ScssRules.without_comments(File.read(path))
+        if body.lines.any? { |line| line.gsub(TOKEN_DECLARATION_SPAN, "").match?(TWITTER_BLUE) }
           @result.fail("dialect_purity: twitter blue in #{path.sub(@rails + '/', '')}")
         end
       end

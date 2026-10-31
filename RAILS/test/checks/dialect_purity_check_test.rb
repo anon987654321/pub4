@@ -127,6 +127,30 @@ class DialectPurityCheckTest < Minitest::Test
     assert_match(%r{twitter blue in __shared/app/assets/stylesheets/_links\.scss}, result.failures.first)
   end
 
+  # The X.com mirror the operator recorded on 2026-10-28 declares the blue as
+  # brgen's palette tokens, so a declaration is the palette itself, a comment
+  # naming it is prose, and only a use-site carrying the literal is drift.
+  def test_a_declared_or_discussed_twitter_blue_is_not_a_use_site
+    result = check_over do |dir|
+      plant(dir, "RAILS/brgen/app/assets/stylesheets/application.scss",
+            BRGEN.sub("body.vertical-dating .dating { color: var(--accent); }",
+                      "  --accent: #1d9bf0;\n  // X paints white type on #1d9bf0, which is 3.16:1 and under the floor.\n" \
+                      "  body.vertical-dating .dating { color: var(--accent); }"))
+    end
+
+    assert result.ok?, "a declared or discussed twitter blue failed: #{result.failures.inspect}"
+  end
+
+  def test_twitter_blue_inside_a_rule_with_a_declaration_still_fails
+    result = check_over do |dir|
+      plant(dir, "RAILS/brgen/app/assets/stylesheets/application.scss",
+            BRGEN + ".badge { --badge-fill: var(--accent); color: #1DA1F2; }\n")
+    end
+
+    refute result.ok?, "a use-site sharing its line with a declaration passed"
+    assert_match(%r{twitter blue in brgen/app/assets/stylesheets/application\.scss}, result.failures.first)
+  end
+
   def test_a_missing_vertical_accent_entry_fails
     result = check_over do |dir|
       plant(dir, "MASTER/data/tokens.yml", MASTER_RULES.sub(%(    dating:\n      accent: "#b3315a"\n), ""))

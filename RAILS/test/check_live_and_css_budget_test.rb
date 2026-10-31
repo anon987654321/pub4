@@ -241,6 +241,41 @@ class CheckLiveAndCssBudgetTest < Minitest::Test
     check
   end
 
+  # The magic-hex instrument counts colours in value position. A selector's
+  # #name spells hex letters (#feed-panel, canvas#face), `#face {` opens a
+  # rule, a token declaration is the palette's own definition, and a var()
+  # fallback is the token's declared value — none of the four is a colour
+  # painted at the call site. A real value still counts.
+  def test_magic_hex_counts_values_and_not_selectors_or_declarations
+    check = rhythm_check
+    check.send(:count_budget_rules, "fixture.scss", "fixture.scss", <<~CSS)
+      #feed-panel, #face-phosphor-trail { color: #ccc; }
+      canvas#face { background: #000; }
+      #face { opacity: .055; }
+      .stage { background: var(--face-bg, #000); }
+      :root { --accent: #1d9bf0; }
+      .hero { background: #0a0a0a; color: #fff; }
+    CSS
+
+    assert_equal ["fixture.scss:1", "fixture.scss:2", "fixture.scss:6"], check.tally.fetch("magic_hex")
+  end
+
+  # A declaration the merge folded into an app's application.scss keeps the
+  # exemption the old token files held, whether it stands alone or shares its
+  # line with a selector — but a use-site on the same line is still counted.
+  def test_a_token_declaration_is_exempt_wherever_the_merge_put_it
+    check = rhythm_check
+    check.send(:count_budget_rules, "fixture.scss", "fixture.scss", <<~CSS)
+      :root {
+        --sale: #F91906;
+        --store-page: #ffffff;
+      }
+      .pill { --badge-fill: #123456; background: #654321; }
+    CSS
+
+    assert_equal ["fixture.scss:5"], check.tally.fetch("magic_hex")
+  end
+
   def test_design_metrics_equal_contrast_ceiling_is_reported
     with_env("CHECK_AUTOFIX" => "0") do
       check = Deploy::DesignMetricsCheck.new

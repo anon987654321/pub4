@@ -153,7 +153,33 @@ rules:
   # token to cite. Folding the dialect palettes into the shared token sources
   # and reducing any remaining literal are colour decisions at the operator's
   # boundary, which is where this row sits until that sitting happens.
-  magic_hex: 146
+  # 146 -> 65 on 2026-10-31, and this is an instrument correction, not a
+  # palette sitting: the one-stylesheet merge (aa3834606, 2026-10-28) moved
+  # every app partial into one application.scss per app and the tally was left
+  # counting three classes of line it never meant to count. Decomposed from the
+  # 175 the merged file first read:
+  # - 96 are custom-property declarations (--bol-*/--store-*/--amber-*/--luxury-*
+  #   and the app palettes). Pre-merge those lines lived in _tokens.scss and
+  #   _dialect_tokens.scss, which TOKEN_SOURCES exempts — the definition is the
+  #   line every use-site is supposed to cite. The tally now exempts the
+  #   declaration span by shape wherever the merge put it, and a use-site
+  #   sharing its line with a declaration is still counted.
+  # - 8 are selector false positives the value-position scan drops: #feed-panel
+  #   and #face spell 4-digit hex, and face.css's canvas selectors glue #face to
+  #   a tag. None of them painted.
+  # - 6 are var(--token, #hex) fallbacks in face.css — the token's own declared
+  #   value, the same VAR_FALLBACK rationale rhythm already applies.
+  # - no_twitter_blue moves to the same line-based reading: the mirror's :root
+  #   declaration is the palette, its contrast note is prose in a comment, and
+  #   a use-site carrying the literal still fails (dialect_purity's rule keeps
+  #   step, and its accent-map rule now exempts the host's :root for the same
+  #   reason).
+  # The 65 that remain are use-sites: the 11 scan:intentional annotations, the
+  # yep pen's 4, the marketplace bol/store mirrors' whites on white and grey
+  # steps, amber's two gradient ramps, bsdports' visited #609, and face.css's
+  # canvas grounds, print styles and wscons terminal greens. Reducing those is
+  # a colour decision at the operator's boundary, which is where this row sits.
+  magic_hex: 65
   # Token pairs below WCAG AA (4.5:1) and in the AA..AAA band, as design_metrics
   # counts them. style.yml declares wcag_2_2_aaa; body text earns it (12.51:1
   # dark, 16.26:1 light) and the secondary/accent tier does not. The vertical

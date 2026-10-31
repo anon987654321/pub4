@@ -43,6 +43,23 @@ module Deploy
     FLAT_PATTERN = /box-shadow\s*:(?!\s*none\b)|text-shadow\s*:(?!\s*none\b)|backdrop-filter\s*:(?!\s*none\b)|filter\s*:[^;]*\bblur\(/i
 
     TWITTER_BLUE = /#1d9bf0|#1DA1F2/i
+
+    # A custom-property declaration is the palette's own definition — the line
+    # every use-site is supposed to cite. Before the 2026-10-28 one-stylesheet
+    # merge those lines lived in _tokens.scss/_dialect_tokens.scss and the
+    # file-name TOKEN_SOURCES exemption covered them; merged into each app's
+    # application.scss they are counted by shape instead of by file: the
+    # declaration span is removed before the scan, so a use-site sharing its
+    # line with a declaration is still counted.
+    TOKEN_DECLARATION_SPAN = /--[\w-]+\s*:[^;}]*/
+
+    # Where a hex can be a colour: in a value, not in a selector. `#feed-panel`
+    # spells a 4-digit hex, `canvas#face` glues one to a tag, and `#face {`
+    # opens a rule — none of them paint. A colour never continues into a word,
+    # a colon, or a block opener, and a value inside var(--token, #hex) is the
+    # token's own declared value (the same VAR_FALLBACK rationale rhythm
+    # already applies), so fallbacks are stripped before the scan.
+    VALUE_HEX = /(?:\A|[\s:,(;])#[0-9a-fA-F]{3,8}(?![-\w:])(?!\s*\{)/
     LONG_TRANSITION = /transition(?:-duration)?\s*:\s*([4-9]\d\d|\d{4,})\s*ms/i
     PHYSICAL_LR = /^\s*(margin|padding|inset)-(left|right)\s*:|^\s*left\s*:|^\s*right\s*:/
 
@@ -62,7 +79,6 @@ module Deploy
 # number the allowlist rejected.
 VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
 
-    HEX = /#[0-9a-fA-F]{3,8}\b/
     COMMENT = %r{\A\s*(?://|/\*|\*)}
 
     # laws.yml's whole `typography` block was the last section it
@@ -306,7 +322,8 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
         where = "#{rel}:#{index + 1}"
 
         @tally["important"] << where if line.match?(IMPORTANT) && motion_depth.nil?
-        @tally["magic_hex"] << where if !token_source && line.match?(HEX)
+        counted_line = line.gsub(VAR_FALLBACK, "var()").gsub(TOKEN_DECLARATION_SPAN, "")
+        @tally["magic_hex"] << where if !token_source && counted_line.match?(VALUE_HEX)
         count_typography(where, line) unless token_source || face_line
         motion_depth = nil if motion_depth && depth <= motion_depth
         next if allowed.empty?
@@ -385,7 +402,12 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
         @result.fail("css_constitution flat_ui: #{rel}")
       end
 
-      if body.match?(TWITTER_BLUE)
+      # Same shape as dialect_purity's rule: the mirror's own token declaration
+      # is the palette, a use-site carrying the literal is drift, and prose in
+      # a comment is neither — the mirror's contrast note names the blue it
+      # keeps on :root.
+      if Operator::ScssRules.without_comments(body).lines
+                       .any? { |line| line.gsub(VAR_FALLBACK, "var()").gsub(TOKEN_DECLARATION_SPAN, "").match?(TWITTER_BLUE) }
         @result.fail("css_constitution no_twitter_blue: #{rel}")
       end
 
