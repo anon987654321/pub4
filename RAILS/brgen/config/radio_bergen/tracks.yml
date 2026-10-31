@@ -82,6 +82,84 @@ external_reference:
       title: BTS Radio 2006
       id: 6nWdggkulHk
       start: 1364
+    # From the operator's radio.brgen.no visualiser pen (2026-10-31).
+    - artist: "Flying Lotus"
+      title: "Message Situation"
+      id: 9fzGGbiJags
+    - artist: "R\u00F6yksopp"
+      title: "Only This Moment (Forsiktige massage)"
+      id: vLE5XCc0XO8
+    - artist: "Jneiro Jarel"
+      title: "Chinubian"
+      id: 9OPypHXlJUQ
+    - artist: "Pete Rock"
+      title: "A Little Soul"
+      id: 4tY89H5TWPY
+    - artist: "Slum Village"
+      title: "Forth & Back (Rock Music) Instrumental"
+      id: 1XY8EHOzLbY
+    - artist: "Flying Lotus"
+      title: "Camel"
+      id: t6SXXx1Fu_4
+    - artist: "Black Loops"
+      title: "Under the Sea"
+      id: U81xh9gJeYM
+  # whyp.it, the operator's own uploads (user "how"), from the same pen. The
+  # embed needs the track id and its share token; titles carrying "Artist -
+  # Title" are split here, the rest keep the uploader as artist.
+  whyp:
+    - artist: "J Dilla"
+      title: "Players (Second Version) (Unreleased)"
+      id: "292777"
+      token: zaB8x
+    - artist: "Black Loops"
+      title: "Under the Sea"
+      id: "292774"
+      token: UTbNQ
+    - artist: "how"
+      title: "amiga"
+      id: "292741"
+      token: 2Jh5p
+    - artist: "how"
+      title: "RADIO BERGEN #1"
+      id: "292718"
+      token: 1cr3I
+    - artist: "how"
+      title: "RAUINGAR"
+      id: "230366"
+      token: zPfQp
+    - artist: "Haisam & Johann"
+      title: "PB1"
+      id: "195489"
+      token: 3XYFb
+    - artist: "Mike T & Johann"
+      title: "Alt Kan Skje"
+      id: "183204"
+      token: 20RKB
+    - artist: "Jan Hakim & Johann"
+      title: "Stailings (a)"
+      id: "183195"
+      token: ALudQ
+    - artist: "Angelo Reira & Johann"
+      title: "Sandviken Hotell (b)"
+      id: "183193"
+      token: CTq5y
+    - artist: "Jan Hakim & Johann"
+      title: "Stailings (a)"
+      id: "183179"
+      token: LWVOl
+    - artist: "Jan Hakim & Johann"
+      title: "Stailings (b)"
+      id: "183178"
+      token: eiAIW
+    - artist: "how"
+      title: "Lofi"
+      id: "183173"
+      token: D9TSI
+    - artist: "Angelo Reira & Johann"
+      title: "Sandviken Hotell (a)"
+      id: "182727"
+      token: QAuRq
 
 curated_playlist:
   name: "Radio Bergen — Selected Crate"

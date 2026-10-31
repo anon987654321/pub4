@@ -157,6 +157,7 @@ class AudioEngine {
     if (!track) return
     clearTimeout(this._advanceTimer)
     if (track.src) this.#loadLocal(track)
+    else if (track.whyp_id) this.#loadWhyp(track)
     else this.#loadYouTube(track)
   }
 
@@ -183,8 +184,22 @@ class AudioEngine {
   }
 
   #loadYouTube(track) {
+    const origin = encodeURIComponent(window.location.origin)
+    this.#loadEmbed(`https://www.youtube.com/embed/${track.id}?autoplay=1&controls=0&disablekb=1&fs=0` +
+      `&iv_load_policy=3&modestbranding=1&playsinline=1&rel=0&showinfo=0&origin=${origin}`)
+  }
+
+  // whyp.it, the operator's own uploads. The embed takes the track id and its
+  // share token and, like YouTube's, says nothing back across the frame, so it
+  // advances on the same timer.
+  #loadWhyp(track) {
+    const id = encodeURIComponent(track.whyp_id)
+    const token = encodeURIComponent(track.whyp_token ?? "")
+    this.#loadEmbed(`https://whyp.it/tracks/embed?id=${id}&token=${token}`)
+  }
+
+  #loadEmbed(embedUrl) {
     if (this.audio) this.audio.pause()
-    const embedUrl = `https://www.youtube.com/embed/${track.id}?autoplay=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&playsinline=1&rel=0&showinfo=0&origin=${encodeURIComponent(window.location.origin)}`
     try {
       this.iframe.src = embedUrl
       this.isPlaying = true

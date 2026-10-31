@@ -111,11 +111,23 @@ module Brgen
         end
       end
 
+      # whyp.it embeds need the track id and its share token; both are required.
+      def whyp_tracks
+        Array(load.dig("external_reference", "whyp")).filter_map do |row|
+          id = row["id"].to_s.presence
+          token = row["token"].to_s.presence
+          next unless id && token
+
+          { title: row["title"].to_s, id: "whyp-#{id}", artist: row["artist"].presence || "Brgen",
+            whyp_id: id, whyp_token: token }
+        end
+      end
+
       def archaeology_lines
         manifest = load
         meta = manifest["meta"] || {}
         pub2_head = lessons_pub2_head
-        youtube_count = youtube_tracks.size
+        youtube_count = youtube_tracks.size + whyp_tracks.size
 
         [
           "$ git dig --follow pub4/index.html",

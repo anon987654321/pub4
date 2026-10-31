@@ -14,7 +14,7 @@ module PlaylistHelper
     return curated if curated.any?
 
     # Before that import, retain the existing external-reference radio.
-    manifest = Brgen::RadioBergenManifest.youtube_tracks
+    manifest = Brgen::RadioBergenManifest.youtube_tracks + Brgen::RadioBergenManifest.whyp_tracks
     hosted = Playlist::Track
       .where(source_type: %w[youtube direct])
       .where.not(source_url: [ nil, "" ])
@@ -23,7 +23,7 @@ module PlaylistHelper
 
     catalog = (manifest + hosted).uniq { |t| t[:id] || t[:src] }
     catalog = radio_tunnel_fallback_tracks if catalog.empty?
-    catalog.first(48)
+    catalog.first(64)
   end
 
   def radio_bergen_curated_local_tracks
