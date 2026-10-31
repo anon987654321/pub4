@@ -90,12 +90,12 @@ class TestGap < Minitest::Test
 
       def publish(event, payload = {}) = (@events ||= []) << [event, payload]
     end.new
-    loop = Master::Fix::RepairLoop.new(law: Rule.new("COLOR_CONTRAST", :warning), agent: ExplodingAgent.new,
+    loop = Master::Fix::RepairLoop.new(law: Rule.new("CONTRAST_TOKENS", :warning), agent: ExplodingAgent.new,
                                     scanner: Object.new, root: Master::ROOT, bus:)
-    violation = { file: "/x/a.scss", law: "COLOR_CONTRAST", message: "low", severity: :warning }
+    violation = { file: "/x/a.scss", law: "CONTRAST_TOKENS", message: "low", severity: :warning }
 
     out, = capture_io { assert_equal :needs_person, loop.send(:fix_batch, [violation]).then { loop.instance_variable_get(:@batch_breakdown).keys.first } }
-    assert_includes out, "COLOR_CONTRAST listed, not attempted"
+    assert_includes out, "CONTRAST_TOKENS listed, not attempted"
     assert_includes out, "gap: waits for the operator, checking costs the operator, the operator's decision"
     event = bus.events.find { |name, _| name == "repair_loop:operator_gap" }
     assert_equal Master::Gap::OPERATOR_DECISION, event.last[:gap]
@@ -103,7 +103,7 @@ class TestGap < Minitest::Test
     pulse = Master::Fix::RunPulse.new(max_passes: 3, clock: -> { 0.0 }, load: -> { 0.0 })
     pulse.observe("repair_loop:operator_gap", event.last)
     pulse.observe("repair_loop:operator_gap", event.last)
-    assert_includes pulse.pass_summary(1, tokens: 0), "fix0: pass 1 listed for the operator, not attempted = 2 (COLOR_CONTRAST 2)"
+    assert_includes pulse.pass_summary(1, tokens: 0), "fix0: pass 1 listed for the operator, not attempted = 2 (CONTRAST_TOKENS 2)"
   end
 
   def test_the_council_that_cannot_sit_says_why_and_whose_call_it_is

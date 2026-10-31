@@ -87,7 +87,7 @@ class FixHardeningTest < Minitest::Test
   def test_rendered_value_block_is_a_human_decision
     loop = Master::Fix::RepairLoop.allocate
     finding = {
-      law: "TYPE_SCALE",
+      law: "TYPE_HIERARCHY",
       file: File.join(Master::ROOT, "..", "RAILS", "master", "face.css"),
       line: 1,
       severity: :warning,

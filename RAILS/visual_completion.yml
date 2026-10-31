@@ -5,13 +5,18 @@ enabled: true
 target: RAILS
 exclude:
   - RAILS/master
+# Spelled to match the law catalogue's actual IDs (MASTER/data/laws.yml):
+# TYPE_SCALE, LEADING and PIXEL_PERFECTION_RHYTHM never corresponded to a
+# real law_id, so a finding in those categories could never pass the
+# Fix::VisualCompletion.authorized_visual_rule? check this list feeds —
+# the campaign's own type-scale, leading and rhythm authorization was inert.
 allowed_visual_rules:
   - AESTHETIC_FLAT_SEMANTIC
-  - TYPE_SCALE
-  - LEADING
+  - TYPE_HIERARCHY
+  - LINE_HEIGHT_ON_SCALE
   - NO_DECORATIVE_FX
   - SQUINT_TEST
-  - PIXEL_PERFECTION_RHYTHM
+  - EIGHT_PX_RHYTHM
 constraints:
   preserve_product_dialects: true
   use_existing_tokens_and_primitives: true

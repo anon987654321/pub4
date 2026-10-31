@@ -40,14 +40,14 @@ class TestVisualCompletion < Minitest::Test
     path = File.join(repo, "RAILS/brgen/app/assets/stylesheets/application.scss")
     blocking = Master::Fix::VisualCustodyBlocking
 
-    assert_nil blocking.gap_for("TYPE_SCALE", root: repo, path:, custody: AuthorizedCustody.new)
-    assert_nil blocking.gap_for("LEADING", root: repo, path:, custody: AuthorizedCustody.new)
+    assert_nil blocking.gap_for("TYPE_HIERARCHY", root: repo, path:, custody: AuthorizedCustody.new)
+    assert_nil blocking.gap_for("LINE_HEIGHT_ON_SCALE", root: repo, path:, custody: AuthorizedCustody.new)
     assert_equal Master::Gap::OPERATOR_DECISION,
-                 blocking.gap_for("TYPE_SCALE", root: repo, path:, custody: OrdinaryCustody.new)
+                 blocking.gap_for("TYPE_HIERARCHY", root: repo, path:, custody: OrdinaryCustody.new)
     assert_equal Master::Gap::OPERATOR_DECISION,
-                 blocking.gap_for("COLOR_CONTRAST", root: repo, path:, custody: AuthorizedCustody.new)
+                 blocking.gap_for("CONTRAST_TOKENS", root: repo, path:, custody: AuthorizedCustody.new)
     assert_equal Master::Gap::OPERATOR_DECISION,
-                 blocking.gap_for("TYPE_SCALE", root: repo, path: File.join(repo, "RAILS/master/public/face.css"),
+                 blocking.gap_for("TYPE_HIERARCHY", root: repo, path: File.join(repo, "RAILS/master/public/face.css"),
                                   custody: AuthorizedCustody.new)
   end
 

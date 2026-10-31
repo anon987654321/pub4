@@ -13,14 +13,23 @@ module Master
 
       # Rules that operate on rendered/visual values. These rules may find
       # violations, but /fix must not apply repairs without operator decision.
+      #
+      # Spelled to match the law catalogue's actual IDs (data/laws.yml), not
+      # the campaign's descriptive names. CONTRAST_TOKENS, TYPE_HIERARCHY,
+      # LINE_HEIGHT_ON_SCALE and EIGHT_PX_RHYTHM are what a real finding's
+      # law_id carries; the prior COLOR_CONTRAST/TYPE_SCALE/LEADING/
+      # PIXEL_PERFECTION_RHYTHM spellings never match one, so fix_blocking_rule?
+      # silently returned false for every finding in these five categories —
+      # the operator-decision gate RENDERED_VALUES exists to enforce was dead
+      # for exactly the findings it was written to hold.
       OPERATOR_OWNED_RULE_IDS = %w[
-        COLOR_CONTRAST
+        CONTRAST_TOKENS
         AESTHETIC_FLAT_SEMANTIC
-        TYPE_SCALE
-        LEADING
+        TYPE_HIERARCHY
+        LINE_HEIGHT_ON_SCALE
         NO_DECORATIVE_FX
         SQUINT_TEST
-        PIXEL_PERFECTION_RHYTHM
+        EIGHT_PX_RHYTHM
       ].freeze
 
       # Is this rule's repair blocked on operator decision?
