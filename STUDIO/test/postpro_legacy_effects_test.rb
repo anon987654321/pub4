@@ -27,7 +27,7 @@ class PostproLegacyEffectsTest < Minitest::Test
     end
 
     assert_empty missing_methods, "missing restored implementations: #{missing_methods.join(', ')}"
-    missing_dispatch_names = EXISTING_EQUIVALENTS.reject { |name| DISPATCH.include?(name) }
+    missing_dispatch_names = (RESTORED + EXISTING_EQUIVALENTS).reject { |name| DISPATCH.include?(name) }
     assert_empty missing_recipe_names, "missing recipe vocabulary: #{missing_recipe_names.join(', ')}"
     assert_empty missing_dispatch_names, "missing current dispatch equivalents: #{missing_dispatch_names.join(', ')}"
   end
