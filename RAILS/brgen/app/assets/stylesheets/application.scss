@@ -8573,12 +8573,6 @@ body.vertical-messenger #typing-indicator[data-active="true"]::before {
     opacity: 0.7;
   }
 
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
 
   .tv-feed-scroller { scroll-behavior: auto; }
 }

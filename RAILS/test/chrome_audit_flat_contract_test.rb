@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "support/stylesheet_modules"
 
 class ChromeAuditFlatContractTest < Minitest::Test
+  include StylesheetModules
   ROOT = File.expand_path("..", __dir__)
 
   def read(path)
@@ -20,11 +22,11 @@ class ChromeAuditFlatContractTest < Minitest::Test
 
   def test_auth_and_promo_surfaces_do_not_reintroduce_container_borders
     auth = read("__shared/app/assets/stylesheets/_auth_form.scss")
-    promo = read("brgen/app/assets/stylesheets/_vertical_promo.scss")
+    promo = stylesheet_module("brgen", "vertical_promo")
     app = read("brgen/app/assets/stylesheets/application.scss")
     assert_includes auth, ".oauth-button {"
     assert_includes auth, "border: 0;"
-    assert_includes app, '@use "vertical_promo";'
+    assert_includes app, "module: vertical_promo"
     assert_includes promo, ".brgen-vertical-promo {"
     assert_includes promo, "background: var(--bg);"
     assert_includes promo, ".promo-disc {"
@@ -42,10 +44,12 @@ class ChromeAuditFlatContractTest < Minitest::Test
     stack = read("__shared/app/assets/stylesheets/_stack_brgen.scss")
     animations = read("__shared/app/assets/stylesheets/_animations.scss")
 
-    assert_includes source, '@use "stack_brgen" as *;'
+    assert_includes source, '@include meta.load-css("stack_brgen");'
     assert_includes stack, '@forward "animations";'
     assert_match(/@media \(prefers-reduced-motion: reduce\)[\s\S]*\*::before,[\s\S]*animation: none !important;[\s\S]*transition: none !important;[\s\S]*scroll-behavior: auto !important;/m, animations)
-    refute_includes source, "animation: none !important;"
+    canonical = /@media \(prefers-reduced-motion: reduce\)[^{]*\{\s*\*,\s*\*::before,\s*\*::after\s*\{[^}]*animation: none !important;/
+    refute_match(canonical, source,
+                 "brgen must not restate the shared canonical reset; it loads unlayered through stack_brgen")
     refute_includes source, "Last in the cascade: reduced motion must survive"
   end
 
@@ -69,7 +73,7 @@ class ChromeAuditFlatContractTest < Minitest::Test
     modal = read("__shared/app/assets/stylesheets/_modal.scss")
     cookie = read("__shared/app/assets/stylesheets/_cookie_banner.scss")
     affiliate = read("__shared/app/assets/stylesheets/_affiliate_feed_unit.scss")
-    commerce = read("brgen/app/assets/stylesheets/_commerce_polish.scss")
+    commerce = stylesheet_module("brgen", "brgen_core_shell")
     offline = read("__shared/app/assets/stylesheets/_offline_page.scss")
     widgets = read("__shared/app/assets/stylesheets/_shell_widgets.scss")
     newsletter = read("__shared/app/assets/stylesheets/_newsletter_capture.scss")

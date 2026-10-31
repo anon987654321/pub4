@@ -3,8 +3,10 @@
 require "minitest/autorun"
 require "yaml"
 require_relative "../../MASTER/tools/scss"
+require_relative "support/stylesheet_modules"
 
 class CritiqueImplementationTest < Minitest::Test
+  include StylesheetModules
   ROOT = File.expand_path("..", __dir__)
 
   def read(path) = File.read(File.join(ROOT, path))
@@ -202,9 +204,9 @@ class CritiqueImplementationTest < Minitest::Test
 
     assert_includes shared_stack, '@forward "search_yep";'
     assert_includes brgen_stack, '@forward "search_yep";'
-    assert_includes amber, '@use "stack" as *;'
-    assert_includes bsdports, '@use "stack" as *;'
-    assert_includes brgen, '@use "stack_brgen" as *;'
+    assert_includes amber, '@include meta.load-css("stack");'
+    assert_includes bsdports, '@include meta.load-css("stack")'
+    assert_includes brgen, '@include meta.load-css("stack_brgen")'
   end
 
   def test_yep_search_is_the_shared_rails_default
@@ -212,7 +214,7 @@ class CritiqueImplementationTest < Minitest::Test
     brgen_stack = read("__shared/app/assets/stylesheets/_stack_brgen.scss")
     %w[amber bsdports].each do |app|
       application = read("#{app}/app/assets/stylesheets/application.scss")
-      assert_includes application, '@use "stack" as *;'
+      assert_includes application, '@include meta.load-css("stack")'
     end
 
     assert_includes stack, '@forward "search_yep";'
@@ -303,9 +305,9 @@ class CritiqueImplementationTest < Minitest::Test
 
     assert_includes shared_stack, '@forward "search_yep";'
     assert_includes brgen_stack, '@forward "search_yep";'
-    assert_includes amber, '@use "stack" as *;'
-    assert_includes bsdports, '@use "stack" as *;'
-    assert_includes brgen, '@use "stack_brgen" as *;'
+    assert_includes amber, '@include meta.load-css("stack");'
+    assert_includes bsdports, '@include meta.load-css("stack");'
+    assert_includes brgen, '@include meta.load-css("stack_brgen");'
   end
 
   def test_shared_feed_text_uses_the_existing_leading_tokens
@@ -319,16 +321,21 @@ class CritiqueImplementationTest < Minitest::Test
 
   def test_commerce_polish_keeps_marketplace_and_amber_distinct
     brgen_css = brgen_css_source
-    brgen_polish = read("brgen/app/assets/stylesheets/_commerce_polish.scss")
+    # The former _commerce_polish.scss folded into the merged sheets; amber
+    # carries it as its own module, brgen's rules live in its core shell
+    # module. The selectors are the contract either way.
     amber_css = amber_css_source
-    amber_polish = read("amber/app/assets/stylesheets/_commerce_polish.scss")
+    brgen_polish = brgen_css
+    amber_polish = stylesheet_module("amber", "commerce_polish")
     seller = read("brgen_marketplace/app/views/marketplace/stores/show.html.erb")
     item = read("amber/app/views/items/show.html.erb")
 
     assert_includes brgen_css, 'commerce_polish'
     assert_includes brgen_polish, ".listing-ranking-reasons"
     assert_includes brgen_polish, ".store-seller-center"
-    assert_includes amber_css, '@use "commerce_polish";'
+    assert_includes amber_css, "module: commerce_polish",
+                    "amber's commerce polish must remain its own module in the merged sheet"
+
     assert_includes amber_polish, ".commerce-fit-suggestion"
     assert_includes amber_polish, ".commerce-fit-reasons"
     assert_match(/\.commerce-fit-source\s*\{[^}]*font-size:\s*var\(--text-xs\);/m, amber_polish)
