@@ -72,16 +72,29 @@ module Master
         key.include?("*") && File.fnmatch?(key, rel)
       end
 
-      # The Laws sit at the top level of laws.yml, upper-case ids carrying a
-      # priority and a statement; ties keep the file's order.
+      # Law identity and file order come from the flat catalogue. Constitutional
+      # precedence itself comes from Master::Soul, never a duplicated priority.
       def constitutional_laws
-        rows = (Master.load_laws(root: @root) || {}).select { |id, value| law_entry?(id, value) }
-        laws = rows.map { |id, value| Law.new(id.to_s, value["priority"], value["statement"].to_s) }
-        laws.each_with_index.sort_by { |law, index| [law.priority.to_i, index] }.map(&:first)
+        order = Master::Soul.invariant_order
+        rows = Master.law_entries(root: @root)
+        rows.each_with_index.map do |entry, index|
+          node = constitutional_node(entry, rows)
+          rank = node ? order.index(node).to_i * 100_000 + index : order.length * 100_000 + index
+          Law.new(entry.fetch("id").to_s, rank, entry.fetch("statement").to_s)
+        end
       end
 
-      def law_entry?(id, value)
-        id.to_s.match?(/\A[A-Z][A-Z0-9_]*\z/) && value.is_a?(Hash) && value["priority"] && value["statement"]
+      def constitutional_node(entry, rows, seen = {})
+        id = entry.fetch("id").to_s
+        return if seen[id]
+        seen[id] = true
+        return entry["node"].to_s if entry["node"]
+
+        parent = entry["parent"]
+        return unless parent
+
+        parent_entry = rows.find { |row| row["id"].to_s.casecmp?(parent.to_s) }
+        parent_entry && constitutional_node(parent_entry, rows, seen)
       end
 
       def render(node)
