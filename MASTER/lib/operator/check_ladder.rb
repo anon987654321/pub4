@@ -219,7 +219,7 @@ end
 # deadline still shows whatever it managed to say.
 def capture_with_timeout(line)
   buffer = +""
-  Open3.popen2e(SAFE_ENV, File.join(ROOT, "bin", "master"), chdir: REPO) do |stdin, out, wait|
+  Open3.popen2e(Master::Io::ProcessSpawn.environment(SAFE_ENV), File.join(ROOT, "bin", "master"), chdir: REPO) do |stdin, out, wait|
     stdin.puts(line)
     stdin.close
     reader = Thread.new do
