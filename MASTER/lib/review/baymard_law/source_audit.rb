@@ -36,7 +36,8 @@ module Master
 
               controls << [record, tag, match.begin(0), attrs]
             end
-            unknown << record if record.content.match?(/\b(?:form_with|form_for|fields_for|text_field|email_field|password_field|search_field|select_tag|label_tag)\b/)
+            unknown << record if record.content.match?(/\b(?:form_with|form_for|fields_for|text_field|email_field|password_field|search_field|select_tag|label_tag)\b/) ||
+              %w[.haml .slim].include?(File.extname(record.path).downcase)
           end
 
           issues = controls.filter_map do |record, tag, offset, attrs|
@@ -55,7 +56,8 @@ module Master
               match = Regexp.last_match
               images << [record, match[0], match.begin(0), attributes(match[0])]
             end
-            unknown << record if record.content.match?(/\bimage_tag\b/)
+            unknown << record if record.content.match?(/\bimage_tag\b/) ||
+              %w[.haml .slim].include?(File.extname(record.path).downcase)
           end
 
           issues = images.filter_map do |record, tag, offset, attrs|
@@ -82,7 +84,8 @@ module Master
 
               elements << [record, tag_name, match[0], match[3], match.begin(0), attrs]
             end
-            unknown << record if record.content.match?(/\b(?:link_to|button_to)\b/)
+            unknown << record if record.content.match?(/\b(?:link_to|button_to)\b/) ||
+              %w[.haml .slim].include?(File.extname(record.path).downcase)
           end
 
           issues = []
@@ -104,13 +107,15 @@ module Master
             record.content.to_enum(:scan, /<(div|span)\b[^>]*(?:onclick\s*=)[^>]*>/im).each do
               match = Regexp.last_match
               attrs = attributes(match[0])
-              next if %w[button link].include?(attrs["role"])
-              next if attrs.key?("tabindex")
+              role = attrs["role"].to_s
+              tab = Integer(attrs["tabindex"], exception: false)
+              next if %w[button link].include?(role) && tab && tab >= 0
 
-              targets << issue(record, match.begin(0), "Clickable #{match[1].downcase} has no native interaction semantics, role or tab stop.")
+              targets << issue(record, match.begin(0), "Clickable #{match[1].downcase} needs both a link/button role and a non-negative tab stop, or a native interactive element.")
             end
+            unknown << record if %w[.haml .slim].include?(File.extname(record.path).downcase)
           end
-          [targets, targets.size, []]
+          [targets, targets.size, unknown.uniq]
         end
 
         def probe_focus_visibility(records)
@@ -143,8 +148,14 @@ module Master
           present = layouts.any? do |record|
             record.content.match?(/<meta\b(?=[^>]*\bname\s*=\s*["']viewport["'])[^>]*>/im)
           end
-          issues = present ? [] : [issue(layouts.first, 0, "Application layout declares no viewport meta element.")]
-          [issues, layouts.size, []]
+          if present
+            [[], layouts.size, []]
+          elsif layouts.all? { |record| %w[.haml .slim].include?(File.extname(record.path).downcase) }
+            [[], 0, layouts]
+          else
+            issues = [issue(layouts.first, 0, "Application layout declares no inspectable viewport meta element.")]
+            [issues, layouts.size, []]
+          end
         end
 
         def named_control?(attrs, content, offset)
