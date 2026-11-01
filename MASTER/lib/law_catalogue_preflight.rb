@@ -4,9 +4,11 @@ require "pathname"
 require "ripper"
 
 module Master
-  # Checks the direct Law.define population against the canonical manifest before
-  # evaluating any law file. The registry audit runs after loading; this is the
-  # earlier, read-only guard for failures that would otherwise prevent the audit.
+  # Transitional preflight for Law.define against law_runtime.yml#law_catalogue.
+  # The flat laws.yml is the normative constitution, but the executable DSL still
+  # depends on this separate per-Law metadata inventory. Keep the debt explicit;
+  # a future migration must update this, Law::Definition, the registry audit and
+  # all fixtures together before removing the legacy metadata.
   module LawCataloguePreflight
     module_function
 
@@ -14,7 +16,7 @@ module Master
       law_root = File.expand_path(law_dir)
       repository_root = File.expand_path(repo_root)
       entries = catalogue.fetch("entries")
-      raise ArgumentError, "law_catalogue.entries must be a mapping" unless entries.is_a?(Hash)
+      raise ArgumentError, "law_runtime.yml law_catalogue.entries must be a mapping" unless entries.is_a?(Hash)
 
       declarations = source_declarations(law_root, repository_root)
       declarations.concat(normalize_generated(generated_declarations))
