@@ -14,7 +14,7 @@ class TestCliStartupGolden < Minitest::Test
   SHAPE = [
     /\Amaster0 at mainbus0: MASTER \d+\.\d+\.\d+ #\d+, model \S+\z/,
     /\Ahost0 at mainbus0: \S+@\S+:\/\S+\z/,
-    /\Avoice0 at mainbus0: (?:ready|degraded)\z/,
+    /\Avoice0 at mainbus0: (?:available|degraded)\z/,
     /\Aweb0 at mainbus0: /,
     /\Anet0 at mainbus0: wifi \w+, power (?:on|off), (?:link up|no link)\z/,
     /\Abth0 at mainbus0: (?:on|off), \d+ connected\z/,
@@ -37,7 +37,7 @@ class TestCliStartupGolden < Minitest::Test
   def test_the_shape_accepts_the_lines_a_real_boot_prints
     sample = ["master0 at mainbus0: MASTER 1.0.3 #22497, model claude-sonnet-5-5",
               "host0 at mainbus0: mac@Mac.localdomain:/Users/mac/pub4/MASTER",
-              "voice0 at mainbus0: ready", "web0 at mainbus0: ready, token set",
+              "voice0 at mainbus0: available", "web0 at mainbus0: ready, token set",
               "net0 at mainbus0: wifi en0, power on, link up", "bth0 at mainbus0: on, 1 connected", "root on master0"]
 
     assert(sample.all? { |line| SHAPE.any? { |shape| line.match?(shape) } })
