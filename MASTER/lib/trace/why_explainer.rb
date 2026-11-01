@@ -19,9 +19,8 @@ module Master
         rule_lineage(key) ||
           design_law(key) ||
           law(key) ||
-          # The declared rule first: it carries tier and name, and registry_law
-          # borrows the executable law's fix when the declaration has none. An
-          # executable law answers for the ids nothing declared.
+          # The canonical declaration first; executable law detail is a
+          # separate source and never supplies missing constitutional metadata.
           registry_law(key) ||
           soul_law(key) ||
           executable_law(key) ||
@@ -106,19 +105,15 @@ module Master
 
       def registry_law(key)
         slug = key.upcase.tr("-", "_")
-        hit = Master.law_entries(root: @root).find { |r| r["id"].to_s.upcase == slug }
+        hit = Master.law_entries(root: @root).find { |entry| entry["id"].to_s.upcase == slug }
         return unless hit
 
         [
-          "law: #{hit['id']}",
-          ("  tier: #{hit['tier']}" if hit["tier"]),
-          ("  name: #{hit['name']}" if hit["name"]),
-          ("  source: #{hit['source']}" if hit["source"]),
-          ("  fix: #{hit["fix"]}" if hit["fix"] || begin
-            executable = ::Law.definitions[slug.to_sym] if defined?(::Law)
-            executable&.fix
-          end),
-        ].compact.join("\n")
+          "law: #{hit.fetch("id")}",
+          "  statement: #{hit.fetch("statement")}",
+          ("  resolution: #{hit["resolution"]}" if hit["resolution"]),
+          ("  enforcement: #{hit["enforcement"]}" if hit["enforcement"]),
+        ].compact.join("\\n")
       end
 
       def soul_law(key)
@@ -130,13 +125,19 @@ module Master
       end
 
       def law(key)
-        hit = Master.law_entries(root: @root).find { |law| law["id"].to_s.upcase == key.upcase } or return
+        hit = Master.law_entries(root: @root).find { |entry| entry["id"].to_s.casecmp?(key.to_s) } or return
         [
-          "law: #{key.upcase}",
-          "  priority: #{hit["priority"]}",
-          "  principle: #{hit["principle"]}",
-          "  applies: #{Array(hit["applies_to"]).join(", ")}",
-        ].join("\n")
+          "law: #{hit.fetch("id")}",
+          ("  node: #{hit["node"]}" if hit["node"]),
+          ("  root: #{hit["root"]}" if hit["root"]),
+          ("  parent: #{hit["parent"]}" if hit["parent"]),
+          "  statement: #{hit.fetch("statement")}",
+          ("  severity: #{hit["severity"]}" if hit["severity"]),
+          ("  resolution: #{hit["resolution"]}" if hit["resolution"]),
+          ("  mechanical: #{hit["mechanical"]}" if hit["mechanical"]),
+          ("  semantic: #{hit["semantic"]}" if hit["semantic"]),
+          ("  lineage: #{hit["lineage"]}" if hit["lineage"]),
+        ].compact.join("\\n")
       end
 
       def scan_law(key)
