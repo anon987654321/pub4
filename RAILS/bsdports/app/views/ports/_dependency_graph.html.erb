@@ -1,13 +1,36 @@
 <%# locals: (graph:) %>
 <% if graph[:nodes].size > 1 %>
+  <% max_depth = graph[:nodes].map { |node| node[:depth] }.max.to_i %>
+  <% width = 280 + max_depth * 160 %>
+  <% height = [graph[:nodes].size * 56 + 32, 180].max %>
+  <% positions = graph[:nodes].each_with_index.to_h do |node, index| %>
+    <% [node[:id], [40 + node[:depth] * 160, 28 + index * 56]] %>
+  <% end %>
   <details class="dep-graph-panel">
     <summary><%= t("ports.graph_heading") %></summary>
+    <p class="dep-graph-note"><%= t("ports.graph_description") %></p>
     <div class="dep-graph-scroll">
-      <svg class="dep-graph" viewBox="0 0 420 180" aria-hidden="true" focusable="false">
+      <svg class="dep-graph" width="<%= width %>" height="<%= height %>"
+           viewBox="0 0 <%= width %> <%= height %>" aria-hidden="true" focusable="false">
         <title><%= t("ports.graph_heading") %></title>
-        <circle cx="60" cy="80" r="20"></circle>
-        <text x="90" y="84"><%= graph[:nodes].first[:name] %></text>
+        <% graph[:edges].each do |edge| %>
+          <% source = positions[edge[:from]] %>
+          <% target = positions[edge[:to]] %>
+          <line class="dep-graph-edge"
+                x1="<%= source[0] + 18 %>" y1="<%= source[1] %>"
+                x2="<%= target[0] - 18 %>" y2="<%= target[1] %>" />
+        <% end %>
+        <% graph[:nodes].each do |node| %>
+          <% point = positions[node[:id]] %>
+          <g class="dep-graph-node<%= " is-root" if node[:depth].zero? %>">
+            <circle cx="<%= point[0] %>" cy="<%= point[1] %>" r="17" />
+            <text x="<%= point[0] + 25 %>" y="<%= point[1] + 4 %>"><%= node[:name] %></text>
+          </g>
+        <% end %>
       </svg>
     </div>
+    <% if graph[:truncated] %>
+      <p class="dep-graph-note"><%= t("ports.graph_truncated", nodes: Dependency::MAX_GRAPH_NODES, depth: Dependency::MAX_GRAPH_DEPTH) %></p>
+    <% end %>
   </details>
 <% end %>
