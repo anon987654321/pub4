@@ -30,8 +30,8 @@ module Master
               attrs = attributes(tag)
               type = attrs["type"].to_s.downcase
               next if type == "hidden"
-              next if %w[submit reset button].include?(type)
-              next if type == "image" && !attrs["alt"].to_s.strip.empty?
+              next if %w[submit reset].include?(type)
+              next if type == "button" && !attrs["value"].to_s.strip.empty?
 
               controls << [record, tag, match.begin(0), attrs]
             end
@@ -190,6 +190,10 @@ module Master
 
         def named_control?(attrs, content, offset)
           return true if named?(attrs)
+
+          type = attrs["type"].to_s.downcase
+          return true if type == "image" && !attrs["alt"].to_s.strip.empty?
+          return true if type == "button" && !attrs["value"].to_s.strip.empty?
 
           id = attrs["id"].to_s
           return false if id.empty?
