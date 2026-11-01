@@ -6,10 +6,10 @@
 <%= render "shared/feed_compose" %>
 <% if @posts.any? %>
   <ul class="feed_list" id="amber-posts-list">
-  <% @posts.each do |post| %>
-    <li><%= render post %></li>
-  <% end %>
-</ul>
+    <% @posts.each do |post| %>
+      <li><%= render post %></li>
+    <% end %>
+  </ul>
   <%= render "shared/infinite_scroll_sentinel",
              pagy: @pagy,
              reflex: "PostsInfiniteScrollReflex#load_more",

@@ -3,6 +3,7 @@
 @use "surface_chrome_endgame" as endgame;
 
 @include meta.load-css("stack");
+@include meta.load-css("feed_list");
 
 @include meta.load-css("shell");
 
