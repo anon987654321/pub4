@@ -483,6 +483,11 @@ class CritiqueImplementationTest < Minitest::Test
     shared_post_css = read("__shared/app/assets/stylesheets/_post_voting.scss")
     assert_includes shared_post_css, ".feed-card.post-reading-card {\n  padding: var(--space-4) var(--space-3);"
     assert_match(/@media \(min-width: 480px\) \{\s*\.feed-card\.post-reading-card \{\s*padding: var\(--space-5\) var\(--space-4\);/m, shared_post_css)
+    assert_includes shared_post_css, ".feed-card.post-reading-card .feed-card-actions {"
+    assert_match(/@media \(min-width: 640px\) \{\s*\.feed-card\.post-reading-card \.feed-card-actions \{\s*width: auto;/m, shared_post_css)
+    assert_includes shared_post_css, "border-radius: var(--radius-pill);"
+    assert_includes feed, 'class: "feed-action"'
+    assert_includes feed, 'form_class: "feed-action-form"'
     luxury_titles = css[/body\[data-surface="luxury"\] :is\((.*?)\n\) \{/m, 1]
     refute_nil luxury_titles, "Amber luxury heading selector should remain explicit"
     refute_match(/\.post-reading-title/, luxury_titles, "feed cards keep the shared family title face")

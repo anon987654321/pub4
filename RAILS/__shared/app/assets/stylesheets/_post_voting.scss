@@ -9,6 +9,55 @@
     padding: var(--space-5) var(--space-4);
   }
 }
+
+/* Post-card actions are one family across Brgen and Amber. The controls
+   distribute evenly on phones and return to a compact left-aligned row on
+   wider screens; each app keeps its own accent and action set. */
+.feed-card.post-reading-card .feed-card-actions {
+  width: 100%;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  margin-block-start: var(--space-3);
+  padding-inline: var(--space-1);
+}
+.feed-card.post-reading-card .feed-card-actions > :is(
+  .feed-action, .feed-action-form, .feed-action-menu, span
+) {
+  flex: 1 1 0;
+  display: inline-flex;
+  justify-content: center;
+  min-inline-size: 0;
+}
+.feed-card.post-reading-card .feed-card-actions .feed-action {
+  justify-content: center;
+  padding-block: var(--space-2);
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-pill);
+}
+.feed-card.post-reading-card .feed-action-form .feed-action {
+  inline-size: 100%;
+}
+@media (min-width: 640px) {
+  .feed-card.post-reading-card .feed-card-actions {
+    width: auto;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    margin-block-start: var(--space-2);
+    padding-inline: 0;
+  }
+  .feed-card.post-reading-card .feed-card-actions > :is(
+    .feed-action, .feed-action-form, .feed-action-menu, span
+  ) {
+    flex: 0 1 auto;
+    min-inline-size: auto;
+  }
+  .feed-card.post-reading-card .feed-card-actions .feed-action {
+    justify-content: flex-start;
+    padding-block: 8px;
+    padding-inline: 12px;
+  }
+}
 .post-reading-layout {
   display: grid;
   grid-template-columns: var(--vote-target) minmax(0, 1fr);
