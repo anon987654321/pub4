@@ -1119,3 +1119,11 @@ namespace :ad_organ do
     ruby File.join(__dir__, "test", "test_browserless_visual_measurements.rb")
   end
 end
+
+
+namespace :ux do
+  desc "Run the Baymard-informed UX audit over the RAILS source tree"
+  task :baymard do
+    sh RbConfig.ruby, File.join(__dir__, "checks", "runner.rb"), "baymard_ux"
+  end
+end
