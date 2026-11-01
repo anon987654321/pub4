@@ -56,18 +56,15 @@ module Master::Core
 
         case verdict
         in Verdict::Block(reason:, by:)
-          observation = Observation.no("refused by #{by}: #{reason}")
+          detail = refusal_detail(effect, by, reason)
+          observation = Observation.no("refused by #{by}: #{detail}")
           @memory.record(effect, observation)
           emit(turn, effect, observation)
           blocked_by[by.to_s] += 1
           signature = [effect.verb, by.to_s, reason.to_s]
           blocked_effects[signature] += 1
-          if blocked_by[by.to_s] >= BLOCK_LIMIT
-            summary = "stopped after #{BLOCK_LIMIT} constitutional blocks by #{by}: #{reason}"
-            return Done.new(reason: :blocked, turns: turn + 1, summary:)
-          end
-          if blocked_effects[signature] >= 2
-            summary = "stopped after repeated #{effect.verb} refusal by #{by}: #{reason}"
+          if blocked_by[by.to_s] >= BLOCK_LIMIT || blocked_effects[signature] >= 2
+            summary = by.to_s == "capability" ? "blocked: #{detail}" : block_limit_summary(effect, by, reason, blocked_effects[signature])
             return Done.new(reason: :blocked, turns: turn + 1, summary:)
           end
         in Verdict::Request(effect: asked, prompt:, reason:, by:)
@@ -85,6 +82,31 @@ module Master::Core
     end
 
 private
+
+    CAPABILITY_LABELS = {
+      execute: ["command execution", "no command was run"],
+      write: ["file changes", "no file was changed"],
+      create: ["file creation", "no file was created"],
+      network: ["network access", "no network request was sent"],
+      read: ["file reads", "no file was read"],
+      stdio: ["interactive input", "no interactive action was taken"],
+      model: ["model calls", "no model call was made"],
+      device: ["device access", "no device action was taken"],
+      world: ["world access", "no world action was taken"],
+    }.freeze
+
+    def refusal_detail(effect, by, reason)
+      return reason.to_s unless by.to_s == "capability"
+
+      label, outcome = CAPABILITY_LABELS.fetch(effect.capability.to_sym, ["#{effect.capability} access", "the action was not performed"])
+      "#{label} is not enabled in this session; #{outcome}"
+    end
+
+    def block_limit_summary(effect, by, reason, repeated_count)
+      return "stopped after repeated #{effect.verb} refusal by #{by}: #{reason}" if repeated_count >= 2
+
+      "stopped after #{BLOCK_LIMIT} constitutional blocks by #{by}: #{reason}"
+    end
 
     def cancellation_requested? = @cancellation&.cancelled? == true
 
