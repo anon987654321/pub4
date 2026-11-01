@@ -51,6 +51,11 @@ APPLICATION_IS_UNIFORM_unrecorded_finding:
   statement: "A finding made and not emitted."
   resolution: never
 
+APPLICATION_IS_UNIFORM_constitution_self_governed:
+  parent: APPLICATION_IS_UNIFORM
+  statement: "The law catalogue or its validator is treated as exempt from the laws it declares."
+  resolution: never
+
 # ==========================================================================
 # 2. THE NINE CONSTITUTIONAL INVARIANTS
 # ==========================================================================
@@ -462,11 +467,18 @@ INTER_MODEL_CONTRACT_simulated_concurrence:
 
 SACRED_AUTHORSHIP:
   root: least_authority
-  statement: "No autonomous write to a sacred path."
+  statement: "No autonomous write to a sacred path; the protected-path contract is declared here."
   severity: error
   resolution: never
   mechanical: Soul.refuse_write!
   semantic: Soul.load!
+  protected_paths:
+    - data/laws.yml
+    - data/soul.yml
+    - data/project_context.yml
+    - lib/soul.rb
+    - lib/ground/pledge.rb
+    - bin/master
 
 SACRED_AUTHORSHIP_autonomous_sacred_write:
   parent: SACRED_AUTHORSHIP
@@ -477,6 +489,36 @@ SACRED_AUTHORSHIP_soul_hash_mismatch:
   parent: SACRED_AUTHORSHIP
   statement: "A soul.yml whose body_sha256 does not match the loaded soul.rb."
   resolution: never
+
+SACRED_AUTHORSHIP_soul_paths_are_law_owned:
+  parent: SACRED_AUTHORSHIP
+  statement: "Protected paths are declared by this law and cannot be shadowed by soul.yml or a Ruby constant."
+  resolution: never
+
+# ---
+
+SOUL_SUBORDINATE_TO_LAW:
+  root: least_authority
+  statement: "Soul expresses identity and delivery within the constitution; it cannot create, rank, weaken or override a Law."
+  severity: error
+  resolution: never
+  mechanical: Master::ConfigurationGuard.validate_soul
+  semantic: human
+
+SOUL_SUBORDINATE_TO_LAW_no_parallel_precedence:
+  parent: SOUL_SUBORDINATE_TO_LAW
+  statement: "Soul or Ruby identity code declares a precedence order independently of laws.yml."
+  resolution: never
+
+SOUL_SUBORDINATE_TO_LAW_temperament_is_not_authority:
+  parent: SOUL_SUBORDINATE_TO_LAW
+  statement: "A persona, voice, temperament or prompt preference overrides a constitutional requirement."
+  resolution: never
+
+SOUL_SUBORDINATE_TO_LAW_no_shadow_vocabulary:
+  parent: SOUL_SUBORDINATE_TO_LAW
+  statement: "Soul duplicates a severity, priority, root or enforcement vocabulary owned by laws.yml."
+  resolution: review
 
 # ---
 
