@@ -407,7 +407,7 @@ class TestLawsPhysicalOrder < Minitest::Test
   def test_catalogue_keys_are_unique_in_source_not_only_after_yaml_parsing
     source = File.read(File.join(DATA, "laws.yml"), encoding: "UTF-8")
     keys = source.lines.filter_map do |line|
-      match = line.match(/\\A([A-Z][A-Z0-9_]*):\\s*\\z/)
+      match = line.match(/\A([A-Z][A-Z0-9_]*):\s*\z/)
       match && match[1]
     end
     duplicates = keys.tally.select { |_key, count| count > 1 }.keys
