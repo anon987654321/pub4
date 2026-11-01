@@ -17,13 +17,15 @@ class WhyExplainerTest < Minitest::Test
   def test_explain_law
     out = explainer.explain("ROBUSTNESS")
     assert_includes out, "law: ROBUSTNESS"
-    assert_includes out, "priority:"
+    assert_includes out, "node: robustness"
+    assert_includes out, "severity: error"
   end
 
   def test_explain_registry_law
     out = explainer.explain("DRY")
     assert_includes out, "law: DRY"
-    assert_includes out, "Merge the duplicated knowledge"
+    assert_includes out, "Don't Repeat Yourself"
+    assert_includes out, "Three or more sites encoding one decision"
   end
 
   def test_explain_kernel_law_from_registry
@@ -50,8 +52,8 @@ class WhyExplainerTest < Minitest::Test
     assert_includes out, "purpose: evidence, events, telemetry, replay, snapshots"
     assert_includes out, "status: RESOLVED"
     assert_includes out, "constitution: data/laws.yml"
-    assert_includes out, "laws: CAPABILITY_STATUS_MUST_BE_TRUTHFUL, ROBUSTNESS, SINGULARITY, " \
-                         "LINEARITY, PROXIMITY, ABSTRACTION, DENSITY, RENDERED_VALUES, INTER_MODEL_CONTRACT"
+    assert_includes out, "laws: TRUTHFUL_STATUS, ROBUSTNESS, SINGULARITY, LINEARITY, " \
+                         "PROXIMITY, ABSTRACTION, DENSITY, OPERATOR_RENDERED, INTER_MODEL_CONTRACT"
     assert_includes out, "executable_law: law/"
   end
 
