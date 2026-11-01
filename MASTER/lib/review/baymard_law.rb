@@ -301,6 +301,8 @@ module Master
         measured = probe.measured
         unknown = probe.unknown
         evidence = source_inventory_evidence(scope)
+        evidence.concat(unknown.map { |record| "rendered_review=#{record.relative}" })
+        evidence.uniq!
         if issues.any?
           rows = issues.map { |issue| finding(app, id, spec, issue) }
           detail = "#{issues.size} source defect(s) in #{measured} measured element(s)"
