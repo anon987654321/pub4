@@ -1,12 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
 
-// positron, not liberty. Both are light -- liberty's background is #f8f4f0 and
-// positron's is rgb(242,243,240), so this was never a dark-to-light change --
-// but liberty carries 111 styled layers of colourful cartography and positron
-// carries 55 desaturated ones. Positron is drawn to sit UNDER data rather than
-// to be read for itself, which is the same argument the rest of this design
-// system makes about chrome.
 const DEFAULT_STYLE = "https://tiles.openfreemap.org/styles/positron"
+const POINT_SOURCE = "brgen-map-points"
+const CLUSTER_LAYER = "brgen-map-point-clusters"
+const CLUSTER_COUNT_LAYER = "brgen-map-point-cluster-count"
+const POINT_LAYER = "brgen-map-unclustered-points"
 
 export default class extends Controller {
   static targets = ["canvas", "search", "popup"]
@@ -20,8 +18,9 @@ export default class extends Controller {
 
   connect() {
     this.points = this.hasPointsValue ? this.pointsValue : this._readPoints()
-    this.markers = []
+    this.filteredPoints = this.points
     this.map = null
+    this.mapLoaded = false
     this._boundSearch = this.filterPoints.bind(this)
     this._boot()
   }
@@ -65,31 +64,37 @@ export default class extends Controller {
 
   _boot() {
     const canvas = this._rootCanvas()
-    if (!canvas) return this._fallback()
-    if (!window.maplibregl) return this._fallback()
+    if (!canvas || !window.maplibregl) return this._fallback()
 
-    window.maplibregl.accessToken = ""
-    this.map = new window.maplibregl.Map({
-      container: canvas,
-      style: this._styleUrl(),
-      center: this._center(),
-      zoom: this.hasZoomValue ? this.zoomValue : (this._hasCenter() ? 12.2 : 1.5),
-      pitch: 55,
-      bearing: -14,
-      antialias: true
-    })
+    try {
+      window.maplibregl.accessToken = ""
+      this.map = new window.maplibregl.Map({
+        container: canvas,
+        style: this._styleUrl(),
+        center: this._center(),
+        zoom: this.hasZoomValue ? this.zoomValue : (this._hasCenter() ? 12.2 : 1.5),
+        pitch: 55,
+        bearing: -14,
+        antialias: true
+      })
 
-    this.map.addControl(new window.maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right")
-    this.map.addControl(new window.maplibregl.GeolocateControl({
-      positionOptions: { enableHighAccuracy: true },
-      trackUserLocation: true,
-      showUserHeading: true
-    }), "bottom-right")
+      this.map.addControl(new window.maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right")
+      this.map.addControl(new window.maplibregl.GeolocateControl({
+        positionOptions: { enableHighAccuracy: true },
+        trackUserLocation: true,
+        showUserHeading: true
+      }), "bottom-right")
 
-    this.map.on("load", () => this._render())
+      this.map.on("load", () => {
+        this.mapLoaded = true
+        this._render(this.filteredPoints)
+      })
 
-    if (this.hasSearchTarget) {
-      this.searchTarget.addEventListener("input", this._boundSearch)
+      if (this.hasSearchTarget) {
+        this.searchTarget.addEventListener("input", this._boundSearch)
+      }
+    } catch (_) {
+      this._fallback()
     }
   }
 
@@ -97,99 +102,235 @@ export default class extends Controller {
     if (this.hasSearchTarget) {
       this.searchTarget.removeEventListener("input", this._boundSearch)
     }
-    this.markers.forEach(marker => marker.remove())
-    this.markers = []
+
     if (this.map) {
       this.map.remove()
       this.map = null
     }
+
+    this.mapLoaded = false
   }
 
   _render(list = this.points) {
-    if (!this.map) return
-    this.markers.forEach(marker => marker.remove())
-    this.markers = []
+    if (!this.map || !this.mapLoaded) return
 
-    list.forEach(point => {
-      const lat = Number(point.lat)
-      const lng = Number(point.lng)
-      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return
+    const data = this._featureCollection(list)
+    const source = this.map.getSource(POINT_SOURCE)
 
-      const marker = document.createElement("div")
-      marker.className = `map-marker map-marker--${point.type || "resource"}`
-      marker.setAttribute("aria-label", point.title || "Map point")
-      marker.tabIndex = 0
-      marker.title = point.title || "Map point"
-      marker.innerHTML = `<span></span>`
+    if (source) {
+      source.setData(data)
+      return
+    }
 
-      const popup = new window.maplibregl.Popup({ offset: 20 }).setHTML(this._popupHtml(point))
-      const instance = new window.maplibregl.Marker({ element: marker, anchor: "bottom" })
-        .setLngLat([lng, lat])
-        .setPopup(popup)
-        .addTo(this.map)
-
-      marker.addEventListener("click", () => popup.addTo(this.map))
-      marker.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault()
-          popup.addTo(this.map)
-        }
-      })
-
-      this.markers.push(instance)
+    this.map.addSource(POINT_SOURCE, {
+      type: "geojson",
+      data,
+      cluster: true,
+      clusterRadius: 44,
+      clusterMaxZoom: 14
     })
+
+    this.map.addLayer({
+      id: CLUSTER_LAYER,
+      type: "circle",
+      source: POINT_SOURCE,
+      filter: ["has", "point_count"],
+      paint: {
+        "circle-color": this._token("--maps-accent"),
+        "circle-radius": [
+          "step", ["get", "point_count"],
+          15, 10, 17, 50, 20, 100, 24
+        ],
+        "circle-stroke-color": this._token("--maps-bg"),
+        "circle-stroke-width": 2
+      }
+    })
+
+    this.map.addLayer({
+      id: CLUSTER_COUNT_LAYER,
+      type: "symbol",
+      source: POINT_SOURCE,
+      filter: ["has", "point_count"],
+      layout: {
+        "text-field": ["get", "point_count_abbreviated"],
+        "text-size": 12
+      },
+      paint: {
+        "text-color": this._token("--maps-bg")
+      }
+    })
+
+    this.map.addLayer({
+      id: POINT_LAYER,
+      type: "circle",
+      source: POINT_SOURCE,
+      filter: ["!", ["has", "point_count"]],
+      paint: {
+        "circle-color": [
+          "match", ["get", "type"],
+          "courier", this._token("--color-success"),
+          "food", this._token("--color-success"),
+          "place", this._token("--color-info"),
+          "resource", this._token("--color-info"),
+          "story", this._token("--maps-ink"),
+          this._token("--maps-accent")
+        ],
+        "circle-radius": ["match", ["get", "type"], "courier", 9, 7],
+        "circle-stroke-color": this._token("--maps-bg"),
+        "circle-stroke-width": 2
+      }
+    })
+
+    this.map.on("click", CLUSTER_LAYER, event => this._expandCluster(event))
+    this.map.on("click", POINT_LAYER, event => this._openPoint(event))
+    this.map.on("mouseenter", CLUSTER_LAYER, () => this._setPointer(true))
+    this.map.on("mouseleave", CLUSTER_LAYER, () => this._setPointer(false))
+    this.map.on("mouseenter", POINT_LAYER, () => this._setPointer(true))
+    this.map.on("mouseleave", POINT_LAYER, () => this._setPointer(false))
   }
 
-  _popupHtml(point) {
-    const title = this._escape(point.title || "Map point")
-    const subtitle = this._escape(point.subtitle ?? "")
-    const url = this._escape(point.url || "#")
-    return `
-      <div class="map-popup">
-        <strong>${title}</strong>
-        ${subtitle ? `<p>${subtitle}</p>` : ""}
-        <a href="${url}">Open</a>
-      </div>
-    `
+  _featureCollection(points) {
+    const features = points.filter(point => {
+      const lat = Number(point?.lat)
+      const lng = Number(point?.lng)
+      return point?.lat !== null && point?.lat !== undefined &&
+        point?.lng !== null && point?.lng !== undefined &&
+        Number.isFinite(lat) && Number.isFinite(lng) &&
+        lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
+    }).map(point => ({
+      type: "Feature",
+      properties: {
+        type: String(point.type || "resource"),
+        title: String(point.title || "Map point"),
+        subtitle: String(point.subtitle || ""),
+        url: this._safeHref(point.url) || ""
+      },
+      geometry: {
+        type: "Point",
+        coordinates: [Number(point.lng), Number(point.lat)]
+      }
+    }))
+
+    return { type: "FeatureCollection", features }
   }
 
-  _escape(value) {
-    return String(value || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
+  _token(name) {
+    const value = getComputedStyle(this.element).getPropertyValue(name).trim()
+    return value || getComputedStyle(this.element).color
+  }
+
+  _expandCluster(event) {
+    const feature = event.features?.[0]
+    if (!feature) return
+
+    const source = this.map.getSource(POINT_SOURCE)
+    source.getClusterExpansionZoom(feature.properties.cluster_id).then(zoom => {
+      this.map.easeTo({ center: feature.geometry.coordinates, zoom })
+    }).catch(() => {})
+  }
+
+  _openPoint(event) {
+    const feature = event.features?.[0]
+    if (!feature) return
+
+    const coordinates = feature.geometry.coordinates.slice()
+    while (Math.abs(event.lngLat.lng - coordinates[0]) > 180) {
+      coordinates[0] += event.lngLat.lng > coordinates[0] ? 360 : -360
+    }
+
+    const content = document.createElement("div")
+    content.className = "map-popup"
+
+    const title = document.createElement("strong")
+    title.textContent = feature.properties.title || "Map point"
+    content.append(title)
+
+    if (feature.properties.subtitle) {
+      const subtitle = document.createElement("p")
+      subtitle.textContent = feature.properties.subtitle
+      content.append(subtitle)
+    }
+
+    const href = this._safeHref(feature.properties.url)
+    if (href) {
+      const link = document.createElement("a")
+      link.href = href
+      link.textContent = "Open"
+      content.append(link)
+    }
+
+    new window.maplibregl.Popup({ offset: 20 })
+      .setLngLat(coordinates)
+      .setDOMContent(content)
+      .addTo(this.map)
+  }
+
+  _safeHref(value) {
+    if (!value) return null
+
+    try {
+      const url = new URL(String(value), window.location.origin)
+      if (!["http:", "https:"].includes(url.protocol) || url.username || url.password) return null
+
+      const cityApex = window.location.hostname.replace(/^maps\./i, "")
+      const sameCity = url.hostname === cityApex || url.hostname.endsWith(`.${cityApex}`)
+      if (url.hostname !== window.location.hostname && !sameCity) return null
+
+      return url.href
+    } catch (_) {
+      return null
+    }
+  }
+
+  _setPointer(active) {
+    if (this.map) this.map.getCanvas().style.cursor = active ? "pointer" : ""
   }
 
   filterPoints() {
     if (!this.hasSearchTarget) return
+
     const q = this.searchTarget.value.trim().toLowerCase()
-    if (!q) {
-      this._render(this.points)
-      return
-    }
-    this._render(this.points.filter(point => {
+    this.filteredPoints = q ? this.points.filter(point => {
       const haystack = [point.title, point.subtitle, point.type, point.city, point.kind]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
       return haystack.includes(q)
-    }))
+    }) : this.points
+
+    if (this.mapLoaded) {
+      this._render(this.filteredPoints)
+    } else if (!this.map) {
+      this._fallback(this.filteredPoints)
+    }
   }
 
-  _fallback() {
+  _fallback(points = this.filteredPoints || this.points) {
     const canvas = this._rootCanvas()
     if (!canvas) return
+
     canvas.classList.add("map-fallback")
-    /* The subtitle is the human label ("Kafé, Sentrum", a date) the popup shows;
-       the raw type leaked as visible copy when the map library was unavailable
-       and every card opened with a literal "place". Subtitle leads, type stays
-       a last-resort for a point with no subtitle at all. */
-    canvas.innerHTML = this.points.map(point => `
-      <a href="${this._escape(point.url || "#")}">
-        <span>${this._escape(point.subtitle || point.type || "point")}</span>
-        <strong>${this._escape(point.title || "Map point")}</strong>
-      </a>
-    `).join("") || "<p>No map points yet.</p>"
+    const fragment = document.createDocumentFragment()
+
+    points.forEach(point => {
+      const item = document.createElement("a")
+      const href = this._safeHref(point.url)
+      if (href) item.href = href
+
+      const label = document.createElement("span")
+      label.textContent = point.subtitle || point.type || "point"
+      const title = document.createElement("strong")
+      title.textContent = point.title || "Map point"
+      item.append(label, title)
+      fragment.append(item)
+    })
+
+    if (points.length === 0) {
+      const empty = document.createElement("p")
+      empty.textContent = "No map points yet."
+      fragment.append(empty)
+    }
+
+    canvas.replaceChildren(fragment)
   }
 }
