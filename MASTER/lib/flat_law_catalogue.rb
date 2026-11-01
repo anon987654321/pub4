@@ -65,7 +65,7 @@ module Master
         declared = node_rows.map { |row| row["node"].to_s }
         valid = node_rows.all? { |row| row.fetch("id").downcase == row["node"].to_s }
         unless declared.size == 9 && declared.uniq == declared && valid &&
-               declared.all? { |node| node.match?(/\\A[a-z][a-z0-9_]*\\z/) }
+               declared.all? { |node| node.match?(/\A[a-z][a-z0-9_]*\z/) }
           raise Invalid, "laws.yml must declare nine unique invariant nodes whose ids match their node names"
         end
       end
