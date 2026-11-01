@@ -920,3 +920,36 @@ browser support and bundle/runtime cost before adopting a dependency.
 - [ ] Deliver a small opt-in proof of concept for the highest-value use case,
   with real data, testable behavior, browser evidence and a removal path. This
   research backlog does not claim implementation or production rollout.
+
+## Open from the 2026-11-01 session — GPU rendering implementation
+
+- [ ] Verify the Brgen Maps MapLibre clustering change on a real browser with
+  WebGL enabled. Run
+  `cd RAILS/brgen && bundle exec ruby -Itest test/controllers/maps_layers_test.rb`
+  and the existing WebGL surface check; then inspect maps.brgen.no at mobile
+  and desktop viewports. Confirm cluster expansion, unclustered point popups,
+  search updates, cross-city links, keyboard/list alternative, WebGL failure
+  fallback, context teardown and console errors. The GitHub editing pass could
+  not execute Rails or browser tests; these checks are NOT_RUN, not PASS.
+- [ ] The MASTER execution observatory, memory/code constellation, particle-face
+  experiments and system telemetry remain proposals, not implementations.
+  Complete the required MASTER authority/read prerequisites and inspect the
+  existing face, browser, event, receipt and visual-conformance paths before
+  changing any MASTER implementation. Keep real receipts as the only source
+  of execution state; no simulated telemetry or second face renderer.
+- [ ] The STUDIO / Dilla audio-reactive renderer and reproducible artwork export
+  remain proposals. First map the existing audio-clock, section manifest,
+  render/export and radio_brgen_tunnel.js ownership boundaries. Do not add a
+  second audio engine or let frame timing drive audio.
+- [ ] Amber 3D garment/product inspection remains a proposal. Preserve the
+  original large Amber identity, neutral fashion surfaces and truthful product
+  colours; prototype only against real optimized assets and retain the current
+  non-WebGL product path.
+- [ ] BSDPorts dependency visualization remains a proposal. Preserve its
+  ultraminimal white search-first experience; add a graph only as an optional
+  drill-down over actual package dependency data.
+- [ ] Evaluate WebGPU only against a measured compute/rendering need. Current
+  Brgen Maps uses its existing MapLibre WebGL renderer; do not add Three.js,
+  PixiJS, deck.gl, Sigma.js or a WebGPU dependency without a concrete consumer,
+  compatibility review, performance evidence, license review and a tested
+  progressive fallback.
