@@ -10,6 +10,15 @@ const APP_NAME = __APP_NAME__
 const CACHE_VERSION = "__CACHE_VERSION__"
 const OFFLINE_URL = "/offline"
 const FORM_QUEUE = `${APP_NAME}-offline-forms`
+const DYNAMIC_PREFIXES = [
+  "/feed",
+  "/activity",
+  "/nearby",
+  "/listings",
+  "/outfits",
+  "/items",
+  "/posts",
+]
 
 setCacheNameDetails({ prefix: APP_NAME, suffix: CACHE_VERSION })
 precacheAndRoute(self.__WB_MANIFEST, { cleanURLs: false })
@@ -26,7 +35,7 @@ const pages = new NetworkFirst({
   networkTimeoutSeconds: 4,
   plugins: [
     new CacheableResponsePlugin({ statuses: [200] }),
-    new ExpirationPlugin({ maxEntries: 40, maxAgeSeconds: 24 * 60 * 60 }),
+    new ExpirationPlugin({ maxEntries: 24, maxAgeSeconds: 12 * 60 * 60 }),
   ],
 })
 
@@ -34,7 +43,7 @@ const dynamic = new StaleWhileRevalidate({
   cacheName: `${APP_NAME}-dynamic-${CACHE_VERSION}`,
   plugins: [
     new CacheableResponsePlugin({ statuses: [200] }),
-    new ExpirationPlugin({ maxEntries: 80, maxAgeSeconds: 12 * 60 * 60 }),
+    new ExpirationPlugin({ maxEntries: 32, maxAgeSeconds: 6 * 60 * 60 }),
   ],
 })
 
@@ -42,7 +51,7 @@ const assets = new CacheFirst({
   cacheName: `${APP_NAME}-assets-${CACHE_VERSION}`,
   plugins: [
     new CacheableResponsePlugin({ statuses: [200] }),
-    new ExpirationPlugin({ maxEntries: 160, maxAgeSeconds: 30 * 24 * 60 * 60 }),
+    new ExpirationPlugin({ maxEntries: 120, maxAgeSeconds: 30 * 24 * 60 * 60 }),
   ],
 })
 
@@ -54,17 +63,9 @@ registerRoute(
     if (request.mode === "navigate") return false
 
     const path = url.pathname
-    return (
-      path.startsWith("/feed") ||
-      path.startsWith("/activity") ||
-      path.startsWith("/nearby") ||
-      path.startsWith("/listings") ||
-      path.startsWith("/outfits") ||
-      path.startsWith("/items") ||
-      path.startsWith("/posts") ||
-      path.includes(".json") ||
-      (request.destination === "" && request.headers.get("Accept")?.includes("application/json"))
-    )
+    const isDynamicPath = DYNAMIC_PREFIXES.some(prefix => path.startsWith(prefix))
+    const isJson = path.includes(".json") || (request.destination === "" && request.headers.get("Accept")?.includes("application/json"))
+    return isDynamicPath || isJson
   },
   dynamic
 )
@@ -120,9 +121,6 @@ self.addEventListener("push", event => {
     actions: data.actions || [],
     icon: data.icon || "/icon-192.png",
     badge: data.badge || "/icon-mono-192.png",
-    // The badge is the small monochrome glyph Android punches into the status
-    // bar; a full-colour icon there renders as a grey blob. Keep notification
-    // assets on the same shared public surface as the manifests.
     data: { url: data.url || "/" },
   }))
 })
