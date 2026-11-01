@@ -4,43 +4,36 @@ require_relative "test_helper"
 require "yaml"
 
 class TestLawsReflow < Minitest::Test
-  RANKED_LAWS = %w[
-    CAPABILITY_STATUS_MUST_BE_TRUTHFUL
-    ROBUSTNESS
-    SINGULARITY
-    LINEARITY
-    PROXIMITY
-    ABSTRACTION
-    DENSITY
-    RENDERED_VALUES
-    INTER_MODEL_CONTRACT
-  ].freeze
+  def test_nine_invariant_nodes_are_first_and_follow_document_order
+    data = Master.load_yaml(File.join(Master::ROOT, "data", "laws.yml"))
+    node_ids = data.filter_map { |id, row| id if row.is_a?(Hash) && row["node"] }
 
-  # The file's own header promises the nine priority-ranked laws (eight operating
-  # principles plus the inter-model protocol) come first and that everything
-  # after them is an execution-policy block.
-  def test_ranked_laws_come_first_then_policy_blocks
-    path = File.join(Master::ROOT, "data", "laws.yml")
-    body = File.read(path, encoding: "UTF-8")
-    keys = body.scan(/^([A-Za-z_][A-Za-z0-9_-]*):\s*$/).flatten
-
-    assert_equal RANKED_LAWS, keys.first(RANKED_LAWS.size)
-    assert keys.drop(RANKED_LAWS.size).all? { |key| key.match?(/\A[a-z][a-z0-9_]*\z/) },
-           "a block after the ranked laws is not a lower-case policy block"
+    assert_equal 9, node_ids.size
+    assert_equal Master::Soul.invariant_order.map(&:upcase), node_ids
+    assert_operator data.keys.index("SACRED_AUTHORSHIP"), :>, data.keys.index(node_ids.last)
   end
 
-  def test_policy_file_remains_valid_yaml
-    path = File.join(Master::ROOT, "data", "laws.yml")
-    data = YAML.safe_load_file(path, aliases: true)
+  def test_laws_yml_is_a_valid_self_governing_flat_catalogue
+    data = YAML.safe_load_file(File.join(Master::ROOT, "data", "laws.yml"), aliases: true)
 
     assert_kind_of Hash, data
+    assert Master::FlatLawCatalogue.validate!(data)
   end
 
-  def test_policy_reflow_does_not_duplicate_top_level_keys
-    path = File.join(Master::ROOT, "data", "laws.yml")
-    body = File.read(path, encoding: "UTF-8")
-    keys = body.scan(/^([A-Za-z_][A-Za-z0-9_-]*):\s*$/).flatten
+  def test_catalogue_has_no_retired_numeric_ranking_or_path_scope
+    source = File.read(File.join(Master::ROOT, "data", "laws.yml"), encoding: "UTF-8")
 
-    assert_equal keys.uniq.sort, keys.sort
+    refute_match(/^\\s+(?:priority|tier):/m, source)
+    refute_match(/^\\s+(?:applies_to|domain|path|path_pattern|exclude):/m, source)
+  end
+
+  def test_source_does_not_declare_duplicate_top_level_law_ids
+    source = File.read(File.join(Master::ROOT, "data", "laws.yml"), encoding: "UTF-8")
+    ids = source.lines.filter_map do |line|
+      match = line.match(/\\A([A-Z][A-Z0-9_]*):\\s*\\z/)
+      match && match[1]
+    end
+
+    assert_equal ids.uniq.sort, ids.sort
   end
 end
