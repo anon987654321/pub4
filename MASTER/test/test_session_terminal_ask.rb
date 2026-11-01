@@ -96,7 +96,7 @@ class SessionTerminalAskTest < Minitest::Test
       answer = asker.call(prompt: "push?", options: [{ name: "deny", value: "deny" }, { name: "ok", value: "approve" }])
 
       assert_equal "approve", answer
-      assert_match(/ask0 at fold0: approved, push\?/, out.string)
+      assert_match(/ask0: approved, push\?/, out.string)
     end
   end
 
