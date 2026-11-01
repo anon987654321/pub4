@@ -370,6 +370,7 @@ module Master
 
         artifacts.all? do |artifact|
           next false unless artifact.is_a?(Hash)
+          next false unless (artifact.keys.map(&:to_s) - %w[path sha256]).empty?
 
           relative = artifact["path"].to_s
           digest = artifact["sha256"].to_s
