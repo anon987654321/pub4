@@ -18,7 +18,7 @@ class FollowsController < ApplicationController
     Current.user.follows_as_follower.find_by(followee: @user)&.destroy!
     @user.record_activity!("AmberFollowRemoved", source_vertical: "amber", actor: Current.user)
     respond_to do |format|
-      format.turbo_stream
+      format.turbo_stream { render :create }
       format.html { redirect_back fallback_location: user_path(@user) }
     end
   end
