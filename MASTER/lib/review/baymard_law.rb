@@ -45,7 +45,7 @@ module Master
 
       App = Data.define(:name, :root, :records, :features)
 
-      Report = Data.define(:apps, :assessments, :findings, :source_files, :read_errors) do
+      Report = Data.define(:apps, :assessments, :findings, :source_files, :read_errors, :profile_sha256, :laws_sha256) do
         def count(status)
           assessments.count { |assessment| assessment.status == status.to_s }
         end
@@ -70,12 +70,14 @@ module Master
         def summary
           "apps=#{apps.size} source_files=#{source_files} measured=#{measured_count}/#{applicable_count} " \
             "coverage=#{coverage_pct}% failures=#{fail_count} inconclusive=#{inconclusive_count} " \
-            "read_errors=#{read_errors.size}"
+            "read_errors=#{read_errors.size} profile_sha256=#{profile_sha256[0, 12]} laws_sha256=#{laws_sha256[0, 12]}"
         end
 
         def to_h
           {
             "summary" => summary,
+            "profile_sha256" => profile_sha256,
+            "laws_sha256" => laws_sha256,
             "counts" => {
               "pass" => count("pass"),
               "fail" => fail_count,
@@ -164,6 +166,9 @@ module Master
 
       def call
         profile = load_profile
+        profile_sha256 = @supplied_profile ? Digest::SHA256.hexdigest(YAML.dump(profile)) :
+          Digest::SHA256.file(File.join(@master_root, "data", "baymard_ux.yml")).hexdigest
+        laws_sha256 = Digest::SHA256.file(File.join(@master_root, "data", "laws.yml")).hexdigest
         evidence = load_evidence
         inventory = SourceInventory.new(
           repo_root: @repo_root, rails_root: @rails_root, requested_apps: @requested_apps
@@ -199,6 +204,8 @@ module Master
           findings: findings.freeze,
           source_files:,
           read_errors: read_errors.freeze,
+          profile_sha256:,
+          laws_sha256:,
         )
       end
 
