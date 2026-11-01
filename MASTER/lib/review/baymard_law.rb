@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
+require "date"
 require "digest"
+require "uri"
 require "yaml"
 
 module Master
@@ -99,9 +101,17 @@ module Master
 
         research = profile["research"]
         raise InvalidProfile, "research provenance must be a mapping" unless research.is_a?(Hash)
-        %w[methodology_url benchmark_url reviewed_on boundary].each do |field|
+        raise InvalidProfile, "research.provider must be Baymard Institute" unless research["provider"] == "Baymard Institute"
+        %w[methodology_url benchmark_url reviewed_on scope boundary].each do |field|
           raise InvalidProfile, "research.#{field} is required" if research[field].to_s.strip.empty?
         end
+        %w[methodology_url benchmark_url].each do |field|
+          uri = URI.parse(research[field].to_s)
+          raise InvalidProfile, "research.#{field} must use https://baymard.com" unless uri.scheme == "https" && uri.host == "baymard.com"
+        end
+        Date.iso8601(research["reviewed_on"].to_s)
+        raise InvalidProfile, "research boundary must disclaim official Baymard status" unless
+          research["boundary"].to_s.match?(/not an official Baymard audit/i)
 
         checks = profile["checks"]
         raise InvalidProfile, "checks must be a non-empty mapping" unless checks.is_a?(Hash) && !checks.empty?
