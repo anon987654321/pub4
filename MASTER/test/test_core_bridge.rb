@@ -59,6 +59,30 @@ class CoreBridgeTest < Minitest::Test
     refute_includes payload.inspect, secret
   end
 
+  def test_live_turn_output_summarizes_long_reads_without_dropping_fold_content
+    Dir.mktmpdir do |root|
+      contents = ["private customer content", *Array.new(14) { |index| "private detail line #{index + 1}" }].join("\n") + "\n"
+      File.write(File.join(root, "private.txt"), contents)
+      streamed = []
+      model = ScriptedModel.new(*evidence_then_done(
+        Master::Core::Effect.read("private.txt"), summary: "read complete"
+      ))
+
+      result = Master::CLI::CoreBridge.run(
+        "read a private file", root:, model:, on_turn: ->(line) { streamed << line }
+      )
+
+      assert_equal :complete, result[:reason]
+      live_read = streamed.find { |line| line.include?("read(path)") }
+      refute_nil live_read
+      refute_includes live_read, "private detail line 14"
+      assert_match(/\(\+\d+ lines\)/, live_read)
+      refute_includes live_read, "\n"
+      full_read = result[:transcript].find { |line| line.include?("read(path)") }
+      assert_includes full_read, "private detail line 14"
+    end
+  end
+
   def test_run_returns_summary_and_streams_turns
     Dir.mktmpdir do |root|
       bus = FakeBus.new
