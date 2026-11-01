@@ -30,7 +30,7 @@ class TestLawsReflow < Minitest::Test
   def test_source_does_not_declare_duplicate_top_level_law_ids
     source = File.read(File.join(Master::ROOT, "data", "laws.yml"), encoding: "UTF-8")
     ids = source.lines.filter_map do |line|
-      match = line.match(/\A([A-Z][A-Z0-9_]*):\s*\z/)
+      match = line.match(/\A([A-Z][A-Za-z0-9_]*):\s*\z/)
       match && match[1]
     end
 
