@@ -33,7 +33,7 @@ module Operator
       require File.join(@root, "MASTER", "lib", "master") unless defined?(Master::ROOT)
       soul = load_yaml("MASTER/data/soul.yml")
       laws = load_yaml("MASTER/data/laws.yml")
-      issues << "soul: golden rule missing or changed" unless soul.dig("absolute", "golden_law") == "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+      issues << "soul: golden Law reference missing or changed" unless soul.dig("absolute", "golden_law") == "STEWARDSHIP_preserve_first"
       issues << "soul: no canonical sacred paths declared" unless Master::Soul.sacred_paths(root: File.join(@root, "MASTER")).any?
       begin
         Master::Soul.load!(root: File.join(@root, "MASTER"))
@@ -42,8 +42,13 @@ module Operator
       end
       tokens = load_yaml("MASTER/data/tokens.yml")
       issues << "rules: missing design tokens" unless tokens["tokens"].is_a?(Hash)
-      declared = laws.any? { |_id, value| value.is_a?(Hash) && value["priority"] && value["statement"] }
-      issues << "rules: no declared policy laws" unless declared
+      begin
+        Master::FlatLawCatalogue.validate!(laws)
+        nodes = Master::FlatLawCatalogue.entries(laws).select { |entry| entry["node"] }
+        issues << "laws: expected nine ordered invariant nodes" unless nodes.size == 9
+      rescue StandardError => e
+        issues << "laws: canonical constitution failed validation (#{e.class}: #{e.message})"
+      end
       prose = File.join(@root, "MASTER", "law", "prose.rb")
       issues << "rules: no Bringhurst reference" unless File.file?(prose) && File.read(prose).include?("Bringhurst")
       issues.concat(law_issues)
