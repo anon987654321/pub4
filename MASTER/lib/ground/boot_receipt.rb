@@ -24,7 +24,7 @@ module Master
       # makes "the same constitution" checkable, rather than a version string
       # somebody remembered to bump.
       GOVERNING_FILES = %w[
-        data/soul.yml data/laws.yml data/providers.yml data/models.yml data/console.yml data/scan.yml
+        data/laws.yml data/soul.yml data/providers.yml data/models.yml data/console.yml data/scan.yml
         data/budgets.yml
       ].freeze
 
@@ -124,17 +124,20 @@ module Master
         }
       end
 
-      # Three populations, counted from what is loaded rather than from a number
-      # in prose. They are allowed to differ — catalogued Laws without a
-      # detector are judged semantically — but a receipt that prints one of them
-      # as the total is the misreport this exists to prevent. Declared Laws are
-      # the entries of law_catalogue, the one place a Law identity is written;
-      # the top-level principles of laws.yml are nine constitutional headings.
+      # Keep the normative flat constitution distinct from the legacy
+      # execution-metadata population. Law::Definition still consumes
+      # law_runtime.yml#law_catalogue for severity/lifecycle/autofix/reach; that
+      # is migration debt, not the normative identity source. The compatibility
+      # field :declared retains its historical meaning until its consumers move.
       def law(root: MasterPaths::ROOT)
+        legacy_count = Master.law("law_catalogue", root:).fetch("entries").size
+        registry_count = domain_law_count(root)
         {
-          declared: Master.law("law_catalogue", root:).fetch("entries").size,
-          registry: domain_law_count(root),
-          domain: domain_law_count(root),
+          normative: Master.law_entries(root:).size,
+          declared: legacy_count,
+          legacy_execution_metadata: legacy_count,
+          registry: registry_count,
+          domain: registry_count,
         }
       end
 
