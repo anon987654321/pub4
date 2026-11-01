@@ -89,15 +89,25 @@ module Operator
 
     # ERB output expressions can contain '>' characters. Mask them before
     # scanning opening tags so a comparison in Ruby cannot truncate the tag.
+    def feed_list_entries(source)
+      sanitized = source.to_s.gsub(/<%#.*?%>/m, "").gsub(/<%=.*?%>/m, " ERB_VALUE ")
+      pattern = /<ul\\b[^>]*\\bfeed_list\\b[^>]*>/m
+      entries = []
+      offset = 0
+      while (match = pattern.match(sanitized, offset))
+        line = sanitized[0...match.begin(0)].count("\\n") + 1
+        entries << [match[0], line]
+        offset = match.end(0)
+      end
+      entries
+    end
+
     def feed_list_open_tags(source)
-      source.to_s
-            .gsub(/<%#.*?%>/m, "")
-            .gsub(/<%=.*?%>/m, " ERB_VALUE ")
-            .scan(/<ul\b[^>]*\bfeed_list\b[^>]*>/m)
+      feed_list_entries(source).map(&:first)
     end
 
     def feed_list_violations(source)
-      feed_list_open_tags(source).reject { |tag| tag.match?(/\brole\s*=\s*["']list["']/) }
+      feed_list_entries(source).reject { |tag, _line| tag.match?(/\\brole\\s*=\\s*["']list["']/) }
     end
 
     private
@@ -203,12 +213,10 @@ module Operator
 
         total += tags.length
         missing = feed_list_violations(source)
-        missing.each do |tag|
-          line = source.lines.index { |row| row.include?("<ul") && row.include?("feed_list") }
+        missing.each do |_tag, line|
           findings << Finding.new(
             status: "FAIL", code: "feed_lists.role",
-            path: absolute.delete_prefix("#{root}/"),
-            line: line && line + 1,
+            path: absolute.delete_prefix("#{root}/"), line:,
             message: "Every markerless feed_list needs role=\"list\" for consistent list exposure."
           )
         end
