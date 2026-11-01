@@ -76,8 +76,9 @@ module Master
           records = collect_source_files(path)
           routes_path = File.join(path, "config", "routes.rb")
           routes = File.file?(routes_path) ? File.read(routes_path) : ""
-          relative_paths = records.map(&:relative).map do |relative|
-            relative.delete_prefix("#{@rails_root.sub(%r{/$}, "")}/").downcase
+          app_prefix = "#{path.sub(%r{/$}, "")}/"
+          relative_paths = records.map(&:path).map do |source_path|
+            source_path.delete_prefix(app_prefix).downcase
           end
 
           # Feature applicability follows actual route and view/controller
