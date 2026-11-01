@@ -199,21 +199,6 @@ class RenderedInvariantsCheckTest < Minitest::Test
     assert_empty check(:check_mark_label, "brgen.no", payload.merge("mark" => "brgen")).failures
   end
 
-  # The measured case: brgen.no at 390px, the chat tab over the Install button.
-  def test_a_chat_tab_over_the_install_prompt_fails_and_says_by_how_much
-    boxes = { "prompt" => { "t" => 632, "b" => 788, "l" => 12, "r" => 378 },
-              "chat" => { "t" => 756, "b" => 800, "l" => 290, "r" => 391 } }
-
-    assert_names check(:check_bottom_overlap, boxes), /chat tab covers 32px of the install prompt/
-  end
-
-  def test_an_install_prompt_clear_of_the_chat_tab_passes
-    boxes = { "prompt" => { "t" => 588, "b" => 744, "l" => 12, "r" => 378 },
-              "chat" => { "t" => 756, "b" => 800, "l" => 290, "r" => 391 } }
-
-    assert_empty check(:check_bottom_overlap, boxes).failures
-  end
-
   def look(scroll: 0, inset: 0) = { "scroll" => scroll, "inset" => inset }
 
   def test_four_looks_that_open_on_their_first_slide_pass

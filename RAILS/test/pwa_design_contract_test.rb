@@ -215,7 +215,6 @@ class PwaDesignContractTest < Minitest::Test
     chrome = read(SHARED_ROOT, "app/assets/stylesheets/_layout_chrome.scss")
     shell = read(SHARED_ROOT, "app/assets/stylesheets/_shell.scss")
     standalone = read(SHARED_ROOT, "frontend/pwa_standalone_controller.js")
-    prompt = read(SHARED_ROOT, "app/views/shared/_install_prompt.html.erb")
 
     %w[top right bottom left].each do |side|
       assert_includes tokens, "env(safe-area-inset-#{side}, 0px)"
@@ -229,10 +228,6 @@ class PwaDesignContractTest < Minitest::Test
     assert_includes standalone, "(display-mode: standalone)"
     assert_includes standalone, "navigator.standalone"
     assert_includes standalone, "pub4:pwa-display"
-
-    assert_includes prompt, 'role="region"'
-    assert_includes prompt, "aria-label="
-    assert_includes prompt, "install-prompt-secondary"
   end
 
   def test_shared_typography_uses_optical_and_rhythm_controls

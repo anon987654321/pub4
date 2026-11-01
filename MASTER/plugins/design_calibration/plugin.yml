@@ -1,0 +1,6 @@
+---
+id: design_calibration
+version: 1.0.0
+description: Parked layout-campaign probes: calibration set, layout search space and their check loaders.
+entrypoint: design_calibration.rb
+observe_actions: [status, run]

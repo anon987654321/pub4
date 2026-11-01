@@ -12,11 +12,9 @@ import ApplicationController from "controllers/application_controller"
 import LiveSearch from "pub4/live_search"
 import SearchFocus from "pub4/search_focus"
 import OfflinePage from "pub4/offline_page"
-import InstallPrompt from "pub4/install_prompt"
 import { noteSession } from "pub4/onboarding"
 import CookieConsent from "pub4/cookie_consent_controller"
 import WelcomeOnboarding from "pub4/welcome_onboarding"
-import NewsletterCapture from "pub4/newsletter_capture"
 import LinkConverter from "pub4/link_converter"
 import ThemeToggle from "pub4/theme_toggle"
 import InfiniteScroll from "pub4/infinite_scroll"
@@ -30,7 +28,6 @@ import FeedHotkey from "pub4/feed_hotkey"
 import NearbyChat from "pub4/nearby_chat"
 import OfflineFeed from "pub4/offline_feed"
 import PwaStandalone from "pub4/pwa_standalone"
-import BatteryAware from "pub4/battery_aware"
 import NetworkAware from "pub4/network_aware"
 import ViewportAware from "pub4/viewport_aware"
 import Haptics from "pub4/haptics"
@@ -100,10 +97,8 @@ export function bootPub4Stimulus(application) {
   application.register("live-search", LiveSearch)
   application.register("search-focus", SearchFocus)
   application.register("offline-page", OfflinePage)
-  application.register("install-prompt", InstallPrompt)
   application.register("cookie-consent", CookieConsent)
   application.register("welcome-onboarding", WelcomeOnboarding)
-  application.register("newsletter-capture", NewsletterCapture)
   application.register("link-converter", LinkConverter)
   application.register("theme-toggle", ThemeToggle)
   application.register("infinite-scroll", InfiniteScroll)
@@ -114,7 +109,6 @@ export function bootPub4Stimulus(application) {
   application.register("nearby-chat", NearbyChat)
   application.register("offline-feed", OfflineFeed)
   application.register("pwa-standalone", PwaStandalone)
-  application.register("battery-aware", BatteryAware)
   application.register("network-aware", NetworkAware)
   application.register("viewport-aware", ViewportAware)
   application.register("haptics", Haptics)

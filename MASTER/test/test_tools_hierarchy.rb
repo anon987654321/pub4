@@ -9,8 +9,8 @@ class TestToolsHierarchy < Minitest::Test
   REPO_ROOT = File.expand_path("../..", __dir__)
   MASTER_ROOT = File.join(REPO_ROOT, "MASTER")
   TOOLS_ROOT = File.join(MASTER_ROOT, "tools")
-  VOICE_TOOLS = %w[voice_benchmark.rb voice_measure.rb voice_quality.rb].freeze
-  RESEARCH_TOOLS = %w[cognition_benchmark.rb llm_challenges.rb llm_trajectory.rb].freeze
+  VOICE_TOOLS = %w[].freeze
+  RESEARCH_TOOLS = %w[llm_challenges.rb llm_trajectory.rb].freeze
   REPO_TOOLS = %w[repo_inventory.rb runs.rb sprawl_plan.rb].freeze
   AUDIT_TOOLS = %w[capability_inventory.rb data_reach.rb design_baseline.rb dup_census.rb law_hygiene.rb].freeze
 
@@ -28,14 +28,6 @@ class TestToolsHierarchy < Minitest::Test
       assert_includes source, "load target"
       assert_includes source, "require_relative \"voice/#{name.delete_suffix('.rb')}\""
     end
-  end
-
-  def test_rake_tasks_use_canonical_voice_paths
-    master_rake = File.read(File.join(MASTER_ROOT, "Rakefile"))
-    tools_rake = File.read(File.join(TOOLS_ROOT, "Rakefile"))
-
-    assert_includes master_rake, "tools/voice/voice_benchmark.rb"
-    assert_includes tools_rake, 'File.expand_path("voice/voice_quality.rb", __dir__)'
   end
 
   def test_master_test_discovery_is_recursive_for_both_test_naming_forms
@@ -164,13 +156,6 @@ class TestToolsHierarchy < Minitest::Test
     assert_includes row.fetch("purpose"), "voice measurement"
     assert_equal "medium", row.fetch("risk")
     assert_includes row.fetch("check"), "rake voice_quality"
-  end
-
-  def test_moved_voice_benchmark_resolves_master_paths_from_its_new_directory
-    source = File.read(File.join(TOOLS_ROOT, "voice", "voice_benchmark.rb"))
-
-    assert_includes source, 'require_relative "../../lib/master"'
-    assert_includes source, 'root = File.expand_path("../..", __dir__)'
   end
 
   def test_design_baseline_implementation_lives_in_its_canonical_family

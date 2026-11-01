@@ -172,10 +172,6 @@ ownership:
       convergence evidence check) — distinct from bin/'s runtime entry points
     risk: medium
     check: ruby -Ilib:test test/test_lifecycle_tools.rb
-  tools/voice/:
-    purpose: voice measurement, benchmark and quality commands; implementation remains in lib/voice/
-    risk: medium
-    check: cd MASTER/tools && rake voice_quality
   tools/research/:
     purpose: cognition benchmarks, challenge measurement and LLM trajectory datasets
     risk: medium

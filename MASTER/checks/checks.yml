@@ -241,13 +241,6 @@ content_for_yield:
   pass: "content_for_yield: every produced content slot has a consumer"
   covered_by: layout_suite
 
-layout_search:
-  require: lib/research/layout_search
-  class: Deploy::LayoutSearchCheck
-  pass: "Layout search (least-resistance) check passed."
-  covered_by: layout_suite
-
-# Owns the professional layout + CSS stack, frontend_auditor included.
 stimulus_wiring:
   require: lib/source/stimulus_wiring
   class: Deploy::StimulusWiringCheck
@@ -275,12 +268,6 @@ visual_quality:
   require: lib/research/visual_quality
   class: Deploy::VisualQualityCheck
   pass: "visual_quality: ok"
-  covered_by: layout_suite
-
-calibration:
-  require: lib/research/calibration
-  class: Deploy::CalibrationCheck
-  pass: "calibration: ok"
   covered_by: layout_suite
 
 apps_yml:
@@ -338,21 +325,6 @@ rendered_suite:
 # Browser probes kept as first-class checks so a probe cannot exist as an
 # unmeasured side script. Each uses the shared CDP transport and is inconclusive
 # when Chromium is absent; CHECK_STRICT_INCONCLUSIVE=1 makes that blocking.
-tap_target_probe:
-  needs: [browser]
-  script: tap_target_probe.rb
-  pass: "ok: tap targets meet the 44px floor"
-
-face_capture_probe:
-  needs: [browser]
-  script: face_capture_probe.rb
-  pass: "ok: face capture drew after primer"
-
-focus_walk_probe:
-  needs: [browser]
-  script: focus_walk_probe.rb
-  pass: "ok: every focus stop shows a ring"
-
 rendered_geometry:
   needs: [browser]
   require: lib/rendered/rendered_geometry

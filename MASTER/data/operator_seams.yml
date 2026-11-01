@@ -60,12 +60,6 @@ seams:
     evidence: >-
       Worktree delivery against a real GitHub staging repository and token, with failure cleanup and accurate
       delivery reporting, leaving the operator checkout untouched.
-  - id: cognition_benchmark_data
-    tree: MASTER
-    needs: material
-    evidence: >-
-      Independently evidenced verified-outcomes.jsonl rows, each with a receipt digest; Brier scores against the
-      constant 0.5 baseline decide whether OutcomeModel stays. No outcome is fabricated.
   # OPENBSD
   - id: shell_init_credential_rotation
     tree: OPENBSD

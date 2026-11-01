@@ -9,7 +9,6 @@
 # is refused delivery as before.
 soft:
   - layout_suite
-  - tap_target_probe
   - visual_contract
   - web_vitals_budget
   - design_metrics

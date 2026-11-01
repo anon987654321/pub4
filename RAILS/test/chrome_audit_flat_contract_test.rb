@@ -76,9 +76,8 @@ class ChromeAuditFlatContractTest < Minitest::Test
     commerce = stylesheet_module("brgen", "brgen_core_shell")
     offline = read("__shared/app/assets/stylesheets/_offline_page.scss")
     widgets = read("__shared/app/assets/stylesheets/_shell_widgets.scss")
-    newsletter = read("__shared/app/assets/stylesheets/_newsletter_capture.scss")
 
-    [modal, cookie, affiliate, commerce, offline, widgets, newsletter].each do |source|
+    [modal, cookie, affiliate, commerce, offline, widgets].each do |source|
       refute_match(/box-shadow:(?!\s*none\b)/, source)
     end
 
@@ -88,6 +87,5 @@ class ChromeAuditFlatContractTest < Minitest::Test
     assert_includes commerce, ".store-buybox {"
     assert_includes offline, ".offline-page-retry {"
     assert_includes widgets, ".sidebar-card {"
-    assert_includes newsletter, ".newsletter-capture {"
   end
 end

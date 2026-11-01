@@ -1,0 +1,6 @@
+---
+id: video_recordings
+version: 1.0.0
+description: Parked session/face video recorders, capture probe and README media tooling.
+entrypoint: video_recordings.rb
+observe_actions: [status, run]

@@ -21,9 +21,4 @@ task :check do
   ruby File.expand_path("check.rb", __dir__)
 end
 
-desc "Run the deterministic voice quality regression harness without synthesis"
-task :voice_quality do
-  ruby File.expand_path("voice/voice_quality.rb", __dir__)
-end
-
 task default: %i[check test]

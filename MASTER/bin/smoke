@@ -157,15 +157,6 @@ rescue Master::Io::Exec::TimeoutError
   [false, "pipe command timed out after #{PIPE_TIMEOUT_SECONDS}s"]
 end
 
-if ARGV.include?("--tts")
-  failures << "tts" unless step("tts-e2e poll") do
-    exe = File.expand_path("tts-e2e", __dir__)
-    out, st = Open3.capture2e(exe)
-    puts out unless out.empty?
-    [st.success?, st.success? ? nil : out.lines.last&.strip]
-  end
-end
-
 if ARGV.include?("--web")
   failures << "web" unless step("web smoke-web") do
     exe = File.expand_path("smoke-web", __dir__)

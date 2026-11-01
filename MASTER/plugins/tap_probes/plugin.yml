@@ -1,0 +1,6 @@
+---
+id: tap_probes
+version: 1.0.0
+description: Parked focus-walk and tap-target browser probes.
+entrypoint: tap_probes.rb
+observe_actions: [status, run]

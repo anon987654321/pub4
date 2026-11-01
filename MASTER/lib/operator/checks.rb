@@ -356,10 +356,6 @@ module Deploy
         "EventMachine SSL support unavailable",
         "unsetenv_others: true",
       ],
-      "MASTER/bin/smoke" => [
-        "tts-e2e poll",
-        "tts-e2e",
-      ],
       "OPENBSD/etc/rc.d/master" => [
         "Master::Voice::TtsSupervisor.ensure_daemon!",
         "MASTER_TTS_TIMEOUT=45",

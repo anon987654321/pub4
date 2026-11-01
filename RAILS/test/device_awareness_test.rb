@@ -7,7 +7,6 @@ class DeviceAwarenessTest < Minitest::Test
   SHARED = File.join(ROOT, "__shared")
 
   CONTROLLERS = {
-    "battery_aware" => %w[connect disconnect],
     "network_aware" => %w[connect disconnect],
     "haptics" => %w[tick success match warning play],
     "geolocation" => %w[connect disconnect prompt pin alertArrival],
@@ -24,7 +23,9 @@ class DeviceAwarenessTest < Minitest::Test
 
   def test_stimulus_boot_registers_them
     boot = File.read(File.join(SHARED, "frontend/stimulus_boot.js"))
-    %w[battery-aware network-aware haptics geolocation viewport-aware].each do |id|
+    # battery-aware is parked in plugins/install_and_battery; the boot file
+    # must not name a controller whose source no longer ships.
+    %w[network-aware haptics geolocation viewport-aware].each do |id|
       assert_includes boot, %("#{id}"), "boot must register #{id}"
     end
   end
@@ -63,14 +64,16 @@ class DeviceAwarenessTest < Minitest::Test
     assert_includes worker, 'action === "view"'
   end
 
-  def test_layouts_mount_battery_and_network_awareness
+  def test_layouts_mount_network_and_viewport_awareness
+    # battery-aware moved to plugins/install_and_battery with its controller,
+    # stylesheet and view; the layouts must not mount it either.
     %w[
       brgen/app/views/layouts/application.html.erb
       amber/app/views/layouts/application.html.erb
       bsdports/app/views/layouts/application.html.erb
     ].each do |rel|
       body = File.read(File.join(ROOT, rel))
-      assert_match(/battery-aware/, body, "#{rel} missing battery-aware")
+      refute_match(/battery-aware/, body, "#{rel} still mounts parked battery-aware")
       assert_match(/network-aware/, body, "#{rel} missing network-aware")
       assert_match(/viewport-aware/, body, "#{rel} missing viewport-aware")
     end

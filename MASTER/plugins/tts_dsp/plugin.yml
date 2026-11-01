@@ -1,0 +1,6 @@
+---
+id: tts_dsp
+version: 1.0.0
+description: Parked TTS benchmark/measure/quality suite and tts-e2e gate.
+entrypoint: tts_dsp.rb
+observe_actions: [status, run]

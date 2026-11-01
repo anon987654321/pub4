@@ -1,0 +1,9 @@
+---
+id: reflexes
+version: 1.0.0
+description: Parked (RAILS side): StimulusReflex classes for the engine and all three apps (46 files).
+revive_when: never, honestly: Turbo won; this parks until it is deleted
+loader: none
+note: Infinite-scroll surfaces degrade: browsers log a reflex error on live scroll until views drop data-reflex attributes (Phase B). stimulus_reflex stays declared in the Gemfiles so boot is unaffected.
+parked_on: 2026-11-01
+sponsor: operator

@@ -872,6 +872,22 @@ law_deps:
     after: [magic_color]
 
 plugins:
+  video_recordings:
+    scope: parked_instrument_on_demand
+    boot_load: never
+    external_write: never
+  tap_probes:
+    scope: parked_instrument_on_demand
+    boot_load: never
+    external_write: never
+  design_calibration:
+    scope: parked_instrument_on_demand
+    boot_load: never
+    external_write: never
+  tts_dsp:
+    scope: parked_instrument_on_demand
+    boot_load: never
+    external_write: never
   travel_browser:
     scope: external_travel_transactions
     destinations: public_https_only

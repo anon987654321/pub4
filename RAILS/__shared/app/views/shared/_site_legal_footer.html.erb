@@ -19,11 +19,5 @@
   </p>
   <%= render "shared/affiliate_disclosure" %>
   <% if respond_to?(:email_subscriptions_path) && current_page?(main_app.root_path) %>
-    <%= render "shared/newsletter_signup_popup",
-          city: (respond_to?(:city_name) ? city_name : "Bergen"),
-          artwork_url: Shared::OnboardingArtwork.url(
-            surface: "brgen",
-            city: (respond_to?(:city_name) ? city_name : "Bergen")
-          ) %>
   <% end %>
 </footer>
