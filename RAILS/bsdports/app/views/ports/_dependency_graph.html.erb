@@ -3,8 +3,9 @@
   <% max_depth = graph[:nodes].map { |node| node[:depth] }.max.to_i %>
   <% width = 280 + max_depth * 160 %>
   <% height = [graph[:nodes].size * 56 + 32, 180].max %>
-  <% positions = graph[:nodes].each_with_index.to_h do |node, index| %>
-    <% [node[:id], [40 + node[:depth] * 160, 28 + index * 56]] %>
+  <% positions = {} %>
+  <% graph[:nodes].each_with_index do |node, index| %>
+    <% positions[node[:id]] = [40 + node[:depth] * 160, 28 + index * 56] %>
   <% end %>
   <details class="dep-graph-panel">
     <summary><%= t("ports.graph_heading") %></summary>
