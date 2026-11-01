@@ -31,6 +31,7 @@ module Master
               type = attrs["type"].to_s.downcase
               next if type == "hidden"
               next if %w[submit reset button].include?(type)
+              next if type == "image" && !attrs["alt"].to_s.strip.empty?
 
               controls << [record, tag, match.begin(0), attrs]
             end
