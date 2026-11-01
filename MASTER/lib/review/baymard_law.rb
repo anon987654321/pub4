@@ -116,6 +116,8 @@ module Master
           raise InvalidProfile, "#{id} has no independently written statement" if row["statement"].to_s.strip.empty?
           raise InvalidProfile, "#{id} has no verification method" if row["verification"].to_s.strip.empty?
           raise InvalidProfile, "#{id} has invalid severity" unless %w[error warning].include?(row["severity"].to_s)
+          law_ids = Array(row["law_ids"]).map(&:to_s)
+          raise InvalidProfile, "#{id} must reference at least one canonical Law" if law_ids.empty?
           applies = row["applies_when"].to_s
           raise InvalidProfile, "#{id} has unknown applicability #{applies.inspect}" unless
             %w[all search product cart checkout].include?(applies)
@@ -232,7 +234,9 @@ module Master
         unknown = probe.unknown
         if issues.any?
           rows = issues.map { |issue| finding(app, id, spec, issue) }
-          [assessment(app, id, spec, "fail", "#{issues.size} source defect(s) in #{measured} measured element(s)", measured, rows), rows]
+          detail = "#{issues.size} source defect(s) in #{measured} measured element(s)"
+          detail += "; #{unknown.size} ambiguous generated element(s)" if unknown.any?
+          [assessment(app, id, spec, "fail", detail, measured, rows), rows]
         elsif unknown.any?
           [assessment(app, id, spec, "inconclusive", "#{unknown.size} framework-generated or ambiguous element(s) need rendered inspection", measured, []), []]
         elsif measured.zero?
@@ -247,18 +251,20 @@ module Master
         return [assessment(app, id, spec, "inconclusive", "task evidence not supplied", 0, []), nil] unless row.is_a?(Hash)
 
         status = row["status"].to_s
-        unless %w[pass fail].include?(status) &&
-               row["summary"].is_a?(String) && !row["summary"].strip.empty? &&
-               EVIDENCE_METHODS.include?(row["method"].to_s) &&
+        unless %w[pass fail inconclusive].include?(status) &&
+               row["summary"].is_a?(String) && !row["summary"].strip.empty?
+          return [assessment(app, id, spec, "inconclusive", "task evidence needs a status and an observation summary", 0, []), nil]
+        end
+        if status == "inconclusive"
+          return [assessment(app, id, spec, "inconclusive", row["summary"], 0, []), nil]
+        end
+        unless EVIDENCE_METHODS.include?(row["method"].to_s) &&
                row["participants"].is_a?(Integer) && row["participants"].positive? &&
                valid_artifacts?(row["artifacts"])
           return [assessment(app, id, spec, "inconclusive", "task evidence is incomplete or its artifact hash is invalid", 0, []), nil]
         end
 
         refs = Array(row["artifacts"]).map { |artifact| artifact["path"] }
-        if status == "inconclusive"
-          return [assessment(app, id, spec, "inconclusive", row["summary"], 0, []), nil]
-        end
 
         if status == "pass"
           [assessment(app, id, spec, "pass", row["summary"], 1, [], evidence: refs), nil]
