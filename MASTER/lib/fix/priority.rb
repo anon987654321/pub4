@@ -15,7 +15,7 @@ module Master
                 law_resolver: nil, laws_index: nil, quality: 0.5, tier2: false)
         sev = Master::SEVERITY_RANK.fetch(severity.to_sym, 1)
         law_rank = law_resolver ? law_resolver.precedence_index(law_resolver.law_for(law_id, laws_index:)) : 50
-        # Invert law priority so a earlier law node (more foundational) scores higher.
+        # Earlier constitutional nodes are more foundational, so they score higher.
         law_component = (100 - law_rank).clamp(0, 100)
         density = sev * frequency.to_f * (1.0 + (age_days.to_f / 30.0))
         base = density + (law_component * 0.5) + (quality.to_f * 2.0)
