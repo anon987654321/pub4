@@ -80,6 +80,30 @@ class HotwireSurfacesTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Office"
   end
 
+  test "removing a planned outfit reuses the planner stream and shows the empty state" do
+    outfit = @user.outfits.create!(name: "Office")
+    plan = @user.planned_outfits.create!(outfit: outfit, planned_date: Date.current)
+
+    assert_difference -> { @user.planned_outfits.count }, -1 do
+      delete planned_outfit_path(plan), as: :turbo_stream
+    end
+
+    assert_response :success
+    refute_includes response.body, "Office"
+  end
+
+  test "following and unfollowing reuse one stream with the current follow state" do
+    post follow_user_path(@other), as: :turbo_stream
+    assert_response :success
+    assert @user.following?(@other)
+    assert_includes response.body, unfollow_user_path(@other)
+
+    delete unfollow_user_path(@other), as: :turbo_stream
+    assert_response :success
+    refute @user.following?(@other)
+    assert_includes response.body, follow_user_path(@other)
+  end
+
   test "wearing an item updates counts over turbo stream" do
     item = @user.items.create!(title: "Coat", category: "Outerwear", times_worn: 0)
     post wear_item_path(item), as: :turbo_stream
