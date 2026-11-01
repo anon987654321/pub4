@@ -1,58 +1,63 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-# ApplicableLaws shares law_resolver.rb, where Zeitwerk cannot find it by name.
+require "master"
 require_relative "../lib/ground/law_resolver"
 
-# LawResolver settles two rules that want the same lines by the priority of the
-# law each one serves: lower number wins, a tie keeps the first, and a rule
-# with no declared law is placed by its tier.
+# Conflict resolution follows document order in the canonical law catalogue.
 class TestGroundLawResolver < Minitest::Test
-  LAWS = { "ROBUSTNESS" => { "priority" => 1 }, "DENSITY" => { "priority" => 3 },
-           "ABSTRACTION" => { "priority" => 2 } }.freeze
+  LAWS = {
+    "TRUTHFUL_STATUS" => { "node" => "truthful_status", "statement" => "Truth precedes all." },
+    "ROBUSTNESS" => { "node" => "robustness", "statement" => "Fail safely." },
+    "ABSTRACTION" => { "node" => "abstraction", "statement" => "Keep boundaries sound." },
+    "DENSITY" => { "node" => "density", "statement" => "Remove noise." },
+  }.freeze
+
   INDEX = {
     "SAFE" => { "violates_law" => "ROBUSTNESS" },
     "TERSE" => { "supports_law" => "DENSITY" },
     "LAYERED" => { "tier" => "architecture" },
-    "UNTIERED" => { "tier" => "whatever" },
+    "UNTIERED" => { "supports_law" => "DENSITY" },
   }.freeze
 
-  def resolver = Master::Ground::LawResolver.new(laws_data: { "laws" => LAWS })
+  def resolver = Master::Ground::LawResolver.new(laws_data: LAWS)
 
-  def test_the_rule_serving_the_higher_priority_law_wins_either_way_round
+  def test_rule_serving_the_earlier_constitutional_node_wins_in_either_argument_order
     assert_equal "SAFE", resolver.winner("TERSE", "SAFE", laws_index: INDEX)
     assert_equal "SAFE", resolver.winner("SAFE", "TERSE", laws_index: INDEX)
   end
 
-  def test_a_tie_keeps_the_first_rule
+  def test_equal_node_keeps_the_first_rule
     assert_equal "TERSE", resolver.winner("TERSE", "UNTIERED", laws_index: INDEX)
     assert_equal "UNTIERED", resolver.winner("UNTIERED", "TERSE", laws_index: INDEX)
   end
 
-  def test_tier_places_a_rule_with_no_declared_law
+  def test_tier_fallback_resolves_to_an_existing_parent_node
     assert_equal "ABSTRACTION", resolver.law_for("layered", laws_index: INDEX)
     assert_equal "DENSITY", resolver.law_for("UNTIERED", laws_index: INDEX)
   end
 
-  def test_an_unknown_rule_or_law_ranks_last
+  def test_unknown_rule_or_law_comes_after_the_declared_nodes
     assert_nil resolver.law_for("NOPE", laws_index: INDEX)
-    assert_equal 99, resolver.priority(nil)
+    assert_equal 99, resolver.precedence_index(nil)
     assert_equal "LAYERED", resolver.winner("NOPE", "LAYERED", laws_index: INDEX)
   end
 
-  def test_reads_the_real_laws_from_laws_yml
+  def test_reads_order_from_laws_yml_without_numeric_priority_fields
     real = Master::Ground::LawResolver.new
 
-    assert_equal 1, real.priority("ROBUSTNESS")
-    assert_equal 5, real.priority("ABSTRACTION")
-    assert_equal 6, real.priority("DENSITY")
+    assert_equal 1, real.precedence_index("ROBUSTNESS")
+    assert_equal 5, real.precedence_index("ABSTRACTION")
+    assert_equal 6, real.precedence_index("DENSITY")
+    refute Master.load_yaml(File.join(Master::ROOT, "data", "laws.yml")).values.any? { |row| row.is_a?(Hash) && row.key?("priority") }
   end
 
-  def test_applicable_laws_always_include_the_governing_roots
+  def test_applicable_laws_always_include_all_nine_governing_nodes
     selection = Master::Ground::ApplicableLaws.new.for(path: File.join(Master::ROOT, "lib", "master.rb"))
+    expected = Master::Ground::LawResolver.new.governing_law_ids
 
-    %w[CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS SINGULARITY LINEARITY PROXIMITY
-       ABSTRACTION DENSITY RENDERED_VALUES].each do |law|
+    assert_equal 9, expected.size
+    expected.each do |law|
       assert_includes selection.governing_ids, law
       assert_includes selection.ids, law
     end
