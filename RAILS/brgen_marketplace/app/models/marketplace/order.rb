@@ -265,7 +265,8 @@ class Marketplace::Order < ApplicationRecord
   # emit FOR UPDATE; its writer serialisation plus this reload is the guard
   # against consuming stock twice on concurrent webhook delivery.
   def consume_stock_for_paid!
-    bought = variant_inventory || listing_inventory
+    bought = variant_id ? variant_inventory : listing_inventory
+    raise "variant is unavailable" if variant_id && bought.nil?
     raise "listing is not in stock" if bought && !bought.in_stock?
 
     bought&.consume_stock!(quantity.presence || 1)
