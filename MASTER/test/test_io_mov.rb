@@ -37,6 +37,8 @@ class TestIoMov < Minitest::Test
     assert_equal 3, Mov.count_from("grab us a few new movies")
     assert_equal 5, Mov.count_from("grab us a bunch of new series")
     assert_equal 2, Mov.count_from("download 2 movies")
+    assert_equal 2, Mov.count_from("download us two new movies please")
+    assert_equal 7, Mov.count_from("download seven movies")
   end
 
   def test_the_title_is_what_the_sentence_names

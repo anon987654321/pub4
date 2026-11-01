@@ -194,11 +194,19 @@ module Master
         request
       end
 
+      # Spoken counts: "download us two new movies please" says the number as
+      # a word, and the digit scan never saw it — the request read as three.
+      NUMBER_WORDS = {
+        "one" => 1, "two" => 2, "three" => 3, "four" => 4, "five" => 5,
+        "six" => 6, "seven" => 7, "eight" => 8, "nine" => 9, "ten" => 10,
+      }.freeze
+
       def count_from(value)
         return BUNCH if value.match?(/\b(?:bunch|heap|pile|lots?|many)\b/i)
         return FEW if value.match?(/\b(?:few|some|couple)\b/i)
 
-        (value.match(/\b(\d{1,2})\b/)&.captures&.first&.to_i) || FEW
+        NUMBER_WORDS.find { |word, _| value.match?(/\b#{word}\b/i) }&.last ||
+          (value.match(/\b(\d{1,2})\b/)&.captures&.first&.to_i) || FEW
       end
 
       def title_from(value)
