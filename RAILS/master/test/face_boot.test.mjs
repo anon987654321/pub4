@@ -1042,7 +1042,7 @@ test("constitutional ASCII face is wired as an overlay and a fallback", () => {
   assert.match(fallback, /ascii\.createView\(canvas\)/);
   assert.match(css, /\.master-face-ascii-layer/);
   assert.match(css, /body\[data-face-ascii="1"\]/);
-  assert.match(laws, /face_ascii:[\s\S]*?source: priority_ranked_constitutional_laws/);
+  assert.match(laws, /face_ascii:[\s\S]*?source: ordered_constitutional_nodes/);
   assert.match(laws, /web_file_access: forbidden/);
 });
 
