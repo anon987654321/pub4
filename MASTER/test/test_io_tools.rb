@@ -170,8 +170,8 @@ class TestIoTools < Minitest::Test
   def test_batch_replace_leaves_sacred_paths_alone
     with_root(manifest: true) do |root|
       # A file PathGuard names sacred, not all of data/, so an ordinary data file still changes.
-      assert_includes Master::Io::PathGuard::SACRED_PATHS, "data/SOUL.md"
-      sacred = write(root, "data/SOUL.md", "old\n")
+      assert_includes Master::Io::PathGuard::SACRED_PATHS, "lib/soul.rb"
+      sacred = write(root, "lib/soul.rb", "old\n")
       before = File.read(sacred)
       ordinary = write(root, "lib/x.txt", "old\n")
 
