@@ -52,3 +52,5 @@ cd RAILS/bsdports
 PLATFORM=openbsd BSDPORTS_TREE_PATH=/usr/ports bin/rails ports:import_now
 bin/ci
 ```
+
+Port pages can also open a compact SVG dependency overview, bounded to 60 indexed packages and six levels. The full text tree remains available; this view uses only recorded dependency rows.
