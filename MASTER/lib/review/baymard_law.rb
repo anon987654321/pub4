@@ -265,16 +265,21 @@ module Master
           next unless File.realpath(path).start_with?("#{File.realpath(root)}#{File::SEPARATOR}")
 
           bytes = File.binread(path, MAX_SOURCE_BYTES + 1)
-          next if bytes.bytesize > MAX_SOURCE_BYTES || bytes.include?("\x00")
-
-          content = bytes.force_encoding(Encoding::UTF_8)
-          next unless content.valid_encoding?
+          error = if bytes.bytesize > MAX_SOURCE_BYTES
+                    "source exceeds #{MAX_SOURCE_BYTES} byte audit limit"
+                  elsif bytes.include?("\x00")
+                    "binary content is not a markup or stylesheet measurement"
+                  else
+                    nil
+                  end
+          content = error ? "" : bytes.force_encoding(Encoding::UTF_8)
+          error ||= "source is not valid UTF-8" unless error || content.valid_encoding?
 
           FileRecord.new(
             path:,
             relative: path.delete_prefix("#{@repo_root}/"),
-            content: content.freeze,
-            error: nil,
+            content: error ? "" : content.freeze,
+            error:,
           )
         rescue SystemCallError, EncodingError => e
           FileRecord.new(path:, relative: path.delete_prefix("#{@repo_root}/"), content: "", error: "#{path}: #{e.class}: #{e.message}")
@@ -292,7 +297,10 @@ module Master
         scope = id == "focus_visibility" ? styles : markup
         return assessment(app, id, spec, "inconclusive", "no readable source files in the required scope", 0, []) if scope.empty?
 
-        issues, measured, unknown = public_send("probe_#{id}", scope)
+        probe = SourceAudit.new.call(id, scope)
+        issues = probe.issues
+        measured = probe.measured
+        unknown = probe.unknown
         if issues.any?
           rows = issues.map { |issue| finding(app, id, spec, issue) }
           [assessment(app, id, spec, "fail", "#{issues.size} source defect(s) in #{measured} measured element(s)", measured, rows), rows]
@@ -303,126 +311,6 @@ module Master
         else
           [assessment(app, id, spec, "pass", "#{measured} source element(s) inspected", measured, []), []]
         end
-      end
-
-      def probe_form_control_names(records)
-        controls = []
-        unknown = []
-        records.each do |record|
-          record.content.to_enum(:scan, /<(input|select|textarea)\b[^>]*>/im).each do
-            match = Regexp.last_match
-            tag = match[0]
-            attrs = attributes(tag)
-            type = attrs["type"].to_s.downcase
-            next if type == "hidden"
-            if %w[submit reset button image].include?(type)
-              next if !attrs["value"].to_s.strip.empty? || named?(attrs)
-            end
-
-            controls << [record, tag, match.begin(0), attrs]
-          end
-          unknown << record if record.content.match?(/\b(?:form_with|form_for|fields_for|text_field|email_field|password_field|search_field|select_tag|label_tag)\b/)
-        end
-
-        issues = controls.filter_map do |record, tag, offset, attrs|
-          next if named_control?(attrs, record.content, offset)
-
-          { record:, offset:, message: "Form control has no inspectable label or accessible name: #{tag[0, 100]}" }
-        end
-        [issues, controls.size, unknown.uniq]
-      end
-
-      def probe_image_alternatives(records)
-        images = []
-        unknown = []
-        records.each do |record|
-          record.content.to_enum(:scan, /<img\b[^>]*>/im).each do
-            match = Regexp.last_match
-            attrs = attributes(match[0])
-            images << [record, match[0], match.begin(0), attrs]
-          end
-          unknown << record if record.content.match?(/\bimage_tag\b/)
-        end
-
-        issues = images.filter_map do |record, tag, offset, attrs|
-          next if attrs.key?("alt") && (!attrs["alt"].to_s.empty? || attrs["role"] == "presentation" || attrs["aria-hidden"] == "true")
-          next if %w[presentation none].include?(attrs["role"]) || attrs["aria-hidden"] == "true"
-
-          { record:, offset:, message: "Image has no non-empty alternative text or decorative marker: #{tag[0, 100]}" }
-        end
-        [issues, images.size, unknown.uniq]
-      end
-
-      def probe_interactive_names(records)
-        elements = []
-        unknown = []
-        records.each do |record|
-          record.content.to_enum(:scan, /<(button|a)\b([^>]*)>(.*?)<\/\1\s*>/im).each do
-            match = Regexp.last_match
-            tag_name = match[1].downcase
-            attrs = attributes(match[2])
-            next if tag_name == "a" && attrs["href"].to_s.empty?
-            elements << [record, tag_name, match[0], match[2], match[3], match.begin(0), attrs]
-          end
-        end
-
-        issues = []
-        elements.each do |record, tag_name, tag, _raw_attrs, inner, offset, attrs|
-          next if named?(attrs) || text_name?(inner) || image_name?(inner)
-
-          if inner.include?("<%")
-            unknown << record
-          else
-            issues << { record:, offset:, message: "#{tag_name} has no visible or programmatic accessible name: #{tag[0, 120]}" }
-          end
-        end
-        [issues, elements.size, unknown.uniq]
-      end
-
-      def probe_native_click_targets(records)
-        targets = []
-        records.each do |record|
-          record.content.to_enum(:scan, /<(div|span)\b[^>]*(?:onclick\s*=)[^>]*>/im).each do
-            match = Regexp.last_match
-            attrs = attributes(match[0])
-            next if attrs["role"].to_s == "button" || attrs["role"].to_s == "link"
-            next if attrs.key?("tabindex")
-
-            targets << { record:, offset: match.begin(0), message: "Clickable #{match[1].downcase} has no native interaction semantics, role or tab stop." }
-          end
-        end
-        [targets, targets.size, []]
-      end
-
-      def probe_focus_visibility(records)
-        issues = []
-        measured = 0
-        records.each do |record|
-          next unless record.content.match?(/outline(?:-width|-[\w-]+)?\s*:\s*(?:none|0(?:\s|;|!))/i)
-
-          measured += 1
-          next if record.content.match?(/:focus(?:-visible)?\b/i)
-
-          offset = record.content.to_enum(:scan, /outline(?:-width|-[\w-]+)?\s*:\s*(?:none|0(?:\s|;|!))/i).next && Regexp.last_match.begin(0)
-          issues << { record:, offset: offset || 0, message: "Stylesheet suppresses the focus outline without a visible :focus or :focus-visible replacement." }
-        end
-        [issues, measured, []]
-      end
-
-      def probe_mobile_viewport(records)
-        layouts = records.select { |record| record.relative.match?(%r{/app/views/layouts/}) }
-        return [[], 0, records] if layouts.empty?
-
-        count = layouts.size
-        present = layouts.any? do |record|
-          record.content.match?(/<meta\b(?=[^>]*\bname\s*=\s*["']viewport["'])[^>]*>/im)
-        end
-        issues = if present
-                   []
-                 else
-                   [{ record: layouts.first, offset: 0, message: "Application layout declares no viewport meta element." }]
-                 end
-        [issues, count, []]
       end
 
       def task_assessment(app, id, spec, evidence)
@@ -439,8 +327,12 @@ module Master
         end
 
         refs = Array(row["artifacts"]).map { |artifact| artifact["path"] }
+        if status == "inconclusive"
+          return [assessment(app, id, spec, "inconclusive", row["summary"], 0, []), nil]
+        end
+
         if status == "pass"
-          [assessment(app, id, spec, "pass", row["summary"], 1, refs), nil]
+          [assessment(app, id, spec, "pass", row["summary"], 1, [], evidence: refs), nil]
         else
           issue = Finding.new(
             app: app.name,
@@ -480,7 +372,11 @@ module Master
         end
       end
 
-      def assessment(app, id, spec, status, summary, measured, findings)
+      def assessment(app, id, spec, status, summary, measured, findings, evidence: [])
+        finding_rows = findings.filter_map { |item| item.to_h if item.respond_to?(:to_h) }
+        evidence_refs = evidence + findings.flat_map do |item|
+          item.respond_to?(:evidence) ? Array(item.evidence) : []
+        end
         Assessment.new(
           app: app.name,
           check_id: id,
@@ -489,8 +385,8 @@ module Master
           status:,
           summary:,
           measured:,
-          findings: findings.map(&:to_h),
-          evidence: findings.flat_map { |item| item.respond_to?(:evidence) ? Array(item.evidence) : [] }.uniq,
+          findings: finding_rows,
+          evidence: evidence_refs.uniq,
         )
       end
 
