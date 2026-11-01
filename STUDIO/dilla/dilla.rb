@@ -8664,6 +8664,9 @@ end
 def render_stream(data, options)
   frame, streamer = stream_frame(data, options)
   plan = streamer.plan
+  if (clip = Dilla::SampleFlip.load(options))
+    Dilla::SampleFlip.mix!(frame, clip, chords: plan.names, bpm: plan.bpm, beats_per_chord: plan.beats, seed: plan.seed)
+  end
   frame, report, instances = master_frame(frame, data, options, seed: plan.seed, bpm: plan.bpm, channels: streamer.channels)
   bits = options.fetch(:bits, 16)
   out = options[:out] || (options[:quick] ? "out/quick.wav" : "out/progression_#{plan.index}#{plan.drums ? "_#{Array(plan.drums).join('+')}" : ''}.wav")
@@ -8692,6 +8695,9 @@ def render(data, options) = options[:buffer_only] ? render_section(data, options
 def render_effect_rig_take(data, options)
   plan = plan_pass(data, options)
   buf = render_section(data, options, plan:)
+  if (clip = Dilla::SampleFlip.load(options))
+    Dilla::SampleFlip.mix!([buf], clip, chords: plan.names, bpm: plan.bpm, beats_per_chord: plan.beats, seed: plan.seed)
+  end
   buf = tape_stage(buf, data, options, plan.seed)
   fade = [SAMPLE_RATE / 25, buf.size / 2].min
   fade.times do |i|
@@ -8873,31 +8879,35 @@ def showcase_section(data, options, section, index:, seed:, bpm:)
   }
   if stream
     frame, = stream_frame(data, section_options.reject { |_key, value| value.nil? })
-    return frame
+  else
+    effect_rig = data.fetch("bus_effects").fetch(options[:effect_rig] || section.fetch("effect_rig"))
+    section_options = {
+      **section_options,
+      gate: section_options[:gate] || 0.88,
+      voice: section_options[:voice] || section.fetch("voice"),
+      repeat: section_options[:repeat] || "half_note_pulse",
+      profile: section_options[:profile] || "soft_swing",
+      drums: section_options[:drums] || section.fetch("drums"),
+      kit: section_options[:kit] || "kit_dust",
+      echo: section_options[:echo] || false,
+      drum_sonitex: options[:drum_sonitex] || effect_rig.fetch("drum_sonitex"),
+      drum_sonitex_instances: options[:drum_sonitex_instances] || effect_rig.fetch("drum_sonitex_instances"),
+      drum_tape: options[:drum_tape] || effect_rig.fetch("drum_tape"),
+      drum_vcs: effect_rig.fetch("drum_vcs"),
+      drum_dub_echo: effect_rig.fetch("drum_dub_echo"),
+      drum_crystallizer: effect_rig.fetch("drum_crystallizer"),
+      instrument_dub_echo: effect_rig.fetch("instrument_dub_echo"),
+      instrument_crystallizer: effect_rig.fetch("instrument_crystallizer"),
+      buffer_only: true,
+    }.reject { |_key, value| value.nil? }
+    buffer = render(data, section_options)
+    frame = [buffer, buffer.dup]
   end
-
-  effect_rig = data.fetch("bus_effects").fetch(options[:effect_rig] || section.fetch("effect_rig"))
-  section_options = {
-    **section_options,
-    gate: section_options[:gate] || 0.88,
-    voice: section_options[:voice] || section.fetch("voice"),
-    repeat: section_options[:repeat] || "half_note_pulse",
-    profile: section_options[:profile] || "soft_swing",
-    drums: section_options[:drums] || section.fetch("drums"),
-    kit: section_options[:kit] || "kit_dust",
-    echo: section_options[:echo] || false,
-    drum_sonitex: options[:drum_sonitex] || effect_rig.fetch("drum_sonitex"),
-    drum_sonitex_instances: options[:drum_sonitex_instances] || effect_rig.fetch("drum_sonitex_instances"),
-    drum_tape: options[:drum_tape] || effect_rig.fetch("drum_tape"),
-    drum_vcs: effect_rig.fetch("drum_vcs"),
-    drum_dub_echo: effect_rig.fetch("drum_dub_echo"),
-    drum_crystallizer: effect_rig.fetch("drum_crystallizer"),
-    instrument_dub_echo: effect_rig.fetch("instrument_dub_echo"),
-    instrument_crystallizer: effect_rig.fetch("instrument_crystallizer"),
-    buffer_only: true,
-  }.reject { |_key, value| value.nil? }
-  buffer = render(data, section_options)
-  [buffer, buffer.dup]
+  if options[:sample_flip]
+    Dilla::SampleFlip.mix!(frame, options[:sample_flip], chords: section.fetch("progression"),
+                           bpm:, beats_per_chord: section.fetch("beats_per_chord", 2.0), seed:)
+  end
+  frame
 end
 
 # Render the curated arrangement from the same patches, chord voicer, sequencer, effects,
@@ -8914,6 +8924,8 @@ def best_take(count, seed:)
 end
 
 def render_showcase(data, options)
+  options = options.dup
+  options[:sample_flip] ||= Dilla::SampleFlip.load(options)
   arrangement_path = options.fetch(:arrangement) { File.join(__dir__, "data", "showcase.json") }
   arrangement = JSON.parse(File.read(arrangement_path))
   sections = arrangement.fetch("sections")
