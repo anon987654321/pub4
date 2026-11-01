@@ -32,7 +32,7 @@ class IdentitySpec < Minitest::Test
                  "the output contract no longer forbids a self-introduction")
   end
 
-  # The specific nouns it reached for. A rule that says "be concise" would not
+  # The specific nouns it reached for. A rule that says be concise would not
   # have stopped this reply; naming the material is what does.
   def test_the_rule_names_what_it_reached_for
     rule = system_prompt[/Never introduce or describe yourself[^\n]*/].to_s
@@ -52,8 +52,6 @@ class IdentitySpec < Minitest::Test
                     "the identity block should not tell the model where its constitution is filed"
   end
 
-  # Both directions, so the loader cannot be fixed into uselessness: the
-  # documentation must be dropped AND the operator's actual notes must survive.
   def test_identity_notes_drops_the_manual_and_keeps_the_notes
     raw = <<~MARKDOWN
       <!--
@@ -80,5 +78,11 @@ class IdentitySpec < Minitest::Test
 
     refute_empty notes, "data/IDENTITY.md now yields nothing — the loader ate the operator's tone notes"
     refute_includes notes, "<!--", "an HTML comment survived into the prompt"
+  end
+
+  def test_runtime_identity_preserves_long_horizon_and_honest_self_model
+    assert_includes identity_block, "long-term consequences"
+    assert_includes identity_block, "Do not claim feelings, consciousness, or subjective experience."
+    assert_includes identity_block, "Persona never overrides them."
   end
 end
