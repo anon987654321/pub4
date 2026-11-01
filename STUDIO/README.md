@@ -20,8 +20,8 @@ photographic vocabulary. The tool `replicate/lora/lora.rb` trains and renders a 
 person, and animates a still into a short clip, through the same client.
 
 A small script, `photograph.rb`, turns a sentence into a still and, with `--film`, a short clip.
-The source still and clip live in `~/ideas`; the returned graded still lives in the dated render
-directory owned by `output_paths.rb`.
+Its implementation lives in `photograph/`; the source still and clip live in `~/ideas`, and
+the returned graded still lives in the dated render directory owned by `output_paths.rb`.
 
 MASTER governs these tools and reaches each through its canonical path
 `MASTER/tools/<tool>/<tool>.rb`. Those paths are compatibility symlinks into this tree, and new
@@ -73,5 +73,3 @@ and `rake replicate:schema_snapshot` stores a dated local evidence snapshot. The
 exit 3 rather than succeeding without measuring a schema. Run them only in an environment
 where provider access is authorized; a source-only check or historical snapshot is not live
 schema proof.
-
-The folder `visual/` holds the generator behind `photograph.rb`.
