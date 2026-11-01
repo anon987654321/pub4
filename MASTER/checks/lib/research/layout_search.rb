@@ -13,10 +13,15 @@ module Deploy
     RAILS = File.join(ROOT, "RAILS")
 
     # Views live in the brgen_marketplace engine, a sibling of brgen. The
-    # marketplace component styles live in the host entrypoint's feature partial.
+    # marketplace component styles live in the host entrypoint: the 2026-10-28
+    # consolidation folded brgen's `_brgen_*.scss` feature partials into
+    # application.scss between `// ===== module:` banners, cascade order kept,
+    # so the check reads the `brgen_*` module sections out of that one sheet.
     ENGINE = File.join(RAILS, "brgen_marketplace")
     CARD = File.join(ENGINE, "app/views/marketplace/listings/_card.html.erb")
-    BRGEN_FEATURE_STYLES = File.join(RAILS, "brgen/app/assets/stylesheets")
+    BRGEN_STYLESHEET = File.join(RAILS, "brgen/app/assets/stylesheets/application.scss")
+    MODULE_OPEN = /\A\/\/ ={5,} module: ([a-z0-9_]+)\s*\z/.freeze
+    MODULE_CLOSE = /\A\/\/ ={5,} \/module: /.freeze
     # The #navBar markup is the storefront header marketplace shares with takeaway.
     NAV = File.join(RAILS, "brgen/app/views/shared/_storefront_nav_bar.html.erb")
     SEARCH = File.join(RAILS, "__shared/app/assets/stylesheets/_search_yep.scss")
@@ -41,16 +46,15 @@ module Deploy
     private
 
     def load_ctx
-      feature_styles = Dir.glob(File.join(BRGEN_FEATURE_STYLES, "_brgen_*.scss")).sort
       missing = [CARD, NAV, SEARCH].reject { |p| File.file?(p) }
-      missing << File.join(BRGEN_FEATURE_STYLES, "_brgen_*.scss") if feature_styles.empty?
+      missing << BRGEN_STYLESHEET unless File.file?(BRGEN_STYLESHEET)
       if missing.any?
         missing.each { |p| @result.fail("layout_search: missing #{p.sub(RAILS + '/', '')}") }
 
         return
       end
       if cards_css.empty?
-        @result.fail("layout_search: Brgen feature styles have no .deal-card rule")
+        @result.fail("layout_search: brgen_* modules in application.scss have no .deal-card rule")
         return
       end
 
@@ -67,9 +71,24 @@ module Deploy
                                         .map { |rule| "#{rule.selector} { #{rule.body} }" }.join("\n")
     end
 
+    # The card rules live in the brgen_* module sections of the merged host
+    # sheet (operator 2026-10-28): slice them out by banner, cascade order
+    # kept, so the detector reads the same cascade the page ships. Modules
+    # outside the former `_brgen_*.scss` glob (post_gallery, local_activity,
+    # vertical_promo) stay excluded, as before the merge.
     def feature_css_source
-      Dir.glob(File.join(BRGEN_FEATURE_STYLES, "_brgen_*.scss")).sort
-         .map { |path| File.read(path) }.join("\n")
+      kept = []
+      inside = false
+      File.foreach(BRGEN_STYLESHEET) do |line|
+        if (open_m = line.match(MODULE_OPEN))
+          inside = open_m[1].start_with?("brgen_")
+        elsif line.match?(MODULE_CLOSE)
+          inside = false
+        elsif inside
+          kept << line
+        end
+      end
+      kept.join
     end
 
     # The card's media slot lives in marketplace/_card_media.html.erb since the
