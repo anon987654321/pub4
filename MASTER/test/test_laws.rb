@@ -15,11 +15,14 @@ class TestAxioms < Minitest::Test
     assert @laws.kernel.key?("PRESERVE_FIRST")
   end
 
-  def test_philosophy_sorted_by_priority
+  def test_philosophy_preserves_canonical_document_order_without_priority_fields
     items = @laws.philosophy
-    refute items.empty?
-    priorities = items.map { |a| a["priority"].to_i }
-    assert_equal priorities.sort, priorities
+    refute_empty items
+
+    ids = items.map { |law| law.fetch("id") }
+    expected = Master.law_entries(root: Master::ROOT).map { |law| law.fetch("id") }
+    assert_equal expected, ids
+    refute items.any? { |law| law.key?("priority") }
   end
 
   def test_kernel_block_formatted
@@ -61,10 +64,8 @@ class TestAxioms < Minitest::Test
       write_laws = lambda do |name|
         File.write(File.join(data, "laws.yml"), {
           "TEMP_RULE" => {
-            "priority" => 1,
-            "statement" => "temporary",
-            "tier" => "style",
-            "name" => name,
+            "root" => "no_surplus",
+            "statement" => name,
           },
         }.to_yaml)
       end
@@ -115,25 +116,30 @@ class TestAxioms < Minitest::Test
     Dir.mktmpdir("rules_soul_refresh") do |root|
       data = File.join(root, "data")
       FileUtils.mkdir_p(data)
-      File.write(File.join(data, "laws.yml"), "{}\n")
+      File.write(File.join(data, "laws.yml"), {
+        "PRESERVE_FIRST" => { "parent" => "STEWARDSHIP", "statement" => "first preservation contract" },
+        "SECOND_PRESERVE" => { "parent" => "STEWARDSHIP", "statement" => "second preservation contract" },
+        "STEWARDSHIP" => { "root" => "stewardship", "statement" => "preserve what works" },
+        "TRUTHFUL_STATUS" => { "node" => "truthful_status", "statement" => "report evidence" },
+        "SACRED_AUTHORSHIP" => { "root" => "least_authority", "statement" => "protect paths", "protected_paths" => ["data/laws.yml"] },
+      }.to_yaml)
       soul = File.join(data, "soul.yml")
-      File.write(soul, "absolute:\n  golden_law: first\n")
+      File.write(soul, "references:\n  golden_law: PRESERVE_FIRST\n")
 
       laws = Master::Ground::Laws.new(root:)
-      assert_equal "first", laws.soul_data.fetch("absolute").fetch("golden_law")
+      assert_equal "PRESERVE_FIRST", laws.soul_data.fetch("references").fetch("golden_law")
 
-      File.write(soul, "absolute:\n  golden_law: second\n")
+      File.write(soul, "references:\n  golden_law: SECOND_PRESERVE\n")
 
       assert_equal "second", laws.soul_data.fetch("absolute").fetch("golden_law")
       assert_equal "second", laws.constitution.fetch("golden_law")
     end
   end
 
-  # soul.yml absolute.anti_simulation is the one source; a shadow copy in
-  # voice.yml would drift from it.
-  def test_constitution_carries_anti_simulation_from_soul
+  # The anti-simulation evidence contract belongs to TRUTHFUL_STATUS in laws.yml.
+  def test_constitution_carries_anti_simulation_from_truthful_status_law
     anti = @laws.constitution["anti_simulation"]
-    refute_nil anti, "soul absolute.anti_simulation must reach the constitution accessor"
+    refute_nil anti, "TRUTHFUL_STATUS must own its anti-simulation evidence contract"
     assert_equal %w[will would could might], anti["forbidden"]
     assert anti.dig("require_evidence", "completion"), "evidence contract must survive"
   end
