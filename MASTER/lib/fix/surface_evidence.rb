@@ -7,6 +7,7 @@ require "rbconfig"
 require "set"
 require "time"
 require "yaml"
+require_relative "../io/process_spawn"
 
 module Master
   module Fix
@@ -1042,7 +1043,7 @@ module Master
         stderr = ""
         status = nil
 
-        Open3.popen3(ENV.to_h.merge(env.transform_keys(&:to_s).transform_values(&:to_s)), *command, chdir:, pgroup: true) do |stdin, out, err, wait_thr|
+        Open3.popen3(Master::Io::ProcessSpawn.environment(ENV.to_h.merge(env.transform_keys(&:to_s).transform_values(&:to_s))), *command, chdir:, pgroup: true) do |stdin, out, err, wait_thr|
           stdin.close
           stdout_reader = Thread.new { drain_output(out) }
           stderr_reader = Thread.new { drain_output(err) }
