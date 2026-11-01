@@ -156,16 +156,19 @@ actionable root-backlog item. Keep them open until the relevant evidence exists.
   capture only actual command output (no invented dmesg). Publish the GIF/MP4 and
   screenshots according to the generated-media policy. Do not re-track the ignored
   MP4/WAV without a separate storage decision.
-- [ ] **Dilla local sample-flip interface:** `1_BACKUP.LOG` records a working
-  `SAMPLE_LOOP` / `SAMPLE_LOOP_VOL` path and an explicit request to save it in
-  `STUDIO/dilla`; the current `dilla.rb` and README have no sample-loop ingestion
-  flags. Reconcile this as a bounded, deterministic local-file sample/chop feature
-  with attenuation and regression coverage, using only operator-supplied,
-  rights-cleared audio. Do not reintroduce remote YouTube acquisition or the
-  previous large sample render: a later instruction explicitly deleted
-  `demo.mp3` and related generated files. Progression and patch rotation already
-  exist in the current shuffle-bag/showcase implementation and should not be
-  duplicated.
+- [ ] **Dilla local sample-flip interface — implementation landed; validation open:**
+  the bounded local-file path is now in `STUDIO/dilla/dilla.rb`: `SAMPLE_LOOP`,
+  `SAMPLE_LOOP_VOL`, `SAMPLE_LOOP_WEIGHT`, plus CLI controls for volume, weight
+  and slice count. It decodes at most 24 seconds through local FFmpeg, estimates
+  slice pitch classes, selects chord-aware chops deterministically, and mixes
+  before the render's final tape/master stage. Three regression tests and the
+  operating instructions are committed. Still run `STUDIO/test/dilla_test.rb`
+  under pinned Ruby 4.0.5, review an actual cleared local source by ear, and verify
+  the 0.42 level leaves voice room before marking complete. The source audio must
+  remain operator-supplied and rights-cleared; do not restore remote YouTube
+  acquisition, `demo.mp3`, or other deleted generated renders. Progression and
+  patch rotation already exist in the shuffle-bag/showcase system; do not duplicate
+  them.
 - [ ] **Dilla README visual hero:** an older direct request asks for inline
   GIF/MP4 media. `STUDIO/dilla/README.md` currently documents offline MP4
   generation but contains no inline hero or linked render. Generate a fresh
