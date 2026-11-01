@@ -12,6 +12,7 @@ module Master
     class Invalid < StandardError; end
 
     SCOPE_FIELDS = %w[applies_to domain path path_pattern exclude].freeze
+    LEGACY_RANK_FIELDS = %w[priority tier].freeze
     SEVERITIES = %w[info warning error critical veto].freeze
     RESOLUTIONS = %w[automatic review never].freeze
     METADATA_PREFIXES = %w[KIND_ RATCHET_ LINT_ META_].freeze
@@ -42,6 +43,7 @@ module Master
         validate_vocabulary!(document, rows)
         validate_resolutions!(rows)
         validate_special_metadata!(rows)
+        validate_protected_paths!(rows)
         true
       end
 
@@ -57,17 +59,22 @@ module Master
       end
 
       def validate_precedence_nodes!(rows)
-        graph_nodes = Master::Soul.invariant_order
         declared = rows.filter_map { |row| row["node"]&.to_s }
-        raise Invalid, "each constitutional invariant node must appear exactly once" unless declared == graph_nodes
+        unless declared.size == 9 && declared.uniq == declared &&
+               declared.all? { |node| node.match?(/\\A[a-z][a-z0-9_]*\\z/) }
+          raise Invalid, "laws.yml must declare exactly nine unique, ordered constitutional nodes"
+        end
       end
 
       def validate_relationships!(rows)
         index = rows.to_h { |row| [row.fetch("id"), row] }
         rows.each do |row|
           id = row.fetch("id")
-          scopes = SCOPE_FIELDS & row.keys.map(&:to_s)
+          fields = row.keys.map(&:to_s)
+          scopes = SCOPE_FIELDS & fields
           raise Invalid, "#{id} contains forbidden scope field(s): #{scopes.join(', ')}" unless scopes.empty?
+          legacy = LEGACY_RANK_FIELDS & fields
+          raise Invalid, "#{id} contains retired ranking field(s): #{legacy.join(', ')}" unless legacy.empty?
 
           parent = row["parent"]
           root = row["root"]
@@ -127,6 +134,23 @@ module Master
             raise Invalid, "#{id} is automatic but names no proof fixture"
           end
         end
+      end
+
+      def validate_protected_paths!(rows)
+        entry = rows.find { |row| row.fetch("id") == "SACRED_AUTHORSHIP" }
+        raise Invalid, "SACRED_AUTHORSHIP is required" unless entry
+
+        paths = entry["protected_paths"]
+        unless paths.is_a?(Array) && !paths.empty? &&
+               paths.all? { |path| path.is_a?(String) && !path.strip.empty? &&
+                 !path.start_with?("/") && !path.split("/").include?("..") } &&
+               paths.uniq == paths
+          raise Invalid, "SACRED_AUTHORSHIP.protected_paths must be unique safe relative paths"
+        end
+
+        required = %w[data/laws.yml data/soul.yml lib/soul.rb]
+        missing = required - paths
+        raise Invalid, "protected paths omit constitutional source(s): #{missing.join(', ')}" unless missing.empty?
       end
 
       def validate_special_metadata!(rows)
