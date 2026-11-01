@@ -26,7 +26,9 @@ class LayoutDriftAuditTest < Minitest::Test
   def test_feed_list_scanner_reports_missing_list_role
     source = '<ul class="feed_list"><li>one</li></ul>'
 
-    assert_equal 1, audit.feed_list_violations(source).length
+    violations = audit.feed_list_violations(source)
+    assert_equal 1, violations.length
+    assert_equal 1, violations.first.last
   end
 
   def test_feed_list_scanner_accepts_role_before_dynamic_attributes
