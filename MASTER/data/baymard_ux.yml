@@ -6,6 +6,7 @@
 schema: 1
 research:
   provider: Baymard Institute
+  authority_law: EXTERNAL_RESEARCH_IS_EVIDENCE_NOT_AUTHORITY
   methodology_url: https://baymard.com/research/methodology
   benchmark_url: https://baymard.com/ux-benchmark
   reviewed_on: "2026-11-01"
