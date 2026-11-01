@@ -200,14 +200,14 @@ time {
   font-variant-numeric: tabular-nums;
 }
 
-/* H · list perf — taller intrinsic for media cards to reduce scroll jump */
-.feed-post,
+/* H · list perf — taller intrinsic for media cards to reduce scroll jump.
+   (.feed-post left with the markup that named it; the card families remain.) */
 .item-card {
   content-visibility: auto;
   contain-intrinsic-size: auto 160px;
 }
 .channel-card,
-.feed-post:has(.feed-card-media),
+.feed-card:has(.feed-card-media),
 .flash-alert,
 .toast,
 .nearby-alerts > * {

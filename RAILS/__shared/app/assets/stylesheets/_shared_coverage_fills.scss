@@ -53,31 +53,9 @@
   font-variant-numeric: tabular-nums;
 }
 
-// Post card — the shared card both brgen and amber render.
-.feed-post-title {
-  margin: 0;
-  font-size: var(--font-size);
-  font-weight: var(--weight-bold);
-  line-height: var(--line-height);
-}
-
-.feed-post-time {
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
-/* How far away a post was written. Same weight as the timestamp beside it,
-   because it is the same kind of fact — when and where, both metadata, neither
-   competing with what was said. tabular-nums so a column of "2 km" and "12 km"
-   does not jitter as the feed scrolls. */
-.feed-post-place {
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
-.feed-post-media {
-  margin-block-start: var(--space-2);
-}
+// The feed-post-title/time/place/media fills are gone with the markup that
+// named them: posts/show and the feeds settled on feed-post-body/byline/
+// meta/prose and feed-post-show/actions, so these four had no reader left.
 
 // Comment row.
 .comment-actions {
