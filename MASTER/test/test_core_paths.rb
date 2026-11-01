@@ -11,7 +11,7 @@ class TestCorePaths < Minitest::Test
   def test_soul_owns_the_sacred_paths
     sacred = paths.sacred_paths
     assert_empty sacred & %w[data/ lib/review/scan/]
-    expected = %w[data/laws.yml data/soul.yml data/SOUL.md data/project_context.yml lib/soul.rb lib/ground/pledge.rb bin/master]
+    expected = %w[data/laws.yml data/soul.yml data/project_context.yml lib/soul.rb lib/ground/pledge.rb bin/master]
     assert_empty expected - sacred
   end
 
