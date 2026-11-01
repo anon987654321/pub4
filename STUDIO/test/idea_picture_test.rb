@@ -126,6 +126,14 @@ class TestStudioOutputPaths < Minitest::Test
 end
 
 class TestIdeaPictureOutput < Minitest::Test
+  def test_idea_picture_has_one_canonical_implementation
+    root = File.expand_path("..", __dir__)
+    canonical = File.join(root, "photograph", "idea_picture.rb")
+    duplicate = File.join(root, "generators", "idea_picture.rb")
+
+    assert File.file?(canonical)
+    refute File.file?(duplicate), "keep the implementation beside its photograph entrypoint"
+  end
   def test_grade_returns_the_render_beside_the_still_not_the_still_itself
     Dir.mktmpdir do |dir|
       source = File.join(dir, "portrait source.jpg")
