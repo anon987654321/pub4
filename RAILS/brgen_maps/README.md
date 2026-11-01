@@ -8,9 +8,13 @@ Maps is a mountable Rails engine served at `maps.<city>`, for instance `maps.brg
 and the city comes from the apex. The recipe for a vertical is in `RAILS/brgen/README.md`, and
 the topology is in `RAILS/brgen/AGENTS.md`.
 
-The home page draws the map on a MapLibre canvas, with tiles from OpenFreeMap, and places the
-city's points on it. The places page lists them, with a live search and a filter by kind, and
-answers JSON to the same query for the map. A place page shows the recent check-ins and the
+The home page draws the map on a MapLibre canvas, with tiles from OpenFreeMap. Its GeoJSON
+source clusters nearby places, events and stories at city scale, expands a cluster on selection,
+and draws individual points as GPU map layers at street scale. Search updates that source rather
+than rebuilding a DOM marker for every result. Marker and cluster colours resolve from the Maps
+surface tokens; the Positron basemap stays deliberately quiet beneath the city data. The places
+page remains the complete list/search alternative, with a filter by kind, and answers JSON to the
+same query for the map. A place page shows the recent check-ins and the
 places nearby. A signed-in visitor, a soft guest included, can check in with a short note.
 
 The engine owns routes, controllers and views only. `Place` and `PlaceCheckIn` stay in brgen's
