@@ -3349,6 +3349,73 @@ class DillaTest < Minitest::Test
     end
   end
 
+  def test_sample_flip_decodes_local_audio_and_detects_chord_tones
+    Dir.mktmpdir do |dir|
+      source = File.join(dir, "operator-loop.wav")
+      File.binwrite(source, "local source placeholder")
+      program = <<~'RUBY'
+        rate = 44_100
+        frames = rate * 8
+        samples = Array.new(frames * 2) do |index|
+          frame = index / 2
+          hz = frame < frames / 2 ? 440.0 : 523.251
+          Math.sin(2.0 * Math::PI * hz * frame / rate) * 0.25
+        end
+        STDOUT.binmode
+        STDOUT.write(samples.pack("e*"))
+      RUBY
+
+      with_fake_ffmpeg(dir, program) do
+        clip = Dilla::SampleFlip.load(sample_loop: source, sample_loop_slices: 24,
+                                      sample_loop_volume: 0.42, sample_loop_weight: 1.0)
+        assert_equal 24, clip.slices.length
+        assert_equal 2, clip.channels.length
+        assert_equal 44_100 * 8, clip.channels.first.length
+        assert_in_delta 0.42, clip.gain, 1e-9
+        assert clip.slices.first(10).all? { |slice| slice.pitch_class == 9 }, "first source half should identify as A"
+        assert clip.slices.last(10).all? { |slice| slice.pitch_class == 0 }, "second source half should identify as C"
+        chosen = Dilla::SampleFlip.choose_slice(clip, Dilla::SampleFlip.chord_pitch_classes("C"), Random.new(7))
+        assert_equal 0, chosen.pitch_class
+      end
+    end
+  end
+
+  def test_sample_flip_mix_is_seeded_stereo_and_mono_safe
+    sample = Array.new(SAMPLE_RATE * 2) { |index| 0.2 * Math.sin(2.0 * Math::PI * 440 * index / SAMPLE_RATE) }
+    slices = [
+      Dilla::SampleFlip::Slice.new(start: 0, frames: SAMPLE_RATE, pitch_class: 9),
+      Dilla::SampleFlip::Slice.new(start: SAMPLE_RATE, frames: SAMPLE_RATE, pitch_class: 0),
+    ]
+    clip = Dilla::SampleFlip::Clip.new(channels: [sample, sample], slices:, gain: 0.42, path: "fixture")
+    left = Array.new(2) { Array.new(SAMPLE_RATE * 4, 0.0) }
+    right = Array.new(2) { Array.new(SAMPLE_RATE * 4, 0.0) }
+
+    Dilla::SampleFlip.mix!(left, clip, chords: %w[C Am], bpm: 60, beats_per_chord: 1, seed: 91)
+    Dilla::SampleFlip.mix!(right, clip, chords: %w[C Am], bpm: 60, beats_per_chord: 1, seed: 91)
+    assert_equal left, right
+    assert_operator left.flatten.map(&:abs).max, :>, 0.01
+
+    mono = [Array.new(SAMPLE_RATE, 0.0)]
+    Dilla::SampleFlip.mix!(mono, clip, chords: ["C"], bpm: 60, beats_per_chord: 1, seed: 91)
+    assert_operator mono.first.map(&:abs).max, :>, 0.01
+  end
+
+  def test_sample_flip_refuses_urls_bad_levels_and_endless_playback
+    assert_raises(ArgumentError) { Dilla::SampleFlip.load(sample_loop: "https://example.invalid/audio.wav") }
+    Dir.mktmpdir do |dir|
+      source = File.join(dir, "local.wav")
+      File.binwrite(source, "local source placeholder")
+      assert_raises(ArgumentError) do
+        Dilla::SampleFlip.load(sample_loop: source, sample_loop_volume: 1.01)
+      end
+      _stdout, stderr, status = Open3.capture3(
+        RbConfig.ruby, SCRIPT, "--sample-loop", source, "--play", chdir: DIR
+      )
+      refute status.success?
+      assert_match(/sample flips require a finite render/, stderr)
+    end
+  end
+
   def test_video_export_terminates_a_timed_out_encoder_and_keeps_source_audio
     Dir.mktmpdir do |dir|
       audio = File.join(dir, "source.wav")
