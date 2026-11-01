@@ -51,6 +51,13 @@ APPLICATION_IS_UNIFORM_unrecorded_finding:
   statement: "A finding made and not emitted."
   resolution: never
 
+APPLICATION_IS_UNIFORM_legacy_reach_is_not_global:
+  parent: APPLICATION_IS_UNIFORM
+  statement: "The executable Law DSL still consumes language, surface and path reach filters from law_runtime.yml, so universal application to every file is not yet proven."
+  resolution: review
+  migration: "Move per-Law reach metadata into this catalogue or remove the exclusions; update Law::Definition, preflight, registry audit and fixtures together."
+
+
 APPLICATION_IS_UNIFORM_constitution_self_governed:
   parent: APPLICATION_IS_UNIFORM
   statement: "The law catalogue or its validator is treated as exempt from the laws it declares."
@@ -225,6 +232,13 @@ SINGULARITY_configuration_shape:
   parent: SINGULARITY
   statement: "A config that reads as a program."
   resolution: review
+
+SINGULARITY_legacy_law_metadata_is_a_second_source:
+  parent: SINGULARITY
+  statement: "Law::Definition still reads executable severity, lifecycle, autofix and reach metadata from law_runtime.yml#law_catalogue instead of this flat catalogue."
+  resolution: review
+  migration: "This is a live migration boundary, not a harmless compatibility alias. Move the metadata and its defaults here, then reconcile all DSL, preflight, audit, boot receipt and test readers before retiring the legacy section."
+
 
 SINGULARITY_magic_color:
   parent: SINGULARITY
