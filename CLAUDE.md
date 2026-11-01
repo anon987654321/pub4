@@ -8,7 +8,7 @@ Before planning or taking action, load MASTER's canonical context in this order:
 
 1. Read `MASTER/data/laws.yml`. It is the sole normative constitution.
 2. Read `MASTER/data/soul.yml` as subordinate identity, voice and delivery configuration.
-3. For unfamiliar or broad work, run `ruby MASTER/tools/agent_context.rb --tree` and use its output to establish the repository's structure and relevant context.
+3. For unfamiliar or broad work, run `ruby MASTER/tools/agent_context.rb --tree` and use its output to establish the repository's structure and relevant context. Use `ruby MASTER/tools/agent_context.rb --json` when a harness needs the machine-readable authority, task-contract schema and capability snapshot.
 4. Read the applicable flat Law records in `MASTER/data/laws.yml`, then inspect the relevant implementations and tests under `MASTER/law/`. A declared adapter or fixture is not proof that the detector ran or the product is excellent. The nine invariant nodes are ordered in the Law catalogue itself; do not invent a numeric priority or second precedence graph.
 5. Read `MASTER/AGENTS.md` for the repository workflow and task guidance before editing.
 
@@ -28,7 +28,9 @@ When a canonical setting changes, change its owning source and follow MASTER's d
 
 ## Task-specific context
 
-After loading MASTER, read the relevant source files, tests, and local documentation for the requested work.
+After loading MASTER, define the task's intent, repository-relative scope, preservation dimensions and proof before editing. The canonical schema is `MASTER/data/task_contract.yml`; consult `MASTER/docs/task-contracts.md` and the generated `MASTER/docs/task-map.md`. Editorial work is reviewed separately under `MASTER/docs/editorial-quality.md`.
+
+Read the relevant source files, tests, and local documentation for the requested work.
 
 Use the applicable tree-level contract when entering a governed subtree, including `RAILS/CLAUDE.md`, `RAILS/master/CLAUDE.md`, or `OPENBSD/CLAUDE.md`. For STUDIO work, follow the relevant project README and source-level contracts.
 

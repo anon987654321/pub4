@@ -1,0 +1,18 @@
+schema: 1
+required_fields: [intent, scope, preserve, proof]
+common_proof: [baseline_hashes, path_scoped_diff, law_assessment]
+proof_types: [baseline_hashes, path_scoped_diff, law_assessment, focused_tests, full_suite, rendered_evidence, runtime_evidence, accessibility_review, source_citations, human_review]
+preservation_dimensions: [visual_identity, layout, structure, assets, behavior, accessibility, public_contracts, operator_owned_values, product_identity, content_semantics, data_semantics]
+intents:
+  content_only:
+    description: Change only the requested words or data; retain presentation and structure.
+    must_preserve: [visual_identity, layout, structure, assets, behavior, accessibility, public_contracts, operator_owned_values]
+  content_and_structure:
+    description: Content and document structure may change; retain visual identity and behavior.
+    must_preserve: [visual_identity, assets, behavior, accessibility, public_contracts, operator_owned_values]
+  functional_change:
+    description: Behavior may change inside scope; retain visual identity and data meaning.
+    must_preserve: [visual_identity, layout, accessibility, public_contracts, operator_owned_values, data_semantics]
+  redesign:
+    description: Presentation may change; retain product identity, meaning and accessibility.
+    must_preserve: [product_identity, content_semantics, data_semantics, accessibility, public_contracts, operator_owned_values]

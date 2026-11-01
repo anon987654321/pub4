@@ -4,7 +4,7 @@
 
 # MASTER/lib map
 
-781 files under `lib/`, sorted. Per file: the constants it declares
+784 files under `lib/`, sorted. Per file: the constants it declares
 (nesting approximated from two-space indentation) and the files under
 `lib/` it require_relatives. The boot chain this map serves:
 `bin/master` → `lib/boot/master_boot.rb` → `bootstrap_container` →
@@ -795,6 +795,10 @@ Declares: `Master`, `Master::Finance`, `Master::Finance::Tradedoubler`, `Master:
 Declares: `Master`, `Master::Fix`, `Master::Fix::ArchitectureExploration`
 Requires: `fix/ux_refinement_catalog`
 
+## `lib/fix/artifact_preservation.rb`
+
+Declares: `Master`, `Master::Fix`, `Master::Fix::ArtifactPreservation`, `Master::Fix::ArtifactPreservation::Violation`
+
 ## `lib/fix/attempt.rb`
 
 Declares: `Master`, `Master::Fix`, `Master::Fix::Attempt`
@@ -1031,6 +1035,7 @@ Declares: `Master`, `Master::Fix`, `Master::Fix::FixLoop`, `Master::Fix::FixLoop
 ## `lib/fix/fix_plan.rb`
 
 Declares: `Master`, `Master::Fix`, `Master::Fix::FixPlan`
+Requires: `fix/task_contract`
 
 ## `lib/fix/fix_trace.rb`
 
@@ -1099,7 +1104,7 @@ Requires: `fix/kernel/lifecycle_journal`, `fix/kernel/lifecycle`
 ## `lib/fix/kernel/convergence_adapter.rb`
 
 Declares: `Master`, `Master::Fix`, `Master`, `Master::Fix`, `Master::Fix::Kernel`, `Master::Fix::Kernel::ConvergenceAdapter`
-Requires: `fix/kernel`, `fix/final_cleanup`, `fix/run_journal`, `fix/scanner`, `fix/fix_plan`, `fix/reachability`, `fix/instrument_check`, `fix/fix_loop/committer`, `fix/fix_loop/council_round`, `fix/fix_loop/llm_router`, `fix/fix_loop/file_collector`, `fix/fix_loop/order`, `fix/fix_loop/pass_runner`, `fix/check_focus`, `fix/work_lane`, `fix/visual_lane_world`, `fix/fix_loop/convergence_config`, `fix/fix_loop/background_runner`, `fix/fix_loop/pass_runner_builder`, `fix/fix_loop/completion`, `fix/fix_loop/lifecycle`, `fix/fix_loop/pass_execution`, `fix/outcome_learning`, `fix/visual_pass`, `fix/opportunity_pass`, `fix/rename_sweep`, `fix/severity`, `fix/violation`, `fix/wishlist`, `fix/outcome_policy`, `fix/protocol`, `fix/architecture_exploration`, `fix/transformation_plan`, `review/reference_graph`, `fix/research_pass`, `fix/convergence_discipline`, `fix/reflection`, `fix/run_budget`, `fix/run_ledger`, `boot/paths`
+Requires: `fix/kernel`, `fix/final_cleanup`, `fix/run_journal`, `fix/scanner`, `fix/fix_plan`, `fix/task_contract`, `fix/reachability`, `fix/instrument_check`, `fix/fix_loop/committer`, `fix/fix_loop/council_round`, `fix/fix_loop/llm_router`, `fix/fix_loop/file_collector`, `fix/fix_loop/order`, `fix/fix_loop/pass_runner`, `fix/check_focus`, `fix/work_lane`, `fix/visual_lane_world`, `fix/fix_loop/convergence_config`, `fix/fix_loop/background_runner`, `fix/fix_loop/pass_runner_builder`, `fix/fix_loop/completion`, `fix/fix_loop/lifecycle`, `fix/fix_loop/pass_execution`, `fix/outcome_learning`, `fix/visual_pass`, `fix/opportunity_pass`, `fix/rename_sweep`, `fix/severity`, `fix/violation`, `fix/wishlist`, `fix/outcome_policy`, `fix/protocol`, `fix/architecture_exploration`, `fix/transformation_plan`, `review/reference_graph`, `fix/research_pass`, `fix/convergence_discipline`, `fix/reflection`, `fix/run_budget`, `fix/run_ledger`, `boot/paths`
 
 ## `lib/fix/kernel/lifecycle.rb`
 
@@ -1222,7 +1227,7 @@ Declares: `Master`, `Master::Fix`, `Master::Fix::ProposeTree`
 ## `lib/fix/protocol.rb`
 
 Declares: `Master`, `Master::Fix`, `Master::Fix::Protocol`
-Requires: `fix/outcome_policy`, `ai/orientation`, `fix/protocol_detector_matrix`, `fix/four_stream_assessment`, `fix/architecture_exploration`, `fix/ux_refinement_catalog`, `ground/law_resolver`
+Requires: `fix/outcome_policy`, `ai/orientation`, `fix/protocol_detector_matrix`, `fix/four_stream_assessment`, `fix/architecture_exploration`, `fix/ux_refinement_catalog`, `ground/law_resolver`, `fix/task_contract`, `fix/artifact_preservation`
 
 ## `lib/fix/protocol_detector_matrix.rb`
 
@@ -1502,6 +1507,10 @@ Requires: `fix/transaction`, `fix/write_guard`
 ## `lib/fix/task_steward.rb`
 
 Declares: `Master`, `Master::Fix`, `Master::Fix::TaskSteward`
+
+## `lib/fix/task_contract.rb`
+
+Declares: `Master`, `Master::Fix`, `Master::Fix::TaskContract`, `Master::Fix::TaskContract::Invalid`
 
 ## `lib/fix/taste_memory.rb`
 
@@ -2495,6 +2504,10 @@ Requires: `fix/routes_manifest`, `io/exec`
 
 Declares: `Operator`, `Operator::CapabilityGraph`
 Requires: `cli/routing/provider_health`, `io/exec`
+
+## `lib/operator/capability_manifest.rb`
+
+Declares: `Operator`, `Operator::CapabilityManifest`
 
 ## `lib/operator/check_brief.rb`
 

@@ -4,6 +4,7 @@ require "digest"
 require "json"
 require "rbconfig"
 require "time"
+require_relative "task_contract"
 
 module Master
   module Fix
@@ -49,13 +50,13 @@ module Master
                   :max_passes, :budget_seconds, :created_at, :deadline_at,
                   :scope_digest, :source_digest, :law_digest, :authority_digest,
                   :law_source_digest, :toolchain_digest, :exclusion_digest,
-                  :adapter_digest, :identity_digest, :digest
+                  :adapter_digest, :identity_digest, :digest, :task_contract, :task_contract_digest
 
-      def self.capture(root:, target:, files:, laws:, excluded: {}, adapters: {}, max_passes:, budget_seconds:)
-        new(root:, target:, files:, laws:, excluded:, adapters:, max_passes:, budget_seconds:)
+      def self.capture(root:, target:, files:, laws:, excluded: {}, adapters: {}, max_passes:, budget_seconds:, task_contract: nil)
+        new(root:, target:, files:, laws:, excluded:, adapters:, max_passes:, budget_seconds:, task_contract:)
       end
 
-      def initialize(root:, target:, files:, laws:, excluded:, adapters:, max_passes:, budget_seconds:)
+      def initialize(root:, target:, files:, laws:, excluded:, adapters:, max_passes:, budget_seconds:, task_contract: nil)
         @root = File.expand_path(root).freeze
         @target = expand(target).freeze
         raise ArgumentError, "fix target escapes repository root" unless inside?(@target, @root)
@@ -78,6 +79,15 @@ module Master
 
         @adapters = normalize_json(adapters)
         @adapter_digest = digest_json(@adapters).freeze
+        @task_contract = task_contract && TaskContract.coerce(task_contract).to_h
+        @task_contract = deep_freeze(@task_contract) if @task_contract
+        if @task_contract
+          uncovered = @sources.map(&:path).reject do |path|
+            TaskContract.covers?(path, scope: @task_contract.fetch("scope"))
+          end
+          raise ArgumentError, "fix plan contains files outside task-contract scope: #{uncovered.first(5).join(", ")}" if uncovered.any?
+        end
+        @task_contract_digest = @task_contract && digest_json(@task_contract).freeze
         @authority = deep_freeze(authority_snapshot)
         @authority_digest = digest_json(@authority).freeze
         @law_sources = deep_freeze(law_source_snapshot)
@@ -85,13 +95,15 @@ module Master
         @law_digest = digest_json([@authority_digest, @law_source_digest, @law_ids]).freeze
         @toolchain = deep_freeze(toolchain_snapshot)
         @toolchain_digest = digest_json(@toolchain).freeze
-        @identity_digest = digest_json(
+        identity = {
           version: VERSION, target: relative(@target), scope_digest: @scope_digest,
           law_digest: @law_digest, authority_digest: @authority_digest,
           toolchain_digest: @toolchain_digest, adapter_digest: @adapter_digest,
           exclusion_digest: @exclusion_digest, max_passes: @max_passes,
-          budget_seconds: @budget_seconds
-        ).freeze
+          budget_seconds: @budget_seconds,
+        }
+        identity[:task_contract_digest] = @task_contract_digest if @task_contract_digest
+        @identity_digest = digest_json(identity).freeze
         @digest = digest_json(to_h(include_digest: false)).freeze
         freeze
       end
@@ -120,6 +132,10 @@ module Master
           "deadline_at" => deadline_at,
           "identity_digest" => identity_digest,
         }
+        if task_contract
+          value["task_contract"] = task_contract
+          value["task_contract_digest"] = task_contract_digest
+        end
         value["digest"] = digest if include_digest
         deep_freeze(value)
       end

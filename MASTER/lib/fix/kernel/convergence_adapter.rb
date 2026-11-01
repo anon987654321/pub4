@@ -17,6 +17,7 @@ require "set"
 require "time"
 require_relative "../scanner"
 require_relative "../fix_plan"
+require_relative "../task_contract"
 require_relative "../reachability"
 require_relative "../instrument_check"
 require_relative "../fix_loop/committer"
@@ -168,10 +169,14 @@ module Master
       # request to repair exactly that tree; halting it too refused every fix
       # while a single violation stood, so "fix and commit" scanned and stopped.
       def run(target = @root, max_passes: max_passes_default, budget_seconds: FixTime.run_s,
-              incremental: @incremental, requested: false, cancellation: nil)
+              incremental: @incremental, requested: false, cancellation: nil, task_contract: nil)
+        key = :"master_fix_task_contract_#{object_id}"
+        Thread.current[key] = task_contract.nil? ? nil : TaskContract.coerce(task_contract)
         @kernel.run_fix_loop(
           self, target:, max_passes:, budget_seconds:, incremental:, requested:, cancellation:
         )
+      ensure
+        Thread.current[key] = nil if defined?(key) && key
       end
 
       def cancellation_requested? = @cancellation&.cancelled? == true
@@ -291,7 +296,7 @@ module Master
         @fix_plan = FixPlan.capture(
           root: repository_root, target:, files:, laws: @laws, excluded: exclusions,
           adapters: @pass_runner.assessment_adapters(target:),
-          max_passes:, budget_seconds:
+          max_passes:, budget_seconds:, task_contract: Thread.current[:"master_fix_task_contract_#{object_id}"],
         )
         @bus&.publish("fix_loop:plan", **@fix_plan.to_h.slice(
           "digest", "identity_digest", "source_digest", "scope_digest", "law_digest",

@@ -112,6 +112,25 @@ each batch; compare pinned revisions only.
   transitional file or bypass its readers until parity is proven and the
   migration has an explicit compatibility/rollback plan.
 
+- [ ] MASTER artifact-preservation enforcement: carry validated task contracts
+  through the operator-facing /fix entrypoint and enforce scope and required
+  preservation at the transaction/mutation boundary, not only in agent protocol
+  instructions. The current HTML verifier is a callable source-level guard; it
+  is not yet an automatic mutation veto. Persist each result with the existing
+  FixPlan and assessment evidence.
+
+- [ ] MASTER artifact-format coverage: add format-aware preservation and
+  rendered-output comparison for DOCX, PDF, XLSX and PPTX. Changed files without
+  a registered verifier must remain INCONCLUSIVE; do not treat archive-byte
+  equality or successful parsing as visual preservation.
+
+- [ ] MASTER golden preservation campaign: add real baseline/candidate fixtures
+  spanning HTML, Ruby source, Rails pages and interactions, legal/long-form
+  documents, spreadsheets and slide decks. Prove the requested preservation
+  dimensions per format and keep tests that demonstrate intentional change as
+  well as regressions. Do not claim broad artifact preservation from the HTML
+  fixtures alone.
+
 - [ ] MASTER scanner/check boundaries: trace production call graphs across
   `MASTER/lib/review/scan/`, `MASTER/lib/fix/scan/`, `MASTER/checks/`
   and `MASTER/checks/support/`. Keep the three distinct concepts explicit:

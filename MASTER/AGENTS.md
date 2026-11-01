@@ -3,10 +3,11 @@
 Task-scoped entry for coding agents (Cursor, Codex, Grok, Claude Code). This file is the contract; `README.md` is the tour.
 
 **Read the repo-root `CLAUDE.md` first.** It is only Claude Code's bootstrap pointer. MASTER
-owns the governing configuration and Law catalogue. Read `MASTER/data/soul.yml`, then
-`MASTER/data/laws.yml`, then the relevant Ruby definitions/adapters under `MASTER/law/`, then
-this workflow contract and task-specific tree contract. `MASTER/lib/review/scan/` contains
-scanner machinery, not a second Law source tree.
+owns the governing configuration and Law catalogue. Read `MASTER/data/laws.yml` first, then
+`MASTER/data/soul.yml` as subordinate identity and delivery configuration, followed by the
+relevant Ruby definitions/adapters under `MASTER/law/`, this workflow contract and the
+task-specific tree contract. `MASTER/lib/review/scan/` contains scanner machinery, not a
+second Law source tree.
 
 The block below is the source every other agent's entry file is generated from
 — root `AGENTS.md`, `GEMINI.md`, `.cursorlaws` and
@@ -14,6 +15,21 @@ The block below is the source every other agent's entry file is generated from
 `cd MASTER && rake docs:agent_contracts`; `rake lint:agent_contracts` fails when
 a generated file drifts from it. One source, four harnesses, no second copy to
 rot.
+
+## Task entry and artifact preservation
+
+For every substantive change, state intent, repository-relative scope, mandatory preservation
+dimensions and the proof required before editing. The canonical schema is
+`MASTER/data/task_contract.yml`; validate programmatic contracts with
+`Master::Fix::TaskContract`. Consult `MASTER/docs/task-contracts.md`, the generated
+`MASTER/docs/task-map.md` and `MASTER/docs/editorial-quality.md` when relevant.
+
+`ruby MASTER/tools/agent_context.rb --json` is the shared machine-readable entrypoint. It
+returns the live authority, task-contract schema, Law coverage and a process capability
+snapshot. `not_probed` means not tested; permission observations are not successful writes.
+
+The HTML preservation verifier proves source-level invariants only. It never replaces browser,
+viewport, keyboard, screen-reader or rendered-output verification.
 
 ## Local test execution and /fix cleanup
 
@@ -39,6 +55,16 @@ law_runtime.yml is still a LIVE transitional second metadata source. Law::Defini
 A Law names the requirement; a detector or assessment names the instrument; proof is evidence. A declaration, implementation, passing test and excellent product are four different claims. A missing or unrun measurement is INCONCLUSIVE, never PASS. No count of declared laws, files, tests or detectors proves the code is correct, the design is usable, or the system can support a stated scale.
 
 MASTER/docs/synonyms.yml is glossary-only. MASTER/checks/checks.yml routes operational checks; it does not create Law identities or normative policy. Neither may override the constitution. The four owners are MASTER/ (runtime, MASTER/bin/master), RAILS/ (apps, MASTER/bin/operator triangle up), OPENBSD/ (deployment and vm23), and STUDIO/ (Dilla, postpro, Replicate and LoRA). MASTER/tools/ keeps compatibility entrypoints for STUDIO tools.
+
+Task entry: before a substantive edit, state intent, repository-relative scope, mandatory
+preservation dimensions and proof. Validate programmatic contracts with
+`Master::Fix::TaskContract`; the schema is `MASTER/data/task_contract.yml`.
+`ruby MASTER/tools/agent_context.rb --json` exposes the shared authority, contract schema,
+Law coverage and capability states. `not_probed` means an operation has not been exercised;
+permission observations do not prove a successful write. Use `MASTER/docs/task-map.md` for
+task entry and `MASTER/docs/editorial-quality.md` for separate editorial review. The HTML
+preservation guard proves source-level invariants only; it does not replace rendered, browser,
+viewport, keyboard or accessibility evidence.
 <!-- agent-contract:end -->
 
 ## Working alone in this repo

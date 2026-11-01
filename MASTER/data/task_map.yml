@@ -1,0 +1,38 @@
+schema: 1
+tasks:
+  - task: Change MASTER behavior
+    start: MASTER/data/laws.yml; relevant MASTER/law implementation; caller and tests
+    proof: Focused tests; changed-line Law assessment; relevant full suite
+  - task: Understand or change a Law
+    start: MASTER/data/laws.yml; MASTER/law; MASTER/bin/operator laws ID
+    proof: Detector bad/good fixtures; registry reconciliation; false-positive and surface-coverage review
+  - task: Change task intent or preservation boundaries
+    start: MASTER/data/task_contract.yml; MASTER/lib/fix/task_contract.rb
+    proof: Validated intent, repository-relative scope, mandatory preservation and evidence types
+  - task: Edit HTML content without redesign
+    start: Task contract; MASTER/lib/fix/artifact_preservation.rb; original HTML and linked assets
+    proof: Baseline hashes; source-preservation result; scoped diff; browser render comparison
+  - task: Change HTML, CSS or interaction behavior
+    start: Owning renderer, stylesheets, interaction handlers and contracts
+    proof: Focused behavior tests; mobile and desktop renders; keyboard and accessibility evidence
+  - task: Change Rails behavior
+    start: Owning app contract; model, controller, view, shared dependencies and tests
+    proof: MASTER/bin/operator test paths; relevant app suite; browser and accessibility evidence
+  - task: Change deployment
+    start: OPENBSD/CLAUDE.md; OPENBSD/bin/vps-deploy; host runbook
+    proof: Host command output; health checks; backup and recovery evidence
+  - task: Change Dilla or generated media
+    start: Owning STUDIO README; manifest; renderer; existing take
+    proof: Reproducible render; seed and version; audio alignment; previous take retained until verified
+  - task: Edit DOCX, PDF, XLSX or PPTX
+    start: Original artifact; format-aware editor; rendered page, sheet or slide view
+    proof: Source diff; rendered-output comparison; accessibility review where applicable
+  - task: Research or editorial work
+    start: Source material; MASTER/docs/editorial-quality.md
+    proof: Source provenance; fact/claim/proposal/inference distinctions; editorial review
+  - task: Understand the repository or agent environment
+    start: MASTER/tools/agent_context.rb --json; MASTER/AGENTS.md; CLAUDE.md
+    proof: Live authority, task schema, capability states and tree scope
+  - task: Change a generated document
+    start: Owning generator and source data; corresponding lint task
+    proof: Generator output matches checked-in artifact; drift test passes

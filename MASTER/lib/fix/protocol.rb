@@ -9,13 +9,15 @@ require_relative "four_stream_assessment"
 require_relative "architecture_exploration"
 require_relative "ux_refinement_catalog"
 require_relative "../ground/law_resolver"
+require_relative "task_contract"
+require_relative "artifact_preservation"
 
 module Master
   module Fix
     # The canonical /fix execution contract. This is procedure, not a second
     # constitution: soul.yml and executable law remain authoritative.
     module Protocol
-      VERSION = 6
+      VERSION = 7
       STAGES = %w[load trace inventory structure architecture_exploration scan semantic repair verify repeat report].freeze
       TERMINAL_STATES = OutcomePolicy::TERMINAL_STATES.map { |state| state.to_s.upcase }.freeze
 
@@ -36,7 +38,20 @@ module Master
           protected paths, operator-owned rendered values, or external
           authority boundaries.
 
-          0. TREE
+          0. TASK CONTRACT
+          #{TaskContract.prompt}
+          Before a write, construct and validate the contract. Programmatic callers
+          pass the validated value to ConvergenceAdapter#run(task_contract:); the
+          resulting FixPlan and RunJournal evidence pin both the contract and its
+          digest. When no caller can carry it yet, state that limitation; never
+          invent or imply a persisted contract.
+
+          For HTML content-only edits, run ArtifactPreservation.verify against the
+          exact baseline and candidate. A source-level PASS is not rendered proof.
+          For changed Office documents or any redesign without rendered and
+          accessibility evidence, report INCONCLUSIVE.
+
+          0.1 TREE
           Before anything is scanned, lay out the tracked files of the target as a
           tree with its sprawl measurements (Fix::Tree) and have the model say
           what it would reshape: files that belong together, folders that earn
@@ -45,7 +60,7 @@ module Master
           never edit anything. A model that cannot answer is reported and the run
           goes on.
 
-          0.1 ARCHITECTURE EXPLORATION
+          0.2 ARCHITECTURE EXPLORATION
           For a requested /fix at the repository root, or an exact top-level MASTER,
           RAILS, OPENBSD or STUDIO target, generate 30–40 materially distinct architecture
           candidates in one structured request per eligible tree (36 by default). Require

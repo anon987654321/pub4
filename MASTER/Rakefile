@@ -504,6 +504,11 @@ def agent_contract_document(audience)
 end
 
 namespace :docs do
+  desc "Write docs/task-map.md from data/task_map.yml"
+  task :task_map do
+    ruby File.join(__dir__, "tools", "task_map.rb")
+  end
+
   desc "Write every agent harness's entry file from MASTER/AGENTS.md"
   task :agent_contracts do
     root = File.expand_path("..", __dir__)
@@ -928,6 +933,11 @@ end
 # nine of twelve subsystems while `rake audit` reported passed, because nothing
 # called it. A check defined and uncalled is a check that has stopped measuring
 # without anyone deciding it should.
+desc "docs/task-map.md matches data/task_map.yml"
+task "lint:task_map" do
+  sh RbConfig.ruby, File.join(__dir__, "tools", "task_map.rb"), "--check"
+end
+
 desc "docs/map.md is current against lib/"
 task "lint:map" do
   sh RbConfig.ruby, File.join(__dir__, "tools", "tree_map.rb"), "--check"
@@ -941,7 +951,7 @@ end
 AUDIT_CHECKS = %w[
   dogfood constitution selftest selfcheck tools core_smoke architecture boot_smoke kernel_autoload_smoke security_sweep
   lint:frozen lint:data_singularity lint:spine lint:autoload
-  lint:law_trace lint:law_parity lint:agent_contracts lint:laws_digest lint:scan_coverage lint:agent_map lint:reader_singularity lint:doc_citations lint:map lint:alias_sites
+  lint:law_trace lint:law_parity lint:agent_contracts lint:laws_digest lint:scan_coverage lint:agent_map lint:reader_singularity lint:doc_citations lint:task_map lint:map lint:alias_sites
   lint:do_not_touch lint:instruments lint:swallowed lint:law_audit lint:autofix_reach
   lint:rule_hygiene lint:constant_collisions lint:capability lint:cohesion lint:law_reach
   lint:models lint:dedup lint:word_boundary lint:test_naming ad_organ:test_browserless

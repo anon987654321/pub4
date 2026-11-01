@@ -111,7 +111,8 @@ module Master
           plan_evidence = @fix_plan&.to_h&.slice(
             "version", "digest", "identity_digest", "scope_digest", "source_digest",
             "law_digest", "law_source_digest", "authority_digest", "toolchain_digest",
-            "exclusion_digest", "adapter_digest", "eligible_files", "deadline_at"
+            "exclusion_digest", "adapter_digest", "task_contract", "task_contract_digest",
+            "eligible_files", "deadline_at"
           )
           evidence[:fix_plan] = plan_evidence if plan_evidence
           matrix_evidence = if @pass_runner&.respond_to?(:assessment_matrix_evidence)

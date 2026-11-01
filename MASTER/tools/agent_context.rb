@@ -18,6 +18,7 @@
 # check can actually block on, and how much of the law is unmeasured right now.
 
 require_relative "../lib/fix/protocol"
+require_relative "../lib/operator/capability_manifest"
 
 module Operator
   module AgentContext
@@ -199,6 +200,8 @@ module Operator
       out << ""
       out << "Rules that can refuse a write (#{blocking_rules.size}): #{blocking_rules.join(', ')}"
       out << "Coverage: #{coverage}"
+      capability_rows = Operator::CapabilityManifest.new(root: REPO_ROOT).call.fetch("capabilities")
+      out << "Execution capabilities: #{capability_rows.map { |name, row| "#{name}=#{row.fetch("status")}" }.join(", ")}"
       out << ""
       out.concat(shell_contract)
       matched = lessons(query)
@@ -227,6 +230,8 @@ module Operator
         "blocking_rules" => blocking_rules,
         "coverage" => coverage,
         "shell_contract" => shell_contract.join("\n"),
+        "task_contract_schema" => Master::Fix::TaskContract.agent_schema,
+        "capabilities" => Operator::CapabilityManifest.new(root: REPO_ROOT).call,
       }
       payload["tree"] = render_tree(root: tree_root, max_depth: tree_depth, max_entries: tree_max_entries) if tree
       payload

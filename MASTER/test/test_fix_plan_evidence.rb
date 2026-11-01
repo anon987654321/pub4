@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require "tmpdir"
 require_relative "../lib/fix/fix_plan"
+require_relative "../lib/fix/task_contract"
 require_relative "../lib/fix/run_journal"
 
 class TestFixPlanEvidence < Minitest::Test
@@ -30,7 +31,7 @@ class TestFixPlanEvidence < Minitest::Test
   end
 
   def capture(files: [@ruby, @docs], laws: [LawStub.new("ROBUSTNESS")],
-               adapters: { whole_file: "registered" }, excluded_paths: {})
+               adapters: { whole_file: "registered" }, excluded_paths: {}, task_contract: nil)
     Master::Fix::FixPlan.capture(
       root: @root,
       target: @root,
@@ -44,6 +45,7 @@ class TestFixPlanEvidence < Minitest::Test
       adapters:,
       max_passes: 15,
       budget_seconds: 120,
+      task_contract:,
     )
   end
 
@@ -64,6 +66,18 @@ class TestFixPlanEvidence < Minitest::Test
     assert_equal ["large.rb"], plan.excluded.fetch("sample")
     assert_match(/\A[0-9a-f]{64}\z/, plan.excluded.fetch("paths_digest"))
     assert plan.deadline_at.end_with?("Z")
+  end
+
+  def test_task_contract_is_pinned_and_changes_the_plan_identity
+    contract = Master::Fix::TaskContract.build(
+      intent: "content_only", scope: %w[README.md sample.rb], preserve: [], proof: ["focused_tests"]
+    )
+    plan = capture(task_contract: contract)
+
+    assert_equal "content_only", plan.to_h.dig("task_contract", "intent")
+    assert_match(/\A[0-9a-f]{64}\z/, plan.task_contract_digest)
+    assert_equal plan.task_contract_digest, plan.to_h.fetch("task_contract_digest")
+    refute_equal capture.task_contract_digest, plan.task_contract_digest
   end
 
   def test_plan_and_nested_manifest_are_immutable
