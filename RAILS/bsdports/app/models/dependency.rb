@@ -49,20 +49,18 @@ class Dependency < ApplicationRecord
     }
     nodes = { port.id => root }
     edges = []
-    queue = [[port, 0]]
-    cursor = 0
+    frontier = [port]
+    depth = 0
     truncated = false
 
-    while cursor < queue.length
-      current, depth = queue[cursor]
-      cursor += 1
-
+    while frontier.any?
       if depth >= MAX_GRAPH_DEPTH
-        truncated ||= where(port_id: current.id).exists?
-        next
+        truncated = where(port_id: frontier.map(&:id)).exists?
+        break
       end
 
-      includes(:depends_on).where(port_id: current.id).order(:id).each do |dependency|
+      next_frontier = []
+      includes(:depends_on).where(port_id: frontier.map(&:id)).order(:port_id, :id).each do |dependency|
         child = dependency.depends_on
         next unless child
 
@@ -79,16 +77,19 @@ class Dependency < ApplicationRecord
             version: child.version,
             depth: depth + 1
           }
-          queue << [child, depth + 1]
+          next_frontier << child
         end
 
         edges << {
           id: dependency.id,
-          from: current.id,
+          from: dependency.port_id,
           to: child.id,
           type: dependency.dep_type.presence || "run"
         }
       end
+
+      frontier = next_frontier
+      depth += 1
     end
 
     { nodes: nodes.values, edges:, truncated: }
