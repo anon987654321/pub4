@@ -356,6 +356,17 @@ class TestDependencyManager < Minitest::Test
     assert_equal 2, @commands.length
   end
 
+  def test_capture_uses_the_shared_process_spawn_environment
+    manager = MANAGER.new(root: @root, env: { "PATH" => ENV.fetch("PATH", "") }, out: StringIO.new, home: @root)
+    ok, stdout, stderr = manager.send(
+      :capture, [RbConfig.ruby, "-e", "print 'spawn-ok'"],
+      chdir: @root, env: {}, deadline_seconds: 5
+    )
+
+    assert ok, stderr
+    assert_equal "spawn-ok", stdout
+  end
+
   def test_capture_kills_a_hung_process_group_at_its_deadline
     manager = MANAGER.new(root: @root, env: { "PATH" => ENV.fetch("PATH", "") }, out: StringIO.new, home: @root)
     ok, _stdout, stderr = manager.send(
