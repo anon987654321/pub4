@@ -41,7 +41,7 @@ module Master::Core
     # through World. So the hardened check was live for the tool path and absent
     # from the constitutional one, which is the path that actually runs unattended.
     def self.load(data_dir:, workspace_root: nil, verify: nil, sandbox: nil, capabilities: Capabilities.for(:fix))
-      rules_data = YAML.safe_load_file(File.join(data_dir, "laws.yml"), aliases: true)
+      rules_data = YAML.safe_load_file(File.join(data_dir, "law_runtime.yml"), aliases: true)
       master_root = File.expand_path(File.dirname(data_dir))
       workspace_root = File.expand_path(workspace_root || master_root)
       sacred_paths = Paths.sacred_paths(root: master_root)
@@ -555,7 +555,7 @@ module Master::Core
     # small: readers can ask for the declarations or whether one path is protected
     # without knowing how soul.yml is laid out.
     class Paths
-      MANIFEST = "data/soul.yml"
+      MANIFEST = "data/laws.yml"
 
       def self.sacred_paths(root:)
         new(root:).sacred_paths
@@ -619,7 +619,7 @@ module Master::Core
         sacred_paths
         return unless sacred?(path)
 
-        "#{relative} is sacred: no automated writer may change it (soul.yml absolute.sacred_paths)"
+        "#{relative} is sacred: no automated writer may change it (laws.yml#SACRED_AUTHORSHIP.protected_paths)"
       rescue ArgumentError
         "#{path} is outside #{@root}"
       rescue StandardError => e
@@ -635,14 +635,11 @@ module Master::Core
           root = manifest_root
           raise Errno::ENOENT, "#{MANIFEST} not found under #{@root}" unless root
 
-          soul = YAML.safe_load_file(File.join(root, MANIFEST), aliases: true)
-          declared = if soul.is_a?(Hash) && soul["absolute"].is_a?(Hash)
-                       Array(soul.dig("absolute", "sacred_paths"))
-                     else
-                       []
-                     end
+          laws = YAML.safe_load_file(File.join(root, MANIFEST), aliases: true)
+          authorship = laws.is_a?(Hash) ? laws["SACRED_AUTHORSHIP"] : nil
+          declared = authorship.is_a?(Hash) ? Array(authorship["protected_paths"]) : []
           if declared.empty? || declared.any? { |path| path.to_s.strip.empty? }
-            raise "soul.yml under #{@root} declares no valid absolute.sacred_paths — refusing to derive empty sacred paths"
+            raise "laws.yml under #{@root} declares no valid SACRED_AUTHORSHIP.protected_paths — refusing to derive empty sacred paths"
           end
 
           declared.map(&:to_s).map do |path|
