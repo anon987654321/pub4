@@ -190,21 +190,23 @@ module Master
       raise ArgumentError, "soul constitution must be MASTER/data/laws.yml" unless
         data["constitution"] == "MASTER/data/laws.yml"
 
-      absolute = data.fetch("absolute") { raise KeyError, "absolute.golden_law reference is required" }
-      raise ArgumentError, "absolute section must be a mapping" unless absolute.is_a?(Hash)
-      raise ArgumentError, "absolute may only reference a Law; it cannot define constitutional values" unless
-        absolute.keys.map(&:to_s) == ["golden_law"]
+      references = data.fetch("references") { raise KeyError, "references.golden_law is required" }
+      raise ArgumentError, "references must be a mapping" unless references.is_a?(Hash)
+      raise ArgumentError, "references may only identify laws, not define them" unless
+        references.keys.map(&:to_s) == ["golden_law"]
 
       master_root = File.dirname(File.dirname(path))
-      laws = YAML.safe_load_file(File.join(master_root, "data", "laws.yml"), aliases: true)
-      golden_id = absolute["golden_law"].to_s
+      laws_path = File.join(master_root, "data", "laws.yml")
+      laws = YAML.safe_load_file(laws_path, aliases: true)
+      golden_id = references["golden_law"].to_s
       golden = laws[golden_id]
       unless golden.is_a?(Hash) && golden["statement"].to_s.match?(/preserve/i)
-        raise ArgumentError, "absolute.golden_law must resolve to an existing preservation Law in laws.yml"
+        raise ArgumentError, "references.golden_law must resolve to an existing preservation Law in laws.yml"
       end
 
-      forbidden = %w[precedence precedence_graph priority severity_rank severity_vocabulary
-                     roots_vocabulary sacred_paths protected_paths enforcement law_catalogue]
+      forbidden = %w[absolute precedence precedence_graph priority severity severity_rank
+                     severity_vocabulary roots_vocabulary sacred_paths protected_paths
+                     enforcement law_catalogue law_map]
       shadowed = forbidden.select { |key| data.key?(key) }
       raise ArgumentError, "soul.yml cannot shadow law-owned field(s): #{shadowed.join(', ')}" unless shadowed.empty?
 
