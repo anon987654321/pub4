@@ -33,7 +33,7 @@ class TestCoreConfigurationGuard < Minitest::Test
 
     assert_instance_of Master::Core::Verdict::Block, verdict
     assert_equal :configuration_invariant, verdict.by
-    assert_match(/required Law sections missing/, verdict.reason)
+    assert_match(/declares no flat laws/, verdict.reason)
     refute_match(/immutable path/, verdict.reason)
   end
 
@@ -42,10 +42,10 @@ class TestCoreConfigurationGuard < Minitest::Test
     current = File.read(path, encoding: "UTF-8")
     assert_nil rule.judge.call(effect("data/soul.yml", current), nil)
 
-    invalid = current.sub("PRESERVE_THEN_IMPROVE_NEVER_BREAK", "PRESERVE_AND_BREAK")
+    invalid = current.sub("PRESERVE_FIRST", "NO_SUCH_LAW")
     verdict = rule.judge.call(effect("data/soul.yml", invalid), nil)
     assert_instance_of Master::Core::Verdict::Block, verdict
     assert_equal :configuration_invariant, verdict.by
-    assert_match(/golden_law/, verdict.reason)
+    assert_match(/references.golden_law/, verdict.reason)
   end
 end
