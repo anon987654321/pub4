@@ -105,13 +105,40 @@ class TestSoul < Minitest::Test
     assert_includes prompt, "Prefer accurate models over comforting ones."
   end
 
+
+  def test_soul_manifest_matches_the_canonical_ruby_body
+    data = Master.load_yaml(Master.data_path("soul.yml"))
+
+    assert_equal Master::Soul.print.fetch("body_sha256"), data.fetch("body_sha256")
+    assert Master::Soul.load!
+  end
+
+  def test_constitutional_precedence_is_a_healthy_nine_node_graph
+    expected = %w[
+      truthful_status robustness singularity linearity proximity abstraction
+      density operator_rendered inter_model_contract
+    ]
+
+    assert_equal expected, Master::Soul.invariant_order
+    assert Master::Soul.dominates?(:truthful_status, :inter_model_contract)
+    refute Master::Soul.dominates?(:inter_model_contract, :truthful_status)
+    assert_equal :truthful_status, Master::Soul.winner(:truthful_status, :robustness)
+  end
+
+  def test_soul_write_guard_protects_the_ruby_authority
+    assert Master::Soul.sacred?("lib/soul.rb")
+    refute Master::Soul.sacred?("lib/fix/fix_loop.rb")
+    assert_raises(Master::Soul::ProtectedWrite) { Master::Soul.refuse_write!("lib/soul.rb") }
+    assert_nil Master::Soul.refuse_write!("lib/fix/fix_loop.rb")
+  end
+
   def test_soul_yaml_contains_only_live_kernel_sections
     data = Master.load_yaml(Master.data_path("soul.yml"))
 
     refute data.key?("evolution_log"), "Git is the history of soul.yml"
     refute data.key?("research"), "research belongs outside the live soul kernel"
     refute data.fetch("negotiable").key?("tts_voice"), "voice has one authority at the top level"
-    assert_equal %w[schema version persona voice language absolute prompt_ordering negotiable hooks], data.keys
+    assert_equal %w[schema version body_sha256 persona voice language absolute prompt_ordering negotiable hooks], data.keys
   end
 
   # /soul prints the revision that booted, then SOUL.md's opening sentence.
