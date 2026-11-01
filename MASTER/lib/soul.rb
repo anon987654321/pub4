@@ -105,19 +105,7 @@ module Master
 
       # Fail closed when the on-disk manifest does not describe this Ruby soul.
       def load!(root: ROOT)
-        master_root = resolve_master_root(root)
-        path = File.join(master_root, "data", "soul.yml")
-        manifest = Master.load_yaml(path)
-
-        unless manifest.is_a?(Hash) &&
-               manifest["schema"] == 1 &&
-               manifest["version"] == VERSION &&
-               secure_digest_match?(manifest["body_sha256"], BODY_SHA256)
-          actual = manifest.is_a?(Hash) ? manifest["body_sha256"].to_s : "missing"
-          raise IntegrityError,
-                "soul manifest mismatch: #{path}; expected #{BODY_SHA256}, found #{actual}"
-        end
-
+        load_manifest!(root:)
         true
       rescue IntegrityError
         raise
@@ -128,13 +116,14 @@ module Master
       def verify!(root: ROOT) = load!(root:)
 
       def prompt(root: ROOT)
-        load!(root:)
+        manifest = load_manifest!(root:)
         [
           IDENTITY,
           section("Core truths", VALUES),
           section("Voice", VOICE),
           section("Judgment", JUDGMENT),
           section("Boundaries", BOUNDARIES),
+          temperament_section(manifest.fetch("temperament")),
           "Constitutional precedence: #{invariant_order.join(" > ")}.",
           "Interaction: state the real problem plainly. Ask for the best-supported answer. Say whether you want pushback or execution."
         ].join("\n\n")
@@ -221,6 +210,54 @@ module Master
       end
 
       private
+
+      def load_manifest!(root:)
+        master_root = resolve_master_root(root)
+        path = File.join(master_root, "data", "soul.yml")
+        manifest = Master.load_yaml(path)
+
+        unless manifest.is_a?(Hash) &&
+               manifest["schema"] == 1 &&
+               manifest["version"] == VERSION &&
+               secure_digest_match?(manifest["body_sha256"], BODY_SHA256)
+          actual = manifest.is_a?(Hash) ? manifest["body_sha256"].to_s : "missing"
+          raise IntegrityError,
+                "soul manifest mismatch: #{path}; expected #{BODY_SHA256}, found #{actual}"
+        end
+
+        validate_temperament!(manifest["temperament"])
+        manifest
+      end
+
+      def validate_temperament!(temperament)
+        raise IntegrityError, "soul temperament must be a mapping" unless temperament.is_a?(Hash)
+        raise IntegrityError, "soul temperament profile is missing" if temperament["profile"].to_s.strip.empty?
+
+        %w[method guardrails].each do |key|
+          values = temperament[key]
+          unless values.is_a?(Array) && !values.empty? && values.all? { |value| value.is_a?(String) && !value.strip.empty? }
+            raise IntegrityError, "soul temperament #{key} must be a non-empty list of statements"
+          end
+        end
+
+        %w[delivery contexts].each do |key|
+          value = temperament[key]
+          raise IntegrityError, "soul temperament #{key} must be a non-empty mapping" unless value.is_a?(Hash) && !value.empty?
+        end
+      end
+
+      def temperament_section(temperament)
+        lines = ["Profile: #{temperament.fetch("profile")}"]
+        lines.concat(temperament.fetch("method").map { |value| "Comic method: #{value}" })
+        temperament.fetch("delivery").each do |key, value|
+          lines << "#{key.to_s.tr("_", " ").capitalize}: #{value}"
+        end
+        temperament.fetch("contexts").each do |key, value|
+          lines << "#{key.to_s.capitalize}: #{value}"
+        end
+        lines.concat(temperament.fetch("guardrails").map { |value| "Restraint: #{value}" })
+        section("Temperament", lines)
+      end
 
       def section(label, lines)
         ([ "#{label}:" ] + lines.map { |line| "- #{line}" }).join("\n")
