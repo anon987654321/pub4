@@ -306,6 +306,10 @@ module Master
       end
 
       def task_assessment(app, id, spec, evidence)
+        if app.name == "__shared"
+          return [assessment(app, id, spec, "not_applicable", "Shared components are evaluated through their consuming applications, not as a standalone user journey.", 0, []), nil]
+        end
+
         row = evidence.dig(app.name, id)
         return [assessment(app, id, spec, "inconclusive", "task evidence not supplied", 0, []), nil] unless row.is_a?(Hash)
 
