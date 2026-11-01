@@ -53,7 +53,7 @@ module Master
 
       def validate_ids!(rows)
         ids = rows.map { |row| row.fetch("id") }
-        invalid = ids.reject { |id| id.match?(/\A[A-Z][A-Z0-9_]*\z/) }
+        invalid = ids.reject { |id| id.match?(/\A[A-Z][A-Za-z0-9_]*\z/) }
         raise Invalid, "invalid law id(s): #{invalid.join(', ')}" unless invalid.empty?
 
         collisions = ids.group_by(&:downcase).select { |_id, names| names.size > 1 }.keys
