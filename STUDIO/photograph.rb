@@ -3,7 +3,7 @@
 
 require "json"
 require "optparse"
-require_relative "photograph/generators/idea_picture"
+require_relative "photograph/idea_picture"
 
 if $PROGRAM_NAME == __FILE__
   options = { film: false, duration: 5, subject: ENV.fetch("STUDIO_PHOTOGRAPH_SUBJECT", "ragnhild") }

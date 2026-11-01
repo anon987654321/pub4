@@ -5,7 +5,7 @@ require_relative "minitest_helper"
 require "open3"
 require "tmpdir"
 require_relative "../output_paths"
-require_relative "../photograph/generators/idea_picture"
+require_relative "../photograph/idea_picture"
 
 class TestStudioOutputPaths < Minitest::Test
   def test_relative_xdg_data_home_uses_an_absolute_fallback_from_any_directory
