@@ -153,17 +153,39 @@ module Master
           layouts = records.select { |record| record.relative.match?(%r{/app/views/layouts/}) }
           return [[], 0, records] if layouts.empty?
 
-          present = layouts.any? do |record|
-            record.content.match?(/<meta\b(?=[^>]*\bname\s*=\s*["']viewport["'])[^>]*>/im)
+          issues = []
+          unknown = []
+          measured = 0
+          layouts.each do |record|
+            if %w[.haml .slim].include?(File.extname(record.path).downcase)
+              unknown << record
+              next
+            end
+
+            measured += 1
+            tags = record.content.to_enum(:scan, /<meta\\b[^>]*>/im).filter_map do
+              tag = Regexp.last_match[0]
+              attrs = attributes(tag)
+              [tag, attrs] if attrs["name"].to_s.casecmp?("viewport")
+            end
+            valid = tags.any? do |_tag, attrs|
+              attrs["content"].to_s.match?(/(?:\\A|,)\\s*width\\s*=\\s*device-width(?:\\s*,|\\z)/i)
+            end
+            next if valid
+
+            message = if tags.empty?
+                        "Application layout declares no viewport meta element."
+                      else
+                        "Viewport meta element does not declare width=device-width."
+                      end
+            offset = if tags.empty?
+                       0
+                     else
+                       record.content.index(/<meta\\b[^>]*>/im) || 0
+                     end
+            issues << issue(record, offset, message)
           end
-          if present
-            [[], layouts.size, []]
-          elsif layouts.all? { |record| %w[.haml .slim].include?(File.extname(record.path).downcase) }
-            [[], 0, layouts]
-          else
-            issues = [issue(layouts.first, 0, "Application layout declares no inspectable viewport meta element.")]
-            [issues, layouts.size, []]
-          end
+          [issues, measured, unknown.uniq]
         end
 
         def named_control?(attrs, content, offset)
