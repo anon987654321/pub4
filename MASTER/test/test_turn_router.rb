@@ -362,6 +362,21 @@ class TurnRouterTest < Minitest::Test
     end
   end
 
+  def test_blocked_fold_report_does_not_dump_a_read_file
+    private_text = "sensitive project instructions\\n" + Array.new(24) { |index| "private detail #{index + 1}\\n" }.join
+    transcript = ["0: read(path) -> ok: #{private_text}"]
+    result = Master::CLI::TurnRouter.fold_to_result(
+      reason: :blocked, turns: 5, risk: :medium,
+      summary: "blocked: command execution is not enabled; no command was run",
+      transcript:,
+    )
+
+    refute result.ok?
+    assert_match(/0: read\\(path\\).*\\(\\+\\d+ lines\\)/, result.message)
+    refute_includes result.message, "private detail 24"
+    assert_includes result.message, "no command was run"
+  end
+
   def test_fold_result_preserves_cancellation_and_ambiguous_outcome_categories
     cancelled = Master::CLI::TurnRouter.fold_to_result(
       reason: :cancelled, turns: 1, summary: "cancelled", transcript: [],
