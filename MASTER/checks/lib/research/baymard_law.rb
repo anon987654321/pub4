@@ -30,6 +30,14 @@ module Deploy
       result = CheckResult.new
       result.checked!(report.measured_count) if report.measured_count.positive?
 
+      report.assessments.each do |assessment|
+        evidence = assessment.evidence.empty? ? "" : " evidence=#{assessment.evidence.join(";")}"
+        result.warn(
+          "baymard_ux: #{assessment.app}/#{assessment.check_id}=#{assessment.status.upcase} " \
+          "measured=#{assessment.measured}#{evidence}",
+        )
+      end
+
       report.findings.each do |finding|
         location = finding.path ? "#{finding.path}:#{finding.line}" : finding.evidence.join(", ")
         detail = [
