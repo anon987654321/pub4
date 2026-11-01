@@ -382,7 +382,7 @@ class TestScanLawContracts < Minitest::Test
 
   def test_runtime_docs_yaml_forbids_stray_data_markdown
     bad = File.join(Master::ROOT, "data", "feedback_new.md")
-    good = File.join(Master::ROOT, "data", "SOUL.md")
+    good = File.join(Master::ROOT, "data", "soul.yml")
 
     assert_finding rule("RUNTIME_DOCS_YAML"), "# stray\n", bad, "delete data/feedback_new.md"
     assert_empty rule("RUNTIME_DOCS_YAML").check("# ok\n", path: good)
