@@ -136,7 +136,7 @@ module Master
         if @turn_worker&.alive? && Thread.current == @pipeline_thread && $stdin.tty? && $stdout.tty?
           request = { answer: nil, choices: }
           @terminal_ask_mutex.synchronize { @pending_terminal_ask = request }
-          label = @refs.renderer.render("ask0 at fold0: #{prompt}", mode: :dmesg)
+          label = @refs.renderer.render("ask0: #{prompt}", mode: :dmesg)
           rows = [label, *choices.each_with_index.map { |choice, index| "  #{index + 1}) #{choice.fetch(:name)}" }]
           rows << (choices.empty? ? "enter /approve or /deny; other input stays queued" : "enter /approve N or /deny; other input stays queued")
           terminal_puts(rows.join("\n"))
@@ -153,7 +153,7 @@ module Master
         @think_mutex&.synchronize { @think_paused = true }
         terminal_print("\r\e[K")
         return answer_choice_at_terminal(prompt, choices) unless choices.empty?
-        terminal_print("#{@refs.renderer.render("ask0 at fold0: #{prompt} [y/N]", mode: :dmesg)} ")
+        terminal_print("#{@refs.renderer.render("ask0: #{prompt} [y/N]", mode: :dmesg)} ")
         $stdin.gets.to_s.strip
       ensure
         if defined?(request) && request
@@ -172,7 +172,7 @@ module Master
       end
 
       def auto_approved(prompt, choices)
-        terminal_puts(@refs.renderer.render("ask0 at fold0: approved, #{prompt}", mode: :dmesg))
+        terminal_puts(@refs.renderer.render("ask0: approved, #{prompt}", mode: :dmesg))
         return "yes" if choices.empty?
 
         (choices.find { |choice| choice.fetch(:value) == "approve" } || choices.first).fetch(:value).to_s
@@ -234,7 +234,7 @@ module Master
       def answer_choice_at_terminal(prompt, options)
         choices = options.each_with_index.map { |option, index| "#{index + 1}) #{option.fetch(:name)}" }
         terminal_write do |target|
-          target.print @refs.renderer.render("ask0 at fold0: #{prompt}", mode: :dmesg)
+          target.print @refs.renderer.render("ask0: #{prompt}", mode: :dmesg)
           target.print "\n  #{choices.join("\n  ")}\n> "
           target.flush
         end
