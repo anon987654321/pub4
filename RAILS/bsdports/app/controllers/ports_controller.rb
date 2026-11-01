@@ -88,7 +88,7 @@ class PortsController < ApplicationController
     @watching = false
     @port.record_activity!("PortUnwatched", source_vertical: "bsdports", actor: Current.user)
     respond_to do |format|
-      format.turbo_stream
+      format.turbo_stream { render :watch }
       format.html { redirect_to @port }
     end
   end
