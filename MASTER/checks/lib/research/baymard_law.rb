@@ -62,6 +62,9 @@ module Deploy
       end
 
       result.warn("baymard_ux: #{report.summary}")
+      result.warn(
+        "baymard_ux: /fix does not recruit participants, run real screen-reader sessions or conduct conversion experiments; "         "those remain human evidence inputs",
+      )
       result.warn("baymard_ux: not an official Baymard score or certification")
       if CheckResult.flag?("BAYMARD_STRICT") && report.task_inconclusive_count.positive?
         result.fail("baymard_ux: BAYMARD_STRICT=1 requires evidence for every applicable participant-task assessment")
