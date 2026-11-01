@@ -2,6 +2,7 @@
 
 require "digest"
 require "json"
+require "set"
 require "time"
 
 module Master
@@ -189,17 +190,20 @@ module Master
           evidence: { required: evidence_requirements(row["mode"]) },
         ) unless recorded
 
-        validate_evidence!(id.to_s, row, recorded)
-        finding(
-          app:, path: nil, id: id.to_s, row:, status: recorded.fetch("status"),
-          message: recorded.fetch("summary"),
-          evidence: sanitize_evidence(recorded),
-        )
-      rescue ArgumentError => e
-        finding(
-          app:, path: nil, id: id.to_s, row:, status: "FAIL",
-          message: "Evidence rejected: #{e.message}", evidence: {},
-        )
+        begin
+          normalized = recorded.transform_keys(&:to_s)
+          validate_evidence!(id.to_s, row, normalized)
+          finding(
+            app:, path: nil, id: id.to_s, row:, status: normalized.fetch("status"),
+            message: normalized.fetch("summary"),
+            evidence: sanitize_evidence(normalized),
+          )
+        rescue ArgumentError => e
+          finding(
+            app:, path: nil, id: id.to_s, row:, status: "FAIL",
+            message: "Evidence rejected: #{e.message}", evidence: {},
+          )
+        end
       end
     end
 
