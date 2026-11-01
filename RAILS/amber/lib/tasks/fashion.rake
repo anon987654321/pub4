@@ -19,8 +19,10 @@ namespace :scrape do
     subs = (args[:subs] || "femalefashionadvice,30PlusSkinCare,PetiteFashion").split(",").map(&:strip)
     schema = %w[title description url upvotes comments image_hints]
 
+    # A scrape sink, never a login: throw away the password the same moment it
+    # is created, so the task cannot leave a known credential behind on a box.
     seed_user = User.find_or_create_by!(email_address: "fashion-seed@amber.local") do |u|
-      u.password = u.password_confirmation = "password123"
+      u.password = u.password_confirmation = SecureRandom.hex(32)
     end
 
     subs.each do |sub|

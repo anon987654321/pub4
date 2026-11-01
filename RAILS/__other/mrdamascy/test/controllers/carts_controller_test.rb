@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class CartsControllerTest < ActiveSupport::TestCase
+class CartsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @kitchen = seed_kitchen!
     @category = seed_category!(@kitchen)

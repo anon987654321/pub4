@@ -350,8 +350,8 @@ worker killed at that mark reads as a broken app.
 Every deploy of any app sheds amber and bsdports, and relayd keeps answering TLS while amber is
 down, so the failure shows as curl 000 and never as a 5xx. Check the port and not the site.
 ALLOW_AMBER_DOWN=1 waives the check in deploy-smoke.sh where being down is the policy. The
-domain is amberapp.art, and its registration was unpaid on 2026-10-09, so confirm that the name
-resolves before pointing anyone at it.
+domain is amberapp.art; apps.yml carries the registration expiry and renewal flag, so read it
+there rather than here before pointing anyone at the name.
 
 The Litestream config is inert by decision, because OpenBSD has no binary for it. The backup is
 a nightly pull from the operator's Mac with OPENBSD/bin/dr-pull, which checks each database

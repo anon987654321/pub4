@@ -4,7 +4,7 @@ require "test_helper"
 
 # Tracking is public by token — no login required. The tip and review forms
 # appear after delivery; the tip updates the order total in øre.
-class TrackTipTest < ActiveSupport::TestCase
+class TrackTipTest < ActionDispatch::IntegrationTest
   setup do
     @order = seed_order!(state: "delivered", delivery_mode: "delivery")
   end

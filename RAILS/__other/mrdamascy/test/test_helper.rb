@@ -99,13 +99,18 @@ module ActiveSupport
     # a plain Session row + the token cookie (cookies[:session_token]).
     # ------------------------------------------------------------------
     def sign_in(user)
-      session_record = Session.create!(user: user, token: SecureRandom.hex(16))
-      cookies[:session_token] = session_record.token
+      # Drive the app's real phone + mock-OTP sign-in (POST /session) so the
+      # session cookie is exactly what SessionsController#create sets — a
+      # SIGNED cookie. Writing a plain cookie here made every controller see a
+      # guest: carts keyed on user_id vanished, the reorder card never
+      # rendered, staff pages bounced.
+      post session_url, params: { phone: user.phone, code: "1234", name: user.name }
+      raise "sign-in failed for #{user.phone} (#{response.status})" unless User.exists?(user.id)
       user
     end
 
     def sign_out
-      cookies.delete(:session_token)
+      delete session_url
     end
 
     def customer_sign_in(name: "Ola Nordmann", phone: "90000004")
@@ -113,11 +118,15 @@ module ActiveSupport
     end
 
     def staff_sign_in
-      sign_in(User.create!(phone: "90000002", name: "Umm Yusuf", role: ROLES.fetch(:staff)))
+      sign_in(User.create!(phone: "90000002", name: "Umm Yusuf", role: ROLES.fetch(:staff))).tap do |user|
+        user.update!(role: ROLES.fetch(:staff))
+      end
     end
 
     def courier_sign_in
-      sign_in(User.create!(phone: "90000003", name: "Kader", role: ROLES.fetch(:courier)))
+      sign_in(User.create!(phone: "90000003", name: "Kader", role: ROLES.fetch(:courier))).tap do |user|
+        user.update!(role: ROLES.fetch(:courier))
+      end
     end
 
     def seed_customer!(name: "Gjest")
@@ -129,15 +138,17 @@ module ActiveSupport
     # Seed helpers — minimal inline world builders (money in øre).
     # ------------------------------------------------------------------
     def seed_kitchen!
-      Kitchen.create!(
-        name: "Mr. Damascy — Bergen sentrum",
-        slug: "bergen",
-        address: "Strandgaten 47, 5004 Bergen",
-        postcode: "5004",
-        phone: "55 00 35 35",
-        opening_hours: "Man–Søn 11–23",
-        rating: 4.9
-      )
+      # Idempotent on slug: setup blocks often call seed_kitchen! and then a
+      # helper like seed_order! that seeds the kitchen again — the second
+      # create! would violate the unique slug and fail every such test.
+      Kitchen.find_or_create_by!(slug: "bergen") do |k|
+        k.name = "Mr. Damascy — Bergen sentrum"
+        k.address = "Strandgaten 47, 5004 Bergen"
+        k.postcode = "5004"
+        k.phone = "55 00 35 35"
+        k.opening_hours = "Man–Søn 11–23"
+        k.rating = 4.9
+      end
     end
 
     def seed_zone!(postcode: "5004", name: "Strandgaten", fee_ore: 2900,

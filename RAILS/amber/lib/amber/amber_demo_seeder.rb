@@ -84,9 +84,19 @@ module Amber
     attr_reader :attach_media
 
     def ensure_demo_user!
+      # Random on create, and rotated again on every seed: the first runs of
+      # this seeder shipped "password123", so a demo row that predates the fix
+      # would carry that credential forever if create-time only were enough.
+      password = SecureRandom.hex(32)
       user = User.strict_loading(false).find_or_create_by!(email_address: DemoWardrobe::DEMO_EMAIL) do |u|
-        u.password = u.password_confirmation = "password123"
+        # The demo account owns the public /demo page, and its address is on
+        # that page. A fixed password made it a known login on every box the
+        # seed ran on — including through the jobs dashboard before it was
+        # gated. The demo user never signs in, so its password exists only to
+        # satisfy has_secure_password and is thrown away here.
+        u.password = u.password_confirmation = password
       end
+      user.update!(password: password, password_confirmation: password) unless user.previously_new_record?
       profile = user.profile || user.create_profile!
       profile.update!(display_name: DemoWardrobe::DEMO_DISPLAY_NAME) if profile.display_name.blank?
       user

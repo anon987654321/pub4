@@ -43,3 +43,7 @@
 
 # Ignore test artifacts.
 /coverage
+
+# Dart Sass build artifacts (Propshaft serves the built file)
+/app/assets/builds
+!app/assets/builds/.keep

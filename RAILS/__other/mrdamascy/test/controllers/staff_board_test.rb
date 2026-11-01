@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class StaffBoardTest < ActiveSupport::TestCase
+class StaffBoardTest < ActionDispatch::IntegrationTest
   setup do
     @kitchen = seed_kitchen!
     @order = seed_order!(kitchen: @kitchen, state: "placed")

@@ -33,7 +33,7 @@ export default class extends Controller {
         }
         if (this.hasEtaTarget && data.eta != null && this.etaTemplateValue) {
           this.etaTarget.textContent = this.etaTemplateValue
-            .split("%{minutes}")
+            .split("%{eta}")
             .join(String(data.eta))
         }
       })

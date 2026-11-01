@@ -101,9 +101,20 @@ module Shared
       # domain: :all for the same reason as the session cookie (see
       # shared/config/initializers/session_store.rb): the verticals are
       # subdomains, and a host-only cookie signed you out on the way to them.
+      # secure: mirrors that initializer — production only, because relayd
+      # terminates TLS and force_ssl is deliberately off, so nothing else
+      # would ever set the flag on this cookie.
       cookies.signed.permanent[:session_id] = {
         value: Current.session.id, httponly: true, same_site: :lax, domain: :all,
+        secure: Rails.env.production?,
       }
+
+      # A member who enabled TOTP must present a current code on this device
+      # before the session is good for anything (Shared::TwoFactorGate). Set
+      # here rather than per sign-in action so password, magic-link and OAuth
+      # entries cannot drift apart; reset_session above already cleared any
+      # previous flag, so re-signing in re-arms the challenge honestly.
+      session[:two_factor_pending] = true if user.try(:otp_secret).present?
     end
 
     def terminate_session

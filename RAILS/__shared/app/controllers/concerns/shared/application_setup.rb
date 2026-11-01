@@ -7,6 +7,7 @@ module Shared
     included do
       include Shared::RescueHandlers
       include Shared::Authentication
+      include Shared::TwoFactorGate
       include Shared::WriteThrottle
       include Shared::Idempotency
       include Shared::PunditAuthorization

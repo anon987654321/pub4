@@ -3,7 +3,8 @@
 class MenuItem < ApplicationRecord
   # The "best of the world's kebab" tour — every I18n origins.<origin> story
   # key comes from this list.
-  ORIGINS = %w[damaskus beirut berlin adana oslo dubai tel_aviv bursa gaziantep familie stockholm sydney].freeze
+  # Bergen, not Oslo: one kitchen, Strandgaten 47 — the home city origin.
+  ORIGINS = %w[damaskus beirut berlin adana bergen dubai tel_aviv bursa gaziantep familie stockholm sydney].freeze
 
   belongs_to :menu_category
   has_many :item_options, dependent: :destroy

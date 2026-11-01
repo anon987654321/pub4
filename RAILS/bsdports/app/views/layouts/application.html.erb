@@ -36,7 +36,7 @@
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-  <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= yield :json_ld %>
   <%= json_ld_script(website_json_ld(site_name: "BSDports", url: root_url, description: "Full-text search for OpenBSD ports.")) %>
   <%= javascript_importmap_tags %>

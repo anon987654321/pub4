@@ -7,12 +7,16 @@ module Shared
 
     included do
       allow_unauthenticated_access only: %i[new create magic request_magic]
-      rate_limit to: 10, within: 3.minutes, only: :create,
+      # Both named: ActionController::RateLimiting keys unnamed limits to one
+      # shared counter per controller, so login would spend the magic-link
+      # budget and the 3-minute window would win for both (see
+      # RAILS/test/rate_limit_naming_test.rb).
+      rate_limit to: 10, within: 3.minutes, only: :create, name: :password,
         with: -> { redirect_to new_session_path, alert: t("shared.flash.rate_limited") }
       # Tighter than :create because this one sends mail on an unauthenticated
       # POST, so the cost of abuse is somebody else's inbox rather than a
       # wasted round trip.
-      rate_limit to: 3, within: 15.minutes, only: :request_magic,
+      rate_limit to: 3, within: 15.minutes, only: :request_magic, name: :magic,
         with: -> { redirect_to new_session_path, alert: t("shared.flash.rate_limited") }
     end
 

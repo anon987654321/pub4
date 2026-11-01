@@ -84,7 +84,7 @@ class VippsClientTest < ActiveSupport::TestCase
   end
 
   test "real init without a known phone omits the customer block" do
-    @order.update!(phone: "")
+    @order.update_column(:phone, "")  # defensive: no known phone on the order
     vipps_real_mode!
     VippsClient.init_payment(order: @order)
 
@@ -173,6 +173,7 @@ class VippsClientTest < ActiveSupport::TestCase
   # --- Login API ----------------------------------------------------------------
 
   test "login authorize URL carries client, scopes, state and redirect" do
+    vipps_real_mode!
     url = VippsClient.login_authorize_url(
       redirect_uri: "https://mrdamascy.example/session/vipps/callback",
       state: "st-123", nonce: "n-123"
@@ -196,7 +197,7 @@ class VippsClientTest < ActiveSupport::TestCase
     assert_match(/\Avip-cid:vip-secret\z/,
                  Base64.decode64(token_call[:headers]["Authorization"].split(" ").last))
 
-    info = VippsClient.login_userinfo!("Tok1")
+    info = VippsClient.login_userinfo!(access_token: "Tok1")
     assert_equal "Ola Nordmann", info["name"]
     assert_equal "4790000004", info["phone_number"]
     assert_equal "Nygårdsgaten 12", info.dig("address", "street_address")

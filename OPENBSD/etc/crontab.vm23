@@ -98,6 +98,16 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 0 6 * * * /usr/local/bin/declutter-hygiene.sh >> /var/log/declutter-hygiene.log 2>&1
 0 3 * * * /usr/local/bin/ports-import.sh >> /var/log/ports-import.log 2>&1
 
+# purge-deleted-users — the third recurring.yml schedule that can never fire
+# on its own, and the one with legal teeth: amber's GDPR Art. 17 erasure
+# (UserPurgeJob, recurring.yml "every day at 3:50am", queue bulk). No resident
+# scheduler means the recurring trigger never fires and deletion requests
+# never erase — a compliance violation that looked scheduled in the docs and
+# the contract test but never executed. Five minutes after the documented
+# slot, so a scheduler that someday does become resident cannot race this
+# run; UserPurgeJob also holds limits_concurrency to 1 for the queue path.
+55 3 * * * /usr/local/bin/purge-deleted-users.sh >> /var/log/purge-deleted-users.log 2>&1
+
 # pub4-alert watch - disk, swap, failed services and a stale backup report, each
 # recorded once per six hours in /var/log/pub4-alerts.log and shown by vps-state.
 # relayd-watchdog and uptime-check raise their own alerts when a symptom recurs.

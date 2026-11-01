@@ -157,7 +157,7 @@ class SessionsController < ApplicationController
       code: params[:code].to_s,
       redirect_uri: session_vipps_callback_url
     )
-    info = VippsClient.login_userinfo!(tokens["access_token"])
+    info = VippsClient.login_userinfo!(access_token: tokens["access_token"])
     address = info["address"].is_a?(Hash) ? info["address"] : {}
 
     {

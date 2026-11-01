@@ -6,7 +6,7 @@ require "test_helper"
 # Vipps app, so the tracking page itself — load and the 10 s status poll —
 # reconciles the payment. No refresh, no extra tap: Vipps says AUTHORIZED →
 # we capture → the timeline flips to confirmed.
-class VippsPollSyncTest < ActiveSupport::TestCase
+class VippsPollSyncTest < ActionDispatch::IntegrationTest
   setup do
     @kitchen = seed_kitchen!
     @order = seed_order!(token: "tok-poll-1")

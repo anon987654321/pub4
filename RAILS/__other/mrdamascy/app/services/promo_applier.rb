@@ -31,10 +31,13 @@ class PromoApplier
       return none_result(base_fee) if best.nil? || best[:saving] <= 0
 
       if best[:promo]
+        free_delivery = best[:promo].kind == "free_delivery"
         {
           promo: best[:promo],
-          discount_ore: best[:saving],
-          delivery_fee_ore: best[:promo].kind == "free_delivery" ? 0 : base_fee,
+          # Free delivery zeroes the fee, not the basket (AGENTS contract):
+          # its "saving" is the fee it removes, never a basket discount.
+          discount_ore: free_delivery ? 0 : best[:saving],
+          delivery_fee_ore: free_delivery ? 0 : base_fee,
           source: :promo
         }
       else

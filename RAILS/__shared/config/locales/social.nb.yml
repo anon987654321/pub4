@@ -85,6 +85,7 @@ nb:
   auth:
     toggle_password_visibility: "Vis eller skjul passordet"
     enable_2fa: "Slå på 2FA"
+    verify_2fa: "Bekreft"
     verification_code: "Verifiseringskode"
     # shared/_oauth_links renders in all three apps and reads these first,
     # falling back to nav.oauth_* and then to English. Only brgen carries
@@ -96,6 +97,7 @@ nb:
     with_bankid: "Logg inn med BankID"
     with_vipps: "Logg inn med Vipps"
     two_factor_lead: "Skann QR-koden eller skriv inn hemmeligheten i autentiseringsappen din."
+    two_factor_challenge_lead: "Skriv inn gjeldende kode fra autentiseringsappen din for å fullføre innloggingen."
     magic_link: "Send meg en innloggingslenke"
   status:
     updating_results: "Oppdaterer resultater…"

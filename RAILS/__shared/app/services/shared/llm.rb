@@ -48,6 +48,16 @@ module Shared
     private
 
     def configure_provider(config)
+      # RubyLLM's defaults (300s open timeout, 3 retries) are tuned for long
+      # completions, not for the JSON classification calls everything here
+      # makes. Untuned, one hung OpenRouter connection pins a Falcon fibre for
+      # minutes — on a synchronous server that is lost capacity, and amber's
+      # AI endpoints are synchronous. 30s and one retry bound a call to about
+      # a minute worst case; LLM_REQUEST_TIMEOUT lets the operator tune it
+      # without a deploy.
+      config.request_timeout = ENV.fetch("LLM_REQUEST_TIMEOUT", "30").to_i
+      config.max_retries = 1
+
       case @provider
       when :openrouter
         config.openrouter_api_key = ENV.fetch(@key_env)

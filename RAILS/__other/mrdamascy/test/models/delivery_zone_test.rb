@@ -15,15 +15,15 @@ class DeliveryZoneTest < ActiveSupport::TestCase
   test "zones are found by postcode, whitespace tolerated" do
     zone = seed_zone!(postcode: "5004", name: "Strandgaten")
 
-    assert_equal zone, DeliveryZone.for_postcode("0170")
-    assert_equal zone, DeliveryZone.for_postcode(" 0170 ")
+    assert_equal zone, DeliveryZone.for_postcode("5004")
+    assert_equal zone, DeliveryZone.for_postcode(" 5004 ")
     assert_nil DeliveryZone.for_postcode("9999")
     assert_nil DeliveryZone.for_postcode("")
   end
 
   test "postcodes are unique — one rule per postcode" do
     seed_zone!(postcode: "5004", name: "Strandgaten")
-    duplicate = DeliveryZone.new(postcode: "0170", name: "Annet sted",
+    duplicate = DeliveryZone.new(postcode: "5004", name: "Annet sted",
                                  fee_ore: 3900, min_basket_ore: 20000, eta_minutes: 30)
     assert_not duplicate.valid?, "two zones with the same postcode should be invalid"
   end
