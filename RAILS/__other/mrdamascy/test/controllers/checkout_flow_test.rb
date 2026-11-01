@@ -6,10 +6,13 @@ require "test_helper"
 # add to cart → checkout create (zone + min basket OK) → redirected to the
 # mock Vipps page with a token → approve → payment captured + order confirmed
 # → public tracking page says Sahtein! صحتين
-class CheckoutFlowTest < ActiveSupport::TestCase
+class CheckoutFlowTest < ActionDispatch::IntegrationTest
   setup do
     @kitchen = seed_kitchen!
-    @zone = seed_zone!(postcode: "0170", fee_ore: 2900, min_basket_ore: 15000, eta_minutes: 20)
+    # The tests post 5004 (Strandgaten) — the zone must cover the postcode the
+    # checkout actually sends, and its minimum must admit the crown's single
+    # 129 kr wrap; the dedicated min-basket test below works against this too.
+    @zone = seed_zone!(postcode: "5004", fee_ore: 2900, min_basket_ore: 10000, eta_minutes: 20)
     @category = seed_category!(@kitchen)
     @item = seed_item!(@category, name: "Damaskus Kylling Shawarma", price_ore: 12900)
     seed_option!(@item, name: "Toum", kind: "sauce", default_on: true)
@@ -77,7 +80,7 @@ class CheckoutFlowTest < ActiveSupport::TestCase
 
   test "a basket below the zone minimum is refused" do
     cheap = seed_item!(@category, name: "Syltebolle", name_en: "Pickled cucumber",
-                       price_ore: 2900, origin: "oslo", heat: 0, emoji: "🥒",
+                       price_ore: 2900, origin: "bergen", heat: 0, emoji: "🥒",
                        badges: "", weight_g: 100)
     post add_item_cart_url, params: { menu_item_id: cheap.id, quantity: 1,
                                       option_ids: [], note: "" }

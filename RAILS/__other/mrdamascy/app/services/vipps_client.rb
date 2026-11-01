@@ -66,10 +66,23 @@ class VippsClient
           token: order.tracking_token, host: default_host
         )
         order.payment_state = "authorised"
+        persist_payment_columns!(order)
         true
       else
         init_real_payment!(order)
+        persist_payment_columns!(order)
       end
+    end
+
+    # Persist exactly the payment columns the client owns. update_columns, not
+    # save!: the order's own validations (address, phone, …) are the checkout's
+    # business, and a defensively blank phone must not block a payment write.
+    def persist_payment_columns!(order)
+      order.update_columns(
+        vipps_order_id: order.vipps_order_id,
+        vipps_url: order.vipps_url,
+        payment_state: order.payment_state
+      )
     end
 
     # The single reconciliation seam: look at what Vipps actually says about

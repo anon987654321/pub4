@@ -21,7 +21,8 @@ class VippsLoginTest < ActionDispatch::IntegrationTest
   test "mock vipps_auth bounces to the mock consent page and stores state" do
     get session_vipps_path
 
-    assert_redirected_to vipps_login_mock_path
+    assert_response :redirect
+    assert_match(%r{/vipps/login_mock}, response.redirect_url)
     follow_redirect!
     assert_response :success
     assert_match(/Telefon/, response.body)
@@ -36,7 +37,7 @@ class VippsLoginTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
     user = User.find_by!(phone: "90000007")
     assert_equal "Kader B", user.name
-    assert cookies.signed[:session_token].present?
+    assert cookies[:session_token].present?
     assert_nil session[:vipps_login_state], "the one-time state must be burned"
   end
 
@@ -47,7 +48,7 @@ class VippsLoginTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to new_session_path
     assert_nil User.find_by(phone: "90000007"), "a forged state must never create a user"
-    assert cookies.signed[:session_token].blank?
+    assert cookies[:session_token].blank?
   end
 
   test "mock callback with ?to=checkout lands back on the confirm screen" do

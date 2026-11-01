@@ -23,7 +23,7 @@
   <% else %>
     <% if order.eta_minutes.present? && order.state != "delivered" %>
       <p class="track-eta" data-track-target="eta">
-        <%= t("orders.eta", minutes: order.eta_minutes) %>
+        <%= t("orders.eta", eta: order.eta_minutes) %>
       </p>
     <% end %>
 

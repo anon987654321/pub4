@@ -7,7 +7,7 @@ require "test_helper"
 # [{reference:, state:, …}]. Contract here: unauthenticated → 401, verified
 # events drive sync_payment! (capture on AUTHORIZED), replays converge,
 # garbage JSON → 400, unknown references are ignored politely.
-class VippsCallbackTest < ActiveSupport::TestCase
+class VippsCallbackTest < ActionDispatch::IntegrationTest
   setup do
     @kitchen = seed_kitchen!
     @order = seed_order!(token: "tok-hook-1")
@@ -20,8 +20,8 @@ class VippsCallbackTest < ActiveSupport::TestCase
   end
 
   test "answers 401 without a webhook secret" do
-    post vipps_callback_path, params: {}, headers: { "Content-Type" => "application/json" },
-                              body: [].to_json, as: :json
+    post vipps_callback_path, headers: { "Content-Type" => "application/json" },
+                              body: [].to_json
 
     assert_response :unauthorized
     assert_equal "authorised", @order.reload.payment_state
@@ -29,9 +29,9 @@ class VippsCallbackTest < ActiveSupport::TestCase
 
   test "answers 401 with a wrong secret" do
     ENV["VIPPS_WEBHOOK_SECRET"] = "sekret"
-    post vipps_callback_path, params: {}, headers: { "Content-Type" => "application/json",
+    post vipps_callback_path, headers: { "Content-Type" => "application/json",
                                                      "Authorization" => "nope" },
-                              body: [].to_json, as: :json
+                              body: [].to_json
 
     assert_response :unauthorized
   end
@@ -40,9 +40,9 @@ class VippsCallbackTest < ActiveSupport::TestCase
     ENV["VIPPS_WEBHOOK_SECRET"] = "sekret"
     vipps_real_mode!
 
-    post vipps_callback_path, params: {},
+    post vipps_callback_path,
          headers: { "Content-Type" => "application/json", "Authorization" => "sekret" },
-         body: [{ reference: "mrdamascy-tok-hook-1", state: "AUTHORIZED" }].to_json, as: :json
+         body: [{ reference: "mrdamascy-tok-hook-1", state: "AUTHORIZED" }].to_json
 
     assert_response :ok
     @order.reload
@@ -58,9 +58,9 @@ class VippsCallbackTest < ActiveSupport::TestCase
     event = [{ reference: "mrdamascy-tok-hook-1", state: "AUTHORIZED" }].to_json
 
     2.times do
-      post vipps_callback_path, params: {},
+      post vipps_callback_path,
            headers: { "Content-Type" => "application/json", "Authorization" => "sekret" },
-           body: event, as: :json
+           body: event
       assert_response :ok
     end
 
@@ -73,9 +73,9 @@ class VippsCallbackTest < ActiveSupport::TestCase
     ENV["VIPPS_WEBHOOK_SECRET"] = "sekret"
     vipps_real_mode!(remote_state: "ABORTED")
 
-    post vipps_callback_path, params: {},
+    post vipps_callback_path,
          headers: { "Content-Type" => "application/json", "Authorization" => "sekret" },
-         body: [{ reference: "mrdamascy-tok-hook-1", state: "ABORTED" }].to_json, as: :json
+         body: [{ reference: "mrdamascy-tok-hook-1", state: "ABORTED" }].to_json
 
     assert_response :ok
     @order.reload
@@ -87,9 +87,9 @@ class VippsCallbackTest < ActiveSupport::TestCase
     ENV["VIPPS_WEBHOOK_SECRET"] = "sekret"
     vipps_real_mode!
 
-    post vipps_callback_path, params: {},
+    post vipps_callback_path,
          headers: { "Content-Type" => "application/json", "Authorization" => "sekret" },
-         body: [{ reference: "mrdamascy-who-dis", state: "AUTHORIZED" }].to_json, as: :json
+         body: [{ reference: "mrdamascy-who-dis", state: "AUTHORIZED" }].to_json
 
     assert_response :ok
     assert_equal "authorised", @order.reload.payment_state
@@ -98,9 +98,9 @@ class VippsCallbackTest < ActiveSupport::TestCase
   test "malformed JSON answers 400" do
     ENV["VIPPS_WEBHOOK_SECRET"] = "sekret"
 
-    post vipps_callback_path, params: {},
+    post vipps_callback_path,
          headers: { "Content-Type" => "application/json", "Authorization" => "sekret" },
-         body: "{not json", as: :json
+         body: "{not json"
 
     assert_response :bad_request
   end
@@ -109,9 +109,9 @@ class VippsCallbackTest < ActiveSupport::TestCase
     ENV["VIPPS_WEBHOOK_SECRET"] = "sekret"
     vipps_real_mode!
 
-    post vipps_callback_path, params: {},
+    post vipps_callback_path,
          headers: { "Content-Type" => "application/json", "Authorization" => "sekret" },
-         body: { reference: "mrdamascy-tok-hook-1", state: "AUTHORIZED" }.to_json, as: :json
+         body: { reference: "mrdamascy-tok-hook-1", state: "AUTHORIZED" }.to_json
 
     assert_response :ok
     assert_equal "captured", @order.reload.payment_state

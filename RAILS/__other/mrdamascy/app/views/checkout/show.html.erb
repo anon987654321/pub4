@@ -84,9 +84,11 @@
     <% end %>
   </section>
 
-  <p class="promo-line">
-    <span aria-hidden="true">✓</span> <%= t("checkout.promo_auto") %>
-  </p>
+  <% if @promo[:promo].present? %>
+    <p class="promo-line">
+      <span aria-hidden="true">✓</span> <%= t("checkout.promo_auto", code: @promo[:promo].code) %>
+    </p>
+  <% end %>
 
   <section class="totals card">
     <div class="totals-row">

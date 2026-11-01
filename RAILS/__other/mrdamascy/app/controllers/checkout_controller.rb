@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class CheckoutController < ApplicationController
+  # The min-basket flash formats øre through the same money() rule as the
+  # views — one formatter, no controller-side copy.
+  include ApplicationHelper
   # Real mode without credentials raises VippsClient::NotAvailable; the checkout
   # says so honestly instead of 500-ing (payment honesty: no fake success, no
   # half-captured orders — the cart is untouched and the customer can retry).

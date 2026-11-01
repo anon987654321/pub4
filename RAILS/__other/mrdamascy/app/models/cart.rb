@@ -27,7 +27,10 @@ class Cart < ApplicationRecord
   def add_item!(menu_item, quantity = 1, option_ids: [], note: nil)
     quantity = Integer(quantity)
     quantity = 1 if quantity < 1
-    ids = Array(option_ids).map { |id| Integer(id) }.sort
+    # Form noise guard: a no-option form can deliver [""] (or "") through the
+    # params round-trip. Blank ids carry no option, so drop them before the
+    # Integer cast instead of 500ing on a legitimate request.
+    ids = Array(option_ids).reject(&:blank?).map { |id| Integer(id) }.sort
     signature = ids.join(",")
 
     line = cart_items.find_by(menu_item_id: menu_item.id, option_ids: signature, note: note.presence)

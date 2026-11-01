@@ -73,6 +73,7 @@ class WoltDriveClient
       if mock_mode?
         { available: true, fee_ore: 4900, eta_minutes: 35 }
       else
+        headers = auth_headers  # validate the Bearer token before the URL
         uri = URI("#{API_BASE}/#{require_env('WOLT_DRIVE_CLIENT_ID')}/shipment-promises")
         payload = {
           pickup: pickup_location,
@@ -80,7 +81,7 @@ class WoltDriveClient
         }.to_json
 
         response = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 5, read_timeout: 10) do |http|
-          http.post(uri.request_uri, payload, auth_headers)
+          http.post(uri.request_uri, payload, headers)
         end
 
         raise NotAvailable, "Wolt Drive quote failed: HTTP #{response.code}" unless response.is_a?(Net::HTTPSuccess)
@@ -96,9 +97,10 @@ class WoltDriveClient
     def delivery_status(delivery_id:)
       return { status: "created", courier: nil } if mock_mode?
 
+      headers = auth_headers  # validate the Bearer token before the URL
       uri = URI("#{API_BASE}/#{require_env('WOLT_DRIVE_CLIENT_ID')}/deliveries/#{delivery_id}")
       response = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 5, read_timeout: 10) do |http|
-        http.get(uri.request_uri, auth_headers)
+        http.get(uri.request_uri, headers)
       end
 
       raise NotAvailable, "Wolt Drive poll failed: HTTP #{response.code}" unless response.is_a?(Net::HTTPSuccess)
@@ -124,6 +126,7 @@ class WoltDriveClient
     end
 
     def request_real_delivery(order)
+      headers = auth_headers  # validate the Bearer token before the URL
       uri = URI("#{API_BASE}/#{require_env('WOLT_DRIVE_CLIENT_ID')}/deliveries")
       payload = {
         pickup: { location: pickup_location, comment: "Mr. Damascy, Strandgaten 47" },
@@ -135,7 +138,7 @@ class WoltDriveClient
       }.to_json
 
       response = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 5, read_timeout: 10) do |http|
-        http.post(uri.request_uri, payload, auth_headers)
+        http.post(uri.request_uri, payload, headers)
       end
 
       unless response.is_a?(Net::HTTPSuccess)

@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class MenuControllerTest < ActiveSupport::TestCase
+class MenuControllerTest < ActionDispatch::IntegrationTest
   setup do
     @kitchen = seed_kitchen!
     @wraps = seed_category!(@kitchen, name: "Wraps & Ruller", slug: "wraps", emoji: "🌯")
@@ -17,7 +17,7 @@ class MenuControllerTest < ActiveSupport::TestCase
     assert_match "129 kr", response.body                       # money(12900)
     assert_match(/4[.,]9/, response.body)                      # kitchen rating ⭐
     assert_match "11–23", response.body                        # opening hours
-    assert_match "Wraps & Ruller", response.body               # category section
+    assert_match "Wraps &amp; Ruller", response.body  # HTML-escaped in the section title               # category section
   end
 
   test "the item page shows the origin story and the options" do
@@ -35,7 +35,10 @@ class MenuControllerTest < ActiveSupport::TestCase
 
   test "the reorder card greets returning customers with Yalla igjen" do
     user = customer_sign_in
-    seed_order!(user: user, kitchen: @kitchen, state: "delivered")
+    order = seed_order!(user: user, kitchen: @kitchen, state: "delivered")
+    # The card renders only when the last order carries lines.
+    order.order_items.create!(name: "Damaskus Kylling Shawarma", quantity: 1,
+                              unit_price_ore: 12900, line_total_ore: 25800)
 
     get root_url
     assert_response :success

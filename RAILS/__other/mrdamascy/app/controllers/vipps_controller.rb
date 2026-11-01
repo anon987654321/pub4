@@ -19,6 +19,11 @@ require "active_support/security_utils"
 # cookie) and authenticated by the webhook secret instead. Replays are fine:
 # sync_payment! only moves states forward and capture is idempotent.
 class VippsController < ApplicationController
+  # Rails' own parameter parser raises before #callback runs when the
+  # webhook body is not JSON; answer the documented 400 there too.
+  rescue_from ActionDispatch::Http::Parameters::ParseError do
+    head :bad_request
+  end
   skip_before_action :verify_authenticity_token, only: [:callback]
 
   before_action :refuse_in_real_mode, only: [:mock, :approve, :login_mock]

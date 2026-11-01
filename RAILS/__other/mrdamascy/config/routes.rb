@@ -31,7 +31,7 @@ Rails.application.routes.draw do
   get "loyalty", to: "loyalty#show"
 
   namespace :staff do
-    resource :board, only: [:show]
+    get "board", to: "board#show", as: :board
     patch "orders/:id/advance", to: "board#advance", as: :advance_order
     patch "orders/:id/wolt", to: "board#wolt_dispatch", as: :wolt_order
   end
