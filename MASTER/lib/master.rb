@@ -180,11 +180,19 @@ module Master
     load_yaml(File.join(root, "data", "soul.yml")) || {}
   end
 
-  # The one reader of data/laws.yml. A missing section raises rather than
-  # returning {}, because every caller reads the empty result as a law with nothing in it.
-  def self.law_entries(root: ROOT) = law_entries_in(load_laws(root:) || {})
+  # The one reader of the normative flat law catalogue.
+  # Runtime compatibility settings and legacy detector metadata are loaded
+  # separately through load_laws (data/law_runtime.yml).
+  def self.law_entries(root: ROOT)
+    master_root = Master.master_root(root:)
+    path = File.join(master_root, "data", "laws.yml")
+    return [] unless master_root == ROOT || File.file?(path)
 
-  # The law entries of an already-loaded laws.yml body, so a caller that holds one need not read the file again.
+    law_entries_in(load_yaml(path) || {})
+  end
+
+  # Preserve source order. Parent entries inherit their constitutional root;
+  # they are not assigned a second, synthetic priority.
   def self.law_entries_in(data)
     legacy = data["laws"]
     if legacy.is_a?(Hash)
@@ -192,7 +200,8 @@ module Master
     end
 
     data.filter_map do |id, value|
-      next unless value.is_a?(Hash) && value["priority"] && value["statement"]
+      next unless value.is_a?(Hash) && value["statement"]
+      next unless value.key?("node") || value.key?("root") || value.key?("parent")
 
       value.merge("id" => id.to_s)
     end
