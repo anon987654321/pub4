@@ -119,7 +119,7 @@ module Master
         {
           soul_version: soul["version"] || "unreadable",
           persona: soul["persona"],
-          sacred_paths: Array(soul.dig("absolute", "sacred_paths")).size,
+          sacred_paths: Master::Soul.sacred_paths(root:).size,
           digest: digest(root:),
         }
       end
