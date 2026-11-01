@@ -58,6 +58,19 @@ class PortMutationsTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "watch and unwatch reuse one Turbo Stream response with opposite actions" do
+    user = make_user("stream-watcher")
+    sign_in_bsdports(user)
+
+    post watch_port_path(@port), as: :turbo_stream
+    assert_response :success
+    assert_includes response.body, unwatch_port_path(@port)
+
+    delete unwatch_port_path(@port), as: :turbo_stream
+    assert_response :success
+    assert_includes response.body, watch_port_path(@port)
+  end
+
 
   test "legacy executable homepage values render as text rather than links" do
     @port.update_column(:homepage, "javascript:alert(1)")
