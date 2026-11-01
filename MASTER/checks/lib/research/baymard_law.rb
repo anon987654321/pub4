@@ -63,8 +63,8 @@ module Deploy
 
       result.warn("baymard_ux: #{report.summary}")
       result.warn("baymard_ux: not an official Baymard score or certification")
-      if CheckResult.flag?("BAYMARD_STRICT") && report.inconclusive_count.positive?
-        result.fail("baymard_ux: BAYMARD_STRICT=1 requires evidence for every applicable task assessment")
+      if CheckResult.flag?("BAYMARD_STRICT") && report.task_inconclusive_count.positive?
+        result.fail("baymard_ux: BAYMARD_STRICT=1 requires evidence for every applicable participant-task assessment")
       end
       result
     rescue StandardError => e
