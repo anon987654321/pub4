@@ -1116,7 +1116,7 @@ STEWARDSHIP_mono_no_aware:
 
 STEWARDSHIP_preserve_first:
   parent: STEWARDSHIP
-  statement: "A change that breaks what exists to build what does not."
+  statement: "Preserve working code and behaviour before improving it; never break what exists to build what does not yet exist."
   resolution: review
 
 STEWARDSHIP_utilitas:
