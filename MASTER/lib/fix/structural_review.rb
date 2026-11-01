@@ -99,10 +99,15 @@ module Master
         text.byteslice(0, MAX_PROMPT_BYTES)
       end
 
-      # The priority-ranked entries of laws.yml, as id and statement.
+      # Constitutional order is defined by Soul. The flat catalogue supplies
+      # statements and source order, never a second priority field.
       def constitution
-        ranked = Master.load_laws(root: @root).select { |_id, entry| entry.is_a?(Hash) && entry["priority"] }
-        ranked.map { |id, entry| "#{id}: #{entry["statement"]}" }.join(" | ")
+        rows = Master.law_entries(root: @root)
+        order = Master::Soul.invariant_order
+        rows.sort_by do |entry|
+          node = entry["node"]
+          [node ? order.index(node.to_s).to_i : order.length, rows.index(entry)]
+        end.map { |entry| "#{entry.fetch("id")}: #{entry.fetch("statement")}" }.join(" | ")
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "StructuralReview.constitution")
         "unavailable"
