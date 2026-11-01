@@ -524,6 +524,7 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes feed_list_css, ".feed_list.post-card-list > li {\n  display: block;"
     assert_match(/posts\.each do \|post\|\s*<li><%= render "posts\/post", post: post %><\/li>/m, amber_home)
   end
+
   def test_feed_lists_keep_safari_list_roles_and_post_item_boxes
     feed_paths = %w[
       brgen/app/views/home/_live_search_results.html.erb
@@ -567,6 +568,7 @@ class CritiqueImplementationTest < Minitest::Test
     assert_operator library.index('render "shared/empty_state"'), :>, library.index("</ul>"),
                     "the playlist empty state must not be a direct child of ul"
   end
+
   def test_amber_enum_selectors_localize_labels_and_keep_enum_values
     helper = read("amber/app/helpers/application_helper.rb")
     season_views = %w[outfits/index.html.erb outfits/_form.html.erb items/_form.html.erb ai/suggest_outfits.html.erb]
