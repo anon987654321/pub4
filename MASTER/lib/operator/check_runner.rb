@@ -66,7 +66,7 @@ module Operator
     # that was still running looked the same for twenty minutes.
     def capture(env, *cmd)
       log = StepWatch.log_path(cmd.last(2).join(" "))
-      pid = Process.spawn(env, *cmd, chdir: @root, in: File::NULL, out: log, err: %i[child out], pgroup: true)
+      pid = Process.spawn(Master::Io::ProcessSpawn.environment(env), *cmd, chdir: @root, in: File::NULL, out: log, err: %i[child out], pgroup: true)
       watch = StepWatch.new(log, unit: "#{@prefix}#{@results.size + 1}") unless @quiet
 
       status = wait_bounded(pid)
