@@ -8,7 +8,7 @@ module Operator
     REQUIRED = %w[
       MASTER/data/soul.yml
       MASTER/data/laws.yml
-      MASTER/data/SOUL.md
+      MASTER/lib/soul.rb
       MASTER/data/project_context.yml
       MASTER/bin/master
       MASTER/lib/review/scan
