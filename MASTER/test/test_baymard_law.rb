@@ -58,7 +58,7 @@ class TestBaymardLaw < Minitest::Test
           },
           "task" => %w[method participants summary artifacts sha256],
         },
-        "task_privacy" => "Use anonymised aggregate observations only.",
+        "task_privacy" => "Use anonymised aggregate observations only; redact images and screen captures.",
         "verdicts" => %w[pass fail inconclusive not_applicable],
       },
     }
@@ -237,6 +237,55 @@ class TestBaymardLaw < Minitest::Test
 
       assert_equal "pass", navigation.status
       assert_includes navigation.evidence, "navigation-observation.md"
+    end
+  end
+
+  def test_task_artifacts_are_scanned_bounded_and_redacted
+    with_fixture do |dir, rails, profile|
+      write_good_surface(rails)
+      artifact_path = File.join(dir, "navigation-observation.md")
+      evidence_path = File.join(dir, "baymard-evidence.yml")
+      evidence = {
+        "schema" => 1,
+        "apps" => {
+          "demo" => {
+            "navigation_findability" => {
+              "status" => "pass",
+              "method" => "expert_walkthrough",
+              "participants" => 1,
+              "summary" => "The task completed without prompting.",
+              "artifacts" => [],
+            },
+          },
+        },
+      }
+
+      File.write(artifact_path, "Observed contact: jane@example.com\n")
+      evidence["apps"]["demo"]["navigation_findability"]["artifacts"] = [{
+        "path" => "navigation-observation.md",
+        "sha256" => Digest::SHA256.file(artifact_path).hexdigest,
+      }]
+      File.write(evidence_path, YAML.dump(evidence))
+      report = Master::Review::BaymardLaw.new(
+        root: dir, apps: ["demo"], evidence_path: "baymard-evidence.yml", profile:
+      ).call
+      row = report.assessments.find { |item| item.check_id == "navigation_findability" }
+      assert_equal "inconclusive", row.status
+      assert_match(/artifact/, row.summary)
+
+      screenshot_path = File.join(dir, "screen.png")
+      File.binwrite(screenshot_path, "\x89PNG\r\n\x1a\n".b + "redacted fixture bytes".b)
+      evidence["apps"]["demo"]["navigation_findability"]["artifacts"] = [{
+        "path" => "screen.png",
+        "sha256" => Digest::SHA256.file(screenshot_path).hexdigest,
+      }]
+      File.write(evidence_path, YAML.dump(evidence))
+      report = Master::Review::BaymardLaw.new(
+        root: dir, apps: ["demo"], evidence_path: "baymard-evidence.yml", profile:
+      ).call
+      row = report.assessments.find { |item| item.check_id == "navigation_findability" }
+      assert_equal "inconclusive", row.status
+      assert_match(/redaction declaration/, row.summary)
     end
   end
 
