@@ -92,7 +92,7 @@ module Operator
     def feed_list_open_tags(source)
       source.to_s
             .gsub(/<%#.*?%>/m, "")
-            .gsub(/<%=.*?%>/m, "ERB_VALUE")
+            .gsub(/<%=.*?%>/m, " ERB_VALUE ")
             .scan(/<ul\b[^>]*\bfeed_list\b[^>]*>/m)
     end
 
