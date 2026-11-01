@@ -9,7 +9,7 @@
 </div>
 
 <% if @videos.any? %>
-  <ul class="video-grid feed_list" id="sound-videos">
+  <ul class="video-grid feed_list" id="sound-videos" role="list">
     <% @videos.each do |video| %>
       <li><%= render "tv/videos/tv_video", tv_video: video %></li>
     <% end %>

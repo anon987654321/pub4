@@ -4,7 +4,7 @@
 
 <% if @events.any? %>
   <%= turbo_frame_tag "events-list", target: "_top" do %>
-    <ul class="event-list feed_list" id="events-list">
+    <ul class="event-list feed_list" id="events-list" role="list">
       <% @events.each do |event| %>
         <li><%= render "events/event", event: event, rsvp_status: @my_rsvps[event.id] %></li>
       <% end %>

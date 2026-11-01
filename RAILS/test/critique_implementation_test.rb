@@ -524,6 +524,49 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes feed_list_css, ".feed_list.post-card-list > li {\n  display: block;"
     assert_match(/posts\.each do \|post\|\s*<li><%= render "posts\/post", post: post %><\/li>/m, amber_home)
   end
+  def test_feed_lists_keep_safari_list_roles_and_post_item_boxes
+    feed_paths = %w[
+      brgen/app/views/home/_live_search_results.html.erb
+      brgen/app/views/hashtags/show.html.erb
+      brgen/app/views/bookmarks/index.html.erb
+      brgen/app/views/events/index.html.erb
+      brgen/app/views/events/_live_search_results.html.erb
+      brgen_marketplace/app/views/marketplace/favorites/index.html.erb
+      brgen_marketplace/app/views/marketplace/deals/_live_search_results.html.erb
+      brgen_radio/tv/app/views/tv/sounds/show.html.erb
+      brgen_radio/tv/app/views/tv/shows/index.html.erb
+      brgen_radio/playlist/app/views/playlist/playlists/_library.html.erb
+      brgen/app/views/posts/_live_search_results.html.erb
+      amber/app/views/posts/index.html.erb
+      amber/app/views/home/_frontpage_posts.html.erb
+    ]
+    feed_paths.each do |path|
+      source = read(path)
+      lists = source.scan(/<ul\b[^>]*\bfeed_list\b[^>]*>/)
+      refute_empty lists, "#{path} lost its feed_list collection"
+      lists.each do |list|
+        assert_match(/\brole="list"/, list, "#{path} must preserve Safari list semantics")
+      end
+    end
+
+    post_lists = %w[
+      brgen/app/views/home/_live_search_results.html.erb
+      brgen/app/views/hashtags/show.html.erb
+      brgen/app/views/bookmarks/index.html.erb
+      brgen/app/views/posts/_live_search_results.html.erb
+      amber/app/views/posts/index.html.erb
+      amber/app/views/home/_frontpage_posts.html.erb
+    ]
+    post_lists.each do |path|
+      assert_match(/<ul\b[^>]*\bpost-card-list\b[^>]*>/, read(path), "#{path} needs real list-item boxes")
+    end
+    assert_includes read("__shared/app/assets/stylesheets/_feed_list.scss"),
+                    ".feed_list.post-card-list > li {\n  display: block;"
+
+    library = read("brgen_radio/playlist/app/views/playlist/playlists/_library.html.erb")
+    assert_operator library.index('render "shared/empty_state"'), :>, library.index("</ul>"),
+                    "the playlist empty state must not be a direct child of ul"
+  end
   def test_amber_enum_selectors_localize_labels_and_keep_enum_values
     helper = read("amber/app/helpers/application_helper.rb")
     season_views = %w[outfits/index.html.erb outfits/_form.html.erb items/_form.html.erb ai/suggest_outfits.html.erb]

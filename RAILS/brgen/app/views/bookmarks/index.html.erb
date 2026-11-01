@@ -5,7 +5,7 @@
 </header>
 
 <% if @posts.any? %>
-  <ul class="post-feed feed_list" id="bookmarks-list">
+  <ul class="post-feed feed_list post-card-list" id="bookmarks-list" role="list">
     <% @posts.each do |post| %>
       <li><%= render "posts/post", post: post %></li>
     <% end %>

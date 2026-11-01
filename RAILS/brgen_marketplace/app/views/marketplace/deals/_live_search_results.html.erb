@@ -7,7 +7,7 @@
 <% if @featured_deals&.any? && live_search_query.blank? %>
  <section aria-label="<%= t("aria.featured_deals") %>">
  <%= tag.h2 t("marketplace.deals.featured"), class: "store-heading" %>
- <ul class="deal-grid top-offers-rail feed_list">
+ <ul class="deal-grid top-offers-rail feed_list" role="list">
  <% @featured_deals.each do |deal| %>
    <li><%= render "marketplace/deals/card", deal: deal %></li>
  <% end %>
@@ -16,7 +16,7 @@
 <% end %>
 
 <% if @deals.any? %>
-<ul class="deal-grid feed_list" id="marketplace-deals-grid">
+<ul class="deal-grid feed_list" id="marketplace-deals-grid" role="list">
  <% @deals.each do |deal| %>
    <li><%= render "marketplace/deals/card", deal: deal %></li>
  <% end %>

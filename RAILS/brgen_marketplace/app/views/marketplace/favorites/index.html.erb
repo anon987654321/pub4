@@ -9,7 +9,7 @@
 </div>
 
 <% if @listings.any? %>
-  <ul class="listing-grid feed_list" id="saved-listings">
+  <ul class="listing-grid feed_list" id="saved-listings" role="list">
     <% @listings.each do |listing| %>
       <li><%= render "marketplace/listings/card", listing: listing %></li>
     <% end %>

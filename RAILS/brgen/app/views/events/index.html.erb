@@ -20,7 +20,7 @@
 <section aria-labelledby="events-upcoming-heading">
   <%= tag.h2 t("events.upcoming"), id: "events-upcoming-heading" %>
   <% if @events.any? %>
-    <ul class="event-list feed_list">
+    <ul class="event-list feed_list" role="list">
       <% @events.each do |event| %>
         <li><%= render "events/event", event: event, rsvp_status: @my_rsvps[event.id] %></li>
       <% end %>
@@ -52,7 +52,7 @@
       last month to find tonight. %>
   <section aria-labelledby="events-past-heading">
     <%= tag.h2 t("events.past"), id: "events-past-heading" %>
-    <ul class="event-list event-list--past feed_list">
+    <ul class="event-list event-list--past feed_list" role="list">
       <% @past.each do |event| %>
         <li><%= render "events/event", event: event %></li>
       <% end %>
