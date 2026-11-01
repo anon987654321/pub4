@@ -8003,6 +8003,8 @@ module Dilla
       unless pcm.bytesize.positive? && (pcm.bytesize % 8).zero?
         raise ArgumentError, "FFmpeg returned incomplete stereo float audio"
       end
+      max_pcm_bytes = SAMPLE_RATE * MAX_SECONDS * 2 * 4
+      raise ArgumentError, "decoded sample exceeds the #{MAX_SECONDS}-second limit" if pcm.bytesize > max_pcm_bytes
 
       values = pcm.unpack("e*")
       frames = values.length / 2
@@ -8037,8 +8039,8 @@ module Dilla
 
     def mix!(frame, clip, chords:, bpm:, beats_per_chord:, seed: 0)
       return frame unless clip && clip.gain.positive?
-      raise ArgumentError, "sample flip needs one or two audio channels" unless [1, 2].include?(frame.length)
-      raise ArgumentError, "sample flip frame must have equal channel lengths" unless frame.all? { |channel| channel.is_a?(Array) && channel.length == frame.first.length }
+      raise ArgumentError, "sample flip needs one or two audio channels" unless frame.is_a?(Array) && [1, 2].include?(frame.length)
+      raise ArgumentError, "sample flip frame must have equal channel lengths" unless frame.first.is_a?(Array) && frame.all? { |channel| channel.is_a?(Array) && channel.length == frame.first.length }
 
       tempo = bounded_number(bpm, "sample-flip BPM", 30.0..300.0)
       chord_span = bounded_number(beats_per_chord, "sample-flip beats per chord", 0.25..64.0)
