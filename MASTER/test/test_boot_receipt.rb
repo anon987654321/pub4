@@ -33,7 +33,9 @@ class TestBootReceipt < Minitest::Test
     assert_equal law[:declared], law[:legacy_execution_metadata]
     assert_equal Master::law_entries(root: Master::ROOT).size, law[:normative]
     assert_equal Master::Review::Scan::LawTree.ids.size, law[:registry]
-    assert_includes Receipt.lines.join("\n"), "#{law[:declared]} declared"
+    output = Receipt.lines.join("\n")
+    assert_includes output, "normative=#{law[:normative]}"
+    assert_includes output, "legacy_metadata=#{law[:declared]}"
   end
 
   # `schema:` is a version pin sharing the file with the providers. It has no
