@@ -9,7 +9,7 @@
 
 schema: 1
 version: "3.0.0"
-body_sha256: "006857ba43c907bfab729715d76fbe4e4ad75186cc3b2fa40d7391cee559722a"
+body_sha256: "9592a0155b52463c3752db498305f6cb4df73ada4df09b7db805773935c53da6"
 
 persona: anchor
 voice: en-US-ChristopherNeural
