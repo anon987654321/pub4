@@ -5,13 +5,26 @@ module Master
     # Resolves Law conflicts and applicability using the constitutional entries
     # in laws.yml (lower priority number wins).
     class LawResolver
-      def initialize(laws_data: nil)
-        data = laws_data || Master.load_laws
-        @laws = law_entries(data)
-          .transform_keys(&:to_s)
-          .transform_values { |value| value["priority"].to_i }
-          .sort_by { |_, priority| priority }
-          .to_h
+      LEGACY_ALIASES = {
+        "CAPABILITY_STATUS_MUST_BE_TRUTHFUL" => "TRUTHFUL_STATUS",
+        "RENDERED_VALUES" => "OPERATOR_RENDERED"
+      }.freeze
+
+      def initialize(laws_data: nil, root: Master::ROOT)
+        @legacy = legacy_entries(laws_data) if laws_data
+        if @legacy && !@legacy.empty?
+          @laws = @legacy.transform_values { |value| value["priority"].to_i }
+          @entries = {}
+          @precedence_order = []
+        else
+          @entries = Master.law_entries(root:).to_h { |entry| [entry.fetch("id").to_s.upcase, entry] }
+          @precedence_order = Master::Soul.invariant_order
+          @laws = @entries.filter_map do |id, entry|
+            node = node_for(id)
+            index = @precedence_order.index(node)
+            [id, index] if index
+          end.to_h
+        end
       end
 
       def law_for(law_id, laws_index: nil)
@@ -19,24 +32,37 @@ module Master
         return unless entry
 
         tags = Array(entry["violates_law"] || entry["supports_law"] || infer_law(entry))
-        tags.first
+        tag = tags.first
+        LEGACY_ALIASES.fetch(tag.to_s.upcase, tag)
       end
 
       def winner(law_a, law_b, laws_index: nil)
-        priority_a = priority(law_for(law_a, laws_index:))
-        priority_b = priority(law_for(law_b, laws_index:))
-        return law_a if priority_a < priority_b
-        return law_b if priority_b < priority_a
+        return legacy_winner(law_a, law_b, laws_index:) if @legacy && !@legacy.empty?
+
+        node_a = node_for(law_for(law_a, laws_index:) || law_a)
+        node_b = node_for(law_for(law_b, laws_index:) || law_b)
+        return law_a unless node_a && node_b
+
+        winner = Master::Soul.winner(node_a, node_b)
+        return law_a if winner.nil? || winner == node_a
+        return law_b if winner == node_b
 
         law_a
       end
 
       def priority(law_name)
-        @laws.fetch(law_name.to_s.upcase, 99)
+        return @laws.fetch(law_name.to_s.upcase, 99) if @legacy && !@legacy.empty?
+
+        node = node_for(law_name)
+        @precedence_order.index(node) || 99
       end
 
       def governing_law_ids
-        @laws.keys
+        return @laws.keys if @legacy && !@legacy.empty?
+
+        @precedence_order.filter_map do |node|
+          @entries.find { |_id, entry| entry["node"].to_s == node }&.first
+        end
       end
 
       def governing_laws
@@ -45,7 +71,23 @@ module Master
 
       private
 
-      def law_entries(data)
+      def node_for(id, seen = {})
+        key = LEGACY_ALIASES.fetch(id.to_s.upcase, id.to_s.upcase)
+        return key.downcase if @precedence_order.include?(key.downcase)
+        return nil if seen[key]
+
+        seen[key] = true
+        entry = @entries[key]
+        return unless entry
+
+        node = entry["node"]
+        return node.to_s if node
+
+        parent = entry["parent"]
+        parent ? node_for(parent, seen) : nil
+      end
+
+      def legacy_entries(data)
         wrapped = data["laws"]
         return wrapped if wrapped.is_a?(Hash)
 
@@ -55,6 +97,15 @@ module Master
             value["priority"] &&
             (value["statement"] || value["name"])
         end
+      end
+
+      def legacy_winner(law_a, law_b, laws_index:)
+        priority_a = priority(law_for(law_a, laws_index:))
+        priority_b = priority(law_for(law_b, laws_index:))
+        return law_a if priority_a < priority_b
+        return law_b if priority_b < priority_a
+
+        law_a
       end
 
       def infer_law(entry)
@@ -103,7 +154,7 @@ module Master
       def initialize(root: Master::ROOT, laws_data: nil, definitions: nil)
         @root = File.expand_path(root)
         @data = laws_data || Master.load_laws(root: @root)
-        @resolver = LawResolver.new(laws_data: @data)
+        @resolver = LawResolver.new(root: @root)
         @definitions = definitions
       end
 
