@@ -110,6 +110,13 @@ module Master
       rows.each do |id, row|
         validate_check!(id.to_s, row, law_ids)
       end
+
+      policy = document.fetch("evidence_policy")
+      raise ArgumentError, "Baymard evidence_policy must be a mapping" unless policy.is_a?(Hash)
+      required = policy.fetch("required")
+      raise ArgumentError, "Baymard evidence policy must separate source/rendered/task evidence" unless
+        required.is_a?(Hash) && %w[source rendered task].all? { |mode| required[mode].is_a?(Array) && !required[mode].empty? }
+      raise ArgumentError, "Baymard evidence policy must declare privacy guidance" if policy["task_privacy"].to_s.strip.empty?
       true
     end
 
@@ -474,9 +481,12 @@ module Master
       raise ArgumentError, "Baymard check #{id} references unknown Law(s): #{unknown.join(', ')}" unless unknown.empty?
 
       if row["mode"] == "task"
-        raise ArgumentError, "Baymard task #{id} must declare a moderated task" if row["task"].to_s.strip.empty?
-      else
-        raise ArgumentError, "Baymard check #{id} must declare an instrument" if row["instrument"].to_s.strip.empty?
+        raise ArgumentError, "Baymard task #{id} must declare a task protocol" if row["task"].to_s.strip.empty?
+      elsif row["mode"] == "source"
+        raise ArgumentError, "Baymard source check #{id} has no deterministic adapter" unless SOURCE_CHECKS.include?(id)
+        raise ArgumentError, "Baymard source check #{id} must declare its instrument" if row["instrument"].to_s.strip.empty?
+      elsif row["mode"] == "rendered"
+        raise ArgumentError, "Baymard rendered check #{id} must declare its browser instrument" if row["instrument"].to_s.strip.empty?
       end
       true
     end
