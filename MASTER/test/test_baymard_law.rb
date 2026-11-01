@@ -319,6 +319,50 @@ class TestBaymardLaw < Minitest::Test
     end
   end
 
+  def test_commerce_journeys_are_scoped_to_routes_and_view_paths_not_incidental_copy
+    with_fixture do |dir, rails, _profile|
+      stylesheet = File.join(rails, "app", "assets", "stylesheets", "application.css")
+      File.write(stylesheet, "/* Search cart checkout products are mentioned in this design note. */\n")
+      product_view = File.join(rails, "app", "views", "products", "show.html.erb")
+      FileUtils.mkdir_p(File.dirname(product_view))
+      File.write(product_view, "<h1>Product details</h1>\n")
+
+      inventory = Master::Review::BaymardLaw::SourceInventory.new(
+        repo_root: dir, rails_root: File.join(dir, "RAILS")
+      ).call
+      features = inventory.apps.find { |app| app.name == "demo" }.features
+
+      assert features.fetch(:product)
+      refute features.fetch(:search)
+      refute features.fetch(:cart)
+      refute features.fetch(:checkout)
+    end
+  end
+
+  def test_shared_engine_does_not_receive_standalone_participant_tasks
+    with_fixture do |dir, _rails, profile|
+      shared = File.join(dir, "RAILS", "__shared")
+      FileUtils.mkdir_p(File.join(shared, "config"))
+      FileUtils.mkdir_p(File.join(shared, "app", "views", "layouts"))
+      FileUtils.mkdir_p(File.join(shared, "app", "views", "shared"))
+      File.write(File.join(shared, "config", "routes.rb"), "Rails.application.routes.draw { root 'shared#index' }\n")
+      File.write(
+        File.join(shared, "app", "views", "layouts", "application.html.erb"),
+        '<html><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body><%= yield %></body></html>',
+      )
+      File.write(
+        File.join(shared, "app", "views", "shared", "index.html.erb"),
+        '<button type="button">Continue</button>',
+      )
+
+      report = Master::Review::BaymardLaw.new(root: dir, apps: ["__shared"], profile:).call
+      task = report.assessments.find { |item| item.check_id == "navigation_findability" }
+
+      assert_equal "not_applicable", task.status
+      assert_match(/consuming applications/, task.summary)
+    end
+  end
+
   def test_the_live_profile_is_accepted_by_configuration_guard
     path = Master.data_path("baymard_ux.yml")
     content = File.read(path, encoding: "UTF-8")
