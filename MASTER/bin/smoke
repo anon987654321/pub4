@@ -170,7 +170,7 @@ if ARGV.include?("--web")
   failures << "web" unless step("web smoke-web") do
     exe = File.expand_path("smoke-web", __dir__)
     env = { "MASTER_WEB_URL" => "http://127.0.0.1:#{port}" }
-    out, st = Open3.capture2e(env, RUBY, exe)
+    out, st = Open3.capture2e(Master::Io::ProcessSpawn.environment(env), RUBY, exe)
     puts out unless out.empty?
     [st.success?, st.success? ? nil : out.lines.grep(/fail/).last&.strip]
   end
