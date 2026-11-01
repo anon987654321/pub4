@@ -39,7 +39,8 @@ export default class extends Controller {
       const raw = this.element.dataset.mapPointsValue || this.element.dataset.mapPoints || "[]"
       const parsed = JSON.parse(raw)
       return Array.isArray(parsed) ? parsed : []
-    } catch (_) {
+    } catch (error) {
+      console.error("Brgen map points could not be read.", error)
       return []
     }
   }
@@ -64,6 +65,9 @@ export default class extends Controller {
 
   _boot() {
     const canvas = this._rootCanvas()
+    if (this.hasSearchTarget) {
+      this.searchTarget.addEventListener("input", this._boundSearch)
+    }
     if (!canvas || !window.maplibregl) return this._fallback()
 
     try {
@@ -90,10 +94,10 @@ export default class extends Controller {
         this._render(this.filteredPoints)
       })
 
-      if (this.hasSearchTarget) {
-        this.searchTarget.addEventListener("input", this._boundSearch)
-      }
-    } catch (_) {
+    } catch (error) {
+      console.error("Brgen map renderer unavailable; showing the place list.", error)
+      if (this.map) this.map.remove()
+      this.map = null
       this._fallback()
     }
   }
@@ -195,6 +199,7 @@ export default class extends Controller {
       const lng = Number(point?.lng)
       return point?.lat !== null && point?.lat !== undefined &&
         point?.lng !== null && point?.lng !== undefined &&
+        String(point.lat).trim() !== "" && String(point.lng).trim() !== "" &&
         Number.isFinite(lat) && Number.isFinite(lng) &&
         lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
     }).map(point => ({
@@ -226,7 +231,9 @@ export default class extends Controller {
     const source = this.map.getSource(POINT_SOURCE)
     source.getClusterExpansionZoom(feature.properties.cluster_id).then(zoom => {
       this.map.easeTo({ center: feature.geometry.coordinates, zoom })
-    }).catch(() => {})
+    }).catch(error => {
+      console.error("Brgen map cluster expansion failed.", error)
+    })
   }
 
   _openPoint(event) {
