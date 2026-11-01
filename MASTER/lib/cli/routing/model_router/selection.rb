@@ -61,7 +61,7 @@ module Master
               ),
               task_type,
             )
-            priority_fallback_order(selected)
+            priority_fallback_order(selected, task_type:)
           end
 
           # Greetings are explicitly routed to the free tier. A locally installed
@@ -101,25 +101,41 @@ module Master
           # with a subscription CLI that put the strongest lane ahead of the free
           # tier for "hello", which chain_for exists to prevent. For chitchat the
           # free and keyless lanes stay in front, in the pool's order.
-          # The terminal fallback order is independent of preference/ranking:
-          # premium and paid API lanes first, free API lanes next, browser chat next,
-          # and local compute last. A preferred local model must never jump the queue.
+          # The terminal fallback order is independent of preference/ranking.
+          # Free routes keep keyless/free APIs first; normal routes preserve the
+          # premium/API -> free API -> browser chat -> local order.
           # Public: Review::Agent::ModelSelector reorders a biased chain with it.
-          def priority_fallback_order(models)
+          def priority_fallback_order(models, task_type: :exploration)
             Array(models).map(&:to_s).reject(&:empty?).uniq.each_with_index.sort_by do |model, index|
-              rank = if web_chat_model?(model)
-                       3
-                     elsif free_api_model?(model)
-                       2
-                     else
-                       case Io::LaneSelection.kind(model)
-                       when :local then 4
-                       when :paid_tail then 1
-                       else 0
-                       end
-                     end
-              [rank, index]
+              [fallback_rank(model, task_type:), index]
             end.map(&:first)
+          end
+
+          def fallback_rank(model, task_type:)
+            return free_route_rank(model) if free_route?(task_type)
+
+            if web_chat_model?(model)
+              3
+            elsif free_api_model?(model)
+              2
+            else
+              case Io::LaneSelection.kind(model)
+              when :local then 4
+              when :paid_tail then 1
+              else 0
+              end
+            end
+          end
+
+          def free_route_rank(model)
+            return 0 if free_api_model?(model)
+            return 1 if web_chat_model?(model)
+
+            case Io::LaneSelection.kind(model)
+            when :local then 2
+            when :paid_tail then 4
+            else 3
+            end
           end
 
           private
@@ -225,11 +241,10 @@ module Master
             return true if quota && quota[:remaining].zero?
             return true if quota && quota[:projected_daily] >= quota[:limit] * 0.8
             # llm_dispatcher.rb writes every failed call here regardless of which
-            # path selected the model, but constrained_for (scan_semantic,
-            # council, code_generation, ...) only ever consulted @provider_health,
-            # which nothing in this codebase constructs — it is always nil. A
-            # model that just failed kept winning the same weighted comparison on
-            # the very next file, forever, since it never saw its own failure.
+            # path selected the model. ModelRouter constructs ProviderHealth by
+            # default and injects the same instance into selection, so a fresh
+            # failure parks that lane on the next selection rather than letting it
+            # win the weighted comparison again.
             return true unless Io::LaneState.usable?(model_id)
             @provider_health.unhealthy?(model_id) || recently_failed?(model_id)
           rescue StandardError => e

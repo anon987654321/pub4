@@ -281,10 +281,25 @@ class TestLaneSelection < Minitest::Test
     end
   end
 
-  def test_a_free_route_still_falls_back_from_premium_before_free
+  def test_a_free_route_keeps_free_candidates_ahead_of_paid_fallbacks
     router = router_over([NEMOTRON, OPUS], [NEMOTRON, OPUS])
-    assert_equal [OPUS, NEMOTRON], router.fallback_chain(task_type: :exploration)
+    assert_equal [NEMOTRON, OPUS], router.fallback_chain(task_type: :exploration)
     assert_equal NEMOTRON, router.preferred(task_type: :exploration)
+  end
+
+  def test_a_keyed_hosted_lane_never_precedes_a_keyless_lane_on_a_free_route
+    keyless = "llm7:GLM-5.3-Flash"
+    paid = "perplexity:sonar-pro"
+    router = router_over([paid, keyless], [paid, keyless])
+    router.define_singleton_method(:hosted_model?) { |id| id.start_with?("llm7:", "perplexity:") }
+    router.define_singleton_method(:hosted_endpoint_for) do |id|
+      id.start_with?("perplexity:") ? { key: "configured-key" } : { key: nil }
+    end
+
+    assert_equal [keyless, paid],
+                 router.priority_fallback_order([paid, keyless], task_type: :exploration)
+    assert_equal [paid, keyless],
+                 router.priority_fallback_order([keyless, paid], task_type: :refactoring)
   end
 
   Config = Struct.new(:task_type, :model, :reasoning_mode, keyword_init: true)
