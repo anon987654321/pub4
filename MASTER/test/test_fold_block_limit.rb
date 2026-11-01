@@ -38,6 +38,12 @@ class FoldBlockLimitTest < Minitest::Test
     def verbs = Master::Core::VERBS
   end
 
+  class CapabilityLaw
+    def admit(_effect, _memory)
+      Master::Core::Verdict::Block.new(reason: "capability refused: execute", by: :capability)
+    end
+  end
+
   def test_different_effects_blocked_by_the_same_law_stop_after_three
     effects = [
       Master::Core::Effect.read("one.rb"),
@@ -63,5 +69,26 @@ class FoldBlockLimitTest < Minitest::Test
     assert_match(/stopped after 3 constitutional blocks by same_law/, result.summary)
     assert_equal 3, memory.records.length
     assert_equal 3, emitted.length
+
+  def test_capability_refusal_says_what_was_unavailable_and_that_nothing_ran
+    effect = Master::Core::Effect.exec(["telegram-cli", "login"])
+    memory = Memory.new
+    fold = Master::Core::Fold.new(
+      model: ScriptedModel.new(effect, effect, Master::Core::Effect.done("must not finish")),
+      constitution: CapabilityLaw.new,
+      world: World.new,
+      memory:,
+      max_turns: 10,
+    )
+
+    result = fold.run("connect to Telegram")
+
+    assert_equal :blocked, result.reason
+    assert_equal 2, result.turns
+    assert_match(/command execution is not enabled in this session/, result.summary)
+    assert_match(/no command was run/, result.summary)
+    assert_match(/no command was run/, memory.records.first.last.message)
+    assert_equal 2, memory.records.length
+  end
   end
 end
