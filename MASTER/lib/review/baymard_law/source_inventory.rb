@@ -17,7 +17,7 @@ module Master
 
         def call
           manifest_path = File.join(@rails_root, "apps.yml")
-          manifest = File.file?(manifest_path) ? Master.load_yaml(manifest_path) : {}
+          manifest = read_app_manifest(manifest_path)
           declared = manifest.fetch("apps", {})
           raise BaymardLaw::InvalidProfile, "RAILS/apps.yml apps must be a mapping" unless declared.is_a?(Hash)
 
@@ -40,10 +40,36 @@ module Master
 
         private
 
+        def read_app_manifest(path)
+          return {} unless File.file?(path)
+
+          real = File.realpath(path)
+          repo_root = File.realpath(@repo_root)
+          raise BaymardLaw::InvalidProfile, "RAILS/apps.yml resolves outside the repository" unless inside?(real, repo_root)
+
+          Master.load_yaml(real)
+        rescue SystemCallError => e
+          raise BaymardLaw::InvalidProfile, "RAILS/apps.yml cannot be safely read: #{e.class}: #{e.message}"
+        end
+
         def valid_app_root?(path)
-          File.directory?(path) &&
-            (File.file?(File.join(path, "config", "routes.rb")) ||
-             File.directory?(File.join(path, "app", "views")))
+          expanded = File.expand_path(path)
+          rails_root = File.expand_path(@rails_root)
+          return false unless inside?(expanded, rails_root)
+          return false unless File.directory?(expanded)
+
+          real = File.realpath(expanded)
+          rails_real = File.realpath(rails_root)
+          return false unless inside?(real, rails_real)
+
+          File.file?(File.join(real, "config", "routes.rb")) ||
+            File.directory?(File.join(real, "app", "views"))
+        rescue SystemCallError
+          false
+        end
+
+        def inside?(path, root)
+          path == root || path.start_with?("#{root}#{File::SEPARATOR}")
         end
 
         def build_app(name, path)
