@@ -33,7 +33,7 @@ module Operator
       require File.join(@root, "MASTER", "lib", "master") unless defined?(Master::ROOT)
       soul = load_yaml("MASTER/data/soul.yml")
       laws = load_yaml("MASTER/data/laws.yml")
-      issues << "soul: golden Law reference missing or changed" unless soul.dig("absolute", "golden_law") == "STEWARDSHIP_preserve_first"
+      issues << "soul: golden Law reference missing or changed" unless soul.dig("references", "golden_law") == "PRESERVE_FIRST"
       issues << "soul: no canonical sacred paths declared" unless Master::Soul.sacred_paths(root: File.join(@root, "MASTER")).any?
       begin
         Master::Soul.load!(root: File.join(@root, "MASTER"))
