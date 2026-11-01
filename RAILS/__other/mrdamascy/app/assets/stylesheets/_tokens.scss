@@ -44,7 +44,7 @@
   --vipps-btn: #cc4409;
   --vipps-btn-hover: #b83c08;
   --vipps-ink: #c73a00;  // 5.2:1 on white
-  --on-dark-dim: rgba(255, 255, 255, 0.18);
+  --on-dark-dim: rgba(255, 255, 255, 0.2);
 
   // Radii — pixel_perfection: nothing above 16px except the pill.
   --radius: 16px;        // cards (MASTER radius_card)
@@ -58,7 +58,7 @@
   --text-body: 1rem;         // 16px — body, buttons, inputs
   --text-title: 1.25rem;     // 20px — page/section titles (MASTER type_tokens)
   --text-display: 1.75rem;   // 28px — hero/display (MASTER font_size_display)
-  --text-display-xl: 3.5rem; // 56px — the Damascus star mark only
+  --text-display-xl: clamp(2.75rem, 11.5vw, 3.5rem); // star mark — CLAMP_TYPOGRAPHY
 
   --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
 

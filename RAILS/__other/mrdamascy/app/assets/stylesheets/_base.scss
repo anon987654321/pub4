@@ -23,7 +23,7 @@ html {
   background: var(--ink);
   color: var(--paper);
   font-weight: 700;
-  transition: top 120ms ease;
+  transition: top 180ms ease;
 }
 
 .skip-link:focus-visible {
@@ -123,7 +123,7 @@ main.shell {
 
 .brand-name {
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.05em;
 }
 
 // Page titles ride the MASTER type_tokens: var(--text-title), var(--font).
@@ -210,5 +210,30 @@ body.act-item main.shell {
 .toast-out {
   opacity: 0;
   transform: translateX(-50%) translateY(-6px);
-  transition: opacity 200ms ease, transform 200ms ease;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+// MASTER motion law: honor prefers-reduced-motion — keep every state
+// readable, drop the movement. Enumerated per animated element so no
+// !important is needed (NO_IMPORTANT law). Centering transforms on fixed
+// chrome (.toast, .cart-bar) are layout, not motion — they survive.
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .btn,
+  .tab,
+  .step-star,
+  .toast,
+  .toast-out,
+  .cart-bar,
+  .cart-bar-pulse {
+    transition: none;
+    animation: none;
+  }
+
+  .btn:active {
+    transform: none;
+  }
 }

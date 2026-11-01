@@ -23,9 +23,10 @@
 .timeline::before {
   content: "";
   position: absolute;
-  left: 15px;
-  top: 14px;
-  bottom: 14px;
+  inset-inline-start: 16px;
+  margin-inline-start: -1px;
+  top: 16px;
+  bottom: 16px;
   width: 2px;
   background: var(--mint-200);
 }
@@ -46,7 +47,7 @@
   width: 32px;
   height: 32px;
   background: var(--mint-200);
-  transition: background-color 200ms ease;
+  transition: background-color 180ms ease;
 }
 
 .step-done {
@@ -79,7 +80,7 @@
   gap: 8px;
   background: var(--surface-elevated);
   border-radius: var(--radius-sm);
-  padding: 10px 12px;
+  padding: 12px;
   font-size: var(--text-meta);
   font-weight: 600;
 }
@@ -88,7 +89,7 @@
   background: var(--pom-100);
   color: var(--danger);
   border-radius: var(--radius-sm);
-  padding: 10px 12px;
+  padding: 12px;
   font-weight: 700;
 }
 
@@ -119,7 +120,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .order-lines {
@@ -142,7 +143,7 @@
 
 .order-head .state-chip,
 .order-head .badge {
-  margin-inline-end: 6px;
+  margin-inline-end: 8px;
 }
 
 .order-line {

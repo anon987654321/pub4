@@ -9,12 +9,12 @@
   min-height: 44px;
   border: 0;
   border-radius: var(--radius-sm);
-  padding: 8px 18px;
+  padding: 8px 16px;
   font-weight: 700;
   text-align: center;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 60ms ease, background-color var(--transition-fast) var(--ease-out);
+  transition: transform 180ms ease, background-color var(--transition-fast) var(--ease-out);
 }
 
 .btn:active {
@@ -81,19 +81,9 @@
   min-height: 48px;
 }
 
-// Vipps mock approval — loading is state, so motion is allowed; a calm
-// opacity pulse instead of an ornamental gradient shimmer.
+// Vipps mock approval — the state change itself is the feedback (disabled
+// + dimmed): stillness by default, motion only when meaning moves.
 .btn.is-loading {
-  animation: btn-pulse 700ms var(--ease-out) infinite;
-}
-
-@keyframes btn-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.55;
-  }
+  opacity: 0.8;
+  cursor: progress;
 }

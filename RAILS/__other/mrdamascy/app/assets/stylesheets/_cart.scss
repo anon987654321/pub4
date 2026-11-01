@@ -57,7 +57,7 @@
 }
 
 .qty-val {
-  min-width: 18px;
+  min-width: 20px;
   text-align: center;
   font-weight: 700;
 }
@@ -165,7 +165,7 @@
 }
 
 .cart-bar-pulse {
-  animation: cart-bar-pulse 600ms ease;
+  animation: cart-bar-pulse 300ms ease;
 }
 
 @keyframes cart-bar-pulse {

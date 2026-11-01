@@ -17,7 +17,7 @@
   width: 100%;
   max-width: 480px;
   gap: 2px;
-  padding: 6px 8px;
+  padding: 8px;
   list-style: none;
 }
 
@@ -29,7 +29,7 @@
   justify-content: center;
   min-height: 44px;
   gap: 2px;
-  padding: 6px 4px;
+  padding: 4px;
   border-radius: var(--radius-sm);
   color: var(--ink-soft);
   font-size: var(--text-xs);
@@ -56,13 +56,14 @@
 }
 
 // Cart count badge riding the bag icon; hidden via [hidden] when empty.
+// Non-interactive: the surrounding .tab link carries the 44px target.
 .tab-badge {
   position: absolute;
   top: -4px;
-  right: -10px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
+  right: -8px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
   border-radius: var(--radius-pill);
   background: var(--gold);
   color: var(--ink);

@@ -30,7 +30,7 @@ select {
 }
 
 textarea {
-  min-height: 84px;
+  min-height: 80px;
   resize: vertical;
 }
 
@@ -45,7 +45,7 @@ select:focus-visible {
 .input-lg {
   font-size: var(--text-title);
   padding: 12px 16px;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.05em;
 }
 
 fieldset {
