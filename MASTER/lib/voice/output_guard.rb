@@ -30,10 +30,8 @@ module Master
         @laws = laws || Ground::Laws.new
         # The messages quote voice.yml's preserve block, so editing the rule edits what is reported.
         @preserve = @laws.preserve
-        soul = @laws.data(:soul) || {}
-        # soul.yml nests evidence requirements under absolute.anti_simulation;
-        # this map supplies the configured hints for named output contexts.
-        @evidence = soul.dig("absolute", "anti_simulation", "require_evidence") || {}
+        # Truthful-status Law owns what evidence is required for claims about work.
+        @evidence = @laws.constitution.dig("anti_simulation", "require_evidence") || {}
       end
 
       def sanitize(text, context: :routine)
@@ -127,7 +125,7 @@ module Master
         end
       end
 
-      # Named contexts use soul.yml requirements. These fallbacks keep
+      # Named contexts use the TRUTHFUL_STATUS Law. These fallbacks keep
       # modification and completion guidance defined if either key is absent.
       def append_evidence_hint(text, context)
         requirement = @evidence[context.to_s] ||
