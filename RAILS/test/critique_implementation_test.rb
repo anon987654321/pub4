@@ -468,9 +468,14 @@ class CritiqueImplementationTest < Minitest::Test
 
     # Brgen and Amber share the same feed-card anatomy and vote rail. Product
     # identity belongs to the surrounding shell, not a second post treatment.
-    assert_includes feed, 'variant: :card'
-    assert_includes brgen_feed, 'variant: :card'
-    refute_includes feed, 'variant: :prose'
+    card = read("__shared/app/views/shared/_post_card.html.erb")
+    assert_includes feed, 'render "shared/post_card"'
+    assert_includes brgen_feed, 'render "shared/post_card"'
+    refute_includes feed, 'variant:'
+    refute_includes brgen_feed, 'variant:'
+    refute_includes card, "if variant == :prose"
+    refute_includes card, "post-reading-card feed-post"
+    assert_includes card, 'class="feed-card post-reading-card'
     assert_includes feed, 'show_votes: true'
     assert_includes feed, 'post_url: post_path(post)'
     # The "…" read-more link lives in the shared card the feed renders.
