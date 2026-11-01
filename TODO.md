@@ -57,7 +57,8 @@ Refresh them at the start and end of each batch; compare pinned revisions only.
   `STUDIO/photograph/idea_picture.rb`. The removed file had the exact same
   Git blob and no tracked caller was found. The `generators/` directory
   disappeared with it. A regression test now asserts that the photograph
-  implementation exists and the duplicate generator path stays absent.
+  implementation exists and the duplicate generator path stays absent; that
+  test is committed but NOT_RUN in this GitHub editing pass.
   Commit: `2fe2701ec268ed94b04c2f1602853a3657872db1` (delete) followed by
   `9a5c884de24857effebe44f9686da6592453bf29` (test).
 
