@@ -6,6 +6,152 @@ vm23 is a seam in `MASTER/data/operator_seams.yml`. Refusals live under
 "Refused, and why" in `MASTER/AGENTS.md`. An item closes by being deleted in
 the commit that carries its evidence; nothing here records finished work.
 
+## Open from the 2026-11-01 session — repository flattening
+
+Baseline: recursive Git tree at `496cfb32497bcedb4de6a98bc452d030e82d886b`
+contained 5,597 files and 719 directories: MASTER 2,210/125, RAILS
+3,088/556, OPENBSD 281/29, STUDIO 4/3. RAILS had 379 files at depth
+7 or greater and 102 at depth 8 or greater. These are structural measurements,
+not proof that a directory or namespace is unnecessary. Refresh them at the
+start and end of each batch; do not compare different revisions as if they
+were one baseline.
+
+- [ ] Complete the semantic flattening census before moving code. For every
+  candidate record current path, owning application/engine, Ruby constant or
+  asset/view identity, all callers/references, autoload/eager-load behavior,
+  routes, migrations, serialization/public API effects, test coverage,
+  compatibility requirements, proposed destination and rollback plan. Classify
+  each as MERGE, MOVE, RENAME, INLINE, DELETE, RETAIN or INVESTIGATE.
+  Never infer redundancy from path depth or repeated words alone.
+
+- [ ] MASTER /fix: map every production caller and state owner across
+  `MASTER/lib/fix/fix_loop/`, `MASTER/lib/fix/fix_loop/pass_runner/`,
+  `MASTER/lib/fix/repair_loop/`, `MASTER/lib/fix/scan/`, and the existing
+  `Fix::Kernel` implementation. The current tree has separate files for
+  pass execution, pass runner, builder, lifecycle, completion, committer,
+  background runner, convergence configuration, repo scope, council round,
+  stream cursor, file collector, and repair policies. Consolidate only
+  demonstrably duplicate orchestration; retain distinct transaction,
+  verification, recovery, budget, evidence and terminal-outcome responsibilities.
+  Compatibility constants remain until caller and receipt-parity tests prove
+  they can be retired. Run focused interruption/recovery tests before and after.
+
+- [ ] MASTER Law metadata: migrate the live per-Law metadata in
+  `MASTER/data/law_runtime.yml#law_catalogue.entries` into the authoritative
+  `MASTER/data/laws.yml` representation. Update Law::Definition,
+  LawCataloguePreflight, LawRegistryAudit, BootReceipt, DSL fixtures and all
+  readers/tests atomically. Preserve every executable Law's severity, mode,
+  lifecycle, autofix, language, surface and path reach. Do not delete the
+  transitional file or bypass its readers until parity is proven and the
+  migration has an explicit compatibility/rollback plan.
+
+- [ ] MASTER scanner/check boundaries: trace production call graphs across
+  `MASTER/lib/review/scan/`, `MASTER/lib/fix/scan/`, `MASTER/checks/`
+  and `MASTER/checks/support/`. Keep the three distinct concepts explicit:
+  Law (requirement), detector/check (measurement instrument), evidence
+  (observed result). Unify duplicate finding schemas, registries or dispatch
+  only where callers and cache invalidation semantics match. A Law/catalogue
+  change must invalidate affected cached findings.
+
+- [ ] MASTER nested modules: inspect
+  `MASTER/lib/cli/face/ascii/`,
+  `MASTER/lib/cli/pipeline/proof/`,
+  `MASTER/lib/cli/routing/model_router/`,
+  `MASTER/lib/fix/scan/ast_fixer/` and
+  `MASTER/lib/review/council/critique/`. Establish whether each nesting level
+  represents a stable public namespace or only file grouping. Preserve the
+  single face renderer, model-routing authority, AST transformation coverage,
+  proof semantics and council behavior. No blind directory moves.
+
+- [ ] RAILS shared namespaces: evaluate the repeated `shared` segment under
+  `RAILS/__shared/app/controllers/concerns/shared/`,
+  `app/models/concerns/shared/`, `app/helpers/shared/`,
+  `app/services/shared/` and `app/views/shared/`. The shared engine already
+  establishes a boundary, but the Ruby module names, Rails autoload paths,
+  partial lookup names, helper inclusion and public call sites may depend on
+  these nested namespaces. Remove only redundant path segments after proving
+  constant, view and helper compatibility. Keep domain subfolders such as
+  `services/shared/discovery/` or `services/shared/link_embed/` when they
+  encode real subdomains.
+
+- [ ] RAILS service namespaces: inspect
+  `RAILS/brgen/app/services/marketplace/payments/`,
+  `RAILS/brgen/app/services/fediverse/`,
+  `RAILS/brgen_marketplace/app/services/marketplace/` and
+  `RAILS/brgen_dating/app/services/dating/`. Distinguish repeated engine
+  names from real Ruby namespace contracts. Payment-provider classes, webhook
+  adapters, tenant boundaries and app-specific domain ownership must remain
+  explicit. Avoid moving a class across an engine boundary merely to reduce
+  path depth.
+
+- [ ] Takeaway boundary decision: review
+  `RAILS/brgen_marketplace/engines/takeaway/` as a separately mountable Rails
+  engine versus a feature namespace within Marketplace. Inventory engine
+  isolation, routes/mount points, migrations, model tables, locale loading,
+  autoloading, tests, dependency direction and future reuse. Record an explicit
+  RETAIN or MIGRATE decision with evidence. Do not flatten it merely because
+  its path is deep.
+
+- [ ] RAILS view/asset/test organization: inspect mailer templates currently
+  under `RAILS/__shared/app/views/shared/passwordless_mailer/` and
+  `verification_mailer/`, shared icon partials under
+  `app/views/shared/icons/`, repeated product asset/token imports, and
+  duplicate test support under `RAILS/__shared/test/`, `RAILS/test/` and
+  app-local test trees. Preserve Rails lookup contracts, per-product visual
+  identity, Amber's identity, Brgen's blue visual language and BSDPorts'
+  minimal white interface. Share foundations, not product compositions.
+
+- [ ] OPENBSD: inspect `OPENBSD/bin/`, `OPENBSD/lib/`, `OPENBSD/checks/`
+  and source-layout mirrors `OPENBSD/etc/`, `home/`, `usr/`, `var/`,
+  `dev/`. Distinguish repository source organization from the target host
+  filesystem contract. Consolidate duplicate deployment/backup/verification
+  wrappers only after host-path, privilege, rollback and evidence behavior is
+  proven. Never flatten required target filesystem paths.
+
+- [ ] STUDIO: preserve its already-small tree. Keep one Dilla generation
+  entrypoint and one audio processing pipeline; do not introduce a second
+  visualizer, audio engine or generator. Reassess only after the
+  `radio_brgen_tunnel.js` audio/visual split has a tested ownership boundary.
+
+- [ ] Root governance and agent instructions: retain one canonical generated
+  instruction source and regenerate compatibility files through the existing
+  generator. Compare `AGENTS.md`, `GEMINI.md`, `.cursorlaws`,
+  `CLAUDE.md` and their generator inputs; do not hand-edit generated copies.
+  Verify tool auto-discovery and root-directory contracts before relocating
+  any configuration. Root `TODO.md` remains the single actionable backlog.
+
+- [ ] FULL.yml retirement: reconcile every remaining item against
+  `MASTER/data/recovery/full_yml_assessment.yml` and current implementation;
+  adopt only unique, still-valid material with provenance, then delete
+  `FULL.yml` in the same commit that proves no required material is lost.
+  Preserve source archives/history as appropriate.
+
+- [ ] Cross-tree duplication graph: detect repeated decision logic,
+  configuration defaults, status/error vocabularies, adapters, serializers,
+  wrappers, registries, generated artifacts, test fixtures and documentation.
+  For each duplicate distinguish identical behavior from superficially similar
+  behavior with different security, transaction, tenant, product or runtime
+  contracts. Consolidate the authority, not merely the syntax.
+
+- [ ] Add or extend structural ratchets for file count, directory count,
+  maximum path depth, single-child directories, repeated namespace segments,
+  dependency fan-out/cycles, public API changes and duplicate implementation
+  fingerprints. Ratchets must be measured from a pinned revision and must not
+  encourage deleting meaningful boundaries or merging unrelated code.
+
+- [ ] Execute verification after each bounded batch: focused tests, relevant
+  app/engine tests, autoload/eager-load checks, route/view rendering, asset
+  builds, law/check parity and full suites where available. Capture exact
+  commands, revision, output, exit status and evidence paths. Run before/after
+  structural metrics and compare behavior. Keep unrun checks NOT_RUN and
+  unknown behavior INCONCLUSIVE; do not claim a code flattening is complete
+  from a tree-only audit.
+
+- [ ] Respect the existing root TODO and MASTER complete-read prerequisites:
+  do not edit MASTER implementation or documentation until the required
+  complete MASTER read is fulfilled. This register is a scoped work inventory,
+  not authorization to bypass constitutional or sacred-path review.
+
 ## Open from the 2026-11-01 session — Baymard UX audit
 
 - [ ] Execute the new Baymard regression suite on pinned Ruby 4.0.5:
