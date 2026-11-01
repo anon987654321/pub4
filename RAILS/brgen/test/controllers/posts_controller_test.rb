@@ -3,6 +3,23 @@
 require "test_helper"
 
 class PostsControllerTest < ActionDispatch::IntegrationTest
+  test "index renders posts with the shared card and vote rail" do
+    city = brgen_city
+    user = User.create!(email_address: "post-index-#{SecureRandom.hex(4)}@example.com",
+                        password: "password12345", city: city)
+    post_record = ActsAsTenant.with_tenant(city) do
+      Post.create!(user: user, title: "Shared feed card", content: "A post in the city feed.", city: city)
+    end
+
+    host! "brgen.no"
+    get posts_url
+
+    assert_response :success
+    assert_select "article#post_#{post_record.id}.feed-card.post-reading-card", 1
+    assert_select "#post_#{post_record.id} .post-reading-layout", 1
+    assert_select "#post_#{post_record.id} .post-vote-rail", 1
+  end
+
   # Post includes CityTenantable -> acts_as_tenant :city. A request to brgen.no
   # sets ActsAsTenant.current_tenant (application_controller.rb:66-69), which
   # scopes every Post query to that city_id. A fixture built out here, with no
