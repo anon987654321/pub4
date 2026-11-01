@@ -10,7 +10,7 @@ the commit that carries its evidence; nothing here records finished work.
 
 Initial recursive Git tree at `496cfb32497bcedb4de6a98bc452d030e82d886b`
 contained 5,597 files and 719 directories. After the STUDIO and RAILS batches,
-the pinned source tree at `cc38ca20edc3ee73a4d0a94a1540ab413b99c9ca`
+the pinned source tree at `88bbd45bb2ede7a10d768c101c796ec786e15f70`
 contains 5,593 files and 718 directories: MASTER 2,210/125, RAILS
 3,085/556, OPENBSD 281/29, STUDIO 3/2. RAILS has 379 files at depth 7
 or greater and 102 at depth 8 or greater; maximum path depth is 9. The four
@@ -72,10 +72,13 @@ each batch; compare pinned revisions only.
   `@watching = false`. Deleted the three redundant templates without
   changing URLs, response MIME types or the post-mutation state rendered.
   Added request regressions for follow/unfollow, planner removal and
-  watch/unwatch. These tests are committed but NOT_RUN in this GitHub editing
-  pass. The controller edits, removals and tests were committed in the
-  2026-11-01 main-branch batch ending at
-  `cc38ca20edc3ee73a4d0a94a1540ab413b99c9ca`.
+  watch/unwatch. A structural assertion in
+  `RAILS/test/app_duplication_test.rb` also prevents the retired templates
+  from reappearing without explicit canonical reuse. Functional and static
+  regressions are committed but NOT_RUN in this GitHub editing pass. The
+  controller edits, removals and functional tests were committed through
+  `2b660c5c080f5ecff2eae0ec15b2257269561a73`; the structural ratchet followed
+  in `88bbd45bb2ede7a10d768c101c796ec786e15f70`.
 
 ### Remaining work
 
