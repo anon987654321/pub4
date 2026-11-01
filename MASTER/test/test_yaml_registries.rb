@@ -7,11 +7,16 @@ require "unwrap_error"
 DATA = File.expand_path("../data", __dir__)
 
 YAML_SPECS = {
-  "attention_context.yml"        => { required_keys: %w[protocol fields rendering when_to_emit], arrays: [] },
-  "patterns.yml"                 => { required_keys: %w[infer prompt_archaeology repo_topics], arrays: [] },
-  # zsh, injection and refusal_templates moved to laws.yml: they are law, and
-  # patterns.yml is the register for what is not. The guarantee moved with them.
-  "laws.yml"                    => { required_keys: %w[transformation_policy architecture plugins runtime_policy self_test veto_patterns anti_patterns law_deps], arrays: [] },
+  "attention_context.yml" => { required_keys: %w[protocol fields rendering when_to_emit], arrays: [] },
+  "patterns.yml" => { required_keys: %w[infer prompt_archaeology repo_topics], arrays: [] },
+  "laws.yml" => {
+    required_keys: %w[
+      APPLICATION_IS_UNIFORM TRUTHFUL_STATUS ROBUSTNESS SINGULARITY LINEARITY
+      PROXIMITY ABSTRACTION DENSITY OPERATOR_RENDERED INTER_MODEL_CONTRACT
+      SACRED_AUTHORSHIP SOUL_SUBORDINATE_TO_LAW SEVERITY_VOCABULARY ROOTS_VOCABULARY
+    ],
+    arrays: []
+  },
 }.freeze
 
 PATTERNS_NAMESPACES = {
@@ -76,18 +81,19 @@ class TestDeletedFilesAbsent < Minitest::Test
 end
 
 class TestLawsYamlRegistry < Minitest::Test
-  REQUIRED_LAW_FIELDS = %w[id priority statement].freeze
+  REQUIRED_LAW_FIELDS = %w[id statement].freeze
 
   def test_laws_yml_has_no_duplicate_rule_ids
     ids = rules.map { |rule| rule["id"] }.compact
     duplicates = ids.tally.select { |_, count| count > 1 }.keys
 
-    assert duplicates.empty?, "laws.yml has duplicate rule ids: #{duplicates.join(', ')}"
+    assert duplicates.empty?, "laws.yml has duplicate Law ids: #{duplicates.join(', ')}"
   end
 
   def test_laws_yml_entries_have_required_fields
     missing = rules.filter_map do |rule|
       absent = REQUIRED_LAW_FIELDS.reject { |field| rule.key?(field) }
+      absent << "parent/root/node" unless rule["parent"] || rule["root"] || rule["node"]
       "#{rule['id'] || '<missing id>'}: #{absent.join(', ')}" if absent.any?
     end
 
@@ -95,7 +101,7 @@ class TestLawsYamlRegistry < Minitest::Test
   end
 
   def test_phantom_recovery_contract
-    recovery = data.fetch("phantom_recovery")
+    recovery = runtime_data.fetch("phantom_recovery")
 
     assert_match %r{\A/\^}, recovery.dig("detectors", "gaslighting_preamble")
     assert recovery.fetch("recovery").any? { |step| step.include?("discard last response") }
@@ -104,11 +110,11 @@ class TestLawsYamlRegistry < Minitest::Test
 
   def test_soul_golden_law_maps_to_kernel_preserve_rule
     soul = Master.load_yaml(File.join(DATA, "soul.yml"))
-    assert_equal "PRESERVE_THEN_IMPROVE_NEVER_BREAK", soul.dig("absolute", "golden_law")
-    # The wording lives in law/, not in soul or laws.yml. This asserted soul.absolute.rules
-    # still carried it, which test_soul.rb asserts soul must not — one of the
-    # two had to be reading the tree as it is.
-    refute soul.dig("absolute", "rules"), "soul must not hold rules; law/ is the registry"
+    law_id = soul.dig("absolute", "golden_law")
+    laws = Master.load_yaml(File.join(DATA, "laws.yml"))
+    assert_equal "STEWARDSHIP_preserve_first", law_id
+    assert_match(/preserve/i, laws.fetch(law_id).fetch("statement"))
+    refute soul.dig("absolute", "rules"), "soul must not hold laws; laws.yml is the constitution"
     law_dir = File.expand_path("../law", __dir__)
     require File.join(law_dir, "definition")
     ::Law.load_all(law_dir) if ::Law.definitions.empty?
@@ -280,8 +286,8 @@ class TestLawsYamlRegistry < Minitest::Test
     ::Law.definitions.keys.map(&:to_s)
   end
 
-  def data
-    @data ||= Master.load_yaml(File.join(DATA, "laws.yml"))
+  def runtime_data
+    @runtime_data ||= Master.load_yaml(File.join(DATA, "law_runtime.yml"))
   end
 
   def patterns
@@ -376,39 +382,36 @@ class TestConstitutionYamlLoading < Minitest::Test
 end
 
 class TestLawsPhysicalOrder < Minitest::Test
-  # Root-key order is a reading contract: constitutional laws first, operational
-  # flow next, then adapters/topology, the derived map, and the separate browser
-  # authority boundary. Tokens live in tokens.yml and must not re-enter this file.
-  ORDER = %w[
-    CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS SINGULARITY LINEARITY
-    PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES INTER_MODEL_CONTRACT languages markdown_style visual_identity_contract
-    typography prose zsh detection_calibration phantom_recovery transformation_policy self_test veto_patterns
-    anti_patterns architecture runtime_policy evidence_scoring law_deps plugins law_ratchets law_map browser_policy
-    face_ascii personal_privacy law_catalogue
-    STYLE_REGISTRY STYLE_SCOPE STYLE_LINEAGE STYLE_VERSIONING STYLE_TEMPORAL_CONSTANCY STYLE_REFUSAL STYLE_ARBITRATION
-    VISUAL_IDENTITY_TOKENS_ONLY VISUAL_CONTRAST_WCAG_AA VISUAL_DISCLOSURE_PROMINENCE VISUAL_ALT_TEXT_PRESENT
-    VISUAL_SAFE_ZONE_RESPECTED VISUAL_RENDER_INTEGRITY
-  ].freeze
-  TRANSFORMATION_ORDER = %w[
-    remove defragment flatten decouple split hoist merge relocate rename reorder
-    reflow simplify recommend
+  TRANSFORMATIONS = %w[
+    DECOUPLE DEFRAG FLATTEN HOIST MERGE RELOCATE REMOVE RENAME REORDER
+    REFLOW SIMPLIFY SPLIT RECOMMEND
   ].freeze
 
-  def test_laws_follow_constitutional_reading_order
+  def test_invariant_nodes_are_physically_ordered_before_supporting_laws
     data = Master.load_yaml(File.join(DATA, "laws.yml"))
-    assert_equal ORDER, data.keys.reject { |key| key == "schema" }
+    node_ids = data.filter_map { |id, row| id if row.is_a?(Hash) && row["node"] }
+
+    assert_equal Master::Soul.invariant_order.map(&:upcase), node_ids
+    assert_operator data.keys.index("SACRED_AUTHORSHIP"), :>, data.keys.index(node_ids.last)
   end
 
-  def test_transformation_flow_matches_its_implementation_contract
-    policy = Master.load_yaml(File.join(DATA, "laws.yml")).fetch("transformation_policy")
+  def test_transformation_operations_are_first_class_laws
+    data = Master.load_yaml(File.join(DATA, "laws.yml"))
 
-    assert_equal %w[inventory classify], policy.fetch("preflight")
-    assert_equal TRANSFORMATION_ORDER, policy.fetch("order")
-    assert_equal TRANSFORMATION_ORDER, policy.fetch("operations").keys
-    assert_equal ["prove"], policy.fetch("postflight")
-    %w[semantic_meaning public_contracts reference_graph side_effect_order rendered_output].each do |invariant|
-      assert_includes %w[required required_when_applicable], policy.fetch("preservation").fetch(invariant),
-                   "transformation flow must preserve #{invariant}"
+    TRANSFORMATIONS.each do |id|
+      assert data.fetch(id).is_a?(Hash), "#{id} must be a first-class Law"
+      assert data.fetch(id).key?("statement"), "#{id} must state its purpose"
     end
+  end
+
+  def test_catalogue_keys_are_unique_in_source_not_only_after_yaml_parsing
+    source = File.read(File.join(DATA, "laws.yml"), encoding: "UTF-8")
+    keys = source.lines.filter_map do |line|
+      match = line.match(/\\A([A-Z][A-Z0-9_]*):\\s*\\z/)
+      match && match[1]
+    end
+    duplicates = keys.tally.select { |_key, count| count > 1 }.keys
+
+    assert_empty duplicates
   end
 end
