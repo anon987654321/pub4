@@ -18,7 +18,8 @@ class TestBaymardLaw < Minitest::Test
       FileUtils.mkdir_p(File.join(rails, "app", "assets", "stylesheets"))
 
       profile = fixture_profile
-      law_ids = profile.fetch("checks").values.flat_map { |row| Array(row["law_ids"]) }.uniq
+      law_ids = (profile.fetch("checks").values.flat_map { |row| Array(row["law_ids"]) } +
+        [profile.dig("research", "authority_law")]).uniq
       laws = law_ids.to_h { |id| [id, { "statement" => "Fixture law #{id}" }] }
       File.write(File.join(master, "data", "laws.yml"), YAML.dump(laws))
       File.write(File.join(rails, "config", "routes.rb"), "Rails.application.routes.draw { root 'demo#index' }\n")
@@ -33,6 +34,7 @@ class TestBaymardLaw < Minitest::Test
       "schema" => 1,
       "research" => {
         "provider" => "Baymard Institute",
+        "authority_law" => "EXTERNAL_RESEARCH_IS_EVIDENCE_NOT_AUTHORITY",
         "scope" => "Profile validation fixture.",
         "methodology_url" => "https://baymard.com/research/methodology",
         "benchmark_url" => "https://baymard.com/ux-benchmark",
