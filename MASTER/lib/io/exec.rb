@@ -57,7 +57,8 @@ module Master
         stdin_data, binmode, spawn_opts = split_opts(opts)
         on_stdout = spawn_opts.delete(:on_stdout)
         options = ProcessSpawn.options(spawn_opts.merge(pgroup: true))
-        Open3.public_send(opener, *cmd, **options) do |stdin, *streams, wait_thr|
+        command = command_with_clean_environment(cmd)
+        Open3.public_send(opener, *command, **options) do |stdin, *streams, wait_thr|
           if binmode
             stdin.binmode
             streams.each(&:binmode)
@@ -73,6 +74,13 @@ module Master
         end
       end
       private_class_method :run_capture
+
+      def command_with_clean_environment(command)
+        args = command.dup
+        overrides = args.first.is_a?(Hash) ? args.shift : {}
+        [ProcessSpawn.environment(overrides), *args]
+      end
+      private_class_method :command_with_clean_environment
 
       HOMEBREW_BINS = %w[/opt/homebrew/bin /usr/local/bin].freeze
 
