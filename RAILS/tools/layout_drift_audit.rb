@@ -91,11 +91,11 @@ module Operator
     # scanning opening tags so a comparison in Ruby cannot truncate the tag.
     def feed_list_entries(source)
       sanitized = source.to_s.gsub(/<%#.*?%>/m, "").gsub(/<%=.*?%>/m, " ERB_VALUE ")
-      pattern = /<ul\\b[^>]*\\bfeed_list\\b[^>]*>/m
+      pattern = /<ul\b[^>]*\bfeed_list\b[^>]*>/m
       entries = []
       offset = 0
       while (match = pattern.match(sanitized, offset))
-        line = sanitized[0...match.begin(0)].count("\\n") + 1
+        line = sanitized[0...match.begin(0)].count("\n") + 1
         entries << [match[0], line]
         offset = match.end(0)
       end
@@ -107,7 +107,7 @@ module Operator
     end
 
     def feed_list_violations(source)
-      feed_list_entries(source).reject { |tag, _line| tag.match?(/\\brole\\s*=\\s*["']list["']/) }
+      feed_list_entries(source).reject { |tag, _line| tag.match?(/\brole\s*=\s*["']list["']/) }
     end
 
     private
