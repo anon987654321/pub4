@@ -104,10 +104,7 @@ module Master
       end
 
       def system_prompt
-        %w[Identity Values Voice Judgment Boundaries].filter_map do |heading|
-          section = @soul[/## #{heading}\n+(.*?)(?=\n## |\z)/m, 1].to_s.strip
-          section unless section.empty?
-        end.join("\n\n")
+        Master::Soul.prompt
       end
 
       private
