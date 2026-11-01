@@ -75,8 +75,8 @@ module Master
           "receipt: soul #{receipt[:constitution][:soul_version]} " \
           "persona=#{receipt[:constitution][:persona]} " \
           "sacred_paths=#{receipt[:constitution][:sacred_paths]}",
-          "receipt: law #{law_counts[:declared]} declared, #{law_counts[:registry]} scan laws, " \
-          "#{law_counts[:domain]} in law/",
+          "receipt: law normative=#{law_counts[:normative]}, legacy_metadata=#{law_counts[:declared]}, " \
+          "scan=#{law_counts[:registry]}, executable=#{law_counts[:domain]}",
           "receipt: providers #{availability(receipt[:providers])}",
           "receipt: capabilities #{availability(receipt[:capabilities])}",
         ]
