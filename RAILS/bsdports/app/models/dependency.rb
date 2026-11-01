@@ -8,6 +8,8 @@ class Dependency < ApplicationRecord
   belongs_to :depends_on, class_name: "Port"
 
   TYPES = %w[build run test lib].freeze
+  MAX_GRAPH_DEPTH = 6
+  MAX_GRAPH_NODES = 60
 
   validates :dep_type, inclusion: { in: TYPES }, allow_nil: true
   validates :port_id, uniqueness: { scope: %i[depends_on_id dep_type] }
@@ -33,5 +35,63 @@ class Dependency < ApplicationRecord
         children: child_port ? tree_for(child_port, seen:, depth: depth + 1) : []
       }
     end
+  end
+
+  # Return a bounded graph of facts already present in the local index.
+  # The text tree remains the accessible source of truth; this is its compact
+  # visual counterpart, not a replacement or an independent data importer.
+  def self.graph_for(port)
+    root = {
+      id: port.id,
+      name: port.name,
+      pkgpath: port.pkgpath,
+      version: port.version,
+      depth: 0
+    }
+    nodes = { port.id => root }
+    edges = []
+    queue = [[port, 0]]
+    cursor = 0
+    truncated = false
+
+    while cursor < queue.length
+      current, depth = queue[cursor]
+      cursor += 1
+
+      if depth >= MAX_GRAPH_DEPTH
+        truncated ||= where(port_id: current.id).exists?
+        next
+      end
+
+      includes(:depends_on).where(port_id: current.id).order(:id).each do |dependency|
+        child = dependency.depends_on
+        next unless child
+
+        unless nodes.key?(child.id)
+          if nodes.size >= MAX_GRAPH_NODES
+            truncated = true
+            next
+          end
+
+          nodes[child.id] = {
+            id: child.id,
+            name: child.name,
+            pkgpath: child.pkgpath,
+            version: child.version,
+            depth: depth + 1
+          }
+          queue << [child, depth + 1]
+        end
+
+        edges << {
+          id: dependency.id,
+          from: current.id,
+          to: child.id,
+          type: dependency.dep_type.presence || "run"
+        }
+      end
+    end
+
+    { nodes: nodes.values, edges:, truncated: }
   end
 end
