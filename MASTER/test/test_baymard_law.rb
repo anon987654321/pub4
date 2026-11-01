@@ -32,6 +32,8 @@ class TestBaymardLaw < Minitest::Test
     {
       "schema" => 1,
       "research" => {
+        "provider" => "Baymard Institute",
+        "scope" => "Profile validation fixture.",
         "methodology_url" => "https://baymard.com/research/methodology",
         "benchmark_url" => "https://baymard.com/ux-benchmark",
         "reviewed_on" => "2026-11-01",
@@ -145,6 +147,45 @@ class TestBaymardLaw < Minitest::Test
       assert_equal "pass", outcomes.fetch("mobile_viewport")
       assert_equal "inconclusive", outcomes.fetch("navigation_findability")
       assert_empty report.findings
+    end
+  end
+
+  def test_task_evidence_rejects_personal_identifiers_and_unredacted_contact_details
+    with_fixture do |dir, rails, profile|
+      write_good_surface(rails)
+      artifact_path = File.join(dir, "navigation-observation.md")
+      File.write(artifact_path, "Anonymised aggregate observation.\n")
+      digest = Digest::SHA256.file(artifact_path).hexdigest
+      evidence_path = File.join(dir, "baymard-evidence.yml")
+      base = {
+        "status" => "pass",
+        "method" => "moderated_user_test",
+        "participants" => 2,
+        "summary" => "Two participants found the destination without prompting.",
+        "artifacts" => [{ "path" => "navigation-observation.md", "sha256" => digest }],
+      }
+      evidence = {
+        "schema" => 1,
+        "apps" => { "demo" => { "navigation_findability" => base.merge("participant_name" => "Private") } },
+      }
+      File.write(evidence_path, YAML.dump(evidence))
+      report = Master::Review::BaymardLaw.new(
+        root: dir, apps: ["demo"], evidence_path: "baymard-evidence.yml", profile:
+      ).call
+      row = report.assessments.find { |item| item.check_id == "navigation_findability" }
+      assert_equal "inconclusive", row.status
+      assert_match(/anonymised aggregate/, row.summary)
+
+      evidence["apps"]["demo"]["navigation_findability"] = base.merge(
+        "summary" => "Contact jane@example.com after the test."
+      )
+      File.write(evidence_path, YAML.dump(evidence))
+      report = Master::Review::BaymardLaw.new(
+        root: dir, apps: ["demo"], evidence_path: "baymard-evidence.yml", profile:
+      ).call
+      row = report.assessments.find { |item| item.check_id == "navigation_findability" }
+      assert_equal "inconclusive", row.status
+      assert_match(/contact details/, row.summary)
     end
   end
 
