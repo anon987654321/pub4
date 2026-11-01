@@ -953,3 +953,12 @@ browser support and bundle/runtime cost before adopting a dependency.
   PixiJS, deck.gl, Sigma.js or a WebGPU dependency without a concrete consumer,
   compatibility review, performance evidence, license review and a tested
   progressive fallback.
+
+## 2026-11-01 — renderer implementation status
+
+- [x] **Brgen Maps:** MapLibre clustering uses GeoJSON source/layers with cluster expansion, safe DOM popups, same-city URL checks and a text/list fallback. Browser verification is still NOT_RUN.
+- [x] **BSDPorts:** port pages now offer an optional collapsed SVG dependency overview from recorded database edges. Traversal is bounded to 60 packages and six dependency levels; the existing text tree remains the readable baseline. English and Norwegian labels are supplied. No graph renderer dependency was added.
+- [x] **Brgen Radio / Dilla:** the existing radio tunnel already owns the WebGL renderer and 2D fallback. Local hosted audio can supply real FFT data; cross-origin iframe playback cannot, and the existing proxy motion is not measured spectrum. No parallel audio engine was introduced.
+- [ ] **Amber 3D:** deferred until the product has real, optimized garment assets and an honest fit-data contract. The current product documentation explicitly excludes virtual fitting; a decorative mannequin would imply a capability the application does not have.
+- [ ] **MASTER visual/observability work:** no MASTER implementation was edited. The repository requires a complete read of every file under MASTER before such edits; the current tree has 2,210 files, so that prerequisite remains open.
+- [ ] **Verification:** run `cd RAILS/bsdports && bin/ci` and the focused graph/controller tests, then capture browser evidence. This GitHub editing session could not execute Rails or browser tests; they remain NOT_RUN, not PASS. Brgen Maps browser checks are also outstanding.
