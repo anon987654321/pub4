@@ -7,7 +7,7 @@ module Deploy
   # and participant evidence that the current run does not claim to have.
   class BaymardUxCheck
     ROOT = File.expand_path("../../../..", __dir__)
-    APPS = Master::BaymardAudit::DEFAULT_APPS
+    APPS = %w[amber brgen bsdports].freeze
 
     def self.run(root: ROOT, apps: APPS, evidence: {})
       require File.join(root, "MASTER", "lib", "master") unless defined?(Master::ROOT)
