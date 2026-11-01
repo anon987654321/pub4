@@ -1,0 +1,49 @@
+<% content_for :title, t("about.title") %>
+
+<section class="hero star-pattern">
+  <%= image_tag "/icon.svg", alt: "", class: "hero-mark" %>
+  <h1 class="hero-title"><%= t("about.title") %></h1>
+  <p class="hero-meta mb-0"><%= t("app.tagline") %></p>
+</section>
+
+<section class="card mt-16">
+  <h2 class="section-title"><%= t("about.story_title") %></h2>
+  <p class="mb-0"><%= t("about.story_body") %></p>
+</section>
+
+<section class="card mt-16">
+  <h2 class="section-title"><%= t("about.fairness_title") %></h2>
+  <p class="mb-0"><%= t("about.fairness_body") %></p>
+</section>
+
+<section class="card mt-16">
+  <h2 class="section-title"><%= t("about.worldtour_title") %></h2>
+  <p class="ink-soft"><%= t("about.worldtour_intro") %></p>
+  <ul class="about-credits">
+    <li><%= t("about.credit_damaskus") %></li>
+    <li><%= t("about.credit_beirut") %></li>
+    <li><%= t("about.credit_berlin") %></li>
+    <li><%= t("about.credit_adana") %></li>
+    <li><%= t("about.credit_bursa") %></li>
+    <li><%= t("about.credit_gaziantep") %></li>
+    <li><%= t("about.credit_istanbul") %></li>
+    <li><%= t("about.credit_tel_aviv") %></li>
+    <li><%= t("about.credit_dubai") %></li>
+    <li><%= t("about.credit_bergen") %></li>
+    <li><%= t("about.credit_stockholm") %></li>
+    <li><%= t("about.credit_sydney") %></li>
+  </ul>
+</section>
+
+<section class="card mt-16">
+  <h2 class="section-title"><%= t("about.vipps_title") %></h2>
+  <p class="mb-0"><%= t("about.vipps_body") %></p>
+</section>
+
+<section class="mt-16">
+  <% if current_user %>
+    <%= link_to t("about.orders_link"), orders_path, class: "btn btn-block" %>
+  <% else %>
+    <%= link_to t("auth.login"), new_session_path, class: "btn btn-block" %>
+  <% end %>
+</section>

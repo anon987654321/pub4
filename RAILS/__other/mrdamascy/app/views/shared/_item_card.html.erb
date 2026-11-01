@@ -1,0 +1,54 @@
+<%# Menu item card — emoji tile on mint-100, name, origin chip (flag-free),
+    heat dots, weight honesty badge, price, and either a one-tap quick-add
+    (items without options) or a jump to the full item sheet. %>
+<% needs_options = item.item_options.any? %>
+<% badge_labels = {
+     "signature" => t("menu.badges.signature"),
+     "veg" => t("menu.badges.veg"),
+     "sharing" => t("menu.badges.sharing"),
+     "secret" => t("menu.badges.secret"),
+     "deal" => t("menu.badges.deal")
+   } %>
+<% badges = item.badges.to_s.split(",").map(&:strip).reject(&:blank?) & badge_labels.keys %>
+
+<article class="item-card card" data-turbo-frame="_top">
+  <%= link_to menu_item_path(item), class: "item-card-hit", aria: { label: item.name } do %>
+    <span class="item-emoji" aria-hidden="true"><%= item.emoji %></span>
+    <span class="item-body">
+      <span class="item-name"><%= item.name %></span>
+      <span class="item-facts">
+        <%= tag.span t("menu.origin_chip", origin: origin_label(item.origin)), class: "badge" if item.origin.present? %>
+        <% if item.weight_g.to_i.positive? %>
+          <%= tag.span "#{item.weight_g} g", class: "badge badge-plain" %>
+        <% end %>
+        <% if item.heat.to_i.positive? %>
+          <span class="heat heat-<%= item.heat.to_i %>" title="<%= t("menu.heat.#{item.heat.to_i}") %>">
+            <span class="visually-hidden"><%= t("menu.heat_label") %>: <%= t("menu.heat.#{item.heat.to_i}") %></span>
+            <% 3.times do |dot| %>
+              <span class="heat-dot<%= " on" if dot < item.heat.to_i %>" aria-hidden="true"></span>
+            <% end %>
+          </span>
+        <% end %>
+      </span>
+      <% if badges.any? %>
+        <span class="item-badges">
+          <% badges.each do |badge| %>
+            <%= tag.span badge_labels[badge], class: "badge badge-gold" %>
+          <% end %>
+        </span>
+      <% end %>
+    </span>
+  <% end %>
+
+  <span class="item-side">
+    <span class="item-price"><%= money(item.price_ore) %></span>
+    <% if needs_options %>
+      <%= link_to t("menu.customize"), menu_item_path(item), class: "btn btn-sm item-add" %>
+    <% else %>
+      <%= button_to add_item_cart_path, params: { menu_item_id: item.id, quantity: 1 },
+            class: "btn btn-primary btn-sm item-add" do %>
+        + <%= t("menu.quick_add") %>
+      <% end %>
+    <% end %>
+  </span>
+</article>

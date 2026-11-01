@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title><%= content_for?(:title) ? yield(:title) : t("app.title") %></title>
+    <meta name="description" content="<%= t("app.description") %>">
+    <meta name="theme-color" content="#FFFFFF">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <%# Body classes drive shell styling: page-<controller> hides the pay-bar on
+      cart/checkout pages, act-<action> lifts content above the item sheet's
+      sticky footer. %>
+  <body class="page-<%= controller_name %> act-<%= action_name %>">
+    <%# Turbo page-refresh morphing keeps the brand bar, pay-bar and tab bar
+        steady while streams swap in new cart counts and order states. %>
+    <%= turbo_refreshes_with method: :morph, scroll: :preserve %>
+
+    <% active_tab =
+         case controller_name
+         when "menu" then "menu"
+         when "carts", "checkout" then "cart"
+         when "loyalty" then "loyalty"
+         when "pages", "sessions", "orders" then "mer"
+         end %>
+
+    <a class="skip-link" href="#main-content"><%= t("nav.skip") %></a>
+
+    <header class="brand-bar">
+      <%= link_to root_path, class: "brand-link" do %>
+        <%= image_tag "/logo.svg", alt: t("app.brand"), class: "brand-logo" %>
+        <span class="brand-name"><%= t("app.brand") %></span>
+      <% end %>
+    </header>
+
+    <main class="shell" id="main-content">
+      <%= render "shared/toast" %>
+      <%= yield %>
+
+      <footer class="app-footer">
+        <p class="ink-soft mb-0"><%= t("footer.line") %></p>
+        <p class="footer-sahtein mb-0"><%= t("footer.sahtein") %></p>
+      </footer>
+    </main>
+
+    <%= render "shared/cart_bar", cart_count: cart_count, cart_total_ore: cart_subtotal_ore %>
+
+    <nav class="tab-bar" aria-label="<%= t("nav.label") %>">
+      <ul>
+        <li>
+          <%= link_to root_path, class: class_names("tab", "tab-active": active_tab == "menu") do %>
+            <%# Utensils — Lucide (ISC), stroke inherits the tab's currentColor. %>
+            <span class="tab-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
+            </span>
+            <%= tag.span t("nav.meny"), class: "tab-label" %>
+          <% end %>
+        </li>
+        <li>
+          <%= link_to cart_path, class: class_names("tab", "tab-active": active_tab == "cart") do %>
+            <%# Shopping bag — Lucide (ISC). %>
+            <span class="tab-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              <%= tag.span cart_count.to_i, id: "cart_count", class: "tab-badge", hidden: cart_count.to_i.zero? %>
+            </span>
+            <%= tag.span t("nav.bestill"), class: "tab-label" %>
+          <% end %>
+        </li>
+        <li>
+          <%= link_to loyalty_path, class: class_names("tab", "tab-active": active_tab == "loyalty") do %>
+            <%# Damascus khatam — the same 8-point star as .star8 in _tokens.scss. %>
+            <span class="tab-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><polygon points="12,0 14.4,6.2 20.5,3.5 17.8,9.6 24,12 17.8,14.4 20.5,20.5 14.4,17.8 12,24 9.6,17.8 3.5,20.5 6.2,14.4 0,12 6.2,9.6 3.5,3.5 9.6,6.2"/></svg>
+            </span>
+            <%= tag.span t("nav.klubb"), class: "tab-label" %>
+          <% end %>
+        </li>
+        <li>
+          <%= link_to about_path, class: class_names("tab", "tab-active": active_tab == "mer") do %>
+            <%# Ellipsis — Lucide (ISC), filled dots. %>
+            <span class="tab-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+            </span>
+            <%= tag.span t("nav.mer"), class: "tab-label" %>
+          <% end %>
+        </li>
+      </ul>
+    </nav>
+  </body>
+</html>

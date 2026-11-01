@@ -1,0 +1,56 @@
+// Mr. Damascy service worker (§7) — offline shell + asset cache.
+// Navigations are network-first with the precached /offline page as fallback;
+// hashed /assets/* and brand /icon*, /logo* are cache-first (immutable).
+// Bump the version when the precache list changes so old caches clear.
+const CACHE_VERSION = "damascy-v1";
+const OFFLINE_URL = "/offline";
+const PRECACHE_URLS = [OFFLINE_URL, "/icon-192.png", "/icon-512.png", "/logo.svg"];
+const ASSET_PATTERN = /^\/(assets\/|icon|logo)/;
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches
+      .open(CACHE_VERSION)
+      .then((cache) => cache.addAll(PRECACHE_URLS))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(keys.filter((key) => key !== CACHE_VERSION).map((key) => caches.delete(key)))
+      )
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+  if (request.method !== "GET") return;
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  // Page navigations: network first, offline shell last.
+  if (request.mode === "navigate") {
+    event.respondWith(fetch(request).catch(() => caches.match(OFFLINE_URL)));
+    return;
+  }
+
+  // Static assets and brand marks: cache first, fill on miss.
+  if (ASSET_PATTERN.test(url.pathname)) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
+          return response;
+        });
+      })
+    );
+  }
+});

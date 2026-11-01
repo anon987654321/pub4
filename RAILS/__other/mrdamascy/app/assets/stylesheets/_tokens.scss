@@ -1,0 +1,92 @@
+// Design tokens — aligned with MASTER/data/tokens.yml (pixel_perfection,
+// type_tokens, ui_polish, contrast law) in the mrdamascy brand dialect:
+// white paper, mint pastels, gold accent, Damascus 8-point star motif.
+// Declared once here so no stylesheet carries a raw literal.
+:root {
+  // Surfaces — space_not_lines: cards separate by surface + gap, not borders.
+  --paper: #ffffff;             // the phone column
+  --surface-elevated: #f3fbf7;  // cards, chips, inputs on paper
+  --bg-page: #e4f6ee;           // behind the column (mint-100)
+
+  // Mint scale. mint-700 is the action/text tone: white on it 6.3:1, on
+  // mint-100 5.6:1 (contrast law ≥ 4.5 for text). mint-600 is a boundary/UI
+  // tone only (3.4:1) — borders, focus accents, never small text.
+  --mint-100: #e4f6ee;
+  --mint-200: #c9eddd;
+  --mint-300: #a6e1cb;
+  --mint-500: #4fb894;
+  --mint-600: #3a9a7b;
+  --mint-700: #276b55;
+  --mint-800: #205544;
+
+  // Ink.
+  --ink: #2e3033;
+  --ink-soft: #6c7076;   // 4.98:1 on white
+  --line: #e6eae8;       // hairlines inside forms and chrome only
+
+  // Gold — logo-derived. Text on white uses --gold-ink, never raw gold
+  // (raw gold on white is 1.6:1). Ink on --gold 8.4:1, on --gold-deep 6.3:1.
+  --gold: #fdc72e;
+  --gold-deep: #e8a81c;  // surfaces and icons only
+  --gold-100: #fff3d6;
+  --gold-150: #fdebc8;
+  --gold-ink: #8a6a00;       // 5.07:1 on white
+  --gold-ink-deep: #8a5f00;  // 4.81:1 on gold-150
+
+  // Pomegranate + danger — the one non-grey semantic.
+  --pom: #c94f4f;
+  --pom-100: #fbe4e4;
+  --danger: #b04141;     // 5.9:1 on white, 4.7:1 on pom-100
+
+  // Vipps — brand orange for wordmarks and the mock; the button surface is
+  // darkened so white label text passes 4.5:1 (white on #ff5b24 is 3.1:1).
+  --vipps: #ff5b24;
+  --vipps-btn: #cc4409;
+  --vipps-btn-hover: #b83c08;
+  --vipps-ink: #c73a00;  // 5.2:1 on white
+  --on-dark-dim: rgba(255, 255, 255, 0.18);
+
+  // Radii — pixel_perfection: nothing above 16px except the pill.
+  --radius: 16px;        // cards (MASTER radius_card)
+  --radius-sm: 12px;     // controls (MASTER radius_md)
+  --radius-xs: 8px;      // badges
+  --radius-pill: 9999px; // MASTER radius_pill
+
+  // Type — MASTER shared_chrome scale: six sizes, three weights (400/600/700).
+  --text-xs: 0.75rem;        // 12px — badges, tab labels
+  --text-meta: 0.8125rem;    // 13px — meta, captions (MASTER font_size_meta)
+  --text-body: 1rem;         // 16px — body, buttons, inputs
+  --text-title: 1.25rem;     // 20px — page/section titles (MASTER type_tokens)
+  --text-display: 1.75rem;   // 28px — hero/display (MASTER font_size_display)
+  --text-display-xl: 3.5rem; // 56px — the Damascus star mark only
+
+  --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
+
+  // Focus — MASTER shared_chrome.focus_ring.
+  --focus-ring: 2px solid var(--mint-700);
+
+  // Motion — MASTER shared_chrome transitions.
+  --transition-fast: 180ms;
+  --transition-normal: 300ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  // Shell geometry: tab bar height + safe area drive bottom clearance.
+  --tab-bar-height: 62px;
+  --bottom-clearance: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px));
+}
+
+// Damascus 8-point star motif — two interleaved squares as a faint mint tile.
+// Subtle by design (~6% visible): heroes, loyalty card, staff board header.
+.star-pattern {
+  background-color: var(--surface-elevated);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='84' viewBox='0 0 84 84'%3E%3Cg fill='none' stroke='%23C9EDDD' stroke-opacity='.4' stroke-width='1'%3E%3Crect x='26' y='26' width='32' height='32'/%3E%3Crect x='26' y='26' width='32' height='32' transform='rotate(45 42 42)'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 84px 84px;
+}
+
+// Solid 8-point star (khatam) — timeline milestones, loyalty stamps, empties.
+.star8 {
+  clip-path: polygon(
+    50% 0%, 60% 26%, 85.4% 14.6%, 74% 40%, 100% 50%, 74% 60%, 85.4% 85.4%,
+    60% 74%, 50% 100%, 40% 74%, 14.6% 85.4%, 26% 60%, 0% 50%, 26% 40%, 14.6% 14.6%, 40% 26%
+  );
+}

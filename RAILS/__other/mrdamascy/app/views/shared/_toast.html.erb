@@ -1,0 +1,12 @@
+<%# Flash toasts — fixed under the brand bar, auto-dismissed by toast_controller.
+    Controllers flash :notice for warm confirmations and :alert for failures. %>
+<% flash.each do |type, message| %>
+  <% next if message.blank? %>
+  <div class="toast <%= type.to_s == "notice" ? "toast-ok" : "toast-alert" %>"
+       data-controller="toast"
+       role="status"
+       aria-live="polite">
+    <p class="toast-body mb-0"><%= message %></p>
+    <button type="button" class="toast-close" data-action="toast#dismiss" aria-label="<%= t("flash.dismiss") %>">×</button>
+  </div>
+<% end %>

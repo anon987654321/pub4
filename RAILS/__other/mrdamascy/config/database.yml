@@ -1,0 +1,74 @@
+# SQLite. Versions 3.8.0 and up are supported.
+#   gem install sqlite3
+#
+#   Ensure the SQLite 3 gem is defined in your Gemfile
+#   gem "sqlite3"
+#
+default: &default
+  adapter: sqlite3
+  journal_mode: WAL
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  timeout: 5000
+
+# Four databases in every environment, matching production: the primary store,
+# plus one each for Solid Cache, Solid Queue and Action Cable. A Solid Queue
+# bug can then only ever appear against its own database, nowhere else.
+development:
+  primary:
+    <<: *default
+    database: storage/development.sqlite3
+  cache:
+    <<: *default
+    database: storage/development_cache.sqlite3
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *default
+    database: storage/development_queue.sqlite3
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *default
+    database: storage/development_cable.sqlite3
+    migrations_paths: db/cable_migrate
+
+# Warning: The database defined as "test" will be erased and
+# re-generated from your development database when you run "rake".
+# Do not set this db to the same as development or production.
+#
+# TEST_DB_ID gives a test run its own database file. Several agents work this
+# checkout in parallel; Rails suffixes per parallel *worker*, not per *session*,
+# so two `rails test` runs would otherwise open the same file and, with
+# journal_mode WAL and a 5s timeout, the loser gets SQLite3::BusyException.
+test:
+  primary:
+    <<: *default
+    database: storage/test<%= ENV["TEST_DB_ID"] %>.sqlite3
+  cache:
+    <<: *default
+    database: storage/test_cache<%= ENV["TEST_DB_ID"] %>.sqlite3
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *default
+    database: storage/test_queue<%= ENV["TEST_DB_ID"] %>.sqlite3
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *default
+    database: storage/test_cable<%= ENV["TEST_DB_ID"] %>.sqlite3
+    migrations_paths: db/cable_migrate
+
+# Production databases live in storage/ next to the code.
+production:
+  primary:
+    <<: *default
+    database: storage/production.sqlite3
+  cache:
+    <<: *default
+    database: storage/production_cache.sqlite3
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *default
+    database: storage/production_queue.sqlite3
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *default
+    database: storage/production_cable.sqlite3
+    migrations_paths: db/cable_migrate

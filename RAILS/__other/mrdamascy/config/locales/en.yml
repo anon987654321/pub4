@@ -1,0 +1,466 @@
+# Mr. Damascy locale — EN
+en:
+  time:
+    formats:
+      short: '%H:%M'
+      long: '%-d %B %Y at %H:%M'
+      day: '%a %-d'
+  number:
+    format:
+      delimiter: ','
+      separator: .
+      precision: 2
+    currency:
+      format:
+        format: '%u %n'
+        unit: kr
+        delimiter: ','
+        separator: .
+        precision: 2
+  app:
+    name: Mr. Damascy
+    short_name: Damascy
+    tagline: From Damascus with love
+    brand: Mr. Damascy — Shawarma & Kebab
+    description: Shawarma and kebab from a single kitchen door in Bergen city centre — ordered and paid with Vipps in 3 steps.
+    city: Bergen
+    title: Mr. Damascy — Shawarma & Kebab
+    greeting: Ahlan! Hungry?
+  nav:
+    meny: Menu
+    bestill: Order
+    klubb: Club
+    mer: More
+    orders: Orders
+    track: Track order
+    home: Home
+    about: About us
+    label: Main navigation
+    skip: Skip to content
+  menu:
+    title: The Menu
+    hero_tagline: From Damascus with love — grilled in Bergen
+    hero_rating: ⭐ %{rating}
+    hero_hours: Open %{hours}
+    hero_open_now: Open now
+    hero_zone: Delivering to %{name} in about %{eta} min
+    hero_zone_unknown: Check if we deliver to you at checkout
+    categories_title: What are you hungry for?
+    add: Add
+    quick_add: + Add
+    added: Added to cart
+    origin_chip: From %{origin}
+    heat_label: Heat
+    heat:
+      '0': None
+      '1': Mild
+      '2': Medium
+      '3': Hot!
+    weight_badge: '%{weight} g — quarter-kilo honest'
+    salatbar: Salad bar
+    salatbar_hint: Pick freely from the salad bar — everything is free, as it should be in Bergen
+    sauces: Sauces
+    toppings: Salad bar
+    extras: Extras
+    max_sauces: Max 2 sauces — even generosity has a limit inside the wrap
+    choose_options: Choose sauces first
+    note_label: Note to the kitchen
+    note_placeholder: Extra hot? No onions? We read everything (optional)
+    quantity: Quantity
+    add_to_cart: Add to cart
+    add_to_cart_price: Add to cart · %{price}
+    back_to_menu: Back to the menu
+    sold_out: Not available right now
+    reorder_title: Yalla igjen
+    reorder_body: You had %{items} last time — the same again?
+    reorder_cta: Add it all to the cart
+    reorder_done: Everything from last time is in your cart
+    add_with_price: Add to cart · %{price}
+    badges:
+      deal: Deal
+      secret: Secret menu
+      sharing: Sharing
+      signature: Signature
+      veg: Vegetarian
+    categories: Categories
+    customize: Customize your dish
+    free: Free
+    last_order: Last ordered
+    note: Note for the kitchen (optional)
+    qty: Quantity
+    reorder: Yalla again
+    total: Total
+    zone_note: We deliver across inner east — check your postcode at checkout.
+  origins:
+    damaskus: The recipe comes from grandfather's shawarma stall by Souq al-Hamidiyah. The garlic sauce is made every morning — toum the way you remember it.
+    beirut: Beirut carves its lamb thin and generous — Joseph and Jabbour taught us that pomegranate and red onion are the best of friends. One bite and you're standing on the Corniche.
+    berlin: 'Hasir invented the döner sandwich in 1971, and Mustafa turned the queue into an institution. Our version is loaded with vegetables — like Berlin itself: busy, warm and surprisingly green.'
+    adana: From Adana's charcoal grills — hot, smoky and completely honest. Dürümzade in Istanbul taught us that a good dürüm is eaten with both hands and a little awe.
+    bergen: Quarter-kilo honest, a salad bar with self-confidence, dinner kebab when the rain sets in. Emil taught us clean gloves and big portions — Bergen taught us to share them on the go.
+    dubai: The streets of Dubai tuck french fries inside the wrap — and who are we to say no? Crunchy, salty and unexpectedly perfect.
+    tel_aviv: Miznon made cauliflower the star, and we nodded in respect. Whole-roasted with lemon — the vegetable gets front-row billing.
+    bursa: İskender has served butter, tomato sauce and yoghurt since 1867. We don't touch the heritage — we let the butter flow.
+    gaziantep: Gaziantep is UNESCO's kebab city. Ali Nazik with smoky aubergine, and baklava that crackles like autumn leaves.
+    familie: The festive mezze comes from no single city — it comes from every dinner table in Damascus. Shared by hand, finished with 'Sahtein!'
+    stockholm: Stockholm invented kebab pizza, and we say thank you with respect and extra cheese. Saturday food, no debate.
+    sydney: Late at night in Sydney there's the HSP — Halal Snack Pack. Fries, meat, cheese and the chef's secret sauce. The night's answer to a hug.
+  cart:
+    title: Your cart
+    empty_title: Your cart is empty — for now.
+    empty_body: The menu is warm and the sauces are ready. Yalla, find something good.
+    empty_cta: To the menu
+    item_count:
+      one: 1 item
+      other: '%{count} items'
+    subtotal: Subtotal
+    delivery_fee: Delivery
+    discount: Discount
+    total: Total
+    pickup_free: Pickup — you collect, no delivery fee
+    mode_label: Delivery or pickup?
+    mode_delivery: Delivery
+    mode_pickup: Pickup
+    promo_hint: We always find the best discount for you — no code hassle here
+    promo_auto: '%{code} applied automatically 🎉'
+    promo_line: Discount (%{code})
+    steps_note: 3 steps · no card fields · secure payment
+    vipps_cta: Pay with Vipps
+    checkout_cta: To checkout
+    continue: Add a little more
+    remove: Remove
+    note: Note
+    bar_label: Cart · %{count} · %{total}
+    bar_cta: Pay
+    bar_items:
+      one: '%{count} item'
+      other: '%{count} items'
+    bar_title: Your cart
+    decrease: Decrease quantity
+    increase: Increase quantity
+    empty: Your cart is empty. Yalla — the menu awaits!
+    updated: Cart updated.
+  checkout:
+    title: Just confirm — we do the rest
+    subtitle: One screen. No account drama. No card fields.
+    address_label: Address
+    address_placeholder: Street and number
+    postcode_label: Postcode
+    postcode_placeholder: '5004'
+    phone_label: Phone
+    mode_label: Delivery or pickup?
+    mode_delivery: Delivery
+    mode_pickup: Pickup
+    zone_checking: Checking your postcode…
+    zone_ok: Ready in %{eta} min · delivery %{fee}
+    zone_fail: Hmm — we don't deliver there yet. Try a Bergen postcode, or choose pickup.
+    zone_unknown: Type your postcode and we'll check in a snap
+    eta_delivery: About %{eta} min to your door
+    eta_pickup: Ready for pickup in about %{eta} min
+    payment_title: Payment
+    vipps_row: Vipps
+    vipps_note: 'Faster than Foodora: no card fields'
+    vipps_last_used: Last used
+    promo_auto: '%{code} applied automatically'
+    subtotal: Subtotal
+    delivery_fee: Delivery
+    discount: Discount
+    total: Total
+    min_basket_fail: You're %{amount} short of the minimum order in %{name}
+    pickup_note: Collect at Strandgaten 47 — we start once you've paid
+    cta: Pay with Vipps
+    steps_note: 3 steps · no card fields
+    terms_note: By paying you agree the food will be eaten with great joy
+    address: Address
+    cart_summary: In your cart
+    checking: Checking delivery…
+    closed: The kitchen is closed right now — we open at 11:00. Yalla tomorrow!
+    failed: Something went wrong with the payment. No hard feelings — try again.
+    payment_unavailable: We couldn't start the payment — no money was reserved. Your cart is waiting, try again.
+    mode: Delivery or pickup?
+    postcode: Postcode
+    sist_brukt: Last used
+    totals_note: Discounts and free delivery apply automatically.
+    vipps_cta: Pay with Vipps
+    login_row: Save 30 seconds
+    login_note: Sign in with Vipps — we fill in name, number and address.
+    login_cta: Sign in with Vipps
+    login_or: or continue as a guest
+  vipps:
+    mock_title: Vipps
+    mock_subtitle: Mock payment — dev and test only
+    merchant: Mr. Damascy
+    amount_label: Amount
+    approve: Approve with Vipps
+    cancel: Cancel
+    processing: Approving…
+    secure_note: No real money moves here — but the flow is real Vipps Express
+    amount: Amount
+    mock_note: Mock payment (development) — connect the real Vipps with VIPPS_MOCK=0.
+    login_mock_subtitle: Mock sign-in — dev and test only
+    login_mock_verify: Verify with Vipps
+    login_mock_phone: Phone
+    login_mock_name: Name (optional)
+    login_mock_continue: Continue
+    login_mock_note: Mock sign-in (development) — connect the real Vipps Login with VIPPS_MOCK=0.
+  orders:
+    title: Your orders
+    empty_title: No orders yet
+    empty_body: Your first wrap is one tap away — and your first star on the Sahtein Card.
+    order_label: 'Order #%{id}'
+    placed_at: Placed %{when}
+    eta_label: About %{eta} min
+    eta_soon: Almost at your door!
+    eta_pickup: Ready for pickup
+    express_chip: Vipps Express
+    payment_steps_chip: Paid in %{steps} steps
+    details: Details
+    items_title: What's being made
+    states:
+      placed: Received
+      confirmed: Confirmed
+      preparing: On the grill
+      ready: Ready
+      picked_up: Picked up
+      delivered: Delivered
+      cancelled: Cancelled
+    timeline_title: The journey to your door
+    step_done: Done
+    step_current: Now
+    step_pending: Waiting
+    courier_line: '%{courier} is collecting your food'
+    courier_anonymous: The courier is collecting your food shortly
+    pickup_line: Collect at Strandgaten 47 — say Ahlan!
+    track_title: Track your order
+    track_hint: This page updates itself — lean back
+    thanks: Thanks for your order — Sahtein! صحتين
+    reorder: Yalla igjen
+    reorder_hint: The same as last time — one tap
+    reorder_cta: Order the same again
+    tip:
+      title: Give your courier some extra love
+      subtitle: 100 % goes to the courier — we take zero
+      chip_0: 0 kr
+      chip_20: 20 kr
+      chip_40: 40 kr
+      submit: Give a tip
+      thanks: Thank you so much! The courier will smile all the way along the harbour
+    review:
+      title: How was the food?
+      rating_label: Give stars
+      body_label: Tell us more
+      body_placeholder: Was the toum like Damascus? We want to hear it all
+      submit: Send review
+      thanks: Thanks for the stars! ⭐
+    back: Back
+    delivery_fee: Delivery
+    delivery_to: Delivering to %{address}
+    discount: Discount
+    empty_cta: See the menu
+    eta: 'Estimated delivery: ~%{eta} min'
+    mode:
+      delivery: Delivery
+      pickup: Pickup
+    paid_steps: Paid in %{steps} steps with Vipps
+    payment_state:
+      authorised: Payment authorised
+      captured: Paid
+      failed: Payment failed
+      pending: Awaiting payment
+    pickup_at: Pick up at %{address}
+    review_body: Your review
+    review_body_placeholder: How was the food and delivery?
+    review_prompt: Rate your order
+    review_stars: Stars
+    review_submit: Send review
+    review_title: How was it?
+    subtotal: Subtotal
+    tip_20: +NOK 20
+    tip_40: +NOK 40
+    tip_line: Tip
+    tip_none: No tip
+    tip_title: Tip the courier?
+    total: Total
+    track: Track order
+    view: View
+  loyalty:
+    title: The Sahtein Card
+    subtitle: Collect stars — earn a free wrap
+    stamps_count: '%{filled} of %{total} stars'
+    progress:
+      remaining:
+        one: '%{count} star to a free wrap!'
+        other: '%{count} stars to a free wrap!'
+      ready: Your next wrap is on the house — Yalla!
+    empty: Your card is empty — the first star is one meal away
+    rules_title: How it works
+    rule_1: One star per order
+    rule_2: 10 stars = a free wrap
+    rule_3: No expiry — the stars will wait for you
+    cta: To the menu — stars are waiting
+    filled: '%{count} of %{total} stars'
+    how_title: How the Sahtein Card works
+    login_hint: Sign in to collect stars.
+    ready: You've earned a free wrap! The discount is waiting at checkout.
+    rule_one: One star per order over NOK 150.
+    rule_two: Ten stars = a free wrap.
+    rule_three: The stars are yours forever — almost.
+  staff:
+    title: Kitchen board
+    subtitle: Everything to be grilled, in one row
+    columns:
+      placed: Received
+      confirmed: Confirmed
+      preparing: On the grill
+      ready: Ready
+    advance:
+      confirm: Confirm
+      begin: Start
+      ready: Ready!
+      none: —
+    items_summary: '%{count} items'
+    mode_delivery: Delivery
+    mode_pickup: Pickup
+    call_customer: Call %{phone}
+    empty: No orders here — perfect time for a toum break
+    denied: Only the kitchen has access here
+    advanced: Order moved — yalla onward
+    advance_confirmed: Confirm
+    advance_preparing: Start cooking
+    advance_ready: Ready!
+    awaiting_courier: Awaiting courier
+    wolt_cta: Send with Wolt
+    wolt_dispatched: '%{courier} is picking up the bag — Wolt Drive is on it'
+    wolt_courier: '%{courier} is picking up the bag'
+    wolt_failed: Could not book a Wolt courier — try again
+    cannot_advance: Can't advance this one.
+  courier:
+    title: Courier runs
+    subtitle: The food arrives while it's still warm
+    ready_for_pickup: Ready for pickup
+    on_the_way: On the way
+    pickup_button: Collected from the kitchen
+    deliver_button: Delivered — Sahtein!
+    address_label: Address
+    total_label: Total
+    eta_label: ETA
+    phone_label: Phone
+    empty: No runs right now — quiet streets, grill warming up
+    denied: Only couriers have access here
+    picked_up_flash: Off you go — the food is with you
+    delivered_flash: Delivered! A star for the customer, a smile for you
+    cannot_deliver: Can't deliver yet — pick up first.
+    cannot_pickup: The order isn't ready from the kitchen.
+    deliver: Delivered
+    delivered: Delivered! Sahtein!
+    onway_title: On the way
+    picked_up: Picked up — heading to the customer.
+    pickup: Picked up
+    ready_title: Ready for pickup
+  auth:
+    title: Sign in with your phone
+    subtitle: No passwords — just a code by SMS and you're in
+    phone_label: Phone number
+    phone_placeholder: 900 00 000
+    phone_hint: 8 digits is enough — Norwegian numbers, no country code
+    send_code: Send code
+    code_label: Code from SMS
+    code_placeholder: '1234'
+    verify: Sign in
+    code_sent: The code is on its way 📱
+    mock_code: 'Mock SMS: the code is 1234'
+    wrong_code: Wrong code — try again, you've got this
+    welcome: Ahlan, %{name}!
+    logout: Sign out
+    privacy_note: We only use the number for food — never for sales robots
+    blurb: Sign in with your phone number — no passwords, no fuss. We'll send you a code.
+    code: SMS code
+    code_invalid: Wrong code. Try again — you've got this!
+    logged_in_as: Signed in as %{name}
+    login: Sign in
+    not_authorized: You don't have access to that.
+    phone: Phone number
+    phone_invalid: That phone number looks odd — eight digits, please.
+    sign_in_first: Sign in first, then we'll take it from there.
+    login_failed: The sign-in was interrupted — please try again.
+    vipps_login: Sign in with Vipps
+    or_sms: or with an SMS code
+  flash:
+    added: Added to cart ✅
+    updated: Cart updated
+    removed: Removed from cart
+    promo_applied: The %{code} discount was applied automatically 🎉
+    zone_error: We don't deliver to %{postcode} yet — try a Bergen postcode or pickup
+    min_basket: The minimum order in %{name} is %{amount}
+    welcome: Ahlan!
+    logged_out: See you! Ma'a salama 👋
+    signed_in: Ahlan, %{name}!
+    order_placed: Your order is underway — approve with Vipps
+    vipps_cancelled: Payment was cancelled — your cart is waiting
+    tip_thanks: Thank you so much for the tip!
+    review_thanks: Thank you! It means everything to a small kitchen
+    reordered: Everything from last time is in your cart
+    forbidden: You don't have access here
+    dismiss: Dismiss
+    not_found: Not found — it may have been eaten.
+  about:
+    title: From Damascus with love
+    story_title: The story
+    story: Grandfather sold shawarma by Souq al-Hamidiyah in Damascus — toum every morning, lamb carved thin, bread from the stone oven. Today we grill the same recipe on Strandgaten in Bergen, with the same hospitality and a shorter road to your food.
+    fair_title: Fair food, fair road
+    fair: 'No Foodora between us: the money goes straight to the kitchen that makes your food. You pay with Vipps in 3 steps — faster than clicking through eight screens.'
+    world_tour_title: A world tour of kebab
+    world_tour_body: Our menu is a tribute to kebab's great cities — from Damascus to Berlin, Beirut to Sydney. One kitchen door, the whole grilled heritage of the world.
+    credits_title: Thanks to the greats
+    credit_damaskus: 'Damascus — the soul of the brand: toum, tarator and knefeh from the streets by Souq al-Hamidiyah.'
+    credit_beirut: 'Beirut — Joseph and Jabbour: lean, flavourful lamb shawarma with pomegranate onion.'
+    credit_berlin: 'Berlin — Hasir (1971, inventor of the döner sandwich), Mustafa''s Gemüse Kebap, Rüyam and Imren Grill: vegetables in the front row and sauces with generosity.'
+    credit_bursa: 'Bursa — İskender since 1867: butter, tomato sauce and yoghurt in holy order.'
+    credit_gaziantep: 'Gaziantep — UNESCO''s kebab city: Ali Nazik and the world''s best baklava.'
+    credit_istanbul: 'Istanbul — Dürümzade: dürüm with pure street-food energy.'
+    credit_tel_aviv: 'Tel Aviv/NYC — Miznon: cauliflower as the lead actor, the voice of a showman.'
+    credit_bergen: 'Bergen — Emil''s Kebab (Bergen''s best according to BT, Wolt Awards 2023) and Bergen kebab culture: clean gloves, the quarter-kilo, the salad bar and the kebab roll.'
+    credit_gdk: 'GDK — loyalty card and the Boss Box: deal energy we happily borrowed.'
+    credit_stockholm: Stockholm — the birthplace of kebab pizza.
+    credit_sydney: 'Sydney — the after-midnight HSP: the night''s answer to a hug.'
+    credit_dubai: Dubai — fries inside the wrap. Simple genius.
+    vipps_security_title: Secure payment with Vipps
+    vipps_security: Payment goes through Vipps — we never see your card, because you never need one. Approve with fingerprint or code, done.
+    salatbar_title: The salad-bar culture
+    salatbar_body: Bergen taught us the salad bar — red cabbage, corn, pickles, everything. We're keeping it. It's free, like it should be.
+    contact_title: Find us
+    address_label: Address
+    hours_label: Opening hours
+    phone_label: Phone
+    back: Back to the menu
+    credit_adana: The Adana dürüm is grilled over coals the way Istanbul's streets demand.
+    fairness_title: No middlemen
+    fairness_body: You pay the kitchen directly with Vipps — zero commission to middlemen. More for the baker, the farmers and the cooks.
+    orders_link: See your orders
+    story_body: Mr. Damascy began with grandfather's shawarma spit at Damascus' Souq al-Hamidiyah. Today the same recipes spin in Bergen — toum made fresh each morning, bread from the bakery next door.
+    vipps_title: Vipps in 3 steps
+    vipps_body: Pick a dish, tap Pay with Vipps, approve in the Vipps app. No card fields, no promo codes — discounts apply automatically.
+    worldtour_title: A world tour of kebab
+    worldtour_intro: 'We tasted our way around the world and took the best from every city:'
+  offline:
+    title: You're offline
+    body: The network sounds like grandfather's old radio. Check your coverage — we still remember your cart.
+    retry: Try again
+    cached_note: The last menu you saw is stored on your device
+    home: Try the menu once you're back
+  footer:
+    tagline: From Damascus with love — grilled in Bergen
+    made_in: Made in Bergen with a Syrian soul and a mint-coloured heart
+    links_title: Shortcuts
+    links_menu: The menu
+    links_loyalty: The Sahtein Card
+    links_about: About us
+    links_track: Track order
+    hours_label: Opening hours
+    hours: Mon–Sun 11–23
+    address_label: Address
+    address: Strandgaten 47, 5004 Bergen
+    vipps_note: Paid with Vipps — 3 steps, zero card fields
+    ahlan: Ahlan wa sahlan — everyone is welcome here
+    copyright: © %{year} Mr. Damascy
+    line: Mr. Damascy · Strandgaten 47, 5004 Bergen · Mon–Sun 11am–11pm
+    sahtein: Made with love in Bergen — صحتين

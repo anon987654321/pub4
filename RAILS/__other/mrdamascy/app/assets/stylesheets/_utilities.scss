@@ -1,0 +1,95 @@
+// Facts side by side — each fact in its own element, spacing separates them
+// (no glyph strings between words). Used by reorder, cart option lists,
+// order lines and run meta.
+.fact-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 12px;
+  row-gap: 2px;
+  padding: 0;
+  list-style: none;
+}
+
+.mt-8 {
+  margin-top: 8px;
+}
+
+.mt-16 {
+  margin-top: 16px;
+}
+
+.mb-0 {
+  margin-bottom: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.wrap {
+  flex-wrap: wrap;
+}
+
+// Delivery-mode icon rides body text — align to the text's visual middle.
+.mode-icon {
+  display: inline-flex;
+  vertical-align: -2px;
+  margin-inline-end: 2px;
+  color: var(--mint-700);
+}
+
+.mode-icon svg {
+  display: block;
+}
+
+// Screen-reader-only text (heat labels, count badges context).
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// About page world-tour credits.
+.about-credits li {
+  list-style: none;
+  position: relative;
+  padding: 8px 0 8px 28px;
+  border-top: 1px solid var(--line);
+  font-size: var(--text-meta);
+}
+
+.about-credits li::before {
+  content: "✦";
+  position: absolute;
+  left: 4px;
+  top: 8px;
+  color: var(--mint-500);
+  font-size: var(--text-meta);
+}
+
+// Auth card.
+.auth-card {
+  max-width: 420px;
+  margin: 8px auto 0;
+}
+
+.auth-status {
+  font-weight: 700;
+  color: var(--mint-700);
+}

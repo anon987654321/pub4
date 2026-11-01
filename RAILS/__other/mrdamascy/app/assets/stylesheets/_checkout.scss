@@ -1,0 +1,181 @@
+// The single confirm screen + Vipps mock stand-in.
+
+// The zero-typing path: "Logg inn med Vipps" card for guests (§12). Flat,
+// mint-tinted, with the orange Vipps CTA — the fastest way through checkout.
+.vipps-login {
+  margin: 16px 0;
+  text-align: center;
+}
+
+.vipps-login strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.vipps-login .btn {
+  margin-top: 12px;
+}
+
+.login-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink-soft);
+  font-size: var(--text-meta);
+  margin: 14px 0 0;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+}
+
+.pay-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.pay-row > div {
+  flex: 1;
+}
+
+.pay-row strong {
+  display: block;
+}
+
+.vipps-wordmark {
+  flex: none;
+  font-weight: 700;
+  font-size: var(--text-body);
+  color: var(--vipps-ink);
+  border: 2px solid var(--vipps);
+  border-radius: var(--radius-xs);
+  padding: 4px 12px;
+}
+
+.promo-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--mint-700);
+  font-weight: 600;
+  font-size: var(--text-meta);
+}
+
+.promo-line span {
+  color: var(--mint-700);
+  font-weight: 700;
+}
+
+.totals {
+  margin: 12px 0;
+}
+
+.totals-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.totals-discount {
+  color: var(--mint-700);
+  font-weight: 600;
+}
+
+.totals-row-strong {
+  font-size: var(--text-title);
+  font-weight: 700;
+  border-top: 1px solid var(--line);
+  margin-top: 6px;
+  padding-top: 12px;
+}
+
+.totals-note {
+  color: var(--ink-soft);
+  font-size: var(--text-meta);
+  margin: 8px 0 0;
+}
+
+.zone-feedback {
+  min-height: 20px;
+  font-size: var(--text-meta);
+  font-weight: 600;
+  margin: 6px 0 0;
+}
+
+.zone-feedback:empty {
+  margin: 0;
+}
+
+.zone-ok {
+  color: var(--mint-700);
+}
+
+.zone-fail {
+  color: var(--danger);
+}
+
+.steps-note {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: var(--text-meta);
+  margin-top: 8px;
+}
+
+// Vipps mock — mint header, orange wordmark, amount, approve/cancel.
+.vipps-mock {
+  max-width: 360px;
+  margin: 32px auto;
+  text-align: center;
+}
+
+.vipps-head {
+  background: var(--surface-elevated);
+  border: 0;
+  border-radius: var(--radius);
+  padding: 32px 20px;
+  margin-bottom: 16px;
+}
+
+.vipps-wordmark-lg {
+  display: block;
+  font-size: var(--text-display);
+  font-weight: 700;
+  color: var(--vipps-ink);
+  margin-bottom: 12px;
+}
+
+.vipps-amount {
+  font-size: var(--text-display);
+  font-weight: 700;
+  margin: 4px 0;
+}
+
+// Mock login header variant — verify line instead of the amount.
+.vipps-amount-sm {
+  font-size: var(--text-title);
+}
+
+.vipps-merchant {
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.vipps-cancel {
+  display: inline-block;
+  margin-top: 16px;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.vipps-note {
+  color: var(--ink-soft);
+  font-size: var(--text-xs);
+  margin-top: 12px;
+}

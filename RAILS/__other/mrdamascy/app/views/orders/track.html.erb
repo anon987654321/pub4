@@ -1,0 +1,75 @@
+<% content_for :title, t("orders.track_title") %>
+
+<%# Public tracking by token (OrdersController#track provides @order).
+    5-step timeline with 8-point star milestones; track_controller polls
+    /track/:token/status every 10s and reloads on state change. %>
+<% order = @order %>
+<% steps = %w[placed confirmed preparing ready delivered] %>
+<%# picked_up sits between ready and delivered; the timeline keeps everything
+    through ready lit so progress never visually resets mid-courier. %>
+<% current_index = order.state == "picked_up" ? 3 : steps.index(order.state) %>
+
+<section class="track-head card"
+     data-controller="track"
+     data-track-token-value="<%= order.tracking_token %>"
+     data-track-state-value="<%= order.state %>"
+     data-track-eta-template-value="<%= t("orders.eta") %>">
+
+  <h1 class="page-title"><%= t("orders.track_title") %></h1>
+  <p class="ink-soft">#<%= order.id %> · <%= order.delivery_mode == "pickup" ? t("checkout.mode_pickup") : t("checkout.mode_delivery") %></p>
+
+  <% if order.state == "cancelled" %>
+    <p class="track-cancelled"><%= t("orders.states.cancelled") %></p>
+  <% else %>
+    <% if order.eta_minutes.present? && order.state != "delivered" %>
+      <p class="track-eta" data-track-target="eta">
+        <%= t("orders.eta", minutes: order.eta_minutes) %>
+      </p>
+    <% end %>
+
+    <ol class="timeline" data-track-target="steps">
+      <% steps.each_with_index do |step, index| %>
+        <li class="step<%= " step-done" if current_index && index <= current_index %><%= " step-current" if current_index == index %>"
+            data-state="<%= step %>">
+          <span class="step-star star8" aria-hidden="true"></span>
+          <span class="step-label"><%= t("orders.states.#{step}") %></span>
+        </li>
+      <% end %>
+    </ol>
+
+    <% if order.state == "picked_up" %>
+      <p class="courier-line"><%= render "shared/mode_icon", mode: "delivery" %> <%= t("orders.courier_line") %></p>
+    <% end %>
+  <% end %>
+</section>
+
+<% if order.state == "delivered" %>
+  <section class="card mt-16">
+    <h2 class="section-title"><%= t("orders.tip_title") %></h2>
+    <div class="tip-row">
+      <%= button_to t("orders.tip_none"), order_tip_path(order.tracking_token),
+            method: :post, params: { tip_ore: 0 }, class: "btn" %>
+      <%= button_to t("orders.tip_20"), order_tip_path(order.tracking_token),
+            method: :post, params: { tip_ore: 2000 }, class: "btn btn-gold" %>
+      <%= button_to t("orders.tip_40"), order_tip_path(order.tracking_token),
+            method: :post, params: { tip_ore: 4000 }, class: "btn btn-gold" %>
+    </div>
+
+    <h2 class="section-title mt-16"><%= t("orders.review_title") %></h2>
+    <%= form_with url: order_review_path(order.id), class: "review-form" do %>
+      <div class="field">
+        <%= label_tag :rating, t("orders.review_stars") %>
+        <%= select_tag :rating,
+              options_for_select([["★★★★★", 5], ["★★★★", 4], ["★★★", 3], ["★★", 2], ["★", 1]]),
+              prompt: t("orders.review_prompt") %>
+      </div>
+      <div class="field">
+        <%= label_tag :body, t("orders.review_body") %>
+        <%= text_area_tag :body, nil, placeholder: t("orders.review_body_placeholder") %>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block"><%= t("orders.review_submit") %></button>
+    <% end %>
+
+    <p class="thanks-line mb-0"><%= t("orders.thanks") %></p>
+  </section>
+<% end %>

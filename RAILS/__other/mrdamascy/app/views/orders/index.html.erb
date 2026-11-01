@@ -1,0 +1,45 @@
+<% content_for :title, t("orders.title") %>
+
+<%# OrdersController#index provides @orders for the signed-in user. %>
+
+<h1 class="page-title"><%= t("orders.title") %></h1>
+
+<% if @orders.any? %>
+  <div class="order-list">
+    <% @orders.each do |order| %>
+      <article class="card order-card">
+        <header class="order-card-head">
+          <%= tag.span t("orders.states.#{order.state}"), class: "state-chip state-#{order.state}" %>
+          <span class="ink-soft">#<%= order.id %></span>
+          <% if order.placed_at.present? %>
+            <span class="ink-soft"><%= t("orders.placed_at", time: order.placed_at.strftime("%d.%m %H:%M")) %></span>
+          <% end %>
+        </header>
+
+        <ul class="fact-list order-lines">
+          <% order.order_items.each do |line| %>
+            <li><%= line.quantity %>× <%= line.name %></li>
+          <% end %>
+        </ul>
+
+        <footer class="order-card-foot">
+          <strong><%= money(order.total_ore) %></strong>
+          <% if order.payment_steps.to_i == 3 %>
+            <span class="badge"><%= t("orders.paid_steps") %></span>
+          <% end %>
+          <span class="order-actions">
+            <%= link_to t("orders.view"), order_path(order), class: "btn btn-sm" %>
+            <% if order.tracking_token.present? %>
+              <%= link_to t("orders.track"), track_path(order.tracking_token), class: "btn btn-primary btn-sm" %>
+            <% end %>
+          </span>
+        </footer>
+      </article>
+    <% end %>
+  </div>
+<% else %>
+  <%= render "shared/empty",
+        title: t("orders.empty_title"),
+        body: t("orders.empty_body"),
+        action: { label: t("orders.empty_cta"), path: root_path } %>
+<% end %>

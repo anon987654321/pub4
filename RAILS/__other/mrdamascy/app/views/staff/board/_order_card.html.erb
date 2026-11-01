@@ -1,0 +1,38 @@
+<%# One kitchen order card on the staff board. DOM contract (Task 6):
+    root id "order_card_<id>" so Staff::BoardController#advance can
+    turbo-stream replace or remove the card after advancing. %>
+<article class="card board-card" id="order_card_<%= order.id %>">
+  <p class="board-card-top">
+    <strong>#<%= order.id %></strong>
+    <span class="badge badge-plain"><%= order.delivery_mode == "pickup" ? t("orders.mode.pickup") : t("orders.mode.delivery") %></span>
+    <span class="ink-soft"><%= money(order.total_ore) %></span>
+  </p>
+  <ul class="fact-list board-card-items">
+    <% order.order_items.each do |line| %>
+      <li><%= line.quantity %>× <%= line.name %></li>
+    <% end %>
+  </ul>
+  <% if order.address.present? && order.delivery? %>
+    <p class="board-card-address ink-soft"><%= order.address %> · <%= order.postcode %></p>
+  <% end %>
+  <% if order.phone.present? %>
+    <p class="board-card-phone"><span class="mode-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92Z"/></svg></span> <%= order.phone %></p>
+  <% end %>
+  <% advance_label = { "placed" => t("staff.advance_confirmed"),
+                       "confirmed" => t("staff.advance_preparing"),
+                       "preparing" => t("staff.advance_ready") }[order.state] %>
+  <% if advance_label %>
+    <%= button_to advance_label, staff_advance_order_path(order),
+          method: :patch, class: "btn btn-primary btn-block" %>
+  <% elsif order.external_delivery_id.present? %>
+    <%# Wolt Drive dispatch done — show who is carrying the bag. %>
+    <p class="board-wait ink-soft mb-0">
+      <%= render "shared/mode_icon", mode: "delivery" %> <%= t("staff.wolt_courier", courier: "Bergen Bud") %>
+    </p>
+  <% elsif order.delivery? %>
+    <%= button_to t("staff.wolt_cta"), staff_wolt_order_path(order),
+          method: :patch, class: "btn btn-gold btn-block" %>
+  <% else %>
+    <p class="board-wait ink-soft mb-0"><%= t("staff.awaiting_courier") %></p>
+  <% end %>
+</article>

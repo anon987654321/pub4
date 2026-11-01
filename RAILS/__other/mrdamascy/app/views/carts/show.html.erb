@@ -1,0 +1,76 @@
+<% content_for :title, t("cart.title") %>
+
+<%# CartsController#show provides @cart with cart_items (line snapshots:
+    unit_price_ore, options_list, note). Steppers post patch/delete to the
+    line routes; the CTA hands over to the confirm screen. %>
+
+<h1 class="page-title"><%= t("cart.title") %></h1>
+
+<% if @cart.cart_items.any? %>
+  <div class="cart-lines">
+    <% @cart.cart_items.each do |line| %>
+      <article class="cart-line card">
+        <span class="line-emoji" aria-hidden="true"><%= line.menu_item&.emoji %></span>
+        <div class="line-body">
+          <h2><%= line.menu_item&.name %></h2>
+          <% if line.options_list.any? %>
+            <ul class="fact-list line-options">
+              <% line.options_list.each do |option_name| %>
+                <li><%= option_name %></li>
+              <% end %>
+            </ul>
+          <% end %>
+          <% if line.note.present? %>
+            <p class="line-note">“<%= line.note %>”</p>
+          <% end %>
+          <div class="line-tools">
+            <% if line.quantity.to_i > 1 %>
+              <%= button_to "−", update_item_cart_path(line.id), method: :patch,
+                    params: { quantity: line.quantity.to_i - 1 },
+                    class: "qty-btn", aria: { label: t("cart.decrease") } %>
+            <% end %>
+            <span class="qty-val" aria-label="<%= t("menu.qty") %>"><%= line.quantity %></span>
+            <%= button_to "+", update_item_cart_path(line.id), method: :patch,
+                  params: { quantity: line.quantity.to_i + 1 },
+                  class: "qty-btn", aria: { label: t("cart.increase") } %>
+            <%= button_to t("cart.remove"), remove_item_cart_path(line.id), method: :delete,
+                  class: "link-danger" %>
+          </div>
+        </div>
+        <div class="line-side">
+          <strong class="line-sum"><%= money(line.line_total_ore) %></strong>
+          <% if line.quantity.to_i > 1 %>
+            <span class="ink-soft"><%= money(line.unit_price_ore) %> × <%= line.quantity %></span>
+          <% end %>
+        </div>
+      </article>
+    <% end %>
+  </div>
+
+  <section class="cart-summary card">
+    <div class="total-row">
+      <span><%= t("cart.subtotal") %></span>
+      <strong><%= money(@cart.subtotal_ore) %></strong>
+    </div>
+
+    <p class="promo-hint">
+      <span class="badge badge-gold" aria-hidden="true">SAHTEIN10</span>
+      <%= t("cart.promo_hint") %>
+    </p>
+
+    <div class="mode-toggle" role="group" aria-label="<%= t("checkout.mode") %>">
+      <%= link_to t("checkout.mode_delivery"), checkout_path(mode: "delivery"),
+            class: class_names("chip", "chip-active": @cart.delivery_mode != "pickup") %>
+      <%= link_to t("checkout.mode_pickup"), checkout_path(mode: "pickup"),
+            class: class_names("chip", "chip-active": @cart.delivery_mode == "pickup") %>
+    </div>
+
+    <%= link_to t("cart.vipps_cta"), checkout_path, class: "btn btn-vipps btn-block btn-lg" %>
+    <p class="cart-cta-note mb-0"><%= t("checkout.steps_note") %></p>
+  </section>
+<% else %>
+  <%= render "shared/empty",
+        title: t("cart.empty_title"),
+        body: t("cart.empty_body"),
+        action: { label: t("cart.empty_cta"), path: root_path } %>
+<% end %>

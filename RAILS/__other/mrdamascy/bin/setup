@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Set up gems and the database for a fresh checkout, the way bin/setup always has.
+
+require "fileutils"
+include FileUtils::Verbose
+
+system("bundle check") || system!("bundle install")
+
+# Prepare the primary database plus the Solid Cache/Queue/Cable databases.
+system!("bin/rails db:prepare")

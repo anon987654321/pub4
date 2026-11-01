@@ -1,0 +1,118 @@
+<% content_for :title, @item&.name || t("menu.title") %>
+
+<%# MenuController#item provides @item with its options (ordered, in @options).
+    The item sheet is one form posting to add_item_cart: option chips
+    (toppings = salatbar, sauces, priced extras), qty stepper, note, sticky
+    price — item_sheet_controller caps sauces at two and recalculates the
+    sticky total live. %>
+<% item = @item %>
+<% badge_labels = {
+     "signature" => t("menu.badges.signature"),
+     "veg" => t("menu.badges.veg"),
+     "sharing" => t("menu.badges.sharing"),
+     "secret" => t("menu.badges.secret"),
+     "deal" => t("menu.badges.deal")
+   } %>
+<% badges = item.badges.to_s.split(",").map(&:strip).reject(&:blank?) & badge_labels.keys %>
+
+<article class="sheet" data-turbo-frame="_top">
+  <header class="sheet-head star-pattern">
+    <span class="sheet-emoji" aria-hidden="true"><%= item.emoji %></span>
+    <h1 class="sheet-name"><%= item.name %></h1>
+    <% if item.name_en.present? %>
+      <p class="ink-soft mb-0"><%= item.name_en %></p>
+    <% end %>
+    <p class="sheet-facts">
+      <%= tag.span t("menu.origin_chip", origin: origin_label(item.origin)), class: "badge" if item.origin.present? %>
+      <% if item.weight_g.to_i.positive? %>
+        <%= tag.span "#{item.weight_g} g", class: "badge badge-plain" %>
+      <% end %>
+      <% if item.heat.to_i.positive? %>
+        <span class="heat heat-<%= item.heat.to_i %>">
+          <span class="visually-hidden"><%= t("menu.heat_label") %>: <%= t("menu.heat.#{item.heat.to_i}") %></span>
+          <% 3.times do |dot| %>
+            <span class="heat-dot<%= " on" if dot < item.heat.to_i %>" aria-hidden="true"></span>
+          <% end %>
+          <span class="heat-label"><%= t("menu.heat.#{item.heat.to_i}") %></span>
+        </span>
+      <% end %>
+      <% badges.each do |badge| %>
+        <%= tag.span badge_labels[badge], class: "badge badge-gold" %>
+      <% end %>
+    </p>
+  </header>
+
+  <% if item.description.present? %>
+    <p class="sheet-desc"><%= item.description %></p>
+  <% end %>
+  <% if item.origin.present? %>
+    <p class="origin-story"><%= t(origin_story_key(item.origin)) %></p>
+  <% end %>
+
+  <%= form_with url: add_item_cart_path, method: :post, class: "sheet-form",
+        data: { controller: "item-sheet",
+                item_sheet_base_value: item.price_ore,
+                item_sheet_template_value: t("menu.add_with_price") } do |f| %>
+
+    <%= f.hidden_field :menu_item_id, value: item.id %>
+
+    <% option_groups = {
+         "topping" => t("menu.salatbar"),
+         "sauce" => t("menu.sauces"),
+         "extra" => t("menu.extras")
+       } %>
+    <% option_groups.each do |kind, heading| %>
+      <% options = @options.select { |option| option.kind == kind } %>
+      <% next if options.empty? %>
+      <fieldset class="option-group">
+        <legend>
+          <%= heading %>
+          <% if kind != "extra" %><span class="badge"><%= t("menu.free") %></span><% end %>
+        </legend>
+        <div class="option-chips">
+          <% options.each do |option| %>
+            <label class="option-chip" for="option_<%= option.id %>">
+              <%= check_box_tag "option_ids[]", option.id, option.default_on?,
+                    id: "option_#{option.id}",
+                    data: { item_sheet_target: "option",
+                            kind: kind,
+                            price_ore: option.price_ore.to_i,
+                            action: "change->item-sheet#recalc" } %>
+              <span class="option-name"><%= option.name %></span>
+              <% if option.price_ore.to_i.positive? %>
+                <span class="option-price">+<%= money(option.price_ore) %></span>
+              <% end %>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+    <% end %>
+
+    <fieldset class="option-group">
+      <legend><%= t("menu.qty") %></legend>
+      <div class="qty-stepper">
+        <button type="button" class="qty-btn" data-action="item-sheet#decrease" aria-label="<%= t("cart.decrease") %>">−</button>
+        <%= number_field_tag :quantity, 1, min: 1, max: 10, inputmode: "numeric",
+              class: "qty-input",
+              data: { item_sheet_target: "qty", action: "input->item-sheet#recalc" } %>
+        <button type="button" class="qty-btn" data-action="item-sheet#increase" aria-label="<%= t("cart.increase") %>">+</button>
+      </div>
+    </fieldset>
+
+    <div class="field">
+      <%= label_tag :note, t("menu.note") %>
+      <%= text_field_tag :note, nil, placeholder: t("menu.note_placeholder") %>
+    </div>
+
+    <div class="sheet-total">
+      <span><%= t("menu.total") %></span>
+      <strong data-item-sheet-target="price"><%= money(item.price_ore) %></strong>
+    </div>
+
+    <div class="sheet-footer">
+      <%= f.submit t("menu.add_with_price", price: money(item.price_ore)),
+            class: "btn btn-primary btn-block btn-lg",
+            data: { item_sheet_target: "submit" } %>
+    </div>
+  <% end %>
+</article>

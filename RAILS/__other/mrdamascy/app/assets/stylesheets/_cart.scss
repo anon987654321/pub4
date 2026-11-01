@@ -1,0 +1,189 @@
+// Cart lines, summary, and the fixed pay-bar above the tab bar.
+// Lines are cards inside .cart-lines — the view's grid gap separates them.
+.cart-line {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 12px;
+}
+
+.line-emoji {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--mint-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-title);
+}
+
+.line-body h2 {
+  font-size: var(--text-body);
+  margin: 0;
+}
+
+.line-options {
+  color: var(--ink-soft);
+  font-size: var(--text-meta);
+  margin: 2px 0;
+}
+
+.line-note {
+  color: var(--mint-700);
+  font-size: var(--text-meta);
+  font-style: italic;
+  margin: 2px 0;
+}
+
+.line-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-size: var(--text-meta);
+}
+
+.line-sum {
+  font-weight: 700;
+  white-space: nowrap;
+  font-size: var(--text-body);
+}
+
+.line-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.qty-val {
+  min-width: 18px;
+  text-align: center;
+  font-weight: 700;
+}
+
+// Fitts: the remove action is a 44px target too.
+.link-danger {
+  background: none;
+  border: 0;
+  padding: 12px 8px;
+  color: var(--danger);
+  font-size: var(--text-meta);
+  font-weight: 600;
+}
+
+.cart-summary {
+  margin-top: 16px;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-body);
+  font-weight: 700;
+  padding: 4px 0 8px;
+}
+
+.promo-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--mint-700);
+  font-size: var(--text-meta);
+  background: var(--surface-elevated);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.mode-toggle .chip {
+  flex: 1;
+  justify-content: center;
+}
+
+.cart-cta-note {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: var(--text-meta);
+  margin-top: 8px;
+}
+
+// Pay-bar — dark ink pill with a gold "Betal" chip. Flat: 1px border, no
+// shadow (pixel_perfection).
+.cart-bar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px) + 8px);
+  width: calc(100% - 32px);
+  max-width: 448px;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px 8px 16px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 700;
+}
+
+.cart-bar-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cart-bar-title {
+  font-size: var(--text-xs);
+  color: var(--mint-200);
+}
+
+.cart-bar-meta {
+  font-size: var(--text-meta);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cart-bar-cta {
+  margin-inline-start: auto;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  background: var(--gold);
+  color: var(--ink);
+  border-radius: var(--radius-pill);
+  padding: 0 16px;
+}
+
+.cart-bar-pulse {
+  animation: cart-bar-pulse 600ms ease;
+}
+
+@keyframes cart-bar-pulse {
+  0% {
+    transform: translateX(-50%) scale(1);
+  }
+
+  40% {
+    transform: translateX(-50%) scale(1.03);
+  }
+
+  100% {
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+// The cart and checkout pages carry their own CTAs — no pay-bar there.
+.page-carts .cart-bar,
+.page-checkout .cart-bar {
+  display: none;
+}

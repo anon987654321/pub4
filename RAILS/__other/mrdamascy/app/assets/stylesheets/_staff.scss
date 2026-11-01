@@ -1,0 +1,107 @@
+// Kitchen board + courier runs — big touch targets, stacked columns on phones.
+.board-head {
+  border: 0;
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.board-head h1 {
+  margin: 0;
+  font-size: var(--text-title);
+}
+
+.board-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+.board-column-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-body);
+  margin: 0 0 8px;
+}
+
+.board-count {
+  background: var(--mint-100);
+  color: var(--mint-700);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-meta);
+  padding: 2px 8px;
+}
+
+.board-card {
+  margin-bottom: 12px;
+  padding: 12px;
+}
+
+.board-card-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.board-card-items {
+  font-size: var(--text-meta);
+  margin: 0 0 8px;
+}
+
+.board-card-phone {
+  font-size: var(--text-meta);
+  margin: 0 0 12px;
+}
+
+.board-card-address {
+  font-size: var(--text-meta);
+  margin: 0 0 4px;
+}
+
+.board-wait {
+  font-size: var(--text-meta);
+  text-align: center;
+  margin: 0;
+}
+
+.board-empty {
+  font-size: var(--text-meta);
+  margin: 0;
+}
+
+// Courier runs.
+.run-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding: 12px 0;
+}
+
+.run-row:first-of-type {
+  border-top: 0;
+}
+
+.run-info {
+  min-width: 0;
+}
+
+.run-info strong {
+  display: block;
+}
+
+.run-address {
+  color: var(--ink-soft);
+  font-size: var(--text-meta);
+  margin: 0;
+}
+
+.run-meta {
+  color: var(--ink-soft);
+  font-size: var(--text-meta);
+  margin: 2px 0 0;
+}

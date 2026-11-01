@@ -1,0 +1,214 @@
+// Reset-lite, typography, focus rings, the phone shell and brand bar.
+// MASTER laws applied: focus_ring token, allowed line-heights, type tokens,
+// 8px spacing scale, no box-shadow (flat_ui / pixel_perfection).
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+// Skip link — first focusable element on every page, visible on focus only.
+.skip-link {
+  position: absolute;
+  inset-inline-start: 16px;
+  top: -48px;
+  z-index: 100;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 700;
+  transition: top 120ms ease;
+}
+
+.skip-link:focus-visible {
+  top: 8px;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--bg-page);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 0.5rem;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+p {
+  margin: 0 0 0.75rem;
+}
+
+a {
+  color: var(--mint-700);
+  text-decoration: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  cursor: pointer;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+// MASTER shared_chrome.focus_ring — one ring, accent-colored.
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--mint-100);
+}
+
+// Phone shell — one white 480px column on mint paper.
+main.shell {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px 16px calc(var(--bottom-clearance) + 24px);
+  min-height: 100dvh;
+  background: var(--paper);
+}
+
+.brand-bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand-link {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  color: var(--ink);
+}
+
+.brand-logo {
+  height: 32px;
+  width: auto;
+}
+
+.brand-name {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+// Page titles ride the MASTER type_tokens: var(--text-title), var(--font).
+.page-title {
+  font-size: var(--text-title);
+  margin: 4px 0 12px;
+}
+
+.section-title {
+  font-size: var(--text-title);
+  margin: 4px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-footer {
+  margin-top: 32px;
+  padding: 16px 4px 8px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+  font-size: var(--text-meta);
+}
+
+.footer-sahtein {
+  color: var(--mint-700);
+  font-weight: 700;
+}
+
+// Item sheet keeps its pay button pinned above the tab bar — give the form room.
+body.act-item main.shell {
+  padding-bottom: calc(var(--bottom-clearance) + 190px);
+}
+
+// Toasts float under the brand bar. Flat chrome: 1px border + surface,
+// no shadow (pixel_perfection).
+.toast {
+  position: fixed;
+  top: calc(64px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100% - 32px);
+  padding: 8px 12px 8px 16px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-pill);
+  color: var(--paper);
+  font-weight: 600;
+  font-size: var(--text-meta);
+}
+
+.toast-ok {
+  background: var(--mint-700);
+}
+
+.toast-alert {
+  background: var(--danger);
+}
+
+.toast-body {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Fitts: the close control is a 44px target; negative margins keep the
+// toast bar visually compact.
+.toast-close {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin: -8px -8px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--on-dark-dim);
+  color: var(--paper);
+  font-size: var(--text-body);
+  line-height: 1;
+}
+
+.toast-out {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-6px);
+  transition: opacity 200ms ease, transform 200ms ease;
+}

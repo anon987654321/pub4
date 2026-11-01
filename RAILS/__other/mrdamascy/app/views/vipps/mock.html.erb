@@ -1,0 +1,27 @@
+<%# Vipps-app stand-in for dev/test (§6): VippsClient redirects here with
+    ?token=… in mock mode. Approving captures payment, confirms the order and
+    lands on the tracking page with "Sahtein! صحتين". vipps_mock_controller
+    adds a short shimmer before submitting the patch form. %>
+<% order = @order %>
+
+<div class="vipps-mock">
+  <header class="vipps-head">
+    <span class="vipps-wordmark-lg" aria-hidden="true">Vipps</span>
+    <p class="vipps-merchant"><%= t("vipps.merchant") %></p>
+    <p class="vipps-amount"><%= money(order.total_ore) %></p>
+    <p class="ink-soft mb-0"><%= t("vipps.amount") %> · #<%= order.id %></p>
+  </header>
+
+  <%= form_with url: "/vipps/mock/approve", method: :patch,
+        html: { class: "vipps-form" }, data: { controller: "vipps-mock" } do %>
+    <%= hidden_field_tag :token, order.tracking_token %>
+    <button type="button" class="btn btn-vipps btn-block btn-lg"
+            data-action="vipps-mock#approve">
+      <%= t("vipps.approve") %>
+      <span class="vipps-heart" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></span>
+    </button>
+  <% end %>
+
+  <%= link_to t("vipps.cancel"), track_path(order.tracking_token), class: "vipps-cancel" %>
+  <p class="vipps-note"><%= t("vipps.mock_note") %></p>
+</div>

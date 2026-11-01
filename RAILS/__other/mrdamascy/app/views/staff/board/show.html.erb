@@ -1,0 +1,31 @@
+<% content_for :title, t("staff.title") %>
+
+<%# Staff::BoardController#show provides @orders_by_state (grouped hash).
+    Columns per state; each card's button advances the order one step.
+    Cards carry order_card_<id> DOM ids (staff/board/_order_card) so the
+    advance turbo-stream can replace or remove them. %>
+<% orders_by_state = @orders_by_state.presence || {} %>
+
+<header class="board-head star-pattern">
+  <h1 class="mb-0"><%= t("staff.title") %></h1>
+</header>
+
+<div class="board-grid">
+  <% %w[placed confirmed preparing ready].each do |state| %>
+    <% column_orders = orders_by_state[state] || [] %>
+    <section class="board-column">
+      <h2 class="board-column-title">
+        <%= t("orders.states.#{state}") %>
+        <span class="board-count"><%= column_orders.size %></span>
+      </h2>
+
+      <% if column_orders.empty? %>
+        <p class="board-empty ink-soft"><%= t("staff.empty") %></p>
+      <% end %>
+
+      <% column_orders.each do |order| %>
+        <%= render "staff/board/order_card", order: order %>
+      <% end %>
+    </section>
+  <% end %>
+</div>

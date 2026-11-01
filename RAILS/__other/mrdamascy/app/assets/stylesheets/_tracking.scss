@@ -1,0 +1,163 @@
+// Live tracking — 8-point star milestones on a mint line.
+.track-head h1 {
+  font-size: var(--text-title);
+}
+
+.track-eta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--mint-100);
+  color: var(--mint-700);
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+}
+
+.timeline {
+  list-style: none;
+  margin: 16px 0 8px;
+  position: relative;
+}
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 14px;
+  bottom: 14px;
+  width: 2px;
+  background: var(--mint-200);
+}
+
+.step {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+  color: var(--ink-soft);
+}
+
+.step-star {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  background: var(--mint-200);
+  transition: background-color 200ms ease;
+}
+
+.step-done {
+  color: var(--mint-700);
+}
+
+.step-done .step-star {
+  background: var(--mint-500);
+}
+
+.step-current {
+  color: var(--ink);
+}
+
+.step-current .step-star {
+  background: var(--gold);
+}
+
+.step-label {
+  font-weight: 600;
+}
+
+.step-current .step-label {
+  font-weight: 700;
+}
+
+.courier-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-elevated);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: var(--text-meta);
+  font-weight: 600;
+}
+
+.track-cancelled {
+  background: var(--pom-100);
+  color: var(--danger);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-weight: 700;
+}
+
+// Tip chips (after delivery only).
+.tip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+
+.tip-row .btn {
+  border-radius: var(--radius-pill);
+  padding: 4px 16px;
+  font-size: var(--text-meta);
+}
+
+.thanks-line {
+  text-align: center;
+  font-weight: 700;
+  color: var(--mint-700);
+  margin-top: 16px;
+}
+
+// Orders index / show cards.
+.order-card-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.order-lines {
+  font-size: var(--text-meta);
+  margin: 0 0 12px;
+}
+
+.order-card-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.order-actions {
+  margin-inline-start: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.order-head .state-chip,
+.order-head .badge {
+  margin-inline-end: 6px;
+}
+
+.order-line {
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  font-size: var(--text-meta);
+  gap: 8px;
+}
+
+.order-line .line-options {
+  display: block;
+}
+
+.order-delivery {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+  font-size: var(--text-meta);
+}

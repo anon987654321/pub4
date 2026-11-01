@@ -1,0 +1,53 @@
+<% content_for :title, t("auth.title") %>
+
+<%# Phone-first login (§6): POST /session/request_code sends the mock OTP,
+    then POST session (session_path) verifies and signs in. Dev notice shows
+    the fixed mock code; sessions#create also accepts the phone param kept
+    alongside the code. %>
+
+<section class="card auth-card">
+  <h1 class="page-title"><%= t("auth.title") %></h1>
+  <p class="ink-soft"><%= t("auth.blurb") %></p>
+
+  <% if current_user %>
+    <p class="auth-status">
+      <%= t("auth.logged_in_as", name: current_user.name.presence || current_user.phone) %>
+    </p>
+    <%= button_to t("auth.logout"), session_path, method: :delete, class: "btn btn-block" %>
+  <% else %>
+    <%# Fastest path first (§12): Vipps verifies the phone and hands back
+        name + address — no OTP, no forms. The SMS fallback stays below. %>
+    <%= link_to t("auth.vipps_login"), session_vipps_path,
+          class: "btn btn-vipps btn-block btn-lg" %>
+    <p class="login-or"><%= t("auth.or_sms") %></p>
+
+    <%= form_with url: "/session/request_code", method: :post, class: "auth-form" do %>
+      <div class="field">
+        <%= label_tag :phone, t("auth.phone") %>
+        <%= telephone_field_tag :phone, params[:phone],
+              inputmode: "numeric",
+              autocomplete: "tel-national",
+              placeholder: t("auth.phone_placeholder"),
+              class: "input-lg" %>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block"><%= t("auth.send_code") %></button>
+    <% end %>
+
+    <%# In development SessionsController#request_code flashes the mock code
+        as a notice — it renders through shared/_toast. No standing mock-code
+        paragraph here: it would leak the OTP in every other environment. %>
+
+    <%= form_with url: session_path, method: :post, class: "auth-form" do %>
+      <%= hidden_field_tag :phone, params[:phone] %>
+      <div class="field">
+        <%= label_tag :code, t("auth.code") %>
+        <%= text_field_tag :code, nil,
+              inputmode: "numeric",
+              autocomplete: "one-time-code",
+              placeholder: t("auth.code_placeholder"),
+              class: "input-lg" %>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block"><%= t("auth.verify") %></button>
+    <% end %>
+  <% end %>
+</section>

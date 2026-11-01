@@ -1,0 +1,131 @@
+// Cards, chips, badges, and the order-state palette (§7).
+// space_not_lines: cards separate by surface + gap — border 0, no shadow.
+.card {
+  background: var(--surface-elevated);
+  border: 0;
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 4px;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--mint-100);
+  border: 1px solid transparent;
+  color: var(--mint-700);
+  font-size: var(--text-meta);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+a.chip:hover {
+  background: var(--mint-200);
+}
+
+.chip-active {
+  background: var(--mint-700);
+  color: var(--paper);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  background: var(--mint-100);
+  color: var(--mint-700);
+}
+
+.badge-plain {
+  background: var(--surface-elevated);
+  color: var(--ink-soft);
+}
+
+.badge-gold {
+  background: var(--gold-100);
+  color: var(--gold-ink);
+}
+
+.badge-pom {
+  background: var(--pom-100);
+  color: var(--pom);
+}
+
+// State chips — placed mint, confirmed gold, preparing gold-deep, ready
+// mint-700, picked_up soft, delivered ink-soft, cancelled pom.
+.state-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-meta);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.state-placed {
+  background: var(--mint-100);
+  color: var(--mint-700);
+}
+
+.state-confirmed {
+  background: var(--gold-100);
+  color: var(--gold-ink);
+}
+
+.state-preparing {
+  background: var(--gold-150);
+  color: var(--gold-ink-deep);
+}
+
+.state-ready {
+  background: var(--mint-700);
+  color: var(--paper);
+}
+
+.state-picked_up {
+  background: var(--mint-200);
+  color: var(--mint-700);
+}
+
+.state-delivered {
+  background: var(--fog);
+  color: var(--ink-soft);
+}
+
+.state-cancelled {
+  background: var(--pom-100);
+  color: var(--danger);
+}
+
+// Empty states — one truth sentence and one verb, plus a way out.
+.empty {
+  text-align: center;
+  padding: 32px 20px;
+}
+
+.empty-star {
+  display: block;
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 12px;
+  background: var(--mint-200);
+}
+
+.empty-title {
+  font-size: var(--text-title);
+}
+
+.empty-body {
+  color: var(--ink-soft);
+}
+
+.empty-cta {
+  margin-top: 8px;
+}

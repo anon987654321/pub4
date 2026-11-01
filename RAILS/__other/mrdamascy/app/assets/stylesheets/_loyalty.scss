@@ -1,0 +1,70 @@
+// Sahtein-kortet — star-pattern card with 10 stampable 8-point stars.
+.loyalty-card {
+  border: 0;
+  border-radius: var(--radius);
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.loyalty-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: var(--text-body);
+  margin: 0;
+}
+
+.loyalty-mark {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+}
+
+.loyalty-stars {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin: 16px 0 12px;
+}
+
+.loyal-star {
+  width: 32px;
+  height: 32px;
+  background: var(--mint-200);
+  transition: background-color var(--transition-normal) var(--ease-out);
+}
+
+.loyal-star-filled {
+  background: var(--gold);
+}
+
+.loyalty-progress {
+  font-weight: 700;
+  color: var(--mint-700);
+  margin-bottom: 0;
+}
+
+// Rules list with small star bullets.
+.loyalty-rules li {
+  list-style: none;
+  position: relative;
+  padding: 8px 0 8px 28px;
+  border-top: 1px solid var(--line);
+  font-size: var(--text-meta);
+}
+
+.loyalty-rules li::before {
+  content: "✦";
+  position: absolute;
+  left: 4px;
+  top: 8px;
+  color: var(--mint-500);
+  font-size: var(--text-meta);
+}
+
+.loyalty-rules-card .btn {
+  margin-top: 8px;
+}

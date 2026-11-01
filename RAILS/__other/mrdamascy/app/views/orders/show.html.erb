@@ -1,0 +1,75 @@
+<% content_for :title, "#{t("orders.title")} · ##{@order&.id}" %>
+
+<%# OrdersController#show provides @order with order_items. %>
+<% order = @order %>
+
+<header class="order-head">
+  <%= tag.span t("orders.states.#{order.state}"), class: "state-chip state-#{order.state}" %>
+  <%= tag.span t("orders.payment_state.#{order.payment_state}"), class: "badge badge-plain" if order.payment_state.present? %>
+  <% if order.payment_steps.to_i == 3 %>
+    <span class="badge badge-gold"><%= t("orders.paid_steps") %></span>
+  <% end %>
+  <% if order.placed_at.present? %>
+    <p class="ink-soft mb-0">#<%= order.id %> · <%= t("orders.placed_at", time: order.placed_at.strftime("%d.%m %H:%M")) %></p>
+  <% end %>
+</header>
+
+<section class="card">
+  <h2 class="section-title"><%= t("orders.items_title") %></h2>
+  <% order.order_items.each do |line| %>
+    <div class="order-line row-between">
+      <span class="row">
+        <span aria-hidden="true"><%= line.emoji %></span>
+        <span>
+          <strong><%= line.quantity %>× <%= line.name %></strong>
+          <% if line.options_text.present? %>
+            <span class="ink-soft line-options"><%= line.options_text %></span>
+          <% end %>
+        </span>
+      </span>
+      <strong><%= money(line.line_total_ore) %></strong>
+    </div>
+  <% end %>
+
+  <div class="order-delivery mt-16">
+    <% if order.delivery_mode == "pickup" %>
+      <p class="mb-0"><%= render "shared/mode_icon", mode: "pickup" %> <%= t("orders.pickup_at") %></p>
+    <% else %>
+      <p class="mb-0"><%= render "shared/mode_icon", mode: "delivery" %> <%= t("orders.delivery_to") %> <%= order.address %> · <%= order.postcode %></p>
+    <% end %>
+  </div>
+</section>
+
+<section class="card totals mt-16">
+  <div class="totals-row">
+    <span><%= t("orders.subtotal") %></span>
+    <span><%= money(order.subtotal_ore) %></span>
+  </div>
+  <% if order.delivery_fee_ore.to_i.positive? && order.delivery_mode != "pickup" %>
+    <div class="totals-row">
+      <span><%= t("orders.delivery_fee") %></span>
+      <span><%= money(order.delivery_fee_ore) %></span>
+    </div>
+  <% end %>
+  <% if order.discount_ore.to_i.positive? %>
+    <div class="totals-row totals-discount">
+      <span><%= t("orders.discount") %></span>
+      <span>−<%= money(order.discount_ore) %></span>
+    </div>
+  <% end %>
+  <% if order.tip_ore.to_i.positive? %>
+    <div class="totals-row">
+      <span><%= t("orders.tip_line") %></span>
+      <span><%= money(order.tip_ore) %></span>
+    </div>
+  <% end %>
+  <div class="totals-row totals-row-strong">
+    <span><%= t("orders.total") %></span>
+    <span><%= money(order.total_ore) %></span>
+  </div>
+</section>
+
+<% if order.tracking_token.present? %>
+  <%= link_to t("orders.track"), track_path(order.tracking_token), class: "btn btn-primary btn-block mt-16" %>
+<% end %>
+<%= link_to t("orders.back"), orders_path, class: "btn btn-block mt-8" %>

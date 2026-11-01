@@ -1,0 +1,10 @@
+<% content_for :title, t("offline.title") %>
+
+<%# Friendly offline page — precached by the service worker and served when a
+    navigation fails. Copy stays short; retry goes to the menu root. %>
+<section class="empty card offline-page">
+  <span class="empty-star star8" aria-hidden="true"></span>
+  <h1 class="empty-title"><%= t("offline.title") %></h1>
+  <p class="empty-body"><%= t("offline.body") %></p>
+  <%= link_to t("offline.retry"), root_path, class: "btn btn-primary empty-cta" %>
+</section>

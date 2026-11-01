@@ -1,0 +1,34 @@
+<%# "Logg inn med Vipps" stand-in for dev/test (mock mode only): Vipps'
+    consent screen, minus the Vipps. Posts phone (+ name) to the session
+    callback, so the login → prefilled-checkout loop runs without
+    credentials. In real mode this page 404s (VippsController). %>
+
+<div class="vipps-mock">
+  <header class="vipps-head">
+    <span class="vipps-wordmark-lg" aria-hidden="true">Vipps</span>
+    <p class="vipps-merchant"><%= t("vipps.login_mock_subtitle") %></p>
+    <p class="vipps-amount vipps-amount-sm"><%= t("vipps.login_mock_verify") %></p>
+  </header>
+
+  <%= form_with url: session_vipps_callback_path, method: :get,
+        html: { class: "vipps-form" } do %>
+    <%= hidden_field_tag :state, @state %>
+    <%= hidden_field_tag :to, @redirect_to %>
+    <div class="field">
+      <%= label_tag :phone, t("vipps.login_mock_phone") %>
+      <%= telephone_field_tag :phone, "90000004",
+            inputmode: "numeric", autocomplete: "tel", maxlength: 12 %>
+    </div>
+    <div class="field">
+      <%= label_tag :name, t("vipps.login_mock_name") %>
+      <%= text_field_tag :name, "", autocomplete: "name" %>
+    </div>
+    <button type="submit" class="btn btn-vipps btn-block btn-lg">
+      <%= t("vipps.login_mock_continue") %>
+      <span class="vipps-heart" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></span>
+    </button>
+  <% end %>
+
+  <%= link_to t("vipps.cancel"), root_path, class: "vipps-cancel" %>
+  <p class="vipps-note"><%= t("vipps.login_mock_note") %></p>
+</div>

@@ -1,0 +1,325 @@
+// Menu: hero, sticky category chips, item cards, item sheet.
+// Landing hero follows MASTER reading_patterns: z-pattern, primary area
+// top-left — left-aligned, not centered.
+.hero {
+  border: 0;
+  border-radius: var(--radius);
+  padding: 24px 20px;
+}
+
+.hero-mark {
+  width: 56px;
+  height: 56px;
+  margin: 0 0 8px;
+}
+
+.hero-greeting {
+  color: var(--mint-700);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.hero-title {
+  font-size: var(--text-display);
+}
+
+.hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-soft);
+  font-size: var(--text-meta);
+  margin-bottom: 2px;
+}
+
+.hero-rating {
+  display: inline-flex;
+  color: var(--gold-deep);
+}
+
+// "Yalla igjen" reorder card.
+.reorder-card {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.reorder-title {
+  color: var(--gold-ink);
+  font-size: var(--text-title);
+  margin: 0;
+}
+
+.reorder-copy p {
+  margin: 2px 0 0;
+  font-size: var(--text-meta);
+}
+
+// Sticky anchor chips under the brand bar (brand bar 49px tall).
+.cat-chips {
+  position: sticky;
+  top: 49px;
+  z-index: 30;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin: 12px -16px 0;
+  padding: 10px 16px;
+  background: var(--paper);
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cat-chips::-webkit-scrollbar {
+  display: none;
+}
+
+// Cards in a section separate by grid gap, not margins (space_not_lines).
+.menu-section {
+  scroll-margin-top: 130px;
+  display: grid;
+  gap: 12px;
+}
+
+// Item card — emoji tile, facts, price, quick-add.
+.item-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.item-card-hit {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  color: inherit;
+}
+
+.item-emoji {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  background: var(--mint-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-display);
+}
+
+.item-body {
+  min-width: 0;
+}
+
+.item-name {
+  display: block;
+  font-weight: 700;
+}
+
+.item-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.item-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.item-side {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.item-price {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+// Heat dots — 1 mint (Mild), 2 gold (Middels), 3 pom (Sterk!).
+.heat {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.heat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--line);
+}
+
+.heat-1 .heat-dot.on {
+  background: var(--mint-500);
+}
+
+.heat-2 .heat-dot.on {
+  background: var(--gold);
+}
+
+.heat-3 .heat-dot.on {
+  background: var(--pom);
+}
+
+.heat-label {
+  margin-inline-start: 4px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+// Item sheet — left-aligned like the hero (z-pattern, max 3 centered lines).
+.sheet-head {
+  border: 0;
+  border-radius: var(--radius);
+  padding: 24px 20px;
+  margin-bottom: 16px;
+}
+
+.sheet-emoji {
+  display: block;
+  font-size: var(--text-display-xl);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.sheet-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 0;
+}
+
+.sheet-desc {
+  font-size: var(--text-body);
+}
+
+.origin-story {
+  border-inline-start: 3px solid var(--mint-300);
+  padding: 4px 0 4px 12px;
+  color: var(--ink-soft);
+  font-size: var(--text-meta);
+  font-style: italic;
+}
+
+.option-group legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.option-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.option-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-elevated);
+  border: 1px solid var(--line);
+  font-size: var(--text-meta);
+  cursor: pointer;
+}
+
+.option-chip input[type="checkbox"],
+.option-chip input[type="radio"] {
+  accent-color: var(--mint-600);
+  margin: 0;
+}
+
+.option-chip:has(input:checked) {
+  background: var(--mint-100);
+  border-color: var(--mint-300);
+}
+
+.option-chip input:disabled {
+  opacity: 0.4;
+}
+
+.option-price {
+  color: var(--ink-soft);
+  font-size: var(--text-meta);
+}
+
+// Quantity stepper.
+.qty-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.qty-btn {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-elevated);
+  font-size: var(--text-title);
+  font-weight: 700;
+  line-height: 1;
+  padding: 0;
+}
+
+.qty-input {
+  width: 56px;
+  text-align: center;
+  font-weight: 700;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 12px 4px;
+}
+
+.sheet-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 2px;
+  font-size: var(--text-body);
+  font-weight: 700;
+}
+
+// Sticky pay bar for the sheet — flat chrome above the tab bar: solid
+// surface + 1px border, no gradient (pixel_perfection).
+.sheet-footer {
+  position: fixed;
+  inset-inline: 0;
+  bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px));
+  z-index: 35;
+  display: flex;
+  justify-content: center;
+  padding: 12px 16px 16px;
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+  pointer-events: none;
+}
+
+.sheet-footer .btn {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 448px;
+}

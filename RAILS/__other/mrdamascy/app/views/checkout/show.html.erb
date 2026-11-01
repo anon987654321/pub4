@@ -1,0 +1,101 @@
+<% content_for :title, t("checkout.title") %>
+
+<%# The single confirm screen (§6/§7). CheckoutController#load_checkout_vars
+    provides @cart, @mode, @order, @returning_customer, @zone, @subtotal_ore,
+    @discount_ore, @delivery_fee_ore, @total_ore and @eta_minutes. Live zone
+    feedback comes from zone_check_controller → GET /checkout/zone. POSTing
+    checkout_path builds the order and redirects to Vipps. %>
+
+<h1 class="page-title"><%= t("checkout.title") %></h1>
+<% if @subtotal_ore.positive? %>
+  <p class="ink-soft"><%= t("checkout.cart_summary", total: money(@subtotal_ore)) %></p>
+<% end %>
+
+<%# The zero-typing path (§12): one tap logs in with Vipps, and Vipps hands
+    back the verified phone, name and address — the confirm screen then
+    arrives prefilled and the only remaining button is "Betal med Vipps". %>
+<% unless current_user %>
+  <section class="vipps-login card">
+    <div>
+      <strong><%= t("checkout.login_row") %></strong>
+      <p class="ink-soft mb-0"><%= t("checkout.login_note") %></p>
+    </div>
+    <%= link_to t("checkout.login_cta"),
+          session_vipps_path(to: "checkout"), class: "btn btn-vipps btn-block" %>
+    <p class="login-or"><%= t("checkout.login_or") %></p>
+  </section>
+<% end %>
+
+<%= form_with url: checkout_path, method: :post, class: "checkout-form",
+      data: { controller: "zone-check",
+              zone_check_url_value: "/checkout/zone",
+              zone_check_ok_value: t("checkout.zone_ok"),
+              zone_check_fail_value: t("checkout.zone_fail"),
+              zone_check_checking_value: t("checkout.checking"),
+              zone_check_pickup_value: t("checkout.pickup_note") } do |f| %>
+
+  <fieldset class="option-group">
+    <legend><%= t("checkout.mode") %></legend>
+    <div class="mode-toggle">
+      <label class="option-chip">
+        <%= radio_button_tag :mode, "delivery", @mode != "pickup",
+              data: { action: "change->zone-check#modeChanged" } %>
+        <span><%= t("checkout.mode_delivery") %></span>
+      </label>
+      <label class="option-chip">
+        <%= radio_button_tag :mode, "pickup", @mode == "pickup",
+              data: { action: "change->zone-check#modeChanged" } %>
+        <span><%= t("checkout.mode_pickup") %></span>
+      </label>
+    </div>
+  </fieldset>
+
+  <div class="field" data-zone-check-target="addressWrap">
+    <%= label_tag :address, t("checkout.address") %>
+    <%= text_field_tag :address, @order.address,
+          placeholder: t("checkout.address_placeholder"),
+          autocomplete: "street-address" %>
+  </div>
+
+  <div class="field" data-zone-check-target="addressWrap">
+    <%= label_tag :postcode, t("checkout.postcode") %>
+    <%= text_field_tag :postcode, @order.postcode,
+          inputmode: "numeric", autocomplete: "postal-code", maxlength: 4,
+          placeholder: t("checkout.postcode_placeholder"),
+          data: { zone_check_target: "postcode", action: "input->zone-check#check" } %>
+    <p class="zone-feedback" data-zone-check-target="feedback" aria-live="polite"></p>
+  </div>
+
+  <div class="field">
+    <%= label_tag :phone, t("checkout.phone_label") %>
+    <%= telephone_field_tag :phone, @order.phone,
+          inputmode: "numeric", autocomplete: "tel", maxlength: 12,
+          placeholder: "900 00 000" %>
+  </div>
+
+  <section class="pay-row card">
+    <span class="vipps-wordmark" aria-hidden="true">Vipps</span>
+    <div>
+      <strong><%= t("checkout.vipps_row") %></strong>
+      <p class="ink-soft mb-0"><%= t("checkout.vipps_note") %></p>
+    </div>
+    <% if @returning_customer %>
+      <span class="badge badge-gold"><%= t("checkout.sist_brukt") %></span>
+    <% end %>
+  </section>
+
+  <p class="promo-line">
+    <span aria-hidden="true">✓</span> <%= t("checkout.promo_auto") %>
+  </p>
+
+  <section class="totals card">
+    <div class="totals-row">
+      <span><%= t("checkout.subtotal") %></span>
+      <strong><%= money(@subtotal_ore) %></strong>
+    </div>
+    <p class="totals-note mb-0"><%= t("checkout.totals_note") %></p>
+  </section>
+
+  <%= f.submit t("checkout.vipps_cta"), class: "btn btn-vipps btn-block btn-lg" %>
+  <p class="steps-note"><%= t("checkout.steps_note") %></p>
+<% end %>
