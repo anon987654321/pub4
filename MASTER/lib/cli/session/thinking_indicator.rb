@@ -280,10 +280,19 @@ module Master
       end
 
       def stage_for(event, payload)
-        return event.delete_prefix("stage:") if event.start_with?("stage:")
+        return stage_with_detail(event, payload) if event.start_with?("stage:")
         return payload[:stage].to_s.downcase if event == "pipeline:stage_start"
 
         STAGE_EVENTS[event]
+      end
+
+      # "stage:*" events name their own unit and may carry a live detail — the
+      # media lane's download fraction, for one. The row reads "mov0 34% of
+      # 667.6MB — Title"; one_row keeps it inside the screen's width.
+      def stage_with_detail(event, payload)
+        name = event.delete_prefix("stage:")
+        detail = payload[:detail].to_s.strip
+        detail.empty? ? name : "#{name} #{detail}"
       end
 
       # What is worth saying out loud while a pass runs. A pass prints hundreds

@@ -35,7 +35,6 @@ module Master
       BUNCH = 5
       READ_TIMEOUT = 30
       DOWNLOAD_TIMEOUT = 600
-      PROGRESS_STEPS = 4
       MAX_REDIRECTS = 5
       DOWNLOAD_ATTEMPTS = 3
       MAX_RETRY_DELAY = 10
@@ -71,6 +70,61 @@ module Master
         end
       end
 
+      # Percentage progress for one long download. The spinner row carries the
+      # live fraction (stage:mov0 bus events, one per percent); a printed dmesg
+      # line lands once per PRINT_STEP percentage points, so a feature film is
+      # a handful of lines, not a torrent. A server that sends no length falls
+      # back to volume steps — honest megabytes instead of a guessed percent.
+      class Progress
+        PRINT_STEP = 10
+        VOLUME_STEP = 64 * 1024 * 1024
+
+        attr_reader :label
+
+        def initialize(label)
+          @label = label.to_s
+          @printed = -1
+          @staged = -1
+        end
+
+        # "34% of 667.6MB — Title" / "128.0MB downloaded — Title"
+        def detail(bytes, total)
+          return "#{Mov.megabytes(bytes)} downloaded — #{@label}" unless total.to_i.positive?
+
+          "#{percent(bytes, total)}% of #{Mov.megabytes(total)} — #{@label}"
+        end
+
+        def print_due?(bytes, total)
+          band = band(bytes, total, PRINT_STEP)
+          return false if band <= @printed
+
+          @printed = band
+          true
+        end
+
+        def stage_due?(bytes, total)
+          band = band(bytes, total, 1)
+          return false if band <= @staged
+
+          @staged = band
+          true
+        end
+
+        private
+
+        def percent(bytes, total)
+          ((bytes.to_f / total) * 100).floor.clamp(0, 100)
+        end
+
+        def band(bytes, total, step)
+          if total.to_i.positive?
+            bytes * 100 / total / step
+          else
+            bytes / VOLUME_STEP
+          end
+        end
+      end
+
       def handles?(text)
         value = text.to_s.strip
         return false if value.empty? || value.match?(ADVICE_RE)
@@ -81,15 +135,19 @@ module Master
         (value.match?(MOVIE_RE) || value.match?(SERIES_RE)) && value.match?(ACQUIRE_RE)
       end
 
-      def dispatch(text, root: nil)
+      # bus: the turn's event bus. The media lane runs outside the pipeline's
+      # stages, so without it the spinner would sit on "intake" for a whole
+      # feature film; stage:mov0 events move it and carry the live percentage.
+      def dispatch(text, root: nil, bus: nil)
         request = parse_request(text)
-        return download_url(request[:url], title: request[:title]) if request[:url]
+        return download_url(request[:url], title: request[:title], bus: bus) if request[:url]
 
+        stage(bus, "searching archive.org")
         entries = search(request)
         return entries if entries.is_a?(Result)
         return Result.err("mov0: nothing found#{query_suffix(request)}", category: :validation) if entries.empty?
 
-        download_queue(entries, request)
+        download_queue(entries, request, bus: bus)
       rescue StandardError => e
         Result.err("mov0: #{e.class}: #{e.message}", category: :infrastructure)
       end
@@ -120,7 +178,11 @@ module Master
       end
 
       def parse_url_request(value, url, request)
-        if (id = value.match(ARCHIVE_DETAILS_RE)&.captures&.first)
+        # Match the identifier against the URL itself, not the sentence: the
+        # pattern anchors at \A and the sentence may prefix the link ("download
+        # https://archive.org/details/X"), which handles? admits but this parse
+        # then dropped on the floor.
+        if (id = url.match(ARCHIVE_DETAILS_RE)&.captures&.first)
           request[:url] = url
           request[:identifier] = id
           return request
@@ -190,8 +252,9 @@ module Master
 
       # Try candidates until the requested number has actually been saved.
       # Every rejected candidate remains visible in the final report.
-      def download_queue(entries, request)
+      def download_queue(entries, request, bus: nil)
         requested = request.fetch(:count, FEW).to_i.clamp(1, 20)
+        report_status("mov0", "#{entries.size} candidates found; target #{requested}; destination #{downloads_dir}")
         lines = ["mov0: #{entries.size} candidates found; target #{requested}; destination #{downloads_dir}"]
         saved_paths = []
         failures = []
@@ -200,7 +263,8 @@ module Master
           break if saved_paths.size >= requested
 
           title = entry[:title].to_s.empty? ? entry[:identifier] : entry[:title]
-          detail = download_identifier(entry[:identifier], title: entry[:title])
+          stage(bus, "#{saved_paths.size + 1}/#{requested} — #{title}")
+          detail = download_identifier(entry[:identifier], title: entry[:title], bus: bus)
           if detail.start_with?("mov0: saved ")
             saved_paths << detail
             lines << detail
@@ -218,7 +282,7 @@ module Master
         Result.ok({ output: report, rendered: report, media: :mov, path: downloads_dir, saved: saved_paths.size })
       end
 
-      def download_identifier(identifier, title: nil)
+      def download_identifier(identifier, title: nil, bus: nil)
         return "mov0: empty identifier" if identifier.to_s.strip.empty?
 
         meta = get_json(HOST, "#{METADATA_PATH}#{path_encode(identifier)}", READ_TIMEOUT)
@@ -234,6 +298,7 @@ module Master
           identifier, name, target, label,
           expected_size: positive_integer(pick["size"]),
           expected_md5: pick["md5"],
+          bus: bus,
         )
       end
 
@@ -364,13 +429,13 @@ module Master
         true
       end
 
-      def fetch_download(identifier, name, target, label, expected_size: nil, expected_md5: nil)
+      def fetch_download(identifier, name, target, label, expected_size: nil, expected_md5: nil, bus: nil)
         uri = URI.parse("https://#{HOST}#{DOWNLOAD_PATH}#{path_encode(identifier)}/#{path_encode(name)}")
         attempt = 0
 
         begin
           attempt += 1
-          download_once(uri, target, label, expected_size:, expected_md5:)
+          download_once(uri, target, label, expected_size:, expected_md5:, bus: bus)
         rescue StandardError => e
           if attempt < DOWNLOAD_ATTEMPTS && retryable_download_error?(e)
             delay = retry_delay(e, attempt)
@@ -383,9 +448,10 @@ module Master
         end
       end
 
-      def download_once(uri, target, label, expected_size:, expected_md5:)
+      def download_once(uri, target, label, expected_size:, expected_md5:, bus: nil)
         FileUtils.mkdir_p(downloads_dir)
         tempfile = nil
+        progress = Progress.new(label)
         begin
           Tempfile.create([".mov-download-", ".part"], downloads_dir) do |file|
             tempfile = file
@@ -415,7 +481,7 @@ module Master
               total = response.content_length.to_i
               bytes = 0
               digest = Digest::MD5.new
-              last_fraction = 0.0
+              announce_progress(progress, bus, 0, total)
               response.read_body do |chunk|
                 bytes += chunk.bytesize
                 if expected_size.to_i.positive? && bytes > expected_size.to_i
@@ -423,11 +489,7 @@ module Master
                 end
                 file.write(chunk)
                 digest.update(chunk)
-                fraction = total.positive? ? bytes.to_f / total : 0.0
-                if fraction - last_fraction >= 1.0 / PROGRESS_STEPS
-                  report_status("mov0", "#{label}, #{megabytes(bytes)} of #{megabytes(total)}")
-                  last_fraction = fraction
-                end
+                announce_progress(progress, bus, bytes, total)
               end
 
               verify_download!(
@@ -464,6 +526,26 @@ module Master
             index += 1
           end
         end
+      end
+
+      # The two progress surfaces: the spinner row follows stage:mov0 bus
+      # events (one per percent, so the operator watches the fraction move),
+      # and a dmesg line lands every Progress::PRINT_STEP points so the log
+      # stays readable. Unknown totals fall back to volume steps.
+      def announce_progress(progress, bus, bytes, total)
+        stage(bus, progress.detail(bytes, total)) if progress.stage_due?(bytes, total)
+        report_status("mov0", progress.detail(bytes, total)) if progress.print_due?(bytes, total)
+      end
+
+      # The spinner row follows "stage:*" bus events; the media lane runs
+      # outside the pipeline stages, so it names itself here and carries the
+      # live percentage in the detail.
+      def stage(bus, detail)
+        return unless bus.respond_to?(:publish)
+
+        bus.publish("stage:mov0", detail: detail.to_s)
+      rescue StandardError
+        nil
       end
 
       def retryable_download_error?(error)
@@ -503,10 +585,12 @@ module Master
       end
 
       # Direct Archive.org links use the same validated download path. YouTube
-      # and Vimeo are delegated to yt-dlp, with explicit, isolated file output.
-      def download_url(url, title: nil)
+      # and Vimeo are delegated to yt-dlp with --progress --newline, whose
+      # streamed percentage the same Progress surfaces read — capture3 would
+      # buffer every byte of a film and answer only when it ended.
+      def download_url(url, title: nil, bus: nil)
         if (id = url.match(ARCHIVE_DETAILS_RE)&.captures&.first)
-          line = download_identifier(id, title:)
+          line = download_identifier(id, title:, bus: bus)
           return Result.ok({ output: line, rendered: line, media: :mov, path: downloads_dir }) if line.start_with?("mov0: saved ")
 
           return Result.err(line, category: :provider_error)
@@ -521,14 +605,48 @@ module Master
           return Result.err("mov0: yt-dlp not installed; install it to pull video links", category: :validation)
         end
 
+        label = (title.to_s.empty? ? url : title).to_s[0, 80]
+        stage(bus, "yt-dlp — #{label}")
         FileUtils.mkdir_p(downloads_dir)
         target = title ? ["-o", File.join(downloads_dir, "#{safe_filename(title)}.%(ext)s")] : ["-P", downloads_dir]
-        out, err, status = Master::Io::Exec.capture3("yt-dlp", "--no-playlist", *target, url)
+        out, status = Master::Io::Exec.capture2e(
+          "yt-dlp", "--no-playlist", "--progress", "--newline", *target, url,
+          on_stdout: yt_progress_handler(bus, label)
+        )
         if status&.success?
           line = "mov0: saved from link, into #{downloads_dir}"
           Result.ok({ output: line, rendered: line, media: :mov, path: downloads_dir })
         else
-          Result.err("mov0: yt-dlp failed: #{(err || out).to_s.lines.first.to_s.strip[0, 160]}", category: :infrastructure)
+          Result.err("mov0: yt-dlp failed: #{out.to_s.lines.first.to_s.strip[0, 160]}", category: :infrastructure)
+        end
+      end
+
+      # yt-dlp writes "[download]  34.5% of ..." lines under --newline. Feed
+      # the merged stream through the same percentage surfaces as the
+      # Archive.org lane; chunk boundaries split lines, so buffer until a
+      # newline arrives and drop a pathological unterminated buffer.
+      def yt_progress_handler(bus, label)
+        buffer = +""
+        progress = Progress.new("yt-dlp — #{label}")
+
+        lambda do |chunk|
+          buffer << chunk.to_s
+          # Complete lines only: a partial tail stays buffered until its
+          # newline arrives, so a percentage split across two chunks still
+          # parses as one line.
+          while (line = buffer.slice!(/\A[^\n]*\n/))
+            if (m = line.match(/\[download\]\s+(\d{1,3}(?:\.\d+)?)%/))
+              fraction = m[1].to_f
+              next unless progress.stage_due?(fraction.floor, 100)
+
+              detail = "#{fraction.floor}% — #{progress.label}"
+              stage(bus, detail)
+              report_status("mov0", detail) if (fraction.floor % Progress::PRINT_STEP).zero?
+            end
+          end
+          buffer.clear if buffer.bytesize > 262_144
+        rescue StandardError
+          nil
         end
       end
 

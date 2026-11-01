@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<title>Mr. Damascy — UI-preview</title>
+<style>
+  :root{--paper:#fff;--surface:#F3FBF7;--m1:#E4F6EE;--m2:#C9EDDD;--m3:#A6E1CB;--m5:#4FB894;--m6:#3A9A7B;--m7:#276B55;
+        --ink:#2E3033;--soft:#6C7076;--gold:#FDC72E;--gold-ink:#8A6A00;--pom:#C94F4F;--vipps:#CC4409;--line:#E6EAE8;}
+  *{box-sizing:border-box;margin:0}
+  body{background:#EDF2EF;font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;color:var(--ink);
+       padding:28px;display:flex;gap:34px;justify-content:center;flex-wrap:wrap}
+  h4{width:100%;text-align:center;font-size:15px;color:var(--soft);font-weight:600}
+  .phone{width:320px;height:660px;background:var(--paper);border-radius:38px;border:10px solid #1c1d1f;
+         overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.18)}
+  .brand{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);background:#fff}
+  .brand img{width:30px;height:30px;border-radius:9px}
+  .brand b{font-size:15px}
+  .body{flex:1;overflow:hidden;background:var(--paper)}
+  .hero{background:var(--surface);padding:14px;text-align:left;position:relative}
+  .hero .tag{color:var(--m7);font-weight:700;font-size:12px;letter-spacing:2px}
+  .hero h2{font-size:17px;margin:2px 0;line-height:1.25}
+  .hero .meta{font-size:11px;color:var(--soft);display:flex;align-items:center;gap:5px}
+  .kh{color:#E8A81C;display:inline-flex}
+  .reorder{margin:10px 12px 0;background:var(--m1);border:1px solid var(--m2);border-radius:16px;padding:10px 12px;
+           display:flex;justify-content:space-between;align-items:center;font-size:12px}
+  .reorder b{color:var(--gold-ink)}
+  .reorder .btn2{background:var(--m7);color:#fff;border-radius:12px;padding:7px 12px;font-weight:700;font-size:11px}
+  .chips{display:flex;gap:6px;padding:10px 12px;overflow:hidden}
+  .chip{font-size:11px;padding:6px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--m2);white-space:nowrap}
+  .chip.on{background:var(--m7);color:#fff;border-color:var(--m7)}
+  .item{display:flex;gap:10px;padding:10px 12px;align-items:center}
+  .em{width:52px;height:52px;border-radius:14px;background:var(--m1);display:grid;place-items:center;font-size:26px;flex:none}
+  .item .nm{font-size:13px;font-weight:700}
+  .item .org{font-size:10px;color:var(--m7);background:var(--surface);border-radius:999px;padding:2px 8px;display:inline-block;margin:2px 0}
+  .item .pr{font-size:11px;color:var(--soft)}
+  .side{margin-left:auto;text-align:right;flex:none}
+  .side .p{font-size:12px;font-weight:700}
+  .add{background:var(--m1);color:var(--m7);border:1px solid var(--m2);border-radius:12px;
+       padding:8px 10px;font-size:11px;font-weight:700;flex:none;margin-top:6px;display:inline-block}
+  .cartbar{margin:0 12px 8px;background:var(--m7);color:#fff;border-radius:16px;padding:11px 14px;display:flex;
+           justify-content:space-between;align-items:center;font-size:12px}
+  .cartbar .cta{color:var(--gold);font-weight:800}
+  .tabs{display:flex;border-top:1px solid var(--line);background:#fff;padding:6px 0 14px}
+  .tab{flex:1;text-align:center;font-size:10px;color:var(--soft)}
+  .tab .i{display:flex;justify-content:center;align-items:center;height:20px;margin-bottom:2px}
+  .tab.on{color:var(--m7);font-weight:700}
+  .badge{position:relative}
+  .badge::after{content:"2";position:absolute;top:-6px;right:2px;background:var(--gold);color:var(--ink);
+                font-size:9px;font-weight:700;border-radius:999px;padding:1px 5px}
+  /* checkout */
+  .sec{padding:12px 14px;border-bottom:1px solid var(--line)}
+  .sec label{font-size:11px;color:var(--soft);display:block;margin-bottom:4px}
+  .inp{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:13px;background:#fff}
+  .zoneok{color:var(--m7);font-size:11px;background:var(--surface);border-radius:10px;padding:7px 10px;margin-top:6px}
+  .row{display:flex;gap:8px}
+  .seg{flex:1;text-align:center;font-size:12px;padding:10px;border:1px solid var(--m2);border-radius:12px}
+  .seg.on{background:var(--m7);color:#fff;border-color:var(--m7)}
+  .pay{display:flex;justify-content:space-between;align-items:center;border:2px solid var(--vipps);border-radius:14px;padding:12px}
+  .pay b{color:var(--vipps)}
+  .last{font-size:10px;background:var(--m1);color:var(--m7);border-radius:999px;padding:3px 8px}
+  .tot{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--soft)}
+  .tot.grand{color:var(--ink);font-weight:800;font-size:14px}
+  .promo{color:var(--m7);font-size:11px;background:var(--surface);border-radius:10px;padding:7px 10px;margin-bottom:6px}
+  .vippsbtn{margin:10px 14px;background:var(--vipps);color:#fff;border-radius:16px;padding:15px;text-align:center;
+            font-weight:800;font-size:15px}
+  .steps{font-size:10px;color:var(--soft);text-align:center;padding:0 14px 10px}
+  /* track */
+  .steps-t{padding:14px}
+  .step{display:flex;gap:10px;margin-bottom:12px;font-size:12px}
+  .dot{width:30px;height:30px;border-radius:50%;background:var(--m1);display:grid;place-items:center;flex:none;
+       color:var(--m7);border:1px solid var(--m2)}
+  .step.now .dot{background:var(--m7);color:#fff;border-color:var(--m7)}
+  .step .lbl{font-weight:700}
+  .step .sub{font-size:11px;color:var(--soft)}
+  .courier{margin:0 14px;background:var(--surface);border:1px solid var(--m2);border-radius:12px;padding:9px 12px;
+           font-size:12px;color:var(--m7);display:flex;gap:6px;align-items:center}
+  .starr{display:flex;gap:4px;justify-content:center;padding:8px 0}
+  .starr span{color:var(--m2);font-size:22px}
+  .starr span.on{color:#E8A81C}
+</style>
+</head>
+<body>
+<h4>Mr. Damascy — Bergen · post-/fix redesign (SVG chrome, flat mint pastels, Vipps-first)</h4>
+
+<div class="phone">
+  <div class="brand"><img src="/home/z/my-project/pub4/RAILS/__other/mrdamascy/public/icon-192.png" alt=""><b>Mr. Damascy</b></div>
+  <div class="body">
+    <div class="hero">
+      <div class="tag">SHAWARMA · KEBAB · BERGEN</div>
+      <h2>Fra Damaskus med kjærlighet — grillat i Bergen</h2>
+      <div class="meta"><span class="kh">✦</span> 4.9 · Man–Søn 11–23 · Strandgaten 47</div>
+    </div>
+    <div class="reorder"><span><b>Yalla igjen!</b><br>2× Damaskus Kylling Shawarma</span><span class="btn2">Bestill igjen</span></div>
+    <div class="chips"><span class="chip on">Wraps</span><span class="chip">Tallerker</span><span class="chip">Tilbehør</span><span class="chip">Drikke</span></div>
+    <div class="item"><div class="em">🌯</div><div><div class="nm">Damaskus Kylling Shawarma</div><span class="org">Damaskus</span><div class="pr">Mild · 450 g</div></div><div class="side"><div class="p">129 kr</div><span class="add">+ Legg til</span></div></div>
+    <div class="item"><div class="em">🥬</div><div><div class="nm">Berlin Gemüse Kebap</div><span class="org">Berlin</span><div class="pr">Vegetar · 139 kr</div></div><div class="side"><div class="p">139 kr</div><span class="add">+ Legg til</span></div></div>
+    <div class="item"><div class="em">🔥</div><div><div class="nm">Adana Sterk Dürum</div><span class="org">Adana</span><div class="pr">Sterk! · 149 kr</div></div><div class="side"><div class="p">149 kr</div><span class="add">+ Legg til</span></div></div>
+    <div class="cartbar"><span>Kurv · 2 varer · 268 kr</span><span class="cta">Betal med Vipps →</span></div>
+  </div>
+  <div class="tabs">
+    <div class="tab on"><span class="i"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg></span>Meny</div>
+    <div class="tab badge"><span class="i"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>Bestill</div>
+    <div class="tab"><span class="i"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><polygon points="12,0 14.4,6.2 20.5,3.5 17.8,9.6 24,12 17.8,14.4 20.5,20.5 14.4,17.8 12,24 9.6,17.8 3.5,20.5 6.2,14.4 0,12 6.2,9.6 3.5,3.5 9.6,6.2"/></svg></span>Klubb</div>
+    <div class="tab"><span class="i"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></span>Mer</div>
+  </div>
+</div>
+
+<div class="phone">
+  <div class="brand"><img src="/home/z/my-project/pub4/RAILS/__other/mrdamascy/public/icon-192.png" alt=""><b>Kassen — 1 skjerm</b></div>
+  <div class="body">
+    <div class="sec"><label>Adresse</label><div class="inp">Nygårdsgaten 12, 5015 Bergen</div>
+      <div class="zoneok">✓ Nygårdshøyden — klar i 20 min · levering 39 kr</div></div>
+    <div class="sec"><div class="row"><div class="seg on">Levering</div><div class="seg">Henting</div></div></div>
+    <div class="sec"><label>Betaling</label>
+      <div class="pay"><b>Vipps</b><span class="last">Sist brukt</span></div></div>
+    <div class="sec">
+      <div class="promo">✓ SAHTEIN10 lagt inn automatisk − 10 %</div>
+      <div class="tot"><span>Delsum</span><span>268 kr</span></div>
+      <div class="tot"><span>Levering</span><span>39 kr</span></div>
+      <div class="tot"><span>Rabatt</span><span>−27 kr</span></div>
+      <div class="tot grand"><span>Totalt</span><span>280 kr</span></div>
+    </div>
+    <div class="vippsbtn">Betal med Vipps</div>
+    <div class="steps">3 steg · ingen kortfelter · trygg betaling</div>
+  </div>
+  <div class="tabs">
+    <div class="tab"><span class="i"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg></span>Meny</div>
+    <div class="tab on"><span class="i"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>Bestill</div>
+    <div class="tab"><span class="i"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><polygon points="12,0 14.4,6.2 20.5,3.5 17.8,9.6 24,12 17.8,14.4 20.5,20.5 14.4,17.8 12,24 9.6,17.8 3.5,20.5 6.2,14.4 0,12 6.2,9.6 3.5,3.5 9.6,6.2"/></svg></span>Klubb</div>
+    <div class="tab"><span class="i"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></span>Mer</div>
+  </div>
+</div>
+
+<div class="phone">
+  <div class="brand"><img src="/home/z/my-project/pub4/RAILS/__other/mrdamascy/public/icon-192.png" alt=""><b>Spor bestilling</b></div>
+  <div class="body">
+    <div class="steps-t">
+      <div class="step now"><div class="dot"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/></svg></div><div><div class="lbl">På spiddet nå</div><div class="sub">Umm Yusuf lager maten din</div></div></div>
+      <div class="step"><div class="dot"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/></svg></div><div><div class="lbl">Klar til henting</div><div class="sub">Budet får beskjed automatisk</div></div></div>
+      <div class="step"><div class="dot"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg></div><div><div class="lbl">Underveis</div><div class="sub">Nygårdsgaten 12, 5015 Bergen</div></div></div>
+    </div>
+    <div class="courier"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg> Bergen Bud henter om 4 min</div>
+    <div class="starr"><span>★</span><span class="on">★</span><span>★</span><span>★</span><span>★</span></div>
+  </div>
+  <div class="tabs">
+    <div class="tab"><span class="i"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg></span>Meny</div>
+    <div class="tab"><span class="i"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>Bestill</div>
+    <div class="tab on"><span class="i"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><polygon points="12,0 14.4,6.2 20.5,3.5 17.8,9.6 24,12 17.8,14.4 20.5,20.5 14.4,17.8 12,24 9.6,17.8 3.5,20.5 6.2,14.4 0,12 6.2,9.6 3.5,3.5 9.6,6.2"/></svg></span>Klubb</div>
+    <div class="tab"><span class="i"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></span>Mer</div>
+  </div>
+</div>
+
+</body>
+</html>

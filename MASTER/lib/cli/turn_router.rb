@@ -39,7 +39,10 @@ module Master
           return dispatch_slash("/deploy #{deployment_args(text)}".strip, container:, felt_sense:, on_turn:)
         end
 
-        return Master::Io::MediaIntent.dispatch(text, root: container.fetch(:root, Dir.pwd)) if Master::Io::MediaIntent.handles?(text)
+        # bus: the media lane runs outside the pipeline stages; the stage:mov0
+        # events it publishes are what move the spinner off "intake" and carry
+        # the live download percentage.
+        return Master::Io::MediaIntent.dispatch(text, root: container.fetch(:root, Dir.pwd), bus: container[:bus]) if Master::Io::MediaIntent.handles?(text)
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if public_research_request?(text)
         # A question is for the agent, which has tools and this turn's evidence rule. Command
         # inference reads a question's words as an operator command: a council review of the

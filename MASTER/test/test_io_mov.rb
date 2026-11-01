@@ -185,7 +185,7 @@ class TestIoMov < Minitest::Test
       { identifier: "blocked", title: "Blocked film" },
     ]
     request = { count: 2 }
-    downloader = lambda do |identifier, title: nil|
+    downloader = lambda do |identifier, title: nil, bus: nil|
       identifier == "saved" ? "mov0: saved /tmp/Saved film.mp4, 1.0MB" : "mov0: HTTP 503 Service Unavailable"
     end
 
@@ -202,6 +202,120 @@ class TestIoMov < Minitest::Test
   def test_megabytes_reads_as_the_machine_counts
     assert_equal "1.0MB", Mov.megabytes(1_048_576)
     assert_equal "0.0MB", Mov.megabytes(0)
+  end
+
+  def test_progress_details_carry_a_percentage_and_the_title
+    progress = Mov::Progress.new("The General")
+    assert_equal "50% of 667.6MB — The General",
+                 progress.detail(350_000_000, 700_000_000)
+    # A server that sends no length says megabytes, never a guessed percent.
+    assert_equal "128.0MB downloaded — The General",
+                 progress.detail(134_217_728, 0)
+  end
+
+  def test_progress_prints_a_line_once_per_step_and_stages_every_percent
+    progress = Mov::Progress.new("The General")
+    total = 700_000_000
+
+    # 5% is inside the first printed band (0), 7% the same band, 12% the next.
+    assert(progress.print_due?(35_000_000, total), "5% opens the first printed band")
+    refute(progress.print_due?(49_000_000, total), "7% is still band 0")
+    assert(progress.print_due?(84_000_000, total), "12% opens band 1")
+
+    # The spinner row moves at one-percent steps, not ten.
+    assert(progress.stage_due?(36_000_000, total))
+    refute(progress.stage_due?(36_999_999, total))
+    assert(progress.stage_due?(43_000_000, total))
+  end
+
+  def test_the_download_stream_announces_percentage_on_the_bus_and_in_dmesg
+    chunk = [0x00, 0xA0, 0xE8, 0xFF].pack("C*") * 262_144 # 1 MiB
+    chunks = Array.new(4) { chunk }
+    total = chunk.bytesize * 4
+    response_class = Class.new(Net::HTTPOK) do
+      define_method(:initialize) do |parts|
+        super("1.1", "200", "OK")
+        @parts = parts
+        @header = {
+          "content-length" => [parts.sum(&:bytesize).to_s],
+          "content-type" => ["video/mp4"],
+        }
+      end
+
+      define_method(:content_length) { @parts.sum(&:bytesize) }
+      define_method(:read_body) { |&block| @parts.each { |part| block.call(part) } }
+    end
+    response = response_class.new(chunks)
+
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |event, payload = {}| events << payload.merge(event: event) }
+
+    printed = []
+    Dir.mktmpdir do |dir|
+      target = File.join(dir, "Percent sample.mp4")
+      responder = lambda do |uri, timeout:, headers:, max_redirects: Mov::MAX_REDIRECTS, &block|
+        block.call(response, uri)
+      end
+
+      Mov.stub(:downloads_dir, dir) do
+        Mov.stub(:with_http_response, responder) do
+          Mov.stub(:report_status, ->(unit, msg) { printed << "#{unit}: #{msg}" }) do
+            result = Mov.download_once(
+              URI("https://archive.org/download/item/Percent%20sample.mp4"),
+              target,
+              "Percent sample",
+              expected_size: total,
+              expected_md5: Digest::MD5.hexdigest(chunk * 4),
+              bus: bus,
+            )
+            assert_match(/\Amov0: saved /, result)
+          end
+        end
+      end
+    end
+
+    assert_operator(events.size, :>=, 4, "the spinner should see the fraction climb")
+    assert_equal("stage:mov0", events.first[:event])
+    assert_match(/\A0% of 4\.0MB — Percent sample\z/, events.first[:detail])
+    assert_match(/\A100% of 4\.0MB — Percent sample\z/, events.last[:detail])
+    assert_includes(printed.first, "0% of 4.0MB — Percent sample")
+  end
+
+  def test_the_yt_dlp_handler_reads_percentage_from_a_chunked_stream
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |event, payload = {}| events << payload.merge(event: event) }
+    printed = []
+
+    Mov.stub(:report_status, ->(unit, msg) { printed << msg }) do
+      handler = Mov.yt_progress_handler(bus, "Trailer")
+
+      # Chunk boundaries split mid-line; the handler reassembles before parsing.
+      handler.call("[download]   9.7% of    10.00MiB at  {'downl")
+      handler.call("oad]   1.00MiB/s ETA 00:09}\n[download]  4")
+      handler.call("0.2% of    10.00MiB at    1.00MiB/s ETA 00:0")
+      handler.call("5\n")
+    end
+
+    details = events.select { |event| event[:event] == "stage:mov0" }.map { |event| event[:detail] }
+    assert_includes(details, "9% — yt-dlp — Trailer")
+    assert_includes(details, "40% — yt-dlp — Trailer")
+    assert_includes(printed, "40% — yt-dlp — Trailer")
+  end
+
+  def test_dispatch_announces_the_search_before_touching_the_network
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |event, payload = {}| events << payload.merge(event: event) }
+
+    Mov.stub(:search, ->(_request) { [] }) do
+      result = Mov.dispatch("download us two new movies please", bus: bus)
+      assert_predicate(result, :err?)
+    end
+
+    assert_equal "stage:mov0", events.first[:event]
+    assert_equal "searching archive.org", events.first[:detail]
   end
 
   def test_download_stream_writes_arbitrary_binary_bytes_without_transcoding
@@ -477,7 +591,7 @@ class TestIoMov < Minitest::Test
       { identifier: "three", title: "Three" },
     ]
     calls = []
-    downloader = lambda do |identifier, title: nil|
+    downloader = lambda do |identifier, title: nil, bus: nil|
       calls << identifier
       "mov0: saved /tmp/#{title}.mp4, 1.0MB"
     end
@@ -639,27 +753,39 @@ class TestIoMov < Minitest::Test
   def test_youtube_and_vimeo_downloads_are_delegated_to_yt_dlp
     Dir.mktmpdir do |dir|
       seen = []
-      runner = lambda do |*argv|
+      version_runner = lambda do |*argv|
         seen << argv
-        argv.last == "--version" ? ["1.0", "", fake_status(true)] : ["saved", "", fake_status(true)]
+        ["1.0", "", fake_status(true)]
+      end
+      # The download itself streams: capture2e with an on_stdout handler, so a
+      # film reports its percentage while it lands instead of after.
+      download_runner = lambda do |*argv, **opts|
+        seen << argv
+        opts.fetch(:on_stdout).call("[download]  100.0% of    1.00MiB\n")
+        ["saved", fake_status(true)]
       end
 
-      Master::Io::Exec.stub(:capture3, runner) do
-        Mov.stub(:downloads_dir, dir) do
-          result = Mov.download_url("https://youtu.be/dQw4w9WgXcQ", title: "Example clip")
-          assert result.ok?, result.to_s
-          assert_equal dir, result.value!.fetch(:path)
+      Master::Io::Exec.stub(:capture3, version_runner) do
+        Master::Io::Exec.stub(:capture2e, download_runner) do
+          Mov.stub(:downloads_dir, dir) do
+            result = Mov.download_url("https://youtu.be/dQw4w9WgXcQ", title: "Example clip")
+            assert result.ok?, result.to_s
+            assert_equal dir, result.value!.fetch(:path)
+          end
         end
       end
       assert_equal "yt-dlp", seen[0][0]
       assert_includes seen[1], "--no-playlist"
+      assert_includes seen[1], "--newline"
       assert_includes seen[1].last, "youtu.be"
 
-      failed = Master::Io::Exec.stub(:capture3, lambda { |*argv|
-        argv.last == "--version" ? ["1.0", "", fake_status(true)] : ["", "blocked", fake_status(false)]
-      }) do
-        Mov.stub(:downloads_dir, dir) do
-          Mov.download_url("https://vimeo.com/123")
+      failed = Master::Io::Exec.stub(:capture3, version_runner) do
+        Master::Io::Exec.stub(:capture2e, lambda { |*argv, **opts|
+          ["", fake_status(false)]
+        }) do
+          Mov.stub(:downloads_dir, dir) do
+            Mov.download_url("https://vimeo.com/123")
+          end
         end
       end
       refute failed.ok?
