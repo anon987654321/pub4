@@ -825,7 +825,7 @@ module Master
       def capture(argv, chdir:, env:, deadline_seconds: CAPTURE_DEADLINE_SECONDS)
         stdout_r, stdout_w = IO.pipe
         stderr_r, stderr_w = IO.pipe
-        pid = Process.spawn(ProcessSpawn.environment(env), *argv, chdir:, out: stdout_w, err: stderr_w, pgroup: true)
+        pid = Process.spawn(Master::Io::ProcessSpawn.environment(env), *argv, chdir:, out: stdout_w, err: stderr_w, pgroup: true)
         stdout_w.close
         stderr_w.close
         stdout_thread = Thread.new { stdout_r.read rescue "" }
