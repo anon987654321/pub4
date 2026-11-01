@@ -8329,7 +8329,8 @@ def run(argv)
   end.parse!(argv)
   options[:live] = true if live_argument
   if options[:play] && (options[:sample_loop] || !ENV.fetch("SAMPLE_LOOP", "").strip.empty?)
-    raise ArgumentError, "sample flips require a finite render; remove --play and use --showcase or --live"
+    warn "dilla0: sample flips require a finite render; remove --play and use --showcase or --live"
+    return 2
   end
 
   data = JSON.parse(File.read(File.join(__dir__, "data", "dilla.json")))
@@ -8396,6 +8397,16 @@ def run(argv)
     outputs << options[:video] if options[:video].is_a?(String)
     existing = outputs.find { |path| File.exist?(path) || File.symlink?(path) }
     abort "studio0: refusing to overwrite existing take #{existing.inspect}; choose a new path or pass --replace" if existing
+  end
+
+  sample_requested = options[:sample_loop] || !ENV.fetch("SAMPLE_LOOP", "").strip.empty?
+  unless !sample_requested || options[:list] || options[:arp] == "list"
+    begin
+      options[:sample_flip] = Dilla::SampleFlip.load(options)
+    rescue ArgumentError => error
+      warn "dilla0: sample flip: #{error.message}"
+      return 2
+    end
   end
 
 progressions = data.fetch("progressions")
@@ -8666,7 +8677,7 @@ end
 def render_stream(data, options)
   frame, streamer = stream_frame(data, options)
   plan = streamer.plan
-  if (clip = Dilla::SampleFlip.load(options))
+  if (clip = options[:sample_flip] || Dilla::SampleFlip.load(options))
     Dilla::SampleFlip.mix!(frame, clip, chords: plan.names, bpm: plan.bpm, beats_per_chord: plan.beats, seed: plan.seed)
   end
   frame, report, instances = master_frame(frame, data, options, seed: plan.seed, bpm: plan.bpm, channels: streamer.channels)
@@ -8697,7 +8708,7 @@ def render(data, options) = options[:buffer_only] ? render_section(data, options
 def render_effect_rig_take(data, options)
   plan = plan_pass(data, options)
   buf = render_section(data, options, plan:)
-  if (clip = Dilla::SampleFlip.load(options))
+  if (clip = options[:sample_flip] || Dilla::SampleFlip.load(options))
     Dilla::SampleFlip.mix!([buf], clip, chords: plan.names, bpm: plan.bpm, beats_per_chord: plan.beats, seed: plan.seed)
   end
   buf = tape_stage(buf, data, options, plan.seed)
