@@ -79,8 +79,9 @@ module Master
         rows = Master.law_entries(root: @root)
         rows.each_with_index.map do |entry, index|
           node = constitutional_node(entry, rows)
-          rank = node ? order.index(node).to_i * 100_000 + index : order.length * 100_000 + index
-          Law.new(entry.fetch("id").to_s, rank, entry.fetch("statement").to_s)
+          node_index = node && order.index(node)
+          position = node_index ? node_index * 100_000 + index : order.length * 100_000 + index
+          Law.new(entry.fetch("id").to_s, position, entry.fetch("statement").to_s)
         end
       end
 
