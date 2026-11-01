@@ -40,6 +40,8 @@ class IdentitySpec < Minitest::Test
     assert_includes identity_block, Master::Soul::IDENTITY
     assert_includes identity_block, "Core truths:"
     assert_includes identity_block, "Constitutional precedence:"
+    assert_includes identity_block, "Profile: The exacting observer"
+    assert_includes identity_block, "Use a concrete example, expose the contradiction"
   end
 
   def test_personality_has_no_markdown_identity_loader
