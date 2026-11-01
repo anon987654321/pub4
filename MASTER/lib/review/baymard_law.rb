@@ -24,6 +24,8 @@ module Master
         moderated_user_test expert_walkthrough browser_task screen_reader_review
       ].freeze
       STATUSES = %w[pass fail inconclusive not_applicable].freeze
+      TASK_EVIDENCE_FIELDS = %w[status method participants summary artifacts].freeze
+      SAFE_ARTIFACT_EXTENSIONS = %w[.md .txt .json .yml .yaml .png .jpg .jpeg .webp].freeze
       MAX_SOURCE_BYTES = 1_000_000
       SOURCE_EXTENSIONS = %w[.erb .html .htm .haml .slim .jsx .tsx .vue .css .scss .sass].freeze
       MARKUP_EXTENSIONS = %w[.erb .html .htm .haml .slim .jsx .tsx .vue].freeze
@@ -262,10 +264,18 @@ module Master
         row = evidence.dig(app.name, id)
         return [assessment(app, id, spec, "inconclusive", "task evidence not supplied", 0, []), nil] unless row.is_a?(Hash)
 
+        unknown_fields = row.keys.map(&:to_s) - TASK_EVIDENCE_FIELDS
+        unless unknown_fields.empty?
+          return [assessment(app, id, spec, "inconclusive", "task evidence contains unsupported fields; store anonymised aggregate observations only", 0, []), nil]
+        end
+
         status = row["status"].to_s
         unless %w[pass fail inconclusive].include?(status) &&
                row["summary"].is_a?(String) && !row["summary"].strip.empty?
           return [assessment(app, id, spec, "inconclusive", "task evidence needs a status and an observation summary", 0, []), nil]
+        end
+        if contact_detail_in?(row["summary"])
+          return [assessment(app, id, spec, "inconclusive", "task summary appears to contain contact details; redact and store an anonymised aggregate observation", 0, []), nil]
         end
         if status == "inconclusive"
           return [assessment(app, id, spec, "inconclusive", row["summary"], 0, []), nil]
@@ -297,6 +307,12 @@ module Master
         end
       end
 
+      def contact_detail_in?(summary)
+        text = summary.to_s
+        text.match?(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i) ||
+          text.match?(/(?:\+?\d[\d\s().-]{7,}\d)/)
+      end
+
       def valid_artifacts?(artifacts)
         return false unless artifacts.is_a?(Array) && !artifacts.empty?
 
@@ -307,6 +323,7 @@ module Master
           digest = artifact["sha256"].to_s
           next false if relative.empty? || relative.start_with?("/") || relative.split("/").include?("..")
           next false unless digest.match?(/\A[0-9a-f]{64}\z/)
+          next false unless SAFE_ARTIFACT_EXTENSIONS.include?(File.extname(relative).downcase)
 
           path = File.expand_path(relative, @repo_root)
           next false unless inside?(path, @repo_root) && File.file?(path)
