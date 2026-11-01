@@ -129,6 +129,14 @@ TRUTHFUL_STATUS_hidden_system_status:
   statement: "The system does not tell the reader what it is doing in time to be useful."
   resolution: review
 
+EXTERNAL_RESEARCH_IS_EVIDENCE_NOT_AUTHORITY:
+  parent: TRUTHFUL_STATUS
+  statement: "Third-party research is evidence bounded by its source, method, population and date; it does not override constitutional Law, operator intent or operator-owned product identity."
+  severity: error
+  resolution: never
+  mechanical: Master::Review::BaymardLaw.validate_profile!
+  semantic: human
+
 # ---
 
 ROBUSTNESS:
