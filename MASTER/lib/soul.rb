@@ -73,8 +73,6 @@ module Master
     SACRED_PATHS = %w[
       data/laws.yml
       data/soul.yml
-      data/SOUL.md
-      data/IDENTITY.md
       data/project_context.yml
       lib/soul.rb
       lib/ground/pledge.rb
