@@ -74,18 +74,36 @@ module Master
 
         def build_app(name, path)
           records = collect_source_files(path)
-          content = records.map(&:content).join("\n")
-          routes = File.join(path, "config", "routes.rb")
-          content << "\n#{File.read(routes)}" if File.file?(routes)
+          routes_path = File.join(path, "config", "routes.rb")
+          routes = File.file?(routes_path) ? File.read(routes_path) : ""
+          relative_paths = records.map(&:relative).map do |relative|
+            relative.delete_prefix("#{@rails_root.sub(%r{/$}, "")}/").downcase
+          end
 
+          # Feature applicability follows actual route and view/controller
+          # structure, not incidental words in copy, CSS or Ruby comments.
           features = {
-            search: content.match?(/(?:search_path|searches_path|type\s*=\s*["']search|resources\s+:search|\/search\b)/i),
-            product: content.match?(/(?:products?|listings?|marketplace|takeaway)/i),
-            cart: content.match?(/(?:shopping[_ -]?cart|cart_path|carts_path|\/cart\b|basket)/i),
-            checkout: content.match?(/(?:checkout|payment_step|\/orders?\b)/i),
+            search: path_or_route?(relative_paths, routes, %w[search searches search_results catalog catalogues]),
+            product: path_or_route?(relative_paths, routes, %w[product products listing listings deal deals marketplace takeaway menu menus menu_items restaurant restaurants storefront]),
+            cart: path_or_route?(relative_paths, routes, %w[cart carts basket baskets shopping_cart]),
+            checkout: path_or_route?(relative_paths, routes, %w[checkout checkouts payment payments order orders]),
           }.freeze
 
           BaymardLaw::App.new(name:, root: path, records: records.freeze, features:)
+        rescue SystemCallError => e
+          raise BaymardLaw::InvalidProfile, "cannot inventory #{name}: #{e.class}: #{e.message}"
+        end
+
+        def path_or_route?(paths, routes, names)
+          path_match = paths.any? do |relative|
+            segments = relative.split("/")
+            (segments & names).any? ||
+              names.any? { |name| File.basename(relative, File.extname(relative)).casecmp?(name) }
+          end
+          route_pattern = names.map { |name| Regexp.escape(name).sub(/s\z/, "s?") }.join("|")
+          route_match = routes.match?(%r{(?:resources?|get|post|patch|put|delete)\s*(?:\(|\s)*[:"]?(?:#{route_pattern})\b}i) ||
+            routes.match?(%r{/(?:#{route_pattern})(?:/|["'\s]|\z)}i)
+          path_match || route_match
         end
 
         def collect_source_files(root)
