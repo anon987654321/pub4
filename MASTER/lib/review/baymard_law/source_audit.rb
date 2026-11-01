@@ -59,7 +59,10 @@ module Master
           end
 
           issues = images.filter_map do |record, tag, offset, attrs|
-            next if attrs.key?("alt") && (!attrs["alt"].to_s.empty? || attrs["role"] == "presentation" || attrs["aria-hidden"] == "true")
+            # alt="" is the standard explicit marker for a decorative image;
+            # the task-level screen-reader review is still needed to catch a
+            # meaningful image incorrectly marked decorative.
+            next if attrs.key?("alt")
             next if %w[presentation none].include?(attrs["role"]) || attrs["aria-hidden"] == "true"
 
             issue(record, offset, "Image has no non-empty alternative text or decorative marker: #{tag[0, 100]}")
@@ -112,14 +115,25 @@ module Master
 
         def probe_focus_visibility(records)
           issues = []
+          unknown = []
+          measured = 0
           records.each do |record|
-            next unless record.content.match?(/outline(?:-width|-[\w-]+)?\s*:\s*(?:none|0(?:\s|;|!))/i)
-            next if record.content.match?(/:focus(?:-visible)?\b/i)
+            matches = record.content.to_enum(:scan, /outline(?:-width|-[\w-]+)?\s*:\s*(?:none|0(?:\s|;|!))/i).map do
+              Regexp.last_match.begin(0)
+            end
+            next if matches.empty?
 
-            match = record.content.match(/outline(?:-width|-[\w-]+)?\s*:\s*(?:none|0(?:\s|;|!))/i)
-            issues << issue(record, match.begin(0), "Stylesheet suppresses the focus outline without a visible :focus or :focus-visible replacement.")
+            measured += matches.size
+            if record.content.match?(/:focus(?:-visible)?\b/i)
+              unknown << record
+              next
+            end
+
+            matches.each do |offset|
+              issues << issue(record, offset, "Stylesheet suppresses the focus outline and contains no visible :focus or :focus-visible replacement.")
+            end
           end
-          [issues, records.size, []]
+          [issues, measured, unknown]
         end
 
         def probe_mobile_viewport(records)
