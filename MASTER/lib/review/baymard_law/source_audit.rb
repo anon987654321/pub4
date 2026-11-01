@@ -40,7 +40,12 @@ module Master
           end
 
           issues = controls.filter_map do |record, tag, offset, attrs|
-            next if named_control?(attrs, record.content, offset)
+            state = named_control?(attrs, record.content, offset)
+            if state == :unknown
+              unknown << record
+              next
+            end
+            next if state
 
             issue(record, offset, "Form control has no inspectable label or accessible name: #{tag[0, 100]}")
           end
@@ -63,8 +68,9 @@ module Master
             # alt="" is the standard explicit marker for a decorative image;
             # the task-level screen-reader review is still needed to catch a
             # meaningful image incorrectly marked decorative.
-            next if attrs.key?("alt")
-            next if %w[presentation none].include?(attrs["role"]) || attrs["aria-hidden"] == "true"
+            alt = attrs["alt"]
+            next if attrs.key?("alt") && (alt == "" || !alt.to_s.strip.empty?)
+            next if %w[presentation none].include?(attrs["role"].to_s.downcase) || attrs["aria-hidden"].to_s.casecmp?("true")
 
             issue(record, offset, "Image has no non-empty alternative text or decorative marker: #{tag[0, 100]}")
           end
@@ -89,9 +95,10 @@ module Master
 
           issues = []
           elements.each do |record, tag_name, tag, inner, offset, attrs|
-            next if named?(attrs) || text_name?(inner) || image_name?(inner)
+            name_state = named?(attrs, content: record.content)
+            next if name_state == true || text_name?(inner) || image_name?(inner)
 
-            if inner.include?("<%")
+            if name_state == :unknown || inner.include?("<%")
               unknown << record
             else
               issues << issue(record, offset, "#{tag_name} has no visible or programmatic accessible name: #{tag[0, 120]}")
@@ -185,7 +192,9 @@ module Master
         end
 
         def named_control?(attrs, content, offset)
-          return true if named?(attrs)
+          state = named?(attrs, content:)
+          return true if state == true
+          return :unknown if state == :unknown
 
           type = attrs["type"].to_s.downcase
           return true if type == "image" && !attrs["alt"].to_s.strip.empty?
@@ -198,13 +207,37 @@ module Master
           return true if content.match?(%r{<label\b[^>]*\bfor\s*=\s*["']#{escaped}["'][^>]*>}i)
 
           before = content[0...offset]
-          open_label = before.rindex(/<label\b[^>]*>/i)
-          close_label = content.index("</label>", offset)
-          open_label && close_label && open_label < offset
+          last_open = before.rindex(/<label\b[^>]*>/i)
+          last_close = before.rindex(%r{</label\s*>}i)
+          return false unless last_open && (!last_close || last_open > last_close)
+
+          close_label = content.index(%r{</label\s*>}i, offset)
+          !!close_label
         end
 
-        def named?(attrs)
-          %w[aria-label aria-labelledby title].any? { |key| !attrs[key].to_s.strip.empty? }
+        # A non-empty aria-labelledby attribute is not proof that its
+        # references resolve. A missing local target is INCONCLUSIVE because
+        # the label may be rendered by a shared partial; a present but empty
+        # target is a source defect.
+        def named?(attrs, content: nil)
+          return true if %w[aria-label title].any? { |key| !attrs[key].to_s.strip.empty? }
+
+          references = attrs["aria-labelledby"].to_s.split
+          return false if references.empty?
+          return :unknown unless content
+
+          references.each do |id|
+            escaped = Regexp.escape(id)
+            target = content.match(
+              %r{<([a-z][a-z0-9:-]*)\b(?=[^>]*\bid\s*=\s*["']#{escaped}["'])[^>]*>(.*?)</\1\s*>}im
+            )
+            return :unknown unless target
+
+            target_attrs = attributes(target[0].split(">", 2).first.to_s + ">")
+            labelled = %w[aria-label title].any? { |key| !target_attrs[key].to_s.strip.empty? }
+            return false unless labelled || text_name?(target[2])
+          end
+          true
         end
 
         def text_name?(inner)
@@ -213,8 +246,15 @@ module Master
         end
 
         def image_name?(inner)
-          inner.match?(/<img\b[^>]*\balt\s*=\s*["'][^"']+["']/im) ||
-            inner.match?(/<svg\b[^>]*(?:aria-label|role\s*=\s*["']img["'])/im)
+          return true if inner.match?(/<img\b[^>]*\balt\s*=\s*["'][^"']+["']/im)
+
+          inner.scan(/<svg\b([^>]*)>(.*?)</svg>/im).any? do |attributes_text, body|
+            svg_attrs = attributes("<svg#{attributes_text}>")
+            next false if svg_attrs["aria-hidden"].to_s.casecmp?("true")
+            next false unless svg_attrs["role"].to_s.casecmp?("img") || svg_attrs.key?("aria-label")
+
+            named?(svg_attrs, content: inner) == true || body.match?(/<title\b[^>]*>\s*\S.*?<\/title>/im)
+          end
         end
 
         def attributes(tag)
