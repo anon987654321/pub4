@@ -81,29 +81,68 @@ module Shared
     end
 
     def self.normalize_params(params)
-      p = payload_hash(params).with_indifferent_access
+      payload = payload_hash(params).with_indifferent_access
+      identity_params(payload)
+        .merge(attribution_params(payload))
+        .merge(order_value_params(payload))
+        .merge(visit_params(payload))
+        .merge(event_time_params(payload))
+    end
+
+    def self.identity_params(payload)
       {
-        transaction_id: p[:transactionId].presence || p[:transaction_id],
-        legacy_transaction_id: p[:legacyTransactionId],
-        order_number: p[:orderNumber] || p[:order_number],
-        message_type_id: (p[:messageTypeId] || p[:message_type_id]).to_i.nonzero?,
-        event_type_id: (p[:eventTypeId] || p[:event_type_id]).presence&.to_i,
-        program_id: (p[:programId] || p[:program_id]).presence&.to_i,
-        site_id: (p[:siteId] || p[:site_id]).presence&.to_i,
-        site_name: p[:siteName] || p[:site_name],
-        order_value: p[:orderValue] || p[:order_value],
-        publisher_commission: p[:publisherCommission] || p[:publisher_commission],
-        currency: p[:currencyId] || p[:currency],
-        product_id: p[:productId] || p[:product_id],
-        product_name: p[:productName] || p[:product_name],
-        epi: p[:epi],
-        epi2: p[:epi2],
-        visitor_id: p[:visitorId] || p[:visitor_id],
-        sequence_number: p[:sequenceNumber] || p[:sequence_number],
-        time_of_event: parse_time(p[:timeOfEvent] || p[:time_of_event]),
-        time_of_visit: parse_time(p[:timeOfVisit] || p[:time_of_visit]),
+        transaction_id: fetch_any(payload, :transactionId).presence || fetch_any(payload, :transaction_id),
+        legacy_transaction_id: fetch_any(payload, :legacyTransactionId),
+        order_number: fetch_any(payload, :orderNumber, :order_number),
+        message_type_id: fetch_any(payload, :messageTypeId, :message_type_id).to_i.nonzero?,
       }
     end
+
+    def self.attribution_params(payload)
+      {
+        event_type_id: fetch_any(payload, :eventTypeId, :event_type_id).presence&.to_i,
+        program_id: fetch_any(payload, :programId, :program_id).presence&.to_i,
+        site_id: fetch_any(payload, :siteId, :site_id).presence&.to_i,
+        site_name: fetch_any(payload, :siteName, :site_name),
+      }
+    end
+
+    def self.order_value_params(payload)
+      {
+        order_value: fetch_any(payload, :orderValue, :order_value),
+        publisher_commission: fetch_any(payload, :publisherCommission, :publisher_commission),
+        currency: fetch_any(payload, :currencyId, :currency),
+        product_id: fetch_any(payload, :productId, :product_id),
+        product_name: fetch_any(payload, :productName, :product_name),
+      }
+    end
+
+    def self.visit_params(payload)
+      {
+        epi: fetch_any(payload, :epi),
+        epi2: fetch_any(payload, :epi2),
+        visitor_id: fetch_any(payload, :visitorId, :visitor_id),
+        sequence_number: fetch_any(payload, :sequenceNumber, :sequence_number),
+      }
+    end
+
+    def self.event_time_params(payload)
+      {
+        time_of_event: parse_time(fetch_any(payload, :timeOfEvent, :time_of_event)),
+        time_of_visit: parse_time(fetch_any(payload, :timeOfVisit, :time_of_visit)),
+      }
+    end
+
+    def self.fetch_any(payload, *keys)
+      keys.each do |key|
+        value = payload[key]
+        return value unless value.nil?
+      end
+      nil
+    end
+
+    private_class_method :identity_params, :attribution_params, :order_value_params,
+                         :visit_params, :event_time_params, :fetch_any
 
     def self.parse_time(value)
       return nil if value.blank?
