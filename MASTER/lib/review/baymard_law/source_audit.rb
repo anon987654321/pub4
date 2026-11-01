@@ -204,15 +204,31 @@ module Master
           return false if id.empty?
 
           escaped = Regexp.escape(id)
-          return true if content.match?(%r{<label\b[^>]*\bfor\s*=\s*["']#{escaped}["'][^>]*>}i)
+          explicit = content.match(
+            %r{<label\b(?=[^>]*\bfor\s*=\s*["']#{escaped}["'])[^>]*>(.*?)</label\s*>}im
+          )
+          return label_name_state(explicit[1]) if explicit
 
           before = content[0...offset]
-          last_open = before.rindex(/<label\b[^>]*>/i)
+          last_open_match = before.match(/<label\b[^>]*>(?!.*<label\b)/im)
+          return false unless last_open_match
+
           last_close = before.rindex(%r{</label\s*>}i)
-          return false unless last_open && (!last_close || last_open > last_close)
+          return false if last_close && last_close > last_open_match.begin(0)
 
           close_label = content.index(%r{</label\s*>}i, offset)
-          !!close_label
+          return false unless close_label
+
+          opening_end = content.index(">", last_open_match.begin(0))
+          return false unless opening_end
+
+          label_name_state(content[(opening_end + 1)...close_label])
+        end
+
+        def label_name_state(value)
+          return :unknown if value.to_s.include?("<%")
+
+          text_name?(value.to_s)
         end
 
         # A non-empty aria-labelledby attribute is not proof that its
