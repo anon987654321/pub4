@@ -107,6 +107,8 @@ module Master
         research = profile["research"]
         raise InvalidProfile, "research provenance must be a mapping" unless research.is_a?(Hash)
         raise InvalidProfile, "research.provider must be Baymard Institute" unless research["provider"] == "Baymard Institute"
+        raise InvalidProfile, "research.authority_law must name the external-research subordination Law" unless
+          research["authority_law"] == "EXTERNAL_RESEARCH_IS_EVIDENCE_NOT_AUTHORITY"
         %w[methodology_url benchmark_url reviewed_on scope boundary].each do |field|
           raise InvalidProfile, "research.#{field} is required" if research[field].to_s.strip.empty?
         end
@@ -124,6 +126,8 @@ module Master
         laws_path = File.join(root, "data", "laws.yml")
         laws = YAML.safe_load_file(laws_path, aliases: true)
         raise InvalidProfile, "data/laws.yml must be a mapping" unless laws.is_a?(Hash)
+        authority_law = research["authority_law"].to_s
+        raise InvalidProfile, "research authority Law is not declared in laws.yml" unless laws.key?(authority_law)
         missing = []
         checks.each do |id, row|
           raise InvalidProfile, "#{id} must be a mapping" unless row.is_a?(Hash)
