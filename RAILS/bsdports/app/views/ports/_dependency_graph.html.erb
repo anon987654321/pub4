@@ -1,1 +1,13 @@
 <%# locals: (graph:) %>
+<% if graph[:nodes].size > 1 %>
+  <details class="dep-graph-panel">
+    <summary><%= t("ports.graph_heading") %></summary>
+    <div class="dep-graph-scroll">
+      <svg class="dep-graph" viewBox="0 0 420 180" aria-hidden="true" focusable="false">
+        <title><%= t("ports.graph_heading") %></title>
+        <circle cx="60" cy="80" r="20"></circle>
+        <text x="90" y="84"><%= graph[:nodes].first[:name] %></text>
+      </svg>
+    </div>
+  </details>
+<% end %>
