@@ -115,7 +115,6 @@
 
     <%= render "shared/post_card",
           post: post,
-          variant: :card,
           name: post.author_name,
           avatar_url: post.author_avatar_url,
           handle: (post.community ? "@#{post.community.slug}" : nil),
