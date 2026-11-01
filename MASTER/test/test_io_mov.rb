@@ -22,6 +22,14 @@ class TestIoMov < Minitest::Test
     assert requests.all? { |text| Mov.handles?(text) }
   end
 
+  def test_a_bare_watch_link_is_not_a_movie_request
+    refute Mov.handles?("https://music.youtube.com/watch?v=mx9NU4LmDwM")
+    refute Mov.handles?("this music video looks interesting https://youtu.be/mx9NU4LmDwM")
+    refute Mov.handles?("nice track: https://youtu.be/mx9NU4LmDwM")
+    refute Mov.handles?("use yt-dlp and demucs to grab, split up, and analyze https://youtu.be/mx9NU4LmDwM")
+    assert Mov.handles?("download https://youtu.be/dQw4w9WgXcQ")
+  end
+
   def test_conversation_does_not_become_a_download
     refusals = [
       "hello",
@@ -61,13 +69,99 @@ class TestIoMov < Minitest::Test
     assert_includes Mov.search_query(request), "title:(general)"
   end
 
-  def test_new_sorts_by_what_the_archive_added
-    request = Mov.parse_request("grab us a few new movies")
-    params = Mov.search_params(Mov.search_query(request), "addeddate desc", 3)
+  def test_search_params_encodes_sort_rows_and_output
+    request = Mov.parse_request("download the general")
+    params = Mov.search_params(Mov.search_query(request), "downloads desc", 3)
 
-    assert_includes params, "sort%5B%5D=addeddate+desc"
+    assert_includes params, "sort%5B%5D=downloads+desc"
     assert_includes params, "rows=3"
     assert_includes params, "output=json"
+  end
+
+  def test_new_requests_search_the_release_shelf_not_the_upload_queue
+    request = Mov.parse_request("grab us a few new movies")
+
+    assert_equal 2024, request.fetch(:year_floor)
+    assert_includes Mov.search_query(request), "year:[2024 TO 2099]"
+    assert_equal ["downloads desc"], Mov.search_sort(request)
+    params = Mov.search_params(Mov.search_query(request), Mov.search_sort(request), 3)
+    assert_includes params, "sort%5B%5D=downloads+desc"
+    assert_includes params, "fl%5B%5D=avg_rating"
+  end
+
+  def test_a_stated_recent_year_floors_the_shelf_and_leaves_the_title
+    request = Mov.parse_request("download us new 2025 movies please")
+
+    assert_equal 2025, request.fetch(:year_floor)
+    assert_equal "", request.fetch(:title)
+  end
+
+  def test_a_title_search_with_an_old_year_stays_a_title_search
+    request = Mov.parse_request("find nosferatu 1922 please")
+
+    assert_nil request.fetch(:year_floor)
+    assert_equal "nosferatu 1922", request.fetch(:title)
+  end
+
+  def test_a_series_request_floors_the_television_shelf_too
+    request = Mov.parse_request("grab us a bunch of new series")
+
+    assert_equal 2024, request.fetch(:year_floor)
+    assert_includes Mov.search_query(request), "collection:(ClassicTV) AND year:[2024 TO 2099]"
+  end
+
+  def test_taste_words_demand_reviews_and_lead_with_them
+    request = Mov.parse_request("download us two acclaimed indie gems please")
+
+    assert request.fetch(:taste)
+    assert_equal 2024, request.fetch(:year_floor)
+    query = Mov.search_query(request)
+    assert_includes query, "year:[2024 TO 2099]"
+    assert_includes query, "avg_rating:[4.0 TO 5]"
+    assert_equal ["avg_rating desc", "downloads desc"], Mov.search_sort(request)
+  end
+
+  def test_reupload_years_hidden_in_title_or_identifier_are_rejected
+    request = Mov.parse_request("download 2 new movies")
+    docs = {
+      "response" => { "docs" => [
+        { "identifier" => "a-face-in-the-crowd", "title" => "A Face In The Crowd (1957)", "year" => 2026 },
+        { "identifier" => "police-story-1985-subtitled", "title" => "Police Story", "year" => 2026 },
+        { "identifier" => "kojak-chronicles-s02e10-13", "title" => "Kojak Chronicles S02E10-13", "year" => 2026 },
+        { "identifier" => "taxi-driver-film-and-analysis", "title" => "Taxi Driver (Film And Analysis)", "year" => 2025 },
+        { "identifier" => "the-a-better-tomorrow-trilogy", "title" => "The A Better Tomorrow Trilogy [with Trailers]", "year" => 2026 },
+        { "identifier" => "drunken-master-geekjuicemedia", "title" => "Drunken Master [Both ENG DUB & SUB]", "year" => 2025 },
+        { "identifier" => "the-shadows-edge-2025-720p", "title" => "The Shadows Edge (720p)", "year" => 2025 },
+      ] },
+    }
+
+    Mov.stub(:get_json, docs) do
+      assert_equal [{ identifier: "the-shadows-edge-2025-720p", title: "The Shadows Edge (720p)", year: "2025" }],
+                   Mov.search(request)
+    end
+  end
+
+  def test_the_recent_report_names_its_filters
+    request = Mov.parse_request("download us two new acclaimed movies")
+    Mov.stub(:download_identifier, "mov0: saved /tmp/example.mp4, 1.0MB") do
+      result = Mov.download_queue([{ identifier: "x", title: "X", year: "2025" }], request)
+
+      assert_includes result.message, "recent shelf"
+      assert_includes result.message, "year >= 2024"
+      assert_includes result.message, "rated >= 4"
+    end
+  end
+
+  def test_a_quoted_title_search_is_not_floored_by_taste_words
+    request = Mov.parse_request('download "the best years of our lives" please')
+
+    assert_nil request.fetch(:year_floor)
+    assert_equal "the best years of our lives", request.fetch(:title)
+  end
+
+  def test_an_empty_recent_shelf_says_why
+    assert_includes Mov.shelf_suffix(Mov.parse_request("download us two new movies")), "free shelf"
+    assert_empty Mov.shelf_suffix(Mov.parse_request("download the general"))
   end
 
   def test_search_oversamples_to_replace_unavailable_items

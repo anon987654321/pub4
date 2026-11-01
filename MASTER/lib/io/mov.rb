@@ -19,6 +19,12 @@ module Master
     # to yt-dlp when installed. Commercial streaming extraction and torrent
     # sources are intentionally outside this tool's scope.
     #
+    # "New" means the film is recent, not the upload. Archive.org's year field
+    # records when an item was uploaded, so a 1985 film re-uploaded in 2026
+    # advertises year:2026; a recent request therefore floors the year at 2024,
+    # demands reviews when the operator asks for taste (acclaimed, gems, indie),
+    # and locally rejects items whose title or identifier hides an older year.
+    #
     # Files land in ~/Downloads, never in the repository.
     module Mov
       module_function
@@ -46,6 +52,27 @@ module Master
       ACQUIRE_RE = /\b(?:grab|download|fetch|get|find|pick|pull|put|queue|i\s+wan(?:na|t)|see|watch)\b/i.freeze
       TITLE_QUOTE_RE = /["“]([^"”]{2,120})["”]/.freeze
       URL_RE = %r{https?://\S+}i.freeze
+
+      # Taste words demand reviews; a stated or implied year floors the shelf.
+      # DEFAULT_RECENT_FLOOR is the operator's standing order: "new" = post-2024.
+      TASTE_RE = /\b(?:acclaimed?|gems?|indie|hidden|masterpiece|best|top)\b/i.freeze
+      STATED_FLOOR_RE = /\b(?:post|after|since|from)\s+(1[89]\d{2}|20\d{2})\b/i.freeze
+      RECENT_YEAR_RE = /\b(20[2-9]\d)\b/.freeze
+      DEFAULT_RECENT_FLOOR = 2024
+      RATED_FLOOR = 4.0
+      # An upload dressed as new: the real year usually survives in the title
+      # or the identifier ("A Face In The Crowd (1957)", "police-story-1985").
+      STALE_YEAR_RE = /\b(?:19\d\d|20(?:0\d|1\d|2[0-3]))\b/.freeze
+      # A television episode pack parked in the film shelf ("Kojak S02E10-13").
+      TV_EPISODE_MARK_RE = /\bS\d{1,2}E\d{1,3}\b/i.freeze
+      # Re-upload furniture: an analysis upload, a compilation, a dubbed
+      # souvenir cut — packaging around old films, however fresh the upload
+      # year on the item looks.
+      REUPLOAD_TELL_RE = /\b(?:analys[ie]s|trilogy|trailers?|dub(?:bed)?|sub(?:bed)?|subtitled?|remaster\w*|collection|compilation|double\s+feature|directors?['’]?\s+cut|box\s+set)\b/i.freeze
+      # Analysis requests name a link as material, not as a download target
+      # ("use yt-dlp and demucs to grab, split up, and analyze <url>"); the
+      # media lane's audio-reference analyzer owns those, so mov yields.
+      ANALYSIS_RE = /\b(?:analyz\w*|analys\w*|stems?|split\s+up|demucs|study|learn\s+from|reference\s+track)\b/i.freeze
       YOUTUBE_RE = %r{\Ahttps?://(?:(?:www|m|music)\.)?(?:youtube\.com|youtu\.be)/}i.freeze
       VIMEO_RE = %r{\Ahttps?://(?:(?:www|player)\.)?vimeo\.com/}i.freeze
       ARCHIVE_DETAILS_RE = %r{\Ahttps?://(?:www\.)?archive\.org/(?:details|download)/([A-Za-z0-9_-]+)}i.freeze
@@ -59,6 +86,8 @@ module Master
         movies movie films film cinema flick flicks series episodes episode
         seasons season sitcoms sitcom tv shows show television please wanna
         want see watch and a an for from with put onto my our the queue
+        post after since acclaimed acclaim gem gems indie hidden masterpiece
+        best top
       ].freeze
 
       class RetryableDownloadError < StandardError
@@ -125,14 +154,23 @@ module Master
         end
       end
 
+      # The verb must be spoken, never part of the link: every YouTube watch
+      # page carries "/watch", and a bare music link is an audio reference for
+      # the media lane, not a movie to pull.
       def handles?(text)
         value = text.to_s.strip
         return false if value.empty? || value.match?(ADVICE_RE)
+        return false if value.match?(ANALYSIS_RE)
         return true if value.match?(%r{https?://(?:www\.)?archive\.org/(?:details|download)/\S+}i)
-        return true if URL_RE.match?(value) && (value.match?(YOUTUBE_RE) || value.match?(VIMEO_RE)) && ACQUIRE_RE.match?(value)
-        return true if value.match?(ACQUIRE_RE) && value.match?(TITLE_QUOTE_RE)
 
-        (value.match?(MOVIE_RE) || value.match?(SERIES_RE)) && value.match?(ACQUIRE_RE)
+        spoken = value.gsub(URL_RE, " ")
+        # The video-host check anchors at the link, not the sentence: the
+        # operator may prefix it ("download https://youtu.be/X").
+        url = value[URL_RE]
+        return true if url && (url.match?(YOUTUBE_RE) || url.match?(VIMEO_RE)) && ACQUIRE_RE.match?(spoken)
+        return true if spoken.match?(ACQUIRE_RE) && value.match?(TITLE_QUOTE_RE)
+
+        (spoken.match?(MOVIE_RE) || spoken.match?(SERIES_RE)) && spoken.match?(ACQUIRE_RE)
       end
 
       # bus: the turn's event bus. The media lane runs outside the pipeline's
@@ -145,7 +183,7 @@ module Master
         stage(bus, "searching archive.org")
         entries = search(request)
         return entries if entries.is_a?(Result)
-        return Result.err("mov0: nothing found#{query_suffix(request)}", category: :validation) if entries.empty?
+        return Result.err("mov0: nothing found#{query_suffix(request)}#{shelf_suffix(request)}", category: :validation) if entries.empty?
 
         download_queue(entries, request, bus: bus)
       rescue StandardError => e
@@ -156,7 +194,11 @@ module Master
 
       def parse_request(text)
         value = text.to_s.strip
-        request = { count: count_from(value), title: nil, url: nil, kind: :film, recent: RECENT_RE.match?(value) }
+        request = {
+          count: count_from(value), title: nil, url: nil, kind: :film,
+          recent: RECENT_RE.match?(value), taste: TASTE_RE.match?(value),
+          year_floor: year_floor_from(value),
+        }
 
         if (url = value.match(URL_RE)&.to_s)
           return parse_url_request(value, url, request) if URLIntentHost.match?(url)
@@ -164,10 +206,26 @@ module Master
 
         request[:kind] = :series if value.match?(SERIES_RE) && !value.match?(MOVIE_RE)
         request[:title] = title_from(value)
+        # A stated year worked as the floor; it must not double as a title
+        # word ("download new 2025 movies" is not a search for title "2025").
+        floor = request[:year_floor].to_s
+        request[:title] = request[:title].to_s.gsub(/\b#{floor}\b/, "").strip if floor.match?(/\A20[2-9]\d\z/)
         request
       end
 
       RECENT_RE = /\b(?:new|latest|fresh|recent|recently)\b/i.freeze
+
+      # An explicit "post 2024" sets the floor; a bare recent year (2025) is
+      # one too; "new" and taste words carry the operator's standing order
+      # (post-2024 only). A quoted title names an exact work — search it as
+      # named, whatever taste words the sentence also carries.
+      def year_floor_from(value)
+        explicit = value[STATED_FLOOR_RE, 1]&.to_i || value[RECENT_YEAR_RE, 1]&.to_i
+        return explicit if explicit
+        return nil if value.match?(TITLE_QUOTE_RE)
+
+        RECENT_RE.match?(value) || TASTE_RE.match?(value) ? DEFAULT_RECENT_FLOOR : nil
+      end
 
       module URLIntentHost
         module_function
@@ -220,11 +278,20 @@ module Master
         request[:title].to_s.empty? ? "" : " for #{request[:title]}"
       end
 
+      # Recency and taste shrink the free shelf hard; say so instead of
+      # letting "nothing found" read as the network being down.
+      def shelf_suffix(request)
+        return "" unless request[:year_floor] || request[:taste]
+
+        "; the free shelf rarely carries the newest acclaimed releases — they stream " \
+          "commercially, which mov does not touch — so try dropping \"new\", or hand mov a direct link"
+      end
+
       # Fetch extra candidates so an unavailable item does not prevent the
       # requested number of successful downloads.
       def search(request)
         query = search_query(request)
-        sort = request[:recent] || request[:title].to_s.empty? ? "addeddate desc" : "downloads desc"
+        sort = search_sort(request)
         rows = search_rows(request)
         path = "#{SEARCH_PATH}?#{search_params(query, sort, rows)}"
         body = get_json(HOST, path, READ_TIMEOUT)
@@ -234,6 +301,32 @@ module Master
         docs.map do |doc|
           { identifier: doc["identifier"].to_s, title: doc["title"].to_s, year: doc["year"].to_s }
         end.reject { |entry| entry[:identifier].empty? }
+          .reject { |entry| dressed_as_new_but_stale?(entry, request) }
+      end
+
+      # The upload queue is not the release shelf: sorting recent requests by
+      # "addeddate" surfaced rips of 1985 films stamped year:2026. Popularity
+      # within the floored year is the honest free-source signal, and taste
+      # requests let the archive's own review data lead.
+      def search_sort(request)
+        if request[:taste]
+          ["avg_rating desc", "downloads desc"]
+        else
+          ["downloads desc"]
+        end
+      end
+
+      # Archive.org's year field records the upload, so recency filters can be
+      # defeated by re-uploads. The real year usually survives in the title or
+      # the identifier — where it does, the item is not what "new" asked for.
+      # Episode packs (S02E10) are television parked in the film shelf.
+      def dressed_as_new_but_stale?(entry, request)
+        return false unless request[:year_floor]
+
+        return true if "#{entry[:title]} #{entry[:identifier]}".match?(STALE_YEAR_RE)
+        return true if entry[:title].match?(REUPLOAD_TELL_RE)
+
+        request[:kind] == :film && entry[:title].match?(TV_EPISODE_MARK_RE)
       end
 
       def search_rows(request)
@@ -241,21 +334,24 @@ module Master
       end
 
       def search_query(request)
-        base = request[:kind] == :series ? "collection:(ClassicTV)" : "collection:(feature_films)"
+        clauses = [request[:kind] == :series ? "collection:(ClassicTV)" : "collection:(feature_films)"]
+        clauses << "year:[#{request[:year_floor]} TO 2099]" if request[:year_floor]
+        clauses << "avg_rating:[#{RATED_FLOOR} TO 5]" if request[:taste]
         title = request[:title].to_s.strip
-        return base if title.empty?
-
-        escaped = title.gsub(/([\\"])/, '\\\\\1')
-        "#{base} AND title:(#{escaped})"
+        unless title.empty?
+          escaped = title.gsub(/([\\"])/, '\\\\\1')
+          clauses << "title:(#{escaped})"
+        end
+        clauses.join(" AND ")
       end
 
       def search_params(query, sort, rows)
         [
           "q=#{uri_encode(query)}",
-          "fl%5B%5D=identifier", "fl%5B%5D=title", "fl%5B%5D=year",
-          "sort%5B%5D=#{uri_encode(sort)}",
+          "fl%5B%5D=identifier", "fl%5B%5D=title", "fl%5B%5D=year", "fl%5B%5D=avg_rating",
+          Array(sort).map { |order| "sort%5B%5D=#{uri_encode(order)}" },
           "rows=#{rows}", "page=1", "output=json",
-        ].join("&")
+        ].flatten.join("&")
       end
 
       # Try candidates until the requested number has actually been saved.
@@ -264,6 +360,14 @@ module Master
         requested = request.fetch(:count, FEW).to_i.clamp(1, 20)
         report_status("mov0", "#{entries.size} candidates found; target #{requested}; destination #{downloads_dir}")
         lines = ["mov0: #{entries.size} candidates found; target #{requested}; destination #{downloads_dir}"]
+        if request[:year_floor] || request[:taste]
+          filters = "year >= #{request[:year_floor]}"
+          filters += ", rated >= #{RATED_FLOOR.to_i} by archive reviewers" if request[:taste]
+          note = "mov0: recent shelf — free/legal sources only; new acclaimed streaming releases are " \
+                 "commercial and outside this tool's scope (filters: #{filters})"
+          report_status("mov0", note)
+          lines << note
+        end
         saved_paths = []
         failures = []
 
