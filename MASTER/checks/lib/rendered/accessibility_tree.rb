@@ -65,6 +65,7 @@ module Deploy
 
       measured = 0
       GeometryProbe.with_browser(warm: live) do |cdp|
+        cdp.command("Accessibility.enable")
         live.each do |surface|
           label = "#{surface.app}/#{surface.label}/#{surface.viewport}"
           payload = GeometryProbe.walk(cdp, surface)
