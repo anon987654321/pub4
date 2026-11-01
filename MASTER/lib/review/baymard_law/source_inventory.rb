@@ -34,7 +34,11 @@ module Master
           end
 
           apps = paths.uniq.sort.map { |path| build_app(File.basename(path), path) }
-          errors = apps.flat_map { |app| app.records.filter_map(&:error) }
+          errors = apps.flat_map do |app|
+            app.records.filter_map do |record|
+              "#{record.relative}: #{record.error}" if record.error
+            end
+          end
           Result.new(apps:, read_errors: errors.freeze)
         end
 
