@@ -55,7 +55,7 @@ class Dependency < ApplicationRecord
 
     while frontier.any?
       if depth >= MAX_GRAPH_DEPTH
-        truncated = where(port_id: frontier.map(&:id)).exists?
+        truncated ||= where(port_id: frontier.map(&:id)).exists?
         break
       end
 
