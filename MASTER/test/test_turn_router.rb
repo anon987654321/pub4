@@ -372,7 +372,7 @@ class TurnRouterTest < Minitest::Test
     )
 
     refute result.ok?
-    assert_match(/0: read\(path\).*\(\+\d+ lines\)/, result.message)
+    assert_match(/0: read\(path\) -> ok: \d+B, 25 lines/, result.message)
     refute_includes result.message, "private detail 24"
     assert_includes result.message, "no command was run"
   end
