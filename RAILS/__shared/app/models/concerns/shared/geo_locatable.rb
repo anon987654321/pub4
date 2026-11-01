@@ -27,19 +27,21 @@ module Shared
     # distance_to) for every including model, breaking their external callers.
     def self.cell_id(lat:, lng:, km: 10.0)
       d_lat = km / EARTH_KM * (180.0 / Math::PI)
-      d_lng = d_lat / Math.cos([ lat.to_f.abs, 0.0001 ].max * Math::PI / 180.0)
+      d_lng = d_lat / Math.cos(deg_to_rad([ lat.to_f.abs, 0.0001 ].max))
       cell_lat = (lat.to_f / d_lat).floor
       cell_lng = (lng.to_f / d_lng).floor
       "#{cell_lat}:#{cell_lng}"
     end
 
     # Great-circle distance in km. A module method so non-model callers need no including class.
+    def self.deg_to_rad(degrees) = degrees.to_f * Math::PI / 180.0
+
     def self.haversine(lat1, lng1, lat2, lng2)
-      dlat = (lat2.to_f - lat1.to_f) * Math::PI / 180.0
-      dlng = (lng2.to_f - lng1.to_f) * Math::PI / 180.0
+      dlat = deg_to_rad(lat2.to_f - lat1.to_f)
+      dlng = deg_to_rad(lng2.to_f - lng1.to_f)
       a = Math.sin(dlat / 2)**2 +
-          Math.cos(lat1.to_f * Math::PI / 180.0) *
-          Math.cos(lat2.to_f * Math::PI / 180.0) *
+          Math.cos(deg_to_rad(lat1)) *
+          Math.cos(deg_to_rad(lat2)) *
           Math.sin(dlng / 2)**2
       EARTH_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
     end
@@ -49,19 +51,26 @@ module Shared
       # For high precision on small result sets, post-filter with haversine or call .select.
       # Signature compatible with prior dupe scopes (positional km default).
       def nearby(lat, lng, km = 5)
-        isolated = GeoIsolation.compute_isolated_bounds(latitude: lat, longitude: lng)
-        return none if isolated[:status] == :error
+        bounds = isolated_bounds_for(lat, lng)
+        return none unless bounds
 
-        lat, lng = isolated[:bounds]
+        lat, lng = bounds
         radius_km = km.to_f
         return none if lat == 0 && lng == 0
 
         d_lat = radius_km / EARTH_KM * (180.0 / Math::PI)
-        d_lng = d_lat / Math.cos([ lat.abs, 0.0001 ].max * Math::PI / 180.0)
+        d_lng = d_lat / Math.cos(GeoLocatable.deg_to_rad([ lat.abs, 0.0001 ].max))
 
         where(latitude: (lat - d_lat)..(lat + d_lat))
           .where(longitude: (lng - d_lng)..(lng + d_lng))
           .where.not(latitude: nil)
+      end
+
+      def isolated_bounds_for(lat, lng)
+        isolated = GeoIsolation.compute_isolated_bounds(latitude: lat, longitude: lng)
+        return if isolated[:status] == :error
+
+        isolated[:bounds]
       end
 
       # Accurate haversine in km. Use for post-filter or distance checks.
