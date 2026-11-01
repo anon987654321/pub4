@@ -112,10 +112,14 @@ module Master
         raise InvalidProfile, "research.provider must be Baymard Institute" unless research["provider"] == "Baymard Institute"
         raise InvalidProfile, "research.authority_law must name the external-research subordination Law" unless
           research["authority_law"] == "EXTERNAL_RESEARCH_IS_EVIDENCE_NOT_AUTHORITY"
-        %w[methodology_url benchmark_url reviewed_on scope boundary].each do |field|
+        research_urls = %w[
+          methodology_url benchmark_url checkout_research_url
+          cart_abandonment_url inline_validation_url
+        ]
+        (research_urls + %w[reviewed_on scope boundary]).each do |field|
           raise InvalidProfile, "research.#{field} is required" if research[field].to_s.strip.empty?
         end
-        %w[methodology_url benchmark_url].each do |field|
+        research_urls.each do |field|
           uri = URI.parse(research[field].to_s)
           raise InvalidProfile, "research.#{field} must use https://baymard.com" unless uri.scheme == "https" && uri.host == "baymard.com"
         end
