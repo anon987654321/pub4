@@ -499,6 +499,19 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes css, ".post-show-comments"
   end
 
+  def test_post_collections_use_the_shared_semantic_list_contract
+    brgen_results = read("brgen/app/views/posts/_live_search_results.html.erb")
+    amber_index = read("amber/app/views/posts/index.html.erb")
+    amber_home = read("amber/app/views/home/_frontpage_posts.html.erb")
+
+    assert_includes brgen_results, '<ul class="post-feed feed_list" id="posts-feed">'
+    assert_match(/<li>\s*<div data-controller="offline-feed"/m, brgen_results)
+    assert_match(/<\/li>\s*<% end %>\s*<\/ul>/m, brgen_results)
+    assert_includes amber_index, '<ul class="feed_list" id="amber-posts-list">'
+    assert_match(/@posts\.each do \|post\|\s*<li><%= render post %><\/li>\s*<% end %>/m, amber_index)
+    assert_includes amber_home, '<ul class="feed_list" id="amber-home-posts-list">'
+    assert_match(/posts\.each do \|post\|\s*<li><%= render "posts\/post", post: post %><\/li>/m, amber_home)
+  end
   def test_amber_enum_selectors_localize_labels_and_keep_enum_values
     helper = read("amber/app/helpers/application_helper.rb")
     season_views = %w[outfits/index.html.erb outfits/_form.html.erb items/_form.html.erb ai/suggest_outfits.html.erb]

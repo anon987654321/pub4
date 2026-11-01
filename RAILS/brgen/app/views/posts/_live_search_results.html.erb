@@ -3,8 +3,9 @@
 <% end %>
 
 <% if @posts.any? %>
-  <div class="post-feed" id="posts-feed">
+  <ul class="post-feed feed_list" id="posts-feed">
     <% @posts.each do |post| %>
+      <li>
       <div data-controller="offline-feed"
            data-offline-feed-key-value="brgen-posts"
            data-offline-feed-title-value="<%= post.title %>"
@@ -12,8 +13,9 @@
            data-offline-feed-meta-value="<%= [post.author_name, l(post.created_at, format: :short)].join(" · ") %>">
         <%= render "posts/post", post: post %>
       </div>
+      </li>
     <% end %>
-  </div>
+  </ul>
 
   <%= render "shared/infinite_scroll_sentinel",
              pagy: @pagy,
