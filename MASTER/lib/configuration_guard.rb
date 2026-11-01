@@ -5,7 +5,7 @@ require_relative "law_vocabulary"
 require_relative "provider_catalogue_guard"
 require_relative "model_catalogue_guard"
 require_relative "config_sections_guard"
-require_relative "review/baymard_law"
+require_relative "baymard_audit"
 
 module Master
   # Validates the governing YAML by its invariants. Who may write it is a
@@ -59,7 +59,7 @@ module Master
       when :models then ModelCatalogueGuard.validate(data, path: absolute)
       when :tokens then validate_tokens(data)
       when :config_sections then ConfigSectionsGuard.validate(data, path: absolute)
-      when :baymard_ux then Review::BaymardLaw.validate_profile!(data, root: File.dirname(File.dirname(absolute)))
+      when :baymard_ux then BaymardAudit.validate_profile!(data, master_root: File.dirname(File.dirname(absolute)))
       end
       nil
     rescue Psych::Exception, ArgumentError, KeyError, TypeError => e
