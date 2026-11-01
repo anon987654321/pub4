@@ -7,8 +7,10 @@ reach it. Sizes are line counts of the class file (plus its subdirectory);
 call sites are a text search of `lib/`, `bin/`, `tools/`, `checks/` and the
 Rakefile, so a `send`, `const_get` or string-built require is not seen.
 
-Authority is unchanged: `soul.yml` > `laws.yml` > executable enforcement. This
-file maps implementations; it is not a second policy surface.
+Authority is `laws.yml` > subordinate `soul.yml` > executable enforcement.
+The legacy `law_runtime.yml#law_catalogue` remains a live per-definition
+metadata dependency and must be migrated before claiming a single-source Law
+system. This file maps implementations; it is not a second policy surface.
 
 ## Owners
 
