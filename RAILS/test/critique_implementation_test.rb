@@ -485,7 +485,7 @@ class CritiqueImplementationTest < Minitest::Test
     assert_match(/@media \(min-width: 480px\) \{\s*\.feed-card\.post-reading-card \{\s*padding: var\(--space-5\) var\(--space-4\);/m, shared_post_css)
     luxury_titles = css[/body\[data-surface="luxury"\] :is\((.*?)\n\) \{/m, 1]
     refute_nil luxury_titles, "Amber luxury heading selector should remain explicit"
-    refute_match(/\.post-reading-title/, luxury_titles, "feed cards keep the shared family title face"
+    refute_match(/\.post-reading-title/, luxury_titles, "feed cards keep the shared family title face")
     detail_title = css[/\.post-show-reading \.post-reading-title \{([^}]*)\}/m, 1]
     assert_match(/font-family: var\(--font-beauty-sans\)/, detail_title)
     assert_match(/font-size: clamp\(1\.75rem, 5vw, 3\.5rem\)/, detail_title)
