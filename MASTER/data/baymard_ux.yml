@@ -76,6 +76,7 @@ checks:
     law_ids: [TRUTHFUL_STATUS, POLA_intuitive_navigation]
     statement: "A first-time visitor should be able to infer the product's purpose and the primary next action without explanation."
     task: "Show the initial screen to a participant unfamiliar with the product. Ask what the service is, who it is for, and what they would do next. Record the words and the chosen action."
+    verification: "Record the visitor's unaided description of the service and the next action they choose."
 
   navigation_findability:
     area: navigation
@@ -85,6 +86,7 @@ checks:
     law_ids: [POLA_intuitive_navigation, PROXIMITY_path_purpose]
     statement: "A visitor should be able to locate a representative task using the site's own navigation and labels."
     task: "Give a realistic destination task without naming the menu path. Record whether the participant finds it, the path taken, hesitation and any wrong turns."
+    verification: "Record task completion, navigation path, hesitation, wrong turns and requests for help."
 
   search_recovery:
     area: search
@@ -94,6 +96,7 @@ checks:
     law_ids: [POLA_intuitive_navigation, TRUTHFUL_STATUS]
     statement: "Search should help a visitor recover from an imprecise query or an empty result set."
     task: "Try a common query, a partial query, a spelling variation and a query with no matches. Record result quality, recovery options, filters and whether the visitor can clear or revise the search."
+    verification: "Record result relevance, query repair, filter use and recovery from an empty result."
 
   product_evaluation:
     area: product_information
@@ -103,6 +106,7 @@ checks:
     law_ids: [TRUTHFUL_STATUS, DENSITY, REACH_img_alt]
     statement: "A visitor should be able to understand and compare the offer, price, important attributes, availability and choices before committing."
     task: "Ask a participant to evaluate two relevant offers and explain the material differences, total price, availability and selectable options using only the page."
+    verification: "Record whether the visitor can compare the offer, total price, important attributes, availability and choices unaided."
 
   cart_editing_and_costs:
     area: cart
@@ -112,6 +116,7 @@ checks:
     law_ids: [TRUTHFUL_STATUS, POLA_intuitive_navigation]
     statement: "A visitor should be able to review, edit and understand the cart total before entering checkout."
     task: "Add an item, change quantity, remove it, return to the cart and explain the current subtotal, delivery charges, fees and total. Record where each cost first becomes clear."
+    verification: "Record quantity edits, removal, cost disclosure and whether the visitor can explain the final total."
 
   checkout_guest_and_recovery:
     area: checkout
@@ -121,6 +126,7 @@ checks:
     law_ids: [TRUTHFUL_STATUS, REACH_form_label, REACH_aria_labels]
     statement: "A purchase flow should not force avoidable account creation and should help visitors recover from field errors without losing entered information."
     task: "Complete a disposable checkout as a guest where the product permits it. Trigger a safe validation error, correct it, and record account barriers, field guidance, retained values, delivery choices, cost disclosure and the final confirmation."
+    verification: "Record avoidable account barriers, retained values after validation errors, delivery and payment clarity, and confirmation."
 
   mobile_task_completion:
     area: mobile
@@ -130,6 +136,7 @@ checks:
     law_ids: [REACH_touch_target_min, REACH_focus_visible, POLA_intuitive_navigation]
     statement: "The primary visitor task should remain understandable and completable on a phone without horizontal page scrolling or obstructed controls."
     task: "Repeat one representative task at a narrow phone viewport and with touch input. Record clipping, sticky overlays, target misses, keyboard obstruction and any task failure."
+    verification: "Record task completion, clipping, target misses, obstruction and keyboard occlusion at the tested phone viewport."
 
   keyboard_and_assistive_technology:
     area: accessibility
@@ -139,6 +146,7 @@ checks:
     law_ids: [REACH_aria_labels, REACH_focus_visible, REACH_skip_to_main]
     statement: "The core journey should remain perceivable and operable without pointer input and expose meaningful names, roles, states and errors."
     task: "Complete a core journey using keyboard only, then inspect key controls with a screen reader. Record focus order, announcements, validation errors, modal handling and state changes."
+    verification: "Record focus order, accessible announcements, error recovery, modal operation and completion without pointer input."
 # A source or participant-task result is only as strong as its evidence.
 # Rendered browser checks also run through MASTER/checks' existing instruments;
 # participant tasks remain inconclusive until observations are supplied.
