@@ -30,16 +30,9 @@ module Operator
 
     module_function
 
-    # The 47 rules about how to work, each as one sentence. They are `practice`
-    # laws in law/practice.rb, which is the only population a detector cannot
-    # describe — "sweep to convergence", "one SSH session" — and therefore the
-    # half of the law an agent has to be told rather than caught on.
-    #
-    # This read `soul.yml`'s `absolute.rules`, where they lived until the
-    # `conduct` kind let them be Laws. Since that move the key has not existed,
-    # `dig` answered nil, and the heading below printed over an empty list: the
-    # law-in-force section of the file that hands agents the law in force named
-    # nothing at all. Every other section kept working, which is why it stood.
+    # The practice Laws are executable declarations under law/. They provide
+    # operator-facing conduct instructions; they do not derive from Soul or form
+    # a second normative catalogue.
     def conduct
       load_master
       require File.join(MASTER_DIR, "law", "definition") unless defined?(::Law)
@@ -69,7 +62,7 @@ module Operator
       load_master
       Master::Review::Scan::LawRegistryAudit.new(root: MASTER_DIR).call.coverage_line
     rescue StandardError => e
-      "rule coverage unavailable (#{e.class})"
+      "Law coverage unavailable (#{e.class})"
     end
 
     # Memory is matched on the words of the prompt rather than searched
@@ -224,8 +217,8 @@ module Operator
       payload = {
         "source" => "MASTER/tools/agent_context.rb",
         "authority" => [
-          "MASTER/data/soul.yml",
           "MASTER/data/laws.yml",
+          "MASTER/data/soul.yml (subordinate identity and delivery)",
           "MASTER/law/*.rb",
           "tree contracts",
           "agent-harness prose",
