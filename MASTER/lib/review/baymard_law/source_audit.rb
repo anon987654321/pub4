@@ -163,13 +163,13 @@ module Master
             end
 
             measured += 1
-            tags = record.content.to_enum(:scan, /<meta\\b[^>]*>/im).filter_map do
+            tags = record.content.to_enum(:scan, /<meta\b[^>]*>/im).filter_map do
               tag = Regexp.last_match[0]
               attrs = attributes(tag)
               [tag, attrs] if attrs["name"].to_s.casecmp?("viewport")
             end
             valid = tags.any? do |_tag, attrs|
-              attrs["content"].to_s.match?(/(?:\\A|,)\\s*width\\s*=\\s*device-width(?:\\s*,|\\z)/i)
+              attrs["content"].to_s.match?(/(?:\A|,)\s*width\s*=\s*device-width(?:\s*,|\z)/i)
             end
             next if valid
 
@@ -181,7 +181,7 @@ module Master
             offset = if tags.empty?
                        0
                      else
-                       record.content.index(/<meta\\b[^>]*>/im) || 0
+                       record.content.index(/<meta\b[^>]*>/im) || 0
                      end
             issues << issue(record, offset, message)
           end
