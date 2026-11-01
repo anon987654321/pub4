@@ -61,7 +61,7 @@ module Operator
         labels << "severity: #{row["severity"]}" if row["severity"]
         out << "- **#{id}**"
         out << " (#{labels.join("; ")})" unless labels.empty?
-        out << " — #{row["statement"].to_s.strip.gsub(/\\s+/, " ")}\n"
+        out << " — #{row["statement"].to_s.strip.gsub(/\s+/, " ")}\n"
         @entry_count += 1
       end
 
