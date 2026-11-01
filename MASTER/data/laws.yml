@@ -84,6 +84,18 @@ TRUTHFUL_STATUS_unverified_claim:
   resolution: review
   evidence: { read: sha256, modify: diff, complete: output }
 
+TRUTHFUL_STATUS_no_simulated_completion:
+  parent: TRUTHFUL_STATUS
+  statement: "A statement that repository work, a file read, or a command completed without the corresponding evidence."
+  resolution: never
+  anti_simulation:
+    scope: repository_work_claims
+    forbidden: [will, would, could, might]
+    require_evidence:
+      file_read: "show content with SHA-256"
+      modification: "show unified diff"
+      completion: "show command output"
+
 TRUTHFUL_STATUS_dishonest_kind:
   parent: TRUTHFUL_STATUS
   statement: "A file's declared kind does not match its content."
@@ -1134,7 +1146,7 @@ STEWARDSHIP_mono_no_aware:
   statement: "A system that pretends nothing is temporary."
   resolution: review
 
-STEWARDSHIP_preserve_first:
+PRESERVE_FIRST:
   parent: STEWARDSHIP
   statement: "Preserve working code and behaviour before improving it; never break what exists to build what does not yet exist."
   resolution: review
