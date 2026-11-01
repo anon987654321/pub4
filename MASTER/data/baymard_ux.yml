@@ -156,5 +156,5 @@ evidence_policy:
       pass: [source_files, source_inventory_sha256]
       finding: [finding_path, line, source_sha256]
     task: [method, participants, summary, artifacts, sha256]
-  task_privacy: "Store anonymised observations only. Do not persist participant names, contact details, recordings or raw personal data."
+  task_privacy: "Store anonymised aggregate observations only. Do not persist participant names, contact details, recordings or raw personal data. Text artifacts are scanned for contact details; image artifacts require an explicit human redaction attestation before they are accepted."
   verdicts: [pass, fail, inconclusive, not_applicable]
