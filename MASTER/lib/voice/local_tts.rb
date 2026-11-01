@@ -6,6 +6,7 @@ require "net/http"
 require "securerandom"
 require "tmpdir"
 require "uri"
+require_relative "../io/process_spawn"
 
 module Master
   module Voice
@@ -79,7 +80,7 @@ module Master
         uri = server_uri(entry)
         log = File.join(Master::ROOT, ".master", "local_tts.log")
         FileUtils.mkdir_p(File.dirname(log))
-        pid = Process.spawn(command, "--host", uri.host, "--port", uri.port.to_s,
+        pid = Process.spawn(Master::Io::ProcessSpawn.environment, command, "--host", uri.host, "--port", uri.port.to_s,
                             in: File::NULL, out: [log, "a"], err: [log, "a"], pgroup: true)
         Process.detach(pid)
         @started = true
