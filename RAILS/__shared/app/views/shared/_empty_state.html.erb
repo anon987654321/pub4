@@ -6,9 +6,14 @@
       body: "Try another search.",
       action: { label: "Compose", path: new_post_path }
 %>
+    The legacy actions: String local is deprecated; use only action: { label:, path: }.
 <% title = local_assigns[:title] %>
 <% body = local_assigns[:body] || local_assigns[:message] %>
 <% action = local_assigns[:action] %>
+<% if local_assigns[:actions].present? %>
+  <%# Compatibility only: the String API is deprecated in favour of action: { label:, path: }. %>
+  <% Rails.logger.warn("DEPRECATION: shared/empty_state actions: is deprecated; use action: { label:, path: }") %>
+<% end %>
 <% live = local_assigns.fetch(:live, true) %>
 <section
   class="empty empty-state<%= " #{local_assigns[:class]}" if local_assigns[:class].present? %>"
