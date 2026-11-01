@@ -163,6 +163,7 @@ module Master
             "<master_identity>",
             "MASTER. #{@desc} OpenBSD-first. Constitutional AI.",
             persona_knowledge_sources,
+            Master::Soul.prompt,
             load_identity,
             "</master_identity>",
           ].compact.join("\n"),
