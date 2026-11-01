@@ -201,13 +201,13 @@ module Master
           return true if type == "button" && !attrs["value"].to_s.strip.empty?
 
           id = attrs["id"].to_s
-          return false if id.empty?
-
-          escaped = Regexp.escape(id)
-          explicit = content.match(
-            %r{<label\b(?=[^>]*\bfor\s*=\s*["']#{escaped}["'])[^>]*>(.*?)</label\s*>}im
-          )
-          return label_name_state(explicit[1]) if explicit
+          unless id.empty?
+            escaped = Regexp.escape(id)
+            explicit = content.match(
+              %r{<label\b(?=[^>]*\bfor\s*=\s*["']#{escaped}["'])[^>]*>(.*?)</label\s*>}im
+            )
+            return label_name_state(explicit[1]) if explicit
+          end
 
           before = content[0...offset]
           last_open_match = before.match(/<label\b[^>]*>(?!.*<label\b)/im)
