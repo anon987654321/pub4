@@ -196,8 +196,8 @@ module Master::Core
       })
     end
 
-    # Sacred paths are declared by soul.yml, the constitutional source. The rule
-    # catalogue remains descriptive and must not become a second write-protection list.
+    # Protected paths are declared by laws.yml#SACRED_AUTHORSHIP. The Soul
+    # manifest is subordinate identity/delivery data, not a write-protection source.
     # The agent may not rewrite the constitution it is judged by or the spine
     # that folds its effects. A write, or a git stage or commit of such a path, is blocked.
     def self.immutable_paths_rule(immutable, master_root: nil, workspace_root: nil)
@@ -214,7 +214,7 @@ module Master::Core
 
     # Resolve the target exactly as World does: relative to the one workspace
     # whose boundary the effect will use. Resolve declarations relative to the
-    # MASTER root that owns soul.yml. Never interpret one relative target against
+    # MASTER root that owns laws.yml. Never interpret one relative target against
     # two roots: that both overblocked unrelated paths and obscured which file
     # was actually being judged.
     def self.immutable_hit?(path, immutable, master_root: nil, workspace_root: nil)
@@ -549,11 +549,11 @@ module Master::Core
 
     # One source for paths that are constitutionally protected.
     #
-    # soul.yml owns identity and sacred paths: the files no automated writer —
+    # laws.yml owns protected paths: the files no automated writer —
     # the Fold, /fix and its autofix, a tool write, a runtime commit — may change.
     # A person changes them with an ordinary git commit. This class is deliberately
     # small: readers can ask for the declarations or whether one path is protected
-    # without knowing how soul.yml is laid out.
+    # without knowing how laws.yml is laid out.
     class Paths
       MANIFEST = "data/laws.yml"
 
@@ -630,7 +630,7 @@ module Master::Core
 
       def legacy_sacred_paths
         begin
-          # Fail closed: a missing, unreadable, invalid, or empty soul.yml must
+          # Fail closed: a missing, unreadable, invalid, or empty laws.yml must
           # never degrade into "nothing is sacred" and silently disable protection.
           root = manifest_root
           raise Errno::ENOENT, "#{MANIFEST} not found under #{@root}" unless root
