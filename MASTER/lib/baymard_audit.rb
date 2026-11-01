@@ -226,66 +226,55 @@ module Master
         type = attribute(attributes, "type").to_s.downcase
         next if tag == "input" && %w[hidden submit reset button].include?(type)
 
-        next if accessible_name?(attributes, body)
-        next if wrapped_by_label?(body, source)
-
-        dynamic = source.include?("<%") || body.match?(/<%[=-]\s*(?:form|f)\.(?:label|text_field|email_field|password_field|select|check_box|radio_button)/i)
-        status = dynamic ? "INCONCLUSIVE" : "FAIL"
-        message = dynamic ? "Control is generated dynamically; verify its rendered label." :
-                            "#{tag} control has no associated label or explicit accessible name."
-        { status:, message: }
+        next if tag == "input" && type == "image" && !attribute(attributes, "alt").to_s.strip.empty?
+        if accessible_name?(attributes, body) || wrapped_by_label?(body, source)
+          { status: "PASS", message: "#{tag} exposes a label or explicit accessible name." }
+        else
+          dynamic = source.include?("<%") || body.match?(/<%[=-]\s*(?:form|f)\.(?:label|text_field|email_field|password_field|select|check_box|radio_button)/i)
+          status = dynamic ? "INCONCLUSIVE" : "FAIL"
+          message = dynamic ? "Control is generated dynamically; verify its rendered label." :
+                              "#{tag} control has no associated label or explicit accessible name."
+          { status:, message: }
+        end
       end
     end
 
     def image_alternatives(body)
-      body.to_enum(:scan, /<img\b([^>]*)>/im).filter_map do
+      body.to_enum(:scan, /<img\b([^>]*)>/im).map do
         attributes = Regexp.last_match(1)
         alt = attribute(attributes, "alt")
-        next unless alt.nil?
-
-        { status: "FAIL", message: "Informative image has no alt attribute; use alt=\"\" only for decorative imagery." }
+        if alt.nil?
+          { status: "FAIL", message: "Informative image has no alt attribute; use alt=\"\" only for decorative imagery." }
+        else
+          { status: "PASS", message: alt.empty? ? "Image is explicitly marked decorative with empty alt text." : "Image exposes alternative text." }
+        end
       end
     end
 
     def interactive_names(body)
-      findings = []
-      body.to_enum(:scan, /<(a|button)\b([^>]*)>(.*?)<\/\1\s*>/im).each do
+      body.to_enum(:scan, /<(a|button)\b([^>]*)>(.*?)<\/\1\s*>/im).map do
         match = Regexp.last_match
         tag = match[1].downcase
         attributes = match[2]
         inner = match[3]
-        next if accessible_name?(attributes, body)
-        next if meaningful_text?(inner)
 
-        dynamic = inner.include?("<%") || attributes.include?("<%")
-        image_name = inner.to_enum(:scan, /<img\b([^>]*)>/im).any? do
-          image_attrs = Regexp.last_match(1)
-          !attribute(image_attrs, "alt").to_s.strip.empty?
+        if accessible_name?(attributes, body) || meaningful_text?(inner) || media_name?(inner)
+          { status: "PASS", message: "#{tag} exposes a discernible name in source." }
+        elsif inner.include?("<%") || attributes.include?("<%")
+          { status: "INCONCLUSIVE", message: "#{tag} content is generated dynamically; inspect its rendered accessible name." }
+        else
+          { status: "FAIL", message: "#{tag} has no discernible text or explicit accessible name." }
         end
-        svg_title = inner.match?(/<svg\b[\s\S]*?<title\b[^>]*>\s*[^<\s]/im)
-        next if image_name || svg_title
-
-        status = dynamic ? "INCONCLUSIVE" : "FAIL"
-        message = dynamic ? "#{tag} content is generated dynamically; inspect its rendered accessible name." :
-                            "#{tag} has no discernible text or explicit accessible name."
-        findings << { status:, message: }
       end
-      findings
     end
 
-    def viewport_declaration(body)
-      return [] unless body.match?(/<html\b/i)
-      head = body[/<head\b[^>]*>(.*?)<\/head\s*>/im, 1].to_s
-      return [{ status: "FAIL", message: "Full-page document has no viewport meta declaration in its head." }] if head.empty?
-
-      tag = head[/<meta\b(?=[^>]*\bname\s*=\s*["']viewport["'])[^>]*>/im]
-      return [{ status: "FAIL", message: "Viewport meta declaration is missing." }] unless tag
-
-      content = attribute(tag, "content").to_s.downcase
-      return [{ status: "FAIL", message: "Viewport must declare width=device-width." }] unless content.match?(/(?:\A|,)\s*width\s*=\s*device-width\b/)
-      return [{ status: "FAIL", message: "Viewport must not disable user scaling." }] if content.match?(/user-scalable\s*=\s*no|maximum-scale\s*=\s*1(?:\.0+)?(?:\D|\z)/)
-
-      [{ status: "PASS", message: "Full-page document declares a device-width viewport and does not disable scaling." }]
+    def media_name?(inner)
+      image_name = inner.to_enum(:scan, /<img\b([^>]*)>/im).any? do
+        attrs = Regexp.last_match(1)
+        !attribute(attrs, "alt").to_s.strip.empty?
+      end
+      svg_title = inner.match?(/<svg\b[\s\S]*?<title\b[^>]*>\s*[^<\s]/im)
+      image_name || svg_title
     end
 
     def applies?(row, relative, body)
@@ -443,8 +432,8 @@ module Master
     end
 
     def attribute(tag, name)
-      match = tag.match(/(?:\A|\s)#{Regexp.escape(name)}\s*=\s*(["'])(.*?)\1/im)
-      match && match[2]
+      match = tag.match(/(?:\A|\s)#{Regexp.escape(name)}\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/im)
+      match && match.captures.compact.first
     end
 
     def accessible_name?(attributes, body)
@@ -452,7 +441,7 @@ module Master
       return true if label && !label.strip.empty?
 
       labelledby = attribute(attributes, "aria-labelledby")
-      if labelledby && labelledby.split.any? { |id| body.match?(/\bid\s*=\s*["']#{Regexp.escape(id)}["']/i) }
+      if labelledby && labelledby.split.all? { |id| body.match?(/\bid\s*=\s*["']#{Regexp.escape(id)}["']/i) }
         return true
       end
 
