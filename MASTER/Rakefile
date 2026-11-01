@@ -909,8 +909,6 @@ end
     # (EXEMPTIONS_EXPIRE). "open:" entries are known debt with a collapse
     # recorded in the old backlog — tolerated so the check can land, never permanent.
     known = {
-      "CAPABILITY_STATUS_MUST_BE_TRUTHFUL:" =>
-        "overlay key: law_enforcement.yml merges onto laws.yml by law id, so the id has to be repeated",
       "voice: en-US-ChristopherNeural" =>
         "coincident strings for two different facts: the soul anchor voice and the trader persona voice are separate settings that name the same voice today",
       "strategy: highest_priority_wins" =>
