@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require_relative "../../lib/io/process_spawn"
 require "open3"
 require "optparse"
 require "prism"
@@ -102,7 +103,7 @@ module Master
               file.close
               env = { "MASTER_COVERAGE_OUT" => report_path }
               output, status = Open3.capture2e(
-                env,
+                Master::Io::ProcessSpawn.environment(env),
                 RbConfig.ruby, file.path, @test_path,
                 chdir: @root
               )
