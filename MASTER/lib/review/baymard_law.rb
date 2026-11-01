@@ -66,6 +66,9 @@ module Master
 
         def fail_count = count("fail")
         def inconclusive_count = count("inconclusive")
+        def task_inconclusive_count
+          assessments.count { |assessment| assessment.mode == "task" && assessment.status == "inconclusive" }
+        end
 
         def summary
           "apps=#{apps.size} source_files=#{source_files} measured=#{measured_count}/#{applicable_count} " \
