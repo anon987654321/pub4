@@ -276,13 +276,13 @@ module Master
         before = File.join(dir, "before")
         after = File.join(dir, "after")
         File.write(before, original.to_s)
-        File.write(after, File.exist?(full(path)) ? File.read(full(path)) : "")
+        File.write(after, File.exist?(full(path)) ? File.read(full(path), encoding: "UTF-8") : "")
         out, = Master::Io::Exec.capture2e("git", "diff", "--no-index", "--no-color", "-U4", before, after)
         ["--- #{original ? path : "/dev/null"}\n+++ #{File.exist?(full(path)) ? path : "/dev/null"}\n",
          *out.lines.drop_while { |line| !line.start_with?("@@") }]
       end
 
-      def read(path) = File.file?(full(path)) ? File.read(full(path)) : nil
+      def read(path) = File.file?(full(path)) ? File.read(full(path), encoding: "UTF-8") : nil
       def full(path) = File.join(@root, path)
     end
   end

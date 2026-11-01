@@ -91,5 +91,4 @@ class FoldBlockLimitTest < Minitest::Test
     assert_match(/no command was run/, memory.records.first.last.message)
     assert_equal 2, memory.records.length
   end
-  end
 end

@@ -1,0 +1,168 @@
+@use "sass:meta";
+@use "dialect_tokens" as x;
+@use "sass:list";
+@use "surface_chrome_endgame" as endgame;
+@include meta.load-css("stack_brgen");
+
+// from: @use "shell" with ($drawer-chrome: false);
+@include meta.load-css("shell", $with: ("drawer-chrome": false));
+
+@include meta.load-css("site_legal");
+
+@include meta.load-css("surface_signal");
+
+:root {
+  // BRGEN_OLD dark was a dark-inverted port of the real 2014 desktop.css.
+  // Operator, 2026-10-28: brgen mirrors X.com — the same true-black ground the
+  // 2014 port already had, now with X's slate-blue greys and its one blue.
+  // Every value here is re-tuned to clear the tree's own floors, which X's raw
+  // palette does not: X's #71767b secondary is 4.56:1 and its #2f3336 border
+  // 1.65:1 on black, both under law. #8b98a5 (X's own muted slate, lightened)
+  // reads 7.11:1 and #526273 holds the 3:1 boundary while keeping X's hue.
+  @include x.brgen-old-dark-tokens;
+  @include x.app-root-tokens;
+  color-scheme: dark;
+  // X.com chrome over the family dark: black ground, slate greys, one blue.
+  --text: #e7e9ea;
+  --text-secondary: #8b98a5;
+  --border: #526273;
+  --surface: #16181c;
+  --surface-elevated: #16181c;
+  --search-bg: #202327;
+  // The accent is X's one blue (#1d9bf0) with the family's black ink on it
+  // (7.02:1; X's own white would be 3.16:1). Both flow from the dialect
+  // mixin's parameter now — brgen-old-dark-tokens — so the accent map stays
+  // the only thing that declares --accent on this tree, which is what the
+  // vertical_accent_single_map law checks.
+  // Operator 2026-10-28: every app ships its bundled face. Source Sans 3 is
+  // self-hosted by the shared engine at /fonts and already @font-face'd
+  // through stack → fonts. The family law in MASTER/data/tokens.yml still
+  // records Helvetica until the sync tool moves it on the VPS; this pin is
+  // the app-root override that law's own comment sanctions.
+  --font: "Source Sans 3", "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
+  // Real 2014 mobile.css body base ("font: 18px sans-serif") -- this app's
+  // own deliberate size, distinct from the 16px shared default.
+  --font-size: var(--text-lg);
+  --upvote: var(--accent);
+  --downvote: oklch(58% 0.15 30);
+  --z-canvas: 0;
+  --z-splash: 1000;
+  --focus-ring: 2px solid var(--accent);
+  /* The gutter the wordmark reserves, sized from the wordmark.
+
+     _layout_chrome publishes --brand-mark-inline as a flat 4.75rem, which is
+     right for amber and bsdports: their marks are one fixed word. brgen's is a
+     city name, 5 glyphs on brgen and 9 on lsangeles, too wide for a flat
+     number. A link under the mark stops being clickable, which is the
+     failure the variable exists to prevent, so brgen sizes it instead of
+     inheriting it.
+
+     0.64 is the measured worst-case glyph advance. The mark does not render in
+     --font-brand here: `a.brgen-logo-mark` at (0,1,1) sets
+     `font: ... $brgen-logo-font`, which outranks the shared .brand-mark's
+     var(--font-brand) at (0,1,0), so on brgen the wordmark is system-ui.
+     system-ui on macOS is SF Pro, which switches optical size around 20px, so
+     an 8-glyph mark measured 83.3px at a 20.25px font and 84.1px at 16.875px: wider
+     type at the smaller size. A factor from Helvetica Neue (0.503 em/glyph)
+     under-reserves by 11px at 390px and puts the first nav link under the
+     wordmark.
+
+     So 0.64 covers 84.1 / (8 x 16.875). It over-reserves on desktop, where there
+     is width to spare, and is right on the phone, where there is not. Narrowing it
+     is safe only while the wordmark keeps $brgen-logo-font.
+
+     The clamp is the same one .brand-mark sets its own type in, so the gutter
+     widens and narrows exactly when the mark does rather than being right at one
+     viewport. 0.5rem is the mark's own 4px inline padding, both sides.
+
+     --chrome-inset and --safe-left are in the sum because the gutter has to clear
+     where the mark ENDS, not how wide it is: the mark is inset 12px from the edge
+     before it draws a glyph. Without them the gutter reserves 95px against a mark
+     whose right edge is at 104px, and the first nav link sits under the wordmark
+     at 390px.
+
+     --brand-mark-glyphs comes from the layout, which is the only place that
+     knows the label. The 9 fallback covers a mark rendered without it. */
+    /* The nav link is a 44px box now, text-sm on --space-3 padding lifted
+       to the tap floor, the same box as the fixed chrome, so the shared 1.6px
+       nudge that matched the old 47.25px link would put the mark and toggle
+       below the links' centre line. */
+    --top-band-nudge: 0px;
+    --brand-mark-inline: calc(
+  var(--chrome-inset) + var(--safe-left) +
+  var(--brand-mark-glyphs, 9) * 0.64 * clamp(0.9375rem, 2.8vw, 1.125rem) + 0.5rem
+    );
+  /* The active rule's colour and weight, declared here because they are this
+     bar's own and nothing else in the app draws them. Operator 2026-10-28:
+     the rule follows the X.com mirror — #1d9bf0, the one blue, in both
+     themes. On black it is 7.02:1 and on white 3.0:1, the floor a 3px band
+     needs (the light rule steps to X's hover blue #1a8cd8, 3.64:1, so the
+     boundary does not sit exactly on the floor).
+
+     The "nytt!" badge keeps its superscript-pill shape on the same blue.
+     White type on #1d9bf0 measures 3.16:1 and fails the badge's own 4.5 for
+     small bold text, so the pill takes black ink: 7.02:1 on both grounds. */
+  --nav-rule: #1d9bf0;
+  --nav-rule-w: 3px;
+  --nav-badge-fill: #1d9bf0;
+  --nav-badge-ink: #000000;
+  /* --logo-detail: the animated mark's micro-stroke — logo art, not text. */
+  --logo-detail: 3px;
+  --font-emoji: "Twemoji Mozilla", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  /* Hue-carrying ink: the live signal and every nick keep their hue and take one
+     lightness per theme, because a single oklch lightness cannot clear TYPOGRAPHY's
+     7.0 on both grounds. 38% is 7.49:1 on #efefef at the worst hue, 78% is 9.89:1
+     on #000000. */
+  --hue-ink-lightness: 78%;
+  /* UI_REFINEMENTS pass — tokens, a11y floor, nav, vertical accents.
+     Flat borders only (no box-shadow). Honors prefers-reduced-motion. */
+
+  /* color-success/warning/info, ease-out/spring and transition-fast/normal come
+     from shared/_tokens.scss through stack_brgen's @forward "tokens", so they are
+     not declared here. */
+  --elev-1: 1px solid var(--border);
+  /* X.com's chrome has no coloured band: the header is the page ground with a
+     hairline under it. Ink and muted read 15.6:1 and 7.11:1 on black. */
+  --brgen-header-bg: #000000;
+  --brgen-header-ink: #e7e9ea;
+  --brgen-header-muted: #8b98a5;
+}
+
+/* brgen's light palette, stated once. Shared [data-theme=light] is the social
+   indigo palette and outranks a bare :root, so brgen-old light is restated
+   here. There is no @media (prefers-color-scheme: light) twin: [data-theme=light]
+   is a stated choice and holds whatever the OS prefers. X.com is dark-first,
+   so light keeps the family palette and takes only the mirror's blue chrome
+   (rule, badge) plus the bundled face. */
+:root[data-theme="light"] {
+  @include x.brgen-old-light-tokens;
+  @include x.app-root-tokens;
+  color-scheme: light;
+  --font-size: var(--text-lg);
+  --hue-ink-lightness: 38%;
+  --nav-rule: #1a8cd8;
+  --nav-badge-fill: #1d9bf0;
+  --nav-badge-ink: #000000;
+  --font: "Source Sans 3", "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
+}
+@each $v, $c in x.$vertical-accents {
+  body.vertical-#{$v} {
+    --accent: #{list.nth($c, 1)};
+    --accent-ink: #{list.nth($c, 4)};
+    // The marketplace bol layer reads its hover by name (--bol-blue-dark);
+    // every other vertical paints through --accent alone.
+    @if $v == marketplace {
+      --vertical-#{$v}-accent-hover: #{list.nth($c, 2)};
+    }
+  }
+  /* Light restates rather than carries: the dataset is the one light path. */
+  :root[data-theme="light"] body.vertical-#{$v} {
+    --accent: #{list.nth($c, 3)};
+    --accent-ink: #{list.nth($c, 4)};
+  }
+}
+
+/* No large-screen upscale: brgen's original desktop.css is a fixed, dense
+   information display (Craigslist-like), not a scaling reading experience. */
+
+// ============================================================ base

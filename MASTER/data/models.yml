@@ -512,6 +512,20 @@ local_servers:
 # key (limits as awesome-freellm-apis lists them, 2026-09); with no keyless
 # rule they are not asked until their key is set in ~/.config/master/env.
 openai_compatible:
+  # Perplexity Agent API, OpenAI-compatible surface. /v1/models lists
+  # perplexity/sonar (search-grounded; $0.25/$2.50 per 1M in/out, cache read
+  # $0.0625) plus third-party models (anthropic/claude-*, openai/gpt-*,
+  # google/gemini-*, xai/grok-*) at Perplexity's own token pricing — check the
+  # models reference before trusting a price to a cap. The lane id is
+  # perplexity:<model id>, so perplexity:perplexity/sonar is the grounded
+  # search lane. Caveat recorded 2026-11-01: Sonar Chat Completions ended
+  # 2026-09-27; synchronous /chat/completions requests keep working, being
+  # reformulated as Agent API requests per model, so this lane rides the
+  # compat surface, not the POST /v1/agent surface. If Perplexity retires
+  # the shim, this needs a sender like replicate_chat's, not this block.
+  perplexity:
+    base: https://api.perplexity.ai/v1
+    key_env: [PERPLEXITY_API_KEY]
   llm7:
     base: https://api.llm7.io/v1
     key_env: [LLM7_API_KEY]

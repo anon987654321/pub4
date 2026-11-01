@@ -278,7 +278,10 @@ module Master
           out, status = Master::Io::Exec.capture2e("git", "-C", @root, "log", "--all", "--follow", "--format=%h %s", "-12", "--", relative(@path))
           return if !status.success? || out.to_s.strip.empty?
 
-          "Recent history for #{relative(@path)}:\n#{out.strip}"
+          # git log output arrives as ASCII-8BIT; commit subjects carry UTF-8
+          # (em-dashes, Norwegian). Force UTF-8 before joining the section.
+          history = out.to_s.force_encoding(Encoding::UTF_8).scrub
+          "Recent history for #{relative(@path)}:\n#{history.strip}"
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "restructure.history", path: @path)
           nil
@@ -329,8 +332,8 @@ module Master
           return if paths.empty?
 
           rows = paths.map do |path|
-            lines = File.foreach(path).first(RELATED_LINES)
-            suffix = File.foreach(path).count > RELATED_LINES ? "\n... truncated at #{RELATED_LINES} lines" : ""
+            lines = File.foreach(path, encoding: "UTF-8").first(RELATED_LINES)
+            suffix = File.foreach(path, encoding: "UTF-8").count > RELATED_LINES ? "\n... truncated at #{RELATED_LINES} lines" : ""
             "Related file, #{relative(path)}:\n#{numbered_lines(lines)}#{suffix}"
           rescue StandardError
             "Related file, #{relative(path)}"
@@ -346,7 +349,7 @@ module Master
           dir = File.dirname(@path)
           rows = Dir.children(dir).sort.map do |name|
             full = File.join(dir, name)
-            File.directory?(full) ? "#{name}/" : "#{name} (#{File.foreach(full).count} lines)"
+            File.directory?(full) ? "#{name}/" : "#{name} (#{File.foreach(full, encoding: "UTF-8").count} lines)"
           end
           "Its directory, #{relative(dir)}/:\n#{rows.join("\n")}"
         end
@@ -356,7 +359,7 @@ module Master
         def owner_section
           dir = File.dirname(@path)
           owners = ["#{dir}.rb", *Dir.glob(File.join(dir, "*.rb"))].uniq.reject { |path| path == @path }
-                     .select { |path| File.file?(path) && File.foreach(path).count <= SMALL }.first(3)
+                     .select { |path| File.file?(path) && File.foreach(path, encoding: "UTF-8").count <= SMALL }.first(3)
           return if owners.empty?
 
           owners.map { |path| "Possible owner, #{relative(path)}:\n#{numbered(path)}" }.join("\n\n")
@@ -381,8 +384,8 @@ module Master
         end
 
         def requirer_section
-          requirers = references.keys.select { |path| File.read(path).match?(require_pattern) }
-                                .select { |path| File.foreach(path).count <= SMALL }.first(REQUIRERS)
+          requirers = references.keys.select { |path| File.read(path, encoding: "UTF-8").match?(require_pattern) }
+                                .select { |path| File.foreach(path, encoding: "UTF-8").count <= SMALL }.first(REQUIRERS)
           return if requirers.empty?
 
           requirers.map { |path| "Requires it, in full, #{relative(path)}:\n#{numbered(path)}" }.join("\n\n")
@@ -393,7 +396,7 @@ module Master
           @production_references ||= Context.production_files(@root)
             .reject { |path| path == @path || test_path?(path) }
             .to_h do |path|
-              [path, File.foreach(path).with_index(1).select { |text, _n| text.match?(needle) }.map(&:reverse)]
+              [path, File.foreach(path, encoding: "UTF-8").with_index(1).select { |text, _n| text.match?(needle) }.map(&:reverse)]
             rescue ArgumentError
               [path, []]
             end.reject { |_path, lines| lines.empty? }
@@ -401,7 +404,7 @@ module Master
 
         def references
           @references ||= Context.tracked(@tree).reject { |path| path == @path }.to_h do |path|
-            [path, File.foreach(path).with_index(1).select { |text, _n| text.match?(needle) }.map(&:reverse)]
+            [path, File.foreach(path, encoding: "UTF-8").with_index(1).select { |text, _n| text.match?(needle) }.map(&:reverse)]
           rescue ArgumentError
             [path, []]
           end.reject { |_path, lines| lines.empty? }
@@ -417,14 +420,14 @@ module Master
         end
 
         def constants
-          File.read(@path).scan(/^\s*(?:class|module)\s+([A-Z]\w+)/).flatten.uniq - Restructure.namespaces(@tree)
+          File.read(@path, encoding: "UTF-8").scan(/^\s*(?:class|module)\s+([A-Z]\w+)/).flatten.uniq - Restructure.namespaces(@tree)
         end
 
         def test_path?(path)
           path.split("/").any? { |part| %w[test spec fixtures].include?(part) }
         end
 
-        def numbered(path) = File.foreach(path).with_index(1).map { |line, n| format("%4d  %s", n, line) }.join
+        def numbered(path) = File.foreach(path, encoding: "UTF-8").with_index(1).map { |line, n| format("%4d  %s", n, line) }.join
         def relative(path) = path.to_s.delete_prefix("#{@root}/")
       end
     end
