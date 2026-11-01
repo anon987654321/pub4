@@ -69,6 +69,9 @@ TRUTHFUL_STATUS:
   resolution: never
   mechanical: Master::Law::Interface#capability_status
   semantic: Master::Law::Interface#claims_match_evidence
+  enforcement: declared
+  coverage_mode: deterministic
+  detector_ids: [CAPABILITY_STATUS_MUST_BE_TRUTHFUL]
 
 TRUTHFUL_STATUS_false_ready:
   parent: TRUTHFUL_STATUS
@@ -116,6 +119,8 @@ ROBUSTNESS:
   resolution: review
   mechanical: Master::Law::Robustness#all
   semantic: Master::Law::Robustness#failure_is_survivable
+  enforcement: declared
+  coverage_mode: semantic
 
 ROBUSTNESS_secret_proximity:
   parent: ROBUSTNESS
@@ -179,6 +184,8 @@ SINGULARITY:
   resolution: review
   mechanical: Master::Law::Universal#singularity
   semantic: human
+  enforcement: declared
+  coverage_mode: semantic
 
 DRY:
   parent: SINGULARITY
@@ -222,6 +229,8 @@ LINEARITY:
   resolution: review
   mechanical: Master::Law::Structural#nesting
   semantic: human
+  enforcement: declared
+  coverage_mode: semantic
 
 LINEARITY_branch_tangle:
   parent: LINEARITY
@@ -242,6 +251,8 @@ PROXIMITY:
   resolution: review
   mechanical: Master::Law::Meta#file_sprawl
   semantic: human
+  enforcement: declared
+  coverage_mode: semantic
 
 PROXIMITY_path_purpose:
   parent: PROXIMITY
@@ -271,6 +282,8 @@ ABSTRACTION:
   resolution: review
   mechanical: Master::Law::StructuralQuestions#lazy_class
   semantic: human
+  enforcement: declared
+  coverage_mode: semantic
 
 ABSTRACTION_lazy_class:
   parent: ABSTRACTION
@@ -291,6 +304,8 @@ DENSITY:
   resolution: review
   mechanical: Master::Law::Universal#density
   semantic: human
+  enforcement: declared
+  coverage_mode: semantic
 
 DENSITY_comments_as_deodorant:
   parent: DENSITY
@@ -407,6 +422,8 @@ OPERATOR_RENDERED:
   resolution: never
   mechanical: Master::Visual::Identity#substitution
   semantic: Master::Visual::Identity#operator_declared
+  enforcement: declared
+  coverage_mode: semantic
 
 OPERATOR_RENDERED_aesthetic_substitution:
   parent: OPERATOR_RENDERED
@@ -445,6 +462,9 @@ INTER_MODEL_CONTRACT:
   resolution: never
   mechanical: Master::Law::InterModel#contract
   semantic: Master::Law::InterModel#sourced
+  enforcement: declared
+  coverage_mode: deterministic
+  detector_ids: [INTER_MODEL_CONTRACT]
 
 INTER_MODEL_CONTRACT_invalid_envelope:
   parent: INTER_MODEL_CONTRACT
