@@ -52,6 +52,7 @@ module Master
 
       case kind
       when :laws then validate_laws(data, path: absolute, text: content)
+      when :law_runtime then validate_runtime_laws(data, path: absolute, text: content)
       when :soul then validate_soul(data, path: absolute)
       when :providers then ProviderCatalogueGuard.validate(data)
       when :models then ModelCatalogueGuard.validate(data, path: absolute)
@@ -68,6 +69,7 @@ module Master
     def kind_for(path)
       normalized = File.expand_path(path.to_s).tr("\\", "/")
       return :laws if normalized.match?(%r{/MASTER/data/laws\.yml\z})
+      return :law_runtime if normalized.match?(%r{/MASTER/data/law_runtime\.yml\z})
       return :soul if normalized.match?(%r{/MASTER/data/soul\.yml\z})
       return :providers if normalized.match?(%r{/MASTER/data/providers\.yml\z})
       return :models if normalized.match?(%r{/MASTER/data/models\.yml\z})
@@ -212,6 +214,12 @@ module Master
     end
 
     def validate_laws(data, path:, text:)
+      Master::FlatLawCatalogue.validate!(data)
+    end
+
+    # Compatibility validator for scanner/execution configuration that has not
+    # yet moved to its owning registry. It is not the normative law catalogue.
+    def validate_runtime_laws(data, path:, text:)
       validate_required_law_sections(data)
       catalogue = data.fetch("law_catalogue")
       validate_catalogue_contract(catalogue)
