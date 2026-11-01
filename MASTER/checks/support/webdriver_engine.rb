@@ -4,6 +4,7 @@ require "base64"
 require "json"
 require "net/http"
 require "socket"
+require_relative "../../lib/io/process_spawn"
 
 module Deploy
   module CaptureEngine
@@ -49,7 +50,7 @@ module Deploy
         raise Unavailable, @missing if @missing || @driver.nil?
 
         @port = free_port
-        @pid = Process.spawn(@driver, "-p", @port.to_s, out: File::NULL, err: File::NULL)
+        @pid = Process.spawn(Master::Io::ProcessSpawn.environment, @driver, "-p", @port.to_s, out: File::NULL, err: File::NULL)
         wait_for_driver
         reply = post("/session", capabilities: { alwaysMatch: @caps })
         @session = reply.dig("value", "sessionId")
