@@ -117,14 +117,7 @@ class Marketplace::Order < ApplicationRecord
       next if payment_status.in?(%w[paid refunded])
 
       transitioned = true
-      # The variant is what was bought, so the variant is what runs out. Falling
-      # back to the listing's own stock would let four sizes share one count,
-      # which is the thing variants exist to stop.
-      bought = variant_id ? Marketplace::Variant.lock.find_by(id: variant_id) : nil
-      bought ||= listing_id && Marketplace::Listing.lock.find_by(id: listing_id)
-      raise "listing is not in stock" if bought && !bought.in_stock?
-
-      bought&.consume_stock!(quantity.presence || 1)
+      consume_stock_for_paid!
       update!(
         payment_status: "paid",
         payment_reference: reference.presence || payment_reference,
@@ -132,19 +125,8 @@ class Marketplace::Order < ApplicationRecord
         status: "paid"
       )
     end
-    # Everything below is a side effect of the transition, so it only runs when
-    # this call is the one that made it. A replayed webhook used to send the
-    # buyer a second "payment confirmed" and attribute the order to a partner
-    # twice.
-    return unless transitioned
-
-    title = listing_title
-    metadata = { order_id: id, total_cents: total_cents, quantity: quantity.to_i }
-    record_listing_commerce_event("MarketplacePurchaseCompleted", actor: buyer_record, metadata: metadata)
-    record_listing_event("purchase", user: buyer_record, metadata: metadata)
-    deliver_notification(seller, title: I18n.t("marketplace.order_notification.payment_received"), body: I18n.t("marketplace.order_notification.payment_received_body", title: title), source: self, kind: "order")
-    deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.payment_confirmed"), body: I18n.t("marketplace.order_notification.payment_confirmed_body", title: title), source: self, kind: "order")
-    PartnerMarketing.attribute_order!(self, visitor_digest: nil)
+    # Side effects follow the committed transition; a replay performs none.
+    notify_paid! if transitioned
   end
 
   # The payment services used to read order.listing.currency and .title
@@ -275,6 +257,28 @@ class Marketplace::Order < ApplicationRecord
   end
 
   private
+
+  # The variant is the purchased unit whenever one was selected. Keeping
+  # this inside mark_paid!'s transaction preserves the SQLite lock/reload guard.
+  def consume_stock_for_paid!
+    bought = variant_id ? Marketplace::Variant.lock.find_by(id: variant_id) : nil
+    bought ||= listing_id && Marketplace::Listing.lock.find_by(id: listing_id)
+    raise "listing is not in stock" if bought && !bought.in_stock?
+
+    bought&.consume_stock!(quantity.presence || 1)
+  end
+
+  # Every external side effect belongs to the one call that changed payment
+  # state, never to a webhook delivery that merely observed an already-paid row.
+  def notify_paid!
+    title = listing_title
+    metadata = { order_id: id, total_cents: total_cents, quantity: quantity.to_i }
+    record_listing_commerce_event("MarketplacePurchaseCompleted", actor: buyer_record, metadata: metadata)
+    record_listing_event("purchase", user: buyer_record, metadata: metadata)
+    deliver_notification(seller, title: I18n.t("marketplace.order_notification.payment_received"), body: I18n.t("marketplace.order_notification.payment_received_body", title: title), source: self, kind: "order")
+    deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.payment_confirmed"), body: I18n.t("marketplace.order_notification.payment_confirmed_body", title: title), source: self, kind: "order")
+    PartnerMarketing.attribute_order!(self, visitor_digest: nil)
+  end
 
   def record_listing_event(type, user:, metadata:)
     listing = Marketplace::Listing.strict_loading(false).find_by(id: listing_id)
