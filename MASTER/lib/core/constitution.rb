@@ -594,29 +594,12 @@ module Master::Core
       end
 
       def sacred_paths
-        @sacred_paths ||= begin
-          # Fail closed: a missing, unreadable, invalid, or empty soul.yml must
-          # never degrade into "nothing is sacred" and silently disable protection.
-          root = manifest_root
-          raise Errno::ENOENT, "#{MANIFEST} not found under #{@root}" unless root
-
-          soul = YAML.safe_load_file(File.join(root, MANIFEST), aliases: true)
-          declared = if soul.is_a?(Hash) && soul["absolute"].is_a?(Hash)
-                       Array(soul.dig("absolute", "sacred_paths"))
-                     else
-                       []
-                     end
-          if declared.empty? || declared.any? { |path| path.to_s.strip.empty? }
-            raise "soul.yml under #{@root} declares no valid absolute.sacred_paths — refusing to derive empty sacred paths"
-          end
-
-          declared.map(&:to_s).map do |path|
-            entry = normalize("#{manifest_prefix}#{path}")
-            # normalize resolves the path and drops the slash that marks a subtree;
-            # Constitution.immutable_hit? reads that slash to guard everything below.
-            path.end_with?("/") ? "#{entry}/" : entry
-          end.uniq.freeze
-        end
+        @sacred_paths ||= if [Master::ROOT, Master::REPO_ROOT].include?(@root)
+                            prefix = @root == Master::REPO_ROOT ? "MASTER/" : ""
+                            Master::Soul.sacred_paths.map { |path| "#{prefix}#{path}" }.freeze
+                          else
+                            legacy_sacred_paths
+                          end
       end
 
       def sacred?(path)
@@ -644,6 +627,32 @@ module Master::Core
       end
 
       private
+
+      def legacy_sacred_paths
+        begin
+          # Fail closed: a missing, unreadable, invalid, or empty soul.yml must
+          # never degrade into "nothing is sacred" and silently disable protection.
+          root = manifest_root
+          raise Errno::ENOENT, "#{MANIFEST} not found under #{@root}" unless root
+
+          soul = YAML.safe_load_file(File.join(root, MANIFEST), aliases: true)
+          declared = if soul.is_a?(Hash) && soul["absolute"].is_a?(Hash)
+                       Array(soul.dig("absolute", "sacred_paths"))
+                     else
+                       []
+                     end
+          if declared.empty? || declared.any? { |path| path.to_s.strip.empty? }
+            raise "soul.yml under #{@root} declares no valid absolute.sacred_paths — refusing to derive empty sacred paths"
+          end
+
+          declared.map(&:to_s).map do |path|
+            entry = normalize("#{manifest_prefix}#{path}")
+            # normalize resolves the path and drops the slash that marks a subtree;
+            # Constitution.immutable_hit? reads that slash to guard everything below.
+            path.end_with?("/") ? "#{entry}/" : entry
+          end.uniq.freeze
+        end 
+      end
 
       def manifest_root
         @manifest_root ||= [@root, File.join(@root, "MASTER")].find do |candidate|
