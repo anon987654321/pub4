@@ -25,8 +25,8 @@ module Master
         # Lazy, for the same reason limits.yml stopped being parsed in the
         # constructor: `constitution` is the only reader, and every Laws built
         # to ask for `laws` was opening soul.yml to back an accessor it never
-        # touched. RepairLoop#build_soul_preamble does exactly that, so a preamble
-        # read the file twice and its cache could only ever halve the cost.
+        # touched. Soul remains a subordinate identity/temperament manifest;
+        # Law statements and protected paths are resolved from laws.yml.
         def soul_data = Master.soul_config(root: @root)
 
         def constitution
@@ -49,8 +49,9 @@ module Master
           }.freeze
         end
 
-        # From law/, the one registry. soul carried absolute.laws until the
-        # `conduct` kind let a law about how to work be a Law like any other.
+        # From law/, the executable Law implementations. This is separate from
+        # the normative flat statements in laws.yml and the legacy execution
+        # metadata still required by Law::Definition.
         def laws
           @laws ||= begin
             require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
