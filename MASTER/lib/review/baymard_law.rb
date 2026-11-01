@@ -244,10 +244,13 @@ module Master
         return {} if @evidence_path.to_s.empty?
 
         path = File.expand_path(@evidence_path, @repo_root)
+        repo_real = File.realpath(@repo_root)
         raise InvalidEvidence, "evidence file must stay inside the repository" unless inside?(path, @repo_root)
         raise InvalidEvidence, "evidence file does not exist: #{@evidence_path}" unless File.file?(path)
+        evidence_real = File.realpath(path)
+        raise InvalidEvidence, "evidence file symlink escapes the repository" unless inside?(evidence_real, repo_real)
 
-        data = Master.load_yaml(path)
+        data = Master.load_yaml(evidence_real)
         unless data.is_a?(Hash) && data["schema"] == 1 && data["apps"].is_a?(Hash)
           raise InvalidEvidence, "evidence root must contain schema: 1 and an apps mapping"
         end
