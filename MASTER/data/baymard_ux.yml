@@ -9,6 +9,9 @@ research:
   authority_law: EXTERNAL_RESEARCH_IS_EVIDENCE_NOT_AUTHORITY
   methodology_url: https://baymard.com/research/methodology
   benchmark_url: https://baymard.com/ux-benchmark
+  checkout_research_url: https://baymard.com/research-articles/ecommerce-checkout-usability-report-and-benchmark
+  cart_abandonment_url: https://baymard.com/lists/cart-abandonment-rate
+  inline_validation_url: https://baymard.com/research-articles/inline-form-validation
   reviewed_on: "2026-11-01"
   scope: "Ecommerce research informs applicable commerce journeys; site-wide usability checks also apply where relevant."
   boundary: "Do not copy proprietary guideline text, screenshots, benchmark scores, or imply Baymard certification. This profile is not an official Baymard audit."
@@ -113,20 +116,20 @@ checks:
     mode: task
     applies_when: cart
     severity: warning
-    law_ids: [TRUTHFUL_STATUS, POLA_intuitive_navigation]
-    statement: "A visitor should be able to review, edit and understand the cart total before entering checkout."
-    task: "Add an item, change quantity, remove it, return to the cart and explain the current subtotal, delivery charges, fees and total. Record where each cost first becomes clear."
-    verification: "Record quantity edits, removal, cost disclosure and whether the visitor can explain the final total."
+    law_ids: [TRUTHFUL_STATUS, POLA_intuitive_navigation, BAYMARD_CART_ABANDONMENT_CONTEXT, BAYMARD_CHECKOUT_COST_TRANSPARENCY]
+    statement: "A visitor should be able to review, edit and understand the cart total before entering checkout; abandonment rates must be interpreted by reason, not treated as a diagnosis."
+    task: "Add an item, change quantity, remove it, return to the cart and explain the current subtotal, delivery charges, fees and total. Record where each cost first becomes clear; distinguish stated purchase intent from browsing or price comparison rather than pressuring the participant to buy."
+    verification: "Record quantity edits, removal, cost disclosure, the participant's stated intent and whether the visitor can explain the final total."
 
   checkout_guest_and_recovery:
     area: checkout
     mode: task
     applies_when: checkout
     severity: error
-    law_ids: [TRUTHFUL_STATUS, REACH_form_label, REACH_aria_labels]
-    statement: "A purchase flow should not force avoidable account creation and should help visitors recover from field errors without losing entered information."
-    task: "Complete a disposable checkout as a guest where the product permits it. Trigger a safe validation error, correct it, and record account barriers, field guidance, retained values, delivery choices, cost disclosure and the final confirmation."
-    verification: "Record avoidable account barriers, retained values after validation errors, delivery and payment clarity, and confirmation."
+    law_ids: [TRUTHFUL_STATUS, REACH_form_label, REACH_aria_labels, BAYMARD_INLINE_VALIDATION_RECOVERY, BAYMARD_USER_AGENCY_OVER_CONVERSION, BAYMARD_CHECKOUT_COST_TRANSPARENCY]
+    statement: "A purchase flow should not force avoidable account creation, hide material costs or use coercive choices; field errors must be recoverable without losing entered information."
+    task: "Complete a disposable checkout as a guest where the product permits it. Enter an invalid value, correct it, and record whether feedback appears too early, names the specific problem, clears when corrected and preserves unrelated values. Also record account barriers, cost disclosure, optional extras, refusal/cancellation paths, delivery choices and the final confirmation."
+    verification: "Record inline error timing and correction, retained values, avoidable account barriers, visible total costs, optional extras, refusal/cancellation clarity and confirmation."
 
   mobile_task_completion:
     area: mobile
