@@ -3,15 +3,19 @@
 require "json"
 require "fileutils"
 require "rbconfig"
-require_relative "../../output_paths"
-require_relative "../../replicate/client"
-require_relative "../../subprocess"
+require_relative "../output_paths"
+require_relative "../replicate/client"
+require_relative "../subprocess"
 
 module Studio
   module Visual
     class IdeaPicture
       FILM = "prunaai/p-video-2-pro"
-      ROOT = File.expand_path("../..", __dir__)
+      # The module root is STUDIO. The flatten (b5acc93bc) moved this file one
+      # level up out of photograph/generators/ but left the two-step climb, so
+      # ROOT answered the repository root and every path built from it — the
+      # Lora subjects, the output-path safety rails — pointed outside the tree.
+      ROOT = File.expand_path("..", __dir__)
       SUBJECTS = File.join(ROOT, "replicate", "lora").freeze
 
       def initialize(

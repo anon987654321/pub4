@@ -247,11 +247,11 @@
   --surface: #16181c;
   --surface-elevated: #16181c;
   --search-bg: #202327;
-  --accent: #1d9bf0;
-  // Ink on --accent: X paints white type on #1d9bf0, which is 3.16:1 and
-  // fails TYPOGRAPHY's 7.0. Black on the same blue is 7.02:1, so the blue is
-  // X's and the ink is ours.
-  --accent-ink: #000000;
+  // The accent is X's one blue (#1d9bf0) with the family's black ink on it
+  // (7.02:1; X's own white would be 3.16:1). Both flow from the dialect
+  // mixin's parameter now — brgen-old-dark-tokens — so the accent map stays
+  // the only thing that declares --accent on this tree, which is what the
+  // vertical_accent_single_map law checks.
   // Operator 2026-10-28: every app ships its bundled face. Source Sans 3 is
   // self-hosted by the shared engine at /fonts and already @font-face'd
   // through stack → fonts. The family law in MASTER/data/tokens.yml still

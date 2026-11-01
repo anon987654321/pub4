@@ -27,7 +27,9 @@ module Deploy
     RAILS_ROOT = File.join(ROOT, "RAILS")
     MASTER = File.join(ROOT, "MASTER")
     DESIGN_RULES = File.join(MASTER, "data", "tokens.yml")
-    LAW_MAP = File.join(MASTER, "data", "laws.yml")
+    # The flat constitutional catalogue (3039b34b9) moved law_map out of the
+    # normative laws.yml; old runtime consumers read it through law_runtime.yml.
+    LAW_MAP = File.join(MASTER, "data", "law_runtime.yml")
     DESIGN_DOC = File.join(RAILS_ROOT, "__shared", "README.md")
 
     # Every directory that renders a view, the three apps plus brgen's engines.
@@ -120,7 +122,7 @@ module Deploy
         "jox chrome" => [["app/assets/stylesheets/application.scss", /\.jox-logo\b/]],
       },
       "bsdports" => {
-        "jox chrome" => [["app/assets/stylesheets/_bsdports_shared_chrome.scss", /\.jox-logo\b/]],
+        "jox chrome" => [["app/assets/stylesheets/application.scss", /\.jox-logo\b/]],
       },
     }.freeze
 
