@@ -11,20 +11,11 @@ module Master
       }.freeze
 
       def initialize(laws_data: nil, root: Master::ROOT)
-        @legacy = legacy_entries(laws_data) if laws_data
-        if @legacy && !@legacy.empty?
-          @laws = @legacy.transform_values { |value| value["priority"].to_i }
-          @entries = {}
-          @precedence_order = []
-        else
-          @entries = Master.law_entries(root:).to_h { |entry| [entry.fetch("id").to_s.upcase, entry] }
-          @precedence_order = Master::Soul.invariant_order
-          @laws = @entries.filter_map do |id, entry|
-            node = node_for(id)
-            index = @precedence_order.index(node)
-            [id, index] if index
-          end.to_h
-        end
+        @root = File.expand_path(Master.master_root(root:))
+        data = laws_data || Master.load_yaml(File.join(@root, "data", "laws.yml"))
+        entries = Master.law_entries_in(data || {})
+        @entries = entries.to_h { |entry| [entry.fetch("id").to_s.upcase, entry] }
+        @precedence_order = Master::Soul.invariant_order(root: @root)
       end
 
       def law_for(law_id, laws_index: nil)
@@ -37,36 +28,34 @@ module Master
       end
 
       def winner(law_a, law_b, laws_index: nil)
-        return legacy_winner(law_a, law_b, laws_index:) if @legacy && !@legacy.empty?
-
         node_a = node_for(law_for(law_a, laws_index:) || law_a)
         node_b = node_for(law_for(law_b, laws_index:) || law_b)
         return law_a unless node_a && node_b
 
-        winner = Master::Soul.winner(node_a, node_b)
-        return law_a if winner.nil? || winner == node_a
-        return law_b if winner == node_b
+        result = Master::Soul.winner(node_a, node_b, root: @root)
+        return law_a if result.nil? || result == node_a
+        return law_b if result == node_b
 
         law_a
       end
 
-      def priority(law_name)
-        return @laws.fetch(law_name.to_s.upcase, 99) if @legacy && !@legacy.empty?
-
+      def precedence_index(law_name)
         node = node_for(law_name)
         @precedence_order.index(node) || 99
       end
 
-      def governing_law_ids
-        return @laws.keys if @legacy && !@legacy.empty?
+      # Transitional method name for callers not yet migrated. The value is a
+      # derived position in laws.yml order, never a declared priority field.
+      def priority(law_name) = precedence_index(law_name)
 
+      def governing_law_ids
         @precedence_order.filter_map do |node|
           @entries.find { |_id, entry| entry["node"].to_s == node }&.first
         end
       end
 
       def governing_laws
-        @laws.dup
+        governing_law_ids.each_with_index.to_h
       end
 
       private
@@ -85,27 +74,6 @@ module Master
 
         parent = entry["parent"]
         parent ? node_for(parent, seen) : nil
-      end
-
-      def legacy_entries(data)
-        wrapped = data["laws"]
-        return wrapped if wrapped.is_a?(Hash)
-
-        data.select do |name, value|
-          name.to_s.match?(/\A[A-Z][A-Z0-9_]*\z/) &&
-            value.is_a?(Hash) &&
-            value["priority"] &&
-            (value["statement"] || value["name"])
-        end
-      end
-
-      def legacy_winner(law_a, law_b, laws_index:)
-        priority_a = priority(law_for(law_a, laws_index:))
-        priority_b = priority(law_for(law_b, laws_index:))
-        return law_a if priority_a < priority_b
-        return law_b if priority_b < priority_a
-
-        law_a
       end
 
       def infer_law(entry)
