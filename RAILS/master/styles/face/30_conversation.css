@@ -509,7 +509,7 @@ body[data-phantom-glitch="1"] canvas {
   position: fixed;
   top: var(--inset-t);
   inset-inline-start: var(--inset-l);
-  bottom: calc(52px + var(--safe-bottom));
+  bottom: calc(76px + var(--safe-bottom) + var(--keyboard-inset, 0px));
   width: min(320px, calc(100vw - 24px - var(--safe-left) - var(--safe-right)));
   z-index: calc(var(--z-toast) + 100);
   display: flex;

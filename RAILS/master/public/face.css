@@ -1231,7 +1231,7 @@ body[data-phantom-glitch="1"] canvas {
   position: fixed;
   top: var(--inset-t);
   inset-inline-start: var(--inset-l);
-  bottom: calc(52px + var(--safe-bottom));
+  bottom: calc(76px + var(--safe-bottom) + var(--keyboard-inset, 0px));
   width: min(320px, calc(100vw - 24px - var(--safe-left) - var(--safe-right)));
   z-index: calc(var(--z-toast) + 100);
   display: flex;
@@ -2058,6 +2058,9 @@ body.mission-control .mission-heading { max-inline-size: 80ch; margin: 0 0 1rem;
   .master-titlebar { gap: .5rem; }
   .master-titlebar .brand-mark { display: inline-flex; }
   .master-session-tab { padding-inline: .875rem; }
+  /* The prompt is 64px high + 8px from the viewport edge; preserve an 8px
+     gap and follow the same keyboard/safe-area offsets as the prompt. */
+  #chat-history-panel { bottom: calc(80px + var(--safe-bottom) + var(--keyboard-inset, 0px)); }
 }
 @media (min-width: 768px) { body.mission-control .panel { margin-block-end: 24px; } }
 @media (prefers-reduced-motion: reduce) { #zsh, .master-titlebar *, .master-session-tab, #turn-control { transition: none; scroll-behavior: auto; } }
