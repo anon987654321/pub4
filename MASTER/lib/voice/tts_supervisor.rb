@@ -147,7 +147,7 @@ module Master
 
       def spawn_daemon(root:, path:, index: 0)
         worker = File.join(root, "bin", "tts-worker")
-        env = daemon_env(root)
+        env = Master::Io::ProcessSpawn.environment(daemon_env(root))
         log = log_path(root, index:)
         pid = Process.spawn(
           env, RbConfig.ruby, worker, "--daemon", path,
