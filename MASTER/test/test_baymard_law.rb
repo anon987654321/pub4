@@ -286,6 +286,49 @@ class TestBaymardLaw < Minitest::Test
       row = report.assessments.find { |item| item.check_id == "navigation_findability" }
       assert_equal "inconclusive", row.status
       assert_match(/redaction declaration/, row.summary)
+
+      evidence["apps"]["demo"]["navigation_findability"]["artifacts"][0]["redacted"] = true
+      File.write(evidence_path, YAML.dump(evidence))
+      report = Master::Review::BaymardLaw.new(
+        root: dir, apps: ["demo"], evidence_path: "baymard-evidence.yml", profile:
+      ).call
+      row = report.assessments.find { |item| item.check_id == "navigation_findability" }
+      assert_equal "pass", row.status
+      assert_match(/redacted=true/, row.evidence.join(" "))
+    end
+  end
+
+  def test_oversized_task_artifacts_cannot_prove_a_task
+    with_fixture do |dir, rails, profile|
+      write_good_surface(rails)
+      artifact_path = File.join(dir, "large-observation.md")
+      File.binwrite(artifact_path, "x" * (Master::Review::BaymardLaw::MAX_EVIDENCE_ARTIFACT_BYTES + 1))
+      evidence_path = File.join(dir, "baymard-evidence.yml")
+      File.write(evidence_path, YAML.dump(
+        "schema" => 1,
+        "apps" => {
+          "demo" => {
+            "navigation_findability" => {
+              "status" => "pass",
+              "method" => "expert_walkthrough",
+              "participants" => 1,
+              "summary" => "The task completed without prompting.",
+              "artifacts" => [{
+                "path" => "large-observation.md",
+                "sha256" => Digest::SHA256.file(artifact_path).hexdigest,
+              }],
+            },
+          },
+        },
+      ))
+
+      report = Master::Review::BaymardLaw.new(
+        root: dir, apps: ["demo"], evidence_path: "baymard-evidence.yml", profile:
+      ).call
+      row = report.assessments.find { |item| item.check_id == "navigation_findability" }
+
+      assert_equal "inconclusive", row.status
+      assert_match(/size/, row.summary)
     end
   end
 
