@@ -207,6 +207,30 @@ each batch; compare pinned revisions only.
 
 ## Open from the 2026-11-01 session — Baymard UX audit
 
+- [ ] Add exact, case-specific runtime adapters for the 392 currently unmapped
+  entries in `RAILS/test/interaction_campaign_400.json`. The premerge gate
+  now runs all 400 rows and reports unmapped rows as SKIPPED/BLOCKED; it must
+  remain non-green until each applicable action/fault pair has a genuine
+  isolated test and saved evidence. Do not generate generic tests that merely
+  assert a nearby page loads, or relabel source expectations as runtime passes.
+- [ ] Run `ruby MASTER/tools/rails/premerge.rb --interactions` after adapter
+  work and retain the exact ledger, command, revision and exit status. The
+  current checked-in inventory remains 8 mapped adapters and 392 unmapped;
+  that campaign has not been executed in this editing session.
+- [ ] Extend the new computed accessibility-tree check from its bounded sample
+  to the full declared surface inventory only after measuring runtime and
+  resource cost. It checks accessible names in Chrome's computed AX tree; it
+  is not a substitute for real VoiceOver/NVDA sessions or announcement testing.
+- [ ] Keep actual participant usability sessions, human screen-reader testing
+  and controlled conversion experiments as separate operator evidence. The
+  automated `/fix` pipeline can validate supplied, anonymised records; it
+  cannot recruit participants, observe human behaviour or manufacture results.
+- [ ] Execute the new Ruby contract tests and full verification on the pinned
+  Ruby runtime with all required app servers and Chrome/Chromium available.
+  The GitHub source edits in this session were not run locally; the reported
+  Vercel status is failed with a build-rate-limit URL, not a successful build.
+
+
 - [ ] Execute the new Baymard regression suite on pinned Ruby 4.0.5:
   from the repository root run
   `cd MASTER && bundle exec ruby -Ilib:test test/test_baymard_law.rb`.
