@@ -19,6 +19,8 @@ module Master
 
       def blocked?(relative_or_absolute)
         relative = normalize_relative(relative_or_absolute)
+        return Master::Soul.sacred?(relative, root: @root) if [Master::ROOT, Master::REPO_ROOT].include?(@root)
+
         sacred_declarations.any? do |declaration|
           prefix = declaration.delete_suffix("/")
           relative == prefix || relative.start_with?(prefix + File::SEPARATOR)
