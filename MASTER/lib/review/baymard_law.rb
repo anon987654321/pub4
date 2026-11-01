@@ -162,14 +162,24 @@ module Master
         raise InvalidProfile, "evidence_policy must be a mapping" unless policy.is_a?(Hash)
         required = policy.fetch("required")
         raise InvalidProfile, "evidence_policy.required must declare source and task evidence" unless required.is_a?(Hash)
-        {
-          "source" => %w[source_files source_inventory_sha256 finding_path line source_sha256],
-          "task" => %w[method participants summary artifacts sha256],
-        }.each do |mode_name, expected|
-          declared = Array(required[mode_name]).map(&:to_s)
-          absent = expected - declared
-          raise InvalidProfile, "evidence_policy.required.#{mode_name} is missing: #{absent.join(', ')}" unless absent.empty?
+        source_contract = required["source"]
+        if source_contract.is_a?(Hash)
+          {
+            "pass" => %w[source_files source_inventory_sha256],
+            "finding" => %w[finding_path line source_sha256],
+          }.each do |outcome, expected|
+            declared = Array(source_contract[outcome]).map(&:to_s)
+            absent = expected - declared
+            raise InvalidProfile, "evidence_policy.required.source.#{outcome} is missing: #{absent.join(', ')}" unless absent.empty?
+          end
+        else
+          raise InvalidProfile, "evidence_policy.required.source must distinguish pass and finding evidence"
         end
+
+        task_required = %w[method participants summary artifacts sha256]
+        task_declared = Array(required["task"]).map(&:to_s)
+        task_missing = task_required - task_declared
+        raise InvalidProfile, "evidence_policy.required.task is missing: #{task_missing.join(', ')}" unless task_missing.empty?
         raise InvalidProfile, "evidence_policy.task_privacy is required" if policy["task_privacy"].to_s.strip.empty?
         verdicts = Array(policy["verdicts"]).map(&:to_s)
         raise InvalidProfile, "evidence_policy.verdicts must declare #{STATUSES.join(', ')}" unless verdicts.sort == STATUSES.sort
@@ -421,7 +431,8 @@ module Master
           message: issue.fetch(:message),
           recommendation: spec["verification"].to_s,
           evidence: [
-            "#{record.relative}:#{line}",
+            "finding_path=#{record.relative}",
+            "line=#{line}",
             "source_sha256=#{Digest::SHA256.hexdigest(record.content.b)}",
           ],
         )
