@@ -6,9 +6,10 @@ require "json"
 module Master
   # The canonical identity and constitutional precedence graph.
   #
-  # soul.rb owns meaning. data/soul.yml carries the integrity digest and,
-  # during the migration, the legacy runtime settings read by existing code.
-  # laws.yml owns operative law definitions; this class owns their precedence.
+  # soul.rb owns canonical identity, values and constitutional precedence.
+  # data/soul.yml attests that body and owns the separate, validated delivery
+  # temperament plus transitional runtime settings. laws.yml owns law records;
+  # this class owns the graph that resolves their constitutional precedence.
   class Soul
     class IntegrityError < StandardError; end
     class ProtectedWrite < StandardError; end
@@ -68,8 +69,8 @@ module Master
       "inter_model_contract" => []
     }.transform_values(&:freeze).freeze
 
-    # Temporary compatibility declarations. Once the remaining legacy readers
-    # have moved to Soul.sacred_paths, the Markdown paths leave this list.
+    # Operator-authored paths. The YAML manifest mirrors this list for legacy
+    # configuration readers; ConfigurationGuard rejects any divergence.
     SACRED_PATHS = %w[
       data/laws.yml
       data/soul.yml
