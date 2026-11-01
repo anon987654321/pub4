@@ -159,5 +159,5 @@ evidence_policy:
       pass: [source_files, source_inventory_sha256]
       finding: [finding_path, line, source_sha256]
     task: [method, participants, summary, artifacts, sha256]
-  task_privacy: "Store anonymised aggregate observations only. Do not persist participant names, contact details, recordings or raw personal data. Text artifacts are scanned for contact details; image artifacts require an explicit human redaction attestation before they are accepted."
+  task_privacy: "Manually anonymise aggregate observations before storage; do not persist participant names, contact details, recordings or raw personal data. The automated text scan rejects emails, phone-like strings and common structured participant/customer name or ID fields, but is a guardrail rather than a complete PII detector. Image artifacts require explicit human review and redaction attestation before acceptance."
   verdicts: [pass, fail, inconclusive, not_applicable]
