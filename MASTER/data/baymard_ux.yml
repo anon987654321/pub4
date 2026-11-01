@@ -66,7 +66,7 @@ checks:
     severity: warning
     law_ids: [REACH_touch_target_min, POLA_intuitive_navigation]
     statement: "Full-page layouts declare a device-width viewport so the browser can size the page to the device."
-    verification: "Inspect the rendered page head and confirm width=device-width and a usable initial scale. Reflow, clipping, touch geometry and occlusion are measured by the existing rendered layout checks."
+    verification: "Inspect each rendered full-page layout and confirm its viewport declaration includes width=device-width. Reflow, clipping, touch geometry and occlusion are measured by the existing rendered layout checks."
 
   first_screen_purpose:
     area: homepage
