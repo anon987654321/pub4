@@ -34,4 +34,25 @@ class AppDuplicationTest < Minitest::Test
     assert_empty offenders.map { |relative, lines, count| "#{relative} (#{lines} lines x#{count})" },
                  "identical in more than one app and big enough to extract into RAILS/__shared"
   end
+
+  def test_equivalent_turbo_stream_actions_reuse_the_canonical_template
+    retired = %w[
+      amber/app/views/follows/destroy.turbo_stream.erb
+      amber/app/views/planned_outfits/destroy.turbo_stream.erb
+      bsdports/app/views/ports/unwatch.turbo_stream.erb
+    ]
+    retired.each do |relative|
+      refute File.file?(File.join(ROOT, relative)), "#{relative} duplicates its paired response"
+    end
+
+    expectations = {
+      "amber/app/controllers/follows_controller.rb" => "format.turbo_stream { render :create }",
+      "amber/app/controllers/planned_outfits_controller.rb" => "render :create",
+      "bsdports/app/controllers/ports_controller.rb" => "render :watch",
+    }
+    expectations.each do |relative, render_call|
+      assert_includes File.read(File.join(ROOT, relative)), render_call,
+                      "#{relative} must explicitly reuse its canonical stream template"
+    end
+  end
 end
