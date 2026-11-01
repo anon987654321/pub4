@@ -620,6 +620,21 @@ FINDING_HYGIENE_inconclusive_as_pass:
   statement: "A finding recorded as pass on inconclusive evidence."
   resolution: never
 
+BAYMARD_RESEARCH_BOUNDARY:
+  parent: FINDING_HYGIENE
+  statement: >
+    Public usability research, including Baymard's ecommerce research, informs
+    independently worded and context-specific assessments. It is evidence, not
+    constitutional authority: it does not override operator-owned product
+    identity, the needs of the actual audience, or observed behaviour. It never
+    implies affiliation or certification and does not reproduce proprietary
+    guideline text, screenshots or benchmark material.
+  severity: error
+  resolution: never
+  mechanical: Master::Review::BaymardLaw.validate_profile!
+  semantic: operator_context_and_observed_user_needs
+  source: https://baymard.com/research/methodology
+
 # ---
 
 ATTESTATION_IS_NOT_FINDING:
