@@ -19,7 +19,13 @@ module Master
       module_function
 
       def report_turn(entry)
-        lines = entry.to_s.lines
+        text = entry.to_s
+        if (match = text.match(/\\A(\\d+): read\\(path\\) -> ok: (.*)\\z/m))
+          output = match[2]
+          return "#{match[1]}: read(path) -> ok: #{output.bytesize}B, #{output.lines.size} lines"
+        end
+
+        lines = text.lines
         first = lines.first.to_s.chomp
         first = "#{first[0, REPORT_TURN_CHARS]}…" if first.length > REPORT_TURN_CHARS
         lines.size > 1 ? "#{first} (+#{lines.size - 1} lines)" : first
