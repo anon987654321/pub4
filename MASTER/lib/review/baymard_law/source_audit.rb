@@ -101,41 +101,49 @@ module Master
         end
 
         def probe_native_click_targets(records)
-          targets = []
+          issues = []
           unknown = []
+          measured = 0
           records.each do |record|
+            # Native links and buttons are the baseline. Their accessible names
+            # and rendered keyboard behaviour are evaluated by separate checks.
+            measured += record.content.scan(/<button\b[^>]*>/im).size
+            measured += record.content.scan(/<a\b(?=[^>]*\bhref\s*=)[^>]*>/im).size
+
             record.content.to_enum(:scan, /<(div|span)\b[^>]*(?:onclick\s*=)[^>]*>/im).each do
               match = Regexp.last_match
               attrs = attributes(match[0])
+              measured += 1
               role = attrs["role"].to_s
               tab = Integer(attrs["tabindex"], exception: false)
-              next if %w[button link].include?(role) && tab && tab >= 0
-
-              targets << issue(record, match.begin(0), "Clickable #{match[1].downcase} needs both a link/button role and a non-negative tab stop, or a native interactive element.")
+              if %w[button link].include?(role) && tab && tab >= 0
+                unknown << record
+              else
+                issues << issue(record, match.begin(0), "Clickable #{match[1].downcase} needs a link/button role and a non-negative tab stop, or should use a native interactive element.")
+              end
             end
             unknown << record if %w[.haml .slim].include?(File.extname(record.path).downcase)
           end
-          [targets, targets.size, unknown.uniq]
+          [issues, measured, unknown.uniq]
         end
 
         def probe_focus_visibility(records)
           issues = []
           unknown = []
-          measured = 0
+          measured = records.size
           records.each do |record|
             matches = record.content.to_enum(:scan, /outline(?:-width|-[\w-]+)?\s*:\s*(?:none|0(?:\s|;|!))/i).map do
               Regexp.last_match.begin(0)
             end
             next if matches.empty?
 
-            measured += matches.size
             if record.content.match?(/:focus(?:-visible)?\b/i)
               unknown << record
               next
             end
 
             matches.each do |offset|
-              issues << issue(record, offset, "Stylesheet suppresses the focus outline and contains no visible :focus or :focus-visible replacement.")
+              issues << issue(record, offset, "Stylesheet suppresses the focus outline and contains no :focus or :focus-visible replacement.")
             end
           end
           [issues, measured, unknown]
