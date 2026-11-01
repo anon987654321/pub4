@@ -1005,3 +1005,71 @@ browser support and bundle/runtime cost before adopting a dependency.
 - [ ] **Amber 3D:** deferred until the product has real, optimized garment assets and an honest fit-data contract. The current product documentation explicitly excludes virtual fitting; a decorative mannequin would imply a capability the application does not have.
 - [ ] **MASTER visual/observability work:** no MASTER implementation was edited. The repository requires a complete read of every file under MASTER before such edits; the current tree has 2,210 files, so that prerequisite remains open.
 - [ ] **Verification:** run `cd RAILS/bsdports && bin/ci` and the focused graph/controller tests, then capture browser evidence. This GitHub editing session could not execute Rails or browser tests; they remain NOT_RUN, not PASS. Brgen Maps browser checks are also outstanding.
+
+## Open from the 2026-11-01 session — Rails ABC, configuration, UX and tokens
+
+- [ ] Re-measure the ABC baseline against the current `main`, not the
+  superseded `5cbb312ed` snapshot. The planned `abc_refactor.rb` driver is
+  absent from the current repository tree. Restore or implement it as a
+  deterministic Ruby AST refactorer with `--dry-run`, bounded `--limit`,
+  source-location-aware helper insertion inside the owning class/module, syntax
+  validation and fixture tests before running another mechanical batch. Keep
+  `Metrics/AbcSize Max: 15`; do not change the threshold to make the report pass.
+- [ ] Close the remaining mechanical ABC work only after the driver exists:
+  run the 20-file batch across Brgen, Amber and BSDPorts, review each helper
+  placement, run `ruby -c` on every changed model, and measure the new
+  violation count. The current `RAILS/.rubocop.yml` disables the entire
+  `Metrics` department, so a separate governance change is required before
+  RuboCop itself can enforce `Metrics/AbcSize`; the MASTER
+  `BOUNDED_LOAD_abc_size` law remains authoritative meanwhile.
+- [ ] Finish BSDPorts Solid Queue proof in a local checkout: run
+  `cd RAILS/bsdports && bin/ci`; enqueue a development job and verify it is
+  stored in `storage/development_queue.sqlite3`; verify recurring jobs use
+  the same configured database; and inspect `/admin/jobs`. Queue/cache YAML
+  and the development adapter/database mapping are committed, but this runtime
+  proof is NOT_RUN.
+- [ ] Complete empty-state migration with a full caller scan across every Rails
+  app and engine. The shared partial now logs a deprecation when legacy
+  `actions:` is supplied and documents `action: { label:, path: }`; migrate
+  any remaining legacy callers, prove none remain, then remove the compatibility
+  branch in a separately verified change. The new logging regression is
+  committed but NOT_RUN.
+- [ ] Finish the canonical token correction in `MASTER/data/tokens.yml` and
+  `MASTER/tools/design_tokens.rb`, then regenerate
+  `RAILS/__shared/design_tokens.yml`, `RAILS/__shared/public/styles/tokens.css`
+  and CSS through the documented builder. Current `social.surface` and
+  `social.surface_elevated` are both `#111111`; light-mode generation hardcodes
+  a white background and a white highlight. The canonical light palette already
+  defines a grey page background, so the generator must consume that source
+  rather than invent another palette. `radius-md` is already 12px and
+  `radius-lg` 16px; preserve this correct distinction. Do not hand-edit
+  generated token artifacts.
+- [ ] Finish the face CSS audit by distinguishing semantic constants from
+  presentation literals. Keep the black canvas/print surfaces and OpenBSD
+  wscons green where they are identity or accessibility requirements. Replace
+  only fallback/presentation literals owned by canonical face tokens, then
+  regenerate `RAILS/master/public/face.css` and compare rendered face pages
+  before/after. A source grep alone is not visual proof; confirm the production
+  visual contract measures rather than silently warning.
+- [ ] Keep Perplexity disabled until the intended product is chosen and tested.
+  Do not add it to `openai_compatible` or a quality tier by model name alone:
+  the current hosted adapter expects `GET /models` plus a chat-completions
+  response, whereas current Perplexity Agent API uses its own request/response
+  envelope and carries citations and cost/usage metadata. Decide between
+  citation-preserving Agent research, raw Search retrieval, or the separately
+  access-controlled Orchestrator model offering. Implement a provider-specific
+  adapter with typed errors, bounded timeout/tool budget, citation and usage
+  preservation, explicit per-operation eligibility, measured conservative
+  scores, and an opt-in spend-capped canary. Test auth, model-list drift,
+  unavailable models, malformed responses, timeouts, rate limits, citations,
+  cost/usage, health/quota parking and fallback before any default route.
+- [ ] Keep the router free-route invariant: a route whose policy is `free`
+  starts with keyless/free candidates and must not silently put a keyed paid
+  endpoint first. The fallback policy and regression tests have been updated;
+  run the focused routing suite and the full MASTER check runner before
+  treating the change as verified.
+- [ ] Run each affected app's `bin/ci`, then
+  `ruby MASTER/checks/runner.rb --all`, and capture fresh output/evidence.
+  GitHub-only editing cannot execute these commands or validate SQLite,
+  Rails rendering, RuboCop metrics or browser contracts; all new tests in this
+  batch remain NOT_RUN until run from a working checkout.
