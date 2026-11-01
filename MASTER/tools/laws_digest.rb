@@ -21,6 +21,7 @@ module Operator
     OUTPUT = File.join(ROOT, "MASTER", "docs", "laws_digest.md")
     DEFINE = /\ALaw\.define\(:([A-Z_0-9]+)\) do\s*\z/.freeze
     FIX = /\A\s+fix\s+"(.*)"\s*\z/.freeze
+    SEVERITY = /\A\s+severity\s+:(info|warning|error|critical|veto)\s*\z/.freeze
 
     attr_reader :entry_count
 
@@ -47,12 +48,20 @@ module Operator
       out << "sentence, and where this file and a source disagree the source wins and the\n"
       out << "digest is regenerated. `rake lint:laws_digest` fails when the file has drifted.\n\n"
 
-      catalogue = YAML.safe_load_file(@catalogue_path)
-      out << "## Constitutional laws (data/laws.yml)\n\n"
-      catalogue.each do |id, row|
-        next unless row.is_a?(Hash) && row["tier"].is_a?(String)
-
-        out << "- **#{id}** — #{row['statement']}\n"
+      catalogue = YAML.safe_load_file(@catalogue_path, aliases: true)
+      @catalogue_entries = catalogue.filter_map do |id, row|
+        [id.to_s, row] if row.is_a?(Hash) && row["statement"].is_a?(String)
+      end.to_h
+      out << "## Normative laws (data/laws.yml)\n\n"
+      @catalogue_entries.each do |id, row|
+        labels = []
+        labels << "node: #{row["node"]}" if row["node"]
+        labels << "parent: #{row["parent"]}" if row["parent"]
+        labels << "root: #{row["root"]}" if row["root"]
+        labels << "severity: #{row["severity"]}" if row["severity"]
+        out << "- **#{id}**"
+        out << " (#{labels.join("; ")})" unless labels.empty?
+        out << " — #{row["statement"].to_s.strip.gsub(/\\s+/, " ")}\n"
         @entry_count += 1
       end
 
@@ -79,10 +88,16 @@ module Operator
 
     private
 
-    # A Law's severity is its law_catalogue entry's.
-    def severity_of(id)
-      @entries ||= YAML.safe_load_file(@catalogue_path).dig("law_catalogue", "entries") || {}
-      @entries.dig(id, "severity")
+    # Resolve severity from the canonical declaration or its declared parent.
+    def severity_of(id, seen = {})
+      key = id.to_s
+      return if seen[key]
+
+      seen[key] = true
+      row = @catalogue_entries && @catalogue_entries[key]
+      return unless row
+
+      row["severity"] || severity_of(row["parent"], seen)
     end
 
     # Block-scoped, not regex-global: a law is the lines between its
@@ -100,6 +115,7 @@ module Operator
           current = nil
         else
           current[:fix] ||= line.match(FIX)&.[](1)
+          current[:severity] ||= line.match(SEVERITY)&.[](1)
         end
       end
       laws
