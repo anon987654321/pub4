@@ -10,6 +10,7 @@ require "open3"
 require_relative "../lib/operator/ruby_runner"
 require "timeout"
 require_relative "../lib/trace/dmesg"
+require_relative "../lib/io/process_spawn"
 
 MASTER_ROOT = File.expand_path("..", __dir__)
 RUBY = Operator::RubyRunner.ruby_cmd
@@ -26,7 +27,7 @@ end
 def run_step(name, env, *cmd, stdin_data: nil, chdir: MASTER_ROOT)
   Master::Trace::Dmesg.status("test0", "#{name}, running")
   out, status = Timeout.timeout(TIMEOUT_SECONDS) do
-    Open3.capture2e(env, *cmd, stdin_data:, chdir:)
+    Open3.capture2e(Master::Io::ProcessSpawn.environment(env), *cmd, stdin_data:, chdir:)
   end
   bad_line = out.lines.find { |line| line.match?(BAD_OUTPUT) }
   if status.success? && bad_line.nil?
