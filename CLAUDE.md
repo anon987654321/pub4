@@ -6,13 +6,13 @@
 
 Before planning or taking action, load MASTER's canonical context in this order:
 
-1. Read `MASTER/data/soul.yml`.
-2. Read `MASTER/data/laws.yml`.
+1. Read `MASTER/data/laws.yml`. It is the sole normative constitution.
+2. Read `MASTER/data/soul.yml` as subordinate identity, voice and delivery configuration.
 3. For unfamiliar or broad work, run `ruby MASTER/tools/agent_context.rb --tree` and use its output to establish the repository's structure and relevant context.
-4. Read the applicable Law entries in `MASTER/data/laws.yml`, and each Law's one `Law.define`, the Ruby under `MASTER/law/`. The catalogue entry holds the operator's decisions about a Law (severity, lifecycle, autofix permission, scope and exemptions); the `Law.define` holds what makes its detector correct (the detector, its fixtures or the test that proves it, its tags and repair transform). Neither restates the other.
+4. Read the applicable flat Law records in `MASTER/data/laws.yml`, then inspect the relevant implementations and tests under `MASTER/law/`. A declared adapter or fixture is not proof that the detector ran or the product is excellent. The nine invariant nodes are ordered in the Law catalogue itself; do not invent a numeric priority or second precedence graph.
 5. Read `MASTER/AGENTS.md` for the repository workflow and task guidance before editing.
 
-Shell commands obey `MASTER/data/laws.yml` `zsh.banned_commands`, which names the replacement for each. No hook enforces it here; MASTER's own shell refuses them, and the ZSH_NATIVE_PATTERNS Law reports them in scripts.
+Shell commands must obey the applicable shell Laws declared in `MASTER/data/laws.yml`. The runtime compatibility registry may still carry older command metadata; it does not override the normative Law statements.
 
 Follow MASTER's current instructions for any additional context required by the task. Do not substitute remembered instructions, summaries, or assumptions for the live configuration and source.
 
