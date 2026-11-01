@@ -326,8 +326,11 @@ module Master
 
       def contact_detail_in?(summary)
         text = summary.to_s
-        text.match?(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i) ||
-          text.match?(/(?:\+?\d[\d\s().-]{7,}\d)/)
+        return true if text.match?(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)
+
+        text.scan(/\+?\d[\d\s().-]{7,}\d/).any? do |candidate|
+          candidate.gsub(/\D/, "").length.between?(9, 15)
+        end
       end
 
       def valid_artifacts?(artifacts)
