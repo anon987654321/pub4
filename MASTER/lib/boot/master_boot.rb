@@ -169,6 +169,7 @@ module Master
     end
 
     def boot_container(root:)
+      Soul.load!
       prepare_runtime!
       emit_device_status
       onboard
