@@ -379,6 +379,8 @@ module Master
       def contact_detail_in?(summary)
         text = summary.to_s
         return true if text.match?(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)
+        return true if text.match?(/\b(?:participant|customer|user)[ _-]?(?:name|id)\s*[:=]/i)
+        return true if text.match?(/\b(?:participant|customer)\s*[:=]\s*[A-Z][\p{L}'-]+(?:\s+[A-Z][\p{L}'-]+)+/u)
 
         text.scan(/\+?\d[\d\s().-]{7,}\d/).any? do |candidate|
           candidate.gsub(/\D/, "").length.between?(9, 15)
