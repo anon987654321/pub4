@@ -6,6 +6,45 @@ vm23 is a seam in `MASTER/data/operator_seams.yml`. Refusals live under
 "Refused, and why" in `MASTER/AGENTS.md`. An item closes by being deleted in
 the commit that carries its evidence; nothing here records finished work.
 
+## Open from the 2026-11-01 session — Baymard UX audit
+
+- [ ] Execute the new Baymard regression suite on pinned Ruby 4.0.5:
+  from the repository root run
+  `cd MASTER && bundle exec ruby -Ilib:test test/test_baymard_law.rb`.
+  Preserve the actual output and exit status. Then run
+  `rake -f MASTER/Rakefile ux:baymard` and review the complete report for
+  every declared RAILS app and shared engine. The 21 regression methods are
+  committed but were not executed in the GitHub editing pass. Fix confirmed
+  defects; do not suppress findings merely to obtain a green report, and keep
+  framework-generated or otherwise unmeasurable cases INCONCLUSIVE.
+
+- [ ] Resolve rendered-review gaps using the existing browser/CDP and
+  accessibility instruments, not a second browser framework. Inspect actual
+  rendered controls and accessibility trees wherever source checks cannot
+  resolve Rails/Haml/Slim helpers or partial composition: control names,
+  informative/decorative image alternatives, button/link names, native
+  keyboard semantics, focus visibility and viewport behavior. Record the
+  app, surface, viewport, observed result and a repository-relative
+  `rendered_review=<path>` evidence reference. Source markup alone is not
+  proof of the rendered experience.
+
+- [ ] Collect privacy-reviewed task evidence for each applicable app and
+  feature: `first_screen_purpose`, `navigation_findability`,
+  `search_recovery`, `product_evaluation`, `cart_editing_and_costs`,
+  `checkout_guest_and_recovery`, `mobile_task_completion`, and
+  `keyboard_and_assistive_technology`. Use a permitted method
+  (`moderated_user_test`, `expert_walkthrough`, `browser_task` or
+  `screen_reader_review`), a positive participant count, anonymised
+  aggregate observations, and repository-local artifacts with verified
+  SHA-256 digests. Manually review/redact every artifact: do not store names,
+  contact details, identifiers or raw audio/video; image evidence requires
+  the explicit human `redacted: true` attestation. The text scanner is only
+  a guardrail, not a complete privacy detector. Populate
+  `MASTER/.master/baymard/evidence.yml`, then rerun
+  `BAYMARD_STRICT=1 BAYMARD_EVIDENCE=MASTER/.master/baymard/evidence.yml ruby MASTER/checks/runner.rb baymard_ux`.
+  Keep unobserved tasks INCONCLUSIVE; do not imply an official Baymard score,
+  certification or affiliation.
+
 ## Open from the 2026-10-31 session
 
 - MASTER browser: submit forms for an operator-approved host. The operator chose
