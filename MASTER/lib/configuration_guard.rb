@@ -5,6 +5,7 @@ require_relative "law_vocabulary"
 require_relative "provider_catalogue_guard"
 require_relative "model_catalogue_guard"
 require_relative "config_sections_guard"
+require_relative "review/baymard_law"
 
 module Master
   # Validates the governing YAML by its invariants. Who may write it is a
@@ -58,6 +59,7 @@ module Master
       when :models then ModelCatalogueGuard.validate(data, path: absolute)
       when :tokens then validate_tokens(data)
       when :config_sections then ConfigSectionsGuard.validate(data, path: absolute)
+      when :baymard_ux then Review::BaymardLaw.validate_profile!(data, root: File.dirname(File.dirname(absolute)))
       end
       nil
     rescue Psych::Exception, ArgumentError, KeyError, TypeError => e
@@ -71,6 +73,7 @@ module Master
       return :laws if normalized.match?(%r{/MASTER/data/laws\.yml\z})
       return :law_runtime if normalized.match?(%r{/MASTER/data/law_runtime\.yml\z})
       return :soul if normalized.match?(%r{/MASTER/data/soul\.yml\z})
+      return :baymard_ux if normalized.match?(%r{/MASTER/data/baymard_ux\.yml\z})
       return :providers if normalized.match?(%r{/MASTER/data/providers\.yml\z})
       return :models if normalized.match?(%r{/MASTER/data/models\.yml\z})
       return :tokens if normalized.match?(%r{/MASTER/data/tokens\.yml\z})
