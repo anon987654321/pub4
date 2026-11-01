@@ -40,7 +40,9 @@ $vertical-accent-ink: #110f19;
 @mixin dark-tokens(
   $bg: #000000,
   $surface: #111111,
-  $surface-elevated: #111111,
+  // 6da7414de differentiates elevated social surfaces in the canonical tokens;
+  // this projection follows the authority.
+  $surface-elevated: #1a1a1a,
   $search-bg: #111111,
   $text: #efefef,
   $text-secondary: #a3a3a3,
@@ -128,7 +130,9 @@ $vertical-accent-ink: #110f19;
 @mixin light-tokens(
   $bg: #ffffff,
   $surface: #efefef,
-  $surface-elevated: #efefef,
+  // tokens.yml#light carries surface_elevated #f2f2f2 — same differentiation,
+  // applied here so the light half does not flat-pack its cards.
+  $surface-elevated: #f2f2f2,
   $search-bg: #efefef,
   $text: #333333,
   $text-secondary: #4d4d4d,
