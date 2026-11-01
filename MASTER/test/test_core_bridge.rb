@@ -76,10 +76,11 @@ class CoreBridgeTest < Minitest::Test
       live_read = streamed.find { |line| line.include?("read(path)") }
       refute_nil live_read
       refute_includes live_read, "private detail line 14"
-      assert_match(/\(\+\d+ lines\)/, live_read)
+      assert_equal "0: read(path) -> ok: #{contents.bytesize}B, 15 lines", live_read
       refute_includes live_read, "\n"
       full_read = result[:transcript].find { |line| line.include?("read(path)") }
       assert_includes full_read, "private detail line 14"
+      refute_includes Master::CLI::CoreBridge.report_turn(full_read), "private detail line 14"
     end
   end
 
@@ -333,7 +334,7 @@ class CoreBridgeTest < Minitest::Test
     line = Master::CLI::CoreBridge.report_turn(file)
 
     refute_includes line, "\n"
-    assert_match(/\\A1: read\\(path\\) -> ok: \\d+B, 3 lines\\z/, line)
+    assert_match(/\A1: read\(path\) -> ok: \d+B, 3 lines\z/, line)
     refute_includes line, "x" * 300
     assert_operator line.length, :<, Master::CLI::CoreBridge::REPORT_TURN_CHARS + 20
     assert_equal "0: note(kind, text) -> ok", Master::CLI::CoreBridge.report_turn("0: note(kind, text) -> ok")
