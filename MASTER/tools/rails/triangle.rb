@@ -177,7 +177,7 @@ module Deploy
       # brgen.log to 1.8 GB and filled the disk.
       log = File.open(log_file(app), "w")
       pid = Process.spawn(
-        env_for(app),
+        Master::Io::ProcessSpawn.environment(env_for(app)),
         BUNDLE, "exec", RUBY, "bin/rails", "server", "-p", app[:port].to_s, "-b", "127.0.0.1",
         chdir: app[:dir], out: log, err: log, pgroup: true
       )
