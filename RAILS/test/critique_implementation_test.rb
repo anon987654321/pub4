@@ -486,6 +486,9 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes shared_post_css, ".feed-card.post-reading-card .feed-card-actions {"
     assert_match(/@media \(min-width: 640px\) \{\s*\.feed-card\.post-reading-card \.feed-card-actions \{\s*width: auto;/m, shared_post_css)
     assert_includes shared_post_css, "border-radius: var(--radius-pill);"
+    assert_includes shared_post_css, '.feed-card.post-reading-card .feed-card-name a,'
+    assert_includes shared_post_css, "padding-block: max(0px, (var(--tap-min) - 1lh) / 2);"
+    assert_includes shared_post_css, ".feed-card.post-reading-card .feed-card-time {\n  font-variant-numeric: tabular-nums;"
     assert_includes feed, 'class: "feed-action"'
     assert_includes feed, 'form_class: "feed-action-form"'
     luxury_titles = css[/body\[data-surface="luxury"\] :is\((.*?)\n\) \{/m, 1]

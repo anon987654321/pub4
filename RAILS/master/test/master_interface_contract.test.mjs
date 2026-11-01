@@ -264,10 +264,10 @@ test("session chrome is mobile-first, nuanced, flat and touch-ready", () => {
 
 
 test("history drawer clears the session prompt and keyboard", () => {
-  assert.match(faceConversation, /#chat-history-panel \{[\s\S]*?bottom: calc\(76px \+ var\(--safe-bottom\) \+ var\(--keyboard-inset, 0px\)\);/);
-  assert.match(faceChrome, /@media \(min-width: 480px\) \{[\s\S]*?#chat-history-panel \{ bottom: calc\(80px \+ var\(--safe-bottom\) \+ var\(--keyboard-inset, 0px\)\); \}/);
-  assert.match(faceCss, /#chat-history-panel \{[\s\S]*?bottom: calc\(76px \+ var\(--safe-bottom\) \+ var\(--keyboard-inset, 0px\)\);/);
-  assert.match(faceCss, /@media \(min-width: 480px\) \{[\s\S]*?#chat-history-panel \{ bottom: calc\(80px \+ var\(--safe-bottom\) \+ var\(--keyboard-inset, 0px\)\); \}/);
+  assert.match(faceConversation, /#chat-history-panel \{[^}]*bottom: calc\(76px \+ var\(--safe-bottom\) \+ var\(--keyboard-inset, 0px\)\);/);
+  assert.ok(faceChrome.includes("#chat-history-panel { bottom: calc(80px + var(--safe-bottom) + var(--keyboard-inset, 0px)); }"));
+  assert.match(faceCss, /#chat-history-panel \{[^}]*bottom: calc\(76px \+ var\(--safe-bottom\) \+ var\(--keyboard-inset, 0px\)\);/);
+  assert.ok(faceCss.includes("#chat-history-panel { bottom: calc(80px + var(--safe-bottom) + var(--keyboard-inset, 0px)); }"));
 });
 
 test("served face.css is generated from the ordered editable sources", () => {

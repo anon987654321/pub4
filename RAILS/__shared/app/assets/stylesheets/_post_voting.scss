@@ -37,6 +37,16 @@
 .feed-card.post-reading-card .feed-action-form .feed-action {
   inline-size: 100%;
 }
+.feed-card.post-reading-card .feed-card-name a,
+.feed-card.post-reading-card .feed-card-text a {
+  display: inline-block;
+  min-inline-size: var(--tap-min);
+  padding-block: max(0px, (var(--tap-min) - 1lh) / 2);
+  margin-block: min(0px, (1lh - var(--tap-min)) / 2);
+}
+.feed-card.post-reading-card .feed-card-time {
+  font-variant-numeric: tabular-nums;
+}
 @media (min-width: 640px) {
   .feed-card.post-reading-card .feed-card-actions {
     width: auto;
