@@ -177,13 +177,26 @@ module Master
     end
 
     def validate_soul(data, path: LIVE_SOUL)
-      absolute = data.fetch("absolute") { raise KeyError, "absolute section is required" }
+      raise ArgumentError, "soul schema must be 1" unless data["schema"] == 1
+      raise ArgumentError, "soul version must match MASTER::Soul::VERSION" unless data["version"] == Master::Soul::VERSION
+
+      expected_digest = Master::Soul.print.fetch("body_sha256")
+      unless data["body_sha256"].to_s == expected_digest
+        raise ArgumentError, "soul body_sha256 must match MASTER/lib/soul.rb (#{expected_digest})"
+      end
+
+      # Compatibility fields remain until their readers have migrated. Their
+      # sacred-path mirror must exactly match the Ruby source, never define it.
+      absolute = data.fetch("absolute") { raise KeyError, "absolute compatibility section is required" }
       raise ArgumentError, "absolute section must be a mapping" unless absolute.is_a?(Hash)
       unless absolute["golden_law"] == "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
         raise ArgumentError, "golden_law must remain PRESERVE_THEN_IMPROVE_NEVER_BREAK"
       end
 
-      validate_sacred_paths(Array(absolute["sacred_paths"]).map { |entry| normalize_path(entry) }, path)
+      declared = Array(absolute["sacred_paths"]).map { |entry| normalize_path(entry) }
+      canonical = Master::Soul.sacred_paths(root: File.dirname(File.dirname(path))).map { |entry| normalize_path(entry) }
+      raise ArgumentError, "sacred_paths must match MASTER/lib/soul.rb" unless declared == canonical
+      validate_sacred_paths(declared, path)
     end
 
     def validate_sacred_paths(paths, path)
@@ -194,19 +207,8 @@ module Master
         raise ArgumentError, "runtime-written data and retired scanner paths cannot be sacred: #{broad.join(', ')}"
       end
 
-      missing = live_sacred_paths(path) - paths
+      missing = Master::Soul.sacred_paths(root: File.dirname(File.dirname(path))) - paths
       raise ArgumentError, "critical path protections missing: #{missing.join(', ')}" unless missing.empty?
-    end
-
-    # soul.yml is the one list. A candidate keeps every path the soul it replaces
-    # declares, so no validated write can drop a protection; a person removes one
-    # with an ordinary commit. A candidate for a file not yet written is held to
-    # this MASTER's soul.
-    def live_sacred_paths(path)
-      soul = YAML.safe_load_file(File.file?(path) ? path : LIVE_SOUL, aliases: true)
-      declared = soul.is_a?(Hash) && soul["absolute"].is_a?(Hash) ? soul["absolute"]["sacred_paths"] : nil
-
-      Array(declared).map { |entry| normalize_path(entry) }
     end
 
     def validate_laws(data, path:, text:)
