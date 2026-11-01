@@ -433,7 +433,7 @@ module Master
                           "voice0: speech interrupted — reply remains visible"
                         else
                           detail = (@mouth.last_error || "audio did not play").to_s.lines.first.to_s.strip
-                          detail = detail.sub(/\\Avoice0:\\s*/i, "")
+                          detail = detail.sub(/\Avoice0:\s*/i, "")
                           detail = "#{detail[0, 96]}…" if detail.length > 96
                           "voice0: audio unavailable — reply remains visible as text (#{detail})"
                         end
