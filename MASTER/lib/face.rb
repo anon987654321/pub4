@@ -112,7 +112,7 @@ module Master
       module_function
 
       def config(root: Master::ROOT)
-        catalog(root:).fetch("face_ascii", {})
+        Master.load_laws(root:).fetch("face_ascii", {})
       end
 
       def laws(root: Master::ROOT)
@@ -128,13 +128,19 @@ module Master
       end
 
       def ranked_laws(catalog)
-        rows = catalog.filter_map do |id, row|
-          next unless row.is_a?(Hash) && row["priority"].is_a?(Numeric)
+        catalog.filter_map do |id, row|
+          next unless row.is_a?(Hash) && row["node"]
           next if row["statement"].to_s.empty?
 
-          { "id" => id.to_s, "priority" => row.fetch("priority"), "statement" => row.fetch("statement").to_s }
+          {
+            "id" => id.to_s,
+            "node" => row.fetch("node").to_s,
+            "precedence" => nil,
+            "statement" => row.fetch("statement").to_s
+          }
+        end.each_with_index.map do |row, index|
+          row.merge("precedence" => index + 1)
         end
-        rows.sort_by { |row| [row.fetch("priority"), row.fetch("id")] }
       end
 
       def browser_payload(root: Master::ROOT)
@@ -160,7 +166,7 @@ module Master
           return @cache.fetch(key) if @cache.key?(key)
 
           @cache.clear if @cache.size >= MAX_CACHE_ENTRIES
-          @cache[key] = Master.load_laws(root:) || {}
+          @cache[key] = Master.load_yaml(path) || {}
         end
       end
     end
