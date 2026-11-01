@@ -8,13 +8,16 @@ the commit that carries its evidence; nothing here records finished work.
 
 ## Open from the 2026-11-01 session — repository flattening
 
-Baseline: recursive Git tree at `9a5c884de24857effebe44f9686da6592453bf29`
-contained 5,596 files and 718 directories: MASTER 2,210/125, RAILS
-3,088/556, OPENBSD 281/29, STUDIO 3/2. RAILS had 379 files at depth
-7 or greater and 102 at depth 8 or greater. The STUDIO batch below removed
-one duplicate implementation and its now-empty directory. Measurements are
-structural signals, not proof that a directory or namespace is unnecessary.
-Refresh them at the start and end of each batch; compare pinned revisions only.
+Initial recursive Git tree at `496cfb32497bcedb4de6a98bc452d030e82d886b`
+contained 5,597 files and 719 directories. After the STUDIO and RAILS batches,
+the pinned source tree at `cc38ca20edc3ee73a4d0a94a1540ab413b99c9ca`
+contains 5,593 files and 718 directories: MASTER 2,210/125, RAILS
+3,085/556, OPENBSD 281/29, STUDIO 3/2. RAILS has 379 files at depth 7
+or greater and 102 at depth 8 or greater; maximum path depth is 9. The four
+removed files comprise one duplicate STUDIO implementation and three duplicate
+Turbo Stream templates. Measurements are structural signals, not proof that a
+directory or namespace is unnecessary. Refresh them at the start and end of
+each batch; compare pinned revisions only.
 
 ### Decisions landed
 
@@ -61,6 +64,18 @@ Refresh them at the start and end of each batch; compare pinned revisions only.
   test is committed but NOT_RUN in this GitHub editing pass.
   Commit: `2fe2701ec268ed94b04c2f1602853a3657872db1` (delete) followed by
   `9a5c884de24857effebe44f9686da6592453bf29` (test).
+- [x] Duplicate Turbo Stream responses — **MERGE** landed. Three alternate
+  action templates were byte-identical to their paired action template:
+  Amber `follows/destroy` now renders `:create` after deleting the Follow;
+  Amber `planned_outfits/destroy` runs `load_planner` then renders
+  `:create`; BSDPorts `ports#unwatch` renders `:watch` after setting
+  `@watching = false`. Deleted the three redundant templates without
+  changing URLs, response MIME types or the post-mutation state rendered.
+  Added request regressions for follow/unfollow, planner removal and
+  watch/unwatch. These tests are committed but NOT_RUN in this GitHub editing
+  pass. The controller edits, removals and tests were committed in the
+  2026-11-01 main-branch batch ending at
+  `cc38ca20edc3ee73a4d0a94a1540ab413b99c9ca`.
 
 ### Remaining work
 
