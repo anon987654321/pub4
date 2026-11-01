@@ -164,7 +164,6 @@ module Master
             "MASTER. #{@desc} OpenBSD-first. Constitutional AI.",
             persona_knowledge_sources,
             Master::Soul.prompt,
-            load_identity,
             "</master_identity>",
           ].compact.join("\n"),
           "master_meta_instruction" => meta_instruction,
