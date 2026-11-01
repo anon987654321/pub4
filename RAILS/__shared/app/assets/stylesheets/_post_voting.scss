@@ -134,3 +134,82 @@
 }
 
 .post-vote-frame { display: block; inline-size: var(--vote-target); }
+
+
+/* Shared post-card presentation.
+   Brgen and Amber use the same card geometry and action treatment; their
+   surrounding site chrome and palette tokens remain app-owned. */
+.post-reading-card.feed-card {
+  display: block;
+  margin: 0;
+  padding: var(--space-4) var(--space-3);
+  transition: background var(--transition-fast) var(--ease-out);
+}
+.post-reading-card.feed-card:hover {
+  background: var(--hover-subtle);
+}
+.post-reading-card.feed-card .feed-card-byline {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+  margin: 0 0 var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+.post-reading-card.feed-card .feed-card-byline .feed-card-name {
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+}
+.post-reading-card.feed-card .feed-card-byline :is(.feed-card-handle, .feed-card-time) {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+.post-reading-card.feed-card .post-reading-preview {
+  position: relative;
+  max-inline-size: 66ch;
+}
+.post-reading-card.feed-card .post-reading-body-preview {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  max-inline-size: 66ch;
+  line-height: var(--leading-normal);
+}
+.post-reading-card.feed-card .post-reading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  margin-block-start: var(--space-2);
+}
+.post-reading-card.feed-card .post-reading-actions .feed-action {
+  padding: 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.post-reading-card.feed-card .post-reading-actions .feed-action:hover {
+  background: var(--hover);
+}
+.post-reading-card.feed-card .post-reading-actions .feed-action-form {
+  margin: 0;
+}
+@media (min-width: 480px) {
+  .post-reading-card.feed-card {
+    padding: var(--space-5) var(--space-4);
+  }
+}
+.post-feed .post-reading-card.feed-card {
+  margin: 0;
+  padding: var(--space-4) var(--space-3);
+}
+@media (min-width: 480px) {
+  .post-feed .post-reading-card.feed-card {
+    padding: var(--space-5) var(--space-4);
+  }
+}

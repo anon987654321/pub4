@@ -66,7 +66,9 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".amber-home-posts" do
       assert_select "h2", text: I18n.t("pages.community")
-      assert_select "article#post_#{post.id}", 1
+      assert_select "article#post_#{post.id}.feed-card.post-reading-card", 1
+      assert_select "#post_#{post.id} .post-reading-layout", 1
+      assert_select "#post_#{post.id} .post-vote-rail", 1
       assert_select "a[href=?]", posts_path
     end
   end
