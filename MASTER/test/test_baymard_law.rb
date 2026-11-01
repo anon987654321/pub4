@@ -392,6 +392,22 @@ class TestBaymardLaw < Minitest::Test
       assert_equal "inconclusive", outcomes.fetch("image_alternatives")
       assert_equal "inconclusive", outcomes.fetch("interactive_names")
       assert_equal "inconclusive", outcomes.fetch("mobile_viewport")
+
+      manual = "rendered_review=RAILS/demo/app/views/layouts/application.html.haml"
+      form = report.assessments.find { |item| item.check_id == "form_control_names" }
+      assert_includes form.evidence, manual
+    end
+  end
+
+  def test_source_read_errors_name_the_repository_relative_file
+    with_fixture do |dir, rails, profile|
+      write_good_surface(rails)
+      oversized = File.join(rails, "app", "views", "demo", "oversized.html.erb")
+      File.write(oversized, "x" * (Master::Review::BaymardLaw::MAX_SOURCE_BYTES + 1))
+
+      report = Master::Review::BaymardLaw.new(root: dir, apps: ["demo"], profile:).call
+
+      assert report.read_errors.any? { |error| error.start_with?("RAILS/demo/app/views/demo/oversized.html.erb:") }
     end
   end
 
