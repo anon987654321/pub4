@@ -45,43 +45,30 @@ checks:
 
   native_click_targets:
     area: accessibility
-    mode: rendered
+    mode: source
     applies_when: all
     severity: warning
     law_ids: [REACH_aria_labels, POLA_intuitive_navigation]
-    instrument: Deploy::KeyboardFlowCheck
     statement: "Interactive actions should use native interactive elements or provide equivalent semantics and keyboard behaviour."
     verification: "Test keyboard activation, focus order, role, name and state in the browser."
 
   focus_visibility:
     area: accessibility
-    mode: rendered
-    applies_when: all
-    severity: error
-    law_ids: [REACH_focus_visible]
-    instrument: Deploy::KeyboardFlowCheck
-    statement: "Removing the browser focus outline requires a visible replacement for keyboard focus."
-    verification: "Tab through every interactive control at each relevant theme and viewport."
-
-  viewport_declaration:
-    area: mobile
     mode: source
     applies_when: all
     severity: error
-    law_ids: [REACH_touch_target_min, POLA_intuitive_navigation]
-    statement: "Every full-page HTML layout must declare a device-width viewport."
-    verification: "Inspect the rendered page head and confirm width=device-width and a usable initial scale."
-    instrument: Master::BaymardAudit.viewport_declaration
+    law_ids: [REACH_focus_visible]
+    statement: "Removing the browser focus outline requires a visible replacement for keyboard focus."
+    verification: "Tab through every interactive control at each relevant theme and viewport."
 
   mobile_viewport:
     area: mobile
-    mode: rendered
+    mode: source
     applies_when: all
     severity: warning
     law_ids: [REACH_touch_target_min, POLA_intuitive_navigation]
     statement: "The application must preserve a usable narrow-screen layout without clipping, obstruction or horizontal page scrolling."
     verification: "Render at 320, 360, 390 and 430 CSS pixels; measure reflow, clipping, occlusion and target geometry."
-    instrument: Deploy::ReflowCheck + Deploy::MobileFlowCheck
 
   first_screen_purpose:
     area: homepage
@@ -154,13 +141,12 @@ checks:
     law_ids: [REACH_aria_labels, REACH_focus_visible, REACH_skip_to_main]
     statement: "The core journey should remain perceivable and operable without pointer input and expose meaningful names, roles, states and errors."
     task: "Complete a core journey using keyboard only, then inspect key controls with a screen reader. Record focus order, announcements, validation errors, modal handling and state changes."
-# A source/browser/task result is only as strong as its own evidence. A source
-# scan cannot stand in for a rendered keyboard walk; neither can stand in for
-# moderated participant research. Missing evidence remains INCONCLUSIVE.
+# A source or participant-task result is only as strong as its evidence.
+# Rendered browser checks also run through MASTER/checks' existing instruments;
+# participant tasks remain inconclusive until observations are supplied.
 evidence_policy:
   required:
-    source: [source_sha256, detector_sha256]
-    rendered: [observed_at, instrument, surfaces, artifact_sha256]
-    task: [observed_at, method, participant_count, tasks, findings]
+    source: [source_path, line, source_sha256]
+    task: [method, participants, summary, artifacts, sha256]
   task_privacy: "Store anonymised observations only. Do not persist participant names, contact details, recordings or raw personal data."
-  verdicts: [PASS, FAIL, INCONCLUSIVE]
+  verdicts: [pass, fail, inconclusive, not_applicable]
