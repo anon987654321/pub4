@@ -255,7 +255,7 @@ end
     def classify_intent(*) = :general
     def tier_for_model(*) = "default"
     def constrained_for(**) = "deepseek-reasoner"
-    def priority_fallback_order(models) = models
+    def priority_fallback_order(models, task_type: :exploration) = models
   end
 
   def agent_routed_by(router)

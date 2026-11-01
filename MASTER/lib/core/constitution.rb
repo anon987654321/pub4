@@ -40,12 +40,12 @@ module Master::Core
     # check was wired in, but the Fold does not exec through Io::Shell. It execs
     # through World. So the hardened check was live for the tool path and absent
     # from the constitutional one, which is the path that actually runs unattended.
-    def self.load(data_dir:, workspace_root: nil, verify: nil, sandbox: nil, capabilities: Capabilities.for(:fix))
+    def self.load(data_dir:, workspace_root: nil, verify: nil, sandbox: nil, probe: nil, capabilities: Capabilities.for(:fix))
       rules_data = YAML.safe_load_file(File.join(data_dir, "law_runtime.yml"), aliases: true)
       master_root = File.expand_path(File.dirname(data_dir))
       workspace_root = File.expand_path(workspace_root || master_root)
       sacred_paths = Paths.sacred_paths(root: master_root)
-      rules = default_rules(rules_data, sacred_paths:, master_root:, workspace_root:)
+      rules = default_rules(rules_data, sacred_paths:, master_root:, workspace_root:, probe:)
       rules += [scan_clean_rule(verify)] if verify
       rules += [sandboxed_exec_rule(sandbox)] if sandbox
       new(laws: rules, capabilities:)
@@ -152,7 +152,7 @@ module Master::Core
 
     # The rules. Each is a few lines because the dangerous thing is expressed as
     # a predicate, not prose. Safety rules Block; hygiene rules Revise.
-    def self.default_rules(data, sacred_paths: [], master_root: nil, workspace_root: nil)
+    def self.default_rules(data, sacred_paths: [], master_root: nil, workspace_root: nil, probe: nil)
       veto = (data["veto_patterns"] || {}).to_h { |n, s| [n, safe_rx(n, s["detect"])] }
       immutable = Array(sacred_paths).map(&:to_s).freeze
 
@@ -162,6 +162,7 @@ module Master::Core
         configuration_invariant_rule(workspace_root:),
         ruby_parses_rule,
         structured_exec_rule,
+        read_only_probe_rule(probe),
         safe_exec_rule(veto),
         batch_delete_rule,
         forbidden_file_rule,
@@ -297,6 +298,19 @@ module Master::Core
         end
 
         Verdict::Block.new(reason: "sandbox denied: #{answer}", by: :sandboxed_exec)
+      })
+    end
+
+    # A read-only diagnostic has its own capability and exact allowlist. It is
+    # not an alternate spelling of exec: a missing policy blocks it.
+    def self.read_only_probe_rule(probe)
+      Law.new(id: :read_only_probe, verbs: %i[probe], judge: lambda { |effect, _memory|
+        next Verdict::Block.new(reason: "read-only probe policy unavailable", by: :read_only_probe) unless probe
+
+        reason = probe.call(Array(effect.args[:argv]).map(&:to_s))
+        next nil if reason.nil?
+
+        Verdict::Block.new(reason: "read-only probe refused: #{reason}", by: :read_only_probe)
       })
     end
 
@@ -541,7 +555,7 @@ module Master::Core
     # had never been scanned". Unlike Memory, this class did not need splitting:
     # its count was the idiom, and Memory's was the design.
     private_class_method :default_rules, :immutable_hit?, :configuration_invariant_rule, :no_secret_rule, :ruby_parses_rule, :scan_clean_rule, :reason_rule,
-                         :safe_exec_rule, :sandboxed_exec_rule, :structured_exec_rule, :batch_delete_rule, :delete_operands,
+                         :safe_exec_rule, :sandboxed_exec_rule, :read_only_probe_rule, :structured_exec_rule, :batch_delete_rule, :delete_operands,
                          :operands_after_flags, :git_clean_all?, :forbidden_file_rule, :scope_creep_rule,
                          :two_hats_rule, :evidence_for_done_rule,
                          :git_commit_evidence_rule, :git_commit_scope_rule, :council_for_done_rule,

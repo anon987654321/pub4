@@ -123,7 +123,7 @@ module Master::Core
     # whichever model made it, and costs no second copy of the file.
     def observe_text(effect, observation)
       text = observation.to_s
-      return clip_result(text) if effect.verb == :exec
+      return clip_result(text) if %i[exec probe].include?(effect.verb)
       return text unless effect.verb == :read && observation.ok?
 
       hex = Digest::SHA256.hexdigest(observation.message)[0, 12]
@@ -158,6 +158,7 @@ module Master::Core
       subject = case effect.verb
                 when :write then "#{args[:path]} (#{args[:content].to_s.lines.size} lines)"
                 when :exec then [Array(args[:argv]).join(" "), (" [#{args[:evidence]}]" if args[:evidence])].join
+                when :probe then Array(args[:argv]).join(" ")
                 when :git then [args[:operation], *Array(args[:paths])].join(" ")
                 else args[:path] || args[:text] || args[:prompt] || args[:summary] || args[:scope]
                 end

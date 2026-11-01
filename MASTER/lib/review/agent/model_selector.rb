@@ -53,7 +53,7 @@ module Master
 
           # Cost/quality bias may reorder within the available pool, but never
           # move browser chat or local compute ahead of the declared fallback ladder.
-          @model_router.priority_fallback_order(chain)
+          @model_router.priority_fallback_order(chain, task_type: task)
         rescue StandardError => e
           @bus&.publish("llm:route_error", error_class: e.class.name, **Master::Execution::Contract.diagnostic_fields(e.message))
           [@config.model]

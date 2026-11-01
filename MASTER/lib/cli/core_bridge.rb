@@ -62,6 +62,7 @@ module Master
           mode_spec = Master::Operator::Mode.spec(operator_mode)
           capabilities = Master::Operator::Mode.capabilities(operator_mode)
           capabilities = grant_tools(capabilities, allowed_tools) unless allowed_tools.nil?
+          probe_policy = read_only_probe(root: workspace_root)
           bus&.publish(
             "operator:mode",
             mode: requested_mode,
@@ -69,12 +70,12 @@ module Master
             model_tier: mode_spec[:model_tier],
             council_required: mode_spec[:council],
           )
-          world = build_world(root: workspace_root, container:, capabilities:, network: network_client(container))
+          world = build_world(root: workspace_root, container:, capabilities:, network: network_client(container), probe: probe_policy)
           mission.transition!(:execute)
           effect_observer = build_effect_observer(
             bus: lifecycle_bus, mission_id: mission.id, attempt_id: mission_attempt_id(mission),
           )
-          done = build_fold(root: workspace_root, model:, memory:, world:, max_turns:, observer:, effect_observer:, capabilities:, cancellation:).run(goal)
+          done = build_fold(root: workspace_root, model:, memory:, world:, max_turns:, observer:, effect_observer:, capabilities:, cancellation:, probe: probe_policy).run(goal)
           unless %i[cancelled trace_failed needs_user blocked unknown_outcome recovery_failed].include?(done.reason)
             mission.transition!(:verify, summary: continuation_summary(done))
           end
@@ -91,7 +92,7 @@ module Master
       # The tool names a person already types, as the capabilities the fold holds.
       # A list narrows the mode's profile and never widens it: Capabilities can
       # drop and cannot acquire, so a tool the profile lacks stays refused.
-      # Reading is always held; a list that names nothing leaves the fold read-only.
+      # Reading and bounded read-only probes are always held; an empty list never grants exec.
       TOOL_CAPABILITIES = {
         "read" => %i[read], "glob" => %i[read], "grep" => %i[read], "ls" => %i[read],
         "edit" => %i[write], "multiedit" => %i[write], "notebookedit" => %i[write],
@@ -99,7 +100,7 @@ module Master
         "bash" => %i[execute],
         "webfetch" => %i[network], "websearch" => %i[network]
       }.freeze
-      ALWAYS_HELD = %i[stdio read].freeze
+      ALWAYS_HELD = %i[stdio read probe].freeze
       TOOL_ENTRY = /[^\s,()]+(?:\([^)]*\))?/
 
       # `plan` reads and proposes; every other permission mode runs the repair
@@ -124,10 +125,10 @@ module Master
       end
 
       # Only the interactive session sets an asker; see Session#terminal_ask.
-      def build_world(root:, container:, capabilities: Master::Core::Capabilities.for(:fix), network: nil)
+      def build_world(root:, container:, capabilities: Master::Core::Capabilities.for(:fix), network: nil, probe: nil)
         critique_runner = container ? CouncilCrit.runner_for(container) : nil
         Master::Core::World.new(root:, ask: Fiber[:master_terminal_ask], critique_runner:,
-                                undo: container&.fetch(:undo, nil), capabilities:, network:)
+                                undo: container&.fetch(:undo, nil), capabilities:, network:, probe:)
       end
 
       # MASTER/ is the runtime's own root; the tree the fold edits is the repository
@@ -136,6 +137,41 @@ module Master
       def workspace_root_for(root)
         path = File.expand_path(root)
         path == Master::ROOT ? Master::REPO_ROOT : path
+      end
+
+      # This is an explicit allowlist, not a shell sandbox. Probe argv is exact:
+      # Ruby's syntax-only parser on one existing in-tree .rb file, Git's
+      # tracked-path listing, or a whitespace check with external diff disabled.
+      # It cannot run tests,
+      # scripts, package hooks, arbitrary binaries, or model-supplied code.
+      def read_only_probe(root:)
+        workspace = File.realpath(root)
+        lambda do |argv|
+          values = Array(argv)
+          if values == %w[git ls-files] || values == %w[git --no-pager diff --check --no-ext-diff]
+            nil
+          elsif values.length == 3 && values[0] == "ruby" && values[1] == "-c"
+            path = values[2]
+            if path.empty? || path.start_with?(File::SEPARATOR) ||
+               path.split(/[\\\/]/).include?("..") || File.extname(path) != ".rb"
+              "ruby -c requires one relative .rb path"
+            else
+              expanded = File.expand_path(path, workspace)
+              real = File.realpath(expanded) if File.file?(expanded)
+              if !real || !(real == workspace || real.start_with?("#{workspace}#{File::SEPARATOR}"))
+                "probe path is missing or escapes the workspace"
+              else
+                nil
+              end
+            end
+          else
+            "only ruby -c on one in-tree .rb file, git ls-files, or git diff --check is allowed"
+          end
+        rescue StandardError => e
+          "probe policy could not establish scope: #{e.class}"
+        end
+      rescue StandardError => e
+        ->(_argv) { "probe workspace unavailable: #{e.class}" }
       end
 
       def network_client(container)
@@ -372,6 +408,7 @@ module Master
         when :read then "file read"
         when :write then "file write"
         when :exec then "command"
+        when :probe then "read-only diagnostic"
         when :git then "git action"
         when :http then "network request"
         when :ask then "approval request"
@@ -388,20 +425,20 @@ module Master
 
       # Keep useful speech/dashboard measurements, never the text being measured.
       def public_output_metrics(effect, observation)
-        return {} unless %i[read exec].include?(effect.verb)
+        return {} unless %i[read probe exec].include?(effect.verb)
 
         output = observation.message.to_s
         { output_bytes: output.bytesize, output_lines: output.lines.size }
       end
 
       def build_fold(root:, model:, memory:, world:, max_turns:, observer:, effect_observer: nil,
-                     capabilities: Master::Core::Capabilities.for(:fix), cancellation: nil)
+                     capabilities: Master::Core::Capabilities.for(:fix), cancellation: nil, probe: nil)
         Master::Core::Fold.new(
           model:,
           constitution: Master::Core::Constitution.load(data_dir: Master.data_path, workspace_root: root,
                                                         verify: ToolHooks.wrap_verifier(scan_verifier(root:), root:),
                                                         sandbox: ToolHooks.wrap_sandbox(shell_sandbox(root:), root:),
-                                                        capabilities:),
+                                                        probe:, capabilities:),
           world:,
           memory:,
           max_turns:,

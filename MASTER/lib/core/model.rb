@@ -50,6 +50,8 @@ module Master::Core
           args: {
             type: "object",
             properties: {
+              argv: { type: "array", minItems: 1, maxItems: 5, items: { type: "string", maxLength: 240 } },
+              timeout: { type: "integer", minimum: 1, maximum: 30 },
               operation: { type: "string", enum: operations },
               compensation: {
                 type: "object",
@@ -78,7 +80,8 @@ module Master::Core
 
       answered = (scope[:proved] || scope[:answerable]) && scope[:cleared]
       closed = [(:done unless answered), (:write unless scope[:writable])].compact
-      operations = scope[:proved] ? GIT_OPERATIONS : GIT_OPERATIONS - %w[commit]
+      operations = Array(scope.fetch(:git_operations, GIT_OPERATIONS)).map(&:to_s)
+      operations -= ["commit"] unless scope[:proved]
       schema(verbs: verbs - closed, operations:)
     end
 
@@ -96,6 +99,7 @@ module Master::Core
 
       Verbs and their args:
         read   {"path"}                          inspect a file before changing it
+        probe  {"argv":[...],"timeout":20} run only an allowlisted read-only diagnostic: `git ls-files`, `git diff --check`, or `ruby -c <relative .rb>`
         write  {"path","content"}                create or replace a file (full contents)
         http   {"url"}                           fetch a public HTTP(S) URL through MASTER's guarded network
         exec   {"argv":["prog","arg"...],"evidence":"#{EVIDENCE_KINDS}",
@@ -109,11 +113,12 @@ module Master::Core
         done     {"summary"}                      finish; the summary is your answer to the operator
 
       How to work:
-        - Orient first: read the files you will change and exec `ls` or
-          `git ls-files` to learn the layout. Never write blind.
+        - Orient first: read the files in scope. In read-only mode use probe `["git","ls-files"]`
+          to discover tracked paths; never ask for exec when the active profile denies it. Never write blind.
         - Change the minimum that satisfies the goal. Every .rb you write must parse.
-        - Prove it: exec the tests or checks with an evidence tag. Each result comes
-          back as the next turn's observation — react to failures, never ignore them.
+        - Prove code changes only when `exec` is offered: run tests or checks with an evidence tag.
+          When only `probe` is offered, report its result as an observation; it is not test evidence.
+          Never claim an unrun test passed.
         - On high-risk goals (risk: high/critical in memory), run `critique` before `done`.
         - Then, and only then, `done`. A question that needs no change is answered
           with `done` once you have read what answers it.

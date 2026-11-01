@@ -97,6 +97,21 @@ class TestModelOffer < Minitest::Test
     assert_includes verbs(schema), "write"
   end
 
+  def test_read_only_capabilities_hide_exec_write_and_mutating_git_operations
+    proof = Master::Core::Proof.new
+    world = Master::Core::World.new(
+      root: Dir.pwd, capabilities: Master::Core::Capabilities.read_only, probe: ->(_argv) { nil }
+    )
+    scope = proof.scope.merge(git_operations: world.git_operations)
+    schema = Master::Core::Model.offer(world.verbs, scope)
+
+    assert_includes verbs(schema), "probe"
+    assert_includes verbs(schema), "read"
+    refute_includes verbs(schema), "exec"
+    refute_includes verbs(schema), "write"
+    assert_equal ["diff"], operations(schema)
+  end
+
   def test_a_read_answers_so_done_opens
     proof = Master::Core::Proof.new
     proof.record_evidence(Effect.read("notes.md"), Observation.ok("hello"))

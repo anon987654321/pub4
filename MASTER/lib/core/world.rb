@@ -38,16 +38,36 @@ module Master::Core
     # pops that journal's newest entry, so a fold write that records nothing
     # leaves /undo reverting an older write instead. Injected, because core
     # reaches nothing in lib/.
-    def initialize(root:, ask: nil, critique_runner: nil, undo: nil, capabilities: Capabilities.for(:fix), network: nil)
+    def initialize(root:, ask: nil, critique_runner: nil, undo: nil, capabilities: Capabilities.for(:fix), network: nil, probe: nil)
       @root = File.expand_path(root)
       @ask = ask
       @critique_runner = critique_runner
       @undo = undo
       @capabilities = capabilities
       @network = network
+      @probe = probe
     end
 
-    def verbs = Master::Core::VERBS
+    # The model only sees effects this context can actually attempt. The
+    # Constitution and this World still recheck every proposed effect.
+    def verbs
+      Master::Core::VERBS.select do |verb|
+        if verb == :git
+          @capabilities.allow?(:read) || @capabilities.allow?(:write)
+        elsif verb == :probe
+          @probe && @capabilities.allow?(:probe)
+        else
+          @capabilities.allow?(Effect::CAPABILITIES.fetch(verb))
+        end
+      end
+    end
+
+    def git_operations
+      operations = []
+      operations << "diff" if @capabilities.allow?(:read)
+      operations.concat(%w[stage commit]) if @capabilities.allow?(:write)
+      operations.freeze
+    end
 
     def perform(effect)
       @capabilities.require!(effect.capability)
@@ -133,6 +153,29 @@ module Master::Core
 
     def do_read(path:, **)
       Observation.ok(File.read(within(path), encoding: "UTF-8").scrub)
+    end
+
+    # A probe is not shell access. The injected policy admits only exact,
+    # read-only diagnostics; World rechecks it so a direct call cannot bypass
+    # the Constitution. No model-supplied environment is accepted.
+    def do_probe(argv:, timeout: 20, **)
+      raise ArgumentError, "argv must be an array" unless argv.is_a?(Array)
+      raise ArgumentError, "argv cannot be empty" if argv.empty?
+      raise ArgumentError, "argv entries must be strings" unless argv.all? { |arg| arg.is_a?(String) }
+      return Observation.no("read-only probe policy unavailable") unless @probe
+
+      refusal = @probe.call(argv)
+      return Observation.no("read-only probe refused: #{refusal}") if refusal
+
+      seconds = Integer(timeout, exception: false)
+      seconds = 20 unless seconds&.positive?
+      seconds = [seconds, 30].min
+      command = argv.first == "ruby" ? [RbConfig.ruby, "--disable-gems", *argv.drop(1)] : argv
+      child_env = ENV.keys.grep(CREDENTIAL_ENV_RX).to_h { |name| [name, nil] }
+      %w[RUBYOPT RUBYLIB RUBYPATH RUBYGEMS_GEMDEPS].each { |name| child_env[name] = nil }
+      out, status = bounded_capture2e(*command, env: child_env, chdir: @root, timeout: seconds)
+      detail = "probe result: exit=#{status.exitstatus || status}\n#{out}".strip
+      status.success? ? Observation.ok(detail) : Observation.no(detail)
     end
 
     def do_write(path:, content:, **)

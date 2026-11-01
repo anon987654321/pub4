@@ -63,12 +63,10 @@ module Master::Core
     def ideation_satisfied? = !ideation_required? || @ideation_complete
     def proved? = evidence_score >= PASS_THRESHOLD
 
-    # A fold that wrote nothing and ran nothing changed nothing, so its `done`
-    # claims no state of the tree; it answers from what it read, and the reads
-    # are on the record. The threshold is proof about changed code, and a
-    # question asked of the code could never meet it: the model read, answered
-    # in notes, and was refused `done` until max_turns. A commit still needs
-    # proved?, since committing is a claim about code.
+    # A fold that wrote nothing and ran no mutating command changed nothing, so
+    # its `done` claims no state of the tree; it can answer from what it read or
+    # observed through a policy-approved read-only probe. The threshold proves
+    # changed code, and a commit still needs that proof.
     def answered_from_reads? = @generation.zero? && !@acted && @read_paths.any?
 
     def mark_ideation_complete!(approaches: nil)
@@ -96,6 +94,7 @@ module Master::Core
     def record_evidence(effect, observation)
       remember_write(effect) if effect.verb == :write && observation.ok?
       remember_read(effect) if effect.verb == :read && observation.ok?
+      remember_probe(effect) if effect.verb == :probe && observation.message.to_s.start_with?("probe result:")
       invalidate_after_unlabelled_exec(effect) if effect.verb == :exec && observation.ok?
       @asked = true if effect.verb == :ask && observation.ok?
       @acted = true if %i[exec git].include?(effect.verb)
@@ -155,6 +154,12 @@ module Master::Core
 
     def remember_read(effect)
       @read_paths << effect.args[:path].to_s
+    end
+
+    # A policy-approved probe is observation, not an edit or test-pass claim.
+    # Its exit status stays visible to the model, but it earns no evidence points.
+    def remember_probe(effect)
+      @read_paths << "probe: #{Array(effect.args[:argv]).join(" ")}"
     end
   end
 end

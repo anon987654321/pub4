@@ -67,9 +67,10 @@ module Master
         root = File.expand_path(options.fetch(:root))
         model = model_for(goal, options)
         refusals = []
+        probe_policy = Master::CLI::CoreBridge.read_only_probe(root: root)
 
         result = Master::Core::Fold.new(
-          model:, constitution: constitution(root, master_root), world: Master::Core::World.new(root:),
+          model:, constitution: constitution(root, master_root, probe: probe_policy), world: Master::Core::World.new(root:, probe: probe_policy),
           memory: Master::Core::Memory.new, max_turns: turn_budget(model, options),
           observer: refusal_recorder(refusals),
           effect_observer: Master::Trace::EffectObserver.new(bus: event_bus(root))
@@ -95,7 +96,7 @@ module Master
 
       # The same guards CoreBridge gives the Fold: without them this entrypoint admitted writes no
       # scan verified and execs no sandbox scoped, the path that runs unattended.
-      def constitution(root, master_root)
+      def constitution(root, master_root, probe: nil)
         bridge = Master::CLI::CoreBridge
         hooks = Master::CLI::ToolHooks
 
@@ -103,7 +104,8 @@ module Master
           data_dir: File.join(master_root, "data"), workspace_root: root,
           capabilities: Master::Core::Capabilities.for(:fix),
           verify: hooks.wrap_verifier(bridge.scan_verifier(root:), root:),
-          sandbox: hooks.wrap_sandbox(bridge.shell_sandbox(root:), root:)
+          sandbox: hooks.wrap_sandbox(bridge.shell_sandbox(root:), root:),
+          probe:
         )
       end
 

@@ -540,6 +540,35 @@ class CoreBridgeSandboxTest < Minitest::Test
     refute_kind_of Master::Core::Verdict::Block, verdict
   end
 
+  def test_observe_mode_can_run_a_scoped_read_only_probe
+    Dir.mktmpdir do |root|
+      File.write(File.join(root, "check.rb"), "VALUE = 1\n")
+      model = CoreBridgeTest::ScriptedModel.new(
+        Master::Core::Effect.probe(["ruby", "-c", "check.rb"]),
+        Master::Core::Effect.done("syntax check completed"),
+      )
+      result = Master::CLI::CoreBridge.run(
+        "check Ruby syntax without editing", root:, model:, mode: :observe, max_turns: 2
+      )
+
+      assert_equal :complete, result[:reason]
+      assert_equal "observe", result[:mission].dig("operator", "mode")
+    end
+  end
+
+  def test_read_only_probe_policy_rejects_arbitrary_commands_and_escaping_paths
+    Dir.mktmpdir do |root|
+      File.write(File.join(root, "check.rb"), "VALUE = 1\n")
+      policy = Master::CLI::CoreBridge.read_only_probe(root:)
+
+      assert_nil policy.call(["ruby", "-c", "check.rb"])
+      assert_nil policy.call(%w[git ls-files])
+      assert_nil policy.call(%w[git --no-pager diff --check --no-ext-diff])
+      assert_match(/relative \.rb path|escapes/, policy.call(["ruby", "-c", "../outside.rb"]))
+      assert_match(/only ruby -c/, policy.call(["ruby", "-e", "puts :unsafe"]))
+    end
+  end
+
   def test_observe_mode_is_read_only
     Dir.mktmpdir do |root|
       File.write(File.join(root, "README.md"), "hello\n")
@@ -576,7 +605,7 @@ class CoreBridgeSandboxTest < Minitest::Test
   def test_allowed_tools_narrow_the_profile_and_refuse_scoped_entries
     caps = Master::Core::Capabilities.for(:repair)
     _, err = capture_io { Master::CLI::CoreBridge.grant_tools(caps, "Read Edit Bash(git diff:*) Frobnicate") }
-    assert_equal %i[stdio read write], caps.capabilities
+    assert_equal %i[stdio read probe write], caps.capabilities
     assert_includes err, "Bash(git diff:*)"
     assert_includes err, "Frobnicate"
   end
@@ -584,12 +613,12 @@ class CoreBridgeSandboxTest < Minitest::Test
   def test_allowed_tools_never_widen_the_profile
     caps = Master::Core::Capabilities.for(:observe)
     Master::CLI::CoreBridge.grant_tools(caps, "Bash Write")
-    assert_equal %i[stdio read], caps.capabilities
+    assert_equal %i[stdio read probe], caps.capabilities
   end
 
   def test_empty_allowed_tools_leaves_the_fold_read_only
     caps = Master::CLI::CoreBridge.grant_tools(Master::Core::Capabilities.for(:repair), "")
-    assert_equal %i[stdio read], caps.capabilities
+    assert_equal %i[stdio read probe], caps.capabilities
   end
 
   def test_only_plan_permission_mode_changes_the_operator_mode

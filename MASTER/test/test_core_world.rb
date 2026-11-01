@@ -18,6 +18,58 @@ class WorldTest < Minitest::Test
   # within() stops a path leaving root and said nothing about what sits inside
   # it, so a credential file in the checkout was readable and its contents
   # landed in the transcript.
+  def test_world_offers_only_verbs_in_its_capability_profile
+    read_only = Master::Core::World.new(root: Dir.pwd, capabilities: Master::Core::Capabilities.read_only)
+    refute_includes read_only.verbs, :probe, "do not offer a probe without its policy"
+    refute_includes read_only.verbs, :exec
+    refute_includes read_only.verbs, :write
+    assert_equal ["diff"], read_only.git_operations
+
+    probed = Master::Core::World.new(
+      root: Dir.pwd, capabilities: Master::Core::Capabilities.read_only, probe: ->(_argv) { nil }
+    )
+    assert_includes probed.verbs, :probe
+
+    repair = Master::Core::World.new(root: Dir.pwd, capabilities: Master::Core::Capabilities.for(:repair))
+    assert_includes repair.verbs, :exec
+    assert_includes repair.verbs, :write
+    assert_equal %w[diff stage commit], repair.git_operations
+  end
+
+  def test_read_only_probe_runs_an_allowlisted_syntax_check_without_shell_access
+    Dir.mktmpdir do |root|
+      File.write(File.join(root, "check.rb"), "VALUE = 1\n")
+      policy = lambda do |argv|
+        %w[check.rb broken.rb].include?(argv[2]) && argv[0, 2] == %w[ruby -c] ? nil : "command is not allowlisted"
+      end
+      capabilities = Master::Core::Capabilities.read_only
+      world = Master::Core::World.new(root:, capabilities:, probe: policy)
+
+      result = world.perform(E.probe(["ruby", "-c", "check.rb"]))
+      assert result.ok?, result.message
+      assert_equal "probe result: exit=0\nSyntax OK", result.message
+
+      File.write(File.join(root, "broken.rb"), "def unfinished(\n")
+      failed = world.perform(E.probe(["ruby", "-c", "broken.rb"]))
+      refute failed.ok?
+      assert_match(/probe result: exit=1/, failed.message)
+      memory = Master::Core::Memory.new
+      memory.record(E.probe(["ruby", "-c", "broken.rb"]), failed)
+      assert memory.proof.scope[:answerable], "a failed check is still an observed outcome"
+      assert_equal 0, memory.proof.scope[:evidence], "a probe cannot award test evidence"
+
+      refused = world.perform(E.probe(["ruby", "-e", "File.write('escape', 'bad')"]))
+      refute refused.ok?
+      assert_match(/not allowlisted/, refused.message)
+      refute File.exist?(File.join(root, "escape"))
+
+      untrusted = Master::Core::World.new(
+        root:, capabilities: Master::Core::Capabilities.for(:model), probe: policy
+      )
+      assert_raises(SecurityError) { untrusted.perform(E.probe(["ruby", "-c", "check.rb"])) }
+    end
+  end
+
   def test_read_refuses_credential_files_inside_the_workspace
     %w[.env .env.production credentials.yml secrets.json id_rsa api_keys.txt].each do |name|
       with_world do |world, root|
