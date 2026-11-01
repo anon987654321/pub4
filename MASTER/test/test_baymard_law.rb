@@ -154,6 +154,7 @@ class TestBaymardLaw < Minitest::Test
       assert_equal "pass", outcomes.fetch("form_control_names")
       assert_equal "pass", outcomes.fetch("image_alternatives")
       assert_equal "pass", outcomes.fetch("mobile_viewport")
+      assert_equal "pass", outcomes.fetch("native_click_targets")
       assert_equal "inconclusive", outcomes.fetch("navigation_findability")
       form = report.assessments.find { |item| item.check_id == "form_control_names" }
       assert form.evidence.any? { |item| item.start_with?("source_inventory_sha256=") }
@@ -260,6 +261,59 @@ class TestBaymardLaw < Minitest::Test
 
       assert_equal "inconclusive", navigation.status
       assert_match(/artifact hash/, navigation.summary)
+    end
+  end
+
+  def test_haml_markup_remains_inconclusive_until_the_rendered_tree_is_inspected
+    with_fixture do |dir, rails, profile|
+      html_layout = File.join(rails, "app", "views", "layouts", "application.html.erb")
+      FileUtils.rm_f(html_layout)
+      haml = File.join(rails, "app", "views", "layouts", "application.html.haml")
+      File.write(haml, "!!!\n%html\n  %head\n  %body\n    = yield\n")
+
+      report = Master::Review::BaymardLaw.new(root: dir, apps: ["demo"], profile:).call
+      outcomes = report.assessments.to_h { |item| [item.check_id, item.status] }
+
+      assert_equal "inconclusive", outcomes.fetch("form_control_names")
+      assert_equal "inconclusive", outcomes.fetch("image_alternatives")
+      assert_equal "inconclusive", outcomes.fetch("interactive_names")
+      assert_equal "inconclusive", outcomes.fetch("mobile_viewport")
+    end
+  end
+
+  def test_clickable_custom_elements_require_rendered_keyboard_verification
+    with_fixture do |dir, rails, profile|
+      write_good_surface(rails)
+      page = File.join(rails, "app", "views", "demo", "index.html.erb")
+      File.write(page, <<~HTML)
+        <button type="button">Continue</button>
+        <div role="button" tabindex="0" onclick="continueFlow()">More</div>
+      HTML
+
+      report = Master::Review::BaymardLaw.new(root: dir, apps: ["demo"], profile:).call
+      row = report.assessments.find { |item| item.check_id == "native_click_targets" }
+
+      assert_equal "inconclusive", row.status
+      assert_match(/rendered inspection/, row.summary)
+    end
+  end
+
+  def test_evidence_file_symlink_cannot_escape_the_repository
+    with_fixture do |dir, _rails, profile|
+      outside = Dir.mktmpdir("baymard-evidence-outside")
+      begin
+        target = File.join(outside, "evidence.yml")
+        File.write(target, YAML.dump("schema" => 1, "apps" => {}))
+        File.symlink(target, File.join(dir, "evidence-link.yml"))
+
+        audit = Master::Review::BaymardLaw.new(
+          root: dir, apps: ["demo"], evidence_path: "evidence-link.yml", profile:
+        )
+        error = assert_raises(Master::Review::BaymardLaw::InvalidEvidence) { audit.call }
+        assert_match(/symlink escapes/, error.message)
+      ensure
+        FileUtils.remove_entry(outside) if File.directory?(outside)
+      end
     end
   end
 
