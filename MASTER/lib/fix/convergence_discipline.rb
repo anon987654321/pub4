@@ -681,8 +681,9 @@ module Master
         return [] unless File.expand_path(@root) == File.expand_path(Master::ROOT)
 
         checks = {
-          File.join(Master::ROOT, "data", "soul.yml") => /PRESERVE_THEN_IMPROVE_NEVER_BREAK/,
-          File.join(Master::ROOT, "data", "laws.yml") => /(?:^|\n)(?:ROBUSTNESS|SINGULARITY|LINEARITY|PROXIMITY):/,
+          File.join(Master::ROOT, "data", "soul.yml") => /golden_law:\s*PRESERVE_FIRST/,
+          File.join(Master::ROOT, "data", "laws.yml") =>
+            /(?:^|\n)(?:TRUTHFUL_STATUS|ROBUSTNESS|SINGULARITY|LINEARITY|PROXIMITY|ABSTRACTION|DENSITY|OPERATOR_RENDERED|INTER_MODEL_CONTRACT):/,
         }
         checks.filter_map do |path, pattern|
           next if File.file?(path) && File.read(path, encoding: "UTF-8").match?(pattern)
