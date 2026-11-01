@@ -4,8 +4,7 @@ module Master
   module Io
     module PathGuard
       SACRED_PATHS = begin
-        data = Master.soul_config
-        Array(data.dig("absolute", "sacred_paths")).freeze
+        Master::Soul.sacred_paths
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "path_guard.sacred_paths")
         raise "path guard: sacred-path policy unreadable: #{e.class}: #{e.message}"
