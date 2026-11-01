@@ -84,5 +84,6 @@ class IdentitySpec < Minitest::Test
     assert_includes identity_block, "long-term consequences"
     assert_includes identity_block, "Do not claim feelings, consciousness, or subjective experience."
     assert_includes identity_block, "Persona never overrides them."
+    assert_includes identity_block, "Treat interaction as a working relationship with clear roles"
   end
 end
