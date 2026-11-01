@@ -635,6 +635,47 @@ BAYMARD_RESEARCH_BOUNDARY:
   semantic: operator_context_and_observed_user_needs
   source: https://baymard.com/research/methodology
 
+BAYMARD_CART_ABANDONMENT_CONTEXT:
+  parent: BAYMARD_RESEARCH_BOUNDARY
+  statement: >
+    Cart abandonment is an outcome, not a diagnosis. Distinguish browsing and
+    unready intent from avoidable friction; never treat an aggregate abandonment
+    rate alone as proof of a design defect or as permission to coerce a purchase.
+  severity: warning
+  resolution: review
+  source: https://baymard.com/lists/cart-abandonment-rate
+
+BAYMARD_CHECKOUT_COST_TRANSPARENCY:
+  parent: BAYMARD_RESEARCH_BOUNDARY
+  statement: >
+    Show the current order total and explain delivery charges, fees and taxes
+    before commitment wherever the service can calculate them. Label estimates
+    as estimates; do not reveal avoidable charges only at the final step.
+  severity: error
+  resolution: review
+  source: https://baymard.com/research-articles/ecommerce-checkout-usability-report-and-benchmark
+
+BAYMARD_INLINE_VALIDATION_RECOVERY:
+  parent: BAYMARD_RESEARCH_BOUNDARY
+  statement: >
+    Form validation supports recovery: do not report an error before a user has
+    had a reasonable chance to enter a value, identify the specific problem,
+    clear or update feedback when corrected, and preserve unrelated valid input.
+  severity: error
+  resolution: review
+  source: https://baymard.com/research-articles/inline-form-validation
+
+BAYMARD_USER_AGENCY_OVER_CONVERSION:
+  parent: BAYMARD_RESEARCH_BOUNDARY
+  statement: >
+    A conversion gain is not acceptable when achieved through concealed costs,
+    deceptive urgency, unnecessary forced account creation, preselected extras,
+    obstructed refusal or cancellation, or misleading consent. Preserve a clear
+    and usable path to decline, revise or leave.
+  severity: error
+  resolution: review
+  source: https://baymard.com/research-articles/current-state-of-checkout-ux
+
 # ---
 
 ATTESTATION_IS_NOT_FINDING:
