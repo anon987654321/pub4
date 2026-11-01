@@ -59,6 +59,7 @@ class PortsController < ApplicationController
     @advisories = @port.security_advisories.recent
     @maintainer = @port.maintainer || Maintainer.find_by(name: @port[:maintainer])
     @dependency_tree = Dependency.tree_for(@port)
+    @dependency_graph = Dependency.graph_for(@port)
     @explore_summary = Ports::ExploreAssistant.summarize(@port)
     @pkg_info = if ENV["CI"] == "1" || Rails.env.test?
       "(pkg_info skipped in CI)"
