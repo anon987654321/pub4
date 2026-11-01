@@ -558,6 +558,17 @@ the wrapper had stopped naming any. Runs from a laptop or vm23, and `--public-on
 means it asks the internet and checks nothing on the box — the service, certificate
 and relayd checks are the same script without that flag.
 
+The Mac side carries the standing vantage: `MASTER/bin/mac-uptime-watch.sh`
+runs on the operator's Mac under launchd or cron (every five minutes, one
+shot, state in `~/.pub4/uptime_watch.state`), polls each public host's `/up`
+from the operator's network, and raises a macOS notification on the third
+consecutive failure and on recovery — catching the inverse failure the box
+cannot see (the box reporting fine while relayd, DNS, TLS or a registrar
+answer is broken for a real visitor). Hosts and waivers mirror
+`uptime-check.sh` (`PUB4_UPTIME_HOSTS`, `PUB4_UPTIME_WAIVED`); drop the
+bsdports.org waiver in the same commit on both sides when delegation
+returns.
+
 ## Post-deploy smoke (one page)
 
 After `vps-deploy` / rcctl restarts, run:
