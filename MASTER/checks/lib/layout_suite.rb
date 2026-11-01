@@ -14,13 +14,11 @@ require_relative "source/affiliate_honesty"
 require_relative "source/content_honesty"
 
 require_relative "source/content_for_yield"
-require_relative "research/layout_search"
 require_relative "live/user_flow"
 require_relative "live/surface_schema"
 require_relative "research/design_metrics"
 require_relative "research/visual_quality"
 
-require_relative "research/calibration"
 require_relative "source/frontend_auditor"
 require_relative "research/baymard_law"
 require_relative "source/stimulus_wiring"
@@ -39,7 +37,6 @@ module Deploy
       CssMinifyIntegrityCheck,
       DialectPurityCheck,
       FirstScreenCheck,
-      LayoutSearchCheck,
       PaymentHonestyCheck,
       AffiliateHonestyCheck,
       ContentHonestyCheck,
@@ -49,7 +46,6 @@ module Deploy
       DesignMetricsCheck,
       TypographyContractCheck,
       VisualQualityCheck,
-      CalibrationCheck,
       FrontendAuditorCheck,
       BaymardUXCheck,
       StimulusWiringCheck,

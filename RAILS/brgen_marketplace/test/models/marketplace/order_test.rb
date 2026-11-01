@@ -47,6 +47,22 @@ class Marketplace::OrderTest < ActiveSupport::TestCase
     end
   end
 
+
+  test "paid orders consume variant stock without changing listing stock" do
+    ActsAsTenant.with_tenant(@city) do
+      listing = Marketplace::Listing.create!(user: @seller, category: @category, title: "Shirt",
+                                             price_cents: 2_000, currency: "NOK", stock: 5)
+      variant = Marketplace::Variant.create!(listing: listing, price_cents: 2_400, stock: 2)
+      order = Marketplace::Order.create!(buyer: @buyer, listing: listing, variant: variant,
+                                         quantity: 1, status: "pending")
+
+      order.mark_paid!(reference: "evt_variant")
+
+      assert_equal 1, variant.reload.stock
+      assert_equal 5, listing.reload.stock
+    end
+  end
+
   test "accept transitions pending to accepted" do
     ActsAsTenant.with_tenant(@city) do
       listing = Marketplace::Listing.create!(user: @seller, category: @category, title: "Jacket", price_cents: 12_000, currency: "NOK")

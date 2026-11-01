@@ -726,10 +726,12 @@ architecture:
       check: OPENBSD/bin/check
     studio:
       path: STUDIO
-      entry: STUDIO/check.rb
+      # b5acc93bc flattened the photograph tree; the public entry it preserved
+      # is the photograph loader, guarded by STUDIO/test/idea_picture_test.rb.
+      entry: STUDIO/photograph.rb
       owner: studio
       depends_on: []
-      check: STUDIO/check.rb
+      check: cd STUDIO && ruby -Itest test/idea_picture_test.rb
 
 runtime_policy:
   concurrency:

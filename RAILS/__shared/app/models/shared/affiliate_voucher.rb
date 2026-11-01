@@ -58,28 +58,66 @@ module Shared
 
     def self.upsert_from_api!(voucher)
       record = find_or_initialize_by(source: "tradedoubler", external_id: voucher.external_id.to_s)
-      record.assign_attributes(
-        program_id: voucher.program_id,
-        program_name: voucher.program_name,
-        code: voucher.code,
-        title: voucher.title.presence || "Offer",
-        short_description: voucher.short_description,
-        description: voucher.description,
-        voucher_type_id: voucher.voucher_type_id.positive? ? voucher.voucher_type_id : 1,
-        track_url: voucher.track_url.presence || voucher.landing_url.presence || "https://brgen.no",
-        landing_url: voucher.landing_url,
-        discount_amount: voucher.discount_amount,
-        percentage: voucher.percentage,
-        site_specific: voucher.site_specific,
-        exclusive: voucher.exclusive,
-        currency: voucher.currency,
-        market: Tradedoubler.market,
-        starts_at: voucher.starts_at,
-        ends_at: voucher.ends_at,
-        last_seen_at: Time.current,
-      )
+      record.assign_attributes(api_attributes(voucher))
       record.save!
       record
     end
+
+    def self.api_attributes(voucher)
+      program_attributes(voucher)
+        .merge(description_attributes(voucher))
+        .merge(offer_attributes(voucher))
+        .merge(tracking_attributes(voucher))
+    end
+
+    def self.program_attributes(voucher)
+      {
+        program_id: fetch_any(voucher, :program_id),
+        program_name: fetch_any(voucher, :program_name),
+        code: fetch_any(voucher, :code),
+      }
+    end
+
+    def self.description_attributes(voucher)
+      {
+        title: fetch_any(voucher, :title).presence || "Offer",
+        short_description: fetch_any(voucher, :short_description),
+        description: fetch_any(voucher, :description),
+      }
+    end
+
+    def self.offer_attributes(voucher)
+      {
+        voucher_type_id: fetch_any(voucher, :voucher_type_id).positive? ? fetch_any(voucher, :voucher_type_id) : 1,
+        discount_amount: fetch_any(voucher, :discount_amount),
+        percentage: fetch_any(voucher, :percentage),
+        site_specific: fetch_any(voucher, :site_specific),
+        exclusive: fetch_any(voucher, :exclusive),
+        currency: fetch_any(voucher, :currency),
+        market: Tradedoubler.market,
+      }
+    end
+
+    def self.tracking_attributes(voucher)
+      {
+        track_url: fetch_any(voucher, :track_url).presence ||
+                   fetch_any(voucher, :landing_url).presence || "https://brgen.no",
+        landing_url: fetch_any(voucher, :landing_url),
+        starts_at: fetch_any(voucher, :starts_at),
+        ends_at: fetch_any(voucher, :ends_at),
+        last_seen_at: Time.current,
+      }
+    end
+
+    def self.fetch_any(record, *attributes)
+      attributes.each do |attribute|
+        value = record.public_send(attribute)
+        return value unless value.nil?
+      end
+      nil
+    end
+
+    private_class_method :api_attributes, :program_attributes, :description_attributes,
+                         :offer_attributes, :tracking_attributes, :fetch_any
   end
 end

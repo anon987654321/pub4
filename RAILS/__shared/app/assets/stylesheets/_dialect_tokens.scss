@@ -172,6 +172,13 @@ $vertical-accent-ink: #110f19;
   // against an APCA 75 floor over four dark grounds; #999 on #111 is 6.63:1 WCAG
   // and the shared value, so that argument is settled here rather than per app.
   @include dark-tokens;
+  // Operator, 2026-10-28: brgen mirrors X.com — the dark accent is X's one
+  // blue, with the family's black ink on it (7.02:1; X's white would be
+  // 3.16:1). The blue is declared here, in the palette mixin where every
+  // --accent definition belongs, so the use-sites keep citing a token and the
+  // vertical accent map stays the only thing that re-points --accent on the
+  // brgen tree itself (vertical_accent_single_map).
+  --accent: #1d9bf0;
 }
 
 @mixin brgen-old-light-tokens {

@@ -50,7 +50,11 @@ module Deploy
             # Intentional exceptions are the documented product pens — the yep.com
             # search, jOxVvNE, Amazon's nav bar and logo — read with their rules
             # blanked. Flag everything else.
-            forbidden: /box-shadow\s*:\s*(?!none\b)|text-shadow\s*:|backdrop-filter\s*:|filter\s*:[^;]*\bblur\(/i,
+            # The possessive \s*+ matters: a backtracking \s* could give its
+            # whitespace back, and then (?!none\b) tested " none" — a leading
+            # space — instead of "none", so every box-shadow: none in the tree
+            # read as an ornament violation.
+            forbidden: /box-shadow\s*:\s*+(?!none\b)|text-shadow\s*:|backdrop-filter\s*:|filter\s*:[^;]*\bblur\(/i,
             allow_path: Shared::FrontendLawSet::PRODUCT_PEN_FILES,
             without_pens: true,
           },
@@ -72,7 +76,7 @@ module Deploy
             # The rule styling the CTA has to carry the floor itself. A sheet that
             # merely mentions the class, or declares 44px for something else,
             # satisfied the file-scoped version of this contract.
-            paths: %w[brgen/app/assets/stylesheets/_brgen_vertical_surfaces.scss],
+            paths: %w[brgen/app/assets/stylesheets/application.scss],
             required_rule: [/\.listing-buy-bar-cta\b/, /min-height:\s*(?:44px|var\(--tap-min\))/],
           },
         ]

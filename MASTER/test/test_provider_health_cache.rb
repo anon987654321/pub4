@@ -107,6 +107,21 @@ class ProviderHealthCacheTest < Minitest::Test
     end
   end
 
+
+  def test_a_recent_failure_ranks_behind_a_recent_success_on_the_next_selection
+    Dir.mktmpdir("provider-health-next-selection-") do |dir|
+      now = Time.utc(2026, 11, 1, 10, 0, 0)
+      health = Master::CLI::Routing::ProviderHealth.new(
+        path: File.join(dir, "health.ndjson"), now: -> { now },
+      )
+      health.record(model: "provider-flaky", status: :provider_error)
+      health.record(model: "provider-steady", status: :success)
+
+      assert_equal %w[provider-steady provider-flaky],
+                   health.rank(%w[provider-flaky provider-steady])
+    end
+  end
+
   def test_missing_model_and_dispatch_failures_penalize_health
     Dir.mktmpdir("provider-health-outcomes-") do |dir|
       now = Time.utc(2026, 10, 26, 12, 0, 0)

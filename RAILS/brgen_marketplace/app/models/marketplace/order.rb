@@ -116,35 +116,20 @@ class Marketplace::Order < ApplicationRecord
       lock!
       next if payment_status.in?(%w[paid refunded])
 
-      transitioned = true
-      # The variant is what was bought, so the variant is what runs out. Falling
-      # back to the listing's own stock would let four sizes share one count,
-      # which is the thing variants exist to stop.
-      bought = variant_id ? Marketplace::Variant.lock.find_by(id: variant_id) : nil
-      bought ||= listing_id && Marketplace::Listing.lock.find_by(id: listing_id)
-      raise "listing is not in stock" if bought && !bought.in_stock?
-
-      bought&.consume_stock!(quantity.presence || 1)
+      consume_stock_for_paid!
       update!(
         payment_status: "paid",
         payment_reference: reference.presence || payment_reference,
         paid_at: Time.current,
         status: "paid"
       )
+      transitioned = true
     end
     # Everything below is a side effect of the transition, so it only runs when
     # this call is the one that made it. A replayed webhook used to send the
     # buyer a second "payment confirmed" and attribute the order to a partner
     # twice.
-    return unless transitioned
-
-    title = listing_title
-    metadata = { order_id: id, total_cents: total_cents, quantity: quantity.to_i }
-    record_listing_commerce_event("MarketplacePurchaseCompleted", actor: buyer_record, metadata: metadata)
-    record_listing_event("purchase", user: buyer_record, metadata: metadata)
-    deliver_notification(seller, title: I18n.t("marketplace.order_notification.payment_received"), body: I18n.t("marketplace.order_notification.payment_received_body", title: title), source: self, kind: "order")
-    deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.payment_confirmed"), body: I18n.t("marketplace.order_notification.payment_confirmed_body", title: title), source: self, kind: "order")
-    PartnerMarketing.attribute_order!(self, visitor_digest: nil)
+    notify_paid! if transitioned
   end
 
   # The payment services used to read order.listing.currency and .title
@@ -275,6 +260,43 @@ class Marketplace::Order < ApplicationRecord
   end
 
   private
+
+  # The lock and reload occur inside mark_paid!'s transaction. SQLite does not
+  # emit FOR UPDATE; its writer serialisation plus this reload is the guard
+  # against consuming stock twice on concurrent webhook delivery.
+  def consume_stock_for_paid!
+    bought = variant_id ? variant_inventory : listing_inventory
+    raise "variant is unavailable" if variant_id && bought.nil?
+    raise "listing is not in stock" if bought && !bought.in_stock?
+
+    bought&.consume_stock!(quantity.presence || 1)
+  end
+
+  def variant_inventory
+    Marketplace::Variant.lock.find_by(id: variant_id) if variant_id
+  end
+
+  def listing_inventory
+    Marketplace::Listing.lock.find_by(id: listing_id) if listing_id
+  end
+
+  def notify_paid!
+    record_paid_purchase_events!
+    deliver_paid_order_notifications!
+    PartnerMarketing.attribute_order!(self, visitor_digest: nil)
+  end
+
+  def record_paid_purchase_events!
+    metadata = { order_id: id, total_cents: total_cents, quantity: quantity.to_i }
+    record_listing_commerce_event("MarketplacePurchaseCompleted", actor: buyer_record, metadata: metadata)
+    record_listing_event("purchase", user: buyer_record, metadata: metadata)
+  end
+
+  def deliver_paid_order_notifications!
+    title = listing_title
+    deliver_notification(seller, title: I18n.t("marketplace.order_notification.payment_received"), body: I18n.t("marketplace.order_notification.payment_received_body", title: title), source: self, kind: "order")
+    deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.payment_confirmed"), body: I18n.t("marketplace.order_notification.payment_confirmed_body", title: title), source: self, kind: "order")
+  end
 
   def record_listing_event(type, user:, metadata:)
     listing = Marketplace::Listing.strict_loading(false).find_by(id: listing_id)

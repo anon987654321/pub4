@@ -94,7 +94,16 @@ module Deploy
 
         REQUIRED_ROUTE_FILES.each do |file|
           needle = "shared/config/routes/#{file}"
-          result.fail("#{app}: routes must eval #{needle}") unless routes.include?(needle)
+          # 970aa52d6 folded auth/email_verification/verification/billing into
+          # one loop — instance_eval(File.read("…/shared/config/routes/#{shared}.rb")).
+          # The literal needle cannot see that spelling, so a file counts as
+          # evaled when it is named whole or when the routes read the shared
+          # directory through the interpolated loop and name the file's stem
+          # in the loop's word list.
+          stem = file.delete_suffix(".rb")
+          evaled = routes.include?(needle) ||
+                   (routes.include?('shared/config/routes/#{') && routes.match?(/\b#{Regexp.escape(stem)}\b/))
+          result.fail("#{app}: routes must eval #{needle}") unless evaled
         end
 
         result.fail("#{app}: importmap must eval importmap_baseline.rb") unless importmap.include?("importmap_baseline.rb")

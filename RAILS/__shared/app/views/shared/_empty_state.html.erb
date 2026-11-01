@@ -29,6 +29,8 @@
   <% if action.is_a?(Hash) && action[:label].present? && action[:path].present? %>
     <%= link_to action[:label], action[:path], class: "btn btn-primary empty-state-action" %>
   <% elsif local_assigns[:actions].present? %>
+    <%# DEPRECATION: use action: { label:, path: }; the String-based actions local is retained only for compatibility. %>
+    <% Rails.logger.warn("[DEPRECATION] shared/empty_state actions: use action: { label:, path: }") %>
     <div class="empty-state-actions"><%= local_assigns[:actions] %></div>
   <% end %>
 </section>

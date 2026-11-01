@@ -281,10 +281,25 @@ class TestLaneSelection < Minitest::Test
     end
   end
 
-  def test_a_free_route_still_falls_back_from_premium_before_free
+  def test_a_free_route_keeps_free_candidates_ahead_of_paid_fallbacks
     router = router_over([NEMOTRON, OPUS], [NEMOTRON, OPUS])
-    assert_equal [OPUS, NEMOTRON], router.fallback_chain(task_type: :exploration)
+    assert_equal [NEMOTRON, OPUS], router.fallback_chain(task_type: :exploration)
     assert_equal NEMOTRON, router.preferred(task_type: :exploration)
+  end
+
+  def test_a_keyed_hosted_lane_never_precedes_a_keyless_lane_on_a_free_route
+    keyless = "llm7:GLM-5.3-Flash"
+    paid = "perplexity:sonar-pro"
+    router = router_over([paid, keyless], [paid, keyless])
+    router.define_singleton_method(:hosted_model?) { |id| id.start_with?("llm7:", "perplexity:") }
+    router.define_singleton_method(:hosted_endpoint_for) do |id|
+      id.start_with?("perplexity:") ? { key: "configured-key" } : { key: nil }
+    end
+
+    assert_equal [keyless, paid],
+                 router.priority_fallback_order([paid, keyless], task_type: :exploration)
+    assert_equal [paid, keyless],
+                 router.priority_fallback_order([keyless, paid], task_type: :refactoring)
   end
 
   Config = Struct.new(:task_type, :model, :reasoning_mode, keyword_init: true)
@@ -312,6 +327,22 @@ class TestLaneSelection < Minitest::Test
     end
 
     assert_equal [OPUS], sent, "the first live lane of the tier, not the dead agy and not a free nemotron"
+  end
+
+  def test_a_recent_provider_failure_changes_the_next_router_selection
+    health = Master::CLI::Routing::ProviderHealth.new(
+      path: File.join(@dir, "provider-health.ndjson"),
+      now: -> { Time.at(NOON).utc },
+    )
+    health.record(model: OPUS, status: :provider_error, at: Time.at(NOON).utc)
+
+    router = router_over([OPUS, GROK], [OPUS, GROK])
+    router.instance_variable_set(:@provider_health, health)
+    router.define_singleton_method(:recently_failed?) do |model_id|
+      health.recently_failed?(model_id, max_age_s: 900)
+    end
+
+    assert_equal [GROK], router.fallback_chain(task_type: :code_generation)
   end
 
   # A launch script whose PATH leaves out ~/.local/bin, where the installer puts claude, still finds it there.

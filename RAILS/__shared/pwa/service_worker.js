@@ -20,6 +20,19 @@ const DYNAMIC_PREFIXES = [
   "/posts",
 ]
 
+const sanitizeTargetUrl = rawUrl => {
+  if (!rawUrl || typeof rawUrl !== "string") return "/"
+
+  try {
+    const url = new URL(rawUrl, self.location.origin)
+    if (url.origin !== self.location.origin) return "/"
+    if (["javascript:", "data:", "about:", "blob:"].includes(url.protocol.toLowerCase())) return "/"
+    return url.pathname + url.search + url.hash
+  } catch (_error) {
+    return "/"
+  }
+}
+
 setCacheNameDetails({ prefix: APP_NAME, suffix: CACHE_VERSION })
 precacheAndRoute(self.__WB_MANIFEST, { cleanURLs: false })
 cleanupOutdatedCaches()
@@ -121,7 +134,7 @@ self.addEventListener("push", event => {
     actions: data.actions || [],
     icon: data.icon || "/icon-192.png",
     badge: data.badge || "/icon-mono-192.png",
-    data: { url: data.url || "/" },
+    data: { url: sanitizeTargetUrl(data.url || "/") },
   }))
 })
 
@@ -130,12 +143,12 @@ self.addEventListener("notificationclick", event => {
 
   const data = event.notification.data || {}
   const action = event.action
-  let target = data.url || "/"
+  let target = sanitizeTargetUrl(data.url || "/")
 
   if (action === "view" || action === "open") {
-    target = data.url || "/"
+    target = sanitizeTargetUrl(data.url || "/")
   } else if (action && data.actions?.[action]) {
-    target = data.actions[action]
+    target = sanitizeTargetUrl(data.actions[action])
   }
 
   event.waitUntil(
