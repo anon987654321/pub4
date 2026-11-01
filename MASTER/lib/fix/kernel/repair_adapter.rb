@@ -99,9 +99,7 @@ module Master
           private
 
           def build_soul_preamble
-            soul = Master.soul_config
-            abs = soul.fetch("absolute", {})
-            golden = abs["golden_law"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+            golden = Master::Ground::Laws.new.constitution.fetch("golden_law")
             lines = ["Golden rule: #{golden}",
                       "Minimum change that eliminates the violation. Do not touch unrelated code."]
             Master::Ground::Laws.new.laws.each { |key, value| lines << "- #{key}: #{value}" }
