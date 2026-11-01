@@ -116,7 +116,6 @@
     <%= render "shared/post_card",
           post: post,
           name: post.author_name,
-          avatar_url: post.author_avatar_url,
           handle: (post.community ? "@#{post.community.slug}" : nil),
           time: time_ago_in_words(post.created_at),
           title: post.title,
@@ -129,7 +128,6 @@
           upvoted: Current.user.present? && post.upvoted_by?(Current.user),
           downvoted: Current.user.present? && post.downvoted_by?(Current.user),
           actions: post_actions,
-          frame: false,
-          class: "feed-card" %>
+          frame: false %>
   <% end %>
 <% end %>

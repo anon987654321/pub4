@@ -1,6 +1,5 @@
 <% post = local_assigns.fetch(:post) %>
 <% name = local_assigns[:name] || post_display_name(post) %>
-<% avatar_url = local_assigns.key?(:avatar_url) ? local_assigns[:avatar_url] : post_avatar_url(post) %>
 <% handle = local_assigns[:handle] %>
 <% title = local_assigns.key?(:title) ? local_assigns[:title] : post_title_text(post) %>
 <% content = local_assigns.key?(:content) ? local_assigns[:content] : post_body_text(post) %>
@@ -13,7 +12,6 @@
 <% media = local_assigns[:media] %>
 <% actions = local_assigns[:actions] %>
 <% frame = local_assigns.fetch(:frame, false) %>
-<% css_class = local_assigns[:class] %>
 <% show_votes = local_assigns.fetch(:show_votes, false) %>
 <% vote_path = local_assigns[:vote_path] %>
 <% vote_score = local_assigns.fetch(:vote_score, post.respond_to?(:score) ? post.score : 0).to_i %>
@@ -28,7 +26,7 @@
         upvoted: upvoted, downvoted: downvoted %>
 <% end %>
 <% card = capture do %>
-    <article id="<%= dom_id(post) %>" class="feed-card post-reading-card<%= " #{css_class}" if css_class.present? %>">
+    <article id="<%= dom_id(post) %>" class="feed-card post-reading-card">
       <div class="post-reading-layout"><%= vote_rail if show_votes %><div class="post-reading-main post-reading-main--card">
         <header class="feed-card-header feed-card-byline"><span class="feed-card-name"><%= url.present? ? link_to(name, author_url, class: "link-inherit") : name %></span><% if handle.present? %><span class="feed-card-handle"><%= handle %></span><% end %><% if time.present? %><span class="feed-card-time"><%= time %></span><% end %></header>
         <% if derived_title.present? %><h2 class="feed-card-text post-reading-title"><%= post_url.present? ? link_to(derived_title, post_url) : derived_title %></h2><% end %>

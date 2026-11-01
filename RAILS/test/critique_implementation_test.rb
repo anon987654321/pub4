@@ -476,6 +476,19 @@ class CritiqueImplementationTest < Minitest::Test
     refute_includes card, "if variant == :prose"
     refute_includes card, "post-reading-card feed-post"
     assert_includes card, 'class="feed-card post-reading-card'
+    assert_includes card, 'class="feed-card post-reading-card"'
+    refute_includes card, "avatar_url"
+    refute_includes brgen_feed, "avatar_url:"
+    refute_includes brgen_feed, 'class: "feed-card"'
+    shared_post_css = read("__shared/app/assets/stylesheets/_post_voting.scss")
+    assert_includes shared_post_css, ".feed-card.post-reading-card {\n  padding: var(--space-4) var(--space-3);"
+    assert_match(/@media \(min-width: 480px\) \{\s*\.feed-card\.post-reading-card \{\s*padding: var\(--space-5\) var\(--space-4\);/m, shared_post_css)
+    luxury_titles = css[/body\[data-surface="luxury"\] :is\((.*?)\n\) \{/m, 1]
+    refute_nil luxury_titles, "Amber luxury heading selector should remain explicit"
+    refute_match(/\.post-reading-title/, luxury_titles, "feed cards keep the shared family title face"
+    detail_title = css[/\.post-show-reading \.post-reading-title \{([^}]*)\}/m, 1]
+    assert_match(/font-family: var\(--font-beauty-sans\)/, detail_title)
+    assert_match(/font-size: clamp\(1\.75rem, 5vw, 3\.5rem\)/, detail_title)
     assert_includes feed, 'show_votes: true'
     assert_includes feed, 'post_url: post_path(post)'
     # The "…" read-more link lives in the shared card the feed renders.

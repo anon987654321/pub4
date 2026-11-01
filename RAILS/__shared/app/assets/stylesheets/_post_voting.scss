@@ -1,4 +1,14 @@
 // Shared post voting and reading geometry. Dialects own colour; this file owns structure.
+// Feed post cards use one measured rhythm in Brgen and Amber. The surrounding
+// page and palette stay dialect-owned; the shared post itself does not drift.
+.feed-card.post-reading-card {
+  padding: var(--space-4) var(--space-3);
+}
+@media (min-width: 480px) {
+  .feed-card.post-reading-card {
+    padding: var(--space-5) var(--space-4);
+  }
+}
 .post-reading-layout {
   display: grid;
   grid-template-columns: var(--vote-target) minmax(0, 1fr);
