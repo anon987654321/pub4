@@ -134,7 +134,7 @@ module Master
           row["node"].to_s if row.is_a?(Hash) && row["node"]
         end
         unless nodes.size == 9 && nodes.uniq == nodes &&
-               nodes.all? { |node| node.match?(/\\A[a-z][a-z0-9_]*\\z/) }
+               nodes.all? { |node| node.match?(/\A[a-z][a-z0-9_]*\z/) }
           raise IntegrityError, "laws.yml must declare exactly nine unique, ordered constitutional nodes"
         end
 
