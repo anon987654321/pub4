@@ -139,21 +139,29 @@ module Deploy
       preferred = %w[
         brgen/core brgen/nearby brgen/marketplace brgen/session_new
         amber/home amber/wardrobe amber/feed amber/sign_in
+        bsdports/home bsdports/ports_index
       ]
 
-      desktop = GeometryProbe.surfaces
-                             .select { |s| s.viewport == "desktop" }
-                             .uniq { |s| "#{s.app}/#{s.label}" }
-      by_key = {}
+      responsive = GeometryProbe.surfaces
+                                .select { |surface| %w[desktop mobile].include?(surface.viewport) }
+                                .uniq { |surface| "#{surface.app}/#{surface.label}/#{surface.viewport}" }
+      by_key = responsive.group_by { |surface| "#{surface.app}/#{surface.label}" }
+      picked = preferred.flat_map do |key|
+        rows = by_key.fetch(key, [])
+        %w[desktop mobile].filter_map { |viewport| rows.find { |surface| surface.viewport == viewport } }
+      end
 
-      desktop.each { |s| by_key["#{s.app}/#{s.label}"] = s }
-      picked = preferred.filter_map { |k| by_key[k] }
-      # Up to 3 additional per app for breadth
-      desktop.group_by(&:app).each_value do |rows|
-        rows.each do |s|
-          break if picked.count { |p| p.app == s.app } >= 4
+      # Keep a bounded but balanced sample for every app at each viewport.
+      # Mobile layouts can reorder, hide or replace controls, so a desktop tab
+      # walk is not evidence that the responsive navigation is keyboard-operable.
+      responsive.group_by { |surface| [surface.app, surface.viewport] }.each_value do |rows|
+        app = rows.first.app
+        viewport = rows.first.viewport
+        rows.each do |surface|
+          count = picked.count { |item| item.app == app && item.viewport == viewport }
+          break if count >= 4
 
-          picked << s unless picked.include?(s)
+          picked << surface unless picked.include?(surface)
         end
       end
       picked
