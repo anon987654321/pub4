@@ -81,13 +81,22 @@ class TestRenderer < Minitest::Test
 
   def test_splash_keeps_multiline_boot_shape_when_verbose
     ENV["MASTER_BOOT_STATUS"] = "1"
-    lines = FakeRenderer.new(config: {}).splash("model").lines
+    old_degraded = ENV["MASTER_TTS_DEGRADED"]
+    ENV.delete("MASTER_TTS_DEGRADED")
+    lines = Master::Voice::Speech.stub(:last_error, nil) do
+      Master::Voice::Playback.stub(:last_error, nil) do
+        FakeRenderer.new(config: {}).splash("model").lines
+      end
+    end
 
     assert_operator lines.size, :>, 10
     assert_operator lines.count { |line| line.include?("boot line") }, :>=, 2
     assert_operator lines.count { |line| line.include?("boot line") }, :<=, 10
+    assert_includes strip_ansi(lines.join), "voice0 at mainbus0: available"
+    refute_includes strip_ansi(lines.join), "voice0 at mainbus0: ready"
   ensure
     ENV.delete("MASTER_BOOT_STATUS")
+    old_degraded.nil? ? ENV.delete("MASTER_TTS_DEGRADED") : ENV["MASTER_TTS_DEGRADED"] = old_degraded
   end
 
   def test_interactive_splash_leaves_the_terminal_background_alone
