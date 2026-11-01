@@ -1197,7 +1197,7 @@ tokens:
   social:
     bg: "#000000"
     surface: "#111111"
-    surface_elevated: "#111111"
+    surface_elevated: "#1a1a1a"
     search_bg: "#111111"
     text: "#efefef"
     text_secondary: "#a3a3a3"
@@ -1235,7 +1235,7 @@ tokens:
   light:
     bg: "#efefef"
     surface: "#ffffff"
-    surface_elevated: "#ffffff"
+    surface_elevated: "#f2f2f2"
     search_bg: "#ffffff"
     text: "#333333"
     text_secondary: "#4d4d4d"

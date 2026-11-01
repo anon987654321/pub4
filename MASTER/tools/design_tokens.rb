@@ -85,6 +85,7 @@ module DesignTokens
   def static_tokens_css
     tokens = load
     social = tokens.fetch("social")
+    light = tokens.fetch("light")
     shared_chrome = tokens.fetch("shared_chrome")
     visual_identity = tokens.fetch("visual_identity")
     face_layout = tokens.fetch("face_root").fetch("layout")
@@ -138,14 +139,21 @@ module DesignTokens
       @media (prefers-color-scheme: light) {
         :root {
           color-scheme: light;
-          --bg: #ffffff;
-          --text: #0f1419;
-          --text-secondary: #536471;
-          --border: #eff3f4;
-          --hover: color-mix(in srgb, var(--text) 10%, transparent);
-          --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
+          --bg: #{light.fetch("bg")};
+          --surface: #{light.fetch("surface")};
+          --surface-elevated: #{light.fetch("surface_elevated")};
+          --search-bg: #{light.fetch("search_bg")};
+          --text: #{light.fetch("text")};
+          --text-secondary: #{light.fetch("text_secondary")};
+          --border: #{light.fetch("border")};
+          --hover: #{light.fetch("hover")};
+          --hover-subtle: #{light.fetch("hover_subtle")};
+          --accent: #{light.fetch("accent")};
+          --danger: #{light.fetch("danger")};
           --color-background: var(--bg);
-          --color-highlight: var(--bg);
+          --color-highlight: var(--surface-elevated);
+          --color-accent: var(--accent);
+          --color-border: var(--border);
           --text-primary: var(--text);
         }
       }
