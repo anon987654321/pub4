@@ -15,6 +15,7 @@ module Master
     LEGACY_RANK_FIELDS = %w[priority tier].freeze
     SEVERITIES = %w[info warning error critical veto].freeze
     RESOLUTIONS = %w[automatic review never].freeze
+    MODALITY_COVERAGE = %w[deterministic semantic].freeze
     METADATA_PREFIXES = %w[KIND_ RATCHET_ LINT_ META_].freeze
 
     class << self
@@ -44,6 +45,7 @@ module Master
         validate_resolutions!(rows)
         validate_special_metadata!(rows)
         validate_protected_paths!(rows)
+        validate_invariant_modalities!(rows)
         true
       end
 
@@ -59,10 +61,12 @@ module Master
       end
 
       def validate_precedence_nodes!(rows)
-        declared = rows.filter_map { |row| row["node"]&.to_s }
-        unless declared.size == 9 && declared.uniq == declared &&
+        node_rows = rows.select { |row| row["node"] }
+        declared = node_rows.map { |row| row["node"].to_s }
+        valid = node_rows.all? { |row| row.fetch("id").downcase == row["node"].to_s }
+        unless declared.size == 9 && declared.uniq == declared && valid &&
                declared.all? { |node| node.match?(/\\A[a-z][a-z0-9_]*\\z/) }
-          raise Invalid, "laws.yml must declare exactly nine unique, ordered constitutional nodes"
+          raise Invalid, "laws.yml must declare nine unique invariant nodes whose ids match their node names"
         end
       end
 
@@ -132,6 +136,24 @@ module Master
           raise Invalid, "#{id} has unknown resolution #{resolution.inspect}" unless RESOLUTIONS.include?(resolution.to_s)
           if resolution.to_s == "automatic" && row["proof"].to_s.strip.empty?
             raise Invalid, "#{id} is automatic but names no proof fixture"
+          end
+        end
+      end
+
+      def validate_invariant_modalities!(rows)
+        rows.select { |row| row["node"] }.each do |row|
+          id = row.fetch("id")
+          %w[mechanical semantic].each do |modality|
+            value = row[modality]
+            raise Invalid, "#{id} must declare #{modality} enforcement" unless
+              value.is_a?(String) && !value.strip.empty?
+          end
+
+          mode = row["coverage_mode"].to_s
+          raise Invalid, "#{id} has no valid coverage_mode" unless MODALITY_COVERAGE.include?(mode)
+          raise Invalid, "#{id} must declare enforcement: declared" unless row["enforcement"] == "declared"
+          if mode == "deterministic" && Array(row["detector_ids"]).empty?
+            raise Invalid, "#{id} deterministic coverage must name detector_ids"
           end
         end
       end
