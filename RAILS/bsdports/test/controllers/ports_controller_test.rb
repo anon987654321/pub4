@@ -63,6 +63,9 @@ class PortsControllerTest < ActionDispatch::IntegrationTest
     assert_select "dd span.data-state.data-state--stale", text: /#{Regexp.escape(I18n.t("ports.stale", count: 400))}\z/
     assert_select "section[aria-label=?] ul[role=tree][aria-label=?] li[role=treeitem]",
                   I18n.t("ports.tree_heading"), I18n.t("ports.tree_heading")
+    assert_select "details.dep-graph-panel > summary", text: I18n.t("ports.graph_heading")
+    assert_select "svg.dep-graph line.dep-graph-edge", 1
+    assert_select "svg.dep-graph g.dep-graph-node", 2
   end
 
   def test_the_updated_sort_has_a_control_on_the_page
