@@ -26,8 +26,9 @@ module Master
       DATA_EXTENSIONS = %w[.yml .yaml .json .tsv .csv .toml .conf].freeze
 
       # Rendered or irreplaceable output, matched against the absolute path.
-      # laws.yml and soul.yml are sacred paths soul.yml declares and are refused
-      # by protected_reason; tokens.yml is not sacred, so it is named here.
+      # laws.yml declares the protected paths through SACRED_AUTHORSHIP.
+      # soul.yml is separately protected by that same Law; tokens.yml is not
+      # sacred, so it is named here.
       PROTECTED = [
         %r{/MASTER/data/tokens\.yml\z},
         %r{/MASTER/lib/cli/face/},
