@@ -26,22 +26,33 @@ module Shared
     # that would also privatize the plain instance methods below (geo?,
     # distance_to) for every including model, breaking their external callers.
     def self.cell_id(lat:, lng:, km: 10.0)
-      d_lat = km / EARTH_KM * (180.0 / Math::PI)
-      d_lng = d_lat / Math.cos([ lat.to_f.abs, 0.0001 ].max * Math::PI / 180.0)
-      cell_lat = (lat.to_f / d_lat).floor
-      cell_lng = (lng.to_f / d_lng).floor
-      "#{cell_lat}:#{cell_lng}"
+      latitude = lat.to_f
+      longitude = lng.to_f
+      latitude_step = degrees_for_km(km)
+      longitude_step = longitude_degrees_for_km(km, latitude)
+
+      "#{(latitude / latitude_step).floor}:#{(longitude / longitude_step).floor}"
     end
 
     # Great-circle distance in km. A module method so non-model callers need no including class.
     def self.haversine(lat1, lng1, lat2, lng2)
-      dlat = (lat2.to_f - lat1.to_f) * Math::PI / 180.0
-      dlng = (lng2.to_f - lng1.to_f) * Math::PI / 180.0
-      a = Math.sin(dlat / 2)**2 +
-          Math.cos(lat1.to_f * Math::PI / 180.0) *
-          Math.cos(lat2.to_f * Math::PI / 180.0) *
-          Math.sin(dlng / 2)**2
-      EARTH_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+      latitude_1 = deg_to_rad(lat1)
+      latitude_2 = deg_to_rad(lat2)
+      delta_latitude = deg_to_rad(lat2.to_f - lat1.to_f)
+      delta_longitude = deg_to_rad(lng2.to_f - lng1.to_f)
+      arc = Math.sin(delta_latitude / 2)**2 +
+            Math.cos(latitude_1) * Math.cos(latitude_2) *
+            Math.sin(delta_longitude / 2)**2
+
+      EARTH_KM * 2 * Math.atan2(Math.sqrt(arc), Math.sqrt(1 - arc))
+    end
+
+    def self.deg_to_rad(value) = value.to_f * Math::PI / 180.0
+
+    def self.degrees_for_km(km) = km.to_f / EARTH_KM * (180.0 / Math::PI)
+
+    def self.longitude_degrees_for_km(km, latitude)
+      degrees_for_km(km) / Math.cos(deg_to_rad([ latitude.to_f.abs, 0.0001 ].max))
     end
 
     class_methods do
@@ -49,23 +60,29 @@ module Shared
       # For high precision on small result sets, post-filter with haversine or call .select.
       # Signature compatible with prior dupe scopes (positional km default).
       def nearby(lat, lng, km = 5)
-        isolated = GeoIsolation.compute_isolated_bounds(latitude: lat, longitude: lng)
-        return none if isolated[:status] == :error
+        bounds = isolated_bounds_for(lat, lng)
+        return none unless bounds
 
-        lat, lng = isolated[:bounds]
-        radius_km = km.to_f
-        return none if lat == 0 && lng == 0
+        center_lat, center_lng = bounds
+        return none if center_lat == 0 && center_lng == 0
 
-        d_lat = radius_km / EARTH_KM * (180.0 / Math::PI)
-        d_lng = d_lat / Math.cos([ lat.abs, 0.0001 ].max * Math::PI / 180.0)
+        d_lat = Shared::GeoLocatable.degrees_for_km(km)
+        d_lng = Shared::GeoLocatable.longitude_degrees_for_km(km, center_lat)
 
-        where(latitude: (lat - d_lat)..(lat + d_lat))
-          .where(longitude: (lng - d_lng)..(lng + d_lng))
+        where(latitude: (center_lat - d_lat)..(center_lat + d_lat))
+          .where(longitude: (center_lng - d_lng)..(center_lng + d_lng))
           .where.not(latitude: nil)
       end
 
       # Accurate haversine in km. Use for post-filter or distance checks.
       def haversine(lat1, lng1, lat2, lng2) = Shared::GeoLocatable.haversine(lat1, lng1, lat2, lng2)
+
+      private
+
+      def isolated_bounds_for(lat, lng)
+        isolated = GeoIsolation.compute_isolated_bounds(latitude: lat, longitude: lng)
+        isolated[:bounds] unless isolated[:status] == :error
+      end
     end
 
     def geo?
