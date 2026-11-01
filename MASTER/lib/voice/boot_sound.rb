@@ -39,7 +39,7 @@ module Master
 
         path = ensure_wav(settings, surface: :cli)
         argv = [*player.map { |word| format(word, volume: settings.fetch("volume", 1.0)) }, path]
-        pid = Process.spawn(*argv, **Master::Io::ProcessSpawn.options(out: File::NULL, err: File::NULL, pgroup: true))
+        pid = Process.spawn(Master::Io::ProcessSpawn.environment, *argv, **Master::Io::ProcessSpawn.options(out: File::NULL, err: File::NULL, pgroup: true))
         Process.detach(pid)
         true
       rescue StandardError => e
