@@ -144,7 +144,9 @@ checks:
 # participant tasks remain inconclusive until observations are supplied.
 evidence_policy:
   required:
-    source: [source_files, source_inventory_sha256, finding_path, line, source_sha256]
+    source:
+      pass: [source_files, source_inventory_sha256]
+      finding: [finding_path, line, source_sha256]
     task: [method, participants, summary, artifacts, sha256]
   task_privacy: "Store anonymised observations only. Do not persist participant names, contact details, recordings or raw personal data."
   verdicts: [pass, fail, inconclusive, not_applicable]
