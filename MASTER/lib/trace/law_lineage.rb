@@ -10,7 +10,7 @@ module Master
       Node = Data.define(
         :path, :boundary, :entry, :depends_on, :check, :ownership, :laws
       )
-      Law = Data.define(:id, :priority, :statement)
+      Law = Data.define(:id, :order, :statement)
 
       def initialize(root: Master::ROOT)
         @root = File.expand_path(root)
@@ -73,7 +73,7 @@ module Master
       end
 
       # Law identity and file order come from the flat catalogue. Constitutional
-      # precedence itself comes from Master::Soul, never a duplicated priority.
+      # precedence is the ordered node sequence declared by laws.yml.
       def constitutional_laws
         order = Master::Soul.invariant_order
         rows = Master.law_entries(root: @root)
