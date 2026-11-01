@@ -32,6 +32,9 @@ class TestImmutability < Minitest::Test
   def test_the_live_manifest_blocks_the_laws_and_the_soul
     assert Master::Ground::Immutability.blocked?("data/laws.yml")
     assert Master::Ground::Immutability.blocked?("data/soul.yml")
+    assert Master::Ground::Immutability.blocked?("lib/soul.rb")
+    refute Master::Ground::Immutability.blocked?("data/SOUL.md")
+    refute Master::Ground::Immutability.blocked?("data/IDENTITY.md")
     refute Master::Ground::Immutability.blocked?("data/tokens.yml")
   end
 
