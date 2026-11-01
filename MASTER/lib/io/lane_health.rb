@@ -160,7 +160,7 @@ module Master
       def recently_failed? = @failed_at && @clock.call - @failed_at < RETRY_AFTER_FAILED_START_S
 
       def spawn_ollama(binary)
-        pid = Process.spawn(binary, "serve", **ProcessSpawn.options(out: File::NULL, err: File::NULL, pgroup: true))
+        pid = Process.spawn(ProcessSpawn.environment, binary, "serve", **ProcessSpawn.options(out: File::NULL, err: File::NULL, pgroup: true))
         Process.detach(pid)
       end
 
