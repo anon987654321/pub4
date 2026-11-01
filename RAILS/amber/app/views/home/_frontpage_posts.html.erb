@@ -1,0 +1,12 @@
+<% if posts.present? %>
+  <%= turbo_stream_from "posts" %>
+  <section class="amber-home-posts" aria-labelledby="amber-home-posts-title">
+    <div class="page-header">
+      <%= tag.h2 t("pages.community"), id: "amber-home-posts-title" %>
+      <%= link_to t("nav.feed"), posts_path %>
+    </div>
+    <div id="amber-home-posts-list">
+      <%= render partial: "posts/post", collection: posts, as: :post %>
+    </div>
+  </section>
+<% end %>
