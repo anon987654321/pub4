@@ -342,7 +342,6 @@ module Master
         end
 
         def import_external!
-          import_brain_files!
           import_project_context!
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "memory.preload_context")
@@ -361,19 +360,6 @@ module Master
 
             body = entry["body"].to_s.strip
             remember(key, body, type: entry["type"].to_s, source: "data/project_context.yml") unless body.empty?
-          end
-        end
-
-        def import_brain_files!
-          %w[IDENTITY.md SOUL.md].each do |name|
-            path = File.join(@root, "data", name)
-            next unless File.exist?(path)
-
-            key = "brain/#{File.basename(name, ".md").downcase}"
-            next if @store.key?(key)
-
-            body = File.read(path, encoding: "UTF-8").strip
-            remember(key, body, type: "general", source: "data/#{name}") unless body.empty?
           end
         end
 
