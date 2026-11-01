@@ -58,6 +58,24 @@ A named `/play progression N` request remains a single progression, at 92 BPM un
 an explicit tempo or an available hip-hop reference supplies another value. Dilla-pocket
 progressions use the full drum pattern, Rhodes, and the `dilla_night` bus-effects rig.
 
+## Local sample flips
+
+A cleared local recording can become a rhythmic, chord-aware sample layer inside the same Dilla render. Dilla divides the first part of the recording into slices, estimates a predominant pitch for each slice, and chooses a matching chord tone (or the nearest available slice) on each beat. Slice choices are seeded, so the same source, progression and seed reproduce the same flip. The layer is mixed before the final tape and mastering stages.
+
+Use a file you already have permission to sample:
+
+```sh
+ruby STUDIO/dilla/dilla.rb --sample-loop /absolute/path/to/cleared-loop.wav \
+  --sample-loop-volume 0.42 --sample-loop-weight 1.0 --sample-loop-slices 24 \
+  --showcase --no-video --seed 42 --out /tmp/dilla-flip.wav
+```
+
+The same path works with an ordinary finite progression render. The matching environment variables are `SAMPLE_LOOP`, `SAMPLE_LOOP_VOL` (default `0.42`) and `SAMPLE_LOOP_WEIGHT` (default `1.0`). The command-line flags override the corresponding level settings. Volume and weight are each bounded to `0..1`; the combined layer gain is their product.
+
+FFmpeg must be installed locally. Dilla reads no URL and runs no downloader: the input must be a local file, at most 128 MiB. Only the first 24 seconds are decoded, to 44.1 kHz stereo float audio. There are 24 slices by default; `--sample-loop-slices` accepts 4–64, with a minimum slice length of 0.1 seconds. The source is read in place and is never copied into the repository or bundled with a render. Keep the source and its rights record under your own control.
+
+The infinite `--play` streamer does not accept a sample layer; use a finite render, `--showcase`, or `--live` instead. This is deliberately a sampler layer, not a second synthesizer, a new progression/patch rotation system, or an automatic online acquisition route.
+
 The rig is defined once in `data/dilla.json`: cassette colour, heavy drum tape, drum-bus
 dub echo and crystallizer, with a quieter instrument echo/crystallizer send. The
 `--effect-rig NAME` option applies this complete per-bus chain to standalone progression
