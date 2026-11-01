@@ -199,6 +199,19 @@ module Master
       canonical = Master::Soul.sacred_paths(root: File.dirname(File.dirname(path))).map { |entry| normalize_path(entry) }
       raise ArgumentError, "sacred_paths must match MASTER/lib/soul.rb" unless declared == canonical
       validate_sacred_paths(declared, path)
+
+      temperament = data.fetch("temperament") { raise KeyError, "temperament profile is required" }
+      raise ArgumentError, "temperament.profile must be non-empty text" unless temperament.is_a?(Hash) && temperament["profile"].is_a?(String) && !temperament["profile"].strip.empty?
+      %w[method guardrails].each do |key|
+        values = temperament[key]
+        unless values.is_a?(Array) && !values.empty? && values.all? { |value| value.is_a?(String) && !value.strip.empty? }
+          raise ArgumentError, "temperament.#{key} must be a non-empty list of statements"
+        end
+      end
+      %w[delivery contexts].each do |key|
+        value = temperament[key]
+        raise ArgumentError, "temperament.#{key} must be a non-empty mapping" unless value.is_a?(Hash) && !value.empty?
+      end
     end
 
     def validate_sacred_paths(paths, path)
