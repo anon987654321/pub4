@@ -7945,6 +7945,262 @@ module Dilla
   end
 end
 
+
+# A local, seeded sample flip. Source audio never leaves the operator's machine.
+# FFmpeg is only a decoder; slice choice, chopping and mixing stay in this engine.
+module Dilla
+  module SampleFlip
+    Slice = Struct.new(:start, :frames, :pitch_class, keyword_init: true)
+    Clip = Struct.new(:channels, :slices, :gain, :path, keyword_init: true)
+
+    MAX_FILE_BYTES = 128 * 1024 * 1024
+    MAX_SECONDS = 24
+    MIN_SECONDS = 1
+    MIN_SLICE_SECONDS = 0.10
+    DEFAULT_SLICES = 24
+    MIN_SLICES = 4
+    MAX_SLICES = 64
+    PITCH_RATE = SAMPLE_RATE / 4
+    MIN_PITCH_CORRELATION = 0.30
+
+    module_function
+
+    def load(options)
+      source = options[:sample_loop] || ENV["SAMPLE_LOOP"]
+      return nil if source.to_s.strip.empty?
+
+      path = source.to_s.strip
+      raise ArgumentError, "sample loop must be a local audio file; URLs are not downloaded" if path.match?(/\A[a-z][a-z0-9+.-]*:\/\//i)
+      path = File.realpath(File.expand_path(path))
+      raise ArgumentError, "sample loop is not a regular file: #{path}" unless File.file?(path)
+
+      bytes = File.size(path)
+      raise ArgumentError, "sample loop is empty: #{path}" unless bytes.positive?
+      raise ArgumentError, "sample loop exceeds #{MAX_FILE_BYTES / 1024 / 1024} MiB" if bytes > MAX_FILE_BYTES
+
+      volume = bounded_number(options.fetch(:sample_loop_volume) { ENV.fetch("SAMPLE_LOOP_VOL", "0.42") },
+                              "SAMPLE_LOOP_VOL", 0.0..1.0)
+      weight = bounded_number(options.fetch(:sample_loop_weight) { ENV.fetch("SAMPLE_LOOP_WEIGHT", "1.0") },
+                              "SAMPLE_LOOP_WEIGHT", 0.0..1.0)
+      requested_slices = Integer(options.fetch(:sample_loop_slices, DEFAULT_SLICES))
+      unless requested_slices.between?(MIN_SLICES, MAX_SLICES)
+        raise ArgumentError, "sample-loop slices must be #{MIN_SLICES}..#{MAX_SLICES}"
+      end
+
+      ffmpeg = executable("ffmpeg")
+      raise ArgumentError, "sample flips need FFmpeg installed on PATH" unless ffmpeg
+
+      pcm, stderr, status = Studio::Subprocess.capture3(
+        ffmpeg, "-nostdin", "-hide_banner", "-loglevel", "error",
+        "-i", path, "-t", MAX_SECONDS.to_s, "-map", "0:a:0", "-vn",
+        "-ac", "2", "-ar", SAMPLE_RATE.to_s, "-f", "f32le", "pipe:1",
+        timeout: 20
+      )
+      unless status.success?
+        detail = stderr.to_s.strip.gsub(/\s+/, " ")[0, 240]
+        raise ArgumentError, "FFmpeg could not decode the sample loop#{detail.empty? ? '' : ": #{detail}"}"
+      end
+      unless pcm.bytesize.positive? && (pcm.bytesize % 8).zero?
+        raise ArgumentError, "FFmpeg returned incomplete stereo float audio"
+      end
+
+      values = pcm.unpack("e*")
+      frames = values.length / 2
+      raise ArgumentError, "sample loop must contain at least #{MIN_SECONDS} second of audio" if frames < SAMPLE_RATE * MIN_SECONDS
+      raise ArgumentError, "decoded sample exceeds the #{MAX_SECONDS}-second limit" if frames > SAMPLE_RATE * MAX_SECONDS
+
+      left = Array.new(frames)
+      right = Array.new(frames)
+      values.each_slice(2).with_index do |(l, r), index|
+        raise ArgumentError, "sample loop contains non-finite audio" unless l.finite? && r.finite?
+
+        left[index] = l.clamp(-1.0, 1.0)
+        right[index] = r.clamp(-1.0, 1.0)
+      end
+
+      max_slices = frames / (SAMPLE_RATE * MIN_SLICE_SECONDS).floor
+      slice_count = [requested_slices, max_slices].min
+      raise ArgumentError, "sample loop is too short for at least #{MIN_SLICES} useful slices" if slice_count < MIN_SLICES
+
+      slices = Array.new(slice_count) do |index|
+        first = (index * frames) / slice_count
+        finish = ((index + 1) * frames) / slice_count
+        Slice.new(start: first, frames: finish - first,
+                  pitch_class: pitch_class(left, right, first, finish - first))
+      end
+      Clip.new(channels: [left, right], slices:, gain: volume * weight, path:)
+    rescue Studio::Subprocess::TimeoutError
+      raise ArgumentError, "FFmpeg timed out while decoding the sample loop"
+    rescue SystemCallError => error
+      raise ArgumentError, "cannot read sample loop: #{error.message}"
+    end
+
+    def mix!(frame, clip, chords:, bpm:, beats_per_chord:, seed: 0)
+      return frame unless clip && clip.gain.positive?
+      raise ArgumentError, "sample flip needs one or two audio channels" unless [1, 2].include?(frame.length)
+      raise ArgumentError, "sample flip frame must have equal channel lengths" unless frame.all? { |channel| channel.is_a?(Array) && channel.length == frame.first.length }
+
+      tempo = bounded_number(bpm, "sample-flip BPM", 30.0..300.0)
+      chord_span = bounded_number(beats_per_chord, "sample-flip beats per chord", 0.25..64.0)
+      progression = Array(chords)
+      raise ArgumentError, "sample flip needs a chord progression" if progression.empty?
+      return frame if frame.first.empty?
+
+      chord_sets = progression.map { |name| chord_pitch_classes(name) }
+      beat_frames = [(60.0 * SAMPLE_RATE / tempo).round, 1].max
+      beat_count = (frame.first.length.to_f / beat_frames).ceil
+      random = Random.new(Integer(seed || 0))
+      previous = nil
+
+      beat_count.times do |beat|
+        destination = beat * beat_frames
+        break if destination >= frame.first.length
+
+        chord_index = (beat / chord_span).floor % chord_sets.length
+        slice = choose_slice(clip, chord_sets.fetch(chord_index), random, previous)
+        previous = slice
+        count = [beat_frames, frame.first.length - destination].min
+        edge = [SAMPLE_RATE / 250, count / 2].min
+
+        count.times do |offset|
+          source_offset = offset % slice.frames
+          envelope = if edge.positive?
+                       [1.0, (offset + 1).to_f / edge, (count - offset).to_f / edge].min
+                     else
+                       1.0
+                     end
+          gain = clip.gain * envelope
+          left = loop_sample(clip.channels[0], slice, source_offset)
+          right = loop_sample(clip.channels[1], slice, source_offset)
+          if frame.length == 1
+            frame[0][destination + offset] += ((left + right) * 0.5) * gain
+          else
+            frame[0][destination + offset] += left * gain
+            frame[1][destination + offset] += right * gain
+          end
+        end
+      end
+      frame
+    end
+
+    def choose_slice(clip, pitch_classes, random, previous = nil)
+      candidates = clip.slices.select { |slice| !slice.pitch_class.nil? }
+      unless candidates.empty?
+        scored = candidates.map do |slice|
+          [pitch_classes.map { |pitch| pitch_distance(slice.pitch_class, pitch) }.min, slice]
+        end
+        best = scored.map(&:first).min
+        candidates = scored.filter_map { |distance, slice| slice if distance == best }
+      else
+        candidates = clip.slices
+      end
+      alternatives = candidates.reject { |slice| slice.equal?(previous) }
+      candidates = alternatives unless alternatives.empty?
+      candidates.fetch(random.rand(candidates.length))
+    end
+
+    def chord_pitch_classes(name)
+      chord = Chords.parse(name)
+      root = chord.fetch(:pc)
+      notes = [root] + Array(chord[:tones]).map { |interval| (root + Integer(interval)) % 12 }
+      notes << chord[:bass] unless chord[:bass].nil?
+      notes.uniq
+    end
+
+    def pitch_distance(left, right)
+      distance = (left - right).abs % 12
+      [distance, 12 - distance].min
+    end
+
+    def bounded_number(value, label, range)
+      number = Float(value)
+      raise ArgumentError, "#{label} must be between #{range.begin} and #{range.end}" unless number.finite? && range.cover?(number)
+
+      number
+    rescue TypeError, ArgumentError => error
+      raise error if error.message.start_with?(label)
+
+      raise ArgumentError, "#{label} must be a number between #{range.begin} and #{range.end}"
+    end
+
+    def executable(name)
+      ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).each do |directory|
+        next if directory.empty?
+
+        candidate = File.join(directory, name)
+        return candidate if File.file?(candidate) && File.executable?(candidate)
+      end
+      nil
+    end
+
+    def pitch_class(left, right, start, frames)
+      decimated = []
+      cursor = start
+      finish = start + frames
+      while cursor < finish
+        limit = [cursor + 4, finish].min
+        total = 0.0
+        count = 0
+        (cursor...limit).each do |index|
+          total += (left[index] + right[index]) * 0.5
+          count += 1
+        end
+        decimated << total / count
+        cursor += 4
+      end
+
+      length = [decimated.length, 2048].min
+      return if length < 1024
+
+      start_at = [(decimated.length - length) / 2, 0].max
+      window = decimated.slice(start_at, length)
+      return if window.sum { |sample| sample * sample } < 1.0e-6
+
+      best_lag = nil
+      best_correlation = -1.0
+      upper = [200, window.length / 2].min
+      (11..upper).each do |lag|
+        cross = left_energy = right_energy = 0.0
+        index = 0
+        count = window.length - lag
+        while index < count
+          a = window[index]
+          b = window[index + lag]
+          cross += a * b
+          left_energy += a * a
+          right_energy += b * b
+          index += 1
+        end
+        denominator = Math.sqrt(left_energy * right_energy)
+        next unless denominator.positive?
+
+        correlation = cross / denominator
+        if correlation > best_correlation
+          best_correlation = correlation
+          best_lag = lag
+        end
+      end
+      return unless best_lag && best_correlation >= MIN_PITCH_CORRELATION
+
+      frequency = PITCH_RATE.to_f / best_lag
+      midi = (69 + (12.0 * Math.log2(frequency / 440.0))).round
+      midi % 12
+    end
+
+    def loop_sample(channel, slice, offset)
+      position = offset % slice.frames
+      fade = [SAMPLE_RATE / 250, slice.frames / 4].min
+      value = channel[slice.start + position]
+      return value unless fade.positive? && position >= slice.frames - fade
+
+      phase = (position - (slice.frames - fade)).to_f / fade
+      opening = channel[slice.start + (fade - 1 - (position - (slice.frames - fade)))]
+      (value * (1.0 - phase)) + (opening * phase)
+    end
+  end
+end
+
+
 # --- engine.rb ---
 # Reference analysis and industrial-techno generation stay in their own modules.
 
@@ -8064,8 +8320,15 @@ def run(argv)
     o.on("--chord-balance DB", Float, "Reference-derived dB shift to chords, bounded to +/-2 dB") { |v| options[:chord_balance] = v.clamp(-2.0, 2.0) }
     o.on("--pool POOL", %w[essential all], "With --play: essential progressions (default) or all") { |v| options[:pool] = v }
     o.on("--quick", "Render the first progression as a smoke test") { options[:quick] = true }
+    o.on("--sample-loop PATH", "Chop a local, rights-cleared audio file against the chords") { |v| options[:sample_loop] = v }
+    o.on("--sample-loop-volume N", Float, "Sample level 0..1 (default SAMPLE_LOOP_VOL or 0.42)") { |v| options[:sample_loop_volume] = v }
+    o.on("--sample-loop-weight N", Float, "Additional sample level 0..1 (default SAMPLE_LOOP_WEIGHT or 1.0)") { |v| options[:sample_loop_weight] = v }
+    o.on("--sample-loop-slices N", Integer, "Number of source chops, 4..64 (default 24)") { |v| options[:sample_loop_slices] = v }
   end.parse!(argv)
   options[:live] = true if live_argument
+  if options[:play] && (options[:sample_loop] || !ENV.fetch("SAMPLE_LOOP", "").strip.empty?)
+    raise ArgumentError, "sample flips require a finite render; remove --play and use --showcase or --live"
+  end
 
   data = JSON.parse(File.read(File.join(__dir__, "data", "dilla.json")))
   if options[:language] || options[:heritage]
