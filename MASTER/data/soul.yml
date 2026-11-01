@@ -1,13 +1,13 @@
-# soul.yml — integrity manifest, live delivery temperament, runtime settings.
-# Canonical identity and constitutional precedence live in MASTER/lib/soul.rb.
-# body_sha256 attests that Ruby-owned body. The temperament below shapes delivery
-# only; it cannot change authority, factual standards, safety or operator intent.
-# The absolute.sacred_paths list is a compatibility mirror validated against
-# Master::Soul. Remaining runtime settings migrate to their owning registries.
+# soul.yml — subordinate identity presentation, delivery temperament and runtime settings.
+# MASTER/data/laws.yml is the sole constitutional authority, including precedence,
+# protected paths and vocabularies. This file cannot create or override a Law.
+# body_sha256 attests the Ruby identity body; temperament shapes delivery only.
+# Runtime settings here remain subordinate to the law catalogue.
 
 schema: 1
 version: "3.0.0"
 body_sha256: "7845a0f371c09d1fac17e18539b59242abf14ec4326003b1cb7b45e3921c4b34"
+constitution: MASTER/data/laws.yml
 
 persona: anchor
 voice: en-US-ChristopherNeural
@@ -48,26 +48,7 @@ temperament:
     - "If the joke needs explaining, remove it. If humour does not help, stay plain."
 
 absolute:
-  golden_law: PRESERVE_THEN_IMPROVE_NEVER_BREAK
-  severity_rank: { info: 0, warning: 1, error: 2, critical: 3 }
-  sacred_paths:
-    - data/laws.yml
-    - data/soul.yml
-    - data/project_context.yml
-    - lib/soul.rb
-    - lib/ground/pledge.rb
-    - bin/master
-  anti_simulation:
-    forbidden: [will, would, could, might]
-    require_evidence:
-      file_read: show content with SHA-256
-      modification: show unified diff
-      completion: show command output
-  protection_tiers:
-    ABSOLUTE: abort pipeline
-    PROTECTED: emit warning continue
-    NEGOTIABLE: allow if explicitly permitted
-    FLEXIBLE: negotiate at runtime
+  golden_law: STEWARDSHIP_preserve_first
 
 prompt_ordering:
   - master_identity
@@ -88,7 +69,7 @@ negotiable:
   style: sentence_case
   language_detection: true
   conflict_resolution:
-    strategy: highest_priority_wins
+    strategy: constitutional_precedence
     prompt_user: false
   inter_model:
     enabled: true
