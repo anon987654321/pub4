@@ -27,6 +27,7 @@ class Dependency < ApplicationRecord
       child_port = dependency.depends_on
       {
         id: dependency.id,
+        port_id: child_port&.id,
         label: dependency.label,
         pkgpath: child_port&.pkgpath,
         children: child_port ? tree_for(child_port, seen:, depth: depth + 1) : []
