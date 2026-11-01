@@ -23,14 +23,14 @@ class TestLawsReflow < Minitest::Test
   def test_catalogue_has_no_retired_numeric_ranking_or_path_scope
     source = File.read(File.join(Master::ROOT, "data", "laws.yml"), encoding: "UTF-8")
 
-    refute_match(/^\\s+(?:priority|tier):/m, source)
-    refute_match(/^\\s+(?:applies_to|domain|path|path_pattern|exclude):/m, source)
+    refute_match(/^\s+(?:priority|tier):/m, source)
+    refute_match(/^\s+(?:applies_to|domain|path|path_pattern|exclude):/m, source)
   end
 
   def test_source_does_not_declare_duplicate_top_level_law_ids
     source = File.read(File.join(Master::ROOT, "data", "laws.yml"), encoding: "UTF-8")
     ids = source.lines.filter_map do |line|
-      match = line.match(/\\A([A-Z][A-Z0-9_]*):\\s*\\z/)
+      match = line.match(/\A([A-Z][A-Z0-9_]*):\s*\z/)
       match && match[1]
     end
 
