@@ -329,6 +329,22 @@ class TestLaneSelection < Minitest::Test
     assert_equal [OPUS], sent, "the first live lane of the tier, not the dead agy and not a free nemotron"
   end
 
+  def test_a_recent_provider_failure_changes_the_next_router_selection
+    health = Master::CLI::Routing::ProviderHealth.new(
+      path: File.join(@dir, "provider-health.ndjson"),
+      now: -> { Time.at(NOON).utc },
+    )
+    health.record(model: OPUS, status: :provider_error, at: Time.at(NOON).utc)
+
+    router = router_over([OPUS, GROK], [OPUS, GROK])
+    router.instance_variable_set(:@provider_health, health)
+    router.define_singleton_method(:recently_failed?) do |model_id|
+      health.recently_failed?(model_id, max_age_s: 900)
+    end
+
+    assert_equal [GROK], router.fallback_chain(task_type: :code_generation)
+  end
+
   # A launch script whose PATH leaves out ~/.local/bin, where the installer puts claude, still finds it there.
   def test_claude_outside_path_is_found_in_the_user_bin
     Dir.mktmpdir do |bin|
