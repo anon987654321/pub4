@@ -12,7 +12,7 @@ module Master
     # what was observed, which Laws governed it and which adapters were present.
     class FixPlan
       VERSION = 1
-      AUTHORITY_FILES = %w[data/soul.yml data/laws.yml].freeze
+      AUTHORITY_FILES = %w[data/laws.yml data/soul.yml].freeze
       RUNTIME_FILES = %w[
         law/definition.rb
         lib/review/scan/detector.rb
