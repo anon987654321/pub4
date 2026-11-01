@@ -7,6 +7,7 @@ class HomeController < ApplicationController
     return render_master_guest_home!(title: "Amber") if params[:master].present? && master_guest_home?
 
     @looks = Amber::HomeLooks.looks_for(Current.user)
+    @frontpage_posts = Post.public_feed.includes(:outfit, :item, user: :profile).limit(4)
 
     unless authenticated?
       @demo_items = Amber::DemoWardrobe.preview_items if Amber::DemoWardrobe.available?
