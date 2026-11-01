@@ -4,7 +4,9 @@ class FollowsController < ApplicationController
   before_action :require_real_user
 
   def create
-    @user = User.publicly_visible.find(params[:user_id])
+    # The follow/unfollow routes are members of resources :users, so the
+    # followee arrives as params[:id] — not :user_id.
+    @user = User.publicly_visible.find(params[:id])
     Current.user.follows_as_follower.find_or_create_by!(followee: @user) unless Current.user == @user
     @user.record_activity!("AmberFollowCreated", source_vertical: "amber", actor: Current.user)
     respond_to do |format|
@@ -14,7 +16,7 @@ class FollowsController < ApplicationController
   end
 
   def destroy
-    @user = User.find(params[:user_id])
+    @user = User.find(params[:id])
     Current.user.follows_as_follower.find_by(followee: @user)&.destroy!
     @user.record_activity!("AmberFollowRemoved", source_vertical: "amber", actor: Current.user)
     respond_to do |format|

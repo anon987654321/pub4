@@ -12,7 +12,19 @@ class AiController < ApplicationController
   # GET actions only suggest. The explicit generate_outfit POST owns persistence
   # and the optional single STUDIO photograph.
 
-  rate_limit to: 10, within: 10.minutes, only: %i[suggest_outfits generate_outfit],
+  # Every action here can reach the LLM, so every action carries a named
+  # ceiling. Two names because ActionController::RateLimiting keys unnamed
+  # limits to one shared counter per controller (see
+  # RAILS/test/rate_limit_naming_test.rb). :premium covers the actions that
+  # mutate wardrobe state or compose outfits; :read covers the exploratory
+  # GETs — WriteThrottle exempts GET by design, so without this a scripted
+  # loop over /ai/search could spend OpenRouter budget unbounded.
+  rate_limit to: 10, within: 10.minutes, name: :premium,
+             only: %i[suggest_outfits generate_outfit analyze_item tag_item packing_list style_profile],
+             by: -> { Current.user ? "u#{Current.user.id}" : "ip#{request.remote_ip}" },
+             with: -> { redirect_to items_path, alert: t("shared.flash.rate_limited") }
+  rate_limit to: 10, within: 10.minutes, name: :read,
+             only: %i[search mood_board capsule color_palette declutter_guide],
              by: -> { Current.user ? "u#{Current.user.id}" : "ip#{request.remote_ip}" },
              with: -> { redirect_to items_path, alert: t("shared.flash.rate_limited") }
 

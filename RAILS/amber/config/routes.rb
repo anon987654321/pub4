@@ -9,9 +9,24 @@ Rails.application.routes.draw do
   get "sso/from_master" => "sso#from_master", as: :sso_from_master
   post "share" => "items#share", as: :share_item
 
+  # The Solid Queue dashboard is infrastructure administration, not a member
+  # feature: it can retry, discard and pause jobs, and job payloads carry user
+  # data. A session merely proves the visitor has an account — every registered
+  # user has one — so the constraint now also demands an operator identity from
+  # /etc/amber.env (AMBER_ADMIN_EMAIL). Production fails closed when the
+  # variable is unset; development and test stay open to any signed-in session
+  # so local debugging does not need a second env file.
   jobs_constraint = lambda { |request|
     session_id = request.cookie_jar.signed[:session_id]
-    session_id.present? && ::Session.exists?(id: session_id)
+    next false if session_id.blank?
+
+    user = ::Session.find_by(id: session_id)&.user
+    next false if user.blank?
+
+    admin_email = ENV["AMBER_ADMIN_EMAIL"].to_s.strip.downcase
+    next user.email_address.to_s.strip.downcase == admin_email unless admin_email.empty?
+
+    Rails.env.development? || Rails.env.test?
   }
 
   resource :registration, only: %i[new create]

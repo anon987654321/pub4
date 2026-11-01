@@ -87,6 +87,7 @@ en:
   auth:
     toggle_password_visibility: "Show or hide the password"
     enable_2fa: "Enable 2FA"
+    verify_2fa: "Verify"
     verification_code: "Verification code"
     # Mirrors social.nb.yml. See there for why these live in the engine.
     options: "Sign in options"
@@ -96,6 +97,7 @@ en:
     with_bankid: "Sign in with BankID"
     with_vipps: "Sign in with Vipps"
     two_factor_lead: "Scan the QR code or enter the secret in your authenticator app."
+    two_factor_challenge_lead: "Enter the current code from your authenticator app to finish signing in."
     magic_link: "Email me a sign-in link"
   # Live regions in shared/_live_search_form and autosave_controller. bsdports had no copy of these and shipped "translation missing" into the announced values.
   status:
