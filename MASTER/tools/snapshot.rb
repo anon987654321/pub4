@@ -170,11 +170,13 @@ module Operator
         This repository is governed by MASTER, and its law is data rather than prose. Read it before
         you judge anything, in this order — all four governed trees are represented by their own snapshots:
 
-        1. `MASTER/data/soul.yml` — the kernel: absolutes, work rules, anti-simulation.
-        2. `MASTER/data/laws.yml` — the live policy catalogue; do not assume a remembered count is current.
-        3. `MASTER/law/*.rb` — executable domain laws, each carrying the example it must flag and the one
-           it must not. Those two examples **are** the law; a fix that breaks either is wrong.
-        4. `MASTER/law/*.rb` — the executable Laws; inspect its live registry rather than a remembered count.
+        1. `MASTER/data/laws.yml` — the normative constitution and ordered invariant nodes.
+        2. `MASTER/data/soul.yml` — subordinate identity, voice and delivery; it cannot override a Law.
+        3. `MASTER/law/*.rb` — executable Law definitions and their bad/good fixtures. A declared detector
+           is not proof it executed; inspect the live registry and the evidence for the target.
+        4. `MASTER/data/law_runtime.yml` — transitional per-Law execution metadata still consumed by
+           Law.define (severity, lifecycle, autofix and applicability). This is known migration debt, not
+           an authority that may override the normative constitution.
 
         The house rules that reject otherwise-correct patches:
 
