@@ -69,7 +69,7 @@ module Master
       private
 
       def canonical_paths
-        prefix = @root == Master::ROOT ? "" : "MASTER/"
+        prefix = @repo_root == Master::REPO_ROOT ? "MASTER/" : ""
         %W[#{prefix}lib/soul.rb #{prefix}data/soul.yml]
       end
 
