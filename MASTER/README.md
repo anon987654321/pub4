@@ -25,9 +25,14 @@ See [Efficient checks → repair → proof](docs/efficient-repair-pass.md) for t
 Most AI is written in Python, chosen for its libraries more than its clarity.
 MASTER is written in Ruby, and that is the point. A law governs a system only
 when a human can read both the Law and the code that enforces it, and Ruby reads
-like intention. The constitution therefore stays legible. `data/soul.yml` holds
-the constitutional absolutes; `data/laws.yml` is the canonical declared Law
-catalogue and execution policy. Executable definitions and detector-adapter
+like intention. The constitution therefore stays legible. `data/laws.yml` is the sole
+normative constitution: it owns Law identities, statements, parentage, ordered
+invariant nodes, vocabularies, protected paths and declared enforcement
+contracts. `data/soul.yml` is subordinate identity and delivery configuration;
+it attests the Ruby identity body and references the preservation Law without
+creating policy of its own. `data/law_runtime.yml` remains a transitional
+compatibility registry for operational readers and is migration debt, not a
+second normative constitution. Executable definitions and detector-adapter
 sources share one physical home under `law/`; detector adapters live in
 `law/`. `lib/review/scan/` holds scanner machinery, registration,
 auditing, and orchestration—not a second Law source tree. These are enforcement
@@ -38,10 +43,13 @@ detector or that every runtime surface has actually been assessed; MASTER must
 not claim complete enforcement from a file count or registry count.
 A break gets a refusal with a reason, never a quiet patch.
 
-The `MASTER/bin/operator laws <ID>` view uses
-`Operator::LawInventory.catalogue_declaration` through `Master.load_laws` to
-search every catalogue section. `Master.law_entries` is intentionally narrower:
-it provides priority-ranked entries, not every declaration.
+The `MASTER/bin/operator laws <ID>` view resolves the flat normative catalogue
+through `Operator::LawInventory.catalogue_declaration`. `Master.law_entries`
+returns its statement-bearing rows in document order. Constitutional precedence
+comes from the nine ordered nodes in `laws.yml`, never a numeric priority.
+The legacy `law_catalogue` and `law_map` inside `law_runtime.yml` remain
+consumed by compatibility audits; those readers are still migration debt and
+must not be treated as a competing constitutional authority.
 
 The kernel also forbids simulation. MASTER may not claim it read a file without
 showing the content and its hash, claim a change without the diff, or claim
