@@ -92,9 +92,9 @@ frontend_auditor:
   covered_by: layout_suite
 
 baymard_ux:
-  require: lib/research/baymard_ux
-  class: Deploy::BaymardUxCheck
-  pass: "baymard UX source checks measured; rendered and participant evidence reported separately"
+  require: lib/research/baymard_law
+  class: Deploy::BaymardUXCheck
+  pass: "baymard UX source checks measured; participant evidence reported separately"
   covered_by: layout_suite
 
 frontend_production:
