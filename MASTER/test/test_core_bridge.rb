@@ -333,7 +333,8 @@ class CoreBridgeTest < Minitest::Test
     line = Master::CLI::CoreBridge.report_turn(file)
 
     refute_includes line, "\n"
-    assert_includes line, "(+2 lines)"
+    assert_match(/\\A1: read\\(path\\) -> ok: \\d+B, 3 lines\\z/, line)
+    refute_includes line, "x" * 300
     assert_operator line.length, :<, Master::CLI::CoreBridge::REPORT_TURN_CHARS + 20
     assert_equal "0: note(kind, text) -> ok", Master::CLI::CoreBridge.report_turn("0: note(kind, text) -> ok")
   end
