@@ -248,7 +248,7 @@ module Master
         def image_name?(inner)
           return true if inner.match?(/<img\b[^>]*\balt\s*=\s*["'][^"']+["']/im)
 
-          inner.scan(/<svg\b([^>]*)>(.*?)<\\/svg>/im).any? do |attributes_text, body|
+          inner.scan(%r{<svg\b([^>]*)>(.*?)</svg>}im).any? do |attributes_text, body|
             svg_attrs = attributes("<svg#{attributes_text}>")
             next false if svg_attrs["aria-hidden"].to_s.casecmp?("true")
             next false unless svg_attrs["role"].to_s.casecmp?("img") || svg_attrs.key?("aria-label")
